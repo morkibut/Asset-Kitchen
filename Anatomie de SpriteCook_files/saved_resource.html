@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<!-- saved from url=(0253)https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/?__frame_t=VrLpxhMh3r04QBdG4_zUs6ow.db11aa7c-4725-495f-a5ff-f114a97e4b93.3865fed4-1800-4035-ba33-915c9e947bfb.1787757552&__frame_v=manifest.14a5398c0bc96a59.json -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- frame-runtime --><!--<base href="/_f/1787743206-6a1d/">--><base href="."><script>window.__FRAME_PREAMBLE={"v":1,"capabilities":{"artifact":"artifact.oqIe8shs.js","assets":"assets.DBUJcvq_.js","comments":"comments.GLuHR3zP.js","db":"db.CRhVHzSt.js","downloads":"downloads.C3GSvEDP.js","embed":"embed.CxGAyc-v.js","mcp":"mcp.Bvma3qD7.js","network":"network.B5UA9Su4.js","permissions":"permissions.BNySkLV5.js","room":"room.DE7EMui-.js","sample":"sample.BW2Uysoh.js","self":"artifact.oqIe8shs.js","user":"user.BpKav-Rf.js"},"transforms":"_transforms.CQm3TZ9K.js","comments":"_comments.PBVy184F.js","translate":"_translate.5HCW4BJh.js"}</script><script>(function(){"use strict";var Z=["light","dark","system"],J=/^[A-Za-z0-9_-]{1,64}$/,z=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,Q=new Set(["class","hidden","value","checked"]);function ee(e){const t=e.toLowerCase();return t.startsWith("data-")||t.startsWith("aria-")||Q.has(t)}var Me="http://www.w3.org/1999/xhtml",te="http://www.w3.org/2000/svg",re=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),ne=new Set(["script","style"]);function oe(e){const t=e.localName.toLowerCase();return e.namespaceURI==="http://www.w3.org/1999/xhtml"?!re.has(t):e.namespaceURI===te?!ne.has(t):!1}var se=new Set(["html","head","body","frameset"]);function ae(e){return e.namespaceURI==="http://www.w3.org/1999/xhtml"&&se.has(e.localName)}function ie(e){if(e===null||typeof e!="object")return!1;const t=e;if(typeof t.target!="string"||!J.test(t.target)||t.text!==void 0&&typeof t.text!="string")return!1;if(t.attrsSet!==void 0){if(t.attrsSet===null||typeof t.attrsSet!="object")return!1;for(const[r,n]of Object.entries(t.attrsSet))if(!z.test(r)||typeof n!="string")return!1}if(t.attrsRemoved!==void 0){if(!Array.isArray(t.attrsRemoved))return!1;for(const r of t.attrsRemoved)if(typeof r!="string"||!z.test(r))return!1}return!0}function ce(e,t){if(e===null||typeof e!="object")return!1;const{seq:r,elements:n}=e;if(typeof r!="number"||!Number.isSafeInteger(r)||!Array.isArray(n)||n.length===0||n.length>64)return!1;for(let s=0;s<n.length;s++)if(!t(n[s]))return!1;return!0}function le(e){return e===null||typeof e!="object"?!1:ce(e.__frame_patch,ie)}function ue(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_init;return t!==null&&typeof t=="object"}function fe(e){return e!==null&&typeof e=="object"&&e.__frame_size_poke===!0}function pe(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_theme;if(t===null||typeof t!="object")return!1;const r=t.theme;return typeof r=="string"&&Z.includes(r)}var g=/^[\w.-]+\.js$/;function de(e,t,r){return r?"inert":typeof t=="string"&&g.test(t)?e?[t]:"inert":e?"inert":"framed"}function me(){return{post(e,t){parent.postMessage(e,t)},on(e){const t=r=>{r.source===parent&&e(r.data,r.origin)};return addEventListener("message",t),()=>removeEventListener("message",t)}}}function he(){return{post:()=>{},on:()=>()=>{}}}var O="__frame_scroll",_e=150,ve=310,ye=160,we=3e4;function be(){let e=0,t=!1,r=!1,n=!1,s=0,a=null;const u=i=>{try{sessionStorage.setItem(O,JSON.stringify({y:i}))}catch{}},f=()=>{if(clearTimeout(e),a===null)return;const i=a;a=null,u(i)},R=()=>{if(t){t=!1;return}r=!0,a=scrollY,clearTimeout(e),e=setTimeout(f,_e)};try{addEventListener("scroll",R,{passive:!0}),addEventListener("pagehide",f)}catch{}const v=()=>{let i;try{i=sessionStorage.getItem(O)}catch{return null}if(i===null)return null;let m;try{m=JSON.parse(i)}catch{m=null}const l=m?.y;if(!(typeof l=="number"&&Number.isFinite(l)&&l>=0)){try{sessionStorage.removeItem(O)}catch{}return null}return l};let S=!1;const h=i=>{try{const m=scrollY;scrollTo({top:i,left:0,behavior:"instant"}),s=i,n=!0,clearTimeout(e),a=null,u(i);const l=scrollY;l!==m&&(t=!0),l!==i&&!S&&(S=!0,addEventListener("load",()=>{try{if(scrollY===l){const k=v();h(k!==null?k:s)}}catch{}},{once:!0}))}catch{}},y=()=>{try{return!!location.hash}catch{return!0}};let o=!1;const p=()=>{try{if(o||innerWidth>ve||innerHeight>ye)return;o=!0;const i=Date.now(),m=()=>{try{removeEventListener("resize",m)}catch{}if(Date.now()-i>we||r||y())return;const l=v();h(l!==null?l:s)};addEventListener("resize",m)}catch{}};let _=!1,w=!1;return{restore(){if(_||(_=!0,y()))return;const i=v();i!==null&&(h(i),p())},promoted(){if(w||(w=!0,y()))return;const i=v();i!==null?(h(i),p()):n&&h(s)}}}function Ee(e,t,r){let n=null;try{n=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:f=>f})??null}catch{}const s=window.Worker,a=s?.prototype,u=Object.freeze({Worker:s,workerOn:a?.addEventListener,workerPost:a?.postMessage,workerTerminate:a?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,policy:n});t(e).then(f=>f?.bootTopLevel?f.bootTopLevel(u,{settle:r}):r()).catch(r)}var Oe="modulepreload",Ce=function(e){return"/"+e},je={},ge=function(t,r,n){let s=Promise.resolve();function a(u){const f=new Event("vite:preloadError",{cancelable:!0});if(f.payload=u,window.dispatchEvent(f),!f.defaultPrevented)throw u}return s.then(u=>{for(const f of u||[])f.status==="rejected"&&a(f.reason);return t().catch(a)})},Ae=window===top,H=Object.getOwnPropertyDescriptor(window,"claude"),T=de(Ae,window.__FRAME_PREAMBLE?.topLevel,H?.writable===!1),C=typeof T=="object"&&T[0],d=C?he():me();(function(){const e=Object.defineProperty,t=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let n=0;for(let s=0;s<r.length;s++){const a=r[s];try{e(t,a,{value:void 0,writable:!1,configurable:!1})}catch{try{delete t[a]}catch{}try{e(t,a,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof t[a]=="function"&&n++}if(n&&T==="framed")try{d.post({__frame_rtc_lockdown_failed:n},"*")}catch{}})();var Re=1e4,Se=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function q(e){for(const t of Se)if(t.endsWith(":*"))try{const r=new URL(e);if(`${r.protocol}//${r.hostname}:*`===t)return!0}catch{}else if(e===t)return!0;return!1}var L=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),j=window.__FRAME_PREAMBLE?.transforms,N=window.__FRAME_PREAMBLE?.comments,I=window.__FRAME_PREAMBLE?.translate;function A(e){return ge(()=>import("/_runtime/"+e),void 0)}function W(e,t){return{contract:e.contract,changes:new Set(e.changes??[]),flags:new Set(e.flags??[]),capabilities:e.capabilities??{},capBudgets:e.capBudgets??{},transforms:new Map,shellOrigin:t,mount:G,pipe:()=>({wrap:(r,n)=>(...s)=>{try{return n(...s)}catch(a){return Promise.reject(a)}}})}}var P=null,b=null;function $(e,t,r){try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var B=!1;function ke(e,t){const r=[];for(const n of e.elements){const s=document.querySelector(`[data-id="${n.target}"]`);if(!s){d.post({__frame_patch_miss:{seq:e.seq}},t);return}if([...Object.keys(n.attrsSet??{}),...n.attrsRemoved??[]].some(a=>!ee(a))){d.post({__frame_patch_miss:{seq:e.seq}},t);return}if(n.text!==void 0&&(!oe(s)||ae(s))){d.post({__frame_patch_miss:{seq:e.seq}},t);return}for(const[a,u]of Object.entries(n.attrsSet??{}))if(!Y(s,a)){try{s.setAttribute(a,u)}catch{}K(s,a,u)}for(const a of n.attrsRemoved??[])Y(s,a)||(s.removeAttribute(a),K(s,a,null));typeof n.text=="string"&&(s.textContent=n.text),r.push(n.target)}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:e.seq,targets:r}}))}catch{}}function K(e,t,r){if(!(e instanceof HTMLInputElement))return;const n=t.toLowerCase();n==="checked"?e.checked=r!==null:n==="value"&&e.type!=="file"&&(e.value=r??"")}function Y(e,t){const r=t.toLowerCase(),n=e;return r==="data-id"||(r==="value"||r==="checked")&&(n.__artifactSecret===!0||/^(password|hidden|file)$/.test(n.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${e.getAttribute("autocomplete")??""} ${n.autocomplete??""}`))}function X(e){const t=document.documentElement;e==="light"||e==="dark"?(t.dataset.theme=e,t.style.colorScheme=e,B=!0):B&&(delete t.dataset.theme,t.style.colorScheme="",B=!1)}var M=new Map;function Te(){let e;const t={u:new Promise(r=>{e=r}),r:r=>{t.done=!0,e(r)},done:!1,nulled:!1};return t}function U(){for(const e of M.values())e.done||(e.nulled=!0,e.r(null))}var Le=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),G=(e,t)=>{const r=M.get(e);if(!r||r.done){r?.nulled&&b&&d.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:e}},b);return}const n=typeof t=="function"?Object.setPrototypeOf(t,Le):Object.assign(Object.create(null),t);typeof n.then=="function"&&delete n.then,r.r(Object.freeze(n))};function V(){const e=H?.value??{};$(window,"claude",e);for(const t of Object.keys(L)){if(e[t]!==void 0){$(e,t,e[t]);continue}M.set(t,Te())}if(e.use===void 0){const t=r=>{if(typeof r!="string"||!Object.hasOwn(L,r))return Promise.resolve(null);const n=M.get(r);return n?n.u:Promise.resolve(e[r]??null)};try{Object.defineProperty(e,"use",{value:t,writable:!0,configurable:!0,enumerable:!1})}catch{}}}if(T==="framed"){const e=j&&g.test(j)?A(j).catch(()=>{}):Promise.resolve(void 0),t=o=>{if(o.type==="auxclick"&&o.button!==1)return;const p=o.target,_=p&&p.closest?p.closest("a[href],area[href]"):null;if(!_)return;const w=_.getAttribute("href");if(!w)return;let i;try{i=new URL(w,document.baseURI)}catch{return}if((i.protocol==="http:"||i.protocol==="https:")&&i.origin!==location.origin){o.preventDefault();const m=(_.getAttribute("target")??"").toLowerCase(),l=o.type==="auxclick"||o.metaKey||o.ctrlKey||o.shiftKey||o.altKey||!["","_self","_top","_parent"].includes(m);d.post({__frame_nav:!0,url:i.href,newTab:l},"*")}};addEventListener("click",t,!0),addEventListener("auxclick",t,!0);const r={},n=o=>{o.isTrusted&&(r.pointer=!0)},s=o=>{o.isTrusted&&(r.click=!0)};addEventListener("pointermove",n,{capture:!0,passive:!0}),addEventListener("click",s,{capture:!0,passive:!0}),e.then(o=>{o?.wireNav&&(o.wireNav(),removeEventListener("click",t,!0),removeEventListener("auxclick",t,!0),removeEventListener("pointermove",n,!0),removeEventListener("click",s,!0),o.wireEngagement?.(r))});let a=null;try{a=be()}catch{}V();let u=null,f=null,R=0;const v=d.on((o,p)=>{q(p)&&ue(o)&&(u=o.__frame_init,b=p,v(),clearTimeout(R),f?.())});d.post({__frame_connect:!0},"*");const S=new Promise(o=>{f=o,R=setTimeout(()=>{v(),o()},Re)}),h=document.readyState==="loading"?new Promise(o=>document.addEventListener("DOMContentLoaded",()=>o(),{once:!0})):Promise.resolve();h.then(()=>{try{a?.restore()}catch{}});const y={cb:null};d.on((o,p)=>{if(q(p)&&fe(o)){try{a?.promoted()}catch{}y.cb?.()}}),S.then(async()=>{if(!u||!b){U();return}X(u.theme);const o=b;let p=!1,_=!1;d.on((c,D)=>{if(D!==o)return;pe(c)&&X(c.__frame_theme.theme),le(c)&&ke(c.__frame_patch,o);const E=c?.__fc_mode;E&&typeof E=="object"&&!p&&N&&g.test(N)&&(p=!0,A(N).then(F=>F.install?.(o,E.on===!0)).catch(()=>{}));const x=c?.__ft_cmd;x&&typeof x=="object"&&!_&&I&&g.test(I)&&(_=!0,A(I).then(F=>F.install?.(o,x)).catch(()=>{}))});const w=Object.keys(u.capabilities??{}).filter(c=>Object.hasOwn(L,c)).map(c=>[c,L[c]]).filter(c=>typeof c[1]=="string"&&g.test(c[1])),i=await Promise.allSettled(w.map(([,c])=>A(c))),m=await e,l=b;if(m?.buildBoot||d.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},l),m?.buildBoot)try{P=m.buildBoot(u,m.TRANSFORMS??{},{shellOrigin:l,mount:G},c=>d.post({__frame_cap_telemetry:c},l))}catch{d.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},l),P=W(u,l)}else P=W(u,l);const k=c=>d.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:c}},l),Pe=P;i.forEach((c,D)=>{const E=w[D][0];if(c.status!=="fulfilled"){k(E);return}try{c.value?.install?.(Pe)}catch{k(E)}}),U(),await h,d.post({__frame_ready:!0},b),e.then(c=>c?.installSizeReporter?.(l,y))})}else C&&(V(),Ee(C,A,U))})();</script><!-- /frame-runtime --><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Anatomie de SpriteCook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link rel="stylesheet" href="./css2">
+
+<style>
+  :root{
+    --ground:#F6F7F7;
+    --surface:#FFFFFF;
+    --surface-2:#EFF2F3;
+    --ink:#0F161B;
+    --ink-2:#334049;
+    --muted:#5C6A75;
+    --line:#DCE3E7;
+    --line-soft:#E9EDEF;
+    --cy:#0A6F80;
+    --cy-soft:#E2F1F3;
+    --mg:#A81C5E;
+    --mg-soft:#FBE7EF;
+    --ok:#1F6B4E;
+    --warn:#8A5A00;
+    --shadow:0 1px 2px rgba(15,22,27,.05), 0 8px 24px -16px rgba(15,22,27,.22);
+    --grid:rgba(15,22,27,.055);
+
+    --f-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+    --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0E1216;
+      --surface:#141A20;
+      --surface-2:#1A222A;
+      --ink:#E6EDF2;
+      --ink-2:#C2CED8;
+      --muted:#8E9DAA;
+      --line:#232D35;
+      --line-soft:#1C242B;
+      --cy:#48D4E4;
+      --cy-soft:#102F35;
+      --mg:#FF7AB0;
+      --mg-soft:#331623;
+      --ok:#5FD6A4;
+      --warn:#E0AE55;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+      --grid:rgba(230,237,242,.06);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0E1216;
+    --surface:#141A20;
+    --surface-2:#1A222A;
+    --ink:#E6EDF2;
+    --ink-2:#C2CED8;
+    --muted:#8E9DAA;
+    --line:#232D35;
+    --line-soft:#1C242B;
+    --cy:#48D4E4;
+    --cy-soft:#102F35;
+    --mg:#FF7AB0;
+    --mg-soft:#331623;
+    --ok:#5FD6A4;
+    --warn:#E0AE55;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+    --grid:rgba(230,237,242,.06);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--f-body);
+    font-size:16px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--cy);text-underline-offset:2px}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:2px}
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    border-bottom:1px solid var(--line);
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/16px 16px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/16px 16px,
+      var(--surface);
+  }
+  .masthead-inner{
+    max-width:1180px;margin:0 auto;padding:64px 28px 46px;
+    display:flex;flex-direction:column;gap:20px;
+  }
+  .eyebrow{
+    font-family:var(--f-mono);font-size:11.5px;font-weight:500;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--cy);margin:0;
+  }
+  h1{
+    font-family:var(--f-display);font-weight:800;
+    font-size:clamp(2.6rem,6.5vw,4.6rem);line-height:.98;letter-spacing:-.03em;
+    margin:0;text-wrap:balance;max-width:14ch;
+  }
+  .standfirst{
+    font-size:1.12rem;line-height:1.55;color:var(--ink-2);max-width:62ch;margin:0;
+  }
+  .stamp{
+    display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);
+    border-radius:3px;overflow:hidden;background:var(--surface);width:fit-content;max-width:100%;
+  }
+  .stamp div{
+    padding:10px 16px;border-right:1px solid var(--line);
+    font-family:var(--f-mono);font-size:12px;color:var(--muted);
+  }
+  .stamp div:last-child{border-right:0}
+  .stamp b{color:var(--ink);font-weight:600}
+
+  /* ---------- shell ---------- */
+  .shell{
+    max-width:1180px;margin:0 auto;padding:0 28px 120px;
+    display:grid;grid-template-columns:216px minmax(0,1fr);gap:56px;align-items:start;
+  }
+  .rail{position:sticky;top:0;padding:44px 0;max-height:100vh;overflow-y:auto}
+  .rail-title{
+    font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 14px;
+  }
+  .rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+  .rail a{
+    display:flex;gap:10px;padding:5px 8px;border-radius:3px;
+    text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.35;
+    border-left:2px solid transparent;
+  }
+  .rail a:hover{background:var(--surface-2);color:var(--ink)}
+  .rail a .n{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:1.4em}
+
+  main{padding:44px 0 0;min-width:0}
+  section{scroll-margin-top:24px;padding-bottom:8px}
+  section + section{margin-top:56px;border-top:1px solid var(--line);padding-top:44px}
+
+  h2{
+    font-family:var(--f-display);font-weight:700;font-size:clamp(1.5rem,2.6vw,1.95rem);
+    line-height:1.12;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance;
+    display:flex;gap:14px;align-items:baseline;
+  }
+  h2 .n{
+    font-family:var(--f-mono);font-size:.62em;font-weight:500;color:var(--cy);
+    letter-spacing:0;flex:none;
+  }
+  h3{
+    font-family:var(--f-display);font-weight:600;font-size:1.12rem;letter-spacing:-.01em;
+    margin:36px 0 10px;color:var(--ink);
+  }
+  h4{
+    font-family:var(--f-mono);font-size:11.5px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);margin:26px 0 10px;
+  }
+  p{margin:0 0 14px;max-width:68ch}
+  .lede{color:var(--ink-2);font-size:1.03rem;max-width:66ch;margin-bottom:22px}
+  ul,ol.list{margin:0 0 16px;padding-left:20px;max-width:68ch}
+  li{margin-bottom:6px}
+  strong{font-weight:600}
+  code{
+    font-family:var(--f-mono);font-size:.855em;background:var(--surface-2);
+    border:1px solid var(--line-soft);border-radius:3px;padding:1px 5px;color:var(--ink);
+    word-break:break-word;
+  }
+  .k{color:var(--mg)}
+
+  /* ---------- tables ---------- */
+  .tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.45}
+  th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  thead th{
+    background:var(--surface-2);font-family:var(--f-mono);font-size:10.5px;font-weight:600;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;
+  }
+  tbody tr:last-child td{border-bottom:0}
+  td.mono,th.mono,.num{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .num{text-align:right;white-space:nowrap}
+  td small{display:block;color:var(--muted);font-size:11.5px;line-height:1.4;margin-top:2px}
+
+  /* ---------- devices ---------- */
+  .cost{
+    font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--mg);
+    background:var(--mg-soft);border-radius:3px;padding:1px 6px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .tag{
+    display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:500;
+    letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;
+    border:1px solid var(--line);color:var(--muted);background:var(--surface);white-space:nowrap;
+  }
+  .tag.paid{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  .tag.free{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+
+  .note{
+    border-left:2px solid var(--cy);background:var(--cy-soft);
+    padding:14px 18px;border-radius:0 4px 4px 0;margin:0 0 22px;max-width:70ch;
+  }
+  .note p{margin:0;font-size:14.5px;color:var(--ink-2)}
+  .note p + p{margin-top:9px}
+  .note .lbl{
+    font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--cy);display:block;margin-bottom:5px;
+  }
+
+  /* layer stack */
+  .stack{display:flex;flex-direction:column;gap:8px;margin:0 0 24px}
+  .layer{
+    border:1px solid var(--line);border-radius:4px;background:var(--surface);
+    padding:14px 18px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:18px;align-items:baseline;
+  }
+  .layer .lname{font-family:var(--f-display);font-weight:600;font-size:14.5px;letter-spacing:-.01em}
+  .layer .lname span{display:block;font-family:var(--f-mono);font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+  .layer .lbody{font-size:13.5px;color:var(--ink-2);line-height:1.5}
+  .layer.hi{border-color:var(--cy);background:var(--cy-soft)}
+
+  /* step chain */
+  .chain{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 22px;align-items:stretch}
+  .step{
+    flex:1 1 130px;min-width:130px;border:1px solid var(--line);border-radius:4px;
+    background:var(--surface);padding:10px 12px;position:relative;
+  }
+  .step .sn{font-family:var(--f-mono);font-size:10.5px;color:var(--cy);letter-spacing:.1em}
+  .step .st{font-weight:600;font-size:13.5px;line-height:1.25;margin:3px 0 3px;letter-spacing:-.01em}
+  .step .sd{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .step .sc{margin-top:6px;display:inline-block}
+
+  .kv{
+    display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;
+    margin:0 0 22px;font-size:14px;max-width:70ch;
+  }
+  .kv dt{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:3px;white-space:nowrap}
+  .kv dd{margin:0;color:var(--ink-2)}
+
+  hr.rule{border:0;border-top:1px solid var(--line-soft);margin:30px 0}
+
+  footer{
+    border-top:1px solid var(--line);background:var(--surface);
+  }
+  .foot-inner{max-width:1180px;margin:0 auto;padding:34px 28px 60px;color:var(--muted);font-size:13px}
+  .foot-inner p{max-width:74ch;margin:0 0 10px}
+
+  @media (max-width:940px){
+    .shell{grid-template-columns:minmax(0,1fr);gap:0}
+    .rail{position:static;max-height:none;padding:32px 0 0;border-bottom:1px solid var(--line);padding-bottom:24px}
+    .rail ol{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0}
+    main{padding-top:32px}
+    .layer{grid-template-columns:minmax(0,1fr);gap:6px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="eyebrow">Spécifications fonctionnelles · reverse engineering</p>
+    <h1>Anatomie de SpriteCook</h1>
+    <p class="standfirst">Relevé complet de <code>app.spritecook.ai</code> : modèle d'objets, écrans, paramètres, machines à états, coûts en crédits et surface d'intégration. Établi en parcourant l'application connectée, en interrogeant l'API via son serveur MCP, et en exécutant un workflow de bout en bout.</p>
+    <div class="stamp">
+      <div>Relevé du <b>26 août 2026</b></div>
+      <div>Compte <b>Adventurer</b></div>
+      <div>Vérifié : <b>1 personnage + 3 animations</b></div>
+      <div>Coût du test : <b>74 crédits</b></div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Sommaire">
+    <p class="rail-title">Sommaire</p>
+    <ol>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s1"><span class="n">1</span><span>Ce qu'est le produit</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s2"><span class="n">2</span><span>Modèle d'objets</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s3"><span class="n">3</span><span>Cartographie des écrans</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s4"><span class="n">4</span><span>Le moteur de génération</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s5"><span class="n">5</span><span>Les huit parcours</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s6"><span class="n">6</span><span>Post-traitement &amp; édition</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s7"><span class="n">7</span><span>Exports moteurs</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s8"><span class="n">8</span><span>Surface d'intégration</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s9"><span class="n">9</span><span>Économie &amp; gating</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s10"><span class="n">10</span><span>Règles métier</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s11"><span class="n">11</span><span>Lecture critique</span></a></li>
+      <li><a href="https://4145bd12-343e-4c9b-8e3e-07578aaffd50.frame.claudeusercontent.com/_f/1787743206-6a1d/#s12"><span class="n">12</span><span>Méthode &amp; fiabilité</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="n">§1</span>Ce qu'est le produit</h2>
+    <p class="lede">SpriteCook n'est pas un générateur d'images. C'est une couche de contraintes métier et d'orchestration posée sur des modèles d'images génériques, dont la valeur est presque entièrement dans ce qui se passe <em>avant</em> et <em>après</em> l'appel au modèle.</p>
+
+    <div class="stack">
+      <div class="layer">
+        <div class="lname"><span>Couche 4</span>Surfaces</div>
+        <div class="lbody">Application web (11 écrans), API REST <code>api.spritecook.ai/v1/api</code>, serveur MCP (43 outils) branché sur Claude, Cursor, Codex, OpenCode, VS Code. Les trois surfaces attaquent le même compte et le même solde de crédits.</div>
+      </div>
+      <div class="layer">
+        <div class="lname"><span>Couche 3</span>Workflows guidés</div>
+        <div class="lbody">Assistants multi-étapes qui transforment une intention floue en une séquence de générations chaînées : personnage&nbsp;+&nbsp;set d'animations, kit d'interface complet, tileset autotile, pack de démarrage par genre.</div>
+      </div>
+      <div class="layer hi">
+        <div class="lname"><span>Couche 2</span>Contraintes &amp; post-traitement</div>
+        <div class="lbody"><strong>Le cœur de la valeur.</strong> Alignement sur grille pixel, quantification de palette, détourage, recadrage intelligent, découpe par alpha connexe, assemblage en atlas autotile, détection de bordures 9-slice, mise en spritesheet.</div>
+      </div>
+      <div class="layer">
+        <div class="lname"><span>Couche 1</span>Modèles d'images</div>
+        <div class="lbody">Cinq modèles tiers, exposés tels quels : Gemini 2.5/3.1/3.1-Lite/3-Pro Flash Image et GPT-Image-2. Aucun modèle propriétaire. Le modèle d'animation, lui, n'est pas exposé.</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p><span class="lbl">Conséquence pour un projet similaire</span>Reproduire la couche 1 est trivial (des clés d'API). Reproduire la couche 2 est le vrai travail : c'est là que se logent le « pixel perfect », les atlas qui tuilent réellement, les 9-slice exploitables. La couche 3 est ce qui fait la différence de conversion, parce qu'elle empêche l'utilisateur de se perdre.</p>
+    </div>
+
+    <h3>Le vocabulaire du produit</h3>
+    <dl class="kv">
+      <dt>Asset</dt><dd>L'unité atomique : une image fixe ou une animation, toujours détenue par un compte.</dd>
+      <dt>Pixel / Detailed</dt><dd>Les deux univers de rendu. <code>pixel=true</code> déclenche tout le post-traitement grille ; <code>pixel=false</code> produit du HD lissé.</dd>
+      <dt>Crédit</dt><dd>L'unité de facturation. Chaque bouton qui en consomme affiche son coût exact avant le clic.</dd>
+      <dt>Job / Run</dt><dd>L'unité asynchrone. Un <em>run</em> regroupe plusieurs jobs (un set d'animations).</dd>
+      <dt>Preset</dt><dd>Un jeu de réglages sauvegardé et partageable — le mécanisme communautaire du produit.</dd>
+    </dl>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="n">§2</span>Modèle d'objets</h2>
+    <p class="lede">Neuf entités persistées. La hiérarchie de rangement est volontairement plate : <code>Projet › Collection › Asset</code>, et rien d'autre.</p>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Entité</th><th>Identité</th><th>Champs observés</th><th>Créée par</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Asset</strong></td>
+            <td class="mono">uuid</td>
+            <td>label (1–255), prompt d'origine, <code>asset_kind</code> (image | animation), largeur/hauteur mesurées, nb de frames, format (PNG / WEBP animé), transparence, modèle générateur, variantes stockées <code>raw</code> et <code>pixel</code>, visibilité publique/privée, favori, filiation (« Made from »)<small>Les dimensions demandées ne sont qu'un indice : seules les dimensions mesurées font foi.</small></td>
+            <td>Génération, upload, import, découpe, post-traitement</td>
+          </tr>
+          <tr>
+            <td><strong>Projet</strong></td>
+            <td class="mono">uuid</td>
+            <td>nom (1–255 après trim), ordre de tri, date de création</td>
+            <td>Manuel, ou auto-provisionné par un workflow guidé</td>
+          </tr>
+          <tr>
+            <td><strong>Collection</strong></td>
+            <td class="mono">uuid</td>
+            <td>nom, <code>project_id</code> optionnel, ordre de tri<small>Une collection peut vivre hors projet.</small></td>
+            <td>Manuel, ou auto-provisionnée</td>
+          </tr>
+          <tr>
+            <td><strong>Job</strong></td>
+            <td class="mono">job_id</td>
+            <td>statut, progression, <code>resolved_parameters</code> (modèle et réglages réellement appliqués), résultat : <code>assets[]</code> pour une image fixe, <code>output</code> pour une animation</td>
+            <td>Tout appel de génération</td>
+          </tr>
+          <tr>
+            <td><strong>Personnage</strong></td>
+            <td class="mono">characterId</td>
+            <td>sprite de base, perspective (<em>verrouillée</em> après création), style pixel/detailed</td>
+            <td>Character Creator</td>
+          </tr>
+          <tr>
+            <td><strong>Run d'animation</strong></td>
+            <td class="mono">runId</td>
+            <td>lot d'animations d'un même personnage, état par animation</td>
+            <td>Étape 4 du Character Creator</td>
+          </tr>
+          <tr>
+            <td><strong>UI Kit</strong></td>
+            <td class="mono">kitId</td>
+            <td>concept sélectionné, planches de composants, brouillon de composants + <code>quality_summary</code>, éléments finalisés, bordures 9-slice, <code>parent_ui_kit_id</code><small>Objet durable et reprenable : c'est le seul workflow qui survit explicitement à une perte de contexte.</small></td>
+            <td>UI Kit Builder</td>
+          </tr>
+          <tr>
+            <td><strong>Preset</strong></td>
+            <td class="mono">uuid ou slug</td>
+            <td>titre (1–120), description, settings, références de style, previews, statut (<code>draft</code> | <code>published</code> | <code>deprecated</code> | <code>moderation_hidden</code>), mode (<code>assets</code> | <code>ui</code> | <code>texture</code> | <code>tileset</code>), drapeau pixel</td>
+            <td>« Save as new » depuis le panneau de réglages</td>
+          </tr>
+          <tr>
+            <td><strong>Clé d'API</strong></td>
+            <td class="mono">sc_live_…</td>
+            <td>scopes parmi 4 groupes de méthodes, 10 clés maximum par compte</td>
+            <td>Écran API Keys</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Auto-provisionnement : le détail le plus intelligent du modèle</h3>
+    <p>Les workflows guidés ne se contentent pas de produire des assets : ils <strong>créent le rangement en même temps</strong>. L'utilisateur n'organise jamais rien à la main, et pourtant sa bibliothèque reste structurée.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Workflow</th><th>Projet créé</th><th>Collections créées</th></tr></thead>
+        <tbody>
+          <tr><td>Character Creator</td><td class="mono">« &lt;prompt du personnage&gt; »</td><td class="mono">Character Animations</td></tr>
+          <tr><td>UI Kit Builder</td><td class="mono">« &lt;nom du kit&gt; UI Kit »</td><td class="mono">Concepts · Component Sheets · UI Elements</td></tr>
+          <tr><td>Asset Generator</td><td colspan="2">Aucun — l'asset tombe dans <em>Unorganized</em>, sauf si le toggle « Use project » est activé</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Règles d'affectation</h4>
+    <ul>
+      <li>Affectation atomique, jusqu'à <strong>500 assets</strong> par opération.</li>
+      <li>Sortir un asset de son projet <strong>efface aussi son appartenance à une collection</strong>.</li>
+      <li>Sortir un asset d'une collection <strong>ne touche pas</strong> à son projet.</li>
+      <li>Affecter un asset à une collection imbriquée dans un projet <strong>le déplace implicitement dans ce projet</strong>.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="n">§3</span>Cartographie des écrans</h2>
+    <p class="lede">Onze routes, plus une barre latérale organisée en quatre blocs — <em>Create</em>, <em>Library</em>, <em>Community</em>, <em>Developer</em> — qui trahit la segmentation mentale du produit.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Route</th><th>Écran</th><th>Rôle</th><th>États / paramètres d'URL</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">/</td><td>Accueil</td><td>Barre de prompt universelle + 7 raccourcis outils + assets récents + presets communautaires</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/create</td><td>Générateur</td><td>L'écran central : panneau de réglages à gauche, prompt + grille d'assets à droite</td><td class="mono">?tab=create | animate<br>?mode=tileset | texture</td></tr>
+          <tr><td class="mono">/characters</td><td>Character Creator</td><td>Assistant 5 étapes, du prompt au set d'animations exportable</td><td class="mono">?step=pickPack | review | animate | generating<br>&amp;characterId=…&amp;runId=…</td></tr>
+          <tr><td class="mono">/packs</td><td>Asset Pack</td><td>Assistant 3 étapes : genre → perspective → style + taille de pack</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/ui-kits</td><td>UI Kit Builder</td><td>Assistant 8 étapes, du concept plein écran aux composants 9-slice</td><td class="mono">?kitId=…</td></tr>
+          <tr><td class="mono">/assets</td><td>Ma bibliothèque</td><td>Arbre Projets/Collections, filtres, sélection multiple, actions en masse</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/assets/asset/&lt;id&gt;</td><td>Fiche asset</td><td>Visionneuse + métadonnées + menu « Edit &amp; adjust » + filiation</td><td class="mono">?gen=…&amp;from=grid</td></tr>
+          <tr><td class="mono">/editor</td><td>Manual Editor</td><td>Éditeur pixel complet dans le navigateur</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/gallery</td><td>Community Gallery</td><td>Découverte + upvote, tri Popular/Latest, filtre de fond</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/api-keys</td><td>Clés d'API</td><td>Création/révocation, documentation des scopes</td><td class="mono">—</td></tr>
+          <tr><td class="mono">/vibecode</td><td>Vibe Code</td><td>Onboarding agent : un chemin d'installation par éditeur</td><td class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Éléments transverses</h3>
+    <ul>
+      <li><strong>Compteur de crédits</strong> persistant en haut à droite et dans le pied de la barre latérale, avec jauge <code>consommé / quota mensuel</code> et mention séparée des crédits top-up.</li>
+      <li><strong>Bandeau de job actif</strong> qui s'affiche en haut de la zone de contenu pendant une génération : prompt (y compris le prompt auto-enrichi), barre de progression, temps restant estimé, bouton <em>Cancel</em>.</li>
+      <li><strong>Panneau Activity</strong> (icône pouls) : flux des jobs récents, avec un lien « View all activity ».</li>
+      <li><strong>Menu compte</strong> : Profile · Subscription &amp; billing · Help · Logout.</li>
+      <li><strong>Barre de prompt universelle</strong> avec un routeur d'intention : <code>Auto</code> (défaut) · Assets · Character · Tileset · Texture · Animation.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="n">§4</span>Le moteur de génération</h2>
+    <p class="lede">Un seul écran, quatre types de génération, un panneau de réglages qui se recompose selon le type choisi. C'est la pièce la plus dense du produit.</p>
+
+    <h3>4.1 · Les quatre types</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Type</th><th>Libellé produit</th><th>Ce qu'il produit</th><th>État</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">assets</td><td>Assets</td><td>Personnages, props, sprites, icônes</td><td><span class="tag free">Actif</span></td></tr>
+          <tr><td class="mono">texture</td><td>Texture</td><td>Surfaces tuilables sans couture</td><td><span class="tag free">Actif</span></td></tr>
+          <tr><td class="mono">tileset</td><td>Tileset</td><td>Atlas autotile pour cartes de jeu</td><td><span class="tag free">Actif</span></td></tr>
+          <tr><td class="mono">ui</td><td>UI</td><td>Boutons, panneaux, éléments d'interface isolés</td><td><span class="tag">Bientôt (dans ce panneau)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Le type <code>ui</code> est grisé dans le sélecteur de l'écran de génération, mais accessible autrement : via l'API pour un élément isolé, et via le UI Kit Builder pour un système complet. La règle de routage est explicite dans la documentation du serveur MCP — <strong>un élément isolé</strong> passe par la génération d'image en mode <code>ui</code>, <strong>un écran ou un système cohérent</strong> passe par les outils UI Kit.</p>
+
+    <h3>4.2 · Le panneau de réglages, contrôle par contrôle</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Contrôle UI</th><th>Paramètre</th><th>Valeurs</th><th>Défaut</th></tr></thead>
+        <tbody>
+          <tr><td>Generation type</td><td class="mono">mode</td><td class="mono">assets · texture · tileset · ui</td><td class="mono">assets</td></tr>
+          <tr><td>Preset — « choose a starting point »</td><td class="mono">preset_id</td><td>Points de départ intégrés (Character &amp; Props, Skill Icons, Inventory Icons, Foliage) + presets communautaires + presets privés. Actions&nbsp;: Reset · Save as new · Clear</td><td>Character &amp; Props</td></tr>
+          <tr><td>Style — curseur Detailed ↔ Pixel Art</td><td class="mono">pixel</td><td class="mono">true | false</td><td class="mono">true</td></tr>
+          <tr><td>Pixel Perfect</td><td>—</td><td>Alignement strict sur la grille de pixels</td><td>Activé</td></tr>
+          <tr><td>Style Guide — « Add style reference »</td><td class="mono">style_asset_ids[]</td><td>Assets du compte utilisés <em>uniquement</em> comme guide visuel. Plafond dépendant du modèle (3 à 14)</td><td>vide</td></tr>
+          <tr><td>AI Model</td><td class="mono">model</td><td class="mono">gemini-2.5-flash-image · gemini-3.1-flash-lite-image · gemini-3.1-flash-image · gemini-3-pro-image · gpt-image-2</td><td class="mono">gemini-3.1-flash-image</td></tr>
+          <tr><td>Size</td><td class="mono">width / height</td><td class="mono">16 · 32 · 64 · 128 · 256 · 512 px<small>Indice de taille, pas garantie : la sortie réelle est reportée dans <code>resolved_parameters.output_dimensions</code>.</small></td><td class="mono">64×64</td></tr>
+          <tr><td>Colors</td><td class="mono">colors[]</td><td>Palette hex de guidage, 64 couleurs max</td><td>Désactivé</td></tr>
+          <tr><td>Remove BG</td><td class="mono">bg_mode / removebg</td><td><strong>Basic</strong> (rapide, inclus) · <strong>Pro</strong> <span class="cost">+2</span> par image, par frame en animation. Mode <code>transparent</code> · <code>white</code> · <code>include</code></td><td>Basic</td></tr>
+          <tr><td>Smart Crop</td><td class="mono">smart_crop / smart_crop_mode</td><td class="mono">tightest | power_of_2</td><td class="mono">tightest</td></tr>
+          <tr><td>Aspect Ratio</td><td class="mono">aspect_ratio</td><td class="mono">1:1 · 16:9 · 9:16</td><td class="mono">1:1</td></tr>
+          <tr><td>Variations</td><td class="mono">variations</td><td>1 à 8 dans l'UI (4 max sur le palier Apprentice, 8 sur Adventurer). L'API plafonne à 4</td><td>1</td></tr>
+          <tr><td>Public</td><td>—</td><td>Publication dans la galerie communautaire</td><td>Privé</td></tr>
+          <tr><td>Use project</td><td class="mono">project_id</td><td>Affecte les nouvelles générations à un projet</td><td>Désactivé</td></tr>
+          <tr><td>Save defaults</td><td>—</td><td>Applique les réglages courants à toute la session</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Le bloc « Theme &amp; Style », replié par défaut</h4>
+    <ul>
+      <li><strong>Onglet Theme</strong> — un champ libre pour l'univers du jeu (« Medieval High Fantasy, Cyberpunk City… »), avec deux boutons&nbsp;: <em>Random</em> et <em>Refine</em>.</li>
+      <li><strong>Onglet Style</strong> — un sélecteur de preset visuel à deux familles (<em>Pixel Art</em>&nbsp;: 8-Bit, 16-Bit, Modern, Dark, Chibi, Isometric… / <em>Detailed</em>), ou un champ libre de direction artistique.</li>
+    </ul>
+    <p>La séparation prompt / thème / style est structurante : le prompt décrit <em>l'objet</em>, le thème décrit <em>le monde</em>, le style décrit <em>le rendu</em>. C'est ce découpage qui permet de garder une cohérence entre des assets générés à des semaines d'intervalle.</p>
+
+    <h3>4.3 · Modèles et coûts en crédits</h3>
+    <p>Catalogue lu directement sur l'API authentifiée, donc exact au jour du relevé.</p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Modèle</th><th class="mono">api_name</th><th class="num">1K</th><th class="num">2K</th><th class="num">4K</th><th>Réfs max</th><th>RPM</th><th>Particularités</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Nano Banana 2 <span class="tag free">défaut</span></td><td class="mono">gemini-3.1-flash-image</td><td class="num">12</td><td class="num">18</td><td class="num">30</td><td class="num">14</td><td class="num">100</td><td>Recommandé pour les tilesets</td></tr>
+          <tr><td>Nano Banana 2 Lite</td><td class="mono">gemini-3.1-flash-lite-image</td><td class="num">8</td><td class="num">—</td><td class="num">—</td><td class="num">14</td><td class="num">100</td><td>1K uniquement</td></tr>
+          <tr><td>Nano Banana Pro</td><td class="mono">gemini-3-pro-image</td><td class="num">16</td><td class="num">24</td><td class="num">40</td><td class="num">10</td><td class="num">20</td><td>Le plus capable, le plus lent</td></tr>
+          <tr><td>GPT-Image-2</td><td class="mono">gpt-image-2</td><td class="num">2 / 9 / 36</td><td class="num">2 / 7 / 28</td><td class="num">4 / 17 / 68</td><td class="num">14</td><td class="num">50</td><td>Seul modèle à paliers de qualité <code>low/medium/high</code> ; recommandé pour les UI kits</td></tr>
+          <tr><td>Nano Banana <span class="tag">déprécié</span></td><td class="mono">gemini-2.5-flash-image</td><td class="num">8</td><td class="num">—</td><td class="num">—</td><td class="num">3</td><td class="num">500</td><td>Déprécié mais toujours actif, conservé pour compatibilité</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><span class="lbl">Formule de coût observée</span>Coût = <code>tarif(modèle, résolution, qualité)</code> × <code>variations</code> + options. Vérifié en direct : avec <em>Remove BG · Pro</em> actif, Nano Banana&nbsp;2 affiche <span class="cost">14</span> (12&nbsp;+&nbsp;2) et Nano Banana affiche <span class="cost">10</span> (8&nbsp;+&nbsp;2). Le bouton recalcule instantanément à chaque changement de réglage.</p>
+    </div>
+
+    <h3>4.4 · Les options propres au mode Tileset</h3>
+    <p>Le mode tileset remplace une partie du panneau par des contrôles spécifiques, et refuse les combinaisons invalides.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Perspective</th><th>Jeu de pièces</th><th>Tailles de tuile</th><th>Atlas</th><th>Élévation</th><th>Arêtes</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2"><strong>Top-down</strong><br><small>pixel</small></td><td class="mono">15-piece <span class="tag free">défaut</span></td><td class="mono">16 · 32</td><td class="mono">4×4</td><td class="mono">minimal</td><td class="mono">transparent · two_surfaces</td></tr>
+          <tr><td class="mono">17-piece-base</td><td class="mono">16 · 32</td><td class="mono">5×4</td><td class="mono">no-elevation · minimal</td><td class="mono">transparent</td></tr>
+          <tr><td><strong>Platformer</strong><br><small>pixel</small></td><td class="mono">autotile-16-set</td><td class="mono">16 · 32 · 64</td><td class="mono">4×4</td><td class="mono">minimal</td><td class="mono">transparent</td></tr>
+          <tr><td rowspan="2"><strong>Isometric</strong><br><small>pixel</small></td><td class="mono">isometric-3x5-32</td><td class="mono">32</td><td class="mono">3×5</td><td class="mono">no-elevation</td><td class="mono">transparent</td></tr>
+          <tr><td class="mono">isometric-2x4-64</td><td class="mono">64</td><td class="mono">2×4</td><td class="mono">no-elevation</td><td class="mono">transparent</td></tr>
+          <tr><td rowspan="2"><strong>Top-down</strong><br><small>detailed</small></td><td class="mono">15-piece</td><td class="mono">64 · 128 · 256</td><td class="mono">4×4</td><td class="mono">no-elevation · minimal</td><td class="mono">transparent · two_surfaces</td></tr>
+          <tr><td class="mono">17-piece-base</td><td class="mono">64 · 128 · 256</td><td class="mono">5×4</td><td class="mono">minimal</td><td class="mono">transparent</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>two_surfaces</code> n'est supporté <strong>que</strong> par le 15-piece top-down. Les petites tailles pixel (16 et 32&nbsp;px) exigent une grille de guidage et un post-traitement — le modèle génère une image plus grande que la sortie finale, puis SpriteCook la recale et la découpe. Un outil gratuit et hors compte, le <em>Tileset Base Generator</em>, permet de fournir sa propre planche de gabarit.</p>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="n">§5</span>Les huit parcours</h2>
+    <p class="lede">Tout le produit se ramène à huit parcours. Trois sont des assistants multi-étapes, cinq sont des formulaires uniques.</p>
+
+    <h3>5.1 · Prompt universel <span class="tag">routeur</span></h3>
+    <p>Sur l'accueil, un champ unique avec un sélecteur <code>Auto</code>. En mode Auto, SpriteCook classe l'intention et route vers le bon outil ; l'utilisateur peut forcer la destination (Assets, Character, Tileset, Texture, Animation). Un bouton d'historique de prompts et un ajout d'image de référence complètent la barre.</p>
+
+    <h3>5.2 · Asset Generator <span class="tag">formulaire</span></h3>
+    <p>Le parcours par défaut&nbsp;: réglages à gauche, prompt + champ <em>Avoid</em> (prompt négatif) au centre, bibliothèque en dessous. Chaque asset de la bibliothèque porte quatre actions de réinjection — <strong>Use</strong> (reprendre ses réglages), <strong>Ref</strong> (le passer en référence), <strong>Edit</strong> (le passer en source d'édition), <strong>Style</strong> (le passer en guide de style) — plus <strong>Open editor</strong>. C'est le mécanisme de cohérence visuelle du produit : on ne repart jamais de zéro.</p>
+
+    <h3>5.3 · Character Creator <span class="tag">assistant · 5 étapes</span></h3>
+    <div class="chain">
+      <div class="step"><div class="sn">01</div><div class="st">Décrire</div><div class="sd">Prompt libre, exemples cliquables, ou dépôt d'un sprite existant</div></div>
+      <div class="step"><div class="sn">02</div><div class="st">Style &amp; perspective</div><div class="sd">Pixel / Detailed × Platformer, Isometric, Top-Down</div><span class="cost sc">12 · 16 Pro</span></div>
+      <div class="step"><div class="sn">03</div><div class="st">Revoir</div><div class="sd">Révisions suggérées par l'IA, retouche manuelle, aperçu sur fond de scène</div><span class="cost sc">12 / révision</span></div>
+      <div class="step"><div class="sn">04</div><div class="st">Choisir les animations</div><div class="sd">Set verrouillé sur la perspective, cadrage, détourage, réglages fins</div><span class="cost sc">20 / anim.</span></div>
+      <div class="step"><div class="sn">05</div><div class="st">Jouer &amp; exporter</div><div class="sd">Playground jouable au clavier, puis export multi-moteurs</div><span class="cost free sc">ZIP gratuit</span></div>
+    </div>
+
+    <p>Trois détails de conception méritent d'être relevés.</p>
+
+    <h4>a. La perspective verrouille tout</h4>
+    <p>Une fois le sprite de base généré, le jeu d'animations est <em>LOCKED</em> sur la perspective choisie. Cela évite l'incohérence classique (un personnage de plateforme à qui on demande un « walk up ») et réduit drastiquement l'espace de choix.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Set</th><th>Animations disponibles</th><th>Par défaut</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Platformer</strong><br><small>recommandé</small></td><td class="mono">idle · walk · jump · run · attack · hurt · death<small>7 animations</small></td><td class="mono">idle, walk, jump</td></tr>
+          <tr><td><strong>Isometric</strong></td><td class="mono">idle · idle_back · walk_down · walk_right · jump_back · jump_front · run_down · run_right · attack · attack_back · hurt · hurt_back · death · death_back<small>14 animations</small></td><td class="mono">idle, walk_down, walk_right</td></tr>
+          <tr><td><strong>Top-Down</strong></td><td class="mono">idle · attack · hurt · death, chacun décliné en back / right / left, plus walk et run dans les 4 directions<small>24 animations</small></td><td class="mono">idle, walk_up, walk_right, walk_down</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Frames par animation&nbsp;: 8 pour idle / walk / jump / attack / hurt, 10 pour run, 12 pour death.</p>
+
+    <h4>b. Le mécanisme de « prep » — la vraie astuce technique</h4>
+    <p>Un modèle d'image ne sait pas animer un personnage vu de face pour le faire marcher de dos. SpriteCook insère donc, entre le sprite de base et l'animation, des <strong>générations intermédiaires de pose</strong> : le sprite de base est d'abord retourné ou remis en pose (« Turn this character around », « Put him in a walk pose »), et c'est ce sprite préparé qui sert de source à l'animation.</p>
+    <ul>
+      <li>Chaque prep est un asset visible dans la bibliothèque — j'ai vu apparaître <code>Character Walk Pose Prep</code> pendant le test.</li>
+      <li>Coût&nbsp;: <span class="cost">12</span> en pixel, <span class="cost">2</span> en detailed.</li>
+      <li>Certaines preps se <strong>chaînent</strong> : la marche de dos dérive de l'idle de dos, pas du sprite de face. Le graphe de dépendances est déclaré côté serveur, animation par animation.</li>
+      <li>L'interface signale d'un pictogramme les animations qui déclencheront une prep, et lance une phase « Analyzing character… » pour déterminer si la pose de départ est déjà exploitable.</li>
+    </ul>
+
+    <h4>c. La remise au volume et le cadrage</h4>
+    <p>Le prix affiché baisse quand on coche plus d'animations : sur mon test, 3 animations passent de <span class="cost">72</span> à <span class="cost">60</span> avec la mention « Batch discount active ». Le panneau latéral affiche la transformation de cadrage (<code>53×71 → 80×80</code>) et offre&nbsp;: marge 0–25&nbsp;%, marge de sécurité, forçage en puissance de 2, et une grille 3×3 d'ancrage. Le détourage se choisit entre <em>Basic</em> et <em>Pro</em> <span class="cost">+2/frame</span>. Deux options fines : <em>Set up starting poses</em> et <em>Edit motion prompts</em>.</p>
+
+    <h4>d. Le playground</h4>
+    <p>L'écran final n'est pas une grille de fichiers : c'est un mini-jeu jouable où le personnage marche, court et saute au clavier, avec cinq curseurs de physique (walk, run, jump, gravity, FPS). C'est la meilleure idée d'UX du produit — l'utilisateur valide ses animations <em>en contexte de jeu</em> avant d'exporter.</p>
+
+    <h3>5.4 · Asset Pack <span class="tag">assistant · 3 étapes</span></h3>
+    <div class="chain">
+      <div class="step"><div class="sn">01</div><div class="st">Genre</div><div class="sd">Roguelike/Dungeon · Platformer · Farming/Life Sim · Tower Defense · Space/Sci-Fi · Fantasy RPG</div></div>
+      <div class="step"><div class="sn">02</div><div class="st">Perspective</div><div class="sd">Top-Down · Side-View · Isometric</div></div>
+      <div class="step"><div class="sn">03</div><div class="st">Style &amp; taille</div><div class="sd">Classic 16-bit · Modern HD · Dark &amp; Gritty · Cute &amp; Colorful · Retro NES, ou description libre</div><span class="cost sc">24 · 88</span></div>
+    </div>
+    <p><strong>Mini Pack</strong> = 9 assets pour <span class="cost">24</span> crédits. <strong>Full Pack</strong> = 44 assets pour <span class="cost">88</span> crédits, réservé aux paliers payants. Un chemin « Create Custom Assets » permet de sortir du parcours par genre.</p>
+
+    <h3>5.5 · Tileset <span class="tag">formulaire</span></h3>
+    <p>Voir §4.4 pour les options. Le parcours ajoute un lien « Make a base template » vers le générateur de gabarits, et un troisième mode de détourage propre au tileset (<em>Tileset</em>, en plus de Basic et Pro). Fonctionnalité en bêta, réservée aux paliers Adventurer et Archmage.</p>
+
+    <h3>5.6 · Seamless Texture <span class="tag">formulaire</span></h3>
+    <p>Même écran, <code>mode=texture</code>. Presets dédiés (<em>Stylized seamless</em>, <em>Texture</em>). Produit une surface qui tuile sans couture — l'usage typique étant les sols, murs et matériaux.</p>
+
+    <h3>5.7 · UI Kit Builder <span class="tag">assistant · 8 étapes</span></h3>
+    <p>Le parcours le plus ambitieux, et le seul construit comme un objet durable et reprenable. Trois entrées possibles&nbsp;: partir d'un style proposé, décrire le sien, ou <strong>téléverser une maquette existante</strong> (PNG, JPG, AVIF, WebP, GIF).</p>
+    <div class="chain">
+      <div class="step"><div class="sn">01</div><div class="st">Point de départ</div><div class="sd">Kit repris, style proposé, description, ou upload</div></div>
+      <div class="step"><div class="sn">02</div><div class="st">Écran &amp; plateforme</div><div class="sd">12 types d'écran × Desktop/Mobile × 16:9, 9:16, 1:1</div></div>
+      <div class="step"><div class="sn">03</div><div class="st">Direction visuelle</div><div class="sd">Style, densité, jusqu'à 3 références, projet cible</div><span class="cost sc">21 pour 3</span></div>
+      <div class="step"><div class="sn">04</div><div class="st">Choisir un concept</div><div class="sd">Maquette plein écran, boucle de révision possible</div></div>
+      <div class="step"><div class="sn">05</div><div class="st">Planches de composants</div><div class="sd">1 à 3 planches sur fond transparent</div><span class="cost sc">payant</span></div>
+      <div class="step"><div class="sn">06</div><div class="st">Extraction</div><div class="sd">Détection, nommage et classification automatiques + <code>quality_summary</code></div><span class="cost free sc">gratuit</span></div>
+      <div class="step"><div class="sn">07</div><div class="st">Bordures 9-slice</div><div class="sd">Réglage par pièce, propagation au groupe d'états, bouton <em>Suggest</em></div><span class="cost free sc">gratuit</span></div>
+      <div class="step"><div class="sn">08</div><div class="st">Export</div><div class="sd">ZIP/Web, Unity, Godot — et enchaînement sur l'écran suivant</div></div>
+    </div>
+
+    <h4>Types d'écran proposés</h4>
+    <p class="mono" style="font-size:13px;color:var(--ink-2)">Custom · Main menu · HUD · Pause · Settings · Inventory · Dialogue · Shop · Quest log · Character select · Map · Game over</p>
+
+    <h4>La taxonomie des composants extraits</h4>
+    <p>C'est le point le plus réutilisable du produit pour qui voudrait s'en inspirer. Chaque pièce détectée reçoit un <strong>rôle</strong>, un <strong>état</strong>, et un <strong>drapeau d'étirabilité</strong>. Relevé sur un kit réel de 31 éléments répartis en 9 groupes d'états&nbsp;:</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Rôle</th><th>États observés</th><th>Étirable</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">FRAME</td><td class="mono">NORMAL · HOVER · PRESSED · DISABLED</td><td>9-slice, ou <code>fixed</code> pour les variantes pleines</td></tr>
+          <tr><td class="mono">BUTTON</td><td class="mono">NORMAL · HOVER · PRESSED · DISABLED · SELECTED · UNSELECTED</td><td>9-slice</td></tr>
+          <tr><td class="mono">DIVIDER</td><td class="mono">NORMAL</td><td class="mono">fixed</td></tr>
+          <tr><td class="mono">FILL</td><td class="mono">FILL</td><td>9-slice — la partie mobile d'une jauge</td></tr>
+          <tr><td class="mono">ICON</td><td class="mono">ON · OFF</td><td class="mono">fixed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Le regroupement par <em>state group</em> permet d'éditer les quatre états d'un même bouton en une seule action. L'éditeur 9-slice affiche un aperçu d'étirement en direct (« drag the handles to stretch or squash ») pour valider les bordures avant l'export.</p>
+
+    <h4>La continuité entre écrans</h4>
+    <p>Une fois un kit terminé, SpriteCook propose directement : « What screen do you need next? ». Le style, le projet et le concept sont conservés comme référence pour le kit suivant. C'est le mécanisme qui transforme un outil de génération en outil de <em>design system</em>.</p>
+
+    <h4>Plafonds durs</h4>
+    <ul>
+      <li>3 concepts maximum par lot, 3 planches maximum par kit.</li>
+      <li>100 composants par planche, <strong>300 composants par kit</strong>.</li>
+      <li>Les planches de composants utilisent <strong>toujours GPT-Image-2</strong>, « qui se découpe le plus fiablement » — le choix de modèle ne porte que sur les concepts.</li>
+      <li>Coût par image de concept : GPT-Image-2 <span class="cost">7</span> · Nano Banana 2 <span class="cost">18</span> · Nano Banana Pro <span class="cost">24</span>.</li>
+    </ul>
+
+    <h3>5.8 · Animate <span class="tag">formulaire</span></h3>
+    <p>Onglet <code>?tab=animate</code>. Prend un asset existant (jamais des octets bruts : un fichier local doit d'abord être téléversé) et un prompt de mouvement.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Réglage</th><th>Valeurs</th><th>Défaut</th></tr></thead>
+        <tbody>
+          <tr><td>BG removal</td><td class="mono">None · Basic · Pro <span class="cost">+2/frame</span></td><td class="mono">Basic</td></tr>
+          <tr><td>Frames</td><td class="mono">2 → 16 par pas de 2 (jusqu'à 24 en detailed) — toujours pair</td><td class="mono">8</td></tr>
+          <tr><td>Enhance prompt</td><td>Inspecte l'asset source et développe un prompt court en description de mouvement complète</td><td>Activé</td></tr>
+          <tr><td>Negative prompt</td><td class="mono">negative_prompt</td><td>Désactivé</td></tr>
+          <tr><td>Random seed</td><td>Graine de reproductibilité</td><td>Désactivé</td></tr>
+          <tr><td>Colors</td><td>Taille de palette — <strong>valide uniquement en mode pixel</strong></td><td class="mono">24</td></tr>
+          <tr><td>Format de sortie</td><td class="mono">webp · gif · spritesheet</td><td class="mono">webp</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Coût affiché&nbsp;: <span class="cost">20</span> crédits. L'entrée est limitée à 256×256&nbsp;px. Le prompt auto-enrichi est visible dans le bandeau de progression — sur mon test, « walk » est devenu « <em>The goblin moves to the right in a steady side-view walk cycle, with alternating steps, a slight torso bob, gentle arm swing, and the bow rocking…</em> ».</p>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="n">§6</span>Post-traitement &amp; édition</h2>
+    <p class="lede">Sept opérations attachées à chaque asset, plus un éditeur pixel complet. C'est ce qui distingue un générateur d'images d'un outil de production.</p>
+
+    <h3>6.1 · Le menu « Edit &amp; adjust » de la fiche asset</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Opération</th><th>Ce qu'elle fait</th><th>Paramètres</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Crop</strong></td><td>Rogne les bords transparents</td><td>—</td></tr>
+          <tr><td><strong>Resize</strong></td><td>Change les dimensions ou agrandit</td><td>—</td></tr>
+          <tr><td><strong>Recolour</strong></td><td>Réduit, quantifie, ou applique une palette sauvegardée</td><td>Palette</td></tr>
+          <tr><td><strong>Remove background</strong></td><td>Détoure le sujet</td><td class="mono">alpha_cutoff 0–255 (défaut 96), toggle de seuil<small>Accepte aussi un WebP animé.</small></td></tr>
+          <tr><td><strong>Edge cleanup</strong></td><td>Durcit les bords laissés flous par un détourage</td><td>—</td></tr>
+          <tr><td><strong>Slicer</strong></td><td>Découpe une planche multi-sprites en assets séparés</td><td class="mono">alpha_threshold 0–255 · min_area 1–1 000 000 · padding 0–256 · merge_distance 0–256</td></tr>
+          <tr><td><strong>Advanced editor</strong></td><td>Ouvre l'asset dans le Manual Editor</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Le découpage se fait par <strong>alpha connexe</strong>, avec activation automatique d'une isolation « smart alpha » quand les boîtes englobantes se chevauchent. Pour une animation, la détection porte sur l'<em>union de toutes les frames</em> et chaque résultat reste une animation avec son timing d'origine. Trois modes documentés&nbsp;: <em>Auto Detect</em>, <em>Fixed Grid</em>, <em>Custom Selection</em>. En cas de résultat imparfait comme en cas d'erreur, une URL de révision manuelle est renvoyée.</p>
+    <div class="note">
+      <p><span class="lbl">Astuce de coût promue par l'éditeur</span>Une génération contenant 8 personnages coûte le même prix qu'une génération à 1 personnage. Le slicer transforme donc une image en 8 assets — c'est un facteur 8 sur le coût unitaire, et probablement le levier d'économie le plus important du produit.</p>
+    </div>
+
+    <h3>6.2 · Le Manual Editor</h3>
+    <p>Un éditeur pixel complet dans le navigateur, à <code>/editor</code>. Positionné explicitement comme un outil de finition&nbsp;: « best for fixing small issues, adjusting details, or polishing AI-generated work before you ship it ».</p>
+    <dl class="kv">
+      <dt>Barre d'outils</dt><dd>Choose Asset · Upload · Preferences · Resize · Export · Contrast · Download · Save · Save as New</dd>
+      <dt>Outils de dessin</dt><dd>Crayon, ligne, pot de peinture, gomme, formes rectangle et ellipse, main, sélection rectangulaire et lasso, pipette, tramage</dd>
+      <dt>Timeline</dt><dd>Frames multiples, ajout de frame, pelure d'oignon réglable, aperçu animé avec curseur de FPS</dd>
+      <dt>Calques</dt><dd>Ajout, réordonnancement, renommage, opacité, fusion, suppression</dd>
+      <dt>Transformations</dt><dd>Miroir horizontal et vertical, rotation, centrage, recadrage</dd>
+      <dt>Palettes</dt><dd>Palettes sauvegardées, extraction des couleurs courantes</dd>
+    </dl>
+
+    <h3>6.3 · Outils gratuits, hors compte</h3>
+    <ul>
+      <li><strong>Pixel Grid Detector</strong> — recale une image IA sur une vraie grille de pixels et corrige les « mixels ».</li>
+      <li><strong>Tileset Base Generator</strong> — produit des planches de gabarit (16/32/64&nbsp;px, layouts 15/17 pièces ou iso 2:1). Publié sous licence MIT, usage commercial autorisé, sans compte.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 7 ===================== -->
+  <section id="s7">
+    <h2><span class="n">§7</span>Exports moteurs</h2>
+    <p class="lede">L'export est le point de monétisation le plus net : le ZIP brut est gratuit sur tous les paliers, les packages prêts à importer sont réservés aux abonnés.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Cible</th><th>Personnage animé</th><th>Tileset</th><th>UI Kit</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>ZIP / Web</strong></td>
+            <td>Spritesheets + aperçus animés <span class="tag free">gratuit</span></td>
+            <td>PNG, échelle 1×–4×, espacement et contours optionnels</td>
+            <td>PNG individuels, atlas packé + JSON, manifeste 9-slice, exemple de loader <span class="tag free">tous paliers</span></td>
+          </tr>
+          <tr>
+            <td><strong>Unity</strong> <small>6000.x</small></td>
+            <td><code>.unitypackage</code> avec clips d'animation déjà construits <span class="tag paid">payant</span></td>
+            <td><code>.unitypackage</code> avec Rule Tiles configurées</td>
+            <td>Sprites, groupes d'états stables, bordures, script d'import <span class="tag paid">Starter+</span></td>
+          </tr>
+          <tr>
+            <td><strong>Godot</strong> <small>4.x</small></td>
+            <td>Projet + scènes ; un plugin éditeur embarqué construit les ressources <code>SpriteFrames</code> et les câble dans des <code>AnimatedSprite2D/3D</code> <span class="tag paid">payant</span></td>
+            <td>Fichier <code>.tres</code> avec terrain set préconfiguré<small>Uniquement pour platformer 16-set, 15-piece compact et 47-piece étendu. Les autres layouts sont livrés en « atlas seulement », sans prétendre configurer un terrain.</small></td>
+            <td>PNG, ressources <code>StyleBoxTexture</code> aux marges validées, mappings de <code>Theme</code> <span class="tag paid">Starter+</span></td>
+          </tr>
+          <tr><td><strong>Phaser</strong></td><td>Starter web jouable, Vite + TypeScript <span class="tag paid">payant</span></td><td>—</td><td>—</td></tr>
+          <tr><td><strong>Roblox</strong></td><td>Projet Studio <code>.rbxlx</code> prêt à jouer, sans upload d'assets <span class="tag paid">payant</span></td><td>—</td><td>—</td></tr>
+          <tr><td><strong>Tiled</strong></td><td>—</td><td>Définition de tileset <code>.tsx</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Les textures sont livrées avec les réglages d'import qui vont bien&nbsp;: filtrage <em>nearest</em>, mipmaps désactivés, pixel snap. Des presets d'import téléchargeables et un calculateur de PPU sont fournis côté documentation. Autres moteurs listés comme compatibles sans package dédié&nbsp;: GameMaker, Construct 3, Three.js, PixiJS.</p>
+  </section>
+
+  <!-- ===================== 8 ===================== -->
+  <section id="s8">
+    <h2><span class="n">§8</span>Surface d'intégration</h2>
+    <p class="lede">Trois voies d'accès au même compte. L'orientation « agent » est assumée : un écran entier de l'application, <em>Vibe Code</em>, ne sert qu'à brancher SpriteCook sur un éditeur de code.</p>
+
+    <h3>8.1 · Clés d'API et scopes</h3>
+    <p>Maximum <strong>10 clés</strong> par compte. En-tête <code>Authorization: Bearer sc_live_…</code>. Les permissions sont des groupes de méthodes, pas des routes individuelles.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Scope</th><th>Périmètre</th><th>Endpoints</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">generate</td><td>Créer des jobs, importer des sources, annuler</td><td class="mono">POST /v1/api/generate<br>POST /v1/api/generate-sync<br>POST /v1/api/animate<br>POST /v1/api/animate-sync<br>POST /v1/api/assets/import<br>POST /v1/api/jobs/{job_id}/cancel</td></tr>
+          <tr><td class="mono">read_assets</td><td>Lire les statuts et les assets</td><td class="mono">GET /v1/api/jobs/{job_id}<br>GET /v1/api/assets/recent<br>GET /v1/api/assets/{asset_id}</td></tr>
+          <tr><td class="mono">read_credits</td><td>Solde, palier, limite de concurrence</td><td class="mono">GET /v1/api/credits</td></tr>
+          <tr><td class="mono">report_errors</td><td>Signalement d'incident d'intégration</td><td class="mono">outil MCP report_integration_error</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Codes d'erreur documentés&nbsp;: <code>400 invalid_request</code>, <code>402 insufficient_credits</code>, <code>403 scope_denied</code>, <code>404 job_not_found</code>, <code>429 rate_limited</code>. Toutes les réponses portent <code>credits_used</code> et <code>credits_remaining</code>. Les URL de téléchargement sont signées et expirent&nbsp;; il faut les rafraîchir par un appel de statut.</p>
+
+    <h3>8.2 · Serveur MCP</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Voie</th><th>Endpoint</th><th>Authentification</th></tr></thead>
+        <tbody>
+          <tr><td>Générique (Cursor, VS Code, tout agent)</td><td class="mono">https://api.spritecook.ai/mcp/</td><td>Clé d'API en en-tête</td></tr>
+          <tr><td>Plugin Claude officiel</td><td class="mono">https://mcp.spritecook.ai/mcp/claude</td><td>OAuth SpriteCook au premier appel</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>L'écran <em>Vibe Code</em> propose un chemin par éditeur — Claude (Desktop et Code), Codex, Cursor, OpenCode — plus quatre chemins avancés&nbsp;: installation générique, MCP seul, <em>skills</em> seules, et usage direct de l'API. Chaque plugin s'installe par une commande unique.</p>
+
+    <h3>8.3 · Les 43 outils MCP, par domaine</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Domaine</th><th>Outils</th></tr></thead>
+        <tbody>
+          <tr><td>Génération d'images</td><td class="mono">generate_game_art · list_generation_models</td></tr>
+          <tr><td>Personnages &amp; animations</td><td class="mono">list_character_workflows · generate_character · generate_character_animations · check_character_animation_run · animate_game_art · list_animation_outputs</td></tr>
+          <tr><td>Tilesets</td><td class="mono">generate_tileset · list_tileset_options</td></tr>
+          <tr><td>UI Kits</td><td class="mono">create_ui_kit · generate_ui_kit_concepts · select_ui_kit_concept · generate_ui_kit_component_sheets · extract_ui_kit_components · finalize_ui_kit · get_ui_kit · list_ui_kits · cancel_ui_kit</td></tr>
+          <tr><td>Assets, upload, import</td><td class="mono">create_asset_upload · finalize_asset_upload · import_asset · get_asset_metadata · list_recent_assets · update_asset_label</td></tr>
+          <tr><td>Post-traitement</td><td class="mono">remove_background · auto_slice_asset</td></tr>
+          <tr><td>Organisation</td><td class="mono">create_project · list_projects · create_collection · list_collections · assign_assets_to_project · assign_assets_to_collection</td></tr>
+          <tr><td>Presets</td><td class="mono">list_presets · get_preset_settings · save_private_preset</td></tr>
+          <tr><td>Jobs &amp; crédits</td><td class="mono">check_job_status · cancel_job · list_active_jobs · get_credit_balance</td></tr>
+          <tr><td>Exports moteur</td><td class="mono">export_godot_tileset_package · export_godot_character_package</td></tr>
+          <tr><td>Divers</td><td class="mono">report_integration_error</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>8.4 · Le contrat asynchrone</h3>
+    <div class="chain">
+      <div class="step"><div class="sn">A</div><div class="st">Soumission</div><div class="sd">Retour immédiat avec un <code>job_id</code>, ou attente synchrone bornée via <code>wait_seconds</code> (0–90&nbsp;s)</div></div>
+      <div class="step"><div class="sn">B</div><div class="st">Polling</div><div class="sd"><code>check_job_status</code>, ou <code>get_ui_kit</code> / <code>check_character_animation_run</code> pour les workflows composites. Pas de webhooks</div></div>
+      <div class="step"><div class="sn">C</div><div class="st">Récupération</div><div class="sd"><code>assets[]</code> pour une image fixe, <code>output</code> pour une animation, plus les <code>resolved_parameters</code> persistés</div></div>
+      <div class="step"><div class="sn">D</div><div class="st">Rattrapage</div><div class="sd"><code>list_recent_assets</code>, <code>list_animation_outputs</code>, <code>get_asset_metadata</code> pour retrouver des ID perdus et des liens frais</div></div>
+    </div>
+    <div class="note">
+      <p><span class="lbl">La règle la plus explicite du serveur</span>Ne jamais resoumettre un job en file ou en cours&nbsp;: <em>chaque soumission crée et facture un nouveau job</em>. Le plafond de parallélisme est celui du palier — 5 jobs simultanés sur Adventurer, jusqu'à 10 sur Archmage — lisible via <code>get_credit_balance</code>.</p>
+    </div>
+    <p>Pour un fichier local, la séquence imposée est&nbsp;: <code>create_asset_upload</code> → PUT des octets vers l'URL éphémère → <code>finalize_asset_upload</code>. L'import inline (<code>import_asset</code>) est réservé aux petites charges base64. Le serveur interdit explicitement d'afficher en clair les jetons d'upload, les URL signées ou les octets de fichier.</p>
+  </section>
+
+  <!-- ===================== 9 ===================== -->
+  <section id="s9">
+    <h2><span class="n">§9</span>Économie &amp; gating</h2>
+
+    <h3>9.1 · Les paliers</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Palier</th><th class="num">Prix / mois</th><th class="num">Crédits / mois</th><th>Variations</th><th class="num">Jobs simultanés</th><th>Spécificités</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Free</strong></td><td class="num">0 $</td><td class="num">40</td><td class="num">—</td><td class="num">—</td><td>Tous les modes de génération, sans carte. 1 preset privé maximum</td></tr>
+          <tr><td><strong>Apprentice</strong></td><td class="num">8 $</td><td class="num">800</td><td class="num">4</td><td class="num">—</td><td>Assets privés, export en masse, packs complets, exports moteur</td></tr>
+          <tr><td><strong>Adventurer</strong> <span class="tag">populaire</span></td><td class="num">30 $</td><td class="num">3 000</td><td class="num">8</td><td class="num">5</td><td>Tilesets (bêta), rendu 4K des UI kits, accès anticipé</td></tr>
+          <tr><td><strong>Archmage</strong></td><td class="num">70 $</td><td class="num">7 000</td><td class="num">8</td><td class="num">10</td><td>Support prioritaire</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Facturation annuelle à −20&nbsp;% (montants absolus non affichés hors de l'interface). API et MCP inclus sur <strong>tous</strong> les paliers, y compris le gratuit. Les crédits d'abonnement sont remis à zéro à chaque cycle&nbsp;; les crédits top-up n'expirent jamais. Upgrade immédiat, downgrade au cycle suivant.</p>
+
+    <h3>9.2 · Coûts relevés, opération par opération</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Opération</th><th class="num">Crédits</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Sprite, Nano Banana 2 Lite en 1K</td><td class="num">8</td><td>Catalogue API</td></tr>
+          <tr><td>Sprite, Nano Banana 2 en 1K</td><td class="num">12</td><td>Catalogue API</td></tr>
+          <tr><td>Sprite, GPT-Image-2 en 1K qualité <code>low</code></td><td class="num">2</td><td>Catalogue API</td></tr>
+          <tr><td>Sprite, GPT-Image-2 en 4K qualité <code>high</code></td><td class="num">68</td><td>Catalogue API</td></tr>
+          <tr><td>Personnage de base</td><td class="num">12</td><td>Vérifié en direct</td></tr>
+          <tr><td>Personnage de base, variante Pro</td><td class="num">16</td><td>Interface</td></tr>
+          <tr><td>Révision ou régénération d'un personnage</td><td class="num">12</td><td>Interface</td></tr>
+          <tr><td>Prep de pose (pixel)</td><td class="num">12</td><td>Registre serveur</td></tr>
+          <tr><td>Prep de pose (detailed)</td><td class="num">2</td><td>Registre serveur</td></tr>
+          <tr><td>Animation, détourage Basic</td><td class="num">20</td><td>Vérifié en direct</td></tr>
+          <tr><td>Animation, détourage Pro (8 frames)</td><td class="num">36</td><td>Registre serveur</td></tr>
+          <tr><td>Lot de 3 animations (remise incluse)</td><td class="num">60</td><td>Vérifié en direct — au lieu de 72</td></tr>
+          <tr><td>Mini Pack, 9 assets</td><td class="num">24</td><td>Interface</td></tr>
+          <tr><td>Full Pack, 44 assets</td><td class="num">88</td><td>Interface</td></tr>
+          <tr><td>3 concepts UI, GPT-Image-2</td><td class="num">21</td><td>Interface</td></tr>
+          <tr><td>Détourage d'une image fixe</td><td class="num">1</td><td>Documentation</td></tr>
+          <tr><td>Détourage d'un WebP animé</td><td class="num">2</td><td>Documentation</td></tr>
+          <tr><td>Découpe, nommage, 9-slice, exports</td><td class="num">0</td><td>Documentation</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <p><span class="lbl">Test de bout en bout</span>Un personnage complet — sprite de base, prep de pose de marche, et trois animations de 8 frames — a coûté <strong>74 crédits</strong>, soit environ <strong>0,74 $</strong> au tarif Adventurer. Le solde est passé de 4&nbsp;713 à 4&nbsp;639 en une quinzaine de minutes, dont moins de deux minutes de calcul effectif.</p>
+    </div>
+
+    <h3>9.3 · Ce qui est verrouillé où</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Fonction</th><th>Palier minimum</th></tr></thead>
+        <tbody>
+          <tr><td>Génération, tous modes · API · MCP · export ZIP</td><td class="mono">Free</td></tr>
+          <tr><td>Presets privés illimités · assets privés · export en masse · Full Pack</td><td class="mono">Apprentice</td></tr>
+          <tr><td>Exports Unity / Godot / Phaser / Roblox</td><td class="mono">Apprentice</td></tr>
+          <tr><td>Tilesets (bêta) · rendu 4K des UI kits · 8 variations</td><td class="mono">Adventurer</td></tr>
+          <tr><td>10 jobs simultanés · support prioritaire</td><td class="mono">Archmage</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Publication d'un preset communautaire&nbsp;: interdite les premières 24&nbsp;h, puis 3 par semaine jusqu'à 30 jours d'ancienneté, puis 10 par semaine.</p>
+  </section>
+
+  <!-- ===================== 10 ===================== -->
+  <section id="s10">
+    <h2><span class="n">§10</span>Règles métier</h2>
+    <p class="lede">Récapitulatif des contraintes dures, celles qui produiraient une erreur si on tentait de les violer.</p>
+
+    <h4>Exclusions mutuelles et conditions</h4>
+    <ul>
+      <li>Détourage&nbsp;: fournir <strong>exactement un</strong> des deux — un <code>asset_id</code> ou une image inline.</li>
+      <li>Export Godot d'un personnage&nbsp;: fournir <strong>un <code>run_id</code> ou une liste d'assets d'animation</strong>. Aucun champ n'est déclaré obligatoire dans le schéma — l'échec ne survient qu'à l'exécution.</li>
+      <li>Le paramètre de palette d'une animation n'est valide qu'en mode pixel.</li>
+      <li>Arêtes <code>two_surfaces</code>&nbsp;: tilesets top-down 15-piece uniquement.</li>
+      <li>Fournir un concept déjà possédé à la création d'un UI kit <strong>saute</strong> les étapes de génération et de sélection de concept.</li>
+      <li>Ne préciser ni animations préréglées ni animations personnalisées <strong>déclenche les défauts de la perspective</strong>.</li>
+    </ul>
+
+    <h4>Prérequis d'entrée</h4>
+    <ul>
+      <li>Animer exige impérativement un asset possédé — les octets inline sont refusés.</li>
+      <li>Finaliser un UI kit exige un brouillon issu de l'extraction, ou une liste de composants corrigés.</li>
+      <li>Exporter un personnage exige un run <em>terminé</em>.</li>
+      <li>Générer des animations exige la <em>même perspective</em> que le personnage de base.</li>
+      <li>Le jeton d'upload est éphémère&nbsp;: la fenêtre de transfert est bornée dans le temps.</li>
+    </ul>
+
+    <h4>Plafonds numériques</h4>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Limite</th><th class="num">Valeur</th></tr></thead>
+        <tbody>
+          <tr><td>Dimensions demandées</td><td class="num">16 – 512 px</td></tr>
+          <tr><td>Variations par appel API</td><td class="num">1 – 4</td></tr>
+          <tr><td>Frames d'animation (pixel / detailed)</td><td class="num">2–16 / 2–24, toujours pair</td></tr>
+          <tr><td>Palette de guidage ou forcée</td><td class="num">64 couleurs</td></tr>
+          <tr><td>Attente synchrone</td><td class="num">0 – 90 s</td></tr>
+          <tr><td>Concepts UI par lot</td><td class="num">1 – 3</td></tr>
+          <tr><td>Planches par kit / composants par planche / par kit</td><td class="num">3 / 100 / 300</td></tr>
+          <tr><td>Assets par affectation (atomique)</td><td class="num">500</td></tr>
+          <tr><td>Nom de projet, de collection, label d'asset</td><td class="num">1 – 255 car.</td></tr>
+          <tr><td>Titre de preset</td><td class="num">1 – 120 car.</td></tr>
+          <tr><td>Clés d'API par compte</td><td class="num">10</td></tr>
+          <tr><td>Taille d'upload recommandée</td><td class="num">&lt; 10 Mo</td></tr>
+          <tr><td>Entrée d'animation</td><td class="num">≤ 256 × 256 px</td></tr>
+          <tr><td>Formats d'upload acceptés</td><td class="num">PNG · JPG · WebP · AVIF · GIF</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Licence et données</h4>
+    <ul>
+      <li>L'utilisateur conserve la propriété de ses prompts, références et uploads.</li>
+      <li>Les sorties peuvent être utilisées, reproduites et distribuées — <strong>usage commercial autorisé, sans restriction de palier</strong>.</li>
+      <li>SpriteCook obtient une licence mondiale non exclusive de traitement et de stockage du contenu utilisateur, « pour fournir et améliorer le service ».</li>
+      <li>Sous-traitants IA nommés&nbsp;: OpenAI, Google, xAI. La politique <strong>ne dit pas explicitement</strong> si le contenu utilisateur sert à entraîner des modèles.</li>
+      <li>Le scraping et le téléchargement massif automatisés des assets générés sont interdits.</li>
+      <li>Rétention des logs d'API&nbsp;: 90 jours. Rétention des assets&nbsp;: non documentée.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 11 ===================== -->
+  <section id="s11">
+    <h2><span class="n">§11</span>Lecture critique</h2>
+    <p class="lede">Ce qui, dans cette conception, mérite d'être repris — et ce qui ne tient pas.</p>
+
+    <h3>Les cinq idées à retenir</h3>
+    <ol class="list">
+      <li><strong>Le graphe de dépendances de poses.</strong> Insérer des générations intermédiaires déclarées côté serveur, plutôt que d'espérer qu'un modèle d'image comprenne « marche de dos », est la solution la plus économique au problème le plus difficile du domaine. Le graphe est explicite, chaînable, et facturé à part.</li>
+      <li><strong>La validation en contexte.</strong> Le playground jouable, l'aperçu d'étirement 9-slice, l'aperçu « true size » — à chaque fois, l'utilisateur juge l'asset dans les conditions de son usage réel, pas dans une visionneuse.</li>
+      <li><strong>L'auto-provisionnement du rangement.</strong> Les workflows créent projets et collections en même temps que les assets. La bibliothèque reste structurée sans qu'on ait jamais demandé à l'utilisateur de ranger.</li>
+      <li><strong>Le coût affiché avant le clic.</strong> Chaque bouton porte son prix, recalculé en direct à chaque changement de réglage, avec la remise au volume rendue visible (72 barré, 60 affiché). C'est ce qui rend un modèle à crédits supportable.</li>
+      <li><strong>La réinjection à quatre portes.</strong> Chaque asset de la bibliothèque peut redevenir un point de départ de quatre façons distinctes — réglages, référence, source d'édition, guide de style. La cohérence visuelle est un effet de bord de l'ergonomie.</li>
+    </ol>
+
+    <h3>Les fragilités</h3>
+    <ul>
+      <li><strong>Aucune validation locale possible côté client.</strong> Sur les 43 outils MCP, une seule énumération est déclarée dans le schéma JSON. Toutes les autres valeurs autorisées ne vivent que dans le texte des descriptions. Un client qui se fie au schéma n'a aucun garde-fou&nbsp;; il doit dupliquer ces listes.</li>
+      <li><strong>Deux surfaces qui divergent.</strong> La documentation publique de l'API expose des routes personnages et tilesets que l'écran des scopes de clé, lui, ne liste pas. Le schéma du tileset expose des paramètres absents de sa propre documentation. La surface REST et la surface MCP ne se recouvrent pas exactement.</li>
+      <li><strong>Pas de webhooks.</strong> Le polling est la seule voie, sans intervalle recommandé, avec des URL signées qui expirent. Pour une intégration en production, c'est le point le plus coûteux à écrire.</li>
+      <li><strong>Le mode UI est annoncé « bientôt » dans le sélecteur principal</strong> alors qu'il est déjà servi par l'API et par le UI Kit Builder. L'incohérence est visible pour l'utilisateur.</li>
+      <li><strong>Aucune limite de débit chiffrée n'est publiée</strong> — seul le code 429 est documenté. Impossible de dimensionner une intégration sans tâtonner.</li>
+      <li><strong>La rétention des assets n'est pas documentée.</strong> Pour un studio qui bâtit sa production sur l'outil, c'est une question ouverte qu'il vaudrait mieux poser avant d'y investir.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 12 ===================== -->
+  <section id="s12">
+    <h2><span class="n">§12</span>Méthode &amp; fiabilité</h2>
+    <p class="lede">Ce document mélange trois sources de fiabilité inégale. Voici laquelle est laquelle.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Source</th><th>Ce qui en vient</th><th>Fiabilité</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Parcours de l'application connectée</strong></td><td>Écrans, routes, contrôles, libellés, coûts affichés, taxonomies observées sur des données réelles</td><td>Élevée — capté à l'écran le 26 août 2026</td></tr>
+          <tr><td><strong>API authentifiée via le serveur MCP</strong></td><td>Catalogue de modèles et coûts, registre des tilesets, workflows de personnage, graphe de preps, schémas des 43 outils, structure projets/collections</td><td>Élevée — réponses machine, non interprétées</td></tr>
+          <tr><td><strong>Documentation publique</strong></td><td>Tarifs, licence, formats d'export détaillés, limites d'upload, modes de découpe, rétention</td><td>Moyenne — déclaratif éditeur, non vérifié</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ce qui a été exécuté pour de vrai</h4>
+    <p>Un parcours Character Creator complet&nbsp;: prompt → style et perspective → génération du sprite de base (≈ 9&nbsp;s) → écran de révision → sélection de 3 animations → génération (≈ 90&nbsp;s) → playground → ouverture du dialogue d'export. Aucun fichier n'a été téléchargé. Le UI kit existant du compte a été ouvert en lecture seule pour relever la taxonomie des composants et l'éditeur 9-slice.</p>
+
+    <h4>Points non vérifiés</h4>
+    <ul>
+      <li>Contenu exact des archives Unity, Godot, Phaser et Roblox — le dialogue d'export a été ouvert, rien n'a été téléchargé.</li>
+      <li>Prix annuels absolus et composition des packs de crédits top-up&nbsp;: affichés uniquement dans des composants interactifs de facturation.</li>
+      <li>Qualité réelle des tilesets autotile et des textures sans couture&nbsp;: aucun n'a été généré.</li>
+      <li>Comportement du Slicer sur une planche multi-sprites&nbsp;: décrit d'après la documentation et les schémas, non exécuté.</li>
+    </ul>
+
+    <h4>Un écart de 2 crédits</h4>
+    <p>Le test a consommé 74 crédits pour des opérations affichées à 12 + 60 = 72. L'écart de 2 crédits n'a pas été élucidé&nbsp;; l'hypothèse la plus probable est une facturation résiduelle de la prep de pose ou d'une passe de détourage. Signalé plutôt que masqué.</p>
+  </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="foot-inner">
+    <p><strong>Anatomie de SpriteCook</strong> — spécifications fonctionnelles établies par observation directe de <code>app.spritecook.ai</code>, de son API authentifiée et de sa documentation publique, le 26 août 2026, sur un compte de palier Adventurer.</p>
+    <p>Les valeurs de crédits, les paliers et les fonctionnalités marquées « bientôt » ou « bêta » sont datées et évolueront. Le catalogue de modèles et les coûts font foi via <code>GET /v1/api/models</code>.</p>
+  </div>
+</footer>
+
+</body></html>
