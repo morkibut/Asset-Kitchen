@@ -1,0 +1,14 @@
+{
+ "jet": 1,
+ "etiquette": "gpt-image-2_low",
+ "modele": "openai/gpt-image-2",
+ "options": {
+  "aspect_ratio": "1:1",
+  "quality": "low"
+ },
+ "refs_max": 16,
+ "cout_usd": 0.244869,
+ "duree_s": 173.3,
+ "etapes_reussies": 10,
+ "etapes_totales": 10
+}

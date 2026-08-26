@@ -1,0 +1,733 @@
+[
+ [
+  "recraft/recraft-v4-styles-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.1
+   },
+   {
+    "billable": "input_reference",
+    "unit": "request",
+    "cost_usd": 0.005
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-styles-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.05
+   },
+   {
+    "billable": "input_reference",
+    "unit": "request",
+    "cost_usd": 0.005
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-styles-pro-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.12
+   },
+   {
+    "billable": "input_reference",
+    "unit": "request",
+    "cost_usd": 0.005
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-styles",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.035
+   },
+   {
+    "billable": "input_reference",
+    "unit": "request",
+    "cost_usd": 0.005
+   }
+  ],
+  ""
+ ],
+ [
+  "bytedance-seed/seedream-5-0-lite",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.035
+   }
+  ],
+  ""
+ ],
+ [
+  "bytedance-seed/seedream-5-0-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.045
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.09,
+    "variant": "high_resolution"
+   },
+   {
+    "billable": "input_image",
+    "unit": "image",
+    "cost_usd": 0.003
+   }
+  ],
+  ""
+ ],
+ [
+  "x-ai/grok-imagine-image-2.0",
+  [
+   {
+    "billable": "input_image",
+    "unit": "image",
+    "cost_usd": 0.01
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04,
+    "variant": "low_1k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.06,
+    "variant": "low_2k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.06,
+    "variant": "medium_1k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.08,
+    "variant": "medium_2k"
+   }
+  ],
+  ""
+ ],
+ [
+  "qwen/qwen-image-3-pro",
+  [
+   {
+    "billable": "input_image",
+    "unit": "image",
+    "cost_usd": 0.003
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04,
+    "variant": "1k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.075,
+    "variant": "2k"
+   }
+  ],
+  ""
+ ],
+ [
+  "qwen/qwen-image-3",
+  [
+   {
+    "billable": "input_image",
+    "unit": "image",
+    "cost_usd": 0.003
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.03,
+    "variant": "1k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.03,
+    "variant": "2k"
+   }
+  ],
+  ""
+ ],
+ [
+  "microsoft/mai-image-2.5-pro",
+  [
+   {
+    "billable": "input_text",
+    "unit": "token",
+    "cost_usd": 5e-06
+   },
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 0.000108
+   }
+  ],
+  ""
+ ],
+ [
+  "krea/krea-2-large",
+  [],
+  ""
+ ],
+ [
+  "krea/krea-2-medium",
+  [],
+  ""
+ ],
+ [
+  "krea/krea-2-medium-turbo",
+  [],
+  ""
+ ],
+ [
+  "google/gemini-3.1-flash-lite-image",
+  [
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 3e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-image-2",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   },
+   {
+    "billable": "input_text",
+    "unit": "token",
+    "cost_usd": 5e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 3e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-image-1-mini",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 2.5e-06
+   },
+   {
+    "billable": "input_text",
+    "unit": "token",
+    "cost_usd": 2e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-image-1",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 1e-05
+   },
+   {
+    "billable": "input_text",
+    "unit": "token",
+    "cost_usd": 5e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 4e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "google/gemini-3.1-flash-image",
+  [
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 6e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "google/gemini-3-pro-image",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 2e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 0.00012
+   }
+  ],
+  ""
+ ],
+ [
+  "sourceful/riverflow-v2.5-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.13
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.15,
+    "variant": "2k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.17,
+    "variant": "4k"
+   }
+  ],
+  ""
+ ],
+ [
+  "sourceful/riverflow-v2.5-fast",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.019
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.021,
+    "variant": "2k"
+   }
+  ],
+  ""
+ ],
+ [
+  "microsoft/mai-image-2.5",
+  [
+   {
+    "billable": "input_text",
+    "unit": "token",
+    "cost_usd": 5e-06
+   },
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 4.7e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "x-ai/grok-imagine-image-quality",
+  [
+   {
+    "billable": "input_image",
+    "unit": "image",
+    "cost_usd": 0.01
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.05,
+    "variant": "1k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.07,
+    "variant": "2k"
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1-pro-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.3
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.08
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1-utility-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.21
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1-utility",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.035
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.21
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4.1",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.035
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-pro-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.3
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-vector",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.08
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.25
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v4",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04
+   }
+  ],
+  ""
+ ],
+ [
+  "recraft/recraft-v3",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-5.4-image-2",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 3e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "google/gemini-3.1-flash-image-preview",
+  [
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 6e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "sourceful/riverflow-v2-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.15
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.15,
+    "variant": "2k"
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.33,
+    "variant": "4k"
+   },
+   {
+    "billable": "input_font",
+    "unit": "image",
+    "cost_usd": 0.03
+   },
+   {
+    "billable": "input_reference",
+    "unit": "image",
+    "cost_usd": 0.2
+   }
+  ],
+  ""
+ ],
+ [
+  "sourceful/riverflow-v2-fast",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.02
+   },
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04,
+    "variant": "2k"
+   },
+   {
+    "billable": "input_font",
+    "unit": "image",
+    "cost_usd": 0.03
+   },
+   {
+    "billable": "input_reference",
+    "unit": "image",
+    "cost_usd": 0.2
+   }
+  ],
+  ""
+ ],
+ [
+  "black-forest-labs/flux.2-klein-4b",
+  [
+   {
+    "billable": "output_image",
+    "unit": "megapixel",
+    "cost_usd": 0.014
+   }
+  ],
+  ""
+ ],
+ [
+  "bytedance-seed/seedream-4.5",
+  [
+   {
+    "billable": "output_image",
+    "unit": "image",
+    "cost_usd": 0.04
+   }
+  ],
+  ""
+ ],
+ [
+  "black-forest-labs/flux.2-max",
+  [
+   {
+    "billable": "output_image",
+    "unit": "megapixel",
+    "cost_usd": 0.07
+   }
+  ],
+  ""
+ ],
+ [
+  "black-forest-labs/flux.2-flex",
+  [
+   {
+    "billable": "input_image",
+    "unit": "megapixel",
+    "cost_usd": 0.06
+   },
+   {
+    "billable": "output_image",
+    "unit": "megapixel",
+    "cost_usd": 0.06
+   }
+  ],
+  ""
+ ],
+ [
+  "black-forest-labs/flux.2-pro",
+  [
+   {
+    "billable": "output_image",
+    "unit": "megapixel",
+    "cost_usd": 0.03
+   }
+  ],
+  ""
+ ],
+ [
+  "google/gemini-3-pro-image-preview",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 2e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 0.00012
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-5-image-mini",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 2.5e-06
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 8e-06
+   }
+  ],
+  ""
+ ],
+ [
+  "openai/gpt-5-image",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 1e-05
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 4e-05
+   }
+  ],
+  ""
+ ],
+ [
+  "google/gemini-2.5-flash-image",
+  [
+   {
+    "billable": "input_image",
+    "unit": "token",
+    "cost_usd": 3e-07
+   },
+   {
+    "billable": "output_image",
+    "unit": "token",
+    "cost_usd": 3e-05
+   }
+  ],
+  ""
+ ]
+]

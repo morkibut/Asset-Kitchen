@@ -1,0 +1,100 @@
+[
+ {
+  "configuration": "seedream-4.5",
+  "jet": 1,
+  "coherence_famille": 2,
+  "fidelite_guide": 3,
+  "pixel_art": 2,
+  "respect_sujet": 2,
+  "piege_reference": true,
+  "identite_chaine": 1,
+  "sujets_rates": [
+   "C1c_marche",
+   "P5_cadre"
+  ],
+  "observations": "C1c_marche ne montre aucune prêtresse : c'est un personnage à peau verte, gros nez crochu, oreille pointue verte à nervure, barbe brune fournie et casque de cuir à sangle — la tête du goblin du guide greffée sur la barbe du nain, vêtu du manteau vert et de la manche ocre de C1. La dérive commence dès C1b : la silhouette de dos garde le manteau vert, le bâton et les cheveux bruns, mais les oreilles y sont devenues vert olive (elles étaient couleur chair en C1) et une calotte de cuir brune à sangle est apparue sur le crâne. P5_cadre n'est pas vide au milieu : l'intérieur est rempli d'une illustration complète de sous-bois (troncs, fougères, sentier), le cadre bois-et-coins-métal n'entoure rien d'utilisable comme panneau d'interface. L'échelle de pixel varie énormément d'un asset à l'autre : mesurée sur les blocs, la potion et l'épée tournent autour de 30-37 px de bloc (soit ~55-65 px de toile logique) quand le squelette et le cadre descendent à 6-8 px de bloc (~260-280 px logiques), un facteur cinq — le tonneau, le coffre et la prêtresse se situant vers 12-14 px ; l'épaisseur du contour noir suit la même dispersion, très épais sur la potion et le tonneau, fin et haché sur le squelette. Le traitement lui aussi diverge : aplats propres sur potion, épée, coffre et tonneau ; dithering désordonné et hors grille sur le pelage du rat et sur la mousse du crâne, où les blocs se décalent d'une demi-case et bavent en dégradés. Les dix fichiers sont des JPEG et le montrent : 24 000 à 74 000 couleurs distinctes sur des images censées être en aplats, un banding visible à l'intérieur du liquide rouge de la fiole, et un halo blanc clair cerne le contour noir de la plupart des sprites (net sur C1b, C1c et P5). La palette, elle, reste tenue et fidèle au guide — verts mousse, bruns terre, ocre, gris de fond identique — c'est le point le plus solide du lot.",
+  "guide_aide_ou_dilue": "dilue"
+ },
+ {
+  "configuration": "gpt-image-2_low",
+  "jet": 1,
+  "coherence_famille": 4,
+  "fidelite_guide": 4,
+  "pixel_art": 3,
+  "respect_sujet": 4,
+  "piege_reference": false,
+  "identite_chaine": 4,
+  "sujets_rates": [
+   "P3_potion",
+   "P2_epee"
+  ],
+  "observations": "Les dix sujets partagent une palette étroite — vert olive, bruns cuir, or/tan, gris acier — et un contour brun très sombre d'un pixel, exactement le vocabulaire des deux planches du guide ; le squelette C3 porte littéralement la tunique olive, la ceinture brune et les bottes lacées du goblin et du nain. Aucun personnage du guide n'a été redessiné à la place d'un sujet : tonneau, épée, fiole, coffre, cadre, rat, squelette et prêtresse sont tous le sujet demandé. Mesure de la grille par autocorrélation des transitions : huit assets tombent sur un bloc de 8 px (grille native ~128), mais P3_potion est à ~16 px — moitié de densité, ses aplats rouges font le double de ceux du robe de C1c — et P2_epee est hybride, poignée à 8 px mais garde et pommeau dorés à 16 px remplis d'un dégradé continu du clair au sombre, ce qui n'est pas un aplat. Sur les zooms à 4x, chaque frontière de bloc porte un halo flou de 2 à 3 pixels et un liseré blanc apparaît sur la silhouette contre le fond ; les fichiers sont en .png sans canal alpha mais comptent 16 000 à 62 000 couleurs uniques et un fond gris bruité à ±3 niveaux (et qui varie de 213 à 223 d'une image à l'autre) — signature d'un pipeline lossy, pas d'une quantification propre. Sur la chaîne, C1b est bien la prêtresse de C1 vue de dos, capuche verte à liseré or, longue chevelure brune, bâton crochu à feuilles, et la canne passe correctement à gauche du cadre ; mais C1c la remet à droite du cadre, soit un changement de main non demandé, et son pied avant flotte sous l'ourlet. Le guide n'a pas dilué la chaîne — C1b et C1c sont presque des clones — en revanche il déteint sur le sujet lui-même : l'« elfe » de C1 a la peau verte, le nez pointu et l'oreille du goblin, et le rat C2 a des défenses recourbées de sanglier plutôt que des incisives de rongeur.",
+  "guide_aide_ou_dilue": "aide"
+ },
+ {
+  "configuration": "seedream-5.0-lite",
+  "jet": 2,
+  "coherence_famille": 3,
+  "fidelite_guide": 4,
+  "pixel_art": 2,
+  "respect_sujet": 4,
+  "piege_reference": false,
+  "identite_chaine": 3,
+  "sujets_rates": [
+   "C2_rat",
+   "P5_cadre"
+  ],
+  "observations": "La palette est la vraie réussite du lot : vert olive, brun cuir, liseré tan, contour brun très foncé et fond gris clair identique partout, et C3_squelette porte littéralement les bottes et la tunique verte des planches du guide. En revanche la taille de pixel n'est pas la même d'un asset à l'autre — mesurée sur les arêtes, elle vaut ~27 px de rendu sur P1_tonneau, P2_epee et P3_potion (donc une toile logique d'environ 75 px), ~20 px sur P4_coffre, ~16 px sur C1_pretresse et C3_squelette, ~14 px sur C1b_dos, ~12 px sur C1c_marche et P5_cadre : les props ont des pixels deux fois plus gros que les personnages, ce qui se voit à l'œil nu sur la planche. C2_rat n'est pas du pixel art : agrandi, ses marches font 1 à 5 px de hauteur variable, la fourrure est un moucheté vert-brun sans grille, les vibrisses sont des traits anti-aliasés et il n'y a pas de contour noir franc ; il ressemble à un mulot ordinaire plutôt qu'à un rat géant galeux. P5_cadre a la même faiblesse en plus fin : les volutes dorées des quatre coins sont une bouillie de blocs irréguliers et le veinage du bois est tracé en lignes plus fines qu'un pixel. Tout le lot est livré en JPEG 2048 : les zooms montrent un halo blanc le long des contours noirs (C1, C1c, P5), des dégradés dans les aplats censés être plats, et un bloc gris parasite qui flotte hors du contour droit de P1_tonneau, sous le cerclage. Enfin, aucun goblin ni nain n'a remplacé un sujet, mais la prêtresse elfe hérite d'oreilles vert olive à liseré jaune sur les trois images de la chaîne alors que son visage et ses mains sont chair pâle — c'est la couleur d'oreille du goblin du guide qui a déteint, et la coiffe brune à galon doré présente sur C1 disparaît sur C1b et C1c.",
+  "guide_aide_ou_dilue": "dilue"
+ },
+ {
+  "configuration": "gpt-image-2_low",
+  "jet": 2,
+  "coherence_famille": 4,
+  "fidelite_guide": 4,
+  "pixel_art": 3,
+  "respect_sujet": 4,
+  "piege_reference": false,
+  "identite_chaine": 4,
+  "guide_aide_ou_dilue": "dilue",
+  "sujets_rates": [
+   "C1_pretresse"
+  ],
+  "observations": "Les dix sujets demandés sont tous présents et lisibles — tonneau à trois cercles de fer, épée pointe en haut, fiole rouge bouchée de liège, coffre bardé de fer fermé, cadre rectangulaire vide à coins métalliques, rat quadrupède galeux à longue queue, squelette au bouclier rond et à la lance : aucun n'a été remplacé par le goblin ou le nain du guide. En revanche C1_pretresse n'est pas une elfe : le visage reprend trait pour trait celui du goblin de la planche 01 — peau olive marbrée, arcade lourde, nez crochu tombant, croc blanc dépassant sous la bouche ; l'espèce demandée est perdue. Sur la chaîne, le costume tient très bien (robe olive à liseré or, ourlet à croix, bâton à crosse et orbe vert, épaulières, oreilles pointues) et les changements demandés sont réels — C1b est un vrai dos avec le bâton correctement inversé à gauche, C1c une vraie marche jambes et bottes visibles — mais le visage se dé-gobelinise en route : C1c a un petit nez droit, plus de croc, une peau verte lisse et uniforme, et le bandeau brun uni de C1 devient une chaîne d'or à gemme verte sur C1b et C1c. La palette est en revanche très homogène et fidèle au guide : mêmes bruns cuir, mêmes verts olive, même ocre, même contour presque noir, même fond gris. Le grain de pixel n'est pas constant : la période mesurée va de 6,4 px sur C1c à 16,0 px sur P3_potion (10,3 sur le tonneau, 9,5 sur l'épée), contre 8,65 px stable sur les deux planches du guide — la fiole est donc dessinée sur une grille deux fois plus grosse que la prêtresse, et son contour paraît deux fois plus épais. Aucun artefact JPEG : ce sont des PNG, les aplats sont propres, mais les images sont ré-échantillonnées depuis une taille native non entière, si bien que les blocs voisins font tantôt 6 tantôt 7 pixels écran, avec un dégradé d'un ou deux pixels à chaque frontière de bloc (très net sur C1c) et un liseré clair collé au contour extérieur — défaut également présent, à intensité comparable, sur les planches du guide."
+ },
+ {
+  "configuration": "seedream-4.5",
+  "jet": 2,
+  "coherence_famille": 3,
+  "fidelite_guide": 3,
+  "pixel_art": 2,
+  "respect_sujet": 3,
+  "piege_reference": true,
+  "identite_chaine": 1,
+  "sujets_rates": [
+   "C1c_marche",
+   "C2_rat",
+   "P2_epee"
+  ],
+  "observations": "C1c_marche n'est pas la prêtresse : c'est le goblin archer du guide, redessiné en marche. Le recadrage tête à tête avec guide/01_goblin.png donne la même peau verte, la même oreille pointue à nervure claire, le même bonnet de cuir brun avec sa couture ochre pointillée, le même nez crochu et le même œil — seule une barbe brune a été ajoutée. Sa main tient un moignon de bâton noueux flottant, sans hampe. C1_pretresse est correcte (elfe de profil à droite, cape verte sur robe ocre, bâton noueux tenu), mais elle porte déjà le bonnet de cuir à couture ochre du goblin et du nain du guide. C1b_dos garde l'angle demandé mais dérive : silhouette bien plus large, robe entièrement verte au lieu du plastron ocre, oreilles devenues grandes et horizontales, et la main n'agrippe pas le bâton — un petit aplat de peau flotte derrière une hampe continue. C2_rat est un rat, mais son rendu casse le lot : fourrure en mosaïque bruitée de dizaines d'olives et de bruns sans aplats francs, grille de pixels bien plus fine que le reste, moustaches en traits de 1 px flous. P2_epee a une lame remplie de deux aplats vert olive et moutarde au lieu d'acier, avec une garde en métal doré et non en cuir. P1_tonneau, P3_potion, P4_coffre, P5_cadre et C3_squelette sont justes et partagent contour brun-noir, palette terreuse et fer gris — mais P3_potion est dessinée sur une grille environ trois fois plus grossière que C2_rat, et le bois du tonneau et du coffre vire à un or saturé plus vif que les bruns sourds du guide. Aux gros plans, tous les fichiers sont du JPEG : chaque frontière de couleur porte une rampe douce de 2 à 3 px, un halo clair entoure les contours noirs, le fond gris est marbré, et des mouchetures blanches parasites apparaissent dans les aplats sombres (joue de C1, barbe de C1c). Les marches d'escalier ne sont pas de largeur constante — l'oreille de C1 alterne blocs simples et doubles.",
+  "guide_aide_ou_dilue": "dilue"
+ },
+ {
+  "configuration": "seedream-5.0-lite",
+  "jet": 1,
+  "coherence_famille": 2,
+  "fidelite_guide": 3,
+  "pixel_art": 2,
+  "respect_sujet": 4,
+  "piege_reference": false,
+  "identite_chaine": 2,
+  "sujets_rates": [
+   "C2_rat",
+   "P5_cadre",
+   "P3_potion",
+   "C1b_dos"
+  ],
+  "observations": "Le lot se scinde en deux blocs qui ne se ressemblent pas : les personnages (C1_pretresse, C3_squelette, C1b, C1c) restent dans la palette terreuse désaturée du guide (distance de palette mesurée 9 à 15, saturation moyenne 0,36-0,44 contre 0,38 pour le goblin et le nain), tandis que les props dérivent franchement — P3_potion en rouge pur 228/32/44 sur verre blanc (distance 69, valeur moyenne 0,72), P5_cadre en or poli très saturé (0,69), P1_tonneau dont les cerclages demandés en fer sortent en laiton doré vif. La taille de pixel n'est pas constante : mesurée en zoom natif à champ égal, P3_potion a les plus gros blocs du lot (silhouette d'environ 20 pixels logiques de large), P5_cadre les plus fins (environ 155 pixels logiques, soit trois fois plus fin que le goblin du guide), P1_tonneau et C1_pretresse tombent vers 50-80, C1b et C1c vers 34-51 ; on ne croit pas à un seul artiste. C2_rat n'a aucune grille : le pelage est un mélange peint de vert mousse et de rouge orangé, les formes sont diagonales et hors grille, les moustaches sont des traits antialiasés avec halo gris, et la taille de bloc varie à l'intérieur du même sprite (oreille en gros aplats, dos en bruit sous-pixel). Les dix fichiers sont livrés en JPEG : fond gris légèrement moucheté (sigma 1,2 à 2,0 contre 0,9 pour les PNG du guide), aplats parcourus de dégradés (les douves de P1_tonneau et le rouge de P3_potion montrent des bandes horizontales de compression), contours qui s'effilochent au lieu de couper net, et l'ornement doré de P5_cadre est visiblement empâté. Aucun sujet n'a été remplacé par le goblin ou le nain, mais la garde-robe du guide déborde : C3_squelette porte le tunique verte, la spallière ronde tan à cercles concentriques, la sangle diagonale à boucle carrée et les bottes brunes du goblin, et C1_pretresse porte le même bonnet brun, la même tunique verte et la même ceinture à boucle carrée. La chaîne casse dès le premier maillon : C1_pretresse est un elfe élancé d'environ sept têtes, de profil, aux oreilles fines repliées sous le capuchon ; C1b_dos est un personnage trapu d'environ trois têtes et demie, crâne en grosse coupole brune, oreilles larges et écartées de type goblin — seuls la robe verte à bande dorée verticale, la ceinture brune et le bâton à croix dorée survivent ; C1c_marche reprend fidèlement C1b (même échelle, même silhouette) mais la « marche » se réduit à un pied avancé et une jupe évasée.",
+  "guide_aide_ou_dilue": "dilue"
+ }
+]

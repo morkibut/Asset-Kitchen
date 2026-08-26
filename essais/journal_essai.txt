@@ -1,0 +1,92 @@
+24 configurations × 4 appels, 5 en parallele
+
+jet1 · flux2-klein-4b           deja complet — saute (aucun frais)
+jet1 · riverflow-2.5-fast       deja complet — saute (aucun frais)
+jet1 · qwen-image-3             deja complet — saute (aucun frais)
+jet1 · gemini-3.1-flash-LITE    deja complet — saute (aucun frais)
+jet1 · gemini-3.1-flash         deja complet — saute (aucun frais)
+jet1 · gemini-3-pro             deja complet — saute (aucun frais)
+jet1 · seedream-4.5             deja complet — saute (aucun frais)
+jet1 · seedream-5.0-lite        deja complet — saute (aucun frais)
+jet1 · gpt-image-1-mini_low     deja complet — saute (aucun frais)
+jet1 · gpt-image-2_low          deja complet — saute (aucun frais)
+jet1 · gpt-image-2_medium       deja complet — saute (aucun frais)
+jet1 · gpt-image-2_high         deja complet — saute (aucun frais)
+jet2 · flux2-klein-4b           deja complet — saute (aucun frais)
+jet2 · qwen-image-3             deja complet — saute (aucun frais)
+jet2 · riverflow-2.5-fast       deja complet — saute (aucun frais)
+jet2 · gemini-3.1-flash-LITE    deja complet — saute (aucun frais)
+jet2 · gpt-image-1-mini_low   [openai/gpt-image-1-mini]  refs max 16
+        A_base     personnage de base   1024x1024    9.7s  $0.0023
+        B_dos      IDENTITE    1024x1024   11.5s  $0.0049
+        C_marche   CHAINAGE    1024x1024   12.2s  $0.0049
+        D_autre    STYLE       1024x1024   12.8s  $0.0049
+        ── 0.0170 $ · 46 s · 4/4
+jet2 · gemini-3.1-flash   [google/gemini-3.1-flash-image]  refs max 14
+        A_base     personnage de base           ?   10.0s  $0.0685
+        B_dos      IDENTITE    1024x1024   13.9s  $0.0678
+        C_marche   CHAINAGE    1024x1024   13.4s  $0.0678
+        D_autre    STYLE       1024x1024   10.4s  $0.0678
+        ── 0.2719 $ · 48 s · 4/4
+jet2 · seedream-4.5   [bytedance-seed/seedream-4.5]  refs max 14
+        A_base     personnage de base           ?    8.8s  $0.0400
+        B_dos      IDENTITE            ?   13.0s  $0.0400
+        C_marche   CHAINAGE            ?   12.2s  $0.0400
+        D_autre    STYLE               ?   25.4s  $0.0400
+        ── 0.1600 $ · 59 s · 4/4
+jet2 · gemini-3-pro   [google/gemini-3-pro-image]  refs max 14
+        A_base     personnage de base           ?   15.3s  $0.1359
+        B_dos      IDENTITE    1024x1024   23.1s  $0.1357
+        C_marche   CHAINAGE            ?   18.7s  $0.1369
+        D_autre    STYLE       1024x1024   21.4s  $0.1357
+        ── 0.5442 $ · 78 s · 4/4
+jet2 · gpt-image-2_low   [openai/gpt-image-2]  refs max 16
+        A_base     personnage de base   1024x1024   18.1s  $0.0063
+        B_dos      IDENTITE    1024x1024   15.9s  $0.0144
+        C_marche   CHAINAGE    1024x1024   13.8s  $0.0145
+        D_autre    STYLE       1024x1024   14.9s  $0.0145
+        ── 0.0497 $ · 63 s · 4/4
+jet2 · seedream-5.0-lite   [bytedance-seed/seedream-5-0-lite]  refs max 14
+        A_base     personnage de base           ?   29.1s  $0.0350
+        B_dos      IDENTITE            ?   29.2s  $0.0350
+        C_marche   CHAINAGE            ?   42.1s  $0.0350
+        D_autre    STYLE               ?   45.2s  $0.0350
+        ── 0.1400 $ · 146 s · 4/4
+jet2 · gpt-image-2_medium   [openai/gpt-image-2]  refs max 16
+        A_base     personnage de base   1024x1024   40.1s  $0.0530
+        B_dos      IDENTITE    1024x1024   42.5s  $0.0612
+        C_marche   CHAINAGE    1024x1024   45.9s  $0.0613
+        D_autre    STYLE       1024x1024   47.9s  $0.0613
+        ── 0.2369 $ · 176 s · 4/4
+jet2 · gpt-image-2_high   [openai/gpt-image-2]  refs max 16
+        A_base     personnage de base   1024x1024  121.4s  $0.2111
+        B_dos      IDENTITE    1024x1024  124.8s  $0.2193
+        C_marche   CHAINAGE    1024x1024  125.0s  $0.2193
+        D_autre    STYLE       1024x1024  121.9s  $0.2194
+        ── 0.8691 $ · 493 s · 4/4
+
+==============================================================================
+RECAPITULATIF
+==============================================================================
+configuration            jet   $ total  $ / image  s / image  etat
+------------------------------------------------------------------------------
+flux2-klein-4b             2    0.0590     0.0147        4.4  4/4
+gemini-3-pro               1    0.5443     0.1361       18.6  4/4
+gemini-3-pro               2    0.5442     0.1360       19.6  4/4
+gemini-3.1-flash           1    0.2725     0.0681       10.5  4/4
+gemini-3.1-flash           2    0.2719     0.0680       11.9  4/4
+gemini-3.1-flash-LITE      2    0.1367     0.0342        3.6  4/4
+gpt-image-1-mini_low       2    0.0170     0.0043       11.6  4/4
+gpt-image-2_high           2    0.8691     0.2173      123.3  4/4
+gpt-image-2_low            2    0.0497     0.0124       15.7  4/4
+gpt-image-2_medium         2    0.2369     0.0592       44.1  4/4
+qwen-image-3               2    0.1290     0.0323       50.1  4/4
+riverflow-2.5-fast         2    0.1689     0.0422       58.7  4/4
+seedream-4.5               1    0.1600     0.0400       11.0  4/4
+seedream-4.5               2    0.1600     0.0400       14.8  4/4
+seedream-5.0-lite          2    0.1400     0.0350       36.4  4/4
+------------------------------------------------------------------------------
+TOTAL                           3.7592
+
+Duree du lot : 9.2 min
+Images       : C:\STOCKAGE\PROJET\_DEV\gag2\essais\resultats

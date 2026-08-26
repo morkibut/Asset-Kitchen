@@ -1,0 +1,4 @@
+essais/resultats/
+.env
+__pycache__/
+donnees/

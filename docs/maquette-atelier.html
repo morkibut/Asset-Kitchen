@@ -1,0 +1,1160 @@
+<!doctype html>
+<!--
+  ⚠ REJETÉE — 26 août 2026. Ne pas reprendre cette maquette comme base.
+  Verdict : hyper chargée, des options partout, très loin de la fluidité de
+  SpriteCook. Elle expose le cadrage au lieu de servir le geste quotidien.
+  Conservée seulement comme trace de ce qu'il ne faut pas faire.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asset Kitchen — maquette de l'Atelier</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Maquette statique de l'écran « Atelier ».
+   Aucun réseau, aucune dépendance. Les images sont générées à la volée :
+   des taches symétriques déterministes, volontairement grossières.
+   Le chrome est achromatique — le seul accent chaud sert à l'action et à
+   la sélection, pour qu'il n'entre jamais en concurrence avec les sprites.
+   ───────────────────────────────────────────────────────────────────────── */
+:root{
+  --fond-0:#0f0f11; --fond-1:#161618; --fond-2:#1c1c1f; --fond-3:#232327;
+  --bord:#2a2a30; --bord-fort:#3a3a42;
+  --texte:#e7e5e1; --texte-2:#a29f9a; --texte-3:#6d6a66;
+  --accent:#d9973f; --accent-clair:#f0b25e; --accent-sourd:rgba(217,151,63,.13);
+  --ok:#6f9d6a; --alerte:#c26a5c; --info:#7aa2b8;
+  --r:6px; --r-s:4px;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono","Consolas",monospace;
+  --arbre:220px; --reglages:292px; --fiche:332px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--fond-0); color:var(--texte);
+  font:13px/1.45 var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font:inherit;color:inherit;background:none;border:none;outline:none}
+::selection{background:var(--accent-sourd)}
+
+/* ── écrans étroits : le produit ne vise que le large ───────────────────── */
+.trop-etroit{display:none}
+@media (max-width:1279px){
+  body > .app{display:none}
+  .trop-etroit{
+    display:flex;align-items:center;justify-content:center;height:100%;padding:40px;
+    text-align:center;color:var(--texte-2);
+  }
+  .trop-etroit b{display:block;color:var(--texte);font-size:15px;margin-bottom:8px}
+}
+
+/* ── coquille ───────────────────────────────────────────────────────────── */
+.app{
+  height:100%;
+  display:grid;
+  grid-template-rows:44px 1fr 26px;
+  grid-template-columns:var(--arbre) var(--reglages) minmax(0,1fr) var(--fiche);
+  grid-template-areas:
+    "barre  barre     barre  barre"
+    "arbre  reglages  centre fiche"
+    "etat   etat      etat   etat";
+}
+body.sans-arbre    .app{grid-template-columns:0 var(--reglages) minmax(0,1fr) var(--fiche)}
+body.sans-reglages .app{grid-template-columns:var(--arbre) 0 minmax(0,1fr) var(--fiche)}
+body.sans-fiche    .app{grid-template-columns:var(--arbre) var(--reglages) minmax(0,1fr) 0}
+body.sans-arbre    #arbre,
+body.sans-reglages #reglages,
+body.sans-fiche    #fiche{display:none}
+
+/* ── barre de titre ─────────────────────────────────────────────────────── */
+.barre{
+  grid-area:barre;display:flex;align-items:center;gap:14px;padding:0 12px;
+  background:var(--fond-1);border-bottom:1px solid var(--bord);
+}
+.marque{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:-.01em}
+.marque .glyphe{
+  width:18px;height:18px;border-radius:3px;flex:none;
+  background:linear-gradient(135deg,var(--accent) 0 50%,#7a4d18 50% 100%);
+}
+.badge-maquette{
+  font:10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-sourd);
+  border:1px solid rgba(217,151,63,.3);border-radius:3px;padding:4px 6px;
+}
+.sep{width:1px;height:18px;background:var(--bord)}
+.selecteur-projet{
+  display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:var(--r-s);
+  border:1px solid var(--bord);background:var(--fond-2);
+}
+.selecteur-projet:hover{border-color:var(--bord-fort)}
+.selecteur-projet .etiq{color:var(--texte-3);font-size:11px}
+.nav{display:flex;gap:2px;margin-left:6px}
+.nav a{
+  padding:6px 11px;border-radius:var(--r-s);color:var(--texte-2);
+  text-decoration:none;font-size:12.5px;
+}
+.nav a:hover{background:var(--fond-2);color:var(--texte)}
+.nav a.actif{color:var(--texte);background:var(--fond-3);box-shadow:inset 0 -2px 0 var(--accent)}
+.barre .droite{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pastille-travaux{
+  display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--texte-2);
+  padding:4px 9px;border:1px solid var(--bord);border-radius:20px;background:var(--fond-2);
+}
+.pouls{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pouls 1.4s ease-in-out infinite}
+@keyframes pouls{0%,100%{opacity:1}50%{opacity:.25}}
+.bouton-notes{
+  font-size:11.5px;color:var(--texte-2);padding:5px 10px;border-radius:var(--r-s);
+  border:1px solid var(--bord);
+}
+.bouton-notes:hover{color:var(--texte);border-color:var(--bord-fort)}
+body.notes .bouton-notes{color:var(--accent);border-color:rgba(217,151,63,.4);background:var(--accent-sourd)}
+
+/* ── panneaux ───────────────────────────────────────────────────────────── */
+/* min-height:0 — sans lui, un élément de grille refuse de descendre sous la
+   hauteur de son contenu et la coquille déborde au lieu de faire défiler. */
+.panneau{background:var(--fond-1);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+#arbre{grid-area:arbre;border-right:1px solid var(--bord)}
+#reglages{grid-area:reglages;border-right:1px solid var(--bord)}
+#fiche{grid-area:fiche;border-left:1px solid var(--bord)}
+.centre{grid-area:centre;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--fond-0)}
+
+.tete{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;flex:none;
+  border-bottom:1px solid var(--bord);
+}
+.tete h2{
+  font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--texte-3);
+}
+.tete .replier{margin-left:auto;color:var(--texte-3);padding:2px 5px;border-radius:3px;line-height:1}
+.tete .replier:hover{background:var(--fond-3);color:var(--texte)}
+.corps{overflow-y:auto;flex:1;min-height:0;padding:10px 0}
+.corps::-webkit-scrollbar{width:9px}
+.corps::-webkit-scrollbar-thumb{background:#2e2e35;border-radius:9px;border:2px solid var(--fond-1)}
+.corps::-webkit-scrollbar-track{background:transparent}
+
+.groupe{padding:0 8px;margin-bottom:14px}
+.groupe > h3{
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--texte-3);padding:0 4px 6px;
+}
+
+/* ── notes de maquette ──────────────────────────────────────────────────── */
+.note{display:none}
+body.notes .note{
+  display:block;font-size:11px;line-height:1.4;color:var(--accent-clair);
+  background:var(--accent-sourd);border-left:2px solid var(--accent);
+  padding:6px 8px;margin:4px 4px 8px;border-radius:0 3px 3px 0;
+}
+body.notes .note .ref{color:var(--texte-3);font-family:var(--mono);font-size:10px}
+
+/* ── arbre ──────────────────────────────────────────────────────────────── */
+.ligne{
+  display:flex;align-items:center;gap:7px;width:100%;text-align:left;
+  padding:5px 8px;border-radius:var(--r-s);color:var(--texte-2);font-size:12.5px;
+}
+.ligne:hover{background:var(--fond-2);color:var(--texte)}
+.ligne.actif{background:var(--fond-3);color:var(--texte)}
+.ligne.actif .nom{font-weight:550}
+.ligne .chevron{width:10px;flex:none;color:var(--texte-3);font-size:9px}
+.ligne .nom{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne .compte{font-family:var(--mono);font-size:10.5px;color:var(--texte-3)}
+.ligne .puce{width:7px;height:7px;border-radius:2px;flex:none}
+.enfants{padding-left:17px}
+
+.univers{
+  margin:0 12px 12px;padding:10px;border:1px solid var(--bord);border-radius:var(--r);
+  background:var(--fond-2);
+}
+.univers h4{font-size:11.5px;font-weight:600;margin-bottom:2px}
+.univers p{font-size:11px;color:var(--texte-3);margin-bottom:8px}
+.palette{display:flex;border-radius:3px;overflow:hidden;height:16px;margin-bottom:8px}
+.palette i{flex:1}
+.univers .lien{font-size:11.5px;color:var(--info)}
+.univers .lien:hover{text-decoration:underline}
+
+/* ── réglages ───────────────────────────────────────────────────────────── */
+.segmente{display:grid;grid-auto-flow:column;gap:2px;background:var(--fond-3);padding:2px;border-radius:var(--r-s)}
+.segmente button{
+  padding:6px 4px;border-radius:3px;font-size:11.5px;color:var(--texte-2);text-align:center;
+}
+.segmente button:hover{color:var(--texte)}
+.segmente button.actif{background:var(--accent);color:#1a1206;font-weight:600}
+
+.modele{
+  display:flex;gap:8px;align-items:flex-start;width:100%;text-align:left;
+  padding:8px;border:1px solid transparent;border-radius:var(--r-s);margin-bottom:2px;
+}
+.modele:hover{background:var(--fond-2)}
+.modele.actif{background:var(--fond-3);border-color:rgba(217,151,63,.4)}
+.modele .radio{
+  width:12px;height:12px;border-radius:50%;border:1.5px solid var(--bord-fort);
+  flex:none;margin-top:2px;
+}
+.modele.actif .radio{border-color:var(--accent);box-shadow:inset 0 0 0 2.5px var(--fond-1),inset 0 0 0 8px var(--accent)}
+.modele .corps-m{flex:1;min-width:0}
+.modele .titre-m{display:flex;align-items:baseline;gap:6px}
+.modele .titre-m b{font-size:12.5px;font-weight:550}
+.modele .prix{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-2)}
+.modele .sous{font-size:11px;color:var(--texte-3);margin-top:1px}
+.modele .caracs{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:3px}
+.modele.grise{cursor:not-allowed;opacity:.85}
+.modele.grise .titre-m b,.modele.grise .prix{color:var(--texte-3)}
+.modele.grise .radio{border-style:dashed;border-color:var(--bord)}
+.modele .raison{
+  font-size:10.5px;color:var(--alerte);margin-top:3px;display:flex;gap:5px;align-items:flex-start;
+}
+.etiq-def{
+  font-size:9.5px;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-sourd);padding:2px 4px;border-radius:3px;
+}
+
+.champ{padding:0 4px;margin-bottom:11px}
+.champ > label{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--texte-3);margin-bottom:5px;
+}
+.champ .verrou{margin-left:auto;font-size:10px;font-family:var(--mono)}
+.valeur-fixe{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r-s);
+  background:var(--fond-2);border:1px solid var(--bord);font-family:var(--mono);font-size:12px;
+}
+.select{
+  display:flex;align-items:center;padding:7px 9px;border-radius:var(--r-s);
+  background:var(--fond-2);border:1px solid var(--bord);font-size:12.5px;width:100%;
+}
+.select:hover{border-color:var(--bord-fort)}
+.select .fleche{margin-left:auto;color:var(--texte-3);font-size:10px}
+.aide{font-size:10.5px;color:var(--texte-3);margin-top:5px;line-height:1.4}
+
+.recette{list-style:none;counter-reset:etape}
+.recette li{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-s);
+  font-size:12px;
+}
+.recette li:hover{background:var(--fond-2)}
+.recette li .num{
+  counter-increment:etape;font-family:var(--mono);font-size:10px;color:var(--texte-3);
+  width:12px;flex:none;
+}
+.recette li .num::before{content:counter(etape)}
+.recette li .lib{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recette li .arg{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+.bascule{
+  width:26px;height:15px;border-radius:20px;background:var(--fond-3);flex:none;position:relative;
+  border:1px solid var(--bord);
+}
+.bascule::after{
+  content:"";position:absolute;top:1.5px;left:2px;width:10px;height:10px;border-radius:50%;
+  background:var(--texte-3);transition:.15s;
+}
+.bascule.on{background:rgba(217,151,63,.28);border-color:rgba(217,151,63,.5)}
+.bascule.on::after{left:12px;background:var(--accent)}
+.obligatoire{font-size:9.5px;font-family:var(--mono);color:var(--texte-3);border:1px solid var(--bord);padding:1px 3px;border-radius:2px}
+
+.pied-panneau{
+  flex:none;border-top:1px solid var(--bord);padding:9px 12px;background:var(--fond-1);
+}
+.bouton-secondaire{
+  width:100%;padding:7px;border:1px solid var(--bord);border-radius:var(--r-s);
+  font-size:12px;color:var(--texte-2);
+}
+.bouton-secondaire:hover{border-color:var(--bord-fort);color:var(--texte)}
+
+/* ── prompt ─────────────────────────────────────────────────────────────── */
+.bloc-prompt{
+  flex:none;padding:12px 14px 11px;border-bottom:1px solid var(--bord);background:var(--fond-1);
+}
+.zone-prompt{
+  border:1px solid var(--bord-fort);border-radius:var(--r);background:var(--fond-2);
+  padding:10px 12px;
+}
+.zone-prompt:focus-within{border-color:rgba(217,151,63,.5)}
+.zone-prompt textarea{
+  width:100%;resize:none;font-size:14px;line-height:1.5;min-height:44px;display:block;
+}
+.zone-prompt textarea::placeholder{color:var(--texte-3)}
+.negatif{
+  display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;
+  border-top:1px dashed var(--bord);
+}
+.negatif .etiq{font-size:11px;color:var(--texte-3);flex:none}
+.negatif input{flex:1;font-size:12.5px;color:var(--texte-2)}
+
+.rangee{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.rangee > .etiq{
+  font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--texte-3);
+  flex:none;width:74px;
+}
+.jeton{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 7px 3px 3px;
+  border:1px solid var(--bord);border-radius:20px;background:var(--fond-2);
+  font-size:11.5px;color:var(--texte-2);
+}
+.jeton:hover{border-color:var(--bord-fort);color:var(--texte)}
+.jeton .vignette{width:20px;height:20px;border-radius:50%;overflow:hidden;flex:none;background:var(--fond-3)}
+.jeton .vignette svg{width:100%;height:100%;display:block}
+.jeton .role{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+  border-left:1px solid var(--bord);padding-left:6px;margin-left:1px}
+.jeton .x{color:var(--texte-3);font-size:12px;line-height:1;padding:0 1px}
+.jeton .x:hover{color:var(--alerte)}
+.jeton.auto{border-style:dashed;padding-left:8px}
+.jeton.ajout{border-style:dashed;color:var(--texte-3);padding:4px 9px}
+
+.jeton-bible{
+  padding:4px 9px;border-radius:20px;border:1px solid var(--bord);
+  font-size:11.5px;color:var(--texte-3);background:var(--fond-2);
+}
+.jeton-bible.on{
+  color:var(--texte);border-color:rgba(217,151,63,.45);background:var(--accent-sourd);
+}
+.jeton-bible.on::before{content:"✓ ";color:var(--accent);font-size:10px}
+
+.pied-prompt{display:flex;align-items:flex-end;gap:14px;margin-top:11px}
+.regles-auto{flex:1;min-width:0;font-size:10.5px;color:var(--texte-3);line-height:1.5}
+.regles-auto code{
+  font-family:var(--mono);font-size:10px;color:var(--texte-2);
+  background:var(--fond-2);border:1px solid var(--bord);border-radius:3px;padding:1px 4px;
+}
+.bouton-generer{
+  display:flex;align-items:center;gap:9px;padding:10px 18px;border-radius:var(--r);
+  background:var(--accent);color:#1a1206;font-weight:600;font-size:13.5px;flex:none;
+  box-shadow:0 1px 0 rgba(255,255,255,.15) inset;
+}
+.bouton-generer:hover{background:var(--accent-clair)}
+.bouton-generer .cout{
+  font-family:var(--mono);font-size:11.5px;font-weight:500;
+  background:rgba(0,0,0,.22);padding:3px 6px;border-radius:3px;
+}
+
+/* ── barre de la grille ─────────────────────────────────────────────────── */
+.barre-grille{
+  flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;
+  border-bottom:1px solid var(--bord);background:var(--fond-0);
+}
+/* bande contextuelle : n'existe que tant qu'une sélection existe */
+.bande-selection{
+  flex:none;display:flex;align-items:center;gap:8px;padding:7px 14px;
+  background:var(--accent-sourd);border-bottom:1px solid rgba(217,151,63,.28);
+}
+.compte-sel{font-size:12px;color:var(--accent-clair);flex:none;margin-right:4px}
+.compte-sel b{font-family:var(--mono);font-weight:600}
+.action-selection.nu{border-color:transparent;color:var(--texte-3)}
+.compte-grille{font-size:12px;color:var(--texte-3);flex:none}
+.compte-grille b{color:var(--texte);font-weight:550}
+.recherche{
+  display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:var(--r-s);
+  background:var(--fond-2);border:1px solid var(--bord);flex:1;max-width:300px;min-width:150px;
+}
+.recherche input{width:100%;font-size:12.5px}
+.filtre{
+  padding:5px 10px;border-radius:20px;border:1px solid var(--bord);
+  font-size:11.5px;color:var(--texte-2);
+}
+.filtre:hover{border-color:var(--bord-fort);color:var(--texte)}
+.filtre.on{color:var(--texte);border-color:rgba(217,151,63,.45);background:var(--accent-sourd)}
+.barre-grille .droite{margin-left:auto;display:flex;align-items:center;gap:8px}
+.densite{display:flex;gap:1px;background:var(--fond-3);border-radius:var(--r-s);padding:2px}
+.densite button{padding:4px 7px;border-radius:3px;color:var(--texte-3);font-size:11px;font-family:var(--mono)}
+.densite button.actif{background:var(--fond-1);color:var(--texte)}
+.action-selection{
+  padding:5px 11px;border-radius:var(--r-s);border:1px solid var(--bord);
+  font-size:12px;color:var(--texte-2);background:var(--fond-1);
+}
+.action-selection:hover{color:var(--texte);border-color:var(--bord-fort)}
+.action-selection.danger:hover{color:var(--alerte);border-color:rgba(194,106,92,.5)}
+
+/* ── grille ─────────────────────────────────────────────────────────────── */
+.grille{
+  flex:1;min-height:0;overflow-y:auto;padding:14px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;
+  /* max-content, pas auto : une ligne « auto » se laisse étirer pour remplir
+     le conteneur, et les cartes se retrouvent écrasées. */
+  grid-auto-rows:max-content;align-content:start;
+}
+.grille::-webkit-scrollbar{width:11px}
+.grille::-webkit-scrollbar-thumb{background:#2e2e35;border-radius:11px;border:3px solid var(--fond-0)}
+body.dense .grille{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
+body.dense .vignette-grande{height:100px}
+body.dense .carte .meta{display:none}
+
+.carte{
+  border:1px solid var(--bord);border-radius:var(--r);background:var(--fond-1);
+  overflow:hidden;position:relative;cursor:pointer;
+}
+.carte:hover{border-color:var(--bord-fort)}
+.carte.selectionne{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.carte.ouvert{border-color:var(--accent-clair);box-shadow:0 0 0 1px var(--accent-clair)}
+/* hauteur explicite plutôt qu'aspect-ratio : une ligne de grille « auto » ne
+   sait pas toujours tenir compte d'un ratio, et la carte se retrouve rognée. */
+.vignette-grande{
+  height:152px;display:flex;align-items:center;justify-content:center;position:relative;
+  background-color:#1a1a1d;
+  background-image:
+    linear-gradient(45deg,#232327 25%,transparent 25%,transparent 75%,#232327 75%),
+    linear-gradient(45deg,#232327 25%,transparent 25%,transparent 75%,#232327 75%);
+  background-size:12px 12px;background-position:0 0,6px 6px;
+}
+.vignette-grande svg{width:78%;height:78%;display:block}
+.carte .infos{padding:7px 8px 8px;height:53px}
+body.dense .carte .infos{height:auto}
+.carte .nom{
+  font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;
+}
+.carte .meta{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+.carte .meta .col{
+  font-family:var(--sans);font-size:10px;padding:1px 5px;border-radius:3px;
+  background:var(--fond-3);color:var(--texte-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78px;
+}
+.case{
+  position:absolute;top:7px;left:7px;width:17px;height:17px;border-radius:4px;
+  border:1px solid rgba(255,255,255,.22);background:rgba(10,10,12,.6);backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;
+}
+.carte:hover .case{border-color:rgba(255,255,255,.4)}
+.case.coche{background:var(--accent);border-color:var(--accent);color:#1a1206}
+.etiquettes{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.etq{
+  font-size:9.5px;font-family:var(--mono);letter-spacing:.03em;
+  padding:2px 5px;border-radius:3px;background:rgba(10,10,12,.72);color:var(--texte-2);
+  border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(2px);
+}
+.etq.or{color:var(--accent-clair);border-color:rgba(217,151,63,.35)}
+.etq.info{color:var(--info);border-color:rgba(122,162,184,.3)}
+.etoile{position:absolute;bottom:6px;right:7px;color:var(--accent);font-size:12px;
+  text-shadow:0 1px 3px rgba(0,0,0,.8)}
+
+/* états de génération */
+.carte.encours .vignette-grande{background-image:none;background-color:var(--fond-2)}
+.voile{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:9px;padding:14px;text-align:center;
+}
+.voile .phase{font-size:11px;color:var(--texte-2)}
+.voile .pourcent{font-family:var(--mono);font-size:19px;color:var(--texte)}
+.jauge{width:100%;height:3px;border-radius:3px;background:var(--fond-3);overflow:hidden}
+.jauge i{display:block;height:100%;background:var(--accent)}
+.carte.file .voile .phase{color:var(--texte-3)}
+.carte.file .vignette-grande{opacity:.6}
+.carte.echec{border-color:rgba(194,106,92,.35)}
+.carte.echec .vignette-grande{background-image:none;background-color:rgba(194,106,92,.06)}
+.carte.echec .voile .phase{color:var(--alerte)}
+.relancer{
+  font-size:11px;color:var(--texte-2);border:1px solid var(--bord-fort);
+  border-radius:var(--r-s);padding:4px 10px;background:var(--fond-1);
+}
+.relancer:hover{color:var(--texte);border-color:var(--texte-3)}
+.chargeur{
+  width:22px;height:22px;border-radius:50%;border:2px solid var(--fond-3);
+  border-top-color:var(--accent);animation:tourne 1s linear infinite;
+}
+@keyframes tourne{to{transform:rotate(360deg)}}
+
+/* ── fiche asset ────────────────────────────────────────────────────────── */
+.visionneuse{
+  flex:none;padding:14px;border-bottom:1px solid var(--bord);
+}
+.scene{
+  height:286px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
+  background-color:#1a1a1d;
+  background-image:
+    linear-gradient(45deg,#232327 25%,transparent 25%,transparent 75%,#232327 75%),
+    linear-gradient(45deg,#232327 25%,transparent 25%,transparent 75%,#232327 75%);
+  background-size:14px 14px;background-position:0 0,7px 7px;
+  border:1px solid var(--bord);
+}
+.scene svg{width:74%;height:74%}
+.outils-vue{display:flex;align-items:center;gap:6px;margin-top:9px}
+.outils-vue .grp{display:flex;gap:1px;background:var(--fond-3);border-radius:var(--r-s);padding:2px}
+.outils-vue .grp button{padding:4px 8px;border-radius:3px;font-size:11px;color:var(--texte-3);font-family:var(--mono)}
+.outils-vue .grp button.actif{background:var(--fond-1);color:var(--texte)}
+.outils-vue .zoom{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+
+.faits{padding:0 4px;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px}
+.faits dt{color:var(--texte-3)}
+.faits dd{font-family:var(--mono);font-size:11px;color:var(--texte);text-align:right}
+.faits dd .fort{color:var(--accent-clair)}
+
+.recette-fiche{list-style:none;counter-reset:e2}
+.recette-fiche li{
+  display:flex;gap:8px;align-items:baseline;padding:5px 8px;border-radius:var(--r-s);font-size:11.5px;
+}
+.recette-fiche li:hover{background:var(--fond-2)}
+.recette-fiche li .num{counter-increment:e2;font-family:var(--mono);font-size:10px;color:var(--texte-3);width:12px;flex:none}
+.recette-fiche li .num::before{content:counter(e2)}
+.recette-fiche li .lib{flex:1}
+.recette-fiche li .arg{font-family:var(--mono);font-size:10px;color:var(--texte-3);text-align:right}
+.duo{display:flex;gap:7px;margin:8px 4px 0}
+.duo button{flex:1;padding:7px;border-radius:var(--r-s);font-size:11.5px;border:1px solid var(--bord)}
+.duo .primaire{background:var(--fond-3);color:var(--texte);border-color:var(--bord-fort)}
+.duo .primaire:hover{background:#2a2a30}
+.duo .couteux{color:var(--texte-3)}
+.duo .couteux:hover{color:var(--texte-2);border-color:var(--bord-fort)}
+
+.filiation{padding:0 4px;font-size:11.5px}
+.filiation .n{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:var(--r-s);color:var(--texte-2)}
+.filiation .n:hover{background:var(--fond-2);color:var(--texte)}
+.filiation .n.soi{color:var(--texte);background:var(--fond-2)}
+.filiation .n .t{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+.filiation .dec{padding-left:14px}
+
+details.repli{padding:0 4px}
+details.repli summary{
+  cursor:pointer;font-size:11.5px;color:var(--texte-2);padding:5px 6px;border-radius:var(--r-s);
+  list-style:none;display:flex;align-items:center;gap:6px;
+}
+details.repli summary::-webkit-details-marker{display:none}
+details.repli summary::before{content:"▸";color:var(--texte-3);font-size:9px}
+details.repli[open] summary::before{content:"▾"}
+details.repli summary:hover{background:var(--fond-2);color:var(--texte)}
+details.repli .contenu{
+  font-family:var(--mono);font-size:10.5px;line-height:1.6;color:var(--texte-2);
+  background:var(--fond-2);border:1px solid var(--bord);border-radius:var(--r-s);
+  padding:9px 10px;margin:4px 6px 0;white-space:pre-wrap;
+}
+details.repli .contenu .auto{color:var(--accent-clair)}
+details.repli .contenu .bible{color:var(--info)}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 4px}
+.actions button{
+  padding:8px;border:1px solid var(--bord);border-radius:var(--r-s);font-size:11.5px;color:var(--texte-2);
+}
+.actions button:hover{border-color:var(--bord-fort);color:var(--texte)}
+.actions .large{grid-column:1/-1}
+.actions .danger:hover{color:var(--alerte);border-color:rgba(194,106,92,.45)}
+.reinjection{padding:0 4px;margin-top:4px}
+.reinjection .etiq{font-size:10.5px;color:var(--texte-3);margin-bottom:5px}
+.reinjection .choix{display:flex;flex-wrap:wrap;gap:5px}
+.reinjection .choix button{
+  font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--bord);color:var(--texte-2);
+}
+.reinjection .choix button:hover{border-color:rgba(217,151,63,.45);color:var(--accent-clair)}
+
+/* ── barre d'état ───────────────────────────────────────────────────────── */
+.etat{
+  grid-area:etat;display:flex;align-items:center;gap:16px;padding:0 12px;
+  background:var(--fond-1);border-top:1px solid var(--bord);
+  font-size:11px;color:var(--texte-3);
+}
+.etat .bloc{display:flex;align-items:center;gap:7px}
+.etat .val{font-family:var(--mono);color:var(--texte-2)}
+.etat .val.or{color:var(--accent)}
+.etat .droite{margin-left:auto;display:flex;align-items:center;gap:16px}
+.point{width:5px;height:5px;border-radius:50%;background:var(--ok)}
+</style>
+</head>
+<body>
+
+<div class="trop-etroit">
+  <div>
+    <b>Écran large uniquement.</b>
+    L'Atelier fait cohabiter trois panneaux et la grille — il ne se replie pas.<br>
+    Élargissez la fenêtre à 1280 px au moins.
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ══ barre de titre ═══════════════════════════════════════════════ -->
+  <header class="barre">
+    <div class="marque"><span class="glyphe"></span>Asset Kitchen</div>
+    <span class="badge-maquette">maquette · images bidon</span>
+    <div class="sep"></div>
+    <button class="selecteur-projet">
+      <span class="puce" style="width:8px;height:8px;border-radius:2px;background:#857567"></span>
+      <span class="etiq">Projet</span>
+      <b style="font-weight:550">Cœur de Pierre</b>
+      <span style="color:var(--texte-3);font-size:10px">▾</span>
+    </button>
+    <nav class="nav">
+      <a href="#">Projets</a>
+      <a href="#">Univers</a>
+      <a href="#" class="actif">Atelier</a>
+      <a href="#">Réglages</a>
+    </nav>
+    <div class="droite">
+      <div class="pastille-travaux"><span class="pouls"></span>3 générations en cours</div>
+      <button class="bouton-notes" id="bascule-notes">Notes de maquette</button>
+    </div>
+  </header>
+
+  <!-- ══ panneau 1 · arbre ════════════════════════════════════════════ -->
+  <aside class="panneau" id="arbre">
+    <div class="tete">
+      <h2>Bibliothèque</h2>
+      <button class="replier" data-replie="arbre" title="Replier">‹</button>
+    </div>
+    <div class="corps">
+      <div class="note">
+        Une seule grille dans tout le produit : celle qui sert à réutiliser est
+        exactement celle qui sert à organiser. Ranger n'oblige jamais à quitter
+        l'endroit où l'on crée. <span class="ref">PLAN §6.2</span>
+      </div>
+
+      <div class="groupe">
+        <button class="ligne"><span class="chevron">▸</span><span class="nom">Tous les assets</span><span class="compte">312</span></button>
+        <button class="ligne actif"><span class="chevron">▾</span><span class="puce" style="background:#857567"></span><span class="nom">Cœur de Pierre</span><span class="compte">148</span></button>
+        <div class="enfants">
+          <button class="ligne"><span class="nom">Personnages</span><span class="compte">24</span></button>
+          <button class="ligne"><span class="nom">Objets</span><span class="compte">57</span></button>
+          <button class="ligne"><span class="nom">Décors</span><span class="compte">31</span></button>
+          <button class="ligne"><span class="nom">Interface</span><span class="compte">26</span></button>
+          <button class="ligne"><span class="nom" style="color:var(--texte-3)">Sans collection</span><span class="compte">10</span></button>
+        </div>
+        <button class="ligne"><span class="chevron">▸</span><span class="puce" style="background:#4a6b4f"></span><span class="nom">Vallée d'Ambre</span><span class="compte">86</span></button>
+        <button class="ligne"><span class="chevron">▸</span><span class="puce" style="background:var(--bord-fort)"></span><span class="nom" style="color:var(--texte-3)">Sans projet</span><span class="compte">78</span></button>
+      </div>
+
+      <div class="groupe">
+        <h3>Filtres</h3>
+        <button class="ligne"><span class="nom">★ Favoris</span><span class="compte">18</span></button>
+        <button class="ligne"><span class="nom">Détourés</span><span class="compte">94</span></button>
+        <button class="ligne"><span class="nom">Planches à découper</span><span class="compte">7</span></button>
+        <button class="ligne"><span class="nom">Importés</span><span class="compte">12</span></button>
+        <button class="ligne"><span class="nom" style="color:var(--alerte)">Échecs</span><span class="compte">3</span></button>
+      </div>
+    </div>
+
+    <div class="univers">
+      <h4>Univers</h4>
+      <p>3 artworks officiels · bible en 5 champs</p>
+      <div class="palette" id="palette-univers"></div>
+      <button class="lien">Ouvrir l'univers →</button>
+      <div class="note" style="margin:8px 0 0">
+        La palette est extraite des artworks officiels par calcul, et sert
+        <b>en entrée</b> — contrainte de quantification, pas contrôle de conformité.
+        <span class="ref">PLAN §3</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ panneau 2 · réglages ═════════════════════════════════════════ -->
+  <aside class="panneau" id="reglages">
+    <div class="tete">
+      <h2>Réglages de génération</h2>
+      <button class="replier" data-replie="reglages" title="Replier">‹</button>
+    </div>
+    <div class="corps">
+
+      <div class="groupe">
+        <h3>Type d'asset</h3>
+        <div class="segmente">
+          <button class="actif">Personnage</button>
+          <button>Objet</button>
+          <button>Décor</button>
+          <button>Icône</button>
+        </div>
+        <p class="aide" style="padding:0 4px">
+          Le type porte les défauts : modèle, taille de sortie, recette.
+          Il n'y a pas de modèle global du projet.
+        </p>
+      </div>
+
+      <div class="groupe">
+        <h3>Modèle</h3>
+        <div class="note">
+          Le catalogue décide, jamais une liste en dur. Un modèle qui ne peut pas
+          honorer la demande est <b>grisé avec sa raison</b> — jamais proposé puis
+          rejeté en 400. <span class="ref">PLAN §4 bis</span>
+        </div>
+
+        <button class="modele actif">
+          <span class="radio"></span>
+          <span class="corps-m">
+            <span class="titre-m"><b>Gemini 3.1 Flash Image</b><span class="prix">0,067 $</span></span>
+            <span class="sous">Seul à tenir l'identité d'un sujet.</span>
+            <span class="caracs">14 réfs · 1024 · aspect_ratio</span>
+          </span>
+        </button>
+
+        <button class="modele">
+          <span class="radio"></span>
+          <span class="corps-m">
+            <span class="titre-m"><b>Seedream 4.5</b><span class="prix">0,040 $</span></span>
+            <span class="sous">Style transmis à l'identique. Identité non tenue.</span>
+            <span class="caracs">14 réfs · 1024 · aspect_ratio</span>
+          </span>
+        </button>
+
+        <button class="modele">
+          <span class="radio"></span>
+          <span class="corps-m">
+            <span class="titre-m"><b>GPT-Image-2</b><span class="prix">~0,011 $</span></span>
+            <span class="sous">Qualité basse — pour explorer, pas pour livrer.</span>
+            <span class="caracs">16 réfs · 1024 · quality</span>
+          </span>
+        </button>
+
+        <div class="modele grise" title="Le catalogue plafonne ce modèle à 4 images de référence.">
+          <span class="radio"></span>
+          <span class="corps-m">
+            <span class="titre-m"><b>Qwen Image 3</b><span class="prix">0,030 $</span></span>
+            <span class="raison">⊘ 4 références au maximum — la demande en compte 5.</span>
+          </span>
+        </div>
+
+        <p class="aide" style="padding:0 8px">
+          Catalogue relu au démarrage — 47 modèles.
+          <span style="color:var(--info)">Tout voir →</span>
+        </p>
+      </div>
+
+      <div class="groupe">
+        <h3>Génération</h3>
+
+        <div class="champ">
+          <label>Résolution <span class="verrou" style="color:var(--texte-3)">verrouillé</span></label>
+          <div class="valeur-fixe">1024 × 1024</div>
+          <p class="aide">On génère en 1K et on réduit ensuite. 512 px coûte 0,045 $ contre 0,067 $ — un tiers de moins pour beaucoup moins de qualité.</p>
+          <div class="note">Ne jamais générer petit. <span class="ref">AGENTS.md · pièges</span></div>
+        </div>
+
+        <div class="champ">
+          <label>Format</label>
+          <div class="segmente">
+            <button class="actif">1:1</button><button>4:3</button><button>3:4</button><button>16:9</button>
+          </div>
+          <p class="aide">Toujours envoyé explicitement.</p>
+          <div class="note">
+            Sans <code>aspect_ratio</code>, Gemini part en 16:9 et Seedream en 1:1 :
+            deux essais ne sont plus comparables. <span class="ref">PLAN §4 bis</span>
+          </div>
+        </div>
+
+        <div class="champ">
+          <label>Variations</label>
+          <div class="segmente">
+            <button>1</button><button>2</button><button>3</button>
+            <button class="actif">4</button><button>6</button><button>8</button>
+          </div>
+          <p class="aide">Lancées en parallèle — les plafonds du fournisseur sont larges.</p>
+        </div>
+      </div>
+
+      <div class="groupe">
+        <h3>Sortie</h3>
+        <div class="champ">
+          <label>Taille finale</label>
+          <button class="select"><span>64 px</span><span class="fleche">▾</span></button>
+        </div>
+
+        <div class="champ">
+          <label>Recette par défaut</label>
+          <ul class="recette">
+            <li><span class="num"></span><span class="lib">Détourage</span><span class="arg">rembg ×2 · α128</span><span class="bascule on"></span></li>
+            <li><span class="num"></span><span class="lib">Recadrage au contenu</span><span class="arg"></span><span class="bascule on"></span></li>
+            <li><span class="num"></span><span class="lib">Normalisation d'échelle</span><span class="obligatoire">requis</span><span class="bascule on"></span></li>
+            <li><span class="num"></span><span class="lib">Pixellisation</span><span class="arg">grille 64</span><span class="bascule on"></span></li>
+            <li><span class="num"></span><span class="lib">Quantification</span><span class="arg">palette · 12</span><span class="bascule on"></span></li>
+            <li><span class="num"></span><span class="lib">Nettoyage de bords</span><span class="arg"></span><span class="bascule"></span></li>
+          </ul>
+          <p class="aide">L'image brute et la recette sont conservées. Le fichier traité est un cache effaçable.</p>
+          <div class="note">
+            La normalisation d'échelle n'est pas du confort : l'échelle du sujet dérive
+            d'une génération à l'autre, et sans elle deux frames ne se montent pas.
+            <span class="ref">PLAN §11</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pied-panneau">
+      <button class="bouton-secondaire">Enregistrer comme défauts du projet</button>
+    </div>
+  </aside>
+
+  <!-- ══ centre · prompt + grille ═════════════════════════════════════ -->
+  <main class="centre">
+
+    <section class="bloc-prompt">
+      <div class="zone-prompt">
+        <textarea rows="2">un forgeron nain, tablier de cuir épais, marteau à la main, vu de trois quarts, campé sur ses jambes</textarea>
+        <div class="negatif">
+          <span class="etiq">Prompt négatif</span>
+          <input value="flou, texte, cadre, arrière-plan, ombre portée">
+        </div>
+      </div>
+
+      <div class="rangee">
+        <span class="etiq">Références</span>
+        <button class="jeton"><span class="vignette" data-sprite="ref-a" data-forme="personnage" data-pal="chair"></span>nain_forgeron_03<span class="role">référence</span><span class="x">×</span></button>
+        <button class="jeton"><span class="vignette" data-sprite="ref-b" data-forme="decor" data-pal="pierre"></span>planche_forge_02<span class="role">guide de style</span><span class="x">×</span></button>
+        <button class="jeton auto" title="Les artworks officiels de l'univers partent à chaque appel.">🔒 3 artworks officiels<span class="role">univers</span></button>
+        <button class="jeton ajout">+ réinjecter un asset</button>
+        <span style="font-family:var(--mono);font-size:10.5px;color:var(--texte-3)">5 / 14</span>
+      </div>
+
+      <div class="rangee">
+        <span class="etiq">Bible</span>
+        <button class="jeton-bible on">Monde</button>
+        <button class="jeton-bible on">Époque</button>
+        <button class="jeton-bible on">Trait</button>
+        <button class="jeton-bible on">Éclairage</button>
+        <button class="jeton-bible">Contraintes techniques</button>
+        <div class="note" style="width:100%">
+          La bible est écrite en champs nommés, et chacun s'active pour une génération
+          donnée. Les artworks officiels, eux, partent toujours.
+          <span class="ref">PLAN §6.1</span>
+        </div>
+      </div>
+
+      <div class="pied-prompt">
+        <div class="regles-auto">
+          Ajoutés automatiquement : <code>one single sprite, one pose only</code>
+          <code>aspect_ratio: 1:1</code>
+          <span style="display:block;margin-top:2px">Sans la première, le modèle rend spontanément une planche de trois poses.</span>
+        </div>
+        <button class="bouton-generer">✦ Générer 4 variations<span class="cout">≈ 0,27 $</span></button>
+      </div>
+    </section>
+
+    <div class="bande-selection">
+      <span class="compte-sel"><b>3</b> sélectionnés</span>
+      <button class="action-selection">Exporter…</button>
+      <button class="action-selection">Ranger dans…</button>
+      <button class="action-selection">★ Favori</button>
+      <button class="action-selection danger">Supprimer</button>
+      <button class="action-selection nu">Annuler</button>
+      <span class="note" style="margin:0 0 0 auto;max-width:340px">
+        La sélection multiple vit dans la grille de travail — organiser n'oblige
+        pas à changer d'écran. <span class="ref">PLAN §6.2</span>
+      </span>
+    </div>
+
+    <div class="barre-grille">
+      <span class="compte-grille"><b>148</b> assets · Cœur de Pierre</span>
+      <div class="recherche"><span style="color:var(--texte-3)">⌕</span><input placeholder="Rechercher un prompt, un label…"></div>
+      <button class="filtre">★ Favoris</button>
+      <button class="filtre">Détourés</button>
+      <div class="droite">
+        <button class="filtre">Récents ▾</button>
+        <div class="densite">
+          <button class="actif" data-densite="normal">▦</button>
+          <button data-densite="dense">▩</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grille" id="grille"></div>
+  </main>
+
+  <!-- ══ panneau 3 · fiche asset ══════════════════════════════════════ -->
+  <aside class="panneau" id="fiche">
+    <div class="tete">
+      <h2>Fiche asset</h2>
+      <button class="replier" style="margin-left:auto;color:var(--accent)" title="Favori">★</button>
+      <button class="replier" data-replie="fiche" style="margin-left:0" title="Fermer">×</button>
+    </div>
+    <div class="corps" style="padding-top:0">
+
+      <div class="visionneuse">
+        <div class="scene" data-sprite="fiche" data-forme="personnage" data-pal="chair"></div>
+        <div class="outils-vue">
+          <div class="grp">
+            <button class="actif">rendu</button>
+            <button>brut</button>
+          </div>
+          <div class="grp"><button>taille réelle</button></div>
+          <span class="zoom">− 400 % +</span>
+        </div>
+        <div class="note" style="margin:8px 0 0">
+          La fiche est un panneau, pas une page : la fermer remet exactement
+          où l'on était, sans perdre la grille ni le prompt.
+          <span class="ref">PLAN §6.2</span>
+        </div>
+      </div>
+
+      <div class="groupe" style="margin-top:12px">
+        <h3 style="padding-left:8px">nain_forgeron_04</h3>
+        <dl class="faits">
+          <dt>Mesuré</dt>       <dd><span class="fort">64 × 64</span></dd>
+          <dt>Demandé</dt>      <dd>64 px · 1:1</dd>
+          <dt>Modèle</dt>       <dd>gemini-3.1-flash-image</dd>
+          <dt>Coût réel</dt>    <dd>0,067 $</dd>
+          <dt>Durée</dt>        <dd>11,4 s</dd>
+          <dt>Créé</dt>         <dd>26/08/2026 21:58</dd>
+        </dl>
+        <div class="note">
+          Les dimensions <b>mesurées</b> font foi, jamais celles demandées.
+          Le coût réel vient de l'appel, il n'est pas estimé.
+          <span class="ref">PLAN §5 · §11</span>
+        </div>
+      </div>
+
+      <div class="groupe">
+        <h3 style="padding-left:8px">Recette</h3>
+        <ul class="recette-fiche">
+          <li><span class="num"></span><span class="lib">Détourage</span><span class="arg">rembg ×2 · α128</span></li>
+          <li><span class="num"></span><span class="lib">Recadrage au contenu</span><span class="arg">marge 2 px</span></li>
+          <li><span class="num"></span><span class="lib">Normalisation d'échelle</span><span class="arg">hauteur 58 px</span></li>
+          <li><span class="num"></span><span class="lib">Réduction</span><span class="arg">1024 → 64</span></li>
+          <li><span class="num"></span><span class="lib">Quantification</span><span class="arg">Cœur de Pierre · 12</span></li>
+        </ul>
+        <div class="duo">
+          <button class="primaire">Recalculer <span style="font-family:var(--mono);font-size:10px;color:var(--texte-3)">12 ms</span></button>
+          <button class="couteux">Regénérer <span style="font-family:var(--mono);font-size:10px">0,067 $</span></button>
+        </div>
+        <p class="aide" style="padding:0 6px">
+          Recalculer relit l'image brute. Regénérer coûte de l'argent et ne rendra
+          jamais la même image.
+        </p>
+      </div>
+
+      <div class="groupe">
+        <h3 style="padding-left:8px">Filiation</h3>
+        <div class="filiation">
+          <button class="n"><span class="t">↖</span>planche_forge_02<span class="t">planche</span></button>
+          <div class="dec">
+            <button class="n soi"><span class="t">●</span>nain_forgeron_04</button>
+            <div class="dec">
+              <button class="n"><span class="t">↳</span>nain_forgeron_04_dos<span class="t">pose</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="groupe">
+        <details class="repli">
+          <summary>Prompt résolu — ce qui a réellement été envoyé</summary>
+          <div class="contenu">un forgeron nain, tablier de cuir épais, marteau à la main, vu de trois quarts, campé sur ses jambes
+<span class="bible">— monde : mines naines abandonnées, veines d'ambre
+— époque : âge de la forge, avant l'effondrement
+— trait : contours nets, aplats, pas de dégradé
+— éclairage : source chaude basse, ombres froides</span>
+<span class="auto">one single sprite, one pose only
+aspect_ratio: 1:1 · 1024×1024</span>
+négatif : flou, texte, cadre, arrière-plan, ombre portée
+références : 3 artworks officiels + nain_forgeron_03 + planche_forge_02</div>
+        </details>
+      </div>
+
+      <div class="groupe">
+        <div class="actions">
+          <button>Détourer</button>
+          <button>Découper</button>
+          <button>Recadrer</button>
+          <button>Exporter</button>
+          <button class="large danger">Supprimer</button>
+        </div>
+        <div class="reinjection">
+          <div class="etiq">Réinjecter dans le prompt</div>
+          <div class="choix">
+            <button>référence</button>
+            <button>source d'édition</button>
+            <button>guide de style</button>
+            <button>jeu de réglages</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ barre d'état ═════════════════════════════════════════════════ -->
+  <footer class="etat">
+    <div class="bloc">Cœur de Pierre <span class="val">148 assets</span> · <span class="val">96 générations</span> · cumulé <span class="val or">4,71 $</span></div>
+    <div class="bloc"><span class="point"></span>OpenRouter · catalogue relu à <span class="val">21:03</span> · <span class="val">47 modèles</span></div>
+    <div class="droite">
+      <div class="bloc">MCP · plafond <span class="val">12 / 40</span> cette session</div>
+      <div class="bloc">Modèle d'exploration imposé <span class="val" style="color:var(--ok)">✓</span></div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   Images bidon. Chaque sprite est une tache symétrique déterministe :
+   même graine → même image, et rien ne vient du réseau. Elles sont
+   volontairement grossières — on juge la mise en page, pas le dessin.
+   ═══════════════════════════════════════════════════════════════════════ */
+const PALETTES = {
+  pierre:['#2b2430','#4a3f4d','#6f6157','#a4937c'],
+  bois  :['#2e1c12','#5c3624','#9a6136','#c9975e'],
+  or    :['#5e3a12','#a8722a','#dc9a3a','#f2cf74'],
+  mousse:['#1e2c21','#3f5c45','#6d9560','#a3c286'],
+  acier :['#1c262e','#3a5f7d','#6b93ad','#a5c3d4'],
+  chair :['#3b2320','#7a4c3c','#b07f60','#dcb18c'],
+  ambre :['#4a2a10','#8f5a1c','#d08a2a','#f0c667'],
+};
+const FORMES = {
+  personnage:(x,y,W,H)=> y>1 && y<H-1 && (y<H*0.55 ? x>=2 : x>=1),
+  objet     :(x,y,W,H)=> y>2 && y<H-2 && x>=1,
+  decor     :(x,y,W,H)=> y>H*0.15,
+  icone     :(x,y,W,H)=> Math.hypot(x-(W/2-0.5),y-(H/2-0.5)) < W*0.42,
+};
+
+function graine(t){
+  let h=1779033703 ^ t.length;
+  for(let i=0;i<t.length;i++){ h=Math.imul(h^t.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; };
+}
+
+function sprite(cle,forme='objet',pal='pierre',W=16,H=16){
+  const r=graine(cle), P=PALETTES[pal]||PALETTES.pierre, dans=FORMES[forme]||FORMES.objet;
+  const moitie=Math.ceil(W/2), plein=[];
+  for(let y=0;y<H;y++){
+    plein[y]=[];
+    for(let x=0;x<moitie;x++){
+      const bord = x===0 || y===0 || y===H-1;
+      const p = bord ? 0.18 : (x===moitie-1 ? 0.9 : 0.66);
+      plein[y][x] = dans(x,y,W,H) && r()<p;
+    }
+    for(let x=0;x<moitie;x++) plein[y][W-1-x]=plein[y][x];
+  }
+  // une couche est un pixel de contour si un voisin orthogonal est vide
+  let out='';
+  for(let y=0;y<H;y++){
+    let x=0;
+    while(x<W){
+      if(!plein[y][x]){ x++; continue; }
+      const contour = !plein[y-1]?.[x] || !plein[y+1]?.[x] || !plein[y][x-1] || !plein[y][x+1];
+      const c = contour ? P[0] : P[1+Math.min(2,Math.floor((1-y/H)*2.2+r()*0.9))];
+      let l=1;
+      while(x+l<W && plein[y][x+l]){
+        const c2b = !plein[y-1]?.[x+l] || !plein[y+1]?.[x+l] || !plein[y][x+l-1] || !plein[y][x+l+1];
+        if(c2b!==contour) break;
+        l++;
+      }
+      out+=`<rect x="${x}" y="${y}" width="${l}" height="1" fill="${c}"/>`;
+      x+=l;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${out}</svg>`;
+}
+
+function planche(cle,pal='acier'){
+  let out='';
+  for(let i=0;i<8;i++){
+    const corps=sprite(cle+'_'+i,'personnage',pal,12,12).replace(/<svg[^>]*>|<\/svg>/g,'');
+    out+=`<g transform="translate(${(i%4)*13+1},${Math.floor(i/4)*13+1})">${corps}</g>`;
+  }
+  return `<svg viewBox="0 0 54 27" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${out}</svg>`;
+}
+
+/* ── contenu de la grille ─────────────────────────────────────────────── */
+const ASSETS=[
+  {n:'nain_forgeron_04', f:'personnage', p:'chair',  d:'64×64', c:'0,067', col:'Personnages', etat:'ok', ouvert:true, etq:['nouveau']},
+  {n:'nain_forgeron_05', f:'personnage', p:'chair',  etat:'encours', pct:62, phase:'quantification'},
+  {n:'nain_forgeron_06', f:'personnage', p:'chair',  etat:'encours', pct:18, phase:'génération'},
+  {n:'nain_forgeron_07', f:'personnage', p:'chair',  etat:'file'},
+  {n:'nain_forgeron_03', f:'personnage', p:'chair',  d:'64×64', c:'0,067', col:'Personnages', etat:'ok', fav:true},
+  {n:'planche_forge_02', f:'decor',      p:'acier',  d:'512×256', c:'0,067', col:'Personnages', etat:'ok', planche:true},
+  {n:'nain_forgeron_04_dos', f:'personnage', p:'chair', d:'64×64', c:'0,067', col:'Personnages', etat:'ok', derive:true},
+  {n:'apprenti_marteau',f:'personnage', p:'mousse', d:'64×64', c:'0,067', col:'Personnages', etat:'ok'},
+  {n:'enclume_lourde',  f:'objet',      p:'acier',  d:'48×48', c:'0,040', col:'Objets', etat:'ok', sel:true},
+  {n:'soufflet_cuir',   f:'objet',      p:'bois',   d:'48×48', c:'0,040', col:'Objets', etat:'ok', sel:true},
+  {n:'pioche_ambre',    f:'objet',      p:'ambre',  d:'48×48', c:'0,040', col:'Objets', etat:'ok', sel:true},
+  {n:'lanterne_veine',  f:'objet',      p:'or',     d:'48×48', c:'0,040', col:'Objets', etat:'ok', fav:true},
+  {n:'coffre_scelle',   f:'objet',      p:'bois',   etat:'echec', raison:'filtre de contenu'},
+  {n:'arche_effondree', f:'decor',      p:'pierre', d:'128×96', c:'0,040', col:'Décors', etat:'ok'},
+  {n:'veine_ambre_mur', f:'decor',      p:'ambre',  d:'128×96', c:'0,040', col:'Décors', etat:'ok'},
+  {n:'brasier_eteint',  f:'decor',      p:'pierre', d:'128×96', c:'0,040', col:'Décors', etat:'ok'},
+  {n:'cadre_dialogue',  f:'icone',      p:'or',     d:'96×32', c:'—',     col:'Interface', etat:'ok', importe:true},
+  {n:'jauge_chaleur',   f:'icone',      p:'ambre',  d:'64×16', c:'0,040', col:'Interface', etat:'ok'},
+  {n:'curseur_repos',   f:'icone',      p:'pierre', d:'32×32', c:'0,040', col:'Interface', etat:'ok'},
+  {n:'rune_scellement', f:'icone',      p:'acier',  d:'32×32', c:'0,040', col:'Interface', etat:'ok'},
+];
+
+const grille=document.getElementById('grille');
+grille.innerHTML=ASSETS.map(a=>{
+  const classes=['carte'];
+  if(a.sel) classes.push('selectionne');
+  if(a.ouvert) classes.push('ouvert');
+  if(a.etat==='encours') classes.push('encours');
+  if(a.etat==='file') classes.push('file','encours');
+  if(a.etat==='echec') classes.push('echec');
+
+  let visuel = a.planche ? planche(a.n,a.p) : sprite(a.n,a.f,a.p);
+  let voile='';
+  if(a.etat==='encours'){
+    voile=`<div class="voile">
+      <div class="chargeur"></div>
+      <div class="pourcent">${a.pct} %</div>
+      <div class="phase">${a.phase}</div>
+      <div class="jauge"><i style="width:${a.pct}%"></i></div>
+    </div>`;
+    visuel='';
+  }
+  if(a.etat==='file'){
+    voile=`<div class="voile"><div class="phase">en file</div></div>`;
+    visuel='';
+  }
+  if(a.etat==='echec'){
+    voile=`<div class="voile">
+      <div class="phase">échec — ${a.raison}</div>
+      <button class="relancer">Relancer</button>
+      <div class="phase" style="font-family:var(--mono);font-size:10px">facturé 0,000 $</div>
+    </div>`;
+    visuel='';
+  }
+
+  const etqs=[];
+  if(a.etq) a.etq.forEach(e=>etqs.push(`<span class="etq or">${e}</span>`));
+  if(a.planche) etqs.push('<span class="etq info">planche · 8</span>');
+  if(a.derive)  etqs.push('<span class="etq">↳ dérivé</span>');
+  if(a.importe) etqs.push('<span class="etq">importé</span>');
+
+  const infos = a.etat==='ok' ? `<div class="infos">
+      <div class="nom">${a.n}</div>
+      <div class="meta">${a.d}<span style="color:var(--bord-fort)">·</span>${a.c==='—'?'importé':a.c+' $'}
+        <span class="col">${a.col}</span></div>
+    </div>` : `<div class="infos"><div class="nom" style="color:var(--texte-3)">${a.n}</div>
+      <div class="meta">${a.etat==='echec'?'aucun fichier':'en cours…'}</div></div>`;
+
+  return `<article class="${classes.join(' ')}">
+    <div class="vignette-grande">${visuel}${voile}
+      <span class="case ${a.sel?'coche':''}">✓</span>
+      ${etqs.length?`<span class="etiquettes">${etqs.join('')}</span>`:''}
+      ${a.fav?'<span class="etoile">★</span>':''}
+    </div>${infos}
+  </article>`;
+}).join('');
+
+/* ── vignettes hors grille (jetons de référence, fiche) ───────────────── */
+document.querySelectorAll('[data-sprite]').forEach(el=>{
+  el.innerHTML=sprite(el.dataset.sprite,el.dataset.forme,el.dataset.pal);
+});
+
+/* ── palette de l'univers ─────────────────────────────────────────────── */
+document.getElementById('palette-univers').innerHTML =
+  ['#0d0b0f','#241d26','#3c3140','#5a4a53','#857567','#c9b79c',
+   '#6b3f2a','#a86a3d','#e8a33d','#f6d67a','#4a6b4f','#7fa86a']
+  .map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
+
+/* ── interactions de démonstration ────────────────────────────────────── */
+document.getElementById('bascule-notes').onclick = () => document.body.classList.toggle('notes');
+
+document.querySelectorAll('[data-replie]').forEach(b=>{
+  b.onclick = () => document.body.classList.toggle('sans-'+b.dataset.replie);
+});
+
+document.querySelectorAll('.densite button').forEach(b=>{
+  b.onclick = () => {
+    document.querySelectorAll('.densite button').forEach(o=>o.classList.remove('actif'));
+    b.classList.add('actif');
+    document.body.classList.toggle('dense', b.dataset.densite==='dense');
+  };
+});
+
+document.querySelectorAll('.segmente').forEach(g=>{
+  g.querySelectorAll('button').forEach(b=>{
+    b.onclick = () => { g.querySelectorAll('button').forEach(o=>o.classList.remove('actif')); b.classList.add('actif'); };
+  });
+});
+
+document.querySelectorAll('.modele:not(.grise)').forEach(m=>{
+  m.onclick = () => {
+    document.querySelectorAll('.modele').forEach(o=>o.classList.remove('actif'));
+    m.classList.add('actif');
+  };
+});
+
+document.querySelectorAll('.bascule').forEach(b=>{ b.onclick = e => { e.stopPropagation(); b.classList.toggle('on'); }; });
+document.querySelectorAll('.jeton-bible').forEach(b=>{ b.onclick = () => b.classList.toggle('on'); });
+</script>
+</body>
+</html>

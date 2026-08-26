@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asset Kitchen — Preview du système de design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* — le châssis : froid, désaturé, muet — */
+  --fond-0:#0B0D10;   /* la table : zone de grille, le plus profond */
+  --fond-1:#111419;   /* panneaux */
+  --fond-2:#171B21;   /* champs, tuiles, cartes */
+  --fond-3:#1E242B;   /* survol, élévation */
+  --bord:#252B33;
+  --bord-fort:#39424C;
+
+  --texte:#E6EAEE;
+  --texte-2:#98A2AC;
+  --texte-3:#5E6771;  /* le grisé : indisponible, avec sa raison */
+
+  /* — le signal : le seul accent — */
+  --signal:#49B3CE;
+  --signal-clair:#8ED8E8;
+  --signal-sourd:rgba(73,179,206,.13);
+  --lumiere:#EAF4F8;  /* sélection, focus — c'est la lampe de la table */
+
+  /* — sémantique, sourde — */
+  --ok:#5FA871;
+  --epingle:#C8A03C;
+  --echec:#CB6C65;
+  --info:#7E8AA0;
+
+  --r-s:2px; --r:3px; --r-l:4px;
+
+  --sans:"Instrument Sans",ui-sans-serif,sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+
+  --damier-a:#191E24; --damier-b:#14181D;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{
+  background:var(--fond-0);color:var(--texte);
+  font-family:var(--sans);font-size:14px;line-height:1.55;
+}
+.page{max-width:1180px;margin:0 auto;padding:0 32px}
+
+/* ————— chrome du preview ————— */
+.entete{padding:64px 0 40px;border-bottom:1px solid var(--bord)}
+.fil{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--texte-3)}
+h1{font-family:var(--serif);font-size:56px;font-weight:400;line-height:1;letter-spacing:-.01em;margin:14px 0 12px}
+.chapeau{color:var(--texte-2);max-width:62ch;font-size:15px}
+.chapeau em{color:var(--texte);font-style:italic}
+
+section{padding:56px 0;border-bottom:1px solid var(--bord)}
+.titre-sec{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.titre-sec h2{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:-.01em}
+.titre-sec .num{font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.14em}
+.sous{color:var(--texte-2);max-width:64ch;margin-bottom:34px;font-size:14px}
+.sous b{color:var(--texte);font-weight:600}
+.sous em{color:var(--texte);font-style:italic}
+
+.etiq{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--texte-3);margin-bottom:10px;display:block}
+.bloc{margin-bottom:38px}
+.note{font-size:12.5px;color:var(--texte-3);margin-top:9px;max-width:70ch;line-height:1.6}
+.note b{color:var(--texte-2);font-weight:500}
+hr.fin{border:0;border-top:1px solid var(--bord);margin:34px 0}
+
+/* ————— 1 · typographie ————— */
+.specimen{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r);padding:28px 30px;overflow-x:auto}
+.spec-hero{font-family:var(--serif);font-size:64px;line-height:1;font-weight:400;letter-spacing:-.015em}
+.spec-hero em{font-style:italic;color:var(--texte-2)}
+.spec-corps{font-size:14.5px;color:var(--texte-2);max-width:68ch}
+.spec-corps b{color:var(--texte);font-weight:600}
+
+table.donnees{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+table.donnees th{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--texte-3);text-align:left;font-weight:500;
+  padding:0 14px 8px 0;border-bottom:1px solid var(--bord);white-space:nowrap
+}
+table.donnees td{padding:7px 14px 7px 0;border-bottom:1px solid var(--fond-2);color:var(--texte-2);white-space:nowrap}
+table.donnees td.nom{color:var(--texte)}
+table.donnees td.n{font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--texte);text-align:right;padding-right:20px}
+table.donnees td.n.faible{color:var(--texte-3)}
+table.donnees tr:last-child td{border-bottom:0}
+
+pre.code{
+  font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--texte-2);
+  background:var(--fond-0);border:1px solid var(--bord);border-radius:var(--r);
+  padding:16px 18px;overflow-x:auto
+}
+.code .k{color:var(--signal)} .code .s{color:#9FBF8E} .code .c{color:var(--texte-3)} .code .v{color:var(--epingle)}
+
+.echelle{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
+.echelle div{flex:1 1 auto;padding:12px 14px;background:var(--fond-1);border-right:1px solid var(--bord);min-width:88px}
+.echelle div:last-child{border-right:0}
+.echelle .px{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);letter-spacing:.08em;display:block;margin-bottom:6px}
+.echelle .ex{color:var(--texte);line-height:1;display:block;white-space:nowrap}
+
+/* ————— 2 · couleur ————— */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
+.sw{background:var(--fond-1)}
+.sw .pave{height:56px;border-bottom:1px solid var(--bord)}
+.sw .txt{padding:9px 11px 12px}
+.sw .nm{font-size:12px;color:var(--texte);line-height:1.3}
+.sw .hx{font-family:var(--mono);font-size:10px;color:var(--texte-3);text-transform:uppercase;letter-spacing:.05em}
+.sw .us{font-size:11px;color:var(--texte-3);margin-top:5px;line-height:1.4}
+
+.rangee{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+.grille2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
+
+/* boutons */
+.btn{
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  border:1px solid transparent;border-radius:var(--r-s);
+  padding:0 14px;height:32px;display:inline-flex;align-items:center;gap:9px;
+  cursor:pointer;transition:background 80ms linear,border-color 80ms linear,color 80ms linear
+}
+.btn .cout{font-family:var(--mono);font-size:11px;font-weight:500;opacity:.72;font-variant-numeric:tabular-nums}
+.btn-1{background:var(--signal);color:#07171C;border-color:var(--signal)}
+.btn-1:hover{background:var(--signal-clair);border-color:var(--signal-clair)}
+.btn-2{background:var(--fond-2);color:var(--texte);border-color:var(--bord-fort)}
+.btn-2:hover{background:var(--fond-3)}
+.btn-f{background:transparent;color:var(--texte-2);border-color:transparent}
+.btn-f:hover{background:var(--fond-2);color:var(--texte)}
+.btn-off{background:var(--fond-2);color:var(--texte-3);border-color:var(--bord);cursor:not-allowed}
+.btn-danger{background:transparent;color:var(--echec);border-color:transparent}
+.btn-danger:hover{background:rgba(203,108,101,.12)}
+.btn-xs{height:24px;padding:0 9px;font-size:11.5px;font-weight:500}
+
+.raison{
+  font-family:var(--mono);font-size:10px;color:var(--texte-3);
+  margin-top:7px;display:flex;align-items:center;gap:7px;line-height:1.4
+}
+.raison::before{content:'';width:8px;height:1px;background:var(--bord-fort);flex:none}
+.raison a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-sourd)}
+
+/* champs */
+.champ-l{font-size:11.5px;color:var(--texte-2);display:block;margin-bottom:6px}
+.champ{
+  width:100%;background:var(--fond-2);border:1px solid var(--bord);border-radius:var(--r-s);
+  color:var(--texte);font-family:var(--sans);font-size:13px;padding:8px 11px;outline:none
+}
+.champ::placeholder{color:var(--texte-3)}
+.champ.focus{border-color:var(--signal);box-shadow:0 0 0 2px var(--signal-sourd)}
+.champ.err{border-color:var(--echec)}
+.champ-err{font-family:var(--mono);font-size:10px;color:var(--echec);margin-top:6px}
+
+/* segmenté */
+.seg{display:inline-flex;border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden;background:var(--fond-2)}
+.seg button{
+  font-family:var(--sans);font-size:11.5px;color:var(--texte-2);background:transparent;border:0;
+  border-right:1px solid var(--bord);padding:0 11px;height:28px;cursor:pointer;white-space:nowrap
+}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--fond-3);color:var(--texte)}
+.seg button.on{background:var(--signal-sourd);color:var(--signal-clair);font-weight:600}
+.seg button.off{color:var(--texte-3);cursor:not-allowed}
+.seg button.off:hover{background:transparent;color:var(--texte-3)}
+.seg.mono button{font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
+
+/* bandeaux */
+.bandeau{
+  display:flex;gap:11px;align-items:flex-start;
+  border:1px solid var(--bord);border-left-width:2px;border-radius:var(--r-s);
+  background:var(--fond-1);padding:11px 14px;font-size:12.5px;color:var(--texte-2)
+}
+.bandeau .t{color:var(--texte);font-weight:600;display:block;margin-bottom:2px;font-size:12.5px}
+.bandeau .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte)}
+.bandeau .pic{width:8px;height:8px;flex:none;margin-top:5px}
+.b-ok{border-left-color:var(--ok)} .b-ok .pic{background:var(--ok)}
+.b-al{border-left-color:var(--epingle)} .b-al .pic{background:var(--epingle)}
+.b-ec{border-left-color:var(--echec)} .b-ec .pic{background:var(--echec)}
+.b-in{border-left-color:var(--info)} .b-in .pic{background:var(--info)}
+
+/* ————— la tuile : l'objet central ————— */
+.tuile{position:relative;background:var(--fond-2);border:1px solid var(--bord);display:flex;flex-direction:column;transition:border-color 80ms linear}
+.tuile:hover{border-color:var(--bord-fort)}
+.tuile-img{
+  aspect-ratio:1/1;display:grid;place-items:center;position:relative;
+  background-color:var(--damier-a);
+  background-image:
+    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%),
+    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%);
+  background-size:12px 12px;background-position:0 0,6px 6px
+}
+.tuile-img svg{width:76%;height:76%;display:block}
+.tuile-pied{padding:6px 7px 7px;border-top:1px solid var(--bord);background:var(--fond-2)}
+.tuile-nom{font-size:11.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.tuile-meta{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);font-variant-numeric:tabular-nums;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tuile.sel{box-shadow:0 0 0 2px var(--lumiere);border-color:var(--lumiere);z-index:2}
+.tuile.fav .tuile-img::after{
+  content:'';position:absolute;top:0;right:0;
+  border-left:13px solid transparent;border-top:13px solid var(--signal)
+}
+.pastille{
+  position:absolute;font-family:var(--mono);font-size:8.5px;line-height:1;
+  letter-spacing:.07em;text-transform:uppercase;padding:3px 4px;
+  background:rgba(11,13,16,.82)
+}
+.p-hg{top:0;left:0}
+.p-bg{bottom:0;left:0}
+.p-agent{color:var(--signal-clair)}
+.p-epingle{color:var(--epingle)}
+.p-orphelin{color:var(--texte-3)}
+/* emplacement — le trou qui attend son image */
+.tuile.vide .tuile-img{background-image:none;background-color:var(--fond-1)}
+.vide-txt{font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums;text-align:center;line-height:1.6}
+.jauge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--bord)}
+.jauge i{display:block;height:100%;background:var(--signal)}
+.tuile.rate{border-color:rgba(203,108,101,.45)}
+.tuile.rate .tuile-img{background-image:none;background-color:rgba(203,108,101,.05)}
+.rate-txt{font-size:11px;color:var(--echec);text-align:center;padding:0 10px;line-height:1.4}
+
+.legende{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:7px 24px;margin-top:18px}
+.legende div{font-size:12px;color:var(--texte-3);display:flex;gap:9px;line-height:1.5}
+.legende b{color:var(--texte-2);font-weight:500;font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;padding-top:3px;white-space:nowrap}
+
+/* ————— 3 · l'écran ————— */
+.ecran{background:var(--fond-0);border:1px solid var(--bord);border-radius:var(--r);overflow-x:auto;overflow-y:hidden}
+.app{min-width:1560px;height:812px;display:grid;grid-template-rows:44px 1fr 26px;background:var(--fond-0)}
+.app-tete{
+  display:flex;align-items:center;gap:26px;padding:0 14px;
+  border-bottom:1px solid var(--bord);background:var(--fond-1)
+}
+.marque{font-family:var(--serif);font-size:17px;color:var(--texte)}
+.onglets{display:flex;gap:2px}
+.onglets a{font-size:12.5px;color:var(--texte-2);text-decoration:none;padding:5px 10px;border-radius:var(--r-s)}
+.onglets a:hover{background:var(--fond-2);color:var(--texte)}
+.onglets a.on{color:var(--texte);background:var(--fond-3);font-weight:600}
+.tete-d{margin-left:auto;display:flex;align-items:center;gap:12px}
+.pastille-projet{
+  display:flex;align-items:center;gap:8px;background:var(--fond-2);border:1px solid var(--bord);
+  border-radius:var(--r-s);padding:4px 9px;font-size:12px;color:var(--texte)
+}
+.pastille-projet .ch{color:var(--texte-3);font-size:10px}
+
+.app-corps{display:grid;grid-template-columns:240px 300px minmax(0,1fr) 380px;overflow:hidden}
+.pan{border-right:1px solid var(--bord);background:var(--fond-1);overflow:hidden;display:flex;flex-direction:column}
+.pan-tete{
+  height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);
+  border-bottom:1px solid var(--bord);flex:none
+}
+.pan-tete .plier{cursor:pointer;color:var(--texte-3);font-size:11px}
+.pan-corps{padding:8px 8px 12px;overflow:auto;flex:1}
+
+/* arbre */
+.arb{display:flex;align-items:center;gap:7px;height:26px;padding:0 7px;border-radius:var(--r-s);cursor:pointer;font-size:12.5px;color:var(--texte-2)}
+.arb:hover{background:var(--fond-2);color:var(--texte)}
+.arb.on{background:var(--fond-3);color:var(--texte);font-weight:600}
+.arb .ic{width:11px;color:var(--texte-3);font-size:9px;flex:none;text-align:center}
+.arb .n{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+.arb.enfant{padding-left:25px;font-size:12px}
+.sep{height:1px;background:var(--bord);margin:9px 5px}
+
+/* réglages */
+.reg-bloc{margin-bottom:16px}
+.reg-l{font-size:11px;color:var(--texte-2);display:block;margin-bottom:7px}
+.modeles{border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden;background:var(--fond-2)}
+.mod{display:flex;align-items:center;gap:8px;padding:7px 9px;border-bottom:1px solid var(--bord);cursor:pointer;font-size:12px;color:var(--texte-2)}
+.mod:last-child{border-bottom:0}
+.mod:hover{background:var(--fond-3)}
+.mod.on{background:var(--signal-sourd);color:var(--texte)}
+.mod .pt{width:5px;height:5px;border-radius:50%;background:var(--bord-fort);flex:none}
+.mod.on .pt{background:var(--signal)}
+.mod .px{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+.mod.off{color:var(--texte-3);cursor:not-allowed;background:transparent}
+.mod.off:hover{background:transparent}
+.mod-raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);padding:0 9px 8px 22px;line-height:1.45;border-bottom:1px solid var(--bord)}
+.part{border:1px solid var(--bord);border-radius:var(--r-s);background:var(--fond-2);padding:9px 10px}
+.part div{display:flex;justify-content:space-between;font-size:11.5px;color:var(--texte-3);padding:3px 0;gap:10px}
+.part div b{color:var(--texte-2);font-weight:400}
+.part div .v{font-family:var(--mono);font-size:10px;color:var(--texte);font-variant-numeric:tabular-nums;white-space:nowrap}
+.replier{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--texte-2);padding:7px 2px;cursor:pointer;border-top:1px solid var(--bord)}
+.replier:hover{color:var(--texte)}
+.replier span:last-child{color:var(--texte-3);font-size:10px}
+
+/* centre */
+.pan-centre{background:var(--fond-0);display:flex;flex-direction:column;overflow:hidden}
+.prompt-zone{padding:14px 16px 12px;border-bottom:1px solid var(--bord);background:var(--fond-1);flex:none}
+.prompt-rang{display:flex;gap:10px;align-items:flex-start}
+.prompt-champ{
+  flex:1;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:var(--r-s);
+  padding:10px 13px;font-size:13.5px;color:var(--texte);line-height:1.5;min-height:62px
+}
+.prompt-champ .curseur{display:inline-block;width:1px;height:15px;background:var(--signal);vertical-align:-2px;margin-left:1px}
+.prompt-pied{display:flex;align-items:center;gap:12px;margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.03em;font-variant-numeric:tabular-nums}
+.prompt-pied .lien{color:var(--texte-2);cursor:pointer}
+.prompt-pied .lien:hover{color:var(--signal-clair)}
+.prompt-pied .sp{color:var(--bord-fort)}
+
+.grille-barre{
+  height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;
+  border-bottom:1px solid var(--bord);background:var(--fond-0);flex:none
+}
+.recherche{
+  background:var(--fond-2);border:1px solid var(--bord);border-radius:var(--r-s);
+  padding:0 10px;height:26px;width:200px;font-size:12px;color:var(--texte-3);display:flex;align-items:center;gap:7px
+}
+.compte{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+.grille{
+  padding:14px 16px 20px;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px;
+  overflow:auto;align-content:start;flex:1
+}
+
+/* fiche */
+.pan-fiche{border-right:0;border-left:1px solid var(--bord);background:var(--fond-1)}
+.fiche-img{
+  aspect-ratio:1/1;margin:12px;background-color:var(--damier-a);
+  background-image:
+    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%),
+    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%);
+  background-size:16px 16px;background-position:0 0,8px 8px;
+  border:1px solid var(--bord);display:grid;place-items:center;flex:none
+}
+.fiche-img svg{width:70%;height:70%}
+.fiche-corps{padding:0 14px 18px}
+.fiche-nom{font-size:15px;color:var(--texte);margin-bottom:2px}
+.fiche-sous{font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.04em;margin-bottom:14px}
+.paire{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fond-2);font-size:12px;gap:10px}
+.paire b{color:var(--texte-3);font-weight:400}
+.paire .v{font-family:var(--mono);font-size:11px;color:var(--texte);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fiche-t{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--texte-3);margin:18px 0 8px
+}
+.chaine{display:flex;flex-direction:column}
+.chaine a{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--texte-2);text-decoration:none;padding:5px 7px;border-radius:var(--r-s)}
+.chaine a:hover{background:var(--fond-2);color:var(--texte)}
+.chaine a.ici{color:var(--texte);background:var(--fond-3)}
+.chaine .fl{color:var(--texte-3);font-size:10px;padding-left:11px;font-family:var(--mono)}
+.recette{border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden}
+.etape{display:flex;align-items:center;gap:9px;padding:6px 9px;font-size:11.5px;color:var(--texte-2);border-bottom:1px solid var(--bord);background:var(--fond-2)}
+.etape:last-child{border-bottom:0}
+.etape .num{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:10px}
+.etape .v{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+
+.app-pied{
+  display:flex;align-items:center;gap:12px;padding:0 14px;
+  border-top:1px solid var(--bord);background:var(--fond-1);
+  font-family:var(--mono);font-size:10px;color:var(--texte-3);
+  letter-spacing:.04em;font-variant-numeric:tabular-nums
+}
+.app-pied .d{margin-left:auto;display:flex;gap:12px;align-items:center}
+.app-pied .sp{color:var(--bord-fort)}
+.app-pied .vert{width:5px;height:5px;border-radius:50%;background:var(--ok);display:inline-block}
+.app-pied b{color:var(--texte-2);font-weight:400}
+
+.pied-page{padding:44px 0 72px;color:var(--texte-3);font-size:12px;line-height:1.7}
+.pied-page code{font-family:var(--mono);font-size:11px;color:var(--texte-2)}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="entete">
+    <div class="fil">docs/design-preview.html · 26 août 2026</div>
+    <h1>Asset&nbsp;Kitchen</h1>
+    <p class="chapeau">
+      Système de design — <em>la table lumineuse</em>. Le châssis est froid, désaturé et muet ;
+      les assets sont la seule chose colorée à l'écran. Chaque décision qui suit sert un objectif
+      unique : que l'œil n'ait nulle part où aller sauf la grille.
+    </p>
+  </header>
+
+  <!-- ═══════════ 1 · TYPOGRAPHIE ═══════════ -->
+  <section>
+    <div class="titre-sec"><span class="num">01</span><h2>Typographie</h2></div>
+    <p class="sous">
+      Trois familles, trois rôles étanches. Instrument Serif ne sort jamais des titres et des états
+      vides ; Instrument Sans porte toute l'interface ; JetBrains Mono porte <b>toute mesure</b> —
+      coût, dimensions, taille de pixel, nombre de références, plafond. Dans ce produit un nombre
+      est toujours un fait mesuré : il ne doit jamais ressembler à un libellé.
+    </p>
+
+    <div class="bloc">
+      <span class="etiq">Display — Instrument Serif · titres d'écran, états vides, ≥ 24 px seulement</span>
+      <div class="specimen">
+        <div class="spec-hero">Asset Kitchen</div>
+        <div class="spec-hero" style="font-size:32px;margin-top:22px">Ta bibliothèque est vide. <em>Écris.</em></div>
+      </div>
+      <p class="note">L'unique endroit où l'outil a un visage. Une bibliothèque vide n'est pas une erreur : c'est une invitation — <b>US-35</b>.</p>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Body — Instrument Sans · toute l'interface, 11 → 15 px</span>
+      <div class="specimen">
+        <p class="spec-corps">
+          Le projet <b>Cœur de Pierre</b> impose une grille de 4 px à tout ce qui rentre. Trois
+          artworks officiels de la famille <b>personnages</b> partent avec cette génération, plus la
+          planche de matières marquée <b>tous</b>. La palette de douze couleurs a été extraite par
+          calcul ; changer la palette la réappliquera à tous les assets du projet sans un seul appel
+          payant, en sautant ceux que tu as réglés à la main.
+        </p>
+      </div>
+      <p class="note">Grotesque légèrement étroit : à densité égale il tient plus de français par ligne que Geist ou Source Sans, et les diacritiques restent nettes à 11 px.</p>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Data — JetBrains Mono · chiffres alignés, tabular-nums, 9,5 → 12 px</span>
+      <div class="specimen">
+        <table class="donnees">
+          <thead><tr>
+            <th>Asset</th><th>Type</th><th>Modèle</th>
+            <th style="text-align:right">Mesuré</th><th style="text-align:right">Grille</th>
+            <th style="text-align:right">Réfs</th><th style="text-align:right">Coût réel</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="nom">gobelin_éclaireur_03</td><td>personnage</td><td>nano-banana-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">4</td><td class="n">$0,067</td></tr>
+            <tr><td class="nom">gobelin_éclaireur_02</td><td>personnage</td><td>nano-banana-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">4</td><td class="n">$0,067</td></tr>
+            <tr><td class="nom">tonneau_cerclé</td><td>objet</td><td>seedream-4</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">3</td><td class="n">$0,031</td></tr>
+            <tr><td class="nom">clé_de_voûte</td><td>objet</td><td>gpt-image-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">2</td><td class="n">$0,113</td></tr>
+            <tr><td class="nom" style="color:var(--texte-3)">— interrompu —</td><td colspan="2" style="color:var(--texte-3)">redémarrage pendant l'appel</td><td class="n faible">—</td><td class="n faible">—</td><td class="n">3</td><td class="n">$0,031</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Virgule décimale, espace fine avant l'unité, colonnes calées à droite. Un appel interrompu garde sa ligne et son coût — <b>US-17</b>, <b>US-24</b>.</p>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Code — JetBrains Mono · payloads MCP, descriptif d'export. Rare.</span>
+      <pre class="code"><span class="c">// outil MCP — generate_asset rend un chemin, pas un identifiant à sonder</span>
+{
+  <span class="k">"projet"</span>:        <span class="s">"Cœur de Pierre"</span>,
+  <span class="k">"type"</span>:          <span class="s">"objet"</span>,
+  <span class="k">"prompt"</span>:        <span class="s">"un tonneau cerclé de fer, vu de trois quarts"</span>,
+  <span class="k">"attente_max_s"</span>: <span class="v">45</span>,
+  <span class="k">"deposer_dans"</span>:  <span class="s">"D:/jeu/assets/props/"</span>
+}
+<span class="c">→ D:/jeu/assets/props/tonneau_cercle.png   64×64 · 4 px · $0,031</span></pre>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Échelle</span>
+      <div class="echelle">
+        <div><span class="px">9,5 MONO</span><span class="ex" style="font-family:var(--mono);font-size:9.5px">64×64</span></div>
+        <div><span class="px">11 MONO</span><span class="ex" style="font-family:var(--mono);font-size:11px">$0,067</span></div>
+        <div><span class="px">11,5</span><span class="ex" style="font-size:11.5px">tonneau</span></div>
+        <div><span class="px">12,5</span><span class="ex" style="font-size:12.5px">Objets</span></div>
+        <div><span class="px">13,5</span><span class="ex" style="font-size:13.5px">le prompt</span></div>
+        <div><span class="px">17 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:17px">Asset Kitchen</span></div>
+        <div><span class="px">30 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:30px">Univers</span></div>
+        <div><span class="px">56 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:56px">Vide</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 2 · COULEUR ═══════════ -->
+  <section>
+    <div class="titre-sec"><span class="num">02</span><h2>Couleur &amp; composants</h2></div>
+    <p class="sous">
+      Approche <b>restrained</b> : un seul accent, des neutres froids, des sémantiques sourdes. Le
+      pixel art de fantasy est saturé et chaud — verts, bruns, ors, pierres. Le châssis est donc
+      froid et désaturé <em>par nécessité optique</em> : c'est ce qui l'empêche d'entrer en
+      concurrence avec ce qu'on lui demande de juger.
+    </p>
+
+    <div class="bloc">
+      <span class="etiq">Le châssis — neutres froids</span>
+      <div class="swatches">
+        <div class="sw"><div class="pave" style="background:#0B0D10"></div><div class="txt"><div class="nm">fond-0 · la table</div><div class="hx">#0B0D10</div><div class="us">Zone de grille. Le plus profond de l'écran.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#111419"></div><div class="txt"><div class="nm">fond-1 · panneaux</div><div class="hx">#111419</div><div class="us">Arbre, réglages, fiche, barres.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#171B21"></div><div class="txt"><div class="nm">fond-2 · surfaces</div><div class="hx">#171B21</div><div class="us">Champs, tuiles, cartes.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#1E242B"></div><div class="txt"><div class="nm">fond-3 · survol</div><div class="hx">#1E242B</div><div class="us">Hover, élément actif de l'arbre.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#252B33"></div><div class="txt"><div class="nm">bord</div><div class="hx">#252B33</div><div class="us">Séparation par défaut, 1 px.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#39424C"></div><div class="txt"><div class="nm">bord-fort</div><div class="hx">#39424C</div><div class="us">Champ de prompt, bouton secondaire.</div></div></div>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Le texte — trois niveaux, dont le grisé · contrastes sur --fond-2</span>
+      <div class="swatches">
+        <div class="sw"><div class="pave" style="background:#E6EAEE"></div><div class="txt"><div class="nm">texte</div><div class="hx">#E6EAEE</div><div class="us">14,3:1 — le contenu.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#98A2AC"></div><div class="txt"><div class="nm">texte-2</div><div class="hx">#98A2AC</div><div class="us">6,7:1 — libellés, secondaire.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#5E6771"></div><div class="txt"><div class="nm">texte-3 · le grisé</div><div class="hx">#5E6771</div><div class="us">3,0:1 — indisponible, méta, raison.</div></div></div>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <span class="etiq">Le signal &amp; la sémantique · contrastes sur --fond-2</span>
+      <div class="swatches">
+        <div class="sw"><div class="pave" style="background:#49B3CE"></div><div class="txt"><div class="nm">signal</div><div class="hx">#49B3CE</div><div class="us">7,1:1 — générer, favori, actif, progression. Le seul accent.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#EAF4F8"></div><div class="txt"><div class="nm">lumière</div><div class="hx">#EAF4F8</div><div class="us">Sélection et focus. C'est la lampe de la table.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#5FA871"></div><div class="txt"><div class="nm">ok</div><div class="hx">#5FA871</div><div class="us">6,0:1 — réussi, en ligne, remis à jour.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#C8A03C"></div><div class="txt"><div class="nm">épinglé</div><div class="hx">#C8A03C</div><div class="us">7,0:1 — réglé à la main, interrompu, catalogue daté.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#CB6C65"></div><div class="txt"><div class="nm">échec</div><div class="hx">#CB6C65</div><div class="us">4,8:1 — appel raté, suppression, refus.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#7E8AA0"></div><div class="txt"><div class="nm">info</div><div class="hx">#7E8AA0</div><div class="us">Hors ligne, repli, information neutre.</div></div></div>
+      </div>
+      <p class="note">Le cyan est choisi <b>contre le contenu</b> : verts, bruns et ors saturent le pixel art de fantasy, un accent chaud s'y noierait. Aucun dégradé, nulle part. Une seule texture dans tout le produit — le damier alpha, qui révèle la transparence : il est fonctionnel, pas décoratif.</p>
+    </div>
+
+    <hr class="fin">
+
+    <div class="grille2">
+      <div>
+        <span class="etiq">Boutons</span>
+        <div class="rangee" style="margin-bottom:26px">
+          <button class="btn btn-1">Générer <span class="cout">$0,067</span></button>
+          <button class="btn btn-2">Réinjecter</button>
+          <button class="btn btn-f">Revenir à l'image brute</button>
+          <button class="btn btn-danger">Supprimer</button>
+        </div>
+
+        <span class="etiq">Le grisé porte sa raison — jamais une infobulle</span>
+        <div style="margin-bottom:15px">
+          <button class="btn btn-off" disabled>Générer</button>
+          <div class="raison">aucune clé OpenRouter — <a href="#">Réglages ›</a></div>
+        </div>
+        <div style="margin-bottom:15px">
+          <button class="btn btn-off" disabled>Exporter la sélection</button>
+          <div class="raison">aucun asset sélectionné</div>
+        </div>
+        <div>
+          <button class="btn btn-off" disabled>Quantifier sur la palette</button>
+          <div class="raison">aucune palette — promeus un artwork officiel</div>
+        </div>
+        <p class="note">La raison est une <b>ligne sœur permanente</b>. Le produit interdit de proposer puis refuser : l'interface doit donc dire pourquoi sans qu'on ait à survoler — <b>US-3</b>, <b>US-8</b>, <b>US-65</b>, <b>US-77</b>.</p>
+      </div>
+
+      <div>
+        <span class="etiq">Champs</span>
+        <div style="margin-bottom:16px">
+          <label class="champ-l">Prompt</label>
+          <input class="champ" value="un tonneau cerclé de fer, vu de trois quarts">
+        </div>
+        <div style="margin-bottom:16px">
+          <label class="champ-l">Taille de pixel du projet</label>
+          <input class="champ focus" value="4">
+        </div>
+        <div style="margin-bottom:26px">
+          <label class="champ-l">Nom du projet</label>
+          <input class="champ err" value="Cœur de Pierre">
+          <div class="champ-err">un projet porte déjà ce nom</div>
+        </div>
+
+        <span class="etiq">Segmentés</span>
+        <div class="rangee">
+          <div class="seg"><button class="on">Personnage</button><button>Objet</button><button>Décor</button><button>Interface</button></div>
+          <div class="seg mono"><button>1</button><button>2</button><button class="on">3</button><button>4</button></div>
+          <div class="seg mono"><button class="on">1×</button><button>2×</button><button class="off">4×</button></div>
+        </div>
+        <p class="note">Le segmenté <b>4×</b> est grisé : à cette largeur de grille il ne tiendrait qu'une tuile par ligne. Même règle partout — grisé, pas caché.</p>
+      </div>
+    </div>
+
+    <hr class="fin">
+
+    <span class="etiq">Bandeaux</span>
+    <div style="display:grid;gap:9px;max-width:780px">
+      <div class="bandeau b-ok"><span class="pic"></span><div><span class="t">Palette réappliquée</span><span class="n">12</span> assets remis à jour, <span class="n">3</span> conservés tels quels — ils sont réglés à la main.</div></div>
+      <div class="bandeau b-al"><span class="pic"></span><div><span class="t">Génération interrompue</span>Coupée par un redémarrage le 26/08 à 14:02. Coût déjà engagé : <span class="n">$0,031</span>. Rien n'a été relancé.</div></div>
+      <div class="bandeau b-ec"><span class="pic"></span><div><span class="t">2 variations sur 4 ont échoué</span>Le fournisseur a refusé : plafond de références dépassé. Les 2 réussites sont en bibliothèque.</div></div>
+      <div class="bandeau b-in"><span class="pic"></span><div><span class="t">Catalogue du 26/08 à 14:02</span>Le fournisseur n'a pas répondu. Bibliothèque, retouche, découpe et export fonctionnent normalement.</div></div>
+    </div>
+
+    <hr class="fin">
+
+    <span class="etiq">La tuile — l'objet central du produit</span>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:10px;max-width:800px">
+      <div class="tuile"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_01</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
+      <div class="tuile fav sel"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_03</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
+      <div class="tuile"><div class="tuile-img" data-sprite="tonneau"><span class="pastille p-hg p-epingle">réglé</span></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cerclé</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
+      <div class="tuile"><div class="tuile-img" data-sprite="cle"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">clé_de_voûte</div><div class="tuile-meta">32×32 · 4 px · $0,113</div></div></div>
+      <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">3 / 4<br>00:12</div><div class="jauge"><i style="width:62%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">tonneau cerclé de fer…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
+      <div class="tuile rate"><div class="tuile-img"><div class="rate-txt">Le fournisseur a refusé la demande</div></div><div class="tuile-pied"><button class="btn btn-2 btn-xs" style="width:100%;justify-content:center">Relancer</button></div></div>
+    </div>
+    <div class="legende">
+      <div><b>coin plein</b><span>favori — la seule marque visuelle, parce que c'est la seule que tu poses toi-même</span></div>
+      <div><b>anneau blanc</b><span>sélectionné — la lampe de la table lumineuse</span></div>
+      <div><b>pastille</b><span>état — réglé, agent, parent supprimé</span></div>
+      <div><b>tuile creuse</b><span>l'emplacement qui attend son image, à sa taille définitive</span></div>
+      <div><b>tuile rouge</b><span>l'échec, à l'endroit exact où l'image devait venir</span></div>
+      <div><b>damier</b><span>la transparence — la seule texture du produit</span></div>
+    </div>
+    <p class="note">Rayon <b>0</b> sur la tuile, 2 px sur le reste du châssis : le bord de la tuile et le bord du sprite sont la même sorte de ligne. La grille se lit comme une planche contact, pas comme un fil d'actualité.</p>
+  </section>
+
+  <!-- ═══════════ 3 · L'ÉCRAN ═══════════ -->
+  <section style="border-bottom:0">
+    <div class="titre-sec"><span class="num">03</span><h2>L'Atelier</h2></div>
+    <p class="sous">
+      L'écran permanent. Arbre · réglages · prompt · grille, plus la fiche en panneau latéral. Ce qui
+      est à l'écran est <b>ce qu'on touche à chaque génération</b> : le sujet, le modèle, le nombre de
+      variations. Tout le reste — format, résolution, prompt négatif, bible, recette — est replié,
+      tenu par un défaut du projet, ou vit dans l'écran Univers.
+    </p>
+
+    <div class="ecran">
+      <div class="app">
+
+        <header class="app-tete">
+          <span class="marque">Asset Kitchen</span>
+          <nav class="onglets">
+            <a href="#" class="on">Atelier</a><a href="#">Univers</a><a href="#">Projets</a><a href="#">Réglages</a>
+          </nav>
+          <div class="tete-d">
+            <div class="pastille-projet">Cœur de Pierre <span class="ch">▾</span></div>
+          </div>
+        </header>
+
+        <div class="app-corps">
+
+          <!-- arbre -->
+          <aside class="pan">
+            <div class="pan-tete"><span>Bibliothèque</span><span class="plier">‹</span></div>
+            <div class="pan-corps">
+              <div class="arb"><span class="ic">▤</span>Tout<span class="n">52</span></div>
+              <div class="arb"><span class="ic">◆</span>Favoris<span class="n">9</span></div>
+              <div class="sep"></div>
+              <div class="arb"><span class="ic">▸</span>Bac à sable<span class="n">5</span></div>
+              <div class="arb on"><span class="ic">▾</span>Cœur de Pierre<span class="n">47</span></div>
+              <div class="arb enfant">Personnages<span class="n">12</span></div>
+              <div class="arb enfant">Objets<span class="n">21</span></div>
+              <div class="arb enfant">Décors<span class="n">9</span></div>
+              <div class="arb enfant">Interface<span class="n">5</span></div>
+              <div class="sep"></div>
+              <div class="arb" style="color:var(--texte-3)"><span class="ic">+</span>Nouveau projet</div>
+            </div>
+          </aside>
+
+          <!-- réglages -->
+          <aside class="pan">
+            <div class="pan-tete"><span>Réglages</span><span class="plier">‹</span></div>
+            <div class="pan-corps">
+
+              <div class="reg-bloc">
+                <span class="reg-l">Sujet</span>
+                <div class="seg" style="display:grid;grid-template-columns:1fr 1fr">
+                  <button style="border-bottom:1px solid var(--bord)">Personnage</button>
+                  <button class="on" style="border-bottom:1px solid var(--bord);border-right:0">Objet</button>
+                  <button>Décor</button>
+                  <button style="border-right:0">Interface</button>
+                </div>
+              </div>
+
+              <div class="reg-bloc">
+                <span class="reg-l">Modèle</span>
+                <div class="modeles">
+                  <div class="mod on"><span class="pt"></span>seedream-4<span class="px">$0,031</span></div>
+                  <div class="mod"><span class="pt"></span>nano-banana-2<span class="px">$0,067</span></div>
+                  <div class="mod off"><span class="pt"></span>gpt-image-2<span class="px">$0,113</span></div>
+                  <div class="mod-raison">2 références maximum — la demande en envoie 3</div>
+                  <div class="mod off"><span class="pt"></span>flux-1.1-pro<span class="px">$0,040</span></div>
+                  <div class="mod-raison" style="border-bottom:0">n'accepte aucune image de référence</div>
+                </div>
+              </div>
+
+              <div class="reg-bloc">
+                <span class="reg-l">Variations</span>
+                <div class="seg mono" style="width:100%">
+                  <button style="flex:1">1</button><button style="flex:1">2</button><button class="on" style="flex:1">3</button><button style="flex:1">4</button>
+                </div>
+              </div>
+
+              <div class="reg-bloc">
+                <span class="reg-l">Ce qui part avec</span>
+                <div class="part">
+                  <div><b>Références</b><span class="v">3</span></div>
+                  <div><b>Famille</b><span class="v">objets + tous</span></div>
+                  <div><b>Palette</b><span class="v">12 couleurs</span></div>
+                  <div><b>Grille imposée</b><span class="v">4 px</span></div>
+                  <div><b>Bible active</b><span class="v">4 / 5 champs</span></div>
+                </div>
+              </div>
+
+              <div class="replier"><span>Prompt négatif</span><span>▾</span></div>
+              <div class="replier"><span>Plus de réglages</span><span>▾</span></div>
+            </div>
+          </aside>
+
+          <!-- centre : prompt + grille -->
+          <main class="pan-centre">
+            <div class="prompt-zone">
+              <div class="prompt-rang">
+                <div class="prompt-champ">un tonneau cerclé de fer, vu de trois quarts, posé sur des dalles<span class="curseur"></span></div>
+                <button class="btn btn-1" style="height:62px;padding:0 20px;flex-direction:column;gap:4px;align-items:center;justify-content:center">
+                  Générer <span class="cout">3 × $0,031</span>
+                </button>
+              </div>
+              <div class="prompt-pied">
+                <span>3 réfs · objets + tous</span><span class="sp">·</span>
+                <span>1K → 4 px</span><span class="sp">·</span>
+                <span>1:1</span><span class="sp">·</span>
+                <span class="lien">réinjecter un asset</span>
+              </div>
+            </div>
+
+            <div class="grille-barre">
+              <div class="recherche"><span style="color:var(--bord-fort)">⌕</span> Chercher…</div>
+              <div class="seg"><button class="on">Tous</button><button>Favoris</button><button>Réglés</button><button>Agent</button></div>
+              <div class="compte">47 assets</div>
+              <div class="seg mono"><button class="on">1×</button><button>2×</button><button>4×</button></div>
+            </div>
+
+            <div class="grille">
+              <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">1 / 3<br>00:08</div><div class="jauge"><i style="width:34%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">un tonneau cerclé…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
+              <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">2 / 3<br>00:08</div><div class="jauge"><i style="width:27%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">un tonneau cerclé…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
+              <div class="tuile rate"><div class="tuile-img"><div class="rate-txt">Refus du fournisseur : contenu filtré</div></div><div class="tuile-pied"><button class="btn btn-2 btn-xs" style="width:100%;justify-content:center">Relancer</button></div></div>
+              <div class="tuile fav sel"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cerclé</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="cle"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">clé_de_voûte</div><div class="tuile-meta">32×32 · 4 px · $0,113</div></div></div>
+
+              <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_03</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="gobelin_bleu"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_02</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">réglé</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="pierre"><span class="pastille p-bg p-orphelin">parent supprimé</span></div><div class="tuile-pied"><div class="tuile-nom">dalle_taillée_02</div><div class="tuile-meta">32×32 · 4 px · $0,000</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="cadre"></div><div class="tuile-pied"><div class="tuile-nom">cadre_bouton_or</div><div class="tuile-meta">48×32 · 4 px · $0,113</div></div></div>
+
+              <div class="tuile"><div class="tuile-img" data-sprite="gobelin"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_01</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_vide</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taillée_01</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="fiole"></div><div class="tuile-pied"><div class="tuile-nom">fiole_vide</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
+              <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">clé_rouillée</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
+            </div>
+          </main>
+
+          <!-- fiche asset -->
+          <aside class="pan pan-fiche">
+            <div class="pan-tete"><span>Fiche asset</span><span class="plier">✕</span></div>
+            <div style="overflow:auto;display:flex;flex-direction:column">
+              <div class="fiche-img" data-sprite="tonneau"></div>
+              <div class="fiche-corps">
+                <div class="fiche-nom">tonneau_cerclé</div>
+                <div class="fiche-sous">26/08/2026 14:31 · objet · Cœur de Pierre › Objets</div>
+
+                <div class="paire"><b>Dimensions mesurées</b><span class="v">64 × 64</span></div>
+                <div class="paire"><b>Taille de pixel</b><span class="v">4 px</span></div>
+                <div class="paire"><b>Modèle</b><span class="v">seedream-4</span></div>
+                <div class="paire"><b>Références envoyées</b><span class="v">3</span></div>
+                <div class="paire"><b>Coût réel</b><span class="v">$0,031</span></div>
+
+                <div class="fiche-t">Filiation</div>
+                <div class="chaine">
+                  <a href="#">planche_tonneaux_a</a>
+                  <span class="fl">└─</span>
+                  <a href="#" class="ici">tonneau_cerclé</a>
+                </div>
+
+                <div class="fiche-t">Recette · rejouable, annulable, nommable</div>
+                <div class="recette">
+                  <div class="etape"><span class="num">1</span>Recadrage<span class="v">auto</span></div>
+                  <div class="etape"><span class="num">2</span>Grille<span class="v">4 px</span></div>
+                  <div class="etape"><span class="num">3</span>Palette<span class="v">12 coul.</span></div>
+                  <div class="etape"><span class="num">4</span>Détourage<span class="v">2 passes</span></div>
+                  <div class="etape"><span class="num">5</span>Bords<span class="v">seuil 128</span></div>
+                </div>
+                <div style="margin-top:9px"><button class="btn btn-f btn-xs" style="padding-left:0">← Revenir à l'image brute</button></div>
+
+                <div class="fiche-t">Actions</div>
+                <div class="rangee">
+                  <button class="btn btn-2 btn-xs">Télécharger</button>
+                  <button class="btn btn-2 btn-xs">Réinjecter</button>
+                  <button class="btn btn-danger btn-xs">Supprimer</button>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+
+        <footer class="app-pied">
+          <b>Cœur de Pierre</b><span class="sp">·</span>47 assets<span class="sp">·</span>$2,41 sur ce projet
+          <div class="d">
+            <span>agent 6 / 40</span><span class="sp">·</span>
+            <span>catalogue 26/08 14:02</span><span class="sp">·</span>
+            <span><span class="vert"></span> en ligne</span>
+          </div>
+        </footer>
+
+      </div>
+    </div>
+
+    <p class="note" style="max-width:none">
+      <b>Ce que l'écran ne montre pas, et pourquoi.</b> Pas de résolution, pas de format, pas de
+      seed, pas de champs de bible dépliés, pas de sélecteur de rôle de réinjection, pas de barre
+      d'état à quatre blocs. Chacun de ces réglages existe dans le produit — il est simplement
+      replié, tenu par un défaut du projet, ou vit dans l'écran Univers. Le panneau réglages ne
+      porte que les trois choses qu'on touche à chaque génération, plus un bloc en lecture seule
+      qui répond d'avance à « qu'est-ce qui part avec ? ».
+    </p>
+  </section>
+
+  <footer class="pied-page">
+    Preview jetable — <code>docs/design-preview.html</code>. Le système fait foi dans
+    <code>docs/DESIGN.md</code>.<br>
+    Les sprites sont dessinés en SVG, 16×16, un rectangle par pixel : ils montrent la grille sans
+    dépendre d'un fichier image.
+  </footer>
+</div>
+
+<script>
+const SPRITES = {
+  gobelin:{
+    pal:{g:'#3F6329',a:'#7FB65B',e:'#141A10',m:'#33421F',b:'#6D4B2B',l:'#3E2D1B',k:'#241A10'},
+    rows:[
+      '................',
+      '.....gggggg.....',
+      '....gaaaaaag....',
+      '.gg.gaaaaaag.gg.',
+      '.ggggaaaaaagggg.',
+      '....gaeaaeag....',
+      '....gaaaaaag....',
+      '.....gammag.....',
+      '......gggg......',
+      '....bbbbbbbb....',
+      '...bbbbbbbbbb...',
+      '..abbbbbbbbbba..',
+      '..abbbbbbbbbba..',
+      '...llll..llll...',
+      '....kkk..kkk....',
+      '................'
+    ]},
+  gobelin_bleu:{
+    pal:{g:'#3F6329',a:'#7FB65B',e:'#141A10',m:'#33421F',b:'#3E5266',l:'#2A3644',k:'#1A222B'},
+    rows:[
+      '................',
+      '.....gggggg.....',
+      '....gaaaaaag....',
+      '.gg.gaaaaaag.gg.',
+      '.ggggaaaaaagggg.',
+      '....gaeaaeag....',
+      '....gaaaaaag....',
+      '.....gammag.....',
+      '......gggg......',
+      '....bbbbbbbb....',
+      '...bbbbbbbbbb...',
+      '..abbbbbbbbbba..',
+      '..abbbbbbbbbba..',
+      '...llll..llll...',
+      '....kkk..kkk....',
+      '................'
+    ]},
+  tonneau:{
+    pal:{d:'#2E1E11',w:'#8A5C33',h:'#A87543',m:'#59636D'},
+    rows:[
+      '................',
+      '....dddddddd....',
+      '...dwwwwwwwwd...',
+      '..dmmmmmmmmmmd..',
+      '..dwhwwwwwwwwd..',
+      '..dwhwwwwwwwwd..',
+      '..dmmmmmmmmmmd..',
+      '..dwhwwwwwwwwd..',
+      '..dwhwwwwwwwwd..',
+      '..dwhwwwwwwwwd..',
+      '..dmmmmmmmmmmd..',
+      '..dwhwwwwwwwwd..',
+      '...dwwwwwwwwd...',
+      '....dddddddd....',
+      '................',
+      '................'
+    ]},
+  cle:{
+    pal:{y:'#8A6417',o:'#E0B647'},
+    rows:[
+      '................',
+      '................',
+      '.....yyyyy......',
+      '....yooooy......',
+      '....yo..oy......',
+      '....yo..oy......',
+      '....yooooy......',
+      '.....yoy........',
+      '.....yoy........',
+      '.....yoy........',
+      '.....yoyy.......',
+      '.....yoy........',
+      '.....yoyyy......',
+      '.....yyy........',
+      '................',
+      '................'
+    ]},
+  fiole:{
+    pal:{k:'#6B4A2B',c:'#2E3942',g:'#93A8B8',r:'#B54A5E'},
+    rows:[
+      '................',
+      '.......kk.......',
+      '.......cc.......',
+      '.......cc.......',
+      '......cggc......',
+      '.....cggggc.....',
+      '....cgrrrrgc....',
+      '....cgrrrrgc....',
+      '....crrrrrrc....',
+      '....crrrrrrc....',
+      '....crrrrrrc....',
+      '.....crrrrc.....',
+      '......cccc......',
+      '................',
+      '................',
+      '................'
+    ]},
+  pierre:{
+    pal:{o:'#2A3138',s:'#6E7883',h:'#8B96A2',p:'#4E5761'},
+    rows:[
+      'oooooooooooooooo',
+      'ossssssssssssspo',
+      'osshhssssshhssso',
+      'ossssssssssssppo',
+      'oooooooooooooooo',
+      'ossssspossssssso',
+      'oshhsspossshhsso',
+      'osssssposssssppo',
+      'oooooooooooooooo',
+      'ossssssssssssspo',
+      'osshhssssshhssso',
+      'ossssssssssssppo',
+      'oooooooooooooooo',
+      'ossssspossssssso',
+      'oshhsspossshhsso',
+      'oooooooooooooooo'
+    ]},
+  cadre:{
+    pal:{f:'#3A2C14',h:'#C79B3E',d:'#7B5C22',g:'#1B2026',s:'#8A6A2C'},
+    rows:[
+      '................',
+      '................',
+      '................',
+      '.ffffffffffffff.',
+      'fhhhhhhhhhhhhhhf',
+      'fhddddddddddddhf',
+      'fhdggggggggggdhf',
+      'fhdggggggggggdhf',
+      'fhdggggggggggdhf',
+      'fhdggggggggggdhf',
+      'fhddddddddddddhf',
+      'fssssssssssssssf',
+      '.ffffffffffffff.',
+      '................',
+      '................',
+      '................'
+    ]}
+};
+
+function svgSprite(nom){
+  const s = SPRITES[nom];
+  if(!s) return '';
+  const w = Math.max.apply(null, s.rows.map(function(r){ return r.length }));
+  const h = s.rows.length;
+  let out = '<svg viewBox="0 0 ' + w + ' ' + h + '" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">';
+  s.rows.forEach(function(row, y){
+    for(let x = 0; x < row.length; x++){
+      const c = row[x];
+      if(c === '.') continue;
+      const col = s.pal[c];
+      if(!col) continue;
+      out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + col + '"/>';
+    }
+  });
+  return out + '</svg>';
+}
+
+document.querySelectorAll('[data-sprite]').forEach(function(el){
+  el.insertAdjacentHTML('afterbegin', svgSprite(el.dataset.sprite));
+});
+</script>
+</body>
+</html>

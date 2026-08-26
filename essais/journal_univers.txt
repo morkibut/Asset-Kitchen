@@ -1,0 +1,92 @@
+Guide de style : 01_goblin.png, 02_nain.png
+6 configurations × 10 appels, 5 en parallele
+
+jet1 · gpt-image-2_low   [openai/gpt-image-2]  refs max 16
+        P1_tonneau     prop    2ref    1024x1024   16.9s  $0.0228
+        P2_epee        prop    2ref    1024x1024   16.1s  $0.0229
+        P3_potion      prop    2ref    1024x1024   15.2s  $0.0228
+        P4_coffre      prop    2ref    1024x1024   19.2s  $0.0228
+        P5_cadre       prop    2ref    1024x1024   18.3s  $0.0229
+        C1_pretresse   perso   2ref    1024x1024   16.0s  $0.0229
+        C2_rat         perso   2ref    1024x1024   17.1s  $0.0229
+        C3_squelette   perso   2ref    1024x1024   18.0s  $0.0229
+        C1b_dos        chaine  3ref    1024x1024   19.0s  $0.0309
+        C1c_marche     chaine  3ref    1024x1024   17.4s  $0.0309
+        == 0.2449 $ · 173 s · 10/10
+jet1 · seedream-4.5   [bytedance-seed/seedream-4.5]  refs max 14
+        P1_tonneau     prop    2ref            ?   28.4s  $0.0400
+        P2_epee        prop    2ref            ?   26.7s  $0.0400
+        P3_potion      prop    2ref            ?   25.3s  $0.0400
+        P4_coffre      prop    2ref            ?   27.6s  $0.0400
+        P5_cadre       prop    2ref            ?   26.8s  $0.0400
+        C1_pretresse   perso   2ref            ?   23.4s  $0.0400
+        C2_rat         perso   2ref            ?   28.4s  $0.0400
+        C3_squelette   perso   2ref            ?   24.7s  $0.0400
+        C1b_dos        chaine  3ref            ?   21.6s  $0.0400
+        C1c_marche     chaine  3ref            ?   31.2s  $0.0400
+        == 0.4000 $ · 264 s · 10/10
+jet2 · seedream-4.5   [bytedance-seed/seedream-4.5]  refs max 14
+        P1_tonneau     prop    2ref            ?   21.0s  $0.0400
+        P2_epee        prop    2ref            ?   26.1s  $0.0400
+        P3_potion      prop    2ref            ?   25.2s  $0.0400
+        P4_coffre      prop    2ref            ?   34.5s  $0.0400
+        P5_cadre       prop    2ref            ?   23.8s  $0.0400
+        C1_pretresse   perso   2ref            ?   29.8s  $0.0400
+        C2_rat         perso   2ref            ?   42.8s  $0.0400
+        C3_squelette   perso   2ref            ?   26.3s  $0.0400
+        C1b_dos        chaine  3ref            ?   22.7s  $0.0400
+        C1c_marche     chaine  3ref            ?   24.3s  $0.0400
+        == 0.4000 $ · 277 s · 10/10
+jet2 · gpt-image-2_low   [openai/gpt-image-2]  refs max 16
+        P1_tonneau     prop    2ref    1024x1024   15.9s  $0.0228
+        P2_epee        prop    2ref    1024x1024   14.3s  $0.0229
+        P3_potion      prop    2ref    1024x1024   16.2s  $0.0228
+        P4_coffre      prop    2ref    1024x1024   20.1s  $0.0228
+        P5_cadre       prop    2ref    1024x1024   17.0s  $0.0229
+        C1_pretresse   perso   2ref    1024x1024   15.9s  $0.0229
+        C2_rat         perso   2ref    1024x1024   16.1s  $0.0229
+        C3_squelette   perso   2ref    1024x1024   21.0s  $0.0229
+        C1b_dos        chaine  3ref    1024x1024   20.1s  $0.0309
+        C1c_marche     chaine  3ref    1024x1024   21.8s  $0.0309
+        == 0.2449 $ · 178 s · 10/10
+jet1 · seedream-5.0-lite   [bytedance-seed/seedream-5-0-lite]  refs max 14
+        P1_tonneau     prop    2ref            ?   40.7s  $0.0350
+        P2_epee        prop    2ref            ?   36.0s  $0.0350
+        P3_potion      prop    2ref            ?   34.6s  $0.0350
+        P4_coffre      prop    2ref            ?   32.7s  $0.0350
+        P5_cadre       prop    2ref            ?   42.7s  $0.0350
+        C1_pretresse   perso   2ref            ?   39.5s  $0.0350
+        C2_rat         perso   2ref            ?   30.6s  $0.0350
+        C3_squelette   perso   2ref            ?   43.5s  $0.0350
+        C1b_dos        chaine  3ref            ?   39.5s  $0.0350
+        C1c_marche     chaine  3ref            ?   35.8s  $0.0350
+        == 0.3500 $ · 376 s · 10/10
+jet2 · seedream-5.0-lite   [bytedance-seed/seedream-5-0-lite]  refs max 14
+        P1_tonneau     prop    2ref            ?   32.8s  $0.0350
+        P2_epee        prop    2ref            ?   38.5s  $0.0350
+        P3_potion      prop    2ref            ?   83.3s  $0.0350
+        P4_coffre      prop    2ref            ?   29.5s  $0.0350
+        P5_cadre       prop    2ref            ?   65.0s  $0.0350
+        C1_pretresse   perso   2ref            ?   47.7s  $0.0350
+        C2_rat         perso   2ref            ?   35.7s  $0.0350
+        C3_squelette   perso   2ref            ?   42.9s  $0.0350
+        C1b_dos        chaine  3ref            ?   35.7s  $0.0350
+        C1c_marche     chaine  3ref            ?   39.8s  $0.0350
+        == 0.3500 $ · 451 s · 10/10
+
+==========================================================================
+RECAPITULATIF
+==========================================================================
+configuration        jet   $ total    $/img    s/img  etat
+--------------------------------------------------------------------------
+gpt-image-2_low        1    0.2449   0.0245     17.3  10/10
+gpt-image-2_low        2    0.2449   0.0245     17.9  10/10
+seedream-4.5           1    0.4000   0.0400     26.4  10/10
+seedream-4.5           2    0.4000   0.0400     27.6  10/10
+seedream-5.0-lite      1    0.3500   0.0350     37.6  10/10
+seedream-5.0-lite      2    0.3500   0.0350     45.1  10/10
+--------------------------------------------------------------------------
+TOTAL                       1.9897
+
+Duree du lot : 7.5 min
+Images       : C:\STOCKAGE\PROJET\_DEV\gag2\essais\resultats_univers

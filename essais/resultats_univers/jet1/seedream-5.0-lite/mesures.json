@@ -1,0 +1,13 @@
+{
+ "jet": 1,
+ "etiquette": "seedream-5.0-lite",
+ "modele": "bytedance-seed/seedream-5-0-lite",
+ "options": {
+  "aspect_ratio": "1:1"
+ },
+ "refs_max": 14,
+ "cout_usd": 0.35,
+ "duree_s": 375.6,
+ "etapes_reussies": 10,
+ "etapes_totales": 10
+}

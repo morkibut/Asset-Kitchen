@@ -1,0 +1,13 @@
+{
+ "jet": 1,
+ "etiquette": "seedream-4.5",
+ "modele": "bytedance-seed/seedream-4.5",
+ "options": {
+  "aspect_ratio": "1:1"
+ },
+ "refs_max": 14,
+ "cout_usd": 0.4,
+ "duree_s": 264.2,
+ "etapes_reussies": 10,
+ "etapes_totales": 10
+}
