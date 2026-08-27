@@ -1011,7 +1011,23 @@ onglet — l'écran ne se dédouble pas, c'est la même matière regardée autre
 **L'îlot est du châssis, pas un objet dessiné.** Cadre de 1 px dans sa teinte, rayon 2 comme la
 carte, fond de la même teinte à 8 % — sous le seuil où l'œil la trouve seule, assez pour
 délimiter. Son titre est le nom du groupe, en mono 10 px comme toute mesure du produit : c'est un
-fait sur ce qu'il contient, pas une légende.
+fait sur ce qu'il contient, pas une légende ; il porte à côté le nombre de cartes, qui est un fait
+de la même sorte.
+
+**Sa teinte n'arrive qu'en T9, et d'ici là il porte celle du châssis** — `--bord-fort` pour le
+cadre, `--fond-1` à 40 % pour le fond. Ce n'est pas un provisoire : la couleur entre avec le reste
+de la couleur (`PLAN.md` T9), et un îlot sans teinte est exactement ce que la phrase ci-dessus
+décrit — du châssis. Écrit le 28 août 2026, en livrant T8.
+
+**Il ne se saisit pas.** On le traverse pour prendre une carte, et pour déplacer le plan. C'est le
+corollaire visuel de « l'îlot *est* le groupe » : ce qui n'a pas d'existence propre n'a pas de
+poignée. Déplacer un rangement, c'est déplacer ce qu'il contient.
+
+**La poignée de largeur est de 10 px, au coin bas-droit, et elle ne paraît qu'au survol de la
+carte.** Même règle que le menu — *le survol révèle* —, même vocabulaire que le châssis : rayon 2,
+cadre `--bord-fort`, fond `--fond-3`, aucune couleur neuve. Elle est à l'échelle du plan comme la
+carte qu'elle règle, et la carte **suit la main pendant qu'on tire** : la largeur est une place
+occupée, et une place ne se juge qu'en la voyant prise.
 
 **Une carte sur la toile est la carte du tableau, sans un pixel de différence.** Même rayon 2,
 même menu au survol, même coin plein pour l'artwork officiel. Une seconde forme de carte ferait
@@ -1244,3 +1260,5 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | La pastille **« agent »** naît pour de vrai, en `--signal-clair`, et passe **avant « réglé »** | Le § La tuile prévoyait le mot depuis l'origine et le § Palette lui réservait déjà sa teinte — « texte de pastille agent » — ; T7 le fait paraître. Une tuile ne porte qu'une pastille, donc l'ordre *est* la décision : devant une image qu'on ne reconnaît pas, « à qui parler » (US-39) se cherche avant « sa recette a été touchée », qui se lit dans la fiche. Aucune couleur neuve — `--signal-clair` est déjà le survol du signal —, et aucune forme : la seule forme reste le coin plein du favori, que l'auteur pose lui-même. |
 | 27/08/2026 | Le **compteur de l'agent est dans le bloc qui le fait relever**, pas dans la barre d'état | US-90 demande « discret », et la barre d'état l'aurait rendu permanent — un chiffre qui ne bouge pas pendant des heures et qu'on cesse de voir, occupant la place d'un fait sur le travail en cours. Il vit donc au-dessus des deux garde-fous, dans une grille de mesures en mono 10 px, la même forme que le bloc « Ce qui part » : *ce qu'on lit au moment où on décide*. **Coût** : il faut ouvrir les Réglages pour le voir, ce qui est exactement le geste qu'on fait quand on se demande s'il faut relever le plafond. |
 | 27/08/2026 | L'interrupteur d'un garde-fou est **celui d'un champ de bible**, repris tel quel | Le produit a déjà un interrupteur — le carré de 26 px, ●/○, `--signal` allumé — et « un second gabarit serait un second endroit où l'oublier ». Un garde-fou est de la même nature qu'un champ de bible actif : *ce que je laisse partir*. Rien de neuf n'entre au châssis pour cette tranche, et c'est le résultat visé. |
+| 28/08/2026 | **L'îlot ne se saisit pas, et il n'a pas encore de teinte** | Ce qui n'a pas d'existence propre n'a pas de poignée : un îlot *est* son groupe, et déplacer un rangement c'est déplacer ce qu'il contient. On le traverse donc pour prendre une carte comme pour déplacer le plan. Sa teinte arrive avec le reste de la couleur en T9 ; d'ici là il porte celle du châssis — `--bord-fort`, `--fond-1` à 40 % —, ce qui est exactement ce que ce document dit qu'il est. **Pas un provisoire, une conséquence.** |
+| 28/08/2026 | La carte **suit la poignée pendant qu'on tire**, et pas seulement au relâchement | Le § Le curseur avait déjà tranché cette forme en T2 — *la valeur suit la main, l'écriture suit le relâchement* — et la moitié « suit la main » manquait ici : on tirait une poignée de 10 px devant une carte immobile, et la place occupée ne se voyait qu'une fois lâchée, c'est-à-dire trop tard pour la juger. Sur une toile, la largeur **est** une place occupée ; une place ne se règle qu'en la voyant prise. **Vu à l'atelier lancé.** |

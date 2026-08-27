@@ -259,6 +259,24 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Rien à la génération. Ce sont les crans du zoom de la grille d'assets, réemployés — un seul vocabulaire de taille dans tout le produit.",
     origine: "toi · défaut 1×",
+    long:
+      "C'est un cran, et il vaut des deux côtés du tableau : dans la grille il décide du nombre de colonnes que la carte occupe, sur la toile il donne sa largeur de départ.\n\nÉlargir une carte sur la toile ne le change pas, et c'est voulu. La largeur libre est une place occupée sur un plan ; la taille est un cran que lit la grille. Une valeur unique pour les deux aurait fait qu'agrandir une carte pour lui donner du poids sur la toile change la grille de tout le monde.",
+  },
+
+  // ── L'Univers — la toile ──────────────────────────────────────────────────
+  //
+  // Une seule entrée, et c'est délibéré : la règle de cet écran tient en une
+  // phrase, et si l'interrupteur qui l'ouvre doit l'expliquer, c'est ici.
+
+  "tableau.vue": {
+    nom: "Vue",
+    ou: "univers",
+    quoi: "Les deux façons de regarder le même tableau : la grille, qui montre tout d'un coup d'œil, et la toile, où une carte se pose où tu veux et garde sa place.",
+    change:
+      "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
+    origine: "toi · la grille au départ · rien ne s'enregistre",
+    long:
+      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\nCtrl+Z défait le dernier geste de composition — déplacer, élargir, classer, déclasser. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
   },
 
   // ── L'Atelier ─────────────────────────────────────────────────────────────

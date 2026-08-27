@@ -5,16 +5,23 @@
 // **à chaque** génération, celui-là tout ce qu'on pose **une fois** et qui
 // s'applique ensuite tout seul.
 //
-// **Deux colonnes, et la grille reste disciplinée.** `380px · 1fr` — l'univers
-// à gauche, le tableau à droite. La largeur de 380 est celle de la fiche asset
-// (`docs/DESIGN.md` § Layout) : c'est la colonne des réglages du produit, et lui
-// en donner une troisième valeur ferait un troisième vocabulaire de largeur.
+// **Deux colonnes en grille, trois en toile.** `380px · 1fr` — l'univers à
+// gauche, le tableau à droite ; `380px · 1fr · 380px` quand la toile est
+// ouverte, la réserve prenant la troisième (`docs/DESIGN.md` § Layout). La
+// largeur de 380 est celle de la fiche asset : c'est *la* colonne de ce qu'on
+// manipule, et lui donner une **valeur** de plus ferait un troisième vocabulaire
+// de largeur. Une **colonne** de plus, non — la réserve reprend la 380 telle
+// quelle, pour ce qu'elle nomme déjà.
+//
+// **Les réglages de l'univers restent visibles pendant qu'on compose**, et c'est
+// la raison d'être de la colonne de gauche : on classe des inspirations en
+// regardant ce qu'elles contraignent.
 //
 // **Aucune rubrique n'y paraît vide sans le dire.** Montrer du cadrage au lieu
 // de servir le geste est le reproche qui a fait écarter la maquette : un univers
 // vide ne montre donc pas des champs morts, il montre ce qu'ils feront.
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   api,
   FAMILLES,
@@ -36,7 +43,8 @@ import {
   Raison,
   Segments,
 } from "./chassis"
-import { Tableau } from "./Tableau"
+import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
+import { Toile, useCrans, type Geste } from "./Toile"
 
 /** Les cibles proposées, reprises de la fiche — 16 pour une tuile, 64 pour un
  *  sprite, 128 pour un décor. Elles se choisissent **ici** depuis T4 : la taille
@@ -49,7 +57,6 @@ export function EcranUnivers({
   univers,
   modeles,
   cartes,
-  groupes,
   onRelire,
   onFermer,
 }: {
@@ -61,7 +68,6 @@ export function EcranUnivers({
    *  ouvert à l'ouverture de cet écran-ci se rebrancherait à chaque aller-retour
    *  vers l'atelier, et le serveur renverrait l'état complet à chaque fois. */
   cartes: Carte[]
-  groupes: string[]
   onRelire: () => void
   onFermer: () => void
 }) {
@@ -75,6 +81,40 @@ export function EcranUnivers({
   // ici, dans la forme des autres — tiret de 8 px, mono 10 px.
   const [refus, setRefus] = useState<string>("")
 
+  // ── Les deux vues, et ce qu'elles partagent ──────────────────────────────
+  //
+  // « L'écran ne se dédouble pas, c'est la même matière regardée autrement » :
+  // le collage est donc branché **ici**, au-dessus des deux. Deux surfaces qui
+  // l'installeraient chacune feraient deux cartes pour un seul Ctrl+V.
+  const [vue, setVue] = useState<Vue>("grille")
+  const collage = useCollage({ onErreur: setRefus, onRafraichir: onRelire })
+
+  // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
+  // la largeur libre. Une seule mesure, trois déclencheurs.
+  const grilleReserve = useRef<HTMLDivElement>(null)
+  const crans = useCrans(grilleReserve, vue)
+
+  // **La pile d'annulation vit ici, donc elle meurt avec l'écran** (`docs/PLAN.md`
+  // T8) : ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
+  // cours. Rien ne la vide au départ, et il ne faut rien écrire pour ça — un
+  // `useRef` est neuf à chaque montage, et une remise à zéro posée en plus
+  // laisserait croire que c'est elle qui tient la promesse. Au retour, ce qui est
+  // sur le disque fait foi.
+  const pile = useRef<Geste[]>([])
+
+  /** Ramener une carte en réserve : ni classée, ni posée, en un seul appel. */
+  const rendre = (identifiant: string) => {
+    const carte = cartes.find((c) => c.identifiant === identifiant)
+    if (!carte || carte.en_reserve) return
+    pile.current.push({
+      carte: identifiant,
+      avant: { groupe: carte.groupe, position: carte.position ?? [] },
+    })
+    void api
+      .reglerCarte(identifiant, { groupe: "", position: [] })
+      .catch((e) => setRefus(e instanceof Refus ? e.message : "la carte n'a pas pu revenir"))
+  }
+
   const realigner = async () => {
     try {
       const fait = await api.realigner()
@@ -86,7 +126,10 @@ export function EcranUnivers({
   }
 
   return (
-    <div className="fixed inset-0 z-10 flex flex-col bg-fond-0">
+    // `data-univers` marque ce que cet écran couvre : c'est ce qui permet à
+    // Ctrl+Z de distinguer un champ qu'on est en train d'écrire *ici* d'un champ
+    // de l'atelier, resté focalisé **derrière** l'écran depuis le démarrage.
+    <div data-univers className="fixed inset-0 z-10 flex flex-col bg-fond-0">
       <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
         <h1 className="font-serif text-[17px] leading-none text-texte">Univers</h1>
         <span className="mesure text-[10px] text-texte-2">
@@ -121,14 +164,40 @@ export function EcranUnivers({
           onErreur={setRefus}
           onRealigner={realigner}
         />
-        <Tableau
-          cartes={cartes}
-          groupes={groupes}
-          choisie={choisie}
-          onChoisir={setChoisir}
-          onErreur={setRefus}
-          onRafraichir={onRelire}
-        />
+        {vue === "grille" ? (
+          <Tableau
+            cartes={cartes}
+            vue={vue}
+            onVue={setVue}
+            choisie={choisie}
+            onChoisir={setChoisir}
+            onErreur={setRefus}
+            collage={collage}
+          />
+        ) : (
+          <>
+            <Toile
+              cartes={cartes}
+              vue={vue}
+              onVue={setVue}
+              choisie={choisie}
+              onChoisir={setChoisir}
+              onErreur={setRefus}
+              collage={collage}
+              crans={crans}
+              pile={pile}
+            />
+            <Reserve
+              cartes={cartes}
+              choisie={choisie}
+              onChoisir={setChoisir}
+              onErreur={setRefus}
+              collage={collage}
+              cadre={grilleReserve}
+              onDepot={rendre}
+            />
+          </>
+        )}
       </div>
     </div>
   )

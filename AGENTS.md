@@ -10,7 +10,7 @@ code le jeu.
 Ce fichier-ci ne dit que **comment travailler dans ce dépôt**. Ce qu'il faut construire vit
 dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 
-## État au 27 août 2026
+## État au 28 août 2026
 
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
@@ -41,12 +41,40 @@ l'asset ; et l'écran Réglages qui tient enfin les trois questions promises dep
 garde-fous, dossiers. **Les quatre-vingt-quatre critères d'acceptation de T1 à T7 sont cochés
 dans `docs/PLAN.md`, et 145 tests de serveur plus 35 d'écran les tiennent.**
 
-**Ce qui vient après n'est plus la V1.** `docs/PLAN.md` porte désormais **T8, la toile**, et
-**T9, les liens et les notes** — le tableau d'inspiration gagne une seconde vue où une carte
-se pose où l'on veut. Elles ne sont pas commencées, et aucune de leurs cases n'est cochée.
+**Ce qui vient après n'est plus la V1, et T8 est finie.** Le tableau d'inspiration a sa
+seconde vue : un plan qu'on déplace et qu'on zoome, des îlots nommés, une réserve à droite.
+**Les quatre-vingt-dix-sept critères d'acceptation de T1 à T8 sont cochés dans
+`docs/PLAN.md`, et 160 tests de serveur plus 55 d'écran les tiennent.** Reste **T9, les
+liens et les notes**, qui n'est pas commencée et dont aucune case n'est cochée.
+
+**La toile ajoute deux champs à la carte, et pas une entité.** `position` et `largeur_libre`
+sont portées par la carte elle-même — un `toile.json` par projet aurait la panne qui a déjà
+valu son refus à `cartes.json`, et sur une toile ce n'est plus une hypothèse mais le régime
+normal. Elles s'écrivent par la route qui portait déjà le groupe : tirer une carte dans un
+îlot écrit sa place **et** son groupe, et deux appels rendraient possible l'état où l'un est
+écrit et l'autre non — la divergence que toute la tranche est là pour empêcher.
+
+**Un îlot n'est écrit nulle part : il est l'étendue de ses membres.** Un îlot *est* le
+groupe, donc il n'a ni identité, ni fichier, ni position à lui, et l'écran le calcule à
+chaque rendu. Il n'existe aucun état où la toile montrerait un rangement que le disque ne dit
+pas, et un îlot vide n'existe pas faute de quoi l'écrire. `docs/ARCHITECTURE.md` §6.5
+annonçait `parentId` + `extent: "parent"` : ce mécanisme *enferme* un enfant dans son parent,
+donc il interdit très exactement « sortir une carte de son îlot ». Le document a été corrigé.
+
+**T8 a été utilisée pour de vrai, et ça a trouvé cinq défauts.** Septième fois de suite.
+Trois de la famille qui revient depuis T5 — *une règle déléguée à autre chose, dont personne
+n'a mesuré le résultat* — dont deux fois le même `ResizeObserver` : la librairie de plan
+cache un nœud dont elle ignore la taille, et elle l'apprend par lui, si bien que **toute la
+toile était invisible dans un onglet d'arrière-plan** ; et son cadrage d'ouverture renonçait
+en silence pour la même raison. Deux d'une famille neuve — *un garde juste dont l'hypothèse
+est fausse* : Ctrl+Z n'annulait rien parce qu'il voyait un champ de saisie actif, celui du
+prompt de l'atelier, resté focalisé **derrière** l'écran Univers qui le couvre. Le tableau
+de `docs/PLAN.md` § T8 dit pour chacun ce qui l'avait rendu invisible.
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
-tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
+tous les défauts.** T8 : cinq de plus, dont trois qu'aucun essai d'écran ne pouvait voir —
+jsdom ne met rien en page, donc un nœud caché par la librairie y est rendu comme un nœud
+visible. T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
 finissent par diverger. T4 : deux, dont un compte de références qui ne se remettait pas à
 jour quand on promouvait un artwork. T5 : trois, tous de mise en page, dont deux de la même
@@ -306,7 +334,7 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/api/univers.py` | les routes de T4 — le tableau et l'univers. Un troisième routeur parce qu'il répond à une troisième question : ce qui contraint une image **avant** qu'elle existe |
 | `atelier/domaine/projet.py` | deux niveaux de rangement, et pas un de plus. `repere()` fait du nom un dossier lisible — `projets/bac-a-sable/` — pour que `donnees/` s'ouvre aussi à la main |
 | `atelier/api/bibliotheque.py` | les routes de T3, montées sous le même préfixe que les autres. Un module à part parce qu'elles répondent à une autre question : `routes.py` dit comment on fabrique une image, celles-ci où elle se range |
-| `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
+| `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs. **Trois dépendances d'exécution depuis T8** : `react`, `react-dom` et `@xyflow/react`, la seule que l'interface ait gagnée depuis l'origine. Elle tient la surface — le plan, le nœud, le glissement —, le produit tient la matière ; `docs/ARCHITECTURE.md` §6.5 fait la part exacte, et le rester est une décision renouvelée, pas un état de fait |
 | `tests/conftest.py` | le double de fournisseur et les trois montages partagés. Il rend de vraies images, de vrais coûts, de vraies dimensions — **aucun test ne coûte un centime** |
 | `tests/test_t1_jalon1.py` | les critères de T1 tenus par les jalons 1 et 2 — clé, catalogue, image téléchargeable, variations concurrentes, emplacements indépendants |
 | `tests/test_t1_jalon3_4.py` | ceux des jalons 3 et 4 — flux d'événements, jauge déterminée, onglet rouvert, repli hors ligne |
@@ -315,7 +343,8 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/composants/BarreOutils.tsx` | les 38 px au-dessus de la grille — chercher, filtrer, agir sur une sélection, et la fente de l'annulation |
 | `interface/src/composants/Decoupe.tsx` | l'écran Découpe — `1fr · 380px`, la planche à gauche, ce qui sortira à droite. Le sujet est l'image, donc c'est elle qui prend la largeur. Il porte sa propre fente de refus, comme l'écran Univers. **Le cadre est mis à l'échelle par calcul** : `aspect-ratio` cède devant `max-height`, et un cadre qui ment décale les rectangles de l'image |
 | `interface/src/composants/Univers.tsx` | l'écran Univers — `380px · 1fr`, l'univers à gauche, le tableau à droite. Il couvre l'atelier, donc **il porte sa propre fente de refus** : une raison envoyée derrière lui serait invisible au moment où elle compte |
-| `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note |
+| `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note. Depuis T8 il porte **une seule grille pour les deux vues** — la réserve n'est pas une grille de plus, c'est celle-ci filtrée sur ce qui n'a encore ni groupe ni place —, et la carte y est un seul composant posé de deux façons |
+| `interface/src/composants/Toile.tsx` | la seconde vue du tableau. **Trois fonctions pures en tiennent toute la géométrie** — où une carte se pose, jusqu'où un îlot s'étend, lequel attrape une carte lâchée — et c'est ce qui les rend vérifiables : `Toile.test.tsx` les éprouve sans monter d'écran, là où jsdom ne pourrait rien mesurer. Chaque nœud porte ses **dimensions données** : la librairie cache ce qu'elle n'a pas mesuré, et elle mesure par un `ResizeObserver` |
 | `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 46 entrées, quatre écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
 | `interface/src/composants/Infobulle.tsx` | le survol qui révèle et le clic qui épingle. Le **libellé est la cible** — aucun glyphe neuf : le nom du réglage devient sa propre poignée, souligné d'un pointillé `--bord-fort`. Rendre un libellé sans clé n'est pas une erreur : rien ne se marque, et c'est le cas d'un réglage que le corpus ne documente pas |
 | `interface/src/composants/EcranReglages.tsx` | les trois questions promises depuis T1, au même endroit (US-96) : la clé, les garde-fous de l'agent, le dossier du jeu. Un panneau posé sur l'atelier et non un quatrième écran plein — il ne couvre pas le travail, il le règle. Le compteur de l'agent y est **à côté du réglage qu'il fait relever** : lu ailleurs, il faudrait revenir |
@@ -324,6 +353,8 @@ chaîne avance : c'est le signe que ça marche.
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
 | `tests/test_t6.py` | les critères de T6 — l'archive et son descriptif, les homonymes numérotés, le rendu et non le brut, le JPEG converti, le refus d'une sélection vide, l'image seule qui se télécharge encore, et le hors ligne prouvé en comptant les appels du double. Ils **ouvrent** l'archive au lieu de la mesurer : `zipfile` la relit, `json` relit le descriptif, Pillow rouvre chaque PNG et confronte ses dimensions à celles annoncées. L'export est le seul geste dont personne ne voit le résultat avant de l'ouvrir ailleurs, une semaine plus tard |
+| `tests/test_t8.py` | les critères de T8 — la place et la largeur libre écrites par la route du groupe, le vide qui efface là où l'absence ne touche pas, la toile relue du disque après l'index effacé, la largeur libre qui ne touche jamais au cran de vignette et réciproquement, et le hors ligne prouvé en comptant les appels du double. Six des treize critères n'y sont pas : ils portent sur ce que l'écran montre ou sur une géométrie que le serveur ne connaît pas |
+| `interface/src/composants/Toile.test.tsx` | la géométrie de la toile, **sans monter d'écran**. Il existe parce que jsdom ne met rien en page : un essai qui tirerait une carte à travers le plan classerait toujours dans le même îlot, celui de la boîte vide qui contient l'origine. Les fonctions sont pures pour cette raison-là |
 | `tests/test_t7.py` | les critères de T7 — les outils appelés **par le serveur**, `call_tool` comme un vrai client, parce qu'appeler les fonctions Python sauterait la validation de schéma et ne prouverait rien du contrat. Plus la vraie poignée de main MCP sur les deux écritures de l'adresse, et deux tests qui **comptent les appels du double** : importer, retoucher, découper et exporter ne demandent jamais le fournisseur |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
@@ -699,6 +730,41 @@ deux vivent côte à côte.
   propre titre demandait. Le document narrait déjà la même erreur sur `ch` — l'avance du
   zéro — et la seconde a survécu au constat de la première, dans la même décision. Une
   largeur de colonne de texte se **remesure** sur l'écran rendu, jamais depuis l'unité.
+
+- **Une librairie cache ce qu'elle n'a pas mesuré, et elle mesure par `ResizeObserver`.**
+  `@xyflow/react` rend `visibility: hidden` tout nœud dont il ignore la taille. Or *un
+  `ResizeObserver` ne livre rien à un onglet qui ne compose pas ses images* — troisième fois
+  que ce piège se referme ici, après le grisé du zoom en T5 et les transitions en T6 : **toute
+  la toile était invisible**, îlots compris, et le rendu HTML était pourtant complet. Aucun
+  essai d'écran ne peut le voir, puisque jsdom ne met rien en page et n'applique donc pas la
+  règle. Un nœud reçoit ses `width` et `height` — elles sont calculées de toute façon, puisque
+  l'étendue d'un îlot est celle de ses membres. Corollaire : le cadrage d'ouverture ne passe
+  pas non plus par `fitView`, qui lit les dimensions du même endroit et renonce en silence
+  quand elles valent zéro. **Une largeur se lit à la demande.**
+- **Un garde peut être juste et son hypothèse fausse.** « Ctrl+Z ne vole pas l'annulation d'un
+  champ de saisie » est une bonne règle ; elle suppose que le champ focalisé est un champ où
+  l'on est en train d'écrire. Faux ici : l'écran Univers **couvre** l'atelier sans le
+  remplacer, et le champ de prompt garde le focus qu'il a pris au démarrage. Le garde voyait
+  donc un `<textarea>` actif à chaque frappe et avalait **toutes** les annulations de la toile,
+  en silence. Un garde qui interroge le focus doit le borner à l'écran qui le pose — d'où
+  `[data-univers]`. On ne tape pas dans un champ qu'un écran recouvre.
+- **Un socle se mesure après ce qu'on y a posé, pas avant.** La disposition d'ouverture cale
+  les îlots neufs sous ce qui occupe déjà la toile. Le socle était mesuré avant de compléter
+  les îlots *entamés* — ceux dont une seule carte avait été placée à la main —, or ceux-là
+  s'étendent vers le bas en accueillant leurs autres membres : les neufs leur rentraient
+  dedans. Invisible au banc, parce qu'il faut un tableau où un même groupe mélange des cartes
+  posées et des cartes qui ne l'ont jamais été — c'est-à-dire un tableau qu'on a vraiment
+  commencé à composer.
+- **Ce qu'on lâche, une référence le retient ; ce qu'on montre, un état le rend.** Un
+  `pointerup` qui suit son `pointermove` d'assez près lit un rappel fabriqué au rendu d'avant,
+  donc une valeur encore nulle — et le geste ne s'écrit pas. La valeur tirée vit donc dans les
+  deux : l'état pour rendre la carte à sa largeur vive, la référence pour la poser. Même geste,
+  deux lecteurs, deux endroits où la lire.
+- **Un glissement synthétisé ne démarre pas une gestion de pointeur de librairie.** Ni le nœud
+  ni le plan ne bougent sous des `PointerEvent` fabriqués, alors que le même dispatch atteint
+  bien la cible et remonte jusqu'à la racine React. Ce qui *est* du produit — un dépôt HTML5,
+  une poignée écrite à la main, une touche — se pilote sans peine. **Ce que la librairie tient
+  se vérifie à la main, et ça se dit** plutôt que de se laisser croire couvert.
 
 ## Règle systématique : comment finir une étape
 

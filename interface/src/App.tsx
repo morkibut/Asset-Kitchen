@@ -160,7 +160,6 @@ export function App() {
   // aller-retour vers l'atelier.
   const [univers, setUnivers] = useState<Univers>(UNIVERS_VIDE)
   const [cartes, setCartes] = useState<Carte[]>([])
-  const [groupes, setGroupes] = useState<string[]>([])
   const [universOuvert, setUniversOuvert] = useState(false)
 
   // ── T5 : la découpe ───────────────────────────────────────────────────────
@@ -348,11 +347,14 @@ export function App() {
   // tableau appartient à son projet, et un tableau tenu en mémoire pendant qu'on
   // change d'univers montrerait les inspirations d'un autre jeu.
 
+  // **Les groupes ne se tiennent pas à côté des cartes.** La route les rend, et
+  // c'est juste au chargement ; mais depuis T8 composer *écrit* un groupe à
+  // chaque glissement, et une liste posée une fois serait fausse avant la fin du
+  // premier geste. Elle se lit donc sur les cartes que l'écran tient — mêmes
+  // cartes, même règle, une seule liste (`Tableau.tsx` § `groupesDe`).
   const relireTableau = useCallback(async () => {
     try {
-      const vu = await api.tableau()
-      setCartes(vu.cartes)
-      setGroupes(vu.groupes)
+      setCartes((await api.tableau()).cartes)
     } catch (erreur) {
       echouer(erreur, "le tableau ne répond pas")
     }
@@ -954,7 +956,6 @@ export function App() {
           univers={univers}
           modeles={modeles}
           cartes={cartes}
-          groupes={groupes}
           onRelire={relireTableau}
           onFermer={() => setUniversOuvert(false)}
         />

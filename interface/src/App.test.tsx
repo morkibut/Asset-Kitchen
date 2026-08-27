@@ -99,6 +99,38 @@ const VIDE = {
   toJSON: () => ({}),
 }
 
+// ── La colonne de la grille, doublée ────────────────────────────────────────
+//
+// Même raison que `doublerLaMesure`, et un cran plus loin. L'aimant de la
+// largeur libre se règle sur la largeur **réelle** d'une colonne de la grille,
+// lue dans `gridTemplateColumns` calculé : un navigateur y rend la valeur
+// utilisée — « 169.5px 169.5px » —, jsdom y rend la règle telle qu'écrite,
+// puisqu'il ne met rien en page. Sans mesure, pas d'aimant, et la toile ne se
+// règle sur rien : c'est le comportement voulu au navigateur comme ici, mais il
+// laisse le plan vide, donc rien à vérifier.
+//
+// On double donc la mesure, et **seulement pour la grille** : `getComputedStyle`
+// sert aussi aux vérifications de visibilité de la bibliothèque d'essai, et lui
+// rendre un objet inventé partout casserait ce qui n'a rien demandé.
+
+function doublerLaGrille(colonne: number) {
+  const vrai = window.getComputedStyle.bind(window)
+  vi.spyOn(window, "getComputedStyle").mockImplementation(((
+    element: Element,
+    pseudo?: string | null,
+  ) => {
+    if (element instanceof HTMLElement && element.dataset.grille !== undefined)
+      return {
+        gridTemplateColumns: `${colonne}px ${colonne}px`,
+        display: "grid",
+        visibility: "visible",
+        opacity: "1",
+        getPropertyValue: () => "",
+      } as unknown as CSSStyleDeclaration
+    return vrai(element, pseudo)
+  }) as typeof window.getComputedStyle)
+}
+
 // ── Ce que le serveur répond ─────────────────────────────────────────────────
 
 const MODELE = {
@@ -271,29 +303,39 @@ const asset = (
   }
 }
 
-const carteImage = (identifiant: string, sur: Partial<Carte> = {}): Carte => ({
-  identifiant,
-  projet: "bac-a-sable",
-  genre: "image",
-  texte: "",
-  statut: "prete",
-  raison: null,
-  source: "",
-  cree_le: 1_787_800_100,
-  groupe: "",
-  note: "",
-  taille: 1,
-  officiel: false,
-  famille: "tous",
-  empreinte: "cafe1234",
-  largeur: 512,
-  hauteur: 512,
-  type_media: "image/png",
-  octets: 4096,
-  montrable: true,
-  artwork: false,
-  ...sur,
-})
+const carteImage = (identifiant: string, sur: Partial<Carte> = {}): Carte => {
+  const carte: Carte = {
+    identifiant,
+    projet: "bac-a-sable",
+    genre: "image",
+    texte: "",
+    statut: "prete",
+    raison: null,
+    source: "",
+    cree_le: 1_787_800_100,
+    groupe: "",
+    note: "",
+    taille: 1,
+    position: null,
+    largeur_libre: null,
+    officiel: false,
+    famille: "tous",
+    empreinte: "cafe1234",
+    largeur: 512,
+    hauteur: 512,
+    type_media: "image/png",
+    octets: 4096,
+    montrable: true,
+    artwork: false,
+    en_reserve: true,
+    ...sur,
+  }
+  // **Recalculé après coup, comme le serveur le calcule** : ni classée, ni
+  // posée. Un essai qui pourrait poser `en_reserve` à côté d'un groupe
+  // fabriquerait un état que le produit ne sait pas produire, et prouverait
+  // alors quelque chose de faux.
+  return { ...carte, en_reserve: !carte.groupe && !carte.position }
+}
 
 /**
  * Le serveur double. Il tient une petite bibliothèque en mémoire, parce que
@@ -477,6 +519,31 @@ function serveurDouble(options: {
       const carte = carteImage(`carte-${etat.cartes.length}`)
       etat.cartes = [carte, ...etat.cartes]
       return rendre({ carte, doublon: null })
+    }
+    // **Régler une carte écrit, puis annonce** — l'ordre du vrai serveur, et
+    // celui dont T1 a montré qu'il ne se devine pas. Une seule route porte le
+    // groupe et la position ensemble : c'est cette route-là que la toile appelle
+    // au relâchement, et deux appels rendraient possible un état où l'un est
+    // écrit et l'autre non.
+    if (url.startsWith("/api/board/") && init?.method === "PUT" && !url.endsWith("/official")) {
+      const identifiant = url.slice("/api/board/".length)
+      const avant = etat.cartes.find((c) => c.identifiant === identifiant)
+      if (!avant) return rendre({})
+      const apres = carteImage(identifiant, {
+        ...avant,
+        ...(corps as Partial<Carte>),
+        // `[]` efface la place, une paire la pose, l'absence ne touche pas —
+        // la convention de `groupe: ""`, appliquée à une paire de nombres.
+        position:
+          corps && "position" in corps
+            ? corps.position.length
+              ? (corps.position as [number, number])
+              : null
+            : avant.position,
+      })
+      etat.cartes = etat.cartes.map((c) => (c.identifiant === identifiant ? apres : c))
+      FluxDouble.ouverts.at(-1)?.emettre("carte", apres)
+      return rendre(apres)
     }
     if (url.startsWith("/api/board")) return rendre({ projet: "bac-a-sable", cartes: etat.cartes, groupes: [] })
     if (url.startsWith("/api/universe")) return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
@@ -1456,5 +1523,188 @@ describe("l'agent, vu de l'atelier", () => {
     await waitFor(() => expect(marque("Dossier du jeu")).toBe(true))
     expect(marque("Plafond de la séance")).toBe(true)
     expect(marque("Modèle d'exploration")).toBe(true)
+  })
+
+  // ── T8 : la toile ─────────────────────────────────────────────────────────
+  //
+  // Six des treize critères de la tranche vivent ici, et pas ailleurs : ils
+  // portent sur ce que l'écran montre, ou sur une pile qui n'existe que dans
+  // l'onglet. La géométrie — où une carte se pose, quel îlot l'attrape — se
+  // vérifie dans `composants/Toile.test.tsx`, où elle est pure ; **jsdom ne met
+  // rien en page, donc tout rectangle y vaut zéro**, et un essai qui tirerait
+  // une carte à travers le plan classerait toujours dans le même îlot.
+
+  /** Un tableau composé : deux groupes peuplés, et deux cartes qui attendent. */
+  const compose = () => [
+    carteImage("m1", { groupe: "marais" }),
+    carteImage("m2", { groupe: "marais", position: [200, 0] }),
+    carteImage("n1", { groupe: "nord" }),
+    carteImage("libre", { position: [600, 400] }),
+    carteImage("r1"),
+    carteImage("r2"),
+  ]
+
+  const ouvrirLaToile = async () => {
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+  }
+
+  /** Les îlots dessinés, par leur nom.
+   *
+   *  Par le marqueur et non par le texte : le nom d'un groupe paraît **aussi**
+   *  au pied de chacune de ses cartes, et chercher « marais » à l'écran en
+   *  trouve donc trois. Ce qu'on veut savoir ici est combien d'îlots la toile a
+   *  dessinés, ce qui est une autre question. */
+  const ilots = () =>
+    [...document.querySelectorAll("[data-ilot]")].map(
+      (e) => (e as HTMLElement).dataset.ilot,
+    )
+
+  test("la toile s'ouvre sur les groupes déjà saisis, et le reste attend en réserve", async () => {
+    // Deux critères d'un coup, parce qu'ils sont les deux moitiés de la même
+    // phrase : « la toile montre ce qui est classé, la réserve contient ce qui
+    // reste à classer ». Aucun geste n'est demandé — les îlots sont là à
+    // l'ouverture, parce qu'un îlot *est* un groupe et que les groupes étaient
+    // déjà écrits.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    const reserve = document.querySelector("[data-reserve]")!
+    expect(reserve).toBeTruthy()
+    expect(await screen.findByText("2 à classer")).toBeTruthy()
+
+    // Les deux îlots portent leur nom et leur compte, et il n'y en a pas un
+    // troisième : la carte posée sans groupe n'en fabrique aucun.
+    await waitFor(() => expect(ilots()).toEqual(["marais", "nord"]))
+    expect(screen.getByText("2 cartes")).toBeTruthy()
+
+    // Les deux cartes à classer sont **dans la réserve**, pas sur le plan.
+    expect(reserve.querySelectorAll("article")).toHaveLength(2)
+  })
+
+  test("l'écran tient trois colonnes, et les réglages de l'univers restent visibles", async () => {
+    // « Les réglages restent visibles pendant qu'on compose, et c'est la raison
+    // d'être de la colonne de gauche » (`docs/ARCHITECTURE.md` §6.2).
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    expect(await screen.findByText("L'univers")).toBeTruthy()
+    expect(screen.getByText("Réserve")).toBeTruthy()
+
+    // **La troisième colonne n'introduit aucune largeur nouvelle** : la réserve
+    // reprend la 380 de la fiche asset, telle quelle. Deux nombres pour la même
+    // sorte de chose feraient un troisième vocabulaire de largeur.
+    const colonnes = [...document.querySelectorAll("aside")].filter((a) =>
+      a.className.includes("w-[380px]"),
+    )
+    expect(colonnes).toHaveLength(2)
+  })
+
+  test("la grille du tableau est inchangée : on y revient telle qu'on l'a laissée", async () => {
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    // La grille montre **tout** le tableau — classé ou non : c'est ce pour quoi
+    // elle est bonne, et la toile ne la remplace pas.
+    const grille = () => screen.getAllByRole("button", { name: "Ouvrir la carte" })
+    await waitFor(() => expect(grille()).toHaveLength(6))
+
+    fireEvent.click(screen.getByRole("button", { name: "toile" }))
+    await waitFor(() => expect(document.querySelector("[data-reserve]")).toBeTruthy())
+
+    fireEvent.click(screen.getByRole("button", { name: "grille" }))
+    await waitFor(() => expect(grille()).toHaveLength(6))
+    expect(document.querySelector("[data-reserve]")).toBeNull()
+  })
+
+  test("coller pendant qu'on compose fait paraître une carte en réserve", async () => {
+    // « Ce qui arrive arrive en réserve — jamais au milieu d'un îlot qu'on vient
+    // de faire. » Rien n'est écrit pour ça : une carte neuve n'a ni groupe ni
+    // place, donc la règle de la réserve la range toute seule.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose() })
+    const flux = await monter(fetchDouble)
+    await ouvrirLaToile()
+    await screen.findByText("2 à classer")
+
+    flux.emettre("carte", carteImage("neuve"))
+    await waitFor(() => expect(screen.getByText("3 à classer")).toBeTruthy())
+
+    // Et rien n'a bougé sur la toile : les deux îlots sont les mêmes.
+    expect(ilots()).toEqual(["marais", "nord"])
+  })
+
+  test("ramener une carte en réserve vide son groupe, et Ctrl+Z le rend", async () => {
+    // Le geste que la pile existe pour rattraper : « hors îlot, pas de groupe »
+    // ferait autrement d'un glissement raté l'effacement d'un nom tapé à la
+    // main. Ctrl+Z n'a **rien côté serveur** — annuler, c'est rappeler la même
+    // route avec la valeur d'avant.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await screen.findByText("2 à classer")
+
+    fireEvent.drop(document.querySelector("[data-reserve]")!, {
+      dataTransfer: {
+        types: ["application/x-carte-atelier"],
+        getData: () => "m1",
+        files: [],
+      },
+    })
+
+    const reglages = () => appels.filter((a) => a.url === "/api/board/m1")
+    await waitFor(() => expect(reglages()).toHaveLength(1))
+    expect(reglages()[0].corps).toEqual({ groupe: "", position: [] })
+    // Elle attend désormais avec les autres, et l'îlot a perdu un membre.
+    await waitFor(() => expect(screen.getByText("3 à classer")).toBeTruthy())
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+    await waitFor(() => expect(reglages()).toHaveLength(2))
+    // « Le champ retrouve sa valeur d'avant » — le nom tapé à la main est rendu.
+    expect(reglages()[1].corps).toEqual({ groupe: "marais", position: [] })
+    await waitFor(() => expect(screen.getByText("2 à classer")).toBeTruthy())
+  })
+
+  test("quitter l'écran vide la pile : au retour, ce qui est sur disque fait foi", async () => {
+    // « Ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
+    // cours » (`docs/PLAN.md` T8). La pile meurt avec l'écran, et un Ctrl+Z au
+    // retour ne défait rien du tout.
+    //
+    // **Il se lit avec celui d'au-dessus, et pas seul.** Celui-ci prouve qu'un
+    // Ctrl+Z après un aller-retour ne défait rien ; c'est le précédent qui
+    // prouve qu'il défait quelque chose quand l'écran n'a pas été quitté. La
+    // différence entre les deux est exactement la vie de l'écran, et aucun des
+    // deux ne dit ça tout seul.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await screen.findByText("2 à classer")
+
+    fireEvent.drop(document.querySelector("[data-reserve]")!, {
+      dataTransfer: {
+        types: ["application/x-carte-atelier"],
+        getData: () => "m1",
+        files: [],
+      },
+    })
+    const reglages = () => appels.filter((a) => a.url === "/api/board/m1")
+    await waitFor(() => expect(reglages()).toHaveLength(1))
+
+    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
+    await ouvrirLaToile()
+    await screen.findByText("3 à classer")
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+    // Rien de plus n'est parti : la pile était vide, et le disque fait foi.
+    await waitFor(() => expect(screen.getByText("3 à classer")).toBeTruthy())
+    expect(reglages()).toHaveLength(1)
   })
 })

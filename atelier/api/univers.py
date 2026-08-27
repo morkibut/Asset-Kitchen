@@ -56,12 +56,23 @@ class CorpsTexte(BaseModel):
 
 
 class CorpsReglage(BaseModel):
-    """Les trois réglages d'une carte, en un seul geste : ils se remplissent
-    ensemble à l'écran, et trois appels feraient trois allers-retours."""
+    """Les réglages d'une carte, en un seul geste : ils se remplissent ensemble à
+    l'écran, et un appel par champ ferait autant d'allers-retours.
+
+    **T8 y ajoute la place et la largeur libre, et n'ouvre pas de route pour
+    elles** : tirer une carte dans un îlot écrit sa position *et* son groupe, et
+    deux appels rendraient possible un état où l'un est écrit et l'autre non.
+
+    `None` ne touche pas ; `position: []` sort la carte du plan, comme
+    `groupe: ""` la sort de son îlot. Ramener une carte en réserve est donc un
+    seul appel qui dit les deux.
+    """
 
     groupe: str | None = None
     note: str | None = None
     taille: Literal[1, 2, 4] | None = None
+    position: list[float] | None = None
+    largeur_libre: int | None = None
     projet: str | None = None
 
 
@@ -201,11 +212,21 @@ async def reessayer(
 async def regler_carte(
     requete: Request, carte: str, corps: CorpsReglage
 ) -> dict[str, Any]:
-    """Grouper, annoter, régler la taille d'affichage (US-47)."""
+    """Grouper, annoter, régler la taille — et poser sur la toile (US-47, T8).
+
+    **Appelée à la fin du geste, jamais pendant** : un glissement écrit une fois,
+    au relâchement, et pas à chaque image.
+    """
     atelier = _atelier(requete)
     identifiant = _projet(requete, corps.projet)
     reglee = atelier.univers.regler(
-        identifiant, carte, groupe=corps.groupe, note=corps.note, taille=corps.taille
+        identifiant,
+        carte,
+        groupe=corps.groupe,
+        note=corps.note,
+        taille=corps.taille,
+        position=corps.position,
+        largeur_libre=corps.largeur_libre,
     )
     return reglee.en_json()
 

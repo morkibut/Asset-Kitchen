@@ -28,11 +28,19 @@ appartient à l'auteur.
 **L'empreinte est celle des octets, et elle sert à une seule chose** : dire
 « tu as déjà celle-ci », avec un lien vers l'existante (US-46). Elle ne bloque
 rien — l'auteur décide, et importer quand même reste possible.
+
+**Sa place sur la toile est sur elle, jamais dans un fichier de mise en page**
+(T8). Un `toile.json` par projet aurait la panne qui a déjà valu son refus à
+`cartes.json` : relire, modifier, réécrire — deux gestes dans le même instant se
+relisent tous les deux avant d'écrire, et le second efface le premier. Sur une
+toile ce n'est plus une hypothèse, c'est le régime normal. La carte porte sa
+place, et un déplacement n'écrit qu'un fichier, le sien.
 """
 
 from __future__ import annotations
 
 import hashlib
+import math
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -66,6 +74,15 @@ FAMILLES = (PERSONNAGES, OBJETS, DECORS, INTERFACE, TOUS)
 # Les trois vignettes du tableau (US-47). Ce sont les mêmes crans que le zoom de
 # la grille d'assets : un seul vocabulaire de taille dans tout le produit.
 TAILLES = (1, 2, 4)
+
+# **La largeur libre n'est pas un cran, et c'est le seul endroit du produit où
+# une mesure est continue** (US-105). Elle est bornée pour la même raison que
+# tout le reste : une valeur qu'aucun écran ne peut rendre n'est pas une
+# décision de l'auteur, c'est une saisie qui a dérapé. En dessous du plancher la
+# carte ne montre plus son image, au-dessus du plafond elle ne tient plus dans
+# un plan qu'on relit.
+LARGEUR_MIN = 48
+LARGEUR_MAX = 2048
 
 
 @dataclass(slots=True)
@@ -101,6 +118,25 @@ class Carte:
     note: str = ""
     taille: int = 1  # 1× · 2× · 4×
 
+    # ── Sa place sur la toile ────────────────────────────────────────────────
+    #
+    # Arrivées en T8, et elles ne se confondent avec rien de ce qui précède.
+    #
+    # **`position` n'est pas `groupe`.** L'un dit *où*, l'autre dit *avec qui*.
+    # Une carte peut avoir l'un sans l'autre : posée sans être classée, c'est le
+    # brouillon — trois images côte à côte pour voir si elles vont ensemble avant
+    # de décider qu'elles font un îlot (US-104). Et classée sans être posée,
+    # c'est toute carte groupée avant T8 : elle se pose dans son îlot à
+    # l'ouverture, et n'écrit la sienne qu'au premier geste.
+    #
+    # **`largeur_libre` n'est pas `taille`.** La taille est le cran 1× / 2× / 4×
+    # que lit la grille ; la largeur libre est une place occupée sur un plan.
+    # Une valeur unique pour les deux aurait fait qu'agrandir une carte sur la
+    # toile change la grille de tout le monde. La hauteur ne se range pas : elle
+    # suit le rapport de l'image.
+    position: tuple[float, float] | None = None
+    largeur_libre: int | None = None
+
     # ── Ce qui en fait un artwork officiel ───────────────────────────────────
     #
     # « Promouvoir reste un geste unique » (US-51) : on pose ces deux champs une
@@ -134,6 +170,19 @@ class Carte:
         bible dit déjà ce qu'un texte aurait à dire."""
         return self.officiel and self.genre == IMAGE and self.statut == PRETE
 
+    @property
+    def en_reserve(self) -> bool:
+        """Ni classée, ni posée — donc elle attend (US-101).
+
+        **La règle de l'écran Toile tient dans cette ligne**, et elle est ici
+        parce qu'il n'y a qu'un endroit où l'écrire : la toile montre ce qui est
+        classé, la réserve contient ce qui reste à classer. Une carte groupée est
+        dans son îlot ; une carte posée sans groupe est sur le plan nu ; ce qui
+        n'a ni l'un ni l'autre n'a nulle part où être, et c'est exactement ce que
+        la réserve contient.
+        """
+        return not self.groupe and self.position is None
+
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
@@ -147,6 +196,10 @@ class Carte:
             "groupe": self.groupe,
             "note": self.note,
             "taille": self.taille,
+            # `null` et non `[0, 0]` : zéro n'est pas une place, c'est l'absence
+            # de place — la même règle que pour une dimension jamais mesurée.
+            "position": list(self.position) if self.position else None,
+            "largeur_libre": self.largeur_libre,
             "officiel": self.officiel,
             "famille": self.famille,
             "empreinte": self.empreinte,
@@ -157,6 +210,7 @@ class Carte:
             # déduits — présents pour l'interface, jamais relus
             "montrable": self.montrable,
             "artwork": self.artwork,
+            "en_reserve": self.en_reserve,
         }
 
     def en_disque(self) -> dict[str, Any]:
@@ -180,6 +234,8 @@ class Carte:
             groupe=d.get("groupe", ""),
             note=d.get("note", ""),
             taille=int(d.get("taille", 1)),
+            position=_position(d.get("position")),
+            largeur_libre=_largeur(d.get("largeur_libre")),
             officiel=bool(d.get("officiel", False)),
             famille=d.get("famille", TOUS),
             empreinte=d.get("empreinte", ""),
@@ -188,6 +244,36 @@ class Carte:
             type_media=d.get("type_media", ""),
             octets=int(d.get("octets", 0)),
         )
+
+
+def _position(brut: Any) -> tuple[float, float] | None:
+    """Une place relue du disque, ou rien.
+
+    **Relire est le moment où un champ ajouté rencontre les fichiers d'avant.**
+    Toutes les cartes écrites de T4 à T7 n'ont pas de `position` : elles en
+    reviennent sans, ce qui est exactement leur état — à classer, donc en
+    réserve. Une valeur abîmée est traitée comme absente plutôt que de faire
+    tomber la lecture du tableau entier : une carte mal placée se replace d'un
+    geste, un tableau qui ne s'ouvre plus ne se répare pas.
+    """
+    if not isinstance(brut, (list, tuple)) or len(brut) != 2:
+        return None
+    try:
+        x, y = float(brut[0]), float(brut[1])
+    except (TypeError, ValueError):
+        return None
+    return (x, y) if math.isfinite(x) and math.isfinite(y) else None
+
+
+def _largeur(brut: Any) -> int | None:
+    """Une largeur libre relue du disque, ou rien — même règle que la place."""
+    if brut is None:
+        return None
+    try:
+        largeur = int(brut)
+    except (TypeError, ValueError):
+        return None
+    return largeur if LARGEUR_MIN <= largeur <= LARGEUR_MAX else None
 
 
 def empreinte_de(octets: bytes) -> str:

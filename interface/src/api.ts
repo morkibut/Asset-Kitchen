@@ -229,6 +229,13 @@ export type Carte = {
   groupe: string
   note: string
   taille: 1 | 2 | 4
+  /** Sa place sur la toile, ou rien — et rien veut dire « pas encore posée ».
+   *  Elle ne se confond pas avec `groupe` : l'un dit *où*, l'autre *avec qui*. */
+  position: [number, number] | null
+  /** La largeur qu'elle occupe sur le plan. **Ce n'est pas `taille`** : la
+   *  taille est le cran que lit la grille, celle-ci est une place occupée sur
+   *  une toile, et aucune des deux ne ment sur l'autre. */
+  largeur_libre: number | null
   officiel: boolean
   famille: Famille
   empreinte: string
@@ -240,6 +247,11 @@ export type Carte = {
   montrable: boolean
   /** Une image promue et arrivée. Un texte n'en est jamais un. */
   artwork: boolean
+  /** Ni classée, ni posée — donc elle attend. **La règle de l'écran Toile tient
+   *  dans ce champ**, et elle est calculée par le serveur pour qu'il n'y ait
+   *  qu'un endroit où elle s'écrive : la toile montre ce qui est classé, la
+   *  réserve contient ce qui reste à classer. */
+  en_reserve: boolean
 }
 
 export type Champ = { nom: string; texte: string; actif: boolean }
@@ -781,9 +793,25 @@ export const api = {
   reessayerCarte: (carte: string) =>
     appeler<Carte>(`/board/${carte}/retry`, { method: "POST" }),
 
+  /** Grouper, annoter, régler la taille — et poser sur la toile.
+   *
+   *  **Une seule route pour les cinq, et T8 n'en a pas ouvert de seconde.**
+   *  Tirer une carte dans un îlot écrit sa position *et* son groupe : deux
+   *  appels rendraient possible un état où l'un est écrit et l'autre non,
+   *  c'est-à-dire la divergence que toute la tranche est là pour empêcher.
+   *
+   *  **Le vide efface, l'absence ne touche pas.** `groupe: ""` sort la carte de
+   *  son îlot, `position: []` la sort du plan ; les deux ensemble la ramènent en
+   *  réserve, en un appel. */
   reglerCarte: (
     carte: string,
-    reglage: { groupe?: string; note?: string; taille?: 1 | 2 | 4 },
+    reglage: {
+      groupe?: string
+      note?: string
+      taille?: 1 | 2 | 4
+      position?: [number, number] | []
+      largeur_libre?: number
+    },
   ) =>
     appeler<Carte>(`/board/${carte}`, {
       method: "PUT",

@@ -30,6 +30,7 @@ correspond plus est aussi périmé qu'un cache absent.
 from __future__ import annotations
 
 import asyncio
+import math
 import uuid
 from dataclasses import replace
 from typing import Any, Iterable
@@ -40,6 +41,8 @@ from atelier.domaine.carte import (
     ECHOUEE,
     FAMILLES,
     IMAGE,
+    LARGEUR_MAX,
+    LARGEUR_MIN,
     PRETE,
     TAILLES,
     TEXTE,
@@ -326,12 +329,25 @@ class ServiceUnivers:
         groupe: str | None = None,
         note: str | None = None,
         taille: int | None = None,
+        position: Iterable[float] | None = None,
+        largeur_libre: int | None = None,
     ) -> Carte:
-        """Grouper, annoter, régler la taille d'affichage (US-47).
+        """Grouper, annoter, régler la taille — et poser sur la toile (US-47, T8).
 
-        Trois réglages en un seul geste parce qu'ils vivent au même endroit à
-        l'écran — la carte — et qu'un appel par champ ferait trois allers-retours
-        pour un formulaire qu'on remplit d'un coup.
+        Cinq réglages en un seul geste parce qu'ils vivent au même endroit —
+        la carte — et qu'un appel par champ ferait autant d'allers-retours pour
+        un formulaire qu'on remplit d'un coup.
+
+        **T8 y ajoute la place, et n'ouvre pas une seconde route pour elle.** La
+        raison est celle d'origine, renforcée : tirer une carte dans un îlot écrit
+        sa position *et* son groupe, et deux appels rendraient possible un état où
+        l'un est écrit et l'autre non — c'est-à-dire très exactement la divergence
+        que toute la tranche est là pour empêcher.
+
+        **`None` ne touche pas, le vide efface.** C'est déjà la convention de
+        `groupe`, où `""` sort la carte de son îlot ; `position=[]` la sort du
+        plan. Ramener une carte en réserve est donc un seul appel qui dit les deux
+        — ni classée, ni posée.
         """
         carte = self.carte(projet, identifiant)
         if groupe is not None:
@@ -344,6 +360,14 @@ class ServiceUnivers:
                     "la taille d'affichage vaut " + ", ".join(f"{t}×" for t in TAILLES)
                 )
             carte.taille = taille
+        if position is not None:
+            carte.position = _place(position)
+        if largeur_libre is not None:
+            if not LARGEUR_MIN <= largeur_libre <= LARGEUR_MAX:
+                raise CarteRefusee(
+                    f"une largeur sur la toile va de {LARGEUR_MIN} à {LARGEUR_MAX} px"
+                )
+            carte.largeur_libre = largeur_libre
         self._sauver(carte)
         return carte
 
@@ -717,6 +741,22 @@ class ServiceUnivers:
             },
         )
         return accorde
+
+
+def _place(brut: Iterable[float]) -> tuple[float, float] | None:
+    """Ce que l'écran envoie comme place, vérifié avant d'être écrit.
+
+    Une liste vide sort la carte du plan — c'est le geste « ramène-la en
+    réserve ». Une paire la pose. **Tout le reste est refusé en le disant**, et
+    l'infini en fait partie : une carte posée à l'infini n'est pas visible, elle
+    est perdue, et le plan n'a aucun bord où la retrouver.
+    """
+    valeurs = [float(v) for v in brut]
+    if not valeurs:
+        return None
+    if len(valeurs) != 2 or not all(math.isfinite(v) for v in valeurs):
+        raise CarteRefusee("une place sur la toile est une paire de coordonnées")
+    return (valeurs[0], valeurs[1])
 
 
 def _quantification_neuve(univers: Univers):

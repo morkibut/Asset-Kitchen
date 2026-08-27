@@ -539,20 +539,38 @@ Ce qu'elle fournit, et qu'on ne réécrit donc pas :
 |---|---|
 | **Le plan** | déplacement et zoom sous une transformation unique, et la conversion écran → plan dont chaque geste a besoin |
 | **Le nœud** | position, glissement, sélection simple et multiple |
-| **L'îlot** | le nœud parent et le confinement d'un enfant dans son parent (`parentId` + `extent: "parent"`) — le mécanisme exact de « tirer dans un îlot » |
 | **Le lien** | le tracé entre deux ancrages, son étiquette, sa pointe, et le fait qu'il suive ses extrémités quand elles bougent |
-| **La poignée** | le redimensionnement d'un nœud, dont la toile ne retient que la largeur |
 
 Ce qu'elle ne fournit pas, et qui reste entièrement au produit :
 
 | | |
 |---|---|
 | **La carte** | un nœud est un emplacement ; ce qu'on y dessine est le composant du produit, sans un pixel d'écart avec la carte de la grille (`docs/DESIGN.md`) |
+| **L'îlot** | il n'est pas un nœud de la librairie mais **une étendue calculée** — voir ci-dessous |
 | **La persistance** | elle ne connaît ni fichier ni route. Ce qui s'écrit, quand, et par quel appel : §5 |
-| **Le classement** | « poser dans un îlot écrit le groupe » est une règle du produit. La librairie signale qu'un nœud a changé de parent ; elle n'en tire aucune conséquence |
+| **Le classement** | « poser dans un îlot écrit le groupe » est une règle du produit, et c'est le produit qui décide dans quel îlot une carte a été lâchée |
+| **La poignée de largeur** | écrite à la main, parce que la toile ne retient que la **largeur** : un redimensionnement à deux dimensions rendrait possible une carte qui ment sur ce qu'elle montre |
 | **L'annulation** | aucune pile fournie. Ctrl+Z, sa pile en mémoire et sa mort à la fermeture sont à écrire |
 | **La réserve** | elle est hors du plan — c'est la grille du tableau. Le glissement qui traverse la frontière est du code maison |
 | **La couleur, la typographie, la forme** | `docs/DESIGN.md` fait foi, y compris pour les six teintes d'îlot |
+
+**L'îlot n'emprunte rien à la librairie, et cette ligne-là a été écrite deux fois.** Le premier jet
+annonçait ici `parentId` + `extent: "parent"` comme « le mécanisme exact de tirer dans un îlot ».
+Il ne l'est pas, et pour deux raisons qui se sont vues à l'exécution le 28 août 2026. La première :
+`extent: "parent"` **enferme** l'enfant dans son parent — il interdit très exactement « sortir une
+carte de son îlot », qui est un critère de la tranche. La seconde est la plus profonde : un nœud
+parent porte sa propre position, donc l'îlot deviendrait une entité, avec un fichier et une place à
+lui — c'est-à-dire le second rangement que §5 refuse dans sa première phrase. **Un îlot est
+l'étendue de ses membres, calculée à chaque rendu**, et il n'existe donc aucun état où l'écran
+montrerait un rangement que le disque ne dit pas.
+
+**Et les dimensions de chaque nœud sont données, jamais laissées à mesurer.** La librairie rend
+`visibility: hidden` un nœud dont elle ne connaît pas la taille, et elle l'apprend par un
+`ResizeObserver` — *qui ne livre rien à un onglet qui ne compose pas ses images* (`AGENTS.md`,
+mesuré en T5). Toute la toile y était invisible. Le produit calcule ces tailles de toute façon,
+puisque l'étendue d'un îlot est celle de ses membres : il les lui donne. Même cause pour le cadrage
+d'ouverture, qui se calcule sur une largeur lue à la demande plutôt que sur celle que la librairie
+croit avoir.
 
 **Le partage est net, et c'est ce qui rend la dépendance acceptable : elle tient la surface, le
 produit tient la matière.** Le jour où elle gênerait, ce qu'on perdrait est du geste — un plan, un
