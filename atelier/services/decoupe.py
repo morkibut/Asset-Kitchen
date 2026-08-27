@@ -197,6 +197,12 @@ class ServiceDecoupe:
                         # calcule sur les générations, dirait alors autre chose
                         # que la somme des tuiles.
                         cout_usd=0.0,
+                        # **Une découpe appartient à qui a demandé la planche**
+                        # (US-39). Couper n'est pas commander : c'est le même
+                        # appel, poursuivi. Sans cette ligne, huit morceaux d'une
+                        # planche de l'agent paraîtraient dans la grille comme
+                        # s'ils venaient de la main de l'auteur.
+                        provenance=planche.provenance,
                         projet=planche.projet,
                         collection=planche.collection,
                         parent=planche.identifiant,

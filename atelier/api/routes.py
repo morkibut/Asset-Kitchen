@@ -151,6 +151,42 @@ async def poser_cle(corps: CorpsCle) -> dict[str, Any]:
         raise ErreurAtelier(str(erreur), ou_aller="reglages") from None
 
 
+class CorpsAgent(BaseModel):
+    """Ce que l'écran Réglages change, **champ par champ** (US-91).
+
+    Tout est optionnel exprès : l'écran bascule un interrupteur à la fois, et
+    envoyer l'objet entier depuis un formulaire partiel effacerait ce qu'un
+    autre onglet vient de poser. Ce qui n'est pas dit ne change pas.
+    """
+
+    plafond_actif: bool | None = None
+    plafond: int | None = Field(None, ge=1)
+    modele_actif: bool | None = None
+    modele: str | None = None
+    options: dict[str, Any] | None = None
+    dossier_jeu: str | None = None
+
+
+@routeur.get("/settings/agent")
+async def lire_agent(requete: Request) -> dict[str, Any]:
+    """Les garde-fous **et** la consommation. Ils se lisent ensemble ou pas du tout."""
+    return _atelier(requete).agent.en_json()
+
+
+@routeur.put("/settings/agent")
+async def regler_agent(requete: Request, corps: CorpsAgent) -> dict[str, Any]:
+    """Prend effet **à l'appel suivant, sans redémarrage** (US-91).
+
+    Rien à faire pour ça : le service relit le fichier à chaque question posée.
+    C'est la même règle que la clé du fournisseur, et pour la même raison — on
+    change d'avis en cours de séance.
+    """
+    atelier = _atelier(requete)
+    champs = {c: v for c, v in corps.model_dump().items() if v is not None}
+    atelier.agent.regler(**champs)
+    return atelier.agent.en_json()
+
+
 # ── Le catalogue ─────────────────────────────────────────────────────────────
 
 
@@ -419,6 +455,40 @@ class CorpsRecette(BaseModel):
 
     def en_recette(self) -> Recette:
         return Recette.depuis_json(self.model_dump())
+
+
+class CorpsImport(BaseModel):
+    """Un fichier local, nommé par son chemin.
+
+    Le chemin plutôt que les octets : l'atelier et l'appelant sont sur la même
+    machine — c'est vrai de l'écran comme de l'agent —, et faire transiter dix
+    mégaoctets en base64 par une boucle locale serait payer un transport qui
+    n'existe pas.
+    """
+
+    chemin: str = Field(min_length=1)
+    projet: str | None = None
+
+
+@routeur.post("/assets/import", status_code=201)
+async def importer_asset(requete: Request, corps: CorpsImport) -> dict[str, Any]:
+    """Un fichier local devient un asset entier (US-82).
+
+    La route existe pour que le geste soit **le même des deux côtés** : l'outil
+    MCP `import_asset` appelle le service, pas cette route, mais l'un et l'autre
+    passent par `ServiceGenerations.importer` — et c'est ça qui garantit que ce
+    que l'agent peut faire, l'écran le peut aussi.
+    """
+    from pathlib import Path
+
+    chemin = Path(corps.chemin).expanduser()
+    if not chemin.is_file():
+        raise ErreurAtelier(f"aucun fichier « {chemin} »")
+    atelier = _atelier(requete)
+    asset = atelier.generations.importer(
+        chemin.read_bytes(), chemin.name, projet=corps.projet
+    )
+    return asset.en_json()
 
 
 @routeur.get("/assets")

@@ -9,6 +9,12 @@ dependencies = [
     "httpx>=0.28",
     "pillow>=11.0",
     "numpy>=2.0",
+    # Le serveur MCP de T7. **Dépendance dure, pas optionnelle** : il tourne dans
+    # le même processus que l'API et se monte sur la même application — c'est ce
+    # qui fait que ce que l'agent produit paraît en direct dans la grille, sans
+    # second écrivain sur le disque ni seconde diffusion. Un montage conditionnel
+    # offrirait un atelier à moitié installé, sans rien en dire.
+    "mcp>=2.1",
 ]
 
 [project.optional-dependencies]

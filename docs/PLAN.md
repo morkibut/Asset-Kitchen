@@ -1,10 +1,15 @@
 # Plan : Asset Kitchen — V1
 
-> **PRD source** : `docs/PRD.md` — 97 user stories.
+> **PRD source** : `docs/PRD.md` — 111 user stories.
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/ARCHITECTURE.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
 > qui fait foi sur l'ordre de construction et sur les critères d'acceptation de la V1.
+>
+> **T8 et T9 sont venues après, le 27 août 2026**, d'une séance d'essai sur le produit tenu :
+> la grille du tableau d'inspiration montre tout d'un coup d'œil et ne permet d'organiser rien.
+> Elles ne s'intercalent nulle part — elles se posent après T7, et aucune tranche de la V1 ne
+> les attend.
 >
 > Ce document fait foi sur **l'ordre**. Il ne nomme ni fichier, ni fonction, ni route :
 > comment c'est construit vit dans `docs/ARCHITECTURE.md`, à quoi ça ressemble dans
@@ -27,7 +32,8 @@ tranche livrable seule.
 | **Asset** | T2 | image brute, recette, dimensions mesurées, label | T3 (projet, collection, favori, filiation), T5 (filiation de découpe) |
 | **Projet** | T3 | nom, rangement, total des coûts, journal | T4 (bible, artworks, palette, réglages par défaut) |
 | **Collection** | T3 | nom, projet optionnel | — |
-| **Carte** | T4 | type, contenu, groupe, note, provenance, taille d'affichage, artwork officiel, famille | — |
+| **Carte** | T4 | type, contenu, groupe, note, provenance, taille d'affichage, artwork officiel, famille | T8 (sa place sur la toile : position, largeur libre) |
+| **Lien** | T9 | les deux objets qu'il joint, son mot, sa pointe | — |
 
 Un objet n'est jamais rétro-adapté en catastrophe : chaque tranche sait déjà ce que la
 suivante viendra y ajouter.
@@ -52,8 +58,10 @@ c'est un critère d'acceptation de chacune d'elles.
 | Tout ce qui ne demande pas le fournisseur fonctionne réseau coupé | T3, reconduit en T4, T5, T6 |
 | Aucune carte graphique mobilisée, aucun modèle **génératif** local — ni ComfyUI, ni LM Studio, ni GPU | T1, et chaque tranche le conserve. **Précisé en T2**, pas contourné : un modèle de *segmentation* sur processeur est admis comme **second** moteur de détourage, facultatif, et grisé avec sa raison quand il n'est pas installé. Le geste courant n'en demande aucun — le détourage par défaut ne charge rien et marche hors ligne |
 | Le MCP n'a aucune logique propre : il appelle les services de l'écran | T7 — et c'est ce qui interdit d'y ajouter un geste que l'écran n'a pas |
+| La toile montre ce qui est classé, la réserve contient ce qui reste à classer | T8 |
+| L'îlot **est** le groupe — hors îlot, pas de groupe, et jamais deux rangements concurrents | T8 |
 
-### Couverture des 97 user stories
+### Couverture des 111 user stories
 
 Chaque user story appartient à une tranche et à une seule.
 
@@ -66,7 +74,9 @@ Chaque user story appartient à une tranche et à une seule.
 | T5 | 72, 73, 74 | 3 |
 | T6 | 76, 77 | 2 |
 | T7 | 39, 78 à 91, 96 | 16 |
-| | **Total** | **97** |
+| T8 | 98 à 107 | 10 |
+| T9 | 108, 109, 110, 111 | 4 |
+| | **Total** | **111** |
 
 Deux user stories s'achèvent dans une tranche postérieure à celle qui les porte, et le
 critère correspondant y est écrit : **US-14** (le total par projet arrive en T3) et
@@ -727,34 +737,203 @@ discret montre sa consommation.
 
 ### Critères d'acceptation
 
-- [ ] Un agent branché sur l'atelier génère un asset dans le bon projet sans aucune intervention, et reçoit un chemin de fichier.
-- [ ] Aucun outil ne réimplémente un geste : chacun appelle le service que l'écran appelle, et ce que l'agent peut faire est exactement ce que l'écran peut faire.
-- [ ] L'univers du projet s'applique à une demande de l'agent sans qu'il ait à répéter le style.
-- [ ] Une attente courte rend l'image directement ; passé le délai fixé par l'appelant, elle rend un identifiant interrogeable.
-- [ ] L'agent liste projets, assets et modèles, importe un fichier local, retouche un asset existant et exporte une sélection.
-- [ ] Au plafond : refus qui nomme le plafond et le moyen de le relever, et aucune invite n'apparaît à l'écran.
-- [ ] Projet inconnu : refus accompagné de la liste des projets existants, et aucun projet n'a été créé.
-- [ ] Sans projet nommé, l'asset atterrit dans le projet ouvert dans l'atelier.
-- [ ] Dossier manquant créé ; fichier de même nom jamais écrasé ; dossier non inscriptible refusé avec le chemin fautif.
-- [ ] Relever le plafond, le désactiver, changer ou lever le modèle imposé prend effet à l'appel suivant, sans redémarrage.
-- [ ] Ce que l'agent produit apparaît en direct dans la grille, marqué de sa provenance.
-- [ ] Le compteur de consommation de l'agent est lisible sans quitter l'atelier.
-- [ ] Clé, garde-fous et dossiers se règlent depuis un seul écran.
+- [x] Un agent branché sur l'atelier génère un asset dans le bon projet sans aucune intervention, et reçoit un chemin de fichier.
+- [x] Aucun outil ne réimplémente un geste : chacun appelle le service que l'écran appelle, et ce que l'agent peut faire est exactement ce que l'écran peut faire.
+- [x] L'univers du projet s'applique à une demande de l'agent sans qu'il ait à répéter le style.
+- [x] Une attente courte rend l'image directement ; passé le délai fixé par l'appelant, elle rend un identifiant interrogeable.
+- [x] L'agent liste projets, assets et modèles, importe un fichier local, retouche un asset existant et exporte une sélection.
+- [x] Au plafond : refus qui nomme le plafond et le moyen de le relever, et aucune invite n'apparaît à l'écran.
+- [x] Projet inconnu : refus accompagné de la liste des projets existants, et aucun projet n'a été créé.
+- [x] Sans projet nommé, l'asset atterrit dans le projet ouvert dans l'atelier.
+- [x] Dossier manquant créé ; fichier de même nom jamais écrasé ; dossier non inscriptible refusé avec le chemin fautif.
+- [x] Relever le plafond, le désactiver, changer ou lever le modèle imposé prend effet à l'appel suivant, sans redémarrage.
+- [x] Ce que l'agent produit apparaît en direct dans la grille, marqué de sa provenance.
+- [x] Le compteur de consommation de l'agent est lisible sans quitter l'atelier.
+- [x] Clé, garde-fous et dossiers se règlent depuis un seul écran.
 
 ### Bloquée par
 
-- **T6** — dernière tranche de l'ordre. En substance, toutes les précédentes : chaque outil est
+- **T6** — dernière tranche de la V1. En substance, toutes les précédentes : chaque outil est
   la façade d'un geste déjà livré — générer en T1, retoucher et détourer en T2, ranger et
   lister en T3, appliquer l'univers en T4, découper en T5, exporter en T6. C'est ce qui fait
   du MCP une tranche courte, et non un second produit.
+
+### Tenue le 27 août 2026
+
+**Treize critères, 25 tests de serveur et 4 d'écran.** Le total du dépôt passe à
+145 tests de serveur et 35 d'écran. **Onze outils, aucun geste neuf** : le seul
+que les services ne savaient pas encore faire était « faire entrer un fichier
+local », et il a été écrit là où il devait l'être — dans `services/`, avec sa
+route HTTP —, pas dans le MCP. C'est la règle 2 de l'architecture appliquée à la
+lettre, et un essai la garde en lisant les **imports** du module : ni
+fournisseur, ni base, ni disque, donc rien qu'il puisse faire seul.
+
+**Un import passe par une génération, et ce n'est pas une formalité.** La
+bibliothèque se reconstruit en parcourant les `generation.json` du disque : un
+asset écrit sans le sien serait perdu au premier effacement de l'index,
+c'est-à-dire à la première évolution du schéma. Cette génération-là n'a appelé
+personne — modèle `import`, coût nul, un emplacement déjà réussi — et elle dit
+d'où venait le fichier, ce qu'aucun autre endroit ne pourrait dire ensuite.
+
+**La consommation de l'agent se lit, elle ne se tient pas.** Le premier jet
+gardait un compteur d'un côté et un total de l'autre ; *un état dérivable ne se
+garde pas en double*, et les deux qui auraient fini par diverger sont précisément
+ceux qui doivent s'accorder — le chiffre du refus opposé à l'agent, et celui que
+l'auteur lit pour décider de relever le plafond. Elle se calcule donc sur les
+générations, seules à connaître ce qui a été demandé **et** ce que les appels
+ratés ont coûté. Reste une réserve courte entre l'autorisation et l'écriture,
+parce qu'il y a un `await` entre les deux : sans elle, deux appels lancés
+ensemble franchiraient tous les deux un plafond qui n'en autorisait qu'un.
+
+**Trois défauts, et les trois trouvés en se branchant pour de vrai.** C'est la
+sixième fois de suite.
+
+| Ce qui n'allait pas | Ce qui l'a rendu invisible |
+|---|---|
+| **Aucun agent ne pouvait se brancher** : `POST /mcp` répondait 405. Le montage posait son préfixe et le SDK posait le sien — l'adresse réelle était `/mcp/mcp` | L'essai vérifiait « ni 404, ni page d'accueil ». 405 n'est ni l'un ni l'autre : un code assez proche du succès pour qu'une assertion négative le laisse passer. Il fallait **ouvrir la session** pour le voir |
+| Corrigé, `/mcp` répondait encore 405 : un montage Starlette ne reconnaît que `/mcp/…`, et le chemin **exact** traversait toute la table pour finir chez les fichiers statiques, qui refusent le `POST` | Même cause seconde : `/mcp/` marchait, et c'est `/mcp` qu'on écrit dans la configuration d'un agent. L'essai ne testait qu'une des deux écritures |
+| L'en-tête `Host` était refusé en `421` pour `localhost` | Protection contre le réattachement DNS, justifiée — mais le défaut du SDK n'autorise qu'`127.0.0.1`, et le lanceur ouvre les deux noms indifféremment |
+
+Les trois appartiennent à la même famille que ceux de T5 et T6, déplacée d'un
+cran : **une règle déléguée à une bibliothèque, dont personne n'a mesuré le
+résultat.** Et la leçon d'essai est neuve : *une assertion négative ne prouve
+rien d'un protocole* — l'essai qui les garde ouvre maintenant une vraie session
+et vérifie les deux écritures de l'adresse.
+
+**Vérifié sur l'atelier lancé, sans un centime** : onze outils listés par un
+vrai client MCP, les 21 assets de la bibliothèque retrouvés avec leurs chemins
+absolus, un projet inconnu refusé avec la liste des trois qui existent, un export
+posé dans un dossier créé au passage — puis **le même export une seconde fois**,
+qui a numéroté au lieu d'écraser —, un dossier fautif nommé dans son refus, et un
+import qui est apparu dans la grille marqué `agent`, en `--signal-clair`, à la
+taille de pixel de son projet. Rien de tout cela n'a demandé le réseau ni un
+appel payant.
+
+**Une contrainte de place, mesurée et assumée.** Le panneau Réglages fait 772 px
+de haut avec ses trois blocs : il tient dans une fenêtre ordinaire et **défile**
+en dessous d'environ 900 px de hauteur utile. La couche porte déjà
+`overflow-y-auto` ; rien n'est inatteignable, et découper les trois questions en
+trois écrans coûterait plus que ce défilement — US-96 demande explicitement un
+seul endroit.
+
+---
+
+## Phase T8 : La toile
+
+**User stories** : US-98, US-99, US-100, US-101, US-102, US-103, US-104, US-105, US-106, US-107
+
+### Ce qu'on livre
+
+Le tableau d'inspiration gagne une **seconde vue**. La grille ne bouge pas — elle reste ce qui
+montre tout d'un coup d'œil, et c'est ce pour quoi elle est bonne — mais un interrupteur ouvre à
+côté d'elle une toile : un plan qu'on déplace et qu'on zoome, où une carte se pose où l'on veut et
+garde sa place.
+
+Ce qui est déjà rangé y est déjà posé. Chaque `groupe` saisi depuis T4 devient un **îlot** nommé,
+avec ses cartes dedans : l'étiquette, qui n'avait jusqu'ici aucune forme, en prend une. Tout le
+reste attend dans la **réserve**, une colonne à droite qui n'est pas une grille de plus — c'est la
+grille du tableau, filtrée sur ce qui n'a pas encore de place. La règle tient en une phrase, et
+c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve
+contient ce qui reste à classer.**
+
+Tirer une carte de la réserve dans un îlot **écrit son groupe** ; l'en sortir le vide. Composer et
+classer sont le même geste, dans les deux sens, et il n'existe aucun état où ce qu'on voit et ce
+qui est écrit divergent. Une carte peut se poser sur la toile nue — elle est alors posée mais non
+classée, et son pied le dit : c'est le brouillon, trois images côte à côte pour voir si elles vont
+ensemble avant de décider qu'elles font un îlot.
+
+Une carte se redimensionne à la poignée, en **largeur libre aimantée** sur les trois crans du
+produit, la hauteur suivant le rapport de l'image. Sur une toile la taille est une place occupée,
+pas un niveau de zoom : elle est distincte du cran 1× / 2× / 4× que lit la grille, et aucune des
+deux ne ment sur l'autre.
+
+Tout geste de composition **s'annule** — déplacer, redimensionner, classer, déclasser. La pile vit
+en mémoire et meurt en quittant l'écran : ce n'est pas de l'historique de projet, c'est le
+rattrapage du geste en cours. Elle existe parce que « hors îlot, pas de groupe » ferait autrement
+d'un glissement raté l'effacement d'un nom tapé à la main.
+
+Coller pendant qu'on compose reste possible, et ce qui arrive arrive **en réserve** — jamais au
+milieu d'un îlot qu'on vient de faire.
+
+C'est la seule tranche du produit qui ajoute une **dépendance** à l'interface : le plan, la
+transformation, la sélection et le confinement dans un îlot ne s'écrivent pas à la main. Les
+cartes, elles, restent les composants du produit — la librairie fournit la surface, jamais la
+forme. Le choix appartient à `ARCHITECTURE.md` ; il est noté ici parce qu'il est le seul de son
+espèce dans tout le plan.
+
+### Critères d'acceptation
+
+- [ ] La grille du tableau est inchangée : mêmes cartes, même menu au survol, mêmes crans de vignette.
+- [ ] Un projet dont les cartes portent trois groupes ouvre la toile sur trois îlots nommés et peuplés, sans qu'aucun geste ne soit demandé.
+- [ ] Une carte sans groupe n'est pas sur la toile : elle attend en réserve.
+- [ ] Tirer une carte de la réserve dans un îlot écrit son groupe, et la grille le montre aussitôt.
+- [ ] Sortir une carte de son îlot vide son groupe ; la ramener en réserve fait la même chose.
+- [ ] Une carte posée sur la toile hors de tout îlot reste posée et sans groupe : l'état existe, et son pied le dit.
+- [ ] Fermer l'écran et le rouvrir rend la toile telle qu'elle a été laissée — positions, largeurs, îlots.
+- [ ] Coller une image pendant qu'on compose fait apparaître une carte en réserve, et rien ne bouge sur la toile.
+- [ ] Ctrl+Z annule le dernier geste de composition, déclassement compris, et le champ retrouve sa valeur d'avant.
+- [ ] Quitter l'écran vide la pile d'annulation : au retour, ce qui est sur disque fait foi.
+- [ ] Redimensionner une carte sur la toile ne change pas son cran de vignette dans la grille, et réciproquement.
+- [ ] L'écran tient en trois colonnes sans qu'aucune n'écrase les autres, et les réglages de l'univers restent visibles pendant qu'on compose.
+- [ ] Réseau coupé : la toile, la réserve et le classement fonctionnent entièrement.
+
+### Bloquée par
+
+- **T4** — la toile ne fait que donner une forme à ce que T4 a créé : la carte, son groupe, sa
+  note. Sans tableau d'inspiration, il n'y a rien à poser et rien à classer.
+
+---
+
+## Phase T9 : Les liens et les notes
+
+**User stories** : US-108, US-109, US-110, US-111
+
+### Ce qu'on livre
+
+Ce que T8 permet de ranger, T9 permet de le **dire**. On tire d'un objet à un autre — carte, note
+ou îlot — et un lien paraît : un trait nu, sans direction ni texte. Il reçoit après, si le rapport
+mérite un mot, une étiquette courte et une pointe de flèche quand le sens compte. Le défaut est
+muet, l'exception s'exprime. Un lien dont une extrémité disparaît disparaît avec elle : un trait
+vers rien ne représente rien, et il n'y a pas de fantôme utile à montrer.
+
+Le lien est le seul objet vraiment neuf du modèle depuis T4. Il vit dans le dossier du projet, un
+fichier par lien, comme une carte.
+
+Une **note** se pose à même la toile, sans passer par le collage : c'est la carte texte de T4,
+créée là où elle s'applique plutôt qu'au bout d'une liste.
+
+Enfin la couleur entre, et elle entre **bornée**. Six teintes sourdes, choisies pour ne ressembler
+à aucune des quatre couleurs qui portent déjà un sens dans le produit, et aucun code hexadécimal à
+saisir. Un îlot en prend une, une note aussi. Rien d'autre n'est colorable : colorier chaque carte
+reconstruirait un second rangement, invisible dans la grille et concurrent du groupe — ce que la
+tranche précédente a justement écarté.
+
+### Critères d'acceptation
+
+- [ ] Un lien se trace d'une carte à une autre en un seul geste, et suit les deux objets quand on les déplace.
+- [ ] Un lien relie aussi bien une note à un îlot que deux cartes.
+- [ ] Un lien naît sans mot ni pointe ; l'un et l'autre s'ajoutent après coup, et se retirent.
+- [ ] Supprimer une carte fait disparaître les liens qui y aboutissaient, sans laisser de trait orphelin ni d'entrée morte sur le disque.
+- [ ] Une note se crée directement sur la toile, et c'est une carte texte : on la retrouve dans la grille.
+- [ ] Les six teintes sont les seules disponibles, et aucune ne se confond avec une couleur sémantique du produit — vérifié à côté d'une carte en échec.
+- [ ] Une carte image ne porte aucune couleur d'organisation.
+- [ ] Ctrl+Z annule la création comme la coupe d'un lien.
+- [ ] Réseau coupé : tout de cette tranche fonctionne.
+
+### Bloquée par
+
+- **T8** — un lien joint des objets posés, et une couleur colore un îlot. Sans toile, il n'y a ni
+  position, ni îlot, ni rien à relier.
 
 ---
 
 ## Ce que ce plan ne couvre pas
 
-La V1 s'arrête à T7. Les tuiles qui se raccordent, le personnage et ses poses préparées,
-l'animation de sprites et le son sont décrits en V2→V5 dans `ARCHITECTURE.md` §7 à §10, et
-ne commencent pas avant que la V1 serve pour de vrai.
+La chaîne de production s'arrête à T7 ; T8 et T9 s'y ajoutent sans en changer l'ordre — elles
+sont nées de l'usage et non du cadrage, et rien avant elles ne les attend. Les tuiles qui se
+raccordent, le personnage et ses poses préparées, l'animation de sprites et le son sont décrits
+en V2→V5 dans `ARCHITECTURE.md` §7 à §10, et ne commencent pas avant que la V1 serve pour de
+vrai.
 
 Deux points restent ouverts, et aucune tranche ne les présuppose :
 

@@ -19,6 +19,12 @@ from typing import Any, Callable
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, PortFournisseur
 from atelier.reglages import etat_cle, lire_cle
+from atelier.services.agent import (
+    DepotRefuse,
+    GardeFous,
+    PlafondAtteint,
+    ServiceAgent,
+)
 from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
 from atelier.services.bibliotheque import (
     ANNULATION_S,
@@ -50,13 +56,17 @@ __all__ = [
     "CarteRefusee",
     "CollectionInconnue",
     "DecoupeRefusee",
+    "DepotRefuse",
     "Diffusion",
     "EtatCatalogue",
     "Evenement",
     "ExportRefuse",
+    "GardeFous",
+    "PlafondAtteint",
     "ProjetInconnu",
     "RangementRefuse",
     "RecetteRefusee",
+    "ServiceAgent",
     "ServiceAssets",
     "ServiceBibliotheque",
     "ServiceCatalogue",
@@ -136,6 +146,16 @@ class Atelier:
             self.bibliotheque,
             self.univers,
         )
+        # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
+        # dit si une dépense est permise, avec quel modèle, et où poser le
+        # fichier. **En dernier, et c'est le seul ordre possible** : sa
+        # consommation se *lit* sur les générations plutôt que se tenir en
+        # double, donc il lui faut le service qui les garde. Il ne reçoit ni le
+        # fournisseur ni la base — autoriser une dépense ne demande ni l'un ni
+        # l'autre.
+        self.agent = ServiceAgent(
+            self.fichiers, self.diffusion, self.catalogue, self.generations
+        )
 
     async def ouvrir(self) -> None:
         """Ce qui se passe au démarrage, dans l'ordre, et sans jamais lever.
@@ -189,5 +209,9 @@ class Atelier:
             # navigateur a en mémoire dirait un chiffre faux dès que la
             # bibliothèque dépasse ce que la grille sert.
             "bibliotheque": self.bibliotheque.arbre(),
+            # Le cadre de l'agent et ce qu'il a consommé depuis l'ouverture.
+            # Servi ici parce que l'écran Réglages le règle et que la barre d'état
+            # le montre : deux endroits, une seule source (US-90, US-91, US-96).
+            "agent": self.agent.en_json(),
             "annulation_s": ANNULATION_S,
         }

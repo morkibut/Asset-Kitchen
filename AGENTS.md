@@ -31,8 +31,19 @@ rectangles dessinés à la main, la filiation de découpe ; **plus les deux dett
 le zoom de la grille et la première exécution du second moteur de détourage. T6 : l'export —
 une sélection qui sort en archive avec son descriptif, et le grisé permanent qui dit
 pourquoi quand rien n'est sélectionné. **Les soixante et onze critères d'acceptation de T1 à
-T6 sont cochés dans `docs/PLAN.md`, et 120 tests de serveur plus 31 d'écran les tiennent. La
-prochaine et dernière tranche est T7, le MCP.**
+T6 sont cochés dans `docs/PLAN.md`, et 120 tests de serveur plus 31 d'écran les tenaient.**
+
+**T7 est finie, et la V1 avec elle.** Le MCP : onze outils épais, façade sur les services que
+l'écran appelle déjà, montés dans le **même processus** que l'API sur `/mcp` ; les deux
+garde-fous relus à chaque appel — plafond de la séance, modèle d'exploration imposé — ; le
+dossier du jeu et ses trois règles ; la provenance portée par la génération et héritée par
+l'asset ; et l'écran Réglages qui tient enfin les trois questions promises depuis T1 — clé,
+garde-fous, dossiers. **Les quatre-vingt-quatre critères d'acceptation de T1 à T7 sont cochés
+dans `docs/PLAN.md`, et 145 tests de serveur plus 35 d'écran les tiennent.**
+
+**Ce qui vient après n'est plus la V1.** `docs/PLAN.md` porte désormais **T8, la toile**, et
+**T9, les liens et les notes** — le tableau d'inspiration gagne une seconde vue où une carte
+se pose où l'on veut. Elles ne sont pas commencées, et aucune de leurs cases n'est cochée.
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
@@ -146,6 +157,31 @@ l'écran ait touché un réglage — d'où le catalogue redemandé sur l'événe
 C'est le défaut trouvé en ouvrant l'atelier le 27 août : **une règle juste dont l'hypothèse
 a changé sous elle**.
 
+**Un agent fait exactement ce que l'écran fait, et rien de plus.** Onze outils, aucun geste
+propre : ça se lit dans les **imports** d'`atelier/mcp/serveur.py` — ni fournisseur, ni base,
+ni disque —, et un essai le garde. Le seul geste que les services ne savaient pas faire était
+« faire entrer un fichier local » : il a été écrit dans `services/`, avec sa route HTTP, pas
+dans le MCP. Un import passe par une **génération** — modèle `import`, coût nul — parce que la
+bibliothèque se reconstruit en parcourant les `generation.json` : sans le sien, un asset
+importé disparaîtrait à la première évolution du schéma.
+
+**La consommation de l'agent se lit sur les générations, elle ne se tient pas en double.** Le
+chiffre du refus opposé à l'agent et celui que l'auteur lit pour relever le plafond sont le
+**même calcul** — deux compteurs auraient fini par se contredire au moment précis où l'on
+cherche à comprendre. Le coût des appels **ratés** y est compris : c'est justement celui-là
+qu'on cherche. « Par séance » veut dire depuis l'ouverture de l'atelier, et le remettre à zéro
+est un geste déjà connu — fermer la fenêtre.
+
+**T7 a été branché pour de vrai, et ça a trouvé trois défauts.** Sixième fois de suite.
+**Aucun agent ne pouvait se brancher** : `POST /mcp` répondait 405, parce que le montage et le
+SDK posaient chacun leur préfixe — l'adresse réelle était `/mcp/mcp`. Corrigé, `/mcp`
+répondait *encore* 405 : un montage Starlette ne reconnaît que `/mcp/…`, et le chemin exact
+tombait chez les fichiers statiques. Et `localhost` était refusé en 421 par la protection
+contre le réattachement DNS, dont le défaut n'autorise qu'`127.0.0.1`. **L'essai qui aurait dû
+les voir vérifiait « ni 404, ni page d'accueil »** — or 405 n'est ni l'un ni l'autre : *une
+assertion négative ne prouve rien d'un protocole*. Il ouvre désormais une vraie session et
+vérifie les deux écritures de l'adresse.
+
 **Le produit s'explique lui-même, et le corpus a été regardé à l'œil.** 46 entrées, quatre
 écrans, deux rendus — le panneau de 280 px et l'écran Guide —, un seul manque déclaré, et
 c'est le guide qui le tient. La revue de l'atelier lancé a mesuré **trente poignées sur les
@@ -178,6 +214,15 @@ py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 py essais/essai_univers_chaine.py    UN APPEL PAYANT, ~$0,023 — la chaîne de T4 de bout en bout
 py essais/essai_decoupe_planche.py   UN APPEL PAYANT, ~$0,004 — une vraie planche, découpée
 ```
+
+**Brancher un agent.** Le serveur MCP vit dans le même processus que l'API, sur `/mcp` :
+
+```
+claude mcp add --transport http atelier http://127.0.0.1:8420/mcp
+```
+
+L'atelier doit tourner — c'est le même processus. `localhost` marche aussi ; **rien d'autre**,
+l'en-tête `Host` étant vérifié par le transport contre le réattachement DNS.
 
 `interface/dist` est un produit de compilation, hors Git : **sans `npm run build`, le
 serveur sert une page qui le dit** au lieu de l'atelier. En développement,
@@ -254,6 +299,8 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/image/palette.py` | d'où vient la palette d'un univers. CPU, pure, aucune entrée-sortie. Détoure d'abord — sans quoi le fond plat écrit la palette à lui seul |
 | `atelier/image/decoupe.py` | **où** couper une planche. CPU, pure : elle reçoit un alpha ou des dimensions, elle rend des rectangles. Ce qu'on en fait appartient au service |
 | `atelier/services/decoupe.py` | découper. **Deux gestes séparés exprès** — `proposer` ne crée rien, `decouper` coupe ce qu'on lui donne. C'est cette séparation, et rien d'autre, qui tient « sans jamais bloquer ». Aucun `fournisseur` : une planche déjà là se découpe réseau coupé |
+| `atelier/mcp/serveur.py` | les onze outils de l'agent. **Une façade, et rien d'autre** : chaque fonction traduit, appelle un service, retraduit. Le jour où l'une d'elles calcule quelque chose, c'est que le geste manquait aux services. Ça se lit dans les imports — ni `fournisseur`, ni `depot`, ni `sqlite3` —, et un essai le vérifie. Les noms d'outils sont en anglais ; les **raisons de refus** restent en français, parce qu'un agent les répète à l'auteur |
+| `atelier/services/agent.py` | le **cadre** de l'agent, pas un geste de plus : le plafond de la séance, le modèle d'exploration imposé, et le dépôt d'un fichier dans le dossier du jeu. Les garde-fous se relisent **à chaque appel** — même règle que la clé —, et la consommation se *lit* sur les générations plutôt que se tenir en double. Aucun `fournisseur` : autoriser une dépense ne demande pas de sortir |
 | `atelier/services/export.py` | sortir de l'atelier. **Le seul service qui ne reçoive pas la diffusion** : un export ne change aucun état — rien n'est rangé, rien n'est jugé, rien n'est créé —, donc il n'a rien à annoncer, et ça se lit dans la ligne qui le compose. Aucun `fournisseur` non plus : l'archive se fabrique réseau coupé |
 | `atelier/fournisseur/toile.py` | aller chercher une image à une adresse collée. Le second sortant du dépôt, et il traduit toute panne de transport en une phrase du produit |
 | `atelier/api/univers.py` | les routes de T4 — le tableau et l'univers. Un troisième routeur parce qu'il répond à une troisième question : ce qui contraint une image **avant** qu'elle existe |
@@ -271,11 +318,13 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note |
 | `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 46 entrées, quatre écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
 | `interface/src/composants/Infobulle.tsx` | le survol qui révèle et le clic qui épingle. Le **libellé est la cible** — aucun glyphe neuf : le nom du réglage devient sa propre poignée, souligné d'un pointillé `--bord-fort`. Rendre un libellé sans clé n'est pas une erreur : rien ne se marque, et c'est le cas d'un réglage que le corpus ne documente pas |
+| `interface/src/composants/EcranReglages.tsx` | les trois questions promises depuis T1, au même endroit (US-96) : la clé, les garde-fous de l'agent, le dossier du jeu. Un panneau posé sur l'atelier et non un quatrième écran plein — il ne couvre pas le travail, il le règle. Le compteur de l'agent y est **à côté du réglage qu'il fait relever** : lu ailleurs, il faudrait revenir |
 | `interface/src/composants/Guide.tsx` | l'écran Guide, la seule prose du produit. Il **ne porte pas de fente de refus**, et c'est la preuve qu'on a compris la règle : il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. Sa troisième partie est le corpus rendu à la file, groupé **par écran** — pas par thème : quand on cherche une explication, on se souvient d'où l'on était |
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
 | `tests/test_t6.py` | les critères de T6 — l'archive et son descriptif, les homonymes numérotés, le rendu et non le brut, le JPEG converti, le refus d'une sélection vide, l'image seule qui se télécharge encore, et le hors ligne prouvé en comptant les appels du double. Ils **ouvrent** l'archive au lieu de la mesurer : `zipfile` la relit, `json` relit le descriptif, Pillow rouvre chaque PNG et confronte ses dimensions à celles annoncées. L'export est le seul geste dont personne ne voit le résultat avant de l'ouvrir ailleurs, une semaine plus tard |
+| `tests/test_t7.py` | les critères de T7 — les outils appelés **par le serveur**, `call_tool` comme un vrai client, parce qu'appeler les fonctions Python sauterait la validation de schéma et ne prouverait rien du contrat. Plus la vraie poignée de main MCP sur les deux écritures de l'adresse, et deux tests qui **comptent les appels du double** : importer, retoucher, découper et exporter ne demandent jamais le fournisseur |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_detourage_modele.py` | les deux moteurs de détourage, l'un contre l'autre. Gratuit. Sortie : `essais/mesures_detourage.json` et `essais/planches/detourage_moteurs.png`. Le cas « fond chargé » y est **composé**, et le banc le dit : aucune des 188 images du dépôt n'a de fond qui résiste au remplissage depuis le bord |
@@ -284,7 +333,7 @@ chaîne avance : c'est le signe que ça marche.
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
 | `essais/essai_univers_chaine.py` | la chaîne de T4 : bible repliée, artworks choisis par famille, asset né habillé, barème mesuré. **Payant**, un seul appel — le barème se vérifie en appliquant six échelles à la même image reçue. Travaille dans son propre `donnees/`, et ne range dans celui de l'atelier que sur `--ranger` |
 | `essais/essai_decoupe_planche.py` | la chaîne de T5 : une planche **demandée exprès** à un modèle, puis détectée, découpée, filiée. **Payant**, un seul appel — tout le reste est gratuit, et c'est ce que la tranche promet. Même règle de `donnees/` séparé et de `--ranger`. C'est le seul essai qui vérifie ce qu'aucune image fabriquée ne peut vérifier : une planche **que personne n'a disposée pour la détection** |
-| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Les découpes de T5 y tiennent les rangs 100 et suivants, dans le dossier de la génération de leur planche. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
+| `donnees/` | l'index SQLite (**jetable**), `agent.json` le cadre de l'agent — un fichier à part de l'état parce qu'il se relit à chaque appel du MCP —, `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Les découpes de T5 y tiennent les rangs 100 et suivants, dans le dossier de la génération de leur planche. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
@@ -614,6 +663,35 @@ deux vivent côte à côte.
   Trouvé le 27 août 2026 en regardant l'atelier lancé, et invisible aux 31 essais d'écran —
   jsdom ne met rien en page. L'essai qui le garde vérifie donc **la règle**, et il le dit ;
   la largeur, elle, se mesure au navigateur.
+- **Un montage Starlette ne reconnaît pas son propre chemin exact.** `Mount("/mcp")` attrape
+  `/mcp/…` et **pas** `/mcp` : le chemin exact traverse toute la table de routage et finit
+  chez `StaticFiles` monté sur « / », qui répond **405** à un `POST`. Or `/mcp` est
+  exactement ce qu'on écrit dans la configuration d'un agent. Le chemin se corrige **avant le
+  routage**, jamais par une redirection : un `POST` redirigé n'est pas resoumis par tous les
+  clients, et un flux d'événements redirigé se rouvre au mauvais endroit.
+- **Le chemin d'un serveur monté est porté par le montage, jamais deux fois.** Le SDK MCP pose
+  sa route sur `/mcp` à l'intérieur de son application ; montée elle-même sous `/mcp`,
+  l'adresse réelle devient `/mcp/mcp`. On lui donne « / » à l'intérieur.
+- **Une assertion négative ne prouve rien d'un protocole.** L'essai qui gardait le branchement
+  vérifiait « ni 404, ni page d'accueil ». Les deux défauts ci-dessus rendaient **405** — ni
+  l'un, ni l'autre —, et l'essai passait sur un serveur auquel personne ne pouvait se
+  brancher. Un protocole se vérifie en **ouvrant une session**, et sur chacune des écritures
+  de l'adresse qu'un client utilisera.
+- **`Host` est vérifié par le transport MCP, et son défaut est plus étroit que l'usage.** La
+  protection contre le réattachement DNS est justifiée pour un serveur qui écoute en local,
+  mais le défaut du SDK n'autorise qu'`127.0.0.1` : `localhost` ressort en **421**, un code
+  que rien n'explique côté agent. Les deux noms de la boucle locale sont nommés, avec leurs
+  ports, et rien d'autre — ouvrir la liste ferait sauter la protection entière.
+- **Le SDK MCP retient le texte d'une exception qu'il ne connaît pas.** Délibérément : une
+  trace interne ne doit pas partir chez le client. Conséquence — « plafond de la séance
+  atteint, relève-le dans l'écran Réglages » devenait « Error executing tool
+  generate_asset », et l'agent n'avait plus rien à répéter à l'auteur, alors que c'est
+  très exactement ce que les user stories demandent. Un refus du produit se traduit donc en
+  refus **attendu** du protocole, comme `CODES` lui donne son code HTTP de l'autre côté.
+- **Une seconde convention de rectangle finit par se confondre avec la première.**
+  `image/decoupe.py` l'écrit en toutes lettres — une boîte est `(x0, y0, x1, y1)`, inclusive
+  aux deux bouts. L'outil `slice_asset` avait été écrit avec `{x, y, largeur, hauteur}` : il
+  proposait une forme et en acceptait une autre, ce qui **est** la seconde convention.
 - **Une unité relative se résout contre une référence qu'il faut aller lire.** `36em` sur
   l'`<article>` du guide rend **468 px** et non 504 : `em` vaut la taille de *l'élément qui
   l'écrit* — 13 px, hérité — et non celle de la prose qu'il contient, qui fait 15 px.

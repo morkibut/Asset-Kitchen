@@ -175,6 +175,10 @@ class ServiceAssets:
             # le total du projet, lui, se calcule sur les générations, qui sont
             # les seules à connaître les appels ratés.
             cout_usd=emplacement.cout_usd,
+            # **Qui l'a demandé**, hérité de l'appel et jamais recalculé (US-39).
+            # Une relance ne le rejoue pas depuis l'ancien : c'est la génération
+            # qui fait foi, et c'est elle qu'on relance.
+            provenance=generation.provenance,
             # **Il entre en bibliothèque de lui-même** (US-25), dans le projet
             # où la génération est partie. Un rangement déjà posé à la main
             # l'emporte : ce que l'auteur a décidé ne se défait pas tout seul.

@@ -162,6 +162,11 @@ export type Asset = {
    *  naissance : le total d'un projet, lui, se calcule sur les générations, qui
    *  sont les seules à connaître les appels ratés. */
   cout_usd: number
+  /** Qui a demandé l'appel — `auteur` ou `agent` (US-39). Hérité de la
+   *  génération à la naissance, jamais recalculé ici : retoucher une image de
+   *  l'agent ne la fait pas devenir celle de l'auteur, et une découpe appartient
+   *  à qui a demandé la planche. */
+  provenance: "auteur" | "agent"
   /** Toucher une recette à la main épingle l'asset. Relu en T4, quand un
    *  changement de palette de projet devra sauter ce qui a été réglé ici. */
   epingle: boolean
@@ -415,6 +420,40 @@ export type EtatCle = {
   raison: string | null
 }
 
+/** Le cadre de l'agent — ce que l'auteur lui a laissé faire (US-91).
+ *
+ *  Chaque garde-fou porte **son interrupteur et sa valeur séparément** : les
+ *  désactiver ne perd pas le réglage qu'on y avait posé, sans quoi rallumer
+ *  demanderait de le retrouver. */
+export type GardeFous = {
+  plafond_actif: boolean
+  plafond: number
+  modele_actif: boolean
+  modele: string
+  options: Record<string, string>
+  dossier_jeu: string
+}
+
+/** Ce que l'agent a consommé **depuis l'ouverture de l'atelier** (US-90).
+ *
+ *  Calculé par le serveur, jamais ici : le refus opposé à l'agent et le chiffre
+ *  lu par l'auteur doivent être le même calcul, sinon ils finiront par se
+ *  contredire au moment précis où l'on cherche à comprendre. */
+export type ConsommationAgent = {
+  generations: number
+  depense_usd: number
+  plafond_actif: boolean
+  plafond: number
+  /** Ce qui reste avant le plafond, ou `null` quand il est éteint. */
+  reste: number | null
+  depuis: number
+}
+
+export type EtatAgent = {
+  garde_fous: GardeFous
+  consommation: ConsommationAgent
+}
+
 export type EtatCatalogue = {
   recu_le: number
   repli: boolean
@@ -445,6 +484,10 @@ export type Etat = {
   /** L'univers du projet ouvert — bible, barème, palette, défauts. Servi à
    *  l'ouverture pour que l'écran dessine « ce qui part » sans un second appel. */
   univers: Univers
+  /** Le cadre de l'agent et ce qu'il a consommé. Servi à l'ouverture et
+   *  republié sur l'événement `agent` : la barre d'état le montre, l'écran
+   *  Réglages le règle, et ni l'un ni l'autre ne le recalcule. */
+  agent: EtatAgent
   /** Combien de temps dure l'annulation d'une suppression. Le serveur le dit,
    *  l'écran le décompte : deux délais écrits à deux endroits finiraient par se
    *  contredire, et c'est le serveur qui refuse. */
@@ -512,6 +555,15 @@ export const api = {
       { method: "POST" },
     ),
 
+  agent: () => appeler<EtatAgent>("/settings/agent"),
+  /** **Champ par champ** : ce qui n'est pas envoyé ne change pas. L'écran
+   *  bascule un interrupteur à la fois, et poster l'objet entier depuis un
+   *  formulaire partiel effacerait ce qu'un autre onglet vient de poser. */
+  reglerAgent: (champs: Partial<GardeFous>) =>
+    appeler<EtatAgent>("/settings/agent", {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
   deposerCle: (cle: string) =>
     appeler<EtatCle>("/settings/key", {
       method: "PUT",
@@ -907,6 +959,10 @@ export type Ecoute = {
     realignes: number
     conserves: number
   }) => void
+  /** Le cadre de l'agent ou sa consommation a changé (US-90, US-91). Un
+   *  garde-fou posé depuis un autre onglet arrive par là, et le compteur bouge
+   *  au moment où l'agent dépense — l'auteur n'a rien à recharger. */
+  agent: (agent: EtatAgent) => void
   /** Vrai quand la liaison est vivante, faux quand elle est rompue. */
   liaison: (vivante: boolean) => void
 }
@@ -926,6 +982,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Bibliotheque>("bibliotheque", ecoute.bibliotheque)
   lire<Carte & { oubliee?: boolean }>("carte", ecoute.carte)
   lire<Parameters<Ecoute["univers"]>[0]>("univers", ecoute.univers)
+  lire<EtatAgent>("agent", ecoute.agent)
 
   source.onopen = () => ecoute.liaison(true)
   source.onerror = () => ecoute.liaison(false)

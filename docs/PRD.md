@@ -148,6 +148,23 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **US-57** — En tant qu'auteur, je veux générer sans bible ni artwork, afin qu'un univers vide ne contraigne simplement rien plutôt que de me bloquer.
 - **US-58** — En tant qu'auteur, je veux régler les défauts de mon projet — dont le modèle par type d'asset —, afin que mes générations partent déjà réglées.
 
+### La toile
+
+- **US-98** — En tant qu'auteur, je veux basculer entre la grille et une toile libre, afin d'organiser ma pensée au lieu de seulement tout voir d'un coup d'œil.
+- **US-99** — En tant qu'auteur, je veux poser mes cartes où je veux sur un plan que je déplace et que je zoome, afin que la place d'une image finisse par dire quelque chose.
+- **US-100** — En tant qu'auteur, je veux que la toile s'ouvre sur mes groupes déjà saisis, matérialisés en îlots, afin de ne pas refaire à la main un rangement que j'ai déjà écrit.
+- **US-101** — En tant qu'auteur, je veux que ce qui n'est pas encore classé m'attende dans une réserve à côté, afin d'y piocher au lieu de subir cinquante cartes en vrac.
+- **US-102** — En tant qu'auteur, je veux qu'une carte tirée dans un îlot y soit rangée pour de bon, afin que composer soit classer.
+- **US-103** — En tant qu'auteur, je veux qu'une carte sortie de son îlot redevienne à classer, afin que ce que je vois et ce qui est écrit ne divergent jamais.
+- **US-104** — En tant qu'auteur, je veux poser une carte sur la toile sans la mettre dans aucun îlot, afin d'essayer un rapprochement avant de décider qu'il fait un groupe.
+- **US-105** — En tant qu'auteur, je veux agrandir ou réduire une carte sur la toile, afin de donner du poids à ce qui compte.
+- **US-106** — En tant qu'auteur, je veux annuler mon dernier geste de composition, afin qu'un glissement raté n'efface pas un rangement.
+- **US-107** — En tant qu'auteur, je veux retrouver ma toile exactement comme je l'ai laissée, afin qu'une composition survive à la fermeture de l'écran.
+- **US-108** — En tant qu'auteur, je veux tirer un lien d'un objet à un autre, afin de montrer un rapport que la proximité ne dit pas.
+- **US-109** — En tant qu'auteur, je veux écrire un mot sur un lien et lui donner une pointe, afin de dire *quel* rapport, quand ça compte.
+- **US-110** — En tant qu'auteur, je veux poser une note à même la toile, afin d'écrire une intention là où elle s'applique.
+- **US-111** — En tant qu'auteur, je veux donner une couleur à un îlot et à une note, afin de lire ma toile d'un coup d'œil.
+
 ### Retoucher
 
 - **US-59** — En tant qu'auteur, je veux recadrer, redimensionner, pixelliser sur grille, ramener sur la palette et nettoyer les bords, avec des réglages qui répondent instantanément.
@@ -237,7 +254,9 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 
 **Écarté de la V1, prévu ensuite.** Génération autre que pixel art. Tuiles qui se raccordent. Personnage et ses poses préparées. Animation de sprites. Son.
 
-**Écarté par choix d'ergonomie.** Mobile et tablette : écran large uniquement, aucun point de rupture, aucun menu escamoté, aucune mise en page de repli. Toile libre dans le tableau d'inspiration : grille seulement. Corbeille : suppression avec annulation courte. Écran séparé pour la bibliothèque : une seule grille dans tout le produit. Détourage par couleur.
+**Écarté par choix d'ergonomie.** Mobile et tablette : écran large uniquement, aucun point de rupture, aucun menu escamoté, aucune mise en page de repli. Corbeille : suppression avec annulation courte. Écran séparé pour la bibliothèque : une seule grille dans tout le produit. Détourage par couleur.
+
+**Revenu dans le périmètre — 27 août 2026.** « Toile libre dans le tableau d'inspiration : grille seulement » était écarté ici, au même titre que le reste, jusqu'à ce qu'une séance d'essai sur le produit tenu montre l'inverse : la grille montre tout d'un coup d'œil et ne permet d'organiser rien, et le champ `groupe` — une étiquette qui n'a aucune forme à l'écran — n'y suffit pas. La toile s'ajoute donc à la grille **sans la remplacer**, et devient les tranches T8 et T9 du plan. Ce qu'elle n'est pas, en revanche, reste écarté : dessin à main levée, formes et flèches libres, plusieurs toiles par projet, export de la toile en image, liens entre cartes de projets différents, alignement et distribution automatiques, et couleur choisie librement — six teintes fermées, et rien au-delà.
 
 **Écarté par les décisions de ce document.** Sas d'acceptation avant l'entrée en bibliothèque. Suppression en cascade. Refus de supprimer tant qu'il existe une descendance. Création implicite d'un projet par l'agent. Assistant de premier lancement. Invite d'autorisation qui bloquerait l'agent en attendant l'auteur. Liste de modèles écrite en dur. Relance automatique après interruption. Réapplication forcée de la palette sur les recettes réglées à la main. Enchaînement d'outils fins que l'agent devrait composer lui-même. Passe de retouche qui monopoliserait la carte graphique.
 
@@ -290,4 +309,5 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **Le coût d'une génération croît avec le nombre de références chez certains fournisseurs et pas chez d'autres.** Le regroupement par famille limite l'envoi, mais un univers riche renchérit quand même, et peut inverser le classement des modèles par coût. À surveiller dès les premières séances réelles.
 - **Les familles d'artworks sont pressenties, pas figées** : personnages, objets, décors, interface, tous. Une famille manquante se découvrira à l'usage.
 - **Deux documents sont à corriger dans la foulée de celui-ci.** `AGENTS.md` et `docs/ARCHITECTURE.md` §1 portent encore « jugée avant d'entrer dans la bibliothèque » ; ce PRD tranche l'inverse et fait foi sur l'usage.
+- **Le nom « la toile » n'est pas figé.** Le produit nomme tout en français — l'Atelier, le tableau, la réserve, la fiche, le barème — et « la toile » a été retenu faute de mieux à la séance de cadrage du 27 août 2026. « Plan de travail » ou « établi » diraient autre chose. Le jour où l'un des deux s'impose, il se change partout d'un coup, ce document compris.
 - **Dépendance externe unique** : un fournisseur d'images en ligne et sa clé. Tout le reste — retouche, détourage, découpe, rangement, export — tourne sur la machine, sans réseau.

@@ -20,8 +20,9 @@
 //
 // **L'ordre du fichier est l'ordre du guide**, et il suit l'ordre où l'on
 // rencontre les choses : ce qu'on pose une fois (l'univers), ce qu'on touche à
-// chaque génération (l'atelier), ce qu'on retouche après (la fiche), et ce
-// qu'on ne fait que sur une planche (la découpe).
+// chaque génération (l'atelier), ce qu'on retouche après (la fiche), ce qu'on
+// ne fait que sur une planche (la découpe), et ce qu'on règle une fois pour
+// toutes — le cadre de l'agent, arrivé en T7.
 
 export type Explication = {
   /** Le nom du réglage, tel qu'il paraît à l'écran. */
@@ -39,7 +40,7 @@ export type Explication = {
   long?: string
   /** Où ça se règle, pour le sommaire du guide. **Un écran, pas un thème** :
    *  quand on cherche une explication, on se souvient d'où l'on était. */
-  ou: "univers" | "atelier" | "retouche" | "decoupe"
+  ou: "univers" | "atelier" | "retouche" | "decoupe" | "reglages"
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -496,6 +497,43 @@ export const AIDE: Record<string, Explication> = {
       "Réinjecter ne coûte rien tant que tu n'as pas cliqué Générer : le rôle se pose dans le panneau de l'atelier, et le bloc « Ce qui part » se met à jour pour le dire. Le compte de références y grimpe d'un cran, et il est plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul qui touche au prompt. Il est là pour la reprise : refaire une image dont on a perdu les réglages est le geste qu'on fait le plus souvent après un tri.",
   },
 
+  // ── Les réglages — le cadre de l'agent ────────────────────────────────────
+  //
+  // Trois entrées, et elles répondent toutes à la même question de fond : *que
+  // se passe-t-il quand je ne regarde pas l'écran ?* L'agent n'attend jamais une
+  // autorisation — c'est ce qui l'empêche de se figer, et c'est exactement ce
+  // qui rend ces trois réglages nécessaires.
+
+  "agent.plafond": {
+    nom: "Plafond de la séance",
+    ou: "reglages",
+    quoi: "Le nombre d'images que l'agent peut faire produire depuis l'ouverture de l'atelier.",
+    change:
+      "Atteint, l'agent reçoit un refus qui nomme le plafond et te renvoie ici — aucune fenêtre ne s'ouvre, rien ne t'interrompt. Il compte des images, pas des appels : quatre variations d'un seul prompt en consomment quatre, parce que c'est ce qui est facturé.",
+    origine: "toi · défaut 20, actif · repart à zéro à chaque ouverture",
+    long:
+      "Il compte depuis l'ouverture de l'atelier et pas plus loin : le remettre à zéro est un geste que tu connais déjà, fermer la fenêtre. Un total gardé sur le disque poserait la question de quand le purger, qui n'a pas de bonne réponse.\n\nLe désactiver ne perd pas le chiffre que tu y avais posé : l'interrupteur et la valeur sont deux réglages, et rallumer te rend le tien.\n\nLe changer prend effet à l'appel suivant. Rien à redémarrer — l'atelier relit ce réglage à chaque question que l'agent lui pose.",
+  },
+  "agent.modele": {
+    nom: "Modèle d'exploration",
+    ou: "reglages",
+    quoi: "Le modèle imposé à l'agent, quel que soit celui qu'il demande.",
+    change:
+      "Toutes ses générations partent sur ce modèle et ces options. Éteint, l'agent choisit — et s'il ne choisit pas, c'est encore celui-ci qui sert : personne ne doit tomber sur le modèle le plus cher du catalogue par accident.",
+    origine: "toi · défaut gpt-image-2 en quality low, actif",
+    long:
+      "Un agent qui code a besoin d'un visuel correct tout de suite, pas d'un asset final : rapport de six sur le coût du travail agentique, pour une perte de qualité qui ne compte pas à ce moment-là. La version de production se regénère depuis l'atelier, avec le modèle que tu veux.\n\nSi le catalogue ne déclare pas ce modèle — il a disparu, ou l'atelier tourne sur son catalogue de repli —, c'est le défaut du catalogue qui prend la main. Un garde-fou qui rendrait l'agent inutilisable te protégerait de la dépense en supprimant le produit.",
+  },
+  "agent.dossier": {
+    nom: "Dossier du jeu",
+    ou: "reglages",
+    quoi: "Où l'agent pose les fichiers quand il ne dit pas où.",
+    change:
+      "Un dossier manquant est créé, et un fichier de même nom n'est jamais écrasé — il est numéroté. Un dossier qui refuse l'écriture est refusé à l'agent avec le chemin fautif, pour qu'il sache lequel des trois qu'il vient de nommer a posé problème.",
+    origine: "toi · vide au départ, et c'est un état légitime",
+    long:
+      "Vide, l'agent nomme son dossier à chaque appel — c'est permis, et c'est même ce qu'il fera s'il range ses sprites et ses tuiles à deux endroits différents.\n\nCe qui est posé là est le rendu, jamais le brut : l'image qu'on voit, celle qui entre dans le jeu. Le brut reste ici, et c'est lui qui permet de refaire le rendu.",
+  },
   // ── L'écran Découpe ───────────────────────────────────────────────────────
   //
   // **Deux gestes séparés exprès** : proposer ne crée rien, découper coupe ce

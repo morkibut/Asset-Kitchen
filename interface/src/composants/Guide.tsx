@@ -76,11 +76,15 @@ const OU: Record<Explication["ou"], string> = {
   atelier: "Dans l'atelier",
   retouche: "Dans la retouche",
   decoupe: "Dans la découpe",
+  reglages: "Dans les réglages",
 }
 
 /** L'ordre des groupes de réglages — celui des écrans, et il est écrit une
  *  seule fois : le sommaire et le corps le lisent tous les deux. */
-const OUS = ["univers", "atelier", "retouche", "decoupe"] as const
+// **Les réglages en dernier, et c'est encore l'ordre des écrans.** On les pose
+// une fois et on n'y revient qu'en cas de doute : les mettre en tête ferait
+// commencer un guide de fabrication par une page d'administration.
+const OUS = ["univers", "atelier", "retouche", "decoupe", "reglages"] as const
 
 const PARTIES = [
   { id: "geste", titre: "Le geste", entrees: ["La boucle", "Écrire", "Générer", "Juger", "Garder"] },

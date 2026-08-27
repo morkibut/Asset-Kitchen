@@ -79,6 +79,14 @@ class Asset:
     # possible : `naitre()` est le seul endroit qui écrive ce champ.
     cout_usd: float = 0.0
 
+    # ── Qui l'a demandé ──────────────────────────────────────────────────────
+    #
+    # Hérité de la génération à la naissance, jamais recalculé (US-39). C'est un
+    # fait sur l'appel : retoucher une image de l'agent ne la fait pas devenir
+    # celle de l'auteur, et une découpe appartient à qui a demandé la planche.
+    # Le défaut vaut pour tout ce qui existait avant T7.
+    provenance: str = "auteur"
+
     # ── Le rangement, la filiation, le jugement ──────────────────────────────
     projet: str | None = None
     collection: str | None = None
@@ -139,6 +147,7 @@ class Asset:
             "cree_le": self.cree_le,
             "epingle": self.epingle,
             "cout_usd": self.cout_usd,
+            "provenance": self.provenance,
             "projet": self.projet,
             "collection": self.collection,
             "parent": self.parent,
@@ -184,6 +193,7 @@ class Asset:
             cree_le=d.get("cree_le", 0.0),
             epingle=d.get("epingle", False),
             cout_usd=float(d.get("cout_usd", 0.0)),
+            provenance=d.get("provenance", "auteur"),
             projet=d.get("projet"),
             collection=d.get("collection"),
             parent=d.get("parent"),

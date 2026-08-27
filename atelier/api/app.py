@@ -9,7 +9,7 @@ sans clé** — l'échec attend le moment où on génère (US-95).
 from __future__ import annotations
 
 import contextlib
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -18,6 +18,9 @@ from fastapi.staticfiles import StaticFiles
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
+from mcp.server.transport_security import TransportSecuritySettings
+
+from atelier.mcp.serveur import creer_serveur
 from atelier.domaine.erreurs import (
     AppelRefuse,
     DemandeRefusee,
@@ -36,6 +39,7 @@ from atelier.services.bibliotheque import (
     ProjetInconnu,
     RangementRefuse,
 )
+from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
 from atelier.services.export import ExportRefuse
 from atelier.services.univers import CarteInconnue, CarteRefusee, UniversRefuse
@@ -61,6 +65,10 @@ CODES = {
     UniversRefuse: 409,
     DecoupeRefusee: 409,
     ExportRefuse: 409,
+    # Le plafond de la séance de l'agent. 429 et non 409 : c'est bien « trop
+    # d'appels », et le refus porte le moyen de le relever.
+    PlafondAtteint: 429,
+    DepotRefuse: 409,
     # L'adresse d'une carte n'a pas répondu, ou n'a pas rendu une image. 502 et
     # non 400 : le refus vient d'en face, pas de ce qu'on a demandé.
     AdresseRefusee: 502,
@@ -70,10 +78,48 @@ INTERFACE = RACINE / "interface" / "dist"
 
 
 def creer_application(atelier: Atelier | None = None) -> FastAPI:
+    # **Le serveur MCP vit dans ce processus-ci**, sur l'atelier de cette
+    # application-ci (`docs/ARCHITECTURE.md` §3). Un second processus aurait son
+    # propre atelier : deux écrivains sur le même disque, deux diffusions, et
+    # « ce que l'agent produit apparaît en direct dans la grille » (US-89)
+    # tomberait — l'onglet n'écoute que la diffusion d'ici.
+    atelier = atelier or Atelier()
+    serveur_mcp = creer_serveur(atelier)
+    # **Le chemin est porté par le montage, pas deux fois.** Le SDK pose sa
+    # route sur « /mcp » à l'intérieur de son application ; montée elle-même
+    # sous « /mcp », l'adresse réelle devenait `/mcp/mcp` et le vrai chemin
+    # répondait 405 — une réponse assez proche du succès pour qu'un essai qui
+    # vérifie seulement « ni 404 ni page d'accueil » la laisse passer.
+    #
+    # **Et l'en-tête `Host` est vérifié par le transport.** C'est une protection
+    # contre le réattachement DNS, et elle est justifiée : ce serveur écoute en
+    # local et un site visité pourrait sinon lui parler. Le défaut du SDK
+    # n'autorise qu'`127.0.0.1` ; or le lanceur ouvre `localhost` aussi souvent,
+    # et un `Host` refusé rend un 421 que rien n'explique côté agent. Les deux
+    # noms de la boucle locale sont donc nommés ici, avec leurs ports — et rien
+    # d'autre : ouvrir la liste ferait sauter la protection entière.
+    application_mcp = serveur_mcp.streamable_http_app(
+        streamable_http_path="/",
+        transport_security=TransportSecuritySettings(
+            allowed_hosts=["127.0.0.1", "127.0.0.1:*", "localhost", "localhost:*"],
+            allowed_origins=[
+                "http://127.0.0.1",
+                "http://127.0.0.1:*",
+                "http://localhost",
+                "http://localhost:*",
+            ],
+        ),
+    )
+
     @contextlib.asynccontextmanager
     async def cycle(application: FastAPI) -> AsyncIterator[None]:
         await application.state.atelier.ouvrir()
-        yield
+        # Le gestionnaire de sessions du MCP a son propre cycle de vie, et
+        # **FastAPI ne le lance pas pour une application montée** : sans cette
+        # ligne, l'agent reçoit une erreur de transport à la première connexion,
+        # et rien dans les journaux ne dit pourquoi.
+        async with application_mcp.router.lifespan_context(application_mcp):
+            yield
 
     application = FastAPI(
         title="Asset Kitchen",
@@ -82,7 +128,7 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
     )
-    application.state.atelier = atelier or Atelier()
+    application.state.atelier = atelier
     application.include_router(routeur, prefix="/api")
     # Deux routeurs, un seul préfixe : de l'extérieur l'API n'a pas de couture.
     # La bibliothèque répond à une autre question que la fabrication d'une
@@ -103,8 +149,36 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
             },
         )
 
+    # **Avant l'interface, et c'est un piège connu** : `StaticFiles` est monté
+    # sur « / » et attrape tout ce qui vient après lui. Monté en dernier, `/mcp`
+    # rendrait la page d'accueil de l'atelier à un agent qui parle MCP.
+    application.mount("/mcp", application_mcp, name="mcp")
+    application.add_middleware(BarreFinaleMCP)
     _monter_interface(application)
     return application
+
+
+class BarreFinaleMCP:
+    """« /mcp » et « /mcp/ » mènent au même endroit — et c'est nécessaire.
+
+    Un montage Starlette ne reconnaît que `/mcp/…` : le chemin **exact** `/mcp`
+    ne lui correspond pas, il traverse toute la table de routage et finit chez
+    les fichiers statiques montés sur « / », qui répondent **405** à un `POST`.
+    Une réponse assez proche du succès pour tromper qui ne regarde que le code,
+    et c'est précisément l'adresse qu'on écrit dans la configuration d'un agent.
+
+    Le chemin est donc corrigé **avant** le routage, jamais par une redirection :
+    un `POST` redirigé n'est pas resoumis par tous les clients, et un flux
+    d'événements redirigé se rouvre au mauvais endroit.
+    """
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, recevoir: Any, envoyer: Any) -> None:
+        if scope["type"] == "http" and scope.get("path") == "/mcp":
+            scope = {**scope, "path": "/mcp/", "raw_path": b"/mcp/"}
+        await self.app(scope, recevoir, envoyer)
 
 
 def _monter_interface(application: FastAPI) -> None:

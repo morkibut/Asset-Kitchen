@@ -48,7 +48,7 @@ import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
-import { EcranCle } from "./composants/EcranCle"
+import { EcranReglages } from "./composants/EcranReglages"
 import { Fiche } from "./composants/Fiche"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { PanneauReglages } from "./composants/PanneauReglages"
@@ -462,6 +462,11 @@ export function App() {
         // se redemande — c'est le serveur qui écrit les raisons du grisé.
         void vivant.current.relireCatalogue()
       },
+      // **Le cadre de l'agent bouge sans que l'écran ait rien fait** : c'est
+      // l'agent qui dépense, et c'est un autre onglet qui a peut-être relevé le
+      // plafond. Rien d'autre à redemander — la charge porte le cadre entier et
+      // sa consommation, et rien ici ne les recalcule.
+      agent: (agent) => setEtat((e) => (e ? { ...e, agent } : e)),
       liaison: setLiaison,
     })
   }, [])
@@ -956,12 +961,18 @@ export function App() {
       )}
 
       {reglagesOuverts && etat && (
-        <EcranCle
+        <EcranReglages
           etat={etat.cle}
+          agent={etat.agent}
           onDeposee={async () => {
             setEtat(await api.etat().catch(() => etat))
             await relireCatalogue()
           }}
+          // **Ce que le serveur vient de rendre, posé tel quel.** Le PUT rend
+          // le cadre entier et sa consommation ; recalculer l'un des deux ici
+          // ferait deux vérités sur le même chiffre — et l'événement `agent`
+          // arrive de toute façon derrière.
+          onAgent={(agent) => setEtat((e) => (e ? { ...e, agent } : e))}
           onFermer={() => setReglagesOuverts(false)}
         />
       )}

@@ -69,6 +69,16 @@ ASSET = "asset"
 CARTE = "carte"
 ORIGINES = (ASSET, CARTE)
 
+# ── Qui a demandé l'appel ───────────────────────────────────────────────────
+#
+# Deux valeurs, et la liste est close : le produit compte exactement deux
+# commanditaires, l'auteur devant son écran et l'agent qui code le jeu. Une
+# troisième — « import », « reprise » — dirait *comment* l'image est arrivée,
+# ce que la filiation dit déjà mieux.
+AUTEUR = "auteur"
+AGENT = "agent"
+PROVENANCES = (AUTEUR, AGENT)
+
 
 @dataclass(frozen=True, slots=True)
 class Reinjection:
@@ -204,6 +214,19 @@ class Generation:
     # Ce qu'on a réinjecté, et à quel titre — voir `Reinjection` ci-dessus.
     references: tuple[Reinjection, ...] = ()
 
+    # ── Qui a demandé cet appel ──────────────────────────────────────────────
+    #
+    # « Distinguer d'un coup d'œil ce que l'agent a produit de ce que j'ai
+    # produit moi-même, afin de savoir à qui parler quand quelque chose me
+    # surprend » (US-39). Deux valeurs et pas une de plus : `auteur` — le
+    # défaut, donc tout ce qui existait avant T7 — et `agent`.
+    #
+    # **C'est un fait sur l'appel, pas sur l'image.** Il se pose ici, à la
+    # soumission, et l'asset en hérite à sa naissance : une image ne change pas
+    # de commanditaire quand on la retouche, et une découpe appartient à qui a
+    # demandé la planche.
+    provenance: str = AUTEUR
+
     # ── Ce qui se déduit, et n'est donc jamais enregistré deux fois ───────────
 
     @property
@@ -268,6 +291,7 @@ class Generation:
             "cree_le": self.cree_le,
             "projet": self.projet,
             "references": [r.en_json() for r in self.references],
+            "provenance": self.provenance,
             # déduits — présents pour l'interface, jamais relus
             "statut": self.statut.value,
             "cout_usd": self.cout_usd,
@@ -289,4 +313,7 @@ class Generation:
             references=tuple(
                 Reinjection.depuis_json(r) for r in d.get("references", ())
             ),
+            # Tout ce qui a été écrit avant T7 est de l'auteur, et le défaut le
+            # dit sans qu'aucun rattrapage n'ait à passer sur le disque.
+            provenance=d.get("provenance", AUTEUR),
         )

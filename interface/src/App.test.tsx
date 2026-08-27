@@ -171,6 +171,24 @@ const ETAT: Etat = {
   },
   bibliotheque: BIBLIOTHEQUE,
   univers: UNIVERS,
+  agent: {
+    garde_fous: {
+      plafond_actif: true,
+      plafond: 20,
+      modele_actif: true,
+      modele: "openai/gpt-image-2",
+      options: { quality: "low" },
+      dossier_jeu: "",
+    },
+    consommation: {
+      generations: 0,
+      depense_usd: 0,
+      plafond_actif: true,
+      plafond: 20,
+      reste: 20,
+      depuis: 1_787_800_000,
+    },
+  },
   annulation_s: 8,
   generations: [],
   assets: [],
@@ -214,7 +232,11 @@ const generation = (
   reussies: 0,
 })
 
-const asset = (identifiant: string, label = "un tonneau"): Asset => {
+const asset = (
+  identifiant: string,
+  label = "un tonneau",
+  provenance: Asset["provenance"] = "auteur",
+): Asset => {
   const [gen, rang] = identifiant.split(/-(\d+)$/)
   return {
     identifiant,
@@ -224,6 +246,7 @@ const asset = (identifiant: string, label = "un tonneau"): Asset => {
     hauteur: 1024,
     type_media: "image/png",
     label,
+    provenance,
     recette: {
       passes: [],
       recadrage: null,
@@ -295,12 +318,16 @@ function serveurDouble(options: {
    *  demander un refus, parce que l'export est le seul appel de l'interface qui
    *  ne rende pas du JSON et que son chemin d'erreur est donc à lui. */
   refusExport?: string | null
+  /** Le cadre de l'agent et sa consommation, quand le test veut autre chose que
+   *  l'atelier neuf — un plafond entamé, un garde-fou éteint. */
+  agent?: Etat["agent"]
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
     supprimes: [] as string[],
     cartes: options.cartes ?? [],
     univers: options.univers ?? UNIVERS,
+    agent: options.agent ?? ETAT.agent,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -352,7 +379,27 @@ function serveurDouble(options: {
       } as unknown as Response
     }
     if (url.startsWith("/api/models")) return rendre(CATALOGUE)
-    if (url === "/api/status") return rendre(ETAT)
+    if (url === "/api/status") return rendre({ ...ETAT, agent: etat.agent })
+    // Le cadre de l'agent. Le PUT rend **le cadre entier et sa consommation**,
+    // comme le vrai serveur : l'écran pose un champ et reçoit tout, ce qui lui
+    // évite d'en recalculer un seul — et c'est justement ce qu'on vérifie.
+    if (url === "/api/settings/agent") {
+      if (init?.method === "PUT") {
+        const garde_fous = { ...etat.agent.garde_fous, ...corps }
+        etat.agent = {
+          garde_fous,
+          consommation: {
+            ...etat.agent.consommation,
+            plafond_actif: garde_fous.plafond_actif,
+            plafond: garde_fous.plafond,
+            reste: garde_fous.plafond_actif
+              ? Math.max(0, garde_fous.plafond - etat.agent.consommation.generations)
+              : null,
+          },
+        }
+      }
+      return rendre(etat.agent)
+    }
     if (url.startsWith("/api/library")) return rendre(BIBLIOTHEQUE)
     if (url.startsWith("/api/journal"))
       return rendre({
@@ -1285,3 +1332,129 @@ describe("l'infobulle et le guide", () => {
   })
 })
 
+// ── T7 : ce que l'agent produit, et le cadre qui le tient ───────────────────
+//
+// Trois des treize critères de T7 ne se vérifient qu'à l'écran : la pastille de
+// provenance, le compteur lisible sans quitter l'atelier, et les trois réglages
+// tenus au même endroit. Les dix autres vivent dans `tests/test_t7.py`.
+
+describe("l'agent, vu de l'atelier", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  test("une image de l'agent porte sa provenance dans la grille", async () => {
+    const grille = [
+      asset("aaaa1111-0", "un tonneau"),
+      asset("bbbb2222-0", "une épée", "agent"),
+    ]
+    const { fetchDouble } = serveurDouble({ assets: grille })
+    await monter(fetchDouble, { ...ETAT, assets: grille })
+
+    await waitFor(() => expect(screen.getByTitle("une épée")).toBeTruthy())
+
+    // **La pastille, et une seule.** « Savoir à qui parler quand quelque chose
+    // me surprend » (US-39) : ce que le système constate est un mot, ce que
+    // l'auteur pose est une forme.
+    const marques = [...document.querySelectorAll("span")].filter(
+      (e) => e.textContent === "agent",
+    )
+    expect(marques).toHaveLength(1)
+
+    // Et la contrepartie, sans laquelle la marque ne distingue rien : ce que
+    // l'auteur a produit ne porte rien.
+    const tonneau = screen.getByTitle("un tonneau").closest("figure")!
+    expect(tonneau.textContent).not.toContain("agent")
+  })
+
+  test("le compteur de l'agent se lit sans quitter l'atelier", async () => {
+    const agent: Etat["agent"] = {
+      garde_fous: { ...ETAT.agent.garde_fous },
+      consommation: {
+        ...ETAT.agent.consommation,
+        generations: 12,
+        depense_usd: 0.0812,
+        reste: 8,
+      },
+    }
+    const { fetchDouble } = serveurDouble({ agent })
+    // **Le compteur arrive par le flux comme le reste de l'état.** C'est ce que
+    // fait le vrai serveur : un onglet qui s'ouvre reçoit l'état complet, et
+    // n'a rien à redemander.
+    await monter(fetchDouble, { ...ETAT, agent })
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    // Les deux chiffres qui décident de relever le plafond (US-90), et ils sont
+    // **à côté du réglage qu'ils font relever**.
+    const panneau = await screen.findByRole("heading", { name: "L'agent" })
+    const section = panneau.closest("section")!
+    expect(section.textContent).toContain("12 images")
+    expect(section.textContent).toContain("8 avant le plafond")
+    expect(section.textContent).toContain("$0,0812")
+  })
+
+  test("clé, garde-fous et dossiers se règlent depuis un seul écran", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    // Les trois blocs, dans un seul panneau (US-96).
+    expect(await screen.findByRole("heading", { name: "La clé" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "L'agent" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "Les dossiers" })).toBeTruthy()
+
+    // Éteindre un garde-fou n'envoie **que lui** : ce qui n'est pas dit ne
+    // change pas, sinon un formulaire partiel effacerait ce qu'un autre onglet
+    // vient de poser.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Plafond de la séance — actif" }),
+    )
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/settings/agent" &&
+            JSON.stringify(a.corps) === JSON.stringify({ plafond_actif: false }),
+        ),
+      ).toBe(true),
+    )
+
+    // Et l'écran suit la réponse du serveur, sans rejouer la règle : le plafond
+    // éteint, il n'y a plus de « reste » à annoncer.
+    await waitFor(() => {
+      const section = screen.getByRole("heading", { name: "L'agent" }).closest("section")!
+      expect(section.textContent).not.toContain("avant le plafond")
+    })
+  })
+
+  test("les trois réglages de l'agent portent leur explication", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    // Le corpus documente ce que l'écran expose, et rien ne se marque sans
+    // entrée : la panne que le corpus existe pour éviter est silencieuse.
+    for (const cle of ["agent.plafond", "agent.modele", "agent.dossier"]) {
+      expect(AIDE[cle], `${cle} — absent du corpus`).toBeTruthy()
+      expect(AIDE[cle].ou).toBe("reglages")
+    }
+    const marque = (nom: string) =>
+      [...document.querySelectorAll("span")].some(
+        (e) => e.textContent === nom && e.className.includes("decoration-dotted"),
+      )
+    await waitFor(() => expect(marque("Dossier du jeu")).toBe(true))
+    expect(marque("Plafond de la séance")).toBe(true)
+    expect(marque("Modèle d'exploration")).toBe(true)
+  })
+})

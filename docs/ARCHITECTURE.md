@@ -46,6 +46,7 @@ l'intégration ne l'est pas.
 | Univers | Bible écrite à la main + planches de référence + palette extraite par calcul. | La palette sert **en entrée** (contrainte de quantification), pas en contrôle. |
 | Conformité | **Aucune vérification automatique.** L'humain juge à l'œil. | Écarté volontairement : coûte de l'analyse d'image pour un jugement que l'auteur fait mieux. Réintégrable plus tard si le besoin apparaît. |
 | Forme | Serveur Python local + interface web dans le navigateur. | Pillow, numpy et le SDK MCP imposent Python ; l'ergonomie impose le web ; le navigateur donne les outils de développement, qu'une WebView cache. |
+| Toile de composition | **`@xyflow/react`**, ajoutée en T8 — la seule dépendance d'exécution que l'interface ait gagnée depuis React. | *Décidé le 27 août 2026.* Le plan, la conversion écran → plan, la sélection et le confinement d'une carte dans un îlot sont du code de bibliothèque, éprouvé et sous licence MIT ; les réécrire coûterait des semaines pour reproduire ce qui existe. Ce qu'elle ne fournit pas — la carte, la persistance, le classement, l'annulation — reste entièrement au produit : §6.5 fait la part exacte. |
 | Style | V1 = pixel art. Aucune décision ne doit interdire le 2D non-pixel. | La quantification stricte abîme le 2D peint — elle devra avoir deux régimes le jour venu. |
 | Validation | Manuelle, systématique. | C'est le principe du produit, pas une limite. |
 
@@ -294,9 +295,34 @@ déjà portés par l'univers.
 | `list_assets` | retrouver et réutiliser plutôt que regénérer |
 | `get_asset` | métadonnées et chemin |
 | `import_asset` | faire entrer un fichier local |
-| `edit_asset` | détourer, découper, recadrer un asset existant |
+| `edit_asset` | détourer, recadrer, remettre sur grille, revenir au brut |
+| `slice_asset` | proposer des rectangles sur une planche, puis les découper |
 | `export_assets` | poser une sélection dans un dossier |
 | `list_models` | le catalogue et ses plafonds |
+| `get_budget` | ce qui reste avant le plafond de la séance |
+
+**Onze plutôt que neuf, et les deux ajouts tiennent à la même règle.**
+`slice_asset` est sorti d'`edit_asset` parce que découper est **deux gestes
+séparés** — proposer ne crée rien, découper coupe ce qu'on lui donne —, et qu'un
+outil qui ferait les deux d'un coup fabriquerait huit assets à jeter sur une
+détection ratée. `get_budget` existe parce qu'un plafond qui ne se consulte qu'en
+le heurtant n'est pas un garde-fou : l'agent doit pouvoir regarder avant de
+lancer un lot.
+
+**Le serveur est monté sur l'application FastAPI, chemin `/mcp`**, et partage
+l'unique `Atelier` du processus. C'est ce qui fait que ce que l'agent produit
+paraît en direct dans la grille : un second processus aurait sa propre diffusion
+et son propre écrivain sur le disque. Deux conséquences à connaître — le chemin
+**exact** `/mcp` doit être corrigé avant le routage, un montage Starlette ne
+reconnaissant que `/mcp/…` ; et l'en-tête `Host` est vérifié par le transport
+contre le réattachement DNS, les deux noms de la boucle locale étant nommés et
+rien d'autre.
+
+**Un refus du produit franchit le protocole avec sa phrase.** Le SDK range toute
+exception qu'il ne connaît pas en « crash » et retient son texte côté serveur ;
+`ErreurAtelier` est donc traduite en refus attendu, exactement comme `CODES` dans
+`api/app.py` lui donne son code HTTP. Même règle, deux protocoles : *un refus du
+produit est une réponse, jamais une panne*.
 
 **Deux garde-fous, tous deux réglables depuis l'interface et désactivables.** Le serveur lit
 le réglage courant **à chaque appel**, jamais au démarrage — on doit pouvoir changer d'avis
@@ -317,20 +343,92 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 |---|---|---|
 | **Projet** *(= l'univers)* | nom, bible (texte libre), planches de référence, palette extraite, réglages par défaut | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
-| **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. |
+| **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
 | **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
 | **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
+| **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
+
+### Ce que la toile ajoute au modèle
+
+*Écrit le 27 août 2026 avec T8 et T9.* Deux tranches nées de l'usage, qui ajoutent une entité,
+deux champs à la carte, et rien d'autre.
+
+**L'îlot n'est pas une entité — il *est* le groupe.** Un îlot nommé sur la toile et un `groupe`
+écrit sur une carte sont la même chose vue de deux endroits, et c'est ce qui interdit deux
+rangements concurrents. Tirer une carte dans un îlot écrit son groupe, l'en sortir le vide :
+composer et classer sont le même geste, dans les deux sens, et il n'existe aucun état où l'écran
+et le disque divergent. La contrepartie est assumée — **un îlot vide n'existe pas**, puisqu'un
+groupe sans carte n'a nulle part où être écrit. La teinte d'un îlot, elle, ne peut pas vivre sur
+ses cartes : six cartes feraient six vérités possibles pour un seul îlot. Elle vit dans le fichier
+du projet, une entrée par nom de groupe, et part avec le dernier membre. Une note est une carte
+texte : elle porte sa teinte elle-même.
+
+**La position et la largeur libre sont sur la carte, jamais dans un fichier de mise en page.**
+Un `toile.json` par projet aurait exactement la panne qui a déjà valu son refus à `cartes.json`
+(`atelier/depot/fichiers.py`) : relire, modifier, réécrire — deux gestes dans le même instant se
+relisent tous les deux avant d'écrire, et le second efface le premier. Sur une toile ce n'est plus
+une hypothèse, c'est le régime normal : on déplace vite et souvent. La carte porte sa place, et un
+déplacement n'écrit qu'un fichier, le sien.
+
+**La largeur libre n'est pas la taille d'affichage, et aucune des deux ne ment sur l'autre.** La
+taille d'affichage est le cran 1× / 2× / 4× que lit la grille ; la largeur libre est une place
+occupée sur un plan — continue, aimantée sur ces mêmes trois largeurs (`docs/DESIGN.md` § L'écran
+Univers). Une valeur unique pour les deux aurait fait qu'agrandir une carte sur la toile change la
+grille de tout le monde. La hauteur ne se stocke pas : elle suit le rapport de l'image.
+
+**Posée n'est pas classée, et la réserve est la lecture de « ni l'un ni l'autre ».** Une carte peut
+avoir une position sans groupe — c'est le brouillon, trois images côte à côte pour voir si elles
+vont ensemble avant de décider qu'elles font un îlot. Le cas inverse existait avant la toile : une
+carte groupée depuis T4 n'a jamais été déplacée, donc n'a pas de position ; elle se pose dans son
+îlot à l'ouverture et n'écrit la sienne qu'au premier geste. Ce qui n'a **ni groupe ni position**
+attend en réserve.
+
+**Un fichier par lien, sous le tableau du projet** — `donnees/projets/<projet>/tableau/liens/<lien>.json`.
+Deux raisons, et la seconde est un fait du code. La première est celle de la carte, mot pour mot :
+écrire vite et souvent sans relire le tout. La seconde est que `parcourir_cartes` lit
+`tableau/*.json` et tient pour une carte tout JSON qui porte un identifiant — poser les liens à
+côté des cartes en ferait des cartes fantômes dans le tableau. Un sous-dossier, et la règle du
+dossier reste vraie telle quelle.
+
+**Pas d'index pour les liens, comme pour les cartes.** Ils ne se cherchent pas, ne se filtrent pas,
+ne se paginent pas : une toile se lit en entier. Corollaire hérité — jeter `atelier.sqlite3` ne
+touche ni au tableau ni aux liens, puisqu'ils n'y sont jamais entrés.
+
+**Un lien meurt avec son extrémité, et c'est la suppression qui l'emporte, pas un balayage.**
+`effacer_carte` efface déjà la carte et ses octets ensemble ; elle efface désormais aussi les liens
+qui y aboutissent. Un trait vers rien ne représente rien, et une entrée morte sur le disque serait
+une deuxième vérité qui attend son heure. Un îlot n'ayant pas d'existence propre, un lien vers un
+îlot disparaît avec le dernier membre du groupe.
+
+**La route qui les accepte est celle qui existe déjà.** `PUT /api/board/{carte}` porte depuis T4
+les réglages qui se remplissent ensemble — groupe, note, taille — et T8 lui ajoute **la position et
+la largeur**, sans en ouvrir une nouvelle. La raison est celle d'origine, renforcée : tirer une
+carte dans un îlot écrit sa position *et* son groupe, et deux appels rendraient possible un état où
+l'un est écrit et l'autre non — c'est-à-dire la divergence que toute la tranche est là pour
+empêcher. Elle est appelée **à la fin du geste, pas pendant** : un glissement écrit une fois, au
+relâchement, jamais à chaque image.
+
+Les liens ont les leurs, sur le même préfixe et dans la même langue — chemins en anglais, charges
+utiles en français : `POST /api/board/links` en pose un, `PUT /api/board/links/{lien}` lui donne
+son mot et sa pointe, `DELETE /api/board/links/{lien}` le coupe. `GET /api/board` les rend **avec
+les cartes**, comme il rend déjà les groupes : la toile se lit en un aller-retour, parce qu'elle
+est le tableau.
+
+**Et rien n'existe côté serveur pour l'annulation.** La pile de Ctrl+Z vit dans l'onglet et meurt
+en quittant l'écran (`docs/PLAN.md` T8) : annuler, c'est rappeler la même route avec la valeur
+d'avant. Une route d'annulation aurait fait de la composition un historique de projet — elle est le
+rattrapage du geste en cours, et rien d'autre.
 
 ## 6 · V1 — l'atelier
 
-Sept briques. Objectif : une application utilisable pour de vrai, sans aucune
-inconnue technique.
+Sept briques, et deux qui sont venues après, de l'usage. Objectif : une application
+utilisable pour de vrai, sans aucune inconnue technique.
 
 ### 6.1 Contenu
 
 | Brique | Ce qu'elle fait | Ce qu'elle ne fait pas |
 |---|---|---|
-| **Tableau d'inspiration** | Rassembler, trier, jeter. Cartes image **ou texte**. Entrée par collage (Ctrl+V, le geste principal), glisser-déposer, URL, fichier. Groupes nommés, note et provenance par carte, vignettes 1×/2×/4×. Promotion d'une carte en **artwork officiel**. | Pas de toile libre — grille seulement. Pas de corbeille : suppression avec annulation courte. |
+| **Tableau d'inspiration** | Rassembler, trier, jeter. Cartes image **ou texte**. Entrée par collage (Ctrl+V, le geste principal), glisser-déposer, URL, fichier. Groupes nommés, note et provenance par carte, vignettes 1×/2×/4×. Promotion d'une carte en **artwork officiel**. **Deux vues sur la même matière depuis T8** : la grille, et une toile où une carte se pose, où l'îlot donne enfin une forme au groupe, et où un lien dit ce que la proximité ne dit pas. | Pas de mise en page automatique sur la toile : rien ne s'aligne, ne se distribue ni ne reflue tout seul. Pas de couleur sur une carte — l'îlot et la note seulement, sinon c'est un second rangement, invisible dans la grille et concurrent du groupe. Pas d'historique de composition : la pile d'annulation meurt avec l'écran. Pas de corbeille : suppression avec annulation courte. |
 | **Univers** | Une bible en **champs nommés** (monde, époque, trait, éclairage, contraintes techniques), chacun activable pour une génération. Les artworks officiels partent en guide de style à chaque appel. Palette extraite d'eux par calcul. | Pas de description automatique du style. Pas de contrôle de conformité. Pas de consignes par type d'asset. |
 
 **Les artworks officiels sont groupés par famille, et seuls ceux de la famille du sujet
@@ -377,7 +475,7 @@ n'oblige jamais à quitter l'endroit où l'on crée — c'est ce qui fait qu'on 
 | Écran | Rôle | Fréquence |
 |---|---|---|
 | **Projets** | liste, création, ouverture | rare |
-| **Univers** | tableau d'inspiration, bible, palette, réglages par défaut | au début d'un projet, puis ponctuel |
+| **Univers** | tableau d'inspiration — grille **ou toile** —, bible, palette, réglages par défaut | au début d'un projet, puis ponctuel |
 | **Atelier** | arbre · réglages · prompt · grille — le travail quotidien | permanent |
 | **Fiche asset** | visionneuse, recette, filiation, actions | constant |
 | **Découpe** | une planche multi-sprites, les rectangles qui en sortiront, leur correction à la main | ponctuel, sur une planche |
@@ -389,6 +487,15 @@ n'oblige jamais à quitter l'endroit où l'on crée — c'est ce qui fait qu'on 
   des rectangles sur une image de mille pixels, et la fiche en fait 380. Il s'ouvre **depuis**
   la fiche — on découpe une image, jamais une sélection — et il couvre l'Atelier comme
   l'écran Univers, avec la même contrepartie : il porte sa propre fente de refus.
+- **L'écran Univers passe à trois colonnes quand la toile est ouverte** : `380px · 1fr · 380px`,
+  réglages de l'univers · toile · réserve, contre `380px · 1fr` en mode grille (`docs/DESIGN.md`
+  § Layout). La troisième colonne n'introduit **aucune largeur nouvelle** — c'est la 380 de la
+  fiche asset, réemployée pour ce qu'elle nomme déjà : la colonne de ce qu'on manipule. Elle
+  n'introduit pas non plus une grille de plus : la réserve **est** la grille du tableau, filtrée
+  sur ce qui n'a pas encore de place, ce qui laisse intacte la règle d'une seule grille dans tout
+  le produit. Les réglages restent visibles pendant qu'on compose, et c'est la raison d'être de la
+  colonne de gauche. La bascule est un segment dans la barre du tableau, pas un onglet : l'écran ne
+  se dédouble pas, c'est la même matière regardée autrement.
 - **Écran large uniquement.** Le produit ne vise ni mobile ni tablette : les trois panneaux
   et la grille cohabitent d'emblée. Aucun point de rupture, aucun menu escamoté, aucune mise
   en page de repli à écrire. Les panneaux restent rétractables **par choix** — voir la grille
@@ -405,6 +512,12 @@ sa livraison, et on ne passe à la suivante que lorsque la précédente sert vra
 seule vaut déjà le détour — elle remplace l'aller-retour vers SpriteCook pour un asset
 isolé. Chaque tranche doit valoir son temps de construction avant que la suivante commence.
 
+**T8 la toile et T9 les liens et les notes** se sont ajoutées le 27 août 2026, d'une séance
+d'essai sur le produit tenu. Elles ne s'intercalent nulle part : la chaîne de production s'arrête à
+T7, rien avant elles ne les attend, et aucune tranche de la V1 ne change d'ordre. Elles sont nées
+de l'usage et non du cadrage — la meilleure raison qu'une tranche puisse avoir, et la seule qui
+autorisait à revenir sur le « pas de toile libre » écrit ici même la veille.
+
 Ce que contient chaque tranche, les user stories qu'elle couvre, ses dépendances et ses
 critères d'acceptation : **`docs/PLAN.md`**, qui fait foi sur l'ordre.
 
@@ -412,6 +525,42 @@ critères d'acceptation : **`docs/PLAN.md`**, qui fait foi sur l'ordre.
 
 Distribués tranche par tranche dans `docs/PLAN.md`, chacun écrit là où il devient
 vérifiable.
+
+### 6.5 La dépendance de la toile
+
+**`@xyflow/react`, ajoutée en T8.** L'interface avait deux dépendances d'exécution — `react`,
+`react-dom` — et elle en a trois. Le fait mérite d'être écrit parce qu'il ne doit pas se
+reproduire : tout le reste du produit est du châssis maison, et le rester est une décision
+renouvelée, pas un état de fait.
+
+Ce qu'elle fournit, et qu'on ne réécrit donc pas :
+
+| | |
+|---|---|
+| **Le plan** | déplacement et zoom sous une transformation unique, et la conversion écran → plan dont chaque geste a besoin |
+| **Le nœud** | position, glissement, sélection simple et multiple |
+| **L'îlot** | le nœud parent et le confinement d'un enfant dans son parent (`parentId` + `extent: "parent"`) — le mécanisme exact de « tirer dans un îlot » |
+| **Le lien** | le tracé entre deux ancrages, son étiquette, sa pointe, et le fait qu'il suive ses extrémités quand elles bougent |
+| **La poignée** | le redimensionnement d'un nœud, dont la toile ne retient que la largeur |
+
+Ce qu'elle ne fournit pas, et qui reste entièrement au produit :
+
+| | |
+|---|---|
+| **La carte** | un nœud est un emplacement ; ce qu'on y dessine est le composant du produit, sans un pixel d'écart avec la carte de la grille (`docs/DESIGN.md`) |
+| **La persistance** | elle ne connaît ni fichier ni route. Ce qui s'écrit, quand, et par quel appel : §5 |
+| **Le classement** | « poser dans un îlot écrit le groupe » est une règle du produit. La librairie signale qu'un nœud a changé de parent ; elle n'en tire aucune conséquence |
+| **L'annulation** | aucune pile fournie. Ctrl+Z, sa pile en mémoire et sa mort à la fermeture sont à écrire |
+| **La réserve** | elle est hors du plan — c'est la grille du tableau. Le glissement qui traverse la frontière est du code maison |
+| **La couleur, la typographie, la forme** | `docs/DESIGN.md` fait foi, y compris pour les six teintes d'îlot |
+
+**Le partage est net, et c'est ce qui rend la dépendance acceptable : elle tient la surface, le
+produit tient la matière.** Le jour où elle gênerait, ce qu'on perdrait est du geste — un plan, un
+glissement, un trait — jamais un objet, jamais un fichier, jamais une règle. C'est la ligne que
+`fournisseur/` défend ailleurs, obtenue ici sans écrire de port : le modèle ne connaît pas la
+librairie, et la librairie ne connaît pas le modèle.
+
+Licence MIT, comme le reste de la chaîne d'interface.
 
 ## 7 · V2 — Tileset autotile
 

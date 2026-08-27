@@ -64,6 +64,11 @@ class Fichiers:
         self.recettes = self.racine / "recettes.json"
         self.collections = self.racine / "collections.json"
         self.etat = self.racine / "atelier.json"
+        # Le cadre de l'agent — plafond, modèle imposé, dossier du jeu. Un
+        # fichier à part de l'état de l'atelier, et pas un bloc dedans : il se
+        # relit **à chaque appel** du MCP (US-91), là où l'état ne se lit qu'à
+        # l'ouverture. Deux rythmes de lecture, deux fichiers.
+        self.agent = self.racine / "agent.json"
         self.base = self.racine / "atelier.sqlite3"
 
     def preparer(self) -> None:
@@ -293,6 +298,19 @@ class Fichiers:
 
     def lire_etat(self) -> dict[str, Any]:
         contenu = self._lire_json(self.etat)
+        return contenu if isinstance(contenu, dict) else {}
+
+    def ecrire_agent(self, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.agent, contenu)
+
+    def lire_agent(self) -> dict[str, Any]:
+        """Le cadre de l'agent. Absent, il rend `{}` — et les défauts s'appliquent.
+
+        **Ne lève jamais**, comme la lecture de la clé : un cadre qui manque
+        n'est pas une panne, c'est l'état d'un atelier où personne n'a encore
+        touché aux garde-fous.
+        """
+        contenu = self._lire_json(self.agent)
         return contenu if isinstance(contenu, dict) else {}
 
     # ── Relire le disque ─────────────────────────────────────────────────────

@@ -186,17 +186,28 @@ function Pastille({
   asset: Asset | null
   emplacement: Emplacement | null
 }) {
-  const mot =
+  // **`agent` passe avant `réglé`, et c'est l'ordre qui décide** puisqu'une
+  // tuile n'en porte qu'une. « Savoir à qui parler quand quelque chose me
+  // surprend » (US-39) est ce qu'on cherche en premier devant une image
+  // inattendue ; qu'elle ait aussi été retouchée se lit dans sa fiche.
+  const [mot, teinte] =
     emplacement?.statut === "interrompue"
-      ? "interrompu"
+      ? ["interrompu", "text-epingle"]
       : asset?.parent_supprime
-        ? "parent supprimé"
-        : asset?.epingle
-          ? "réglé"
-          : null
+        ? ["parent supprimé", "text-epingle"]
+        : asset?.provenance === "agent"
+          ? // `--signal-clair`, nommé pour cet emploi au § Palette. Une
+            // troisième couleur de pastille aurait été une couleur de plus
+            // dans la grille ; celle-ci est déjà celle du survol du signal.
+            ["agent", "text-signal-clair"]
+          : asset?.epingle
+            ? ["réglé", "text-epingle"]
+            : [null, ""]
   if (!mot) return null
   return (
-    <span className="mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] text-epingle">
+    <span
+      className={`mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] ${teinte}`}
+    >
       {mot}
     </span>
   )

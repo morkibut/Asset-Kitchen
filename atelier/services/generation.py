@@ -41,7 +41,7 @@ from atelier.domaine import (
     Resultat,
     Statut,
 )
-from atelier.domaine.generation import CARTE, EDITION
+from atelier.domaine.generation import AUTEUR, CARTE, EDITION
 from atelier.domaine.erreurs import (
     DemandeRefusee,
     ErreurAtelier,
@@ -52,6 +52,7 @@ from atelier.fournisseur import PortFournisseur
 from atelier.image import mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
+from atelier.domaine.asset import Asset
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
@@ -68,6 +69,13 @@ ATTENTE_INCONNUE_S = 20.0
 # Sur combien d'appels réussis la médiane se calcule. Court exprès : un modèle
 # qui ralentit doit se voir en quelques images, pas en cinquante.
 FENETRE_MESURES = 8
+
+
+# Le « modèle » d'une image qui n'a appelé personne. Un mot du produit, pas un
+# identifiant de fournisseur : le catalogue ne le déclare pas et ne le déclarera
+# jamais, et c'est exactement ce qu'il dit — cette image n'a rien coûté et ne se
+# relance pas.
+IMPORT = "import"
 
 
 class ServiceGenerations:
@@ -195,6 +203,69 @@ class ServiceGenerations:
             raise ErreurAtelier("le fichier de cette image a disparu du disque")
         return self._fichiers.lire(resultat.fichier), resultat.type_media
 
+    # ── Faire entrer une image qui vient d'ailleurs ──────────────────────────
+
+    def importer(
+        self,
+        octets: bytes,
+        nom: str,
+        *,
+        projet: str | None = None,
+        provenance: str = AUTEUR,
+    ) -> Asset:
+        """Un fichier local devient un asset entier (US-82).
+
+        **Il passe par une génération, et ce n'est pas une formalité.** La
+        bibliothèque se reconstruit en parcourant les `generation.json` du
+        disque : un asset écrit sans le sien serait perdu au premier effacement
+        de l'index, c'est-à-dire à la première évolution du schéma. Cette
+        génération-là n'a appelé personne — modèle `import`, coût nul, un seul
+        emplacement déjà réussi —, et elle dit d'où le fichier venait, ce
+        qu'aucun autre endroit ne pourrait dire ensuite.
+
+        L'asset naît donc par le même chemin que tous les autres : il hérite de
+        la recette du projet, entre en bibliothèque de lui-même, et se range
+        dans le projet ouvert quand on n'en nomme pas. **Aucun appel au
+        fournisseur** — importer marche réseau coupé.
+        """
+        mesure = mesurer(octets)
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+
+        identifiant = uuid.uuid4().hex
+        chemin = self._fichiers.ecrire_brut(
+            identifiant, 0, octets, extension(mesure.type_media)
+        )
+        emplacement = Emplacement(
+            rang=0,
+            statut=Statut.REUSSIE,
+            resultat=Resultat(
+                fichier=chemin,
+                largeur=mesure.largeur,
+                hauteur=mesure.hauteur,
+                type_media=mesure.type_media,
+                octets=mesure.octets,
+            ),
+        )
+        generation = Generation(
+            identifiant=identifiant,
+            modele=IMPORT,
+            # Le nom du fichier fait le label, par `_label` : c'est le seul
+            # texte qu'un import apporte, et c'est celui que l'auteur cherchera
+            # dans la grille.
+            demande={"prompt": nom, "variations": 1, "source": nom},
+            parametres_resolus={"modele": IMPORT, "source": nom},
+            emplacements=[emplacement],
+            cree_le=time.time(),
+            projet=projet,
+            provenance=provenance,
+        )
+        self._sauver(generation)
+        asset = self._assets.naitre(generation, emplacement)
+        if asset is None:  # pragma: no cover — l'emplacement porte son résultat
+            raise ErreurAtelier(f"« {nom} » n'a pas pu entrer en bibliothèque")
+        return asset
+
     # ── Soumission ───────────────────────────────────────────────────────────
 
     def preparer(
@@ -205,6 +276,7 @@ class ServiceGenerations:
         identifiant: str | None = None,
         projet: str | None = None,
         references: Sequence[Reinjection] = (),
+        provenance: str = AUTEUR,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -263,6 +335,10 @@ class ServiceGenerations:
             cree_le=time.time(),
             projet=projet,
             references=reinjectes,
+            # **Qui a demandé cet appel** (US-39). Posé ici, à la soumission, et
+            # nulle part ailleurs : c'est le seul instant où l'on sait par quelle
+            # façade la demande est entrée. L'asset en héritera à sa naissance.
+            provenance=provenance,
         )
         self._sauver(generation)
         return generation, modele, False
@@ -275,6 +351,7 @@ class ServiceGenerations:
         identifiant: str | None = None,
         projet: str | None = None,
         references: Sequence[Reinjection] = (),
+        provenance: str = AUTEUR,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
@@ -283,6 +360,7 @@ class ServiceGenerations:
             identifiant=identifiant,
             projet=projet,
             references=references,
+            provenance=provenance,
         )
         if deja or modele is None:
             return generation
