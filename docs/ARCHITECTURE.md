@@ -249,6 +249,16 @@ Absents du catalogue image, contrairement à ce qu'on espérait : **Wan** (famil
 - Pas d'URL signées ni d'expiration — le MCP tourne dans le même processus que l'API et lit
   les fichiers sur le disque. Le point le plus coûteux de l'intégration SpriteCook n'existe
   pas ici.
+- **Le flux ne transporte que des faits acquis** — un emplacement part, une image arrive, un
+  appel échoue, le catalogue revient. Aucun avancement intermédiaire n'y circule, parce
+  qu'aucun fournisseur d'image n'en produit : relevé sur les 48 modèles du catalogue, aucun
+  ne rend de progression avant l'image. Le premier message de chaque abonnement est **l'état
+  complet**, ce qui fait qu'un onglet rouvert n'a rien à redemander et qu'une reconnexion se
+  rattrape seule.
+- **L'attente d'un modèle est une mesure, pas une table.** Elle est la médiane des durées de
+  ses derniers appels réussis, relues dans l'index ; une valeur d'amorçage sert le temps de
+  la première image, puis ne resert jamais. C'est ce qui rend possible la jauge *déterminée*
+  que `docs/DESIGN.md` § Motion demande, sans inventer de pourcentage.
 
 ### Serveur MCP — outils et garde-fous
 

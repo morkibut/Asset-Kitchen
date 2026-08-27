@@ -15,10 +15,13 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1, jalons 1 et 2 sont faits.** Le squelette, la clé, le catalogue relu au démarrage,
-un appel qui rend une image téléchargeable — puis l'écran Atelier : réglages, prompt,
-grille d'emplacements, relance d'un raté. 16 tests d'acceptation passent. Trois images
-réelles sont sorties, dont deux variations en parallèle (11,7 s et 18,8 s, $0,0125).
+**T1 est finie.** Le squelette, la clé, le catalogue relu au démarrage, un appel qui rend
+une image téléchargeable ; l'écran Atelier — réglages, prompt, grille d'emplacements,
+relance d'un raté ; puis le flux d'événements qui remplace le sondage, la jauge
+déterminée, la reprise vue du navigateur et le repli hors ligne à l'écran. **Les seize
+critères d'acceptation de T1 sont cochés dans `docs/PLAN.md`, et 28 tests les tiennent.**
+Trois images réelles sont sorties, dont deux variations en parallèle (11,7 s et 18,8 s,
+$0,0125). **La prochaine tranche est T2, le post-traitement.**
 
 **Le risque « couverture image d'OpenRouter » est levé** (`essais/essai_couverture.py`) :
 48 modèles image, 11 fournisseurs, 31 acceptent assez de références pour un univers.
@@ -29,9 +32,10 @@ fiche naissent avec la bibliothèque (T3) ; les afficher vides aujourd'hui montr
 cadrage au lieu de servir le geste, ce qui est exactement le reproche fait à la maquette
 écartée. Le design n'est pas amendé, il est atteint en T3.
 
-Reste de T1 : le flux d'événements à la place du sondage d'une seconde (et la jauge
-**déterminée** que le design demande), la reprise vue du navigateur, le repli hors ligne
-à l'écran.
+**L'interface ne redemande plus rien.** Elle se branche une fois sur `GET /api/events` et
+écoute ; le seul appel qu'elle refait d'elle-même est le catalogue, parce que le grisé de
+chaque modèle dépend de la demande en cours. Vérifié au navigateur : deux requêtes au
+chargement, plus une seule ensuite tant que rien ne change.
 
 ## Lancer
 
@@ -106,8 +110,11 @@ chaîne avance : c'est le signe que ça marche.
 | | |
 |---|---|
 | `atelier/` | le paquet Python — `domaine/` les objets et les règles, `fournisseur/` le port et l'adaptateur OpenRouter, `services/` les gestes, `api/` les routes, `depot/` SQLite et fichiers, `image/` le traitement, `mcp/` vide jusqu'à T7 |
+| `atelier/services/evenements.py` | la diffusion — ce que l'atelier annonce, à qui écoute. C'est elle qui remplace le sondage : un service qui change d'état le dit, personne ne redemande |
 | `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
-| `tests/test_t1_jalon1.py` | un test par critère d'acceptation de T1 déjà tenu. Le fournisseur y est un double : aucun test ne coûte un centime |
+| `tests/conftest.py` | le double de fournisseur et les trois montages partagés. Il rend de vraies images, de vrais coûts, de vraies dimensions — **aucun test ne coûte un centime** |
+| `tests/test_t1_jalon1.py` | les critères de T1 tenus par les jalons 1 et 2 — clé, catalogue, image téléchargeable, variations concurrentes, emplacements indépendants |
+| `tests/test_t1_jalon3_4.py` | ceux des jalons 3 et 4 — flux d'événements, jauge déterminée, onglet rouvert, repli hors ligne |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
 | `donnees/` | l'index SQLite, la photo du catalogue, les générations et leurs images. Hors Git |
@@ -193,6 +200,20 @@ deux vivent côte à côte.
   $0,0245 avec deux. Un univers riche renchérit chaque appel — à surveiller dès T4.
 - **Un seul échantillon ne mesure rien.** Un modèle génératif n'est pas déterministe : tout
   banc se fait en deux jets au minimum, et l'écart entre eux compte autant que la moyenne.
+- **Un générateur asynchrone ne se referme pas pendant qu'il attend.** Un abonnement écrit
+  en `async def … yield` lève `aclose(): asynchronous generator is already running` dès que
+  l'appelant le referme alors que l'attente en cours n'est pas finie — et un flux
+  d'événements est *toujours* en attente. Constaté le 27 août sur `GET /api/events`. Un
+  abonné reçoit donc une **file** (`asyncio.Queue`) : l'appelant décide comment il attend,
+  et annuler cette attente n'abîme rien.
+- **`TestClient` et `httpx.ASGITransport` attendent la fin de la réponse.** Ils ne
+  conviennent pas à un flux qui n'en a pas : le test se fige jusqu'au délai du lot entier.
+  On appelle l'application ASGI directement, on lit les premiers messages, et on envoie
+  `http.disconnect` — ce qui vérifie du même coup que le serveur s'en remet.
+- **Le message d'erreur d'`httpx` est en anglais, et il finit à l'écran.** « All connection
+  attempts failed » est ressorti tel quel dans le bandeau hors ligne. Toute erreur de
+  transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message
+  de bibliothèque ne franchit jamais le port.
 
 ## Règle systématique : comment finir une étape
 

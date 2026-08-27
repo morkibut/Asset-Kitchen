@@ -13,7 +13,7 @@ Trois invariants sont portés ici, et ils sont instaurés dès T1
 Une génération de N variations tient N **emplacements** indépendants. Un
 emplacement réussit ou échoue seul : les images qui arrivent arrivent, même
 quand leurs voisines échouent, et relancer l'une ne rejoue pas les autres.
-L'exécution parallèle vient au jalon suivant ; la forme, elle, est déjà là.
+Les N appels partent ensemble, jamais l'un après l'autre.
 """
 
 from __future__ import annotations
@@ -77,21 +77,35 @@ class Emplacement:
 
     rang: int
     statut: Statut = Statut.EN_ATTENTE
-    avancement: float = 0.0
     cout_usd: float = 0.0  # ce que l'appel a facturé, y compris quand il échoue
     duree_s: float = 0.0
     resultat: Resultat | None = None
     raison: str | None = None
 
+    # ── Ce qu'il faut pour une jauge **déterminée** ───────────────────────────
+    #
+    # `docs/DESIGN.md` § Motion veut la jauge déterminée — « ça travaille, et
+    # voilà où ça en est ». Aucun fournisseur d'image ne rend d'avancement
+    # intermédiaire : il n'y a rien à relayer, il faut une **attente estimée**.
+    #
+    # Deux faits suffisent, et ce sont des faits : l'instant du départ, et la
+    # durée que ce modèle a réellement mise les fois précédentes. Aucun taux
+    # d'avancement n'est enregistré ici — un pourcentage inventé n'est pas une
+    # mesure, et ce dépôt n'écrit pas de nombre qui ne mesure rien. C'est
+    # l'interface qui trace, à partir de ces deux-là.
+    demarre_le: float | None = None
+    duree_attendue_s: float = 0.0
+
     def en_json(self) -> dict[str, Any]:
         return {
             "rang": self.rang,
             "statut": self.statut.value,
-            "avancement": self.avancement,
             "cout_usd": self.cout_usd,
             "duree_s": self.duree_s,
             "resultat": self.resultat.en_json() if self.resultat else None,
             "raison": self.raison,
+            "demarre_le": self.demarre_le,
+            "duree_attendue_s": self.duree_attendue_s,
         }
 
     @staticmethod
@@ -100,11 +114,12 @@ class Emplacement:
         return Emplacement(
             rang=d["rang"],
             statut=Statut(d["statut"]),
-            avancement=d.get("avancement", 0.0),
             cout_usd=d.get("cout_usd", 0.0),
             duree_s=d.get("duree_s", 0.0),
             resultat=Resultat.depuis_json(brut) if brut else None,
             raison=d.get("raison"),
+            demarre_le=d.get("demarre_le"),
+            duree_attendue_s=d.get("duree_attendue_s", 0.0),
         )
 
 
@@ -141,12 +156,6 @@ class Generation:
         return round(sum(e.cout_usd for e in self.emplacements), 6)
 
     @property
-    def avancement(self) -> float:
-        if not self.emplacements:
-            return 0.0
-        return sum(e.avancement for e in self.emplacements) / len(self.emplacements)
-
-    @property
     def reussies(self) -> int:
         return sum(1 for e in self.emplacements if e.statut == Statut.REUSSIE)
 
@@ -170,7 +179,6 @@ class Generation:
             "projet": self.projet,
             # déduits — présents pour l'interface, jamais relus
             "statut": self.statut.value,
-            "avancement": self.avancement,
             "cout_usd": self.cout_usd,
             "reussies": self.reussies,
         }

@@ -41,11 +41,17 @@ export type Resultat = {
 export type Emplacement = {
   rang: number
   statut: Statut
-  avancement: number
   cout_usd: number
   duree_s: number
   resultat: Resultat | null
   raison: string | null
+  /** Quand l'appel est parti, en secondes epoch. Null tant qu'il n'est pas parti.
+   *  Avec `duree_attendue_s`, c'est tout ce qu'il faut pour une jauge déterminée
+   *  — aucun avancement n'est enregistré côté serveur, parce qu'aucun
+   *  fournisseur d'image n'en rend un. */
+  demarre_le: number | null
+  /** Ce que ce modèle a mis, en médiane, à ses derniers appels réussis. */
+  duree_attendue_s: number
 }
 
 export type Generation = {
@@ -66,7 +72,6 @@ export type Generation = {
   cree_le: number
   projet: string | null
   statut: Statut
-  avancement: number
   cout_usd: number
   reussies: number
 }
@@ -88,10 +93,21 @@ export type EtatCatalogue = {
   modeles: Modele[]
 }
 
+export type EtatCatalogueCourt = {
+  modeles: number
+  recu_le: number
+  repli: boolean
+  raison: string | null
+}
+
 export type Etat = {
   cle: EtatCle
-  catalogue: { modeles: number; recu_le: number; repli: boolean; raison: string | null }
+  catalogue: EtatCatalogueCourt
   couts: { total_usd: number }
+  /** Présent sur le premier message du flux, absent des suivants : c'est lui qui
+   *  fait qu'un onglet rouvert retrouve ce qui s'est produit pendant son
+   *  absence, sans un seul sondage. */
+  generations?: Generation[]
 }
 
 export class Refus extends Error {
@@ -146,11 +162,6 @@ export const api = {
       body: JSON.stringify({ cle }),
     }),
 
-  generations: (limite = 24) =>
-    appeler<{ generations: Generation[]; total_usd: number }>(
-      `/generations?limite=${limite}`,
-    ),
-
   generer: (corps: {
     modele: string
     prompt: string
@@ -177,14 +188,58 @@ export const api = {
     `/api/generations/${identifiant}/slots/${rang}/download`,
 }
 
+// ── Le flux d'événements ────────────────────────────────────────────────────
+//
+// L'interface ne redemande plus rien : elle écoute. Un onglet ouvert apprend au
+// moment où ça se produit, un onglet fermé ne coûte rien, et le serveur, lui,
+// travaille de la même façon dans les deux cas.
+//
+// `EventSource` se reconnecte seul, et **chaque reconnexion redonne l'état
+// complet** — c'est ce qui fait qu'un onglet rouvert, ou une veille de machine,
+// retrouve ses images sans que personne ait à recharger la page.
+
+export type Ecoute = {
+  /** L'état complet. Arrive au branchement, et à chaque rebranchement. */
+  etat: (etat: Etat) => void
+  /** Une génération a changé — un emplacement part, une image arrive, un appel
+   *  échoue. La charge porte toujours la génération **entière**. */
+  generation: (generation: Generation) => void
+  /** Le catalogue a été relu : entrée en repli, ou sortie de repli. */
+  catalogue: (catalogue: EtatCatalogueCourt) => void
+  /** Vrai quand la liaison est vivante, faux quand elle est rompue. */
+  liaison: (vivante: boolean) => void
+}
+
+export function ecouter(ecoute: Ecoute): () => void {
+  const source = new EventSource("/api/events")
+
+  const lire = <T,>(genre: string, recevoir: (charge: T) => void) =>
+    source.addEventListener(genre, (message) =>
+      recevoir(JSON.parse((message as MessageEvent<string>).data) as T),
+    )
+
+  lire<Etat>("etat", ecoute.etat)
+  lire<Generation>("generation", ecoute.generation)
+  lire<EtatCatalogueCourt>("catalogue", ecoute.catalogue)
+
+  source.onopen = () => ecoute.liaison(true)
+  source.onerror = () => ecoute.liaison(false)
+
+  return () => source.close()
+}
+
 // ── Mise en forme des mesures ───────────────────────────────────────────────
 // Virgule décimale, espace fine avant l'unité. `docs/DESIGN.md` § Typography.
 
 export const dollars = (montant: number) =>
   `$${montant.toFixed(4).replace(".", ",")}`
 
+// `00:08` — deux chiffres des deux côtés, chiffres de largeur fixe : le
+// compteur ne doit pas changer de largeur pendant qu'on le regarde.
 export const secondes = (duree: number) =>
-  `${Math.floor(duree / 60)}:${String(Math.floor(duree % 60)).padStart(2, "0")}`
+  `${String(Math.floor(duree / 60)).padStart(2, "0")}:${String(
+    Math.floor(duree % 60),
+  ).padStart(2, "0")}`
 
 export const heure = (horodatage: number) =>
   new Date(horodatage * 1000).toLocaleString("fr-FR", {

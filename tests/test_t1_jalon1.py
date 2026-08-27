@@ -1,99 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Les critères d'acceptation de T1 que le jalon 1 doit déjà tenir.
+"""Les critères d'acceptation de T1 tenus par les jalons 1 et 2.
 
-Un test par critère de `docs/PLAN.md` § Phase T1, nommé d'après lui. Ce qui
-relève des variations concurrentes, de la survie à l'écran et du repli hors
-ligne complet arrive aux jalons suivants ; ce qui est ici est acquis.
+Un test par critère de `docs/PLAN.md` § Phase T1, nommé d'après lui — la clé, le
+catalogue, un appel qui rend une image téléchargeable, les variations
+concurrentes et les emplacements indépendants.
 
-Aucun test n'appelle le fournisseur : le port est remplacé par un double. Le
-seul appel payant du jalon est l'essai `essais/essai_premiere_image.py`, et il
-se lance à la main.
+Le flux d'événements, la jauge déterminée, la reprise vue du navigateur et le
+repli hors ligne à l'écran sont dans `tests/test_t1_jalon3_4.py`.
+
+Le double de fournisseur et les montages vivent dans `tests/conftest.py` :
+aucun test n'appelle le fournisseur, aucun ne coûte un centime.
 """
 
 from __future__ import annotations
 
 import asyncio
-import io
 
 import pytest
-from fastapi.testclient import TestClient
-from PIL import Image
 
 from atelier.api.app import creer_application
-from atelier.domaine import Demande, Modele, Option, Statut
-from atelier.domaine.erreurs import (
-    AppelRefuse,
-    ErreurAtelier,
-    FournisseurIndisponible,
-)
-from atelier.fournisseur.port import ImageProduite
+from atelier.domaine import Demande, Statut
+from atelier.domaine.erreurs import AppelRefuse, ErreurAtelier
 from atelier.services import Atelier
-
-# ── Le double de fournisseur ─────────────────────────────────────────────────
-
-CATALOGUE = [
-    Modele(
-        identifiant="essai/rend-du-png",
-        nom="Essai PNG",
-        references_max=2,
-        proportions=("1:1", "16:9"),
-        resolutions=(),
-        variations_max=4,
-        options={"quality": Option("quality", "choix", ("low", "high"))},
-    ),
-    Modele(
-        identifiant="essai/rend-du-jpeg",
-        nom="Essai JPEG",
-        references_max=0,
-        proportions=("1:1",),
-        variations_max=1,
-    ),
-]
-
-
-def _image(format_: str, taille: tuple[int, int] = (48, 32)) -> bytes:
-    tampon = io.BytesIO()
-    Image.new("RGB", taille, (32, 64, 96)).save(tampon, format=format_)
-    return tampon.getvalue()
-
-
-class FournisseurDouble:
-    nom = "Double"
-
-    def __init__(self) -> None:
-        self.appels = 0
-        self.catalogue_lisible = True
-        self.echec: Exception | None = None
-
-    async def catalogue(self) -> list[Modele]:
-        if not self.catalogue_lisible:
-            raise FournisseurIndisponible("catalogue injoignable — réseau coupé")
-        return list(CATALOGUE)
-
-    async def generer(self, modele: Modele, demande: Demande) -> ImageProduite:
-        self.appels += 1
-        if self.echec is not None:
-            raise self.echec
-        if modele.identifiant.endswith("jpeg"):
-            return ImageProduite(_image("JPEG"), cout_usd=0.035, type_media="image/jpeg")
-        return ImageProduite(_image("PNG"), cout_usd=0.0245, type_media="image/png")
-
-
-@pytest.fixture
-def double() -> FournisseurDouble:
-    return FournisseurDouble()
-
-
-@pytest.fixture
-def atelier(tmp_path, double, monkeypatch) -> Atelier:
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
-    return Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
-
-
-@pytest.fixture
-def client(atelier) -> TestClient:
-    with TestClient(creer_application(atelier)) as client:
-        yield client
+from fastapi.testclient import TestClient
 
 
 # ── « La liste des modèles vient du catalogue du fournisseur » ───────────────

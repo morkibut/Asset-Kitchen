@@ -52,7 +52,9 @@ export function PanneauReglages({
   const proportionsPossibles = choisi?.proportions ?? []
 
   return (
-    <aside className="flex w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1">
+    // `min-h-0` : sans lui, une case de grille prend la hauteur de son contenu
+    // et le panneau pousse la barre d'état hors de l'écran au lieu de défiler.
+    <aside className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1">
       <EnTetePanneau>Réglages</EnTetePanneau>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">

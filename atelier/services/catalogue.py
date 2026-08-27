@@ -18,12 +18,14 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 from atelier.depot import Fichiers
 from atelier.domaine import Modele
 from atelier.domaine.catalogue import modele_depuis_json, modele_en_json
 from atelier.domaine.erreurs import ErreurAtelier, ModeleInconnu
 from atelier.fournisseur import PortFournisseur
+from atelier.services.evenements import Diffusion
 
 
 # **Le seul modèle écrit en dur du produit, et c'est un choix, pas une capacité.**
@@ -58,9 +60,15 @@ class EtatCatalogue:
 
 
 class ServiceCatalogue:
-    def __init__(self, fournisseur: PortFournisseur, fichiers: Fichiers) -> None:
+    def __init__(
+        self,
+        fournisseur: PortFournisseur,
+        fichiers: Fichiers,
+        diffusion: Diffusion | None = None,
+    ) -> None:
         self._fournisseur = fournisseur
         self._fichiers = fichiers
+        self._diffusion = diffusion or Diffusion()
         self._etat = EtatCatalogue()
         self._index: dict[str, Modele] = {}
 
@@ -114,7 +122,23 @@ class ServiceCatalogue:
             )
 
         self._index = {m.identifiant: m for m in self._etat.modeles}
+        # Le repli — et surtout la sortie du repli — se voit à l'écran sans
+        # qu'on ait à recharger la page : c'est le même tuyau que l'avancement.
+        self._diffusion.publier("catalogue", self.en_json())
         return self._etat
+
+    def en_json(self) -> dict[str, Any]:
+        """L'état du catalogue tel que la barre de tête l'affiche.
+
+        Écrit ici, pas dans les routes : la même phrase part par le flux
+        d'événements et par `GET /api/status`, et elles ne peuvent pas diverger.
+        """
+        return {
+            "modeles": len(self._etat.modeles),
+            "recu_le": self._etat.recu_le,
+            "repli": self._etat.repli,
+            "raison": self._etat.raison,
+        }
 
     def _depuis_disque(self, raison: str) -> EtatCatalogue:
         contenu = self._fichiers.lire_catalogue()

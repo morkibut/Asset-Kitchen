@@ -46,7 +46,12 @@ export function Tuile({
             style={{ imageRendering: "pixelated" }}
           />
         )}
-        {enCours && <Jauge depart={generation.cree_le} />}
+        {enCours && (
+          <Jauge
+            demarreLe={emplacement.demarre_le}
+            attendue={emplacement.duree_attendue_s}
+          />
+        )}
         {rate && <Raté raison={emplacement.raison} />}
         {PASTILLES[emplacement.statut] && (
           <span className="mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] text-epingle">
@@ -109,28 +114,69 @@ function Mesures({
   )
 }
 
-/** Jauge en pied de zone image, et compteur : « ça travaille, et voilà où ça
- *  en est ». Le seul mouvement continu du produit. */
-function Jauge({ depart }: { depart: number }) {
-  const [ecoule, setEcoule] = useState(0)
+/**
+ * La jauge **déterminée** de `docs/DESIGN.md` § Motion — « ça travaille, et
+ * voilà où ça en est ». Le seul mouvement continu du produit.
+ *
+ * Aucun fournisseur d'image ne rend d'avancement entre le départ et l'arrivée :
+ * il n'y a rien à relayer. Le serveur donne donc les deux seuls faits qui
+ * existent — l'instant du départ, et la durée que **ce modèle-là** a mise en
+ * médiane à ses derniers appels réussis — et la jauge se trace ici.
+ *
+ * Elle ne ment pas sur ce qu'elle sait : le compteur porte le temps écoulé
+ * **et** l'attente, précédée d'un tilde. Quand l'appel dépasse son attente, ça
+ * se lit tout seul — `00:31 / ~00:19` — et la barre continue d'avancer sans
+ * jamais atteindre le bout, parce qu'elle ne sait pas quand ça finira.
+ */
+function Jauge({
+  demarreLe,
+  attendue,
+}: {
+  demarreLe: number | null
+  attendue: number
+}) {
+  const [ecoule, setEcoule] = useState(() => depuis(demarreLe))
+
   useEffect(() => {
-    const battement = setInterval(
-      () => setEcoule(Date.now() / 1000 - depart),
-      500,
-    )
+    setEcoule(depuis(demarreLe))
+    const battement = setInterval(() => setEcoule(depuis(demarreLe)), 250)
     return () => clearInterval(battement)
-  }, [depart])
+  }, [demarreLe])
+
+  // Pas encore parti : la tuile tient sa place, mais il n'y a rien à mesurer.
+  const enAttente = demarreLe === null
 
   return (
     <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-2">
       <span className="mesure text-[8.5px] text-texte-2">
-        {secondes(Math.max(0, ecoule))}
+        {enAttente ? "en file" : `${secondes(ecoule)} / ~${secondes(attendue)}`}
       </span>
       <span className="block h-[2px] w-full overflow-hidden bg-bord">
-        <span className="block h-full w-1/3 animate-[glisse_1.4s_ease-in-out_infinite] bg-signal" />
+        <span
+          className="block h-full bg-signal transition-[width] duration-[240ms] ease-linear"
+          style={{ width: `${part(ecoule, attendue, enAttente) * 100}%` }}
+        />
       </span>
     </div>
   )
+}
+
+const depuis = (horodatage: number | null) =>
+  horodatage === null ? 0 : Math.max(0, Date.now() / 1000 - horodatage)
+
+/**
+ * Où en est la jauge, entre 0 et 1.
+ *
+ * Linéaire jusqu'à 85 % au moment de l'attente estimée, puis asymptotique :
+ * chaque seconde supplémentaire avance moins que la précédente, et le bout
+ * n'est jamais atteint. Une jauge qui se colle à 100 % avant l'arrivée dit une
+ * chose fausse ; celle-ci dit « ça dépasse, et ça continue ».
+ */
+function part(ecoule: number, attendue: number, enAttente: boolean): number {
+  if (enAttente || attendue <= 0) return 0
+  const fraction = ecoule / attendue
+  if (fraction <= 1) return 0.85 * fraction
+  return 0.85 + 0.14 * (1 - 1 / fraction)
 }
 
 /** « Un raté affiche sa raison en clair à la place de l'image. » */

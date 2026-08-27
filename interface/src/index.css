@@ -98,18 +98,11 @@ body {
   animation: arrivee 120ms var(--ease-entree);
 }
 
-/* La jauge de génération. `docs/DESIGN.md` la veut **déterminée** — « ça
-   travaille, et voilà où ça en est ». Le fournisseur ne rend aucun avancement
-   intermédiaire : tant que le flux d'événements n'est pas là (jalon 3), la
-   jauge balaie et c'est le compteur, lui, qui porte le fait mesuré. */
-@keyframes glisse {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(300%);
-  }
-}
+/* La jauge de génération est **déterminée** (`docs/DESIGN.md` § Motion) et n'a
+   pas d'image-clé : sa largeur est calculée à partir de l'instant du départ et
+   de l'attente mesurée du modèle, et elle glisse par `transition`. Il n'y a
+   donc rien à animer ici — une image-clé de balayage dirait « ça travaille »
+   sans dire « voilà où ça en est », ce que le design refuse. */
 
 *:focus-visible {
   outline: 2px solid var(--color-signal);

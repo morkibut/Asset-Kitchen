@@ -38,6 +38,15 @@ class EtatCle:
         """La raison du grisé, en clair, quand générer est impossible."""
         return None if self.presente else "aucune clé OpenRouter"
 
+    def en_json(self) -> dict[str, object]:
+        """Ce qui part vers l'interface — jamais la clé, seulement son aperçu."""
+        return {
+            "presente": self.presente,
+            "origine": self.origine,
+            "apercu": self.apercu,
+            "raison": self.raison,
+        }
+
 
 def _decoder(octets: bytes) -> str | None:
     for encodage in ENCODAGES:

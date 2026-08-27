@@ -148,12 +148,13 @@ def principal() -> int:
 
 
 def _attendre(client: TestClient, identifiant: str, delai_s: float = 300.0) -> dict:
-    """On sonde ici parce qu'un essai n'a pas d'écran. L'interface, elle, écoutera."""
+    """On sonde ici parce qu'un essai n'a pas d'écran. L'interface, elle, écoute
+    le flux d'événements — `GET /api/events` — et ne redemande jamais rien."""
     limite = time.monotonic() + delai_s
     dernier = ""
     while time.monotonic() < limite:
         generation = client.get(f"/api/generations/{identifiant}").json()
-        etat = f"{generation['statut']} {generation['avancement']:.0%}"
+        etat = f"{generation['statut']} {generation['reussies']}/{len(generation['emplacements'])}"
         if etat != dernier:
             print(f"  … {etat}", flush=True)
             dernier = etat

@@ -15,6 +15,12 @@ Quatre règles portées par ce service, et instaurées ici une fois pour toutes 
   tarif du catalogue.
 - **Rien n'est jamais relancé automatiquement** (US-18). Une génération coupée
   par un redémarrage est marquée interrompue, garde son coût, et attend.
+
+**Ce service ne sait pas qu'un navigateur existe, et il l'annonce quand même.**
+Chaque enregistrement publie sur la diffusion : c'est ce qui remplace le sondage
+d'une seconde. Un onglet fermé ne coûte rien, un onglet ouvert apprend au moment
+où ça se produit, et le service, lui, ne change pas d'un iota selon qu'on écoute
+ou non.
 """
 
 from __future__ import annotations
@@ -44,6 +50,20 @@ from atelier.image import mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
 from atelier.services.catalogue import ServiceCatalogue
+from atelier.services.evenements import Diffusion
+
+
+# **L'attente d'un modèle jamais encore appelé.** Mesuré le 27 août 2026 sur
+# deux variations réelles en parallèle : 11,7 s et 18,8 s. 20 s est donc une
+# première hypothèse prudente — et elle ne sert qu'une fois : dès la première
+# image de ce modèle, c'est la médiane de ses durées réelles qui prend le
+# relais. Ce n'est pas une table de modèles écrite en dur : c'est la valeur
+# d'amorçage d'une mesure qui se recale seule.
+ATTENTE_INCONNUE_S = 20.0
+
+# Sur combien d'appels réussis la médiane se calcule. Court exprès : un modèle
+# qui ralentit doit se voir en quelques images, pas en cinquante.
+FENETRE_MESURES = 8
 
 
 class ServiceGenerations:
@@ -53,11 +73,13 @@ class ServiceGenerations:
         fichiers: Fichiers,
         catalogue: ServiceCatalogue,
         fabrique_fournisseur: Callable[[], PortFournisseur],
+        diffusion: Diffusion | None = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
         self._catalogue = catalogue
         self._fournisseur = fabrique_fournisseur
+        self._diffusion = diffusion or Diffusion()
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -76,6 +98,7 @@ class ServiceGenerations:
                     continue
                 emplacement.statut = Statut.INTERROMPUE
                 emplacement.raison = "le serveur a redémarré pendant la génération"
+                emplacement.demarre_le = None
             self._sauver(generation)
             coupees.append(generation)
         return coupees
@@ -90,6 +113,28 @@ class ServiceGenerations:
 
     def total_couts(self, projet: str | None = None) -> float:
         return self._base.total_par_projet(projet)
+
+    def attente_estimee(self, identifiant_modele: str) -> float:
+        """Combien de temps ce modèle met, d'après ses derniers appels réussis.
+
+        C'est le seul chiffre qui rende la jauge **déterminée** possible : le
+        fournisseur ne dit rien entre le départ et l'arrivée, il n'y a donc
+        aucun avancement à relayer. La médiane, et pas la moyenne — un appel qui
+        a mis quatre-vingts secondes parce que le fournisseur toussait ne doit
+        pas déplacer l'attente des dix suivants.
+
+        Sans mesure, la valeur d'amorçage. Après une seule image, plus jamais.
+        """
+        # Les plus récentes d'abord, puis triées : couper après le tri prendrait
+        # les huit plus courtes de l'histoire au lieu des huit dernières.
+        recentes = self._base.durees_mesurees(identifiant_modele)[:FENETRE_MESURES]
+        durees = sorted(recentes)
+        if not durees:
+            return ATTENTE_INCONNUE_S
+        milieu = len(durees) // 2
+        if len(durees) % 2:
+            return round(durees[milieu], 2)
+        return round((durees[milieu - 1] + durees[milieu]) / 2, 2)
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -194,7 +239,6 @@ class ServiceGenerations:
 
         emplacement.statut = Statut.EN_ATTENTE
         emplacement.raison = None
-        emplacement.avancement = 0.0
         self._sauver(generation)
 
         fournisseur = self._fournisseur()
@@ -249,7 +293,8 @@ class ServiceGenerations:
         fournisseur: PortFournisseur,
     ) -> None:
         emplacement.statut = Statut.EN_COURS
-        emplacement.avancement = 0.05
+        emplacement.demarre_le = time.time()
+        emplacement.duree_attendue_s = self.attente_estimee(modele.identifiant)
         self._sauver(generation)
 
         depart = time.monotonic()
@@ -281,7 +326,6 @@ class ServiceGenerations:
         )
         emplacement.cout_usd = image.cout_usd
         emplacement.duree_s = round(time.monotonic() - depart, 2)
-        emplacement.avancement = 1.0
         emplacement.statut = Statut.REUSSIE
         self._sauver(generation)
 
@@ -295,7 +339,6 @@ class ServiceGenerations:
         """Un appel raté garde son coût : il reste lisible dans le journal (US-24)."""
         emplacement.statut = Statut.ECHOUEE
         emplacement.raison = raison
-        emplacement.avancement = 0.0
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         self._sauver(generation)
 
@@ -303,9 +346,16 @@ class ServiceGenerations:
 
     def _sauver(self, generation: Generation) -> None:
         """Au fil de l'eau, jamais à la fin — sinon un plantage perd ce qui est
-        déjà payé (`AGENTS.md` § Pièges connus)."""
+        déjà payé (`AGENTS.md` § Pièges connus).
+
+        **Écrire d'abord, annoncer ensuite.** Ce qui est annoncé est donc
+        toujours déjà sur le disque : un onglet qui reçoit l'événement puis
+        redemande la génération ne peut pas tomber sur un état plus ancien.
+        """
+        contenu = generation.en_json()
         self._base.enregistrer(generation)
-        self._fichiers.ecrire_enregistrement(generation.identifiant, generation.en_json())
+        self._fichiers.ecrire_enregistrement(generation.identifiant, contenu)
+        self._diffusion.publier("generation", contenu)
 
     @staticmethod
     def _resolus(

@@ -103,6 +103,29 @@ class Base:
             ).fetchall()
         return [Generation.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
+    def durees_mesurees(self, modele: str, limite: int = 12) -> list[float]:
+        """Ce que ce modèle a réellement mis, aux derniers appels réussis.
+
+        C'est la matière de la jauge **déterminée** (`docs/DESIGN.md` § Motion) :
+        aucun fournisseur d'image ne rend d'avancement en chemin, donc la seule
+        façon honnête de dire « voilà où ça en est » est de comparer le temps
+        écoulé à celui que ce modèle-là a mis les fois précédentes. Une mesure,
+        pas une table écrite en dur — et elle se recale à chaque image.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM generations WHERE modele = ? "
+                "ORDER BY cree_le DESC LIMIT ?",
+                (modele, limite),
+            ).fetchall()
+
+        durees: list[float] = []
+        for ligne in lignes:
+            for emplacement in json.loads(ligne["contenu"]).get("emplacements", []):
+                if emplacement.get("statut") == "reussie" and emplacement.get("duree_s"):
+                    durees.append(float(emplacement["duree_s"]))
+        return durees
+
     def total_par_projet(self, projet: str | None) -> float:
         """Le total des coûts, **appels ratés compris** (US-14, achevée en T3)."""
         with self._connexion() as connexion:

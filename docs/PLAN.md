@@ -109,26 +109,48 @@ l'essai qui vérifie la couverture image du fournisseur, premier risque à lever
 
 ### Critères d'acceptation
 
-- [ ] Depuis une installation neuve, la première image est obtenue sans traverser d'autre écran que celui de la clé.
-- [ ] La clé se dépose une fois et n'est plus jamais redemandée.
-- [ ] Sans clé : générer est inactif, dit pourquoi, et mène au réglage en un geste.
-- [ ] La liste des modèles vient du catalogue du fournisseur ; aucun identifiant de modèle, aucun plafond de références n'est écrit en dur.
-- [ ] Un modèle qui ne peut pas honorer la demande en cours est grisé avec sa raison, jamais proposé puis refusé.
-- [ ] Un modèle déjà choisi qui devient invalide reste choisi : c'est générer qui devient inactif, avec sa raison. Aucune substitution silencieuse.
-- [ ] Quatre variations d'un même prompt partent en parallèle et affichent chacune son avancement.
-- [ ] Une génération se lance pendant qu'une autre tourne, sans attendre la première.
-- [ ] Sur quatre variations dont deux échouent : deux images arrivent, deux emplacements portent une raison lisible et un bouton relancer, et relancer l'un ne rejoue pas les autres.
-- [ ] L'onglet est fermé pendant une génération : à la réouverture, l'image est là.
-- [ ] Le serveur est arrêté pendant une génération : au redémarrage elle est marquée interrompue, son coût réel est lisible, et aucune relance n'a eu lieu.
-- [ ] Deux soumissions de la même génération ne facturent qu'une seule fois.
-- [ ] Le coût enregistré est celui que l'appel a facturé, pas le tarif du catalogue ; il est lisible génération par génération.
-- [ ] Les dimensions enregistrées sont mesurées sur l'image reçue.
-- [ ] Réseau coupé : le démarrage n'affiche aucune erreur, le catalogue affiche sa date en clair, un prompt se prépare, et l'échec ne survient qu'au moment de générer.
-- [ ] Une image se télécharge seule, en PNG.
+- [x] Depuis une installation neuve, la première image est obtenue sans traverser d'autre écran que celui de la clé.
+- [x] La clé se dépose une fois et n'est plus jamais redemandée.
+- [x] Sans clé : générer est inactif, dit pourquoi, et mène au réglage en un geste.
+- [x] La liste des modèles vient du catalogue du fournisseur ; aucun identifiant de modèle, aucun plafond de références n'est écrit en dur.
+- [x] Un modèle qui ne peut pas honorer la demande en cours est grisé avec sa raison, jamais proposé puis refusé.
+- [x] Un modèle déjà choisi qui devient invalide reste choisi : c'est générer qui devient inactif, avec sa raison. Aucune substitution silencieuse.
+- [x] Quatre variations d'un même prompt partent en parallèle et affichent chacune son avancement.
+- [x] Une génération se lance pendant qu'une autre tourne, sans attendre la première.
+- [x] Sur quatre variations dont deux échouent : deux images arrivent, deux emplacements portent une raison lisible et un bouton relancer, et relancer l'un ne rejoue pas les autres.
+- [x] L'onglet est fermé pendant une génération : à la réouverture, l'image est là.
+- [x] Le serveur est arrêté pendant une génération : au redémarrage elle est marquée interrompue, son coût réel est lisible, et aucune relance n'a eu lieu.
+- [x] Deux soumissions de la même génération ne facturent qu'une seule fois.
+- [x] Le coût enregistré est celui que l'appel a facturé, pas le tarif du catalogue ; il est lisible génération par génération.
+- [x] Les dimensions enregistrées sont mesurées sur l'image reçue.
+- [x] Réseau coupé : le démarrage n'affiche aucune erreur, le catalogue affiche sa date en clair, un prompt se prépare, et l'échec ne survient qu'au moment de générer.
+- [x] Une image se télécharge seule, en PNG.
 
 ### Bloquée par
 
 Aucune — démarrable immédiatement.
+
+### Tenue le 27 août 2026
+
+Les seize critères sont vérifiés, et **aucune vérification ne coûte un centime** :
+le fournisseur est un double dans les tests, et le seul appel payant du dépôt
+part à la main. Deux critères ne se vérifient pas là où on les regarde, et
+c'est noté dans les tests eux-mêmes : « sans sondage » se prouve en montrant que
+le serveur **annonce** chaque changement, et la jauge déterminée se prouve en
+montrant que le serveur donne les deux faits qui la portent — l'instant du
+départ et l'attente mesurée du modèle.
+
+Trois constats sont sortis de cette tranche et valent pour les suivantes :
+
+- **Aucun fournisseur d'image ne rend d'avancement en chemin.** Une jauge
+  déterminée ne peut donc pas relayer : elle compare le temps écoulé à ce que ce
+  modèle-là a mis à ses derniers appels réussis. Cette attente est une mesure qui
+  se recale seule, jamais une table de modèles.
+- **Une jauge qui atteint le bout avant l'arrivée dit une chose fausse.** Celle
+  du produit approche sans jamais toucher, et le compteur porte l'écart en clair.
+- **Hors ligne n'est pas une panne du produit** : c'est un état dans lequel il
+  continue de servir. Le bandeau date ce qu'on voit, dit ce qui marche encore,
+  dit ce qui échouera, et donne le geste pour réessayer.
 
 ---
 

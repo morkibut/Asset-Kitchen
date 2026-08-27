@@ -14,15 +14,23 @@ sont sur le disque.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, PortFournisseur
-from atelier.reglages import lire_cle
+from atelier.reglages import etat_cle, lire_cle
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
+from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.generation import ServiceGenerations
 
-__all__ = ["Atelier", "EtatCatalogue", "ServiceCatalogue", "ServiceGenerations"]
+__all__ = [
+    "Atelier",
+    "Diffusion",
+    "EtatCatalogue",
+    "Evenement",
+    "ServiceCatalogue",
+    "ServiceGenerations",
+]
 
 
 def _openrouter() -> PortFournisseur:
@@ -44,9 +52,19 @@ class Atelier:
         self.fichiers.preparer()
         self.base = Base(self.fichiers.base)
         self.fabrique_fournisseur = fabrique_fournisseur
-        self.catalogue = ServiceCatalogue(fabrique_fournisseur(), self.fichiers)
+        # **Une seule diffusion pour tout l'atelier.** Un abonné voit passer
+        # l'avancement d'une génération et le retour du catalogue sur le même
+        # flux : c'est ce qui permet à l'interface de n'ouvrir qu'une liaison.
+        self.diffusion = Diffusion()
+        self.catalogue = ServiceCatalogue(
+            fabrique_fournisseur(), self.fichiers, self.diffusion
+        )
         self.generations = ServiceGenerations(
-            self.base, self.fichiers, self.catalogue, fabrique_fournisseur
+            self.base,
+            self.fichiers,
+            self.catalogue,
+            fabrique_fournisseur,
+            self.diffusion,
         )
 
     async def ouvrir(self) -> None:
@@ -58,3 +76,17 @@ class Atelier:
         """
         await self.catalogue.rafraichir()
         self.generations.reprendre()
+
+    def etat(self) -> dict[str, Any]:
+        """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture.
+
+        Un seul objet, servi à l'identique par `GET /api/status` et par le
+        premier message du flux d'événements. Un onglet qui se rouvre n'a donc
+        qu'une chose à faire : écouter — l'état complet arrive dans la seconde,
+        avec les générations déjà terminées pendant son absence.
+        """
+        return {
+            "cle": etat_cle().en_json(),
+            "catalogue": self.catalogue.en_json(),
+            "couts": {"total_usd": self.generations.total_couts()},
+        }

@@ -8,9 +8,12 @@ par des outils, une charge utile est lue par l'interface, qui est française
 
 from __future__ import annotations
 
-from typing import Any
+import asyncio
+import json
+from typing import Any, AsyncIterator
 
 from fastapi import APIRouter, Query, Request, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from atelier.domaine import Demande, Generation, Modele
@@ -21,6 +24,14 @@ from atelier.reglages import deposer_cle, etat_cle
 from atelier.services import Atelier
 
 routeur = APIRouter()
+
+# Combien de temps le flux reste muet avant d'envoyer un signe de vie. Un
+# atelier peut rester une heure sans rien produire ; sans ce battement, un
+# mandataire ou un pare-feu couperait la liaison et l'onglet ne le saurait pas.
+BATTEMENT_S = 15.0
+
+# Un commentaire SSE : la liaison reste ouverte, l'onglet n'a rien à lire.
+BATTEMENT = ": battement\n\n"
 
 
 def _atelier(requete: Request) -> Atelier:
@@ -38,19 +49,65 @@ async def sante() -> dict[str, Any]:
 @routeur.get("/status")
 async def statut(requete: Request) -> dict[str, Any]:
     """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture, en un appel."""
+    return _atelier(requete).etat()
+
+
+# ── Le flux d'événements ─────────────────────────────────────────────────────
+
+
+@routeur.get("/events")
+async def flux(requete: Request, limite: int = Query(50, ge=1, le=500)) -> Response:
+    """Ce que l'atelier fait, au moment où il le fait. Aucun sondage.
+
+    **Le premier message est l'état complet** — clé, catalogue, coûts, et les
+    générations récentes avec leurs images. C'est lui qui tient le critère
+    « l'onglet est fermé pendant une génération : à la réouverture, l'image est
+    là » : rouvrir, c'est se réabonner, et l'état arrive avant tout le reste.
+
+    Les suivants sont des faits acquis : un emplacement part, une image arrive,
+    un appel échoue, le catalogue revient. Entre deux, un battement en
+    commentaire SSE tient la liaison ouverte sans rien dire.
+    """
     atelier = _atelier(requete)
-    catalogue = atelier.catalogue.etat
-    cle = etat_cle()
-    return {
-        "cle": _cle_en_json(cle),
-        "catalogue": {
-            "modeles": len(catalogue.modeles),
-            "recu_le": catalogue.recu_le,
-            "repli": catalogue.repli,
-            "raison": catalogue.raison,
+
+    async def messages() -> AsyncIterator[str]:
+        # On s'abonne **avant** de composer l'état : sinon un fait qui se produit
+        # pendant la composition passerait entre les deux et serait perdu. Un
+        # doublon est sans conséquence — chaque message porte l'objet entier.
+        with atelier.diffusion.abonnement() as file:
+            yield _sse(
+                "etat",
+                {
+                    **atelier.etat(),
+                    "generations": [
+                        g.en_json() for g in atelier.generations.recentes(limite)
+                    ],
+                },
+            )
+            while True:
+                try:
+                    evenement = await asyncio.wait_for(file.get(), BATTEMENT_S)
+                except asyncio.TimeoutError:
+                    yield BATTEMENT
+                    continue
+                yield _sse(evenement.genre, evenement.charge)
+
+    return StreamingResponse(
+        messages(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-store",
+            # L'atelier tourne en local, mais `npm run dev` relaie par Vite :
+            # sans ça, le tampon du relais retiendrait les messages.
+            "X-Accel-Buffering": "no",
         },
-        "couts": {"total_usd": atelier.generations.total_couts()},
-    }
+    )
+
+
+def _sse(genre: str, charge: dict[str, Any]) -> str:
+    """Un message SSE — un genre, une charge JSON, une ligne vide qui clôt."""
+    donnees = json.dumps(charge, ensure_ascii=False)
+    return "event: " + genre + "\n" + "data: " + donnees + "\n\n"
 
 
 # ── La clé ───────────────────────────────────────────────────────────────────
@@ -62,25 +119,16 @@ class CorpsCle(BaseModel):
 
 @routeur.get("/settings/key")
 async def lire_etat_cle() -> dict[str, Any]:
-    return _cle_en_json(etat_cle())
+    return etat_cle().en_json()
 
 
 @routeur.put("/settings/key")
 async def poser_cle(corps: CorpsCle) -> dict[str, Any]:
     """Se dépose une fois, et n'est plus jamais redemandée (US-4)."""
     try:
-        return _cle_en_json(deposer_cle(corps.cle))
+        return deposer_cle(corps.cle).en_json()
     except ValueError as erreur:
         raise ErreurAtelier(str(erreur), ou_aller="reglages") from None
-
-
-def _cle_en_json(cle) -> dict[str, Any]:
-    return {
-        "presente": cle.presente,
-        "origine": cle.origine,
-        "apercu": cle.apercu,
-        "raison": cle.raison,
-    }
 
 
 # ── Le catalogue ─────────────────────────────────────────────────────────────
@@ -114,13 +162,15 @@ async def modeles(
 
 @routeur.post("/models/refresh")
 async def rafraichir_modeles(requete: Request) -> dict[str, Any]:
-    etat = await _atelier(requete).catalogue.rafraichir()
-    return {
-        "modeles": len(etat.modeles),
-        "recu_le": etat.recu_le,
-        "repli": etat.repli,
-        "raison": etat.raison,
-    }
+    """Redemander le catalogue — le geste qui sort du repli hors ligne.
+
+    Ne lève pas quand le réseau est toujours coupé : elle rend le repli et sa
+    date, et l'écran continue de le dire. Le retour du réseau, lui, part sur le
+    flux d'événements : tous les onglets ouverts l'apprennent d'un coup.
+    """
+    catalogue = _atelier(requete).catalogue
+    await catalogue.rafraichir()
+    return catalogue.en_json()
 
 
 class _Jauge:

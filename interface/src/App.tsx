@@ -5,10 +5,11 @@
 // les afficher vides maintenant serait montrer du cadrage au lieu de servir le
 // geste — c'est exactement ce qui a fait écarter `docs/maquette-atelier.html`.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   api,
   dollars,
+  ecouter,
   heure,
   Refus,
   type Etat,
@@ -21,23 +22,25 @@ import { EcranCle } from "./composants/EcranCle"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile } from "./composants/Tuile"
 
-const BATTEMENT_MS = 1000
+type Repli = { repli: boolean; raison: string | null; recu_le: number }
 
 export function App() {
   const [etat, setEtat] = useState<Etat | null>(null)
   const [modeles, setModeles] = useState<Modele[]>([])
-  const [catalogueRepli, setCatalogueRepli] = useState<{
-    repli: boolean
-    raison: string | null
-    recu_le: number
-  }>({ repli: false, raison: null, recu_le: 0 })
+  const [catalogueRepli, setCatalogueRepli] = useState<Repli>({
+    repli: false,
+    raison: null,
+    recu_le: 0,
+  })
   const [defaut, setDefaut] = useState<{
     modele: string | null
     options: Record<string, string>
   }>({ modele: null, options: {} })
   const [generations, setGenerations] = useState<Generation[]>([])
   const [panne, setPanne] = useState<string | null>(null)
+  const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
+  const [relecture, setRelecture] = useState(false)
 
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
@@ -48,13 +51,13 @@ export function App() {
 
   // ── Ce que l'atelier sait de lui-même ─────────────────────────────────────
 
-  const relire = useCallback(async () => {
+  // Le catalogue est le seul appel que l'interface refait d'elle-même : la
+  // liste des modèles dépend de la demande en cours (proportions, références),
+  // et c'est le serveur qui décide du grisé de chacun. Tout le reste arrive par
+  // le flux.
+  const relireCatalogue = useCallback(async () => {
     try {
-      const [nouvelEtat, catalogue] = await Promise.all([
-        api.etat(),
-        api.modeles(proportions),
-      ])
-      setEtat(nouvelEtat)
+      const catalogue = await api.modeles(proportions)
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
       setCatalogueRepli({
@@ -69,41 +72,39 @@ export function App() {
   }, [proportions])
 
   useEffect(() => {
-    void relire()
-  }, [relire])
+    void relireCatalogue()
+  }, [relireCatalogue])
 
-  // Le battement : on redemande les générations tant qu'une tourne. Le flux
-  // d'événements (SSE) le remplacera au jalon suivant — ici, un sondage d'une
-  // seconde suffit et ne coûte rien : tout est local.
-  const tourne = useMemo(
-    () => generations.some((g) => g.statut === "en_cours" || g.statut === "en_attente"),
-    [generations],
-  )
-  const battement = useRef<number | null>(null)
-
-  const relireGenerations = useCallback(async () => {
-    try {
-      const { generations: liste } = await api.generations(24)
-      setGenerations(liste)
-    } catch {
-      /* le battement ne fait jamais de bruit : la panne se voit ailleurs */
-    }
-  }, [])
+  // ── Le flux d'événements ──────────────────────────────────────────────────
+  //
+  // Plus aucun sondage. On se branche une fois, on écoute, et l'atelier dit ce
+  // qu'il fait au moment où il le fait. Le premier message est l'état complet :
+  // c'est lui qui fait qu'un onglet rouvert retrouve les images produites
+  // pendant son absence — et `EventSource` se rebranche seul, donc une veille
+  // de machine ou un redémarrage du serveur se rattrapent sans rien recharger.
 
   useEffect(() => {
-    void relireGenerations()
-  }, [relireGenerations])
-
-  useEffect(() => {
-    if (!tourne) return
-    battement.current = window.setInterval(() => {
-      void relireGenerations()
-      void api.etat().then(setEtat).catch(() => undefined)
-    }, BATTEMENT_MS)
-    return () => {
-      if (battement.current) window.clearInterval(battement.current)
-    }
-  }, [tourne, relireGenerations])
+    return ecouter({
+      etat: (recu) => {
+        setEtat(recu)
+        if (recu.generations) setGenerations(recu.generations)
+      },
+      generation: (recue) =>
+        setGenerations((liste) => {
+          const connue = liste.some((g) => g.identifiant === recue.identifiant)
+          return connue
+            ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
+            : [recue, ...liste]
+        }),
+      catalogue: (recu) => {
+        setCatalogueRepli(recu)
+        // Le repli change ce que chaque modèle peut honorer : la liste, elle,
+        // se redemande — c'est le serveur qui écrit les raisons du grisé.
+        void relireCatalogue()
+      },
+      liaison: setLiaison,
+    })
+  }, [relireCatalogue])
 
   // ── Le modèle choisi reste choisi ─────────────────────────────────────────
   // Même devenu invalide : c'est générer qui devient inactif, avec sa raison.
@@ -126,13 +127,17 @@ export function App() {
 
   const refus = useMemo(() => {
     if (panne) return panne
+    if (!liaison) return "l'atelier ne répond pas"
     if (!etat?.cle.presente) return etat?.cle.raison ?? "aucune clé OpenRouter"
     if (modeles.length === 0) return "aucun modèle — le catalogue n'a jamais été reçu"
     if (!modele) return "aucun modèle choisi"
     if (modele.refus) return `${modele.nom} ${modele.refus}`
     if (!prompt.trim()) return "aucun prompt"
+    // Hors ligne, générer reste **actif** : « l'échec ne survient qu'au moment
+    // où on génère, jamais à l'ouverture » (US-95). Le repli se dit dans le
+    // bandeau et la barre d'état, il ne barre pas la route.
     return null
-  }, [panne, etat, modeles, modele, prompt])
+  }, [panne, liaison, etat, modeles, modele, prompt])
 
   // ── Générer ───────────────────────────────────────────────────────────────
 
@@ -173,53 +178,86 @@ export function App() {
 
   // ── L'écran ───────────────────────────────────────────────────────────────
 
+  // Redemander le catalogue au fournisseur. Le résultat n'est pas lu ici : le
+  // serveur publie le nouvel état sur le flux, et c'est ce message qui relit la
+  // liste des modèles — pour cet onglet comme pour les autres. Le lire aussi en
+  // retour ferait demander la même chose deux fois.
+  const redemanderCatalogue = async () => {
+    setRelecture(true)
+    try {
+      await api.rafraichirCatalogue()
+    } catch (erreur) {
+      setPanne(erreur instanceof Refus ? erreur.message : "l'atelier ne répond pas")
+    } finally {
+      setRelecture(false)
+    }
+  }
+
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
       <BarreDeTete
         etat={etat}
-        catalogue={catalogueRepli}
         onReglages={() => setReglagesOuverts(true)}
-        onRafraichir={async () => {
-          await api.rafraichirCatalogue().catch(() => undefined)
-          await relire()
-        }}
+        onRafraichir={redemanderCatalogue}
       />
 
-      <main className="grid min-h-0 grid-cols-[300px_minmax(0,1fr)]">
-        <PanneauReglages
-          modeles={modeles}
-          choisi={modele}
-          onChoisir={setModeleChoisi}
-          proportions={proportions}
-          onProportions={setProportions}
-          variations={variations}
-          onVariations={setVariations}
-          options={options}
-          onOptions={setOptions}
+      {/* Le bandeau vit **dans** la rangée du travail, pas dans une rangée à
+          lui : une rangée de gabarit qui n'a pas toujours d'occupant décale
+          tout le reste les jours où le réseau va bien. */}
+      <div className="flex min-h-0 flex-col">
+        <BandeauHorsLigne
+          catalogue={catalogueRepli}
+          relecture={relecture}
+          onReessayer={redemanderCatalogue}
         />
 
-        <section className="flex min-h-0 flex-col">
-          <ChampPrompt
-            prompt={prompt}
-            onPrompt={setPrompt}
-            promptNegatif={promptNegatif}
-            onPromptNegatif={setPromptNegatif}
-            refus={refus}
-            ouAller={refus === etat?.cle.raison ? "Réglages" : undefined}
-            onAller={() => setReglagesOuverts(true)}
-            onGenerer={generer}
+        <main className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)]">
+          <PanneauReglages
+            modeles={modeles}
+            choisi={modele}
+            onChoisir={setModeleChoisi}
+            proportions={proportions}
+            onProportions={setProportions}
             variations={variations}
+            onVariations={setVariations}
+            options={options}
+            onOptions={setOptions}
           />
-          <Grille generations={generations} onRelancer={relancer} />
-        </section>
-      </main>
 
-      <BarreEtat etat={etat} catalogue={catalogueRepli} panne={panne} />
+          <section className="flex min-h-0 flex-col">
+            <ChampPrompt
+              prompt={prompt}
+              onPrompt={setPrompt}
+              promptNegatif={promptNegatif}
+              onPromptNegatif={setPromptNegatif}
+              refus={refus}
+              ouAller={refus === etat?.cle.raison ? "Réglages" : undefined}
+              onAller={() => setReglagesOuverts(true)}
+              onGenerer={generer}
+              variations={variations}
+            />
+            <Grille generations={generations} onRelancer={relancer} />
+          </section>
+        </main>
+      </div>
+
+      <BarreEtat
+        etat={etat}
+        catalogue={catalogueRepli}
+        panne={panne}
+        liaison={liaison}
+      />
 
       {reglagesOuverts && etat && (
         <EcranCle
           etat={etat.cle}
-          onDeposee={relire}
+          onDeposee={async () => {
+            // La clé n'est pas un fait que le serveur annonce : c'est l'écran
+            // qui vient de la poser. Il relit donc l'état une fois, ici, et
+            // nulle part ailleurs.
+            setEtat(await api.etat().catch(() => etat))
+            await relireCatalogue()
+          }}
           onFermer={() => setReglagesOuverts(false)}
         />
       )}
@@ -231,12 +269,10 @@ export function App() {
 
 function BarreDeTete({
   etat,
-  catalogue,
   onReglages,
   onRafraichir,
 }: {
   etat: Etat | null
-  catalogue: { repli: boolean; raison: string | null; recu_le: number }
   onReglages: () => void
   onRafraichir: () => void
 }) {
@@ -247,11 +283,6 @@ function BarreDeTete({
       <h1 className="font-serif text-[17px] leading-none text-texte">Asset Kitchen</h1>
 
       <div className="ml-auto flex items-center gap-4">
-        {catalogue.repli && (
-          <span className="mesure text-[10px] text-epingle">
-            catalogue du {heure(catalogue.recu_le)} — {catalogue.raison}
-          </span>
-        )}
         <span className="mesure text-[10px] text-texte-3">
           {dollars(etat?.couts.total_usd ?? 0)} dépensés
         </span>
@@ -259,6 +290,55 @@ function BarreDeTete({
         <Bouton onClick={onReglages} enfants="Réglages" />
       </div>
     </header>
+  )
+}
+
+// ── Le repli hors ligne, à l'écran ──────────────────────────────────────────
+//
+// « Le catalogue affiche sa date en clair, un prompt se prépare, et l'échec ne
+// survient qu'au moment de générer » — critère d'acceptation de T1.
+//
+// Le bandeau ne barre rien et ne s'excuse pas : il date ce qu'on voit, dit ce
+// qui marche encore, dit ce qui échouera, et donne le geste pour réessayer. En
+// `--info`, pas en `--echec` : hors ligne n'est pas une panne du produit, c'est
+// un état dans lequel il continue de servir.
+
+function BandeauHorsLigne({
+  catalogue,
+  relecture,
+  onReessayer,
+}: {
+  catalogue: Repli
+  relecture: boolean
+  onReessayer: () => void
+}) {
+  if (!catalogue.repli) return null
+
+  const jamaisRecu = catalogue.recu_le === 0
+
+  return (
+    <div className="mesure flex shrink-0 items-center gap-2 border-b border-info/35 bg-info/8 px-4 py-1.5 text-[10px] leading-4 text-info">
+      <span aria-hidden className="inline-block h-px w-2 bg-info" />
+      <span className="text-texte-2">
+        {jamaisRecu
+          ? "Hors ligne, et le catalogue n'a jamais été reçu."
+          : `Hors ligne — catalogue du ${heure(catalogue.recu_le)}.`}
+      </span>
+      <span>
+        {jamaisRecu
+          ? "Aucun modèle à proposer tant que le réseau n'est pas revenu."
+          : "On peut écrire et régler ; générer échouera tant que le réseau est coupé."}
+      </span>
+      {catalogue.raison && <span className="text-texte-3">· {catalogue.raison}</span>}
+      <button
+        type="button"
+        onClick={onReessayer}
+        disabled={relecture}
+        className="ml-auto text-signal hover:text-signal-clair disabled:text-texte-3"
+      >
+        {relecture ? "…" : "Réessayer ›"}
+      </button>
+    </div>
   )
 }
 
@@ -308,16 +388,23 @@ function BarreEtat({
   etat,
   catalogue,
   panne,
+  liaison,
 }: {
   etat: Etat | null
-  catalogue: { repli: boolean; raison: string | null }
+  catalogue: Repli
   panne: string | null
+  liaison: boolean
 }) {
-  const [couleur, texte] = panne
-    ? ["var(--color-echec)", panne]
-    : catalogue.repli
-      ? ["var(--color-info)", "hors ligne — dernier catalogue reçu"]
-      : ["var(--color-ok)", "en ligne"]
+  // Trois choses différentes, et il ne faut pas les confondre : l'atelier est
+  // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
+  // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
+  const [couleur, texte] = !liaison
+    ? ["var(--color-echec)", "l'atelier ne répond pas"]
+    : panne
+      ? ["var(--color-echec)", panne]
+      : catalogue.repli
+        ? ["var(--color-info)", "hors ligne — dernier catalogue reçu"]
+        : ["var(--color-ok)", "en ligne"]
 
   return (
     <footer className="mesure flex items-center gap-4 border-t border-bord bg-fond-1 px-4 text-[10px] text-texte-3">

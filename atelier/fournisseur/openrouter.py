@@ -74,7 +74,9 @@ class OpenRouter:
                 statut=erreur.response.status_code,
             ) from None
         except httpx.HTTPError as erreur:
-            raise FournisseurIndisponible(f"catalogue injoignable — {erreur}") from None
+            raise FournisseurIndisponible(
+                f"catalogue injoignable — {_panne(erreur)}"
+            ) from None
 
         modeles = []
         for fiche in brut.get("data", []):
@@ -136,7 +138,7 @@ class OpenRouter:
                 )
         except httpx.HTTPError as erreur:
             raise FournisseurIndisponible(
-                f"fournisseur injoignable — {erreur}"
+                f"fournisseur injoignable — {_panne(erreur)}"
             ) from None
 
         if reponse.status_code >= 400:
@@ -207,6 +209,21 @@ def _prompt_complet(demande: Demande) -> str:
     return f"{demande.prompt.strip()}\n\nDo not include: {negatif}"
 
 
+def _panne(erreur: httpx.HTTPError) -> str:
+    """Pourquoi la liaison n'a pas abouti, **en français**.
+
+    Le message d'httpx est en anglais et technique — « All connection attempts
+    failed ». Il ne reste pas dans les journaux : il ressort tel quel dans le
+    bandeau hors ligne et sur la tuile d'un raté. Ce qui s'affiche doit donc
+    être une phrase du produit, jamais une trace de bibliothèque.
+    """
+    if isinstance(erreur, httpx.TimeoutException):
+        return "le fournisseur n'a pas répondu à temps"
+    if isinstance(erreur, httpx.ConnectError):
+        return "aucune connexion au fournisseur"
+    return "liaison interrompue avec le fournisseur"
+
+
 def _raison(reponse: httpx.Response) -> str:
     """La raison de l'échec, en clair, la plus courte qui reste vraie."""
     if reponse.status_code == 401:
@@ -245,4 +262,4 @@ async def _octets_de(image: dict[str, Any]) -> tuple[bytes, str | None]:
             reponse.raise_for_status()
             return reponse.content, reponse.headers.get("content-type", type_media)
     except httpx.HTTPError as erreur:
-        raise FournisseurIndisponible(f"image injoignable — {erreur}") from None
+        raise FournisseurIndisponible(f"image injoignable — {_panne(erreur)}") from None
