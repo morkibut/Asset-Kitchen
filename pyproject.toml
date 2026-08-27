@@ -13,9 +13,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
-# Le second moteur de détourage. Optionnel **exprès** : il embarque un modèle
-# ONNX de ~180 Mo téléchargé au premier usage, et le produit doit continuer de
-# détourer hors ligne sans lui. Absent, il est grisé avec sa raison.
+# Le second moteur de détourage. Optionnel **exprès** : il télécharge au premier
+# usage le modèle ONNX `u2net` (176 Mo), et le produit doit continuer de détourer
+# hors ligne sans lui. Absent, il est grisé avec sa raison.
+#
+# Le modèle est **nommé** dans `atelier/image/traitement.py`, jamais laissé au
+# défaut de la bibliothèque : celui de `rembg` 2.0.81 est `bria-rmbg`, un
+# gigaoctet qui met 15,8 s par image de 1024 px sur processeur, là où `u2net`
+# met 0,47 s pour une silhouette équivalente à deux points près.
 detourage = ["rembg>=2.0", "onnxruntime>=1.20"]
 
 [project.scripts]
