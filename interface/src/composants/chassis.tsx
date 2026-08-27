@@ -2,8 +2,9 @@
 // Elles portent les hauteurs de contrôle de `docs/DESIGN.md` § Spacing —
 // c'est cette grille de densité, pas les marges, qui fait l'instrument.
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react"
+import { useEffect, useState, useSyncExternalStore, type ReactNode, type Ref } from "react"
 import { secondes } from "../api"
+import { POINTILLE, useInfobulle } from "./Infobulle"
 
 // ── Les crans de taille ─────────────────────────────────────────────────────
 //
@@ -114,8 +115,52 @@ export function EnTetePanneau({ children }: { children: ReactNode }) {
   )
 }
 
-export function Libelle({ children }: { children: ReactNode }) {
-  return <span className="text-[11px] text-texte-2">{children}</span>
+/**
+ * Le nom d'un réglage — et sa propre poignée d'explication.
+ *
+ * « Le libellé est la cible — aucun glyphe neuf » (`docs/DESIGN.md` §
+ * L'infobulle explique, elle n'excuse jamais). Passer `aide` pose le pointillé
+ * `--bord-fort` et branche le survol ; sans `aide`, le libellé est exactement
+ * ce qu'il était, et **c'est le cas d'un réglage que le corpus ne documente pas
+ * encore** : aucune marque, aucune bulle vide, rien qui casse.
+ *
+ * Ne jamais y faire passer une **raison** : ce qui refuse un geste vit dans une
+ * fente permanente (`Raison`), et se survoler serait proposer puis refuser.
+ */
+export function Libelle({
+  children,
+  aide,
+  eteint = false,
+}: {
+  children: ReactNode
+  aide?: string
+  /** Le libellé d'un contrôle qui ne porte rien — un champ de bible vide ou
+   *  désactivé. Il descend d'un ton, et **c'est la seule variante permise** :
+   *  un second gabarit de libellé serait un second endroit où poser le
+   *  pointillé, donc un endroit où l'oublier. */
+  eteint?: boolean
+}) {
+  const { presente, ancre, declencheurs, bulle } = useInfobulle(aide)
+  // **`w-fit`, et c'est la poignée qui en dépend.** Un `<span>` posé dans un
+  // conteneur flexible est *blockifié* — son `display` calculé vaut `block`,
+  // quel que soit celui qu'on écrit. Dans une rangée il se dimensionne sur son
+  // texte ; dans une **colonne**, `align-items: stretch` l'étire sur toute la
+  // largeur du panneau. Mesuré à l'atelier : « Proportions » occupait 268 px
+  // pour 60 px de mot, soit 208 px de zone morte qui ouvrait quand même la
+  // bulle et allumait quand même le pointillé — à côté de « Modèle », content,
+  // dans le même panneau. « Le libellé est la cible » ne tient que si la cible
+  // *est* le libellé. Une largeur en `fit-content` neutralise l'étirement sans
+  // toucher à l'alignement, donc sans défaire l'`items-baseline` des rangées.
+  const base = `w-fit text-[11px] ${eteint ? "text-texte-3" : "text-texte-2"}`
+  if (!presente) return <span className={base}>{children}</span>
+  return (
+    <>
+      <span ref={ancre as Ref<HTMLSpanElement>} {...declencheurs} className={`${base} ${POINTILLE}`}>
+        {children}
+      </span>
+      {bulle}
+    </>
+  )
 }
 
 // ── Le bloc repliable ───────────────────────────────────────────────────────
@@ -212,11 +257,20 @@ export function Bloc({
   titre,
   etat,
   mesure,
+  aide,
   children,
 }: {
   /** L'identité du bloc dans le repli global. Stable d'un asset à l'autre. */
   cle: string
   titre: string
+  /** La clé de l'entrée du corpus, s'il y en a une.
+   *
+   *  **Un titre de bloc n'épingle pas** : son clic est déjà pris — il replie.
+   *  Les gestes vont donc sur le bouton et non sur le titre, parce qu'un
+   *  élément focalisable imbriqué dans un bouton est du HTML invalide et un
+   *  piège au clavier ; le survol révèle, le focus du bouton aussi, et c'est
+   *  tout ce que ce cas mérite. */
+  aide?: string
   /** Ce que le bloc porte, dit en une ligne. `null` — rien de posé. */
   etat?: string | null
   /** Le fait que le bloc garde visible une fois **ouvert**. La droite de la
@@ -228,15 +282,26 @@ export function Bloc({
   children: ReactNode
 }) {
   const ouvert = useOuvert(cle)
+  const infobulle = useInfobulle(aide, { epinglable: false })
   return (
     <section className="flex flex-col gap-1.5">
       <button
         type="button"
         onClick={() => basculer(cle)}
         aria-expanded={ouvert}
+        {...infobulle.declencheurs}
         className="-mx-1 flex h-[26px] items-center rounded-[2px] px-1 text-left transition-colors duration-[80ms] hover:bg-fond-3"
       >
-        <Libelle>{titre}</Libelle>
+        <span
+          ref={infobulle.ancre as Ref<HTMLSpanElement>}
+          // `w-fit` pour la même raison que dans `Libelle` : la poignée est
+          // bornée à son mot **quelle que soit l'orientation du parent**. Cette
+          // rangée-ci est en `flex … items-center`, donc contente aujourd'hui —
+          // la classe dit qu'elle le restera si la rangée devient une colonne.
+          className={`w-fit text-[11px] text-texte-2 ${infobulle.presente ? POINTILLE : ""}`}
+        >
+          {titre}
+        </span>
         {ouvert ? (
           mesure && (
             <span className="mesure ml-auto truncate pl-2 text-[9.5px] text-texte-3">
@@ -247,6 +312,11 @@ export function Bloc({
           <Valeur etat={etat} />
         )}
       </button>
+      {/* Hors du bouton, exprès : la bulle porte le lien « Le guide › », et un
+          bouton dans un bouton est invalide — le clic du lien replierait le
+          bloc au passage. Elle est en `fixed`, donc sa place à l'écran ne doit
+          rien à l'endroit où elle est rendue. */}
+      {infobulle.bulle}
       {ouvert && children}
     </section>
   )
@@ -427,6 +497,7 @@ export function Etape({
   onBasculer,
   etat,
   raison,
+  aide,
   children,
 }: {
   /** L'identité de l'étape dans le repli global. Stable d'un asset à l'autre :
@@ -435,6 +506,14 @@ export function Etape({
   titre: string
   active: boolean
   onBasculer: () => void
+  /** La clé de l'entrée du corpus. **Une étape est un réglage**, et le plus
+   *  structurant de tous : elle décide qu'une place de la recette est occupée.
+   *  Documenter `tache minimale` sans documenter `Nettoyage des bords`
+   *  laisserait le parent plus opaque que son enfant.
+   *
+   *  N'épingle pas, comme le titre d'un `Bloc` : le clic de la rangée est déjà
+   *  pris — il pose l'étape, ou la replie. */
+  aide?: string
   /** Le réglage posé, dit en une ligne — ce que l'en-tête porte une fois
    *  replié. Ignoré tant que l'étape n'est pas posée : il n'y a rien à dire. */
   etat?: string | null
@@ -444,6 +523,19 @@ export function Etape({
   const grise = Boolean(raison)
   const ouvert = useOuvert(cle)
   const montre = active && !grise && ouvert
+  const infobulle = useInfobulle(aide, { epinglable: false })
+
+  // **Le pointillé reste sur une étape grisée.** Le § L'infobulle le tranche :
+  // *pourquoi c'est fermé* n'est pas *à quoi ça sert*, et les deux cohabitent —
+  // la raison dans sa fente, permanente ; l'explication au survol.
+  const nom = (
+    <span
+      ref={infobulle.ancre as Ref<HTMLSpanElement>}
+      className={`truncate ${infobulle.presente ? POINTILLE : ""}`}
+    >
+      {titre}
+    </span>
+  )
 
   const carre = (
     <span
@@ -477,27 +569,43 @@ export function Etape({
             type="button"
             onClick={() => basculer(cle)}
             aria-expanded={ouvert}
+            {...infobulle.declencheurs}
             className={`${style} -mr-1 min-w-0 flex-1 rounded-[2px] pr-1 hover:bg-fond-3`}
           >
-            <span className="truncate">{titre}</span>
+            {nom}
             {!ouvert && <Valeur etat={etat} />}
           </button>
         </div>
       ) : (
         // Pas posée, ou grisée : rien à replier, toute la rangée la pose.
+        //
+        // **`aria-disabled` et non `disabled`, et c'est le motif qui l'exige.**
+        // Un contrôle grisé garde son pointillé — *pourquoi c'est fermé* n'est
+        // pas *à quoi ça sert* —, or un `<button disabled>` ne dispatche aucun
+        // événement de souris, pas même sur ses enfants : l'explication d'une
+        // étape grisée serait donc la seule du produit à ne jamais s'ouvrir,
+        // et c'est précisément celle qu'on cherche à ce moment-là. Le refus
+        // reste entier : le clic ne fait rien, et la raison est dans sa fente,
+        // juste dessous.
         <button
           type="button"
-          disabled={grise}
+          aria-disabled={grise}
           onClick={() => {
+            if (grise) return
             ouvrir(cle)
             onBasculer()
           }}
+          {...infobulle.declencheurs}
           className={style}
         >
           {carre}
-          {titre}
+          {nom}
         </button>
       )}
+      {/* Hors des boutons, exprès : la bulle porte le lien « Le guide › », et un
+          bouton dans un bouton est invalide. Elle est en `fixed`, donc sa place
+          à l'écran ne doit rien à l'endroit où elle est rendue. */}
+      {infobulle.bulle}
       {grise ? <Raison texte={raison ?? null} /> : montre ? children : null}
     </section>
   )

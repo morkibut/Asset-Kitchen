@@ -31,7 +31,7 @@ rectangles dessinés à la main, la filiation de découpe ; **plus les deux dett
 le zoom de la grille et la première exécution du second moteur de détourage. T6 : l'export —
 une sélection qui sort en archive avec son descriptif, et le grisé permanent qui dit
 pourquoi quand rien n'est sélectionné. **Les soixante et onze critères d'acceptation de T1 à
-T6 sont cochés dans `docs/PLAN.md`, et 120 tests de serveur plus 20 d'écran les tiennent. La
+T6 sont cochés dans `docs/PLAN.md`, et 120 tests de serveur plus 31 d'écran les tiennent. La
 prochaine et dernière tranche est T7, le MCP.**
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
@@ -146,6 +146,17 @@ l'écran ait touché un réglage — d'où le catalogue redemandé sur l'événe
 C'est le défaut trouvé en ouvrant l'atelier le 27 août : **une règle juste dont l'hypothèse
 a changé sous elle**.
 
+**Le produit s'explique lui-même, et le corpus a été regardé à l'œil.** 46 entrées, quatre
+écrans, deux rendus — le panneau de 280 px et l'écran Guide —, un seul manque déclaré, et
+c'est le guide qui le tient. La revue de l'atelier lancé a mesuré **trente poignées sur les
+quatre écrans** et trouvé un défaut de la famille habituelle : « Proportions » réagissait
+208 px à droite de son mot quand « Modèle », dans le même panneau, ne réagissait que sur les
+siens — un `<span>` blockifié par son parent flexible et étiré par une colonne. Corrigé sur
+le gabarit, remesuré à zéro partout. Et le guide a rendu un second écart, dans l'autre sens :
+sa colonne de prose fait **468 px et 72 signes**, pas les « 504 px / 74 signes » que
+`docs/DESIGN.md` annonçait — l'écran avait raison, le document a été corrigé. Les deux sont
+dans § Pièges connus.
+
 ## Lancer
 
 ```
@@ -258,6 +269,9 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/composants/Decoupe.tsx` | l'écran Découpe — `1fr · 380px`, la planche à gauche, ce qui sortira à droite. Le sujet est l'image, donc c'est elle qui prend la largeur. Il porte sa propre fente de refus, comme l'écran Univers. **Le cadre est mis à l'échelle par calcul** : `aspect-ratio` cède devant `max-height`, et un cadre qui ment décale les rectangles de l'image |
 | `interface/src/composants/Univers.tsx` | l'écran Univers — `380px · 1fr`, l'univers à gauche, le tableau à droite. Il couvre l'atelier, donc **il porte sa propre fente de refus** : une raison envoyée derrière lui serait invisible au moment où elle compte |
 | `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note |
+| `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 46 entrées, quatre écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
+| `interface/src/composants/Infobulle.tsx` | le survol qui révèle et le clic qui épingle. Le **libellé est la cible** — aucun glyphe neuf : le nom du réglage devient sa propre poignée, souligné d'un pointillé `--bord-fort`. Rendre un libellé sans clé n'est pas une erreur : rien ne se marque, et c'est le cas d'un réglage que le corpus ne documente pas |
+| `interface/src/composants/Guide.tsx` | l'écran Guide, la seule prose du produit. Il **ne porte pas de fente de refus**, et c'est la preuve qu'on a compris la règle : il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. Sa troisième partie est le corpus rendu à la file, groupé **par écran** — pas par thème : quand on cherche une explication, on se souvient d'où l'on était |
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
@@ -574,6 +588,39 @@ deux vivent côte à côte.
 - **Zéro n'est pas une dimension mesurée, c'est l'absence de mesure.** Une carte d'adresse
   qui n'avait pas abouti annonçait `0×0`. Le produit dit partout que les dimensions mesurées
   font foi : une mesure ne s'affiche que si elle a été prise.
+
+- **Un `<button disabled>` ne dispatche aucun événement de souris, pas même sur ses
+  enfants.** Le motif de l'infobulle promet qu'un contrôle grisé garde son explication —
+  *pourquoi c'est fermé* n'est pas *à quoi ça sert* —, et c'est justement celle qu'on va
+  chercher à ce moment-là. Avec `disabled`, elle aurait été la seule du produit à ne jamais
+  s'ouvrir. La rangée d'étape passe donc à `aria-disabled`, le clic gardé par une
+  condition : le refus est entier, la raison reste dans sa fente, et l'explication s'ouvre
+  par-dessus. Vérifié en réintroduisant le défaut — l'essai tombe.
+- **Une clé d'explication mal tapée ne lève pas, elle rend le réglage muet.**
+  `explication()` rend `undefined`, le pointillé ne paraît pas, et rien ne le dit. C'est la
+  panne que le corpus existe pour éviter, et elle est silencieuse : un essai balaie donc les
+  composants et confronte **toute clé branchée à l'écran** au corpus. Corollaire de
+  rédaction : un second gabarit de libellé serait un second endroit où poser le pointillé,
+  donc un endroit où l'oublier — d'où l'état *éteint* plutôt qu'un deuxième composant.
+- **Un `<span>` dans un conteneur flexible est blockifié, et une colonne l'étire.** Son
+  `display` calculé vaut `block` quel que soit celui qu'on écrit ; dans une rangée il se
+  dimensionne sur son texte, dans une **colonne** `align-items: stretch` lui donne toute la
+  largeur du panneau. « Proportions » occupait donc 268 px pour 60 px de mot — 208 px de
+  zone morte qui ouvrait quand même la bulle et allumait quand même le pointillé —, à côté
+  de « Modèle », content, dans le **même panneau** : la poignée dépendait de l'orientation
+  du parent, pas du motif. « Le libellé est la cible » ne tient que si la cible *est* le
+  libellé, d'où `w-fit` sur le gabarit. Même famille que le cadre de la planche et que la
+  barre d'outils : *une règle déléguée au navigateur dont personne n'a mesuré le résultat*.
+  Trouvé le 27 août 2026 en regardant l'atelier lancé, et invisible aux 31 essais d'écran —
+  jsdom ne met rien en page. L'essai qui le garde vérifie donc **la règle**, et il le dit ;
+  la largeur, elle, se mesure au navigateur.
+- **Une unité relative se résout contre une référence qu'il faut aller lire.** `36em` sur
+  l'`<article>` du guide rend **468 px** et non 504 : `em` vaut la taille de *l'élément qui
+  l'écrit* — 13 px, hérité — et non celle de la prose qu'il contient, qui fait 15 px.
+  `docs/DESIGN.md` annonçait « 504 px, 74 signes » ; l'écran rend 72 signes, ce que son
+  propre titre demandait. Le document narrait déjà la même erreur sur `ch` — l'avance du
+  zéro — et la seconde a survécu au constat de la première, dans la même décision. Une
+  largeur de colonne de texte se **remesure** sur l'écran rendu, jamais depuis l'unité.
 
 ## Règle systématique : comment finir une étape
 

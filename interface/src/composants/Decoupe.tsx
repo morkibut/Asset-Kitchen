@@ -163,7 +163,7 @@ export function EcranDecoupe({
 
           <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
             <div className="flex flex-col gap-1">
-              <Libelle>Détection</Libelle>
+              <Libelle aide="decoupe.mode">Détection</Libelle>
               <Segments
                 valeurs={["auto", "grille"] as const}
                 valeur={mode}
@@ -173,7 +173,7 @@ export function EcranDecoupe({
             </div>
 
             {mode === "auto" ? (
-              <Reglage libelle="taille minimale">
+              <Reglage libelle="taille minimale" aide="decoupe.taille_min">
                 <Curseur
                   valeur={coteMin}
                   min={0}
@@ -184,7 +184,7 @@ export function EcranDecoupe({
               </Reglage>
             ) : (
               <>
-                <Reglage libelle="colonnes">
+                <Reglage libelle="colonnes" aide="decoupe.colonnes">
                   <Curseur
                     valeur={colonnes}
                     min={1}
@@ -192,7 +192,7 @@ export function EcranDecoupe({
                     onChange={setColonnes}
                   />
                 </Reglage>
-                <Reglage libelle="lignes">
+                <Reglage libelle="lignes" aide="decoupe.lignes">
                   <Curseur valeur={lignes} min={1} max={16} onChange={setLignes} />
                 </Reglage>
               </>
@@ -500,10 +500,20 @@ function ListeBoites({
 
 // ── Le gabarit d'un réglage — le même que dans la fiche ─────────────────────
 
-function Reglage({ libelle, children }: { libelle: string; children: React.ReactNode }) {
+function Reglage({
+  libelle,
+  aide,
+  children,
+}: {
+  libelle: string
+  /** La clé de l'entrée du corpus (`src/aide.ts`), s'il y en a une. Le libellé
+   *  devient alors sa propre poignée ; sans clé, rien ne se marque. */
+  aide?: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex flex-col gap-1">
-      <Libelle>{libelle}</Libelle>
+      <Libelle aide={aide}>{libelle}</Libelle>
       {children}
     </div>
   )

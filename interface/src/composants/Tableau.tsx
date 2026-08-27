@@ -547,24 +547,35 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
 
   return (
     <div className="flex flex-col gap-2 p-2">
-      <input
-        value={groupe}
-        placeholder="groupe"
-        onChange={(e) => setGroupe(e.target.value)}
-        onBlur={() => groupe !== carte.groupe && void regler({ groupe })}
-        className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
-      />
-      <textarea
-        value={note}
-        placeholder="note"
-        rows={2}
-        onChange={(e) => setNote(e.target.value)}
-        onBlur={() => note !== carte.note && void regler({ note })}
-        className="resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte placeholder:text-texte-3"
-      />
+      {/* Les deux seuls champs du produit qui n'avaient pas de libelle : leur
+          nom vivait dans un `placeholder`, donc il disparaissait des qu'on
+          tapait dedans. Un champ dont le nom s'efface ne peut ni s'identifier
+          ni porter une explication — c'est exactement ce qui a rendu `groupe`
+          incomprehensible. */}
+      <div className="flex flex-col gap-1">
+        <Libelle aide="carte.groupe">Groupe</Libelle>
+        <input
+          value={groupe}
+          placeholder="aucun"
+          onChange={(e) => setGroupe(e.target.value)}
+          onBlur={() => groupe !== carte.groupe && void regler({ groupe })}
+          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Libelle aide="carte.note">Note</Libelle>
+        <textarea
+          value={note}
+          placeholder="—"
+          rows={2}
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={() => note !== carte.note && void regler({ note })}
+          className="resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte placeholder:text-texte-3"
+        />
+      </div>
 
       <div className="flex items-center justify-between">
-        <Libelle>Taille</Libelle>
+        <Libelle aide="carte.taille">Taille</Libelle>
         <Segments
           valeurs={[1, 2, 4] as const}
           valeur={carte.taille}
@@ -575,7 +586,7 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
       {carte.genre === "image" && (
         <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
           <div className="flex items-center justify-between">
-            <Libelle>Artwork officiel</Libelle>
+            <Libelle aide="carte.officiel">Artwork officiel</Libelle>
             <button
               type="button"
               onClick={() => void promouvoir(!carte.officiel)}
@@ -598,7 +609,7 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
           )}
           {carte.officiel && (
             <>
-              <Libelle>Famille</Libelle>
+              <Libelle aide="carte.famille">Famille</Libelle>
               <div className="flex flex-wrap gap-1">
                 {FAMILLES.map((famille) => (
                   <button

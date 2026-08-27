@@ -200,6 +200,7 @@ function Bible({
   return (
     <Bloc
       cle="univers.bible"
+      aide="univers.bible"
       titre="Bible"
       etat={actifs ? `${actifs} champ${actifs > 1 ? "s" : ""}` : null}
       mesure={`${actifs} champ${actifs > 1 ? "s" : ""} part${actifs > 1 ? "ent" : ""} avec chaque génération`}
@@ -225,14 +226,14 @@ function Bible({
             >
               {champ.actif ? "●" : "○"}
             </button>
-            <span
-              className={[
-                "text-[11px]",
-                champ.actif && champ.texte.trim() ? "text-texte-2" : "text-texte-3",
-              ].join(" ")}
-            >
+            {/* Cinq champs voisins, tous du texte libre, et rien à l'écran ne
+                disait lequel porte quoi : la forme exacte du défaut `groupe`
+                contre `famille`, à cinq exemplaires. Chacun porte donc son
+                pointillé, et son entrée dit sous quel intitulé anglais il
+                part. */}
+            <Libelle aide={`bible.${champ.nom}`} eteint={!(champ.actif && champ.texte.trim())}>
               {NOM_CHAMP[champ.nom] ?? champ.nom}
-            </span>
+            </Libelle>
           </div>
           <textarea
             value={champ.texte}
@@ -280,6 +281,7 @@ function Palette({
   return (
     <Bloc
       cle="univers.palette"
+      aide="univers.palette"
       titre="Palette"
       etat={univers.palette.length ? `${univers.palette.length} couleurs` : null}
       mesure={
@@ -302,7 +304,7 @@ function Palette({
             ))}
           </div>
           <div className="flex items-center justify-between pt-1">
-            <Libelle>Couleurs demandées</Libelle>
+            <Libelle aide="univers.couleurs">Couleurs demandées</Libelle>
             <Segments
               valeurs={COULEURS}
               valeur={
@@ -337,6 +339,7 @@ function Grille({
   return (
     <Bloc
       cle="univers.grille"
+      aide="univers.cible_px"
       titre="Taille de pixel"
       etat={`${univers.cible_px} px`}
       mesure="imposée à ce qui rentre"
@@ -385,6 +388,7 @@ function Bareme({
   return (
     <Bloc
       cle="univers.bareme"
+      aide="univers.bareme"
       titre="Barème d'échelles"
       etat={
         univers.bareme.length
@@ -471,6 +475,7 @@ function Defauts({
   return (
     <Bloc
       cle="univers.defauts"
+      aide="univers.modeles"
       titre="Modèle par famille"
       etat={
         poses ? `${poses} famille${poses > 1 ? "s" : ""} réglée${poses > 1 ? "s" : ""}` : null

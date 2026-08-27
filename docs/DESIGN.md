@@ -65,6 +65,12 @@ les titres d'écran, et les états vides. « Ta bibliothèque est vide. *Écris.
 invitation ; en sans, c'est un message d'erreur. Trois usages de trop et le produit bascule en
 blog.
 
+**Le Guide n'en ouvre pas un quatrième**, et c'est le refus qui vaut d'être noté : l'écran de
+prose du produit garde son titre en serif — c'est un titre d'écran, le deuxième emploi — mais
+ses titres de section sont en **sans 12,5 px majuscules**, la forme de l'en-tête de panneau.
+Un sous-titrage en serif de 24 px sur la seule page de texte long est très exactement le
+basculement que cette règle annonce (§ L'écran Guide).
+
 **2 — Toute mesure est en JetBrains Mono, partout.** Coût réel, dimensions mesurées, taille de
 pixel, nombre de références, compteur de l'agent, plafond, horodatage, durée. Dans ce produit un
 nombre est toujours un fait mesuré, jamais un libellé — et les mesures deviennent scannables
@@ -154,6 +160,36 @@ Le cyan est choisi **contre le contenu** : c'est la seule famille chromatique qu
 fantasy ne produit presque jamais. Un accent ambre — celui de la maquette écartée — se noierait
 dans une grille de tonneaux et de clés.
 
+### Les teintes d'îlot
+
+Ajoutées le 27 août 2026 avec la toile (`PLAN.md` T8-T9), et c'est le **seul endroit du produit
+où une couleur ne veut rien dire**. Un îlot ou une note en porte une parce que l'auteur l'a
+choisie, jamais parce qu'un état la commande — l'inverse exact des quatre sémantiques ci-dessus,
+et il faut donc que rien ne les confonde.
+
+| Token | Hex | Contraste sur `--fond-2` |
+|---|---|---|
+| `--ilot-ardoise` | `#7086A0` | 4,6 : 1 |
+| `--ilot-iris` | `#847FAA` | 4,6 : 1 |
+| `--ilot-prune` | `#9D77A4` | 4,6 : 1 |
+| `--ilot-bruyere` | `#A4778C` | 4,6 : 1 |
+| `--ilot-lichen` | `#708C5D` | 4,6 : 1 |
+| `--ilot-paille` | `#87875A` | 4,6 : 1 |
+
+**Trois disciplines, et aucune ne se négocie.** *Une* — la saturation est plafonnée à 20 %, quand
+les quatre sémantiques vivent entre 40 et 55 % : une teinte d'îlot est toujours la couleur la plus
+sourde de l'écran, et c'est ce qui la fait lire comme un rangement plutôt que comme un état.
+*Deux* — elles ne colorent que des **surfaces de la toile** : cadre d'îlot, titre d'îlot, fond de
+note. Jamais une marque sur une carte, jamais un contrôle ; le coin plein en `--signal` reste le
+seul vocabulaire de marque du tableau. *Trois* — la liste est **fermée**, et il n'existe aucun
+sélecteur libre : le premier îlot rouge vif se lirait comme un échec.
+
+Les six sont posées à la même clarté, à 4,6 : 1 sur `--fond-2` — au-dessus du seuil AA, sous le
+contraste de toutes les sémantiques. Aucune ne reprend la teinte de `--signal` (192°) ni celle de
+`--echec` (4°), les deux qu'il serait coûteux de mal lire. `--ilot-paille` (60°) et
+`--ilot-lichen` (95°) sont les plus proches voisines de `--epingle` (43°) et `--ok` (140°) : elles
+s'en séparent par la saturation et par le rôle, et ne se posent jamais sur le même objet.
+
 ### Le damier alpha
 
 | Token | Hex |
@@ -200,8 +236,9 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 
 - **Approche** : **grid-disciplined**, sans exception. Il n'y a pas de section marketing dans ce produit, donc aucune raison de casser la grille nulle part.
 - **Grid de l'Atelier** : `240px · 300px · minmax(0,1fr) · 380px` — arbre · réglages · prompt + grille · fiche. Largeurs absolues, sans condition.
+- **Grid de l'Univers** : `380px · minmax(0,1fr)` en mode grille, `380px · minmax(0,1fr) · 380px` en mode toile — réglages · tableau, ou réglages · toile · réserve. La troisième colonne n'introduit **aucune largeur nouvelle** : c'est la 380 de la fiche, réemployée pour ce qu'elle nomme déjà, la colonne de ce qu'on manipule. Ajouté le 27 août 2026 avec la toile (`PLAN.md` T8).
 - **La colonne de 240 px porte trois choses, et c'est le même sujet vu de trois hauteurs** : où ça se range (projets, collections), ce que ça coûte (le total du projet ouvert), et **ce qui a raté** — le journal, sous l'arbre. Ajouté le 27 août 2026 avec la bibliothèque : un appel raté a coûté de l'argent sans produire d'image, donc il n'a sa place ni dans la grille, qui ne montre que ce qu'on peut réutiliser, ni nulle part, puisqu'il faut pouvoir expliquer une facture. Le journal ne paraît que s'il y a eu un raté.
-- **Max content width** : **aucune**. L'écran large est la ressource du produit, on la dépense. La grille d'assets remplit ce qui reste.
+- **Max content width** : **aucune**, à une exception nommée. L'écran large est la ressource du produit, on la dépense, et la grille d'assets remplit ce qui reste. L'exception est la colonne de prose de l'écran Guide, bornée à **72 caractères** : la règle a été écrite pour la chose qui *gagne* à s'étaler, et la prose est la seule matière du produit qui perde à recevoir de la largeur (§ L'écran Guide). Aucune autre surface n'a le droit de s'en réclamer.
 - **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — le cran donne la **largeur minimale d'une tuile** : 128, 256, 512. Un niveau indisponible à la largeur courante est **grisé, pas caché**.
 - **Un cran est disponible quand deux tuiles y tiennent côte à côte**, gouttière et padding compris — pas une. Ajouté le 27 août 2026 en ouvrant l'atelier : `minmax(512px, 1fr)` accepte une colonne unique et l'**étire** jusqu'au bord, et 4× rendait une tuile de 1028 px sur une colonne de 1060. Huit fois la taille de repos pour un contrôle qui en annonce quatre. Une grille d'une colonne n'est plus une planche contact, c'est une visionneuse. **1× reste toujours disponible** : c'est l'état de repos, et quelque chose doit se rendre.
 - **Le cran choisi reste choisi, même devenu indisponible** — c'est la règle du modèle du catalogue (US-9), et il n'y a aucune raison d'en avoir deux. Mais une grille doit rendre quelque chose : elle rend au plus grand cran qui tienne, et la barre d'outils le **dit**, dans la fente et la forme des autres — `— 4× ne tient pas ici, rendu en 2×`. Le seul endroit du produit où l'on rend autre chose que ce qui est choisi, et il ne le fait jamais en silence.
@@ -264,6 +301,11 @@ transition de couleur au maximum, jamais de transformation).
 | Annulation après suppression | entrée 160 ms, sortie 160 ms | il reste un instant pour revenir en arrière |
 | Repli / dépliage d'un panneau | 160 ms sur la largeur | tu n'as pas perdu ta place |
 | Ouverture / fermeture de la fiche | 160 ms sur la largeur | idem |
+| **Ce qui paraît sans clic** — menu de carte, infobulle | fondu 80 ms + 2 px de levée | c'est venu se poser par-dessus, la grille n'a pas bougé |
+
+La dernière rangée porte **deux locataires, et n'en accepte pas un troisième sans repasser
+par la règle d'admission** : elle est réservée à ce qui paraît sans qu'un geste ait dit
+qu'on le demandait. Un menu qui s'ouvre au clic n'y entre pas — le clic l'a déjà annoncé.
 
 **La règle qui garde la liste close**, posée le 27 août 2026 en refusant d'y ajouter le repli hors
 ligne : *un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être
@@ -422,6 +464,242 @@ l'état peut battre plusieurs fois dans une séance — un fragment qui entre et
 une bande relue avant chaque clic devient un clignotement. Seule s'applique la tolérance générale
 du § Motion : 80 ms de transition de couleur sur le point de la barre d'état, `--ok` →
 `--epingle`.
+
+### L'infobulle explique, elle n'excuse jamais
+
+Écrit le 27 août 2026, sur un constat de l'auteur : *« même si c'est mon app perso, je suis
+un peu perdu dessus encore — le champ `groupe` sur un concept art, il sert à quoi ? »* La
+question est juste, et l'écran ne peut pas y répondre : `groupe` et `famille` sont deux
+champs voisins du même menu, l'un ne fait **rien** à la génération et l'autre décide de ce
+qui part en référence *et* de ce que ça coûte. Rien à l'écran ne les distingue.
+
+Les deux motifs ci-dessus interdisent l'infobulle. **Ils l'interdisent toujours, et cette
+section dit exactement pourquoi ils ne mordent pas ici.** Ce qu'ils protègent est *la
+raison* : ce qui refuse un geste ne se survole jamais, parce qu'on est bloqué maintenant.
+Une explication n'a pas cette propriété — on génère très bien sans savoir ce que `groupe`
+fait, on ignore seulement ce qu'on a gagné.
+
+**Le test, et il est binaire** : *son absence empêche-t-elle un geste ?* Oui — fente
+permanente, jamais un survol : « aucune clé OpenRouter », « la quantification demande une
+palette », « 4× ne tient pas ici ». Non — survol, jamais une fente : ce que fait un réglage,
+d'où sort son défaut, ce que remplir un champ entraîne. La règle ancienne n'est pas
+assouplie, elle gagne son revers : **la fente permanente est réservée à ce qui bloque, le
+survol à ce qui n'a jamais bloqué personne.** Une infobulle qui porte une raison est un bug,
+pas un arbitrage.
+
+**Le libellé est la cible — aucun glyphe neuf.** Le produit compte trois glyphes (`+` de
+l'arbre, triangle plein du favori, carré de 9 px d'une étape) et le § Le bloc repliable a
+déjà refusé le chevron pour ne pas en ouvrir un quatrième. Trente points d'interrogation
+posés dans les panneaux seraient ce quatrième glyphe, multiplié — c'est-à-dire la maquette
+écartée, qui mettait « des options partout ». Le nom du réglage est déjà à l'écran, déjà
+placé, et c'est déjà le nom de la chose : il devient sa propre poignée. **Rien n'est ajouté
+au repos, ni une rangée, ni une hauteur, ni une couleur.**
+
+**La marque est un souligné pointillé `--bord-fort`, `underline-offset: 3px`.** Même token
+que la poignée de barre de défilement, et pour exactement le même métier : *il y a plus
+ici*. `--bord` est sous le seuil où l'œil le trouve (§ Layout, mesuré), `--bord-fort` est
+au-dessus quand on cherche et en dessous quand on travaille. C'est aussi le trait que le
+navigateur pose sous `<abbr>` depuis toujours — la seule décoration du produit qui se
+comprenne sans être apprise.
+
+**Elle s'ouvre vers le centre, jamais vers le bord.** Corollaire du menu de carte — *jamais
+sur l'image qu'il règle* — appliqué un cran plus loin : le panneau se pose du côté de la
+grille, seule surface assez large et seule chose que personne ne lit au moment où il lit une
+explication. Depuis la fiche (colonne de droite) il part à gauche, depuis les réglages
+(colonne de gauche) il part à droite. Et il est **borné par l'écran, jamais par son
+contenu** — la règle du § Layout, qui vaut pour tout ce qui se pose.
+
+**Fond `--fond-1`, bord `--bord-fort`, rayon 2, largeur 280 px.** Le menu de carte se
+contente de `--bord` parce qu'il tombe toujours sur `--fond-0` ; une infobulle peut se poser
+sur un panneau, où `--bord` disparaît. Un seul token d'écart, et c'est l'argument déjà payé
+sur la barre de défilement. Aucune couleur neuve n'entre : le produit a trois sémantiques,
+il en garde trois.
+
+#### Trois lignes, toujours les mêmes trois
+
+```
+  ┌────────────────────────────────────────┐
+  │ Un nom libre pour ranger les cartes    │  ce que c'est
+  │ du tableau. Vide = hors groupe.        │  sans 12 px · --texte
+  │                                        │
+  │ Rien à la génération. Ce qui décide    │  ce que ça change
+  │ des références envoyées, c'est         │  sans 12 px · --texte-2
+  │ artwork officiel + famille.            │
+  │                                        │
+  │ toi · aucun défaut      Le guide ›     │  d'où ça sort
+  └────────────────────────────────────────┘  mono 10 px · --texte-3
+```
+
+La troisième ligne est en mono parce que l'origine d'un défaut est **un fait sur le monde** —
+le projet, l'univers, le catalogue, une mesure, ou toi — et que ce produit rend tout fait en
+mono (§ Typography, règle 2). Elle porte le lien `--signal` vers le guide, par la règle du
+§ Le grisé : *un lien quand il y a un endroit où aller*.
+
+**Aucune explication ne saute la deuxième ligne.** Un réglage qui ne change rien en aval
+doit l'écrire dans ces mots-là — `Rien à la génération.` C'est le gabarit qui produit la
+réponse, pas la bonne volonté de celui qui rédige : sans ligne obligatoire, `groupe` aurait
+reçu trois phrases sur le rangement, et la question de départ serait restée entière. Mise à
+l'épreuve sur les deux champs qui l'ont provoquée :
+
+| Champ | Ce que ça change |
+|---|---|
+| `groupe` | **Rien à la génération.** C'est un rangement pour l'œil. |
+| `famille` | Seuls les artworks de la famille du sujet partent en référence, plus ceux marqués « tous ». **Le nombre de références change le coût.** |
+
+Deux champs voisins, deux lignes qui ne se ressemblent pas : c'est tout ce que l'écran
+n'arrivait pas à dire.
+
+#### Un nom qui vit dans un `placeholder` n'est pas un nom
+
+Trouvé en branchant le motif, le 27 août 2026, et c'est **la moitié de la réponse à la
+question qui l'a lancé**. Dans le menu d'une carte, `groupe` et `note` n'avaient aucun
+libellé : leur seul nom était le texte gris du champ vide, qui disparaît dès qu'on tape
+dedans. Un champ rempli n'avait donc plus de nom du tout — impossible à identifier en le
+relisant, et impossible à expliquer, puisque le motif accroche l'explication au libellé.
+
+C'étaient les deux seuls champs du produit dans ce cas ; leurs voisins de la même colonne —
+*Taille*, *Artwork officiel*, *Famille* — en avaient un. Ils en ont un maintenant, et le
+`placeholder` redevient ce qu'il doit être : la valeur vide (`aucun`, `—`), pas l'identité du
+champ.
+
+**La règle qui en sort** : un contrôle dont le nom disparaît quand on s'en sert n'a pas de
+nom. Le pointillé n'est donc pas seulement une marque d'aide — il est le test qui a révélé
+le trou, parce qu'il n'avait nulle part où se poser.
+
+#### Le survol révèle, le clic retient
+
+La grammaire est celle du menu de carte, réemployée sans un réglage de plus : 200 ms de
+repos pour paraître — assez long pour traverser un panneau sans rien déclencher, assez court
+pour battre le clic —, 150 ms de grâce en partant, `Échap` ou un second clic sur le libellé
+pour lâcher l'épingle. Le clic épingle parce qu'une explication de quatre lignes se lit sans
+que la main reste immobile, et parce qu'on peut vouloir en copier un mot.
+
+**Le fondu de 80 ms n'ajoute pas de ligne à la liste close du § Motion — il en rejoint une.**
+C'est la même entrée que le menu de carte, pour la même raison d'admission : la chose paraît
+**sans clic**, donc sans geste qui dise qu'on l'a demandée, et les 80 ms sont ce qui la fait
+lire comme posée par-dessus plutôt que comme une grille qui vient de se recomposer. Un
+second locataire d'une entrée existante, pas une entrée de plus.
+
+**Le clavier n'est pas un rattrapage** : le libellé prend le focus, `Entrée` épingle,
+`aria-describedby` relie le panneau au contrôle. Un réglage qu'on atteint au clavier doit
+pouvoir s'expliquer au clavier.
+
+#### Ce qui est écarté
+
+**Un mode d'aide** — une bascule dans la barre de tête, éteinte par défaut, qui allumerait
+les marques. Le calme au repos serait parfait, mais on n'est jamais perdu *avant* d'ouvrir un
+panneau : on l'est en le regardant, et il faudrait alors sortir du geste pour aller allumer
+une lampe. Un mode, c'est aussi un état de plus à tenir dans un produit qui en compte déjà
+beaucoup, pour économiser un pointillé.
+
+**Un texte plus long, ou une image dans l'infobulle.** Le panneau est borné à trois lignes
+parce qu'au-delà c'est le guide qu'on veut, et le guide est à un clic — même partage que la
+tuile et la fiche : *une tuile porte un nom, trois mesures et deux marques ; au-delà, c'est
+la fiche qui prend le relais.*
+
+**Une explication sur un contrôle grisé.** Elle existe — le libellé garde son pointillé —
+mais elle ne remplace ni ne déplace la raison, qui reste dans sa fente, permanente. Les deux
+cohabitent parce qu'elles ne disent pas la même chose : *pourquoi c'est fermé* n'est pas
+*à quoi ça sert*.
+
+#### Un seul corpus, deux rendus
+
+**L'infobulle et le guide sont le même texte.** Le panneau rend les trois lignes d'une
+entrée du guide ; l'écran Guide rend toutes les entrées à la file, avec le contexte autour.
+Ce n'est pas une commodité de construction, c'est la règle que ce document a déjà appliquée
+deux fois — *deux comptes calculés à deux endroits se contredisent* (bloc « Ce qui part »),
+*deux éléments qui disent la même chose à deux altitudes, et aucun des deux n'est l'autorité*
+(le bandeau hors ligne). Une explication recopiée dans deux fichiers diverge en trois
+semaines, et c'est celle qui est sous les yeux au moment du doute qui sera la fausse.
+
+**Un réglage sans entrée n'a pas de pointillé, et rien ne casse.** Aucune infobulle vide,
+aucun `à documenter` dans le châssis. C'est le **guide** qui tient la liste de ce qui lui
+manque, dans sa dernière section — un manque de guide est un fait sur le guide, et il se
+range là où les guides vivent. Même partage que le journal des ratés : hors de la grille,
+dans la colonne qui parle déjà de ça.
+
+#### Le corpus est complet, et « complet » a un sens précis
+
+Écrit le 27 août 2026, au bout du chantier. Le motif était branché sur dix-neuf entrées et
+la dernière section du guide en listait **six manques**. Les combler a demandé de trancher
+ce que « un réglage » veut dire, et trois réponses en sont sorties — chacune a déplacé une
+frontière, pas seulement rempli une case.
+
+**Quarante-six entrées, quatre écrans.** Le groupe *Dans la découpe* entre à cette
+occasion, et c'est un **écran, pas un thème** : quand on cherche une explication, on se
+souvient d'où l'on était, pas de quelle famille conceptuelle relevait le curseur. Ranger
+les lignes et les colonnes sous *la retouche* au motif qu'elles viennent après la
+génération aurait été un classement juste pour le rédacteur et faux pour le lecteur. Les
+comptes : univers 20, atelier 4, retouche 18, découpe 4.
+
+**Une étape de recette est un réglage, et c'est le plus structurant de tous.** Elle décide
+qu'une des cinq places est occupée. Documenter `tache minimale` sans documenter
+*Nettoyage des bords* aurait laissé le parent plus opaque que son enfant — le contraire de
+ce qu'on cherche, puisque c'est le nom du bloc qu'on lit d'abord. Les cinq titres portent
+donc leur pointillé, et leurs entrées disent l'ordre fixe : *rien ne peut se recadrer avant
+qu'un alpha dise où est le sujet.*
+
+**Un contrôle grisé s'explique — et `disabled` l'en empêchait.** Le § Ce qui est écarté
+promettait déjà que le libellé d'un contrôle refusé garde son pointillé, parce que
+*pourquoi c'est fermé* n'est pas *à quoi ça sert*. Un `<button disabled>` ne dispatche
+aucun événement de souris, **pas même sur ses enfants** : l'explication d'une étape grisée
+aurait donc été la seule du produit à ne jamais s'ouvrir, et c'est précisément celle qu'on
+va chercher à ce moment-là. La rangée passe à `aria-disabled`, avec le clic gardé par une
+condition. Le refus est entier — le clic ne pose rien —, la raison reste dans sa fente
+juste dessous, et l'explication s'ouvre par-dessus. C'est un cas où **la règle du motif a
+corrigé le code**, et pas l'inverse.
+
+**Le seuil de la jauge de retouche sort de la liste des manques, et n'y est pas remplacé.**
+Les 240 ms sous lesquelles rien ne paraît ne sont pas un réglage : personne ne peut les
+toucher, et aucun libellé de l'écran ne pourrait porter leur pointillé. Ils vivent au
+§ Motion, là où les décisions de mouvement se tranchent. **Une liste de manques qui garde
+un item impossible à combler cesse d'être une liste de travail** — c'est la même hygiène
+que le tramage retiré du corpus le même jour, par l'autre bout : là un réglage qu'on ne
+peut pas atteindre, ici un manque qu'on ne peut pas écrire.
+
+**Il reste un manque, et il est structurel** : les réglages qu'un modèle déclare en propre.
+Le catalogue les nomme, et il change d'un jour à l'autre — 47 modèles le 26 août, 48 le 27.
+Aucune entrée écrite d'avance ne peut les couvrir, et c'est exactement pour ça que le guide
+tient une liste plutôt qu'une promesse.
+
+#### Deux règles de rédaction que le remplissage a fait apparaître
+
+**Deux entrées d'un même écran ne portent jamais le même nom.** Le guide rend les entrées à
+la file, groupées par écran, et le nom est le titre de chacune : deux « famille » à la suite
+dans *Dans l'univers* — celle d'une carte, celle d'une échelle du barème — et le lecteur ne
+sait plus laquelle il lit. C'est la seule collision que le regroupement ne rattrape pas,
+puisqu'il **est** le regroupement. Le même mot dans deux écrans différents, lui, est
+correct : c'est le même mot à l'écran.
+
+**Un libellé peut s'éteindre, et c'est la seule variante permise.** Les cinq champs de la
+bible descendent en `--texte-3` quand ils ne portent rien. Le gabarit de libellé prend donc
+un état *éteint* plutôt qu'un second gabarit : **un second endroit où poser le pointillé
+est un endroit où l'oublier**, et c'est la panne que ce motif ne peut pas se permettre —
+elle est silencieuse. Un test la couvre désormais, en confrontant toute clé branchée à
+l'écran au corpus : une clé mal tapée ne lève pas, elle rend le réglage muet.
+
+#### Ce qui n'a pas d'ancrage à l'écran, et pourquoi c'est correct
+
+Trois entrées vivent dans le guide seul — `famille d'une échelle`, `occupation d'une
+échelle`, `se détoure / plein cadre`. Les trois contrôles sont **répétés sept fois**, une
+fois par échelle du barème, et aucun ne porte de libellé : chacun montre sa valeur, ce qui
+suffit à le nommer. Vingt-et-un pointillés dans un bloc de sept rangées seraient la maquette
+écartée et ses « options partout » ; inventer une rangée de légende pour les porter serait
+inventer un motif pour un cas. Le bloc *Barème d'échelles*, lui, porte le sien, et son
+entrée nomme les trois choses qu'une échelle transporte. `Le guide ›` mène juste au-dessus
+des trois entrées longues.
+
+La même chose vaut pour `provenance`, qui n'est pas un réglage mais un fait — l'adresse
+gardée au collage. **Une entrée sans ancrage est permise ; un ancrage sans entrée ne l'est
+pas** : le premier laisse une explication à un clic de plus, le second laisse un réglage
+muet.
+
+**Et un contrôle a gagné un nom au passage** : le moteur de détourage. Ses trois voisins de
+la passe — tolérance, seuil alpha, durcissement — en portaient un ; celui-ci se lisait sur
+ses deux segments, « bord » et « modèle », c'est-à-dire sur ses **valeurs**. Même famille
+que `groupe` et `note`, dont le nom vivait dans un `placeholder` : *un contrôle qui n'est
+nommé que par ce qu'il vaut n'a nulle part où accrocher son explication.* Le pointillé n'a
+pas seulement documenté le produit, il a servi une troisième fois de détecteur.
 
 ### L'annulation se pose dans une fente, jamais dans un bandeau
 
@@ -622,10 +900,14 @@ T4, et l'écran est dérivé des motifs transversaux plutôt qu'inventé. Ce qui
 la dérivation a tranché, écrit ici parce qu'une décision d'apparence qui ne vit que dans le
 code finit par contredire ce document.
 
-**`380px · 1fr`, et pas une troisième largeur.** L'univers à gauche, le tableau à droite.
-380 est la largeur de la fiche asset : c'est *la* colonne de réglages du produit, et lui
-donner une troisième valeur ferait un troisième vocabulaire de largeur pour la même sorte
-de chose. La grille reste disciplinée, comme partout.
+**`380px · 1fr` en grille, `380px · 1fr · 380px` en toile.** L'univers à gauche, le tableau — ou
+la toile — au milieu, la réserve à droite quand la toile est ouverte. 380 est la largeur de la
+fiche asset : c'est *la* colonne de réglages du produit, et lui donner une **valeur** de plus
+ferait un troisième vocabulaire de largeur pour la même sorte de chose. Une **colonne** de plus,
+non : réécrit le 27 août 2026 avec la toile, parce que la phrase d'origine — « et pas une
+troisième largeur » — interdisait un nombre et se lisait comme interdisant une colonne. La
+réserve reprend la 380 telle quelle, pour ce qu'elle nomme déjà : ce qu'on manipule. La grille
+reste disciplinée, comme partout.
 
 **C'est un écran, pas un panneau — et c'est le cadrage qui le dit** (`docs/ARCHITECTURE.md`
 §6.2 : « Univers · au début d'un projet, puis ponctuel »). Il couvre donc l'Atelier au lieu
@@ -649,7 +931,8 @@ produit » reste vrai — celle-ci n'en est pas une, et se voit tout de suite co
 marque.** La même règle de densité que la tuile, et le même vocabulaire de marque : le coin
 plein en `--signal` dit **artwork officiel** — ce que l'auteur pose est une forme —, le mot
 du pied dit la famille ou le groupe — ce que le système constate est un mot. Aucune couleur
-supplémentaire n'entre dans le tableau.
+supplémentaire n'entre dans le tableau — et sur la toile, la couleur se pose sur l'îlot et sur la
+note, jamais sur la carte (§ Color, *Les teintes d'îlot*).
 
 #### Le menu d'une carte — le survol révèle, le clic retient
 
@@ -709,6 +992,48 @@ au survol, seul endroit du produit où une infobulle est permise parce qu'elle n
 aucune raison. Sans artwork, le bloc ne disparaît pas : il porte sa raison, comme tout
 grisé du produit.
 
+#### La toile, la réserve et les îlots
+
+Écrit le 27 août 2026, au cadrage de T8, après une séance d'essai sur le produit tenu : la grille
+montrait tout d'un coup d'œil et ne permettait d'organiser rien. Le tableau gagne une seconde vue,
+et ce qui suit est ce qui, d'elle, relève de l'apparence.
+
+**La règle est une phrase, et l'écran ne doit rien dire d'autre : la toile montre ce qui est
+classé, la réserve contient ce qui reste à classer.** Tout en découle — pourquoi la réserve n'est
+pas une grille de plus (c'est *la* grille du tableau, filtrée sur ce qui n'a pas de place),
+pourquoi une carte sans groupe n'est jamais sur le plan, pourquoi tirer est le seul geste à
+apprendre.
+
+**L'interrupteur de vue est dans la barre du tableau**, à côté des crans de vignette, dans la
+forme des segments existants : `grille` et `toile`. Un troisième contrôle de barre, et non un
+onglet — l'écran ne se dédouble pas, c'est la même matière regardée autrement.
+
+**L'îlot est du châssis, pas un objet dessiné.** Cadre de 1 px dans sa teinte, rayon 2 comme la
+carte, fond de la même teinte à 8 % — sous le seuil où l'œil la trouve seule, assez pour
+délimiter. Son titre est le nom du groupe, en mono 10 px comme toute mesure du produit : c'est un
+fait sur ce qu'il contient, pas une légende.
+
+**Une carte sur la toile est la carte du tableau, sans un pixel de différence.** Même rayon 2,
+même menu au survol, même coin plein pour l'artwork officiel. Une seconde forme de carte ferait
+une troisième grille dans un produit qui n'en veut qu'une.
+
+**La largeur libre s'aimante sur les trois largeurs de vignette du tableau** — celles qu'une carte
+1×, 2× et 4× prend dans la grille, mesurées à l'ouverture et jamais écrites en dur. C'est le seul
+endroit du produit où une mesure est continue ; l'aimant est ce qui l'empêche d'être arbitraire, et
+le cran cesse d'être la seule valeur possible pour redevenir un repère.
+
+**Rien ne se recompose tout seul sur la toile.** Aucun alignement automatique, aucune
+distribution, aucune mise en page qui reflue quand une carte arrive : c'est *l'œil reste
+exactement où il était* appliqué à la surface dont c'est la raison d'être. La liste close du
+§ Motion ne s'allonge pas — le plan qui se déplace sous le geste n'est pas une animation, c'est le
+geste.
+
+**Et l'annulation ne se pose nulle part.** Le § Motifs a tranché qu'une annulation vit dans une
+fente et jamais dans un bandeau, parce que le geste qu'elle rattrape est rare et explicite. Sur la
+toile, le geste risqué est le déplacement — c'est-à-dire le geste permanent : une fente qui
+clignote à chaque glissement serait du bruit. Ctrl+Z, sans surface, et la pile meurt en quittant
+l'écran.
+
 ---
 
 ### L'écran Découpe, et le cadre qui est l'image
@@ -739,6 +1064,92 @@ décale de vingt pixels tout ce qui est posé dessus en pourcentage.
 `--lumiere` pour « choisi », bord `--signal` sinon, et le numéro en mono 8,5 px sur le même
 fond `rgba(11,13,16,.82)` que la pastille d'une tuile. Ce numéro est un fait mesuré — c'est
 l'ordre de lecture, et c'est celui que la découpe garde.
+
+---
+
+### L'écran Guide, et la seule prose du produit
+
+**C'est un écran, et le cadrage le dit comme il l'a dit pour les deux autres.** Univers est
+« au début d'un projet, puis ponctuel » ; le Guide l'est davantage — on l'ouvre quand on ne
+sait pas, on le ferme quand on sait. Il couvre donc l'Atelier au lieu de s'y ajouter, comme
+Univers et Découpe, et pour la même raison : rien de ce qu'il porte ne se règle en
+regardant la grille.
+
+**Il n'a pas de fente de refus, et c'est la preuve qu'on a compris la règle.** Univers et
+Découpe en portent une parce qu'ils couvrent la barre d'état et qu'un refus provoqué chez
+eux serait rendu derrière eux. Le Guide ne provoque aucun refus : il ne demande rien au
+serveur, ne dépense rien, ne peut pas échouer. Le motif ne s'applique pas faute de déclencheur,
+et on ne pose pas une fente vide pour la symétrie.
+
+**Sa place dans la barre de tête est à droite, après le seul écart du produit.** Univers,
+Catalogue et le nom du projet parlent du travail en cours ; le Guide parle de l'outil. Il
+est donc séparé — un `lg` de 24 px, la seule respiration d'une barre de 44 px — et il est le
+seul élément de cette barre qui ne change jamais d'état. `?` l'ouvre au clavier, `Échap` le
+ferme, comme partout.
+
+#### `240px · 1fr`, et la seule largeur maximale du produit
+
+240 est la colonne de l'arbre, réemployée sans discussion : c'est *où ça se range*, et un
+sommaire n'est rien d'autre. Aucune troisième largeur n'est inventée, comme le § Layout et
+l'écran Univers l'ont déjà tranché.
+
+**La prose est bornée à 72 caractères, et c'est une exception assumée au § Layout.** « Max
+content width : aucune. L'écran large est la ressource du produit, on la dépense » a été
+écrit pour la grille — la chose qui *gagne* à s'étaler. La prose est la seule matière du
+produit qui **perde** à recevoir de la largeur : à 1 600 px une ligne de français fait
+190 signes, et le retour à la ligne suivante devient une recherche. La règle visait la
+planche contact ; le guide est son contraire exact, et c'est le seul endroit où l'exception
+vaut.
+
+**Et l'unité n'est pas `ch` — mesuré au navigateur, pas déduit.** `72ch` rend **671 px**, soit
+88 signes de français : `ch` vaut l'avance du zéro, et le chiffre d'Instrument Sans est bien
+plus large que ses bas-de-casse. La valeur juste est **`36em`**, soit 504 px pour une avance
+moyenne mesurée à 6,77 px — **74 signes par ligne**. C'est la même erreur de famille que
+`aspect-ratio` cédant devant `max-height` sur le cadre de la planche : une unité qui a l'air
+de dire ce qu'on veut, et qui mesure autre chose.
+
+**La colonne de prose est calée à gauche, jamais centrée**, et la place qui reste à droite
+reste **vide**. Centrer désalignerait le texte de son sommaire pour rien, et remplir la
+marge de notes, de figures ou de rappels serait recommencer la maquette écartée sur le seul
+écran qui pouvait s'en passer. Le Guide est la seule surface calme d'un produit dense : ce
+vide *est* ce qui dit qu'on est sorti de l'atelier.
+
+#### La typographie ne gagne aucun usage
+
+**Instrument Serif reste à trois emplois.** Le titre de l'écran est un titre d'écran — le
+deuxième emploi, inchangé. Les titres de section du guide, eux, **ne sont pas en serif** :
+ils reprennent la forme de l'en-tête de panneau, déjà dans le produit — sans 12,5 px,
+majuscules, `letter-spacing .11em`, `--texte-3` —, séparés du texte précédent par 48 px.
+
+C'est un refus, et il est délibéré. Une hiérarchie de sous-titres en serif de 24 px, sur la
+seule page de prose du produit, est *exactement* le basculement en blog que la règle 1 du
+§ Typography annonce en toutes lettres : « trois usages de trop et le produit bascule en
+blog ». La hiérarchie est portée par l'espace, ce que la direction esthétique demande depuis
+la première ligne — *la typographie et l'espace font tout le travail*.
+
+**Le corps est à 15 px, interligne 1,65** — le haut de la ligne « prose longue » de
+l'échelle, aucune valeur neuve. Les mesures et les noms de fichiers y restent en mono, par
+la règle 2 : un guide qui écrirait `$0,067` ou `donnees/cartes.json` en sans mentirait sur
+ce qu'ils sont.
+
+#### Quatre parties, et la troisième est le corpus des infobulles
+
+| Partie | Ce qu'elle porte |
+|---|---|
+| **Le geste** | La boucle quotidienne dans l'ordre où on la fait : écrire, générer, juger, garder. Une page, aucune option. |
+| **Les écrans** | Atelier, Univers, Découpe, Bibliothèque — ce que chacun est *pour*, et pourquoi c'est un écran séparé plutôt qu'un panneau de plus. |
+| **Les réglages** | Un par un, **groupés par écran** — univers, atelier, retouche, découpe. C'est le même texte que les infobulles, rendu à la file : les trois lignes, plus le contexte que le panneau de 280 px ne peut pas porter. Le groupe est un écran et non un thème : quand on cherche une explication, on se souvient d'où l'on était. |
+| **Ce qui n'est pas encore écrit** | La liste des réglages sans entrée. Un manque de guide est un fait sur le guide — et **rien d'autre n'y entre** : un seuil interne que personne ne peut toucher n'est pas un manque, c'est une décision, et elle vit au § Motion. |
+
+**Le sommaire est l'arbre, sans en être un.** Rangées de 26 px, actif sur `--fond-3`, comme
+la colonne de gauche de l'Atelier — mais sans `+`, sans repli et sans menu : il n'y a rien à
+créer dans un guide. Une seule grammaire de liste dans le produit, et elle sait déjà se
+taire quand on ne lui demande que de conduire.
+
+**Une infobulle mène ici, et le guide n'en porte aucune.** Le lien `Le guide ›` de la
+troisième ligne ouvre l'écran à l'ancre du réglage. En sens inverse rien ne survole : la
+forme longue *est* déjà l'explication, et un pointillé sur un texte qui explique serait la
+promesse d'un troisième niveau qui n'existe pas.
 
 ---
 
@@ -804,3 +1215,28 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | Découper vit dans la **rangée du jugement**, en mono 10 px | Rien ne permet de savoir d'avance qu'une image est une planche : un geste qui paraîtrait ou disparaîtrait selon ce qu'on croit deviner serait faux la moitié du temps. Il coûte une ligne, la même densité que le § La tuile impose à la grille. |
 | 27/08/2026 | Un cran de zoom tient quand **deux** tuiles y tiennent, pas une | `minmax(cran, 1fr)` accepte une colonne unique et l'étire jusqu'au bord : 4× rendait 1028 px sur une colonne de 1060, huit fois le repos pour un contrôle qui annonce quatre. Vu en ouvrant l'atelier, jamais au banc. Coût : sur un écran étroit, 4× est grisé alors qu'« une » tuile y tiendrait — c'est le prix pour que le cran veuille dire ce qu'il dit. |
 | 27/08/2026 | Le **cadre de la planche est calculé**, la mise à l'échelle n'est pas déléguée au CSS | `aspect-ratio` cède devant `max-height` : le navigateur rabote la hauteur sans redéduire la largeur, et un cadre de 1388 × 874 pour une image carrée décale de vingt pixels tout ce qui est posé dessus en pourcentage. Un seul facteur, et le cadre **est** l'image. Coût : une largeur mesurée de plus à tenir à jour. |
+| 27/08/2026 | **L'infobulle entre au produit**, et un test binaire la borne | Demandée par l'auteur, perdu dans sa propre application sur un cas exact : `groupe` et `famille` sont voisins dans le même menu, l'un ne fait rien à la génération, l'autre décide des références envoyées **et** du coût — et rien à l'écran ne les distingue. La règle « jamais une infobulle » n'est pas assouplie : elle protégeait *la raison*, et la raison bloque un geste maintenant. Une explication ne bloque rien. D'où le test, et il ne se discute pas au cas par cas : *son absence empêche-t-elle un geste ?* Oui → fente permanente. Non → survol. **Coût** : l'interdit devient conditionnel, donc argumentable plus tard ; le test est écrit comme un test et non comme une permission, et une infobulle qui porte une raison est déclarée bug, pas arbitrage. |
+| 27/08/2026 | **Le libellé est la cible** — souligné pointillé `--bord-fort`, aucun glyphe neuf | Trente points d'interrogation dans les panneaux seraient le quatrième glyphe d'un produit qui en compte trois, multiplié — c'est-à-dire la maquette écartée et ses « options partout ». Le nom du réglage est déjà à l'écran, déjà placé, et c'est déjà le nom de la chose. Le pointillé reprend le token de la poignée de barre de défilement pour le même métier — *il y a plus ici* : `--bord` est sous le seuil où l'œil le trouve, `--bord-fort` au-dessus quand on cherche et en dessous quand on travaille. C'est aussi le trait de `<abbr>`, seule décoration du produit qui se comprenne sans être apprise. **Écarté** : un mode d'aide à bascule — on n'est jamais perdu *avant* d'ouvrir un panneau, et il faudrait sortir du geste pour aller allumer une lampe. **Coût** : cinq à douze pointillés visibles par écran, contre zéro aujourd'hui. |
+| 27/08/2026 | **Trois lignes fixes, et la deuxième est obligatoire** | *Ce que c'est · ce que ça change · d'où ça sort.* La deuxième porte tout le poids : un réglage qui ne change rien en aval doit l'écrire dans ces mots-là — `Rien à la génération.` C'est le gabarit qui produit la réponse et non la bonne volonté du rédacteur ; sans ligne obligatoire, `groupe` aurait reçu trois phrases sur le rangement et la question de départ serait restée entière. La troisième est en mono parce que l'origine d'un défaut est un fait sur le monde (§ Typography, règle 2). **Coût** : un gabarit rigide produit parfois une ligne plate ; c'est le prix pour qu'aucun réglage inerte ne passe pour actif. |
+| 27/08/2026 | Le fondu de 80 ms **prend un second locataire**, il n'ouvre pas une entrée | Menu de carte et infobulle partagent la même rangée de la liste close, parce qu'ils partagent la raison d'admission : ils paraissent **sans clic**, donc sans geste qui dise qu'on les a demandés. La rangée est écrite comme réservée à cette classe, ce qui la rend refusable au troisième candidat sans rediscuter le principe. |
+| 27/08/2026 | **L'écran Guide est un écran**, `240px · 1fr`, et il ne porte pas de fente de refus | Même cadrage qu'Univers et Découpe — on l'ouvre quand on ne sait pas, on le ferme quand on sait —, donc il couvre l'Atelier. 240 est la colonne de l'arbre réemployée : un sommaire, c'est *où ça se range*, et aucune troisième largeur n'est inventée. **L'absence de fente est la preuve de la règle et non un oubli** : les deux autres écrans en portent une parce qu'ils couvrent la barre d'état et provoquent des refus ; le Guide ne demande rien au serveur, ne dépense rien, ne peut pas échouer. On ne pose pas une fente vide pour la symétrie. |
+| 27/08/2026 | **La prose du Guide est bornée à 72 caractères** — la seule largeur maximale du produit | « Max content width : aucune » a été écrit pour la grille, la chose qui *gagne* à s'étaler. La prose est la seule matière du produit qui perde à recevoir de la largeur : à 1 600 px une ligne de français fait 190 signes et le retour à la ligne devient une recherche. Calée à gauche et non centrée — centrer la désalignerait de son sommaire pour rien — et la place restante reste **vide** : remplir cette marge de notes et de figures serait recommencer la maquette écartée sur le seul écran qui pouvait s'en passer. **Mesuré au navigateur** : l'unité n'est pas `ch` — `72ch` rend 671 px, soit 88 signes, parce que `ch` vaut l'avance du zéro et que le chiffre d'Instrument Sans est bien plus large que ses bas-de-casse. La valeur juste est `36em` : **468 px**, avance moyenne 6,51 px, **72 signes par ligne** — remesuré sur l'atelier lancé le 27 août, et c'est bien la valeur que le titre de cette ligne annonce. Le « 504 px / 74 signes » écrit ici d'abord résolvait `em` contre 14 px ; l'`<article>` qui porte la borne hérite de **13 px**, et `em` se résout toujours contre la taille de l'élément qui l'écrit — pas contre celle de la prose qu'il contient, qui fait 15 px. Deux fois la même famille d'erreur dans la même décision, donc, et la seconde a survécu au constat de la première : `ch` valait l'avance du zéro, `em` vaut la taille du porteur. Même famille encore qu'`aspect-ratio` cédant devant `max-height` sur le cadre de la planche — *une unité relative se résout contre une référence qu'il faut aller lire, jamais contre celle qu'on a en tête*. **Coût** : une exception nommée dans une règle écrite comme absolue ; elle est bornée à cette colonne, et le § Layout le dit. |
+| 27/08/2026 | Les titres de section du Guide **ne sont pas en serif** | Instrument Serif reste à trois emplois. Le titre de l'écran en est un (titre d'écran) ; les sections reprennent la forme de l'en-tête de panneau — sans 12,5 px, majuscules, `letter-spacing .11em` — et la hiérarchie est portée par 48 px d'espace. Un sous-titrage serif de 24 px sur la seule page de texte long est très exactement le « bascule en blog » que la règle 1 du § Typography annonce en toutes lettres. **Ce que ça achète** : le guide ressemble au produit et non à un article posé dedans. |
+| 27/08/2026 | **Le guide et les infobulles sont un seul corpus**, deux rendus | Le panneau de 280 px rend les trois lignes d'une entrée, l'écran les rend toutes à la file avec le contexte autour. C'est la règle déjà appliquée deux fois par ce document — *deux comptes calculés à deux endroits se contredisent*, *deux éléments qui disent la même chose à deux altitudes et aucun n'est l'autorité*. Une explication recopiée diverge en trois semaines, et c'est celle qui est sous les yeux au moment du doute qui sera la fausse. Corollaire : un réglage sans entrée n'a **pas** de pointillé, aucune bulle vide, aucun `à documenter` dans le châssis — c'est le guide qui tient la liste de ses manques, dans sa dernière section, comme le journal des ratés vit hors de la grille. |
+| 27/08/2026 | **`groupe` et `note` n'avaient pas de libellé** — leur nom vivait dans un `placeholder` | Trouvé en branchant le motif, et c'est la moitié de la réponse à la question qui l'a lancé : un champ dont le nom est le texte gris du champ vide perd son nom dès qu'on tape dedans. Il n'était donc ni identifiable en relecture, ni explicable, puisque le motif accroche l'explication au libellé. Les deux seuls champs du produit dans ce cas ; leurs voisins de la même colonne en avaient un. **Règle générale** : un contrôle dont le nom disparaît quand on s'en sert n'a pas de nom, et le `placeholder` redit la valeur vide (`aucun`, `—`), jamais l'identité. **Coût** : deux rangées de 11 px dans un menu qui en comptait déjà quatre — payées, parce qu'un menu qui se borne à l'écran et défile peut se les offrir. |
+| 27/08/2026 | Le fondu de l'infobulle **réemploie `.paraitre`**, la classe du menu de carte | Écrit d'abord en JS — un état `posé` basculé par `requestAnimationFrame` — puis remplacé le jour même par la classe CSS qui existait déjà. Deux raisons, et la seconde est un défaut réel : un `requestAnimationFrame` ne se déclenche pas dans un onglet qui ne compose pas ses images, donc la bulle serait restée à `opacity: 0` au lieu de paraître. La première est le document lui-même — « deux locataires, une entrée » n'est vrai que si les deux jouent la **même** animation ; deux keyframes identiques écrites à deux endroits sont deux entrées qui divergeront. |
+| 27/08/2026 | Le **tramage retiré du corpus** : il n'est pas réglable à l'écran | `quantification.tramage` existe dans le domaine et dans l'API, avec deux valeurs, mais aucun contrôle ne l'expose — l'interface pose toujours « aucun ». Une entrée de guide décrivant un réglage qu'on ne peut pas atteindre est le même mensonge que le `bayer` déclaré et non implémenté que `recette.py` a retiré le jour où il a été écrit, et il se réveille de la même façon : des mois plus tard, devant quelqu'un qui cherche le curseur. Retirée. |
+
+| 27/08/2026 | **Le corpus passe de 19 à 46 entrées**, et gagne un quatrième groupe : la découpe | Les six manques que le guide listait sont comblés. Le groupe est un **écran et non un thème** — quand on cherche une explication, on se souvient d'où l'on était, pas de quelle famille conceptuelle relevait le curseur ; ranger lignes et colonnes sous *la retouche* aurait été juste pour le rédacteur et faux pour le lecteur. Comptes : univers 20, atelier 4, retouche 18, découpe 4. **Coût** : la troisième partie du guide fait désormais quarante-six sections, ce qui rend le sommaire indispensable plutôt que confortable. |
+| 27/08/2026 | **Une étape de recette est un réglage**, et les cinq titres prennent le pointillé | Elle décide qu'une des cinq places est occupée : c'est le réglage le plus structurant du panneau. Documenter `tache minimale` sans documenter *Nettoyage des bords* laissait le **parent plus opaque que son enfant**, alors que c'est le nom du bloc qu'on lit d'abord. Leurs entrées portent l'ordre fixe, qui n'était écrit nulle part que l'auteur puisse lire. |
+| 27/08/2026 | Une rangée d'étape passe à **`aria-disabled`**, parce que le motif l'exige | Le § Ce qui est écarté promettait qu'un contrôle grisé garde son pointillé — *pourquoi c'est fermé* n'est pas *à quoi ça sert*. Or un `<button disabled>` ne dispatche aucun événement de souris, **pas même sur ses enfants** : l'explication d'une étape grisée aurait été la seule du produit à ne jamais s'ouvrir, et c'est celle qu'on va chercher à ce moment-là. Le refus reste entier (le clic ne pose rien) et la raison reste dans sa fente. **Vérifié en réintroduisant le défaut** : l'essai tombe. **Coût** : la rangée redevient focalisable au clavier — ce qui est plutôt le bon comportement, la raison étant juste dessous. |
+| 27/08/2026 | Le **seuil de la jauge sort de la liste des manques**, et n'y est pas remplacé | Les 240 ms sous lesquelles rien ne paraît ne sont pas un réglage : personne ne peut les toucher, et aucun libellé de l'écran ne pourrait porter leur pointillé. Ils vivent au § Motion. **Une liste de manques qui garde un item impossible à combler cesse d'être une liste de travail** — même hygiène que le tramage retiré le même jour, par l'autre bout : là un réglage inatteignable, ici un manque inécrivable. Il reste un seul manque, et il est structurel : les réglages qu'un modèle déclare en propre, que le catalogue nomme et qui changent d'un jour à l'autre. |
+| 27/08/2026 | **Deux entrées d'un même écran ne portent jamais le même nom** | Le guide rend les entrées à la file, groupées par écran, et le nom est le titre de chacune : deux « famille » à la suite dans *Dans l'univers* — celle d'une carte, celle d'une échelle — et le lecteur ne sait plus laquelle il lit. C'est la seule collision que le regroupement ne rattrape pas, puisqu'il **est** le regroupement. Le même mot dans deux écrans reste correct : c'est le même mot à l'écran. Un essai le tient. |
+| 27/08/2026 | Le gabarit de libellé prend un état **éteint**, plutôt qu'un second gabarit | Les cinq champs de la bible descendent en `--texte-3` quand ils ne portent rien. **Un second endroit où poser le pointillé est un endroit où l'oublier**, et cette panne-là est silencieuse : une clé absente ne lève pas, elle rend le réglage muet. D'où aussi l'essai qui confronte toute clé branchée à l'écran au corpus — vérifié en introduisant une faute de frappe. |
+| 27/08/2026 | **Une entrée sans ancrage est permise ; un ancrage sans entrée ne l'est pas** | Trois entrées vivent dans le guide seul — les trois contrôles d'une échelle du barème, répétés sept fois et nommés par leurs seules valeurs. Vingt-et-un pointillés dans un bloc de sept rangées seraient la maquette écartée et ses « options partout » ; inventer une rangée de légende serait inventer un motif pour un cas. Le bloc porte le sien, et son entrée nomme les trois choses qu'une échelle transporte. L'asymétrie est le bon sens du motif : le premier cas laisse une explication à un clic de plus, le second laisse un réglage muet. **Tranché par l'auteur**, contre les deux autres branches proposées — une rangée de légende (une forme que le produit n'a nulle part ailleurs) et un pointillé par rangée (vingt-et-un dans un seul bloc). |
+| 27/08/2026 | **Le moteur de détourage n'avait pas de nom** — troisième trou révélé par le pointillé | Ses trois voisins de la passe en portaient un ; celui-ci se lisait sur ses deux segments, « bord » et « modèle », c'est-à-dire sur ses **valeurs**. Même famille que `groupe` et `note`, dont le nom vivait dans un `placeholder` : *un contrôle qui n'est nommé que par ce qu'il vaut n'a nulle part où accrocher son explication.* Il gagne un libellé `moteur` au gabarit de la fiche ; la raison du grisé reste sous la rangée, sur toute la largeur, parce qu'elle parle du modèle indisponible et non du réglage. |
+| 27/08/2026 | **La toile libre entre dans le produit**, à côté de la grille et sans la remplacer | Écartée au PRD par choix d'ergonomie, renversée par la première séance d'essai : la grille montre tout et n'organise rien, et `groupe` n'était qu'une étiquette sans forme à l'écran. La grille reste ce qui montre, la toile devient ce qui range. |
+| 27/08/2026 | L'écran Univers passe à **trois colonnes** en mode toile — `380 · 1fr · 380` | « Pas une troisième largeur » interdisait un troisième *nombre*, pas une troisième *colonne*. La réserve reprend la 380 de la fiche, qui nomme déjà la colonne de ce qu'on manipule ; l'Atelier vit à quatre colonnes, l'Univers à trois n'est pas une rupture de grammaire. |
+| 27/08/2026 | **L'îlot est le groupe** — une seule notion de rangement, jamais deux | Un cadre libre indépendant du champ `groupe` aurait fait coexister deux appartenances, et posé la question sans réponse « pourquoi cette carte est dans l'îlot *Nord* alors que son groupe dit *marais* ? ». Corollaire assumé : hors îlot, pas de groupe. |
+| 27/08/2026 | **Six teintes d'îlot**, fermées et sourdes, sans aucune sémantique | Premier endroit du produit où une couleur ne veut rien dire. Un sélecteur libre aurait produit l'îlot rouge vif qui se lit comme un échec ; saturation plafonnée à 20 % et emploi limité aux surfaces de la toile les tiennent à distance des quatre sémantiques. |
+| 27/08/2026 | **Ctrl+Z sur la toile**, sans fente ni bandeau | L'annulation d'une suppression tient dans une fente parce que ce geste-là est rare. Sur la toile le geste risqué est le déplacement, donc le geste permanent : une fente qui clignote cent fois par séance est du bruit, et « hors îlot, pas de groupe » exige pourtant un rattrapage. |

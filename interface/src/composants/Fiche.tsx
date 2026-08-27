@@ -40,6 +40,7 @@ import {
   Raison,
   Segments,
 } from "./chassis"
+import { POINTILLE, useInfobulle } from "./Infobulle"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. La valeur
@@ -264,6 +265,7 @@ export function Fiche({
           {/* ── 1. Détourage ─────────────────────────────────────────────── */}
           <Etape
             cle="fiche.detourage"
+            aide="etape.detourage"
             titre="Détourage"
             active={recette.passes.length > 0}
             etat={RESUME.detourage(recette)}
@@ -322,6 +324,7 @@ export function Fiche({
           {/* ── 2. Recadrage ─────────────────────────────────────────────── */}
           <Etape
             cle="fiche.recadrage"
+            aide="etape.recadrage"
             titre="Recadrage"
             active={recette.recadrage !== null}
             etat={recette.recadrage && RESUME.recadrage(recette.recadrage)}
@@ -332,7 +335,7 @@ export function Fiche({
               })
             }
           >
-            <Reglage libelle="marge">
+            <Reglage libelle="marge" aide="recadrage.marge">
               <Curseur
                 valeur={recette.recadrage?.marge ?? 0}
                 min={0}
@@ -351,6 +354,7 @@ export function Fiche({
           {/* ── 3. Grille ────────────────────────────────────────────────── */}
           <Etape
             cle="fiche.grille"
+            aide="etape.grille"
             titre="Grille"
             active={recette.grille !== null}
             etat={recette.grille && RESUME.grille(recette.grille)}
@@ -364,7 +368,7 @@ export function Fiche({
             }
           >
             <div className="flex flex-col gap-2">
-              <Reglage libelle="cible">
+              <Reglage libelle="cible" aide="grille.cible">
                 <Segments
                   valeurs={CIBLES}
                   valeur={(recette.grille?.cible ?? 64) as (typeof CIBLES)[number]}
@@ -376,7 +380,7 @@ export function Fiche({
                   }
                 />
               </Reglage>
-              <Reglage libelle="occupation">
+              <Reglage libelle="occupation" aide="grille.occupation">
                 <Curseur
                   valeur={recette.grille?.occupation ?? 100}
                   min={10}
@@ -396,7 +400,7 @@ export function Fiche({
                   }
                 />
               </Reglage>
-              <Reglage libelle="ancrage">
+              <Reglage libelle="ancrage" aide="grille.ancrage">
                 <Segments
                   valeurs={["bas", "centre"] as const}
                   valeur={recette.grille?.ancrage ?? "bas"}
@@ -414,6 +418,7 @@ export function Fiche({
           {/* ── 4. Quantification — branchée, et grisée avec sa raison ────── */}
           <Etape
             cle="fiche.quantification"
+            aide="etape.quantification"
             titre="Quantification"
             active={recette.quantification !== null}
             etat={recette.quantification && RESUME.quantification(recette.quantification)}
@@ -439,7 +444,7 @@ export function Fiche({
           >
             <div className="flex flex-col gap-2">
               {univers.palette.length > 0 && (
-                <Reglage libelle="palette">
+                <Reglage libelle="palette" aide="quantification.palette">
                   <div className="flex flex-wrap gap-[2px]">
                     {univers.palette.map((couleur) => (
                       <span
@@ -452,7 +457,7 @@ export function Fiche({
                   </div>
                 </Reglage>
               )}
-              <Reglage libelle="couleurs">
+              <Reglage libelle="couleurs" aide="quantification.couleurs">
                 <Segments
                   valeurs={[4, 8, 16, 32, 64] as const}
                   valeur={
@@ -477,6 +482,7 @@ export function Fiche({
           {/* ── 5. Bords ─────────────────────────────────────────────────── */}
           <Etape
             cle="fiche.bords"
+            aide="etape.bords"
             titre="Nettoyage des bords"
             active={recette.bords !== null}
             etat={recette.bords && RESUME.bords(recette.bords)}
@@ -487,7 +493,7 @@ export function Fiche({
               })
             }
           >
-            <Reglage libelle="tache minimale">
+            <Reglage libelle="tache minimale" aide="bords.aire_min">
               <Curseur
                 valeur={recette.bords?.aire_min ?? 3}
                 min={0}
@@ -534,7 +540,7 @@ export function Fiche({
         <div className="mt-auto flex flex-col gap-2 border-t border-bord pt-2">
           {traitement.recettes.length > 0 && (
             <div className="flex flex-col gap-1">
-              <Libelle>Recettes</Libelle>
+              <Libelle aide="fiche.recettes">Recettes</Libelle>
               <div className="flex flex-wrap gap-1">
                 {traitement.recettes.map((enregistree) => (
                   <button
@@ -673,7 +679,7 @@ function Jugement({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle>Réinjecter</Libelle>
+        <Libelle aide="fiche.reinjecter">Réinjecter</Libelle>
         <div className="flex flex-wrap gap-1">
           {ROLES.map(({ role, libelle, explique }) => (
             <button
@@ -908,17 +914,26 @@ function BlocPasse({
         )}
       </div>
 
-      <Segments
-        valeurs={["bord", "modele"] as const}
-        valeur={passe.moteur}
-        onChange={(moteur) => onFini({ ...passe, moteur })}
-        indisponibles={raisonModele ? (["modele"] as const) : []}
-        libelles={{ bord: "bord", modele: "modèle" }}
-      />
+      {/* **Le seul contrôle de la passe qui n'avait pas de nom.** Ses trois
+          voisins en portaient un ; celui-ci se lisait sur ses deux segments,
+          « bord » et « modèle », c'est-à-dire sur ses valeurs. Un contrôle qui
+          n'est nommé que par ce qu'il vaut n'a nulle part où accrocher son
+          explication — la même règle que les `placeholder` du menu de carte.
+          La raison du grisé reste sous la rangée, sur toute la largeur : elle
+          parle du modèle indisponible, pas du réglage. */}
+      <Reglage libelle="moteur" aide="detourage.moteur">
+        <Segments
+          valeurs={["bord", "modele"] as const}
+          valeur={passe.moteur}
+          onChange={(moteur) => onFini({ ...passe, moteur })}
+          indisponibles={raisonModele ? (["modele"] as const) : []}
+          libelles={{ bord: "bord", modele: "modèle" }}
+        />
+      </Reglage>
       {raisonModele && <Raison texte={raisonModele} />}
 
       {passe.moteur === "bord" && (
-        <Reglage libelle="tolérance">
+        <Reglage libelle="tolérance" aide="detourage.tolerance">
           <Curseur
             valeur={passe.tolerance}
             min={0}
@@ -928,7 +943,7 @@ function BlocPasse({
           />
         </Reglage>
       )}
-      <Reglage libelle="seuil alpha">
+      <Reglage libelle="seuil alpha" aide="detourage.seuil_alpha">
         <Curseur
           valeur={passe.seuil_alpha}
           min={1}
@@ -937,7 +952,7 @@ function BlocPasse({
           onFini={(seuil_alpha) => onFini({ ...passe, seuil_alpha })}
         />
       </Reglage>
-      <Reglage libelle="durcissement">
+      <Reglage libelle="durcissement" aide="detourage.durcissement">
         <Segments
           valeurs={[0, 1, 2, 3, 4] as const}
           valeur={passe.durcissement as 0 | 1 | 2 | 3 | 4}
@@ -952,15 +967,28 @@ function BlocPasse({
 
 function Reglage({
   libelle,
+  aide,
   children,
 }: {
   libelle: string
+  /** La cle de l'entree du corpus (`src/aide.ts`), s'il y en a une. Le libelle
+   *  devient alors sa propre poignee : pointille `--bord-fort`, survol pour
+   *  reveler, clic pour epingler. Sans cle, rien ne se marque. */
+  aide?: string
   children: React.ReactNode
 }) {
+  const { presente, ancre, declencheurs, bulle } = useInfobulle(aide)
   return (
     <div className="grid grid-cols-[86px_minmax(0,1fr)] items-center gap-2">
-      <span className="mesure text-[10px] text-texte-3">{libelle}</span>
+      <span
+        ref={ancre as React.Ref<HTMLSpanElement>}
+        {...declencheurs}
+        className={`mesure text-[10px] text-texte-3 ${presente ? POINTILLE : ""}`}
+      >
+        {libelle}
+      </span>
       {children}
+      {bulle}
     </div>
   )
 }

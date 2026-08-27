@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // Le seul endroit du dépôt où l'interface est montée et pilotée.
 //
 // Il existe pour une raison précise, et elle est écrite dans `AGENTS.md`
@@ -23,6 +24,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { App } from "./App"
 import { toutReplier } from "./composants/chassis"
+import { reinitialiserGuide } from "./composants/Guide"
+import { AIDE, SANS_ENTREE } from "./aide"
 import type {
   Asset,
   Bibliotheque,
@@ -1033,3 +1036,252 @@ describe("le slicer et le zoom de la grille", () => {
     )
   })
 })
+
+
+// ── L'infobulle et le guide ─────────────────────────────────────────────────
+//
+// « L'infobulle explique, elle n'excuse jamais » (`docs/DESIGN.md`). Ce qui se
+// vérifie ici est le **test binaire** qui borne le motif — *son absence
+// empêche-t-elle un geste ?* —, et la règle du gabarit qui le rend utile :
+// aucune entrée ne saute la deuxième ligne.
+
+describe("l'infobulle et le guide", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    // Le guide vit dans un magasin de module, comme le repli : il survit au
+    // démontage, ce qui est voulu d'un écran à l'autre et faux d'un essai à
+    // l'autre.
+    reinitialiserGuide()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  test("aucune entrée du corpus ne saute la deuxième ligne", () => {
+    // C'est le gabarit qui produit la réponse, pas la bonne volonté du
+    // rédacteur : sans champ obligatoire, `groupe` aurait reçu trois phrases
+    // sur le rangement, et la question de départ serait restée entière.
+    for (const [cle, entree] of Object.entries(AIDE)) {
+      expect(entree.quoi.trim(), `${cle} · ce que c'est`).not.toBe("")
+      expect(entree.change.trim(), `${cle} · ce que ça change`).not.toBe("")
+      expect(entree.origine.trim(), `${cle} · d'où ça sort`).not.toBe("")
+    }
+  })
+
+  test("un champ qui n'agit pas le dit, son voisin qui coûte le dit aussi", () => {
+    // Les deux champs qui ont provoqué le motif : voisins dans le même menu,
+    // l'un inerte, l'autre décisif, et rien à l'écran ne les distinguait.
+    expect(AIDE["carte.groupe"].change).toContain("Rien à la génération")
+    expect(AIDE["carte.famille"].change).toContain("coût")
+  })
+
+  test("le pointillé ne paraît que sur un réglage documenté", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const marque = (nom: string) =>
+      [...document.querySelectorAll("span")].some(
+        (e) => e.textContent === nom && e.className.includes("decoration-dotted"),
+      )
+
+    // Documentés — le nom du réglage devient sa propre poignée.
+    await waitFor(() => expect(marque("Variations")).toBe(true))
+    expect(marque("Proportions")).toBe(true)
+
+    // Et rien d'autre ne se marque : un réglage sans entrée n'a pas de
+    // pointillé, aucune bulle vide, rien qui casse.
+    expect(marque("Ce qui part")).toBe(false)
+  })
+
+  test("la poignée n'est jamais plus large que son mot", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Trouvé à l'œil dans l'atelier lancé, pas ici : un `<span>` posé dans un
+    // conteneur flexible est blockifié, et dans une **colonne** il s'étire sur
+    // toute la largeur. « Proportions » réagissait donc 200 px à droite de son
+    // mot, quand « Modèle » — même panneau, parent en rangée — ne réagissait
+    // que sur ses 38 px. « Le libellé est la cible » ne tient que si la cible
+    // *est* le libellé.
+    //
+    // jsdom ne met rien en page : ce qui se vérifie ici est la **règle**, pas
+    // sa largeur. La largeur, elle, se mesure au navigateur, et c'est ce qui a
+    // trouvé le défaut.
+    await waitFor(() =>
+      expect(
+        [...document.querySelectorAll("span")].some((e) =>
+          e.className.includes("decoration-dotted"),
+        ),
+      ).toBe(true),
+    )
+    for (const nom of ["Proportions", "Variations", "Modèle", "Sujet"]) {
+      const poignee = [...document.querySelectorAll("span")].find(
+        (e) => e.textContent === nom && e.className.includes("decoration-dotted"),
+      )
+      expect(poignee, `${nom} — poignée absente`).toBeTruthy()
+      expect(poignee!.className, `${nom} — poignée étirable`).toContain("w-fit")
+    }
+  })
+
+  test("le survol explique, et n'excuse jamais", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const libelle = [...document.querySelectorAll("span")].find(
+      (e) => e.textContent === "Variations" && e.className.includes("decoration-dotted"),
+    )!
+    expect(document.querySelector('[role="tooltip"]')).toBeNull()
+
+    // 200 ms de repos : assez long pour traverser un panneau sans rien
+    // déclencher, assez court pour battre le clic.
+    fireEvent.mouseOver(libelle)
+    const bulle = await screen.findByRole("tooltip")
+
+    // Les trois lignes, dans l'ordre.
+    expect(bulle.textContent).toContain("Combien d'images partent d'un seul clic")
+    expect(bulle.textContent).toContain("4 fois le coût")
+    expect(bulle.textContent).toContain("défaut 1")
+    expect(bulle.textContent).toContain("Le guide ›")
+  })
+
+  test("le guide s'ouvre depuis la barre de tête et porte le corpus", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+
+    // Les quatre parties, et la troisième est le corpus lui-même.
+    expect(await screen.findByRole("heading", { name: "La boucle" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "Ce qui n'est pas encore écrit" })).toBeTruthy()
+
+    // La réponse à la question qui a lancé tout ce chantier.
+    expect(screen.getByRole("heading", { name: "groupe" })).toBeTruthy()
+    expect(
+      screen.getAllByText(/Rien à la génération\. C'est un rangement pour l'œil\./).length,
+    ).toBeGreaterThan(0)
+  })
+
+  test("toute clé branchée à l'écran a son entrée dans le corpus", () => {
+    // **Le trou que ce motif peut avoir en silence.** Une clé mal tapée dans un
+    // composant ne lève pas : `explication()` rend `undefined`, le pointillé ne
+    // paraît pas, et le réglage redevient muet sans que rien ne le dise. C'est
+    // exactement la panne que le corpus existe pour éviter, et elle ne se voit
+    // qu'en confrontant ce que l'écran demande à ce que le corpus porte.
+    const sources = import.meta.glob("./composants/*.tsx", {
+      query: "?raw",
+      import: "default",
+      eager: true,
+    }) as Record<string, string>
+
+    const branchees = new Set<string>()
+    for (const [fichier, code] of Object.entries(sources)) {
+      if (fichier.endsWith("Infobulle.tsx") || fichier.endsWith("Guide.tsx")) continue
+      for (const trouvee of code.matchAll(/aide="([\w.]+)"/g)) branchees.add(trouvee[1])
+    }
+
+    // De quoi prouver que le balayage a vraiment lu quelque chose : un test qui
+    // ne trouve aucune clé passerait tout seul, et pour toujours.
+    expect(branchees.size).toBeGreaterThan(20)
+    for (const cle of branchees) {
+      expect(AIDE[cle], `${cle} — branché à l'écran, absent du corpus`).toBeTruthy()
+    }
+
+    // Les cinq champs de la bible sont branchés par gabarit — `bible.${champ}` —
+    // et aucun littéral ne les nomme. Ils se vérifient donc à part.
+    for (const champ of ["monde", "epoque", "trait", "eclairage", "technique"]) {
+      expect(AIDE[`bible.${champ}`], `bible.${champ}`).toBeTruthy()
+    }
+  })
+
+  test("deux entrées du même écran ne portent pas le même nom", () => {
+    // Le guide rend les entrées à la file, groupées par écran, et le nom est le
+    // titre de chacune. Deux « famille » à la suite dans « Dans l'univers » —
+    // celle d'une carte et celle d'une échelle — et le lecteur ne sait plus
+    // laquelle il lit. C'est la seule collision que le regroupement ne rattrape
+    // pas, puisqu'il est le regroupement.
+    const vus = new Map<string, string>()
+    for (const [cle, entree] of Object.entries(AIDE)) {
+      const empreinte = `${entree.ou} · ${entree.nom.toLowerCase()}`
+      expect(vus.get(empreinte), `${cle} et ${vus.get(empreinte)} — même nom, même écran`)
+        .toBeUndefined()
+      vus.set(empreinte, cle)
+    }
+  })
+
+  test("une étape grisée s'explique quand même, et sa raison reste dans sa fente", async () => {
+    // « Une explication sur un contrôle grisé. Elle existe — le libellé garde
+    // son pointillé — mais elle ne remplace ni ne déplace la raison, qui reste
+    // dans sa fente, permanente » (`docs/DESIGN.md` § Ce qui est écarté). Les
+    // deux cohabitent parce qu'elles ne disent pas la même chose : *pourquoi
+    // c'est fermé* n'est pas *à quoi ça sert*.
+    const { fetchDouble } = serveurDouble({ assets: [asset("dddd1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("dddd1111-0")] })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+
+    // L'univers du double n'a aucune palette : l'étape est grisée avec sa
+    // raison, et la raison est écrite — jamais au survol.
+    const etape = await screen.findByRole("button", { name: "Quantification" })
+    expect(etape.getAttribute("aria-disabled")).toBe("true")
+    expect(screen.getByText("aucune palette")).toBeTruthy()
+
+    // Et elle s'explique. `aria-disabled` plutôt que `disabled` est ce qui le
+    // permet : un `<button disabled>` ne dispatche aucun événement de souris,
+    // pas même sur ses enfants.
+    fireEvent.mouseOver(etape)
+    const bulle = await screen.findByRole("tooltip")
+    expect(bulle.textContent).toContain("La quatrième place")
+    // La bulle explique, elle n'excuse jamais : la raison n'y entre pas.
+    expect(bulle.textContent).not.toContain("aucune palette")
+
+    // Cliquer une étape grisée ne la pose pas quand même.
+    fireEvent.click(etape)
+    expect(
+      fetchDouble.mock.calls.some((appel) => String(appel[0]).includes("/recette")),
+    ).toBe(false)
+  })
+
+  test("le guide range les réglages par écran, découpe comprise", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    for (const groupe of [
+      "Dans l'univers",
+      "Dans l'atelier",
+      "Dans la retouche",
+      "Dans la découpe",
+    ]) {
+      expect(await screen.findByRole("heading", { name: groupe }), groupe).toBeTruthy()
+    }
+
+    // Les six manques d'hier sont comblés : le barème, les champs de la bible,
+    // la palette de l'univers, la tache minimale, les lignes et colonnes de la
+    // découpe. Le seul restant est celui que personne ne peut écrire d'avance.
+    expect(screen.getByRole("heading", { name: "Barème d'échelles" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "contraintes techniques" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "tache minimale" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "lignes" })).toBeTruthy()
+    expect(SANS_ENTREE).toHaveLength(1)
+    expect(SANS_ENTREE[0]).toContain("catalogue")
+  })
+
+  test("Échap ferme le guide, comme tout écran du produit", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    expect(await screen.findByRole("heading", { name: "La boucle" })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "La boucle" })).toBeNull())
+  })
+})
+

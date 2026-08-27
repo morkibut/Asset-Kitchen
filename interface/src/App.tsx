@@ -50,6 +50,7 @@ import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranCle } from "./composants/EcranCle"
 import { Fiche } from "./composants/Fiche"
+import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers } from "./composants/Univers"
@@ -222,6 +223,26 @@ export function App() {
     window.addEventListener("resize", mesurerCentre)
     return () => window.removeEventListener("resize", mesurerCentre)
   }, [mesurerCentre])
+
+  // **Le guide s'ouvre sur `?`**, et se ferme sur Échap comme tout écran du
+  // produit. Jamais quand on est en train d'écrire : le champ de prompt et les
+  // notes de carte prennent la touche avant lui.
+  const guideOuvert = useGuide()
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== "?" || e.ctrlKey || e.metaKey || e.altKey) return
+      const cible = e.target as HTMLElement | null
+      const saisie =
+        cible?.tagName === "INPUT" ||
+        cible?.tagName === "TEXTAREA" ||
+        cible?.isContentEditable
+      if (saisie) return
+      e.preventDefault()
+      ouvrirGuide()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [])
 
   // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
   //
@@ -913,6 +934,12 @@ export function App() {
         />
       )}
 
+      {/* **Le Guide couvre l'atelier**, comme Univers et Découpe — on l'ouvre
+          quand on ne sait pas, on le ferme quand on sait. Il ne porte pas de
+          fente de refus : il ne demande rien au serveur, ne dépense rien, ne
+          peut pas échouer. On ne pose pas une fente vide pour la symétrie. */}
+      {guideOuvert && <EcranGuide onFermer={fermerGuide} />}
+
       {universOuvert && (
         <EcranUnivers
           projet={
@@ -1054,6 +1081,13 @@ function BarreDeTete({
         />
         <Bouton onClick={onRafraichir} enfants="Catalogue" />
         <Bouton onClick={onReglages} enfants="Réglages" />
+        {/* Le seul élément de cette barre qui ne parle pas du travail en cours
+            mais de l'outil, donc le seul qui soit séparé — 24 px, la seule
+            respiration d'une barre de 44. Il ne change jamais d'état. */}
+        <div className="ml-2 flex items-center gap-2 border-l border-bord pl-4">
+          <Bouton onClick={() => ouvrirGuide()} enfants="Guide" />
+          <span className="mesure text-[10px] text-texte-3">?</span>
+        </div>
       </div>
     </header>
   )

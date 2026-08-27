@@ -687,7 +687,7 @@ pre.code{
   </section>
 
   <!-- ═══════════ 3 · L'ÉCRAN ═══════════ -->
-  <section style="border-bottom:0">
+  <section>
     <div class="titre-sec"><span class="num">03</span><h2>L'Atelier</h2></div>
     <p class="sous">
       L'écran permanent. Arbre · réglages · prompt · grille, plus la fiche en panneau latéral. Ce qui
@@ -1085,6 +1085,421 @@ pre.code{
       </div>
     </div>
   </section>
+
+
+<style>
+/* ————— 4 · l'infobulle · 5 · le guide ————— */
+
+/* le libellé est la cible : aucun glyphe neuf, un pointillé --bord-fort */
+.lib-aide{
+  text-decoration:underline dotted var(--bord-fort);
+  text-underline-offset:3px;text-decoration-thickness:1px;
+  cursor:help
+}
+.lib-aide:hover{color:var(--texte);text-decoration-color:var(--texte-3)}
+
+/* le panneau : fond-1 sur bord-fort, 280 px, trois lignes */
+.bulle{
+  width:280px;background:var(--fond-1);border:1px solid var(--bord-fort);
+  border-radius:var(--r-s);padding:11px 13px 9px;
+  box-shadow:0 6px 20px rgba(0,0,0,.45)
+}
+.bulle .l1{font-size:12px;color:var(--texte);line-height:1.5}
+.bulle .l2{font-size:12px;color:var(--texte-2);line-height:1.5;margin-top:9px}
+.bulle .l2 b{color:var(--texte);font-weight:600}
+.bulle .l3{
+  font-family:var(--mono);font-size:10px;color:var(--texte-3);
+  margin-top:11px;padding-top:8px;border-top:1px solid var(--bord);
+  display:flex;justify-content:space-between;align-items:center;gap:14px
+}
+.bulle .l3 a{color:var(--signal);text-decoration:none;white-space:nowrap}
+.bulle .l3 a:hover{color:var(--signal-clair)}
+
+/* les deux colonnes du test */
+.test{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
+.test > div{background:var(--fond-1);padding:22px 24px 26px}
+.test .q{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--texte-3);margin-bottom:4px}
+.test .r{font-size:13px;color:var(--texte);margin-bottom:20px}
+.test .r em{font-style:italic;color:var(--texte-2)}
+.test .verdict{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:18px;padding-top:12px;border-top:1px solid var(--bord);line-height:1.6}
+.test .verdict b{color:var(--signal);font-weight:500}
+
+/* l'anatomie annotée */
+.anat{display:grid;grid-template-columns:280px 1fr;gap:26px;align-items:start}
+.anat-notes{display:flex;flex-direction:column;gap:0;padding-top:2px}
+.anat-notes div{padding:9px 0;border-bottom:1px solid var(--bord)}
+.anat-notes div:last-child{border-bottom:0}
+.anat-notes .t{font-size:12.5px;color:var(--texte)}
+.anat-notes .d{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:3px}
+
+/* la paire groupe / famille */
+.paire-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.champ-demo .tete-champ{margin-bottom:11px}
+.champ-demo .tete-champ .nom{font-size:11.5px;color:var(--texte-2)}
+.champ-demo .faux-champ{
+  width:280px;height:28px;background:var(--fond-2);border:1px solid var(--bord);
+  border-radius:var(--r-s);display:flex;align-items:center;padding:0 10px;
+  font-size:12.5px;color:var(--texte-3);margin-bottom:9px
+}
+.champ-demo .faux-champ.rempli{color:var(--texte)}
+/* la rangee des familles passe a la ligne dans 280 px — c'est ce que fait
+   le menu d'une carte 1x, § Le menu d'une carte. */
+.champ-demo .seg{display:flex;flex-wrap:wrap;width:280px}
+.champ-demo .seg button{flex:0 0 auto}
+
+/* en situation : le panneau et la bulle qui s'ouvre vers la grille */
+.situ{position:relative;height:376px;display:grid;grid-template-columns:300px minmax(0,1fr);background:var(--fond-0);overflow:hidden}
+.situ .bulle{position:absolute;left:296px;top:150px;z-index:5}
+.situ .cible{color:var(--texte);text-decoration-color:var(--texte-3)}
+.curseur-demo{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.curseur-demo .rail{flex:1;height:2px;background:var(--bord);border-radius:2px;position:relative}
+.curseur-demo .rail i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--signal)}
+.curseur-demo .v{font-family:var(--mono);font-size:10px;color:var(--texte);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.faux-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;padding:16px;align-content:start}
+.faux-grille i{aspect-ratio:1;background:var(--fond-2);border:1px solid var(--bord);display:block}
+
+/* ————— 5 · l'écran guide ————— */
+.app-guide{min-width:1120px;height:660px;display:grid;grid-template-rows:44px 1fr 26px;background:var(--fond-0)}
+.guide-corps{display:grid;grid-template-columns:240px minmax(0,1fr);overflow:hidden}
+.guide-som{border-right:1px solid var(--bord);background:var(--fond-1);padding:10px 8px;overflow:auto}
+.guide-som .grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);padding:14px 7px 6px}
+.guide-som .grp:first-child{padding-top:4px}
+.guide-txt{overflow:auto;padding:44px 48px 64px}
+.guide-mesure{max-width:36em} /* 72 signes reels : ch = avance du zero, trop large ici */
+.guide-titre{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;letter-spacing:-.01em;margin-bottom:18px}
+.guide-txt p{font-size:15px;line-height:1.65;color:var(--texte-2);margin-bottom:15px}
+.guide-txt p b{color:var(--texte);font-weight:600}
+.guide-txt p em{color:var(--texte);font-style:italic}
+.guide-txt code{font-family:var(--mono);font-size:13px;color:var(--texte)}
+.guide-h{
+  font-size:12.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);
+  margin:48px 0 14px
+}
+.guide-trois{border-left:1px solid var(--bord);padding:2px 0 2px 16px;margin:22px 0 26px}
+.guide-trois .a{font-size:15px;line-height:1.6;color:var(--texte)}
+.guide-trois .b{font-size:15px;line-height:1.6;color:var(--texte-2);margin-top:8px}
+.guide-trois .b b{color:var(--texte);font-weight:600}
+.guide-trois .c{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:11px}
+.guide-vide{
+  font-family:var(--mono);font-size:10px;color:var(--texte-3);
+  border-top:1px solid var(--bord);margin-top:16px;padding-top:12px;line-height:1.7
+}
+</style>
+
+<section>
+  <div class="titre-sec"><span class="num">04</span><h2>L'infobulle</h2></div>
+  <p class="sous">
+    Le produit interdisait l'infobulle. Il l'interdit toujours — pour <em>la raison</em>, ce qui
+    refuse un geste, qui ne se survole jamais. Ce qui entre ici est son revers exact :
+    <b>l'explication</b>, dont l'absence n'a jamais bloqué personne. Le test est binaire, et il ne
+    se rediscute pas au cas par cas.
+  </p>
+
+  <div class="bloc">
+    <span class="etiq">Le test — son absence empêche-t-elle un geste ?</span>
+    <div class="test">
+      <div>
+        <div class="q">Oui</div>
+        <div class="r">La raison — <em>fente permanente, jamais un survol</em></div>
+        <button class="btn btn-off" style="pointer-events:none">Générer</button>
+        <p class="raison">aucune clé OpenRouter <a>Réglages ›</a></p>
+        <div class="verdict">
+          On est bloqué <b>maintenant</b>. Cacher ce qui bloque derrière un survol,<br>
+          c'est proposer puis refuser — ce que le produit s'interdit.
+        </div>
+      </div>
+      <div>
+        <div class="q">Non</div>
+        <div class="r">L'explication — <em>survol, jamais une fente</em></div>
+        <div style="margin-bottom:11px"><span class="champ-l lib-aide" style="display:inline;color:var(--texte)">variations</span></div>
+        <div class="bulle">
+          <div class="l1">Combien d'images partent d'un seul clic. Chacune est facturée.</div>
+          <div class="l2">Multiplie le coût annoncé sur le bouton. <b>Ne change ni le prompt ni le modèle</b> — ce sont N tirages de la même demande.</div>
+          <div class="l3"><span>défaut du projet · 3</span><a>Le guide ›</a></div>
+        </div>
+        <div class="verdict">
+          On génère très bien sans le savoir — on ignore seulement<br>
+          ce qu'on a gagné. Une bulle qui porte une raison est un <b>bug</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="fin">
+
+  <div class="bloc">
+    <span class="etiq">Les deux champs qui ont provoqué la règle</span>
+    <p class="note" style="margin-top:0;margin-bottom:20px">
+      Voisins dans le même menu de carte. <b>L'un ne fait rien à la génération, l'autre décide de
+      ce qui part en référence et de ce que ça coûte.</b> Rien à l'écran ne les distinguait — c'est
+      toute la raison d'être de ce motif. Les deux bulles sont ouvertes ensemble ici parce que
+      c'est un spécimen ; à l'écran il n'y en a jamais qu'une.
+    </p>
+    <div class="paire-champs">
+      <div class="champ-demo">
+        <div class="tete-champ"><span class="nom lib-aide">groupe</span></div>
+        <div class="faux-champ rempli">taverne</div>
+        <div class="bulle">
+          <div class="l1">Un nom libre pour ranger les cartes du tableau. Vide&nbsp;= hors groupe.</div>
+          <div class="l2"><b>Rien à la génération.</b> C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est <em>artwork officiel</em>&nbsp;+&nbsp;<em>famille</em>.</div>
+          <div class="l3"><span>toi · aucun défaut</span><a>Le guide ›</a></div>
+        </div>
+      </div>
+      <div class="champ-demo">
+        <div class="tete-champ"><span class="nom lib-aide">famille</span></div>
+        <div class="seg" style="margin-bottom:9px"><button>personnages</button><button class="on">objets</button><button>décors</button><button>interface</button><button>tous</button></div>
+        <div class="bulle">
+          <div class="l1">La catégorie d'un artwork officiel. « Tous » est la planche non figurative — matières, palette, trait.</div>
+          <div class="l2">À la génération, <b>seuls les artworks de la famille du sujet partent en référence</b>, plus ceux marqués « tous ». <b>Le nombre de références change le coût.</b></div>
+          <div class="l3"><span>toi, en promouvant · défaut tous</span><a>Le guide ›</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="fin">
+
+  <div class="bloc">
+    <span class="etiq">Trois lignes, toujours les mêmes trois</span>
+    <div class="anat">
+      <div class="bulle">
+        <div class="l1">La part de la tuile que le sujet doit occuper, une fois recadré.</div>
+        <div class="l2">Recadre le rendu, <b>jamais le brut</b>. Un sujet trop petit se perd dans la grille ; trop grand, il touche les bords et l'export rogne.</div>
+        <div class="l3"><span>barème de l'univers · 82 %</span><a>Le guide ›</a></div>
+      </div>
+      <div class="anat-notes">
+        <div>
+          <div class="t">Ce que c'est</div>
+          <div class="d">sans 12 px · --texte · une phrase, jamais deux</div>
+        </div>
+        <div>
+          <div class="t">Ce que ça change — <b style="color:var(--signal);font-weight:500">obligatoire</b></div>
+          <div class="d">sans 12 px · --texte-2 · « Rien à la génération. » si c'est le cas</div>
+        </div>
+        <div>
+          <div class="t">D'où ça sort</div>
+          <div class="d">mono 10 px · --texte-3 · l'origine du défaut est un fait sur le monde</div>
+        </div>
+        <div>
+          <div class="t">Le lien vers le guide</div>
+          <div class="d">--signal · la règle du § Le grisé : un lien quand il y a où aller</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">
+      <b>La deuxième ligne porte tout le poids.</b> C'est le gabarit qui produit la réponse, pas la
+      bonne volonté du rédacteur : sans ligne obligatoire, <code style="font-family:var(--mono);font-size:11px">groupe</code>
+      aurait reçu trois phrases sur le rangement, et la question de départ serait restée entière.
+    </p>
+  </div>
+
+  <hr class="fin">
+
+  <div class="bloc">
+    <span class="etiq">Au repos, et à l'ouverture — le panneau Détourage</span>
+    <p class="note" style="margin-top:0;margin-bottom:18px">
+      C'est ici que le risque se juge : <b>huit pointillés dans un panneau</b>, et rien d'autre
+      d'ajouté — ni rangée, ni hauteur, ni couleur, ni glyphe. La bulle s'ouvre <b>vers la
+      grille</b>, jamais vers le bord : c'est la seule surface assez large, et la seule chose que
+      personne ne lit au moment où il lit une explication.
+    </p>
+    <div class="ecran">
+      <div class="situ">
+        <div class="pan">
+          <div class="pan-tete"><span>Détourage</span><span class="plier">−</span></div>
+          <div class="pan-corps">
+            <div class="reg-bloc">
+              <span class="reg-l lib-aide">moteur</span>
+              <div class="seg"><button class="on">alpha</button><button>modèle</button></div>
+            </div>
+            <div class="reg-bloc">
+              <span class="reg-l cible lib-aide">tolérance</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:38%"></i></div><span class="v">24</span>
+              </div>
+              <span class="reg-l lib-aide">seuil alpha</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:52%"></i></div><span class="v">128</span>
+              </div>
+              <span class="reg-l lib-aide">tache minimale</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:16%"></i></div><span class="v">12 px</span>
+              </div>
+              <span class="reg-l lib-aide">durcissement</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:30%"></i></div><span class="v">2</span>
+              </div>
+            </div>
+            <div class="sep"></div>
+            <div class="reg-bloc">
+              <span class="reg-l lib-aide">occupation</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:78%"></i></div><span class="v">82 %</span>
+              </div>
+              <span class="reg-l lib-aide">ancrage</span>
+              <div class="seg" style="margin-bottom:14px"><button>haut</button><button class="on">centre</button><button>bas</button></div>
+              <span class="reg-l lib-aide">marge</span>
+              <div class="curseur-demo">
+                <div class="rail"><i style="left:12%"></i></div><span class="v">2 px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="faux-grille">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="bulle">
+          <div class="l1">Jusqu'où une couleur peut s'écarter du fond et compter quand même comme fond.</div>
+          <div class="l2">Monter mange le sujet par les bords ; descendre laisse un halo. <b>Chaque cran relance le détourage — 1,5 s.</b></div>
+          <div class="l3"><span>mesuré au navigateur · défaut 24</span><a>Le guide ›</a></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">
+      <b>Le survol révèle, le clic retient</b> — la grammaire du menu de carte, réemployée sans un
+      réglage de plus : 200 ms de repos pour paraître, 150 ms de grâce en partant,
+      <code style="font-family:var(--mono);font-size:11px">Échap</code> ou un second clic pour
+      lâcher l'épingle. Le fondu de 80 ms ne crée pas d'entrée dans la liste close du § Motion :
+      il en <b>rejoint</b> une.
+    </p>
+  </div>
+</section>
+
+<section style="border-bottom:0">
+  <div class="titre-sec"><span class="num">05</span><h2>L'écran Guide</h2></div>
+  <p class="sous">
+    La seule prose du produit, et le seul écran calme d'un outil dense. Il couvre l'Atelier comme
+    Univers et Découpe — <b>mais il ne porte pas de fente de refus</b>, parce qu'il ne demande rien
+    au serveur, ne dépense rien et ne peut pas échouer. On ne pose pas une fente vide pour la
+    symétrie. Sa troisième partie <b>est le corpus des infobulles</b>, rendu à la file : un seul
+    texte, deux rendus.
+  </p>
+
+  <div class="ecran">
+    <div class="app app-guide">
+      <div class="app-tete">
+        <span class="marque">Asset Kitchen</span>
+        <nav class="onglets">
+          <a href="#">Atelier</a><a href="#">Univers</a><a href="#">Catalogue</a>
+        </nav>
+        <div class="tete-d">
+          <span class="pastille-projet">Ruines d'Ashken <span class="ch">▾</span></span>
+          <nav class="onglets" style="margin-left:12px"><a href="#" class="on">Guide</a></nav>
+        </div>
+      </div>
+
+      <div class="guide-corps">
+        <div class="guide-som">
+          <div class="grp">Le geste</div>
+          <div class="arb on"><span class="ic">·</span>La boucle</div>
+          <div class="arb"><span class="ic">·</span>Écrire</div>
+          <div class="arb"><span class="ic">·</span>Générer</div>
+          <div class="arb"><span class="ic">·</span>Juger</div>
+          <div class="arb"><span class="ic">·</span>Garder</div>
+          <div class="grp">Les écrans</div>
+          <div class="arb"><span class="ic">·</span>Atelier</div>
+          <div class="arb"><span class="ic">·</span>Univers</div>
+          <div class="arb"><span class="ic">·</span>Découpe</div>
+          <div class="arb"><span class="ic">·</span>Bibliothèque</div>
+          <div class="grp">Les réglages</div>
+          <div class="arb"><span class="ic">·</span>Dans l'univers<span class="n">20</span></div>
+          <div class="arb"><span class="ic">·</span>Dans l'atelier<span class="n">4</span></div>
+          <div class="arb"><span class="ic">·</span>Dans la retouche<span class="n">18</span></div>
+          <div class="arb"><span class="ic">·</span>Dans la découpe<span class="n">4</span></div>
+          <div class="sep"></div>
+          <div class="arb"><span class="ic">·</span>Ce qui manque<span class="n">1</span></div>
+        </div>
+
+        <div class="guide-txt">
+          <div class="guide-mesure">
+            <h3 class="guide-titre">La boucle</h3>
+            <p>
+              Tu écris ce que tu veux dans le champ du haut, tu génères, tu regardes, tu gardes ce
+              qui est bon. <b>C'est toute l'application.</b> Le reste — l'univers, la découpe, le
+              catalogue — existe pour que cette boucle-là demande le moins de décisions possible.
+            </p>
+
+            <div class="guide-h">Écrire</div>
+            <p>
+              Le champ de prompt ne demande que <em>le sujet</em>. Ni le style, ni la palette, ni le
+              format : ils sont déjà posés dans l'univers du projet, et ils partent tout seuls à
+              chaque génération. Écrire <code>un tonneau</code> suffit. Écrire
+              <code>un tonneau pixel art 32×32 palette sombre</code> fait le travail une seconde
+              fois, et moins bien que l'univers ne le fait.
+            </p>
+            <p>
+              Le bloc <em>Ce qui part</em>, juste en dessous, est en lecture seule : il répond
+              d'avance à « qu'est-ce qui accompagne ma demande ? » — les références, la famille, la
+              palette, la grille imposée. Le compte est calculé par le serveur, jamais par l'écran.
+            </p>
+
+            <div class="guide-h">Générer</div>
+            <p>
+              N tuiles paraissent aussitôt <b>à leur taille définitive</b>, avec leur jauge et leur
+              compteur. La grille ne se recompose pas entre le départ et l'arrivée : ton œil reste
+              où il était, et un échec atterrit exactement là où le succès serait arrivé.
+            </p>
+            <p>
+              Le coût est écrit sur le bouton <b>avant</b> le clic. Rien n'est jamais relancé
+              automatiquement — ni une génération interrompue, ni un appel raté, ni une carte qui
+              n'est pas arrivée. Relancer est toujours ton geste.
+            </p>
+
+            <div class="guide-h">Les réglages — groupe</div>
+            <div class="guide-trois">
+              <div class="a">Un nom libre pour ranger les cartes du tableau d'inspiration. Vide&nbsp;= hors groupe.</div>
+              <div class="b"><b>Rien à la génération.</b> C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est <em>artwork officiel</em> + <em>famille</em>.</div>
+              <div class="c">toi · aucun défaut</div>
+            </div>
+            <p>
+              En long : un tableau d'inspiration monte vite à cent cartes, et le groupe est ce qui
+              te permet d'en retrouver douze. Il ne voyage nulle part — ni dans un prompt, ni dans
+              une référence, ni dans un export. Tu peux le remplir, le changer, le vider sans
+              qu'aucune image déjà produite ne bouge, et sans qu'aucune génération à venir ne
+              change de résultat ni de prix.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-pied">
+        <span class="vert"></span><b>en ligne</b>
+        <span class="sp">·</span><span>catalogue du 27/08 09:14</span>
+        <span class="sp">·</span><span>5 modèles</span>
+        <div class="d"><span>clé …a1b2</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grille2" style="margin-top:34px">
+    <div>
+      <span class="etiq">La seule largeur maximale du produit</span>
+      <p class="note" style="margin-top:0">
+        <b>72 caractères</b>, calés à gauche, et la place qui reste à droite reste vide.
+        « Max content width : aucune » a été écrit pour la grille — la chose qui <em>gagne</em> à
+        s'étaler. La prose est la seule matière du produit qui <b>perde</b> à recevoir de la
+        largeur : à 1 600 px, une ligne de français fait 190 signes et le retour à la ligne devient
+        une recherche. Remplir la marge de notes et de figures serait recommencer la maquette
+        écartée sur le seul écran qui pouvait s'en passer.
+      </p>
+    </div>
+    <div>
+      <span class="etiq">Aucun quatrième emploi du serif</span>
+      <p class="note" style="margin-top:0">
+        Le titre de l'écran est en Instrument Serif — c'est un <em>titre d'écran</em>, le deuxième
+        emploi, inchangé. Les titres de section sont en <b>sans 12,5 px majuscules</b>, la forme de
+        l'en-tête de panneau, séparés par 48 px d'espace. Un sous-titrage serif de 24 px sur la
+        seule page de texte long est très exactement le « bascule en blog » que la règle 1 du
+        § Typography annonce en toutes lettres.
+      </p>
+      <div class="guide-vide">
+        Ce qui manque · 1 réglage sans entrée<br>
+        <span style="color:var(--texte-2)">les réglages qu'un modèle déclare en propre — le catalogue les nomme, et il bouge</span><br>
+        — un réglage sans entrée n'a pas de pointillé, et rien ne casse.
+      </div>
+    </div>
+  </div>
+</section>
 
   <footer class="pied-page">
     Preview jetable — <code>docs/design-preview.html</code>. Le système fait foi dans

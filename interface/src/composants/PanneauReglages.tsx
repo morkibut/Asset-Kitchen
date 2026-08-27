@@ -97,6 +97,7 @@ export function PanneauReglages({
         <Bloc
           cle="reglages.modele"
           titre="Modèle"
+          aide="reglages.modele"
           etat={choisi?.nom ?? null}
           mesure={`${modeles.length} au catalogue`}
         >
@@ -128,7 +129,7 @@ export function PanneauReglages({
 
         {/* ── Le cadrage ────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-1.5">
-          <Libelle>Proportions</Libelle>
+          <Libelle aide="reglages.proportions">Proportions</Libelle>
           <Segments
             valeurs={["1:1", "3:2", "2:3", "16:9"] as const}
             valeur={proportions}
@@ -144,7 +145,7 @@ export function PanneauReglages({
         </section>
 
         <section className="flex flex-col gap-1.5">
-          <Libelle>Variations</Libelle>
+          <Libelle aide="reglages.variations">Variations</Libelle>
           <Segments
             valeurs={[1, 2, 4] as const}
             valeur={variations}
@@ -169,7 +170,7 @@ export function PanneauReglages({
         {univers.bareme.length > 0 && (
           <section className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between">
-              <Libelle>Sujet</Libelle>
+              <Libelle aide="reglages.sujet">Sujet</Libelle>
               {echelleLue && (
                 <span className="mesure text-[9.5px] text-texte-3">
                   {echelleLue.occupation} % de la case
