@@ -380,10 +380,15 @@ n'oblige jamais à quitter l'endroit où l'on crée — c'est ce qui fait qu'on 
 | **Univers** | tableau d'inspiration, bible, palette, réglages par défaut | au début d'un projet, puis ponctuel |
 | **Atelier** | arbre · réglages · prompt · grille — le travail quotidien | permanent |
 | **Fiche asset** | visionneuse, recette, filiation, actions | constant |
+| **Découpe** | une planche multi-sprites, les rectangles qui en sortiront, leur correction à la main | ponctuel, sur une planche |
 | **Réglages** | clé OpenRouter, garde-fous MCP, dossiers | rare |
 
 - **La fiche asset est un panneau latéral**, pas une page. Une page ferait perdre la grille et
   le prompt ; fermer le panneau remet exactement où l'on était.
+- **La découpe, elle, est un écran**, ajouté en T5, et pour la raison inverse : on y dessine
+  des rectangles sur une image de mille pixels, et la fiche en fait 380. Il s'ouvre **depuis**
+  la fiche — on découpe une image, jamais une sélection — et il couvre l'Atelier comme
+  l'écran Univers, avec la même contrepartie : il porte sa propre fente de refus.
 - **Écran large uniquement.** Le produit ne vise ni mobile ni tablette : les trois panneaux
   et la grille cohabitent d'emblée. Aucun point de rupture, aucun menu escamoté, aucune mise
   en page de repli à écrire. Les panneaux restent rétractables **par choix** — voir la grille

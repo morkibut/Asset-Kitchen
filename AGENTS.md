@@ -15,7 +15,7 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1, T2, T3 et T4 sont finies.** T1 : le squelette, la clé, le catalogue relu au
+**T1, T2, T3, T4 et T5 sont finies.** T1 : le squelette, la clé, le catalogue relu au
 démarrage, un appel qui rend une image téléchargeable ; l'écran Atelier ; le flux
 d'événements qui remplace le sondage, la jauge déterminée, la reprise vue du navigateur et
 le repli hors ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs
@@ -26,18 +26,28 @@ journal des appels ratés, la réinjection dans ses quatre rôles, et l'index re
 T4 : le tableau d'inspiration et l'univers — coller une image, une adresse ou un texte,
 promouvoir en artwork officiel par famille, la palette extraite par calcul, la bible en
 champs nommés, le barème d'échelles, la taille de pixel imposée, la quantification allumée,
-et la palette rétroactive. **Les soixante et un critères d'acceptation de T1 à T4 sont
-cochés dans `docs/PLAN.md`, et 98 tests de serveur plus 14 d'écran les tiennent. La
-prochaine tranche est T5, le slicer.**
+et la palette rétroactive. T5 : le slicer — les zones opaques connexes, la grille fixe, les
+rectangles dessinés à la main, la filiation de découpe ; **plus les deux dettes reportées**,
+le zoom de la grille et la première exécution du second moteur de détourage. **Les
+soixante-six critères d'acceptation de T1 à T5 sont cochés dans `docs/PLAN.md`, et 108 tests
+de serveur plus 17 d'écran les tiennent. La prochaine tranche est T6, l'export.**
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
 finissent par diverger. T4 : deux, dont un compte de références qui ne se remettait pas à
-jour quand on promouvait un artwork. **Aucun test de serveur ne pouvait les voir**, et les
-tableaux de `docs/PLAN.md` § T3 et § T4 disent pour chacun ce qui l'avait rendu invisible.
-C'est désormais une règle du dépôt : **une tranche n'est finie que lorsqu'on s'en est
-servi.**
+jour quand on promouvait un artwork. T5 : trois, tous de mise en page, dont deux de la même
+famille — **une règle déléguée au navigateur dont personne n'a mesuré le résultat**.
+**Aucun test de serveur ne pouvait les voir**, et les tableaux de `docs/PLAN.md` § T3, § T4
+et § T5 disent pour chacun ce qui l'avait rendu invisible. C'est désormais une règle du
+dépôt : **une tranche n'est finie que lorsqu'on s'en est servi.**
+
+**Une planche se découpe, et chaque morceau est un asset entier.** Le serveur *propose* des
+rectangles — zones opaques connexes, ou grille fixe —, l'auteur corrige, et ce qui part à la
+découpe est **sa** liste. Chaque découpe possède ses propres octets bruts, hérite de la
+recette de sa planche et pointe vers elle par sa filiation. Elle possède ses octets pour une
+raison précise, et ça se paie en disque : **supprimer la planche doit laisser ses découpes
+en place**, or la suppression définitive efface `<rang>-*`, brut compris.
 
 **L'écran tient ses quatre colonnes.** `docs/DESIGN.md` § Layout donne
 `240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. Les trois
@@ -82,16 +92,24 @@ gris clair et fioles translucides compris. `rembg` reste un **second** moteur, f
 (`uv pip install -e ".[detourage]"`), grisé avec sa raison quand il n'est pas là. Le geste
 courant ne charge rien, ne télécharge rien, et marche hors ligne.
 
-**Ce chemin-là n'a toujours jamais été exécuté, et c'est écrit ici pour qu'on ne l'oublie
-pas.** `rembg` n'est pas installé sur cette machine : le grisé est vérifié, l'appel au
-moteur ne l'est pas, et le test qui le concerne se saute en son absence. Il devait se
-vérifier en T4 « sur les images du tableau d'inspiration » — **ça ne s'est pas fait**, et
-aucun des dix-neuf critères de T4 ne le demandait. Deux choses le retiennent, et elles se
-disent : installer 180 Mo d'ONNX sur cette machine, et le fait que `tests/test_t2.py`
-vérifie qu'aucune bibliothèque d'inférence n'entre dans `sys.modules` pendant une retouche
-— `onnxruntime` y est nommé. **L'extraction de palette, elle, n'en a pas eu besoin** :
-elle emprunte le remplissage depuis le bord, comme le geste courant. Reporté à T5, ou au
-jour où une image trouvée résistera vraiment au détourage par défaut.
+**Ce chemin-là a été exécuté le 27 août 2026, et il a retourné une décision.**
+`essais/essai_detourage_modele.py` compare les deux moteurs sur six vraies images plus un
+cas composé. Sur ce que le produit fabrique — fond plat —, les deux **s'accordent à 96,3 %**
+en médiane : le second n'apporte rien, et c'est ce qui justifie qu'il reste facultatif. Sur
+un fond chargé, le bord garde **100 %** de l'image — il échoue entièrement — quand le modèle
+en isole 19,8 % : c'est sa raison d'être, et elle se mesure. Il coûte 482 ms contre 147.
+**Le modèle est nommé, jamais laissé au défaut de la bibliothèque** : le défaut de `rembg`
+2.0.81 est `bria-rmbg`, un gigaoctet qui met 15,8 s par image de 1024 px sur processeur,
+là où `u2net` met 0,47 s pour deux points d'écart. Le « ~180 Mo » écrit ici depuis T2 était
+la taille d'`u2net`, et le défaut avait changé sous cette note.
+
+**Deux choses ont rendu l'exécution possible, et elles se disent.** `raison_moteur` cherche
+désormais le paquet avec `find_spec` au lieu de l'importer : demander « faut-il griser ce
+bouton ? » ne charge plus `onnxruntime`, et `tests/test_t2.py` — qui vérifie qu'aucune
+bibliothèque d'inférence n'entre dans `sys.modules` pendant une retouche — tient sur une
+machine où le second moteur est installé. Et le test qui le concerne a désormais un
+symétrique : l'un vaut quand le moteur manque, l'autre quand il est là, et il y en a
+toujours exactement un des deux qui travaille.
 
 **L'interface ne redemande plus rien, et elle se branche une seule fois.** Un abonnement
 par onglet, pour toute sa vie : ni le filtre, ni le projet ouvert, ni les proportions, ni
@@ -112,6 +130,7 @@ a changé sous elle**.
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 uv pip install -e ".[detourage]"   facultatif — le second moteur de détourage, ~180 Mo
+                                   (le modèle `u2net` se télécharge au premier appel)
 cd interface && npm install && npm run build
 
 py -m atelier                        lance le serveur et ouvre le navigateur
@@ -197,6 +216,8 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/domaine/carte.py` | la deuxième famille d'images du produit. Elle ne s'exporte jamais, ne compte pas dans la bibliothèque, n'a ni recette ni rendu. Elle appartient à son projet, et part avec lui |
 | `atelier/domaine/projet.py` (§ Univers) | la bible en cinq champs nommés, le barème d'échelles — une nature de sujet porte **sa famille et son occupation à la fois** —, la cible de pixel, les modèles par famille, et `recette_de()`, **le seul endroit qui dise ce qu'un projet impose** |
 | `atelier/image/palette.py` | d'où vient la palette d'un univers. CPU, pure, aucune entrée-sortie. Détoure d'abord — sans quoi le fond plat écrit la palette à lui seul |
+| `atelier/image/decoupe.py` | **où** couper une planche. CPU, pure : elle reçoit un alpha ou des dimensions, elle rend des rectangles. Ce qu'on en fait appartient au service |
+| `atelier/services/decoupe.py` | découper. **Deux gestes séparés exprès** — `proposer` ne crée rien, `decouper` coupe ce qu'on lui donne. C'est cette séparation, et rien d'autre, qui tient « sans jamais bloquer ». Aucun `fournisseur` : une planche déjà là se découpe réseau coupé |
 | `atelier/fournisseur/toile.py` | aller chercher une image à une adresse collée. Le second sortant du dépôt, et il traduit toute panne de transport en une phrase du produit |
 | `atelier/api/univers.py` | les routes de T4 — le tableau et l'univers. Un troisième routeur parce qu'il répond à une troisième question : ce qui contraint une image **avant** qu'elle existe |
 | `atelier/domaine/projet.py` | deux niveaux de rangement, et pas un de plus. `repere()` fait du nom un dossier lisible — `projets/bac-a-sable/` — pour que `donnees/` s'ouvre aussi à la main |
@@ -208,16 +229,19 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas. Cinq des seize critères de T3 n'existent que là |
 | `interface/src/composants/Arbre.tsx` | la colonne de 240 px : projets, collections, total, et le journal des ratés sous l'arbre |
 | `interface/src/composants/BarreOutils.tsx` | les 38 px au-dessus de la grille — chercher, filtrer, agir sur une sélection, et la fente de l'annulation |
+| `interface/src/composants/Decoupe.tsx` | l'écran Découpe — `1fr · 380px`, la planche à gauche, ce qui sortira à droite. Le sujet est l'image, donc c'est elle qui prend la largeur. Il porte sa propre fente de refus, comme l'écran Univers. **Le cadre est mis à l'échelle par calcul** : `aspect-ratio` cède devant `max-height`, et un cadre qui ment décale les rectangles de l'image |
 | `interface/src/composants/Univers.tsx` | l'écran Univers — `380px · 1fr`, l'univers à gauche, le tableau à droite. Il couvre l'atelier, donc **il porte sa propre fente de refus** : une raison envoyée derrière lui serait invisible au moment où elle compte |
 | `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note |
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
+| `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
+| `essais/essai_detourage_modele.py` | les deux moteurs de détourage, l'un contre l'autre. Gratuit. Sortie : `essais/mesures_detourage.json` et `essais/planches/detourage_moteurs.png`. Le cas « fond chargé » y est **composé**, et le banc le dit : aucune des 188 images du dépôt n'a de fond qui résiste au remplissage depuis le bord |
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
 | `essais/essai_univers_chaine.py` | la chaîne de T4 : bible repliée, artworks choisis par famille, asset né habillé, barème mesuré. **Payant**, un seul appel — le barème se vérifie en appliquant six échelles à la même image reçue. Travaille dans son propre `donnees/`, et ne range dans celui de l'atelier que sur `--ranger` |
-| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
+| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Les découpes de T5 y tiennent les rangs 100 et suivants, dans le dossier de la génération de leur planche. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
@@ -449,6 +473,41 @@ deux vivent côte à côte.
   identify image file <_io.BytesIO object at 0x…> » — de l'anglais qui nomme un tampon
   mémoire. Ce qui compte, et que le PRD demande, c'est **quel fichier** pose problème parmi
   les douze qu'on vient de déposer. Même règle que pour `httpx`.
+- **`aspect-ratio` cède devant `max-height`, et le cadre ment.** Un cadre en
+  `width: 100%` + `aspect-ratio: 1/1` + `max-h-full` dans une zone de 1420 × 906 ressort en
+  **1388 × 874** : le navigateur prend la largeur disponible, en déduit la hauteur, rabote
+  la hauteur au maximum — et **ne redéduit pas la largeur**. L'image, elle, reste centrée
+  par `object-contain`, donc tout ce qui est posé en pourcentage du cadre se décale de
+  l'image qu'il désigne. Une mise à l'échelle qui doit être exacte se calcule : un seul
+  facteur, `min(place_l / image_l, place_h / image_h)`, et le cadre **est** l'image.
+- **`minmax(cran, 1fr)` accepte une colonne unique et l'étire.** Le zoom 4× de la grille
+  rendait une tuile de 1028 px sur une colonne de 1060 — huit fois la taille de repos pour
+  un contrôle qui en annonce quatre. Un cran de zoom n'est donc disponible que si **deux**
+  tuiles y tiennent côte à côte, gouttière comprise : une grille d'une colonne n'est plus
+  une planche contact, c'est une visionneuse.
+- **Un `ResizeObserver` ne livre rien à un onglet qui ne compose pas ses images.** Ses
+  rappels passent par la boucle de rendu ; sur un onglet en arrière-plan, le grisé du zoom
+  n'est jamais apparu — la largeur mesurée restait à zéro pour toute la session. Une
+  largeur se lit à la demande (`getBoundingClientRect`), au montage, au redimensionnement
+  de la fenêtre, et à la fin de la transition de 160 ms des colonnes. Trois déclencheurs,
+  une seule mesure.
+- **Le défaut d'une bibliothèque est une cible mouvante, et il se nomme.** `rembg.new_session()`
+  sans argument charge `bria-rmbg` depuis la version 2.0.81 : un gigaoctet, et **15,8 s**
+  par image de 1024 px sur processeur. `u2net`, nommé, met **0,47 s** pour une silhouette
+  équivalente à deux points près. Le dépôt annonçait « ~180 Mo » — la taille d'`u2net` —
+  et le défaut avait changé sous cette note sans que rien ne le dise.
+- **Demander si un paquet est là ne doit pas le charger.** `import rembg` tire
+  `onnxruntime` dans le processus au premier `GET /api/status`, c'est-à-dire à l'ouverture
+  de l'atelier, pour la seule question « faut-il griser ce bouton ? ». Or « le
+  post-traitement ne touche jamais le GPU » se **prouve** en regardant `sys.modules` :
+  installer le second moteur aurait fait tomber ce test sans qu'aucun détourage par modèle
+  ait eu lieu. `importlib.util.find_spec` répond sans rien charger.
+- **Un glob de suppression mord sur ce qui commence pareil — sauf avec son séparateur.**
+  Les découpes de T5 vivent dans le dossier de la génération de leur planche, aux rangs 100
+  et suivants ; effacer la planche fait `glob("0-*")`, qui ne touche pas `100-asset.json`
+  parce que le motif exige le tiret. C'est ce qui rend le décalage de rang sûr, et c'est
+  aussi ce qu'il ne faut pas défaire : nommer une découpe `0-1-asset.json` aurait fait
+  disparaître les huit avec leur planche.
 - **Zéro n'est pas une dimension mesurée, c'est l'absence de mesure.** Une carte d'adresse
   qui n'avait pas abouti annonçait `0×0`. Le produit dit partout que les dimensions mesurées
   font foi : une mesure ne s'affiche que si elle a été prise.

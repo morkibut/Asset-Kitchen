@@ -26,6 +26,7 @@ c'est le liseré clair autour du sprite.
 
 from __future__ import annotations
 
+import importlib.util
 import io
 from dataclasses import dataclass
 
@@ -50,6 +51,7 @@ __all__ = [
     "Rendu",
     "appliquer",
     "boite_opaque",
+    "composantes",
     "detourer",
     "detourer_bord",
     "durcir",
@@ -81,10 +83,20 @@ class Rendu:
 # ── Le second moteur, et son absence ─────────────────────────────────────────
 #
 # Importé **paresseusement, une seule fois**. `rembg` charge un modèle ONNX de
-# près de 180 Mo au premier appel et le télécharge s'il n'est pas déjà en cache :
+# 176 Mo au premier appel et le télécharge s'il n'est pas déjà en cache :
 # l'importer au démarrage ferait payer ça à l'ouverture de l'atelier, et
 # échouerait hors ligne — or « le démarrage n'affiche aucune erreur » est un
 # critère de T1 qu'aucune tranche ne renégocie.
+
+# **Le modèle est nommé, jamais laissé au défaut de la bibliothèque.** Mesuré le
+# 27 août 2026, à la première exécution réelle de ce chemin
+# (`essais/essai_detourage_modele.py`) : le défaut de `rembg` 2.0.81 est
+# `bria-rmbg`, un modèle d'un gigaoctet qui met **15,8 s** par image de 1024 px
+# sur processeur. `u2net` met **0,47 s** — trente-quatre fois moins — pour une
+# silhouette équivalente à deux points de pourcentage près. Le défaut d'une
+# bibliothèque est une cible mouvante : celui-ci a changé sous une note du dépôt
+# qui annonçait « ~180 Mo », et c'est la taille de `u2net`. On le nomme.
+MODELE_ONNX = "u2net"
 
 _session_modele: object | None = None
 
@@ -99,14 +111,24 @@ def raison_moteur(moteur: str) -> str | None:
     « Ce qui est indisponible est grisé avec sa raison, jamais proposé puis
     refusé » (`docs/PLAN.md` § Les invariants, étendu par T2). Le moteur absent
     est précisément l'une des nouvelles raisons que cette tranche apporte.
+
+    **On cherche le paquet, on ne l'importe pas.** `import rembg` tire
+    `onnxruntime` dans le processus au premier `GET /api/status` — donc à
+    l'ouverture de l'atelier, pour la seule question « faut-il griser ce
+    bouton ? ». Or « le post-traitement ne touche jamais le GPU » se **prouve**
+    en regardant `sys.modules` (`tests/test_t2.py`) : une machine où le second
+    moteur est installé aurait fait tomber ce test sans qu'aucun détourage par
+    modèle ait eu lieu. `find_spec` répond à la même question sans rien charger,
+    et l'inférence n'entre dans le processus qu'au moment où on la demande.
     """
     if moteur == BORD:
         return None
     if moteur != MODELE:
         return f"moteur inconnu — « {moteur} »"
     try:
-        import rembg  # noqa: F401
-    except Exception:  # noqa: BLE001 — l'absence n'est pas une panne
+        if importlib.util.find_spec("rembg") is None:
+            return "le moteur par modèle n'est pas installé"
+    except (ImportError, ValueError):  # noqa: BLE001 — l'absence n'est pas une panne
         return "le moteur par modèle n'est pas installé"
     return None
 
@@ -118,7 +140,7 @@ def _detourer_modele(rgb: np.ndarray) -> np.ndarray:
     import rembg  # type: ignore[import-not-found]
 
     if _session_modele is None:
-        _session_modele = rembg.new_session()
+        _session_modele = rembg.new_session(MODELE_ONNX)
     image = Image.fromarray(rgb, mode="RGB")
     sortie = rembg.remove(image, session=_session_modele)
     return np.asarray(sortie.convert("RGBA"))[:, :, 3]
@@ -245,8 +267,14 @@ def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
 # ── Les composantes connexes ─────────────────────────────────────────────────
 
 
-def _composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
-    """Les taches opaques, chacune avec son aire. Même remplissage par plages."""
+def composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
+    """Les taches opaques, chacune avec son aire. Même remplissage par plages.
+
+    Publique depuis T5 : le slicer cherche exactement la même chose que le
+    nettoyage des bords — des taches connexes dans un alpha —, et la seule
+    différence est ce qu'on en fait. Deux implémentations du remplissage par
+    plages finiraient par se répondre différemment sur la même image.
+    """
     hauteur, largeur = masque.shape
     vu = np.zeros_like(masque)
     taches: list[tuple[np.ndarray, int]] = []
@@ -299,7 +327,7 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
         return rgba
     sortie = rgba.copy()
     canal = sortie[:, :, 3]  # une vue, pas une copie : écrire dedans écrit dans `sortie`
-    for tache, aire in _composantes(alpha > 0):
+    for tache, aire in composantes(alpha > 0):
         if aire < bords.aire_min:
             canal[tache] = 0
     return sortie

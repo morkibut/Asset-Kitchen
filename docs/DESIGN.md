@@ -202,7 +202,9 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 - **Grid de l'Atelier** : `240px · 300px · minmax(0,1fr) · 380px` — arbre · réglages · prompt + grille · fiche. Largeurs absolues, sans condition.
 - **La colonne de 240 px porte trois choses, et c'est le même sujet vu de trois hauteurs** : où ça se range (projets, collections), ce que ça coûte (le total du projet ouvert), et **ce qui a raté** — le journal, sous l'arbre. Ajouté le 27 août 2026 avec la bibliothèque : un appel raté a coûté de l'argent sans produire d'image, donc il n'a sa place ni dans la grille, qui ne montre que ce qu'on peut réutiliser, ni nulle part, puisqu'il faut pouvoir expliquer une facture. Le journal ne paraît que s'il y a eu un raté.
 - **Max content width** : **aucune**. L'écran large est la ressource du produit, on la dépense. La grille d'assets remplit ce qui reste.
-- **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — un niveau indisponible à la largeur courante est **grisé, pas caché**.
+- **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — le cran donne la **largeur minimale d'une tuile** : 128, 256, 512. Un niveau indisponible à la largeur courante est **grisé, pas caché**.
+- **Un cran est disponible quand deux tuiles y tiennent côte à côte**, gouttière et padding compris — pas une. Ajouté le 27 août 2026 en ouvrant l'atelier : `minmax(512px, 1fr)` accepte une colonne unique et l'**étire** jusqu'au bord, et 4× rendait une tuile de 1028 px sur une colonne de 1060. Huit fois la taille de repos pour un contrôle qui en annonce quatre. Une grille d'une colonne n'est plus une planche contact, c'est une visionneuse. **1× reste toujours disponible** : c'est l'état de repos, et quelque chose doit se rendre.
+- **Le cran choisi reste choisi, même devenu indisponible** — c'est la règle du modèle du catalogue (US-9), et il n'y a aucune raison d'en avoir deux. Mais une grille doit rendre quelque chose : elle rend au plus grand cran qui tienne, et la barre d'outils le **dit**, dans la fente et la forme des autres — `— 4× ne tient pas ici, rendu en 2×`. Le seul endroit du produit où l'on rend autre chose que ce qui est choisi, et il ne le fait jamais en silence.
 - **Border radius** : `sm 2px · md 3px · lg 4px · full 9999px` (réservé aux pastilles de statut et aux points de la barre d'état). **La tuile d'asset est à 0.**
 
 ### Le rayon 0 sur la tuile
@@ -479,6 +481,37 @@ grisé du produit.
 
 ---
 
+### L'écran Découpe, et le cadre qui est l'image
+
+**`1fr · 380px`, et l'image passe à gauche.** L'écran Univers met ses réglages à gauche
+parce que l'univers *est* son sujet ; ici le sujet est la planche, et c'est elle qui prend la
+largeur. 380 reste la colonne de réglages du produit — la troisième largeur qu'on s'interdit
+d'inventer.
+
+**Un écran, pas un panneau, et c'est le geste qui le dit.** On dessine des rectangles sur une
+image de mille pixels ; la fiche en fait 380. Il couvre donc l'atelier, comme l'écran Univers,
+et **porte sa propre fente de refus** pour la même raison : une raison envoyée à la barre
+d'état de l'atelier serait rendue derrière lui, invisible au moment précis où elle compte.
+
+**Il s'ouvre depuis la fiche, jamais depuis la barre d'outils.** On découpe **une** image,
+pas une sélection — et le geste vit donc là où vivent les gestes d'une image seule. Dans la
+rangée du jugement, en mono 10 px, entre le coût et Supprimer : rien ne permet de savoir
+d'avance qu'une image est une planche, donc rien ne doit paraître ou disparaître selon ce
+qu'on croit deviner.
+
+**Le cadre de la planche est mis à l'échelle par calcul, pas par le CSS.** Un seul facteur —
+celui qui fait entrer la planche dans la place —, et le cadre **est** l'image, au pixel près.
+Décidé le 27 août 2026 en mesurant : `aspect-ratio` cède devant `max-height`, le navigateur
+rabote la hauteur sans redéduire la largeur, et un cadre de 1388 × 874 pour une image carrée
+décale de vingt pixels tout ce qui est posé dessus en pourcentage.
+
+**Les rectangles reprennent la grammaire de la tuile, sans y ajouter une couleur.** Anneau
+`--lumiere` pour « choisi », bord `--signal` sinon, et le numéro en mono 8,5 px sur le même
+fond `rgba(11,13,16,.82)` que la pastille d'une tuile. Ce numéro est un fait mesuré — c'est
+l'ordre de lecture, et c'est celui que la découpe garde.
+
+---
+
 ## Ce que le design n'affiche pas, et pourquoi
 
 L'Atelier ne montre que ce qu'on touche **à chaque** génération : le sujet, le modèle, le nombre
@@ -528,3 +561,7 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | La **carte a le rayon 2**, la tuile garde le rayon 0 | Seule différence de forme entre les deux grilles, et elle suffit : une tuile est un produit du travail et se lit comme une planche contact ; une carte est de la matière rassemblée, donc du châssis. « Une seule grille d'assets dans tout le produit » reste vrai — celle-ci n'en est pas une. Écarté : une bordure de couleur, qui aurait ajouté un ton à un système qui n'en veut pas. |
 | 27/08/2026 | Le **sujet** est le seul contrôle que T4 ajoute à l'Atelier | Une nature de sujet porte sa famille *et* son occupation : la choisir décide des artworks envoyés, du modèle par défaut et de l'échelle, d'un seul geste. Deux taxonomies — l'une pour l'échelle, l'autre pour la famille — se paieraient deux fois par génération, et le PRD écarte explicitement la sélection manuelle des artworks. Le reste de l'univers n'est **jamais** montré ici : le bloc « Ce qui part » est en lecture seule, comme ce document le demandait déjà. |
 | 27/08/2026 | Le bloc « Ce qui part » affiche un compte **calculé par le serveur** | Il l'affichait déjà pour le grisé ; T4 lui donne la même origine pour le nombre. L'écran tient les réinjections posées à la main, pas les artworks que l'application ajoute, ni le dédoublonnage entre les deux — deux comptes calculés à deux endroits se contredisent, et celui qui compte est celui qui part. **Vu en séance** : promouvoir un artwork ne rafraîchissait rien, parce que « la demande en cours » avait gagné une composante que l'écran ne pilote pas. |
+| 27/08/2026 | **L'écran Découpe est un écran**, `1fr · 380px`, et l'image passe à gauche | On dessine des rectangles sur une planche de mille pixels : la fiche en fait 380. Même raisonnement que l'écran Univers le même jour, et même contrepartie — il couvre l'Atelier, donc il porte sa propre fente de refus. La largeur passe à l'image parce que c'est **elle** le sujet ; 380 reste la colonne de réglages du produit. Écarté : une rubrique de la fiche, qui aurait demandé de viser un rectangle au tiers de sa taille. |
+| 27/08/2026 | Découper vit dans la **rangée du jugement**, en mono 10 px | Rien ne permet de savoir d'avance qu'une image est une planche : un geste qui paraîtrait ou disparaîtrait selon ce qu'on croit deviner serait faux la moitié du temps. Il coûte une ligne, la même densité que le § La tuile impose à la grille. |
+| 27/08/2026 | Un cran de zoom tient quand **deux** tuiles y tiennent, pas une | `minmax(cran, 1fr)` accepte une colonne unique et l'étire jusqu'au bord : 4× rendait 1028 px sur une colonne de 1060, huit fois le repos pour un contrôle qui annonce quatre. Vu en ouvrant l'atelier, jamais au banc. Coût : sur un écran étroit, 4× est grisé alors qu'« une » tuile y tiendrait — c'est le prix pour que le cran veuille dire ce qu'il dit. |
+| 27/08/2026 | Le **cadre de la planche est calculé**, la mise à l'échelle n'est pas déléguée au CSS | `aspect-ratio` cède devant `max-height` : le navigateur rabote la hauteur sans redéduire la largeur, et un cadre de 1388 × 874 pour une image carrée décale de vingt pixels tout ce qui est posé dessus en pourcentage. Un seul facteur, et le cadre **est** l'image. Coût : une largeur mesurée de plus à tenir à jour. |

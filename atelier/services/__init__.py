@@ -29,6 +29,7 @@ from atelier.services.bibliotheque import (
     ServiceBibliotheque,
 )
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
+from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.generation import ServiceGenerations
 from atelier.services.univers import (
@@ -46,6 +47,7 @@ __all__ = [
     "CarteInconnue",
     "CarteRefusee",
     "CollectionInconnue",
+    "DecoupeRefusee",
     "Diffusion",
     "EtatCatalogue",
     "Evenement",
@@ -55,6 +57,7 @@ __all__ = [
     "ServiceAssets",
     "ServiceBibliotheque",
     "ServiceCatalogue",
+    "ServiceDecoupe",
     "ServiceGenerations",
     "ServiceUnivers",
     "UniversRefuse",
@@ -106,6 +109,13 @@ class Atelier:
         # auprès d'un service.
         self.univers = ServiceUnivers(
             self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
+        )
+        # **Après la bibliothèque et les assets, avant rien du tout.** Le
+        # slicer ne fabrique que ce que ces deux-là savent déjà écrire et
+        # ranger : il ne connaît ni le catalogue, ni l'univers, ni le
+        # fournisseur. C'est ce qui fait qu'une planche se découpe réseau coupé.
+        self.decoupe = ServiceDecoupe(
+            self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
         self.generations = ServiceGenerations(
             self.base,

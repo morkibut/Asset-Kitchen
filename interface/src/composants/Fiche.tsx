@@ -42,6 +42,7 @@ export function Fiche({
   onReinjecter,
   onReglages,
   onSupprimer,
+  onDecouper,
   onOuvrir,
 }: {
   asset: Asset
@@ -59,6 +60,10 @@ export function Fiche({
    *  cet asset. Aucune image ne part — c'est le générateur qu'on repeuple. */
   onReglages: () => void
   onSupprimer: () => void
+  /** Ouvrir l'écran de découpe sur cette image (US-72). **Un écran, pas une
+   *  rubrique de plus ici** : on dessine des rectangles sur une planche de
+   *  mille pixels, et cette colonne en fait 380. */
+  onDecouper: () => void
   /** Remonter ou descendre la filiation sans quitter le panneau. */
   onOuvrir: (identifiant: string) => void
 }) {
@@ -146,6 +151,7 @@ export function Fiche({
           onReinjecter={onReinjecter}
           onReglages={onReglages}
           onSupprimer={onSupprimer}
+          onDecouper={onDecouper}
         />
 
         <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
@@ -478,12 +484,14 @@ function Jugement({
   onReinjecter,
   onReglages,
   onSupprimer,
+  onDecouper,
 }: {
   asset: Asset
   onErreur: (raison: string) => void
   onReinjecter: (role: Role) => void
   onReglages: () => void
   onSupprimer: () => void
+  onDecouper: () => void
 }) {
   const basculerFavori = async () => {
     try {
@@ -511,10 +519,24 @@ function Jugement({
         <span className="mesure text-[10px] text-texte-3">
           {dollars(asset.cout_usd)}
         </span>
+        {/* **Découper vit dans la rangée des gestes, pas dans une rubrique.**
+            Une planche est une image comme une autre : rien ne permet de savoir
+            d'avance qu'elle en contient huit, donc rien ne doit paraître ou
+            disparaître selon ce qu'on croit deviner. Le geste est là, toujours,
+            et il coûte une ligne de mono — la densité que le § La tuile impose
+            à la grille vaut aussi pour la fiche. */}
+        <button
+          type="button"
+          onClick={onDecouper}
+          title="découper une planche multi-sprites en assets"
+          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-signal"
+        >
+          Découper ›
+        </button>
         <button
           type="button"
           onClick={onSupprimer}
-          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
         >
           Supprimer
         </button>

@@ -422,6 +422,21 @@ class Base:
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
+    def rangs_de_generation(self, generation: str) -> list[int]:
+        """Les rangs déjà pris dans une génération — **supprimés compris**.
+
+        C'est ce qui permet à une découpe de T5 de prendre une place libre à
+        côté des emplacements de l'appel. Un supprimé compte : tant que son
+        annulation court, ses fichiers `<rang>-*` sont encore sur le disque, et
+        rendre son rang à quelqu'un d'autre écraserait une image qu'un geste
+        peut encore ramener.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT rang FROM assets WHERE generation = ?", (generation,)
+            ).fetchall()
+        return [int(l["rang"]) for l in lignes]
+
     def compter_par_projet(self) -> dict[str | None, int]:
         """Combien d'assets par projet, et sous `None` ceux qui n'en ont pas.
 

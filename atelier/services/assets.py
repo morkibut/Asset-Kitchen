@@ -34,6 +34,7 @@ from atelier.domaine.recette import (
     ANCRAGES,
     MOTEURS,
     TRAMAGES,
+    Passe,
     Recette,
 )
 from atelier.image import Rendu, detourer, finir, raison_moteur, rendre_en_png
@@ -195,9 +196,21 @@ class ServiceAssets:
             supprime_le=ancien.supprime_le if ancien else None,
             parent_supprime=ancien.parent_supprime if ancien else False,
         )
-        self._oublier_detourage(identifiant)
+        self.accueillir(asset)
+        return asset
+
+    def accueillir(self, asset: Asset, *, annoncer: bool = True) -> Asset:
+        """Un asset neuf entre : son rendu se calcule, puis il s'écrit.
+
+        Deux naissances passent par ici — celle d'une image reçue du fournisseur
+        (`naitre`) et celle d'une découpe de planche (T5). Elles n'ont **rien**
+        en commun en amont : l'une vient du réseau et coûte de l'argent, l'autre
+        d'un rectangle et ne coûte rien. Elles ont tout en commun en aval — un
+        rendu à poser, un fichier à écrire, un index à mettre à jour, un onglet
+        à prévenir —, et c'est cette moitié-là qui est ici plutôt que dupliquée.
+        """
         self._rendre(asset)
-        self.sauver(asset)
+        self.sauver(asset, annoncer=annoncer)
         return asset
 
     def rattraper(self, generations: list[Generation]) -> int:
@@ -401,13 +414,30 @@ class ServiceAssets:
         faire glisser la grille, l'occupation ou le nettoyage ne repaie pas les
         130 ms du détourage, seulement les 28 ms du reste.
         """
-        cle = f"{asset.identifiant}:{asset.recette.empreinte_passes()}"
+        return finir(self.detourage(asset), asset.recette)
+
+    def detourage(self, asset: Asset, passes: tuple[Passe, ...] | None = None) -> np.ndarray:
+        """L'image détourée d'un asset, gardée sous la main.
+
+        **Le seul endroit du dépôt qui détoure un asset**, et c'est ce qui rend
+        le cache utile : le rendu de la fiche et l'aperçu du slicer demandent la
+        même image détourée du même asset, et ne la paient qu'une fois. Deux
+        chemins qui détoureraient chacun de leur côté paieraient 130 ms chacun,
+        pour le même tableau.
+
+        `passes` sert à détourer **autrement** que ne le dit la recette — le
+        slicer a besoin d'un alpha même sur une planche que personne n'a
+        détourée, sinon ses zones connexes n'en font qu'une, celle de l'image
+        entière. La clé du cache porte l'empreinte des passes, donc les deux
+        vues cohabitent sans se confondre.
+        """
+        recette = Recette(passes=asset.recette.passes if passes is None else passes)
+        cle = f"{asset.identifiant}:{recette.empreinte_passes()}"
         rgba = self._detourages.get(cle)
         if rgba is None:
-            octets = self._fichiers.lire(asset.brut)
-            rgba = detourer(asset.recette, octets)
+            rgba = detourer(recette, self._fichiers.lire(asset.brut))
             self._garder_detourage(cle, rgba)
-        return finir(rgba, asset.recette)
+        return rgba
 
     def _garder_detourage(self, cle: str, rgba: np.ndarray) -> None:
         if len(self._detourages) >= DETOURAGES_GARDES:

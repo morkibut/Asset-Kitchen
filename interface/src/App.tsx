@@ -13,7 +13,14 @@
 // clé, donc à la même place. L'image ne se glisse pas à côté de son attente :
 // elle la remplace.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import {
   api,
   dollars,
@@ -37,8 +44,9 @@ import {
 } from "./api"
 import { Arbre } from "./composants/Arbre"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
-import { Bouton, Point } from "./composants/chassis"
+import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
+import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranCle } from "./composants/EcranCle"
 import { Fiche } from "./composants/Fiche"
 import { PanneauReglages } from "./composants/PanneauReglages"
@@ -74,6 +82,33 @@ const fondre = (liste: Generation[], recue: Generation): Generation[] =>
   liste.some((g) => g.identifiant === recue.identifiant)
     ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
     : [recue, ...liste]
+
+// « Zoom 1× / 2× / 4× — un niveau indisponible à la largeur courante est
+// **grisé, pas caché** » (`docs/DESIGN.md` § Layout). Les crans eux-mêmes vivent
+// dans le châssis : ce sont ceux des vignettes du tableau d'inspiration, et un
+// seul vocabulaire de taille traverse tout le produit.
+//
+// Le padding de la zone centrale et la gouttière de la grille, `docs/DESIGN.md`
+// § Spacing. Ils servent à répondre à une seule question : **combien de tuiles
+// de ce cran tiennent côte à côte ?**
+const PADDING = 16
+const GOUTTIERE = 9
+
+/**
+ * Un cran tient-il à cette largeur ?
+ *
+ * **Il faut deux colonnes, pas une.** Trouvé en ouvrant l'atelier, jamais au
+ * banc : `minmax(cran, 1fr)` accepte une colonne unique et l'**étire** jusqu'au
+ * bord — à 4× sur une colonne de 1060 px, une seule tuile occupait 1028 px, soit
+ * huit fois la taille de repos pour un contrôle qui en annonce quatre. Une
+ * grille d'une colonne n'est plus une planche contact, c'est une visionneuse, et
+ * ce n'est pas ce que le zoom promet.
+ *
+ * **1× est toujours disponible.** C'est l'état de repos du produit, et quelque
+ * chose doit se rendre : le griser laisserait la grille sans cran valide.
+ */
+const tient = (cran: Zoom, largeur: number): boolean =>
+  cran === 1 || 2 * CRANS[cran] + GOUTTIERE <= largeur - 2 * PADDING
 
 export function App() {
   const [etat, setEtat] = useState<Etat | null>(null)
@@ -121,6 +156,25 @@ export function App() {
   const [groupes, setGroupes] = useState<string[]>([])
   const [universOuvert, setUniversOuvert] = useState(false)
 
+  // ── T5 : la découpe ───────────────────────────────────────────────────────
+  //
+  // **L'identifiant, jamais l'objet.** L'asset ouvert dans l'écran de découpe
+  // continue d'arriver par le flux — une retouche, un rangement, un
+  // réalignement de lot. Gardé en copie, il serait celui d'avant ; gardé en
+  // identifiant, il se relit dans la grille, qui est la seule vérité de cet
+  // onglet. Même règle que la fiche, et pour la même raison.
+  const [decoupeOuverte, setDecoupeOuverte] = useState<string | null>(null)
+
+  /** Le zoom de la grille — 1× / 2× / 4×, `docs/DESIGN.md` § Layout. Il n'est
+   *  ni sauvegardé ni partagé : c'est un réglage de coup d'œil, pas une
+   *  propriété de la bibliothèque. */
+  const [zoom, setZoom] = useState<Zoom>(1)
+  /** La largeur de la colonne centrale, **mesurée**. C'est elle qui décide
+   *  quels crans de zoom tiennent. Zéro veut dire « pas encore mesurée » et non
+   *  « nulle » : rien n'est grisé tant qu'on n'a pas regardé. */
+  const [largeurCentre, setLargeurCentre] = useState(0)
+  const centre = useRef<HTMLElement>(null)
+
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
   const [promptNegatif, setPromptNegatif] = useState("")
@@ -135,6 +189,33 @@ export function App() {
   const [echelle, setEchelle] = useState("")
 
   const dernierClic = useRef<string | null>(null)
+
+  // ── La largeur de la colonne centrale, mesurée ────────────────────────────
+  //
+  // **On regarde la colonne, on ne la recalcule pas.** Les largeurs du § Layout
+  // sont déjà écrites une fois, dans `colonnes` ; les soustraire à nouveau ici
+  // en ferait une seconde vérité, et le jour où l'une des deux bouge, le grisé
+  // du zoom mentirait sans que rien ne le dise.
+  //
+  // **Trois moments, et il n'y en a pas d'autre** : au montage, quand la fenêtre
+  // change de taille, et quand la transition de 160 ms sur les colonnes s'achève
+  // — c'est-à-dire quand un panneau s'est replié ou que la fiche s'est ouverte.
+  // Mesurer au moment où l'on replie donnerait la largeur d'**avant** : la
+  // transition n'a pas commencé, et c'est l'arrivée qui compte.
+  //
+  // Pas de `ResizeObserver` : ses rappels sont livrés par la boucle de rendu, et
+  // un onglet qui ne compose pas ses images ne les livre jamais — vu le 27 août
+  // au navigateur, où le grisé du zoom n'est **jamais** apparu. Un rectangle se
+  // lit à la demande, dans tous les cas.
+  const mesurerCentre = useCallback(() => {
+    const largeur = centre.current?.getBoundingClientRect().width ?? 0
+    setLargeurCentre((deja) => (Math.abs(deja - largeur) < 1 ? deja : largeur))
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener("resize", mesurerCentre)
+    return () => window.removeEventListener("resize", mesurerCentre)
+  }, [mesurerCentre])
 
   // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
   //
@@ -164,6 +245,18 @@ export function App() {
   // La déduire tient aussi la promesse de `docs/DESIGN.md` : l'anneau
   // `--lumiere` dit « sélectionné », et il n'a plus qu'un seul sens.
   const fiche = selection.length === 1 ? selection[0] : null
+
+  // **Et à chaque geste qui change la largeur.** Le repli d'un panneau et
+  // l'ouverture de la fiche déplacent les colonnes ; la transition de 160 ms
+  // fait que la mesure prise ici est celle d'**avant**, et c'est
+  // `onTransitionEnd` qui pose la bonne. Les deux servent : sans celle-ci, un
+  // onglet où les transitions ne s'exécutent pas ne remesurerait jamais.
+  useLayoutEffect(mesurerCentre, [
+    mesurerCentre,
+    replies.arbre,
+    replies.reglages,
+    fiche,
+  ])
 
   const echouer = (erreur: unknown, defaut_: string) =>
     setPanne(erreur instanceof Refus ? erreur.message : defaut_)
@@ -597,6 +690,28 @@ export function App() {
   ].join(" ")
 
   const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
+  const planche = decoupeOuverte
+    ? grille.find((a) => a.identifiant === decoupeOuverte)
+    : undefined
+
+  // **Un cran est indisponible quand la colonne est trop étroite pour lui**, et
+  // c'est une largeur mesurée qui le dit — pas une soustraction refaite ici à
+  // partir des largeurs du § Layout, qui serait une seconde vérité sur la même
+  // chose. Tant que rien n'a été mesuré, rien n'est grisé : **zéro n'est pas
+  // une largeur, c'est l'absence de mesure**, exactement comme le `0×0` d'une
+  // carte qui n'a pas abouti.
+  const indisponibles = largeurCentre
+    ? ZOOMS.filter((cran) => !tient(cran, largeurCentre))
+    : []
+
+  // **Le cran choisi reste choisi**, même devenu trop grand — c'est la règle
+  // du modèle du catalogue (US-9), et il n'y a aucune raison d'en avoir deux.
+  // Mais une grille doit rendre quelque chose : elle rend donc au plus grand
+  // cran qui tient, et la barre d'outils **dit** que c'est ce qui se passe.
+  // Sans cette phrase, le contrôle annoncerait 4× sur des tuiles de 400 px.
+  const zoomRendu = indisponibles.includes(zoom)
+    ? ([...ZOOMS].reverse().find((cran) => !indisponibles.includes(cran)) ?? 1)
+    : zoom
 
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
@@ -618,6 +733,7 @@ export function App() {
           partie de ce que le mouvement promet. */}
       <main
         className="grid min-h-0"
+        onTransitionEnd={mesurerCentre}
         style={{
           gridTemplateColumns: colonnes,
           transition: "grid-template-columns 160ms ease-in-out",
@@ -656,7 +772,7 @@ export function App() {
           />
         </div>
 
-        <section className="flex min-h-0 flex-col">
+        <section ref={centre} className="flex min-h-0 flex-col">
           <Reinjections
             reinjections={reinjections}
             grille={grille}
@@ -697,11 +813,16 @@ export function App() {
             annulation={annulation}
             onAnnuler={annuler}
             compte={grille.length}
+            zoom={zoom}
+            onZoom={setZoom}
+            zoomsIndisponibles={indisponibles}
+            zoomRendu={zoomRendu}
           />
           <Grille
             entrees={entrees}
             selection={selection}
             filtre={filtre}
+            zoom={zoomRendu}
             onRelancer={relancer}
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
@@ -719,6 +840,7 @@ export function App() {
               onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
               onReglages={() => void reprendreReglages(ouverte)}
               onSupprimer={() => void supprimer([ouverte.identifiant])}
+              onDecouper={() => setDecoupeOuverte(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
             />
           )}
@@ -732,6 +854,21 @@ export function App() {
         liaison={liaison}
         bibliotheque={bibliotheque}
       />
+
+      {/* **L'écran de découpe couvre l'atelier**, comme l'écran Univers : on
+          dessine des rectangles sur une planche de mille pixels, et la fiche en
+          fait 380. Il se ferme sur la première découpe, ouverte dans sa fiche —
+          la grille, elle, les a déjà toutes reçues par le flux. */}
+      {planche && (
+        <EcranDecoupe
+          planche={planche}
+          onFermer={() => setDecoupeOuverte(null)}
+          onDecoupe={(decoupes) => {
+            setDecoupeOuverte(null)
+            if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+          }}
+        />
+      )}
 
       {universOuvert && (
         <EcranUnivers
@@ -953,6 +1090,7 @@ function Grille({
   entrees,
   selection,
   filtre,
+  zoom,
   onRelancer,
   onOuvrir,
   onRetirerFiltre,
@@ -960,6 +1098,9 @@ function Grille({
   entrees: Entree[]
   selection: string[]
   filtre: Filtre
+  /** Le cran **rendu**, pas le cran choisi : à une largeur où le choix ne tient
+   *  pas, la grille rend le plus grand qui tienne, et la barre d'outils le dit. */
+  zoom: Zoom
   onRelancer: (generation: string, rang: number) => void
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRetirerFiltre: () => void
@@ -995,7 +1136,9 @@ function Grille({
     <div className="min-h-0 flex-1 overflow-y-auto p-4">
       <div
         className="grid gap-[9px]"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))" }}
+        style={{
+          gridTemplateColumns: `repeat(auto-fill, minmax(${CRANS[zoom]}px, 1fr))`,
+        }}
       >
         {entrees.map((entree) => (
           <Tuile

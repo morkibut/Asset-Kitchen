@@ -517,16 +517,77 @@ entière, rangé comme les autres, dont la filiation pointe vers la planche d'or
 
 ### Critères d'acceptation
 
-- [ ] Une planche de huit sprites devient huit assets, chacun visible dans la grille.
-- [ ] La filiation de chaque découpe pointe vers la planche et se lit depuis sa fiche.
-- [ ] Une détection ratée se corrige en grille fixe ou en sélection manuelle, sans jamais bloquer.
-- [ ] Supprimer la planche laisse ses découpes en place, chacune marquée « parent supprimé ».
-- [ ] La découpe fonctionne réseau coupé.
+- [x] Une planche de huit sprites devient huit assets, chacun visible dans la grille.
+- [x] La filiation de chaque découpe pointe vers la planche et se lit depuis sa fiche.
+- [x] Une détection ratée se corrige en grille fixe ou en sélection manuelle, sans jamais bloquer.
+- [x] Supprimer la planche laisse ses découpes en place, chacune marquée « parent supprimé ».
+- [x] La découpe fonctionne réseau coupé.
 
 ### Bloquée par
 
 - **T3** — chaque découpe est un asset rangé et filié ; sans bibliothèque, une planche découpée ne produit que des fichiers.
 - **T2** — le détourage fournit l'alpha sur lequel la détection des zones connexes s'appuie.
+
+### Tenue le 27 août 2026
+
+**Cinq critères, 10 tests de serveur et 3 d'écran.** Le total du dépôt passe à
+108 tests de serveur et 17 d'écran. **Les deux dettes reportées de T3 et de T2
+sont soldées dans la même tranche** — le zoom 1× / 2× / 4× de la grille, et la
+première exécution réelle du second moteur de détourage.
+
+**Deux gestes, et c'est la seule décision de conception qui compte.** Le serveur
+*propose* des rectangles, il ne découpe que ceux qu'on lui donne. « Une détection
+ratée se corrige sans jamais bloquer » n'existe qu'à ce prix : l'écran affiche la
+proposition, l'auteur ajoute, retire, redessine, et ce qui part est **sa** liste.
+Une route unique qui aurait découpé « en mode auto » aurait fait de la détection
+une autorité qu'il faut convaincre.
+
+**Une découpe possède ses octets, et ça se paie en disque pour tenir un
+critère.** Une découpe qui n'aurait été qu'un rectangle sur l'image de sa planche
+serait morte avec elle : la suppression définitive efface `<rang>-*`, brut
+compris. Le brut d'une découpe est donc un **vrai** brut — le rectangle découpé
+dans l'image telle qu'elle est arrivée, fond compris, avec quatre pixels de marge
+autour. Sans cette marge, le détourage par défaut lirait la couleur du fond sur
+une bordure qui n'est que du sujet, et mangerait le sprite.
+
+**Trois défauts ont été trouvés en ouvrant l'atelier, aucun par les tests.**
+C'est la quatrième fois de suite, et la règle tient.
+
+| Ce qui n'allait pas | Ce qui l'a rendu invisible |
+|---|---|
+| À 4×, une colonne unique s'étirait sur toute la largeur : une tuile de 1028 px pour un cran qui en annonce 512, soit huit fois la taille de repos | Le grisé regardait si **une** tuile tenait. `minmax(cran, 1fr)` accepte une colonne et l'étire — la règle était juste sur le cran, fausse sur ce que le cran promet |
+| Le grisé du zoom n'apparaissait jamais | Le `ResizeObserver` livre ses rappels par la boucle de rendu ; un onglet qui ne compose pas ses images ne les livre pas. Une mesure qui dépend d'être *rendu* n'est pas une mesure sur laquelle compter |
+| Sur une planche carrée, les rectangles se décalaient de l'image qu'ils désignent | `aspect-ratio` cède devant `max-height` : le navigateur rabote la hauteur **sans redéduire la largeur**. Le cadre faisait 1388 × 874 pour une image carrée, et l'image y restait centrée par `object-contain` |
+
+Le premier et le troisième sont la même famille : **une règle de mise en page
+déléguée au navigateur, dont le résultat n'a pas été mesuré**. Le second est le
+contraire d'une mesure — et c'est la deuxième fois de suite qu'une valeur par
+défaut, ici zéro, se fait passer pour un fait.
+
+**La dette du second moteur de détourage est soldée, et son exécution a retourné
+une décision.** `essais/essai_detourage_modele.py`, gratuit, six vraies images
+plus un cas composé :
+
+| Ce qu'on voulait savoir | Ce qui est arrivé |
+|---|---|
+| Le moteur par modèle marche-t-il ? | Oui — première exécution du chemin, jamais empruntée depuis T2 |
+| Apporte-t-il quelque chose sur ce que le produit fabrique ? | Non : accord médian **96,3 %** avec le remplissage depuis le bord sur six images à fond plat. Il reste donc facultatif, et le geste courant ne change pas |
+| A-t-il une raison d'exister ? | Oui, et elle se mesure : sur un fond chargé, le bord garde **100 %** de l'image — il échoue entièrement — quand le modèle en isole **19,8 %** |
+| Combien coûte-t-il ? | **482 ms** contre 147 ms, facteur 3 — après avoir nommé le modèle |
+
+**Ce dernier point est une décision, pas une mesure.** Le défaut de `rembg`
+2.0.81 est `bria-rmbg`, un modèle d'un gigaoctet qui met **15,8 s** par image de
+1024 px sur processeur. `u2net` met **0,47 s** — trente-quatre fois moins — pour
+une silhouette équivalente à deux points près. Le dépôt annonçait « ~180 Mo »
+depuis T2 : c'était la taille de `u2net`, et le défaut de la bibliothèque avait
+changé sous cette note. Le modèle est désormais **nommé**.
+
+**Ce qui reste ouvert, et pour T6 :** la découpe n'a pas encore été exercée sur
+une planche multi-sprites **réellement produite par un modèle**. Celle qui a servi
+est faite de deux sprites réels du guide, recomposés — les huit sujets sont de
+vraies sorties de `gpt-image-2`, leur disposition ne l'est pas. Un modèle qui rend
+spontanément une planche de trois poses est un piège connu du dépôt ; en demander
+une exprès coûte un appel, et c'est la seule vérification de T5 qui manque.
 
 ---
 

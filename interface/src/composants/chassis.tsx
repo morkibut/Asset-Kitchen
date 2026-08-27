@@ -4,6 +4,30 @@
 
 import type { ReactNode } from "react"
 
+// ── Les crans de taille ─────────────────────────────────────────────────────
+//
+// « Les vignettes 1× / 2× / 4× sont les crans du zoom de la grille »
+// (`docs/DESIGN.md` § Le tableau). **Un seul vocabulaire de taille dans tout le
+// produit**, donc un seul endroit qui l'écrive : la grille d'assets s'en sert
+// pour la largeur minimale d'une tuile, le tableau d'inspiration pour le nombre
+// de colonnes qu'une carte occupe. Les deux contrôles ne cohabitent jamais —
+// ils vivent sur deux écrans —, mais ils comptent pareil.
+
+export type Zoom = 1 | 2 | 4
+export const ZOOMS: readonly Zoom[] = [1, 2, 4]
+
+/** La largeur minimale d'une tuile, par cran. 128 est la valeur de T3 : 1× ne
+ *  change donc rien à ce qu'on regardait, le zoom s'ajoute au repos plutôt que
+ *  de le redéfinir. */
+export const CRANS: Record<Zoom, number> = { 1: 128, 2: 256, 4: 512 }
+
+/** Ce que l'auteur lit — le multiplicateur, jamais le nombre de pixels. */
+export const LIBELLES_ZOOM: Partial<Record<string, string>> = {
+  "1": "1×",
+  "2": "2×",
+  "4": "4×",
+}
+
 /**
  * « Le grisé porte sa raison — jamais une infobulle. »
  *

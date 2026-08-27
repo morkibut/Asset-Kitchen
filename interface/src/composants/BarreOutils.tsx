@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react"
 import type { Collection, Projet } from "../api"
+import { LIBELLES_ZOOM, Segments, ZOOMS, type Zoom } from "./chassis"
 
 export type Annulation = { identifiants: string[]; expireLe: number }
 
@@ -32,6 +33,10 @@ export function BarreOutils({
   annulation,
   onAnnuler,
   compte,
+  zoom,
+  onZoom,
+  zoomsIndisponibles,
+  zoomRendu,
 }: {
   recherche: string
   onRecherche: (v: string) => void
@@ -50,6 +55,17 @@ export function BarreOutils({
   /** Ce que la grille montre en ce moment. Un compte est un fait mesuré : il
    *  est en mono, comme toute mesure du produit. */
   compte: number
+  /** Le cran **choisi**. Il le reste même quand la colonne devient trop
+   *  étroite : c'est la règle du modèle du catalogue (US-9), aucune
+   *  substitution silencieuse. */
+  zoom: Zoom
+  onZoom: (zoom: Zoom) => void
+  /** Les crans que la largeur courante ne peut pas honorer. **Grisés, pas
+   *  cachés** (`docs/DESIGN.md` § Layout) : l'absence n'apprend rien. */
+  zoomsIndisponibles: readonly Zoom[]
+  /** Le cran auquel la grille rend vraiment. Il diffère du choisi quand celui-ci
+   *  ne tient pas — et c'est alors qu'il faut le dire. */
+  zoomRendu: Zoom
 }) {
   return (
     <div className="flex h-[38px] shrink-0 items-center gap-2 border-b border-bord bg-fond-1 px-4">
@@ -80,6 +96,30 @@ export function BarreOutils({
       <span className="mesure text-[10px] text-texte-3">
         {compte} image{compte > 1 ? "s" : ""}
       </span>
+
+      {/* **Le zoom de la grille**, dans la fente qui existe déjà : aucune
+          hauteur neuve sur une barre de 38 px. Trois crans, les mêmes que les
+          vignettes du tableau — un seul vocabulaire de taille dans tout le
+          produit, et les deux contrôles ne cohabitent jamais. */}
+      <div className="flex items-center gap-2">
+        <Segments
+          valeurs={ZOOMS}
+          valeur={zoom}
+          onChange={onZoom}
+          indisponibles={zoomsIndisponibles}
+          libelles={LIBELLES_ZOOM}
+        />
+        {/* Le seul endroit où le produit dit qu'il rend autre chose que ce qui
+            est choisi. Il le dit plutôt que de corriger en silence : le cran
+            reste celui qu'on a posé, et il redeviendra vrai dès que la colonne
+            aura repris sa largeur — un panneau replié, la fiche fermée. */}
+        {zoomRendu !== zoom && (
+          <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10px] text-texte-3">
+            <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+            {zoom}× ne tient pas ici — rendu en {zoomRendu}×
+          </span>
+        )}
+      </div>
 
       {selection.length > 0 && (
         <>

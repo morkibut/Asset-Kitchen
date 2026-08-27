@@ -36,6 +36,7 @@ from atelier.services.bibliotheque import (
     ProjetInconnu,
     RangementRefuse,
 )
+from atelier.services.decoupe import DecoupeRefusee
 from atelier.services.univers import CarteInconnue, CarteRefusee, UniversRefuse
 from atelier.fournisseur.toile import AdresseRefusee
 
@@ -57,6 +58,7 @@ CODES = {
     CarteInconnue: 404,
     CarteRefusee: 409,
     UniversRefuse: 409,
+    DecoupeRefusee: 409,
     # L'adresse d'une carte n'a pas répondu, ou n'a pas rendu une image. 502 et
     # non 400 : le refus vient d'en face, pas de ce qu'on a demandé.
     AdresseRefusee: 502,

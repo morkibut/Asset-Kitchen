@@ -365,6 +365,29 @@ export type Filiation = {
   enfants: Asset[]
 }
 
+// ── La découpe d'une planche ────────────────────────────────────────────────
+
+/** Un rectangle de la planche, **inclusif aux deux bouts** et exprimé dans les
+ *  pixels de l'image **brute** — jamais du rendu, qui peut être un sprite de
+ *  64 px là où la planche en fait 1024. Une seule convention de rectangle dans
+ *  tout le produit, celle du serveur. */
+export type Boite = [number, number, number, number]
+
+export type ModeDecoupe = "auto" | "grille"
+
+/** Ce que le serveur propose de découper — rien n'est créé tant qu'on ne l'a pas
+ *  demandé. `raison` est le grisé du produit : une détection qui ne trouve rien
+ *  dit pourquoi, elle ne se tait pas. */
+export type Proposition = {
+  asset: string
+  label: string
+  largeur: number
+  hauteur: number
+  mode: ModeDecoupe
+  boites: Boite[]
+  raison: string | null
+}
+
 export type Filtre = {
   collection: string | null
   favoris: boolean
@@ -638,6 +661,35 @@ export const api = {
 
   filiation: (identifiant: string) =>
     appeler<Filiation>(`/assets/${identifiant}/lineage`),
+
+  // ── Le slicer ─────────────────────────────────────────────────────────────
+  //
+  // **Deux appels, parce que ce sont deux gestes.** Proposer ne crée rien et se
+  // redemande à chaque cran de réglage ; découper crée des assets et ne se
+  // redemande jamais. Ce qui part à la découpe est la liste que l'auteur a sous
+  // les yeux, corrections comprises — pas un mode que le serveur rejouerait de
+  // son côté (US-73).
+
+  decoupeProposee: (
+    identifiant: string,
+    reglage: {
+      mode?: ModeDecoupe
+      colonnes?: number
+      lignes?: number
+      cote_min?: number
+    } = {},
+  ) => {
+    const parametres = new URLSearchParams()
+    for (const [nom, valeur] of Object.entries(reglage))
+      if (valeur !== undefined) parametres.set(nom, String(valeur))
+    return appeler<Proposition>(`/assets/${identifiant}/slices?${parametres}`)
+  },
+
+  decouper: (identifiant: string, boites: Boite[]) =>
+    appeler<{ planche: string; decoupes: Asset[] }>(`/assets/${identifiant}/slices`, {
+      method: "POST",
+      body: JSON.stringify({ boites }),
+    }),
 
   // ── Le tableau d'inspiration ──────────────────────────────────────────────
   // Une seule de ces routes touche le réseau : celle qui va chercher l'image

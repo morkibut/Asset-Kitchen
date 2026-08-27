@@ -532,6 +532,49 @@ async def telecharger_asset(
     )
 
 
+# ── Le slicer ────────────────────────────────────────────────────────────────
+#
+# **Deux routes, parce que ce sont deux gestes.** Proposer ne crée rien et se
+# redemande à chaque cran de réglage ; découper crée des assets et ne se
+# redemande jamais. Une seule route qui découperait « en mode auto » ferait de la
+# détection une autorité — or c'est l'auteur qui tranche, et « une détection
+# ratée se corrige sans jamais bloquer » (US-73) n'existe qu'à ce prix.
+
+
+class CorpsDecoupe(BaseModel):
+    """Les rectangles que l'auteur a sous les yeux, dans son ordre.
+
+    Des boîtes explicites plutôt qu'un mode : ce qui part à la découpe est
+    exactement ce que l'écran montre, y compris ce qu'on y a dessiné à la main.
+    """
+
+    boites: list[list[int]] = Field(default_factory=list)
+
+
+@routeur.get("/assets/{identifiant}/slices")
+async def proposer_decoupe(
+    requete: Request,
+    identifiant: str,
+    mode: str = Query("auto"),
+    colonnes: int = Query(2, ge=1, le=64),
+    lignes: int = Query(1, ge=1, le=64),
+    cote_min: int = Query(16, ge=0, le=256),
+) -> dict[str, Any]:
+    """Où l'on pourrait couper — sans rien créer et sans rien écrire (US-72)."""
+    return _atelier(requete).decoupe.proposer(
+        identifiant, mode=mode, colonnes=colonnes, lignes=lignes, cote_min=cote_min
+    )
+
+
+@routeur.post("/assets/{identifiant}/slices")
+async def decouper(
+    requete: Request, identifiant: str, corps: CorpsDecoupe
+) -> dict[str, Any]:
+    """Une planche de huit devient huit assets, chacun filié (US-72, US-74)."""
+    boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
+    return _atelier(requete).decoupe.decouper(identifiant, boites)
+
+
 # ── Les recettes nommées ─────────────────────────────────────────────────────
 
 

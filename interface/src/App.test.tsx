@@ -66,6 +66,35 @@ class FluxDouble {
   }
 }
 
+// ── La largeur de la colonne, doublée ───────────────────────────────────────
+//
+// jsdom ne met rien en page : `getBoundingClientRect` y rend des zéros. Or le
+// grisé du zoom repose sur une **largeur mesurée** — « zéro n'est pas une
+// largeur, c'est l'absence de mesure », donc rien n'y serait jamais grisé. On
+// double donc la mesure, comme `FluxDouble` double le flux, et le test décide
+// de la largeur qu'a la colonne centrale.
+
+let largeurRendue = 0
+
+function mesurer(largeur: number) {
+  largeurRendue = largeur
+  fireEvent(window, new Event("resize"))
+}
+
+function doublerLaMesure() {
+  largeurRendue = 0
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      return { ...VIDE, width: this.tagName === "SECTION" ? largeurRendue : 0 } as DOMRect
+    },
+  )
+}
+
+const VIDE = {
+  x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, height: 0, width: 0,
+  toJSON: () => ({}),
+}
+
 // ── Ce que le serveur répond ─────────────────────────────────────────────────
 
 const MODELE = {
@@ -253,6 +282,11 @@ function serveurDouble(options: {
   cartes?: Carte[]
   univers?: Univers
   aPublier?: () => Generation
+  /** Ce que la détection propose de découper. Le test le décide, comme le vrai
+   *  serveur le déciderait sur l'image : c'est ce que l'écran affiche, et c'est
+   *  ce que l'auteur corrige avant de découper (US-73). */
+  boites?: [number, number, number, number][]
+  raisonDecoupe?: string | null
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -300,6 +334,27 @@ function serveurDouble(options: {
         parent_supprime: false,
         enfants: [],
       })
+    if (url.includes("/slices")) {
+      if (init?.method === "POST")
+        return rendre({
+          planche: "aaaa1111-0",
+          decoupes: (corps.boites as unknown[]).map((_, rang) =>
+            asset(`aaaa1111-${100 + rang}`, `un tonneau · ${rang + 1}/2`),
+          ),
+        })
+      return rendre({
+        asset: "aaaa1111-0",
+        label: "un tonneau",
+        largeur: 1024,
+        hauteur: 1024,
+        mode: "auto",
+        boites: options.boites ?? [
+          [0, 0, 400, 900],
+          [500, 0, 900, 900],
+        ],
+        raison: options.raisonDecoupe ?? null,
+      })
+    }
     if (url === "/api/assets/delete") {
       etat.supprimes = corps.identifiants
       return rendre({
@@ -368,6 +423,7 @@ describe("l'écran de l'atelier", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
   })
 
   afterEach(() => {
@@ -710,5 +766,114 @@ describe("l'écran de l'atelier", () => {
     // Et le sujet est le seul geste qui reste : promouvoir a déjà tout décidé.
     expect(screen.getByRole("button", { name: "personnage" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "objet tenu" })).toBeTruthy()
+  })
+})
+
+// ── T5 : le slicer et le zoom ────────────────────────────────────────────────
+//
+// Trois critères de T5 ne se vérifient que devant l'écran : que le geste parte
+// de la fiche, que la correction à la main soit possible **sur ce que la
+// détection a proposé**, et que la découpe faite renvoie sur ce qu'elle a
+// fabriqué. Les cinq critères du serveur, eux, vivent dans `tests/test_t5.py`.
+//
+// Le zoom de la grille y est aussi, et pour la même raison : « un niveau
+// indisponible à la largeur courante est grisé, pas caché » est une phrase sur
+// une largeur mesurée — aucun test de serveur ne peut la voir.
+
+describe("le slicer et le zoom de la grille", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  async function ouvrirLaDecoupe(options: Parameters<typeof serveurDouble>[0] = {}) {
+    const planche = asset("aaaa1111-0")
+    const double = serveurDouble({ assets: [planche], ...options })
+    await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    return double
+  }
+
+  test("découper part de la fiche, montre ce qui sortira, et se corrige à la main", async () => {
+    const { appels } = await ouvrirLaDecoupe()
+
+    // L'écran couvre l'atelier et montre ce que la détection a trouvé.
+    expect(await screen.findByRole("heading", { name: "Découpe" })).toBeTruthy()
+    expect(screen.getByText("2 rectangles")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Découper en 2 assets" })).toBeTruthy()
+
+    // **Corriger n'a pas besoin de convaincre la détection.** On retire un
+    // rectangle, et ce qui partira suit — c'est la liste de l'auteur qui compte.
+    fireEvent.click(screen.getByRole("button", { name: "Retirer le rectangle 2" }))
+    expect(screen.getByRole("button", { name: "Découper en 1 asset" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Découper en 1 asset" }))
+
+    // Ce qui est parti est **la liste corrigée**, pas la proposition.
+    await waitFor(() => {
+      const envoi = appels.find((a) => a.url.includes("/slices") && a.corps)
+      expect((envoi?.corps as { boites: number[][] }).boites).toHaveLength(1)
+    })
+
+    // Et l'écran se referme sur ce qu'il vient de fabriquer : la fiche de la
+    // première découpe, ouverte dans l'atelier.
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Découpe" })).toBeNull(),
+    )
+  })
+
+  test("une détection qui ne trouve rien porte sa raison, et découper est grisé", async () => {
+    await ouvrirLaDecoupe({ boites: [], raisonDecoupe: "le détourage n'a rien laissé d'opaque — corrige à la main" })
+
+    expect(
+      await screen.findByText("le détourage n'a rien laissé d'opaque — corrige à la main"),
+    ).toBeTruthy()
+    // Grisé **avec sa raison**, jamais proposé puis refusé.
+    expect(screen.getByRole("button", { name: /^Découper en 0/ })).toBeDisabled()
+    expect(screen.getByText("aucun rectangle — il n'y a rien à découper")).toBeTruthy()
+  })
+
+  test("un cran de zoom trop grand pour la colonne est grisé, pas caché", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await screen.findByRole("button", { name: "4×" })
+
+    // Tant que rien n'a été mesuré, rien n'est grisé : zéro n'est pas une
+    // largeur, c'est l'absence de mesure.
+    expect(screen.getByRole("button", { name: "4×" })).not.toBeDisabled()
+
+    // Une colonne large : les trois crans tiennent — 4× demande **deux**
+    // colonnes de 512 px et leur gouttière, plus le padding de la zone.
+    mesurer(1200)
+    await waitFor(() => expect(screen.getByRole("button", { name: "4×" })).not.toBeDisabled())
+    fireEvent.click(screen.getByRole("button", { name: "4×" }))
+
+    // **Une colonne qui tient une seule tuile ne tient pas le cran.** Trouvé au
+    // navigateur, sur une colonne de 1060 px : `minmax(512px, 1fr)` acceptait
+    // une colonne unique et l'étirait à 1028 px — huit fois la taille de repos
+    // pour un contrôle qui en annonce quatre. Le seuil est donc à deux colonnes,
+    // et cette largeur-là est exactement celle qui l'a montré.
+    mesurer(1060)
+    await waitFor(() => expect(screen.getByRole("button", { name: "4×" })).toBeDisabled())
+    expect(screen.getByRole("button", { name: "2×" })).not.toBeDisabled()
+    expect(screen.getByText("4× ne tient pas ici — rendu en 2×")).toBeTruthy()
+
+    // La colonne rétrécit — la fiche s'ouvre, un panneau se déplie, la fenêtre
+    // change. Le cran reste **choisi**, il est grisé, et l'écran dit ce qu'il
+    // rend à la place : aucune substitution silencieuse (US-9).
+    mesurer(200)
+    await waitFor(() => expect(screen.getByRole("button", { name: "4×" })).toBeDisabled())
+    expect(screen.getByRole("button", { name: "2×" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "1×" })).not.toBeDisabled()
+    expect(screen.getByText("4× ne tient pas ici — rendu en 1×")).toBeTruthy()
   })
 })
