@@ -39,6 +39,48 @@ export function Raison({
   )
 }
 
+/**
+ * « Le revers — l'actif qui porte son risque. »
+ *
+ * Le repli hors ligne est le seul endroit du produit où l'on propose puis
+ * refuse : le catalogue est une photo, générer reste **actif**, et l'échec ne
+ * survient qu'au moment du clic (US-95). C'est l'exception à `Raison`, et elle
+ * se rend dans **la même fente, avec la même forme** — tiret de 8 px, mono
+ * 10 px, lien `--signal` pour le geste. Ce qui change est le mot : le grisé dit
+ * *pourquoi c'est fermé*, le revers dit *ce qui va casser*.
+ *
+ * En `--epingle` et non `--info` : arrêté à un instant, que le système ne
+ * bougera pas tout seul, et que seul un geste de l'auteur relance — exactement
+ * la définition que partagent « réglé à la main » et « interrompu ».
+ * `docs/DESIGN.md` § Motifs.
+ */
+export function Revers({
+  texte,
+  geste,
+  onGeste,
+  enCours = false,
+}: {
+  texte: string
+  geste: string
+  onGeste: () => void
+  enCours?: boolean
+}) {
+  return (
+    <p className="mesure mt-1 flex items-center gap-1.5 text-[10px] leading-4 whitespace-nowrap text-epingle">
+      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+      <span>{texte}</span>
+      <button
+        type="button"
+        onClick={onGeste}
+        disabled={enCours}
+        className="text-signal hover:text-signal-clair disabled:text-texte-3"
+      >
+        {enCours ? "…" : `${geste} ›`}
+      </button>
+    </p>
+  )
+}
+
 export function EnTetePanneau({ children }: { children: ReactNode }) {
   return (
     <div className="mesure flex h-[30px] shrink-0 items-center border-b border-bord px-2 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">

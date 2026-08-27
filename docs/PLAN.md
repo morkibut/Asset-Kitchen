@@ -149,7 +149,7 @@ Trois constats sont sortis de cette tranche et valent pour les suivantes :
 - **Une jauge qui atteint le bout avant l'arrivée dit une chose fausse.** Celle
   du produit approche sans jamais toucher, et le compteur porte l'écart en clair.
 - **Hors ligne n'est pas une panne du produit** : c'est un état dans lequel il
-  continue de servir. Le bandeau date ce qu'on voit, dit ce qui marche encore,
+  continue de servir. Le repli date ce qu'on voit, dit ce qui marche encore,
   dit ce qui échouera, et donne le geste pour réessayer.
 
 ---

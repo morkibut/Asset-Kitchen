@@ -136,13 +136,19 @@ marque. Toute information nécessaire est en `--texte-2` ou au-dessus.
 | `--signal-sourd` | `rgba(73,179,206,.13)` | — | fond d'un segment actif, anneau de focus |
 | `--lumiere` | `#EAF4F8` | — | sélection et focus. C'est la lampe de la table. |
 | `--ok` | `#5FA871` | 6,0 : 1 | réussi, en ligne, remis à jour |
-| `--epingle` | `#C8A03C` | 7,0 : 1 | réglé à la main, interrompu, catalogue daté |
+| `--epingle` | `#C8A03C` | 7,0 : 1 | réglé à la main, interrompu, **catalogue servi de repli** |
 | `--echec` | `#CB6C65` | 4,8 : 1 | appel raté, suppression, refus |
-| `--info` | `#7E8AA0` | — | hors ligne, repli, information neutre |
 
 `--echec` porte du texte sur `--fond-2` — c'est la raison d'un appel raté, l'erreur d'un champ,
 la tuile en échec. Le rouge brique `#C4635C` n'y vaut que 4,35 : 1, sous le seuil AA ; `#CB6C65`
 le remonte à 4,8 : 1 sans déplacer la teinte.
+
+**`--info` `#7E8AA0` est retiré** — 27 août 2026. Il n'avait qu'un usage dans tout le produit, le
+repli hors ligne, et le repli est passé en `--epingle` (§ Motifs, *Le revers*). Un token
+sémantique qui nomme un état et ne colore plus rien est un piège : il ré-autorise un second gris
+neutre le jour où quelqu'un cherchera « la couleur d'une information ». Le châssis n'a donc que
+trois sémantiques — `--ok`, `--epingle`, `--echec` — plus l'accent `--signal` et la lampe
+`--lumiere`.
 
 Le cyan est choisi **contre le contenu** : c'est la seule famille chromatique qu'un asset de
 fantasy ne produit presque jamais. Un accent ambre — celui de la maquette écartée — se noierait
@@ -226,6 +232,11 @@ transition de couleur au maximum, jamais de transformation).
 | Repli / dépliage d'un panneau | 160 ms sur la largeur | tu n'as pas perdu ta place |
 | Ouverture / fermeture de la fiche | 160 ms sur la largeur | idem |
 
+**La règle qui garde la liste close**, posée le 27 août 2026 en refusant d'y ajouter le repli hors
+ligne : *un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être
+remarquée.* Un asset qui atterrit au milieu de tuiles identiques n'en a aucun — d'où le fondu. Le
+repli en a un : il arrive dans la seule couleur chaude du châssis. Il reste donc instantané.
+
 ---
 
 ## Motifs
@@ -262,6 +273,111 @@ La raison n'est jamais au survol : le produit interdit de proposer puis refuser,
 donc dire pourquoi sans qu'on ait à chercher. Même traitement pour un modèle du catalogue qui ne
 peut pas honorer la demande, un niveau de zoom trop grand pour la largeur, la quantification sans
 palette, et l'export d'une sélection vide.
+
+### Le revers — l'actif qui porte son risque
+
+Le repli hors ligne est le **seul endroit du produit où l'on propose puis refuse** : le catalogue
+est une photo, générer reste actif, et l'échec ne survient qu'au moment du clic (`docs/PRD.md`
+US-95). C'est donc l'exception au motif ci-dessus, et elle se rend **dans la même fente, avec la
+même forme** — tiret de 8 px, mono 10 px, lien `--signal` pour le geste. Ce qui change est le
+mot : le grisé dit *pourquoi c'est fermé*, le revers dit *ce qui va casser*.
+
+**Où ça se pose : dans une fente qui existe déjà.** Aucun bandeau, aucune rangée, aucune hauteur
+neuve sur une colonne qui compte 44 px en tête et 26 px en pied. Sous le bouton Générer, alignée
+à droite, il y a une ligne mono 10 px qui a déjà deux locataires : `Ctrl + Entrée` au repos, et la
+raison quand générer est grisé. **Le repli est le troisième, et les trois ne coexistent jamais.**
+
+```
+   au repos                                    [ Générer 3 variations ]
+                                                         Ctrl + Entrée
+
+   hors ligne                                  [ Générer 3 variations ]
+                                    — seul générer échouera   Réessayer ›
+
+   jamais reçu                                         [ Générer ]
+                             — le catalogue n'a jamais été reçu   Réessayer ›
+```
+
+**La fente prédit, elle ne raconte pas.** Elle porte deux choses — **ce qui échouera** et **le
+geste** — plus, dans un seul mot, **ce qui marche encore** : `seul` borne la panne, et une panne
+bornée dit son complément. Coût assumé : « écrire, régler, choisir un modèle » n'est pas écrit en
+toutes lettres. Le champ prend le texte, le panneau répond, la bibliothèque est là — l'écran le
+démontre pendant qu'on le lit, et § *Ce que le design n'affiche pas* a déjà tranché qu'une
+décision peut être respectée sans être affichée.
+
+**La date, elle, n'est pas dans la fente — et c'est une correction.** Elle y a été posée le
+27 août, puis retirée le jour même : à l'ouverture de l'atelier le prompt est vide, donc le refus
+« aucun prompt » occupe la fente, donc la date n'était lisible **nulle part tant que l'auteur
+n'avait pas tapé un caractère**. Or c'est exactement au démarrage que le catalogue doit dire son
+âge (US-93, et le critère T1 « le démarrage n'affiche aucune erreur, le catalogue affiche sa date
+en clair »).
+
+La règle qui l'a corrigée est celle du motif lui-même : **une date est un fait sur le monde, pas
+sur le clic à venir.** Elle vit donc dans la barre d'état, seul élément rendu en permanence. Et
+cette répartition rend l'ordre des trois locataires *juste* plutôt que subi : tant que la demande
+n'est pas composée, le refus tient la fente, et il n'y a aucune prédiction à faire puisqu'il n'y a
+pas encore de geste possible.
+
+**Variante — catalogue jamais reçu.** Aucun modèle, donc générer redevient grisé, donc c'est le
+motif ordinaire qui reprend la main, dans la même fente, sans machinerie supplémentaire et sans
+rien d'autre à dire : il n'y a pas de date à porter, et rien qui marche encore à nuancer. La barre
+d'état se tait alors sur le catalogue — elle n'a rien à dater — et dit seulement `hors ligne`.
+Que la fente passe du revers au grisé selon le nombre de modèles revenus est **la preuve de
+l'emplacement** : un seul fait, « le catalogue n'est pas frais », une seule fente, deux mots selon
+la gravité. Deux traitements à deux endroits, c'est ce que le bandeau imposait.
+
+**Deux altitudes, deux métiers, une seule occurrence de « hors ligne ».** La barre d'état (26 px)
+porte **l'état du monde**, en permanence, qu'on la regarde ou non : le point `--epingle`, la
+phrase de liaison, **la date** de la photo servie, et — quand le port a su la dire en français —
+**la cause**. Elle ne prédit jamais.
+
+```
+ ● hors ligne · catalogue du 26/08 14:02 · aucune connexion au fournisseur · 2 modèles · clé …a1b2
+```
+
+**Chacun de ces trois faits est un segment à lui**, et c'est ce qui les rend robustes : la phrase
+de liaison est disputée — une génération refusée ou un flux rompu la prennent, et à juste titre,
+c'est plus grave. Fondre la date dedans la ferait disparaître au moment où elle compte le plus.
+La date et la cause survivent donc à la phrase, et la couleur du point suit la chose la plus grave.
+
+La fente sous Générer porte **la conséquence pour le prochain geste**, et seulement hors ligne ;
+elle ne raconte jamais l'état du réseau. Le doublon d'avant — le bandeau et la barre d'état
+disaient « hors ligne » dans les mêmes mots — n'était pas une redondance voulue mais un
+symptôme : deux éléments qui disent la même chose à deux altitudes, et aucun des deux n'est
+l'autorité.
+
+**La cinquième chose, et pourquoi elle est en bas.** Le port traduit toute panne de transport en
+une phrase du produit — « aucune connexion au fournisseur », « le fournisseur n'a pas répondu à
+temps ». C'est une information réelle : elle dit à l'auteur si c'est son réseau ou celui d'en face.
+Mais ce n'est **pas** une conséquence du prochain clic, donc elle ne monte pas dans la fente : elle
+reste en bas, en `--texte-3`, dans la bande qui rapporte l'état du monde.
+
+Le bouton **Catalogue** de la barre de tête reste : c'est le geste permanent, disponible en ligne
+comme hors ligne. `Réessayer ›` n'en est pas un doublon mais la règle du motif — *un lien
+`--signal` quand il y a un endroit où aller* — appliquée là où la panne est nommée. Un nom, un
+verbe : on rafraîchit un catalogue, on réessaie une panne.
+
+**Une seule voix par bande.** La fente sous Générer, le pied de prompt, la méta de tuile et la
+barre d'état sont en **mono de bout en bout, phrases comprises** — pas seulement leurs mesures. Ce sont
+les bandes où la machine rapporte ; le sans est ce que l'auteur écrit et choisit. Corollaire de la
+règle 2 du § Typography, et raison pratique : accorder deux familles sur une ligne de 10 px coûte
+plus qu'il ne rapporte.
+
+**La couleur : `--epingle`, pas `--info`.** Les trois usages d'`--epingle` — réglé à la main,
+interrompu, catalogue de repli — partagent une définition : *arrêté à un instant, que le système
+ne bougera pas tout seul, et que seul un geste de l'auteur relance*. C'est mot pour mot l'invariant
+« rien n'est jamais relancé automatiquement ». `--info` `#7E8AA0` échouait deux fois : à 10 px il
+ne se distingue pas de `--texte-2` `#98A2AC`, donc il ne lit pas comme une couleur ; et c'est un
+bleu-gris posé à côté du cyan, ce qui coûte à l'accent son exclusivité. Il est retiré (§ Color).
+Les deux emplois du jaune restent **hors de la grille** — le pied de l'écran, et la bande de
+prompt au-dessus des tuiles — donc ce point chaud n'est jamais posé à côté d'un sprite.
+
+**Rien ne bouge.** L'apparition n'entre pas dans la liste close du § Motion : le fragment arrive
+dans la seule couleur chaude du châssis, il n'a pas besoin d'un fondu pour se faire voir. Et
+l'état peut battre plusieurs fois dans une séance — un fragment qui entre et sort en fondu dans
+une bande relue avant chaque clic devient un clignotement. Seule s'applique la tolérance générale
+du § Motion : 80 ms de transition de couleur sur le point de la barre d'état, `--ok` →
+`--epingle`.
 
 ### L'emplacement
 
@@ -309,3 +425,10 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 26/08/2026 | Aucun mode clair | Un utilisateur, un écran, un usage. Double maintenance d'états pour un mode qui fausserait le jugement. |
 | 26/08/2026 | Contrastes mesurés sur `--fond-2`, et `--echec` porté à `#CB6C65` | Le fond le plus clair où du texte est posé. `#C4635C` n'y valait que 4,35 : 1, sous AA — il était mesuré sur le fond qui le flattait. |
 | 26/08/2026 | `docs/maquette-atelier.html` définitivement écartée comme base | Châssis ambre en concurrence avec le contenu, `system-ui` en display et body, et un écran qui exhibe le cadrage au lieu de servir le geste. |
+| 27/08/2026 | **Aucun bandeau hors ligne** — le repli se pose dans la fente sous Générer | Un bandeau pleine largeur est du châssis permanent en travers de la grille, dans un système dont le principe unique est « chaque décision retire une concurrence à la grille » ; et il introduit une quatrième hauteur sur une colonne qui compte déjà 44 px en tête et 26 px en pied. La fente sous le bouton Générer existe déjà, en mono 10 px, et porte déjà `Ctrl + Entrée` au repos et la raison quand générer est grisé. Argument décisif : sans aucun modèle, générer **est** grisé et c'est le motif de la raison qui reprend la main — deux traitements du même fait à deux endroits selon le nombre de modèles revenus, c'est exactement ce que le bandeau imposait. **Coût** : à 10 px sous un bouton, la ligne se rate plus facilement qu'un bandeau ; on paie ça d'un échec au clic, ce que l'US-95 accepte explicitement. |
+| 27/08/2026 | Ce n'est **pas un motif à part** : c'est le revers de « Le grisé porte sa raison » | Le déclencheur est inversé — rien n'est grisé, tout marche, et le risque est le contraire du refus — mais c'est la même fente, la même forme et le même lien. Écrit dans ce motif-là plutôt qu'à côté, pour que la règle et son unique exception se lisent d'un seul tenant. |
+| 27/08/2026 | Le repli en `--epingle` ; **`--info` retiré de la palette** | `--epingle` = arrêté à un instant, que seul un geste de l'auteur relance : les trois usages coïncident, et le troisième était déjà « catalogue daté ». `--info` échouait deux fois — il ne se distingue pas de `--texte-2` à 10 px, donc il ne lit pas comme une couleur ; et son bleu-gris posé près du cyan coûte à l'accent son exclusivité. Retiré : le repli était son seul usage, et un token sémantique sans usage ré-autorise un second gris neutre plus tard. **Coût** : un point chaud de plus dans un châssis froid — tenu hors de la grille, jamais à côté d'un sprite. |
+| 27/08/2026 | **Une seule voix par bande** : les bandes machine sont en mono, phrases comprises | Corollaire de la règle 2 du § Typography, écrit dans le motif plutôt que dans § Typography pour ne pas réécrire la section. Pied de prompt, ligne de raison, méta de tuile, barre d'état : le sans mélangé au mono demanderait d'accorder deux familles à 10 px pour rien. La date reste en mono parce que c'est une mesure ; la phrase aussi, parce que c'est la machine qui parle. |
+| 27/08/2026 | **La date du catalogue vit dans la barre d'état**, pas dans la fente — *corrigé le jour même* | Posée d'abord dans la fente, avec les trois autres choses, pour que les quatre se lisent d'un tenant. Une relecture a montré que ça ne tenait pas : à l'ouverture le prompt est vide, donc le refus « aucun prompt » occupe la fente, donc la date n'était lisible **nulle part** avant que l'auteur ne tape un caractère — or c'est au démarrage que le catalogue doit dire son âge (US-93, critère T1). La règle qui tranche est celle du motif : *une date est un fait sur le monde, pas sur le clic à venir*. La barre d'état est le seul élément rendu en permanence, donc elle la porte. **Ce que ça rachiète** : l'ordre des trois locataires devient juste et non subi — tant que la demande n'est pas composée, il n'y a rien à prédire. **Coût** : les quatre choses ne se lisent plus sur une seule ligne, elles se répartissent sur deux bandes. |
+| 27/08/2026 | La **cause** du repli reste dans la barre d'état, elle ne monte pas dans la fente | Le port traduit déjà toute panne de transport en une phrase du produit, et elle dit à l'auteur si c'est son réseau ou celui d'en face — donc elle s'affiche. Mais ce n'est pas une conséquence du prochain clic : la fente porte ce qui va casser, la barre d'état porte ce qui est. Corollaire : la cause **s'ajoute** à la date, elle ne la remplace pas — la barre d'état porte les deux côte à côte, chacune dans son segment, et la fente n'en porte aucune. |
+| 27/08/2026 | L'apparition du repli **n'entre pas** dans la liste close du § Motion | Règle posée à cette occasion : un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être remarquée. Le fragment arrive dans la seule couleur chaude du châssis — il en a un. Et l'état peut battre plusieurs fois par séance : un fondu dans une bande relue avant chaque clic deviendrait un clignotement. |

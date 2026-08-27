@@ -211,7 +211,7 @@ deux vivent côte à côte.
   On appelle l'application ASGI directement, on lit les premiers messages, et on envoie
   `http.disconnect` — ce qui vérifie du même coup que le serveur s'en remet.
 - **Le message d'erreur d'`httpx` est en anglais, et il finit à l'écran.** « All connection
-  attempts failed » est ressorti tel quel dans le bandeau hors ligne. Toute erreur de
+  attempts failed » est ressorti tel quel dans la barre d'état. Toute erreur de
   transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message
   de bibliothèque ne franchit jamais le port.
 

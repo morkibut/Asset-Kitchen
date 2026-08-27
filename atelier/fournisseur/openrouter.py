@@ -213,9 +213,9 @@ def _panne(erreur: httpx.HTTPError) -> str:
     """Pourquoi la liaison n'a pas abouti, **en français**.
 
     Le message d'httpx est en anglais et technique — « All connection attempts
-    failed ». Il ne reste pas dans les journaux : il ressort tel quel dans le
-    bandeau hors ligne et sur la tuile d'un raté. Ce qui s'affiche doit donc
-    être une phrase du produit, jamais une trace de bibliothèque.
+    failed ». Il ne reste pas dans les journaux : il ressort tel quel dans la
+    barre d'état et sur la tuile d'un raté. Ce qui s'affiche doit donc être une
+    phrase du produit, jamais une trace de bibliothèque.
     """
     if isinstance(erreur, httpx.TimeoutException):
         return "le fournisseur n'a pas répondu à temps"

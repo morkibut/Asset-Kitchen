@@ -308,7 +308,7 @@ def test_une_generation_interrompue_n_affiche_plus_de_jauge(tmp_path, double, mo
 
 
 def test_hors_ligne_l_ecran_a_de_quoi_dater_son_repli(tmp_path, double, monkeypatch):
-    """Tout ce que le bandeau affiche vient de `GET /api/status`, en un appel."""
+    """Tout ce que le repli affiche vient de `GET /api/status`, en un appel."""
     monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     premier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
     asyncio.run(premier.ouvrir())  # une photo du catalogue est écrite sur le disque
@@ -319,7 +319,7 @@ def test_hors_ligne_l_ecran_a_de_quoi_dater_son_repli(tmp_path, double, monkeypa
         catalogue = client.get("/api/status").json()["catalogue"]
 
     assert catalogue["repli"] is True
-    assert catalogue["recu_le"] > 0  # la date en clair du bandeau
+    assert catalogue["recu_le"] > 0  # la date en clair, sous le bouton Générer
     assert catalogue["raison"] == "catalogue injoignable — réseau coupé"
     assert catalogue["modeles"] == 2  # un prompt se prépare quand même
 

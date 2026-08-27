@@ -23,6 +23,7 @@ import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile } from "./composants/Tuile"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
+type Geste = "Réglages" | "Réessayer"
 
 export function App() {
   const [etat, setEtat] = useState<Etat | null>(null)
@@ -88,6 +89,18 @@ export function App() {
       etat: (recu) => {
         setEtat(recu)
         if (recu.generations) setGenerations(recu.generations)
+        // Ce message part **une fois par abonnement**, donc à chaque
+        // rebranchement. Deux conséquences, et le repli dépend des deux.
+        //
+        // Son catalogue fait autorité sur celui que l'onglet gardait : sans ça,
+        // un serveur redémarré pendant une veille laisse la barre d'état dater
+        // une photo qui n'existe plus — ou n'en dater aucune alors qu'il y en a
+        // une, et générer partirait sans le moindre avertissement.
+        setCatalogueRepli(recu.catalogue)
+        // Et son arrivée **prouve** que l'atelier répond : une panne posée
+        // pendant son absence est un fait périmé. Sans ce nettoyage, un
+        // redémarrage ne « se rattrape sans rien recharger » que sur le papier.
+        setPanne(null)
       },
       generation: (recue) =>
         setGenerations((liste) => {
@@ -125,17 +138,24 @@ export function App() {
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
-  const refus = useMemo(() => {
-    if (panne) return panne
-    if (!liaison) return "l'atelier ne répond pas"
-    if (!etat?.cle.presente) return etat?.cle.raison ?? "aucune clé OpenRouter"
-    if (modeles.length === 0) return "aucun modèle — le catalogue n'a jamais été reçu"
-    if (!modele) return "aucun modèle choisi"
-    if (modele.refus) return `${modele.nom} ${modele.refus}`
-    if (!prompt.trim()) return "aucun prompt"
+  // Le refus porte **son geste** : chaque raison sait où elle mène, quand il y
+  // a un endroit où aller. « Le grisé porte sa raison — jamais une infobulle. »
+  const refus = useMemo<{ texte: string; geste?: Geste } | null>(() => {
+    if (panne) return { texte: panne }
+    if (!liaison) return { texte: "l'atelier ne répond pas" }
+    if (!etat?.cle.presente)
+      return {
+        texte: etat?.cle.raison ?? "aucune clé OpenRouter",
+        geste: "Réglages",
+      }
+    if (modeles.length === 0)
+      return { texte: "le catalogue n'a jamais été reçu", geste: "Réessayer" }
+    if (!modele) return { texte: "aucun modèle choisi" }
+    if (modele.refus) return { texte: `${modele.nom} ${modele.refus}` }
+    if (!prompt.trim()) return { texte: "aucun prompt" }
     // Hors ligne, générer reste **actif** : « l'échec ne survient qu'au moment
-    // où on génère, jamais à l'ouverture » (US-95). Le repli se dit dans le
-    // bandeau et la barre d'état, il ne barre pas la route.
+    // où on génère, jamais à l'ouverture » (US-95). Le repli se dit dans la
+    // fente sous le bouton et dans la barre d'état, il ne barre pas la route.
     return null
   }, [panne, liaison, etat, modeles, modele, prompt])
 
@@ -193,6 +213,24 @@ export function App() {
     }
   }
 
+  // « Le revers — l'actif qui porte son risque. » La fente **prédit** : elle dit
+  // ce qui cassera au prochain clic, et le geste qui répare. Elle ne date pas la
+  // photo — une date est un fait sur le monde, pas sur le clic à venir, et elle
+  // vit donc dans la barre d'état, qui est rendue en permanence.
+  //
+  // C'est ce qui rend l'ordre des trois locataires juste plutôt que subi : tant
+  // que la demande n'est pas composée, le refus tient la fente, et il n'y a
+  // aucune prédiction à faire puisqu'il n'y a pas de geste possible.
+  // `docs/DESIGN.md` § Motifs, *Le revers*.
+  const revers =
+    catalogueRepli.repli && catalogueRepli.recu_le > 0
+      ? {
+          texte: "seul générer échouera",
+          enCours: relecture,
+          onReessayer: redemanderCatalogue,
+        }
+      : null
+
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
       <BarreDeTete
@@ -201,45 +239,42 @@ export function App() {
         onRafraichir={redemanderCatalogue}
       />
 
-      {/* Le bandeau vit **dans** la rangée du travail, pas dans une rangée à
-          lui : une rangée de gabarit qui n'a pas toujours d'occupant décale
-          tout le reste les jours où le réseau va bien. */}
-      <div className="flex min-h-0 flex-col">
-        <BandeauHorsLigne
-          catalogue={catalogueRepli}
-          relecture={relecture}
-          onReessayer={redemanderCatalogue}
+      {/* Trois rangées, et rien de plus : 44 px en tête, le travail, 26 px en
+          pied. Le repli hors ligne n'ajoute **aucune hauteur** — il se pose
+          dans une fente qui existe déjà, sous le bouton Générer. */}
+      <main className="grid min-h-0 grid-cols-[300px_minmax(0,1fr)]">
+        <PanneauReglages
+          modeles={modeles}
+          choisi={modele}
+          onChoisir={setModeleChoisi}
+          proportions={proportions}
+          onProportions={setProportions}
+          variations={variations}
+          onVariations={setVariations}
+          options={options}
+          onOptions={setOptions}
         />
 
-        <main className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)]">
-          <PanneauReglages
-            modeles={modeles}
-            choisi={modele}
-            onChoisir={setModeleChoisi}
-            proportions={proportions}
-            onProportions={setProportions}
+        <section className="flex min-h-0 flex-col">
+          <ChampPrompt
+            prompt={prompt}
+            onPrompt={setPrompt}
+            promptNegatif={promptNegatif}
+            onPromptNegatif={setPromptNegatif}
+            refus={refus?.texte ?? null}
+            ouAller={refus?.geste}
+            onAller={
+              refus?.geste === "Réessayer"
+                ? redemanderCatalogue
+                : () => setReglagesOuverts(true)
+            }
+            revers={revers}
+            onGenerer={generer}
             variations={variations}
-            onVariations={setVariations}
-            options={options}
-            onOptions={setOptions}
           />
-
-          <section className="flex min-h-0 flex-col">
-            <ChampPrompt
-              prompt={prompt}
-              onPrompt={setPrompt}
-              promptNegatif={promptNegatif}
-              onPromptNegatif={setPromptNegatif}
-              refus={refus}
-              ouAller={refus === etat?.cle.raison ? "Réglages" : undefined}
-              onAller={() => setReglagesOuverts(true)}
-              onGenerer={generer}
-              variations={variations}
-            />
-            <Grille generations={generations} onRelancer={relancer} />
-          </section>
-        </main>
-      </div>
+          <Grille generations={generations} onRelancer={relancer} />
+        </section>
+      </main>
 
       <BarreEtat
         etat={etat}
@@ -290,55 +325,6 @@ function BarreDeTete({
         <Bouton onClick={onReglages} enfants="Réglages" />
       </div>
     </header>
-  )
-}
-
-// ── Le repli hors ligne, à l'écran ──────────────────────────────────────────
-//
-// « Le catalogue affiche sa date en clair, un prompt se prépare, et l'échec ne
-// survient qu'au moment de générer » — critère d'acceptation de T1.
-//
-// Le bandeau ne barre rien et ne s'excuse pas : il date ce qu'on voit, dit ce
-// qui marche encore, dit ce qui échouera, et donne le geste pour réessayer. En
-// `--info`, pas en `--echec` : hors ligne n'est pas une panne du produit, c'est
-// un état dans lequel il continue de servir.
-
-function BandeauHorsLigne({
-  catalogue,
-  relecture,
-  onReessayer,
-}: {
-  catalogue: Repli
-  relecture: boolean
-  onReessayer: () => void
-}) {
-  if (!catalogue.repli) return null
-
-  const jamaisRecu = catalogue.recu_le === 0
-
-  return (
-    <div className="mesure flex shrink-0 items-center gap-2 border-b border-info/35 bg-info/8 px-4 py-1.5 text-[10px] leading-4 text-info">
-      <span aria-hidden className="inline-block h-px w-2 bg-info" />
-      <span className="text-texte-2">
-        {jamaisRecu
-          ? "Hors ligne, et le catalogue n'a jamais été reçu."
-          : `Hors ligne — catalogue du ${heure(catalogue.recu_le)}.`}
-      </span>
-      <span>
-        {jamaisRecu
-          ? "Aucun modèle à proposer tant que le réseau n'est pas revenu."
-          : "On peut écrire et régler ; générer échouera tant que le réseau est coupé."}
-      </span>
-      {catalogue.raison && <span className="text-texte-3">· {catalogue.raison}</span>}
-      <button
-        type="button"
-        onClick={onReessayer}
-        disabled={relecture}
-        className="ml-auto text-signal hover:text-signal-clair disabled:text-texte-3"
-      >
-        {relecture ? "…" : "Réessayer ›"}
-      </button>
-    </div>
   )
 }
 
@@ -398,20 +384,39 @@ function BarreEtat({
   // Trois choses différentes, et il ne faut pas les confondre : l'atelier est
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
   // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
+  //
+  // Le repli est en `--epingle` : arrêté à un instant, que le système ne
+  // bougera pas tout seul, et que seul un geste de l'auteur relance. `--info`
+  // ne lisait pas comme une couleur à 10 px — il est retiré de la palette.
   const [couleur, texte] = !liaison
     ? ["var(--color-echec)", "l'atelier ne répond pas"]
     : panne
       ? ["var(--color-echec)", panne]
       : catalogue.repli
-        ? ["var(--color-info)", "hors ligne — dernier catalogue reçu"]
+        ? ["var(--color-epingle)", "hors ligne"]
         : ["var(--color-ok)", "en ligne"]
 
+  // Deux altitudes, deux métiers : le pied porte **l'état du monde** — et
+  // pourquoi, quand le port a su le dire en français. Il ne prédit jamais ce
+  // qui va casser : ça, c'est la fente sous le bouton Générer.
   return (
     <footer className="mesure flex items-center gap-4 border-t border-bord bg-fond-1 px-4 text-[10px] text-texte-3">
       <span className="flex items-center gap-1.5">
         <Point couleur={couleur} />
         {texte}
       </span>
+      {/* **La date vit ici**, et nulle part ailleurs — dans un segment à elle,
+          jamais fondue dans la phrase d'état. La mettre dans la fente sous
+          Générer la rendait invisible à l'ouverture, où le refus « aucun prompt »
+          occupe la fente ; la fondre dans la phrase la rendait invisible dès
+          qu'une panne ou une liaison rompue prend cette phrase. Or c'est
+          précisément quand ça va mal que l'âge de la photo compte (US-93).
+          Sans photo, il n'y a rien à dater : c'est la fente, où générer est
+          grisé avec sa raison, qui dit que le catalogue n'est jamais arrivé. */}
+      {catalogue.repli && catalogue.recu_le > 0 && (
+        <span className="text-epingle">catalogue du {heure(catalogue.recu_le)}</span>
+      )}
+      {catalogue.repli && catalogue.raison && <span>{catalogue.raison}</span>}
       <span>{etat?.catalogue.modeles ?? 0} modèles</span>
       <span className="ml-auto">
         {etat?.cle.presente ? `clé …${etat.cle.apercu}` : "aucune clé"}

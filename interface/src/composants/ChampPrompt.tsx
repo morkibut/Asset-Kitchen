@@ -6,7 +6,7 @@
 // le lit encore moins.
 
 import { useEffect, useRef, useState } from "react"
-import { Bouton, Raison } from "./chassis"
+import { Bouton, Raison, Revers } from "./chassis"
 
 export function ChampPrompt({
   prompt,
@@ -16,6 +16,7 @@ export function ChampPrompt({
   refus,
   ouAller,
   onAller,
+  revers,
   onGenerer,
   variations,
 }: {
@@ -26,6 +27,8 @@ export function ChampPrompt({
   refus: string | null
   ouAller?: string
   onAller?: () => void
+  /** Le repli hors ligne, quand il y a un catalogue à servir. */
+  revers?: { texte: string; enCours: boolean; onReessayer: () => void } | null
   onGenerer: () => void
   variations: number
 }) {
@@ -78,8 +81,21 @@ export function ChampPrompt({
           <Bouton principal inactif={refus !== null} onClick={onGenerer} enfants={
             variations > 1 ? `Générer ${variations} variations` : "Générer"
           } />
-          <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
-          {!refus && (
+          {/* La fente : une ligne mono 10 px alignée à droite, trois
+              locataires, **jamais deux à la fois** — `docs/DESIGN.md`
+              § Motifs, *Le revers*. Le refus l'emporte : quand le catalogue
+              n'a jamais été reçu, il n'y a ni date à porter ni nuance à faire,
+              et c'est le grisé ordinaire qui reprend la main. */}
+          {refus ? (
+            <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
+          ) : revers ? (
+            <Revers
+              texte={revers.texte}
+              geste="Réessayer"
+              onGeste={revers.onReessayer}
+              enCours={revers.enCours}
+            />
+          ) : (
             <p className="mesure mt-1 text-[10px] text-texte-3">Ctrl + Entrée</p>
           )}
         </div>

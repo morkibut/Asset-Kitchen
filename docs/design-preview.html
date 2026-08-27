@@ -31,7 +31,7 @@
   --ok:#5FA871;
   --epingle:#C8A03C;
   --echec:#CB6C65;
-  --info:#7E8AA0;
+  /* --info #7E8AA0 : retiré le 27/08, plus aucun usage — § Couleur. */
 
   --r-s:2px; --r:3px; --r-l:4px;
 
@@ -138,7 +138,7 @@ pre.code{
   margin-top:7px;display:flex;align-items:center;gap:7px;line-height:1.4
 }
 .raison::before{content:'';width:8px;height:1px;background:var(--bord-fort);flex:none}
-.raison a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-sourd)}
+.raison a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-sourd);white-space:nowrap}
 
 /* champs */
 .champ-l{font-size:11.5px;color:var(--texte-2);display:block;margin-bottom:6px}
@@ -176,7 +176,6 @@ pre.code{
 .b-ok{border-left-color:var(--ok)} .b-ok .pic{background:var(--ok)}
 .b-al{border-left-color:var(--epingle)} .b-al .pic{background:var(--epingle)}
 .b-ec{border-left-color:var(--echec)} .b-ec .pic{background:var(--echec)}
-.b-in{border-left-color:var(--info)} .b-in .pic{background:var(--info)}
 
 /* ————— la tuile : l'objet central ————— */
 .tuile{position:relative;background:var(--fond-2);border:1px solid var(--bord);display:flex;flex-direction:column;transition:border-color 80ms linear}
@@ -295,6 +294,33 @@ pre.code{
 .prompt-pied .lien:hover{color:var(--signal-clair)}
 .prompt-pied .sp{color:var(--bord-fort)}
 
+/* le revers : le repli hors ligne, dans le pied de prompt — aucune hauteur neuve */
+.repli{margin-left:auto;flex:none;display:flex;align-items:center;gap:7px;color:var(--epingle);white-space:nowrap}
+.repli::before{content:'';width:8px;height:1px;background:var(--epingle);flex:none}
+.repli .sp{color:rgba(200,160,60,.42)}
+.repli a{color:var(--signal);text-decoration:none;white-space:nowrap}
+.repli a:hover{color:var(--signal-clair)}
+
+/* la fente sous Générer : trois locataires, jamais deux à la fois */
+.fente{display:grid;gap:18px;margin-bottom:22px;max-width:840px}
+.fente-demo{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r-s);padding:14px 16px 13px;display:flex;flex-direction:column;align-items:flex-end}
+.sous-bouton{font-family:var(--mono);font-size:10px;line-height:1.4;color:var(--texte-3);margin-top:7px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+/* mini-écrans : la même bande dans ses trois états */
+.etats{display:grid;gap:16px}
+.etat-tag{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--texte-3);margin-bottom:7px;display:flex;gap:9px;align-items:baseline;white-space:nowrap
+}
+.etat-tag i{font-style:normal;color:var(--texte-2);letter-spacing:0;text-transform:none;font-family:var(--sans);font-size:11.5px;white-space:normal;min-width:0}
+.mini{border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;background:var(--fond-0);min-width:0}
+.mini .prompt-pied{flex-wrap:nowrap;overflow:hidden}
+.mini .app-pied{height:26px;white-space:nowrap;overflow:hidden}
+.mini .app-pied>*{flex:none}
+.mini .app-pied .jaune{width:5px;height:5px;border-radius:50%;background:var(--epingle);display:inline-block}
+.mini .app-pied .etat-hl{color:var(--epingle)}
+.mini-grille{padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;background:var(--fond-0)}
+
 .grille-barre{
   height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;
   border-bottom:1px solid var(--bord);background:var(--fond-0);flex:none
@@ -361,7 +387,7 @@ pre.code{
 
 <div class="page">
   <header class="entete">
-    <div class="fil">docs/design-preview.html · 26 août 2026</div>
+    <div class="fil">docs/design-preview.html · 26 août 2026, revu le 27</div>
     <h1>Asset&nbsp;Kitchen</h1>
     <p class="chapeau">
       Système de design — <em>la table lumineuse</em>. Le châssis est froid, désaturé et muet ;
@@ -489,11 +515,12 @@ pre.code{
         <div class="sw"><div class="pave" style="background:#49B3CE"></div><div class="txt"><div class="nm">signal</div><div class="hx">#49B3CE</div><div class="us">7,1:1 — générer, favori, actif, progression. Le seul accent.</div></div></div>
         <div class="sw"><div class="pave" style="background:#EAF4F8"></div><div class="txt"><div class="nm">lumière</div><div class="hx">#EAF4F8</div><div class="us">Sélection et focus. C'est la lampe de la table.</div></div></div>
         <div class="sw"><div class="pave" style="background:#5FA871"></div><div class="txt"><div class="nm">ok</div><div class="hx">#5FA871</div><div class="us">6,0:1 — réussi, en ligne, remis à jour.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#C8A03C"></div><div class="txt"><div class="nm">épinglé</div><div class="hx">#C8A03C</div><div class="us">7,0:1 — réglé à la main, interrompu, catalogue daté.</div></div></div>
+        <div class="sw"><div class="pave" style="background:#C8A03C"></div><div class="txt"><div class="nm">épinglé</div><div class="hx">#C8A03C</div><div class="us">7,0:1 — réglé à la main, interrompu, catalogue servi de repli. <b style="color:var(--texte-2);font-weight:400">Arrêté à un instant, que seul un geste relance.</b></div></div></div>
         <div class="sw"><div class="pave" style="background:#CB6C65"></div><div class="txt"><div class="nm">échec</div><div class="hx">#CB6C65</div><div class="us">4,8:1 — appel raté, suppression, refus.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#7E8AA0"></div><div class="txt"><div class="nm">info</div><div class="hx">#7E8AA0</div><div class="us">Hors ligne, repli, information neutre.</div></div></div>
+        <div class="sw" style="opacity:.5"><div class="pave" style="background:#7E8AA0;position:relative"><span style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#171B21">retiré</span></div><div class="txt"><div class="nm">info</div><div class="hx">#7E8AA0</div><div class="us">27/08 — le repli est passé en épinglé. Plus aucun usage.</div></div></div>
       </div>
       <p class="note">Le cyan est choisi <b>contre le contenu</b> : verts, bruns et ors saturent le pixel art de fantasy, un accent chaud s'y noierait. Aucun dégradé, nulle part. Une seule texture dans tout le produit — le damier alpha, qui révèle la transparence : il est fonctionnel, pas décoratif.</p>
+      <p class="note"><b>À trois sémantiques.</b> <code style="font-family:var(--mono);font-size:11px">--info</code> est retiré le 27/08 : il n'avait qu'un usage — le repli hors ligne — et le repli est passé en <b>épinglé</b>, dont c'était déjà le troisième emploi déclaré. À 10 px, <code style="font-family:var(--mono);font-size:11px">#7E8AA0</code> ne se distinguait pas de <b>texte-2</b> <code style="font-family:var(--mono);font-size:11px">#98A2AC</code> : il ne lisait pas comme une couleur. Et son bleu-gris posé près du cyan coûtait à l'accent son exclusivité.</p>
     </div>
 
     <hr class="fin">
@@ -552,13 +579,69 @@ pre.code{
 
     <hr class="fin">
 
+    <span class="etiq">Le revers &mdash; l'actif qui porte son risque</span>
+    <p class="note" style="margin:0 0 16px;max-width:80ch">
+      Le repli hors ligne est le <b>seul endroit du produit o&ugrave; l'on propose puis refuse</b> : le catalogue est
+      une photo, g&eacute;n&eacute;rer reste actif, l'&eacute;chec ne vient qu'au clic (<b>US-95</b>). C'est l'exception au motif
+      ci-dessus, et elle se rend dans <b>la m&ecirc;me fente, avec la m&ecirc;me forme</b> &mdash; tiret de 8 px, mono 10 px,
+      lien signal. Ce qui change est le mot : le gris&eacute; dit <em>pourquoi c'est ferm&eacute;</em>, le revers dit
+      <em>ce qui va casser</em>. La fente, c'est la ligne align&eacute;e &agrave; droite sous G&eacute;n&eacute;rer &mdash; elle a d&eacute;j&agrave; deux
+      locataires, en voici le troisi&egrave;me. <b>Elle pr&eacute;dit, elle ne raconte pas</b>&nbsp;: la date de la photo
+      servie est un fait sur le monde, elle vit donc en bas, dans la seule bande rendue en permanence.
+    </p>
+
+    <div class="fente">
+      <div>
+        <div class="etat-tag">au repos <i>&mdash; en ligne, rien &agrave; signaler</i></div>
+        <div class="fente-demo">
+          <button class="btn btn-1">G&eacute;n&eacute;rer 3 variations <span class="cout">3 &times; $0,031</span></button>
+          <div class="sous-bouton">Ctrl + Entr&eacute;e</div>
+        </div>
+      </div>
+      <div>
+        <div class="etat-tag" style="color:var(--epingle)">le revers <i style="color:var(--epingle)">&mdash; hors ligne, g&eacute;n&eacute;rer reste actif, l'échec ne viendra qu'au clic</i></div>
+        <div class="fente-demo">
+          <button class="btn btn-1">G&eacute;n&eacute;rer 3 variations <span class="cout">3 &times; $0,031</span></button>
+          <div class="sous-bouton repli">seul g&eacute;n&eacute;rer &eacute;chouera <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></div>
+        </div>
+      </div>
+      <div>
+        <div class="etat-tag">le gris&eacute; <i>&mdash; catalogue jamais re&ccedil;u, aucun mod&egrave;le : le motif ordinaire reprend la fente</i></div>
+        <div class="fente-demo">
+          <button class="btn btn-off" disabled>G&eacute;n&eacute;rer</button>
+          <div class="sous-bouton"><span class="raison" style="margin:0;justify-content:flex-end">le catalogue n'a jamais &eacute;t&eacute; re&ccedil;u <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legende" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+      <div><b>la fente pr&eacute;dit</b><span>ce qui &eacute;chouera, ce qui marche encore (<em>seul</em>&nbsp;: la panne born&eacute;e dit son compl&eacute;ment), le geste</span></div>
+      <div><b>le pied raconte</b><span>la date de la photo servie et la cause &mdash; des faits sur le monde, lisibles d&egrave;s l'ouverture, prompt vide</span></div>
+      <div><b>&eacute;pingl&eacute;</b><span>arr&ecirc;t&eacute; &agrave; un instant, que seul un geste de l'auteur relance &mdash; comme &laquo;&nbsp;r&eacute;gl&eacute;&nbsp;&raquo; et &laquo;&nbsp;interrompu&nbsp;&raquo;</span></div>
+      <div><b>jamais deux</b><span>les trois locataires de la fente s'excluent&nbsp;: c'est ce qui prouve l'emplacement</span></div>
+      <div><b>instantan&eacute;</b><span>aucun fondu &mdash; le fragment arrive dans la seule couleur chaude du ch&acirc;ssis, il se voit tout seul</span></div>
+    </div>
+    <p class="note" style="max-width:80ch">
+      <b>Pas de bandeau, pas de rang&eacute;e, aucune hauteur neuve</b> sur une colonne qui compte 44 px en t&ecirc;te et
+      26 px en pied. Et la preuve de l'emplacement&nbsp;: quand aucun mod&egrave;le n'est revenu, g&eacute;n&eacute;rer <em>est</em>
+      gris&eacute; &mdash; la m&ecirc;me fente passe du revers au gris&eacute;. Un bandeau aurait trait&eacute; le m&ecirc;me fait &agrave; deux
+      endroits selon le nombre de mod&egrave;les re&ccedil;us.<br><br>
+      <b>La date a d'abord &eacute;t&eacute; pos&eacute;e ici, puis retir&eacute;e le jour m&ecirc;me.</b> &Agrave; l'ouverture le prompt est vide,
+      donc le refus &laquo;&nbsp;aucun prompt&nbsp;&raquo; occupe la fente &mdash; et la date n'&eacute;tait lisible nulle part avant
+      qu'on ait tap&eacute; un caract&egrave;re, alors que c'est au d&eacute;marrage qu'elle compte le plus (<b>US-93</b>).
+      Ce que la correction rach&egrave;te&nbsp;: l'ordre des trois locataires devient <em>juste</em> et non subi &mdash;
+      tant que la demande n'est pas compos&eacute;e, il n'y a rien &agrave; pr&eacute;dire.
+    </p>
+
+    <hr class="fin">
+
     <span class="etiq">Bandeaux</span>
     <div style="display:grid;gap:9px;max-width:780px">
       <div class="bandeau b-ok"><span class="pic"></span><div><span class="t">Palette réappliquée</span><span class="n">12</span> assets remis à jour, <span class="n">3</span> conservés tels quels — ils sont réglés à la main.</div></div>
       <div class="bandeau b-al"><span class="pic"></span><div><span class="t">Génération interrompue</span>Coupée par un redémarrage le 26/08 à 14:02. Coût déjà engagé : <span class="n">$0,031</span>. Rien n'a été relancé.</div></div>
       <div class="bandeau b-ec"><span class="pic"></span><div><span class="t">2 variations sur 4 ont échoué</span>Le fournisseur a refusé : plafond de références dépassé. Les 2 réussites sont en bibliothèque.</div></div>
-      <div class="bandeau b-in"><span class="pic"></span><div><span class="t">Catalogue du 26/08 à 14:02</span>Le fournisseur n'a pas répondu. Bibliothèque, retouche, découpe et export fonctionnent normalement.</div></div>
     </div>
+    <p class="note">Le bandeau rapporte un <b>événement terminé</b> — quelque chose vient de se passer, voilà le compte. Il ne porte jamais un <b>état qui dure</b> : le repli hors ligne a eu son bandeau jusqu'au 27/08, il a été retiré — voir <em>Le revers</em>, ci-dessus.</p>
 
     <hr class="fin">
 
@@ -783,6 +866,102 @@ pre.code{
       replié, tenu par un défaut du projet, ou vit dans l'écran Univers. Le panneau réglages ne
       porte que les trois choses qu'on touche à chaque génération, plus un bloc en lecture seule
       qui répond d'avance à « qu'est-ce qui part avec ? ».
+    </p>
+
+    <hr class="fin">
+
+    <div class="titre-sec" style="margin-top:8px"><span class="num">03b</span><h2>Le repli hors ligne</h2></div>
+    <p class="sous">
+      Le catalogue est injoignable. <b>Le d&eacute;marrage n'affiche aucune erreur</b>, la biblioth&egrave;que est l&agrave;, le
+      champ prend le texte, le panneau r&eacute;pond &mdash; et <b>G&eacute;n&eacute;rer reste actif</b> : le repli informe, il ne
+      barre pas la route. Trois &eacute;tats de la m&ecirc;me bande, dans l'&eacute;cran, &agrave; l'&eacute;chelle.
+    </p>
+
+    <div class="etats">
+      <div>
+        <div class="etat-tag">01 &middot; en ligne <i>&mdash; la r&eacute;f&eacute;rence</i></div>
+        <div class="mini">
+          <div class="prompt-zone">
+            <div class="prompt-rang">
+              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
+              <button class="btn btn-1" style="height:52px;padding:0 18px;flex-direction:column;gap:3px;justify-content:center;flex:none">G&eacute;n&eacute;rer <span class="cout">3 &times; $0,031</span></button>
+            </div>
+            <div class="prompt-pied">
+              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
+              <span class="sous-bouton" style="margin:0 0 0 auto">Ctrl + Entr&eacute;e</span>
+            </div>
+          </div>
+        <div class="mini-grille">
+          <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cercl&eacute;</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
+          <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_&eacute;claireur_03</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">r&eacute;gl&eacute;</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">cl&eacute;_de_vo&ucirc;te</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taill&eacute;e_01</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+        </div>
+          <footer class="app-pied">
+            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
+            <div class="d"><span>catalogue 26/08 14:02</span><span class="sp">&middot;</span><span><span class="vert"></span> en ligne</span></div>
+          </footer>
+        </div>
+      </div>
+
+      <div>
+        <div class="etat-tag">02 &middot; hors ligne, catalogue dat&eacute; <i>&mdash; le revers : g&eacute;n&eacute;rer reste actif, la fente dit ce qui va casser</i></div>
+        <div class="mini">
+          <div class="prompt-zone">
+            <div class="prompt-rang">
+              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
+              <button class="btn btn-1" style="height:52px;padding:0 18px;flex-direction:column;gap:3px;justify-content:center;flex:none">G&eacute;n&eacute;rer <span class="cout">3 &times; $0,031</span></button>
+            </div>
+            <div class="prompt-pied">
+              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
+              <span class="repli">seul g&eacute;n&eacute;rer &eacute;chouera <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span>
+            </div>
+          </div>
+        <div class="mini-grille">
+          <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cercl&eacute;</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
+          <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_&eacute;claireur_03</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">r&eacute;gl&eacute;</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">cl&eacute;_de_vo&ucirc;te</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+          <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taill&eacute;e_01</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
+        </div>
+          <footer class="app-pied">
+            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
+            <div class="d"><span class="etat-hl"><span class="jaune"></span> hors ligne</span><span class="sp">&middot;</span><span class="etat-hl">catalogue du 26/08 14:02</span><span class="sp">&middot;</span><span>aucune connexion au fournisseur</span></div>
+          </footer>
+        </div>
+      </div>
+
+      <div>
+        <div class="etat-tag">03 &middot; hors ligne, catalogue jamais re&ccedil;u <i>&mdash; aucun mod&egrave;le : le gris&eacute; ordinaire reprend la fente, et c'est tout ce qu'il y a &agrave; dire</i></div>
+        <div class="mini">
+          <div class="prompt-zone">
+            <div class="prompt-rang">
+              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
+              <button class="btn btn-off" disabled style="height:52px;padding:0 18px;flex:none">G&eacute;n&eacute;rer</button>
+            </div>
+            <div class="prompt-pied">
+              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
+              <span class="raison" style="margin:0 0 0 auto">le catalogue n'a jamais &eacute;t&eacute; re&ccedil;u <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span>
+            </div>
+          </div>
+          <footer class="app-pied">
+            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
+            <div class="d"><span>0 mod&egrave;les</span><span class="sp">&middot;</span><span class="etat-hl"><span class="jaune"></span> hors ligne</span></div>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <p class="note" style="max-width:82ch">
+      <b>Ce que la ligne du bas dit quand elle passe en jaune.</b> Trois faits, <b>chacun dans son propre
+      segment</b>&nbsp;: la liaison, la date de la photo servie, la cause. Les d&eacute;couper n'est pas de la
+      cosm&eacute;tique &mdash; la phrase de liaison est disput&eacute;e (une g&eacute;n&eacute;ration refus&eacute;e ou un flux rompu la prennent,
+      et &agrave; juste titre, c'est plus grave), et fondre la date dedans la ferait dispara&icirc;tre au moment
+      o&ugrave; elle compte le plus. <b>Deux altitudes, deux m&eacute;tiers</b>&nbsp;: le pied raconte l'&eacute;tat du monde et
+      ne pr&eacute;dit jamais&nbsp;; la fente pr&eacute;dit le prochain geste et ne raconte jamais le r&eacute;seau. La date
+      est un fait sur le monde, elle reste donc en bas &mdash; et elle y est lisible d&egrave;s l'ouverture,
+      prompt vide, l&agrave; o&ugrave; la fente est encore prise par &laquo;&nbsp;aucun prompt&nbsp;&raquo;.
     </p>
   </section>
 
