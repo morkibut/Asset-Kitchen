@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+"""Ce que l'auteur demande — avant qu'un modèle ne soit consulté."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Mapping
+
+
+@dataclass(frozen=True, slots=True)
+class Demande:
+    """Un sujet, ce qu'on n'en veut pas, et le cadrage.
+
+    `references` est vide en T1 jalon 1 : la réinjection d'un asset arrive en T3,
+    les artworks officiels en T4. Le champ existe déjà parce que c'est lui qui
+    décide du grisé d'un modèle, et que ce calcul ne doit pas être réécrit.
+    """
+
+    prompt: str
+    prompt_negatif: str = ""
+    proportions: str = "1:1"
+    resolution: str | None = None
+    variations: int = 1
+    references: tuple[bytes, ...] = ()
+    options: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.prompt.strip():
+            raise ValueError("prompt vide")
+        if self.variations < 1:
+            raise ValueError("au moins une variation")
+
+    def resume(self) -> dict[str, Any]:
+        """Les paramètres, sans les octets des références — pour l'enregistrement."""
+        return {
+            "prompt": self.prompt,
+            "prompt_negatif": self.prompt_negatif,
+            "proportions": self.proportions,
+            "resolution": self.resolution,
+            "variations": self.variations,
+            "references": len(self.references),
+            "options": dict(self.options),
+        }

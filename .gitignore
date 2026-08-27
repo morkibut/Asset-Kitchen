@@ -2,3 +2,7 @@ essais/resultats/
 .env
 __pycache__/
 donnees/
+.venv/
+node_modules/
+interface/dist/
+*.pyc

@@ -10,13 +10,37 @@ code le jeu.
 Ce fichier-ci ne dit que **comment travailler dans ce dépôt**. Ce qu'il faut construire vit
 dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 
-## État au 26 août 2026
+## État au 27 août 2026
 
-Aucun code applicatif n'est écrit. Le cadrage technique est complet (`docs/ARCHITECTURE.md`),
-le PRD aussi — 97 user stories (`docs/PRD.md`). **Deux bancs de modèles ont tourné**
-(`essais/`) : 156 images, ~$7,60. Ils ont levé le risque principal, disqualifié quatre
-modèles, et produit trois contraintes de conception qu'aucune réflexion n'aurait données.
-Reste `/design` puis `/planifie` avant de coder.
+La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
+commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
+
+**T1, jalon 1 est fait** : le squelette du dépôt, la clé, le catalogue relu au démarrage,
+et un appel qui rend une image téléchargeable. Le serveur tourne, l'API répond, 14 tests
+d'acceptation passent, et la première image réelle est sortie — un tonneau en 1024×1024
+pour **$0,0064**. Il n'y a pas encore d'interface : `interface/` n'existe pas, tout se
+touche par l'API.
+
+**Le risque « couverture image d'OpenRouter » est levé** (`essais/essai_couverture.py`) :
+48 modèles image, 11 fournisseurs, 31 acceptent assez de références pour un univers.
+
+Reste de T1 : les variations concurrentes à l'écran, la reprise après fermeture de
+l'onglet, le repli hors ligne vu de l'interface — et donc l'interface elle-même.
+
+## Lancer
+
+```
+uv venv --python 3.11
+uv pip install -e ".[dev]"
+
+py -m atelier                        lance le serveur et ouvre le navigateur
+py -m atelier --sans-navigateur --port 8421
+pytest -q                            les critères d'acceptation, sans un centime
+py essais/essai_couverture.py        la couverture du fournisseur, gratuit
+py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
+```
+
+L'API est documentée d'elle-même sur `/api/docs`.
 
 ## Les documents et leur autorité
 
@@ -70,8 +94,15 @@ chaîne avance : c'est le signe que ça marche.
 
 | | |
 |---|---|
+| `atelier/` | le paquet Python — `domaine/` les objets et les règles, `fournisseur/` le port et l'adaptateur OpenRouter, `services/` les gestes, `api/` les routes, `depot/` SQLite et fichiers, `image/` le traitement, `mcp/` vide jusqu'à T7 |
+| `tests/test_t1_jalon1.py` | un test par critère d'acceptation de T1 déjà tenu. Le fournisseur y est un double : aucun test ne coûte un centime |
+| `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
+| `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
+| `donnees/` | l'index SQLite, la photo du catalogue, les générations et leurs images. Hors Git |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
+| `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
+| `docs/DESIGN.md` + `docs/design-preview.html` | l'apparence — typographie, palette, densité, mouvement, et le spécimen qui les montre |
 | `docs/maquette-atelier.html` | **brouillon écarté** — jugé trop chargé et trop loin de la fluidité recherchée. Reste sur disque, ne sert pas de base. L'interface part du geste quotidien : écrire, générer, juger, garder. |
 | `essais/essai_identite.py` | banc de modèles — quatre appels enchaînés, deux jets, parallèle |
 | `essais/resultats/jet<N>/<config>/` | images produites + `mesures.json` (coût et durée réels) |
@@ -138,6 +169,16 @@ deux vivent côte à côte.
 - **L'échelle du sujet dérive d'une génération à l'autre**, malgré tous les « same size » du
   prompt. Le recadrage et la normalisation d'échelle ne sont pas du confort : sans eux, deux
   frames ne se montent pas.
+- **Aucun modèle ne déclare de prompt négatif.** Relevé sur les 48 modèles image du
+  catalogue : zéro `negative_prompt`. Le champ existe dans le produit (US-6) ; c'est
+  l'adaptateur qui le replie en fin de prompt (`Do not include: …`). Ne jamais l'envoyer
+  comme un paramètre : il serait ignoré en silence, comme `output_format` chez Seedream.
+- **Le catalogue bouge d'un jour à l'autre.** 47 modèles le 26 août, 48 le 27 —
+  `meta/muse-image` est apparu entre les deux. C'est précisément ce qu'une liste écrite en
+  dur ne verrait pas.
+- **Le coût d'un appel dépend du nombre de références, chez ceux qui facturent au token.**
+  Mesuré sur `gpt-image-2` en `quality: low` : $0,0064 sans référence, $0,0124 avec une,
+  $0,0245 avec deux. Un univers riche renchérit chaque appel — à surveiller dès T4.
 - **Un seul échantillon ne mesure rien.** Un modèle génératif n'est pas déterministe : tout
   banc se fait en deux jets au minimum, et l'écart entre eux compte autant que la moyenne.
 

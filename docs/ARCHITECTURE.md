@@ -38,7 +38,7 @@ l'intégration ne l'est pas.
 |---|---|---|
 | Socle | Nouveau dépôt. Récupération ciblée, pas de fork. | Paradigme opposé à GAG, moteur opposé à MySpriteAi. |
 | Moteur d'image | **API seulement**, via **OpenRouter comme passerelle unique**. | Cohérence d'identité impossible en local sur 8 Go — mesuré : Flux GGUF 1024 à 106,9 s/image sur cette machine. |
-| Fournisseur | Un seul adaptateur : OpenRouter. Un compte, une clé, une facture. | 47 modèles image de 8 fournisseurs, paramètres unifiés, découverte de capacités, `usage.cost` par appel. Écrire trois adaptateurs donnerait le même résultat pour trois fois le travail. |
+| Fournisseur | Un seul adaptateur : OpenRouter. Un compte, une clé, une facture. | 48 modèles image de 11 fournisseurs, paramètres unifiés, découverte de capacités, `usage.cost` par appel. Écrire trois adaptateurs donnerait le même résultat pour trois fois le travail. |
 | Comptabilité | **Aucun compteur de crédits maison en V1.** Suivi des coûts dans le tableau de bord OpenRouter. | Économise tout un pan de code pour une information déjà rendue ailleurs. |
 | Modèles locaux | Hors application. Import du résultat. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. |
 | Détourage | `rembg` en local, en direct, passes multiples possibles. | 1–2 s, aucun GPU mobilisé longtemps, aucune dépendance à un service. |
@@ -127,7 +127,8 @@ d'image, colonnes SQL, interface : en français.
 
 ## 4 bis · Fournisseur et modèles
 
-Un seul adaptateur, OpenRouter (`https://openrouter.ai/api/v1`). Relevé du 26 août 2026.
+Un seul adaptateur, OpenRouter (`https://openrouter.ai/api/v1`). Relevé du 26 août 2026,
+recompté le 27 : **48 modèles image, 11 fournisseurs** (`essais/couverture.json`).
 
 **Le catalogue décide, jamais une liste en dur.** `GET /api/v1/images/models` est relu au
 démarrage : il donne par modèle le plafond de références, les résolutions, les paramètres
@@ -173,15 +174,21 @@ alors rien à écraser.
 3. **Les petits objets sortent plus grossiers que les personnages** (16 px de bloc contre 8),
    chez les trois modèles. La taille cible doit être imposée, pas espérée.
 
-**Deux pièges de fournisseur, vérifiés par appel :**
+**Trois pièges de fournisseur, vérifiés par appel :**
 
+- **Aucun modèle ne déclare de prompt négatif.** Relevé le 27 août 2026 sur les 48 modèles
+  image : zéro `negative_prompt`. Le prompt négatif est un champ du produit (US-6), pas un
+  paramètre du fournisseur — **c'est l'adaptateur qui le replie en fin de prompt**. L'envoyer
+  comme paramètre reviendrait à le voir ignoré en silence, exactement comme `output_format`
+  chez Seedream.
 - **Les Seedream ne rendent que du JPEG.** `output_format: "png"` est accepté sans erreur puis
   ignoré (`media_type: image/jpeg`). Le catalogue ne déclare pas ce paramètre pour eux — il ne
   ment pas, il se tait. Mesuré : le bruit JPEG est absorbé par la réduction et la
   quantification (1 316 couleurs à 64 px → 32 après quantification), donc handicap réel mais
   non disqualifiant.
 - **Le coût dépend du nombre de références, mais seulement pour les modèles facturés au token.**
-  `gpt-image-2` double de $0,0124 à $0,0245 en passant d'une à deux références ; les Seedream,
+  `gpt-image-2` va de **$0,0064 sans référence** à $0,0124 avec une puis $0,0245 avec deux —
+  les deux premiers chiffres mesurés en `quality: low`, le troisième au banc 2. Les Seedream,
   facturés à l'image, ne bougent pas. **À quatre ou cinq artworks officiels, le classement des
   coûts s'inverse** — l'économie du projet dépend donc de la taille de l'univers.
 
@@ -355,31 +362,22 @@ n'oblige jamais à quitter l'endroit où l'on crée — c'est ce qui fait qu'on 
 
 ### 6.3 Ordre de construction
 
-Chaque tranche est utilisable à sa livraison. On ne passe à la suivante que
-lorsque la précédente sert vraiment.
+Sept tranches verticales, décidées ici le 26 août 2026 : **T1** la première image,
+**T2** le post-traitement, **T3** la bibliothèque, **T4** le tableau et l'univers,
+**T5** le slicer, **T6** l'export, **T7** le MCP.
 
-| | Tranche | Ce qu'on peut faire à la fin | Sert dès |
-|---|---|---|---|
-| **T1** | La première image | Écrire un prompt, obtenir un PNG, le télécharger. Un seul fournisseur. | tout de suite |
-| **T2** | Le post-traitement | Détourer, pixelliser, quantifier, régler en direct, retélécharger. | tout de suite |
-| **T3** | La bibliothèque | Tout ce qui sort est gardé, retrouvable, rangeable. Réinjection d'un asset. | tout de suite |
-| **T4** | Le tableau et l'univers | Rassembler des références, trier, promouvoir en artwork officiel, écrire la bible. Les générations en héritent. | tout de suite |
-| **T5** | Le slicer | Une planche de 8 sprites devient 8 assets. | tout de suite |
-| **T6** | L'export | Sortir une sélection en ZIP + JSON. | tout de suite |
-| **T7** | Le MCP | Claude fabrique des assets pendant qu'il code le jeu. | tout de suite |
+Le critère qui a produit ce découpage, et qui le tient : **chaque tranche est utilisable à
+sa livraison, et on ne passe à la suivante que lorsque la précédente sert vraiment.** T1
+seule vaut déjà le détour — elle remplace l'aller-retour vers SpriteCook pour un asset
+isolé. Chaque tranche doit valoir son temps de construction avant que la suivante commence.
 
-**T1 seule vaut déjà le détour** : elle remplace l'aller-retour vers SpriteCook
-pour un asset isolé. C'est le critère à tenir — chaque tranche doit valoir son
-temps de construction avant que la suivante commence.
+Ce que contient chaque tranche, les user stories qu'elle couvre, ses dépendances et ses
+critères d'acceptation : **`docs/PLAN.md`**, qui fait foi sur l'ordre.
 
 ### 6.4 Critères d'acceptation de la V1
 
-- Un projet neuf se crée, reçoit une bible et trois planches, et sa palette est extraite.
-- Un asset se génère, se détoure, se pixellise sur la palette du projet, et se range tout seul.
-- Une planche de 8 sprites se découpe en 8 assets, la filiation est visible.
-- Une sélection s'exporte en ZIP avec son JSON.
-- Claude Code, branché sur le MCP, génère un asset dans le bon projet sans intervention.
-- Le tout tourne sans ComfyUI, sans LM Studio, sans GPU.
+Distribués tranche par tranche dans `docs/PLAN.md`, chacun écrit là où il devient
+vérifiable.
 
 ## 7 · V2 — Tileset autotile
 
@@ -465,7 +463,7 @@ isolé. Le prompt doit imposer « one single sprite, one pose only ».
 | **La recette d'animation n'existe pas** | élevée | prototypage dédié avant la V4 — **piste sérieuse trouvée**, voir §9 |
 | ~~Aucun fournisseur ne préserve l'identité~~ | — | **levé le 26 août 2026.** `gemini-3.1-flash-image` tient l'identité et la dérive entre deux poses enchaînées est quasi nulle. Seedream 4.5 échoue sur ce point mais excelle au transfert de style. |
 | **L'échelle du sujet dérive d'une génération à l'autre** | moyenne — bloque le montage d'animations | constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires** |
-| **La couverture image d'OpenRouter** | moyenne | à vérifier en T1 ; OpenRouter route surtout des modèles de langage |
+| ~~La couverture image d'OpenRouter~~ | — | **levé le 27 août 2026** par `essais/essai_couverture.py` : 48 modèles image, 11 fournisseurs, 31 acceptant trois références ou plus. Et le catalogue a bougé en un jour — 47 → 48 — ce qu'une liste en dur n'aurait pas vu |
 | **Le coût par image dérive** | moyenne | enregistrer le coût réel de chaque génération dès la T1, et le totaliser par projet |
 | **La qualité pixel art directe** | faible | comparaison en T2 : sortie brute du modèle contre sortie post-traitée |
 
