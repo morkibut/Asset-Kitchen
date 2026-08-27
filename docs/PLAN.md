@@ -474,13 +474,32 @@ l'hypothèse a changé sous elle**. Le second est le contraire d'une mesure — 
 dimensions mesurées font foi », et zéro n'est pas une dimension mesurée, c'est
 l'absence de mesure.
 
+**La chaîne a été vérifiée par un appel payant réel, et elle a tenu**
+(`essais/essai_univers_chaine.py`, 27 août 2026, **$0,0228**). Deux planches
+promues — l'une en `personnages`, l'autre en `tous` —, une bible de quatre champs
+actifs sur cinq, et un prompt qui ne dit plus que la chose : *« A hooded forest
+ranger standing idle, facing the viewer »*. Ce qui est revenu portait le style
+des planches sans qu'un mot de style ait été écrit.
+
+| Ce qu'on voulait savoir | Ce qui est arrivé |
+|---|---|
+| Les artworks partent-ils, et lesquels ? | Deux, tous deux en rôle `style`, et le `generation.json` les nomme — une génération se relit des mois après |
+| L'asset naît-il habillé ? | Détourage, grille 64 px à 100 %, quantification sur les 24 couleurs du projet, **et non épinglé** : l'univers n'épingle pas |
+| La palette imposée tient-elle sur une vraie image ? | 57 196 couleurs au brut, **22 au rendu, zéro hors de la palette du projet** — la correction de `_palette_imposee` se vérifie ici, pas au banc |
+| Le barème sépare-t-il les échelles ? | Cinq hauteurs distinctes sur six paliers — 64, 58, 42, 32, 26 px — **et une seule ligne de sol** |
+
+**Un seul appel a suffi**, et c'est une décision de l'essai : tout ce qui ne
+demande pas le fournisseur se vérifie sans lui. Le barème s'est mesuré en
+appliquant six échelles à **la même image reçue** — six sprites pour le prix
+d'un aller-retour.
+
 **Ce qui reste ouvert, et pour T5 :** le zoom 1× / 2× / 4× de la grille d'assets,
 reconduit de T3 et qu'aucun critère de T4 ne demandait — les vignettes du tableau
-en partagent les crans mais n'en sont pas ; le second moteur de détourage,
+en partagent les crans mais n'en sont pas ; et le second moteur de détourage,
 toujours jamais exécuté, qu'`AGENTS.md` renvoyait à T4 « sur les images du
-tableau d'inspiration » et qu'aucun des dix-neuf critères ne demandait ; et la
-chaîne complète vérifiée par un **appel payant réel** — elle est tenue par les
-tests et par le double, elle n'a pas encore coûté un centime.
+tableau d'inspiration » et qu'aucun des dix-neuf critères ne demandait.
+L'extraction de palette, elle, n'en a pas eu besoin : elle emprunte le
+remplissage depuis le bord, comme le geste courant.
 
 
 ---
