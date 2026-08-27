@@ -36,6 +36,52 @@ class Statut(str, Enum):
         return self in (Statut.REUSSIE, Statut.ECHOUEE, Statut.INTERROMPUE)
 
 
+# ── Les rôles d'une réinjection ──────────────────────────────────────────────
+#
+# « Un asset se réinjecte dans le générateur dans ses quatre rôles : référence,
+# source d'édition, guide de style, jeu de réglages » (US-12). Trois d'entre eux
+# envoient une image, et sont ici ; le quatrième — **jeu de réglages** — n'envoie
+# rien : il repeuple le générateur avec les paramètres d'une génération passée,
+# et ne laisse donc aucune trace dans celle qui part.
+#
+# **Deux de ces trois rôles partent par le même tuyau**, parce que le contrat du
+# fournisseur n'a qu'un seul champ d'images d'entrée. Ce qui les distingue est
+# donc écrit ici, et nulle part chez l'adaptateur :
+#
+# - `edition` **engendre** — c'est l'image qu'on retouche, et c'est elle qui
+#   donne sa filiation à ce qui sort (US-38). Une seule par appel : on n'édite
+#   pas deux images à la fois.
+# - `reference` et `style` **inspirent**, et ne créent aucune descendance.
+#   Ils sont indiscernables sur le fil, et leur différence est enregistrée
+#   quand même : c'est elle que T4 relira quand l'univers enverra ses artworks
+#   officiels tout seul, et elle qu'un journal doit pouvoir montrer.
+REFERENCE = "reference"
+EDITION = "edition"
+STYLE = "style"
+ROLES = (REFERENCE, EDITION, STYLE)
+
+
+@dataclass(frozen=True, slots=True)
+class Reinjection:
+    """Un asset renvoyé au fournisseur, et à quel titre.
+
+    **Un identifiant, jamais des octets.** Un `generation.json` doit rester
+    lisible à l'œil, et une seconde copie de l'image serait une copie que plus
+    rien ne met à jour. Les octets se relisent depuis l'asset au moment de
+    l'appel — et de la relance, qui suit exactement le même chemin.
+    """
+
+    asset: str
+    role: str = REFERENCE
+
+    def en_json(self) -> dict[str, Any]:
+        return {"asset": self.asset, "role": self.role}
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Reinjection":
+        return Reinjection(asset=d["asset"], role=d.get("role", REFERENCE))
+
+
 @dataclass(slots=True)
 class Resultat:
     """Une image reçue, telle qu'elle est arrivée. Le brut, jamais un rendu."""
@@ -132,7 +178,10 @@ class Generation:
     ecartees: list[str] = field(default_factory=list)  # ce que le modèle ne déclare pas
     emplacements: list[Emplacement] = field(default_factory=list)
     cree_le: float = field(default_factory=time.time)
-    projet: str | None = None  # le rangement arrive en T3 ; la colonne l'attend
+    projet: str | None = None  # le projet courant au moment de la soumission
+
+    # Ce qu'on a réinjecté, et à quel titre — voir `Reinjection` ci-dessus.
+    references: tuple[Reinjection, ...] = ()
 
     # ── Ce qui se déduit, et n'est donc jamais enregistré deux fois ───────────
 
@@ -150,6 +199,20 @@ class Generation:
         if any(s == Statut.INTERROMPUE for s in statuts):
             return Statut.INTERROMPUE
         return Statut.ECHOUEE
+
+    @property
+    def parent(self) -> str | None:
+        """De quoi descend ce que cette génération produit (US-38).
+
+        Déduit, jamais enregistré deux fois : c'est la réinjection marquée
+        `edition`. Une référence inspire, une source d'édition engendre — et
+        cette phrase-là est toute la règle de filiation de la tranche. T5 y
+        ajoutera celle de la découpe.
+        """
+        for reinjection in self.references:
+            if reinjection.role == EDITION:
+                return reinjection.asset
+        return None
 
     @property
     def cout_usd(self) -> float:
@@ -177,10 +240,12 @@ class Generation:
             "emplacements": [e.en_json() for e in self.emplacements],
             "cree_le": self.cree_le,
             "projet": self.projet,
+            "references": [r.en_json() for r in self.references],
             # déduits — présents pour l'interface, jamais relus
             "statut": self.statut.value,
             "cout_usd": self.cout_usd,
             "reussies": self.reussies,
+            "parent": self.parent,
         }
 
     @staticmethod
@@ -194,4 +259,7 @@ class Generation:
             emplacements=[Emplacement.depuis_json(e) for e in d.get("emplacements", [])],
             cree_le=d.get("cree_le", 0.0),
             projet=d.get("projet"),
+            references=tuple(
+                Reinjection.depuis_json(r) for r in d.get("references", ())
+            ),
         )

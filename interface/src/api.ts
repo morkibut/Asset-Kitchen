@@ -54,6 +54,23 @@ export type Emplacement = {
   duree_attendue_s: number
 }
 
+// ── La réinjection ──────────────────────────────────────────────────────────
+//
+// « Un asset se réinjecte dans le générateur dans ses quatre rôles » (US-12).
+// Trois envoient une image ; le quatrième — **jeu de réglages** — n'envoie
+// rien : il repeuple le générateur avec les paramètres d'une génération passée,
+// et ne laisse donc aucune trace dans celle qui part.
+
+export type Role = "reference" | "edition" | "style"
+
+export type Reinjection = { asset: string; role: Role }
+
+export const ROLES: { role: Role; libelle: string; explique: string }[] = [
+  { role: "reference", libelle: "référence", explique: "elle inspire" },
+  { role: "edition", libelle: "source d'édition", explique: "elle engendre" },
+  { role: "style", libelle: "guide de style", explique: "elle donne la manière" },
+]
+
 export type Generation = {
   identifiant: string
   modele: string
@@ -71,6 +88,10 @@ export type Generation = {
   emplacements: Emplacement[]
   cree_le: number
   projet: string | null
+  references: Reinjection[]
+  /** L'asset dont ce lot descend — la réinjection marquée « edition ». Déduit
+   *  par le serveur, jamais enregistré deux fois. */
+  parent: string | null
   statut: Statut
   cout_usd: number
   reussies: number
@@ -137,12 +158,23 @@ export type Asset = {
   rendu_largeur: number
   rendu_hauteur: number
   cree_le: number
+  /** Ce que l'appel a facturé pour cette image-là. Une copie prise à la
+   *  naissance : le total d'un projet, lui, se calcule sur les générations, qui
+   *  sont les seules à connaître les appels ratés. */
+  cout_usd: number
   /** Toucher une recette à la main épingle l'asset. Relu en T4, quand un
    *  changement de palette de projet devra sauter ce qui a été réglé ici. */
   epingle: boolean
   projet: string | null
+  collection: string | null
   parent: string | null
+  /** Posé à l'instant où le parent part. Jamais de cascade : l'enfant reste, il
+   *  sait seulement d'où il ne vient plus (US-29). */
+  parent_supprime: boolean
   favori: boolean
+  /** Hors bibliothèque. Le temps que dure l'annulation, l'asset existe encore
+   *  sur le disque — mais plus rien ne le montre ni ne le compte. */
+  supprime_le: number | null
   /** Vrai dès qu'une place de la recette est remplie — donc dès qu'il y a un
    *  rendu à montrer plutôt que le brut. */
   traite: boolean
@@ -152,6 +184,81 @@ export type Asset = {
    *  ici — deux empreintes calculées à deux endroits finiraient par diverger. */
   empreinte: string
 }
+
+// ── La bibliothèque ─────────────────────────────────────────────────────────
+
+export type Projet = {
+  identifiant: string
+  nom: string
+  cree_le: number
+  assets: number
+  total_usd: number
+}
+
+export type Collection = {
+  identifiant: string
+  nom: string
+  projet: string | null
+  cree_le: number
+  assets: number
+}
+
+/** L'arbre, compté et totalisé **par le serveur**. Une somme faite ici, sur les
+ *  deux cents assets que la grille a en mémoire, dirait un chiffre faux dès que
+ *  la bibliothèque dépasse ce qu'elle sert. */
+export type Bibliotheque = {
+  courant: string | null
+  projets: Projet[]
+  collections: Collection[]
+  sans_projet: { assets: number; total_usd: number }
+  total_usd: number
+}
+
+export type Rate = {
+  rang: number
+  statut: Statut
+  raison: string | null
+  cout_usd: number
+}
+
+export type Appel = {
+  identifiant: string
+  modele: string
+  prompt: string
+  cree_le: number
+  cout_usd: number
+  statut: Statut
+  reussies: number
+  rates: Rate[]
+}
+
+/** Le journal d'un projet : ses appels, **ratés compris** (US-24). C'est ici que
+ *  vit ce qui n'entre jamais dans la grille. */
+export type Journal = {
+  projet: string | null
+  total_usd: number
+  rates: number
+  cout_rate_usd: number
+  appels: Appel[]
+}
+
+export type Filiation = {
+  parent: Asset | null
+  parent_identifiant: string | null
+  parent_supprime: boolean
+  enfants: Asset[]
+}
+
+export type Filtre = {
+  collection: string | null
+  favoris: boolean
+  recherche: string
+}
+
+export const FILTRE_VIDE: Filtre = { collection: null, favoris: false, recherche: "" }
+
+export const filtreActif = (filtre: Filtre) =>
+  filtre.collection !== null || filtre.favoris || filtre.recherche.trim() !== ""
 
 /** Ce que le post-traitement peut faire **sur cette machine**, et ce qu'il ne
  *  peut pas. Chaque raison est écrite par le serveur : l'interface l'affiche,
@@ -191,10 +298,17 @@ export type Etat = {
   catalogue: EtatCatalogueCourt
   couts: { total_usd: number }
   traitement: EtatTraitement
-  /** Présents sur le premier message du flux, absents des suivants : c'est eux
-   *  qui font qu'un onglet rouvert retrouve ce qui s'est produit pendant son
-   *  absence — les images produites **et** les retouches posées —, sans un seul
-   *  sondage. */
+  bibliotheque: Bibliotheque
+  /** Combien de temps dure l'annulation d'une suppression. Le serveur le dit,
+   *  l'écran le décompte : deux délais écrits à deux endroits finiraient par se
+   *  contredire, et c'est le serveur qui refuse. */
+  annulation_s: number
+  /** Présents sur le premier message du flux, absents des suivants.
+   *
+   *  `generations` ne porte que **le chantier** — ce qui tourne encore ou qu'un
+   *  redémarrage a coupé. Ce qui a réussi est dans `assets`, ce qui a échoué est
+   *  au journal du projet. `assets` est la grille du projet ouvert, servie
+   *  d'avance pour qu'un onglet qui s'ouvre la dessine sans un second appel. */
   generations?: Generation[]
   assets?: Asset[]
 }
@@ -259,6 +373,7 @@ export const api = {
     variations: number
     options: Record<string, unknown>
     identifiant: string
+    references: Reinjection[]
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -270,11 +385,14 @@ export const api = {
       method: "POST",
     }),
 
+  /** Les paramètres d'une génération passée — le quatrième rôle de la
+   *  réinjection, celui qui n'envoie aucune image (US-12). */
+  generation: (identifiant: string) =>
+    appeler<Generation>(`/generations/${identifiant}`),
+
   // ── Le post-traitement ────────────────────────────────────────────────────
   // Aucun de ces appels ne touche le réseau côté serveur, et aucun ne coûte un
   // centime : tout se passe sur le disque et le processeur de la machine.
-
-  assets: () => appeler<{ assets: Asset[] }>("/assets"),
 
   poserRecette: (identifiant: string, recette: Recette) =>
     appeler<Asset>(`/assets/${identifiant}/recipe`, {
@@ -292,10 +410,104 @@ export const api = {
     ),
 
   appliquerRecette: (identifiant: string, nom: string) =>
-    appeler<Asset>(
-      `/assets/${identifiant}/apply/${encodeURIComponent(nom)}`,
+    appeler<Asset>(`/assets/${identifiant}/apply/${encodeURIComponent(nom)}`, {
+      method: "POST",
+    }),
+
+  // ── La bibliothèque ───────────────────────────────────────────────────────
+  // Rien ici ne touche le réseau non plus : retrouver, ranger, marquer,
+  // supprimer et reconstruire fonctionnent réseau coupé (US-92).
+
+  /** La grille. **La seule du produit** : mêmes filtres, même recherche, même
+   *  sélection, qu'on cherche à réutiliser ou à organiser (US-31). Le filtrage
+   *  est fait par le serveur — la recherche doit porter sur toute la
+   *  bibliothèque, pas sur ce que le navigateur a en mémoire. */
+  assets: (filtre: Partial<Filtre> & { sansProjet?: boolean } = {}) => {
+    const parametres = new URLSearchParams()
+    if (filtre.sansProjet) parametres.set("sans_projet", "true")
+    if (filtre.collection) parametres.set("collection", filtre.collection)
+    if (filtre.favoris) parametres.set("favoris", "true")
+    if (filtre.recherche?.trim()) parametres.set("recherche", filtre.recherche.trim())
+    const suite = parametres.toString()
+    return appeler<{ assets: Asset[] }>(`/assets${suite ? `?${suite}` : ""}`)
+  },
+
+  arbre: () => appeler<Bibliotheque>("/library"),
+
+  reconstruire: () =>
+    appeler<{ reconstruit: Record<string, number>; bibliotheque: Bibliotheque }>(
+      "/library/rebuild",
       { method: "POST" },
     ),
+
+  journal: (projet: string | null) =>
+    appeler<Journal>(
+      projet === null
+        ? "/journal?sans_projet=true"
+        : `/journal?projet=${encodeURIComponent(projet)}`,
+    ),
+
+  creerProjet: (nom: string) =>
+    appeler<{ projet: Projet; bibliotheque: Bibliotheque }>("/projects", {
+      method: "POST",
+      body: JSON.stringify({ nom }),
+    }),
+
+  ouvrirProjet: (projet: string | null) =>
+    appeler<Bibliotheque>("/projects/current", {
+      method: "PUT",
+      body: JSON.stringify({ projet }),
+    }),
+
+  supprimerProjet: (identifiant: string) =>
+    appeler<{ assets: number; appels: number; bibliotheque: Bibliotheque }>(
+      `/projects/${encodeURIComponent(identifiant)}`,
+      { method: "DELETE" },
+    ),
+
+  creerCollection: (nom: string, projet: string | null) =>
+    appeler<{ collection: Collection; bibliotheque: Bibliotheque }>("/collections", {
+      method: "POST",
+      body: JSON.stringify({ nom, projet }),
+    }),
+
+  supprimerCollection: (identifiant: string) =>
+    appeler<{ assets: number; bibliotheque: Bibliotheque }>(
+      `/collections/${encodeURIComponent(identifiant)}`,
+      { method: "DELETE" },
+    ),
+
+  ranger: (
+    identifiants: string[],
+    rangement: { projet?: string | null; collection?: string | null },
+  ) =>
+    appeler<{ assets: Asset[]; bibliotheque: Bibliotheque }>("/assets/arrangement", {
+      method: "PUT",
+      body: JSON.stringify({ identifiants, ...rangement }),
+    }),
+
+  favori: (identifiants: string[], favori: boolean) =>
+    appeler<{ assets: Asset[] }>("/assets/favorite", {
+      method: "PUT",
+      body: JSON.stringify({ identifiants, favori }),
+    }),
+
+  supprimerAssets: (identifiants: string[]) =>
+    appeler<{ supprimes: string[]; annulation_s: number; expire_le: number }>(
+      "/assets/delete",
+      { method: "POST", body: JSON.stringify({ identifiants }) },
+    ),
+
+  restaurer: (identifiants: string[]) =>
+    appeler<{ assets: Asset[] }>("/assets/restore", {
+      method: "POST",
+      body: JSON.stringify({ identifiants }),
+    }),
+
+  filiation: (identifiant: string) =>
+    appeler<Filiation>(`/assets/${identifiant}/lineage`),
+
+  // ── Les adresses d'images ─────────────────────────────────────────────────
 
   image: (identifiant: string, rang: number) =>
     `/api/generations/${identifiant}/slots/${rang}/image`,
@@ -331,8 +543,11 @@ export type Ecoute = {
   generation: (generation: Generation) => void
   /** Le catalogue a été relu : entrée en repli, ou sortie de repli. */
   catalogue: (catalogue: EtatCatalogueCourt) => void
-  /** Un asset est né, ou sa recette a changé. La charge porte l'asset entier. */
+  /** Un asset est né, sa recette a changé, il s'est rangé, ou il est parti. La
+   *  charge porte l'asset entier. */
   asset: (asset: Asset) => void
+  /** L'arbre a changé — un projet, une collection, un rangement, un compte. */
+  bibliotheque: (bibliotheque: Bibliotheque) => void
   /** Vrai quand la liaison est vivante, faux quand elle est rompue. */
   liaison: (vivante: boolean) => void
 }
@@ -349,6 +564,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Generation>("generation", ecoute.generation)
   lire<EtatCatalogueCourt>("catalogue", ecoute.catalogue)
   lire<Asset>("asset", ecoute.asset)
+  lire<Bibliotheque>("bibliotheque", ecoute.bibliotheque)
 
   source.onopen = () => ecoute.liaison(true)
   source.onerror = () => ecoute.liaison(false)

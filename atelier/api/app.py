@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.routes import routeur
 from atelier.domaine.erreurs import (
     AppelRefuse,
@@ -28,6 +29,12 @@ from atelier.domaine.erreurs import (
 from atelier.reglages import RACINE
 from atelier.services import Atelier
 from atelier.services.assets import AssetInconnu, RecetteRefusee
+from atelier.services.bibliotheque import (
+    AnnulationExpiree,
+    CollectionInconnue,
+    ProjetInconnu,
+    RangementRefuse,
+)
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
@@ -40,6 +47,10 @@ CODES = {
     AppelRefuse: 502,
     AssetInconnu: 404,
     RecetteRefusee: 409,
+    ProjetInconnu: 404,
+    CollectionInconnue: 404,
+    RangementRefuse: 409,
+    AnnulationExpiree: 409,
 }
 
 INTERFACE = RACINE / "interface" / "dist"
@@ -60,6 +71,10 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     )
     application.state.atelier = atelier or Atelier()
     application.include_router(routeur, prefix="/api")
+    # Deux routeurs, un seul préfixe : de l'extérieur l'API n'a pas de couture.
+    # La bibliothèque répond à une autre question que la fabrication d'une
+    # image, et ses routes vivent donc dans leur propre module.
+    application.include_router(routeur_bibliotheque, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

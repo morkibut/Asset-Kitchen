@@ -6,6 +6,13 @@
 // ne se recompose jamais entre le départ et l'arrivée — l'œil reste où il est,
 // et l'échec atterrit à l'endroit précis où le succès serait arrivé.
 //
+// **Depuis T3, la grille est faite d'assets** — c'est la bibliothèque, et c'est
+// la seule grille du produit (US-31). Un emplacement qui n'a pas encore donné
+// son asset y tient quand même sa place, et il la tient sous **la même clé**
+// (`<génération>-<rang>`, qui est précisément l'identifiant que l'asset
+// portera) : l'image ne se glisse donc pas à côté de son attente, elle la
+// remplace. C'est ce qui rend vraie, sans machinerie, la phrase du design.
+//
 // Rayon 0, aucune ombre : le bord de la tuile et le bord du sprite sont la même
 // sorte de ligne, et la grille se lit comme une planche contact.
 
@@ -19,60 +26,81 @@ import {
   type Generation,
 } from "../api"
 
-const PASTILLES: Partial<Record<Emplacement["statut"], string>> = {
-  interrompue: "interrompu",
-}
+/**
+ * Ce que la grille itère. Un asset, ou un emplacement qui l'attend encore.
+ *
+ * `cle` est la même dans les deux cas, et c'est tout le mécanisme :
+ * `<génération>-<rang>`, l'identifiant que l'asset porte à sa naissance.
+ * `date` et `rang` sont l'ordre — la date du **lot**, jamais celle de
+ * l'arrivée, sans quoi les variations d'un même lot glisseraient les unes par
+ * rapport aux autres pendant qu'on les regarde.
+ */
+export type Entree =
+  | { cle: string; date: number; rang: number; sorte: "asset"; asset: Asset }
+  | {
+      cle: string
+      date: number
+      rang: number
+      sorte: "emplacement"
+      generation: Generation
+      emplacement: Emplacement
+    }
 
 export function Tuile({
-  generation,
-  emplacement,
-  asset,
-  ouverte,
-  onRelancer,
+  entree,
+  selectionnee,
   onOuvrir,
+  onRelancer,
 }: {
-  generation: Generation
-  emplacement: Emplacement
-  /** L'asset né de cet emplacement. Absent tant que l'image n'est pas arrivée. */
-  asset?: Asset
-  ouverte: boolean
-  onRelancer: (rang: number) => void
-  onOuvrir: (identifiant: string) => void
+  entree: Entree
+  selectionnee: boolean
+  onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
+  onRelancer: (generation: string, rang: number) => void
 }) {
-  const enCours =
-    emplacement.statut === "en_cours" || emplacement.statut === "en_attente"
+  const asset = entree.sorte === "asset" ? entree.asset : null
+  const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
+  const lot = entree.sorte === "emplacement" ? entree.generation : null
   const rate =
-    emplacement.statut === "echouee" || emplacement.statut === "interrompue"
+    emplacement !== null &&
+    (emplacement.statut === "echouee" || emplacement.statut === "interrompue")
+  const enCours =
+    emplacement !== null &&
+    (emplacement.statut === "en_cours" || emplacement.statut === "en_attente")
+
+  const titre =
+    entree.sorte === "asset" ? entree.asset.label : entree.generation.demande.prompt
 
   // **La tuile montre ce que l'asset est devenu**, pas ce que le fournisseur a
   // rendu : dès qu'une recette existe, c'est le rendu qui s'affiche. Juger sur
   // le brut alors qu'on a détouré et remis sur grille ferait juger autre chose
   // que ce qui partira dans le jeu.
-  const source = asset?.traite
-    ? api.rendu(asset.identifiant, asset.empreinte)
-    : api.image(generation.identifiant, emplacement.rang)
+  const source = asset
+    ? asset.traite
+      ? api.rendu(asset.identifiant, asset.empreinte)
+      : api.image(asset.generation, asset.rang)
+    : null
 
   return (
     <figure
       className={[
-        "arrivee flex flex-col border",
+        "arrivee relative flex flex-col border",
         rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",
         // L'anneau du sélectionné — « la lampe de la table », `docs/DESIGN.md`
         // § La tuile. Aucune couleur de plus dans la grille.
-        ouverte ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
+        selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
       ].join(" ")}
     >
       <button
         type="button"
         disabled={!asset}
-        onClick={() => asset && onOuvrir(asset.identifiant)}
+        onClick={(evenement) => asset && onOuvrir(asset.identifiant, evenement)}
         aria-label="Ouvrir la fiche"
         className="relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default"
       >
-        {emplacement.resultat && (
+        {source && (
           <img
             src={source}
-            alt={generation.demande.prompt.slice(0, 80)}
+            alt={titre.slice(0, 80)}
             className="damier h-full w-full object-contain"
             style={{ imageRendering: "pixelated" }}
           />
@@ -84,35 +112,30 @@ export function Tuile({
           />
         )}
         {rate && <Raté raison={emplacement.raison} />}
-        {/* Une pastille pour un état **subi** — `docs/DESIGN.md` § La tuile.
-            « réglé » en fait partie : c'est ce que le système constate d'un
-            asset dont la recette a été touchée à la main, et c'est ce que T4
-            relira pour le sauter lors d'un changement de palette. */}
-        {(PASTILLES[emplacement.statut] || asset?.epingle) && (
-          <span className="mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] text-epingle">
-            {PASTILLES[emplacement.statut] ?? "réglé"}
-          </span>
-        )}
+        <Pastille asset={asset} emplacement={emplacement} />
+        {/* « Coin plein haut-droit, `--signal`, 13 px — la seule marque
+            visuelle, parce que c'est la seule que l'auteur pose lui-même »
+            (`docs/DESIGN.md` § La tuile). Ce que le système constate est un
+            mot ; ce que l'auteur pose est une forme. */}
+        {asset?.favori && <CoinFavori />}
       </button>
 
       <figcaption className="flex min-h-[38px] flex-col justify-center gap-[3px] border-t border-bord px-2 py-1.5">
-        <span className="truncate text-[11.5px] text-texte">
-          {generation.demande.prompt}
+        <span className="truncate text-[11.5px] text-texte" title={titre}>
+          {titre}
         </span>
-        {rate ? (
+        {rate && lot && emplacement ? (
           <button
             type="button"
-            onClick={() => onRelancer(emplacement.rang)}
+            onClick={() => onRelancer(lot.identifiant, emplacement.rang)}
             className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
           >
             Relancer
           </button>
+        ) : asset ? (
+          <Mesures asset={asset} />
         ) : (
-          <Mesures
-            generation={generation}
-            emplacement={emplacement}
-            asset={asset}
-          />
+          <span className="mesure text-[9.5px] text-texte-3">en attente</span>
         )}
       </figcaption>
     </figure>
@@ -121,45 +144,69 @@ export function Tuile({
 
 /** Une tuile porte au maximum un nom et trois mesures. Au-delà, c'est la fiche
  *  qui prend le relais — c'est la règle qui empêche la grille de se charger. */
-function Mesures({
-  generation,
-  emplacement,
-  asset,
-}: {
-  generation: Generation
-  emplacement: Emplacement
-  asset?: Asset
-}) {
-  const resultat = emplacement.resultat
+function Mesures({ asset }: { asset: Asset }) {
   return (
     <div className="mesure flex items-center gap-1.5 text-[9.5px] text-texte-3">
-      {resultat ? (
-        <>
-          {/* Les dimensions **du rendu** quand il y en a un : c'est l'image
-              qu'on regarde, donc c'est elle qu'on mesure. */}
-          <span>
-            {asset?.traite
-              ? `${asset.rendu_largeur}×${asset.rendu_hauteur}`
-              : `${resultat.largeur}×${resultat.hauteur}`}
-          </span>
-          <span aria-hidden>·</span>
-          <span>{dollars(emplacement.cout_usd)}</span>
-          <a
-            href={
-              asset
-                ? api.telechargementAsset(asset.identifiant)
-                : api.telechargement(generation.identifiant, emplacement.rang)
-            }
-            download
-            className="ml-auto text-signal hover:text-signal-clair"
-          >
-            PNG ↓
-          </a>
-        </>
-      ) : (
-        <span>en attente</span>
-      )}
+      {/* Les dimensions **du rendu** quand il y en a un : c'est l'image qu'on
+          regarde, donc c'est elle qu'on mesure. */}
+      <span>
+        {asset.traite
+          ? `${asset.rendu_largeur}×${asset.rendu_hauteur}`
+          : `${asset.largeur}×${asset.hauteur}`}
+      </span>
+      <span aria-hidden>·</span>
+      <span>{dollars(asset.cout_usd)}</span>
+      <a
+        href={api.telechargementAsset(asset.identifiant)}
+        download
+        onClick={(e) => e.stopPropagation()}
+        className="ml-auto text-signal hover:text-signal-clair"
+      >
+        PNG ↓
+      </a>
     </div>
+  )
+}
+
+/**
+ * Une pastille, et une seule — pour un état **subi**.
+ *
+ * `docs/DESIGN.md` § La tuile en donne la liste close : `réglé`, `agent`,
+ * `parent supprimé`. « interrompu » lui appartient depuis T1, pour la même
+ * raison : c'est ce que le système constate, jamais ce que l'auteur pose.
+ *
+ * L'ordre n'est pas arbitraire : une filiation cassée se lit avant un réglage,
+ * parce qu'elle change ce qu'on peut encore comprendre de l'image.
+ */
+function Pastille({
+  asset,
+  emplacement,
+}: {
+  asset: Asset | null
+  emplacement: Emplacement | null
+}) {
+  const mot =
+    emplacement?.statut === "interrompue"
+      ? "interrompu"
+      : asset?.parent_supprime
+        ? "parent supprimé"
+        : asset?.epingle
+          ? "réglé"
+          : null
+  if (!mot) return null
+  return (
+    <span className="mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] text-epingle">
+      {mot}
+    </span>
+  )
+}
+
+function CoinFavori() {
+  return (
+    <span
+      aria-label="favori"
+      className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
+    />
   )
 }
 

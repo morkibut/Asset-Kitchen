@@ -15,25 +15,36 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1 et T2 sont finies.** T1 : le squelette, la clé, le catalogue relu au démarrage, un
+**T1, T2 et T3 sont finies.** T1 : le squelette, la clé, le catalogue relu au démarrage, un
 appel qui rend une image téléchargeable ; l'écran Atelier ; le flux d'événements qui
 remplace le sondage, la jauge déterminée, la reprise vue du navigateur et le repli hors
 ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs passes, la
-remise sur grille, la quantification grisée, les recettes nommées, et la fiche — la
-troisième colonne de l'écran. **Les vingt-six critères d'acceptation de T1 et T2 sont
-cochés dans `docs/PLAN.md`, et 45 tests de serveur plus 3 d'écran les tiennent. La
-prochaine tranche est T3, la bibliothèque.**
+remise sur grille, la quantification grisée, les recettes nommées, et la fiche. T3 : la
+bibliothèque — projets et collections, une seule grille filtrable et cherchable, la
+sélection multiple, le favori, la suppression avec son annulation courte, la filiation, le
+journal des appels ratés, la réinjection dans ses quatre rôles, et l'index reconstructible.
+**Les quarante-deux critères d'acceptation de T1 à T3 sont cochés dans `docs/PLAN.md`, et
+70 tests de serveur plus 9 d'écran les tiennent. La prochaine tranche est T4, le tableau et
+l'univers.**
 
-**Le produit a été utilisé pour de vrai le 27 août, et c'est ce qui a trouvé le seul défaut
-de T1.** Trois appels payants ($0,019 : un coffre, un ranger en deux variations lancées
-pendant que le coffre tournait), puis la retouche des six assets par les routes de l'écran.
-Ce qui s'est vérifié à cette occasion, sur de vraies images et non au banc : une recette
-nommée réappliquée rend un PNG **identique octet pour octet** ; un rendu effacé se recalcule
-en 41 ms ; le retour au brut rend le brut exact ; resoumettre le même identifiant ne
-refacture rien ; un cran de curseur coûte 23 à 34 ms tant qu'on ne touche pas au détourage,
-qui coûte 180 à 205 ms. Ce qui s'est trouvé : l'écran doublait chaque génération lancée
-depuis l'onglet — voir les pièges ci-dessous. **Aucun test de serveur ne pouvait le voir, et
-aucun rechargement ne le laissait vivre : il a fallu s'en servir.**
+**Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
+tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
+cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
+finissent par diverger. **Aucun test de serveur ne pouvait les voir**, et le tableau de
+`docs/PLAN.md` § T3 dit pour chacun ce qui l'avait rendu invisible. C'est désormais une
+règle du dépôt : **une tranche n'est finie que lorsqu'on s'en est servi.**
+
+**L'écran tient ses quatre colonnes.** `docs/DESIGN.md` § Layout donne
+`240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. Les trois
+premières sont permanentes et repliables **par choix** ; la quatrième s'ouvre avec la
+sélection d'une image et se referme sur la position, le filtre et le prompt d'avant.
+
+**La grille est faite d'assets, et le chantier y tient sa place.** Un emplacement qui n'a
+pas encore donné son asset occupe la case sous **la même clé** — `<génération>-<rang>`,
+l'identifiant que l'asset portera —, si bien que l'image ne se glisse pas à côté de son
+attente : elle la remplace. Un échec occupe sa place tant qu'on le regarde, mais il ne
+s'installe pas : la bibliothèque relue ne le contient pas, et le journal du projet garde
+l'appel avec son coût réel.
 
 **Sans palette, un asset traité n'a pas 27 couleurs mais 1 000 à 2 000.** Le chiffre de 27
 du banc du 26 août suppose la quantification, qui reste grisée jusqu'à T4. Ce qui sort
@@ -64,16 +75,11 @@ se vérifiera en **T4**, sur les images du tableau d'inspiration — c'est-à-di
 qui n'ont pas de fond plat et qui le justifient. D'ici là, aucun geste du produit ne
 l'emprunte.
 
-**L'écran tient trois colonnes sur quatre.** `docs/DESIGN.md` § Layout donne
-`240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. La fiche s'est
-ouverte en T2 avec ce que T2 possède ; l'arbre naît avec la bibliothèque (T3). Afficher une
-colonne vide montrerait le cadrage au lieu de servir le geste, ce qui est exactement le
-reproche fait à la maquette écartée.
-
-**L'interface ne redemande plus rien.** Elle se branche une fois sur `GET /api/events` et
-écoute ; le seul appel qu'elle refait d'elle-même est le catalogue, parce que le grisé de
-chaque modèle dépend de la demande en cours. Vérifié au navigateur : deux requêtes au
-chargement, plus une seule ensuite tant que rien ne change.
+**L'interface ne redemande plus rien, et elle se branche une seule fois.** Un abonnement
+par onglet, pour toute sa vie : ni le filtre, ni le projet ouvert, ni les proportions ne le
+font se rebrancher. Les deux seuls appels qu'elle refait d'elle-même sont le catalogue —
+parce que le grisé de chaque modèle dépend de la demande en cours — et la grille, quand un
+filtre change, parce que c'est le serveur qui filtre.
 
 ## Lancer
 
@@ -95,6 +101,11 @@ py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 `interface/dist` est un produit de compilation, hors Git : **sans `npm run build`, le
 serveur sert une page qui le dit** au lieu de l'atelier. En développement,
 `cd interface && npm run dev` sert l'interface sur 5173 et relaie `/api` vers 8420.
+
+`donnees/atelier.sqlite3` est un **index jetable**. Au premier démarrage qui suit une
+évolution du schéma, il est effacé et refait en relisant `donnees/` : quelques dizaines de
+millisecondes, rien à faire, et rien à sauvegarder. L'effacer soi-même est un geste sans
+conséquence — c'est même un critère d'acceptation de T3.
 
 L'API est documentée d'elle-même sur `/api/docs`.
 
@@ -154,17 +165,23 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/services/evenements.py` | la diffusion — ce que l'atelier annonce, à qui écoute. C'est elle qui remplace le sondage : un service qui change d'état le dit, personne ne redemande |
 | `atelier/domaine/recette.py` | les cinq places d'une recette, **dans un ordre fixe** — détourage, recadrage, grille, quantification, bords. Et l'empreinte, qui nomme un rendu et rend deux recettes égales interchangeables |
 | `atelier/image/traitement.py` | le pipeline : CPU, pur, aucune entrée-sortie. `detourer` et `finir` sont séparés parce que le premier coûte 130 ms et le second 28 — c'est ce qui rend la retouche instantanée |
-| `atelier/services/assets.py` | poser une recette, revenir au brut, nommer une recette. **Aucun `fournisseur` dans ce fichier**, et ça se lit dans les imports : T2 n'appelle jamais l'extérieur |
+| `atelier/services/assets.py` | poser une recette, revenir au brut, nommer une recette — et **le seul endroit du dépôt qui écrive un asset** (`sauver`). **Aucun `fournisseur` dans ce fichier**, et ça se lit dans les imports : T2 n'appelle jamais l'extérieur |
+| `atelier/services/bibliotheque.py` | ranger, retrouver, juger, jeter, reconstruire. Pas de `fournisseur` non plus : tout T3 marche réseau coupé. C'est ici que vivent l'annulation courte, le refus de supprimer le dernier projet, et l'adoption de ce qui existait avant les projets |
+| `atelier/domaine/projet.py` | deux niveaux de rangement, et pas un de plus. `repere()` fait du nom un dossier lisible — `projets/bac-a-sable/` — pour que `donnees/` s'ouvre aussi à la main |
+| `atelier/api/bibliotheque.py` | les routes de T3, montées sous le même préfixe que les autres. Un module à part parce qu'elles répondent à une autre question : `routes.py` dit comment on fabrique une image, celles-ci où elle se range |
 | `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
 | `tests/conftest.py` | le double de fournisseur et les trois montages partagés. Il rend de vraies images, de vrais coûts, de vraies dimensions — **aucun test ne coûte un centime** |
 | `tests/test_t1_jalon1.py` | les critères de T1 tenus par les jalons 1 et 2 — clé, catalogue, image téléchargeable, variations concurrentes, emplacements indépendants |
 | `tests/test_t1_jalon3_4.py` | ceux des jalons 3 et 4 — flux d'événements, jauge déterminée, onglet rouvert, repli hors ligne |
-| `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas |
+| `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas. Cinq des seize critères de T3 n'existent que là |
+| `interface/src/composants/Arbre.tsx` | la colonne de 240 px : projets, collections, total, et le journal des ratés sous l'arbre |
+| `interface/src/composants/BarreOutils.tsx` | les 38 px au-dessus de la grille — chercher, filtrer, agir sur une sélection, et la fente de l'annulation |
+| `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
-| `donnees/` | l'index SQLite, la photo du catalogue, les recettes nommées, et par génération : `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git |
+| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json`, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
@@ -300,6 +317,60 @@ deux vivent côte à côte.
   attempts failed » est ressorti tel quel dans la barre d'état. Toute erreur de
   transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message
   de bibliothèque ne franchit jamais le port.
+
+- **`with sqlite3.connect(...)` ne ferme pas la connexion**, il ne fait que valider la
+  transaction. Rendre la connexion telle quelle laissait un descripteur ouvert par
+  requête — et sous Windows un fichier encore ouvert **ne se supprime pas**. C'est
+  exactement le geste que T3 doit permettre : effacer `atelier.sqlite3` pour voir la
+  bibliothèque se reconstruire. Une connexion s'ouvre et se referme, toujours.
+- **Une colonne qui double l'objet doit être réécrite depuis lui, sans exception.**
+  `cree_le` manquait à la liste des colonnes mises à jour : la date changeait dans
+  `contenu` et pas dans la colonne, donc l'objet disait une chose et l'ordre de la
+  grille en disait une autre. Le fichier interdit les « deux vérités » dans sa première
+  phrase, et c'est une colonne oubliée qui les a créées.
+- **Un état dérivable ne se garde pas en double.** La fiche ouverte et la sélection
+  étaient deux états pour la même chose : deux clics dans le même rendu lisaient la même
+  sélection périmée, et le second effaçait le premier au lieu de s'y ajouter. La fiche
+  **est** la sélection quand elle vaut un. Corollaire, dans React : toute mise à jour qui
+  lit l'état précédent passe par la forme fonctionnelle, jamais par la valeur du rendu.
+- **Un abonnement au flux ne doit dépendre de rien.** Mettre le filtre ou le projet ouvert
+  dans les dépendances de l'effet ferme la liaison et en rouvre une à chaque changement —
+  donc à chaque frappe dans le champ de recherche —, et le serveur renvoie l'état complet à
+  chaque fois. Ce qui bouge vit dans un `ref` que les gestionnaires consultent.
+- **Un événement qui porte un objet ne dit pas qu'il est encore d'ici.** Supprimer un
+  projet détache ses assets, chaque détachement est annoncé, et les détachés venaient
+  s'installer dans la grille du projet **ouvert**, qui n'est pas le leur. Ce qui se fond
+  dans une liste filtrée doit être confronté au filtre — sauf à la recherche, qui vit sur
+  le serveur et qu'on ne rejoue jamais à l'écran.
+- **Un appel qui échoue peut avoir coûté.** L'adaptateur levait avant de lire `usage.cost`
+  quand la réponse ne portait aucune image : le montant disparaissait du journal du projet,
+  c'est-à-dire exactement celui qu'on cherche à expliquer. Le coût se lit **avant** tout ce
+  qui peut lever.
+- **Un champ ajouté à un objet ne se rétro-remplit pas tout seul.** Les assets écrits avant
+  T3 n'ont ni coût ni date de lot : relire le disque sans aller les chercher dans la
+  génération affichait `$0,0000` sur des images payées, et cassait l'ordre de la grille.
+  `rattraper()` est l'endroit de ces réparations — il passe déjà à chaque démarrage.
+- **« Sans projet » doit vouloir dire *détaché*, jamais *antérieur au rangement*.** À
+  l'apparition du tout premier projet, ce qui n'en avait pas y entre : sinon l'atelier
+  s'ouvre sur une grille vide alors qu'il a déjà six images.
+- **Le type d'une image de référence se lit sur ses octets.** L'adaptateur annonçait
+  `data:image/png` en dur : réinjecter une image d'un modèle qui ne rend que du JPEG
+  l'aurait envoyée sous une fausse étiquette, et le refus serait venu du fournisseur après
+  avoir traversé tout le produit.
+- **Un fichier qui fait foi s'écrit entièrement ou pas du tout.** `write_text` sur le nom
+  définitif laisse un JSON tronqué si le processus s'arrête au milieu — et un
+  `generation.json` tronqué est le seul cas où « la bibliothèque se reconstruit sans perdre
+  un asset » tombe pour de bon. On écrit à côté, puis on renomme.
+- **Les polices de l'interface viennent du réseau.** `interface/index.html` charge
+  Instrument Serif, Instrument Sans et JetBrains Mono depuis Google Fonts. Hors ligne,
+  l'atelier fonctionne — les replis système prennent la main —, mais il ne **ressemble** pas
+  à ce que `docs/DESIGN.md` décrit. À embarquer le jour où le hors ligne devient un usage
+  et pas un accident.
+- **Le démarrage attend le catalogue avant de servir quoi que ce soit.** Le délai est de
+  30 s : un réseau qui absorbe sans refuser retarde donc l'ouverture d'autant, bibliothèque
+  comprise. Un réseau franchement coupé, lui, refuse tout de suite. Le local se fait déjà
+  en premier dans `Atelier.ouvrir()` ; rendre la main avant le catalogue demanderait de
+  l'annoncer sur le flux, ce que l'écran sait déjà écouter.
 
 ## Règle systématique : comment finir une étape
 

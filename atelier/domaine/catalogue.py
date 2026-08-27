@@ -75,8 +75,9 @@ class Modele:
         if nombre > self.references_max:
             if self.references_max == 0:
                 return "n'accepte aucune image de référence"
+            images = "image" if self.references_max == 1 else "images"
             return (
-                f"n'accepte que {self.references_max} images de référence, "
+                f"n'accepte que {self.references_max} {images} de référence, "
                 f"il en faudrait {nombre}"
             )
 

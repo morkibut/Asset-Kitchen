@@ -79,6 +79,13 @@ Cinq règles qui tiennent l'ensemble :
 3. **Les fichiers font foi, la base est un index reconstructible.** Si la base
    SQLite disparaît, on la reconstruit en relisant le disque — aucun asset n'est
    perdu. Reprise de AD-5 de GAG.
+
+   Deux conséquences, tirées en T3 et qui tiennent l'invariant vivant : le schéma
+   de l'index **n'a aucune migration** — quand il change, l'index est jeté et le
+   démarrage le refait depuis les fichiers, si bien que la reconstruction sert au
+   moins une fois par évolution du schéma ; et **le fichier s'écrit avant
+   l'index**, jamais l'inverse, pour qu'une coupure laisse l'index en retard sur
+   le disque plutôt que le disque en retard sur l'index.
 4. **Le post-traitement ne touche jamais le GPU.** Il est CPU, pur, et ses étapes
    s'appliquent dans un ordre fixe : détourage, recadrage, grille, quantification,
    bords. Aucune ne se réordonne — trois des cinq n'ont pas de sens avant celle
@@ -309,10 +316,10 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 | Entité | Contenu | Note |
 |---|---|---|
 | **Projet** *(= l'univers)* | nom, bible (texte libre), planches de référence, palette extraite, réglages par défaut | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
-| **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. |
+| **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. |
-| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, parent (filiation), favori | Les dimensions **mesurées** font foi, jamais celles demandées. |
-| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats | Un enregistrement par appel, y compris ceux qui échouent. |
+| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
+| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
 
 ## 6 · V1 — l'atelier
 

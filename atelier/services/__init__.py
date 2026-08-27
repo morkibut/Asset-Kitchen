@@ -20,18 +20,32 @@ from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, PortFournisseur
 from atelier.reglages import etat_cle, lire_cle
 from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
+from atelier.services.bibliotheque import (
+    ANNULATION_S,
+    AnnulationExpiree,
+    CollectionInconnue,
+    ProjetInconnu,
+    RangementRefuse,
+    ServiceBibliotheque,
+)
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.generation import ServiceGenerations
 
 __all__ = [
+    "ANNULATION_S",
+    "AnnulationExpiree",
     "AssetInconnu",
     "Atelier",
+    "CollectionInconnue",
     "Diffusion",
     "EtatCatalogue",
     "Evenement",
+    "ProjetInconnu",
+    "RangementRefuse",
     "RecetteRefusee",
     "ServiceAssets",
+    "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceGenerations",
 ]
@@ -57,8 +71,9 @@ class Atelier:
         self.base = Base(self.fichiers.base)
         self.fabrique_fournisseur = fabrique_fournisseur
         # **Une seule diffusion pour tout l'atelier.** Un abonné voit passer
-        # l'avancement d'une génération et le retour du catalogue sur le même
-        # flux : c'est ce qui permet à l'interface de n'ouvrir qu'une liaison.
+        # l'avancement d'une génération, le retour du catalogue et le rangement
+        # de la bibliothèque sur le même flux : c'est ce qui permet à
+        # l'interface de n'ouvrir qu'une liaison.
         self.diffusion = Diffusion()
         self.catalogue = ServiceCatalogue(
             fabrique_fournisseur(), self.fichiers, self.diffusion
@@ -67,6 +82,12 @@ class Atelier:
         # naître, pas l'inverse. Le post-traitement ne connaît ni le fournisseur
         # ni le catalogue — il n'y a rien à lui passer d'autre que le disque.
         self.assets = ServiceAssets(self.base, self.fichiers, self.diffusion)
+        # La bibliothèque range ce que les assets écrivent : elle passe par eux
+        # pour poser un résultat, et reste ainsi le second lecteur d'un seul
+        # écrivain.
+        self.bibliotheque = ServiceBibliotheque(
+            self.base, self.fichiers, self.assets, self.diffusion
+        )
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,
@@ -74,22 +95,33 @@ class Atelier:
             fabrique_fournisseur,
             self.diffusion,
             self.assets,
+            self.bibliotheque,
         )
 
     async def ouvrir(self) -> None:
         """Ce qui se passe au démarrage, dans l'ordre, et sans jamais lever.
 
-        Le catalogue est relu, ce que l'arrêt précédent a coupé est marqué —
-        pas relancé —, et les images qui n'ont pas encore d'asset en reçoivent
-        un. L'atelier s'ouvre même sans réseau et même sans clé : l'échec attend
-        le moment où on génère (US-95).
+        Le catalogue est relu ; la bibliothèque se reconstruit si son index a
+        disparu et s'assure qu'un projet existe ; ce que l'arrêt précédent a
+        coupé est marqué — pas relancé —, et les images qui n'ont pas encore
+        d'asset en reçoivent un. L'atelier s'ouvre même sans réseau et même sans
+        clé : l'échec attend le moment où on génère (US-95).
+
+        **La bibliothèque avant le rattrapage** : reconstruire repose ce que les
+        fichiers disent, rattraper ne comble que ce qui manque encore. Dans
+        l'ordre inverse, un index effacé serait d'abord rempli d'assets tout
+        neufs, sans rangement, sans favori et sans filiation — puis écrasé.
         """
-        await self.catalogue.rafraichir()
+        # **Le local d'abord.** Rien ici ne demande le réseau, et rien ici ne
+        # doit attendre qu'il réponde : c'est ce qui donne son sens à « réseau
+        # coupé, la bibliothèque fonctionne normalement » (US-92).
+        self.bibliotheque.ouvrir()
         self.generations.reprendre()
         # Les images produites avant que les assets existent — celles de T1 —
         # en reçoivent un ici. Sans ça elles resteraient dans la grille sans
         # pouvoir être retouchées, et l'atelier aurait deux sortes d'images.
         self.assets.rattraper(self.generations.recentes(1000))
+        await self.catalogue.rafraichir()
 
     def etat(self) -> dict[str, Any]:
         """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture.
@@ -108,4 +140,10 @@ class Atelier:
             # n'existe pas encore. L'écran grise avec la phrase qu'il reçoit, il
             # ne rejoue jamais la règle de son côté.
             "traitement": self.assets.traitement(),
+            # L'arbre : projets, collections, comptes et totaux. Comptés ici,
+            # jamais à l'écran — une somme faite sur les deux cents assets qu'un
+            # navigateur a en mémoire dirait un chiffre faux dès que la
+            # bibliothèque dépasse ce que la grille sert.
+            "bibliotheque": self.bibliotheque.arbre(),
+            "annulation_s": ANNULATION_S,
         }

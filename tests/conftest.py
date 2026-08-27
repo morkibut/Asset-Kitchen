@@ -155,6 +155,12 @@ class FournisseurDouble:
         # de post-traitement ont besoin d'un sujet sur un fond, pas d'un carré
         # uni. Un seul levier, posé par le test, et T1 ne bouge pas.
         self.rendre: "callable[[], bytes] | None" = None
+        # Ce que chaque appel a **réellement** reçu en références (US-12). Un
+        # test qui vérifie la réinjection sur l'enregistrement seul se
+        # contenterait de ce que le produit dit avoir envoyé ; celui-ci regarde
+        # ce qui est arrivé au bout du port.
+        self.references_recues: list[int] = []
+        self.demandes: list[Demande] = []
 
     async def catalogue(self) -> list[Modele]:
         if not self.catalogue_lisible:
@@ -163,6 +169,8 @@ class FournisseurDouble:
 
     async def generer(self, modele: Modele, demande: Demande) -> ImageProduite:
         self.appels += 1
+        self.references_recues.append(len(demande.references))
+        self.demandes.append(demande)
         if self.retenir is not None:
             await self.retenir.wait()
         if self.duree_annoncee_s:

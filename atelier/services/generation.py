@@ -28,7 +28,8 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from typing import Any, Callable
+from dataclasses import replace
+from typing import Any, Callable, Sequence
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine import (
@@ -36,9 +37,11 @@ from atelier.domaine import (
     Emplacement,
     Generation,
     Modele,
+    Reinjection,
     Resultat,
     Statut,
 )
+from atelier.domaine.generation import EDITION
 from atelier.domaine.erreurs import (
     DemandeRefusee,
     ErreurAtelier,
@@ -49,7 +52,7 @@ from atelier.fournisseur import PortFournisseur
 from atelier.image import mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
-from atelier.services.assets import ServiceAssets
+from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
 
@@ -76,6 +79,7 @@ class ServiceGenerations:
         fabrique_fournisseur: Callable[[], PortFournisseur],
         diffusion: Diffusion | None = None,
         assets: ServiceAssets | None = None,
+        bibliotheque: "ServiceBibliotheque | None" = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -87,6 +91,12 @@ class ServiceGenerations:
         # T2). Ce service ne sait rien de ce qu'est une recette ; il sait
         # seulement qu'une image qui arrive a désormais un destinataire.
         self._assets = assets
+        # **Ce qui sort entre dans le projet ouvert** (US-2, US-25). Le défaut
+        # est posé ici et non dans la route : le MCP de T7 appelle ce service
+        # directement, et un agent qui ne nomme aucun projet doit atterrir au
+        # même endroit que l'auteur (US-87). Un défaut écrit dans la façade
+        # serait un défaut qu'une des deux façades oublierait.
+        self._bibliotheque = bibliotheque
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -117,6 +127,31 @@ class ServiceGenerations:
 
     def recentes(self, limite: int = 50) -> list[Generation]:
         return self._base.recentes(limite)
+
+    def chantier(self, limite: int = 200) -> list[Generation]:
+        """Les générations dont **un emplacement attend encore une issue**.
+
+        C'est ce qui tient sa place dans la grille à côté de la bibliothèque :
+        ce qui part, ce qui tourne, et ce qu'un redémarrage a coupé — celui-là
+        garde son coût et attend un geste, jamais une relance automatique
+        (US-17, US-18).
+
+        Un emplacement **échoué**, lui, n'attend rien : sa réponse est arrivée,
+        c'était non. Il reste visible dans l'onglet qui l'a vu échouer — c'est
+        là qu'on décide de relancer — mais il ne s'installe pas : la
+        bibliothèque relue ne le contient pas (US-23), et l'appel, avec son
+        coût réel, reste au journal du projet (US-24).
+
+        Le tri se fait ici et non en SQL parce que le statut d'une génération
+        est celui de **l'ensemble** de ses emplacements : un lot où une image
+        est arrivée est « réussi » même si sa voisine a été coupée.
+        """
+        en_suspens = (Statut.EN_ATTENTE, Statut.EN_COURS, Statut.INTERROMPUE)
+        return [
+            generation
+            for generation in self._base.recentes(limite)
+            if any(e.statut in en_suspens for e in generation.emplacements)
+        ]
 
     def total_couts(self, projet: str | None = None) -> float:
         return self._base.total_par_projet(projet)
@@ -162,17 +197,33 @@ class ServiceGenerations:
         *,
         identifiant: str | None = None,
         projet: str | None = None,
+        references: Sequence[Reinjection] = (),
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
         Rend `(generation, modele, deja_soumise)`. Quand `deja_soumise` est vrai,
         rien n'a été facturé et rien ne le sera : c'est la même génération, et le
         modèle est inutile — on ne rappellera pas le fournisseur.
+
+        `references` porte des **identifiants d'assets et leur rôle** (US-12) :
+        les octets sont relus ici, jamais transportés par l'appelant ni recopiés
+        dans l'enregistrement. Celle qui porte le rôle `edition` ouvre la liste
+        et donnera sa filiation à ce qui sortira.
+
+        Les références sont résolues **avant** le grisé : le plafond d'un modèle
+        se compte sur des images réelles, et un asset réinjecté qui n'existe
+        plus doit se dire avant qu'un centime ne parte.
         """
         identifiant = identifiant or uuid.uuid4().hex
         existante = self._base.lire(identifiant)
         if existante is not None:
             return existante, None, True
+
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+
+        reinjectes = _reinjectes(references)
+        demande = replace(demande, references=self._octets_references(reinjectes))
 
         modele = self._catalogue.modele(identifiant_modele)
 
@@ -193,6 +244,7 @@ class ServiceGenerations:
             emplacements=[Emplacement(rang=r) for r in range(demande.variations)],
             cree_le=time.time(),
             projet=projet,
+            references=reinjectes,
         )
         self._sauver(generation)
         return generation, modele, False
@@ -204,15 +256,24 @@ class ServiceGenerations:
         *,
         identifiant: str | None = None,
         projet: str | None = None,
+        references: Sequence[Reinjection] = (),
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
-            identifiant_modele, demande, identifiant=identifiant, projet=projet
+            identifiant_modele,
+            demande,
+            identifiant=identifiant,
+            projet=projet,
+            references=references,
         )
         if deja or modele is None:
             return generation
 
-        tache = asyncio.create_task(self._executer(generation, modele, demande))
+        # Les octets des références ont été relus dans `preparer` : on repart de
+        # l'enregistrement pour que l'appel et le relancer suivent le même chemin.
+        tache = asyncio.create_task(
+            self._executer(generation, modele, self._demande_de(generation))
+        )
         self._en_vol.add(tache)
         tache.add_done_callback(self._en_vol.discard)
         return generation
@@ -242,7 +303,7 @@ class ServiceGenerations:
             raise SansCle()
 
         modele = self._catalogue.modele(generation.modele)
-        demande = _demande_de(generation)
+        demande = self._demande_de(generation)
 
         emplacement.statut = Statut.EN_ATTENTE
         emplacement.raison = None
@@ -272,6 +333,12 @@ class ServiceGenerations:
             if time.monotonic() >= limite:
                 return generation
             await asyncio.sleep(0.25)
+
+    async def attendre_tout(self) -> None:
+        """Jusqu'à ce que plus rien ne tourne. Pour les essais et les scripts —
+        l'écran, lui, écoute le flux et n'attend jamais."""
+        while self._en_vol:
+            await asyncio.gather(*tuple(self._en_vol), return_exceptions=True)
 
     # ── L'exécution ──────────────────────────────────────────────────────────
 
@@ -309,7 +376,15 @@ class ServiceGenerations:
             image = await fournisseur.generer(modele, demande)
             mesure = mesurer(image.octets)
         except ErreurAtelier as erreur:
-            self._echouer(generation, emplacement, erreur.raison, depart)
+            # Un refus peut coûter : le fournisseur facture dès que l'appel a
+            # atteint le modèle. Ce montant part au journal du projet (US-24).
+            self._echouer(
+                generation,
+                emplacement,
+                erreur.raison,
+                depart,
+                cout_usd=getattr(erreur, "cout_usd", 0.0),
+            )
             return
         except ValueError as erreur:  # image illisible
             self._echouer(generation, emplacement, str(erreur), depart)
@@ -347,12 +422,54 @@ class ServiceGenerations:
         emplacement: Emplacement,
         raison: str,
         depart: float,
+        cout_usd: float = 0.0,
     ) -> None:
         """Un appel raté garde son coût : il reste lisible dans le journal (US-24)."""
         emplacement.statut = Statut.ECHOUEE
         emplacement.raison = raison
+        emplacement.cout_usd = cout_usd
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         self._sauver(generation)
+
+    def _demande_de(self, generation: Generation) -> Demande:
+        """Reconstruit la demande d'une génération enregistrée, références comprises.
+
+        Les octets ne sont **jamais** recopiés dans l'enregistrement : un
+        `generation.json` doit rester lisible à l'œil, et une seconde copie de
+        l'image serait une copie que plus rien ne met à jour. Ils se relisent
+        depuis les assets — ici comme à la soumission, donc l'appel et la
+        relance suivent exactement le même chemin.
+        """
+        demande = generation.demande
+        return Demande(
+            prompt=demande["prompt"],
+            prompt_negatif=demande.get("prompt_negatif", ""),
+            proportions=demande.get("proportions", "1:1"),
+            resolution=demande.get("resolution"),
+            variations=1,
+            references=self._octets_references(generation.references),
+            options=demande.get("options", {}),
+        )
+
+    def _octets_references(self, identifiants) -> tuple[bytes, ...]:
+        """Les images réinjectées, relues depuis la bibliothèque (US-12).
+
+        Un asset supprimé entre-temps arrête l'appel **avant** qu'il ne parte :
+        mieux vaut redemander laquelle réinjecter que payer une génération à
+        laquelle il manque ce qu'on voulait montrer.
+        """
+        if self._assets is None or not identifiants:
+            return ()
+        octets: list[bytes] = []
+        for reinjection in identifiants:
+            try:
+                octets.append(self._assets.reference(reinjection.asset))
+            except AssetInconnu:
+                raise DemandeRefusee(
+                    "une image réinjectée n'est plus dans la bibliothèque — "
+                    "la rechoisir avant de relancer"
+                ) from None
+        return tuple(octets)
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 
@@ -365,8 +482,13 @@ class ServiceGenerations:
         redemande la génération ne peut pas tomber sur un état plus ancien.
         """
         contenu = generation.en_json()
-        self._base.enregistrer(generation)
+        # **Le fichier d'abord, l'index ensuite** — voir `ServiceAssets.sauver`.
+        # Une coupure entre les deux lignes laisse alors l'index en retard sur
+        # le disque, ce que la reconstruction rattrape ; dans l'autre ordre,
+        # elle laisserait le disque en retard sur l'index, ce que rien ne
+        # rattrape et qui met l'invariant à l'envers.
         self._fichiers.ecrire_enregistrement(generation.identifiant, contenu)
+        self._base.enregistrer(generation)
         self._diffusion.publier("generation", contenu)
 
     @staticmethod
@@ -388,20 +510,27 @@ class ServiceGenerations:
         }
 
 
-def _demande_de(generation: Generation) -> Demande:
-    """Reconstruit la demande d'une génération enregistrée, pour un seul appel.
+def _reinjectes(references: Sequence[Reinjection]) -> tuple[Reinjection, ...]:
+    """L'ordre dans lequel les images repartent, et sans doublon.
 
-    Les références ne sont pas reconstituées : en T1 il n'y en a aucune. Quand
-    elles arriveront (T3, T4), elles seront relues depuis les assets qui les
-    portent — jamais recopiées dans l'enregistrement, qui n'a pas à grossir de
-    plusieurs mégaoctets de base64.
+    La source d'édition ouvre la liste, parce que c'est elle qu'on édite. Chaque
+    asset n'y figure qu'une fois : un fournisseur qui reçoit deux fois la même
+    image la compte deux fois dans son plafond de références — et la facture
+    deux fois chez ceux qui facturent au token.
+
+    **Une seule source d'édition par appel**, et le refus le dit plutôt que de
+    choisir à la place de l'auteur : deux images éditées ensemble donneraient
+    une filiation à deux parents, que le modèle d'objets ne porte pas et que
+    rien à l'écran ne saurait montrer.
     """
-    demande = generation.demande
-    return Demande(
-        prompt=demande["prompt"],
-        prompt_negatif=demande.get("prompt_negatif", ""),
-        proportions=demande.get("proportions", "1:1"),
-        resolution=demande.get("resolution"),
-        variations=1,
-        options=demande.get("options", {}),
-    )
+    editions = [r for r in references if r.role == EDITION]
+    if len(editions) > 1:
+        raise DemandeRefusee("on n'édite qu'une image à la fois")
+    ordonnees = editions + [r for r in references if r.role != EDITION]
+    vus: set[str] = set()
+    propres: list[Reinjection] = []
+    for reinjection in ordonnees:
+        if reinjection.asset not in vus:
+            vus.add(reinjection.asset)
+            propres.append(reinjection)
+    return tuple(propres)

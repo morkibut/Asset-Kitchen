@@ -17,9 +17,9 @@ Trois invariants se rejoignent ici, et ils viennent de trois tranches :
   — l'enregistrement de l'asset est écrit à côté de ses images. La bibliothèque
   se reconstruira en relisant le disque, sans rien à rétro-adapter.
 
-`projet`, `parent` et `favori` sont déclarés et jamais écrits en T2 : ils sont le
-rangement, la filiation et le jugement, qui arrivent en T3. Les écrire
-maintenant coûte trois champs ; les ajouter plus tard coûterait une migration.
+Le rangement, la filiation et le jugement — `projet`, `collection`, `parent`,
+`favori` — ont été déclarés en T2 et sont écrits depuis T3. Les déclarer d'avance
+a coûté quatre champs ; les ajouter après coup aurait coûté une migration.
 """
 
 from __future__ import annotations
@@ -65,10 +65,41 @@ class Asset:
     # de projet saute les épinglés et rend son compte.
     epingle: bool = False
 
-    # ── Déclarés ici, écrits en T3 ───────────────────────────────────────────
+    # ── Ce que l'appel a facturé pour cette image-là ─────────────────────────
+    #
+    # **Une copie, prise à la naissance**, et le seul chiffre de ce fichier qui
+    # ne se mesure pas sur l'image. Il est ici parce que la tuile le porte
+    # (`docs/DESIGN.md` § La tuile : `64×64 · $0,067`) et que la grille de T3
+    # est faite d'assets, plus de générations : sans lui, chaque tuile devrait
+    # aller chercher sa génération pour afficher trois caractères.
+    #
+    # **La génération reste la vérité** sur le coût, et le total d'un projet se
+    # calcule sur elle seule — elle est la seule à porter les appels **ratés**,
+    # qui coûtent et ne produisent aucun asset (US-24). Aucune divergence
+    # possible : `naitre()` est le seul endroit qui écrive ce champ.
+    cout_usd: float = 0.0
+
+    # ── Le rangement, la filiation, le jugement ──────────────────────────────
     projet: str | None = None
+    collection: str | None = None
     parent: str | None = None
     favori: bool = False
+
+    # **Un fait acquis à l'instant où le parent part**, pas une déduction refaite
+    # à chaque affichage. Supprimer un parent touche déjà ses enfants — il faut
+    # les annoncer pour que leur pastille paraisse —, donc marquer ne coûte rien
+    # de plus, et l'annonce porte alors la vérité au lieu d'un renvoi vers une
+    # table à consulter. Jamais de cascade : l'enfant reste, il sait seulement
+    # d'où il ne vient plus (US-28, US-29).
+    parent_supprime: bool = False
+
+    # ── La suppression, et son instant d'annulation ──────────────────────────
+    #
+    # Pas de corbeille (`docs/PRD.md` § Hors périmètre) : l'asset quitte la
+    # bibliothèque au moment du geste, et il ne reste qu'un court instant pour
+    # revenir en arrière. Passé ce délai, les fichiers partent pour de bon —
+    # c'est le service qui balaie, jamais une minuterie.
+    supprime_le: float | None = None
 
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
 
@@ -76,6 +107,12 @@ class Asset:
     def traite(self) -> bool:
         """Y a-t-il quelque chose à montrer d'autre que le brut ?"""
         return not self.recette.vide
+
+    @property
+    def supprime(self) -> bool:
+        """Hors bibliothèque. Les fichiers sont peut-être encore là — l'annulation
+        court —, mais plus rien ne le montre ni ne le compte."""
+        return self.supprime_le is not None
 
     @property
     def rendu_a_jour(self) -> bool:
@@ -101,9 +138,13 @@ class Asset:
             "rendu_hauteur": self.rendu_hauteur,
             "cree_le": self.cree_le,
             "epingle": self.epingle,
+            "cout_usd": self.cout_usd,
             "projet": self.projet,
+            "collection": self.collection,
             "parent": self.parent,
+            "parent_supprime": self.parent_supprime,
             "favori": self.favori,
+            "supprime_le": self.supprime_le,
             # déduits — présents pour l'interface, jamais relus
             "traite": self.traite,
             # L'empreinte de la **recette**, pas du fichier. Le rendu change sous
@@ -142,9 +183,13 @@ class Asset:
             rendu_hauteur=d.get("rendu_hauteur", 0),
             cree_le=d.get("cree_le", 0.0),
             epingle=d.get("epingle", False),
+            cout_usd=float(d.get("cout_usd", 0.0)),
             projet=d.get("projet"),
+            collection=d.get("collection"),
             parent=d.get("parent"),
+            parent_supprime=d.get("parent_supprime", False),
             favori=d.get("favori", False),
+            supprime_le=d.get("supprime_le"),
         )
 
 

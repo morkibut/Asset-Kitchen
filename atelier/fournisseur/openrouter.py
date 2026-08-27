@@ -44,6 +44,15 @@ _VARIATIONS = "n"
 _REFERENCES = "input_references"
 _TRADUITS = frozenset({_PROPORTIONS, _RESOLUTION, _VARIATIONS, _REFERENCES})
 
+# Les signatures des formats qu’un fournisseur rend vraiment. En hexadécimal
+# plutôt qu’en échappements : « 89 50 4E 47 0D 0A 1A 0A » est la signature PNG,
+# « FF D8 FF » celle du JPEG, et les lire ainsi évite qu’un copier-coller ne les
+# abîme en silence.
+_SIGNATURES = (
+    (bytes.fromhex("89504e470d0a1a0a"), "image/png"),
+    (bytes.fromhex("ffd8ff"), "image/jpeg"),
+)
+
 _GENRES = {"enum": "choix", "range": "intervalle", "boolean": "booleen"}
 
 
@@ -145,12 +154,16 @@ class OpenRouter:
             raise AppelRefuse(_raison(reponse), statut=reponse.status_code)
 
         resultat = reponse.json()
+        # **Le coût se lit avant tout le reste.** Une réponse sans image a
+        # quand même atteint le modèle, donc elle est facturée : lever avant
+        # cette ligne ferait disparaître du journal du projet exactement le
+        # montant qu'on cherchera à expliquer (US-24).
+        cout = float((resultat.get("usage") or {}).get("cost") or 0.0)
         images = resultat.get("data") or []
         if not images:
-            raise AppelRefuse("le fournisseur n'a rendu aucune image")
+            raise AppelRefuse("le fournisseur n'a rendu aucune image", cout_usd=cout)
 
         octets, type_media = await _octets_de(images[0])
-        cout = float((resultat.get("usage") or {}).get("cost") or 0.0)
         return ImageProduite(octets=octets, cout_usd=cout, type_media=type_media)
 
     @staticmethod
@@ -175,7 +188,9 @@ class OpenRouter:
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": "data:image/png;base64,"
+                        "url": "data:"
+                        + _type_media(octets)
+                        + ";base64,"
                         + base64.b64encode(octets).decode("ascii")
                     },
                 }
@@ -207,6 +222,22 @@ def _prompt_complet(demande: Demande) -> str:
     if not negatif:
         return demande.prompt.strip()
     return f"{demande.prompt.strip()}\n\nDo not include: {negatif}"
+
+
+def _type_media(octets: bytes) -> str:
+    """Le type d’une référence, lu **sur les octets** et jamais supposé.
+
+    L’annoncer en dur en PNG était un mensonge qui attendait son heure : les
+    Seedream ne rendent que du JPEG, et un JPEG servi sous l’étiquette PNG se
+    fait refuser chez le fournisseur — après avoir traversé tout le produit sans
+    que rien ne l’arrête.
+    """
+    for signature, type_media in _SIGNATURES:
+        if octets.startswith(signature):
+            return type_media
+    if octets[:4] == b"RIFF" and octets[8:12] == b"WEBP":
+        return "image/webp"
+    return "application/octet-stream"
 
 
 def _panne(erreur: httpx.HTTPError) -> str:

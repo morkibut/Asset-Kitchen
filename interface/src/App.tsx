@@ -1,35 +1,55 @@
 // L'Atelier — l'écran du travail quotidien.
 //
-// Trois colonnes en T2 : les réglages, le prompt et la grille, puis la fiche
-// quand une tuile est ouverte. L'arbre des projets — la quatrième colonne de
-// `docs/DESIGN.md` § Layout — arrive avec la bibliothèque (T3) ; l'afficher
-// vide aujourd'hui serait montrer du cadrage au lieu de servir le geste, c'est
-// exactement ce qui a fait écarter `docs/maquette-atelier.html`.
+// Quatre colonnes depuis T3, et c'est la grille de `docs/DESIGN.md` § Layout :
+// `240px · 300px · minmax(0,1fr) · 380px` — arbre · réglages · prompt + grille ·
+// fiche. Chacune se replie **par choix**, pour voir la grille en grand, jamais
+// par contrainte de place (US-97). Écran large uniquement : aucun point de
+// rupture, aucun menu escamoté, aucune mise en page de repli à écrire.
 //
-// La fiche, elle, n'est plus vide : T2 lui donne la visionneuse, la recette et
-// le retour au brut. La filiation et le favori l'y rejoindront en T3.
+// **Une seule grille dans tout le produit** (US-31). Celle qui sert à réutiliser
+// est exactement celle qui sert à organiser : mêmes filtres, même recherche,
+// même sélection multiple. Elle est faite d'assets — la bibliothèque —, et un
+// emplacement qui n'a pas encore donné son asset y tient sa place sous la même
+// clé, donc à la même place. L'image ne se glisse pas à côté de son attente :
+// elle la remplace.
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   api,
   dollars,
   ecouter,
+  filtreActif,
+  FILTRE_VIDE,
   heure,
   Refus,
   type Asset,
+  type Bibliotheque,
   type Etat,
+  type Filtre,
   type Generation,
   type Modele,
+  type Reinjection,
+  type Role,
 } from "./api"
+import { Arbre } from "./composants/Arbre"
+import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { Bouton, Point } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranCle } from "./composants/EcranCle"
 import { Fiche } from "./composants/Fiche"
 import { PanneauReglages } from "./composants/PanneauReglages"
-import { Tuile } from "./composants/Tuile"
+import { Tuile, type Entree } from "./composants/Tuile"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
+
+const BIBLIOTHEQUE_VIDE: Bibliotheque = {
+  courant: null,
+  projets: [],
+  collections: [],
+  sans_projet: { assets: 0, total_usd: 0 },
+  total_usd: 0,
+}
 
 /** Poser une génération dans la liste **sans jamais la doubler**.
  *
@@ -62,15 +82,25 @@ export function App() {
     modele: string | null
     options: Record<string, string>
   }>({ modele: null, options: {} })
-  const [generations, setGenerations] = useState<Generation[]>([])
-  // Les assets par identifiant : la tuile en a besoin pour savoir s'il y a un
-  // rendu à montrer, et la fiche pour savoir quelle recette afficher.
-  const [assets, setAssets] = useState<Record<string, Asset>>({})
-  const [fiche, setFiche] = useState<string | null>(null)
+
+  // Le chantier : ce qui tourne, et ce qu'un redémarrage a coupé. Ce qui a
+  // réussi est en bibliothèque, ce qui a échoué est au journal du projet.
+  const [chantier, setChantier] = useState<Generation[]>([])
+  // La bibliothèque telle que le serveur l'a filtrée. C'est **lui** qui filtre :
+  // la recherche doit porter sur tout, pas sur ce que cet onglet a en mémoire.
+  const [grille, setGrille] = useState<Asset[]>([])
+  const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
+  const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
+  const [selection, setSelection] = useState<string[]>([])
+  const [annulation, setAnnulation] = useState<Annulation | null>(null)
   const [panne, setPanne] = useState<string | null>(null)
   const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
   const [relecture, setRelecture] = useState(false)
+  const [replies, setReplies] = useState<{ arbre: boolean; reglages: boolean }>({
+    arbre: false,
+    reglages: false,
+  })
 
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
@@ -78,16 +108,49 @@ export function App() {
   const [proportions, setProportions] = useState("1:1")
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
+  const [reinjections, setReinjections] = useState<Reinjection[]>([])
+
+  const dernierClic = useRef<string | null>(null)
+
+  // **Ce que le flux a besoin de savoir, sans le faire se rebrancher.**
+  //
+  // L'abonnement est ouvert **une fois par onglet**, et il le reste : c'est la
+  // promesse de T1, « on se branche une fois, on écoute ». Mettre le filtre, le
+  // projet ouvert ou les proportions dans les dépendances de l'effet aurait
+  // fermé la liaison et en aurait rouvert une à chaque changement — donc à
+  // chaque frappe dans le champ de recherche —, et le serveur aurait renvoyé
+  // l'état complet à chaque fois. Un ref porte donc ce qui bouge, et l'effet ne
+  // dépend de rien.
+  const vivant = useRef({
+    filtre: FILTRE_VIDE,
+    courant: null as string | null,
+    relireCatalogue: async () => {},
+  })
+
+  // **La fiche n'est pas un état : c'est la sélection quand elle vaut un.**
+  //
+  // Les tenir tous les deux, c'était deux vérités sur la même chose — et elles
+  // ont divergé au premier clic un peu vif : deux clics dans le même tick
+  // lisaient la même sélection périmée, et le second effaçait le premier au
+  // lieu de s'y ajouter. Vu au navigateur, jamais au banc, parce qu'une main
+  // humaine met plus d'un rendu entre deux clics.
+  //
+  // La déduire tient aussi la promesse de `docs/DESIGN.md` : l'anneau
+  // `--lumiere` dit « sélectionné », et il n'a plus qu'un seul sens.
+  const fiche = selection.length === 1 ? selection[0] : null
+
+  const echouer = (erreur: unknown, defaut_: string) =>
+    setPanne(erreur instanceof Refus ? erreur.message : defaut_)
 
   // ── Ce que l'atelier sait de lui-même ─────────────────────────────────────
 
   // Le catalogue est le seul appel que l'interface refait d'elle-même : la
-  // liste des modèles dépend de la demande en cours (proportions, références),
-  // et c'est le serveur qui décide du grisé de chacun. Tout le reste arrive par
-  // le flux.
+  // liste des modèles dépend de la demande en cours — les proportions, et **le
+  // nombre d'images réinjectées** —, et c'est le serveur qui décide du grisé de
+  // chacun. Tout le reste arrive par le flux.
   const relireCatalogue = useCallback(async () => {
     try {
-      const catalogue = await api.modeles(proportions)
+      const catalogue = await api.modeles(proportions, reinjections.length)
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
       setCatalogueRepli({
@@ -97,13 +160,40 @@ export function App() {
       })
       setPanne(null)
     } catch (erreur) {
-      setPanne(erreur instanceof Refus ? erreur.message : "l'atelier ne répond pas")
+      echouer(erreur, "l'atelier ne répond pas")
     }
-  }, [proportions])
+  }, [proportions, reinjections.length])
 
   useEffect(() => {
     void relireCatalogue()
   }, [relireCatalogue])
+
+  // Posé à chaque rendu, lu par le flux : le seul but est de tenir l'abonnement
+  // ouvert pendant que ce qu'il consulte, lui, change.
+  vivant.current = { filtre, courant: bibliotheque.courant, relireCatalogue }
+
+  // ── La grille ─────────────────────────────────────────────────────────────
+  //
+  // Elle se redemande quand le filtre change, et **seulement** alors. Le
+  // filtrage vit côté serveur : le rejouer ici sur les deux cents assets que cet
+  // onglet a en mémoire ferait dire à la recherche autre chose qu'à la
+  // bibliothèque, et c'est exactement la divergence relevée chez SpriteCook.
+
+  const relireGrille = useCallback(async () => {
+    try {
+      const { assets } = await api.assets({
+        ...filtre,
+        sansProjet: bibliotheque.courant === null,
+      })
+      setGrille(assets)
+    } catch (erreur) {
+      echouer(erreur, "la bibliothèque ne répond pas")
+    }
+  }, [filtre, bibliotheque.courant])
+
+  useEffect(() => {
+    void relireGrille()
+  }, [relireGrille])
 
   // ── Le flux d'événements ──────────────────────────────────────────────────
   //
@@ -117,34 +207,33 @@ export function App() {
     return ecouter({
       etat: (recu) => {
         setEtat(recu)
-        if (recu.generations) setGenerations(recu.generations)
-        if (recu.assets)
-          setAssets(Object.fromEntries(recu.assets.map((a) => [a.identifiant, a])))
+        setBibliotheque(recu.bibliotheque)
+        if (recu.generations) setChantier(recu.generations)
+        if (recu.assets) setGrille(recu.assets)
         // Ce message part **une fois par abonnement**, donc à chaque
-        // rebranchement. Deux conséquences, et le repli dépend des deux.
-        //
-        // Son catalogue fait autorité sur celui que l'onglet gardait : sans ça,
-        // un serveur redémarré pendant une veille laisse la barre d'état dater
-        // une photo qui n'existe plus — ou n'en dater aucune alors qu'il y en a
-        // une, et générer partirait sans le moindre avertissement.
+        // rebranchement. Son catalogue fait autorité sur celui que l'onglet
+        // gardait : sans ça, un serveur redémarré pendant une veille laisse la
+        // barre d'état dater une photo qui n'existe plus.
         setCatalogueRepli(recu.catalogue)
         // Et son arrivée **prouve** que l'atelier répond : une panne posée
-        // pendant son absence est un fait périmé. Sans ce nettoyage, un
-        // redémarrage ne « se rattrape sans rien recharger » que sur le papier.
+        // pendant son absence est un fait périmé.
         setPanne(null)
       },
-      generation: (recue) => setGenerations((liste) => fondre(liste, recue)),
+      generation: (recue) => setChantier((liste) => fondre(liste, recue)),
       asset: (recu) =>
-        setAssets((connus) => ({ ...connus, [recu.identifiant]: recu })),
+        setGrille((liste) =>
+          fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
+        ),
+      bibliotheque: setBibliotheque,
       catalogue: (recu) => {
         setCatalogueRepli(recu)
         // Le repli change ce que chaque modèle peut honorer : la liste, elle,
         // se redemande — c'est le serveur qui écrit les raisons du grisé.
-        void relireCatalogue()
+        void vivant.current.relireCatalogue()
       },
       liaison: setLiaison,
     })
-  }, [relireCatalogue])
+  }, [])
 
   // ── Le modèle choisi reste choisi ─────────────────────────────────────────
   // Même devenu invalide : c'est générer qui devient inactif, avec sa raison.
@@ -155,13 +244,51 @@ export function App() {
     [modeles, modeleChoisi],
   )
 
-  // Le premier modèle d'une séance vient du serveur, pas d'un choix arbitraire
-  // du navigateur : c'est le modèle que le banc a retenu, avec ses réglages.
   useEffect(() => {
     if (modeleChoisi || !defaut.modele) return
     setModeleChoisi(defaut.modele)
     setOptions((precedentes) => ({ ...defaut.options, ...precedentes }))
   }, [defaut, modeleChoisi])
+
+  // ── Ce que la grille montre ───────────────────────────────────────────────
+
+  const entrees = useMemo<Entree[]>(() => {
+    const parCle = new Map<string, Entree>()
+    // Le chantier d'abord : il tient sa place **avant** que l'image n'existe.
+    // Il ne paraît pas quand un filtre est posé — un lot qui n'est pas encore
+    // arrivé n'a rien à quoi un filtre puisse s'appliquer, et le faire
+    // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
+    if (!filtreActif(filtre)) {
+      for (const generation of chantier) {
+        for (const emplacement of generation.emplacements) {
+          if (emplacement.statut === "reussie") continue
+          const cle = `${generation.identifiant}-${emplacement.rang}`
+          parCle.set(cle, {
+            cle,
+            date: generation.cree_le,
+            rang: emplacement.rang,
+            sorte: "emplacement",
+            generation,
+            emplacement,
+          })
+        }
+      }
+    }
+    // Puis la bibliothèque : un asset **remplace** l'emplacement qui l'attendait,
+    // à la même clé et donc à la même place.
+    for (const asset of grille) {
+      parCle.set(asset.identifiant, {
+        cle: asset.identifiant,
+        date: asset.cree_le,
+        rang: asset.rang,
+        sorte: "asset",
+        asset,
+      })
+    }
+    return [...parCle.values()].sort(
+      (a, b) => b.date - a.date || a.rang - b.rang,
+    )
+  }, [chantier, grille, filtre])
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
@@ -181,8 +308,7 @@ export function App() {
     if (modele.refus) return { texte: `${modele.nom} ${modele.refus}` }
     if (!prompt.trim()) return { texte: "aucun prompt" }
     // Hors ligne, générer reste **actif** : « l'échec ne survient qu'au moment
-    // où on génère, jamais à l'ouverture » (US-95). Le repli se dit dans la
-    // fente sous le bouton et dans la barre d'état, il ne barre pas la route.
+    // où on génère, jamais à l'ouverture » (US-95).
     return null
   }, [panne, liaison, etat, modeles, modele, prompt])
 
@@ -205,49 +331,141 @@ export function App() {
         variations,
         options: retenues,
         identifiant,
+        references: reinjections,
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
-      setGenerations((liste) => fondre(liste, generation))
+      setChantier((liste) => fondre(liste, generation))
     } catch (erreur) {
-      setPanne(erreur instanceof Refus ? erreur.message : "génération refusée")
+      echouer(erreur, "génération refusée")
     }
   }
 
   const relancer = async (identifiant: string, rang: number) => {
     try {
       const generation = await api.relancer(identifiant, rang)
-      setGenerations((liste) => fondre(liste, generation))
+      setChantier((liste) => fondre(liste, generation))
     } catch (erreur) {
-      setPanne(erreur instanceof Refus ? erreur.message : "relance refusée")
+      echouer(erreur, "relance refusée")
+    }
+  }
+
+  // ── Juger : sélectionner, marquer, jeter ──────────────────────────────────
+
+  const ouvrir = (identifiant: string, evenement?: React.MouseEvent) => {
+    const multiple = evenement?.ctrlKey || evenement?.metaKey
+    const etendue = evenement?.shiftKey
+    if (multiple) {
+      // La forme fonctionnelle, et pas la valeur du rendu courant : deux clics
+      // rapprochés partagent le même rendu, donc la même sélection périmée.
+      setSelection((precedente) =>
+        precedente.includes(identifiant)
+          ? precedente.filter((i) => i !== identifiant)
+          : [...precedente, identifiant],
+      )
+    } else if (etendue && dernierClic.current) {
+      const cles = entrees.map((e) => e.cle)
+      const depart = cles.indexOf(dernierClic.current)
+      const arrivee = cles.indexOf(identifiant)
+      if (depart >= 0 && arrivee >= 0) {
+        const [a, b] = depart < arrivee ? [depart, arrivee] : [arrivee, depart]
+        setSelection(
+          cles
+            .slice(a, b + 1)
+            .filter((cle) => grille.some((g) => g.identifiant === cle)),
+        )
+      }
+    } else {
+      setSelection([identifiant])
+    }
+    dernierClic.current = identifiant
+  }
+
+  const supprimer = async (identifiants: string[]) => {
+    if (identifiants.length === 0) return
+    try {
+      const rendu = await api.supprimerAssets(identifiants)
+      setAnnulation({ identifiants: rendu.supprimes, expireLe: rendu.expire_le })
+      setSelection([])
+      await relireGrille()
+    } catch (erreur) {
+      echouer(erreur, "suppression refusée")
+    }
+  }
+
+  const annuler = async () => {
+    if (!annulation) return
+    try {
+      await api.restaurer(annulation.identifiants)
+      setAnnulation(null)
+      await relireGrille()
+    } catch (erreur) {
+      setAnnulation(null)
+      echouer(erreur, "annulation refusée")
+    }
+  }
+
+  const marquerFavori = async (identifiants: string[], favori: boolean) => {
+    try {
+      await api.favori(identifiants, favori)
+      await relireGrille()
+    } catch (erreur) {
+      echouer(erreur, "favori refusé")
+    }
+  }
+
+  const ranger = async (rangement: {
+    projet?: string | null
+    collection?: string | null
+  }) => {
+    try {
+      await api.ranger(selection, rangement)
+      setSelection([])
+      await relireGrille()
+    } catch (erreur) {
+      echouer(erreur, "rangement refusé")
+    }
+  }
+
+  // ── Réinjecter ────────────────────────────────────────────────────────────
+
+  const reinjecter = (asset: string, role: Role) =>
+    setReinjections((deja) => [
+      ...deja.filter((r) => r.asset !== asset),
+      { asset, role },
+    ])
+
+  /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image. */
+  const reprendreReglages = async (asset: Asset) => {
+    try {
+      const generation = await api.generation(asset.generation)
+      setPrompt(generation.demande.prompt)
+      setPromptNegatif(generation.demande.prompt_negatif)
+      setProportions(generation.demande.proportions)
+      setVariations(generation.demande.variations)
+      setModeleChoisi(generation.modele)
+      setOptions(
+        Object.fromEntries(
+          Object.entries(generation.demande.options).map(([n, v]) => [n, String(v)]),
+        ),
+      )
+    } catch (erreur) {
+      echouer(erreur, "réglages illisibles")
     }
   }
 
   // ── L'écran ───────────────────────────────────────────────────────────────
 
-  // Redemander le catalogue au fournisseur. Le résultat n'est pas lu ici : le
-  // serveur publie le nouvel état sur le flux, et c'est ce message qui relit la
-  // liste des modèles — pour cet onglet comme pour les autres. Le lire aussi en
-  // retour ferait demander la même chose deux fois.
   const redemanderCatalogue = async () => {
     setRelecture(true)
     try {
       await api.rafraichirCatalogue()
     } catch (erreur) {
-      setPanne(erreur instanceof Refus ? erreur.message : "l'atelier ne répond pas")
+      echouer(erreur, "l'atelier ne répond pas")
     } finally {
       setRelecture(false)
     }
   }
 
-  // « Le revers — l'actif qui porte son risque. » La fente **prédit** : elle dit
-  // ce qui cassera au prochain clic, et le geste qui répare. Elle ne date pas la
-  // photo — une date est un fait sur le monde, pas sur le clic à venir, et elle
-  // vit donc dans la barre d'état, qui est rendue en permanence.
-  //
-  // C'est ce qui rend l'ordre des trois locataires juste plutôt que subi : tant
-  // que la demande n'est pas composée, le refus tient la fente, et il n'y a
-  // aucune prédiction à faire puisqu'il n'y a pas de geste possible.
-  // `docs/DESIGN.md` § Motifs, *Le revers*.
   const revers =
     catalogueRepli.repli && catalogueRepli.recu_le > 0
       ? {
@@ -257,41 +475,76 @@ export function App() {
         }
       : null
 
+  const colonnes = [
+    `${replies.arbre ? 0 : 240}px`,
+    `${replies.reglages ? 0 : 300}px`,
+    "minmax(0,1fr)",
+    `${fiche ? 380 : 0}px`,
+  ].join(" ")
+
+  const ouverte = fiche ? grille.find((a) => a.identifiant === fiche) : undefined
+
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
       <BarreDeTete
         etat={etat}
+        bibliotheque={bibliotheque}
+        replies={replies}
+        onReplier={(quoi) => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
         onReglages={() => setReglagesOuverts(true)}
         onRafraichir={redemanderCatalogue}
       />
 
-      {/* Trois rangées, et rien de plus : 44 px en tête, le travail, 26 px en
-          pied. Le repli hors ligne n'ajoute **aucune hauteur** — il se pose
-          dans une fente qui existe déjà, sous le bouton Générer. */}
-      {/* La fiche ajoute une colonne, elle ne recouvre rien : « fermer le
-          panneau remet exactement où l'on était » (`docs/DESIGN.md`). La grille
-          se resserre, elle ne se recompose pas. */}
+      {/* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
+          l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
+          « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
+          n'est pas fermer, et retrouver un panneau où on l'avait laissé fait
+          partie de ce que le mouvement promet. */}
       <main
         className="grid min-h-0"
         style={{
-          gridTemplateColumns: fiche
-            ? "300px minmax(0,1fr) 380px"
-            : "300px minmax(0,1fr)",
+          gridTemplateColumns: colonnes,
+          transition: "grid-template-columns 160ms ease-in-out",
         }}
       >
-        <PanneauReglages
-          modeles={modeles}
-          choisi={modele}
-          onChoisir={setModeleChoisi}
-          proportions={proportions}
-          onProportions={setProportions}
-          variations={variations}
-          onVariations={setVariations}
-          options={options}
-          onOptions={setOptions}
-        />
+        <div className="min-h-0 overflow-hidden">
+          <Arbre
+            bibliotheque={bibliotheque}
+            collection={filtre.collection}
+            onCollection={(collection) => setFiltre((f) => ({ ...f, collection }))}
+            onErreur={setPanne}
+            onRelancer={relancer}
+          />
+        </div>
+
+        <div className="min-h-0 overflow-hidden">
+          <PanneauReglages
+            modeles={modeles}
+            choisi={modele}
+            onChoisir={setModeleChoisi}
+            proportions={proportions}
+            onProportions={setProportions}
+            variations={variations}
+            onVariations={setVariations}
+            options={options}
+            onOptions={setOptions}
+            references={reinjections.length}
+            projet={
+              bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant)
+                ?.nom ?? null
+            }
+          />
+        </div>
 
         <section className="flex min-h-0 flex-col">
+          <Reinjections
+            reinjections={reinjections}
+            grille={grille}
+            onRetirer={(asset) =>
+              setReinjections((deja) => deja.filter((r) => r.asset !== asset))
+            }
+            onRole={(asset, role) => reinjecter(asset, role)}
+          />
           <ChampPrompt
             prompt={prompt}
             onPrompt={setPrompt}
@@ -308,23 +561,47 @@ export function App() {
             onGenerer={generer}
             variations={variations}
           />
+          <BarreOutils
+            recherche={filtre.recherche}
+            onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
+            favoris={filtre.favoris}
+            onFavoris={(favoris) => setFiltre((f) => ({ ...f, favoris }))}
+            collection={filtre.collection}
+            collections={bibliotheque.collections}
+            projets={bibliotheque.projets}
+            selection={selection}
+            onRanger={ranger}
+            onFavori={(favori) => void marquerFavori(selection, favori)}
+            onSupprimer={() => void supprimer(selection)}
+            onVider={() => setSelection([])}
+            annulation={annulation}
+            onAnnuler={annuler}
+            compte={grille.length}
+          />
           <Grille
-            generations={generations}
-            assets={assets}
-            ouverte={fiche}
+            entrees={entrees}
+            selection={selection}
+            filtre={filtre}
             onRelancer={relancer}
-            onOuvrir={setFiche}
+            onOuvrir={ouvrir}
+            onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
           />
         </section>
 
-        {fiche && assets[fiche] && etat && (
-          <Fiche
-            asset={assets[fiche]}
-            traitement={etat.traitement}
-            onFermer={() => setFiche(null)}
-            onErreur={setPanne}
-          />
-        )}
+        <div className="min-h-0 overflow-hidden">
+          {ouverte && etat && (
+            <Fiche
+              asset={ouverte}
+              traitement={etat.traitement}
+              onFermer={() => setSelection([])}
+              onErreur={setPanne}
+              onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
+              onReglages={() => void reprendreReglages(ouverte)}
+              onSupprimer={() => void supprimer([ouverte.identifiant])}
+              onOuvrir={(identifiant) => setSelection([identifiant])}
+            />
+          )}
+        </div>
       </main>
 
       <BarreEtat
@@ -332,15 +609,13 @@ export function App() {
         catalogue={catalogueRepli}
         panne={panne}
         liaison={liaison}
+        bibliotheque={bibliotheque}
       />
 
       {reglagesOuverts && etat && (
         <EcranCle
           etat={etat.cle}
           onDeposee={async () => {
-            // La clé n'est pas un fait que le serveur annonce : c'est l'écran
-            // qui vient de la poser. Il relit donc l'état une fois, ici, et
-            // nulle part ailleurs.
             setEtat(await api.etat().catch(() => etat))
             await relireCatalogue()
           }}
@@ -351,26 +626,91 @@ export function App() {
   )
 }
 
+/** Fondre un asset annoncé dans la grille — et l'en **retirer** quand il l'a
+ *  quittée.
+ *
+ *  Trois façons de la quitter, et elles se lisent toutes sur l'objet reçu : il
+ *  est supprimé, il a changé de projet, ou il ne répond plus au filtre posé.
+ *  Le manque de la troisième s'est vu tout de suite au navigateur — supprimer un
+ *  projet détache ses assets, chaque détachement est annoncé, et les trois
+ *  détachés venaient s'installer dans la grille du projet **ouvert**, qui n'est
+ *  pas le leur.
+ *
+ *  Ce que cette fonction refuse de trancher, c'est **la recherche** : elle vit
+ *  sur le serveur, et la rejouer ici ferait dire à la grille autre chose qu'à la
+ *  bibliothèque. Sous recherche, un asset inconnu n'entre pas — on redemande. */
+function fondreAsset(
+  liste: Asset[],
+  recu: Asset,
+  filtre: Filtre,
+  courant: string | null,
+): Asset[] {
+  const dehors =
+    recu.supprime_le !== null ||
+    recu.projet !== courant ||
+    (filtre.collection !== null && recu.collection !== filtre.collection) ||
+    (filtre.favoris && !recu.favori)
+  if (dehors) return liste.filter((a) => a.identifiant !== recu.identifiant)
+  if (liste.some((a) => a.identifiant === recu.identifiant))
+    return liste.map((a) => (a.identifiant === recu.identifiant ? recu : a))
+  if (filtre.recherche.trim()) return liste
+  return [recu, ...liste].sort((a, b) => b.cree_le - a.cree_le || a.rang - b.rang)
+}
+
 // ── La barre de tête ────────────────────────────────────────────────────────
 
 function BarreDeTete({
   etat,
+  bibliotheque,
+  replies,
+  onReplier,
   onReglages,
   onRafraichir,
 }: {
   etat: Etat | null
+  bibliotheque: Bibliotheque
+  replies: { arbre: boolean; reglages: boolean }
+  onReplier: (quoi: "arbre" | "reglages") => void
   onReglages: () => void
   onRafraichir: () => void
 }) {
+  const projet =
+    bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ?? null
+
   return (
     <header className="flex items-center gap-4 border-b border-bord bg-fond-1 px-4">
       {/* Le seul endroit où l'outil a un visage — 17 px, l'unique exception à
           la règle « Instrument Serif ne descend jamais sous 24 px ». */}
       <h1 className="font-serif text-[17px] leading-none text-texte">Asset Kitchen</h1>
 
+      {/* Replier est **un choix**, jamais une contrainte de place (US-97) : les
+          deux bascules sont là en permanence, et disent l'état où elles sont. */}
+      <div className="flex items-center gap-1">
+        {(["arbre", "reglages"] as const).map((quoi) => (
+          <button
+            key={quoi}
+            type="button"
+            onClick={() => onReplier(quoi)}
+            aria-pressed={!replies[quoi]}
+            className={[
+              "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+              replies[quoi]
+                ? "border-bord bg-fond-2 text-texte-3"
+                : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+            ].join(" ")}
+          >
+            {quoi === "arbre" ? "arbre" : "réglages"}
+          </button>
+        ))}
+      </div>
+
       <div className="ml-auto flex items-center gap-4">
         <span className="mesure text-[10px] text-texte-3">
-          {dollars(etat?.couts.total_usd ?? 0)} dépensés
+          {projet ? projet.nom : "sans projet"} ·{" "}
+          {dollars(projet ? projet.total_usd : bibliotheque.sans_projet.total_usd)}
+        </span>
+        <span className="mesure text-[10px] text-texte-3">
+          {dollars(etat?.couts.total_usd ?? 0)} en tout
         </span>
         <Bouton onClick={onRafraichir} enfants="Catalogue" />
         <Bouton onClick={onReglages} enfants="Réglages" />
@@ -379,23 +719,110 @@ function BarreDeTete({
   )
 }
 
+// ── Les images réinjectées ──────────────────────────────────────────────────
+
+/**
+ * Ce qui repartira avec l'appel (US-12).
+ *
+ * La bande n'existe que quand il y a quelque chose dedans : une rangée vide en
+ * permanence au-dessus du prompt serait du cadrage affiché, et le prompt est
+ * l'endroit où l'atelier s'ouvre.
+ */
+function Reinjections({
+  reinjections,
+  grille,
+  onRetirer,
+  onRole,
+}: {
+  reinjections: Reinjection[]
+  grille: Asset[]
+  onRetirer: (asset: string) => void
+  onRole: (asset: string, role: Role) => void
+}) {
+  if (reinjections.length === 0) return null
+  return (
+    <div className="flex items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
+      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        Repart avec
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        {reinjections.map(({ asset, role }) => {
+          const connu = grille.find((a) => a.identifiant === asset)
+          return (
+            <span
+              key={asset}
+              className="flex items-center gap-1.5 rounded-[2px] border border-bord bg-fond-2 py-1 pr-1 pl-1"
+            >
+              {connu && (
+                <img
+                  src={api.rendu(connu.identifiant, connu.empreinte)}
+                  alt=""
+                  className="damier h-6 w-6 object-contain"
+                  style={{ imageRendering: "pixelated" }}
+                />
+              )}
+              <select
+                aria-label="Rôle de la réinjection"
+                value={role}
+                onChange={(e) => onRole(asset, e.target.value as Role)}
+                className="mesure bg-transparent text-[10px] text-texte-2"
+              >
+                <option value="reference">référence</option>
+                <option value="edition">source d'édition</option>
+                <option value="style">guide de style</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => onRetirer(asset)}
+                aria-label="Retirer la réinjection"
+                className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
+              >
+                ×
+              </button>
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── La grille ───────────────────────────────────────────────────────────────
 
 function Grille({
-  generations,
-  assets,
-  ouverte,
+  entrees,
+  selection,
+  filtre,
   onRelancer,
   onOuvrir,
+  onRetirerFiltre,
 }: {
-  generations: Generation[]
-  assets: Record<string, Asset>
-  ouverte: string | null
-  onRelancer: (identifiant: string, rang: number) => void
-  onOuvrir: (identifiant: string) => void
+  entrees: Entree[]
+  selection: string[]
+  filtre: Filtre
+  onRelancer: (generation: string, rang: number) => void
+  onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
+  onRetirerFiltre: () => void
 }) {
-  if (generations.length === 0) {
-    return (
+  // **Deux états vides, et ce ne sont pas les mêmes** (US-34, US-35). Une
+  // bibliothèque vide invite à écrire ; un filtre sans résultat est une impasse,
+  // et une impasse doit porter le geste qui en sort — sinon la grille est muette
+  // au moment précis où elle devrait aider.
+  if (entrees.length === 0) {
+    return filtreActif(filtre) ? (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
+        <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
+          Rien ne répond à ce filtre.
+        </p>
+        <button
+          type="button"
+          onClick={onRetirerFiltre}
+          className="mesure text-[11px] text-signal hover:text-signal-clair"
+        >
+          Retirer le filtre ›
+        </button>
+      </div>
+    ) : (
       <div className="flex flex-1 items-center justify-center p-4">
         <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
           Rien n'est encore sorti d'ici. <em className="text-texte-2">Écris.</em>
@@ -410,19 +837,15 @@ function Grille({
         className="grid gap-[9px]"
         style={{ gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))" }}
       >
-        {generations.flatMap((generation) =>
-          generation.emplacements.map((emplacement) => (
-            <Tuile
-              key={`${generation.identifiant}-${emplacement.rang}`}
-              generation={generation}
-              emplacement={emplacement}
-              asset={assets[`${generation.identifiant}-${emplacement.rang}`]}
-              ouverte={ouverte === `${generation.identifiant}-${emplacement.rang}`}
-              onRelancer={(rang) => onRelancer(generation.identifiant, rang)}
-              onOuvrir={onOuvrir}
-            />
-          )),
-        )}
+        {entrees.map((entree) => (
+          <Tuile
+            key={entree.cle}
+            entree={entree}
+            selectionnee={selection.includes(entree.cle)}
+            onRelancer={onRelancer}
+            onOuvrir={onOuvrir}
+          />
+        ))}
       </div>
     </div>
   )
@@ -435,19 +858,17 @@ function BarreEtat({
   catalogue,
   panne,
   liaison,
+  bibliotheque,
 }: {
   etat: Etat | null
   catalogue: Repli
   panne: string | null
   liaison: boolean
+  bibliotheque: Bibliotheque
 }) {
   // Trois choses différentes, et il ne faut pas les confondre : l'atelier est
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
   // va bien. La première l'emporte — sans serveur, le reste ne veut rien dire.
-  //
-  // Le repli est en `--epingle` : arrêté à un instant, que le système ne
-  // bougera pas tout seul, et que seul un geste de l'auteur relance. `--info`
-  // ne lisait pas comme une couleur à 10 px — il est retiré de la palette.
   const [couleur, texte] = !liaison
     ? ["var(--color-echec)", "l'atelier ne répond pas"]
     : panne
@@ -455,6 +876,10 @@ function BarreEtat({
       : catalogue.repli
         ? ["var(--color-epingle)", "hors ligne"]
         : ["var(--color-ok)", "en ligne"]
+
+  const assets =
+    bibliotheque.projets.reduce((somme, p) => somme + p.assets, 0) +
+    bibliotheque.sans_projet.assets
 
   // Deux altitudes, deux métiers : le pied porte **l'état du monde** — et
   // pourquoi, quand le port a su le dire en français. Il ne prédit jamais ce
@@ -465,19 +890,14 @@ function BarreEtat({
         <Point couleur={couleur} />
         {texte}
       </span>
-      {/* **La date vit ici**, et nulle part ailleurs — dans un segment à elle,
-          jamais fondue dans la phrase d'état. La mettre dans la fente sous
-          Générer la rendait invisible à l'ouverture, où le refus « aucun prompt »
-          occupe la fente ; la fondre dans la phrase la rendait invisible dès
-          qu'une panne ou une liaison rompue prend cette phrase. Or c'est
-          précisément quand ça va mal que l'âge de la photo compte (US-93).
-          Sans photo, il n'y a rien à dater : c'est la fente, où générer est
-          grisé avec sa raison, qui dit que le catalogue n'est jamais arrivé. */}
       {catalogue.repli && catalogue.recu_le > 0 && (
         <span className="text-epingle">catalogue du {heure(catalogue.recu_le)}</span>
       )}
       {catalogue.repli && catalogue.raison && <span>{catalogue.raison}</span>}
       <span>{etat?.catalogue.modeles ?? 0} modèles</span>
+      <span>
+        {assets} asset{assets > 1 ? "s" : ""}
+      </span>
       <span className="ml-auto">
         {etat?.cle.presente ? `clé …${etat.cle.apercu}` : "aucune clé"}
       </span>

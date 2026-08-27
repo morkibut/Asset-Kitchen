@@ -59,10 +59,20 @@ class FournisseurIndisponible(ErreurAtelier):
 
 
 class AppelRefuse(ErreurAtelier):
-    """Le fournisseur a répondu, et il a dit non."""
+    """Le fournisseur a répondu, et il a dit non.
+
+    **Un refus peut coûter.** Un appel qui atteint le modèle est facturé même
+    quand il ne rend aucune image exploitable : `cout_usd` porte alors ce que la
+    réponse déclare, et c'est ce chiffre-là qui va au journal du projet (US-24).
+    Le jeter rendrait un total de projet faux du montant exact qu'on cherche à
+    expliquer.
+    """
 
     code = "appel_refuse"
 
-    def __init__(self, raison: str, *, statut: int | None = None) -> None:
+    def __init__(
+        self, raison: str, *, statut: int | None = None, cout_usd: float = 0.0
+    ) -> None:
         super().__init__(raison)
         self.statut = statut
+        self.cout_usd = cout_usd

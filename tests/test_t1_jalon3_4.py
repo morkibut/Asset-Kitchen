@@ -171,7 +171,16 @@ def test_le_flux_http_ouvre_sur_l_etat_complet(atelier):
 
 
 def test_l_onglet_rouvert_retrouve_l_image_sans_la_redemander(atelier):
-    """Rouvrir, c'est se rebrancher — et l'état complet arrive avant le reste."""
+    """Rouvrir, c'est se rebrancher — et l'état complet arrive avant le reste.
+
+    **L'image est retrouvée en bibliothèque, pas dans une génération gardée à
+    l'écran** — et c'est ce que le critère demande mot pour mot : « l'onglet est
+    fermé pendant une génération : l'image est en bibliothèque à la
+    réouverture ». Ce test l'a d'abord vérifié sur la liste des générations,
+    faute de bibliothèque ; depuis T3, il le vérifie là où c'est vrai. Le
+    premier message ne porte plus que le **chantier** — ce qui tourne encore ou
+    qu'un redémarrage a coupé —, et un lot terminé n'y est plus.
+    """
     identifiant = "pendant-que-l-onglet-etait-ferme"
 
     async def scenario():
@@ -187,12 +196,14 @@ def test_l_onglet_rouvert_retrouve_l_image_sans_la_redemander(atelier):
     _, messages = asyncio.run(scenario())
     _, charge = messages[0]
 
-    retrouvee = next(
-        g for g in charge["generations"] if g["identifiant"] == identifiant
+    retrouve = next(
+        a for a in charge["assets"] if a["generation"] == identifiant
     )
-    assert retrouvee["statut"] == "reussie"
-    assert retrouvee["emplacements"][0]["resultat"]["type_media"] == "image/png"
+    assert retrouve["type_media"] == "image/png"
+    assert retrouve["identifiant"] == identifiant + "-0"
     assert charge["couts"]["total_usd"] == 0.0245
+    # Le lot est réglé : il ne tient plus de place dans le chantier.
+    assert [g for g in charge["generations"] if g["identifiant"] == identifiant] == []
 
 
 # ── « La jauge déterminée » ──────────────────────────────────────────────────

@@ -7,8 +7,16 @@ Rien ici ne connaît FastAPI, SQLite, httpx, ni le vocabulaire d'un fournisseur.
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.catalogue import Modele, Option
 from atelier.domaine.demande import Demande
-from atelier.domaine.generation import Emplacement, Generation, Resultat, Statut
 from atelier.domaine.erreurs import ErreurAtelier, ModeleInconnu, SansCle
+from atelier.domaine.generation import (
+    ROLES,
+    Emplacement,
+    Generation,
+    Reinjection,
+    Resultat,
+    Statut,
+)
+from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
 from atelier.domaine.recette import (
     Bords,
     Grille,
@@ -19,8 +27,10 @@ from atelier.domaine.recette import (
 )
 
 __all__ = [
+    "NOM_BAC_A_SABLE",
     "Asset",
     "Bords",
+    "Collection",
     "Demande",
     "Emplacement",
     "ErreurAtelier",
@@ -30,11 +40,15 @@ __all__ = [
     "ModeleInconnu",
     "Option",
     "Passe",
+    "Projet",
     "Quantification",
+    "ROLES",
     "Recadrage",
     "Recette",
+    "Reinjection",
     "Resultat",
     "SansCle",
     "Statut",
     "identifiant_de",
+    "repere",
 ]

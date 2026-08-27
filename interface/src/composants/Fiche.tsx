@@ -3,21 +3,26 @@
 // « La fiche asset est un panneau latéral, pas une page. Une page ferait perdre
 // la grille et le prompt ; fermer le panneau remet exactement où l'on était. »
 //
-// Elle s'ouvre en T2 avec ce que T2 possède : la visionneuse, la recette, le
-// retour au brut. La filiation, le favori et la suppression l'y rejoignent en
-// T3, quand la bibliothèque existera. Montrer aujourd'hui des rubriques vides
-// serait exhiber le cadrage au lieu de servir le geste — le reproche qui a fait
-// écarter `docs/maquette-atelier.html`.
+// Elle s'est ouverte en T2 avec ce que T2 possédait : la visionneuse, la
+// recette, le retour au brut. T3 y ajoute ce que la bibliothèque rend possible
+// — le jugement (favori, suppression), la filiation, et la réinjection dans ses
+// quatre rôles. Aucune rubrique n'y est arrivée vide : montrer du cadrage au
+// lieu de servir le geste est le reproche qui a fait écarter
+// `docs/maquette-atelier.html`.
 
 import { useEffect, useState } from "react"
 import {
   api,
+  dollars,
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
+  ROLES,
   type Asset,
   type EtatTraitement,
+  type Filiation,
   type Passe,
   type Recette,
+  type Role,
 } from "../api"
 import { Bouton, Curseur, EnTetePanneau, Etape, Libelle, Raison, Segments } from "./chassis"
 
@@ -32,11 +37,24 @@ export function Fiche({
   traitement,
   onFermer,
   onErreur,
+  onReinjecter,
+  onReglages,
+  onSupprimer,
+  onOuvrir,
 }: {
   asset: Asset
   traitement: EtatTraitement
   onFermer: () => void
   onErreur: (raison: string) => void
+  /** Renvoyer cette image au générateur, dans l'un des trois rôles qui portent
+   *  une image (US-12). */
+  onReinjecter: (role: Role) => void
+  /** Le quatrième rôle : reprendre les réglages de la génération qui a produit
+   *  cet asset. Aucune image ne part — c'est le générateur qu'on repeuple. */
+  onReglages: () => void
+  onSupprimer: () => void
+  /** Remonter ou descendre la filiation sans quitter le panneau. */
+  onOuvrir: (identifiant: string) => void
 }) {
   const [recette, setRecette] = useState<Recette>(asset.recette)
   const [montrerBrut, setMontrerBrut] = useState(false)
@@ -115,6 +133,16 @@ export function Fiche({
           onBrut={setMontrerBrut}
           traite={!estVide(recette)}
         />
+
+        <Jugement
+          asset={asset}
+          onErreur={onErreur}
+          onReinjecter={onReinjecter}
+          onReglages={onReglages}
+          onSupprimer={onSupprimer}
+        />
+
+        <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
 
         <div className="flex flex-col gap-2">
           {/* ── 1. Détourage ─────────────────────────────────────────────── */}
@@ -367,6 +395,178 @@ export function Fiche({
         </div>
       </div>
     </aside>
+  )
+}
+
+// ── Le jugement, et la réinjection ──────────────────────────────────────────
+
+/**
+ * Ce qu'on fait de cette image, une fois qu'on l'a regardée.
+ *
+ * « Juger, c'est marquer favori ou supprimer » — jamais accepter (US-25, US-26,
+ * US-27). Et réinjecter, qui n'est pas un jugement mais son prolongement
+ * naturel : ce qui marche repart (US-12).
+ */
+function Jugement({
+  asset,
+  onErreur,
+  onReinjecter,
+  onReglages,
+  onSupprimer,
+}: {
+  asset: Asset
+  onErreur: (raison: string) => void
+  onReinjecter: (role: Role) => void
+  onReglages: () => void
+  onSupprimer: () => void
+}) {
+  const basculerFavori = async () => {
+    try {
+      await api.favori([asset.identifiant], !asset.favori)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "favori refusé")
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-bord pt-2">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={basculerFavori}
+          className={[
+            "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+            asset.favori
+              ? "border-signal bg-signal/13 text-signal"
+              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+          ].join(" ")}
+        >
+          {asset.favori ? "◤ favori" : "favori"}
+        </button>
+        <span className="mesure text-[10px] text-texte-3">
+          {dollars(asset.cout_usd)}
+        </span>
+        <button
+          type="button"
+          onClick={onSupprimer}
+          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+        >
+          Supprimer
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <Libelle>Réinjecter</Libelle>
+        <div className="flex flex-wrap gap-1">
+          {ROLES.map(({ role, libelle, explique }) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => onReinjecter(role)}
+              title={explique}
+              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
+            >
+              {libelle}
+            </button>
+          ))}
+          {/* Le quatrième rôle n'envoie aucune image : il reprend les réglages
+              de la génération qui a produit cet asset. */}
+          <button
+            type="button"
+            onClick={onReglages}
+            title="reprendre prompt, modèle et réglages"
+            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
+          >
+            jeu de réglages
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── La filiation ────────────────────────────────────────────────────────────
+
+/**
+ * D'où vient cette image, et ce qui en descend (US-38).
+ *
+ * **Une filiation incomplète reste une filiation.** Un parent supprimé garde son
+ * identifiant et se dit supprimé (US-29) plutôt que de disparaître en emportant
+ * les maillons qui restent — c'est la contrepartie directe de « jamais de
+ * cascade » : si les enfants survivent, il faut qu'ils puissent dire à quoi.
+ *
+ * Le bloc n'existe que s'il y a quelque chose à montrer. Un asset sans parent et
+ * sans descendance n'a pas de filiation manquante : il n'en a pas, et une
+ * rubrique vide dirait le contraire.
+ */
+function Descendance({
+  asset,
+  onOuvrir,
+  onErreur,
+}: {
+  asset: Asset
+  onOuvrir: (identifiant: string) => void
+  onErreur: (raison: string) => void
+}) {
+  const [filiation, setFiliation] = useState<Filiation | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    api
+      .filiation(asset.identifiant)
+      .then((lue) => vivant && setFiliation(lue))
+      .catch((erreur) =>
+        onErreur(erreur instanceof Error ? erreur.message : "filiation illisible"),
+      )
+    return () => {
+      vivant = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asset.identifiant, asset.parent_supprime])
+
+  if (!filiation) return null
+  const sansParent = filiation.parent_identifiant === null
+  if (sansParent && filiation.enfants.length === 0) return null
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-bord pt-2">
+      <Libelle>Filiation</Libelle>
+      {filiation.parent && (
+        <button
+          type="button"
+          onClick={() => onOuvrir(filiation.parent!.identifiant)}
+          className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal hover:text-signal-clair"
+        >
+          <span aria-hidden>↑</span>
+          <span className="truncate">{filiation.parent.label}</span>
+        </button>
+      )}
+      {filiation.parent_supprime && (
+        <p className="mesure flex items-center gap-1.5 text-[10px] text-epingle">
+          <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+          parent supprimé — {filiation.parent_identifiant}
+        </p>
+      )}
+      {filiation.enfants.length > 0 && (
+        <div className="flex flex-col gap-[2px]">
+          <span className="mesure text-[10px] text-texte-3">
+            {filiation.enfants.length} descendant
+            {filiation.enfants.length > 1 ? "s" : ""}
+          </span>
+          {filiation.enfants.slice(0, 8).map((enfant) => (
+            <button
+              key={enfant.identifiant}
+              type="button"
+              onClick={() => onOuvrir(enfant.identifiant)}
+              className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal"
+            >
+              <span aria-hidden>↓</span>
+              <span className="truncate">{enfant.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

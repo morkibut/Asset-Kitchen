@@ -10,13 +10,20 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Literal
 
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from atelier.domaine import Asset, Demande, Generation, Modele, Recette
+from atelier.domaine import (
+    Asset,
+    Demande,
+    Generation,
+    Modele,
+    Recette,
+    Reinjection,
+)
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png
@@ -60,14 +67,16 @@ async def statut(requete: Request) -> dict[str, Any]:
 async def flux(requete: Request, limite: int = Query(50, ge=1, le=500)) -> Response:
     """Ce que l'atelier fait, au moment où il le fait. Aucun sondage.
 
-    **Le premier message est l'état complet** — clé, catalogue, coûts, et les
-    générations récentes avec leurs images. C'est lui qui tient le critère
+    **Le premier message est l'état complet** — clé, catalogue, coûts, l'arbre
+    de la bibliothèque, la grille du projet ouvert, et le chantier : ce qui
+    tourne encore ou qu'un redémarrage a coupé. C'est lui qui tient le critère
     « l'onglet est fermé pendant une génération : à la réouverture, l'image est
-    là » : rouvrir, c'est se réabonner, et l'état arrive avant tout le reste.
+    là » — elle y est parce qu'elle est **en bibliothèque**, pas parce qu'on a
+    gardé la génération à l'écran.
 
     Les suivants sont des faits acquis : un emplacement part, une image arrive,
-    un appel échoue, le catalogue revient. Entre deux, un battement en
-    commentaire SSE tient la liaison ouverte sans rien dire.
+    un appel échoue, un asset se range, le catalogue revient. Entre deux, un
+    battement en commentaire SSE tient la liaison ouverte sans rien dire.
     """
     atelier = _atelier(requete)
 
@@ -80,14 +89,18 @@ async def flux(requete: Request, limite: int = Query(50, ge=1, le=500)) -> Respo
                 "etat",
                 {
                     **atelier.etat(),
+                    # **Le chantier, pas l'historique.** Ce qui a réussi est en
+                    # bibliothèque et paraît par `assets` ; ce qui a échoué est
+                    # au journal du projet avec son coût. Ne restent ici que les
+                    # emplacements qui attendent encore une issue.
                     "generations": [
-                        g.en_json() for g in atelier.generations.recentes(limite)
+                        g.en_json() for g in atelier.generations.chantier(limite)
                     ],
-                    # Les assets voyagent avec l'état complet, pour la même
-                    # raison que les générations : un onglet qui se rouvre
-                    # retrouve ses retouches sans redemander quoi que ce soit.
+                    # La grille du projet ouvert, servie avec l'état pour qu'un
+                    # onglet qui s'ouvre la dessine sans un second appel.
                     "assets": [
-                        a.en_json() for a in atelier.assets.recents(limite * 4)
+                        a.en_json()
+                        for a in atelier.bibliotheque.grille_courante(limite * 4)
                     ],
                 },
             )
@@ -203,6 +216,19 @@ def _modele_en_json(modele: Modele, demande) -> dict[str, Any]:
 # ── Les générations ──────────────────────────────────────────────────────────
 
 
+class CorpsReinjection(BaseModel):
+    """Un asset renvoyé au fournisseur, et à quel titre (US-12).
+
+    Le quatrième rôle du produit — **jeu de réglages** — n'apparaît pas ici : il
+    n'envoie aucune image. Il repeuple le générateur avec les paramètres d'une
+    génération passée, que l'écran relit sur `GET /api/generations/{id}`, et il
+    ne laisse donc rien dans celle qui part.
+    """
+
+    asset: str
+    role: Literal["reference", "edition", "style"] = "reference"
+
+
 class CorpsGeneration(BaseModel):
     modele: str
     prompt: str = Field(min_length=1)
@@ -213,6 +239,10 @@ class CorpsGeneration(BaseModel):
     options: dict[str, Any] = Field(default_factory=dict)
     identifiant: str | None = None
     projet: str | None = None
+    # Des identifiants d'assets et leur rôle, jamais des octets (US-12). Celui
+    # qui porte « edition » est ce qu'on retouche : il part avec l'appel comme
+    # les autres, et c'est le seul qui donne sa filiation à ce qui sortira.
+    references: list[CorpsReinjection] = Field(default_factory=list)
 
 
 @routeur.post("/generations", status_code=202)
@@ -230,11 +260,17 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         variations=corps.variations,
         options=corps.options,
     )
-    generation = await _atelier(requete).generations.soumettre(
+    atelier = _atelier(requete)
+    generation = await atelier.generations.soumettre(
         corps.modele,
         demande,
         identifiant=corps.identifiant,
+        # Sans projet nommé, c'est le service qui pose le projet ouvert : le
+        # défaut vit là-bas pour que le MCP de T7 en hérite sans le réécrire.
         projet=corps.projet,
+        references=[
+            Reinjection(asset=r.asset, role=r.role) for r in corps.references
+        ],
     )
     return generation.en_json()
 
@@ -355,9 +391,38 @@ class CorpsRecette(BaseModel):
 
 @routeur.get("/assets")
 async def liste_assets(
-    requete: Request, limite: int = Query(200, ge=1, le=1000)
+    requete: Request,
+    projet: str | None = Query(None),
+    sans_projet: bool = Query(False),
+    tous: bool = Query(False),
+    collection: str | None = Query(None),
+    favoris: bool = Query(False),
+    recherche: str = Query(""),
+    limite: int = Query(200, ge=1, le=1000),
 ) -> dict[str, Any]:
-    assets = _atelier(requete).assets.recents(limite)
+    """La bibliothèque, filtrée. **La seule grille du produit** (US-31).
+
+    Sans aucun paramètre, c'est la grille du projet ouvert — exactement ce que
+    le premier message du flux a déjà servi. `tous` regarde par-dessus les
+    projets, `sans_projet` ne montre que ce qu'une suppression de projet a
+    détaché.
+
+    Le filtrage est **ici** et non à l'écran : la recherche doit porter sur
+    toute la bibliothèque, pas sur les deux cents assets qu'un navigateur a en
+    mémoire. C'est aussi ce qui fera que le MCP de T7 verra exactement ce que
+    l'écran voit.
+    """
+    bibliotheque = _atelier(requete).bibliotheque
+    if not tous and projet is None and not sans_projet and collection is None:
+        projet, sans_projet = bibliotheque.courant, bibliotheque.courant is None
+    assets = bibliotheque.chercher(
+        projet=None if tous else projet,
+        sans_projet=sans_projet and not tous,
+        collection=collection,
+        favoris=favoris,
+        recherche=recherche,
+        limite=limite,
+    )
     return {"assets": [a.en_json() for a in assets]}
 
 

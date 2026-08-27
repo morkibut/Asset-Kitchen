@@ -200,6 +200,7 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 
 - **Approche** : **grid-disciplined**, sans exception. Il n'y a pas de section marketing dans ce produit, donc aucune raison de casser la grille nulle part.
 - **Grid de l'Atelier** : `240px · 300px · minmax(0,1fr) · 380px` — arbre · réglages · prompt + grille · fiche. Largeurs absolues, sans condition.
+- **La colonne de 240 px porte trois choses, et c'est le même sujet vu de trois hauteurs** : où ça se range (projets, collections), ce que ça coûte (le total du projet ouvert), et **ce qui a raté** — le journal, sous l'arbre. Ajouté le 27 août 2026 avec la bibliothèque : un appel raté a coûté de l'argent sans produire d'image, donc il n'a sa place ni dans la grille, qui ne montre que ce qu'on peut réutiliser, ni nulle part, puisqu'il faut pouvoir expliquer une facture. Le journal ne paraît que s'il y a eu un raté.
 - **Max content width** : **aucune**. L'écran large est la ressource du produit, on la dépense. La grille d'assets remplit ce qui reste.
 - **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — un niveau indisponible à la largeur courante est **grisé, pas caché**.
 - **Border radius** : `sm 2px · md 3px · lg 4px · full 9999px` (réservé aux pastilles de statut et aux points de la barre d'état). **La tuile d'asset est à 0.**
@@ -228,7 +229,7 @@ transition de couleur au maximum, jamais de transformation).
 |---|---|---|
 | Jauge de génération | continue, **déterminée** | ça travaille, et voilà où ça en est |
 | Arrivée d'un asset dans la grille | fondu 120 ms + 1 px de levée | quelque chose de neuf est apparu — c'est ce qui permet de garder l'œil sur ce que l'agent produit sans notification |
-| Bandeau d'annulation après suppression | entrée 160 ms, sortie 160 ms | il reste un instant pour revenir en arrière |
+| Annulation après suppression | entrée 160 ms, sortie 160 ms | il reste un instant pour revenir en arrière |
 | Repli / dépliage d'un panneau | 160 ms sur la largeur | tu n'as pas perdu ta place |
 | Ouverture / fermeture de la fiche | 160 ms sur la largeur | idem |
 
@@ -379,6 +380,39 @@ une bande relue avant chaque clic devient un clignotement. Seule s'applique la t
 du § Motion : 80 ms de transition de couleur sur le point de la barre d'état, `--ok` →
 `--epingle`.
 
+### L'annulation se pose dans une fente, jamais dans un bandeau
+
+Le § Motion réserve 160 ms à « l'annulation après suppression », et ne dit pas où elle se
+pose. La réponse est venue du même raisonnement que le repli hors ligne, le même jour :
+**un bandeau est du châssis en travers de la grille**, et une suppression n'en mérite pas
+plus qu'une panne de réseau.
+
+Elle se pose donc dans la **barre d'outils de la grille** — 38 px qui existent déjà —, à
+droite, et **dans la forme exacte de la fente sous Générer** : tiret de 8 px, mono 10 px,
+`--epingle` pour le fait, lien `--signal` pour le geste. Le décompte est celui que le
+serveur a annoncé, jamais un délai recompté à l'écran : c'est lui qui refuse au-delà, et
+deux délais écrits à deux endroits finiraient par se contredire.
+
+```
+   Chercher   [Favoris]   12 images            — 3 supprimés · 6 s   Annuler ›
+```
+
+**La couleur est `--epingle`, et c'est la même définition que ses deux autres emplois** :
+*arrêté à un instant, que le système ne bougera pas tout seul, et que seul un geste de
+l'auteur relance*. Une suppression en sursis est exactement cela.
+
+### La barre d'outils ne perd jamais son filtre
+
+Une sélection **ajoute** des gestes à droite du compteur ; elle ne prend pas la place de la
+recherche ni du filtre favoris. La règle a été écrite après l'avoir violée : ouvrir une
+fiche sélectionne, donc la barre basculait en mode sélection, donc le filtre posé
+disparaissait de l'écran — et « fermer le panneau remet exactement où l'on était » (US-37)
+devenait faux sans que rien ne l'ait dit.
+
+**Et l'anneau `--lumiere` n'a qu'un sens : sélectionné.** La fiche n'est pas un état de
+plus — c'est la sélection quand elle vaut un. Deux images sélectionnées ferment la fiche et
+laissent la barre d'outils faire le travail de lot ; une seule la rouvre.
+
 ### L'emplacement
 
 Au moment où la génération part, N tuiles paraissent **à leur taille définitive**, avec la jauge
@@ -418,6 +452,10 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 26/08/2026 | Châssis sombre et **froid**, un seul accent cyan | Le pixel art de fantasy sature verts, bruns et ors ; un châssis chaud entre en concurrence avec ce qu'on juge. Un fond clair fausserait le contraste perçu d'un sprite. |
 | 26/08/2026 | Instrument Serif + Instrument Sans + JetBrains Mono | Même fonderie pour la paire serif/sans — la paire lit comme un choix. Grotesque étroit pour la densité du français. Une seule mono. |
 | 26/08/2026 | **Toute mesure en monospace**, partout | Dans ce produit un nombre est toujours un fait mesuré. Coût : `$0,067` est plus large en mono, et deux familles sur une ligne demandent d'accorder taille et ligne de base. |
+| 27/08/2026 | L'annulation d'une suppression **dans la barre d'outils**, pas dans un bandeau | Même raisonnement que le repli hors ligne le même jour : un bandeau est du châssis en travers de la grille. Une fente de 38 px existe déjà et ne coûte aucune hauteur. |
+| 27/08/2026 | Le **journal des ratés** sous l'arbre, dans la colonne de 240 px | Un appel raté n'entre pas dans la grille (US-23) mais doit rester lisible avec son coût (US-24). La colonne du projet est la seule qui parle déjà d'argent. |
+| 27/08/2026 | La barre d'outils **garde** recherche et filtre quand une sélection existe | Ouvrir une fiche sélectionne : faire basculer la barre effaçait le filtre posé, et contredisait « se retrouver exactement où l'on était » (US-37). |
+| 27/08/2026 | L'anneau `--lumiere` ne veut dire que **sélectionné** ; la fiche est la sélection quand elle vaut un | Deux états pour la même chose divergent. Constaté à l'écran : deux clics rapprochés se contredisaient. |
 | 26/08/2026 | **Rayon 0 sur la tuile**, 2 px sur le châssis | La grille se lit comme une planche contact. Coût : aucune ombre n'est possible sur une tuile. |
 | 26/08/2026 | Instrument Serif borné aux titres et aux états vides, ≥ 24 px | Le seul endroit où l'outil a un visage. Coût : règle dure à tenir — trois usages de trop et ça bascule en blog. |
 | 26/08/2026 | **L'emplacement persistant** : la grille ne se recompose jamais | L'échec atterrit là où le succès serait arrivé. Coût : des trous dans la grille pendant 10 à 20 s, qui peuvent se lire comme des images cassées si la jauge n'est pas assez lisible. |

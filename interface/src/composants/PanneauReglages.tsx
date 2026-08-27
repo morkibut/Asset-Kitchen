@@ -22,6 +22,8 @@ export function PanneauReglages({
   onVariations,
   options,
   onOptions,
+  references,
+  projet,
 }: {
   modeles: Modele[]
   choisi: Modele | null
@@ -32,6 +34,13 @@ export function PanneauReglages({
   onVariations: (v: number) => void
   options: Record<string, string>
   onOptions: (o: Record<string, string>) => void
+  /** Combien d'images réinjectées partiront avec l'appel (US-12, US-52). Le
+   *  chiffre vient de l'écran parce que c'est lui qui les tient ; le **grisé**
+   *  qui en découle, lui, vient du serveur — l'interface ne rejoue jamais la
+   *  règle « ce modèle n'accepte que N références ». */
+  references: number
+  /** Le projet ouvert : c'est là que ce qui sort entrera (US-2). */
+  projet: string | null
 }) {
   const [filtre, setFiltre] = useState("")
 
@@ -146,9 +155,18 @@ export function PanneauReglages({
           </div>
           <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
             <dt className="text-texte-3">références</dt>
-            <dd className="text-right text-texte-2">
-              0 / {choisi?.references_max ?? 0}
+            <dd
+              className={[
+                "text-right",
+                references > (choisi?.references_max ?? 0)
+                  ? "text-echec"
+                  : "text-texte-2",
+              ].join(" ")}
+            >
+              {references} / {choisi?.references_max ?? 0}
             </dd>
+            <dt className="text-texte-3">projet</dt>
+            <dd className="text-right text-texte-2">{projet ?? "aucun"}</dd>
             <dt className="text-texte-3">univers</dt>
             <dd className="text-right text-texte-3">aucun — T4</dd>
             <dt className="text-texte-3">grille imposée</dt>

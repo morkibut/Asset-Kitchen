@@ -36,7 +36,7 @@ from atelier.domaine.recette import (
     TRAMAGES,
     Recette,
 )
-from atelier.image import Rendu, detourer, finir, raison_moteur
+from atelier.image import Rendu, detourer, finir, raison_moteur, rendre_en_png
 from atelier.services.evenements import Diffusion
 
 # Les bornes des réglages, et le seul endroit qui les dise. Une recette venue
@@ -133,12 +133,34 @@ class ServiceAssets:
             # faire de l'image ne dépend pas de l'appel qui l'a rendue.
             recette=ancien.recette if ancien else Recette(),
             epingle=ancien.epingle if ancien else False,
-            projet=generation.projet,
-            cree_le=ancien.cree_le if ancien else time.time(),
+            # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
+            # le total du projet, lui, se calcule sur les générations, qui sont
+            # les seules à connaître les appels ratés.
+            cout_usd=emplacement.cout_usd,
+            # **Il entre en bibliothèque de lui-même** (US-25), dans le projet
+            # où la génération est partie. Un rangement déjà posé à la main
+            # l'emporte : ce que l'auteur a décidé ne se défait pas tout seul.
+            projet=ancien.projet if ancien else generation.projet,
+            collection=ancien.collection if ancien else None,
+            favori=ancien.favori if ancien else False,
+            # La filiation vient de la source d'édition réinjectée (US-12).
+            # Sans réinjection, l'asset n'a pas de parent — et c'est vrai, pas
+            # provisoire : rien ne l'a engendré.
+            parent=generation.parent,
+            # **La date du lot, pas celle de l'arrivée.** Les variations d'une
+            # même génération n'arrivent pas ensemble : dater chaque asset de
+            # son arrivée ferait glisser les tuiles les unes par rapport aux
+            # autres pendant qu'on les regarde, et « la grille ne se recompose
+            # jamais entre le départ et l'arrivée » (`docs/DESIGN.md`
+            # § L'emplacement) tomberait. Le rang départage à égalité.
+            cree_le=ancien.cree_le if ancien else generation.cree_le,
+            # Ce qu'une relance ne doit pas défaire : le jugement de l'auteur.
+            supprime_le=ancien.supprime_le if ancien else None,
+            parent_supprime=ancien.parent_supprime if ancien else False,
         )
         self._oublier_detourage(identifiant)
         self._rendre(asset)
-        self._sauver(asset)
+        self.sauver(asset)
         return asset
 
     def rattraper(self, generations: list[Generation]) -> int:
@@ -159,8 +181,36 @@ class ServiceAssets:
             for emplacement in generation.emplacements:
                 if emplacement.resultat is None:
                     continue
+                # **Pas d'image sur le disque, pas d'asset.** C'est ce qui
+                # empêche une suppression définitive de ressusciter au
+                # redémarrage : effacer les fichiers suffit à effacer l'asset,
+                # sans qu'une pierre tombale ait à être gardée quelque part.
+                if not self._fichiers.existe(emplacement.resultat.fichier):
+                    continue
                 identifiant = identifiant_de(generation.identifiant, emplacement.rang)
-                if self._base.lire_asset(identifiant) is not None:
+                connu = self._base.lire_asset(identifiant)
+                if connu is not None:
+                    # **Un asset écrit avant T3 ne porte pas son coût** : le
+                    # champ n'existait pas. Sa génération, elle, l'a toujours
+                    # porté. Le lui reprendre ici évite d'afficher `$0,0000` sur
+                    # une tuile dont l'image a bel et bien été payée — alors que
+                    # le total du projet, lui, dirait autre chose. Un rattrapage
+                    # de plus, et c'est exactement le métier de cette méthode.
+                    repare = False
+                    if not connu.cout_usd and emplacement.cout_usd:
+                        connu.cout_usd = emplacement.cout_usd
+                        repare = True
+                    # **La date du lot, pas celle de l'arrivée.** Les assets
+                    # d'avant T3 portent l'instant où leur image est tombée :
+                    # deux variations d'un même appel ont donc deux dates, et la
+                    # grille les rend dans l'ordre où elles sont arrivées plutôt
+                    # que dans celui de leurs emplacements. Vu à l'écran sur le
+                    # ranger, dont la variation 1 passait devant la 0.
+                    if connu.cree_le != generation.cree_le:
+                        connu.cree_le = generation.cree_le
+                        repare = True
+                    if repare:
+                        self.sauver(connu)
                     continue
                 self.naitre(generation, emplacement)
                 nes += 1
@@ -169,7 +219,13 @@ class ServiceAssets:
     # ── Lecture ──────────────────────────────────────────────────────────────
 
     def lire(self, identifiant: str) -> Asset | None:
-        return self._base.lire_asset(identifiant)
+        """L'asset, ou rien. **Un supprimé est absent**, même pendant que son
+        annulation court : il a quitté la bibliothèque au moment du geste, donc
+        plus rien ne le sert, ne le retouche ni ne le réinjecte. Ses fichiers,
+        eux, attendent encore le délai — c'est ce qui rend l'annulation
+        possible, et ça ne regarde que la bibliothèque."""
+        asset = self._base.lire_asset(identifiant)
+        return None if asset is not None and asset.supprime else asset
 
     def recents(self, limite: int = 200) -> list[Asset]:
         return self._base.assets_recents(limite)
@@ -188,8 +244,21 @@ class ServiceAssets:
 
         if not asset.rendu_a_jour or not self._fichiers.existe(asset.rendu or ""):
             self._rendre(asset)
-            self._sauver(asset)
+            self.sauver(asset)
         return self._fichiers.lire(asset.rendu or ""), "image/png"
+
+    def reference(self, identifiant: str) -> bytes:
+        """Les octets à renvoyer au fournisseur quand cet asset repart (US-12).
+
+        **Le rendu, et en PNG.** Le rendu parce que ce qu'on réinjecte doit être
+        ce qu'on voit — réinjecter le brut d'un asset détouré renverrait le fond
+        gris qu'on vient d'enlever. Le PNG parce que c'est le seul format qui
+        porte l'alpha, et parce que l'adaptateur envoie ses références en
+        `data:image/png` : lui passer du JPEG sous cette étiquette serait un
+        mensonge qui se réveillerait chez le fournisseur.
+        """
+        octets, type_media = self.octets(self._trouver(identifiant))
+        return octets if type_media == "image/png" else rendre_en_png(octets)
 
     # ── Poser une recette ────────────────────────────────────────────────────
 
@@ -205,7 +274,7 @@ class ServiceAssets:
         asset.recette = recette
         asset.epingle = True
         self._rendre(asset)
-        self._sauver(asset)
+        self.sauver(asset)
         return asset
 
     def revenir_au_brut(self, identifiant: str) -> Asset:
@@ -224,7 +293,7 @@ class ServiceAssets:
         asset.rendu_hauteur = 0
         asset.epingle = False
         self._oublier_detourage(identifiant)
-        self._sauver(asset)
+        self.sauver(asset)
         return asset
 
     # ── Les recettes nommées ─────────────────────────────────────────────────
@@ -364,20 +433,32 @@ class ServiceAssets:
     # ── Enregistrement ───────────────────────────────────────────────────────
 
     def _trouver(self, identifiant: str) -> Asset:
-        asset = self._base.lire_asset(identifiant)
+        asset = self.lire(identifiant)
         if asset is None:
             raise AssetInconnu(identifiant)
         return asset
 
-    def _sauver(self, asset: Asset) -> None:
-        """Écrire d'abord, annoncer ensuite — comme pour une génération.
+    def sauver(self, asset: Asset) -> None:
+        """**Le seul endroit du dépôt qui écrive un asset.**
 
-        Ce qui est annoncé est donc toujours déjà sur le disque : un onglet qui
-        reçoit l'événement puis redemande l'asset ne peut pas tomber sur un état
-        plus ancien que celui qu'on vient de lui dire.
+        La bibliothèque de T3 range, marque et supprime ; elle passe par ici
+        pour poser le résultat. Deux écrivains, ce serait un jour un rangement
+        écrit dans la base et pas dans le fichier — donc perdu à la première
+        reconstruction.
+
+        Écrire d'abord, annoncer ensuite — comme pour une génération. Ce qui est
+        annoncé est donc toujours déjà sur le disque : un onglet qui reçoit
+        l'événement puis redemande l'asset ne peut pas tomber sur un état plus
+        ancien que celui qu'on vient de lui dire.
         """
-        self._base.enregistrer_asset(asset)
+        # **Le fichier d'abord, l'index ensuite.** « Les fichiers font foi, la
+        # base est un index reconstructible » : écrire l'index en premier
+        # laisserait, si le processus s'arrête entre les deux lignes, un index
+        # en avance sur le fichier — c'est-à-dire l'invariant à l'envers. Dans
+        # cet ordre-ci, la pire coupure laisse un index en retard, que la
+        # prochaine reconstruction rattrape.
         self._fichiers.ecrire_asset(asset.generation, asset.rang, asset.en_disque())
+        self._base.enregistrer_asset(asset)
         self._diffusion.publier("asset", asset.en_json())
 
 
