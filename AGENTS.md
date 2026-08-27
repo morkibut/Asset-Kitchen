@@ -21,8 +21,24 @@ remplace le sondage, la jauge déterminée, la reprise vue du navigateur et le r
 ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs passes, la
 remise sur grille, la quantification grisée, les recettes nommées, et la fiche — la
 troisième colonne de l'écran. **Les vingt-six critères d'acceptation de T1 et T2 sont
-cochés dans `docs/PLAN.md`, et 45 tests les tiennent. La prochaine tranche est T3, la
-bibliothèque.**
+cochés dans `docs/PLAN.md`, et 45 tests de serveur plus 3 d'écran les tiennent. La
+prochaine tranche est T3, la bibliothèque.**
+
+**Le produit a été utilisé pour de vrai le 27 août, et c'est ce qui a trouvé le seul défaut
+de T1.** Trois appels payants ($0,019 : un coffre, un ranger en deux variations lancées
+pendant que le coffre tournait), puis la retouche des six assets par les routes de l'écran.
+Ce qui s'est vérifié à cette occasion, sur de vraies images et non au banc : une recette
+nommée réappliquée rend un PNG **identique octet pour octet** ; un rendu effacé se recalcule
+en 41 ms ; le retour au brut rend le brut exact ; resoumettre le même identifiant ne
+refacture rien ; un cran de curseur coûte 23 à 34 ms tant qu'on ne touche pas au détourage,
+qui coûte 180 à 205 ms. Ce qui s'est trouvé : l'écran doublait chaque génération lancée
+depuis l'onglet — voir les pièges ci-dessous. **Aucun test de serveur ne pouvait le voir, et
+aucun rechargement ne le laissait vivre : il a fallu s'en servir.**
+
+**Sans palette, un asset traité n'a pas 27 couleurs mais 1 000 à 2 000.** Le chiffre de 27
+du banc du 26 août suppose la quantification, qui reste grisée jusqu'à T4. Ce qui sort
+aujourd'hui a l'alpha franc et la grille juste ; ce n'est pas encore du pixel art au sens de
+la palette, et c'est T4 qui l'achève.
 
 **Deux risques ont été levés, aucun n'a coûté un centime.** « La couverture image
 d'OpenRouter » (`essais/essai_couverture.py`) : 48 modèles image, 11 fournisseurs, 31
@@ -70,6 +86,7 @@ cd interface && npm install && npm run build
 py -m atelier                        lance le serveur et ouvre le navigateur
 py -m atelier --sans-navigateur --port 8421
 pytest -q                            les critères d'acceptation, sans un centime
+cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
@@ -142,6 +159,7 @@ chaîne avance : c'est le signe que ça marche.
 | `tests/conftest.py` | le double de fournisseur et les trois montages partagés. Il rend de vraies images, de vrais coûts, de vraies dimensions — **aucun test ne coûte un centime** |
 | `tests/test_t1_jalon1.py` | les critères de T1 tenus par les jalons 1 et 2 — clé, catalogue, image téléchargeable, variations concurrentes, emplacements indépendants |
 | `tests/test_t1_jalon3_4.py` | ceux des jalons 3 et 4 — flux d'événements, jauge déterminée, onglet rouvert, repli hors ligne |
+| `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
@@ -264,6 +282,20 @@ deux vivent côte à côte.
   L'autocorrélation, elle, tombe juste sur les sujets fins — mais **prend une harmonique sur
   les plus grossiers**. Elle situe un ordre de grandeur, elle ne remplace pas l'œil : aucun
   chiffre de dérive publié ne doit venir d'elle seule.
+- **Deux chemins amènent le même objet à l'écran, et ils se croisent.** La réponse du
+  `POST` et l'annonce du flux portent la même génération ; le serveur publie **avant** que
+  le POST ne soit revenu. Insérer sans regarder d'un côté et fondre de l'autre a doublé
+  chaque génération lancée depuis l'onglet — et une clé React doublée laisse des tuiles
+  orphelines qu'aucun rendu ne retire ensuite. Le défaut ne survivait à aucun
+  rechargement, puisque le message d'état remplace la liste par celle du serveur : il a
+  donc traversé T1 et T2 sans se voir. **Tout ce qui arrive par deux chemins se fond par
+  identifiant, jamais ne s'empile.** Constaté le 27 août 2026, à la première séance faite
+  au navigateur.
+- **Un test qui ne rejoue pas l'ordre du serveur ne prouve rien.** Le double du flux dans
+  `interface/src/App.test.tsx` publie **avant** que le POST ne réponde, parce que c'est ce
+  que fait le vrai serveur — il enregistre, il annonce, puis il rend la main. Avec l'ordre
+  inverse, le même test passe sur le code fautif. Vérifié en réintroduisant le défaut : le
+  test tombe sur « 4 tuiles au lieu de 2 ».
 - **Le message d'erreur d'`httpx` est en anglais, et il finit à l'écran.** « All connection
   attempts failed » est ressorti tel quel dans la barre d'état. Toute erreur de
   transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message

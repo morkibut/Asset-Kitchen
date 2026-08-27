@@ -31,6 +31,25 @@ import { Tuile } from "./composants/Tuile"
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
 
+/** Poser une génération dans la liste **sans jamais la doubler**.
+ *
+ *  Deux chemins amènent la même génération à l'écran, et ils se croisent : la
+ *  réponse du POST, et l'annonce du flux — que le serveur publie dès qu'il a
+ *  enregistré, donc *avant* que le POST ne soit revenu. Insérer sans regarder
+ *  d'un côté et fondre de l'autre laissait deux copies de tout ce qui était
+ *  lancé depuis cet onglet. Elles restaient jumelles — la mise à jour les
+ *  touchait toutes les deux — mais la clé React devenait double, et une clé
+ *  double laisse des tuiles orphelines que le rendu suivant ne retire plus.
+ *
+ *  Le défaut ne survivait à aucun rechargement : le message d'état remplace la
+ *  liste entière par celle du serveur, qui, lui, n'a jamais rien doublé. C'est
+ *  ce qui l'a rendu invisible jusqu'à une séance faite au navigateur.
+ */
+const fondre = (liste: Generation[], recue: Generation): Generation[] =>
+  liste.some((g) => g.identifiant === recue.identifiant)
+    ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
+    : [recue, ...liste]
+
 export function App() {
   const [etat, setEtat] = useState<Etat | null>(null)
   const [modeles, setModeles] = useState<Modele[]>([])
@@ -114,13 +133,7 @@ export function App() {
         // redémarrage ne « se rattrape sans rien recharger » que sur le papier.
         setPanne(null)
       },
-      generation: (recue) =>
-        setGenerations((liste) => {
-          const connue = liste.some((g) => g.identifiant === recue.identifiant)
-          return connue
-            ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
-            : [recue, ...liste]
-        }),
+      generation: (recue) => setGenerations((liste) => fondre(liste, recue)),
       asset: (recu) =>
         setAssets((connus) => ({ ...connus, [recu.identifiant]: recu })),
       catalogue: (recu) => {
@@ -193,7 +206,8 @@ export function App() {
         options: retenues,
         identifiant,
       })
-      setGenerations((liste) => [generation, ...liste])
+      // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
+      setGenerations((liste) => fondre(liste, generation))
     } catch (erreur) {
       setPanne(erreur instanceof Refus ? erreur.message : "génération refusée")
     }
@@ -202,9 +216,7 @@ export function App() {
   const relancer = async (identifiant: string, rang: number) => {
     try {
       const generation = await api.relancer(identifiant, rang)
-      setGenerations((liste) =>
-        liste.map((g) => (g.identifiant === identifiant ? generation : g)),
-      )
+      setGenerations((liste) => fondre(liste, generation))
     } catch (erreur) {
       setPanne(erreur instanceof Refus ? erreur.message : "relance refusée")
     }

@@ -326,6 +326,14 @@ retire un. Le projet porte enfin ses défauts : modèle par type d'asset, et tai
 cible imposée à tout ce qui rentre — jamais déduite de l'image reçue. La quantification,
 grisée depuis T2, s'allume.
 
+Le projet porte aussi son **barème d'échelles** — quelle part de la toile un sujet occupe
+selon sa nature : un personnage la remplit, un meuble en prend les deux tiers, un objet tenu
+en main moins de la moitié. Sans lui, tout ce qui sort du produit fait la même hauteur : la
+séance du 27 août l'a montré sur cinq sujets réels, un coffre aussi haut qu'un personnage, et
+la coïncidence n'est pas fortuite — c'est ce que donne l'occupation à 100 %. La taille de
+pixel et l'échelle du sujet sont deux réglages distincts, et T2 ne pouvait tenir que le
+premier : le second n'a de sens que rapporté aux autres assets du même projet.
+
 Changer la palette d'un projet la réapplique à tous ses assets sans un seul appel payant. Les
 assets dont la recette a été touchée à la main sont épinglés : ils sont sautés, le compte de
 ce qui a été remis à jour et de ce qui a été conservé est affiché, et un épinglé se réaligne
@@ -348,6 +356,7 @@ du produit prennent le relais.
 - [ ] Chaque champ de la bible s'active et se désactive indépendamment pour une génération.
 - [ ] Générer sans bible ni artwork fonctionne : un univers vide ne bloque rien.
 - [ ] Un personnage et un petit objet générés dans le même projet sortent avec la même taille de pixel, quelle que soit la grille rendue par le modèle.
+- [ ] Un personnage et un petit objet du même projet sortent **à leur échelle respective**, ancrés sur la même ligne de sol : le barème du projet le décide, jamais un réglage repris à la main sujet par sujet.
 - [ ] La remise sur grille est systématique, jamais optionnelle, et la cible n'est jamais déduite de l'image reçue.
 - [ ] La quantification n'est plus grisée dès qu'une palette existe.
 - [ ] Changer la palette du projet remet ses assets à jour sans un seul appel payant, saute les épinglés, et affiche le compte des deux.

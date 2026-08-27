@@ -1,4 +1,4 @@
-import { defineConfig } from "vite"
+import { defineConfig } from "vitest/config"
 import react from "@vitejs/plugin-react"
 import tailwind from "@tailwindcss/vite"
 
@@ -10,5 +10,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: { "/api": "http://127.0.0.1:8420" },
+  },
+  // Les essais d'écran — le seul endroit du dépôt où l'interface est montée et
+  // pilotée. Ni serveur ni réseau : `fetch` et `EventSource` y sont doublés,
+  // comme `tests/conftest.py` double le fournisseur côté Python.
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/montage-essais.ts"],
+    include: ["src/**/*.test.tsx"],
   },
 })
