@@ -194,8 +194,19 @@ deux vivent côte à côte.
 - **Un seul échantillon ne mesure rien.** Un modèle génératif n'est pas déterministe : tout
   banc se fait en deux jets au minimum, et l'écart entre eux compte autant que la moyenne.
 
-## Règle systématique : prompt de reprise
+## Règle systématique : comment finir une étape
 
-Trois lignes : la tâche du jour, l'état en une phrase, et « lis `AGENTS.md` et les documents de `docs/` ». Ne jamais y recopier le contexte du dépôt, les règles ci-dessus, l'état Git
-ni la liste du reste à faire : tout cela vit déjà dans les fichiers, et la nouvelle session
-les lit seule.
+Toute fin d'étape se rend en **trois temps, dans cet ordre**. Systématiquement, sans qu'on
+ait à le redemander.
+
+1. **Les questions ouvertes sont posées de façon cliquable**, jamais en prose. La réponse
+   recommandée passe en premier et le dit.
+2. **Les actions à faire et les informations importantes sont mises en exergue** — titrées,
+   isolées, écrites pour quelqu'un qui ne connaît pas le projet. Une action noyée dans un
+   paragraphe technique ne se fait pas.
+3. **Le prompt de reprise vient en dernier**, dans un bloc à copier.
+
+**Le prompt de reprise fait trois lignes** : la tâche du jour, l'état en une phrase, et
+« lis `AGENTS.md` et les documents de `docs/` ». Ne jamais y recopier le contexte du dépôt,
+les règles ci-dessus, l'état Git ni la liste du reste à faire : tout cela vit déjà dans les
+fichiers, et la nouvelle session les lit seule.
