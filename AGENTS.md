@@ -49,6 +49,15 @@ recette de sa planche et pointe vers elle par sa filiation. Elle possède ses oc
 raison précise, et ça se paie en disque : **supprimer la planche doit laisser ses découpes
 en place**, or la suppression définitive efface `<rang>-*`, brut compris.
 
+**Et ça a été vérifié sur une vraie planche, payée** (`essais/essai_decoupe_planche.py`,
+$0,0042) : huit personnages demandés à `gpt-image-2` en 16:9, huit zones trouvées — ni sept
+ni neuf —, dans l'ordre de lecture, chacune devenue un asset de 64 px détouré et filié. Ce
+qui manquait aux tests, c'était exactement ça : **une planche que personne n'avait disposée
+pour la détection**. Corollaire observé, qui n'est pas un défaut : une planche naît
+**habillée comme un sprite**, donc sa tuile montre huit personnages écrasés dans 64 × 64 —
+c'est le brut qui se découpe, et rien dans la grille ne dit qu'une image est une planche
+avant qu'on ouvre sa fiche.
+
 **L'écran tient ses quatre colonnes.** `docs/DESIGN.md` § Layout donne
 `240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. Les trois
 premières sont permanentes et repliables **par choix** ; la quatrième s'ouvre avec la
@@ -141,6 +150,7 @@ py essais/essai_couverture.py        la couverture du fournisseur, gratuit
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 py essais/essai_univers_chaine.py    UN APPEL PAYANT, ~$0,023 — la chaîne de T4 de bout en bout
+py essais/essai_decoupe_planche.py   UN APPEL PAYANT, ~$0,004 — une vraie planche, découpée
 ```
 
 `interface/dist` est un produit de compilation, hors Git : **sans `npm run build`, le
@@ -241,6 +251,7 @@ chaîne avance : c'est le signe que ça marche.
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
 | `essais/essai_univers_chaine.py` | la chaîne de T4 : bible repliée, artworks choisis par famille, asset né habillé, barème mesuré. **Payant**, un seul appel — le barème se vérifie en appliquant six échelles à la même image reçue. Travaille dans son propre `donnees/`, et ne range dans celui de l'atelier que sur `--ranger` |
+| `essais/essai_decoupe_planche.py` | la chaîne de T5 : une planche **demandée exprès** à un modèle, puis détectée, découpée, filiée. **Payant**, un seul appel — tout le reste est gratuit, et c'est ce que la tranche promet. Même règle de `donnees/` séparé et de `--ranger`. C'est le seul essai qui vérifie ce qu'aucune image fabriquée ne peut vérifier : une planche **que personne n'a disposée pour la détection** |
 | `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Les découpes de T5 y tiennent les rangs 100 et suivants, dans le dossier de la génération de leur planche. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |

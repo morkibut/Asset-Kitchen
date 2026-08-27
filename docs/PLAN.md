@@ -582,12 +582,30 @@ une silhouette équivalente à deux points près. Le dépôt annonçait « ~180 
 depuis T2 : c'était la taille de `u2net`, et le défaut de la bibliothèque avait
 changé sous cette note. Le modèle est désormais **nommé**.
 
-**Ce qui reste ouvert, et pour T6 :** la découpe n'a pas encore été exercée sur
-une planche multi-sprites **réellement produite par un modèle**. Celle qui a servi
-est faite de deux sprites réels du guide, recomposés — les huit sujets sont de
-vraies sorties de `gpt-image-2`, leur disposition ne l'est pas. Un modèle qui rend
-spontanément une planche de trois poses est un piège connu du dépôt ; en demander
-une exprès coûte un appel, et c'est la seule vérification de T5 qui manque.
+**La chaîne a été vérifiée par un appel payant réel, et elle a tenu**
+(`essais/essai_decoupe_planche.py`, 27 août 2026, **$0,0042**). Une planche
+demandée exprès à `gpt-image-2` en 16:9 — « huit personnages distincts, deux
+rangées de quatre, espacés » —, puis toute la découpe jouée dessus. Ce qui
+manquait, c'était exactement ça : **une planche que personne n'avait disposée
+pour la détection**. Tous les tests de T5 travaillent sur des sujets posés à des
+écarts choisis, sur un fond que l'on sait plat.
+
+| Ce qu'on voulait savoir | Ce qui est arrivé |
+|---|---|
+| Le modèle rend-il une planche quand on la demande ? | Oui — 1536 × 864, huit personnages, deux rangées de quatre, fond gris uniforme |
+| La détection retrouve-t-elle les sprites ? | **Huit zones, ni sept ni neuf**, chacune sur un personnage, de 235 à 314 px de large |
+| Dans l'ordre de lecture ? | Oui, et il se voit : chevalier, archère, mage, voleur / paladine, nain, sorcière, druide — exactement la planche, de gauche à droite et de haut en bas |
+| Les découpes sont-elles utilisables ? | Huit assets à 64 × 64, détourés, aucun vide, aucun sujet mangé, tous filiés sur la planche, tous à $0,0000 |
+
+**Un seul appel a suffi**, et c'est une décision de l'essai : la détection, la
+grille fixe, la découpe, les huit rendus et la filiation ne demandent pas le
+fournisseur. Ce qui se paie, c'est l'aller-retour, rien d'autre.
+
+**Une observation à garder pour la suite, qui n'est pas un défaut** : une planche
+naît **habillée comme un sprite** — l'univers lui impose sa grille, donc sa tuile
+montre huit personnages écrasés dans 64 × 64. C'est le brut qui se découpe, et
+la chaîne est juste ; mais rien dans la grille ne dit qu'une image est une
+planche avant qu'on ouvre sa fiche.
 
 ---
 
