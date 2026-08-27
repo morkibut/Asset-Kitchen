@@ -27,15 +27,17 @@ T4 : le tableau d'inspiration et l'univers — coller une image, une adresse ou 
 promouvoir en artwork officiel par famille, la palette extraite par calcul, la bible en
 champs nommés, le barème d'échelles, la taille de pixel imposée, la quantification allumée,
 et la palette rétroactive. **Les soixante et un critères d'acceptation de T1 à T4 sont
-cochés dans `docs/PLAN.md`, et 98 tests de serveur plus 14 d'écran les tiennent. La
+cochés dans `docs/PLAN.md`, et 98 tests de serveur plus 16 d'écran les tiennent. La
 prochaine tranche est T5, le slicer.**
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
-finissent par diverger. T4 : deux, dont un compte de références qui ne se remettait pas à
-jour quand on promouvait un artwork. **Aucun test de serveur ne pouvait les voir**, et les
-tableaux de `docs/PLAN.md` § T3 et § T4 disent pour chacun ce qui l'avait rendu invisible.
+finissent par diverger. T4 : quatre, dont un compte de références qui ne se remettait pas
+à jour quand on promouvait un artwork, et deux du panneau des réglages, où un filtre
+écartait le modèle choisi alors que rien d'autre à l'écran ne le nommait. **Aucun test de
+serveur ne pouvait les voir**, et les tableaux de `docs/PLAN.md` § T3 et § T4 disent pour
+chacun ce qui l'avait rendu invisible.
 C'est désormais une règle du dépôt : **une tranche n'est finie que lorsqu'on s'en est
 servi.**
 
@@ -352,6 +354,16 @@ deux vivent côte à côte.
   transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message
   de bibliothèque ne franchit jamais le port.
 
+- **Un affichage placé sous un filtre doit suivre ce filtre.** Deux fautes de la même
+  famille dans le même panneau : « 48 au catalogue » au-dessus d'une liste de huit — un
+  chiffre pris à sa source et non à ce qui est rendu —, et le modèle choisi écarté de la
+  liste par le filtre alors qu'aucun autre endroit de l'écran ne le nommait. Corollaire, et
+  il a fallu les deux : **ce qui décide d'un appel ne quitte jamais l'écran** — le choisi
+  revient en tête quand le filtre l'écarte, avec un liseré qui dit qu'il n'est pas un
+  résultat — **et se lit à une place fixe** que le défilement n'emporte pas, ce qui est le
+  rôle du bloc « Ce qui part ». Le compteur, lui, compte les résultats du filtre et non les
+  lignes rendues. Et un commentaire n'est pas une preuve : celui du code annonçait « le
+  modèle choisi reste visible », ce qui était vrai du grisé et faux du filtre.
 - **`with sqlite3.connect(...)` ne ferme pas la connexion**, il ne fait que valider la
   transaction. Rendre la connexion telle quelle laissait un descripteur ouvert par
   requête — et sous Windows un fichier encore ouvert **ne se supprime pas**. C'est

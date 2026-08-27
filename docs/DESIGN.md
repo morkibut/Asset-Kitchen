@@ -483,7 +483,19 @@ grisé du produit.
 
 L'Atelier ne montre que ce qu'on touche **à chaque** génération : le sujet, le modèle, le nombre
 de variations — plus un bloc en lecture seule qui répond d'avance à « qu'est-ce qui part avec ? »
-(références, famille, palette, grille imposée, bible active).
+(le modèle, les références et leur famille, le projet, la bible active, la palette, la grille
+imposée).
+
+**Le modèle y est nommé bien qu'il ne parte pas** — c'est lui qui reçoit. Il y figure parce que
+la liste au-dessus peut cesser de le dire : un catalogue de quarante-huit le pousse hors de vue
+au moindre défilement, et le bloc est alors le seul endroit fixe où se lit *avec quoi on génère*.
+Il rend du même coup lisible le « n / max » de la ligne suivante, dont le plafond est le sien.
+
+**Et la liste ne le perd pas non plus.** Quand le filtre l'écarte, le modèle choisi revient en
+tête, séparé des résultats par un liseré en `--bord-fort` : la position seule le ferait passer
+pour la meilleure réponse au filtre, or il n'en est pas une réponse du tout. Le compteur, lui,
+compte **les résultats** — trois sur quarante-huit —, jamais les lignes rendues : un chiffre
+posé au-dessus d'une liste annonce ce que la liste a cherché.
 
 Résolution, format, champs de bible dépliés, sélecteur de rôle de réinjection, barre d'état
 à quatre blocs : tous ces réglages existent dans le produit. Ils sont repliés, tenus par un défaut
@@ -527,4 +539,5 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | **L'écran Univers est un écran**, `380px · 1fr`, et il couvre l'Atelier | Le cadrage le classe déjà comme tel (`ARCHITECTURE.md` §6.2, « au début d'un projet, puis ponctuel »). 380 est la largeur de la fiche : *la* colonne de réglages du produit, jamais une troisième valeur pour la même sorte de chose. **Coût, et il a fallu le payer tout de suite** : couvrir l'Atelier rend sa barre d'état invisible, donc l'écran porte sa propre fente de refus — le motif ne change pas, son emplacement suit l'écran qui a provoqué le refus. |
 | 27/08/2026 | La **carte a le rayon 2**, la tuile garde le rayon 0 | Seule différence de forme entre les deux grilles, et elle suffit : une tuile est un produit du travail et se lit comme une planche contact ; une carte est de la matière rassemblée, donc du châssis. « Une seule grille d'assets dans tout le produit » reste vrai — celle-ci n'en est pas une. Écarté : une bordure de couleur, qui aurait ajouté un ton à un système qui n'en veut pas. |
 | 27/08/2026 | Le **sujet** est le seul contrôle que T4 ajoute à l'Atelier | Une nature de sujet porte sa famille *et* son occupation : la choisir décide des artworks envoyés, du modèle par défaut et de l'échelle, d'un seul geste. Deux taxonomies — l'une pour l'échelle, l'autre pour la famille — se paieraient deux fois par génération, et le PRD écarte explicitement la sélection manuelle des artworks. Le reste de l'univers n'est **jamais** montré ici : le bloc « Ce qui part » est en lecture seule, comme ce document le demandait déjà. |
+| 27/08/2026 | Le modèle choisi est **nommé dans « Ce qui part »** *et* **épinglé en tête de la liste filtrée** — *trouvé en séance* | La liste des modèles était le seul endroit qui disait avec quoi on génère, et elle peut cesser de le dire de deux façons : le filtre l'écarte, le défilement l'emporte. Les deux corrections ne se recouvrent pas — l'épinglage règle le filtre, le bloc règle les deux — et le bloc était de toute façon incomplet : nommer les références, le projet, la bible, la palette et la grille mais pas le modèle laissait l'écran muet sur celui qui décide de tout le reste, c'est son plafond de références et c'est son défaut de famille. L'épinglé porte un liseré `--bord-fort` parce que la position seule le ferait passer pour la meilleure réponse au filtre. **Coût** : une ligne de plus dans un bloc déjà dense — le plus long nom du catalogue s'y replie sur deux lignes plutôt que de se couper —, et une liste qui peut montrer une ligne de plus que ce que le compteur annonce, ce que le liseré est là pour expliquer. |
 | 27/08/2026 | Le bloc « Ce qui part » affiche un compte **calculé par le serveur** | Il l'affichait déjà pour le grisé ; T4 lui donne la même origine pour le nombre. L'écran tient les réinjections posées à la main, pas les artworks que l'application ajoute, ni le dédoublonnage entre les deux — deux comptes calculés à deux endroits se contredisent, et celui qui compte est celui qui part. **Vu en séance** : promouvoir un artwork ne rafraîchissait rien, parce que « la demande en cours » avait gagné une composante que l'écran ne pilote pas. |

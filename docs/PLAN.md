@@ -461,18 +461,32 @@ quantification imposée était grisée depuis T2 : **le seul chemin qui l'emprun
 n'existait pas encore**. C'est la même famille que le liseré clair du seuil
 alpha — une valeur de remplissage qui n'est pas neutre finit par se voir.
 
-**Deux défauts ont été trouvés en ouvrant l'atelier, aucun par les tests.**
+**Quatre défauts ont été trouvés en ouvrant l'atelier, aucun par les tests.**
 C'est la troisième fois de suite, et la règle tient.
 
 | Ce qui n'allait pas | Ce qui l'a rendu invisible |
 |---|---|
 | Promouvoir un artwork ne changeait pas le compte de « ce qui part » : l'écran annonçait zéro référence quand le serveur en comptait une, et ne se corrigeait qu'au premier changement de sujet | La règle de T1 n'avait pas bougé — « le catalogue se redemande parce que le grisé dépend de la demande en cours » —, c'est **la demande** qui a gagné une composante que l'écran ne pilote pas |
 | Une carte d'adresse qui n'avait pas abouti annonçait `0×0` | Aucun test d'écran ne montait une carte sans image, et zéro est une valeur qui passe partout |
+| Filtrer la liste des modèles en écartait le modèle choisi, et plus rien à l'écran ne disait avec quoi on allait générer : le bloc « Ce qui part » nommait les références, le projet, l'univers et la grille, mais pas le modèle | Le commentaire du code annonçait l'inverse — « le modèle choisi reste visible même quand il devient invalide » —, vrai du grisé et faux du filtre : **une phrase juste sur un cas tenait lieu de preuve sur l'autre** |
+| Le compteur « 48 au catalogue » ne suivait pas le filtre, au-dessus d'une liste de huit | Un chiffre pris à sa source plutôt qu'à ce qui est rendu — et aucun essai d'écran ne montait un catalogue à plus d'un modèle, donc aucun filtre n'avait rien à écarter |
 
 Le premier a la même racine que le doublon de T1 : **une règle juste dont
 l'hypothèse a changé sous elle**. Le second est le contraire d'une mesure — « les
 dimensions mesurées font foi », et zéro n'est pas une dimension mesurée, c'est
 l'absence de mesure.
+
+Les deux derniers sont du même panneau et de la même faute : **un affichage qui ne
+suit pas le filtre posé juste au-dessus de lui**. Le modèle choisi est désormais
+tenu de deux façons, parce que deux choses distinctes le faisaient disparaître :
+le filtre le remet **en tête de liste**, séparé des résultats par un liseré, et
+« Ce qui part » le **nomme** à une place que le défilement n'emporte pas non plus.
+Le compteur, lui, écrit « 3 sur 48 » dès qu'un filtre est posé, et compte les
+résultats du filtre — pas les lignes rendues, l'épinglé n'en étant pas un. Deux
+essais d'écran les tiennent et portent le total à **16 d'écran** ; le premier a été
+vérifié en réintroduisant chaque défaut séparément, et il tombe sur chacun.
+**Vu ensuite sur le vrai catalogue** : 48 modèles, filtre « seed », le choisi
+`OpenAI: GPT Image 2` en tête et nommé dans le bloc, compteur à « 3 sur 48 ».
 
 **Ce qui reste ouvert, et pour T5 :** le zoom 1× / 2× / 4× de la grille d'assets,
 reconduit de T3 et qu'aucun critère de T4 ne demandait — les vignettes du tableau

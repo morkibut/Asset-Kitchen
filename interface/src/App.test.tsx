@@ -29,6 +29,7 @@ import type {
   Etat,
   EtatCatalogue,
   Generation,
+  Modele,
   Univers,
 } from "./api"
 
@@ -252,6 +253,9 @@ function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
   univers?: Univers
+  /** Un catalogue à plusieurs modèles — ce qu'il faut pour qu'un filtre ait
+   *  quelque chose à écarter. Par défaut, le seul `MODELE`. */
+  modeles?: Modele[]
   aPublier?: () => Generation
 } = {}) {
   const etat = {
@@ -282,7 +286,10 @@ function serveurDouble(options: {
     const rendre = (charge: unknown) =>
       ({ ok: true, status: 200, json: async () => charge }) as Response
 
-    if (url.startsWith("/api/models")) return rendre(CATALOGUE)
+    if (url.startsWith("/api/models"))
+      return rendre(
+        options.modeles ? { ...CATALOGUE, modeles: options.modeles } : CATALOGUE,
+      )
     if (url === "/api/status") return rendre(ETAT)
     if (url.startsWith("/api/library")) return rendre(BIBLIOTHEQUE)
     if (url.startsWith("/api/journal"))
@@ -710,5 +717,80 @@ describe("l'écran de l'atelier", () => {
     // Et le sujet est le seul geste qui reste : promouvoir a déjà tout décidé.
     expect(screen.getByRole("button", { name: "personnage" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "objet tenu" })).toBeTruthy()
+  })
+
+  // ── Le filtre du catalogue ne fait pas disparaître ce qui va générer ──────
+  //
+  // Vu en séance le 27 août : filtrer écartait le modèle choisi de la liste, et
+  // plus rien à l'écran ne disait avec quoi on allait générer — le modèle
+  // manquait au bloc « Ce qui part », qui nommait pourtant tout le reste. Le
+  // compteur, lui, continuait d'annoncer le catalogue entier au-dessus d'une
+  // liste réduite. Deux fois la même faute : un affichage qui ne suit pas le
+  // filtre posé juste au-dessus de lui.
+
+  /** La liste des modèles, telle qu'elle est rendue — l'épinglé compris. */
+  const listeModeles = () =>
+    screen.getByPlaceholderText("filtrer").parentElement!.querySelector("ul")!
+
+  test("un filtre qui écarte le modèle choisi le garde en tête, et le compteur suit", async () => {
+    const { fetchDouble } = serveurDouble({
+      modeles: [
+        { ...MODELE, identifiant: "autre/rapide", nom: "Autre : Rapide" },
+        MODELE,
+        { ...MODELE, identifiant: "autre/lent", nom: "Autre : Lent" },
+      ],
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      catalogue: { ...ETAT.catalogue, modeles: 3 },
+    })
+
+    // Sans filtre : le compteur dit le catalogue entier, et le choisi garde sa
+    // place dans l'ordre du serveur — épingler n'est pas réordonner.
+    expect(await screen.findByText("3 au catalogue")).toBeTruthy()
+    await waitFor(() => expect(listeModeles().children).toHaveLength(3))
+    expect(listeModeles().children[0].textContent).toContain("Autre : Rapide")
+
+    fireEvent.change(screen.getByPlaceholderText("filtrer"), {
+      target: { value: "autre" },
+    })
+
+    // Le filtre l'écarte, donc il revient **en tête** : il ne quitte pas
+    // l'écran, et il n'est pas une réponse au filtre.
+    await waitFor(() =>
+      expect(listeModeles().children[0].textContent).toContain("Essai : Modèle"),
+    )
+    expect(listeModeles().children).toHaveLength(3)
+
+    // Le compteur compte ce que le filtre a trouvé — deux —, jamais les trois
+    // du catalogue ni les trois lignes rendues.
+    expect(screen.getByText("2 sur 3")).toBeTruthy()
+    expect(screen.queryByText("3 au catalogue")).toBeNull()
+
+    // Et « Ce qui part » le nomme de toute façon : c'est la place que ni le
+    // filtre ni le défilement n'emportent.
+    const bloc = screen.getByText("Ce qui part").parentElement!
+    expect(bloc.textContent).toContain("modèle")
+    expect(bloc.textContent).toContain("Essai : Modèle")
+  })
+
+  test("un filtre sans réponse garde le modèle choisi, et le dit", async () => {
+    const { fetchDouble } = serveurDouble({
+      modeles: [MODELE, { ...MODELE, identifiant: "autre/lent", nom: "Autre : Lent" }],
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      catalogue: { ...ETAT.catalogue, modeles: 2 },
+    })
+    await screen.findByText("2 au catalogue")
+
+    fireEvent.change(screen.getByPlaceholderText("filtrer"), {
+      target: { value: "zzz" },
+    })
+
+    // Zéro trouvé, et l'écran le dit — mais le choix en cours reste lisible.
+    await waitFor(() => expect(screen.getByText("0 sur 2")).toBeTruthy())
+    expect(screen.getByText("aucun modèle ne porte ce nom")).toBeTruthy()
+    expect(listeModeles().children[0].textContent).toContain("Essai : Modèle")
   })
 })
