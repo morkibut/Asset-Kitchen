@@ -33,7 +33,12 @@ from atelier.domaine import (
     Resultat,
     Statut,
 )
-from atelier.domaine.erreurs import DemandeRefusee, ErreurAtelier, SansCle
+from atelier.domaine.erreurs import (
+    DemandeRefusee,
+    ErreurAtelier,
+    GenerationInconnue,
+    SansCle,
+)
 from atelier.fournisseur import PortFournisseur
 from atelier.image import mesurer
 from atelier.image.mesures import extension
@@ -160,6 +165,48 @@ class ServiceGenerations:
         tache.add_done_callback(self._en_vol.discard)
         return generation
 
+    async def relancer(self, identifiant: str, rang: int) -> Generation:
+        """Relance **un seul** emplacement, sans réécrire le prompt ni repayer
+        les autres (US-20, US-22).
+
+        C'est la contrepartie directe de « une variation est un appel » : ce qui
+        a réussi est déjà sur le disque, ce qui a raté repart seul. Un
+        emplacement déjà réussi n'est jamais rejoué — ce serait payer deux fois
+        pour la même chose.
+        """
+        generation = self._base.lire(identifiant)
+        if generation is None:
+            raise GenerationInconnue(identifiant)
+
+        emplacement = generation.emplacement(rang)
+        if emplacement is None:
+            raise ErreurAtelier(f"l'emplacement {rang} n'existe pas")
+        if emplacement.statut == Statut.REUSSIE:
+            raise ErreurAtelier("cet emplacement a déjà son image")
+        if emplacement.statut in (Statut.EN_COURS, Statut.EN_ATTENTE):
+            return generation  # il tourne déjà : relancer le doublerait
+
+        if not lire_cle():
+            raise SansCle()
+
+        modele = self._catalogue.modele(generation.modele)
+        demande = _demande_de(generation)
+
+        emplacement.statut = Statut.EN_ATTENTE
+        emplacement.raison = None
+        emplacement.avancement = 0.0
+        self._sauver(generation)
+
+        fournisseur = self._fournisseur()
+        tache = asyncio.create_task(
+            self._executer_emplacement(
+                generation, emplacement, modele, demande, fournisseur
+            )
+        )
+        self._en_vol.add(tache)
+        tache.add_done_callback(self._en_vol.discard)
+        return generation
+
     async def attendre(self, identifiant: str, delai_s: float) -> Generation | None:
         """Attente bornée — le contrat du MCP, utile aussi aux essais.
 
@@ -277,3 +324,22 @@ class ServiceGenerations:
             "options": gardees,
             "prompt_negatif_replie": bool(demande.prompt_negatif.strip()),
         }
+
+
+def _demande_de(generation: Generation) -> Demande:
+    """Reconstruit la demande d'une génération enregistrée, pour un seul appel.
+
+    Les références ne sont pas reconstituées : en T1 il n'y en a aucune. Quand
+    elles arriveront (T3, T4), elles seront relues depuis les assets qui les
+    portent — jamais recopiées dans l'enregistrement, qui n'a pas à grossir de
+    plusieurs mégaoctets de base64.
+    """
+    demande = generation.demande
+    return Demande(
+        prompt=demande["prompt"],
+        prompt_negatif=demande.get("prompt_negatif", ""),
+        proportions=demande.get("proportions", "1:1"),
+        resolution=demande.get("resolution"),
+        variations=1,
+        options=demande.get("options", {}),
+    )

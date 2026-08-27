@@ -102,10 +102,12 @@ async def modeles(
     atelier = _atelier(requete)
     etat = atelier.catalogue.etat
     demande = _demande_de_jauge(references, proportions, resolution)
+    defaut = atelier.catalogue.defaut(demande)
     return {
         "recu_le": etat.recu_le,
         "repli": etat.repli,
         "raison": etat.raison,
+        "defaut": {"modele": defaut.modele, "options": defaut.options},
         "modeles": [_modele_en_json(m, demande) for m in etat.modeles],
     }
 
@@ -194,6 +196,13 @@ async def liste_generations(
 @routeur.get("/generations/{identifiant}")
 async def lire_generation(requete: Request, identifiant: str) -> dict[str, Any]:
     return _trouver(requete, identifiant).en_json()
+
+
+@routeur.post("/generations/{identifiant}/slots/{rang}/retry")
+async def relancer(requete: Request, identifiant: str, rang: int) -> dict[str, Any]:
+    """Un seul emplacement repart. Les voisines ne sont pas rejouées (US-22)."""
+    generation = await _atelier(requete).generations.relancer(identifiant, rang)
+    return generation.en_json()
 
 
 @routeur.get("/generations/{identifiant}/slots/{rang}/image")

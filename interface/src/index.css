@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Les tokens de `docs/DESIGN.md`, et rien d'autre. Aucune valeur de couleur,
+   de rayon ou de durée n'est écrite ailleurs dans l'interface.
+
+   « La table lumineuse » : le châssis est muet, les assets sont la seule chose
+   colorée à l'écran. Pas de mode clair — c'en est une décision : un fond clair
+   remonte la luminance d'entourage et fausse le contraste perçu d'un sprite.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  --color-fond-0: #0b0d10;
+  --color-fond-1: #111419;
+  --color-fond-2: #171b21;
+  --color-fond-3: #1e242b;
+  --color-bord: #252b33;
+  --color-bord-fort: #39424c;
+
+  --color-texte: #e6eaee;
+  --color-texte-2: #98a2ac;
+  --color-texte-3: #5e6771;
+
+  --color-signal: #49b3ce;
+  --color-signal-clair: #8ed8e8;
+  --color-lumiere: #eaf4f8;
+  --color-ok: #5fa871;
+  --color-epingle: #c8a03c;
+  --color-echec: #cb6c65;
+  --color-info: #7e8aa0;
+
+  --color-damier-a: #191e24;
+  --color-damier-b: #14181d;
+
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+
+  --ease-entree: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#atelier {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-fond-0);
+  color: var(--color-texte);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Toute mesure est en monospace, partout — un nombre est toujours un fait
+   mesuré, jamais un libellé. Virgule décimale, chiffres de largeur fixe. */
+.mesure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le damier alpha — la seule texture du produit, et elle est fonctionnelle :
+   elle révèle la transparence d'un sprite détouré. Écart volontairement faible
+   entre les deux tons, pour qu'il ne devienne pas un motif que l'œil suit. */
+.damier {
+  background-image:
+    linear-gradient(45deg, var(--color-damier-b) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-damier-b) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-damier-b) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-damier-b) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: var(--color-damier-a);
+}
+
+/* La liste close de ce qui bouge — § Motion. Rien d'autre ne s'anime. */
+@keyframes arrivee {
+  from {
+    opacity: 0;
+    transform: translateY(1px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.arrivee {
+  animation: arrivee 120ms var(--ease-entree);
+}
+
+/* La jauge de génération. `docs/DESIGN.md` la veut **déterminée** — « ça
+   travaille, et voilà où ça en est ». Le fournisseur ne rend aucun avancement
+   intermédiaire : tant que le flux d'événements n'est pas là (jalon 3), la
+   jauge balaie et c'est le compteur, lui, qui porte le fait mesuré. */
+@keyframes glisse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-bord);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

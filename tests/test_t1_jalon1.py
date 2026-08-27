@@ -21,7 +21,11 @@ from PIL import Image
 
 from atelier.api.app import creer_application
 from atelier.domaine import Demande, Modele, Option, Statut
-from atelier.domaine.erreurs import AppelRefuse, FournisseurIndisponible
+from atelier.domaine.erreurs import (
+    AppelRefuse,
+    ErreurAtelier,
+    FournisseurIndisponible,
+)
 from atelier.fournisseur.port import ImageProduite
 from atelier.services import Atelier
 
@@ -312,3 +316,50 @@ def test_sans_reseau_ni_photo_l_atelier_s_ouvre_quand_meme(tmp_path, double):
         statut = client.get("/api/status").json()
     assert statut["catalogue"]["modeles"] == 0
     assert statut["catalogue"]["raison"] == "catalogue injoignable — réseau coupé"
+
+
+# ── « Relancer l'un ne rejoue pas les autres » ────────────────────────────────
+
+
+def test_relancer_un_rate_ne_rejoue_que_lui(atelier, double):
+    reels = double.generer
+    etat = {"appel": 0}
+
+    async def capricieux(modele, demande):
+        etat["appel"] += 1
+        if etat["appel"] == 1:
+            raise AppelRefuse("trop d'appels d'affilée — réessayer dans un instant")
+        return await reels(modele, demande)
+
+    double.generer = capricieux
+
+    async def scenario():
+        await atelier.ouvrir()
+        generation = await atelier.generations.soumettre(
+            "essai/rend-du-png", Demande("deux variations", variations=2)
+        )
+        avant = await atelier.generations.attendre(generation.identifiant, 5.0)
+        rate = next(e for e in avant.emplacements if e.statut == Statut.ECHOUEE)
+        await atelier.generations.relancer(avant.identifiant, rate.rang)
+        return avant, await atelier.generations.attendre(avant.identifiant, 5.0)
+
+    avant, apres = asyncio.run(scenario())
+
+    assert [e.statut for e in avant.emplacements].count(Statut.ECHOUEE) == 1
+    assert all(e.statut == Statut.REUSSIE for e in apres.emplacements)
+    # trois appels en tout : le raté, sa voisine, et la relance — pas quatre
+    assert etat["appel"] == 3
+    assert apres.cout_usd == pytest.approx(0.0245 * 2)
+
+
+def test_un_emplacement_reussi_ne_se_relance_pas(atelier):
+    async def scenario():
+        await atelier.ouvrir()
+        generation = await atelier.generations.soumettre(
+            "essai/rend-du-png", Demande("une seule")
+        )
+        await atelier.generations.attendre(generation.identifiant, 5.0)
+        return await atelier.generations.relancer(generation.identifiant, 0)
+
+    with pytest.raises(ErreurAtelier, match="a déjà son image"):
+        asyncio.run(scenario())

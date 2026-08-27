@@ -26,6 +26,25 @@ from atelier.domaine.erreurs import ErreurAtelier, ModeleInconnu
 from atelier.fournisseur import PortFournisseur
 
 
+# **Le seul modèle écrit en dur du produit, et c'est un choix, pas une capacité.**
+#
+# `docs/ARCHITECTURE.md` §4 bis : « Un seul modèle par défaut : `openai/gpt-image-2`
+# en `quality: low` », établi par le second banc — le seul régulier sur dix sujets,
+# à $0,0245 l'image avec guide. Ce n'est pas une liste de capacités : celles-là
+# viennent toujours du catalogue. C'est le point de départ d'une séance, et il
+# cessera d'être écrit ici en T4, quand l'univers portera un défaut par type
+# d'asset. S'il disparaît du catalogue, le premier modèle utilisable prend sa
+# place — jamais une erreur au démarrage.
+DEFAUT = "openai/gpt-image-2"
+OPTIONS_DEFAUT = {"quality": "low"}
+
+
+@dataclass(slots=True)
+class Defaut:
+    modele: str | None
+    options: dict[str, str]
+
+
 @dataclass(slots=True)
 class EtatCatalogue:
     modeles: list[Modele] = field(default_factory=list)
@@ -50,6 +69,22 @@ class ServiceCatalogue:
     @property
     def etat(self) -> EtatCatalogue:
         return self._etat
+
+    def defaut(self, demande=None) -> Defaut:
+        """Par quoi commencer une séance — le modèle du banc, ou un repli.
+
+        Un défaut qui ne peut pas honorer la demande en cours n'en est pas un :
+        on prend alors le premier modèle que le catalogue déclare capable.
+        """
+        index = self._index
+        prefere = index.get(DEFAUT)
+        if prefere is not None and (demande is None or prefere.refus(demande) is None):
+            return Defaut(prefere.identifiant, dict(OPTIONS_DEFAUT))
+
+        for modele in self._etat.modeles:
+            if demande is None or modele.refus(demande) is None:
+                return Defaut(modele.identifiant, {})
+        return Defaut(None, {})
 
     def modele(self, identifiant: str) -> Modele:
         modele = self._index.get(identifiant)

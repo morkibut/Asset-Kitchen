@@ -15,23 +15,30 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1, jalon 1 est fait** : le squelette du dépôt, la clé, le catalogue relu au démarrage,
-et un appel qui rend une image téléchargeable. Le serveur tourne, l'API répond, 14 tests
-d'acceptation passent, et la première image réelle est sortie — un tonneau en 1024×1024
-pour **$0,0064**. Il n'y a pas encore d'interface : `interface/` n'existe pas, tout se
-touche par l'API.
+**T1, jalons 1 et 2 sont faits.** Le squelette, la clé, le catalogue relu au démarrage,
+un appel qui rend une image téléchargeable — puis l'écran Atelier : réglages, prompt,
+grille d'emplacements, relance d'un raté. 16 tests d'acceptation passent. Trois images
+réelles sont sorties, dont deux variations en parallèle (11,7 s et 18,8 s, $0,0125).
 
 **Le risque « couverture image d'OpenRouter » est levé** (`essais/essai_couverture.py`) :
 48 modèles image, 11 fournisseurs, 31 acceptent assez de références pour un univers.
 
-Reste de T1 : les variations concurrentes à l'écran, la reprise après fermeture de
-l'onglet, le repli hors ligne vu de l'interface — et donc l'interface elle-même.
+**L'écran tient deux colonnes, pas quatre.** `docs/DESIGN.md` § Layout donne
+`240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. L'arbre et la
+fiche naissent avec la bibliothèque (T3) ; les afficher vides aujourd'hui montrerait le
+cadrage au lieu de servir le geste, ce qui est exactement le reproche fait à la maquette
+écartée. Le design n'est pas amendé, il est atteint en T3.
+
+Reste de T1 : le flux d'événements à la place du sondage d'une seconde (et la jauge
+**déterminée** que le design demande), la reprise vue du navigateur, le repli hors ligne
+à l'écran.
 
 ## Lancer
 
 ```
 uv venv --python 3.11
 uv pip install -e ".[dev]"
+cd interface && npm install && npm run build
 
 py -m atelier                        lance le serveur et ouvre le navigateur
 py -m atelier --sans-navigateur --port 8421
@@ -39,6 +46,10 @@ pytest -q                            les critères d'acceptation, sans un centim
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 ```
+
+`interface/dist` est un produit de compilation, hors Git : **sans `npm run build`, le
+serveur sert une page qui le dit** au lieu de l'atelier. En développement,
+`cd interface && npm run dev` sert l'interface sur 5173 et relaie `/api` vers 8420.
 
 L'API est documentée d'elle-même sur `/api/docs`.
 
@@ -95,6 +106,7 @@ chaîne avance : c'est le signe que ça marche.
 | | |
 |---|---|
 | `atelier/` | le paquet Python — `domaine/` les objets et les règles, `fournisseur/` le port et l'adaptateur OpenRouter, `services/` les gestes, `api/` les routes, `depot/` SQLite et fichiers, `image/` le traitement, `mcp/` vide jusqu'à T7 |
+| `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
 | `tests/test_t1_jalon1.py` | un test par critère d'acceptation de T1 déjà tenu. Le fournisseur y est un double : aucun test ne coûte un centime |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |

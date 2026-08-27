@@ -6,3 +6,4 @@ donnees/
 node_modules/
 interface/dist/
 *.pyc
+*.tsbuildinfo
