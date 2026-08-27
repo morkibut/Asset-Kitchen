@@ -28,6 +28,7 @@ import {
   filtreActif,
   FILTRE_VIDE,
   heure,
+  poserLeFichier,
   Refus,
   type Asset,
   type Bibliotheque,
@@ -136,6 +137,11 @@ export function App() {
   const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
   const [selection, setSelection] = useState<string[]>([])
   const [annulation, setAnnulation] = useState<Annulation | null>(null)
+  // **Le seul geste du produit dont le résultat n'arrive pas par le flux** :
+  // une archive ne s'annonce pas, elle se télécharge. Ce drapeau ne sert
+  // qu'à empêcher un second clic pendant que le premier fabrique le ZIP —
+  // deux archives identiques dans les téléchargements pour un double-clic.
+  const [exportEnCours, setExportEnCours] = useState(false)
   const [panne, setPanne] = useState<string | null>(null)
   const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
@@ -620,6 +626,25 @@ export function App() {
     }
   }
 
+  /** L'export d'une sélection (US-76).
+   *
+   *  **La sélection reste après coup**, contrairement au rangement qui la vide :
+   *  exporter ne change rien à la bibliothèque, donc rien ne justifie de perdre
+   *  ce qu'on avait sous la main — on exporte souvent deux fois de suite, une
+   *  fois pour le jeu et une fois pour l'archive.
+   */
+  const exporter = async () => {
+    if (exportEnCours) return
+    setExportEnCours(true)
+    try {
+      poserLeFichier(await api.exporter(selection))
+    } catch (erreur) {
+      echouer(erreur, "export refusé")
+    } finally {
+      setExportEnCours(false)
+    }
+  }
+
   const ranger = async (rangement: {
     projet?: string | null
     collection?: string | null
@@ -772,7 +797,13 @@ export function App() {
           />
         </div>
 
-        <section ref={centre} className="flex min-h-0 flex-col">
+        {/* `min-w-0` **et** `min-h-0` : une piste de grille en `minmax(0,1fr)`
+            n'empêche pas son contenu de l'élargir — c'est l'élément posé dedans
+            qui vaut `min-width: auto`, donc la largeur de ce qu'il contient. Une
+            barre d'outils trop pleine faisait alors glisser la page entière sur
+            la droite, en-tête et pied compris. Constaté au navigateur le 27 août
+            2026, à la première sélection. */}
+        <section ref={centre} className="flex min-h-0 min-w-0 flex-col">
           <Reinjections
             reinjections={reinjections}
             grille={grille}
@@ -810,6 +841,8 @@ export function App() {
             onFavori={(favori) => void marquerFavori(selection, favori)}
             onSupprimer={() => void supprimer(selection)}
             onVider={() => setSelection([])}
+            onExporter={() => void exporter()}
+            exportEnCours={exportEnCours}
             annulation={annulation}
             onAnnuler={annuler}
             compte={grille.length}

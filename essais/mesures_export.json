@@ -1,0 +1,133 @@
+{
+  "archive": "attachment; filename=\"atelier-20260827-1835.zip\"",
+  "octets": 832171,
+  "assets": [
+    {
+      "identifiant": "498d4a18adf84da88382d851a3c95094-0",
+      "fichier": "world-dark-fantasy-forest-realm-mossy-stone-and-iron-era.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 3469,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "c631f55866474b58a5cee9c0b7d5c780-0",
+      "fichier": "a-hooded-forest-ranger-standing-idle-facing-the-viewer-gre.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 5850,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "c631f55866474b58a5cee9c0b7d5c780-1",
+      "fichier": "a-hooded-forest-ranger-standing-idle-facing-the-viewer-gre-2.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 5593,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "3787535fb7434f6ebe9c15aa3deba1b9-0",
+      "fichier": "a-sturdy-wooden-treasure-chest-with-iron-fittings-and-a-heav.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 4440,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "fce1ce9273bd4ff5b27ddfe5c6c248ab-0",
+      "fichier": "a-small-glass-flask-filled-with-red-potion-cork-stopper-da.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 1679,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "fce1ce9273bd4ff5b27ddfe5c6c248ab-1",
+      "fichier": "a-small-glass-flask-filled-with-red-potion-cork-stopper-da-2.png",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 803585,
+      "traite": false,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    },
+    {
+      "identifiant": "9d1a6ec0bde14095b473295505cc7265-0",
+      "fichier": "a-wooden-barrel-bound-with-iron-hoops-standing-upright-dar.png",
+      "dimensions": [
+        64,
+        64
+      ],
+      "brut": [
+        1024,
+        1024
+      ],
+      "octets": 3949,
+      "traite": true,
+      "prompt": true,
+      "reglages_resolus": true,
+      "parent": null,
+      "enfants": 0
+    }
+  ],
+  "ecarts": []
+}

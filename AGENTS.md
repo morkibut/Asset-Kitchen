@@ -15,7 +15,7 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1, T2, T3, T4 et T5 sont finies.** T1 : le squelette, la clé, le catalogue relu au
+**T1, T2, T3, T4, T5 et T6 sont finies.** T1 : le squelette, la clé, le catalogue relu au
 démarrage, un appel qui rend une image téléchargeable ; l'écran Atelier ; le flux
 d'événements qui remplace le sondage, la jauge déterminée, la reprise vue du navigateur et
 le repli hors ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs
@@ -28,18 +28,21 @@ promouvoir en artwork officiel par famille, la palette extraite par calcul, la b
 champs nommés, le barème d'échelles, la taille de pixel imposée, la quantification allumée,
 et la palette rétroactive. T5 : le slicer — les zones opaques connexes, la grille fixe, les
 rectangles dessinés à la main, la filiation de découpe ; **plus les deux dettes reportées**,
-le zoom de la grille et la première exécution du second moteur de détourage. **Les
-soixante-six critères d'acceptation de T1 à T5 sont cochés dans `docs/PLAN.md`, et 108 tests
-de serveur plus 17 d'écran les tiennent. La prochaine tranche est T6, l'export.**
+le zoom de la grille et la première exécution du second moteur de détourage. T6 : l'export —
+une sélection qui sort en archive avec son descriptif, et le grisé permanent qui dit
+pourquoi quand rien n'est sélectionné. **Les soixante et onze critères d'acceptation de T1 à
+T6 sont cochés dans `docs/PLAN.md`, et 120 tests de serveur plus 20 d'écran les tiennent. La
+prochaine et dernière tranche est T7, le MCP.**
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
 finissent par diverger. T4 : deux, dont un compte de références qui ne se remettait pas à
 jour quand on promouvait un artwork. T5 : trois, tous de mise en page, dont deux de la même
-famille — **une règle déléguée au navigateur dont personne n'a mesuré le résultat**.
-**Aucun test de serveur ne pouvait les voir**, et les tableaux de `docs/PLAN.md` § T3, § T4
-et § T5 disent pour chacun ce qui l'avait rendu invisible. C'est désormais une règle du
+famille — **une règle déléguée au navigateur dont personne n'a mesuré le résultat**. T6 :
+deux, de cette même famille, et **tous les deux antérieurs à la tranche qui les a trouvés**.
+**Aucun test de serveur ne pouvait les voir**, et les tableaux de `docs/PLAN.md` § T3, § T4,
+§ T5 et § T6 disent pour chacun ce qui l'avait rendu invisible. C'est désormais une règle du
 dépôt : **une tranche n'est finie que lorsqu'on s'en est servi.**
 
 **Une planche se découpe, et chaque morceau est un asset entier.** Le serveur *propose* des
@@ -57,6 +60,16 @@ pour la détection**. Corollaire observé, qui n'est pas un défaut : une planch
 **habillée comme un sprite**, donc sa tuile montre huit personnages écrasés dans 64 × 64 —
 c'est le brut qui se découpe, et rien dans la grille ne dit qu'une image est une planche
 avant qu'on ouvre sa fiche.
+
+**Une sélection sort de l'atelier, et elle emporte de quoi se relire.** Une archive, un
+`descriptif.json` à sa racine, et rien d'autre : pour chaque image, son label, le prompt et
+les réglages résolus de l'appel qui l'a produite, les dimensions **mesurées sur le fichier
+qui part**, sa filiation, et sa recette avec son empreinte. Ce qui part est le **rendu** —
+celui qu'on voit, celui qui entre dans le jeu —, jamais le brut, qui reste ici : c'est lui
+qui permet de refaire le rendu, et le descriptif dit lequel il est. Corollaire assumé : un
+asset qu'on n'a pas traité sort tel qu'il est arrivé, donc en 1024 px à côté de sprites de
+64 — c'est la même phrase appliquée jusqu'au bout, et le descriptif porte les deux
+dimensions.
 
 **L'écran tient ses quatre colonnes.** `docs/DESIGN.md` § Layout donne
 `240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. Les trois
@@ -148,6 +161,8 @@ pytest -q                            les critères d'acceptation, sans un centim
 cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
+py essais/essai_export.py            l'archive rouverte, sur ce que l'atelier a — gratuit
+                                     (demande un atelier lancé)
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 py essais/essai_univers_chaine.py    UN APPEL PAYANT, ~$0,023 — la chaîne de T4 de bout en bout
 py essais/essai_decoupe_planche.py   UN APPEL PAYANT, ~$0,004 — une vraie planche, découpée
@@ -228,6 +243,7 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/image/palette.py` | d'où vient la palette d'un univers. CPU, pure, aucune entrée-sortie. Détoure d'abord — sans quoi le fond plat écrit la palette à lui seul |
 | `atelier/image/decoupe.py` | **où** couper une planche. CPU, pure : elle reçoit un alpha ou des dimensions, elle rend des rectangles. Ce qu'on en fait appartient au service |
 | `atelier/services/decoupe.py` | découper. **Deux gestes séparés exprès** — `proposer` ne crée rien, `decouper` coupe ce qu'on lui donne. C'est cette séparation, et rien d'autre, qui tient « sans jamais bloquer ». Aucun `fournisseur` : une planche déjà là se découpe réseau coupé |
+| `atelier/services/export.py` | sortir de l'atelier. **Le seul service qui ne reçoive pas la diffusion** : un export ne change aucun état — rien n'est rangé, rien n'est jugé, rien n'est créé —, donc il n'a rien à annoncer, et ça se lit dans la ligne qui le compose. Aucun `fournisseur` non plus : l'archive se fabrique réseau coupé |
 | `atelier/fournisseur/toile.py` | aller chercher une image à une adresse collée. Le second sortant du dépôt, et il traduit toute panne de transport en une phrase du produit |
 | `atelier/api/univers.py` | les routes de T4 — le tableau et l'univers. Un troisième routeur parce qu'il répond à une troisième question : ce qui contraint une image **avant** qu'elle existe |
 | `atelier/domaine/projet.py` | deux niveaux de rangement, et pas un de plus. `repere()` fait du nom un dossier lisible — `projets/bac-a-sable/` — pour que `donnees/` s'ouvre aussi à la main |
@@ -245,10 +261,12 @@ chaîne avance : c'est le signe que ça marche.
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
+| `tests/test_t6.py` | les critères de T6 — l'archive et son descriptif, les homonymes numérotés, le rendu et non le brut, le JPEG converti, le refus d'une sélection vide, l'image seule qui se télécharge encore, et le hors ligne prouvé en comptant les appels du double. Ils **ouvrent** l'archive au lieu de la mesurer : `zipfile` la relit, `json` relit le descriptif, Pillow rouvre chaque PNG et confronte ses dimensions à celles annoncées. L'export est le seul geste dont personne ne voit le résultat avant de l'ouvrir ailleurs, une semaine plus tard |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_detourage_modele.py` | les deux moteurs de détourage, l'un contre l'autre. Gratuit. Sortie : `essais/mesures_detourage.json` et `essais/planches/detourage_moteurs.png`. Le cas « fond chargé » y est **composé**, et le banc le dit : aucune des 188 images du dépôt n'a de fond qui résiste au remplissage depuis le bord |
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
+| `essais/essai_export.py` | l'archive de T6, **ouverte** — sur ce que l'atelier contient vraiment, pas sur des images fabriquées. Gratuit, mais il demande un atelier lancé : il passe par la route. Chaque fiche du descriptif est confrontée à son fichier, dimensions remesurées par Pillow. Sortie : `essais/mesures_export.json` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
 | `essais/essai_univers_chaine.py` | la chaîne de T4 : bible repliée, artworks choisis par famille, asset né habillé, barème mesuré. **Payant**, un seul appel — le barème se vérifie en appliquant six échelles à la même image reçue. Travaille dans son propre `donnees/`, et ne range dans celui de l'atelier que sur `--ranger` |
 | `essais/essai_decoupe_planche.py` | la chaîne de T5 : une planche **demandée exprès** à un modèle, puis détectée, découpée, filiée. **Payant**, un seul appel — tout le reste est gratuit, et c'est ce que la tranche promet. Même règle de `donnees/` séparé et de `--ranger`. C'est le seul essai qui vérifie ce qu'aucune image fabriquée ne peut vérifier : une planche **que personne n'a disposée pour la détection** |
@@ -519,6 +537,40 @@ deux vivent côte à côte.
   parce que le motif exige le tiret. C'est ce qui rend le décalage de rang sûr, et c'est
   aussi ce qu'il ne faut pas défaire : nommer une découpe `0-1-asset.json` aurait fait
   disparaître les huit avec leur planche.
+- **Une piste `minmax(0,1fr)` ne borne pas ce qu'on pose dedans.** La piste accepte de
+  descendre à zéro ; l'**élément** posé dessus, lui, vaut `min-width: auto`, c'est-à-dire la
+  largeur de son contenu. Une barre d'outils sans retour à la ligne qui demandait 963 px
+  pour 740 élargissait donc sa colonne, puis la page entière — en-tête et pied compris — et
+  poussait le bouton d'export 150 px hors de l'écran. Le défaut a traversé T3, T4 et T5
+  parce que **rien n'était ancré à droite de cette barre** : ce qui débordait sortait de
+  l'écran sans rien déplacer de visible. Il a fallu un contrôle *permanent* pour le voir.
+  `min-w-0` sur ce qui doit céder, `shrink-0` sur ce qui doit rester.
+- **La largeur d'un `select` est décidée par ses données.** Il se dimensionne sur son
+  option la plus longue, et les options sont ici des **noms de projets** — donc sans
+  plafond. « Ranger… » faisait déjà 162 px pour deux projets et une collection. La largeur
+  d'un contrôle est une décision de mise en page ; la liste déroulée, elle, montre les noms
+  entiers, et ce n'est pas elle qu'il faut borner.
+- **Les transitions CSS n'avancent pas dans un onglet qui ne compose pas ses images.** Même
+  famille que le `ResizeObserver` de T5, et le même piège pour qui mesure : `getComputedStyle`
+  y rend un instant figé du trajet — colonnes `240px 300px 740px 0px` là où le style en
+  ligne dit `… minmax(0px,1fr) 380px`, donc une fiche qu'on croit fermée alors qu'elle est
+  ouverte. Une mesure de mise en page se prend transition coupée, jamais après un `sleep`.
+- **`zipfile` accepte deux entrées de même nom sans broncher**, et l'outil qui décompresse
+  n'en garde qu'une. Quatre variations d'un même prompt portent quatre fois le même label :
+  un nom de fichier tiré du label doit donc être numéroté, et c'est le **descriptif** qui
+  fait foi sur le lien entre un nom lisible et un identifiant, jamais le nom lui-même.
+- **Un PNG ne se recomprime pas.** Il est déjà dégonflé : le repasser au deflate coûte du
+  temps pour quelques octets. On le range tel quel (`ZIP_STORED`) et on comprime le
+  descriptif, qui est du texte.
+- **`Content-Disposition` n'est pas lisible par `fetch` sans qu'on l'expose.** Une réponse
+  n'offre à JavaScript qu'une poignée d'en-têtes ; le nom de fichier n'en fait pas partie.
+  Sans `Access-Control-Expose-Headers`, l'archive serait sauvée sous un nom inventé par
+  l'interface — et deux endroits qui nomment la même archive finissent par ne plus dire la
+  même date.
+- **Une adresse d'objet non révoquée retient ses octets jusqu'à la fermeture de l'onglet.**
+  Une image seule a une adresse et se télécharge par un `<a download>` ; une archive, elle,
+  est fabriquée pour cette sélection-là et n'en a pas. On lui en donne une le temps d'un
+  clic, et on la reprend aussitôt.
 - **Zéro n'est pas une dimension mesurée, c'est l'absence de mesure.** Une carte d'adresse
   qui n'avait pas abouti annonçait `0×0`. Le produit dit partout que les dimensions mesurées
   font foi : une mesure ne s'affiche que si elle a été prise.

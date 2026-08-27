@@ -803,6 +803,71 @@ export const api = {
 
   telechargementAsset: (identifiant: string, brut = false) =>
     `/api/assets/${identifiant}/download?brut=${brut}`,
+
+  /** L'archive d'une sélection (US-76) — **le seul appel qui ne rende pas du
+   *  JSON**, d'où son chemin à part.
+   *
+   *  Un `POST` parce qu'une sélection de deux cents identifiants ne tient pas
+   *  dans une adresse, et un lien `download` ne sait pas poster. Le refus, lui,
+   *  revient en JSON comme partout ailleurs : c'est le même `Refus` que le
+   *  reste de l'interface affiche, et l'export ne s'invente pas de message.
+   *
+   *  Le nom du fichier vient du serveur, jamais d'ici : deux endroits qui
+   *  nommeraient la même archive finiraient par ne plus dire la même date. */
+  exporter: async (identifiants: string[]): Promise<Archive> => {
+    let reponse: Response
+    try {
+      reponse = await fetch("/api/exports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifiants }),
+      })
+    } catch {
+      throw new Refus("l'atelier ne répond pas", "atelier_arrete")
+    }
+    if (!reponse.ok) {
+      const charge = await reponse.json().catch(() => null)
+      throw new Refus(
+        charge?.raison ?? `l'atelier a répondu ${reponse.status}`,
+        charge?.code ?? "erreur",
+        charge?.ou_aller ?? null,
+      )
+    }
+    return {
+      nom: nomDeFichier(reponse.headers.get("Content-Disposition")),
+      octets: await reponse.blob(),
+    }
+  },
+}
+
+export type Archive = { nom: string; octets: Blob }
+
+/** Le nom que le serveur a posé dans `Content-Disposition`.
+ *
+ *  Le repli n'est pas une seconde règle de nommage : c'est le nom qu'un
+ *  navigateur donnerait de toute façon à une archive sans nom. Il n'arrive que
+ *  si l'en-tête manque, et alors le fichier est quand même sauvé. */
+function nomDeFichier(disposition: string | null): string {
+  const trouve = /filename="([^"]+)"/.exec(disposition ?? "")
+  return trouve ? trouve[1] : "atelier.zip"
+}
+
+/** Poser un fichier reçu dans les téléchargements, sans passer par une adresse.
+ *
+ *  Un `<a download>` suffit pour une image seule — elle a une adresse, et
+ *  `Tuile` comme `Fiche` s'en servent. Une archive, elle, n'en a pas : elle est
+ *  fabriquée pour cette sélection-là, à cet instant-là. On lui en donne une le
+ *  temps d'un clic, et on la reprend aussitôt — une adresse d'objet non révoquée
+ *  retient les octets de l'archive en mémoire jusqu'à la fermeture de l'onglet. */
+export function poserLeFichier({ nom, octets }: Archive): void {
+  const adresse = URL.createObjectURL(octets)
+  const lien = document.createElement("a")
+  lien.href = adresse
+  lien.download = nom
+  document.body.append(lien)
+  lien.click()
+  lien.remove()
+  URL.revokeObjectURL(adresse)
 }
 
 // ── Le flux d'événements ────────────────────────────────────────────────────

@@ -120,7 +120,7 @@ gag2/
 │  ├─ services/              les gestes du produit
 │  ├─ domaine/               objets et règles, aucune dépendance sortante
 │  ├─ fournisseur/           le port + l'adaptateur OpenRouter
-│  ├─ image/                 mesures, détourage, grille, quantification, découpe, export
+│  ├─ image/                 mesures, détourage, grille, quantification, découpe, PNG
 │  └─ depot/                 SQLite + fichiers
 ├─ interface/                React + Vite + Tailwind
 ├─ donnees/                  projets et assets — hors Git
@@ -363,7 +363,7 @@ n'est pas un style, c'est une erreur.
 | **Post-traitement** | Recadrage, redimensionnement, pixellisation sur grille, quantification sur la palette de l'univers, nettoyage de bords. Réglages instantanés. | Pas de passe qui monopolise le GPU. |
 | **Détourage** | Remplissage depuis le bord par défaut — aucun modèle, aucun réseau ; `rembg` en second moteur facultatif. Une ou plusieurs passes, seuil alpha et durcissement du bord réglables à chacune. | Pas de détourage par couleur au seuil global : il perce les clairs du sujet. |
 | **Slicer** | Découpe d'une planche multi-sprites par alpha connexe. Modes automatique, grille fixe, sélection manuelle. Correction à la main quand la détection se trompe. | Pas d'extraction de composants d'interface (c'est le UI Kit, hors périmètre). |
-| **Export** | Téléchargement d'un PNG. Export d'une sélection en ZIP + JSON descriptif. | Pas de paquet Unity/Godot prêt à importer. |
+| **Export** | Téléchargement d'un PNG. Export d'une sélection en ZIP + JSON descriptif — **un geste, donc `services/`** ; `image/` n'en tient que la conversion en PNG. Ce qui part est le rendu, jamais le brut : le brut est ce qui permet de refaire le rendu, et il reste dans l'atelier. | Pas de paquet Unity/Godot prêt à importer. |
 | **MCP** | **Une dizaine d'outils complets, pas quarante-trois outils fins.** `generate_asset` génère, applique l'univers du projet, traite, range et rend **un chemin de fichier** — et sait écrire directement dans le dossier du projet de jeu. Attente bornée pour éviter le sondage. | Pas d'enchaînement à composer par l'agent. Pas d'URL signées : même machine, mêmes fichiers. |
 
 ### 6.2 Les écrans

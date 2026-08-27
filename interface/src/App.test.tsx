@@ -287,6 +287,10 @@ function serveurDouble(options: {
    *  ce que l'auteur corrige avant de découper (US-73). */
   boites?: [number, number, number, number][]
   raisonDecoupe?: string | null
+  /** Ce que l'atelier répond à un export. Par défaut une archive ; le test peut
+   *  demander un refus, parce que l'export est le seul appel de l'interface qui
+   *  ne rende pas du JSON et que son chemin d'erreur est donc à lui. */
+  refusExport?: string | null
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -316,6 +320,33 @@ function serveurDouble(options: {
     const rendre = (charge: unknown) =>
       ({ ok: true, status: 200, json: async () => charge }) as Response
 
+    // **L'archive ne passe pas par `json()`** — c'est le seul appel du produit
+    // dont la réponse est un fichier. Le double rend donc ce que le vrai
+    // serveur rend : des octets, et le nom du fichier dans l'en-tête. Le refus,
+    // lui, reste du JSON comme partout ailleurs.
+    if (url === "/api/exports") {
+      if (options.refusExport)
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "export_refuse",
+            raison: options.refusExport,
+            ou_aller: null,
+          }),
+        } as unknown as Response
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: (nom: string) =>
+            nom.toLowerCase() === "content-disposition"
+              ? 'attachment; filename="atelier-20260827-1743.zip"'
+              : null,
+        },
+        blob: async () => new Blob(["PK"], { type: "application/zip" }),
+      } as unknown as Response
+    }
     if (url.startsWith("/api/models")) return rendre(CATALOGUE)
     if (url === "/api/status") return rendre(ETAT)
     if (url.startsWith("/api/library")) return rendre(BIBLIOTHEQUE)
@@ -875,5 +906,117 @@ describe("le slicer et le zoom de la grille", () => {
     expect(screen.getByRole("button", { name: "2×" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "1×" })).not.toBeDisabled()
     expect(screen.getByText("4× ne tient pas ici — rendu en 1×")).toBeTruthy()
+  })
+
+  // ── T6 : l'export ─────────────────────────────────────────────────────────
+  //
+  // Les deux user stories de la tranche se jouent ici, et l'une des deux **ne
+  // peut se vérifier nulle part ailleurs** : « l'export est grisé avec sa raison
+  // quand la sélection est vide » (US-77) est une propriété de l'écran. Le
+  // serveur, lui, ne voit jamais le cas — l'écran l'a arrêté avant.
+
+  test("sélection vide : exporter est grisé et dit pourquoi, sans être caché", async () => {
+    const { fetchDouble, appels } = serveurDouble({ assets: [asset("6666cccc-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("6666cccc-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    // **Présent et grisé**, pas absent : l'absence n'apprend rien, le grisé
+    // apprend pourquoi. Et la raison est écrite, jamais au survol.
+    const bouton = screen.getByRole("button", { name: "Exporter la sélection" })
+    expect(bouton).toBeDisabled()
+    expect(screen.getByText("aucune image sélectionnée")).toBeTruthy()
+
+    // Cliquer un contrôle grisé ne part pas quand même.
+    fireEvent.click(bouton)
+    expect(appels.some((a) => a.url === "/api/exports")).toBe(false)
+
+    // Une image sélectionnée : le bouton s'ouvre, la raison s'en va, et il dit
+    // ce qui va sortir.
+    fireEvent.click(tuiles()[0])
+    await waitFor(() => expect(bouton).not.toBeDisabled())
+    expect(screen.queryByText("aucune image sélectionnée")).toBeNull()
+    expect(bouton.textContent).toBe("Exporter 1")
+  })
+
+  test("exporter une sélection envoie ses identifiants et pose le fichier nommé par le serveur", async () => {
+    const deux = [asset("6666cccc-0"), asset("7777dddd-0", "un fût")]
+    const { fetchDouble, appels } = serveurDouble({ assets: deux })
+    await monter(fetchDouble, { ...ETAT, assets: deux })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    // `URL.createObjectURL` n'existe pas dans jsdom, et le clic d'un lien
+    // fabriqué n'y déclenche aucun téléchargement : on double les deux, comme
+    // `FluxDouble` double le flux. Ce que le test regarde, c'est **le nom sous
+    // lequel le fichier est posé** — il vient du serveur, et deux endroits qui
+    // nommeraient la même archive finiraient par ne plus dire la même date.
+    vi.stubGlobal("URL", { ...URL, createObjectURL: () => "blob:essai", revokeObjectURL: () => {} })
+    const poses: { nom: string; adresse: string }[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      poses.push({ nom: this.download, adresse: this.href })
+    })
+
+    fireEvent.click(tuiles()[0])
+    fireEvent.click(tuiles()[1], { ctrlKey: true })
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Exporter la sélection" }).textContent).toBe(
+        "Exporter 2",
+      ),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Exporter la sélection" }))
+
+    await waitFor(() => expect(poses).toHaveLength(1))
+    expect(poses[0].nom).toBe("atelier-20260827-1743.zip")
+    expect(poses[0].adresse).toContain("blob:essai")
+
+    const envoi = appels.find((a) => a.url === "/api/exports")
+    expect((envoi?.corps as { identifiants: string[] }).identifiants).toEqual([
+      "6666cccc-0",
+      "7777dddd-0",
+    ])
+
+    // **La sélection survit à l'export** : rien n'a changé dans la
+    // bibliothèque, donc rien ne justifie de perdre ce qu'on avait sous la
+    // main. On exporte souvent deux fois de suite.
+    expect(screen.getByRole("button", { name: "Exporter la sélection" }).textContent).toBe(
+      "Exporter 2",
+    )
+  })
+
+  test("un export refusé dit la phrase du serveur, et ne pose aucun fichier", async () => {
+    // L'export est le seul appel de l'interface dont la réponse n'est pas du
+    // JSON. Son chemin d'erreur est donc à lui, et c'est exactement le genre
+    // d'endroit où un message de bibliothèque en anglais finit à l'écran —
+    // « All connection attempts failed » l'avait fait en T1.
+    const { fetchDouble } = serveurDouble({
+      assets: [asset("6666cccc-0")],
+      refusExport: "« 6666cccc-0 » n'est plus dans la bibliothèque",
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("6666cccc-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    const poses: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      poses.push(this.download)
+    })
+
+    fireEvent.click(tuiles()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "Exporter la sélection" }))
+
+    // Le pied porte l'état du monde, et c'est **la phrase du serveur** qu'il
+    // porte — pas « l'atelier a répondu 409 », pas un message de bibliothèque.
+    await waitFor(() =>
+      expect(document.querySelector("footer")?.textContent).toContain(
+        "« 6666cccc-0 » n'est plus dans la bibliothèque",
+      ),
+    )
+    expect(poses).toHaveLength(0)
+    // Et le bouton se rouvre : un refus n'est pas un état dont on ne sort pas.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Exporter la sélection" })).not.toBeDisabled(),
+    )
   })
 })

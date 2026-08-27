@@ -31,6 +31,7 @@ from atelier.services.bibliotheque import (
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.evenements import Diffusion, Evenement
+from atelier.services.export import Archive, ExportRefuse, ServiceExport
 from atelier.services.generation import ServiceGenerations
 from atelier.services.univers import (
     CarteInconnue,
@@ -42,6 +43,7 @@ from atelier.services.univers import (
 __all__ = [
     "ANNULATION_S",
     "AnnulationExpiree",
+    "Archive",
     "AssetInconnu",
     "Atelier",
     "CarteInconnue",
@@ -51,6 +53,7 @@ __all__ = [
     "Diffusion",
     "EtatCatalogue",
     "Evenement",
+    "ExportRefuse",
     "ProjetInconnu",
     "RangementRefuse",
     "RecetteRefusee",
@@ -58,6 +61,7 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "ServiceExport",
     "ServiceGenerations",
     "ServiceUnivers",
     "UniversRefuse",
@@ -117,6 +121,11 @@ class Atelier:
         self.decoupe = ServiceDecoupe(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
+        # **Le dernier, et le seul qui ne reçoive pas la diffusion.** Un export
+        # ne change rien : il lit des assets, il rend des octets, et l'atelier
+        # est exactement dans l'état où il l'a trouvé. Rien à annoncer, donc
+        # rien à quoi s'abonner — et ça se lit dans cette ligne.
+        self.export = ServiceExport(self.base, self.assets, self.bibliotheque)
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,

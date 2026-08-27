@@ -277,6 +277,12 @@ donc dire pourquoi sans qu'on ait à chercher. Même traitement pour un modèle 
 peut pas honorer la demande, un niveau de zoom trop grand pour la largeur, la quantification sans
 palette, et l'export d'une sélection vide.
 
+**Dans une barre de 38 px, la ligne sœur se pose à côté et non dessous.** La forme ne change pas —
+tiret de 8 px, mono 10 px, `--texte-3` — seule la direction change, parce qu'aucune hauteur neuve
+n'est disponible là (§ Spacing). C'est déjà ce que fait `— 4× ne tient pas ici` ; l'export grisé de
+la barre d'outils est le second locataire de cette variante, et les deux ne cohabitent jamais avec
+un troisième.
+
 ### Le revers — l'actif qui porte son risque
 
 Le repli hors ligne est le **seul endroit du produit où l'on propose puis refuse** : le catalogue

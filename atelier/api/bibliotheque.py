@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from atelier.services import Atelier
@@ -62,6 +62,19 @@ class CorpsRangement(CorpsSelection):
 
 class CorpsFavori(CorpsSelection):
     favori: bool = True
+
+
+class CorpsExport(CorpsSelection):
+    """**Le seul corps de sélection qui accepte le vide**, et c'est voulu.
+
+    `CorpsSelection` exige au moins un identifiant : une sélection vide y serait
+    refusée par la validation, en anglais et en 422. Or « l'export d'une
+    sélection vide » est nommément un grisé du produit (`docs/DESIGN.md` § Le
+    grisé porte sa raison, US-77) : le refus doit être une phrase française, pas
+    un rapport de schéma. Le service tranche, et il le dit.
+    """
+
+    identifiants: list[str] = Field(default_factory=list)
 
 
 # ── L'arbre et sa reconstruction ─────────────────────────────────────────────
@@ -208,6 +221,34 @@ async def annuler_suppression(requete: Request, corps: CorpsSelection) -> dict[s
     """L'annulation courte. Refusée au-delà du délai, en le disant."""
     rendus = _atelier(requete).bibliotheque.annuler_suppression(corps.identifiants)
     return {"assets": [a.en_json() for a in rendus]}
+
+
+# ── Sortir de l'atelier ──────────────────────────────────────────────────────
+
+
+@routeur.post("/exports")
+async def exporter(requete: Request, corps: CorpsExport) -> Response:
+    """Une sélection sort en une archive, avec son descriptif (US-76).
+
+    `POST` et non `GET` : une sélection de deux cents identifiants ne tient pas
+    dans une adresse, et l'archive n'est pas une ressource qu'on pourrait aller
+    rechercher — elle est fabriquée pour ce lot-là, à cet instant-là.
+
+    **Aucun réseau, aucun centime.** Le service n'importe pas de fournisseur ;
+    ce qui part est déjà sur le disque.
+    """
+    archive = _atelier(requete).export.exporter(corps.identifiants)
+    return Response(
+        content=archive.octets,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{archive.nom}"',
+            # Le navigateur lit le nom du fichier dans l'en-tête ci-dessus, et
+            # il ne le voit pas sans ça : `Content-Disposition` ne fait pas
+            # partie des en-têtes qu'une réponse expose d'elle-même à `fetch`.
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
 
 
 @routeur.get("/assets/{identifiant}/lineage")
