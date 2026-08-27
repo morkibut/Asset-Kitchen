@@ -1,0 +1,514 @@
+// La fiche — 380 px, la quatrième colonne de `docs/DESIGN.md` § Layout.
+//
+// « La fiche asset est un panneau latéral, pas une page. Une page ferait perdre
+// la grille et le prompt ; fermer le panneau remet exactement où l'on était. »
+//
+// Elle s'ouvre en T2 avec ce que T2 possède : la visionneuse, la recette, le
+// retour au brut. La filiation, le favori et la suppression l'y rejoignent en
+// T3, quand la bibliothèque existera. Montrer aujourd'hui des rubriques vides
+// serait exhiber le cadrage au lieu de servir le geste — le reproche qui a fait
+// écarter `docs/maquette-atelier.html`.
+
+import { useEffect, useState } from "react"
+import {
+  api,
+  PASSE_PAR_DEFAUT,
+  RECETTE_VIDE,
+  type Asset,
+  type EtatTraitement,
+  type Passe,
+  type Recette,
+} from "../api"
+import { Bouton, Curseur, EnTetePanneau, Etape, Libelle, Raison, Segments } from "./chassis"
+
+/** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
+ *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. La valeur
+ *  n'est jamais déduite de l'image reçue (US-61) : elle se choisit ici, et
+ *  deviendra une propriété du projet en T4. */
+const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
+
+export function Fiche({
+  asset,
+  traitement,
+  onFermer,
+  onErreur,
+}: {
+  asset: Asset
+  traitement: EtatTraitement
+  onFermer: () => void
+  onErreur: (raison: string) => void
+}) {
+  const [recette, setRecette] = useState<Recette>(asset.recette)
+  const [montrerBrut, setMontrerBrut] = useState(false)
+  const [nom, setNom] = useState("")
+
+  // Changer d'asset remet la fiche sur la recette de celui-là. Sans ça, le
+  // panneau garderait les réglages du précédent et on croirait les avoir posés.
+  //
+  // **Sur l'identifiant seul, jamais sur la recette.** Chaque retouche revient
+  // par le flux d'événements ; se resynchroniser dessus ferait reculer un
+  // curseur qu'on est en train de faire glisser, au rythme des allers-retours.
+  // C'est l'écran qui mène la recette tant que la fiche est ouverte, et le
+  // serveur qui tranche quand il refuse — `poser` remet alors l'état d'avant.
+  useEffect(() => {
+    setRecette(asset.recette)
+    setMontrerBrut(false)
+    setNom("")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asset.identifiant])
+
+  // ── Poser la recette ──────────────────────────────────────────────────────
+  //
+  // À chaque cran de curseur, et c'est tenable : le serveur garde le détourage
+  // et ne refait que la queue de la recette — 28 ms contre 130. C'est ce qui
+  // rend vrai « chaque réglage répond sans attente perceptible ».
+
+  const poser = async (suivante: Recette) => {
+    setRecette(suivante)
+    try {
+      await api.poserRecette(asset.identifiant, suivante)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "retouche refusée")
+      setRecette(asset.recette) // l'écran ne garde pas un réglage que le serveur refuse
+    }
+  }
+
+  const revenirAuBrut = async () => {
+    try {
+      await api.revenirAuBrut(asset.identifiant)
+      setRecette(RECETTE_VIDE)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "retour au brut refusé")
+    }
+  }
+
+  const enregistrer = async () => {
+    try {
+      await api.nommerRecette(nom.trim(), recette)
+      setNom("")
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "recette refusée")
+    }
+  }
+
+  const raisonModele =
+    traitement.moteurs.find((m) => m.nom === "modele")?.raison ?? null
+
+  return (
+    <aside className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1">
+      <EnTetePanneau>
+        <span className="truncate">Fiche</span>
+        <button
+          type="button"
+          onClick={onFermer}
+          aria-label="Fermer la fiche"
+          className="ml-auto text-texte-3 transition-colors duration-[80ms] hover:text-texte"
+        >
+          ✕
+        </button>
+      </EnTetePanneau>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
+        <Visionneuse
+          asset={asset}
+          brut={montrerBrut}
+          onBrut={setMontrerBrut}
+          traite={!estVide(recette)}
+        />
+
+        <div className="flex flex-col gap-2">
+          {/* ── 1. Détourage ─────────────────────────────────────────────── */}
+          <Etape
+            titre="Détourage"
+            active={recette.passes.length > 0}
+            onBasculer={() =>
+              poser({
+                ...recette,
+                passes: recette.passes.length ? [] : [{ ...PASSE_PAR_DEFAUT }],
+              })
+            }
+          >
+            <div className="flex flex-col gap-2">
+              {recette.passes.map((passe, rang) => (
+                <BlocPasse
+                  key={rang}
+                  rang={rang}
+                  passe={passe}
+                  raisonModele={raisonModele}
+                  onChange={(suivante) =>
+                    poser({
+                      ...recette,
+                      passes: recette.passes.map((p, i) => (i === rang ? suivante : p)),
+                    })
+                  }
+                  onRetirer={
+                    recette.passes.length > 1
+                      ? () =>
+                          poser({
+                            ...recette,
+                            passes: recette.passes.filter((_, i) => i !== rang),
+                          })
+                      : undefined
+                  }
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  poser({
+                    ...recette,
+                    passes: [...recette.passes, { ...PASSE_PAR_DEFAUT }],
+                  })
+                }
+                className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+              >
+                + une passe
+              </button>
+            </div>
+          </Etape>
+
+          {/* ── 2. Recadrage ─────────────────────────────────────────────── */}
+          <Etape
+            titre="Recadrage"
+            active={recette.recadrage !== null}
+            onBasculer={() =>
+              poser({
+                ...recette,
+                recadrage: recette.recadrage ? null : { marge: 0, boite: null },
+              })
+            }
+          >
+            <Reglage libelle="marge">
+              <Curseur
+                valeur={recette.recadrage?.marge ?? 0}
+                min={0}
+                max={64}
+                unite=" px"
+                onChange={(marge) =>
+                  poser({ ...recette, recadrage: { marge, boite: null } })
+                }
+              />
+            </Reglage>
+          </Etape>
+
+          {/* ── 3. Grille ────────────────────────────────────────────────── */}
+          <Etape
+            titre="Grille"
+            active={recette.grille !== null}
+            onBasculer={() =>
+              poser({
+                ...recette,
+                grille: recette.grille
+                  ? null
+                  : { cible: 64, occupation: 100, ancrage: "bas" },
+              })
+            }
+          >
+            <div className="flex flex-col gap-2">
+              <Reglage libelle="cible">
+                <Segments
+                  valeurs={CIBLES}
+                  valeur={(recette.grille?.cible ?? 64) as (typeof CIBLES)[number]}
+                  onChange={(cible) =>
+                    poser({
+                      ...recette,
+                      grille: { ...(recette.grille ?? defautGrille()), cible },
+                    })
+                  }
+                />
+              </Reglage>
+              <Reglage libelle="occupation">
+                <Curseur
+                  valeur={recette.grille?.occupation ?? 100}
+                  min={10}
+                  max={100}
+                  unite=" %"
+                  onChange={(occupation) =>
+                    poser({
+                      ...recette,
+                      grille: { ...(recette.grille ?? defautGrille()), occupation },
+                    })
+                  }
+                />
+              </Reglage>
+              <Reglage libelle="ancrage">
+                <Segments
+                  valeurs={["bas", "centre"] as const}
+                  valeur={recette.grille?.ancrage ?? "bas"}
+                  onChange={(ancrage) =>
+                    poser({
+                      ...recette,
+                      grille: { ...(recette.grille ?? defautGrille()), ancrage },
+                    })
+                  }
+                />
+              </Reglage>
+            </div>
+          </Etape>
+
+          {/* ── 4. Quantification — branchée, et grisée avec sa raison ────── */}
+          <Etape
+            titre="Quantification"
+            active={recette.quantification !== null}
+            raison={traitement.quantification.raison}
+            onBasculer={() =>
+              poser({
+                ...recette,
+                quantification: recette.quantification
+                  ? null
+                  : { couleurs: 32, palette: [], tramage: "aucun" },
+              })
+            }
+          >
+            <Reglage libelle="couleurs">
+              <Segments
+                valeurs={[4, 8, 16, 32, 64] as const}
+                valeur={(recette.quantification?.couleurs ?? 32) as 4 | 8 | 16 | 32 | 64}
+                onChange={(couleurs) =>
+                  poser({
+                    ...recette,
+                    quantification: {
+                      couleurs,
+                      palette: [],
+                      tramage: recette.quantification?.tramage ?? "aucun",
+                    },
+                  })
+                }
+              />
+            </Reglage>
+          </Etape>
+
+          {/* ── 5. Bords ─────────────────────────────────────────────────── */}
+          <Etape
+            titre="Nettoyage des bords"
+            active={recette.bords !== null}
+            onBasculer={() =>
+              poser({
+                ...recette,
+                bords: recette.bords ? null : { aire_min: 3 },
+              })
+            }
+          >
+            <Reglage libelle="tache minimale">
+              <Curseur
+                valeur={recette.bords?.aire_min ?? 3}
+                min={0}
+                max={64}
+                unite=" px"
+                onChange={(aire_min) => poser({ ...recette, bords: { aire_min } })}
+              />
+            </Reglage>
+          </Etape>
+        </div>
+
+        {/* ── La recette elle-même ───────────────────────────────────────── */}
+        <div className="mt-auto flex flex-col gap-2 border-t border-bord pt-2">
+          {traitement.recettes.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <Libelle>Recettes</Libelle>
+              <div className="flex flex-wrap gap-1">
+                {traitement.recettes.map((enregistree) => (
+                  <button
+                    key={enregistree}
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const suivant = await api.appliquerRecette(
+                          asset.identifiant,
+                          enregistree,
+                        )
+                        setRecette(suivant.recette)
+                      } catch (erreur) {
+                        onErreur(
+                          erreur instanceof Error ? erreur.message : "recette refusée",
+                        )
+                      }
+                    }}
+                    className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
+                  >
+                    {enregistree}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              placeholder="nommer cette recette"
+              className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+            />
+            <Bouton
+              inactif={!nom.trim() || estVide(recette)}
+              onClick={enregistrer}
+              enfants="Enregistrer"
+            />
+          </div>
+          {estVide(recette) && nom.trim() !== "" && (
+            <Raison texte="une recette vide n'a rien à rejouer" />
+          )}
+
+          <div className="flex items-center gap-2">
+            <Bouton
+              inactif={estVide(recette)}
+              onClick={revenirAuBrut}
+              enfants="Revenir au brut"
+            />
+            <a
+              href={api.telechargementAsset(asset.identifiant, montrerBrut)}
+              download
+              className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+            >
+              PNG ↓
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+// ── La visionneuse ──────────────────────────────────────────────────────────
+
+function Visionneuse({
+  asset,
+  brut,
+  onBrut,
+  traite,
+}: {
+  asset: Asset
+  brut: boolean
+  onBrut: (v: boolean) => void
+  traite: boolean
+}) {
+  const dimensions = brut || !traite
+    ? `${asset.largeur}×${asset.hauteur}`
+    : `${asset.rendu_largeur}×${asset.rendu_hauteur}`
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="damier damier-fiche aspect-square w-full border border-bord">
+        <img
+          src={api.rendu(asset.identifiant, asset.empreinte, brut)}
+          alt={asset.label}
+          className="h-full w-full object-contain"
+          style={{ imageRendering: "pixelated" }}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        {/* La bascule n'est là que s'il y a deux choses à comparer. Un segment
+            « Brut » seul, sur une image sans recette, dirait une différence qui
+            n'existe pas. */}
+        {traite ? (
+          <Segments
+            valeurs={["rendu", "brut"] as const}
+            valeur={brut ? "brut" : "rendu"}
+            onChange={(quoi) => onBrut(quoi === "brut")}
+          />
+        ) : (
+          <span className="mesure text-[10px] text-texte-3">brut</span>
+        )}
+        <span className="mesure ml-auto text-[10px] text-texte-3">{dimensions}</span>
+      </div>
+      <p className="truncate text-[11.5px] text-texte-2" title={asset.label}>
+        {asset.label}
+      </p>
+    </div>
+  )
+}
+
+// ── Une passe de détourage ──────────────────────────────────────────────────
+
+function BlocPasse({
+  rang,
+  passe,
+  raisonModele,
+  onChange,
+  onRetirer,
+}: {
+  rang: number
+  passe: Passe
+  raisonModele: string | null
+  onChange: (p: Passe) => void
+  onRetirer?: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-2 p-2">
+      <div className="flex items-center gap-2">
+        <span className="mesure text-[9.5px] text-texte-3">passe {rang + 1}</span>
+        {onRetirer && (
+          <button
+            type="button"
+            onClick={onRetirer}
+            className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec"
+          >
+            retirer
+          </button>
+        )}
+      </div>
+
+      <Segments
+        valeurs={["bord", "modele"] as const}
+        valeur={passe.moteur}
+        onChange={(moteur) => onChange({ ...passe, moteur })}
+        indisponibles={raisonModele ? (["modele"] as const) : []}
+        libelles={{ bord: "bord", modele: "modèle" }}
+      />
+      {raisonModele && <Raison texte={raisonModele} />}
+
+      {passe.moteur === "bord" && (
+        <Reglage libelle="tolérance">
+          <Curseur
+            valeur={passe.tolerance}
+            min={0}
+            max={120}
+            onChange={(tolerance) => onChange({ ...passe, tolerance })}
+          />
+        </Reglage>
+      )}
+      <Reglage libelle="seuil alpha">
+        <Curseur
+          valeur={passe.seuil_alpha}
+          min={1}
+          max={255}
+          onChange={(seuil_alpha) => onChange({ ...passe, seuil_alpha })}
+        />
+      </Reglage>
+      <Reglage libelle="durcissement">
+        <Segments
+          valeurs={[0, 1, 2, 3, 4] as const}
+          valeur={passe.durcissement as 0 | 1 | 2 | 3 | 4}
+          onChange={(durcissement) => onChange({ ...passe, durcissement })}
+        />
+      </Reglage>
+    </div>
+  )
+}
+
+// ── Le gabarit d'un réglage ─────────────────────────────────────────────────
+
+function Reglage({
+  libelle,
+  children,
+}: {
+  libelle: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-[86px_minmax(0,1fr)] items-center gap-2">
+      <span className="mesure text-[10px] text-texte-3">{libelle}</span>
+      {children}
+    </div>
+  )
+}
+
+const defautGrille = () => ({ cible: 64, occupation: 100, ancrage: "bas" as const })
+
+const estVide = (recette: Recette) =>
+  recette.passes.length === 0 &&
+  !recette.recadrage &&
+  !recette.grille &&
+  !recette.quantification &&
+  !recette.bords

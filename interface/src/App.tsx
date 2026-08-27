@@ -1,9 +1,13 @@
 // L'Atelier — l'écran du travail quotidien.
 //
-// En T1 il tient deux colonnes : les réglages, puis le prompt et la grille.
-// L'arbre des projets et la fiche asset arrivent avec la bibliothèque (T3) ;
-// les afficher vides maintenant serait montrer du cadrage au lieu de servir le
-// geste — c'est exactement ce qui a fait écarter `docs/maquette-atelier.html`.
+// Trois colonnes en T2 : les réglages, le prompt et la grille, puis la fiche
+// quand une tuile est ouverte. L'arbre des projets — la quatrième colonne de
+// `docs/DESIGN.md` § Layout — arrive avec la bibliothèque (T3) ; l'afficher
+// vide aujourd'hui serait montrer du cadrage au lieu de servir le geste, c'est
+// exactement ce qui a fait écarter `docs/maquette-atelier.html`.
+//
+// La fiche, elle, n'est plus vide : T2 lui donne la visionneuse, la recette et
+// le retour au brut. La filiation et le favori l'y rejoindront en T3.
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
@@ -12,6 +16,7 @@ import {
   ecouter,
   heure,
   Refus,
+  type Asset,
   type Etat,
   type Generation,
   type Modele,
@@ -19,6 +24,7 @@ import {
 import { Bouton, Point } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranCle } from "./composants/EcranCle"
+import { Fiche } from "./composants/Fiche"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile } from "./composants/Tuile"
 
@@ -38,6 +44,10 @@ export function App() {
     options: Record<string, string>
   }>({ modele: null, options: {} })
   const [generations, setGenerations] = useState<Generation[]>([])
+  // Les assets par identifiant : la tuile en a besoin pour savoir s'il y a un
+  // rendu à montrer, et la fiche pour savoir quelle recette afficher.
+  const [assets, setAssets] = useState<Record<string, Asset>>({})
+  const [fiche, setFiche] = useState<string | null>(null)
   const [panne, setPanne] = useState<string | null>(null)
   const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
@@ -89,6 +99,8 @@ export function App() {
       etat: (recu) => {
         setEtat(recu)
         if (recu.generations) setGenerations(recu.generations)
+        if (recu.assets)
+          setAssets(Object.fromEntries(recu.assets.map((a) => [a.identifiant, a])))
         // Ce message part **une fois par abonnement**, donc à chaque
         // rebranchement. Deux conséquences, et le repli dépend des deux.
         //
@@ -109,6 +121,8 @@ export function App() {
             ? liste.map((g) => (g.identifiant === recue.identifiant ? recue : g))
             : [recue, ...liste]
         }),
+      asset: (recu) =>
+        setAssets((connus) => ({ ...connus, [recu.identifiant]: recu })),
       catalogue: (recu) => {
         setCatalogueRepli(recu)
         // Le repli change ce que chaque modèle peut honorer : la liste, elle,
@@ -242,7 +256,17 @@ export function App() {
       {/* Trois rangées, et rien de plus : 44 px en tête, le travail, 26 px en
           pied. Le repli hors ligne n'ajoute **aucune hauteur** — il se pose
           dans une fente qui existe déjà, sous le bouton Générer. */}
-      <main className="grid min-h-0 grid-cols-[300px_minmax(0,1fr)]">
+      {/* La fiche ajoute une colonne, elle ne recouvre rien : « fermer le
+          panneau remet exactement où l'on était » (`docs/DESIGN.md`). La grille
+          se resserre, elle ne se recompose pas. */}
+      <main
+        className="grid min-h-0"
+        style={{
+          gridTemplateColumns: fiche
+            ? "300px minmax(0,1fr) 380px"
+            : "300px minmax(0,1fr)",
+        }}
+      >
         <PanneauReglages
           modeles={modeles}
           choisi={modele}
@@ -272,8 +296,23 @@ export function App() {
             onGenerer={generer}
             variations={variations}
           />
-          <Grille generations={generations} onRelancer={relancer} />
+          <Grille
+            generations={generations}
+            assets={assets}
+            ouverte={fiche}
+            onRelancer={relancer}
+            onOuvrir={setFiche}
+          />
         </section>
+
+        {fiche && assets[fiche] && etat && (
+          <Fiche
+            asset={assets[fiche]}
+            traitement={etat.traitement}
+            onFermer={() => setFiche(null)}
+            onErreur={setPanne}
+          />
+        )}
       </main>
 
       <BarreEtat
@@ -332,10 +371,16 @@ function BarreDeTete({
 
 function Grille({
   generations,
+  assets,
+  ouverte,
   onRelancer,
+  onOuvrir,
 }: {
   generations: Generation[]
+  assets: Record<string, Asset>
+  ouverte: string | null
   onRelancer: (identifiant: string, rang: number) => void
+  onOuvrir: (identifiant: string) => void
 }) {
   if (generations.length === 0) {
     return (
@@ -359,7 +404,10 @@ function Grille({
               key={`${generation.identifiant}-${emplacement.rang}`}
               generation={generation}
               emplacement={emplacement}
+              asset={assets[`${generation.identifiant}-${emplacement.rang}`]}
+              ouverte={ouverte === `${generation.identifiant}-${emplacement.rang}`}
               onRelancer={(rang) => onRelancer(generation.identifiant, rang)}
+              onOuvrir={onOuvrir}
             />
           )),
         )}

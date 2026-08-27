@@ -133,11 +133,16 @@ export function Segments<T extends string | number>({
   valeur,
   onChange,
   indisponibles = [],
+  libelles,
 }: {
   valeurs: readonly T[]
   valeur: T
   onChange: (v: T) => void
   indisponibles?: readonly T[]
+  /** Ce que l'auteur lit, quand ce n'est pas ce que l'API transporte. Le nom
+   *  d'un moteur voyage sans accent — il traverse du JSON et des chemins — mais
+   *  ce qui s'affiche est français, comme tout le reste de l'écran. */
+  libelles?: Partial<Record<string, string>>
 }) {
   return (
     <div className="flex gap-1">
@@ -159,11 +164,112 @@ export function Segments<T extends string | number>({
                   : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
             ].join(" ")}
           >
-            {v}
+            {libelles?.[String(v)] ?? v}
           </button>
         )
       })}
     </div>
+  )
+}
+
+/**
+ * Un réglage continu — la tolérance d'un détourage, l'occupation d'une case.
+ *
+ * Le seul contrôle ajouté au châssis en T2, et il l'est pour une raison de
+ * comportement : « chaque réglage répond sans attente perceptible » suppose
+ * qu'on **fasse glisser** et qu'on regarde l'image suivre. Un champ de nombre
+ * demanderait de viser une valeur avant de voir ce qu'elle donne, ce qui est
+ * exactement l'inverse du geste.
+ *
+ * Il n'introduit aucune couleur : rail en `--bord`, curseur en `--signal`,
+ * valeur en mono à droite comme toute mesure du produit.
+ */
+export function Curseur({
+  valeur,
+  min,
+  max,
+  pas = 1,
+  unite = "",
+  onChange,
+  inactif = false,
+}: {
+  valeur: number
+  min: number
+  max: number
+  pas?: number
+  unite?: string
+  onChange: (v: number) => void
+  inactif?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={pas}
+        value={valeur}
+        disabled={inactif}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="curseur h-[26px] min-w-0 flex-1"
+      />
+      <span
+        className={[
+          "mesure w-[46px] shrink-0 text-right text-[10px]",
+          inactif ? "text-texte-3" : "text-texte-2",
+        ].join(" ")}
+      >
+        {valeur}
+        {unite}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * Une place de la recette est-elle remplie ou vide ?
+ *
+ * Pas une case à cocher du système : un titre de section cliquable, dont l'état
+ * se lit à la couleur du texte et à un liseré. La recette a cinq places, et
+ * cinq cases à cocher alignées dans un panneau de 380 px ressembleraient à un
+ * formulaire — or ce panneau est un établi.
+ */
+export function Etape({
+  titre,
+  active,
+  onBasculer,
+  raison,
+  children,
+}: {
+  titre: string
+  active: boolean
+  onBasculer: () => void
+  raison?: string | null
+  children?: ReactNode
+}) {
+  const grise = Boolean(raison)
+  return (
+    <section className="flex flex-col gap-1.5 border-t border-bord pt-2 first:border-t-0 first:pt-0">
+      <button
+        type="button"
+        disabled={grise}
+        onClick={onBasculer}
+        className={[
+          "mesure flex h-[26px] items-center gap-2 text-left text-[9.5px] tracking-[.11em] uppercase transition-colors duration-[80ms]",
+          grise ? "text-texte-3" : active ? "text-signal" : "text-texte-3 hover:text-texte-2",
+        ].join(" ")}
+      >
+        <span
+          aria-hidden
+          className={[
+            "inline-block h-[9px] w-[9px] rounded-[2px] border",
+            active && !grise ? "border-signal bg-signal" : "border-bord-fort bg-fond-2",
+          ].join(" ")}
+        />
+        {titre}
+      </button>
+      {grise ? <Raison texte={raison ?? null} /> : active ? children : null}
+    </section>
   )
 }
 

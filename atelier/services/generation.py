@@ -49,6 +49,7 @@ from atelier.fournisseur import PortFournisseur
 from atelier.image import mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
+from atelier.services.assets import ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
 
@@ -74,12 +75,18 @@ class ServiceGenerations:
         catalogue: ServiceCatalogue,
         fabrique_fournisseur: Callable[[], PortFournisseur],
         diffusion: Diffusion | None = None,
+        assets: ServiceAssets | None = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
         self._catalogue = catalogue
         self._fournisseur = fabrique_fournisseur
         self._diffusion = diffusion or Diffusion()
+        # **L'asset naît ici, à l'arrivée de l'image** — pas au premier geste de
+        # retouche (`docs/PLAN.md`, calendrier des entités : l'asset apparaît en
+        # T2). Ce service ne sait rien de ce qu'est une recette ; il sait
+        # seulement qu'une image qui arrive a désormais un destinataire.
+        self._assets = assets
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -328,6 +335,11 @@ class ServiceGenerations:
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         emplacement.statut = Statut.REUSSIE
         self._sauver(generation)
+
+        # Après l'enregistrement, jamais avant : l'asset renvoie à un fichier et
+        # à une génération qui doivent déjà être sur le disque quand il paraît.
+        if self._assets is not None:
+            self._assets.naitre(generation, emplacement)
 
     def _echouer(
         self,

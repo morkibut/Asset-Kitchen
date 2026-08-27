@@ -1,0 +1,578 @@
+# -*- coding: utf-8 -*-
+"""Le post-traitement — CPU, pur, dans un ordre fixe.
+
+**Ne touche jamais le GPU et n'appelle jamais le fournisseur** : invariant
+instauré ici (`docs/PLAN.md`, T2). Aucune fonction de ce module ne fait d'entrée
+ni de sortie ; elle reçoit des tableaux, elle en rend. C'est ce qui les rend
+mesurables au banc et rejouables à l'identique.
+
+Deux décisions ont été prises à la mesure, pas au jugé, le 27 août 2026 :
+
+**Le détourage par défaut ne demande aucun modèle.** Le remplissage depuis le
+bord — un pixel n'est du fond que s'il est *relié au bord* par une chaîne de
+pixels proches de la couleur du bord — a rendu douze silhouettes propres sur
+douze images de six modèles, PNG et JPEG, squelette blanc sur fond gris clair et
+fioles translucides compris. Un seuil global aurait mangé le squelette ; la
+chaîne jusqu'au bord ne le touche pas. Le second moteur (`rembg`) existe pour les
+images qui n'ont pas été fabriquées ici et n'ont donc pas de fond plat — il est
+facultatif, et grisé avec sa raison quand il n'est pas installé.
+
+**L'alpha se durcit avant la réduction, jamais après.** Décision reprise de
+`MySpriteAi/src/lib/pixelPipeline.ts`, où elle a été payée cher : un contour à
+demi transparent est tranché à pile ou face par un rééchantillonnage au plus
+proche voisin, et la quantification le ressort *opaque, de la couleur du fond* —
+c'est le liseré clair autour du sprite.
+"""
+
+from __future__ import annotations
+
+import io
+from dataclasses import dataclass
+
+import numpy as np
+from PIL import Image
+
+from atelier.domaine.recette import (
+    BAS,
+    BORD,
+    FLOYD,
+    MODELE,
+    Bords,
+    Grille,
+    Passe,
+    Quantification,
+    Recadrage,
+    Recette,
+)
+
+__all__ = [
+    "MoteurAbsent",
+    "Rendu",
+    "appliquer",
+    "boite_opaque",
+    "detourer",
+    "detourer_bord",
+    "durcir",
+    "finir",
+    "mesurer_grille",
+    "moteur_disponible",
+    "raison_moteur",
+    "ronger",
+]
+
+
+class MoteurAbsent(Exception):
+    """Le moteur demandé n'est pas installé sur cette machine.
+
+    Ne devrait jamais atteindre l'auteur par surprise : le service grise le
+    moteur avec sa raison avant qu'on puisse le choisir. C'est le filet.
+    """
+
+
+@dataclass(frozen=True, slots=True)
+class Rendu:
+    """Le résultat d'une recette : des octets PNG, et ce qu'on a mesuré dessus."""
+
+    octets: bytes
+    largeur: int
+    hauteur: int
+
+
+# ── Le second moteur, et son absence ─────────────────────────────────────────
+#
+# Importé **paresseusement, une seule fois**. `rembg` charge un modèle ONNX de
+# près de 180 Mo au premier appel et le télécharge s'il n'est pas déjà en cache :
+# l'importer au démarrage ferait payer ça à l'ouverture de l'atelier, et
+# échouerait hors ligne — or « le démarrage n'affiche aucune erreur » est un
+# critère de T1 qu'aucune tranche ne renégocie.
+
+_session_modele: object | None = None
+
+
+def moteur_disponible(moteur: str) -> bool:
+    return raison_moteur(moteur) is None
+
+
+def raison_moteur(moteur: str) -> str | None:
+    """La raison du grisé, en clair — ou `None` si le moteur est là.
+
+    « Ce qui est indisponible est grisé avec sa raison, jamais proposé puis
+    refusé » (`docs/PLAN.md` § Les invariants, étendu par T2). Le moteur absent
+    est précisément l'une des nouvelles raisons que cette tranche apporte.
+    """
+    if moteur == BORD:
+        return None
+    if moteur != MODELE:
+        return f"moteur inconnu — « {moteur} »"
+    try:
+        import rembg  # noqa: F401
+    except Exception:  # noqa: BLE001 — l'absence n'est pas une panne
+        return "le moteur par modèle n'est pas installé"
+    return None
+
+
+def _detourer_modele(rgb: np.ndarray) -> np.ndarray:
+    global _session_modele
+    if raison_moteur(MODELE) is not None:
+        raise MoteurAbsent("le moteur par modèle n'est pas installé")
+    import rembg  # type: ignore[import-not-found]
+
+    if _session_modele is None:
+        _session_modele = rembg.new_session()
+    image = Image.fromarray(rgb, mode="RGB")
+    sortie = rembg.remove(image, session=_session_modele)
+    return np.asarray(sortie.convert("RGBA"))[:, :, 3]
+
+
+# ── Le détourage par le bord ─────────────────────────────────────────────────
+
+
+def _couleur_du_bord(rgb: np.ndarray) -> np.ndarray:
+    """La médiane des pixels de bordure. La médiane, pas la moyenne : un sujet
+    qui touche un bord déplacerait la moyenne, il ne déplace pas la médiane."""
+    bordure = np.concatenate(
+        [rgb[0, :, :], rgb[-1, :, :], rgb[:, 0, :], rgb[:, -1, :]], axis=0
+    )
+    return np.median(bordure.astype(np.int16), axis=0)
+
+
+def _remplir_depuis_le_bord(proche: np.ndarray) -> np.ndarray:
+    """Remplissage par plages, amorcé sur les quatre bords.
+
+    Par plages et non pixel à pixel : une file de pixels sur une image de
+    1024 × 1024 se compte en centaines de milliers d'entrées et met près d'une
+    seconde en Python, ce qui interdirait « chaque réglage répond sans attente
+    perceptible ». Une plage est une ligne de fond entière, trouvée d'un coup par
+    numpy — il y en a quelques milliers, pas un million.
+    """
+    hauteur, largeur = proche.shape
+    fond = np.zeros_like(proche)
+    pile: list[tuple[int, int]] = []
+
+    def semer(y: int, debut: int, fin: int) -> None:
+        """Une graine par sous-plage libre, jamais une par pixel."""
+        if not (0 <= y < hauteur):
+            return
+        libre = proche[y, debut : fin + 1] & ~fond[y, debut : fin + 1]
+        if not libre.any():
+            return
+        borde = np.concatenate(([False], libre, [False])).astype(np.int8)
+        for depart in np.flatnonzero(np.diff(borde) == 1):
+            pile.append((y, debut + int(depart)))
+
+    semer(0, 0, largeur - 1)
+    semer(hauteur - 1, 0, largeur - 1)
+    for y in range(hauteur):
+        if proche[y, 0]:
+            pile.append((y, 0))
+        if proche[y, largeur - 1]:
+            pile.append((y, largeur - 1))
+
+    while pile:
+        y, x = pile.pop()
+        if fond[y, x] or not proche[y, x]:
+            continue
+        ligne = proche[y] & ~fond[y]
+        fermes = np.flatnonzero(~ligne)
+        avant = fermes[fermes < x]
+        apres = fermes[fermes > x]
+        debut = int(avant[-1]) + 1 if avant.size else 0
+        fin = int(apres[0]) - 1 if apres.size else largeur - 1
+        fond[y, debut : fin + 1] = True
+        semer(y - 1, debut, fin)
+        semer(y + 1, debut, fin)
+
+    return fond
+
+
+def detourer_bord(rgb: np.ndarray, tolerance: int) -> np.ndarray:
+    """L'alpha d'une image dont le fond est plat — le cas de tout ce qui sort d'ici.
+
+    Un pixel n'est du fond que s'il est **relié au bord** par une chaîne de
+    pixels proches de la couleur de bordure. C'est toute la différence avec un
+    seuil global : un blanc à l'intérieur du sujet — l'os d'un squelette, le
+    reflet d'une fiole — n'est relié à rien, et reste.
+    """
+    cible = _couleur_du_bord(rgb)
+    ecart = np.abs(rgb.astype(np.int16) - cible).max(axis=2)
+    proche = ecart <= tolerance
+    fond = _remplir_depuis_le_bord(proche)
+    return np.where(fond, np.uint8(0), np.uint8(255))
+
+
+# ── Le bord du sujet ─────────────────────────────────────────────────────────
+
+
+def durcir(alpha: np.ndarray, seuil: int) -> np.ndarray:
+    """Franchement opaque, ou franchement absent. Rien entre les deux."""
+    return np.where(alpha >= seuil, np.uint8(255), np.uint8(0))
+
+
+def ronger(alpha: np.ndarray, pixels: int) -> np.ndarray:
+    """Érosion en croix, `pixels` fois — le durcissement du bord (US-70).
+
+    Ce qui reste d'un halo après le seuil, c'est un ou deux pixels de contour à
+    la couleur du fond. Les ronger coûte un liseré de sprite ; ne pas les ronger
+    coûte un halo. Le réglage existe pour que l'auteur tranche, image par image.
+    """
+    if pixels <= 0:
+        return alpha
+    plein = alpha > 0
+    for _ in range(pixels):
+        garde = plein.copy()
+        garde[1:, :] &= plein[:-1, :]
+        garde[:-1, :] &= plein[1:, :]
+        garde[:, 1:] &= plein[:, :-1]
+        garde[:, :-1] &= plein[:, 1:]
+        plein = garde
+    return np.where(plein, alpha, np.uint8(0))
+
+
+def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
+    """La boîte du sujet, ou `None` s'il ne reste rien.
+
+    `None` est le cas « le détourage a mangé le sujet » (US-71) : il ne se
+    répare pas ici, il **se voit** — l'appelant le remonte tel quel plutôt que
+    de rendre une image vide sans rien dire.
+    """
+    lignes = np.flatnonzero(alpha.any(axis=1))
+    colonnes = np.flatnonzero(alpha.any(axis=0))
+    if lignes.size == 0 or colonnes.size == 0:
+        return None
+    return int(colonnes[0]), int(lignes[0]), int(colonnes[-1]), int(lignes[-1])
+
+
+# ── Les composantes connexes ─────────────────────────────────────────────────
+
+
+def _composantes(masque: np.ndarray) -> list[tuple[np.ndarray, int]]:
+    """Les taches opaques, chacune avec son aire. Même remplissage par plages."""
+    hauteur, largeur = masque.shape
+    vu = np.zeros_like(masque)
+    taches: list[tuple[np.ndarray, int]] = []
+
+    for y0 in range(hauteur):
+        libres = np.flatnonzero(masque[y0] & ~vu[y0])
+        for x0 in libres:
+            if vu[y0, x0]:
+                continue
+            tache = np.zeros_like(masque)
+            pile = [(y0, int(x0))]
+            aire = 0
+            while pile:
+                y, x = pile.pop()
+                if vu[y, x] or not masque[y, x]:
+                    continue
+                ligne = masque[y] & ~vu[y]
+                fermes = np.flatnonzero(~ligne)
+                avant = fermes[fermes < x]
+                apres = fermes[fermes > x]
+                debut = int(avant[-1]) + 1 if avant.size else 0
+                fin = int(apres[0]) - 1 if apres.size else largeur - 1
+                vu[y, debut : fin + 1] = True
+                tache[y, debut : fin + 1] = True
+                aire += fin - debut + 1
+                for voisin in (y - 1, y + 1):
+                    if not (0 <= voisin < hauteur):
+                        continue
+                    libre = masque[voisin, debut : fin + 1] & ~vu[voisin, debut : fin + 1]
+                    if not libre.any():
+                        continue
+                    borde = np.concatenate(([False], libre, [False])).astype(np.int8)
+                    for depart in np.flatnonzero(np.diff(borde) == 1):
+                        pile.append((voisin, debut + int(depart)))
+            taches.append((tache, aire))
+    return taches
+
+
+def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
+    """Le dernier mot : les taches trop petites pour être le sujet s'en vont.
+
+    Une réduction au plus proche voisin laisse derrière elle des pixels isolés —
+    un éclat de fond qui a survécu au seuil, un bout de contour détaché. À
+    64 pixels de côté, un pixel isolé se voit ; à 1024, il ne se voyait pas.
+    """
+    if bords.aire_min <= 0:
+        return rgba
+    alpha = rgba[:, :, 3]
+    if not alpha.any():
+        return rgba
+    sortie = rgba.copy()
+    canal = sortie[:, :, 3]  # une vue, pas une copie : écrire dedans écrit dans `sortie`
+    for tache, aire in _composantes(alpha > 0):
+        if aire < bords.aire_min:
+            canal[tache] = 0
+    return sortie
+
+
+# ── La remise sur grille ─────────────────────────────────────────────────────
+
+
+def _recadrer(rgba: np.ndarray, recadrage: Recadrage) -> np.ndarray:
+    hauteur, largeur = rgba.shape[:2]
+    if recadrage.boite is not None:
+        x0, y0, x1, y1 = recadrage.boite
+    else:
+        boite = boite_opaque(rgba[:, :, 3])
+        if boite is None:
+            return rgba  # plus rien à recadrer : on ne fabrique pas une image vide
+        x0, y0, x1, y1 = boite
+    marge = max(0, recadrage.marge)
+    x0 = max(0, x0 - marge)
+    y0 = max(0, y0 - marge)
+    x1 = min(largeur - 1, x1 + marge)
+    y1 = min(hauteur - 1, y1 + marge)
+    return rgba[y0 : y1 + 1, x0 : x1 + 1]
+
+
+def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
+    """Le sujet, ramené à la taille de bloc demandée.
+
+    **La cible est demandée, jamais déduite de l'image reçue** (US-61). C'est
+    elle qui met un tonneau rendu sur une grille de 16 px et un personnage rendu
+    sur une grille de 8 px à la même finesse : les deux ressortent avec le même
+    bloc, quelle que soit la grille sur laquelle le modèle les a peints.
+
+    Deux formes de sortie, et `case` tranche :
+
+    - **une case carrée** de `cible` côté, où le sujet est centré
+      horizontalement et posé selon `ancrage`. C'est la case qui fait que deux
+      frames d'un même personnage se superposent au lieu de flotter.
+    - **une homothétie** : le côté long ramené à `cible`, les proportions
+      gardées. Enfermer un décor 16:9 dans une case carrée ajouterait des bandes
+      que personne n'a demandées.
+
+    `case` ne se déduit **pas** de la transparence présente dans le tableau : une
+    fois recadré sur sa boîte opaque, un sprite n'a plus un seul pixel
+    transparent, et la déduction rendrait une case pour les uns et pas pour les
+    autres selon qu'ils ont été recadrés. Elle se déduit de la *recette* — avoir
+    demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette.
+    """
+    cible = max(1, grille.cible)
+    hauteur, largeur = rgba.shape[:2]
+    image = Image.fromarray(rgba, mode="RGBA")
+
+    if not case:
+        facteur = cible / max(largeur, hauteur)
+        taille = (max(1, round(largeur * facteur)), max(1, round(hauteur * facteur)))
+        return np.asarray(image.resize(taille, Image.Resampling.NEAREST))
+
+    boite = boite_opaque(rgba[:, :, 3])
+    if boite is None:
+        return rgba  # le détourage a tout mangé : ça se voit, ça ne se répare pas ici
+    x0, y0, x1, y1 = boite
+    sujet = image.crop((x0, y0, x1 + 1, y1 + 1))
+
+    dedans = max(1, round(cible * max(1, min(100, grille.occupation)) / 100))
+    facteur = dedans / max(sujet.width, sujet.height)
+    taille = (
+        max(1, min(cible, round(sujet.width * facteur))),
+        max(1, min(cible, round(sujet.height * facteur))),
+    )
+    reduit = sujet.resize(taille, Image.Resampling.NEAREST)
+
+    toile = Image.new("RGBA", (cible, cible), (0, 0, 0, 0))
+    x = (cible - reduit.width) // 2
+    y = cible - reduit.height if grille.ancrage == BAS else (cible - reduit.height) // 2
+    toile.paste(reduit, (x, y))
+    return np.asarray(toile)
+
+
+# ── La quantification ────────────────────────────────────────────────────────
+
+
+def _palette_imposee(couleurs: tuple[str, ...]) -> Image.Image:
+    plate: list[int] = []
+    for hexa in couleurs:
+        propre = hexa.lstrip("#")
+        plate.extend(int(propre[i : i + 2], 16) for i in (0, 2, 4))
+    plate.extend([0] * (768 - len(plate)))
+    reference = Image.new("P", (1, 1))
+    reference.putpalette(plate)
+    return reference
+
+
+def quantifier(rgba: np.ndarray, quantification: Quantification) -> np.ndarray:
+    """Des aplats, à la place de trente mille couleurs.
+
+    **Déterministe, et c'est un critère** : « une recette nommée, réappliquée
+    ailleurs, donne exactement le même résultat ». Une initialisation aléatoire
+    de k-moyennes rendrait deux images différentes pour la même recette — d'où
+    la coupe médiane de Pillow, qui ne tire rien au sort, plutôt que le k-means++
+    de `MySpriteAi/src/lib/pixelPipeline.ts`.
+
+    L'alpha est mis de côté et remis **tel quel** : la quantification ne touche
+    jamais la transparence. C'est l'autre moitié du piège du liseré — forcer
+    l'alpha à 255 en même temps qu'on ramène les couleurs ressort les contours à
+    demi transparents en pixels opaques de la couleur du fond.
+    """
+    alpha = rgba[:, :, 3].copy()
+    rgb = Image.fromarray(rgba[:, :, :3], mode="RGB")
+    tramage = (
+        Image.Dither.FLOYDSTEINBERG
+        if quantification.tramage == FLOYD
+        else Image.Dither.NONE
+    )
+
+    if quantification.palette:
+        indexee = rgb.quantize(
+            palette=_palette_imposee(quantification.palette), dither=tramage
+        )
+    else:
+        couleurs = max(2, min(256, quantification.couleurs))
+        indexee = rgb.quantize(
+            colors=couleurs, method=Image.Quantize.MEDIANCUT, dither=tramage
+        )
+
+    sortie = np.dstack([np.asarray(indexee.convert("RGB")), alpha])
+    return sortie
+
+
+# ── L'ordre fixe ─────────────────────────────────────────────────────────────
+
+
+def _tableau(octets: bytes) -> np.ndarray:
+    with Image.open(io.BytesIO(octets)) as image:
+        return np.asarray(image.convert("RGBA")).copy()
+
+
+def _en_png(rgba: np.ndarray) -> bytes:
+    tampon = io.BytesIO()
+    Image.fromarray(rgba, mode="RGBA").save(tampon, format="PNG", optimize=True)
+    return tampon.getvalue()
+
+
+def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
+    """Une passe. L'alpha déjà posé n'est jamais rendu : il ne peut que se serrer.
+
+    Une seconde passe travaille donc sur ce que la première a laissé, et non sur
+    l'image d'origine — c'est ce qui fait que les passes s'enchaînent au lieu de
+    se remplacer.
+    """
+    if passe.moteur == MODELE:
+        neuf = _detourer_modele(rgba[:, :, :3])
+    else:
+        neuf = detourer_bord(rgba[:, :, :3], passe.tolerance)
+
+    alpha = np.minimum(rgba[:, :, 3], neuf)
+    alpha = durcir(alpha, passe.seuil_alpha)
+    alpha = ronger(alpha, passe.durcissement)
+    sortie = rgba.copy()
+    sortie[:, :, 3] = alpha
+    return sortie
+
+
+def detourer(recette: Recette, octets: bytes) -> np.ndarray:
+    """L'étape 1, seule — parce que c'est la seule qui coûte cher.
+
+    Mesuré le 27 août 2026 sur une image de 1024 px : 130 ms pour le détourage,
+    28 ms pour les quatre étapes qui le suivent. Or ce sont ces quatre-là qu'on
+    fait glisser. L'appelant garde donc ce tableau sous la main tant que les
+    passes ne changent pas, et ne repaie que la queue.
+    """
+    rgba = _tableau(octets)
+    for passe in recette.passes:
+        rgba = _detourer(rgba, passe)
+    return rgba
+
+
+def finir(rgba: np.ndarray, recette: Recette) -> Rendu:
+    """Les étapes 2 à 5, sur une image déjà détourée. Dans l'ordre, toujours."""
+    if recette.recadrage is not None:
+        rgba = _recadrer(rgba, recette.recadrage)
+
+    if recette.grille is not None:
+        # La case suit le détourage : avoir demandé une silhouette, c'est avoir
+        # dit que ce qu'on traite est un sprite et qu'il vit dans une case.
+        rgba = sur_grille(rgba, recette.grille, case=bool(recette.passes))
+
+    if recette.quantification is not None:
+        rgba = quantifier(rgba, recette.quantification)
+
+    if recette.bords is not None:
+        rgba = nettoyer(rgba, recette.bords)
+
+    hauteur, largeur = rgba.shape[:2]
+    return Rendu(octets=_en_png(rgba), largeur=largeur, hauteur=hauteur)
+
+
+def appliquer(recette: Recette, octets: bytes) -> Rendu:
+    """La recette, du début à la fin, dans l'ordre qui ne se négocie pas.
+
+    Ne lève pas quand le détourage a tout mangé : elle rend l'image vide telle
+    quelle. « Un détourage qui a mangé le sujet se voit immédiatement et se
+    reprend avec d'autres réglages » (`docs/PLAN.md`, T2) — se voir suppose
+    d'être rendu, pas d'être refusé.
+    """
+    return finir(detourer(recette, octets), recette)
+
+
+# ── Le diagnostic ────────────────────────────────────────────────────────────
+
+
+# En dessous, le profil ne se répète pas assez pour qu'on parle de grille. Seuil
+# posé à la mesure : sur le corpus du 27 août 2026, les images franchement
+# pixelisées montent à 0,45–0,92 et rien d'ambigu ne dépasse 0,35.
+NETTETE_MINIMALE = 0.35
+
+
+def mesurer_grille(octets: bytes, maximum: int = 64) -> tuple[int, float]:
+    """Sur quelle grille le modèle a-t-il peint ? Le pas, et sa netteté.
+
+    Mesure **descriptive, jamais prescriptive** : la cible du produit est
+    demandée, jamais déduite de l'image reçue (US-61). Elle sert au banc, qui a
+    besoin de chiffrer la dérive de grille d'un modèle à l'autre.
+
+    Méthode : le contraste entre colonnes voisines se concentre sur les
+    frontières de blocs ; on cherche donc la période de ce profil par
+    autocorrélation, et on retient la **plus petite** période qui approche le
+    maximum — sinon on rapporte une harmonique au lieu de la fondamentale.
+
+    **Ce qu'elle sait faire, et ce qu'elle ne sait pas.** Confrontée le 27 août
+    2026 aux jugements portés à l'œil sur le banc du 26, elle tombe juste sur les
+    sujets fins (squelette, cadre : 8 px mesurés contre 6–8 jugés) et **prend une
+    harmonique sur les plus grossiers** (potion : 17 px mesurés contre 30–37
+    jugés). Elle situe donc un ordre de grandeur ; elle ne remplace pas l'œil, et
+    aucun chiffre de dérive publié ne doit venir d'elle seule.
+
+    Une première version cherchait, pour chaque pas candidat, la phase qui
+    ramasse le plus de contraste. Elle est retirée : à grand pas, la phase
+    retenue porte peu d'échantillons, son maximum est mécaniquement flatté, et
+    la mesure répondait 40 à 64 px sur tout le corpus — c'est-à-dire le haut de
+    sa propre plage de recherche, ce qui aurait dû l'alerter.
+    """
+    with Image.open(io.BytesIO(octets)) as image:
+        gris = np.asarray(image.convert("L"), dtype=np.float64)
+
+    profils = (
+        np.abs(np.diff(gris, axis=1)).sum(axis=0),
+        np.abs(np.diff(gris, axis=0)).sum(axis=1),
+    )
+
+    meilleur_pas, meilleure_nettete = 0, 0.0
+    for profil in profils:
+        pas, nettete = _periode(profil, min(maximum, profil.size // 4))
+        if nettete > meilleure_nettete:
+            meilleur_pas, meilleure_nettete = pas, nettete
+    return meilleur_pas, round(meilleure_nettete, 3)
+
+
+def _periode(profil: np.ndarray, maximum: int) -> tuple[int, float]:
+    centre = profil - profil.mean()
+    variance = float((centre * centre).mean())
+    if variance == 0 or maximum < 2:
+        return 0, 0.0
+
+    correlations = {
+        pas: float((centre[:-pas] * centre[pas:]).mean() / variance)
+        for pas in range(2, maximum + 1)
+    }
+    crete = max(correlations.values())
+    if crete < NETTETE_MINIMALE:
+        return 0, crete  # pas de grille franche — une réponse, pas un échec
+
+    for pas in sorted(correlations):
+        voisines = (correlations.get(pas - 1, -1.0), correlations.get(pas + 1, -1.0))
+        if correlations[pas] >= 0.9 * crete and correlations[pas] >= max(voisines):
+            return pas, correlations[pas]
+    return max(correlations, key=correlations.__getitem__), crete

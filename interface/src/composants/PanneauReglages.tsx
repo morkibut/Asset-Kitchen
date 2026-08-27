@@ -152,7 +152,10 @@ export function PanneauReglages({
             <dt className="text-texte-3">univers</dt>
             <dd className="text-right text-texte-3">aucun — T4</dd>
             <dt className="text-texte-3">grille imposée</dt>
-            <dd className="text-right text-texte-3">aucune — T2</dd>
+            {/* Elle se choisit **par asset**, dans la fiche, tant que le projet
+                n'existe pas pour la porter. En T4 elle deviendra une propriété
+                de l'univers, imposée à tout ce qui rentre (US-60). */}
+            <dd className="text-right text-texte-3">à la fiche</dd>
           </dl>
         </section>
       </div>

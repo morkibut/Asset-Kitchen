@@ -41,11 +41,11 @@ l'intégration ne l'est pas.
 | Fournisseur | Un seul adaptateur : OpenRouter. Un compte, une clé, une facture. | 48 modèles image de 11 fournisseurs, paramètres unifiés, découverte de capacités, `usage.cost` par appel. Écrire trois adaptateurs donnerait le même résultat pour trois fois le travail. |
 | Comptabilité | **Aucun compteur de crédits maison en V1.** Suivi des coûts dans le tableau de bord OpenRouter. | Économise tout un pan de code pour une information déjà rendue ailleurs. |
 | Modèles locaux | Hors application. Import du résultat. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. |
-| Détourage | `rembg` en local, en direct, passes multiples possibles. | 1–2 s, aucun GPU mobilisé longtemps, aucune dépendance à un service. |
+| Détourage | **Remplissage depuis le bord** par défaut, `rembg` en second moteur facultatif. Passes multiples dans les deux cas. | *Révisé le 27 août 2026, à la mesure.* Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
 | Post-traitement | Local, CPU, jamais sur le GPU. | Reprise de AD-9 de GAG. Un curseur doit répondre instantanément. |
 | Univers | Bible écrite à la main + planches de référence + palette extraite par calcul. | La palette sert **en entrée** (contrainte de quantification), pas en contrôle. |
 | Conformité | **Aucune vérification automatique.** L'humain juge à l'œil. | Écarté volontairement : coûte de l'analyse d'image pour un jugement que l'auteur fait mieux. Réintégrable plus tard si le besoin apparaît. |
-| Forme | Serveur Python local + interface web dans le navigateur. | `rembg`/Pillow/SDK MCP imposent Python ; l'ergonomie impose le web ; le navigateur donne les outils de développement, qu'une WebView cache. |
+| Forme | Serveur Python local + interface web dans le navigateur. | Pillow, numpy et le SDK MCP imposent Python ; l'ergonomie impose le web ; le navigateur donne les outils de développement, qu'une WebView cache. |
 | Style | V1 = pixel art. Aucune décision ne doit interdire le 2D non-pixel. | La quantification stricte abîme le 2D peint — elle devra avoir deux régimes le jour venu. |
 | Validation | Manuelle, systématique. | C'est le principe du produit, pas une limite. |
 
@@ -61,15 +61,15 @@ l'intégration ne l'est pas.
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
    fournisseurs          traitement            bibliothèque
-   d'image (API)      (Pillow, numpy,        (SQLite + fichiers)
-                          rembg)
+   d'image (API)     (Pillow + numpy,       (SQLite + fichiers)
+                     rembg en option)
                               ▲
                               │
                      serveur MCP (même processus,
                       mêmes fonctions que l'API)
 ```
 
-Quatre règles qui tiennent l'ensemble :
+Cinq règles qui tiennent l'ensemble :
 
 1. **Le fournisseur est derrière un port.** Le vocabulaire d'un fournisseur ne franchit
    pas son adaptateur : ni `gpt-image-2`, ni `gemini-*`, ni le nom d'un paramètre
@@ -80,7 +80,19 @@ Quatre règles qui tiennent l'ensemble :
    SQLite disparaît, on la reconstruit en relisant le disque — aucun asset n'est
    perdu. Reprise de AD-5 de GAG.
 4. **Le post-traitement ne touche jamais le GPU.** Il est CPU, pur, et ses étapes
-   s'appliquent dans un ordre fixe.
+   s'appliquent dans un ordre fixe : détourage, recadrage, grille, quantification,
+   bords. Aucune ne se réordonne — trois des cinq n'ont pas de sens avant celle
+   qui les précède.
+
+   **Le détourage par défaut ne demande aucun modèle**, et c'est une mesure, pas
+   un principe : un remplissage depuis le bord — un pixel n'est du fond que s'il
+   est *relié au bord* par une chaîne de pixels proches de la couleur de
+   bordure — rend une silhouette propre sur les 44 images des bancs, squelette
+   blanc sur fond gris clair et fioles translucides compris (`essais/essai_pixel.py`,
+   27 août 2026). `rembg` reste **en second moteur, facultatif** — il embarque
+   180 Mo de réseau de neurones et il est là pour les images qui ne viennent pas
+   d'ici, donc sans fond plat. Absent, il est grisé avec sa raison, et rien du
+   geste courant ne s'arrête.
 5. **Le traitement est non destructif.** On garde l'image brute et la **recette** — la
    liste ordonnée des étapes et leurs réglages. Le fichier traité est un rendu, écrit sur
    disque comme cache, effaçable sans rien perdre. Recalculer coûte des millisecondes ;
@@ -101,7 +113,7 @@ gag2/
 │  ├─ services/              les gestes du produit
 │  ├─ domaine/               objets et règles, aucune dépendance sortante
 │  ├─ fournisseur/           le port + l'adaptateur OpenRouter
-│  ├─ image/                 détourage, pixellisation, palette, découpe, export
+│  ├─ image/                 mesures, détourage, grille, quantification, découpe, export
 │  └─ depot/                 SQLite + fichiers
 ├─ interface/                React + Vite + Tailwind
 ├─ donnees/                  projets et assets — hors Git
@@ -342,7 +354,7 @@ n'est pas un style, c'est une erreur.
 | **Générateur** | Prompt, prompt négatif, réglages, choix du modèle, variations. Réinjection d'un asset existant comme référence, source d'édition, guide de style, ou jeu de réglages. | Pas de routeur d'intention automatique. Pas de presets communautaires. |
 | **Bibliothèque** | Projets, collections, filiation, favoris, recherche, filtres, sélection multiple. Affichée **sous le champ de prompt**, pas dans un écran séparé. | Pas de galerie publique, pas de partage. |
 | **Post-traitement** | Recadrage, redimensionnement, pixellisation sur grille, quantification sur la palette de l'univers, nettoyage de bords. Réglages instantanés. | Pas de passe qui monopolise le GPU. |
-| **Détourage** | `rembg`, une ou plusieurs passes, seuil alpha réglable, durcissement du bord. | Pas de détourage par couleur. |
+| **Détourage** | Remplissage depuis le bord par défaut — aucun modèle, aucun réseau ; `rembg` en second moteur facultatif. Une ou plusieurs passes, seuil alpha et durcissement du bord réglables à chacune. | Pas de détourage par couleur au seuil global : il perce les clairs du sujet. |
 | **Slicer** | Découpe d'une planche multi-sprites par alpha connexe. Modes automatique, grille fixe, sélection manuelle. Correction à la main quand la détection se trompe. | Pas d'extraction de composants d'interface (c'est le UI Kit, hors périmètre). |
 | **Export** | Téléchargement d'un PNG. Export d'une sélection en ZIP + JSON descriptif. | Pas de paquet Unity/Godot prêt à importer. |
 | **MCP** | **Une dizaine d'outils complets, pas quarante-trois outils fins.** `generate_asset` génère, applique l'univers du projet, traite, range et rend **un chemin de fichier** — et sait écrire directement dans le dossier du projet de jeu. Attente bornée pour éviter le sondage. | Pas d'enchaînement à composer par l'agent. Pas d'URL signées : même machine, mêmes fichiers. |
@@ -475,7 +487,7 @@ isolé. Le prompt doit imposer « one single sprite, one pose only ».
 | **L'échelle du sujet dérive d'une génération à l'autre** | moyenne — bloque le montage d'animations | constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires** |
 | ~~La couverture image d'OpenRouter~~ | — | **levé le 27 août 2026** par `essais/essai_couverture.py` : 48 modèles image, 11 fournisseurs, 31 acceptant trois références ou plus. Et le catalogue a bougé en un jour — 47 → 48 — ce qu'une liste en dur n'aurait pas vu |
 | **Le coût par image dérive** | moyenne | enregistrer le coût réel de chaque génération dès la T1, et le totaliser par projet |
-| **La qualité pixel art directe** | faible | comparaison en T2 : sortie brute du modèle contre sortie post-traitée |
+| ~~La qualité pixel art directe~~ | — | **levé le 27 août 2026** par `essais/essai_pixel.py`, sur 44 images de six modèles et sans un appel : aucune sortie brute n'a de transparence, la médiane est à 33 986 couleurs, et la grille rendue va de 7 à 20 px — facteur 2 **à l'intérieur d'un même lot**. Après traitement : 27 couleurs, alpha franc, grille imposée, 0 sujet perdu sur 44, 0,17 s par image. La question s'est retournée : le post-traitement n'est pas un supplément qui doit prouver son apport, c'est ce sans quoi rien n'est utilisable |
 
 Le deuxième risque est le plus sournois : il ne se voit pas en V1, et il annule les
 V3 et V4 s'il se réalise. **Il se teste en dix minutes dès la première tranche** —
@@ -488,7 +500,7 @@ c'est le premier essai à faire, avant même d'écrire la bibliothèque.
 | GAG | `gag/domaine/direction.py` | extraction de palette, luminance, saturation |
 | GAG | `gag/ports/`, `gag/adaptateurs/` | la forme du port fournisseur, allégée |
 | GAG | AD-5, AD-9, AD-11, AD-28 | index jetable, post-traitement hors GPU, vocabulaire confiné |
-| MySpriteAi | `src/lib/pixelPipeline.ts` | à porter en Python — les décisions dedans sont durement acquises (durcir l'alpha à 128 **avant** la réduction, sinon liseré clair) |
+| MySpriteAi | `src/lib/pixelPipeline.ts` | **porté en T2**. Les décisions dedans étaient durement acquises et elles sont reprises telles quelles : durcir l'alpha à 128 **avant** la réduction, et ne jamais forcer l'alpha à 255 en quantifiant — les deux moitiés du même liseré clair. Écarté au passage : le k-means++ de la palette, qui tire son initialisation au sort et rendrait deux images différentes pour une même recette nommée |
 | MySpriteAi | `src/lib/audioPipeline.ts` | V5 |
 | MySpriteAi | `workflows/audio/txt2sfx.api.json` | V5, si le local reste au menu |
 | SpriteCook | captures `screen_spritecook/` | référence d'ergonomie, écran par écran |

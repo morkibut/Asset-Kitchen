@@ -19,15 +19,19 @@ from typing import Any, Callable
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, PortFournisseur
 from atelier.reglages import etat_cle, lire_cle
+from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.generation import ServiceGenerations
 
 __all__ = [
+    "AssetInconnu",
     "Atelier",
     "Diffusion",
     "EtatCatalogue",
     "Evenement",
+    "RecetteRefusee",
+    "ServiceAssets",
     "ServiceCatalogue",
     "ServiceGenerations",
 ]
@@ -59,23 +63,33 @@ class Atelier:
         self.catalogue = ServiceCatalogue(
             fabrique_fournisseur(), self.fichiers, self.diffusion
         )
+        # Les assets avant les générations : c'est une génération qui les fait
+        # naître, pas l'inverse. Le post-traitement ne connaît ni le fournisseur
+        # ni le catalogue — il n'y a rien à lui passer d'autre que le disque.
+        self.assets = ServiceAssets(self.base, self.fichiers, self.diffusion)
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,
             self.catalogue,
             fabrique_fournisseur,
             self.diffusion,
+            self.assets,
         )
 
     async def ouvrir(self) -> None:
         """Ce qui se passe au démarrage, dans l'ordre, et sans jamais lever.
 
-        Le catalogue est relu, et ce que l'arrêt précédent a coupé est marqué —
-        pas relancé. L'atelier s'ouvre même sans réseau et même sans clé :
-        l'échec attend le moment où on génère (US-95).
+        Le catalogue est relu, ce que l'arrêt précédent a coupé est marqué —
+        pas relancé —, et les images qui n'ont pas encore d'asset en reçoivent
+        un. L'atelier s'ouvre même sans réseau et même sans clé : l'échec attend
+        le moment où on génère (US-95).
         """
         await self.catalogue.rafraichir()
         self.generations.reprendre()
+        # Les images produites avant que les assets existent — celles de T1 —
+        # en reçoivent un ici. Sans ça elles resteraient dans la grille sans
+        # pouvoir être retouchées, et l'atelier aurait deux sortes d'images.
+        self.assets.rattraper(self.generations.recentes(1000))
 
     def etat(self) -> dict[str, Any]:
         """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture.
@@ -89,4 +103,9 @@ class Atelier:
             "cle": etat_cle().en_json(),
             "catalogue": self.catalogue.en_json(),
             "couts": {"total_usd": self.generations.total_couts()},
+            # Ce que le post-traitement sait faire **sur cette machine**, et ce
+            # qu'il ne peut pas : un moteur de détourage absent, une palette qui
+            # n'existe pas encore. L'écran grise avec la phrase qu'il reçoit, il
+            # ne rejoue jamais la règle de son côté.
+            "traitement": self.assets.traitement(),
         }

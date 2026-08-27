@@ -15,22 +15,44 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1 est finie.** Le squelette, la clé, le catalogue relu au démarrage, un appel qui rend
-une image téléchargeable ; l'écran Atelier — réglages, prompt, grille d'emplacements,
-relance d'un raté ; puis le flux d'événements qui remplace le sondage, la jauge
-déterminée, la reprise vue du navigateur et le repli hors ligne à l'écran. **Les seize
-critères d'acceptation de T1 sont cochés dans `docs/PLAN.md`, et 28 tests les tiennent.**
-Trois images réelles sont sorties, dont deux variations en parallèle (11,7 s et 18,8 s,
-$0,0125). **La prochaine tranche est T2, le post-traitement.**
+**T1 et T2 sont finies.** T1 : le squelette, la clé, le catalogue relu au démarrage, un
+appel qui rend une image téléchargeable ; l'écran Atelier ; le flux d'événements qui
+remplace le sondage, la jauge déterminée, la reprise vue du navigateur et le repli hors
+ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs passes, la
+remise sur grille, la quantification grisée, les recettes nommées, et la fiche — la
+troisième colonne de l'écran. **Les vingt-six critères d'acceptation de T1 et T2 sont
+cochés dans `docs/PLAN.md`, et 45 tests les tiennent. La prochaine tranche est T3, la
+bibliothèque.**
 
-**Le risque « couverture image d'OpenRouter » est levé** (`essais/essai_couverture.py`) :
-48 modèles image, 11 fournisseurs, 31 acceptent assez de références pour un univers.
+**Deux risques ont été levés, aucun n'a coûté un centime.** « La couverture image
+d'OpenRouter » (`essais/essai_couverture.py`) : 48 modèles image, 11 fournisseurs, 31
+acceptent assez de références pour un univers. « La qualité pixel art directe »
+(`essais/essai_pixel.py`) : sur 44 images de six modèles, **aucune sortie brute n'a de
+transparence**, la médiane est à 33 986 couleurs, et la grille rendue va de 7 à 20 px —
+facteur 2 à l'intérieur d'un même lot. Après traitement : 27 couleurs, alpha franc, grille
+imposée, 0 sujet perdu sur 44, 0,17 s par image. **La question s'est retournée** : le
+post-traitement n'est pas un supplément qui doit prouver son apport, c'est ce sans quoi
+rien n'est utilisable.
 
-**L'écran tient deux colonnes, pas quatre.** `docs/DESIGN.md` § Layout donne
-`240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. L'arbre et la
-fiche naissent avec la bibliothèque (T3) ; les afficher vides aujourd'hui montrerait le
-cadrage au lieu de servir le geste, ce qui est exactement le reproche fait à la maquette
-écartée. Le design n'est pas amendé, il est atteint en T3.
+**Le détourage par défaut n'a besoin d'aucun modèle.** Un remplissage depuis le bord — un
+pixel n'est du fond que s'il est *relié au bord* par une chaîne de pixels proches de la
+couleur de bordure — rend une silhouette propre sur les 44 images, squelette blanc sur fond
+gris clair et fioles translucides compris. `rembg` reste un **second** moteur, facultatif
+(`uv pip install -e ".[detourage]"`), grisé avec sa raison quand il n'est pas là. Le geste
+courant ne charge rien, ne télécharge rien, et marche hors ligne.
+
+**Ce chemin-là n'a jamais été exécuté, et c'est écrit ici pour qu'on ne l'oublie pas.**
+`rembg` n'est pas installé sur cette machine : le grisé est vérifié, l'appel au moteur ne
+l'est pas, et le test qui le concerne se saute en son absence. Décidé le 27 août 2026 : il
+se vérifiera en **T4**, sur les images du tableau d'inspiration — c'est-à-dire sur celles
+qui n'ont pas de fond plat et qui le justifient. D'ici là, aucun geste du produit ne
+l'emprunte.
+
+**L'écran tient trois colonnes sur quatre.** `docs/DESIGN.md` § Layout donne
+`240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. La fiche s'est
+ouverte en T2 avec ce que T2 possède ; l'arbre naît avec la bibliothèque (T3). Afficher une
+colonne vide montrerait le cadrage au lieu de servir le geste, ce qui est exactement le
+reproche fait à la maquette écartée.
 
 **L'interface ne redemande plus rien.** Elle se branche une fois sur `GET /api/events` et
 écoute ; le seul appel qu'elle refait d'elle-même est le catalogue, parce que le grisé de
@@ -42,12 +64,14 @@ chargement, plus une seule ensuite tant que rien ne change.
 ```
 uv venv --python 3.11
 uv pip install -e ".[dev]"
+uv pip install -e ".[detourage]"   facultatif — le second moteur de détourage, ~180 Mo
 cd interface && npm install && npm run build
 
 py -m atelier                        lance le serveur et ouvre le navigateur
 py -m atelier --sans-navigateur --port 8421
 pytest -q                            les critères d'acceptation, sans un centime
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
+py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 ```
 
@@ -111,13 +135,18 @@ chaîne avance : c'est le signe que ça marche.
 |---|---|
 | `atelier/` | le paquet Python — `domaine/` les objets et les règles, `fournisseur/` le port et l'adaptateur OpenRouter, `services/` les gestes, `api/` les routes, `depot/` SQLite et fichiers, `image/` le traitement, `mcp/` vide jusqu'à T7 |
 | `atelier/services/evenements.py` | la diffusion — ce que l'atelier annonce, à qui écoute. C'est elle qui remplace le sondage : un service qui change d'état le dit, personne ne redemande |
+| `atelier/domaine/recette.py` | les cinq places d'une recette, **dans un ordre fixe** — détourage, recadrage, grille, quantification, bords. Et l'empreinte, qui nomme un rendu et rend deux recettes égales interchangeables |
+| `atelier/image/traitement.py` | le pipeline : CPU, pur, aucune entrée-sortie. `detourer` et `finir` sont séparés parce que le premier coûte 130 ms et le second 28 — c'est ce qui rend la retouche instantanée |
+| `atelier/services/assets.py` | poser une recette, revenir au brut, nommer une recette. **Aucun `fournisseur` dans ce fichier**, et ça se lit dans les imports : T2 n'appelle jamais l'extérieur |
 | `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
 | `tests/conftest.py` | le double de fournisseur et les trois montages partagés. Il rend de vraies images, de vrais coûts, de vraies dimensions — **aucun test ne coûte un centime** |
 | `tests/test_t1_jalon1.py` | les critères de T1 tenus par les jalons 1 et 2 — clé, catalogue, image téléchargeable, variations concurrentes, emplacements indépendants |
 | `tests/test_t1_jalon3_4.py` | ceux des jalons 3 et 4 — flux d'événements, jauge déterminée, onglet rouvert, repli hors ligne |
+| `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
+| `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
-| `donnees/` | l'index SQLite, la photo du catalogue, les générations et leurs images. Hors Git |
+| `donnees/` | l'index SQLite, la photo du catalogue, les recettes nommées, et par génération : `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
@@ -161,7 +190,13 @@ deux vivent côte à côte.
 - **Le traitement est non destructif.** On garde l'image brute et la recette. Le rendu est un
   cache effaçable. Recalculer coûte des millisecondes ; regénérer coûte de l'argent et ne rend
   jamais la même image.
-- **Le post-traitement ne touche jamais le GPU.** CPU, pur, étapes dans un ordre fixe.
+- **Le post-traitement ne touche jamais le GPU, et n'appelle jamais le fournisseur.** CPU,
+  pur, étapes dans un ordre fixe : détourage, recadrage, grille, quantification, bords.
+  Aucune ne se réordonne — trois des cinq n'ont pas de sens avant celle qui les précède.
+- **Chaque étape est déterministe, et c'est un critère.** « Une recette nommée, réappliquée
+  ailleurs, donne exactement le même résultat » : une initialisation tirée au sort — le
+  k-means++ de MySpriteAi, par exemple — rendrait deux images différentes pour la même
+  recette. La coupe médiane de Pillow ne tire rien au sort ; c'est elle qui quantifie.
 - **Pas de ComfyUI dans l'application.** Le local reste dehors : on génère ailleurs, on importe.
 - **Aucune clé en dur.** `.env` seul, jamais versionné ; `.env.example` documente les noms.
 
@@ -210,6 +245,25 @@ deux vivent côte à côte.
   conviennent pas à un flux qui n'en a pas : le test se fige jusqu'au délai du lot entier.
   On appelle l'application ASGI directement, on lit les premiers messages, et on envoie
   `http.disconnect` — ce qui vérifie du même coup que le serveur s'en remet.
+- **Durcir l'alpha AVANT la réduction, jamais après.** Repris de
+  `MySpriteAi/src/lib/pixelPipeline.ts`, où ça a été payé cher. Un contour à demi transparent
+  est tranché à pile ou face par un rééchantillonnage au plus proche voisin : deux passes de
+  suite rendent deux silhouettes différentes. Et la quantification force l'alpha à 255 sans
+  toucher à la couleur, donc un pixel de contour à peine visible ressort **opaque, de la
+  couleur du fond** — le liseré clair autour du sprite. Les deux moitiés du même piège.
+- **Un détourage au seuil global perce le sujet ; un remplissage depuis le bord ne le perce
+  pas.** La différence tient en un mot : *relié*. Un pixel de la couleur du fond qui n'est
+  relié à aucun bord — l'os d'un squelette, le reflet d'une fiole — n'est pas du fond.
+  Corollaire assumé : **une région fermée reste opaque**. L'intérieur d'un cadre d'interface
+  survit au détourage, et c'est la même règle qui sauve le squelette. Le rendre transparent
+  est un geste de l'auteur, jamais une décision de l'outil.
+- **Une mesure de périodicité par « meilleure phase » ment à grand pas.** Écrite pour mesurer
+  la grille rendue, elle a répondu 40 à 64 px sur tout le corpus — c'est-à-dire le haut de sa
+  propre plage de recherche, ce qui aurait dû alerter tout de suite. La cause : à grand pas, la
+  phase retenue porte peu d'échantillons, donc son maximum est mécaniquement flatté.
+  L'autocorrélation, elle, tombe juste sur les sujets fins — mais **prend une harmonique sur
+  les plus grossiers**. Elle situe un ordre de grandeur, elle ne remplace pas l'œil : aucun
+  chiffre de dérive publié ne doit venir d'elle seule.
 - **Le message d'erreur d'`httpx` est en anglais, et il finit à l'écran.** « All connection
   attempts failed » est ressorti tel quel dans la barre d'état. Toute erreur de
   transport se traduit en une phrase du produit avant de quitter `fournisseur/` ; un message

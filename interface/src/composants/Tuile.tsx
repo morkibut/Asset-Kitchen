@@ -10,7 +10,14 @@
 // sorte de ligne, et la grille se lit comme une planche contact.
 
 import { useEffect, useState } from "react"
-import { api, dollars, secondes, type Emplacement, type Generation } from "../api"
+import {
+  api,
+  dollars,
+  secondes,
+  type Asset,
+  type Emplacement,
+  type Generation,
+} from "../api"
 
 const PASTILLES: Partial<Record<Emplacement["statut"], string>> = {
   interrompue: "interrompu",
@@ -19,28 +26,52 @@ const PASTILLES: Partial<Record<Emplacement["statut"], string>> = {
 export function Tuile({
   generation,
   emplacement,
+  asset,
+  ouverte,
   onRelancer,
+  onOuvrir,
 }: {
   generation: Generation
   emplacement: Emplacement
+  /** L'asset né de cet emplacement. Absent tant que l'image n'est pas arrivée. */
+  asset?: Asset
+  ouverte: boolean
   onRelancer: (rang: number) => void
+  onOuvrir: (identifiant: string) => void
 }) {
   const enCours =
     emplacement.statut === "en_cours" || emplacement.statut === "en_attente"
   const rate =
     emplacement.statut === "echouee" || emplacement.statut === "interrompue"
 
+  // **La tuile montre ce que l'asset est devenu**, pas ce que le fournisseur a
+  // rendu : dès qu'une recette existe, c'est le rendu qui s'affiche. Juger sur
+  // le brut alors qu'on a détouré et remis sur grille ferait juger autre chose
+  // que ce qui partira dans le jeu.
+  const source = asset?.traite
+    ? api.rendu(asset.identifiant, asset.empreinte)
+    : api.image(generation.identifiant, emplacement.rang)
+
   return (
     <figure
       className={[
         "arrivee flex flex-col border",
         rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",
+        // L'anneau du sélectionné — « la lampe de la table », `docs/DESIGN.md`
+        // § La tuile. Aucune couleur de plus dans la grille.
+        ouverte ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
       ].join(" ")}
     >
-      <div className="relative aspect-square w-full overflow-hidden">
+      <button
+        type="button"
+        disabled={!asset}
+        onClick={() => asset && onOuvrir(asset.identifiant)}
+        aria-label="Ouvrir la fiche"
+        className="relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default"
+      >
         {emplacement.resultat && (
           <img
-            src={api.image(generation.identifiant, emplacement.rang)}
+            src={source}
             alt={generation.demande.prompt.slice(0, 80)}
             className="damier h-full w-full object-contain"
             style={{ imageRendering: "pixelated" }}
@@ -53,12 +84,16 @@ export function Tuile({
           />
         )}
         {rate && <Raté raison={emplacement.raison} />}
-        {PASTILLES[emplacement.statut] && (
+        {/* Une pastille pour un état **subi** — `docs/DESIGN.md` § La tuile.
+            « réglé » en fait partie : c'est ce que le système constate d'un
+            asset dont la recette a été touchée à la main, et c'est ce que T4
+            relira pour le sauter lors d'un changement de palette. */}
+        {(PASTILLES[emplacement.statut] || asset?.epingle) && (
           <span className="mesure absolute top-1.5 left-1.5 bg-fond-0/82 px-1 py-px text-[8.5px] text-epingle">
-            {PASTILLES[emplacement.statut]}
+            {PASTILLES[emplacement.statut] ?? "réglé"}
           </span>
         )}
-      </div>
+      </button>
 
       <figcaption className="flex min-h-[38px] flex-col justify-center gap-[3px] border-t border-bord px-2 py-1.5">
         <span className="truncate text-[11.5px] text-texte">
@@ -73,7 +108,11 @@ export function Tuile({
             Relancer
           </button>
         ) : (
-          <Mesures generation={generation} emplacement={emplacement} />
+          <Mesures
+            generation={generation}
+            emplacement={emplacement}
+            asset={asset}
+          />
         )}
       </figcaption>
     </figure>
@@ -85,22 +124,32 @@ export function Tuile({
 function Mesures({
   generation,
   emplacement,
+  asset,
 }: {
   generation: Generation
   emplacement: Emplacement
+  asset?: Asset
 }) {
   const resultat = emplacement.resultat
   return (
     <div className="mesure flex items-center gap-1.5 text-[9.5px] text-texte-3">
       {resultat ? (
         <>
+          {/* Les dimensions **du rendu** quand il y en a un : c'est l'image
+              qu'on regarde, donc c'est elle qu'on mesure. */}
           <span>
-            {resultat.largeur}×{resultat.hauteur}
+            {asset?.traite
+              ? `${asset.rendu_largeur}×${asset.rendu_hauteur}`
+              : `${resultat.largeur}×${resultat.hauteur}`}
           </span>
           <span aria-hidden>·</span>
           <span>{dollars(emplacement.cout_usd)}</span>
           <a
-            href={api.telechargement(generation.identifiant, emplacement.rang)}
+            href={
+              asset
+                ? api.telechargementAsset(asset.identifiant)
+                : api.telechargement(generation.identifiant, emplacement.rang)
+            }
             download
             className="ml-auto text-signal hover:text-signal-clair"
           >

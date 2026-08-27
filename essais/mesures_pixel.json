@@ -1,0 +1,1049 @@
+{
+ "cible": 64,
+ "recette": {
+  "passes": [
+   {
+    "moteur": "bord",
+    "tolerance": 28,
+    "seuil_alpha": 128,
+    "durcissement": 1
+   }
+  ],
+  "recadrage": {
+   "marge": 0,
+   "boite": null
+  },
+  "grille": {
+   "cible": 64,
+   "occupation": 100,
+   "ancrage": "bas"
+  },
+  "quantification": {
+   "couleurs": 32,
+   "palette": [],
+   "tramage": "aucun"
+  },
+  "bords": {
+   "aire_min": 2
+  },
+  "nom": null
+ },
+ "lots": [
+  {
+   "nom": "univers · gpt-image-2 low · jet 1",
+   "chemin": "resultats_univers/jet1/gpt-image-2_low",
+   "images": [
+    {
+     "fichier": "C1_pretresse.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 58743,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.683
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 23,
+      "part_transparente": 0.6406,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.673
+     },
+     "duree_s": 0.187
+    },
+    {
+     "fichier": "C1b_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 43710,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 9,
+      "grille_nettete": 0.829
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 29,
+      "part_transparente": 0.6245,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.537
+     },
+     "duree_s": 0.219
+    },
+    {
+     "fichier": "C1c_marche.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 47147,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.847
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 18,
+      "part_transparente": 0.644,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.213
+     },
+     "duree_s": 0.188
+    },
+    {
+     "fichier": "C2_rat.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 44777,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.919
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 19,
+      "part_transparente": 0.7666,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.457
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "C3_squelette.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 62067,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.797
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 27,
+      "part_transparente": 0.6797,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.331
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "P1_tonneau.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 22068,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.482
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 28,
+      "part_transparente": 0.3262,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.243
+     },
+     "duree_s": 0.14
+    },
+    {
+     "fichier": "P2_epee.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 16532,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 13,
+      "grille_nettete": 0.496
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 18,
+      "part_transparente": 0.8425,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.442
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "P3_potion.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 31444,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.687
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 24,
+      "part_transparente": 0.5876,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.557
+     },
+     "duree_s": 0.157
+    },
+    {
+     "fichier": "P4_coffre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 31085,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.744
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 27,
+      "part_transparente": 0.3066,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.418
+     },
+     "duree_s": 0.141
+    },
+    {
+     "fichier": "P5_cadre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 56806,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.553
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 32,
+      "part_transparente": 0.3557,
+      "part_floue": 0.0,
+      "grille_pas": 6,
+      "grille_nettete": 0.415
+     },
+     "duree_s": 0.157
+    }
+   ]
+  },
+  {
+   "nom": "univers · gpt-image-2 low · jet 2",
+   "chemin": "resultats_univers/jet2/gpt-image-2_low",
+   "images": [
+    {
+     "fichier": "C1_pretresse.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 54180,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.829
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 20,
+      "part_transparente": 0.7141,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.552
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "C1b_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 40653,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.74
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 24,
+      "part_transparente": 0.656,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.347
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "C1c_marche.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 57864,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 7,
+      "grille_nettete": 0.711
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 25,
+      "part_transparente": 0.6272,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.444
+     },
+     "duree_s": 0.157
+    },
+    {
+     "fichier": "C2_rat.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 59587,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 7,
+      "grille_nettete": 0.81
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 19,
+      "part_transparente": 0.7791,
+      "part_floue": 0.0,
+      "grille_pas": 3,
+      "grille_nettete": 0.532
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "C3_squelette.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 61956,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 7,
+      "grille_nettete": 0.763
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 17,
+      "part_transparente": 0.7366,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.475
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "P1_tonneau.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 26157,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.668
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 29,
+      "part_transparente": 0.3625,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.301
+     },
+     "duree_s": 0.141
+    },
+    {
+     "fichier": "P2_epee.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 14232,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.502
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 19,
+      "part_transparente": 0.8716,
+      "part_floue": 0.0,
+      "grille_pas": 4,
+      "grille_nettete": 0.451
+     },
+     "duree_s": 0.125
+    },
+    {
+     "fichier": "P3_potion.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 21174,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 16,
+      "grille_nettete": 0.697
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 23,
+      "part_transparente": 0.5183,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.391
+     },
+     "duree_s": 0.125
+    },
+    {
+     "fichier": "P4_coffre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 24937,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.763
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 30,
+      "part_transparente": 0.3208,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.247
+     },
+     "duree_s": 0.109
+    },
+    {
+     "fichier": "P5_cadre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 65639,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.576
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 31,
+      "part_transparente": 0.3589,
+      "part_floue": 0.0,
+      "grille_pas": 7,
+      "grille_nettete": 0.356
+     },
+     "duree_s": 0.156
+    }
+   ]
+  },
+  {
+   "nom": "identité · gpt-image-2 low",
+   "chemin": "resultats/jet1/gpt-image-2_low",
+   "images": [
+    {
+     "fichier": "A_base.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 34772,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.914
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 28,
+      "part_transparente": 0.6201,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.356
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "B_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 28859,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.847
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 28,
+      "part_transparente": 0.6201,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.321
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "C_marche.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 27971,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.868
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 31,
+      "part_transparente": 0.6206,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.426
+     },
+     "duree_s": 0.172
+    },
+    {
+     "fichier": "D_autre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 28705,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.912
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 21,
+      "part_transparente": 0.5916,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.245
+     },
+     "duree_s": 0.156
+    }
+   ]
+  },
+  {
+   "nom": "identité · gpt-image-2 high",
+   "chemin": "resultats/jet1/gpt-image-2_high",
+   "images": [
+    {
+     "fichier": "A_base.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 32912,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.922
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 29,
+      "part_transparente": 0.6501,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.477
+     },
+     "duree_s": 0.171
+    },
+    {
+     "fichier": "B_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 26488,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.801
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 31,
+      "part_transparente": 0.6157,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.335
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "C_marche.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 29719,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 7,
+      "grille_nettete": 0.804
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 26,
+      "part_transparente": 0.6777,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.435
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "D_autre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 24920,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 8,
+      "grille_nettete": 0.941
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 20,
+      "part_transparente": 0.5864,
+      "part_floue": 0.0,
+      "grille_pas": 3,
+      "grille_nettete": 0.421
+     },
+     "duree_s": 0.157
+    }
+   ]
+  },
+  {
+   "nom": "identité · seedream 4.5",
+   "chemin": "resultats/jet1/seedream-4.5",
+   "images": [
+    {
+     "fichier": "A_base.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 61513,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 18,
+      "grille_nettete": 0.719
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 27,
+      "part_transparente": 0.686,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.303
+     },
+     "duree_s": 0.422
+    },
+    {
+     "fichier": "B_dos.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 38793,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.644
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 24,
+      "part_transparente": 0.6423,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.241
+     },
+     "duree_s": 0.438
+    },
+    {
+     "fichier": "C_marche.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 42685,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.663
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 28,
+      "part_transparente": 0.6658,
+      "part_floue": 0.0,
+      "grille_pas": 3,
+      "grille_nettete": 0.408
+     },
+     "duree_s": 0.422
+    },
+    {
+     "fichier": "D_autre.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 57038,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.714
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 25,
+      "part_transparente": 0.6611,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.34
+     },
+     "duree_s": 0.437
+    }
+   ]
+  },
+  {
+   "nom": "identité · seedream 5.0 lite",
+   "chemin": "resultats/jet1/seedream-5.0-lite",
+   "images": [
+    {
+     "fichier": "A_base.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 29451,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 18,
+      "grille_nettete": 0.626
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 18,
+      "part_transparente": 0.8035,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.629
+     },
+     "duree_s": 0.421
+    },
+    {
+     "fichier": "B_dos.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 32868,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.565
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 32,
+      "part_transparente": 0.5269,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.325
+     },
+     "duree_s": 0.375
+    },
+    {
+     "fichier": "C_marche.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 40157,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 17,
+      "grille_nettete": 0.483
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 31,
+      "part_transparente": 0.5273,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.31
+     },
+     "duree_s": 0.406
+    },
+    {
+     "fichier": "D_autre.jpg",
+     "avant": {
+      "largeur": 2048,
+      "hauteur": 2048,
+      "couleurs": 48207,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 18,
+      "grille_nettete": 0.657
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 20,
+      "part_transparente": 0.531,
+      "part_floue": 0.0,
+      "grille_pas": 3,
+      "grille_nettete": 0.508
+     },
+     "duree_s": 0.438
+    }
+   ]
+  },
+  {
+   "nom": "identité · nano banana 2",
+   "chemin": "resultats/jet1/gemini-3.1-flash",
+   "images": [
+    {
+     "fichier": "A_base.jpg",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 23795,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.858
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 29,
+      "part_transparente": 0.594,
+      "part_floue": 0.0,
+      "grille_pas": 3,
+      "grille_nettete": 0.364
+     },
+     "duree_s": 0.141
+    },
+    {
+     "fichier": "B_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 56848,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.873
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 30,
+      "part_transparente": 0.6169,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.26
+     },
+     "duree_s": 0.156
+    },
+    {
+     "fichier": "C_marche.jpg",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 30557,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.862
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 30,
+      "part_transparente": 0.625,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.255
+     },
+     "duree_s": 0.141
+    },
+    {
+     "fichier": "D_autre.jpg",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 29543,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 10,
+      "grille_nettete": 0.886
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 22,
+      "part_transparente": 0.582,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.192
+     },
+     "duree_s": 0.125
+    }
+   ]
+  },
+  {
+   "nom": "identité · qwen image 3",
+   "chemin": "resultats/jet1/qwen-image-3",
+   "images": [
+    {
+     "fichier": "A_base.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 33200,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 19,
+      "grille_nettete": 0.553
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 30,
+      "part_transparente": 0.6038,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.333
+     },
+     "duree_s": 0.235
+    },
+    {
+     "fichier": "B_dos.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 34926,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 20,
+      "grille_nettete": 0.4
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 27,
+      "part_transparente": 0.5742,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.333
+     },
+     "duree_s": 0.188
+    },
+    {
+     "fichier": "C_marche.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 35192,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 2,
+      "grille_nettete": 0.376
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 30,
+      "part_transparente": 0.5718,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.173
+     },
+     "duree_s": 0.188
+    },
+    {
+     "fichier": "D_autre.png",
+     "avant": {
+      "largeur": 1024,
+      "hauteur": 1024,
+      "couleurs": 31299,
+      "part_transparente": 0.0,
+      "part_floue": 0.0,
+      "grille_pas": 11,
+      "grille_nettete": 0.475
+     },
+     "apres": {
+      "largeur": 64,
+      "hauteur": 64,
+      "couleurs": 22,
+      "part_transparente": 0.5554,
+      "part_floue": 0.0,
+      "grille_pas": 0,
+      "grille_nettete": 0.121
+     },
+     "duree_s": 0.156
+    }
+   ]
+  }
+ ]
+}

@@ -82,6 +82,55 @@ body {
   background-color: var(--color-damier-a);
 }
 
+/* Le damier de la fiche : 16 px, contre 12 sur une tuile. La zone est quatre
+   fois plus large, et un carreau de 12 px y redeviendrait un motif que l'œil
+   suit — ce que le damier ne doit jamais être. */
+.damier-fiche {
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+/* Le curseur — ajouté en T2, seul contrôle neuf du châssis. Aucune couleur de
+   plus : rail en `--bord`, poignée en `--signal`. Hauteur alignée sur la rangée
+   de 26 px du § Spacing. */
+.curseur {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.curseur::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--color-bord);
+  border-radius: 9999px;
+}
+.curseur::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -5px;
+  height: 12px;
+  width: 12px;
+  border-radius: 9999px;
+  background: var(--color-signal);
+  transition: background 80ms;
+}
+.curseur:hover::-webkit-slider-thumb {
+  background: var(--color-signal-clair);
+}
+.curseur:disabled::-webkit-slider-thumb {
+  background: var(--color-texte-3);
+}
+.curseur::-moz-range-track {
+  height: 2px;
+  background: var(--color-bord);
+  border-radius: 9999px;
+}
+.curseur::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-signal);
+}
+
 /* La liste close de ce qui bouge — § Motion. Rien d'autre ne s'anime. */
 @keyframes arrivee {
   from {

@@ -27,6 +27,7 @@ from atelier.domaine.erreurs import (
 )
 from atelier.reglages import RACINE
 from atelier.services import Atelier
+from atelier.services.assets import AssetInconnu, RecetteRefusee
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
@@ -37,6 +38,8 @@ CODES = {
     GenerationInconnue: 404,
     FournisseurIndisponible: 503,
     AppelRefuse: 502,
+    AssetInconnu: 404,
+    RecetteRefusee: 409,
 }
 
 INTERFACE = RACINE / "interface" / "dist"

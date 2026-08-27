@@ -16,12 +16,13 @@ from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from atelier.domaine import Demande, Generation, Modele
+from atelier.domaine import Asset, Demande, Generation, Modele, Recette
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png
 from atelier.reglages import deposer_cle, etat_cle
 from atelier.services import Atelier
+from atelier.services.assets import AssetInconnu
 
 routeur = APIRouter()
 
@@ -81,6 +82,12 @@ async def flux(requete: Request, limite: int = Query(50, ge=1, le=500)) -> Respo
                     **atelier.etat(),
                     "generations": [
                         g.en_json() for g in atelier.generations.recentes(limite)
+                    ],
+                    # Les assets voyagent avec l'état complet, pour la même
+                    # raison que les générations : un onglet qui se rouvre
+                    # retrouve ses retouches sans redemander quoi que ce soit.
+                    "assets": [
+                        a.en_json() for a in atelier.assets.recents(limite * 4)
                     ],
                 },
             )
@@ -288,3 +295,171 @@ def _trouver(requete: Request, identifiant: str) -> Generation:
     if generation is None:
         raise GenerationInconnue(identifiant)
     return generation
+
+
+# ── Les assets et leur recette ───────────────────────────────────────────────
+#
+# **Aucun de ces appels ne touche le réseau ni ne coûte un centime.** C'est
+# l'invariant de T2, et c'est aussi ce qui rend la retouche instantanée : tout se
+# passe sur le disque et le processeur de la machine.
+
+
+class CorpsPasse(BaseModel):
+    moteur: str = "bord"
+    tolerance: int = Field(28, ge=0, le=255)
+    seuil_alpha: int = Field(128, ge=0, le=255)
+    durcissement: int = Field(0, ge=0, le=4)
+
+
+class CorpsRecadrage(BaseModel):
+    marge: int = Field(0, ge=0)
+    boite: list[int] | None = None
+
+
+class CorpsGrille(BaseModel):
+    cible: int = Field(64, ge=8, le=512)
+    occupation: int = Field(100, ge=1, le=100)
+    ancrage: str = "bas"
+
+
+class CorpsQuantification(BaseModel):
+    couleurs: int = Field(32, ge=2, le=256)
+    palette: list[str] = Field(default_factory=list)
+    tramage: str = "aucun"
+
+
+class CorpsBords(BaseModel):
+    aire_min: int = Field(0, ge=0)
+
+
+class CorpsRecette(BaseModel):
+    """La recette telle qu'elle arrive de l'écran.
+
+    Les bornes sont déclarées deux fois — ici en `Field`, et dans le service.
+    Ce n'est pas une redite : celles-ci rendent un 422 lisible dans `/api/docs`
+    et arrêtent une valeur absurde avant qu'elle n'entre, celles du service
+    valent pour **toute** provenance — une recette relue d'un fichier, une
+    recette nommée devenue caduque, un agent en T7 qui n'a jamais vu cet écran.
+    """
+
+    passes: list[CorpsPasse] = Field(default_factory=list)
+    recadrage: CorpsRecadrage | None = None
+    grille: CorpsGrille | None = None
+    quantification: CorpsQuantification | None = None
+    bords: CorpsBords | None = None
+    nom: str | None = None
+
+    def en_recette(self) -> Recette:
+        return Recette.depuis_json(self.model_dump())
+
+
+@routeur.get("/assets")
+async def liste_assets(
+    requete: Request, limite: int = Query(200, ge=1, le=1000)
+) -> dict[str, Any]:
+    assets = _atelier(requete).assets.recents(limite)
+    return {"assets": [a.en_json() for a in assets]}
+
+
+@routeur.get("/assets/{identifiant}")
+async def lire_asset(requete: Request, identifiant: str) -> dict[str, Any]:
+    return _asset(requete, identifiant).en_json()
+
+
+@routeur.put("/assets/{identifiant}/recipe")
+async def poser_recette(
+    requete: Request, identifiant: str, corps: CorpsRecette
+) -> dict[str, Any]:
+    """Le geste de la tranche. Le rendu est recalculé avant de répondre.
+
+    Répondre après le calcul et non avant : l'écran affiche l'image dès qu'il a
+    la réponse, sans un second aller-retour pour savoir si c'est prêt. Le calcul
+    se compte en dizaines de millisecondes — le détourage déjà fait est gardé,
+    seule la queue de la recette est refaite.
+    """
+    asset = _atelier(requete).assets.poser_recette(identifiant, corps.en_recette())
+    return asset.en_json()
+
+
+@routeur.post("/assets/{identifiant}/reset")
+async def revenir_au_brut(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Revenir à l'image brute, d'un seul geste (US-64)."""
+    return _atelier(requete).assets.revenir_au_brut(identifiant).en_json()
+
+
+@routeur.post("/assets/{identifiant}/apply/{nom}")
+async def appliquer_recette_nommee(
+    requete: Request, identifiant: str, nom: str
+) -> dict[str, Any]:
+    """La même recette, sur un autre asset, au pixel près (US-66)."""
+    return _atelier(requete).assets.appliquer_nommee(identifiant, nom).en_json()
+
+
+@routeur.get("/assets/{identifiant}/image")
+async def image_asset(
+    requete: Request, identifiant: str, brut: bool = Query(False)
+) -> Response:
+    """Le rendu, ou le brut si on le demande — c'est la bascule de la fiche.
+
+    Un rendu dont le fichier a disparu du disque **se recalcule ici**, sans que
+    l'appelant ait à le savoir : « supprimer le fichier de rendu ne perd rien »
+    (`docs/PLAN.md`, T2).
+    """
+    atelier = _atelier(requete)
+    octets, type_media = atelier.assets.octets(_asset(requete, identifiant), brut=brut)
+    return Response(
+        content=octets,
+        media_type=type_media,
+        # Le rendu change sous la même adresse à chaque cran de curseur : le
+        # mettre en cache ferait regarder l'image d'avant.
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@routeur.get("/assets/{identifiant}/download")
+async def telecharger_asset(
+    requete: Request, identifiant: str, brut: bool = Query(False)
+) -> Response:
+    """« Une image se télécharge seule, en PNG » — et c'est le rendu qui part."""
+    atelier = _atelier(requete)
+    asset = _asset(requete, identifiant)
+    octets, _ = atelier.assets.octets(asset, brut=brut)
+    png = rendre_en_png(octets)
+    suffixe = "-brut" if brut else ""
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{identifiant}{suffixe}.png"'
+        },
+    )
+
+
+# ── Les recettes nommées ─────────────────────────────────────────────────────
+
+
+@routeur.get("/recipes")
+async def liste_recettes(requete: Request) -> dict[str, Any]:
+    recettes = _atelier(requete).assets.recettes()
+    return {"recettes": {nom: r.en_json() for nom, r in recettes.items()}}
+
+
+@routeur.put("/recipes/{nom}")
+async def nommer_recette(
+    requete: Request, nom: str, corps: CorpsRecette
+) -> dict[str, Any]:
+    recettes = _atelier(requete).assets.nommer(nom, corps.en_recette())
+    return {"recettes": {n: r.en_json() for n, r in recettes.items()}}
+
+
+@routeur.delete("/recipes/{nom}")
+async def oublier_recette(requete: Request, nom: str) -> dict[str, Any]:
+    recettes = _atelier(requete).assets.oublier_recette(nom)
+    return {"recettes": {n: r.en_json() for n, r in recettes.items()}}
+
+
+def _asset(requete: Request, identifiant: str) -> Asset:
+    asset = _atelier(requete).assets.lire(identifiant)
+    if asset is None:
+        raise AssetInconnu(identifiant)
+    return asset

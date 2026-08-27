@@ -50,7 +50,7 @@ c'est un critère d'acceptation de chacune d'elles.
 | Les fichiers font foi, la base est un index reconstructible | T3 |
 | Une seule grille d'assets dans tout le produit | T3 |
 | Tout ce qui ne demande pas le fournisseur fonctionne réseau coupé | T3, reconduit en T4, T5, T6 |
-| Aucun modèle local, aucune carte graphique mobilisée — ni ComfyUI, ni LM Studio, ni GPU | T1, et chaque tranche le conserve |
+| Aucune carte graphique mobilisée, aucun modèle **génératif** local — ni ComfyUI, ni LM Studio, ni GPU | T1, et chaque tranche le conserve. **Précisé en T2**, pas contourné : un modèle de *segmentation* sur processeur est admis comme **second** moteur de détourage, facultatif, et grisé avec sa raison quand il n'est pas installé. Le geste courant n'en demande aucun — le détourage par défaut ne charge rien et marche hors ligne |
 | Le MCP n'a aucune logique propre : il appelle les services de l'écran | T7 — et c'est ce qui interdit d'y ajouter un geste que l'écran n'a pas |
 
 ### Couverture des 97 user stories
@@ -181,20 +181,67 @@ n'existe. Elle s'allume en T4, quand la palette se déduit des artworks officiel
 
 ### Critères d'acceptation
 
-- [ ] Une image rendue sur une grille cinq fois trop grosse revient sur la grille cible demandée.
-- [ ] Un petit objet et un personnage traités vers la même cible sortent avec le même bloc de pixel.
-- [ ] Chaque réglage répond sans attente perceptible, sans appel réseau et sans solliciter la carte graphique.
-- [ ] L'image brute est toujours conservée, et revenir à elle est un seul geste.
-- [ ] Supprimer le fichier de rendu ne perd rien : il se recalcule depuis la recette.
-- [ ] Une recette nommée, réappliquée ailleurs, donne exactement le même résultat.
-- [ ] La quantification est grisée avec sa raison tant qu'aucune palette n'existe.
-- [ ] Un détourage qui a mangé le sujet se voit immédiatement et se reprend avec d'autres réglages, sans repayer.
-- [ ] Plusieurs passes de détourage s'enchaînent, seuil et durcissement réglables à chacune.
-- [ ] La comparaison est faite et tranchée : sortie brute du modèle contre sortie post-traitée (risque « qualité pixel art directe », `ARCHITECTURE.md` §11).
+- [x] Une image rendue sur une grille cinq fois trop grosse revient sur la grille cible demandée.
+- [x] Un petit objet et un personnage traités vers la même cible sortent avec le même bloc de pixel.
+- [x] Chaque réglage répond sans attente perceptible, sans appel réseau et sans solliciter la carte graphique.
+- [x] L'image brute est toujours conservée, et revenir à elle est un seul geste.
+- [x] Supprimer le fichier de rendu ne perd rien : il se recalcule depuis la recette.
+- [x] Une recette nommée, réappliquée ailleurs, donne exactement le même résultat.
+- [x] La quantification est grisée avec sa raison tant qu'aucune palette n'existe.
+- [x] Un détourage qui a mangé le sujet se voit immédiatement et se reprend avec d'autres réglages, sans repayer.
+- [x] Plusieurs passes de détourage s'enchaînent, seuil et durcissement réglables à chacune.
+- [x] La comparaison est faite et tranchée : sortie brute du modèle contre sortie post-traitée (risque « qualité pixel art directe », `ARCHITECTURE.md` §11).
 
 ### Bloquée par
 
 - **T1** — il faut une image et son enregistrement pour avoir quelque chose à retoucher et où poser une recette.
+
+### Tenue le 27 août 2026
+
+Les dix critères sont vérifiés, **et le dixième a coûté zéro appel** : la
+comparaison brut/traité s'est faite sur les 44 images des bancs de modèles, déjà
+sur le disque depuis le 26 août. Vingt-deux tests tiennent les neuf autres, et
+aucun n'appelle le fournisseur — plusieurs le **prouvent**, en comptant les
+appels du double avant et après une retouche.
+
+**Le verdict du dixième critère, et il est net.** Sur 44 images de six modèles :
+
+| | sortie brute | sortie post-traitée |
+|---|---|---|
+| Transparence | **0 sur 44** — aucun fournisseur n'en rend | franche, alpha durci |
+| Couleurs (médiane) | 33 986 | **27** |
+| Grille rendue | 7 à 20 px selon le sujet, **facteur 2 dans un même lot** | 1 px, par construction |
+| Sujet perdu | — | **0 sur 44** |
+| Coût | un appel payant | 0,17 s de processeur |
+
+**Le risque « qualité pixel art directe » est donc levé, et à l'envers de ce
+qu'on craignait** : la question n'était pas de savoir si le post-traitement
+apporte assez, mais s'il est indispensable. Il l'est. Aucune sortie brute n'est
+utilisable comme asset de jeu — pas de transparence, trente mille couleurs, une
+grille qui change de sujet en sujet. C'est la confirmation directe de
+`ARCHITECTURE.md` §4 bis : *« la couche de post-traitement n'est pas un confort,
+c'est ce qui rend le produit possible »*.
+
+Quatre constats sont sortis de cette tranche et valent pour les suivantes :
+
+- **Le détourage par défaut n'a besoin d'aucun modèle.** Un remplissage depuis
+  le bord — un pixel n'est du fond que s'il est *relié au bord* — rend une
+  silhouette propre sur les 44 images, squelette blanc sur fond gris clair et
+  fioles translucides compris. Un seuil global les aurait percés. Le modèle de
+  segmentation reste en second moteur, pour les images qui ne viennent pas d'ici.
+- **Une région fermée reste opaque, et c'est voulu.** L'intérieur d'un cadre
+  d'interface n'est relié à aucun bord : il survit au détourage. C'est la même
+  règle qui sauve l'os d'un squelette. Le rendre transparent est un geste de
+  l'auteur — une passe de plus, ou le second moteur —, jamais une décision de
+  l'outil.
+- **Ce qui coûte, c'est le détourage ; le reste est gratuit.** 130 ms contre
+  28 ms sur une image de 1024 px. Garder le détourage entre deux réglages est ce
+  qui rend « chaque réglage répond sans attente perceptible » vrai — et c'est un
+  fait de mesure, pas une optimisation prudente.
+- **Une mesure automatique de la grille rendue ne remplace pas l'œil.** Elle
+  situe l'ordre de grandeur et prend une harmonique sur les sujets les plus
+  grossiers. Le facteur cinq relevé à l'œil le 26 août reste le chiffre de
+  référence ; celui du banc automatique est un plancher.
 
 ---
 
