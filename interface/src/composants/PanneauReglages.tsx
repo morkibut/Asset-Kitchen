@@ -9,7 +9,7 @@
 // réglage demain l'affiche demain, sans une ligne de code.
 
 import { useMemo, useState } from "react"
-import type { Modele } from "../api"
+import { NOM_FAMILLE, type CompteReferences, type Modele, type Univers } from "../api"
 import { EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
 
 export function PanneauReglages({
@@ -24,6 +24,10 @@ export function PanneauReglages({
   onOptions,
   references,
   projet,
+  univers,
+  echelle,
+  onEchelle,
+  compte,
 }: {
   modeles: Modele[]
   choisi: Modele | null
@@ -41,8 +45,21 @@ export function PanneauReglages({
   references: number
   /** Le projet ouvert : c'est là que ce qui sort entrera (US-2). */
   projet: string | null
+  /** L'univers du projet : son barème alimente le sujet, sa palette et sa
+   *  taille de pixel s'affichent en lecture seule. « L'Atelier ne montre que ce
+   *  qu'on touche à chaque génération — plus un bloc en lecture seule qui répond
+   *  d'avance à *qu'est-ce qui part avec ?* » (`docs/DESIGN.md`). */
+  univers: Univers
+  /** Ce que l'auteur fabrique, choisi dans le barème du projet. */
+  echelle: string
+  onEchelle: (nom: string) => void
+  /** Ce qui partira vraiment, artworks compris et dédoublonné — **calculé par
+   *  le serveur** (US-52). L'écran ne connaît que sa moitié : il tient les
+   *  réinjections posées à la main, pas les artworks que l'application ajoute. */
+  compte: CompteReferences | null
 }) {
   const [filtre, setFiltre] = useState("")
+  const echelleLue = univers.bareme.find((e) => e.nom === echelle) ?? null
 
   const listes = useMemo(() => {
     const terme = filtre.trim().toLowerCase()
@@ -133,6 +150,46 @@ export function PanneauReglages({
           />
         </section>
 
+        {/* ── Le sujet ──────────────────────────────────────────────────────
+            **Un seul contrôle, trois conséquences.** Dire « c'est un objet tenu
+            en main », c'est du même coup dire quels artworks partent en
+            référence, quel modèle est le défaut, et quelle part de la case le
+            sujet occupera. Le PRD écarte explicitement « la sélection manuelle
+            des artworks, génération par génération » : promouvoir reste un geste
+            unique, et ceci est le seul geste qui reste au moment de générer. */}
+        {univers.bareme.length > 0 && (
+          <section className="flex flex-col gap-1.5">
+            <div className="flex items-baseline justify-between">
+              <Libelle>Sujet</Libelle>
+              {echelleLue && (
+                <span className="mesure text-[9.5px] text-texte-3">
+                  {echelleLue.occupation} % de la case
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {univers.bareme.map((e) => (
+                <button
+                  key={e.nom}
+                  type="button"
+                  onClick={() => onEchelle(e.nom === echelle ? "" : e.nom)}
+                  className={[
+                    "mesure h-[26px] rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
+                    e.nom === echelle
+                      ? "border-signal bg-signal/13 text-signal"
+                      : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                  ].join(" ")}
+                >
+                  {e.nom}
+                </button>
+              ))}
+            </div>
+            {!echelle && (
+              <Raison texte="aucun sujet — seules les planches « tous » partiront" />
+            )}
+          </section>
+        )}
+
         {/* ── Ce que le modèle déclare en propre ────────────────────────── */}
         {choisi &&
           Object.values(choisi.options)
@@ -158,22 +215,39 @@ export function PanneauReglages({
             <dd
               className={[
                 "text-right",
-                references > (choisi?.references_max ?? 0)
+                (compte?.total ?? references) > (choisi?.references_max ?? 0)
                   ? "text-echec"
                   : "text-texte-2",
               ].join(" ")}
             >
-              {references} / {choisi?.references_max ?? 0}
+              {compte?.total ?? references} / {choisi?.references_max ?? 0}
             </dd>
+            {/* D'où elles viennent. La ligne ne paraît que s'il y a deux
+                provenances à distinguer : « n'accepte que 2 images de
+                référence, il en faudrait 5 » ne dit pas d'où viennent les cinq,
+                et c'est cette ligne-ci qui le dit. */}
+            {compte && compte.artworks > 0 && (
+              <>
+                <dt className="text-texte-3">dont artworks</dt>
+                <dd className="text-right text-signal">
+                  {compte.artworks}
+                  {compte.famille ? ` · ${NOM_FAMILLE[compte.famille]} + tous` : " · tous"}
+                </dd>
+              </>
+            )}
             <dt className="text-texte-3">projet</dt>
             <dd className="text-right text-texte-2">{projet ?? "aucun"}</dd>
-            <dt className="text-texte-3">univers</dt>
-            <dd className="text-right text-texte-3">aucun — T4</dd>
+            <dt className="text-texte-3">bible</dt>
+            <dd className="text-right text-texte-2">
+              {univers.bible.filter((c) => c.actif && c.texte.trim()).length || "—"}
+              {univers.bible.some((c) => c.actif && c.texte.trim()) ? " champs" : ""}
+            </dd>
+            <dt className="text-texte-3">palette</dt>
+            <dd className="text-right text-texte-2">
+              {univers.palette.length ? `${univers.palette.length} couleurs` : "—"}
+            </dd>
             <dt className="text-texte-3">grille imposée</dt>
-            {/* Elle se choisit **par asset**, dans la fiche, tant que le projet
-                n'existe pas pour la porter. En T4 elle deviendra une propriété
-                de l'univers, imposée à tout ce qui rentre (US-60). */}
-            <dd className="text-right text-texte-3">à la fiche</dd>
+            <dd className="text-right text-texte-2">{univers.cible_px} px</dd>
           </dl>
         </section>
       </div>

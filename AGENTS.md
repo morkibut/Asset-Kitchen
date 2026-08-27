@@ -15,24 +15,29 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a
 commencé**. `docs/PLAN.md` fait foi sur ce qui reste.
 
-**T1, T2 et T3 sont finies.** T1 : le squelette, la clé, le catalogue relu au démarrage, un
-appel qui rend une image téléchargeable ; l'écran Atelier ; le flux d'événements qui
-remplace le sondage, la jauge déterminée, la reprise vue du navigateur et le repli hors
-ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs passes, la
-remise sur grille, la quantification grisée, les recettes nommées, et la fiche. T3 : la
-bibliothèque — projets et collections, une seule grille filtrable et cherchable, la
+**T1, T2, T3 et T4 sont finies.** T1 : le squelette, la clé, le catalogue relu au
+démarrage, un appel qui rend une image téléchargeable ; l'écran Atelier ; le flux
+d'événements qui remplace le sondage, la jauge déterminée, la reprise vue du navigateur et
+le repli hors ligne. T2 : l'asset, la recette, le rendu-cache, le détourage en plusieurs
+passes, la remise sur grille, la quantification grisée, les recettes nommées, et la fiche.
+T3 : la bibliothèque — projets et collections, une seule grille filtrable et cherchable, la
 sélection multiple, le favori, la suppression avec son annulation courte, la filiation, le
 journal des appels ratés, la réinjection dans ses quatre rôles, et l'index reconstructible.
-**Les quarante-deux critères d'acceptation de T1 à T3 sont cochés dans `docs/PLAN.md`, et
-70 tests de serveur plus 9 d'écran les tiennent. La prochaine tranche est T4, le tableau et
-l'univers.**
+T4 : le tableau d'inspiration et l'univers — coller une image, une adresse ou un texte,
+promouvoir en artwork officiel par famille, la palette extraite par calcul, la bible en
+champs nommés, le barème d'échelles, la taille de pixel imposée, la quantification allumée,
+et la palette rétroactive. **Les soixante et un critères d'acceptation de T1 à T4 sont
+cochés dans `docs/PLAN.md`, et 98 tests de serveur plus 14 d'écran les tiennent. La
+prochaine tranche est T5, le slicer.**
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 tous les défauts.** T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
-finissent par diverger. **Aucun test de serveur ne pouvait les voir**, et le tableau de
-`docs/PLAN.md` § T3 dit pour chacun ce qui l'avait rendu invisible. C'est désormais une
-règle du dépôt : **une tranche n'est finie que lorsqu'on s'en est servi.**
+finissent par diverger. T4 : deux, dont un compte de références qui ne se remettait pas à
+jour quand on promouvait un artwork. **Aucun test de serveur ne pouvait les voir**, et les
+tableaux de `docs/PLAN.md` § T3 et § T4 disent pour chacun ce qui l'avait rendu invisible.
+C'est désormais une règle du dépôt : **une tranche n'est finie que lorsqu'on s'en est
+servi.**
 
 **L'écran tient ses quatre colonnes.** `docs/DESIGN.md` § Layout donne
 `240px · 300px · 1fr · 380px` — arbre · réglages · prompt+grille · fiche. Les trois
@@ -46,10 +51,19 @@ attente : elle la remplace. Un échec occupe sa place tant qu'on le regarde, mai
 s'installe pas : la bibliothèque relue ne le contient pas, et le journal du projet garde
 l'appel avec son coût réel.
 
-**Sans palette, un asset traité n'a pas 27 couleurs mais 1 000 à 2 000.** Le chiffre de 27
-du banc du 26 août suppose la quantification, qui reste grisée jusqu'à T4. Ce qui sort
-aujourd'hui a l'alpha franc et la grille juste ; ce n'est pas encore du pixel art au sens de
-la palette, et c'est T4 qui l'achève.
+**La palette se lit sur le sujet, jamais sur le fond.** La coupe médiane appliquée aux
+artworks tels quels rend vingt gris sur vingt-quatre : le fond plat occupe 75 % des pixels
+et son anti-crénelage l'éclate en autant de seaux. `atelier/image/palette.py` détoure donc
+d'abord, avec le moteur du geste courant, et la palette passe à quinze couleurs franchement
+distinctes. *Ce qui est majoritaire n'est pas ce qui compte* — la même phrase que pour le
+détourage au seuil global.
+
+**L'univers est porté par le projet, et il contraint.** Bible en cinq champs nommés,
+chacun activable ; barème d'échelles, où une nature de sujet porte **sa famille et son
+occupation à la fois** — c'est ce qui garde un seul contrôle au moment de générer ; taille
+de pixel imposée à tout ce qui rentre ; modèle par défaut **par famille** ; et la palette,
+qui est un cache nommé par l'empreinte des artworks qui l'ont produite. Un univers vide ne
+contraint rien : c'est un état, pas une configuration manquante.
 
 **Deux risques ont été levés, aucun n'a coûté un centime.** « La couverture image
 d'OpenRouter » (`essais/essai_couverture.py`) : 48 modèles image, 11 fournisseurs, 31
@@ -68,18 +82,29 @@ gris clair et fioles translucides compris. `rembg` reste un **second** moteur, f
 (`uv pip install -e ".[detourage]"`), grisé avec sa raison quand il n'est pas là. Le geste
 courant ne charge rien, ne télécharge rien, et marche hors ligne.
 
-**Ce chemin-là n'a jamais été exécuté, et c'est écrit ici pour qu'on ne l'oublie pas.**
-`rembg` n'est pas installé sur cette machine : le grisé est vérifié, l'appel au moteur ne
-l'est pas, et le test qui le concerne se saute en son absence. Décidé le 27 août 2026 : il
-se vérifiera en **T4**, sur les images du tableau d'inspiration — c'est-à-dire sur celles
-qui n'ont pas de fond plat et qui le justifient. D'ici là, aucun geste du produit ne
-l'emprunte.
+**Ce chemin-là n'a toujours jamais été exécuté, et c'est écrit ici pour qu'on ne l'oublie
+pas.** `rembg` n'est pas installé sur cette machine : le grisé est vérifié, l'appel au
+moteur ne l'est pas, et le test qui le concerne se saute en son absence. Il devait se
+vérifier en T4 « sur les images du tableau d'inspiration » — **ça ne s'est pas fait**, et
+aucun des dix-neuf critères de T4 ne le demandait. Deux choses le retiennent, et elles se
+disent : installer 180 Mo d'ONNX sur cette machine, et le fait que `tests/test_t2.py`
+vérifie qu'aucune bibliothèque d'inférence n'entre dans `sys.modules` pendant une retouche
+— `onnxruntime` y est nommé. **L'extraction de palette, elle, n'en a pas eu besoin** :
+elle emprunte le remplissage depuis le bord, comme le geste courant. Reporté à T5, ou au
+jour où une image trouvée résistera vraiment au détourage par défaut.
 
 **L'interface ne redemande plus rien, et elle se branche une seule fois.** Un abonnement
-par onglet, pour toute sa vie : ni le filtre, ni le projet ouvert, ni les proportions ne le
-font se rebrancher. Les deux seuls appels qu'elle refait d'elle-même sont le catalogue —
-parce que le grisé de chaque modèle dépend de la demande en cours — et la grille, quand un
-filtre change, parce que c'est le serveur qui filtre.
+par onglet, pour toute sa vie : ni le filtre, ni le projet ouvert, ni les proportions, ni
+l'écran Univers ne le font se rebrancher. Les seuls appels qu'elle refait d'elle-même sont
+le catalogue — parce que le grisé de chaque modèle dépend de la demande en cours —, la
+grille quand un filtre change, et le tableau quand le projet ouvert change, parce que c'est
+le serveur qui filtre et que le tableau appartient à son projet.
+
+**Et « la demande en cours » a grandi en T4** : elle porte désormais les artworks que
+l'application ajoute seule. Promouvoir une carte change donc ce qui partira sans que
+l'écran ait touché un réglage — d'où le catalogue redemandé sur l'événement `univers`.
+C'est le défaut trouvé en ouvrant l'atelier le 27 août : **une règle juste dont l'hypothèse
+a changé sous elle**.
 
 ## Lancer
 
@@ -166,7 +191,13 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/domaine/recette.py` | les cinq places d'une recette, **dans un ordre fixe** — détourage, recadrage, grille, quantification, bords. Et l'empreinte, qui nomme un rendu et rend deux recettes égales interchangeables |
 | `atelier/image/traitement.py` | le pipeline : CPU, pur, aucune entrée-sortie. `detourer` et `finir` sont séparés parce que le premier coûte 130 ms et le second 28 — c'est ce qui rend la retouche instantanée |
 | `atelier/services/assets.py` | poser une recette, revenir au brut, nommer une recette — et **le seul endroit du dépôt qui écrive un asset** (`sauver`). **Aucun `fournisseur` dans ce fichier**, et ça se lit dans les imports : T2 n'appelle jamais l'extérieur |
-| `atelier/services/bibliotheque.py` | ranger, retrouver, juger, jeter, reconstruire. Pas de `fournisseur` non plus : tout T3 marche réseau coupé. C'est ici que vivent l'annulation courte, le refus de supprimer le dernier projet, et l'adoption de ce qui existait avant les projets |
+| `atelier/services/bibliotheque.py` | ranger, retrouver, juger, jeter, reconstruire. Pas de `fournisseur` non plus : tout T3 marche réseau coupé. C'est ici que vivent l'annulation courte, le refus de supprimer le dernier projet, l'adoption de ce qui existait avant les projets — et **le seul endroit qui écrive un projet** (`sauver_projet`), par où l'univers passe |
+| `atelier/services/univers.py` | le tableau et l'univers — coller, promouvoir, extraire la palette, réaligner. **Le seul service qui sorte sans être une génération**, et par une seule méthode : `recuperer`, l'adresse collée. Tout le reste marche réseau coupé |
+| `atelier/domaine/carte.py` | la deuxième famille d'images du produit. Elle ne s'exporte jamais, ne compte pas dans la bibliothèque, n'a ni recette ni rendu. Elle appartient à son projet, et part avec lui |
+| `atelier/domaine/projet.py` (§ Univers) | la bible en cinq champs nommés, le barème d'échelles — une nature de sujet porte **sa famille et son occupation à la fois** —, la cible de pixel, les modèles par famille, et `recette_de()`, **le seul endroit qui dise ce qu'un projet impose** |
+| `atelier/image/palette.py` | d'où vient la palette d'un univers. CPU, pure, aucune entrée-sortie. Détoure d'abord — sans quoi le fond plat écrit la palette à lui seul |
+| `atelier/fournisseur/toile.py` | aller chercher une image à une adresse collée. Le second sortant du dépôt, et il traduit toute panne de transport en une phrase du produit |
+| `atelier/api/univers.py` | les routes de T4 — le tableau et l'univers. Un troisième routeur parce qu'il répond à une troisième question : ce qui contraint une image **avant** qu'elle existe |
 | `atelier/domaine/projet.py` | deux niveaux de rangement, et pas un de plus. `repere()` fait du nom un dossier lisible — `projets/bac-a-sable/` — pour que `donnees/` s'ouvre aussi à la main |
 | `atelier/api/bibliotheque.py` | les routes de T3, montées sous le même préfixe que les autres. Un module à part parce qu'elles répondent à une autre question : `routes.py` dit comment on fabrique une image, celles-ci où elle se range |
 | `interface/` | React + Vite + Tailwind. `src/index.css` porte **tous** les tokens de `docs/DESIGN.md` — aucune couleur, aucun rayon, aucune durée n'est écrit ailleurs |
@@ -176,12 +207,15 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/App.test.tsx` | les essais d'écran — le seul endroit du dépôt où l'interface est **montée et pilotée**. `fetch` et `EventSource` y sont doublés, comme `tests/conftest.py` double le fournisseur. Ils existent parce qu'un défaut a traversé T1 et T2 sans que rien ne le voie : ce que le serveur tient, l'écran ne le tient pas. Cinq des seize critères de T3 n'existent que là |
 | `interface/src/composants/Arbre.tsx` | la colonne de 240 px : projets, collections, total, et le journal des ratés sous l'arbre |
 | `interface/src/composants/BarreOutils.tsx` | les 38 px au-dessus de la grille — chercher, filtrer, agir sur une sélection, et la fente de l'annulation |
+| `interface/src/composants/Univers.tsx` | l'écran Univers — `380px · 1fr`, l'univers à gauche, le tableau à droite. Il couvre l'atelier, donc **il porte sa propre fente de refus** : une raison envoyée derrière lui serait invisible au moment où elle compte |
+| `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note |
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
+| `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t2.py` | les critères de T2 — grille cible, même bloc de pixel, brut conservé, rendu recalculable, recette nommée, quantification grisée, passes de détourage. Plusieurs **comptent les appels du double** avant et après une retouche : c'est ainsi que « le post-traitement n'appelle jamais le fournisseur » se prouve |
 | `essais/essai_couverture.py` | la couverture image du fournisseur, et sa dérive depuis le relevé précédent. Gratuit |
 | `essais/essai_pixel.py` | le banc du post-traitement — brut contre traité, sur les 44 images des bancs déjà sur le disque. Gratuit. Sortie : `essais/mesures_pixel.json` et `essais/planches/pixel_64.png` |
 | `essais/essai_premiere_image.py` | la première image, de bout en bout par l'API. **Payant**, ne part qu'à la main |
-| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json`, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git |
+| `donnees/` | l'index SQLite (**jetable**), `atelier.json` le projet courant, la photo du catalogue, les recettes nommées, `collections.json`, `projets/<repère>/projet.json` — l'univers —, `projets/<repère>/tableau/<carte>.json` et ses octets à côté, et par génération : `generation.json`, `<rang>-brut.<ext>` l'image telle qu'elle est arrivée, `<rang>-asset.json` la recette, le rangement et les mesures, `<rang>-rendu.png` **un cache, effaçable sans rien perdre**. Hors Git. **Les cartes n'entrent jamais dans l'index** — elles n'ont aucune question à lui poser, et effacer `atelier.sqlite3` ne peut donc pas les perdre |
 | `docs/ARCHITECTURE.md` | décisions techniques, squelette, fournisseur et modèles, modèle d'objets, contrat de génération, MCP, V1→V5, risques |
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
@@ -371,6 +405,51 @@ deux vivent côte à côte.
   comprise. Un réseau franchement coupé, lui, refuse tout de suite. Le local se fait déjà
   en premier dans `Atelier.ouvrir()` ; rendre la main avant le catalogue demanderait de
   l'annoncer sur le flux, ce que l'écran sait déjà écouter.
+
+- **Une table de palette Pillow se complète en répétant, jamais avec des zéros.** Elle
+  compte toujours 256 entrées, et `quantize(palette=…)` ramène chaque pixel à la plus
+  proche des **256** — pas à la plus proche de celles qu'on a écrites. Compléter avec des
+  zéros posait donc 254 noirs purs : mesuré sur six gris et une palette de deux couleurs
+  claires, les deux plus sombres ressortaient en `#000000`, une couleur que la palette du
+  projet ne déclare pas. Même famille que le liseré du seuil alpha — *une valeur de
+  remplissage qui n'est pas neutre finit par se voir*. Le défaut a dormi de T2 à T4 parce
+  que le seul chemin qui l'empruntait était grisé.
+- **Une palette lue sur des images entières ne dit rien du sujet.** La coupe médiane
+  appliquée aux artworks tels quels rend vingt gris sur vingt-quatre : le fond plat occupe
+  75 % des pixels et son anti-crénelage l'éclate en autant de seaux. On détoure d'abord.
+  Corollaire à connaître : **une région fermée reste opaque**, donc l'intérieur d'un cadre
+  d'interface entre dans la palette — c'est la même règle qui sauve le squelette.
+- **Le dédoublonnage des références se fait sur le couple, pas sur l'identifiant.** Depuis
+  T4 deux familles d'images partent par le même tuyau — un asset de la bibliothèque et une
+  carte du tableau —, et elles ne se nomment pas dans le même espace.
+- **Un artwork retiré ne doit pas rendre les générations passées non relançables.** Les
+  artworks entrent dans `generation.references`, et `_octets_references` refusait l'appel
+  dès qu'un identifiant manquait. Un asset disparu arrête toujours l'appel — c'est l'image
+  que l'auteur a choisie de montrer ; une **carte** disparue est sautée, parce qu'un artwork
+  inspire et n'a pas été choisi appel par appel. Sans cette différence, retirer une planche
+  cassait US-19 sur tout l'univers.
+- **Un balayage de masse n'écrit pas un événement par objet.** La diffusion garde 64
+  messages par abonné : cent assets remis à jour en perdraient les plus anciens sur un
+  onglet lent, pour un écran qui redemande de toute façon la grille entière. `sauver` prend
+  donc `annoncer=False`, et l'appelant annonce **une fois**, à la fin.
+- **Un asset ramené au brut reste au brut.** `revenir_au_brut` désépingle, donc l'épingle
+  ne le protège pas d'un balayage de palette — et lui reposer une grille défferait « revenir
+  à l'image d'origine est un seul geste » par un geste qui ne le concernait pas. Le vide
+  **est** la décision : le balayage saute une recette vide et la compte comme conservée.
+- **La réapplication de palette ne passe jamais par `poser_recette`**, qui épingle. Le
+  premier passage épinglerait tout le projet et le second ne remettrait plus rien à jour :
+  la fonction s'annulerait elle-même à son deuxième usage.
+- **Un montage FastAPI ajouté après celui de l'interface n'est jamais atteint.**
+  `creer_application` monte `interface/dist` sur « / », qui attrape tout. Constaté en montant
+  un dossier de planches pour une séance : la planche revenait en JSON de vingt-deux octets,
+  et le produit refusait à juste titre « ce n'est pas une image ».
+- **Le message de Pillow ne franchit pas le port non plus.** `mesurer()` lève « cannot
+  identify image file <_io.BytesIO object at 0x…> » — de l'anglais qui nomme un tampon
+  mémoire. Ce qui compte, et que le PRD demande, c'est **quel fichier** pose problème parmi
+  les douze qu'on vient de déposer. Même règle que pour `httpx`.
+- **Zéro n'est pas une dimension mesurée, c'est l'absence de mesure.** Une carte d'adresse
+  qui n'avait pas abouti annonçait `0×0`. Le produit dit partout que les dimensions mesurées
+  font foi : une mesure ne s'affiche que si elle a été prise.
 
 ## Règle systématique : comment finir une étape
 

@@ -89,9 +89,18 @@ def test_l_asset_nait_a_l_arrivee_de_l_image(client, double):
 
     assert asset["rang"] == 0
     assert asset["label"] == "un sujet d'essai"
-    assert asset["traite"] is False  # recette vide : le rendu **est** le brut
+    # **Depuis T4, il naît déjà habillé de son univers** : « un asset se génère,
+    # se détoure, se ramène sur la grille et la palette du projet, et se range
+    # tout seul ». En T2 la recette naissait vide et le rendu *était* le brut ;
+    # ce n'était pas un critère, c'était l'état d'un produit qui n'avait pas
+    # encore de projet pour imposer quoi que ce soit. Le critère de T2, lui, ne
+    # bouge pas : l'asset existe à l'arrivée de l'image, pas au premier réglage.
+    assert asset["traite"] is True
+    # Et il n'est pas épinglé pour autant : une recette posée par l'univers
+    # n'est pas une recette posée à la main, donc un changement de palette la
+    # remet à jour (US-68).
     assert asset["epingle"] is False
-    assert (asset["largeur"], asset["hauteur"]) == (96, 96)
+    assert (asset["largeur"], asset["hauteur"]) == (96, 96)  # le brut ne change jamais
     assert asset["identifiant"] in [
         a["identifiant"] for a in client.get("/api/assets").json()["assets"]
     ]

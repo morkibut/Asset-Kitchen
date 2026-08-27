@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.routes import routeur
+from atelier.api.univers import routeur as routeur_univers
 from atelier.domaine.erreurs import (
     AppelRefuse,
     DemandeRefusee,
@@ -35,6 +36,8 @@ from atelier.services.bibliotheque import (
     ProjetInconnu,
     RangementRefuse,
 )
+from atelier.services.univers import CarteInconnue, CarteRefusee, UniversRefuse
+from atelier.fournisseur.toile import AdresseRefusee
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
@@ -51,6 +54,12 @@ CODES = {
     CollectionInconnue: 404,
     RangementRefuse: 409,
     AnnulationExpiree: 409,
+    CarteInconnue: 404,
+    CarteRefusee: 409,
+    UniversRefuse: 409,
+    # L'adresse d'une carte n'a pas répondu, ou n'a pas rendu une image. 502 et
+    # non 400 : le refus vient d'en face, pas de ce qu'on a demandé.
+    AdresseRefusee: 502,
 }
 
 INTERFACE = RACINE / "interface" / "dist"
@@ -75,6 +84,9 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # La bibliothèque répond à une autre question que la fabrication d'une
     # image, et ses routes vivent donc dans leur propre module.
     application.include_router(routeur_bibliotheque, prefix="/api")
+    # Le troisième, arrivé avec T4 : ce qui contraint une image avant qu'elle
+    # existe — le tableau d'inspiration et l'univers du projet.
+    application.include_router(routeur_univers, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

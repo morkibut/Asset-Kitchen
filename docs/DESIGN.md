@@ -431,6 +431,54 @@ maquette écartée.
 
 ---
 
+### L'écran Univers, et la carte qui n'est pas une tuile
+
+Ce document ne portait rien sur le tableau d'inspiration ni sur l'univers — ils arrivent en
+T4, et l'écran est dérivé des motifs transversaux plutôt qu'inventé. Ce qui suit est ce que
+la dérivation a tranché, écrit ici parce qu'une décision d'apparence qui ne vit que dans le
+code finit par contredire ce document.
+
+**`380px · 1fr`, et pas une troisième largeur.** L'univers à gauche, le tableau à droite.
+380 est la largeur de la fiche asset : c'est *la* colonne de réglages du produit, et lui
+donner une troisième valeur ferait un troisième vocabulaire de largeur pour la même sorte
+de chose. La grille reste disciplinée, comme partout.
+
+**C'est un écran, pas un panneau — et c'est le cadrage qui le dit** (`docs/ARCHITECTURE.md`
+§6.2 : « Univers · au début d'un projet, puis ponctuel »). Il couvre donc l'Atelier au lieu
+de s'y ajouter. La contrepartie est exacte : l'Atelier ne montre que ce qu'on touche **à
+chaque** génération, l'Univers tout ce qu'on pose **une fois** et qui s'applique ensuite
+tout seul.
+
+**Corollaire obligatoire : il porte sa propre fente de refus.** Une raison envoyée à la
+barre d'état de l'Atelier serait rendue *derrière* lui — donc invisible au moment précis où
+elle compte. Elle se pose dans la barre de tête de 44 px, dans la forme des autres : tiret
+de 8 px, mono 10 px, `--echec` pour un refus. Le motif ne change pas, seul son emplacement
+suit l'écran qui l'a provoqué.
+
+**La carte a le rayon 2 du châssis, la tuile garde le rayon 0.** C'est la seule différence
+de forme entre les deux grilles, et elle suffit à dire ce qu'elles sont : une tuile est un
+produit du travail, et le rayon nul la fait lire comme une planche contact ; une carte est
+de la matière rassemblée, donc du châssis. « Une seule grille d'assets dans tout le
+produit » reste vrai — celle-ci n'en est pas une, et se voit tout de suite comme telle.
+
+**Une carte porte au maximum : une image ou un texte, une provenance, un mot de pied et une
+marque.** La même règle de densité que la tuile, et le même vocabulaire de marque : le coin
+plein en `--signal` dit **artwork officiel** — ce que l'auteur pose est une forme —, le mot
+du pied dit la famille ou le groupe — ce que le système constate est un mot. Aucune couleur
+supplémentaire n'entre dans le tableau.
+
+**Les vignettes 1× / 2× / 4× sont les crans du zoom de la grille**, réemployés. Un seul
+vocabulaire de taille dans tout le produit ; ce sont deux contrôles distincts sur deux
+grilles distinctes, et ils ne se confondent pas parce qu'ils ne cohabitent jamais.
+
+**La palette se montre en carrés de 20 px, sans nom.** C'est une vérification à l'œil —
+« voir ce que la machine y a lu » (US-54) —, pas une liste à lire ; le code hexadécimal est
+au survol, seul endroit du produit où une infobulle est permise parce qu'elle ne porte
+aucune raison. Sans artwork, le bloc ne disparaît pas : il porte sa raison, comme tout
+grisé du produit.
+
+---
+
 ## Ce que le design n'affiche pas, et pourquoi
 
 L'Atelier ne montre que ce qu'on touche **à chaque** génération : le sujet, le modèle, le nombre
@@ -476,3 +524,7 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | La tuile montre le **rendu**, pas le brut, dès qu'une recette existe | La grille sert à juger, et juger sur le brut alors qu'on a détouré et remis sur grille ferait juger autre chose que ce qui partira dans le jeu. Le brut reste à un geste — la bascule de la fiche. **Coût** : deux images sous la même adresse selon l'état de l'asset ; l'empreinte de la recette voyage donc dans l'URL, sans quoi le navigateur resservirait celle d'avant. |
 | 27/08/2026 | Les cinq étapes de la recette sont des **titres cliquables**, pas des cases à cocher | Cinq cases alignées dans un panneau de 380 px se lisent comme un formulaire ; ce panneau est un établi. L'état se dit par la couleur du titre et un carré de 9 px — la même grammaire que le segment choisi. Une étape indisponible garde le motif du § Le grisé : elle porte sa raison en ligne sœur, jamais une infobulle — c'est ce que fait la quantification tant qu'aucune palette n'existe. |
 | 27/08/2026 | Le damier passe à **16 px en fiche**, contre 12 sur une tuile | Déjà écrit au § Le damier alpha, appliqué ici pour la première fois. La zone est quatre fois plus large : un carreau de 12 px y redeviendrait un motif que l'œil suit, ce que le damier ne doit jamais être. |
+| 27/08/2026 | **L'écran Univers est un écran**, `380px · 1fr`, et il couvre l'Atelier | Le cadrage le classe déjà comme tel (`ARCHITECTURE.md` §6.2, « au début d'un projet, puis ponctuel »). 380 est la largeur de la fiche : *la* colonne de réglages du produit, jamais une troisième valeur pour la même sorte de chose. **Coût, et il a fallu le payer tout de suite** : couvrir l'Atelier rend sa barre d'état invisible, donc l'écran porte sa propre fente de refus — le motif ne change pas, son emplacement suit l'écran qui a provoqué le refus. |
+| 27/08/2026 | La **carte a le rayon 2**, la tuile garde le rayon 0 | Seule différence de forme entre les deux grilles, et elle suffit : une tuile est un produit du travail et se lit comme une planche contact ; une carte est de la matière rassemblée, donc du châssis. « Une seule grille d'assets dans tout le produit » reste vrai — celle-ci n'en est pas une. Écarté : une bordure de couleur, qui aurait ajouté un ton à un système qui n'en veut pas. |
+| 27/08/2026 | Le **sujet** est le seul contrôle que T4 ajoute à l'Atelier | Une nature de sujet porte sa famille *et* son occupation : la choisir décide des artworks envoyés, du modèle par défaut et de l'échelle, d'un seul geste. Deux taxonomies — l'une pour l'échelle, l'autre pour la famille — se paieraient deux fois par génération, et le PRD écarte explicitement la sélection manuelle des artworks. Le reste de l'univers n'est **jamais** montré ici : le bloc « Ce qui part » est en lecture seule, comme ce document le demandait déjà. |
+| 27/08/2026 | Le bloc « Ce qui part » affiche un compte **calculé par le serveur** | Il l'affichait déjà pour le grisé ; T4 lui donne la même origine pour le nombre. L'écran tient les réinjections posées à la main, pas les artworks que l'application ajoute, ni le dédoublonnage entre les deux — deux comptes calculés à deux endroits se contredisent, et celui qui compte est celui qui part. **Vu en séance** : promouvoir un artwork ne rafraîchissait rien, parce que « la demande en cours » avait gagné une composante que l'écran ne pilote pas. |

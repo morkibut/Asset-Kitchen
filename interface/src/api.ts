@@ -185,6 +185,122 @@ export type Asset = {
   empreinte: string
 }
 
+// ── Le tableau d'inspiration et l'univers ───────────────────────────────────
+//
+// La deuxième famille d'images du produit. Une carte ne s'exporte jamais, ne
+// compte pas dans la bibliothèque, n'a ni recette ni rendu : elle rassemble.
+
+export type Famille = "personnages" | "objets" | "decors" | "interface" | "tous"
+
+export const FAMILLES: readonly Famille[] = [
+  "personnages",
+  "objets",
+  "decors",
+  "interface",
+  "tous",
+]
+
+/** Ce que l'auteur lit. La famille voyage sans accent — elle traverse du JSON
+ *  et des chemins — mais ce qui s'affiche est français, comme tout l'écran. */
+export const NOM_FAMILLE: Record<Famille, string> = {
+  personnages: "personnages",
+  objets: "objets",
+  decors: "décors",
+  interface: "interface",
+  tous: "tous",
+}
+
+export type Carte = {
+  identifiant: string
+  projet: string
+  genre: "image" | "texte"
+  texte: string
+  /** `attente` tant que l'image d'une adresse n'est pas arrivée, `echouee` si
+   *  elle n'arrive pas — et la carte garde alors son adresse et sa raison. */
+  statut: "attente" | "prete" | "echouee"
+  raison: string | null
+  source: string
+  cree_le: number
+  groupe: string
+  note: string
+  taille: 1 | 2 | 4
+  officiel: boolean
+  famille: Famille
+  empreinte: string
+  largeur: number
+  hauteur: number
+  type_media: string
+  octets: number
+  /** Y a-t-il quelque chose à afficher à la place de l'attente ? */
+  montrable: boolean
+  /** Une image promue et arrivée. Un texte n'en est jamais un. */
+  artwork: boolean
+}
+
+export type Champ = { nom: string; texte: string; actif: boolean }
+
+/** Ce que l'auteur lit d'un champ de bible. La clé voyage sans accent. */
+export const NOM_CHAMP: Record<string, string> = {
+  monde: "monde",
+  epoque: "époque",
+  trait: "trait",
+  eclairage: "éclairage",
+  technique: "contraintes techniques",
+}
+
+/** Une nature de sujet : la part de case qu'elle occupe, et sa famille.
+ *
+ *  **Un seul contrôle au générateur.** Dire « c'est un objet tenu en main »,
+ *  c'est du même coup dire quelle part de case il occupe et quels artworks
+ *  partent en référence. Deux taxonomies se paieraient deux fois par
+ *  génération. */
+export type Echelle = {
+  nom: string
+  famille: Famille
+  occupation: number
+  /** Un décor n'a pas de contour : l'enfermer dans une case carrée lui
+   *  ajouterait des bandes que personne n'a demandées. */
+  silhouette: boolean
+}
+
+export type Univers = {
+  bible: Champ[]
+  bareme: Echelle[]
+  cible_px: number
+  couleurs: number
+  /** Déduite par calcul des artworks officiels, jamais saisie (US-54). */
+  palette: string[]
+  palette_empreinte: string
+  modeles: Partial<Record<Famille, string>>
+  /** Ni bible qui parle, ni palette. Un état normal, pas une configuration
+   *  manquante : « un univers vide ne contraint rien » (US-57). */
+  vide: boolean
+}
+
+export const UNIVERS_VIDE: Univers = {
+  bible: [],
+  bareme: [],
+  cible_px: 64,
+  couleurs: 24,
+  palette: [],
+  palette_empreinte: "",
+  modeles: {},
+  vide: true,
+}
+
+/** Combien d'images partiront, et d'où elles viennent (US-52).
+ *
+ *  **Calculé par le serveur.** L'écran tient les réinjections que l'auteur a
+ *  posées, mais pas les artworks — c'est l'application qui les choisit — ni le
+ *  dédoublonnage entre les deux. Deux comptes calculés à deux endroits
+ *  finiraient par se contredire, et celui qui compte est celui qui part. */
+export type CompteReferences = {
+  total: number
+  manuelles: number
+  artworks: number
+  famille: Famille | null
+}
+
 // ── La bibliothèque ─────────────────────────────────────────────────────────
 
 export type Projet = {
@@ -281,8 +397,12 @@ export type EtatCatalogue = {
   repli: boolean
   raison: string | null
   /** Par quoi commencer une séance. Décidé par le serveur — le banc du 26 août
-   *  a tranché, et en T4 c'est l'univers du projet qui le portera. */
+   *  a tranché, et depuis T4 c'est l'univers du projet qui le porte, famille
+   *  par famille (US-58). Sans réglage pour cette famille-là, le défaut du
+   *  catalogue reprend la main. */
   defaut: { modele: string | null; options: Record<string, string> }
+  /** Ce qui partira vraiment, artworks compris et dédoublonné (US-52). */
+  references: CompteReferences
   modeles: Modele[]
 }
 
@@ -299,6 +419,9 @@ export type Etat = {
   couts: { total_usd: number }
   traitement: EtatTraitement
   bibliotheque: Bibliotheque
+  /** L'univers du projet ouvert — bible, barème, palette, défauts. Servi à
+   *  l'ouverture pour que l'écran dessine « ce qui part » sans un second appel. */
+  univers: Univers
   /** Combien de temps dure l'annulation d'une suppression. Le serveur le dit,
    *  l'écran le décompte : deux délais écrits à deux endroits finiraient par se
    *  contredire, et c'est le serveur qui refuse. */
@@ -348,9 +471,16 @@ async function appeler<T>(chemin: string, init?: RequestInit): Promise<T> {
 export const api = {
   etat: () => appeler<Etat>("/status"),
 
-  modeles: (proportions: string, references = 0) =>
+  /** Le catalogue, le grisé de chaque modèle, **et le compte de références**.
+   *
+   *  `echelle` est ce que l'auteur fabrique. Le serveur en tire la famille,
+   *  ajoute les artworks qui partiront, dédoublonne avec les réinjections
+   *  posées à la main, et rend le total — c'est ce total-là qui décide du
+   *  grisé, et c'est lui qu'on affiche. */
+  modeles: (proportions: string, references = 0, echelle = "") =>
     appeler<EtatCatalogue>(
-      `/models?proportions=${encodeURIComponent(proportions)}&references=${references}`,
+      `/models?proportions=${encodeURIComponent(proportions)}` +
+        `&references=${references}&echelle=${encodeURIComponent(echelle)}`,
     ),
 
   rafraichirCatalogue: () =>
@@ -374,6 +504,8 @@ export const api = {
     options: Record<string, unknown>
     identifiant: string
     references: Reinjection[]
+    /** Ce que l'auteur fabrique, nommé dans le barème du projet. */
+    echelle: string
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -507,6 +639,102 @@ export const api = {
   filiation: (identifiant: string) =>
     appeler<Filiation>(`/assets/${identifiant}/lineage`),
 
+  // ── Le tableau d'inspiration ──────────────────────────────────────────────
+  // Une seule de ces routes touche le réseau : celle qui va chercher l'image
+  // d'une adresse collée. Toutes les autres marchent hors ligne.
+
+  tableau: () => appeler<{ projet: string; cartes: Carte[]; groupes: string[] }>("/board"),
+
+  /** Coller **une** image. Les octets sont le corps, bruts — pas de
+   *  `multipart`, qui demanderait une dépendance de plus au serveur.
+   *
+   *  Une image par appel, et c'est ce que US-45 demande : « savoir lequel des
+   *  douze fichiers déposés pose problème ». Douze appels rendent douze
+   *  réponses, dont onze cartes et un refus qui nomme le fichier — et les onze
+   *  premières paraissent sans attendre que la douzième soit lue. */
+  collerImage: (octets: Blob, nom: string, forcer = false) =>
+    appeler<{ carte: Carte | null; doublon: Carte | null }>(
+      `/board/paste?nom=${encodeURIComponent(nom)}&forcer=${forcer}`,
+      { method: "POST", body: octets, headers: {} },
+    ),
+
+  /** Coller une adresse — la carte paraît **avant** que l'image n'arrive. La
+   *  route rend la main tout de suite ; l'issue arrive par le flux. */
+  collerAdresse: (adresse: string) =>
+    appeler<Carte>("/board/url", {
+      method: "POST",
+      body: JSON.stringify({ adresse }),
+    }),
+
+  collerTexte: (texte: string) =>
+    appeler<Carte>("/board/text", {
+      method: "POST",
+      body: JSON.stringify({ texte }),
+    }),
+
+  /** Réessayer une récupération qui a échoué (US-43). Un geste de l'auteur,
+   *  jamais une reprise automatique. */
+  reessayerCarte: (carte: string) =>
+    appeler<Carte>(`/board/${carte}/retry`, { method: "POST" }),
+
+  reglerCarte: (
+    carte: string,
+    reglage: { groupe?: string; note?: string; taille?: 1 | 2 | 4 },
+  ) =>
+    appeler<Carte>(`/board/${carte}`, {
+      method: "PUT",
+      body: JSON.stringify(reglage),
+    }),
+
+  /** Promouvoir une carte en artwork officiel, et lui donner sa famille.
+   *  Rend l'univers avec : la palette se recalcule dans le même geste. */
+  promouvoir: (carte: string, officiel: boolean, famille: Famille = "tous") =>
+    appeler<{ carte: Carte; univers: Univers }>(`/board/${carte}/official`, {
+      method: "PUT",
+      body: JSON.stringify({ officiel, famille }),
+    }),
+
+  oublierCarte: (carte: string) =>
+    appeler<{ carte: Carte; univers: Univers }>(`/board/${carte}`, {
+      method: "DELETE",
+    }),
+
+  imageCarte: (carte: string, version: string) =>
+    `/api/board/${carte}/image?v=${encodeURIComponent(version)}`,
+
+  // ── L'univers du projet ───────────────────────────────────────────────────
+
+  univers: () =>
+    appeler<{ projet: string; univers: Univers; artworks: Carte[] }>("/universe"),
+
+  /** Tout est facultatif : ce qu'on n'envoie pas ne bouge pas. Un `PUT` qui
+   *  exigerait l'univers entier obligerait l'écran à en tenir une copie. */
+  reglerUnivers: (reglage: {
+    bible?: Champ[]
+    bareme?: Echelle[]
+    cible_px?: number
+    couleurs?: number
+    modeles?: Partial<Record<Famille, string>>
+  }) =>
+    appeler<{ projet: string; univers: Univers }>("/universe", {
+      method: "PUT",
+      body: JSON.stringify(reglage),
+    }),
+
+  /** Réappliquer la palette et la grille du projet — **sans un appel payant**.
+   *  Sans identifiants, tout le projet en sautant les épinglés ; avec, cette
+   *  sélection-là, épinglés compris (US-67, US-68, US-69). */
+  realigner: (identifiants?: string[]) =>
+    appeler<{
+      projet: string
+      realignes: number
+      conserves: number
+      assets: string[]
+    }>("/universe/realign", {
+      method: "POST",
+      body: JSON.stringify({ identifiants: identifiants ?? null }),
+    }),
+
   // ── Les adresses d'images ─────────────────────────────────────────────────
 
   image: (identifiant: string, rang: number) =>
@@ -548,6 +776,20 @@ export type Ecoute = {
   asset: (asset: Asset) => void
   /** L'arbre a changé — un projet, une collection, un rangement, un compte. */
   bibliotheque: (bibliotheque: Bibliotheque) => void
+  /** Une carte est entrée, a été réglée, promue, récupérée — ou elle est
+   *  partie, et elle porte alors `oubliee`. La charge est la carte entière. */
+  carte: (carte: Carte & { oubliee?: boolean }) => void
+  /** L'univers d'un projet a changé : palette recalculée, réglage posé, ou
+   *  balayage de réalignement terminé. Un **seul** message pour un lot entier —
+   *  la diffusion garde soixante-quatre messages par abonné, et un événement
+   *  par asset en perdrait les plus anciens sur un projet un peu fourni. */
+  univers: (charge: {
+    projet: string
+    nom: string
+    univers: Univers
+    realignes: number
+    conserves: number
+  }) => void
   /** Vrai quand la liaison est vivante, faux quand elle est rompue. */
   liaison: (vivante: boolean) => void
 }
@@ -565,6 +807,8 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<EtatCatalogueCourt>("catalogue", ecoute.catalogue)
   lire<Asset>("asset", ecoute.asset)
   lire<Bibliotheque>("bibliotheque", ecoute.bibliotheque)
+  lire<Carte & { oubliee?: boolean }>("carte", ecoute.carte)
+  lire<Parameters<Ecoute["univers"]>[0]>("univers", ecoute.univers)
 
   source.onopen = () => ecoute.liaison(true)
   source.onerror = () => ecoute.liaison(false)

@@ -382,13 +382,32 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
 
 
 def _palette_imposee(couleurs: tuple[str, ...]) -> Image.Image:
+    """La table Pillow d'une palette imposée — **remplie, jamais bourrée de noir**.
+
+    Une table de palette compte toujours 256 entrées, et Pillow ramène chaque
+    pixel à la **plus proche des 256**, pas à la plus proche de celles qu'on a
+    écrites. Compléter avec des zéros posait donc 254 noirs purs dans la table,
+    et tout ce qui était sombre s'y accrochait : mesuré sur six gris et une
+    palette de deux couleurs claires, les deux plus sombres ressortaient en
+    `#000000` — une couleur que la palette du projet ne déclare pas.
+
+    C'est la même famille de piège que le liseré clair du § SEUIL_ALPHA : une
+    valeur de remplissage qui n'est pas neutre finit par se voir sur l'image.
+    On répète donc les couleurs déclarées jusqu'à remplir la table : chaque
+    entrée est alors une couleur du projet, et la plus proche des 256 est
+    forcément l'une d'elles.
+    """
+    triplets = [
+        tuple(int(hexa.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+        for hexa in couleurs
+    ] or [(0, 0, 0)]
+
     plate: list[int] = []
-    for hexa in couleurs:
-        propre = hexa.lstrip("#")
-        plate.extend(int(propre[i : i + 2], 16) for i in (0, 2, 4))
-    plate.extend([0] * (768 - len(plate)))
+    while len(plate) < 768:
+        plate.extend(triplets[(len(plate) // 3) % len(triplets)])
+
     reference = Image.new("P", (1, 1))
-    reference.putpalette(plate)
+    reference.putpalette(plate[:768])
     return reference
 
 

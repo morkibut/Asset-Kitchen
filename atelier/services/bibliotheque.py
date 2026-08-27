@@ -278,15 +278,30 @@ class ServiceBibliotheque:
         de proposer de le supprimer."""
         return self._base.compter_par_projet().get(identifiant, 0)
 
+    def sauver_projet(self, projet: Projet) -> Projet:
+        """**Le seul endroit du dépôt qui écrive un projet.**
+
+        `ServiceUnivers` pose la bible, le barème, la palette et les défauts ; il
+        passe par ici, exactement comme ce service passe par `ServiceAssets`
+        pour écrire un asset. Deux écrivains, ce serait un jour un réglage
+        inscrit dans la base et pas dans le fichier — donc perdu à la première
+        reconstruction, qui relit `donnees/` et rien d'autre.
+
+        **Le fichier d'abord, l'index ensuite**, comme partout : une coupure
+        entre les deux lignes laisse l'index en retard sur le disque, ce que la
+        reconstruction rattrape ; dans l'autre ordre, elle mettrait l'invariant
+        à l'envers.
+        """
+        self._fichiers.ecrire_projet(projet.identifiant, projet.en_json())
+        self._base.enregistrer_projet(projet)
+        return projet
+
     def _creer(self, nom: str) -> Projet:
         propre = nom.strip()
         if not propre:
             raise RangementRefuse("un projet a besoin d'un nom")
         pris = {p.identifiant for p in self._base.projets()}
-        projet = Projet(identifiant=repere(propre, pris), nom=propre)
-        self._base.enregistrer_projet(projet)
-        self._fichiers.ecrire_projet(projet.identifiant, projet.en_json())
-        return projet
+        return self.sauver_projet(Projet(identifiant=repere(propre, pris), nom=propre))
 
     def _projet_valide(self, identifiant: Any) -> str | None:
         if isinstance(identifiant, str) and self._base.lire_projet(identifiant):

@@ -160,22 +160,46 @@ async def modeles(
     references: int = Query(0, ge=0),
     proportions: str = Query("1:1"),
     resolution: str | None = Query(None),
+    echelle: str = Query(""),
 ) -> dict[str, Any]:
     """Le catalogue, **et la raison du grisé de chaque modèle**.
 
     Le calcul du refus vit dans le domaine et sort d'ici tout mâché : l'interface
     n'a pas à réimplémenter la règle « indisponible avec sa raison, jamais
     proposé puis refusé ». Elle affiche la phrase qu'elle reçoit.
+
+    **Le compte de références est calculé ici, pas à l'écran** (US-52). Depuis
+    T4, l'auteur n'est plus le seul à en poser : l'application ajoute les
+    artworks de la famille du sujet, et dédoublonne les deux ensembles. L'écran
+    ne connaît que sa moitié — il envoie donc le nombre qu'il tient et le sujet
+    choisi, et reçoit le total qui partira vraiment, avec sa provenance. C'est
+    aussi ce total-là qui décide du grisé : « n'accepte que 2 images de
+    référence, il en faudrait 5 » doit compter les cinq qui partent.
+
+    **Le modèle par défaut suit la famille du sujet** (US-58) : « le modèle est
+    un défaut par type d'asset porté par l'univers, pas un réglage global ».
+    Sans réglage pour cette famille-là, c'est le défaut du catalogue qui reprend
+    la main — il n'y a pas de trou, seulement un réglage qu'on n'a pas posé.
     """
     atelier = _atelier(requete)
     etat = atelier.catalogue.etat
-    demande = _demande_de_jauge(references, proportions, resolution)
+    projet = atelier.bibliotheque.courant
+    compte = atelier.generations.compter_references(
+        projet, echelle, tuple(Reinjection(asset=f"~{rang}") for rang in range(references))
+    )
+    demande = _demande_de_jauge(compte["total"], proportions, resolution)
     defaut = atelier.catalogue.defaut(demande)
+    du_projet = (
+        atelier.univers.univers(projet).modele(compte["famille"])
+        if compte["famille"]
+        else None
+    )
     return {
         "recu_le": etat.recu_le,
         "repli": etat.repli,
         "raison": etat.raison,
-        "defaut": {"modele": defaut.modele, "options": defaut.options},
+        "defaut": {"modele": du_projet or defaut.modele, "options": defaut.options},
+        "references": compte,
         "modeles": [_modele_en_json(m, demande) for m in etat.modeles],
     }
 
@@ -227,6 +251,9 @@ class CorpsReinjection(BaseModel):
 
     asset: str
     role: Literal["reference", "edition", "style"] = "reference"
+    # L'origine n'est pas dans ce corps : une réinjection posée à la main vient
+    # toujours de la bibliothèque. Les cartes du tableau, elles, ne se
+    # sélectionnent jamais — c'est l'application qui les ajoute (US-51).
 
 
 class CorpsGeneration(BaseModel):
@@ -239,6 +266,10 @@ class CorpsGeneration(BaseModel):
     options: dict[str, Any] = Field(default_factory=dict)
     identifiant: str | None = None
     projet: str | None = None
+    # **Ce que l'auteur fabrique**, nommé dans le barème de son projet. Un seul
+    # mot, et il décide de trois choses : quels artworks partent, quel modèle
+    # est le défaut, et quelle part de la case le sujet occupera (T4).
+    echelle: str = ""
     # Des identifiants d'assets et leur rôle, jamais des octets (US-12). Celui
     # qui porte « edition » est ce qu'on retouche : il part avec l'appel comme
     # les autres, et c'est le seul qui donne sa filiation à ce qui sortira.
@@ -259,6 +290,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         resolution=corps.resolution,
         variations=corps.variations,
         options=corps.options,
+        echelle=corps.echelle,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(

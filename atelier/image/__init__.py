@@ -2,11 +2,13 @@
 """Le traitement d'image — CPU, pur, jamais le GPU.
 
 `mesures` regarde ce qui est arrivé et le rend en PNG ; `traitement` applique une
-recette. Aucun des deux ne lit ni n'écrit un fichier : ils reçoivent des octets et
-en rendent. Le disque, c'est le dépôt ; le réseau, c'est le fournisseur.
+recette ; `palette` lit une palette dans des artworks. Aucun des trois ne lit ni
+n'écrit un fichier : ils reçoivent des octets et en rendent. Le disque, c'est le
+dépôt ; le réseau, c'est le fournisseur.
 """
 
 from atelier.image.mesures import Mesure, extension, mesurer, rendre_en_png
+from atelier.image.palette import COULEURS, COULEURS_MAX, COULEURS_MIN, palette_de
 from atelier.image.traitement import (
     MoteurAbsent,
     Rendu,
@@ -19,6 +21,9 @@ from atelier.image.traitement import (
 )
 
 __all__ = [
+    "COULEURS",
+    "COULEURS_MAX",
+    "COULEURS_MIN",
     "Mesure",
     "MoteurAbsent",
     "Rendu",
@@ -29,6 +34,7 @@ __all__ = [
     "mesurer",
     "mesurer_grille",
     "moteur_disponible",
+    "palette_de",
     "raison_moteur",
     "rendre_en_png",
 ]

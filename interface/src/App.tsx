@@ -30,6 +30,10 @@ import {
   type Modele,
   type Reinjection,
   type Role,
+  type Carte,
+  type CompteReferences,
+  type Univers,
+  UNIVERS_VIDE,
 } from "./api"
 import { Arbre } from "./composants/Arbre"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
@@ -39,6 +43,7 @@ import { EcranCle } from "./composants/EcranCle"
 import { Fiche } from "./composants/Fiche"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
+import { EcranUnivers } from "./composants/Univers"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
@@ -78,6 +83,9 @@ export function App() {
     raison: null,
     recu_le: 0,
   })
+  const [compteReferences, setCompteReferences] = useState<CompteReferences | null>(
+    null,
+  )
   const [defaut, setDefaut] = useState<{
     modele: string | null
     options: Record<string, string>
@@ -102,6 +110,17 @@ export function App() {
     reglages: false,
   })
 
+  // ── T4 : le tableau et l'univers ──────────────────────────────────────────
+  //
+  // Tenus ici, comme la grille et l'arbre, parce que **l'onglet n'a qu'un
+  // abonnement** et qu'il vit ici. L'écran Univers les reçoit en propriétés : un
+  // second abonnement ouvert à son ouverture se rebrancherait à chaque
+  // aller-retour vers l'atelier.
+  const [univers, setUnivers] = useState<Univers>(UNIVERS_VIDE)
+  const [cartes, setCartes] = useState<Carte[]>([])
+  const [groupes, setGroupes] = useState<string[]>([])
+  const [universOuvert, setUniversOuvert] = useState(false)
+
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
   const [promptNegatif, setPromptNegatif] = useState("")
@@ -109,6 +128,11 @@ export function App() {
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
   const [reinjections, setReinjections] = useState<Reinjection[]>([])
+  /** **Ce que l'auteur fabrique**, nommé dans le barème de son projet. Un seul
+   *  contrôle, et il décide de trois choses : quels artworks partent en
+   *  référence, quel modèle est le défaut, et quelle part de la case le sujet
+   *  occupera. Vide est permis — un univers vide ne contraint rien (US-57). */
+  const [echelle, setEchelle] = useState("")
 
   const dernierClic = useRef<string | null>(null)
 
@@ -125,6 +149,8 @@ export function App() {
     filtre: FILTRE_VIDE,
     courant: null as string | null,
     relireCatalogue: async () => {},
+    relireGrille: async () => {},
+    relireEtat: async () => {},
   })
 
   // **La fiche n'est pas un état : c'est la sélection quand elle vaut un.**
@@ -145,14 +171,19 @@ export function App() {
   // ── Ce que l'atelier sait de lui-même ─────────────────────────────────────
 
   // Le catalogue est le seul appel que l'interface refait d'elle-même : la
-  // liste des modèles dépend de la demande en cours — les proportions, et **le
-  // nombre d'images réinjectées** —, et c'est le serveur qui décide du grisé de
-  // chacun. Tout le reste arrive par le flux.
+  // liste des modèles dépend de la demande en cours — les proportions, le
+  // **nombre d'images réinjectées**, et depuis T4 **le sujet**, qui décide des
+  // artworks qui partent —, et c'est le serveur qui décide du grisé de chacun.
+  // Tout le reste arrive par le flux.
   const relireCatalogue = useCallback(async () => {
     try {
-      const catalogue = await api.modeles(proportions, reinjections.length)
+      const catalogue = await api.modeles(proportions, reinjections.length, echelle)
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
+      // Le compte qui partira vraiment, artworks compris et dédoublonné. Il
+      // vient d'ici et jamais d'une addition faite à l'écran : l'écran ne
+      // connaît pas les artworks, et deux comptes finiraient par diverger.
+      setCompteReferences(catalogue.references)
       setCatalogueRepli({
         repli: catalogue.repli,
         raison: catalogue.raison,
@@ -162,15 +193,11 @@ export function App() {
     } catch (erreur) {
       echouer(erreur, "l'atelier ne répond pas")
     }
-  }, [proportions, reinjections.length])
+  }, [proportions, reinjections.length, echelle])
 
   useEffect(() => {
     void relireCatalogue()
   }, [relireCatalogue])
-
-  // Posé à chaque rendu, lu par le flux : le seul but est de tenir l'abonnement
-  // ouvert pendant que ce qu'il consulte, lui, change.
-  vivant.current = { filtre, courant: bibliotheque.courant, relireCatalogue }
 
   // ── La grille ─────────────────────────────────────────────────────────────
   //
@@ -195,6 +222,52 @@ export function App() {
     void relireGrille()
   }, [relireGrille])
 
+  // ── Le tableau d'inspiration ──────────────────────────────────────────────
+  //
+  // Il se redemande quand le projet ouvert change, et **seulement** alors : le
+  // tableau appartient à son projet, et un tableau tenu en mémoire pendant qu'on
+  // change d'univers montrerait les inspirations d'un autre jeu.
+
+  const relireTableau = useCallback(async () => {
+    try {
+      const vu = await api.tableau()
+      setCartes(vu.cartes)
+      setGroupes(vu.groupes)
+    } catch (erreur) {
+      echouer(erreur, "le tableau ne répond pas")
+    }
+  }, [bibliotheque.courant])
+
+  useEffect(() => {
+    void relireTableau()
+  }, [relireTableau])
+
+  /** Redemander ce que le serveur grise — et lui seul.
+   *
+   *  La quantification s'allume quand une palette existe (US-65), et c'est le
+   *  serveur qui écrit cette phrase-là. L'écran pourrait la déduire de
+   *  `univers.palette` ; il ne le fait pas, parce que « l'interface affiche la
+   *  raison qu'elle reçoit, elle ne rejoue jamais la règle de son côté ». */
+  const relireEtat = useCallback(async () => {
+    try {
+      setEtat(await api.etat())
+    } catch {
+      // Muet : l'état complet revient de toute façon au prochain rebranchement
+      // du flux, et une panne a déjà sa phrase ailleurs.
+    }
+  }, [])
+
+  // Posé à chaque rendu, lu par le flux : le seul but est de tenir l'abonnement
+  // ouvert pendant que ce qu'il consulte, lui, change. Écrit **après** les
+  // fonctions qu'il porte — une constante lue avant sa déclaration lève.
+  vivant.current = {
+    filtre,
+    courant: bibliotheque.courant,
+    relireCatalogue,
+    relireGrille,
+    relireEtat,
+  }
+
   // ── Le flux d'événements ──────────────────────────────────────────────────
   //
   // Plus aucun sondage. On se branche une fois, on écoute, et l'atelier dit ce
@@ -208,6 +281,7 @@ export function App() {
       etat: (recu) => {
         setEtat(recu)
         setBibliotheque(recu.bibliotheque)
+        setUnivers(recu.univers ?? UNIVERS_VIDE)
         if (recu.generations) setChantier(recu.generations)
         if (recu.assets) setGrille(recu.assets)
         // Ce message part **une fois par abonnement**, donc à chaque
@@ -225,6 +299,43 @@ export function App() {
           fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
         ),
       bibliotheque: setBibliotheque,
+      // **Une carte se fond par identifiant, jamais ne s'empile.** Elle arrive
+      // par deux chemins qui se croisent — la réponse du POST et l'annonce du
+      // flux —, exactement comme une génération en T1. Et comme un asset, elle
+      // doit être confrontée à ce qu'on regarde : une carte d'un autre projet
+      // n'entre pas dans le tableau du projet ouvert.
+      carte: (recue) =>
+        setCartes((liste) => {
+          if (recue.projet !== vivant.current.courant)
+            return liste.filter((c) => c.identifiant !== recue.identifiant)
+          if (recue.oubliee)
+            return liste.filter((c) => c.identifiant !== recue.identifiant)
+          return liste.some((c) => c.identifiant === recue.identifiant)
+            ? liste.map((c) => (c.identifiant === recue.identifiant ? recue : c))
+            : [recue, ...liste]
+        }),
+      // Un seul message pour un lot entier : palette recalculée, réglage posé,
+      // ou balayage terminé. La grille se redemande alors — c'est le troisième
+      // et dernier appel que l'interface refait d'elle-même, et il porte sur des
+      // rendus dont l'empreinte vient de changer.
+      univers: (recu) => {
+        if (recu.projet !== vivant.current.courant) return
+        setUnivers(recu.univers)
+        // Un balayage a changé des recettes, donc des empreintes, donc les
+        // adresses des rendus : la grille se redemande une fois, pour le lot.
+        if (recu.realignes) void vivant.current.relireGrille()
+        // Et le grisé de la quantification suit la palette : c'est le serveur
+        // qui l'écrit, l'écran ne rejoue jamais la règle.
+        void vivant.current.relireEtat()
+        // **Et le catalogue, parce que promouvoir change ce qui partira.**
+        // Trouvé en ouvrant l'atelier, pas au banc : le bloc « Ce qui part »
+        // annonçait zéro référence alors que le serveur en comptait une, et il
+        // ne se corrigeait qu'au premier changement de sujet. La règle de T1
+        // n'avait pas bougé — « le catalogue se redemande parce que le grisé de
+        // chaque modèle dépend de la demande en cours » —, c'est la demande qui
+        // a gagné une composante que l'écran ne pilote pas.
+        void vivant.current.relireCatalogue()
+      },
       catalogue: (recu) => {
         setCatalogueRepli(recu)
         // Le repli change ce que chaque modèle peut honorer : la liste, elle,
@@ -332,6 +443,9 @@ export function App() {
         options: retenues,
         identifiant,
         references: reinjections,
+        // Le sujet : c'est lui qui décide des artworks qui partent, du modèle
+        // par défaut et de la part de case que l'image occupera.
+        echelle,
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
@@ -492,6 +606,8 @@ export function App() {
         replies={replies}
         onReplier={(quoi) => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
         onReglages={() => setReglagesOuverts(true)}
+        onUnivers={() => setUniversOuvert(true)}
+        univers={univers}
         onRafraichir={redemanderCatalogue}
       />
 
@@ -533,6 +649,10 @@ export function App() {
               bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant)
                 ?.nom ?? null
             }
+            univers={univers}
+            echelle={echelle}
+            onEchelle={setEchelle}
+            compte={compteReferences}
           />
         </div>
 
@@ -593,6 +713,7 @@ export function App() {
             <Fiche
               asset={ouverte}
               traitement={etat.traitement}
+              univers={univers}
               onFermer={() => setSelection([])}
               onErreur={setPanne}
               onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
@@ -611,6 +732,21 @@ export function App() {
         liaison={liaison}
         bibliotheque={bibliotheque}
       />
+
+      {universOuvert && (
+        <EcranUnivers
+          projet={
+            bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ??
+            null
+          }
+          univers={univers}
+          modeles={modeles}
+          cartes={cartes}
+          groupes={groupes}
+          onRelire={relireTableau}
+          onFermer={() => setUniversOuvert(false)}
+        />
+      )}
 
       {reglagesOuverts && etat && (
         <EcranCle
@@ -662,16 +798,20 @@ function fondreAsset(
 function BarreDeTete({
   etat,
   bibliotheque,
+  univers,
   replies,
   onReplier,
   onReglages,
+  onUnivers,
   onRafraichir,
 }: {
   etat: Etat | null
   bibliotheque: Bibliotheque
+  univers: Univers
   replies: { arbre: boolean; reglages: boolean }
   onReplier: (quoi: "arbre" | "reglages") => void
   onReglages: () => void
+  onUnivers: () => void
   onRafraichir: () => void
 }) {
   const projet =
@@ -712,6 +852,26 @@ function BarreDeTete({
         <span className="mesure text-[10px] text-texte-3">
           {dollars(etat?.couts.total_usd ?? 0)} en tout
         </span>
+        {/* L'écran où l'on pose ce qui s'appliquera ensuite tout seul. Il
+            dit d'un mot s'il a quelque chose à dire : un univers vide n'est pas
+            un réglage manquant, c'est un état — et il ne réclame rien. */}
+        <Bouton
+          onClick={onUnivers}
+          enfants={
+            univers.vide ? (
+              "Univers"
+            ) : (
+              <span className="flex items-center gap-2">
+                Univers
+                <span className="mesure text-[10px] text-signal">
+                  {univers.palette.length
+                    ? `${univers.palette.length} couleurs`
+                    : "bible"}
+                </span>
+              </span>
+            )
+          }
+        />
         <Bouton onClick={onRafraichir} enfants="Catalogue" />
         <Bouton onClick={onReglages} enfants="Réglages" />
       </div>

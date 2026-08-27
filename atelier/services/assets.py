@@ -79,32 +79,65 @@ class ServiceAssets:
 
     # ── Ce qui est disponible, et pourquoi ───────────────────────────────────
 
-    def palette_du_projet(self) -> tuple[str, ...]:
-        """La palette sur laquelle quantifier. Vide jusqu'en T4.
+    def palette_du_projet(self, projet: str | None) -> tuple[str, ...]:
+        """La palette sur laquelle quantifier — celle de l'univers du projet.
 
-        Elle se déduira par calcul des artworks officiels du projet
-        (`docs/PLAN.md`, T4). Tant qu'il n'y a ni projet ni artwork, il n'y a pas
-        de palette — ce n'est pas une pièce manquante, c'est l'état réel.
+        **Lue dans le projet, pas demandée à un service.** Elle vit dans
+        `projet.json`, donc dans l'index, donc à portée de ce fichier-ci : passer
+        par le service d'univers créerait un cycle de composition — il a besoin
+        des assets pour la palette rétroactive — pour aller chercher un champ.
+        C'est le service d'univers qui la **calcule** et la garde à jour ; ce
+        service-ci ne fait que la lire.
+
+        Sans projet, sans artwork, il n'y a pas de palette — ce n'est pas une
+        pièce manquante, c'est l'état réel d'un univers vide (US-57).
         """
-        return ()
+        if projet is None:
+            return ()
+        objet = self._base.lire_projet(projet)
+        return objet.univers.palette if objet else ()
 
-    def raison_quantification(self) -> str | None:
-        """Pourquoi la quantification est grisée — ou `None` quand elle ne l'est plus."""
-        if self.palette_du_projet():
+    def raison_quantification(self, projet: str | None) -> str | None:
+        """Pourquoi la quantification est grisée — ou `None` quand elle ne l'est plus.
+
+        Elle s'allume au premier artwork officiel promu (US-65, achevée en T4).
+        """
+        if self.palette_du_projet(projet):
             return None
         return "aucune palette : elle se déduira des artworks du projet"
 
-    def traitement(self) -> dict[str, Any]:
+    def traitement(self, projet: str | None = None) -> dict[str, Any]:
         """Ce que l'écran a besoin de savoir pour griser sans redemander."""
         return {
             "moteurs": [
                 {"nom": moteur, "raison": raison_moteur(moteur)} for moteur in MOTEURS
             ],
-            "quantification": {"raison": self.raison_quantification()},
+            "quantification": {"raison": self.raison_quantification(projet)},
             "recettes": sorted(self._fichiers.lire_recettes()),
         }
 
     # ── La naissance ─────────────────────────────────────────────────────────
+
+    def _recette_du_projet(self, generation: Generation) -> Recette:
+        """Ce que l'univers impose à cette image-là, à sa naissance.
+
+        **La remise sur grille est systématique, jamais optionnelle** (US-61) :
+        un asset dont la grille a dérivé est le cas normal, pas l'incident. Elle
+        arrive donc posée, et l'auteur la défait s'il le veut — l'inverse
+        obligerait à la reposer à chaque image, ce que le produit existe pour
+        éviter.
+
+        Sans projet, ou sans échelle nommée, la recette du produit s'applique
+        quand même : « un univers vide ne contraint rien » ne veut pas dire
+        « un univers vide ne fait rien ».
+        """
+        if generation.projet is None:
+            return Recette()
+        objet = self._base.lire_projet(generation.projet)
+        if objet is None:
+            return Recette()
+        nom = str(generation.demande.get("echelle", "") or "")
+        return objet.univers.recette_de(objet.univers.echelle(nom))
 
     def naitre(self, generation: Generation, emplacement: Emplacement) -> Asset | None:
         """Un emplacement qui réussit devient un asset, tout de suite.
@@ -130,8 +163,12 @@ class ServiceAssets:
             type_media=resultat.type_media,
             label=_label(generation),
             # Une relance garde la recette qu'on avait posée : ce qu'on veut
-            # faire de l'image ne dépend pas de l'appel qui l'a rendue.
-            recette=ancien.recette if ancien else Recette(),
+            # faire de l'image ne dépend pas de l'appel qui l'a rendue. Une
+            # image neuve, elle, naît **déjà habillée de son univers** — c'est
+            # « la chaîne complète tient d'un bout à l'autre : un asset se
+            # génère, se détoure, se ramène sur la grille et la palette du
+            # projet, et se range tout seul » (`docs/PLAN.md`, T4).
+            recette=ancien.recette if ancien else self._recette_du_projet(generation),
             epingle=ancien.epingle if ancien else False,
             # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
             # le total du projet, lui, se calcule sur les générations, qui sont
@@ -270,7 +307,7 @@ class ServiceAssets:
         projet saute les épinglés et rend le compte des deux.
         """
         asset = self._trouver(identifiant)
-        self._verifier(recette)
+        self._verifier(recette, asset.projet)
         asset.recette = recette
         asset.epingle = True
         self._rendre(asset)
@@ -383,11 +420,16 @@ class ServiceAssets:
 
     # ── Vérification ─────────────────────────────────────────────────────────
 
-    def _verifier(self, recette: Recette) -> None:
+    def _verifier(self, recette: Recette, projet: str | None = None) -> None:
         """Ce qui est indisponible est refusé **en le nommant**, jamais corrigé.
 
         L'écran a déjà grisé : c'est le filet, pour un fichier retouché à la
         main, une recette nommée devenue caduque, ou un agent en T7.
+
+        `projet` dit **quelle** palette existe : la quantification d'un asset se
+        juge sur l'univers auquel il appartient, pas sur celui qui est ouvert à
+        l'écran. Les deux se confondent presque toujours, et « presque » suffit
+        à faire diverger un refus d'un grisé.
         """
         for rang, passe in enumerate(recette.passes, start=1):
             if passe.moteur not in MOTEURS:
@@ -417,7 +459,7 @@ class ServiceAssets:
 
         quantification = recette.quantification
         if quantification is not None:
-            raison = self.raison_quantification()
+            raison = self.raison_quantification(projet)
             if raison is not None and not quantification.palette:
                 raise RecetteRefusee(f"quantification — {raison}")
             if not COULEURS_MIN <= quantification.couleurs <= COULEURS_MAX:
@@ -438,7 +480,7 @@ class ServiceAssets:
             raise AssetInconnu(identifiant)
         return asset
 
-    def sauver(self, asset: Asset) -> None:
+    def sauver(self, asset: Asset, *, annoncer: bool = True) -> None:
         """**Le seul endroit du dépôt qui écrive un asset.**
 
         La bibliothèque de T3 range, marque et supprime ; elle passe par ici
@@ -450,6 +492,14 @@ class ServiceAssets:
         annoncé est donc toujours déjà sur le disque : un onglet qui reçoit
         l'événement puis redemande l'asset ne peut pas tomber sur un état plus
         ancien que celui qu'on vient de lui dire.
+
+        **`annoncer=False` est pour les lots, et pour eux seuls.** La diffusion
+        garde soixante-quatre messages par abonné : un balayage de palette qui
+        touche cent assets en publierait cent, dont les trente-six premiers
+        seraient perdus par un onglet lent — et l'écran redemanderait de toute
+        façon la grille entière. L'appelant annonce alors **une fois**, à la
+        fin, ce que le lot a fait. Le disque et l'index, eux, sont écrits dans
+        tous les cas : se taire n'est jamais ne pas écrire.
         """
         # **Le fichier d'abord, l'index ensuite.** « Les fichiers font foi, la
         # base est un index reconstructible » : écrire l'index en premier
@@ -459,7 +509,8 @@ class ServiceAssets:
         # prochaine reconstruction rattrape.
         self._fichiers.ecrire_asset(asset.generation, asset.rang, asset.en_disque())
         self._base.enregistrer_asset(asset)
-        self._diffusion.publier("asset", asset.en_json())
+        if annoncer:
+            self._diffusion.publier("asset", asset.en_json())
 
 
 def _label(generation: Generation) -> str:

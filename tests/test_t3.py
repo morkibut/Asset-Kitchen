@@ -499,7 +499,13 @@ def test_un_asset_se_reinjecte_dans_ses_quatre_roles(client, double):
     )
     assert double.references_recues[-1] == 1
     enregistree = client.get(f"/api/generations/{style['identifiant']}").json()
-    assert enregistree["references"] == [{"asset": souche["identifiant"], "role": "style"}]
+    # `origine` est arrivée en T4, quand une seconde famille d'images a pu
+    # partir en référence : une carte du tableau d'inspiration se relit ailleurs
+    # qu'un asset. Une réinjection posée à la main reste `asset`, et c'est ce
+    # que ce test-ci vérifie — celui de T4 vérifie l'autre moitié.
+    assert enregistree["references"] == [
+        {"asset": souche["identifiant"], "role": "style", "origine": "asset"}
+    ]
     assert enregistree["parent"] is None
 
     # 4 · jeu de réglages — aucune image ne part : l'écran relit les paramètres

@@ -31,12 +31,20 @@ from atelier.services.bibliotheque import (
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.generation import ServiceGenerations
+from atelier.services.univers import (
+    CarteInconnue,
+    CarteRefusee,
+    ServiceUnivers,
+    UniversRefuse,
+)
 
 __all__ = [
     "ANNULATION_S",
     "AnnulationExpiree",
     "AssetInconnu",
     "Atelier",
+    "CarteInconnue",
+    "CarteRefusee",
     "CollectionInconnue",
     "Diffusion",
     "EtatCatalogue",
@@ -48,6 +56,8 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceGenerations",
+    "ServiceUnivers",
+    "UniversRefuse",
 ]
 
 
@@ -88,6 +98,15 @@ class Atelier:
         self.bibliotheque = ServiceBibliotheque(
             self.base, self.fichiers, self.assets, self.diffusion
         )
+        # **L'univers après la bibliothèque, avant les générations**, et cet
+        # ordre-là est le seul possible : il écrit le projet *par* la
+        # bibliothèque, qui en est le seul écrivain, et c'est lui que la
+        # génération consulte pour savoir ce qui part en référence. Aucun cycle
+        # — la palette dont `ServiceAssets` a besoin se lit dans le projet, pas
+        # auprès d'un service.
+        self.univers = ServiceUnivers(
+            self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
+        )
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,
@@ -96,6 +115,7 @@ class Atelier:
             self.diffusion,
             self.assets,
             self.bibliotheque,
+            self.univers,
         )
 
     async def ouvrir(self) -> None:
@@ -138,8 +158,13 @@ class Atelier:
             # Ce que le post-traitement sait faire **sur cette machine**, et ce
             # qu'il ne peut pas : un moteur de détourage absent, une palette qui
             # n'existe pas encore. L'écran grise avec la phrase qu'il reçoit, il
-            # ne rejoue jamais la règle de son côté.
-            "traitement": self.assets.traitement(),
+            # ne rejoue jamais la règle de son côté. La palette dépend du projet
+            # ouvert — c'est ici qu'on les tient tous les deux.
+            "traitement": self.assets.traitement(self.bibliotheque.courant),
+            # L'univers du projet ouvert : bible, barème, palette, défauts. Servi
+            # à l'ouverture pour que l'écran dessine « ce qui part » sans un
+            # second appel, et republié à chaque fois qu'il change.
+            "univers": self.univers.univers(self.bibliotheque.courant).en_json(),
             # L'arbre : projets, collections, comptes et totaux. Comptés ici,
             # jamais à l'écran — une somme faite sur les deux cents assets qu'un
             # navigateur a en mémoire dirait un chiffre faux dès que la

@@ -8,7 +8,10 @@
     ├─ recettes.json              les recettes nommées (US-66)
     ├─ collections.json           les collections, avec leur projet éventuel
     ├─ projets/<identifiant>/
-    │  └─ projet.json             le projet — T4 y posera bible, artworks, palette
+    │  ├─ projet.json             le projet — bible, barème, palette, défauts
+    │  └─ tableau/
+    │     ├─ <carte>.json         une carte du tableau d'inspiration
+    │     └─ <carte>.<ext>        ses octets, tels qu'ils sont entrés
     └─ generations/<identifiant>/
        ├─ generation.json         l'enregistrement complet, lisible sans la base
        ├─ <rang>-brut.<ext>       l'image telle qu'elle est arrivée
@@ -207,6 +210,76 @@ class Fichiers:
             if isinstance(contenu, dict) and contenu.get("identifiant"):
                 lus.append(contenu)
         return lus
+
+    # ── Le tableau d'inspiration ─────────────────────────────────────────────
+    #
+    # **Un fichier par carte, comme un asset vit dans le dossier de sa
+    # génération.** Un seul `cartes.json` par projet aurait été plus court à
+    # écrire, et faux au premier usage réel : le collage est le geste principal
+    # de la tranche, on colle en rafale, et une adresse collée écrit sa carte
+    # *deux fois* — en attente, puis remplie quand l'image arrive. Réécrire tout
+    # le tableau à chaque fois, c'est le relire d'abord ; deux récupérations qui
+    # aboutissent dans le même instant se relisent alors toutes les deux avant
+    # d'écrire, et la seconde efface la première. C'est « deux vérités sur la
+    # même chose », vu de la concurrence.
+    #
+    # **Pas de table d'index non plus.** Les cartes ne se cherchent pas, ne se
+    # filtrent pas et ne se paginent pas : un tableau se lit en entier. Un index
+    # existe pour être *interrogé* ; celui-ci n'aurait aucune question à
+    # répondre et il faudrait pourtant le tenir à jour, l'inscrire dans
+    # `TABLES`, le vider à la reconstruction. Corollaire heureux : effacer
+    # `atelier.sqlite3` ne touche pas au tableau, puisqu'il n'y est jamais entré.
+    #
+    # **Le tableau vit sous son projet**, et c'est ce qui rend la suppression
+    # d'un projet simple : `effacer_projet` emporte le dossier, donc le tableau
+    # avec. Une image produite se détache et survit ailleurs ; une inspiration
+    # n'a de sens que dans l'univers pour lequel on l'a rassemblée.
+
+    def dossier_tableau(self, projet: str) -> Path:
+        dossier = self.projets / projet / "tableau"
+        dossier.mkdir(parents=True, exist_ok=True)
+        return dossier
+
+    def ecrire_carte(self, projet: str, identifiant: str, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.dossier_tableau(projet) / f"{identifiant}.json", contenu)
+
+    def lire_carte(self, projet: str, identifiant: str) -> dict[str, Any] | None:
+        contenu = self._lire_json(self.projets / projet / "tableau" / f"{identifiant}.json")
+        return contenu if isinstance(contenu, dict) else None
+
+    def parcourir_cartes(self, projet: str) -> Iterator[dict[str, Any]]:
+        """Chaque carte du tableau d'un projet. Le disque est la seule vérité."""
+        dossier = self.projets / projet / "tableau"
+        if not dossier.is_dir():
+            return
+        for chemin in sorted(dossier.glob("*.json")):
+            contenu = self._lire_json(chemin)
+            if isinstance(contenu, dict) and contenu.get("identifiant"):
+                yield contenu
+
+    def ecrire_octets_carte(
+        self, projet: str, identifiant: str, octets: bytes, ext: str
+    ) -> str:
+        """Les octets collés, tels qu'ils sont entrés, et leur chemin relatif.
+
+        **Rien n'est converti à l'entrée.** Un WEBP reste un WEBP : le tableau
+        rassemble, il ne traite pas. C'est au moment de partir en référence que
+        l'adaptateur regarde les octets et annonce le bon type (`AGENTS.md` :
+        « le type d'une image de référence se lit sur ses octets »).
+        """
+        chemin = self.dossier_tableau(projet) / f"{identifiant}{ext}"
+        self._poser(chemin, octets)
+        return chemin.relative_to(self.racine).as_posix()
+
+    def effacer_carte(self, projet: str, identifiant: str) -> None:
+        """La carte et ses octets, ensemble. Pas d'annulation ici : une carte
+        n'a rien coûté, et le tableau se recolle."""
+        dossier = self.projets / projet / "tableau"
+        if not dossier.is_dir():
+            return
+        for chemin in dossier.glob(f"{identifiant}.*"):
+            if chemin.is_file():
+                chemin.unlink(missing_ok=True)
 
     def ecrire_collections(self, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.collections, contenu)

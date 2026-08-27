@@ -60,26 +60,47 @@ EDITION = "edition"
 STYLE = "style"
 ROLES = (REFERENCE, EDITION, STYLE)
 
+# **D'où viennent les octets** — la deuxième famille d'images du produit est
+# arrivée en T4. Un asset vient de la bibliothèque et se relit par son
+# emplacement ; une carte vient du tableau d'inspiration de son projet et se
+# relit dans son dossier. Les deux partent par le même tuyau et comptent
+# pareil dans le plafond du modèle ; seule la relecture diffère.
+ASSET = "asset"
+CARTE = "carte"
+ORIGINES = (ASSET, CARTE)
+
 
 @dataclass(frozen=True, slots=True)
 class Reinjection:
-    """Un asset renvoyé au fournisseur, et à quel titre.
+    """Une image renvoyée au fournisseur, à quel titre et d'où elle vient.
 
     **Un identifiant, jamais des octets.** Un `generation.json` doit rester
     lisible à l'œil, et une seconde copie de l'image serait une copie que plus
-    rien ne met à jour. Les octets se relisent depuis l'asset au moment de
-    l'appel — et de la relance, qui suit exactement le même chemin.
+    rien ne met à jour. Les octets se relisent au moment de l'appel — et de la
+    relance, qui suit exactement le même chemin.
+
+    C'est aussi ce qui rend une génération **relisable des mois après** : le
+    `generation.json` dit quels artworks officiels sont partis ce jour-là, même
+    si l'univers a changé depuis. Enregistrer « quatre références » sans dire
+    lesquelles rendrait la moitié du journal illisible.
     """
 
     asset: str
     role: str = REFERENCE
+    origine: str = ASSET
 
     def en_json(self) -> dict[str, Any]:
-        return {"asset": self.asset, "role": self.role}
+        return {"asset": self.asset, "role": self.role, "origine": self.origine}
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Reinjection":
-        return Reinjection(asset=d["asset"], role=d.get("role", REFERENCE))
+        return Reinjection(
+            asset=d["asset"],
+            role=d.get("role", REFERENCE),
+            # Une génération écrite avant T4 ne porte que des assets, et c'est
+            # vrai sans rien aller vérifier : les cartes n'existaient pas.
+            origine=d.get("origine", ASSET),
+        )
 
 
 @dataclass(slots=True)
@@ -208,9 +229,15 @@ class Generation:
         `edition`. Une référence inspire, une source d'édition engendre — et
         cette phrase-là est toute la règle de filiation de la tranche. T5 y
         ajoutera celle de la découpe.
+
+        **Un artwork n'engendre jamais**, et l'origine le dit plutôt que le rôle
+        seul : une carte du tableau n'est pas dans la bibliothèque, donc une
+        filiation qui la nommerait pointerait vers un asset qui n'existe pas.
+        Les artworks partent en `style`, jamais en `edition` — mais le filet est
+        ici, où la filiation se décide.
         """
         for reinjection in self.references:
-            if reinjection.role == EDITION:
+            if reinjection.role == EDITION and reinjection.origine == ASSET:
                 return reinjection.asset
         return None
 

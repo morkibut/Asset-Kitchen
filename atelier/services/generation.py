@@ -41,7 +41,7 @@ from atelier.domaine import (
     Resultat,
     Statut,
 )
-from atelier.domaine.generation import EDITION
+from atelier.domaine.generation import CARTE, EDITION
 from atelier.domaine.erreurs import (
     DemandeRefusee,
     ErreurAtelier,
@@ -80,6 +80,7 @@ class ServiceGenerations:
         diffusion: Diffusion | None = None,
         assets: ServiceAssets | None = None,
         bibliotheque: "ServiceBibliotheque | None" = None,
+        univers: "ServiceUnivers | None" = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -97,6 +98,12 @@ class ServiceGenerations:
         # même endroit que l'auteur (US-87). Un défaut écrit dans la façade
         # serait un défaut qu'une des deux façades oublierait.
         self._bibliotheque = bibliotheque
+        # **L'univers habille ce qui part** (US-51, US-53). C'est ici, et pas
+        # dans la route, pour la même raison que le projet par défaut : le MCP
+        # de T7 appelle ce service directement, et un agent doit voir partir les
+        # mêmes artworks que l'auteur. Une sélection écrite dans la façade
+        # serait une sélection qu'une des deux façades oublierait.
+        self._univers = univers
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -213,6 +220,14 @@ class ServiceGenerations:
         Les références sont résolues **avant** le grisé : le plafond d'un modèle
         se compte sur des images réelles, et un asset réinjecté qui n'existe
         plus doit se dire avant qu'un centime ne parte.
+
+        **L'univers s'ajoute ici, et avant le dédoublonnage** (T4). La bible
+        active se replie en tête du prompt, et les artworks de la famille du
+        sujet — plus ceux marqués « tous » — rejoignent les réinjections de
+        l'auteur. L'ordre n'est pas indifférent : le dédoublonnage passe après,
+        donc un artwork que l'auteur a aussi réinjecté à la main ne compte
+        qu'une fois dans le plafond du modèle, et n'est facturé qu'une fois chez
+        ceux qui facturent au token.
         """
         identifiant = identifiant or uuid.uuid4().hex
         existante = self._base.lire(identifiant)
@@ -222,8 +237,11 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
 
-        reinjectes = _reinjectes(references)
-        demande = replace(demande, references=self._octets_references(reinjectes))
+        demande = self._habiller(demande, projet)
+        reinjectes = _reinjectes(tuple(references) + self._artworks(demande, projet))
+        demande = replace(
+            demande, references=self._octets_references(reinjectes, projet)
+        )
 
         modele = self._catalogue.modele(identifiant_modele)
 
@@ -447,21 +465,99 @@ class ServiceGenerations:
             proportions=demande.get("proportions", "1:1"),
             resolution=demande.get("resolution"),
             variations=1,
-            references=self._octets_references(generation.references),
+            references=self._octets_references(generation.references, generation.projet),
             options=demande.get("options", {}),
         )
 
-    def _octets_references(self, identifiants) -> tuple[bytes, ...]:
-        """Les images réinjectées, relues depuis la bibliothèque (US-12).
+    # ── L'univers du projet ──────────────────────────────────────────────────
 
-        Un asset supprimé entre-temps arrête l'appel **avant** qu'il ne parte :
-        mieux vaut redemander laquelle réinjecter que payer une génération à
-        laquelle il manque ce qu'on voulait montrer.
+    def _habiller(self, demande: Demande, projet: str | None) -> Demande:
+        """La bible active, repliée en tête du prompt (US-53).
+
+        « Je veux que le style de mon univers parte avec chaque génération, afin
+        de ne jamais le retaper. » Le repliage se fait **avant** l'enregistrement
+        et avant l'appel, donc `generation.json` porte le prompt tel qu'il est
+        parti : une génération se relit des mois après sans avoir à reconstituer
+        l'univers du jour.
         """
-        if self._assets is None or not identifiants:
+        if self._univers is None or projet is None:
+            return demande
+        bible = self._univers.prompt(projet)
+        if not bible:
+            return demande
+        return replace(demande, prompt=f"{bible}\n\n{demande.prompt}")
+
+    def _artworks(self, demande: Demande, projet: str | None) -> tuple[Reinjection, ...]:
+        """Les artworks que le sujet demandé fait partir (US-51).
+
+        Le sujet est une échelle du barème du projet, et elle porte sa famille.
+        Un nom d'échelle inconnu est refusé par le service d'univers plutôt que
+        corrigé : un onglet resté ouvert après un renommage enverrait sinon les
+        artworks d'une autre famille sans que rien ne le dise.
+        """
+        if self._univers is None or projet is None:
+            return ()
+        echelle = self._univers.echelle(projet, demande.echelle)
+        return self._univers.references(projet, echelle.famille if echelle else None)
+
+    def compter_references(
+        self, projet: str | None, echelle: str, manuelles: Sequence[Reinjection] = ()
+    ) -> dict[str, Any]:
+        """Combien d'images partiront, et d'où elles viennent (US-52).
+
+        **Le compte vient du serveur, comme le grisé.** L'écran tient les
+        réinjections que l'auteur a posées, mais pas les artworks — c'est
+        l'application qui les choisit —, et surtout pas le dédoublonnage entre
+        les deux. Deux comptes calculés à deux endroits finiraient par se
+        contredire, et celui qui compte est celui qui part.
+        """
+        artworks = self._artworks(Demande(prompt="x", echelle=echelle), projet)
+        toutes = _reinjectes(tuple(manuelles) + artworks)
+        echelle_lue = (
+            self._univers.echelle(projet, echelle) if self._univers and echelle else None
+        )
+        return {
+            "total": len(toutes),
+            "manuelles": sum(1 for r in toutes if r.origine != CARTE),
+            "artworks": sum(1 for r in toutes if r.origine == CARTE),
+            "famille": echelle_lue.famille if echelle_lue else None,
+        }
+
+    def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:
+        """Les images réinjectées, relues à la source (US-12).
+
+        Deux sources depuis T4, et `origine` aiguille : un asset se relit dans la
+        bibliothèque, une carte dans le tableau de son projet.
+
+        **Les deux manques ne se traitent pas pareil, et c'est une décision.**
+
+        - Un **asset** disparu arrête l'appel avant qu'il ne parte : c'est
+          l'image que l'auteur a choisie de montrer, et payer une génération à
+          laquelle il manque exactement ça n'a pas de sens.
+        - Un **artwork** disparu est sauté, et l'appel part. Un artwork
+          *inspire* ; il n'est pas choisi appel par appel mais par une promotion
+          faite une fois. Le refuser rendrait **toutes** les générations passées
+          d'un univers non relançables au premier artwork qu'on retire du
+          tableau — or « retirer un artwork officiel » est un geste courant que
+          la tranche encourage (US-55). Une relance repart alors avec l'univers
+          tel qu'il est aujourd'hui, ce qui est aussi ce que l'auteur attend.
+        """
+        if not identifiants:
             return ()
         octets: list[bytes] = []
         for reinjection in identifiants:
+            if reinjection.origine == CARTE:
+                if self._univers is None or projet is None:
+                    continue
+                try:
+                    octets.append(
+                        self._univers.octets_reference(projet, reinjection.asset)
+                    )
+                except ErreurAtelier:
+                    continue
+                continue
+            if self._assets is None:
+                continue
             try:
                 octets.append(self._assets.reference(reinjection.asset))
             except AssetInconnu:
@@ -527,10 +623,17 @@ def _reinjectes(references: Sequence[Reinjection]) -> tuple[Reinjection, ...]:
     if len(editions) > 1:
         raise DemandeRefusee("on n'édite qu'une image à la fois")
     ordonnees = editions + [r for r in references if r.role != EDITION]
-    vus: set[str] = set()
+    # **La clé est le couple, pas l'identifiant seul.** Depuis T4 deux familles
+    # d'images partent par ce tuyau — un asset de la bibliothèque et une carte
+    # du tableau —, et elles ne se nomment pas dans le même espace. Dédoublonner
+    # sur l'identifiant seul ferait taire une carte parce qu'un asset porte le
+    # même nom, ce qui n'arrive jamais et qui, le jour où ça arriverait, ne se
+    # verrait qu'en comptant les images reçues au bout du port.
+    vus: set[tuple[str, str]] = set()
     propres: list[Reinjection] = []
     for reinjection in ordonnees:
-        if reinjection.asset not in vus:
-            vus.add(reinjection.asset)
+        cle = (reinjection.origine, reinjection.asset)
+        if cle not in vus:
+            vus.add(cle)
             propres.append(reinjection)
     return tuple(propres)

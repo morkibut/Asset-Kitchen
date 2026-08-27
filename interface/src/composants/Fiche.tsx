@@ -23,6 +23,7 @@ import {
   type Passe,
   type Recette,
   type Role,
+  type Univers,
 } from "../api"
 import { Bouton, Curseur, EnTetePanneau, Etape, Libelle, Raison, Segments } from "./chassis"
 
@@ -35,6 +36,7 @@ const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
 export function Fiche({
   asset,
   traitement,
+  univers,
   onFermer,
   onErreur,
   onReinjecter,
@@ -44,6 +46,10 @@ export function Fiche({
 }: {
   asset: Asset
   traitement: EtatTraitement
+  /** L'univers du projet ouvert. La fiche n'y touche pas — elle le lit pour
+   *  savoir sur quelle palette quantifier, et pour proposer de réaligner un
+   *  asset que l'auteur avait réglé à la main (US-69). */
+  univers: Univers
   onFermer: () => void
   onErreur: (raison: string) => void
   /** Renvoyer cette image au générateur, dans l'un des trois rôles qui portent
@@ -284,26 +290,55 @@ export function Fiche({
                 ...recette,
                 quantification: recette.quantification
                   ? null
-                  : { couleurs: 32, palette: [], tramage: "aucun" },
+                  : {
+                      couleurs: univers.couleurs,
+                      // **La palette vient du projet, jamais d'ici.** Elle se
+                      // déduit par calcul des artworks officiels (US-54) ; une
+                      // palette vide veut dire « déduite de l'image
+                      // elle-même », ce que le serveur refuse à l'écran. La
+                      // reposer vide à chaque cran, comme le faisait T2, aurait
+                      // fait tomber la quantification au premier réglage.
+                      palette: univers.palette,
+                      tramage: "aucun",
+                    },
               })
             }
           >
-            <Reglage libelle="couleurs">
-              <Segments
-                valeurs={[4, 8, 16, 32, 64] as const}
-                valeur={(recette.quantification?.couleurs ?? 32) as 4 | 8 | 16 | 32 | 64}
-                onChange={(couleurs) =>
-                  poser({
-                    ...recette,
-                    quantification: {
-                      couleurs,
-                      palette: [],
-                      tramage: recette.quantification?.tramage ?? "aucun",
-                    },
-                  })
-                }
-              />
-            </Reglage>
+            <div className="flex flex-col gap-2">
+              {univers.palette.length > 0 && (
+                <Reglage libelle="palette">
+                  <div className="flex flex-wrap gap-[2px]">
+                    {univers.palette.map((couleur) => (
+                      <span
+                        key={couleur}
+                        title={couleur}
+                        style={{ background: couleur }}
+                        className="h-4 w-4 rounded-[2px] border border-bord"
+                      />
+                    ))}
+                  </div>
+                </Reglage>
+              )}
+              <Reglage libelle="couleurs">
+                <Segments
+                  valeurs={[4, 8, 16, 32, 64] as const}
+                  valeur={
+                    (recette.quantification?.couleurs ?? 32) as 4 | 8 | 16 | 32 | 64
+                  }
+                  onChange={(couleurs) =>
+                    poser({
+                      ...recette,
+                      quantification: {
+                        couleurs,
+                        palette:
+                          recette.quantification?.palette ?? univers.palette,
+                        tramage: recette.quantification?.tramage ?? "aucun",
+                      },
+                    })
+                  }
+                />
+              </Reglage>
+            </div>
           </Etape>
 
           {/* ── 5. Bords ─────────────────────────────────────────────────── */}
@@ -328,6 +363,36 @@ export function Fiche({
             </Reglage>
           </Etape>
         </div>
+
+        {/* ── Faire rentrer un épinglé dans le rang ──────────────────────
+            « Je veux réaligner d'un geste, depuis sa fiche, un asset que
+            j'avais réglé à la main » (US-69). La proposition ne paraît que sur
+            un épinglé : sur les autres, elle dirait de faire ce qui est déjà
+            fait. Elle ne coûte rien — aucun appel payant, aucun rendu recalculé
+            avant qu'on le regarde. */}
+        {asset.epingle && !univers.vide && (
+          <div className="mt-4 flex flex-col gap-1 border-t border-bord pt-2">
+            <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-epingle">
+              <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+              réglé à la main — un changement de palette le saute
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await api.realigner([asset.identifiant])
+                } catch (erreur) {
+                  onErreur(
+                    erreur instanceof Error ? erreur.message : "réalignement refusé",
+                  )
+                }
+              }}
+              className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+            >
+              Le remettre sur l'univers du projet ›
+            </button>
+          </div>
+        )}
 
         {/* ── La recette elle-même ───────────────────────────────────────── */}
         <div className="mt-auto flex flex-col gap-2 border-t border-bord pt-2">

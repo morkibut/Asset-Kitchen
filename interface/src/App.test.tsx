@@ -22,7 +22,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { App } from "./App"
-import type { Asset, Bibliotheque, Etat, EtatCatalogue, Generation } from "./api"
+import type {
+  Asset,
+  Bibliotheque,
+  Carte,
+  Etat,
+  EtatCatalogue,
+  Generation,
+  Univers,
+} from "./api"
 
 // ── Le double du flux ────────────────────────────────────────────────────────
 //
@@ -76,7 +84,31 @@ const CATALOGUE: EtatCatalogue = {
   repli: false,
   raison: null,
   defaut: { modele: MODELE.identifiant, options: {} },
+  // Ce qui partira vraiment, artworks compris — calculé par le serveur (US-52).
+  references: { total: 0, manuelles: 0, artworks: 0, famille: null },
   modeles: [MODELE],
+}
+
+/** Un univers vide — l'état d'un projet neuf. « Un univers vide ne contraint
+ *  rien » : c'est le cas normal, pas une configuration manquante. */
+const UNIVERS: Univers = {
+  bible: [
+    { nom: "monde", texte: "", actif: true },
+    { nom: "epoque", texte: "", actif: true },
+    { nom: "trait", texte: "", actif: true },
+    { nom: "eclairage", texte: "", actif: true },
+    { nom: "technique", texte: "", actif: true },
+  ],
+  bareme: [
+    { nom: "personnage", famille: "personnages", occupation: 100, silhouette: true },
+    { nom: "objet tenu", famille: "objets", occupation: 40, silhouette: true },
+  ],
+  cible_px: 64,
+  couleurs: 24,
+  palette: [],
+  palette_empreinte: "",
+  modeles: {},
+  vide: true,
 }
 
 const BIBLIOTHEQUE: Bibliotheque = {
@@ -105,6 +137,7 @@ const ETAT: Etat = {
     recettes: [],
   },
   bibliotheque: BIBLIOTHEQUE,
+  univers: UNIVERS,
   annulation_s: 8,
   generations: [],
   assets: [],
@@ -182,6 +215,30 @@ const asset = (identifiant: string, label = "un tonneau"): Asset => {
   }
 }
 
+const carteImage = (identifiant: string, sur: Partial<Carte> = {}): Carte => ({
+  identifiant,
+  projet: "bac-a-sable",
+  genre: "image",
+  texte: "",
+  statut: "prete",
+  raison: null,
+  source: "",
+  cree_le: 1_787_800_100,
+  groupe: "",
+  note: "",
+  taille: 1,
+  officiel: false,
+  famille: "tous",
+  empreinte: "cafe1234",
+  largeur: 512,
+  hauteur: 512,
+  type_media: "image/png",
+  octets: 4096,
+  montrable: true,
+  artwork: false,
+  ...sur,
+})
+
 /**
  * Le serveur double. Il tient une petite bibliothèque en mémoire, parce que
  * T3 fait aller et venir la grille : on filtre, on supprime, on annule, et
@@ -193,15 +250,34 @@ const asset = (identifiant: string, label = "un tonneau"): Asset => {
  */
 function serveurDouble(options: {
   assets?: Asset[]
+  cartes?: Carte[]
+  univers?: Univers
   aPublier?: () => Generation
 } = {}) {
-  const etat = { assets: options.assets ?? [], supprimes: [] as string[] }
+  const etat = {
+    assets: options.assets ?? [],
+    supprimes: [] as string[],
+    cartes: options.cartes ?? [],
+    univers: options.univers ?? UNIVERS,
+  }
 
   const appels: { url: string; corps: unknown }[] = []
 
   const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
     const url = String(chemin)
-    const corps = init?.body ? JSON.parse(String(init.body)) : undefined
+    // **Tous les corps ne sont pas du JSON.** Depuis T4, coller une image
+    // envoie ses octets bruts : `String(File)` rend « [object File] », et
+    // `JSON.parse` levait alors avant même d'atteindre la route. Le double
+    // rejoue ce que le vrai serveur fait — il lit le corps selon la route, pas
+    // selon une supposition.
+    const corps = (() => {
+      if (!init?.body || typeof init.body !== "string") return undefined
+      try {
+        return JSON.parse(init.body)
+      } catch {
+        return undefined
+      }
+    })()
     appels.push({ url, corps })
     const rendre = (charge: unknown) =>
       ({ ok: true, status: 200, json: async () => charge }) as Response
@@ -246,6 +322,27 @@ function serveurDouble(options: {
           : vivants,
       })
     }
+    if (url.startsWith("/api/board/paste")) {
+      // Le serveur mesure les octets et refuse ce qui n'est pas une image, en
+      // **nommant le fichier** (US-45). Le double rejoue la seule chose que
+      // l'écran a besoin de voir : le refus, et la carte qui n'existe pas.
+      const nom = new URL(url, "http://x").searchParams.get("nom") ?? ""
+      if (!nom.endsWith(".png"))
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "carte_refusee",
+            raison: `« ${nom} » n'est pas une image`,
+            ou_aller: null,
+          }),
+        } as Response
+      const carte = carteImage(`carte-${etat.cartes.length}`)
+      etat.cartes = [carte, ...etat.cartes]
+      return rendre({ carte, doublon: null })
+    }
+    if (url.startsWith("/api/board")) return rendre({ projet: "bac-a-sable", cartes: etat.cartes, groupes: [] })
+    if (url.startsWith("/api/universe")) return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
     if (url === "/api/generations" && init?.method === "POST") {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
       FluxDouble.ouverts.at(-1)?.emettre("generation", g)
@@ -459,5 +556,159 @@ describe("l'écran de l'atelier", () => {
     expect(await screen.findByText("crédit épuisé")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Relancer" })).toBeTruthy()
     expect(screen.getByText("0 image")).toBeTruthy()
+  })
+
+  // ── T4 : coller une adresse fait paraître une carte **avant** l'image ──────
+
+  test("coller une adresse fait paraître une carte en attente, et on continue à coller", async () => {
+    // Le critère dit « en moins d'une seconde, avant que l'image ne soit
+    // récupérée, et on continue à coller pendant ce temps ». Ce que l'écran
+    // doit tenir, ce n'est pas un délai — c'est que **rien n'attend le serveur
+    // d'en face** : la carte est écrite et annoncée avant que la récupération
+    // ne parte, et la suivante n'attend pas la première.
+    const { fetchDouble } = serveurDouble()
+    const flux = await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
+
+    flux.emettre(
+      "carte",
+      carteImage("url-1", {
+        statut: "attente",
+        montrable: false,
+        source: "https://exemple.test/planche.png",
+      }),
+    )
+    expect(await screen.findByText("en attente…")).toBeTruthy()
+    expect(screen.getByText("https://exemple.test/planche.png")).toBeTruthy()
+
+    // La seconde arrive sans que la première ait abouti : deux cartes, dont une
+    // qui attend encore.
+    flux.emettre(
+      "carte",
+      carteImage("url-2", {
+        statut: "attente",
+        montrable: false,
+        source: "https://exemple.test/seconde.png",
+      }),
+    )
+    await waitFor(() => expect(screen.getAllByText("en attente…")).toHaveLength(2))
+
+    // Puis la première aboutit — et elle **remplace** la carte en attente, sous
+    // la même clé. Elle ne s'ajoute pas à côté d'elle.
+    flux.emettre("carte", carteImage("url-1", { source: "https://exemple.test/planche.png" }))
+    await waitFor(() => expect(screen.getAllByText("en attente…")).toHaveLength(1))
+  })
+
+  test("une récupération qui échoue garde son adresse, sa raison, et son geste", async () => {
+    const { fetchDouble } = serveurDouble()
+    const flux = await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    await screen.findByText("Le tableau est vide.")
+
+    flux.emettre(
+      "carte",
+      carteImage("url-3", {
+        statut: "echouee",
+        montrable: false,
+        source: "https://exemple.test/absente.png",
+        raison: "l'adresse a répondu 404",
+      }),
+    )
+    expect(await screen.findByText("pas arrivée")).toBeTruthy()
+    expect(screen.getByText("l'adresse a répondu 404")).toBeTruthy()
+    expect(screen.getByText("https://exemple.test/absente.png")).toBeTruthy()
+
+    // Le geste de réessayer est **dans la carte**, et il n'est proposé que là :
+    // rien ne se relance tout seul.
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir la carte" }))
+    expect(await screen.findByRole("button", { name: "Réessayer ›" })).toBeTruthy()
+  })
+
+  // ── T4 : la palette se recalcule, et **le changement se voit** ─────────────
+
+  test("promouvoir un artwork montre la palette, et la retirer la fait changer à l'œil", async () => {
+    const { fetchDouble } = serveurDouble({ cartes: [carteImage("planche")] })
+    const flux = await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    // Sans artwork, la palette n'est pas une pièce manquante : c'est un état,
+    // et il porte sa raison — « le grisé porte sa raison, jamais une infobulle ».
+    expect(
+      await screen.findByText("aucun artwork officiel — promeus une carte du tableau"),
+    ).toBeTruthy()
+
+    const univers: Univers = {
+      ...UNIVERS,
+      palette: ["#3d2b2d", "#7d5543", "#b59b72"],
+      vide: false,
+    }
+    flux.emettre("univers", {
+      projet: "bac-a-sable",
+      nom: "Bac à sable",
+      univers,
+      realignes: 0,
+      conserves: 0,
+    })
+
+    // Les couleurs se montrent — « je veux voir la palette extraite de mes
+    // artworks officiels, afin de vérifier ce que la machine y a lu » (US-54).
+    expect(await screen.findByTitle("#3d2b2d")).toBeTruthy()
+    expect(screen.getByTitle("#7d5543")).toBeTruthy()
+    expect(screen.getByText("3 couleurs · 0 artwork")).toBeTruthy()
+
+    // On en retire un : la palette change, et ça se voit sans recharger.
+    flux.emettre("univers", {
+      projet: "bac-a-sable",
+      nom: "Bac à sable",
+      univers: { ...univers, palette: ["#1d131a", "#dfc1a6"] },
+      realignes: 0,
+      conserves: 0,
+    })
+    await waitFor(() => expect(screen.queryByTitle("#3d2b2d")).toBeNull())
+    expect(screen.getByTitle("#dfc1a6")).toBeTruthy()
+  })
+
+  // ── T4 : le refus nomme le fichier ───────────────────────────────────────
+
+  test("un fichier qui n'est pas une image est refusé en le nommant", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    await screen.findByText("Le tableau est vide.")
+
+    // `DataTransfer` n'existe pas hors navigateur : on double ce que l'écran
+    // lit de la presse-papiers, et rien de plus — comme `FluxDouble` double
+    // d'`EventSource` les seules trois choses dont le test a besoin.
+    const fichier = new File([new Uint8Array([1, 2, 3])], "notes.txt", {
+      type: "text/plain",
+    })
+    fireEvent.paste(window, {
+      clipboardData: { files: [fichier], getData: () => "" },
+    })
+
+    // La phrase nomme **le fichier**, pas le tampon mémoire de Pillow : « savoir
+    // lequel des douze fichiers déposés pose problème ».
+    expect(await screen.findByText(/« notes\.txt » n'est pas une image/)).toBeTruthy()
+  })
+
+  // ── T4 : ce qui part avec la génération se lit avant de cliquer ───────────
+
+  test("le nombre de références envoyées et l'univers sont lisibles au moment de générer", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble, {
+      ...ETAT,
+      univers: { ...UNIVERS, palette: ["#111111", "#222222"], cible_px: 48, vide: false },
+    })
+
+    // Le bloc « Ce qui part » répond d'avance à *qu'est-ce qui part avec ?*
+    const bloc = (await screen.findByText("Ce qui part")).parentElement!
+    expect(bloc.textContent).toContain("palette")
+    expect(bloc.textContent).toContain("2 couleurs")
+    expect(bloc.textContent).toContain("48 px")
+
+    // Et le sujet est le seul geste qui reste : promouvoir a déjà tout décidé.
+    expect(screen.getByRole("button", { name: "personnage" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "objet tenu" })).toBeTruthy()
   })
 })

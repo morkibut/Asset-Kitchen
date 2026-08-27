@@ -494,7 +494,14 @@ class Base:
                 INSERT INTO projets (identifiant, nom, cree_le, contenu)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
-                    nom = excluded.nom, contenu = excluded.contenu
+                    nom = excluded.nom,
+                    -- Même règle que sur les assets, et pour la même raison :
+                    -- toute colonne qui double l'objet se réécrit depuis lui.
+                    -- `cree_le` ne bouge pas aujourd'hui, mais c'est ce qu'on
+                    -- disait aussi de celui d'un asset avant qu'un réalignement
+                    -- de lot ne le déplace et ne fasse diverger les deux.
+                    cree_le = excluded.cree_le,
+                    contenu = excluded.contenu
                 """,
                 (
                     projet.identifiant,

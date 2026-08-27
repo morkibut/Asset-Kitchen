@@ -7,9 +7,10 @@ chaque rangement, l'afficher dans l'arbre, le filtrer, et décider ce qu'il
 advient de son contenu quand on le supprime.
 
 **Le projet contraint, la collection range.** C'est la différence centrale avec
-SpriteCook, où le projet n'est qu'un dossier : ici le projet portera en T4 la
-bible, les artworks officiels, la palette et la taille de pixel imposée à tout
-ce qui rentre. La collection, elle, ne contraint rien — elle regroupe.
+SpriteCook, où le projet n'est qu'un dossier : depuis T4 le projet porte la
+bible, les artworks officiels, la palette, la taille de pixel imposée à tout ce
+qui rentre et le barème d'échelles. La collection, elle, ne contraint rien —
+elle regroupe.
 
 **Une collection peut n'appartenir à aucun projet.** C'est écrit tel quel dans
 le modèle d'objets (« nom, projet optionnel ») et ça sert : « à refaire », « pour
@@ -26,11 +27,22 @@ sous les fichiers qu'il contient est un déménagement, pas un renommage.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import time
 import unicodedata
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass, field, replace
+from typing import Any, Iterable
+
+from atelier.domaine.carte import DECORS, FAMILLES, INTERFACE, OBJETS, PERSONNAGES, TOUS
+from atelier.domaine.recette import (
+    BAS,
+    Grille,
+    Passe,
+    Quantification,
+    Recadrage,
+    Recette,
+)
 
 # Le projet qui existe déjà au premier lancement (US-2). Ranger reste un geste,
 # jamais un préalable : on ne nomme pas un univers avant de savoir ce qu'on
@@ -38,27 +50,323 @@ from typing import Any
 NOM_BAC_A_SABLE = "Bac à sable"
 
 
+# ── La bible ─────────────────────────────────────────────────────────────────
+#
+# **Cinq champs nommés, et pas un texte libre** (`docs/ARCHITECTURE.md` §6.1 :
+# « monde, époque, trait, éclairage, contraintes techniques »). Le texte libre
+# est ce qu'on retape ; les champs nommés sont ce qu'on dose. C'est la
+# différence qui rend US-56 possible : chacun s'active indépendamment, donc on
+# peut relâcher le trait sans relâcher le monde.
+#
+# La liste est close et ordonnée ici — elle décide de l'ordre à l'écran comme de
+# l'ordre dans le prompt. Un champ de plus se paierait à chaque génération, en
+# lecture et en décision ; le PRD écarte déjà « les consignes par type d'asset ».
+
+CHAMPS_BIBLE = ("monde", "epoque", "trait", "eclairage", "technique")
+
+# Ce qui précède chaque champ quand la bible part avec l'appel. En anglais : le
+# prompt part en anglais chez tous les modèles du catalogue, et c'est une
+# traduction de fournisseur — elle ne remonte pas dans le produit.
+INTITULES = {
+    "monde": "World",
+    "epoque": "Era",
+    "trait": "Line and shading",
+    "eclairage": "Lighting",
+    "technique": "Technical constraints",
+}
+
+
+@dataclass(frozen=True, slots=True)
+class Champ:
+    """Un champ de la bible : son texte, et s'il part.
+
+    **Un seul objet pour les deux**, jamais un texte d'un côté et une liste
+    d'actifs de l'autre : ce sont deux vérités sur la même chose, et le fichier
+    voisin dit ce qu'elles finissent par faire.
+    """
+
+    nom: str
+    texte: str = ""
+    actif: bool = True
+
+    @property
+    def porte(self) -> bool:
+        """Ce champ dit-il quelque chose qui parte vraiment ?"""
+        return self.actif and bool(self.texte.strip())
+
+    def en_json(self) -> dict[str, Any]:
+        return {"nom": self.nom, "texte": self.texte, "actif": self.actif}
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Champ":
+        return Champ(
+            nom=d.get("nom", ""),
+            texte=d.get("texte", ""),
+            actif=bool(d.get("actif", True)),
+        )
+
+
+# ── Le barème d'échelles ─────────────────────────────────────────────────────
+#
+# **Sans lui, tout ce qui sort du produit fait la même hauteur** (`docs/PLAN.md`,
+# T4). La séance du 27 août l'a montré sur cinq sujets réels : un coffre aussi
+# haut qu'un personnage. Ce n'est pas une coïncidence, c'est ce que donne
+# mécaniquement une occupation à 100 % — la case est remplie, donc tout la
+# remplit.
+#
+# **Une échelle porte aussi sa famille, et c'est ce qui garde un seul contrôle.**
+# Dire « c'est un objet tenu en main », c'est du même coup dire quelle part de
+# case il occupe *et* quels artworks partent en référence. Deux taxonomies —
+# l'une pour l'échelle, l'autre pour la famille — se paieraient deux fois à
+# chaque génération, et le PRD écarte explicitement « la sélection manuelle des
+# artworks, génération par génération ».
+
+
+@dataclass(frozen=True, slots=True)
+class Echelle:
+    """Une nature de sujet : la part de case qu'elle occupe, et sa famille.
+
+    **`silhouette` dit si le sujet se découpe.** Un personnage, un tonneau, une
+    icône ont un contour et vivent dans une case carrée ; un décor n'en a pas —
+    il occupe tout le cadre, et l'enfermer dans une case lui ajouterait des
+    bandes transparentes que personne n'a demandées. C'est la même distinction
+    que `sur_grille` fait déjà avec son paramètre `case`, remontée au seul
+    endroit où l'auteur peut la trancher : la nature du sujet.
+    """
+
+    nom: str
+    famille: str = TOUS
+    occupation: int = 100  # % du côté de la case rempli par le sujet
+    silhouette: bool = True
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "nom": self.nom,
+            "famille": self.famille,
+            "occupation": self.occupation,
+            "silhouette": self.silhouette,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Echelle":
+        return Echelle(
+            nom=d.get("nom", ""),
+            famille=d.get("famille", TOUS),
+            occupation=int(d.get("occupation", 100)),
+            silhouette=bool(d.get("silhouette", True)),
+        )
+
+
+# Le barème d'un projet neuf. **Des valeurs de départ, pas une table de vérité** :
+# elles se règlent projet par projet, et un jeu où les personnages sont des
+# insectes n'a rien à faire de celles-ci. Elles viennent de la mesure du
+# 27 août 2026 sur sept sujets réels — à 100 % pour tout le monde, le coffre
+# sortait aussi haut que la prêtresse.
+BAREME_PAR_DEFAUT = (
+    Echelle("personnage", PERSONNAGES, 100),
+    Echelle("créature", PERSONNAGES, 90),
+    Echelle("meuble", OBJETS, 66),
+    Echelle("objet posé", OBJETS, 50),
+    Echelle("objet tenu", OBJETS, 40),
+    Echelle("décor", DECORS, 100, silhouette=False),
+    Echelle("élément d'interface", INTERFACE, 100),
+)
+
+# La taille de pixel d'un projet neuf. **Imposée à tout ce qui rentre, jamais
+# déduite de l'image reçue** (US-60, US-61) : c'est elle qui met un tonneau
+# rendu sur une grille de 16 px et un personnage rendu sur 8 px à la même
+# finesse. 64 est la valeur d'un sprite de personnage chez MySpriteAi.
+CIBLE_PAR_DEFAUT = 64
+
+
+# ── L'univers ────────────────────────────────────────────────────────────────
+
+
+@dataclass(slots=True)
+class Univers:
+    """Ce que le projet impose à ce qui rentre, et ce qu'il envoie avec.
+
+    **Un univers vide ne contraint rien** (US-57). Aucun champ n'est obligatoire,
+    aucun n'est un préalable : générer sans bible, sans artwork et sans palette
+    reste possible, et les défauts du produit prennent le relais. C'est pour ça
+    que tout est facultatif ici, et que rien ne lève.
+    """
+
+    bible: tuple[Champ, ...] = ()
+    bareme: tuple[Echelle, ...] = BAREME_PAR_DEFAUT
+    cible_px: int = CIBLE_PAR_DEFAUT
+
+    # **Combien de couleurs on demande à la palette.** Elle, on ne la saisit
+    # jamais : elle se déduit par calcul des artworks officiels (US-54). Ce
+    # chiffre-ci est le seul réglage qu'on ait sur elle.
+    couleurs: int = 24
+
+    # ── La palette, et d'où elle vient ───────────────────────────────────────
+    #
+    # **Un cache nommé par sa provenance**, exactement comme le rendu d'un asset
+    # est nommé par l'empreinte de sa recette. La palette *est* dérivable des
+    # artworks — la garder telle quelle serait une seconde vérité, et « deux
+    # vérités sur la même chose finissent par diverger ». L'empreinte dit de
+    # quels artworks cette palette-ci est la lecture : une promotion, un retrait
+    # ou un changement de `couleurs` ne correspond plus, donc se recalcule.
+    palette: tuple[str, ...] = ()
+    palette_empreinte: str = ""
+
+    # **Le modèle est un défaut par type d'asset, pas un réglage global**
+    # (`docs/PLAN.md`, T4). Une famille sans modèle retombe sur le défaut du
+    # catalogue — il n'y a pas de trou, seulement un réglage qu'on n'a pas posé.
+    modeles: dict[str, str] = field(default_factory=dict)
+
+    # ── Ce qui se déduit ─────────────────────────────────────────────────────
+
+    @property
+    def vide(self) -> bool:
+        """Rien de posé : ni bible qui parle, ni palette. Le produit prend le
+        relais, et c'est un état normal, pas une configuration manquante."""
+        return not (self.palette or any(c.porte for c in self.bible))
+
+    def champ(self, nom: str) -> Champ:
+        for c in self.bible:
+            if c.nom == nom:
+                return c
+        return Champ(nom)
+
+    def echelle(self, nom: str) -> Echelle | None:
+        """L'échelle de ce nom, ou rien. Un nom inconnu ne se corrige pas en
+        silence : c'est l'appelant qui décide de retomber sur les défauts."""
+        for e in self.bareme:
+            if e.nom == nom:
+                return e
+        return None
+
+    def modele(self, famille: str) -> str | None:
+        return self.modeles.get(famille) or None
+
+    def recette_de(self, echelle: Echelle | None) -> Recette:
+        """**Ce que le projet impose à ce qui rentre**, et le seul endroit qui le dise.
+
+        Écrite ici, dans le domaine, parce que deux appelants la posent — la
+        naissance d'un asset et le balayage de la palette rétroactive — et que
+        deux recettes construites à deux endroits divergeraient au premier
+        réglage ajouté. Elle est pure : rien à lire, rien à écrire.
+
+        **La remise sur grille est systématique, jamais optionnelle** (US-61) :
+        « un asset dont la grille a dérivé est le cas normal, pas l'incident ».
+        Elle est donc toujours de la partie, même quand l'échelle est inconnue —
+        c'est l'occupation qui retombe alors à 100 %, pas l'étape qui disparaît.
+
+        **Le détourage suit la nature du sujet, pas un réglage.** Un personnage
+        a un contour ; un décor n'en a pas, et l'enfermer dans une case carrée
+        lui ajouterait des bandes transparentes. `sur_grille` lit déjà cette
+        distinction dans la recette — « avoir demandé un détourage, c'est avoir
+        dit que ce qu'on traite a une silhouette » —, il n'y a donc rien à
+        transporter de plus : ne pas poser de passe suffit à dire « décor ».
+
+        **La quantification n'entre que s'il y a une palette.** Sans artwork
+        officiel il n'y a pas de palette, et ce n'est pas une pièce manquante :
+        c'est l'état réel d'un univers vide, qui ne contraint rien (US-57).
+        """
+        silhouette = echelle.silhouette if echelle else True
+        return Recette(
+            passes=(Passe(),) if silhouette else (),
+            recadrage=Recadrage() if silhouette else None,
+            grille=Grille(
+                cible=self.cible_px,
+                occupation=echelle.occupation if echelle else 100,
+                ancrage=BAS,
+            ),
+            quantification=(
+                Quantification(couleurs=self.couleurs, palette=self.palette)
+                if self.palette
+                else None
+            ),
+            # Le nettoyage des bords n'est pas un défaut : il efface des taches,
+            # et effacer sans qu'on l'ait demandé est le seul geste du
+            # post-traitement qui puisse enlever quelque chose au sujet. Il reste
+            # à la fiche, où on le voit agir.
+            bords=None,
+        )
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "bible": [c.en_json() for c in self.bible],
+            "bareme": [e.en_json() for e in self.bareme],
+            "cible_px": self.cible_px,
+            "couleurs": self.couleurs,
+            "palette": list(self.palette),
+            "palette_empreinte": self.palette_empreinte,
+            "modeles": dict(self.modeles),
+            # déduit — présent pour l'interface, jamais relu
+            "vide": self.vide,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any] | None) -> "Univers":
+        if not d:
+            return Univers(bible=bible_complete(()))
+        bareme = tuple(Echelle.depuis_json(e) for e in d.get("bareme", ()))
+        return Univers(
+            bible=bible_complete(Champ.depuis_json(c) for c in d.get("bible", ())),
+            bareme=bareme or BAREME_PAR_DEFAUT,
+            cible_px=int(d.get("cible_px", CIBLE_PAR_DEFAUT)),
+            couleurs=int(d.get("couleurs", 24)),
+            palette=tuple(d.get("palette", ())),
+            palette_empreinte=d.get("palette_empreinte", ""),
+            modeles={
+                f: m for f, m in (d.get("modeles") or {}).items() if f in FAMILLES and m
+            },
+        )
+
+
+def bible_complete(champs: Iterable[Champ]) -> tuple[Champ, ...]:
+    """Les cinq champs, dans l'ordre, quoi qu'on ait lu.
+
+    Un fichier écrit avant qu'un champ n'existe, ou relu après qu'un champ a été
+    retiré, ne doit ni faire disparaître une rubrique de l'écran ni ressusciter
+    une rubrique qui n'existe plus. La liste close décide ; le fichier ne fait
+    qu'apporter les textes.
+    """
+    connus = {c.nom: c for c in champs}
+    return tuple(connus.get(nom, Champ(nom)) for nom in CHAMPS_BIBLE)
+
+
+def empreinte_palette(empreintes: Iterable[str], couleurs: int) -> str:
+    """De quoi cette palette est la lecture : ces artworks-là, ce compte-là.
+
+    Les empreintes entrent **triées** : l'ordre de promotion n'a aucune raison de
+    changer une palette, et le calcul n'en tient d'ailleurs pas compte. Sans le
+    tri, réordonner le tableau invaliderait un cache encore juste.
+    """
+    matiere = "|".join(sorted(empreintes)) + f"#{couleurs}"
+    return hashlib.sha256(matiere.encode("utf-8")).hexdigest()[:16]
+
+
 @dataclass(slots=True)
 class Projet:
-    """Un univers. En T3 il range et il totalise ; en T4 il contraindra.
+    """Un univers. Il range, il totalise, et depuis T4 **il contraint**.
 
-    `docs/PLAN.md` § Quand chaque entité apparaît : le projet porte ici « nom,
-    rangement, total des coûts, journal », et se complète en T4 de la bible, des
-    artworks, de la palette et des réglages par défaut. Aucun de ces champs
-    n'est déclaré à vide aujourd'hui : un champ vide à l'écran montre le cadrage
-    au lieu de servir le geste, et sur le disque il ferait croire à une donnée
-    perdue plutôt qu'à une donnée qui n'existe pas encore.
+    `docs/PLAN.md` § Quand chaque entité apparaît : le projet portait en T3
+    « nom, rangement, total des coûts, journal », et se complète en T4 de la
+    bible, des artworks, de la palette et des réglages par défaut. Les artworks,
+    eux, ne sont pas ici : ce sont des cartes du tableau, et c'est la carte qui
+    porte sa promotion (`atelier/domaine/carte.py`). Les recopier ici ferait deux
+    vérités sur la même image.
     """
 
     identifiant: str
     nom: str
     cree_le: float = field(default_factory=time.time)
+    univers: Univers = field(default_factory=lambda: Univers(bible=bible_complete(())))
+
+    def avec(self, univers: Univers) -> "Projet":
+        return replace(self, univers=univers)
 
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
             "nom": self.nom,
             "cree_le": self.cree_le,
+            "univers": self.univers.en_json(),
         }
 
     @staticmethod
@@ -67,6 +375,7 @@ class Projet:
             identifiant=d["identifiant"],
             nom=d.get("nom", d["identifiant"]),
             cree_le=d.get("cree_le", 0.0),
+            univers=Univers.depuis_json(d.get("univers")),
         )
 
 

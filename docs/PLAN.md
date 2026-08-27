@@ -402,30 +402,86 @@ du produit prennent le relais.
 
 ### Critères d'acceptation
 
-- [ ] Un projet neuf se crée, reçoit une bible et trois planches, et sa palette est extraite.
-- [ ] La chaîne complète tient d'un bout à l'autre : un asset se génère, se détoure, se ramène sur la grille et la palette du projet, et se range tout seul.
-- [ ] Coller une adresse fait apparaître une carte en moins d'une seconde, avant que l'image ne soit récupérée, et on continue à coller pendant ce temps.
-- [ ] Une récupération échouée laisse la carte avec son adresse et sa raison, et se réessaie.
-- [ ] Un fichier qui n'est pas une image est refusé en le nommant.
-- [ ] Un doublon est signalé avec un lien vers l'existant, et s'importe quand même si on le décide.
-- [ ] Générer un décor n'envoie aucun artwork de la famille personnages ; une planche marquée « tous » part avec toutes les générations.
-- [ ] Le nombre de références envoyées est visible au moment de générer.
-- [ ] Retirer un artwork officiel recalcule la palette, et le changement se voit.
-- [ ] Chaque champ de la bible s'active et se désactive indépendamment pour une génération.
-- [ ] Générer sans bible ni artwork fonctionne : un univers vide ne bloque rien.
-- [ ] Un personnage et un petit objet générés dans le même projet sortent avec la même taille de pixel, quelle que soit la grille rendue par le modèle.
-- [ ] Un personnage et un petit objet du même projet sortent **à leur échelle respective**, ancrés sur la même ligne de sol : le barème du projet le décide, jamais un réglage repris à la main sujet par sujet.
-- [ ] La remise sur grille est systématique, jamais optionnelle, et la cible n'est jamais déduite de l'image reçue.
-- [ ] La quantification n'est plus grisée dès qu'une palette existe.
-- [ ] Changer la palette du projet remet ses assets à jour sans un seul appel payant, saute les épinglés, et affiche le compte des deux.
-- [ ] Un asset épinglé se réaligne d'un geste depuis sa fiche.
-- [ ] Le modèle est un défaut par type d'asset porté par l'univers, pas un réglage global.
-- [ ] Réseau coupé : le tableau, la bible, la palette et la retouche fonctionnent ; seule la génération échoue, au moment où on l'essaie.
+- [x] Un projet neuf se crée, reçoit une bible et trois planches, et sa palette est extraite.
+- [x] La chaîne complète tient d'un bout à l'autre : un asset se génère, se détoure, se ramène sur la grille et la palette du projet, et se range tout seul.
+- [x] Coller une adresse fait apparaître une carte en moins d'une seconde, avant que l'image ne soit récupérée, et on continue à coller pendant ce temps.
+- [x] Une récupération échouée laisse la carte avec son adresse et sa raison, et se réessaie.
+- [x] Un fichier qui n'est pas une image est refusé en le nommant.
+- [x] Un doublon est signalé avec un lien vers l'existant, et s'importe quand même si on le décide.
+- [x] Générer un décor n'envoie aucun artwork de la famille personnages ; une planche marquée « tous » part avec toutes les générations.
+- [x] Le nombre de références envoyées est visible au moment de générer.
+- [x] Retirer un artwork officiel recalcule la palette, et le changement se voit.
+- [x] Chaque champ de la bible s'active et se désactive indépendamment pour une génération.
+- [x] Générer sans bible ni artwork fonctionne : un univers vide ne bloque rien.
+- [x] Un personnage et un petit objet générés dans le même projet sortent avec la même taille de pixel, quelle que soit la grille rendue par le modèle.
+- [x] Un personnage et un petit objet du même projet sortent **à leur échelle respective**, ancrés sur la même ligne de sol : le barème du projet le décide, jamais un réglage repris à la main sujet par sujet.
+- [x] La remise sur grille est systématique, jamais optionnelle, et la cible n'est jamais déduite de l'image reçue.
+- [x] La quantification n'est plus grisée dès qu'une palette existe.
+- [x] Changer la palette du projet remet ses assets à jour sans un seul appel payant, saute les épinglés, et affiche le compte des deux.
+- [x] Un asset épinglé se réaligne d'un geste depuis sa fiche.
+- [x] Le modèle est un défaut par type d'asset porté par l'univers, pas un réglage global.
+- [x] Réseau coupé : le tableau, la bible, la palette et la retouche fonctionnent ; seule la génération échoue, au moment où on l'essaie.
 
 ### Bloquée par
 
 - **T3** — l'univers est porté par le projet, et le projet naît avec la bibliothèque.
 - **T2** — la palette alimente la quantification, et la cible de pixel pilote une remise sur grille déjà écrite.
+
+### Tenue le 27 août 2026
+
+**Dix-neuf critères, 28 tests de serveur et 5 d'écran.** Le total du dépôt passe
+à 98 tests de serveur et 14 d'écran. Deux critères ne se vérifient que devant
+l'écran — la carte qui paraît avant son image, et la palette dont *le changement
+se voit* —, et ils vivent donc dans les essais d'écran.
+
+**Deux risques ont été levés avant d'écrire une ligne de T4, et l'un des deux a
+retourné une décision.**
+
+- *La palette extraite des artworks.* Premier essai sur les deux planches du
+  guide : la coupe médiane appliquée aux images telles quelles rend **vingt gris
+  sur vingt-quatre**. Le fond plat occupe 75 % des pixels et son anti-crénelage
+  l'éclate en autant de seaux. On détoure donc d'abord — avec le moteur du geste
+  courant, celui qui ne charge aucun modèle — et la palette passe à quinze
+  couleurs franchement distinctes, toutes prises dans le sujet. *Ce qui est
+  majoritaire n'est pas ce qui compte*, exactement comme pour un détourage au
+  seuil global.
+- *Le barème d'échelles.* Mesuré sur sept sujets réels avant d'écrire quoi que ce
+  soit : `sur_grille` tenait déjà tout ce qu'il fallait. Personnage 64 px de
+  haut, meuble 42, objet tenu 26, **et tous ancrés sur la même ligne de sol**.
+  T4 n'a eu qu'à décider *qui* renseigne `occupation` — le projet, jamais un
+  réglage repris à la main sujet par sujet.
+
+**Un défaut dormant a été trouvé, et il attendait cette tranche pour se voir.**
+`_palette_imposee` complétait la table Pillow de 256 entrées avec des zéros :
+254 noirs purs, et Pillow ramène chaque pixel à la plus proche des 256, pas à la
+plus proche de celles qu'on a écrites. Mesuré sur six gris et une palette de deux
+couleurs claires, les deux plus sombres ressortaient en `#000000` — une couleur
+que la palette du projet ne déclare pas. Invisible jusqu'ici parce que la
+quantification imposée était grisée depuis T2 : **le seul chemin qui l'empruntait
+n'existait pas encore**. C'est la même famille que le liseré clair du seuil
+alpha — une valeur de remplissage qui n'est pas neutre finit par se voir.
+
+**Deux défauts ont été trouvés en ouvrant l'atelier, aucun par les tests.**
+C'est la troisième fois de suite, et la règle tient.
+
+| Ce qui n'allait pas | Ce qui l'a rendu invisible |
+|---|---|
+| Promouvoir un artwork ne changeait pas le compte de « ce qui part » : l'écran annonçait zéro référence quand le serveur en comptait une, et ne se corrigeait qu'au premier changement de sujet | La règle de T1 n'avait pas bougé — « le catalogue se redemande parce que le grisé dépend de la demande en cours » —, c'est **la demande** qui a gagné une composante que l'écran ne pilote pas |
+| Une carte d'adresse qui n'avait pas abouti annonçait `0×0` | Aucun test d'écran ne montait une carte sans image, et zéro est une valeur qui passe partout |
+
+Le premier a la même racine que le doublon de T1 : **une règle juste dont
+l'hypothèse a changé sous elle**. Le second est le contraire d'une mesure — « les
+dimensions mesurées font foi », et zéro n'est pas une dimension mesurée, c'est
+l'absence de mesure.
+
+**Ce qui reste ouvert, et pour T5 :** le zoom 1× / 2× / 4× de la grille d'assets,
+reconduit de T3 et qu'aucun critère de T4 ne demandait — les vignettes du tableau
+en partagent les crans mais n'en sont pas ; le second moteur de détourage,
+toujours jamais exécuté, qu'`AGENTS.md` renvoyait à T4 « sur les images du
+tableau d'inspiration » et qu'aucun des dix-neuf critères ne demandait ; et la
+chaîne complète vérifiée par un **appel payant réel** — elle est tenue par les
+tests et par le double, elle n'a pas encore coûté un centime.
+
 
 ---
 
