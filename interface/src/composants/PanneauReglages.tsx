@@ -10,7 +10,7 @@
 
 import { useMemo, useState } from "react"
 import { NOM_FAMILLE, type CompteReferences, type Modele, type Univers } from "../api"
-import { EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import { Bloc, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
 
 export function PanneauReglages({
   modeles,
@@ -83,39 +83,48 @@ export function PanneauReglages({
     <aside className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1">
       <EnTetePanneau>Réglages</EnTetePanneau>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">
-        {/* ── Le modèle ─────────────────────────────────────────────────── */}
-        <section className="flex min-h-0 flex-col gap-1.5">
-          <div className="flex items-baseline justify-between">
-            <Libelle>Modèle</Libelle>
-            <span className="mesure text-[9.5px] text-texte-3">
-              {modeles.length} au catalogue
-            </span>
+      <div className="defile flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">
+        {/* ── Le modèle ─────────────────────────────────────────────────────
+            **Le premier bloc repliable du produit, et celui qui l'a rendu
+            nécessaire.** La liste vaut 280 px à elle seule dans une colonne qui
+            en offre 620 : replié sur son choix, il en rend 26. C'est aussi le
+            cas d'école de la règle — un choix déjà fait, qui se dit en une
+            ligne, et qu'on ne rouvre que pour en changer.
+
+            Les réglages propres au modèle, juste en dessous, ne se replient
+            pas : un rang de segments fait 26 px, le repli lui coûterait un clic
+            pour ne rien rendre. */}
+        <Bloc
+          cle="reglages.modele"
+          titre="Modèle"
+          etat={choisi?.nom ?? null}
+          mesure={`${modeles.length} au catalogue`}
+        >
+          <div className="flex flex-col gap-1.5">
+            <input
+              value={filtre}
+              onChange={(e) => setFiltre(e.target.value)}
+              placeholder="filtrer"
+              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+            />
+
+            <ul className="max-h-[280px] overflow-y-auto rounded-[2px] border border-bord">
+              {listes.map((modele) => (
+                <LigneModele
+                  key={modele.identifiant}
+                  modele={modele}
+                  choisi={modele.identifiant === choisi?.identifiant}
+                  onChoisir={() => onChoisir(modele.identifiant)}
+                />
+              ))}
+              {listes.length === 0 && (
+                <li className="mesure px-2 py-3 text-[10px] text-texte-3">
+                  aucun modèle ne porte ce nom
+                </li>
+              )}
+            </ul>
           </div>
-
-          <input
-            value={filtre}
-            onChange={(e) => setFiltre(e.target.value)}
-            placeholder="filtrer"
-            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
-          />
-
-          <ul className="max-h-[280px] overflow-y-auto rounded-[2px] border border-bord">
-            {listes.map((modele) => (
-              <LigneModele
-                key={modele.identifiant}
-                modele={modele}
-                choisi={modele.identifiant === choisi?.identifiant}
-                onChoisir={() => onChoisir(modele.identifiant)}
-              />
-            ))}
-            {listes.length === 0 && (
-              <li className="mesure px-2 py-3 text-[10px] text-texte-3">
-                aucun modèle ne porte ce nom
-              </li>
-            )}
-          </ul>
-        </section>
+        </Bloc>
 
         {/* ── Le cadrage ────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-1.5">

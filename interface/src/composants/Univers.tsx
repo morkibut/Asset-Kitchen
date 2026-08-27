@@ -27,7 +27,15 @@ import {
   type Modele,
   type Univers,
 } from "../api"
-import { Bouton, Curseur, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import {
+  Bloc,
+  Bouton,
+  Curseur,
+  EnTetePanneau,
+  Libelle,
+  Raison,
+  Segments,
+} from "./chassis"
 import { Tableau } from "./Tableau"
 
 /** Les cibles proposées, reprises de la fiche — 16 pour une tuile, 64 pour un
@@ -155,7 +163,7 @@ function PanneauUnivers({
   return (
     <aside className="flex min-h-0 w-[380px] shrink-0 flex-col bg-fond-1">
       <EnTetePanneau>L'univers</EnTetePanneau>
-      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
+      <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
         <Bible bible={univers.bible} onRegler={(bible) => void regler({ bible })} />
         <Palette univers={univers} artworks={artworks} onRegler={regler} />
         <Grille univers={univers} onRegler={regler} onRealigner={onRealigner} />
@@ -190,14 +198,12 @@ function Bible({
   const actifs = brouillon.filter((c) => c.actif && c.texte.trim()).length
 
   return (
-    <section className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between">
-        <Libelle>Bible</Libelle>
-        <span className="mesure text-[9.5px] text-texte-3">
-          {actifs} champ{actifs > 1 ? "s" : ""} part{actifs > 1 ? "ent" : ""} avec chaque
-          génération
-        </span>
-      </div>
+    <Bloc
+      cle="univers.bible"
+      titre="Bible"
+      etat={actifs ? `${actifs} champ${actifs > 1 ? "s" : ""}` : null}
+      mesure={`${actifs} champ${actifs > 1 ? "s" : ""} part${actifs > 1 ? "ent" : ""} avec chaque génération`}
+    >
       {brouillon.map((champ, rang) => (
         <div key={champ.nom} className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -245,7 +251,7 @@ function Bible({
           />
         </div>
       ))}
-    </section>
+    </Bloc>
   )
 }
 
@@ -272,15 +278,16 @@ function Palette({
   onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
 }) {
   return (
-    <section className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between">
-        <Libelle>Palette</Libelle>
-        <span className="mesure text-[9.5px] text-texte-3">
-          {univers.palette.length
-            ? `${univers.palette.length} couleurs · ${artworks.length} artwork${artworks.length > 1 ? "s" : ""}`
-            : "déduite des artworks"}
-        </span>
-      </div>
+    <Bloc
+      cle="univers.palette"
+      titre="Palette"
+      etat={univers.palette.length ? `${univers.palette.length} couleurs` : null}
+      mesure={
+        univers.palette.length
+          ? `${univers.palette.length} couleurs · ${artworks.length} artwork${artworks.length > 1 ? "s" : ""}`
+          : "déduite des artworks"
+      }
+    >
 
       {univers.palette.length > 0 ? (
         <>
@@ -312,7 +319,7 @@ function Palette({
           <Raison texte="aucun artwork officiel — promeus une carte du tableau" />
         </div>
       )}
-    </section>
+    </Bloc>
   )
 }
 
@@ -328,11 +335,12 @@ function Grille({
   onRealigner: () => void
 }) {
   return (
-    <section className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between">
-        <Libelle>Taille de pixel</Libelle>
-        <span className="mesure text-[9.5px] text-texte-3">imposée à ce qui rentre</span>
-      </div>
+    <Bloc
+      cle="univers.grille"
+      titre="Taille de pixel"
+      etat={`${univers.cible_px} px`}
+      mesure="imposée à ce qui rentre"
+    >
       <Segments
         valeurs={CIBLES}
         valeur={
@@ -354,7 +362,7 @@ function Grille({
           Tout réaligner ›
         </button>
       </div>
-    </section>
+    </Bloc>
   )
 }
 
@@ -375,13 +383,16 @@ function Bareme({
   const poser = (bareme: Echelle[]) => void onRegler({ bareme })
 
   return (
-    <section className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between">
-        <Libelle>Barème d'échelles</Libelle>
-        <span className="mesure text-[9.5px] text-texte-3">
-          part de la case, et famille
-        </span>
-      </div>
+    <Bloc
+      cle="univers.bareme"
+      titre="Barème d'échelles"
+      etat={
+        univers.bareme.length
+          ? `${univers.bareme.length} échelle${univers.bareme.length > 1 ? "s" : ""}`
+          : null
+      }
+      mesure="part de la case, et famille"
+    >
       <ul className="flex flex-col rounded-[2px] border border-bord">
         {univers.bareme.map((echelle, rang) => (
           <li
@@ -441,7 +452,7 @@ function Bareme({
           </li>
         ))}
       </ul>
-    </section>
+    </Bloc>
   )
 }
 
@@ -455,14 +466,17 @@ function Defauts({
   modeles: Modele[]
   onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
 }) {
+  const poses = FAMILLES.filter((f) => f !== "tous" && univers.modeles[f]).length
+
   return (
-    <section className="flex flex-col gap-1.5 pb-2">
-      <div className="flex items-baseline justify-between">
-        <Libelle>Modèle par famille</Libelle>
-        <span className="mesure text-[9.5px] text-texte-3">
-          sinon, le défaut du catalogue
-        </span>
-      </div>
+    <Bloc
+      cle="univers.defauts"
+      titre="Modèle par famille"
+      etat={
+        poses ? `${poses} famille${poses > 1 ? "s" : ""} réglée${poses > 1 ? "s" : ""}` : null
+      }
+      mesure="sinon, le défaut du catalogue"
+    >
       <ul className="flex flex-col rounded-[2px] border border-bord">
         {FAMILLES.filter((f) => f !== "tous").map((famille) => (
           <li
@@ -491,6 +505,6 @@ function Defauts({
           </li>
         ))}
       </ul>
-    </section>
+    </Bloc>
   )
 }

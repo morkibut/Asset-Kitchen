@@ -214,6 +214,36 @@ de ligne, et la grille se lit comme une planche contact plutôt que comme un fil
 Corollaire obligatoire : **aucune ombre portée sur une tuile** — un rayon nul rend toute ombre
 brutale. La profondeur se fait au fond (`--fond-0` sous `--fond-2`) et au bord, jamais à l'ombre.
 
+### Un panneau est borné par l'écran, jamais par son contenu
+
+Écrit le 27 août 2026, après avoir mesuré au navigateur ce que trois colonnes sur quatre
+faisaient depuis le début : **elles rognaient en silence**. À 1280 × 720, l'arbre tenait ses
+193 px, les réglages en demandaient 950 pour 650 offerts, la fiche 1310 — la filiation entière
+hors d'atteinte, et aucune barre nulle part pour le dire. Le seul panneau qui défilait était
+celui de l'écran Univers, et il ne le devait qu'à un accident de construction : son parent est
+une boîte `flex`, donc il était étiré ; ceux de l'Atelier vivent dans des cases de grille, donc
+ils prenaient la hauteur de leur propre contenu et n'avaient jamais rien à contraindre.
+
+**La hauteur d'un panneau est celle de l'écran, moins la barre de tête et la barre d'état.** Ce
+qui dépasse défile. L'en-tête de 30 px ne défile jamais : il porte le nom du panneau et, dans la
+fiche, sa fermeture — les deux doivent rester atteignables depuis le fond d'un défilement.
+
+**Un bloc ne s'écrase jamais pour tenir.** Dans une colonne qui défile, un enfant se comprime
+avant de sortir : en bornant les panneaux à la main, la liste des modèles est tombée à **0 px**
+et a disparu entièrement, sa section passant de 330 à 34. Un contrôle écrasé ment sur son état ;
+il vaut mieux qu'il sorte de l'écran et qu'une barre le dise.
+
+**La barre est visible dès qu'il y a plus, et elle ne déplace rien en paraissant.** Elle garde
+ses 9 px — la gouttière de la grille d'assets, un seul vocabulaire de largeur dans le produit —
+mais sa poignée passe de `--bord` à **`--bord-fort`** : sur `--fond-1`, le trait de séparation du
+châssis est sous le seuil où l'œil le trouve, et une barre qu'on ne voit pas ne dit pas « il y a
+plus ». Gouttière réservée partout où ça défile, panneaux **et** grille d'assets : 9 px qui
+apparaissent peuvent retirer une colonne entière d'un `auto-fill`, et recomposer la planche
+contact au moment où l'on y cherchait quelque chose.
+
+C'est la seule pièce du châssis qui a le droit de se faire remarquer, et elle ne paraît que quand
+elle a quelque chose à dire.
+
 ---
 
 ## Motion
@@ -239,6 +269,11 @@ transition de couleur au maximum, jamais de transformation).
 ligne : *un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être
 remarquée.* Un asset qui atterrit au milieu de tuiles identiques n'en a aucun — d'où le fondu. Le
 repli en a un : il arrive dans la seule couleur chaude du châssis. Il reste donc instantané.
+
+**Le repli d'un bloc n'y entre pas non plus**, par la même règle et le 27 août 2026 : on a
+cliqué, donc on sait que ça s'ouvre, et les blocs voisins qui descendent le disent une seconde
+fois. Ne pas confondre avec le repli d'un **panneau**, qui garde ses 160 ms — celui-là touche la
+grille des colonnes, et c'est la place de tout l'écran qui bouge.
 
 ---
 
@@ -439,6 +474,147 @@ maquette écartée.
 
 ---
 
+### La visionneuse ne défile pas — et le curseur envoie ce qu'on a lâché
+
+Écrit le 27 août 2026, en réglant un détourage pour de vrai. Trois faits mesurés au navigateur,
+bout en bout, PUT compris, sur une image dont le brut fait 1024 px :
+
+| Le geste | Ce que ça coûte |
+|---|---|
+| Occupation, ancrage, marge — **la queue de la recette** | **29 ms** |
+| Recadrage recalculé | 204 ms |
+| Un cran de tolérance — **le détourage repasse** | **1 492 ms** |
+| Le moteur `modèle` | **1 840 – 2 255 ms** |
+
+« Chaque réglage répond sans attente perceptible » était vrai de la première ligne et faux des
+deux dernières. Tout ce document en découle.
+
+**La visionneuse est le sujet du panneau, pas son premier bloc.** Elle sort donc du défilement et
+se pose sous l'en-tête de 30 px, comme lui fixe. On règle un détourage *en regardant ce qu'il
+fait* ; avec l'image en tête de défilement, un curseur posé six cents pixels plus bas obligeait à
+remonter à chaque cran pour voir ce qu'on venait de faire, ce qui n'est pas un réglage mais un
+aller-retour.
+
+**Ce qui bouge quand on règle reste sous les yeux ; ce qui ne bouge pas descend.** L'image, la
+bascule rendu/brut et les dimensions restent — les dimensions changent avec le recadrage et la
+grille, c'est un fait qu'on surveille. Le sujet de la génération descend dans le défilement : on
+le lit une fois, il ne bougera plus.
+
+**Carrée, large comme le panneau, bornée en largeur par la hauteur de l'écran.** `max-width: 46vh`
+et non `max-height` : `aspect-ratio` cède devant `max-height` — le navigateur rabote la hauteur
+sans redéduire la largeur, et le damier cesse d'être carré. C'est la leçon déjà payée sur le cadre
+de l'écran Découpe, et la borne ne mord que sous 760 px de haut, où l'image cède au calcul plutôt
+qu'aux contrôles.
+
+**Un curseur envoie ce qu'on a lâché, pas ce qu'on a traversé.** Un cran de segment est un choix,
+il part ; un cran de curseur est un point de passage, et personne n'a demandé à le voir. Ce n'est
+pas une économie de confort : le serveur sérialise les retouches, donc un glissement de la
+tolérance sur vingt crans, c'était **vingt appels de 1,5 s à la file** — une demi-minute pendant
+laquelle l'image défilait des valeurs intermédiaires. Vérifié après : vingt-et-un crans, **zéro
+appel** ; un relâchement, **un appel**. La valeur sous le curseur, elle, suit la main sans
+attendre — c'est elle qui rend le contrôle vivant, pas le rendu.
+
+### La jauge de la fiche — la même barre, deux réglages
+
+**Une seule jauge dans tout le produit.** Celle d'une tuile en génération et celle d'une retouche
+sont le même composant, les mêmes 2 px, la même courbe asymptotique qui n'atteint jamais le bout.
+Elle se pose au bord bas de la zone image, à l'endroit exact où une tuile porte la sienne.
+
+Deux réglages, parce que les deux attentes du produit n'ont pas la même échelle :
+
+- **Pas de compteur.** Une génération court dix à vingt secondes et on peut quitter l'écran : son
+  `00:08 / ~00:15` dit s'il faut attendre. Une retouche court une à deux secondes, la main encore
+  sur le curseur — un nombre qui change deux fois n'apprend rien.
+- **Un seuil de 240 ms**, la borne haute des durées du § Motion, réemployée. Sous ce seuil, rien
+  ne paraît du tout : la queue de la recette répond en 29 ms, et y faire clignoter une jauge
+  serait pire que de ne rien montrer. Vérifié : sur un cran d'occupation, la jauge n'apparaît à
+  aucun instant.
+
+**L'attente s'apprend au lieu d'être écrite.** Le serveur publie une durée attendue pour une
+génération — la médiane de ce modèle-là — mais rien pour une retouche. L'écran garde donc ce que
+la dernière du même genre a mis, sur cette machine et sur cette image, avec les valeurs de la
+mesure en amorce. Il n'y a que deux genres, et c'est le serveur qui les sépare : les passes ont
+bougé, ou seulement la queue.
+
+**L'image ne se vide pas et ne se grise pas pendant.** Elle reste le rendu d'avant, entier et
+jugeable — on compare toujours à quelque chose, et c'est la jauge qui dit que ce n'est pas encore
+le bon.
+
+### Le bloc repliable — un bloc replié ne se tait pas
+
+Ajouté le 27 août 2026, en même temps que la règle qui borne les panneaux, et pour la raison
+inverse : borner un panneau le fait défiler honnêtement, mais un panneau de 1471 px qui défile
+reste un panneau de 1471 px. La question n'était pas de cacher, c'était de **résumer**.
+
+> **Un bloc replié porte son réglage, en mono, à droite de son titre.**
+
+C'est la seule ligne qui compte. Le repli cesse d'être un rangement et devient un résumé : la
+recette d'un asset se lit en cinq rangées sans rien ouvrir, et le panneau de l'univers devient la
+fiche de l'univers. **Un panneau plié se lit mieux que déplié** — sans ça, le mécanisme ne serait
+pas dans ce document.
+
+```
+ Détourage             bord · 28        posé      → --signal
+ Recadrage             marge 0 px
+ Grille                64 px · 100 %
+ Quantification                         grisé     → sa raison, tiret de 8 px
+  — aucune palette : elle se déduit des artworks
+ Nettoyage des bords                    pas posé  → le carré vide le dit déjà
+
+ Bible                          —       rien de posé → --texte-3
+ Taille de pixel            96 px
+```
+
+**La marque de repli est la valeur elle-même.** Replié, l'en-tête porte le réglage ; ouvert, il se
+tait — la valeur est dans le bloc, sous les yeux, et rien ne s'écrit deux fois. **Aucun glyphe
+neuf n'entre dans le produit**, et ce n'est pas une coquetterie : les deux candidats évidents sont
+pris. Le `+` en bout de rangée d'en-tête veut dire *nouvelle entrée* dans l'arbre, le triangle
+plein veut dire *favori* sur une tuile. Un chevron serait un quatrième glyphe dans un produit qui
+en compte trois. L'affordance tient au survol de la rangée — `--fond-3`, 80 ms, le survol du
+produit — et à la valeur en `--signal`, qui se lit comme quelque chose qu'on va éditer.
+**Coût assumé** : si au bout de deux jours d'usage on clique à côté, c'est raté, et il faudra le
+chevron.
+
+**La rangée fait 26 px** — celle de l'arbre, au § Spacing. Aucune hauteur neuve, comme aucune
+couleur neuve.
+
+**Ce qui se replie**, et c'est une règle à deux conditions : ce qui coûte plus de place qu'un rang
+de segments, **et** ce qui porte un choix qui se dit en une ligne. Un contrôle qui tient sur 26 px
+ne se replie pas — le repli lui coûterait un clic pour ne rien rendre.
+
+| Panneau | Ne se replie jamais | Se replie | Mesuré |
+|---|---|---|---|
+| **Réglages** `300` | Proportions, Variations, Sujet, les options du modèle, *Ce qui part* | Modèle — la liste vaut 280 px à elle seule | 950 → 620, il tient |
+| **Fiche** `380` | la visionneuse, la rangée du jugement, Réinjecter | les 5 passes de la recette, Filiation | recette 522 → 192 |
+| **Univers** `380` | — | Bible, Palette, Taille de pixel, Barème, Modèle par famille | 1471 → 130 |
+| **Arbre** `240` | tout | rien | — |
+
+L'arbre est le cas qui explique la règle : ses sections sont de la **navigation**, chaque projet
+s'ouvre déjà par sa rangée, et le `+` de son en-tête a déjà un sens. Réinjecter est l'autre : une
+rangée de gestes n'a pas de valeur à résumer, donc rien à dire une fois repliée.
+
+**La recette est le cas particulier, et sa rangée porte deux actes.** Une étape de recette avait
+déjà un état — *posée* ou *pas posée* —, et il ne se confond pas avec *montrée* ou *pas montrée* :
+le premier change l'asset, le second ne change que l'écran. Le carré de 9 px garde le premier, le
+titre prend le second, et une étape qui n'est pas posée n'a rien à replier — toute sa rangée la
+pose, comme avant. **Poser une étape l'ouvre** : c'est le même geste, on demande ses contrôles en
+la posant.
+
+**Trois règles pour que ça ne dérive pas.** Replié par défaut, partout — un panneau neuf affiche
+son état complet, et l'auteur ouvre ce qu'il vient toucher. L'état de repli est **global et par
+bloc** : il survit au changement d'asset et à la fermeture du panneau, ce qui est déjà la promesse
+d'US-37, et personne ne veut gérer deux cents états de repli. **Rien ne s'ouvre tout seul** — sauf
+une étape qu'on vient de poser : l'en-tête dit déjà l'état, donc rien n'a besoin de s'ouvrir pour
+se faire remarquer.
+
+**La droite de la rangée dit toujours un fait sur le bloc**, et les deux locataires ne cohabitent
+jamais : replié c'est la valeur, ouvert c'est ce que le bloc veut garder sous les yeux pendant
+qu'on le règle — `48 au catalogue` pendant qu'on choisit un modèle, `déduite des artworks` quand
+la palette est vide. Même fente, même mono 9,5 px, `--texte-3` pour le fait et `--signal` pour la
+valeur.
+
+---
+
 ### L'écran Univers, et la carte qui n'est pas une tuile
 
 Ce document ne portait rien sur le tableau d'inspiration ni sur l'univers — ils arrivent en
@@ -474,6 +650,54 @@ marque.** La même règle de densité que la tuile, et le même vocabulaire de m
 plein en `--signal` dit **artwork officiel** — ce que l'auteur pose est une forme —, le mot
 du pied dit la famille ou le groupe — ce que le système constate est un mot. Aucune couleur
 supplémentaire n'entre dans le tableau.
+
+#### Le menu d'une carte — le survol révèle, le clic retient
+
+Écrit le 27 août 2026, en promouvant des artworks pour de vrai. Le menu vivait **dans** la carte :
+elle grandissait de 300 px en s'ouvrant, la rangée entière suivait, et les voisines devenaient des
+rectangles vides. Une grille qui se recompose parce qu'on regarde une carte, c'est exactement ce
+que le produit refuse déjà pour la grille d'assets — *l'œil reste exactement où il était*.
+
+**Le menu se pose par-dessus, jamais dans le flux.** Absolu, au-dessus des voisines. La grille ne
+bouge plus d'un pixel : vérifié aux deux extrémités du tableau, position et hauteur de chaque
+carte identiques avant et après ouverture.
+
+**Sous la carte, ou au-dessus d'elle, jamais dessus.** C'est la réponse à « le menu est plus grand
+que la vignette » : il fait 300 px pour une carte 1× qui en fait 190, donc il déborde
+nécessairement — mais sur les **voisines**, et jamais sur l'image qu'il règle, ce qui serait
+absurde puisque c'est elle qu'on regarde en réglant. Largeur : celle de la carte, et **au moins
+240 px** — une carte 1× est trop étroite pour la rangée des familles, qui y passerait à cinq
+lignes.
+
+**La place se mesure autour de la carte, jamais autour du menu.** Écrit d'abord dans l'autre sens,
+et faux : le menu rendu sous la carte, on regardait la place au-dessus de *lui*, qui comprend la
+carte entière. Il basculait donc vers le haut en croyant tenir, et se posait deux cents pixels
+au-dessus du cadre visible. La carte est l'ancre ; c'est autour d'elle qu'on compte.
+
+**Et un menu est borné par l'écran, jamais par son contenu** — la règle du § Layout, un cran plus
+bas. Quand il ne tient ni dessus ni dessous, il prend exactement ce qui est offert et défile en
+dedans. **Sans plancher, exprès** : un plancher le rendait plus haut que la place, donc rogné par
+le cadre du tableau, donc son pied inatteignable. Un menu court qui défile vaut mieux qu'un menu
+complet dont on ne peut pas atteindre `Retirer`.
+
+**Le survol révèle, le clic retient.** 200 ms de repos font paraître le menu — assez long pour
+traverser la grille sans rien déclencher, assez court pour battre le clic, ce qu'il doit gagner
+sur lui pour servir à quelque chose. Le pointeur qui quitte la carte *et* son menu l'efface après
+150 ms de grâce, le temps de traverser la gouttière de 9 px sans le perdre.
+
+Le clic, lui, n'est pas remplacé : il **épingle**. La carte reste choisie, anneau `--lumiere`
+comme partout ailleurs, et le menu ne s'efface plus. Ce n'est pas du confort — ce menu porte
+`groupe` et `note`, deux champs de saisie, et un menu qui s'évapore parce que le pointeur a dérivé
+pendant qu'on tape une note est inutilisable. Corollaire : **on ne vole pas un menu à un clavier
+en train de s'en servir.** Survoler une autre carte déplace le menu, sauf si un champ du menu
+épinglé a le focus.
+
+**Le fondu de 80 ms entre dans la liste close du § Motion**, et par sa propre règle d'admission.
+Le menu paraît **sans clic**, donc sans geste qui dise qu'on l'a demandé : les 80 ms sont ce qui
+le fait lire comme une chose venue se poser par-dessus, plutôt que comme une grille qui vient de
+se recomposer — ce que le produit passe justement son temps à ne pas faire. Les 2 px de levée sont
+ceux de l'arrivée d'un asset dans la grille, à un pixel près : même vocabulaire pour la même
+chose, *quelque chose est là qui n'y était pas*.
 
 **Les vignettes 1× / 2× / 4× sont les crans du zoom de la grille**, réemployés. Un seul
 vocabulaire de taille dans tout le produit ; ce sont deux contrôles distincts sur deux
@@ -557,8 +781,17 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | **La date du catalogue vit dans la barre d'état**, pas dans la fente — *corrigé le jour même* | Posée d'abord dans la fente, avec les trois autres choses, pour que les quatre se lisent d'un tenant. Une relecture a montré que ça ne tenait pas : à l'ouverture le prompt est vide, donc le refus « aucun prompt » occupe la fente, donc la date n'était lisible **nulle part** avant que l'auteur ne tape un caractère — or c'est au démarrage que le catalogue doit dire son âge (US-93, critère T1). La règle qui tranche est celle du motif : *une date est un fait sur le monde, pas sur le clic à venir*. La barre d'état est le seul élément rendu en permanence, donc elle la porte. **Ce que ça rachiète** : l'ordre des trois locataires devient juste et non subi — tant que la demande n'est pas composée, il n'y a rien à prédire. **Coût** : les quatre choses ne se lisent plus sur une seule ligne, elles se répartissent sur deux bandes. |
 | 27/08/2026 | La **cause** du repli reste dans la barre d'état, elle ne monte pas dans la fente | Le port traduit déjà toute panne de transport en une phrase du produit, et elle dit à l'auteur si c'est son réseau ou celui d'en face — donc elle s'affiche. Mais ce n'est pas une conséquence du prochain clic : la fente porte ce qui va casser, la barre d'état porte ce qui est. Corollaire : la cause **s'ajoute** à la date, elle ne la remplace pas — la barre d'état porte les deux côte à côte, chacune dans son segment, et la fente n'en porte aucune. |
 | 27/08/2026 | L'apparition du repli **n'entre pas** dans la liste close du § Motion | Règle posée à cette occasion : un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être remarquée. Le fragment arrive dans la seule couleur chaude du châssis — il en a un. Et l'état peut battre plusieurs fois par séance : un fondu dans une bande relue avant chaque clic deviendrait un clignotement. |
+| 27/08/2026 | **Le menu d'une carte sort du flux** : survol pour révéler, clic pour épingler | Il vivait dans la carte, qui grandissait de 300 px : la rangée suivait et les voisines devenaient des rectangles vides — la recomposition de grille que le produit refuse partout ailleurs. Posé en absolu **sous** la carte, jamais dessus : il déborde sur les voisines, pas sur l'image qu'il règle. Le clic n'est pas remplacé, il devient l'épingle — le menu porte deux champs de saisie, et un menu qui s'évapore sous les doigts est inutilisable ; d'où aussi « on ne vole pas un menu à un clavier en train de s'en servir ». **Coût** : deux durées de plus à tenir (200 ms de repos, 150 ms de grâce) et un survol qui peut surprendre la première fois — c'est le prix de battre le clic en vitesse, ce qui était la demande. |
+| 27/08/2026 | La place d'un menu se mesure **autour de la carte**, et il se borne comme un panneau | Deux erreurs payées à l'écran le même jour. Mesurer la place au-dessus du *menu* plutôt qu'au-dessus de la *carte* le faisait basculer vers le haut en croyant tenir, et se poser 200 px hors du cadre. Puis un plancher de hauteur le rendait plus haut que la place offerte, donc rogné par le cadre, donc son pied inatteignable — retiré : un menu court qui défile vaut mieux qu'un menu complet dont on ne peut pas atteindre « Retirer ». C'est la règle du § Layout appliquée un cran plus bas, et elle vaut pour tout ce qui se pose. |
+| 27/08/2026 | **La visionneuse sort du défilement** de la fiche | On règle un détourage en regardant ce qu'il fait. L'image en tête de défilement obligeait à remonter à chaque cran — ce n'est plus un réglage, c'est un aller-retour. Règle générale qui en sort : *ce qui bouge quand on règle reste sous les yeux, ce qui ne bouge pas descend* — les dimensions restent (elles changent avec le recadrage et la grille), le sujet de la génération descend (on le lit une fois). **Coût** : 403 px de tête fixe sur un panneau de 620, donc un défilement plus long pour les contrôles ; borné par `max-width: 46vh` pour qu'un écran court fasse céder l'image et non les contrôles. |
+| 27/08/2026 | **Un curseur envoie ce qu'on a lâché, pas ce qu'on a traversé** — et « sans attente perceptible » est corrigé | Mesuré au navigateur : la queue de recette répond en 29 ms, mais un cran de tolérance coûte **1 492 ms** et le moteur modèle **2 255**. Le critère T2 était vrai de la première et faux des deux autres. Un appel par cran, c'était vingt appels sérialisés par glissement — une demi-minute de file pendant laquelle l'image défilait des valeurs que personne n'a demandé à voir. Vérifié après : vingt-et-un crans, zéro appel ; un relâchement, un appel. **Coût** : le rendu ne suit plus le glissement, ce que la promesse de T2 laissait espérer — mais elle ne pouvait pas être tenue à 1,5 s le cran, et la valeur sous le curseur, elle, suit toujours la main. |
+| 27/08/2026 | **La jauge quitte la tuile pour le châssis**, avec un seuil et un compteur facultatif | Une seule jauge dans tout le produit, comme il n'y a qu'un vocabulaire de taille et qu'une grille d'assets. Les deux attentes n'ont pas la même échelle : la génération garde son compteur (on peut quitter l'écran), la retouche prend un seuil de 240 ms à la place (la main est encore sur le curseur, et la queue de recette répond en 29 ms). **L'attente s'apprend** faute d'être publiée : l'écran garde ce que la dernière retouche du même genre a mis. **Coût** : la première retouche d'une séance trace une jauge contre une amorce, pas contre une mesure. |
+| 27/08/2026 | **Un panneau est borné par l'écran, jamais par son contenu** | Mesuré au navigateur, pas déduit : trois colonnes sur quatre rognaient en silence — 300 px coupés dans les réglages, 660 px dans la fiche, la filiation entière hors d'atteinte. Le seul panneau qui défilait le devait à un accident de construction. Corollaire indissociable : **un bloc ne s'écrase pas pour tenir** — borner les panneaux sans ça faisait tomber la liste des modèles à 0 px. **Coût** : la poignée de barre passe de `--bord` à `--bord-fort`, soit une pièce du châssis qui a le droit de se faire remarquer, et 9 px de gouttière réservée en permanence sur chaque zone qui défile. |
+| 27/08/2026 | **Le bloc repliable**, et sa marque est la valeur elle-même | Borner un panneau le fait défiler honnêtement ; ça ne raccourcit rien. La ligne qui justifie le mécanisme est *un bloc replié porte son réglage à droite de son titre* — sans elle, le repli cacherait au lieu de résumer, et un panneau plié se lirait moins bien que déplié. Aucun glyphe neuf : le `+` veut déjà dire *nouvelle entrée* dans l'arbre, le triangle plein *favori* sur une tuile ; un chevron serait le quatrième glyphe d'un produit qui en compte trois. **Coût** : l'affordance tient au survol et à la couleur de la valeur — si l'usage montre qu'on clique à côté, il faudra le chevron. |
+| 27/08/2026 | La rangée d'une **étape de recette porte deux actes**, le carré et le titre | *Posée* n'est pas *montrée* : le premier change l'asset, le second ne change que l'écran. Les fusionner en un seul clic obligeait à choisir entre garder une étape posée et la subir dépliée — cinq étapes posées tenaient 522 px dans une colonne qui en offre 620. Le carré de 9 px garde une cible de 26. **Coût** : deux cibles sur une rangée, distinguées par 22 px de large ; une étape pas encore posée n'en a qu'une, ce qui rattrape le cas le plus fréquent. |
+| 27/08/2026 | Le repli est **global et par bloc**, pas par asset | « Fermer le panneau remet exactement où l'on était » (US-37) vaut aussi d'une image à l'autre : rouvrir cinq blocs à chaque asset regardé serait le contraire. Conséquence directe : l'état vit dans le châssis et non dans un écran, donc il survit au démontage de la fiche — et les essais d'écran le remettent à zéro comme ils remettent le flux. |
 | 27/08/2026 | **La fiche s'ouvre en T2**, pas en T3 | La retouche a besoin d'une surface, et le § Layout en prévoit déjà une : la quatrième colonne, 380 px. L'ouvrir en T2 avec ce que T2 possède — visionneuse, recette, retour au brut — atteint le layout par étapes au lieu de le contredire ; la filiation et le favori l'y rejoignent en T3. Écarté : un écran de retouche plein cadre, qui ferait perdre la grille et le prompt — exactement ce que ce document refuse quand il écrit « la fiche est un panneau latéral, pas une page ». Écarté aussi : un dépliage sous la tuile, qui recomposerait la grille. **Coût** : l'écran passe à trois colonnes en cours de tranche, et l'arbre reste la seule case vide du layout. |
-| 27/08/2026 | **Le curseur entre au châssis** — premier contrôle neuf depuis la création | Il n'entre pas pour l'apparence mais pour un comportement : « chaque réglage répond sans attente perceptible » (critère T2) suppose qu'on **fasse glisser** et qu'on regarde l'image suivre. Un champ de nombre demanderait de viser une valeur avant de voir ce qu'elle donne — l'inverse du geste. Il n'ajoute aucune couleur : rail `--bord`, poignée `--signal`, valeur en mono à droite comme toute mesure. Hauteur 26 px, la rangée de segment du § Spacing. **Coût** : un contrôle de plus à tenir dans les états, et la tentation d'en mettre partout — il reste borné à la fiche. |
+| 27/08/2026 | **Le curseur entre au châssis** — premier contrôle neuf depuis la création | Il n'entre pas pour l'apparence mais pour un comportement : viser une valeur dans un champ de nombre avant de voir ce qu'elle donne est l'inverse du geste. *Révisé le 27 août 2026, à la mesure* : « chaque réglage répond sans attente perceptible » (critère T2) ne vaut que pour la queue de la recette — le détourage coûte 1,5 s le cran, donc le curseur pose au relâchement et non en glissant. Un champ de nombre demanderait de viser une valeur avant de voir ce qu'elle donne — l'inverse du geste. Il n'ajoute aucune couleur : rail `--bord`, poignée `--signal`, valeur en mono à droite comme toute mesure. Hauteur 26 px, la rangée de segment du § Spacing. **Coût** : un contrôle de plus à tenir dans les états, et la tentation d'en mettre partout — il reste borné à la fiche. |
 | 27/08/2026 | La pastille **« réglé »** rejoint « interrompu » et « agent » sur la tuile | Le § La tuile prévoyait déjà les trois mots ; T2 en fait naître un pour de vrai. Un asset dont la recette a été touchée à la main est un **état subi** au sens de ce document : le système le constate, l'auteur ne l'a pas posé comme une marque. Il reste donc un mot en mono, en `--epingle`, et non une forme — la seule forme est le coin plein du favori. Cohérence de la couleur : « réglé à la main » est l'un des trois usages d'`--epingle` déjà nommés ici. |
 | 27/08/2026 | La tuile montre le **rendu**, pas le brut, dès qu'une recette existe | La grille sert à juger, et juger sur le brut alors qu'on a détouré et remis sur grille ferait juger autre chose que ce qui partira dans le jeu. Le brut reste à un geste — la bascule de la fiche. **Coût** : deux images sous la même adresse selon l'état de l'asset ; l'empreinte de la recette voyage donc dans l'URL, sans quoi le navigateur resservirait celle d'avant. |
 | 27/08/2026 | Les cinq étapes de la recette sont des **titres cliquables**, pas des cases à cocher | Cinq cases alignées dans un panneau de 380 px se lisent comme un formulaire ; ce panneau est un établi. L'état se dit par la couleur du titre et un carré de 9 px — la même grammaire que le segment choisi. Une étape indisponible garde le motif du § Le grisé : elle porte sa raison en ligne sœur, jamais une infobulle — c'est ce que fait la quantification tant qu'aucune palette n'existe. |

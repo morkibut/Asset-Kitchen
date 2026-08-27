@@ -280,6 +280,27 @@ pre.code{
 .replier:hover{color:var(--texte)}
 .replier span:last-child{color:var(--texte-3);font-size:10px}
 
+/* le bloc repliable — la marque de repli est la valeur elle-même, aucun glyphe neuf */
+.plis{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.pli{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
+.pli-corps{padding:8px 10px 12px}
+.b-tete{display:flex;align-items:center;gap:8px;height:26px;padding:0 5px;margin:0 -5px;border-radius:var(--r-s);cursor:pointer}
+.b-tete:hover{background:var(--fond-3)}
+.b-tete .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);white-space:nowrap}
+.b-tete.on .t{color:var(--signal)}
+.b-tete .v{margin-left:auto;font-family:var(--mono);font-size:9.5px;font-variant-numeric:tabular-nums;color:var(--signal);white-space:nowrap;padding-left:10px}
+.b-tete .v.rien,.b-tete .v.fait{color:var(--texte-3)}
+.b-lib .t{font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;color:var(--texte-2)}
+.b-etape{border-top:1px solid var(--bord);padding-top:8px;margin-top:8px}
+.b-etape.prem{border-top:0;padding-top:0;margin-top:0}
+.carre{width:9px;height:9px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-2);flex:none}
+.carre.on{border-color:var(--signal);background:var(--signal)}
+.b-corps{padding:2px 0 2px 17px;display:flex;flex-direction:column;gap:7px}
+.b-rang{display:flex;align-items:center;gap:9px}
+.b-rang>span:first-child{font-size:11px;color:var(--texte-3);width:70px;flex:none}
+.b-raison{font-family:var(--mono);font-size:10px;color:var(--texte-3);display:flex;align-items:center;gap:7px;margin-top:5px;padding-left:17px}
+.b-raison::before{content:'';width:8px;height:1px;background:var(--texte-3);flex:none}
+
 /* centre */
 .pan-centre{background:var(--fond-0);display:flex;flex-direction:column;overflow:hidden}
 .prompt-zone{padding:14px 16px 12px;border-bottom:1px solid var(--bord);background:var(--fond-1);flex:none}
@@ -963,6 +984,106 @@ pre.code{
       est un fait sur le monde, elle reste donc en bas &mdash; et elle y est lisible d&egrave;s l'ouverture,
       prompt vide, l&agrave; o&ugrave; la fente est encore prise par &laquo;&nbsp;aucun prompt&nbsp;&raquo;.
     </p>
+
+    <hr class="fin">
+
+    <div class="titre-sec" style="margin-top:8px"><span class="num">03c</span><h2>Le bloc repliable</h2></div>
+    <p class="sous">
+      <b>Un bloc repli&eacute; ne se tait pas &mdash; il porte son r&eacute;glage, en mono, &agrave; droite de son titre.</b>
+      Le repli cesse d'&ecirc;tre un rangement pour devenir un r&eacute;sum&eacute;&nbsp;: la recette d'un asset se lit
+      en cinq rang&eacute;es sans rien ouvrir. Aucun glyphe neuf &mdash; le <code>+</code> veut d&eacute;j&agrave; dire
+      <i>nouvelle entr&eacute;e</i> dans l'arbre, le triangle plein <i>favori</i> sur une tuile.
+    </p>
+
+    <div class="plis">
+      <div>
+        <div class="etat-tag">repli&eacute; <i>&mdash; la recette enti&egrave;re, 192&nbsp;px au lieu de 522</i></div>
+        <div class="pli">
+          <div class="pan-tete"><span>Fiche</span><span class="plier">&times;</span></div>
+          <div class="pli-corps">
+            <div class="b-etape prem"><div class="b-tete on"><span class="carre on"></span><span class="t">D&eacute;tourage</span><span class="v">bord &middot; 28</span></div></div>
+            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Recadrage</span><span class="v">marge 0 px</span></div></div>
+            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Grille</span><span class="v">64 px &middot; 100 %</span></div></div>
+            <div class="b-etape">
+              <div class="b-tete"><span class="carre"></span><span class="t">Quantification</span></div>
+              <div class="b-raison">aucune palette&nbsp;: elle se d&eacute;duit des artworks</div>
+            </div>
+            <div class="b-etape"><div class="b-tete"><span class="carre"></span><span class="t">Nettoyage des bords</span></div></div>
+          </div>
+        </div>
+        <p class="note" style="max-width:46ch">
+          Le carr&eacute; dit <b>pos&eacute; ou pas</b> &mdash; &ccedil;a change l'asset. Le titre dit <b>montr&eacute; ou pas</b> &mdash;
+          &ccedil;a ne change que l'&eacute;cran. Une &eacute;tape pas pos&eacute;e n'a rien &agrave; replier&nbsp;: toute sa rang&eacute;e la pose.
+        </p>
+      </div>
+
+      <div>
+        <div class="etat-tag">une seule ouverte <i>&mdash; l'en-t&ecirc;te se tait, la valeur est sous les yeux</i></div>
+        <div class="pli">
+          <div class="pan-tete"><span>Fiche</span><span class="plier">&times;</span></div>
+          <div class="pli-corps">
+            <div class="b-etape prem"><div class="b-tete on"><span class="carre on"></span><span class="t">D&eacute;tourage</span><span class="v">bord &middot; 28</span></div></div>
+            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Recadrage</span><span class="v">marge 0 px</span></div></div>
+            <div class="b-etape">
+              <div class="b-tete on"><span class="carre on"></span><span class="t">Grille</span></div>
+              <div class="b-corps">
+                <div class="b-rang"><span>cible</span><div class="seg"><button>32</button><button class="on">64</button><button>96</button><button>128</button></div></div>
+                <div class="b-rang"><span>occupation</span><span class="sous-bouton" style="margin:0">100 %</span></div>
+                <div class="b-rang"><span>ancrage</span><div class="seg"><button class="on">bas</button><button>centre</button></div></div>
+              </div>
+            </div>
+            <div class="b-etape">
+              <div class="b-tete"><span class="carre"></span><span class="t">Quantification</span></div>
+              <div class="b-raison">aucune palette&nbsp;: elle se d&eacute;duit des artworks</div>
+            </div>
+            <div class="b-etape"><div class="b-tete"><span class="carre"></span><span class="t">Nettoyage des bords</span></div></div>
+          </div>
+        </div>
+        <p class="note" style="max-width:46ch">
+          Rien ne s'&eacute;crit deux fois&nbsp;: ouvert, l'en-t&ecirc;te l&acirc;che sa valeur. La m&ecirc;me fente sert alors
+          &agrave; l'autre locataire &mdash; le fait que le bloc garde sous les yeux pendant qu'on le r&egrave;gle.
+        </p>
+      </div>
+    </div>
+
+    <div class="plis" style="margin-top:22px">
+      <div>
+        <div class="etat-tag">l'univers repli&eacute; <i>&mdash; 1471&nbsp;px de r&eacute;glages, 130 de fiche</i></div>
+        <div class="pli">
+          <div class="pan-tete"><span>L'univers</span></div>
+          <div class="pli-corps">
+            <div class="b-tete b-lib"><span class="t">Bible</span><span class="v rien">&mdash;</span></div>
+            <div class="b-tete b-lib"><span class="t">Palette</span><span class="v rien">&mdash;</span></div>
+            <div class="b-tete b-lib"><span class="t">Taille de pixel</span><span class="v">96 px</span></div>
+            <div class="b-tete b-lib"><span class="t">Bar&egrave;me d'&eacute;chelles</span><span class="v">7 &eacute;chelles</span></div>
+            <div class="b-tete b-lib"><span class="t">Mod&egrave;le par famille</span><span class="v rien">&mdash;</span></div>
+          </div>
+        </div>
+        <p class="note" style="max-width:46ch">
+          Le panneau de l'univers devient <b>la fiche de l'univers</b>. C'est ce qui justifie le
+          m&eacute;canisme&nbsp;: un panneau pli&eacute; se lit mieux que d&eacute;pli&eacute;.
+        </p>
+      </div>
+      <div>
+        <div class="etat-tag">le mod&egrave;le, ouvert <i>&mdash; la droite de la rang&eacute;e passe &agrave; l'autre locataire</i></div>
+        <div class="pli">
+          <div class="pan-tete"><span>R&eacute;glages</span></div>
+          <div class="pli-corps">
+            <div class="b-tete b-lib"><span class="t">Mod&egrave;le</span><span class="v fait">48 au catalogue</span></div>
+            <div class="modeles" style="margin-top:7px">
+              <div class="mod on"><span class="pt"></span>OpenAI&nbsp;: GPT Image 2<span class="px">2 r&eacute;fs &middot; &times;4</span></div>
+              <div class="mod"><span class="pt"></span>Meta&nbsp;: Imagine 3<span class="px">4 r&eacute;fs &middot; &times;4</span></div>
+              <div class="mod off"><span class="pt"></span>Google&nbsp;: Nano Banana Pro</div>
+              <div class="mod-raison" style="border-bottom:0">n'accepte pas 3 variations</div>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="max-width:46ch">
+          Repli&eacute;e, cette rang&eacute;e dit <code>OpenAI&nbsp;: GPT Image 2</code> et rend 280&nbsp;px &agrave; la
+          colonne. C'est le bloc qui a rendu le m&eacute;canisme n&eacute;cessaire.
+        </p>
+      </div>
+    </div>
   </section>
 
   <footer class="pied-page">

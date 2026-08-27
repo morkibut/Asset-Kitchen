@@ -22,6 +22,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { App } from "./App"
+import { toutReplier } from "./composants/chassis"
 import type {
   Asset,
   Bibliotheque,
@@ -455,6 +456,10 @@ describe("l'écran de l'atelier", () => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
     doublerLaMesure()
+    // Le repli des blocs vit dans le châssis, pas dans un écran — il survit
+    // donc au démontage, ce qui est voulu d'une image à l'autre et faux d'un
+    // essai à l'autre.
+    toutReplier()
   })
 
   afterEach(() => {
@@ -719,6 +724,10 @@ describe("l'écran de l'atelier", () => {
     const flux = await monter(fetchDouble)
     fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
 
+    // Les blocs de l'univers arrivent repliés — on pose ces réglages une fois,
+    // et l'en-tête dit déjà leur état (`docs/DESIGN.md` § Le bloc repliable).
+    fireEvent.click(await screen.findByRole("button", { name: /^Palette/ }))
+
     // Sans artwork, la palette n'est pas une pièce manquante : c'est un état,
     // et il porte sa raison — « le grisé porte sa raison, jamais une infobulle ».
     expect(
@@ -816,6 +825,10 @@ describe("le slicer et le zoom de la grille", () => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
     doublerLaMesure()
+    // Le repli des blocs vit dans le châssis, pas dans un écran — il survit
+    // donc au démontage, ce qui est voulu d'une image à l'autre et faux d'un
+    // essai à l'autre.
+    toutReplier()
   })
 
   afterEach(() => {

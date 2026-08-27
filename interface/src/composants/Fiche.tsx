@@ -10,7 +10,7 @@
 // lieu de servir le geste est le reproche qui a fait écarter
 // `docs/maquette-atelier.html`.
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   api,
   dollars,
@@ -18,20 +18,55 @@ import {
   RECETTE_VIDE,
   ROLES,
   type Asset,
+  type Bords,
   type EtatTraitement,
   type Filiation,
+  type Grille,
   type Passe,
+  type Quantification,
+  type Recadrage,
   type Recette,
   type Role,
   type Univers,
 } from "../api"
-import { Bouton, Curseur, EnTetePanneau, Etape, Libelle, Raison, Segments } from "./chassis"
+import {
+  Bloc,
+  Bouton,
+  Curseur,
+  EnTetePanneau,
+  Etape,
+  Jauge,
+  Libelle,
+  Raison,
+  Segments,
+} from "./chassis"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. La valeur
  *  n'est jamais déduite de l'image reçue (US-61) : elle se choisit ici, et
  *  deviendra une propriété du projet en T4. */
 const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
+
+const MOTEUR: Record<Passe["moteur"], string> = { bord: "bord", modele: "modèle" }
+
+/** Ce qu'une étape posée dit d'elle-même quand elle est repliée
+ *  (`docs/DESIGN.md` § Le bloc repliable). Une ligne, en mono, à droite du
+ *  titre — c'est ce qui permet de lire la recette entière sans rien ouvrir.
+ *
+ *  Le résumé est **la valeur, jamais le fait qu'il y en ait une** : « 2 passes »
+ *  n'apprend rien de plus qu'un carré plein, alors que « bord · 28 » dit ce que
+ *  l'image a subi. La seule exception est le pluriel, où la valeur ne tient
+ *  plus : deux passes ont deux moteurs, et c'est le nombre qui devient le fait. */
+const RESUME = {
+  detourage: (recette: Recette) =>
+    recette.passes.length === 1
+      ? `${MOTEUR[recette.passes[0].moteur]} · ${recette.passes[0].tolerance}`
+      : `${recette.passes.length} passes`,
+  recadrage: (r: Recadrage) => `marge ${r.marge} px`,
+  grille: (g: Grille) => `${g.cible} px · ${g.occupation} %`,
+  quantification: (q: Quantification) => `${q.couleurs} couleurs`,
+  bords: (b: Bords) => `tache ${b.aire_min} px`,
+}
 
 export function Fiche({
   asset,
@@ -71,6 +106,24 @@ export function Fiche({
   const [montrerBrut, setMontrerBrut] = useState(false)
   const [nom, setNom] = useState("")
 
+  // ── Ce qui est en vol, et ce que ça coûte ─────────────────────────────────
+  //
+  // « Chaque réglage répond sans attente perceptible » (critère T2) était vrai
+  // de la queue de recette et faux du détourage : mesuré au navigateur le
+  // 27 août 2026, un cran de tolérance coûte **1 492 ms**, le moteur modèle
+  // 2 255, là où l'occupation en coûte 29. Une seconde et demie de rien, sur
+  // une image qui ne change pas encore — c'est ce que la jauge dit.
+  //
+  // **L'attente s'apprend au lieu d'être écrite.** Le serveur ne publie pas de
+  // durée attendue pour une retouche comme il le fait pour une génération ;
+  // l'écran garde donc ce que la dernière du même genre a mis, sur cette
+  // machine et sur cette image. Les deux valeurs de départ sont celles de la
+  // mesure, et elles se corrigent au premier passage.
+  const attentes = useRef({ detourage: 1.5, queue: 0.05 })
+  const envoyee = useRef<Recette>(asset.recette)
+  const envols = useRef(0)
+  const [enVol, setEnVol] = useState<{ depuis: number; attendue: number } | null>(null)
+
   // Changer d'asset remet la fiche sur la recette de celui-là. Sans ça, le
   // panneau garderait les réglages du précédent et on croirait les avoir posés.
   //
@@ -81,6 +134,7 @@ export function Fiche({
   // serveur qui tranche quand il refuse — `poser` remet alors l'état d'avant.
   useEffect(() => {
     setRecette(asset.recette)
+    envoyee.current = asset.recette
     setMontrerBrut(false)
     setNom("")
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,17 +142,55 @@ export function Fiche({
 
   // ── Poser la recette ──────────────────────────────────────────────────────
   //
-  // À chaque cran de curseur, et c'est tenable : le serveur garde le détourage
-  // et ne refait que la queue de la recette — 28 ms contre 130. C'est ce qui
-  // rend vrai « chaque réglage répond sans attente perceptible ».
+  // **Deux gestes, pas un.** `regler` bouge la valeur à l'écran et ne demande
+  // rien ; `poser` l'envoie. Un segment fait les deux d'un coup — c'est un
+  // choix, il part. Un curseur ne pose qu'au relâchement : la valeur suit la
+  // main, le rendu suit la main lâchée.
+  //
+  // Le serveur garde le détourage entre deux réglages et ne refait que la queue
+  // de la recette quand les passes n'ont pas bougé — c'est ce qui sépare 29 ms
+  // de 1 492, et c'est aussi ce qui dit à la jauge quelle attente afficher.
+
+  const regler = (suivante: Recette) => setRecette(suivante)
 
   const poser = async (suivante: Recette) => {
     setRecette(suivante)
+
+    // Rien à envoyer si c'est déjà ce qui est posé — un relâchement de curseur
+    // qui n'a rien déplacé, un `onKeyUp` sur une touche qui n'est pas une
+    // flèche. Le serveur sérialise les retouches : un appel pour rien, c'est
+    // une seconde et demie de file pour rien.
+    if (JSON.stringify(suivante) === JSON.stringify(envoyee.current)) return
+
+    const lourde =
+      JSON.stringify(suivante.passes) !== JSON.stringify(envoyee.current.passes)
+    envoyee.current = suivante
+
+    const depart = Date.now() / 1000
+    envols.current += 1
+    // La jauge garde le **premier** départ : le serveur sérialise, donc deux
+    // retouches lancées coup sur coup sont une seule attente, pas deux.
+    setEnVol(
+      (deja) =>
+        deja ?? {
+          depuis: depart,
+          attendue: lourde ? attentes.current.detourage : attentes.current.queue,
+        },
+    )
+
     try {
       await api.poserRecette(asset.identifiant, suivante)
+      const mise = Date.now() / 1000 - depart
+      attentes.current = lourde
+        ? { ...attentes.current, detourage: mise }
+        : { ...attentes.current, queue: mise }
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : "retouche refusée")
       setRecette(asset.recette) // l'écran ne garde pas un réglage que le serveur refuse
+      envoyee.current = asset.recette
+    } finally {
+      envols.current -= 1
+      if (envols.current === 0) setEnVol(null)
     }
   }
 
@@ -137,13 +229,25 @@ export function Fiche({
         </button>
       </EnTetePanneau>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
-        <Visionneuse
-          asset={asset}
-          brut={montrerBrut}
-          onBrut={setMontrerBrut}
-          traite={!estVide(recette)}
-        />
+      {/* **La visionneuse ne défile pas.** C'est le sujet du panneau : on règle
+          un détourage en regardant ce qu'il fait, et un curseur posé six cents
+          pixels sous l'image obligeait à remonter à chaque cran pour voir ce
+          qu'on venait de faire. Ce qui **bouge quand on règle** reste sous les
+          yeux — l'image, la bascule rendu/brut, les dimensions ; ce qui ne
+          bouge pas descend dans le défilement, à commencer par le sujet de la
+          génération, qu'on lit une fois. `docs/DESIGN.md` § La visionneuse. */}
+      <Visionneuse
+        asset={asset}
+        brut={montrerBrut}
+        onBrut={setMontrerBrut}
+        traite={!estVide(recette)}
+        enVol={enVol}
+      />
+
+      <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
+        <p className="truncate text-[11.5px] text-texte-2" title={asset.label}>
+          {asset.label}
+        </p>
 
         <Jugement
           asset={asset}
@@ -159,8 +263,10 @@ export function Fiche({
         <div className="flex flex-col gap-2">
           {/* ── 1. Détourage ─────────────────────────────────────────────── */}
           <Etape
+            cle="fiche.detourage"
             titre="Détourage"
             active={recette.passes.length > 0}
+            etat={RESUME.detourage(recette)}
             onBasculer={() =>
               poser({
                 ...recette,
@@ -176,7 +282,13 @@ export function Fiche({
                   passe={passe}
                   raisonModele={raisonModele}
                   onChange={(suivante) =>
-                    poser({
+                    regler({
+                      ...recette,
+                      passes: recette.passes.map((p, i) => (i === rang ? suivante : p)),
+                    })
+                  }
+                  onFini={(suivante) =>
+                    void poser({
                       ...recette,
                       passes: recette.passes.map((p, i) => (i === rang ? suivante : p)),
                     })
@@ -209,8 +321,10 @@ export function Fiche({
 
           {/* ── 2. Recadrage ─────────────────────────────────────────────── */}
           <Etape
+            cle="fiche.recadrage"
             titre="Recadrage"
             active={recette.recadrage !== null}
+            etat={recette.recadrage && RESUME.recadrage(recette.recadrage)}
             onBasculer={() =>
               poser({
                 ...recette,
@@ -225,7 +339,10 @@ export function Fiche({
                 max={64}
                 unite=" px"
                 onChange={(marge) =>
-                  poser({ ...recette, recadrage: { marge, boite: null } })
+                  regler({ ...recette, recadrage: { marge, boite: null } })
+                }
+                onFini={(marge) =>
+                  void poser({ ...recette, recadrage: { marge, boite: null } })
                 }
               />
             </Reglage>
@@ -233,8 +350,10 @@ export function Fiche({
 
           {/* ── 3. Grille ────────────────────────────────────────────────── */}
           <Etape
+            cle="fiche.grille"
             titre="Grille"
             active={recette.grille !== null}
+            etat={recette.grille && RESUME.grille(recette.grille)}
             onBasculer={() =>
               poser({
                 ...recette,
@@ -264,7 +383,13 @@ export function Fiche({
                   max={100}
                   unite=" %"
                   onChange={(occupation) =>
-                    poser({
+                    regler({
+                      ...recette,
+                      grille: { ...(recette.grille ?? defautGrille()), occupation },
+                    })
+                  }
+                  onFini={(occupation) =>
+                    void poser({
                       ...recette,
                       grille: { ...(recette.grille ?? defautGrille()), occupation },
                     })
@@ -288,8 +413,10 @@ export function Fiche({
 
           {/* ── 4. Quantification — branchée, et grisée avec sa raison ────── */}
           <Etape
+            cle="fiche.quantification"
             titre="Quantification"
             active={recette.quantification !== null}
+            etat={recette.quantification && RESUME.quantification(recette.quantification)}
             raison={traitement.quantification.raison}
             onBasculer={() =>
               poser({
@@ -349,8 +476,10 @@ export function Fiche({
 
           {/* ── 5. Bords ─────────────────────────────────────────────────── */}
           <Etape
+            cle="fiche.bords"
             titre="Nettoyage des bords"
             active={recette.bords !== null}
+            etat={recette.bords && RESUME.bords(recette.bords)}
             onBasculer={() =>
               poser({
                 ...recette,
@@ -364,7 +493,8 @@ export function Fiche({
                 min={0}
                 max={64}
                 unite=" px"
-                onChange={(aire_min) => poser({ ...recette, bords: { aire_min } })}
+                onChange={(aire_min) => regler({ ...recette, bords: { aire_min } })}
+                onFini={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
               />
             </Reglage>
           </Etape>
@@ -615,44 +745,63 @@ function Descendance({
   const sansParent = filiation.parent_identifiant === null
   if (sansParent && filiation.enfants.length === 0) return null
 
+  // Ce que la filiation dit d'elle-même repliée : le nombre de maillons, pas
+  // leurs noms. Un label d'asset ne tient pas dans la fente, et deux parents
+  // n'existent pas — c'est la descendance qui se compte.
+  const resume = [
+    filiation.parent_supprime
+      ? "parent supprimé"
+      : filiation.parent
+        ? "1 parent"
+        : null,
+    filiation.enfants.length > 0
+      ? `${filiation.enfants.length} descendant${filiation.enfants.length > 1 ? "s" : ""}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+
   return (
-    <div className="flex flex-col gap-1 border-t border-bord pt-2">
-      <Libelle>Filiation</Libelle>
-      {filiation.parent && (
-        <button
-          type="button"
-          onClick={() => onOuvrir(filiation.parent!.identifiant)}
-          className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal hover:text-signal-clair"
-        >
-          <span aria-hidden>↑</span>
-          <span className="truncate">{filiation.parent.label}</span>
-        </button>
-      )}
-      {filiation.parent_supprime && (
-        <p className="mesure flex items-center gap-1.5 text-[10px] text-epingle">
-          <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
-          parent supprimé — {filiation.parent_identifiant}
-        </p>
-      )}
-      {filiation.enfants.length > 0 && (
-        <div className="flex flex-col gap-[2px]">
-          <span className="mesure text-[10px] text-texte-3">
-            {filiation.enfants.length} descendant
-            {filiation.enfants.length > 1 ? "s" : ""}
-          </span>
-          {filiation.enfants.slice(0, 8).map((enfant) => (
+    <div className="border-t border-bord pt-2">
+      <Bloc cle="fiche.filiation" titre="Filiation" etat={resume}>
+        <div className="flex flex-col gap-1">
+          {filiation.parent && (
             <button
-              key={enfant.identifiant}
               type="button"
-              onClick={() => onOuvrir(enfant.identifiant)}
-              className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal"
+              onClick={() => onOuvrir(filiation.parent!.identifiant)}
+              className="mesure flex items-center gap-1.5 text-left text-[10px] text-signal hover:text-signal-clair"
             >
-              <span aria-hidden>↓</span>
-              <span className="truncate">{enfant.label}</span>
+              <span aria-hidden>↑</span>
+              <span className="truncate">{filiation.parent.label}</span>
             </button>
-          ))}
+          )}
+          {filiation.parent_supprime && (
+            <p className="mesure flex items-center gap-1.5 text-[10px] text-epingle">
+              <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+              parent supprimé — {filiation.parent_identifiant}
+            </p>
+          )}
+          {filiation.enfants.length > 0 && (
+            <div className="flex flex-col gap-[2px]">
+              <span className="mesure text-[10px] text-texte-3">
+                {filiation.enfants.length} descendant
+                {filiation.enfants.length > 1 ? "s" : ""}
+              </span>
+              {filiation.enfants.slice(0, 8).map((enfant) => (
+                <button
+                  key={enfant.identifiant}
+                  type="button"
+                  onClick={() => onOuvrir(enfant.identifiant)}
+                  className="mesure flex items-center gap-1.5 text-left text-[10px] text-texte-2 hover:text-signal"
+                >
+                  <span aria-hidden>↓</span>
+                  <span className="truncate">{enfant.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </Bloc>
     </div>
   )
 }
@@ -664,25 +813,46 @@ function Visionneuse({
   brut,
   onBrut,
   traite,
+  enVol,
 }: {
   asset: Asset
   brut: boolean
   onBrut: (v: boolean) => void
   traite: boolean
+  /** Une retouche partie et pas encore revenue. L'image affichée est alors
+   *  celle d'avant : c'est ce que la jauge vient dire, au bord bas de la zone
+   *  image, à l'endroit exact où une tuile en génération porte la sienne. */
+  enVol: { depuis: number; attendue: number } | null
 }) {
   const dimensions = brut || !traite
     ? `${asset.largeur}×${asset.hauteur}`
     : `${asset.rendu_largeur}×${asset.rendu_hauteur}`
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="damier damier-fiche aspect-square w-full border border-bord">
+    <div className="flex shrink-0 flex-col gap-1.5 px-2 pt-2">
+      {/* Carrée, et large comme le panneau — sauf sur un écran court, où elle
+          cède au calcul plutôt qu'aux contrôles. La borne porte sur la
+          **largeur** et non sur la hauteur : `aspect-ratio` cède devant
+          `max-height`, le navigateur rabote la hauteur sans redéduire la
+          largeur, et le damier cesse d'être carré. C'est la leçon déjà payée
+          sur le cadre de l'écran Découpe. */}
+      <div className="damier damier-fiche relative mx-auto aspect-square w-full max-w-[46vh] border border-bord">
         <img
           src={api.rendu(asset.identifiant, asset.empreinte, brut)}
           alt={asset.label}
           className="h-full w-full object-contain"
           style={{ imageRendering: "pixelated" }}
         />
+        {enVol && (
+          <div className="absolute inset-x-0 bottom-0">
+            <Jauge
+              demarreLe={enVol.depuis}
+              attendue={enVol.attendue}
+              compteur={false}
+              seuil={0.24}
+            />
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {/* La bascule n'est là que s'il y a deux choses à comparer. Un segment
@@ -699,9 +869,6 @@ function Visionneuse({
         )}
         <span className="mesure ml-auto text-[10px] text-texte-3">{dimensions}</span>
       </div>
-      <p className="truncate text-[11.5px] text-texte-2" title={asset.label}>
-        {asset.label}
-      </p>
     </div>
   )
 }
@@ -713,12 +880,17 @@ function BlocPasse({
   passe,
   raisonModele,
   onChange,
+  onFini,
   onRetirer,
 }: {
   rang: number
   passe: Passe
   raisonModele: string | null
+  /** La valeur bouge à l'écran, rien ne part. */
   onChange: (p: Passe) => void
+  /** La valeur est arrêtée : elle part. Un segment appelle celui-ci
+   *  directement — un choix n'a pas d'états intermédiaires à traverser. */
+  onFini: (p: Passe) => void
   onRetirer?: () => void
 }) {
   return (
@@ -739,7 +911,7 @@ function BlocPasse({
       <Segments
         valeurs={["bord", "modele"] as const}
         valeur={passe.moteur}
-        onChange={(moteur) => onChange({ ...passe, moteur })}
+        onChange={(moteur) => onFini({ ...passe, moteur })}
         indisponibles={raisonModele ? (["modele"] as const) : []}
         libelles={{ bord: "bord", modele: "modèle" }}
       />
@@ -752,6 +924,7 @@ function BlocPasse({
             min={0}
             max={120}
             onChange={(tolerance) => onChange({ ...passe, tolerance })}
+            onFini={(tolerance) => onFini({ ...passe, tolerance })}
           />
         </Reglage>
       )}
@@ -761,13 +934,14 @@ function BlocPasse({
           min={1}
           max={255}
           onChange={(seuil_alpha) => onChange({ ...passe, seuil_alpha })}
+          onFini={(seuil_alpha) => onFini({ ...passe, seuil_alpha })}
         />
       </Reglage>
       <Reglage libelle="durcissement">
         <Segments
           valeurs={[0, 1, 2, 3, 4] as const}
           valeur={passe.durcissement as 0 | 1 | 2 | 3 | 4}
-          onChange={(durcissement) => onChange({ ...passe, durcissement })}
+          onChange={(durcissement) => onFini({ ...passe, durcissement })}
         />
       </Reglage>
     </div>

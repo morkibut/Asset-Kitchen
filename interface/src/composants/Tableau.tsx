@@ -29,6 +29,32 @@ import { Bouton, Libelle, Raison, Segments } from "./chassis"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
 
+// ── Le survol qui ouvre, et le clic qui retient ─────────────────────────────
+//
+// **Le menu d'une carte se pose par-dessus, jamais dans le flux.** Il vivait
+// dans la carte, qui grandissait de 300 px en s'ouvrant : la rangée entière
+// suivait, et les voisines devenaient des rectangles vides. Une grille qui se
+// recompose quand on regarde une carte, c'est ce que le produit refuse déjà
+// pour la grille d'assets — « l'œil reste exactement où il était ».
+//
+// **Le survol révèle, le clic retient.** Le menu porte deux champs de saisie ;
+// un menu qui s'évapore parce que le pointeur a dérivé pendant qu'on tape une
+// note est inutilisable. Le clic d'avant n'est donc pas remplacé, il devient
+// l'épingle — le survol s'ajoute par-dessus.
+
+/** Le repos qu'il faut sur une carte pour que son menu paraisse. Assez long
+ *  pour traverser la grille sans rien déclencher, assez court pour battre le
+ *  clic — c'est ce que le survol doit gagner sur lui, sinon il ne sert à rien. */
+const REPOS_MS = 200
+
+/** La grâce avant qu'un menu non épinglé s'efface : le temps de traverser la
+ *  gouttière de 9 px qui sépare la carte de son menu, sans le perdre. */
+const GRACE_MS = 150
+
+/** Ce qu'on laisse entre le menu et le bord du tableau. La gouttière de la
+ *  grille — un seul vocabulaire d'écart dans tout le produit. */
+const MARGE = 9
+
 /** Ce que le pied d'une carte porte quand elle n'a ni famille ni groupe.
  *
  *  **Une mesure ne s'affiche que si elle a été prise.** Une carte d'adresse qui
@@ -63,6 +89,38 @@ export function Tableau({
   const [doublon, setDoublon] = useState<{ nom: string; carte: Carte } | null>(null)
   const [survole, setSurvole] = useState(false)
   const zone = useRef<HTMLDivElement>(null)
+
+  // ── Le survol ─────────────────────────────────────────────────────────────
+  //
+  // Tenu ici et pas dans la carte : **il n'y en a qu'un à la fois**, et une
+  // minuterie par carte sur cinquante cartes, ce sont cinquante minuteries à
+  // annuler quand le pointeur traverse la grille.
+  const [survolee, setSurvolee] = useState<string | null>(null)
+  const minuterie = useRef<number | null>(null)
+
+  const survoler = (identifiant: string, dedans: boolean) => {
+    if (minuterie.current !== null) clearTimeout(minuterie.current)
+    if (dedans) {
+      // **On ne vole pas un menu à un clavier en train de s'en servir.** Sans
+      // cette ligne, épingler une carte pour taper sa note, puis dériver d'un
+      // pixel vers la voisine, effacerait le champ sous les doigts.
+      const saisieEnCours =
+        choisie !== null &&
+        document.activeElement instanceof HTMLElement &&
+        ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)
+      if (saisieEnCours) return
+      minuterie.current = window.setTimeout(() => setSurvolee(identifiant), REPOS_MS)
+    } else {
+      minuterie.current = window.setTimeout(() => setSurvolee(null), GRACE_MS)
+    }
+  }
+
+  useEffect(
+    () => () => {
+      if (minuterie.current !== null) clearTimeout(minuterie.current)
+    },
+    [],
+  )
 
   // ── Coller ────────────────────────────────────────────────────────────────
   //
@@ -187,7 +245,7 @@ export function Tableau({
       {cartes.length === 0 ? (
         <Vide />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="defile min-h-0 flex-1 overflow-y-auto p-4">
           <div
             className="grid gap-[9px]"
             style={{ gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))" }}
@@ -197,6 +255,8 @@ export function Tableau({
                 key={carte.identifiant}
                 carte={carte}
                 choisie={carte.identifiant === choisie}
+                survolee={carte.identifiant === survolee}
+                onSurvol={(dedans) => survoler(carte.identifiant, dedans)}
                 onChoisir={() =>
                   onChoisir(carte.identifiant === choisie ? null : carte.identifiant)
                 }
@@ -259,27 +319,42 @@ function Vide() {
 function CarteTuile({
   carte,
   choisie,
+  survolee,
+  onSurvol,
   onChoisir,
   onErreur,
 }: {
   carte: Carte
+  /** Épinglée par un clic : son menu ne s'efface plus au survol perdu. */
   choisie: boolean
+  /** Le pointeur s'est reposé dessus assez longtemps. */
+  survolee: boolean
+  onSurvol: (dedans: boolean) => void
   onChoisir: () => void
   onErreur: (raison: string) => void
 }) {
+  const ouvert = choisie || survolee
   return (
     <article
       style={{ gridColumn: SPAN[carte.taille] ?? "span 1" }}
+      onPointerEnter={() => onSurvol(true)}
+      onPointerLeave={() => onSurvol(false)}
       className={[
-        "flex flex-col overflow-hidden rounded-[2px] border bg-fond-2 transition-colors duration-[80ms]",
+        // `relative` et **pas** `overflow-hidden` : le menu se pose par-dessus
+        // les voisines, donc il doit pouvoir sortir de la carte. Le rognage des
+        // coins descend sur l'image, qui est la seule chose à rogner.
+        "relative flex flex-col rounded-[2px] border bg-fond-2 transition-colors duration-[80ms]",
         choisie ? "border-lumiere shadow-[0_0_0_2px_var(--color-lumiere)]" : "border-bord",
+        // La carte ouverte passe devant ses voisines, et devant le menu d'une
+        // autre qui serait en train de s'effacer.
+        ouvert ? "z-20" : "z-0",
       ].join(" ")}
     >
       <button
         type="button"
         onClick={onChoisir}
         aria-label={carte.genre === "texte" ? "Ouvrir la note" : "Ouvrir la carte"}
-        className="relative block w-full"
+        className="relative block w-full overflow-hidden rounded-t-[2px]"
       >
         {carte.genre === "texte" ? (
           <p className="min-h-[92px] p-3 text-left text-[12.5px] leading-relaxed text-texte">
@@ -316,8 +391,95 @@ function CarteTuile({
         <span className="ml-auto">{carte.taille}×</span>
       </div>
 
-      {choisie && <Reglages carte={carte} onErreur={onErreur} />}
+      {ouvert && <Menu carte={carte} onErreur={onErreur} />}
     </article>
+  )
+}
+
+/**
+ * Le menu d'une carte — posé **sous** la carte, ou au-dessus d'elle si le bas
+ * du tableau est trop près, jamais dessus.
+ *
+ * C'est la règle qui répond à « le menu est plus grand que la vignette » : il
+ * fait 300 px pour une carte 1× qui en fait 190, donc il déborde forcément.
+ * Il déborde sur les **voisines**, hors du flux — et jamais sur l'image qu'il
+ * règle, ce qui serait absurde puisque c'est elle qu'on regarde en réglant.
+ *
+ * Largeur : celle de la carte, et au moins 240 px. Une carte 1× est trop
+ * étroite pour la rangée des familles, qui y passerait à cinq lignes.
+ */
+function Menu({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => void }) {
+  const boite = useRef<HTMLDivElement>(null)
+  const [place, setPlace] = useState<{
+    haut: boolean
+    gauche: boolean
+    hauteurMax: number | null
+  }>({ haut: false, gauche: false, hauteurMax: null })
+
+  // Mesuré à l'ouverture, une fois. Le tableau ne défile pas sous un menu
+  // ouvert — le pointeur est dessus — donc il n'y a rien à suivre ensuite.
+  //
+  // **La place se mesure autour de la carte, jamais autour du menu.** Première
+  // écriture faite dans l'autre sens : le menu rendu par défaut sous la carte,
+  // on regardait la place au-dessus de *lui*, qui comprend la carte entière.
+  // Il basculait donc vers le haut en croyant tenir, et se posait 200 px
+  // au-dessus du cadre visible. La carte est l'ancre ; c'est autour d'elle
+  // qu'on compte.
+  useEffect(() => {
+    const el = boite.current
+    const ancre = el?.parentElement
+    const defilant = el?.closest(".defile")
+    if (!el || !ancre || !defilant) return
+
+    const cadre = defilant.getBoundingClientRect()
+    const carte = ancre.getBoundingClientRect()
+    // `scrollHeight` et non `offsetHeight` : la hauteur que le menu *veut*,
+    // même quand un plafond posé au passage précédent la lui a déjà retirée.
+    const veut = el.scrollHeight + 2
+
+    const dessous = cadre.bottom - carte.bottom - MARGE
+    const dessus = carte.top - cadre.top - MARGE
+    // Dessous d'abord — c'est là qu'on regarde après avoir regardé l'image.
+    // On ne bascule que si ça ne tient pas dessous **et** que ça tient mieux
+    // dessus ; sinon on reste dessous et c'est le plafond qui règle le reste.
+    const haut = veut > dessous && dessus > dessous
+    const offert = haut ? dessus : dessous
+
+    setPlace({
+      haut,
+      // Le menu déborde à droite du cadre : il s'aligne sur le bord droit de la
+      // carte au lieu du gauche. La largeur est celle de la carte, au moins 240.
+      gauche: carte.left + Math.max(carte.width, 240) > cadre.right,
+      // **Un menu est borné par l'écran, jamais par son contenu** — la règle du
+      // § Layout, un cran plus bas. Sur un écran court il n'y a la place ni
+      // au-dessus ni en dessous : il prend alors exactement ce qui est offert et
+      // défile en dedans. Sans plancher, exprès — un plancher rendait le menu
+      // plus haut que la place, donc rogné par le cadre du tableau, donc son
+      // pied inatteignable. Un menu court qui défile vaut mieux qu'un menu
+      // complet dont on ne peut pas atteindre « Retirer ».
+      hauteurMax: veut > offert ? offert : null,
+    })
+  }, [carte.identifiant])
+
+  return (
+    <div
+      ref={boite}
+      style={place.hauteurMax ? { maxHeight: place.hauteurMax } : undefined}
+      className={[
+        "absolute z-30 min-w-[240px] rounded-[2px] border border-bord bg-fond-1",
+        // Le fondu : le menu paraît **sans clic**, donc sans geste qui dise
+        // qu'on l'a demandé. 80 ms suffisent à dire « ceci est venu se poser
+        // par-dessus » plutôt que « la grille s'est recomposée » — c'est ce que
+        // le mouvement porte ici, et c'est ce qui le fait entrer dans la liste
+        // close du § Motion.
+        "paraitre",
+        place.hauteurMax ? "defile overflow-y-auto" : "",
+        place.haut ? "bottom-full mb-[3px]" : "top-full mt-[3px]",
+        place.gauche ? "right-0" : "left-0",
+      ].join(" ")}
+    >
+      <Reglages carte={carte} onErreur={onErreur} />
+    </div>
   )
 }
 
@@ -384,7 +546,7 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-bord bg-fond-1 p-2">
+    <div className="flex flex-col gap-2 p-2">
       <input
         value={groupe}
         placeholder="groupe"

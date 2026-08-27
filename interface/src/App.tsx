@@ -755,7 +755,17 @@ export function App() {
           l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
           « tu n'as pas perdu ta place ». Les panneaux restent montés : replier
           n'est pas fermer, et retrouver un panneau où on l'avait laissé fait
-          partie de ce que le mouvement promet. */}
+          partie de ce que le mouvement promet.
+
+          **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
+          porte** — `docs/DESIGN.md` § Un panneau est borné par l'écran. Une case
+          de grille est haute comme sa piste, mais un `aside` posé dedans en
+          bloc reste haut comme *son contenu* : son `overflow-y-auto` intérieur
+          n'a alors rien à contraindre, et l'`overflow-hidden` de la case rogne
+          en silence. Mesuré au navigateur le 27 août 2026 : 300 px coupés dans
+          les réglages, 660 px dans la fiche — la filiation entière hors
+          d'atteinte. En `flex`, l'`aside` est étiré, exactement comme sur
+          l'écran Univers, seul panneau du produit qui défilait. */}
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -764,7 +774,7 @@ export function App() {
           transition: "grid-template-columns 160ms ease-in-out",
         }}
       >
-        <div className="min-h-0 overflow-hidden">
+        <div className="flex min-h-0 overflow-hidden">
           <Arbre
             bibliotheque={bibliotheque}
             collection={filtre.collection}
@@ -774,7 +784,7 @@ export function App() {
           />
         </div>
 
-        <div className="min-h-0 overflow-hidden">
+        <div className="flex min-h-0 overflow-hidden">
           <PanneauReglages
             modeles={modeles}
             choisi={modele}
@@ -862,7 +872,7 @@ export function App() {
           />
         </section>
 
-        <div className="min-h-0 overflow-hidden">
+        <div className="flex min-h-0 overflow-hidden">
           {ouverte && etat && (
             <Fiche
               asset={ouverte}
@@ -1166,7 +1176,7 @@ function Grille({
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-4">
+    <div className="defile min-h-0 flex-1 overflow-y-auto p-4">
       <div
         className="grid gap-[9px]"
         style={{

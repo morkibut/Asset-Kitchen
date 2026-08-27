@@ -91,7 +91,7 @@ export function Arbre({
         </span>
       </EnTetePanneau>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="defile flex min-h-0 flex-1 flex-col overflow-y-auto">
         <Section
           titre="Projets"
           onAjouter={() => {

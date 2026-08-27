@@ -157,14 +157,70 @@ body {
   outline-offset: 1px;
 }
 
+/* La barre de défilement — 9 px, la gouttière de la grille d'assets. Un seul
+   vocabulaire de largeur dans le produit.
+
+   La poignée est en `--bord-fort` et non en `--bord` : sur `--fond-1`, le trait
+   de séparation du châssis passe sous le seuil où l'œil le trouve, et une barre
+   qu'on ne voit pas ne dit pas « il y a plus ». C'est la seule pièce du châssis
+   qui doit se faire remarquer quand elle paraît — et elle ne paraît que quand
+   il y a quelque chose à dire. */
 ::-webkit-scrollbar {
   width: 9px;
   height: 9px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bord);
+  background: var(--color-bord-fort);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bord-fort) transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Un panneau est borné par l'écran, jamais par son contenu — `docs/DESIGN.md`
+   § Layout. Toute zone qui défile porte cette classe, et elle porte deux
+   règles que Tailwind ne dit pas en un mot.
+
+   `flex-shrink: 0` sur les enfants directs : dans une colonne flex qui défile,
+   un bloc se comprime au lieu de sortir. Mesuré le 27 août 2026 en bornant les
+   panneaux à la main — la liste des modèles tombait à 0 px et disparaissait
+   entièrement, sa section passant de 330 à 34 px. Un contrôle écrasé ment sur
+   son état ; il vaut mieux qu'il sorte de l'écran et qu'une barre le dise.
+
+   `scrollbar-gutter: stable` : la barre ne déplace rien en paraissant. Vrai
+   d'un panneau, et surtout de la grille d'assets, où 9 px de moins peuvent
+   retirer une colonne entière d'un `auto-fill`.
+   ───────────────────────────────────────────────────────────────────────────── */
+.defile {
+  scrollbar-gutter: stable;
+}
+.defile > * {
+  flex-shrink: 0;
+}
+
+/* Le menu d'une carte du tableau — `docs/DESIGN.md` § Le menu d'une carte.
+   Il paraît **sans clic**, donc sans geste qui dise qu'on l'a demandé : les
+   80 ms de fondu sont ce qui le fait lire comme une chose venue se poser
+   par-dessus, plutôt que comme une grille qui se recompose. C'est à ce titre
+   qu'il entre dans la liste close du § Motion, et pas au titre du confort.
+   Les 2 px de levée sont ceux de l'arrivée d'un asset dans la grille, à un
+   pixel près : le même vocabulaire pour la même chose — quelque chose est là
+   qui n'y était pas. */
+@keyframes paraitre {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.paraitre {
+  animation: paraitre 80ms var(--ease-entree);
 }

@@ -161,7 +161,7 @@ export function EcranDecoupe({
         <aside className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1">
           <EnTetePanneau>Ce qui sortira</EnTetePanneau>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
+          <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
             <div className="flex flex-col gap-1">
               <Libelle>Détection</Libelle>
               <Segments
