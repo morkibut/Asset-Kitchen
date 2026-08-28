@@ -1,0 +1,686 @@
+[
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_low\\casque.png",
+  "silhouette_retrouvee": 0.9914,
+  "repeint": 0.0082,
+  "recouvert": 0.0366,
+  "ajout": 0.0244,
+  "ajout_hors_zone": 0.0061,
+  "compacite": 0.2093,
+  "echelle_brute": 1.0236,
+  "echelle_recalee": 0.97,
+  "decalage_px": [
+   4,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_low\\cape.png",
+  "silhouette_retrouvee": 0.9993,
+  "repeint": 0.253,
+  "recouvert": 0.227,
+  "ajout": 1.8968,
+  "ajout_hors_zone": 1.6961,
+  "compacite": 0.4172,
+  "echelle_brute": 0.9989,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   16,
+   -23
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_low\\jambieres.png",
+  "silhouette_retrouvee": 0.9945,
+  "repeint": 0.0027,
+  "recouvert": 0.0173,
+  "ajout": 0.0137,
+  "ajout_hors_zone": 0.0029,
+  "compacite": 0.4,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_medium\\casque.png",
+  "silhouette_retrouvee": 0.992,
+  "repeint": 0.0071,
+  "recouvert": 0.0246,
+  "ajout": 0.0739,
+  "ajout_hors_zone": 0.0191,
+  "compacite": 0.3721,
+  "echelle_brute": 1.018,
+  "echelle_recalee": 0.95,
+  "decalage_px": [
+   5,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_medium\\cape.png",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.2209,
+  "recouvert": 0.2617,
+  "ajout": 1.8646,
+  "ajout_hors_zone": 1.6155,
+  "compacite": 0.3801,
+  "echelle_brute": 0.9989,
+  "echelle_recalee": 0.63,
+  "decalage_px": [
+   14,
+   -26
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\gpt-image-2_medium\\jambieres.png",
+  "silhouette_retrouvee": 0.9976,
+  "repeint": 0.0013,
+  "recouvert": 0.0181,
+  "ajout": 0.0152,
+  "ajout_hors_zone": 0.0058,
+  "compacite": 0.4043,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash\\casque.png",
+  "silhouette_retrouvee": 0.9935,
+  "repeint": 0.0126,
+  "recouvert": 0.0124,
+  "ajout": 0.0566,
+  "ajout_hors_zone": 0.0116,
+  "compacite": 0.1837,
+  "echelle_brute": 1.0326,
+  "echelle_recalee": 0.96,
+  "decalage_px": [
+   4,
+   -1
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.25,
+  "recouvert": 0.2241,
+  "ajout": 1.9444,
+  "ajout_hors_zone": 1.6389,
+  "compacite": 0.375,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   12,
+   -21
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash\\jambieres.png",
+  "silhouette_retrouvee": 0.9956,
+  "repeint": 0.0,
+  "recouvert": 0.0137,
+  "ajout": 0.0116,
+  "ajout_hors_zone": 0.0022,
+  "compacite": 0.3143,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash-LITE\\casque.jpg",
+  "silhouette_retrouvee": 0.9947,
+  "repeint": 0.0042,
+  "recouvert": 0.0143,
+  "ajout": 0.0571,
+  "ajout_hors_zone": 0.0087,
+  "compacite": 0.2796,
+  "echelle_brute": 1.0483,
+  "echelle_recalee": 0.95,
+  "decalage_px": [
+   6,
+   -1
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash-LITE\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.1728,
+  "recouvert": 0.257,
+  "ajout": 2.0484,
+  "ajout_hors_zone": 1.7952,
+  "compacite": 0.5048,
+  "echelle_brute": 0.9978,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   13,
+   -26
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\gemini-3.1-flash-LITE\\jambieres.jpg",
+  "silhouette_retrouvee": 0.9948,
+  "repeint": 0.0066,
+  "recouvert": 0.0201,
+  "ajout": 0.0251,
+  "ajout_hors_zone": 0.0043,
+  "compacite": 0.2794,
+  "echelle_brute": 0.9966,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   -1
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\seedream-5.0-lite\\casque.jpg",
+  "silhouette_retrouvee": 0.9902,
+  "repeint": 0.0079,
+  "recouvert": 0.0609,
+  "ajout": 0.0497,
+  "ajout_hors_zone": 0.0067,
+  "compacite": 0.3806,
+  "echelle_brute": 1.0135,
+  "echelle_recalee": 0.98,
+  "decalage_px": [
+   2,
+   5
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\seedream-5.0-lite\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.4458,
+  "recouvert": 0.2664,
+  "ajout": 2.3396,
+  "ajout_hors_zone": 1.9568,
+  "compacite": 0.8745,
+  "echelle_brute": 0.9978,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   23,
+   -22
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\seedream-5.0-lite\\jambieres.jpg",
+  "silhouette_retrouvee": 0.9972,
+  "repeint": 0.0013,
+  "recouvert": 0.0534,
+  "ajout": 0.0412,
+  "ajout_hors_zone": 0.0043,
+  "compacite": 0.2652,
+  "echelle_brute": 0.9983,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet1\\qwen-image-3\\casque.png",
+  "silhouette_retrouvee": 0.9914,
+  "repeint": 0.007,
+  "recouvert": 0.0444,
+  "ajout": 0.0651,
+  "ajout_hors_zone": 0.0071,
+  "compacite": 0.3287,
+  "echelle_brute": 1.0427,
+  "echelle_recalee": 0.95,
+  "decalage_px": [
+   6,
+   -1
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet1\\qwen-image-3\\cape.png",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.2637,
+  "recouvert": 0.2297,
+  "ajout": 2.1808,
+  "ajout_hors_zone": 1.868,
+  "compacite": 0.4643,
+  "echelle_brute": 1.0022,
+  "echelle_recalee": 0.63,
+  "decalage_px": [
+   9,
+   -14
+  ]
+ },
+ {
+  "jet": 1,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet1\\qwen-image-3\\jambieres.png",
+  "silhouette_retrouvee": 0.9956,
+  "repeint": 0.004,
+  "recouvert": 0.0279,
+  "ajout": 0.0426,
+  "ajout_hors_zone": 0.0066,
+  "compacite": 0.2929,
+  "echelle_brute": 1.0056,
+  "echelle_recalee": 0.99,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_low\\casque.png",
+  "silhouette_retrouvee": 0.993,
+  "repeint": 0.0124,
+  "recouvert": 0.0334,
+  "ajout": 0.066,
+  "ajout_hors_zone": 0.0109,
+  "compacite": 0.2701,
+  "echelle_brute": 1.0292,
+  "echelle_recalee": 0.96,
+  "decalage_px": [
+   4,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_low\\cape.png",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.1714,
+  "recouvert": 0.2519,
+  "ajout": 2.015,
+  "ajout_hors_zone": 1.7312,
+  "compacite": 0.3752,
+  "echelle_brute": 0.9989,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   14,
+   -23
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_low",
+  "modele": "openai/gpt-image-2",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_low\\jambieres.png",
+  "silhouette_retrouvee": 0.991,
+  "repeint": 0.0079,
+  "recouvert": 0.0205,
+  "ajout": 0.0256,
+  "ajout_hors_zone": 0.0161,
+  "compacite": 0.2174,
+  "echelle_brute": 1.0011,
+  "echelle_recalee": 0.99,
+  "decalage_px": [
+   1,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_medium\\casque.png",
+  "silhouette_retrouvee": 0.9925,
+  "repeint": 0.0132,
+  "recouvert": 0.0121,
+  "ajout": 0.0565,
+  "ajout_hors_zone": 0.0129,
+  "compacite": 0.5,
+  "echelle_brute": 1.0449,
+  "echelle_recalee": 0.94,
+  "decalage_px": [
+   7,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_medium\\cape.png",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.2069,
+  "recouvert": 0.2196,
+  "ajout": 1.9059,
+  "ajout_hors_zone": 1.6513,
+  "compacite": 0.3932,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   15,
+   -25
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gpt-image-2_medium",
+  "modele": "openai/gpt-image-2",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\gpt-image-2_medium\\jambieres.png",
+  "silhouette_retrouvee": 0.9965,
+  "repeint": 0.0026,
+  "recouvert": 0.0181,
+  "ajout": 0.0166,
+  "ajout_hors_zone": 0.0072,
+  "compacite": 0.36,
+  "echelle_brute": 0.9989,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash\\casque.jpg",
+  "silhouette_retrouvee": 0.9945,
+  "repeint": 0.0088,
+  "recouvert": 0.0294,
+  "ajout": 0.0481,
+  "ajout_hors_zone": 0.005,
+  "compacite": 0.4609,
+  "echelle_brute": 0.9978,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   -1
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.1918,
+  "recouvert": 0.2627,
+  "ajout": 2.0994,
+  "ajout_hors_zone": 1.7674,
+  "compacite": 0.879,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   14,
+   -20
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash",
+  "modele": "google/gemini-3.1-flash-image",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash\\jambieres.png",
+  "silhouette_retrouvee": 0.9953,
+  "repeint": 0.0,
+  "recouvert": 0.0159,
+  "ajout": 0.0116,
+  "ajout_hors_zone": 0.0029,
+  "compacite": 0.3158,
+  "echelle_brute": 1.0,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash-LITE\\casque.jpg",
+  "silhouette_retrouvee": 0.9928,
+  "repeint": 0.0042,
+  "recouvert": 0.0341,
+  "ajout": 0.0667,
+  "ajout_hors_zone": 0.0095,
+  "compacite": 0.3077,
+  "echelle_brute": 1.0461,
+  "echelle_recalee": 0.95,
+  "decalage_px": [
+   6,
+   -1
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash-LITE\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.191,
+  "recouvert": 0.2403,
+  "ajout": 1.9834,
+  "ajout_hors_zone": 1.7172,
+  "compacite": 0.7631,
+  "echelle_brute": 0.9978,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   11,
+   -28
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "gemini-3.1-flash-LITE",
+  "modele": "google/gemini-3.1-flash-lite-image",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\gemini-3.1-flash-LITE\\jambieres.jpg",
+  "silhouette_retrouvee": 0.9942,
+  "repeint": 0.0066,
+  "recouvert": 0.0165,
+  "ajout": 0.0208,
+  "ajout_hors_zone": 0.0043,
+  "compacite": 0.3158,
+  "echelle_brute": 0.9966,
+  "echelle_recalee": 1.0,
+  "decalage_px": [
+   0,
+   -1
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\seedream-5.0-lite\\casque.jpg",
+  "silhouette_retrouvee": 0.9903,
+  "repeint": 0.0138,
+  "recouvert": 0.0411,
+  "ajout": 0.0693,
+  "ajout_hors_zone": 0.016,
+  "compacite": 0.2774,
+  "echelle_brute": 1.0135,
+  "echelle_recalee": 0.97,
+  "decalage_px": [
+   3,
+   4
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\seedream-5.0-lite\\cape.jpg",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.2824,
+  "recouvert": 0.2607,
+  "ajout": 2.7356,
+  "ajout_hors_zone": 2.3818,
+  "compacite": 0.8996,
+  "echelle_brute": 0.9989,
+  "echelle_recalee": 0.62,
+  "decalage_px": [
+   15,
+   -11
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "seedream-5.0-lite",
+  "modele": "bytedance-seed/seedream-5-0-lite",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\seedream-5.0-lite\\jambieres.jpg",
+  "silhouette_retrouvee": 0.9909,
+  "repeint": 0.0053,
+  "recouvert": 0.036,
+  "ajout": 0.0396,
+  "ajout_hors_zone": 0.0081,
+  "compacite": 0.271,
+  "echelle_brute": 0.9955,
+  "echelle_recalee": 0.99,
+  "decalage_px": [
+   0,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "casque",
+  "fichier": "resultats\\silhouette\\jet2\\qwen-image-3\\casque.png",
+  "silhouette_retrouvee": 0.9909,
+  "repeint": 0.0062,
+  "recouvert": 0.0258,
+  "ajout": 0.0946,
+  "ajout_hors_zone": 0.0086,
+  "compacite": 0.4028,
+  "echelle_brute": 1.0618,
+  "echelle_recalee": 0.91,
+  "decalage_px": [
+   10,
+   0
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "cape",
+  "fichier": "resultats\\silhouette\\jet2\\qwen-image-3\\cape.png",
+  "silhouette_retrouvee": 1.0,
+  "repeint": 0.375,
+  "recouvert": 0.2626,
+  "ajout": 2.1924,
+  "ajout_hors_zone": 1.8759,
+  "compacite": 0.4939,
+  "echelle_brute": 0.9966,
+  "echelle_recalee": 0.63,
+  "decalage_px": [
+   15,
+   -19
+  ]
+ },
+ {
+  "jet": 2,
+  "etiquette": "qwen-image-3",
+  "modele": "qwen/qwen-image-3",
+  "piece": "jambieres",
+  "fichier": "resultats\\silhouette\\jet2\\qwen-image-3\\jambieres.png",
+  "silhouette_retrouvee": 0.9926,
+  "repeint": 0.0123,
+  "recouvert": 0.025,
+  "ajout": 0.047,
+  "ajout_hors_zone": 0.0144,
+  "compacite": 0.1442,
+  "echelle_brute": 1.0169,
+  "echelle_recalee": 0.97,
+  "decalage_px": [
+   -2,
+   0
+  ]
+ }
+]
