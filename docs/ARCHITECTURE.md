@@ -343,7 +343,7 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 |---|---|---|
 | **Projet** *(= l'univers)* | nom, bible (texte libre), planches de référence, palette extraite, réglages par défaut | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
-| **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
+| **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
 | **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
 | **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
@@ -362,6 +362,14 @@ groupe sans carte n'a nulle part où être écrit. La teinte d'un îlot, elle, n
 ses cartes : six cartes feraient six vérités possibles pour un seul îlot. Elle vit dans le fichier
 du projet, une entrée par nom de groupe, et part avec le dernier membre. Une note est une carte
 texte : elle porte sa teinte elle-même.
+
+**Et elle vit sur le `Projet`, pas dans son `Univers`** — écrit en livrant T9, parce que « le
+fichier du projet » laissait les deux ouverts. `Univers` est défini dans sa première phrase comme
+*ce que le projet impose à ce qui rentre, et ce qu'il envoie avec* : une teinte d'îlot n'impose rien
+et ne part nulle part, et l'y poser en aurait fait le premier champ à démentir cette phrase-là. Elle
+voyage en revanche dans l'**enveloppe** du message `univers`, qui portait déjà `projet` et `nom`
+sans qu'ils soient dans l'objet — un genre d'événement de plus pour un dictionnaire de six entrées
+aurait fait un troisième canal sur un fichier qui en a un.
 
 **La position et la largeur libre sont sur la carte, jamais dans un fichier de mise en page.**
 Un `toile.json` par projet aurait exactement la panne qui a déjà valu son refus à `cartes.json`
@@ -412,7 +420,29 @@ Les liens ont les leurs, sur le même préfixe et dans la même langue — chemi
 utiles en français : `POST /api/board/links` en pose un, `PUT /api/board/links/{lien}` lui donne
 son mot et sa pointe, `DELETE /api/board/links/{lien}` le coupe. `GET /api/board` les rend **avec
 les cartes**, comme il rend déjà les groupes : la toile se lit en un aller-retour, parce qu'elle
-est le tableau.
+est le tableau — et il rend les **teintes** avec, pour la même raison.
+
+**La teinte d'un îlot se pose par `PUT /api/board/groups/tint`, et le nom du groupe est dans le
+corps.** Deux décisions, deux raisons. Le nom d'abord : un groupe est du texte libre, `nord/sud` en
+chemin devient `%2F`, et un nom qui doit revenir intact ne s'encode ni dans un chemin ni dans une
+clé composite — c'est le refus de `"ilot:nom"` qui a déjà donné `Bout(genre, valeur)`. Les **trois
+segments** ensuite : à deux, `/board/tint` entre en concurrence avec `PUT /board/{carte}` et n'est
+atteinte que si elle est déclarée avant, donc l'adresse dépendrait de l'ordre des fonctions dans un
+fichier. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`, `AGENTS.md`
+§ Pièges connus) ; à trois segments il n'y a plus d'ordre à respecter.
+
+**`PUT /api/board/{carte}` gagne le texte d'une note en même temps que sa teinte**, et ça comble un
+trou de T4 : sans lui, corriger une faute demanderait de retirer la note et de la recoller — donc
+de perdre sa place, sa teinte et les liens qui y aboutissent, c'est-à-dire tout ce que T9 vient
+d'ajouter. Le trou ne s'était jamais vu parce qu'une note au bout d'une liste se retape sans rien
+perdre.
+
+**`POST /api/board/links` accepte un mot et une pointe, et c'est pour l'annulation seule.** « Il
+naît muet » reste vrai : c'est une règle de l'**écran**, qui ne les envoie jamais en tirant un
+trait. Mais défaire une coupe, c'est reposer le lien tel qu'il était — et une route qui ne saurait
+reposer qu'un trait nu forcerait l'annulation à passer par un second appel, donc par un état où le
+geste est à moitié défait. T8 a déjà tranché cette question : deux appels pour un geste sont un
+état de trop.
 
 **Et rien n'existe côté serveur pour l'annulation.** La pile de Ctrl+Z vit dans l'onglet et meurt
 en quittant l'écran (`docs/PLAN.md` T8) : annuler, c'est rappeler la même route avec la valeur
@@ -571,6 +601,38 @@ mesuré en T5). Toute la toile y était invisible. Le produit calcule ces taille
 puisque l'étendue d'un îlot est celle de ses membres : il les lui donne. Même cause pour le cadrage
 d'ouverture, qui se calcule sur une largeur lue à la demande plutôt que sur celle que la librairie
 croit avoir.
+
+**T9 a déplacé la frontière d'un cran, et dans le sens du produit.** La ligne « Le lien » du
+tableau ci-dessus annonçait que la librairie fournirait « le tracé entre deux ancrages, son
+étiquette, sa pointe, et le fait qu'il suive ses extrémités ». Elle fournit l'étiquette — rendue à
+l'échelle du plan —, la zone d'écoute de 20 px le long d'un trait de 1 px, et le calque où tout ça
+se pose. Elle ne fournit **pas** le tracé, et c'est mesuré, pas préféré :
+
+- **Elle refuse de résoudre une arête dont les nœuds ne sont pas « initialisés »**, et
+  `isNodeInitialized` exige `internals.handleBounds` — mesuré sur le DOM des ancrages par un
+  `ResizeObserver`. *Qui ne livre rien à un onglet qui ne compose pas ses images.* Aucun trait ne
+  paraissait, sans un mot. Quatrième fois que ce piège se referme ici (T5, T6, T8, T9), et un cran
+  plus bas que la précédente : T8 avait donné à chaque nœud ses dimensions, il fallait aussi lui
+  donner ses **ancrages** — le champ existe (`node.handles`), et la librairie s'en sert au lieu de
+  mesurer.
+- **Et son calcul de position lit `measured`**, qui vaut zéro pour la même raison : les deux boîtes
+  étaient vides, donc le trait partait du coin supérieur gauche de chaque objet. La réponse est la
+  formule de T8 appliquée aux arêtes — **position mesurée, taille donnée** : la position vient de la
+  librairie parce qu'elle bouge pendant qu'on tire une carte, la taille vient du produit parce qu'il
+  la calcule de toute façon.
+
+Le tracé est donc une fonction pure du produit, `ancrer(depart, arrivee)`, qui rend les deux points
+où le segment joignant les centres croise chaque boîte. **C'est aussi ce qui permet à un îlot d'être
+une extrémité sans avoir d'identité** : son étendue est déjà calculée, puisqu'elle est celle de ses
+membres. Un ancrage qu'il aurait fallu *mesurer* aurait exigé qu'il soit un objet — §5 se referme
+sur §6.5.
+
+Deux réglages de la librairie sont **éteints, et ça se dit**, parce que leurs défauts prennent des
+gestes que T9 utilise : `zoomOnDoubleClick` (défaut `true` — le double-clic écrit une note, il ne
+peut pas aussi zoomer) et `connectOnClick` (défaut `true` — un clic sur le nom d'un îlot ouvre son
+menu ; un lien se tire, il ne se clique pas). Et `deleteKeyCode={null}`, hérité de T8, cesse d'être
+un héritage le jour où il y a de vraies arêtes : sans lui, la touche Suppr couperait un lien sans
+passer par la route ni par la pile d'annulation.
 
 **Le partage est net, et c'est ce qui rend la dépendance acceptable : elle tient la surface, le
 produit tient la matière.** Le jour où elle gênerait, ce qu'on perdrait est du geste — un plan, un

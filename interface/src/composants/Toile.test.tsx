@@ -6,6 +6,12 @@
 // pose quand elle n'a jamais été posée, jusqu'où un îlot s'étend, et lequel
 // attrape une carte lâchée à un endroit donné.
 //
+// **Et un essai d'écran garde ce que celui-ci ne peut pas voir** : sans les
+// `handles` déclarées sur chaque nœud, `@xyflow/react` refuse de résoudre une
+// arête et **aucun trait ne paraît** — sans un mot. Les essais de lien de
+// `App.test.tsx` tombent alors, ce qui est exactement leur travail : la règle
+// est ici, la preuve qu'elle est branchée est là-bas.
+//
 // **C'est aussi le seul endroit où ces règles *peuvent* être vérifiées.** jsdom
 // ne met rien en page : tout rectangle y vaut zéro, donc un essai qui tirerait
 // une carte à l'écran classerait toujours dans le même îlot — celui de la boîte
@@ -15,8 +21,34 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { Carte } from "../api"
-import { aimanter, disposer, ilotSous, ilotsDe, type Crans } from "./Toile"
+import type { Carte, Lien, Teinte } from "../api"
+import {
+  aimanter,
+  ancrer,
+  carteSous,
+  disposer,
+  ilotPerdu,
+  ilotSous,
+  ilotsDe,
+  type Crans,
+} from "./Toile"
+
+/** Un trait entre deux objets, tel que le serveur le rend. */
+const lien = (identifiant: string, de: Lien["de"], vers: Lien["de"]): Lien => ({
+  identifiant,
+  projet: "bac-a-sable",
+  de,
+  vers,
+  mot: "",
+  pointe: false,
+  cree_le: 1_787_800_200,
+})
+
+const surCarte = (identifiant: string): Lien["de"] => ({
+  genre: "carte",
+  valeur: identifiant,
+})
+const surIlot = (nom: string): Lien["de"] => ({ genre: "ilot", valeur: nom })
 
 /** Les trois crans, tels que la grille les rendrait sur une colonne de 160 px :
  *  160, puis 160×2 + 9, puis 160×4 + 9×3. Ils sont écrits ici parce qu'un essai
@@ -38,6 +70,7 @@ const carte = (identifiant: string, sur: Partial<Carte> = {}): Carte => {
     taille: 1,
     position: null,
     largeur_libre: null,
+    teinte: "",
     officiel: false,
     famille: "tous",
     empreinte: "cafe1234",
@@ -245,5 +278,141 @@ describe("quel îlot attrape une carte lâchée", () => {
     const serre = { nom: "serré", membres: 1, boite: { x: 100, y: 100, l: 200, h: 200 } }
     expect(ilotSous({ x: 150, y: 150 }, [large, serre])).toBe("serré")
     expect(ilotSous({ x: 800, y: 800 }, [large, serre])).toBe("large")
+  })
+})
+
+// ── T9 : les liens et les notes ─────────────────────────────────────────────
+//
+// **Trois règles neuves, et les trois sont de la géométrie ou de l'arithmétique
+// — donc les trois se vérifient ici.** Où un trait rencontre ce qu'il joint, ce
+// qu'un point du plan désigne, et ce qu'un îlot emporte en disparaissant. Ce qui
+// reste — tirer le trait lui-même — passe par la gestion de pointeur de la
+// librairie, qui ne démarre pas sur des événements synthétisés : ça se vérifie
+// au navigateur, et `docs/PLAN.md` le dit plutôt que de le laisser croire
+// couvert.
+
+describe("où un trait rencontre ce qu'il joint", () => {
+  test("il part du côté qui fait face, et rien n'est stocké", () => {
+    // Deux boîtes côte à côte : le trait sort par le bord droit de la première
+    // et entre par le bord gauche de la seconde, à mi-hauteur des deux.
+    const gauche = { x: 0, y: 0, l: 100, h: 100 }
+    const droite = { x: 300, y: 0, l: 100, h: 100 }
+    const [un, deux] = ancrer(gauche, droite)
+
+    expect(un).toEqual({ x: 100, y: 50 })
+    expect(deux).toEqual({ x: 300, y: 50 })
+  })
+
+  test("le côté change avec la direction, sans qu'on ait rien à lui dire", () => {
+    // C'est toute la raison d'être de la fonction : un ancrage **calculé** ne
+    // demande pas que l'objet ait une identité où le ranger — et c'est ce qui
+    // permet à un îlot, qui n'en a pas, d'être une extrémité.
+    const haut = { x: 0, y: 0, l: 100, h: 100 }
+    const bas = { x: 0, y: 300, l: 100, h: 100 }
+    const [un, deux] = ancrer(haut, bas)
+
+    expect(un).toEqual({ x: 50, y: 100 })
+    expect(deux).toEqual({ x: 50, y: 300 })
+  })
+
+  test("deux boîtes concentriques n'ont pas de côté qui se fasse face", () => {
+    // Le trait a alors une longueur nulle : il ne se voit pas, ce qui est
+    // exactement ce qu'il y a à montrer de deux objets posés l'un sur l'autre.
+    const boite = { x: 10, y: 10, l: 80, h: 40 }
+    expect(ancrer(boite, boite)).toEqual([
+      { x: 50, y: 30 },
+      { x: 50, y: 30 },
+    ])
+  })
+})
+
+describe("ce qu'un point du plan désigne", () => {
+  const cartes = [
+    carte("a", { groupe: "marais", position: [0, 0] }),
+    carte("b", { groupe: "nord", position: [1000, 0] }),
+  ]
+  const places = disposer(cartes, CRANS)
+
+  test("une carte d'abord, un îlot ensuite — l'ordre de ce que l'œil voit", () => {
+    // Les `zIndex` posent la carte à 1 et l'îlot à 0 ; `carteSous` se demande
+    // donc avant `ilotSous`. Un point sur la carte « a » est **sur la carte**,
+    // même s'il est aussi dans l'étendue de l'îlot « marais » qui l'englobe.
+    const surA = { x: 10, y: 10 }
+    expect(carteSous(surA, cartes, places, CRANS)).toBe("a")
+    expect(ilotSous(surA, ilotsDe(cartes, places, CRANS))).toBe("marais")
+  })
+
+  test("à côté de tout, il ne désigne rien — et un trait lâché là n'est pas un refus", () => {
+    expect(carteSous({ x: 600, y: 600 }, cartes, places, CRANS)).toBe("")
+  })
+
+  test("une carte en réserve n'est pas sur le plan, donc rien ne la désigne", () => {
+    const rangee = [carte("z")]
+    expect(carteSous({ x: 0, y: 0 }, rangee, disposer(rangee, CRANS), CRANS)).toBe("")
+  })
+})
+
+describe("ce qu'un îlot emporte en disparaissant", () => {
+  const teintes: Record<string, Teinte> = { marais: "lichen" }
+
+  test("le dernier membre qui sort emporte la teinte et les traits de l'îlot", () => {
+    // **La moitié de l'annulation que le serveur ne peut pas tenir.** Il efface
+    // à juste titre les liens et la teinte d'un îlot qui n'existe plus ; mais
+    // Ctrl+Z, qui rend son groupe à la carte, ferait alors reparaître un îlot
+    // **nu** — la couleur et les traits perdus en silence. L'écran a la toile
+    // sous les yeux au moment du geste : il retient de quoi les reposer.
+    const sortante = carte("seul", { groupe: "marais", position: [0, 0] })
+    const liens = [
+      lien("l1", surCarte("note"), surIlot("marais")),
+      lien("l2", surCarte("note"), surCarte("ailleurs")),
+    ]
+
+    const perdu = ilotPerdu(sortante, [sortante], liens, teintes)
+    expect(perdu).toEqual({
+      nom: "marais",
+      teinte: "lichen",
+      liens: [liens[0]],
+    })
+  })
+
+  test("tant qu'il reste un membre, rien ne se perd", () => {
+    const sortante = carte("un", { groupe: "marais", position: [0, 0] })
+    const reste = carte("deux", { groupe: "marais", position: [200, 0] })
+    expect(
+      ilotPerdu(sortante, [sortante, reste], [lien("l1", surCarte("n"), surIlot("marais"))], teintes),
+    ).toBeUndefined()
+  })
+
+  test("passer d'un îlot à un autre emporte le premier, s'il était le dernier membre", () => {
+    // **Le cas que « le groupe devient vide » ratait.** Tirer l'unique membre
+    // d'un îlot droit dans un autre écrit un groupe **non vide** ; le premier
+    // îlot disparaît quand même, avec son trait et sa couleur. La règle est donc
+    // « le groupe change », pas « le groupe se vide ».
+    const sortante = carte("seul", { groupe: "marais", position: [0, 0] })
+    const voisine = carte("autre", { groupe: "nord", position: [500, 0] })
+    const liens = [lien("l1", surIlot("marais"), surCarte("autre"))]
+    expect(ilotPerdu(sortante, [sortante, voisine], liens, { marais: "iris" })).toEqual({
+      nom: "marais",
+      teinte: "iris",
+      liens,
+    })
+  })
+
+  test("une carte qui n'était dans aucun îlot n'emporte rien", () => {
+    const posee = carte("libre", { position: [10, 10] })
+    expect(ilotPerdu(posee, [posee], [], teintes)).toBeUndefined()
+  })
+
+  test("un îlot sans teinte emporte quand même ses traits", () => {
+    // Le vide **est** une valeur : un îlot sans teinte porte celle du châssis.
+    // Ce qui se repose est donc « pas de teinte », et ça ne doit pas empêcher
+    // les traits de revenir.
+    const sortante = carte("seul", { groupe: "nord", position: [0, 0] })
+    const liens = [lien("l1", surIlot("nord"), surCarte("note"))]
+    expect(ilotPerdu(sortante, [sortante], liens, {})).toEqual({
+      nom: "nord",
+      teinte: "",
+      liens,
+    })
   })
 })

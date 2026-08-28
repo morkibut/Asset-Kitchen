@@ -41,11 +41,42 @@ l'asset ; et l'écran Réglages qui tient enfin les trois questions promises dep
 garde-fous, dossiers. **Les quatre-vingt-quatre critères d'acceptation de T1 à T7 sont cochés
 dans `docs/PLAN.md`, et 145 tests de serveur plus 35 d'écran les tiennent.**
 
-**Ce qui vient après n'est plus la V1, et T8 est finie.** Le tableau d'inspiration a sa
-seconde vue : un plan qu'on déplace et qu'on zoome, des îlots nommés, une réserve à droite.
-**Les quatre-vingt-dix-sept critères d'acceptation de T1 à T8 sont cochés dans
-`docs/PLAN.md`, et 160 tests de serveur plus 55 d'écran les tiennent.** Reste **T9, les
-liens et les notes**, qui n'est pas commencée et dont aucune case n'est cochée.
+**Ce qui vient après n'est plus la V1, et T8 comme T9 sont finies.** T8 : le tableau
+d'inspiration a sa seconde vue — un plan qu'on déplace et qu'on zoome, des îlots nommés, une
+réserve à droite. T9 : ce que T8 permet de ranger, T9 permet de le **dire** — un trait d'un objet à
+un autre, une note posée à même la toile, et six teintes sourdes. **Les cent six critères
+d'acceptation de T1 à T9 sont cochés dans `docs/PLAN.md`, et 185 tests de serveur plus 75 d'écran
+les tiennent.** Le plan n'a plus de tranche ouverte.
+
+**Un lien est le seul objet neuf du modèle depuis T4, et il naît muet.** Ni mot, ni pointe : un
+trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — *le défaut est muet,
+l'exception s'exprime*. Une extrémité est une carte par identifiant **ou** un îlot par nom de
+groupe, et le couple `(genre, valeur)` existe parce que les deux ne se nomment pas dans le même
+espace. Il ne survit pas à ses extrémités, et c'est la **suppression** qui l'emporte, jamais un
+balayage : un trait vers rien ne représente rien, et une entrée morte sur le disque serait une
+deuxième vérité qui attend son heure.
+
+**La teinte d'un îlot vit sur le projet, jamais dans son univers ni sur ses cartes.** Sur ses
+cartes, six membres feraient six vérités possibles pour un seul cadre. Dans `Univers` — « ce que le
+projet impose à ce qui rentre, et ce qu'il envoie avec » —, elle aurait été le premier champ à
+démentir cette phrase : une teinte n'impose rien et ne part nulle part. Une **note**, elle, *est* un
+objet et porte la sienne. Une carte image n'en porte aucune, et c'est un critère : colorier chaque
+carte reconstruirait un second rangement, concurrent du groupe.
+
+**Une revue adversariale a suivi la tranche, et elle a trouvé quatre défauts de plus.** Vingt-quatre
+trouvailles sur cinq lentilles, chacune soumise à **trois sceptiques chargés de la réfuter** ; six
+ont survécu, dont quatre disaient la même chose. La plus utile ne portait pas sur le produit mais
+sur ce qui est censé le garder : *un essai passait pour une autre raison que celle qu'il annonçait*
+— la borne du mot d'un lien était éprouvée sur une paire déjà jointe, donc le refus rendu était
+« ces deux-là sont déjà joints », et l'essai aurait passé même si la borne n'existait pas. **Une
+assertion négative ne prouve rien**, encore, et cette fois-ci sur nos propres essais.
+
+**T9 a été conçue par un panneau avant d'être écrite, et ça a trouvé le défaut le plus grave.**
+Trois conceptions indépendantes des quatre gestes ouverts, trois juges — les documents, l'usage, les
+pannes —, et le verdict a nommé un état que ni le serveur ni l'écran n'auraient signalé : *sortir la
+dernière carte d'un îlot efface ses liens et sa teinte, et Ctrl+Z ne rendait que le groupe*. Chacun
+des deux gestes est correct isolément ; c'est leur composition qui perdait quelque chose, en
+silence. Première fois que ce dépôt fait ça, et à refaire.
 
 **La toile ajoute deux champs à la carte, et pas une entité.** `position` et `largeur_libre`
 sont portées par la carte elle-même — un `toile.json` par projet aurait la panne qui a déjà
@@ -72,7 +103,11 @@ prompt de l'atelier, resté focalisé **derrière** l'écran Univers qui le couv
 de `docs/PLAN.md` § T8 dit pour chacun ce qui l'avait rendu invisible.
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
-tous les défauts.** T8 : cinq de plus, dont trois qu'aucun essai d'écran ne pouvait voir —
+presque tous les défauts.** T9 : six, dont cinq en s'en servant — et **le sixième, le plus grave,
+trouvé avant la première ligne de code** par un panneau de conceptions mises à juger l'une contre
+l'autre. C'est le seul de toute l'histoire du dépôt qu'aucun essai n'aurait pu voir *ni* aucune
+séance : les deux gestes qui le composent sont corrects isolément. T8 : cinq de plus, dont trois
+qu'aucun essai d'écran ne pouvait voir —
 jsdom ne met rien en page, donc un nœud caché par la librairie y est rendu comme un nœud
 visible. T1 : l'écran doublait chaque génération lancée depuis l'onglet. T3 :
 cinq de plus, dont deux venaient de la même racine — deux vérités sur la même chose
@@ -210,7 +245,7 @@ les voir vérifiait « ni 404, ni page d'accueil »** — or 405 n'est ni l'un n
 assertion négative ne prouve rien d'un protocole*. Il ouvre désormais une vraie session et
 vérifie les deux écritures de l'adresse.
 
-**Le produit s'explique lui-même, et le corpus a été regardé à l'œil.** 46 entrées, quatre
+**Le produit s'explique lui-même, et le corpus a été regardé à l'œil.** 46 entrées à l'époque, quatre
 écrans, deux rendus — le panneau de 280 px et l'écran Guide —, un seul manque déclaré, et
 c'est le guide qui le tient. La revue de l'atelier lancé a mesuré **trente poignées sur les
 quatre écrans** et trouvé un défaut de la famille habituelle : « Proportions » réagissait
@@ -322,6 +357,8 @@ chaîne avance : c'est le signe que ça marche.
 | `atelier/services/assets.py` | poser une recette, revenir au brut, nommer une recette — et **le seul endroit du dépôt qui écrive un asset** (`sauver`). **Aucun `fournisseur` dans ce fichier**, et ça se lit dans les imports : T2 n'appelle jamais l'extérieur |
 | `atelier/services/bibliotheque.py` | ranger, retrouver, juger, jeter, reconstruire. Pas de `fournisseur` non plus : tout T3 marche réseau coupé. C'est ici que vivent l'annulation courte, le refus de supprimer le dernier projet, l'adoption de ce qui existait avant les projets — et **le seul endroit qui écrive un projet** (`sauver_projet`), par où l'univers passe |
 | `atelier/services/univers.py` | le tableau et l'univers — coller, promouvoir, extraire la palette, réaligner. **Le seul service qui sorte sans être une génération**, et par une seule méthode : `recuperer`, l'adresse collée. Tout le reste marche réseau coupé |
+| `atelier/domaine/lien.py` | **le seul objet neuf du modèle depuis T4** — un trait entre deux objets de la toile. Il naît muet, et une extrémité est un couple `(genre, valeur)` parce qu'une carte et un îlot ne se nomment pas dans le même espace. `depuis_json` rend **rien** plutôt que de lever : un lien illisible est un lien sans extrémité, donc un lien qui doit disparaître, et c'est déjà la règle |
+| `atelier/domaine/teinte.py` | la liste close des six teintes, et rien de ce qu'elles valent — **aucun hexadécimal ici** : le produit range un *nom*, l'écran seul sait ce qu'il vaut par son token. Un module à part parce que la carte et le projet s'en servent tous les deux et qu'aucun ne la possède |
 | `atelier/domaine/carte.py` | la deuxième famille d'images du produit. Elle ne s'exporte jamais, ne compte pas dans la bibliothèque, n'a ni recette ni rendu. Elle appartient à son projet, et part avec lui |
 | `atelier/domaine/projet.py` (§ Univers) | la bible en cinq champs nommés, le barème d'échelles — une nature de sujet porte **sa famille et son occupation à la fois** —, la cible de pixel, les modèles par famille, et `recette_de()`, **le seul endroit qui dise ce qu'un projet impose** |
 | `atelier/image/palette.py` | d'où vient la palette d'un univers. CPU, pure, aucune entrée-sortie. Détoure d'abord — sans quoi le fond plat écrit la palette à lui seul |
@@ -345,7 +382,7 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/composants/Univers.tsx` | l'écran Univers — `380px · 1fr`, l'univers à gauche, le tableau à droite. Il couvre l'atelier, donc **il porte sa propre fente de refus** : une raison envoyée derrière lui serait invisible au moment où elle compte |
 | `interface/src/composants/Tableau.tsx` | le tableau d'inspiration. Le collage y est le geste principal, et il devine : des octets font une carte image, une adresse une carte en attente, le reste une note. Depuis T8 il porte **une seule grille pour les deux vues** — la réserve n'est pas une grille de plus, c'est celle-ci filtrée sur ce qui n'a encore ni groupe ni place —, et la carte y est un seul composant posé de deux façons |
 | `interface/src/composants/Toile.tsx` | la seconde vue du tableau. **Trois fonctions pures en tiennent toute la géométrie** — où une carte se pose, jusqu'où un îlot s'étend, lequel attrape une carte lâchée — et c'est ce qui les rend vérifiables : `Toile.test.tsx` les éprouve sans monter d'écran, là où jsdom ne pourrait rien mesurer. Chaque nœud porte ses **dimensions données** : la librairie cache ce qu'elle n'a pas mesuré, et elle mesure par un `ResizeObserver` |
-| `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 46 entrées, quatre écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
+| `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 55 entrées, cinq écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
 | `interface/src/composants/Infobulle.tsx` | le survol qui révèle et le clic qui épingle. Le **libellé est la cible** — aucun glyphe neuf : le nom du réglage devient sa propre poignée, souligné d'un pointillé `--bord-fort`. Rendre un libellé sans clé n'est pas une erreur : rien ne se marque, et c'est le cas d'un réglage que le corpus ne documente pas |
 | `interface/src/composants/EcranReglages.tsx` | les trois questions promises depuis T1, au même endroit (US-96) : la clé, les garde-fous de l'agent, le dossier du jeu. Un panneau posé sur l'atelier et non un quatrième écran plein — il ne couvre pas le travail, il le règle. Le compteur de l'agent y est **à côté du réglage qu'il fait relever** : lu ailleurs, il faudrait revenir |
 | `interface/src/composants/Guide.tsx` | l'écran Guide, la seule prose du produit. Il **ne porte pas de fente de refus**, et c'est la preuve qu'on a compris la règle : il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. Sa troisième partie est le corpus rendu à la file, groupé **par écran** — pas par thème : quand on cherche une explication, on se souvient d'où l'on était |
@@ -353,6 +390,7 @@ chaîne avance : c'est le signe que ça marche.
 | `tests/test_t4.py` | les critères de T4 — la palette extraite de **vraies** planches (`essais/guide/`), la famille qui décide des références, le compte dédoublonné, la palette rétroactive et ses deux comptes, le barème, et le hors ligne. Trois tests **comptent les appels du double** : le tableau et la palette ne demandent jamais le fournisseur |
 | `tests/test_t5.py` | les critères de T5 — la planche de huit, la filiation dans les deux sens, les trois issues d'une détection ratée, la suppression sans cascade, la reconstruction, et le hors ligne prouvé en comptant les appels du double. Plus le symétrique du moteur absent : **le moteur par modèle exécuté pour de vrai** quand il est là |
 | `tests/test_t6.py` | les critères de T6 — l'archive et son descriptif, les homonymes numérotés, le rendu et non le brut, le JPEG converti, le refus d'une sélection vide, l'image seule qui se télécharge encore, et le hors ligne prouvé en comptant les appels du double. Ils **ouvrent** l'archive au lieu de la mesurer : `zipfile` la relit, `json` relit le descriptif, Pillow rouvre chaque PNG et confronte ses dimensions à celles annoncées. L'export est le seul geste dont personne ne voit le résultat avant de l'ouvrir ailleurs, une semaine plus tard |
+| `tests/test_t9.py` | les critères de T9 — le lien muet à la naissance, la toile lue en un aller-retour, la paire déjà jointe refusée en le disant, le lien qui meurt avec son extrémité **et sur le disque**, la note née posée et classée, le texte corrigé en place, les six teintes seules, et le hors ligne prouvé en comptant les appels du double. Trois des neuf critères n'y sont pas : deux sont de la géométrie ou de la couleur, le troisième est une pile qui n'existe que dans l'onglet |
 | `tests/test_t8.py` | les critères de T8 — la place et la largeur libre écrites par la route du groupe, le vide qui efface là où l'absence ne touche pas, la toile relue du disque après l'index effacé, la largeur libre qui ne touche jamais au cran de vignette et réciproquement, et le hors ligne prouvé en comptant les appels du double. Six des treize critères n'y sont pas : ils portent sur ce que l'écran montre ou sur une géométrie que le serveur ne connaît pas |
 | `interface/src/composants/Toile.test.tsx` | la géométrie de la toile, **sans monter d'écran**. Il existe parce que jsdom ne met rien en page : un essai qui tirerait une carte à travers le plan classerait toujours dans le même îlot, celui de la boîte vide qui contient l'origine. Les fonctions sont pures pour cette raison-là |
 | `tests/test_t7.py` | les critères de T7 — les outils appelés **par le serveur**, `call_tool` comme un vrai client, parce qu'appeler les fonctions Python sauterait la validation de schéma et ne prouverait rien du contrat. Plus la vraie poignée de main MCP sur les deux écritures de l'adresse, et deux tests qui **comptent les appels du double** : importer, retoucher, découper et exporter ne demandent jamais le fournisseur |
@@ -760,6 +798,42 @@ deux vivent côte à côte.
   donc une valeur encore nulle — et le geste ne s'écrit pas. La valeur tirée vit donc dans les
   deux : l'état pour rendre la carte à sa largeur vive, la référence pour la poser. Même geste,
   deux lecteurs, deux endroits où la lire.
+- **Une librairie cache ce qu'elle n'a pas mesuré — et elle refuse aussi de *relier* ce qu'elle
+  n'a pas mesuré.** Quatrième fois que ce piège se referme (T5, T6, T8, T9), et un cran plus bas à
+  chaque fois. T8 avait donné à chaque nœud ses `width` et `height` ; il refusait quand même de
+  tracer la moindre arête, parce qu'`isNodeInitialized` exige `internals.handleBounds` — mesuré sur
+  le DOM des **ancrages**, par le même `ResizeObserver`. Aucun trait ne paraissait, sans un mot. Le
+  champ existe pour ça : un nœud porte ses `handles` comme il porte ses dimensions, et la librairie
+  s'en sert au lieu de mesurer. Corollaire immédiat : son calcul de position lit `measured`, qui
+  vaut zéro pour la même raison, donc le trait partait du **coin supérieur gauche** de chaque objet.
+  La formule qui tient les deux : **position mesurée, taille donnée** — la position vient de la
+  librairie parce qu'elle bouge pendant qu'on tire, la taille vient du produit parce qu'il la
+  calcule de toute façon.
+- **Le défaut d'un réglage de librairie prend le geste qu'on voulait.** `zoomOnDoubleClick` et
+  `connectOnClick` valent `true` chez `@xyflow/react` 12.11.5 : le premier zoome sur le double-clic
+  qui écrit une note, le second arme une liaison sur le clic qui ouvre le menu d'un îlot. Les deux
+  sont éteints, **nommés, et la raison est écrite à côté** — un réglage éteint sans phrase se
+  rallume à la première mise à jour.
+- **Un onglet qui ne compose pas ses images ment aussi sur les couleurs.** Une transition CSS n'y
+  avance pas (piège de T6), donc `getComputedStyle` y rend un instant du trajet plutôt que sa fin :
+  une couleur qu'on vient de poser s'y lit encore comme l'ancienne. Ce qui se vérifie dans un tel
+  onglet est le **style en ligne**, pas la valeur calculée — et une comparaison de teintes à l'œil
+  ne s'y fait pas du tout.
+- **`getComputedStyle` rend un objet *vivant*.** Le garder pour comparer un avant et un après ne
+  compare rien : les deux lectures rendent l'état d'après. Une mesure se prend en **copiant la
+  valeur** au moment où on la prend, jamais en gardant la déclaration.
+- **Un état qui l'emporte sur un autre ne doit pas l'emporter sur tout.** L'anneau `--lumiere` d'une
+  carte choisie l'emporte à juste titre sur sa teinte — mais le faire l'emporter sur le **fond**
+  autant que sur le bord rendait la teinte invisible tant que la carte restait choisie, c'est-à-dire
+  à l'instant précis où on vient de la choisir : la pastille se clique **depuis le menu de la
+  carte**, qui n'est ouvert que parce qu'elle est choisie. Deux vocabulaires qui se disputent une
+  surface ne se disputent qu'une **partie** de cette surface.
+- **Un événement qui gagne un champ gagne aussi des lecteurs qui ne le concernent pas.** Le message
+  `univers` fait redemander l'état et le catalogue depuis T4, parce que promouvoir un artwork change
+  ce qui partira. Il porte désormais aussi les teintes d'îlot : colorer un îlot déclenchait donc
+  **deux appels réseau pour une couleur**. La règle n'avait pas bougé ; c'est sa condition qui
+  manquait, parce que jusque-là « un message `univers` est arrivé » et « l'univers a changé »
+  étaient la même chose.
 - **Un glissement synthétisé ne démarre pas une gestion de pointeur de librairie.** Ni le nœud
   ni le plan ne bougent sous des `PointerEvent` fabriqués, alors que le même dispatch atteint
   bien la cible et remonte jusqu'à la racine React. Ce qui *est* du produit — un dépôt HTML5,

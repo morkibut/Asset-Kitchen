@@ -39,6 +39,8 @@ import {
   type Reinjection,
   type Role,
   type Carte,
+  type Lien,
+  type Teinte,
   type CompteReferences,
   type Univers,
   UNIVERS_VIDE,
@@ -160,6 +162,12 @@ export function App() {
   // aller-retour vers l'atelier.
   const [univers, setUnivers] = useState<Univers>(UNIVERS_VIDE)
   const [cartes, setCartes] = useState<Carte[]>([])
+  // **Les traits et les teintes voyagent avec les cartes**, parce qu'ils
+  // viennent de la même route : une toile se lit en un aller-retour. Tenus ici
+  // et non dans l'écran Univers, comme les cartes elles-mêmes — un seul endroit
+  // écoute le flux, pour toute la vie de l'onglet.
+  const [liens, setLiens] = useState<Lien[]>([])
+  const [teintes, setTeintes] = useState<Record<string, Teinte>>({})
   const [universOuvert, setUniversOuvert] = useState(false)
 
   // ── T5 : la découpe ───────────────────────────────────────────────────────
@@ -354,7 +362,10 @@ export function App() {
   // cartes, même règle, une seule liste (`Tableau.tsx` § `groupesDe`).
   const relireTableau = useCallback(async () => {
     try {
-      setCartes((await api.tableau()).cartes)
+      const toile = await api.tableau()
+      setCartes(toile.cartes)
+      setLiens(toile.liens)
+      setTeintes(toile.teintes)
     } catch (erreur) {
       echouer(erreur, "le tableau ne répond pas")
     }
@@ -378,6 +389,11 @@ export function App() {
       // du flux, et une panne a déjà sa phrase ailleurs.
     }
   }, [])
+
+  /** L'univers tel que l'onglet le tient, en une chaîne. Un `ref` et non un
+   *  état : il ne rend rien, il ne sert qu'à répondre « est-ce que ce message
+   *  change quelque chose ? » au moment où le message arrive. */
+  const empreinteUnivers = useRef("")
 
   // Posé à chaque rendu, lu par le flux : le seul but est de tenir l'abonnement
   // ouvert pendant que ce qu'il consulte, lui, change. Écrit **après** les
@@ -404,6 +420,7 @@ export function App() {
         setEtat(recu)
         setBibliotheque(recu.bibliotheque)
         setUnivers(recu.univers ?? UNIVERS_VIDE)
+        empreinteUnivers.current = JSON.stringify(recu.univers ?? UNIVERS_VIDE)
         if (recu.generations) setChantier(recu.generations)
         if (recu.assets) setGrille(recu.assets)
         // Ce message part **une fois par abonnement**, donc à chaque
@@ -436,6 +453,22 @@ export function App() {
             ? liste.map((c) => (c.identifiant === recue.identifiant ? recue : c))
             : [recue, ...liste]
         }),
+      // **Un lien est né, a été nommé, ou coupé.** Il se fond par identifiant,
+      // jamais ne s'empile : il arrive par deux chemins qui se croisent — la
+      // réponse du POST et l'annonce du flux —, exactement comme une génération
+      // en T1 et comme une carte en T4. Un lien coupé porte `coupe`, et un lien
+      // dont une extrémité a disparu arrive par ce message-là, coupé : c'est le
+      // serveur qui tient la règle, l'écran ne la rejoue jamais.
+      lien: (recu) =>
+        setLiens((liste) => {
+          if (recu.projet !== vivant.current.courant)
+            return liste.filter((un) => un.identifiant !== recu.identifiant)
+          if (recu.coupe)
+            return liste.filter((un) => un.identifiant !== recu.identifiant)
+          return liste.some((un) => un.identifiant === recu.identifiant)
+            ? liste.map((un) => (un.identifiant === recu.identifiant ? recu : un))
+            : [...liste, recu]
+        }),
       // Un seul message pour un lot entier : palette recalculée, réglage posé,
       // ou balayage terminé. La grille se redemande alors — c'est le troisième
       // et dernier appel que l'interface refait d'elle-même, et il porte sur des
@@ -443,9 +476,20 @@ export function App() {
       univers: (recu) => {
         if (recu.projet !== vivant.current.courant) return
         setUnivers(recu.univers)
+        setTeintes(recu.teintes)
         // Un balayage a changé des recettes, donc des empreintes, donc les
         // adresses des rendus : la grille se redemande une fois, pour le lot.
         if (recu.realignes) void vivant.current.relireGrille()
+        // **Deux appels réseau, et seulement si l'univers a vraiment changé.**
+        // Ce message porte désormais aussi les teintes d'îlot (T9), qui ne sont
+        // pas dans l'univers et ne changent ni le grisé ni ce qui partira :
+        // colorer un îlot aurait redemandé l'état *et* le catalogue pour une
+        // couleur. La règle des deux lignes ci-dessous n'a pas bougé — c'est sa
+        // condition qui manquait, parce que jusqu'ici « un message `univers` est
+        // arrivé » et « l'univers a changé » étaient la même chose.
+        const signature = JSON.stringify(recu.univers)
+        if (signature === empreinteUnivers.current) return
+        empreinteUnivers.current = signature
         // Et le grisé de la quantification suit la palette : c'est le serveur
         // qui l'écrit, l'écran ne rejoue jamais la règle.
         void vivant.current.relireEtat()
@@ -956,6 +1000,8 @@ export function App() {
           univers={univers}
           modeles={modeles}
           cartes={cartes}
+          liens={liens}
+          teintes={teintes}
           onRelire={relireTableau}
           onFermer={() => setUniversOuvert(false)}
         />

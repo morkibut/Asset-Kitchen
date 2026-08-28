@@ -31,7 +31,9 @@ import {
   type Carte,
   type Echelle,
   type Famille,
+  type Lien,
   type Modele,
+  type Teinte,
   type Univers,
 } from "../api"
 import {
@@ -44,7 +46,7 @@ import {
   Segments,
 } from "./chassis"
 import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
-import { Toile, useCrans, type Geste } from "./Toile"
+import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 
 /** Les cibles proposées, reprises de la fiche — 16 pour une tuile, 64 pour un
  *  sprite, 128 pour un décor. Elles se choisissent **ici** depuis T4 : la taille
@@ -57,6 +59,8 @@ export function EcranUnivers({
   univers,
   modeles,
   cartes,
+  liens,
+  teintes,
   onRelire,
   onFermer,
 }: {
@@ -68,6 +72,11 @@ export function EcranUnivers({
    *  ouvert à l'ouverture de cet écran-ci se rebrancherait à chaque aller-retour
    *  vers l'atelier, et le serveur renverrait l'état complet à chaque fois. */
   cartes: Carte[]
+  /** Les traits de la toile, et les teintes de ses îlots. Ils arrivent par la
+   *  même route que les cartes — une toile se lit en un aller-retour, parce
+   *  qu'elle *est* le tableau. */
+  liens: Lien[]
+  teintes: Record<string, Teinte>
   onRelire: () => void
   onFermer: () => void
 }) {
@@ -102,13 +111,22 @@ export function EcranUnivers({
   // sur le disque fait foi.
   const pile = useRef<Geste[]>([])
 
-  /** Ramener une carte en réserve : ni classée, ni posée, en un seul appel. */
+  /** Ramener une carte en réserve : ni classée, ni posée, en un seul appel.
+   *
+   *  **Et le geste retient ce qu'il fait disparaître** (T9) : si c'était le
+   *  dernier membre d'un groupe, l'îlot cesse d'exister, et le serveur emporte
+   *  avec lui les liens qui y aboutissaient et sa teinte. Sans ça, Ctrl+Z
+   *  rendrait son groupe à la carte et ferait reparaître un îlot **nu** — les
+   *  traits et la couleur perdus en silence, ce qui est le contraire de ce que
+   *  « le champ retrouve sa valeur d'avant » promet. */
   const rendre = (identifiant: string) => {
     const carte = cartes.find((c) => c.identifiant === identifiant)
     if (!carte || carte.en_reserve) return
     pile.current.push({
+      genre: "carte",
       carte: identifiant,
       avant: { groupe: carte.groupe, position: carte.position ?? [] },
+      ilot: ilotPerdu(carte, cartes, liens, teintes),
     })
     void api
       .reglerCarte(identifiant, { groupe: "", position: [] })
@@ -178,6 +196,8 @@ export function EcranUnivers({
           <>
             <Toile
               cartes={cartes}
+              liens={liens}
+              teintes={teintes}
               vue={vue}
               onVue={setVue}
               choisie={choisie}

@@ -215,6 +215,85 @@ export const NOM_FAMILLE: Record<Famille, string> = {
   tous: "tous",
 }
 
+/** Les six, et il n'y en a pas une septième — `docs/DESIGN.md` § Les teintes
+ *  d'îlot. Le vide **est** une valeur : un îlot sans teinte porte celle du
+ *  châssis, ce qui est exactement ce que ce document dit qu'il est. */
+export type Teinte =
+  | ""
+  | "ardoise"
+  | "iris"
+  | "prune"
+  | "bruyere"
+  | "lichen"
+  | "paille"
+
+export const TEINTES = [
+  "ardoise",
+  "iris",
+  "prune",
+  "bruyere",
+  "lichen",
+  "paille",
+] as const satisfies readonly Exclude<Teinte, "">[]
+
+/** Ce que chaque teinte vaut — **par son token, jamais par sa valeur**.
+ *
+ *  `src/index.css` porte tous les tokens de `docs/DESIGN.md`, et aucune couleur
+ *  n'est écrite ailleurs : ce tableau ne contient donc que des renvois. Écrire
+ *  `#7086A0` ici en aurait fait un second endroit où la palette du châssis vit,
+ *  et le jour où le document déplace une teinte d'un point, l'un des deux
+ *  l'aurait suivie sans l'autre.
+ *
+ *  Un tableau plutôt que des classes Tailwind parce que la teinte arrive du
+ *  serveur : `bg-ilot-${teinte}` ne se compile pas — Tailwind lit des classes
+ *  écrites en toutes lettres, et une classe composée à l'exécution n'existe
+ *  dans aucune feuille. */
+export const COULEUR_TEINTE: Record<Exclude<Teinte, "">, string> = {
+  ardoise: "var(--color-ilot-ardoise)",
+  iris: "var(--color-ilot-iris)",
+  prune: "var(--color-ilot-prune)",
+  bruyere: "var(--color-ilot-bruyere)",
+  lichen: "var(--color-ilot-lichen)",
+  paille: "var(--color-ilot-paille)",
+}
+
+/** Ce que l'auteur lit d'une teinte. Sans accent dans le JSON, accentué à
+ *  l'écran — la règle du produit depuis les familles. */
+export const NOM_TEINTE: Record<Exclude<Teinte, "">, string> = {
+  ardoise: "ardoise",
+  iris: "iris",
+  prune: "prune",
+  bruyere: "bruyère",
+  lichen: "lichen",
+  paille: "paille",
+}
+
+/** Une extrémité de lien.
+ *
+ *  **Deux espaces de noms, donc deux champs** : une carte se nomme par son
+ *  identifiant, un îlot par son nom de groupe — parce qu'un îlot *est* le
+ *  groupe et n'a pas d'identité propre. Aplatis dans un seul champ, le lien vers
+ *  un îlot qui s'appellerait comme une carte n'aurait plus dit lequel des deux
+ *  il désigne. */
+export type Bout = { genre: "carte" | "ilot"; valeur: string }
+
+/** Un trait entre deux objets de la toile — **le seul objet neuf du modèle
+ *  depuis T4**.
+ *
+ *  Il naît muet : ni mot, ni pointe. Un trait nu dit déjà « ceci a rapport avec
+ *  cela », et c'est le cas courant — *le défaut est muet, l'exception
+ *  s'exprime*. Il ne survit pas à ses extrémités, et c'est le serveur qui le
+ *  tient : un trait vers rien ne représente rien. */
+export type Lien = {
+  identifiant: string
+  projet: string
+  de: Bout
+  vers: Bout
+  mot: string
+  pointe: boolean
+  cree_le: number
+}
+
 export type Carte = {
   identifiant: string
   projet: string
@@ -236,6 +315,10 @@ export type Carte = {
    *  taille est le cran que lit la grille, celle-ci est une place occupée sur
    *  une toile, et aucune des deux ne ment sur l'autre. */
   largeur_libre: number | null
+  /** Sa teinte, **si c'est une note**. Une carte image n'en porte jamais :
+   *  colorier chaque carte reconstruirait un second rangement, invisible dans la
+   *  grille et concurrent du groupe. Le refus vient du serveur. */
+  teinte: Teinte
   officiel: boolean
   famille: Famille
   empreinte: string
@@ -759,7 +842,18 @@ export const api = {
   // Une seule de ces routes touche le réseau : celle qui va chercher l'image
   // d'une adresse collée. Toutes les autres marchent hors ligne.
 
-  tableau: () => appeler<{ projet: string; cartes: Carte[]; groupes: string[] }>("/board"),
+  /** La toile en un aller-retour : les cartes, les groupes, les traits et les
+   *  teintes. Une seconde route pour les liens aurait fait paraître les cartes
+   *  avant eux — donc un instant, à chaque ouverture, où la toile montre des
+   *  objets sans ce qu'on en avait dit. */
+  tableau: () =>
+    appeler<{
+      projet: string
+      cartes: Carte[]
+      groupes: string[]
+      liens: Lien[]
+      teintes: Record<string, Teinte>
+    }>("/board"),
 
   /** Coller **une** image. Les octets sont le corps, bruts — pas de
    *  `multipart`, qui demanderait une dépendance de plus au serveur.
@@ -782,10 +876,20 @@ export const api = {
       body: JSON.stringify({ adresse }),
     }),
 
-  collerTexte: (texte: string) =>
+  /** Un texte devient une carte texte — et depuis T9 il peut naître **posé**.
+   *
+   *  La place voyage avec le texte, et n'ouvre pas de second appel : créer puis
+   *  déplacer aurait fait paraître la note en réserve, à l'autre bout de l'écran
+   *  de l'endroit qu'on vient de désigner, et rendu possible l'état où elle
+   *  existe sans avoir jamais été posée. C'est la règle de la carte tirée dans
+   *  un îlot, appliquée à sa naissance. */
+  collerTexte: (
+    texte: string,
+    sur?: { position?: [number, number]; groupe?: string; teinte?: Teinte },
+  ) =>
     appeler<Carte>("/board/text", {
       method: "POST",
-      body: JSON.stringify({ texte }),
+      body: JSON.stringify({ texte, ...sur }),
     }),
 
   /** Réessayer une récupération qui a échoué (US-43). Un geste de l'auteur,
@@ -811,6 +915,13 @@ export const api = {
       taille?: 1 | 2 | 4
       position?: [number, number] | []
       largeur_libre?: number
+      /** Le texte d'une **note**, corrigé en place. Sans lui, réparer une faute
+       *  demanderait de retirer la note et de la recoller — donc de perdre sa
+       *  place, sa teinte et les liens qui y aboutissent. */
+      texte?: string
+      /** La teinte d'une **note**. `""` la retire ; une carte image la refuse,
+       *  et c'est le serveur qui le dit. */
+      teinte?: Teinte
     },
   ) =>
     appeler<Carte>(`/board/${carte}`, {
@@ -833,6 +944,41 @@ export const api = {
 
   imageCarte: (carte: string, version: string) =>
     `/api/board/${carte}/image?v=${encodeURIComponent(version)}`,
+
+  // ── Les liens de la toile ─────────────────────────────────────────────────
+  // Aucune ne touche le réseau extérieur : toute la tranche est du dire.
+
+  /** Tirer un trait d'un objet à un autre — **il naît muet**.
+   *
+   *  `dit` n'existe que pour l'annulation : défaire une coupe, c'est reposer le
+   *  lien **tel qu'il était**, en un seul appel. Tirer un trait ne l'envoie
+   *  jamais, et c'est cette ligne-ci qui tient « il naît muet ». */
+  lier: (de: Bout, vers: Bout, dit?: { mot?: string; pointe?: boolean }) =>
+    appeler<Lien>("/board/links", {
+      method: "POST",
+      body: JSON.stringify({ de, vers, ...dit }),
+    }),
+
+  /** Le mot et la pointe, ensemble : ils se posent sur la même petite surface.
+   *  `undefined` ne touche pas, `""` efface — la convention du produit depuis
+   *  `groupe`. */
+  reglerLien: (lien: string, reglage: { mot?: string; pointe?: boolean }) =>
+    appeler<Lien>(`/board/links/${lien}`, {
+      method: "PUT",
+      body: JSON.stringify(reglage),
+    }),
+
+  couperLien: (lien: string) =>
+    appeler<Lien>(`/board/links/${lien}`, { method: "DELETE" }),
+
+  /** La teinte d'un îlot. **Le groupe est dans le corps, pas dans le chemin** :
+   *  un nom de groupe est du texte libre, et un îlot nommé « nord/sud » aurait
+   *  fabriqué une adresse que personne n'atteint. */
+  teinterIlot: (groupe: string, teinte: Teinte) =>
+    appeler<{ projet: string; teintes: Record<string, Teinte> }>("/board/groups/tint", {
+      method: "PUT",
+      body: JSON.stringify({ groupe, teinte }),
+    }),
 
   // ── L'univers du projet ───────────────────────────────────────────────────
 
@@ -976,6 +1122,11 @@ export type Ecoute = {
   /** Une carte est entrée, a été réglée, promue, récupérée — ou elle est
    *  partie, et elle porte alors `oubliee`. La charge est la carte entière. */
   carte: (carte: Carte & { oubliee?: boolean }) => void
+  /** Un lien a été tiré, nommé, ou coupé — et il porte alors `coupe`. La charge
+   *  est le lien entier, comme pour une carte. Un lien dont une extrémité
+   *  disparaît arrive par ce message-là, coupé : c'est le serveur qui le tient,
+   *  l'écran ne rejoue jamais la règle. */
+  lien: (lien: Lien & { coupe?: boolean }) => void
   /** L'univers d'un projet a changé : palette recalculée, réglage posé, ou
    *  balayage de réalignement terminé. Un **seul** message pour un lot entier —
    *  la diffusion garde soixante-quatre messages par abonné, et un événement
@@ -984,6 +1135,11 @@ export type Ecoute = {
     projet: string
     nom: string
     univers: Univers
+    /** Les teintes des îlots. **Dans l'enveloppe, pas dans l'univers** :
+     *  `Univers` est « ce que le projet impose à ce qui rentre, et ce qu'il
+     *  envoie avec », et une teinte d'îlot n'impose rien et ne part nulle
+     *  part. */
+    teintes: Record<string, Teinte>
     realignes: number
     conserves: number
   }) => void
@@ -1009,6 +1165,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Asset>("asset", ecoute.asset)
   lire<Bibliotheque>("bibliotheque", ecoute.bibliotheque)
   lire<Carte & { oubliee?: boolean }>("carte", ecoute.carte)
+  lire<Lien & { coupe?: boolean }>("lien", ecoute.lien)
   lire<Parameters<Ecoute["univers"]>[0]>("univers", ecoute.univers)
   lire<EtatAgent>("agent", ecoute.agent)
 

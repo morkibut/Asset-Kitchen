@@ -276,7 +276,68 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
     origine: "toi · la grille au départ · rien ne s'enregistre",
     long:
-      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\nCtrl+Z défait le dernier geste de composition — déplacer, élargir, classer, déclasser. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
+      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\n**Trois gestes, et ils tiennent en trois lignes.** *Tirer* une carte la pose et la classe. *Tirer depuis la petite poignée* d'une carte ou du nom d'un îlot trace un lien vers ce qu'on lâche dessous. *Double-cliquer* sur le plan nu écrit une note à cet endroit-là — c'est une carte texte, tu la retrouves dans la grille.\n\nCtrl+Z défait le dernier geste de composition — déplacer, élargir, classer, déclasser, tirer un lien, le couper. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
+  },
+
+  // ── L'Univers — les liens, les notes et la couleur (T9) ───────────────────
+  //
+  // Cinq entrées pour quatre user stories, et aucune ne porte de raison : ce qui
+  // refuse un geste — « ces deux-là sont déjà joints », « aucun îlot de ce
+  // nom » — vit dans la fente de l'écran Univers, et ne se survole pas.
+
+  "lien.mot": {
+    nom: "mot d'un lien",
+    ou: "univers",
+    quoi: "Une étiquette courte posée au milieu d'un trait, pour dire *quel* rapport il montre.",
+    change:
+      "Rien à la génération. Un lien naît muet, et il reste muet tant que tu n'écris rien : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant.",
+    origine: "toi · vide au tracé · 32 signes au plus",
+    long:
+      "Le défaut est muet, l'exception s'exprime. C'est ce qui rend le geste de tracer gratuit : si le mot était demandé au moment du tracé, il faudrait répondre à chaque trait à une question dont la réponse est presque toujours « rien ».\n\nLa borne de 32 signes n'est pas du confort. L'étiquette se pose entre deux objets qui peuvent être à trente pixels l'un de l'autre, et ce qui déborde recouvre ce qu'il relie. Au-delà, ce que tu veux écrire est une note — et une note se pose à même la toile.\n\nLe vider le retire, et le trait redevient ce qu'il était en naissant. Un lien qui porte un mot se survole par son mot ; un lien muet se survole par sa bande.",
+  },
+
+  "lien.pointe": {
+    nom: "pointe",
+    ou: "univers",
+    quoi: "La flèche au bout d'un trait, quand le sens du rapport compte.",
+    change:
+      "Rien à la génération. Elle ne change que ce que le trait montre : sans elle il dit « ces deux-là ont rapport », avec elle il dit « celui-ci va vers celui-là ».",
+    origine: "toi · sans pointe au tracé",
+    long:
+      "Elle se pose à l'arrivée, et l'arrivée est l'objet sur lequel tu as lâché : on tire du départ vers l'arrivée, et la pointe ne fait que rendre visible ce que le geste a déjà décidé.\n\nIl n'y a pas de troisième état — pas de double pointe, pas de retournement. Retourner un lien, c'est le couper et le retirer dans l'autre sens : deux gestes rares plutôt qu'un contrôle permanent sur chaque trait.",
+  },
+
+  "note.texte": {
+    nom: "texte d'une note",
+    ou: "univers",
+    quoi: "Ce qu'une carte texte dit — l'intention que tu as posée au milieu des images.",
+    change:
+      "Rien à la génération. Une note ne part nulle part : ce qui voyage en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
+    origine: "toi · au collage, ou au double-clic sur la toile",
+    long:
+      "Sur la toile, un double-clic sur le plan nu ouvre un champ à l'endroit exact où tu as cliqué, et ce que tu écris devient une note posée là. Un champ quitté vide ne crée rien.\n\nLe corriger ici plutôt que de retirer la note et de la recoller : recoller lui ferait perdre sa place, sa teinte et les liens qui y aboutissent.",
+  },
+
+  "note.teinte": {
+    nom: "teinte d'une note",
+    ou: "univers",
+    quoi: "Une des six couleurs sourdes, posée sur le fond d'une note.",
+    change:
+      "Rien à la génération, et rien au rangement non plus. C'est **le seul endroit du produit où une couleur ne veut rien dire** : elle est là parce que tu l'as choisie, jamais parce qu'un état la commande.",
+    origine: "toi · sans teinte au départ",
+    long:
+      "La liste est fermée à six, et il n'existe aucun sélecteur libre : le premier îlot rouge vif se lirait comme un échec. Les six sont posées à la même clarté et sous le contraste de toutes les couleurs qui, elles, disent quelque chose — réussi, réglé à la main, raté, et l'accent du produit.\n\nUne carte image n'en porte aucune, et ce n'est pas un oubli : colorier chaque carte reconstruirait un second rangement, invisible dans la grille et concurrent du groupe. La couleur se pose sur ce qui rassemble — un îlot, une note —, jamais sur ce qui est rassemblé.\n\nLa septième pastille n'est pas une septième couleur : c'est le châssis, c'est-à-dire l'absence de teinte, montrée plutôt que dite.",
+  },
+
+  "ilot.teinte": {
+    nom: "teinte d'un îlot",
+    ou: "univers",
+    quoi: "La même palette de six, posée sur le cadre et le nom d'un îlot.",
+    change:
+      "Rien à la génération, et rien au groupe. Un îlot teinté et un îlot nu contiennent exactement les mêmes cartes, et envoient exactement les mêmes références.",
+    origine: "toi · sans teinte au départ · part avec le dernier membre",
+    long:
+      "Elle ne vit pas sur les cartes de l'îlot : six membres feraient six réponses possibles pour un seul cadre. Elle vit avec le projet, une entrée par nom de groupe.\n\nCorollaire de « un îlot *est* son groupe » : quand la dernière carte en sort, l'îlot cesse d'exister, et sa couleur s'en va avec lui — comme les liens qui y aboutissaient. Ctrl+Z rend les trois d'un coup.",
   },
 
   // ── L'Atelier ─────────────────────────────────────────────────────────────

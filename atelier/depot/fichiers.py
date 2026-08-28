@@ -11,7 +11,8 @@
     │  ├─ projet.json             le projet — bible, barème, palette, défauts
     │  └─ tableau/
     │     ├─ <carte>.json         une carte du tableau d'inspiration
-    │     └─ <carte>.<ext>        ses octets, tels qu'ils sont entrés
+    │     ├─ <carte>.<ext>        ses octets, tels qu'ils sont entrés
+    │     └─ liens/<lien>.json    un trait entre deux objets de la toile (T9)
     └─ generations/<identifiant>/
        ├─ generation.json         l'enregistrement complet, lisible sans la base
        ├─ <rang>-brut.<ext>       l'image telle qu'elle est arrivée
@@ -278,13 +279,66 @@ class Fichiers:
 
     def effacer_carte(self, projet: str, identifiant: str) -> None:
         """La carte et ses octets, ensemble. Pas d'annulation ici : une carte
-        n'a rien coûté, et le tableau se recolle."""
+        n'a rien coûté, et le tableau se recolle.
+
+        **Les liens qui y aboutissaient partent aussi**, mais pas ici : c'est le
+        service qui les connaît, parce que lui seul sait qu'une carte est une
+        *extrémité* (`ServiceUnivers.oublier`). Ce module range des octets, il ne
+        sait pas ce qu'ils se disent entre eux.
+        """
         dossier = self.projets / projet / "tableau"
         if not dossier.is_dir():
             return
         for chemin in dossier.glob(f"{identifiant}.*"):
             if chemin.is_file():
                 chemin.unlink(missing_ok=True)
+
+    # ── Les liens de la toile ────────────────────────────────────────────────
+    #
+    # **Un fichier par lien, comme un fichier par carte**, et pour la première
+    # des deux raisons de la carte, mot pour mot : écrire vite et souvent sans
+    # relire le tout. On tire des traits en rafale, et un `liens.json` unique se
+    # relirait avant chaque écriture — deux traits tirés dans le même instant se
+    # reliraient tous les deux, et le second effacerait le premier.
+    #
+    # **Un sous-dossier, et c'est un fait du code, pas du rangement.**
+    # `parcourir_cartes` lit `tableau/*.json` et tient pour une carte tout JSON
+    # qui porte un identifiant : poser les liens à côté des cartes en ferait des
+    # **cartes fantômes** dans le tableau, dans la grille, dans la réserve, et
+    # dans le compte que la barre affiche. Un cran plus bas, et la règle du
+    # dossier reste vraie telle quelle — c'est aussi ce qui fait que
+    # `effacer_carte`, qui balaie `<identifiant>.*`, ne peut pas les atteindre :
+    # `liens` n'est pas un fichier, et le motif exige un point.
+    #
+    # **Pas d'index, comme pour les cartes.** Ils ne se cherchent pas, ne se
+    # filtrent pas, ne se paginent pas : une toile se lit en entier. Corollaire
+    # hérité — jeter `atelier.sqlite3` ne touche pas aux liens, puisqu'ils n'y
+    # sont jamais entrés.
+
+    def dossier_liens(self, projet: str) -> Path:
+        dossier = self.projets / projet / "tableau" / "liens"
+        dossier.mkdir(parents=True, exist_ok=True)
+        return dossier
+
+    def ecrire_lien(self, projet: str, identifiant: str, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.dossier_liens(projet) / f"{identifiant}.json", contenu)
+
+    def parcourir_liens(self, projet: str) -> Iterator[dict[str, Any]]:
+        """Chaque lien de la toile d'un projet. Le disque est la seule vérité."""
+        dossier = self.projets / projet / "tableau" / "liens"
+        if not dossier.is_dir():
+            return
+        for chemin in sorted(dossier.glob("*.json")):
+            contenu = self._lire_json(chemin)
+            if isinstance(contenu, dict) and contenu.get("identifiant"):
+                yield contenu
+
+    def effacer_lien(self, projet: str, identifiant: str) -> None:
+        """Le lien part pour de bon. **Aucune entrée morte ne reste** : un trait
+        vers rien ne représente rien, et un fichier qui lui survivrait serait une
+        deuxième vérité qui attend son heure."""
+        chemin = self.projets / projet / "tableau" / "liens" / f"{identifiant}.json"
+        chemin.unlink(missing_ok=True)
 
     def ecrire_collections(self, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.collections, contenu)

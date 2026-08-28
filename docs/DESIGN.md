@@ -1014,10 +1014,27 @@ délimiter. Son titre est le nom du groupe, en mono 10 px comme toute mesure du 
 fait sur ce qu'il contient, pas une légende ; il porte à côté le nombre de cartes, qui est un fait
 de la même sorte.
 
-**Sa teinte n'arrive qu'en T9, et d'ici là il porte celle du châssis** — `--bord-fort` pour le
-cadre, `--fond-1` à 40 % pour le fond. Ce n'est pas un provisoire : la couleur entre avec le reste
-de la couleur (`PLAN.md` T9), et un îlot sans teinte est exactement ce que la phrase ci-dessus
-décrit — du châssis. Écrit le 28 août 2026, en livrant T8.
+**Sa teinte est arrivée en T9, et l'absence de teinte reste le châssis** — `--bord-fort` pour le
+cadre, `--fond-1` à 40 % pour le fond. Ce n'était pas un provisoire : un îlot sans teinte est
+exactement ce que la phrase ci-dessus décrit, du châssis, et c'est pourquoi la rangée de pastilles
+en compte **sept** — les six, plus celle qui montre le châssis. La septième n'est pas une septième
+couleur : c'est l'absence, montrée plutôt que dite, et elle évite un huitième glyphe en forme de
+croix. La liste close du produit ne bouge donc pas d'un nom. Écrit le 28 août 2026, en livrant T8,
+complété en livrant T9.
+
+**Le nom de l'îlot est la poignée de son menu, et c'est la seule surface vivante qu'il ait.** Un
+îlot n'a pas d'identité, il a un nom — et depuis T7, *le libellé est la cible*. La bande de son
+titre passe en `pointer-events: auto` sous un nœud qui reste en `none` ; l'argument est géométrique
+et il se mesure : la boîte de l'îlot part **au-dessus** de la boîte englobante de ses membres, donc
+ces 20 px ne recouvrent aucune carte, par construction. Une surface qui ne recouvre rien ne prend
+rien à personne, là où rendre la *boîte* vivante aurait volé chaque prise de carte. Ce qu'on perd
+est 20 px de plan par îlot pour le déplacement du plan, et ça se dit. **Il ne se saisit toujours
+pas.**
+
+**Le menu s'ouvre au-dessus de la bande, et le nœud monte à `z-index: 10` en s'ouvrant.** Sans quoi
+il se rendrait **sous** les cartes qui entourent l'îlot — c'est-à-dire sous exactement ce qu'il
+décrit —, l'îlot étant posé à 0 et les cartes à 1. Il redescend en se refermant : un îlot resté
+élevé volerait les clics de ses propres membres.
 
 **Il ne se saisit pas.** On le traverse pour prendre une carte, et pour déplacer le plan. C'est le
 corollaire visuel de « l'îlot *est* le groupe » : ce qui n'a pas d'existence propre n'a pas de
@@ -1049,6 +1066,65 @@ fente et jamais dans un bandeau, parce que le geste qu'elle rattrape est rare et
 toile, le geste risqué est le déplacement — c'est-à-dire le geste permanent : une fente qui
 clignote à chaque glissement serait du bruit. Ctrl+Z, sans surface, et la pile meurt en quittant
 l'écran.
+
+#### Le trait, la note, et la couleur qui entre
+
+Écrit le 28 août 2026, en livrant T9. Trois choses s'ajoutent à la toile, et **aucune n'ajoute un
+glyphe** : le produit garde les siens.
+
+**Le trait est droit, en `--bord-fort` au repos, `--texte-2` au survol.** Droit et non courbe :
+`PLAN.md` dit « un trait nu », et une courbe de Bézier ferait lire l'écran comme un outil de
+diagrammes. `--bord-fort` et pas `--bord` parce qu'un lien n'est pas une séparation, c'est du
+contenu — et `--bord` est sous le seuil où l'œil le trouve seul (§ Layout, mesuré). Il passe
+**derrière** ce qu'il relie, comme un îlot est derrière ses cartes. Il ne prend **aucune teinte** :
+la liste des surfaces colorables reste close à trois, et un trait coloré ferait un septième
+vocabulaire de couleur sur un écran qui en compte déjà six qui ne veulent rien dire.
+
+**Un lien qui a un mot se survole par son mot ; un lien muet se survole par sa bande.** C'est ce qui
+rend le défaut muet payable : un trait de 1 px ne se survole pas, et la zone d'écoute de 20 px que
+la librairie pose le long du tracé est de la surface, donc de son ressort. Le mot se pose au milieu
+du trait, en **mono 10 px** sur une pastille `--fond-0` pour que le trait ne le traverse pas — c'est
+un fait sur ce qui est là, comme le nom d'un îlot, pas une légende. Un lien muet n'a pas de cible au
+clavier : c'est la contrepartie assumée du défaut muet, et elle se dit.
+
+**Son pavé de réglage est le menu d'une carte, en plus court** — `--fond-1`, cadre `--bord`,
+rayon 2, le fondu `paraitre` de 80 ms, le survol qui révèle et le clic qui épingle. Posé **sous** le
+milieu du trait, à la gouttière de 9 px : jamais sur ce qu'il règle, la règle du menu de carte
+appliquée. Trois rangées et rien de plus : `Mot`, un champ écrit au relâchement du focus comme
+`groupe` et `note` ; `Pointe`, un bouton qui **est la phrase de son état** — `sans pointe` /
+`pointe à l'arrivée`, le motif du bouton `silhouette` du barème ; et `Couper`, traité exactement
+comme `Retirer` dans le menu d'une carte — mono 10 px, `--texte-3` qui vire à `--echec`. Il ne se
+borne pas : un plan n'a pas de bord contre lequel se cogner, et une hauteur en pixels d'écran serait
+fausse au premier cran de zoom.
+
+**Il n'y a pas de troisième état de pointe, et pas de retournement.** Le sens vient du tracé — on
+tire du départ vers l'arrivée, et la pointe ne fait que rendre visible ce que le geste a décidé.
+Retourner un lien, c'est le couper et le retirer dans l'autre sens : deux gestes rares plutôt qu'un
+contrôle permanent sur chaque trait.
+
+**Une note s'écrit au double-clic sur le plan nu**, et le champ paraît à l'endroit exact du clic, à
+la largeur d'une carte 1×, anneau `--lumiere`. C'est « créée là où elle s'applique » pris à la
+lettre : un contrôle de barre aurait posé la note à sept cents pixels de l'endroit qui la demande,
+et il aurait fallu ensuite l'y tirer. Le champ n'est pas encore la note — quitté vide, il ne crée
+rien, et `Échap` l'abandonne : **le geste s'essaie sans rien casser**, ce qui est la moitié de sa
+découverte. L'autre moitié est le corpus, par le `long` de *Vue*, dont le pointillé est à huit
+pixels du segment qu'on vient de cliquer pour entrer dans la toile.
+
+**Les sept pastilles ont la forme du carré de palette de l'écran Univers** — `h-5 w-5`, rayon 2,
+cadre `--bord` —, parce qu'une pastille n'est pas une marque : c'est la couleur montrée, et c'est
+la même défense que la palette, « une vérification à l'œil, pas une liste à lire ». La choisie prend
+l'anneau `--lumiere`, qui ne veut dire que *choisi*. Elles vivent dans le menu de l'îlot pour un
+îlot, dans le menu de la carte pour une note — jamais les deux au même endroit : deux champs voisins
+dont l'un règle la carte et l'autre autre chose, c'est le constat `groupe` contre `famille` qui a
+fait naître tout le corpus.
+
+**Ce que la teinte colore, et ce qu'elle ne colore pas.** Îlot : cadre en teinte pleine à la place
+de `--bord-fort`, fond de la même teinte à 8 %, nom en teinte à la place de `--texte-2`. Note : fond
+à 8 %, et le bord passe de `--bord` à la teinte. **L'anneau `--lumiere` d'une carte choisie prend le
+bord, jamais le fond** — les deux ne se disputent que le bord, et le bord suffit à dire *choisi*.
+Faire céder les deux rendait la teinte invisible tant que la carte restait choisie, c'est-à-dire à
+l'instant précis où on vient de la choisir, puisqu'on choisit la pastille depuis le menu de la
+carte. Mesuré à l'atelier lancé le 28 août 2026.
 
 ---
 
@@ -1260,5 +1336,11 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 | 27/08/2026 | La pastille **« agent »** naît pour de vrai, en `--signal-clair`, et passe **avant « réglé »** | Le § La tuile prévoyait le mot depuis l'origine et le § Palette lui réservait déjà sa teinte — « texte de pastille agent » — ; T7 le fait paraître. Une tuile ne porte qu'une pastille, donc l'ordre *est* la décision : devant une image qu'on ne reconnaît pas, « à qui parler » (US-39) se cherche avant « sa recette a été touchée », qui se lit dans la fiche. Aucune couleur neuve — `--signal-clair` est déjà le survol du signal —, et aucune forme : la seule forme reste le coin plein du favori, que l'auteur pose lui-même. |
 | 27/08/2026 | Le **compteur de l'agent est dans le bloc qui le fait relever**, pas dans la barre d'état | US-90 demande « discret », et la barre d'état l'aurait rendu permanent — un chiffre qui ne bouge pas pendant des heures et qu'on cesse de voir, occupant la place d'un fait sur le travail en cours. Il vit donc au-dessus des deux garde-fous, dans une grille de mesures en mono 10 px, la même forme que le bloc « Ce qui part » : *ce qu'on lit au moment où on décide*. **Coût** : il faut ouvrir les Réglages pour le voir, ce qui est exactement le geste qu'on fait quand on se demande s'il faut relever le plafond. |
 | 27/08/2026 | L'interrupteur d'un garde-fou est **celui d'un champ de bible**, repris tel quel | Le produit a déjà un interrupteur — le carré de 26 px, ●/○, `--signal` allumé — et « un second gabarit serait un second endroit où l'oublier ». Un garde-fou est de la même nature qu'un champ de bible actif : *ce que je laisse partir*. Rien de neuf n'entre au châssis pour cette tranche, et c'est le résultat visé. |
+| 28/08/2026 | **Le corpus passe de 50 à 55 entrées**, et n'ouvre aucun écran neuf | Les cinq de T9 vivent toutes dans *l'univers*, qui est l'écran où la toile se compose. Deux d'entre elles ont dû être **renommées avant d'être écrites** : « teinte d'une note » et « teinte d'un îlot » plutôt que « Teinte » deux fois, parce que le guide rend les entrées à la file, groupées par écran, et que deux titres identiques à la suite ne se distinguent plus. C'est la même panne que `groupe` contre `famille`, prise à l'écriture au lieu d'être prise à l'usage. |
+| 28/08/2026 | **Le nom d'un îlot devient la poignée de son menu** — et il reste la seule surface vivante qu'il ait | Un îlot n'a pas d'identité, il a un nom, et *le libellé est la cible* depuis T7. L'argument se **mesure** : sa bande part au-dessus de la boîte englobante de ses membres, donc elle ne recouvre aucune carte, par construction — une surface qui ne recouvre rien ne prend rien à personne. Rendre la *boîte* vivante aurait volé chaque prise de carte. **Coût** : 20 px de plan par îlot pour le déplacement du plan, et un `z-index` qui monte à 10 en s'ouvrant, sans quoi le menu se rend sous les cartes qu'il décrit. |
+| 28/08/2026 | **Une note s'écrit au double-clic sur le plan**, et le zoom au double-clic de la librairie s'éteint pour ça | « Créée là où elle s'applique » pris à la lettre : un contrôle de barre pose la note à sept cents pixels de l'endroit qui la demande. Le double-clic ne peut pas à la fois zoomer et écrire, et le perdant serait toujours celui qu'on voulait ; la molette et le plan couvrent déjà le zoom. Sa découverte tient à ce qu'il s'essaie sans rien casser — un champ quitté vide ne crée rien — et au `long` de *Vue*, à huit pixels du segment qui ouvre la toile. |
+| 28/08/2026 | **Sept pastilles, pas six** : la septième est le châssis, montré | Un îlot sans teinte porte celle du châssis, et ce document dit que c'est *ce qu'il est*, pas un réglage manquant. La montrer évite un huitième glyphe en forme de croix, et la liste close du domaine ne bouge pas d'un nom — le vide y était déjà une valeur. |
+| 28/08/2026 | **L'anneau d'une carte choisie prend le bord, jamais le fond** | Première écriture : *choisi* est un état, un état l'emporte sur un rangement, donc la teinte cédait entière. Or on choisit une pastille **depuis le menu de la carte**, qui n'est ouvert que parce qu'elle est choisie : on cliquait une couleur et rien ne changeait jusqu'à ce qu'on clique ailleurs. Les deux ne se disputent que le bord, et le bord suffit. **Vu à l'atelier lancé.** |
+| 28/08/2026 | **Un trait ne prend aucune teinte** | La liste des surfaces colorables reste close à trois — cadre d'îlot, nom d'îlot, fond de note. Un trait coloré ferait un septième vocabulaire de couleur sur un écran qui en compte déjà six qui ne veulent rien dire, et un lien dit déjà tout ce qu'il a à dire par son mot et sa pointe. |
 | 28/08/2026 | **L'îlot ne se saisit pas, et il n'a pas encore de teinte** | Ce qui n'a pas d'existence propre n'a pas de poignée : un îlot *est* son groupe, et déplacer un rangement c'est déplacer ce qu'il contient. On le traverse donc pour prendre une carte comme pour déplacer le plan. Sa teinte arrive avec le reste de la couleur en T9 ; d'ici là il porte celle du châssis — `--bord-fort`, `--fond-1` à 40 % —, ce qui est exactement ce que ce document dit qu'il est. **Pas un provisoire, une conséquence.** |
 | 28/08/2026 | La carte **suit la poignée pendant qu'on tire**, et pas seulement au relâchement | Le § Le curseur avait déjà tranché cette forme en T2 — *la valeur suit la main, l'écriture suit le relâchement* — et la moitié « suit la main » manquait ici : on tirait une poignée de 10 px devant une carte immobile, et la place occupée ne se voyait qu'une fois lâchée, c'est-à-dire trop tard pour la juger. Sur une toile, la largeur **est** une place occupée ; une place ne se règle qu'en la voyant prise. **Vu à l'atelier lancé.** |

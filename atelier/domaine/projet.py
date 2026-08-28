@@ -35,6 +35,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Iterable
 
 from atelier.domaine.carte import DECORS, FAMILLES, INTERFACE, OBJETS, PERSONNAGES, TOUS
+from atelier.domaine.teinte import AUCUNE, teinte_valide
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -358,8 +359,30 @@ class Projet:
     cree_le: float = field(default_factory=time.time)
     univers: Univers = field(default_factory=lambda: Univers(bible=bible_complete(())))
 
+    # ── Les teintes d'îlot ───────────────────────────────────────────────────
+    #
+    # Arrivées en T9 (US-111). Une entrée par nom de groupe, et **pas dans
+    # `Univers`** : cet objet-là est défini comme « ce que le projet impose à ce
+    # qui rentre, et ce qu'il envoie avec », et une teinte d'îlot ne contraint
+    # rien et ne part nulle part. L'y poser aurait été le premier champ à
+    # démentir la phrase qui tient tout le reste du fichier.
+    #
+    # **Ici, et pas sur les cartes du groupe** : un îlot n'a pas d'existence
+    # propre, donc six membres feraient six vérités possibles pour un seul
+    # cadre (`docs/ARCHITECTURE.md` §5). Une note, elle, *est* un objet et porte
+    # la sienne (`atelier/domaine/carte.py`).
+    #
+    # **Une entrée dont le groupe n'existe plus est effacée par le geste qui l'a
+    # vidé**, pas par un balayage — même règle qu'un lien vers un îlot. Un îlot
+    # vide n'existe pas, donc sa teinte n'a plus rien à teinter.
+    teintes: dict[str, str] = field(default_factory=dict)
+
     def avec(self, univers: Univers) -> "Projet":
         return replace(self, univers=univers)
+
+    def teinte(self, groupe: str) -> str:
+        """La teinte d'un îlot, ou le vide — qui est le châssis, pas un trou."""
+        return self.teintes.get(groupe, AUCUNE)
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -367,6 +390,7 @@ class Projet:
             "nom": self.nom,
             "cree_le": self.cree_le,
             "univers": self.univers.en_json(),
+            "teintes": dict(self.teintes),
         }
 
     @staticmethod
@@ -376,6 +400,13 @@ class Projet:
             nom=d.get("nom", d["identifiant"]),
             cree_le=d.get("cree_le", 0.0),
             univers=Univers.depuis_json(d.get("univers")),
+            # Une teinte inconnue revient vide et l'entrée disparaît : la liste
+            # est fermée, et un fichier ne la rouvre pas.
+            teintes={
+                groupe: teinte_valide(valeur)
+                for groupe, valeur in (d.get("teintes") or {}).items()
+                if isinstance(groupe, str) and groupe and teinte_valide(valeur)
+            },
         )
 
 

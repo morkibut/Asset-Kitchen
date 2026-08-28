@@ -41,27 +41,43 @@ import {
 import {
   Background,
   BackgroundVariant,
+  BaseEdge,
+  EdgeLabelRenderer,
+  Handle,
+  Position,
   ReactFlow,
   ReactFlowProvider,
+  useInternalNode,
   useNodesState,
   useReactFlow,
+  type Edge,
+  type EdgeProps,
   type Node,
   type NodeProps,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
-import { api, Refus, type Carte } from "../api"
+import {
+  api,
+  COULEUR_TEINTE,
+  Refus,
+  type Carte,
+  type Lien,
+  type Teinte,
+} from "../api"
 import {
   BarreTableau,
   CarteTuile,
   GLISSE_CARTE,
   GOUTTIERE,
+  Pastilles,
   groupesDe,
   useCollage,
   useDepot,
   useSurvol,
   type Vue,
 } from "./Tableau"
+import { Libelle } from "./chassis"
 
 // ── Les mesures de l'îlot ───────────────────────────────────────────────────
 //
@@ -85,6 +101,31 @@ const LARGEUR_MAX = 2048
 
 /** Ce à quoi la largeur libre s'aimante, quand la mesure a pu être prise. */
 export type Crans = { 1: number; 2: number; 4: number }
+
+/**
+ * Les ancrages d'un nœud, **donnés et non laissés à mesurer** — quatrième fois
+ * que ce piège se referme dans ce dépôt, et cette fois-ci un cran plus bas.
+ *
+ * T8 avait donné à chaque nœud ses `width` et `height`, parce que la librairie
+ * cache ce dont elle ignore la taille et qu'elle l'apprend par un
+ * `ResizeObserver` — *qui ne livre rien à un onglet qui ne compose pas ses
+ * images*. Les **arêtes** ont exactement la même dépendance, et à un autre
+ * endroit : `isNodeInitialized` exige `internals.handleBounds || handles`, et
+ * `handleBounds` se mesure sur le DOM des ancrages. Sans elles, `getEdgePosition`
+ * rend `null` et **aucun trait ne paraît** — sans un mot, comme la toile entière
+ * était invisible en T8.
+ *
+ * La réponse est la même : le produit les **déclare**. Elles n'ont aucune
+ * conséquence sur le tracé, qui se calcule par `ancrer` sur les boîtes ; elles
+ * existent pour que la librairie sache résoudre l'arête, ce qui est son travail
+ * — la surface (`docs/ARCHITECTURE.md` §6.5). Une seule paire par nœud, source
+ * et arrivée : le produit n'a qu'un point de départ par objet et décide de
+ * l'arrivée lui-même.
+ */
+const ANCRAGES = [
+  { id: null, type: "source" as const, position: Position.Right, x: 0, y: 0, width: 1, height: 1 },
+  { id: null, type: "target" as const, position: Position.Left, x: 0, y: 0, width: 1, height: 1 },
+]
 
 /** Ce que le glissement d'une poignée doit dépasser pour quitter un cran. Sous
  *  ce seuil l'aimant tient : c'est ce qui empêche la largeur libre d'être
@@ -297,9 +338,142 @@ export function ilotSous(point: Place, ilots: Ilot[]): string {
   return dedans.sort((a, b) => a.boite.l * a.boite.h - b.boite.l * b.boite.h)[0].nom
 }
 
-// ── Ce qu'un geste retient pour se défaire ──────────────────────────────────
+/** La carte dont l'étendue contient un point du plan, ou rien.
+ *
+ *  **La sœur d'`ilotSous`, et elle existe pour la même raison** : c'est le
+ *  produit qui décide sur quoi un trait est lâché, jamais la librairie. Un
+ *  ancrage invisible posé sur toute la carte aurait dû être éteint au repos et
+ *  rallumé pendant la liaison — *une règle déléguée à autre chose dont personne
+ *  n'aurait mesuré le résultat*, la famille de défauts qui revient depuis T5.
+ *
+ *  Elle se demande **avant** `ilotSous`, dans l'ordre exact des `zIndex` —
+ *  carte 1, îlot 0 —, c'est-à-dire dans l'ordre de ce que l'œil voit. */
+export function carteSous(
+  point: Place,
+  cartes: Carte[],
+  places: Map<string, Place>,
+  crans: Crans,
+): string {
+  const dedans = cartes
+    .filter((c) => !c.en_reserve)
+    .map((c) => {
+      const p = places.get(c.identifiant)
+      return p
+        ? { id: c.identifiant, b: { ...p, l: largeurDe(c, crans), h: hauteurDe(c, crans) } }
+        : null
+    })
+    .filter((x): x is { id: string; b: Boite } => x !== null)
+    .filter(
+      ({ b }) =>
+        point.x >= b.x && point.x <= b.x + b.l && point.y >= b.y && point.y <= b.y + b.h,
+    )
+  if (!dedans.length) return ""
+  // La plus serrée, comme pour les îlots : rien ne s'aligne tout seul sur cette
+  // toile, et deux cartes peuvent se recouvrir.
+  return dedans.sort((a, b) => a.b.l * a.b.h - b.b.l * b.b.h)[0].id
+}
 
-export type Geste = { carte: string; avant: Parameters<typeof api.reglerCarte>[1] }
+/**
+ * Les deux points où un trait rencontre les objets qu'il joint.
+ *
+ * **Le trait part du côté qui fait face**, et rien n'est stocké : on prend le
+ * segment qui joint les deux centres, et on garde ses intersections avec chaque
+ * bord. Deux boîtes, deux points, aucune mémoire — c'est ce qui fait qu'un lien
+ * suit ses extrémités sans que personne n'ait à le lui dire.
+ *
+ * **Et c'est ce qui permet à un îlot d'être une extrémité sans avoir
+ * d'identité** (`docs/ARCHITECTURE.md` §5) : son étendue est déjà calculée,
+ * puisqu'elle est celle de ses membres. Un ancrage qu'il aurait fallu *mesurer*
+ * aurait exigé qu'il soit un objet ; un ancrage qui se calcule n'exige rien.
+ *
+ * Deux boîtes concentriques n'ont pas de côté qui se fasse face : on rend alors
+ * les deux centres, et le trait a une longueur nulle — il ne se voit pas, ce qui
+ * est exactement ce qu'il y a à montrer de deux objets posés l'un sur l'autre.
+ */
+export function ancrer(depart: Boite, arrivee: Boite): [Place, Place] {
+  const centre = (b: Boite): Place => ({ x: b.x + b.l / 2, y: b.y + b.h / 2 })
+  const un = centre(depart)
+  const deux = centre(arrivee)
+  const dx = deux.x - un.x
+  const dy = deux.y - un.y
+  if (!dx && !dy) return [un, deux]
+
+  /** Où le rayon partant du centre de `b` dans la direction (dx, dy) sort de `b`.
+   *  Le facteur est le plus petit des deux qui amène sur un bord : c'est celui
+   *  qui décide **quel** côté fait face. */
+  const sortie = (b: Boite, dx: number, dy: number): Place => {
+    const c = centre(b)
+    const facteurs: number[] = []
+    if (dx) facteurs.push(b.l / 2 / Math.abs(dx))
+    if (dy) facteurs.push(b.h / 2 / Math.abs(dy))
+    const t = Math.min(...facteurs)
+    return { x: c.x + dx * t, y: c.y + dy * t }
+  }
+
+  return [sortie(depart, dx, dy), sortie(arrivee, -dx, -dy)]
+}
+
+// ── Ce qu'un geste retient pour se défaire ──────────────────────────────────
+//
+// **Une union, parce que la toile a désormais trois gestes qui s'annulent**, et
+// que chacun se défait par un appel différent. Une forme unique aurait obligé à
+// deviner lequel jouer, et deviner sur une pile d'annulation, c'est défaire
+// autre chose que ce qu'on vient de faire.
+
+/** Ce qu'un îlot emporte en disparaissant, et qu'il faut savoir reposer.
+ *
+ *  **Sortir la dernière carte d'un groupe efface, sur le disque, les liens qui
+ *  aboutissaient à son îlot et la teinte qu'on lui avait donnée** — c'est la
+ *  règle de la tranche, et elle est juste : un trait vers rien ne représente
+ *  rien. Mais Ctrl+Z ne peut pas se contenter de rendre son groupe à la carte :
+ *  l'îlot reparaîtrait nu, et la couleur comme les traits seraient perdus **en
+ *  silence**. L'écran tient donc, au moment du geste, ce que le geste va faire
+ *  disparaître. Il le sait : il a la toile entière sous les yeux. */
+export type IlotPerdu = { nom: string; teinte: Teinte; liens: Lien[] }
+
+/**
+ * Ce qu'un geste va faire disparaître, calculé **avant** de l'envoyer.
+ *
+ * Une carte quitte le groupe `sortante.groupe` ; si personne d'autre ne le
+ * porte, l'îlot cesse d'exister, et le serveur emporte avec lui ses liens et sa
+ * teinte (`ServiceUnivers._elaguer`). Ce qui est rendu ici est exactement de
+ * quoi les reposer.
+ *
+ * **Pure, et exportée pour ça** : c'est la seule moitié de l'annulation qui ait
+ * une règle plutôt qu'un appel, donc la seule qui se vérifie sans écran.
+ */
+export function ilotPerdu(
+  sortante: Carte,
+  cartes: Carte[],
+  liens: Lien[],
+  teintes: Record<string, Teinte>,
+): IlotPerdu | undefined {
+  const nom = sortante.groupe
+  if (!nom) return undefined
+  const reste = cartes.some((c) => c.identifiant !== sortante.identifiant && c.groupe === nom)
+  if (reste) return undefined
+  return {
+    nom,
+    teinte: teintes[nom] ?? "",
+    liens: liens.filter(
+      (un) =>
+        (un.de.genre === "ilot" && un.de.valeur === nom) ||
+        (un.vers.genre === "ilot" && un.vers.valeur === nom),
+    ),
+  }
+}
+
+export type Geste =
+  | {
+      genre: "carte"
+      carte: string
+      avant: Parameters<typeof api.reglerCarte>[1]
+      /** Rempli seulement quand ce geste-là vide un groupe de son dernier
+       *  membre. Presque toujours absent, donc. */
+      ilot?: IlotPerdu
+    }
+  | { genre: "lien-cree"; lien: string }
+  | { genre: "lien-coupe"; lien: Lien }
 
 // ── Ce que les nœuds ont besoin de savoir ───────────────────────────────────
 //
@@ -312,23 +486,50 @@ export type Geste = { carte: string; avant: Parameters<typeof api.reglerCarte>[1
 type Cadre = {
   choisie: string | null
   survolee: string | null
+  /** Ce qui est épinglé et **n'est pas une carte** — le pavé d'un lien, le menu
+   *  d'un îlot. Séparé de `choisie`, qui reste la carte choisie et voyage
+   *  jusqu'à la réserve et à la grille : les mélanger aurait fait qu'épingler un
+   *  trait désigne une carte dans une colonne où il n'y a pas de trait. */
+  epingle: string | null
   crans: Crans | null
-  onSurvol: (identifiant: string, dedans: boolean) => void
+  teintes: Record<string, Teinte>
+  /** La taille d'un nœud, **telle que le produit la calcule** — jamais celle
+   *  que la librairie croit avoir mesurée. Voir `AreteLien`. */
+  tailleDe: (id: string) => { l: number; h: number } | null
+  onSurvol: (cle: string, dedans: boolean) => void
   onChoisir: (identifiant: string | null) => void
+  onEpingler: (cle: string | null) => void
   onErreur: (raison: string) => void
   onLargeur: (carte: Carte, largeur: number) => void
+  onTeinterIlot: (nom: string, teinte: Teinte) => void
+  onReglerLien: (lien: Lien, reglage: { mot?: string; pointe?: boolean }) => void
+  onCouperLien: (lien: Lien) => void
+  onNote: (texte: string, place: Place) => void
+  onAbandon: () => void
   aimanter: (depart: number, ecart: number) => number
   zoom: () => number
 }
 
 const CADRE = createContext<Cadre | null>(null)
 
-const TYPES = { ilot: NoeudIlot, carte: NoeudCarte }
+/** **Une seule survolée sur la toile, tous genres confondus.** Le produit promet
+ *  qu'il n'y a qu'une surface ouverte à la fois ; trois états de survol
+ *  indépendants en auraient ouvert trois. Les clés sont donc préfixées — c'est
+ *  la même leçon que `Bout(genre, valeur)` côté domaine : deux espaces de noms
+ *  aplatis dans un seul finissent par se confondre. */
+const cleCarte = (identifiant: string) => `carte:${identifiant}`
+const cleLien = (identifiant: string) => `lien:${identifiant}`
+const cleIlot = (nom: string) => `ilot:${nom}`
+
+const TYPES = { ilot: NoeudIlot, carte: NoeudCarte, brouillon: NoeudBrouillon }
+const TYPES_ARETE = { lien: AreteLien }
 
 // ── L'écran ─────────────────────────────────────────────────────────────────
 
 type Parametres = {
   cartes: Carte[]
+  liens: Lien[]
+  teintes: Record<string, Teinte>
   vue: Vue
   onVue: (vue: Vue) => void
   choisie: string | null
@@ -355,6 +556,8 @@ export function Toile(parametres: Parametres) {
 
 function Plan({
   cartes,
+  liens,
+  teintes,
   vue,
   onVue,
   choisie,
@@ -365,7 +568,10 @@ function Plan({
   pile,
 }: Parametres) {
   const { screenToFlowPosition, getZoom, setViewport } = useReactFlow()
-  const { survolee, survoler } = useSurvol(choisie)
+  // Ce qui est épinglé sans être une carte : un lien, un îlot. Local au plan,
+  // parce que rien d'autre que le plan n'en dessine.
+  const [epingle, setEpingle] = useState<string | null>(null)
+  const { survolee, survoler } = useSurvol(choisie !== null || epingle !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
   const [noeuds, setNoeuds, surChangement] = useNodesState<Node>([])
 
@@ -392,6 +598,21 @@ function Plan({
     [cartes, places, crans],
   )
 
+  // ── Le brouillon d'une note ──────────────────────────────────────────────
+  //
+  // **Un nœud comme un autre, et pas une surface flottante par-dessus le plan.**
+  // Une boîte posée en pixels d'écran serait fausse au premier cran de zoom et
+  // resterait immobile pendant qu'on déplace le plan : ce qu'on écrit est déjà à
+  // sa place, donc ça doit être *sur* le plan.
+  //
+  // Sa clé ne change jamais (`brouillon`), et son champ de saisie n'est pas
+  // contrôlé : l'effet ci-dessous refabrique la liste des nœuds à chaque carte
+  // qui arrive — une image collée depuis un autre onglet, par exemple —, et un
+  // texte à moitié tapé qui vivrait dans `data` serait perdu à ce moment-là.
+  // Même clé, même composant monté, même DOM : le texte est dans le champ, et
+  // le champ ne bouge pas.
+  const [brouillon, setBrouillon] = useState<Place | null>(null)
+
   // **Chaque nœud porte ses dimensions, et c'est la librairie qui l'exige.** Un
   // nœud dont elle ne connaît pas la taille est rendu `visibility: hidden` en
   // attendant que son `ResizeObserver` la lui livre — et *un `ResizeObserver` ne
@@ -413,6 +634,7 @@ function Plan({
         data: { nom, membres },
         width: boite.l,
         height: boite.h,
+        handles: ANCRAGES,
         style: { pointerEvents: "none" as const },
         draggable: false,
         selectable: false,
@@ -427,10 +649,95 @@ function Plan({
           data: { carte },
           width: largeurDe(carte, crans),
           height: hauteurDe(carte, crans),
+          handles: ANCRAGES,
           zIndex: 1,
         })),
+      ...(brouillon
+        ? [
+            {
+              id: "brouillon",
+              type: "brouillon",
+              position: brouillon,
+              data: {},
+              width: crans[1],
+              height: crans[1],
+              draggable: false,
+              selectable: false,
+              zIndex: 20,
+            } as Node,
+          ]
+        : []),
     ])
-  }, [cartes, ilots, places, crans, setNoeuds])
+  }, [cartes, ilots, places, crans, brouillon, setNoeuds])
+
+  // ── Les traits ───────────────────────────────────────────────────────────
+  //
+  // **Une arête par lien, et son tracé n'est pas de la librairie.** Elle fournit
+  // la surface — le calque, la zone d'écoute de 20 px le long du trait, le
+  // rendu de l'étiquette à l'échelle du plan — et le produit fournit la
+  // géométrie, parce que l'ancrage d'un îlot se calcule sur son étendue et que
+  // son étendue est celle de ses membres (`ancrer`). Un ancrage qu'il aurait
+  // fallu *mesurer* aurait exigé que l'îlot soit un objet.
+  //
+  // **Un lien dont une extrémité n'est pas sur le plan ne se dessine pas.** Le
+  // serveur l'aura déjà effacé — c'est la règle de la tranche — mais le message
+  // qui le dit et celui qui dit la carte arrivent par deux chemins : entre les
+  // deux, l'écran ne doit pas tracer un trait vers un nœud qui n'existe pas.
+  const aretes = useMemo<Edge[]>(() => {
+    const noeudsPresents = new Set([
+      ...cartes.filter((c) => !c.en_reserve).map((c) => c.identifiant),
+      ...ilots.map((i) => `ilot:${i.nom}`),
+    ])
+    const nomDe = (bout: Lien["de"]) =>
+      bout.genre === "ilot" ? `ilot:${bout.valeur}` : bout.valeur
+    return liens
+      .filter((un) => noeudsPresents.has(nomDe(un.de)) && noeudsPresents.has(nomDe(un.vers)))
+      .map<Edge>((un) => ({
+        id: un.identifiant,
+        type: "lien",
+        source: nomDe(un.de),
+        target: nomDe(un.vers),
+        data: { lien: un },
+        // La zone d'écoute de la librairie, et c'est très exactement le partage
+        // de `docs/ARCHITECTURE.md` §6.5 : un trait de 1 px ne se survole pas,
+        // et une zone d'écoute est de la surface.
+        interactionWidth: 20,
+        selectable: false,
+        focusable: false,
+      }))
+  }, [liens, cartes, ilots])
+
+
+  /**
+   * La taille d'un nœud — **celle que le produit calcule, pas celle que la
+   * librairie mesure**.
+   *
+   * Quatrième fois que le même piège se referme, et cette fois-ci sur le tracé
+   * d'un trait. `useInternalNode(...).measured` est rempli par un
+   * `ResizeObserver`, *qui ne livre rien à un onglet qui ne compose pas ses
+   * images* : les deux boîtes valaient alors zéro, et `ancrer` — qui rend les
+   * deux centres quand les boîtes sont vides — faisait partir le trait du **coin
+   * supérieur gauche** de chaque objet au lieu du côté qui fait face. Vu à
+   * l'atelier lancé, dans un onglet sans composition ; invisible autrement,
+   * puisqu'un onglet au premier plan mesure et corrige tout seul.
+   *
+   * La **position**, elle, reste celle de la librairie : c'est elle qui bouge
+   * pendant qu'on tire une carte, et c'est ce qui fait que le trait suit la
+   * main. Position mesurée, taille donnée — la formule de T8, appliquée aux
+   * arêtes.
+   */
+  const tailleDe = useCallback(
+    (id: string) => {
+      if (!crans) return null
+      if (id.startsWith("ilot:")) {
+        const ilot = ilots.find((i) => i.nom === id.slice(5))
+        return ilot ? { l: ilot.boite.l, h: ilot.boite.h } : null
+      }
+      const carte = cartes.find((c) => c.identifiant === id)
+      return carte ? { l: largeurDe(carte, crans), h: hauteurDe(carte, crans) } : null
+    },
+    [cartes, ilots, crans],
+  )
 
   // ── Le cadrage d'ouverture ───────────────────────────────────────────────
   //
@@ -489,15 +796,29 @@ function Plan({
   // **Une carte ouverte passe devant ses voisines.** Le menu déborde de son
   // nœud ; sans cette élévation il glisserait sous celui d'à côté, et c'est
   // exactement au moment où on le lit qu'il disparaîtrait à moitié.
+  //
+  // **Et un îlot ouvert aussi, pour la même raison et avec une pente en plus.**
+  // Le nœud d'un îlot est posé à `zIndex: 0`, les cartes à 1 : son menu de
+  // teintes se serait rendu **sous** les cartes qui l'entourent, c'est-à-dire
+  // sous exactement ce qu'il décrit. Il monte donc à 10 comme une carte ouverte,
+  // et redescend à 0 en se refermant — un îlot qui resterait élevé volerait les
+  // clics de ses propres membres.
   useEffect(() => {
     setNoeuds((liste) =>
-      liste.map((n) =>
-        n.type === "carte"
-          ? { ...n, zIndex: n.id === choisie || n.id === survolee ? 10 : 1 }
-          : n,
-      ),
+      liste.map((n) => {
+        if (n.type === "carte")
+          return {
+            ...n,
+            zIndex: n.id === choisie || survolee === cleCarte(n.id) ? 10 : 1,
+          }
+        if (n.type === "ilot") {
+          const cle = `ilot:${(n.data as { nom: string }).nom}`
+          return { ...n, zIndex: epingle === cle || survolee === cle ? 10 : 0 }
+        }
+        return n
+      }),
     )
-  }, [choisie, survolee, setNoeuds])
+  }, [choisie, survolee, epingle, setNoeuds])
 
   // ── Poser, et retenir de quoi défaire ────────────────────────────────────
 
@@ -515,12 +836,56 @@ function Plan({
       // toute façon la largeur qu'on voyait avant de tirer.
       if ("largeur_libre" in reglage && crans)
         avant.largeur_libre = carte.largeur_libre ?? crans[carte.taille]
-      pile.current.push({ carte: carte.identifiant, avant })
+      // **Et ce que ce geste-là va emporter avec l'îlot qu'il vide** (T9). Sortir
+      // la dernière carte d'un groupe efface, sur le disque, les liens qui
+      // aboutissaient à son îlot et la teinte qu'on lui avait donnée : c'est la
+      // règle de la tranche, et elle est juste. Mais rendre son groupe à la
+      // carte ferait alors reparaître un îlot **nu**, et la couleur comme les
+      // traits seraient perdus en silence — c'est-à-dire le contraire de ce que
+      // « le champ retrouve sa valeur d'avant » promet. L'écran a la toile
+      // entière sous les yeux au moment du geste ; il retient donc de quoi les
+      // reposer.
+      //
+      // **Dès que le groupe *change*, et pas seulement quand il se vide.** Tirer
+      // l'unique membre d'un îlot droit dans un autre écrit un groupe non vide,
+      // et emporte quand même le premier : la condition « le groupe devient
+      // vide » ratait exactement ce cas-là.
+      const perdu =
+        "groupe" in reglage && reglage.groupe !== carte.groupe
+          ? ilotPerdu(carte, cartes, liens, teintes)
+          : undefined
+      pile.current.push({ genre: "carte", carte: carte.identifiant, avant, ilot: perdu })
       void api
         .reglerCarte(carte.identifiant, reglage)
         .catch((e) => echouer(e, "la carte n'a pas pu être posée"))
     },
-    [crans, echouer, pile],
+    [cartes, liens, teintes, crans, echouer, pile],
+  )
+
+  // ── Les gestes du lien ───────────────────────────────────────────────────
+  //
+  // **La pile n'empile que ce qu'elle sait défaire, et l'ordre n'est pas le
+  // même des deux côtés.** Un réglage s'empile *avant* l'appel, parce que la
+  // valeur d'avant est vraie même si l'appel échoue. Une création s'empile
+  // *après*, parce que son identifiant vient de la réponse — l'empiler avant
+  // aurait fait viser un lien qui n'existe pas encore, ou pas du tout.
+
+  const tirer = useCallback(
+    (de: Lien["de"], vers: Lien["de"]) => {
+      void api
+        .lier(de, vers)
+        .then((ne) => pile.current.push({ genre: "lien-cree", lien: ne.identifiant }))
+        .catch((e) => echouer(e, "le lien n'a pas pu être tiré"))
+    },
+    [echouer, pile],
+  )
+
+  const couper = useCallback(
+    (un: Lien) => {
+      pile.current.push({ genre: "lien-coupe", lien: un })
+      void api.couperLien(un.identifiant).catch((e) => echouer(e, "le lien n'a pas pu être coupé"))
+    },
+    [echouer, pile],
   )
 
   // ── Ctrl+Z, sans surface ─────────────────────────────────────────────────
@@ -556,9 +921,7 @@ function Plan({
       const geste = pile.current.pop()
       if (!geste) return
       evenement.preventDefault()
-      void api
-        .reglerCarte(geste.carte, geste.avant)
-        .catch((e) => echouer(e, "le geste n'a pas pu être défait"))
+      void defaire(geste).catch((e) => echouer(e, "le geste n'a pas pu être défait"))
     }
     window.addEventListener("keydown", surTouche)
     return () => window.removeEventListener("keydown", surTouche)
@@ -613,23 +976,207 @@ function Plan({
     [cartes, crans, ilots, poser, screenToFlowPosition],
   )
 
+  /** Le point du plan où un geste de la librairie s'est terminé, et ce qu'il y
+   *  a dessous — **demandé au produit, jamais à la librairie**. */
+  const objetSous = useCallback(
+    (ecran: { clientX: number; clientY: number }): Lien["de"] | null => {
+      if (!crans) return null
+      const point = screenToFlowPosition({ x: ecran.clientX, y: ecran.clientY })
+      // La carte d'abord, l'îlot ensuite : l'ordre exact des `zIndex`,
+      // c'est-à-dire l'ordre de ce que l'œil voit.
+      const carte = carteSous(point, cartes, places, crans)
+      if (carte) return { genre: "carte", valeur: carte }
+      const nom = ilotSous(point, ilots)
+      return nom ? { genre: "ilot", valeur: nom } : null
+    },
+    [cartes, places, ilots, crans, screenToFlowPosition],
+  )
+
+  /** Un trait vient d'être relâché. **C'est `onConnectEnd` et pas `onConnect`**,
+   *  parce que l'arrivée est décidée par la géométrie du produit : un ancrage
+   *  invisible posé sur toute la carte aurait dû être éteint au repos et rallumé
+   *  pendant la liaison — une règle déléguée à la librairie dont personne
+   *  n'aurait mesuré le résultat. */
+  const relierAu = useCallback(
+    (evenement: MouseEvent | TouchEvent, etat: { fromNode?: { id: string } | null }) => {
+      const depart = etat.fromNode?.id
+      if (!depart) return
+      const ecran =
+        "clientX" in evenement
+          ? { clientX: evenement.clientX, clientY: evenement.clientY }
+          : {
+              clientX: evenement.changedTouches[0]?.clientX ?? 0,
+              clientY: evenement.changedTouches[0]?.clientY ?? 0,
+            }
+      const arrivee = objetSous(ecran)
+      // Lâché dans le vide : rien ne se passe, et rien ne le dit. Un trait tiré
+      // à côté est un geste abandonné, pas un refus.
+      if (!arrivee) return
+      const de: Lien["de"] = depart.startsWith("ilot:")
+        ? { genre: "ilot", valeur: depart.slice(5) }
+        : { genre: "carte", valeur: depart }
+      if (de.genre === arrivee.genre && de.valeur === arrivee.valeur) return
+      tirer(de, arrivee)
+    },
+    [objetSous, tirer],
+  )
+
+  /** Écrire une note là où on double-clique.
+   *
+   *  **`zoomOnDoubleClick` est éteint pour ça**, et c'est le prix, écrit : le
+   *  défaut de `@xyflow/react` est `true`, donc le plan zoomerait sous le champ
+   *  au moment même où il s'ouvre — et le champ étant à l'échelle du plan, il
+   *  grossirait et se déplacerait pendant qu'on tape. Le double-clic ne peut pas
+   *  à la fois zoomer et écrire, et le perdant serait toujours celui qu'on
+   *  voulait. La molette et le plan couvrent déjà le zoom. */
+  const ouvrirBrouillon = useCallback(
+    (evenement: React.MouseEvent) => {
+      if (!crans) return
+      // **Sur quoi que ce soit que le produit ait posé, le double-clic ne crée
+      // rien** : on écrit *à côté* de ce qui est là, jamais par-dessus. Le nœud
+      // ne suffit pas à le dire — le pavé d'un lien et son mot sont rendus par
+      // le calque des étiquettes, qui est **frère** des nœuds et non l'un
+      // d'eux. Sans cette seconde classe, double-cliquer un mot dans le champ
+      // « Mot » pour le sélectionner — le geste le plus banal qui soit sur un
+      // champ de saisie — ouvrait un brouillon de note et lui volait le focus.
+      const cible = evenement.target as HTMLElement
+      if (cible.closest(".react-flow__node, .react-flow__edgelabel-renderer")) return
+      const point = screenToFlowPosition({ x: evenement.clientX, y: evenement.clientY })
+      setBrouillon({ x: point.x - crans[1] / 2, y: point.y - crans[1] / 2 })
+    },
+    [crans, screenToFlowPosition],
+  )
+
+  /** Ce qu'un brouillon devient. Vide, il ne devient rien — sans quoi le tableau
+   *  se remplirait de notes vides qu'il faudrait ensuite retirer une à une. */
+  const ecrire = useCallback(
+    (texte: string, place: Place) => {
+      setBrouillon(null)
+      const propre = texte.trim()
+      if (!propre || !crans) return
+      // **Une note écrite dans un îlot lui appartient**, comme tout ce qui
+      // atterrit sur le plan : « composer et classer sont le même geste ». La
+      // laisser hors groupe aurait fait qu'une note posée au milieu d'un îlot
+      // n'en soit pas membre, puis le devienne au premier pixel de déplacement —
+      // deux réponses à la même question, à un pixel d'écart.
+      const centre = { x: place.x + crans[1] / 2, y: place.y + crans[1] / 2 }
+      void api
+        .collerTexte(propre, {
+          position: [place.x, place.y],
+          groupe: ilotSous(centre, ilots),
+        })
+        .catch((e) => echouer(e, "la note n'a pas pu être posée"))
+    },
+    [crans, ilots, echouer],
+  )
+
+  /** Défaire un geste — trois formes, trois chemins.
+   *
+   *  L'ordre compte pour l'îlot rendu : son groupe doit être réécrit **avant**
+   *  que ses liens ne soient reposés, sinon le serveur refuse à juste titre un
+   *  trait vers un îlot qui n'existe pas encore. */
+  const defaire = useCallback(
+    async (geste: Geste) => {
+      if (geste.genre === "lien-cree") {
+        await api.couperLien(geste.lien)
+        return
+      }
+      if (geste.genre === "lien-coupe") {
+        const { de, vers, mot, pointe } = geste.lien
+        const repose = await api.lier(de, vers, { mot, pointe })
+        // **Le lien revient avec un identifiant neuf, et la pile doit le
+        // savoir.** Rien ne référence un lien, donc le changement ne se voit
+        // nulle part — sauf dans la pile elle-même, où l'entrée « ce lien-ci a
+        // été tiré » nommait l'ancien. Un Ctrl+Z de plus serait allé couper un
+        // lien qui n'existe plus, et l'auteur aurait lu un refus au lieu de voir
+        // son geste se défaire. On réécrit donc ce que l'annulation vient de
+        // renommer : la pile décrit des gestes, pas des identifiants figés.
+        //
+        // **Aucun essai ne couvre ce chemin, et ça se dit.** Il demande un lien
+        // *tiré depuis l'écran* — donc la gestion de pointeur de la librairie,
+        // qui ne démarre pas sur des événements synthétisés. Un essai monté sur
+        // un lien de fixture n'empile aucune création, et passerait donc sans
+        // rien prouver : c'est très exactement le défaut d'essai que la revue de
+        // cette tranche a trouvé ailleurs, et on ne le réintroduit pas ici.
+        for (const autre of pile.current)
+          if (autre.genre === "lien-cree" && autre.lien === geste.lien.identifiant)
+            autre.lien = repose.identifiant
+        return
+      }
+      await api.reglerCarte(geste.carte, geste.avant)
+      if (!geste.ilot) return
+      // L'îlot reparaît : on lui rend ce qu'il avait.
+      if (geste.ilot.teinte) await api.teinterIlot(geste.ilot.nom, geste.ilot.teinte)
+      for (const un of geste.ilot.liens) {
+        await api.lier(un.de, un.vers, { mot: un.mot, pointe: un.pointe })
+      }
+    },
+    [],
+  )
+
   const cadre = useMemo<Cadre>(
     () => ({
       choisie,
       survolee,
+      epingle,
       crans,
+      teintes,
+      tailleDe,
       onSurvol: survoler,
       onChoisir,
+      onEpingler: setEpingle,
       onErreur,
       onLargeur: (carte, largeur) => poser(carte, { largeur_libre: largeur }),
+      onTeinterIlot: (nom, teinte) =>
+        void api.teinterIlot(nom, teinte).catch((e) => echouer(e, "teinte refusée")),
+      onReglerLien: (un, reglage) =>
+        void api
+          .reglerLien(un.identifiant, reglage)
+          .catch((e) => echouer(e, "le lien n'a pas pu être réglé")),
+      onCouperLien: couper,
+      onNote: ecrire,
+      onAbandon: () => setBrouillon(null),
       aimanter: (depart, ecart) => aimanter(crans, depart, ecart),
       zoom: getZoom,
     }),
-    [choisie, survolee, crans, survoler, onChoisir, onErreur, poser, getZoom],
+    [
+      choisie,
+      survolee,
+      epingle,
+      crans,
+      teintes,
+      tailleDe,
+      survoler,
+      onChoisir,
+      onErreur,
+      poser,
+      couper,
+      ecrire,
+      echouer,
+      getZoom,
+    ],
   )
 
   const glisseCarte = (evenement: React.DragEvent) =>
     evenement.dataTransfer.types.includes(GLISSE_CARTE)
+
+  /** **Ne pas proposer ce qu'on refusera** — la règle du produit depuis T1, et
+   *  le serveur refuse déjà les deux cas en le disant. Un objet ne se joint pas
+   *  à lui-même, et deux traits entre les deux mêmes objets se poseraient l'un
+   *  sur l'autre : le second serait invisible, donc impossible à couper. */
+  const peutRelier = useCallback(
+    ({ source, target }: { source?: string | null; target?: string | null }) => {
+      if (!source || !target || source === target) return false
+      const nomDe = (bout: Lien["de"]) =>
+        bout.genre === "ilot" ? `ilot:${bout.valeur}` : bout.valeur
+      return !liens.some(
+        (un) =>
+          (nomDe(un.de) === source && nomDe(un.vers) === target) ||
+          (nomDe(un.de) === target && nomDe(un.vers) === source),
+      )
+    },
+    [liens],
+  )
 
   return (
     <section
@@ -651,6 +1198,8 @@ function Plan({
           if (glisseCarte(evenement)) accueillir(evenement)
           else depot.props.onDrop(evenement)
         }}
+        onDoubleClick={ouvrirBrouillon}
+        data-plan
         className="relative min-h-0 min-w-0 flex-1"
       >
         <CADRE.Provider value={cadre}>
@@ -658,19 +1207,42 @@ function Plan({
             nodes={noeuds}
             nodeTypes={TYPES}
             onNodesChange={surChangement}
-            edges={[]}
+            edges={aretes}
+            edgeTypes={TYPES_ARETE}
+            onConnectEnd={relierAu}
+            isValidConnection={peutRelier}
             onNodeDragStop={(evenement, noeud) =>
               relacher(noeud.id, noeud.position, {
                 x: (evenement as MouseEvent).clientX,
                 y: (evenement as MouseEvent).clientY,
               })
             }
-            onPaneClick={() => onChoisir(null)}
+            onPaneClick={() => {
+              onChoisir(null)
+              setEpingle(null)
+            }}
             minZoom={0.2}
             maxZoom={2.5}
-            nodesConnectable={false}
+            // Un objet porte **une** poignée de lien, à l'endroit où l'écran
+            // dessinait déjà quelque chose : pas de nord/sud/est/ouest, pas de
+            // point sur cinquante cartes. Ce qui paraît est ce que le produit
+            // dessine, jamais une propriété.
+            nodesConnectable
+            // **Le défaut de la librairie est `true`, et il arme une liaison au
+            // clic.** Un clic sur le nom d'un îlot ouvrirait alors son menu *et*
+            // commencerait un trait : deux gestes sur le même `pointerdown`. Un
+            // lien se tire, il ne se clique pas.
+            connectOnClick={false}
+            // Le défaut est `true` lui aussi, et le double-clic écrit une note
+            // ici. Voir `ouvrirBrouillon`.
+            zoomOnDoubleClick={false}
             nodesFocusable={false}
             edgesFocusable={false}
+            // **Cette ligne cesse d'être un héritage le jour où il y a de vraies
+            // arêtes.** Sans elle, la touche Suppr de la librairie couperait un
+            // lien sans passer par la route ni par la pile — un geste qui écrit
+            // sur le disque et que Ctrl+Z ignore. La suppression reste au
+            // produit, dans le pavé du lien.
             deleteKeyCode={null}
             className="h-full w-full"
           >
@@ -680,6 +1252,25 @@ function Plan({
               size={1}
               color="var(--color-bord)"
             />
+            {/* **La pointe, définie une fois pour toutes les arêtes.** Un
+                marqueur par lien serait autant de définitions identiques dans le
+                document, et `markerEnd` se résout de toute façon par
+                identifiant. Elle prend la couleur du trait au repos : une pointe
+                est une précision sur le trait, pas une seconde marque. */}
+            <svg width="0" height="0" aria-hidden>
+              <defs>
+                <marker
+                  id={POINTE}
+                  markerWidth="7"
+                  markerHeight="7"
+                  refX="6"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path d="M0,0 L6,3 L0,6 z" fill="var(--color-bord-fort)" />
+                </marker>
+              </defs>
+            </svg>
           </ReactFlow>
         </CADRE.Provider>
 
@@ -724,33 +1315,169 @@ function ToileNue() {
   )
 }
 
-// ── Les deux nœuds ──────────────────────────────────────────────────────────
+// ── Les nœuds et l'arête ────────────────────────────────────────────────────
+
+/** L'ancrage d'arrivée — **il existe pour que la librairie sache résoudre une
+ *  arête, et pour rien d'autre.**
+ *
+ *  Elle refuse de rendre un trait dont elle ne trouve pas les deux bouts : sans
+ *  cet ancrage, aucun lien ne paraît, et rien ne le dit. Il est donc de la
+ *  **surface** — le partage de `docs/ARCHITECTURE.md` §6.5, à la lettre.
+ *
+ *  **Il ne participe jamais à la liaison** (`isConnectable={false}`), et c'est
+ *  ce qui le distingue du piège qu'on a écarté : décider *sur quoi* un trait est
+ *  lâché reste au produit, par `carteSous` et `ilotSous` au relâchement. Un
+ *  ancrage qui aurait accepté la liaison aurait fallu être éteint au repos et
+ *  rallumé pendant le geste — une règle déléguée à la librairie dont personne
+ *  n'aurait mesuré le résultat. Celui-ci ne s'allume jamais.
+ *
+ *  Le tracé, lui, ne le lit pas : `ancrer` calcule les deux points sur les
+ *  boîtes. Sa position déclarée n'a donc aucune conséquence visible. */
+function Ancrage() {
+  return (
+    <Handle
+      type="target"
+      position={Position.Left}
+      isConnectable={false}
+      className="!pointer-events-none !h-0 !w-0 !min-w-0 !border-0 !bg-transparent !opacity-0"
+    />
+  )
+}
 
 /**
- * L'îlot — un cadre et un nom, et rien d'autre.
+ * L'îlot — un cadre, un nom, et depuis T9 une couleur.
  *
  * « L'îlot est du châssis, pas un objet dessiné » (`docs/DESIGN.md`) : cadre de
- * 1 px, rayon 2 comme la carte, titre en mono 10 px parce que c'est un fait sur
- * ce qu'il contient et pas une légende. **Il ne se saisit pas** — on le traverse
- * pour prendre une carte, ou pour déplacer le plan.
+ * 1 px, rayon 2 comme la carte, fond de la même teinte à 8 %, titre en mono
+ * 10 px parce que c'est un fait sur ce qu'il contient et pas une légende. Sans
+ * teinte il porte celle du châssis — `--bord-fort`, `--fond-1` à 40 % —, et ce
+ * n'est pas un provisoire : c'est ce que ce document dit qu'il est.
  *
- * Sa teinte arrive en T9 avec le reste de la couleur (`docs/PLAN.md` T9) ; d'ici
- * là il porte celle du châssis, ce qui est exactement ce qu'il est.
+ * **Il ne se saisit toujours pas.** Ce qui change en T9 tient en une ligne : la
+ * bande de son nom passe en `pointer-events: auto` sous un nœud qui reste en
+ * `none`. L'argument est géométrique et il se mesure dans `ilotsDe` — la boîte
+ * part à `y − MARGE_ILOT − BANDE_ILOT`, donc ces 20 px sont **au-dessus** de la
+ * boîte englobante de ses membres et ne recouvrent aucune carte, par
+ * construction. Une surface qui ne recouvre rien ne prend rien à personne, là
+ * où rendre la *boîte* vivante aurait volé chaque prise de carte. On traverse
+ * toujours l'îlot pour prendre une carte et pour déplacer le plan ; on ne le
+ * déplace toujours pas, puisque déplacer un rangement serait déplacer ce qu'il
+ * contient. Ce qu'on perd est 20 px de plan par îlot, et ça se dit.
+ *
+ * **Le nom ouvre le menu, la poignée tire le lien — deux surfaces, deux
+ * gestes.** Une bande qui ferait les deux les mettrait sur le même
+ * `pointerdown`, et il faudrait décider lequel gagne à chaque pression. La
+ * poignée est la jumelle de celle de la largeur : 10 px, mêmes tokens, révélée
+ * au survol.
  */
 function NoeudIlot({ data }: NodeProps) {
+  const cadre = useContext(CADRE)
   const { nom, membres } = data as unknown as { nom: string; membres: number }
+  if (!cadre) return null
+
+  const cle = cleIlot(nom)
+  const ouvert = cadre.epingle === cle || cadre.survolee === cle
+  const teinte = cadre.teintes[nom] ?? ""
+  const couleur = teinte ? COULEUR_TEINTE[teinte] : null
+
   return (
     <div
       data-ilot={nom}
-      className="h-full w-full rounded-[2px] border border-bord-fort bg-fond-1/40"
+      style={
+        couleur
+          ? {
+              borderColor: couleur,
+              background: `color-mix(in srgb, ${couleur} 8%, transparent)`,
+            }
+          : undefined
+      }
+      className={[
+        "group/ilot h-full w-full rounded-[2px] border",
+        couleur ? "" : "border-bord-fort bg-fond-1/40",
+      ].join(" ")}
     >
-      <div className="mesure flex h-[20px] items-center gap-2 px-2 text-[10px] text-texte-2">
-        <span className="truncate">{nom}</span>
+      {/* **La seule surface vivante de l'îlot**, et elle ne recouvre aucune de
+          ses cartes. Le nœud reste en `pointer-events: none` ; un enfant en
+          `auto` sous un parent en `none` reçoit ses événements. */}
+      <div
+        style={{ pointerEvents: "auto" }}
+        onPointerEnter={() => cadre.onSurvol(cle, true)}
+        onPointerLeave={() => cadre.onSurvol(cle, false)}
+        className="mesure relative flex h-[20px] items-center gap-2 px-2 text-[10px]"
+      >
+        {/* Le nom **est** la poignée du menu — le motif de l'infobulle, appliqué
+            à l'objet qui n'a rien d'autre à offrir. `w-fit` pour la même raison
+            qu'un libellé : dans une rangée, la cible doit être le mot. */}
+        <button
+          type="button"
+          onClick={() => cadre.onEpingler(ouvert && cadre.epingle === cle ? null : cle)}
+          style={couleur ? { color: couleur } : undefined}
+          className={`w-fit max-w-full truncate text-left ${couleur ? "" : "text-texte-2"}`}
+        >
+          {nom}
+        </button>
         <span className="shrink-0 text-texte-3">
           {membres} carte{membres > 1 ? "s" : ""}
         </span>
+
+        {/* La poignée de lien, jumelle de celle de la largeur : mêmes tokens,
+            même révélation au survol, seul le curseur diffère. */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          isConnectableStart
+          isConnectableEnd={false}
+          className="!relative !ml-auto !h-[10px] !w-[10px] !min-w-0 !translate-y-0 !transform-none !cursor-crosshair !rounded-[2px] !border !border-bord-fort !bg-fond-3 !opacity-0 !transition-opacity !duration-[80ms] group-hover/ilot:!opacity-100"
+        />
+        <Ancrage />
       </div>
+
+      {ouvert && (
+        <div className="paraitre absolute bottom-full left-0 mb-[3px] flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2"
+             style={{ pointerEvents: "auto" }}>
+          <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
+          <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
+        </div>
+      )}
     </div>
+  )
+}
+
+/**
+ * Le brouillon d'une note — ce sur quoi on écrit avant que la note existe.
+ *
+ * **Un champ non contrôlé, et c'est délibéré.** L'effet qui compose les nœuds se
+ * rejoue à chaque carte qui arrive — une image collée depuis un autre onglet,
+ * une récupération qui aboutit —, et un texte à moitié tapé qui vivrait dans
+ * l'état du plan serait perdu à ce moment-là. Ici il vit dans le DOM du champ,
+ * que React ne démonte pas puisque la clé du nœud ne change jamais.
+ *
+ * `Échap` abandonne, `blur` écrit, et un champ vide ne crée rien : le tableau ne
+ * se remplit pas de notes vides qu'il faudrait ensuite retirer une à une.
+ */
+function NoeudBrouillon({ positionAbsoluteX, positionAbsoluteY }: NodeProps) {
+  const cadre = useContext(CADRE)
+  const champ = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => champ.current?.focus(), [])
+  if (!cadre) return null
+
+  return (
+    <textarea
+      ref={champ}
+      data-brouillon
+      placeholder="une intention, ici"
+      onKeyDown={(evenement) => {
+        if (evenement.key === "Escape") {
+          evenement.stopPropagation()
+          cadre.onAbandon()
+        }
+      }}
+      onBlur={(evenement) =>
+        cadre.onNote(evenement.target.value, { x: positionAbsoluteX, y: positionAbsoluteY })
+      }
+      className="nodrag nowheel h-full w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
+    />
   )
 }
 
@@ -785,8 +1512,8 @@ function NoeudCarte({ data }: NodeProps) {
         carte={carte}
         plan
         choisie={carte.identifiant === cadre.choisie}
-        survolee={carte.identifiant === cadre.survolee}
-        onSurvol={(dedans) => cadre.onSurvol(carte.identifiant, dedans)}
+        survolee={cleCarte(carte.identifiant) === cadre.survolee}
+        onSurvol={(dedans) => cadre.onSurvol(cleCarte(carte.identifiant), dedans)}
         onChoisir={() =>
           cadre.onChoisir(carte.identifiant === cadre.choisie ? null : carte.identifiant)
         }
@@ -807,7 +1534,200 @@ function NoeudCarte({ data }: NodeProps) {
         }}
         zoom={cadre.zoom}
       />
+
+      {/* **La poignée du lien — jumelle de celle de la largeur, à l'autre coin.**
+          Mêmes tokens exactement : 10 px, rayon 2, cadre `--bord-fort`, fond
+          `--fond-3`, révélée au survol. Aucun pixel de vocabulaire neuf ; seul
+          le curseur diffère, parce que le geste diffère. Bas-**gauche** contre
+          bas-droit : deux poignées au même coin auraient demandé de viser, et
+          une toile se compose vite. */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        isConnectableStart
+        isConnectableEnd={false}
+        className="!left-0 !-bottom-1 !h-[10px] !w-[10px] !min-w-0 !-translate-x-1/2 !cursor-crosshair !rounded-[2px] !border !border-bord-fort !bg-fond-3 !opacity-0 !transition-opacity !duration-[80ms] group-hover:!opacity-100"
+      />
+      <Ancrage />
     </div>
+  )
+}
+
+/**
+ * Le trait, son mot et sa pointe.
+ *
+ * **Le tracé se calcule sur les positions vives des nœuds, pas sur celles que le
+ * serveur dit.** C'est la phrase de T8 pour la troisième fois — *la valeur suit
+ * la main, l'écriture suit le relâchement* : sans elle, un lien resterait
+ * immobile pendant qu'on déplace la carte à laquelle il est accroché, et ne
+ * sauterait qu'au relâchement. L'îlot, lui, ne suit **pas** un membre qu'on tire
+ * dehors : sa boîte est celle que le serveur dit, exactement comme T8 l'a
+ * décidé pour qu'une carte puisse sortir de son îlot.
+ *
+ * **Droit, et non courbe.** `docs/PLAN.md` dit « un trait nu » ; une courbe de
+ * Bézier ferait lire l'écran comme un outil de diagrammes.
+ *
+ * **Un lien qui a un mot se survole par son mot, un lien muet par sa bande.**
+ * C'est ce qui rend le défaut muet payable : la zone d'écoute de 20 px que la
+ * librairie pose le long du tracé est de la surface, donc de son ressort
+ * (`docs/ARCHITECTURE.md` §6.5) — un trait de 1 px, lui, ne se survole pas.
+ */
+function AreteLien({ id, source, target, data }: EdgeProps) {
+  const cadre = useContext(CADRE)
+  const depart = useInternalNode(source)
+  const arrivee = useInternalNode(target)
+  const { lien } = data as unknown as { lien: Lien }
+  if (!cadre || !depart || !arrivee) return null
+
+  // **Position de la librairie, taille du produit** — voir `tailleDe`. La
+  // position bouge pendant qu'on tire une carte, donc elle vient d'elle ; la
+  // taille est calculée de toute façon, donc elle vient de nous, et le trait
+  // ne dépend d'aucune mesure qu'un onglet pourrait ne jamais prendre.
+  const boiteDe = (n: typeof depart, id: string): Boite => {
+    const taille = cadre.tailleDe(id)
+    return {
+      x: n?.internals?.positionAbsolute?.x ?? 0,
+      y: n?.internals?.positionAbsolute?.y ?? 0,
+      l: taille?.l ?? n?.measured?.width ?? 0,
+      h: taille?.h ?? n?.measured?.height ?? 0,
+    }
+  }
+  const [un, deux] = ancrer(boiteDe(depart, source), boiteDe(arrivee, target))
+
+  const cle = cleLien(id)
+  const ouvert = cadre.epingle === cle || cadre.survolee === cle
+  const milieu = { x: (un.x + deux.x) / 2, y: (un.y + deux.y) / 2 }
+
+  return (
+    <>
+      <BaseEdge
+        id={id}
+        path={`M ${un.x},${un.y} L ${deux.x},${deux.y}`}
+        markerEnd={lien.pointe ? `url(#${POINTE})` : undefined}
+        style={{
+          stroke: ouvert ? "var(--color-texte-2)" : "var(--color-bord-fort)",
+          strokeWidth: 1,
+        }}
+        // Le survol passe par la zone d'écoute de la librairie, qui la pose sur
+        // le chemin d'interaction — pas sur le trait visible.
+        interactionWidth={20}
+      />
+      <EdgeLabelRenderer>
+        {/* Le mot, au milieu du trait, sur une pastille `--fond-0` pour que le
+            trait ne le traverse pas. Mono 10 px : c'est un fait sur ce qui est
+            là, comme le nom d'un îlot. */}
+        {lien.mot && (
+          <button
+            type="button"
+            onPointerEnter={() => cadre.onSurvol(cle, true)}
+            onPointerLeave={() => cadre.onSurvol(cle, false)}
+            onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${milieu.x}px, ${milieu.y}px)`,
+              pointerEvents: "all",
+            }}
+            className="mesure nodrag nopan rounded-[2px] bg-fond-0 px-1 text-[10px] text-texte-2"
+          >
+            {lien.mot}
+          </button>
+        )}
+
+        {/* La zone d'écoute d'un lien **muet** : il n'a pas de mot à survoler, et
+            c'est la contrepartie assumée du défaut muet. Un carré de 20 px au
+            milieu du trait, invisible, dans la même largeur que celle que la
+            librairie pose le long du tracé. */}
+        {!lien.mot && (
+          <button
+            type="button"
+            aria-label="Régler le lien"
+            onPointerEnter={() => cadre.onSurvol(cle, true)}
+            onPointerLeave={() => cadre.onSurvol(cle, false)}
+            onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${milieu.x}px, ${milieu.y}px)`,
+              pointerEvents: "all",
+            }}
+            className="nodrag nopan h-[20px] w-[20px] rounded-[2px]"
+          />
+        )}
+
+        {ouvert && (
+          <div
+            data-lien={id}
+            onPointerEnter={() => cadre.onSurvol(cle, true)}
+            onPointerLeave={() => cadre.onSurvol(cle, false)}
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, 0) translate(${milieu.x}px, ${milieu.y + GOUTTIERE}px)`,
+              pointerEvents: "all",
+            }}
+            className="paraitre nodrag nopan flex min-w-[240px] flex-col gap-2 rounded-[2px] border border-bord bg-fond-1 p-2"
+          >
+            <PavéLien lien={lien} cadre={cadre} />
+          </div>
+        )}
+      </EdgeLabelRenderer>
+    </>
+  )
+}
+
+/** L'identifiant de la pointe, posé une fois pour toutes les arêtes. */
+const POINTE = "pointe-lien"
+
+/** Ce qu'on règle sur un lien : son mot, sa pointe — et le couper.
+ *
+ *  **Une seule rangée de chaque, dans la forme du menu d'une carte** : mêmes
+ *  libellés à pointillé, même `Retirer` à droite en `--texte-3` qui vire à
+ *  `--echec` au survol. Le mot s'écrit à `blur`, comme `groupe` et `note`.
+ *
+ *  **La pointe est un bouton qui est la phrase de son état**, comme le bouton
+ *  `silhouette` du barème : `sans pointe` / `pointe à l'arrivée`. Aucun glyphe
+ *  neuf, et pas de troisième état à inventer — le domaine porte un booléen, et
+ *  le sens vient du tracé : on tire du départ vers l'arrivée. */
+function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
+  const [mot, setMot] = useState(lien.mot)
+  useEffect(() => setMot(lien.mot), [lien.identifiant])
+
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <Libelle aide="lien.mot">Mot</Libelle>
+        <input
+          value={mot}
+          placeholder="aucun"
+          onChange={(e) => setMot(e.target.value)}
+          onBlur={() => mot !== lien.mot && cadre.onReglerLien(lien, { mot })}
+          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <Libelle aide="lien.pointe">Pointe</Libelle>
+        <button
+          type="button"
+          aria-pressed={lien.pointe}
+          onClick={() => cadre.onReglerLien(lien, { pointe: !lien.pointe })}
+          className={[
+            "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+            lien.pointe
+              ? "border-signal bg-signal/13 text-signal"
+              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+          ].join(" ")}
+        >
+          {lien.pointe ? "pointe à l'arrivée" : "sans pointe"}
+        </button>
+      </div>
+      <div className="flex items-center border-t border-bord pt-2">
+        <button
+          type="button"
+          onClick={() => cadre.onCouperLien(lien)}
+          className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec"
+        >
+          Couper
+        </button>
+      </div>
+    </>
   )
 }
 

@@ -35,6 +35,14 @@ rien — l'auteur décide, et importer quand même reste possible.
 relisent tous les deux avant d'écrire, et le second efface le premier. Sur une
 toile ce n'est plus une hypothèse, c'est le régime normal. La carte porte sa
 place, et un déplacement n'écrit qu'un fichier, le sien.
+
+**Une note porte sa teinte, une image n'en porte aucune** (T9, US-111). Ce n'est
+pas une restriction technique : colorier chaque carte reconstruirait un second
+rangement, invisible dans la grille et concurrent du groupe — très exactement ce
+que la tranche précédente a écarté en faisant de l'îlot le groupe lui-même. La
+teinte d'un **îlot**, elle, n'est pas ici : un îlot n'a pas d'existence propre,
+donc six membres feraient six vérités possibles pour un seul cadre. Elle vit sur
+le projet (`atelier/domaine/projet.py`).
 """
 
 from __future__ import annotations
@@ -44,6 +52,8 @@ import math
 import time
 from dataclasses import dataclass, field
 from typing import Any
+
+from atelier.domaine.teinte import AUCUNE, teinte_valide
 
 # ── Ce qu'une carte porte ────────────────────────────────────────────────────
 
@@ -137,6 +147,21 @@ class Carte:
     position: tuple[float, float] | None = None
     largeur_libre: int | None = None
 
+    # ── Sa teinte, si c'est une note ─────────────────────────────────────────
+    #
+    # Arrivée en T9, et **elle ne concerne qu'une carte texte** (US-111). Une
+    # carte image ne porte aucune couleur d'organisation, et c'est un critère
+    # d'acceptation : colorier chaque carte reconstruirait un second rangement,
+    # invisible dans la grille et concurrent du groupe — ce que T8 a justement
+    # écarté en faisant de l'îlot le groupe lui-même.
+    #
+    # **Une note porte la sienne, un îlot non.** La différence n'est pas un
+    # caprice : une note *est* un objet, donc elle a un endroit où l'écrire ; un
+    # îlot n'en est pas un — six membres feraient six vérités possibles pour un
+    # seul îlot, d'où la teinte d'îlot rangée sur le projet
+    # (`atelier/domaine/projet.py`, `Projet.teintes`).
+    teinte: str = AUCUNE
+
     # ── Ce qui en fait un artwork officiel ───────────────────────────────────
     #
     # « Promouvoir reste un geste unique » (US-51) : on pose ces deux champs une
@@ -200,6 +225,7 @@ class Carte:
             # de place — la même règle que pour une dimension jamais mesurée.
             "position": list(self.position) if self.position else None,
             "largeur_libre": self.largeur_libre,
+            "teinte": self.teinte,
             "officiel": self.officiel,
             "famille": self.famille,
             "empreinte": self.empreinte,
@@ -236,6 +262,7 @@ class Carte:
             taille=int(d.get("taille", 1)),
             position=_position(d.get("position")),
             largeur_libre=_largeur(d.get("largeur_libre")),
+            teinte=teinte_valide(d.get("teinte")),
             officiel=bool(d.get("officiel", False)),
             famille=d.get("famille", TOUS),
             empreinte=d.get("empreinte", ""),

@@ -61,6 +61,16 @@ from atelier.domaine.projet import (
     bible_complete,
     empreinte_palette,
 )
+from atelier.domaine.lien import (
+    CARTE as BOUT_CARTE,
+    GENRES as GENRES_BOUT,
+    ILOT as BOUT_ILOT,
+    MOT_MAX,
+    Bout,
+    Lien,
+    meme_paire,
+)
+from atelier.domaine.teinte import AUCUNE, TEINTES
 from atelier.image import COULEURS_MAX, COULEURS_MIN, extension, mesurer, palette_de
 # `CIBLE_MIN` et `CIBLE_MAX` viennent de la recette et pas d'ici : la taille
 # de pixel d'un projet et celle d'une recette sont la même grandeur, et deux
@@ -93,6 +103,23 @@ class UniversRefuse(ErreurAtelier):
     """Un réglage de l'univers n'est pas applicable, et on dit lequel."""
 
     code = "univers_refuse"
+
+
+class LienInconnu(ErreurAtelier):
+    code = "lien_inconnu"
+
+    def __init__(self, identifiant: str) -> None:
+        super().__init__(f"aucun lien « {identifiant} » sur cette toile")
+
+
+class LienRefuse(ErreurAtelier):
+    """Ce trait-là ne peut pas être tiré, et le refus dit pourquoi.
+
+    Même forme que `CarteRefusee` : la phrase **est** ce qui s'affiche, et elle
+    nomme ce qui manque plutôt que ce qui a été demandé.
+    """
+
+    code = "lien_refuse"
 
 
 class ServiceUnivers:
@@ -200,13 +227,45 @@ class ServiceUnivers:
         self._sauver(carte)
         return {"carte": carte.en_json(), "doublon": None}
 
-    def coller_texte(self, projet: str, texte: str) -> Carte:
+    def coller_texte(
+        self,
+        projet: str,
+        texte: str,
+        *,
+        position: Iterable[float] | None = None,
+        groupe: str = "",
+        teinte: str = AUCUNE,
+    ) -> Carte:
         """Un texte devient une carte texte (US-44) — une intention au milieu
-        des images, et non une ligne de plus dans la bible."""
+        des images, et non une ligne de plus dans la bible.
+
+        **T9 lui donne une place à la naissance, et n'ouvre pas de second
+        geste** (US-110). « Une note se pose à même la toile, créée là où elle
+        s'applique plutôt qu'au bout d'une liste » : coller puis déplacer aurait
+        fait paraître la note en réserve avant de la poser, c'est-à-dire à
+        l'autre bout de l'écran de l'endroit qu'on vient de désigner — et aurait
+        rendu possible l'état où elle est créée sans jamais avoir été posée.
+        C'est la règle de la carte tirée dans un îlot, appliquée à sa naissance :
+        **un seul appel dit les deux**.
+
+        **Et elle naît dans l'îlot où on l'a posée**, s'il y en avait un. Ce
+        n'est pas une seconde règle : c'est *la* règle du plan, celle que tout
+        ce qui atterrit dessus suit déjà — une carte lâchée dans un îlot y écrit
+        son groupe. La laisser hors groupe aurait fait qu'une note posée au
+        milieu d'un îlot n'en soit pas membre, puis le devienne au premier pixel
+        de déplacement : deux réponses à la même question, à un pixel d'écart.
+        C'est l'écran qui dit dans quel îlot le point tombe — il le sait déjà,
+        c'est le même calcul qu'au relâchement d'une carte.
+
+        Un texte **collé**, lui, n'a aucun point : il n'envoie ni place ni
+        groupe et attend en réserve, comme tout ce qui entre par le collage.
+        """
         self._exige(projet)
         propre = texte.strip()
         if not propre:
             raise CarteRefusee("une carte texte a besoin d'un texte")
+        if teinte and teinte not in TEINTES:
+            raise CarteRefusee(_teintes_possibles(teinte))
         carte = Carte(
             identifiant=uuid.uuid4().hex[:16],
             projet=projet,
@@ -214,6 +273,9 @@ class ServiceUnivers:
             statut=PRETE,
             texte=propre,
             empreinte=empreinte_de(propre.encode("utf-8")),
+            position=_place(position) if position is not None else None,
+            groupe=groupe.strip(),
+            teinte=teinte,
         )
         self._sauver(carte)
         return carte
@@ -331,6 +393,8 @@ class ServiceUnivers:
         taille: int | None = None,
         position: Iterable[float] | None = None,
         largeur_libre: int | None = None,
+        texte: str | None = None,
+        teinte: str | None = None,
     ) -> Carte:
         """Grouper, annoter, régler la taille — et poser sur la toile (US-47, T8).
 
@@ -350,6 +414,7 @@ class ServiceUnivers:
         — ni classée, ni posée.
         """
         carte = self.carte(projet, identifiant)
+        avant = carte.groupe
         if groupe is not None:
             carte.groupe = groupe.strip()
         if note is not None:
@@ -368,7 +433,46 @@ class ServiceUnivers:
                     f"une largeur sur la toile va de {LARGEUR_MIN} à {LARGEUR_MAX} px"
                 )
             carte.largeur_libre = largeur_libre
+        if texte is not None:
+            # **Le texte d'une note se corrige**, et c'est T9 qui l'ouvre : sans
+            # ça, réparer une faute demanderait de retirer la note et de la
+            # recoller — donc de perdre sa place, sa teinte et les liens qui y
+            # aboutissent, c'est-à-dire tout ce que cette tranche vient
+            # d'ajouter. Le trou datait de T4 et ne s'était jamais vu, parce
+            # qu'une note au bout d'une liste se retape sans rien perdre.
+            propre = texte.strip()
+            if carte.genre != TEXTE:
+                raise CarteRefusee("seule une note porte un texte")
+            if not propre:
+                raise CarteRefusee("une carte texte a besoin d'un texte")
+            carte.texte = propre
+            # L'empreinte suit le texte : c'est elle qui dit « tu as déjà
+            # celle-ci », et une empreinte qui ne suit plus son contenu est une
+            # seconde vérité — la panne que `cree_le` avait déjà causée sur la
+            # grille (`AGENTS.md` § Pièges connus).
+            carte.empreinte = empreinte_de(propre.encode("utf-8"))
+        if teinte is not None:
+            # **Une carte image ne porte aucune couleur d'organisation** (US-111,
+            # critère d'acceptation). Le refus est ici et pas à l'écran : une
+            # règle que seule l'interface tiendrait serait fausse dès le premier
+            # appel qui ne vient pas d'elle.
+            if teinte and carte.genre != TEXTE:
+                raise CarteRefusee(
+                    "seule une note porte une teinte — une carte image se range "
+                    "par son groupe"
+                )
+            if teinte and teinte not in TEINTES:
+                raise CarteRefusee(_teintes_possibles(teinte))
+            carte.teinte = teinte
         self._sauver(carte)
+        # **Le groupe qui vient de perdre sa dernière carte n'existe plus**, et
+        # ce qui pendait à lui non plus : son cadre n'a plus rien à englober,
+        # donc un lien qui y aboutissait pointe vers rien et sa teinte n'a plus
+        # rien à teindre. C'est le geste qui l'a vidé qui l'emporte, jamais un
+        # balayage — et seulement quand le groupe a bougé, pour qu'annoter une
+        # carte ne relise pas toute la toile.
+        if groupe is not None and carte.groupe != avant:
+            self._elaguer(projet)
         return carte
 
     def promouvoir(
@@ -405,8 +509,232 @@ class ServiceUnivers:
         carte = self.carte(projet, identifiant)
         self._fichiers.effacer_carte(projet, identifiant)
         self._diffusion.publier("carte", {**carte.en_json(), "oubliee": True})
+        # **Un lien ne survit pas à son extrémité, et c'est la suppression qui
+        # l'emporte** (`docs/ARCHITECTURE.md` §5). Un trait vers rien ne
+        # représente rien, et une entrée morte sur le disque serait une deuxième
+        # vérité qui attend son heure. L'élagage vient **après** l'effacement :
+        # il lit ce qui reste, et ce qui reste ne contient plus cette carte-ci.
+        self._elaguer(projet)
         self._accorder(projet)
         return carte
+
+    # ── Les liens de la toile ────────────────────────────────────────────────────────
+    #
+    # « Ce que T8 permet de ranger, T9 permet de le dire » (`docs/PLAN.md`). Les
+    # quatre gestes tiennent en quatre méthodes, et **aucune ne connaît la
+    # géométrie** : où un trait passe, comment il se courbe, où son mot se pose,
+    # c'est l'affaire de l'écran. Le service tient ce qui doit survivre à la
+    # fermeture de l'onglet — qui est joint à qui, et ce qu'on en a dit.
+
+    def liens(self, projet: str) -> list[Lien]:
+        """Les liens d'une toile, relus du disque à chaque fois — comme les
+        cartes, et pour la même raison : un cache en mémoire serait une seconde
+        vérité, et une toile se lit en entier de toute façon.
+
+        L'ordre est celui du tracé, le plus ancien d'abord. Un trait qui
+        changerait de rang dans la liste changerait de rang dans le rendu, et
+        deux traits qui se croisent se croiseraient dans l'autre sens à chaque
+        relecture.
+        """
+        self._exige(projet)
+        lus = [Lien.depuis_json(un) for un in self._fichiers.parcourir_liens(projet)]
+        return sorted((un for un in lus if un is not None), key=lambda un: un.cree_le)
+
+    def lien(self, projet: str, identifiant: str) -> Lien:
+        for un in self.liens(projet):
+            if un.identifiant == identifiant:
+                return un
+        raise LienInconnu(identifiant)
+
+    def lier(
+        self,
+        projet: str,
+        de: dict[str, str] | Bout,
+        vers: dict[str, str] | Bout,
+        *,
+        mot: str = "",
+        pointe: bool = False,
+    ) -> Lien:
+        """Tirer un trait d'un objet à un autre (US-108).
+
+        **Il naît muet** : ni mot, ni pointe. Un trait nu dit déjà « ceci a
+        rapport avec cela », et c'est le cas courant — demander le mot au moment
+        du tracé ferait répondre, à chaque trait, à une question dont la réponse
+        est presque toujours « rien ».
+
+        **Les deux extrémités sont vérifiées ici, pas à l'écran.** Une carte
+        s'efface, un groupe se vide, et l'onglet qui tire le trait peut avoir un
+        rendu vieux d'une seconde : un lien écrit vers une extrémité qui n'existe
+        plus serait exactement l'entrée morte que la tranche interdit.
+
+        **`mot` et `pointe` existent pour l'annulation, et pour elle seule.**
+        « Il naît muet » reste vrai : c'est une règle de l'écran, qui ne les
+        envoie jamais en tirant un trait. Mais défaire une coupe, c'est reposer
+        le lien **tel qu'il était** — et une route qui ne saurait reposer qu'un
+        trait nu forcerait l'annulation à passer par un second appel pour lui
+        rendre son mot, donc par un état intermédiaire où le geste est à moitié
+        défait. T8 a déjà tranché cette question-là : deux appels pour un geste
+        sont un état de trop.
+        """
+        self._exige(projet)
+        premier, second = _bout(de), _bout(vers)
+        if premier == second:
+            raise LienRefuse("un lien joint deux objets, jamais un objet à lui-même")
+
+        cartes = self.cartes(projet)
+        for bout in (premier, second):
+            if not _existe(bout, cartes):
+                raise LienRefuse(_absent(bout))
+
+        # **Deux traits entre les deux mêmes objets se posent l'un sur l'autre**,
+        # donc le second est invisible — impossible à survoler, donc impossible à
+        # couper. Le sens ne compte pas pour cette question-là, alors qu'il
+        # compte pour la pointe : le trait dit *qu'il y a* un rapport, la pointe
+        # dit lequel. Retourner un lien existant reste un geste ; en empiler un
+        # second n'en est pas un.
+        for existant in self.liens(projet):
+            if meme_paire(existant, premier, second):
+                raise LienRefuse("ces deux-là sont déjà joints")
+
+        # **Le mot se vérifie avant que rien ne soit écrit.** Le poser après avoir
+        # sauvé, en passant par `regler_lien`, laissait un lien **créé et muet**
+        # derrière un refus 409 : le geste n'aurait été qu'à moitié refusé, et
+        # l'auteur aurait vu paraître un trait qu'il n'a pas obtenu. C'est la
+        # règle de `_ecrire_json` — *un fichier qui fait foi s'écrit entièrement
+        # ou pas du tout* — vue du geste plutôt que du fichier.
+        neuf = Lien(
+            identifiant=uuid.uuid4().hex[:16],
+            projet=projet,
+            de=premier,
+            vers=second,
+            mot=_mot_valide(mot),
+            pointe=pointe,
+        )
+        self._sauver_lien(neuf)
+        return neuf
+
+    def regler_lien(
+        self,
+        projet: str,
+        identifiant: str,
+        *,
+        mot: str | None = None,
+        pointe: bool | None = None,
+    ) -> Lien:
+        """Le mot et la pointe, ensemble (US-109) — *l'exception s'exprime*.
+
+        **Les deux dans un seul appel**, comme les réglages d'une carte : ils se
+        posent au même endroit, sur la même petite surface, et un appel par champ
+        ferait deux allers-retours pour ce qu'on remplit d'un coup.
+
+        **Le vide efface, l'absence ne touche pas** — la convention du produit
+        depuis `groupe`. Retirer le mot d'un lien est donc un geste comme lui en
+        donner un, et le trait redevient ce qu'il était en naissant.
+        """
+        un = self.lien(projet, identifiant)
+        if mot is not None:
+            un.mot = _mot_valide(mot)
+        if pointe is not None:
+            un.pointe = pointe
+        self._sauver_lien(un)
+        return un
+
+    def couper(self, projet: str, identifiant: str) -> Lien:
+        """Le trait part, tout de suite. Pas d'annulation courte, comme pour une
+        carte : un lien n'a rien coûté. La toile en a une, en mémoire, qui vit le
+        temps de l'écran (`docs/PLAN.md` T8)."""
+        un = self.lien(projet, identifiant)
+        self._fichiers.effacer_lien(projet, identifiant)
+        self._diffusion.publier("lien", {**un.en_json(), "coupe": True})
+        return un
+
+    # ── Les teintes d'îlot ────────────────────────────────────────────────────────────
+
+    def teintes(self, projet: str) -> dict[str, str]:
+        """Les teintes des îlots d'un projet, telles qu'elles sont rangées.
+
+        Relues du projet à chaque fois, comme les cartes du disque : la seule
+        copie qui existe est celle du fichier.
+        """
+        return dict(self._exige(projet).teintes)
+
+    def teinter(self, projet: str, groupe: str, teinte: str) -> Projet:
+        """La teinte d'un îlot (US-111) — sur le projet, jamais sur ses cartes.
+
+        Six membres feraient six vérités possibles pour un seul cadre
+        (`docs/ARCHITECTURE.md` §5) : elle vit donc dans le fichier du projet,
+        une entrée par nom de groupe.
+
+        **Un îlot qui n'existe pas ne se teinte pas.** Un îlot *est* le groupe,
+        et un groupe sans carte n'est écrit nulle part : accepter sa teinte
+        écrirait une entrée que rien ne pourrait jamais montrer, et que rien ne
+        viendrait jamais effacer — la définition d'une entrée morte.
+        """
+        objet = self._exige(projet)
+        nom = groupe.strip()
+        if not nom:
+            raise UniversRefuse("un îlot se teinte par son nom de groupe")
+        if teinte and teinte not in TEINTES:
+            raise UniversRefuse(_teintes_possibles(teinte))
+        if nom not in {c.groupe for c in self.cartes(projet) if c.groupe}:
+            raise UniversRefuse(f"aucun îlot « {nom} » sur cette toile")
+
+        teintes = dict(objet.teintes)
+        # Le vide **efface l'entrée** au lieu de la mettre à « rien » : un îlot
+        # sans teinte porte celle du châssis, et une entrée qui dirait « aucune »
+        # serait un réglage posé qui ne règle rien.
+        if teinte:
+            teintes[nom] = teinte
+        else:
+            teintes.pop(nom, None)
+        if teintes == objet.teintes:
+            return objet
+
+        objet.teintes = teintes
+        self._bibliotheque.sauver_projet(objet)
+        self._annoncer_univers(objet)
+        return objet
+
+    # ── Ce qui ne survit pas à ses extrémités ───────────────────────────────────────────
+
+    def _elaguer(self, projet: str) -> None:
+        """Les liens et les teintes dont l'objet a disparu partent avec lui.
+
+        **Appelé par le geste qui a fait disparaître l'objet, jamais en
+        balayage** (`docs/ARCHITECTURE.md` §5) : supprimer une carte, ou sortir
+        la dernière carte d'un groupe. Un nettoyage périodique aurait laissé
+        exister, entre deux passages, l'état que toute la tranche interdit — un
+        trait vers rien, et une teinte sur un îlot qui n'est plus dessiné.
+
+        **Il lit ce qui reste, il ne devine pas ce qui est parti.** Lui passer
+        l'identifiant supprimé aurait demandé à l'appelant de savoir *quelles*
+        extrémités il vient d'invalider — or sortir une carte d'un groupe peut
+        faire disparaître un îlot entier, donc une extrémité que personne n'a
+        nommée. La liste de ce qui existe est la seule information juste.
+        """
+        cartes = self.cartes(projet)
+        for un in self.liens(projet):
+            if all(_existe(bout, cartes) for bout in un.bouts):
+                continue
+            self._fichiers.effacer_lien(projet, un.identifiant)
+            self._diffusion.publier("lien", {**un.en_json(), "coupe": True})
+
+        objet = self._exige(projet)
+        groupes = {c.groupe for c in cartes if c.groupe}
+        restantes = {nom: t for nom, t in objet.teintes.items() if nom in groupes}
+        if restantes != objet.teintes:
+            objet.teintes = restantes
+            self._bibliotheque.sauver_projet(objet)
+            self._annoncer_univers(objet)
+
+    def _sauver_lien(self, un: Lien) -> None:
+        """**Le seul endroit du dépôt qui écrive un lien.**
+
+        Écrire d'abord, annoncer ensuite — comme une carte, comme un asset, comme
+        une génération. Ce qui est annoncé est donc toujours déjà sur le disque.
+        """
+        self._fichiers.ecrire_lien(un.projet, un.identifiant, un.en_json())
+        self._diffusion.publier("lien", un.en_json())
 
     # ── L'univers ────────────────────────────────────────────────────────────
 
@@ -663,16 +991,7 @@ class ServiceUnivers:
         # quatre messages par abonné : un événement par asset ferait perdre les
         # plus anciens à un onglet lent au-delà de soixante-quatre images, et
         # l'écran redemanderait de toute façon la grille entière.
-        self._diffusion.publier(
-            "univers",
-            {
-                "projet": projet,
-                "nom": objet.nom,
-                "univers": univers.en_json(),
-                "realignes": remis,
-                "conserves": conserves,
-            },
-        )
+        self._annoncer_univers(objet, realignes=remis, conserves=conserves)
         return {
             "projet": projet,
             "realignes": remis,
@@ -730,17 +1049,32 @@ class ServiceUnivers:
         univers.palette_empreinte = empreinte
         accorde = objet.avec(univers)
         self._bibliotheque.sauver_projet(accorde)
+        self._annoncer_univers(accorde)
+        return accorde
+
+    def _annoncer_univers(
+        self, objet: Projet, *, realignes: int = 0, conserves: int = 0
+    ) -> None:
+        """L'unique forme de l'annonce « quelque chose a changé sur ce projet ».
+
+        **Écrite une fois parce qu'elle a gagné un champ en T9**, et que trois
+        appelants qui composent le même message à trois endroits finissent par
+        n'en composer que deux quand un champ s'ajoute. Les teintes voyagent avec
+        l'univers sans être dedans : `Univers` est « ce que le projet impose à ce
+        qui rentre », et une teinte d'îlot n'impose rien — c'est l'enveloppe qui
+        les porte, pas l'objet.
+        """
         self._diffusion.publier(
             "univers",
             {
-                "projet": projet,
-                "nom": accorde.nom,
-                "univers": univers.en_json(),
-                "realignes": 0,
-                "conserves": 0,
+                "projet": objet.identifiant,
+                "nom": objet.nom,
+                "univers": objet.univers.en_json(),
+                "teintes": dict(objet.teintes),
+                "realignes": realignes,
+                "conserves": conserves,
             },
         )
-        return accorde
 
 
 def _place(brut: Iterable[float]) -> tuple[float, float] | None:
@@ -757,6 +1091,59 @@ def _place(brut: Iterable[float]) -> tuple[float, float] | None:
     if len(valeurs) != 2 or not all(math.isfinite(v) for v in valeurs):
         raise CarteRefusee("une place sur la toile est une paire de coordonnées")
     return (valeurs[0], valeurs[1])
+
+
+def _bout(brut: dict[str, str] | Bout) -> Bout:
+    """Une extrémité telle que l'écran l'envoie, vérifiée avant d'être écrite."""
+    if isinstance(brut, Bout):
+        return brut
+    lu = Bout.depuis_json(brut)
+    if lu is None:
+        raise LienRefuse(
+            "une extrémité de lien est une carte ou un îlot, et elle se nomme"
+        )
+    return lu
+
+
+def _existe(bout: Bout, cartes: Iterable[Carte]) -> bool:
+    """Cette extrémité désigne-t-elle encore quelque chose ?
+
+    **Les deux genres se lisent sur la même liste**, et c'est la moitié de ce que
+    « l'îlot *est* le groupe » veut dire : une carte existe si elle est là, un
+    îlot existe s'il reste au moins une carte qui porte son nom. Il n'y a rien
+    d'autre à consulter, et surtout pas un second rangement.
+    """
+    liste = list(cartes)
+    if bout.genre == BOUT_CARTE:
+        return any(c.identifiant == bout.valeur for c in liste)
+    return any(c.groupe == bout.valeur for c in liste)
+
+
+def _mot_valide(mot: str) -> str:
+    """Le mot d'un lien, mis au propre et borné — **un seul endroit qui décide**.
+
+    Deux appelants le posent, celui qui tire le trait et celui qui le règle : une
+    seconde écriture de la borne serait une seconde règle sur la même grandeur, et
+    c'est la première qui finirait par être fausse.
+    """
+    propre = " ".join(mot.split())
+    if len(propre) > MOT_MAX:
+        raise LienRefuse(
+            f"le mot d'un lien tient en {MOT_MAX} signes — au-delà, "
+            "ce qu'on veut écrire est une note"
+        )
+    return propre
+
+
+def _absent(bout: Bout) -> str:
+    quoi = "la carte" if bout.genre == BOUT_CARTE else "l'îlot"
+    return f"{quoi} « {bout.valeur} » n'est plus sur cette toile"
+
+
+def _teintes_possibles(recue: str) -> str:
+    """Le refus nomme la **liste close** plutôt que ce qu'on a demandé : c'est
+    elle qu'il faut connaître, et elle tient en une ligne."""
+    return f"teinte inconnue « {recue} » — les six sont : " + ", ".join(TEINTES)
 
 
 def _quantification_neuve(univers: Univers):

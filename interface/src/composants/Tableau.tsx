@@ -26,11 +26,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import {
   api,
+  COULEUR_TEINTE,
   FAMILLES,
   NOM_FAMILLE,
+  NOM_TEINTE,
   Refus,
+  TEINTES,
   type Carte,
   type Famille,
+  type Teinte,
 } from "../api"
 import { Libelle, Raison, Segments } from "./chassis"
 
@@ -83,7 +87,7 @@ const MARGE = 9
  * Partagé par la grille et par la toile depuis T8 : une carte se survole pareil
  * des deux côtés, et deux minuteries concurrentes se voleraient le menu.
  */
-export function useSurvol(choisie: string | null) {
+export function useSurvol(epingle: boolean) {
   const [survolee, setSurvolee] = useState<string | null>(null)
   const minuterie = useRef<number | null>(null)
 
@@ -93,8 +97,16 @@ export function useSurvol(choisie: string | null) {
       // **On ne vole pas un menu à un clavier en train de s'en servir.** Sans
       // cette ligne, épingler une carte pour taper sa note, puis dériver d'un
       // pixel vers la voisine, effacerait le champ sous les doigts.
+      //
+      // **Ce qui est épinglé n'est plus forcément une carte** (T9) : la toile
+      // épingle aussi le pavé d'un lien, qui porte le champ du mot, et le menu
+      // d'un îlot. Le garde recevait jusqu'ici l'identifiant de la carte
+      // choisie, et il aurait donc été aveugle exactement là où on tape — la
+      // règle était juste, son hypothèse a changé sous elle. Il reçoit
+      // désormais la question qu'il posait déjà : *y a-t-il quelque chose
+      // d'épinglé ?*
       const saisieEnCours =
-        choisie !== null &&
+        epingle &&
         document.activeElement instanceof HTMLElement &&
         ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)
       if (saisieEnCours) return
@@ -331,7 +343,7 @@ export function Tableau({
   onErreur: (raison: string) => void
   collage: ReturnType<typeof useCollage>
 }) {
-  const { survolee, survoler } = useSurvol(choisie)
+  const { survolee, survoler } = useSurvol(choisie !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
 
   return (
@@ -392,7 +404,7 @@ export function Reserve({
   /** Une carte ramenée de la toile : elle perd sa place **et** son groupe. */
   onDepot: (carte: string) => void
 }) {
-  const { survolee, survoler } = useSurvol(choisie)
+  const { survolee, survoler } = useSurvol(choisie !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
   const enReserve = cartes.filter((c) => c.en_reserve)
   const glisseCarte = (evenement: React.DragEvent) =>
@@ -560,6 +572,56 @@ export function BarreTableau({
   )
 }
 
+/**
+ * Les sept pastilles d'une teinte — **six couleurs et le châssis**.
+ *
+ * « La liste est fermée, et il n'existe aucun sélecteur libre : le premier îlot
+ * rouge vif se lirait comme un échec » (`docs/DESIGN.md` § Les teintes d'îlot).
+ * Elles prennent la forme exacte du carré de palette de l'écran Univers — le
+ * seul motif de couleur nue du produit —, parce qu'une pastille n'est pas une
+ * marque : c'est la couleur montrée.
+ *
+ * **La septième n'est pas une septième teinte, c'est l'absence de teinte
+ * montrée.** Un îlot sans couleur porte celle du châssis — `--fond-2` bordé
+ * `--bord` —, et `docs/DESIGN.md` dit que c'est *ce qu'il est*, pas un réglage
+ * manquant. La rendre évite un huitième glyphe en forme de croix, et la liste
+ * close du domaine ne bouge pas d'un nom : `atelier/domaine/teinte.py` garde
+ * ses six, et le vide reste ce qu'il a toujours été — une valeur.
+ *
+ * Partagée par la note et par l'îlot, parce que c'est le même geste sur deux
+ * objets. Deux rangées écrites à deux endroits auraient fini par proposer deux
+ * listes.
+ */
+export function Pastilles({
+  teinte,
+  onChoisir,
+}: {
+  teinte: Teinte
+  onChoisir: (teinte: Teinte) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {(["", ...TEINTES] as Teinte[]).map((valeur) => (
+        <button
+          key={valeur || "aucune"}
+          type="button"
+          aria-label={valeur ? NOM_TEINTE[valeur] : "sans teinte"}
+          aria-pressed={teinte === valeur}
+          onClick={() => onChoisir(valeur)}
+          style={valeur ? { background: COULEUR_TEINTE[valeur] } : undefined}
+          className={[
+            "h-5 w-5 rounded-[2px] border transition-colors duration-[80ms]",
+            valeur ? "border-bord" : "border-bord bg-fond-2",
+            // L'anneau de la chose choisie, et il n'en existe qu'un dans le
+            // produit : `--lumiere` ne veut dire que ça.
+            teinte === valeur ? "ring-2 ring-lumiere" : "",
+          ].join(" ")}
+        />
+      ))}
+    </div>
+  )
+}
+
 /** Les groupes qui existent — c'est-à-dire les îlots. **Une seule définition
  *  dans tout l'écran** : un îlot *est* le groupe, et deux façons de dresser la
  *  liste finiraient par en montrer une de plus que la toile n'en dessine. */
@@ -627,9 +689,33 @@ export function CarteTuile({
   onErreur: (raison: string) => void
 }) {
   const ouvert = choisie || survolee
+  // **La teinte d'une note colore sa surface, jamais une marque posée dessus**
+  // (`docs/DESIGN.md` § Les teintes d'îlot, discipline n°2). Le fond à 8 %, sous
+  // le seuil où l'œil la trouve seule et assez pour délimiter — la même valeur
+  // que le fond d'un îlot, parce que c'est la même chose : une surface qui dit
+  // à quoi elle appartient.
+  //
+  // **Le bord cède à l'anneau `--lumiere`, le fond jamais.** *Choisi* est un
+  // état et un état l'emporte sur un rangement — mais faire céder les deux
+  // rendait la teinte invisible tant que la carte reste choisie, c'est-à-dire
+  // **à l'instant précis où on vient de la choisir** : on cliquait une pastille
+  // et rien ne changeait. Vu à l'atelier lancé. Les deux ne se disputent que le
+  // bord, et le bord suffit à dire *choisi*.
+  const teinte = carte.genre === "texte" ? carte.teinte : ""
+  const couleur = teinte ? COULEUR_TEINTE[teinte] : null
   return (
     <article
-      style={plan ? { width: "100%", height: "100%" } : { gridColumn: SPAN[carte.taille] ?? "span 1" }}
+      style={{
+        ...(plan
+          ? { width: "100%", height: "100%" }
+          : { gridColumn: SPAN[carte.taille] ?? "span 1" }),
+        ...(couleur
+          ? {
+              background: `color-mix(in srgb, ${couleur} 8%, var(--color-fond-2))`,
+              ...(choisie ? {} : { borderColor: couleur }),
+            }
+          : {}),
+      }}
       onPointerEnter={() => onSurvol(true)}
       onPointerLeave={() => onSurvol(false)}
       className={[
@@ -860,10 +946,12 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
 function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => void }) {
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
+  const [texte, setTexte] = useState(carte.texte)
 
   useEffect(() => {
     setGroupe(carte.groupe)
     setNote(carte.note)
+    setTexte(carte.texte)
   }, [carte.identifiant])
 
   const echouer = (erreur: unknown, defaut: string) =>
@@ -922,6 +1010,36 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
           onChange={(taille) => void regler({ taille })}
         />
       </div>
+
+      {/* **Ce qui n'appartient qu'à une note**, et qui n'existe donc pas sur une
+          carte image : son texte, et sa teinte. L'absence du bloc **est** le
+          critère « une carte image ne porte aucune couleur d'organisation » —
+          rien n'est grisé, parce qu'il n'y a pas de réglage à refuser. C'est la
+          symétrique exacte du bloc *Artwork officiel*, qui n'existe que pour une
+          image. */}
+      {carte.genre === "texte" && (
+        <div className="flex flex-col gap-2 border-t border-bord pt-2">
+          <div className="flex flex-col gap-1">
+            <Libelle aide="note.texte">Texte</Libelle>
+            <textarea
+              value={texte}
+              rows={3}
+              onChange={(e) => setTexte(e.target.value)}
+              onBlur={() =>
+                texte.trim() && texte !== carte.texte && void regler({ texte })
+              }
+              className="resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Libelle aide="note.teinte">Teinte de la note</Libelle>
+            <Pastilles
+              teinte={carte.teinte}
+              onChoisir={(teinte) => void regler({ teinte })}
+            />
+          </div>
+        </div>
+      )}
 
       {carte.genre === "image" && (
         <div className="flex flex-col gap-1.5 border-t border-bord pt-2">

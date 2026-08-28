@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+"""Les six teintes — **le seul endroit du produit où une couleur ne veut rien dire**.
+
+Un îlot ou une note en porte une parce que l'auteur l'a choisie, jamais parce
+qu'un état la commande : c'est l'inverse exact des quatre sémantiques du châssis
+— `--ok`, `--epingle`, `--echec`, `--signal` —, qui disent toutes un fait sur le
+monde. `docs/DESIGN.md` § Les teintes d'îlot porte les valeurs et les trois
+disciplines qui les tiennent à distance ; ce fichier-ci ne porte que **la liste
+close**, et rien de ce qu'elles valent.
+
+**Aucun hexadécimal ici, et c'est la décision.** Le produit range un *nom* —
+`ardoise`, `iris` — et l'écran seul sait ce qu'il vaut, par son token. Ranger
+`#7086A0` aurait fait du fichier d'un projet une seconde vérité sur la palette
+du châssis : le jour où `docs/DESIGN.md` déplace une teinte d'un point, tous les
+îlots déjà teintés garderaient l'ancienne, et personne ne saurait dire laquelle
+est la bonne. C'est la même règle que pour la palette d'un univers, dans l'autre
+sens : là, c'est le calcul qui fait foi et le cache qui porte son empreinte.
+
+**Un module à part parce que deux objets s'en servent et qu'aucun ne la
+possède** : la carte, pour la teinte d'une note qu'elle porte elle-même, et le
+projet, pour celle d'un îlot — qui ne peut pas vivre sur ses cartes, six membres
+faisant six vérités possibles pour un seul îlot (`docs/ARCHITECTURE.md` §5).
+Écrire la liste dans l'un des deux aurait fait dépendre l'autre de lui.
+
+**La liste est fermée, et c'est un critère d'acceptation** (`docs/PLAN.md` T9) :
+il n'existe aucun sélecteur libre, et le premier îlot rouge vif se lirait comme
+un échec.
+"""
+
+from __future__ import annotations
+
+# L'ordre est celui de `docs/DESIGN.md`, et c'est celui des pastilles à l'écran :
+# les quatre froides d'abord, les deux chaudes ensuite. Il ne se trie pas
+# alphabétiquement — une roue de teintes rangée par nom n'est plus une roue.
+ARDOISE = "ardoise"
+IRIS = "iris"
+PRUNE = "prune"
+BRUYERE = "bruyere"
+LICHEN = "lichen"
+PAILLE = "paille"
+
+TEINTES: tuple[str, ...] = (ARDOISE, IRIS, PRUNE, BRUYERE, LICHEN, PAILLE)
+
+# Le vide **est** une valeur : un îlot sans teinte porte celle du châssis, ce
+# qui est exactement ce que `docs/DESIGN.md` dit qu'il est. Ce n'est donc pas un
+# réglage manquant, et retirer une teinte est un geste comme en poser une.
+AUCUNE = ""
+
+
+def teinte_valide(brut: object) -> str:
+    """Le nom d'une teinte relu du disque, ou rien.
+
+    **Un nom inconnu revient vide plutôt que de faire tomber la lecture.** Même
+    règle que la place d'une carte : un îlot mal teinté se reteinte d'un clic,
+    un tableau qui ne s'ouvre plus ne se répare pas. Et le vide est ici une
+    valeur légitime, pas un repli honteux — c'est le châssis.
+    """
+    return brut if isinstance(brut, str) and brut in TEINTES else AUCUNE

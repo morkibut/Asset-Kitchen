@@ -26,6 +26,7 @@ import { App } from "./App"
 import { toutReplier } from "./composants/chassis"
 import { reinitialiserGuide } from "./composants/Guide"
 import { AIDE, SANS_ENTREE } from "./aide"
+import { COULEUR_TEINTE, NOM_TEINTE, TEINTES } from "./api"
 import type {
   Asset,
   Bibliotheque,
@@ -33,6 +34,8 @@ import type {
   Etat,
   EtatCatalogue,
   Generation,
+  Lien,
+  Teinte,
   Univers,
 } from "./api"
 
@@ -318,6 +321,7 @@ const carteImage = (identifiant: string, sur: Partial<Carte> = {}): Carte => {
     taille: 1,
     position: null,
     largeur_libre: null,
+    teinte: "",
     officiel: false,
     famille: "tous",
     empreinte: "cafe1234",
@@ -363,11 +367,18 @@ function serveurDouble(options: {
   /** Le cadre de l'agent et sa consommation, quand le test veut autre chose que
    *  l'atelier neuf — un plafond entamé, un garde-fou éteint. */
   agent?: Etat["agent"]
+  /** Les traits de la toile, et les teintes de ses îlots. Ils arrivent par la
+   *  même route que les cartes, parce que le vrai serveur les rend ensemble :
+   *  une toile se lit en un aller-retour. */
+  liens?: Lien[]
+  teintes?: Record<string, Teinte>
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
     supprimes: [] as string[],
     cartes: options.cartes ?? [],
+    liens: options.liens ?? ([] as Lien[]),
+    teintes: options.teintes ?? ({} as Record<string, Teinte>),
     univers: options.univers ?? UNIVERS,
     agent: options.agent ?? ETAT.agent,
   }
@@ -525,6 +536,70 @@ function serveurDouble(options: {
     // groupe et la position ensemble : c'est cette route-là que la toile appelle
     // au relâchement, et deux appels rendraient possible un état où l'un est
     // écrit et l'autre non.
+    // ── Les liens de la toile (T9) ────────────────────────────────────────
+    // Trois routes, et le double les tient comme le vrai serveur : **il écrit,
+    // puis il annonce**. C'est l'ordre dont T1 a montré qu'il ne se devine pas,
+    // et c'est lui qui rend le croisement des deux chemins reproductible.
+    if (url.startsWith("/api/board/links")) {
+      if (init?.method === "POST") {
+        const ne = {
+          identifiant: `lien-${etat.liens.length + 1}`,
+          projet: "bac-a-sable",
+          mot: "",
+          pointe: false,
+          cree_le: 1_787_800_300,
+          ...(corps as Partial<Lien>),
+        } as Lien
+        etat.liens = [...etat.liens, ne]
+        FluxDouble.ouverts.at(-1)?.emettre("lien", ne)
+        return rendre(ne)
+      }
+      const identifiant = url.slice("/api/board/links/".length)
+      const avant = etat.liens.find((un) => un.identifiant === identifiant)
+      if (!avant) return rendre({})
+      if (init?.method === "DELETE") {
+        etat.liens = etat.liens.filter((un) => un.identifiant !== identifiant)
+        FluxDouble.ouverts.at(-1)?.emettre("lien", { ...avant, coupe: true })
+        return rendre(avant)
+      }
+      const apres = { ...avant, ...(corps as Partial<Lien>) }
+      etat.liens = etat.liens.map((un) => (un.identifiant === identifiant ? apres : un))
+      FluxDouble.ouverts.at(-1)?.emettre("lien", apres)
+      return rendre(apres)
+    }
+    if (url === "/api/board/groups/tint" && init?.method === "PUT") {
+      const { groupe, teinte } = corps as { groupe: string; teinte: Teinte }
+      etat.teintes = { ...etat.teintes }
+      if (teinte) etat.teintes[groupe] = teinte
+      else delete etat.teintes[groupe]
+      FluxDouble.ouverts.at(-1)?.emettre("univers", {
+        projet: "bac-a-sable",
+        nom: "Bac à sable",
+        univers: etat.univers,
+        teintes: etat.teintes,
+        realignes: 0,
+        conserves: 0,
+      })
+      return rendre({ projet: "bac-a-sable", teintes: etat.teintes })
+    }
+    if (url === "/api/board/text" && init?.method === "POST") {
+      const { texte, position, groupe } = corps as {
+        texte: string
+        position?: [number, number]
+        groupe?: string
+      }
+      const note = carteImage(`note-${etat.cartes.length}`, {
+        genre: "texte",
+        texte,
+        position: position ?? null,
+        groupe: groupe ?? "",
+        largeur: 0,
+        hauteur: 0,
+      })
+      etat.cartes = [note, ...etat.cartes]
+      FluxDouble.ouverts.at(-1)?.emettre("carte", note)
+      return rendre(note)
+    }
     if (url.startsWith("/api/board/") && init?.method === "PUT" && !url.endsWith("/official")) {
       const identifiant = url.slice("/api/board/".length)
       const avant = etat.cartes.find((c) => c.identifiant === identifiant)
@@ -545,7 +620,18 @@ function serveurDouble(options: {
       FluxDouble.ouverts.at(-1)?.emettre("carte", apres)
       return rendre(apres)
     }
-    if (url.startsWith("/api/board")) return rendre({ projet: "bac-a-sable", cartes: etat.cartes, groupes: [] })
+    // **Le double rend ce que la route rend**, liens et teintes compris : une
+    // toile se lit en un aller-retour, et un double qui n'en donnerait que la
+    // moitié laisserait l'écran deviner l'autre — donc prouverait un contrat qui
+    // n'est pas celui du serveur.
+    if (url.startsWith("/api/board"))
+      return rendre({
+        projet: "bac-a-sable",
+        cartes: etat.cartes,
+        groupes: [...new Set(etat.cartes.map((c) => c.groupe).filter(Boolean))].sort(),
+        liens: etat.liens,
+        teintes: etat.teintes,
+      })
     if (url.startsWith("/api/universe")) return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
     if (url === "/api/generations" && init?.method === "POST") {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
@@ -1707,4 +1793,317 @@ describe("l'agent, vu de l'atelier", () => {
     await waitFor(() => expect(screen.getByText("3 à classer")).toBeTruthy())
     expect(reglages()).toHaveLength(1)
   })
+
+  // ── T9 : les liens et les notes ───────────────────────────────────────────
+  //
+  // **Ce que l'écran seul peut tenir, et rien de plus.** Le serveur tient qui
+  // est joint à qui (`tests/test_t9.py`) ; la géométrie du trait et ce qu'un
+  // îlot emporte se vérifient purs, sans monter d'écran
+  // (`composants/Toile.test.tsx`). Restent ici trois choses qui n'existent que
+  // dans l'onglet : la pile d'annulation, le geste qui écrit une note, et
+  // l'absence d'un contrôle sur une carte image.
+  //
+  // **Et une chose ne s'y vérifie pas : tirer le trait lui-même.** Il passe par
+  // la gestion de pointeur de la librairie, qui ne démarre pas sur des
+  // événements synthétisés (`AGENTS.md`, mesuré en T8 sur le glissement d'une
+  // carte). Ce qui *suit* le tracé — l'appel, la pile, le pavé — est en
+  // revanche le même code, et il est éprouvé ci-dessous par la coupe et son
+  // annulation.
+
+  /** Un tableau composé, plus un trait entre deux cartes du même îlot. */
+  const compose9 = () => [
+    carteImage("m1", { groupe: "marais", position: [0, 0] }),
+    carteImage("m2", { groupe: "marais", position: [200, 0] }),
+    carteImage("r1"),
+  ]
+
+  const LIEN = {
+    identifiant: "l1",
+    projet: "bac-a-sable",
+    de: { genre: "carte" as const, valeur: "m1" },
+    vers: { genre: "carte" as const, valeur: "m2" },
+    mot: "",
+    pointe: false,
+    cree_le: 1_787_800_300,
+  }
+
+  test("une note s'écrit à même la toile, et c'est une carte texte", async () => {
+    // « Créée là où elle s'applique plutôt qu'au bout d'une liste » (US-110).
+    // **Un seul appel dit le texte et la place** : créer puis déplacer aurait
+    // fait paraître la note en réserve, à l'autre bout de l'écran de l'endroit
+    // qu'on vient de désigner.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    const plan = document.querySelector("[data-plan]")!
+    fireEvent.doubleClick(plan)
+
+    const champ = await waitFor(() => {
+      const trouve = document.querySelector("[data-brouillon]") as HTMLTextAreaElement
+      expect(trouve).toBeTruthy()
+      return trouve
+    })
+
+    fireEvent.change(champ, { target: { value: "  trois pierres, pas quatre  " } })
+    fireEvent.blur(champ)
+
+    const poses = () => appels.filter((a) => a.url === "/api/board/text")
+    await waitFor(() => expect(poses()).toHaveLength(1))
+    const corps = poses()[0].corps as { texte: string; position: number[] }
+    expect(corps.texte).toBe("trois pierres, pas quatre")
+    expect(corps.position).toHaveLength(2)
+
+    // Et le brouillon a disparu : il n'était pas la note, il était ce sur quoi
+    // on écrit avant qu'elle existe.
+    await waitFor(() => expect(document.querySelector("[data-brouillon]")).toBeNull())
+  })
+
+  test("un brouillon vide ne crée rien, et Échap l'abandonne", async () => {
+    // Sans quoi le tableau se remplirait de notes vides qu'il faudrait ensuite
+    // retirer une à une — et le double-clic cesserait d'être un geste qu'on peut
+    // essayer sans rien casser.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    fireEvent.doubleClick(document.querySelector("[data-plan]")!)
+    const champ = await waitFor(() => {
+      const trouve = document.querySelector("[data-brouillon]") as HTMLTextAreaElement
+      expect(trouve).toBeTruthy()
+      return trouve
+    })
+    fireEvent.change(champ, { target: { value: "   " } })
+    fireEvent.blur(champ)
+
+    await waitFor(() => expect(document.querySelector("[data-brouillon]")).toBeNull())
+    expect(appels.filter((a) => a.url === "/api/board/text")).toHaveLength(0)
+
+    // Et Échap referme sans rien écrire non plus.
+    fireEvent.doubleClick(document.querySelector("[data-plan]")!)
+    const second = await waitFor(() => {
+      const trouve = document.querySelector("[data-brouillon]") as HTMLTextAreaElement
+      expect(trouve).toBeTruthy()
+      return trouve
+    })
+    fireEvent.change(second, { target: { value: "une intention" } })
+    fireEvent.keyDown(second, { key: "Escape" })
+    await waitFor(() => expect(document.querySelector("[data-brouillon]")).toBeNull())
+    expect(appels.filter((a) => a.url === "/api/board/text")).toHaveLength(0)
+  })
+
+  test("couper un lien passe par sa route, et Ctrl+Z le repose tel qu'il était", async () => {
+    // Le critère de la tranche : « Ctrl+Z annule la création comme la coupe d'un
+    // lien ». **Reposer, c'est reposer le lien entier** — son mot et sa pointe
+    // avec —, en un seul appel : une route qui ne saurait reposer qu'un trait nu
+    // forcerait l'annulation à passer par un état où le geste est à moitié
+    // défait.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({
+      cartes: compose9(),
+      liens: [{ ...LIEN, mot: "vient de", pointe: true }],
+    })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    // Le mot du lien **est** sa poignée — « le libellé est la cible ».
+    const poignee = await screen.findByRole("button", { name: "vient de" })
+    fireEvent.click(poignee)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Couper" }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/board/links/l1")).toBe(true),
+    )
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+    const reposes = () => appels.filter((a) => a.url === "/api/board/links")
+    await waitFor(() => expect(reposes()).toHaveLength(1))
+    expect(reposes()[0].corps).toEqual({
+      de: LIEN.de,
+      vers: LIEN.vers,
+      mot: "vient de",
+      pointe: true,
+    })
+  })
+
+  test("le mot et la pointe d'un lien partent par la même route", async () => {
+    // « L'un et l'autre s'ajoutent après coup, et se retirent » (US-109). Ils se
+    // posent sur la même petite surface, donc ils voyagent ensemble.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({
+      cartes: compose9(),
+      liens: [LIEN],
+    })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    // Un lien **muet** n'a pas de mot à survoler : sa bande en tient lieu, et
+    // c'est la contrepartie assumée du défaut muet.
+    fireEvent.click(await screen.findByRole("button", { name: "Régler le lien" }))
+
+    const champ = await screen.findByPlaceholderText("aucun")
+    fireEvent.change(champ, { target: { value: "dérive de" } })
+    fireEvent.blur(champ)
+
+    const regles = () => appels.filter((a) => a.url === "/api/board/links/l1")
+    await waitFor(() => expect(regles()).toHaveLength(1))
+    expect(regles()[0].corps).toEqual({ mot: "dérive de" })
+
+    // La pointe est un bouton qui **est la phrase de son état**.
+    fireEvent.click(await screen.findByRole("button", { name: "sans pointe" }))
+    await waitFor(() => expect(regles()).toHaveLength(2))
+    expect(regles()[1].corps).toEqual({ pointe: true })
+  })
+
+  test("un lien dont une extrémité part disparaît, et rien ne reste à l'écran", async () => {
+    // « Sans laisser de trait orphelin. » C'est le serveur qui l'emporte —
+    // l'écran ne rejoue jamais la règle —, et il l'annonce sur le flux.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose9(), liens: [LIEN] })
+    const flux = await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    expect(await screen.findByRole("button", { name: "Régler le lien" })).toBeTruthy()
+
+    flux.emettre("lien", { ...LIEN, coupe: true })
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Régler le lien" })).toBeNull(),
+    )
+  })
+
+  test("une note porte une teinte, une carte image n'en porte aucune", async () => {
+    // « Une carte image ne porte aucune couleur d'organisation » — critère
+    // d'acceptation. **L'absence du contrôle est le critère** : rien n'est
+    // grisé, parce qu'il n'y a pas de réglage à refuser.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({
+      cartes: [
+        carteImage("note", { genre: "texte", texte: "trois pierres", position: [0, 0] }),
+        carteImage("img", { position: [400, 0] }),
+      ],
+    })
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    // Le menu d'une carte image : pas de rangée de teinte.
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la carte" }))
+    await waitFor(() => expect(screen.getByText("Artwork officiel")).toBeTruthy())
+    expect(screen.queryByText("Teinte de la note")).toBeNull()
+
+    // Le menu d'une note : la rangée est là, et pas le bloc d'artwork.
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir la note" }))
+    await waitFor(() => expect(screen.getByText("Teinte de la note")).toBeTruthy())
+    expect(screen.queryByText("Artwork officiel")).toBeNull()
+
+    // Sept pastilles : les six, et le châssis.
+    const pastilles = ["ardoise", "iris", "prune", "bruyère", "lichen", "paille"].map(
+      (nom) => screen.getByRole("button", { name: nom }),
+    )
+    expect(pastilles).toHaveLength(6)
+    expect(screen.getByRole("button", { name: "sans teinte" })).toBeTruthy()
+
+    fireEvent.click(pastilles[2])
+    const regles = () => appels.filter((a) => a.url === "/api/board/note")
+    await waitFor(() => expect(regles()).toHaveLength(1))
+    expect(regles()[0].corps).toEqual({ teinte: "prune" })
+  })
+
+  test("teinter un îlot passe par son nom, et ne redemande pas le catalogue", async () => {
+    // **Le nom fait poignée** : un îlot n'a pas d'identité, il a un nom, et
+    // c'est le nom qui ouvre son menu. Et la teinte ne redemande **ni l'état ni
+    // le catalogue** : ce message-là les redemandait parce que promouvoir un
+    // artwork change ce qui partira, or une couleur ne change rien de tout ça —
+    // la règle était juste, son déclencheur trop large.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+    await waitFor(() => expect(ilots()).toEqual(["marais"]))
+
+    const avant = appels.filter((a) => a.url.startsWith("/api/images/models")).length
+
+    fireEvent.click(await screen.findByRole("button", { name: "marais" }))
+    fireEvent.click(await screen.findByRole("button", { name: "lichen" }))
+
+    const teintes = () => appels.filter((a) => a.url === "/api/board/groups/tint")
+    await waitFor(() => expect(teintes()).toHaveLength(1))
+    expect(teintes()[0].corps).toEqual({ groupe: "marais", teinte: "lichen" })
+
+    // Le message d'univers est revenu par le flux ; le catalogue n'a pas bougé.
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url.startsWith("/api/images/models")).length).toBe(
+        avant,
+      ),
+    )
+  })
+
+  test("la teinte d'une note se voit à l'instant où on la choisit", async () => {
+    // **Trouvé à l'atelier lancé.** Le bord d'une carte choisie porte l'anneau
+    // `--lumiere`, et *choisi* est un état qui l'emporte sur un rangement : la
+    // première écriture faisait donc céder la teinte **entière** tant que la
+    // carte restait choisie. Or on choisit une pastille depuis le menu de la
+    // carte, qui n'est ouvert que parce qu'elle est choisie : on cliquait une
+    // couleur et rien ne changeait, jusqu'à ce qu'on clique ailleurs.
+    //
+    // Les deux ne se disputent que le **bord**, et le bord suffit à dire
+    // *choisi*. Le fond, lui, ne cède jamais.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({
+      cartes: [
+        carteImage("note", {
+          genre: "texte",
+          texte: "trois pierres",
+          position: [0, 0],
+          teinte: "prune",
+        }),
+      ],
+    })
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    const carte = () => screen.getByRole("button", { name: "Ouvrir la note" }).closest("article")!
+
+    await waitFor(() => expect(carte().getAttribute("style")).toContain("--color-ilot-prune"))
+    // Au repos, la teinte prend aussi le bord.
+    expect(carte().getAttribute("style")).toContain("border-color")
+
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir la note" }))
+    await waitFor(() => expect(carte().className).toContain("border-lumiere"))
+    // Choisie : le bord est à l'anneau, **le fond garde sa teinte**.
+    expect(carte().getAttribute("style")).toContain("--color-ilot-prune")
+    expect(carte().getAttribute("style")).not.toContain("border-color")
+  })
+
+  test("les six teintes sont les seules, et elles ne renvoient à aucun token sémantique", () => {
+    // « Les six teintes sont les seules disponibles, et aucune ne se confond
+    // avec une couleur sémantique du produit — **vérifié à côté d'une carte en
+    // échec** » (`docs/PLAN.md` T9). La seconde moitié de ce critère est un
+    // constat d'œil, et il se fait au navigateur : deux valeurs peuvent être
+    // distinctes et se confondre quand même.
+    //
+    // Ce qui se prouve **ici** est la première moitié, et elle est entière : la
+    // liste est close, elle est la même des deux côtés du tuyau, et aucune de
+    // ses entrées ne renvoie à un token qui, lui, dit quelque chose. Une
+    // septième teinte, ou une teinte qui pointerait vers `--color-echec`, fait
+    // tomber ce test.
+    expect(TEINTES).toEqual(["ardoise", "iris", "prune", "bruyere", "lichen", "paille"])
+    expect(Object.keys(COULEUR_TEINTE).sort()).toEqual([...TEINTES].sort())
+    expect(Object.keys(NOM_TEINTE).sort()).toEqual([...TEINTES].sort())
+
+    const renvois = Object.values(COULEUR_TEINTE)
+    expect(new Set(renvois).size, "deux teintes pour la même couleur").toBe(6)
+    for (const renvoi of renvois) {
+      expect(renvoi).toMatch(/^var\(--color-ilot-[a-z]+\)$/)
+    }
+
+    // Et la liste close du serveur est la même : deux listes dans deux langues
+    // finiraient par ne plus dire la même chose, et c'est le refus d'un geste
+    // qui l'apprendrait à l'auteur.
+    for (const teinte of TEINTES) {
+      expect(COULEUR_TEINTE[teinte], teinte).toBe(`var(--color-ilot-${teinte})`)
+    }
+  })
+
 })

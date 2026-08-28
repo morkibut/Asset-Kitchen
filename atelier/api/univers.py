@@ -22,8 +22,19 @@ from typing import Any, Literal
 from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field
 
+from atelier.domaine.teinte import TEINTES
 from atelier.image import rendre_en_png
 from atelier.services import Atelier
+
+# **La liste close, rendue au schéma** — donc à `/api/docs`, et donc au refus
+# que FastAPI compose tout seul. Écrire les six noms ici en aurait fait un
+# second endroit où la liste vit, et le premier îlot d'une septième teinte
+# aurait été accepté par l'un et refusé par l'autre.
+#
+# **Le vide en fait partie, et c'est une valeur** : retirer une teinte est un
+# geste comme en poser une, et un îlot sans teinte porte celle du châssis — ce
+# que `docs/DESIGN.md` dit qu'il est, pas un réglage manquant.
+TEINTE = Literal[("",) + TEINTES]  # type: ignore[valid-type]
 
 routeur = APIRouter()
 
@@ -51,7 +62,23 @@ class CorpsAdresse(BaseModel):
 
 
 class CorpsTexte(BaseModel):
+    """Un texte, et depuis T9 la place où il se pose (US-110).
+
+    **La place voyage avec le texte, et n'ouvre pas de second appel** : « une
+    note se pose à même la toile, créée là où elle s'applique ». Créer puis
+    déplacer aurait fait paraître la note en réserve — à l'autre bout de l'écran
+    de l'endroit qu'on vient de désigner — et rendu possible l'état où elle
+    existe sans avoir jamais été posée. C'est la règle de la carte tirée dans un
+    îlot, appliquée à sa naissance.
+    """
+
     texte: str = Field(min_length=1)
+    position: list[float] | None = None
+    # L'îlot où le point est tombé, quand il y en avait un. C'est **la** règle du
+    # plan — tout ce qui y atterrit écrit son groupe —, et l'écran est le seul à
+    # savoir dans quelle étendue le point est tombé.
+    groupe: str = ""
+    teinte: TEINTE = ""
     projet: str | None = None
 
 
@@ -73,6 +100,56 @@ class CorpsReglage(BaseModel):
     taille: Literal[1, 2, 4] | None = None
     position: list[float] | None = None
     largeur_libre: int | None = None
+    # Le texte d'une **note**, corrigé en place (T9). Refusé sur une carte image
+    # par le service, comme la teinte.
+    texte: str | None = None
+    # La teinte d'une **note**. `""` la retire ; une carte image la refuse, et
+    # le refus vient du service — une règle que seule l'interface tiendrait
+    # serait fausse au premier appel qui ne vient pas d'elle.
+    teinte: TEINTE | None = None
+    projet: str | None = None
+
+
+class CorpsBout(BaseModel):
+    """Une extrémité de lien : une carte par identifiant, ou un îlot par nom de
+    groupe. **Deux espaces de noms, donc deux champs** — aplatis dans un seul,
+    le lien vers un îlot qui s'appellerait comme une carte n'aurait plus dit
+    lequel des deux il désigne."""
+
+    genre: Literal["carte", "ilot"]
+    valeur: str = Field(min_length=1)
+
+
+class CorpsLien(BaseModel):
+    """Un trait à tirer. `mot` et `pointe` existent **pour l'annulation** : un
+    lien naît muet, et c'est l'écran qui tient cette règle — mais défaire une
+    coupe, c'est reposer le lien tel qu'il était, en un seul appel."""
+
+    de: CorpsBout
+    vers: CorpsBout
+    mot: str = ""
+    pointe: bool = False
+    projet: str | None = None
+
+
+class CorpsReglageLien(BaseModel):
+    """Le mot et la pointe, ensemble — ils se posent sur la même surface.
+
+    `None` ne touche pas, `""` efface : la convention du produit depuis `groupe`.
+    """
+
+    mot: str | None = None
+    pointe: bool | None = None
+    projet: str | None = None
+
+
+class CorpsTeinte(BaseModel):
+    """La teinte d'un îlot. **Le groupe est dans le corps, pas dans le chemin** :
+    un nom de groupe est du texte libre — il peut porter une barre oblique, et
+    un îlot nommé « nord/sud » aurait fabriqué une route que personne n'atteint."""
+
+    groupe: str = Field(min_length=1)
+    teinte: TEINTE = ""
     projet: str | None = None
 
 
@@ -127,17 +204,34 @@ class CorpsRealignement(BaseModel):
 
 @routeur.get("/board")
 async def tableau(requete: Request, projet: str | None = None) -> dict[str, Any]:
-    """Le tableau d'un projet, en entier. Il ne se pagine pas : on le regarde."""
+    """Le tableau d'un projet, en entier. Il ne se pagine pas : on le regarde.
+
+    **Les liens partent avec les cartes** (T9) : une toile se lit en un
+    aller-retour, parce qu'elle *est* le tableau. Une seconde route pour les
+    traits aurait fait paraître les cartes avant eux — donc un instant, à chaque
+    ouverture, où la toile montre des objets sans ce qu'on en avait dit.
+    """
     atelier = _atelier(requete)
     identifiant = _projet(requete, projet)
     cartes = atelier.univers.cartes(identifiant)
+    groupes = sorted({c.groupe for c in cartes if c.groupe})
     return {
         "projet": identifiant,
         "cartes": [c.en_json() for c in cartes],
         # Les groupes tels qu'ils existent, dans l'ordre où on les a nommés.
         # Calculés ici plutôt qu'à l'écran : c'est le serveur qui tient les
         # cartes, et deux listes de groupes finiraient par diverger.
-        "groupes": sorted({c.groupe for c in cartes if c.groupe}),
+        "groupes": groupes,
+        "liens": [un.en_json() for un in atelier.univers.liens(identifiant)],
+        # Les teintes des îlots **qui existent**, et rien de plus. Le projet ne
+        # devrait déjà plus en porter d'autres — l'élagage les emporte avec leur
+        # dernier membre —, et les filtrer ici est ce qui rend cette phrase-là
+        # vraie même pour un `projet.json` écrit à la main.
+        "teintes": {
+            nom: t
+            for nom, t in atelier.univers.teintes(identifiant).items()
+            if nom in groupes
+        },
     }
 
 
@@ -189,9 +283,87 @@ async def coller_adresse(requete: Request, corps: CorpsAdresse) -> dict[str, Any
 
 @routeur.post("/board/text", status_code=201)
 async def coller_texte(requete: Request, corps: CorpsTexte) -> dict[str, Any]:
-    """Un texte devient une carte texte (US-44)."""
+    """Un texte devient une carte texte (US-44), et depuis T9 il peut naître
+    posé (US-110). La même route pour les deux : une note *est* une carte texte,
+    et c'est tout ce qu'elle est."""
     identifiant = _projet(requete, corps.projet)
-    return _atelier(requete).univers.coller_texte(identifiant, corps.texte).en_json()
+    return (
+        _atelier(requete)
+        .univers.coller_texte(
+            identifiant,
+            corps.texte,
+            position=corps.position,
+            groupe=corps.groupe,
+            teinte=corps.teinte,
+        )
+        .en_json()
+    )
+
+
+# ── Les liens de la toile ────────────────────────────────────────────────────
+#
+# **Déclarées avant `PUT /board/{carte}`, et ce n'est pas cosmétique.** FastAPI
+# essaie ses routes dans l'ordre de déclaration : `/board/links/…` a trois
+# segments et ne peut pas être pris pour `/board/{carte}`, mais l'ordre le dit
+# quand même à qui lit — et la règle vaut telle quelle pour `/board/groups`,
+# qui, lui, en a deux et *serait* attrapé.
+
+
+@routeur.post("/board/links", status_code=201)
+async def lier(requete: Request, corps: CorpsLien) -> dict[str, Any]:
+    """Tirer un trait d'un objet à un autre (US-108) — il naît muet."""
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    return atelier.univers.lier(
+        identifiant,
+        corps.de.model_dump(),
+        corps.vers.model_dump(),
+        mot=corps.mot,
+        pointe=corps.pointe,
+    ).en_json()
+
+
+@routeur.put("/board/links/{lien}")
+async def regler_lien(
+    requete: Request, lien: str, corps: CorpsReglageLien
+) -> dict[str, Any]:
+    """Le mot et la pointe (US-109). *Le défaut est muet, l'exception s'exprime.*"""
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    return atelier.univers.regler_lien(
+        identifiant, lien, mot=corps.mot, pointe=corps.pointe
+    ).en_json()
+
+
+@routeur.delete("/board/links/{lien}")
+async def couper_lien(
+    requete: Request, lien: str, projet: str | None = None
+) -> dict[str, Any]:
+    """Le trait part tout de suite. Comme une carte, il n'a rien coûté."""
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, projet)
+    return atelier.univers.couper(identifiant, lien).en_json()
+
+
+@routeur.put("/board/groups/tint")
+async def teinter(requete: Request, corps: CorpsTeinte) -> dict[str, Any]:
+    """La teinte d'un îlot (US-111).
+
+    **Trois segments, et ce n'est pas une préférence de style.** À deux —
+    `/board/tint` —, la route littérale entre en concurrence avec
+    `PUT /board/{carte}` et n'est atteinte que si elle est déclarée avant :
+    l'adresse dépendrait alors de l'ordre des fonctions dans le fichier, donc
+    d'une ligne que le prochain réarrangement déplacerait sans rien casser de
+    visible. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`,
+    `AGENTS.md` § Pièges connus) ; à trois segments, aucune route existante n'a
+    cette forme et il n'y a plus d'ordre à respecter.
+
+    Rend les teintes du projet : elles y vivent, et l'écran les apprend d'ici.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    projet_teinte = atelier.univers.teinter(identifiant, corps.groupe, corps.teinte)
+    return {"projet": identifiant, "teintes": dict(projet_teinte.teintes)}
 
 
 @routeur.post("/board/{carte}/retry")
@@ -227,6 +399,8 @@ async def regler_carte(
         taille=corps.taille,
         position=corps.position,
         largeur_libre=corps.largeur_libre,
+        texte=corps.texte,
+        teinte=corps.teinte,
     )
     return reglee.en_json()
 

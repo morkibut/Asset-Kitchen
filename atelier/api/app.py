@@ -42,7 +42,13 @@ from atelier.services.bibliotheque import (
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
 from atelier.services.export import ExportRefuse
-from atelier.services.univers import CarteInconnue, CarteRefusee, UniversRefuse
+from atelier.services.univers import (
+    CarteInconnue,
+    CarteRefusee,
+    LienInconnu,
+    LienRefuse,
+    UniversRefuse,
+)
 from atelier.fournisseur.toile import AdresseRefusee
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
@@ -62,6 +68,8 @@ CODES = {
     AnnulationExpiree: 409,
     CarteInconnue: 404,
     CarteRefusee: 409,
+    LienInconnu: 404,
+    LienRefuse: 409,
     UniversRefuse: 409,
     DecoupeRefusee: 409,
     ExportRefuse: 409,
