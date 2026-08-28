@@ -30,6 +30,20 @@ montré qu'une famille de modèles tient réellement l'identité d'un sujet sur 
 générations enchaînées, et qu'aucun des trois frottements n'est fatal — chacun se corrige
 après coup, sans repayer, à condition que le produit s'en charge systématiquement.
 
+**Puis l'atelier a servi, et un quatrième frottement est apparu, propre au personnage.** Un
+personnage de jeu n'est pas une image, c'est un plan : une dizaine de poses, et pour chaque
+pose autant de variantes qu'il porte de pièces d'équipement. Fabriqué image par image, ce
+plan est intenable sur les deux tableaux à la fois. Il coûte un appel par case, et le
+tableau se remplit vite : dix poses et quatre pièces font cinquante images à payer une par
+une. Et il ne tient pas ensemble : entre deux appels, la taille du pixel dérive et le
+personnage se déplace dans son cadre, si bien que deux images du même personnage ne se
+montent pas — ce qui est exactement ce dont on a besoin d'un personnage.
+
+Le contournement naturel est pire. Demander « le même personnage, mais avec un casque » fait
+retirer le personnage entier au modèle : il redessine tout, et ce qui revient n'est plus le
+même nain avec un casque, c'est un autre nain. L'auteur se retrouve à choisir entre payer
+cinquante fois et accepter que son casting change de visage en cours de route.
+
 ## Solution
 
 Un atelier personnel, qui tourne sur la machine de l'auteur et s'ouvre dans son navigateur.
@@ -51,6 +65,34 @@ Tout ce qui est produit reste dans une bibliothèque unique, rangée en projets 
 où l'on retrouve, réutilise et exporte. Et l'agent qui code le jeu dispose exactement des
 mêmes gestes : il demande un asset, l'univers du projet s'applique, il reçoit un fichier — et
 peut le déposer directement dans le dossier du jeu.
+
+**Sur cet atelier vient se poser le personnage, et son équipement.** Le projet porte un plan
+de poses ; un personnage déclare lesquelles il tient, et un écran à deux entrées montre en
+permanence ce qui est fait et ce qui manque. Ce qui manque se lance par paquets : on
+sélectionne les poses qu'on veut, elles partent **pliées dans une seule image** et reviennent
+dépliées en autant de sprites. Un appel au lieu de N, et les poses d'un même paquet partagent
+la même grille de pixel parce qu'elles ont été peintes ensemble.
+
+**L'équipement se fabrique par le même pliage.** Un casque vu de face n'est pas un casque vu
+de dos : une pièce est solidaire de la pose sur laquelle elle est apparue, et il en faut donc
+une par pose. Mais on ne les paie pas une par une. L'atelier recompose lui-même une planche
+des corps déjà générés, l'envoie avec « la même planche, avec la pièce en plus, ne touche à
+rien d'autre », redécoupe ce qui revient sur la grille qu'il a lui-même posée, et compare case
+par case ce qu'il a envoyé — qu'il connaît exactement, puisqu'il l'a composé — et ce qui
+revient. Chaque différence est un calque à fond transparent, rangé à côté de son corps et
+jamais dedans. **N calques pour un appel.**
+
+Le pliage cesse alors d'être une astuce du lot de poses pour devenir la manière dont l'atelier
+travaille : **habiller ou transformer N images d'un seul appel**, sur une grille dont il
+connaît la géométrie case par case.
+
+La zone où la pièce a le droit d'être se dessine à la souris et se corrige après coup pour
+rien ; ce que la machine sait mesurer — combien de silhouette a survécu, combien de corps a
+été repeint — est affiché mais ne décide de rien. **Seul le compte d'images refuse**, parce
+que neuf poses demandées et sept reçues est un contrat rompu, pas un avis esthétique. Et une
+limite est écrite d'avance plutôt que découverte à l'usage : la méthode tient pour une pièce
+**contenue dans la silhouette** — casque, jambières, ceinture, gants, plastron — et casse pour
+une pièce qui **l'agrandit** — cape, ailes, arme longue, sac à dos, monture.
 
 ## Utilisateur cible
 
@@ -165,6 +207,8 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **US-109** — En tant qu'auteur, je veux écrire un mot sur un lien et lui donner une pointe, afin de dire *quel* rapport, quand ça compte.
 - **US-110** — En tant qu'auteur, je veux poser une note à même la toile, afin d'écrire une intention là où elle s'applique.
 - **US-111** — En tant qu'auteur, je veux donner une couleur à un îlot et à une note, afin de lire ma toile d'un coup d'œil.
+- **US-112** — En tant qu'auteur, je veux déplacer un îlot entier avec ce qu'il contient, afin de pousser un groupe composé sans reprendre ses cartes une par une.
+- **US-113** — En tant qu'auteur, je veux voir, pendant que je tire une carte, que ce geste va faire disparaître son îlot, afin de ne pas découvrir la perte après l'avoir faite.
 
 ### Retoucher
 
@@ -223,6 +267,64 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **US-96** — En tant qu'auteur, je veux régler la clé du fournisseur, les garde-fous de l'agent et mes dossiers, afin de tout tenir depuis un seul endroit.
 - **US-97** — En tant qu'auteur, je veux voir les trois panneaux et la grille ensemble sur mon écran large, et replier un panneau quand je veux voir la grille en grand, afin de ne jamais subir un repli imposé par la place.
 
+### Le personnage et son plan
+
+- **US-115** — En tant qu'auteur, je veux créer un personnage dans mon projet et le décrire une fois, afin de fabriquer toutes ses images sans réécrire son signalement à chaque prompt.
+- **US-116** — En tant qu'auteur, je veux que mon projet porte une liste de poses, chacune avec un nom et un nombre d'images, afin que tous mes personnages se comparent sur le même plan.
+- **US-117** — En tant qu'auteur, je veux dire pour chaque personnage lesquelles de ces poses il tient, afin qu'un figurant ne réclame pas les mêmes images qu'un héros.
+- **US-118** — En tant qu'auteur, je veux ajouter, renommer et retirer une pose du plan de mon projet à tout moment, afin que le plan suive le jeu au lieu de le précéder.
+- **US-119** — En tant qu'auteur, je veux voir d'un coup d'œil, pour un personnage, ce qui est fait et ce qui ne l'est pas, afin de savoir quoi lancer sans tenir la liste dans ma tête.
+- **US-120** — En tant qu'auteur, je veux générer une pose seule, afin de juger un personnage avant d'engager un lot entier sur lui.
+- **US-121** — En tant qu'auteur, je veux voir avant de lancer ce qui va partir en référence et ce que ça va coûter, afin de décider en connaissance de cause.
+- **US-122** — En tant qu'auteur, je veux que le corps d'un personnage naisse dans l'atelier et jamais d'une planche venue d'ailleurs, afin que tout ce qui s'empile ensuite repose sur une image dont je connais la grille et la palette.
+- **US-123** — En tant qu'auteur, je veux voir sur chaque asset le modèle qui l'a produit, afin de savoir à qui redemander quand un résultat me plaît, et de qui me méfier quand il me déçoit.
+- **US-124** — En tant qu'auteur, je veux qu'un personnage ou une pièce désigne des cartes de mon tableau comme concept art, afin de repartir de mes références au lieu de les redécrire en prose.
+- **US-125** — En tant qu'auteur, je veux qu'une carte désignée se voie sur la toile, afin de savoir ce qui sert et ce qui dort.
+- **US-126** — En tant qu'auteur, je veux décocher une référence pour cette génération, pour ce personnage ou pour tout le projet, afin de couper une contamination sans démonter mon univers.
+- **US-127** — En tant qu'auteur, je veux voir d'où vient chaque référence envoyée, afin de comprendre pourquoi elle part avant de décider de la retirer.
+
+### Le lot
+
+- **US-128** — En tant qu'auteur, je veux sélectionner plusieurs poses et les obtenir d'une seule génération, afin de payer un appel au lieu de N.
+- **US-129** — En tant qu'auteur, je veux choisir la taille de mon lot à chaque génération et voir ce qu'un compte faux me coûterait, afin d'arbitrer moi-même entre le coût et le risque de tout rater d'un coup.
+- **US-130** — En tant qu'auteur, je veux que la planche reçue soit dépliée toute seule en autant d'images de corps qu'il y avait de cases, afin de n'avoir jamais à découper à la main ce que j'ai demandé plié.
+- **US-131** — En tant qu'auteur, je veux qu'un lot dont le compte d'images ne tombe pas juste soit refusé et relançable, afin qu'une planche incomplète n'entre jamais silencieusement dans mon plan.
+- **US-132** — En tant qu'auteur, je veux reprendre un lot interrompu sans repayer ce qui est déjà arrivé, afin qu'une coupure ne me coûte que ce qu'elle a coûté.
+- **US-133** — En tant qu'auteur, je veux régénérer une pose seule à l'intérieur d'un lot déjà reçu, afin de rattraper une case ratée sans refaire la planche entière.
+- **US-134** — En tant qu'auteur, je veux enregistrer sous un nom ce qui part en référence et les réglages d'une génération, afin de rejouer la même recette sur un autre personnage sans la reconstituer.
+- **US-135** — En tant qu'auteur, je veux être prévenu quand deux poses d'un même lot se ressemblent trop, sans que le lot soit refusé pour autant, afin de relancer la case qui n'apporte rien plutôt que de la découvrir au montage.
+
+### La pièce et le calque
+
+- **US-136** — En tant qu'auteur, je veux définir sur mon projet des emplacements ordonnés — la tête, le dos, les jambes —, afin que mes pièces se posent au même endroit d'un personnage à l'autre.
+- **US-137** — En tant qu'auteur, je veux décrire une pièce d'équipement une seule fois sur mon projet, afin de la poser sur n'importe lequel de mes personnages sans la redécrire.
+- **US-138** — En tant qu'auteur, je veux qu'écrire le nom d'une pièce ou d'un emplacement qui n'existe pas le crée, afin que ranger ne soit jamais un préalable.
+- **US-139** — En tant qu'auteur, je veux déclarer si une pièce tient dans la silhouette du personnage ou si elle l'agrandit, afin que l'atelier sache d'avance s'il peut m'en faire un calque ou non.
+- **US-140** — En tant qu'auteur, je veux poser une pièce sur plusieurs poses d'un personnage d'un seul appel payant et obtenir un calque par pose, afin d'habiller tout un plan sans le payer case par case.
+- **US-141** — En tant qu'auteur, je veux ne pouvoir faire partir dans une planche d'équipement que des poses qui ont déjà un corps, les autres étant visiblement inéligibles avec leur raison, afin de ne jamais payer pour habiller une case vide.
+- **US-142** — En tant qu'auteur, je veux que la planche revenue soit redécoupée sur la grille exacte que l'atelier a posée et comparée case par case à ce qu'il avait envoyé, afin que chaque calque sorte d'une base connue et non devinée.
+- **US-143** — En tant qu'auteur, je veux voir le calque superposé au corps de sa pose, afin de juger un résultat à l'œil au lieu de juger un chiffre.
+- **US-144** — En tant qu'auteur, je veux borner un calque à une zone, afin qu'un visage repeint au passage ne parte pas avec la pièce.
+- **US-145** — En tant qu'auteur, je veux déplacer et retailler cette zone après coup sans repayer, afin qu'une erreur de cadrage me coûte un glissement de souris et rien d'autre.
+- **US-146** — En tant qu'auteur, je veux que le calque soit rangé à côté de l'image payée et jamais écrit dedans, afin de pouvoir revenir en arrière autant de fois qu'il le faut.
+- **US-147** — En tant qu'auteur, je veux lire ce qui a bougé — la silhouette retrouvée, le corps repeint, ce qui a été ajouté, l'échelle au retour, et si c'est un objet ou une poussière — sans qu'aucune de ces mesures ne refuse à ma place, afin de garder le jugement.
+- **US-148** — En tant qu'auteur, je veux qu'une pièce qui agrandit la silhouette et revient à une autre échelle que celle envoyée me le dise au lieu de me rendre un calque faux, et que ce qui revient soit gardé comme des corps habillés, afin de ne pas perdre l'appel que j'ai payé.
+
+### La main
+
+- **US-149** — En tant qu'auteur, je veux affiner une zone à main levée puis au pixel, afin de rattraper ce qu'un rectangle ne sait pas dire.
+- **US-150** — En tant qu'auteur, je veux retoucher un calque au pixel avec le corps visible en repère dessous, afin de corriger sans perdre l'alignement.
+- **US-151** — En tant qu'auteur, je veux comparer l'avant et l'après d'un seul geste, afin de voir ce que ma retouche a réellement changé.
+- **US-152** — En tant qu'auteur, je veux trier ce qui me reste à regarder en commençant par le pire, afin d'attaquer par ce qui va me poser problème.
+- **US-153** — En tant qu'auteur, je veux que la zone et la retouche au pixel soient deux couches séparées et rejouables, afin qu'aucune des deux ne détruise l'autre.
+
+### Sortir un personnage
+
+- **US-154** — En tant qu'auteur, je veux exporter un personnage complet — ses poses et ses calques — dans le dossier de mon jeu, afin qu'il soit utilisable sans manipulation.
+- **US-155** — En tant qu'auteur, je veux qu'un descriptif accompagne l'export et dise ce qu'est chaque fichier, afin que l'agent sache quoi en faire sans que j'aie à le lui raconter.
+- **US-156** — En tant qu'agent, je veux disposer sur les personnages et les calques exactement des mêmes gestes que l'écran, afin de compléter un plan sans que l'auteur ouvre l'atelier.
+- **US-157** — En tant qu'agent, je veux écrire moi-même les lignes de catalogue de mon jeu à partir du descriptif, afin que l'atelier décrive ce qu'il produit sans avoir à connaître la structure de mon jeu.
+
 ## Critères de succès
 
 - Depuis une installation neuve, la première image est obtenue sans traverser d'autre écran que celui de la clé.
@@ -245,6 +347,26 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - Le coût réel de chaque génération est enregistré et totalisé par projet, et le nombre de références envoyées est visible.
 - Le tout tourne sans aucun modèle local et sans mobiliser de carte graphique.
 
+**Le personnage et son équipement**
+
+- Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite.
+- Un personnage créé, décrit et rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides.
+- Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après un seul appel payant, et le journal du projet montre un appel et non neuf.
+- Un lot qui revient avec huit images pour neuf demandées est refusé, aucune image n'entre dans le plan, et le lot se relance d'un geste.
+- Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux huit autres.
+- Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues.
+- Deux poses trop semblables dans un même lot sont signalées à l'auteur ; le lot n'est pas refusé et les images entrent.
+- Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six.
+- Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé octet pour octet.
+- Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison.
+- Une pièce déclarée « qui agrandit la silhouette », revenue à une échelle différente de celle envoyée, ne produit aucun calque : la dérive est nommée à l'écran et ce qui revient est proposé à garder comme corps habillés.
+- La zone d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et le journal du projet ne bouge pas d'un centime.
+- Les mesures d'un calque s'affichent toutes, et aucune ne rend un calque impossible à garder.
+- Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément, et l'auteur n'a pas à les choisir à chaque génération.
+- Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce.
+- L'agent, branché sur l'atelier, ajoute une pose au plan d'un personnage existant et la génère sans que l'écran soit ouvert.
+- La fiche de n'importe quel asset nomme le modèle qui l'a produit.
+
 ## Hors périmètre
 
 **Écarté par nature du produit.** Comptes, crédits, paiement, multi-utilisateur, distribution, galerie publique, partage, presets communautaires. Pack d'assets par genre — fabriquer de la quantité est le métier d'un autre outil. Compteur de crédits maison : le suivi des coûts se lit chez le fournisseur.
@@ -262,6 +384,12 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 **Écarté par les décisions de ce document.** Sas d'acceptation avant l'entrée en bibliothèque. Suppression en cascade. Refus de supprimer tant qu'il existe une descendance. Création implicite d'un projet par l'agent. Assistant de premier lancement. Invite d'autorisation qui bloquerait l'agent en attendant l'auteur. Liste de modèles écrite en dur. Relance automatique après interruption. Réapplication forcée de la palette sur les recettes réglées à la main. Enchaînement d'outils fins que l'agent devrait composer lui-même. Passe de retouche qui monopoliserait la carte graphique.
 
 **Écarté sur les références.** Sélection manuelle des artworks à envoyer, génération par génération : c'est l'application qui choisit, sur la famille. Obligation que l'artwork officiel soit une planche non figurative : trop contraignant, l'auteur travaille justement à partir de visuels trouvés. Déduction de la taille de pixel depuis l'image reçue : elle est imposée par le projet, jamais devinée.
+
+**Revenu dans le périmètre — 28 août 2026.** « Personnage et ses poses préparées » était écarté de la V1 et renvoyé à un « ensuite » sans rang, derrière les tuiles. Deux essais payés le 28 août 2026 ont levé les deux doutes qui le retenaient : un jeu de poses tient dans une seule image sans que la grille de pixels dérive d'une pose à l'autre, et une pièce d'équipement s'extrait d'un corps habillé sans qu'un seul pixel du corps soit repeint. Le personnage et son équipement passent donc devant les tuiles et forment la V2. L'ordre des versions devient : **V2 le personnage et son équipement, V3 l'animation, V4 les tuiles qui se raccordent, V5 le son.** L'équipement, qui n'était nulle part, entre avec le personnage parce qu'il n'existe pas sans lui.
+
+**Écarté de la V2 — repoussé.** Animation, tuiles raccordées, son. Squelette, os, interpolation entre deux poses : c'est l'animation, pas le personnage. Salle d'essai qui montrerait le personnage équipé dans un décor. Bibliothèque de poses partagée entre projets : le plan appartient au projet qui le porte.
+
+**Écarté de la V2 — par les décisions de cette version.** Deuxième grille d'assets : la matrice de production d'un personnage n'en est pas une — pas de recherche, pas de filtres, pas de sélection multiple, deux axes et des vignettes, rien de plus. Point de repère, ancre ou marque injectée dans l'image pour recaler un calque : le calque est une pure différence, et rien n'est ajouté à l'image envoyée. Génération d'une pièce seule sur fond vide : une pièce n'existe qu'apparue sur un corps. Calque unique porté sur toutes les poses : une pièce est solidaire de la pose sur laquelle elle est apparue, et il en faut une par pose — c'est le pliage qui en divise le prix, pas une réutilisation. Combinaison de deux pièces qui agrandissent la silhouette sur le même corps : ce qui revient d'une pièce qui agrandit est un corps habillé et non un calque, et deux corps habillés ne s'empilent pas. Détection automatique de ce qui agrandit la silhouette : l'auteur déclare, au même titre qu'il nomme la pièce et l'emplacement. Plafond sur la taille d'un lot : le produit annonce ce que coûte un compte faux, il ne l'interdit pas. Refus automatique sur les mesures de qualité : elles informent, seul le compte d'images refuse. Reconnaissance automatique de la pièce ou de l'emplacement depuis l'image : l'auteur nomme, l'application enregistre. Mannequin ou silhouette de référence imposée à tous les personnages. Feuille de sprites assemblée à la sortie : le pliage est une ruse d'appel, pas un format de livraison — ce qui sort, ce sont des images séparées et leur descriptif.
 
 ## Décisions d'implémentation
 
@@ -303,6 +431,48 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 
 **Les dimensions mesurées font foi**, jamais celles demandées.
 
+**Le corps naît dans l'atelier, et nulle part ailleurs.** Il n'y a pas d'écran de création de personnage avec son propre prompt : on écrit un sujet, on génère, on obtient une image, et c'est cette image qu'on désigne comme le corps d'un personnage. L'unité manipulée reste l'image de corps — un personnage n'est pas un objet mystérieux, c'est un nom, une description, et un plan de cases dont chacune attend ou contient une image de corps.
+
+**Le personnage appartient au projet.** Il porte un nom, une description, et le plan de poses qu'on lui a rattaché. Il vit dans la bibliothèque du projet comme tout le reste, et sa suppression suit la règle générale : jamais de cascade, les images survivent et affichent « personnage supprimé ».
+
+**Le plan de poses est une propriété du projet, réutilisable par tous ses personnages.** Un plan porte un nom et une liste de poses, chacune nommée. Un projet neuf en reçoit un par défaut, immédiatement utilisable ; l'auteur en ajoute, en retire, en renomme, et rattache le plan qu'il veut à chaque personnage. Ajouter une pose à un plan ajoute une case vide à chaque personnage qui le porte — jamais une génération.
+
+**La taille d'un lot est le choix de l'auteur, jamais celui du produit.** Il coche les poses qu'il veut voir partir ensemble, de deux à autant qu'il ose. Le produit annonce ce que ça coûte, et ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein. Il n'annonce pas de probabilité : il ne mesure rien sur le modèle choisi, et une statistique qu'il n'a pas faite ne vaut pas mieux qu'un pressentiment. Il ne plafonne pas. Une pose reste toujours régénérable seule, dans ou hors d'un lot.
+
+**Un lot est tout ou rien sur le compte, indépendant sur le reste.** Si le compte d'images revenues ne correspond pas au compte demandé, rien n'entre et le lot se relance d'un geste. Si le compte est bon, les images entrent toutes, et chaque pose devient jugeable et régénérable individuellement. Aucune autre mesure ne peut refuser un lot.
+
+**Les mesures d'un lot et d'un calque sont indicatives et toutes visibles.** Elles disent ce qui s'est passé — ressemblance entre poses, dérive de la grille de pixels, part de l'image touchée, netteté du découpage — et n'empêchent jamais de garder. Le seul refus automatique du produit est le compte d'images.
+
+**Une pièce d'équipement se fabrique par différence, sans repère ajouté.** L'auteur part de corps existants, demande une pièce, et le produit compare ce qui revient à ce qu'il a envoyé : ce qui a changé devient un calque à fond transparent. Rien n'est ajouté à l'image envoyée pour aider le recalage, et le corps d'origine n'est jamais modifié.
+
+**Un calque est solidaire de sa pose, et c'est le pliage qui en divise le prix.** Un casque vu de face n'est pas un casque vu de dos : il faut un calque par pose. Le produit ne prétend pas le contraire et ne propose jamais de reposer un calque ailleurs que sur la pose où il est apparu. Ce qui est divisé par le pliage, c'est le nombre d'appels payants, pas le nombre de calques.
+
+**La planche d'équipement est composée par l'atelier, pas par l'auteur.** L'auteur coche les poses qu'il veut habiller — celles qui ont déjà un corps, les autres étant grisées avec leur raison. L'atelier range lui-même ces corps sur une grille carrée dont il connaît la géométrie case par case, envoie la planche entière avec la consigne de n'ajouter que la pièce, redécoupe le retour sur cette même grille, et compare case par case l'envoyé et le revenu. Les cases en trop d'une grille non pleine restent vides à l'aller et sont ignorées au retour.
+
+**Une pièce est contenue dans la silhouette, ou elle l'agrandit — et c'est l'auteur qui le dit.** Contenue par défaut. **Contenue** — casque, jambières, ceinture, gants, plastron : la méthode par différence s'applique telle quelle ; l'essai du 28 août 2026 a mesuré moins de 1,5 % du corps repeint sur six modèles et deux jets, sans exception. **Qui agrandit** — cape, ailes, arme longue, sac à dos, monture : la planche part sur une toile avec marge pour que la pièce ait la place, et si l'échelle revient malgré tout différente de celle envoyée, aucun calque n'est fabriqué. Le produit nomme la dérive et propose de garder ce qui revient comme des corps habillés — utilisables et exportables, mais pas empilables. Le même essai a rendu 23,5 % du corps repeint et une échelle de 0,62 sur la cape, sur les six modèles et aux deux jets.
+
+**Le pliage est une fonction générale de l'atelier.** Ce n'est pas un dispositif du lot de poses : c'est la manière dont l'atelier habille ou transforme N images d'un seul appel, sur une grille dont il connaît la géométrie case par case. Le lot de poses et la planche d'équipement en sont deux usages ; il en viendra d'autres.
+
+**Deux défauts de modèle, pas un.** Produire une planche et éditer un corps ne demandent pas le même modèle : un modèle qui recopie fidèlement les traits du gabarit de découpe rend une planche juste mais tramée, quand un autre l'ignore comme demandé. L'univers du projet porte donc les deux défauts séparément, et l'auteur n'a pas à y penser au moment de générer.
+
+**Une planche redondante n'est pas une planche refusée.** Si deux cases d'un même lot rendent presque la même image, le compte est bon et le contrat est tenu : tout entre. Mais l'auteur le voit, case par case et nommément, et relance la pose seule s'il le veut. Mesuré le 28 août 2026 : deux planches sur vingt-quatre ont répété une pose.
+
+**Nommer, c'est créer.** Les emplacements (tête, torse, dos, jambes…) et les pièces vivent sur le projet ; les calques vivent sur le personnage. Écrire un nom d'emplacement ou de pièce qui n'existe pas encore le crée sur-le-champ, sans passer par un écran de gestion. Rien à déclarer avant de travailler.
+
+**La zone est facultative, et se rejoue.** Par défaut aucune zone n'est donnée : la différence est cherchée sur toute la case de la planche. L'auteur peut restreindre la recherche à une zone, la déplacer, la retailler — c'est une étape de la recette du calque, rejouable et annulable, qui ne redemande jamais d'image au fournisseur.
+
+**Un calque est une recette, pas un fichier figé.** À côté de l'image payée s'empilent la recherche de différence, le masque, et les retouches au pixel — chacune rejouable, annulable, nommable, exactement comme la retouche d'un asset ordinaire. Revenir à la différence brute est un geste unique.
+
+**La production d'un personnage se lit dans une matrice.** Deux axes — les poses d'un côté, les emplacements de l'autre —, des vignettes dans les cases, les cases vides visiblement vides. Ce n'est pas la grille de la bibliothèque : ni recherche, ni filtres, ni sélection multiple. On y voit ce qui manque, et on lance depuis là.
+
+**Les concept arts sont des cartes du tableau, désignées comme telles.** Une carte image du tableau d'inspiration se désigne concept art d'un personnage ; elle reste où elle est, visible sur la toile, et devient consultable depuis le personnage. Aucun deuxième endroit où ranger des images.
+
+**Les références envoyées sont visibles et décochables, à trois portées.** Ce qui part avec une demande se lit avant de générer, ligne par ligne, avec sa provenance — artwork officiel de l'univers, concept art du personnage, ou image du lot en cours. Chacune se décoche pour une génération, pour un personnage, ou pour le projet. La préséance est écrite à l'écran, jamais devinée, et un jeu de cases coché se garde sous un nom pour être rappelé d'un geste.
+
+**L'atelier décrit, l'agent écrit.** Le produit expose ce qu'il sait d'un personnage — ses poses, ses pièces, ses fichiers — sous une forme que l'agent qui code le jeu lit et transforme en lignes de catalogue. L'atelier n'écrit jamais de code de jeu, et l'agent n'invente jamais un chemin de fichier.
+
+**La fiche d'un asset nomme le modèle qui l'a produit.** Pour une image générée, le modèle exact ; pour une image importée, « importé ». C'est une information de provenance au même titre que le prompt et le coût : elle se lit, elle ne se règle pas.
+
 ## Notes complémentaires
 
 - **La maquette de l'écran Atelier est à refaire.** Le brouillon existant a été jugé trop chargé et trop loin de la fluidité recherchée. Il reste sur disque mais ne sert pas de base : l'interface doit partir du geste quotidien — écrire, générer, juger, garder — et non de la liste des décisions ci-dessus. Un réglage n'est à l'écran que si on y touche à chaque génération.
@@ -312,3 +482,11 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **Deux documents sont à corriger dans la foulée de celui-ci.** `AGENTS.md` et `docs/ARCHITECTURE.md` §1 portent encore « jugée avant d'entrer dans la bibliothèque » ; ce PRD tranche l'inverse et fait foi sur l'usage.
 - **Le nom « la toile » n'est pas figé.** Le produit nomme tout en français — l'Atelier, le tableau, la réserve, la fiche, le barème — et « la toile » a été retenu faute de mieux à la séance de cadrage du 27 août 2026. « Plan de travail » ou « établi » diraient autre chose. Le jour où l'un des deux s'impose, il se change partout d'un coup, ce document compris.
 - **Dépendance externe unique** : un fournisseur d'images en ligne et sa clé. Tout le reste — retouche, détourage, découpe, rangement, export — tourne sur la machine, sans réseau.
+- **Le risque de la V2 a changé de place le 28 août 2026.** Ce document a porté un temps « le report d'un calque sur une autre pose n'a jamais été essayé » comme risque principal. C'en était un faux : un casque vu de face n'est pas un casque vu de dos, un calque est solidaire de sa pose, et c'était une évidence de dessin qu'il ne fallait pas promettre. Ce qui reste réellement non mesuré, c'est **la toile avec marge** : l'idée que donner de la place au modèle l'empêche de dézoomer sur une pièce qui agrandit la silhouette est une hypothèse, pas un résultat. Elle se teste en un appel payant, et ce test appartient à C3. Si elle ne tient pas, la pièce qui agrandit se rabat sur le corps habillé — ce que le produit sait déjà faire — et rien d'autre ne bouge.
+- **Le bon modèle pour une planche n'est pas forcément le bon pour une édition** : mesuré le 28 août 2026, un modèle recopie fidèlement les traits du gabarit qu'on lui donne en repère de découpe et rend la planche tramée, un autre l'ignore comme demandé. Passé en décision d'implémentation ci-dessus.
+- **La conclusion imprimée par l'essai du 28 août était trompeuse, et a été corrigée.** Elle annonçait que « les six modèles tiennent les deux seuils » alors que la cape échouait sur les six, aux deux jets : le verdict prenait une médiane sur les trois pièces d'un modèle, et la cape n'en ratait que deux. **Une médiane sur trois pièces efface la seule qui rate** — et c'est la seule qui décide de ce que le produit promet. L'essai juge désormais pièce par pièce, et l'échelle au retour y est devenue une colonne qui décide.
+- **Les planches existantes de Cœur de Pierre ne servent plus que de référence de pose.** Le nain est refait dans l'atelier, conformément à la règle que le corps y naît et nulle part ailleurs. Les planches actuelles ne sont ni importées, ni découpées, ni rattachées à un personnage : on les regarde pour savoir quelles poses le jeu réclame, rien de plus.
+- **Le classement des modèles par coût est contre-intuitif et doit rester mesuré, jamais supposé.** L'essai a mesuré un écart de 1 à 4,6 entre le plus cher et le moins cher des six candidats, et le favori pressenti s'est révélé être le plus cher. C'est exactement ce que la décision « le coût réel facturé fait foi » protège. Le pliage des poses, lui, divise le prix par quatre sur la même planche.
+- **Les mesures de ressemblance restent grossières.** Celle qui compare deux poses d'un même personnage travaille sur une empreinte de couleurs, pas sur une reconnaissance de forme : elle repère un personnage devenu franchement autre, elle ne repère pas un détail de costume qui a changé. C'est assumé — elle informe, elle ne refuse pas — mais il ne faut pas lui faire dire plus qu'elle ne dit.
+- **Le modèle est déjà enregistré, il n'est simplement pas montré.** Chaque génération conserve le modèle qui l'a produite depuis la V1 ; ce qui manque, c'est le report sur l'asset et l'affichage sur sa fiche. La demande est donc de rendre visible, pas d'enregistrer.
+- **La V2 est passée de six tranches à cinq.** Les références d'un personnage rejoignent C1, parce qu'une génération de pose annonce déjà ce qui part et ce que ça coûte ; la pièce et le calque remontent en C3, la main en C4, la sortie en C5. Le masque rectangle reste délibérément en C3 et non en C4 : sans lui la différence emporte le visage, et C3 ne serait pas utilisable à sa livraison. C4 apporte la finesse, pas la fonction. La renumérotation des user stories — US-115 à US-157 — suit cet ordre.

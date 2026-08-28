@@ -18,7 +18,7 @@ avant de partir dans le jeu, pas avant d'entrer dans la bibliothèque
 
 Le moteur d'image est une API payante. Ce n'est pas un compromis : c'est la seule
 famille de modèles qui sait **préserver l'identité d'un sujet** d'une génération à
-la suivante — la capacité sur laquelle repose tout ce qui suit la V2.
+la suivante — la capacité sur laquelle repose toute la V2, et tout ce qui la suit.
 
 ## 2 · Ce que ce n'est pas
 
@@ -348,6 +348,20 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 | **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
 
+Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,
+personnage, emplacement, pièce, calque — sont décrites en §7, et aucune ne modifie une
+ligne ci-dessus : elles s'ajoutent, et le corps comme le calque rendu restent des assets
+ordinaires.
+
+**Pourquoi le personnage mérite une entité et pas un champ.** C'est la deuxième fois seulement
+depuis T4 qu'on ajoute un objet au modèle — le lien de T9 était le premier —, et la barre doit
+rester haute. Une étiquette sur l'asset aurait suffi à dire « ces images vont ensemble » ; elle
+ne suffit pas à dire **ce qui manque**. Le personnage porte un plan de cases dont chacune est
+vide ou pleine, et c'est cette liste de cases vides — que nul asset ne peut porter, puisqu'elle
+décrit des images qui n'existent pas — qui fait l'entité. Le champ `groupe` de la carte avait
+déjà échoué sur ce point en T8, pour la même raison : une étiquette n'a pas de forme, et ce qui
+n'existe pas encore n'a rien à étiqueter.
+
 ### Ce que la toile ajoute au modèle
 
 *Écrit le 27 août 2026 avec T8 et T9.* Deux tranches nées de l'usage, qui ajoutent une entité,
@@ -428,8 +442,21 @@ chemin devient `%2F`, et un nom qui doit revenir intact ne s'encode ni dans un c
 clé composite — c'est le refus de `"ilot:nom"` qui a déjà donné `Bout(genre, valeur)`. Les **trois
 segments** ensuite : à deux, `/board/tint` entre en concurrence avec `PUT /board/{carte}` et n'est
 atteinte que si elle est déclarée avant, donc l'adresse dépendrait de l'ordre des fonctions dans un
-fichier. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`, `AGENTS.md`
-§ Pièges connus) ; à trois segments il n'y a plus d'ordre à respecter.
+fichier. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`, voir
+`docs/PIEGES.md`) ; à trois segments il n'y a plus d'ordre à respecter.
+
+**Et `PUT /api/board/groups/move` déplace un îlot entier**, écrit le 28 août 2026 avec T10. Trois
+segments pour la raison exacte de `tint`, et le nom du groupe dans le corps pour la même. Ce qu'elle
+ajoute est une **cardinalité** : un îlot n'a pas de position à lui, donc le déplacer, c'est écrire la
+place de chacune de ses cartes — et un appel par carte rendrait possible l'état où sept ont bougé et
+cinq sont restées, un îlot déchiré en deux moitiés que personne n'a demandé. C'est « deux appels
+pour un geste sont un état de trop » appliqué à un geste qui en aurait demandé douze. Elle exige
+donc **toutes** les places de l'îlot et rien d'autre — un sous-ensemble en ferait un second
+`PUT /board/{carte}` capable d'écrire des places en lot sous un nom de groupe qui ne les regarde
+pas —, elle les vérifie **avant** d'écrire la première, et elle n'élague rien : aucun groupe ne
+change, donc l'îlot garde ses liens et sa teinte. Les places sont **absolues et non un écart**,
+parce qu'une carte groupée avant T8 n'a pas de position écrite : c'est l'ouverture qui lui en
+calcule une, et un écart n'aurait rien eu à quoi s'ajouter pour elle.
 
 **`PUT /api/board/{carte}` gagne le texte d'une note en même temps que sa teinte**, et ça comble un
 trou de T4 : sans lui, corriger une faute demanderait de retirer la note et de la recoller — donc
@@ -642,40 +669,182 @@ librairie, et la librairie ne connaît pas le modèle.
 
 Licence MIT, comme le reste de la chaîne d'interface.
 
-## 7 · V2 — Tileset autotile
+## 7 · V2 — Le personnage et son équipement
 
-Génération d'atlas de tuiles qui se raccordent. Lourd mais **déterministe** : aucune
-inconnue, seulement du post-traitement précis.
+Un personnage, ses poses, et les pièces qu'il porte. **C'est ici que se joue la valeur du
+projet** : la V1 fabrique des images une par une, la V2 fabrique un personnage cohérent
+d'une pose à l'autre — ce que l'analyse de SpriteCook désigne comme sa meilleure idée
+technique, et l'entrée obligatoire de la V3.
 
-- Perspectives : top-down, plateforme, isométrique.
-- Jeux de pièces : 15-pièce (4×4), 17-pièce (5×4), autotile-16 plateforme.
-- Recalage sur grille, découpe, assemblage en atlas, aperçu de raccord.
-- Sortie : PNG + JSON de mappage.
+Passée devant les tuiles le 28 août 2026, sur deux essais payés qui ont levé les deux doutes
+qui la retenaient : un jeu de poses tient dans une seule image sans que la grille de pixels
+dérive (`essais/essai_grille.py` — dérive médiane 1,00× dans un appel, contre 2,5× entre
+deux), et une pièce **contenue dans la silhouette** s'extrait d'un corps habillé sans qu'un
+pixel du corps soit repeint (`essais/essai_silhouette.py` — 0,3 % sur les jambières, 0,8 %
+sur le casque, six modèles et deux jets). Le même essai a montré la limite, et elle est
+écrite dans le produit : une pièce qui **agrandit** la silhouette casse la méthode sur les six
+modèles sans exception — voir plus bas.
 
-Point d'attention relevé chez SpriteCook : aux petites tailles (16 et 32 px), le
-modèle génère **plus grand** que la sortie finale, puis on recale et on découpe.
-Générer directement à la taille cible ne marche pas.
+**Le corps naît dans l'atelier, et nulle part ailleurs.** Il n'y a pas d'écran de création de
+personnage avec son propre prompt — c'est la décision qui remplace l'assistant en quatre
+étapes écrit ici le 26 août. On écrit un sujet, on génère, on obtient une image, et c'est
+cette image qu'on désigne comme corps. L'unité manipulée reste l'image de corps : un
+personnage est un nom, une description, et un plan de cases dont chacune attend ou contient
+une image dont on connaît déjà la grille et la palette.
 
-## 8 · V3 — Character Creator
+### Ce que la version ajoute au modèle
 
-Un personnage, sa perspective, et ses **poses préparées**.
+| Entité | Contenu | Note |
+|---|---|---|
+| **Plan de poses** *(projet)* | nom, liste de poses nommées, nombre d'images par pose | Propriété du **projet**, réutilisable par tous ses personnages. Un projet neuf en reçoit un par défaut, immédiatement utilisable. Ajouter une pose ajoute une case vide, jamais une génération. |
+| **Personnage** *(projet)* | nom, description, plan rattaché, poses tenues, concept arts désignés | Vit dans la bibliothèque du projet comme le reste. Sa suppression suit la règle générale : jamais de cascade, les images survivent et affichent « personnage supprimé ». |
+| **Emplacement** *(projet)* | nom, rang | Ordonné — la tête, le dos, les jambes. Écrire un nom qui n'existe pas le crée. |
+| **Pièce** *(projet)* | nom, description, emplacement, **portée** (contenue \| agrandit), concept arts désignés | Décrite une fois sur le projet, posée sur n'importe quel personnage. La **portée** est déclarée par l'auteur, jamais devinée : elle décide si la pièce donne un calque ou un corps habillé. Défaut : contenue. |
+| **Calque** *(personnage)* | planche payée d'origine et sa case, recette (recherche de différence, zone, masque, retouches pixel), pièce, **pose**, mesures | **Une recette, pas un fichier figé** — exactement comme la retouche d'un asset ordinaire en T2. Revenir à la différence brute est un geste unique. La **pose** n'est pas une provenance, c'est une appartenance : un calque ne vaut que sur la pose où il est apparu. |
 
-- Étape 1 — décrire, ou déposer un sprite existant.
-- Étape 2 — style et perspective. **La perspective verrouille tout ce qui suit.**
-- Étape 3 — révision : retoucher, régénérer, comparer.
-- Étape 4 — poses préparées : retourner le personnage, le mettre en posture. Chaque
-  pose est un asset visible, et certaines dérivent d'une autre (la marche de dos
-  dérive de l'attente de dos, pas de la vue de face).
+Aucun de ces objets n'est une image de plus : le corps et le calque rendu sont des assets
+ordinaires, rangés dans la même bibliothèque, avec la même filiation et le même coût.
 
-**C'est ici que se joue la valeur du projet.** Le graphe de poses est ce que
-l'analyse de SpriteCook désigne comme sa meilleure idée technique, et c'est
-l'entrée obligatoire de la V4.
+### Le pliage — la fonction générale de l'atelier
 
-**Prérequis à vérifier avant d'engager la V3** : que le fournisseur retenu sache
-réellement préserver l'identité d'un sujet sur plusieurs générations, à partir de
-références multiples. À tester tôt — voir §11.
+Le pliage est **une ruse d'appel, pas un format de livraison**. On demande N images dans une
+seule planche, on paie un appel au lieu de N, et la planche est dépliée toute seule en N
+images séparées. Ce qui sort du produit, ce sont ces images-là et leur descriptif — jamais la
+feuille assemblée.
 
-## 9 · V4 — Animation de sprites
+Ce n'est pas un dispositif du lot de poses : **c'est la manière dont l'atelier habille ou
+transforme N images d'un seul appel**, sur une grille carrée dont il connaît la géométrie case
+par case. La V2 en a deux usages — le lot de poses (créer N corps) et la planche d'équipement
+(habiller N corps) —, et le découpeur de T5 sert les deux. Ce qui change entre eux tient en un
+mot : le lot de poses part d'une grille **vide** et l'application ne connaît pas ce qui va
+revenir ; la planche d'équipement part d'une grille **qu'elle a composée elle-même**, donc
+elle connaît exactement l'avant de chaque case. C'est cette base connue qui rend la différence
+solide, et non devinée.
+
+Le gabarit de cases vides devient donc une pièce du produit et pas un accessoire d'essai :
+mesuré le 28 août 2026, le compte revient exact 11 fois sur 12 avec gabarit contre 9 sur 12
+sans. Deux pièges mesurés le même jour l'accompagnent, et sont traités plus bas : un modèle
+recopie les traits du gabarit dans l'image, et deux planches sur vingt-quatre ont répété une
+pose sans que le compte en souffre.
+
+- **La taille du lot est le choix de l'auteur.** Le produit annonce ce que ça coûte et ce que
+  ça risque ; il ne plafonne pas.
+- **Tout ou rien sur le compte, indépendant sur le reste.** Si le nombre d'images revenues ne
+  correspond pas au nombre demandé, rien n'entre et le lot se relance d'un geste. Si le compte
+  est bon, tout entre, et chaque pose devient jugeable et régénérable seule.
+- **Aucune autre mesure ne peut refuser un lot.** Ressemblance, dérive de grille, netteté :
+  elles s'affichent toutes, elles n'empêchent jamais de garder.
+
+C'est le seul refus automatique de la version, et il est arithmétique — c'est ce qui le rend
+tenable.
+
+### Le calque par différence, sur une planche d'équipement
+
+Une pièce se fabrique **par différence, sans repère ajouté**. Rien n'est ajouté à l'image
+envoyée pour aider le recalage — ni ancre, ni mire, ni silhouette — et le corps d'origine
+n'est jamais modifié.
+
+Ce qui part n'est pas un corps, c'est **une planche que l'application a composée elle-même** :
+
+1. l'auteur coche les poses qu'il veut habiller, parmi celles qui ont déjà un corps ;
+2. l'application range ces corps sur une grille carrée dont elle connaît la géométrie case par
+   case, et les cases en trop restent vides ;
+3. elle envoie la planche avec « la même planche, avec la pièce en plus, ne touche à rien
+   d'autre » ;
+4. elle redécoupe le retour sur **la même** grille — le découpeur de T5 fait déjà la moitié du
+   travail ;
+5. case par case, elle compare l'avant qu'elle connaît exactement et l'après ; chaque
+   différence est un calque, **propre à sa pose** ;
+6. l'auteur rattrape à la main ce qui tombe faux.
+
+**N calques pour un appel payant au lieu de N.** Et la comparaison part d'une base connue au
+lieu d'être devinée, ce qui est plus solide que la méthode une-pièce-un-corps.
+
+La zone est **facultative et rejouable** : par défaut la différence est cherchée sur toute la
+case ; la restreindre, la déplacer, la retailler sont des étapes de la recette, qui ne
+redemandent jamais d'image au fournisseur.
+
+**Un calque est solidaire de sa pose.** Un casque vu de face n'est pas un casque vu de dos : il
+faut un calque par pose, et pour huit frames d'un cycle de marche, huit calques. Ce n'est pas
+une limite technique à lever, c'est une évidence de dessin. Ce que le pliage divise, c'est le
+nombre d'appels payants — jamais le nombre de calques. Le produit ne propose donc jamais de
+reposer un calque ailleurs que sur la pose où il est apparu.
+
+**Une pièce contenue, une pièce qui agrandit.** C'est la seule limite de méthode de la version,
+et elle est mesurée, pas pressentie. `essais/essai_silhouette.py`, six modèles et deux jets :
+
+| Pièce | Silhouette retrouvée | **Corps repeint** | Ajout | Échelle au retour |
+|---|---:|---:|---:|---:|
+| Jambières | 99,5 % | **0,3 %** | 2,3 % | 1,00 |
+| Casque | 99,2 % | **0,8 %** | 6,1 % | 0,96 |
+| **Cape** | 100,0 % | **23,5 %** | 203 % | **0,62** |
+
+La colonne qui décide est *repeint*, pas *silhouette* : une silhouette à 100 % avec 23 % de
+repeint veut dire que le modèle a gardé la forme et redessiné l'intérieur. Et la planche
+contact donne la cause : le modèle **dézoome le personnage** pour faire tenir la cape dans le
+cadre. À 0,62, il n'y a plus de différence à calculer — remettre à l'échelle rééchantillonne le
+pixel art d'un facteur 1,61 et détruit la grille avant même la comparaison.
+
+Le produit en tire une règle, portée par la **portée** que l'auteur déclare sur la pièce :
+
+- **contenue** (casque, jambières, ceinture, gants, plastron) → la différence, telle quelle ;
+- **qui agrandit** (cape, ailes, arme longue, sac à dos, monture) → la planche part sur une
+  toile avec marge pour que la pièce ait la place ; si l'échelle revient malgré tout
+  différente de celle envoyée, **aucun calque n'est fabriqué**. Le produit nomme la dérive et
+  garde ce qui revient comme des **corps habillés** — des images de corps ordinaires,
+  utilisables et exportables, mais qui ne s'empilent pas.
+
+Ce n'est pas un refus au sens de T2 : rien n'est jeté, l'appel payé reste acquis, et la seule
+chose que le produit refuse de faire, c'est prétendre qu'un calque faux en est un.
+
+### La matrice de production
+
+Deux axes — les poses d'un côté, les emplacements de l'autre —, des vignettes dans les cases,
+les cases vides visiblement vides. **Ce n'est pas la grille de la bibliothèque** : ni
+recherche, ni filtres, ni sélection multiple. Elle ne rompt donc pas la règle d'une seule
+grille dans tout le produit, pas plus que la réserve de T8 ne l'avait rompue. On y voit ce
+qui manque, et on lance depuis là.
+
+### Ce que la V2 n'est pas
+
+Ni squelette, ni os, ni interpolation entre deux poses — c'est la V3. Ni salle d'essai
+montrant le personnage équipé dans un décor. Ni bibliothèque de poses partagée entre projets :
+le plan appartient au projet qui le porte. Ni génération d'une pièce seule sur fond vide : une
+pièce n'existe qu'apparue sur un corps. Ni calque unique porté sur toutes les poses. Ni
+combinaison de deux pièces qui agrandissent sur le même corps : deux corps habillés ne
+s'empilent pas. Ni détection automatique de ce qui agrandit la silhouette : l'auteur déclare.
+
+### Deux pièges mesurés, et ce que le produit en fait
+
+**Le gabarit recopié.** Un des six modèles rend les traits du gabarit de découpe dans l'image :
+la planche est juste, mais elle arrive tramée. Un autre l'ignore comme demandé. Le projet porte
+donc **deux défauts de modèle** — produire une planche, éditer un corps — et non un seul, sans
+que l'auteur ait à y penser au moment de générer.
+
+**La planche redondante.** Deux planches sur vingt-quatre ont répété la même pose. Le compte
+était bon, donc le contrat était tenu, donc rien n'a refusé — et c'est correct : le compte
+d'images reste le seul refus automatique du produit. Mais la ressemblance entre cases d'un
+même lot est mesurée et montrée case par case, et la pose qui n'apporte rien se relance seule.
+Un compte juste peut donner une planche sans valeur ; le produit ne le cache pas.
+
+### Le risque de la version
+
+**La toile avec marge n'a jamais été essayée.** Ce document a porté un temps « le report d'un
+calque sur une autre pose » comme risque principal. C'en était un faux : un calque est
+solidaire de sa pose, c'est une évidence de dessin, et il ne fallait pas le promettre — le
+risque disparaît avec la promesse, et le pliage rend le prix acceptable de toute façon.
+
+Ce qui reste réellement non mesuré tient en une hypothèse : **donner de la place au modèle
+l'empêcherait de dézoomer** sur une pièce qui agrandit la silhouette. C'est une idée
+plausible, pas un résultat. Elle se teste en un appel payant, et ce test appartient à C3. Si
+elle ne tient pas, la pièce qui agrandit se rabat sur le corps habillé — ce que le produit sait
+déjà faire par construction — et rien d'autre ne bouge. **Gravité faible, donc, là où la
+précédente rédaction en annonçait une élevée** : le repli est déjà écrit.
+
+Le découpage en tranches, les user stories et les critères : **`docs/PLAN.md`**, qui fait foi
+sur l'ordre.
+
+## 8 · V3 — Animation de sprites
 
 Le morceau à risque. Le modèle d'animation de SpriteCook n'est pas exposé : il n'y
 a rien à copier, il faut retrouver une recette.
@@ -709,6 +878,20 @@ largement favorite.
 Effet de bord côté V1 : ce même comportement est une **nuisance** tant qu'on veut un sprite
 isolé. Le prompt doit imposer « one single sprite, one pose only ».
 
+## 9 · V4 — Tileset autotile
+
+Génération d'atlas de tuiles qui se raccordent. Lourd mais **déterministe** : aucune
+inconnue, seulement du post-traitement précis.
+
+- Perspectives : top-down, plateforme, isométrique.
+- Jeux de pièces : 15-pièce (4×4), 17-pièce (5×4), autotile-16 plateforme.
+- Recalage sur grille, découpe, assemblage en atlas, aperçu de raccord.
+- Sortie : PNG + JSON de mappage.
+
+Point d'attention relevé chez SpriteCook : aux petites tailles (16 et 32 px), le
+modèle génère **plus grand** que la sortie finale, puis on recale et on découpe.
+Générer directement à la taille cible ne marche pas.
+
 ## 10 · V5 — Audio
 
 - **Bruitages** — description → son court. Le module existe déjà dans MySpriteAi
@@ -723,16 +906,30 @@ isolé. Le prompt doit imposer « one single sprite, one pose only ».
 
 | Risque | Gravité | Quand le lever |
 |---|---|---|
-| **La recette d'animation n'existe pas** | élevée | prototypage dédié avant la V4 — **piste sérieuse trouvée**, voir §9 |
+| **La recette d'animation n'existe pas** | élevée | prototypage dédié avant la V3 — **piste sérieuse trouvée**, voir §8 |
+| ~~Un calque ne se repose pas sur une autre pose~~ | — | **retiré le 28 août 2026 : ce n'était pas un risque, c'était une promesse fausse.** Un casque vu de face n'est pas un casque vu de dos ; un calque est solidaire de sa pose et il en faut un par pose. Ce qui l'a remplacé — la planche d'équipement pliée, N calques pour un appel — rend le prix acceptable sans rien promettre qu'on n'ait mesuré. Voir §7 |
+| **La toile avec marge n'a jamais été essayée** | faible — le repli est déjà écrit | **en C3, en un appel payant.** L'idée que donner de la place au modèle l'empêche de dézoomer sur une pièce qui agrandit la silhouette est une hypothèse, pas un résultat. Si elle tombe : la pièce qui agrandit se rabat sur le corps habillé, ce que le produit sait déjà faire, et rien d'autre ne bouge |
+| ~~Le bon modèle pour une planche n'est pas le bon pour une édition~~ | — | **traité le 28 août 2026, pas seulement mesuré.** Un modèle recopie les traits du gabarit de découpe et rend la planche tramée, un autre l'ignore. Le projet porte donc **deux** défauts de modèle — planche, et édition d'un corps — sans que l'auteur ait à y penser. Passé en décision produit, ce n'est plus un risque ouvert |
 | ~~Aucun fournisseur ne préserve l'identité~~ | — | **levé le 26 août 2026.** `gemini-3.1-flash-image` tient l'identité et la dérive entre deux poses enchaînées est quasi nulle. Seedream 4.5 échoue sur ce point mais excelle au transfert de style. |
 | **L'échelle du sujet dérive d'une génération à l'autre** | moyenne — bloque le montage d'animations | constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires** |
 | ~~La couverture image d'OpenRouter~~ | — | **levé le 27 août 2026** par `essais/essai_couverture.py` : 48 modèles image, 11 fournisseurs, 31 acceptant trois références ou plus. Et le catalogue a bougé en un jour — 47 → 48 — ce qu'une liste en dur n'aurait pas vu |
 | **Le coût par image dérive** | moyenne | enregistrer le coût réel de chaque génération dès la T1, et le totaliser par projet |
 | ~~La qualité pixel art directe~~ | — | **levé le 27 août 2026** par `essais/essai_pixel.py`, sur 44 images de six modèles et sans un appel : aucune sortie brute n'a de transparence, la médiane est à 33 986 couleurs, et la grille rendue va de 7 à 20 px — facteur 2 **à l'intérieur d'un même lot**. Après traitement : 27 couleurs, alpha franc, grille imposée, 0 sujet perdu sur 44, 0,17 s par image. La question s'est retournée : le post-traitement n'est pas un supplément qui doit prouver son apport, c'est ce sans quoi rien n'est utilisable |
 
-Le deuxième risque est le plus sournois : il ne se voit pas en V1, et il annule les
-V3 et V4 s'il se réalise. **Il se teste en dix minutes dès la première tranche** —
-c'est le premier essai à faire, avant même d'écrire la bibliothèque.
+~~Le deuxième risque est le plus sournois~~ — il a été levé le 26 août, avant même
+d'écrire la bibliothèque, exactement comme prévu ici. ~~Le sournois, désormais, c'est le
+report d'un calque sur une autre pose~~ — **et celui-là n'a jamais existé.** Il a été écrit ici
+le 28 août au matin par extrapolation, et retiré le soir même : reposer un casque de face sur
+une pose de dos n'est pas un pari technique qui pourrait tenir, c'est une chose qui ne marche
+pas et qu'aucun essai n'aurait sauvée.
+
+**La leçon vaut mieux que le risque.** Ce faux risque est né d'une confusion entre *ce que
+l'essai a mesuré* et *ce qu'on aurait aimé qu'il mesure* — l'essai prouvait l'extraction, on
+en a déduit le report. La même séance a produit la même faute une seconde fois, dans la
+conclusion imprimée de `essais/essai_silhouette.py` : une médiane sur trois pièces annonçait
+que les six modèles tenaient les seuils, alors que la cape échouait sur les six. **Une moyenne
+efface le seul cas qui décide.** Les deux sont corrigés ; ce qui reste à surveiller, c'est le
+geste, pas le chiffre.
 
 ## 12 · Ce qu'on récupère
 
