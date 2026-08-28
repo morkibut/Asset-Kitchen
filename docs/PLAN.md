@@ -508,12 +508,12 @@ après.
 
 ### Critères d'acceptation
 
-- [ ] Changer la taille de pixel, la bible, le barème ou un modèle par défaut met l'écran à jour sans rechargement, et la valeur affichée est celle qui vient d'être écrite
-- [ ] Le même changement fait dans un onglet apparaît dans un second onglet ouvert sur le même projet, comme tout ce qui passe par le flux
-- [ ] Un réglage refusé par le serveur laisse l'écran sur la valeur d'avant, avec sa raison — jamais sur la valeur tentée
-- [ ] Rouvrir l'écran Univers après un réglage montre la même valeur que le fichier du projet
-- [ ] Un essai d'écran vérifie, pour chacun des cinq blocs de l'univers, ce qui est affiché **après** le réglage
-- [ ] Aucun appel payant, aucun aller-retour supplémentaire au réglage : ce qui manquait est une annonce et une pose, pas une relecture
+- [x] Changer la taille de pixel, la bible, le barème ou un modèle par défaut met l'écran à jour sans rechargement, et la valeur affichée est celle qui vient d'être écrite
+- [x] Le même changement fait dans un onglet apparaît dans un second onglet ouvert sur le même projet, comme tout ce qui passe par le flux
+- [x] Un réglage refusé par le serveur laisse l'écran sur la valeur d'avant, avec sa raison — jamais sur la valeur tentée
+- [x] Rouvrir l'écran Univers après un réglage montre la même valeur que le fichier du projet
+- [x] Un essai d'écran vérifie, pour chacun des cinq blocs de l'univers, ce qui est affiché **après** le réglage
+- [x] Aucun appel payant, aucun aller-retour supplémentaire au réglage : ce qui manquait est une annonce et une pose, pas une relecture
 
 ## Bloquée par
 

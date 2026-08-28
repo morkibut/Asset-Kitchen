@@ -848,7 +848,21 @@ function serveurDouble(options: {
       )
       return rendre(rendu)
     }
-    if (url.startsWith("/api/universe")) return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
+    // **Le double pose ce qu'on lui règle, et rend l'univers entier** — comme
+    // le vrai serveur, et comme le cadre de l'agent juste au-dessus. Un double
+    // qui rendait toujours l'univers de départ laissait passer R1 : un essai
+    // pouvait vérifier que l'écran avait bien appelé la route, jamais ce qu'il
+    // affichait **après**. C'est exactement le trou par lequel le défaut est
+    // arrivé jusqu'à l'usage.
+    if (url.startsWith("/api/universe")) {
+      if (init?.method === "PUT") {
+        const pose = Object.fromEntries(
+          Object.entries(corps ?? {}).filter(([, v]) => v !== undefined && v !== null),
+        )
+        etat.univers = { ...etat.univers, ...pose }
+      }
+      return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
+    }
     if (url === "/api/generations" && init?.method === "POST") {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
       FluxDouble.ouverts.at(-1)?.emettre("generation", g)
@@ -2684,6 +2698,234 @@ describe("l'aperçu", () => {
     fireEvent.pointerDown(scene(), { button: 0, clientX: 400, clientY: 300 })
     fireEvent.pointerUp(scene(), { clientX: 401, clientY: 300 })
     expect(apercu()).toBeNull()
+  })
+})
+
+// ── R1 · Le réglage d'univers se voit à l'instant ────────────────────────────
+//
+// **Le trou par lequel le défaut est passé.** 122 essais d'écran, et aucun ne
+// regardait *après* : on vérifiait que l'écran avait bien appelé la route, ce
+// qui était vrai, pendant que l'écran restait sur la valeur d'avant. Ceux-ci
+// regardent donc ce qui est affiché une fois le réglage posé, pour **chacun des
+// cinq blocs** de l'univers — et le double, de son côté, pose ce qu'on lui règle
+// au lieu de rendre éternellement l'univers de départ.
+
+describe("le réglage d'univers se voit à l'instant", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un bloc de l'univers, en-tête comprise.
+   *
+   *  Les segments de deux blocs portent les mêmes nombres — 16, 24, 32 et 48
+   *  sont à la fois des couleurs et des tailles de pixel. On cherche donc *dans*
+   *  le bloc, jamais dans l'écran entier. */
+  const bloc = (titre: string) =>
+    within(
+      screen
+        .getByRole("button", { name: new RegExp(`^${titre}`) })
+        .closest("section") as HTMLElement,
+    )
+
+  /** Ouvrir un bloc, et rendre son contenu. */
+  const ouvrir = async (titre: string) => {
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${titre}`) }))
+    return bloc(titre)
+  }
+
+  /** Replier un bloc : **replié, l'en-tête porte sa valeur** (`docs/DESIGN.md`
+   *  § Le bloc repliable). C'est la façon la plus directe de lire ce que
+   *  l'écran tient d'un réglage, sans passer par une classe CSS. */
+  const replier = (titre: string) =>
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${titre}`) }))
+
+  /** L'en-tête repliée qui porte cette valeur-là.
+   *
+   *  Le titre et la valeur sont deux `span` **collés** — le nom accessible du
+   *  bouton est donc « Bible1 champ », sans espace. On l'écrit une fois ici
+   *  plutôt que de le subir à six endroits. */
+  const replie = (titre: string, valeur: string) =>
+    screen.getByRole("button", { name: `${titre}${valeur}` })
+
+  /** L'écran Univers, ouvert sur cet univers-là.
+   *
+   *  **L'onglet tient son univers du flux**, pas de la route : c'est le premier
+   *  message de l'abonnement qui le pose (« un abonné qui arrive en retard
+   *  demande l'état complet »). Le double et l'état de départ doivent donc dire
+   *  la même chose, sans quoi l'écran montrerait l'un et réglerait l'autre. */
+  const ouvrirLUnivers = async (univers: Univers = UNIVERS) => {
+    const double = serveurDouble({ univers })
+    const flux = await monter(double.fetchDouble, { ...ETAT, univers })
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    await screen.findByRole("button", { name: /^Bible/ })
+    return { ...double, flux }
+  }
+
+  test("la bible posée survit à la fermeture de l'écran, sans rechargement", async () => {
+    await ouvrirLUnivers()
+    const bible = await ouvrir("Bible")
+
+    const monde = bible.getByPlaceholderText(/royaume de tourbe/)
+    fireEvent.change(monde, { target: { value: "marais de fer" } })
+    fireEvent.blur(monde)
+
+    // **On referme et on rouvre**, parce que la bible est le seul bloc qui
+    // tienne un brouillon : le texte encore à l'écran ne prouverait que le
+    // brouillon. Remonté, il naît de ce que l'onglet tient de l'univers — donc
+    // de la réponse posée. C'est « rouvrir montre la même valeur », vu d'ici.
+    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    // Le repli des blocs vit dans le châssis et survit au démontage : la bible
+    // est déjà ouverte au retour, et la rouvrir la refermerait.
+    await screen.findByRole("button", { name: /^Bible/ })
+
+    await waitFor(() =>
+      expect(
+        (bloc("Bible").getByPlaceholderText(/royaume de tourbe/) as HTMLTextAreaElement)
+          .value,
+      ).toBe("marais de fer"),
+    )
+    replier("Bible")
+    expect(replie("Bible", "1 champ")).toBeTruthy()
+  })
+
+  test("le nombre de couleurs demandé est celui qui vient d'être posé", async () => {
+    // La palette n'offre son réglage que lorsqu'elle existe : sans artwork, le
+    // bloc porte sa raison, pas un contrôle mort.
+    await ouvrirLUnivers({ ...UNIVERS, palette: ["#3d2b2d", "#b59b72"], vide: false })
+    const palette = await ouvrir("Palette")
+
+    // 8 et 12 n'appartiennent qu'aux couleurs ; 96 et 128 qu'aux tailles de
+    // pixel. On règle sur ce qui ne peut pas être l'autre.
+    fireEvent.click(palette.getByRole("button", { name: "12" }))
+
+    await waitFor(() =>
+      expect(palette.getByRole("button", { name: "12" }).className).toContain(
+        "border-signal",
+      ),
+    )
+    expect(palette.getByRole("button", { name: "24" }).className).not.toContain(
+      "border-signal",
+    )
+  })
+
+  test("la taille de pixel posée s'affiche, sans rechargement", async () => {
+    const { appels } = await ouvrirLUnivers()
+    const grille = await ouvrir("Taille de pixel")
+
+    const avant = appels.length
+    fireEvent.click(grille.getByRole("button", { name: "96" }))
+    await waitFor(() =>
+      expect(grille.getByRole("button", { name: "96" }).className).toContain(
+        "border-signal",
+      ),
+    )
+
+    // Replié, l'en-tête porte sa valeur — et c'est elle qu'on lit.
+    replier("Taille de pixel")
+    expect(replie("Taille de pixel", "96 px")).toBeTruthy()
+
+    // **Aucun aller-retour de plus** : ce qui manquait est une pose, pas une
+    // relecture. Le réglage n'a fait qu'un appel — le PUT lui-même —, et rien
+    // n'est allé redemander l'univers derrière.
+    expect(appels.slice(avant).map((a) => a.url)).toEqual(["/api/universe"])
+  })
+
+  test("le barème posé se relit sur la ligne qu'on a réglée", async () => {
+    await ouvrirLUnivers()
+    const bareme = await ouvrir("Barème")
+
+    // La silhouette est le seul réglage du barème qui se dise en toutes
+    // lettres : c'est donc lui qu'on lit après.
+    fireEvent.click(bareme.getAllByRole("button", { name: /se détoure/ })[0])
+
+    expect(
+      await bareme.findByRole("button", { name: "plein cadre, aucun détourage" }),
+    ).toBeTruthy()
+    expect(bareme.getAllByRole("button", { name: /se détoure/ })).toHaveLength(1)
+  })
+
+  test("le modèle par défaut d'une famille tient, et l'en-tête la compte", async () => {
+    await ouvrirLUnivers()
+    const defauts = await ouvrir("Modèle par défaut")
+
+    const personnages = defauts.getAllByRole("combobox")[0]
+    fireEvent.change(personnages, { target: { value: "essai/modele" } })
+
+    await waitFor(() =>
+      expect((defauts.getAllByRole("combobox")[0] as HTMLSelectElement).value).toBe(
+        "essai/modele",
+      ),
+    )
+    replier("Modèle par défaut")
+    expect(replie("Modèle par défaut", "1 famille réglée")).toBeTruthy()
+  })
+
+  test("un réglage refusé laisse l'écran sur la valeur d'avant, avec sa raison", async () => {
+    const { fetchDouble } = serveurDouble()
+    const vrai = fetchDouble.getMockImplementation()!
+    // Le serveur refuse **l'écriture** de l'univers, et rien d'autre : la forme
+    // exacte d'un refus du produit — un code, une raison, et où aller.
+    fetchDouble.mockImplementation(async (chemin: string, init?: RequestInit) => {
+      if (init?.method === "PUT" && String(chemin).startsWith("/api/universe"))
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "univers_refuse",
+            raison: "la taille de pixel cible va de 8 à 512 pixels",
+            ou_aller: null,
+          }),
+        } as unknown as Response
+      return vrai(chemin, init)
+    })
+
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    const grille = await ouvrir("Taille de pixel")
+
+    fireEvent.click(grille.getByRole("button", { name: "96" }))
+
+    expect(
+      await screen.findByText("la taille de pixel cible va de 8 à 512 pixels"),
+    ).toBeTruthy()
+    // La valeur d'avant, jamais la valeur tentée.
+    replier("Taille de pixel")
+    expect(replie("Taille de pixel", "64 px")).toBeTruthy()
+  })
+
+  test("le flux d'un second onglet pose le même réglage, sans qu'on ait rien fait ici", async () => {
+    const { flux } = await ouvrirLUnivers()
+    await ouvrir("Taille de pixel")
+
+    // Ce que le serveur annonce **à tout onglet ouvert sur le projet** depuis
+    // R1 : un réglage posé s'annonce toujours, et plus seulement quand
+    // l'empreinte de palette a bougé.
+    flux.emettre("univers", {
+      projet: "bac-a-sable",
+      nom: "Bac à sable",
+      univers: { ...UNIVERS, cible_px: 128, vide: false },
+      teintes: {},
+      realignes: 0,
+      conserves: 0,
+    })
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "128" }).className,
+      ).toContain("border-signal"),
+    )
+    replier("Taille de pixel")
+    expect(replie("Taille de pixel", "128 px")).toBeTruthy()
   })
 })
 

@@ -1254,6 +1254,7 @@ export function App() {
           liens={liens}
           teintes={teintes}
           personnages={personnages}
+          onUnivers={setUnivers}
           onRelire={relireTableau}
           onFermer={() => setUniversOuvert(false)}
         />

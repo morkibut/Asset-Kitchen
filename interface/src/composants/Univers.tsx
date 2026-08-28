@@ -70,6 +70,12 @@ const COULEURS = [8, 12, 16, 24, 32, 48] as const
 const BASCULES = { univers: "univers", reserve: "réserve" } as const
 type Repliable = keyof typeof BASCULES
 
+/** Poser un réglage, et **dire s'il a pris**. Le booléen n'est pas de la
+ *  politesse : un bloc qui tient un brouillon doit savoir revenir à la valeur
+ *  d'avant quand le serveur refuse, sinon l'écran reste sur la valeur tentée —
+ *  celle que le fichier du projet ne porte pas. */
+type Regler = (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<boolean>
+
 export function EcranUnivers({
   projet,
   univers,
@@ -78,6 +84,7 @@ export function EcranUnivers({
   liens,
   teintes,
   personnages,
+  onUnivers,
   onRelire,
   onFermer,
 }: {
@@ -98,6 +105,12 @@ export function EcranUnivers({
    *  coup d'œil **ce qui sert et ce qui dort** (US-125), et désigner une carte
    *  comme concept art depuis son menu (US-124). */
   personnages: Personnage[]
+  /** Poser l'univers que le serveur vient de rendre. **Un réglage arrive par
+   *  deux chemins qui se croisent** — la réponse du PUT et l'annonce du flux —,
+   *  comme un personnage ou une carte, et l'écran jetait ici le premier des
+   *  deux. Un écran qui ne sait pas poser ce qu'on lui rend est un piège qui se
+   *  réveille ailleurs : il se corrige même quand le flux suffirait. */
+  onUnivers: (univers: Univers) => void
   onRelire: () => void
   onFermer: () => void
 }) {
@@ -265,6 +278,7 @@ export function EcranUnivers({
             univers={univers}
             modeles={modeles}
             artworks={cartes.filter((c) => c.artwork)}
+            onUnivers={onUnivers}
             onErreur={setRefus}
             onRealigner={realigner}
           />
@@ -328,23 +342,30 @@ function PanneauUnivers({
   univers,
   modeles,
   artworks,
+  onUnivers,
   onErreur,
   onRealigner,
 }: {
   univers: Univers
   modeles: Modele[]
   artworks: Carte[]
+  onUnivers: (univers: Univers) => void
   onErreur: (raison: string) => void
   onRealigner: () => void
 }) {
   const echouer = (erreur: unknown, defaut: string) =>
     onErreur(erreur instanceof Refus ? erreur.message : defaut)
 
-  const regler = async (reglage: Parameters<typeof api.reglerUnivers>[0]) => {
+  const regler: Regler = async (reglage) => {
     try {
-      await api.reglerUnivers(reglage)
+      // **Ce que le serveur rend est ce que l'écran pose** — le PUT rend
+      // l'univers entier, exactement comme le cadre de l'agent. Rien n'est
+      // redemandé : ce qui manquait était une pose, pas une relecture.
+      onUnivers((await api.reglerUnivers(reglage)).univers)
+      return true
     } catch (erreur) {
       echouer(erreur, "réglage refusé")
+      return false
     }
   }
 
@@ -352,7 +373,7 @@ function PanneauUnivers({
     <aside className="flex min-h-0 w-[380px] shrink-0 flex-col bg-fond-1">
       <EnTetePanneau>L'univers</EnTetePanneau>
       <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
-        <Bible bible={univers.bible} onRegler={(bible) => void regler({ bible })} />
+        <Bible bible={univers.bible} onRegler={(bible) => regler({ bible })} />
         <Palette univers={univers} artworks={artworks} onRegler={regler} />
         <Grille univers={univers} onRegler={regler} onRealigner={onRealigner} />
         <Bareme univers={univers} onRegler={regler} />
@@ -372,15 +393,19 @@ function Bible({
   onRegler,
 }: {
   bible: { nom: string; texte: string; actif: boolean }[]
-  onRegler: (bible: { nom: string; texte: string; actif: boolean }[]) => void
+  onRegler: (bible: { nom: string; texte: string; actif: boolean }[]) => Promise<boolean>
 }) {
   const [brouillon, setBrouillon] = useState(bible)
 
   useEffect(() => setBrouillon(bible), [bible])
 
-  const poser = (suivante: typeof bible) => {
+  /** **Le seul bloc de l'univers qui tienne un brouillon**, parce qu'il porte
+   *  du texte qu'on tape. Les quatre autres lisent l'univers tel qu'il est, et
+   *  une valeur refusée ne s'y affiche donc jamais. Ici il faut le dire :
+   *  refusé, le brouillon revient à ce que le projet porte. */
+  const poser = async (suivante: typeof bible) => {
     setBrouillon(suivante)
-    onRegler(suivante)
+    if (!(await onRegler(suivante))) setBrouillon(bible)
   }
 
   const actifs = brouillon.filter((c) => c.actif && c.texte.trim()).length
@@ -401,7 +426,7 @@ function Bible({
               aria-pressed={champ.actif}
               aria-label={`${NOM_CHAMP[champ.nom] ?? champ.nom} — ${champ.actif ? "actif" : "inactif"}`}
               onClick={() =>
-                poser(
+                void poser(
                   brouillon.map((c, i) => (i === rang ? { ...c, actif: !c.actif } : c)),
                 )
               }
@@ -432,7 +457,7 @@ function Bible({
                 brouillon.map((c, i) => (i === rang ? { ...c, texte: e.target.value } : c)),
               )
             }
-            onBlur={() => onRegler(brouillon)}
+            onBlur={() => void poser(brouillon)}
             className={[
               "resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug placeholder:text-texte-3",
               champ.actif ? "text-texte" : "text-texte-3",
@@ -464,7 +489,7 @@ function Palette({
 }: {
   univers: Univers
   artworks: Carte[]
-  onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+  onRegler: Regler
 }) {
   return (
     <Bloc
@@ -521,7 +546,7 @@ function Grille({
   onRealigner,
 }: {
   univers: Univers
-  onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+  onRegler: Regler
   onRealigner: () => void
 }) {
   return (
@@ -569,7 +594,7 @@ function Bareme({
   onRegler,
 }: {
   univers: Univers
-  onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+  onRegler: Regler
 }) {
   const poser = (bareme: Echelle[]) => void onRegler({ bareme })
 
@@ -656,7 +681,7 @@ function Defauts({
 }: {
   univers: Univers
   modeles: Modele[]
-  onRegler: (r: Parameters<typeof api.reglerUnivers>[0]) => Promise<void>
+  onRegler: Regler
 }) {
   const poses = FAMILLES.filter((f) => f !== "tous" && univers.modeles[f]).length
 

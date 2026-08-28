@@ -889,7 +889,18 @@ class ServiceUnivers:
         self._bibliotheque.sauver_projet(objet.avec(univers))
         # Le compte de couleurs fait partie de ce que la palette lit : le
         # changer la périme, exactement comme promouvoir un artwork.
-        return self._accorder(projet)
+        accorde = self._accorder(projet, annoncer=False)
+        # **Un réglage posé s'annonce toujours, et c'est ici que ça se décide.**
+        # `_accorder` n'annonce que lorsque l'empreinte de palette a bougé —
+        # changer la cible de pixel, la bible, le barème ou un modèle ne la
+        # périme pas. Le réglage était donc bien écrit sur le disque et
+        # n'arrivait à aucun onglet, pas même à celui qui venait de le poser :
+        # seul « couleurs » se voyait, parce que lui seul passe par la palette.
+        # L'accord ne s'annonce pas de son côté pour que l'annonce reste
+        # **unique** — deux messages pour un geste feraient redemander l'état
+        # et le catalogue deux fois.
+        self._annoncer_univers(accorde)
+        return accorde
 
     # ── Ce qui part avec une génération ──────────────────────────────────────
 
@@ -1092,13 +1103,17 @@ class ServiceUnivers:
         self._fichiers.ecrire_carte(carte.projet, carte.identifiant, carte.en_disque())
         self._diffusion.publier("carte", carte.en_json())
 
-    def _accorder(self, projet: str) -> Projet:
+    def _accorder(self, projet: str, *, annoncer: bool = True) -> Projet:
         """Remet la palette d'accord avec les artworks, si elle ne l'est plus.
 
         Ne recalcule que lorsque l'empreinte a changé : promouvoir, rétrograder,
         supprimer une carte, en récupérer une, ou changer le nombre de couleurs.
         Tout le reste — annoter, grouper, redimensionner — laisse la palette
         exactement où elle est, et ne coûte donc rien.
+
+        **`annoncer` n'existe que pour un appelant qui annonce lui-même** —
+        `regler_univers`, qui doit le faire *quoi qu'il arrive* et ne veut pas
+        s'annoncer deux fois quand la palette a bougé en même temps.
         """
         objet = self._exige(projet)
         univers = objet.univers
@@ -1123,7 +1138,8 @@ class ServiceUnivers:
         univers.palette_empreinte = empreinte
         accorde = objet.avec(univers)
         self._bibliotheque.sauver_projet(accorde)
-        self._annoncer_univers(accorde)
+        if annoncer:
+            self._annoncer_univers(accorde)
         return accorde
 
     def _annoncer_univers(
