@@ -30,6 +30,7 @@ import {
   heure,
   poserLeFichier,
   Refus,
+  type ApercuPrompt,
   type Asset,
   type Bibliotheque,
   type Etat,
@@ -247,6 +248,17 @@ export function App() {
   const [modeleChoisi, setModeleChoisi] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
   const [promptNegatif, setPromptNegatif] = useState("")
+  /** **Le champ porte le texte entier, et il part mot pour mot** (US-159).
+   *
+   *  Deux états du même champ, pas deux champs : reprendre le texte, c'est
+   *  continuer à écrire là où on écrivait — un second éditeur à côté aurait
+   *  demandé de choisir lequel des deux part. */
+  const [repris, setRepris] = useState(false)
+  /** Ce qui partira, tel que le serveur le compose (US-158). `null` tant qu'il
+   *  n'a pas répondu : le dépliant dit qu'il ne sait pas encore, jamais un
+   *  texte deviné à l'écran. */
+  const [apercuPrompt, setApercuPrompt] = useState<ApercuPrompt | null>(null)
+  const [apercuRefus, setApercuRefus] = useState<string | null>(null)
   const [proportions, setProportions] = useState("1:1")
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
@@ -405,6 +417,74 @@ export function App() {
   useEffect(() => {
     void relireCatalogue()
   }, [relireCatalogue])
+
+  // ── Ce qui partira, tel que le serveur le compose ─────────────────────────
+  //
+  // « Avant de lancer, le texte exact qui partira s'affiche » (US-158). Il est
+  // **demandé**, jamais recomposé ici : la bible se replie en tête et les
+  // consignes de planche en queue à un seul endroit du dépôt, et c'est celui
+  // que la soumission emprunte. Un aperçu écrit à l'écran aurait été une
+  // seconde vérité sur ce qui part, et « celle qui compte est celle qui part ».
+  //
+  // **Attendu 140 ms, et c'est la frappe qui le veut.** Le catalogue se
+  // redemande sur des choix — un modèle, des proportions, une case — qui ne
+  // partent jamais lettre par lettre ; celui-ci suit un champ de texte. L'appel
+  // ne sort pas de la machine et n'écrit rien, mais un aller-retour par
+  // caractère ferait clignoter le dépliant sous la main.
+  //
+  // Il ne tourne **pas** quand le texte est repris : le champ *est* alors ce qui
+  // partira, et demander au serveur de composer ce qu'on est en train d'écrire
+  // n'aurait rien à rendre de plus.
+  useEffect(() => {
+    if (repris) {
+      setApercuPrompt({ texte: prompt, parties: [{ origine: "repris", texte: prompt }] })
+      setApercuRefus(null)
+      return
+    }
+    let vivant = true
+    const minuterie = window.setTimeout(async () => {
+      try {
+        const recu = await api.apercuPrompt({
+          prompt,
+          projet: bibliotheque.courant,
+          personnage: cible?.personnage ?? null,
+          poses: cases ? posesCible.map((p) => p.identifiant) : null,
+        })
+        if (!vivant) return
+        setApercuPrompt(recu)
+        setApercuRefus(null)
+      } catch (erreur) {
+        if (!vivant) return
+        // **Le refus va dans le dépliant, jamais dans la fente du bas.** Une
+        // case de lot qui a disparu se dit là où on regarde le texte ; la
+        // fente, elle, porte ce qui empêche de générer, et le bouton a sa
+        // propre raison.
+        setApercuRefus(
+          erreur instanceof Refus ? erreur.message : "l'atelier ne répond pas",
+        )
+      }
+    }, 140)
+    return () => {
+      vivant = false
+      window.clearTimeout(minuterie)
+    }
+    // `univers` n'est pas lu ici, mais il est **la** dépendance qui compte : un
+    // champ de bible décoché change ce qui part sans toucher au prompt, et il
+    // arrive par le flux (R1). Sans lui, décocher ne se verrait pas dans
+    // l'aperçu — le défaut exact que R1 vient de corriger, un cran plus loin.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Les poses **jointes** et non le tableau : `posesCible` se refabrique à
+    // chaque rendu, et deux lots de même taille sur des cases différentes
+    // n'enverraient pas les mêmes noms dans les consignes de planche.
+  }, [
+    prompt,
+    repris,
+    bibliotheque.courant,
+    cible?.personnage,
+    cible?.poses.join("·"),
+    cases,
+    univers,
+  ])
 
   // ── La grille ─────────────────────────────────────────────────────────────
   //
@@ -796,6 +876,10 @@ export function App() {
         // Le sujet : c'est lui qui décide des artworks qui partent, du modèle
         // par défaut et de la part de case que l'image occupera.
         echelle,
+        // **Le texte part mot pour mot** (US-160). Il ne touche qu'au texte :
+        // l'échelle ci-dessus décide toujours des artworks, du modèle par
+        // défaut et de l'occupation, et le gabarit d'un lot part toujours.
+        repris,
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
@@ -844,6 +928,12 @@ export function App() {
         ? [personnage.description.trim(), poses[0].nom].filter(Boolean).join(", ")
         : personnage.description.trim(),
     )
+    // **Armer rend la main à l'atelier.** Ce qui vient d'être posé dans le
+    // champ est un *sujet*, pas un texte complet : le laisser en mode repris
+    // ferait partir un signalement de personnage sans la bible ni les
+    // consignes de planche — c'est-à-dire sans rien de ce que la matrice
+    // arme.
+    setRepris(false)
     setPersonnagesOuverts(false)
   }
 
@@ -960,11 +1050,19 @@ export function App() {
       { asset, role },
     ])
 
-  /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image. */
+  /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image.
+   *
+   *  **Le texte revient repris, quoi qu'il ait été** (US-160). `demande.prompt`
+   *  est le prompt tel qu'il *est parti* — bible repliée en tête et consignes
+   *  de planche en queue comprises. Le reposer en mode atelier le ferait
+   *  rhabiller une seconde fois : la bible partirait en double, et la planche
+   *  demanderait deux grilles. Ce que l'auteur reprend, c'est l'appel — donc il
+   *  repart identique. */
   const reprendreReglages = async (asset: Asset) => {
     try {
       const generation = await api.generation(asset.generation)
       setPrompt(generation.demande.prompt)
+      setRepris(true)
       setPromptNegatif(generation.demande.prompt_negatif)
       setProportions(generation.demande.proportions)
       setVariations(generation.demande.variations)
@@ -1148,6 +1246,22 @@ export function App() {
             onPrompt={setPrompt}
             promptNegatif={promptNegatif}
             onPromptNegatif={setPromptNegatif}
+            apercu={apercuPrompt}
+            apercuRefus={apercuRefus}
+            repris={repris}
+            /* **Reprendre pose le texte exact, et rien d'autre.** L'univers
+               n'est pas touché : rouvrir l'écran Univers montre la bible
+               inchangée (US-159). C'est la différence entre corriger une
+               formulation et démonter son projet. */
+            onReprendre={() => {
+              if (!apercuPrompt) return
+              setPrompt(apercuPrompt.texte)
+              setRepris(true)
+            }}
+            /* Rendre la main : le champ redevient le sujet seul. **Il ne se
+               vide pas** — on ne perd pas ce qui a été écrit —, et l'atelier
+               reprend son habillage par-dessus. */
+            onRendre={() => setRepris(false)}
             refus={refus?.texte ?? null}
             ouAller={refus?.geste}
             onAller={

@@ -54,17 +54,29 @@ NOM_BAC_A_SABLE = "Bac à sable"
 
 # ── La bible ─────────────────────────────────────────────────────────────────
 #
-# **Cinq champs nommés, et pas un texte libre** (`docs/ARCHITECTURE.md` §6.1 :
-# « monde, époque, trait, éclairage, contraintes techniques »). Le texte libre
-# est ce qu'on retape ; les champs nommés sont ce qu'on dose. C'est la
-# différence qui rend US-56 possible : chacun s'active indépendamment, donc on
-# peut relâcher le trait sans relâcher le monde.
+# **Sept champs nommés, et pas un texte libre** (`docs/ARCHITECTURE.md` §6.1).
+# Le texte libre est ce qu'on retape ; les champs nommés sont ce qu'on dose.
+# C'est la différence qui rend US-56 possible : chacun s'active indépendamment,
+# donc on peut relâcher le trait sans relâcher le monde.
 #
 # La liste est close et ordonnée ici — elle décide de l'ordre à l'écran comme de
 # l'ordre dans le prompt. Un champ de plus se paierait à chaque génération, en
 # lecture et en décision ; le PRD écarte déjà « les consignes par type d'asset ».
+#
+# **Deux champs sont entrés en R2, et la liste reste close** (US-161, US-162).
+# `rendu` et `vue` ne sont pas deux libertés de plus : ce sont exactement les
+# deux décisions d'apparence que la séance du 28 août 2026 a vues retapées à
+# chaque prompt sans avoir où se poser — la technique de rendu et le cadrage.
+# Les laisser dans le sujet, c'était laisser le post-traitement décider seul de
+# l'apparence du jeu.
+#
+# **L'ordre va de la fiction au cadre** : ce que le monde est, avec quoi c'est
+# dessiné, d'où on le regarde, ce que l'image doit être. `rendu` précède `trait`
+# et `eclairage` parce qu'il nomme le médium dont les deux autres sont le
+# détail ; `vue` les suit parce qu'elle ne parle plus du dessin mais de la
+# caméra ; `technique` ferme, comme avant.
 
-CHAMPS_BIBLE = ("monde", "epoque", "trait", "eclairage", "technique")
+CHAMPS_BIBLE = ("monde", "epoque", "rendu", "trait", "eclairage", "vue", "technique")
 
 # Ce qui précède chaque champ quand la bible part avec l'appel. En anglais : le
 # prompt part en anglais chez tous les modèles du catalogue, et c'est une
@@ -72,8 +84,10 @@ CHAMPS_BIBLE = ("monde", "epoque", "trait", "eclairage", "technique")
 INTITULES = {
     "monde": "World",
     "epoque": "Era",
+    "rendu": "Rendering technique",
     "trait": "Line and shading",
     "eclairage": "Lighting",
+    "vue": "View and framing",
     "technique": "Technical constraints",
 }
 
@@ -180,6 +194,18 @@ BAREME_PAR_DEFAUT = (
 # finesse. 64 est la valeur d'un sprite de personnage chez MySpriteAi.
 CIBLE_PAR_DEFAUT = 64
 
+# **« Aucune » est une valeur, pas un trou** (US-163, R2). Zéro veut dire « ce
+# que le modèle a rendu me revient tel quel » : la remise sur grille est la
+# seule étape que le projet imposait sans échappatoire, et un jeu qui n'est pas
+# en pixel art n'a rien à y gagner. Ce n'est pas un réglage désactivé — c'est un
+# univers qui déclare ne pas contraindre l'échelle, comme un univers sans
+# artwork ne contraint pas la palette.
+#
+# **Zéro plutôt que `None`** : la cible est un entier partout — dans le fichier,
+# dans le corps de la route, dans le segment d'écran —, et un second type pour
+# une seule valeur aurait fait écrire deux fois la même condition.
+AUCUNE_CIBLE = 0
+
 
 # ── L'univers ────────────────────────────────────────────────────────────────
 
@@ -274,10 +300,20 @@ class Univers:
         deux recettes construites à deux endroits divergeraient au premier
         réglage ajouté. Elle est pure : rien à lire, rien à écrire.
 
-        **La remise sur grille est systématique, jamais optionnelle** (US-61) :
-        « un asset dont la grille a dérivé est le cas normal, pas l'incident ».
-        Elle est donc toujours de la partie, même quand l'échelle est inconnue —
-        c'est l'occupation qui retombe alors à 100 %, pas l'étape qui disparaît.
+        **La remise sur grille est systématique tant qu'une cible est posée**
+        (US-61) : « un asset dont la grille a dérivé est le cas normal, pas
+        l'incident ». Elle est donc toujours de la partie, même quand l'échelle
+        est inconnue — c'est l'occupation qui retombe alors à 100 %, pas l'étape
+        qui disparaît.
+
+        **`AUCUNE_CIBLE` est la seule échappatoire, et elle est déclarée**
+        (US-163) : sans cible, il n'y a pas de grille, donc l'image entre aux
+        dimensions rendues par le modèle. Le reste ne bouge pas — le détourage
+        et le recadrage suivent toujours la nature du sujet, et la
+        quantification toujours l'existence d'une palette. **L'occupation, elle,
+        n'agit plus** : elle n'existe que dans la grille, qui est ce qui met un
+        sujet à l'échelle de sa case. C'est ce que l'écran Univers dit sous le
+        barème plutôt que de le laisser deviner.
 
         **Le détourage suit la nature du sujet, pas un réglage.** Un personnage
         a un contour ; un décor n'en a pas, et l'enfermer dans une case carrée
@@ -294,10 +330,14 @@ class Univers:
         return Recette(
             passes=(Passe(),) if silhouette else (),
             recadrage=Recadrage() if silhouette else None,
-            grille=Grille(
-                cible=self.cible_px,
-                occupation=echelle.occupation if echelle else 100,
-                ancrage=BAS,
+            grille=(
+                Grille(
+                    cible=self.cible_px,
+                    occupation=echelle.occupation if echelle else 100,
+                    ancrage=BAS,
+                )
+                if self.cible_px != AUCUNE_CIBLE
+                else None
             ),
             quantification=(
                 Quantification(couleurs=self.couleurs, palette=self.palette)
@@ -347,12 +387,17 @@ class Univers:
 
 
 def bible_complete(champs: Iterable[Champ]) -> tuple[Champ, ...]:
-    """Les cinq champs, dans l'ordre, quoi qu'on ait lu.
+    """Les sept champs, dans l'ordre, quoi qu'on ait lu.
 
     Un fichier écrit avant qu'un champ n'existe, ou relu après qu'un champ a été
     retiré, ne doit ni faire disparaître une rubrique de l'écran ni ressusciter
     une rubrique qui n'existe plus. La liste close décide ; le fichier ne fait
     qu'apporter les textes.
+
+    **C'est elle, et rien d'autre, qui fait la migration de R2** : un
+    `projet.json` écrit à cinq champs s'ouvre à sept, les deux nouveaux vides et
+    actifs, et rien de ce qu'il portait n'est perdu — un champ vide ne part pas,
+    donc un projet d'avant génère exactement comme avant.
     """
     connus = {c.nom: c for c in champs}
     return tuple(connus.get(nom, Champ(nom)) for nom in CHAMPS_BIBLE)

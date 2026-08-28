@@ -75,6 +75,10 @@ export type Generation = {
   identifiant: string
   modele: string
   demande: {
+    /** **Le prompt tel qu'il est parti** — bible repliée en tête et consignes
+     *  de planche en queue comprises. Ce n'est pas ce que l'auteur avait tapé :
+     *  c'est ce que le modèle a lu, et c'est le seul texte qui explique
+     *  l'image des mois plus tard. */
     prompt: string
     prompt_negatif: string
     proportions: string
@@ -82,6 +86,9 @@ export type Generation = {
     variations: number
     references: number
     options: Record<string, unknown>
+    /** Ce prompt-là est celui que l'auteur a écrit, pas celui que l'atelier a
+     *  composé (US-160). Absent des générations d'avant R2. */
+    repris?: boolean
   }
   parametres_resolus: Record<string, unknown>
   ecartees: string[]
@@ -477,12 +484,21 @@ export type Carte = {
 
 export type Champ = { nom: string; texte: string; actif: boolean }
 
-/** Ce que l'auteur lit d'un champ de bible. La clé voyage sans accent. */
+/** Ce que l'auteur lit d'un champ de bible. La clé voyage sans accent.
+ *
+ *  **Sept depuis R2** (US-161, US-162). `rendu` et `vue` sont exactement les
+ *  deux décisions d'apparence que l'auteur reposait dans chaque prompt sans
+ *  avoir où les écrire ; la liste reste close, c'est le dosage qui fait sa
+ *  valeur. L'ordre est celui du domaine — il décide de l'écran comme du
+ *  prompt —, et il n'est pas recopié ici : cet objet ne porte que les mots
+ *  français, la bible arrive déjà rangée. */
 export const NOM_CHAMP: Record<string, string> = {
   monde: "monde",
   epoque: "époque",
+  rendu: "technique de rendu",
   trait: "trait",
   eclairage: "éclairage",
+  vue: "vue et cadrage",
   technique: "contraintes techniques",
 }
 
@@ -501,9 +517,16 @@ export type Echelle = {
   silhouette: boolean
 }
 
+/** Pas de taille de pixel imposée : ce que le modèle a rendu entre tel quel
+ *  (US-163). **Une valeur, pas un trou** — un jeu qui n'est pas en pixel art
+ *  n'a rien à gagner à la remise sur grille, et c'était la seule étape que le
+ *  projet imposait sans échappatoire. */
+export const AUCUNE_CIBLE = 0
+
 export type Univers = {
   bible: Champ[]
   bareme: Echelle[]
+  /** Le côté de case imposé à ce qui rentre — ou `AUCUNE_CIBLE`. */
   cible_px: number
   couleurs: number
   /** Déduite par calcul des artworks officiels, jamais saisie (US-54). */
@@ -676,6 +699,35 @@ export const FILTRE_VIDE: Filtre = { collection: null, favoris: false, recherche
 
 export const filtreActif = (filtre: Filtre) =>
   filtre.collection !== null || filtre.favoris || filtre.recherche.trim() !== ""
+
+/** Ce qui partira chez le modèle, **bloc par bloc et dans l'ordre d'envoi**
+ *  (US-158).
+ *
+ *  Trois origines, et une quatrième qui les remplace toutes : `repris`, quand
+ *  l'auteur a pris la main sur l'ensemble du texte. Le découper alors aurait
+ *  été une reconstitution, pas une lecture. */
+export type PartiePrompt = {
+  origine: "bible" | "sujet" | "planche" | "repris"
+  texte: string
+}
+
+export type ApercuPrompt = {
+  /** Les parties jointes — **exactement** ce que le modèle lira. */
+  texte: string
+  parties: PartiePrompt[]
+}
+
+/** Ce que le projet impose à une image donnée, aujourd'hui (US-164).
+ *
+ *  `impose` est `null` quand la génération n'est plus sur le disque : le
+ *  produit dit qu'il ne sait pas plutôt que de répondre « rien d'imposé », qui
+ *  est une réponse différente et fausse. */
+export type Impose = {
+  impose: Recette | null
+  /** Ce que l'auteur avait dit fabriquer — c'est elle qui décide de
+   *  l'occupation, et « 40 % » ne s'explique qu'avec « objet tenu » à côté. */
+  echelle: string
+}
 
 /** Ce que le post-traitement peut faire **sur cette machine**, et ce qu'il ne
  *  peut pas. Chaque raison est écrite par le serveur : l'interface l'affiche,
@@ -881,6 +933,12 @@ export const api = {
     references: Reinjection[]
     /** Ce que l'auteur fabrique, nommé dans le barème du projet. */
     echelle: string
+    /** **Le texte part mot pour mot** (US-159, US-160). L'auteur a vu ce qui
+     *  partait et l'a repris : la bible ne se replie plus en tête, les
+     *  consignes de planche ne s'ajoutent plus en queue — elles sont déjà dans
+     *  ce qu'il a écrit. Rien d'autre ne change : l'échelle décide toujours des
+     *  artworks, du modèle par défaut et de l'occupation. */
+    repris: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -897,6 +955,25 @@ export const api = {
   generation: (identifiant: string) =>
     appeler<Generation>(`/generations/${identifiant}`),
 
+  /** **Le texte exact qui partira**, avant de lancer (US-158).
+   *
+   *  Composé par le serveur, jamais ici : c'est le même chemin que la
+   *  soumission emprunte, et deux compositions écrites à deux endroits
+   *  finiraient par diverger — celle qui compte étant celle qui part. Rien
+   *  n'est facturé, rien n'est enregistré, et l'appel ne sort pas de la
+   *  machine. */
+  apercuPrompt: (corps: {
+    prompt: string
+    projet?: string | null
+    personnage?: string | null
+    poses?: string[] | null
+    repris?: boolean
+  }) =>
+    appeler<ApercuPrompt>("/prompt/preview", {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
   // ── Le post-traitement ────────────────────────────────────────────────────
   // Aucun de ces appels ne touche le réseau côté serveur, et aucun ne coûte un
   // centime : tout se passe sur le disque et le processeur de la machine.
@@ -909,6 +986,13 @@ export const api = {
 
   revenirAuBrut: (identifiant: string) =>
     appeler<Asset>(`/assets/${identifiant}/reset`, { method: "POST" }),
+
+  /** Ce que le projet impose à cette image-là, **maintenant** (US-164).
+   *
+   *  À part de l'asset, et c'est la grille qui le décide : la charge d'un asset
+   *  part deux cents fois par relecture, celle-ci une fois par fiche ouverte. */
+  imposeSurAsset: (identifiant: string) =>
+    appeler<Impose>(`/assets/${identifiant}/imposed`),
 
   nommerRecette: (nom: string, recette: Recette) =>
     appeler<{ recettes: Record<string, Recette> }>(
@@ -1313,6 +1397,11 @@ export const api = {
       realignes: number
       conserves: number
       assets: string[]
+      /** Faux quand le projet n'impose aucune taille de pixel : le balayage
+       *  n'a rééchantillonné personne, et l'écran le dit avec le compte
+       *  (US-163). Sans cette ligne, « 12 remis à jour » se lirait comme une
+       *  remise sur grille qui n'a pas eu lieu. */
+      sur_grille: boolean
     }>("/universe/realign", {
       method: "POST",
       body: JSON.stringify({ identifiants: identifiants ?? null }),

@@ -36,6 +36,7 @@ import { reinitialiserGuide } from "./composants/Guide"
 import { AIDE, SANS_ENTREE } from "./aide"
 import { COULEUR_TEINTE, NOM_TEINTE, TEINTES } from "./api"
 import type {
+  ApercuPrompt,
   Asset,
   Bibliotheque,
   Carte,
@@ -43,6 +44,7 @@ import type {
   CompteReferences,
   EtatCatalogue,
   Generation,
+  Impose,
   Lien,
   Personnage,
   Pose,
@@ -194,12 +196,28 @@ const CATALOGUE: EtatCatalogue = {
 
 /** Un univers vide — l'état d'un projet neuf. « Un univers vide ne contraint
  *  rien » : c'est le cas normal, pas une configuration manquante. */
+/** Sous quel intitulé anglais chaque champ de bible part (R2). **Le double le
+ *  porte parce que le serveur le porte** : la composition du prompt vit là-bas,
+ *  et le seul moyen de vérifier que l'écran ne la refait pas est de la mettre
+ *  ailleurs que chez lui. */
+const INTITULE: Record<string, string> = {
+  monde: "World",
+  epoque: "Era",
+  rendu: "Rendering technique",
+  trait: "Line and shading",
+  eclairage: "Lighting",
+  vue: "View and framing",
+  technique: "Technical constraints",
+}
+
 const UNIVERS: Univers = {
   bible: [
     { nom: "monde", texte: "", actif: true },
     { nom: "epoque", texte: "", actif: true },
+    { nom: "rendu", texte: "", actif: true },
     { nom: "trait", texte: "", actif: true },
     { nom: "eclairage", texte: "", actif: true },
+    { nom: "vue", texte: "", actif: true },
     { nom: "technique", texte: "", actif: true },
   ],
   bareme: [
@@ -466,6 +484,18 @@ function serveurDouble(options: {
   references?: CompteReferences
   /** Ce qu'une image a coûté chez chaque modèle — **mesuré**, jamais un tarif. */
   couts?: Record<string, number>
+  /** Ce que le projet impose à l'image ouverte dans la fiche (US-164). Calculé
+   *  par le serveur, qui est le seul à savoir sur quelle échelle l'image est
+   *  née — l'écran ne le devine jamais. */
+  impose?: Impose
+  /** Le texte exact qui partira (US-158). Composé par le serveur, par le chemin
+   *  même que la soumission emprunte : le double le rend donc lui aussi, plutôt
+   *  que de laisser l'écran le recomposer, ce que le produit refuse. */
+  apercu?: ApercuPrompt
+  /** Le prompt **tel qu'il est parti** que porte une génération relue — bible
+   *  repliée en tête comprise. C'est ce que « reprendre les réglages » doit
+   *  faire repartir mot pour mot (US-160). */
+  promptParti?: string
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -533,6 +563,39 @@ function serveurDouble(options: {
         references: options.references ?? CATALOGUE.references,
         couts: options.couts ?? CATALOGUE.couts,
       })
+    // ── Ce qui partira (US-158) ──────────────────────────────────────────
+    //
+    // **Le double compose, comme le serveur compose** : c'est très exactement
+    // ce que la tranche interdit à l'écran de faire, et le seul moyen de
+    // vérifier qu'il ne le fait pas est de mettre la composition ailleurs que
+    // chez lui. Il lit la bible de `etat.univers`, donc décocher un champ
+    // change ce qu'il rend — ce que l'essai regarde.
+    if (url === "/api/prompt/preview") {
+      if (options.apercu) return rendre(options.apercu)
+      const sujet = String(corps?.prompt ?? "").trim()
+      if (corps?.repris)
+        return rendre({
+          texte: sujet,
+          parties: [{ origine: "repris", texte: sujet }],
+        })
+      const parties: { origine: string; texte: string }[] = []
+      const bible = etat.univers.bible
+        .filter((c) => c.actif && c.texte.trim())
+        .map((c) => `${INTITULE[c.nom] ?? c.nom}: ${c.texte.trim()}`)
+        .join("\n")
+      if (bible) parties.push({ origine: "bible", texte: bible })
+      if (sujet) parties.push({ origine: "sujet", texte: sujet })
+      const poses = (corps?.poses ?? null) as string[] | null
+      if (poses && poses.length >= 2)
+        parties.push({
+          origine: "planche",
+          texte: `Render this as a sprite sheet of ${poses.length} sprites of the SAME subject.`,
+        })
+      return rendre({
+        texte: parties.map((p) => p.texte).join("\n\n"),
+        parties,
+      })
+    }
     if (url === "/api/status") return rendre({ ...ETAT, agent: etat.agent })
     // Le cadre de l'agent. Le PUT rend **le cadre entier et sa consommation**,
     // comme le vrai serveur : l'écran pose un champ et reçoit tout, ce qui lui
@@ -570,6 +633,23 @@ function serveurDouble(options: {
         parent_supprime: false,
         enfants: [],
       })
+    // Ce que le projet impose à cette image-là (US-164). Le double rend la
+    // recette d'un univers ordinaire — 64 px, 100 % d'occupation, sans palette
+    // —, et `options.impose` la remplace pour les essais qui la regardent.
+    if (url.includes("/imposed"))
+      return rendre(
+        options.impose ?? {
+          impose: {
+            passes: [],
+            recadrage: null,
+            grille: { cible: 64, occupation: 100, ancrage: "bas" },
+            quantification: null,
+            bords: null,
+            nom: null,
+          },
+          echelle: "",
+        },
+      )
     if (url.includes("/slices")) {
       if (init?.method === "POST")
         return rendre({
@@ -867,6 +947,19 @@ function serveurDouble(options: {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
       FluxDouble.ouverts.at(-1)?.emettre("generation", g)
       return rendre(g)
+    }
+    // Une génération relue — le quatrième rôle de la réinjection, celui qui
+    // n'envoie aucune image (US-12). Son `prompt` est **ce qui est parti** :
+    // bible repliée en tête comprise, comme le vrai serveur l'enregistre.
+    if (url.startsWith("/api/generations/") && init?.method === undefined) {
+      const relue = options.aPublier?.() ?? generation("zzzz0000", 1, "reussie")
+      return rendre({
+        ...relue,
+        demande: {
+          ...relue.demande,
+          prompt: options.promptParti ?? relue.demande.prompt,
+        },
+      })
     }
     return rendre({})
   })
@@ -2834,10 +2927,21 @@ describe("le réglage d'univers se voit à l'instant", () => {
     replier("Taille de pixel")
     expect(replie("Taille de pixel", "96 px")).toBeTruthy()
 
-    // **Aucun aller-retour de plus** : ce qui manquait est une pose, pas une
-    // relecture. Le réglage n'a fait qu'un appel — le PUT lui-même —, et rien
-    // n'est allé redemander l'univers derrière.
-    expect(appels.slice(avant).map((a) => a.url)).toEqual(["/api/universe"])
+    // **Aucune relecture de l'univers** : ce qui manquait est une pose, pas un
+    // aller-retour. Le réglage n'a fait qu'un appel sur cette route — le PUT
+    // lui-même —, et rien n'est allé la redemander derrière.
+    //
+    // L'aperçu du prompt, lui, se redemande, et c'est une autre question : un
+    // champ de bible décoché change *ce qui part* sans toucher au prompt écrit
+    // (R2, US-158). Le compter comme une relecture de l'univers ferait choisir
+    // entre les deux tranches ; elles ne se contredisent pas.
+    const depuis = appels.slice(avant).map((a) => a.url)
+    expect(depuis.filter((u) => u.startsWith("/api/universe"))).toEqual([
+      "/api/universe",
+    ])
+    expect(depuis.every((u) => u.startsWith("/api/universe") || u === "/api/prompt/preview")).toBe(
+      true,
+    )
   })
 
   test("le barème posé se relit sur la ligne qu'on a réglée", async () => {
@@ -3542,3 +3646,325 @@ describe("l'écran des personnages", () => {
 })
 
 
+
+// ── R2 · Ce qui décide de l'apparence se voit et se règle ────────────────────
+//
+// Les six critères de la tranche qui portent sur **ce que l'écran montre**. Le
+// reste — le texte composé, la bible à sept champs, la cible « aucune », ce que
+// le projet impose — est tenu par `tests/test_r2.py`, et ces essais-ci ne le
+// rejouent pas : ils vérifient que l'écran affiche ce qu'on lui rend, ce qui est
+// très exactement le trou par lequel R1 est passée.
+
+describe("ce qui décide de l'apparence se voit et se règle", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un univers qui dit quelque chose, pour que l'aperçu ait de quoi montrer. */
+  const AVEC_BIBLE: Univers = {
+    ...UNIVERS,
+    bible: UNIVERS.bible.map((c) =>
+      c.nom === "monde"
+        ? { ...c, texte: "marais de fer" }
+        : c.nom === "rendu"
+          ? { ...c, texte: "pixel art 16 bits" }
+          : c,
+    ),
+    vide: false,
+  }
+
+  /** Ce que la bible d'`AVEC_BIBLE` donne une fois repliée en tête du prompt.
+   *  Écrit une fois : c'est le texte que le double compose, et celui que
+   *  l'écran doit rendre sans y toucher. */
+  const BIBLE_PARTIE =
+    "World: marais de fer\nRendering technique: pixel art 16 bits"
+
+  /** Chercher **sans normaliser les blancs**. Les retours à la ligne de la
+   *  bible font partie de ce qui part : la normalisation par défaut de la
+   *  bibliothèque d'essai les écraserait en espaces, et l'essai passerait sur
+   *  un texte que le modèle ne recevrait pas. */
+  const brut = { normalizer: (texte: string) => texte.trim() }
+
+  /** Déplier, et rendre le dépliant lui-même. **On cherche dedans, jamais dans
+   *  l'écran entier** : le champ de prompt porte le même texte que le bloc
+   *  « sujet », et les deux se ressembleraient dans une requête globale. */
+  const deplier = async () => {
+    fireEvent.click(await screen.findByRole("button", { name: /ce qui partira/ }))
+    return within(await screen.findByRole("region", { name: "Ce qui partira" }))
+  }
+
+  // ── « Avant de lancer, le texte exact qui partira s'affiche : bible active,
+  //     sujet, consignes de pliage — dans l'ordre d'envoi » ──────────────────
+
+  test("le dépliant montre la bible puis le sujet, dans l'ordre d'envoi", async () => {
+    const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
+    await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
+
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau cerclé" } })
+    const depliant = await deplier()
+
+    // Les deux blocs sont là, et **dans cet ordre** : la bible se replie en
+    // tête, le sujet suit. L'ordre est celui du prompt, pas une préférence
+    // d'affichage — on le lit donc sur la position, pas sur la présence.
+    await depliant.findByText(BIBLE_PARTIE, brut)
+    const rendus = depliant
+      .getAllByText(/marais de fer|un tonneau cerclé/, brut)
+      .map((n) => n.textContent)
+    expect(rendus).toEqual([BIBLE_PARTIE, "un tonneau cerclé"])
+  })
+
+  test("l'aperçu se demande au serveur — il n'est jamais recomposé à l'écran", async () => {
+    // **La preuve tient dans l'appel**, pas dans le rendu : si l'écran savait
+    // composer, il n'aurait aucune raison d'appeler. C'est ce que la tranche
+    // interdit — « deux compositions écrites à deux endroits finiraient par
+    // diverger, et celle qui compte est celle qui part ».
+    const { fetchDouble, appels } = serveurDouble({ univers: AVEC_BIBLE })
+    await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
+
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/prompt/preview" &&
+            (a.corps as { prompt?: string } | undefined)?.prompt === "un tonneau",
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « Ce texte suit ce qu'on tape et ce qu'on décoche : décocher un champ de
+  //     bible le retire de l'aperçu à l'instant » ─────────────────────────────
+
+  test("décocher un champ de bible le retire de l'aperçu", async () => {
+    const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
+    await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
+
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    await (await deplier()).findByText(BIBLE_PARTIE, brut)
+
+    // **Par le vrai chemin, et pas par un message fabriqué** : on décoche à
+    // l'écran Univers, le serveur écrit et rend l'univers entier, l'écran le
+    // pose (R1) — et l'aperçu, qui n'a jamais rien composé lui-même, redemande
+    // ce qui part.
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
+    fireEvent.click(
+      await screen.findByRole("button", { name: "technique de rendu — actif" }),
+    )
+    await screen.findByRole("button", { name: "technique de rendu — inactif" })
+    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
+
+    const depliant = within(
+      await screen.findByRole("region", { name: "Ce qui partira" }),
+    )
+    await waitFor(() => expect(depliant.queryByText(/Rendering technique/)).toBeNull())
+    expect(depliant.getByText(/World: marais de fer/)).toBeTruthy()
+  })
+
+  // ── « Le texte repris à la main part mot pour mot » · « Reprendre le texte
+  //     n'écrit rien dans l'univers » ──────────────────────────────────────────
+
+  test("reprendre le texte pose le texte exact et le fait partir mot pour mot", async () => {
+    const { fetchDouble, appels } = serveurDouble({ univers: AVEC_BIBLE })
+    await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
+
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    const depliant = await deplier()
+    await depliant.findByText(BIBLE_PARTIE, brut)
+
+    fireEvent.click(screen.getByRole("button", { name: /Reprendre le texte/ }))
+
+    // Le champ **est** désormais ce qui partira, bible comprise.
+    const libre = (await screen.findByPlaceholderText(
+      "Le texte part exactement tel qu'il est écrit ici.",
+    )) as HTMLTextAreaElement
+    expect(libre.value).toBe(`${BIBLE_PARTIE}\n\nun tonneau`)
+
+    fireEvent.change(libre, { target: { value: "a plain wooden barrel, painterly" } })
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+
+    await waitFor(() => {
+      const envoi = appels.find((a) => a.url === "/api/generations" && a.corps)
+      expect(envoi?.corps).toMatchObject({
+        prompt: "a plain wooden barrel, painterly",
+        repris: true,
+      })
+    })
+
+    // **Et l'univers n'a pas bougé** : reprendre corrige une formulation, ça ne
+    // démonte pas la bible du projet (US-159).
+    expect(appels.filter((a) => a.url.startsWith("/api/universe") && a.corps)).toEqual([])
+  })
+
+  test("rendre la main à l'atelier remet l'habillage, sans perdre ce qui est écrit", async () => {
+    const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
+    await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
+
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    const depliant = await deplier()
+    await depliant.findByText(BIBLE_PARTIE, brut)
+    fireEvent.click(screen.getByRole("button", { name: /Reprendre le texte/ }))
+    await screen.findByPlaceholderText("Le texte part exactement tel qu'il est écrit ici.")
+
+    fireEvent.click(screen.getByRole("button", { name: /Rendre la main/ }))
+
+    // Le champ redevient le champ de sujet, et il garde ce qu'on y avait mis :
+    // on ne perd pas du texte en changeant d'avis.
+    const revenu = (await screen.findByPlaceholderText(
+      "Décris ce que tu veux fabriquer.",
+    )) as HTMLTextAreaElement
+    expect(revenu.value).toContain("un tonneau")
+    // Et l'habillage est de retour — la bible reparaît comme un bloc à part.
+    await waitFor(() => expect(depliant.getByText(BIBLE_PARTIE, brut)).toBeTruthy())
+  })
+
+  // ── « Une génération relancée depuis un asset repart avec le texte qui était
+  //     parti, repris compris » ────────────────────────────────────────────────
+
+  test("reprendre les réglages d'un asset renvoie le texte qui était parti", async () => {
+    // Ce que la génération a enregistré est le prompt **habillé**. Le reposer
+    // en mode atelier le ferait rhabiller une seconde fois : la bible partirait
+    // en double. Il revient donc repris.
+    const parti = `${BIBLE_PARTIE}\n\nun tonneau cerclé`
+    const images = [asset("eeee5555-0")]
+    const { fetchDouble, appels } = serveurDouble({
+      assets: images,
+      univers: AVEC_BIBLE,
+      promptParti: parti,
+    })
+    await monter(fetchDouble, { ...ETAT, assets: images, univers: AVEC_BIBLE })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    fireEvent.click(screen.getByRole("button", { name: "jeu de réglages" }))
+
+    const libre = (await screen.findByPlaceholderText(
+      "Le texte part exactement tel qu'il est écrit ici.",
+    )) as HTMLTextAreaElement
+    expect(libre.value).toBe(parti)
+
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    await waitFor(() => {
+      const envoi = appels.find((a) => a.url === "/api/generations" && a.corps)
+      expect(envoi?.corps).toMatchObject({ prompt: parti, repris: true })
+    })
+  })
+
+  // ── « La fiche d'un asset nomme le traitement que le projet lui a imposé —
+  //     cible, occupation, palette — et le distingue de ce que l'auteur a réglé
+  //     à la main » ────────────────────────────────────────────────────────────
+
+  test("la fiche nomme ce que le projet a imposé, et ce qui a été réglé à la main", async () => {
+    // L'asset porte une grille de 32 px là où le projet en impose 64 : c'est
+    // l'écart exact que « réglé à la main » nomme.
+    const image = {
+      ...asset("eeee5555-0"),
+      recette: {
+        passes: [],
+        recadrage: null,
+        grille: { cible: 32, occupation: 40, ancrage: "bas" as const },
+        quantification: null,
+        bords: null,
+        nom: null,
+      },
+    }
+    const { fetchDouble } = serveurDouble({
+      assets: [image],
+      impose: {
+        impose: {
+          passes: [],
+          recadrage: null,
+          grille: { cible: 64, occupation: 40, ancrage: "bas" },
+          quantification: null,
+          bords: null,
+          nom: null,
+        },
+        echelle: "objet tenu",
+      },
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [image] })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    // Replié, le bloc porte déjà les trois valeurs du projet — c'est ce qui
+    // permet de lire la fiche entière sans rien ouvrir.
+    const entete = await screen.findByRole("button", { name: /^Imposé par le projet/ })
+    expect(entete.textContent).toContain("64 px · 40 % · aucune")
+
+    fireEvent.click(entete)
+    const bloc = within(entete.closest("section") as HTMLElement)
+    // La cible diffère : réglée à la main. L'occupation, elle, est celle du
+    // projet, et le mot « appliqué » le dit.
+    const lignes = bloc.getAllByRole("listitem").map((li) => li.textContent)
+    expect(lignes[0]).toContain("réglé à la main")
+    expect(lignes[1]).toContain("40 % · objet tenu")
+    expect(lignes[1]).toContain("appliqué")
+  })
+
+  test("la fiche dit qu'elle ne sait pas quand la génération a disparu", async () => {
+    const { fetchDouble } = serveurDouble({
+      assets: [asset("eeee5555-0")],
+      impose: { impose: null, echelle: "" },
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("eeee5555-0")] })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    // « Zéro n'est pas une dimension mesurée, c'est l'absence de mesure » : le
+    // produit l'avoue plutôt que de répondre « rien d'imposé », qui serait une
+    // réponse différente et fausse.
+    expect(
+      await screen.findByRole("button", { name: /^Imposé par le projeton ne sait pas/ }),
+    ).toBeTruthy()
+  })
+
+  // ── « Taille de pixel "aucune" » — la moitié écran ─────────────────────────
+
+  test("« aucune » se choisit, se lit repliée, et dit ce qui continue de s'appliquer", async () => {
+    const sansCible: Univers = { ...UNIVERS, cible_px: 0 }
+    const double = serveurDouble({ univers: sansCible })
+    await monter(double.fetchDouble, { ...ETAT, univers: sansCible })
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    const entete = await screen.findByRole("button", { name: /^Taille de pixel/ })
+    expect(entete.textContent).toContain("aucune")
+
+    fireEvent.click(entete)
+    const bloc = within(entete.closest("section") as HTMLElement)
+    expect(
+      bloc.getByText(
+        /aucune remise sur grille — le détourage, le recadrage et la palette/,
+      ),
+    ).toBeTruthy()
+
+    // Et le barème dit son inaction plutôt que de laisser croire qu'il agit.
+    const bareme = screen.getByRole("button", { name: /^Barème d'échelles/ })
+    fireEvent.click(bareme)
+    expect(
+      within(bareme.closest("section") as HTMLElement).getByText(
+        /sans taille de pixel, l'occupation ne s'applique pas/,
+      ),
+    ).toBeTruthy()
+  })
+})

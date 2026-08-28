@@ -53,6 +53,7 @@ from atelier.domaine.carte import (
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE, STYLE, Reinjection
 from atelier.domaine.projet import (
+    AUCUNE_CIBLE,
     CHAMPS_BIBLE,
     Champ,
     Echelle,
@@ -857,9 +858,15 @@ class ServiceUnivers:
             univers.bareme = echelles
 
         if cible_px is not None:
-            if not CIBLE_MIN <= cible_px <= CIBLE_MAX:
+            # **« Aucune » est une valeur, pas un trou** (US-163) : zéro dit
+            # « ce que le modèle a rendu me revient tel quel ». Elle passe donc
+            # *avant* le contrôle de bornes plutôt que d'élargir le minimum à
+            # zéro — élargir aurait laissé entrer 1, 2 et 4 pixels, qui ne sont
+            # ni une échappatoire ni une grille.
+            if cible_px != AUCUNE_CIBLE and not CIBLE_MIN <= cible_px <= CIBLE_MAX:
                 raise UniversRefuse(
-                    f"la taille de pixel cible va de {CIBLE_MIN} à {CIBLE_MAX} pixels"
+                    f"la taille de pixel cible va de {CIBLE_MIN} à {CIBLE_MAX} "
+                    "pixels, ou aucune"
                 )
             univers.cible_px = cible_px
 
@@ -1042,9 +1049,19 @@ class ServiceUnivers:
 
             suivante = replace(
                 asset.recette,
-                grille=univers.recette_de(None).grille
-                if asset.recette.grille is None
-                else replace(asset.recette.grille, cible=univers.cible_px),
+                # **Sans cible, la grille s'en va** (US-163). Elle ne se règle
+                # pas à zéro : une grille de zéro pixel n'existe pas, et la
+                # laisser posée à une valeur d'avant ferait mentir la fiche —
+                # l'asset porterait une remise sur grille que le projet
+                # n'impose plus. C'est aussi ce qui rend « Tout réaligner »
+                # honnête : il ramène l'image aux dimensions rendues.
+                grille=(
+                    None
+                    if univers.cible_px == AUCUNE_CIBLE
+                    else univers.recette_de(None).grille
+                    if asset.recette.grille is None
+                    else replace(asset.recette.grille, cible=univers.cible_px)
+                ),
                 quantification=(
                     replace(
                         asset.recette.quantification or _quantification_neuve(univers),
@@ -1082,6 +1099,12 @@ class ServiceUnivers:
             "realignes": remis,
             "conserves": conserves,
             "assets": touches,
+            # **Ce que ce balayage-ci a remis, et ce qu'il n'a pas remis**
+            # (US-163). Sans cible, il ne rééchantillonne rien : l'écran le dit
+            # avec le compte plutôt que d'annoncer « 12 remis à jour » pour un
+            # geste dont l'auteur attendait une remise sur grille qui n'a pas
+            # eu lieu. Le serveur porte le fait, l'écran la phrase.
+            "sur_grille": univers.cible_px != AUCUNE_CIBLE,
         }
 
     # ── Le dedans ────────────────────────────────────────────────────────────

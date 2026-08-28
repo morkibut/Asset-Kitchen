@@ -434,7 +434,7 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 
 **Les artworks officiels sont groupés par famille.** Une carte porte une famille en plus de son groupe : personnages, objets, décors, interface, ou « tous » pour une planche de style non figurative. À la génération, seuls les artworks de la famille du sujet partent en référence, plus ceux marqués « tous ». C'est l'application qui choisit, pas l'auteur : promouvoir reste un geste unique. Le nombre de références effectivement envoyées est visible au moment de générer.
 
-**La taille de pixel est une propriété du projet, imposée à tout ce qui rentre.** Elle n'est jamais déduite de l'image reçue. La remise sur grille est systématique et non optionnelle : un asset dont la grille a dérivé est le cas normal, pas l'incident.
+**La taille de pixel est une propriété du projet, imposée à tout ce qui rentre.** Elle n'est jamais déduite de l'image reçue. La remise sur grille est systématique **tant qu'une cible est posée** : un asset dont la grille a dérivé est le cas normal, pas l'incident. La seule échappatoire est « aucune » (US-163), qui est une valeur déclarée par l'auteur — un jeu qui n'est pas en pixel art — et non un réglage éteint ; elle ne rouvre rien, puisque dès qu'une cible est posée la remise reste sans condition.
 
 **La palette rétroactive.** Toucher une recette à la main épingle l'asset. Un changement de palette du projet saute les épinglés et rend son compte : « 12 assets remis à jour, 3 conservés tels quels ». Un épinglé se réaligne d'un geste depuis sa fiche.
 

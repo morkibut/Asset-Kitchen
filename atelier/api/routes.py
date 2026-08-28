@@ -353,6 +353,12 @@ class CorpsGeneration(BaseModel):
     # décide seul, parce que c'est la portée la plus étroite. Un agent qui ne
     # dit rien part donc avec ce que l'auteur a posé une fois pour toutes.
     references_ecartees: list[str] | None = None
+    # **Le texte est repris à la main, il part mot pour mot** (US-159, US-160).
+    # L'auteur a vu l'aperçu, il l'a corrigé : la bible ne se replie plus en
+    # tête et les consignes de planche ne s'ajoutent plus en queue, puisqu'elles
+    # sont déjà dans ce qu'il a écrit. Il ne touche à rien d'autre — ni à
+    # l'univers du projet, ni à l'échelle, ni au gabarit du lot.
+    repris: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -370,6 +376,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         variations=corps.variations,
         options=corps.options,
         echelle=corps.echelle,
+        repris=corps.repris,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -388,6 +395,56 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         references_ecartees=corps.references_ecartees,
     )
     return generation.en_json()
+
+
+class CorpsApercu(BaseModel):
+    """De quoi composer le texte, et rien de plus.
+
+    **Pas un `CorpsGeneration` allégé** : le modèle, les proportions, les
+    variations, les références et jusqu'à l'échelle ne changent pas un caractère
+    de ce qui part en texte. Les demander ici aurait fait croire qu'ils
+    comptent, et obligé l'écran à les tenir à jour pour un aperçu.
+    """
+
+    prompt: str = ""
+    projet: str | None = None
+    personnage: str | None = None
+    poses: list[str] | None = None
+    # Repris, l'aperçu **est** le texte de l'auteur : il ne se recompose pas, il
+    # se rend tel quel. La route le sert quand même, pour que l'écran n'ait
+    # jamais deux chemins selon l'état d'un interrupteur.
+    repris: bool = False
+
+
+@routeur.post("/prompt/preview")
+async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
+    """Le texte exact qui partira, **avant de lancer** (US-158).
+
+    **Une route à part, et deux segments** : ni sous `/generations`, où elle
+    aurait dépendu de l'ordre de déclaration des fonctions face à
+    `/generations/{identifiant}` — le piège de `board/groups/tint` —, ni greffée
+    sur `/models`, qui se redemande à chaque changement de proportions et n'a
+    jamais le prompt sous les yeux.
+
+    **`POST` pour un calcul qui n'écrit rien**, parce qu'un prompt est du texte
+    long : le passer en paramètre d'adresse le ferait tronquer par le premier
+    journal venu, et une bible de sept champs y tient mal.
+
+    Rien n'est facturé, rien n'est enregistré, et aucun appel ne sort de la
+    machine : l'aperçu marche réseau coupé, comme le réglage de la bible.
+    """
+    # Le sujet est **passé tel quel, espaces de bout compris retirés** : c'est
+    # ce que la soumission enverra, `Demande` faisant le même `strip` en amont
+    # de son refus. Un prompt vide n'est pas une erreur ici — l'atelier s'ouvre
+    # dessus, et l'aperçu montre alors la bible seule, qui est déjà ce qui
+    # partirait.
+    return _atelier(requete).generations.apercu(
+        corps.prompt.strip(),
+        repris=corps.repris,
+        projet=corps.projet,
+        personnage=corps.personnage or None,
+        poses=corps.poses,
+    )
 
 
 @routeur.get("/generations")
@@ -578,6 +635,18 @@ async def liste_assets(
 @routeur.get("/assets/{identifiant}")
 async def lire_asset(requete: Request, identifiant: str) -> dict[str, Any]:
     return _asset(requete, identifiant).en_json()
+
+
+@routeur.get("/assets/{identifiant}/imposed")
+async def impose_sur_asset(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Ce que le projet impose à cette image — cible, occupation, palette (US-164).
+
+    **À part de l'asset, et c'est la grille qui le décide** : la charge d'un
+    asset part deux cents fois par relecture de grille, celle-ci une fois par
+    fiche ouverte. Y greffer un calcul qui relit le projet et son barème aurait
+    fait payer à la grille une phrase que seule la fiche montre.
+    """
+    return _atelier(requete).assets.impose(identifiant)
 
 
 @routeur.put("/assets/{identifiant}/recipe")

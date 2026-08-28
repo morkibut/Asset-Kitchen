@@ -22,6 +22,7 @@ import {
   type EtatTraitement,
   type Filiation,
   type Grille,
+  type Impose,
   type Passe,
   type Personnage,
   type Pose,
@@ -130,6 +131,10 @@ export function Fiche({
   const [recette, setRecette] = useState<Recette>(asset.recette)
   const [montrerBrut, setMontrerBrut] = useState(false)
   const [nom, setNom] = useState("")
+  /** Ce que le projet impose à **cette** image (US-164). Demandé au serveur —
+   *  il est le seul à savoir sur quelle échelle l'image est née, et l'échelle
+   *  décide de l'occupation. `null` tant qu'il n'a pas répondu. */
+  const [impose, setImpose] = useState<Impose | null>(null)
 
   // ── Ce qui est en vol, et ce que ça coûte ─────────────────────────────────
   //
@@ -164,6 +169,32 @@ export function Fiche({
     setNom("")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asset.identifiant])
+
+  // ── Ce que le projet a imposé à cette image ───────────────────────────────
+  //
+  // « Je veux lire sur la fiche le traitement que le projet lui a imposé, afin
+  // de comprendre pourquoi l'image affichée ne ressemble pas à celle qui est
+  // arrivée du fournisseur » (US-164).
+  //
+  // **Une lecture à part de l'asset, et c'est la grille qui le décide** : la
+  // charge d'un asset part deux cents fois par relecture de grille, celle-ci
+  // une fois par fiche ouverte. Elle se redemande aussi quand l'univers bouge,
+  // parce que la phrase est « ce que le projet impose *maintenant* » : une
+  // taille de pixel changée dans l'autre onglet doit se lire ici sans qu'on
+  // referme la fiche.
+  useEffect(() => {
+    let vivant = true
+    setImpose(null)
+    api
+      .imposeSurAsset(asset.identifiant)
+      .then((recu) => vivant && setImpose(recu))
+      // Un asset disparu pendant qu'on le regardait : la fiche se ferme de son
+      // côté, et il n'y a rien à dire de plus ici qu'« on ne sait pas ».
+      .catch(() => vivant && setImpose(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant, univers])
 
   // ── Poser la recette ──────────────────────────────────────────────────────
   //
@@ -300,6 +331,8 @@ export function Fiche({
         />
 
         <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
+
+        <ImposeParLeProjet impose={impose} recette={recette} />
 
         <div className="flex flex-col gap-2">
           {/* ── 1. Détourage ─────────────────────────────────────────────── */}
@@ -642,6 +675,143 @@ export function Fiche({
         </div>
       </div>
     </aside>
+  )
+}
+
+// ── Ce que le projet a imposé ───────────────────────────────────────────────
+
+/** Le traitement que le projet a posé sur cette image, et ce que l'auteur a
+ *  changé depuis (US-164).
+ *
+ *  **Le défaut que cette rubrique répare est un défaut de composition**, pas de
+ *  code : « la dérive de grille est le cas normal » et « le style vient de la
+ *  bible et d'un seul endroit » sont justes séparément, et leur composition
+ *  produisait un atelier qui imposait une apparence que l'auteur n'avait jamais
+ *  posée — sans jamais lui montrer laquelle. Trois lignes suffisent à le dire,
+ *  et elles se lisent avant la recette, pas dedans : c'est le *pourquoi* de ce
+ *  qui suit.
+ *
+ *  Elle ne se règle pas — elle se lit. Un bloc quand même, et repliable comme
+ *  les cinq étapes : « un bloc replié ne se tait pas, il porte sa valeur »
+ *  (`docs/DESIGN.md`), et une ligne d'état suffit alors à dire ce que le projet
+ *  a fait. Aucun pointillé sur les valeurs : ce qui se règle est juste en
+ *  dessous. */
+function ImposeParLeProjet({
+  impose,
+  recette,
+}: {
+  impose: Impose | null
+  /** La recette **à l'écran**, pas celle de l'asset : un curseur qu'on vient de
+   *  lâcher doit faire basculer la ligne sur « réglé à la main » tout de suite,
+   *  sans attendre le retour du flux. */
+  recette: Recette
+}) {
+  // Tant que le serveur n'a pas répondu, la rubrique n'existe pas. Une rubrique
+  // vide qui se remplit une demi-seconde plus tard fait sauter tout ce qui est
+  // dessous — la recette entière, sur laquelle la main est déjà partie.
+  if (impose === null) return null
+
+  const pose = impose.impose
+
+  if (pose === null)
+    return (
+      <Bloc
+        cle="fiche.impose"
+        aide="fiche.impose"
+        titre="Imposé par le projet"
+        etat="on ne sait pas"
+        mesure="la génération n'est plus sur le disque"
+      >
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Sa génération n'est plus sur le disque, et le produit ne devine pas :
+          « rien d'imposé » serait une réponse différente, et fausse.
+        </p>
+      </Bloc>
+    )
+
+  const lignes: { quoi: string; valeur: string; main: boolean }[] = []
+
+  lignes.push(
+    pose.grille === null
+      ? {
+          quoi: "taille de pixel",
+          valeur: "aucune",
+          main: recette.grille !== null,
+        }
+      : {
+          quoi: "taille de pixel",
+          valeur: `${pose.grille.cible} px`,
+          main: recette.grille?.cible !== pose.grille.cible,
+        },
+  )
+
+  // **L'occupation ne se lit qu'avec sa nature de sujet à côté.** « 40 % » seul
+  // n'explique rien ; « 40 % · objet tenu » dit d'où vient le chiffre et où le
+  // changer — dans le barème du projet, pas ici.
+  if (pose.grille !== null)
+    lignes.push({
+      quoi: "occupation",
+      valeur:
+        `${pose.grille.occupation} %` +
+        (impose.echelle ? ` · ${impose.echelle}` : ""),
+      main: recette.grille?.occupation !== pose.grille.occupation,
+    })
+
+  lignes.push(
+    pose.quantification === null
+      ? {
+          quoi: "palette",
+          valeur: "aucune",
+          main: recette.quantification !== null,
+        }
+      : {
+          quoi: "palette",
+          valeur: `${pose.quantification.palette.length} couleurs`,
+          main:
+            recette.quantification === null ||
+            recette.quantification.palette.join() !==
+              pose.quantification.palette.join(),
+        },
+  )
+
+  return (
+    <Bloc
+      cle="fiche.impose"
+      aide="fiche.impose"
+      titre="Imposé par le projet"
+      /* Replié, le bloc porte les trois valeurs du projet — c'est ce qui permet
+         de lire la fiche entière sans rien ouvrir. Ouvert, il garde sous les
+         yeux ce que la lecture décide : combien de lignes ont été reprises à la
+         main. */
+      etat={lignes.map((l) => l.valeur.split(" · ")[0]).join(" · ")}
+      mesure={
+        lignes.some((l) => l.main)
+          ? `${lignes.filter((l) => l.main).length} repris à la main`
+          : "tout est appliqué"
+      }
+    >
+      <ul className="flex flex-col gap-[3px]">
+        {lignes.map((ligne) => (
+          <li key={ligne.quoi} className="flex items-baseline gap-2">
+            <span className="text-[11px] text-texte-2">{ligne.quoi}</span>
+            <span className="mesure ml-auto text-[10px] text-texte">{ligne.valeur}</span>
+            {/* **Le distinguo est la moitié de la rubrique** : sans lui, une
+                valeur affichée ne dit pas si elle vient du projet ou de la main
+                de l'auteur, et c'est exactement la question posée. Le token
+                `epingle` est celui qui porte déjà « réglé à la main » plus bas
+                dans cette même fiche. */}
+            <span
+              className={[
+                "mesure w-[76px] shrink-0 text-right text-[9.5px]",
+                ligne.main ? "text-epingle" : "text-texte-3",
+              ].join(" ")}
+            >
+              {ligne.main ? "réglé à la main" : "appliqué"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Bloc>
   )
 }
 

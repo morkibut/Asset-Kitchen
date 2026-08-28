@@ -363,7 +363,7 @@ sait plus laquelle il lit. C'est la seule collision que le regroupement ne rattr
 puisqu'il **est** le regroupement. Le même mot dans deux écrans différents, lui, est
 correct : c'est le même mot à l'écran.
 
-**Un libellé peut s'éteindre, et c'est la seule variante permise.** Les cinq champs de la
+**Un libellé peut s'éteindre, et c'est la seule variante permise.** Les sept champs de la
 bible descendent en `--texte-3` quand ils ne portent rien. Le gabarit de libellé prend donc
 un état *éteint* plutôt qu'un second gabarit : **un second endroit où poser le pointillé
 est un endroit où l'oublier**, et c'est la panne que ce motif ne peut pas se permettre —
@@ -582,6 +582,35 @@ jamais : replié c'est la valeur, ouvert c'est ce que le bloc veut garder sous l
 qu'on le règle — `48 au catalogue` pendant qu'on choisit un modèle, `déduite des artworks` quand
 la palette est vide. Même fente, même mono 9,5 px, `--texte-3` pour le fait et `--signal` pour la
 valeur.
+
+---
+
+### Le dépliant du prompt — ce qui partira, et rien d'autre
+
+Ajouté le 29 août 2026 (R2). Sous le champ de prompt, une ligne de pied déplie le texte exact
+qui sera envoyé au modèle : la bible active, le sujet, puis les consignes de planche quand un
+lot est armé.
+
+> **On montre ce qui part, dans l'ordre où ça part, sans étiquette dans le texte.**
+
+Trois décisions, et elles se tiennent :
+
+- **Fermé par défaut, et il tient sur une ligne** — `+ ce qui partira · +2`, mono 10 px,
+  `--texte-3`, la forme exacte de `+ prompt négatif` juste en dessous. Le geste quotidien est
+  d'écrire, pas de relire ; le pied dit seulement *combien de blocs s'ajoutent à ton sujet*,
+  ce qui suffit à donner envie d'ouvrir le jour où le compte surprend.
+- **Chaque bloc porte son origine à côté, jamais dedans** — un en-tête mono 9,5 px majuscules
+  `--texte-3`, la forme de l'en-tête de panneau. Coller « [bible] » dans le texte montrerait
+  autre chose que ce qui part, ce qui est pire que de ne rien montrer. Le texte lui-même est
+  en mono 10,5 px : c'est une **mesure**, pas de la prose — c'est le prompt caractère pour
+  caractère, et la règle 2 de la typographie s'y applique telle quelle.
+- **Repris, le champ change de nature et le dit par son bord** — `--signal` au lieu de
+  `--bord-fort`, mono 11,5 px au lieu de sans 13,5, six lignes au lieu de deux. Ce n'est plus
+  un sujet qu'on décrit, c'est un prompt qu'on écrit : un champ qui ne changerait pas
+  d'apparence laisserait croire que l'atelier habille encore par-dessus.
+
+Le dépliant est un **conteneur nommé** (`region`, « Ce qui partira ») et non une simple boîte :
+il est lu autant que regardé, et un lecteur d'écran doit pouvoir y aller comme on y va de l'œil.
 
 ---
 

@@ -119,14 +119,51 @@ class ServiceAssets:
 
     # ── La naissance ─────────────────────────────────────────────────────────
 
+    def impose(self, identifiant: str) -> dict[str, Any]:
+        """Ce que le projet impose à **cette image-là**, aujourd'hui (US-164).
+
+        « Je veux lire sur la fiche d'un asset le traitement que le projet lui a
+        imposé, afin de comprendre pourquoi l'image affichée ne ressemble pas à
+        celle qui est arrivée du fournisseur. » Sans ça, l'auteur voit une image
+        remise sur 64 pixels et quantifiée sur une palette qu'il n'a jamais
+        demandées à cette image-ci, et rien à l'écran ne le lui dit.
+
+        **Calculée, jamais rangée.** C'est `recette_du_projet` — le seul chemin
+        qui dise ce qu'un univers impose — rejoué sur l'échelle demandée à la
+        naissance. La ranger sur l'asset en aurait fait une seconde vérité, qui
+        aurait vieilli au premier réglage d'univers ; or c'est précisément « ce
+        que le projet impose *maintenant* » que la fiche compare à ce que
+        l'image porte.
+
+        **Une route à part de l'asset, et c'est pour la grille** : deux cents
+        assets affichés relisent alors deux cents fois le projet et son barème,
+        pour une phrase que seule la fiche montre, une image à la fois.
+
+        Rend `null` quand la génération n'est plus sur le disque : le produit
+        dit qu'il ne sait pas plutôt que de répondre « rien d'imposé », qui est
+        une réponse différente et fausse.
+        """
+        asset = self._trouver(identifiant)
+        generation = self._base.lire(asset.generation)
+        if generation is None:
+            return {"impose": None, "echelle": ""}
+        return {
+            "impose": self.recette_du_projet(generation).en_json(),
+            # **Ce que l'auteur avait dit fabriquer**, parce que c'est elle qui
+            # décide de l'occupation : « imposé 40 % » ne s'explique que si la
+            # fiche peut ajouter « objet tenu ».
+            "echelle": str(generation.demande.get("echelle", "") or ""),
+        }
+
     def recette_du_projet(self, generation: Generation) -> Recette:
         """Ce que l'univers impose à cette image-là, à sa naissance.
 
-        **La remise sur grille est systématique, jamais optionnelle** (US-61) :
-        un asset dont la grille a dérivé est le cas normal, pas l'incident. Elle
-        arrive donc posée, et l'auteur la défait s'il le veut — l'inverse
-        obligerait à la reposer à chaque image, ce que le produit existe pour
-        éviter.
+        **La remise sur grille est systématique tant qu'une cible est posée**
+        (US-61) : un asset dont la grille a dérivé est le cas normal, pas
+        l'incident. Elle arrive donc posée, et l'auteur la défait s'il le veut —
+        l'inverse obligerait à la reposer à chaque image, ce que le produit
+        existe pour éviter. Sans cible — « aucune » (US-163) —, il n'y a pas de
+        grille du tout : l'image entre aux dimensions rendues par le modèle.
 
         Sans projet, ou sans échelle nommée, la recette du produit s'applique
         quand même : « un univers vide ne contraint rien » ne veut pas dire

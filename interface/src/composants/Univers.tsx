@@ -33,6 +33,7 @@ import { useEffect, useRef, useState } from "react"
 import {
   api,
   FAMILLES,
+  AUCUNE_CIBLE,
   NOM_CHAMP,
   NOM_FAMILLE,
   Refus,
@@ -59,8 +60,18 @@ import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 
 /** Les cibles proposées, reprises de la fiche — 16 pour une tuile, 64 pour un
  *  sprite, 128 pour un décor. Elles se choisissent **ici** depuis T4 : la taille
- *  de pixel est une propriété du projet, imposée à tout ce qui rentre (US-60). */
-const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
+ *  de pixel est une propriété du projet, imposée à tout ce qui rentre (US-60).
+ *
+ *  **« Aucune » ouvre la liste depuis R2** (US-163), et elle est en tête parce
+ *  qu'elle est le cas d'un jeu qui n'est pas en pixel art — la première
+ *  question, pas la dernière. C'est un segment comme les autres et non un
+ *  interrupteur à côté : trancher entre « pas de grille » et « une grille de
+ *  16 px » est un seul choix, et deux contrôles en auraient fait deux. */
+const CIBLES = [AUCUNE_CIBLE, 16, 24, 32, 48, 64, 96, 128] as const
+
+/** Ce que l'auteur lit d'une cible. Zéro n'est pas « 0 px » — c'est l'absence
+ *  de remise sur grille, et l'écrire en pixels serait un mensonge de mesure. */
+const NOM_CIBLE: Partial<Record<string, string>> = { "0": "aucune" }
 const COULEURS = [8, 12, 16, 24, 32, 48] as const
 
 /** Ce qui se replie sur cet écran, et le mot qui le nomme dans la barre de
@@ -115,9 +126,14 @@ export function EcranUnivers({
   onFermer: () => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
-  const [compte, setCompte] = useState<{ realignes: number; conserves: number } | null>(
-    null,
-  )
+  const [compte, setCompte] = useState<{
+    realignes: number
+    conserves: number
+    /** Le balayage a-t-il remis quelque chose sur grille ? Faux quand le projet
+     *  n'impose aucune taille de pixel : « 12 remis à jour » se lirait sinon
+     *  comme un rééchantillonnage qui n'a pas eu lieu (US-163). */
+    sur_grille: boolean
+  } | null>(null)
   // **Le refus se pose où le geste a eu lieu.** Cet écran couvre l'atelier :
   // une raison envoyée à la barre d'état de l'atelier serait rendue derrière
   // lui, donc invisible au moment précis où elle compte. Elle a donc sa fente
@@ -179,7 +195,11 @@ export function EcranUnivers({
   const realigner = async () => {
     try {
       const fait = await api.realigner()
-      setCompte({ realignes: fait.realignes, conserves: fait.conserves })
+      setCompte({
+        realignes: fait.realignes,
+        conserves: fait.conserves,
+        sur_grille: fait.sur_grille,
+      })
       setRefus("")
     } catch (erreur) {
       setRefus(erreur instanceof Refus ? erreur.message : "réalignement refusé")
@@ -249,6 +269,10 @@ export function EcranUnivers({
           {compte && (
             <span className="mesure text-[10px] text-ok">
               {compte.realignes} remis à jour · {compte.conserves} conservés tels quels
+              {/* Sans cible, le balayage a remis la palette et **retiré** la
+                  grille : il n'a rééchantillonné personne, et le dire tient en
+                  quatre mots plutôt qu'en une infobulle. */}
+              {!compte.sur_grille && " · aucune remise sur grille"}
             </span>
           )}
           <Bouton onClick={onFermer} enfants="Retour à l'atelier" />
@@ -383,7 +407,7 @@ function PanneauUnivers({
   )
 }
 
-/** La bible — cinq champs nommés, chacun activable indépendamment (US-56).
+/** La bible — sept champs nommés, chacun activable indépendamment (US-56).
  *
  *  Le texte libre est ce qu'on retape ; les champs nommés sont ce qu'on dose.
  *  L'interrupteur est à côté du champ et pas dans un menu : « doser ce qui
@@ -439,9 +463,9 @@ function Bible({
             >
               {champ.actif ? "●" : "○"}
             </button>
-            {/* Cinq champs voisins, tous du texte libre, et rien à l'écran ne
+            {/* Sept champs voisins, tous du texte libre, et rien à l'écran ne
                 disait lequel porte quoi : la forme exacte du défaut `groupe`
-                contre `famille`, à cinq exemplaires. Chacun porte donc son
+                contre `famille`, à sept exemplaires. Chacun porte donc son
                 pointillé, et son entrée dit sous quel intitulé anglais il
                 part. */}
             <Libelle aide={`bible.${champ.nom}`} eteint={!(champ.actif && champ.texte.trim())}>
@@ -472,8 +496,10 @@ function Bible({
 const PLACEHOLDERS: Record<string, string> = {
   monde: "royaume de tourbe et de fer, marais au nord",
   epoque: "haut moyen âge, avant la poudre",
+  rendu: "pixel art 16 bits, palette limitée",
   trait: "contour brun d'un pixel, aplats, pas de dégradé",
   eclairage: "lumière rasante, ombres portées courtes",
+  vue: "trois quarts, corps entier, sujet centré",
   technique: "sprite sur fond uni, une seule pose",
 }
 
@@ -539,7 +565,13 @@ function Palette({
 }
 
 /** La taille de pixel du projet — imposée à tout ce qui rentre, jamais déduite
- *  de l'image reçue (US-60, US-61). */
+ *  de l'image reçue (US-60, US-61) — **ou aucune** (US-163).
+ *
+ *  Sans cible, ce que le modèle a rendu revient tel quel : le détourage et le
+ *  recadrage continuent de s'appliquer, la quantification reste liée à
+ *  l'existence d'une palette, et seule la remise sur grille disparaît. C'est ce
+ *  que le bloc dit sous ses segments plutôt que de le laisser deviner — il n'y
+ *  a rien de grisé à regarder, l'étape n'est simplement plus là. */
 function Grille({
   univers,
   onRegler,
@@ -549,13 +581,14 @@ function Grille({
   onRegler: Regler
   onRealigner: () => void
 }) {
+  const aucune = univers.cible_px === AUCUNE_CIBLE
   return (
     <Bloc
       cle="univers.grille"
       aide="univers.cible_px"
       titre="Taille de pixel"
-      etat={`${univers.cible_px} px`}
-      mesure="imposée à ce qui rentre"
+      etat={aucune ? "aucune" : `${univers.cible_px} px`}
+      mesure={aucune ? "le rendu du modèle entre tel quel" : "imposée à ce qui rentre"}
     >
       <Segments
         valeurs={CIBLES}
@@ -564,8 +597,15 @@ function Grille({
             ? univers.cible_px
             : 64) as (typeof CIBLES)[number]
         }
+        libelles={NOM_CIBLE}
         onChange={(cible_px) => void onRegler({ cible_px })}
       />
+      {aucune && (
+        <p className="mesure pt-1 text-[10px] leading-4 text-texte-3">
+          aucune remise sur grille — le détourage, le recadrage et la palette
+          s'appliquent toujours
+        </p>
+      )}
       <div className="flex items-center justify-between pt-1">
         <span className="mesure text-[10px] text-texte-3">
           les assets déjà là ne bougent pas tout seuls
@@ -610,6 +650,14 @@ function Bareme({
       }
       mesure="part de la case, et famille"
     >
+      {/* **L'occupation n'agit que par la grille**, qui est ce qui met un sujet
+          à l'échelle de sa case : sans taille de pixel, elle ne s'applique
+          pas. La famille et la silhouette, elles, continuent — l'une décide des
+          artworks qui partent, l'autre du détourage. Le barème reste donc
+          lisible et réglable : ce qui manque est une étape, pas un droit. */}
+      {univers.cible_px === AUCUNE_CIBLE && (
+        <Raison texte="sans taille de pixel, l'occupation ne s'applique pas — la famille et la silhouette, si" />
+      )}
       <ul className="flex flex-col rounded-[2px] border border-bord">
         {univers.bareme.map((echelle, rang) => (
           <li

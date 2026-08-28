@@ -46,19 +46,19 @@ export type Explication = {
 export const AIDE: Record<string, Explication> = {
   // ── L'univers — la bible ──────────────────────────────────────────────────
   //
-  // Cinq champs voisins dans le même bloc, tous du texte libre, et rien à
+  // Sept champs voisins dans le même bloc, tous du texte libre, et rien à
   // l'écran ne dit lequel porte quoi. C'est la forme exacte du défaut qui a
-  // lancé ce chantier — `groupe` contre `famille` —, à cinq exemplaires.
+  // lancé ce chantier — `groupe` contre `famille` —, à sept exemplaires.
 
   "univers.bible": {
     nom: "Bible",
     ou: "univers",
-    quoi: "Cinq champs nommés qui disent ce qu'est ton jeu — monde, époque, trait, éclairage, contraintes techniques.",
+    quoi: "Sept champs nommés qui disent ce qu'est ton jeu — monde, époque, technique de rendu, trait, éclairage, vue et cadrage, contraintes techniques.",
     change:
-      "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur.",
-    origine: "toi, une fois par projet · cinq champs vides au départ",
+      "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur. Le dépliant « ce qui partira », sous le champ de prompt de l'atelier, montre le résultat exact.",
+    origine: "toi, une fois par projet · sept champs vides au départ",
     long:
-      "Cinq champs nommés plutôt qu'un texte libre, et toute la différence est dans le geste : un texte libre est ce qu'on retape, des champs nommés sont ce qu'on dose. Tu peux relâcher le trait sans relâcher le monde, essayer une génération sans les contraintes techniques, et remettre l'interrupteur sans avoir rien réécrit.\n\nLa liste est close, et son ordre est celui de l'écran comme celui du prompt. Un sixième champ se paierait à chaque génération, en lecture et en décision.\n\nLes intitulés partent en anglais — « World: », « Lighting: » —, parce que tous les modèles du catalogue sont entraînés dessus et qu'« Éclairage : » dégraderait ce que « Lighting: » obtient. C'est une traduction de fournisseur : elle ne remonte jamais dans le produit. Ton texte, lui, part exactement tel que tu l'as écrit.",
+      "Des champs nommés plutôt qu'un texte libre, et toute la différence est dans le geste : un texte libre est ce qu'on retape, des champs nommés sont ce qu'on dose. Tu peux relâcher le trait sans relâcher le monde, essayer une génération sans les contraintes techniques, et remettre l'interrupteur sans avoir rien réécrit.\n\nLa liste est close, et son ordre est celui de l'écran comme celui du prompt. Un champ de plus se paierait à chaque génération, en lecture et en décision.\n\nDeux d'entre eux sont arrivés après coup, et ils disent pourquoi la liste est close plutôt que libre : une séance sur trois projets réels a montré que la technique de rendu et le cadrage se retapaient dans chaque prompt, faute d'avoir où se poser. Ce ne sont pas deux libertés de plus, ce sont deux décisions déjà prises et écrites nulle part.\n\nLes intitulés partent en anglais — « World: », « Lighting: » —, parce que tous les modèles du catalogue sont entraînés dessus et qu'« Éclairage : » dégraderait ce que « Lighting: » obtient. C'est une traduction de fournisseur : elle ne remonte jamais dans le produit. Ton texte, lui, part exactement tel que tu l'as écrit.",
   },
 
   "bible.monde": {
@@ -77,6 +77,28 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Part sous « Era: ». C'est ce qui empêche une arbalète de ressortir avec une lunette de visée.",
     origine: "toi · vide, donc ne part pas",
+  },
+
+  "bible.rendu": {
+    nom: "technique de rendu",
+    ou: "univers",
+    quoi: "Avec quoi l'image est censée être faite — pixel art, peinture numérique, trait encré, rendu 3D.",
+    change:
+      "Part sous « Rendering technique: ». C'est le champ qui décide de l'apparence là où elle se décide vraiment : dans ce que le modèle dessine, pas dans ce que le post-traitement lui fait ensuite.",
+    origine: "toi · vide, donc ne part pas",
+    long:
+      "Il existe parce qu'une séance sur trois projets réels a trouvé les cinq champs de bible vides dans les trois — donc rien sur l'apparence ne partait — et pourtant tout ce qui sortait ressemblait à du pixel art de 64 pixels. La cause n'était pas dans le prompt : elle était après l'image, dans une remise sur grille systématique et une quantification qui s'allume dès qu'il y a une palette.\n\nCe champ rend la décision à la seule personne qui puisse la prendre. Il se lit avec la taille de pixel : « aucune » là-bas et « peinture numérique » ici, et le produit cesse d'imposer une apparence que tu n'as jamais posée.",
+  },
+
+  "bible.vue": {
+    nom: "vue et cadrage",
+    ou: "univers",
+    quoi: "D'où on regarde le sujet et jusqu'où on le voit — trois quarts, de face, de profil, plan large, corps entier.",
+    change:
+      "Part sous « View and framing: ». C'est ce qui évite qu'un personnage sorte de face et le suivant de trois quarts, alors que les deux doivent tenir dans la même scène.",
+    origine: "toi · vide, donc ne part pas",
+    long:
+      "Il entre pour une raison mesurée : c'est, avec la technique de rendu, la consigne qui se retapait dans chaque prompt lors de la séance du 28 août 2026. Une consigne qu'on retape à chaque fois est une décision d'univers qui n'a pas de place où se poser.\n\nÀ ne pas confondre avec le barème d'échelles : celui-ci décide de la part de case qu'un sujet occupe *après* coup, par le rééchantillonnage. Ce champ-ci agit avant, sur ce que le modèle cadre. Les deux se complètent ; aucun ne remplace l'autre.",
   },
 
   "bible.trait": {
@@ -135,12 +157,12 @@ export const AIDE: Record<string, Explication> = {
   "univers.cible_px": {
     nom: "Taille de pixel",
     ou: "univers",
-    quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet.",
+    quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
     change:
-      "Toute image née ici arrive déjà remise sur cette grille. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
+      "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
     origine: "toi, une fois par projet · défaut 64",
     long:
-      "Imposée, jamais déduite de l'image reçue. Dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre : la grille rendue va de 7 à 20 px, facteur 2 à l'intérieur d'un même lot. Déduire la cible de ce qui revient reviendrait à laisser le fournisseur décider de l'échelle de ton jeu.\n\nRéaligner ne coûte rien — aucun appel payant, aucune image regénérée : les octets bruts sont là, et la recette se rejoue en millisecondes. Le balayage saute les assets ramenés au brut, parce que le vide est une décision : revenir à l'image d'origine est un seul geste, et lui reposer une grille le déferait.",
+      "« Aucune » est une valeur, pas un réglage éteint : elle dit que ton jeu n'est pas en pixel art, et c'est la seule échappatoire à la seule étape que le projet imposait sans en avoir. Elle existe parce que le contraire produisait un atelier qui imposait une apparence que personne n'avait posée — toute image revenait sur 64 pixels, et rien à l'écran ne le disait.\n\nSur « aucune », « Tout réaligner » ne rééchantillonne rien et le dit avec son compte : il retire la grille des assets qu'il touche au lieu de leur en poser une.\n\nAvec une cible, elle est imposée et jamais déduite de l'image reçue. Dix modèles sur douze font dériver la taille du pixel d'une génération à l'autre : la grille rendue va de 7 à 20 px, facteur 2 à l'intérieur d'un même lot. Déduire la cible de ce qui revient reviendrait à laisser le fournisseur décider de l'échelle de ton jeu.\n\nRéaligner ne coûte rien — aucun appel payant, aucune image regénérée : les octets bruts sont là, et la recette se rejoue en millisecondes. Le balayage saute les assets ramenés au brut, parce que le vide est une décision : revenir à l'image d'origine est un seul geste, et lui reposer une grille le déferait.",
   },
 
   "univers.bareme": {
@@ -397,6 +419,17 @@ export const AIDE: Record<string, Explication> = {
       "C'est le seul contrôle que le tableau d'inspiration ajoute à l'Atelier, et il porte trois conséquences parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération.\n\nSans sujet choisi, seules les planches marquées « tous » partiront en référence : c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner.\n\nLe barème lui-même se pose dans l'écran Univers, une fois pour le projet. C'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 % — et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
+  "atelier.apercu": {
+    nom: "Ce qui partira",
+    ou: "atelier",
+    quoi: "Le texte exact envoyé au modèle : la bible active de ton projet, ton sujet, puis les consignes de planche quand un lot d'attitudes est armé.",
+    change:
+      "Rien à la génération tant que tu le lis — c'est une lecture, pas un réglage. « Reprendre le texte » en fait le contenu du champ : ce que tu écris alors part mot pour mot, sans que l'atelier ajoute quoi que ce soit.",
+    origine: "composé par l'atelier · l'ordre est celui de l'envoi",
+    long:
+      "Il existe pour une raison mesurée : sur trois projets réels, la bible était vide dans les trois, donc rien du style ne partait — et pourtant tout ce qui sortait se ressemblait. Sans voir ce qui part, il n'y a aucun moyen de savoir si ce qu'on obtient vient du prompt ou du post-traitement.\n\nLe texte n'est pas recomposé à l'écran : il est demandé à l'atelier, par le chemin même que la soumission emprunte. Deux compositions écrites à deux endroits finiraient par diverger, et celle qui compte est celle qui part.\n\nReprendre le texte ne touche pas à ton univers : la bible reste exactement ce qu'elle était, et la reprise ne vaut que pour cette génération-là. Ce qui est parti reste attaché à la génération, au même titre que le modèle et le coût — reprendre les réglages d'un asset, des mois plus tard, renvoie donc exactement le même texte.\n\nRien d'autre ne change en mode repris : le sujet choisi décide toujours des artworks qui partent, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours.",
+  },
+
   // ── La retouche — les cinq places de la recette ───────────────────────────
   //
   // **L'ordre ne se négocie pas**, et c'est ce que ces cinq entrées ont à dire
@@ -566,6 +599,17 @@ export const AIDE: Record<string, Explication> = {
   },
 
   // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
+
+  "fiche.impose": {
+    nom: "Imposé par le projet",
+    ou: "retouche",
+    quoi: "Ce que l'univers de ton projet a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
+    change:
+      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les cinq étapes en dessous sont l'endroit où l'on change.",
+    origine: "l'univers du projet, tel qu'il est maintenant · l'échelle demandée à la naissance",
+    long:
+      "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'asset : la question posée est « qu'est-ce que le projet impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
+  },
 
   "fiche.recettes": {
     nom: "Recettes",

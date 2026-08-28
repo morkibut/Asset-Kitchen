@@ -35,6 +35,19 @@ class Demande:
     # contraint rien (US-57), et seuls les artworks marqués « tous » partent.
     echelle: str = ""
 
+    # **Le texte est celui de l'auteur, mot pour mot** (US-159, US-160). Arrivé
+    # en R2 : l'auteur a vu ce qui partait, il l'a repris à la main, et ce qu'il
+    # a écrit part tel quel — la bible ne se replie pas en tête, les consignes
+    # de planche ne s'ajoutent pas en queue. Elles sont déjà dans son texte,
+    # puisque c'est celui-là même qu'il a vu et corrigé.
+    #
+    # **Ce drapeau ne touche que le texte.** L'échelle continue de décider des
+    # artworks qui partent, du modèle par défaut et de l'occupation ; le gabarit
+    # d'un lot part toujours ; les cases sont toujours vérifiées. Reprendre le
+    # prompt n'est pas sortir du projet, c'est corriger une formulation sans
+    # démonter la bible.
+    repris: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -52,4 +65,8 @@ class Demande:
             "references": len(self.references),
             "options": dict(self.options),
             "echelle": self.echelle,
+            # **Enregistré, parce que c'est un fait de l'appel** : relire une
+            # génération des mois plus tard doit dire si ce prompt-là est celui
+            # que l'atelier a composé ou celui que l'auteur a écrit.
+            "repris": self.repris,
         }

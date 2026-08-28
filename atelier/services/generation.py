@@ -379,16 +379,14 @@ class ServiceGenerations:
                 "et les variations ne s'y appliquent pas"
             )
 
-        demande = self._habiller(demande, projet)
-        if pliage is not None:
-            # **Les consignes de grille repliées en queue du prompt**, comme la
-            # bible l'est en tête et pour la raison exacte : `generation.json`
-            # doit porter le prompt tel qu'il est parti. En queue et non en tête,
-            # parce qu'elles parlent du *sujet décrit au-dessus* — les mettre
-            # avant obligerait à le nommer deux fois.
-            demande = replace(
-                demande, prompt="\n\n".join((demande.prompt, consignes(pliage)))
-            )
+        # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
+        # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
+        # lancer : deux compositions écrites à deux endroits finiraient par
+        # diverger, et celle qui compte est celle qui part.
+        demande = replace(
+            demande,
+            prompt=self._texte(demande.prompt, demande.repris, projet, pliage),
+        )
         # **Trois sources, dans cet ordre, puis le dédoublonnage** : ce que
         # l'auteur a posé à la main, ce que le personnage désigne (US-124), et
         # les artworks de la famille du sujet. L'ordre décide du rôle gardé en
@@ -815,23 +813,92 @@ class ServiceGenerations:
         modele = self._catalogue.modele(identifiant_modele)
         return (reference(pliage),) if modele.references_max > 0 else ()
 
-    # ── L'univers du projet ──────────────────────────────────────────────────
+    # ── Le texte qui part, et l'univers qui l'habille ────────────────────────
 
-    def _habiller(self, demande: Demande, projet: str | None) -> Demande:
-        """La bible active, repliée en tête du prompt (US-53).
+    def parties(
+        self, sujet: str, repris: bool, projet: str | None, pliage: Pliage | None
+    ) -> list[dict[str, str]]:
+        """Ce qui partira, **bloc par bloc et dans l'ordre d'envoi** (US-158).
 
-        « Je veux que le style de mon univers parte avec chaque génération, afin
-        de ne jamais le retaper. » Le repliage se fait **avant** l'enregistrement
-        et avant l'appel, donc `generation.json` porte le prompt tel qu'il est
-        parti : une génération se relit des mois après sans avoir à reconstituer
-        l'univers du jour.
+        Trois origines et pas une de plus : la bible active du projet, le sujet
+        écrit par l'auteur, et les consignes de planche quand un lot est armé.
+        Rien n'est traduit ni enrichi en chemin — montrer autre chose que ce qui
+        part serait pire que ne rien montrer.
+
+        **Un texte repris n'a qu'une partie, et c'est la vérité** : l'auteur a
+        pris la main sur l'ensemble, donc il n'y a plus de bible d'un côté et de
+        sujet de l'autre. Le découpage aurait été une reconstitution, pas une
+        lecture.
+
+        **Le sujet est un texte, pas une `Demande`** : l'aperçu se demande dès
+        le champ vide — l'atelier s'ouvre dessus —, et `Demande` refuse un
+        prompt vide à juste titre. Ce refus appartient à la soumission, pas à la
+        lecture de ce qui partirait.
         """
-        if self._univers is None or projet is None:
-            return demande
-        bible = self._univers.prompt(projet)
-        if not bible:
-            return demande
-        return replace(demande, prompt=f"{bible}\n\n{demande.prompt}")
+        if repris:
+            return [{"origine": "repris", "texte": sujet}]
+        blocs = []
+        bible = (
+            self._univers.prompt(projet)
+            if self._univers is not None and projet is not None
+            else ""
+        )
+        if bible:
+            blocs.append({"origine": "bible", "texte": bible})
+        if sujet:
+            blocs.append({"origine": "sujet", "texte": sujet})
+        if pliage is not None:
+            blocs.append({"origine": "planche", "texte": consignes(pliage)})
+        return blocs
+
+    def _texte(
+        self, sujet: str, repris: bool, projet: str | None, pliage: Pliage | None
+    ) -> str:
+        """Les parties, jointes — **le seul endroit qui écrive le prompt final**.
+
+        La bible active se replie en tête (US-53) : « je veux que le style de mon
+        univers parte avec chaque génération, afin de ne jamais le retaper ». Les
+        consignes de planche se replient en queue, parce qu'elles parlent du
+        *sujet décrit au-dessus* — les mettre avant obligerait à le nommer deux
+        fois. Les deux se font **avant** l'enregistrement et avant l'appel, donc
+        `generation.json` porte le prompt tel qu'il est parti : une génération se
+        relit des mois après sans avoir à reconstituer l'univers du jour.
+        """
+        return "\n\n".join(
+            bloc["texte"] for bloc in self.parties(sujet, repris, projet, pliage)
+        )
+
+    def apercu(
+        self,
+        sujet: str,
+        *,
+        repris: bool = False,
+        projet: str | None = None,
+        personnage: str | None = None,
+        poses: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
+
+        C'est `preparer` privé de tout ce qui coûte : ni clé, ni catalogue, ni
+        enregistrement, ni fournisseur. Il ne reste que la composition — et c'est
+        exactement la même, appelée par le même chemin, ce qui est toute la
+        valeur de l'aperçu. Un aperçu recomposé à l'écran aurait été une seconde
+        vérité sur ce qui part, et « deux vérités sur la même chose finissent par
+        diverger ».
+
+        **Les cases du lot sont vérifiées ici aussi**, parce que `_plier` est ce
+        qui les nomme : leur texte est le nom des poses, et il part dans le
+        prompt. Le refus est donc le même avant et à la soumission — l'aperçu ne
+        montre jamais un texte qui ne partirait pas.
+        """
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+        pliage = self._plier(projet, personnage, poses)
+        parties = self.parties(sujet, repris, projet, pliage)
+        return {
+            "texte": "\n\n".join(bloc["texte"] for bloc in parties),
+            "parties": parties,
+        }
 
     def _artworks(self, demande: Demande, projet: str | None) -> tuple[Reinjection, ...]:
         """Les artworks que le sujet demandé fait partir (US-51).

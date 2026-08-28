@@ -11,6 +11,55 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## État au 29 août 2026
+
+**R2 est écrite — ce qui décide de l'apparence se voit et se règle.** C'est la plus grosse des
+quatre reprises, et la seule qui touche à la fois au prompt, à l'univers et à la fiche. Un
+dépliant sous le champ de prompt montre le texte exact qui partira — bible active, sujet,
+consignes de planche —, et un geste le bascule en édition libre pour cette génération-là. La
+bible passe de cinq champs nommés à sept : la technique de rendu et la vue et cadrage, qui
+étaient exactement les deux consignes retapées dans chaque prompt le 28 août. La taille de
+pixel accepte « aucune ». Et la fiche dit enfin ce que le projet a imposé à l'image affichée.
+**Les treize critères sont cochés, tenus par 20 essais de serveur et 9 d'écran.**
+
+**Le défaut réparé est un défaut de composition, pas de code**, et c'est la troisième fois que
+le dépôt en trouve un — après la toile de T9 et le réglage d'univers de R1. « La dérive de
+grille est le cas normal, pas l'incident » est juste. « Le style vient de la bible, et d'un
+seul endroit » est juste. Ensemble, elles produisaient un atelier qui **imposait une apparence
+que l'auteur n'avait jamais posée** : la séance du 28 août l'a mesuré sur trois projets réels
+— les cinq champs de bible vides dans les trois, donc rien du style ne partait, et pourtant
+tout ressortait en pixel art de 64 pixels. Aucun test ne pouvait le voir : les deux moitiés
+faisaient exactement ce qu'on leur demandait.
+
+**Un seul endroit compose le prompt, et l'aperçu emprunte ce chemin-là.** C'était la décision
+de conception de la tranche, et elle a coûté un aller-retour local par frappe — atténué de
+140 ms, sans réseau, sans écriture. L'alternative aurait été de recomposer à l'écran : deux
+compositions qui divergent au premier champ ajouté, et celle qu'on regarde n'est pas celle qui
+part. L'essai qui le tient ne compare pas l'aperçu à lui-même mais **à ce que le fournisseur a
+reçu** — un aperçu vérifié contre sa propre logique ne prouverait que sa propre logique.
+
+**Elle a réparé un défaut que personne n'avait signalé.** « Reprendre les réglages » d'un asset
+reposait dans le champ de l'atelier le prompt **déjà habillé** — bible comprise —, que l'atelier
+rhabillait ensuite : la bible partait en double, à chaque reprise, depuis T4. Le geste rend
+désormais la main à l'auteur en mode repris, donc ce qui repart est exactement ce qui était
+parti. Personne ne l'aurait trouvé sans écrire le mode repris : il fallait que les deux
+chemins existent pour que leur composition devienne visible.
+
+**« Aucune » est une valeur, pas un réglage éteint**, et le dire ainsi a décidé du code : zéro
+est traité **à part** du contrôle de bornes plutôt qu'en élargissant le minimum, sans quoi 1, 2
+et 4 pixels seraient passés. Sans cible, la grille **disparaît** de la recette au lieu de valoir
+zéro — un asset ne doit pas porter une remise sur grille que le projet n'impose plus —, et
+« Tout réaligner » la retire donc au lieu d'en poser une, en le disant avec son compte.
+
+**Et ce que le projet impose se calcule, il ne se range pas.** La fiche demande « qu'est-ce que
+le projet impose *maintenant* » : une valeur enregistrée à la naissance aurait vieilli au premier
+réglage d'univers, et la fiche aurait comparé l'image à un souvenir. C'est une route à part de
+l'asset, parce que la grille en affiche deux cents à la fois pour une phrase que seule la fiche
+montre — le même raisonnement que la réserve de T8, un cran plus bas.
+
+**La séance d'usage au navigateur n'a pas encore eu lieu**, et la règle du dépôt tient : *une
+tranche n'est finie que lorsqu'on s'en est servi*.
+
 ## État au 28 août 2026
 
 La chaîne de cadrage est finie — PRD, architecture, design, plan — et **le code a

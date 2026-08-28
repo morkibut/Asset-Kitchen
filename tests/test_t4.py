@@ -27,6 +27,7 @@ import pytest
 from conftest import FournisseurDouble, bloc_mesure, image, image_sujet
 
 from atelier.domaine.erreurs import FournisseurIndisponible
+from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.services import Atelier
 
 MODELE = "essai/rend-du-png"
@@ -143,8 +144,12 @@ def test_un_projet_neuf_recoit_une_bible_des_planches_et_sa_palette_est_extraite
     )
     assert pose.status_code == 200, pose.text
     bible = {c["nom"]: c for c in pose.json()["univers"]["bible"]}
-    # La liste close décide : les cinq champs sont là, deux portent un texte.
-    assert set(bible) == {"monde", "epoque", "trait", "eclairage", "technique"}
+    # La liste close décide : tous les champs sont là, deux portent un texte.
+    # Comparé à `CHAMPS_BIBLE` et non à une liste recopiée : ce que ce test
+    # tient est « le fichier n'apporte que les textes, la liste décide du
+    # reste », et une liste écrite ici en ferait une seconde vérité — R2 l'a
+    # cassée en portant la bible de cinq champs à sept.
+    assert set(bible) == set(CHAMPS_BIBLE)
     assert bible["monde"]["texte"] == "royaume de tourbe et de fer"
 
     _univers_peuple(client, "personnages", "tous")

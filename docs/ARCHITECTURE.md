@@ -225,6 +225,20 @@ confirmation directe du diagnostic porté sur SpriteCook : sans la re-pixelisati
 commune, **dix modèles sur douze sont inutilisables**. La couche de post-traitement n'est pas
 un confort, c'est ce qui rend le produit possible.
 
+**La remise sur grille est donc systématique — tant qu'une cible est posée** (R2, US-163).
+« Systématique » a longtemps voulu dire « sans échappatoire », et c'en était une de trop : le
+constat ci-dessus vaut pour un jeu en pixel art, et un jeu qui ne l'est pas n'a rien à gagner à
+être ramené sur une grille. La cible « aucune » est une valeur d'univers déclarée, pas un
+réglage éteint ; sans elle, le post-traitement imposait une apparence que l'auteur n'avait
+jamais posée, et rien à l'écran ne le lui disait. **Elle ne rouvre rien** : dès qu'une cible est
+posée, la dérive reste le cas normal et la remise reste sans condition.
+
+**Et ce qui part se voit avant de partir** (R2, US-158). La composition du prompt — bible
+active en tête, sujet, consignes de planche en queue — vit à **un seul endroit**, et l'aperçu
+emprunte ce chemin-là plutôt que d'en écrire un second : deux compositions divergeraient, et
+celle qui compte est celle qui part. L'auteur peut reprendre ce texte pour une génération
+donnée ; il part alors mot pour mot, et l'enregistrement le dit.
+
 **Deux familles de défauts, à ne jamais confondre au moment de choisir un modèle :**
 
 | | Exemples | Verdict |
@@ -341,11 +355,11 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 
 | Entité | Contenu | Note |
 |---|---|---|
-| **Projet** *(= l'univers)* | nom, bible (texte libre), planches de référence, palette extraite, réglages par défaut | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
+| **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
 | **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
-| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
+| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
 
 Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,
@@ -486,7 +500,7 @@ utilisable pour de vrai, sans aucune inconnue technique.
 | Brique | Ce qu'elle fait | Ce qu'elle ne fait pas |
 |---|---|---|
 | **Tableau d'inspiration** | Rassembler, trier, jeter. Cartes image **ou texte**. Entrée par collage (Ctrl+V, le geste principal), glisser-déposer, URL, fichier. Groupes nommés, note et provenance par carte, vignettes 1×/2×/4×. Promotion d'une carte en **artwork officiel**. **Deux vues sur la même matière depuis T8** : la grille, et une toile où une carte se pose, où l'îlot donne enfin une forme au groupe, et où un lien dit ce que la proximité ne dit pas. | Pas de mise en page automatique sur la toile : rien ne s'aligne, ne se distribue ni ne reflue tout seul. Pas de couleur sur une carte — l'îlot et la note seulement, sinon c'est un second rangement, invisible dans la grille et concurrent du groupe. Pas d'historique de composition : la pile d'annulation meurt avec l'écran. Pas de corbeille : suppression avec annulation courte. |
-| **Univers** | Une bible en **champs nommés** (monde, époque, trait, éclairage, contraintes techniques), chacun activable pour une génération. Les artworks officiels partent en guide de style à chaque appel. Palette extraite d'eux par calcul. | Pas de description automatique du style. Pas de contrôle de conformité. Pas de consignes par type d'asset. |
+| **Univers** | Une bible en **sept champs nommés** (monde, époque, technique de rendu, trait, éclairage, vue et cadrage, contraintes techniques), chacun activable pour une génération. Les artworks officiels partent en guide de style à chaque appel. Palette extraite d'eux par calcul. Taille de pixel imposée à ce qui rentre, **ou aucune**. | Pas de description automatique du style. Pas de contrôle de conformité. Pas de consignes par type d'asset. Pas de texte libre à côté des champs. |
 
 **Les artworks officiels sont groupés par famille, et seuls ceux de la famille du sujet
 partent en référence.** Décidé le 26 août 2026, sur mesure.

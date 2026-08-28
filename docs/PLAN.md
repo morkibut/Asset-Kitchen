@@ -522,6 +522,7 @@ après.
 ---
 
 ## R2 · Ce qui décide de l'apparence se voit et se règle
+*13 critères · 7 US (158–164) · tenue le 29 août 2026*
 
 **User stories** : 158, 159, 160, 161, 162, 163, 164
 
@@ -555,19 +556,55 @@ cible est posée », et la bible y compte sept champs.
 
 ### Critères d'acceptation
 
-- [ ] Avant de lancer, le texte exact qui partira s'affiche : bible active, sujet, consignes de pliage — dans l'ordre d'envoi, sans rien de masqué
-- [ ] Ce texte suit ce qu'on tape et ce qu'on décoche : décocher un champ de bible le retire de l'aperçu à l'instant
-- [ ] Le texte repris à la main part **mot pour mot**, et `generation.json` porte ce texte-là
-- [ ] Reprendre le texte n'écrit rien dans l'univers : rouvrir l'écran Univers montre la bible inchangée
-- [ ] Une génération relancée depuis un asset repart avec le texte qui était parti, repris compris
-- [ ] La bible compte sept champs nommés, chacun activable indépendamment comme les cinq premiers
-- [ ] Un projet écrit avant cette tranche s'ouvre avec ses deux nouveaux champs vides et actifs, et rien de ce qu'il portait n'est perdu
-- [ ] Taille de pixel « aucune » : l'image générée entre en bibliothèque **aux dimensions rendues par le modèle**, sans rééchantillonnage
-- [ ] Avec « aucune », le détourage et le recadrage continuent de s'appliquer, et le barème d'échelles reste lisible avec la raison de son inaction
-- [ ] Avec « aucune », « Tout réaligner » ne rééchantillonne rien et le dit
-- [ ] La fiche d'un asset nomme le traitement que le projet lui a imposé — cible, occupation, palette — et le distingue de ce que l'auteur a réglé à la main
-- [ ] Un univers vide ne contraint toujours rien : générer sans bible, sans artwork et sans cible reste possible (US-57 reconduite)
-- [ ] Réseau coupé : l'aperçu du prompt, l'édition du texte et le réglage de la bible fonctionnent
+- [x] Avant de lancer, le texte exact qui partira s'affiche : bible active, sujet, consignes de pliage — dans l'ordre d'envoi, sans rien de masqué
+- [x] Ce texte suit ce qu'on tape et ce qu'on décoche : décocher un champ de bible le retire de l'aperçu à l'instant
+- [x] Le texte repris à la main part **mot pour mot**, et `generation.json` porte ce texte-là
+- [x] Reprendre le texte n'écrit rien dans l'univers : rouvrir l'écran Univers montre la bible inchangée
+- [x] Une génération relancée depuis un asset repart avec le texte qui était parti, repris compris
+- [x] La bible compte sept champs nommés, chacun activable indépendamment comme les cinq premiers
+- [x] Un projet écrit avant cette tranche s'ouvre avec ses deux nouveaux champs vides et actifs, et rien de ce qu'il portait n'est perdu
+- [x] Taille de pixel « aucune » : l'image générée entre en bibliothèque **aux dimensions rendues par le modèle**, sans rééchantillonnage
+- [x] Avec « aucune », le détourage et le recadrage continuent de s'appliquer, et le barème d'échelles reste lisible avec la raison de son inaction
+- [x] Avec « aucune », « Tout réaligner » ne rééchantillonne rien et le dit
+- [x] La fiche d'un asset nomme le traitement que le projet lui a imposé — cible, occupation, palette — et le distingue de ce que l'auteur a réglé à la main
+- [x] Un univers vide ne contraint toujours rien : générer sans bible, sans artwork et sans cible reste possible (US-57 reconduite)
+- [x] Réseau coupé : l'aperçu du prompt, l'édition du texte et le réglage de la bible fonctionnent
+
+### Ce que la construction a décidé
+
+**Le texte qui part n'a qu'un auteur, et l'aperçu emprunte son chemin.** Composer la bible en
+tête et les consignes de planche en queue vit à un seul endroit du dépôt ; l'aperçu appelle
+cette composition-là, sans la refaire. L'écran ne joint donc rien — il *demande*, sur une route
+à lui, et affiche ce qu'on lui rend. Un aperçu recomposé au navigateur aurait été une seconde
+vérité sur ce qui part, et la seule qui compte est celle qui part. Le prix est un aller-retour
+local par frappe, atténué d'un délai de 140 ms ; il ne sort pas de la machine et n'écrit rien.
+
+**Reprendre le texte ne touche qu'au texte.** L'échelle continue de décider des artworks qui
+partent, du modèle par défaut et de l'occupation ; le gabarit d'un lot part toujours ; les cases
+sont toujours vérifiées avant qu'un centime parte. C'est ce qui fait de la reprise une
+correction de formulation et non une sortie du projet.
+
+**Et elle a réparé un défaut que personne n'avait vu** : « reprendre les réglages » d'un asset
+reposait le prompt **déjà habillé** dans le champ de l'atelier, qui le rhabillait une seconde
+fois — la bible partait en double. Le geste rend désormais la main à l'auteur, en repris : ce
+qui est reparti est exactement ce qui était parti.
+
+**« Aucune » est une valeur, pas un réglage éteint**, et zéro est traité à part du contrôle de
+bornes plutôt qu'en élargissant le minimum : élargir aurait laissé entrer 1, 2 et 4 pixels, qui
+ne sont ni une échappatoire ni une grille. Sans cible, la grille **disparaît** de la recette au
+lieu de valoir zéro — un asset ne doit pas porter une remise sur grille que le projet n'impose
+plus. « Tout réaligner » la retire donc au lieu d'en poser une, et le dit avec son compte.
+
+**Ce que le projet impose se calcule, il ne se range pas.** La question posée par la fiche est
+« qu'est-ce que le projet impose *maintenant* » : une valeur enregistrée à la naissance aurait
+vieilli au premier réglage d'univers, et la fiche aurait comparé l'image à un souvenir. La
+lecture est une route à part de l'asset, parce que la grille en affiche deux cents à la fois
+pour une phrase que seule la fiche montre.
+
+**Le prix payé, et il est écrit ici** : l'aperçu vérifie les cases d'un lot comme la soumission
+les vérifie, donc un lot dont une pose a disparu montre un refus au lieu d'un texte. C'est
+voulu — l'aperçu ne montre jamais un texte qui ne partirait pas — mais cela veut dire qu'un
+onglet resté ouvert sur une pose décochée voit d'abord la raison, et le texte ensuite.
 
 ## Bloquée par
 
