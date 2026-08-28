@@ -510,6 +510,13 @@ export type Univers = {
   palette: string[]
   palette_empreinte: string
   modeles: Partial<Record<Famille, string>>
+  /** **Les deux modèles d'appel** (C2). Ils ne sont pas dans `modeles`, qui est
+   *  indexé par famille de *sujet* : ceux-ci répondent à une autre question —
+   *  quelle sorte d'appel on fait. Produire une planche et éditer un corps ne se
+   *  jouent pas chez le même modèle, mesuré le 28 août. Vides, la famille du
+   *  sujet puis le catalogue reprennent la main. */
+  modele_planche: string
+  modele_edition: string
   /** Ni bible qui parle, ni palette. Un état normal, pas une configuration
    *  manquante : « un univers vide ne contraint rien » (US-57). */
   vide: boolean
@@ -523,6 +530,8 @@ export const UNIVERS_VIDE: Univers = {
   palette: [],
   palette_empreinte: "",
   modeles: {},
+  modele_planche: "",
+  modele_edition: "",
   vide: true,
 }
 
@@ -1287,6 +1296,8 @@ export const api = {
     cible_px?: number
     couleurs?: number
     modeles?: Partial<Record<Famille, string>>
+    modele_planche?: string
+    modele_edition?: string
   }) =>
     appeler<{ projet: string; univers: Univers }>("/universe", {
       method: "PUT",

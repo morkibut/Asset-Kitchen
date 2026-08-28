@@ -664,7 +664,7 @@ function Defauts({
     <Bloc
       cle="univers.defauts"
       aide="univers.modeles"
-      titre="Modèle par famille"
+      titre="Modèle par défaut"
       etat={
         poses ? `${poses} famille${poses > 1 ? "s" : ""} réglée${poses > 1 ? "s" : ""}` : null
       }
@@ -686,6 +686,44 @@ function Defauts({
                   modeles: { ...univers.modeles, [famille]: e.target.value },
                 })
               }
+              className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+            >
+              <option value="">—</option>
+              {modeles.map((m) => (
+                <option key={m.identifiant} value={m.identifiant}>
+                  {m.nom}
+                </option>
+              ))}
+            </select>
+          </li>
+        ))}
+      </ul>
+
+      {/* **Deux défauts d'appel, et pas une famille de plus** (C2). La liste
+          au-dessus est indexée par *ce qu'on fabrique* ; ces deux-ci répondent
+          à *quelle sorte d'appel on fait*, et les mêler aurait demandé deux clés
+          réservées dans un espace de noms qui est celui de l'auteur.
+
+          Deux, et pas un : à l'essai du 28 août, un modèle rend les traits du
+          gabarit dans l'image là où un autre les ignore comme demandé. */}
+      <ul className="mt-2 flex flex-col rounded-[2px] border border-bord">
+        {(
+          [
+            ["modele_planche", "planche", "quand un lot d'attitudes part"],
+            ["modele_edition", "édition", "quand un corps se retouche"],
+          ] as const
+        ).map(([champ, nom, quand]) => (
+          <li
+            key={champ}
+            className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0"
+          >
+            <span className="w-[80px] shrink-0 text-[11px] text-texte-2" title={quand}>
+              {nom}
+            </span>
+            <select
+              value={univers[champ] ?? ""}
+              onChange={(e) => void onRegler({ [champ]: e.target.value })}
+              aria-label={`Modèle par défaut pour une ${nom}`}
               className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
             >
               <option value="">—</option>

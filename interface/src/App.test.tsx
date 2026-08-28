@@ -211,6 +211,11 @@ const UNIVERS: Univers = {
   palette: [],
   palette_empreinte: "",
   modeles: {},
+  // **Les deux modèles d'appel** (C2) — vides, la famille du sujet puis le
+  // défaut du catalogue reprennent la main. C'est ce que le serveur rend d'un
+  // projet neuf, et le double se construit sur ce que la route dit vraiment.
+  modele_planche: "",
+  modele_edition: "",
   vide: true,
 }
 
