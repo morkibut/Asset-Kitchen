@@ -78,7 +78,7 @@ export function Raison({
  * En `--epingle` et non `--info` : arrêté à un instant, que le système ne
  * bougera pas tout seul, et que seul un geste de l'auteur relance — exactement
  * la définition que partagent « réglé à la main » et « interrompu ».
- * `docs/DESIGN.md` § Motifs.
+ * `docs/design-motifs.md`.
  */
 export function Revers({
   texte,

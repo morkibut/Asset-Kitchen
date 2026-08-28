@@ -313,7 +313,16 @@ def test_le_nombre_de_references_envoyees_est_visible_avant_de_generer(client, d
 
     avant = double.appels
     compte = client.get("/api/models", params={"echelle": "personnage"}).json()["references"]
-    assert compte == {"total": 2, "manuelles": 0, "artworks": 2, "famille": "personnages"}
+    # **Les quatre chiffres de T4**, et non l'objet entier : C1 a ajouté à la
+    # même charge la liste ligne par ligne et le compte des concept arts
+    # (US-127). Le critère de T4 porte sur ce qui est *visible avant de
+    # générer*, pas sur la forme exacte d'une charge qui devait grossir.
+    assert {c: compte[c] for c in ("total", "manuelles", "artworks", "famille")} == {
+        "total": 2,
+        "manuelles": 0,
+        "artworks": 2,
+        "famille": "personnages",
+    }
     assert client.get("/api/models", params={"echelle": "meuble"}).json()["references"][
         "artworks"
     ] == 1

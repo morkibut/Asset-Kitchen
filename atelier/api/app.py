@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
+from atelier.api.production import routeur as routeur_production
 from atelier.api.routes import routeur
 from atelier.api.univers import routeur as routeur_univers
 from mcp.server.transport_security import TransportSecuritySettings
@@ -41,6 +42,11 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.production import (
+    PersonnageInconnu,
+    PoseInconnue,
+    ProductionRefusee,
+)
 from atelier.services.export import ExportRefuse
 from atelier.services.univers import (
     CarteInconnue,
@@ -73,6 +79,9 @@ CODES = {
     UniversRefuse: 409,
     DecoupeRefusee: 409,
     ExportRefuse: 409,
+    PersonnageInconnu: 404,
+    PoseInconnue: 404,
+    ProductionRefusee: 409,
     # Le plafond de la séance de l'agent. 429 et non 409 : c'est bien « trop
     # d'appels », et le refus porte le moyen de le relever.
     PlafondAtteint: 429,
@@ -145,6 +154,9 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # Le troisième, arrivé avec T4 : ce qui contraint une image avant qu'elle
     # existe — le tableau d'inspiration et l'univers du projet.
     application.include_router(routeur_univers, prefix="/api")
+    # Le quatrième, arrivé avec C1 : ce qu'il reste à fabriquer — le plan de
+    # poses du projet, ses personnages, et la matrice qui dit ce qui manque.
+    application.include_router(routeur_production, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

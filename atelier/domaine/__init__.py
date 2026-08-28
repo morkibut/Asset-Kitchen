@@ -16,6 +16,7 @@ from atelier.domaine.generation import (
     Resultat,
     Statut,
 )
+from atelier.domaine.pliage import CasePliee, Geometrie, MesuresLot, Pliage, geometrie
 from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
 from atelier.domaine.recette import (
     Bords,
@@ -30,16 +31,20 @@ __all__ = [
     "NOM_BAC_A_SABLE",
     "Asset",
     "Bords",
+    "CasePliee",
     "Collection",
     "Demande",
     "Emplacement",
     "ErreurAtelier",
     "Generation",
+    "Geometrie",
     "Grille",
+    "MesuresLot",
     "Modele",
     "ModeleInconnu",
     "Option",
     "Passe",
+    "Pliage",
     "Projet",
     "Quantification",
     "ROLES",
@@ -49,6 +54,7 @@ __all__ = [
     "Resultat",
     "SansCle",
     "Statut",
+    "geometrie",
     "identifiant_de",
     "repere",
 ]

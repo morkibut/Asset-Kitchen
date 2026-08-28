@@ -1,0 +1,1424 @@
+{
+  "schema": 1,
+  "project": {
+    "name": "Asset Kitchen",
+    "item_word": "éléments"
+  },
+  "config": {
+    "out_dir": "docs/status",
+    "plan_heading": "^#{2,3}\\s*([TC]\\d+)\\s*[:·\\-–—]?\\s*(.*)$"
+  },
+  "detected": {
+    "items": [
+      {
+        "id": "T1",
+        "type": "epic",
+        "parent": null,
+        "title": "La première image",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 0,
+        "blocked_by": null
+      },
+      {
+        "id": "T2",
+        "type": "epic",
+        "parent": null,
+        "title": "Le post-traitement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 1,
+        "blocked_by": null
+      },
+      {
+        "id": "T3",
+        "type": "epic",
+        "parent": null,
+        "title": "La bibliothèque",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 2,
+        "blocked_by": null
+      },
+      {
+        "id": "T4",
+        "type": "epic",
+        "parent": null,
+        "title": "Le tableau et l'univers",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 3,
+        "blocked_by": null
+      },
+      {
+        "id": "T5",
+        "type": "epic",
+        "parent": null,
+        "title": "Le slicer",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 4,
+        "blocked_by": null
+      },
+      {
+        "id": "T6",
+        "type": "epic",
+        "parent": null,
+        "title": "L'export",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 5,
+        "blocked_by": null
+      },
+      {
+        "id": "T7",
+        "type": "epic",
+        "parent": null,
+        "title": "Le MCP — *et la V1 avec elle*",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 6,
+        "blocked_by": null
+      },
+      {
+        "id": "T8",
+        "type": "epic",
+        "parent": null,
+        "title": "La toile",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 7,
+        "blocked_by": null
+      },
+      {
+        "id": "T9",
+        "type": "epic",
+        "parent": null,
+        "title": "Les liens et les notes",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 8,
+        "blocked_by": null
+      },
+      {
+        "id": "T10",
+        "type": "epic",
+        "parent": null,
+        "title": "L'îlot se saisit, et ce qui va partir se voit",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 9,
+        "blocked_by": null
+      },
+      {
+        "id": "C1",
+        "type": "epic",
+        "parent": null,
+        "title": "Le personnage, son plan, une pose, et ce qui part avec elle",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 18
+        },
+        "source": "plan",
+        "order": 10,
+        "blocked_by": null
+      },
+      {
+        "id": "C1.1",
+        "type": "check",
+        "parent": "C1",
+        "title": "Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 11
+      },
+      {
+        "id": "C1.2",
+        "type": "check",
+        "parent": "C1",
+        "title": "Un personnage se crée avec un nom et une description ; sa description part avec chaque génération de pose, sans être retapée",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 12
+      },
+      {
+        "id": "C1.3",
+        "type": "check",
+        "parent": "C1",
+        "title": "Une pose s'ajoute, se renomme et se retire du plan du projet à tout moment ; ajouter une pose ajoute une case vide à chaque personnage qui porte ce plan, et ne lance **aucune** génération",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 13
+      },
+      {
+        "id": "C1.4",
+        "type": "check",
+        "parent": "C1",
+        "title": "Un personnage rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 14
+      },
+      {
+        "id": "C1.5",
+        "type": "check",
+        "parent": "C1",
+        "title": "Écrire un nom de pose qui n'existe pas le crée sur-le-champ, sans passer par un écran de gestion",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 15
+      },
+      {
+        "id": "C1.6",
+        "type": "check",
+        "parent": "C1",
+        "title": "La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et la grille de la bibliothèque reste la seule grille d'assets du produit",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 16
+      },
+      {
+        "id": "C1.7",
+        "type": "check",
+        "parent": "C1",
+        "title": "Une carte image du tableau se désigne concept art d'un personnage ou d'une pièce, et reste à sa place — aucune copie, aucun second rangement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 17
+      },
+      {
+        "id": "C1.8",
+        "type": "check",
+        "parent": "C1",
+        "title": "Une carte désignée se distingue sur la toile de celle qui dort",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 18
+      },
+      {
+        "id": "C1.9",
+        "type": "check",
+        "parent": "C1",
+        "title": "Avant de lancer, chaque référence envoyée est listée avec sa provenance nommée, et le coût est annoncé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 19
+      },
+      {
+        "id": "C1.10",
+        "type": "check",
+        "parent": "C1",
+        "title": "Une référence se décoche à trois portées — cette génération, ce personnage, tout le projet — et la portée retenue est lisible",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 20
+      },
+      {
+        "id": "C1.11",
+        "type": "check",
+        "parent": "C1",
+        "title": "La règle de préséance entre les trois portées est affichée à l'écran, pas déduite",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 21
+      },
+      {
+        "id": "C1.12",
+        "type": "check",
+        "parent": "C1",
+        "title": "Décocher une référence ne modifie ni l'univers, ni les artworks officiels du projet",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 22
+      },
+      {
+        "id": "C1.13",
+        "type": "check",
+        "parent": "C1",
+        "title": "Le nombre de références effectivement envoyées reste visible au moment de générer, comme depuis T4",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 23
+      },
+      {
+        "id": "C1.14",
+        "type": "check",
+        "parent": "C1",
+        "title": "Une pose générée entre en bibliothèque comme tout asset : projet courant, filiation, coût réel enregistré",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 24
+      },
+      {
+        "id": "C1.15",
+        "type": "check",
+        "parent": "C1",
+        "title": "Aucun écran de création de personnage avec son propre prompt n'existe : le corps se désigne depuis une image née dans l'atelier",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 25
+      },
+      {
+        "id": "C1.16",
+        "type": "check",
+        "parent": "C1",
+        "title": "La fiche de **n'importe quel** asset nomme le modèle qui l'a produit — le modèle exact pour une image générée, « importé » pour une image importée",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 26
+      },
+      {
+        "id": "C1.17",
+        "type": "check",
+        "parent": "C1",
+        "title": "Réseau coupé : le plan, le personnage, la matrice et le panneau des références se consultent et se modifient ; seule la génération échoue, au moment où on l'essaie",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 27
+      },
+      {
+        "id": "C1.18",
+        "type": "check",
+        "parent": "C1",
+        "title": "Supprimer un personnage laisse ses images en place, chacune marquée « personnage supprimé » — jamais de cascade",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 28
+      },
+      {
+        "id": "C2",
+        "type": "epic",
+        "parent": null,
+        "title": "Le lot plié",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 12
+        },
+        "source": "plan",
+        "order": 29,
+        "blocked_by": "- C1 — il n'y a pas de lot sans plan de poses ni cases à remplir"
+      },
+      {
+        "id": "C2.1",
+        "type": "check",
+        "parent": "C2",
+        "title": "Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après **un seul** appel payant, et le journal du projet montre un appel et non neuf",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 30
+      },
+      {
+        "id": "C2.2",
+        "type": "check",
+        "parent": "C2",
+        "title": "La planche reçue est dépliée automatiquement ; aucun geste de découpe n'est demandé à l'auteur",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 31
+      },
+      {
+        "id": "C2.3",
+        "type": "check",
+        "parent": "C2",
+        "title": "Un lot qui revient avec huit images pour neuf demandées est refusé : aucune image n'entre dans le plan, et le lot se relance d'un geste",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 32
+      },
+      {
+        "id": "C2.4",
+        "type": "check",
+        "parent": "C2",
+        "title": "Le compte d'images est le **seul** refus automatique — les mesures de ressemblance et de dérive de grille s'affichent et ne bloquent rien",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 33
+      },
+      {
+        "id": "C2.5",
+        "type": "check",
+        "parent": "C2",
+        "title": "Deux poses trop semblables dans un même lot sont signalées case par case ; le lot n'est pas refusé et les images entrent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 34
+      },
+      {
+        "id": "C2.6",
+        "type": "check",
+        "parent": "C2",
+        "title": "Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein — sans annoncer de probabilité",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 35
+      },
+      {
+        "id": "C2.7",
+        "type": "check",
+        "parent": "C2",
+        "title": "Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux autres",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 36
+      },
+      {
+        "id": "C2.8",
+        "type": "check",
+        "parent": "C2",
+        "title": "Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues, et rien ne se relance tout seul",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 37
+      },
+      {
+        "id": "C2.9",
+        "type": "check",
+        "parent": "C2",
+        "title": "Ce qui part en référence et les réglages d'une génération s'enregistrent sous un nom, et se rappellent d'un geste sur un autre personnage",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 38
+      },
+      {
+        "id": "C2.10",
+        "type": "check",
+        "parent": "C2",
+        "title": "Ce qui sort du produit reste des images séparées : aucune feuille assemblée n'est livrable",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 39
+      },
+      {
+        "id": "C2.11",
+        "type": "check",
+        "parent": "C2",
+        "title": "Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément sur l'univers du projet, et l'auteur n'a pas à les choisir à chaque génération",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 40
+      },
+      {
+        "id": "C2.12",
+        "type": "check",
+        "parent": "C2",
+        "title": "Le coût réel du lot est enregistré et totalisé par projet, comme tout appel depuis T1",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 41
+      },
+      {
+        "id": "C3",
+        "type": "epic",
+        "parent": null,
+        "title": "La pièce et le calque",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 16
+        },
+        "source": "plan",
+        "order": 42,
+        "blocked_by": "- C1 — une pièce se pose sur un corps, et le corps vient du plan de poses"
+      },
+      {
+        "id": "C3.1",
+        "type": "check",
+        "parent": "C3",
+        "title": "Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 43
+      },
+      {
+        "id": "C3.2",
+        "type": "check",
+        "parent": "C3",
+        "title": "Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé **octet pour octet**",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 44
+      },
+      {
+        "id": "C3.3",
+        "type": "check",
+        "parent": "C3",
+        "title": "Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 45
+      },
+      {
+        "id": "C3.4",
+        "type": "check",
+        "parent": "C3",
+        "title": "La planche revenue est redécoupée sur la grille exacte que l'atelier a posée, et la comparaison se fait case par case contre ce qu'il avait envoyé",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 46
+      },
+      {
+        "id": "C3.5",
+        "type": "check",
+        "parent": "C3",
+        "title": "Rien n'est ajouté à l'image envoyée au fournisseur : ni ancre, ni mire, ni silhouette de repère",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 47
+      },
+      {
+        "id": "C3.6",
+        "type": "check",
+        "parent": "C3",
+        "title": "Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée sur-le-champ ; les emplacements sont ordonnés",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 48
+      },
+      {
+        "id": "C3.7",
+        "type": "check",
+        "parent": "C3",
+        "title": "Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est « contenue », et rien ne la devine à la place de l'auteur",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 49
+      },
+      {
+        "id": "C3.8",
+        "type": "check",
+        "parent": "C3",
+        "title": "Une pièce déclarée « qui agrandit », revenue à une autre échelle que celle envoyée, ne produit **aucun** calque : la dérive est nommée à l'écran et ce qui revient est proposé à garder comme corps habillés",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 50
+      },
+      {
+        "id": "C3.9",
+        "type": "check",
+        "parent": "C3",
+        "title": "Un corps habillé est un asset ordinaire : rangé, exportable, avec son coût — il ne s'empile simplement pas",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 51
+      },
+      {
+        "id": "C3.10",
+        "type": "check",
+        "parent": "C3",
+        "title": "Par défaut, aucun masque n'est donné : la différence est cherchée sur toute la case",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 52
+      },
+      {
+        "id": "C3.11",
+        "type": "check",
+        "parent": "C3",
+        "title": "Le masque rectangle d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et **le journal du projet ne bouge pas d'un centime**",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 53
+      },
+      {
+        "id": "C3.12",
+        "type": "check",
+        "parent": "C3",
+        "title": "Le calque est rangé à côté de l'image payée et jamais écrit dedans ; revenir à la différence brute est un geste unique",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 54
+      },
+      {
+        "id": "C3.13",
+        "type": "check",
+        "parent": "C3",
+        "title": "Les mesures — silhouette retrouvée, corps repeint, part ajoutée, échelle au retour, objet ou poussière — s'affichent toutes, et aucune ne rend un calque impossible à garder",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 55
+      },
+      {
+        "id": "C3.14",
+        "type": "check",
+        "parent": "C3",
+        "title": "Aucune génération de pièce seule sur fond vide n'existe : une pièce n'apparaît que sur un corps",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 56
+      },
+      {
+        "id": "C3.15",
+        "type": "check",
+        "parent": "C3",
+        "title": "Le produit ne propose nulle part de reposer un calque sur une autre pose que la sienne",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 57
+      },
+      {
+        "id": "C3.16",
+        "type": "check",
+        "parent": "C3",
+        "title": "Réseau coupé : le masque, le recalcul de différence et la superposition fonctionnent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 58
+      },
+      {
+        "id": "C4",
+        "type": "epic",
+        "parent": null,
+        "title": "La main",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 7
+        },
+        "source": "plan",
+        "order": 59,
+        "blocked_by": "- C3 — on ne retouche à la main que ce que la différence a produit"
+      },
+      {
+        "id": "C4.1",
+        "type": "check",
+        "parent": "C4",
+        "title": "Un masque s'affine à main levée, puis au pixel, sans repayer d'image",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 60
+      },
+      {
+        "id": "C4.2",
+        "type": "check",
+        "parent": "C4",
+        "title": "Un calque se retouche au pixel avec le corps affiché en repère sous lui",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 61
+      },
+      {
+        "id": "C4.3",
+        "type": "check",
+        "parent": "C4",
+        "title": "L'avant et l'après se comparent d'un seul geste",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 62
+      },
+      {
+        "id": "C4.4",
+        "type": "check",
+        "parent": "C4",
+        "title": "Les calques restant à regarder se trient par la mesure la plus défavorable, le pire en tête",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 63
+      },
+      {
+        "id": "C4.5",
+        "type": "check",
+        "parent": "C4",
+        "title": "Le masque et la retouche au pixel sont deux couches distinctes de la recette : modifier le masque ne détruit pas la retouche, et inversement",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 64
+      },
+      {
+        "id": "C4.6",
+        "type": "check",
+        "parent": "C4",
+        "title": "Chaque couche s'annule, se rejoue et se nomme, comme toute recette depuis T2",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 65
+      },
+      {
+        "id": "C4.7",
+        "type": "check",
+        "parent": "C4",
+        "title": "Aucune de ces opérations n'appelle le fournisseur ni ne mobilise la carte graphique",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 66
+      },
+      {
+        "id": "C5",
+        "type": "epic",
+        "parent": null,
+        "title": "La sortie — le dossier du jeu, et l'agent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 8
+        },
+        "source": "plan",
+        "order": 67,
+        "blocked_by": null
+      },
+      {
+        "id": "C5.1",
+        "type": "check",
+        "parent": "C5",
+        "title": "Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 68
+      },
+      {
+        "id": "C5.2",
+        "type": "check",
+        "parent": "C5",
+        "title": "Ce qui part est le **rendu**, jamais l'image payée qui reste dans l'atelier, et le descriptif dit lequel il est — comme en T6",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 69
+      },
+      {
+        "id": "C5.3",
+        "type": "check",
+        "parent": "C5",
+        "title": "Les trois règles du dossier de jeu de T7 tiennent : dossier manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé avec son chemin",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 70
+      },
+      {
+        "id": "C5.4",
+        "type": "check",
+        "parent": "C5",
+        "title": "L'agent ajoute une pose au plan d'un personnage existant et la génère **sans que l'écran soit ouvert**",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 71
+      },
+      {
+        "id": "C5.5",
+        "type": "check",
+        "parent": "C5",
+        "title": "Les outils MCP de la V2 n'ont aucune logique propre : chacun appelle un service que l'écran appelle déjà, et n'offre aucun geste que l'écran n'a pas",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 72
+      },
+      {
+        "id": "C5.6",
+        "type": "check",
+        "parent": "C5",
+        "title": "Les garde-fous de T7 s'appliquent aux appels de la V2 : au plafond, l'agent reçoit un refus qui nomme le plafond et le moyen de le relever, sans aucune invite à l'écran",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 73
+      },
+      {
+        "id": "C5.7",
+        "type": "check",
+        "parent": "C5",
+        "title": "L'atelier n'écrit aucune ligne de code de jeu, et aucun chemin de fichier n'est inventé par l'agent",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 74
+      },
+      {
+        "id": "C5.8",
+        "type": "check",
+        "parent": "C5",
+        "title": "Export d'un personnage sans aucune pose remplie : l'action est grisée avec sa raison, comme toute action indisponible du produit",
+        "status": "todo",
+        "status_raw": null,
+        "team": null,
+        "path": "docs/PLAN.md",
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "plan",
+        "order": 75
+      }
+    ],
+    "sources": [
+      "claude-mastery (docs/PLAN.md)"
+    ],
+    "artifacts": [
+      {
+        "label": "Brief / PRD",
+        "path": "docs/PRD.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Plan de phases",
+        "path": "docs/PLAN.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Design system",
+        "path": "docs/DESIGN.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "Architecture",
+        "path": "docs/architecture.md",
+        "present": true,
+        "detail": ""
+      },
+      {
+        "label": "PRD shardé",
+        "path": "docs/prd",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Stories",
+        "path": "docs/stories",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Portes QA",
+        "path": "docs/qa/gates",
+        "present": false,
+        "detail": ""
+      },
+      {
+        "label": "Config BMAD",
+        "path": ".bmad-core/core-config.yaml",
+        "present": false,
+        "detail": ""
+      }
+    ],
+    "scanned_at": "2026-08-28"
+  },
+  "manual": {
+    "items": []
+  },
+  "overrides": {
+    "T1": {
+      "status": "done"
+    },
+    "T2": {
+      "status": "done"
+    },
+    "T3": {
+      "status": "done"
+    },
+    "T4": {
+      "status": "done"
+    },
+    "T5": {
+      "status": "done"
+    },
+    "T6": {
+      "status": "done"
+    },
+    "T7": {
+      "status": "done"
+    },
+    "T8": {
+      "status": "done"
+    },
+    "T9": {
+      "status": "done"
+    },
+    "T10": {
+      "status": "done"
+    }
+  },
+  "notes": [
+    {
+      "id": "n1",
+      "level": "win",
+      "text": "V1 livrée : les 10 tranches T1–T10 sont tenues (115 critères, 195 tests serveur + 80 tests d'écran). Leur détail vit dans docs/plan-archive.md.",
+      "date": "2026-08-28",
+      "scope": "global",
+      "scope_label": null
+    },
+    {
+      "id": "n2",
+      "level": "decision",
+      "text": "Le % global ne pèse que les 61 critères V2 encore ouverts : les critères V1 sont archivés hors PLAN.md et comptent pour une tranche chacun. Lire plutôt « 10/15 chantiers terminés ».",
+      "date": "2026-08-28",
+      "scope": "global",
+      "scope_label": null
+    },
+    {
+      "id": "n3",
+      "level": "info",
+      "text": "C1 est le seul chantier V2 non bloqué — C2 et C3 attendent C1, C4 attend C3. C5 est indépendant.",
+      "date": "2026-08-28",
+      "scope": "C1",
+      "scope_label": "Le personnage, son plan, une pose, et ce qui part avec elle"
+    }
+  ],
+  "milestones": [],
+  "activity": [
+    {
+      "hash": "b4e80c8",
+      "date": "2026-08-28",
+      "text": "docs: la V2 cadrÃ©e â€” un calque par pose, et le pliage qui en paie un seul"
+    },
+    {
+      "hash": "1f7ccbc",
+      "date": "2026-08-28",
+      "text": "essais: les deux essais payÃ©s du 28 aoÃ»t, et la mÃ©diane qui mentait"
+    },
+    {
+      "hash": "541fe4b",
+      "date": "2026-08-28",
+      "text": "feat: l'aperÃ§u â€” Espace, et l'image sous le pointeur emplit l'Ã©cran"
+    },
+    {
+      "hash": "611d197",
+      "date": "2026-08-28",
+      "text": "feat: T9 â€” les liens et les notes, et la couleur qui ne veut rien dire"
+    },
+    {
+      "hash": "8180dc1",
+      "date": "2026-08-28",
+      "text": "feat: T8 â€” la toile, oÃ¹ l'Ã®lot est le groupe"
+    },
+    {
+      "hash": "5ec83b0",
+      "date": "2026-08-27",
+      "text": "feat: T7 â€” un agent code le jeu, l'atelier lui fabrique les images"
+    },
+    {
+      "hash": "4928381",
+      "date": "2026-08-27",
+      "text": "feat: le produit s'explique lui-mÃªme â€” un corpus, deux rendus"
+    },
+    {
+      "hash": "46f349a",
+      "date": "2026-08-27",
+      "text": "feat: les panneaux tiennent dans l'Ã©cran, et les blocs se replient sur leur valeur"
+    },
+    {
+      "hash": "01210b0",
+      "date": "2026-08-27",
+      "text": "feat: T6 â€” une sÃ©lection sort en archive avec son descriptif"
+    },
+    {
+      "hash": "f1f26fb",
+      "date": "2026-08-27",
+      "text": "feat: T5 â€” la dÃ©coupe vÃ©rifiÃ©e par un appel payant rÃ©el"
+    },
+    {
+      "hash": "ebe1539",
+      "date": "2026-08-27",
+      "text": "feat: le second moteur de dÃ©tourage, exÃ©cutÃ© pour la premiÃ¨re fois"
+    },
+    {
+      "hash": "533da54",
+      "date": "2026-08-27",
+      "text": "feat: T5 â€” une planche multi-sprites se dÃ©coupe en assets"
+    }
+  ]
+}

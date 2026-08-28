@@ -50,10 +50,12 @@ import {
   useInternalNode,
   useNodesState,
   useReactFlow,
+  useStore,
   type Edge,
   type EdgeProps,
   type Node,
   type NodeProps,
+  type ReactFlowState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
@@ -63,6 +65,7 @@ import {
   Refus,
   type Carte,
   type Lien,
+  type Personnage,
   type Teinte,
 } from "../api"
 import {
@@ -87,6 +90,64 @@ import { Libelle } from "./chassis"
 
 const MARGE_ILOT = 14
 const BANDE_ILOT = 20
+
+// ── Les deux échelles ───────────────────────────────────────────────────────
+//
+// **Ce qui se lit est en pixels d'écran ; ce qui se mesure est en pixels de
+// plan** (`docs/DESIGN.md` § Sur la toile, deux échelles). L'image, la carte, la
+// note, la boîte d'un îlot sont des **places** : elles suivent le zoom, sans
+// quoi la toile mentirait sur ce qu'elle range. Le nom d'un îlot, son compte, le
+// mot d'un trait et les trois prises sont des **lectures et des cibles** : ils
+// gardent leur taille d'écran à tous les crans, parce qu'un nom illisible à 0,3×
+// et une poignée de 30 px à 2,5× sont la même panne vue par ses deux bouts.
+//
+// C'est la seule surface du produit qui ait besoin de la règle — partout
+// ailleurs l'écran *est* le plan. **Coût, et il est structurel** : tout objet
+// neuf de cette toile doit déclarer à laquelle des deux il appartient, et
+// l'oubli est silencieux — il ne se voit qu'en zoomant.
+
+/** Le zoom du plan, **relu à chaque cran**.
+ *
+ *  `getZoom()` rend la valeur du moment sans réabonner personne : il sert au
+ *  calcul d'un geste en cours, où l'on veut la valeur *maintenant*. Ici c'est le
+ *  **rendu** qui en dépend, donc c'est le store qu'on lit — et la transformation
+ *  seule, pas le déplacement : `useViewport` rendrait chaque nœud à chaque pixel
+ *  de panoramique, pour une valeur qui n'a pas bougé.
+ *
+ *  Zéro n'est pas un zoom : c'est l'absence de plan monté, et diviser par lui
+ *  ferait disparaître ce qu'on voulait garder lisible. */
+const zoomDuPlan = (etat: ReactFlowState) => etat.transform[2]
+
+function useZoom(): number {
+  return useStore(zoomDuPlan) || 1
+}
+
+/**
+ * Une **ancre d'écran** — un point du plan dont le contenu ne suit pas le zoom.
+ *
+ * La boîte est de taille nulle : elle n'occupe rien, elle ne recouvre rien, et
+ * `scale(1/zoom)` autour d'elle laisse son point exactement là où il est —
+ * ses quatre coins étant confondus, il n'y a aucun `transform-origin` à
+ * choisir, donc aucun à se tromper. Ce qu'on pose dedans se mesure en pixels
+ * d'écran : le plan multiplie par le zoom, l'ancre divise par lui, et le compte
+ * est juste à tous les crans.
+ *
+ * **Une seule forme pour les cinq usages** — le bandeau d'un îlot, ses deux
+ * prises, celles d'une carte, le mot d'un trait. Une taille d'écran obtenue
+ * cinq fois de cinq façons aurait fini par en donner cinq différentes.
+ */
+function ancreEcran(zoom: number, place: React.CSSProperties): React.CSSProperties {
+  return {
+    position: "absolute",
+    width: 0,
+    height: 0,
+    transform: `scale(${1 / zoom})`,
+    transformOrigin: "0 0",
+    // L'ancre elle-même n'attrape rien : ce qu'elle porte le dit pour soi.
+    pointerEvents: "none",
+    ...place,
+  }
+}
 
 /** La hauteur du pied d'une carte — la rangée qui porte son groupe et son cran.
  *  Elle entre dans la hauteur du nœud parce que c'est **l'image** qui suit le
@@ -131,6 +192,16 @@ const ANCRAGES = [
  *  ce seuil l'aimant tient : c'est ce qui empêche la largeur libre d'être
  *  arbitraire, et ce qui rend le cran un repère plutôt qu'une prison. */
 const AIMANT = 12
+
+/** Ce qu'une prise doit parcourir, en pixels d'écran, pour devenir un
+ *  glissement.
+ *
+ *  Le seul endroit du produit qui ait besoin de distinguer les deux : la bande
+ *  d'un îlot porte deux gestes — ouvrir son menu, déplacer l'îlot — et c'est la
+ *  distance qui les sépare. Trois pixels, parce que le tremblement d'un clic en
+ *  fait un ou deux et qu'un déplacement voulu en fait dix. À l'écran et non sur
+ *  le plan : c'est la main qui tremble, pas la toile. */
+const SEUIL_PRISE = 3
 
 /**
  * L'aimant de la largeur libre — **la seule mesure continue du produit**.
@@ -338,6 +409,110 @@ export function ilotSous(point: Place, ilots: Ilot[]): string {
   return dedans.sort((a, b) => a.boite.l * a.boite.h - b.boite.l * b.boite.h)[0].nom
 }
 
+/** Deux boîtes se touchent-elles ? Non strict — deux bords qui se rejoignent au
+ *  pixel se **touchent**, et c'est ce que le mot dit. */
+function touche(un: Boite, deux: Boite): boolean {
+  return (
+    un.x <= deux.x + deux.l &&
+    deux.x <= un.x + un.l &&
+    un.y <= deux.y + deux.h &&
+    deux.y <= un.y + un.h
+  )
+}
+
+/** Deux boîtes se recouvrent-elles ? Strict — deux bords qui se rejoignent au
+ *  pixel sont côte à côte, pas l'un sur l'autre. La sœur de `touche`, et les
+ *  deux existent séparément parce que les deux seuils du classement ne sont
+ *  justement pas le même. */
+function chevauche(un: Boite, deux: Boite): boolean {
+  return (
+    un.x < deux.x + deux.l &&
+    deux.x < un.x + un.l &&
+    un.y < deux.y + deux.h &&
+    deux.y < un.y + un.h
+  )
+}
+
+/**
+ * Le groupe d'une carte posée là — **on entre par le centre, on sort par le
+ * tout**.
+ *
+ * Écrit le 28 août 2026 (`docs/design-motifs.md` § La toile révisée). Le
+ * classement se décidait au centre dans les deux sens, et il suffisait d'en
+ * passer la moitié par-dessus la bordure pour qu'un groupe s'efface —
+ * c'est-à-dire qu'un îlot lâchait une carte qui était encore visiblement dedans.
+ * Les deux seuils se séparent : une carte **entre** dans un îlot dès que son
+ * centre y est, elle n'en **sort** que lorsqu'elle n'en touche plus rien. C'est
+ * l'hystérésis, et c'est le remède écrit d'un classement nerveux.
+ *
+ * **Et quand les deux se disputent, entrer l'emporte sur rester.** Deux îlots
+ * voisins peuvent tenir la même carte — l'un parce qu'elle le touche encore,
+ * l'autre parce que son centre y est déjà —, et une carte n'a qu'un groupe.
+ * L'ordre est donc fixe : le centre d'abord, l'ancien îlot ensuite. Sans lui, le
+ * classement dépendrait de l'ordre de la liste, ce qui est la manière la plus
+ * discrète de n'avoir aucune règle. **Coût** : une carte peut être à moitié
+ * dehors en étant encore dedans, et le cadre s'élargit au relâchement pour le
+ * dire.
+ *
+ * **Pure, et exportée pour ça** : c'est de la géométrie, et la géométrie se
+ * vérifie sans navigateur.
+ */
+export function classer(carte: Boite, actuel: string, ilots: Ilot[]): string {
+  const entrant = ilotSous({ x: carte.x + carte.l / 2, y: carte.y + carte.h / 2 }, ilots)
+  if (entrant) return entrant
+  const ancien = ilots.find((un) => un.nom === actuel)
+  return ancien && touche(carte, ancien.boite) ? actuel : ""
+}
+
+/**
+ * La première place libre à partir de celle qu'on visait — **ce qui arrive de la
+ * réserve ne se pose jamais sur une carte**.
+ *
+ * Lâchée dans un îlot déjà rempli, une carte se posait sous le pointeur et donc
+ * **derrière** ce qui s'y trouvait. Elle glisse maintenant vers la droite, puis
+ * à la ligne, jusqu'à la première place libre : la règle que `disposer` applique
+ * déjà aux cartes d'un îlot à l'ouverture, appliquée à une carte au lieu d'un
+ * lot. Rien d'autre ne bouge — *l'œil reste exactement où il était*, et **ce
+ * n'est donc pas une mise en page qui reflue**.
+ *
+ * **Et la règle s'arrête au bord de la réserve.** Un déplacement *sur* le plan
+ * garde le droit de recouvrir, et c'est la ligne qui rend celle-ci défendable :
+ * la main y voit les deux cartes et décide ; un empilement voulu est un geste
+ * légitime sur une toile. Le glissement depuis la réserve est **aveugle** — le
+ * fantôme que le navigateur traîne ne dit ni la taille réelle au zoom courant,
+ * ni ce qu'il y a dessous. On ne corrige que le geste qui ne peut pas se voir.
+ *
+ * `borneDroite` est le bord au-delà duquel la ligne redescend : celui de l'îlot
+ * où l'on tombe, ou celui de ce que la toile occupe déjà quand il n'y en a pas.
+ * Épuisée, la carte se pose **sous tout** — une place qui est libre par
+ * construction, donc une réponse plutôt qu'un abandon.
+ */
+export function placeLibre(
+  voulue: Place,
+  taille: { l: number; h: number },
+  occupees: Boite[],
+  borneDroite: number,
+): Place {
+  const libre = (place: Place) =>
+    !occupees.some((b) => chevauche({ ...place, ...taille }, b))
+  if (libre(voulue)) return voulue
+
+  const pasX = taille.l + GOUTTIERE
+  const pasY = taille.h + GOUTTIERE
+  const bas = Math.max(...occupees.map((b) => b.y + b.h))
+  // Le nombre de lignes est borné par ce qu'il y a à éviter : au-delà d'une
+  // ligne par carte occupée, il n'y a plus rien à rencontrer.
+  for (let ligne = 0; ligne <= occupees.length; ligne++) {
+    const y = voulue.y + ligne * pasY
+    // La colonne du départ est toujours essayée, même si elle déborde déjà :
+    // la borne écarte les places suivantes, elle ne refuse pas celle qu'on
+    // visait.
+    for (let x = voulue.x; x === voulue.x || x + taille.l <= borneDroite; x += pasX)
+      if (libre({ x, y })) return { x, y }
+  }
+  return { x: voulue.x, y: bas + GOUTTIERE }
+}
+
 /** La carte dont l'étendue contient un point du plan, ou rien.
  *
  *  **La sœur d'`ilotSous`, et elle existe pour la même raison** : c'est le
@@ -463,6 +638,60 @@ export function ilotPerdu(
   }
 }
 
+/**
+ * Ce qu'un glissement en cours ferait disparaître, **s'il se terminait
+ * maintenant**.
+ *
+ * `vers` est le groupe où la carte tomberait — celui de l'îlot sous son centre,
+ * ou le vide si elle est sur le plan nu ou sur la réserve. C'est le même calcul
+ * qu'au relâchement, et il **doit** l'être : deux réponses différentes à un pixel
+ * d'écart feraient de l'avertissement un mensonge la moitié du temps.
+ *
+ * **Un groupe inchangé ne menace rien**, et c'est toute la règle de cette
+ * fonction : déplacer une carte *dans* son îlot est le geste le plus courant de
+ * la toile, et il ne coûte jamais rien. Tout le reste est délégué à `ilotPerdu`,
+ * qui remplissait déjà la pile d'annulation : la même vérité, dite avant le
+ * geste au lieu d'après.
+ *
+ * **Pure, et exportée pour ça.** L'endroit où la carte tombe se mesure à l'écran ;
+ * ce qu'elle emporte en tombant là est de l'arithmétique, et l'arithmétique se
+ * vérifie sans navigateur.
+ */
+export function menaceDe(
+  sortante: Carte,
+  vers: string,
+  cartes: Carte[],
+  liens: Lien[],
+  teintes: Record<string, Teinte>,
+): IlotPerdu | null {
+  if (vers === sortante.groupe) return null
+  return ilotPerdu(sortante, cartes, liens, teintes) ?? null
+}
+
+/**
+ * Le glissement en cours, tel que les îlots ont besoin de le connaître.
+ *
+ * **Un îlot dit ce qu'il vaudra, et non ce qu'il vaut.** T10 avait donné cette
+ * voix à l'îlot pour un seul cas — celui où il disparaît. Elle vaut pour les
+ * trois, parce que c'est le même instant : celui où l'auteur peut encore ne pas
+ * faire le geste. Il faut donc dire à chaque îlot lequel des trois rôles il
+ * tient, et **trois rôles se déduisent de deux noms** : d'où la carte part, où
+ * elle tomberait. `perdu` est le troisième, et il est déjà calculé par
+ * `menaceDe`.
+ *
+ * Une seule forme plutôt que trois états, pour la raison qui vaut sur toute
+ * cette toile : le glissement appelle cent fois par seconde, et trois états
+ * indépendants auraient fait trois rendus là où il en faut un.
+ */
+export type Glissement = {
+  /** L'îlot d'où la carte vient, ou le vide. */
+  depuis: string
+  /** L'îlot où elle tomberait **si on lâchait maintenant**, ou le vide. */
+  vers: string
+  /** Ce que le geste ferait disparaître, ou rien — la sortie de `menaceDe`. */
+  perdu: IlotPerdu | null
+}
+
 export type Geste =
   | {
       genre: "carte"
@@ -472,6 +701,17 @@ export type Geste =
        *  membre. Presque toujours absent, donc. */
       ilot?: IlotPerdu
     }
+  /** **Un îlot déplacé est *un* geste, et donc *une* entrée.** Douze cartes
+   *  posées font douze places écrites ; les empiler une à une aurait demandé
+   *  douze Ctrl+Z pour défaire un seul glissement, c'est-à-dire le contraire de
+   *  ce que la pile promet. Elle décrit des gestes, pas des écritures.
+   *
+   *  `avant` porte les places **occupées**, pas les places *écrites* : une carte
+   *  groupée avant T8 n'en avait aucune, et c'est celle que l'ouverture lui
+   *  calculait qu'elle occupait — donc celle où l'annulation doit la remettre.
+   *  Le disque en garde une de plus qu'avant le geste ; l'œil, lui, retrouve
+   *  exactement ce qu'il avait. */
+  | { genre: "ilot-deplace"; groupe: string; avant: Record<string, [number, number]> }
   | { genre: "lien-cree"; lien: string }
   | { genre: "lien-coupe"; lien: Lien }
 
@@ -493,6 +733,20 @@ type Cadre = {
   epingle: string | null
   crans: Crans | null
   teintes: Record<string, Teinte>
+  /** Les personnages du projet, pour dire ce qui sert et ce qui dort (US-125).
+   *  **Ils passent par le cadre et non par les données d'un nœud** : la
+   *  librairie garde ces données-là, et y poser une liste qui change ferait
+   *  recomposer la toile à chaque description écrite ailleurs. */
+  personnages: Personnage[]
+  /** Le glissement en cours, ou rien — d'où la carte part, où elle tomberait,
+   *  et ce que le geste ferait disparaître.
+   *
+   *  **C'est `ilotPerdu` rendu visible**, la même fonction qui remplit la pile
+   *  d'annulation, plus les deux noms qui donnent aux **trois** îlots concernés
+   *  leur rôle. Elle savait déjà, au moment d'écrire, ce que le geste allait
+   *  emporter ; elle le dit maintenant *pendant* qu'on le fait, ce qui est le
+   *  seul instant où l'on peut encore ne pas le faire. */
+  glissement: Glissement | null
   /** La taille d'un nœud, **telle que le produit la calcule** — jamais celle
    *  que la librairie croit avoir mesurée. Voir `AreteLien`. */
   tailleDe: (id: string) => { l: number; h: number } | null
@@ -502,6 +756,11 @@ type Cadre = {
   onErreur: (raison: string) => void
   onLargeur: (carte: Carte, largeur: number) => void
   onTeinterIlot: (nom: string, teinte: Teinte) => void
+  /** L'îlot suit la main — sans rien écrire. La formule du dépôt depuis T2 :
+   *  *la valeur suit la main, l'écriture suit le relâchement.* */
+  onGlisserIlot: (nom: string, ecart: Place) => void
+  /** Et le relâchement écrit, en un appel pour tout l'îlot. */
+  onPoserIlot: (nom: string, ecart: Place) => void
   onReglerLien: (lien: Lien, reglage: { mot?: string; pointe?: boolean }) => void
   onCouperLien: (lien: Lien) => void
   onNote: (texte: string, place: Place) => void
@@ -530,6 +789,7 @@ type Parametres = {
   cartes: Carte[]
   liens: Lien[]
   teintes: Record<string, Teinte>
+  personnages: Personnage[]
   vue: Vue
   onVue: (vue: Vue) => void
   choisie: string | null
@@ -558,6 +818,7 @@ function Plan({
   cartes,
   liens,
   teintes,
+  personnages,
   vue,
   onVue,
   choisie,
@@ -571,6 +832,10 @@ function Plan({
   // Ce qui est épinglé sans être une carte : un lien, un îlot. Local au plan,
   // parce que rien d'autre que le plan n'en dessine.
   const [epingle, setEpingle] = useState<string | null>(null)
+  // Le glissement en cours, et ce qu'il ferait aux îlots qu'il touche. Local au
+  // plan, comme `epingle` : rien d'autre que le plan n'en dessine, et ça meurt
+  // avec le geste.
+  const [glissement, setGlissement] = useState<Glissement | null>(null)
   const { survolee, survoler } = useSurvol(choisie !== null || epingle !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
   const [noeuds, setNoeuds, surChangement] = useNodesState<Node>([])
@@ -631,7 +896,12 @@ function Plan({
         id: `ilot:${nom}`,
         type: "ilot",
         position: { x: boite.x, y: boite.y },
-        data: { nom, membres },
+        // **La largeur voyage avec les données**, parce que le bandeau est de
+        // l'écran et la boîte du plan : pour tenir la largeur de l'une en
+        // pixels de l'autre, il faut la connaître. La lire sur le DOM aurait
+        // demandé une mesure, et *une mesure ne se prend pas dans un onglet qui
+        // ne compose pas ses images* — le piège de ce fichier depuis T5.
+        data: { nom, membres, largeur: boite.l },
         width: boite.l,
         height: boite.h,
         handles: ANCRAGES,
@@ -946,17 +1216,150 @@ function Plan({
         return
       }
 
-      const centre = {
-        x: place.x + largeurDe(carte, crans) / 2,
-        y: place.y + hauteurDe(carte, crans) / 2,
+      // **On entre par le centre, on sort par le tout** — `classer`, et c'est
+      // le même calcul qu'à `surveiller`. Deux réponses différentes à un pixel
+      // d'écart feraient de l'avertissement un mensonge la moitié du temps.
+      const boite = {
+        ...place,
+        l: largeurDe(carte, crans),
+        h: hauteurDe(carte, crans),
       }
-      poser(carte, { groupe: ilotSous(centre, ilots), position: [place.x, place.y] })
+      poser(carte, {
+        groupe: classer(boite, carte.groupe, ilots),
+        position: [place.x, place.y],
+      })
     },
     [cartes, crans, ilots, poser],
   )
 
+  // ── Le geste de l'îlot ───────────────────────────────────────────────────
+  //
+  // **Déplacer un îlot, c'est déplacer ses cartes — il n'a rien d'autre.** Il
+  // n'a ni identité, ni fichier, ni position à lui : son étendue est celle de
+  // ses membres (`docs/ARCHITECTURE.md` §5), donc la seule chose qu'on puisse
+  // écrire de son déplacement est leur place à chacune. Ce qui rend le geste
+  // possible sans faire de l'îlot un objet.
+  //
+  // **Et il ne reclasse rien.** Une carte lâchée décide de son groupe par
+  // l'endroit où elle tombe ; un îlot lâché ne décide de rien du tout, parce
+  // que déplacer un rangement n'est pas ranger ce qu'il contient. Deux îlots
+  // qui se recouvrent restent deux îlots — c'était déjà permis, rien ne
+  // s'aligne tout seul sur cette toile.
+
+  /** Les cartes d'un îlot et la place que chacune **occupe**.
+   *
+   *  Occupée, et non *écrite* : une carte groupée avant T8 n'a pas de position,
+   *  et c'est celle que l'ouverture lui calcule qu'elle occupe (`disposer`). La
+   *  prendre là est ce qui fait qu'un vieil îlot se déplace comme un neuf. */
+  const membresDe = useCallback(
+    (nom: string) =>
+      cartes
+        .filter((c) => !c.en_reserve && c.groupe === nom)
+        .map((c) => ({ carte: c, place: places.get(c.identifiant) }))
+        .filter((m): m is { carte: Carte; place: Place } => m.place !== undefined),
+    [cartes, places],
+  )
+
+  /** L'îlot suit la main, **sans rien écrire** — et ses cartes avec lui.
+   *
+   *  L'écart s'applique toujours à la place que le serveur dit, jamais à celle
+   *  du rendu précédent : additionner des écarts image après image accumule
+   *  l'erreur du zoom, et l'îlot dérive sous la main. Une base fixe, un écart
+   *  total, aucune mémoire à tenir. */
+  const glisserIlot = useCallback(
+    (nom: string, ecart: Place) => {
+      const bases = new Map<string, Place>(
+        membresDe(nom).map(({ carte, place }) => [carte.identifiant, place]),
+      )
+      const ilot = ilots.find((un) => un.nom === nom)
+      if (ilot) bases.set(`ilot:${nom}`, { x: ilot.boite.x, y: ilot.boite.y })
+      setNoeuds((liste) =>
+        liste.map((noeud) => {
+          const base = bases.get(noeud.id)
+          return base
+            ? { ...noeud, position: { x: base.x + ecart.x, y: base.y + ecart.y } }
+            : noeud
+        }),
+      )
+    },
+    [membresDe, ilots, setNoeuds],
+  )
+
+  /** Et le relâchement écrit — **un appel pour tout l'îlot**, une entrée pour
+   *  tout le geste. Voir `api.deplacerIlot` et le genre `ilot-deplace`. */
+  const poserIlot = useCallback(
+    (nom: string, ecart: Place) => {
+      const membres = membresDe(nom)
+      if (!membres.length) return
+      const avant: Record<string, [number, number]> = {}
+      const apres: Record<string, [number, number]> = {}
+      for (const { carte, place } of membres) {
+        avant[carte.identifiant] = [place.x, place.y]
+        apres[carte.identifiant] = [place.x + ecart.x, place.y + ecart.y]
+      }
+      pile.current.push({ genre: "ilot-deplace", groupe: nom, avant })
+      void api
+        .deplacerIlot(nom, apres)
+        .catch((e) => echouer(e, "l'îlot n'a pas pu être déplacé"))
+    },
+    [membresDe, echouer, pile],
+  )
+
+  /** Ce que le glissement en cours ferait disparaître — **calculé pendant, avec
+   *  la fonction qui le calculait déjà après**.
+   *
+   *  `ilotPerdu` remplissait la pile d'annulation au moment d'écrire : elle
+   *  savait, mais après coup. Le seul instant où l'auteur peut encore ne pas
+   *  faire le geste est *pendant* qu'il le fait, et « hors îlot, pas de groupe »
+   *  emporte alors la teinte de l'îlot et les traits qui y aboutissaient. Ce
+   *  n'est pas une confirmation — le produit n'en pose pas — c'est le même fait,
+   *  montré à temps.
+   *
+   *  La destination se demande exactement comme au relâchement : la réserve
+   *  d'abord, puis l'îlot sous le **centre** de la carte. Deux réponses
+   *  différentes à un pixel d'écart auraient fait de l'avertissement un mensonge
+   *  la moitié du temps. */
+  const surveiller = useCallback(
+    (evenement: MouseEvent, noeud: Node) => {
+      const carte = cartes.find((c) => c.identifiant === noeud.id)
+      if (!carte || !crans) return
+      const vers = surLaReserve({ x: evenement.clientX, y: evenement.clientY })
+        ? ""
+        : classer(
+            {
+              ...noeud.position,
+              l: largeurDe(carte, crans),
+              h: hauteurDe(carte, crans),
+            },
+            carte.groupe,
+            ilots,
+          )
+      const perdu = menaceDe(carte, vers, cartes, liens, teintes)
+      // Le glissement appelle cent fois par seconde et l'état ne doit changer
+      // qu'à la frontière : sans cette égalité, chaque image refabriquerait le
+      // contexte des nœuds et remonterait toute la toile.
+      setGlissement((avant) =>
+        avant &&
+        avant.depuis === carte.groupe &&
+        avant.vers === vers &&
+        avant.perdu?.nom === perdu?.nom
+          ? avant
+          : { depuis: carte.groupe, vers, perdu },
+      )
+    },
+    [cartes, liens, teintes, crans, ilots],
+  )
+
   /** Une carte tirée de la réserve — elle arrive **où on la lâche**, et le
-   *  classement suit la place. Composer et classer sont le même geste. */
+   *  classement suit la place. Composer et classer sont le même geste.
+   *
+   *  **Mais jamais sur une carte** : le glissement depuis la réserve est le seul
+   *  geste aveugle de cette toile — le fantôme que le navigateur traîne ne dit
+   *  ni la taille réelle au zoom courant, ni ce qu'il y a dessous. Elle glisse
+   *  donc vers la droite, puis à la ligne, jusqu'à la première place libre
+   *  (`placeLibre`), et **le groupe se décide sur la place finale** : composer
+   *  et classer restent le même geste, y compris quand la place a dû se
+   *  déplacer d'une colonne. */
   const accueillir = useCallback(
     (evenement: React.DragEvent) => {
       const identifiant = evenement.dataTransfer.getData(GLISSE_CARTE)
@@ -965,15 +1368,37 @@ function Plan({
       const carte = cartes.find((c) => c.identifiant === identifiant)
       if (!carte) return
       const point = screenToFlowPosition({ x: evenement.clientX, y: evenement.clientY })
+      const taille = { l: largeurDe(carte, crans), h: hauteurDe(carte, crans) }
       // Lâchée sous le pointeur, donc centrée sur lui : une carte qui se pose
       // par son coin supérieur gauche tombe toujours à côté de ce qu'on visait.
-      const place = {
-        x: point.x - largeurDe(carte, crans) / 2,
-        y: point.y - hauteurDe(carte, crans) / 2,
-      }
-      poser(carte, { groupe: ilotSous(point, ilots), position: [place.x, place.y] })
+      const visee = { x: point.x - taille.l / 2, y: point.y - taille.h / 2 }
+
+      // Ce qui occupe déjà le plan, et jusqu'où la ligne peut pousser : le bord
+      // de l'îlot où l'on tombe, ou celui de tout ce qui est posé quand il n'y
+      // en a pas. Aucun nombre écrit à la main — on ne pousse jamais une carte
+      // au-delà de ce que la toile occupe déjà.
+      const occupees = cartes
+        .filter((c) => !c.en_reserve && c.identifiant !== identifiant)
+        .map((c) => {
+          const p = places.get(c.identifiant)
+          return p ? { ...p, l: largeurDe(c, crans), h: hauteurDe(c, crans) } : null
+        })
+        .filter((b): b is Boite => b !== null)
+      const accueillant = ilots.find((un) => un.nom === ilotSous(point, ilots))
+      const tout = englober(occupees)
+      const borne = accueillant
+        ? accueillant.boite.x + accueillant.boite.l
+        : tout
+          ? tout.x + tout.l
+          : visee.x
+
+      const place = placeLibre(visee, taille, occupees, borne)
+      poser(carte, {
+        groupe: classer({ ...place, ...taille }, "", ilots),
+        position: [place.x, place.y],
+      })
     },
-    [cartes, crans, ilots, poser, screenToFlowPosition],
+    [cartes, crans, ilots, places, poser, screenToFlowPosition],
   )
 
   /** Le point du plan où un geste de la librairie s'est terminé, et ce qu'il y
@@ -1081,6 +1506,13 @@ function Plan({
         await api.couperLien(geste.lien)
         return
       }
+      if (geste.genre === "ilot-deplace") {
+        // Le même appel avec les places d'avant : « annuler, c'est rappeler la
+        // même route avec la valeur d'avant », et l'îlot repart entier comme il
+        // est venu.
+        await api.deplacerIlot(geste.groupe, geste.avant)
+        return
+      }
       if (geste.genre === "lien-coupe") {
         const { de, vers, mot, pointe } = geste.lien
         const repose = await api.lier(de, vers, { mot, pointe })
@@ -1121,6 +1553,8 @@ function Plan({
       epingle,
       crans,
       teintes,
+      personnages,
+      glissement,
       tailleDe,
       onSurvol: survoler,
       onChoisir,
@@ -1129,6 +1563,8 @@ function Plan({
       onLargeur: (carte, largeur) => poser(carte, { largeur_libre: largeur }),
       onTeinterIlot: (nom, teinte) =>
         void api.teinterIlot(nom, teinte).catch((e) => echouer(e, "teinte refusée")),
+      onGlisserIlot: glisserIlot,
+      onPoserIlot: poserIlot,
       onReglerLien: (un, reglage) =>
         void api
           .reglerLien(un.identifiant, reglage)
@@ -1141,10 +1577,12 @@ function Plan({
     }),
     [
       choisie,
+      personnages,
       survolee,
       epingle,
       crans,
       teintes,
+      glissement,
       tailleDe,
       survoler,
       onChoisir,
@@ -1154,6 +1592,8 @@ function Plan({
       ecrire,
       echouer,
       getZoom,
+      glisserIlot,
+      poserIlot,
     ],
   )
 
@@ -1185,7 +1625,27 @@ function Plan({
         depot.survole ? "bg-fond-2" : "bg-fond-0",
       ].join(" ")}
     >
-      <BarreTableau cartes={cartes} vue={vue} onVue={onVue} />
+      {/* **En toile, `+ note` pose le brouillon au centre de ce que l'écran
+          montre** — c'est-à-dire au milieu de ce qu'on regarde, et non à sept
+          cents pixels de là, qui était l'argument de T9 contre un contrôle de
+          barre. Le centre se **mesure** sur le plan rendu : la librairie tient
+          ses dimensions par un `ResizeObserver`, et un `ResizeObserver` ne livre
+          rien à un onglet qui ne compose pas ses images (`AGENTS.md`). Une
+          largeur se lit à la demande, quatrième fois dans ce fichier. */}
+      <BarreTableau
+        cartes={cartes}
+        vue={vue}
+        onVue={onVue}
+        onNote={() => {
+          if (!crans || !plan.current) return
+          const place = plan.current.getBoundingClientRect()
+          const centre = screenToFlowPosition({
+            x: place.left + place.width / 2,
+            y: place.top + place.height / 2,
+          })
+          setBrouillon({ x: centre.x - crans[1] / 2, y: centre.y - crans[1] / 2 })
+        }}
+      />
 
       <div
         ref={plan}
@@ -1211,12 +1671,18 @@ function Plan({
             edgeTypes={TYPES_ARETE}
             onConnectEnd={relierAu}
             isValidConnection={peutRelier}
-            onNodeDragStop={(evenement, noeud) =>
+            // **Pendant** le glissement, l'écran dit ce que le relâchement
+            // ferait disparaître ; **au** relâchement, il l'écrit. Deux
+            // moments, une seule règle — `surveiller` et `relacher` demandent
+            // la destination de la même façon.
+            onNodeDrag={(evenement, noeud) => surveiller(evenement as MouseEvent, noeud)}
+            onNodeDragStop={(evenement, noeud) => {
+              setGlissement(null)
               relacher(noeud.id, noeud.position, {
                 x: (evenement as MouseEvent).clientX,
                 y: (evenement as MouseEvent).clientY,
               })
-            }
+            }}
             onPaneClick={() => {
               onChoisir(null)
               setEpingle(null)
@@ -1236,6 +1702,15 @@ function Plan({
             // Le défaut est `true` lui aussi, et le double-clic écrit une note
             // ici. Voir `ouvrirBrouillon`.
             zoomOnDoubleClick={false}
+            // **Le fond ne bouge que quand on le déplace**, et c'est la seconde
+            // moitié de la même règle. Le défaut de la librairie fait glisser le
+            // plan tout seul dès que le pointeur passe à moins de 40 px d'un bord
+            // pendant qu'on tire un nœud — or la réserve est collée au bord
+            // droit, donc *tout* renvoi de carte traverse cette bande, et le plan
+            // fuit sous la main au moment précis où l'on range. « L'œil reste
+            // exactement où il était » vaut ici comme pour la grille : ce qui se
+            // déplace tout seul n'a été demandé par personne.
+            autoPanOnNodeDrag={false}
             nodesFocusable={false}
             edgesFocusable={false}
             // **Cette ligne cesse d'être un héritage le jour où il y a de vraies
@@ -1296,13 +1771,22 @@ function Plan({
 }
 
 /** Le pointeur est-il sur la réserve ? La frontière est celle de la colonne,
- *  telle qu'elle est rendue — mesurée, jamais supposée. */
+ *  telle qu'elle est rendue — mesurée, jamais supposée.
+ *
+ *  **Et repliée, la réserve n'est plus une frontière.** Elle garde ses 380 px —
+ *  replier n'est pas démonter, et c'est cette largeur-là que l'aimant mesure —,
+ *  mais la case qui la porte est à zéro et les rogne entièrement : ce qui reste
+ *  à l'écran n'a pas d'épaisseur, et une carte lâchée là n'a rien traversé. Le
+ *  rectangle du nœud dit l'inverse, puisqu'il ne sait rien du rognage de son
+ *  parent ; on le borne donc à ce que la fenêtre montre. */
 function surLaReserve(pointeur: Place): boolean {
   const colonne = document.querySelector("[data-reserve]")?.getBoundingClientRect()
+  if (!colonne) return false
+  const droite = Math.min(colonne.right, window.innerWidth)
   return (
-    !!colonne &&
+    droite > colonne.left &&
     pointeur.x >= colonne.left &&
-    pointeur.x <= colonne.right &&
+    pointeur.x <= droite &&
     pointeur.y >= colonne.top &&
     pointeur.y <= colonne.bottom
   )
@@ -1354,34 +1838,105 @@ function Ancrage() {
 }
 
 /**
- * L'îlot — un cadre, un nom, et depuis T9 une couleur.
+ * Les six points — **le premier glyphe du produit**, et il vient avec sa règle
+ * d'admission.
+ *
+ * `docs/DESIGN.md` dit « aucune icône illustrative » depuis l'origine, et il n'y
+ * a jamais eu d'exception. En voici une, et la règle qui la borne : **un glyphe
+ * n'entre que là où aucun mot ne peut tenir et où la forme est déjà lue sans
+ * apprentissage.** Dix-huit pixels de bandeau avant le nom n'accueillent pas un
+ * mot ; une grille de six points est lue comme *ça se saisit* par quiconque a
+ * déjà touché une interface. Le carré de 10 px qu'elle remplace échouait aux
+ * deux : il ne disait rien, et il était le troisième carré identique de l'écran.
+ *
+ * **Coût** : le produit a désormais un glyphe, donc un endroit où en ajouter un
+ * deuxième. La règle ci-dessus est tout ce qui l'en empêche.
+ *
+ * Il prend la couleur du nom, parce qu'il est de la même encre que lui — c'est
+ * le bandeau qui décide de ce qui s'écrit dessus, et il n'en décide qu'une fois.
+ */
+function SixPoints({ encre }: { encre: string }) {
+  return (
+    <span
+      aria-hidden
+      className="grid h-3 w-3 shrink-0 grid-cols-2 grid-rows-3 place-content-center place-items-center gap-[2px] p-px"
+    >
+      {[0, 1, 2, 3, 4, 5].map((rang) => (
+        <i
+          key={rang}
+          style={{ background: encre }}
+          className="block h-[3px] w-[3px] rounded-full"
+        />
+      ))}
+    </span>
+  )
+}
+
+/**
+ * L'îlot — un cadre, un bandeau, un nom, un compte, deux prises.
  *
  * « L'îlot est du châssis, pas un objet dessiné » (`docs/DESIGN.md`) : cadre de
- * 1 px, rayon 2 comme la carte, fond de la même teinte à 8 %, titre en mono
+ * 1 px, rayon 2 comme la carte, fond de la même teinte à **16 %**, titre en mono
  * 10 px parce que c'est un fait sur ce qu'il contient et pas une légende. Sans
  * teinte il porte celle du châssis — `--bord-fort`, `--fond-1` à 40 % —, et ce
  * n'est pas un provisoire : c'est ce que ce document dit qu'il est.
  *
- * **Il ne se saisit toujours pas.** Ce qui change en T9 tient en une ligne : la
- * bande de son nom passe en `pointer-events: auto` sous un nœud qui reste en
- * `none`. L'argument est géométrique et il se mesure dans `ilotsDe` — la boîte
- * part à `y − MARGE_ILOT − BANDE_ILOT`, donc ces 20 px sont **au-dessus** de la
- * boîte englobante de ses membres et ne recouvrent aucune carte, par
- * construction. Une surface qui ne recouvre rien ne prend rien à personne, là
- * où rendre la *boîte* vivante aurait volé chaque prise de carte. On traverse
- * toujours l'îlot pour prendre une carte et pour déplacer le plan ; on ne le
- * déplace toujours pas, puisque déplacer un rangement serait déplacer ce qu'il
- * contient. Ce qu'on perd est 20 px de plan par îlot, et ça se dit.
+ * **Le bandeau est en teinte pleine, et c'est lui qui décide de la couleur de
+ * son texte** (28 août 2026, `docs/design-motifs.md` § La toile révisée). La
+ * bande de 20 px était transparente et le nom portait la teinte sur un fond à
+ * 8 % : un îlot ne se nommait de loin que si on savait déjà où regarder. Un
+ * bandeau teinté est clair, donc le nom s'y pose en `--fond-0`, qui vaut 5,2 : 1
+ * sur les dix ; `--bord-fort` est sombre, donc le nom y reste en `--texte`, à
+ * 8,4 : 1. **C'est la seule conditionnelle que la toile s'autorise, et elle est
+ * mécanique, pas décorative** : `--fond-0` sur `--bord-fort` vaut 1,9 : 1,
+ * c'est-à-dire illisible. Le compte est cette encre à 90 %, la prise de lien à
+ * 55 % — un seul nombre pour les deux cas, à trois endroits.
  *
- * **Le nom ouvre le menu, la poignée tire le lien — deux surfaces, deux
- * gestes.** Une bande qui ferait les deux les mettrait sur le même
- * `pointerdown`, et il faudrait décider lequel gagne à chaque pression. La
- * poignée est la jumelle de celle de la largeur : 10 px, mêmes tokens, révélée
- * au survol.
+ * **Deux échelles, et le bandeau appartient à celle de l'écran.** Sa boîte est
+ * du plan ; son nom, son compte et ses deux prises sont des lectures et des
+ * cibles. Il garde donc ses 20 px d'écran à tous les crans, et **son bord
+ * inférieur reste collé au haut de la marge de l'îlot** : ce qu'il gagne en
+ * hauteur quand on dézoome, il le prend au-dessus du cadre, jamais sur les
+ * cartes. La phrase de T9 — *ces 20 px ne recouvrent aucune carte, par
+ * construction* — est donc vraie à tous les zooms, et pas seulement à 1×. Le
+ * cadre, lui, fait suivre son bord du haut : sans ça, le bandeau flotterait à
+ * l'intérieur à 2,5× et déborderait au-dessus à 0,3×.
+ *
+ * **Une seule surface vivante, et c'est le bandeau** : il passe en
+ * `pointer-events: auto` sous un nœud qui reste en `none`. Une surface qui ne
+ * recouvre rien ne prend rien à personne, là où rendre la *boîte* vivante aurait
+ * volé chaque prise de carte. On traverse toujours l'îlot pour prendre une
+ * carte ; on ne le déplace que par son bandeau (T10).
+ *
+ * **Ce qu'on perd est 20 px de plan par îlot, et c'est `nopan` qui le paie.**
+ * La phrase était écrite depuis T9, la classe manquait : la bande déplaçait
+ * l'îlot *et* le plan, du même écart, donc l'îlot à deux fois la main et le fond
+ * à une fois. Corrigé le 28 août 2026, à l'usage.
+ *
+ * **Trois gestes sur ce bandeau, et ce sont les formes qui les séparent
+ * désormais.** Les six points saisissent, le nom ouvre le menu, le rond tire un
+ * lien. Le nom et le bandeau partagent le même `pointerdown` et c'est la
+ * **distance** qui tranche (T10) ; le rond, lui, est écarté dès la pression,
+ * parce que deux gestes sur une même pression demanderaient de décider lequel
+ * gagne — c'est l'argument qui a déjà éteint `connectOnClick`. Les curseurs le
+ * redisent : `pointer` sur le mot, `grab` sur le bandeau, `crosshair` sur le
+ * rond.
  */
 function NoeudIlot({ data }: NodeProps) {
   const cadre = useContext(CADRE)
-  const { nom, membres } = data as unknown as { nom: string; membres: number }
+  const zoom = useZoom()
+  const { nom, membres, largeur } = data as unknown as {
+    nom: string
+    membres: number
+    largeur: number
+  }
+  /** La prise en cours sur le bandeau : d'où le pointeur est parti, s'il a
+   *  franchi le seuil, et s'il est parti du nom. Un `ref` et non un état — la
+   *  valeur est lue par les gestionnaires suivants du même geste, elle n'est pas
+   *  rendue. */
+  const prise = useRef<{ x: number; y: number; tire: boolean; surLeNom: boolean } | null>(
+    null,
+  )
   if (!cadre) return null
 
   const cle = cleIlot(nom)
@@ -1389,63 +1944,264 @@ function NoeudIlot({ data }: NodeProps) {
   const teinte = cadre.teintes[nom] ?? ""
   const couleur = teinte ? COULEUR_TEINTE[teinte] : null
 
-  return (
-    <div
-      data-ilot={nom}
-      style={
-        couleur
-          ? {
-              borderColor: couleur,
-              background: `color-mix(in srgb, ${couleur} 8%, transparent)`,
-            }
-          : undefined
-      }
-      className={[
-        "group/ilot h-full w-full rounded-[2px] border",
-        couleur ? "" : "border-bord-fort bg-fond-1/40",
-      ].join(" ")}
-    >
-      {/* **La seule surface vivante de l'îlot**, et elle ne recouvre aucune de
-          ses cartes. Le nœud reste en `pointer-events: none` ; un enfant en
-          `auto` sous un parent en `none` reçoit ses événements. */}
-      <div
-        style={{ pointerEvents: "auto" }}
-        onPointerEnter={() => cadre.onSurvol(cle, true)}
-        onPointerLeave={() => cadre.onSurvol(cle, false)}
-        className="mesure relative flex h-[20px] items-center gap-2 px-2 text-[10px]"
-      >
-        {/* Le nom **est** la poignée du menu — le motif de l'infobulle, appliqué
-            à l'objet qui n'a rien d'autre à offrir. `w-fit` pour la même raison
-            qu'un libellé : dans une rangée, la cible doit être le mot. */}
-        <button
-          type="button"
-          onClick={() => cadre.onEpingler(ouvert && cadre.epingle === cle ? null : cle)}
-          style={couleur ? { color: couleur } : undefined}
-          className={`w-fit max-w-full truncate text-left ${couleur ? "" : "text-texte-2"}`}
-        >
-          {nom}
-        </button>
-        <span className="shrink-0 text-texte-3">
-          {membres} carte{membres > 1 ? "s" : ""}
-        </span>
+  // ── Ce que l'îlot vaudra, et non ce qu'il vaut ───────────────────────────
+  //
+  // T10 avait donné cette voix à l'îlot pour un seul cas — celui où il
+  // disparaît. Elle vaut pour les trois, parce que c'est le même instant : celui
+  // où l'auteur peut encore ne pas faire le geste. Les trois rôles sont
+  // exclusifs, et l'ordre les rend tels : partir l'emporte sur perdre, qui n'est
+  // que sa version bénigne.
+  const geste = cadre.glissement
+  const part = geste?.perdu?.nom === nom ? geste.perdu : null
+  const accueille = !part && !!geste && geste.vers === nom && geste.depuis !== nom
+  const perd = !part && !!geste && geste.depuis === nom && geste.vers !== nom
 
-        {/* La poignée de lien, jumelle de celle de la largeur : mêmes tokens,
-            même révélation au survol, seul le curseur diffère. */}
-        <Handle
-          type="source"
-          position={Position.Right}
-          isConnectableStart
-          isConnectableEnd={false}
-          className="!relative !ml-auto !h-[10px] !w-[10px] !min-w-0 !translate-y-0 !transform-none !cursor-crosshair !rounded-[2px] !border !border-bord-fort !bg-fond-3 !opacity-0 !transition-opacity !duration-[80ms] group-hover/ilot:!opacity-100"
-        />
-        <Ancrage />
+  /** La couleur de la surface — la teinte, le châssis, ou ce qui s'en va. */
+  const surface = part ? "var(--color-echec)" : (couleur ?? "var(--color-bord-fort)")
+  /** L'encre du bandeau, et c'est le bandeau qui la décide. */
+  const encre = part || couleur ? "var(--color-fond-0)" : "var(--color-texte)"
+
+  // **Le trait porte le message, et la couleur reste réservée.** La seule
+  // couleur disponible pour dire *ça s'en va* est `--echec` ; la dépenser sur un
+  // geste anodin — retirer une carte d'un îlot qui en compte douze — ferait
+  // cesser de voir le seul avertissement qui compte, celui de la dernière carte.
+  // Le **pointillé** dit *cette limite n'est pas celle que tu vas laisser* sans
+  // emprunter un mot à la sémantique, et le fond vidé le redit sur toute la
+  // surface, là où l'œil est réellement posé pendant qu'on tire.
+  const fond = part
+    ? "color-mix(in srgb, var(--color-echec) 8%, transparent)"
+    : perd
+      ? "transparent"
+      : accueille
+        ? `color-mix(in srgb, ${surface} 28%, transparent)`
+        : couleur
+          ? `color-mix(in srgb, ${couleur} 16%, transparent)`
+          : "color-mix(in srgb, var(--color-fond-1) 40%, transparent)"
+
+  // **Le compte est l'argument, et il était déjà là.** Montrer la valeur
+  // *future* au lieu de la valeur courante ne demande ni surface, ni couleur, ni
+  // glyphe. Les traits sont nommés parce qu'ils partiraient sans qu'on les voie
+  // partir ; la teinte non — elle est déjà en train de s'en aller sous les yeux,
+  // le cadre ayant viré à `--echec`.
+  const apres = membres + (accueille ? 1 : perd ? -1 : 0)
+  const compte = part
+    ? `l'îlot part${part.liens.length ? ` — ${part.liens.length} trait${part.liens.length > 1 ? "s" : ""}` : ""}`
+    : `${apres} carte${apres > 1 ? "s" : ""}`
+
+  /** Le haut du bandeau, en pixels de plan et relatif au nœud. Son **bas** est
+   *  fixe — il vaut `BANDE_ILOT`, c'est-à-dire le haut de la marge de l'îlot —,
+   *  donc c'est le haut qui bouge avec le zoom. */
+  const haut = BANDE_ILOT - 20 / zoom
+
+  /** L'écart parcouru depuis la prise, **à l'échelle du plan** : sans la
+   *  division, tirer de dix pixels à l'écran en donnerait quarante sur un plan
+   *  réduit au quart. La poignée de largeur divise déjà par le même zéro. */
+  const ecartDe = (evenement: React.PointerEvent, depuis: { x: number; y: number }) => {
+    const echelle = cadre.zoom() || 1
+    return {
+      x: (evenement.clientX - depuis.x) / echelle,
+      y: (evenement.clientY - depuis.y) / echelle,
+    }
+  }
+
+  return (
+    <div data-ilot={nom} className="group/ilot relative h-full w-full">
+      {/* **Le cadre — sa boîte est du plan, son bord du haut suit le bandeau.**
+          L'écart entre les deux ne dépasse jamais 20 px de plan, et il n'existe
+          que pour que le bandeau se pose *sur* le cadre à tous les crans plutôt
+          que de flotter dedans ou au-dessus. Ce que le classement mesure reste
+          la boîte, qui n'a pas bougé. */}
+      <div
+        style={{
+          top: haut,
+          borderColor: surface,
+          borderStyle: perd ? "dashed" : "solid",
+          background: fond,
+        }}
+        className="absolute right-0 bottom-0 left-0 rounded-[2px] border transition-colors duration-[80ms]"
+      />
+
+      {/* **Le bandeau, en pixels d'écran** — voir `ancreEcran`. Sa largeur est
+          celle de la boîte (donc du plan, donc multipliée par le zoom avant
+          d'entrer dans l'ancre), sa hauteur est de 20 px d'écran, et le pixel
+          qu'il déborde de chaque côté couvre le bord du cadre.
+
+          **Il est aussi sa propre poignée.** Le pointeur est capturé dès la
+          pression et non au franchissement du seuil : une bande de 20 px se
+          quitte en une image quand on tire vite, et un glissement qui n'attrape
+          rien parce que la main allait trop vite est un geste qui rate au
+          hasard. La capture prise, c'est le **relâchement** qui dit ce que le
+          geste était — sous le seuil un clic, au-dessus un déplacement. */}
+      <div style={ancreEcran(zoom, { left: 0, top: haut })}>
+        <div
+          style={{
+            pointerEvents: "auto",
+            left: -1,
+            top: -1,
+            width: largeur * zoom + 2,
+            height: 20,
+            background: surface,
+            color: encre,
+          }}
+          onPointerEnter={() => cadre.onSurvol(cle, true)}
+          onPointerLeave={() => cadre.onSurvol(cle, false)}
+          onPointerDown={(evenement) => {
+            // Le rond n'est pas une prise sur l'îlot : deux gestes sur le même
+            // `pointerdown`, il faudrait décider lequel gagne — c'est
+            // l'argument qui a déjà éteint `connectOnClick`.
+            if ((evenement.target as HTMLElement).closest(".react-flow__handle")) return
+            if (evenement.button !== 0) return
+            prise.current = {
+              x: evenement.clientX,
+              y: evenement.clientY,
+              tire: false,
+              surLeNom: !!(evenement.target as HTMLElement).closest("[data-nom-ilot]"),
+            }
+            evenement.currentTarget.setPointerCapture(evenement.pointerId)
+          }}
+          onPointerMove={(evenement) => {
+            const en_cours = prise.current
+            if (!en_cours) return
+            const ecran = Math.hypot(
+              evenement.clientX - en_cours.x,
+              evenement.clientY - en_cours.y,
+            )
+            // Sous le seuil, rien ne bouge : sans lui, le tremblement d'un clic
+            // écrirait un déplacement de deux pixels que personne n'a voulu.
+            if (!en_cours.tire && ecran < SEUIL_PRISE) return
+            en_cours.tire = true
+            cadre.onGlisserIlot(nom, ecartDe(evenement, en_cours))
+          }}
+          onPointerUp={(evenement) => {
+            const en_cours = prise.current
+            prise.current = null
+            if (!en_cours) return
+            // **Rien ne relâche la capture ici, et c'est volontaire.** Elle se
+            // rend d'elle-même au `pointerup` ; un `releasePointerCapture` de
+            // plus ne serait pas seulement redondant, il lève `NotFoundError`
+            // dès que le pointeur a déjà été rendu — et lève **avant** la ligne
+            // qui écrit. Le geste serait alors perdu sans un mot, ce qui est la
+            // famille de défauts que ce dépôt traque depuis T5.
+            if (en_cours.tire) {
+              cadre.onPoserIlot(nom, ecartDe(evenement, en_cours))
+              return
+            }
+            // Pas de glissement : c'était un clic, et un clic n'ouvre le menu
+            // que s'il est parti du nom. La capture ayant détourné le `click`
+            // vers ce bandeau, c'est ici qu'il se traite — le bouton ne garde
+            // que le chemin du clavier.
+            if (en_cours.surLeNom)
+              cadre.onEpingler(ouvert && cadre.epingle === cle ? null : cle)
+          }}
+          onPointerCancel={() => {
+            prise.current = null
+          }}
+          // `nopan` — **et c'est elle qui rend le geste de T10 honnête.** Sans
+          // elle, une seule pression fait deux choses : le bandeau déplace
+          // l'îlot de tout l'écart parcouru, et le plan de la librairie se
+          // déplace du même écart par-dessus. L'îlot part alors à **deux fois**
+          // la main et le fond à une fois — la parallaxe qu'on a vue. Voir
+          // `Poignee` pour la raison technique, qui est la même aux quatre
+          // endroits.
+          className="mesure nodrag nopan absolute flex cursor-grab items-center gap-1.5 rounded-t-[2px] px-1.5 text-[10px] active:cursor-grabbing"
+        >
+          {/* **La prise de déplacement, et elle est permanente.** *Le survol
+              révèle* garde ses raisons partout ailleurs ; ici les six points
+              servent à déplacer un objet vers une cible qui n'est pas sous
+              l'œil, et la toile est la seule surface du produit où ça arrive. Un
+              curseur ne se voit pas de loin. La grille d'assets, elle, ne change
+              pas d'un pixel. */}
+          <SixPoints encre={encre} />
+
+          {/* Le nom **est** la poignée du menu — le motif de l'infobulle,
+              appliqué à l'objet qui n'a rien d'autre à offrir. `w-fit` pour la
+              même raison qu'un libellé : dans une rangée, la cible doit être le
+              mot. Son curseur est `pointer` et non le `grab` du bandeau : c'est
+              le seul endroit d'où un clic ouvre quelque chose. */}
+          <button
+            type="button"
+            data-nom-ilot
+            onClick={(evenement) => {
+              // **Le clavier seul passe par ici.** Un clic de souris est déjà
+              // traité au `pointerup` du bandeau, qui sait si le pointeur a
+              // tiré ; le laisser agir ici aussi refermerait le menu qu'il vient
+              // d'ouvrir. `detail` vaut 0 quand le clic ne vient pas d'un
+              // pointeur.
+              if (evenement.detail !== 0) return
+              cadre.onEpingler(ouvert && cadre.epingle === cle ? null : cle)
+            }}
+            className="w-fit max-w-full cursor-pointer truncate text-left font-medium"
+          >
+            {nom}
+          </button>
+
+          {/* **Ce que l'îlot dit de lui-même** : ce qu'il vaudra si on lâche
+              maintenant, et non ce qu'il vaut. */}
+          <span
+            style={{ color: `color-mix(in srgb, ${encre} 90%, transparent)` }}
+            className="ml-auto shrink-0"
+          >
+            {compte}
+          </span>
+
+          {/* Le rond — **on tire un trait**, et il est permanent lui aussi. Il
+              relie deux objets, c'est-à-dire qu'il vise une cible qui n'est pas
+              sous l'œil : même argument que les six points, même conclusion. Il
+              n'entre pas dans le bandeau quand l'îlot s'en va — un îlot qui
+              part n'a plus rien à joindre. Il passe en `--signal` sous le
+              pointeur, comme les deux autres depuis T10 : *le survol révèle la
+              poignée, le pointeur dit qu'on l'a trouvée.* */}
+          {!part && (
+            <Handle
+              type="source"
+              position={Position.Right}
+              isConnectableStart
+              isConnectableEnd={false}
+              style={{ borderColor: `color-mix(in srgb, ${encre} 55%, transparent)` }}
+              className="!relative !ml-1.5 !h-3 !w-3 !min-w-0 !shrink-0 !transform-none !cursor-crosshair !rounded-full !border !bg-transparent !opacity-100 !transition !duration-[80ms] hover:!border-signal"
+            />
+          )}
+          <Ancrage />
+        </div>
       </div>
 
+      {/* **Le menu porte le survol de l'îlot, comme le menu d'une carte porte
+          celui de sa carte.** Là-bas il est *dans* la carte, donc aller le
+          chercher n'est pas la quitter ; ici il est le **frère** du bandeau, et
+          le pointeur qui montait vers lui quittait la seule surface qui le
+          tenait ouvert. Il se refermait à trois pixels du but, et la teinte d'un
+          îlot était inatteignable à la souris. Il redit donc `onSurvol(…, true)`
+          en entrant, ce qui annule la grâce de 150 ms, et `false` en sortant.
+
+          **Et l'écart de 3 px passe dedans.** En marge, il était un couloir mort
+          entre deux surfaces vivantes, que la traversée quittait toutes les
+          deux ; en padding, le dessin ne bouge pas d'un pixel et la zone
+          sensible touche le bandeau.
+
+          **Il se cale sur le haut du bandeau, pas sur celui de la boîte** —
+          les deux ne coïncident qu'à 1×, et un menu qui se poserait sur le nom
+          qu'il explique serait le contraire de la règle du menu de carte.
+
+          `nodrag nopan`, comme le pavé d'un lien : sans elles, choisir une
+          teinte déplace le plan sous le menu. */}
       {ouvert && (
-        <div className="paraitre absolute bottom-full left-0 mb-[3px] flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2"
-             style={{ pointerEvents: "auto" }}>
-          <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
-          <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
+        <div
+          style={{
+            pointerEvents: "auto",
+            position: "absolute",
+            left: 0,
+            top: haut,
+            transform: "translateY(-100%)",
+            paddingBottom: 3,
+          }}
+          onPointerEnter={() => cadre.onSurvol(cle, true)}
+          onPointerLeave={() => cadre.onSurvol(cle, false)}
+          className="nodrag nopan"
+        >
+          <div className="paraitre flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2">
+            <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
+            <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
+          </div>
         </div>
       )}
     </div>
@@ -1485,7 +2241,10 @@ function NoeudBrouillon({ positionAbsoluteX, positionAbsoluteY }: NodeProps) {
       onBlur={(evenement) =>
         cadre.onNote(evenement.target.value, { x: positionAbsoluteX, y: positionAbsoluteY })
       }
-      className="nodrag nowheel h-full w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
+      // `nopan` avec les deux autres : sélectionner son texte à la souris
+      // déplaçait le plan sous le champ, et la note s'en allait de l'écran
+      // pendant qu'on la relisait.
+      className="nodrag nowheel nopan h-full w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
     />
   )
 }
@@ -1500,6 +2259,7 @@ function NoeudBrouillon({ positionAbsoluteX, positionAbsoluteY }: NodeProps) {
  *  cette forme : *la valeur suit la main, l'écriture suit le relâchement*. */
 function NoeudCarte({ data }: NodeProps) {
   const cadre = useContext(CADRE)
+  const zoom = useZoom()
   const { carte } = data as unknown as { carte: Carte }
   const [tiree, setTiree] = useState<number | null>(null)
   // **La valeur à écrire vit aussi dans un `ref`.** Un `pointerup` qui suit son
@@ -1519,6 +2279,7 @@ function NoeudCarte({ data }: NodeProps) {
     >
       <CarteTuile
         carte={carte}
+        personnages={cadre.personnages}
         plan
         choisie={carte.identifiant === cadre.choisie}
         survolee={cleCarte(carte.identifiant) === cadre.survolee}
@@ -1528,35 +2289,58 @@ function NoeudCarte({ data }: NodeProps) {
         }
         onErreur={cadre.onErreur}
       />
-      <Poignee
-        depart={vive}
-        onTirer={(ecart, depuis) => {
-          const largeur = cadre.aimanter(depuis, ecart)
-          derniere.current = largeur
-          setTiree(largeur)
-        }}
-        onPoser={() => {
-          if (derniere.current !== null && derniere.current !== posee)
-            cadre.onLargeur(carte, derniere.current)
-          derniere.current = null
-          setTiree(null)
-        }}
-        zoom={cadre.zoom}
-      />
+      {/* **Le carré — on tire une dimension**, 10 px au coin bas-droit, révélé
+          au survol. Le seul des trois qui garde le motif *le survol révèle*, et
+          il le garde avec sa raison : il règle **la carte qu'on regarde déjà**,
+          donc il n'a rien à faire avant que la main soit dessus. Les deux autres
+          servent à relier ou déplacer deux objets, c'est-à-dire à viser une
+          cible qui n'est pas sous l'œil — et c'est là que le motif cède. */}
+      <div style={ancreEcran(zoom, { left: "100%", top: "100%" })}>
+        <Poignee
+          depart={vive}
+          onTirer={(ecart, depuis) => {
+            const largeur = cadre.aimanter(depuis, ecart)
+            derniere.current = largeur
+            setTiree(largeur)
+          }}
+          onPoser={() => {
+            if (derniere.current !== null && derniere.current !== posee)
+              cadre.onLargeur(carte, derniere.current)
+            derniere.current = null
+            setTiree(null)
+          }}
+          zoom={cadre.zoom}
+        />
+      </div>
 
-      {/* **La poignée du lien — jumelle de celle de la largeur, à l'autre coin.**
-          Mêmes tokens exactement : 10 px, rayon 2, cadre `--bord-fort`, fond
-          `--fond-3`, révélée au survol. Aucun pixel de vocabulaire neuf ; seul
-          le curseur diffère, parce que le geste diffère. Bas-**gauche** contre
-          bas-droit : deux poignées au même coin auraient demandé de viser, et
-          une toile se compose vite. */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        isConnectableStart
-        isConnectableEnd={false}
-        className="!left-0 !-bottom-1 !h-[10px] !w-[10px] !min-w-0 !-translate-x-1/2 !cursor-crosshair !rounded-[2px] !border !border-bord-fort !bg-fond-3 !opacity-0 !transition-opacity !duration-[80ms] group-hover:!opacity-100"
-      />
+      {/* **Le rond — on tire un trait**, 12 px, **permanent**, et il sort
+          entièrement de la carte.
+
+          Il déborde de 3 px sur la voisine : la gouttière entre deux cartes d'un
+          îlot est de 9 px, un rond permanent de 12 en prend 12 — le compte est
+          écrit parce qu'il ne se rattrape pas. Le mordant est sur le **bord** de
+          la voisine, pas sur son image. **L'autre branche coûtait plus cher** :
+          à cheval sur le bord, il cachait six pixels de sprite en permanence,
+          sur chaque carte, c'est-à-dire sur la seule chose que l'écran existe
+          pour montrer.
+
+          *Qui passe devant qui reste au navigateur* : deux cartes au repos
+          partagent le même `zIndex`, donc c'est l'ordre du document qui tranche
+          — et la carte survolée monte à 10, ce qui suffit, puisque c'est le seul
+          moment où l'on vise ce rond.
+
+          Il passe en `--signal` sous le pointeur, comme les deux autres depuis
+          T10 : *le survol révèle la poignée, le pointeur dit qu'on l'a
+          trouvée.* */}
+      <div style={ancreEcran(zoom, { left: "100%", top: "50%" })}>
+        <Handle
+          type="source"
+          position={Position.Right}
+          isConnectableStart
+          isConnectableEnd={false}
+          className="!top-[-6px] !left-0 !h-3 !w-3 !min-w-0 !transform-none !cursor-crosshair !rounded-full !border !border-bord-fort !bg-fond-2 !opacity-100 !transition !duration-[80ms] hover:!border-signal"
+        />
+      </div>
       <Ancrage />
     </div>
   )
@@ -1583,6 +2367,7 @@ function NoeudCarte({ data }: NodeProps) {
  */
 function AreteLien({ id, source, target, data }: EdgeProps) {
   const cadre = useContext(CADRE)
+  const zoom = useZoom()
   const depart = useInternalNode(source)
   const arrivee = useInternalNode(target)
   const { lien } = data as unknown as { lien: Lien }
@@ -1624,42 +2409,53 @@ function AreteLien({ id, source, target, data }: EdgeProps) {
       <EdgeLabelRenderer>
         {/* Le mot, au milieu du trait, sur une pastille `--fond-0` pour que le
             trait ne le traverse pas. Mono 10 px : c'est un fait sur ce qui est
-            là, comme le nom d'un îlot. */}
+            là, comme le nom d'un îlot.
+
+            **Et comme lui, il est de l'échelle de l'écran** (`docs/DESIGN.md`
+            § Sur la toile, deux échelles). Le trait est une géométrie du plan,
+            le mot est une lecture : à 0,3× il aurait fait trois pixels de haut,
+            c'est-à-dire rien. L'ancre est le milieu du trait, et la pastille s'y
+            centre. */}
         {lien.mot && (
-          <button
-            type="button"
-            onPointerEnter={() => cadre.onSurvol(cle, true)}
-            onPointerLeave={() => cadre.onSurvol(cle, false)}
-            onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
-            style={{
-              position: "absolute",
-              transform: `translate(-50%, -50%) translate(${milieu.x}px, ${milieu.y}px)`,
-              pointerEvents: "all",
-            }}
-            className="mesure nodrag nopan rounded-[2px] bg-fond-0 px-1 text-[10px] text-texte-2"
-          >
-            {lien.mot}
-          </button>
+          <div style={ancreEcran(zoom, { left: milieu.x, top: milieu.y })}>
+            <button
+              type="button"
+              onPointerEnter={() => cadre.onSurvol(cle, true)}
+              onPointerLeave={() => cadre.onSurvol(cle, false)}
+              onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
+              style={{
+                position: "absolute",
+                transform: "translate(-50%, -50%)",
+                pointerEvents: "all",
+              }}
+              className="mesure nodrag nopan rounded-[2px] bg-fond-0 px-1 text-[10px] whitespace-nowrap text-texte-2"
+            >
+              {lien.mot}
+            </button>
+          </div>
         )}
 
         {/* La zone d'écoute d'un lien **muet** : il n'a pas de mot à survoler, et
             c'est la contrepartie assumée du défaut muet. Un carré de 20 px au
             milieu du trait, invisible, dans la même largeur que celle que la
-            librairie pose le long du tracé. */}
+            librairie pose le long du tracé — donc **de l'écran**, comme elle :
+            une cible qui rétrécirait avec le plan cesserait d'être une cible. */}
         {!lien.mot && (
-          <button
-            type="button"
-            aria-label="Régler le lien"
-            onPointerEnter={() => cadre.onSurvol(cle, true)}
-            onPointerLeave={() => cadre.onSurvol(cle, false)}
-            onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
-            style={{
-              position: "absolute",
-              transform: `translate(-50%, -50%) translate(${milieu.x}px, ${milieu.y}px)`,
-              pointerEvents: "all",
-            }}
-            className="nodrag nopan h-[20px] w-[20px] rounded-[2px]"
-          />
+          <div style={ancreEcran(zoom, { left: milieu.x, top: milieu.y })}>
+            <button
+              type="button"
+              aria-label="Régler le lien"
+              onPointerEnter={() => cadre.onSurvol(cle, true)}
+              onPointerLeave={() => cadre.onSurvol(cle, false)}
+              onClick={() => cadre.onEpingler(cadre.epingle === cle ? null : cle)}
+              style={{
+                position: "absolute",
+                transform: "translate(-50%, -50%)",
+                pointerEvents: "all",
+              }}
+              className="nodrag nopan h-[20px] w-[20px] rounded-[2px]"
+            />
+          </div>
         )}
 
         {ouvert && (
@@ -1741,7 +2537,13 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
 }
 
 /**
- * La poignée de largeur — 10 px dans le coin, et elle ne paraît qu'au survol.
+ * La poignée de largeur — le **carré** de 10 px, centré sur le coin bas-droit,
+ * et elle ne paraît qu'au survol.
+ *
+ * **Dix pixels d'écran, à tous les crans** : elle vit dans une ancre d'écran
+ * (`ancreEcran`), donc ses mesures ci-dessous sont en pixels d'écran et non de
+ * plan. Une poignée de 30 px à 2,5× et un nom illisible à 0,3× étaient la même
+ * panne vue par ses deux bouts.
  *
  * **Elle ne tire que la largeur**, et c'est une décision de produit : « sur une
  * toile la taille est une place occupée, pas un niveau de zoom », et la hauteur
@@ -1752,7 +2554,18 @@ function PavéLien({ lien, cadre }: { lien: Lien; cadre: Cadre }) {
  * l'écran en donnerait quarante sur un plan réduit au quart.
  *
  * `nodrag` : sans cette classe la librairie saisit le nœud au premier pixel, et
- * on déplace la carte au lieu de l'élargir.
+ * on déplace la carte au lieu de l'élargir. **`nopan` est l'autre moitié, et
+ * elle manquait** : `nodrag` écarte le glissement de nœud, elle n'écarte pas le
+ * déplacement du plan, qui écoute un `mousedown` **natif** posé sur son propre
+ * calque. Le `stopPropagation` d'à côté ne pouvait rien y faire, et pour deux
+ * raisons plutôt qu'une : React délègue à la racine du document, donc son
+ * gestionnaire passe *après* celui de la librairie — et le `pointerdown` qu'il
+ * arrête n'est de toute façon pas le `mousedown` qu'elle écoute. Une classe, lue
+ * par la librairie elle-même, est la seule réponse, et c'est la même aux quatre
+ * endroits de ce fichier où le produit tient un geste à la main.
+ *
+ * Elle s'allume en `--signal` sous le pointeur — le token de la poignée du
+ * curseur depuis T2, pour la même chose : une poignée que la main a trouvée.
  */
 function Poignee({
   depart,
@@ -1771,7 +2584,8 @@ function Poignee({
     <button
       type="button"
       aria-label="Régler la largeur sur la toile"
-      className="nodrag absolute -right-1 -bottom-1 h-[10px] w-[10px] cursor-ew-resize rounded-[2px] border border-bord-fort bg-fond-3 opacity-0 transition-opacity duration-[80ms] group-hover:opacity-100 focus-visible:opacity-100"
+      style={{ pointerEvents: "auto" }}
+      className="nodrag nopan absolute -top-[5px] -left-[5px] h-[10px] w-[10px] cursor-ew-resize rounded-[2px] border border-bord-fort bg-fond-3 opacity-0 transition duration-[80ms] group-hover:opacity-100 hover:border-signal focus-visible:opacity-100"
       onPointerDown={(evenement) => {
         evenement.stopPropagation()
         evenement.currentTarget.setPointerCapture(evenement.pointerId)

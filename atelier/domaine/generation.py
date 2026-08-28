@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from atelier.domaine.pliage import Pliage
+
 
 class Statut(str, Enum):
     EN_ATTENTE = "en_attente"
@@ -227,6 +229,33 @@ class Generation:
     # demandé la planche.
     provenance: str = AUTEUR
 
+    # ── Pour qui, et pour quelle case ────────────────────────────────────────
+    #
+    # Arrivés en C1 (US-120). L'appel part d'une case vide de la matrice, et
+    # l'image qui en revient sait où elle tombe — elle en hérite à sa naissance,
+    # comme elle hérite du projet et de la provenance. Une génération ordinaire
+    # ne vise aucune case, et c'est le cas courant.
+    #
+    # **Ils sont ici et pas dans `demande`** parce qu'ils ne partent pas chez le
+    # fournisseur : ce sont des faits sur l'appel, du même genre que le projet
+    # qui recevra ce qui en sort. `demande` porte ce qui s'écrit dans le prompt.
+    personnage: str | None = None
+    pose: str | None = None
+
+    # ── Le pliage — N images demandées en un seul appel ───────────────────────
+    #
+    # Arrivé en C2 (US-128). **Ici et pas dans `demande`**, pour la raison de
+    # `personnage` et `pose` : c'est un fait sur l'appel, pas du texte qui part
+    # chez le fournisseur. Les consignes de grille, elles, sont repliées dans le
+    # prompt à la soumission, comme la bible de T4 — `generation.json` porte
+    # donc le prompt tel qu'il est parti.
+    #
+    # `pose` reste renseignée quand le lot n'a qu'une case ; un lot en a
+    # plusieurs, et ce sont les cases du pliage qui disent où va chacune. Les
+    # deux ne se contredisent jamais parce qu'un lot ne remplit pas `pose` :
+    # l'asset lit la case, pas la génération.
+    pliage: Pliage | None = None
+
     # ── Ce qui se déduit, et n'est donc jamais enregistré deux fois ───────────
 
     @property
@@ -284,6 +313,9 @@ class Generation:
         return {
             "identifiant": self.identifiant,
             "modele": self.modele,
+            "personnage": self.personnage,
+            "pose": self.pose,
+            "pliage": self.pliage.en_json() if self.pliage else None,
             "demande": self.demande,
             "parametres_resolus": self.parametres_resolus,
             "ecartees": self.ecartees,
@@ -304,6 +336,9 @@ class Generation:
         return Generation(
             identifiant=d["identifiant"],
             modele=d["modele"],
+            personnage=d.get("personnage"),
+            pose=d.get("pose"),
+            pliage=Pliage.depuis_json(d.get("pliage")),
             demande=d.get("demande", {}),
             parametres_resolus=d.get("parametres_resolus", {}),
             ecartees=list(d.get("ecartees", [])),

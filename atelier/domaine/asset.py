@@ -28,6 +28,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from atelier.domaine.pliage import MesuresLot
 from atelier.domaine.recette import Recette
 
 
@@ -86,6 +87,59 @@ class Asset:
     # celle de l'auteur, et une découpe appartient à qui a demandé la planche.
     # Le défaut vaut pour tout ce qui existait avant T7.
     provenance: str = "auteur"
+
+    # ── Le modèle qui a produit cette image ──────────────────────────────────
+    #
+    # « Savoir à qui redemander quand un résultat me plaît, et de qui me méfier
+    # quand il me déçoit » (US-123). **Une copie prise à la naissance**, comme
+    # le coût : la grille et la fiche sont faites d'assets, et aller chercher la
+    # génération pour afficher un nom serait un aller-retour par tuile ouverte.
+    #
+    # La génération reste la vérité — c'est elle qu'on relance, et c'est d'elle
+    # que le champ se reprend à chaque relance. Un asset écrit avant C1 ne le
+    # porte pas : `rattraper()` va le chercher dans sa génération, comme il l'a
+    # déjà fait pour le coût.
+    #
+    # `import` pour une image importée — la valeur que porte déjà sa génération,
+    # rendue « importé » par l'écran. Le vide n'existe qu'à la relecture d'un
+    # fichier antérieur, et il se répare.
+    modele: str = ""
+
+    # ── De quel personnage, et de quelle pose ────────────────────────────────
+    #
+    # Arrivés en C1 (US-119, US-120). **C'est l'image qui dit sa case, jamais le
+    # personnage qui tient la liste de ses images** : la matrice se calcule à
+    # partir d'ici, et il n'existe donc nulle part un état à tenir d'accord avec
+    # ce que le disque contient. Un asset sans personnage est le cas courant —
+    # la bibliothèque est faite d'images qui n'appartiennent à personne.
+    #
+    # La pose est désignée par son **identifiant**, pas par son nom : une pose se
+    # renomme à tout moment (US-118), et un nom recopié ici ferait perdre leur
+    # case à toutes les images déjà faites.
+    personnage: str | None = None
+    pose: str | None = None
+
+    # ── Ce que le lot a mesuré sur cette case-là ─────────────────────────────
+    #
+    # Arrivé en C2 (US-135). Vide pour toute image qui n'est pas sortie d'une
+    # planche pliée, c'est-à-dire pour l'immense majorité d'entre elles.
+    #
+    # **Une copie prise à la naissance**, comme `cout_usd` et `modele`, et pour
+    # la raison exacte : la ligne de la matrice les porte, et aller chercher la
+    # génération pour trois nombres serait un aller-retour par case affichée. La
+    # génération garde le pliage entier — ce qui a été demandé, ce qui a été
+    # refusé —, celui-ci ne garde que ce que la case a besoin de dire d'elle.
+    #
+    # **Elles n'empêchent rien.** Le compte d'images est le seul refus
+    # automatique du produit ; ressemblance et dérive s'affichent et laissent
+    # l'auteur décider (`docs/PLAN.md`, C2).
+    lot: MesuresLot | None = None
+
+    # Posé à l'instant où le personnage part, exactement comme `parent_supprime`
+    # et pour la même raison : jamais de cascade, l'image reste, et elle sait
+    # seulement de qui elle n'est plus. L'annonce porte alors la vérité au lieu
+    # d'un renvoi vers une table à consulter.
+    personnage_supprime: bool = False
 
     # ── Le rangement, la filiation, le jugement ──────────────────────────────
     projet: str | None = None
@@ -148,6 +202,11 @@ class Asset:
             "epingle": self.epingle,
             "cout_usd": self.cout_usd,
             "provenance": self.provenance,
+            "modele": self.modele,
+            "personnage": self.personnage,
+            "pose": self.pose,
+            "lot": self.lot.en_json() if self.lot else None,
+            "personnage_supprime": self.personnage_supprime,
             "projet": self.projet,
             "collection": self.collection,
             "parent": self.parent,
@@ -194,6 +253,11 @@ class Asset:
             epingle=d.get("epingle", False),
             cout_usd=float(d.get("cout_usd", 0.0)),
             provenance=d.get("provenance", "auteur"),
+            modele=d.get("modele", ""),
+            personnage=d.get("personnage"),
+            pose=d.get("pose"),
+            lot=MesuresLot.depuis_json(d.get("lot")),
+            personnage_supprime=d.get("personnage_supprime", False),
             projet=d.get("projet"),
             collection=d.get("collection"),
             parent=d.get("parent"),

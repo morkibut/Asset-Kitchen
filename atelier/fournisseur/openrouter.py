@@ -10,7 +10,7 @@ Trois traductions valent d'être connues, parce qu'elles ne sont pas des détail
 
 - **`aspect_ratio` est toujours imposé.** Sans lui, Gemini part en 16:9 et
   Seedream en 1:1 — deux essais ne sont alors plus comparables et un sprite
-  n'est plus cadrable (`AGENTS.md` § Pièges connus).
+  n'est plus cadrable (`docs/PIEGES.md`).
 - **Aucun modèle du catalogue ne déclare de prompt négatif** — relevé du
   26 août 2026, 47 modèles, zéro `negative_prompt`. Ce que l'auteur écrit dans
   ce champ est donc replié dans le prompt, en anglais, à la fin. C'est une

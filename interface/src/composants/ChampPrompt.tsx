@@ -83,7 +83,7 @@ export function ChampPrompt({
           } />
           {/* La fente : une ligne mono 10 px alignée à droite, trois
               locataires, **jamais deux à la fois** — `docs/DESIGN.md`
-              § Motifs, *Le revers*. Le refus l'emporte : quand le catalogue
+              `docs/design-motifs.md`, *Le revers*. Le refus l'emporte : quand le catalogue
               n'a jamais été reçu, il n'y a ni date à porter ni nuance à faire,
               et c'est le grisé ordinaire qui reprend la main. */}
           {refus ? (

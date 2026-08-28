@@ -33,7 +33,7 @@ import asyncio
 import math
 import uuid
 from dataclasses import replace
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.carte import (
@@ -449,7 +449,7 @@ class ServiceUnivers:
             # L'empreinte suit le texte : c'est elle qui dit « tu as déjà
             # celle-ci », et une empreinte qui ne suit plus son contenu est une
             # seconde vérité — la panne que `cree_le` avait déjà causée sur la
-            # grille (`AGENTS.md` § Pièges connus).
+            # grille (`docs/PIEGES.md`).
             carte.empreinte = empreinte_de(propre.encode("utf-8"))
         if teinte is not None:
             # **Une carte image ne porte aucune couleur d'organisation** (US-111,
@@ -695,6 +695,69 @@ class ServiceUnivers:
         self._annoncer_univers(objet)
         return objet
 
+    def deplacer_ilot(
+        self, projet: str, groupe: str, places: Mapping[str, Iterable[float]]
+    ) -> list[Carte]:
+        """Déplacer un îlot entier — **un seul appel, parce que c'est un seul geste**.
+
+        Un îlot n'a pas de position à lui : il *est* le groupe, et son étendue
+        est celle de ses membres (`docs/ARCHITECTURE.md` §5). Le déplacer, c'est
+        donc déplacer ses cartes — et c'est très exactement pourquoi ça ne peut
+        pas être *n* appels. Un îlot de douze cartes écrit par douze `PUT` rend
+        possible l'état où sept ont bougé et cinq sont restées : un îlot déchiré
+        en deux moitiés, que personne n'a demandé et que rien ne rattrape. C'est
+        la règle de T8 — « deux appels pour un geste sont un état de trop » —
+        appliquée à un geste qui en aurait demandé douze.
+
+        **Il se déplace entier, ou pas du tout.** Les places reçues doivent
+        nommer *tous* ses membres et rien d'autre : une route qui accepterait un
+        sous-ensemble serait un second `PUT /board/{carte}` déguisé, capable
+        d'écrire des places en lot sous un nom de groupe qui ne les regarde pas.
+        Et tout est vérifié **avant** que rien ne soit écrit, sans quoi le refus
+        laisserait derrière lui la moitié du déchirement qu'il empêche.
+
+        **Aucun groupe ne change, donc rien n'est élagué.** Déplacer un rangement
+        ne reclasse pas ce qu'il contient : les cartes gardent leur groupe, l'îlot
+        garde ses liens et sa teinte. Ce qui reclasse est le geste sur *une*
+        carte, et lui seul.
+        """
+        nom = groupe.strip()
+        if not nom:
+            raise UniversRefuse("un îlot se déplace par son nom de groupe")
+        membres = {c.identifiant: c for c in self.cartes(projet) if c.groupe == nom}
+        if not membres:
+            raise UniversRefuse(f"aucun îlot « {nom} » sur cette toile")
+
+        etrangeres = sorted(set(places) - set(membres))
+        if etrangeres:
+            raise UniversRefuse(
+                f"« {etrangeres[0]} » n'est pas une carte de l'îlot « {nom} »"
+            )
+        absentes = sorted(set(membres) - set(places))
+        if absentes:
+            raise UniversRefuse(
+                f"un îlot se déplace entier : il manque {len(absentes)} "
+                f"carte{'s' if len(absentes) > 1 else ''} de « {nom} »"
+            )
+
+        # Tout est validé d'abord, écrit ensuite. Une place refusée au milieu de
+        # la boucle laisserait l'îlot à moitié déplacé — la panne même que cette
+        # route existe pour empêcher.
+        voulues: list[tuple[Carte, tuple[float, float]]] = []
+        for identifiant, brut in places.items():
+            place = _place(brut)
+            if place is None:
+                raise CarteRefusee(
+                    "déplacer un îlot pose chacune de ses cartes : une place est "
+                    "une paire de coordonnées"
+                )
+            voulues.append((membres[identifiant], place))
+
+        for carte, place in voulues:
+            carte.position = place
+            self._sauver(carte)
+        return [carte for carte, _ in voulues]
+
     # ── Ce qui ne survit pas à ses extrémités ───────────────────────────────────────────
 
     def _elaguer(self, projet: str) -> None:
@@ -765,6 +828,8 @@ class ServiceUnivers:
         cible_px: int | None = None,
         couleurs: int | None = None,
         modeles: dict[str, str] | None = None,
+        modele_planche: str | None = None,
+        modele_edition: str | None = None,
     ) -> Projet:
         """Poser les réglages de l'univers. Tout est facultatif, rien ne lève à vide."""
         objet = self._exige(projet)
@@ -811,6 +876,15 @@ class ServiceUnivers:
                 noms = " » « ".join(sorted(inconnues))
                 raise UniversRefuse(f"famille inconnue « {noms} »")
             univers.modeles = {f: m for f, m in modeles.items() if m}
+
+        # **Les deux modèles d'appel, et aucune famille à valider** : ce sont des
+        # identifiants de modèle, et le catalogue décide seul de ce qu'ils
+        # valent — un modèle disparu se grise avec sa raison au moment de
+        # générer, comme n'importe quel autre. Le vide les remet au défaut.
+        if modele_planche is not None:
+            univers.modele_planche = modele_planche.strip()
+        if modele_edition is not None:
+            univers.modele_edition = modele_edition.strip()
 
         self._bibliotheque.sauver_projet(objet.avec(univers))
         # Le compte de couleurs fait partie de ce que la palette lit : le

@@ -61,6 +61,8 @@ Si le user demande à ajuster une section, propose 2-3 alternatives pour CETTE s
 
 Quand le user valide, écris `docs/DESIGN.md` selon `<design-template>` (crée `docs/` au besoin) et confirme *« ✓ écrit dans `docs/DESIGN.md` »*. Le preview HTML reste dans `docs/design-preview.html` (artefact jetable, ignorable par git).
 
+**Si le projet a déjà sorti des sections de `docs/DESIGN.md` dans des annexes** — un `docs/design-decisions.md`, un `docs/design-motifs.md` —, écris dedans et **ne les réinstalle pas** dans `docs/DESIGN.md` : le fichier avait été scindé parce qu'il était devenu trop lourd à charger, et un `/design` qui recolle défait le travail en silence. Le `## Decisions Log` du `<design-template>` ne s'applique qu'à un projet qui n'a pas d'annexe.
+
 ## Design Knowledge (informe tes propositions, ne présente JAMAIS comme un menu)
 
 Cette palette curée est ton book : pioche dedans pour construire la proposition de Phase 3. Ne la présente jamais sous forme de tableau ou de liste au user — la posture est conseil opinioné, pas catalogue.

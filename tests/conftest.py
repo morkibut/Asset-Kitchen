@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import math
 
 import pytest
 from fastapi.testclient import TestClient
@@ -103,6 +104,63 @@ def image_sujet(
     grande = petite.resize((toile * bloc, toile * bloc), Image.Resampling.NEAREST)
     tampon = io.BytesIO()
     grande.save(tampon, format=format_)
+    return tampon.getvalue()
+
+
+def planche_sujets(
+    sujets: int, *, cote: int = 480, jumelles: bool = False, format_: str = "PNG"
+) -> bytes:
+    """Une planche de N sujets séparables, comme celle qu'un modèle rend (C2).
+
+    **Écrite d'après ce que le produit reçoit, pas d'après ce qu'il attend.**
+    Un double construit sur l'intention prouve l'intention, pas le serveur
+    (`docs/PIEGES.md`, payé en C1) : cette planche-ci passe donc par la même
+    chaîne que les vingt-quatre planches réelles du 28 août — détourage par
+    remplissage depuis le bord, puis zones connexes. Le fond touche les quatre
+    bords, aucun sujet ne les touche, et les gouttières sont bien au-dessus de
+    l'écart qui recolle deux morceaux d'un même sprite.
+
+    **Chaque sujet a une silhouette différente**, et c'est ce qui rend la mesure
+    de ressemblance vérifiable : des barres pleines s'étireraient toutes en un
+    carré plein, se ressembleraient à 1,00 et un essai n'y verrait rien. Le bras
+    se déplace d'un sujet à l'autre ; `jumelles` en donne deux identiques, ce
+    qui est très exactement le cas mesuré le 28 août — un compte juste et une
+    planche qui répète une pose.
+
+    `sujets` est ce que la planche **contient**, pas ce qu'on a demandé : c'est
+    la même fonction qui joue le compte juste et le compte faux.
+    """
+    colonnes = math.ceil(math.sqrt(max(1, sujets)))
+    lignes = math.ceil(max(1, sujets) / colonnes)
+    image = Image.new("RGB", (cote, cote), FOND)
+    dessin = ImageDraw.Draw(image)
+    marge = 24
+    large = (cote - 2 * marge) // colonnes
+    haut = (cote - 2 * marge) // lignes
+
+    for index in range(sujets):
+        forme = 0 if (jumelles and index == 1) else index
+        x0 = marge + (index % colonnes) * large
+        y0 = marge + (index // colonnes) * haut
+        corps_l, corps_h = large // 4, int(haut * 0.6)
+        cx = x0 + (large - corps_l) // 2
+        cy = y0 + haut - corps_h - 8
+        # Le corps est rayé une colonne sur deux : sans ça, la plus longue plage
+        # d'une même couleur mesurerait la largeur du sujet et non le bloc de
+        # pixel, et la dérive de grille dirait n'importe quoi.
+        for colonne in range(corps_l):
+            dessin.rectangle(
+                [cx + colonne, cy, cx + colonne, cy + corps_h - 1],
+                fill=SUJET if colonne % 2 == 0 else SUJET_SOMBRE,
+            )
+        bras_h = max(4, corps_h // 10)
+        bras_y = cy + int(corps_h * (0.08 + 0.09 * (forme % 10)))
+        dessin.rectangle(
+            [cx - corps_l, bras_y, cx - 1, bras_y + bras_h - 1], fill=SUJET
+        )
+
+    tampon = io.BytesIO()
+    image.save(tampon, format=format_)
     return tampon.getvalue()
 
 

@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="fr" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — avancement</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#fbfcfd; --ink:#12161c; --muted:#5b6572;
+  --line:#e3e7ec; --line-soft:#eef1f5;
+  --accent:#3b6ef6; --done:#16a37f; --prog:#3b6ef6; --review:#8b5cf6; --ready:#0ea5e9;
+  --todo:#98a2b3; --blocked:#e0533d; --warn:#d97706;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px rgba(16,24,40,.06);
+  --radius:14px;
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]) {}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116; --panel:#161b22; --panel-2:#1b2129; --ink:#e8edf4; --muted:#98a3b3;
+    --line:#262d38; --line-soft:#1f252e;
+    --accent:#6f97ff; --done:#2dd4a7; --prog:#6f97ff; --review:#a78bfa; --ready:#38bdf8;
+    --todo:#7a8699; --blocked:#ff7a63; --warn:#f0a02c;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --panel:#161b22; --panel-2:#1b2129; --ink:#e8edf4; --muted:#98a3b3;
+  --line:#262d38; --line-soft:#1f252e;
+  --accent:#6f97ff; --done:#2dd4a7; --prog:#6f97ff; --review:#a78bfa; --ready:#38bdf8;
+  --todo:#7a8699; --blocked:#ff7a63; --warn:#f0a02c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+a{color:var(--accent);text-decoration:none}
+h1,h2,h3{margin:0;font-weight:640;letter-spacing:-.01em}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em}
+.muted{color:var(--muted)}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+header.top h1{font-size:26px}
+.subline{color:var(--muted);font-size:13.5px;margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.srcbadge{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:2px 9px;font-size:12px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;box-shadow:var(--shadow)}
+.btn:hover{border-color:var(--accent)}
+input.search{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 11px;font-size:13px;min-width:190px}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.section{margin-top:26px}
+.section > h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;padding:22px 24px}
+@media(max-width:720px){.hero{grid-template-columns:1fr}}
+.ring{position:relative;width:132px;height:132px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .val b{font-size:30px;letter-spacing:-.02em}
+.ring .val span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.kpi{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:12px 14px}
+.kpi b{display:block;font-size:22px;letter-spacing:-.02em}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi.alert b{color:var(--blocked)}
+
+/* stacked bar */
+.stack{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line-soft);margin-top:14px}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend em{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:99px;display:inline-block}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stage{padding:14px;position:relative;overflow:hidden}
+.stage:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
+.stage h3{font-size:13px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.stage h3 b{font-size:20px;color:var(--c)}
+.stage ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.stage li{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage li b{color:var(--ink);font-weight:600}
+
+/* epics */
+.epics{display:flex;flex-direction:column;gap:12px}
+.epic{padding:0;overflow:hidden}
+.epic > .head{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:15px 18px;cursor:pointer}
+.epic > .head:hover{background:var(--panel-2)}
+.epic .title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.epic .title .caret{color:var(--muted);font-size:11px;transition:transform .15s;display:inline-block}
+.epic.open .title .caret{transform:rotate(90deg)}
+.epic .title strong{font-size:15px;font-weight:620}
+.epic .meta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap}
+.pct{display:flex;align-items:center;gap:10px;min-width:150px}
+.bar{flex:1;height:7px;border-radius:99px;background:var(--line-soft);overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;background:var(--c,var(--prog));border-radius:99px}
+.pct b{font-size:13px;min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+.chip{font-size:11px;font-weight:640;letter-spacing:.02em;padding:3px 8px;border-radius:99px;color:#fff;background:var(--c,var(--todo));white-space:nowrap}
+.chip.soft{background:transparent;border:1px solid var(--c);color:var(--c)}
+.children{display:none;border-top:1px solid var(--line-soft);background:var(--panel-2)}
+.epic.open .children{display:block}
+.child{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.child:last-child{border-bottom:0}
+.child .id{color:var(--muted);font-size:12px;min-width:34px}
+.child .checks{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.child .path{grid-column:1/-1;margin-top:-4px;padding-left:46px}
+.epic-notes{padding:10px 18px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px}
+
+/* notes */
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 15px;border-left:3px solid var(--c)}
+.note .txt{font-size:14px}
+.note .when{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.note .lvl{font-size:11px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+
+/* misc lists */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:840px){.grid2{grid-template-columns:1fr}}
+.rows{padding:6px 0}
+.row{display:flex;gap:10px;align-items:baseline;padding:8px 16px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.row:last-child{border-bottom:0}
+.row .when{color:var(--muted);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ok{color:var(--done)} .ko{color:var(--todo)}
+footer{margin-top:36px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+footer code{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.empty{padding:16px;color:var(--muted);font-size:13.5px}
+.hidden{display:none !important}
+@media print{
+  body{background:#fff}
+  .toolbar,footer{display:none}
+  .children{display:block !important}
+  .card{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 id="p-name">Projet</h1>
+      <div class="subline" id="p-sub"></div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="Filtrer…" aria-label="Filtrer">
+      <button class="btn" id="expand">Tout déplier</button>
+      <button class="btn" id="theme">Thème</button>
+      <button class="btn" onclick="window.print()">Imprimer</button>
+    </div>
+  </header>
+
+  <div class="card hero">
+    <div class="ring">
+      <svg width="132" height="132" viewBox="0 0 132 132">
+        <circle cx="66" cy="66" r="56" fill="none" stroke="var(--line-soft)" stroke-width="13"></circle>
+        <circle id="ring-arc" cx="66" cy="66" r="56" fill="none" stroke="var(--prog)" stroke-width="13" stroke-linecap="round" stroke-dasharray="0 999"></circle>
+      </svg>
+      <div class="val"><b id="ring-pct">0%</b><span>global</span></div>
+    </div>
+    <div>
+      <div class="kpis" id="kpis"></div>
+      <div class="stack" id="stack"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+  <section class="section" id="s-pipeline">
+    <h2>Pipeline par étape / équipe</h2>
+    <div class="pipe" id="pipe"></div>
+  </section>
+
+  <section class="section" id="s-notes">
+    <h2>Remarques &amp; points d'attention</h2>
+    <div class="notes" id="notes"></div>
+  </section>
+
+  <section class="section">
+    <h2>Epics &amp; phases</h2>
+    <div class="epics" id="epics"></div>
+  </section>
+
+  <section class="section grid2">
+    <div>
+      <h2>Jalons</h2>
+      <div class="card rows" id="milestones"></div>
+    </div>
+    <div>
+      <h2>Artefacts méthodo</h2>
+      <div class="card rows" id="artifacts"></div>
+    </div>
+  </section>
+
+  <section class="section" id="s-activity">
+    <h2>Activité récente</h2>
+    <div class="card rows" id="activity"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script id="status-data" type="application/json">{"project": {"name": "Asset Kitchen", "generated_at": "28/08/2026 17:38", "sources": ["claude-mastery (docs/PLAN.md)"]}, "labels": {"done": "Terminé", "in_progress": "En cours", "review": "En revue", "ready": "Prêt", "todo": "À faire", "blocked": "Bloqué"}, "primary": "Plan", "multi_group": false, "summary": {"progress": 0.1408, "item_word": "critères", "epics": {"total": 15, "done": 10}, "items": {"blocked": 0, "todo": 61, "ready": 0, "in_progress": 0, "review": 0, "done": 10, "total": 71}}, "pipeline": [{"key": "todo", "label": "Backlog · SM", "count": 61, "items": [{"id": "C1.1", "title": "Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite"}, {"id": "C1.2", "title": "Un personnage se crée avec un nom et une description ; sa description part avec chaque génération de pose, sans être retapée"}, {"id": "C1.3", "title": "Une pose s'ajoute, se renomme et se retire du plan du projet à tout moment ; ajouter une pose ajoute une case vide à chaque personnage qui porte ce plan, et ne lance **aucune** génération"}, {"id": "C1.4", "title": "Un personnage rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides"}, {"id": "C1.5", "title": "Écrire un nom de pose qui n'existe pas le crée sur-le-champ, sans passer par un écran de gestion"}, {"id": "C1.6", "title": "La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et la grille de la bibliothèque reste la seule grille d'assets du produit"}, {"id": "C1.7", "title": "Une carte image du tableau se désigne concept art d'un personnage ou d'une pièce, et reste à sa place — aucune copie, aucun second rangement"}, {"id": "C1.8", "title": "Une carte désignée se distingue sur la toile de celle qui dort"}, {"id": "C1.9", "title": "Avant de lancer, chaque référence envoyée est listée avec sa provenance nommée, et le coût est annoncé"}, {"id": "C1.10", "title": "Une référence se décoche à trois portées — cette génération, ce personnage, tout le projet — et la portée retenue est lisible"}, {"id": "C1.11", "title": "La règle de préséance entre les trois portées est affichée à l'écran, pas déduite"}, {"id": "C1.12", "title": "Décocher une référence ne modifie ni l'univers, ni les artworks officiels du projet"}, {"id": "C1.13", "title": "Le nombre de références effectivement envoyées reste visible au moment de générer, comme depuis T4"}, {"id": "C1.14", "title": "Une pose générée entre en bibliothèque comme tout asset : projet courant, filiation, coût réel enregistré"}, {"id": "C1.15", "title": "Aucun écran de création de personnage avec son propre prompt n'existe : le corps se désigne depuis une image née dans l'atelier"}, {"id": "C1.16", "title": "La fiche de **n'importe quel** asset nomme le modèle qui l'a produit — le modèle exact pour une image générée, « importé » pour une image importée"}, {"id": "C1.17", "title": "Réseau coupé : le plan, le personnage, la matrice et le panneau des références se consultent et se modifient ; seule la génération échoue, au moment où on l'essaie"}, {"id": "C1.18", "title": "Supprimer un personnage laisse ses images en place, chacune marquée « personnage supprimé » — jamais de cascade"}, {"id": "C2.1", "title": "Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après **un seul** appel payant, et le journal du projet montre un appel et non neuf"}, {"id": "C2.2", "title": "La planche reçue est dépliée automatiquement ; aucun geste de découpe n'est demandé à l'auteur"}, {"id": "C2.3", "title": "Un lot qui revient avec huit images pour neuf demandées est refusé : aucune image n'entre dans le plan, et le lot se relance d'un geste"}, {"id": "C2.4", "title": "Le compte d'images est le **seul** refus automatique — les mesures de ressemblance et de dérive de grille s'affichent et ne bloquent rien"}, {"id": "C2.5", "title": "Deux poses trop semblables dans un même lot sont signalées case par case ; le lot n'est pas refusé et les images entrent"}, {"id": "C2.6", "title": "Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein — sans annoncer de probabilité"}, {"id": "C2.7", "title": "Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux autres"}, {"id": "C2.8", "title": "Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues, et rien ne se relance tout seul"}, {"id": "C2.9", "title": "Ce qui part en référence et les réglages d'une génération s'enregistrent sous un nom, et se rappellent d'un geste sur un autre personnage"}, {"id": "C2.10", "title": "Ce qui sort du produit reste des images séparées : aucune feuille assemblée n'est livrable"}, {"id": "C2.11", "title": "Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément sur l'univers du projet, et l'auteur n'a pas à les choisir à chaque génération"}, {"id": "C2.12", "title": "Le coût réel du lot est enregistré et totalisé par projet, comme tout appel depuis T1"}, {"id": "C3.1", "title": "Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six"}, {"id": "C3.2", "title": "Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé **octet pour octet**"}, {"id": "C3.3", "title": "Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison"}, {"id": "C3.4", "title": "La planche revenue est redécoupée sur la grille exacte que l'atelier a posée, et la comparaison se fait case par case contre ce qu'il avait envoyé"}, {"id": "C3.5", "title": "Rien n'est ajouté à l'image envoyée au fournisseur : ni ancre, ni mire, ni silhouette de repère"}, {"id": "C3.6", "title": "Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée sur-le-champ ; les emplacements sont ordonnés"}, {"id": "C3.7", "title": "Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est « contenue », et rien ne la devine à la place de l'auteur"}, {"id": "C3.8", "title": "Une pièce déclarée « qui agrandit », revenue à une autre échelle que celle envoyée, ne produit **aucun** calque : la dérive est nommée à l'écran et ce qui revient est proposé à garder comme corps habillés"}, {"id": "C3.9", "title": "Un corps habillé est un asset ordinaire : rangé, exportable, avec son coût — il ne s'empile simplement pas"}, {"id": "C3.10", "title": "Par défaut, aucun masque n'est donné : la différence est cherchée sur toute la case"}, {"id": "C3.11", "title": "Le masque rectangle d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et **le journal du projet ne bouge pas d'un centime**"}, {"id": "C3.12", "title": "Le calque est rangé à côté de l'image payée et jamais écrit dedans ; revenir à la différence brute est un geste unique"}, {"id": "C3.13", "title": "Les mesures — silhouette retrouvée, corps repeint, part ajoutée, échelle au retour, objet ou poussière — s'affichent toutes, et aucune ne rend un calque impossible à garder"}, {"id": "C3.14", "title": "Aucune génération de pièce seule sur fond vide n'existe : une pièce n'apparaît que sur un corps"}, {"id": "C3.15", "title": "Le produit ne propose nulle part de reposer un calque sur une autre pose que la sienne"}, {"id": "C3.16", "title": "Réseau coupé : le masque, le recalcul de différence et la superposition fonctionnent"}, {"id": "C4.1", "title": "Un masque s'affine à main levée, puis au pixel, sans repayer d'image"}, {"id": "C4.2", "title": "Un calque se retouche au pixel avec le corps affiché en repère sous lui"}, {"id": "C4.3", "title": "L'avant et l'après se comparent d'un seul geste"}, {"id": "C4.4", "title": "Les calques restant à regarder se trient par la mesure la plus défavorable, le pire en tête"}, {"id": "C4.5", "title": "Le masque et la retouche au pixel sont deux couches distinctes de la recette : modifier le masque ne détruit pas la retouche, et inversement"}, {"id": "C4.6", "title": "Chaque couche s'annule, se rejoue et se nomme, comme toute recette depuis T2"}, {"id": "C4.7", "title": "Aucune de ces opérations n'appelle le fournisseur ni ne mobilise la carte graphique"}, {"id": "C5.1", "title": "Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce"}, {"id": "C5.2", "title": "Ce qui part est le **rendu**, jamais l'image payée qui reste dans l'atelier, et le descriptif dit lequel il est — comme en T6"}, {"id": "C5.3", "title": "Les trois règles du dossier de jeu de T7 tiennent : dossier manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé avec son chemin"}, {"id": "C5.4", "title": "L'agent ajoute une pose au plan d'un personnage existant et la génère **sans que l'écran soit ouvert**"}, {"id": "C5.5", "title": "Les outils MCP de la V2 n'ont aucune logique propre : chacun appelle un service que l'écran appelle déjà, et n'offre aucun geste que l'écran n'a pas"}, {"id": "C5.6", "title": "Les garde-fous de T7 s'appliquent aux appels de la V2 : au plafond, l'agent reçoit un refus qui nomme le plafond et le moyen de le relever, sans aucune invite à l'écran"}, {"id": "C5.7", "title": "L'atelier n'écrit aucune ligne de code de jeu, et aucun chemin de fichier n'est inventé par l'agent"}, {"id": "C5.8", "title": "Export d'un personnage sans aucune pose remplie : l'action est grisée avec sa raison, comme toute action indisponible du produit"}]}, {"key": "ready", "label": "Prêt · Dev", "count": 0, "items": []}, {"key": "in_progress", "label": "En cours · Dev", "count": 0, "items": []}, {"key": "review", "label": "Revue · QA", "count": 0, "items": []}, {"key": "done", "label": "Livré", "count": 10, "items": [{"id": "T1", "title": "La première image"}, {"id": "T2", "title": "Le post-traitement"}, {"id": "T3", "title": "La bibliothèque"}, {"id": "T4", "title": "Le tableau et l'univers"}, {"id": "T5", "title": "Le slicer"}, {"id": "T6", "title": "L'export"}, {"id": "T7", "title": "Le MCP — *et la V1 avec elle*"}, {"id": "T8", "title": "La toile"}, {"id": "T9", "title": "Les liens et les notes"}, {"id": "T10", "title": "L'îlot se saisit, et ce qui va partir se voit"}]}], "epics": [{"id": "T1", "title": "La première image", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T2", "title": "Le post-traitement", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T3", "title": "La bibliothèque", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T4", "title": "Le tableau et l'univers", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T5", "title": "Le slicer", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T6", "title": "L'export", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T7", "title": "Le MCP — *et la V1 avec elle*", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T8", "title": "La toile", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T9", "title": "Les liens et les notes", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "T10", "title": "L'îlot se saisit, et ce qui va partir se voit", "status": "done", "progress": 1.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "stories", "children": [], "notes": []}, {"id": "C1", "title": "Le personnage, son plan, une pose, et ce qui part avec elle", "status": "todo", "progress": 0.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "critères", "children": [{"id": "C1.1", "title": "Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.2", "title": "Un personnage se crée avec un nom et une description ; sa description part avec chaque génération de pose, sans être retapée", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.3", "title": "Une pose s'ajoute, se renomme et se retire du plan du projet à tout moment ; ajouter une pose ajoute une case vide à chaque personnage qui porte ce plan, et ne lance **aucune** génération", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.4", "title": "Un personnage rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.5", "title": "Écrire un nom de pose qui n'existe pas le crée sur-le-champ, sans passer par un écran de gestion", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.6", "title": "La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et la grille de la bibliothèque reste la seule grille d'assets du produit", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.7", "title": "Une carte image du tableau se désigne concept art d'un personnage ou d'une pièce, et reste à sa place — aucune copie, aucun second rangement", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.8", "title": "Une carte désignée se distingue sur la toile de celle qui dort", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.9", "title": "Avant de lancer, chaque référence envoyée est listée avec sa provenance nommée, et le coût est annoncé", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.10", "title": "Une référence se décoche à trois portées — cette génération, ce personnage, tout le projet — et la portée retenue est lisible", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.11", "title": "La règle de préséance entre les trois portées est affichée à l'écran, pas déduite", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.12", "title": "Décocher une référence ne modifie ni l'univers, ni les artworks officiels du projet", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.13", "title": "Le nombre de références effectivement envoyées reste visible au moment de générer, comme depuis T4", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.14", "title": "Une pose générée entre en bibliothèque comme tout asset : projet courant, filiation, coût réel enregistré", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.15", "title": "Aucun écran de création de personnage avec son propre prompt n'existe : le corps se désigne depuis une image née dans l'atelier", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.16", "title": "La fiche de **n'importe quel** asset nomme le modèle qui l'a produit — le modèle exact pour une image générée, « importé » pour une image importée", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.17", "title": "Réseau coupé : le plan, le personnage, la matrice et le panneau des références se consultent et se modifient ; seule la génération échoue, au moment où on l'essaie", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C1.18", "title": "Supprimer un personnage laisse ses images en place, chacune marquée « personnage supprimé » — jamais de cascade", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}], "notes": [{"id": "n3", "level": "info", "text": "C1 est le seul chantier V2 non bloqué — C2 et C3 attendent C1, C4 attend C3. C5 est indépendant.", "date": "2026-08-28", "scope": "C1", "scope_label": "Le personnage, son plan, une pose, et ce qui part avec elle"}]}, {"id": "C2", "title": "Le lot plié", "status": "todo", "progress": 0.0, "team": null, "path": "docs/PLAN.md", "blocked_by": "- C1 — il n'y a pas de lot sans plan de poses ni cases à remplir", "group": "Plan", "child_word": "critères", "children": [{"id": "C2.1", "title": "Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après **un seul** appel payant, et le journal du projet montre un appel et non neuf", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.2", "title": "La planche reçue est dépliée automatiquement ; aucun geste de découpe n'est demandé à l'auteur", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.3", "title": "Un lot qui revient avec huit images pour neuf demandées est refusé : aucune image n'entre dans le plan, et le lot se relance d'un geste", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.4", "title": "Le compte d'images est le **seul** refus automatique — les mesures de ressemblance et de dérive de grille s'affichent et ne bloquent rien", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.5", "title": "Deux poses trop semblables dans un même lot sont signalées case par case ; le lot n'est pas refusé et les images entrent", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.6", "title": "Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein — sans annoncer de probabilité", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.7", "title": "Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux autres", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.8", "title": "Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues, et rien ne se relance tout seul", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.9", "title": "Ce qui part en référence et les réglages d'une génération s'enregistrent sous un nom, et se rappellent d'un geste sur un autre personnage", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.10", "title": "Ce qui sort du produit reste des images séparées : aucune feuille assemblée n'est livrable", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.11", "title": "Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément sur l'univers du projet, et l'auteur n'a pas à les choisir à chaque génération", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C2.12", "title": "Le coût réel du lot est enregistré et totalisé par projet, comme tout appel depuis T1", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}], "notes": []}, {"id": "C3", "title": "La pièce et le calque", "status": "todo", "progress": 0.0, "team": null, "path": "docs/PLAN.md", "blocked_by": "- C1 — une pièce se pose sur un corps, et le corps vient du plan de poses", "group": "Plan", "child_word": "critères", "children": [{"id": "C3.1", "title": "Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.2", "title": "Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé **octet pour octet**", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.3", "title": "Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.4", "title": "La planche revenue est redécoupée sur la grille exacte que l'atelier a posée, et la comparaison se fait case par case contre ce qu'il avait envoyé", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.5", "title": "Rien n'est ajouté à l'image envoyée au fournisseur : ni ancre, ni mire, ni silhouette de repère", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.6", "title": "Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée sur-le-champ ; les emplacements sont ordonnés", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.7", "title": "Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est « contenue », et rien ne la devine à la place de l'auteur", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.8", "title": "Une pièce déclarée « qui agrandit », revenue à une autre échelle que celle envoyée, ne produit **aucun** calque : la dérive est nommée à l'écran et ce qui revient est proposé à garder comme corps habillés", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.9", "title": "Un corps habillé est un asset ordinaire : rangé, exportable, avec son coût — il ne s'empile simplement pas", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.10", "title": "Par défaut, aucun masque n'est donné : la différence est cherchée sur toute la case", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.11", "title": "Le masque rectangle d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et **le journal du projet ne bouge pas d'un centime**", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.12", "title": "Le calque est rangé à côté de l'image payée et jamais écrit dedans ; revenir à la différence brute est un geste unique", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.13", "title": "Les mesures — silhouette retrouvée, corps repeint, part ajoutée, échelle au retour, objet ou poussière — s'affichent toutes, et aucune ne rend un calque impossible à garder", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.14", "title": "Aucune génération de pièce seule sur fond vide n'existe : une pièce n'apparaît que sur un corps", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.15", "title": "Le produit ne propose nulle part de reposer un calque sur une autre pose que la sienne", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C3.16", "title": "Réseau coupé : le masque, le recalcul de différence et la superposition fonctionnent", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}], "notes": []}, {"id": "C4", "title": "La main", "status": "todo", "progress": 0.0, "team": null, "path": "docs/PLAN.md", "blocked_by": "- C3 — on ne retouche à la main que ce que la différence a produit", "group": "Plan", "child_word": "critères", "children": [{"id": "C4.1", "title": "Un masque s'affine à main levée, puis au pixel, sans repayer d'image", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.2", "title": "Un calque se retouche au pixel avec le corps affiché en repère sous lui", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.3", "title": "L'avant et l'après se comparent d'un seul geste", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.4", "title": "Les calques restant à regarder se trient par la mesure la plus défavorable, le pire en tête", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.5", "title": "Le masque et la retouche au pixel sont deux couches distinctes de la recette : modifier le masque ne détruit pas la retouche, et inversement", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.6", "title": "Chaque couche s'annule, se rejoue et se nomme, comme toute recette depuis T2", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C4.7", "title": "Aucune de ces opérations n'appelle le fournisseur ni ne mobilise la carte graphique", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}], "notes": []}, {"id": "C5", "title": "La sortie — le dossier du jeu, et l'agent", "status": "todo", "progress": 0.0, "team": null, "path": "docs/PLAN.md", "blocked_by": null, "group": "Plan", "child_word": "critères", "children": [{"id": "C5.1", "title": "Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.2", "title": "Ce qui part est le **rendu**, jamais l'image payée qui reste dans l'atelier, et le descriptif dit lequel il est — comme en T6", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.3", "title": "Les trois règles du dossier de jeu de T7 tiennent : dossier manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé avec son chemin", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.4", "title": "L'agent ajoute une pose au plan d'un personnage existant et la génère **sans que l'écran soit ouvert**", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.5", "title": "Les outils MCP de la V2 n'ont aucune logique propre : chacun appelle un service que l'écran appelle déjà, et n'offre aucun geste que l'écran n'a pas", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.6", "title": "Les garde-fous de T7 s'appliquent aux appels de la V2 : au plafond, l'agent reçoit un refus qui nomme le plafond et le moyen de le relever, sans aucune invite à l'écran", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.7", "title": "L'atelier n'écrit aucune ligne de code de jeu, et aucun chemin de fichier n'est inventé par l'agent", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}, {"id": "C5.8", "title": "Export d'un personnage sans aucune pose remplie : l'action est grisée avec sa raison, comme toute action indisponible du produit", "status": "todo", "team": null, "checks": {"done": 0, "total": 0}, "path": "docs/PLAN.md"}], "notes": []}], "notes": [{"id": "n2", "level": "decision", "text": "Le % global ne pèse que les 61 critères V2 encore ouverts : les critères V1 sont archivés hors PLAN.md et comptent pour une tranche chacun. Lire plutôt « 10/15 chantiers terminés ».", "date": "2026-08-28", "scope": "global", "scope_label": null}, {"id": "n1", "level": "win", "text": "V1 livrée : les 10 tranches T1–T10 sont tenues (115 critères, 195 tests serveur + 80 tests d'écran). Leur détail vit dans docs/plan-archive.md.", "date": "2026-08-28", "scope": "global", "scope_label": null}, {"id": "n3", "level": "info", "text": "C1 est le seul chantier V2 non bloqué — C2 et C3 attendent C1, C4 attend C3. C5 est indépendant.", "date": "2026-08-28", "scope": "C1", "scope_label": "Le personnage, son plan, une pose, et ce qui part avec elle"}], "milestones": [], "artifacts": [{"label": "Brief / PRD", "path": "docs/PRD.md", "present": true, "detail": ""}, {"label": "Plan de phases", "path": "docs/PLAN.md", "present": true, "detail": ""}, {"label": "Design system", "path": "docs/DESIGN.md", "present": true, "detail": ""}, {"label": "Architecture", "path": "docs/architecture.md", "present": true, "detail": ""}, {"label": "PRD shardé", "path": "docs/prd", "present": false, "detail": ""}, {"label": "Stories", "path": "docs/stories", "present": false, "detail": ""}, {"label": "Portes QA", "path": "docs/qa/gates", "present": false, "detail": ""}, {"label": "Config BMAD", "path": ".bmad-core/core-config.yaml", "present": false, "detail": ""}], "activity": [{"hash": "b4e80c8", "date": "2026-08-28", "text": "docs: la V2 cadrÃ©e â€” un calque par pose, et le pliage qui en paie un seul"}, {"hash": "1f7ccbc", "date": "2026-08-28", "text": "essais: les deux essais payÃ©s du 28 aoÃ»t, et la mÃ©diane qui mentait"}, {"hash": "541fe4b", "date": "2026-08-28", "text": "feat: l'aperÃ§u â€” Espace, et l'image sous le pointeur emplit l'Ã©cran"}, {"hash": "611d197", "date": "2026-08-28", "text": "feat: T9 â€” les liens et les notes, et la couleur qui ne veut rien dire"}, {"hash": "8180dc1", "date": "2026-08-28", "text": "feat: T8 â€” la toile, oÃ¹ l'Ã®lot est le groupe"}, {"hash": "5ec83b0", "date": "2026-08-27", "text": "feat: T7 â€” un agent code le jeu, l'atelier lui fabrique les images"}, {"hash": "4928381", "date": "2026-08-27", "text": "feat: le produit s'explique lui-mÃªme â€” un corpus, deux rendus"}, {"hash": "46f349a", "date": "2026-08-27", "text": "feat: les panneaux tiennent dans l'Ã©cran, et les blocs se replient sur leur valeur"}, {"hash": "01210b0", "date": "2026-08-27", "text": "feat: T6 â€” une sÃ©lection sort en archive avec son descriptif"}, {"hash": "f1f26fb", "date": "2026-08-27", "text": "feat: T5 â€” la dÃ©coupe vÃ©rifiÃ©e par un appel payant rÃ©el"}, {"hash": "ebe1539", "date": "2026-08-27", "text": "feat: le second moteur de dÃ©tourage, exÃ©cutÃ© pour la premiÃ¨re fois"}, {"hash": "533da54", "date": "2026-08-27", "text": "feat: T5 â€” une planche multi-sprites se dÃ©coupe en assets"}], "footer": ["Généré par le skill <b>/avancement<\/b> — état dans <code>docs/status/state.json<\/code>.", "Mise à jour : <code>/avancement<\/code> (re-scan) · <code>/avancement note \"…\"<\/code> · <code>/avancement 1.2 done<\/code>"]}</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('status-data').textContent);
+  var COLORS = {done:'var(--done)',in_progress:'var(--prog)',review:'var(--review)',ready:'var(--ready)',todo:'var(--todo)',blocked:'var(--blocked)'};
+  var LABELS = D.labels || {done:'Terminé',in_progress:'En cours',review:'En revue',ready:'Prêt',todo:'À faire',blocked:'Bloqué'};
+  var el = function(id){return document.getElementById(id)};
+  var esc = function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})};
+  var pct = function(x){return Math.round((x||0)*100)+'%'};
+
+  /* header */
+  el('p-name').textContent = D.project.name;
+  var sub = ['<span>Mis à jour le '+esc(D.project.generated_at)+'</span>'];
+  (D.project.sources||[]).forEach(function(s){sub.push('<span class="srcbadge">'+esc(s)+'</span>')});
+  el('p-sub').innerHTML = sub.join('');
+  document.title = D.project.name + ' — avancement';
+
+  /* ring */
+  var C = 2*Math.PI*56, p = D.summary.progress||0;
+  el('ring-arc').setAttribute('stroke-dasharray', (C*p).toFixed(1)+' '+C.toFixed(1));
+  el('ring-pct').textContent = pct(p);
+
+  /* kpis */
+  var k = D.summary, kh = '';
+  kh += '<div class="kpi"><b>'+k.epics.done+'/'+k.epics.total+'</b><span>epics terminés</span></div>';
+  kh += '<div class="kpi"><b>'+k.items.done+'/'+k.items.total+'</b><span>'+esc(D.summary.item_word||'stories')+' terminées</span></div>';
+  kh += '<div class="kpi"><b>'+(k.items.in_progress+k.items.review)+'</b><span>en cours / revue</span></div>';
+  kh += '<div class="kpi'+(k.items.blocked?' alert':'')+'"><b>'+k.items.blocked+'</b><span>bloqués</span></div>';
+  el('kpis').innerHTML = kh;
+
+  /* stacked bar + legend */
+  var order = ['done','review','in_progress','ready','todo','blocked'];
+  var tot = order.reduce(function(a,s){return a+(k.items[s]||0)},0) || 1;
+  el('stack').innerHTML = order.map(function(s){
+    var n=k.items[s]||0; if(!n) return '';
+    return '<i style="width:'+(n/tot*100)+'%;background:'+COLORS[s]+'" title="'+LABELS[s]+' : '+n+'"></i>';
+  }).join('');
+  el('legend').innerHTML = order.filter(function(s){return k.items[s]}).map(function(s){
+    return '<em><span class="dot" style="background:'+COLORS[s]+'"></span>'+LABELS[s]+' · '+k.items[s]+'</em>';
+  }).join('');
+
+  /* pipeline */
+  el('pipe').innerHTML = (D.pipeline||[]).map(function(st){
+    var items = (st.items||[]).slice(0,5).map(function(i){
+      return '<li><b>'+esc(i.id)+'</b> '+esc(i.title)+'</li>';
+    }).join('');
+    var more = (st.items||[]).length>5 ? '<li>+'+((st.items.length)-5)+' autres…</li>' : '';
+    return '<div class="card stage" style="--c:'+(COLORS[st.key]||'var(--todo)')+'">'+
+      '<h3><span>'+esc(st.label)+'</span><b>'+st.count+'</b></h3>'+
+      '<ul>'+(items||'<li class="muted">—</li>')+more+'</ul></div>';
+  }).join('');
+
+  /* notes */
+  var NLVL = {risk:'var(--warn)',blocker:'var(--blocked)',win:'var(--done)',info:'var(--accent)',decision:'var(--review)'};
+  var NL = {risk:'Risque',blocker:'Blocage',win:'Gain',info:'Info',decision:'Décision'};
+  var gnotes = (D.notes||[]);
+  if(!gnotes.length){ el('s-notes').classList.add('hidden'); }
+  el('notes').innerHTML = gnotes.map(function(n){
+    return '<div class="card note" style="--c:'+(NLVL[n.level]||NLVL.info)+'">'+
+      '<div class="lvl">'+(NL[n.level]||n.level)+'</div>'+
+      '<div class="txt">'+esc(n.text)+(n.scope_label?' <span class="muted">— '+esc(n.scope_label)+'</span>':'')+'</div>'+
+      '<div class="when">'+esc(n.date||'')+'</div></div>';
+  }).join('');
+
+  /* epics */
+  el('epics').innerHTML = (D.epics||[]).map(function(e,idx){
+    var c = COLORS[e.status]||COLORS.todo;
+    var kids = (e.children||[]).map(function(s){
+      var sc = COLORS[s.status]||COLORS.todo;
+      return '<div class="child" data-search="'+esc((s.id+' '+s.title+' '+(s.team||'')).toLowerCase())+'">'+
+        '<span class="id mono">'+esc(s.id)+'</span>'+
+        '<span>'+esc(s.title)+((s.team&&s.team!=='—')?' <span class="muted">· '+esc(s.team)+'</span>':'')+'</span>'+
+        '<span class="checks">'+(s.checks&&s.checks.total?(s.checks.done+'/'+s.checks.total):'')+'</span>'+
+        '<span class="chip soft" style="--c:'+sc+'">'+(LABELS[s.status]||s.status)+'</span>'+
+      '</div>';
+    }).join('');
+    var enotes = (e.notes||[]).map(function(n){
+      return '<div class="muted" style="font-size:12.5px">▸ '+esc(n.text)+'</div>';
+    }).join('');
+    var meta = [];
+    if(D.multi_group && e.group) meta.push('<span class="srcbadge">'+esc(e.group)+'</span>');
+    if(e.team) meta.push('Équipe : '+esc(e.team));
+    if(e.blocked_by) meta.push('Bloqué par : '+esc(e.blocked_by));
+    if(e.path) meta.push('<span class="mono">'+esc(e.path)+'</span>');
+    if(e.children&&e.children.length) meta.push(e.children.length+' '+(e.child_word||'éléments'));
+    return '<div class="card epic'+(e.status==='in_progress'?' open':'')+'" data-status="'+e.status+'" data-search="'+esc(((e.id||'')+' '+e.title+' '+(e.team||'')).toLowerCase())+'">'+
+      '<div class="head">'+
+        '<div><div class="title"><span class="caret">▶</span>'+
+          '<strong>'+(e.id?'<span class="muted mono">'+esc(e.id)+'</span> ':'')+esc(e.title)+'</strong>'+
+          '<span class="chip" style="--c:'+c+'">'+(LABELS[e.status]||e.status)+'</span></div>'+
+          (meta.length?'<div class="meta">'+meta.join('<span>·</span>')+'</div>':'')+
+        '</div>'+
+        '<div class="pct" style="--c:'+c+'"><div class="bar"><i style="width:'+pct(e.progress)+'"></i></div><b>'+pct(e.progress)+'</b></div>'+
+      '</div>'+
+      (kids?'<div class="children">'+kids+'</div>':'')+
+      (enotes?'<div class="epic-notes">'+enotes+'</div>':'')+
+    '</div>';
+  }).join('') || '<div class="card empty">Aucun epic détecté. Lance <span class="mono">/avancement scan</span> ou ajoute-en un.</div>';
+
+  document.querySelectorAll('.epic .head').forEach(function(h){
+    h.addEventListener('click',function(){h.parentNode.classList.toggle('open')});
+  });
+
+  /* milestones / artifacts / activity */
+  el('milestones').innerHTML = (D.milestones||[]).map(function(m){
+    var c = COLORS[m.status]||COLORS.todo;
+    return '<div class="row"><span class="chip soft" style="--c:'+c+'">'+(LABELS[m.status]||m.status)+'</span><span style="flex:1">'+esc(m.title)+'</span><span class="when">'+esc(m.date||'')+'</span></div>';
+  }).join('') || '<div class="empty">Aucun jalon.</div>';
+
+  el('artifacts').innerHTML = (D.artifacts||[]).map(function(a){
+    return '<div class="row"><span class="'+(a.present?'ok':'ko')+'">'+(a.present?'✔':'○')+'</span>'+
+      '<span style="flex:1">'+esc(a.label)+(a.detail?' <span class="muted">— '+esc(a.detail)+'</span>':'')+'</span>'+
+      '<span class="when mono">'+esc(a.path||'')+'</span></div>';
+  }).join('') || '<div class="empty">—</div>';
+
+  if(!(D.activity||[]).length){ el('s-activity').classList.add('hidden'); }
+  el('activity').innerHTML = (D.activity||[]).map(function(a){
+    return '<div class="row"><span class="when">'+esc(a.date)+'</span><span style="flex:1">'+esc(a.text)+'</span><span class="mono muted">'+esc(a.hash||'')+'</span></div>';
+  }).join('');
+
+  el('foot').innerHTML = (D.footer||[]).map(function(f){return '<div>'+f+'</div>'}).join('');
+
+  /* search */
+  el('q').addEventListener('input',function(){
+    var v = this.value.trim().toLowerCase();
+    document.querySelectorAll('.epic').forEach(function(e){
+      var hit = !v || (e.dataset.search||'').indexOf(v)>=0;
+      var kidHit = false;
+      e.querySelectorAll('.child').forEach(function(c){
+        var h = !v || (c.dataset.search||'').indexOf(v)>=0;
+        c.classList.toggle('hidden', !(h||hit));
+        if(h) kidHit = true;
+      });
+      e.classList.toggle('hidden', !(hit||kidHit));
+      if(v && (hit||kidHit)) e.classList.add('open');
+    });
+  });
+  el('expand').addEventListener('click',function(){
+    var any = document.querySelector('.epic:not(.open)');
+    document.querySelectorAll('.epic').forEach(function(e){e.classList.toggle('open', !!any)});
+    this.textContent = any ? 'Tout replier' : 'Tout déplier';
+  });
+  /* theme */
+  var root = document.documentElement;
+  try{ var t = localStorage.getItem('av-theme'); if(t) root.setAttribute('data-theme',t); }catch(e){}
+  el('theme').addEventListener('click',function(){
+    var cur = root.getAttribute('data-theme');
+    var next = cur==='dark' ? 'light' : (cur==='light' ? 'auto' : 'dark');
+    root.setAttribute('data-theme',next);
+    try{ localStorage.setItem('av-theme',next); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

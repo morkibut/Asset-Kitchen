@@ -42,6 +42,8 @@ import {
   type Lien,
   type Teinte,
   type CompteReferences,
+  type Personnage,
+  type Pose,
   type Univers,
   UNIVERS_VIDE,
 } from "./api"
@@ -51,6 +53,7 @@ import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
+import { EcranPersonnages } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { Fiche } from "./composants/Fiche"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
@@ -123,6 +126,10 @@ export function App() {
     raison: null,
     recu_le: 0,
   })
+  // Ce qu'une image a coûté chez chaque modèle, mesuré sur les derniers appels
+  // (US-121). Une mesure, jamais un tarif — le produit ne porte aucun prix de
+  // catalogue, et il dit « jamais appelé » plutôt que d'inventer.
+  const [couts, setCouts] = useState<Record<string, number>>({})
   const [compteReferences, setCompteReferences] = useState<CompteReferences | null>(
     null,
   )
@@ -162,6 +169,53 @@ export function App() {
   // second abonnement ouvert à son ouverture se rebrancherait à chaque
   // aller-retour vers l'atelier.
   const [univers, setUnivers] = useState<Univers>(UNIVERS_VIDE)
+  // ── Le plan de poses et les personnages du projet (C1) ────────────────────
+  //
+  // Tenus ici comme les cartes, et pour la même raison : **un seul endroit
+  // écoute le flux**, pour toute la vie de l'onglet. Un second abonnement ouvert
+  // à l'ouverture de l'écran Personnages se rebrancherait à chaque aller-retour
+  // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
+  const [plan, setPlan] = useState<Pose[]>([])
+  const [personnages, setPersonnages] = useState<Personnage[]>([])
+  const [personnagesOuverts, setPersonnagesOuverts] = useState(false)
+  // **La case que le prochain appel remplira** (US-120). Armée depuis la
+  // matrice, désarmée dès que l'appel est parti : c'est une intention qui vaut
+  // pour *cette* génération, et une intention qui survivrait à son geste
+  // enverrait la suivante dans une case que personne ne vise plus.
+  // **Des identifiants, jamais des copies.** Une cible qui garderait l'objet
+  // du moment où on l'a armée porterait un personnage périmé dès la première
+  // description écrite : le nom affiché, ce qu'il écarte, ses concept arts —
+  // tout cela continue de vivre ailleurs. On retient donc *lequel*, et on le
+  // relit dans la liste que le flux tient à jour.
+  //
+  // **Une cible porte N cases depuis C2**, jamais une seule. Un lot est la même
+  // intention que la case unique de C1 — *ce que le prochain appel remplira* —,
+  // et en faire un second état aurait donné deux façons de dire la même chose,
+  // qui se seraient contredites au premier désarmement. Une case armée est un
+  // lot d'une case ; c'est le compte qui décide si l'appel se plie.
+  const [cible, setCible] = useState<{ personnage: string; poses: string[] } | null>(
+    null,
+  )
+  // **Ce que cette génération-ci n'envoie pas** (US-126). `null` — aucun avis,
+  // donc les deux portées durables s'appliquent telles que le serveur les rend.
+  // Il ne s'écrit nulle part : c'est la portée la plus étroite, elle vit dans
+  // l'onglet et part avec l'appel — comme la pile d'annulation de la toile.
+  const [ecarteesGeneration, setEcarteesGeneration] = useState<string[] | null>(null)
+
+  // La case visée, relue dans ce que le flux tient à jour. Ni l'une ni l'autre
+  // ne survit à sa disparition : un personnage supprimé, une pose retirée du
+  // plan, et la bande s'efface — la case n'existe plus.
+  const personnageCible =
+    personnages.find((p) => p.identifiant === cible?.personnage) ?? null
+  // **Dans l'ordre du plan, pas dans celui des clics.** C'est cet ordre-là que
+  // la planche portera case par case, et c'est celui que l'auteur a sous les
+  // yeux dans la matrice : deux ordres pour la même chose se contrediraient au
+  // moment où l'on compare la planche à la colonne.
+  const posesCible = plan.filter((p) => cible?.poses.includes(p.identifiant))
+  // Deux ou plus, et l'appel se plie. En dessous, c'est la génération de C1 :
+  // plier une seule case ferait payer un gabarit et une consigne de grille pour
+  // une image que le produit sait déjà demander.
+  const cases = posesCible.length >= 2 ? posesCible.length : 0
   const [cartes, setCartes] = useState<Carte[]>([])
   // **Les traits et les teintes voyagent avec les cartes**, parce qu'ils
   // viennent de la même route : une toile se lit en un aller-retour. Tenus ici
@@ -275,6 +329,9 @@ export function App() {
     relireCatalogue: async () => {},
     relireGrille: async () => {},
     relireEtat: async () => {},
+    fondrePersonnage: (_recu: Personnage & { supprime?: boolean }) => {},
+    relireProduction: async () => {},
+    personnages: [] as Personnage[],
   })
 
   // **La fiche n'est pas un état : c'est la sélection quand elle vaut un.**
@@ -313,13 +370,27 @@ export function App() {
   // Tout le reste arrive par le flux.
   const relireCatalogue = useCallback(async () => {
     try {
-      const catalogue = await api.modeles(proportions, reinjections.length, echelle)
+      const catalogue = await api.modeles(
+        proportions,
+        reinjections.length,
+        echelle,
+        // **Le personnage visé décide de ce qui part** : ses concept arts
+        // rejoignent les artworks, et ce qu'il écarte s'applique. Le compte
+        // vient donc du serveur avec la case sous les yeux.
+        cible?.personnage ?? "",
+        // **Le lot armé décide de deux choses au serveur** : le gabarit compte
+        // dans le plafond du modèle — c'est une image qui part vraiment —, et
+        // le défaut devient le modèle de planche du projet plutôt que celui de
+        // la famille du sujet.
+        cases,
+      )
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
       // Le compte qui partira vraiment, artworks compris et dédoublonné. Il
       // vient d'ici et jamais d'une addition faite à l'écran : l'écran ne
       // connaît pas les artworks, et deux comptes finiraient par diverger.
       setCompteReferences(catalogue.references)
+      setCouts(catalogue.couts ?? {})
       setCatalogueRepli({
         repli: catalogue.repli,
         raison: catalogue.raison,
@@ -329,7 +400,7 @@ export function App() {
     } catch (erreur) {
       echouer(erreur, "l'atelier ne répond pas")
     }
-  }, [proportions, reinjections.length, echelle])
+  }, [proportions, reinjections.length, echelle, cible?.personnage, cases])
 
   useEffect(() => {
     void relireCatalogue()
@@ -384,6 +455,46 @@ export function App() {
     void relireTableau()
   }, [relireTableau])
 
+  /** **Un personnage se fond par identifiant, jamais ne s'empile.**
+   *
+   *  Il arrive par deux chemins qui se croisent — la réponse de l'appel et
+   *  l'annonce du flux —, comme une génération en T1 et une carte en T4. Une
+   *  seule fonte, appelée des deux côtés : deux fusions écrites à deux endroits
+   *  finiraient par ne plus traiter le même cas (`docs/PIEGES.md`). */
+  const fondrePersonnage = useCallback(
+    (recu: Personnage & { supprime?: boolean }) =>
+      setPersonnages((liste) => {
+        if (recu.projet !== vivant.current.courant)
+          return liste.filter((p) => p.identifiant !== recu.identifiant)
+        if (recu.supprime)
+          return liste.filter((p) => p.identifiant !== recu.identifiant)
+        return liste.some((p) => p.identifiant === recu.identifiant)
+          ? liste.map((p) => (p.identifiant === recu.identifiant ? recu : p))
+          : [...liste, recu]
+      }),
+    [],
+  )
+
+  // ── Le plan et les personnages ────────────────────────────────────────────
+  //
+  // Redemandés quand le projet ouvert change, et **seulement** alors — comme le
+  // tableau : un plan appartient à son jeu, et celui d'un autre univers n'a rien
+  // à faire à l'écran. Les deux arrivent **en un seul aller-retour** : une
+  // colonne de cases n'existe que par le plan qui la nomme.
+  const relireProduction = useCallback(async () => {
+    try {
+      const production = await api.production()
+      setPlan(production.plan)
+      setPersonnages(production.personnages)
+    } catch (erreur) {
+      echouer(erreur, "les personnages ne répondent pas")
+    }
+  }, [bibliotheque.courant])
+
+  useEffect(() => {
+    void relireProduction()
+  }, [relireProduction])
+
   /** Redemander ce que le serveur grise — et lui seul.
    *
    *  La quantification s'allume quand une palette existe (US-65), et c'est le
@@ -413,6 +524,9 @@ export function App() {
     relireCatalogue,
     relireGrille,
     relireEtat,
+    fondrePersonnage,
+    relireProduction,
+    personnages,
   }
 
   // ── Le flux d'événements ──────────────────────────────────────────────────
@@ -442,10 +556,25 @@ export function App() {
         setPanne(null)
       },
       generation: (recue) => setChantier((liste) => fondre(liste, recue)),
-      asset: (recu) =>
+      asset: (recu) => {
         setGrille((liste) =>
           fondreAsset(liste, recu, vivant.current.filtre, vivant.current.courant),
-        ),
+        )
+        // **Une image qui porte une case peut la remplir ou la vider**, et les
+        // cases se calculent sur les assets — que cet onglet ne tient pas : il
+        // n'en a qu'une page, filtrée sur autre chose. On redemande donc, et
+        // seulement pour les images qui **concernent** une case : celle qui en
+        // porte une, et celle qui vient d'en quitter une, reconnue parce que la
+        // matrice la montre encore.
+        const concerne =
+          recu.personnage ||
+          vivant.current.personnages.some((p) =>
+            p.cases.some((c) =>
+              c.images.some((i) => i.identifiant === recu.identifiant),
+            ),
+          )
+        if (concerne) void vivant.current.relireProduction()
+      },
       bibliotheque: setBibliotheque,
       // **Une carte se fond par identifiant, jamais ne s'empile.** Elle arrive
       // par deux chemins qui se croisent — la réponse du POST et l'annonce du
@@ -478,6 +607,28 @@ export function App() {
             ? liste.map((un) => (un.identifiant === recu.identifiant ? recu : un))
             : [...liste, recu]
         }),
+      // **Un personnage se fond par identifiant, jamais ne s'empile** — même
+      // règle que la carte et le lien, et pour la même raison : il arrive par
+      // deux chemins qui se croisent, la réponse de l'appel et l'annonce du
+      // flux. Un personnage supprimé porte `supprime`, et il est confronté au
+      // projet ouvert comme tout ce qui appartient à un projet.
+      personnage: (recu) => vivant.current.fondrePersonnage(recu),
+      // Ce que le projet n'envoie plus. Un genre à lui : `univers` fait
+      // redemander l'état *et* le catalogue depuis T4, et une case décochée n'a
+      // aucune raison de coûter deux appels réseau.
+      references: (recu) => {
+        if (recu.projet !== vivant.current.courant) return
+        void vivant.current.relireCatalogue()
+      },
+      // **Le plan arrive entier**, et il remplace : il est court, et une pose
+      // retirée ne se devinerait pas d'un message qui ne porterait que les
+      // ajouts. Une pose ajoutée fait paraître une case chez chaque personnage
+      // sans qu'aucun personnage soit annoncé — c'est ce que « le plan décide,
+      // le personnage soustrait » veut dire, vu du flux.
+      plan: (recu) => {
+        if (recu.projet !== vivant.current.courant) return
+        setPlan(recu.plan)
+      },
       // Un seul message pour un lot entier : palette recalculée, réglage posé,
       // ou balayage terminé. La grille se redemande alors — c'est le troisième
       // et dernier appel que l'interface refait d'elle-même, et il porte sur des
@@ -615,11 +766,30 @@ export function App() {
     )
     try {
       const generation = await api.generer({
+        // **La case visée, quand la matrice a armé** (US-120). L'image qui
+        // reviendra y tombera d'elle-même : personne n'a à la ranger, et une
+        // relance de cet appel visera toujours la même case.
+        personnage: cible?.personnage ?? null,
+        // **Une case ou N, et la même route** (US-128). Il n'existe qu'un seul
+        // endroit d'où l'on paie dans tout le produit : une seconde route pour
+        // les lots en aurait fait deux, et l'invariant de C1 serait tombé le
+        // jour où elle serait apparue. C'est le compte qui décide, pas l'écran.
+        pose: cases ? null : (posesCible[0]?.identifiant ?? null),
+        poses: cases ? posesCible.map((p) => p.identifiant) : null,
+        // **Ce que cette génération-ci écarte.** `null` laisse parler les deux
+        // portées durables — c'est ce que reçoit un agent, qui n'a pas de
+        // panneau devant lui.
+        references_ecartees: ecarteesGeneration,
         modele: modele.identifiant,
         prompt: prompt.trim(),
         prompt_negatif: promptNegatif.trim(),
         proportions,
-        variations,
+        // **Un lot part en un seul appel, et l'écran envoie ce qu'il affiche.**
+        // Le segment est éteint quand un lot est armé, mais la valeur d'avant
+        // vit encore dans l'état : sans cette ligne, un « 4 » choisi puis un lot
+        // coché enverraient 4 pendant que l'écran montre 1 — et le refus
+        // arriverait après le clic qui paie, ce que le grisé existe pour éviter.
+        variations: cases ? 1 : variations,
         options: retenues,
         identifiant,
         references: reinjections,
@@ -629,9 +799,52 @@ export function App() {
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
+      // L'avis de cette génération-là est parti avec elle : le suivant se
+      // reprend aux portées durables, comme au premier prompt de la séance.
+      setEcarteesGeneration(null)
+      // **La cible se désarme dès que l'appel est parti.** C'est une intention
+      // qui vaut pour *cette* génération : la garder enverrait l'image suivante
+      // — un tonneau, un décor — dans la case d'un personnage, sans que rien
+      // ne l'ait demandé. On réarme d'un clic depuis la matrice.
+      setCible(null)
     } catch (erreur) {
       echouer(erreur, "génération refusée")
     }
+  }
+
+  /** Armer l'atelier sur une case (US-120).
+   *
+   *  **Rien n'est dépensé ici.** Le prompt reçoit le signalement du personnage
+   *  et le nom de l'attitude — c'est très exactement ce qu'on ne veut plus
+   *  retaper (US-115) —, la case est retenue, et l'écran rend la main. C'est le
+   *  bouton Générer de l'atelier qui paie.
+   *
+   *  Le prompt est **remplacé**, pas complété : cliquer « Fabriquer » sur une
+   *  case est sans ambiguïté, et laisser dessous un début de phrase écrit pour
+   *  autre chose ferait partir les deux ensemble.
+   *
+   *  Le **sujet**, lui, n'est pas touché : c'est le choix de l'auteur, et le
+   *  produit ne devine pas à sa place — il n'y a pas de famille « personnages »
+   *  imposée dans un barème qu'il a pu renommer.
+   */
+  const armer = (personnage: Personnage, poses: Pose[]) => {
+    if (poses.length === 0) return
+    setCible({
+      personnage: personnage.identifiant,
+      poses: poses.map((p) => p.identifiant),
+    })
+    // **Le prompt reçoit le sujet, jamais la grille.** Pour une case, c'est le
+    // signalement et l'attitude, comme en C1. Pour un lot, c'est le signalement
+    // seul : les attitudes partent case par case dans les consignes de planche,
+    // que l'atelier replie côté serveur — les écrire ici en ferait un second
+    // endroit qui décide de ce qu'on demande, et le prompt enregistré ne
+    // dirait plus ce qui est parti.
+    setPrompt(
+      poses.length === 1
+        ? [personnage.description.trim(), poses[0].nom].filter(Boolean).join(", ")
+        : personnage.description.trim(),
+    )
+    setPersonnagesOuverts(false)
   }
 
   const relancer = async (identifiant: string, rang: number) => {
@@ -828,6 +1041,7 @@ export function App() {
         onReplier={(quoi) => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
         onReglages={() => setReglagesOuverts(true)}
         onUnivers={() => setUniversOuvert(true)}
+        onPersonnages={() => setPersonnagesOuverts(true)}
         univers={univers}
         onRafraichir={redemanderCatalogue}
       />
@@ -885,6 +1099,15 @@ export function App() {
             echelle={echelle}
             onEchelle={setEchelle}
             compte={compteReferences}
+            cout={modele ? (couts[modele.identifiant] ?? null) : null}
+            // Combien de cases le lot armé demande, ou zéro. Le panneau en tire
+            // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
+            // qu'un compte faux coûterait.
+            cases={cases}
+            cible={personnageCible}
+            ecarteesGeneration={ecarteesGeneration}
+            onEcarterGeneration={setEcarteesGeneration}
+            onErreur={setPanne}
           />
         </div>
 
@@ -895,6 +1118,23 @@ export function App() {
             la droite, en-tête et pied compris. Constaté au navigateur le 27 août
             2026, à la première sélection. */}
         <section ref={centre} className="flex min-h-0 min-w-0 flex-col">
+          <Cible
+            personnage={personnageCible}
+            poses={posesCible}
+            onRetirer={(pose) =>
+              setCible((precedente) => {
+                // La forme fonctionnelle, jamais la valeur du rendu : deux
+                // retraits rapprochés partagent le même rendu, donc la même
+                // liste périmée, et le second effacerait le premier.
+                const restantes =
+                  precedente?.poses.filter((p) => p !== pose.identifiant) ?? []
+                return restantes.length && precedente
+                  ? { ...precedente, poses: restantes }
+                  : null
+              })
+            }
+            onDesarmer={() => setCible(null)}
+          />
           <Reinjections
             reinjections={reinjections}
             grille={grille}
@@ -959,6 +1199,8 @@ export function App() {
               asset={ouverte}
               traitement={etat.traitement}
               univers={univers}
+              plan={plan}
+              personnages={personnages}
               onFermer={() => setSelection([])}
               onErreur={setPanne}
               onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
@@ -1011,8 +1253,27 @@ export function App() {
           cartes={cartes}
           liens={liens}
           teintes={teintes}
+          personnages={personnages}
           onRelire={relireTableau}
           onFermer={() => setUniversOuvert(false)}
+        />
+      )}
+
+      {/* **Ce qu'il reste à fabriquer**, et l'écran d'où l'on arme une pose. Il
+          couvre l'atelier comme Univers, avec la même contrepartie : il porte
+          sa propre fente de refus. */}
+      {personnagesOuverts && (
+        <EcranPersonnages
+          projet={
+            bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ??
+            null
+          }
+          plan={plan}
+          personnages={personnages}
+          onPersonnage={fondrePersonnage}
+          onPlan={setPlan}
+          onArmer={armer}
+          onFermer={() => setPersonnagesOuverts(false)}
         />
       )}
 
@@ -1084,6 +1345,7 @@ function BarreDeTete({
   onReplier,
   onReglages,
   onUnivers,
+  onPersonnages,
   onRafraichir,
 }: {
   etat: Etat | null
@@ -1093,6 +1355,7 @@ function BarreDeTete({
   onReplier: (quoi: "arbre" | "reglages") => void
   onReglages: () => void
   onUnivers: () => void
+  onPersonnages: () => void
   onRafraichir: () => void
 }) {
   const projet =
@@ -1153,6 +1416,9 @@ function BarreDeTete({
             )
           }
         />
+        {/* Ce qu'il reste à fabriquer — « savoir quoi lancer sans tenir la
+            liste dans ma tête » (US-119). */}
+        <Bouton onClick={onPersonnages} enfants="Personnages" />
         <Bouton onClick={onRafraichir} enfants="Catalogue" />
         <Bouton onClick={onReglages} enfants="Réglages" />
         {/* Le seul élément de cette barre qui ne parle pas du travail en cours
@@ -1164,6 +1430,83 @@ function BarreDeTete({
         </div>
       </div>
     </header>
+  )
+}
+
+// ── La case visée ───────────────────────────────────────────────────────────
+
+/**
+ * Pour quelle case le prochain appel partira (US-120).
+ *
+ * **La bande n'existe que quand l'atelier est armé** — même règle que celle des
+ * réinjections, juste au-dessus : une rangée vide en permanence au-dessus du
+ * prompt serait du cadrage affiché, et le prompt est l'endroit où l'atelier
+ * s'ouvre.
+ *
+ * Elle est là parce qu'une intention invisible est une intention qu'on oublie :
+ * ce qui décide où l'image ira doit se lire au moment où l'on appuie, à côté du
+ * bouton qui paie. Et elle se défait d'un clic — armer n'est pas s'engager.
+ */
+function Cible({
+  personnage,
+  poses,
+  onRetirer,
+  onDesarmer,
+}: {
+  /** **Relus dans les listes vivantes**, jamais gardés au moment de l'armement :
+   *  un personnage supprimé ou une pose retirée du plan font disparaître la
+   *  bande, ce qui est exactement ce qu'il faut — la case n'existe plus. */
+  personnage: Personnage | null
+  /** Une case, ou N depuis C2. **Le nom du personnage ne se répète pas** : il
+   *  est écrit une fois, et les attitudes suivent — un lot n'en vise qu'un. */
+  poses: Pose[]
+  onRetirer: (pose: Pose) => void
+  onDesarmer: () => void
+}) {
+  if (!personnage || poses.length === 0) return null
+  const lot = poses.length >= 2
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-bord bg-fond-1 px-4 pt-3">
+      <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+        Pour
+      </span>
+      <span className="flex flex-wrap items-center gap-1.5 rounded-[2px] border border-signal bg-signal/13 py-1 pr-1 pl-2">
+        <span className="text-[11.5px] text-texte">{personnage.nom}</span>
+        {poses.map((pose) => (
+          <span key={pose.identifiant} className="flex items-center">
+            <span className="mesure text-[10px] text-signal">{pose.nom}</span>
+            <button
+              type="button"
+              onClick={() => onRetirer(pose)}
+              aria-label={`Retirer ${pose.nom} de ce qui part`}
+              className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </span>
+      {/* **Un lot le dit en toutes lettres, au-dessus du bouton qui paie.**
+          C'est la phrase du § Le grisé porte sa raison prise par l'autre bout :
+          ici rien n'est refusé, mais ce qui va se passer n'est pas ce qu'on
+          fait d'habitude — neuf cases, un seul appel — et l'écrire coûte moins
+          cher que de le faire deviner. */}
+      {lot && (
+        <span className="mesure text-[10px] text-texte-3">
+          {poses.length} attitudes, un seul appel
+        </span>
+      )}
+      {lot && (
+        <button
+          type="button"
+          onClick={onDesarmer}
+          aria-label="Ne plus viser ces cases"
+          className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec"
+        >
+          tout retirer
+        </button>
+      )}
+    </div>
   )
 }
 

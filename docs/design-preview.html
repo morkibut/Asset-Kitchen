@@ -3,1677 +3,422 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Asset Kitchen — Preview du système de design</title>
+<title>Asset Kitchen — la toile, révisée</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* — le châssis : froid, désaturé, muet — */
-  --fond-0:#0B0D10;   /* la table : zone de grille, le plus profond */
-  --fond-1:#111419;   /* panneaux */
-  --fond-2:#171B21;   /* champs, tuiles, cartes */
-  --fond-3:#1E242B;   /* survol, élévation */
-  --bord:#252B33;
-  --bord-fort:#39424C;
-
-  --texte:#E6EAEE;
-  --texte-2:#98A2AC;
-  --texte-3:#5E6771;  /* le grisé : indisponible, avec sa raison */
-
-  /* — le signal : le seul accent — */
-  --signal:#49B3CE;
-  --signal-clair:#8ED8E8;
-  --signal-sourd:rgba(73,179,206,.13);
-  --lumiere:#EAF4F8;  /* sélection, focus — c'est la lampe de la table */
-
-  /* — sémantique, sourde — */
-  --ok:#5FA871;
-  --epingle:#C8A03C;
-  --echec:#CB6C65;
-  /* --info #7E8AA0 : retiré le 27/08, plus aucun usage — § Couleur. */
-
-  --r-s:2px; --r:3px; --r-l:4px;
-
-  --sans:"Instrument Sans",ui-sans-serif,sans-serif;
-  --serif:"Instrument Serif",Georgia,serif;
-  --mono:"JetBrains Mono",ui-monospace,monospace;
-
+  --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+  --bord:#252B33; --bord-fort:#39424C;
+  --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+  --signal:#49B3CE; --signal-clair:#8ED8E8; --lumiere:#EAF4F8;
+  --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
   --damier-a:#191E24; --damier-b:#14181D;
+
+  --ardoise:#6686AD; --pervenche:#7781B6; --iris:#847DB9; --lavande:#9577B6;
+  --prune:#A76FB2; --mauve:#B16DA4; --bruyere:#B2708F;
+  --lichen:#678F4D; --mousse:#788B4B; --paille:#878748;
+
+  --o-lichen:#708c5d;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-font-smoothing:antialiased}
-body{
-  background:var(--fond-0);color:var(--texte);
-  font-family:var(--sans);font-size:14px;line-height:1.55;
-}
-.page{max-width:1180px;margin:0 auto;padding:0 32px}
+body{background:var(--fond-0);color:var(--texte);font-family:"Instrument Sans",sans-serif;font-size:14px;line-height:1.55}
+.mono{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
 
-/* ————— chrome du preview ————— */
-.entete{padding:64px 0 40px;border-bottom:1px solid var(--bord)}
-.fil{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--texte-3)}
-h1{font-family:var(--serif);font-size:56px;font-weight:400;line-height:1;letter-spacing:-.01em;margin:14px 0 12px}
-.chapeau{color:var(--texte-2);max-width:62ch;font-size:15px}
-.chapeau em{color:var(--texte);font-style:italic}
+.page{max-width:1180px;margin:0 auto;padding:64px 32px 96px}
+header.tete{border-bottom:1px solid var(--bord);padding-bottom:32px;margin-bottom:56px}
+header.tete .kick{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
+header.tete h1{font-family:"Instrument Serif",serif;font-size:44px;line-height:1.05;margin:14px 0 16px;font-weight:400}
+header.tete h1 em{font-style:italic;color:var(--signal)}
+header.tete p{color:var(--texte-2);max-width:64ch;font-size:15px}
+header.tete p b{color:var(--texte);font-weight:600}
 
-section{padding:56px 0;border-bottom:1px solid var(--bord)}
-.titre-sec{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
-.titre-sec h2{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:-.01em}
-.titre-sec .num{font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.14em}
-.sous{color:var(--texte-2);max-width:64ch;margin-bottom:34px;font-size:14px}
-.sous b{color:var(--texte);font-weight:600}
-.sous em{color:var(--texte);font-style:italic}
+section{margin-bottom:72px}
+h2{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);border-bottom:1px solid var(--bord);padding-bottom:8px;margin-bottom:24px;font-weight:500}
+h3{font-size:12.5px;font-weight:600;color:var(--texte);margin-bottom:8px}
+p.note{color:var(--texte-2);font-size:12.5px;max-width:78ch}
+p.note em{color:var(--texte);font-style:italic}
+p.note b{color:var(--texte);font-weight:600}
+.mesure{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
 
-.etiq{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--texte-3);margin-bottom:10px;display:block}
-.bloc{margin-bottom:38px}
-.note{font-size:12.5px;color:var(--texte-3);margin-top:9px;max-width:70ch;line-height:1.6}
-.note b{color:var(--texte-2);font-weight:500}
-hr.fin{border:0;border-top:1px solid var(--bord);margin:34px 0}
+/* palette */
+.roue{display:grid;grid-template-columns:repeat(10,1fr);gap:9px;margin-bottom:24px}
+.teinte{display:flex;flex-direction:column;gap:6px}
+.teinte .bloc{height:56px;border-radius:2px}
+.teinte .nom{font-size:11.5px;color:var(--texte-2)}
+.teinte .hex{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-3)}
+.teinte.neuve .nom{color:var(--texte)}
+.teinte.neuve .nom::after{content:" ·";color:var(--signal)}
 
-/* ————— 1 · typographie ————— */
-.specimen{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r);padding:28px 30px;overflow-x:auto}
-.spec-hero{font-family:var(--serif);font-size:64px;line-height:1;font-weight:400;letter-spacing:-.015em}
-.spec-hero em{font-style:italic;color:var(--texte-2)}
-.spec-corps{font-size:14.5px;color:var(--texte-2);max-width:68ch}
-.spec-corps b{color:var(--texte);font-weight:600}
+.compare{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.cadre-cmp{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);padding:20px}
+.cadre-cmp .lg{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);margin-bottom:14px}
+.ilot-demo{border:1px solid;border-radius:2px;height:96px;position:relative}
+.ilot-demo .bande{height:20px;display:flex;align-items:center;gap:6px;padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:10px}
 
-table.donnees{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
-table.donnees th{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--texte-3);text-align:left;font-weight:500;
-  padding:0 14px 8px 0;border-bottom:1px solid var(--bord);white-space:nowrap
-}
-table.donnees td{padding:7px 14px 7px 0;border-bottom:1px solid var(--fond-2);color:var(--texte-2);white-space:nowrap}
-table.donnees td.nom{color:var(--texte)}
-table.donnees td.n{font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--texte);text-align:right;padding-right:20px}
-table.donnees td.n.faible{color:var(--texte-3)}
-table.donnees tr:last-child td{border-bottom:0}
+/* prises */
+.prises{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.prise{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:20px}
+.prise .demo{height:64px;display:flex;align-items:center;justify-content:center}
+.prise h3{margin-top:14px}
+.prise p{font-size:11.5px;color:var(--texte-2)}
+.prise p b{color:var(--texte);font-weight:600}
+.grip{width:12px;height:12px;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr);gap:2px;align-content:center;justify-items:center;align-items:center;padding:1px;flex:none}
+.grip i{width:3px;height:3px;border-radius:9999px;background:var(--fond-0);display:block}
+.grip.sur-chassis i{background:var(--texte-2)}
+.rond{width:12px;height:12px;border-radius:9999px;border:1px solid var(--bord-fort);background:var(--fond-2);flex:none}
+.carre{width:10px;height:10px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-3);flex:none}
+.zoomx{transform:scale(2.6);transform-origin:center}
 
-pre.code{
-  font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--texte-2);
-  background:var(--fond-0);border:1px solid var(--bord);border-radius:var(--r);
-  padding:16px 18px;overflow-x:auto
-}
-.code .k{color:var(--signal)} .code .s{color:#9FBF8E} .code .c{color:var(--texte-3)} .code .v{color:var(--epingle)}
+/* mockup */
+.appli{border:1px solid var(--bord);border-radius:3px;overflow:hidden;background:var(--fond-1)}
+.barre-tete{height:44px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--bord)}
+.barre-tete .marque{font-family:"Instrument Serif",serif;font-size:17px}
+.barre-tete .ecran{font-family:"Instrument Serif",serif;font-size:17px;color:var(--texte-2)}
+.corps{display:grid;grid-template-columns:250px minmax(0,1fr) 210px;height:460px}
+.col{border-right:1px solid var(--bord);background:var(--fond-1);overflow:hidden}
+.col:last-child{border-right:0;border-left:1px solid var(--bord)}
+.entete-panneau{height:30px;display:flex;align-items:center;padding:0 8px;font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);border-bottom:1px solid var(--bord)}
+.reglage{padding:8px;display:flex;flex-direction:column;gap:10px}
+.champ{display:flex;flex-direction:column;gap:4px}
+.champ label{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
+.champ .val{height:32px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);display:flex;align-items:center;padding:0 8px;font-size:12.5px;color:var(--texte);overflow:hidden;white-space:nowrap}
 
-.echelle{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
-.echelle div{flex:1 1 auto;padding:12px 14px;background:var(--fond-1);border-right:1px solid var(--bord);min-width:88px}
-.echelle div:last-child{border-right:0}
-.echelle .px{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);letter-spacing:.08em;display:block;margin-bottom:6px}
-.echelle .ex{color:var(--texte);line-height:1;display:block;white-space:nowrap}
+.barre-tableau{height:38px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--bord)}
+.barre-tableau .lg{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3)}
+.segs{display:flex;border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+.segs button{height:26px;padding:0 10px;background:var(--fond-2);border:0;color:var(--texte-2);font-family:inherit;font-size:11.5px}
+.segs button.on{background:color-mix(in srgb,var(--signal) 13%,transparent);color:var(--signal-clair)}
+.btn-xs{height:24px;padding:0 9px;border:1px solid var(--bord-fort);border-radius:2px;background:var(--fond-2);color:var(--texte);font-family:inherit;font-size:11.5px;display:inline-flex;align-items:center;gap:5px}
+.plus{color:var(--signal)}
 
-/* ————— 2 · couleur ————— */
-.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
-.sw{background:var(--fond-1)}
-.sw .pave{height:56px;border-bottom:1px solid var(--bord)}
-.sw .txt{padding:9px 11px 12px}
-.sw .nm{font-size:12px;color:var(--texte);line-height:1.3}
-.sw .hx{font-family:var(--mono);font-size:10px;color:var(--texte-3);text-transform:uppercase;letter-spacing:.05em}
-.sw .us{font-size:11px;color:var(--texte-3);margin-top:5px;line-height:1.4}
+.plan{position:relative;background:var(--fond-0);flex:1;overflow:hidden;
+  background-image:radial-gradient(var(--bord) 1px,transparent 1px);background-size:24px 24px;background-position:6px 6px}
 
-.rangee{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
-.grille2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
+.ilot{position:absolute;border:1px solid;border-radius:2px}
+.ilot > .bande{position:absolute;top:-1px;left:-1px;right:-1px;height:20px;display:flex;align-items:center;gap:6px;padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:10px;border-radius:2px 2px 0 0}
+.ilot > .bande .nom{color:var(--fond-0);font-weight:500;white-space:nowrap}
+.ilot > .bande .cpt{color:color-mix(in srgb,var(--fond-0) 90%,transparent);margin-left:auto;white-space:nowrap}
+.ilot > .bande .rond{margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--fond-0) 55%,transparent)}
 
-/* boutons */
-.btn{
-  font-family:var(--sans);font-size:13px;font-weight:600;
-  border:1px solid transparent;border-radius:var(--r-s);
-  padding:0 14px;height:32px;display:inline-flex;align-items:center;gap:9px;
-  cursor:pointer;transition:background 80ms linear,border-color 80ms linear,color 80ms linear
-}
-.btn .cout{font-family:var(--mono);font-size:11px;font-weight:500;opacity:.72;font-variant-numeric:tabular-nums}
-.btn-1{background:var(--signal);color:#07171C;border-color:var(--signal)}
-.btn-1:hover{background:var(--signal-clair);border-color:var(--signal-clair)}
-.btn-2{background:var(--fond-2);color:var(--texte);border-color:var(--bord-fort)}
-.btn-2:hover{background:var(--fond-3)}
-.btn-f{background:transparent;color:var(--texte-2);border-color:transparent}
-.btn-f:hover{background:var(--fond-2);color:var(--texte)}
-.btn-off{background:var(--fond-2);color:var(--texte-3);border-color:var(--bord);cursor:not-allowed}
-.btn-danger{background:transparent;color:var(--echec);border-color:transparent}
-.btn-danger:hover{background:rgba(203,108,101,.12)}
-.btn-xs{height:24px;padding:0 9px;font-size:11.5px;font-weight:500}
+.carte{position:absolute;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+.carte .img{background-image:
+    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+    linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
+  background-size:12px 12px;background-position:0 0,6px 6px;position:relative;border-radius:1px 1px 0 0}
+.carte .img .sujet{position:absolute;inset:20%;border-radius:1px}
+.carte .pied{height:21px;display:flex;align-items:center;padding:0 5px;font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-3);border-top:1px solid var(--bord)}
+.carte .coin{position:absolute;top:0;right:0;width:0;height:0;border-top:9px solid var(--signal);border-left:9px solid transparent}
+.carte > .rond{position:absolute;right:-7px;top:calc(50% - 6px)}
+.carte > .carre{position:absolute;right:-5px;bottom:-5px}
+.carte.visee > .carre{border-color:var(--signal)}
 
-.raison{
-  font-family:var(--mono);font-size:10px;color:var(--texte-3);
-  margin-top:7px;display:flex;align-items:center;gap:7px;line-height:1.4
-}
-.raison::before{content:'';width:8px;height:1px;background:var(--bord-fort);flex:none}
-.raison a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-sourd);white-space:nowrap}
+.note-c{position:absolute;border:1px solid;border-radius:2px;padding:7px 8px;font-size:11.5px;line-height:1.4;color:var(--texte)}
+.trait{position:absolute;height:1px;background:var(--bord-fort);transform-origin:left center}
+.mot{position:absolute;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-2);background:var(--fond-0);padding:1px 5px;border-radius:2px;white-space:nowrap}
+.fantome{position:absolute;border:1px solid var(--lumiere);border-radius:2px;background:var(--fond-2)}
 
-/* champs */
-.champ-l{font-size:11.5px;color:var(--texte-2);display:block;margin-bottom:6px}
-.champ{
-  width:100%;background:var(--fond-2);border:1px solid var(--bord);border-radius:var(--r-s);
-  color:var(--texte);font-family:var(--sans);font-size:13px;padding:8px 11px;outline:none
-}
-.champ::placeholder{color:var(--texte-3)}
-.champ.focus{border-color:var(--signal);box-shadow:0 0 0 2px var(--signal-sourd)}
-.champ.err{border-color:var(--echec)}
-.champ-err{font-family:var(--mono);font-size:10px;color:var(--echec);margin-top:6px}
+.legende{position:absolute;font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--signal);white-space:nowrap}
+.legende::before{content:"";position:absolute;left:-13px;top:6px;width:9px;height:1px;background:var(--signal)}
 
-/* segmenté */
-.seg{display:inline-flex;border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden;background:var(--fond-2)}
-.seg button{
-  font-family:var(--sans);font-size:11.5px;color:var(--texte-2);background:transparent;border:0;
-  border-right:1px solid var(--bord);padding:0 11px;height:28px;cursor:pointer;white-space:nowrap
-}
-.seg button:last-child{border-right:0}
-.seg button:hover{background:var(--fond-3);color:var(--texte)}
-.seg button.on{background:var(--signal-sourd);color:var(--signal-clair);font-weight:600}
-.seg button.off{color:var(--texte-3);cursor:not-allowed}
-.seg button.off:hover{background:transparent;color:var(--texte-3)}
-.seg.mono button{font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
+.reserve-l{padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mini{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);overflow:hidden}
+.mini .img{height:52px;background-image:
+    linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+    linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
+  background-size:10px 10px;background-position:0 0,5px 5px}
+.mini .pied{height:19px;display:flex;align-items:center;padding:0 5px;font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--texte-3);border-top:1px solid var(--bord)}
 
-/* bandeaux */
-.bandeau{
-  display:flex;gap:11px;align-items:flex-start;
-  border:1px solid var(--bord);border-left-width:2px;border-radius:var(--r-s);
-  background:var(--fond-1);padding:11px 14px;font-size:12.5px;color:var(--texte-2)
-}
-.bandeau .t{color:var(--texte);font-weight:600;display:block;margin-bottom:2px;font-size:12.5px}
-.bandeau .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte)}
-.bandeau .pic{width:8px;height:8px;flex:none;margin-top:5px}
-.b-ok{border-left-color:var(--ok)} .b-ok .pic{background:var(--ok)}
-.b-al{border-left-color:var(--epingle)} .b-al .pic{background:var(--epingle)}
-.b-ec{border-left-color:var(--echec)} .b-ec .pic{background:var(--echec)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);text-align:left;padding:0 14px 8px 0;border-bottom:1px solid var(--bord);font-weight:500}
+td{padding:11px 14px 11px 0;border-bottom:1px solid var(--bord);color:var(--texte-2);vertical-align:top}
+td:first-child{color:var(--texte);white-space:nowrap}
+td b{color:var(--texte);font-weight:600}
+td em{color:var(--texte);font-style:italic}
+td .k{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--signal)}
 
-/* ————— la tuile : l'objet central ————— */
-.tuile{position:relative;background:var(--fond-2);border:1px solid var(--bord);display:flex;flex-direction:column;transition:border-color 80ms linear}
-.tuile:hover{border-color:var(--bord-fort)}
-.tuile-img{
-  aspect-ratio:1/1;display:grid;place-items:center;position:relative;
-  background-color:var(--damier-a);
-  background-image:
-    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%),
-    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%);
-  background-size:12px 12px;background-position:0 0,6px 6px
-}
-.tuile-img svg{width:76%;height:76%;display:block}
-.tuile-pied{padding:6px 7px 7px;border-top:1px solid var(--bord);background:var(--fond-2)}
-.tuile-nom{font-size:11.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.tuile-meta{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);font-variant-numeric:tabular-nums;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tuile.sel{box-shadow:0 0 0 2px var(--lumiere);border-color:var(--lumiere);z-index:2}
-.tuile.fav .tuile-img::after{
-  content:'';position:absolute;top:0;right:0;
-  border-left:13px solid transparent;border-top:13px solid var(--signal)
-}
-.pastille{
-  position:absolute;font-family:var(--mono);font-size:8.5px;line-height:1;
-  letter-spacing:.07em;text-transform:uppercase;padding:3px 4px;
-  background:rgba(11,13,16,.82)
-}
-.p-hg{top:0;left:0}
-.p-bg{bottom:0;left:0}
-.p-agent{color:var(--signal-clair)}
-.p-epingle{color:var(--epingle)}
-.p-orphelin{color:var(--texte-3)}
-/* emplacement — le trou qui attend son image */
-.tuile.vide .tuile-img{background-image:none;background-color:var(--fond-1)}
-.vide-txt{font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums;text-align:center;line-height:1.6}
-.jauge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--bord)}
-.jauge i{display:block;height:100%;background:var(--signal)}
-.tuile.rate{border-color:rgba(203,108,101,.45)}
-.tuile.rate .tuile-img{background-image:none;background-color:rgba(203,108,101,.05)}
-.rate-txt{font-size:11px;color:var(--echec);text-align:center;padding:0 10px;line-height:1.4}
-
-.legende{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:7px 24px;margin-top:18px}
-.legende div{font-size:12px;color:var(--texte-3);display:flex;gap:9px;line-height:1.5}
-.legende b{color:var(--texte-2);font-weight:500;font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;padding-top:3px;white-space:nowrap}
-
-/* ————— 3 · l'écran ————— */
-.ecran{background:var(--fond-0);border:1px solid var(--bord);border-radius:var(--r);overflow-x:auto;overflow-y:hidden}
-.app{min-width:1560px;height:812px;display:grid;grid-template-rows:44px 1fr 26px;background:var(--fond-0)}
-.app-tete{
-  display:flex;align-items:center;gap:26px;padding:0 14px;
-  border-bottom:1px solid var(--bord);background:var(--fond-1)
-}
-.marque{font-family:var(--serif);font-size:17px;color:var(--texte)}
-.onglets{display:flex;gap:2px}
-.onglets a{font-size:12.5px;color:var(--texte-2);text-decoration:none;padding:5px 10px;border-radius:var(--r-s)}
-.onglets a:hover{background:var(--fond-2);color:var(--texte)}
-.onglets a.on{color:var(--texte);background:var(--fond-3);font-weight:600}
-.tete-d{margin-left:auto;display:flex;align-items:center;gap:12px}
-.pastille-projet{
-  display:flex;align-items:center;gap:8px;background:var(--fond-2);border:1px solid var(--bord);
-  border-radius:var(--r-s);padding:4px 9px;font-size:12px;color:var(--texte)
-}
-.pastille-projet .ch{color:var(--texte-3);font-size:10px}
-
-.app-corps{display:grid;grid-template-columns:240px 300px minmax(0,1fr) 380px;overflow:hidden}
-.pan{border-right:1px solid var(--bord);background:var(--fond-1);overflow:hidden;display:flex;flex-direction:column}
-.pan-tete{
-  height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);
-  border-bottom:1px solid var(--bord);flex:none
-}
-.pan-tete .plier{cursor:pointer;color:var(--texte-3);font-size:11px}
-.pan-corps{padding:8px 8px 12px;overflow:auto;flex:1}
-
-/* arbre */
-.arb{display:flex;align-items:center;gap:7px;height:26px;padding:0 7px;border-radius:var(--r-s);cursor:pointer;font-size:12.5px;color:var(--texte-2)}
-.arb:hover{background:var(--fond-2);color:var(--texte)}
-.arb.on{background:var(--fond-3);color:var(--texte);font-weight:600}
-.arb .ic{width:11px;color:var(--texte-3);font-size:9px;flex:none;text-align:center}
-.arb .n{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
-.arb.enfant{padding-left:25px;font-size:12px}
-.sep{height:1px;background:var(--bord);margin:9px 5px}
-
-/* réglages */
-.reg-bloc{margin-bottom:16px}
-.reg-l{font-size:11px;color:var(--texte-2);display:block;margin-bottom:7px}
-.modeles{border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden;background:var(--fond-2)}
-.mod{display:flex;align-items:center;gap:8px;padding:7px 9px;border-bottom:1px solid var(--bord);cursor:pointer;font-size:12px;color:var(--texte-2)}
-.mod:last-child{border-bottom:0}
-.mod:hover{background:var(--fond-3)}
-.mod.on{background:var(--signal-sourd);color:var(--texte)}
-.mod .pt{width:5px;height:5px;border-radius:50%;background:var(--bord-fort);flex:none}
-.mod.on .pt{background:var(--signal)}
-.mod .px{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
-.mod.off{color:var(--texte-3);cursor:not-allowed;background:transparent}
-.mod.off:hover{background:transparent}
-.mod-raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);padding:0 9px 8px 22px;line-height:1.45;border-bottom:1px solid var(--bord)}
-.part{border:1px solid var(--bord);border-radius:var(--r-s);background:var(--fond-2);padding:9px 10px}
-.part div{display:flex;justify-content:space-between;font-size:11.5px;color:var(--texte-3);padding:3px 0;gap:10px}
-.part div b{color:var(--texte-2);font-weight:400}
-.part div .v{font-family:var(--mono);font-size:10px;color:var(--texte);font-variant-numeric:tabular-nums;white-space:nowrap}
-.replier{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--texte-2);padding:7px 2px;cursor:pointer;border-top:1px solid var(--bord)}
-.replier:hover{color:var(--texte)}
-.replier span:last-child{color:var(--texte-3);font-size:10px}
-
-/* le bloc repliable — la marque de repli est la valeur elle-même, aucun glyphe neuf */
-.plis{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-.pli{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
-.pli-corps{padding:8px 10px 12px}
-.b-tete{display:flex;align-items:center;gap:8px;height:26px;padding:0 5px;margin:0 -5px;border-radius:var(--r-s);cursor:pointer}
-.b-tete:hover{background:var(--fond-3)}
-.b-tete .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);white-space:nowrap}
-.b-tete.on .t{color:var(--signal)}
-.b-tete .v{margin-left:auto;font-family:var(--mono);font-size:9.5px;font-variant-numeric:tabular-nums;color:var(--signal);white-space:nowrap;padding-left:10px}
-.b-tete .v.rien,.b-tete .v.fait{color:var(--texte-3)}
-.b-lib .t{font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;color:var(--texte-2)}
-.b-etape{border-top:1px solid var(--bord);padding-top:8px;margin-top:8px}
-.b-etape.prem{border-top:0;padding-top:0;margin-top:0}
-.carre{width:9px;height:9px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-2);flex:none}
-.carre.on{border-color:var(--signal);background:var(--signal)}
-.b-corps{padding:2px 0 2px 17px;display:flex;flex-direction:column;gap:7px}
-.b-rang{display:flex;align-items:center;gap:9px}
-.b-rang>span:first-child{font-size:11px;color:var(--texte-3);width:70px;flex:none}
-.b-raison{font-family:var(--mono);font-size:10px;color:var(--texte-3);display:flex;align-items:center;gap:7px;margin-top:5px;padding-left:17px}
-.b-raison::before{content:'';width:8px;height:1px;background:var(--texte-3);flex:none}
-
-/* centre */
-.pan-centre{background:var(--fond-0);display:flex;flex-direction:column;overflow:hidden}
-.prompt-zone{padding:14px 16px 12px;border-bottom:1px solid var(--bord);background:var(--fond-1);flex:none}
-.prompt-rang{display:flex;gap:10px;align-items:flex-start}
-.prompt-champ{
-  flex:1;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:var(--r-s);
-  padding:10px 13px;font-size:13.5px;color:var(--texte);line-height:1.5;min-height:62px
-}
-.prompt-champ .curseur{display:inline-block;width:1px;height:15px;background:var(--signal);vertical-align:-2px;margin-left:1px}
-.prompt-pied{display:flex;align-items:center;gap:12px;margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.03em;font-variant-numeric:tabular-nums}
-.prompt-pied .lien{color:var(--texte-2);cursor:pointer}
-.prompt-pied .lien:hover{color:var(--signal-clair)}
-.prompt-pied .sp{color:var(--bord-fort)}
-
-/* le revers : le repli hors ligne, dans le pied de prompt — aucune hauteur neuve */
-.repli{margin-left:auto;flex:none;display:flex;align-items:center;gap:7px;color:var(--epingle);white-space:nowrap}
-.repli::before{content:'';width:8px;height:1px;background:var(--epingle);flex:none}
-.repli .sp{color:rgba(200,160,60,.42)}
-.repli a{color:var(--signal);text-decoration:none;white-space:nowrap}
-.repli a:hover{color:var(--signal-clair)}
-
-/* la fente sous Générer : trois locataires, jamais deux à la fois */
-.fente{display:grid;gap:18px;margin-bottom:22px;max-width:840px}
-.fente-demo{background:var(--fond-1);border:1px solid var(--bord);border-radius:var(--r-s);padding:14px 16px 13px;display:flex;flex-direction:column;align-items:flex-end}
-.sous-bouton{font-family:var(--mono);font-size:10px;line-height:1.4;color:var(--texte-3);margin-top:7px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-
-/* mini-écrans : la même bande dans ses trois états */
-.etats{display:grid;gap:16px}
-.etat-tag{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--texte-3);margin-bottom:7px;display:flex;gap:9px;align-items:baseline;white-space:nowrap
-}
-.etat-tag i{font-style:normal;color:var(--texte-2);letter-spacing:0;text-transform:none;font-family:var(--sans);font-size:11.5px;white-space:normal;min-width:0}
-.mini{border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;background:var(--fond-0);min-width:0}
-.mini .prompt-pied{flex-wrap:nowrap;overflow:hidden}
-.mini .app-pied{height:26px;white-space:nowrap;overflow:hidden}
-.mini .app-pied>*{flex:none}
-.mini .app-pied .jaune{width:5px;height:5px;border-radius:50%;background:var(--epingle);display:inline-block}
-.mini .app-pied .etat-hl{color:var(--epingle)}
-.mini-grille{padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;background:var(--fond-0)}
-
-.grille-barre{
-  height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;
-  border-bottom:1px solid var(--bord);background:var(--fond-0);flex:none
-}
-.recherche{
-  background:var(--fond-2);border:1px solid var(--bord);border-radius:var(--r-s);
-  padding:0 10px;height:26px;width:200px;font-size:12px;color:var(--texte-3);display:flex;align-items:center;gap:7px
-}
-.compte{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
-.grille{
-  padding:14px 16px 20px;display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px;
-  overflow:auto;align-content:start;flex:1
-}
-
-/* fiche */
-.pan-fiche{border-right:0;border-left:1px solid var(--bord);background:var(--fond-1)}
-.fiche-img{
-  aspect-ratio:1/1;margin:12px;background-color:var(--damier-a);
-  background-image:
-    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%),
-    linear-gradient(45deg,var(--damier-b) 25%,transparent 25%,transparent 75%,var(--damier-b) 75%);
-  background-size:16px 16px;background-position:0 0,8px 8px;
-  border:1px solid var(--bord);display:grid;place-items:center;flex:none
-}
-.fiche-img svg{width:70%;height:70%}
-.fiche-corps{padding:0 14px 18px}
-.fiche-nom{font-size:15px;color:var(--texte);margin-bottom:2px}
-.fiche-sous{font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.04em;margin-bottom:14px}
-.paire{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fond-2);font-size:12px;gap:10px}
-.paire b{color:var(--texte-3);font-weight:400}
-.paire .v{font-family:var(--mono);font-size:11px;color:var(--texte);font-variant-numeric:tabular-nums;white-space:nowrap}
-.fiche-t{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--texte-3);margin:18px 0 8px
-}
-.chaine{display:flex;flex-direction:column}
-.chaine a{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--texte-2);text-decoration:none;padding:5px 7px;border-radius:var(--r-s)}
-.chaine a:hover{background:var(--fond-2);color:var(--texte)}
-.chaine a.ici{color:var(--texte);background:var(--fond-3)}
-.chaine .fl{color:var(--texte-3);font-size:10px;padding-left:11px;font-family:var(--mono)}
-.recette{border:1px solid var(--bord);border-radius:var(--r-s);overflow:hidden}
-.etape{display:flex;align-items:center;gap:9px;padding:6px 9px;font-size:11.5px;color:var(--texte-2);border-bottom:1px solid var(--bord);background:var(--fond-2)}
-.etape:last-child{border-bottom:0}
-.etape .num{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:10px}
-.etape .v{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
-
-.app-pied{
-  display:flex;align-items:center;gap:12px;padding:0 14px;
-  border-top:1px solid var(--bord);background:var(--fond-1);
-  font-family:var(--mono);font-size:10px;color:var(--texte-3);
-  letter-spacing:.04em;font-variant-numeric:tabular-nums
-}
-.app-pied .d{margin-left:auto;display:flex;gap:12px;align-items:center}
-.app-pied .sp{color:var(--bord-fort)}
-.app-pied .vert{width:5px;height:5px;border-radius:50%;background:var(--ok);display:inline-block}
-.app-pied b{color:var(--texte-2);font-weight:400}
-
-.pied-page{padding:44px 0 72px;color:var(--texte-3);font-size:12px;line-height:1.7}
-.pied-page code{font-family:var(--mono);font-size:11px;color:var(--texte-2)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.avert{border-left:2px solid var(--epingle);padding:2px 0 2px 14px;color:var(--texte-2);font-size:12.5px}
+.avert b{color:var(--epingle);font-weight:600}
+.avert em{color:var(--texte);font-style:italic}
+@media(max-width:1040px){.corps{grid-template-columns:1fr}.col{display:none}.roue{grid-template-columns:repeat(5,1fr)}.duo,.compare,.prises{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
 <div class="page">
-  <header class="entete">
-    <div class="fil">docs/design-preview.html · 26 août 2026, revu le 27</div>
-    <h1>Asset&nbsp;Kitchen</h1>
-    <p class="chapeau">
-      Système de design — <em>la table lumineuse</em>. Le châssis est froid, désaturé et muet ;
-      les assets sont la seule chose colorée à l'écran. Chaque décision qui suit sert un objectif
-      unique : que l'œil n'ait nulle part où aller sauf la grille.
-    </p>
-  </header>
 
-  <!-- ═══════════ 1 · TYPOGRAPHIE ═══════════ -->
-  <section>
-    <div class="titre-sec"><span class="num">01</span><h2>Typographie</h2></div>
-    <p class="sous">
-      Trois familles, trois rôles étanches. Instrument Serif ne sort jamais des titres et des états
-      vides ; Instrument Sans porte toute l'interface ; JetBrains Mono porte <b>toute mesure</b> —
-      coût, dimensions, taille de pixel, nombre de références, plafond. Dans ce produit un nombre
-      est toujours un fait mesuré : il ne doit jamais ressembler à un libellé.
-    </p>
-
-    <div class="bloc">
-      <span class="etiq">Display — Instrument Serif · titres d'écran, états vides, ≥ 24 px seulement</span>
-      <div class="specimen">
-        <div class="spec-hero">Asset Kitchen</div>
-        <div class="spec-hero" style="font-size:32px;margin-top:22px">Ta bibliothèque est vide. <em>Écris.</em></div>
-      </div>
-      <p class="note">L'unique endroit où l'outil a un visage. Une bibliothèque vide n'est pas une erreur : c'est une invitation — <b>US-35</b>.</p>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Body — Instrument Sans · toute l'interface, 11 → 15 px</span>
-      <div class="specimen">
-        <p class="spec-corps">
-          Le projet <b>Cœur de Pierre</b> impose une grille de 4 px à tout ce qui rentre. Trois
-          artworks officiels de la famille <b>personnages</b> partent avec cette génération, plus la
-          planche de matières marquée <b>tous</b>. La palette de douze couleurs a été extraite par
-          calcul ; changer la palette la réappliquera à tous les assets du projet sans un seul appel
-          payant, en sautant ceux que tu as réglés à la main.
-        </p>
-      </div>
-      <p class="note">Grotesque légèrement étroit : à densité égale il tient plus de français par ligne que Geist ou Source Sans, et les diacritiques restent nettes à 11 px.</p>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Data — JetBrains Mono · chiffres alignés, tabular-nums, 9,5 → 12 px</span>
-      <div class="specimen">
-        <table class="donnees">
-          <thead><tr>
-            <th>Asset</th><th>Type</th><th>Modèle</th>
-            <th style="text-align:right">Mesuré</th><th style="text-align:right">Grille</th>
-            <th style="text-align:right">Réfs</th><th style="text-align:right">Coût réel</th>
-          </tr></thead>
-          <tbody>
-            <tr><td class="nom">gobelin_éclaireur_03</td><td>personnage</td><td>nano-banana-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">4</td><td class="n">$0,067</td></tr>
-            <tr><td class="nom">gobelin_éclaireur_02</td><td>personnage</td><td>nano-banana-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">4</td><td class="n">$0,067</td></tr>
-            <tr><td class="nom">tonneau_cerclé</td><td>objet</td><td>seedream-4</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">3</td><td class="n">$0,031</td></tr>
-            <tr><td class="nom">clé_de_voûte</td><td>objet</td><td>gpt-image-2</td><td class="n">1024×1024</td><td class="n">4 px</td><td class="n">2</td><td class="n">$0,113</td></tr>
-            <tr><td class="nom" style="color:var(--texte-3)">— interrompu —</td><td colspan="2" style="color:var(--texte-3)">redémarrage pendant l'appel</td><td class="n faible">—</td><td class="n faible">—</td><td class="n">3</td><td class="n">$0,031</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="note">Virgule décimale, espace fine avant l'unité, colonnes calées à droite. Un appel interrompu garde sa ligne et son coût — <b>US-17</b>, <b>US-24</b>.</p>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Code — JetBrains Mono · payloads MCP, descriptif d'export. Rare.</span>
-      <pre class="code"><span class="c">// outil MCP — generate_asset rend un chemin, pas un identifiant à sonder</span>
-{
-  <span class="k">"projet"</span>:        <span class="s">"Cœur de Pierre"</span>,
-  <span class="k">"type"</span>:          <span class="s">"objet"</span>,
-  <span class="k">"prompt"</span>:        <span class="s">"un tonneau cerclé de fer, vu de trois quarts"</span>,
-  <span class="k">"attente_max_s"</span>: <span class="v">45</span>,
-  <span class="k">"deposer_dans"</span>:  <span class="s">"D:/jeu/assets/props/"</span>
-}
-<span class="c">→ D:/jeu/assets/props/tonneau_cercle.png   64×64 · 4 px · $0,031</span></pre>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Échelle</span>
-      <div class="echelle">
-        <div><span class="px">9,5 MONO</span><span class="ex" style="font-family:var(--mono);font-size:9.5px">64×64</span></div>
-        <div><span class="px">11 MONO</span><span class="ex" style="font-family:var(--mono);font-size:11px">$0,067</span></div>
-        <div><span class="px">11,5</span><span class="ex" style="font-size:11.5px">tonneau</span></div>
-        <div><span class="px">12,5</span><span class="ex" style="font-size:12.5px">Objets</span></div>
-        <div><span class="px">13,5</span><span class="ex" style="font-size:13.5px">le prompt</span></div>
-        <div><span class="px">17 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:17px">Asset Kitchen</span></div>
-        <div><span class="px">30 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:30px">Univers</span></div>
-        <div><span class="px">56 SERIF</span><span class="ex" style="font-family:var(--serif);font-size:56px">Vide</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════ 2 · COULEUR ═══════════ -->
-  <section>
-    <div class="titre-sec"><span class="num">02</span><h2>Couleur &amp; composants</h2></div>
-    <p class="sous">
-      Approche <b>restrained</b> : un seul accent, des neutres froids, des sémantiques sourdes. Le
-      pixel art de fantasy est saturé et chaud — verts, bruns, ors, pierres. Le châssis est donc
-      froid et désaturé <em>par nécessité optique</em> : c'est ce qui l'empêche d'entrer en
-      concurrence avec ce qu'on lui demande de juger.
-    </p>
-
-    <div class="bloc">
-      <span class="etiq">Le châssis — neutres froids</span>
-      <div class="swatches">
-        <div class="sw"><div class="pave" style="background:#0B0D10"></div><div class="txt"><div class="nm">fond-0 · la table</div><div class="hx">#0B0D10</div><div class="us">Zone de grille. Le plus profond de l'écran.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#111419"></div><div class="txt"><div class="nm">fond-1 · panneaux</div><div class="hx">#111419</div><div class="us">Arbre, réglages, fiche, barres.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#171B21"></div><div class="txt"><div class="nm">fond-2 · surfaces</div><div class="hx">#171B21</div><div class="us">Champs, tuiles, cartes.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#1E242B"></div><div class="txt"><div class="nm">fond-3 · survol</div><div class="hx">#1E242B</div><div class="us">Hover, élément actif de l'arbre.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#252B33"></div><div class="txt"><div class="nm">bord</div><div class="hx">#252B33</div><div class="us">Séparation par défaut, 1 px.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#39424C"></div><div class="txt"><div class="nm">bord-fort</div><div class="hx">#39424C</div><div class="us">Champ de prompt, bouton secondaire.</div></div></div>
-      </div>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Le texte — trois niveaux, dont le grisé · contrastes sur --fond-2</span>
-      <div class="swatches">
-        <div class="sw"><div class="pave" style="background:#E6EAEE"></div><div class="txt"><div class="nm">texte</div><div class="hx">#E6EAEE</div><div class="us">14,3:1 — le contenu.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#98A2AC"></div><div class="txt"><div class="nm">texte-2</div><div class="hx">#98A2AC</div><div class="us">6,7:1 — libellés, secondaire.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#5E6771"></div><div class="txt"><div class="nm">texte-3 · le grisé</div><div class="hx">#5E6771</div><div class="us">3,0:1 — indisponible, méta, raison.</div></div></div>
-      </div>
-    </div>
-
-    <div class="bloc">
-      <span class="etiq">Le signal &amp; la sémantique · contrastes sur --fond-2</span>
-      <div class="swatches">
-        <div class="sw"><div class="pave" style="background:#49B3CE"></div><div class="txt"><div class="nm">signal</div><div class="hx">#49B3CE</div><div class="us">7,1:1 — générer, favori, actif, progression. Le seul accent.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#EAF4F8"></div><div class="txt"><div class="nm">lumière</div><div class="hx">#EAF4F8</div><div class="us">Sélection et focus. C'est la lampe de la table.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#5FA871"></div><div class="txt"><div class="nm">ok</div><div class="hx">#5FA871</div><div class="us">6,0:1 — réussi, en ligne, remis à jour.</div></div></div>
-        <div class="sw"><div class="pave" style="background:#C8A03C"></div><div class="txt"><div class="nm">épinglé</div><div class="hx">#C8A03C</div><div class="us">7,0:1 — réglé à la main, interrompu, catalogue servi de repli. <b style="color:var(--texte-2);font-weight:400">Arrêté à un instant, que seul un geste relance.</b></div></div></div>
-        <div class="sw"><div class="pave" style="background:#CB6C65"></div><div class="txt"><div class="nm">échec</div><div class="hx">#CB6C65</div><div class="us">4,8:1 — appel raté, suppression, refus.</div></div></div>
-        <div class="sw" style="opacity:.5"><div class="pave" style="background:#7E8AA0;position:relative"><span style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#171B21">retiré</span></div><div class="txt"><div class="nm">info</div><div class="hx">#7E8AA0</div><div class="us">27/08 — le repli est passé en épinglé. Plus aucun usage.</div></div></div>
-      </div>
-      <p class="note">Le cyan est choisi <b>contre le contenu</b> : verts, bruns et ors saturent le pixel art de fantasy, un accent chaud s'y noierait. Aucun dégradé, nulle part. Une seule texture dans tout le produit — le damier alpha, qui révèle la transparence : il est fonctionnel, pas décoratif.</p>
-      <p class="note"><b>À trois sémantiques.</b> <code style="font-family:var(--mono);font-size:11px">--info</code> est retiré le 27/08 : il n'avait qu'un usage — le repli hors ligne — et le repli est passé en <b>épinglé</b>, dont c'était déjà le troisième emploi déclaré. À 10 px, <code style="font-family:var(--mono);font-size:11px">#7E8AA0</code> ne se distinguait pas de <b>texte-2</b> <code style="font-family:var(--mono);font-size:11px">#98A2AC</code> : il ne lisait pas comme une couleur. Et son bleu-gris posé près du cyan coûtait à l'accent son exclusivité.</p>
-    </div>
-
-    <hr class="fin">
-
-    <div class="grille2">
-      <div>
-        <span class="etiq">Boutons</span>
-        <div class="rangee" style="margin-bottom:26px">
-          <button class="btn btn-1">Générer <span class="cout">$0,067</span></button>
-          <button class="btn btn-2">Réinjecter</button>
-          <button class="btn btn-f">Revenir à l'image brute</button>
-          <button class="btn btn-danger">Supprimer</button>
-        </div>
-
-        <span class="etiq">Le grisé porte sa raison — jamais une infobulle</span>
-        <div style="margin-bottom:15px">
-          <button class="btn btn-off" disabled>Générer</button>
-          <div class="raison">aucune clé OpenRouter — <a href="#">Réglages ›</a></div>
-        </div>
-        <div style="margin-bottom:15px">
-          <button class="btn btn-off" disabled>Exporter la sélection</button>
-          <div class="raison">aucun asset sélectionné</div>
-        </div>
-        <div>
-          <button class="btn btn-off" disabled>Quantifier sur la palette</button>
-          <div class="raison">aucune palette — promeus un artwork officiel</div>
-        </div>
-        <p class="note">La raison est une <b>ligne sœur permanente</b>. Le produit interdit de proposer puis refuser : l'interface doit donc dire pourquoi sans qu'on ait à survoler — <b>US-3</b>, <b>US-8</b>, <b>US-65</b>, <b>US-77</b>.</p>
-      </div>
-
-      <div>
-        <span class="etiq">Champs</span>
-        <div style="margin-bottom:16px">
-          <label class="champ-l">Prompt</label>
-          <input class="champ" value="un tonneau cerclé de fer, vu de trois quarts">
-        </div>
-        <div style="margin-bottom:16px">
-          <label class="champ-l">Taille de pixel du projet</label>
-          <input class="champ focus" value="4">
-        </div>
-        <div style="margin-bottom:26px">
-          <label class="champ-l">Nom du projet</label>
-          <input class="champ err" value="Cœur de Pierre">
-          <div class="champ-err">un projet porte déjà ce nom</div>
-        </div>
-
-        <span class="etiq">Segmentés</span>
-        <div class="rangee">
-          <div class="seg"><button class="on">Personnage</button><button>Objet</button><button>Décor</button><button>Interface</button></div>
-          <div class="seg mono"><button>1</button><button>2</button><button class="on">3</button><button>4</button></div>
-          <div class="seg mono"><button class="on">1×</button><button>2×</button><button class="off">4×</button></div>
-        </div>
-        <p class="note">Le segmenté <b>4×</b> est grisé : à cette largeur de grille il ne tiendrait qu'une tuile par ligne. Même règle partout — grisé, pas caché.</p>
-      </div>
-    </div>
-
-    <hr class="fin">
-
-    <span class="etiq">Le revers &mdash; l'actif qui porte son risque</span>
-    <p class="note" style="margin:0 0 16px;max-width:80ch">
-      Le repli hors ligne est le <b>seul endroit du produit o&ugrave; l'on propose puis refuse</b> : le catalogue est
-      une photo, g&eacute;n&eacute;rer reste actif, l'&eacute;chec ne vient qu'au clic (<b>US-95</b>). C'est l'exception au motif
-      ci-dessus, et elle se rend dans <b>la m&ecirc;me fente, avec la m&ecirc;me forme</b> &mdash; tiret de 8 px, mono 10 px,
-      lien signal. Ce qui change est le mot : le gris&eacute; dit <em>pourquoi c'est ferm&eacute;</em>, le revers dit
-      <em>ce qui va casser</em>. La fente, c'est la ligne align&eacute;e &agrave; droite sous G&eacute;n&eacute;rer &mdash; elle a d&eacute;j&agrave; deux
-      locataires, en voici le troisi&egrave;me. <b>Elle pr&eacute;dit, elle ne raconte pas</b>&nbsp;: la date de la photo
-      servie est un fait sur le monde, elle vit donc en bas, dans la seule bande rendue en permanence.
-    </p>
-
-    <div class="fente">
-      <div>
-        <div class="etat-tag">au repos <i>&mdash; en ligne, rien &agrave; signaler</i></div>
-        <div class="fente-demo">
-          <button class="btn btn-1">G&eacute;n&eacute;rer 3 variations <span class="cout">3 &times; $0,031</span></button>
-          <div class="sous-bouton">Ctrl + Entr&eacute;e</div>
-        </div>
-      </div>
-      <div>
-        <div class="etat-tag" style="color:var(--epingle)">le revers <i style="color:var(--epingle)">&mdash; hors ligne, g&eacute;n&eacute;rer reste actif, l'échec ne viendra qu'au clic</i></div>
-        <div class="fente-demo">
-          <button class="btn btn-1">G&eacute;n&eacute;rer 3 variations <span class="cout">3 &times; $0,031</span></button>
-          <div class="sous-bouton repli">seul g&eacute;n&eacute;rer &eacute;chouera <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></div>
-        </div>
-      </div>
-      <div>
-        <div class="etat-tag">le gris&eacute; <i>&mdash; catalogue jamais re&ccedil;u, aucun mod&egrave;le : le motif ordinaire reprend la fente</i></div>
-        <div class="fente-demo">
-          <button class="btn btn-off" disabled>G&eacute;n&eacute;rer</button>
-          <div class="sous-bouton"><span class="raison" style="margin:0;justify-content:flex-end">le catalogue n'a jamais &eacute;t&eacute; re&ccedil;u <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="legende" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
-      <div><b>la fente pr&eacute;dit</b><span>ce qui &eacute;chouera, ce qui marche encore (<em>seul</em>&nbsp;: la panne born&eacute;e dit son compl&eacute;ment), le geste</span></div>
-      <div><b>le pied raconte</b><span>la date de la photo servie et la cause &mdash; des faits sur le monde, lisibles d&egrave;s l'ouverture, prompt vide</span></div>
-      <div><b>&eacute;pingl&eacute;</b><span>arr&ecirc;t&eacute; &agrave; un instant, que seul un geste de l'auteur relance &mdash; comme &laquo;&nbsp;r&eacute;gl&eacute;&nbsp;&raquo; et &laquo;&nbsp;interrompu&nbsp;&raquo;</span></div>
-      <div><b>jamais deux</b><span>les trois locataires de la fente s'excluent&nbsp;: c'est ce qui prouve l'emplacement</span></div>
-      <div><b>instantan&eacute;</b><span>aucun fondu &mdash; le fragment arrive dans la seule couleur chaude du ch&acirc;ssis, il se voit tout seul</span></div>
-    </div>
-    <p class="note" style="max-width:80ch">
-      <b>Pas de bandeau, pas de rang&eacute;e, aucune hauteur neuve</b> sur une colonne qui compte 44 px en t&ecirc;te et
-      26 px en pied. Et la preuve de l'emplacement&nbsp;: quand aucun mod&egrave;le n'est revenu, g&eacute;n&eacute;rer <em>est</em>
-      gris&eacute; &mdash; la m&ecirc;me fente passe du revers au gris&eacute;. Un bandeau aurait trait&eacute; le m&ecirc;me fait &agrave; deux
-      endroits selon le nombre de mod&egrave;les re&ccedil;us.<br><br>
-      <b>La date a d'abord &eacute;t&eacute; pos&eacute;e ici, puis retir&eacute;e le jour m&ecirc;me.</b> &Agrave; l'ouverture le prompt est vide,
-      donc le refus &laquo;&nbsp;aucun prompt&nbsp;&raquo; occupe la fente &mdash; et la date n'&eacute;tait lisible nulle part avant
-      qu'on ait tap&eacute; un caract&egrave;re, alors que c'est au d&eacute;marrage qu'elle compte le plus (<b>US-93</b>).
-      Ce que la correction rach&egrave;te&nbsp;: l'ordre des trois locataires devient <em>juste</em> et non subi &mdash;
-      tant que la demande n'est pas compos&eacute;e, il n'y a rien &agrave; pr&eacute;dire.
-    </p>
-
-    <hr class="fin">
-
-    <span class="etiq">Bandeaux</span>
-    <div style="display:grid;gap:9px;max-width:780px">
-      <div class="bandeau b-ok"><span class="pic"></span><div><span class="t">Palette réappliquée</span><span class="n">12</span> assets remis à jour, <span class="n">3</span> conservés tels quels — ils sont réglés à la main.</div></div>
-      <div class="bandeau b-al"><span class="pic"></span><div><span class="t">Génération interrompue</span>Coupée par un redémarrage le 26/08 à 14:02. Coût déjà engagé : <span class="n">$0,031</span>. Rien n'a été relancé.</div></div>
-      <div class="bandeau b-ec"><span class="pic"></span><div><span class="t">2 variations sur 4 ont échoué</span>Le fournisseur a refusé : plafond de références dépassé. Les 2 réussites sont en bibliothèque.</div></div>
-    </div>
-    <p class="note">Le bandeau rapporte un <b>événement terminé</b> — quelque chose vient de se passer, voilà le compte. Il ne porte jamais un <b>état qui dure</b> : le repli hors ligne a eu son bandeau jusqu'au 27/08, il a été retiré — voir <em>Le revers</em>, ci-dessus.</p>
-
-    <hr class="fin">
-
-    <span class="etiq">La tuile — l'objet central du produit</span>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:10px;max-width:800px">
-      <div class="tuile"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_01</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
-      <div class="tuile fav sel"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_03</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
-      <div class="tuile"><div class="tuile-img" data-sprite="tonneau"><span class="pastille p-hg p-epingle">réglé</span></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cerclé</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
-      <div class="tuile"><div class="tuile-img" data-sprite="cle"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">clé_de_voûte</div><div class="tuile-meta">32×32 · 4 px · $0,113</div></div></div>
-      <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">3 / 4<br>00:12</div><div class="jauge"><i style="width:62%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">tonneau cerclé de fer…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
-      <div class="tuile rate"><div class="tuile-img"><div class="rate-txt">Le fournisseur a refusé la demande</div></div><div class="tuile-pied"><button class="btn btn-2 btn-xs" style="width:100%;justify-content:center">Relancer</button></div></div>
-    </div>
-    <div class="legende">
-      <div><b>coin plein</b><span>favori — la seule marque visuelle, parce que c'est la seule que tu poses toi-même</span></div>
-      <div><b>anneau blanc</b><span>sélectionné — la lampe de la table lumineuse</span></div>
-      <div><b>pastille</b><span>état — réglé, agent, parent supprimé</span></div>
-      <div><b>tuile creuse</b><span>l'emplacement qui attend son image, à sa taille définitive</span></div>
-      <div><b>tuile rouge</b><span>l'échec, à l'endroit exact où l'image devait venir</span></div>
-      <div><b>damier</b><span>la transparence — la seule texture du produit</span></div>
-    </div>
-    <p class="note">Rayon <b>0</b> sur la tuile, 2 px sur le reste du châssis : le bord de la tuile et le bord du sprite sont la même sorte de ligne. La grille se lit comme une planche contact, pas comme un fil d'actualité.</p>
-  </section>
-
-  <!-- ═══════════ 3 · L'ÉCRAN ═══════════ -->
-  <section>
-    <div class="titre-sec"><span class="num">03</span><h2>L'Atelier</h2></div>
-    <p class="sous">
-      L'écran permanent. Arbre · réglages · prompt · grille, plus la fiche en panneau latéral. Ce qui
-      est à l'écran est <b>ce qu'on touche à chaque génération</b> : le sujet, le modèle, le nombre de
-      variations. Tout le reste — format, résolution, prompt négatif, bible, recette — est replié,
-      tenu par un défaut du projet, ou vit dans l'écran Univers.
-    </p>
-
-    <div class="ecran">
-      <div class="app">
-
-        <header class="app-tete">
-          <span class="marque">Asset Kitchen</span>
-          <nav class="onglets">
-            <a href="#" class="on">Atelier</a><a href="#">Univers</a><a href="#">Projets</a><a href="#">Réglages</a>
-          </nav>
-          <div class="tete-d">
-            <div class="pastille-projet">Cœur de Pierre <span class="ch">▾</span></div>
-          </div>
-        </header>
-
-        <div class="app-corps">
-
-          <!-- arbre -->
-          <aside class="pan">
-            <div class="pan-tete"><span>Bibliothèque</span><span class="plier">‹</span></div>
-            <div class="pan-corps">
-              <div class="arb"><span class="ic">▤</span>Tout<span class="n">52</span></div>
-              <div class="arb"><span class="ic">◆</span>Favoris<span class="n">9</span></div>
-              <div class="sep"></div>
-              <div class="arb"><span class="ic">▸</span>Bac à sable<span class="n">5</span></div>
-              <div class="arb on"><span class="ic">▾</span>Cœur de Pierre<span class="n">47</span></div>
-              <div class="arb enfant">Personnages<span class="n">12</span></div>
-              <div class="arb enfant">Objets<span class="n">21</span></div>
-              <div class="arb enfant">Décors<span class="n">9</span></div>
-              <div class="arb enfant">Interface<span class="n">5</span></div>
-              <div class="sep"></div>
-              <div class="arb" style="color:var(--texte-3)"><span class="ic">+</span>Nouveau projet</div>
-            </div>
-          </aside>
-
-          <!-- réglages -->
-          <aside class="pan">
-            <div class="pan-tete"><span>Réglages</span><span class="plier">‹</span></div>
-            <div class="pan-corps">
-
-              <div class="reg-bloc">
-                <span class="reg-l">Sujet</span>
-                <div class="seg" style="display:grid;grid-template-columns:1fr 1fr">
-                  <button style="border-bottom:1px solid var(--bord)">Personnage</button>
-                  <button class="on" style="border-bottom:1px solid var(--bord);border-right:0">Objet</button>
-                  <button>Décor</button>
-                  <button style="border-right:0">Interface</button>
-                </div>
-              </div>
-
-              <div class="reg-bloc">
-                <span class="reg-l">Modèle</span>
-                <div class="modeles">
-                  <div class="mod on"><span class="pt"></span>seedream-4<span class="px">$0,031</span></div>
-                  <div class="mod"><span class="pt"></span>nano-banana-2<span class="px">$0,067</span></div>
-                  <div class="mod off"><span class="pt"></span>gpt-image-2<span class="px">$0,113</span></div>
-                  <div class="mod-raison">2 références maximum — la demande en envoie 3</div>
-                  <div class="mod off"><span class="pt"></span>flux-1.1-pro<span class="px">$0,040</span></div>
-                  <div class="mod-raison" style="border-bottom:0">n'accepte aucune image de référence</div>
-                </div>
-              </div>
-
-              <div class="reg-bloc">
-                <span class="reg-l">Variations</span>
-                <div class="seg mono" style="width:100%">
-                  <button style="flex:1">1</button><button style="flex:1">2</button><button class="on" style="flex:1">3</button><button style="flex:1">4</button>
-                </div>
-              </div>
-
-              <div class="reg-bloc">
-                <span class="reg-l">Ce qui part avec</span>
-                <div class="part">
-                  <div><b>Références</b><span class="v">3</span></div>
-                  <div><b>Famille</b><span class="v">objets + tous</span></div>
-                  <div><b>Palette</b><span class="v">12 couleurs</span></div>
-                  <div><b>Grille imposée</b><span class="v">4 px</span></div>
-                  <div><b>Bible active</b><span class="v">4 / 5 champs</span></div>
-                </div>
-              </div>
-
-              <div class="replier"><span>Prompt négatif</span><span>▾</span></div>
-              <div class="replier"><span>Plus de réglages</span><span>▾</span></div>
-            </div>
-          </aside>
-
-          <!-- centre : prompt + grille -->
-          <main class="pan-centre">
-            <div class="prompt-zone">
-              <div class="prompt-rang">
-                <div class="prompt-champ">un tonneau cerclé de fer, vu de trois quarts, posé sur des dalles<span class="curseur"></span></div>
-                <button class="btn btn-1" style="height:62px;padding:0 20px;flex-direction:column;gap:4px;align-items:center;justify-content:center">
-                  Générer <span class="cout">3 × $0,031</span>
-                </button>
-              </div>
-              <div class="prompt-pied">
-                <span>3 réfs · objets + tous</span><span class="sp">·</span>
-                <span>1K → 4 px</span><span class="sp">·</span>
-                <span>1:1</span><span class="sp">·</span>
-                <span class="lien">réinjecter un asset</span>
-              </div>
-            </div>
-
-            <div class="grille-barre">
-              <div class="recherche"><span style="color:var(--bord-fort)">⌕</span> Chercher…</div>
-              <div class="seg"><button class="on">Tous</button><button>Favoris</button><button>Réglés</button><button>Agent</button></div>
-              <div class="compte">47 assets</div>
-              <div class="seg mono"><button class="on">1×</button><button>2×</button><button>4×</button></div>
-            </div>
-
-            <div class="grille">
-              <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">1 / 3<br>00:08</div><div class="jauge"><i style="width:34%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">un tonneau cerclé…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
-              <div class="tuile vide"><div class="tuile-img"><div class="vide-txt">2 / 3<br>00:08</div><div class="jauge"><i style="width:27%"></i></div></div><div class="tuile-pied"><div class="tuile-nom" style="color:var(--texte-3)">un tonneau cerclé…</div><div class="tuile-meta">seedream-4 · 3 réfs</div></div></div>
-              <div class="tuile rate"><div class="tuile-img"><div class="rate-txt">Refus du fournisseur : contenu filtré</div></div><div class="tuile-pied"><button class="btn btn-2 btn-xs" style="width:100%;justify-content:center">Relancer</button></div></div>
-              <div class="tuile fav sel"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cerclé</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="cle"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">clé_de_voûte</div><div class="tuile-meta">32×32 · 4 px · $0,113</div></div></div>
-
-              <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_03</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="gobelin_bleu"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_02</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">réglé</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="pierre"><span class="pastille p-bg p-orphelin">parent supprimé</span></div><div class="tuile-pied"><div class="tuile-nom">dalle_taillée_02</div><div class="tuile-meta">32×32 · 4 px · $0,000</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="cadre"></div><div class="tuile-pied"><div class="tuile-nom">cadre_bouton_or</div><div class="tuile-meta">48×32 · 4 px · $0,113</div></div></div>
-
-              <div class="tuile"><div class="tuile-img" data-sprite="gobelin"><span class="pastille p-hg p-agent">agent</span></div><div class="tuile-pied"><div class="tuile-nom">gobelin_éclaireur_01</div><div class="tuile-meta">64×64 · 4 px · $0,067</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_vide</div><div class="tuile-meta">64×64 · 4 px · $0,031</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taillée_01</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="fiole"></div><div class="tuile-pied"><div class="tuile-nom">fiole_vide</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
-              <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">clé_rouillée</div><div class="tuile-meta">32×32 · 4 px · $0,031</div></div></div>
-            </div>
-          </main>
-
-          <!-- fiche asset -->
-          <aside class="pan pan-fiche">
-            <div class="pan-tete"><span>Fiche asset</span><span class="plier">✕</span></div>
-            <div style="overflow:auto;display:flex;flex-direction:column">
-              <div class="fiche-img" data-sprite="tonneau"></div>
-              <div class="fiche-corps">
-                <div class="fiche-nom">tonneau_cerclé</div>
-                <div class="fiche-sous">26/08/2026 14:31 · objet · Cœur de Pierre › Objets</div>
-
-                <div class="paire"><b>Dimensions mesurées</b><span class="v">64 × 64</span></div>
-                <div class="paire"><b>Taille de pixel</b><span class="v">4 px</span></div>
-                <div class="paire"><b>Modèle</b><span class="v">seedream-4</span></div>
-                <div class="paire"><b>Références envoyées</b><span class="v">3</span></div>
-                <div class="paire"><b>Coût réel</b><span class="v">$0,031</span></div>
-
-                <div class="fiche-t">Filiation</div>
-                <div class="chaine">
-                  <a href="#">planche_tonneaux_a</a>
-                  <span class="fl">└─</span>
-                  <a href="#" class="ici">tonneau_cerclé</a>
-                </div>
-
-                <div class="fiche-t">Recette · rejouable, annulable, nommable</div>
-                <div class="recette">
-                  <div class="etape"><span class="num">1</span>Recadrage<span class="v">auto</span></div>
-                  <div class="etape"><span class="num">2</span>Grille<span class="v">4 px</span></div>
-                  <div class="etape"><span class="num">3</span>Palette<span class="v">12 coul.</span></div>
-                  <div class="etape"><span class="num">4</span>Détourage<span class="v">2 passes</span></div>
-                  <div class="etape"><span class="num">5</span>Bords<span class="v">seuil 128</span></div>
-                </div>
-                <div style="margin-top:9px"><button class="btn btn-f btn-xs" style="padding-left:0">← Revenir à l'image brute</button></div>
-
-                <div class="fiche-t">Actions</div>
-                <div class="rangee">
-                  <button class="btn btn-2 btn-xs">Télécharger</button>
-                  <button class="btn btn-2 btn-xs">Réinjecter</button>
-                  <button class="btn btn-danger btn-xs">Supprimer</button>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-        </div>
-
-        <footer class="app-pied">
-          <b>Cœur de Pierre</b><span class="sp">·</span>47 assets<span class="sp">·</span>$2,41 sur ce projet
-          <div class="d">
-            <span>agent 6 / 40</span><span class="sp">·</span>
-            <span>catalogue 26/08 14:02</span><span class="sp">·</span>
-            <span><span class="vert"></span> en ligne</span>
-          </div>
-        </footer>
-
-      </div>
-    </div>
-
-    <p class="note" style="max-width:none">
-      <b>Ce que l'écran ne montre pas, et pourquoi.</b> Pas de résolution, pas de format, pas de
-      seed, pas de champs de bible dépliés, pas de sélecteur de rôle de réinjection, pas de barre
-      d'état à quatre blocs. Chacun de ces réglages existe dans le produit — il est simplement
-      replié, tenu par un défaut du projet, ou vit dans l'écran Univers. Le panneau réglages ne
-      porte que les trois choses qu'on touche à chaque génération, plus un bloc en lecture seule
-      qui répond d'avance à « qu'est-ce qui part avec ? ».
-    </p>
-
-    <hr class="fin">
-
-    <div class="titre-sec" style="margin-top:8px"><span class="num">03b</span><h2>Le repli hors ligne</h2></div>
-    <p class="sous">
-      Le catalogue est injoignable. <b>Le d&eacute;marrage n'affiche aucune erreur</b>, la biblioth&egrave;que est l&agrave;, le
-      champ prend le texte, le panneau r&eacute;pond &mdash; et <b>G&eacute;n&eacute;rer reste actif</b> : le repli informe, il ne
-      barre pas la route. Trois &eacute;tats de la m&ecirc;me bande, dans l'&eacute;cran, &agrave; l'&eacute;chelle.
-    </p>
-
-    <div class="etats">
-      <div>
-        <div class="etat-tag">01 &middot; en ligne <i>&mdash; la r&eacute;f&eacute;rence</i></div>
-        <div class="mini">
-          <div class="prompt-zone">
-            <div class="prompt-rang">
-              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
-              <button class="btn btn-1" style="height:52px;padding:0 18px;flex-direction:column;gap:3px;justify-content:center;flex:none">G&eacute;n&eacute;rer <span class="cout">3 &times; $0,031</span></button>
-            </div>
-            <div class="prompt-pied">
-              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
-              <span class="sous-bouton" style="margin:0 0 0 auto">Ctrl + Entr&eacute;e</span>
-            </div>
-          </div>
-        <div class="mini-grille">
-          <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cercl&eacute;</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
-          <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_&eacute;claireur_03</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">r&eacute;gl&eacute;</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">cl&eacute;_de_vo&ucirc;te</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taill&eacute;e_01</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-        </div>
-          <footer class="app-pied">
-            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
-            <div class="d"><span>catalogue 26/08 14:02</span><span class="sp">&middot;</span><span><span class="vert"></span> en ligne</span></div>
-          </footer>
-        </div>
-      </div>
-
-      <div>
-        <div class="etat-tag">02 &middot; hors ligne, catalogue dat&eacute; <i>&mdash; le revers : g&eacute;n&eacute;rer reste actif, la fente dit ce qui va casser</i></div>
-        <div class="mini">
-          <div class="prompt-zone">
-            <div class="prompt-rang">
-              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
-              <button class="btn btn-1" style="height:52px;padding:0 18px;flex-direction:column;gap:3px;justify-content:center;flex:none">G&eacute;n&eacute;rer <span class="cout">3 &times; $0,031</span></button>
-            </div>
-            <div class="prompt-pied">
-              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
-              <span class="repli">seul g&eacute;n&eacute;rer &eacute;chouera <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span>
-            </div>
-          </div>
-        <div class="mini-grille">
-          <div class="tuile"><div class="tuile-img" data-sprite="tonneau"></div><div class="tuile-pied"><div class="tuile-nom">tonneau_cercl&eacute;</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
-          <div class="tuile fav"><div class="tuile-img" data-sprite="gobelin"></div><div class="tuile-pied"><div class="tuile-nom">gobelin_&eacute;claireur_03</div><div class="tuile-meta">64&times;64 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="fiole"><span class="pastille p-hg p-epingle">r&eacute;gl&eacute;</span></div><div class="tuile-pied"><div class="tuile-nom">fiole_de_sang</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="cle"></div><div class="tuile-pied"><div class="tuile-nom">cl&eacute;_de_vo&ucirc;te</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-          <div class="tuile"><div class="tuile-img" data-sprite="pierre"></div><div class="tuile-pied"><div class="tuile-nom">dalle_taill&eacute;e_01</div><div class="tuile-meta">32&times;32 &middot; 4 px</div></div></div>
-        </div>
-          <footer class="app-pied">
-            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
-            <div class="d"><span class="etat-hl"><span class="jaune"></span> hors ligne</span><span class="sp">&middot;</span><span class="etat-hl">catalogue du 26/08 14:02</span><span class="sp">&middot;</span><span>aucune connexion au fournisseur</span></div>
-          </footer>
-        </div>
-      </div>
-
-      <div>
-        <div class="etat-tag">03 &middot; hors ligne, catalogue jamais re&ccedil;u <i>&mdash; aucun mod&egrave;le : le gris&eacute; ordinaire reprend la fente, et c'est tout ce qu'il y a &agrave; dire</i></div>
-        <div class="mini">
-          <div class="prompt-zone">
-            <div class="prompt-rang">
-              <div class="prompt-champ" style="min-height:52px">un tonneau cercl&eacute; de fer, vu de trois quarts, pos&eacute; sur des dalles<span class="curseur"></span></div>
-              <button class="btn btn-off" disabled style="height:52px;padding:0 18px;flex:none">G&eacute;n&eacute;rer</button>
-            </div>
-            <div class="prompt-pied">
-              <span>3 r&eacute;fs &middot; objets + tous</span><span class="sp">&middot;</span><span>1:1</span>
-              <span class="raison" style="margin:0 0 0 auto">le catalogue n'a jamais &eacute;t&eacute; re&ccedil;u <a href="#">R&eacute;essayer&nbsp;&rsaquo;</a></span>
-            </div>
-          </div>
-          <footer class="app-pied">
-            <b>C&oelig;ur de Pierre</b><span class="sp">&middot;</span>47 assets
-            <div class="d"><span>0 mod&egrave;les</span><span class="sp">&middot;</span><span class="etat-hl"><span class="jaune"></span> hors ligne</span></div>
-          </footer>
-        </div>
-      </div>
-    </div>
-
-    <p class="note" style="max-width:82ch">
-      <b>Ce que la ligne du bas dit quand elle passe en jaune.</b> Trois faits, <b>chacun dans son propre
-      segment</b>&nbsp;: la liaison, la date de la photo servie, la cause. Les d&eacute;couper n'est pas de la
-      cosm&eacute;tique &mdash; la phrase de liaison est disput&eacute;e (une g&eacute;n&eacute;ration refus&eacute;e ou un flux rompu la prennent,
-      et &agrave; juste titre, c'est plus grave), et fondre la date dedans la ferait dispara&icirc;tre au moment
-      o&ugrave; elle compte le plus. <b>Deux altitudes, deux m&eacute;tiers</b>&nbsp;: le pied raconte l'&eacute;tat du monde et
-      ne pr&eacute;dit jamais&nbsp;; la fente pr&eacute;dit le prochain geste et ne raconte jamais le r&eacute;seau. La date
-      est un fait sur le monde, elle reste donc en bas &mdash; et elle y est lisible d&egrave;s l'ouverture,
-      prompt vide, l&agrave; o&ugrave; la fente est encore prise par &laquo;&nbsp;aucun prompt&nbsp;&raquo;.
-    </p>
-
-    <hr class="fin">
-
-    <div class="titre-sec" style="margin-top:8px"><span class="num">03c</span><h2>Le bloc repliable</h2></div>
-    <p class="sous">
-      <b>Un bloc repli&eacute; ne se tait pas &mdash; il porte son r&eacute;glage, en mono, &agrave; droite de son titre.</b>
-      Le repli cesse d'&ecirc;tre un rangement pour devenir un r&eacute;sum&eacute;&nbsp;: la recette d'un asset se lit
-      en cinq rang&eacute;es sans rien ouvrir. Aucun glyphe neuf &mdash; le <code>+</code> veut d&eacute;j&agrave; dire
-      <i>nouvelle entr&eacute;e</i> dans l'arbre, le triangle plein <i>favori</i> sur une tuile.
-    </p>
-
-    <div class="plis">
-      <div>
-        <div class="etat-tag">repli&eacute; <i>&mdash; la recette enti&egrave;re, 192&nbsp;px au lieu de 522</i></div>
-        <div class="pli">
-          <div class="pan-tete"><span>Fiche</span><span class="plier">&times;</span></div>
-          <div class="pli-corps">
-            <div class="b-etape prem"><div class="b-tete on"><span class="carre on"></span><span class="t">D&eacute;tourage</span><span class="v">bord &middot; 28</span></div></div>
-            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Recadrage</span><span class="v">marge 0 px</span></div></div>
-            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Grille</span><span class="v">64 px &middot; 100 %</span></div></div>
-            <div class="b-etape">
-              <div class="b-tete"><span class="carre"></span><span class="t">Quantification</span></div>
-              <div class="b-raison">aucune palette&nbsp;: elle se d&eacute;duit des artworks</div>
-            </div>
-            <div class="b-etape"><div class="b-tete"><span class="carre"></span><span class="t">Nettoyage des bords</span></div></div>
-          </div>
-        </div>
-        <p class="note" style="max-width:46ch">
-          Le carr&eacute; dit <b>pos&eacute; ou pas</b> &mdash; &ccedil;a change l'asset. Le titre dit <b>montr&eacute; ou pas</b> &mdash;
-          &ccedil;a ne change que l'&eacute;cran. Une &eacute;tape pas pos&eacute;e n'a rien &agrave; replier&nbsp;: toute sa rang&eacute;e la pose.
-        </p>
-      </div>
-
-      <div>
-        <div class="etat-tag">une seule ouverte <i>&mdash; l'en-t&ecirc;te se tait, la valeur est sous les yeux</i></div>
-        <div class="pli">
-          <div class="pan-tete"><span>Fiche</span><span class="plier">&times;</span></div>
-          <div class="pli-corps">
-            <div class="b-etape prem"><div class="b-tete on"><span class="carre on"></span><span class="t">D&eacute;tourage</span><span class="v">bord &middot; 28</span></div></div>
-            <div class="b-etape"><div class="b-tete on"><span class="carre on"></span><span class="t">Recadrage</span><span class="v">marge 0 px</span></div></div>
-            <div class="b-etape">
-              <div class="b-tete on"><span class="carre on"></span><span class="t">Grille</span></div>
-              <div class="b-corps">
-                <div class="b-rang"><span>cible</span><div class="seg"><button>32</button><button class="on">64</button><button>96</button><button>128</button></div></div>
-                <div class="b-rang"><span>occupation</span><span class="sous-bouton" style="margin:0">100 %</span></div>
-                <div class="b-rang"><span>ancrage</span><div class="seg"><button class="on">bas</button><button>centre</button></div></div>
-              </div>
-            </div>
-            <div class="b-etape">
-              <div class="b-tete"><span class="carre"></span><span class="t">Quantification</span></div>
-              <div class="b-raison">aucune palette&nbsp;: elle se d&eacute;duit des artworks</div>
-            </div>
-            <div class="b-etape"><div class="b-tete"><span class="carre"></span><span class="t">Nettoyage des bords</span></div></div>
-          </div>
-        </div>
-        <p class="note" style="max-width:46ch">
-          Rien ne s'&eacute;crit deux fois&nbsp;: ouvert, l'en-t&ecirc;te l&acirc;che sa valeur. La m&ecirc;me fente sert alors
-          &agrave; l'autre locataire &mdash; le fait que le bloc garde sous les yeux pendant qu'on le r&egrave;gle.
-        </p>
-      </div>
-    </div>
-
-    <div class="plis" style="margin-top:22px">
-      <div>
-        <div class="etat-tag">l'univers repli&eacute; <i>&mdash; 1471&nbsp;px de r&eacute;glages, 130 de fiche</i></div>
-        <div class="pli">
-          <div class="pan-tete"><span>L'univers</span></div>
-          <div class="pli-corps">
-            <div class="b-tete b-lib"><span class="t">Bible</span><span class="v rien">&mdash;</span></div>
-            <div class="b-tete b-lib"><span class="t">Palette</span><span class="v rien">&mdash;</span></div>
-            <div class="b-tete b-lib"><span class="t">Taille de pixel</span><span class="v">96 px</span></div>
-            <div class="b-tete b-lib"><span class="t">Bar&egrave;me d'&eacute;chelles</span><span class="v">7 &eacute;chelles</span></div>
-            <div class="b-tete b-lib"><span class="t">Mod&egrave;le par famille</span><span class="v rien">&mdash;</span></div>
-          </div>
-        </div>
-        <p class="note" style="max-width:46ch">
-          Le panneau de l'univers devient <b>la fiche de l'univers</b>. C'est ce qui justifie le
-          m&eacute;canisme&nbsp;: un panneau pli&eacute; se lit mieux que d&eacute;pli&eacute;.
-        </p>
-      </div>
-      <div>
-        <div class="etat-tag">le mod&egrave;le, ouvert <i>&mdash; la droite de la rang&eacute;e passe &agrave; l'autre locataire</i></div>
-        <div class="pli">
-          <div class="pan-tete"><span>R&eacute;glages</span></div>
-          <div class="pli-corps">
-            <div class="b-tete b-lib"><span class="t">Mod&egrave;le</span><span class="v fait">48 au catalogue</span></div>
-            <div class="modeles" style="margin-top:7px">
-              <div class="mod on"><span class="pt"></span>OpenAI&nbsp;: GPT Image 2<span class="px">2 r&eacute;fs &middot; &times;4</span></div>
-              <div class="mod"><span class="pt"></span>Meta&nbsp;: Imagine 3<span class="px">4 r&eacute;fs &middot; &times;4</span></div>
-              <div class="mod off"><span class="pt"></span>Google&nbsp;: Nano Banana Pro</div>
-              <div class="mod-raison" style="border-bottom:0">n'accepte pas 3 variations</div>
-            </div>
-          </div>
-        </div>
-        <p class="note" style="max-width:46ch">
-          Repli&eacute;e, cette rang&eacute;e dit <code>OpenAI&nbsp;: GPT Image 2</code> et rend 280&nbsp;px &agrave; la
-          colonne. C'est le bloc qui a rendu le m&eacute;canisme n&eacute;cessaire.
-        </p>
-      </div>
-    </div>
-  </section>
-
-
-<style>
-/* ————— 4 · l'infobulle · 5 · le guide ————— */
-
-/* le libellé est la cible : aucun glyphe neuf, un pointillé --bord-fort */
-.lib-aide{
-  text-decoration:underline dotted var(--bord-fort);
-  text-underline-offset:3px;text-decoration-thickness:1px;
-  cursor:help
-}
-.lib-aide:hover{color:var(--texte);text-decoration-color:var(--texte-3)}
-
-/* le panneau : fond-1 sur bord-fort, 280 px, trois lignes */
-.bulle{
-  width:280px;background:var(--fond-1);border:1px solid var(--bord-fort);
-  border-radius:var(--r-s);padding:11px 13px 9px;
-  box-shadow:0 6px 20px rgba(0,0,0,.45)
-}
-.bulle .l1{font-size:12px;color:var(--texte);line-height:1.5}
-.bulle .l2{font-size:12px;color:var(--texte-2);line-height:1.5;margin-top:9px}
-.bulle .l2 b{color:var(--texte);font-weight:600}
-.bulle .l3{
-  font-family:var(--mono);font-size:10px;color:var(--texte-3);
-  margin-top:11px;padding-top:8px;border-top:1px solid var(--bord);
-  display:flex;justify-content:space-between;align-items:center;gap:14px
-}
-.bulle .l3 a{color:var(--signal);text-decoration:none;white-space:nowrap}
-.bulle .l3 a:hover{color:var(--signal-clair)}
-
-/* les deux colonnes du test */
-.test{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
-.test > div{background:var(--fond-1);padding:22px 24px 26px}
-.test .q{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--texte-3);margin-bottom:4px}
-.test .r{font-size:13px;color:var(--texte);margin-bottom:20px}
-.test .r em{font-style:italic;color:var(--texte-2)}
-.test .verdict{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:18px;padding-top:12px;border-top:1px solid var(--bord);line-height:1.6}
-.test .verdict b{color:var(--signal);font-weight:500}
-
-/* l'anatomie annotée */
-.anat{display:grid;grid-template-columns:280px 1fr;gap:26px;align-items:start}
-.anat-notes{display:flex;flex-direction:column;gap:0;padding-top:2px}
-.anat-notes div{padding:9px 0;border-bottom:1px solid var(--bord)}
-.anat-notes div:last-child{border-bottom:0}
-.anat-notes .t{font-size:12.5px;color:var(--texte)}
-.anat-notes .d{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:3px}
-
-/* la paire groupe / famille */
-.paire-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
-.champ-demo .tete-champ{margin-bottom:11px}
-.champ-demo .tete-champ .nom{font-size:11.5px;color:var(--texte-2)}
-.champ-demo .faux-champ{
-  width:280px;height:28px;background:var(--fond-2);border:1px solid var(--bord);
-  border-radius:var(--r-s);display:flex;align-items:center;padding:0 10px;
-  font-size:12.5px;color:var(--texte-3);margin-bottom:9px
-}
-.champ-demo .faux-champ.rempli{color:var(--texte)}
-/* la rangee des familles passe a la ligne dans 280 px — c'est ce que fait
-   le menu d'une carte 1x, § Le menu d'une carte. */
-.champ-demo .seg{display:flex;flex-wrap:wrap;width:280px}
-.champ-demo .seg button{flex:0 0 auto}
-
-/* en situation : le panneau et la bulle qui s'ouvre vers la grille */
-.situ{position:relative;height:376px;display:grid;grid-template-columns:300px minmax(0,1fr);background:var(--fond-0);overflow:hidden}
-.situ .bulle{position:absolute;left:296px;top:150px;z-index:5}
-.situ .cible{color:var(--texte);text-decoration-color:var(--texte-3)}
-.curseur-demo{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-.curseur-demo .rail{flex:1;height:2px;background:var(--bord);border-radius:2px;position:relative}
-.curseur-demo .rail i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--signal)}
-.curseur-demo .v{font-family:var(--mono);font-size:10px;color:var(--texte);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
-.faux-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px;padding:16px;align-content:start}
-.faux-grille i{aspect-ratio:1;background:var(--fond-2);border:1px solid var(--bord);display:block}
-
-/* ————— 5 · l'écran guide ————— */
-.app-guide{min-width:1120px;height:660px;display:grid;grid-template-rows:44px 1fr 26px;background:var(--fond-0)}
-.guide-corps{display:grid;grid-template-columns:240px minmax(0,1fr);overflow:hidden}
-.guide-som{border-right:1px solid var(--bord);background:var(--fond-1);padding:10px 8px;overflow:auto}
-.guide-som .grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);padding:14px 7px 6px}
-.guide-som .grp:first-child{padding-top:4px}
-.guide-txt{overflow:auto;padding:44px 48px 64px}
-.guide-mesure{max-width:36em} /* 72 signes reels : ch = avance du zero, trop large ici */
-.guide-titre{font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1;letter-spacing:-.01em;margin-bottom:18px}
-.guide-txt p{font-size:15px;line-height:1.65;color:var(--texte-2);margin-bottom:15px}
-.guide-txt p b{color:var(--texte);font-weight:600}
-.guide-txt p em{color:var(--texte);font-style:italic}
-.guide-txt code{font-family:var(--mono);font-size:13px;color:var(--texte)}
-.guide-h{
-  font-size:12.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);
-  margin:48px 0 14px
-}
-.guide-trois{border-left:1px solid var(--bord);padding:2px 0 2px 16px;margin:22px 0 26px}
-.guide-trois .a{font-size:15px;line-height:1.6;color:var(--texte)}
-.guide-trois .b{font-size:15px;line-height:1.6;color:var(--texte-2);margin-top:8px}
-.guide-trois .b b{color:var(--texte);font-weight:600}
-.guide-trois .c{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:11px}
-.guide-vide{
-  font-family:var(--mono);font-size:10px;color:var(--texte-3);
-  border-top:1px solid var(--bord);margin-top:16px;padding-top:12px;line-height:1.7
-}
-</style>
+<header class="tete">
+  <div class="kick">Design preview · drill-down · 28 août 2026</div>
+  <h1>La toile <em>range</em>,<br>et ranger se voit.</h1>
+  <p>Huit corrections vues à l'atelier tenu, ramenées à une règle : <b>sur la toile, ce qui se lit est en pixels d'écran, ce qui se mesure est en pixels de plan.</b> Le reste — les prises permanentes, le bandeau coloré, les dix teintes — en découle. La grille d'assets ne bouge pas d'un pixel.</p>
+</header>
 
 <section>
-  <div class="titre-sec"><span class="num">04</span><h2>L'infobulle</h2></div>
-  <p class="sous">
-    Le produit interdisait l'infobulle. Il l'interdit toujours — pour <em>la raison</em>, ce qui
-    refuse un geste, qui ne se survole jamais. Ce qui entre ici est son revers exact :
-    <b>l'explication</b>, dont l'absence n'a jamais bloqué personne. Le test est binaire, et il ne
-    se rediscute pas au cas par cas.
-  </p>
+  <h2>Color — les teintes d'îlot passent de six à dix</h2>
+  <div class="roue">
+    <div class="teinte"><div class="bloc" style="background:var(--ardoise)"></div><div class="nom">ardoise</div><div class="hex">#6686AD</div></div>
+    <div class="teinte neuve"><div class="bloc" style="background:var(--pervenche)"></div><div class="nom">pervenche</div><div class="hex">#7781B6</div></div>
+    <div class="teinte"><div class="bloc" style="background:var(--iris)"></div><div class="nom">iris</div><div class="hex">#847DB9</div></div>
+    <div class="teinte neuve"><div class="bloc" style="background:var(--lavande)"></div><div class="nom">lavande</div><div class="hex">#9577B6</div></div>
+    <div class="teinte"><div class="bloc" style="background:var(--prune)"></div><div class="nom">prune</div><div class="hex">#A76FB2</div></div>
+    <div class="teinte neuve"><div class="bloc" style="background:var(--mauve)"></div><div class="nom">mauve</div><div class="hex">#B16DA4</div></div>
+    <div class="teinte"><div class="bloc" style="background:var(--bruyere)"></div><div class="nom">bruyère</div><div class="hex">#B2708F</div></div>
+    <div class="teinte"><div class="bloc" style="background:var(--lichen)"></div><div class="nom">lichen</div><div class="hex">#678F4D</div></div>
+    <div class="teinte neuve"><div class="bloc" style="background:var(--mousse)"></div><div class="nom">mousse</div><div class="hex">#788B4B</div></div>
+    <div class="teinte"><div class="bloc" style="background:var(--paille)"></div><div class="nom">paille</div><div class="hex">#878748</div></div>
+  </div>
+  <p class="note" style="margin-bottom:24px">Saturation <b>20 % → 30 %</b>, clarté réglée teinte par teinte pour tenir <b>4,6 : 1</b> sur <span class="mono">--fond-2</span> — la discipline d'origine, au chiffre près. Les quatre neuves (·) subdivisent les arcs déjà occupés. <b>Les deux arcs des sémantiques restent fermés</b> : 345–55° (<span class="mono" style="color:var(--echec)">--echec</span> 4°, <span class="mono" style="color:var(--epingle)">--epingle</span> 43°) et 120–200° (<span class="mono" style="color:var(--ok)">--ok</span> 140°, <span class="mono" style="color:var(--signal)">--signal</span> 192°). Aucun rouge, aucun vert franc, aucun ambre — c'est ce qui empêche un îlot de se lire comme un état.</p>
 
-  <div class="bloc">
-    <span class="etiq">Le test — son absence empêche-t-elle un geste ?</span>
-    <div class="test">
-      <div>
-        <div class="q">Oui</div>
-        <div class="r">La raison — <em>fente permanente, jamais un survol</em></div>
-        <button class="btn btn-off" style="pointer-events:none">Générer</button>
-        <p class="raison">aucune clé OpenRouter <a>Réglages ›</a></p>
-        <div class="verdict">
-          On est bloqué <b>maintenant</b>. Cacher ce qui bloque derrière un survol,<br>
-          c'est proposer puis refuser — ce que le produit s'interdit.
+  <div class="compare">
+    <div class="cadre-cmp">
+      <div class="lg">Aujourd'hui — fond 8 %, bande transparente</div>
+      <div class="ilot-demo" style="border-color:var(--o-lichen);background:color-mix(in srgb,var(--o-lichen) 8%,transparent)">
+        <div class="bande"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--bord-fort);background:var(--fond-3)"></span><span style="color:var(--o-lichen)">marais</span><span style="color:var(--texte-3);margin-left:auto">4 cartes</span></div>
+      </div>
+    </div>
+    <div class="cadre-cmp">
+      <div class="lg">Proposé — fond 16 %, bandeau en teinte pleine</div>
+      <div class="ilot-demo" style="border-color:var(--lichen);background:color-mix(in srgb,var(--lichen) 16%,transparent)">
+        <div class="bande" style="background:var(--lichen)">
+          <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span style="color:var(--fond-0);font-weight:500">marais</span>
+          <span style="color:color-mix(in srgb,var(--fond-0) 90%,transparent);margin-left:auto">4 cartes</span>
+          <span class="rond" style="margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--fond-0) 55%,transparent)"></span>
         </div>
       </div>
-      <div>
-        <div class="q">Non</div>
-        <div class="r">L'explication — <em>survol, jamais une fente</em></div>
-        <div style="margin-bottom:11px"><span class="champ-l lib-aide" style="display:inline;color:var(--texte)">variations</span></div>
-        <div class="bulle">
-          <div class="l1">Combien d'images partent d'un seul clic. Chacune est facturée.</div>
-          <div class="l2">Multiplie le coût annoncé sur le bouton. <b>Ne change ni le prompt ni le modèle</b> — ce sont N tirages de la même demande.</div>
-          <div class="l3"><span>défaut du projet · 3</span><a>Le guide ›</a></div>
-        </div>
-        <div class="verdict">
-          On génère très bien sans le savoir — on ignore seulement<br>
-          ce qu'on a gagné. Une bulle qui porte une raison est un <b>bug</b>.
+    </div>
+    <div class="cadre-cmp">
+      <div class="lg">Sans teinte — le châssis, montré</div>
+      <div class="ilot-demo" style="border-color:var(--bord-fort);background:color-mix(in srgb,var(--fond-1) 40%,transparent)">
+        <div class="bande" style="background:var(--bord-fort)">
+          <span class="grip"><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i><i style="background:var(--texte)"></i></span>
+          <span style="color:var(--texte);font-weight:500">sans nom</span>
+          <span style="color:color-mix(in srgb,var(--texte) 90%,transparent);margin-left:auto">3 cartes</span>
+          <span class="rond" style="margin-left:6px;background:transparent;border-color:color-mix(in srgb,var(--texte) 55%,transparent)"></span>
         </div>
       </div>
     </div>
   </div>
+  <p class="note" style="margin-top:16px"><b>Le bandeau décide de la couleur de son texte</b> — <span class="mono">--fond-0</span> sur une teinte (5,2 : 1), <span class="mono">--texte</span> sur <span class="mono">--bord-fort</span> quand l'îlot n'en a pas (8,4 : 1). C'est la seule conditionnelle de la toile, et elle est mécanique : du texte sombre sur <span class="mono">--bord-fort</span> vaut 1,9 : 1. Le compte est la couleur du nom à 90 %, jamais sous 4,7 : 1.</p>
+</section>
 
-  <hr class="fin">
-
-  <div class="bloc">
-    <span class="etiq">Les deux champs qui ont provoqué la règle</span>
-    <p class="note" style="margin-top:0;margin-bottom:20px">
-      Voisins dans le même menu de carte. <b>L'un ne fait rien à la génération, l'autre décide de
-      ce qui part en référence et de ce que ça coûte.</b> Rien à l'écran ne les distinguait — c'est
-      toute la raison d'être de ce motif. Les deux bulles sont ouvertes ensemble ici parce que
-      c'est un spécimen ; à l'écran il n'y en a jamais qu'une.
-    </p>
-    <div class="paire-champs">
-      <div class="champ-demo">
-        <div class="tete-champ"><span class="nom lib-aide">groupe</span></div>
-        <div class="faux-champ rempli">taverne</div>
-        <div class="bulle">
-          <div class="l1">Un nom libre pour ranger les cartes du tableau. Vide&nbsp;= hors groupe.</div>
-          <div class="l2"><b>Rien à la génération.</b> C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est <em>artwork officiel</em>&nbsp;+&nbsp;<em>famille</em>.</div>
-          <div class="l3"><span>toi · aucun défaut</span><a>Le guide ›</a></div>
-        </div>
-      </div>
-      <div class="champ-demo">
-        <div class="tete-champ"><span class="nom lib-aide">famille</span></div>
-        <div class="seg" style="margin-bottom:9px"><button>personnages</button><button class="on">objets</button><button>décors</button><button>interface</button><button>tous</button></div>
-        <div class="bulle">
-          <div class="l1">La catégorie d'un artwork officiel. « Tous » est la planche non figurative — matières, palette, trait.</div>
-          <div class="l2">À la génération, <b>seuls les artworks de la famille du sujet partent en référence</b>, plus ceux marqués « tous ». <b>Le nombre de références change le coût.</b></div>
-          <div class="l3"><span>toi, en promouvant · défaut tous</span><a>Le guide ›</a></div>
-        </div>
-      </div>
+<section>
+  <h2>La grammaire des prises — trois formes, plus un seul curseur</h2>
+  <p class="note" style="margin-bottom:24px">T8 avait tranché « aucun pixel de vocabulaire neuf, seul le curseur diffère » : trois carrés de 10 px identiques, séparés par le pointeur. C'est la <em>troisième</em> fois que cette décision cède à l'usage. La forme remplace le curseur.</p>
+  <div class="prises">
+    <div class="prise">
+      <div class="demo"><span class="grip sur-chassis zoomx"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+      <h3>Six points — on saisit</h3>
+      <p>Le seul glyphe du produit. En tête du bandeau d'îlot, <b>permanent</b> : il ne s'efface plus au départ du pointeur.</p>
     </div>
-  </div>
-
-  <hr class="fin">
-
-  <div class="bloc">
-    <span class="etiq">Trois lignes, toujours les mêmes trois</span>
-    <div class="anat">
-      <div class="bulle">
-        <div class="l1">La part de la tuile que le sujet doit occuper, une fois recadré.</div>
-        <div class="l2">Recadre le rendu, <b>jamais le brut</b>. Un sujet trop petit se perd dans la grille ; trop grand, il touche les bords et l'export rogne.</div>
-        <div class="l3"><span>barème de l'univers · 82 %</span><a>Le guide ›</a></div>
-      </div>
-      <div class="anat-notes">
-        <div>
-          <div class="t">Ce que c'est</div>
-          <div class="d">sans 12 px · --texte · une phrase, jamais deux</div>
-        </div>
-        <div>
-          <div class="t">Ce que ça change — <b style="color:var(--signal);font-weight:500">obligatoire</b></div>
-          <div class="d">sans 12 px · --texte-2 · « Rien à la génération. » si c'est le cas</div>
-        </div>
-        <div>
-          <div class="t">D'où ça sort</div>
-          <div class="d">mono 10 px · --texte-3 · l'origine du défaut est un fait sur le monde</div>
-        </div>
-        <div>
-          <div class="t">Le lien vers le guide</div>
-          <div class="d">--signal · la règle du § Le grisé : un lien quand il y a où aller</div>
-        </div>
-      </div>
+    <div class="prise">
+      <div class="demo"><span class="rond zoomx"></span></div>
+      <h3>Rond — on tire un trait</h3>
+      <p>12 px, <b>permanent</b>, entièrement hors du bord droit. Il passe en <span class="mono" style="color:var(--signal)">--signal</span> sous le pointeur.</p>
     </div>
-    <p class="note">
-      <b>La deuxième ligne porte tout le poids.</b> C'est le gabarit qui produit la réponse, pas la
-      bonne volonté du rédacteur : sans ligne obligatoire, <code style="font-family:var(--mono);font-size:11px">groupe</code>
-      aurait reçu trois phrases sur le rangement, et la question de départ serait restée entière.
-    </p>
-  </div>
-
-  <hr class="fin">
-
-  <div class="bloc">
-    <span class="etiq">Au repos, et à l'ouverture — le panneau Détourage</span>
-    <p class="note" style="margin-top:0;margin-bottom:18px">
-      C'est ici que le risque se juge : <b>huit pointillés dans un panneau</b>, et rien d'autre
-      d'ajouté — ni rangée, ni hauteur, ni couleur, ni glyphe. La bulle s'ouvre <b>vers la
-      grille</b>, jamais vers le bord : c'est la seule surface assez large, et la seule chose que
-      personne ne lit au moment où il lit une explication.
-    </p>
-    <div class="ecran">
-      <div class="situ">
-        <div class="pan">
-          <div class="pan-tete"><span>Détourage</span><span class="plier">−</span></div>
-          <div class="pan-corps">
-            <div class="reg-bloc">
-              <span class="reg-l lib-aide">moteur</span>
-              <div class="seg"><button class="on">alpha</button><button>modèle</button></div>
-            </div>
-            <div class="reg-bloc">
-              <span class="reg-l cible lib-aide">tolérance</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:38%"></i></div><span class="v">24</span>
-              </div>
-              <span class="reg-l lib-aide">seuil alpha</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:52%"></i></div><span class="v">128</span>
-              </div>
-              <span class="reg-l lib-aide">tache minimale</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:16%"></i></div><span class="v">12 px</span>
-              </div>
-              <span class="reg-l lib-aide">durcissement</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:30%"></i></div><span class="v">2</span>
-              </div>
-            </div>
-            <div class="sep"></div>
-            <div class="reg-bloc">
-              <span class="reg-l lib-aide">occupation</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:78%"></i></div><span class="v">82 %</span>
-              </div>
-              <span class="reg-l lib-aide">ancrage</span>
-              <div class="seg" style="margin-bottom:14px"><button>haut</button><button class="on">centre</button><button>bas</button></div>
-              <span class="reg-l lib-aide">marge</span>
-              <div class="curseur-demo">
-                <div class="rail"><i style="left:12%"></i></div><span class="v">2 px</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="faux-grille">
-          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-        </div>
-        <div class="bulle">
-          <div class="l1">Jusqu'où une couleur peut s'écarter du fond et compter quand même comme fond.</div>
-          <div class="l2">Monter mange le sujet par les bords ; descendre laisse un halo. <b>Chaque cran relance le détourage — 1,5 s.</b></div>
-          <div class="l3"><span>mesuré au navigateur · défaut 24</span><a>Le guide ›</a></div>
-        </div>
-      </div>
+    <div class="prise">
+      <div class="demo"><span class="carre zoomx"></span></div>
+      <h3>Carré — on tire une dimension</h3>
+      <p>10 px, coin bas-droit, <b>révélé au survol</b> — inchangé. On ne le cherche que sur la carte qu'on regarde déjà.</p>
     </div>
-    <p class="note">
-      <b>Le survol révèle, le clic retient</b> — la grammaire du menu de carte, réemployée sans un
-      réglage de plus : 200 ms de repos pour paraître, 150 ms de grâce en partant,
-      <code style="font-family:var(--mono);font-size:11px">Échap</code> ou un second clic pour
-      lâcher l'épingle. Le fondu de 80 ms ne crée pas d'entrée dans la liste close du § Motion :
-      il en <b>rejoint</b> une.
-    </p>
   </div>
 </section>
 
-<section style="border-bottom:0">
-  <div class="titre-sec"><span class="num">05</span><h2>L'écran Guide</h2></div>
-  <p class="sous">
-    La seule prose du produit, et le seul écran calme d'un outil dense. Il couvre l'Atelier comme
-    Univers et Découpe — <b>mais il ne porte pas de fente de refus</b>, parce qu'il ne demande rien
-    au serveur, ne dépense rien et ne peut pas échouer. On ne pose pas une fente vide pour la
-    symétrie. Sa troisième partie <b>est le corpus des infobulles</b>, rendu à la file : un seul
-    texte, deux rendus.
-  </p>
-
-  <div class="ecran">
-    <div class="app app-guide">
-      <div class="app-tete">
-        <span class="marque">Asset Kitchen</span>
-        <nav class="onglets">
-          <a href="#">Atelier</a><a href="#">Univers</a><a href="#">Catalogue</a>
-        </nav>
-        <div class="tete-d">
-          <span class="pastille-projet">Ruines d'Ashken <span class="ch">▾</span></span>
-          <nav class="onglets" style="margin-left:12px"><a href="#" class="on">Guide</a></nav>
-        </div>
-      </div>
-
-      <div class="guide-corps">
-        <div class="guide-som">
-          <div class="grp">Le geste</div>
-          <div class="arb on"><span class="ic">·</span>La boucle</div>
-          <div class="arb"><span class="ic">·</span>Écrire</div>
-          <div class="arb"><span class="ic">·</span>Générer</div>
-          <div class="arb"><span class="ic">·</span>Juger</div>
-          <div class="arb"><span class="ic">·</span>Garder</div>
-          <div class="grp">Les écrans</div>
-          <div class="arb"><span class="ic">·</span>Atelier</div>
-          <div class="arb"><span class="ic">·</span>Univers</div>
-          <div class="arb"><span class="ic">·</span>Découpe</div>
-          <div class="arb"><span class="ic">·</span>Bibliothèque</div>
-          <div class="grp">Les réglages</div>
-          <div class="arb"><span class="ic">·</span>Dans l'univers<span class="n">20</span></div>
-          <div class="arb"><span class="ic">·</span>Dans l'atelier<span class="n">4</span></div>
-          <div class="arb"><span class="ic">·</span>Dans la retouche<span class="n">18</span></div>
-          <div class="arb"><span class="ic">·</span>Dans la découpe<span class="n">4</span></div>
-          <div class="sep"></div>
-          <div class="arb"><span class="ic">·</span>Ce qui manque<span class="n">1</span></div>
-        </div>
-
-        <div class="guide-txt">
-          <div class="guide-mesure">
-            <h3 class="guide-titre">La boucle</h3>
-            <p>
-              Tu écris ce que tu veux dans le champ du haut, tu génères, tu regardes, tu gardes ce
-              qui est bon. <b>C'est toute l'application.</b> Le reste — l'univers, la découpe, le
-              catalogue — existe pour que cette boucle-là demande le moins de décisions possible.
-            </p>
-
-            <div class="guide-h">Écrire</div>
-            <p>
-              Le champ de prompt ne demande que <em>le sujet</em>. Ni le style, ni la palette, ni le
-              format : ils sont déjà posés dans l'univers du projet, et ils partent tout seuls à
-              chaque génération. Écrire <code>un tonneau</code> suffit. Écrire
-              <code>un tonneau pixel art 32×32 palette sombre</code> fait le travail une seconde
-              fois, et moins bien que l'univers ne le fait.
-            </p>
-            <p>
-              Le bloc <em>Ce qui part</em>, juste en dessous, est en lecture seule : il répond
-              d'avance à « qu'est-ce qui accompagne ma demande ? » — les références, la famille, la
-              palette, la grille imposée. Le compte est calculé par le serveur, jamais par l'écran.
-            </p>
-
-            <div class="guide-h">Générer</div>
-            <p>
-              N tuiles paraissent aussitôt <b>à leur taille définitive</b>, avec leur jauge et leur
-              compteur. La grille ne se recompose pas entre le départ et l'arrivée : ton œil reste
-              où il était, et un échec atterrit exactement là où le succès serait arrivé.
-            </p>
-            <p>
-              Le coût est écrit sur le bouton <b>avant</b> le clic. Rien n'est jamais relancé
-              automatiquement — ni une génération interrompue, ni un appel raté, ni une carte qui
-              n'est pas arrivée. Relancer est toujours ton geste.
-            </p>
-
-            <div class="guide-h">Les réglages — groupe</div>
-            <div class="guide-trois">
-              <div class="a">Un nom libre pour ranger les cartes du tableau d'inspiration. Vide&nbsp;= hors groupe.</div>
-              <div class="b"><b>Rien à la génération.</b> C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est <em>artwork officiel</em> + <em>famille</em>.</div>
-              <div class="c">toi · aucun défaut</div>
+<section>
+  <h2>L'écran — Univers · toile, un glissement en cours</h2>
+  <div class="appli">
+    <div class="barre-tete">
+      <span class="marque">Asset Kitchen</span>
+      <span style="color:var(--bord-fort)">/</span>
+      <span class="ecran">Univers</span>
+      <span class="mesure" style="margin-left:auto">bac-a-sable · 34 cartes · $2,41</span>
+    </div>
+    <div class="corps">
+      <div class="col">
+        <div class="entete-panneau">Univers</div>
+        <div class="reglage">
+          <div class="champ"><label>bible · lieu</label><div class="val">marais de tourbe, brumes basses</div></div>
+          <div class="champ"><label>taille de pixel</label><div class="val mono" style="font-size:11px">4 px</div></div>
+          <div class="champ"><label>palette</label>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#3E5148"></span>
+              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#6E7F5E"></span>
+              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#A89A6B"></span>
+              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#2A2E2A"></span>
+              <span style="width:20px;height:20px;border-radius:2px;border:1px solid var(--bord);background:#C8B48A"></span>
             </div>
-            <p>
-              En long : un tableau d'inspiration monte vite à cent cartes, et le groupe est ce qui
-              te permet d'en retrouver douze. Il ne voyage nulle part — ni dans un prompt, ni dans
-              une référence, ni dans un export. Tu peux le remplir, le changer, le vider sans
-              qu'aucune image déjà produite ne bouge, et sans qu'aucune génération à venir ne
-              change de résultat ni de prix.
-            </p>
           </div>
         </div>
       </div>
 
-      <div class="app-pied">
-        <span class="vert"></span><b>en ligne</b>
-        <span class="sp">·</span><span>catalogue du 27/08 09:14</span>
-        <span class="sp">·</span><span>5 modèles</span>
-        <div class="d"><span>clé …a1b2</span></div>
-      </div>
-    </div>
-  </div>
+      <div style="display:flex;flex-direction:column;min-width:0">
+        <div class="barre-tableau">
+          <span class="lg">Tableau</span>
+          <span class="mesure" style="color:var(--texte-2)">34 cartes</span>
+          <span class="mesure" style="color:var(--signal)">3 artworks</span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+            <button class="btn-xs"><span class="plus">+</span> note</button>
+            <span class="lg">Vue</span>
+            <div class="segs"><button>grille</button><button class="on">toile</button></div>
+          </div>
+        </div>
 
-  <div class="grille2" style="margin-top:34px">
-    <div>
-      <span class="etiq">La seule largeur maximale du produit</span>
-      <p class="note" style="margin-top:0">
-        <b>72 caractères</b>, calés à gauche, et la place qui reste à droite reste vide.
-        « Max content width : aucune » a été écrit pour la grille — la chose qui <em>gagne</em> à
-        s'étaler. La prose est la seule matière du produit qui <b>perde</b> à recevoir de la
-        largeur : à 1 600 px, une ligne de français fait 190 signes et le retour à la ligne devient
-        une recherche. Remplir la marge de notes et de figures serait recommencer la maquette
-        écartée sur le seul écran qui pouvait s'en passer.
-      </p>
-    </div>
-    <div>
-      <span class="etiq">Aucun quatrième emploi du serif</span>
-      <p class="note" style="margin-top:0">
-        Le titre de l'écran est en Instrument Serif — c'est un <em>titre d'écran</em>, le deuxième
-        emploi, inchangé. Les titres de section sont en <b>sans 12,5 px majuscules</b>, la forme de
-        l'en-tête de panneau, séparés par 48 px d'espace. Un sous-titrage serif de 24 px sur la
-        seule page de texte long est très exactement le « bascule en blog » que la règle 1 du
-        § Typography annonce en toutes lettres.
-      </p>
-      <div class="guide-vide">
-        Ce qui manque · 1 réglage sans entrée<br>
-        <span style="color:var(--texte-2)">les réglages qu'un modèle déclare en propre — le catalogue les nomme, et il bouge</span><br>
-        — un réglage sans entrée n'a pas de pointillé, et rien ne casse.
+        <div class="plan">
+          <div class="trait" style="left:214px;top:132px;width:118px"></div>
+          <div class="mot" style="left:244px;top:124px">alimente</div>
+          <div class="trait" style="left:186px;top:214px;width:170px;transform:rotate(38deg)"></div>
+
+          <div class="ilot" style="left:28px;top:38px;width:186px;height:190px;border-color:var(--lichen);background:color-mix(in srgb,var(--lichen) 16%,transparent)">
+            <div class="bande" style="background:var(--lichen)">
+              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="nom">marais</span><span class="cpt">4 cartes</span><span class="rond"></span>
+            </div>
+            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#6E7F5E"></div></div>
+              <div class="pied">marais</div><div class="coin"></div><span class="rond"></span>
+            </div>
+            <div class="carte" style="left:95px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#3E5148"></div></div>
+              <div class="pied">marais</div><span class="rond"></span>
+            </div>
+            <div class="carte visee" style="left:14px;top:124px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#A89A6B"></div></div>
+              <div class="pied">marais</div><span class="rond"></span><span class="carre"></span>
+            </div>
+            <div class="carte" style="left:95px;top:124px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#C8B48A"></div></div>
+              <div class="pied">marais</div><span class="rond"></span>
+            </div>
+          </div>
+
+          <div class="ilot" style="left:332px;top:38px;width:186px;height:130px;border-color:var(--mauve);border-style:dashed;background:transparent">
+            <div class="bande" style="background:var(--mauve)">
+              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="nom">falaise</span><span class="cpt">2 cartes</span><span class="rond"></span>
+            </div>
+            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#7A6A58"></div></div>
+              <div class="pied">falaise</div><span class="rond"></span>
+            </div>
+            <div class="carte" style="left:95px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#8E8E86"></div></div>
+              <div class="pied">falaise</div><span class="rond"></span>
+            </div>
+          </div>
+          <div class="legende" style="left:532px;top:44px">perd une carte :<br>pointillé,<br>fond vidé,<br>compte à 2</div>
+
+          <div class="ilot" style="left:332px;top:210px;width:186px;height:130px;border-color:var(--pervenche);background:color-mix(in srgb,var(--pervenche) 28%,transparent)">
+            <div class="bande" style="background:var(--pervenche)">
+              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="nom">ciel</span><span class="cpt">3 cartes</span><span class="rond"></span>
+            </div>
+            <div class="carte" style="left:14px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px"><div class="sujet" style="background:#5C6E8A"></div></div>
+              <div class="pied">ciel</div><span class="rond"></span>
+            </div>
+            <div class="fantome" style="left:95px;top:34px;width:72px;height:81px">
+              <div class="img" style="height:59px;position:relative;border-radius:1px 1px 0 0;background-image:
+                linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+                linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
+                background-size:12px 12px;background-position:0 0,6px 6px"><span style="position:absolute;inset:20%;border-radius:1px;background:#8E8E86"></span></div>
+              <div style="height:21px;display:flex;align-items:center;padding:0 5px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--texte-3);border-top:1px solid var(--bord)">ciel</div>
+            </div>
+          </div>
+          <div class="legende" style="left:532px;top:216px">accueille :<br>fond à 28 %,<br>compte à 3</div>
+
+          <div class="ilot" style="left:28px;top:262px;width:186px;height:88px;border-color:var(--echec);background:color-mix(in srgb,var(--echec) 8%,transparent)">
+            <div class="bande" style="background:var(--echec)">
+              <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="nom">ruine</span><span class="cpt" style="color:var(--fond-0)">l'îlot part — 1 trait</span>
+            </div>
+          </div>
+          <div class="legende" style="left:232px;top:268px">dernière carte sortante :<br>--echec, et ce qu'elle emporte</div>
+
+          <div class="note-c" style="left:332px;top:372px;width:186px;border-color:var(--paille);background:color-mix(in srgb,var(--paille) 16%,transparent)">
+            La brume mange toujours le bas du sprite.
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="entete-panneau">Réserve · 12</div>
+        <div class="reserve-l">
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+          <div class="mini"><div class="img"></div><div class="pied">à classer</div></div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-  <footer class="pied-page">
-    Preview jetable — <code>docs/design-preview.html</code>. Le système fait foi dans
-    <code>docs/DESIGN.md</code>.<br>
-    Les sprites sont dessinés en SVG, 16×16, un rectangle par pixel : ils montrent la grille sans
-    dépendre d'un fichier image.
-  </footer>
+<section>
+  <h2>Les huit, et ce que chacun coûte</h2>
+  <table>
+    <thead><tr><th style="width:120px">Demande</th><th>Ce qui est proposé</th><th style="width:270px">Ce que ça coûte</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1 · à côté,<br>pas derrière</td>
+        <td><b>Une carte qui arrive de la réserve ne se pose jamais sur une autre</b> : elle glisse vers la droite, puis à la ligne, jusqu'à la première place libre — la règle de <span class="k">disposer</span>, appliquée à une carte au lieu d'un îlot. Le déplacement <em>sur</em> le plan garde le droit de recouvrir : la main y voit ce qu'elle fait, le glissement depuis la réserve est aveugle.</td>
+        <td>Une carte lâchée dans un îlot dense peut voyager visiblement depuis le point du lâcher. C'est honnête, et mieux que caché.</td>
+      </tr>
+      <tr>
+        <td>2 · sortir<br>d'un îlot</td>
+        <td><b>On entre par le centre, on sort par le tout.</b> Une carte quitte son îlot quand elle n'en touche plus rien ; elle y entre dès que son centre y est. Entrer ailleurs l'emporte sur rester.</td>
+        <td>Deux seuils au lieu d'un, et une carte peut être à moitié dehors en étant encore dedans — le cadre s'élargit au relâchement pour le dire.</td>
+      </tr>
+      <tr>
+        <td>3 · le dire<br>avant le lâcher</td>
+        <td><b>Un îlot dit ce qu'il vaudra.</b> Il accueille → fond 16 % → 28 %, compte +1. Il perd → fond vidé, cadre en pointillé, compte −1. Il meurt → <span class="mono" style="color:var(--echec)">--echec</span> et <em>l'îlot part</em>, inchangé.</td>
+        <td>Le cadre change de <em>trait</em> et non de couleur : <span class="mono" style="color:var(--echec)">--echec</span> reste réservé à ce qui détruit, sans quoi le seul vrai avertissement cesserait de se voir.</td>
+      </tr>
+      <tr>
+        <td>4 · les points<br>de lien</td>
+        <td><b>Rond de 12 px, permanent, entièrement hors du bord droit.</b> La poignée de largeur reste carrée, 10 px, au survol. <em>Le survol révèle</em> ne vaut plus sur la toile pour ce qui relie deux objets — c'est la seule surface où la cible du geste n'est pas ce qu'on regarde.</td>
+        <td>Le rond déborde de 3 px sur la voisine de droite. Une carte cachée en permanence coûtait plus cher.</td>
+      </tr>
+      <tr>
+        <td>5 · plus<br>de couleurs</td>
+        <td><b>Dix teintes, saturation 30 %, fond à 16 %.</b> La teinte devient visible sans devenir un état.</td>
+        <td><b>Pas de primaires</b> : les arcs de <span class="mono">--echec</span>, <span class="mono">--epingle</span>, <span class="mono">--ok</span> et <span class="mono">--signal</span> restent fermés. Et deux paires deviennent proches — ardoise/pervenche, iris/lavande.</td>
+      </tr>
+      <tr>
+        <td>6 · écrire<br>une note</td>
+        <td><b><span class="plus">+</span> note</b> dans la barre du tableau. En grille, la note naît en réserve ; en toile, le brouillon paraît au centre de ce que l'écran montre. Le double-clic sur le plan reste le geste précis.</td>
+        <td>Deux chemins pour un même résultat — le découvrable et le rapide. Le produit n'en a nulle part ailleurs.</td>
+      </tr>
+      <tr>
+        <td>7 · bandeau<br>et typo</td>
+        <td><b>Bandeau en teinte pleine, nom en <span class="mono">--fond-0</span></b> (5,2 : 1). Et la règle qui porte tout : <b>ce qui se lit est en pixels d'écran, ce qui se mesure est en pixels de plan.</b> Nom, compte, mot d'un trait, prises : écran. Image, carte, note, îlot : plan.</td>
+        <td>Deux systèmes de coordonnées sur une surface : tout objet neuf de la toile doit désormais déclarer auquel il appartient.</td>
+      </tr>
+      <tr>
+        <td>8 · le glyphe<br>de prise</td>
+        <td><b>Six points, permanents, en tête du bandeau.</b> Le carré de 10 px disparaît — il était le troisième carré identique de l'écran.</td>
+        <td>Le premier et le seul glyphe du produit. Il faut écrire la règle d'admission qui va avec, sinon il y en aura douze.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section style="margin-bottom:0">
+  <h2>Ce qui ne bouge pas — et l'exception qu'il faut écrire</h2>
+  <div class="duo">
+    <div>
+      <p class="note" style="margin-bottom:16px"><b>La grille d'assets est intacte.</b> Rayon 0, aucune ombre, tuile muette, <em>le survol révèle</em>. Rien de ce qui précède ne la touche.</p>
+      <p class="note"><b>Le châssis n'a pas une couleur de plus.</b> Quatre sémantiques, un accent, une lampe. Les dix teintes restent le seul endroit du produit où une couleur ne veut rien dire.</p>
+    </div>
+    <div>
+      <p class="avert"><b>La toile devient plus bavarde que le reste du produit</b> — prises permanentes, bandeaux pleins, dix teintes visibles. Ce n'est tenable que si le document dit <em>pourquoi</em> : <b>la grille montre, la toile range</b>, et il n'y a rien à juger sur la toile, seulement à placer. Sans cette phrase écrite, le prochain passage remettra la toile au silence et rouvrira les huit points.</p>
+    </div>
+  </div>
+</section>
+
 </div>
-
-<script>
-const SPRITES = {
-  gobelin:{
-    pal:{g:'#3F6329',a:'#7FB65B',e:'#141A10',m:'#33421F',b:'#6D4B2B',l:'#3E2D1B',k:'#241A10'},
-    rows:[
-      '................',
-      '.....gggggg.....',
-      '....gaaaaaag....',
-      '.gg.gaaaaaag.gg.',
-      '.ggggaaaaaagggg.',
-      '....gaeaaeag....',
-      '....gaaaaaag....',
-      '.....gammag.....',
-      '......gggg......',
-      '....bbbbbbbb....',
-      '...bbbbbbbbbb...',
-      '..abbbbbbbbbba..',
-      '..abbbbbbbbbba..',
-      '...llll..llll...',
-      '....kkk..kkk....',
-      '................'
-    ]},
-  gobelin_bleu:{
-    pal:{g:'#3F6329',a:'#7FB65B',e:'#141A10',m:'#33421F',b:'#3E5266',l:'#2A3644',k:'#1A222B'},
-    rows:[
-      '................',
-      '.....gggggg.....',
-      '....gaaaaaag....',
-      '.gg.gaaaaaag.gg.',
-      '.ggggaaaaaagggg.',
-      '....gaeaaeag....',
-      '....gaaaaaag....',
-      '.....gammag.....',
-      '......gggg......',
-      '....bbbbbbbb....',
-      '...bbbbbbbbbb...',
-      '..abbbbbbbbbba..',
-      '..abbbbbbbbbba..',
-      '...llll..llll...',
-      '....kkk..kkk....',
-      '................'
-    ]},
-  tonneau:{
-    pal:{d:'#2E1E11',w:'#8A5C33',h:'#A87543',m:'#59636D'},
-    rows:[
-      '................',
-      '....dddddddd....',
-      '...dwwwwwwwwd...',
-      '..dmmmmmmmmmmd..',
-      '..dwhwwwwwwwwd..',
-      '..dwhwwwwwwwwd..',
-      '..dmmmmmmmmmmd..',
-      '..dwhwwwwwwwwd..',
-      '..dwhwwwwwwwwd..',
-      '..dwhwwwwwwwwd..',
-      '..dmmmmmmmmmmd..',
-      '..dwhwwwwwwwwd..',
-      '...dwwwwwwwwd...',
-      '....dddddddd....',
-      '................',
-      '................'
-    ]},
-  cle:{
-    pal:{y:'#8A6417',o:'#E0B647'},
-    rows:[
-      '................',
-      '................',
-      '.....yyyyy......',
-      '....yooooy......',
-      '....yo..oy......',
-      '....yo..oy......',
-      '....yooooy......',
-      '.....yoy........',
-      '.....yoy........',
-      '.....yoy........',
-      '.....yoyy.......',
-      '.....yoy........',
-      '.....yoyyy......',
-      '.....yyy........',
-      '................',
-      '................'
-    ]},
-  fiole:{
-    pal:{k:'#6B4A2B',c:'#2E3942',g:'#93A8B8',r:'#B54A5E'},
-    rows:[
-      '................',
-      '.......kk.......',
-      '.......cc.......',
-      '.......cc.......',
-      '......cggc......',
-      '.....cggggc.....',
-      '....cgrrrrgc....',
-      '....cgrrrrgc....',
-      '....crrrrrrc....',
-      '....crrrrrrc....',
-      '....crrrrrrc....',
-      '.....crrrrc.....',
-      '......cccc......',
-      '................',
-      '................',
-      '................'
-    ]},
-  pierre:{
-    pal:{o:'#2A3138',s:'#6E7883',h:'#8B96A2',p:'#4E5761'},
-    rows:[
-      'oooooooooooooooo',
-      'ossssssssssssspo',
-      'osshhssssshhssso',
-      'ossssssssssssppo',
-      'oooooooooooooooo',
-      'ossssspossssssso',
-      'oshhsspossshhsso',
-      'osssssposssssppo',
-      'oooooooooooooooo',
-      'ossssssssssssspo',
-      'osshhssssshhssso',
-      'ossssssssssssppo',
-      'oooooooooooooooo',
-      'ossssspossssssso',
-      'oshhsspossshhsso',
-      'oooooooooooooooo'
-    ]},
-  cadre:{
-    pal:{f:'#3A2C14',h:'#C79B3E',d:'#7B5C22',g:'#1B2026',s:'#8A6A2C'},
-    rows:[
-      '................',
-      '................',
-      '................',
-      '.ffffffffffffff.',
-      'fhhhhhhhhhhhhhhf',
-      'fhddddddddddddhf',
-      'fhdggggggggggdhf',
-      'fhdggggggggggdhf',
-      'fhdggggggggggdhf',
-      'fhdggggggggggdhf',
-      'fhddddddddddddhf',
-      'fssssssssssssssf',
-      '.ffffffffffffff.',
-      '................',
-      '................',
-      '................'
-    ]}
-};
-
-function svgSprite(nom){
-  const s = SPRITES[nom];
-  if(!s) return '';
-  const w = Math.max.apply(null, s.rows.map(function(r){ return r.length }));
-  const h = s.rows.length;
-  let out = '<svg viewBox="0 0 ' + w + ' ' + h + '" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">';
-  s.rows.forEach(function(row, y){
-    for(let x = 0; x < row.length; x++){
-      const c = row[x];
-      if(c === '.') continue;
-      const col = s.pal[c];
-      if(!col) continue;
-      out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + col + '"/>';
-    }
-  });
-  return out + '</svg>';
-}
-
-document.querySelectorAll('[data-sprite]').forEach(function(el){
-  el.insertAdjacentHTML('afterbegin', svgSprite(el.dataset.sprite));
-});
-</script>
 </body>
 </html>

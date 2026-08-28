@@ -203,6 +203,12 @@ class ServiceDecoupe:
                         # planche de l'agent paraîtraient dans la grille comme
                         # s'ils venaient de la main de l'auteur.
                         provenance=planche.provenance,
+                        # **Et du même modèle que sa planche** (US-123), pour la
+                        # raison exacte de la provenance : découper n'est pas
+                        # commander, c'est le même appel poursuivi. Un morceau
+                        # sans modèle serait la seule image de la bibliothèque à
+                        # ne pas savoir dire qui l'a dessinée.
+                        modele=planche.modele,
                         projet=planche.projet,
                         collection=planche.collection,
                         parent=planche.identifiant,

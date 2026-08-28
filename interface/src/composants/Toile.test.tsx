@@ -26,10 +26,13 @@ import {
   aimanter,
   ancrer,
   carteSous,
+  classer,
   disposer,
   ilotPerdu,
   ilotSous,
   ilotsDe,
+  menaceDe,
+  placeLibre,
   type Crans,
 } from "./Toile"
 
@@ -281,6 +284,88 @@ describe("quel îlot attrape une carte lâchée", () => {
   })
 })
 
+// ── La toile révisée du 28 août 2026 ────────────────────────────────────────
+//
+// Deux règles neuves, et les deux sont de la géométrie : elles se vérifient donc
+// ici. Le reste de la révision — le bandeau en teinte pleine, les trois prises,
+// les deux échelles — est du dessin, et le dessin se juge au navigateur.
+
+describe("on entre par le centre, on sort par le tout", () => {
+  const marais = { nom: "marais", membres: 3, boite: { x: 0, y: 0, l: 400, h: 300 } }
+
+  test("le centre dedans fait entrer, même en venant de nulle part", () => {
+    expect(classer({ x: 150, y: 100, l: 100, h: 100 }, "", [marais])).toBe("marais")
+  })
+
+  test("le centre dehors ne fait pas sortir tant qu'on touche encore", () => {
+    // Le défaut que cette règle corrige : il suffisait d'en passer la moitié
+    // par-dessus la bordure pour qu'un groupe s'efface, c'est-à-dire qu'un îlot
+    // lâchait une carte qui était encore visiblement dedans.
+    const sortante = { x: 360, y: 100, l: 100, h: 100 }
+    expect(sortante.x + sortante.l / 2).toBeGreaterThan(marais.boite.l)
+    expect(classer(sortante, "marais", [marais])).toBe("marais")
+    // **Et le seuil d'entrée reste le seuil d'entrée** : la même carte, venue du
+    // dehors, n'entre pas. C'est ça, l'hystérésis — deux seuils, pas un.
+    expect(classer(sortante, "", [marais])).toBe("")
+  })
+
+  test("ne plus rien toucher fait sortir", () => {
+    expect(classer({ x: 401, y: 100, l: 100, h: 100 }, "marais", [marais])).toBe("")
+  })
+
+  test("entrer l'emporte sur rester", () => {
+    // Deux îlots voisins peuvent tenir la même carte — l'un parce qu'elle le
+    // touche encore, l'autre parce que son centre y est déjà —, et une carte n'a
+    // qu'un groupe. Sans ordre fixe, le classement dépendrait de l'ordre de la
+    // liste, ce qui est la manière la plus discrète de n'avoir aucune règle.
+    const petit = { nom: "marais", membres: 1, boite: { x: 0, y: 0, l: 200, h: 200 } }
+    const voisin = { nom: "nord", membres: 1, boite: { x: 210, y: 0, l: 200, h: 200 } }
+    const carte = { x: 180, y: 50, l: 100, h: 100 }
+
+    // Elle touche encore « marais » — et c'est pourtant « nord » qui prend.
+    expect(carte.x).toBeLessThan(petit.boite.l)
+    expect(classer(carte, "marais", [petit, voisin])).toBe("nord")
+    expect(classer(carte, "marais", [voisin, petit])).toBe("nord")
+  })
+
+  test("un îlot qui n'existe plus ne retient rien", () => {
+    // Le dernier membre sorti emporte l'îlot : le groupe d'avant ne désigne plus
+    // rien, et « rester » n'a plus de sujet.
+    expect(classer({ x: 900, y: 900, l: 100, h: 100 }, "atlantide", [marais])).toBe("")
+  })
+})
+
+describe("ce qui arrive de la réserve ne se pose jamais sur une carte", () => {
+  const taille = { l: 100, h: 100 }
+  const occupee = [{ x: 0, y: 0, l: 100, h: 100 }]
+
+  test("une place libre est rendue telle quelle", () => {
+    expect(placeLibre({ x: 300, y: 0 }, taille, occupee, 1000)).toEqual({ x: 300, y: 0 })
+    // Bord à bord n'est pas l'un sur l'autre : le seuil de recouvrement est
+    // strict, celui du classement ne l'est pas — et les deux mots le disent.
+    expect(placeLibre({ x: 100, y: 0 }, taille, occupee, 1000)).toEqual({ x: 100, y: 0 })
+  })
+
+  test("elle glisse d'une largeur et d'une gouttière vers la droite", () => {
+    expect(placeLibre({ x: 0, y: 0 }, taille, occupee, 1000)).toEqual({ x: 109, y: 0 })
+  })
+
+  test("au bord elle passe à la ligne, et repart de la colonne du départ", () => {
+    // La borne est le bord de l'îlot où l'on tombe : on ne pousse jamais une
+    // carte au-delà de ce que la toile occupe déjà.
+    expect(placeLibre({ x: 0, y: 0 }, taille, occupee, 100)).toEqual({ x: 0, y: 109 })
+  })
+
+  test("elle traverse une rangée pleine sans s'y arrêter", () => {
+    const rangee = [
+      { x: 0, y: 0, l: 100, h: 100 },
+      { x: 109, y: 0, l: 100, h: 100 },
+      { x: 218, y: 0, l: 100, h: 100 },
+    ]
+    expect(placeLibre({ x: 0, y: 0 }, taille, rangee, 318)).toEqual({ x: 0, y: 109 })
+  })
+})
+
 // ── T9 : les liens et les notes ─────────────────────────────────────────────
 //
 // **Trois règles neuves, et les trois sont de la géométrie ou de l'arithmétique
@@ -414,5 +499,52 @@ describe("ce qu'un îlot emporte en disparaissant", () => {
       teinte: "",
       liens,
     })
+  })
+})
+
+describe("ce qu'un glissement en cours menace", () => {
+  // **La même vérité que ci-dessus, dite avant le geste au lieu d'après.** Ce qui
+  // s'ajoute ici est une seule question : *où la carte tomberait-elle si on la
+  // lâchait maintenant ?* — et l'écran la pose exactement comme au relâchement,
+  // sans quoi l'avertissement mentirait la moitié du temps.
+  const teintes: Record<string, Teinte> = { marais: "lichen" }
+  const traits = [lien("l1", surCarte("note"), surIlot("marais"))]
+
+  test("une carte qui reste dans son îlot ne menace rien", () => {
+    // Le geste le plus courant de la toile : ranger une carte *dans* son îlot.
+    // Il ne coûte jamais rien, et l'écran ne doit donc rien annoncer.
+    const seule = carte("seule", { groupe: "marais", position: [0, 0] })
+    expect(menaceDe(seule, "marais", [seule], traits, teintes)).toBeNull()
+  })
+
+  test("le dernier membre tiré dehors menace son îlot, avec ses traits", () => {
+    const seule = carte("seule", { groupe: "marais", position: [0, 0] })
+    expect(menaceDe(seule, "", [seule], traits, teintes)).toEqual({
+      nom: "marais",
+      teinte: "lichen",
+      liens: traits,
+    })
+  })
+
+  test("le dernier membre tiré dans un autre îlot menace le sien quand même", () => {
+    // Tomber dans « nord » écrit un groupe **non vide**, et vide pourtant
+    // « marais » : c'est le cas que « le groupe devient vide » ratait, et il se
+    // voit maintenant pendant le geste.
+    const seule = carte("seule", { groupe: "marais", position: [0, 0] })
+    const voisine = carte("voisine", { groupe: "nord", position: [500, 0] })
+    expect(menaceDe(seule, "nord", [seule, voisine], traits, teintes)?.nom).toBe("marais")
+  })
+
+  test("une carte parmi d'autres ne menace pas son îlot", () => {
+    const une = carte("une", { groupe: "marais", position: [0, 0] })
+    const deux = carte("deux", { groupe: "marais", position: [200, 0] })
+    expect(menaceDe(une, "", [une, deux], traits, teintes)).toBeNull()
+  })
+
+  test("une carte sans groupe ne menace rien, où qu'elle aille", () => {
+    // Elle n'a pas d'îlot à vider : la poser dans un îlot en **remplit** un.
+    const libre = carte("libre", { position: [10, 10] })
+    expect(menaceDe(libre, "marais", [libre], traits, teintes)).toBeNull()
+    expect(menaceDe(libre, "", [libre], traits, teintes)).toBeNull()
   })
 })

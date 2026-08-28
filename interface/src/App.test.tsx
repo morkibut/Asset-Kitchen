@@ -2,7 +2,7 @@
 // Le seul endroit du dépôt où l'interface est montée et pilotée.
 //
 // Il existe pour une raison précise, et elle est écrite dans `AGENTS.md`
-// § Pièges connus : **deux chemins amènent la même génération à l'écran, et ils
+// `docs/PIEGES.md` : **deux chemins amènent la même génération à l'écran, et ils
 // se croisent.** La réponse du POST et l'annonce du flux portent le même objet,
 // et le serveur publie *avant* que le POST ne soit revenu. Le défaut qui en est
 // sorti — chaque génération lancée depuis l'onglet en double — n'a été vu ni par
@@ -21,7 +21,14 @@
 // `tests/conftest.py` double le fournisseur côté Python. Aucun centime.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react"
+import {
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import { App } from "./App"
 import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
@@ -33,9 +40,12 @@ import type {
   Bibliotheque,
   Carte,
   Etat,
+  CompteReferences,
   EtatCatalogue,
   Generation,
   Lien,
+  Personnage,
+  Pose,
   Teinte,
   Univers,
 } from "./api"
@@ -161,8 +171,24 @@ const CATALOGUE: EtatCatalogue = {
   repli: false,
   raison: null,
   defaut: { modele: MODELE.identifiant, options: {} },
-  // Ce qui partira vraiment, artworks compris — calculé par le serveur (US-52).
-  references: { total: 0, manuelles: 0, artworks: 0, famille: null },
+  // Ce qui partira vraiment, artworks compris — calculé par le serveur (US-52),
+  // et depuis C1 **ligne par ligne, avec sa provenance** (US-127).
+  references: {
+    total: 0,
+    manuelles: 0,
+    artworks: 0,
+    concepts: 0,
+    // **Le gabarit du lot** (C2). Zéro sans lot armé, et c'est ce que le
+    // serveur rend — le double se construit sur ce que la route dit vraiment,
+    // jamais sur ce qu'on voudrait qu'elle dise (`docs/PIEGES.md`, payé en C1).
+    gabarit: 0,
+    famille: null,
+    lignes: [],
+  },
+  // Ce qu'une image a coûté chez chaque modèle, **mesuré** sur les derniers
+  // appels (US-121). Vide : dans un atelier neuf, aucun modèle n'a rien
+  // facturé, et le produit le dit plutôt que d'inventer un tarif.
+  couts: {},
   modeles: [MODELE],
 }
 
@@ -186,6 +212,40 @@ const UNIVERS: Univers = {
   palette_empreinte: "",
   modeles: {},
   vide: true,
+}
+
+/** Le plan d'un projet neuf — six attitudes, une image chacune. Le vrai serveur
+ *  en donne autant sans qu'aucune ligne n'ait été écrite (US-116). */
+const PLAN: Pose[] = [
+  { identifiant: "repos", nom: "repos", images: 1 },
+  { identifiant: "marche", nom: "marche", images: 1 },
+  { identifiant: "course", nom: "course", images: 1 },
+  { identifiant: "attaque", nom: "attaque", images: 1 },
+  { identifiant: "degats", nom: "dégâts", images: 1 },
+  { identifiant: "mort", nom: "mort", images: 1 },
+]
+
+const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
+  const ecartees = sur.ecartees ?? []
+  return {
+    identifiant: nom.toLowerCase().replace(/\s+/g, "-"),
+    projet: "bac-a-sable",
+    nom,
+    description: "",
+    concept_arts: [],
+    references_ecartees: [],
+    cree_le: 1_787_800_100,
+    // Les cases viennent du serveur, qui les déduit du plan et des assets. Le
+    // double les calcule de la même façon : un personnage neuf a autant de
+    // cases vides que d'attitudes tenues.
+    cases: PLAN.filter((p) => !ecartees.includes(p.identifiant)).map((p) => ({
+      pose: p.identifiant,
+      demandees: p.images,
+      images: [],
+    })),
+    ...sur,
+    ecartees,
+  }
 }
 
 const BIBLIOTHEQUE: Bibliotheque = {
@@ -280,6 +340,7 @@ const asset = (
   identifiant: string,
   label = "un tonneau",
   provenance: Asset["provenance"] = "auteur",
+  modele = "google/gemini-2.5-flash-image",
 ): Asset => {
   const [gen, rang] = identifiant.split(/-(\d+)$/)
   return {
@@ -291,6 +352,14 @@ const asset = (
     type_media: "image/png",
     label,
     provenance,
+    modele,
+    personnage: null,
+    pose: null,
+    // **Vide pour toute image qui n'est pas sortie d'une planche pliée** (C2) —
+    // c'est-à-dire pour l'immense majorité d'entre elles, et pour toutes
+    // celles-ci.
+    lot: null,
+    personnage_supprime: false,
     recette: {
       passes: [],
       recadrage: null,
@@ -381,6 +450,17 @@ function serveurDouble(options: {
    *  une toile se lit en un aller-retour. */
   liens?: Lien[]
   teintes?: Record<string, Teinte>
+  /** Le plan du jeu et ses personnages. Ils arrivent par la même route, parce
+   *  que le vrai serveur les rend ensemble : une colonne de cases n'existe que
+   *  par le plan qui la nomme. */
+  plan?: Pose[]
+  personnages?: Personnage[]
+  /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
+   *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
+   *  ni les concept arts, et deux comptes divergeraient. */
+  references?: CompteReferences
+  /** Ce qu'une image a coûté chez chaque modèle — **mesuré**, jamais un tarif. */
+  couts?: Record<string, number>
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -390,6 +470,8 @@ function serveurDouble(options: {
     teintes: options.teintes ?? ({} as Record<string, Teinte>),
     univers: options.univers ?? UNIVERS,
     agent: options.agent ?? ETAT.agent,
+    plan: options.plan ?? PLAN,
+    personnages: options.personnages ?? ([] as Personnage[]),
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -440,7 +522,12 @@ function serveurDouble(options: {
         blob: async () => new Blob(["PK"], { type: "application/zip" }),
       } as unknown as Response
     }
-    if (url.startsWith("/api/models")) return rendre(CATALOGUE)
+    if (url.startsWith("/api/models"))
+      return rendre({
+        ...CATALOGUE,
+        references: options.references ?? CATALOGUE.references,
+        couts: options.couts ?? CATALOGUE.couts,
+      })
     if (url === "/api/status") return rendre({ ...ETAT, agent: etat.agent })
     // Le cadre de l'agent. Le PUT rend **le cadre entier et sa consommation**,
     // comme le vrai serveur : l'écran pose un champ et reçoit tout, ce qui lui
@@ -641,6 +728,121 @@ function serveurDouble(options: {
         liens: etat.liens,
         teintes: etat.teintes,
       })
+    // **Le plan et les personnages arrivent ensemble**, comme la toile : le
+    // double rend ce que le vrai serveur rend, sans les poses tenues — elles se
+    // déduisent du plan, et les envoyer ferait une copie qui se périme.
+    if (url === "/api/characters" && (!init?.method || init.method === "GET"))
+      return rendre({
+        projet: "bac-a-sable",
+        plan: etat.plan,
+        personnages: etat.personnages,
+      })
+    if (url.startsWith("/api/characters")) {
+      if (url === "/api/characters" && init?.method === "POST") {
+        const cree = personnage(String(corps.nom))
+        etat.personnages = [...etat.personnages, cree]
+        return rendre({ personnage: cree })
+      }
+      if (url === "/api/characters/poses" && init?.method === "POST") {
+        const pose: Pose = {
+          identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
+          nom: String(corps.nom),
+          images: Number(corps.images ?? 1),
+        }
+        etat.plan = [...etat.plan, pose]
+        // La case neuve paraît chez chacun sans qu'aucun personnage soit
+        // réécrit : c'est le plan qui décide, le personnage ne fait que
+        // soustraire. Le double le rejoue, sinon l'essai prouverait un contrat
+        // qui n'est pas celui du serveur.
+        etat.personnages = etat.personnages.map((p) => ({
+          ...p,
+          cases: [...p.cases, { pose: pose.identifiant, demandees: pose.images, images: [] }],
+        }))
+        // **Le plan entier avec la pose**, comme le vrai serveur : l'écran fond
+        // ce qui lui arrive par les deux chemins avec le même code, et un double
+        // qui n'en rendrait que la moitié prouverait un autre contrat.
+        return rendre({ pose, plan: etat.plan })
+      }
+      if (init?.method === "PUT" && url.startsWith("/api/characters/poses/")) {
+        const identifiant = url.slice("/api/characters/poses/".length)
+        etat.plan = etat.plan.map((p) =>
+          p.identifiant === identifiant ? { ...p, ...corps } : p,
+        )
+        return rendre({
+          pose: etat.plan.find((p) => p.identifiant === identifiant),
+          plan: etat.plan,
+        })
+      }
+      if (init?.method === "DELETE" && url.startsWith("/api/characters/poses/")) {
+        const identifiant = url.slice("/api/characters/poses/".length)
+        const pose = etat.plan.find((p) => p.identifiant === identifiant)
+        etat.plan = etat.plan.filter((p) => p.identifiant !== identifiant)
+        return rendre({ pose, plan: etat.plan })
+      }
+      if (init?.method === "PUT") {
+        const identifiant = url.slice("/api/characters/".length)
+        // Le serveur reçoit les poses **tenues** et range le complément : le
+        // double fait la même chose, sinon l'essai prouverait un contrat qui
+        // n'est pas celui du serveur.
+        etat.personnages = etat.personnages.map((p) =>
+          p.identifiant === identifiant
+            ? {
+                ...p,
+                ...(corps.nom !== undefined ? { nom: String(corps.nom) } : {}),
+                ...(corps.description !== undefined
+                  ? { description: String(corps.description) }
+                  : {}),
+                ...(corps.poses !== undefined
+                  ? {
+                      ecartees: etat.plan
+                        .map((pose) => pose.identifiant)
+                        .filter((pose) => !corps.poses.includes(pose)),
+                      cases: etat.plan
+                        .filter((pose) => corps.poses.includes(pose.identifiant))
+                        .map((pose) => ({
+                          pose: pose.identifiant,
+                          demandees: pose.images,
+                          images:
+                            p.cases.find((c) => c.pose === pose.identifiant)?.images ??
+                            [],
+                        })),
+                    }
+                  : {}),
+                ...(corps.concept_arts !== undefined
+                  ? { concept_arts: corps.concept_arts }
+                  : {}),
+              }
+            : p,
+        )
+        return rendre({
+          personnage: etat.personnages.find((p) => p.identifiant === identifiant),
+        })
+      }
+      if (init?.method === "DELETE") {
+        const identifiant = url.slice("/api/characters/".length)
+        const personnage = etat.personnages.find((p) => p.identifiant === identifiant)
+        etat.personnages = etat.personnages.filter(
+          (p) => p.identifiant !== identifiant,
+        )
+        return rendre({ personnage, images: 0 })
+      }
+    }
+    // La case qu'une image remplit (US-122). Le double rend l'asset entier,
+    // comme le vrai serveur — et il l'annonce, parce que c'est cette annonce qui
+    // fait redemander les cases à l'écran.
+    if (url.endsWith("/character") && init?.method === "PUT") {
+      const identifiant = url.slice("/api/assets/".length, -"/character".length)
+      const trouve = etat.assets.find((a) => a.identifiant === identifiant)
+      const rendu = {
+        ...(trouve ?? asset(identifiant)),
+        personnage: corps.personnage ?? null,
+        pose: corps.pose ?? null,
+      }
+      etat.assets = etat.assets.map((a) =>
+        a.identifiant === identifiant ? rendu : a,
+      )
+      return rendre(rendu)
+    }
     if (url.startsWith("/api/universe")) return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
     if (url === "/api/generations" && init?.method === "POST") {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
@@ -782,6 +984,35 @@ describe("l'écran de l'atelier", () => {
       (screen.getByLabelText("Chercher dans la bibliothèque") as HTMLInputElement).value,
     ).toBe("tonneau")
     expect(tuiles()).toHaveLength(2)
+  })
+
+  // ── C1 : « la fiche de n'importe quel asset nomme le modèle qui l'a
+  //     produit — le modèle exact pour une image générée, "importé" pour une
+  //     image importée » (US-123) ─────────────────────────────────────────────
+
+  test("la fiche nomme le modèle qui a produit l'image, et « importé » quand il n'y en a pas", async () => {
+    const images = [
+      asset("eeee5555-0", "un tonneau", "auteur", "essai/rend-du-png"),
+      asset("eeee5555-1", "un voisin", "auteur", "import"),
+    ]
+    const { fetchDouble } = serveurDouble({ assets: images })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    // L'identifiant exact du fournisseur, pas le nom du catalogue : c'est lui
+    // qu'on redemande, et il reste vrai quand le catalogue est hors ligne.
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    expect(screen.getByText("essai/rend-du-png")).toBeTruthy()
+
+    // Une image importée n'a pas de modèle, et son absence est une réponse.
+    fireEvent.click(screen.getByLabelText("Fermer la fiche"))
+    await waitFor(() => expect(screen.queryByLabelText("Fermer la fiche")).toBeNull())
+    fireEvent.click(tuiles()[1])
+    await screen.findByLabelText("Fermer la fiche")
+    expect(screen.getByText("importé")).toBeTruthy()
+    expect(screen.queryByText("import")).toBeNull()
   })
 
   // ── T3 : « replier un panneau est un choix, jamais une contrainte » ────────
@@ -998,6 +1229,26 @@ describe("l'écran de l'atelier", () => {
     // La phrase nomme **le fichier**, pas le tampon mémoire de Pillow : « savoir
     // lequel des douze fichiers déposés pose problème ».
     expect(await screen.findByText(/« notes\.txt » n'est pas une image/)).toBeTruthy()
+  })
+
+  // ── Coller dans un champ, c'est coller dans le champ ─────────────────────
+
+  test("un texte collé dans un champ de saisie ne fabrique pas de carte", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    await screen.findByText("Le tableau est vide.")
+
+    // L'écoute est posée sur la fenêtre : elle voit passer aussi les collages
+    // qui ne lui sont pas adressés. Celui-ci remplit une case — le nom d'un
+    // groupe, le mot d'un lien, une recherche — et le tableau n'en sait rien.
+    const champ = screen.getByLabelText("Chercher dans la bibliothèque")
+    fireEvent.paste(champ, { clipboardData: { files: [], getData: () => "héros" } })
+
+    expect(fetchDouble.mock.calls.some(([url]) => String(url).includes("/api/board/text"))).toBe(
+      false,
+    )
+    expect(screen.getByText("Le tableau est vide.")).toBeTruthy()
   })
 
   // ── T4 : ce qui part avec la génération se lit avant de cliquer ───────────
@@ -1699,6 +1950,46 @@ describe("l'agent, vu de l'atelier", () => {
     expect(colonnes).toHaveLength(2)
   })
 
+  test("les deux colonnes de l'écran se replient, et la toile prend toute la largeur", async () => {
+    // « Replier un panneau est un choix, jamais une contrainte de place »
+    // (US-97) : c'est la règle de l'atelier, et cet écran-ci n'en a pas une
+    // autre. Repliées toutes les deux, il ne reste que la toile.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: compose() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    const pistes = () =>
+      (document.querySelector("[data-colonnes]") as HTMLElement).style.gridTemplateColumns
+    const univers = screen.getByRole("button", { name: "univers" })
+    const reserve = screen.getByRole("button", { name: "réserve" })
+
+    // Déployées d'emblée : l'écran large est la ressource du produit.
+    expect(univers.getAttribute("aria-pressed")).toBe("true")
+    expect(reserve.getAttribute("aria-pressed")).toBe("true")
+    expect(pistes()).toBe("380px minmax(0,1fr) 380px")
+
+    fireEvent.click(univers)
+    fireEvent.click(reserve)
+    expect(pistes()).toBe("0px minmax(0,1fr) 0px")
+
+    // **Replier n'est pas fermer**, et c'est tout l'enjeu : les deux panneaux
+    // sont toujours montés, avec ce qu'ils portaient. La réserve garde même ses
+    // 380 px — c'est la grille que l'aimant de la toile mesure.
+    expect(
+      document.querySelector("[data-reserve]")!.querySelectorAll("article"),
+    ).toHaveLength(2)
+    expect(screen.getByText("L'univers")).toBeTruthy()
+
+    fireEvent.click(univers)
+    expect(pistes()).toBe("380px minmax(0,1fr) 0px")
+
+    // En grille, la réserve n'a pas de colonne : elle n'a donc pas de bascule.
+    fireEvent.click(screen.getByRole("button", { name: "grille" }))
+    expect(screen.queryByRole("button", { name: "réserve" })).toBeNull()
+    expect(pistes()).toBe("380px minmax(0,1fr)")
+  })
+
   test("la grille du tableau est inchangée : on y revient telle qu'on l'a laissée", async () => {
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
@@ -1903,6 +2194,65 @@ describe("l'agent, vu de l'atelier", () => {
     expect(appels.filter((a) => a.url === "/api/board/text")).toHaveLength(0)
   })
 
+  test("« + note » fait ce que la vue permet — en grille, la note naît en réserve", async () => {
+    // Écrit le 28 août 2026 (`docs/design-motifs.md` § La toile révisée). T9
+    // avait refusé un contrôle de barre, et l'argument était juste — *une note
+    // se crée là où elle s'applique*. Il ne couvrait pas le vrai trou, qui est
+    // en amont : **il n'existait aucun moyen d'écrire une note sans en avoir
+    // d'abord le texte dans le presse-papier**, le double-clic n'existant que
+    // sur le plan et la vue grille n'ayant pas de plan.
+    //
+    // En grille, la note naît donc **en réserve** — sans place et sans groupe,
+    // ce que le serveur déduit des deux : le corps ne porte que le texte.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "+ note" }))
+    const champ = await waitFor(() => {
+      const trouve = document.querySelector("[data-brouillon]") as HTMLTextAreaElement
+      expect(trouve).toBeTruthy()
+      return trouve
+    })
+    fireEvent.change(champ, { target: { value: "  la brume mange le bas  " } })
+    fireEvent.blur(champ)
+
+    const poses = () => appels.filter((a) => a.url === "/api/board/text")
+    await waitFor(() => expect(poses()).toHaveLength(1))
+    expect(poses()[0].corps).toEqual({ texte: "la brume mange le bas" })
+    await waitFor(() => expect(document.querySelector("[data-brouillon]")).toBeNull())
+  })
+
+  test("« + note » en toile pose le brouillon sur le plan, et un champ vide ne crée rien", async () => {
+    // L'autre moitié de la même règle : en toile, le brouillon paraît au centre
+    // de ce que l'écran montre — au milieu de ce qu'on regarde, et non à sept
+    // cents pixels de là. **Le double-clic ne bouge pas** : il reste le geste
+    // précis, celui qui désigne l'endroit ; les deux ne se doublent pas, l'un
+    // est découvrable et l'autre est rapide.
+    doublerLaGrille(160)
+    const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
+    await monter(fetchDouble)
+    await ouvrirLaToile()
+
+    fireEvent.click(await screen.findByRole("button", { name: "+ note" }))
+    const champ = await waitFor(() => {
+      const trouve = document.querySelector("[data-brouillon]") as HTMLTextAreaElement
+      expect(trouve).toBeTruthy()
+      return trouve
+    })
+    // Il est **sur le plan** : le brouillon de la toile est un nœud, pas une
+    // surface flottante — un champ posé en pixels d'écran serait faux au premier
+    // cran de zoom.
+    expect(champ.closest(".react-flow__node")).toBeTruthy()
+
+    // Et il s'essaie sans rien casser, exactement comme celui du double-clic.
+    fireEvent.change(champ, { target: { value: "   " } })
+    fireEvent.blur(champ)
+    await waitFor(() => expect(document.querySelector("[data-brouillon]")).toBeNull())
+    expect(appels.filter((a) => a.url === "/api/board/text")).toHaveLength(0)
+  })
+
   test("couper un lien passe par sa route, et Ctrl+Z le repose tel qu'il était", async () => {
     // Le critère de la tranche : « Ctrl+Z annule la création comme la coupe d'un
     // lien ». **Reposer, c'est reposer le lien entier** — son mot et sa pointe
@@ -2085,9 +2435,9 @@ describe("l'agent, vu de l'atelier", () => {
     expect(carte().getAttribute("style")).not.toContain("border-color")
   })
 
-  test("les six teintes sont les seules, et elles ne renvoient à aucun token sémantique", () => {
-    // « Les six teintes sont les seules disponibles, et aucune ne se confond
-    // avec une couleur sémantique du produit — **vérifié à côté d'une carte en
+  test("les dix teintes sont les seules, et elles ne renvoient à aucun token sémantique", () => {
+    // « Les teintes sont les seules disponibles, et aucune ne se confond avec
+    // une couleur sémantique du produit — **vérifié à côté d'une carte en
     // échec** » (`docs/PLAN.md` T9). La seconde moitié de ce critère est un
     // constat d'œil, et il se fait au navigateur : deux valeurs peuvent être
     // distinctes et se confondre quand même.
@@ -2095,14 +2445,30 @@ describe("l'agent, vu de l'atelier", () => {
     // Ce qui se prouve **ici** est la première moitié, et elle est entière : la
     // liste est close, elle est la même des deux côtés du tuyau, et aucune de
     // ses entrées ne renvoie à un token qui, lui, dit quelque chose. Une
-    // septième teinte, ou une teinte qui pointerait vers `--color-echec`, fait
+    // onzième teinte, ou une teinte qui pointerait vers `--color-echec`, fait
     // tomber ce test.
-    expect(TEINTES).toEqual(["ardoise", "iris", "prune", "bruyere", "lichen", "paille"])
+    //
+    // **Six jusqu'au 28 août 2026, dix depuis, et c'est ce test qui a dû être
+    // rouvert pour l'écrire** — ce qui est exactement son travail : le compte
+    // ne se change pas par distraction. L'ordre est celui de la roue, pas celui
+    // de l'alphabet, et il est le même à l'écran et sur le disque.
+    expect(TEINTES).toEqual([
+      "ardoise",
+      "pervenche",
+      "iris",
+      "lavande",
+      "prune",
+      "mauve",
+      "bruyere",
+      "mousse",
+      "lichen",
+      "paille",
+    ])
     expect(Object.keys(COULEUR_TEINTE).sort()).toEqual([...TEINTES].sort())
     expect(Object.keys(NOM_TEINTE).sort()).toEqual([...TEINTES].sort())
 
     const renvois = Object.values(COULEUR_TEINTE)
-    expect(new Set(renvois).size, "deux teintes pour la même couleur").toBe(6)
+    expect(new Set(renvois).size, "deux teintes pour la même couleur").toBe(10)
     for (const renvoi of renvois) {
       expect(renvoi).toMatch(/^var\(--color-ilot-[a-z]+\)$/)
     }
@@ -2315,3 +2681,617 @@ describe("l'aperçu", () => {
     expect(apercu()).toBeNull()
   })
 })
+
+// ── C1 · L'écran des personnages ────────────────────────────────────────────
+//
+// Ce que le serveur ne peut pas tenir : qu'un plan neuf soit là sans qu'on ait
+// rien écrit, qu'une attitude ajoutée paraisse chez chacun, et surtout **que
+// cet écran ne soit pas une grille d'assets** — ni recherche, ni filtres, ni
+// sélection multiple. C'est cette privation qui préserve « une seule grille
+// dans tout le produit » (`docs/PLAN.md` C1), et elle ne se vérifie qu'ici.
+
+describe("l'écran des personnages", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** L'écran ouvert, **et borné à lui**. L'atelier reste monté derrière — c'est
+   *  ce que « il couvre » veut dire —, donc une assertion posée sur tout le
+   *  document trouverait la barre d'outils de la bibliothèque et prouverait le
+   *  contraire de ce qu'elle croit prouver. */
+  const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
+    const titre = await screen.findByRole("heading", { name: "Personnages" })
+    const ecran = within(titre.closest("[data-univers]") as HTMLElement)
+    return { ...double, flux, ecran }
+  }
+
+  // ── « Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne
+  //     n'ait été écrite » (US-116) ────────────────────────────────────────────
+
+  test("le plan du jeu est là au premier lancement, sans qu'on ait rien écrit", async () => {
+    const { ecran } = await ouvrir()
+
+    for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"])
+      expect(ecran.getByLabelText(`Nom de l'attitude ${attitude}`)).toBeTruthy()
+  })
+
+  // ── « La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et
+  //     la grille de la bibliothèque reste la seule grille d'assets du
+  //     produit » ──────────────────────────────────────────────────────────────
+
+  test("l'écran n'offre ni recherche, ni filtre, ni sélection multiple", async () => {
+    const { ecran } = await ouvrir({
+      personnages: [personnage("Le nain"), personnage("La prêtresse")],
+    })
+
+    // La barre d'outils de la bibliothèque est **derrière** cet écran, pas
+    // dedans : il n'y a qu'un endroit dans le produit où l'on cherche.
+    expect(ecran.queryByLabelText("Chercher dans la bibliothèque")).toBeNull()
+    expect(ecran.queryByRole("searchbox")).toBeNull()
+
+    // Et choisir un personnage remplace le précédent : il n'y a pas de
+    // sélection à accumuler.
+    const nain = ecran.getByRole("button", { name: /Le nain/ })
+    const pretresse = ecran.getByRole("button", { name: /La prêtresse/ })
+    fireEvent.click(pretresse)
+    await waitFor(() => expect(pretresse.getAttribute("aria-pressed")).toBe("true"))
+    expect(nain.getAttribute("aria-pressed")).toBe("false")
+
+    // **Les cases à cocher de C2 portent des attitudes, jamais des images**, et
+    // c'est très exactement ce qui garde l'invariant vrai : on ne sélectionne
+    // toujours aucun asset ici. Le jour où l'une d'elles cochera une vignette,
+    // cet essai tombera — et c'est son métier.
+    const coches = ecran.getAllByRole("checkbox") as HTMLInputElement[]
+    expect(coches.length).toBeGreaterThan(0)
+    for (const coche of coches) {
+      expect(coche.getAttribute("aria-label")).toMatch(
+        /^Faire partir .+ avec les autres$/,
+      )
+    }
+  })
+
+  // ── « Un personnage se crée avec un nom et une description ; sa description
+  //     part avec chaque génération de pose, sans être retapée » (US-115) ──────
+
+  test("un personnage se crée d'un nom, et se décrit une fois", async () => {
+    const { fetchDouble, ecran } = await ouvrir()
+
+    fireEvent.change(ecran.getByLabelText("Nom du personnage à créer"), {
+      target: { value: "Le nain" },
+    })
+    fireEvent.click(ecran.getByRole("button", { name: "Ajouter un personnage" }))
+
+    const description = await screen.findByLabelText("Description du personnage")
+    fireEvent.change(description, {
+      target: { value: "un forgeron nain à la barbe tressée" },
+    })
+    fireEvent.blur(description)
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/le-nain" &&
+            (init as RequestInit)?.method === "PUT" &&
+            String((init as RequestInit)?.body).includes("barbe tressée"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « Un personnage rattaché à six poses affiche six cases vides ; une pose
+  //     générée en remplit une, et les cinq autres restent visiblement
+  //     vides » ─────────────────────────────────────────────────────────────────
+
+  test("un personnage qui tient six attitudes montre six cases, et elles sont vides", async () => {
+    const { ecran } = await ouvrir({ personnages: [personnage("Le nain")] })
+
+    const cases = ecran
+      .getAllByRole("button", { name: /Retirer .* de ce personnage/ })
+      .map((bouton) => bouton.getAttribute("aria-label"))
+    expect(cases).toHaveLength(6)
+    // Vides, et **visiblement** vides : la case dit ce qu'elle attend.
+    expect(ecran.getAllByText("0 / 1")).toHaveLength(6)
+  })
+
+  // ── « Une pose s'ajoute […] ; ajouter une pose ajoute une case vide à chaque
+  //     personnage qui porte ce plan, et ne lance AUCUNE génération » (US-118) ──
+
+  test("ajouter une attitude ajoute une case à chaque personnage, sans rien générer", async () => {
+    const { fetchDouble, ecran } = await ouvrir({
+      personnages: [personnage("Le nain"), personnage("La prêtresse")],
+    })
+
+    fireEvent.change(ecran.getByLabelText("Nom de l'attitude à ajouter"), {
+      target: { value: "saut" },
+    })
+    fireEvent.click(ecran.getByRole("button", { name: "Ajouter une attitude" }))
+
+    // La case neuve paraît chez le personnage ouvert…
+    await screen.findByRole("button", { name: "Retirer saut de ce personnage" })
+    // …et chez l'autre, sans qu'il ait été réécrit : c'est le plan qui décide.
+    fireEvent.click(ecran.getByRole("button", { name: /La prêtresse/ }))
+    await screen.findByRole("button", { name: "Retirer saut de ce personnage" })
+
+    // « Ajouter une pose ajoute une case vide, jamais une génération. »
+    expect(
+      fetchDouble.mock.calls.some(([url]) => String(url).startsWith("/api/generations")),
+    ).toBe(false)
+  })
+
+  // ── « Un personnage dit lesquelles de ses poses il tient » (US-117) ─────────
+
+  test("un figurant écarte ce qu'il ne tient pas, et peut le reprendre", async () => {
+    const { ecran } = await ouvrir({ personnages: [personnage("Le marchand")] })
+
+    fireEvent.click(ecran.getByRole("button", { name: "Retirer mort de ce personnage" }))
+
+    await waitFor(() =>
+      expect(
+        ecran.queryByRole("button", { name: "Retirer mort de ce personnage" }),
+      ).toBeNull(),
+    )
+    // Écartée n'est pas perdue : elle reste offerte, sous « pas pour lui ».
+    fireEvent.click(ecran.getByRole("button", { name: "mort" }))
+    await screen.findByRole("button", { name: "Retirer mort de ce personnage" })
+  })
+
+  // ── « Un personnage rattaché à six poses affiche six cases vides ; une pose
+  //     générée en remplit une, et les cinq autres restent visiblement
+  //     vides » (US-119) ────────────────────────────────────────────────────────
+
+  test("une case pleine montre sa vignette, les autres restent visiblement vides", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      personnages: [
+        personnage("Le nain", {
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: p.identifiant === "repos" ? [corps] : [],
+          })),
+        }),
+      ],
+    })
+
+    // Une seule case pleine, et elle le dit deux fois : par sa vignette et par
+    // son compte.
+    expect(ecran.getByAltText("un nain au repos")).toBeTruthy()
+    expect(ecran.getAllByText("0 / 1")).toHaveLength(5)
+    expect(ecran.getAllByText("1 / 1")).toHaveLength(1)
+    // Les cinq vides le disent aussi, plutôt que de ne rien montrer.
+    expect(ecran.getAllByText("rien encore")).toHaveLength(5)
+  })
+
+  // ── « On lance depuis là une pose à la fois » — la matrice arme, l'atelier
+  //     tire (US-120) ─────────────────────────────────────────────────────────
+
+  test("fabriquer une attitude arme l'atelier au lieu de payer", async () => {
+    const { fetchDouble, ecran } = await ouvrir({
+      personnages: [
+        personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
+      ],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
+
+    // L'écran rend la main : on relit et on dépense **dans l'atelier**.
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+    // Le signalement est écrit à la place de l'auteur — c'est ce qu'il ne veut
+    // plus retaper (US-115).
+    const champ = screen.getByPlaceholderText(
+      "Décris ce que tu veux fabriquer.",
+    ) as HTMLTextAreaElement
+    expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche")
+    // Et la case visée se **voit**, à côté du bouton qui paie.
+    expect(screen.getByText("Le nain")).toBeTruthy()
+    expect(screen.getByLabelText("Retirer marche de ce qui part")).toBeTruthy()
+    // Rien n'est parti.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      ),
+    ).toBe(false)
+  })
+
+  test("générer envoie la case visée, puis désarme", async () => {
+    const { fetchDouble, ecran } = await ouvrir({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Générer" }))
+
+    await waitFor(() => {
+      const envoi = fetchDouble.mock.calls.find(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      )
+      expect(envoi).toBeTruthy()
+      const corps = JSON.parse(String((envoi![1] as RequestInit).body))
+      expect(corps.personnage).toBe("le-nain")
+      expect(corps.pose).toBe("repos")
+    })
+
+    // **La cible se désarme dès que l'appel est parti** : la garder enverrait
+    // l'image suivante — un tonneau, un décor — dans la case d'un personnage.
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Retirer repos de ce qui part")).toBeNull(),
+    )
+  })
+
+  // ── C2 · « On coche les poses qu'on veut voir partir ensemble, et elles
+  //     partent en **un seul appel** » (US-128, US-129) ───────────────────────
+
+  test("cocher deux attitudes arme un lot, et le dit avant de payer", async () => {
+    const { fetchDouble, ecran } = await ouvrir({
+      personnages: [
+        personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
+      ],
+    })
+
+    // **Ce qui se coche est une attitude, pas une image.** L'invariant de C1
+    // tient : on ne sélectionne toujours aucun asset dans cet écran.
+    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
+
+    // Le geste n'existe qu'à partir de deux : un bouton sans objet ne se grise
+    // pas, il ne paraît pas.
+    const ensemble = await ecran.findByRole("button", {
+      name: "Fabriquer ensemble ›",
+    })
+    fireEvent.click(ensemble)
+
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+
+    // **Le prompt reçoit le sujet, jamais la grille** : les attitudes partent
+    // case par case dans les consignes de planche, repliées côté serveur.
+    const champ = screen.getByPlaceholderText(
+      "Décris ce que tu veux fabriquer.",
+    ) as HTMLTextAreaElement
+    expect(champ.value).toBe("un forgeron nain à la barbe tressée")
+
+    // Les deux attitudes se lisent à côté du bouton qui paie, et le lot le dit.
+    expect(screen.getByLabelText("Retirer repos de ce qui part")).toBeTruthy()
+    expect(screen.getByLabelText("Retirer marche de ce qui part")).toBeTruthy()
+    expect(screen.getAllByText("2 attitudes, un seul appel").length).toBeGreaterThan(0)
+
+    // Rien n'est parti.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      ),
+    ).toBe(false)
+  })
+
+  test("un lot part en poses, jamais en pose — et le catalogue le sait", async () => {
+    const { fetchDouble, ecran } = await ouvrir({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+    })
+
+    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(ecran.getByLabelText("Faire partir course avec les autres"))
+    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+
+    // **Le catalogue apprend qu'un lot est armé** : le gabarit compte dans le
+    // plafond du modèle, et le défaut devient celui de la planche.
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(([url]) => String(url).includes("cases=2")),
+      ).toBe(true),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Générer" }))
+    await waitFor(() => {
+      const envoi = fetchDouble.mock.calls.find(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      )
+      expect(envoi).toBeTruthy()
+      const corps = JSON.parse(String((envoi![1] as RequestInit).body))
+      expect(corps.poses).toEqual(["repos", "course"])
+      // **Une case ou N, jamais les deux** : un lot ne vise pas *une* case.
+      expect(corps.pose).toBeNull()
+      // **Un lot part en un seul appel**, quoi que le segment ait porté avant :
+      // l'écran envoie ce qu'il affiche, sinon le refus arriverait après le
+      // clic qui paie — ce que le grisé existe pour éviter.
+      expect(corps.variations).toBe(1)
+    })
+  })
+
+  test("une attitude se retire du lot sans le défaire", async () => {
+    const { ecran } = await ouvrir({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+    })
+
+    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
+    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+
+    fireEvent.click(screen.getByLabelText("Retirer marche de ce qui part"))
+
+    // La bande reste, avec ce qui reste dedans — **armer n'est pas s'engager**,
+    // et retirer une attitude n'est pas tout défaire.
+    expect(screen.getByLabelText("Retirer repos de ce qui part")).toBeTruthy()
+    expect(screen.queryByLabelText("Retirer marche de ce qui part")).toBeNull()
+  })
+
+  // ── C2 · « Deux poses trop semblables dans un même lot sont signalées case
+  //     par case ; le lot n'est pas refusé » (US-135) ─────────────────────────
+
+  test("une case sortie d'un lot porte ses mesures, et rien n'est refusé", async () => {
+    const corps = {
+      ...asset("aaaa1111-100", "repos"),
+      lot: {
+        case: 0,
+        cases: 4,
+        grille_px: 4,
+        ressemblance: 1,
+        jumeau: 1,
+        derive: 1,
+      },
+    }
+    const { ecran } = await ouvrir({
+      personnages: [
+        personnage("Le nain", {
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: p.identifiant === "repos" ? [corps] : [],
+          })),
+        }),
+      ],
+    })
+
+    // Le chiffre **et son jumeau** : « 0,98 » tout seul demanderait de chercher
+    // à quoi. Aucun seuil, aucune couleur d'alarme — l'image est là, gardée.
+    expect(ecran.getByText(/ressemblance 1\.00 · case 2/)).toBeTruthy()
+    expect(ecran.getByText(/grille 4 px · dérive 1\.00×/)).toBeTruthy()
+    expect(ecran.getByAltText("repos")).toBeTruthy()
+  })
+
+  test("l'écran dit ce qu'un compte faux coûterait, sans annoncer de risque", async () => {
+    const { ecran } = await ouvrir({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+      couts: { [MODELE.identifiant]: 0.0245 },
+    })
+
+    fireEvent.click(ecran.getByLabelText("Faire partir repos avec les autres"))
+    fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
+    fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+    )
+
+    // **Le coût d'un lot est celui d'un appel, pas de N** — c'est la promesse
+    // de la tranche, et c'est le même chiffre qu'un compte faux ferait repayer.
+    await screen.findByText("un compte faux")
+    expect(screen.getByText("≈ $0,0245 · 2 attitudes")).toBeTruthy()
+    expect(screen.getByText("≈ $0,0245 à repayer")).toBeTruthy()
+
+    // **Aucune probabilité, nulle part.** Le produit dit ce que ça coûterait,
+    // jamais si ça arrivera : il n'en sait rien, et l'écrire serait un nombre
+    // qui ne mesure rien.
+    expect(screen.queryByText(/%/)).toBeNull()
+    expect(screen.queryByText(/risque/i)).toBeNull()
+  })
+
+  test("une case ordinaire n'affiche aucune mesure de lot", async () => {
+    const { ecran } = await ouvrir({
+      personnages: [
+        personnage("Le nain", {
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: p.identifiant === "repos" ? [asset("aaaa1111-0", "repos")] : [],
+          })),
+        }),
+      ],
+    })
+    expect(ecran.queryByText(/ressemblance/)).toBeNull()
+  })
+
+  // ── « Aucun écran de création de personnage avec son propre prompt n'existe :
+  //     le corps se désigne depuis une image née dans l'atelier » (US-122) ──────
+
+  test("le corps se désigne depuis la fiche d'une image de l'atelier", async () => {
+    const images = [asset("aaaa1111-0", "un nain")]
+    const { fetchDouble } = serveurDouble({
+      assets: images,
+      personnages: [personnage("Le nain")],
+    })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    // Deux listes, jamais une seule : l'attitude appartient au personnage.
+    fireEvent.change(await screen.findByLabelText("Personnage de cette image"), {
+      target: { value: "le-nain" },
+    })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/assets/aaaa1111-0/character" &&
+            (init as RequestInit)?.method === "PUT" &&
+            String((init as RequestInit)?.body).includes("le-nain"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("sans personnage, la fiche dit quoi faire au lieu de montrer deux listes vides", async () => {
+    const images = [asset("aaaa1111-0", "un tonneau")]
+    const { fetchDouble } = serveurDouble({ assets: images })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    expect(screen.queryByLabelText("Personnage de cette image")).toBeNull()
+    expect(screen.getByText(/Aucun personnage dans ce jeu/)).toBeTruthy()
+  })
+
+  // ── « Avant de lancer, chaque référence envoyée est listée avec sa
+  //     provenance nommée » ; « la règle de préséance est affichée à l'écran,
+  //     pas déduite » (US-121, US-126, US-127) ──────────────────────────────────
+
+  const REFERENCES: CompteReferences = {
+    total: 2,
+    manuelles: 0,
+    artworks: 1,
+    concepts: 1,
+    famille: "personnages",
+    gabarit: 0,
+    lignes: [
+      {
+        asset: "carte-officielle",
+        role: "style",
+        origine: "carte",
+        provenance: "artwork officiel",
+        ecartee_par: null,
+      },
+      {
+        asset: "carte-concept",
+        role: "style",
+        origine: "carte",
+        provenance: "concept art",
+        ecartee_par: null,
+      },
+    ],
+  }
+
+  test("chaque référence est listée avec sa provenance, et la préséance est écrite", async () => {
+    const { fetchDouble } = serveurDouble({ references: REFERENCES })
+    await monter(fetchDouble)
+
+    expect(await screen.findByText("artwork officiel")).toBeTruthy()
+    expect(screen.getByText("concept art")).toBeTruthy()
+    // La règle **est affichée**, elle ne se déduit pas — c'est le critère.
+    expect(
+      screen.getByText(/la portée la plus étroite l'emporte/),
+    ).toBeTruthy()
+  })
+
+  test("décocher une référence l'écarte pour cette génération seule, et le dit", async () => {
+    const { fetchDouble } = serveurDouble({ references: REFERENCES })
+    await monter(fetchDouble)
+
+    fireEvent.click(await screen.findByLabelText("Écarter artwork officiel"))
+
+    // La ligne **reste** — barrée —, et elle dit la portée retenue.
+    expect(screen.getByText("artwork officiel")).toBeTruthy()
+    expect(screen.getByText(/écartée · cette génération/)).toBeTruthy()
+
+    // Et rien n'a été écrit côté serveur : cette portée-là ne s'écrit nulle part.
+    expect(
+      fetchDouble.mock.calls.some(([url]) => String(url) === "/api/references"),
+    ).toBe(false)
+
+    // Elle part avec l'appel, et avec lui seul.
+    const champ = screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    fireEvent.click(screen.getByRole("button", { name: "Générer" }))
+
+    await waitFor(() => {
+      const envoi = fetchDouble.mock.calls.find(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      )
+      expect(envoi).toBeTruthy()
+      expect(
+        JSON.parse(String((envoi![1] as RequestInit).body)).references_ecartees,
+      ).toEqual(["carte-officielle"])
+    })
+  })
+
+  test("élargir la portée au projet s'écrit, et ne touche pas l'univers", async () => {
+    const { fetchDouble } = serveurDouble({ references: REFERENCES })
+    await monter(fetchDouble)
+
+    fireEvent.click(await screen.findByLabelText("Écarter concept art"))
+    fireEvent.click(screen.getByRole("button", { name: "+ projet" }))
+
+    await waitFor(() => {
+      const envoi = fetchDouble.mock.calls.find(
+        ([url, init]) =>
+          String(url) === "/api/references" && (init as RequestInit)?.method === "PUT",
+      )
+      expect(envoi).toBeTruthy()
+      const corps = JSON.parse(String((envoi![1] as RequestInit).body))
+      expect(corps).toEqual({
+        portee: "projet",
+        ecartees: ["carte-concept"],
+        personnage: null,
+      })
+    })
+
+    // « Décocher ne modifie ni l'univers, ni les artworks officiels. » Aucun
+    // appel n'est parti vers l'un ou vers l'autre.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          (String(url).startsWith("/api/universe") ||
+            String(url).includes("/official")) &&
+          (init as RequestInit)?.method !== undefined,
+      ),
+    ).toBe(false)
+  })
+
+  test("le coût est annoncé, et il dit quand il ne sait pas", async () => {
+    // Jamais appelé : le produit le dit plutôt que d'inventer un tarif.
+    const vierge = serveurDouble({ references: REFERENCES })
+    await monter(vierge.fetchDouble)
+    expect(await screen.findByText("jamais appelé")).toBeTruthy()
+    cleanup()
+
+    // Mesuré : la médiane de ce que ce modèle a réellement facturé.
+    FluxDouble.ouverts = []
+    const mesure = serveurDouble({ references: REFERENCES, couts: { [MODELE.identifiant]: 0.0245 } })
+    await monter(mesure.fetchDouble)
+    expect(await screen.findByText("≈ $0,0245")).toBeTruthy()
+  })
+
+  test("sans case visée, la portée « ce personnage » n'est pas proposée", async () => {
+    const { fetchDouble } = serveurDouble({ references: REFERENCES })
+    await monter(fetchDouble)
+
+    fireEvent.click(await screen.findByLabelText("Écarter artwork officiel"))
+
+    // Elle ne désignerait personne : elle n'est pas offerte, et « + projet »
+    // l'est. L'absence de contrôle **est** la raison, comme la réserve de T8.
+    expect(screen.queryByRole("button", { name: "+ personnage" })).toBeNull()
+    expect(screen.getByRole("button", { name: "+ projet" })).toBeTruthy()
+  })
+})
+
+

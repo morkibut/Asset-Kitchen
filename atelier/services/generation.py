@@ -41,13 +41,14 @@ from atelier.domaine import (
     Resultat,
     Statut,
 )
-from atelier.domaine.generation import AUTEUR, CARTE, EDITION
 from atelier.domaine.erreurs import (
     DemandeRefusee,
     ErreurAtelier,
     GenerationInconnue,
     SansCle,
 )
+from atelier.domaine.generation import AUTEUR, CARTE, EDITION, STYLE
+from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
 from atelier.image import mesurer
 from atelier.image.mesures import extension
@@ -56,6 +57,7 @@ from atelier.domaine.asset import Asset
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
+from atelier.services.pliage import CompteFaux, ServicePliage, consignes, reference
 
 
 # **L'attente d'un modèle jamais encore appelé.** Mesuré le 27 août 2026 sur
@@ -89,6 +91,8 @@ class ServiceGenerations:
         assets: ServiceAssets | None = None,
         bibliotheque: "ServiceBibliotheque | None" = None,
         univers: "ServiceUnivers | None" = None,
+        production: "ServiceProduction | None" = None,
+        pliage: "ServicePliage | None" = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -112,6 +116,15 @@ class ServiceGenerations:
         # mêmes artworks que l'auteur. Une sélection écrite dans la façade
         # serait une sélection qu'une des deux façades oublierait.
         self._univers = univers
+        # **La production, pour une seule question** : cette case existe-t-elle
+        # encore ? La règle lui appartient — un service qui la rejouerait ici en
+        # ferait une seconde vérité, et c'est la panne que tout ce dépôt évite.
+        self._production = production
+        # **Le pliage, pour deux gestes et pas un de plus** : composer ce qui
+        # part quand un lot est demandé, et ranger ce qui revient. Il ne connaît
+        # ni personnage ni pose — c'est ce service-ci qui compose ses cases,
+        # parce que c'est lui qui sait déjà relier un appel à une case (C1).
+        self._pliage = pliage
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -192,6 +205,28 @@ class ServiceGenerations:
         if len(durees) % 2:
             return round(durees[milieu], 2)
         return round((durees[milieu - 1] + durees[milieu]) / 2, 2)
+
+    def cout_attendu(self, identifiant_modele: str) -> float | None:
+        """Ce qu'une image de ce modèle a coûté, en médiane, aux derniers appels.
+
+        « Voir avant de lancer ce qui va partir et **ce que ça va coûter** »
+        (US-121). Le chiffre est une **mesure**, pas un tarif : le produit ne
+        porte aucun prix de catalogue, et le coût réel facturé fait foi partout
+        ailleurs — l'annoncer autrement ici en ferait le seul endroit du produit
+        où l'argent est supposé.
+
+        `None` quand ce modèle n'a jamais rien facturé sur cette machine. Le
+        produit dit alors qu'il ne sait pas, ce qui est vrai et utile : c'est le
+        premier appel qui l'apprend. Même geste que l'attente de la jauge.
+        """
+        recents = self._base.couts_mesures(identifiant_modele)[:FENETRE_MESURES]
+        couts = sorted(recents)
+        if not couts:
+            return None
+        milieu = len(couts) // 2
+        if len(couts) % 2:
+            return round(couts[milieu], 4)
+        return round((couts[milieu - 1] + couts[milieu]) / 2, 4)
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -277,6 +312,10 @@ class ServiceGenerations:
         projet: str | None = None,
         references: Sequence[Reinjection] = (),
         provenance: str = AUTEUR,
+        personnage: str | None = None,
+        pose: str | None = None,
+        poses: Sequence[str] | None = None,
+        references_ecartees: Sequence[str] | None = None,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -309,10 +348,75 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
 
+        # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
+        # personnage disparu ou une pose qu'il ne tient plus doivent se dire
+        # ici : l'écran n'arme que des cases visibles, mais un onglet resté
+        # ouvert pendant qu'on décochait la pose enverrait sinon une image dans
+        # une case que personne ne regarde plus. La règle appartient à la
+        # production, et ce service ne fait que la lui demander.
+        # **Le lot, et les cases qu'il vise** (US-128). Composé ici parce que ce
+        # service est le seul qui sache déjà relier un appel à une case ; le
+        # pliage, lui, ne connaît ni personnage ni pose, et c'est ce qui laissera
+        # C3 le réemployer tel quel. Chaque case est vérifiée avant qu'un centime
+        # parte, exactement comme la case unique de C1.
+        pliage = self._plier(projet, personnage, poses)
+        # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
+        # personnage disparu ou une pose qu'il ne tient plus doivent se dire
+        # ici : l'écran n'arme que des cases visibles, mais un onglet resté
+        # ouvert pendant qu'on décochait la pose enverrait sinon une image dans
+        # une case que personne ne regarde plus. La règle appartient à la
+        # production, et ce service ne fait que la lui demander.
+        #
+        # **Sauf pour un lot**, dont chaque case vient d'être vérifiée juste
+        # au-dessus, une par une : un lot ne vise pas *une* case, il en vise N,
+        # et `pose` reste vide.
+        if pliage is None and personnage and self._production is not None and projet:
+            self._production.viser(projet, personnage, pose or "")
+
+        if pliage is not None and demande.variations > 1:
+            raise DemandeRefusee(
+                "un lot plié part en un seul appel — c'est tout son intérêt, "
+                "et les variations ne s'y appliquent pas"
+            )
+
         demande = self._habiller(demande, projet)
-        reinjectes = _reinjectes(tuple(references) + self._artworks(demande, projet))
+        if pliage is not None:
+            # **Les consignes de grille repliées en queue du prompt**, comme la
+            # bible l'est en tête et pour la raison exacte : `generation.json`
+            # doit porter le prompt tel qu'il est parti. En queue et non en tête,
+            # parce qu'elles parlent du *sujet décrit au-dessus* — les mettre
+            # avant obligerait à le nommer deux fois.
+            demande = replace(
+                demande, prompt="\n\n".join((demande.prompt, consignes(pliage)))
+            )
+        # **Trois sources, dans cet ordre, puis le dédoublonnage** : ce que
+        # l'auteur a posé à la main, ce que le personnage désigne (US-124), et
+        # les artworks de la famille du sujet. L'ordre décide du rôle gardé en
+        # cas de doublon, et le plafond du modèle se compte après.
+        reinjectes = _reinjectes(
+            tuple(references)
+            + self._concepts(projet, personnage)
+            + self._artworks(demande, projet)
+        )
+        # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
+        # elle a un avis, décide **seule** : c'est la plus étroite, et c'est la
+        # règle affichée à l'écran. Sans avis — un agent, une relance —, les
+        # deux portées durables s'appliquent.
+        ecartees = (
+            set(references_ecartees)
+            if references_ecartees is not None
+            else set(self._ecartees_durables(projet, personnage))
+        )
+        reinjectes = tuple(r for r in reinjectes if r.asset not in ecartees)
         demande = replace(
-            demande, references=self._octets_references(reinjectes, projet)
+            demande,
+            references=self._octets_references(reinjectes, projet)
+            # **Le gabarit part comme une référence de plus, et il en est une.**
+            # Il occupe donc une place dans le plafond du modèle et il coûte chez
+            # ceux qui facturent au token (`docs/PIEGES.md`) : le compter à part
+            # aurait fait mentir le grisé au moment précis où l'appel est le plus
+            # cher. **Avant le grisé**, pour la même raison que les réinjections.
+            + self._gabarit(pliage, identifiant_modele),
         )
 
         modele = self._catalogue.modele(identifiant_modele)
@@ -339,6 +443,15 @@ class ServiceGenerations:
             # nulle part ailleurs : c'est le seul instant où l'on sait par quelle
             # façade la demande est entrée. L'asset en héritera à sa naissance.
             provenance=provenance,
+            # **Et pour quelle case** (US-120). Même règle, même instant : l'image
+            # qui en reviendra tombera dans la case sans que personne ait à l'y
+            # ranger, et une relance de cet appel-là visera toujours la même.
+            personnage=personnage or None,
+            pose=pose or None,
+            # **Et pour combien de cases** (US-128). Une génération ordinaire n'en
+            # porte pas, et c'est le cas courant : `pliage` vaut `None`, l'image
+            # qui revient naît comme depuis T1.
+            pliage=pliage,
         )
         self._sauver(generation)
         return generation, modele, False
@@ -352,6 +465,10 @@ class ServiceGenerations:
         projet: str | None = None,
         references: Sequence[Reinjection] = (),
         provenance: str = AUTEUR,
+        personnage: str | None = None,
+        pose: str | None = None,
+        poses: Sequence[str] | None = None,
+        references_ecartees: Sequence[str] | None = None,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
@@ -361,6 +478,10 @@ class ServiceGenerations:
             projet=projet,
             references=references,
             provenance=provenance,
+            personnage=personnage,
+            pose=pose,
+            poses=poses,
+            references_ecartees=references_ecartees,
         )
         if deja or modele is None:
             return generation
@@ -507,6 +628,34 @@ class ServiceGenerations:
         emplacement.statut = Statut.REUSSIE
         self._sauver(generation)
 
+        # **Un lot se déplie ici, et la planche ne devient pas un asset**
+        # (US-130). Ce qui sort du produit, ce sont les images séparées : une
+        # feuille assemblée qui entrerait en bibliothèque serait exportable, et
+        # « aucune feuille assemblée n'est livrable » cesserait d'être vrai par
+        # construction pour devenir un filtre à tenir.
+        #
+        # **L'arrivée est enregistrée avant le dépliage**, jamais après : un lot
+        # payant écrit au fur et à mesure (`docs/PIEGES.md`), et c'est ce qui
+        # rend la reprise possible — une coupure pendant le dépliage laisse sur
+        # le disque une planche payée et reçue, que le démarrage rangera sans
+        # rien repayer (US-132). Le prix est un second message sur le flux quand
+        # le compte tombe faux, et il est mérité.
+        if generation.pliage is not None:
+            if self._pliage is None:  # pragma: no cover — l'atelier le compose
+                return
+            try:
+                self._pliage.deplier(generation, emplacement)
+            except CompteFaux as refus:
+                # **Le seul refus automatique du produit** : rien n'est entré, le
+                # coût reste au journal (US-24), et l'emplacement redevient
+                # relançable d'un geste — c'est la relance de T1, telle quelle,
+                # et le lot repart au prix plein (US-131).
+                generation.pliage.refus = refus.raison
+                emplacement.statut = Statut.ECHOUEE
+                emplacement.raison = refus.raison
+                self._sauver(generation)
+            return
+
         # Après l'enregistrement, jamais avant : l'asset renvoie à un fichier et
         # à une génération qui doivent déjà être sur le disque quand il paraît.
         if self._assets is not None:
@@ -543,9 +692,128 @@ class ServiceGenerations:
             proportions=demande.get("proportions", "1:1"),
             resolution=demande.get("resolution"),
             variations=1,
-            references=self._octets_references(generation.references, generation.projet),
+            references=self._octets_references(generation.references, generation.projet)
+            # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
+            # asset ni une carte : il n'a pas d'identifiant, il n'est nulle part
+            # sur le disque, et il se refabrique à l'identique depuis la
+            # géométrie du pliage. L'appel et la relance envoient donc exactement
+            # la même chose, ce qui est la promesse de cette méthode.
+            + self._gabarit(generation.pliage, generation.modele),
             options=demande.get("options", {}),
         )
+
+    # ── Les jeux de réglages nommés ──────────────────────────────────────────
+
+    def reglages(self) -> dict[str, Any]:
+        """Les jeux de réglages enregistrés (US-134).
+
+        « Enregistrer sous un nom ce qui part en référence et les réglages d'une
+        génération, afin de rejouer la même recette sur un autre personnage sans
+        la reconstituer. » C'est le **quatrième rôle** d'une réinjection, déclaré
+        en T1 et resté vide depuis : *jeu de réglages* — le seul des quatre qui
+        n'envoie aucune image, et qui repeuple le générateur au lieu de partir
+        avec l'appel (`atelier/domaine/generation.py` § Les rôles).
+        """
+        return self._fichiers.lire_prereglages()
+
+    def nommer_reglages(self, nom: str, contenu: dict[str, Any]) -> dict[str, Any]:
+        """Ce qui part et comment, sous un nom — **et rien de qui**.
+
+        Le personnage, ses poses et le prompt n'y sont pas, et c'est toute la
+        promesse : *se rappeler d'un geste sur un autre personnage*. Un jeu de
+        réglages qui porterait le personnage serait un jeu de réglages qu'on ne
+        pourrait rejouer que sur lui.
+
+        **Rien n'est validé ici**, et c'est délibéré : un modèle qui a disparu
+        du catalogue, un asset supprimé depuis, une option qu'un modèle ne
+        déclare plus — tout cela se grise **au moment de générer**, avec sa
+        raison, exactement comme si l'auteur venait de le choisir à la main. Un
+        refus à l'enregistrement aurait fait un second endroit qui juge une
+        demande, et il aurait fini par ne plus dire la même chose que le premier.
+        """
+        propre = nom.strip()
+        if not propre:
+            raise DemandeRefusee("un jeu de réglages a besoin d'un nom")
+        enregistres = self._fichiers.lire_prereglages()
+        enregistres[propre] = {
+            "modele": contenu.get("modele", ""),
+            "proportions": contenu.get("proportions", "1:1"),
+            "resolution": contenu.get("resolution"),
+            "options": dict(contenu.get("options") or {}),
+            "echelle": contenu.get("echelle", ""),
+            "references": [
+                {"asset": r.get("asset", ""), "role": r.get("role", "reference")}
+                for r in (contenu.get("references") or [])
+                if r.get("asset")
+            ],
+            "references_ecartees": list(contenu.get("references_ecartees") or []),
+        }
+        self._fichiers.ecrire_prereglages(enregistres)
+        return self.reglages()
+
+    def oublier_reglages(self, nom: str) -> dict[str, Any]:
+        enregistres = self._fichiers.lire_prereglages()
+        enregistres.pop(nom, None)
+        self._fichiers.ecrire_prereglages(enregistres)
+        return self.reglages()
+
+    # ── Le lot ───────────────────────────────────────────────────────────────
+
+    def _plier(
+        self, projet: str | None, personnage: str | None, poses: Sequence[str] | None
+    ) -> Pliage | None:
+        """Les cases d'un lot, **vérifiées avant qu'un centime parte** (US-128).
+
+        Rien en dessous de deux : une seule pose n'est pas un lot, c'est la
+        génération de C1, et la plier ferait payer un gabarit et une consigne de
+        grille pour une image que le produit sait déjà demander. Le seuil n'est
+        pas un plafond — **il n'y en a pas** : la taille du lot est le choix de
+        l'auteur, le produit annonce ce que ça coûte et ce qu'un compte faux
+        coûterait (US-129).
+
+        Chaque case passe par `viser`, comme la case unique de C1 et pour la
+        raison exacte : l'écran ne coche que des poses visibles, mais un onglet
+        resté ouvert pendant qu'on en décochait une enverrait sinon une image
+        dans une case que personne ne regarde plus. **Une seule refuse, le lot
+        entier ne part pas** — c'est mieux que de payer neuf images pour en
+        ranger huit.
+
+        Le texte d'une case est le **nom** de la pose, pas son identifiant : il
+        part dans le prompt, et un repère de fichier n'a jamais décrit une
+        attitude à un modèle.
+        """
+        if not poses or len(poses) < 2:
+            return None
+        if not personnage or self._production is None or not projet:
+            raise DemandeRefusee(
+                "un lot de poses se lance depuis un personnage — il n'y a pas "
+                "de cases à remplir sans lui"
+            )
+        cases = []
+        for pose in dict.fromkeys(poses):
+            _, visee = self._production.viser(projet, personnage, pose)
+            cases.append(CasePliee(texte=visee.nom, pose=visee.identifiant))
+        return Pliage(cases=tuple(cases))
+
+    def _gabarit(
+        self, pliage: Pliage | None, identifiant_modele: str
+    ) -> tuple[bytes, ...]:
+        """Le gabarit de cases vides, quand ce modèle-là sait le lire.
+
+        **Mesuré, pas supposé** : compte exact 11 fois sur 12 avec gabarit contre
+        9 sur 12 sans (`essais/essai_grille.py`, 28 août 2026). C'est ce qui en
+        fait une pièce du produit et non un accessoire d'essai.
+
+        Un modèle qui n'accepte aucune référence part **sans** — le prompt seul
+        décrit la grille, et c'est le bras « libre » de l'essai, qui marche moins
+        bien mais qui marche. Il n'est pas grisé pour autant : le grisé dit
+        *cette chose est indisponible*, et celle-ci ne l'est pas — le modèle peut
+        honorer la demande, un peu moins bien.
+        """
+        if pliage is None:
+            return ()
+        modele = self._catalogue.modele(identifiant_modele)
+        return (reference(pliage),) if modele.references_max > 0 else ()
 
     # ── L'univers du projet ──────────────────────────────────────────────────
 
@@ -579,27 +847,123 @@ class ServiceGenerations:
         return self._univers.references(projet, echelle.famille if echelle else None)
 
     def compter_references(
-        self, projet: str | None, echelle: str, manuelles: Sequence[Reinjection] = ()
+        self,
+        projet: str | None,
+        echelle: str,
+        manuelles: Sequence[Reinjection] = (),
+        personnage: str | None = None,
+        cases: int = 0,
     ) -> dict[str, Any]:
-        """Combien d'images partiront, et d'où elles viennent (US-52).
+        """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
         **Le compte vient du serveur, comme le grisé.** L'écran tient les
         réinjections que l'auteur a posées, mais pas les artworks — c'est
-        l'application qui les choisit —, et surtout pas le dédoublonnage entre
-        les deux. Deux comptes calculés à deux endroits finiraient par se
-        contredire, et celui qui compte est celui qui part.
+        l'application qui les choisit —, ni les concept arts du personnage, ni
+        le dédoublonnage entre les trois. Deux comptes calculés à deux endroits
+        finiraient par se contredire, et celui qui compte est celui qui part.
+
+        C1 y ajoute la **liste**, parce qu'annoncer un coût sans montrer ce qui
+        le fait n'est utile qu'à moitié : chaque ligne dit d'où elle vient, et
+        si quelque chose l'écarte, à quelle portée. Le total, lui, ne compte que
+        ce qui part vraiment — c'est lui qui décide du grisé du modèle.
         """
-        artworks = self._artworks(Demande(prompt="x", echelle=echelle), projet)
-        toutes = _reinjectes(tuple(manuelles) + artworks)
+        demande = Demande(prompt="x", echelle=echelle)
+        artworks = self._artworks(demande, projet)
+        concepts = self._concepts(projet, personnage)
+        ecartees = (
+            self._production.ecartees(projet, personnage)
+            if self._production is not None and projet
+            else {}
+        )
+
+        toutes = _reinjectes(tuple(manuelles) + concepts + artworks)
         echelle_lue = (
             self._univers.echelle(projet, echelle) if self._univers and echelle else None
         )
+        designes = set(self._concepts_identifiants(projet, personnage))
+
+        lignes = [
+            {
+                "asset": r.asset,
+                "role": r.role,
+                "origine": r.origine,
+                # **La provenance, nommée** (US-127) : « comprendre pourquoi elle
+                # part avant de décider de la retirer ». Trois sources, trois
+                # phrases, et jamais un mot que l'écran devrait interpréter.
+                "provenance": (
+                    "concept art"
+                    if r.origine == CARTE and r.asset in designes
+                    else "artwork officiel"
+                    if r.origine == CARTE
+                    else "réinjection"
+                ),
+                # La portée qui l'écarte, ou rien. C'est **la portée retenue**,
+                # celle qui décide — pas la liste de celles qui ont un avis.
+                "ecartee_par": ecartees.get(r.asset),
+            }
+            for r in toutes
+        ]
+        retenues = [ligne for ligne in lignes if not ligne["ecartee_par"]]
+
+        # **Le gabarit compte dans le total, et il a sa propre ligne.**
+        # C'est une image qui part vraiment : elle occupe une place dans le
+        # plafond du modèle et elle coûte chez ceux qui facturent au token
+        # (`docs/PIEGES.md`). L'oublier ferait mentir le grisé au moment précis
+        # où l'appel est le plus cher.
+        #
+        # **Il n'entre pas dans `lignes`**, et c'est délibéré : cette liste-là
+        # est celle des images que l'auteur peut décocher (US-126), et le
+        # gabarit n'en est pas une — le décocher reviendrait à demander une
+        # planche sans dire à quoi elle ressemble. Une ligne qu'on ne peut pas
+        # défaire dans une liste de cases à cocher serait une case grisée dont
+        # personne ne comprendrait la raison.
+        gabarit = 1 if cases >= 2 else 0
+
         return {
-            "total": len(toutes),
-            "manuelles": sum(1 for r in toutes if r.origine != CARTE),
-            "artworks": sum(1 for r in toutes if r.origine == CARTE),
+            # Ce qui part vraiment — donc ce qui décide du grisé.
+            "total": len(retenues) + gabarit,
+            "gabarit": gabarit,
+            "manuelles": sum(1 for l in retenues if l["origine"] != CARTE),
+            "artworks": sum(
+                1 for l in retenues if l["provenance"] == "artwork officiel"
+            ),
+            "concepts": sum(1 for l in retenues if l["provenance"] == "concept art"),
             "famille": echelle_lue.famille if echelle_lue else None,
+            # Les écartées y sont **aussi**, et elles le disent : une ligne qui
+            # disparaîtrait ne laisserait aucun moyen de la remettre.
+            "lignes": lignes,
         }
+
+    def _ecartees_durables(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """Ce que le projet et le personnage ont écarté — les deux portées qui
+        s'écrivent. Celle de la génération ne s'écrit nulle part : elle vit dans
+        l'onglet et part avec l'appel."""
+        if self._production is None or not projet:
+            return ()
+        return tuple(self._production.ecartees(projet, personnage))
+
+    def _concepts_identifiants(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        if self._production is None or not projet:
+            return ()
+        return self._production.concept_arts(projet, personnage)
+
+    def _concepts(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[Reinjection, ...]:
+        """Les concept arts du personnage visé (US-124).
+
+        En rôle `style`, comme les artworks : ils **inspirent**, ils
+        n'engendrent pas — une carte en source d'édition donnerait une filiation
+        vers un objet que la bibliothèque ne connaît pas.
+        """
+        return tuple(
+            Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
+            for identifiant in self._concepts_identifiants(projet, personnage)
+        )
 
     def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:
         """Les images réinjectées, relues à la source (US-12).
@@ -649,7 +1013,7 @@ class ServiceGenerations:
 
     def _sauver(self, generation: Generation) -> None:
         """Au fil de l'eau, jamais à la fin — sinon un plantage perd ce qui est
-        déjà payé (`AGENTS.md` § Pièges connus).
+        déjà payé (`docs/PIEGES.md`).
 
         **Écrire d'abord, annoncer ensuite.** Ce qui est annoncé est donc
         toujours déjà sur le disque : un onglet qui reçoit l'événement puis

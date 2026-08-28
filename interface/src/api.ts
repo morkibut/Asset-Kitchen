@@ -167,6 +167,33 @@ export type Asset = {
    *  l'agent ne la fait pas devenir celle de l'auteur, et une découpe appartient
    *  à qui a demandé la planche. */
   provenance: "auteur" | "agent"
+  /** **Le modèle qui a rendu cette image** (US-123). L'identifiant exact du
+   *  fournisseur — c'est lui qu'on redemande —, `import` pour une image
+   *  importée, et le vide pour une image dont la génération a disparu du
+   *  disque. Une information de provenance au même titre que le prompt et le
+   *  coût : elle se lit, elle ne se règle pas. */
+  modele: string
+  /** **De quel personnage, et de quelle pose** (C1). C'est l'image qui dit sa
+   *  case, jamais le personnage qui tient la liste de ses images : la matrice
+   *  se calcule là-dessus, et il n'existe nulle part un état à remettre
+   *  d'accord avec le disque. Vides pour la plupart des images — la
+   *  bibliothèque est faite d'images qui n'appartiennent à personne. */
+  personnage: string | null
+  pose: string | null
+  /** **Ce que le lot a mesuré sur cette case-là** (C2, US-135). Vide pour toute
+   *  image qui n'est pas sortie d'une planche pliée — c'est-à-dire pour
+   *  l'immense majorité d'entre elles.
+   *
+   *  Une copie prise à la naissance, comme le coût et le modèle : la ligne de
+   *  la matrice les porte, et aller chercher la génération pour trois nombres
+   *  serait un aller-retour par case affichée.
+   *
+   *  **Elles n'empêchent rien.** Le compte d'images est le seul refus
+   *  automatique du produit ; celles-ci s'affichent et laissent décider. */
+  lot: MesuresLot | null
+  /** Posé à l'instant où le personnage part, comme `parent_supprime` : jamais
+   *  de cascade, l'image reste, et elle sait seulement de qui elle n'est plus. */
+  personnage_supprime: boolean
   /** Toucher une recette à la main épingle l'asset. Relu en T4, quand un
    *  changement de palette de projet devra sauter ce qui a été réglé ici. */
   epingle: boolean
@@ -188,6 +215,97 @@ export type Asset = {
    *  et sans elle le navigateur resservirait celui d'avant. Jamais recalculée
    *  ici — deux empreintes calculées à deux endroits finiraient par diverger. */
   empreinte: string
+}
+
+/** Ce qu'un lot plié a mesuré sur une de ses cases (C2, US-135).
+ *
+ *  Deux nombres, et pas un de plus. **Aucun seuil** : le produit montre le
+ *  chiffre et son jumeau, et l'auteur décide — un seuil serait un nombre
+ *  inventé sur un corpus de vingt-quatre planches. Pour mémoire, sur ce
+ *  corpus : les deux planches qui répétaient une pose ressortaient à 0,999 et
+ *  1,000, les vingt-deux autres plafonnaient à 0,897. */
+export type MesuresLot = {
+  /** Sa place dans la planche, en ordre de lecture. */
+  case: number
+  cases: number
+  /** Le pas de pixel sur lequel le modèle a peint cette case. */
+  grille_px: number
+  /** Le plus fort recouvrement de silhouette avec une autre case du lot. */
+  ressemblance: number
+  /** Laquelle, ou `-1`. Les jumelles se désignent l'une l'autre. */
+  jumeau: number
+  /** La dérive de grille du lot entier — le rapport du plus grand pas au plus
+   *  petit. Un fait sur le lot, recopié sur chaque case qui doit le dire. */
+  derive: number
+}
+
+// ── Le plan de poses et les personnages ─────────────────────────────────────
+//
+// C1. Un jeu porte **une** liste d'attitudes — repos, marche, mort — et chacun
+// de ses personnages coche celles qu'il tient. Ce ne sont pas des images : ce
+// sont les cases à remplir, et c'est ce qui permet de voir ce qui manque sans
+// tenir la liste dans sa tête.
+
+export type Pose = {
+  identifiant: string
+  nom: string
+  /** Combien d'images cette pose demande — une pour la plupart, quatre ou huit
+   *  pour un cycle. C'est l'auteur qui le décide, jamais le produit. */
+  images: number
+}
+
+/** Une case de la matrice : ce qu'une attitude demande, et ce qui la remplit.
+ *
+ *  **Rien de tout ceci n'est enregistré côté serveur** : une case est pleine
+ *  parce qu'une image la porte (`asset.personnage` et `asset.pose`), et non
+ *  parce qu'une liste de cases pleines serait tenue quelque part. Supprimer une
+ *  image vide sa case toute seule.
+ *
+ *  Elle porte l'**asset entier**, pas un résumé : l'adresse d'une image d'asset
+ *  n'a qu'un seul endroit où elle s'écrit dans tout le produit, et un objet à
+ *  moitié aurait forcé un second calcul à tenir d'accord avec le premier. */
+export type Case = {
+  pose: string
+  /** Combien d'images cette attitude demande. La case est faite quand elle en a
+   *  autant — le compte se lit, il ne refuse rien. */
+  demandees: number
+  images: Asset[]
+}
+
+export type Personnage = {
+  identifiant: string
+  projet: string
+  nom: string
+  /** Elle part avec chaque génération de pose, et ne se retape jamais (US-115). */
+  description: string
+  /** Ce que le **fichier** garde : les poses du plan que ce personnage ne tient
+   *  pas. L'écran, lui, coche les tenues — c'est le complément qui est rangé,
+   *  pour qu'une pose ajoutée au plan paraisse chez tout le monde sans que rien
+   *  ne soit réécrit, et donc sans qu'aucun personnage soit annoncé.
+   *
+   *  Les tenues se déduisent d'ici et du plan (`posesTenues`), et **le serveur
+   *  ne les envoie pas** : une liste envoyée avec le personnage serait périmée
+   *  à l'ajout de pose suivant. */
+  ecartees: string[]
+  /** Des cartes du tableau d'inspiration, désignées (US-124). Elles restent où
+   *  elles sont — aucune copie, aucun second rangement. */
+  concept_arts: string[]
+  /** Ce qui ne doit plus partir avec ce personnage-là (US-126) — la portée du
+   *  milieu, entre la génération et le projet. */
+  references_ecartees: string[]
+  cree_le: number
+  /** Ses cases, dans l'ordre du plan et **calculées par le serveur**. L'écran ne
+   *  saurait pas les calculer : il ne tient qu'une page de la grille, filtrée
+   *  sur autre chose, et compterait faux dès la première image hors de vue. */
+  cases: Case[]
+}
+
+/** Le plan et les personnages d'un projet, **en un seul aller-retour** : une
+ *  colonne de cases n'existe que par le plan qui la nomme. */
+export type Production = {
+  projet: string
+  plan: Pose[]
+  personnages: Personnage[]
 }
 
 // ── Le tableau d'inspiration et l'univers ───────────────────────────────────
@@ -215,23 +333,35 @@ export const NOM_FAMILLE: Record<Famille, string> = {
   tous: "tous",
 }
 
-/** Les six, et il n'y en a pas une septième — `docs/DESIGN.md` § Les teintes
+/** Les dix, et il n'y en a pas une onzième — `docs/DESIGN.md` § Les teintes
  *  d'îlot. Le vide **est** une valeur : un îlot sans teinte porte celle du
- *  châssis, ce qui est exactement ce que ce document dit qu'il est. */
+ *  châssis, ce qui est exactement ce que ce document dit qu'il est.
+ *
+ *  **Six jusqu'au 28 août 2026**, dix depuis : les quatre neuves subdivisent les
+ *  arcs déjà occupés, les deux arcs des sémantiques restant fermés. L'ordre est
+ *  celui de la roue, pas celui de l'alphabet. */
 export type Teinte =
   | ""
   | "ardoise"
+  | "pervenche"
   | "iris"
+  | "lavande"
   | "prune"
+  | "mauve"
   | "bruyere"
+  | "mousse"
   | "lichen"
   | "paille"
 
 export const TEINTES = [
   "ardoise",
+  "pervenche",
   "iris",
+  "lavande",
   "prune",
+  "mauve",
   "bruyere",
+  "mousse",
   "lichen",
   "paille",
 ] as const satisfies readonly Exclude<Teinte, "">[]
@@ -250,9 +380,13 @@ export const TEINTES = [
  *  dans aucune feuille. */
 export const COULEUR_TEINTE: Record<Exclude<Teinte, "">, string> = {
   ardoise: "var(--color-ilot-ardoise)",
+  pervenche: "var(--color-ilot-pervenche)",
   iris: "var(--color-ilot-iris)",
+  lavande: "var(--color-ilot-lavande)",
   prune: "var(--color-ilot-prune)",
+  mauve: "var(--color-ilot-mauve)",
   bruyere: "var(--color-ilot-bruyere)",
+  mousse: "var(--color-ilot-mousse)",
   lichen: "var(--color-ilot-lichen)",
   paille: "var(--color-ilot-paille)",
 }
@@ -261,9 +395,13 @@ export const COULEUR_TEINTE: Record<Exclude<Teinte, "">, string> = {
  *  l'écran — la règle du produit depuis les familles. */
 export const NOM_TEINTE: Record<Exclude<Teinte, "">, string> = {
   ardoise: "ardoise",
+  pervenche: "pervenche",
   iris: "iris",
+  lavande: "lavande",
   prune: "prune",
+  mauve: "mauve",
   bruyere: "bruyère",
+  mousse: "mousse",
   lichen: "lichen",
   paille: "paille",
 }
@@ -394,12 +532,43 @@ export const UNIVERS_VIDE: Univers = {
  *  posées, mais pas les artworks — c'est l'application qui les choisit — ni le
  *  dédoublonnage entre les deux. Deux comptes calculés à deux endroits
  *  finiraient par se contredire, et celui qui compte est celui qui part. */
+/** Une image qui partira — ou qui ne partira pas, et qui dit alors ce qui
+ *  l'écarte (US-126, US-127).
+ *
+ *  **La ligne écartée reste dans la liste**, et c'est la décision : une ligne
+ *  qui disparaîtrait ne laisserait aucun moyen de la remettre. */
+export type LigneReference = {
+  asset: string
+  role: Role
+  /** `asset` — une image de la bibliothèque ; `carte` — une image du tableau. */
+  origine: "asset" | "carte"
+  /** D'où elle vient, **nommée par le serveur** : « comprendre pourquoi elle
+   *  part avant de décider de la retirer ». L'écran affiche la phrase qu'il
+   *  reçoit, il ne la reconstitue pas. */
+  provenance: "artwork officiel" | "concept art" | "réinjection"
+  /** La portée **durable** qui l'écarte, ou rien. Celle de la génération ne
+   *  s'écrit nulle part : elle vit dans l'onglet et part avec l'appel. */
+  ecartee_par: "projet" | "personnage" | null
+}
+
 export type CompteReferences = {
+  /** Ce qui part **vraiment** — donc ce qui décide du grisé du modèle. Les
+   *  écartées n'y sont pas comptées. */
   total: number
   manuelles: number
   artworks: number
+  concepts: number
   famille: Famille | null
+  /** **Le gabarit du lot, quand il y en a un** (C2). Une image qui part
+   *  vraiment : elle occupe une place dans le plafond du modèle et elle coûte
+   *  chez ceux qui facturent au token. Elle n'est **pas** dans `lignes` —
+   *  celle-ci est faite d'images qu'on peut décocher, et décocher le gabarit
+   *  reviendrait à demander une planche sans dire à quoi elle ressemble. */
+  gabarit: number
+  lignes: LigneReference[]
 }
+
+export type PorteeDurable = "personnage" | "projet"
 
 // ── La bibliothèque ─────────────────────────────────────────────────────────
 
@@ -560,6 +729,11 @@ export type EtatCatalogue = {
   defaut: { modele: string | null; options: Record<string, string> }
   /** Ce qui partira vraiment, artworks compris et dédoublonné (US-52). */
   references: CompteReferences
+  /** Ce qu'une image a coûté chez chaque modèle, en médiane des derniers appels
+   *  réussis **sur cette machine** (US-121). Une mesure, jamais un tarif : le
+   *  produit ne porte aucun prix de catalogue, et un modèle jamais appelé n'y
+   *  figure pas — il dit qu'il ne sait pas plutôt que d'inventer. */
+  couts: Record<string, number>
   modeles: Modele[]
 }
 
@@ -638,10 +812,20 @@ export const api = {
    *  ajoute les artworks qui partiront, dédoublonne avec les réinjections
    *  posées à la main, et rend le total — c'est ce total-là qui décide du
    *  grisé, et c'est lui qu'on affiche. */
-  modeles: (proportions: string, references = 0, echelle = "") =>
+  modeles: (
+    proportions: string,
+    references = 0,
+    echelle = "",
+    personnage = "",
+    /** Combien de cases le lot armé demande, ou zéro. Il décide de deux choses
+     *  au serveur : le gabarit compte dans le plafond du modèle, et le défaut
+     *  devient le modèle de planche du projet plutôt que celui de la famille. */
+    cases = 0,
+  ) =>
     appeler<EtatCatalogue>(
       `/models?proportions=${encodeURIComponent(proportions)}` +
-        `&references=${references}&echelle=${encodeURIComponent(echelle)}`,
+        `&references=${references}&echelle=${encodeURIComponent(echelle)}` +
+        `&personnage=${encodeURIComponent(personnage)}&cases=${cases}`,
     ),
 
   rafraichirCatalogue: () =>
@@ -670,6 +854,18 @@ export const api = {
     prompt: string
     prompt_negatif: string
     proportions: string
+    /** La case que cet appel vise (US-120). Absente pour une génération
+     *  ordinaire, qui est le cas courant. */
+    personnage?: string | null
+    pose?: string | null
+    /** **Les cases d'un lot plié** (C2, US-128). Deux poses ou plus, et l'appel
+     *  part en une seule planche que l'atelier dépliera lui-même. La même route
+     *  que tout le reste : il n'existe qu'un seul endroit d'où l'on paie. */
+    poses?: string[] | null
+    /** Ce que **cette génération-ci** n'envoie pas (US-126). Absent, les deux
+     *  portées durables s'appliquent ; présent, il décide seul — c'est la
+     *  portée la plus étroite. */
+    references_ecartees?: string[] | null
     variations: number
     options: Record<string, unknown>
     identifiant: string
@@ -980,6 +1176,104 @@ export const api = {
       body: JSON.stringify({ groupe, teinte }),
     }),
 
+  /** Déplacer un îlot entier — **un seul appel, parce que c'est un seul geste**.
+   *
+   *  Un îlot n'a pas de position à lui : il *est* le groupe, et le déplacer,
+   *  c'est déplacer ses cartes. Un appel par carte rendrait donc possible l'état
+   *  où sept ont bougé et cinq sont restées — un îlot déchiré en deux moitiés
+   *  que personne n'a demandé. C'est la règle de T8, « deux appels pour un geste
+   *  sont un état de trop », appliquée à un geste qui en aurait demandé douze.
+   *
+   *  **Les places sont absolues, et toutes.** Absolues parce qu'une carte groupée
+   *  avant T8 n'a pas de position écrite — un écart n'aurait rien eu à quoi
+   *  s'ajouter pour elle. Toutes parce que le serveur refuse un îlot déplacé à
+   *  moitié, et il a raison de le refuser. */
+  deplacerIlot: (groupe: string, places: Record<string, [number, number]>) =>
+    appeler<{ projet: string; cartes: Carte[] }>("/board/groups/move", {
+      method: "PUT",
+      body: JSON.stringify({ groupe, places }),
+    }),
+
+  // ── Le plan de poses et les personnages ───────────────────────────────────
+
+  production: () => appeler<Production>("/characters"),
+
+  creerPersonnage: (nom: string, description = "") =>
+    appeler<{ personnage: Personnage }>("/characters", {
+      method: "POST",
+      body: JSON.stringify({ nom, description }),
+    }),
+
+  /** **En un seul geste** : les champs se remplissent ensemble à l'écran, et un
+   *  appel par champ ferait autant d'allers-retours qu'il y a de cases. Ce
+   *  qu'on n'envoie pas ne bouge pas. `poses` part en **positif** — ce que
+   *  l'auteur a coché. */
+  reglerPersonnage: (
+    personnage: string,
+    champs: {
+      nom?: string
+      description?: string
+      poses?: string[]
+      concept_arts?: string[]
+    },
+  ) =>
+    appeler<{ personnage: Personnage }>(`/characters/${personnage}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,
+   *  les deux vides ensemble. Le corps naît dans l'atelier et nulle part
+   *  ailleurs : ce geste ne fabrique rien, il dit seulement où l'image va. */
+  designer: (asset: string, personnage: string | null, pose: string | null) =>
+    appeler<Asset>(`/assets/${asset}/character`, {
+      method: "PUT",
+      body: JSON.stringify({ personnage, pose }),
+    }),
+
+  /** Le personnage part, **ses images restent** — chacune marquée « personnage
+   *  supprimé ». La réponse dit combien. */
+  supprimerPersonnage: (personnage: string) =>
+    appeler<{ personnage: Personnage; images: number }>(
+      `/characters/${personnage}`,
+      { method: "DELETE" },
+    ),
+
+  /** Les trois gestes du plan rendent **le plan entier** avec la pose touchée
+   *  — la même forme que l'annonce du flux. L'écran fond alors ce qui lui
+   *  arrive par les deux chemins avec le même code, et n'a jamais à deviner si
+   *  une pose vient d'être ajoutée, renommée ou retirée. */
+  ajouterPose: (nom: string, images = 1) =>
+    appeler<{ pose: Pose; plan: Pose[] }>("/characters/poses", {
+      method: "POST",
+      body: JSON.stringify({ nom, images }),
+    }),
+
+  /** Renommer, ou changer ce que la pose demande. **L'identifiant ne bouge
+   *  pas** : les images déjà faites le portent. */
+  reglerPose: (pose: string, champs: { nom?: string; images?: number }) =>
+    appeler<{ pose: Pose; plan: Pose[] }>(`/characters/poses/${pose}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Poser ce qui ne partira plus, à l'une des **deux portées durables**
+   *  (US-126). La troisième — cette génération — ne passe pas par ici : elle ne
+   *  s'écrit nulle part et part avec l'appel.
+   *
+   *  La liste est **entière**, jamais un ajout : deux onglets qui cocheraient
+   *  et décocheraient la même ligne par deltas ne convergeraient jamais. */
+  ecarter: (portee: PorteeDurable, ecartees: string[], personnage?: string) =>
+    appeler<{ portee: PorteeDurable; ecartees: string[] }>("/references", {
+      method: "PUT",
+      body: JSON.stringify({ portee, ecartees, personnage: personnage ?? null }),
+    }),
+
+  retirerPose: (pose: string) =>
+    appeler<{ pose: Pose; plan: Pose[] }>(`/characters/poses/${pose}`, {
+      method: "DELETE",
+    }),
+
   // ── L'univers du projet ───────────────────────────────────────────────────
 
   univers: () =>
@@ -1143,6 +1437,20 @@ export type Ecoute = {
     realignes: number
     conserves: number
   }) => void
+  /** Un personnage a été créé, décrit, coché — ou il est parti, et il porte
+   *  alors `supprime`. La charge est le personnage entier, comme pour une carte.
+   *  **Son propre genre, jamais un champ de plus sur `univers`** : un message
+   *  qui gagne un champ gagne aussi des lecteurs qui ne le concernent pas, et
+   *  `univers` fait redemander l'état *et* le catalogue depuis T4. */
+  personnage: (personnage: Personnage & { supprime?: boolean }) => void
+  /** Le plan de poses du projet a changé — une pose ajoutée, renommée, retirée.
+   *  La charge porte le plan **entier** : il est court, et un message par pose
+   *  ferait un ordre à reconstituer à l'arrivée. */
+  plan: (charge: { projet: string; plan: Pose[] }) => void
+  /** Ce que le projet n'envoie plus a changé (US-126). **Son propre genre** :
+   *  `univers` fait redemander l'état et le catalogue depuis T4, et une case
+   *  décochée n'a aucune raison de coûter deux appels réseau. */
+  references: (charge: { projet: string; ecartees: string[] }) => void
   /** Le cadre de l'agent ou sa consommation a changé (US-90, US-91). Un
    *  garde-fou posé depuis un autre onglet arrive par là, et le compteur bouge
    *  au moment où l'agent dépense — l'auteur n'a rien à recharger. */
@@ -1167,6 +1475,9 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Carte & { oubliee?: boolean }>("carte", ecoute.carte)
   lire<Lien & { coupe?: boolean }>("lien", ecoute.lien)
   lire<Parameters<Ecoute["univers"]>[0]>("univers", ecoute.univers)
+  lire<Personnage & { supprime?: boolean }>("personnage", ecoute.personnage)
+  lire<Parameters<Ecoute["plan"]>[0]>("plan", ecoute.plan)
+  lire<Parameters<Ecoute["references"]>[0]>("references", ecoute.references)
   lire<EtatAgent>("agent", ecoute.agent)
 
   source.onopen = () => ecoute.liaison(true)

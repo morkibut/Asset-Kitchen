@@ -39,6 +39,13 @@ from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport
 from atelier.services.generation import ServiceGenerations
+from atelier.services.pliage import CompteFaux, ServicePliage
+from atelier.services.production import (
+    PersonnageInconnu,
+    PoseInconnue,
+    ProductionRefusee,
+    ServiceProduction,
+)
 from atelier.services.univers import (
     CarteInconnue,
     CarteRefusee,
@@ -55,6 +62,7 @@ __all__ = [
     "CarteInconnue",
     "CarteRefusee",
     "CollectionInconnue",
+    "CompteFaux",
     "DecoupeRefusee",
     "DepotRefuse",
     "Diffusion",
@@ -62,7 +70,10 @@ __all__ = [
     "Evenement",
     "ExportRefuse",
     "GardeFous",
+    "PersonnageInconnu",
     "PlafondAtteint",
+    "PoseInconnue",
+    "ProductionRefusee",
     "ProjetInconnu",
     "RangementRefuse",
     "RecetteRefusee",
@@ -73,6 +84,8 @@ __all__ = [
     "ServiceDecoupe",
     "ServiceExport",
     "ServiceGenerations",
+    "ServicePliage",
+    "ServiceProduction",
     "ServiceUnivers",
     "UniversRefuse",
 ]
@@ -131,6 +144,21 @@ class Atelier:
         self.decoupe = ServiceDecoupe(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
+        # **Après la bibliothèque et les assets, comme le slicer, et pour la
+        # même raison** : le plan, les personnages et la matrice ne fabriquent
+        # aucune image. Ni catalogue, ni fournisseur — c'est ce qui fait que
+        # tout C1 se consulte et se modifie réseau coupé, sauf la génération
+        # elle-même, qui part de l'atelier.
+        self.production = ServiceProduction(
+            self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
+        )
+        # **Au même rang que le slicer, et pour la même raison** : déplier une
+        # planche déjà là ne demande ni catalogue ni fournisseur. Il ne connaît
+        # ni personnage ni pose — c'est la génération qui compose ses cases, et
+        # c'est ce qui laissera C3 le réemployer tel quel.
+        self.pliage = ServicePliage(
+            self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
+        )
         # **Le dernier, et le seul qui ne reçoive pas la diffusion.** Un export
         # ne change rien : il lit des assets, il rend des octets, et l'atelier
         # est exactement dans l'état où il l'a trouvé. Rien à annoncer, donc
@@ -145,6 +173,15 @@ class Atelier:
             self.assets,
             self.bibliotheque,
             self.univers,
+            # **Pour une seule question, et c'est pour ça qu'elle vient en
+            # dernier** : une génération de pose vise une case, et cette case
+            # doit exister encore au moment où l'appel part. La production ne
+            # connaît pas les générations, donc l'ordre tient.
+            self.production,
+            # Et le pliage, pour deux gestes : composer ce qui part quand un lot
+            # est demandé, et ranger ce qui revient. Lui non plus ne connaît pas
+            # les générations — l'ordre tient de la même façon.
+            self.pliage,
         )
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le
@@ -179,7 +216,15 @@ class Atelier:
         # Les images produites avant que les assets existent — celles de T1 —
         # en reçoivent un ici. Sans ça elles resteraient dans la grille sans
         # pouvoir être retouchées, et l'atelier aurait deux sortes d'images.
-        self.assets.rattraper(self.generations.recentes(1000))
+        recentes = self.generations.recentes(1000)
+        self.assets.rattraper(recentes)
+        # **Un lot payé, reçu, et coupé avant d'être rangé se range ici** —
+        # gratuitement, localement, sans appeler personne (US-132). Déplier
+        # n'est pas relancer : ce qui a été coupé *en vol* est marqué interrompu
+        # juste au-dessus et attend un geste, comme depuis T1. **Après le
+        # rattrapage**, pour la raison qui met la bibliothèque avant lui : ce
+        # que le disque dit se repose d'abord, ce qui manque se comble ensuite.
+        self.pliage.reprendre(recentes)
         await self.catalogue.rafraichir()
 
     def etat(self) -> dict[str, Any]:

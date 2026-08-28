@@ -3,7 +3,7 @@
 
 Un test par critère de `docs/PLAN.md` § Phase T9, nommé d'après lui. **Trois des
 neuf ne se vérifient pas ici** : que le trait suive ses deux objets quand on les
-déplace, que les six teintes ne se confondent avec aucune couleur sémantique, et
+déplace, que les teintes ne se confondent avec aucune couleur sémantique, et
 que Ctrl+Z défasse la création comme la coupe. Les deux premiers sont de la
 géométrie et de la couleur — ils vivent dans `interface/src/composants/` et se
 mesurent au navigateur ; le troisième est une pile qui n'existe que dans
@@ -425,12 +425,18 @@ def test_un_lien_se_repose_tel_qu_il_etait(client):
     assert len(_toile(client)["liens"]) == 1
 
 
-# ── « Les six teintes sont les seules disponibles » ──────────────────────────
+# ── « Les teintes de la liste close sont les seules disponibles » ────────────
 
 
-def test_les_six_teintes_sont_les_seules_acceptees(client):
+def test_les_teintes_de_la_liste_close_sont_les_seules_acceptees(client):
     """La liste est **fermée**, et il n'existe aucun sélecteur libre : le premier
-    îlot rouge vif se lirait comme un échec (`docs/DESIGN.md`)."""
+    îlot rouge vif se lirait comme un échec (`docs/DESIGN.md`).
+
+    **Elle est parcourue, jamais recopiée** — c'est ce qui l'a fait passer de six
+    à dix le 28 août 2026 sans qu'une ligne de cet essai change. Un essai qui
+    aurait écrit les six noms aurait fallu être rouvert pour la seule raison
+    qu'il les répétait.
+    """
     _classer(client, "membre.png", "marais", [0, 0])
 
     for teinte in TEINTES:

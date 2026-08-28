@@ -185,7 +185,7 @@ def main() -> int:
 
         # **Écrit au fur et à mesure, jamais à la fin.** Le banc du 26 août s'est
         # arrêté à quatre configurations sur douze ; ce qui était déjà sur le
-        # disque n'a pas été reperdu (`AGENTS.md` § Pièges connus).
+        # disque n'a pas été reperdu (`docs/PIEGES.md`).
         releve["lots"].append({"nom": nom, "chemin": chemin, "images": lignes})
         SORTIE.write_text(
             json.dumps(releve, indent=1, ensure_ascii=False), encoding="utf-8"

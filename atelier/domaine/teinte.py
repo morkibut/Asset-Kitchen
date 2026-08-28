@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Les six teintes — **le seul endroit du produit où une couleur ne veut rien dire**.
+"""Les dix teintes — **le seul endroit du produit où une couleur ne veut rien dire**.
 
 Un îlot ou une note en porte une parce que l'auteur l'a choisie, jamais parce
 qu'un état la commande : c'est l'inverse exact des quatre sémantiques du châssis
@@ -25,21 +25,47 @@ faisant six vérités possibles pour un seul îlot (`docs/ARCHITECTURE.md` §5).
 **La liste est fermée, et c'est un critère d'acceptation** (`docs/PLAN.md` T9) :
 il n'existe aucun sélecteur libre, et le premier îlot rouge vif se lirait comme
 un échec.
+
+**Six jusqu'au 28 août 2026, dix depuis.** La demande était « plus de couleurs,
+et qu'on les voie » ; la seconde moitié a été rendue entière — fond à 16 %,
+bandeau en teinte pleine — et la première dans les limites que la sémantique
+laisse. Les quatre neuves subdivisent les arcs déjà occupés, parce que **deux
+arcs de la roue sont interdits et ce sont ceux des sémantiques**. C'est aussi ce
+qui a tranché la demande de « couleurs primaires », et il l'a tranchée contre :
+une primaire est au milieu d'un arc, et les trois arcs qu'on demandait sont les
+trois qui sont fermés. Que le nombre bouge ne change rien à la clôture — c'est
+elle, et non le compte, qui est le critère.
 """
 
 from __future__ import annotations
 
 # L'ordre est celui de `docs/DESIGN.md`, et c'est celui des pastilles à l'écran :
-# les quatre froides d'abord, les deux chaudes ensuite. Il ne se trie pas
-# alphabétiquement — une roue de teintes rangée par nom n'est plus une roue.
+# les sept froides d'abord, les trois chaudes ensuite — c'est-à-dire l'ordre de
+# la roue. Il ne se trie pas alphabétiquement : une roue de teintes rangée par
+# nom n'est plus une roue.
 ARDOISE = "ardoise"
+PERVENCHE = "pervenche"
 IRIS = "iris"
+LAVANDE = "lavande"
 PRUNE = "prune"
+MAUVE = "mauve"
 BRUYERE = "bruyere"
+MOUSSE = "mousse"
 LICHEN = "lichen"
 PAILLE = "paille"
 
-TEINTES: tuple[str, ...] = (ARDOISE, IRIS, PRUNE, BRUYERE, LICHEN, PAILLE)
+TEINTES: tuple[str, ...] = (
+    ARDOISE,
+    PERVENCHE,
+    IRIS,
+    LAVANDE,
+    PRUNE,
+    MAUVE,
+    BRUYERE,
+    MOUSSE,
+    LICHEN,
+    PAILLE,
+)
 
 # Le vide **est** une valeur : un îlot sans teinte porte celle du châssis, ce
 # qui est exactement ce que `docs/DESIGN.md` dit qu'il est. Ce n'est donc pas un

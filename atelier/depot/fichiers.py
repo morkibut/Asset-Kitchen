@@ -6,6 +6,7 @@
     ├─ atelier.json               le projet courant, et rien d'autre
     ├─ catalogue.json             la dernière photo du catalogue, datée
     ├─ recettes.json              les recettes nommées (US-66)
+    ├─ prereglages.json           les jeux de réglages nommés (US-134)
     ├─ collections.json           les collections, avec leur projet éventuel
     ├─ projets/<identifiant>/
     │  ├─ projet.json             le projet — bible, barème, palette, défauts
@@ -48,8 +49,8 @@ from typing import Any, Iterator
 
 from atelier.reglages import DONNEES
 
-# `.env` s'écrit en UTF-16 quand PowerShell le crée avec `>` (`AGENTS.md`
-# § Pièges connus). Ces fichiers-ci sont écrits par le produit, donc en UTF-8 —
+# `.env` s'écrit en UTF-16 quand PowerShell le crée avec `>` (voir
+# `docs/PIEGES.md`). Ces fichiers-ci sont écrits par le produit, donc en UTF-8 —
 # mais rien n'empêche de les corriger à la main au terminal, et un fichier de
 # rangement illisible ferait disparaître un rangement sans le dire. On essaie
 # donc plusieurs encodages, comme `lire_cle()`.
@@ -63,6 +64,7 @@ class Fichiers:
         self.projets = self.racine / "projets"
         self.catalogue = self.racine / "catalogue.json"
         self.recettes = self.racine / "recettes.json"
+        self.prereglages = self.racine / "prereglages.json"
         self.collections = self.racine / "collections.json"
         self.etat = self.racine / "atelier.json"
         # Le cadre de l'agent — plafond, modèle imposé, dossier du jeu. Un
@@ -125,7 +127,7 @@ class Fichiers:
 
         **Au fil de l'eau, jamais à la fin** : un lot payant qui écrit ses
         résultats à la fin perd tout ce qui précède le plantage. Constaté le
-        26 août 2026 sur le banc de modèles (`AGENTS.md` § Pièges connus).
+        26 août 2026 sur le banc de modèles (`docs/PIEGES.md`).
         """
         chemin = self.dossier_generation(identifiant) / f"{rang}-brut{ext}"
         self._poser(chemin, octets)
@@ -195,6 +197,20 @@ class Fichiers:
 
     def lire_recettes(self) -> dict[str, Any]:
         return self._lire_json(self.recettes) or {}
+
+    def ecrire_prereglages(self, contenu: dict[str, Any]) -> None:
+        self._ecrire_json(self.prereglages, contenu)
+
+    def lire_prereglages(self) -> dict[str, Any]:
+        """Les jeux de réglages nommés (US-134).
+
+        **Un fichier à part de `recettes.json`**, et ce n'est pas de la
+        symétrie : une recette dit ce qu'on fait à une image *déjà payée*, un
+        jeu de réglages dit ce qui part *avant* de payer. Les mêler aurait fait
+        un fichier dont la moitié des entrées ne s'appliquent jamais à l'autre
+        moitié des gestes.
+        """
+        return self._lire_json(self.prereglages) or {}
 
     # ── Projets, collections, et le projet courant ───────────────────────────
 
@@ -338,6 +354,54 @@ class Fichiers:
         vers rien ne représente rien, et un fichier qui lui survivrait serait une
         deuxième vérité qui attend son heure."""
         chemin = self.projets / projet / "tableau" / "liens" / f"{identifiant}.json"
+        chemin.unlink(missing_ok=True)
+
+    # ── Les personnages ──────────────────────────────────────────────────────
+    #
+    # **Un fichier par personnage, sous son projet** — pour les deux raisons des
+    # liens de T9, dans l'ordre inverse. La seconde d'abord, parce que c'est un
+    # fait du code : `parcourir_cartes` lit `tableau/*.json` et tient pour une
+    # carte tout JSON qui porte un identifiant ; les personnages vivent donc
+    # ailleurs que dans le tableau, sous un dossier à eux. La première ensuite :
+    # écrire un personnage ne demande pas de relire les autres, et deux gestes
+    # dans le même instant — décrire l'un pendant qu'on désigne un concept art à
+    # l'autre — ne s'effacent pas l'un l'autre.
+    #
+    # **Pas d'index non plus**, comme les cartes et les liens : les personnages
+    # d'un projet se lisent en entier, ils ne se cherchent ni ne se paginent.
+    # Effacer `atelier.sqlite3` ne peut donc pas les perdre.
+    #
+    # Le plan de poses, lui, n'est **pas** ici : il vit dans `projet.json`, avec
+    # l'univers et les teintes. Il n'y en a qu'un par projet, il est court, et le
+    # sortir en aurait fait un second fichier à tenir d'accord avec le premier.
+
+    def dossier_personnages(self, projet: str) -> Path:
+        dossier = self.projets / projet / "personnages"
+        dossier.mkdir(parents=True, exist_ok=True)
+        return dossier
+
+    def ecrire_personnage(
+        self, projet: str, identifiant: str, contenu: dict[str, Any]
+    ) -> None:
+        self._ecrire_json(
+            self.dossier_personnages(projet) / f"{identifiant}.json", contenu
+        )
+
+    def parcourir_personnages(self, projet: str) -> Iterator[dict[str, Any]]:
+        """Chaque personnage d'un projet. Le disque est la seule vérité."""
+        dossier = self.projets / projet / "personnages"
+        if not dossier.is_dir():
+            return
+        for chemin in sorted(dossier.glob("*.json")):
+            contenu = self._lire_json(chemin)
+            if isinstance(contenu, dict) and contenu.get("identifiant"):
+                yield contenu
+
+    def effacer_personnage(self, projet: str, identifiant: str) -> None:
+        """Le personnage part pour de bon — **et ses images restent**. Jamais de
+        cascade : elles vivent avec leur génération, à l'autre bout de
+        `donnees/`, et ce sont elles qui portent la marque de son départ."""
+        chemin = self.projets / projet / "personnages" / f"{identifiant}.json"
         chemin.unlink(missing_ok=True)
 
     def ecrire_collections(self, contenu: dict[str, Any]) -> None:

@@ -503,7 +503,7 @@ async def test_le_montage_du_mcp_precede_celui_de_l_interface(atelier):
     """Un montage ajouté après celui de l'interface n'est jamais atteint.
 
     `StaticFiles` est monté sur « / » et attrape tout ce qui vient après lui.
-    Le piège a déjà coûté une séance (`AGENTS.md` § Pièges connus) ; ici il
+    Le piège a déjà coûté une séance (`docs/PIEGES.md`) ; ici il
     rendrait la page d'accueil à un agent qui parle MCP.
     """
     application = creer_application(atelier)

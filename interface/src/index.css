@@ -28,19 +28,34 @@
   --color-epingle: #c8a03c;
   --color-echec: #cb6c65;
 
-  /* Les six teintes d'îlot — `docs/DESIGN.md` § Les teintes d'îlot. **Le seul
+  /* Les dix teintes d'îlot — `docs/DESIGN.md` § Les teintes d'îlot. **Le seul
      endroit du produit où une couleur ne veut rien dire** : un îlot ou une note
      en porte une parce que l'auteur l'a choisie, jamais parce qu'un état la
-     commande. Saturation plafonnée à 20 % quand les quatre sémantiques vivent
-     entre 40 et 55 %, et toutes les six à 4,6 : 1 sur `--fond-2` — au-dessus du
+     commande. Saturation plafonnée à 30 % quand les quatre sémantiques vivent
+     entre 40 et 55 %, et toutes les dix à 4,6 : 1 sur `--fond-2` — au-dessus du
      seuil AA, sous le contraste de toutes les sémantiques. C'est ce qui les
-     fait lire comme un rangement plutôt que comme un état. */
-  --color-ilot-ardoise: #7086a0;
-  --color-ilot-iris: #847faa;
-  --color-ilot-prune: #9d77a4;
-  --color-ilot-bruyere: #a4778c;
-  --color-ilot-lichen: #708c5d;
-  --color-ilot-paille: #87875a;
+     fait lire comme un rangement plutôt que comme un état.
+
+     **Dix depuis le 28 août 2026**, contre six à l'origine, et les six noms de
+     départ ne bougent pas d'une teinte de roue : seule leur saturation monte.
+     Les quatre neuves — pervenche, lavande, mauve, mousse — subdivisent les
+     arcs déjà occupés, parce que **deux arcs de la roue sont interdits et ce
+     sont ceux des sémantiques** : 345–55° où vivent `--echec` et `--epingle`,
+     120–200° où vivent `--ok` et `--signal`. Une onzième ne peut naître que
+     dans ce qui reste.
+
+     L'ordre est celui du document, et c'est celui des pastilles à l'écran : il
+     suit la roue, il ne se trie pas alphabétiquement. */
+  --color-ilot-ardoise: #6686ad;
+  --color-ilot-pervenche: #7781b6;
+  --color-ilot-iris: #847db9;
+  --color-ilot-lavande: #9577b6;
+  --color-ilot-prune: #a76fb2;
+  --color-ilot-mauve: #b16da4;
+  --color-ilot-bruyere: #b2708f;
+  --color-ilot-mousse: #788b4b;
+  --color-ilot-lichen: #678f4d;
+  --color-ilot-paille: #878748;
 
   --color-damier-a: #191e24;
   --color-damier-b: #14181d;

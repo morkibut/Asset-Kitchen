@@ -8,7 +8,7 @@ dépose une fois et n'est plus jamais redemandée : l'environnement d'abord, pui
 Le fichier `.env` est lu **en essayant plusieurs encodages**. PowerShell écrit en
 UTF-16 avec `>` et `Out-File` : un `.env` créé au terminal Windows n'est pas de
 l'UTF-8, et le lire comme tel lève sur le tout premier octet. Piège vérifié —
-voir `AGENTS.md` § Pièges connus.
+voir `docs/PIEGES.md`.
 """
 
 from __future__ import annotations

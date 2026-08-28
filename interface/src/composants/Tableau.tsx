@@ -33,6 +33,7 @@ import {
   Refus,
   TEINTES,
   type Carte,
+  type Personnage,
   type Famille,
   type Teinte,
 } from "../api"
@@ -178,6 +179,18 @@ export function useCollage({
 
   useEffect(() => {
     const surColle = (evenement: ClipboardEvent) => {
+      // **Coller dans un champ, c'est coller dans le champ** : le mot d'un
+      // lien, le nom d'un groupe, le prompt. L'écoute est posée sur la
+      // fenêtre, donc elle voit passer aussi les collages qui ne lui sont pas
+      // adressés ; sans ce garde, taper un groupe au presse-papier fabriquait
+      // une carte au lieu de remplir la case. On laisse alors le navigateur
+      // faire son collage ordinaire.
+      const cible = evenement.target
+      if (
+        cible instanceof HTMLElement &&
+        (cible.isContentEditable || ["INPUT", "TEXTAREA"].includes(cible.tagName))
+      )
+        return
       const presse = evenement.clipboardData
       if (!presse) return
       const fichiers = Array.from(presse.files)
@@ -267,6 +280,7 @@ const pied = (carte: Carte) => {
  *  qui puisse diverger entre les deux côtés de la frontière. */
 export function GrilleCartes({
   cartes,
+  personnages,
   choisie,
   survolee,
   onSurvol,
@@ -275,8 +289,14 @@ export function GrilleCartes({
   glissable = false,
   cadre,
   vide,
+  brouillon,
 }: {
   cartes: Carte[]
+  /** Les personnages du projet — pour dire d'un coup d'œil **ce qui sert et ce
+   *  qui dort** (US-125), et pour désigner une carte depuis son menu (US-124).
+   *  C'est le personnage qui porte ce qu'il désigne : une carte peut servir à
+   *  deux personnages, et un champ sur la carte ne saurait pas dire lequel. */
+  personnages: Personnage[]
   choisie: string | null
   survolee: string | null
   onSurvol: (identifiant: string, dedans: boolean) => void
@@ -295,6 +315,11 @@ export function GrilleCartes({
   /** Ce qui paraît quand il n'y a rien — **à côté de la grille, pas à sa
    *  place** : elle reste là pour être mesurée. */
   vide?: ReactNode
+  /** Le brouillon d'une note, quand il y en a un — **une case de la grille, pas
+   *  une surface posée dessus**. La même décision que sur la toile, où il est un
+   *  nœud du plan : ce qu'on écrit est déjà à sa place, donc il doit être *dans*
+   *  la grille et non par-dessus. */
+  brouillon?: ReactNode
 }) {
   return (
     <div className="defile min-h-0 flex-1 overflow-y-auto p-4">
@@ -307,10 +332,12 @@ export function GrilleCartes({
           gridTemplateColumns: `repeat(auto-fill, minmax(${COLONNE_MIN}px, 1fr))`,
         }}
       >
+        {brouillon}
         {cartes.map((carte) => (
           <CarteTuile
             key={carte.identifiant}
             carte={carte}
+            personnages={personnages}
             choisie={carte.identifiant === choisie}
             survolee={carte.identifiant === survolee}
             glissable={glissable}
@@ -322,13 +349,54 @@ export function GrilleCartes({
           />
         ))}
       </div>
-      {cartes.length === 0 && vide}
+      {cartes.length === 0 && !brouillon && vide}
     </div>
+  )
+}
+
+/**
+ * Le brouillon d'une note — ce sur quoi on écrit avant que la note existe.
+ *
+ * **Jumeau de celui de la toile, et volontairement identique** : même anneau
+ * `--lumiere`, même `Échap` qui abandonne, même relâchement du focus qui écrit,
+ * même champ vide qui ne crée rien — *le geste s'essaie sans rien casser*. Ce
+ * qui change est l'endroit, et c'est tout ce que la vue décide : sur le plan la
+ * note naît là où l'on a double-cliqué, en grille elle naît **en réserve**, très
+ * exactement l'endroit de ce qui n'est pas encore classé.
+ *
+ * **En tête de la grille, et pas à la fin** : une case ajoutée en queue d'une
+ * grille qui défile s'écrit hors de l'écran. Elle n'y pousse rien — c'est une
+ * case de plus dans un `auto-fill`, pas une rangée neuve.
+ */
+export function BrouillonNote({
+  onEcrire,
+  onAbandon,
+}: {
+  onEcrire: (texte: string) => void
+  onAbandon: () => void
+}) {
+  const champ = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => champ.current?.focus(), [])
+
+  return (
+    <textarea
+      ref={champ}
+      data-brouillon
+      placeholder="une intention, ici"
+      onKeyDown={(evenement) => {
+        if (evenement.key !== "Escape") return
+        evenement.stopPropagation()
+        onAbandon()
+      }}
+      onBlur={(evenement) => onEcrire(evenement.target.value)}
+      className="aspect-square w-full resize-none rounded-[2px] border border-lumiere bg-fond-2 p-3 text-[12.5px] leading-relaxed text-texte shadow-[0_0_0_2px_var(--color-lumiere)] placeholder:text-texte-3"
+    />
   )
 }
 
 export function Tableau({
   cartes,
+  personnages,
   vue,
   onVue,
   choisie,
@@ -337,6 +405,7 @@ export function Tableau({
   collage,
 }: {
   cartes: Carte[]
+  personnages: Personnage[]
   vue: Vue
   onVue: (vue: Vue) => void
   choisie: string | null
@@ -346,6 +415,11 @@ export function Tableau({
 }) {
   const { survolee, survoler } = useSurvol(choisie !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
+  // **En grille, `+ note` fait naître la note en réserve** — c'est-à-dire sans
+  // place et sans groupe, ce que le serveur calcule tout seul à partir des deux.
+  // Ce booléen est tout ce que la vue a besoin de tenir : le texte, lui, vit
+  // dans le DOM du champ, comme sur la toile.
+  const [brouillon, setBrouillon] = useState(false)
 
   return (
     <section
@@ -355,19 +429,39 @@ export function Tableau({
         depot.survole ? "bg-fond-2" : "bg-fond-0",
       ].join(" ")}
     >
-      <BarreTableau cartes={cartes} vue={vue} onVue={onVue} />
+      <BarreTableau
+        cartes={cartes}
+        vue={vue}
+        onVue={onVue}
+        onNote={() => setBrouillon(true)}
+      />
       <BandeauDoublon collage={collage} onChoisir={onChoisir} onErreur={onErreur} />
 
-      {cartes.length === 0 ? (
+      {cartes.length === 0 && !brouillon ? (
         <Vide />
       ) : (
         <GrilleCartes
           cartes={cartes}
+          personnages={personnages}
           choisie={choisie}
           survolee={survolee}
           onSurvol={survoler}
           onChoisir={onChoisir}
           onErreur={onErreur}
+          brouillon={
+            brouillon && (
+              <BrouillonNote
+                onAbandon={() => setBrouillon(false)}
+                onEcrire={(texte) => {
+                  setBrouillon(false)
+                  // Vide, il ne devient rien : `collerTexte` refuse déjà le
+                  // blanc, et le tableau ne se remplit pas de notes vides qu'il
+                  // faudrait ensuite retirer une à une.
+                  void collage.collerTexte(texte)
+                }}
+              />
+            )
+          }
         />
       )}
     </section>
@@ -386,6 +480,7 @@ export function Tableau({
  * L'écran ne rejoue pas la règle de son côté.
  */
 export function Reserve({
+  personnages,
   cartes,
   choisie,
   onChoisir,
@@ -395,6 +490,7 @@ export function Reserve({
   onDepot,
 }: {
   cartes: Carte[]
+  personnages: Personnage[]
   choisie: string | null
   onChoisir: (identifiant: string | null) => void
   onErreur: (raison: string) => void
@@ -438,6 +534,7 @@ export function Reserve({
 
       <GrilleCartes
         cartes={enReserve}
+        personnages={personnages}
         choisie={choisie}
         survolee={survolee}
         onSurvol={survoler}
@@ -532,10 +629,25 @@ export function BarreTableau({
   cartes,
   vue,
   onVue,
+  onNote,
 }: {
   cartes: Carte[]
   vue: Vue
   onVue: (vue: Vue) => void
+  /** **`+ note` fait ce que la vue permet** (`docs/design-motifs.md` § La toile
+   *  révisée, 28 août 2026). T9 avait refusé un contrôle de barre, et
+   *  l'argument était juste — *une note se crée là où elle s'applique*, un
+   *  bouton la pose à sept cents pixels de l'endroit qui la demande. Il ne
+   *  couvrait pas le vrai trou, qui est en amont : **il n'existait aucun moyen
+   *  d'écrire une note sans en avoir d'abord le texte dans le presse-papier**,
+   *  le double-clic n'existant que sur le plan et la vue grille n'ayant pas de
+   *  plan.
+   *
+   *  Le double-clic ne bouge pas : il reste le geste **précis**, celui qui
+   *  désigne l'endroit. **Coût, et le produit n'en a nulle part ailleurs** :
+   *  deux chemins vers un même résultat. Ils ne se doublent pas — l'un est
+   *  découvrable, l'autre est rapide —, et c'est le premier qui manquait. */
+  onNote: () => void
 }) {
   const artworks = cartes.filter((c) => c.artwork).length
   const groupes = groupesDe(cartes)
@@ -561,7 +673,20 @@ export function BarreTableau({
           une barre sans retour à la ligne qui demande plus que sa colonne
           élargit la colonne, puis la page — et pousse hors de l'écran ce qui est
           ancré à droite. */}
-      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-3">
+        {/* **À gauche du segment *Vue*, en bouton compact de 24 px.** Le `+`
+            est celui de l'arbre — l'un des trois glyphes du produit, et pas un
+            quatrième : ce bouton en réemploie un, il n'en ouvre pas. */}
+        <button
+          type="button"
+          onClick={onNote}
+          className="mesure flex h-[24px] items-center gap-1.5 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11.5px] text-texte transition-colors duration-[80ms] hover:bg-fond-3"
+        >
+          {/* Le `+` reste lisible à l'assistance : il fait partie du libellé,
+              et un nom accessible qui dirait « note » là où l'écran dit
+              « + note » nommerait une chose au lieu d'un geste. */}
+          <span className="text-signal">+</span> note
+        </button>
         <Libelle aide="tableau.vue">Vue</Libelle>
         <Segments
           valeurs={["grille", "toile"] as const}
@@ -574,7 +699,7 @@ export function BarreTableau({
 }
 
 /**
- * Les sept pastilles d'une teinte — **six couleurs et le châssis**.
+ * Les onze pastilles d'une teinte — **dix couleurs et le châssis**.
  *
  * « La liste est fermée, et il n'existe aucun sélecteur libre : le premier îlot
  * rouge vif se lirait comme un échec » (`docs/DESIGN.md` § Les teintes d'îlot).
@@ -582,12 +707,16 @@ export function BarreTableau({
  * seul motif de couleur nue du produit —, parce qu'une pastille n'est pas une
  * marque : c'est la couleur montrée.
  *
- * **La septième n'est pas une septième teinte, c'est l'absence de teinte
+ * **La dernière n'est pas une teinte de plus, c'est l'absence de teinte
  * montrée.** Un îlot sans couleur porte celle du châssis — `--fond-2` bordé
  * `--bord` —, et `docs/DESIGN.md` dit que c'est *ce qu'il est*, pas un réglage
- * manquant. La rendre évite un huitième glyphe en forme de croix, et la liste
- * close du domaine ne bouge pas d'un nom : `atelier/domaine/teinte.py` garde
- * ses six, et le vide reste ce qu'il a toujours été — une valeur.
+ * manquant. La rendre évite un glyphe en forme de croix, et la liste close du
+ * domaine ne bouge pas d'un nom : `atelier/domaine/teinte.py` tient les dix, et
+ * le vide reste ce qu'il a toujours été — une valeur.
+ *
+ * **Le compte est passé de sept à onze le 28 août 2026, et l'argument n'en
+ * dépendait pas** : la rangée compte toujours une pastille de plus que la
+ * liste, et la liste reste close. C'est le nombre qui bouge, jamais la clôture.
  *
  * Partagée par la note et par l'îlot, parce que c'est le même geste sur deux
  * objets. Deux rangées écrites à deux endroits auraient fini par proposer deux
@@ -668,6 +797,7 @@ function Vide() {
  */
 export function CarteTuile({
   carte,
+  personnages,
   choisie,
   survolee,
   plan = false,
@@ -677,6 +807,7 @@ export function CarteTuile({
   onErreur,
 }: {
   carte: Carte
+  personnages: Personnage[]
   /** Épinglée par un clic : son menu ne s'efface plus au survol perdu. */
   choisie: boolean
   /** Le pointeur s'est reposé dessus assez longtemps. */
@@ -710,6 +841,14 @@ export function CarteTuile({
   // aucune raison de faire attendre. Une note ne rend pas de sujet : Espace n'y
   // fait rien, et c'est la bonne réponse — son texte est déjà entier.
   const visee = useVisee(sujetCarte(carte))
+
+  // **Qui se sert de cette carte** (US-125). Déduit des personnages, jamais
+  // porté par la carte : elle peut servir à deux d'entre eux, et un champ sur
+  // elle ne saurait pas dire lequel. Même règle que l'îlot, qui *est* le groupe
+  // écrit sur ses membres.
+  const designeurs = personnages.filter((p) =>
+    p.concept_arts.includes(carte.identifiant),
+  )
   return (
     <article
       style={{
@@ -718,7 +857,13 @@ export function CarteTuile({
           : { gridColumn: SPAN[carte.taille] ?? "span 1" }),
         ...(couleur
           ? {
-              background: `color-mix(in srgb, ${couleur} 8%, var(--color-fond-2))`,
+              // **16 %, et non 8 % — 28 août 2026.** « Le 8 % était sous le
+              // seuil où l'œil la trouve seule : on posait une teinte et on ne
+              // voyait pas laquelle » (`docs/design-motifs.md` § La toile
+              // révisée). La visibilité se gagne à l'opacité, jamais à la
+              // saturation, qui reste plafonnée à 30 % — c'est elle seule qui
+              // sépare un rangement d'un état.
+              background: `color-mix(in srgb, ${couleur} 16%, var(--color-fond-2))`,
               ...(choisie ? {} : { borderColor: couleur }),
             }
           : {}),
@@ -789,11 +934,27 @@ export function CarteTuile({
             className="absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-t-signal border-l-transparent"
           />
         )}
+
+        {/* **Ce qui sert, et ce qui dort** (US-125). Une forme, comme
+            au-dessus, parce que c'est encore l'auteur qui l'a posée — et à
+            l'autre coin, parce qu'une carte peut être les deux. La teinte est
+            celle de l'épingle : « réglé à la main », qui est exactement ce
+            qu'une désignation est. */}
+        {designeurs.length > 0 && (
+          <span
+            aria-label={`concept art de ${designeurs.map((p) => p.nom).join(", ")}`}
+            className="absolute top-0 left-0 h-0 w-0 border-t-[13px] border-r-[13px] border-t-epingle border-r-transparent"
+          />
+        )}
       </button>
 
       <div className="mesure flex shrink-0 items-center gap-1.5 border-t border-bord px-1.5 py-1 text-[9.5px] text-texte-3">
         {carte.artwork ? (
           <span className="text-signal">{NOM_FAMILLE[carte.famille]}</span>
+        ) : designeurs.length > 0 ? (
+          <span className="truncate text-epingle">
+            {designeurs.map((p) => p.nom).join(" · ")}
+          </span>
         ) : carte.groupe ? (
           <span className="truncate">{carte.groupe}</span>
         ) : (
@@ -808,7 +969,14 @@ export function CarteTuile({
         <span className="ml-auto">{carte.taille}×</span>
       </div>
 
-      {ouvert && <Menu carte={carte} borne={!plan} onErreur={onErreur} />}
+      {ouvert && (
+        <Menu
+          carte={carte}
+          personnages={personnages}
+          borne={!plan}
+          onErreur={onErreur}
+        />
+      )}
     </article>
   )
 }
@@ -833,10 +1001,12 @@ export function CarteTuile({
  */
 function Menu({
   carte,
+  personnages,
   borne = true,
   onErreur,
 }: {
   carte: Carte
+  personnages: Personnage[]
   borne?: boolean
   onErreur: (r: string) => void
 }) {
@@ -910,7 +1080,7 @@ function Menu({
         place.gauche ? "right-0" : "left-0",
       ].join(" ")}
     >
-      <Reglages carte={carte} onErreur={onErreur} />
+      <Reglages carte={carte} personnages={personnages} onErreur={onErreur} />
     </div>
   )
 }
@@ -956,7 +1126,15 @@ function Attente({ carte, plan = false }: { carte: Carte; plan?: boolean }) {
  *  sur la toile, et le dernier membre qui en sort l'emporte. Un bouton
  *  « nouvel îlot » aurait créé un îlot vide, c'est-à-dire un groupe qui n'est
  *  écrit sur aucune carte — donc rien. */
-function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => void }) {
+function Reglages({
+  carte,
+  personnages,
+  onErreur,
+}: {
+  carte: Carte
+  personnages: Personnage[]
+  onErreur: (r: string) => void
+}) {
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1000,6 +1178,15 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
           placeholder="aucun"
           onChange={(e) => setGroupe(e.target.value)}
           onBlur={() => groupe !== carte.groupe && void regler({ groupe })}
+          // **Entrée valide** : nommer un îlot est le geste qui le fait
+          // paraître, et il n'avait pour toute confirmation que d'aller
+          // cliquer ailleurs. On quitte le champ, et c'est `onBlur` — la seule
+          // porte de sortie — qui enregistre : deux gestes, un seul envoi.
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return
+            e.preventDefault()
+            e.currentTarget.blur()
+          }}
           className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
       </div>
@@ -1050,6 +1237,52 @@ function Reglages({ carte, onErreur }: { carte: Carte; onErreur: (r: string) => 
               teinte={carte.teinte}
               onChoisir={(teinte) => void regler({ teinte })}
             />
+          </div>
+        </div>
+      )}
+
+      {carte.genre === "image" && personnages.length > 0 && (
+        <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
+          <Libelle aide="carte.concept">Concept art de</Libelle>
+          {/* **Une carte désignée reste où elle est** (US-124) : aucune copie,
+              aucun second rangement. Et elle peut servir à plusieurs — d'où des
+              bascules, et non un choix unique. */}
+          <div className="flex flex-wrap gap-1">
+            {personnages.map((personnage) => {
+              const designe = personnage.concept_arts.includes(carte.identifiant)
+              return (
+                <button
+                  key={personnage.identifiant}
+                  type="button"
+                  aria-pressed={designe}
+                  onClick={async () => {
+                    try {
+                      await api.reglerPersonnage(personnage.identifiant, {
+                        concept_arts: designe
+                          ? personnage.concept_arts.filter(
+                              (c) => c !== carte.identifiant,
+                            )
+                          : [...personnage.concept_arts, carte.identifiant],
+                      })
+                    } catch (erreur) {
+                      onErreur(
+                        erreur instanceof Error
+                          ? erreur.message
+                          : "désignation refusée",
+                      )
+                    }
+                  }}
+                  className={[
+                    "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+                    designe
+                      ? "border-epingle bg-epingle/13 text-epingle"
+                      : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+                  ].join(" ")}
+                >
+                  {personnage.nom}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

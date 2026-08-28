@@ -19,6 +19,7 @@ from atelier.image.decoupe import (
 )
 from atelier.image.mesures import Mesure, extension, mesurer, rendre_en_png
 from atelier.image.palette import COULEURS, COULEURS_MAX, COULEURS_MIN, palette_de
+from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.image.traitement import (
     MoteurAbsent,
     Rendu,
@@ -46,9 +47,11 @@ __all__ = [
     "en_ordre_de_lecture",
     "extension",
     "finir",
+    "gabarit",
     "grille_fixe",
     "mesurer",
     "mesurer_grille",
+    "mesurer_lot",
     "moteur_disponible",
     "palette_de",
     "raison_moteur",

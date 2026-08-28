@@ -23,6 +23,8 @@ import {
   type Filiation,
   type Grille,
   type Passe,
+  type Personnage,
+  type Pose,
   type Quantification,
   type Recadrage,
   type Recette,
@@ -42,6 +44,7 @@ import {
   Segments,
 } from "./chassis"
 import { POINTILLE, useInfobulle } from "./Infobulle"
+import { posesTenues } from "./Personnages"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. La valeur
@@ -50,6 +53,18 @@ import { POINTILLE, useInfobulle } from "./Infobulle"
 const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
 
 const MOTEUR: Record<Passe["moteur"], string> = { bord: "bord", modele: "modèle" }
+
+/** Le modèle qui a produit une image, tel qu'il se lit (US-123).
+ *
+ *  **Trois cas, et le troisième n'est pas un trou.** Une image générée nomme le
+ *  modèle exact — l'identifiant du fournisseur, celui qu'on redemandera ; une
+ *  image importée n'a pas de modèle et le dit ; et une image dont la génération
+ *  a disparu du disque ne peut plus le savoir. Elle ne l'invente pas : « zéro
+ *  n'est pas une dimension mesurée, c'est l'absence de mesure »
+ *  (`docs/PIEGES.md`), et un nom de modèle deviné vaudrait pire que rien —
+ *  c'est très exactement l'information à qui l'on va faire confiance. */
+export const nomDuModele = (modele: string): string =>
+  modele === "import" ? "importé" : modele || "modèle inconnu"
 
 /** Ce qu'une étape posée dit d'elle-même quand elle est repliée
  *  (`docs/DESIGN.md` § Le bloc repliable). Une ligne, en mono, à droite du
@@ -74,6 +89,8 @@ export function Fiche({
   asset,
   traitement,
   univers,
+  plan,
+  personnages,
   onFermer,
   onErreur,
   onReinjecter,
@@ -84,6 +101,12 @@ export function Fiche({
 }: {
   asset: Asset
   traitement: EtatTraitement
+  /** Le plan du jeu et ses personnages, pour désigner cette image comme le
+   *  corps d'une case (US-122). **Il n'y a pas d'écran de création de
+   *  personnage avec son propre prompt** : le corps naît dans l'atelier, et
+   *  c'est ici — sur l'image obtenue — qu'on dit ce qu'il est. */
+  plan: Pose[]
+  personnages: Personnage[]
   /** L'univers du projet ouvert. La fiche n'y touche pas — elle le lit pour
    *  savoir sur quelle palette quantifier, et pour proposer de réaligner un
    *  asset que l'auteur avait réglé à la main (US-69). */
@@ -251,6 +274,15 @@ export function Fiche({
           {asset.label}
         </p>
 
+        {/* **Qui a dessiné cette image** (US-123). Une ligne de provenance, au
+            même titre que le coût : elle se lit, elle ne se règle pas — donc
+            aucun libellé, aucun pointillé, rien à survoler. L'identifiant
+            exact plutôt que le nom du catalogue : c'est lui qu'on redemande, et
+            il reste vrai quand le catalogue est hors ligne. */}
+        <p className="mesure truncate text-[10px] text-texte-3" title={asset.modele}>
+          {nomDuModele(asset.modele)}
+        </p>
+
         <Jugement
           asset={asset}
           onErreur={onErreur}
@@ -258,6 +290,13 @@ export function Fiche({
           onReglages={onReglages}
           onSupprimer={onSupprimer}
           onDecouper={onDecouper}
+        />
+
+        <CaseDeLAsset
+          asset={asset}
+          plan={plan}
+          personnages={personnages}
+          onErreur={onErreur}
         />
 
         <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
@@ -705,6 +744,107 @@ function Jugement({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── La case que cette image remplit ─────────────────────────────────────────
+
+/**
+ * Désigner cette image comme le corps d'une attitude (US-122).
+ *
+ * **C'est ici, et nulle part ailleurs, qu'un corps devient un corps.** Il n'y a
+ * pas d'écran de création de personnage avec son propre prompt : on écrit un
+ * sujet dans l'atelier, on génère, on obtient une image, et c'est cette
+ * image-là qu'on désigne. Le geste ne fabrique rien et ne coûte rien.
+ *
+ * **Deux listes, jamais une seule** : l'attitude appartient au personnage
+ * choisi, et proposer les attitudes de tout le projet ferait désigner une case
+ * qui n'existe pas. Un projet sans personnage ne montre donc pas deux listes
+ * vides — il dit ce qu'il faut faire d'abord.
+ */
+function CaseDeLAsset({
+  asset,
+  plan,
+  personnages,
+  onErreur,
+}: {
+  asset: Asset
+  plan: Pose[]
+  personnages: Personnage[]
+  onErreur: (raison: string) => void
+}) {
+  const porteur = personnages.find((p) => p.identifiant === asset.personnage) ?? null
+  const tenues = porteur ? posesTenues(plan, porteur) : []
+
+  const designer = async (personnage: string | null, pose: string | null) => {
+    try {
+      await api.designer(asset.identifiant, personnage, pose)
+    } catch (erreur) {
+      onErreur(erreur instanceof Error ? erreur.message : "désignation refusée")
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-bord pt-2">
+      <Libelle aide="fiche.personnage">Corps de</Libelle>
+
+      {personnages.length === 0 ? (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Aucun personnage dans ce jeu. Une image devient un corps quand un
+          personnage l'attend — l'écran Personnages en crée un.
+        </p>
+      ) : (
+        <div className="flex items-center gap-2">
+          <select
+            aria-label="Personnage de cette image"
+            value={asset.personnage ?? ""}
+            onChange={(e) => {
+              const choisi = e.target.value
+              if (!choisi) return void designer(null, null)
+              // Un personnage choisi sans attitude ne désigne rien : la
+              // première qu'il tient est proposée, et se change juste à côté.
+              const suivant =
+                personnages.find((p) => p.identifiant === choisi) ?? null
+              const premiere = suivant ? posesTenues(plan, suivant)[0] : null
+              if (!premiere)
+                return onErreur("ce personnage ne tient aucune attitude")
+              void designer(choisi, premiere.identifiant)
+            }}
+            className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+          >
+            <option value="">aucun</option>
+            {personnages.map((p) => (
+              <option key={p.identifiant} value={p.identifiant}>
+                {p.nom}
+              </option>
+            ))}
+          </select>
+
+          <select
+            aria-label="Attitude de cette image"
+            value={asset.pose ?? ""}
+            disabled={!porteur}
+            onChange={(e) =>
+              void designer(asset.personnage ?? null, e.target.value || null)
+            }
+            className="mesure h-[26px] w-[120px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2 disabled:text-texte-3"
+          >
+            {!porteur && <option value="">—</option>}
+            {tenues.map((pose) => (
+              <option key={pose.identifiant} value={pose.identifiant}>
+                {pose.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {asset.personnage_supprime && (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          personnage supprimé — l'image reste, sa case n'existe plus
+        </p>
+      )}
     </div>
   )
 }

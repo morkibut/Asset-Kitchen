@@ -36,7 +36,7 @@ from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 3
+VERSION = 4
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS assets (
     projet      TEXT,
     collection  TEXT,
     parent      TEXT,
+    personnage  TEXT,
     favori      INTEGER NOT NULL DEFAULT 0,
     epingle     INTEGER NOT NULL DEFAULT 0,
     supprime_le REAL,
@@ -70,6 +71,12 @@ CREATE INDEX IF NOT EXISTS assets_par_date ON assets (cree_le DESC);
 CREATE INDEX IF NOT EXISTS assets_par_projet ON assets (projet);
 CREATE INDEX IF NOT EXISTS assets_par_collection ON assets (collection);
 CREATE INDEX IF NOT EXISTS assets_par_parent ON assets (parent);
+-- La matrice de production demande « les images de ce personnage » à chaque
+-- rendu, et une suppression de personnage les redemande toutes : c'est très
+-- exactement la question qu'un index existe pour répondre. Le schéma n'a
+-- aucune migration — il est jeté et refait depuis les fichiers au premier
+-- démarrage qui suit son évolution (`docs/ARCHITECTURE.md` §4).
+CREATE INDEX IF NOT EXISTS assets_par_personnage ON assets (personnage);
 
 CREATE TABLE IF NOT EXISTS projets (
     identifiant TEXT PRIMARY KEY,
@@ -298,6 +305,34 @@ class Base:
                     durees.append(float(emplacement["duree_s"]))
         return durees
 
+    def couts_mesures(self, modele: str, limite: int = 12) -> list[float]:
+        """Ce que ce modèle a réellement **facturé**, aux derniers appels réussis.
+
+        Jumeau exact de `durees_mesurees`, et pour la même raison : le produit
+        ne porte aucun tarif de catalogue, et il ne doit pas en porter. « Le
+        classement des modèles par coût est contre-intuitif et doit rester
+        mesuré, jamais supposé » (`docs/PRD.md`) — l'essai du 28 août a relevé
+        un écart de 1 à 4,6 entre le plus cher et le moins cher, et le favori
+        pressenti était le plus cher. Annoncer un prix venu d'une table serait
+        annoncer un chiffre que personne n'a payé.
+
+        La médiane de ces valeurs est ce que l'écran annonce avant de générer.
+        Sans mesure, il ne dit rien plutôt que d'inventer.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM generations WHERE modele = ? "
+                "ORDER BY cree_le DESC LIMIT ?",
+                (modele, limite),
+            ).fetchall()
+
+        couts: list[float] = []
+        for ligne in lignes:
+            for emplacement in json.loads(ligne["contenu"]).get("emplacements", []):
+                if emplacement.get("statut") == "reussie" and emplacement.get("cout_usd"):
+                    couts.append(float(emplacement["cout_usd"]))
+        return couts
+
     # ── Assets ───────────────────────────────────────────────────────────────
     #
     # Même règle que pour les générations : `contenu` porte l'enregistrement
@@ -310,9 +345,9 @@ class Base:
                 """
                 INSERT INTO assets
                     (identifiant, generation, rang, label, recherche, cree_le,
-                     projet, collection, parent, favori, epingle, supprime_le,
-                     contenu)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     projet, collection, parent, personnage, favori, epingle,
+                     supprime_le, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     label = excluded.label,
                     recherche = excluded.recherche,
@@ -326,6 +361,7 @@ class Base:
                     projet = excluded.projet,
                     collection = excluded.collection,
                     parent = excluded.parent,
+                    personnage = excluded.personnage,
                     favori = excluded.favori,
                     epingle = excluded.epingle,
                     supprime_le = excluded.supprime_le,
@@ -341,6 +377,7 @@ class Base:
                     asset.projet,
                     asset.collection,
                     asset.parent,
+                    asset.personnage,
                     int(asset.favori),
                     int(asset.epingle),
                     asset.supprime_le,
@@ -419,6 +456,26 @@ class Base:
                 "SELECT contenu FROM assets WHERE parent = ? AND supprime_le IS NULL "
                 "ORDER BY cree_le DESC, rang ASC",
                 (identifiant,),
+            ).fetchall()
+        return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def assets_du_personnage(self, personnage: str) -> list[Asset]:
+        """Les images faites pour ce personnage — **jamais les supprimées**.
+
+        C'est la question de la matrice, posée à chaque rendu : une case est
+        pleine parce qu'une image la porte, et non parce qu'une liste de cases
+        pleines aurait été tenue quelque part. Une image supprimée vide donc sa
+        case toute seule, sans que rien n'ait à être défait.
+
+        L'ordre est celui de la grille — la plus fraîche d'abord —, parce que
+        c'est la dernière image faite qui représente sa case.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM assets "
+                "WHERE personnage = ? AND supprime_le IS NULL "
+                "ORDER BY cree_le DESC, rang ASC",
+                (personnage,),
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
 

@@ -236,7 +236,7 @@ def render(excalidraw_path: str, output_path: str | None = None) -> str:
     output_file = Path(output_path).resolve() if output_path else excalidraw_file.with_suffix(".png")
     svg_file = excalidraw_file.with_suffix(".svg")
 
-    with open(excalidraw_file) as f:
+    with open(excalidraw_file, encoding="utf-8") as f:
         data = json.load(f)
 
     svg, w, h = _build_svg(data)

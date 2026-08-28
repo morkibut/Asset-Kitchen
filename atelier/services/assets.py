@@ -119,7 +119,7 @@ class ServiceAssets:
 
     # ── La naissance ─────────────────────────────────────────────────────────
 
-    def _recette_du_projet(self, generation: Generation) -> Recette:
+    def recette_du_projet(self, generation: Generation) -> Recette:
         """Ce que l'univers impose à cette image-là, à sa naissance.
 
         **La remise sur grille est systématique, jamais optionnelle** (US-61) :
@@ -169,7 +169,7 @@ class ServiceAssets:
             # « la chaîne complète tient d'un bout à l'autre : un asset se
             # génère, se détoure, se ramène sur la grille et la palette du
             # projet, et se range tout seul » (`docs/PLAN.md`, T4).
-            recette=ancien.recette if ancien else self._recette_du_projet(generation),
+            recette=ancien.recette if ancien else self.recette_du_projet(generation),
             epingle=ancien.epingle if ancien else False,
             # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
             # le total du projet, lui, se calcule sur les générations, qui sont
@@ -179,10 +179,23 @@ class ServiceAssets:
             # Une relance ne le rejoue pas depuis l'ancien : c'est la génération
             # qui fait foi, et c'est elle qu'on relance.
             provenance=generation.provenance,
+            # **Le modèle qui a rendu cette image-là** (US-123). Repris de la
+            # génération à chaque naissance, relance comprise : une relance
+            # change le modèle si l'auteur l'a changé, et c'est bien ce qu'il
+            # faut afficher — l'image visible est celle du dernier appel.
+            modele=generation.modele,
             # **Il entre en bibliothèque de lui-même** (US-25), dans le projet
             # où la génération est partie. Un rangement déjà posé à la main
             # l'emporte : ce que l'auteur a décidé ne se défait pas tout seul.
             projet=ancien.projet if ancien else generation.projet,
+            # **La case que cet appel visait** (US-120), et la même règle que le
+            # rangement : ce que l'auteur a décidé ne se défait pas tout seul.
+            # Une image qu'il a désignée ailleurs — ou dont il a retiré la
+            # désignation — ne revient pas dans sa case parce qu'on relance
+            # l'appel qui l'avait produite.
+            personnage=ancien.personnage if ancien else generation.personnage,
+            pose=ancien.pose if ancien else generation.pose,
+            personnage_supprime=ancien.personnage_supprime if ancien else False,
             collection=ancien.collection if ancien else None,
             favori=ancien.favori if ancien else False,
             # La filiation vient de la source d'édition réinjectée (US-12).
@@ -232,6 +245,15 @@ class ServiceAssets:
         """
         nes = 0
         for generation in generations:
+            # **La planche d'un lot plié n'est pas un asset, et ne le devient
+            # pas ici non plus.** Ce qui entre en bibliothèque, ce sont les N
+            # images séparées ; leur ranger la feuille à côté la rendrait
+            # exportable, et « aucune feuille assemblée n'est livrable »
+            # (`docs/PLAN.md`, C2) cesserait d'être vrai par construction. Le
+            # dépliage manquant, lui, se rattrape ailleurs — `ServicePliage`
+            # sait le faire sans rien repayer.
+            if generation.pliage is not None:
+                continue
             for emplacement in generation.emplacements:
                 if emplacement.resultat is None:
                     continue
@@ -262,6 +284,15 @@ class ServiceAssets:
                     # ranger, dont la variation 1 passait devant la 0.
                     if connu.cree_le != generation.cree_le:
                         connu.cree_le = generation.cree_le
+                        repare = True
+                    # **Le modèle, pour tout ce qui est né avant C1.** Le champ
+                    # n'existait pas sur l'asset ; il a toujours existé sur la
+                    # génération. Sans ce rattrapage, la fiche d'une image
+                    # payée dirait « inconnu » alors que le nom est sur le
+                    # disque à côté (`docs/PIEGES.md` — un champ ajouté à un
+                    # objet ne se rétro-remplit pas tout seul).
+                    if not connu.modele and generation.modele:
+                        connu.modele = generation.modele
                         repare = True
                     if repare:
                         self.sauver(connu)

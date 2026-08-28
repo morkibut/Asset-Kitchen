@@ -257,7 +257,7 @@ function Exporter({
 }
 
 /**
- * L'annulation courte (US-27), dans la forme du § Motifs, *Le revers*.
+ * L'annulation courte (US-27), dans la forme de `docs/design-motifs.md`, *Le revers*.
  *
  * Elle décompte ce que le **serveur** a dit : c'est lui qui refuse au-delà du
  * délai, et deux délais écrits à deux endroits finiraient par se contredire.

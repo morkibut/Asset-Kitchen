@@ -13,6 +13,14 @@
 // de largeur. Une **colonne** de plus, non — la réserve reprend la 380 telle
 // quelle, pour ce qu'elle nomme déjà.
 //
+// **Et chacune des deux colonnes se replie par choix.** Même bascule qu'à
+// l'atelier, même case de grille qui tombe à zéro, mêmes 160 ms sur la largeur
+// (`docs/DESIGN.md` § Motion) : repliées toutes les deux, la toile tient la
+// largeur de l'écran. **Replier n'est pas fermer** — les deux panneaux restent
+// montés, et la réserve garde ses 380 px sous une case qui les rogne. C'est ce
+// qui laisse à l'aimant de la toile la grille qu'il mesure, et à la colonne son
+// défilement là où on l'avait laissé.
+//
 // **Les réglages de l'univers restent visibles pendant qu'on compose**, et c'est
 // la raison d'être de la colonne de gauche : on classe des inspirations en
 // regardant ce qu'elles contraignent.
@@ -33,6 +41,7 @@ import {
   type Famille,
   type Lien,
   type Modele,
+  type Personnage,
   type Teinte,
   type Univers,
 } from "../api"
@@ -54,6 +63,13 @@ import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
 const COULEURS = [8, 12, 16, 24, 32, 48] as const
 
+/** Ce qui se replie sur cet écran, et le mot qui le nomme dans la barre de
+ *  tête — celui que porte l'en-tête de la colonne, en minuscules comme à
+ *  l'atelier. La réserve n'y paraît qu'en toile : en grille elle n'existe pas,
+ *  et une bascule pour une colonne absente mentirait sur ce que l'écran a. */
+const BASCULES = { univers: "univers", reserve: "réserve" } as const
+type Repliable = keyof typeof BASCULES
+
 export function EcranUnivers({
   projet,
   univers,
@@ -61,6 +77,7 @@ export function EcranUnivers({
   cartes,
   liens,
   teintes,
+  personnages,
   onRelire,
   onFermer,
 }: {
@@ -77,6 +94,10 @@ export function EcranUnivers({
    *  qu'elle *est* le tableau. */
   liens: Lien[]
   teintes: Record<string, Teinte>
+  /** Les personnages du projet. Le tableau les lit pour deux choses : dire d'un
+   *  coup d'œil **ce qui sert et ce qui dort** (US-125), et désigner une carte
+   *  comme concept art depuis son menu (US-124). */
+  personnages: Personnage[]
   onRelire: () => void
   onFermer: () => void
 }) {
@@ -97,6 +118,15 @@ export function EcranUnivers({
   // l'installeraient chacune feraient deux cartes pour un seul Ctrl+V.
   const [vue, setVue] = useState<Vue>("grille")
   const collage = useCollage({ onErreur: setRefus, onRafraichir: onRelire })
+
+  // **Replier est un choix, jamais une contrainte de place** (US-97). C'est la
+  // règle de l'atelier, et cet écran-ci n'a aucune raison d'en avoir une autre :
+  // les deux colonnes tombent à zéro, la toile prend tout ce qui reste, et rien
+  // n'est fermé pour autant.
+  const [replies, setReplies] = useState<{ univers: boolean; reserve: boolean }>({
+    univers: false,
+    reserve: false,
+  })
 
   // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
   // la largeur libre. Une seule mesure, trois déclencheurs.
@@ -143,6 +173,20 @@ export function EcranUnivers({
     }
   }
 
+  // La réserve n'a de bascule qu'en toile — c'est là, et là seulement, qu'elle
+  // occupe une colonne.
+  const repliables: Repliable[] = vue === "toile" ? ["univers", "reserve"] : ["univers"]
+
+  // Les colonnes du § Layout, avec la case qui tombe à zéro quand on replie :
+  // `380px · 1fr` en grille, `380px · 1fr · 380px` en toile. Aucune largeur
+  // neuve n'entre ici — replier ne fabrique pas une quatrième colonne, il en
+  // retire une.
+  const colonnes = [
+    `${replies.univers ? 0 : 380}px`,
+    "minmax(0,1fr)",
+    ...(vue === "toile" ? [`${replies.reserve ? 0 : 380}px`] : []),
+  ].join(" ")
+
   return (
     // `data-univers` marque ce que cet écran couvre : c'est ce qui permet à
     // Ctrl+Z de distinguer un champ qu'on est en train d'écrire *ici* d'un champ
@@ -150,6 +194,30 @@ export function EcranUnivers({
     <div data-univers className="fixed inset-0 z-10 flex flex-col bg-fond-0">
       <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
         <h1 className="font-serif text-[17px] leading-none text-texte">Univers</h1>
+
+        {/* Replier est **un choix**, jamais une contrainte de place (US-97) :
+            la bascule est là en permanence et dit l'état où elle est, dans la
+            forme exacte de celles de l'atelier. Repliées toutes les deux, la
+            toile tient la largeur de l'écran. */}
+        <div className="flex items-center gap-1">
+          {repliables.map((quoi) => (
+            <button
+              key={quoi}
+              type="button"
+              onClick={() => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
+              aria-pressed={!replies[quoi]}
+              className={[
+                "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+                replies[quoi]
+                  ? "border-bord bg-fond-2 text-texte-3"
+                  : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+              ].join(" ")}
+            >
+              {BASCULES[quoi]}
+            </button>
+          ))}
+        </div>
+
         <span className="mesure text-[10px] text-texte-2">
           {projet ? projet.nom : "sans projet"}
         </span>
@@ -174,28 +242,53 @@ export function EcranUnivers({
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <PanneauUnivers
-          univers={univers}
-          modeles={modeles}
-          artworks={cartes.filter((c) => c.artwork)}
-          onErreur={setRefus}
-          onRealigner={realigner}
-        />
-        {vue === "grille" ? (
-          <Tableau
-            cartes={cartes}
-            vue={vue}
-            onVue={setVue}
-            choisie={choisie}
-            onChoisir={setChoisir}
+      {/* Deux colonnes en grille, trois en toile, et 160 ms sur la largeur
+          quand l'une se replie — `docs/DESIGN.md` § Motion, « tu n'as pas perdu
+          ta place ». C'est la grille de l'atelier, à trois colonnes près.
+
+          **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
+          porte** (§ Un panneau est borné par l'écran). Cet écran était le seul
+          du produit dont le panneau défilait, et il ne le devait qu'à un parent
+          `flex` : en passant à la grille, il fallait le lui rendre exprès.
+          L'`overflow-hidden` est ce qui rogne le panneau replié, qui garde ses
+          380 px sous une case à zéro. */}
+      <div
+        data-colonnes
+        className="grid min-h-0 flex-1"
+        style={{
+          gridTemplateColumns: colonnes,
+          transition: "grid-template-columns 160ms ease-in-out",
+        }}
+      >
+        <div className="flex min-h-0 overflow-hidden">
+          <PanneauUnivers
+            univers={univers}
+            modeles={modeles}
+            artworks={cartes.filter((c) => c.artwork)}
             onErreur={setRefus}
-            collage={collage}
+            onRealigner={realigner}
           />
-        ) : (
-          <>
+        </div>
+
+        {/* `min-w-0` **et** `min-h-0` : une piste en `minmax(0,1fr)` n'empêche
+            pas son contenu de l'élargir — c'est l'élément posé dedans qui vaut
+            `min-width: auto`, donc la largeur de ce qu'il contient. */}
+        <div className="flex min-h-0 min-w-0 overflow-hidden">
+          {vue === "grille" ? (
+            <Tableau
+              cartes={cartes}
+              personnages={personnages}
+              vue={vue}
+              onVue={setVue}
+              choisie={choisie}
+              onChoisir={setChoisir}
+              onErreur={setRefus}
+              collage={collage}
+            />
+          ) : (
             <Toile
               cartes={cartes}
+              personnages={personnages}
               liens={liens}
               teintes={teintes}
               vue={vue}
@@ -207,8 +300,14 @@ export function EcranUnivers({
               crans={crans}
               pile={pile}
             />
+          )}
+        </div>
+
+        {vue === "toile" && (
+          <div className="flex min-h-0 overflow-hidden">
             <Reserve
               cartes={cartes}
+              personnages={personnages}
               choisie={choisie}
               onChoisir={setChoisir}
               onErreur={setRefus}
@@ -216,7 +315,7 @@ export function EcranUnivers({
               cadre={grilleReserve}
               onDepot={rendre}
             />
-          </>
+          </div>
         )}
       </div>
     </div>

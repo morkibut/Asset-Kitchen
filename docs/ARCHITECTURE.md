@@ -685,6 +685,13 @@ sur le casque, six modèles et deux jets). Le même essai a montré la limite, e
 écrite dans le produit : une pièce qui **agrandit** la silhouette casse la méthode sur les six
 modèles sans exception — voir plus bas.
 
+**Le coût annoncé avant de générer est mesuré, jamais lu dans un tarif.** Le produit ne
+porte aucun prix de catalogue et ne doit pas en porter : le coût réel facturé fait foi
+partout ailleurs, et l'essai du 28 août a relevé un écart de 1 à 4,6 entre modèles avec un
+favori pressenti qui était le plus cher. Ce que l'écran annonce est donc la **médiane de ce
+que ce modèle-là a réellement facturé sur cette machine**, et « jamais appelé » quand il n'en
+sait rien — le même geste que l'attente de la jauge de T1, qui s'apprend au lieu de s'écrire.
+
 **Le corps naît dans l'atelier, et nulle part ailleurs.** Il n'y a pas d'écran de création de
 personnage avec son propre prompt — c'est la décision qui remplace l'assistant en quatre
 étapes écrit ici le 26 août. On écrit un sujet, on génère, on obtient une image, et c'est
@@ -696,14 +703,44 @@ une image dont on connaît déjà la grille et la palette.
 
 | Entité | Contenu | Note |
 |---|---|---|
-| **Plan de poses** *(projet)* | nom, liste de poses nommées, nombre d'images par pose | Propriété du **projet**, réutilisable par tous ses personnages. Un projet neuf en reçoit un par défaut, immédiatement utilisable. Ajouter une pose ajoute une case vide, jamais une génération. |
-| **Personnage** *(projet)* | nom, description, plan rattaché, poses tenues, concept arts désignés | Vit dans la bibliothèque du projet comme le reste. Sa suppression suit la règle générale : jamais de cascade, les images survivent et affichent « personnage supprimé ». |
+| **Plan de poses** *(projet)* | liste de poses, chacune un identifiant, un nom et un nombre d'images | Propriété du **projet**, et **il n'y en a qu'un** — voir plus bas. Un projet neuf en reçoit un par défaut, immédiatement utilisable. Ajouter une pose ajoute une case vide, jamais une génération. Une pose porte un **identifiant** distinct de son nom : elle se renomme à tout moment, et les images déjà faites ne doivent pas perdre leur case. |
+| **Personnage** *(projet)* | nom, description, **poses écartées**, concept arts désignés, références écartées | Un fichier par personnage sous son projet — ni index, ni entrée dans `atelier.sqlite3`. Sa suppression suit la règle générale : jamais de cascade, les images survivent et affichent « personnage supprimé ». |
 | **Emplacement** *(projet)* | nom, rang | Ordonné — la tête, le dos, les jambes. Écrire un nom qui n'existe pas le crée. |
 | **Pièce** *(projet)* | nom, description, emplacement, **portée** (contenue \| agrandit), concept arts désignés | Décrite une fois sur le projet, posée sur n'importe quel personnage. La **portée** est déclarée par l'auteur, jamais devinée : elle décide si la pièce donne un calque ou un corps habillé. Défaut : contenue. |
 | **Calque** *(personnage)* | planche payée d'origine et sa case, recette (recherche de différence, zone, masque, retouches pixel), pièce, **pose**, mesures | **Une recette, pas un fichier figé** — exactement comme la retouche d'un asset ordinaire en T2. Revenir à la différence brute est un geste unique. La **pose** n'est pas une provenance, c'est une appartenance : un calque ne vaut que sur la pose où il est apparu. |
 
 Aucun de ces objets n'est une image de plus : le corps et le calque rendu sont des assets
 ordinaires, rangés dans la même bibliothèque, avec la même filiation et le même coût.
+
+**Trois décisions prises en construisant C1, et qui corrigent ce tableau.**
+
+**Un seul plan par projet, et il n'a pas de nom.** Cette section en prévoyait plusieurs,
+nommés, entre lesquels chaque personnage aurait choisi. C'est inutile tant qu'un personnage
+peut **écarter** les poses qu'il ne tient pas (US-117) : un figurant et un héros se comparent
+alors au même plan, l'un en cochant moins de cases. Deux façons concurrentes de dire « ce
+personnage n'a pas besoin de ça » — sa liste et ses cases décochées — auraient fini par se
+contredire. Le nom reviendra avec le second plan, s'il vient.
+
+**Le personnage range ce qu'il *écarte*, jamais ce qu'il tient.** À l'écran on coche des
+poses tenues ; le fichier garde le complément. Le sens est le même, la panne évitée ne l'est
+pas : ajouter une pose au plan doit ajouter une case vide à *chaque* personnage, et avec une
+liste de poses tenues il aurait fallu réécrire tous les personnages du projet à chaque
+ajout — un balayage capable de réussir à moitié, pour un geste qui ne devrait rien écrire du
+tout. Avec l'écart, la case neuve paraît partout sans qu'un seul fichier soit touché.
+
+**La case n'est pas un objet : c'est l'image qui dit sa case.** L'asset porte `personnage` et
+`pose`, hérités de sa génération à la naissance comme il hérite du projet et de la
+provenance ; la matrice se **calcule** là-dessus. Il n'existe donc nulle part une liste de
+cases pleines à tenir d'accord avec le disque : une image supprimée vide sa case toute seule,
+et supprimer un personnage n'a rien à défaire — l'image reste, marquée `personnage_supprime`,
+exactement comme un enfant survit à son parent. C'est la règle « un état dérivable ne se
+garde pas en double », et c'est aussi ce qui rend vraie sans effort la promesse « jamais de
+cascade ».
+
+**Corollaire sur le port** : un personnage qui franchit le port porte **toujours** ses cases,
+que ce soit par la réponse d'un appel ou par l'annonce du flux. Elles ne sont pas dans son
+fichier — elles se déduisent —, mais une charge amputée remplacerait, à l'écran, un objet
+entier par un objet à trous. Payé le 28 août 2026 (`docs/PIEGES.md`).
 
 ### Le pliage — la fonction générale de l'atelier
 
@@ -737,6 +774,31 @@ pose sans que le compte en souffre.
 
 C'est le seul refus automatique de la version, et il est arithmétique — c'est ce qui le rend
 tenable.
+
+**Où il vit, et ce que la construction de C2 a tranché.** Le pliage est un module pur —
+`atelier/image/pliage.py`, le gabarit et les deux mesures — et un service —
+`atelier/services/pliage.py`, plier et déplier. La coupure est celle du slicer de T5 : un
+calcul pur se rejoue à l'identique et se mesure au banc, une écriture sur disque non. **Ni
+l'un ni l'autre ne connaît personnage ni pose**, et ça se lit dans leurs imports : ils parlent
+de *cases*, et c'est le service de génération — le seul qui sache déjà relier un appel à une
+case — qui les compose. C'est ce qui laissera C3 le réemployer sans le rouvrir.
+
+- **La planche payée n'est pas un asset.** Elle reste le brut de sa génération, et seules les
+  N images séparées entrent en bibliothèque : « ce qui sort du produit, ce sont des images
+  séparées » devient vrai *par construction* au lieu d'être un filtre d'export à tenir. Elles
+  vivent aux rangs 100 et suivants dans le dossier de la génération, comme les découpes de T5
+  et protégées par le même piège du tiret dans le glob de suppression. Prix assumé : les N
+  corps n'ont pas de `parent` — c'est la génération qui les relie.
+- **Un compte faux est un emplacement échoué**, avec sa raison et son coût. La relance de T1
+  s'applique alors telle quelle, au prix plein, sans qu'aucun état neuf soit inventé.
+- **Le gabarit ne s'enregistre nulle part** : il se redessine depuis la géométrie, à la
+  soumission comme à la relance, donc les deux envoient exactement la même chose. Il compte en
+  revanche comme une référence — plafond du modèle, et facture chez ceux qui facturent au
+  token —, et l'écran le dit.
+- **La reprise d'un lot est un rangement, jamais une relance.** Une planche payée et reçue que
+  la fermeture a laissée non dépliée se déplie au démarrage, gratuitement et sans appeler
+  personne ; ce qui a été coupé *en vol* reste marqué interrompu et attend un geste, comme
+  depuis T1. Les deux moitiés sont écrites côte à côte pour qu'on ne les confonde jamais.
 
 ### Le calque par différence, sur une planche d'équipement
 
@@ -805,6 +867,19 @@ recherche, ni filtres, ni sélection multiple. Elle ne rompt donc pas la règle 
 grille dans tout le produit, pas plus que la réserve de T8 ne l'avait rompue. On y voit ce
 qui manque, et on lance depuis là.
 
+**En C1 elle n'a qu'un axe — les poses.** Le second, les emplacements, n'a rien à montrer
+avant que la pièce existe : il arrive avec elle, en C3. Une colonne vide affichée d'avance
+serait du cadrage montré à la place du geste — le reproche qui a fait écarter la maquette.
+
+**Et « lancer depuis là » veut dire *armer*, pas payer.** Cliquer une case vide remplit le
+prompt de l'atelier avec le signalement du personnage et le nom de l'attitude, retient la
+case visée, et rend la main : c'est le bouton Générer de l'atelier qui dépense. Il n'existe
+donc **qu'un seul endroit d'où l'on paie** dans tout le produit, et « le corps naît dans
+l'atelier et nulle part ailleurs » reste vrai au pied de la lettre. La case visée se voit
+jusqu'au départ, dans une bande au-dessus du prompt, et se désarme dès que l'appel est parti :
+une intention qui survivrait à son geste enverrait l'image suivante — un tonneau, un décor —
+dans la case d'un personnage.
+
 ### Ce que la V2 n'est pas
 
 Ni squelette, ni os, ni interpolation entre deux poses — c'est la V3. Ni salle d'essai
@@ -819,7 +894,11 @@ s'empilent pas. Ni détection automatique de ce qui agrandit la silhouette : l'a
 **Le gabarit recopié.** Un des six modèles rend les traits du gabarit de découpe dans l'image :
 la planche est juste, mais elle arrive tramée. Un autre l'ignore comme demandé. Le projet porte
 donc **deux défauts de modèle** — produire une planche, éditer un corps — et non un seul, sans
-que l'auteur ait à y penser au moment de générer.
+que l'auteur ait à y penser au moment de générer. Ils sont posés en C2 sur l'univers, en deux
+champs nommés et **hors du dictionnaire `modeles`** : celui-là est indexé par *famille de
+sujet* — ce qu'on fabrique —, et ceux-ci répondent à une autre question, *quelle sorte d'appel
+on fait*. Trois niveaux décident donc du défaut, sans trou : le modèle de planche quand un lot
+est armé, sinon la famille du sujet, sinon le catalogue.
 
 **La planche redondante.** Deux planches sur vingt-quatre ont répété la même pose. Le compte
 était bon, donc le contrat était tenu, donc rien n'a refusé — et c'est correct : le compte

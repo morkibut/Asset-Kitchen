@@ -202,14 +202,27 @@ def refs_max(modele: dict) -> int:
 # L'appel
 # ─────────────────────────────────────────────────────────────────────────────
 
-def generer(
-    cle: str, modele: str, prompt: str, reference: bytes | None, options: dict
-) -> tuple[bytes, float]:
-    corps: dict = {"model": modele, "prompt": prompt, **options}
+def corps_requete(
+    modele: str, prompt: str, reference: bytes | None, options: dict
+) -> dict:
+    """Le corps POST, seul — construit une fois, envoyé et montré par le même code.
 
+    Sorti de `generer()` pour que `essais/verifier.py` puisse **montrer avant de
+    payer ce qui partira**. Une seconde fonction qui redirait la même chose
+    finirait par mentir le jour où l'une des deux change : le prompt affiché ne
+    serait plus le prompt envoyé, et la vérification vaudrait pour rien.
+    """
+    corps: dict = {"model": modele, "prompt": prompt, **options}
     if reference is not None:
         url = "data:image/png;base64," + base64.b64encode(reference).decode("ascii")
         corps["input_references"] = [{"type": "image_url", "image_url": {"url": url}}]
+    return corps
+
+
+def generer(
+    cle: str, modele: str, prompt: str, reference: bytes | None, options: dict
+) -> tuple[bytes, float]:
+    corps = corps_requete(modele, prompt, reference, options)
 
     requete = urllib.request.Request(
         "https://openrouter.ai/api/v1/images",

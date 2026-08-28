@@ -36,6 +36,7 @@ from typing import Any, Iterable
 
 from atelier.domaine.carte import DECORS, FAMILLES, INTERFACE, OBJETS, PERSONNAGES, TOUS
 from atelier.domaine.teinte import AUCUNE, teinte_valide
+from atelier.domaine.plan import PLAN_PAR_DEFAUT, Pose, plan_depuis_json
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -218,6 +219,28 @@ class Univers:
     # catalogue — il n'y a pas de trou, seulement un réglage qu'on n'a pas posé.
     modeles: dict[str, str] = field(default_factory=dict)
 
+    # ── Les deux modèles d'appel, arrivés en C2 ──────────────────────────────
+    #
+    # **Ils ne sont pas dans `modeles`, et c'est la décision.** Ce dictionnaire
+    # est indexé par **famille de sujet** — ce qu'on fabrique —, et ces deux-ci
+    # répondent à une autre question : *quelle sorte d'appel on fait*. Les
+    # ranger ensemble aurait demandé deux clés réservées dans un espace de noms
+    # que l'auteur croit être le sien, et la validation « famille inconnue »
+    # aurait dû les excepter.
+    #
+    # Deux, et pas un : l'essai du 28 août a mesuré qu'un modèle rend les traits
+    # du gabarit dans l'image quand un autre les ignore comme demandé — produire
+    # une planche et éditer un corps ne se jouent donc pas chez le même. Vides,
+    # le défaut du catalogue et la famille du sujet reprennent la main, comme
+    # partout ailleurs : il n'y a pas de trou, seulement un réglage qu'on n'a
+    # pas posé.
+    #
+    # `modele_edition` est écrit ici et lu en C3 : il n'a pas de sens tant qu'on
+    # n'édite pas un corps, et le poser en même temps que son jumeau évite de
+    # rouvrir l'univers pour un champ.
+    modele_planche: str = ""
+    modele_edition: str = ""
+
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
 
     @property
@@ -297,6 +320,8 @@ class Univers:
             "palette": list(self.palette),
             "palette_empreinte": self.palette_empreinte,
             "modeles": dict(self.modeles),
+            "modele_planche": self.modele_planche,
+            "modele_edition": self.modele_edition,
             # déduit — présent pour l'interface, jamais relu
             "vide": self.vide,
         }
@@ -316,6 +341,8 @@ class Univers:
             modeles={
                 f: m for f, m in (d.get("modeles") or {}).items() if f in FAMILLES and m
             },
+            modele_planche=d.get("modele_planche", "") or "",
+            modele_edition=d.get("modele_edition", "") or "",
         )
 
 
@@ -377,6 +404,25 @@ class Projet:
     # vide n'existe pas, donc sa teinte n'a plus rien à teinter.
     teintes: dict[str, str] = field(default_factory=dict)
 
+    # ── Le plan de poses ─────────────────────────────────────────────────────
+    #
+    # Arrivé en C1 (US-116). **Sur le projet, et pas dans son `Univers`** : cet
+    # objet-là est « ce que le projet impose à ce qui rentre, et ce qu'il envoie
+    # avec », et un plan de production n'impose rien à une image importée. Même
+    # raison que les teintes d'îlot, un cran plus haut.
+    #
+    # Un projet neuf en reçoit un, utilisable sans qu'aucune ligne n'ait été
+    # écrite — c'est `plan_depuis_json` qui fait la différence entre « jamais
+    # écrit » et « vidé par l'auteur ».
+    plan: tuple[Pose, ...] = PLAN_PAR_DEFAUT
+
+    # Ce qui ne doit plus partir en référence avec **rien de ce projet**
+    # (US-126) — la plus large des trois portées. Elle ne dépromeut aucun
+    # artwork et ne touche pas à l'univers : c'est un critère d'acceptation de
+    # C1, et le ranger ici plutôt que dans `Univers` le rend vrai par
+    # construction.
+    references_ecartees: tuple[str, ...] = ()
+
     def avec(self, univers: Univers) -> "Projet":
         return replace(self, univers=univers)
 
@@ -391,6 +437,8 @@ class Projet:
             "cree_le": self.cree_le,
             "univers": self.univers.en_json(),
             "teintes": dict(self.teintes),
+            "plan": [p.en_json() for p in self.plan],
+            "references_ecartees": list(self.references_ecartees),
         }
 
     @staticmethod
@@ -407,6 +455,12 @@ class Projet:
                 for groupe, valeur in (d.get("teintes") or {}).items()
                 if isinstance(groupe, str) and groupe and teinte_valide(valeur)
             },
+            plan=plan_depuis_json(d.get("plan")),
+            references_ecartees=tuple(
+                r
+                for r in (d.get("references_ecartees") or ())
+                if isinstance(r, str) and r
+            ),
         )
 
 
@@ -440,7 +494,7 @@ class Collection:
 _INTERDITS = re.compile(r"[^a-z0-9]+")
 
 
-def repere(nom: str, pris: object = ()) -> str:
+def repere(nom: str, pris: object = (), defaut: str = "projet") -> str:
     """Le nom, réduit à ce qu'un dossier accepte partout, et rendu unique.
 
     Les accents sont dépliés plutôt que remplacés — « Forêt » donne `foret` et
@@ -448,12 +502,14 @@ def repere(nom: str, pris: object = ()) -> str:
     la normalisation Unicode d'un nom de dossier : ne garder que `[a-z0-9-]`
     évite d'avoir un jour à en débattre.
 
-    Un nom qui ne laisse rien — « ✳︎ », « 日本 » — retombe sur `projet`, puis sur
-    `projet-2` : un dossier sans nom vaut mieux qu'un refus de créer.
+    Un nom qui ne laisse rien — « ✳︎ », « 日本 » — retombe sur `defaut`, puis sur
+    `defaut-2` : un dossier sans nom vaut mieux qu'un refus de créer. C1 s'en
+    sert pour les poses et les personnages, qui ne sont pas des projets et n'ont
+    aucune raison de s'appeler ainsi quand leur nom ne laisse rien.
     """
     deplie = unicodedata.normalize("NFKD", nom)
     sans_accent = "".join(c for c in deplie if not unicodedata.combining(c))
-    base = _INTERDITS.sub("-", sans_accent.lower()).strip("-") or "projet"
+    base = _INTERDITS.sub("-", sans_accent.lower()).strip("-") or defaut
 
     if base not in pris:
         return base

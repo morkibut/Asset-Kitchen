@@ -4,7 +4,7 @@
 **C'est un adaptateur, pas un service**, et il est ici pour la raison qui a fait
 ce dossier : *le vocabulaire de l'extérieur ne le franchit pas*. « All connection
 attempts failed » est ressorti tel quel dans la barre d'état le 27 août
-(`AGENTS.md` § Pièges connus) ; toute panne de transport se traduit donc en une
+(`docs/PIEGES.md`) ; toute panne de transport se traduit donc en une
 phrase du produit **avant** de sortir d'ici.
 
 Il ne connaît ni carte, ni projet, ni tableau. On lui donne une adresse, il rend

@@ -27,9 +27,11 @@ from atelier.image import rendre_en_png
 from atelier.services import Atelier
 
 # **La liste close, rendue au schéma** — donc à `/api/docs`, et donc au refus
-# que FastAPI compose tout seul. Écrire les six noms ici en aurait fait un
-# second endroit où la liste vit, et le premier îlot d'une septième teinte
-# aurait été accepté par l'un et refusé par l'autre.
+# que FastAPI compose tout seul. Écrire les noms ici en aurait fait un second
+# endroit où la liste vit, et le premier îlot d'une teinte de plus aurait été
+# accepté par l'un et refusé par l'autre. Elle est passée de six à dix le
+# 28 août 2026 sans que cette ligne change, ce qui est très exactement la
+# preuve qu'il n'y a qu'un endroit.
 #
 # **Le vide en fait partie, et c'est une valeur** : retirer une teinte est un
 # geste comme en poser une, et un îlot sans teinte porte celle du châssis — ce
@@ -153,6 +155,20 @@ class CorpsTeinte(BaseModel):
     projet: str | None = None
 
 
+class CorpsDeplacementIlot(BaseModel):
+    """Le déplacement d'un îlot entier. **Le groupe est dans le corps** pour la
+    raison de `CorpsTeinte`, et les places y sont **toutes** : un îlot se déplace
+    entier ou pas du tout, et c'est le service qui le vérifie.
+
+    Les places sont absolues et non un écart, parce qu'une carte groupée avant T8
+    n'a **pas** de position écrite : l'écran lui en calcule une à l'ouverture, et
+    un écart n'aurait rien eu à quoi s'ajouter pour elle."""
+
+    groupe: str = Field(min_length=1)
+    places: dict[str, list[float]] = Field(default_factory=dict)
+    projet: str | None = None
+
+
 class CorpsPromotion(BaseModel):
     officiel: bool = True
     famille: Literal["personnages", "objets", "decors", "interface", "tous"] = "tous"
@@ -185,6 +201,11 @@ class CorpsUnivers(BaseModel):
     cible_px: int | None = None
     couleurs: int | None = None
     modeles: dict[str, str] | None = None
+    # **Deux défauts d'appel, pas de famille** (C2) : produire une planche et
+    # éditer un corps ne se jouent pas chez le même modèle — mesuré le 28 août.
+    # Le vide les remet au défaut du catalogue.
+    modele_planche: str | None = None
+    modele_edition: str | None = None
 
 
 class CorpsRealignement(BaseModel):
@@ -355,7 +376,7 @@ async def teinter(requete: Request, corps: CorpsTeinte) -> dict[str, Any]:
     l'adresse dépendrait alors de l'ordre des fonctions dans le fichier, donc
     d'une ligne que le prochain réarrangement déplacerait sans rien casser de
     visible. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`,
-    `AGENTS.md` § Pièges connus) ; à trois segments, aucune route existante n'a
+    `docs/PIEGES.md`) ; à trois segments, aucune route existante n'a
     cette forme et il n'y a plus d'ordre à respecter.
 
     Rend les teintes du projet : elles y vivent, et l'écran les apprend d'ici.
@@ -364,6 +385,25 @@ async def teinter(requete: Request, corps: CorpsTeinte) -> dict[str, Any]:
     identifiant = _projet(requete, corps.projet)
     projet_teinte = atelier.univers.teinter(identifiant, corps.groupe, corps.teinte)
     return {"projet": identifiant, "teintes": dict(projet_teinte.teintes)}
+
+
+@routeur.put("/board/groups/move")
+async def deplacer_ilot(requete: Request, corps: CorpsDeplacementIlot) -> dict[str, Any]:
+    """Déplacer un îlot entier (US-113) — *un seul appel, parce que c'est un seul geste*.
+
+    **Trois segments, et pour la raison exacte de `/board/groups/tint`** : à deux,
+    `/board/move` entre en concurrence avec `PUT /board/{carte}` et n'est atteinte
+    que si elle est déclarée avant, donc son adresse dépendrait de l'ordre des
+    fonctions dans ce fichier.
+
+    Elle ne reclasse rien : déplacer un rangement, ce n'est pas reclasser ce qu'il
+    contient. Le groupe des cartes ne bouge pas, et l'îlot garde ses liens et sa
+    teinte.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    cartes = atelier.univers.deplacer_ilot(identifiant, corps.groupe, corps.places)
+    return {"projet": identifiant, "cartes": [c.en_json() for c in cartes]}
 
 
 @routeur.post("/board/{carte}/retry")
@@ -499,6 +539,8 @@ async def regler_univers(
         cible_px=corps.cible_px,
         couleurs=corps.couleurs,
         modeles=corps.modeles,
+        modele_planche=corps.modele_planche,
+        modele_edition=corps.modele_edition,
     )
     return {"projet": identifiant, "univers": objet.univers.en_json()}
 

@@ -286,6 +286,7 @@ chacune.**
 ---
 
 ## C1 · Le personnage, son plan, une pose, et ce qui part avec elle
+*18 critères · 13 US (115–127) · tenue le 28 août 2026*
 
 **User stories** : 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127
 
@@ -311,24 +312,60 @@ une génération est invisible.
 
 ### Critères d'acceptation
 
-- [ ] Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite
-- [ ] Un personnage se crée avec un nom et une description ; sa description part avec chaque génération de pose, sans être retapée
-- [ ] Une pose s'ajoute, se renomme et se retire du plan du projet à tout moment ; ajouter une pose ajoute une case vide à chaque personnage qui porte ce plan, et ne lance **aucune** génération
-- [ ] Un personnage rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides
-- [ ] Écrire un nom de pose qui n'existe pas le crée sur-le-champ, sans passer par un écran de gestion
-- [ ] La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et la grille de la bibliothèque reste la seule grille d'assets du produit
-- [ ] Une carte image du tableau se désigne concept art d'un personnage ou d'une pièce, et reste à sa place — aucune copie, aucun second rangement
-- [ ] Une carte désignée se distingue sur la toile de celle qui dort
-- [ ] Avant de lancer, chaque référence envoyée est listée avec sa provenance nommée, et le coût est annoncé
-- [ ] Une référence se décoche à trois portées — cette génération, ce personnage, tout le projet — et la portée retenue est lisible
-- [ ] La règle de préséance entre les trois portées est affichée à l'écran, pas déduite
-- [ ] Décocher une référence ne modifie ni l'univers, ni les artworks officiels du projet
-- [ ] Le nombre de références effectivement envoyées reste visible au moment de générer, comme depuis T4
-- [ ] Une pose générée entre en bibliothèque comme tout asset : projet courant, filiation, coût réel enregistré
-- [ ] Aucun écran de création de personnage avec son propre prompt n'existe : le corps se désigne depuis une image née dans l'atelier
-- [ ] La fiche de **n'importe quel** asset nomme le modèle qui l'a produit — le modèle exact pour une image générée, « importé » pour une image importée
-- [ ] Réseau coupé : le plan, le personnage, la matrice et le panneau des références se consultent et se modifient ; seule la génération échoue, au moment où on l'essaie
-- [ ] Supprimer un personnage laisse ses images en place, chacune marquée « personnage supprimé » — jamais de cascade
+- [x] Un projet neuf porte un plan de poses utilisable sans qu'aucune ligne n'ait été écrite
+- [x] Un personnage se crée avec un nom et une description ; sa description part avec chaque génération de pose, sans être retapée
+- [x] Une pose s'ajoute, se renomme et se retire du plan du projet à tout moment ; ajouter une pose ajoute une case vide à chaque personnage qui porte ce plan, et ne lance **aucune** génération
+- [x] Un personnage rattaché à six poses affiche six cases vides ; une pose générée en remplit une, et les cinq autres restent visiblement vides
+- [x] Écrire un nom de pose qui n'existe pas le crée sur-le-champ, sans passer par un écran de gestion
+- [x] La matrice n'offre ni recherche, ni filtres, ni sélection multiple — et la grille de la bibliothèque reste la seule grille d'assets du produit
+- [x] Une carte image du tableau se désigne concept art d'un personnage ou d'une pièce, et reste à sa place — aucune copie, aucun second rangement
+- [x] Une carte désignée se distingue sur la toile de celle qui dort
+- [x] Avant de lancer, chaque référence envoyée est listée avec sa provenance nommée, et le coût est annoncé
+- [x] Une référence se décoche à trois portées — cette génération, ce personnage, tout le projet — et la portée retenue est lisible
+- [x] La règle de préséance entre les trois portées est affichée à l'écran, pas déduite
+- [x] Décocher une référence ne modifie ni l'univers, ni les artworks officiels du projet
+- [x] Le nombre de références effectivement envoyées reste visible au moment de générer, comme depuis T4
+- [x] Une pose générée entre en bibliothèque comme tout asset : projet courant, filiation, coût réel enregistré
+- [x] Aucun écran de création de personnage avec son propre prompt n'existe : le corps se désigne depuis une image née dans l'atelier
+- [x] La fiche de **n'importe quel** asset nomme le modèle qui l'a produit — le modèle exact pour une image générée, « importé » pour une image importée
+- [x] Réseau coupé : le plan, le personnage, la matrice et le panneau des références se consultent et se modifient ; seule la génération échoue, au moment où on l'essaie
+- [x] Supprimer un personnage laisse ses images en place, chacune marquée « personnage supprimé » — jamais de cascade
+
+### Ce que la construction a décidé
+
+Quatre décisions prises en écrivant, et qui ne sont pas dans le cadrage :
+
+- **Un seul plan par projet, et il n'a pas de nom.** Le découpage en prévoyait plusieurs,
+  nommés ; c'est inutile tant qu'un personnage peut **écarter** les poses qu'il ne tient pas
+  (US-117) — un figurant et un héros se comparent au même plan, l'un en cochant moins de
+  cases. Deux façons de dire « ce personnage n'a pas besoin de ça » auraient fini par se
+  contredire.
+- **Le personnage range ce qu'il écarte, jamais ce qu'il tient.** À l'écran on coche des
+  poses tenues ; sur le disque on garde le complément. C'est ce qui rend « ajouter une pose
+  ajoute une case vide à chaque personnage » vrai **sans écrire un seul fichier de
+  personnage** — donc sans balayage capable de réussir à moitié.
+- **La case n'est pas un objet : c'est l'image qui dit sa case.** L'asset porte son
+  personnage et sa pose, la matrice se calcule là-dessus. Une image supprimée vide sa case
+  toute seule, et supprimer un personnage n'a rien à défaire — l'image reste, marquée.
+- **Le coût annoncé est mesuré, jamais lu dans un tarif.** Le produit ne porte aucun prix de
+  catalogue et ne doit pas en porter : ce qu'il annonce est la médiane de ce que ce
+  modèle-là a réellement facturé sur cette machine, et « jamais appelé » quand il n'en sait
+  rien. Même geste que l'attente de la jauge de T1.
+
+### Ce que la première séance a trouvé
+
+**C1 a été utilisée pour de vrai au navigateur, et ça a trouvé trois défauts.** Neuvième fois
+de suite. Deux tiennent à la même racine — *un objet qui voyage par deux routes doit avoir la
+même forme sur les deux* : le personnage porte des cases déduites, et seul le tableau de bord
+les mettait dans sa charge. Écrire une description remplaçait donc un personnage entier par
+un personnage à trous, la matrice se vidait, et le rendu suivant tombait — écran blanc. Le
+second est le même défaut vu de l'autre bout : élargir la portée d'un décochage écrivait bien
+sur le disque, mais rien ne redemandait ce qui part, et le panneau montrait l'état d'avant.
+Le troisième était une **copie périmée** : la case visée gardait l'objet du moment où on
+l'avait armée. Elle ne garde plus qu'un identifiant, et se relit dans la liste que le flux
+tient à jour. Les deux premiers sont dans `docs/PIEGES.md`, avec ce qui les avait rendus
+invisibles : **le double des essais d'écran, lui, rendait la forme entière** — il avait été
+écrit d'après l'intention, pas d'après le serveur.
 
 ## Bloquée par
 
@@ -337,6 +374,7 @@ une génération est invisible.
 ---
 
 ## C2 · Le lot plié
+*12 critères · 8 US (128–135) · tenue le 28 août 2026*
 
 **User stories** : 128, 129, 130, 131, 132, 133, 134, 135
 
@@ -362,18 +400,56 @@ servent les deux usages.
 
 ### Critères d'acceptation
 
-- [ ] Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après **un seul** appel payant, et le journal du projet montre un appel et non neuf
-- [ ] La planche reçue est dépliée automatiquement ; aucun geste de découpe n'est demandé à l'auteur
-- [ ] Un lot qui revient avec huit images pour neuf demandées est refusé : aucune image n'entre dans le plan, et le lot se relance d'un geste
-- [ ] Le compte d'images est le **seul** refus automatique — les mesures de ressemblance et de dérive de grille s'affichent et ne bloquent rien
-- [ ] Deux poses trop semblables dans un même lot sont signalées case par case ; le lot n'est pas refusé et les images entrent
-- [ ] Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein — sans annoncer de probabilité
-- [ ] Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux autres
-- [ ] Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues, et rien ne se relance tout seul
-- [ ] Ce qui part en référence et les réglages d'une génération s'enregistrent sous un nom, et se rappellent d'un geste sur un autre personnage
-- [ ] Ce qui sort du produit reste des images séparées : aucune feuille assemblée n'est livrable
-- [ ] Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément sur l'univers du projet, et l'auteur n'a pas à les choisir à chaque génération
-- [ ] Le coût réel du lot est enregistré et totalisé par projet, comme tout appel depuis T1
+- [x] Neuf poses sélectionnées et lancées ensemble donnent neuf images de corps distinctes après **un seul** appel payant, et le journal du projet montre un appel et non neuf
+- [x] La planche reçue est dépliée automatiquement ; aucun geste de découpe n'est demandé à l'auteur
+- [x] Un lot qui revient avec huit images pour neuf demandées est refusé : aucune image n'entre dans le plan, et le lot se relance d'un geste
+- [x] Le compte d'images est le **seul** refus automatique — les mesures de ressemblance et de dérive de grille s'affichent et ne bloquent rien
+- [x] Deux poses trop semblables dans un même lot sont signalées case par case ; le lot n'est pas refusé et les images entrent
+- [x] Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot entier refusé et relancé au prix plein — sans annoncer de probabilité
+- [x] Une pose ratée à l'intérieur d'un lot accepté se régénère seule, sans toucher aux autres
+- [x] Un lot interrompu par la fermeture de l'application se reprend au redémarrage sans repayer les images déjà reçues, et rien ne se relance tout seul
+- [x] Ce qui part en référence et les réglages d'une génération s'enregistrent sous un nom, et se rappellent d'un geste sur un autre personnage
+- [x] Ce qui sort du produit reste des images séparées : aucune feuille assemblée n'est livrable
+- [x] Le modèle par défaut pour produire une planche et celui pour éditer un corps se règlent séparément sur l'univers du projet, et l'auteur n'a pas à les choisir à chaque génération
+- [x] Le coût réel du lot est enregistré et totalisé par projet, comme tout appel depuis T1
+
+### Ce que la construction a décidé
+
+Cinq décisions prises en écrivant, et qui ne sont pas dans le cadrage :
+
+- **La planche payée n'est pas un asset.** Elle reste le brut de sa génération — payée,
+  gardée, redépliable — et seules les N images séparées entrent en bibliothèque. C'est ce qui
+  rend « aucune feuille assemblée n'est livrable » vrai **par construction** plutôt que par un
+  filtre d'export qu'il faudrait tenir. Le prix est assumé et il faut l'écrire : les N corps
+  n'ont pas de `parent`, c'est la **génération** qui les relie — et quand le compte tombe faux,
+  on ne voit pas ce qui est revenu.
+- **Un lot refusé sur le compte est un emplacement échoué, et rien de plus.** La relance de T1
+  s'applique alors telle quelle — un geste, au prix plein —, sans qu'aucun état neuf soit
+  inventé. Conséquence assumée, et c'est la règle du produit depuis T1 : il reste relançable
+  **dans l'onglet qui l'a vu échouer**, et un rechargement n'en garde que la ligne de coût au
+  journal.
+- **Le gabarit ne s'enregistre nulle part.** Ni asset, ni carte : il se redessine du geste
+  depuis la géométrie, à la soumission comme à la relance, donc les deux envoient exactement la
+  même chose. Il compte en revanche comme **une référence** — il occupe une place dans le
+  plafond du modèle et il coûte chez ceux qui facturent au token —, et l'écran le dit dans
+  *Ce qui part*. Un modèle qui n'accepte aucune référence part sans lui, et ne se grise pas
+  pour autant : il peut honorer la demande, un peu moins bien.
+- **La ressemblance s'affiche avec son jumeau, et sans seuil.** Un seuil serait un nombre
+  inventé sur un corpus de vingt-quatre planches. Ce corpus dit ceci, et c'est assez : les deux
+  planches qui répétaient une pose ressortent à 0,999 et 1,000 quand les vingt-deux autres
+  plafonnent à 0,897.
+- **La case à cocher de la matrice porte une attitude, jamais une image.** C'est ce qui garde
+  vrai l'invariant de C1 — *la matrice n'offre pas de sélection multiple* : on n'y sélectionne
+  toujours aucun asset. La distinction n'est pas de vocabulaire, c'est elle qui empêche l'écran
+  de redevenir une seconde planche contact, et un essai d'écran tombe le jour où une coche
+  passera sur une vignette.
+
+### Ce que la première séance a trouvé
+
+*À écrire après usage.* Le pliage pur a été éprouvé sur les **vingt-quatre planches réelles**
+de `essais/essai_grille.py` — zéro écart de compte avec le banc du 28 août —, mais la tranche
+n'a pas encore servi au navigateur, et la règle du dépôt tient : *une tranche n'est finie que
+lorsqu'on s'en est servi*.
 
 ## Bloquée par
 

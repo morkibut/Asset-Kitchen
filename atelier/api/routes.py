@@ -197,6 +197,8 @@ async def modeles(
     proportions: str = Query("1:1"),
     resolution: str | None = Query(None),
     echelle: str = Query(""),
+    personnage: str = Query(""),
+    cases: int = Query(0, ge=0),
 ) -> dict[str, Any]:
     """Le catalogue, **et la raison du grisé de chaque modèle**.
 
@@ -221,14 +223,27 @@ async def modeles(
     etat = atelier.catalogue.etat
     projet = atelier.bibliotheque.courant
     compte = atelier.generations.compter_references(
-        projet, echelle, tuple(Reinjection(asset=f"~{rang}") for rang in range(references))
+        projet,
+        echelle,
+        tuple(Reinjection(asset=f"~{rang}") for rang in range(references)),
+        personnage=personnage or None,
+        # **Combien de cases le lot armé demande**, ou zéro. Il ne change qu'une
+        # chose ici, et elle compte : le gabarit part avec l'appel, donc il
+        # occupe une place dans le plafond du modèle et décide du grisé.
+        cases=cases,
     )
     demande = _demande_de_jauge(compte["total"], proportions, resolution)
     defaut = atelier.catalogue.defaut(demande)
+    univers = atelier.univers.univers(projet)
+    # **Le défaut suit ce qu'on fabrique, et une planche n'est pas un sujet.**
+    # Un lot armé demande une planche : c'est le modèle de planche du projet qui
+    # décide, avant la famille du sujet — mesuré le 28 août, un modèle rend les
+    # traits du gabarit dans l'image là où un autre les ignore. Sans réglage,
+    # la famille reprend la main, puis le catalogue : trois niveaux, aucun trou.
     du_projet = (
-        atelier.univers.univers(projet).modele(compte["famille"])
-        if compte["famille"]
-        else None
+        (univers.modele_planche or None)
+        if cases >= 2
+        else (univers.modele(compte["famille"]) if compte["famille"] else None)
     )
     return {
         "recu_le": etat.recu_le,
@@ -236,6 +251,16 @@ async def modeles(
         "raison": etat.raison,
         "defaut": {"modele": du_projet or defaut.modele, "options": defaut.options},
         "references": compte,
+        # **Ce qu'une image a coûté chez chaque modèle, en médiane** (US-121).
+        # Une mesure, jamais un tarif : le produit ne porte aucun prix de
+        # catalogue, et « le coût réel facturé fait foi » partout ailleurs. Un
+        # modèle jamais appelé n'y figure pas — le produit dit alors qu'il ne
+        # sait pas plutôt que d'inventer un chiffre.
+        "couts": {
+            m.identifiant: cout
+            for m in etat.modeles
+            if (cout := atelier.generations.cout_attendu(m.identifiant)) is not None
+        },
         "modeles": [_modele_en_json(m, demande) for m in etat.modeles],
     }
 
@@ -310,6 +335,24 @@ class CorpsGeneration(BaseModel):
     # qui porte « edition » est ce qu'on retouche : il part avec l'appel comme
     # les autres, et c'est le seul qui donne sa filiation à ce qui sortira.
     references: list[CorpsReinjection] = Field(default_factory=list)
+    # **La case que cet appel vise** (US-120). Vides pour une génération
+    # ordinaire, qui est le cas courant : l'atelier fabrique des images, et
+    # seules quelques-unes remplissent une case de personnage. L'image qui
+    # reviendra en héritera à sa naissance, sans que personne ait à la ranger.
+    personnage: str | None = None
+    pose: str | None = None
+    # **Les cases d'un lot plié** (US-128). Deux poses ou plus, et l'appel part
+    # en une seule planche que l'atelier dépliera lui-même. **La même route que
+    # tout le reste**, et c'est la décision : il n'existe qu'un seul endroit
+    # d'où l'on paie dans tout le produit, et une seconde route de génération en
+    # aurait fait deux. Vide ou à une seule pose, c'est la génération de C1 —
+    # `pose` dit alors la case, et rien n'est plié.
+    poses: list[str] | None = None
+    # **Ce que cette génération-ci n'envoie pas** (US-126). Absent, les deux
+    # portées durables — le projet et le personnage — s'appliquent ; présent, il
+    # décide seul, parce que c'est la portée la plus étroite. Un agent qui ne
+    # dit rien part donc avec ce que l'auteur a posé une fois pour toutes.
+    references_ecartees: list[str] | None = None
 
 
 @routeur.post("/generations", status_code=202)
@@ -339,6 +382,10 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         references=[
             Reinjection(asset=r.asset, role=r.role) for r in corps.references
         ],
+        personnage=corps.personnage,
+        pose=corps.pose,
+        poses=corps.poses,
+        references_ecartees=corps.references_ecartees,
     )
     return generation.en_json()
 
@@ -666,6 +713,55 @@ async def nommer_recette(
 async def oublier_recette(requete: Request, nom: str) -> dict[str, Any]:
     recettes = _atelier(requete).assets.oublier_recette(nom)
     return {"recettes": {n: r.en_json() for n, r in recettes.items()}}
+
+
+# ── Les jeux de réglages nommés ──────────────────────────────────────────────
+#
+# **Le quatrième rôle d'une réinjection**, déclaré en T1 et resté vide depuis
+# (US-12). Le seul des quatre qui n'envoie aucune image : il repeuple le
+# générateur au lieu de partir avec l'appel.
+#
+# Un jeu de sa propre route, et pas un champ de plus sur `/recipes` : une recette
+# dit ce qu'on fait à une image **déjà payée**, un jeu de réglages dit ce qui part
+# **avant** de payer. Deux moments, deux questions, deux adresses.
+
+
+class CorpsReglages(BaseModel):
+    """Ce qui part, et comment — **jamais pour qui** (US-134).
+
+    Ni personnage, ni pose, ni prompt : c'est toute la promesse du geste, *se
+    rappeler d'un geste sur un autre personnage*. Un jeu qui porterait le
+    personnage serait un jeu qu'on ne pourrait rejouer que sur lui.
+    """
+
+    modele: str = ""
+    proportions: str = "1:1"
+    resolution: str | None = None
+    options: dict[str, Any] = Field(default_factory=dict)
+    echelle: str = ""
+    references: list[CorpsReinjection] = Field(default_factory=list)
+    references_ecartees: list[str] = Field(default_factory=list)
+
+
+@routeur.get("/presets")
+async def liste_reglages(requete: Request) -> dict[str, Any]:
+    return {"reglages": _atelier(requete).generations.reglages()}
+
+
+@routeur.put("/presets/{nom}")
+async def nommer_reglages(
+    requete: Request, nom: str, corps: CorpsReglages
+) -> dict[str, Any]:
+    return {
+        "reglages": _atelier(requete).generations.nommer_reglages(
+            nom, corps.model_dump()
+        )
+    }
+
+
+@routeur.delete("/presets/{nom}")
+async def oublier_reglages(requete: Request, nom: str) -> dict[str, Any]:
+    return {"reglages": _atelier(requete).generations.oublier_reglages(nom)}
 
 
 def _asset(requete: Request, identifiant: str) -> Asset:

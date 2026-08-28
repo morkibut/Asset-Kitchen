@@ -224,6 +224,17 @@ export const AIDE: Record<string, Explication> = {
       "C'est le mécanisme qui empêche un artwork de contaminer un sujet qui n'a rien à voir avec lui. Au banc d'essai, un goblin figuratif laissé en référence a transmis sa tunique et ses bottes lacées au squelette généré ensuite : la famille est la réponse à ça.\n\n« Tous » est le cas particulier utile — une planche de matières, de palette ou d'échantillons de trait, qui accompagne toute génération sans transmettre de personnage. C'est le défaut, et c'est le bon défaut pour une planche de style.\n\nDeux conséquences à garder en tête : le compte de références est plafonné par modèle (le bloc « Ce qui part » affiche n / max, en rouge au-dessus), et chez certains fournisseurs le prix croît avec le nombre de références — un univers riche peut donc renverser le classement des modèles par coût.",
   },
 
+  "carte.concept": {
+    nom: "Concept art de",
+    ou: "univers",
+    quoi: "Les personnages qui se servent de cette carte comme référence.",
+    change:
+      "Elle part avec chaque génération de ce personnage-là, **quelle que soit la famille du sujet** — un artwork officiel se filtre par famille, un concept art a été désigné pour lui.",
+    origine: "toi · les personnages viennent du projet",
+    long:
+      "Désigner ne déplace rien : la carte reste sur le tableau, à sa place, ni promue ni copiée en bibliothèque. Il n'y a pas de second endroit où ranger des images, et c'est ce qui évite d'en avoir deux qui divergent.\n\nUne carte peut servir à plusieurs personnages — d'où des bascules et non un choix unique. Le coin qui paraît en haut à gauche dit qu'elle sert ; celui d'en haut à droite dit qu'elle est un artwork officiel. Une carte peut porter les deux.",
+  },
+
   "carte.officiel": {
     nom: "artwork officiel",
     ou: "univers",
@@ -276,7 +287,7 @@ export const AIDE: Record<string, Explication> = {
       "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
     origine: "toi · la grille au départ · rien ne s'enregistre",
     long:
-      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\n**Trois gestes, et ils tiennent en trois lignes.** *Tirer* une carte la pose et la classe. *Tirer depuis la petite poignée* d'une carte ou du nom d'un îlot trace un lien vers ce qu'on lâche dessous. *Double-cliquer* sur le plan nu écrit une note à cet endroit-là — c'est une carte texte, tu la retrouves dans la grille.\n\nCtrl+Z défait le dernier geste de composition — déplacer, élargir, classer, déclasser, tirer un lien, le couper. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
+      "La règle tient en une phrase, et c'est tout ce qu'il y a à comprendre de cet écran : **la toile montre ce qui est classé, la réserve contient ce qui reste à classer.** Une carte groupée est dans son îlot, une carte posée sans groupe est sur le plan nu, et ce qui n'a ni l'un ni l'autre attend à droite.\n\nUn îlot *est* un groupe — pas un cadre indépendant. Il n'a ni nom propre ni existence propre : il est l'étendue de ses cartes. Le créer, c'est taper un nom de groupe dans le menu d'une carte, ou en tirer une dans un îlot voisin ; le vider de son dernier membre le fait disparaître, parce qu'un groupe sans carte n'est écrit nulle part — et pendant que tu tires cette dernière carte dehors, l'îlot vire au rouge et te dit ce qu'il emporte.\n\nUne carte peut être posée sans être classée : trois images côte à côte pour voir si elles vont ensemble avant de décider qu'elles font un groupe. Son pied dit « posée ».\n\n**Quatre gestes, et ils tiennent en quatre lignes.** *Tirer* une carte la pose et la classe. *Tirer un îlot par la bande de son titre* le déplace avec toutes ses cartes, sans rien reclasser — un clic au même endroit ouvre son menu, c'est la distance qui sépare les deux. *Tirer depuis la petite poignée* d'une carte ou du nom d'un îlot trace un lien vers ce qu'on lâche dessous. *Double-cliquer* sur le plan nu écrit une note à cet endroit-là — c'est une carte texte, tu la retrouves dans la grille. Le bouton **+ note** de la barre fait la même chose sans viser : en toile il pose le brouillon au milieu de ce que tu regardes, en grille il le fait naître en réserve. Le double-clic reste le geste précis, celui qui désigne l'endroit.\n\nCtrl+Z défait le dernier geste de composition — déplacer une carte ou un îlot entier, élargir, classer, déclasser, tirer un lien, le couper. Un îlot de douze cartes se défait d'un seul Ctrl+Z, pas de douze : la pile compte les gestes, pas les écritures. La pile vit dans l'onglet et meurt en quittant l'écran : ce n'est pas un historique de projet, c'est le rattrapage du geste en cours. Au retour, ce qui est sur le disque fait foi.",
   },
 
   // ── L'Univers — les liens, les notes et la couleur (T9) ───────────────────
@@ -313,26 +324,26 @@ export const AIDE: Record<string, Explication> = {
     quoi: "Ce qu'une carte texte dit — l'intention que tu as posée au milieu des images.",
     change:
       "Rien à la génération. Une note ne part nulle part : ce qui voyage en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
-    origine: "toi · au collage, ou au double-clic sur la toile",
+    origine: "toi · au collage, au double-clic sur la toile, ou par « + note »",
     long:
-      "Sur la toile, un double-clic sur le plan nu ouvre un champ à l'endroit exact où tu as cliqué, et ce que tu écris devient une note posée là. Un champ quitté vide ne crée rien.\n\nLe corriger ici plutôt que de retirer la note et de la recoller : recoller lui ferait perdre sa place, sa teinte et les liens qui y aboutissent.",
+      "Sur la toile, un double-clic sur le plan nu ouvre un champ à l'endroit exact où tu as cliqué, et ce que tu écris devient une note posée là. Un champ quitté vide ne crée rien, et Échap l'abandonne : le geste s'essaie sans rien casser.\n\nLe bouton **+ note** de la barre du tableau ouvre le même champ sans avoir à viser — au milieu de ce que la toile montre, ou en réserve quand tu es en grille, qui est très exactement l'endroit de ce qui n'est pas encore classé. C'est le seul chemin qui existe quand tu n'as pas déjà le texte dans le presse-papier.\n\nLe corriger ici plutôt que de retirer la note et de la recoller : recoller lui ferait perdre sa place, sa teinte et les liens qui y aboutissent.",
   },
 
   "note.teinte": {
     nom: "teinte d'une note",
     ou: "univers",
-    quoi: "Une des six couleurs sourdes, posée sur le fond d'une note.",
+    quoi: "Une des dix couleurs sourdes, posée sur le fond d'une note.",
     change:
       "Rien à la génération, et rien au rangement non plus. C'est **le seul endroit du produit où une couleur ne veut rien dire** : elle est là parce que tu l'as choisie, jamais parce qu'un état la commande.",
     origine: "toi · sans teinte au départ",
     long:
-      "La liste est fermée à six, et il n'existe aucun sélecteur libre : le premier îlot rouge vif se lirait comme un échec. Les six sont posées à la même clarté et sous le contraste de toutes les couleurs qui, elles, disent quelque chose — réussi, réglé à la main, raté, et l'accent du produit.\n\nUne carte image n'en porte aucune, et ce n'est pas un oubli : colorier chaque carte reconstruirait un second rangement, invisible dans la grille et concurrent du groupe. La couleur se pose sur ce qui rassemble — un îlot, une note —, jamais sur ce qui est rassemblé.\n\nLa septième pastille n'est pas une septième couleur : c'est le châssis, c'est-à-dire l'absence de teinte, montrée plutôt que dite.",
+      "La liste est fermée à dix, et il n'existe aucun sélecteur libre : le premier îlot rouge vif se lirait comme un échec. Les dix sont posées à la même clarté et sous le contraste de toutes les couleurs qui, elles, disent quelque chose — réussi, réglé à la main, raté, et l'accent du produit. Deux arcs de la roue sont interdits, et ce sont ceux des sémantiques : c'est pour ça qu'aucune n'est un rouge, un vert franc ou un ambre.\n\nUne carte image n'en porte aucune, et ce n'est pas un oubli : colorier chaque carte reconstruirait un second rangement, invisible dans la grille et concurrent du groupe. La couleur se pose sur ce qui rassemble — un îlot, une note —, jamais sur ce qui est rassemblé.\n\nLa dernière pastille n'est pas une couleur de plus : c'est le châssis, c'est-à-dire l'absence de teinte, montrée plutôt que dite.",
   },
 
   "ilot.teinte": {
     nom: "teinte d'un îlot",
     ou: "univers",
-    quoi: "La même palette de six, posée sur le cadre et le nom d'un îlot.",
+    quoi: "La même palette de dix, posée sur le cadre, le bandeau et le fond d'un îlot.",
     change:
       "Rien à la génération, et rien au groupe. Un îlot teinté et un îlot nu contiennent exactement les mêmes cartes, et envoient exactement les mêmes références.",
     origine: "toi · sans teinte au départ · part avec le dernier membre",
@@ -371,6 +382,8 @@ export const AIDE: Record<string, Explication> = {
     change:
       "Multiplie le prix à l'identique : 4 variations, ce sont 4 appels et 4 fois le coût. Ce ne sont pas 4 images différentes demandées, ce sont 4 tirages de la même demande.",
     origine: "toi · défaut 1",
+    long:
+      "Un **lot d'attitudes** les éteint, et c'est l'inverse exact : quatre variations, ce sont quatre appels pour la même demande ; neuf attitudes cochées ensemble, c'est **un seul appel** pour neuf demandes différentes. Les deux ne se combinent pas — c'est tout l'intérêt du lot, et le refus le dit plutôt que de ramener silencieusement les variations à un.\n\nCe qu'un lot risque est écrit à côté du prix : si le nombre d'images revenues n'est pas celui demandé, **rien n'entre** et le lot se relance au prix plein. C'est le seul refus automatique du produit, et il est arithmétique. Tout le reste — ressemblance entre cases, dérive de grille — s'affiche case par case et ne bloque jamais : deux planches sur vingt-quatre, à l'essai qui a décidé de la méthode, avaient le compte juste et répétaient une pose. Le contrat était tenu, la planche sans valeur, et c'est à toi de le voir.",
   },
 
   "reglages.sujet": {
@@ -574,6 +587,17 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · le contrat de génération nomme les rôles",
     long:
       "Réinjecter ne coûte rien tant que tu n'as pas cliqué Générer : le rôle se pose dans le panneau de l'atelier, et le bloc « Ce qui part » se met à jour pour le dire. Le compte de références y grimpe d'un cran, et il est plafonné par le modèle choisi.\n\nLe quatrième rôle est le seul qui touche au prompt. Il est là pour la reprise : refaire une image dont on a perdu les réglages est le geste qu'on fait le plus souvent après un tri.",
+  },
+
+  "fiche.personnage": {
+    nom: "Corps de",
+    ou: "retouche",
+    quoi: "Le personnage et l'attitude dont cette image est le corps.",
+    change:
+      "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
+    origine: "toi · le plan d'attitudes vient du projet",
+    long:
+      "Un corps naît dans l'atelier et nulle part ailleurs : on écrit un sujet, on génère, on obtient une image, et c'est ici qu'on dit ce qu'elle est. Il n'existe pas d'écran de création de personnage avec son propre prompt, et c'est délibéré — tout ce qui s'empilera ensuite repose sur une image dont on connaît déjà la grille et la palette.\n\nLes attitudes proposées sont celles que ce personnage-là tient, jamais toutes celles du jeu : désigner une case qu'il ne réclame pas n'aurait aucun sens. Retirer la désignation ne touche pas à l'image — elle reste dans la bibliothèque, sa case redevient vide.",
   },
 
   // ── Les réglages — le cadre de l'agent ────────────────────────────────────

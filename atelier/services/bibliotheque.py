@@ -183,6 +183,12 @@ class ServiceBibliotheque:
                     emplacement = generation.emplacement(asset.rang)
                     if emplacement is not None:
                         asset.cout_usd = emplacement.cout_usd
+                # **Ni son modèle** — le champ n'existait pas avant C1, et la
+                # génération le porte depuis T1 (US-123). Même réparation, même
+                # endroit, même raison : la fiche d'une image payée doit
+                # nommer qui l'a dessinée, et ce nom est sur le disque à côté.
+                if not asset.modele:
+                    asset.modele = generation.modele
                 assets.append(asset)
 
         self._base.remplir(
