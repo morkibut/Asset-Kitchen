@@ -15,8 +15,11 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 **Les dix tranches T1 à T10 sont finies, et C1 et C2 — les deux premières de la V2 — le sont
 aussi.** Les 145 critères d'acceptation sont cochés dans `docs/PLAN.md` ; 267 tests de serveur
 et 122 d'écran les tiennent. La V1 s'est arrêtée à T7 ; T8, T9 et T10 sont venues après.
-**La suite ouverte du plan commence à C3**, la pièce et le calque — qui réemploie le pliage de
-C2 tel quel.
+**La suite ouverte du plan compte cinq entrées** : les quatre reprises R1 à R4, venues d'une
+séance d'usage le 28 août 2026 — le réglage d'univers qui se voit, ce qui décide de
+l'apparence, l'import depuis l'écran, l'infobulle qui ne couvre plus le réglage —, et C3, la
+pièce et le calque, qui réemploie le pliage de C2 tel quel. **Les reprises ne bloquent pas C3
+et C3 ne les bloque pas** : elles se prennent dans l'ordre qu'on veut.
 
 Le journal complet — ce que chaque tranche a livré, et surtout ce que chacune a appris en
 étant *utilisée* — vit dans **`docs/status/etat.md`**. Il ne fait foi sur rien : on l'ouvre

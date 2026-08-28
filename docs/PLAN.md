@@ -1,6 +1,6 @@
 # Plan : Asset Kitchen — V1, puis V2
 
-> **PRD source** : `docs/PRD.md` — 157 user stories.
+> **PRD source** : `docs/PRD.md` — 172 user stories.
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/ARCHITECTURE.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
@@ -15,6 +15,13 @@
 > qui retenait le personnage, il est passé devant les tuiles, et son équipement — qui n'était
 > nulle part — entre avec lui. Elles ne changent rien à T1–T10 : la V1 est close, et la V2 se
 > pose dessus.
+>
+> **Les quatre reprises R1 à R4 sont venues le 28 août 2026**, d'une séance d'usage et non
+> d'un cadrage : ce que le produit impose à l'apparence ne se voyait nulle part, un réglage
+> d'univers ne se voyait qu'en rechargeant la page, on ne pouvait pas importer une image depuis
+> l'écran, et l'infobulle se posait sur le réglage d'à côté. Elles ne s'intercalent pas dans la
+> V2 : **elles ne bloquent ni ne sont bloquées par C3, C4 et C5**, et se prennent quand on veut.
+> Elles sont rangées ici avant C3 parce que c'est l'ordre de valeur, pas un ordre de dépendance.
 >
 > Ce document fait foi sur **l'ordre**. Il ne nomme ni fichier, ni fonction, ni route :
 > comment c'est construit vit dans `docs/ARCHITECTURE.md`, à quoi ça ressemble dans
@@ -280,8 +287,18 @@ d'acceptation de chacune d'elles :
 | C5 | 154 à 157 | 4 |
 | | **Total** | **43** |
 
-Avec les 114 de la V1, le PRD est couvert de bout en bout : **157 user stories, une tranche
-chacune.**
+### Couverture des user stories des reprises
+
+| Tranche | User stories | Nombre |
+|---|---|---:|
+| R1 | 165, 166 | 2 |
+| R2 | 158 à 164 | 7 |
+| R3 | 167 à 170 | 4 |
+| R4 | 171, 172 | 2 |
+| | **Total** | **15** |
+
+Avec les 114 de la V1 et les 43 de la V2, le PRD est couvert de bout en bout : **172 user
+stories, une tranche chacune.**
 
 ---
 
@@ -457,6 +474,178 @@ lorsqu'on s'en est servi*.
 
 ---
 
+## Les quatre reprises — R1 à R4
+
+Elles sortent d'une séance d'usage du 28 août 2026, pas d'un cadrage. Aucune ne dépend d'une
+autre, aucune ne bloque la V2 et aucune n'est bloquée par elle : **elles se prennent dans
+l'ordre où elles sont écrites, ou à l'unité.** L'ordre est celui de la valeur — sauf R1, mise
+en tête parce qu'elle coûte quelques heures et que **R2 ne se juge pas sans elle** : changer une
+taille de pixel sans voir l'écran la prendre, c'est régler à l'aveugle.
+
+---
+
+## R1 · Le réglage d'univers se voit à l'instant
+
+**User stories** : 165, 166
+
+### Ce qu'on livre
+
+Un réglage posé dans l'univers change l'écran tout de suite. C'est une correction, pas une
+fonctionnalité : le réglage était bien écrit sur le disque, il ne remontait simplement pas.
+
+**Deux causes indépendantes pour un seul symptôme**, et c'est ce qui l'a rendu insaisissable :
+le service n'annonce le changement au flux que lorsque l'empreinte de palette bouge — changer
+le nombre de couleurs se voyait donc, changer la taille de pixel, la bible, le barème ou les
+modèles ne se voyait pas —, et l'écran jetait par ailleurs la réponse du réglage au lieu de la
+poser. Corriger l'une des deux suffirait à faire disparaître le symptôme ; les deux se
+corrigent, parce qu'un écran qui ne sait pas poser ce qu'on lui rend est un piège qui se
+réveillera ailleurs.
+
+**Ce que la tranche ajoute et qui n'existait pas** : un essai d'écran qui vérifie *ce que
+l'écran affiche après le réglage*, et non plus seulement qu'il a bien appelé le serveur. C'est
+exactement le trou par lequel ce défaut est passé — 122 essais d'écran, et aucun ne regardait
+après.
+
+### Critères d'acceptation
+
+- [ ] Changer la taille de pixel, la bible, le barème ou un modèle par défaut met l'écran à jour sans rechargement, et la valeur affichée est celle qui vient d'être écrite
+- [ ] Le même changement fait dans un onglet apparaît dans un second onglet ouvert sur le même projet, comme tout ce qui passe par le flux
+- [ ] Un réglage refusé par le serveur laisse l'écran sur la valeur d'avant, avec sa raison — jamais sur la valeur tentée
+- [ ] Rouvrir l'écran Univers après un réglage montre la même valeur que le fichier du projet
+- [ ] Un essai d'écran vérifie, pour chacun des cinq blocs de l'univers, ce qui est affiché **après** le réglage
+- [ ] Aucun appel payant, aucun aller-retour supplémentaire au réglage : ce qui manquait est une annonce et une pose, pas une relecture
+
+## Bloquée par
+
+- rien
+
+---
+
+## R2 · Ce qui décide de l'apparence se voit et se règle
+
+**User stories** : 158, 159, 160, 161, 162, 163, 164
+
+### Ce qu'on livre
+
+L'auteur voit ce qu'il demande et ce qu'on lui applique, et il peut trancher les deux.
+
+**Le prompt exact, avant de lancer.** Un dépliant sous le champ montre le texte tel qu'il
+partira, dans l'ordre où il part : la bible active, le sujet, puis les consignes de pliage
+quand il y a une planche. Un geste le bascule en édition libre **pour cette génération-là** :
+la bible n'est pas touchée, et ce qui est parti reste attaché à la génération, au même titre
+que le modèle et le coût. Rien n'est traduit ni enrichi en chemin — montrer autre chose que ce
+qui part serait pire que ne rien montrer.
+
+**La bible gagne deux champs nommés** : la vue et le cadrage, la technique de rendu. La liste
+close passe de cinq à sept et **reste close** : c'est le dosage qui fait sa valeur, pas le
+texte libre. Ces deux-là entrent parce que ce sont exactement les deux décisions d'apparence
+que l'auteur prenait à chaque prompt sans avoir où les poser.
+
+**La taille de pixel accepte « aucune ».** La remise sur grille cesse d'être sans échappatoire :
+un projet qui n'est pas en pixel art reçoit ce que le modèle a rendu. Le reste ne bouge pas —
+détourage, recadrage et barème d'échelles continuent de s'appliquer, et la quantification reste
+liée à l'existence d'une palette.
+
+**Et la fiche dit ce que le projet a imposé** à l'image affichée : sans ça, l'auteur voit une
+image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi.
+
+À la livraison, `docs/ARCHITECTURE.md` §4 bis et §6.1 sont corrigés dans la foulée : « la
+remise sur grille est systématique, jamais optionnelle » devient « systématique tant qu'une
+cible est posée », et la bible y compte sept champs.
+
+### Critères d'acceptation
+
+- [ ] Avant de lancer, le texte exact qui partira s'affiche : bible active, sujet, consignes de pliage — dans l'ordre d'envoi, sans rien de masqué
+- [ ] Ce texte suit ce qu'on tape et ce qu'on décoche : décocher un champ de bible le retire de l'aperçu à l'instant
+- [ ] Le texte repris à la main part **mot pour mot**, et `generation.json` porte ce texte-là
+- [ ] Reprendre le texte n'écrit rien dans l'univers : rouvrir l'écran Univers montre la bible inchangée
+- [ ] Une génération relancée depuis un asset repart avec le texte qui était parti, repris compris
+- [ ] La bible compte sept champs nommés, chacun activable indépendamment comme les cinq premiers
+- [ ] Un projet écrit avant cette tranche s'ouvre avec ses deux nouveaux champs vides et actifs, et rien de ce qu'il portait n'est perdu
+- [ ] Taille de pixel « aucune » : l'image générée entre en bibliothèque **aux dimensions rendues par le modèle**, sans rééchantillonnage
+- [ ] Avec « aucune », le détourage et le recadrage continuent de s'appliquer, et le barème d'échelles reste lisible avec la raison de son inaction
+- [ ] Avec « aucune », « Tout réaligner » ne rééchantillonne rien et le dit
+- [ ] La fiche d'un asset nomme le traitement que le projet lui a imposé — cible, occupation, palette — et le distingue de ce que l'auteur a réglé à la main
+- [ ] Un univers vide ne contraint toujours rien : générer sans bible, sans artwork et sans cible reste possible (US-57 reconduite)
+- [ ] Réseau coupé : l'aperçu du prompt, l'édition du texte et le réglage de la bible fonctionnent
+
+## Bloquée par
+
+- R1 en fait, pas en droit — poser « aucune » sans voir l'écran le prendre est intenable
+
+---
+
+## R3 · Faire entrer une image depuis l'écran
+
+**User stories** : 167, 168, 169, 170
+
+### Ce qu'on livre
+
+Le geste que l'agent a depuis T7 et que l'écran n'a jamais eu. Un bouton, et le glisser-déposer
+depuis le bureau dans la grille. L'image devient un asset entier — rangée, retouchable,
+découpable, exportable, marquée comme importée — et sa génération dit d'où le fichier venait,
+comme aujourd'hui côté agent.
+
+**Une route qui prend les octets, et c'est la seule pièce neuve du serveur.** Celle qui existe
+prend un *chemin*, ce qu'un navigateur ne donne jamais. Elle appelle le même service que l'outil
+MCP : « ce que l'agent peut faire, l'écran le peut aussi » reste vrai dans les deux sens, et il
+n'y a toujours qu'un seul endroit qui fait entrer une image.
+
+**On dit au moment du geste si le traitement du projet s'applique**, et le défaut est « telle
+quelle ». Aujourd'hui l'import hérite de la recette du projet en silence : une référence de
+2048 pixels revient à 64, ce que personne n'a demandé.
+
+### Critères d'acceptation
+
+- [ ] Un bouton d'import fait entrer un fichier choisi, et le déposer sur la grille fait la même chose
+- [ ] Plusieurs fichiers déposés d'un coup entrent tous, chacun avec son propre sort
+- [ ] Ce qui n'est pas une image est refusé **en le nommant**, et les autres fichiers du même dépôt entrent quand même
+- [ ] Un doublon est signalé avec le lien vers l'existant, et l'import forcé reste possible — comme au tableau d'inspiration
+- [ ] L'image importée est un asset ordinaire : filiation, retouche, découpe, export, suppression avec annulation
+- [ ] Sa provenance est lisible sur sa fiche : importée, coût nul, et le nom du fichier d'origine
+- [ ] Le choix « traitement du projet / telle quelle » est offert au moment de l'import, et le défaut est « telle quelle »
+- [ ] L'écran et l'outil MCP passent par le même service : aucun geste que l'un a et l'autre pas
+- [ ] Un fichier de plusieurs mégaoctets entre sans que l'écran se fige
+- [ ] Réseau coupé : l'import fonctionne de bout en bout
+
+## Bloquée par
+
+- rien
+
+---
+
+## R4 · L'infobulle ne couvre plus le réglage
+
+**User stories** : 171, 172
+
+### Ce qu'on livre
+
+L'infobulle se pose là où il n'y a rien à cliquer. Elle choisit aujourd'hui son côté par
+rapport au **milieu de l'écran** — l'intention étant « elle s'ouvre vers la grille, jamais sur
+l'image qu'elle règle » —, ce qui est juste à l'atelier et faux partout où l'écran n'est que
+du réglage : à l'univers, aux réglages, dans la fiche, la surface d'à côté est encore du
+réglage, et la bulle atterrit dessus.
+
+Elle se placera par rapport au **panneau qui porte l'ancre**, pas par rapport à la fenêtre :
+hors du panneau, et rabattue dans l'écran comme aujourd'hui. Le motif, le pointillé, la durée
+de repos et l'épingle ne changent pas — `docs/DESIGN.md` n'a rien à rouvrir, seule la mesure
+de la place change.
+
+### Critères d'acceptation
+
+- [ ] Une infobulle ouverte depuis un panneau de réglages ne recouvre aucun contrôle de ce panneau, à l'univers, aux réglages et dans la fiche
+- [ ] Un panneau plus large que la place restante fait sortir la bulle du panneau, jamais dessus, et elle reste entièrement dans l'écran
+- [ ] Pointer un autre élément referme la bulle non épinglée sans qu'il faille la chasser
+- [ ] Une bulle épinglée reste, et Échap la lâche — inchangé
+- [ ] Le pointillé, la durée de repos, l'animation et le lien vers le guide sont inchangés
+- [ ] Un essai d'écran vérifie le non-recouvrement sur les trois écrans, et non seulement le rendu de la bulle
+
+## Bloquée par
+
+- rien
+
+---
+
 ## C3 · La pièce et le calque
 
 **User stories** : 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148
@@ -591,6 +780,7 @@ Trois points restent ouverts, et aucune tranche ne les présuppose :
   façon. *(Ce plan a porté un temps « le report d'un calque sur une autre pose » comme risque
   principal de la V2. C'en était un faux : un calque est solidaire de sa pose, il en faut un
   par pose, et c'est le pliage qui en divise le prix. Retiré le 28 août 2026.)*
+- **La quantification reste liée à la palette, et R2 ne la débrance pas.** Un projet qui choisit « aucune » comme taille de pixel reçoit encore ses images ramenées sur la palette dès qu'un artwork officiel existe : pour qu'elle se taise, il faut n'en promouvoir aucun. C'est atteignable mais indirect, et c'est une limite acceptée le 28 août 2026 plutôt qu'un oubli. Si une séance montre qu'un projet veut la palette **sans** la quantification — la lire pour s'y tenir à la main, sans que l'image y soit forcée —, c'est un réglage de plus dans le même bloc, pas une tranche.
 - **La recette d'animation** est le risque de la V3. Une piste sérieuse a été observée le
   26 août 2026 ; elle demande un prototypage dédié avant tout engagement.
 - **Le coût croît avec le nombre de références chez certains fournisseurs et pas chez

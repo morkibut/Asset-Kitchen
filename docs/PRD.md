@@ -214,7 +214,7 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 
 - **US-59** — En tant qu'auteur, je veux recadrer, redimensionner, pixelliser sur grille, ramener sur la palette et nettoyer les bords, avec des réglages qui répondent instantanément.
 - **US-60** — En tant qu'auteur, je veux fixer une taille de pixel cible pour mon projet et qu'elle soit imposée à tout ce qui rentre, afin que deux assets du même lot partagent la même grille.
-- **US-61** — En tant qu'auteur, je veux que la grille soit ramenée à cette cible systématiquement, y compris quand le modèle a rendu une grille cinq fois plus grosse, afin que la dérive soit traitée comme le cas normal et non comme un incident.
+- **US-61** — En tant qu'auteur, je veux que la grille soit ramenée à cette cible systématiquement **dès lors que j'ai posé une cible**, y compris quand le modèle a rendu une grille cinq fois plus grosse, afin que la dérive soit traitée comme le cas normal et non comme un incident. *(« Systématique » a longtemps voulu dire « sans échappatoire » : la cible « aucune » d'US-163 en est une, et elle ne rouvre rien — tant qu'une cible est posée, la remise sur grille reste sans condition.)*
 - **US-62** — En tant qu'auteur, je veux que mes petits objets sortent aussi fins que mes personnages, afin de ne pas obtenir un tonneau plus grossier que celui qui le porte.
 - **US-63** — En tant qu'auteur, je veux que l'image d'origine soit toujours conservée, afin de revenir en arrière sans jamais repayer.
 - **US-64** — En tant qu'auteur, je veux revenir à l'image brute d'un seul geste, afin de repartir proprement quand une retouche part de travers.
@@ -325,6 +325,33 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **US-156** — En tant qu'agent, je veux disposer sur les personnages et les calques exactement des mêmes gestes que l'écran, afin de compléter un plan sans que l'auteur ouvre l'atelier.
 - **US-157** — En tant qu'agent, je veux écrire moi-même les lignes de catalogue de mon jeu à partir du descriptif, afin que l'atelier décrive ce qu'il produit sans avoir à connaître la structure de mon jeu.
 
+### Ce qui décide de l'apparence
+
+- **US-158** — En tant qu'auteur, je veux voir, avant de lancer, le texte exact qui va partir chez le modèle — la bible, mon sujet et les consignes de planche comprises —, afin de savoir ce que je demande réellement au lieu de le supposer.
+- **US-159** — En tant qu'auteur, je veux reprendre ce texte à la main pour cette génération-là, afin de corriger une formulation sans démonter la bible de mon projet.
+- **US-160** — En tant qu'auteur, je veux que le texte repris parte tel quel et reste attaché à la génération, afin de relire des mois plus tard ce qui a produit l'image.
+- **US-161** — En tant qu'auteur, je veux décrire dans un champ nommé la vue et le cadrage de mon univers — trois quarts, de face, de profil, plan large —, afin de ne plus les retaper à chaque prompt.
+- **US-162** — En tant qu'auteur, je veux décrire dans un champ nommé la technique de rendu attendue — pixel art, peinture, trait encré —, afin que ce soit moi qui décide de l'apparence plutôt qu'un défaut que je n'ai jamais posé.
+- **US-163** — En tant qu'auteur, je veux choisir « aucune » comme taille de pixel de mon projet, afin que ce que le modèle a rendu me revienne tel quel quand mon jeu n'est pas en pixel art.
+- **US-164** — En tant qu'auteur, je veux lire sur la fiche d'un asset le traitement que le projet lui a imposé, afin de comprendre pourquoi l'image affichée ne ressemble pas à celle qui est arrivée du fournisseur.
+
+### Le réglage d'univers se voit à l'instant
+
+- **US-165** — En tant qu'auteur, je veux qu'un réglage d'univers change l'écran à l'instant où je le pose, afin de ne pas avoir à recharger la page pour savoir ce que mon projet impose.
+- **US-166** — En tant qu'auteur, je veux que ce que l'écran affiche soit toujours ce que le fichier porte, afin de ne jamais reposer deux fois le même réglage en croyant que le premier n'a pas pris.
+
+### Faire entrer une image depuis l'écran
+
+- **US-167** — En tant qu'auteur, je veux faire entrer un fichier de mon disque depuis l'écran, par un bouton et par glisser-déposer dans la grille, afin de ne pas avoir à passer par l'agent pour importer une image.
+- **US-168** — En tant qu'auteur, je veux que l'image importée soit un asset entier — rangée, retouchable, découpable, exportable, et marquée comme importée —, afin qu'elle vive exactement comme celles que j'ai payées.
+- **US-169** — En tant qu'auteur, je veux un refus qui nomme le fichier quand ce n'est pas une image, et l'avertissement de doublon avec le lien vers l'existant, afin de décider moi-même — comme au tableau d'inspiration.
+- **US-170** — En tant qu'auteur, je veux dire, en important, si le traitement de mon projet s'applique ou si l'image entre telle quelle, afin qu'une référence ne soit pas ramenée à 64 pixels sans que je l'aie demandé.
+
+### L'infobulle ne couvre plus ce qu'elle explique
+
+- **US-171** — En tant qu'auteur, je veux qu'une infobulle ne se pose jamais sur un réglage cliquable, afin de ne pas avoir à la chasser pour atteindre le contrôle d'à côté.
+- **US-172** — En tant qu'auteur, je veux qu'elle disparaisse dès que je pointe ailleurs et ne reste que si je l'ai épinglée volontairement, afin qu'elle ne se mette jamais entre ma main et le réglage suivant.
+
 ## Critères de succès
 
 - Depuis une installation neuve, la première image est obtenue sans traverser d'autre écran que celui de la clé.
@@ -390,6 +417,10 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 **Écarté de la V2 — repoussé.** Animation, tuiles raccordées, son. Squelette, os, interpolation entre deux poses : c'est l'animation, pas le personnage. Salle d'essai qui montrerait le personnage équipé dans un décor. Bibliothèque de poses partagée entre projets : le plan appartient au projet qui le porte.
 
 **Écarté de la V2 — par les décisions de cette version.** Deuxième grille d'assets : la matrice de production d'un personnage n'en est pas une — pas de recherche, pas de filtres, pas de sélection multiple, deux axes et des vignettes, rien de plus. Point de repère, ancre ou marque injectée dans l'image pour recaler un calque : le calque est une pure différence, et rien n'est ajouté à l'image envoyée. Génération d'une pièce seule sur fond vide : une pièce n'existe qu'apparue sur un corps. Calque unique porté sur toutes les poses : une pièce est solidaire de la pose sur laquelle elle est apparue, et il en faut une par pose — c'est le pliage qui en divise le prix, pas une réutilisation. Combinaison de deux pièces qui agrandissent la silhouette sur le même corps : ce qui revient d'une pièce qui agrandit est un corps habillé et non un calque, et deux corps habillés ne s'empilent pas. Détection automatique de ce qui agrandit la silhouette : l'auteur déclare, au même titre qu'il nomme la pièce et l'emplacement. Plafond sur la taille d'un lot : le produit annonce ce que coûte un compte faux, il ne l'interdit pas. Refus automatique sur les mesures de qualité : elles informent, seul le compte d'images refuse. Reconnaissance automatique de la pièce ou de l'emplacement depuis l'image : l'auteur nomme, l'application enregistre. Mannequin ou silhouette de référence imposée à tous les personnages. Feuille de sprites assemblée à la sortie : le pliage est une ruse d'appel, pas un format de livraison — ce qui sort, ce sont des images séparées et leur descriptif.
+
+**Revenu dans le périmètre — 28 août 2026 (les quatre reprises).** « Génération autre que pixel art » était écarté de la V1 et renvoyé à un « ensuite ». Une séance sur le produit tenu a montré que l'écart n'était pas là où ce document le plaçait : **rien du style n'est écrit dans le prompt** — seule la bible part, et une bible vide ne dit rien —, mais **le post-traitement, lui, impose l'apparence sans qu'on l'ait demandée** : la remise sur grille est systématique, donc toute image revient sur 64 ou 96 pixels, et la quantification la ramène sur la palette dès qu'un artwork existe. L'auteur ne voit ni ce qui part, ni ce qui est appliqué au retour. Trois choses entrent donc dans le périmètre : **le prompt exact se voit et se reprend**, **la bible gagne la vue et la technique de rendu**, et **la taille de pixel accepte « aucune »**. Trois autres suivent, de la même séance : l'import depuis l'écran, le réglage d'univers qui se voit sans recharger, et l'infobulle qui ne couvre plus le réglage voisin.
+
+**Écarté par ces reprises.** Mode de rendu HD à part entière, où le projet basculerait d'un bloc : la case « aucune » de la taille de pixel suffit à rendre la grille facultative, et un second axe de configuration se paierait à chaque écran. Quantification débrayable indépendamment : elle reste attachée à l'existence d'une palette — un projet qui n'en veut pas ne promeut pas d'artwork. Bible en texte libre : les champs nommés restent des champs nommés, la liste s'allonge de deux et ne s'ouvre pas. Prompt réécrit par l'application, traduit ou enrichi automatiquement : ce qui est montré est ce qui part, mot pour mot. Import qui devinerait la famille, l'échelle ou le traitement à appliquer : l'auteur déclare, comme partout ailleurs.
 
 ## Décisions d'implémentation
 
@@ -473,6 +504,10 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 
 **La fiche d'un asset nomme le modèle qui l'a produit.** Pour une image générée, le modèle exact ; pour une image importée, « importé ». C'est une information de provenance au même titre que le prompt et le coût : elle se lit, elle ne se règle pas.
 
+**Le prompt exact.** Ce que l'écran montre avant de lancer est **le texte tel qu'il partira**, assemblé dans l'ordre où il part : la bible active, puis le sujet, puis les consignes de pliage quand il y a une planche. Le reprendre à la main vaut pour cette génération seule et n'écrit rien dans l'univers ; ce qui est parti reste attaché à la génération, comme le modèle et le coût. L'application ne traduit ni n'enrichit ce texte : montrer autre chose que ce qui part serait pire que ne rien montrer.
+
+**Ce que l'import subit.** Une image importée naît par le même chemin que les autres et hérite donc du traitement du projet. Comme ce traitement peut ramener une référence de 2048 pixels à 64, l'import demande au moment du geste — traitement du projet, ou telle quelle. Le défaut est **telle quelle** : ce qu'on importe, on l'a déjà choisi, et le produit ne réduit rien qu'on ne lui ait demandé de réduire.
+
 ## Notes complémentaires
 
 - **La maquette de l'écran Atelier est à refaire.** Le brouillon existant a été jugé trop chargé et trop loin de la fluidité recherchée. Il reste sur disque mais ne sert pas de base : l'interface doit partir du geste quotidien — écrire, générer, juger, garder — et non de la liste des décisions ci-dessus. Un réglage n'est à l'écran que si on y touche à chaque génération.
@@ -489,4 +524,6 @@ ni tunnel de configuration, ni assistant, ni écran à traverser avant d'écrire
 - **Le classement des modèles par coût est contre-intuitif et doit rester mesuré, jamais supposé.** L'essai a mesuré un écart de 1 à 4,6 entre le plus cher et le moins cher des six candidats, et le favori pressenti s'est révélé être le plus cher. C'est exactement ce que la décision « le coût réel facturé fait foi » protège. Le pliage des poses, lui, divise le prix par quatre sur la même planche.
 - **Les mesures de ressemblance restent grossières.** Celle qui compare deux poses d'un même personnage travaille sur une empreinte de couleurs, pas sur une reconnaissance de forme : elle repère un personnage devenu franchement autre, elle ne repère pas un détail de costume qui a changé. C'est assumé — elle informe, elle ne refuse pas — mais il ne faut pas lui faire dire plus qu'elle ne dit.
 - **Le modèle est déjà enregistré, il n'est simplement pas montré.** Chaque génération conserve le modèle qui l'a produite depuis la V1 ; ce qui manque, c'est le report sur l'asset et l'affichage sur sa fiche. La demande est donc de rendre visible, pas d'enregistrer.
+- **Le style n'a jamais été envoyé, et personne ne pouvait le voir.** Séance du 28 août 2026, sur trois projets réels : les cinq champs de bible sont vides dans les trois, donc **rien** sur l'apparence ne part avec les générations — et pourtant tout ce qui sort ressemble à du pixel art de 64 pixels. La cause n'est pas dans le prompt, elle est après l'image : la remise sur grille est systématique et la quantification s'allume dès qu'il y a une palette. Les deux décisions étaient justes séparément — « la dérive de grille est le cas normal », « le style vient de la bible et d'un seul endroit » — et leur composition produit un produit qui impose une apparence que l'auteur n'a pas posée, sans jamais lui montrer ni ce qui part ni ce qui est appliqué. **C'est le même défaut de composition que T9 avait trouvé sur la toile** : deux gestes corrects isolément qui perdent quelque chose en silence.
+- **Un réglage d'univers ne se voyait qu'en rechargeant la page.** Le service n'annonce le changement que lorsque l'empreinte de palette bouge — donc changer le nombre de couleurs se voyait, changer la taille de pixel, la bible, le barème ou les modèles ne se voyait pas —, et l'écran jetait par ailleurs la réponse du réglage au lieu de la poser. Deux causes indépendantes pour un seul symptôme, et aucun test ne les voyait : les essais d'écran vérifiaient l'appel réseau, pas ce que l'écran affiche ensuite.
 - **La V2 est passée de six tranches à cinq.** Les références d'un personnage rejoignent C1, parce qu'une génération de pose annonce déjà ce qui part et ce que ça coûte ; la pièce et le calque remontent en C3, la main en C4, la sortie en C5. Le masque rectangle reste délibérément en C3 et non en C4 : sans lui la différence emporte le visage, et C3 ne serait pas utilisable à sa livraison. C4 apporte la finesse, pas la fonction. La renumérotation des user stories — US-115 à US-157 — suit cet ordre.
