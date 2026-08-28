@@ -384,6 +384,7 @@ chaîne avance : c'est le signe que ça marche.
 | `interface/src/composants/Toile.tsx` | la seconde vue du tableau. **Trois fonctions pures en tiennent toute la géométrie** — où une carte se pose, jusqu'où un îlot s'étend, lequel attrape une carte lâchée — et c'est ce qui les rend vérifiables : `Toile.test.tsx` les éprouve sans monter d'écran, là où jsdom ne pourrait rien mesurer. Chaque nœud porte ses **dimensions données** : la librairie cache ce qu'elle n'a pas mesuré, et elle mesure par un `ResizeObserver` |
 | `interface/src/aide.ts` | **le corpus des explications — un seul texte, deux rendus.** 55 entrées, cinq écrans. Chacune tient trois champs obligatoires : *ce que c'est · ce que ça change · d'où ça sort*, et la deuxième porte tout le poids — « Rien à la génération. » est une réponse, c'est même la plus utile. Il ne porte **jamais une raison** : ce qui refuse un geste vit dans une fente permanente, et ne se survole pas |
 | `interface/src/composants/Infobulle.tsx` | le survol qui révèle et le clic qui épingle. Le **libellé est la cible** — aucun glyphe neuf : le nom du réglage devient sa propre poignée, souligné d'un pointillé `--bord-fort`. Rendre un libellé sans clé n'est pas une erreur : rien ne se marque, et c'est le cas d'un réglage que le corpus ne documente pas |
+| `interface/src/composants/Apercu.tsx` | l'aperçu — le pointeur posé sur une image, Espace, et elle emplit l'écran. **Un geste, aucun contrôle** : rien ne paraît sur une tuile pour l'annoncer, sans quoi la planche contact porterait une loupe sur chacune de ses vignettes. Il porte aussi `imageAsset`, **le seul endroit qui nomme l'adresse de l'image d'un asset** — la tuile, la fiche et l'aperçu la lisent tous les trois, et c'est ce qui rend vraie sans machinerie la phrase « l'aperçu est la vignette en grand, et rien d'autre ». Son garde de saisie tient sur *deux* conditions, jamais sur le focus seul : le champ de prompt le prend au démarrage et ne le rend jamais |
 | `interface/src/composants/EcranReglages.tsx` | les trois questions promises depuis T1, au même endroit (US-96) : la clé, les garde-fous de l'agent, le dossier du jeu. Un panneau posé sur l'atelier et non un quatrième écran plein — il ne couvre pas le travail, il le règle. Le compteur de l'agent y est **à côté du réglage qu'il fait relever** : lu ailleurs, il faudrait revenir |
 | `interface/src/composants/Guide.tsx` | l'écran Guide, la seule prose du produit. Il **ne porte pas de fente de refus**, et c'est la preuve qu'on a compris la règle : il ne demande rien au serveur, ne dépense rien, ne peut pas échouer. Sa troisième partie est le corpus rendu à la file, groupé **par écran** — pas par thème : quand on cherche une explication, on se souvient d'où l'on était |
 | `tests/test_t3.py` | les critères de T3 — le Bac à sable, le journal des ratés, la grille unique, la suppression sans cascade, l'annulation, la reconstruction depuis les fichiers, les quatre rôles de réinjection, et le hors ligne. Deux tests **prouvent** le hors ligne en comptant les appels du double avant et après |
@@ -786,6 +787,20 @@ deux vivent côte à côte.
   donc un `<textarea>` actif à chaque frappe et avalait **toutes** les annulations de la toile,
   en silence. Un garde qui interroge le focus doit le borner à l'écran qui le pose — d'où
   `[data-univers]`. On ne tape pas dans un champ qu'un écran recouvre.
+- **Le même garde, pris par l'autre bout : un champ focalisé ne dit pas qu'on écrit.**
+  Espace ouvre l'aperçu de l'image survolée ; un garde qui écartait la touche dès qu'un
+  `<input>` ou un `<textarea>` avait le focus rendait la fonction **entièrement morte dans
+  l'atelier**, puisque le champ de prompt prend le focus au démarrage et ne le rend jamais.
+  Trouvé au premier essai, qui ne l'a jamais vu s'ouvrir. Un garde de saisie tient donc sur
+  *deux* conditions — un champ où l'on peut écrire, **et** que la dernière chose faite ait été
+  d'y écrire —, et le geste concurrent le désarme : poser le pointeur sur une image rend la
+  touche à l'image, taper un seul signe la rend au champ. Corollaire du même piège :
+  **sous un écran posé par-dessus, le garde ne s'applique plus du tout.**
+- **La barre d'espace est déjà prise par trois choses, et deux ne se voient pas.** Un
+  `<button>` focalisé s'active à l'espace — la tuile qu'on vient de cliquer —, `@xyflow/react`
+  en fait son `panActivationKeyCode` par défaut, et une zone qui défile défile. Les trois se
+  taisent avec un seul `preventDefault` au bon moment et un réglage de librairie éteint,
+  nommé, avec sa raison à côté. Sans quoi une pression fait deux gestes, dont un invisible.
 - **Un socle se mesure après ce qu'on y a posé, pas avant.** La disposition d'ouverture cale
   les îlots neufs sous ce qui occupe déjà la toile. Le socle était mesuré avant de compléter
   les îlots *entamés* — ceux dont une seule carte avait été placée à la main —, or ceux-là

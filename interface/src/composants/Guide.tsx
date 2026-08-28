@@ -235,6 +235,22 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               que ce qui partira dans ton jeu. Le brut reste à un geste — la bascule de la
               fiche.
             </P>
+            <P>
+              Une vignette de 128 px ne suffit pas toujours. <B>Pose le pointeur sur une image
+              et appuie sur la barre d'espace</B> : elle emplit l'écran. Espace encore, Échap,
+              ou un clic, et elle s'en va — tu n'as rien quitté. La <I>molette</I> zoome autour
+              du pointeur, et au-delà de l'ajustement tu déplaces l'image en la tirant ; le
+              pied dit ses dimensions et le facteur, <C>96×96 · 673 %</C>. Ça marche sur les
+              tuiles de la grille, sur l'image de la fiche, et sur les cartes de l'écran
+              Univers, en grille comme sur la toile.
+            </P>
+            <P>
+              Ce que tu vois en grand est <B>exactement l'image qui était sous le pointeur</B> :
+              le rendu si la tuile montre le rendu, le brut si la bascule de la fiche est sur
+              brut. L'aperçu n'a aucun réglage à lui — il agrandit, il ne décide pas. Et tant
+              que tu es en train d'écrire dans un champ, la barre d'espace reste une espace :
+              il suffit de bouger la souris sur une image pour la lui rendre.
+            </P>
 
             <H id="garder">Garder</H>
             <P>

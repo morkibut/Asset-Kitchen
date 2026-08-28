@@ -45,6 +45,7 @@ import {
   type Univers,
   UNIVERS_VIDE,
 } from "./api"
+import { Apercu, fermerApercu, useApercu } from "./composants/Apercu"
 import { Arbre } from "./composants/Arbre"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
@@ -235,6 +236,14 @@ export function App() {
   // produit. Jamais quand on est en train d'écrire : le champ de prompt et les
   // notes de carte prennent la touche avant lui.
   const guideOuvert = useGuide()
+
+  // **L'aperçu est branché ici, et une seule fois.** Il se pose au-dessus de
+  // tout — l'atelier, l'Univers, la Découpe, le Guide —, donc son écoute de
+  // touche vit au-dessus de tous les écrans. Ce qu'il montre lui vient des
+  // vignettes elles-mêmes, sans traverser cet étage : le pointeur dit ce qu'il
+  // vise, personne n'a à le faire descendre.
+  const apercu = useApercu()
+
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => {
       if (e.key !== "?" || e.ctrlKey || e.metaKey || e.altKey) return
@@ -1023,6 +1032,13 @@ export function App() {
           onFermer={() => setReglagesOuverts(false)}
         />
       )}
+
+      {/* **L'aperçu couvre tout, y compris les écrans qui couvrent l'atelier**
+          — c'est le seul du produit dans ce cas, et c'est ce que son geste
+          demande : on le tient une seconde au-dessus de ce qu'on faisait, on le
+          referme, et on n'a rien quitté. Il ne porte pas de fente de refus,
+          pour la même raison que le Guide : il ne demande rien au serveur. */}
+      {apercu && <Apercu sujet={apercu} onFermer={fermerApercu} />}
     </div>
   )
 }

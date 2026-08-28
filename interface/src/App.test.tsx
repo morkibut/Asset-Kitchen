@@ -23,6 +23,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { App } from "./App"
+import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
 import { reinitialiserGuide } from "./composants/Guide"
 import { AIDE, SANS_ENTREE } from "./aide"
@@ -88,10 +89,18 @@ function mesurer(largeur: number) {
   fireEvent(window, new Event("resize"))
 }
 
+/** La place que l'aperçu croit avoir. Même raison que la colonne centrale : son
+ *  facteur d'ajustement est *calculé* sur une mesure, et sans mesure il se tait
+ *  — « zéro n'est pas une dimension ». Le test décide donc de la scène, comme il
+ *  décide de la largeur de la colonne. */
+const SCENE = { l: 1000, h: 800 }
+
 function doublerLaMesure() {
   largeurRendue = 0
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
+      if (this.dataset.apercuScene !== undefined)
+        return { ...VIDE, width: SCENE.l, height: SCENE.h } as DOMRect
       return { ...VIDE, width: this.tagName === "SECTION" ? largeurRendue : 0 } as DOMRect
     },
   )
@@ -2106,4 +2115,203 @@ describe("l'agent, vu de l'atelier", () => {
     }
   })
 
+})
+
+// ── L'aperçu — Espace, et l'image en grand ──────────────────────────────────
+//
+// **Ce qui se prouve ici, et ce qui ne s'y prouve pas.** La touche, ce qu'elle
+// ouvre, l'adresse de l'image ouverte, la cohabitation avec les écrans qu'elle
+// couvre et le facteur de zoom sont du produit et se vérifient ici. Le rendu de
+// l'image — pixels au plus proche voisin, damier de 24 px, image centrée — est
+// de la mise en page, et jsdom n'en met aucune : ça se regarde au navigateur, et
+// **ça se dit** plutôt que de se laisser croire couvert.
+
+describe("l'aperçu", () => {
+  // jsdom ne connaît pas la capture de pointeur : trois surfaces du produit s'en
+  // servent déjà — la poignée de largeur, la bande d'un îlot, le cadre de la
+  // Découpe — et aucun essai ne les touche pour cette raison-là. On la double,
+  // comme le flux et la mesure. Elle ne fait rien de plus qu'exister : jsdom
+  // livre de toute façon chaque événement à sa cible.
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+    Element.prototype.setPointerCapture = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+    reinitialiserApercu()
+  })
+
+  /** Le survol, tel que React l'entend. **Pas `pointerEnter`** : React ne
+   *  l'écoute pas — il le fabrique depuis `pointerover` et `pointerout`, et un
+   *  `pointerenter` envoyé à la main n'atteint donc aucun gestionnaire. */
+  const survoler = (element: Element) => fireEvent.pointerOver(element)
+  const quitter = (element: Element) => fireEvent.pointerOut(element)
+
+  const espace = () => fireEvent.keyDown(window, { key: " ", code: "Space" })
+  const apercu = () => screen.queryByRole("dialog", { name: "Aperçu" })
+  const image = () => apercu()!.querySelector("img")!
+
+  test("Espace sur une tuile survolée l'ouvre en grand, et Espace la referme", async () => {
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0", "un tonneau")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0", "un tonneau")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    // Rien sous le pointeur : la touche ne prend rien, et elle le prouve en
+    // laissant l'événement passer — c'est ce qui permet à Espace de continuer à
+    // défiler le guide.
+    const seul = fireEvent.keyDown(window, { key: " ", code: "Space" })
+    expect(seul, "Espace a été consommé sans rien sous le pointeur").toBe(true)
+    expect(apercu()).toBeNull()
+
+    const vignette = tuiles()[0].closest("figure")!
+    survoler(vignette)
+    espace()
+
+    // **L'aperçu est la vignette en grand, et rien d'autre** : la même adresse,
+    // pas une seconde décision sur « rendu ou brut ».
+    expect(apercu()).toBeTruthy()
+    expect(image().getAttribute("src")).toBe(
+      vignette.querySelector("img")!.getAttribute("src"),
+    )
+    // Les dimensions mesurées, et le facteur qu'elles donnent dans cette scène :
+    // 1024 px dans 1000 × 800 moins deux marges de 24 → 752 / 1024.
+    expect(screen.getByText("1024×1024 · 73 %")).toBeTruthy()
+
+    espace()
+    expect(apercu()).toBeNull()
+  })
+
+  test("Échap ferme l'aperçu, et laisse ouvert l'écran qu'il couvrait", async () => {
+    // **Une pression, un geste.** L'écran Univers ne porte pas d'Échap, mais la
+    // Découpe et le Guide en portent un, et la toile écoute Ctrl+Z : l'aperçu
+    // les couvre tous. Ce qu'il consomme s'arrête chez lui — sinon fermer une
+    // image en fermerait deux.
+    doublerLaGrille(160)
+    const { fetchDouble } = serveurDouble({ cartes: [carteImage("c1")] })
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    const carte = await waitFor(() => document.querySelector("article")!)
+    survoler(carte)
+    espace()
+    expect(apercu()).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(apercu()).toBeNull()
+    expect(screen.getByText("L'univers")).toBeTruthy()
+  })
+
+  test("une note n'a pas d'aperçu, et un champ garde sa barre d'espace", async () => {
+    const { fetchDouble } = serveurDouble({
+      cartes: [carteImage("n1", { genre: "texte", texte: "une intention" })],
+      assets: [asset("aaaa1111-0")],
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+
+    // Le sujet d'une note est son texte, déjà entier dans la carte : l'agrandir
+    // ne montrerait rien de plus, donc la touche ne fait rien — et rien ne
+    // clignote pour l'annoncer.
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    const note = await waitFor(() => document.querySelector("article")!)
+    survoler(note)
+    espace()
+    expect(apercu()).toBeNull()
+
+    // Le pointeur repart : la touche n'a plus rien à ouvrir.
+    quitter(note)
+    espace()
+    expect(apercu()).toBeNull()
+  })
+
+  test("écrire garde la barre d'espace, bouger la souris la rend à l'image", async () => {
+    // **Le piège de T9, pris par l'autre bout.** *Le champ de prompt prend le
+    // focus au démarrage et ne le rend jamais* : un garde qui n'interrogerait
+    // que le focus rendrait Espace mort dans l'atelier, c'est-à-dire à
+    // l'endroit exact où il sert. Vérifié en écrivant cet essai — la première
+    // écriture du garde ne laissait pas l'aperçu s'ouvrir une seule fois.
+    //
+    // Le garde tient donc sur deux conditions : un champ où l'on peut écrire,
+    // **et** que la dernière chose faite ait été d'y écrire.
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    const vignette = tuiles()[0].closest("figure")!
+
+    // Le pointeur se pose : la touche est à l'image.
+    survoler(vignette)
+    espace()
+    expect(apercu()).toBeTruthy()
+    espace()
+
+    // On tape un signe dans le prompt, la souris toujours posée sur la tuile :
+    // la barre d'espace redevient une espace, et rien ne s'ouvre.
+    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    champ.focus()
+    fireEvent.keyDown(champ, { key: "u" })
+    const passe = fireEvent.keyDown(window, { key: " ", code: "Space" })
+    expect(passe, "Espace a été volé au champ où l'on écrit").toBe(true)
+    expect(apercu()).toBeNull()
+
+    // La souris bouge sur une image : la touche lui revient, sans avoir eu
+    // besoin de quitter le champ.
+    survoler(vignette)
+    espace()
+    expect(apercu()).toBeTruthy()
+  })
+
+  test("la molette zoome autour du pointeur, et le facteur se lit", async () => {
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    survoler(tuiles()[0].closest("figure")!)
+    espace()
+    expect(screen.getByText(/73 %/)).toBeTruthy()
+
+    const scene = document.querySelector("[data-apercu-scene]")!
+    const cran = (deltaY: number) =>
+      fireEvent.wheel(scene, { deltaY, clientX: 500, clientY: 400 })
+
+    // Un cran de souris rend `deltaY` ≈ 100, donc un facteur de 1,16 : 73 → 85.
+    cran(-100)
+    expect(screen.getByText(/85 %/)).toBeTruthy()
+
+    // Et le dézoom revient à l'ajustement, sans le dépasser : l'image entière
+    // est le plancher, une image qui tient déjà n'a rien à rapetisser.
+    cran(400)
+    expect(screen.getByText("1024×1024 · 73 %")).toBeTruthy()
+  })
+
+  test("un clic ferme l'aperçu, un glissement ne le ferme pas", async () => {
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    survoler(tuiles()[0].closest("figure")!)
+    espace()
+    const scene = () => document.querySelector("[data-apercu-scene]")!
+
+    // Un glissement : au-delà du seuil de trois pixels, c'est un déplacement, et
+    // un déplacement ne ferme rien. Même seuil que la bande d'un îlot.
+    fireEvent.pointerDown(scene(), { button: 0, clientX: 400, clientY: 300 })
+    fireEvent.pointerMove(scene(), { clientX: 460, clientY: 340 })
+    fireEvent.pointerUp(scene(), { clientX: 460, clientY: 340 })
+    expect(apercu()).toBeTruthy()
+
+    // Un clic : rien ne bouge entre la pression et le relâchement, donc c'est
+    // une sortie. L'aperçu ne porte aucun contrôle — rien d'autre ne peut être
+    // voulu par un clic, et « à côté » est partout.
+    fireEvent.pointerDown(scene(), { button: 0, clientX: 400, clientY: 300 })
+    fireEvent.pointerUp(scene(), { clientX: 401, clientY: 300 })
+    expect(apercu()).toBeNull()
+  })
 })

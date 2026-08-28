@@ -23,6 +23,7 @@ import {
   type Emplacement,
   type Generation,
 } from "../api"
+import { sujetAsset, useVisee } from "./Apercu"
 import { Jauge } from "./chassis"
 
 /**
@@ -73,14 +74,18 @@ export function Tuile({
   // rendu : dès qu'une recette existe, c'est le rendu qui s'affiche. Juger sur
   // le brut alors qu'on a détouré et remis sur grille ferait juger autre chose
   // que ce qui partira dans le jeu.
-  const source = asset
-    ? asset.traite
-      ? api.rendu(asset.identifiant, asset.empreinte)
-      : api.image(asset.generation, asset.rang)
-    : null
+  //
+  // C'est `sujetAsset` qui le dit, et il le dit **une fois pour trois surfaces**
+  // — la tuile, la fiche et l'aperçu. Espace, le pointeur posé ici, ouvre donc
+  // exactement l'image qui est sous les yeux, jamais une autre.
+  const sujet = asset ? sujetAsset(asset) : null
+  const source = sujet?.src ?? null
+  const visee = useVisee(sujet)
 
   return (
     <figure
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
       className={[
         "arrivee relative flex flex-col border",
         rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",

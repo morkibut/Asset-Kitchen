@@ -36,6 +36,7 @@ import {
   type Famille,
   type Teinte,
 } from "../api"
+import { sujetCarte, useVisee } from "./Apercu"
 import { Libelle, Raison, Segments } from "./chassis"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
@@ -703,6 +704,12 @@ export function CarteTuile({
   // bord, et le bord suffit à dire *choisi*.
   const teinte = carte.genre === "texte" ? carte.teinte : ""
   const couleur = teinte ? COULEUR_TEINTE[teinte] : null
+  // **La visée n'est pas le survol du menu, et les deux vivent côte à côte.**
+  // Le menu attend 200 ms de repos parce qu'il se déploie et qu'il déplace le
+  // regard ; l'aperçu ne se déploie pas tant qu'on n'a pas appuyé, donc il n'a
+  // aucune raison de faire attendre. Une note ne rend pas de sujet : Espace n'y
+  // fait rien, et c'est la bonne réponse — son texte est déjà entier.
+  const visee = useVisee(sujetCarte(carte))
   return (
     <article
       style={{
@@ -716,8 +723,14 @@ export function CarteTuile({
             }
           : {}),
       }}
-      onPointerEnter={() => onSurvol(true)}
-      onPointerLeave={() => onSurvol(false)}
+      onPointerEnter={() => {
+        visee.entrer()
+        onSurvol(true)
+      }}
+      onPointerLeave={() => {
+        visee.sortir()
+        onSurvol(false)
+      }}
       className={[
         // `relative` et **pas** `overflow-hidden` : le menu se pose par-dessus
         // les voisines, donc il doit pouvoir sortir de la carte. Le rognage des

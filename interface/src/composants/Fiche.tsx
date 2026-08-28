@@ -29,6 +29,7 @@ import {
   type Role,
   type Univers,
 } from "../api"
+import { sujetAsset, useVisee } from "./Apercu"
 import {
   Bloc,
   Bouton,
@@ -834,6 +835,13 @@ function Visionneuse({
     ? `${asset.largeur}×${asset.hauteur}`
     : `${asset.rendu_largeur}×${asset.rendu_hauteur}`
 
+  // **La visionneuse fait 380 px de large, et c'est là qu'on règle un
+  // détourage** : Espace y ouvre la même image en grand, et la bascule décide
+  // laquelle — l'aperçu suit ce que la surface montre, il ne rouvre pas la
+  // question.
+  const sujet = sujetAsset(asset, brut)
+  const visee = useVisee(sujet)
+
   return (
     <div className="flex shrink-0 flex-col gap-1.5 px-2 pt-2">
       {/* Carrée, et large comme le panneau — sauf sur un écran court, où elle
@@ -842,9 +850,13 @@ function Visionneuse({
           `max-height`, le navigateur rabote la hauteur sans redéduire la
           largeur, et le damier cesse d'être carré. C'est la leçon déjà payée
           sur le cadre de l'écran Découpe. */}
-      <div className="damier damier-fiche relative mx-auto aspect-square w-full max-w-[46vh] border border-bord">
+      <div
+        onPointerEnter={visee.entrer}
+        onPointerLeave={visee.sortir}
+        className="damier damier-fiche relative mx-auto aspect-square w-full max-w-[46vh] border border-bord"
+      >
         <img
-          src={api.rendu(asset.identifiant, asset.empreinte, brut)}
+          src={sujet.src}
           alt={asset.label}
           className="h-full w-full object-contain"
           style={{ imageRendering: "pixelated" }}

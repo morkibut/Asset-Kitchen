@@ -104,6 +104,15 @@ body {
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
 }
 
+/* Le damier de l'aperçu : 24 px, et c'est le même raisonnement d'un cran plus
+   loin. La zone est l'écran entier ; à 16 px elle porterait soixante carreaux
+   de large, ce qui est un motif, pas un fond. Il ne suit pas le zoom — il dit
+   « ici, c'est transparent », et cette réponse ne change pas de taille. */
+.damier-apercu {
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+
 /* Le curseur — ajouté en T2, seul contrôle neuf du châssis. Aucune couleur de
    plus : rail en `--bord`, poignée en `--signal`. Hauteur alignée sur la rangée
    de 26 px du § Spacing. */

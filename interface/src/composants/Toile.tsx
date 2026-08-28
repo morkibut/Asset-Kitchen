@@ -1244,6 +1244,15 @@ function Plan({
             // sur le disque et que Ctrl+Z ignore. La suppression reste au
             // produit, dans le pavé du lien.
             deleteKeyCode={null}
+            // **Le défaut de la librairie est `Space`**, et Espace ouvre
+            // l'aperçu de la carte survolée. Laissé tel quel, il armerait un
+            // mode « déplacer le plan en tirant » que personne n'a demandé, à
+            // chaque fois qu'on regarde une image en grand — et il resterait
+            // armé si le relâchement se perdait sous l'écran posé par-dessus.
+            // Troisième réglage de librairie éteint ici, et la raison est
+            // écrite comme les deux autres : un réglage éteint sans phrase se
+            // rallume à la première mise à jour.
+            panActivationKeyCode={null}
             className="h-full w-full"
           >
             <Background
