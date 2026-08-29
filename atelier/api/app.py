@@ -56,6 +56,7 @@ from atelier.services.univers import (
     UniversRefuse,
 )
 from atelier.fournisseur.toile import AdresseRefusee
+from atelier.services.generation import ImportRefuse
 
 # Le code HTTP de chaque refus du produit. La raison, elle, est toujours la
 # même phrase en français — c'est elle que l'interface affiche.
@@ -74,6 +75,7 @@ CODES = {
     AnnulationExpiree: 409,
     CarteInconnue: 404,
     CarteRefusee: 409,
+    ImportRefuse: 409,
     LienInconnu: 404,
     LienRefuse: 409,
     UniversRefuse: 409,

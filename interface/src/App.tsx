@@ -57,10 +57,12 @@ import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranPersonnages } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { Fiche } from "./composants/Fiche"
+import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers } from "./composants/Univers"
+import { useDepot } from "./composants/Tableau"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
@@ -270,6 +272,15 @@ export function App() {
   const [echelle, setEchelle] = useState("")
 
   const dernierClic = useRef<string | null>(null)
+
+  /** **Faire entrer une image depuis l'écran** (R3). Le bouton de la barre
+   *  d'outils et le dépôt sur la grille passent tous les deux par ici, donc par
+   *  le même service que l'outil MCP : il n'y a qu'un endroit du produit qui
+   *  fasse entrer une image, et il n'a pas bougé. */
+  const entree = useImport({
+    onErreur: (raison) => setPanne(raison),
+    onEntree: () => void vivant.current.relireGrille(),
+  })
 
   // ── La largeur de la colonne centrale, mesurée ────────────────────────────
   //
@@ -1286,6 +1297,7 @@ export function App() {
             onFavori={(favori) => void marquerFavori(selection, favori)}
             onSupprimer={() => void supprimer(selection)}
             onVider={() => setSelection([])}
+            entree={entree}
             onExporter={() => void exporter()}
             exportEnCours={exportEnCours}
             annulation={annulation}
@@ -1296,11 +1308,20 @@ export function App() {
             zoomsIndisponibles={indisponibles}
             zoomRendu={zoomRendu}
           />
+          {/* Ce qui n'est pas entré — un refus qui nomme le fichier, un doublon
+              qui propose. **Au-dessus de la grille et non dans la barre d'état** :
+              un import refusé ne doit pas griser Générer, et la barre d'état est
+              le seul endroit du produit qui le ferait. */}
+          <CeQuiNEstPasEntre
+            etat={entree}
+            onOuvrir={(identifiant) => setSelection([identifiant])}
+          />
           <Grille
             entrees={entrees}
             selection={selection}
             filtre={filtre}
             zoom={zoomRendu}
+            entree={entree}
             onRelancer={relancer}
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
@@ -1700,6 +1721,7 @@ function Grille({
   selection,
   filtre,
   zoom,
+  entree,
   onRelancer,
   onOuvrir,
   onRetirerFiltre,
@@ -1710,17 +1732,31 @@ function Grille({
   /** Le cran **rendu**, pas le cran choisi : à une largeur où le choix ne tient
    *  pas, la grille rend le plus grand qui tienne, et la barre d'outils le dit. */
   zoom: Zoom
+  /** Faire entrer une image en la déposant ici (US-167). */
+  entree: Import
   onRelancer: (generation: string, rang: number) => void
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRetirerFiltre: () => void
 }) {
+  // **La même mécanique de dépôt que le tableau d'inspiration**, réemployée
+  // telle quelle : c'est le geste, pas la surface, qui décide de la forme. Un
+  // texte lâché ici ne fait rien — la bibliothèque n'a pas de carte texte —, et
+  // ne rien faire est la bonne réponse plutôt qu'un refus.
+  const depot = useDepot(
+    (fichier) => void entree.entrer(fichier),
+    () => {},
+  )
   // **Deux états vides, et ce ne sont pas les mêmes** (US-34, US-35). Une
   // bibliothèque vide invite à écrire ; un filtre sans résultat est une impasse,
   // et une impasse doit porter le geste qui en sort — sinon la grille est muette
   // au moment précis où elle devrait aider.
   if (entrees.length === 0) {
     return filtreActif(filtre) ? (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
+      <div
+        {...depot.props}
+        {...NOMMEE}
+        className={`flex flex-1 flex-col items-center justify-center gap-3 p-4 ${cadreDepot(depot.survole)}`}
+      >
         <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
           Rien ne répond à ce filtre.
         </p>
@@ -1733,7 +1769,11 @@ function Grille({
         </button>
       </div>
     ) : (
-      <div className="flex flex-1 items-center justify-center p-4">
+      <div
+        {...depot.props}
+        {...NOMMEE}
+        className={`flex flex-1 items-center justify-center p-4 ${cadreDepot(depot.survole)}`}
+      >
         <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
           Rien n'est encore sorti d'ici. <em className="text-texte-2">Écris.</em>
         </p>
@@ -1742,7 +1782,11 @@ function Grille({
   }
 
   return (
-    <div className="defile min-h-0 flex-1 overflow-y-auto p-4">
+    <div
+      {...depot.props}
+      {...NOMMEE}
+      className={`defile min-h-0 flex-1 overflow-y-auto p-4 ${cadreDepot(depot.survole)}`}
+    >
       <div
         className="grid gap-[9px]"
         style={{
@@ -1762,6 +1806,29 @@ function Grille({
     </div>
   )
 }
+
+/** Ce que la grille montre quand un fichier la survole.
+ *
+ *  **Un liseré intérieur, jamais un voile.** La grille est la seule surface du
+ *  produit où l'on juge : un calque par-dessus les images cacherait ce qu'on
+ *  est en train de regarder au moment précis où l'on décide où déposer. Le
+ *  `--signal` posé en `inset` dit « ici » sans rien recouvrir, et il ne déplace
+ *  rien — un `outline` ne prend pas de place dans la mise en page.
+ *
+ *  Écrit une fois pour les trois états de la grille : pleine, filtrée à vide,
+ *  et vide. Une bibliothèque vide est très exactement le moment où l'on fait
+ *  entrer sa première image, et une surface qui n'accepterait le dépôt qu'une
+ *  fois pleine serait fermée quand elle sert le plus. */
+const cadreDepot = (survole: boolean) =>
+  survole ? "outline outline-1 -outline-offset-1 outline-signal" : ""
+
+/** La grille se nomme, dans ses trois états.
+ *
+ *  **Parce qu'elle reçoit un dépôt** : une surface où l'on peut lâcher un
+ *  fichier doit pouvoir être désignée autrement que par la vue — c'est la même
+ *  raison qui a nommé le dépliant du prompt. Le nom est le même pour les trois
+ *  états, parce que c'est la même surface : pleine, filtrée à vide, ou vide. */
+const NOMMEE = { role: "region", "aria-label": "Grille des images" } as const
 
 // ── La barre d'état ─────────────────────────────────────────────────────────
 

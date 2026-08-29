@@ -232,6 +232,32 @@ class Base:
             ).fetchall()
         return [Generation.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
+    def generations_du_modele(
+        self, modele: str, projet: str | None
+    ) -> list[Generation]:
+        """Toutes celles d'un modèle donné, dans un projet donné — **sans limite**.
+
+        Écrite pour une seule question, et elle décide de sa forme : *cette
+        image est-elle déjà entrée ?* (US-169). Une limite y serait un doublon
+        non signalé passé un certain rang, c'est-à-dire un défaut qui
+        n'apparaîtrait qu'après cent imports.
+
+        `modele` est une colonne, pas un champ du contenu : le filtre se fait
+        donc en SQL, et seules les générations d'import sont désérialisées. Sur
+        un projet qui compte mille appels et douze imports, douze lignes sont
+        lues.
+        """
+        condition = "projet IS NULL" if projet is None else "projet = ?"
+        arguments: tuple[Any, ...] = () if projet is None else (projet,)
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM generations WHERE modele = ? AND "
+                + condition
+                + " ORDER BY cree_le DESC",
+                (modele, *arguments),
+            ).fetchall()
+        return [Generation.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
     def en_vol(self) -> list[Generation]:
         """Ce qui était en cours ou en attente — au démarrage, c'est ce qui a été
         interrompu par l'arrêt du serveur. **Rien n'est jamais relancé

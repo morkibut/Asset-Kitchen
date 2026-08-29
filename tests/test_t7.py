@@ -164,7 +164,10 @@ async def test_les_cinq_gestes_de_l_agent(atelier, mcp, double, tmp_path):
     source = tmp_path / "epee-de-fer.png"
     source.write_bytes(image_sujet())
     avant = double.appels
-    importe = await appeler(mcp, "import_asset", file_path=str(source))
+    # **Une seule forme, toujours** (R3) : l'outil rend `{asset, doublon}`,
+    # dont l'un est nul. Un import qui rendrait tantôt un asset et tantôt un
+    # avertissement serait deux contrats sous un seul nom.
+    importe = (await appeler(mcp, "import_asset", file_path=str(source)))["asset"]
     assert importe["id"]
     assert Path(importe["path"]).is_file()
 
@@ -204,7 +207,7 @@ async def test_une_planche_se_propose_puis_se_decoupe(atelier, mcp, double, tmp_
     lui donne. La séparation est le contrat, pas un détail d'implémentation."""
     planche = tmp_path / "planche.png"
     planche.write_bytes(image_sujet(logique_l=32, logique_h=16, bloc=2, toile=8))
-    importe = await appeler(mcp, "import_asset", file_path=str(planche))
+    importe = (await appeler(mcp, "import_asset", file_path=str(planche)))["asset"]
 
     avant_assets = len(atelier.assets.recents(500))
     propose = await appeler(
@@ -607,11 +610,11 @@ async def test_un_import_survit_a_un_index_efface(atelier, tmp_path):
     retrouve — sinon il disparaîtrait à la première évolution du schéma."""
     source = tmp_path / "tonneau.png"
     source.write_bytes(image_sujet())
-    asset = atelier.generations.importer(source.read_bytes(), source.name)
+    entre = atelier.generations.importer(source.read_bytes(), source.name)
 
     compte = atelier.bibliotheque.reconstruire()
     assert compte["assets"] >= 1
-    assert atelier.assets.lire(asset.identifiant) is not None
+    assert atelier.assets.lire(entre["asset"]["identifiant"]) is not None
 
 
 async def test_l_export_de_l_agent_est_relisible(atelier, mcp, tmp_path):
@@ -622,11 +625,14 @@ async def test_l_export_de_l_agent_est_relisible(atelier, mcp, tmp_path):
     """
     source = tmp_path / "fiole.png"
     source.write_bytes(image_sujet())
-    asset = atelier.generations.importer(source.read_bytes(), source.name)
+    entre = atelier.generations.importer(source.read_bytes(), source.name)
 
     dossier = tmp_path / "jeu"
     sortie = await appeler(
-        mcp, "export_assets", asset_ids=[asset.identifiant], folder=str(dossier)
+        mcp,
+        "export_assets",
+        asset_ids=[entre["asset"]["identifiant"]],
+        folder=str(dossier),
     )
 
     descriptif = json.loads(
@@ -635,7 +641,7 @@ async def test_l_export_de_l_agent_est_relisible(atelier, mcp, tmp_path):
     fiches = descriptif["assets"]
     assert len(fiches) == 1
     fiche = fiches[0]
-    assert fiche["identifiant"] == asset.identifiant
+    assert fiche["identifiant"] == entre["asset"]["identifiant"]
 
     png = dossier / fiche["fichier"]
     assert png.is_file()

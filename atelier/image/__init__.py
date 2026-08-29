@@ -17,7 +17,13 @@ from atelier.image.decoupe import (
     grille_fixe,
     zones_opaques,
 )
-from atelier.image.mesures import Mesure, extension, mesurer, rendre_en_png
+from atelier.image.mesures import (
+    Mesure,
+    empreinte_de,
+    extension,
+    mesurer,
+    rendre_en_png,
+)
 from atelier.image.palette import COULEURS, COULEURS_MAX, COULEURS_MIN, palette_de
 from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.image.traitement import (
@@ -43,6 +49,7 @@ __all__ = [
     "Rendu",
     "appliquer",
     "decouper",
+    "empreinte_de",
     "detourer",
     "en_ordre_de_lecture",
     "extension",

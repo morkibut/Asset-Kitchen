@@ -50,7 +50,7 @@ from atelier.domaine.erreurs import (
 from atelier.domaine.generation import AUTEUR, CARTE, EDITION, STYLE
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
-from atelier.image import mesurer
+from atelier.image import empreinte_de, mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
 from atelier.domaine.asset import Asset
@@ -78,6 +78,18 @@ FENETRE_MESURES = 8
 # jamais, et c'est exactement ce qu'il dit — cette image n'a rien coûté et ne se
 # relance pas.
 IMPORT = "import"
+
+
+class ImportRefuse(ErreurAtelier):
+    """Ce qu'on a fait entrer n'est pas une image, et on dit lequel.
+
+    **Sa propre classe, comme `CarteRefusee`**, et pour la même raison : un
+    dépôt de douze fichiers doit distinguer « celui-là n'est pas une image » de
+    « l'atelier ne répond pas ». Le premier se range à côté de son fichier et
+    n'empêche rien ; le second est une panne, et il va à la barre d'état.
+    """
+
+    code = "import_refuse"
 
 
 class ServiceGenerations:
@@ -247,8 +259,22 @@ class ServiceGenerations:
         *,
         projet: str | None = None,
         provenance: str = AUTEUR,
-    ) -> Asset:
-        """Un fichier local devient un asset entier (US-82).
+        traiter: bool = False,
+        forcer: bool = False,
+    ) -> dict[str, Any]:
+        """Un fichier devient un asset entier (US-82, US-167, US-168).
+
+        **Le seul endroit du dépôt qui fasse entrer une image**, et c'est ce qui
+        rend vraie la phrase « ce que l'agent peut faire, l'écran le peut aussi »
+        dans les deux sens : l'outil MCP et la route qui prend les octets
+        appellent celui-ci, chacun avec sa provenance.
+
+        Rend `{"asset": …, "doublon": …}`, et l'un des deux est toujours nul —
+        **la forme de `coller_image`**, et pour la raison exacte : « je veux être
+        averti d'un doublon avec un lien vers l'existant, tout en gardant la
+        possibilité d'importer quand même » (US-46, US-169). Un doublon n'est pas
+        un refus, donc il ne lève pas ; rappeler avec `forcer` fait entrer quand
+        même.
 
         **Il passe par une génération, et ce n'est pas une formalité.** La
         bibliothèque se reconstruit en parcourant les `generation.json` du
@@ -258,14 +284,36 @@ class ServiceGenerations:
         emplacement déjà réussi —, et elle dit d'où le fichier venait, ce
         qu'aucun autre endroit ne pourrait dire ensuite.
 
-        L'asset naît donc par le même chemin que tous les autres : il hérite de
-        la recette du projet, entre en bibliothèque de lui-même, et se range
-        dans le projet ouvert quand on n'en nomme pas. **Aucun appel au
-        fournisseur** — importer marche réseau coupé.
+        **`traiter` est faux par défaut, et c'est une correction** (US-170).
+        L'import héritait de la recette du projet en silence : une référence de
+        2048 pixels revenait à 64, ce que personne n'avait demandé. Le défaut
+        est donc « telle quelle », des deux côtés — un agent et un auteur ne
+        vivent pas dans deux produits différents. La décision est portée par la
+        génération, donc elle survit à l'effacement de l'index.
+
+        L'asset naît pour le reste par le même chemin que tous les autres : il
+        entre en bibliothèque de lui-même, et se range dans le projet ouvert
+        quand on n'en nomme pas. **Aucun appel au fournisseur** — importer
+        marche réseau coupé.
         """
-        mesure = mesurer(octets)
+        propre = nom.strip() or "l'image importée"
+        try:
+            mesure = mesurer(octets)
+        except ValueError:
+            # **Le message de Pillow ne franchit pas cette ligne**, comme au
+            # tableau : il est en anglais et nomme un tampon mémoire. Ce qui
+            # compte, et que le PRD demande, c'est **quel** fichier pose
+            # problème parmi les douze qu'on vient de déposer (US-169).
+            raise ImportRefuse(f"« {propre} » n'est pas une image") from None
+
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
+
+        empreinte = empreinte_de(octets)
+        if not forcer:
+            deja = self._deja_importe(projet, empreinte)
+            if deja is not None:
+                return {"asset": None, "doublon": deja.en_json()}
 
         identifiant = uuid.uuid4().hex
         chemin = self._fichiers.ecrire_brut(
@@ -287,8 +335,17 @@ class ServiceGenerations:
             modele=IMPORT,
             # Le nom du fichier fait le label, par `_label` : c'est le seul
             # texte qu'un import apporte, et c'est celui que l'auteur cherchera
-            # dans la grille.
-            demande={"prompt": nom, "variations": 1, "source": nom},
+            # dans la grille. `traiter` et l'empreinte y sont aussi : la
+            # première décide de ce que l'asset reçoit à sa naissance, la
+            # seconde de ce qu'un import suivant reconnaîtra comme doublon — et
+            # les deux doivent survivre à l'effacement de l'index.
+            demande={
+                "prompt": nom,
+                "variations": 1,
+                "source": nom,
+                "traiter": traiter,
+                "empreinte": empreinte,
+            },
             parametres_resolus={"modele": IMPORT, "source": nom},
             emplacements=[emplacement],
             cree_le=time.time(),
@@ -298,8 +355,34 @@ class ServiceGenerations:
         self._sauver(generation)
         asset = self._assets.naitre(generation, emplacement)
         if asset is None:  # pragma: no cover — l'emplacement porte son résultat
-            raise ErreurAtelier(f"« {nom} » n'a pas pu entrer en bibliothèque")
-        return asset
+            raise ErreurAtelier(f"« {propre} » n'a pas pu entrer en bibliothèque")
+        return {"asset": asset.en_json(), "doublon": None}
+
+    def _deja_importe(self, projet: str | None, empreinte: str) -> Asset | None:
+        """L'asset importé qui porte déjà ces octets-là, ou rien.
+
+        **Dans ce projet, et pas dans toute la bibliothèque** — même portée
+        qu'au tableau d'inspiration, et l'écran dit « comme au tableau ». Un
+        univers n'a pas à savoir ce qu'un autre a fait entrer ; la même
+        référence a de bonnes raisons de servir dans deux jeux.
+
+        **Comparé sur les octets, jamais à l'œil** : deux images visuellement
+        proches sont deux images, et c'est à l'auteur d'en décider. Le produit
+        signale ce dont il est certain — le même fichier, deux fois.
+
+        Cherché sur les **générations d'import** plutôt que sur les assets : ce
+        sont elles qui portent l'empreinte, et c'est déjà là que vit tout ce
+        qu'on sait d'un import. Un asset supprimé n'a plus de doublon à
+        signaler — il n'est plus dans la bibliothèque —, d'où la relecture par
+        l'asset et non par la génération seule.
+        """
+        for generation in self._base.generations_du_modele(IMPORT, projet):
+            if generation.demande.get("empreinte") != empreinte:
+                continue
+            asset = self._assets.lire(f"{generation.identifiant}-0")
+            if asset is not None:
+                return asset
+        return None
 
     # ── Soumission ───────────────────────────────────────────────────────────
 

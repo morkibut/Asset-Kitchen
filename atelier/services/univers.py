@@ -48,7 +48,6 @@ from atelier.domaine.carte import (
     TEXTE,
     TOUS,
     Carte,
-    empreinte_de,
 )
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE, STYLE, Reinjection
@@ -72,7 +71,14 @@ from atelier.domaine.lien import (
     meme_paire,
 )
 from atelier.domaine.teinte import AUCUNE, TEINTES
-from atelier.image import COULEURS_MAX, COULEURS_MIN, extension, mesurer, palette_de
+from atelier.image import (
+    COULEURS_MAX,
+    COULEURS_MIN,
+    empreinte_de,
+    extension,
+    mesurer,
+    palette_de,
+)
 # `CIBLE_MIN` et `CIBLE_MAX` viennent de la recette et pas d'ici : la taille
 # de pixel d'un projet et celle d'une recette sont la même grandeur, et deux
 # plages écrites à deux endroits finiraient par se contredire — l'une refusant

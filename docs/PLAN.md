@@ -613,6 +613,7 @@ onglet resté ouvert sur une pose décochée voit d'abord la raison, et le texte
 ---
 
 ## R3 · Faire entrer une image depuis l'écran
+*10 critères · 4 US (167–170) · tenue le 29 août 2026*
 
 **User stories** : 167, 168, 169, 170
 
@@ -634,16 +635,50 @@ quelle ». Aujourd'hui l'import hérite de la recette du projet en silence : une
 
 ### Critères d'acceptation
 
-- [ ] Un bouton d'import fait entrer un fichier choisi, et le déposer sur la grille fait la même chose
-- [ ] Plusieurs fichiers déposés d'un coup entrent tous, chacun avec son propre sort
-- [ ] Ce qui n'est pas une image est refusé **en le nommant**, et les autres fichiers du même dépôt entrent quand même
-- [ ] Un doublon est signalé avec le lien vers l'existant, et l'import forcé reste possible — comme au tableau d'inspiration
-- [ ] L'image importée est un asset ordinaire : filiation, retouche, découpe, export, suppression avec annulation
-- [ ] Sa provenance est lisible sur sa fiche : importée, coût nul, et le nom du fichier d'origine
-- [ ] Le choix « traitement du projet / telle quelle » est offert au moment de l'import, et le défaut est « telle quelle »
-- [ ] L'écran et l'outil MCP passent par le même service : aucun geste que l'un a et l'autre pas
-- [ ] Un fichier de plusieurs mégaoctets entre sans que l'écran se fige
-- [ ] Réseau coupé : l'import fonctionne de bout en bout
+- [x] Un bouton d'import fait entrer un fichier choisi, et le déposer sur la grille fait la même chose
+- [x] Plusieurs fichiers déposés d'un coup entrent tous, chacun avec son propre sort
+- [x] Ce qui n'est pas une image est refusé **en le nommant**, et les autres fichiers du même dépôt entrent quand même
+- [x] Un doublon est signalé avec le lien vers l'existant, et l'import forcé reste possible — comme au tableau d'inspiration
+- [x] L'image importée est un asset ordinaire : filiation, retouche, découpe, export, suppression avec annulation
+- [x] Sa provenance est lisible sur sa fiche : importée, coût nul, et le nom du fichier d'origine
+- [x] Le choix « traitement du projet / telle quelle » est offert au moment de l'import, et le défaut est « telle quelle »
+- [x] L'écran et l'outil MCP passent par le même service : aucun geste que l'un a et l'autre pas
+- [x] Un fichier de plusieurs mégaoctets entre sans que l'écran se fige
+- [x] Réseau coupé : l'import fonctionne de bout en bout
+
+### Ce que la construction a décidé
+
+**Le service qui faisait entrer une image n'a pas bougé de place ; il a changé de réponse.**
+Il rend désormais *ce qui est entré* **ou** *ce qui était déjà là*, comme le collage du
+tableau depuis T4 : un doublon n'est pas un refus, donc il ne lève pas. Les deux routes et
+l'outil de l'agent rendent la même forme — un objet a la même forme sur toutes les routes qui
+le portent, et la leçon de C1 s'appliquait ici mot pour mot.
+
+**Le défaut « telle quelle » vaut des deux côtés, et c'est une décision.** Le PRD ne parlait
+que de l'écran ; l'appliquer à l'agent aussi change son comportement d'avant. C'est assumé :
+le défaut d'hier — hériter de la recette du projet en silence — est le défaut que la reprise
+corrige, et un agent qui le garderait ferait vivre l'auteur et lui dans deux produits
+différents. Les deux options sont donc sur l'outil MCP, comme sur la route.
+
+**La décision voyage sur la génération, pas sur l'asset.** L'index est jetable : ce qui n'est
+pas dans un `generation.json` n'existe plus après la première évolution du schéma. Une image
+entrée telle quelle se retrouverait sinon ramenée sur la grille du projet un matin, sans que
+personne l'ait demandé.
+
+**Et elle n'a rien coûté au balayage de palette** : une recette vide est déjà ce que
+« Tout réaligner » laisse tranquille — « un asset ramené au brut reste au brut ». Une image
+entrée telle quelle le reste donc sans qu'aucune règle nouvelle ait eu à le dire. C'est le
+signe qu'elle est posée au bon endroit.
+
+**Le doublon se compte par projet**, comme au tableau : un univers n'a pas à savoir ce qu'un
+autre a fait entrer, et la même référence a de bonnes raisons de servir dans deux jeux. Il se
+cherche sur les **générations d'import** — elles seules portent l'empreinte des octets — et
+il se relit par l'asset : ce qui a quitté la bibliothèque n'a plus de lien à proposer.
+
+**Le prix payé, et il est écrit ici** : le choix « telle quelle / traitement du projet » vaut
+pour la séance et non pour chaque fichier. Douze fichiers déposés ensemble ne peuvent pas
+avoir douze sorts différents sans douze questions, et le produit n'a aucune boîte modale.
+Qui veut mélanger les deux fait deux dépôts.
 
 ## Bloquée par
 

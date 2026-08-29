@@ -14,6 +14,7 @@
 import { useEffect, useState } from "react"
 import type { Collection, Projet } from "../api"
 import { LIBELLES_ZOOM, Segments, ZOOMS, type Zoom } from "./chassis"
+import { Importer, type Import } from "./Import"
 
 export type Annulation = { identifiants: string[]; expireLe: number }
 
@@ -32,6 +33,7 @@ export function BarreOutils({
   onVider,
   onExporter,
   exportEnCours,
+  entree,
   annulation,
   onAnnuler,
   compte,
@@ -58,6 +60,10 @@ export function BarreOutils({
    *  rien. */
   onExporter: () => void
   exportEnCours: boolean
+  /** **L'import, et le sort qu'il réserve à ce qui entre** (R3). Ancré à droite
+   *  contre l'export, parce que ce sont les deux portes de la bibliothèque et
+   *  qu'une porte qui se déplace est une porte qu'on cherche. */
+  entree: Import
   annulation: Annulation | null
   onAnnuler: () => void
   /** Ce que la grille montre en ce moment. Un compte est un fait mesuré : il
@@ -195,6 +201,7 @@ export function BarreOutils({
           on va le cliquer est un contrôle qu'on rate. */}
       <div className="flex shrink-0 items-center gap-3">
         {annulation && <FenteAnnulation annulation={annulation} onAnnuler={onAnnuler} />}
+        <Importer etat={entree} />
         <Exporter
           combien={selection.length}
           enCours={exportEnCours}

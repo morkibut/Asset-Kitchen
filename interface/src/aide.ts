@@ -419,6 +419,28 @@ export const AIDE: Record<string, Explication> = {
       "C'est le seul contrôle que le tableau d'inspiration ajoute à l'Atelier, et il porte trois conséquences parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération.\n\nSans sujet choisi, seules les planches marquées « tous » partiront en référence : c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner.\n\nLe barème lui-même se pose dans l'écran Univers, une fois pour le projet. C'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 % — et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
+  "atelier.import": {
+    nom: "Importer",
+    ou: "atelier",
+    quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
+    change:
+      "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
+    origine: "ton disque · le même geste que l'agent a depuis le serveur MCP",
+    long:
+      "Un appel par fichier, et chacun répond pour lui-même : douze fichiers déposés ensemble font entrer les onze images et nomment le douzième s'il n'en est pas une. Les onze premières paraissent sans attendre que la douzième soit lue.\n\nSi les mêmes octets sont déjà dans ce projet, rien n'entre : le doublon est signalé avec un lien vers l'image existante, et « Importer quand même » reste offert. C'est exactement la règle du tableau d'inspiration, et la portée est la même — ce projet-ci, pas toute la bibliothèque : la même référence a de bonnes raisons de servir dans deux jeux.\n\nRien de tout cela ne demande le réseau, et rien ne coûte un centime.",
+  },
+
+  "atelier.import.traitement": {
+    nom: "brute ou traitée",
+    ou: "atelier",
+    quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
+    change:
+      "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
+    origine: "toi · défaut « brute »",
+    long:
+      "Le défaut a changé, et c'est une correction : l'import héritait de la recette du projet en silence, donc une référence de 2048 pixels revenait à 64 sans que personne l'ait demandé.\n\nLe choix vaut pour la séance et pour les deux gestes — le bouton et le dépôt —, plutôt que d'ouvrir une question à chaque fichier : douze fichiers déposés ensemble poseraient douze fois la même.\n\nUne image entrée telle quelle le reste : « Tout réaligner » ne la touche pas, parce qu'une recette vide est une décision, pas un oubli. C'est la même règle qui protège un asset ramené au brut.",
+  },
+
   "atelier.apercu": {
     nom: "Ce qui partira",
     ou: "atelier",

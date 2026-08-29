@@ -11,6 +11,49 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## R3 — 29 août 2026
+
+**R3 est écrite — faire entrer une image depuis l'écran.** Un bouton dans la barre d'outils,
+et le glisser-déposer sur la grille. L'image devient un asset entier : retouche, découpe,
+export, suppression avec annulation, et sa fiche dit d'où elle vient — importée, coût nul, le
+nom du fichier. **Les dix critères sont cochés, tenus par 18 essais de serveur et 5 d'écran.**
+
+**La seule pièce neuve du serveur est une route qui prend les octets**, parce que celle qui
+existait prend un *chemin* — ce qu'un navigateur ne donne jamais. Les deux appellent le même
+service que l'outil MCP, et il n'y a donc toujours qu'un endroit du produit qui fasse entrer
+une image. Les octets voyagent bruts, en corps de requête : la décision de `POST /board/paste`
+en T4, reconduite sans la rediscuter — `multipart` demanderait une dépendance d'exécution de
+plus pour transporter ce qu'un `POST` transporte déjà.
+
+**Le service a changé de réponse plutôt que de place.** Il rend maintenant *ce qui est entré*
+**ou** *ce qui était déjà là* : un doublon n'est pas un refus, donc il ne lève pas. C'est la
+forme du collage du tableau, et c'est la leçon de C1 appliquée — *un objet a la même forme sur
+toutes les routes qui le portent*, l'outil MCP compris. Cinq essais de T7 et de C1 ont été
+repris pour cette raison-là, et c'est le prix juste d'un contrat qui a changé.
+
+**Le défaut est passé à « telle quelle », et il vaut aussi pour l'agent.** Le PRD ne parlait
+que de l'écran ; l'étendre à l'agent change son comportement d'avant, et c'est assumé : le
+défaut d'hier — hériter de la recette du projet en silence, donc ramener une référence de 2048
+pixels à 64 — est très exactement le défaut que la reprise corrige. Un agent qui le garderait
+ferait vivre l'auteur et lui dans deux produits différents.
+
+**La décision voyage sur la génération, et un essai le prouve après reconstruction.** L'index
+est jetable : ce qui n'est pas dans un `generation.json` n'existe plus à la première évolution
+du schéma, et une image entrée telle quelle se retrouverait sinon ramenée sur la grille du
+projet un matin, sans que personne l'ait demandé.
+
+**Et elle n'a rien coûté au balayage de palette.** Une recette vide est déjà ce que « Tout
+réaligner » laisse tranquille — « un asset ramené au brut reste au brut » (US-64). Une image
+entrée telle quelle le reste donc sans qu'aucune règle nouvelle ait eu à le dire : le signe
+que la décision est posée au bon endroit.
+
+**Une fonction a déménagé, et c'est le précédent de `teinte.py` qui l'a décidé.** L'empreinte
+qui nomme un doublon vivait dans la carte du tableau ; la bibliothèque en a désormais besoin
+aussi. Deux familles d'images l'appellent et aucune ne la possède : elle est passée dans
+`atelier/image/mesures.py`, où elle ne parle que d'octets.
+
+**La séance d'usage au navigateur n'a pas encore eu lieu**, pour R2 comme pour R3.
+
 ## État au 29 août 2026
 
 **R2 est écrite — ce qui décide de l'apparence se voit et se règle.** C'est la plus grosse des

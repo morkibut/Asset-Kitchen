@@ -564,14 +564,20 @@ class CorpsRecette(BaseModel):
 class CorpsImport(BaseModel):
     """Un fichier local, nommé par son chemin.
 
-    Le chemin plutôt que les octets : l'atelier et l'appelant sont sur la même
-    machine — c'est vrai de l'écran comme de l'agent —, et faire transiter dix
-    mégaoctets en base64 par une boucle locale serait payer un transport qui
-    n'existe pas.
+    Le chemin plutôt que les octets : l'appelant est sur la même machine —
+    c'est vrai de l'agent —, et faire transiter dix mégaoctets en base64 par une
+    boucle locale serait payer un transport qui n'existe pas. **Un navigateur,
+    lui, ne donne jamais de chemin** : c'est `POST /assets/upload` qui le sert,
+    et les deux appellent le même service.
     """
 
     chemin: str = Field(min_length=1)
     projet: str | None = None
+    # **Le traitement du projet s'applique-t-il ?** Faux par défaut, des deux
+    # côtés (US-170) : un agent et un auteur ne vivent pas dans deux produits
+    # différents, et « telle quelle » est le défaut du produit.
+    traiter: bool = False
+    forcer: bool = False
 
 
 @routeur.post("/assets/import", status_code=201)
@@ -588,11 +594,48 @@ async def importer_asset(requete: Request, corps: CorpsImport) -> dict[str, Any]
     chemin = Path(corps.chemin).expanduser()
     if not chemin.is_file():
         raise ErreurAtelier(f"aucun fichier « {chemin} »")
-    atelier = _atelier(requete)
-    asset = atelier.generations.importer(
-        chemin.read_bytes(), chemin.name, projet=corps.projet
+    return _atelier(requete).generations.importer(
+        chemin.read_bytes(),
+        chemin.name,
+        projet=corps.projet,
+        traiter=corps.traiter,
+        forcer=corps.forcer,
     )
-    return asset.en_json()
+
+
+@routeur.post("/assets/upload", status_code=201)
+async def televerser_asset(
+    requete: Request,
+    nom: str = "",
+    projet: str | None = None,
+    traiter: bool = False,
+    forcer: bool = False,
+) -> dict[str, Any]:
+    """Faire entrer une image **depuis l'écran** (US-167, US-168).
+
+    **La seule pièce neuve du serveur pour cette tranche**, et elle existe parce
+    que celle d'à côté prend un *chemin* — ce qu'un navigateur ne donne jamais.
+    Elle appelle le même service : « ce que l'agent peut faire, l'écran le peut
+    aussi » reste vrai dans les deux sens, et il n'y a toujours qu'un seul
+    endroit qui fasse entrer une image.
+
+    Les octets sont le corps de la requête, bruts. **Pas de `multipart`**, et
+    c'est la décision de `POST /board/paste` reconduite telle quelle : il
+    demanderait `python-multipart`, une dépendance d'exécution de plus pour
+    transporter ce qu'un `POST` transporte déjà.
+
+    **Une image par appel**, pour la raison de la tranche T4 : douze fichiers
+    déposés font douze appels, donc douze réponses — onze assets et un refus qui
+    nomme le fichier (US-169). Un lot unique aurait dû inventer une forme de
+    réponse partielle, et il aurait fait attendre les onze premiers que le
+    douzième soit lu.
+
+    Rend `{"asset": …, "doublon": …}`, dont l'un est toujours nul. Aucun appel au
+    fournisseur : l'import marche réseau coupé.
+    """
+    return _atelier(requete).generations.importer(
+        await requete.body(), nom, projet=projet, traiter=traiter, forcer=forcer
+    )
 
 
 @routeur.get("/assets")

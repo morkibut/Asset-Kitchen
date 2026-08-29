@@ -987,6 +987,36 @@ export const api = {
   revenirAuBrut: (identifiant: string) =>
     appeler<Asset>(`/assets/${identifiant}/reset`, { method: "POST" }),
 
+  /** **Faire entrer une image depuis l'écran** (US-167, US-168).
+   *
+   *  Les octets sont le corps de la requête, bruts — pas de `multipart`, comme
+   *  au tableau d'inspiration : il demanderait une dépendance d'exécution de
+   *  plus pour transporter ce qu'un `POST` transporte déjà.
+   *
+   *  **Une image par appel** : douze fichiers déposés font douze réponses, donc
+   *  onze assets et un refus qui nomme le douzième (US-169), et les onze
+   *  premiers entrent sans attendre que le douzième soit lu.
+   *
+   *  L'un des deux champs rendus est toujours nul. Un doublon **n'est pas un
+   *  refus** : il porte l'asset existant, de quoi faire le lien, et rappeler
+   *  avec `forcer` fait entrer quand même. */
+  televerser: (
+    octets: Blob,
+    {
+      nom = "",
+      /** Le traitement du projet s'applique-t-il ? **Faux par défaut** — une
+       *  référence de 2048 pixels n'a rien à faire ramenée à 64 (US-170). */
+      traiter = false,
+      forcer = false,
+    }: { nom?: string; traiter?: boolean; forcer?: boolean } = {},
+  ) =>
+    appeler<{ asset: Asset | null; doublon: Asset | null }>(
+      `/assets/upload?nom=${encodeURIComponent(
+        nom || (octets instanceof File ? octets.name : ""),
+      )}&traiter=${traiter}&forcer=${forcer}`,
+      { method: "POST", body: octets, headers: {} },
+    ),
+
   /** Ce que le projet impose à cette image-là, **maintenant** (US-164).
    *
    *  À part de l'asset, et c'est la grille qui le décide : la charge d'un asset

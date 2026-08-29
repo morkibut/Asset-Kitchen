@@ -47,7 +47,6 @@ le projet (`atelier/domaine/projet.py`).
 
 from __future__ import annotations
 
-import hashlib
 import math
 import time
 from dataclasses import dataclass, field
@@ -301,13 +300,3 @@ def _largeur(brut: Any) -> int | None:
     except (TypeError, ValueError):
         return None
     return largeur if LARGEUR_MIN <= largeur <= LARGEUR_MAX else None
-
-
-def empreinte_de(octets: bytes) -> str:
-    """Ce qui nomme un doublon. Les octets, rien d'autre.
-
-    Pas de comparaison perceptuelle : deux images visuellement proches sont deux
-    images, et c'est à l'auteur d'en décider. Le produit signale ce dont il est
-    **certain** — le même fichier, deux fois — et ne devine jamais le reste.
-    """
-    return hashlib.sha256(octets).hexdigest()[:16]

@@ -504,6 +504,9 @@ function serveurDouble(options: {
     liens: options.liens ?? ([] as Lien[]),
     teintes: options.teintes ?? ({} as Record<string, Teinte>),
     univers: options.univers ?? UNIVERS,
+    /** Ce que le double a déjà fait entrer, pour reconnaître un doublon —
+     *  comme le serveur reconnaît les mêmes octets. */
+    importes: [] as { nom: string; asset: Asset }[],
     agent: options.agent ?? ETAT.agent,
     plan: options.plan ?? PLAN,
     personnages: options.personnages ?? ([] as Personnage[]),
@@ -682,6 +685,49 @@ function serveurDouble(options: {
     if (url === "/api/assets/restore") {
       etat.supprimes = []
       return rendre({ assets: [] })
+    }
+    // ── Faire entrer une image depuis l'écran (R3) ───────────────────────
+    //
+    // **Le double tient ce que le serveur tient** : ce qui n'est pas une image
+    // est refusé en le nommant, et les mêmes octets déjà entrés reviennent en
+    // doublon plutôt qu'en refus. Le nom du fichier lui suffit à jouer les
+    // trois issues — c'est ce que l'écran voit, et l'écran ne regarde jamais
+    // les octets lui-même.
+    if (url.startsWith("/api/assets/upload")) {
+      const parametres = new URL(url, "http://x").searchParams
+      const nom = parametres.get("nom") ?? ""
+      if (!/\.(png|jpe?g|webp|gif)$/i.test(nom))
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "import_refuse",
+            raison: `« ${nom} » n'est pas une image`,
+            ou_aller: null,
+          }),
+        } as unknown as Response
+      const deja = etat.importes.find((i) => i.nom === nom)
+      if (deja && parametres.get("forcer") !== "true")
+        return rendre({ asset: null, doublon: deja.asset })
+      const ne = {
+        ...asset(`iiii${etat.importes.length}${etat.assets.length}-0`, nom, "auteur", "import"),
+        // Le double porte le choix tel qu'il est arrivé : c'est la seule chose
+        // que l'écran ait à décider, et c'est donc la seule qu'il faille voir.
+        recette: {
+          passes: [],
+          recadrage: null,
+          grille:
+            parametres.get("traiter") === "true"
+              ? { cible: 64, occupation: 100, ancrage: "bas" as const }
+              : null,
+          quantification: null,
+          bords: null,
+          nom: null,
+        },
+      }
+      etat.importes.push({ nom, asset: ne })
+      etat.assets = [ne, ...etat.assets]
+      return rendre({ asset: ne, doublon: null })
     }
     if (url.startsWith("/api/assets")) {
       const parametres = new URL(url, "http://x").searchParams
@@ -3966,5 +4012,183 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         /sans taille de pixel, l'occupation ne s'applique pas/,
       ),
     ).toBeTruthy()
+  })
+})
+
+// ── R3 · Faire entrer une image depuis l'écran ───────────────────────────────
+//
+// Les cinq critères de la tranche qui portent sur **le geste**. Le reste — la
+// route qui prend les octets, le doublon par projet, « telle quelle » qui
+// survit à l'effacement de l'index — est tenu par `tests/test_r3.py`.
+//
+// **Un appel par fichier, et chacun répond pour lui-même** : c'est ce que ces
+// essais regardent en premier, parce que c'est la décision de la tranche. Un
+// dépôt de trois fichiers dont un mauvais doit faire entrer les deux autres.
+
+describe("faire entrer une image depuis l'écran", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const fichier = (nom: string, taille = 12) =>
+    new File([new Uint8Array(taille)], nom, { type: "image/png" })
+
+  /** Déposer sur la grille. `dataTransfer` est doublé parce que jsdom n'en
+   *  fabrique pas : ce qui compte est ce que l'écran en lit — la liste des
+   *  fichiers, et les types qui disent que ce n'est pas une carte tirée de la
+   *  réserve. */
+  const deposer = (cible: HTMLElement, fichiers: File[]) =>
+    fireEvent.drop(cible, {
+      dataTransfer: { files: fichiers, types: [], getData: () => "" },
+    })
+
+  /** La grille, **nommée** : elle est la surface qui reçoit le dépôt, dans ses
+   *  trois états — pleine, filtrée à vide, ou vide. */
+  const laGrille = () => screen.getByRole("region", { name: "Grille des images" })
+
+  const champImport = () =>
+    screen.getByLabelText("Importer des images") as HTMLInputElement
+
+  // ── « Un bouton d'import fait entrer un fichier choisi, et le déposer sur la
+  //     grille fait la même chose » ───────────────────────────────────────────
+
+  test("le bouton et le dépôt font entrer la même chose, par la même route", async () => {
+    const { fetchDouble, appels } = serveurDouble({ assets: [asset("aaaa1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.change(champImport(), { target: { files: [fichier("epee.png")] } })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    deposer(laGrille(), [fichier("bouclier.png")])
+    await waitFor(() => expect(tuiles()).toHaveLength(3))
+
+    // **La même route pour les deux**, et c'est la moitié du critère : un
+    // bouton qui passerait ailleurs que le dépôt serait deux gestes.
+    const envois = appels.filter((a) => a.url.startsWith("/api/assets/upload"))
+    expect(envois).toHaveLength(2)
+    expect(envois.map((a) => new URL(a.url, "http://x").searchParams.get("nom"))).toEqual([
+      "epee.png",
+      "bouclier.png",
+    ])
+  })
+
+  // ── « Plusieurs fichiers déposés d'un coup entrent tous, chacun avec son
+  //     propre sort » · « Ce qui n'est pas une image est refusé en le nommant,
+  //     et les autres fichiers du même dépôt entrent quand même » ─────────────
+
+  test("un dépôt mêlé fait entrer les images et nomme celui qui n'en est pas", async () => {
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    // Un prompt écrit **avant** le dépôt : sans lui, Générer est déjà grisé
+    // faute de sujet, et l'essai ne prouverait rien de ce qu'il annonce.
+    fireEvent.change(screen.getByPlaceholderText("Décris ce que tu veux fabriquer."), {
+      target: { value: "un tonneau" },
+    })
+
+    deposer(laGrille(), [
+      fichier("epee.png"),
+      new File(["des notes"], "notes.txt", { type: "text/plain" }),
+      fichier("bouclier.png"),
+    ])
+
+    // Les deux images entrent — le fichier refusé ne les a pas retenues.
+    await waitFor(() => expect(tuiles()).toHaveLength(3))
+
+    // Et le refus **nomme le fichier** : c'est tout ce qu'il doit apprendre,
+    // et c'est ce qui permet de savoir lequel des douze pose problème.
+    expect(await screen.findByText(/« notes.txt » n'est pas une image/)).toBeTruthy()
+
+    // **Il ne va pas à la barre d'état**, où il griserait Générer : un import
+    // refusé n'empêche pas de générer.
+    expect(screen.getByRole("button", { name: /^Générer/ })).not.toBeDisabled()
+  })
+
+  // ── « Un doublon est signalé avec le lien vers l'existant, et l'import forcé
+  //     reste possible — comme au tableau d'inspiration » ────────────────────
+
+  test("un doublon propose de voir l'existante ou d'importer quand même", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, assets: [] })
+
+    fireEvent.change(champImport(), { target: { files: [fichier("epee.png")] } })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    // Le même fichier une seconde fois : signalé, pas refusé.
+    fireEvent.change(champImport(), { target: { files: [fichier("epee.png")] } })
+    expect(
+      await screen.findByText(/« epee.png » est déjà dans la bibliothèque/),
+    ).toBeTruthy()
+    // Rien n'est entré tant qu'on n'a pas tranché.
+    expect(tuiles()).toHaveLength(1)
+
+    // **Le lien vers l'existante** : elle s'ouvre dans la fiche.
+    fireEvent.click(screen.getByRole("button", { name: "La voir ›" }))
+    await screen.findByLabelText("Fermer la fiche")
+
+    // Et l'import forcé reste possible.
+    fireEvent.change(champImport(), { target: { files: [fichier("epee.png")] } })
+    await screen.findByText(/« epee.png » est déjà dans la bibliothèque/)
+    fireEvent.click(screen.getByRole("button", { name: "Importer quand même ›" }))
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    const force = appels
+      .filter((a) => a.url.startsWith("/api/assets/upload"))
+      .some((a) => new URL(a.url, "http://x").searchParams.get("forcer") === "true")
+    expect(force).toBe(true)
+  })
+
+  // ── « Le choix "traitement du projet / telle quelle" est offert au moment de
+  //     l'import, et le défaut est "telle quelle" » ──────────────────────────
+
+  test("le choix est là, et le défaut est l'image brute", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, assets: [] })
+
+    // **Le libellé dit ce qui se passera**, pas ce que le clic ferait : c'est
+    // la forme du détourage d'une échelle dans le barème, et la seule qui se
+    // lise sans avoir à l'essayer.
+    const choix = await screen.findByRole("button", { name: "brute" })
+    expect(choix.getAttribute("aria-pressed")).toBe("false")
+
+    fireEvent.change(champImport(), { target: { files: [fichier("reference.png")] } })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    expect(
+      new URL(appels.at(-1)!.url, "http://x").searchParams.get("traiter"),
+    ).not.toBe("true")
+
+    // Retourné, il envoie l'autre — et il le dit avant qu'on dépose.
+    fireEvent.click(choix)
+    const pose = await screen.findByRole("button", { name: "traitée" })
+    expect(pose.getAttribute("aria-pressed")).toBe("true")
+
+    fireEvent.change(champImport(), { target: { files: [fichier("sujet.png")] } })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+    const dernier = appels.filter((a) => a.url.startsWith("/api/assets/upload")).at(-1)!
+    expect(new URL(dernier.url, "http://x").searchParams.get("traiter")).toBe("true")
+  })
+
+  test("une bibliothèque vide accepte le dépôt — c'est là qu'il sert le plus", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble, { ...ETAT, assets: [] })
+
+    // L'état vide, et non la grille : c'est lui qui occupe la place quand il
+    // n'y a rien, et une surface qui n'accepterait le dépôt qu'une fois pleine
+    // serait fermée au moment où elle sert le plus.
+    await screen.findByText(/Rien n'est encore sorti d'ici/)
+    deposer(laGrille(), [fichier("premiere.png")])
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
   })
 })

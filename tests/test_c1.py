@@ -76,7 +76,7 @@ def test_une_image_importee_le_dit(client, tmp_path):
     fichier.write_bytes(image("PNG"))
     reponse = client.post("/api/assets/import", json={"chemin": str(fichier)})
     assert reponse.status_code == 201, reponse.text
-    assert reponse.json()["modele"] == "import"
+    assert reponse.json()["asset"]["modele"] == "import"
 
 
 def test_une_decoupe_porte_le_modele_de_sa_planche(client, double):

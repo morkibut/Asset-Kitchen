@@ -585,6 +585,38 @@ valeur.
 
 ---
 
+### La grille reçoit un dépôt — un liseré, jamais un voile
+
+Ajouté le 29 août 2026 (R3). Un fichier lâché sur la grille d'assets y entre, comme il entre
+déjà sur le tableau d'inspiration depuis T4.
+
+> **La grille est la seule surface du produit où l'on juge : rien ne se pose par-dessus.**
+
+Le survol d'un fichier se dit par un `outline` de 1 px en `--signal`, posé en `inset` : il ne
+recouvre aucune image et ne déplace rien — un `outline` ne prend pas de place dans la mise en
+page. Un calque semi-opaque, la solution ordinaire, cacherait très exactement ce qu'on est en
+train de regarder au moment où l'on décide où déposer.
+
+**Les trois états de la grille le reçoivent** — pleine, filtrée à vide, et vide. Une surface
+qui n'accepterait le dépôt qu'une fois pleine serait fermée au moment où elle sert le plus :
+une bibliothèque vide *est* le moment où l'on fait entrer sa première image.
+
+**Ce qui n'entre pas se dit au-dessus, une ligne par fichier.** Un refus en `--echec` qui nomme
+le fichier ; un doublon en `--epingle` avec ses deux gestes — voir l'existante, ou faire entrer
+quand même. Une ligne par fichier parce que « chacun avec son propre sort » n'a pas d'autre
+forme : dix fichiers déposés peuvent donner huit images, un refus et un doublon.
+
+**Et jamais dans la barre d'état.** Elle porte les pannes, et une panne grise Générer : un
+import refusé n'a aucune raison d'empêcher de générer. C'est le corollaire direct de « le
+grisé porte sa raison » — encore faut-il que la raison soit celle du bon geste.
+
+Le sort réservé à ce qui entre — telle quelle, ou traitement du projet — est un **libellé qui
+énonce l'état**, pas un bouton qui annonce une action : la forme du détourage d'une échelle
+dans le barème. Il est ancré à droite contre l'export, parce que ce sont les deux portes de la
+bibliothèque et qu'une porte qui se déplace est une porte qu'on cherche.
+
+---
+
 ### Le dépliant du prompt — ce qui partira, et rien d'autre
 
 Ajouté le 29 août 2026 (R2). Sous le champ de prompt, une ligne de pied déplie le texte exact

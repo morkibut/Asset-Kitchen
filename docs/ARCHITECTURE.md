@@ -233,6 +233,13 @@ réglage éteint ; sans elle, le post-traitement imposait une apparence que l'au
 jamais posée, et rien à l'écran ne le lui disait. **Elle ne rouvre rien** : dès qu'une cible est
 posée, la dérive reste le cas normal et la remise reste sans condition.
 
+**Faire entrer une image est un geste du produit, et il n'a qu'un endroit.** Le service qui
+le porte est appelé par l'outil de l'agent, par la route qui prend un *chemin* — ce qu'un
+appelant local a — et, depuis R3, par celle qui prend les **octets** — ce qu'un navigateur
+donne. Trois portes, une serrure : c'est ce qui garde vraie la phrase « ce que l'agent peut
+faire, l'écran le peut aussi », dans les deux sens. Les octets voyagent bruts, en corps de
+requête : ni `multipart`, ni base64, comme le collage du tableau depuis T4.
+
 **Et ce qui part se voit avant de partir** (R2, US-158). La composition du prompt — bible
 active en tête, sujet, consignes de planche en queue — vit à **un seul endroit**, et l'aperçu
 emprunte ce chemin-là plutôt que d'en écrire un second : deux compositions divergeraient, et
@@ -308,7 +315,7 @@ déjà portés par l'univers.
 | `list_projects` | savoir où ranger |
 | `list_assets` | retrouver et réutiliser plutôt que regénérer |
 | `get_asset` | métadonnées et chemin |
-| `import_asset` | faire entrer un fichier local |
+| `import_asset` | faire entrer un fichier local — telle quelle ou avec le traitement du projet, et le doublon se dit plutôt que d'entrer deux fois |
 | `edit_asset` | détourer, recadrer, remettre sur grille, revenir au brut |
 | `slice_asset` | proposer des rectangles sur une planche, puis les découper |
 | `export_assets` | poser une sélection dans un dossier |
@@ -359,7 +366,7 @@ ne compte pas à ce moment-là. La version de production se regénère depuis l'
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
 | **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
-| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
+| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main. Pour un import : le nom du fichier, l'empreinte de ses octets, et si le traitement du projet lui a été appliqué | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
 
 Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,

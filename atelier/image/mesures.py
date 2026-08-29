@@ -15,6 +15,7 @@ cache, le brut est la vérité.
 
 from __future__ import annotations
 
+import hashlib
 import io
 from dataclasses import dataclass
 
@@ -89,3 +90,19 @@ def rendre_en_png(octets: bytes) -> bytes:
         tampon = io.BytesIO()
         converti.save(tampon, format="PNG", optimize=True)
         return tampon.getvalue()
+
+
+def empreinte_de(octets: bytes) -> str:
+    """Ce qui nomme un doublon. Les octets, rien d'autre.
+
+    Pas de comparaison perceptuelle : deux images visuellement proches sont deux
+    images, et c'est à l'auteur d'en décider. Le produit signale ce dont il est
+    **certain** — le même fichier, deux fois — et ne devine jamais le reste.
+
+    **Ici depuis R3, et plus dans la carte** : le tableau d'inspiration s'en
+    servait seul jusqu'à ce que l'import de la bibliothèque en ait besoin aussi.
+    Deux familles d'images l'appellent désormais, et aucune ne la possède —
+    même raison que `domaine/teinte.py`, un cran plus bas. Elle a sa place ici
+    parce qu'elle ne parle que d'octets : CPU, pure, aucune entrée-sortie.
+    """
+    return hashlib.sha256(octets).hexdigest()[:16]

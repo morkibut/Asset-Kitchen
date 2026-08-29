@@ -168,7 +168,21 @@ class ServiceAssets:
         Sans projet, ou sans échelle nommée, la recette du produit s'applique
         quand même : « un univers vide ne contraint rien » ne veut pas dire
         « un univers vide ne fait rien ».
+
+        **Sauf pour une image entrée « telle quelle »** (US-170, R3). L'import
+        héritait de la recette du projet en silence : une référence de 2048
+        pixels revenait à 64, ce que personne n'avait demandé. La décision est
+        portée par la génération, pas par un réglage d'écran, pour la raison
+        habituelle — elle survit à l'effacement de l'index, et elle vaut pour
+        l'agent comme pour l'auteur.
+
+        Conséquence heureuse et non fortuite : une recette vide est déjà ce que
+        le balayage de palette laisse tranquille (« un asset ramené au brut
+        reste au brut »). Une image entrée telle quelle le reste donc, sans
+        qu'aucune règle nouvelle ait à le dire.
         """
+        if generation.demande.get("traiter") is False:
+            return Recette()
         if generation.projet is None:
             return Recette()
         objet = self._base.lire_projet(generation.projet)

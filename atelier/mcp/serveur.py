@@ -297,24 +297,45 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         description=(
             "Bring a local image file into the library as a full asset — it "
             "can then be edited, sliced, reused as a reference and exported. "
-            "Costs nothing and works offline."
+            "The image enters as-is by default; pass apply_project_recipe to "
+            "let the project's pixel grid and palette be applied to it. If the "
+            "same file is already in the library, nothing is imported and the "
+            "existing asset is returned as `doublon` — call again with "
+            "force=true to import it anyway. Costs nothing and works offline."
         ),
     )
     @_refus_lisible
     async def import_asset(
         file_path: str,
         project: str | None = None,
+        apply_project_recipe: bool = False,
+        force: bool = False,
     ) -> dict[str, Any]:
+        """**Les deux options de R3 sont ici aussi, et c'est le critère.**
+
+        « L'écran et l'outil MCP passent par le même service : aucun geste que
+        l'un a et l'autre pas. » Le service porte le doublon et le traitement du
+        projet ; les cacher ici aurait fait de l'agent un utilisateur de seconde
+        classe, avec une image ramenée à 64 pixels sans qu'il l'ait demandé et
+        un doublon qu'il ne pourrait pas voir.
+        """
         chemin = Path(file_path).expanduser()
         if not chemin.is_file():
             raise ErreurAtelier(f"aucun fichier « {chemin} »")
-        asset = atelier.generations.importer(
+        entre = atelier.generations.importer(
             chemin.read_bytes(),
             chemin.name,
             projet=_projet(atelier, project),
             provenance=AGENT,
+            traiter=apply_project_recipe,
+            forcer=force,
         )
-        return _asset_en_json(atelier, asset)
+        if entre["asset"] is None:
+            return {"asset": None, "doublon": entre["doublon"]}
+        return {
+            "asset": _asset_en_json(atelier, Asset.depuis_json(entre["asset"])),
+            "doublon": None,
+        }
 
     @serveur.tool(
         name="edit_asset",
