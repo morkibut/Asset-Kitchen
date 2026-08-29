@@ -44,7 +44,7 @@ import {
   Raison,
   Segments,
 } from "./chassis"
-import { POINTILLE, useInfobulle } from "./Infobulle"
+import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 import { posesTenues } from "./Personnages"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
@@ -272,7 +272,10 @@ export function Fiche({
     traitement.moteurs.find((m) => m.nom === "modele")?.raison ?? null
 
   return (
-    <aside className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1">
+    <aside
+      {...PANNEAU}
+      className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+    >
       <EnTetePanneau>
         <span className="truncate">Fiche</span>
         <button

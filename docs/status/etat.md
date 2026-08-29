@@ -11,6 +11,45 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## R4 — 29 août 2026
+
+**R4 est écrite, et les quatre reprises sont finies.** L'infobulle sort désormais du panneau
+qui porte son ancre, au lieu de choisir son côté par rapport au milieu de la fenêtre. **Les
+six critères sont cochés, tenus par 12 essais de placement et 6 d'écran** ; aucun essai de
+serveur n'a bougé, parce que rien du serveur n'a bougé.
+
+**La règle d'avant n'était pas approximative, elle était juste au mauvais endroit.** Elle
+disait *jamais sur l'image qu'elle règle*, et la mesurait contre le milieu de l'écran. À
+l'atelier c'est vrai — l'autre moitié est la grille. À l'univers, aux réglages et dans la
+fiche, l'autre moitié est encore du réglage, et le cas le plus net est celui des réglages :
+un panneau de 520 px posé au milieu, une ancre dans sa moitié gauche, donc à gauche du milieu
+de la fenêtre, donc une bulle qui s'ouvrait **sur le panneau lui-même**.
+
+**Les panneaux se déclarent, l'infobulle ne les connaît pas.** Six panneaux portent une
+marque, et le placement remonte de l'ancre au premier ancêtre marqué. L'alternative — une
+liste d'écrans tenue dans l'infobulle — aurait fait de ce composant l'endroit qu'il faut
+modifier chaque fois qu'un panneau naît ailleurs. Sans marque, le calcul retombe sur l'ancre :
+la barre d'outils traverse l'écran, « hors du panneau » n'y voudrait rien dire, et elle garde
+la règle d'avant là où elle était juste.
+
+**Le calcul est sorti du composant parce que jsdom ne met rien en page**, et cette fois-ci
+c'était décisif et non confortable. Un essai qui monterait l'écran Univers et mesurerait le
+recouvrement lirait des rectangles nuls : il passerait avant la correction comme après, et
+attesterait d'une règle qu'il ne vérifie pas. `placer()` prend donc des rectangles et rend
+une position — le précédent de `Toile.test.tsx`, invoqué pour la même raison. L'écran, lui,
+prouve ce que jsdom sait voir : que chaque panneau se déclare. Aucune des deux moitiés ne
+suffit, et un essai nomme l'erreur d'avant pour montrer qu'elle tombe.
+
+**Elle a été vue à l'écran, sur les trois cas.** L'univers : la bulle « Bible » couvrait
+Palette, Taille de pixel, Barème et Modèle par défaut ; elle s'ouvre maintenant à droite du
+panneau, sur le tableau. La fiche : « Détourage » part à gauche, sur la grille. Les réglages :
+le panneau mesuré à 373–893, la bulle posée à 903 — dehors, à l'écart près.
+
+**Le prix payé, et il est écrit** : la bulle peut recouvrir *un autre* panneau. Ouverte depuis
+les réglages, elle atterrit sur la fiche restée derrière, inerte tant que les réglages sont
+ouverts. La règle protège le panneau qu'on est en train de régler ; protéger tout l'écran
+demanderait de replier la bulle sous son libellé, et ce n'est pas ce motif-là.
+
 ## R3 — 29 août 2026
 
 **R3 est écrite — faire entrer une image depuis l'écran.** Un bouton dans la barre d'outils,
@@ -52,7 +91,14 @@ qui nomme un doublon vivait dans la carte du tableau ; la bibliothèque en a dé
 aussi. Deux familles d'images l'appellent et aucune ne la possède : elle est passée dans
 `atelier/image/mesures.py`, où elle ne parle que d'octets.
 
-**La séance d'usage au navigateur n'a pas encore eu lieu**, pour R2 comme pour R3.
+**L'écran a quand même été ouvert, et il a rendu un défaut qu'aucun essai ne pouvait voir.**
+Les commandes d'import prenaient 151 px dans la barre d'outils et poussaient le bloc de gauche
+32 px au-delà de sa largeur à 1280 : le cran de zoom 4× sortait de l'écran. La bascule dit
+maintenant **brute / traitée** — le vocabulaire que la fiche emploie déjà pour le brut et le
+rendu — et le groupe tient en 109 px, débord nul. Une largeur ne se prouve pas dans jsdom, qui
+ne met rien en page ; elle se mesure dans un navigateur, ou elle ne se mesure pas.
+
+**La séance d'usage complète n'a pas encore eu lieu**, pour R2 comme pour R3.
 
 ## État au 29 août 2026
 

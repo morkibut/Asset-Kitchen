@@ -22,6 +22,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import {
+  act,
   cleanup,
   render,
   screen,
@@ -4190,5 +4191,146 @@ describe("faire entrer une image depuis l'écran", () => {
     deposer(laGrille(), [fichier("premiere.png")])
 
     await waitFor(() => expect(tuiles()).toHaveLength(1))
+  })
+})
+
+// ── R4 · L'infobulle ne couvre plus le réglage ───────────────────────────────
+//
+// **La moitié que jsdom peut voir, et elle est nécessaire.** Où la bulle se
+// pose est vérifié sur de vrais rectangles dans `Infobulle.test.tsx` — jsdom ne
+// met rien en page, donc un essai qui mesurerait ici le recouvrement lirait des
+// zéros et passerait avant comme après la correction.
+//
+// Ce qui se vérifie ici est l'autre moitié : **que chaque panneau de réglages
+// se déclare**, et qu'une poignée d'infobulle vit bien dedans. Sans ça, la
+// règle serait juste et ne s'appliquerait à personne.
+
+describe("l'infobulle sort du panneau, sur les trois écrans", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Une poignée d'infobulle : le libellé souligné en pointillé. */
+  const poignee = (nom: string) =>
+    [...document.querySelectorAll("span")].find(
+      (e) => e.textContent === nom && e.className.includes("decoration-dotted"),
+    )
+
+  test("l'atelier : la colonne des réglages se déclare, et sa poignée est dedans", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    await waitFor(() => expect(poignee("Variations")).toBeTruthy())
+    // **Le panneau est l'ancêtre déclaré**, et c'est lui que la règle mesure.
+    // À l'atelier, la bulle sortait déjà du bon côté — ce que R4 change est
+    // qu'elle sort désormais de *la colonne* et non de la moitié d'écran, donc
+    // qu'elle dégage aussi le réglage d'à côté.
+    expect(poignee("Variations")!.closest("[data-panneau]")).toBeTruthy()
+  })
+
+  test("l'univers : le panneau se déclare, et sa poignée est dedans", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+
+    await screen.findByRole("button", { name: /^Bible/ })
+    const marque = poignee("Bible")
+    expect(marque).toBeTruthy()
+    expect(marque!.closest("[data-panneau]")).toBeTruthy()
+  })
+
+  test("la fiche : le panneau se déclare, et sa poignée est dedans", async () => {
+    const images = [asset("aaaa1111-0")]
+    const { fetchDouble } = serveurDouble({ assets: images })
+    await monter(fetchDouble, { ...ETAT, assets: images })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    const marque = poignee("Détourage")
+    expect(marque).toBeTruthy()
+    expect(marque!.closest("[data-panneau]")).toBeTruthy()
+  })
+
+  test("les réglages : le panneau posé sur l'atelier se déclare aussi", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+
+    const marque = await waitFor(() => {
+      const trouvee = poignee("Plafond de la séance")
+      expect(trouvee).toBeTruthy()
+      return trouvee!
+    })
+    expect(marque.closest("[data-panneau]")).toBeTruthy()
+  })
+
+  test("la barre d'outils ne se déclare pas, et c'est voulu", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // Une barre traverse l'écran : « hors du panneau » n'y voudrait rien dire,
+    // et la bulle y retombe sur la règle de l'ancre — celle d'avant R4, juste
+    // là où elle l'était.
+    const marque = await waitFor(() => {
+      const trouvee = poignee("Importer")
+      expect(trouvee).toBeTruthy()
+      return trouvee!
+    })
+    expect(marque.closest("[data-panneau]")).toBeNull()
+  })
+
+  // ── « Pointer un autre élément referme la bulle non épinglée sans qu'il
+  //     faille la chasser » · « une bulle épinglée reste, et Échap la lâche » ──
+
+  test("la bulle non épinglée part quand on pointe ailleurs ; épinglée, elle reste", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const marque = await waitFor(() => {
+      const trouvee = poignee("Variations")
+      expect(trouvee).toBeTruthy()
+      return trouvee!
+    })
+
+    fireEvent.mouseEnter(marque)
+    await act(async () => {
+      vi.advanceTimersByTime(250)
+    })
+    expect(screen.getByRole("tooltip")).toBeTruthy()
+
+    // Pointer ailleurs : elle part d'elle-même, sans qu'on ait à la chasser.
+    fireEvent.mouseLeave(marque)
+    await act(async () => {
+      vi.advanceTimersByTime(200)
+    })
+    expect(screen.queryByRole("tooltip")).toBeNull()
+
+    // Épinglée, elle reste — et Échap la lâche. Inchangé par R4.
+    fireEvent.mouseEnter(marque)
+    await act(async () => {
+      vi.advanceTimersByTime(250)
+    })
+    fireEvent.click(marque)
+    fireEvent.mouseLeave(marque)
+    await act(async () => {
+      vi.advanceTimersByTime(400)
+    })
+    expect(screen.getByRole("tooltip")).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull())
+    vi.useRealTimers()
   })
 })

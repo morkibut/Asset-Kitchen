@@ -485,6 +485,7 @@ taille de pixel sans voir l'écran la prendre, c'est régler à l'aveugle.
 ---
 
 ## R1 · Le réglage d'univers se voit à l'instant
+*6 critères · 2 US (165–166) · tenue le 28 août 2026*
 
 **User stories** : 165, 166
 
@@ -687,6 +688,7 @@ Qui veut mélanger les deux fait deux dépôts.
 ---
 
 ## R4 · L'infobulle ne couvre plus le réglage
+*6 critères · 2 US (171–172) · tenue le 29 août 2026*
 
 **User stories** : 171, 172
 
@@ -705,12 +707,46 @@ de la place change.
 
 ### Critères d'acceptation
 
-- [ ] Une infobulle ouverte depuis un panneau de réglages ne recouvre aucun contrôle de ce panneau, à l'univers, aux réglages et dans la fiche
-- [ ] Un panneau plus large que la place restante fait sortir la bulle du panneau, jamais dessus, et elle reste entièrement dans l'écran
-- [ ] Pointer un autre élément referme la bulle non épinglée sans qu'il faille la chasser
-- [ ] Une bulle épinglée reste, et Échap la lâche — inchangé
-- [ ] Le pointillé, la durée de repos, l'animation et le lien vers le guide sont inchangés
-- [ ] Un essai d'écran vérifie le non-recouvrement sur les trois écrans, et non seulement le rendu de la bulle
+- [x] Une infobulle ouverte depuis un panneau de réglages ne recouvre aucun contrôle de ce panneau, à l'univers, aux réglages et dans la fiche
+- [x] Un panneau plus large que la place restante fait sortir la bulle du panneau, jamais dessus, et elle reste entièrement dans l'écran
+- [x] Pointer un autre élément referme la bulle non épinglée sans qu'il faille la chasser
+- [x] Une bulle épinglée reste, et Échap la lâche — inchangé
+- [x] Le pointillé, la durée de repos, l'animation et le lien vers le guide sont inchangés
+- [x] Un essai d'écran vérifie le non-recouvrement sur les trois écrans, et non seulement le rendu de la bulle
+
+### Ce que la construction a décidé
+
+**Le panneau se déclare lui-même, et la bulle le demande à son ancre.** Six panneaux portent
+désormais une marque, et le placement remonte de l'ancre au premier ancêtre marqué. Nul
+registre des panneaux, nulle liste d'écrans à tenir à jour dans l'infobulle : un panneau de
+plus se déclare, et il est servi. Sans marque, le calcul retombe sur l'ancre — la barre
+d'outils traverse l'écran, « hors du panneau » n'y voudrait rien dire, et elle garde la règle
+d'avant, là où elle était juste.
+
+**Le côté se choisit par la place, pas par le milieu de l'écran.** La bulle sort du côté du
+panneau où il reste le plus de place, puis se rabat dans l'écran. C'est ce qui rend le cas des
+réglages : un panneau posé au milieu a de la place des deux côtés, et l'ancienne règle — qui
+comparait l'ancre au milieu de la fenêtre — ouvrait la bulle **sur le panneau lui-même** dès
+que l'ancre était dans sa moitié gauche.
+
+**La verticale suit l'ancre, pas le panneau.** Une bulle alignée sur le haut du panneau
+expliquerait le réglage d'en bas depuis le haut de l'écran. Elle remonte quand elle sortirait
+par le bas, et se borne sans plancher quand elle est plus haute que l'écran — un plancher la
+rendrait plus haute que la place offerte, donc rognée, donc son pied inatteignable.
+
+**Le calcul est sorti du composant pour être vérifiable.** `placer()` prend des rectangles et
+rend une position ; c'est la leçon de `Toile.test.tsx`, et elle était nécessaire ici : jsdom ne
+met rien en page, donc un essai qui monterait l'univers et mesurerait le recouvrement lirait
+des rectangles nuls et **passerait avant comme après la correction**. L'essai d'écran vérifie
+l'autre moitié — que chaque panneau se déclare — sans quoi la règle serait juste et ne
+s'appliquerait à personne. Aucune des deux moitiés ne suffit ; un essai nomme l'erreur d'avant
+et montre qu'elle tombe.
+
+**Le prix payé, et il est écrit ici** : la bulle peut recouvrir *un autre* panneau. Ouverte
+depuis les réglages posés au milieu, elle atterrit sur la fiche restée derrière — inerte tant
+que les réglages sont ouverts. La règle protège le panneau qui porte l'ancre, celui qu'on est
+en train de régler ; protéger tout l'écran demanderait de replier la bulle sous son libellé,
+et ce n'est pas ce motif-là.
 
 ## Bloquée par
 

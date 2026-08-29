@@ -302,6 +302,19 @@ la prochaine réécriture retrouvera.
   Trouvé le 27 août 2026 en regardant l'atelier lancé, et invisible aux 31 essais d'écran —
   jsdom ne met rien en page. L'essai qui le garde vérifie donc **la règle**, et il le dit ;
   la largeur, elle, se mesure au navigateur.
+- **Ce qu'un panneau flottant doit éviter est le panneau, pas la moitié d'écran.** L'infobulle
+  choisissait son côté en comparant son ancre au **milieu de la fenêtre**, sous l'intention
+  *jamais sur ce qu'elle règle*. Juste à l'atelier, où l'autre moitié est la grille ; faux
+  partout où l'écran n'est que du réglage. Le pire cas est le panneau **centré** : une ancre
+  dans sa moitié gauche est à gauche du milieu de la fenêtre, donc la bulle s'ouvrait vers la
+  droite — c'est-à-dire dessus. Une règle de placement se mesure contre **le conteneur qui
+  porte l'ancre** ; et ce conteneur se déclare lui-même, sans quoi le composant flottant
+  devient l'endroit qu'il faut modifier chaque fois qu'un panneau naît ailleurs. Corollaire
+  d'essai, du même piège que ci-dessus : **un recouvrement ne se mesure pas dans jsdom.** Tout
+  rectangle y vaut zéro, donc un essai qui monterait l'écran et comparerait les boîtes
+  passerait avant la correction comme après — il attesterait d'une règle qu'il ne vérifie
+  pas. Le placement sort en fonction pure et s'éprouve sur de vrais rectangles ; l'écran, lui,
+  vérifie ce que jsdom sait voir — que les panneaux se déclarent.
 - **Un montage Starlette ne reconnaît pas son propre chemin exact.** `Mount("/mcp")` attrape
   `/mcp/…` et **pas** `/mcp` : le chemin exact traverse toute la table de routage et finit
   chez `StaticFiles` monté sur « / », qui répond **405** à un `POST`. Or `/mcp` est

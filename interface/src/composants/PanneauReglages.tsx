@@ -21,6 +21,7 @@ import {
   type Univers,
 } from "../api"
 import { Bloc, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import { PANNEAU } from "./Infobulle"
 
 export function PanneauReglages({
   modeles,
@@ -112,7 +113,10 @@ export function PanneauReglages({
   return (
     // `min-h-0` : sans lui, une case de grille prend la hauteur de son contenu
     // et le panneau pousse la barre d'état hors de l'écran au lieu de défiler.
-    <aside className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1">
+    <aside
+      {...PANNEAU}
+      className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1"
+    >
       <EnTetePanneau>Réglages</EnTetePanneau>
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">

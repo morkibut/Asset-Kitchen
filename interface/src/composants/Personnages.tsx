@@ -31,6 +31,7 @@ import { useEffect, useRef, useState } from "react"
 import { api, type Case, type Personnage, type Pose } from "../api"
 import { sujetAsset } from "./Apercu"
 import { Bouton, EnTetePanneau, Libelle } from "./chassis"
+import { PANNEAU } from "./Infobulle"
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
  *
@@ -156,7 +157,10 @@ function PanneauGauche({
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   return (
-    <aside className="flex min-h-0 w-[380px] shrink-0 flex-col border-r border-bord bg-fond-1">
+    <aside
+      {...PANNEAU}
+      className="flex min-h-0 w-[380px] shrink-0 flex-col border-r border-bord bg-fond-1"
+    >
       <EnTetePanneau>Le jeu</EnTetePanneau>
       <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
         <ListePersonnages

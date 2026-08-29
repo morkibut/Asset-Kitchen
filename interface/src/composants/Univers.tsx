@@ -57,6 +57,7 @@ import {
 } from "./chassis"
 import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
+import { PANNEAU } from "./Infobulle"
 
 /** Les cibles proposées, reprises de la fiche — 16 pour une tuile, 64 pour un
  *  sprite, 128 pour un décor. Elles se choisissent **ici** depuis T4 : la taille
@@ -394,7 +395,10 @@ function PanneauUnivers({
   }
 
   return (
-    <aside className="flex min-h-0 w-[380px] shrink-0 flex-col bg-fond-1">
+    <aside
+      {...PANNEAU}
+      className="flex min-h-0 w-[380px] shrink-0 flex-col bg-fond-1"
+    >
       <EnTetePanneau>L'univers</EnTetePanneau>
       <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
         <Bible bible={univers.bible} onRegler={(bible) => regler({ bible })} />

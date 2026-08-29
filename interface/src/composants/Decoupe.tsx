@@ -28,6 +28,7 @@ import {
   type Proposition,
 } from "../api"
 import { Bouton, Curseur, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import { PANNEAU } from "./Infobulle"
 
 /** En dessous, un rectangle est un clic qui a glissé, pas une intention. En
  *  pixels de la planche — la même unité que tout le reste de cet écran. */
@@ -158,7 +159,10 @@ export function EcranDecoupe({
           }}
         />
 
-        <aside className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1">
+        <aside
+          {...PANNEAU}
+          className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
+        >
           <EnTetePanneau>Ce qui sortira</EnTetePanneau>
 
           <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">

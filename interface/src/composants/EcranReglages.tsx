@@ -24,6 +24,7 @@ import {
   type GardeFous,
 } from "../api"
 import { Bouton, Curseur, Libelle, Raison } from "./chassis"
+import { PANNEAU } from "./Infobulle"
 
 export function EcranReglages({
   etat,
@@ -48,6 +49,7 @@ export function EcranReglages({
     >
       <section
         onClick={(e) => e.stopPropagation()}
+        {...PANNEAU}
         className="w-[520px] rounded-[3px] border border-bord bg-fond-1 p-6"
       >
         <h2 className="font-serif text-[24px] leading-tight text-texte">Réglages</h2>

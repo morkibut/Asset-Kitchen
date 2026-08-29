@@ -194,12 +194,24 @@ au-dessus quand on cherche et en dessous quand on travaille. C'est aussi le trai
 navigateur pose sous `<abbr>` depuis toujours — la seule décoration du produit qui se
 comprenne sans être apprise.
 
-**Elle s'ouvre vers le centre, jamais vers le bord.** Corollaire du menu de carte — *jamais
-sur l'image qu'il règle* — appliqué un cran plus loin : le panneau se pose du côté de la
-grille, seule surface assez large et seule chose que personne ne lit au moment où il lit une
-explication. Depuis la fiche (colonne de droite) il part à gauche, depuis les réglages
-(colonne de gauche) il part à droite. Et il est **borné par l'écran, jamais par son
-contenu** — la règle du § Layout, qui vaut pour tout ce qui se pose.
+**Elle sort du panneau qui porte son ancre, jamais dessus.** Corollaire du menu de carte —
+*jamais sur l'image qu'il règle* — appliqué un cran plus loin : ce qu'il ne faut pas couvrir
+est **le panneau qu'on est en train de régler**, et la bulle part du côté où il reste le plus
+de place. Depuis la fiche (colonne de droite) elle part à gauche, depuis l'univers (colonne
+de gauche) elle part à droite, depuis les réglages (panneau posé au milieu) elle part du côté
+le plus large. Et elle est **bornée par l'écran, jamais par son contenu** — la règle du
+§ Layout, qui vaut pour tout ce qui se pose.
+
+*La règle mesurait auparavant l'ancre contre le milieu de la fenêtre. C'était juste à
+l'atelier, où l'autre moitié est la grille, et faux partout où l'écran n'est que du réglage :
+un panneau au milieu recevait sa propre bulle. Corrigé en R4 — le panneau se déclare, et le
+placement remonte de l'ancre au premier ancêtre déclaré. Sans ancêtre déclaré — la barre
+d'outils, qui traverse l'écran — c'est l'ancre qui décide, comme avant.*
+
+**Sa verticale suit l'ancre, pas le panneau.** Elle se pose à la hauteur de ce qu'elle
+explique, remonte quand elle sortirait par le bas, et se colle en haut sans plancher quand
+elle est plus haute que l'écran — un plancher la rendrait plus haute que la place offerte,
+donc rognée, donc son pied inatteignable.
 
 **Fond `--fond-1`, bord `--bord-fort`, rayon 2, largeur 280 px.** Le menu de carte se
 contente de `--bord` parce qu'il tombe toujours sur `--fond-0` ; une infobulle peut se poser
