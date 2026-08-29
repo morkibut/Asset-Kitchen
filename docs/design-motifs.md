@@ -55,7 +55,7 @@ un troisième.
 ### Le revers — l'actif qui porte son risque
 
 Le repli hors ligne est le **seul endroit du produit où l'on propose puis refuse** : le catalogue
-est une photo, générer reste actif, et l'échec ne survient qu'au moment du clic (`docs/PRD.md`
+est une photo, générer reste actif, et l'échec ne survient qu'au moment du clic (`docs/user-stories.md`
 US-95). C'est donc l'exception au motif ci-dessus, et elle se rend **dans la même fente, avec la
 même forme** — tiret de 8 px, mono 10 px, lien `--signal` pour le geste. Ce qui change est le
 mot : le grisé dit *pourquoi c'est fermé*, le revers dit *ce qui va casser*.
@@ -691,7 +691,7 @@ rien du rognage de son parent, dit l'inverse.
 bascule pour une colonne absente mentirait sur ce que l'écran contient, et ce serait la seule du
 produit à ne rien tenir.
 
-**C'est un écran, pas un panneau — et c'est le cadrage qui le dit** (`docs/ARCHITECTURE.md`
+**C'est un écran, pas un panneau — et c'est le cadrage qui le dit** (`docs/archi-versions.md`
 §6.2 : « Univers · au début d'un projet, puis ponctuel »). Il couvre donc l'Atelier au lieu
 de s'y ajouter. La contrepartie est exacte : l'Atelier ne montre que ce qu'on touche **à
 chaque** génération, l'Univers tout ce qu'on pose **une fois** et qui s'applique ensuite

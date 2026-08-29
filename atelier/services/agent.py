@@ -46,7 +46,7 @@ from atelier.services.evenements import Diffusion
 
 # Le modèle d'exploration, et ses options. Nommé ici et pas dans le catalogue :
 # c'est une décision du produit sur ce que l'agent dépense, pas une propriété du
-# fournisseur. `docs/ARCHITECTURE.md` § Serveur MCP.
+# fournisseur. `docs/archi-fournisseur.md` § Serveur MCP.
 MODELE_EXPLORATION = "openai/gpt-image-2"
 OPTIONS_EXPLORATION: dict[str, Any] = {"quality": "low"}
 

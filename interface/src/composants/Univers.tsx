@@ -1,6 +1,6 @@
 // L'écran Univers — le tableau d'inspiration, la bible, la palette, le barème.
 //
-// « Au début d'un projet, puis ponctuel » (`docs/ARCHITECTURE.md` §6.2). C'est
+// « Au début d'un projet, puis ponctuel » (`docs/archi-versions.md` §6.2). C'est
 // la contrepartie exacte de l'Atelier : celui-ci ne montre que ce qu'on touche
 // **à chaque** génération, celui-là tout ce qu'on pose **une fois** et qui
 // s'applique ensuite tout seul.

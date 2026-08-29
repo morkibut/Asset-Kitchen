@@ -17,7 +17,7 @@ silhouette ou elle l'agrandit, et c'est l'auteur qui le dit : de cette phrase
 dépend si l'atelier peut fabriquer un calque ou seulement un corps habillé.
 `essais/essai_silhouette.py`, six modèles et deux jets, a mesuré la raison —
 jambières 0,3 % de corps repeint, casque 0,8 %, cape **23,5 %** avec un dézoom à
-0,62. Aucune détection automatique n'est prévue : `docs/ARCHITECTURE.md` §7 la
+0,62. Aucune détection automatique n'est prévue : `docs/archi-versions.md` §7 la
 range dans « ce que la V2 n'est pas ».
 
 **Un mot pour deux choses, et il faut le savoir.** `atelier/domaine/generation.py`
@@ -113,7 +113,7 @@ class Piece:
     réécrit pas « un casque de fer à cornes » à chaque pose qu'on habille.
 
     **Elle ne porte aucune image, et il n'existe pas d'image d'elle seule.** Une
-    pièce n'apparaît que sur un corps (`docs/ARCHITECTURE.md` §7, « ce que la V2
+    pièce n'apparaît que sur un corps (`docs/archi-versions.md` §7, « ce que la V2
     n'est pas ») : il n'y a donc ni prompt de pièce, ni écran qui en génère une
     sur fond vide. Ce qu'elle désigne, ce sont des cartes du tableau — comme un
     personnage, et par le même mécanisme.

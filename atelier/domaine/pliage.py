@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Le pliage — N images demandées en un seul appel, et ce qui en revient.
 
-**Ce n'est pas un dispositif du lot de poses** (`docs/ARCHITECTURE.md` § Le
+**Ce n'est pas un dispositif du lot de poses** (`docs/archi-versions.md` § Le
 pliage) : c'est la manière dont l'atelier habille ou transforme N images d'un
 seul appel, sur une grille carrée dont il connaît la géométrie case par case. La
 V2 en a deux usages — créer N corps (C2) et habiller N corps (C3) —, et ce

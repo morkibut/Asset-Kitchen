@@ -89,7 +89,7 @@ export function Tuile({
       className={[
         "arrivee relative flex flex-col border",
         rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",
-        // L'anneau du sélectionné — « la lampe de la table », `docs/DESIGN.md`
+        // L'anneau du sélectionné — « la lampe de la table », `docs/design-motifs.md`
         // § La tuile. Aucune couleur de plus dans la grille.
         selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
       ].join(" ")}
@@ -121,7 +121,7 @@ export function Tuile({
         <Pastille asset={asset} emplacement={emplacement} />
         {/* « Coin plein haut-droit, `--signal`, 13 px — la seule marque
             visuelle, parce que c'est la seule que l'auteur pose lui-même »
-            (`docs/DESIGN.md` § La tuile). Ce que le système constate est un
+            (`docs/design-motifs.md` § La tuile). Ce que le système constate est un
             mot ; ce que l'auteur pose est une forme. */}
         {asset?.favori && <CoinFavori />}
       </button>
@@ -177,7 +177,7 @@ function Mesures({ asset }: { asset: Asset }) {
 /**
  * Une pastille, et une seule — pour un état **subi**.
  *
- * `docs/DESIGN.md` § La tuile en donne la liste close : `réglé`, `agent`,
+ * `docs/design-motifs.md` § La tuile en donne la liste close : `réglé`, `agent`,
  * `parent supprimé`. « interrompu » lui appartient depuis T1, pour la même
  * raison : c'est ce que le système constate, jamais ce que l'auteur pose.
  *

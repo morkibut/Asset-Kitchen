@@ -150,7 +150,7 @@ class Emplacement:
     """Une variation. La tuile paraît ici, et ne bouge plus.
 
     « La grille ne se recompose jamais entre le départ et l'arrivée » —
-    `docs/DESIGN.md` § L'emplacement. L'échec atterrit à l'endroit précis où le
+    `docs/design-motifs.md` § L'emplacement. L'échec atterrit à l'endroit précis où le
     succès serait arrivé : c'est pour ça que l'emplacement existe avant l'image.
     """
 

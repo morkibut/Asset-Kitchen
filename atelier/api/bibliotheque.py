@@ -69,7 +69,7 @@ class CorpsExport(CorpsSelection):
 
     `CorpsSelection` exige au moins un identifiant : une sélection vide y serait
     refusée par la validation, en anglais et en 422. Or « l'export d'une
-    sélection vide » est nommément un grisé du produit (`docs/DESIGN.md` § Le
+    sélection vide » est nommément un grisé du produit (`docs/design-motifs.md` § Le
     grisé porte sa raison, US-77) : le refus doit être une phrase française, pas
     un rapport de schéma. Le service tranche, et il le dit.
     """

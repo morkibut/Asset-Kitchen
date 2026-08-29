@@ -248,7 +248,7 @@ def test_une_detection_qui_ne_trouve_rien_dit_pourquoi_et_laisse_la_main(
 
     Le produit interdit de proposer puis de refuser : une détection qui ne rend
     rien doit dire *pourquoi* elle ne rend rien, dans la même forme que tout
-    grisé (`docs/DESIGN.md` § Le grisé porte sa raison).
+    grisé (`docs/design-motifs.md` § Le grisé porte sa raison).
     """
     planche_asset = _planche_generee(client, double)
 
@@ -442,7 +442,8 @@ def test_les_decoupes_survivent_a_un_index_efface(client, double):
 def test_le_moteur_par_modele_detoure_pour_de_vrai_quand_il_est_installe(
     client, double
 ):
-    """Le chemin qu'aucun test n'avait jamais emprunté (`AGENTS.md`, T2→T4→T5).
+    """Le chemin qu'aucun test n'avait jamais emprunté — T2 le grise, T4 l'allume,
+    T5 l'exécute (`docs/tranches/T5.md`, la dette reportée).
 
     Le grisé était vérifié, l'appel au moteur ne l'était pas — et il se sautait
     en l'absence de `rembg`. Ce test est le symétrique exact de

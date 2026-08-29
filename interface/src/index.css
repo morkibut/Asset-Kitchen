@@ -241,7 +241,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Le menu d'une carte du tableau — `docs/DESIGN.md` § Le menu d'une carte.
+/* Le menu d'une carte du tableau — `docs/design-motifs.md` § Le menu d'une carte.
    Il paraît **sans clic**, donc sans geste qui dise qu'on l'a demandé : les
    80 ms de fondu sont ce qui le fait lire comme une chose venue se poser
    par-dessus, plutôt que comme une grille qui se recompose. C'est à ce titre

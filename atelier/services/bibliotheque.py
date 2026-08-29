@@ -446,7 +446,7 @@ class ServiceBibliotheque:
     def marquer_favori(self, identifiants: Iterable[str], favori: bool) -> list[Asset]:
         """La seule marque que l'auteur pose lui-même — d'où sa forme, un coin
         plein, quand tout ce que le système constate est un mot
-        (`docs/DESIGN.md` § La tuile)."""
+        (`docs/design-motifs.md` § La tuile)."""
         marques = []
         for identifiant in identifiants:
             asset = self._trouver(identifiant)

@@ -1,6 +1,6 @@
 // L'infobulle — « elle explique, elle n'excuse jamais ».
 //
-// `docs/DESIGN.md` § L'infobulle explique, elle n'excuse jamais. Le test qui la
+// `docs/design-motifs.md` § L'infobulle explique, elle n'excuse jamais. Le test qui la
 // borne est binaire : *son absence empêche-t-elle un geste ?* Oui — fente
 // permanente sous le contrôle, jamais un survol (voir `Raison`). Non — survol,
 // jamais une fente. Ce fichier ne rend que le second cas ; il ne doit jamais

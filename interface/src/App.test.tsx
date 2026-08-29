@@ -1525,7 +1525,7 @@ describe("l'écran de l'atelier", () => {
     fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
 
     // Les blocs de l'univers arrivent repliés — on pose ces réglages une fois,
-    // et l'en-tête dit déjà leur état (`docs/DESIGN.md` § Le bloc repliable).
+    // et l'en-tête dit déjà leur état (`docs/design-motifs.md` § Le bloc repliable).
     fireEvent.click(await screen.findByRole("button", { name: /^Palette/ }))
 
     // Sans artwork, la palette n'est pas une pièce manquante : c'est un état,
@@ -2289,7 +2289,7 @@ describe("l'agent, vu de l'atelier", () => {
 
   test("l'écran tient trois colonnes, et les réglages de l'univers restent visibles", async () => {
     // « Les réglages restent visibles pendant qu'on compose, et c'est la raison
-    // d'être de la colonne de gauche » (`docs/ARCHITECTURE.md` §6.2).
+    // d'être de la colonne de gauche » (`docs/archi-versions.md` §6.2).
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
     await monter(fetchDouble)
@@ -3080,7 +3080,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     return bloc(titre)
   }
 
-  /** Replier un bloc : **replié, l'en-tête porte sa valeur** (`docs/DESIGN.md`
+  /** Replier un bloc : **replié, l'en-tête porte sa valeur** (`docs/design-motifs.md`
    *  § Le bloc repliable). C'est la façon la plus directe de lire ce que
    *  l'écran tient d'un réglage, sans passer par une classe CSS. */
   const replier = (titre: string) =>
@@ -5270,7 +5270,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
       name: "Poser dans le dossier du jeu",
     }) as HTMLButtonElement
     // **Grisé, jamais caché** : la chose existe — c'est un personnage —, et ce
-    // qui manque est nommé (`docs/DESIGN.md` § Le grisé porte sa raison).
+    // qui manque est nommé (`docs/design-motifs.md` § Le grisé porte sa raison).
     expect(bouton.disabled).toBe(true)
     expect(
       ecran.getAllByText(/aucune attitude remplie/).length,

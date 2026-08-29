@@ -15,7 +15,7 @@
 - **Memorable thing** : *la table lumineuse* — le châssis est muet, les assets sont la seule chose colorée à l'écran.
 
 **Écran large uniquement** — tranché par `docs/PRD.md` § Décisions d'implémentation, construit
-par `docs/ARCHITECTURE.md` §6.2. La seule chose que ce document ajoute est la conséquence
+par `docs/archi-versions.md` §6.2. La seule chose que ce document ajoute est la conséquence
 d'apparence : **aucune media query, aucune valeur de repli, aucun style alternatif**. Les
 largeurs de colonnes du § Layout sont donc absolues et sans condition.
 

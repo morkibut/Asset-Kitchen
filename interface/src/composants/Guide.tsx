@@ -1,6 +1,6 @@
 // L'écran Guide — la seule prose du produit.
 //
-// `docs/DESIGN.md` § L'écran Guide, et la seule prose du produit. C'est un
+// `docs/design-motifs.md` § L'écran Guide, et la seule prose du produit. C'est un
 // écran, pas un panneau : on l'ouvre quand on ne sait pas, on le ferme quand on
 // sait. Il couvre l'Atelier comme Univers et Découpe.
 //

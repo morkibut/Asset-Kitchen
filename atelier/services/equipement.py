@@ -8,7 +8,7 @@ posée sur une image payée.
 
 **Ce service ne sait pas plier, et c'est délibéré.** Le pliage est la manière
 dont l'atelier habille ou transforme N images d'un seul appel
-(`docs/ARCHITECTURE.md` § Le pliage) ; il a été écrit en C2 sans connaître ni
+(`docs/archi-versions.md` § Le pliage) ; il a été écrit en C2 sans connaître ni
 personnage, ni pose, ni pièce, et C3 le réemploie **tel quel** — la grille, le
 compte, le découpeur et le refus arithmétique viennent tous de
 `ServicePliage.decouper_retour`. Ce qui appartient à C3 tient en deux phrases :
@@ -222,7 +222,7 @@ class ServiceEquipement:
         """Une pièce se décrit **une seule fois** sur le projet (US-137).
 
         **Aucun prompt ici, et aucune image.** Une pièce n'existe qu'apparue sur
-        un corps (`docs/ARCHITECTURE.md` §7) : ce geste-ci ne fabrique qu'une
+        un corps (`docs/archi-versions.md` §7) : ce geste-ci ne fabrique qu'une
         colonne de cases vides, il ne demande rien au fournisseur et ne coûte
         rien.
 

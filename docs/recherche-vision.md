@@ -37,7 +37,7 @@ bouge pas.
 ## 1 · Ce que le dépôt fait déjà
 
 Inventaire honnête avant de proposer quoi que ce soit. Tout est en numpy + Pillow, CPU, pur,
-sans réseau — l'invariant `docs/ARCHITECTURE.md` §4.4.
+sans réseau — l'invariant `docs/ARCHITECTURE.md` §4, règle 4.
 
 | Où | Ce que ça fait | La technique, sous son nom académique |
 |---|---|---|
@@ -160,7 +160,7 @@ Estimer 8 paramètres quand 3 suffisent, ce n'est pas « plus général » : c'e
 degrés de liberté absorber le bruit. Un cisaillement de 0,3° et une perspective de 10⁻⁴
 réduisent l'erreur de reprojection sur les points appariés — et **rééchantillonnent toute
 l'image en diagonale**, ce qui sur du pixel art détruit la grille avant la comparaison, le
-mécanisme exact que `docs/ARCHITECTURE.md` §7 décrit pour l'échelle 0,62.
+mécanisme exact que `docs/archi-versions.md` §7 décrit pour l'échelle 0,62.
 
 **Quand on connaît la contrainte, le modèle contraint est plus fort que le modèle général.**
 Ce n'est pas une opinion : c'est pourquoi `_recalage` cherche une échelle et deux entiers, et
@@ -415,7 +415,7 @@ pas, l'auteur corrige.
 
 ## 9 · V4 — le tileset
 
-`docs/ARCHITECTURE.md` §9 annonce déjà « recalage sur grille, découpe, assemblage, aperçu de
+`docs/archi-versions.md` §9 annonce déjà « recalage sur grille, découpe, assemblage, aperçu de
 raccord », et note le comportement mesuré chez SpriteCook : aux petites tailles, le modèle
 génère plus grand, puis on recale et on découpe.
 

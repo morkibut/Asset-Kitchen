@@ -60,7 +60,7 @@ NOM_BAC_A_SABLE = "Bac à sable"
 
 # ── La bible ─────────────────────────────────────────────────────────────────
 #
-# **Sept champs nommés, et pas un texte libre** (`docs/ARCHITECTURE.md` §6.1).
+# **Sept champs nommés, et pas un texte libre** (`docs/archi-versions.md` §6.1).
 # Le texte libre est ce qu'on retape ; les champs nommés sont ce qu'on dose.
 # C'est la différence qui rend US-56 possible : chacun s'active indépendamment,
 # donc on peut relâcher le trait sans relâcher le monde.
@@ -424,7 +424,7 @@ def empreinte_palette(empreintes: Iterable[str], couleurs: int) -> str:
 class Projet:
     """Un univers. Il range, il totalise, et depuis T4 **il contraint**.
 
-    `docs/PLAN.md` § Quand chaque entité apparaît : le projet portait en T3
+    `docs/PLAN.md` § Quand chaque entité du modèle d'objets apparaît : le projet portait en T3
     « nom, rangement, total des coûts, journal », et se complète en T4 de la
     bible, des artworks, de la palette et des réglages par défaut. Les artworks,
     eux, ne sont pas ici : ce sont des cartes du tableau, et c'est la carte qui

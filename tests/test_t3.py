@@ -666,7 +666,7 @@ def test_reseau_coupe_la_bibliotheque_fonctionne_normalement(client, double):
 
 def test_le_lot_reste_groupe_et_dans_l_ordre_de_ses_emplacements(client):
     """« La grille ne se recompose jamais entre le départ et l'arrivée »
-    (`docs/DESIGN.md` § L'emplacement).
+    (`docs/design-motifs.md` § L'emplacement).
 
     Les variations d'un même lot n'arrivent pas ensemble. Dater chaque asset de
     son arrivée les ferait glisser les unes par rapport aux autres pendant
@@ -794,7 +794,7 @@ def test_les_variations_d_un_meme_lot_se_realignent_sur_la_date_du_lot(client, a
     Un asset d'avant T3 porte l'instant où son image est tombée, et deux
     variations d'un même appel n'arrivent pas ensemble. La grille les rendait
     donc dans l'ordre des arrivées plutôt que dans celui des emplacements — ce
-    que « la grille ne se recompose jamais » (`docs/DESIGN.md` § L'emplacement)
+    que « la grille ne se recompose jamais » (`docs/design-motifs.md` § L'emplacement)
     interdit précisément.
     """
     lot = _generer(client, "deux variations", variations=2)

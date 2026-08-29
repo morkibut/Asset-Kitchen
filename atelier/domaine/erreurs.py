@@ -2,7 +2,7 @@
 """Les refus du produit. Chacun porte sa raison **en clair, en français**.
 
 Le produit n'affiche jamais un message technique à la place d'une raison : un
-contrôle indisponible est grisé et dit pourquoi (`docs/DESIGN.md` § Le grisé
+contrôle indisponible est grisé et dit pourquoi (`docs/design-motifs.md` § Le grisé
 porte sa raison).
 """
 

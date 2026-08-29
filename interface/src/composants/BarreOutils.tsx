@@ -196,7 +196,7 @@ export function BarreOutils({
           ci-dessus paraissent avec la sélection et disparaissent avec elle ;
           celui-ci reste, parce que le produit doit dire *pourquoi* il est fermé
           quand rien n'est sélectionné — c'est nommément l'un des grisés de
-          `docs/DESIGN.md` § Le grisé porte sa raison. L'y mêler ferait sauter sa
+          `docs/design-motifs.md` § Le grisé porte sa raison. L'y mêler ferait sauter sa
           place d'un rendu à l'autre, et un contrôle qui se déplace au moment où
           on va le cliquer est un contrôle qu'on rate. */}
       <div className="flex shrink-0 items-center gap-3">

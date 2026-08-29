@@ -888,7 +888,7 @@ function Fiche({
  *  fait, ce qui manque, et alors seulement on livre. Un bouton posé en tête
  *  aurait proposé de sortir avant d'avoir montré ce qu'il y a à sortir.
  *
- *  **Grisé avec sa raison**, jamais caché (`docs/DESIGN.md` § Le grisé porte sa
+ *  **Grisé avec sa raison**, jamais caché (`docs/design-motifs.md` § Le grisé porte sa
  *  raison) : ici la chose existe — c'est un personnage —, et ce qui manque est
  *  nommé. Deux raisons, et l'ordre compte : ce qu'il faut fabriquer d'abord, le
  *  réglage ensuite.

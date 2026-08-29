@@ -68,7 +68,7 @@ export const nomDuModele = (modele: string): string =>
   modele === "import" ? "importé" : modele || "modèle inconnu"
 
 /** Ce qu'une étape posée dit d'elle-même quand elle est repliée
- *  (`docs/DESIGN.md` § Le bloc repliable). Une ligne, en mono, à droite du
+ *  (`docs/design-motifs.md` § Le bloc repliable). Une ligne, en mono, à droite du
  *  titre — c'est ce qui permet de lire la recette entière sans rien ouvrir.
  *
  *  Le résumé est **la valeur, jamais le fait qu'il y en ait une** : « 2 passes »
@@ -294,7 +294,7 @@ export function Fiche({
           qu'on venait de faire. Ce qui **bouge quand on règle** reste sous les
           yeux — l'image, la bascule rendu/brut, les dimensions ; ce qui ne
           bouge pas descend dans le défilement, à commencer par le sujet de la
-          génération, qu'on lit une fois. `docs/DESIGN.md` § La visionneuse. */}
+          génération, qu'on lit une fois. `docs/design-motifs.md` § La visionneuse. */}
       <Visionneuse
         asset={asset}
         brut={montrerBrut}

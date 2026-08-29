@@ -93,7 +93,7 @@ class ExportRefuse(ErreurAtelier):
     """Il n'y a rien à exporter, et on dit quoi.
 
     L'écran grise d'abord — « l'export d'une sélection vide » est nommément dans
-    `docs/DESIGN.md` § Le grisé porte sa raison. Ce refus-ci est le filet, pas le
+    `docs/design-motifs.md` § Le grisé porte sa raison. Ce refus-ci est le filet, pas le
     chemin normal ; il existe pour que le MCP de T7, qui n'a pas d'écran devant
     lui, reçoive une phrase du produit et non une erreur de validation.
     """
@@ -336,7 +336,7 @@ class ServiceExport:
                 )
 
         if not parts:
-            # **Le filet, et la phrase que l'écran grise** (`docs/DESIGN.md`
+            # **Le filet, et la phrase que l'écran grise** (`docs/design-motifs.md`
             # § Le grisé porte sa raison). L'agent, lui, n'a pas d'écran : c'est
             # cette phrase-là qu'il répétera à l'auteur.
             raise ExportRefuse(

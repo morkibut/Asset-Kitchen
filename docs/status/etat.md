@@ -11,6 +11,74 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## Le compactage des documents — 29 août 2026
+
+**Le corpus de démarrage est passé de 315 à 139 Ko sans qu'une ligne soit supprimée.** Sept
+passes, et ce qui est sorti est descendu en annexe avec un renvoi. Ce n'est pas une tranche :
+rien du produit n'a changé, seuls les documents ont été redécoupés.
+
+**Ce qui a été trouvé en mesurant, et qu'aucun de nous ne voyait.** `AGENTS.md` portait la
+règle depuis le début — *« dès qu'une section pèse plus que le document qui la porte, elle
+sort en annexe »* — et elle n'a jamais déclenché une seule fois. La raison est arithmétique :
+**aucune section n'atteint jamais la moitié de son document**. La plus lourde du corpus
+d'alors, « Où sont les choses » dans `AGENTS.md`, en faisait 71 % — un cas unique. Partout
+ailleurs le document doublait par accumulation de sections moyennes, chacune parfaitement en
+règle. Une règle qui ne peut pas se déclencher est une règle qu'on croit avoir.
+
+**Et 36 renvois mentaient en silence.** Le code et les documents renvoient aux documents près
+de six cents fois — un « § » qui nomme une section, un numéro qui nomme un chapitre, une
+lettre et un chiffre qui nomment une tranche — et rien ne vérifiait qu'une section citée
+existait encore. L'extraction du 28 août avait
+emporté treize sections de `DESIGN.md` vers `design-motifs.md` ; les trente-trois renvois qui
+les visaient étaient restés sur l'ancienne adresse, sans qu'aucun test ne s'en aperçoive.
+C'est exactement la fragilité n°1 relevée chez SpriteCook, où la doc publique et le schéma du
+serveur ne se recouvraient plus.
+
+**Le banc est donc venu avant le découpage, et non après.** `essais/essai_docs.py` pèse le
+corpus section par section — sous-sections comprises, sans quoi le poids d'un chapeau
+déciderait à la place de ce qu'il porte — et résout chaque renvoi contre les titres réels du
+document visé. Les 36 renvois cassés ont été réparés **avant** la première passe de découpage,
+et c'est ce qui a rendu les six suivantes vérifiables : tout renvoi cassé apparu ensuite était
+le fait du découpage, et de rien d'autre. Il y en a eu 41, tous repointés.
+
+**Le banc s'est trouvé un trou à lui-même, à la sixième passe.** Il ne lisait que les renvois
+écrits avec leur chemin complet ; un sur six s'écrit sans — `` `PLAN.md` `` tout court. Huit
+renvois cassés par la quatrième passe étaient donc passés sous son nez pendant qu'il annonçait
+tout vert. Il les lit depuis.
+
+**Ce qui est sorti, et où :**
+
+| Passe | Ce qui sort | Vers | Gain |
+|---|---|---|---:|
+| 1 | le détail des vingt tranches | `docs/tranches/` — un fichier par tranche, de `T1` à `R5` | 50 Ko |
+| 2 | la carte fichier par fichier | `docs/carte-du-depot.md` | 33 Ko |
+| 3 | les 173 user stories, le carnet des séances | `docs/user-stories.md`, `docs/prd-carnet.md` | 38 Ko |
+| 4 | les dossiers de version, §6 à §10 | `docs/archi-versions.md` | 44 Ko |
+| 5 | le relevé du fournisseur, §4 bis | `docs/archi-fournisseur.md` | 14 Ko |
+
+L'ancienne archive du plan — un seul fichier pour les dix tranches finies — a été dissoute
+dans les vingt : chaque tranche a désormais une adresse, au lieu d'un rang dans un long
+document.
+
+**Une décision de méthode, qui a rendu le reste possible : les numéros de section ne bougent
+pas.** Soixante-dix renvois disent « §7 » ou « §6.2 ». Renuméroter `ARCHITECTURE.md` après en
+avoir sorti cinq sections les aurait tous cassés d'un coup, pour un gain nul. Une section
+déplacée **garde son numéro dans son nouveau fichier**, et c'est le fichier du renvoi qui
+change. `docs/archi-versions.md` s'ouvre donc sur un §6.
+
+**La règle a changé, et pas dans le sens attendu.** Le plan visait un plafond de 140 Ko, et
+le corpus l'a tenu à 139. Le plafond n'a pas été gardé : *un seuil rond refuserait le jour où
+l'on écrit une phrase de plus, ce qui n'est pas une faute, et se relèverait le jour où il
+gêne, ce qui n'est pas un garde-fou.* Le banc mesure désormais la **dérive** — chaque relevé
+comparé au précédent, et le plus haut connu écrit en dur pour que l'échelle ne se perde pas.
+Ce qui le fait échouer est ailleurs, et c'est objectif : un renvoi cassé désigne une section
+qui n'existe plus.
+
+**Trois manques comblés en passant**, tous trouvés par le découpage et non cherchés : `C4` et
+`C5` n'avaient pas de ligne d'état dans le plan ; `mcp/` était encore décrit comme « vide
+jusqu'à T7 » ; et deux renvois visaient `AGENTS.md` pour ce qu'il n'a jamais porté — un piège
+vit dans `PIEGES.md`, une dette reportée dans le fichier de sa tranche.
+
 ## C4 — 29 août 2026
 
 **C4 est écrite : la main rattrape ce que la différence ne voit pas.** Le masque d'un calque
@@ -453,7 +521,7 @@ d'acceptation de T1 à C1 sont cochés dans `docs/PLAN.md`, et 233 tests de serv
 d'écran les tiennent.**
 
 **Quatre décisions de construction, et trois défauts trouvés en s'en servant.** Les décisions
-sont dans `docs/PLAN.md` § C1 et `docs/ARCHITECTURE.md` §7 : un seul plan par projet, le
+sont dans `docs/PLAN.md` § C1 et `docs/archi-versions.md` §7 : un seul plan par projet, le
 personnage qui range **ce qu'il écarte**, la case déduite des images plutôt qu'enregistrée, et
 le coût annoncé **mesuré** au lieu d'être lu dans un tarif que le produit ne porte pas.
 
@@ -541,7 +609,7 @@ normal. Elles s'écrivent par la route qui portait déjà le groupe : tirer une 
 **Un îlot n'est écrit nulle part : il est l'étendue de ses membres.** Un îlot *est* le
 groupe, donc il n'a ni identité, ni fichier, ni position à lui, et l'écran le calcule à
 chaque rendu. Il n'existe aucun état où la toile montrerait un rangement que le disque ne dit
-pas, et un îlot vide n'existe pas faute de quoi l'écrire. `docs/ARCHITECTURE.md` §6.5
+pas, et un îlot vide n'existe pas faute de quoi l'écrire. `docs/archi-versions.md` §6.5
 annonçait `parentId` + `extent: "parent"` : ce mécanisme *enferme* un enfant dans son parent,
 donc il interdit très exactement « sortir une carte de son îlot ». Le document a été corrigé.
 

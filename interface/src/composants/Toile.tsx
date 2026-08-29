@@ -1,7 +1,7 @@
 // La toile — la seconde vue du tableau d'inspiration (T8).
 //
 // **La règle est une phrase, et l'écran ne dit rien d'autre : la toile montre ce
-// qui est classé, la réserve contient ce qui reste à classer** (`docs/DESIGN.md`
+// qui est classé, la réserve contient ce qui reste à classer** (`docs/design-motifs.md`
 // § La toile, la réserve et les îlots). Tout en découle — pourquoi la réserve
 // n'est pas une grille de plus, pourquoi une carte sans groupe et sans place
 // n'est jamais sur le plan, pourquoi tirer est le seul geste à apprendre.
@@ -18,7 +18,7 @@
 // fournit le plan — déplacement, zoom, transformation unique, conversion écran →
 // plan —, le nœud et son glissement, la sélection. Le reste est du produit : la
 // carte, la persistance, le classement, l'annulation, la réserve, et la poignée
-// de largeur. `docs/ARCHITECTURE.md` §6.5 fait la part exacte.
+// de largeur. `docs/archi-versions.md` §6.5 fait la part exacte.
 //
 // **Rien ne se recompose tout seul.** Aucun alignement automatique, aucune
 // distribution, aucune mise en page qui reflue quand une carte arrive : c'est
@@ -179,7 +179,7 @@ export type Crans = { 1: number; 2: number; 4: number }
  * La réponse est la même : le produit les **déclare**. Elles n'ont aucune
  * conséquence sur le tracé, qui se calcule par `ancrer` sur les boîtes ; elles
  * existent pour que la librairie sache résoudre l'arête, ce qui est son travail
- * — la surface (`docs/ARCHITECTURE.md` §6.5). Une seule paire par nœud, source
+ * — la surface (`docs/archi-versions.md` §6.5). Une seule paire par nœud, source
  * et arrivée : le produit n'a qu'un point de départ par objet et décide de
  * l'arrivée lui-même.
  */
@@ -969,7 +969,7 @@ function Plan({
         target: nomDe(un.vers),
         data: { lien: un },
         // La zone d'écoute de la librairie, et c'est très exactement le partage
-        // de `docs/ARCHITECTURE.md` §6.5 : un trait de 1 px ne se survole pas,
+        // de `docs/archi-versions.md` §6.5 : un trait de 1 px ne se survole pas,
         // et une zone d'écoute est de la surface.
         interactionWidth: 20,
         selectable: false,
@@ -1022,7 +1022,7 @@ function Plan({
   // n'existent pas encore — ils arrivent d'un effet. La seconde : la librairie
   // tient les dimensions de son plan par un `ResizeObserver`, et *un
   // `ResizeObserver` ne livre rien à un onglet qui ne compose pas ses images*
-  // (`AGENTS.md`, T5). Le plan mesurait donc zéro et `fitView` renonçait en
+  // (`docs/PIEGES.md`). Le plan mesurait donc zéro et `fitView` renonçait en
   // silence, alors que le `getBoundingClientRect` du même nœud rendait
   // 519 × 638. Troisième fois que ce piège se referme dans ce dépôt, et la
   // réponse est toujours la même : **une largeur se lit à la demande.**
@@ -1815,7 +1815,7 @@ function ToileNue() {
  *
  *  Elle refuse de rendre un trait dont elle ne trouve pas les deux bouts : sans
  *  cet ancrage, aucun lien ne paraît, et rien ne le dit. Il est donc de la
- *  **surface** — le partage de `docs/ARCHITECTURE.md` §6.5, à la lettre.
+ *  **surface** — le partage de `docs/archi-versions.md` §6.5, à la lettre.
  *
  *  **Il ne participe jamais à la liaison** (`isConnectable={false}`), et c'est
  *  ce qui le distingue du piège qu'on a écarté : décider *sur quoi* un trait est
@@ -2363,7 +2363,7 @@ function NoeudCarte({ data }: NodeProps) {
  * **Un lien qui a un mot se survole par son mot, un lien muet par sa bande.**
  * C'est ce qui rend le défaut muet payable : la zone d'écoute de 20 px que la
  * librairie pose le long du tracé est de la surface, donc de son ressort
- * (`docs/ARCHITECTURE.md` §6.5) — un trait de 1 px, lui, ne se survole pas.
+ * (`docs/archi-versions.md` §6.5) — un trait de 1 px, lui, ne se survole pas.
  */
 function AreteLien({ id, source, target, data }: EdgeProps) {
   const cadre = useContext(CADRE)
@@ -2610,7 +2610,7 @@ function Poignee({
 
 /**
  * Les trois largeurs sur lesquelles la largeur libre s'aimante — **mesurées sur
- * la grille, jamais écrites en dur** (`docs/DESIGN.md` § La toile).
+ * la grille, jamais écrites en dur** (`docs/design-motifs.md` § La toile).
  *
  * `gridTemplateColumns` calculé rend la largeur réelle d'une colonne, c'est-à-dire
  * celle d'une carte 1×. Les deux autres s'en déduisent par la règle que la grille

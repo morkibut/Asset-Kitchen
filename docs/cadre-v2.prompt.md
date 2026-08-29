@@ -37,7 +37,7 @@ Pour huit frames d'un cycle de marche, il faut huit calques. C'est une évidence
 une incertitude technique.
 
 Ces quatre passages sont à supprimer ou à réécrire. Les documents en aval les portent aussi et
-suivront : `docs/ARCHITECTURE.md` §7 et §11, `docs/PLAN.md` tranche C4.
+suivront : `docs/archi-versions.md` §7 et §11, `docs/PLAN.md` tranche C4.
 
 ---
 

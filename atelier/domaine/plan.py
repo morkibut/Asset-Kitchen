@@ -21,7 +21,7 @@ c'est inutile tant qu'un personnage peut **écarter** les poses qu'il ne tient
 pas (US-117) — un figurant et un héros se comparent alors au même plan, l'un en
 cochant moins de cases. Deux façons concurrentes de dire « ce personnage n'a pas
 besoin de ça » auraient fini par se contredire. Le nom reviendra avec le second
-plan, s'il vient : `docs/ARCHITECTURE.md` §7 porte la décision.
+plan, s'il vient : `docs/archi-versions.md` §7 porte la décision.
 
 **Ajouter une pose n'ajoute qu'une case vide, jamais une génération**
 (`docs/PLAN.md` C1). Rien ici ne part vers le fournisseur, et rien ici ne coûte.

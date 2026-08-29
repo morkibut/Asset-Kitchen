@@ -4,7 +4,7 @@
 **Ce service ne connaît ni personnage, ni pose, ni matrice.** C'est le piège
 principal de la tranche, et il se tient par les imports : le pliage est *la
 manière dont l'atelier habille ou transforme N images d'un seul appel*
-(`docs/ARCHITECTURE.md` § Le pliage), pas un dispositif du lot de poses. C2 s'en
+(`docs/archi-versions.md` § Le pliage), pas un dispositif du lot de poses. C2 s'en
 sert pour créer N corps, C3 le réemploiera tel quel pour en habiller N, et rien
 ici ne changera entre les deux.
 
@@ -126,7 +126,7 @@ def _habiller(pliage: Pliage) -> str:
     """La planche de C3 : N corps déjà là, à qui l'on ajoute une pièce.
 
     « La même planche, avec la pièce en plus, ne touche à rien d'autre »
-    (`docs/ARCHITECTURE.md` §7). Le texte est **volontairement redondant**, et ce
+    (`docs/archi-versions.md` §7). Le texte est **volontairement redondant**, et ce
     n'est pas de la superstition : `essais/essai_silhouette.py` l'a étalonné le
     28 août 2026, et la règle qu'il en tire est que **tout ce qu'on ne dit pas
     explicitement « ne change pas » est une invitation à le changer** — or chaque

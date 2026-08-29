@@ -1,6 +1,6 @@
 // Le corpus des explications — un seul texte, deux rendus.
 //
-// « L'infobulle et le guide sont le même texte » (`docs/DESIGN.md` § Un seul
+// « L'infobulle et le guide sont le même texte » (`docs/design-motifs.md` § Un seul
 // corpus, deux rendus). Le panneau de 280 px rend les trois lignes d'une
 // entrée ; l'écran Guide les rend toutes à la file, avec la version longue
 // quand il y en a une. Une explication recopiée dans deux fichiers diverge en

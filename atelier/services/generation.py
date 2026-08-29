@@ -635,7 +635,7 @@ class ServiceGenerations:
         """Attente bornée — le contrat du MCP, utile aussi aux essais.
 
         « L'appelant dit : attends jusqu'à N secondes, sinon rends
-        l'identifiant » (`docs/ARCHITECTURE.md` § Contrat de génération).
+        l'identifiant » (`docs/archi-fournisseur.md` § Contrat de génération).
         """
         limite = time.monotonic() + delai_s
         while True:

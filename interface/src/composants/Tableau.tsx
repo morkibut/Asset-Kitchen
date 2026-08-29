@@ -1,7 +1,7 @@
 // Le tableau d'inspiration — la grille de cartes de l'écran Univers, et la
 // réserve de la toile, qui est la même grille filtrée.
 //
-// **Le collage est le geste principal** (`docs/ARCHITECTURE.md` §6.1 : « entrée
+// **Le collage est le geste principal** (`docs/archi-versions.md` §6.1 : « entrée
 // par collage (Ctrl+V, le geste principal) »). Tout le reste — le glisser-
 // déposer, l'adresse, le texte — arrive par le même chemin : on colle, et
 // l'atelier devine ce que c'est et le dit.
@@ -15,7 +15,7 @@
 //
 // **Deux vues sur la même matière depuis T8, et une seule grille pour les
 // deux.** La réserve n'est pas une grille de plus : c'est celle-ci, filtrée sur
-// ce qui n'a encore ni groupe ni place (`docs/DESIGN.md` § La toile, la réserve
+// ce qui n'a encore ni groupe ni place (`docs/design-motifs.md` § La toile, la réserve
 // et les îlots). Le corps qui la rend est donc littéralement le même —
 // `GrilleCartes` —, et c'est ce qui garantit qu'une carte se lit pareil des deux
 // côtés de la frontière.
@@ -49,7 +49,7 @@ export const GOUTTIERE = 9
 /** La largeur minimale d'une colonne de la grille. Écrite ici parce que la toile
  *  la **mesure** au lieu de la deviner : `gridTemplateColumns` calculé donne la
  *  largeur réelle d'une carte 1×, et c'est d'elle que l'aimant de la largeur
- *  libre tire ses trois crans (`docs/DESIGN.md` § La toile). */
+ *  libre tire ses trois crans (`docs/design-motifs.md` § La toile). */
 export const COLONNE_MIN = 148
 
 /** Les deux façons de voir la même matière (T8). */
@@ -275,7 +275,7 @@ const pied = (carte: Carte) => {
 /** Le corps de la grille — **un seul, pour les deux vues**.
  *
  *  La réserve « n'introduit pas une grille de plus : c'est la grille du tableau,
- *  filtrée sur ce qui n'a pas encore de place » (`docs/ARCHITECTURE.md` §6.2).
+ *  filtrée sur ce qui n'a pas encore de place » (`docs/archi-versions.md` §6.2).
  *  Le filtrage se fait chez l'appelant, le rendu est ici, et il n'y a donc rien
  *  qui puisse diverger entre les deux côtés de la frontière. */
 export function GrilleCartes({
@@ -614,7 +614,7 @@ function BandeauDoublon({
 /**
  * La barre du tableau, et l'interrupteur de vue.
  *
- * **`grille` et `toile` sont un segment de barre, pas un onglet** (`docs/DESIGN.md`
+ * **`grille` et `toile` sont un segment de barre, pas un onglet** (`docs/design-motifs.md`
  * § La toile, la réserve et les îlots) : l'écran ne se dédouble pas, c'est la
  * même matière regardée autrement. Il se pose à côté de ce qui compte les
  * cartes, dans la forme des segments existants.

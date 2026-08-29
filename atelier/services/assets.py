@@ -261,7 +261,7 @@ class ServiceAssets:
             # même génération n'arrivent pas ensemble : dater chaque asset de
             # son arrivée ferait glisser les tuiles les unes par rapport aux
             # autres pendant qu'on les regarde, et « la grille ne se recompose
-            # jamais entre le départ et l'arrivée » (`docs/DESIGN.md`
+            # jamais entre le départ et l'arrivée » (`docs/design-motifs.md`
             # § L'emplacement) tomberait. Le rang départage à égalité.
             cree_le=ancien.cree_le if ancien else generation.cree_le,
             # Ce qu'une relance ne doit pas défaire : le jugement de l'auteur.
@@ -295,7 +295,7 @@ class ServiceAssets:
         jamais été l'image payée : l'image payée est la planche, qui reste le
         brut de sa génération et que personne ne touche ; celui du calque est
         déjà un dérivé — la case découpée puis recalée —, donc un cache, et un
-        cache se recalcule (`docs/ARCHITECTURE.md` § Le calque par différence).
+        cache se recalcule (`docs/archi-versions.md` § Le calque par différence).
 
         **Oublier le détourage est la moitié qui décide.** Il est gardé sous
         l'identifiant de l'asset, et l'identifiant, lui, ne change pas : sans

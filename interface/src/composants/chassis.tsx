@@ -9,7 +9,7 @@ import { POINTILLE, useInfobulle } from "./Infobulle"
 // ── Les crans de taille ─────────────────────────────────────────────────────
 //
 // « Les vignettes 1× / 2× / 4× sont les crans du zoom de la grille »
-// (`docs/DESIGN.md` § Le tableau). **Un seul vocabulaire de taille dans tout le
+// (`docs/design-motifs.md` § L'écran Univers). **Un seul vocabulaire de taille dans tout le
 // produit**, donc un seul endroit qui l'écrive : la grille d'assets s'en sert
 // pour la largeur minimale d'une tuile, le tableau d'inspiration pour le nombre
 // de colonnes qu'une carte occupe. Les deux contrôles ne cohabitent jamais —
@@ -118,7 +118,7 @@ export function EnTetePanneau({ children }: { children: ReactNode }) {
 /**
  * Le nom d'un réglage — et sa propre poignée d'explication.
  *
- * « Le libellé est la cible — aucun glyphe neuf » (`docs/DESIGN.md` §
+ * « Le libellé est la cible — aucun glyphe neuf » (`docs/design-motifs.md` §
  * L'infobulle explique, elle n'excuse jamais). Passer `aide` pose le pointillé
  * `--bord-fort` et branche le survol ; sans `aide`, le libellé est exactement
  * ce qu'il était, et **c'est le cas d'un réglage que le corpus ne documente pas
@@ -166,7 +166,7 @@ export function Libelle({
 // ── Le bloc repliable ───────────────────────────────────────────────────────
 //
 // « Un bloc replié ne se tait pas — il porte son réglage, en mono, à droite de
-// son titre » (`docs/DESIGN.md` § Le bloc repliable). C'est cette ligne qui
+// son titre » (`docs/design-motifs.md` § Le bloc repliable). C'est cette ligne qui
 // fait tout : le repli cesse d'être un rangement pour devenir un **résumé**, et
 // un panneau plié se lit mieux que déplié.
 //

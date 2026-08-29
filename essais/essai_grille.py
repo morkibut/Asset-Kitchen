@@ -10,7 +10,7 @@ une facture.
 
 Ce que le dépôt sait déjà, et ce qu'il ne sait pas :
 
-  · `ARCHITECTURE.md` §9 raconte l'observation du 26 août — `gemini-3.1-flash-image`
+  · `docs/archi-versions.md` §8 raconte l'observation du 26 août — `gemini-3.1-flash-image`
     a **calqué la mise en page de sa référence** : on demandait un sprite, il en a
     rendu trois alignés, puis l'appel suivant en a rendu trois dans la même
     disposition. D'où l'hypothèse : fournir un **gabarit** de cases vides et le

@@ -77,7 +77,7 @@ class Asset:
     #
     # **Une copie, prise à la naissance**, et le seul chiffre de ce fichier qui
     # ne se mesure pas sur l'image. Il est ici parce que la tuile le porte
-    # (`docs/DESIGN.md` § La tuile : `64×64 · $0,067`) et que la grille de T3
+    # (`docs/design-motifs.md` § La tuile : `64×64 · $0,067`) et que la grille de T3
     # est faite d'assets, plus de générations : sans lui, chaque tuile devrait
     # aller chercher sa génération pour afficher trois caractères.
     #
