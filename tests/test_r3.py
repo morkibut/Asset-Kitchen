@@ -282,6 +282,7 @@ def test_le_defaut_est_telle_quelle(client):
 
     assert asset["recette"] == {
         "passes": [],
+        "difference": None,
         "recadrage": None,
         "grille": None,
         "quantification": None,

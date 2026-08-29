@@ -22,6 +22,7 @@ jamais l'interface, qui affiche la phrase qu'elle reçoit :
 from __future__ import annotations
 
 import time
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -33,11 +34,14 @@ from atelier.domaine.generation import Emplacement, Generation
 from atelier.domaine.recette import (
     ANCRAGES,
     MOTEURS,
+    RAYON_MAX,
     TRAMAGES,
+    Difference,
     Passe,
     Recette,
 )
 from atelier.image import Rendu, detourer, finir, raison_moteur, rendre_en_png
+from atelier.image.calque import avec_alpha, differencier
 from atelier.services.evenements import Diffusion
 
 # Les bornes des réglages, et le seul endroit qui les dise. Une recette venue
@@ -281,6 +285,28 @@ class ServiceAssets:
         self.sauver(asset, annoncer=annoncer)
         return asset
 
+    def reposer(self, asset: Asset, *, annoncer: bool = True) -> Asset:
+        """Un asset déjà né **dont le brut vient de changer** : son détourage est
+        oublié, son rendu recalculé, et il s'écrit à sa place.
+
+        **Un seul appelant, et il est nommé ici** : le rejeu du recalage d'un
+        calque (R5, `docs/PLAN.md`). Ce n'est pas une exception à « le brut ne
+        change jamais » — c'en est la borne exacte. Le brut d'un calque n'a
+        jamais été l'image payée : l'image payée est la planche, qui reste le
+        brut de sa génération et que personne ne touche ; celui du calque est
+        déjà un dérivé — la case découpée puis recalée —, donc un cache, et un
+        cache se recalcule (`docs/ARCHITECTURE.md` § Le calque par différence).
+
+        **Oublier le détourage est la moitié qui décide.** Il est gardé sous
+        l'identifiant de l'asset, et l'identifiant, lui, ne change pas : sans
+        cette ligne, le rendu se recalculerait sur l'image d'avant, et le geste
+        n'aurait aucun effet visible.
+        """
+        self._oublier_detourage(asset.identifiant)
+        self._rendre(asset)
+        self.sauver(asset, annoncer=annoncer)
+        return asset
+
     def rattraper(self, generations: list[Generation]) -> int:
         """Donne un asset aux images produites avant que les assets existent.
 
@@ -366,13 +392,23 @@ class ServiceAssets:
     def recents(self, limite: int = 200) -> list[Asset]:
         return self._base.assets_recents(limite)
 
-    def octets(self, asset: Asset, *, brut: bool = False) -> tuple[bytes, str]:
+    def octets(
+        self, asset: Asset, *, brut: bool = False, avant: bool = False
+    ) -> tuple[bytes, str]:
         """Les octets à servir, et leur type de média.
 
         **Le rendu se recalcule quand son fichier a disparu.** C'est un critère
         d'acceptation, et c'est aussi le seul chemin de code : un fichier absent
         et un fichier périmé mènent au même geste, donc il n'y en a qu'un.
+
+        `avant` rend le calque **tel que la différence l'avait produit**, avant
+        que la main y passe (C4, US-151). Voir `_avant`.
         """
+        if avant and not brut:
+            octets = self._avant(asset)
+            if octets is not None:
+                return octets, "image/png"
+
         if brut or asset.recette.vide:
             if not self._fichiers.existe(asset.brut):
                 raise ErreurAtelier("le fichier de cette image a disparu du disque")
@@ -467,8 +503,6 @@ class ServiceAssets:
         enregistrees = self.recettes()
         if nom not in enregistrees:
             raise RecetteRefusee(f"aucune recette nommée « {nom} »")
-        from dataclasses import replace
-
         return self.poser_recette(identifiant, replace(enregistrees[nom], nom=nom))
 
     # ── Le rendu ─────────────────────────────────────────────────────────────
@@ -499,8 +533,90 @@ class ServiceAssets:
         C'est ce qui tient « chaque réglage répond sans attente perceptible » :
         faire glisser la grille, l'occupation ou le nettoyage ne repaie pas les
         130 ms du détourage, seulement les 28 ms du reste.
+
+        **La différence s'insère entre les deux, et c'est le seul endroit du
+        dépôt qui rende un asset** (C3). Elle n'est pas dans `traitement.py`
+        parce qu'elle a besoin d'une **seconde image** — le corps — que seul un
+        service sait aller chercher : un module pur qui lirait un asset par son
+        identifiant ne serait plus pur.
         """
-        return finir(self.detourage(asset), asset.recette)
+        return self._calculer_avec(asset, asset.recette)
+
+    def _calculer_avec(self, asset: Asset, recette: Recette) -> Rendu:
+        """Le même calcul, sur une recette qu'on lui donne.
+
+        **Un seul chemin de rendu, deux appelants.** Le second est l'avant
+        d'US-151, qui rejoue la recette de l'asset avec les deux couches de la
+        main vidées : deux chaînes écrites à deux endroits finiraient par ne plus
+        rendre la même image, et la comparaison mesurerait alors l'écart entre
+        deux codes plutôt que l'effet d'une retouche.
+        """
+        return finir(
+            self._differencier(asset, self.detourage(asset), recette.difference),
+            recette,
+        )
+
+    def _avant(self, asset: Asset) -> bytes | None:
+        """Le calque **avant que la main y passe** (C4, US-151).
+
+        **Rien n'est écrit** : ni cache sur le disque, ni asset sauvé, ni
+        empreinte déplacée. L'avant est une lecture, pas un état — le poser sur
+        le disque en ferait une image que plus rien ne met à jour le jour où le
+        recalage se rejoue, et il faudrait alors la nettoyer, donc la tenir.
+
+        Rend `None` quand il n'y a pas d'avant : une image sans différence, ou
+        un calque sur lequel la main n'est pas passée. **L'appelant sert alors
+        le rendu ordinaire** plutôt qu'un refus — demander l'avant d'une image
+        que personne n'a touchée est une question dont la réponse est l'image
+        elle-même, pas une erreur.
+        """
+        difference = asset.recette.difference
+        if difference is None or not difference.main_posee:
+            return None
+        recette = replace(asset.recette, difference=difference.sans_main())
+        return self._calculer_avec(asset, recette).octets
+
+    def _differencier(
+        self, asset: Asset, rgba: np.ndarray, difference: Difference | None
+    ) -> np.ndarray:
+        """Ce qui a changé entre le corps et cette image-là — le calque (C3).
+
+        **Le corps est relu à chaque rendu, jamais recopié dans le calque.**
+        C'est la même règle qu'une réinjection, et elle a la même conséquence
+        heureuse : déplacer le masque relance ce calcul et rien d'autre, donc le
+        journal du projet ne bouge pas d'un centime (US-145).
+
+        Un corps disparu ne fait pas tomber le rendu : le calque redevient ce
+        qu'il est sur le disque — la case telle qu'elle est revenue. La recette
+        garde sa différence, donc le corps revenu la lui rend. Jamais de cascade,
+        ici comme ailleurs.
+
+        **Un corps qui a changé de taille est un corps disparu**, et il reçoit
+        le même traitement. Le calque a été taillé dans le cadre du corps *tel
+        qu'il était au dépliage* ; changer la taille de pixel du projet rend le
+        corps à une autre taille, et les deux images ne se superposent plus. Le
+        remettre à l'échelle rééchantillonnerait le pixel art et fabriquerait une
+        différence que personne n'a demandée — c'est très exactement ce que le
+        recalage de C3 refuse de faire. Le calque redevient donc sa case, la
+        recette garde sa différence, et le geste qui répare est le rejeu du
+        recalage (R5), qui retaille depuis la planche payée. Payé le 29 août
+        2026 sur `coeur de pierre - 01` (`docs/PIEGES.md`).
+
+        **La différence est reçue, jamais relue sur l'asset** : c'est ce qui
+        permet à l'avant d'US-151 de rejouer exactement ce calcul-ci avec les
+        deux couches de la main vidées, sans qu'aucune ligne soit écrite deux
+        fois.
+        """
+        if difference is None:
+            return rgba
+        base = self.lire(difference.base)
+        if base is None:
+            return rgba
+        octets, _ = self.octets(base)
+        corps = avec_alpha(octets)
+        if corps.shape[:2] != rgba.shape[:2]:
+            return rgba
+        return differencier(corps, rgba, difference)
 
     def detourage(self, asset: Asset, passes: tuple[Passe, ...] | None = None) -> np.ndarray:
         """L'image détourée d'un asset, gardée sous la main.
@@ -587,6 +703,23 @@ class ServiceAssets:
 
         if recette.bords is not None and recette.bords.aire_min < 0:
             raise RecetteRefusee("l'aire minimale d'une tache ne peut pas être négative")
+
+        # **Les deux couches de la main** (C4). Seul le rayon a des bornes : un
+        # point hors du cadre se borne au lieu de lever — c'est la règle du
+        # rectangle depuis T5, et un onglet resté ouvert pendant qu'on changeait
+        # la cible de pixel du projet enverrait sinon une erreur là où il suffit
+        # de rogner.
+        difference = recette.difference
+        if difference is not None:
+            for couche, traits in (
+                ("masque", difference.affinage),
+                ("retouche", difference.retouche),
+            ):
+                for rang, trait in enumerate(traits, start=1):
+                    if not 0 <= trait.rayon <= RAYON_MAX:
+                        raise RecetteRefusee(
+                            f"{couche}, passage {rang} : le rayon va de 0 à {RAYON_MAX}"
+                        )
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 

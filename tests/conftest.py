@@ -213,6 +213,12 @@ class FournisseurDouble:
         # de post-traitement ont besoin d'un sujet sur un fond, pas d'un carré
         # uni. Un seul levier, posé par le test, et T1 ne bouge pas.
         self.rendre: "callable[[], bytes] | None" = None
+        # **Ce que le modele rend d'apres ce qu'il a recu** (C3). `rendre` suffit
+        # tant que la reponse ne depend pas de la demande ; une planche
+        # d'equipement, si : ce qui revient est ce qui est parti, avec la piece
+        # en plus. Deux leviers plutot qu'un `rendre` a deux formes — un test lit
+        # alors dans son nom ce que le double fait.
+        self.repondre: "callable[[Demande], bytes] | None" = None
         # Ce que chaque appel a **réellement** reçu en références (US-12). Un
         # test qui vérifie la réinjection sur l'enregistrement seul se
         # contenterait de ce que le produit dit avoir envoyé ; celui-ci regarde
@@ -235,6 +241,10 @@ class FournisseurDouble:
             await asyncio.sleep(self.duree_annoncee_s)
         if self.echec is not None:
             raise self.echec
+        if self.repondre is not None:
+            return ImageProduite(
+                self.repondre(demande), cout_usd=0.0245, type_media="image/png"
+            )
         if self.rendre is not None:
             return ImageProduite(self.rendre(), cout_usd=0.0245, type_media="image/png")
         if modele.identifiant.endswith("jpeg"):

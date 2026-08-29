@@ -38,6 +38,7 @@ from atelier.domaine.generation import Emplacement, Generation, Statut
 from atelier.domaine.pliage import CasePliee, Geometrie, MesuresLot, Pliage
 from atelier.domaine.recette import BORD, Passe, Recette
 from atelier.image import Boite, decouper, detourer, grille_fixe, mesurer, zones_opaques
+from atelier.image.decoupe import MARGE
 from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.services.assets import ServiceAssets
 from atelier.services.bibliotheque import ServiceBibliotheque
@@ -65,6 +66,19 @@ class CompteFaux(ErreurAtelier):
 
 def consignes(pliage: Pliage) -> str:
     """Ce qui s'ajoute au prompt pour demander une planche plutôt qu'une image.
+
+    **Deux consignes, une porte d'entrée**, et c'est la géométrie qui décide :
+    une grille partie vide demande de *créer* N sujets (C2), une grille partie
+    pleine demande de les *habiller* (C3). Le reste de la chaîne — le pliage, le
+    découpeur, le compte — ne fait aucune différence entre les deux.
+    """
+    if pliage.geometrie_connue:
+        return _habiller(pliage)
+    return _creer(pliage)
+
+
+def _creer(pliage: Pliage) -> str:
+    """La planche de C2 : N sujets à faire naître sur une grille vide.
 
     **Repliées à la soumission, comme la bible de T4** : `generation.json` porte
     le prompt tel qu'il est parti, et une génération se relit des mois après sans
@@ -94,8 +108,6 @@ def consignes(pliage: Pliage) -> str:
         f"proportions, same size, same style. Plain flat light gray background, no cell "
         f"borders, no grid lines, no text, no numbers, no frames, no ground shadow."
     )
-    if pliage.geometrie_connue:
-        return consigne
     # **La consigne du gabarit dit deux choses, et la seconde est la piégeuse.**
     # Remplir les cases, oui — mais *ne pas redessiner leurs bords*. Un modèle qui
     # recopie la structure de son entrée recopiera aussi les traits qui la
@@ -107,6 +119,40 @@ def consignes(pliage: Pliage) -> str:
         f"one sprite inside each cell, keeping the cells at their positions and sizes. "
         f"Do NOT draw the cell outlines in your image — the background must stay one "
         f"plain flat light gray, with no visible cell borders and no separating lines."
+    )
+
+
+def _habiller(pliage: Pliage) -> str:
+    """La planche de C3 : N corps déjà là, à qui l'on ajoute une pièce.
+
+    « La même planche, avec la pièce en plus, ne touche à rien d'autre »
+    (`docs/ARCHITECTURE.md` §7). Le texte est **volontairement redondant**, et ce
+    n'est pas de la superstition : `essais/essai_silhouette.py` l'a étalonné le
+    28 août 2026, et la règle qu'il en tire est que **tout ce qu'on ne dit pas
+    explicitement « ne change pas » est une invitation à le changer** — or chaque
+    chose changée entre directement dans la mesure du corps repeint.
+
+    Ce qu'il ne dit **pas** : ce qu'est la pièce. Ça, c'est le sujet, écrit par
+    l'auteur et replié juste au-dessus avec la bible — l'écrire ici en ferait un
+    second endroit qui décide de ce qu'on demande.
+
+    Il ne nomme pas non plus les cases une par une. Le nom d'une pose n'apprend
+    rien à un modèle qui a l'image sous les yeux, et le lui donner l'inviterait à
+    redessiner la pose au lieu de l'habiller.
+    """
+    forme = pliage.geometrie
+    return (
+        f"The attached image is a sprite sheet of {forme.cases} sprites of the same "
+        f"character, laid out in exactly {forme.colonnes} columns and {forme.lignes} "
+        f"rows. Return the SAME sheet with the described item added to every sprite. "
+        f"Change absolutely nothing else: the same character, the same poses, the same "
+        f"proportions, the same size, the same position of each sprite in its cell, the "
+        f"same viewing angles, the same colors everywhere else, the same pixel art "
+        f"style, the same outline weight, the same plain flat light gray background. "
+        f"Keep the exact same grid: {forme.colonnes} columns, {forme.lignes} rows, "
+        f"same cell positions, same cell sizes, same overall image size. Only the item "
+        f"is added. Nothing else moves, nothing else is redrawn, nothing is zoomed in "
+        f"or out, no cell borders, no grid lines, no text, no numbers, no frames."
     )
 
 
@@ -149,6 +195,49 @@ class ServicePliage:
 
     # ── Déplier ──────────────────────────────────────────────────────────────
 
+    def decouper_retour(
+        self, generation: Generation, emplacement: Emplacement
+    ) -> tuple[list[bytes], list[MesuresLot]]:
+        """La planche revenue, coupée en N images — **et le seul refus du produit**.
+
+        Écrite à part parce que **les deux usages du pliage la partagent** : C2
+        en fait des corps, C3 en fait des calques, et aucun des deux ne redécoupe
+        de son côté. C'est ce que `docs/PLAN.md` demande en toutes lettres — « la
+        construire à côté serait un doublon de la grille, du gabarit et du
+        découpeur ».
+
+        Lève `CompteFaux` si le nombre d'images trouvées n'est pas celui demandé.
+        **Rien n'est écrit avant que le compte soit vérifié**, ici comme chez ses
+        deux appelants : « aucune image n'entre » est vrai au pied de la lettre,
+        et pas rattrapé après coup par une suppression qui pourrait échouer à
+        moitié.
+
+        Les mesures de lot partent avec les morceaux. Elles ne veulent pas dire
+        la même chose des deux côtés — la ressemblance entre deux corps d'un même
+        lot dit qu'une pose a été répétée, celle entre deux cases d'une planche
+        d'équipement dit que deux poses se ressemblaient déjà — mais elles se
+        calculent pareil, et **elles ne refusent ni ici ni là**.
+        """
+        pliage = generation.pliage
+        if pliage is None or emplacement.resultat is None:  # pragma: no cover
+            return [], []
+
+        octets = self._fichiers.lire(emplacement.resultat.fichier)
+        rgba = detourer(Recette(passes=(Passe(moteur=BORD),)), octets)
+        boites = self._boites(pliage, rgba)
+
+        if len(boites) != pliage.nombre:
+            raise CompteFaux(_compte(len(boites), pliage.nombre))
+
+        # **Pas de marge sur une grille connue.** La marge existe pour les
+        # boîtes serrées de C2, trouvées sur les taches opaques : elle leur rend
+        # l'air que le détourage leur a retiré. Sur une grille posée par
+        # l'atelier, chaque boîte est déjà la case entière, et l'élargir la
+        # ferait mordre sur sa voisine — le calque de la pose 1 porterait un bout
+        # de la pose 2.
+        marge = 0 if pliage.geometrie_connue else MARGE
+        return decouper(octets, boites, marge=marge), mesurer_lot(rgba, boites)
+
     def deplier(
         self, generation: Generation, emplacement: Emplacement
     ) -> list[Asset]:
@@ -169,16 +258,8 @@ class ServicePliage:
         if pliage is None or emplacement.resultat is None:  # pragma: no cover
             return []
 
-        octets = self._fichiers.lire(emplacement.resultat.fichier)
-        rgba = detourer(Recette(passes=(Passe(moteur=BORD),)), octets)
-        boites = self._boites(pliage, rgba)
-
-        if len(boites) != pliage.nombre:
-            raise CompteFaux(_compte(len(boites), pliage.nombre))
-
-        mesures = mesurer_lot(rgba, boites)
-        morceaux = decouper(octets, boites)
-        rang = self._premier_rang_libre(generation)
+        morceaux, mesures = self.decouper_retour(generation, emplacement)
+        rang = self.premier_rang_libre(generation)
         nees: list[Asset] = []
         for index, (case, image) in enumerate(zip(pliage.cases, morceaux)):
             nees.append(
@@ -307,8 +388,12 @@ class ServicePliage:
             )
         )
 
-    def _premier_rang_libre(self, generation: Generation) -> int:
+    def premier_rang_libre(self, generation: Generation) -> int:
         """Le rang de la prochaine image dépliée.
+
+        **Publique parce que les deux usages du pliage la partagent** : C3 range
+        ses calques dans le dossier de la planche qui les a payés, aux mêmes
+        rangs et pour les mêmes deux raisons.
 
         Pris au-dessus de **tout** ce que la génération connaît déjà, ses
         emplacements comme ses dépliages précédents : deux assets d'un même rang

@@ -43,7 +43,9 @@ import {
   type Lien,
   type Teinte,
   type CompteReferences,
+  type EmplacementCorps,
   type Personnage,
+  type Piece,
   type Pose,
   type Univers,
   UNIVERS_VIDE,
@@ -180,6 +182,12 @@ export function App() {
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
   const [personnages, setPersonnages] = useState<Personnage[]>([])
+  // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, tenu ici
+  // pour la raison du plan : un seul endroit écoute le flux, pour toute la vie
+  // de l'onglet. Il arrive dans le même aller-retour que le plan et les
+  // personnages, parce qu'une colonne n'existe que par la pièce qui la nomme.
+  const [emplacements, setEmplacements] = useState<EmplacementCorps[]>([])
+  const [pieces, setPieces] = useState<Piece[]>([])
   const [personnagesOuverts, setPersonnagesOuverts] = useState(false)
   // **La case que le prochain appel remplira** (US-120). Armée depuis la
   // matrice, désarmée dès que l'appel est parti : c'est une intention qui vaut
@@ -196,9 +204,17 @@ export function App() {
   // et en faire un second état aurait donné deux façons de dire la même chose,
   // qui se seraient contredites au premier désarmement. Une case armée est un
   // lot d'une case ; c'est le compte qui décide si l'appel se plie.
-  const [cible, setCible] = useState<{ personnage: string; poses: string[] } | null>(
-    null,
-  )
+  //
+  // **Et une pièce depuis C3**, quand ce qui est armé n'est plus « fabriquer ces
+  // corps » mais « habiller ceux qui existent ». Le troisième champ du même état
+  // plutôt qu'un état de plus : c'est la même intention — *ce que le prochain
+  // appel remplira* —, et un second état se serait contredit avec celui-ci au
+  // premier désarmement, comme le lot l'aurait fait avec la case unique.
+  const [cible, setCible] = useState<{
+    personnage: string
+    poses: string[]
+    piece?: string | null
+  } | null>(null)
   // **Ce que cette génération-ci n'envoie pas** (US-126). `null` — aucun avis,
   // donc les deux portées durables s'appliquent telles que le serveur les rend.
   // Il ne s'écrit nulle part : c'est la portée la plus étroite, elle vit dans
@@ -218,7 +234,17 @@ export function App() {
   // Deux ou plus, et l'appel se plie. En dessous, c'est la génération de C1 :
   // plier une seule case ferait payer un gabarit et une consigne de grille pour
   // une image que le produit sait déjà demander.
-  const cases = posesCible.length >= 2 ? posesCible.length : 0
+  //
+  // **Sauf pour une pièce, où une seule case est déjà une planche** (C3). Il n'y
+  // a pas d'autre chemin : un calque ne se fabrique que par une planche, fût-elle
+  // d'une case, et l'image qu'elle porte est le corps — pas un gabarit vide.
+  const pieceCible = cible?.piece ? (pieces.find((p) => p.identifiant === cible.piece) ?? null) : null
+  const cases =
+    pieceCible !== null
+      ? posesCible.length
+      : posesCible.length >= 2
+        ? posesCible.length
+        : 0
   const [cartes, setCartes] = useState<Carte[]>([])
   // **Les traits et les teintes voyagent avec les cartes**, parce qu'ils
   // viennent de la même route : une toile se lit en un aller-retour. Tenus ici
@@ -406,6 +432,10 @@ export function App() {
         // le défaut devient le modèle de planche du projet plutôt que celui de
         // la famille du sujet.
         cases,
+        // **Et la pièce armée** : ses concept arts partent avec l'appel, et le
+        // défaut devient le modèle d'édition du projet — habiller un corps est
+        // une édition, pas une création de planche.
+        cible?.piece ?? "",
       )
       setModeles(catalogue.modeles)
       setDefaut(catalogue.defaut)
@@ -460,6 +490,7 @@ export function App() {
           projet: bibliotheque.courant,
           personnage: cible?.personnage ?? null,
           poses: cases ? posesCible.map((p) => p.identifiant) : null,
+          piece: cible?.piece ?? null,
         })
         if (!vivant) return
         setApercuPrompt(recu)
@@ -577,6 +608,8 @@ export function App() {
       const production = await api.production()
       setPlan(production.plan)
       setPersonnages(production.personnages)
+      setEmplacements(production.emplacements)
+      setPieces(production.pieces)
     } catch (erreur) {
       echouer(erreur, "les personnages ne répondent pas")
     }
@@ -719,6 +752,17 @@ export function App() {
       plan: (recu) => {
         if (recu.projet !== vivant.current.courant) return
         setPlan(recu.plan)
+      },
+      // **Le vestiaire arrive entier**, et il remplace — même règle que le plan,
+      // et pour les mêmes deux raisons : il est court, et une pièce retirée ne se
+      // devinerait pas d'un message qui ne porterait que les ajouts. Un genre à
+      // lui plutôt qu'un champ sur `univers`, qui fait redemander l'état *et* le
+      // catalogue depuis T4 : renommer une pièce n'a aucune raison de coûter deux
+      // appels réseau.
+      vestiaire: (recu) => {
+        if (recu.projet !== vivant.current.courant) return
+        setEmplacements(recu.emplacements)
+        setPieces(recu.pieces)
       },
       // Un seul message pour un lot entier : palette recalculée, réglage posé,
       // ou balayage terminé. La grille se redemande alors — c'est le troisième
@@ -867,6 +911,11 @@ export function App() {
         // jour où elle serait apparue. C'est le compte qui décide, pas l'écran.
         pose: cases ? null : (posesCible[0]?.identifiant ?? null),
         poses: cases ? posesCible.map((p) => p.identifiant) : null,
+        // **La pièce que cet appel pose** (C3, US-140). Elle fait de la planche
+        // une planche d'*équipement* : elle part pleine des corps que `poses`
+        // désigne, et ce qui revient est comparé case par case à ce qui est
+        // parti. Sans elle, la même route crée des corps — c'est C2.
+        piece: cible?.piece ?? null,
         // **Ce que cette génération-ci écarte.** `null` laisse parler les deux
         // portées durables — c'est ce que reçoit un agent, qui n'a pas de
         // panneau devant lui.
@@ -922,23 +971,40 @@ export function App() {
    *  produit ne devine pas à sa place — il n'y a pas de famille « personnages »
    *  imposée dans un barème qu'il a pu renommer.
    */
-  const armer = (personnage: Personnage, poses: Pose[]) => {
+  const armer = async (
+    personnage: Personnage,
+    poses: Pose[],
+    piece?: Piece | null,
+  ) => {
     if (poses.length === 0) return
     setCible({
       personnage: personnage.identifiant,
       poses: poses.map((p) => p.identifiant),
+      piece: piece?.identifiant ?? null,
     })
-    // **Le prompt reçoit le sujet, jamais la grille.** Pour une case, c'est le
-    // signalement et l'attitude, comme en C1. Pour un lot, c'est le signalement
-    // seul : les attitudes partent case par case dans les consignes de planche,
-    // que l'atelier replie côté serveur — les écrire ici en ferait un second
-    // endroit qui décide de ce qu'on demande, et le prompt enregistré ne
-    // dirait plus ce qui est parti.
-    setPrompt(
-      poses.length === 1
-        ? [personnage.description.trim(), poses[0].nom].filter(Boolean).join(", ")
-        : personnage.description.trim(),
-    )
+    // **Le prompt reçoit le sujet, jamais la grille** — et c'est le serveur qui
+    // l'écrit depuis C5. Les trois règles (une case : le signalement et
+    // l'attitude ; un lot : le signalement seul, les attitudes partant dans les
+    // consignes de planche ; une pièce : sa description seule, parce que le
+    // corps est *dans l'image* qui part) vivent dans le service, où l'agent les
+    // lit aussi. Deux compositions à deux endroits auraient fini par demander
+    // deux choses différentes pour la même case, sans que rien ne le signale.
+    //
+    // **Un refus n'empêche pas d'armer.** La case est visée, l'atelier est
+    // ouvert, et le champ reste à écrire : c'est un geste local et gratuit, pas
+    // une dépense — le vider et laisser la main est moins coûteux que de
+    // renvoyer l'auteur d'où il vient.
+    try {
+      const recu = await api.sujetDeCase({
+        personnage: personnage.identifiant,
+        poses: poses.map((p) => p.identifiant),
+        piece: piece?.identifiant ?? null,
+        projet: bibliotheque.courant,
+      })
+      setPrompt(recu.sujet)
+    } catch {
+      setPrompt("")
+    }
     // **Armer rend la main à l'atelier.** Ce qui vient d'être posé dans le
     // champ est un *sujet*, pas un texte complet : le laisser en mode repris
     // ferait partir un signalement de personnage sans la bible ni les
@@ -1407,8 +1473,20 @@ export function App() {
           plan={plan}
           personnages={personnages}
           onPersonnage={fondrePersonnage}
+          emplacements={emplacements}
+          pieces={pieces}
           onPlan={setPlan}
+          onVestiaire={(recu) => {
+            setEmplacements(recu.emplacements)
+            setPieces(recu.pieces)
+          }}
           onArmer={armer}
+          // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran
+          // ne s'en sert que pour griser avec sa raison : le geste, lui, le
+          // redemande au serveur, qui en est le seul dépositaire. Il arrive par
+          // le flux comme le reste du cadre de l'agent, donc le bouton
+          // s'allume à l'instant où l'auteur pose le dossier dans l'autre écran.
+          dossierJeu={etat?.agent.garde_fous.dossier_jeu ?? ""}
           onFermer={() => setPersonnagesOuverts(false)}
         />
       )}

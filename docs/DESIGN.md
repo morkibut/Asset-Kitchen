@@ -398,7 +398,7 @@ code sans être affichée** — c'est la leçon de la maquette écartée.
 
 ## Decisions Log → `docs/design-decisions.md`
 
-Le journal complet — 99 décisions datées avec leur rationale et leur coût — vit dans
+Le journal complet — 108 décisions datées avec leur rationale et leur coût — vit dans
 **`docs/design-decisions.md`**. Il ne tranche rien : il explique. On l'ouvre pour rouvrir une
 décision, pas pour connaître le système.
 

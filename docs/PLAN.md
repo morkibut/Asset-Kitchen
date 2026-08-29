@@ -1,6 +1,6 @@
 # Plan : Asset Kitchen — V1, puis V2
 
-> **PRD source** : `docs/PRD.md` — 172 user stories.
+> **PRD source** : `docs/PRD.md` — 173 user stories.
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/ARCHITECTURE.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
@@ -22,6 +22,10 @@
 > l'écran, et l'infobulle se posait sur le réglage d'à côté. Elles ne s'intercalent pas dans la
 > V2 : **elles ne bloquent ni ne sont bloquées par C3, C4 et C5**, et se prennent quand on veut.
 > Elles sont rangées ici avant C3 parce que c'est l'ordre de valeur, pas un ordre de dépendance.
+>
+> **R5 est venue le 29 août 2026**, de la première séance d'usage de C3 : un mauvais recalage a
+> figé quatre images alors que les planches qui les ont payées sont toujours sur le disque. Elle
+> est rangée après C3, qu'elle est la seule reprise à supposer.
 >
 > Ce document fait foi sur **l'ordre**. Il ne nomme ni fichier, ni fonction, ni route :
 > comment c'est construit vit dans `docs/ARCHITECTURE.md`, à quoi ça ressemble dans
@@ -255,7 +259,7 @@ d'acceptation de chacune d'elles :
 | **Personnage** *(projet)* | C1 | nom, description, plan rattaché, poses tenues, concept arts désignés | — |
 | **Emplacement** *(projet)* | C3 | nom, rang | — |
 | **Pièce** *(projet)* | C3 | nom, description, emplacement, portée (contenue \| agrandit), concept arts désignés | — |
-| **Calque** *(personnage)* | C3 | planche payée et sa case, pièce, **pose**, recette de différence, zone, masque rectangle, mesures | C4 (masque libre et couche de retouche au pixel) |
+| **Calque** *(personnage)* | C3 | planche payée et sa case, pièce, **pose**, recette de différence, zone, masque rectangle, mesures | C4 — deux couches de plus dans la même place : le masque affiné à la main, et la retouche au pixel |
 
 ### Les invariants que la V2 instaure
 
@@ -295,9 +299,10 @@ d'acceptation de chacune d'elles :
 | R2 | 158 à 164 | 7 |
 | R3 | 167 à 170 | 4 |
 | R4 | 171, 172 | 2 |
-| | **Total** | **15** |
+| R5 | 173 | 1 |
+| | **Total** | **16** |
 
-Avec les 114 de la V1 et les 43 de la V2, le PRD est couvert de bout en bout : **172 user
+Avec les 114 de la V1 et les 43 de la V2, le PRD est couvert de bout en bout : **173 user
 stories, une tranche chacune.**
 
 ---
@@ -432,7 +437,7 @@ servent les deux usages.
 
 ### Ce que la construction a décidé
 
-Cinq décisions prises en écrivant, et qui ne sont pas dans le cadrage :
+Six décisions prises en écrivant, et qui ne sont pas dans le cadrage :
 
 - **La planche payée n'est pas un asset.** Elle reste le brut de sa génération — payée,
   gardée, redépliable — et seules les N images séparées entrent en bibliothèque. C'est ce qui
@@ -755,6 +760,7 @@ et ce n'est pas ce motif-là.
 ---
 
 ## C3 · La pièce et le calque
+*16 critères · 13 US (136–148) · tenue le 29 août 2026*
 
 **User stories** : 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148
 
@@ -781,32 +787,220 @@ agrandit la silhouette, l'essai du 28 août a mesuré le modèle dézoomant le p
 six candidats sans exception — échelle 0,62, 23,5 % du corps repeint. L'hypothèse est que lui
 donner de la place l'en empêche ; elle n'a jamais été essayée. Si elle tombe, la pièce qui
 agrandit se rabat sur le **corps habillé**, ce que la tranche livre de toute façon, et rien
-d'autre ne bouge.
+d'autre ne bouge. *(Écrit avant la construction. L'appel a été tiré le 29 août 2026, six fois :
+voir « Ce que la première séance a trouvé » plus bas.)*
 
 ### Critères d'acceptation
 
-- [ ] Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six
-- [ ] Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé **octet pour octet**
-- [ ] Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison
-- [ ] La planche revenue est redécoupée sur la grille exacte que l'atelier a posée, et la comparaison se fait case par case contre ce qu'il avait envoyé
-- [ ] Rien n'est ajouté à l'image envoyée au fournisseur : ni ancre, ni mire, ni silhouette de repère
-- [ ] Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée sur-le-champ ; les emplacements sont ordonnés
-- [ ] Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est « contenue », et rien ne la devine à la place de l'auteur
-- [ ] Une pièce déclarée « qui agrandit », revenue à une autre échelle que celle envoyée, ne produit **aucun** calque : la dérive est nommée à l'écran et ce qui revient est proposé à garder comme corps habillés
-- [ ] Un corps habillé est un asset ordinaire : rangé, exportable, avec son coût — il ne s'empile simplement pas
-- [ ] Par défaut, aucun masque n'est donné : la différence est cherchée sur toute la case
-- [ ] Le masque rectangle d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et **le journal du projet ne bouge pas d'un centime**
-- [ ] Le calque est rangé à côté de l'image payée et jamais écrit dedans ; revenir à la différence brute est un geste unique
-- [ ] Les mesures — silhouette retrouvée, corps repeint, part ajoutée, échelle au retour, objet ou poussière — s'affichent toutes, et aucune ne rend un calque impossible à garder
-- [ ] Aucune génération de pièce seule sur fond vide n'existe : une pièce n'apparaît que sur un corps
-- [ ] Le produit ne propose nulle part de reposer un calque sur une autre pose que la sienne
-- [ ] Réseau coupé : le masque, le recalcul de différence et la superposition fonctionnent
+- [x] Un casque posé sur six poses d'un personnage donne six calques distincts, un par pose, après **un seul** appel payant, et le journal du projet montre un appel et non six
+- [x] Chacun de ces six calques s'affiche superposé au corps de **sa** pose, et le corps d'origine de chaque pose est retrouvé **octet pour octet**
+- [x] Une planche d'équipement où figurerait une pose sans corps est impossible à lancer : la pose est visiblement inéligible et porte sa raison
+- [x] La planche revenue est redécoupée sur la grille exacte que l'atelier a posée, et la comparaison se fait case par case contre ce qu'il avait envoyé
+- [x] Rien n'est ajouté à l'image envoyée au fournisseur : ni ancre, ni mire, ni silhouette de repère
+- [x] Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée sur-le-champ ; les emplacements sont ordonnés
+- [x] Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est « contenue », et rien ne la devine à la place de l'auteur
+- [x] Une pièce déclarée « qui agrandit », revenue à une autre échelle que celle envoyée, ne produit **aucun** calque : la dérive est nommée à l'écran et ce qui revient est **gardé** comme corps habillés
+- [x] Un corps habillé est un asset ordinaire : rangé, exportable, avec son coût — il ne s'empile simplement pas
+- [x] Par défaut, aucun masque n'est donné : la différence est cherchée sur toute la case
+- [x] Le masque rectangle d'un calque déjà fabriqué se déplace et se retaille, le calque se recalcule, et **le journal du projet ne bouge pas d'un centime**
+- [x] Le calque est rangé à côté de l'image payée et jamais écrit dedans ; revenir à la différence brute est un geste unique
+- [x] Les mesures — silhouette retrouvée, corps repeint, part ajoutée, échelle au retour, objet ou poussière — s'affichent toutes, et aucune ne rend un calque impossible à garder
+- [x] Aucune génération de pièce seule sur fond vide n'existe : une pièce n'apparaît que sur un corps
+- [x] Le produit ne propose nulle part de reposer un calque sur une autre pose que la sienne
+- [x] Réseau coupé : le masque, le recalcul de différence et la superposition fonctionnent
+
+### Ce que la construction a décidé
+
+Cinq décisions prises en écrivant, et qui ne sont pas dans le cadrage :
+
+- **Un calque est un asset, et c'est sa *recette* qui le dit.** Le modèle d'objets annonçait
+  « une recette, pas un fichier figé » ; la construction en tire la conséquence exacte — la
+  recette gagne une **sixième place**, `différence`, juste après le détourage. Elle nomme
+  l'asset du corps et le masque rectangle, et rien d'autre. Trois critères deviennent alors
+  vrais par construction plutôt que par soin : le corps n'est jamais modifié — la place ne
+  décrit qu'un calcul —, le masque se déplace sans un centime — c'est un rendu qu'on
+  recalcule, comme depuis T2 —, et revenir à la différence brute est un geste unique — on
+  vide la zone. C4 y a posé ses deux couches sans rouvrir quoi que ce soit. **Le prix est écrit
+  ici** : une place de plus change l'empreinte de toutes les recettes déjà écrites, donc
+  chaque rendu du disque se recalcule une fois. C'est exactement ce qu'un cache est censé
+  supporter, et la seule alternative — la déclarer en queue — aurait rangé l'ordre
+  d'exécution ailleurs que dans l'ordre du fichier.
+- **Rien ne distingue un calque d'un corps habillé qu'un drapeau aurait dit.** Les deux
+  portent la même pièce, la même pose, le même personnage ; seule la présence d'une
+  différence les sépare. C'est la règle « un état dérivable ne se garde pas en double »,
+  appliquée au verdict de US-148 : il n'existe nulle part une liste de calques à tenir
+  d'accord avec le disque, et l'écran lit la recette.
+- **La marge d'une pièce qui agrandit est exactement le dézoom que le modèle s'accordait tout
+  seul.** L'essai du 28 août a mesuré 0,62 sur les six modèles sans exception ; le sujet part
+  donc à 0,62 de sa case. Ce n'est pas un réglage choisi, c'est la mesure retournée — et si
+  l'hypothèse tombe, le chiffre qui l'a fixée est celui qui dira pourquoi. La tolérance de
+  dérive, 0,08, sort des trois mêmes mesures : 1,00 et 0,96 passent, 0,62 non, et rien
+  d'intermédiaire n'a jamais été observé.
+- **Une seule case qui dérive décide pour la planche entière.** Un appel, une pièce, un
+  verdict : rendre trois calques et deux corps habillés du même lot aurait fait un état que
+  personne ne sait lire, et la dérive est de toute façon une propriété de la façon dont le
+  modèle a traité *la pièce*, pas telle ou telle pose. C'est le « tout ou rien » du compte de
+  C2, appliqué au second verdict de la version.
+- **Ce qui revient est gardé, pas proposé.** Ce critère disait « proposé à garder », et
+  `docs/PRD.md` (US-148) dit « gardé » — c'est la question du PRD, il l'emporte, et cette
+  ligne est corrigée dans la foulée. Le sens du produit est le même dans les deux cas :
+  l'appel payé est acquis, rien n'est jeté. Une proposition aurait demandé un écran de plus,
+  un état « en attente d'être gardé » à tenir, et un chemin où la fermeture de l'onglet perd
+  ce qui est déjà payé.
+- **La matrice a deux axes et se lit une colonne à la fois.** Un damier de vignettes aurait
+  croisé les poses et les emplacements à l'écran — et aurait rendu à cet écran très
+  exactement ce que la privation de C1 lui refuse, une seconde planche contact. On choisit
+  donc la colonne qu'on lit, et la matrice reste une ligne par attitude. Le motif de C1 le
+  disait déjà, mot pour mot : *on lit une colonne, on ne balaie pas une planche contact.*
+
+**Et deux seuils que la construction a déplacés, chacun pour une raison mesurée.** Un lot de
+C2 exige deux poses — une seule n'est pas un lot, c'est la génération de C1. Une planche
+d'équipement en accepte **une** : il n'y a pas d'autre chemin vers un calque, et ce qui part
+n'est pas un gabarit vide mais le corps lui-même. Et la planche d'équipement compte comme une
+référence dès la première case, pour la même raison.
+
+### Ce que la première séance a trouvé
+
+**C3 a servi au navigateur, sur un personnage qui portait déjà la pièce, et ça a trouvé un
+défaut qu'aucun des vingt-sept essais ne voyait.** Le recalage notait chaque échelle candidate
+à *la part du corps qu'elle recouvre* — une mesure juste, et **monotone** : agrandir le revenu
+finit toujours par tout recouvrir, donc le critère demandait « quelle est la plus grande
+échelle ? », et la bonne réponse ne gagnait que par l'égalité. Une planche revenue intacte
+était déclarée revenue à 0,58×, et le calque valait toute la silhouette au lieu du seul casque.
+On cherche désormais sur le recouvrement rapporté à l'**union**, qui pénalise ce qui déborde,
+et on rend la couverture au placement retenu. Le piège est dans `docs/PIEGES.md` avec ce qui
+l'avait rendu invisible — les essais dessinaient des blocs pleins, qui traversent un
+rééchantillonnage sans perdre un pixel, donc l'égalité tenait et le départage sauvait la mise.
+**Les seize critères tiennent après correction**, et la suite du dépôt passe ce jour-là de 343
+essais de serveur à 345.
+
+**La toile avec marge n'a pas eu à servir, et le seul risque de méthode de la V2 tombe avec
+elle.** Six planches payées, un seul modèle, deux pièces — un casque, et une hache, celle-ci
+étant très exactement l'« arme longue » que le cadrage donnait en exemple de pièce qui agrandit
+—, chacune envoyée aux deux occupations. **L'échelle au retour est restée dans la tolérance à
+chaque fois, à 0,92 comme à 0,62.** L'hypothèse n'est donc pas validée : elle n'a pas été mise
+à l'épreuve, faute que le dézoom qu'elle prévient se présente. La marge reste posée — elle ne
+coûte rien —, et le repli n'a jamais été pris pour une autre raison que le défaut ci-dessus.
+`docs/ARCHITECTURE.md` § Le risque de la version est corrigé dans la foulée : l'appel payant à
+risque a été tiré, six fois.
+
+**Et la séance a trouvé où la méthode s'arrête vraiment, ce qui n'est pas où le cadrage
+l'attendait.** Le casque est revenu en poussière, sur les quatre planches où il figurait — y
+compris celle que l'échelle et les mesures déclaraient bonne. Et **la hache dit les deux
+moitiés du défaut à elle seule** : son fer, qui dépasse de la silhouette, revient entier au
+pixel près ; son manche, là où il croise le bras, ne revient pas. Ce qui décide n'est donc ni
+l'échelle ni la taille de la pièce, mais la place qu'elle prend : ce qui **s'ajoute** hors du
+corps relève d'`ajout`, et rien ne peut l'effacer ; ce qui **se substitue** à l'intérieur
+relève de `touche`, et la comparaison de couleur — tolérante au voisin de 3×3 pour ne pas
+compter un résidu de recalage comme du repeint — l'efface avec le bruit. Deux décisions justes
+séparément, dont la composition perd la pièce. Le cadrage oppose *contenue* et *qui agrandit* ;
+ce qui décide est *ajoute* contre *substitue*, et les deux découpes ne se recouvrent pas. Ce
+n'est ni cadré ni planifié : c'est dans `docs/releve-usage.md`. **C4 l'a rattrapé le 29 août
+sans le supprimer** : sa retouche ramène ce que la mesure n'a pas vu — 451 pixels contre 1 044
+sur ce casque-ci —, mais rien n'annonce toujours *d'avance* qu'une pièce va se substituer.
+
+**Enfin, la séance laisse quatre images fausses sur le disque, et la question qui va avec.**
+Deux calques figés sur un mauvais recalage, et deux corps habillés qui n'en sont pas — la
+dérive ayant été prononcée sur une échelle inventée. Repassées dans le recalage corrigé, les
+six planches reviennent dans la tolérance. Rien n'est perdu : les planches payées sont sur le
+disque, les corps aussi, et la mesure juste coûte des millisecondes. Le produit, lui, ne sait
+pas s'en servir.
+
+**La décision : une planche déjà dépliée ne réaccouche jamais ; ce qu'elle a calculé se
+rejoue.** Redéplier créerait N assets de plus, à des rangs neufs, et il faudrait supprimer les
+anciens — or un calque désigne son corps par identifiant, donc redéplier un lot de corps de C2
+laisserait orphelins tous les calques posés dessus. Ce n'est pas un geste, c'est un piège. Ce
+qui se rejoue est le **calcul** du dépliage, sur les assets qu'il a déjà produits : même
+identifiant, même rang, même fichier, même place en bibliothèque, et le journal du projet ne
+bouge pas d'un centime.
+
+Le périmètre exact est **l'alignement, et le verdict qui en dépend** — rien de plus, parce que
+rien de plus n'est figé : le seuil, le masque et le calcul de différence vivent déjà dans la
+recette et se rejouent à chaque rendu. Et l'écriture est légitime pour une raison qui vaut
+au-delà du calque : **le brut d'un calque n'a jamais été l'image payée.** L'image payée est la
+planche, et elle n'est pas touchée ; le brut du calque est déjà un dérivé — la case découpée
+puis recalée —, au même titre que le brut d'une découpe de T5. Un brut dérivé est un cache, et
+un cache se recalcule. C'est **R5**, ci-dessous.
 
 ## Bloquée par
 
 - C1 — une pièce se pose sur un corps, et le corps vient du plan de poses
 - C2 — la planche d'équipement **est** le pliage de C2, appliqué à des corps existants. La
   construire à côté serait un doublon de la grille, du gabarit et du découpeur
+
+---
+
+## R5 · Un calque se recale sans repayer
+*9 critères · 1 US (173) · tenue le 29 août 2026*
+
+**User stories** : 173
+
+### Ce qu'on livre
+
+Le recalage d'un calque se rejoue depuis la planche qui l'a payé. **Rien n'est créé, rien n'est
+supprimé** : l'asset garde son identifiant, son rang, son fichier, son label, ses collections,
+son état de favori et son masque ; son alignement, ses cinq mesures et le verdict calque /
+corps habillé se recalculent. Le geste est gratuit et local — la planche et les corps sont sur
+le disque —, et le journal du projet ne bouge pas d'un centime.
+
+**Ce n'est pas un dépliage de plus, et c'est la moitié de la décision.** Une planche déjà
+dépliée ne donne jamais naissance une seconde fois : des rangs neufs laisseraient orphelins les
+calques qui désignent leur corps par identifiant, et il faudrait supprimer les anciens assets
+pour ne pas doubler la matrice. Ce qui se rejoue est le calcul, sur les assets déjà nés.
+
+Le verdict se rejoue **par planche**, jamais par case : *un appel, une pièce, un verdict* est
+l'invariant de C3, et le rejeu ne le rouvre pas.
+
+Ce qui rend l'écriture légitime tient en une phrase, et elle dépasse le calque : **le brut d'un
+calque n'a jamais été l'image payée.** L'image payée est la planche, et le rejeu n'y touche
+pas ; le brut du calque est déjà un dérivé — la case découpée puis recalée —, au même titre que
+le brut d'une découpe de T5. **Un brut dérivé est un cache**, et un cache se recalcule.
+
+**Ce que la reprise ne fait pas** : elle ne rejoue ni le seuil, ni le masque, ni le calcul de
+différence — ceux-là vivent déjà dans la recette et se recalculent à chaque rendu depuis C3. Le
+périmètre est l'alignement, et le verdict qui en dépend.
+
+### Critères d'acceptation
+
+- [x] Le recalage d'un calque se rejoue depuis la planche de sa génération, et **le journal du projet ne bouge pas d'un centime**
+- [x] L'asset rejoué garde son identifiant, son rang, son label, ses collections, son état de favori et son masque
+- [x] Le verdict calque / corps habillé se rejoue **pour la planche entière**, jamais pour une case seule
+- [x] Un corps habillé qui redevient un calque garde son identifiant : aucun calque désignant un corps par identifiant ne perd sa base
+- [x] Une planche absente du disque refuse le rejeu **en le disant**, et ne touche à rien
+- [x] Une image qui n'est pas sortie d'une planche d'équipement refuse **en le disant**, plutôt que de rendre une liste vide qui passerait pour un succès
+- [x] Aucun rang neuf ne naît d'une planche déjà dépliée, par ce geste ni par un autre
+- [x] L'image payée — la planche — n'est jamais réécrite
+- [x] Réseau coupé : le rejeu fonctionne
+
+### Ce que la construction a décidé
+
+**Le calcul du dépliage est sorti dans une lecture partagée.** Le dépliage et le rejeu doivent
+tomber sur exactement le même résultat, sans quoi recaler changerait l'image pour une raison
+qui n'est pas le défaut qu'on répare. Une seule fonction lit donc la planche et rend les N
+retours ; `deplier` en fait naître des assets, `recaler` en repose ceux qui existent. C'est la
+raison qui avait déjà sorti le découpage de `deplier` en C3, appliquée un cran plus haut.
+
+**La recette n'est remplacée que si le verdict a changé.** Un calque qui reste calque garde la
+sienne, zone comprise ; un corps habillé qui reste corps habillé garde la sienne, retouches
+comprises. Repartir de zéro à chaque rejeu effacerait le détourage ou la grille que l'auteur a
+posés à la main, sans que rien ne l'ait demandé — et le masque, qui est du travail de la main
+et non un résultat de mesure, ne survivrait pas à un geste censé ne rien coûter.
+
+**Le geste part d'une image et agit sur sa planche**, parce que c'est ce qui préserve *un
+appel, une pièce, un verdict*. Un rejeu case par case aurait pu rendre trois calques et deux
+corps habillés du même lot — très exactement l'état que C3 refuse de produire.
+
+**Ce que le rejeu a mesuré sur les six planches du 29 août, et qui n'était pas prévu** : **cinq
+sur six bougent**, pas quatre. Aux deux calques manifestement faux et aux deux corps habillés
+prononcés sur une échelle inventée s'ajoute un calque dont l'échelle était pourtant juste et
+dont le *placement* se déplace — le critère monotone départageait aussi les décalages, pas
+seulement les échelles. La sixième, seule produite après la correction, revient **identique**.
+C'est la meilleure vérification qu'on pouvait souhaiter : le rejeu est fidèle là où il n'y a
+rien à réparer, et il ne change que ce que le défaut avait changé.
+
+## Bloquée par
+
+- C3 — il n'y a pas de calque à recaler avant elle
 
 ---
 
@@ -825,15 +1019,53 @@ exactement comme les passes de recette de T2.
 
 C4 apporte la finesse, jamais la fonction : C3 est utilisable sans elle.
 
+*(**Écrit avant, et à moitié démenti par l'écriture.** Le masque affiné est bien de la finesse.
+La retouche, elle, ne l'est pas : elle **ramène** ce que la mesure n'a pas vu, et c'est le seul
+geste du produit qui répare une pièce qui se substitue au corps au lieu de s'y ajouter — le
+défaut trouvé le 29 août 2026 à la première séance de C3. Sans elle, ces calques-là restaient
+illisibles quoi qu'on règle. La phrase reste vraie de la moitié gauche de la tranche, et fausse
+de la droite ; elle est gardée telle quelle parce que c'est ce qu'on croyait en planifiant.)*
+
 ### Critères d'acceptation
 
-- [ ] Un masque s'affine à main levée, puis au pixel, sans repayer d'image
-- [ ] Un calque se retouche au pixel avec le corps affiché en repère sous lui
-- [ ] L'avant et l'après se comparent d'un seul geste
-- [ ] Les calques restant à regarder se trient par la mesure la plus défavorable, le pire en tête
-- [ ] Le masque et la retouche au pixel sont deux couches distinctes de la recette : modifier le masque ne détruit pas la retouche, et inversement
-- [ ] Chaque couche s'annule, se rejoue et se nomme, comme toute recette depuis T2
-- [ ] Aucune de ces opérations n'appelle le fournisseur ni ne mobilise la carte graphique
+- [x] Un masque s'affine à main levée, puis au pixel, sans repayer d'image
+- [x] Un calque se retouche au pixel avec le corps affiché en repère sous lui
+- [x] L'avant et l'après se comparent d'un seul geste
+- [x] Les calques restant à regarder se trient par la mesure la plus défavorable, le pire en tête
+- [x] Le masque et la retouche au pixel sont deux couches distinctes de la recette : modifier le masque ne détruit pas la retouche, et inversement
+- [x] Chaque couche s'annule, se rejoue et se nomme, comme toute recette depuis T2
+- [x] Aucune de ces opérations n'appelle le fournisseur ni ne mobilise la carte graphique
+
+### Ce que C4 a tranché en écrivant
+
+**La retouche ne fait pas que retirer : elle ramène.** C'était le choix décisif, et il n'était
+pas dans le cadrage. Une couche qui n'aurait su qu'effacer aurait laissé le défaut du 29 août
+entier — *la différence trouve ce qui s'ajoute et manque ce qui se substitue* —, puisque aucun
+réglage de masque ne fabrique une différence que la comparaison de couleur n'a pas vue. La
+seconde couche tranche donc **après** la mesure et dans les deux sens : elle ôte ce qui est en
+trop, et elle ramène les pixels revenus là où la mesure n'a rien trouvé. Mesuré le 29 août 2026
+sur le casque de la séance : 451 pixels de poussière, 1044 après un seul passage de la main, et
+le casque est lisible.
+
+**Une couche est un vecteur, jamais une image.** Ce qu'on enregistre est le chemin parcouru et
+son rayon. Un masque en octets aurait pesé la taille de l'image à chaque geste, et surtout il
+aurait perdu ce qui fait une recette : se rejouer. Le prix : la rasterisation doit être
+déterministe, ce qui est déjà un critère depuis T2.
+
+**Rayon zéro est le pixel.** « À main levée, puis au pixel » n'est pas deux outils mais les
+deux bouts d'un seul réglage — même liste de points, même rasterisation, un nombre de
+différence. Deux chemins de code séparés auraient fini par ne plus se rejoindre au rayon 1.
+
+**L'ordre est le pire, et c'est un choix, pas le défaut.** Le plan du jeu reste l'ordre des
+rangées, parce que c'est l'ordre de l'auteur et le seul dans lequel une case *vide* se lit ; le
+tri par le pire est à un clic et se nomme. « Ce qui reste à regarder » ne s'écrit nulle part :
+c'est un calque sur lequel la main n'est pas passée, et ça se lit dans sa recette.
+
+**Un défaut de C3 est tombé avec** : un calque dont le corps a changé de taille — parce que la
+cible de pixel du projet a bougé depuis — ne se rendait plus du tout. C4 l'a révélé plutôt que
+causé, en changeant l'empreinte de toutes les recettes de calque, donc en les faisant toutes
+recalculer. Un corps qui a changé de taille est désormais traité comme un corps disparu, et le
+geste qui répare est le rejeu du recalage (`docs/PIEGES.md`).
 
 ## Bloquée par
 
@@ -856,19 +1088,73 @@ mêmes gestes que l'écran — ni plus, ni moins, comme depuis T7.
 
 ### Critères d'acceptation
 
-- [ ] Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce
-- [ ] Ce qui part est le **rendu**, jamais l'image payée qui reste dans l'atelier, et le descriptif dit lequel il est — comme en T6
-- [ ] Les trois règles du dossier de jeu de T7 tiennent : dossier manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé avec son chemin
-- [ ] L'agent ajoute une pose au plan d'un personnage existant et la génère **sans que l'écran soit ouvert**
-- [ ] Les outils MCP de la V2 n'ont aucune logique propre : chacun appelle un service que l'écran appelle déjà, et n'offre aucun geste que l'écran n'a pas
-- [ ] Les garde-fous de T7 s'appliquent aux appels de la V2 : au plafond, l'agent reçoit un refus qui nomme le plafond et le moyen de le relever, sans aucune invite à l'écran
-- [ ] L'atelier n'écrit aucune ligne de code de jeu, et aucun chemin de fichier n'est inventé par l'agent
-- [ ] Export d'un personnage sans aucune pose remplie : l'action est grisée avec sa raison, comme toute action indisponible du produit
+- [x] Un personnage complet s'exporte dans le dossier du jeu avec un descriptif qui nomme chaque fichier, sa pose et sa pièce
+- [x] Ce qui part est le **rendu**, jamais l'image payée qui reste dans l'atelier, et le descriptif dit lequel il est — comme en T6
+- [x] Les trois règles du dossier de jeu de T7 tiennent : dossier manquant créé, fichier existant jamais écrasé, dossier non inscriptible refusé avec son chemin
+- [x] L'agent ajoute une pose au plan d'un personnage existant et la génère **sans que l'écran soit ouvert**
+- [x] Les outils MCP de la V2 n'ont aucune logique propre : chacun appelle un service que l'écran appelle déjà, et n'offre aucun geste que l'écran n'a pas
+- [x] Les garde-fous de T7 s'appliquent aux appels de la V2 : au plafond, l'agent reçoit un refus qui nomme le plafond et le moyen de le relever, sans aucune invite à l'écran
+- [x] L'atelier n'écrit aucune ligne de code de jeu, et aucun chemin de fichier n'est inventé par l'agent
+- [x] Export d'un personnage sans aucune pose remplie : l'action est grisée avec sa raison, comme toute action indisponible du produit
+
+### Ce que C5 a tranché en écrivant
+
+**Ce qui sort est ce que la matrice retient — un corps par pose, un calque par pièce.** Le
+choix décisif, et il n'était pas dans le cadrage : sortir les quatre variations d'une pose
+aurait rendu le tri à qui ouvre le dossier, alors que l'auteur y a déjà répondu en marquant
+son favori. La règle n'est pas neuve — c'est `corps_retenu`, celle qui compose déjà la
+planche d'équipement —, et c'est le second endroit qui la lit plutôt qu'un second barème.
+Une pose sans corps ne sort pas, ses calques compris : un calque est une différence posée
+sur un corps, et seul dans un dossier de jeu il ne se pose sur rien.
+
+**Tout ce qui porte une pièce n'est pas un calque, et le premier vrai personnage sorti l'a
+prouvé.** Une pièce qui agrandit la silhouette et revient à une autre échelle est gardée comme
+un **corps habillé** (US-148) : la même image, entière, qui ne s'empile pas. Le descriptif
+portait « calque » pour les deux — donc un fichier montrant un nain entier annoncé comme une
+surcouche à empiler, et rien à l'autre bout pour s'en apercevoir avant de le voir à l'écran.
+Le rôle vient maintenant de `Recette.calque`, c'est-à-dire de la même question que l'écran
+pose déjà pour afficher « ceci n'est pas un calque ». Trois rôles, donc : `corps`, `calque`,
+`corps_habille`.
+
+**L'atelier pose des fichiers à plat ; il n'invente pas d'arborescence.** Pas de sous-dossier
+par personnage, pas de convention de moteur. « Aucune structure inventée » ne s'arrête pas au
+code : un dossier `sprites/héros/` créé d'office est une décision de rangement prise pour un
+jeu dont l'atelier ne sait rien. Ce qui remplace la structure, c'est le descriptif — et il
+porte le **rang de l'emplacement**, sans quoi un agent qui empile un casque et une cape doit
+inventer lequel passe devant.
+
+**Un seul descriptif dans tout le produit.** L'archive de T6 et le dossier de C5 écrivent la
+même fiche, par le même code ; C5 n'y ajoute que ce que la V2 sait de plus — le rôle, la
+pose, la pièce. Deux formats auraient divergé au premier champ ajouté d'un seul côté, et le
+numéro de format n'aurait plus rien appris à personne.
+
+**Le sujet d'une case est descendu dans le service, et c'est C5 qui l'a exigé.** L'écran le
+composait lui-même depuis C1 — signalement du personnage et nom de l'attitude pour une case,
+signalement seul pour un lot, description de la pièce pour une planche d'équipement. L'agent
+arme les mêmes cases : deux compositions à deux endroits auraient fini par demander deux
+choses différentes pour la même case, sans que rien ne le signale. `ServiceProduction.sujet`
+l'écrit une fois, l'écran le demande en armant, le MCP l'appelle en générant. Le prix est un
+aller-retour de plus sur un geste local — accepté, parce qu'armer est gratuit et que l'aperçu
+en fait déjà un juste derrière.
+
+**Le MCP a perdu sa dernière logique au passage.** `export_assets` rouvrait l'archive de T6
+pour en ressortir les fichiers un par un : c'était la seule fonction du serveur qui *faisait*
+quelque chose, donc la seule entorse à l'invariant de T7. Le geste vit dans le service
+(`export.deposer`), les deux sorties le partagent, et l'essai qui lit les imports interdit
+désormais `zipfile` en plus des quatre autres.
+
+**Cinq outils, et pas les gestes de finesse de C4.** Lire, compléter le plan, remplir,
+habiller, livrer : la boucle entière de la V2 au grain épais de T7. Borner une zone, affiner
+un masque ou retoucher au pixel demandent un œil sur l'image — un agent qui le ferait à
+l'aveugle abîmerait ce que la mesure vient de produire. L'invariant tient dans le sens qui
+compte : aucun geste que l'écran n'a pas.
 
 ## Bloquée par
 
 - C3 — un personnage se livre avec ses calques, et il n'y a rien à livrer sans eux
-- C4 est **recommandée mais non bloquante** : on peut livrer des calques non retouchés
+- C4 est **recommandée mais non bloquante** : on peut livrer des calques non retouchés.
+  C'est ce qui a permis de l'écrire pendant que la main de C4 s'éprouvait encore.. Elle
+  est faite depuis le 29 août 2026, donc la question ne se pose plus.
 
 ---
 
@@ -879,15 +1165,28 @@ sont décrites en `ARCHITECTURE.md` §8 à §10, et ne sont pas découpées ici.
 commencent pas avant que la V2 serve pour de vrai, comme la V2 n'a commencé qu'une fois la V1
 tenue.
 
-Trois points restent ouverts, et aucune tranche ne les présuppose :
+Quatre points restent ouverts, et aucune tranche ne les présuppose :
 
-- **La toile avec marge n'a jamais été essayée** — c'est le seul risque de méthode qui reste
-  en V2, et il se lève en un appel payant dans C3. L'idée que donner de la place au modèle
-  l'empêche de dézoomer sur une pièce qui agrandit la silhouette est plausible et non mesurée.
-  Si elle tombe, la pièce qui agrandit se rabat sur le corps habillé, que C3 livre de toute
-  façon. *(Ce plan a porté un temps « le report d'un calque sur une autre pose » comme risque
-  principal de la V2. C'en était un faux : un calque est solidaire de sa pose, il en faut un
-  par pose, et c'est le pliage qui en divise le prix. Retiré le 28 août 2026.)*
+- **La différence trouve ce qui s'ajoute, et manque ce qui se substitue.** C'est le risque de
+  méthode qui reste en V2, et il a remplacé le précédent le 29 août 2026. Sur les six planches
+  de la première séance de C3, la hache est revenue en calque net et le casque en poussière :
+  une pièce qui déborde de la silhouette est trouvée entière, une pièce qui remplace ce qu'il y
+  avait à sa place — un casque sur une chevelure, même empreinte, valeurs voisines — est effacée
+  avec le bruit de rééchantillonnage que la comparaison de couleur est faite pour absorber. Le
+  cadrage oppose *contenue* et *qui agrandit* ; ce qui décide est *ajoute* contre *substitue*, et
+  les deux découpes ne se recouvrent pas. Ce n'est ni cadré ni planifié — `docs/releve-usage.md`
+  le porte.
+  *(**C4 l'a rattrapé sans le supprimer**, le 29 août 2026 : la retouche au pixel ramène ce que
+  la mesure n'a pas vu, et le casque de la séance est revenu lisible d'un seul passage. Ce qui
+  reste ouvert est la **détection** — le produit ne dit toujours pas d'avance qu'une pièce va se
+  substituer, il laisse l'auteur le voir et le corriger à la main. Le risque a donc changé de
+  gravité, pas de nature : il coûte désormais un geste, plus une image illisible.)*
+  *(Ce plan a porté un temps « la toile avec marge n'a jamais été essayée » comme risque
+  principal de la V2, et avant elle « le report d'un calque sur une autre pose ». La seconde
+  était fausse — un calque est solidaire de sa pose. La première est levée : six planches
+  payées le 29 août 2026 sont revenues dans la tolérance d'échelle, à 0,92 comme à 0,62. Le
+  dézoom que la marge prévient ne s'est pas présenté, la marge reste posée puisqu'elle ne coûte
+  rien, et le repli n'a jamais eu à servir.)*
 - **La quantification reste liée à la palette, et R2 ne la débrance pas.** Un projet qui choisit « aucune » comme taille de pixel reçoit encore ses images ramenées sur la palette dès qu'un artwork officiel existe : pour qu'elle se taise, il faut n'en promouvoir aucun. C'est atteignable mais indirect, et c'est une limite acceptée le 28 août 2026 plutôt qu'un oubli. Si une séance montre qu'un projet veut la palette **sans** la quantification — la lire pour s'y tenir à la main, sans que l'image y soit forcée —, c'est un réglage de plus dans le même bloc, pas une tranche.
 - **La recette d'animation** est le risque de la V3. Une piste sérieuse a été observée le
   26 août 2026 ; elle demande un prototypage dédié avant tout engagement.

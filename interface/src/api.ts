@@ -106,11 +106,11 @@ export type Generation = {
 
 // ── Le post-traitement ──────────────────────────────────────────────────────
 //
-// Une recette, c'est cinq places nommées dans un ordre fixe : détourage,
-// recadrage, grille, quantification, bords. Ce n'est pas une liste que l'auteur
-// ordonne — trois des cinq étapes n'ont aucun sens avant celle qui les précède.
-// `null` veut dire « place vide », et une recette dont les cinq places sont
-// vides ne produit aucun rendu : le brut suffit.
+// Une recette, c'est six places nommées dans un ordre fixe : détourage,
+// différence, recadrage, grille, quantification, bords. Ce n'est pas une liste
+// que l'auteur ordonne — cinq des six étapes n'ont aucun sens avant celle qui
+// les précède. `null` veut dire « place vide », et une recette dont les six
+// places sont vides ne produit aucun rendu : le brut suffit.
 
 export type Passe = {
   moteur: "bord" | "modele"
@@ -118,6 +118,48 @@ export type Passe = {
   seuil_alpha: number
   durcissement: number
 }
+
+/** La seconde place — celle qui fait d'une image un **calque** (C3).
+ *
+ *  `base` est l'asset du corps qui était dans cette case quand la planche est
+ *  partie : un identifiant, jamais des octets, et le corps n'est jamais
+ *  modifié. `zone` est le masque rectangle (US-144), **inclusif aux deux
+ *  bouts** comme tout rectangle du produit depuis T5 et exprimé en pixels de
+ *  l'image rendue ; `null` cherche la différence sur toute la case, et c'est le
+ *  défaut — le produit ne devine aucune zone.
+ *
+ *  Le déplacer ne redemande **aucune image** : le calque se recalcule, et le
+ *  journal du projet ne bouge pas d'un centime (US-145).
+ *
+ *  **Deux couches de plus depuis C4, et elles ne se touchent jamais** (US-153) :
+ *  `affinage` est ce que la main dit du masque — elle restreint ce que la
+ *  différence a le droit de garder —, `retouche` ce qu'elle dit du calque
+ *  lui-même — elle ôte ce qui est en trop et **ramène ce que la mesure n'a pas
+ *  vu**. Poser l'une n'écrit jamais dans l'autre : ce sont deux champs. */
+export type Difference = {
+  base: string
+  zone: number[] | null
+  seuil: number
+  affinage: Trait[]
+  retouche: Trait[]
+}
+
+/** Un passage de la main — ce qu'un geste a gardé, ou ôté (C4).
+ *
+ *  **Un chemin et un rayon, jamais un masque en octets** : ce qui est
+ *  enregistré est le calcul, pas l'image qu'il produit. Les points sont en
+ *  pixels de l'image rendue, et un point hors du cadre se borne.
+ *
+ *  **Rayon 0, c'est le pixel** : les deux échelles d'US-149 — à main levée,
+ *  puis au pixel — sont les deux bouts d'un seul réglage, et non deux outils. */
+export type Trait = { garde: boolean; rayon: number; points: [number, number][] }
+
+/** Les deux couches de la main, par leur nom de domaine (C4).
+ *
+ *  Les valeurs traversent le port telles quelles, comme la portée d'une pièce :
+ *  une valeur traduite au passage est une valeur qu'on peut traduire de
+ *  travers. */
+export type Couche = "affinage" | "retouche"
 
 export type Recadrage = { marge: number; boite: number[] | null }
 export type Grille = { cible: number; occupation: number; ancrage: "bas" | "centre" }
@@ -130,6 +172,7 @@ export type Bords = { aire_min: number }
 
 export type Recette = {
   passes: Passe[]
+  difference: Difference | null
   recadrage: Recadrage | null
   grille: Grille | null
   quantification: Quantification | null
@@ -139,6 +182,7 @@ export type Recette = {
 
 export const RECETTE_VIDE: Recette = {
   passes: [],
+  difference: null,
   recadrage: null,
   grille: null,
   quantification: null,
@@ -187,6 +231,20 @@ export type Asset = {
    *  bibliothèque est faite d'images qui n'appartiennent à personne. */
   personnage: string | null
   pose: string | null
+  /** **Et de quelle pièce** (C3, US-140). Le second axe de la matrice : la pose
+   *  dit la ligne, la pièce dit la colonne. Vide pour un corps — c'est la
+   *  colonne de gauche, et c'est le cas courant.
+   *
+   *  **Elle ne dit pas ce que l'image est**, seulement de quoi elle parle : un
+   *  calque et un corps habillé portent la même pièce, et c'est `recette.
+   *  difference` qui les distingue. Un drapeau de plus aurait été une seconde
+   *  vérité sur une question à laquelle la recette répond déjà. */
+  piece: string | null
+  /** **Ce que la différence a mesuré sur ce calque-là** (C3, US-147). Cinq
+   *  nombres, et **aucun ne refuse** : le compte d'images reste le seul refus
+   *  automatique du produit. Portées aussi par un corps habillé — c'est là
+   *  qu'on lit l'échelle qui a fait renoncer au calque (US-148). */
+  calque: MesuresCalque | null
   /** **Ce que le lot a mesuré sur cette case-là** (C2, US-135). Vide pour toute
    *  image qui n'est pas sortie d'une planche pliée — c'est-à-dire pour
    *  l'immense majorité d'entre elles.
@@ -246,6 +304,77 @@ export type MesuresLot = {
   derive: number
 }
 
+/** Ce que la différence a lu d'un calque (C3, US-147).
+ *
+ *  Leur définition vient de `essais/essai_silhouette.py`, étalonné le 28 août
+ *  2026 sur six modèles et deux jets — c'est ce banc qui a décidé de la méthode.
+ *  **Aucune ne refuse** : elles s'affichent, se comparent d'une case à l'autre,
+ *  et laissent l'auteur juger. */
+export type MesuresCalque = {
+  /** Ce qui reste du corps de départ, au meilleur recalage. À 0,99, le modèle a
+   *  gardé la forme. */
+  silhouette: number
+  /** La part du corps dont la couleur a changé, **hors de l'empreinte de la
+   *  pièce**. C'est la colonne qui décide : un casque n'a aucune raison de
+   *  changer les bottes. */
+  repeint: number
+  /** Ce qui est apparu, en part du corps — l'empreinte de la pièce. */
+  ajout: number
+  /** La taille du sujet au retour, rapportée à celle qui est partie. 1,00 : il
+   *  n'a pas bougé. 0,62 : le modèle a dézoomé pour faire tenir la pièce, et il
+   *  n'y a plus de différence à calculer. */
+  echelle: number
+  /** La part de la différence qui tient dans sa plus grosse tache. Proche de
+   *  1 : un objet. Proche de 0 : une poussière semée sur tout le corps,
+   *  c'est-à-dire un repeint déguisé. */
+  compacite: number
+  /** **Le nom de la mesure la plus défavorable** (C4, US-152) — celle qui
+   *  décide de la place de ce calque dans ce qui reste à regarder.
+   *
+   *  Déduit par le serveur, jamais relu du disque : un second barème écrit à
+   *  l'écran aurait donné deux listes triées différemment sur les mêmes cinq
+   *  nombres. */
+  pire: string
+  /** À quel point elle est défavorable — 0 va bien, 1 va mal. Quatre mesures y
+   *  entrent, `ajout` n'en est pas : elle n'a pas de bon côté connu. */
+  gravite: number
+}
+
+// ── Le vestiaire — les emplacements et les pièces ───────────────────────────
+//
+// C3. Le second axe de la matrice, porté par le **projet** comme le plan de
+// poses, et pour la même raison : ce sont des listes de production, elles
+// n'imposent rien à une image qui rentre.
+
+/** Un endroit du corps, et son rang dans l'ordre où l'auteur les pense.
+ *  **Ordonné, jamais trié** : la tête vient avant les jambes parce que c'est
+ *  ainsi qu'on habille quelqu'un.
+ *
+ *  **`Corps` dans le nom parce qu'un mot sert déjà deux fois** : `Emplacement`,
+ *  plus haut, est la place d'une variation dans un appel. Le serveur les tient
+ *  dans deux modules et n'a pas eu à trancher ; ici tout vit dans un fichier, et
+ *  la précision est du côté du nouveau — c'est lui qui doit s'expliquer. */
+export type EmplacementCorps = { identifiant: string; nom: string; rang: number }
+
+/** Ce qui se pose sur un emplacement, décrit **une seule fois** (US-137).
+ *
+ *  `portee` est **déclarée par l'auteur, jamais devinée** (US-139) : elle décide
+ *  si l'atelier peut fabriquer un calque ou seulement des corps habillés.
+ *  Défaut « contenue » — c'est celle qui marche, mesurée sur cinq pièces sur six
+ *  le 28 août 2026. */
+export type Piece = {
+  identifiant: string
+  nom: string
+  description: string
+  /** L'identifiant de son emplacement, ou le vide — une pièce qu'on vient de
+   *  nommer et qu'on n'a pas encore rangée. */
+  emplacement: string
+  portee: Portee
+  concept_arts: string[]
+}
+
+export type Portee = "contenue" | "agrandit"
+
 // ── Le plan de poses et les personnages ─────────────────────────────────────
 //
 // C1. Un jeu porte **une** liste d'attitudes — repos, marche, mort — et chacun
@@ -276,7 +405,20 @@ export type Case = {
   /** Combien d'images cette attitude demande. La case est faite quand elle en a
    *  autant — le compte se lit, il ne refuse rien. */
   demandees: number
+  /** Les **corps** de cette attitude : les images qui ne portent aucune pièce.
+   *  Un calque en porte une, et il est rangé plus bas — sans ce partage, un
+   *  casque posé sur six poses ferait paraître six corps de plus. */
   images: Asset[]
+  /** **Le second axe** (C3, US-140), pièce par pièce. Calques ou corps
+   *  habillés : c'est `recette.difference` qui les distingue, jamais un drapeau
+   *  de plus. Vide pour l'immense majorité des cases. */
+  calques: Record<string, Asset[]>
+  /** **Le corps que cette attitude enverrait en planche d'équipement**, ou rien
+   *  — et c'est ce « rien » qui la rend visiblement inéligible (US-141). Le
+   *  favori d'abord, sinon la plus récente : la règle est calculée par le
+   *  serveur, celui-là même qui composera la planche, pour que l'écran montre
+   *  exactement ce qui partira. */
+  corps: string | null
 }
 
 export type Personnage = {
@@ -313,6 +455,47 @@ export type Production = {
   projet: string
   plan: Pose[]
   personnages: Personnage[]
+  /** **Le vestiaire, dans le même aller-retour** (C3) — et pour la raison
+   *  exacte : les emplacements et les pièces sont l'autre axe de la même
+   *  matrice, et une colonne n'existe que par la pièce qui la nomme. */
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
+}
+
+/** Une fiche du descriptif d'une sortie (C5) — ce qu'un fichier posé dans le
+ *  dossier du jeu **est**. L'écran n'en lit qu'une poignée de champs ; le
+ *  descriptif écrit à côté des images, lui, les porte tous, parce que c'est lui
+ *  qu'on rouvrira dans six mois sans l'atelier sous la main. */
+export type FichierSorti = {
+  /** Le chemin **absolu** du fichier posé. C'est ce qu'on colle dans un moteur
+   *  de jeu, et c'est le dépôt qui le rend — jamais l'écran qui le recompose. */
+  chemin: string
+  fichier: string
+  /** **Trois rôles, et le troisième est celui qu'on oublie** : `corps` est un
+   *  corps, `calque` s'empile sur celui de sa pose, et `corps_habille` est un
+   *  corps entier portant déjà la pièce — il **remplace** le corps au lieu de
+   *  s'empiler (US-148). C'est la recette qui tranche, jamais un drapeau. */
+  role: "corps" | "calque" | "corps_habille"
+  pose: { identifiant: string; nom: string }
+  piece: { identifiant: string; nom: string } | null
+}
+
+/** Ce qu'une sortie vient de poser dans le dossier du jeu (US-154). */
+export type Sortie = {
+  dossier: string
+  fichiers: FichierSorti[]
+  /** Le descriptif, posé **dans le dossier** à côté des images. */
+  descriptif: string
+  compte: number
+}
+
+/** Ce que les six gestes du vestiaire rendent : l'objet touché, **et le
+ *  vestiaire entier avec**. Même forme que l'annonce du flux, pour que l'écran
+ *  fonde ce qui lui arrive par les deux chemins avec le même code. */
+export type Vestiaire = {
+  projet: string
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
 }
 
 // ── Le tableau d'inspiration et l'univers ───────────────────────────────────
@@ -882,11 +1065,17 @@ export const api = {
      *  au serveur : le gabarit compte dans le plafond du modèle, et le défaut
      *  devient le modèle de planche du projet plutôt que celui de la famille. */
     cases = 0,
+    /** La pièce armée, ou le vide. Elle décide de deux choses au serveur : les
+     *  concept arts qu'elle désigne partent avec l'appel, et le défaut devient
+     *  le modèle d'**édition** du projet — habiller un corps est une édition,
+     *  pas une création de planche. */
+    piece = "",
   ) =>
     appeler<EtatCatalogue>(
       `/models?proportions=${encodeURIComponent(proportions)}` +
         `&references=${references}&echelle=${encodeURIComponent(echelle)}` +
-        `&personnage=${encodeURIComponent(personnage)}&cases=${cases}`,
+        `&personnage=${encodeURIComponent(personnage)}&cases=${cases}` +
+        `&piece=${encodeURIComponent(piece)}`,
     ),
 
   rafraichirCatalogue: () =>
@@ -923,6 +1112,11 @@ export const api = {
      *  part en une seule planche que l'atelier dépliera lui-même. La même route
      *  que tout le reste : il n'existe qu'un seul endroit d'où l'on paie. */
     poses?: string[] | null
+    /** **La pièce que cet appel pose** (C3, US-140). Présente, la planche part
+     *  *pleine* des corps que `poses` désigne, et ce qui revient est comparé
+     *  case par case à ce qui est parti : N calques pour un appel. Absente,
+     *  c'est une planche de création, et il n'y a rien à comparer. */
+    piece?: string | null
     /** Ce que **cette génération-ci** n'envoie pas (US-126). Absent, les deux
      *  portées durables s'appliquent ; présent, il décide seul — c'est la
      *  portée la plus étroite. */
@@ -967,6 +1161,7 @@ export const api = {
     projet?: string | null
     personnage?: string | null
     poses?: string[] | null
+    piece?: string | null
     repris?: boolean
   }) =>
     appeler<ApercuPrompt>("/prompt/preview", {
@@ -1354,6 +1549,36 @@ export const api = {
       body: JSON.stringify({ personnage, pose }),
     }),
 
+  /** Le sujet qu'une case demande au modèle — **composé par le serveur**.
+   *
+   *  L'écran l'écrivait lui-même jusqu'en C5 ; l'agent arme les mêmes cases, et
+   *  deux compositions à deux endroits auraient fini par demander deux choses
+   *  différentes pour la même case. Ce n'est pas l'aperçu : la bible et les
+   *  consignes de planche s'ajoutent plus tard, et c'est `apercuPrompt` qui les
+   *  montre. Rien n'est écrit, rien n'est payé. */
+  sujetDeCase: (corps: {
+    personnage: string
+    poses?: string[]
+    piece?: string | null
+    projet?: string | null
+  }) =>
+    appeler<{ sujet: string }>("/characters/subject", {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  /** Un personnage complet part dans le dossier du jeu (US-154, US-155).
+   *
+   *  **Aucun octet ne revient** : les fichiers sont écrits sur la machine, et ce
+   *  qu'on reçoit est la liste de leurs chemins — la même que l'agent reçoit,
+   *  de la même sortie. Sans `dossier`, c'est celui des Réglages ; absent lui
+   *  aussi, le refus dit où le poser. */
+  sortirPersonnage: (personnage: string, dossier?: string) =>
+    appeler<Sortie>(`/characters/${personnage}/export`, {
+      method: "POST",
+      body: JSON.stringify(dossier ? { dossier } : {}),
+    }),
+
   /** Le personnage part, **ses images restent** — chacune marquée « personnage
    *  supprimé ». La réponse dit combien. */
   supprimerPersonnage: (personnage: string) =>
@@ -1366,6 +1591,111 @@ export const api = {
    *  — la même forme que l'annonce du flux. L'écran fond alors ce qui lui
    *  arrive par les deux chemins avec le même code, et n'a jamais à deviner si
    *  une pose vient d'être ajoutée, renommée ou retirée. */
+  // ── Le vestiaire (C3) ─────────────────────────────────────────────────────
+  //
+  // Les six gestes rendent **le vestiaire entier** avec l'objet touché — la même
+  // forme que l'annonce du flux, comme les trois gestes du plan juste en
+  // dessous. Aucun ne touche le réseau côté serveur, et aucun ne coûte un
+  // centime : écrire une pièce ne demande rien à personne.
+
+  /** **Nommer, c'est créer** (US-138) : un emplacement de plus, en queue. */
+  ajouterEmplacement: (nom: string) =>
+    appeler<{ emplacement: EmplacementCorps } & Vestiaire>("/characters/slots", {
+      method: "POST",
+      body: JSON.stringify({ nom }),
+    }),
+
+  /** Renommer un emplacement, ou le déplacer dans l'ordre. **L'identifiant ne
+   *  bouge pas** : les pièces rangées là le portent. */
+  reglerEmplacement: (identifiant: string, champs: { nom?: string; rang?: number }) =>
+    appeler<{ emplacement: EmplacementCorps } & Vestiaire>(
+      `/characters/slots/${identifiant}`,
+      { method: "PUT", body: JSON.stringify(champs) },
+    ),
+
+  /** L'emplacement part, **les pièces restent** — sans emplacement, comme au
+   *  jour où on les a nommées. Jamais de cascade. */
+  retirerEmplacement: (identifiant: string) =>
+    appeler<{ emplacement: EmplacementCorps } & Vestiaire>(
+      `/characters/slots/${identifiant}`,
+      { method: "DELETE" },
+    ),
+
+  /** Une pièce décrite **une seule fois** (US-137). L'emplacement se donne par
+   *  son identifiant ou par son nom, et il est créé s'il n'existe pas : nommer
+   *  « casque · tête » ne doit pas demander d'avoir créé la tête d'abord. */
+  ajouterPiece: (corps: {
+    nom: string
+    description?: string
+    emplacement?: string
+    portee?: Portee
+  }) =>
+    appeler<{ piece: Piece } & Vestiaire>("/characters/pieces", {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  /** Tout ce qui se règle sur une pièce, **en un seul geste** — la portée
+   *  comprise, et elle n'est jamais devinée (US-139). */
+  reglerPiece: (
+    identifiant: string,
+    champs: {
+      nom?: string
+      description?: string
+      emplacement?: string
+      portee?: Portee
+      concept_arts?: string[]
+    },
+  ) =>
+    appeler<{ piece: Piece } & Vestiaire>(`/characters/pieces/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** La pièce part, **ses calques restent** — jamais de cascade. */
+  retirerPiece: (identifiant: string) =>
+    appeler<{ piece: Piece } & Vestiaire>(`/characters/pieces/${identifiant}`, {
+      method: "DELETE",
+    }),
+
+  /** Poser, déplacer ou retirer le masque rectangle d'un calque (US-145).
+   *
+   *  **Le journal du projet ne bouge pas d'un centime** : ce chemin ne touche
+   *  jamais le fournisseur. `null` retire le masque — revenir à la différence
+   *  brute est un geste unique, et c'est celui-ci. */
+  borner: (identifiant: string, zone: number[] | null) =>
+    appeler<Asset>(`/assets/${identifiant}/layer`, {
+      method: "PUT",
+      body: JSON.stringify({ zone }),
+    }),
+
+  /** Poser une couche de la main sur un calque (C4, US-149, US-150, US-153).
+   *
+   *  **La liste est entière, jamais un ajout**, et **vide elle annule la
+   *  couche** — c'est le geste unique du retour en arrière, celui de « Sans
+   *  zone » un cran plus haut. Deux onglets qui empileraient des deltas ne
+   *  convergeraient jamais.
+   *
+   *  Une couche n'écrit jamais dans l'autre : le serveur remplace un champ de
+   *  la différence, et laisse l'autre où il est. */
+  affiner: (identifiant: string, couche: Couche, traits: Trait[]) =>
+    appeler<Asset>(`/assets/${identifiant}/hand`, {
+      method: "PUT",
+      body: JSON.stringify({ couche, traits }),
+    }),
+
+  /** Rejouer le recalage de la planche dont cette image est sortie (US-173, R5).
+   *
+   *  **Rien ne naît, rien ne meurt** : les images déjà là gardent leur
+   *  identifiant et leur place, et seule leur matière change — d'où une liste
+   *  d'assets *rejoués*, jamais d'assets neufs. Le journal du projet ne bouge
+   *  pas d'un centime : la planche a été payée une fois, la remesurer est
+   *  gratuit. */
+  recaler: (identifiant: string) =>
+    appeler<{ assets: Asset[] }>(`/assets/${identifiant}/realign`, {
+      method: "POST",
+    }),
+
   ajouterPose: (nom: string, images = 1) =>
     appeler<{ pose: Pose; plan: Pose[] }>("/characters/poses", {
       method: "POST",
@@ -1450,6 +1780,16 @@ export const api = {
   // neuve au lieu de resservir celle d'avant.
   rendu: (identifiant: string, version: string, brut = false) =>
     `/api/assets/${identifiant}/image?brut=${brut}&v=${encodeURIComponent(version)}`,
+
+  /** Le calque **avant que la main y passe** (C4, US-151) — l'autre moitié de
+   *  la comparaison d'un seul geste.
+   *
+   *  Une adresse à part et non un troisième état de `rendu` : l'avant n'est pas
+   *  un cran de la bascule rendu/brut, il ne se garde nulle part, et rien
+   *  d'autre dans le produit ne le montre. Le serveur ne l'écrit pas non plus —
+   *  c'est un calcul, pas un fichier. */
+  avant: (identifiant: string, version: string) =>
+    `/api/assets/${identifiant}/image?avant=true&v=${encodeURIComponent(version)}`,
 
   telechargementAsset: (identifiant: string, brut = false) =>
     `/api/assets/${identifiant}/download?brut=${brut}`,
@@ -1581,6 +1921,11 @@ export type Ecoute = {
    *  `univers` fait redemander l'état et le catalogue depuis T4, et une case
    *  décochée n'a aucune raison de coûter deux appels réseau. */
   references: (charge: { projet: string; ecartees: string[] }) => void
+  /** Le vestiaire du projet a changé — un emplacement ou une pièce ajouté,
+   *  réglé, retiré (C3). La charge porte les deux listes **entières**, comme le
+   *  plan et pour les mêmes raisons : elles sont courtes, et un retrait ne se
+   *  devinerait pas d'un message qui ne porterait que les ajouts. */
+  vestiaire: (charge: Vestiaire) => void
   /** Le cadre de l'agent ou sa consommation a changé (US-90, US-91). Un
    *  garde-fou posé depuis un autre onglet arrive par là, et le compteur bouge
    *  au moment où l'agent dépense — l'auteur n'a rien à recharger. */
@@ -1608,6 +1953,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Personnage & { supprime?: boolean }>("personnage", ecoute.personnage)
   lire<Parameters<Ecoute["plan"]>[0]>("plan", ecoute.plan)
   lire<Parameters<Ecoute["references"]>[0]>("references", ecoute.references)
+  lire<Vestiaire>("vestiaire", ecoute.vestiaire)
   lire<EtatAgent>("agent", ecoute.agent)
 
   source.onopen = () => ecoute.liaison(true)

@@ -43,6 +43,7 @@ from atelier.domaine.asset import Asset
 from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT, Generation
+from atelier.domaine.personnage import Personnage
 from atelier.domaine.recette import Recette
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ProjetInconnu
@@ -450,26 +451,323 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
     ) -> dict[str, Any]:
         """L'archive de T6, **ouverte dans le dossier du jeu**.
 
-        Le service rend un zip ; ce qui est utile à un agent est une liste de
-        fichiers posés. On dépose donc chaque PNG un par un, plus le descriptif
-        qui dit lequel est lequel — c'est lui qui fait foi sur le lien entre un
-        nom lisible et un identifiant, et un nom numéroté sans lui serait
-        illisible une semaine plus tard.
+        Cette fonction rouvrait le zip pour en ressortir les fichiers un par un
+        — c'était la seule du fichier qui *faisait* quelque chose, donc la seule
+        entorse à « le MCP n'a pas de logique propre ». **Le geste vit dans le
+        service depuis C5** (`export.deposer`), et l'outil est redevenu ce qu'il
+        aurait toujours dû être : une traduction.
         """
-        archive = atelier.export.exporter(asset_ids)
-        import io as _io
-        import json
-        import zipfile
+        sortie = atelier.export.deposer(asset_ids, folder)
+        return {
+            "folder": sortie.dossier,
+            # **Le descriptif est dans la liste, et il y était déjà** : T7 rend
+            # les chemins de *tous* les fichiers posés, celui-là compris. Un
+            # invariant instauré ne se renégocie pas parce qu'on a déménagé le
+            # geste — c'est la même réponse, écrite ailleurs.
+            "files": [
+                {"name": fiche["fichier"], "path": fiche["chemin"]}
+                for fiche in sortie.fichiers
+            ]
+            + [
+                {
+                    "name": Path(sortie.descriptif).name,
+                    "path": sortie.descriptif,
+                }
+            ],
+            "manifest": list(sortie.fichiers),
+            "descriptor": sortie.descriptif,
+        }
 
-        poses: list[dict[str, str]] = []
-        with zipfile.ZipFile(_io.BytesIO(archive.octets)) as zip_:
-            for entree in zip_.namelist():
-                octets = zip_.read(entree)
-                chemin = atelier.agent.deposer(octets, Path(entree).name, folder)
-                poses.append({"name": Path(entree).name, "path": chemin})
-                if entree == "descriptif.json":
-                    descriptif = json.loads(octets.decode("utf-8"))
-        return {"files": poses, "manifest": descriptif.get("assets", [])}
+    # ── Le personnage, ses attitudes, et ce qu'il porte (C5) ────────────────
+    #
+    # **Cinq outils, et ils ne font rien que l'écran ne fasse** (US-156). Lire ce
+    # qui manque, ajouter une attitude au plan, remplir une case, habiller, et
+    # sortir le personnage dans le jeu : c'est la boucle entière de la V2, au
+    # grain épais de T7 — l'agent dit ce qu'il veut, pas comment l'obtenir.
+    #
+    # **Les gestes de finesse de C4 restent à l'écran**, et c'est délibéré :
+    # borner une zone, affiner un masque, retoucher au pixel demandent un œil
+    # sur l'image. Un agent qui bornerait un calque à l'aveugle abîmerait ce que
+    # la mesure vient de produire, sans que rien ne le lui dise. L'invariant qui
+    # compte est tenu dans le sens qui compte : **aucun geste que l'écran n'a
+    # pas.**
+
+    @serveur.tool(
+        name="list_characters",
+        title="List characters and what they still need",
+        description=(
+            "The game's cast: every character, the poses the project's plan "
+            "asks for, which of them already have a body, and which pieces of "
+            "equipment are already layered on. Also returns the project's "
+            "wardrobe — equipment slots in wearing order, and the pieces that "
+            "go in them. Call this before generating: an empty pose is what "
+            "needs an image, a filled one does not. Free and offline."
+        ),
+    )
+    @_refus_lisible
+    async def list_characters(project: str | None = None) -> dict[str, Any]:
+        """La matrice, dite à l'agent — **et rien n'est recalculé ici**.
+
+        « Cette pose est remplie » a une seule écriture dans le produit, celle
+        qui dessine la matrice à l'écran ; on la traduit, on ne la refait pas.
+        Les calques d'une pièce sont rendus **tous**, sans en élire un : élire
+        est une règle, et la règle appartient au service qui sort le personnage.
+        """
+        projet = _projet_ouvert(atelier, project)
+        vestiaire = atelier.equipement.vestiaire(projet)
+        return {
+            "project": projet,
+            "poses": [
+                {"id": p.identifiant, "name": p.nom, "images": p.images}
+                for p in atelier.production.plan(projet)
+            ],
+            "slots": [
+                {"id": e["identifiant"], "name": e["nom"], "order": e["rang"]}
+                for e in vestiaire["emplacements"]
+            ],
+            "pieces": [
+                {
+                    "id": p["identifiant"],
+                    "name": p["nom"],
+                    "description": p["description"],
+                    "slot": p["emplacement"],
+                    "scope": p["portee"],
+                }
+                for p in vestiaire["pieces"]
+            ],
+            "characters": [
+                {
+                    "id": personnage.identifiant,
+                    "name": personnage.nom,
+                    "description": personnage.description,
+                    "poses": [
+                        {
+                            "pose": case["pose"],
+                            "wanted": case["demandees"],
+                            "body": case["corps"],
+                            "images": [a["identifiant"] for a in case["images"]],
+                            "layers": {
+                                piece: [a["identifiant"] for a in liste]
+                                for piece, liste in case["calques"].items()
+                            },
+                        }
+                        for case in atelier.production.cases(projet, personnage)
+                    ],
+                }
+                for personnage in atelier.production.personnages(projet)
+            ],
+        }
+
+    @serveur.tool(
+        name="add_pose",
+        title="Add a pose to the game plan",
+        description=(
+            "Add a pose — an attitude the game needs, like 'walk' or 'idle' — "
+            "to the project's plan. Every character of the project gains an "
+            "empty slot for it. Naming it creates it. Free and offline."
+        ),
+    )
+    @_refus_lisible
+    async def add_pose(
+        name: str, images: int = 1, project: str | None = None
+    ) -> dict[str, Any]:
+        """**Le plan appartient au projet, jamais au personnage** (C1).
+
+        Ajouter une attitude la donne donc à tout le monde d'un coup, et c'est
+        ce qui rend le geste utile à un agent : il complète le plan une fois,
+        puis il remplit les cases qui l'intéressent.
+        """
+        projet = _projet_ouvert(atelier, project)
+        pose = atelier.production.ajouter_pose(projet, name, max(1, int(images)))
+        return {
+            "project": projet,
+            "pose": {"id": pose.identifiant, "name": pose.nom, "images": pose.images},
+            "poses": [
+                {"id": p.identifiant, "name": p.nom, "images": p.images}
+                for p in atelier.production.plan(projet)
+            ],
+        }
+
+    @serveur.tool(
+        name="generate_pose",
+        title="Fill a character's pose",
+        description=(
+            "Generate the body of one or more poses of a character. The "
+            "character's own description and the universe are added "
+            "automatically — leave `subject` empty unless this image needs "
+            "something the character's description does not say. Two poses or "
+            "more go out as a single folded call, which is how a plan gets "
+            "filled without paying pose by pose. Costs money."
+        ),
+    )
+    @_refus_lisible
+    async def generate_pose(
+        character: str,
+        poses: list[str],
+        subject: str = "",
+        project: str | None = None,
+        model: str | None = None,
+        wait_seconds: float = ATTENTE_PAR_DEFAUT,
+        folder: str | None = None,
+    ) -> dict[str, Any]:
+        """La case que l'écran arme, armée par l'agent (US-156).
+
+        **Le sujet vient du service, pas d'ici** : le signalement du personnage
+        part avec chaque image de lui et ne se retape jamais (US-115). Deux
+        compositions à deux endroits auraient demandé deux choses différentes
+        pour la même case.
+
+        **Une pose ou N, et c'est le compte qui décide** — une seule vise une
+        case, deux ou plus se replient en une planche. C'est la traduction de ce
+        que l'écran envoie déjà sur la même route, jamais une seconde règle : le
+        pliage, le refus d'un compte faux et la vérification des cases
+        appartiennent au service, qui les tient pour les deux façades.
+        """
+        projet = _projet_ouvert(atelier, project)
+        vise = _personnage(atelier, projet, character)
+        voulues = [_pose(atelier, projet, nomme) for nomme in poses]
+        if not voulues:
+            raise ErreurAtelier("dis quelle attitude remplir — « poses » est vide")
+
+        # **La place est retenue avant l'appel, et rendue quoi qu'il arrive** —
+        # même `finally` que `generate_asset`, et pour la même raison. Un lot
+        # plié est **un** appel : c'est tout son intérêt, et le compter N fois
+        # ferait mentir le plafond dans le sens qui coûte à l'auteur.
+        atelier.agent.reserver(1)
+        try:
+            identifiant_modele, options = atelier.agent.modele_impose(model)
+            generation = await atelier.generations.soumettre(
+                identifiant_modele,
+                Demande(
+                    prompt=subject.strip()
+                    or atelier.production.sujet(projet, vise.identifiant, voulues),
+                    variations=1,
+                    options=options,
+                ),
+                projet=projet,
+                provenance=AGENT,
+                personnage=vise.identifiant,
+                pose=voulues[0] if len(voulues) == 1 else None,
+                poses=voulues if len(voulues) > 1 else None,
+            )
+        finally:
+            atelier.agent.liberer(1)
+
+        attente = max(0.0, min(float(wait_seconds), ATTENTE_MAX))
+        finie = await atelier.generations.attendre(generation.identifiant, attente)
+        return _generation_en_json(atelier, finie or generation, folder)
+
+    @serveur.tool(
+        name="equip_character",
+        title="Put a piece of equipment on a character",
+        description=(
+            "Layer one piece of equipment onto poses that already have a body. "
+            "The bodies are sent out together in a single call and what comes "
+            "back is compared to what was sent, pose by pose, which yields one "
+            "layer per pose. Poses without a body are refused with their "
+            "reason — dressing an empty pose is paying for nothing. Costs "
+            "money."
+        ),
+    )
+    @_refus_lisible
+    async def equip_character(
+        character: str,
+        piece: str,
+        poses: list[str],
+        subject: str = "",
+        project: str | None = None,
+        model: str | None = None,
+        wait_seconds: float = ATTENTE_PAR_DEFAUT,
+        folder: str | None = None,
+    ) -> dict[str, Any]:
+        """La planche d'équipement de C3, armée par l'agent.
+
+        **Le même endroit d'où l'on paie** : il n'existe qu'une soumission dans
+        tout le produit, et cet outil-ci n'en est que la seconde adresse. Ce qui
+        change tient en un mot — la pièce —, et c'est ce mot qui fait partir la
+        planche **pleine** des corps au lieu d'une grille vide.
+        """
+        projet = _projet_ouvert(atelier, project)
+        vise = _personnage(atelier, projet, character)
+        voulue = _piece(atelier, projet, piece)
+        voulues = [_pose(atelier, projet, nomme) for nomme in poses]
+        if not voulues:
+            raise ErreurAtelier("dis quelles attitudes habiller — « poses » est vide")
+
+        atelier.agent.reserver(1)
+        try:
+            identifiant_modele, options = atelier.agent.modele_impose(model)
+            generation = await atelier.generations.soumettre(
+                identifiant_modele,
+                Demande(
+                    prompt=subject.strip()
+                    or atelier.production.sujet(
+                        projet, vise.identifiant, voulues, voulue
+                    ),
+                    variations=1,
+                    options=options,
+                ),
+                projet=projet,
+                provenance=AGENT,
+                personnage=vise.identifiant,
+                poses=voulues,
+                piece=voulue,
+            )
+        finally:
+            atelier.agent.liberer(1)
+
+        attente = max(0.0, min(float(wait_seconds), ATTENTE_MAX))
+        finie = await atelier.generations.attendre(generation.identifiant, attente)
+        return _generation_en_json(atelier, finie or generation, folder)
+
+    @serveur.tool(
+        name="export_character",
+        title="Export a character into the game folder",
+        description=(
+            "Write a whole character into the game folder: one PNG per pose "
+            "and one per piece worn on it, plus a descriptor naming every "
+            "file, its pose and its piece. Each file carries a `role`: "
+            "`corps` is a body, `calque` is a layer to stack on the body of "
+            "the same pose, and `corps_habille` is a whole body already "
+            "wearing the piece — it replaces the body, it does not stack. "
+            "What is written is the rendered image, never the raw one. A "
+            "missing folder is created and an existing file is never "
+            "overwritten. Read the descriptor to write your own catalogue "
+            "lines — the workshop does not write game code, and it invents no "
+            "folder structure. Free and offline."
+        ),
+    )
+    @_refus_lisible
+    async def export_character(
+        character: str,
+        project: str | None = None,
+        folder: str | None = None,
+    ) -> dict[str, Any]:
+        """La sortie de C5 (US-154, US-155, US-157).
+
+        **Le descriptif part deux fois, et ce n'est pas un doublon** : il est
+        écrit dans le dossier, pour qui rouvrira le jeu dans six mois, et rendu
+        ici, pour que l'agent n'ait pas à relire un fichier qu'il vient de faire
+        écrire.
+        """
+        projet = _projet_ouvert(atelier, project)
+        vise = _personnage(atelier, projet, character)
+        sortie = atelier.export.exporter_personnage(projet, vise.identifiant, folder)
+        return {
+            "folder": sortie.dossier,
+            "files": [
+                {
+                    "name": fiche["fichier"],
+                    "path": fiche["chemin"],
+                    "role": fiche["role"],
+                    "pose": fiche["pose"],
+                    "piece": fiche["piece"],
+                }
+                for fiche in sortie.fichiers
+            ],
+            "manifest": list(sortie.fichiers),
+            "descriptor": sortie.descriptif,
+        }
 
     # ── Le cadre, pour que l'agent sache ce qu'il lui reste ──────────────────
 
@@ -523,6 +821,76 @@ def _projet(atelier: Atelier, nomme: str | None) -> str | None:
         if projet.nom.strip().lower() == nomme.strip().lower():
             return identifiant
     raise ProjetInconnu(nomme, sorted(connus))
+
+
+def _projet_ouvert(atelier: Atelier, nomme: str | None) -> str:
+    """Le projet visé, **résolu** — celui qu'on nomme, sinon celui qui est ouvert.
+
+    `_projet` rend `None` quand rien n'est nommé, et c'est juste pour la
+    génération : le défaut vit dans le service, qui doit pouvoir refuser un
+    projet manquant plutôt que d'en inventer un. Les gestes de la V2, eux,
+    visent un projet *nommé* — un plan, un vestiaire, une matrice appartiennent
+    à quelqu'un. C'est exactement la règle qu'`api/production.py` applique déjà
+    pour l'écran, et c'est la même phrase des deux côtés.
+    """
+    return _projet(atelier, nomme) or atelier.bibliotheque.courant or ""
+
+
+def _personnage(atelier: Atelier, projet: str, nomme: str) -> Personnage:
+    """Le personnage visé — **par son repère ou par son nom**.
+
+    Comme `_projet` juste au-dessus, et pour la raison exacte : un agent a lu
+    « Héroïne » dans `list_characters`, pas son repère. Et rien n'est créé au
+    passage — un personnage fantôme né d'une faute de frappe se retrouve des
+    semaines après, vide, sans qu'on sache d'où il vient.
+    """
+    connus = atelier.production.personnages(projet)
+    for personnage in connus:
+        if personnage.identifiant == nomme:
+            return personnage
+    for personnage in connus:
+        if personnage.nom.strip().lower() == nomme.strip().lower():
+            return personnage
+    raise ErreurAtelier(
+        f"aucun personnage « {nomme} » — il y a "
+        + (", ".join(f"« {p.nom} »" for p in connus) or "personne dans ce projet")
+    )
+
+
+def _pose(atelier: Atelier, projet: str, nomme: str) -> str:
+    """L'identifiant d'une attitude, dite par son repère ou par son nom."""
+    plan = atelier.production.plan(projet)
+    for pose in plan:
+        if pose.identifiant == nomme:
+            return pose.identifiant
+    for pose in plan:
+        if pose.nom.strip().lower() == nomme.strip().lower():
+            return pose.identifiant
+    raise ErreurAtelier(
+        f"aucune attitude « {nomme} » au plan — il y a "
+        + (", ".join(f"« {p.nom} »" for p in plan) or "un plan vide")
+    )
+
+
+def _piece(atelier: Atelier, projet: str, nomme: str) -> str:
+    """L'identifiant d'une pièce du vestiaire, par son repère ou par son nom.
+
+    **Rien n'est créé ici non plus**, et c'est le seul endroit du produit où
+    « nommer, c'est créer » ne s'applique pas : l'auteur écrit son vestiaire,
+    l'agent s'en sert. Une pièce inventée par une faute de frappe partirait dans
+    un appel payant sans description, et reviendrait en calque de rien.
+    """
+    connues = atelier.equipement.pieces(projet)
+    for piece in connues:
+        if piece.identifiant == nomme:
+            return piece.identifiant
+    for piece in connues:
+        if piece.nom.strip().lower() == nomme.strip().lower():
+            return piece.identifiant
+    raise ErreurAtelier(
+        f"aucune pièce « {nomme} » au vestiaire — il y a "
+        + (", ".join(f"« {p.nom} »" for p in connues) or "un vestiaire vide")
+    )
 
 
 def _asset(atelier: Atelier, identifiant: str) -> Asset:

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Asset Kitchen — quatre formes proposées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+  --bord:#252B33; --bord-fort:#39424C;
+  --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+  --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+  --lumiere:#EAF4F8; --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+  --damier-a:#191E24; --damier-b:#14181D;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--fond-0); color:var(--texte);
+  font-family:"Instrument Sans",sans-serif; font-size:13px; line-height:1.5;
+  padding:48px 32px 96px; -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1180px;margin:0 auto}
+.mesure{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:32px;line-height:1.15;margin-bottom:8px}
+h1 em{font-style:italic}
+.chapeau{color:var(--texte-2);font-size:14px;max-width:64ch;margin-bottom:8px}
+.avert{color:var(--texte-3);font-size:11px;font-family:"JetBrains Mono",monospace;margin-bottom:48px}
+
+section{border-top:1px solid var(--bord);padding-top:24px;margin-top:48px}
+.titre{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.titre .num{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--signal)}
+.titre h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.pourquoi{color:var(--texte-2);font-size:12.5px;max-width:72ch;margin-bottom:20px}
+.pourquoi b{color:var(--texte);font-weight:600}
+
+.paire{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.volet{background:var(--fond-1);border:1px solid var(--bord);padding:16px}
+.volet.apres{border-color:var(--bord-fort)}
+.etiquette{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);margin-bottom:14px}
+.volet.apres .etiquette{color:var(--signal)}
+
+/* ── pièces de châssis ─────────────────────────────────────────────── */
+.champ{
+  background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:3px;
+  padding:8px 12px;font-size:13.5px;color:var(--texte);min-height:62px;
+  position:relative;line-height:1.5;
+}
+.champ.vide{color:var(--texte-3)}
+.champ.petit{min-height:32px;font-size:13px;display:flex;align-items:center}
+.soeur{
+  font-family:"JetBrains Mono",monospace;font-size:10px;margin-top:5px;
+  display:flex;align-items:baseline;gap:6px;
+}
+.soeur::before{content:"";width:8px;height:1px;background:currentColor;flex:none;transform:translateY(-3px)}
+.soeur.raison{color:var(--texte-3)}
+.soeur.invite{color:var(--texte-2)}
+.soeur a{color:var(--signal);text-decoration:none}
+.pastille{
+  position:absolute;top:6px;right:6px;
+  font-family:"JetBrains Mono",monospace;font-size:8.5px;
+  background:rgba(11,13,16,.82);color:var(--texte-2);
+  padding:2px 5px;border-radius:2px;letter-spacing:.04em;
+}
+.bouton{
+  height:32px;padding:0 14px;border:0;border-radius:3px;font-family:inherit;font-size:13px;
+  background:var(--signal);color:var(--fond-0);font-weight:600;cursor:default;
+}
+.bouton.inactif{background:var(--fond-2);color:var(--texte-3);border:1px solid var(--bord)}
+.rangee-bouton{display:flex;flex-direction:column;align-items:flex-end;margin-top:12px}
+
+/* réglages */
+.reglage{display:flex;align-items:center;justify-content:space-between;height:26px;border-bottom:1px solid var(--bord)}
+.reglage:last-child{border-bottom:0}
+.reglage .lib{font-size:11px;color:var(--texte-2)}
+.reglage .val{font-family:"JetBrains Mono",monospace;font-size:11px}
+.val.defaut{color:var(--texte-2)}
+.val.calme{color:var(--texte-3)}
+.val.change{color:var(--texte)}
+.val.plein{color:var(--texte)}
+.rendre{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--signal);margin-left:8px}
+.entete-p{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--texte-3);height:30px;display:flex;align-items:center;border-bottom:1px solid var(--bord);margin-bottom:8px}
+
+/* ce qui part */
+.ligne-ref{display:flex;align-items:center;gap:8px;padding:4px 0}
+.coche{width:18px;height:18px;flex:none;border:1px solid var(--signal);background:var(--signal-sourd);border-radius:2px;color:var(--signal);font-family:"JetBrains Mono",monospace;font-size:10px;display:flex;align-items:center;justify-content:center}
+.coche.off{border-color:var(--bord);background:var(--fond-1);color:var(--texte-3)}
+.vignette{
+  width:44px;height:44px;flex:none;border-radius:0;
+  background-image:linear-gradient(45deg,var(--damier-a) 25%,transparent 25%),linear-gradient(-45deg,var(--damier-a) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--damier-a) 75%),linear-gradient(-45deg,transparent 75%,var(--damier-a) 75%);
+  background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0;
+  background-color:var(--damier-b);
+  display:flex;align-items:center;justify-content:center;
+}
+.sprite{font-size:20px;line-height:1;filter:saturate(.9)}
+.ref-nom{font-size:11.5px;color:var(--texte);line-height:1.25}
+.ref-prov{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-3)}
+.ligne-ref.ecartee .ref-nom{color:var(--texte-3);text-decoration:line-through}
+.mot{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--texte-2)}
+.pied-dl{display:flex;justify-content:space-between;border-top:1px solid var(--bord);margin-top:10px;padding-top:8px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-3)}
+.pied-dl b{color:var(--texte-2);font-weight:500}
+.note{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--texte-3);margin-top:14px;padding-left:14px;border-left:1px solid var(--bord)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Quatre formes, <em>et pas un token de plus</em></h1>
+  <p class="chapeau">Comparaison avant / après des quatre propositions du débrief. Toutes les couleurs, tailles et hauteurs viennent de <code>docs/DESIGN.md</code> tel qu'il est écrit aujourd'hui&nbsp;: rien n'est inventé ici, tout est réemployé.</p>
+  <p class="avert">artefact jetable — le spécimen validé reste docs/design-preview.html</p>
+
+  <!-- P1 ─────────────────────────────────────────────────────────── -->
+  <section>
+    <div class="titre"><span class="num">P1</span><h2>La fente gagne un quatrième locataire&nbsp;: l'invitation</h2></div>
+    <p class="pourquoi">Même forme exacte que <b>« le grisé porte sa raison »</b> — tiret de 8&nbsp;px, mono 10&nbsp;px, ligne sœur permanente. Seule la couleur change&nbsp;: <code>--texte-2</code> au lieu de <code>--texte-3</code>, parce qu'elle ne dit pas <i>pourquoi tu ne peux pas</i> mais <i>ce que tu peux écrire</i>. Elle ne cohabite jamais avec un refus — le refus l'emporte, comme les trois locataires actuels.</p>
+    <div class="paire">
+      <div class="volet">
+        <div class="etiquette">aujourd'hui</div>
+        <div class="champ vide">Décris ce que tu veux fabriquer.</div>
+        <div class="rangee-bouton">
+          <button class="bouton">Générer</button>
+          <div class="soeur raison" style="align-self:flex-end">Ctrl + Entrée</div>
+        </div>
+        <p class="note">Le placeholder nomme la catégorie, puis disparaît à la première frappe — c'est-à-dire au moment précis où l'exemple servirait.</p>
+      </div>
+      <div class="volet apres">
+        <div class="etiquette">proposé</div>
+        <div class="champ vide">Décris ce que tu veux fabriquer.</div>
+        <div class="soeur invite">nain trapu, barbe brune non tressée, chemise brune, sandales de cuir, sac de voyage, lanterne à la main droite <a href="#">Trois exemples&nbsp;›</a></div>
+        <div class="rangee-bouton">
+          <button class="bouton">Générer</button>
+          <div class="soeur raison" style="align-self:flex-end">Ctrl + Entrée</div>
+        </div>
+        <p class="note">L'exemple est sous le champ, donc il reste pendant qu'on écrit. Il montre la <i>forme</i> d'un signalement qui marche, pas le nom du champ.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- P2 ─────────────────────────────────────────────────────────── -->
+  <section>
+    <div class="titre"><span class="num">P2</span><h2>La pastille <code>proposé</code></h2></div>
+    <p class="pourquoi">La règle de la tuile est déjà écrite&nbsp;: <b>ce que tu poses est une forme, ce que le système constate est un mot.</b> Une valeur proposée est constatée — donc c'est un mot, mono 8,5&nbsp;px, sur fond <code>rgba(11,13,16,.82)</code>, exactement la pastille d'état existante. <b>Elle disparaît dès qu'on touche le champ&nbsp;:</b> toucher une valeur, c'est se l'approprier. C'est <code>--epingle</code> pris un cran plus tôt.</p>
+    <div class="paire">
+      <div class="volet">
+        <div class="etiquette">aujourd'hui — préremplir mentirait</div>
+        <div class="entete-p">bible · vue et cadrage</div>
+        <div class="champ petit">top-down view, full body, centered</div>
+        <p class="note">Rien ne distingue cette valeur d'une valeur que tu aurais écrite toi-même. Le produit s'attribue silencieusement une décision d'apparence — très exactement ce que R2 a corrigé.</p>
+      </div>
+      <div class="volet apres">
+        <div class="etiquette">proposé</div>
+        <div class="entete-p">bible · vue et cadrage</div>
+        <div class="champ petit">top-down view, full body, centered<span class="pastille">proposé</span></div>
+        <div class="soeur invite">d'après tes trois artworks officiels</div>
+        <p class="note">La pastille dit <i>qui</i> a écrit ça, la ligne sœur dit <i>d'où</i> ça vient. Les deux disparaissent à la première frappe, et la valeur devient la tienne.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- P3 ─────────────────────────────────────────────────────────── -->
+  <section>
+    <div class="titre"><span class="num">P3</span><h2>Le réglage au défaut se tait</h2></div>
+    <p class="pourquoi">La colonne 2 crie à volume constant, que tu y aies touché ou non. <b>Valeur en <code>--texte-2</code> quand elle vient du projet, en <code>--texte</code> quand tu l'as changée pour cette génération</b> — et un « rendre au projet » en <code>--signal</code> à côté de ce que tu as changé. La colonne devient alors la liste de ce que tu as décidé aujourd'hui, et elle se calme d'elle-même au repos. Zéro token neuf&nbsp;: c'est la logique de <code>--epingle</code>, appliquée aux réglages au lieu des recettes.</p>
+    <div class="paire">
+      <div class="volet">
+        <div class="etiquette">aujourd'hui — huit lignes de même force</div>
+        <div class="entete-p">réglages</div>
+        <div class="reglage"><span class="lib">modèle</span><span class="val plein">gemini-2.5-flash-image</span></div>
+        <div class="reglage"><span class="lib">proportions</span><span class="val plein">1:1</span></div>
+        <div class="reglage"><span class="lib">résolution</span><span class="val plein">1024</span></div>
+        <div class="reglage"><span class="lib">échelle</span><span class="val plein">personnage entier</span></div>
+        <div class="reglage"><span class="lib">variations</span><span class="val plein">3</span></div>
+        <div class="reglage"><span class="lib">taille de pixel</span><span class="val plein">64 px</span></div>
+        <div class="reglage"><span class="lib">palette</span><span class="val plein">32 couleurs</span></div>
+        <div class="reglage"><span class="lib">détourage</span><span class="val plein">bord · 24</span></div>
+        <p class="note">Rien ne dit lesquels tu as touchés. Pour retrouver ce que tu as changé, il faut se souvenir.</p>
+      </div>
+      <div class="volet apres">
+        <div class="etiquette">proposé — deux forces, une lecture</div>
+        <div class="entete-p">réglages</div>
+        <div class="reglage"><span class="lib">modèle</span><span class="val calme">gemini-2.5-flash-image</span></div>
+        <div class="reglage"><span class="lib">proportions</span><span class="val calme">1:1</span></div>
+        <div class="reglage"><span class="lib">résolution</span><span class="val calme">1024</span></div>
+        <div class="reglage"><span class="lib">échelle</span><span class="val calme">personnage entier</span></div>
+        <div class="reglage"><span class="lib">variations</span><span class="val change">3<span class="rendre">rendre au projet</span></span></div>
+        <div class="reglage"><span class="lib">taille de pixel</span><span class="val calme">64 px</span></div>
+        <div class="reglage"><span class="lib">palette</span><span class="val calme">32 couleurs</span></div>
+        <div class="reglage"><span class="lib">détourage</span><span class="val change">bord · 41<span class="rendre">rendre au projet</span></span></div>
+        <p class="note">Deux lignes parlent, six se taisent. La colonne dit maintenant <i>ce que cette génération-ci a de particulier</i> — et c'est la seule chose qu'on y cherche.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- P4 ─────────────────────────────────────────────────────────── -->
+  <section>
+    <div class="titre"><span class="num">P4</span><h2>« Ce qui part » montre les images</h2></div>
+    <p class="pourquoi">C'est la seule surface du produit qui parle d'images sans en montrer&nbsp;: on décoche « artwork officiel » sans savoir lequel. <b>Vignette de 44&nbsp;px</b> — celle de l'écran Personnages, aucune taille neuve —, damier alpha, coche <code>--signal</code> à gauche, provenance en mono 9,5&nbsp;px dessous. Corriger ça <i>renforce</i> la table lumineuse au lieu de l'entamer&nbsp;: ce qui part se juge à l'œil, comme tout le reste.</p>
+    <div class="paire">
+      <div class="volet">
+        <div class="etiquette">aujourd'hui — une liste aveugle</div>
+        <div class="entete-p">ce qui part</div>
+        <div class="ligne-ref"><span class="coche">✓</span><span class="ref-nom" style="font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--texte-2)">artwork officiel</span></div>
+        <div class="ligne-ref"><span class="coche">✓</span><span class="ref-nom" style="font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--texte-2)">artwork officiel</span></div>
+        <div class="ligne-ref"><span class="coche">✓</span><span class="ref-nom" style="font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--texte-2)">concept art</span></div>
+        <div class="ligne-ref ecartee"><span class="coche off"></span><span class="ref-nom" style="font-size:9.5px;font-family:'JetBrains Mono',monospace">réinjection</span></div>
+        <div class="pied-dl"><span>références</span><span><b>3 / 4</b></span></div>
+        <p class="note">Deux lignes portent le même mot. Laquelle décoches-tu ?</p>
+      </div>
+      <div class="volet apres">
+        <div class="etiquette">proposé — on décoche ce qu'on voit</div>
+        <div class="entete-p">ce qui part</div>
+        <div class="ligne-ref">
+          <span class="coche">✓</span>
+          <span class="vignette"><span class="sprite">🛡️</span></span>
+          <span><span class="ref-nom">planche d'armures</span><br><span class="ref-prov">artwork officiel · famille personnages</span></span>
+        </div>
+        <div class="ligne-ref">
+          <span class="coche">✓</span>
+          <span class="vignette"><span class="sprite">🏰</span></span>
+          <span><span class="ref-nom">pierre de donjon</span><br><span class="ref-prov">artwork officiel · tous</span></span>
+        </div>
+        <div class="ligne-ref">
+          <span class="coche">✓</span>
+          <span class="vignette"><span class="sprite">🧔</span></span>
+          <span><span class="ref-nom">Balthazar — recherche</span><br><span class="ref-prov">concept art de Balthazar</span></span>
+        </div>
+        <div class="ligne-ref ecartee">
+          <span class="coche off"></span>
+          <span class="vignette" style="opacity:.45"><span class="sprite">🏮</span></span>
+          <span><span class="ref-nom">lanterne v3</span><br><span class="ref-prov">écartée · ce personnage · rendre au personnage</span></span>
+        </div>
+        <div class="pied-dl"><span>références</span><span><b>3 / 4</b> · $0,0245</span></div>
+        <p class="note">Même mécanisme, mêmes portées, même code serveur. On a juste rendu visible ce que le serveur savait déjà.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- synthèse ───────────────────────────────────────────────────── -->
+  <section>
+    <div class="titre"><span class="num">bilan</span><h2>Ce que ça coûte au système</h2></div>
+    <div class="paire" style="grid-template-columns:1fr">
+      <div class="volet">
+        <div class="reglage"><span class="lib">tokens de couleur ajoutés</span><span class="val calme">0</span></div>
+        <div class="reglage"><span class="lib">familles typographiques ajoutées</span><span class="val calme">0</span></div>
+        <div class="reglage"><span class="lib">tailles nouvelles dans l'échelle</span><span class="val calme">0</span></div>
+        <div class="reglage"><span class="lib">hauteurs de contrôle nouvelles</span><span class="val calme">0</span></div>
+        <div class="reglage"><span class="lib">mouvements ajoutés à la liste close</span><span class="val calme">0</span></div>
+        <div class="reglage"><span class="lib">motifs nouveaux à écrire dans design-motifs.md</span><span class="val change">2 — l'invitation, la pastille « proposé »</span></div>
+        <div class="reglage"><span class="lib">exception nouvelle au principe fondateur</span><span class="val change">1 — <i>la grille montre, le champ demande</i></span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

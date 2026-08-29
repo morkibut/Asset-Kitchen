@@ -35,7 +35,7 @@ import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
 import { reinitialiserGuide } from "./composants/Guide"
 import { AIDE, SANS_ENTREE } from "./aide"
-import { COULEUR_TEINTE, NOM_TEINTE, TEINTES } from "./api"
+import { COULEUR_TEINTE, NOM_TEINTE, RECETTE_VIDE, TEINTES } from "./api"
 import type {
   ApercuPrompt,
   Asset,
@@ -45,11 +45,14 @@ import type {
   CompteReferences,
   EtatCatalogue,
   Generation,
+  EmplacementCorps,
   Impose,
   Lien,
   Personnage,
+  Piece,
   Pose,
   Teinte,
+  Trait,
   Univers,
 } from "./api"
 
@@ -266,6 +269,7 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
       pose: p.identifiant,
       demandees: p.images,
       images: [],
+      ...VIDE_C3,
     })),
     ...sur,
     ecartees,
@@ -360,6 +364,8 @@ const generation = (
   reussies: 0,
 })
 
+const VIDE_C3 = { calques: {}, corps: null } as const
+
 const asset = (
   identifiant: string,
   label = "un tonneau",
@@ -383,9 +389,12 @@ const asset = (
     // c'est-à-dire pour l'immense majorité d'entre elles, et pour toutes
     // celles-ci.
     lot: null,
+    piece: null,
+    calque: null,
     personnage_supprime: false,
     recette: {
       passes: [],
+      difference: null,
       recadrage: null,
       grille: null,
       quantification: null,
@@ -479,6 +488,8 @@ function serveurDouble(options: {
    *  par le plan qui la nomme. */
   plan?: Pose[]
   personnages?: Personnage[]
+  emplacements?: EmplacementCorps[]
+  pieces?: Piece[]
   /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
    *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
    *  ni les concept arts, et deux comptes divergeraient. */
@@ -511,6 +522,10 @@ function serveurDouble(options: {
     agent: options.agent ?? ETAT.agent,
     plan: options.plan ?? PLAN,
     personnages: options.personnages ?? ([] as Personnage[]),
+    // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, servi
+    // dans le même aller-retour que le plan, exactement comme le serveur.
+    emplacements: options.emplacements ?? ([] as EmplacementCorps[]),
+    pieces: options.pieces ?? ([] as Piece[]),
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -645,6 +660,7 @@ function serveurDouble(options: {
         options.impose ?? {
           impose: {
             passes: [],
+            difference: null,
             recadrage: null,
             grille: { cible: 64, occupation: 100, ancrage: "bas" },
             quantification: null,
@@ -716,6 +732,7 @@ function serveurDouble(options: {
         // que l'écran ait à décider, et c'est donc la seule qu'il faille voir.
         recette: {
           passes: [],
+          difference: null,
           recadrage: null,
           grille:
             parametres.get("traiter") === "true"
@@ -729,6 +746,52 @@ function serveurDouble(options: {
       etat.importes.push({ nom, asset: ne })
       etat.assets = [ne, ...etat.assets]
       return rendre({ asset: ne, doublon: null })
+    }
+    // ── La main sur un calque (C4) ─────────────────────────────────────────
+    //
+    // **Le double écrit, puis il annonce** — l'ordre du vrai serveur, celui dont
+    // T1 a montré qu'il ne se devine pas. Il vaut ici plus qu'ailleurs : la
+    // promesse « la liste est entière, jamais un ajout » ne se vérifie qu'en
+    // envoyant deux passages de suite, et le second ne porte les deux que si le
+    // premier est revenu dans la recette. Un double muet aurait laissé cette
+    // promesse-là sans preuve.
+    if (url.endsWith("/hand") && init?.method === "PUT") {
+      const vise = url.split("/")[3]
+      const charge = corps as { couche: "affinage" | "retouche"; traits: Trait[] }
+      // **Rien n'est écrit en place.** Le vrai serveur réécrit l'asset et la
+      // matrice se recalcule dessus ; un double qui muterait l'objet rendrait le
+      // *même* tableau à la relecture, et React, qui compare les identités, ne
+      // rendrait rien du tout. Le double refait donc la chaîne, comme le serveur
+      // refait le fichier.
+      let ecrit: Asset | null = null
+      etat.personnages = etat.personnages.map((p) => ({
+        ...p,
+        cases: p.cases.map((c) => ({
+          ...c,
+          calques: Object.fromEntries(
+            Object.entries(c.calques).map(([piece, liste]) => [
+              piece,
+              liste.map((a) => {
+                if (a.identifiant !== vise || !a.recette.difference) return a
+                ecrit = {
+                  ...a,
+                  recette: {
+                    ...a.recette,
+                    difference: {
+                      ...a.recette.difference,
+                      [charge.couche]: charge.traits,
+                    },
+                  },
+                }
+                return ecrit
+              }),
+            ]),
+          ),
+        })),
+      }))
+      if (!ecrit) return rendre({})
+      FluxDouble.ouverts.at(-1)?.emettre("asset", ecrit)
+      return rendre(ecrit)
     }
     if (url.startsWith("/api/assets")) {
       const parametres = new URL(url, "http://x").searchParams
@@ -868,12 +931,143 @@ function serveurDouble(options: {
         projet: "bac-a-sable",
         plan: etat.plan,
         personnages: etat.personnages,
+        emplacements: etat.emplacements,
+        pieces: etat.pieces,
       })
     if (url.startsWith("/api/characters")) {
+      // ── Le vestiaire (C3) ─────────────────────────────────────────────────
+      //
+      // **Les six gestes rendent le vestiaire entier**, comme le vrai serveur :
+      // l'écran fond ce qui lui arrive par les deux chemins avec le même code,
+      // et un double qui n'en rendrait que la moitié prouverait un autre
+      // contrat. C'est la leçon payée en C1, appliquée d'avance.
+      const vestiaire = () => ({
+        projet: "bac-a-sable",
+        emplacements: etat.emplacements,
+        pieces: etat.pieces,
+      })
+      if (url === "/api/characters/slots" && init?.method === "POST") {
+        const emplacement: EmplacementCorps = {
+          identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
+          nom: String(corps.nom),
+          rang: etat.emplacements.length,
+        }
+        etat.emplacements = [...etat.emplacements, emplacement]
+        return rendre({ emplacement, ...vestiaire() })
+      }
+      if (url === "/api/characters/pieces" && init?.method === "POST") {
+        // **Nommer, c'est créer — jusqu'au bout** : l'emplacement écrit ici est
+        // créé s'il n'existe pas, comme le fait le serveur. Sans ça, l'essai
+        // prouverait que l'écran envoie le nom, jamais que le nom suffit.
+        const ou = String(corps.emplacement ?? "").trim()
+        let emplacement = etat.emplacements.find(
+          (e) => e.nom.toLowerCase() === ou.toLowerCase(),
+        )
+        if (ou && !emplacement) {
+          emplacement = {
+            identifiant: ou.toLowerCase().replace(/\s+/g, "-"),
+            nom: ou,
+            rang: etat.emplacements.length,
+          }
+          etat.emplacements = [...etat.emplacements, emplacement]
+        }
+        const piece: Piece = {
+          identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
+          nom: String(corps.nom),
+          description: String(corps.description ?? ""),
+          emplacement: emplacement?.identifiant ?? "",
+          // **Le défaut est « contenue »**, et il vient du serveur : l'écran ne
+          // l'écrit nulle part, et rien ne le devine du nom de la pièce.
+          portee: (corps.portee as Piece["portee"]) ?? "contenue",
+          concept_arts: [],
+        }
+        etat.pieces = [...etat.pieces, piece]
+        return rendre({ piece, ...vestiaire() })
+      }
+      if (init?.method === "PUT" && url.startsWith("/api/characters/pieces/")) {
+        const identifiant = url.slice("/api/characters/pieces/".length)
+        etat.pieces = etat.pieces.map((p) =>
+          p.identifiant === identifiant ? { ...p, ...corps } : p,
+        )
+        return rendre({
+          piece: etat.pieces.find((p) => p.identifiant === identifiant),
+          ...vestiaire(),
+        })
+      }
+      if (init?.method === "DELETE" && url.startsWith("/api/characters/pieces/")) {
+        const identifiant = url.slice("/api/characters/pieces/".length)
+        const piece = etat.pieces.find((p) => p.identifiant === identifiant)
+        etat.pieces = etat.pieces.filter((p) => p.identifiant !== identifiant)
+        return rendre({ piece, ...vestiaire() })
+      }
       if (url === "/api/characters" && init?.method === "POST") {
         const cree = personnage(String(corps.nom))
         etat.personnages = [...etat.personnages, cree]
         return rendre({ personnage: cree })
+      }
+      // **Le sujet qu'une case arme, composé par le serveur** (C5). Le double
+      // rejoue ses trois règles, parce que c'est le contrat qu'il double : une
+      // case porte le signalement et l'attitude, un lot le signalement seul, et
+      // une pièce sa description seule. Un double qui rendrait un texte
+      // quelconque prouverait que l'écran demande, jamais qu'il pose ce que le
+      // serveur a écrit.
+      if (url === "/api/characters/subject" && init?.method === "POST") {
+        const qui = etat.personnages.find(
+          (p) => p.identifiant === String(corps.personnage),
+        )
+        const quoi = etat.pieces.find((p) => p.identifiant === corps.piece)
+        const visees = etat.plan.filter((p) =>
+          (corps.poses ?? []).includes(p.identifiant),
+        )
+        const sujet = quoi
+          ? quoi.description.trim() || quoi.nom
+          : visees.length === 1
+            ? [qui?.description.trim(), visees[0].nom].filter(Boolean).join(", ")
+            : (qui?.description.trim() ?? "")
+        return rendre({ sujet })
+      }
+      // **La sortie d'un personnage** (C5) : aucun octet ne revient, seulement
+      // les chemins de ce qui vient d'être posé. Le double n'écrit rien — il
+      // n'a pas de disque —, mais il rend la forme entière, parce que c'est
+      // elle que l'écran affiche.
+      if (init?.method === "POST" && url.endsWith("/export")) {
+        const identifiant = url.slice(
+          "/api/characters/".length,
+          -"/export".length,
+        )
+        const qui = etat.personnages.find((p) => p.identifiant === identifiant)
+        const remplies = (qui?.cases ?? []).filter((c) => c.corps)
+        // Les deux refus du serveur, dans l'ordre où il les oppose : rien à
+        // sortir d'abord, pas de dossier ensuite. L'écran grise avant d'en
+        // arriver là — c'est justement ce qu'on vérifie —, mais un double qui
+        // ne saurait pas refuser laisserait passer un écran qui n'a pas grisé.
+        const dossier = etat.agent.garde_fous.dossier_jeu
+        if (remplies.length === 0 || !dossier)
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              code: remplies.length === 0 ? "export_refuse" : "depot_refuse",
+              raison:
+                remplies.length === 0
+                  ? `« ${qui?.nom} » n'a aucune pose remplie — il n'y a rien à sortir`
+                  : "aucun dossier de jeu — nomme-le dans l'appel, ou pose-le une fois pour toutes dans l'atelier, écran Réglages, bloc « L'agent ».",
+              ou_aller: remplies.length === 0 ? null : "reglages",
+            }),
+          } as unknown as Response
+        const fichiers = remplies.map((c) => ({
+          chemin: `${dossier}/${identifiant}-${c.pose}.png`,
+          fichier: `${identifiant}-${c.pose}.png`,
+          role: "corps" as const,
+          pose: { identifiant: c.pose, nom: c.pose },
+          piece: null,
+        }))
+        return rendre({
+          dossier,
+          fichiers,
+          descriptif: `${dossier}/${identifiant}-descriptif.json`,
+          compte: fichiers.length,
+        })
       }
       if (url === "/api/characters/poses" && init?.method === "POST") {
         const pose: Pose = {
@@ -888,7 +1082,10 @@ function serveurDouble(options: {
         // qui n'est pas celui du serveur.
         etat.personnages = etat.personnages.map((p) => ({
           ...p,
-          cases: [...p.cases, { pose: pose.identifiant, demandees: pose.images, images: [] }],
+          cases: [
+            ...p.cases,
+            { pose: pose.identifiant, demandees: pose.images, images: [], ...VIDE_C3 },
+          ],
         }))
         // **Le plan entier avec la pose**, comme le vrai serveur : l'écran fond
         // ce qui lui arrive par les deux chemins avec le même code, et un double
@@ -937,6 +1134,7 @@ function serveurDouble(options: {
                           images:
                             p.cases.find((c) => c.pose === pose.identifiant)?.images ??
                             [],
+                          ...VIDE_C3,
                         })),
                     }
                   : {}),
@@ -3259,6 +3457,7 @@ describe("l'écran des personnages", () => {
             pose: p.identifiant,
             demandees: p.images,
             images: p.identifiant === "repos" ? [corps] : [],
+            ...VIDE_C3,
           })),
         }),
       ],
@@ -3463,6 +3662,7 @@ describe("l'écran des personnages", () => {
             pose: p.identifiant,
             demandees: p.images,
             images: p.identifiant === "repos" ? [corps] : [],
+            ...VIDE_C3,
           })),
         }),
       ],
@@ -3509,6 +3709,7 @@ describe("l'écran des personnages", () => {
             pose: p.identifiant,
             demandees: p.images,
             images: p.identifiant === "repos" ? [asset("aaaa1111-0", "repos")] : [],
+            ...VIDE_C3,
           })),
         }),
       ],
@@ -3925,6 +4126,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
       ...asset("eeee5555-0"),
       recette: {
         passes: [],
+        difference: null,
         recadrage: null,
         grille: { cible: 32, occupation: 40, ancrage: "bas" as const },
         quantification: null,
@@ -3937,6 +4139,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
       impose: {
         impose: {
           passes: [],
+          difference: null,
           recadrage: null,
           grille: { cible: 64, occupation: 40, ancrage: "bas" },
           quantification: null,
@@ -4332,5 +4535,826 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
     fireEvent.keyDown(window, { key: "Escape" })
     await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull())
     vi.useRealTimers()
+  })
+})
+
+// ── C3 — la pièce et le calque ───────────────────────────────────────────────
+//
+// **Ce qui est ici est ce que le serveur ne peut pas tenir.** Six des seize
+// critères de C3 portent sur ce que l'écran montre — une pose inéligible qui
+// porte sa raison, un calque posé sur son corps, une zone qu'on traîne — et
+// aucun d'eux ne se prouve dans `tests/test_c3.py` : le serveur y refuse, il
+// n'affiche pas. Les dix autres y sont, et ne sont pas redits ici.
+
+describe("l'écran des personnages — la pièce et le calque", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
+    const titre = await screen.findByRole("heading", { name: "Personnages" })
+    const ecran = within(titre.closest("[data-univers]") as HTMLElement)
+    return { ...double, flux, ecran }
+  }
+
+  const CASQUE: Piece = {
+    identifiant: "casque",
+    nom: "casque",
+    description: "un casque de fer à cornes",
+    emplacement: "tete",
+    portee: "contenue",
+    concept_arts: [],
+  }
+  const TETE: EmplacementCorps = { identifiant: "tete", nom: "tête", rang: 0 }
+
+  /** Un calque : une image qui porte une pièce **et** une différence. C'est la
+   *  recette qui dit ce qu'elle est — jamais un drapeau de plus. */
+  const calque = (identifiant: string, base: string, sur: Partial<Asset> = {}): Asset => ({
+    ...asset(identifiant, "casque · repos"),
+    piece: "casque",
+    pose: "repos",
+    personnage: "le-nain",
+    recette: {
+      ...RECETTE_VIDE,
+      difference: {
+        base,
+        zone: null,
+        seuil: 32,
+        // **Les deux couches de la main, vides** (C4) : un calque qui vient de
+        // naître n'a été touché par personne, et c'est l'état qui décide de sa
+        // place dans ce qui reste à regarder.
+        affinage: [],
+        retouche: [],
+      },
+    },
+    calque: {
+      silhouette: 0.995,
+      repeint: 0.003,
+      ajout: 0.061,
+      echelle: 1,
+      compacite: 0.98,
+      // Déduits par le serveur, jamais recalculés à l'écran (C4, US-152) : ici
+      // c'est la compacité qui est la moins bonne — 1 − 0,98.
+      pire: "objet ou poussière",
+      gravite: 0.02,
+    },
+    ...sur,
+  })
+
+  /** Un personnage dont la pose « repos » a un corps, et rien d'autre. */
+  const avecCorps = (corps: Asset, calques: Asset[] = []) =>
+    personnage("Le nain", {
+      cases: PLAN.map((p) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images: p.identifiant === "repos" ? [corps] : [],
+        calques: (p.identifiant === "repos" && calques.length
+          ? { casque: calques }
+          : {}) as Record<string, Asset[]>,
+        corps: p.identifiant === "repos" ? corps.identifiant : null,
+      })),
+    })
+
+  // ── « Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée
+  //     sur-le-champ » (US-138) ────────────────────────────────────────────────
+
+  test("nommer une pièce la crée, et crée son emplacement avec elle", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.change(ecran.getByLabelText("Nom de la pièce à ajouter"), {
+      target: { value: "casque" },
+    })
+    fireEvent.change(
+      ecran.getByLabelText("Emplacement de la pièce sur le corps — créé s'il n'existe pas"),
+      { target: { value: "tête" } },
+    )
+    fireEvent.click(ecran.getByRole("button", { name: "Ajouter" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/characters/pieces"),
+      ).toBe(true),
+    )
+    // **Ranger n'est jamais un préalable** : l'écran envoie le nom de
+    // l'emplacement, il n'a pas eu à le créer d'abord.
+    const envoye = appels.find((a) => a.url === "/api/characters/pieces")
+      ?.corps as Record<string, unknown>
+    expect(envoye.emplacement).toBe("tête")
+    // Et l'emplacement paraît, avec sa pièce dessous.
+    await waitFor(() => expect(ecran.getByText("tête")).toBeTruthy())
+  })
+
+  // ── « Une pièce déclare sa portée — contenue ou qui agrandit —, le défaut est
+  //     « contenue », et rien ne la devine à la place de l'auteur » (US-139) ────
+
+  test("la portée d'une pièce se déclare, et le défaut est « contenue »", async () => {
+    const { ecran, appels } = await ouvrir({
+      emplacements: [{ identifiant: "dos", nom: "dos", rang: 0 }],
+      pieces: [
+        {
+          identifiant: "cape",
+          nom: "cape",
+          description: "une longue cape qui traîne au sol",
+          emplacement: "dos",
+          // **Rien ne lit le mot « cape »** : elle arrive contenue, comme tout
+          // ce que l'auteur n'a pas déclaré.
+          portee: "contenue",
+          concept_arts: [],
+        },
+      ],
+    })
+
+    const portee = ecran.getByLabelText("Portée de cape") as HTMLSelectElement
+    expect(portee.value).toBe("contenue")
+
+    fireEvent.change(portee, { target: { value: "agrandit" } })
+    await waitFor(() =>
+      expect(
+        appels.find((a) => a.url === "/api/characters/pieces/cape")?.corps,
+      ).toEqual({ portee: "agrandit" }),
+    )
+  })
+
+  // ── « Une planche d'équipement où figurerait une pose sans corps est
+  //     impossible à lancer : la pose est visiblement inéligible et porte sa
+  //     raison » (US-141) ──────────────────────────────────────────────────────
+
+  test("une pose sans corps est inéligible, porte sa raison, et ne se coche pas", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps)],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    // Celle qui a un corps s'arme.
+    expect(ecran.getByRole("button", { name: "Habiller repos de casque" })).toBeTruthy()
+    // Celle qui n'en a pas **porte sa raison**, et sa coche est éteinte.
+    expect(ecran.getByText(/« marche » n'a pas encore de corps/)).toBeTruthy()
+    expect(
+      (ecran.getByLabelText("Habiller marche avec casque") as HTMLInputElement)
+        .disabled,
+    ).toBe(true)
+    // Et rien ne propose de la lancer : il n'y a pas de chose indisponible, il
+    // n'y a rien du tout.
+    expect(ecran.queryByRole("button", { name: "Habiller marche de casque" })).toBeNull()
+  })
+
+  // ── « Chacun de ces calques s'affiche superposé au corps de sa pose »
+  //     (US-143) ──────────────────────────────────────────────────────────────
+
+  test("le calque s'affiche superposé au corps de sa pose", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    const vignette = ecran.getByRole("button", { name: "Ouvrir casque · repos" })
+
+    // **Deux images dans le même cadre** : le corps dessous, le calque dessus.
+    // Une seule aurait été un calque flottant, et l'auteur n'aurait rien à
+    // juger — c'est très exactement ce que US-143 demande de voir.
+    const images = Array.from(vignette.querySelectorAll("img"))
+    expect(images.length).toBe(2)
+    // L'adresse d'une image se lit sur sa génération et son rang — un seul
+    // endroit du produit la nomme (`Apercu.imageAsset`), et l'essai la lit là où
+    // elle est écrite plutôt que de la recomposer.
+    expect(images[0].getAttribute("src")).toContain("aaaa1111/slots/0/image")
+    expect(images[1].getAttribute("src")).toContain("bbbb2222/slots/100/image")
+  })
+
+  // ── « Les mesures s'affichent toutes, et aucune ne rend un calque impossible
+  //     à garder » (US-147) ────────────────────────────────────────────────────
+
+  test("les cinq mesures s'affichent, et aucune n'a de seuil ni de couleur d'alarme", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+
+    for (const nom of [
+      "silhouette retrouvée",
+      "corps repeint",
+      "part ajoutée",
+      "échelle au retour",
+      "objet ou poussière",
+    ])
+      expect(await ecran.findByText(nom)).toBeTruthy()
+
+    // **Aucune ne refuse, et aucune ne s'alarme.** `--echec` veut dire *ce qui
+    // échoue ou ce qui détruit*, et un calque gardé n'échoue pas.
+    expect(
+      document.querySelector("[data-univers] .text-echec"),
+    ).toBeNull()
+  })
+
+  // ── « Le masque rectangle d'un calque déjà fabriqué se déplace et se
+  //     retaille » (US-145) ────────────────────────────────────────────────────
+
+  test("la zone se trace au glissement, et se retire d'un geste", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+
+    const cadre = await ecran.findByRole("application", {
+      name: "Zone du calque casque sur repos",
+    })
+    // jsdom ne met rien en page : le cadre mesure zéro, donc **tous les
+    // pointeurs tombent au même pixel**. On borne donc l'essai à ce qu'il peut
+    // honnêtement prouver — que le geste part au serveur, et qu'il en revient
+    // sans zone quand il n'a pas glissé. La géométrie, elle, est une fonction
+    // pure, et c'est `placer()` de l'infobulle qui a montré la voie.
+    fireEvent.pointerDown(cadre, { clientX: 10, clientY: 10, pointerId: 1 })
+    fireEvent.pointerMove(cadre, { clientX: 90, clientY: 90, pointerId: 1 })
+    fireEvent.pointerUp(cadre, { clientX: 90, clientY: 90, pointerId: 1 })
+
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/assets/bbbb2222-100/layer"),
+      ).toBe(true),
+    )
+    // **Rien n'a été redemandé au fournisseur** : poser une zone ne passe par
+    // aucune route de génération.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  // ── « Une pièce qui agrandit, revenue à une autre échelle, ne produit aucun
+  //     calque : la dérive est nommée à l'écran » (US-148) ─────────────────────
+
+  test("un corps habillé dit qu'il n'est pas un calque, et nomme la dérive", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const habille = calque("bbbb2222-100", corps.identifiant, {
+      // **Aucune différence** : ce qui revient est gardé, mais il ne s'empile
+      // pas. C'est la recette qui le dit, et rien d'autre.
+      recette: RECETTE_VIDE,
+      calque: {
+        silhouette: 1,
+        repeint: 0.235,
+        ajout: 2.03,
+        echelle: 0.62,
+        compacite: 0.41,
+        // L'écart d'échelle est rapporté à la tolérance du produit — 0,38 pour
+        // 0,08 —, donc plafonné : au-delà, il n'y a plus de calque à graduer.
+        pire: "échelle au retour",
+        gravite: 1,
+      },
+    })
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [{ ...CASQUE, portee: "agrandit" }],
+      personnages: [avecCorps(corps, [habille])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    expect(ecran.getByText(/corps habillé/)).toBeTruthy()
+
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+    // La dérive est **nommée**, avec le chiffre qui a décidé.
+    expect(await ecran.findByText(/0,62× de la taille envoyée/)).toBeTruthy()
+    expect(ecran.getByText(/il ne s'empile pas/)).toBeTruthy()
+  })
+
+  // ── « Le produit ne propose nulle part de reposer un calque sur une autre
+  //     pose que la sienne » ───────────────────────────────────────────────────
+
+  test("aucun geste ne propose de reposer un calque ailleurs", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    // La colonne du corps porte le geste qui vide une case ; celle d'une pièce,
+    // non — **un calque est solidaire de sa pose**, et il n'y a donc rien à
+    // défaire ni à reposer.
+    expect(ecran.queryByLabelText(/Retirer cette image de la case/)).toBeNull()
+    expect(ecran.queryByText(/reposer/i)).toBeNull()
+  })
+
+  // ── « La matrice n'offre ni recherche, ni filtres, ni sélection multiple »
+  //     — reconduit en C3 ─────────────────────────────────────────────────────
+
+  test("la colonne d'une pièce ne fait pas de la matrice une grille", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    // Ni recherche, ni filtre — l'invariant de C1, reconduit.
+    expect(ecran.queryByRole("searchbox")).toBeNull()
+    // **Et ce qui se coche reste une attitude**, jamais une vignette : chaque
+    // case à cocher de cette colonne nomme une pose, et le jour où l'une d'elles
+    // passera sur une image, cet essai tombera. C'est son métier.
+    for (const coche of ecran.getAllByRole("checkbox"))
+      expect(coche.getAttribute("aria-label")).toMatch(/^Habiller .+ avec casque$/)
+  })
+
+  // ── R5 · « Le recalage se rejoue depuis la planche, sans un centime »
+  //     (US-173) ───────────────────────────────────────────────────────────────
+
+  test("le calque se recale depuis sa planche, et rien n'est redemandé", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+
+    fireEvent.click(
+      await ecran.findByRole("button", { name: /Recaler depuis la planche/ }),
+    )
+
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/assets/bbbb2222-100/realign"),
+      ).toBe(true),
+    )
+    // **Aucun centime**, et ça se vérifie ici comme au serveur : le rejeu ne
+    // passe par aucune route de génération.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  test("un corps habillé porte le rejeu, parce que c'est lui qui en a besoin", async () => {
+    // Le cas du 29 août 2026 : la dérive a été prononcée sur une échelle
+    // inventée, et l'image est rangée comme un corps habillé. Le geste qui la
+    // répare doit donc être **là aussi**, pas seulement sur les calques.
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const habille = calque("bbbb2222-100", corps.identifiant, {
+      recette: RECETTE_VIDE,
+    })
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [habille])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+
+    expect(
+      await ecran.findByRole("button", { name: /Recaler depuis la planche/ }),
+    ).toBeTruthy()
+  })
+
+  // ══ C4 · La main ═══════════════════════════════════════════════════════════
+  //
+  // **Ce que jsdom peut honnêtement prouver, et rien de plus.** Il ne met rien
+  // en page : le cadre mesure zéro, donc tous les pointeurs tombent au même
+  // pixel. Ce qui se vérifie ici est donc *ce qui part* — la couche visée, le
+  // rayon, le sens — et *ce qui paraît* : le corps sous la retouche, l'avant
+  // sous l'appui, le tri de la colonne. La géométrie du pinceau, elle, est une
+  // fonction pure, et elle s'éprouve au serveur (`tests/test_c4.py`).
+
+  /** Ouvrir le panneau d'un calque, et rendre son cadre — le geste commun à
+   *  tous les essais de C4. */
+  const ouvrirCalque = async (ecran: ReturnType<typeof within>) => {
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+    return await ecran.findByRole("application", {
+      name: "Zone du calque casque sur repos",
+    })
+  }
+
+  const glisser = (cadre: HTMLElement) => {
+    fireEvent.pointerDown(cadre, { clientX: 10, clientY: 10, pointerId: 1 })
+    fireEvent.pointerMove(cadre, { clientX: 40, clientY: 60, pointerId: 1 })
+    fireEvent.pointerUp(cadre, { clientX: 40, clientY: 60, pointerId: 1 })
+  }
+
+  const dernierAppel = (
+    appels: { url: string; corps: unknown }[],
+    url: string,
+  ) => appels.filter((a) => a.url === url).at(-1)?.corps as
+    | { couche: string; traits: { garde: boolean; rayon: number }[] }
+    | undefined
+
+  // ── « Un masque s'affine à main levée, puis au pixel, sans repayer
+  //     d'image » (US-149) ─────────────────────────────────────────────────────
+
+  test("le masque s'affine à main levée puis au pixel, et rien n'est repayé", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    const cadre = await ouvrirCalque(ecran)
+
+    // **À main levée** — le rayon offert au repos, et la couche du masque.
+    fireEvent.click(ecran.getByRole("button", { name: "masque" }))
+    glisser(cadre)
+
+    await waitFor(() =>
+      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
+    )
+    const large = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
+    expect(large.couche).toBe("affinage")
+    expect(large.traits.at(-1)!.rayon).toBeGreaterThan(0)
+
+    // **Puis au pixel** — le même geste, le même envoi, un rayon de moins.
+    // Les deux échelles sont les deux bouts d'un seul réglage.
+    fireEvent.click(ecran.getByRole("button", { name: "1 px" }))
+    glisser(cadre)
+
+    await waitFor(() =>
+      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!.traits).toHaveLength(2),
+    )
+    const fin = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
+    expect(fin.couche).toBe("affinage")
+    expect(fin.traits.at(-1)!.rayon).toBe(0)
+    // **La liste est entière, jamais un ajout** : le second envoi porte les deux
+    // passages, et pas seulement le dernier.
+    expect(fin.traits).toHaveLength(2)
+
+    // Rien n'a été redemandé au fournisseur.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  // ── « Un calque se retouche au pixel avec le corps affiché en repère sous
+  //     lui » (US-150) ─────────────────────────────────────────────────────────
+
+  test("la retouche vise l'autre couche, et le corps reste en repère dessous", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    const cadre = await ouvrirCalque(ecran)
+    fireEvent.click(ecran.getByRole("button", { name: "retouche" }))
+
+    // **Le corps est là, sous le calque** : c'est lui le repère, et sans lui on
+    // corrigerait sans savoir sur quoi ça se pose.
+    const dessous = cadre.querySelector('img[alt=""]') as HTMLImageElement | null
+    expect(dessous).toBeTruthy()
+    expect(dessous!.getAttribute("src")).toContain(corps.generation)
+
+    // **Ôter, au pixel** — la seconde couche, et le sens que le segment dit.
+    fireEvent.click(ecran.getByRole("button", { name: "ôter" }))
+    fireEvent.click(ecran.getByRole("button", { name: "1 px" }))
+    glisser(cadre)
+
+    await waitFor(() =>
+      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
+    )
+    const pose = dernierAppel(appels, "/api/assets/bbbb2222-100/hand")!
+    expect(pose.couche).toBe("retouche")
+    expect(pose.traits.at(-1)).toMatchObject({ garde: false, rayon: 0 })
+  })
+
+  // ── « L'avant et l'après se comparent d'un seul geste » (US-151) ────────────
+
+  test("tenir montre l'avant, et lâcher rend l'après", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    // Un calque que la main a déjà touché : sans ça il n'y a rien à comparer.
+    const touche = calque("bbbb2222-100", corps.identifiant)
+    touche.recette.difference!.retouche = [
+      { garde: true, rayon: 2, points: [[4, 4]] },
+    ]
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [touche])],
+    })
+
+    const cadre = await ouvrirCalque(ecran)
+    const dessus = () =>
+      (cadre.querySelector('img[alt="casque · repos"]') as HTMLImageElement).src
+
+    const apres = dessus()
+    expect(apres).not.toContain("avant=true")
+
+    const bouton = ecran.getByRole("button", { name: "Voir le calque avant la main" })
+    fireEvent.pointerDown(bouton)
+    expect(dessus()).toContain("avant=true")
+
+    // **Lâcher rend l'après.** Une bascule aurait laissé l'écran sur l'avant, et
+    // la retouche suivante se serait faite sur une image qui n'est plus celle
+    // qu'on modifie.
+    fireEvent.pointerUp(bouton)
+    expect(dessus()).toBe(apres)
+
+    // Comparer ne redemande rien : c'est un calcul du serveur, pas un appel.
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  test("sans main posée, il n'y a rien à comparer — et le geste est absent", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    await ouvrirCalque(ecran)
+    // **Absent, pas grisé** — la bascule de `+ personnage` et du geste du lot :
+    // le grisé suppose une chose indisponible, et ici il n'y a pas de chose.
+    expect(
+      ecran.queryByRole("button", { name: "Voir le calque avant la main" }),
+    ).toBeNull()
+  })
+
+  // ── « Le masque et la retouche sont deux couches distinctes, et chacune
+  //     s'annule » (US-153, C4) ────────────────────────────────────────────────
+
+  test("chaque couche s'annule seule, et l'autre ne bouge pas", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const deux = calque("bbbb2222-100", corps.identifiant)
+    deux.recette.difference!.affinage = [
+      { garde: false, rayon: 2, points: [[1, 1]] },
+    ]
+    deux.recette.difference!.retouche = [
+      { garde: true, rayon: 0, points: [[4, 4]] },
+    ]
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [deux])],
+    })
+
+    await ouvrirCalque(ecran)
+
+    fireEvent.click(ecran.getByRole("button", { name: "masque" }))
+    fireEvent.click(ecran.getByRole("button", { name: /Sans passages/ }))
+    await waitFor(() =>
+      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toBeTruthy(),
+    )
+    // **La couche visée est vidée, et elle seule** : l'envoi ne parle que d'elle.
+    expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toEqual({
+      couche: "affinage",
+      traits: [],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "retouche" }))
+    fireEvent.click(ecran.getByRole("button", { name: /Sans retouche/ }))
+    await waitFor(() =>
+      expect(dernierAppel(appels, "/api/assets/bbbb2222-100/hand")).toEqual({
+        couche: "retouche",
+        traits: [],
+      }),
+    )
+  })
+
+  test("les trois outils ne paraissent que sur un calque", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const habille = calque("bbbb2222-100", corps.identifiant, {
+      recette: RECETTE_VIDE,
+    })
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [{ ...CASQUE, portee: "agrandit" }],
+      personnages: [avecCorps(corps, [habille])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "Ouvrir casque · repos" }))
+
+    // Un corps habillé n'a ni masque ni retouche : trois segments morts
+    // au-dessus de son image seraient du cadrage affiché.
+    await ecran.findByText(/il ne s'empile pas/)
+    expect(ecran.queryByRole("button", { name: "masque" })).toBeNull()
+    expect(ecran.queryByRole("button", { name: "retouche" })).toBeNull()
+  })
+
+  // ── « Les calques restant à regarder se trient par la mesure la plus
+  //     défavorable, le pire en tête » (US-152) ────────────────────────────────
+
+  test("la colonne se trie par le pire, et ce qui est fait descend", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    /** Un calque sur une pose donnée, avec la gravité que le serveur lui a
+     *  calculée — l'écran ne la recalcule jamais. */
+    const sur = (pose: string, gravite: number, main = false): Asset => {
+      const un = calque(`bbbb2222-10${pose.length}`, corps.identifiant, {
+        identifiant: `calque-${pose}`,
+        label: `casque · ${pose}`,
+        pose,
+      })
+      un.calque = { ...un.calque!, gravite, pire: "corps repeint" }
+      if (main)
+        un.recette.difference!.retouche = [
+          { garde: true, rayon: 0, points: [[1, 1]] },
+        ]
+      return un
+    }
+    const doux = sur("repos", 0.04)
+    const pire = sur("marche", 0.62)
+    const fait = sur("course", 0.9, true)
+
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [
+        personnage("Le nain", {
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: [corps],
+            corps: corps.identifiant,
+            calques: { repos: [doux], marche: [pire], course: [fait] }[
+              p.identifiant
+            ]
+              ? ({
+                  casque: { repos: [doux], marche: [pire], course: [fait] }[
+                    p.identifiant
+                  ]!,
+                } as Record<string, Asset[]>)
+              : ({} as Record<string, Asset[]>),
+          })),
+        }),
+      ],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    /** L'ordre des attitudes tel qu'il est **rendu**, ligne à ligne. */
+    const ordre = () =>
+      Array.from(
+        document.querySelectorAll("[data-univers] li .w-\\[110px\\]"),
+      ).map((n) => n.textContent)
+
+    // **Le plan reste le défaut** : c'est l'ordre de l'auteur, et le seul dans
+    // lequel une case vide se lit.
+    expect(ordre().slice(0, 3)).toEqual(["repos", "marche", "course"])
+
+    fireEvent.click(ecran.getByRole("button", { name: "par le pire" }))
+
+    // Le pire en tête, ce qui va mieux ensuite — et **ce dont on s'est déjà
+    // occupé descend**, malgré la pire gravité des trois : « ce qui reste à
+    // regarder » est un calque sur lequel la main n'est pas passée.
+    const trie = ordre()
+    expect(trie.indexOf("marche")).toBeLessThan(trie.indexOf("repos"))
+    expect(trie.indexOf("repos")).toBeLessThan(trie.indexOf("course"))
+    // Les attitudes sans calque ferment la marche : il n'y a rien à y regarder.
+    expect(trie.slice(0, 3)).toEqual(["marche", "repos", "course"])
+
+    // **La mesure qui décide est nommée sur la rangée**, et l'état de la main
+    // avec — c'est ce que le tri ordonne, écrit là où on le lit.
+    expect(ecran.getAllByText(/à regarder · corps repeint/).length).toBe(2)
+    expect(ecran.getByText("main posée")).toBeTruthy()
+  })
+
+  test("la colonne du corps n'offre pas de tri : il n'y a rien à classer", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    // **Absent, pas grisé** : sur la colonne du corps il n'y a pas de mesure de
+    // calque, donc pas de chose indisponible — il n'y a rien du tout.
+    expect(ecran.queryByRole("button", { name: "par le pire" })).toBeNull()
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    expect(ecran.getByRole("button", { name: "par le pire" })).toBeTruthy()
+  })
+
+  // ── La sortie vers le jeu (C5) ──────────────────────────────────────────
+
+  /** Le cadre de l'agent avec un dossier de jeu posé — c'est là que le produit
+   *  le range depuis T7, et l'écran des personnages ne fait que le lire. */
+  const AVEC_DOSSIER: Etat["agent"] = {
+    ...ETAT.agent,
+    garde_fous: { ...ETAT.agent.garde_fous, dossier_jeu: "C:/jeux/mon-jeu/assets" },
+  }
+
+  test("sans attitude remplie, sortir est grisé et dit pourquoi", async () => {
+    const { ecran, flux } = await ouvrir({
+      agent: AVEC_DOSSIER,
+      personnages: [personnage("Le nain")],
+    })
+    // Le dossier est posé : ce qui manque ici est ce qu'il y a à sortir, et
+    // c'est cette raison-là qui doit s'afficher — celle qu'on peut corriger
+    // sans quitter l'écran passe devant celle qui renvoie ailleurs.
+    act(() => flux.emettre("agent", AVEC_DOSSIER))
+
+    const bouton = ecran.getByRole("button", {
+      name: "Poser dans le dossier du jeu",
+    }) as HTMLButtonElement
+    // **Grisé, jamais caché** : la chose existe — c'est un personnage —, et ce
+    // qui manque est nommé (`docs/DESIGN.md` § Le grisé porte sa raison).
+    expect(bouton.disabled).toBe(true)
+    expect(
+      ecran.getAllByText(/aucune attitude remplie/).length,
+    ).toBeGreaterThan(0)
+  })
+
+  test("sans dossier de jeu, sortir est grisé et renvoie aux Réglages", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({ personnages: [avecCorps(corps)] })
+
+    const bouton = ecran.getByRole("button", {
+      name: "Poser dans le dossier du jeu",
+    }) as HTMLButtonElement
+    expect(bouton.disabled).toBe(true)
+    // Le réglage manquant n'est pas une panne : c'est un dossier que personne
+    // n'a encore posé, et la raison dit où on le pose.
+    expect(ecran.getAllByText(/aucun dossier de jeu/).length).toBeGreaterThan(0)
+    expect(ecran.getAllByText(/Réglages/).length).toBeGreaterThan(0)
+  })
+
+  test("le personnage part, et l'écran dit combien de fichiers et où", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels, flux } = await ouvrir({
+      agent: AVEC_DOSSIER,
+      personnages: [avecCorps(corps)],
+    })
+
+    const bouton = ecran.getByRole("button", {
+      name: "Poser dans le dossier du jeu",
+    }) as HTMLButtonElement
+    // **Posé dans l'autre écran, il s'allume ici à l'instant** : le cadre de
+    // l'agent arrive par le flux, et c'est la leçon de R1 — un réglage qui ne
+    // se voit qu'en rechargeant la page n'est pas un réglage.
+    expect(bouton.disabled).toBe(true)
+    act(() => flux.emettre("agent", AVEC_DOSSIER))
+    expect(bouton.disabled).toBe(false)
+
+    fireEvent.click(bouton)
+
+    // **Le dossier n'est pas envoyé** : il vit dans les Réglages, et le serveur
+    // en est le seul dépositaire. L'écran le lit pour griser, jamais pour le
+    // redire.
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/characters/le-nain/export"),
+      ).toBe(true),
+    )
+    expect(
+      appels.find((a) => a.url === "/api/characters/le-nain/export")?.corps,
+    ).toEqual({})
+
+    // Ce que l'auteur veut savoir après coup : combien, et où — c'est le chemin
+    // qu'il collera dans son moteur.
+    await waitFor(() =>
+      expect(ecran.getAllByText(/1 fichiers posés dans/).length).toBeGreaterThan(0),
+    )
+    expect(ecran.getAllByText("C:/jeux/mon-jeu/assets").length).toBeGreaterThan(0)
+  })
+
+  test("armer demande le sujet au serveur au lieu de l'écrire", async () => {
+    const { ecran, appels } = await ouvrir({
+      personnages: [
+        personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
+      ],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
+
+    // **Une seule composition dans tout le produit** (C5) : l'écran et l'agent
+    // arment la même case, et le texte vient du service qui l'écrit. Deux
+    // compositions auraient fini par demander deux choses différentes.
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/characters/subject")).toBe(true),
+    )
+    const envoye = appels.find((a) => a.url === "/api/characters/subject")
+      ?.corps as { personnage: string; poses: string[] }
+    expect(envoye.personnage).toBe("le-nain")
+    expect(envoye.poses).toEqual(["marche"])
+
+    const champ = screen.getByPlaceholderText(
+      "Décris ce que tu veux fabriquer.",
+    ) as HTMLTextAreaElement
+    await waitFor(() =>
+      expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche"),
+    )
   })
 })

@@ -37,8 +37,9 @@ from atelier.services.bibliotheque import (
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.evenements import Diffusion, Evenement
-from atelier.services.export import Archive, ExportRefuse, ServiceExport
+from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.generation import ServiceGenerations
+from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import CompteFaux, ServicePliage
 from atelier.services.production import (
     PersonnageInconnu,
@@ -84,9 +85,11 @@ __all__ = [
     "ServiceDecoupe",
     "ServiceExport",
     "ServiceGenerations",
+    "ServiceEquipement",
     "ServicePliage",
     "ServiceProduction",
     "ServiceUnivers",
+    "Sortie",
     "UniversRefuse",
 ]
 
@@ -159,11 +162,22 @@ class Atelier:
         self.pliage = ServicePliage(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
-        # **Le dernier, et le seul qui ne reçoive pas la diffusion.** Un export
-        # ne change rien : il lit des assets, il rend des octets, et l'atelier
-        # est exactement dans l'état où il l'a trouvé. Rien à annoncer, donc
-        # rien à quoi s'abonner — et ça se lit dans cette ligne.
-        self.export = ServiceExport(self.base, self.assets, self.bibliotheque)
+        # **C3, et il se pose sur les deux précédents sans les rouvrir.** Le
+        # vestiaire d'un projet, la planche qui habille, le calque qui en sort.
+        # Il ne sait pas plier — il demande au pliage —, et il ne sait pas viser
+        # une case — il demande à la production. Ce qui lui appartient tient en
+        # deux phrases : quels corps mettre dans les cases, et quoi faire de ce
+        # qui en revient. Aucun fournisseur non plus : tout C3 marche réseau
+        # coupé, sauf la génération, qui part de l'atelier.
+        self.equipement = ServiceEquipement(
+            self.base,
+            self.fichiers,
+            self.bibliotheque,
+            self.assets,
+            self.production,
+            self.pliage,
+            self.diffusion,
+        )
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,
@@ -182,6 +196,10 @@ class Atelier:
             # est demandé, et ranger ce qui revient. Lui non plus ne connaît pas
             # les générations — l'ordre tient de la même façon.
             self.pliage,
+            # Et l'équipement, pour les trois mêmes gestes du côté de C3 : les
+            # cases d'une planche qui habille, la planche elle-même, et les
+            # calques qui en reviennent.
+            self.equipement,
         )
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le
@@ -192,6 +210,24 @@ class Atelier:
         # l'autre.
         self.agent = ServiceAgent(
             self.fichiers, self.diffusion, self.catalogue, self.generations
+        )
+        # **Le dernier de tous, et le seul qui ne reçoive pas la diffusion.** Un
+        # export ne change rien : il lit des assets, il rend des octets, et
+        # l'atelier est exactement dans l'état où il l'a trouvé. Rien à
+        # annoncer, donc rien à quoi s'abonner — et ça se lit dans cette ligne.
+        #
+        # **Il est passé après l'agent en C5**, et c'est le seul ordre possible :
+        # sortir un personnage pose des fichiers dans le dossier du jeu, et ce
+        # dossier — avec ses trois règles — appartient au service de l'agent
+        # depuis T7. La production et l'équipement le précèdent déjà ; le
+        # dernier arrivé décide de la place.
+        self.export = ServiceExport(
+            self.base,
+            self.assets,
+            self.bibliotheque,
+            self.production,
+            self.equipement,
+            self.agent,
         )
 
     async def ouvrir(self) -> None:

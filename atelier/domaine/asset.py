@@ -10,9 +10,15 @@ Trois invariants se rejoignent ici, et ils viennent de trois tranches :
 
 - **Les dimensions mesurées font foi** (T1) — celles du brut *et* celles du
   rendu, chacune mesurée sur le fichier, jamais déduite d'un calcul.
-- **Le traitement est non destructif** (T2) — `brut` ne change jamais, `rendu`
-  est un cache nommé par l'empreinte de la recette. Effacer le rendu ne perd
-  rien ; effacer le brut perdrait tout, et rien dans le produit ne l'efface.
+- **Le traitement est non destructif** (T2) — `brut` est l'image payée et ne
+  change pas, `rendu` est un cache nommé par l'empreinte de la recette. Effacer
+  le rendu ne perd rien ; effacer le brut perdrait tout, et rien dans le produit
+  ne l'efface. **Une seule famille d'assets fait exception, et la règle y tient
+  quand même** : un calque et une découpe de planche ont un brut *dérivé* d'une
+  autre image — l'image payée est alors la planche, qui reste le brut de sa
+  génération et que rien ne touche. Un brut dérivé est un cache d'un cran plus
+  haut, et c'est ce qui permet de rejouer le recalage d'un calque sans repayer
+  (R5, `docs/PLAN.md`).
 - **Les fichiers font foi, la base est un index reconstructible** (T3, payé ici)
   — l'enregistrement de l'asset est écrit à côté de ses images. La bibliothèque
   se reconstruira en relisant le disque, sans rien à rétro-adapter.
@@ -28,6 +34,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from atelier.domaine.equipement import MesuresCalque
 from atelier.domaine.pliage import MesuresLot
 from atelier.domaine.recette import Recette
 
@@ -119,6 +126,20 @@ class Asset:
     personnage: str | None = None
     pose: str | None = None
 
+    # ── Et de quelle pièce ───────────────────────────────────────────────────
+    #
+    # Arrivée en C3 (US-140). Le second axe de la matrice : la pose dit la ligne,
+    # la pièce dit la colonne, et l'emplacement de la pièce dit où cette colonne
+    # se range. Vide pour un corps — c'est la colonne de gauche, celle du corps
+    # nu, et c'est le cas courant.
+    #
+    # **Elle ne dit pas ce que l'image est**, seulement de quoi elle parle. Un
+    # calque et un corps habillé portent la même pièce ; c'est la **recette** qui
+    # les distingue, parce qu'elle seule sait si une différence a été calculée
+    # (`recette.calque`). Un drapeau de plus aurait été une seconde vérité sur
+    # une question à laquelle la recette répond déjà.
+    piece: str | None = None
+
     # ── Ce que le lot a mesuré sur cette case-là ─────────────────────────────
     #
     # Arrivé en C2 (US-135). Vide pour toute image qui n'est pas sortie d'une
@@ -134,6 +155,18 @@ class Asset:
     # automatique du produit ; ressemblance et dérive s'affichent et laissent
     # l'auteur décider (`docs/PLAN.md`, C2).
     lot: MesuresLot | None = None
+
+    # ── Ce que la différence a mesuré sur ce calque-là ───────────────────────
+    #
+    # Arrivées en C3 (US-147). Cinq nombres — silhouette retrouvée, corps
+    # repeint, part ajoutée, échelle au retour, objet ou poussière —, **et aucun
+    # ne refuse** : le compte d'images reste le seul refus automatique du
+    # produit. Une copie prise à la naissance, comme `lot` juste au-dessus, et
+    # pour la même raison.
+    #
+    # Portées aussi par un **corps habillé** : c'est là qu'on lit l'échelle qui
+    # a fait renoncer au calque (US-148).
+    calque: MesuresCalque | None = None
 
     # Posé à l'instant où le personnage part, exactement comme `parent_supprime`
     # et pour la même raison : jamais de cascade, l'image reste, et elle sait
@@ -205,7 +238,9 @@ class Asset:
             "modele": self.modele,
             "personnage": self.personnage,
             "pose": self.pose,
+            "piece": self.piece,
             "lot": self.lot.en_json() if self.lot else None,
+            "calque": self.calque.en_json() if self.calque else None,
             "personnage_supprime": self.personnage_supprime,
             "projet": self.projet,
             "collection": self.collection,
@@ -256,7 +291,9 @@ class Asset:
             modele=d.get("modele", ""),
             personnage=d.get("personnage"),
             pose=d.get("pose"),
+            piece=d.get("piece"),
             lot=MesuresLot.depuis_json(d.get("lot")),
+            calque=MesuresCalque.depuis_json(d.get("calque")),
             personnage_supprime=d.get("personnage_supprime", False),
             projet=d.get("projet"),
             collection=d.get("collection"),

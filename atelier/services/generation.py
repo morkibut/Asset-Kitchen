@@ -57,6 +57,7 @@ from atelier.domaine.asset import Asset
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
+from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import CompteFaux, ServicePliage, consignes, reference
 
 
@@ -105,6 +106,7 @@ class ServiceGenerations:
         univers: "ServiceUnivers | None" = None,
         production: "ServiceProduction | None" = None,
         pliage: "ServicePliage | None" = None,
+        equipement: "ServiceEquipement | None" = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
@@ -137,6 +139,11 @@ class ServiceGenerations:
         # ni personnage ni pose — c'est ce service-ci qui compose ses cases,
         # parce que c'est lui qui sait déjà relier un appel à une case (C1).
         self._pliage = pliage
+        # **L'équipement, pour trois gestes et pas un de plus** : composer
+        # les cases d'une planche qui habille, dessiner cette planche, et
+        # ranger les calques qui en reviennent. Ce service-là ne sait pas
+        # plier — c'est le pliage de C2 qui plie, des deux côtés.
+        self._equipement = equipement
         self._en_vol: set[asyncio.Task[None]] = set()
 
     # ── Au démarrage ─────────────────────────────────────────────────────────
@@ -398,6 +405,7 @@ class ServiceGenerations:
         personnage: str | None = None,
         pose: str | None = None,
         poses: Sequence[str] | None = None,
+        piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
@@ -442,7 +450,7 @@ class ServiceGenerations:
         # pliage, lui, ne connaît ni personnage ni pose, et c'est ce qui laissera
         # C3 le réemployer tel quel. Chaque case est vérifiée avant qu'un centime
         # parte, exactement comme la case unique de C1.
-        pliage = self._plier(projet, personnage, poses)
+        pliage = self._plier(projet, personnage, poses, piece)
         # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
         # personnage disparu ou une pose qu'il ne tient plus doivent se dire
         # ici : l'écran n'arme que des cases visibles, mais un onglet resté
@@ -476,7 +484,7 @@ class ServiceGenerations:
         # cas de doublon, et le plafond du modèle se compte après.
         reinjectes = _reinjectes(
             tuple(references)
-            + self._concepts(projet, personnage)
+            + self._concepts(projet, personnage, piece)
             + self._artworks(demande, projet)
         )
         # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
@@ -497,7 +505,7 @@ class ServiceGenerations:
             # ceux qui facturent au token (`docs/PIEGES.md`) : le compter à part
             # aurait fait mentir le grisé au moment précis où l'appel est le plus
             # cher. **Avant le grisé**, pour la même raison que les réinjections.
-            + self._gabarit(pliage, identifiant_modele),
+            + self._jointes(pliage, identifiant_modele),
         )
 
         modele = self._catalogue.modele(identifiant_modele)
@@ -533,6 +541,10 @@ class ServiceGenerations:
             # porte pas, et c'est le cas courant : `pliage` vaut `None`, l'image
             # qui revient naît comme depuis T1.
             pliage=pliage,
+            # **Et de quelle pièce** (US-140). C'est ce champ, et lui seul, qui
+            # fait de cet appel une planche d'équipement : le dépliage le lit
+            # pour savoir s'il doit ranger des corps ou fabriquer des calques.
+            piece=piece or None,
         )
         self._sauver(generation)
         return generation, modele, False
@@ -549,6 +561,7 @@ class ServiceGenerations:
         personnage: str | None = None,
         pose: str | None = None,
         poses: Sequence[str] | None = None,
+        piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
@@ -562,6 +575,7 @@ class ServiceGenerations:
             personnage=personnage,
             pose=pose,
             poses=poses,
+            piece=piece,
             references_ecartees=references_ecartees,
         )
         if deja or modele is None:
@@ -725,7 +739,16 @@ class ServiceGenerations:
             if self._pliage is None:  # pragma: no cover — l'atelier le compose
                 return
             try:
-                self._pliage.deplier(generation, emplacement)
+                # **Une seule ligne sépare les deux usages du pliage** : sans
+                # pièce, la planche rend N corps (C2) ; avec, elle rend N calques
+                # comparés à l'avant que l'atelier connaît (C3). Le découpage, le
+                # compte et son refus sont les mêmes des deux côtés — ils vivent
+                # dans `ServicePliage`, et aucun des deux dépliages ne les
+                # réécrit.
+                if generation.piece and self._equipement is not None:
+                    self._equipement.deplier(generation, emplacement.rang)
+                else:
+                    self._pliage.deplier(generation, emplacement)
             except CompteFaux as refus:
                 # **Le seul refus automatique du produit** : rien n'est entré, le
                 # coût reste au journal (US-24), et l'emplacement redevient
@@ -779,7 +802,7 @@ class ServiceGenerations:
             # sur le disque, et il se refabrique à l'identique depuis la
             # géométrie du pliage. L'appel et la relance envoient donc exactement
             # la même chose, ce qui est la promesse de cette méthode.
-            + self._gabarit(generation.pliage, generation.modele),
+            + self._jointes(generation.pliage, generation.modele),
             options=demande.get("options", {}),
         )
 
@@ -841,9 +864,19 @@ class ServiceGenerations:
     # ── Le lot ───────────────────────────────────────────────────────────────
 
     def _plier(
-        self, projet: str | None, personnage: str | None, poses: Sequence[str] | None
+        self,
+        projet: str | None,
+        personnage: str | None,
+        poses: Sequence[str] | None,
+        piece: str | None = None,
     ) -> Pliage | None:
         """Les cases d'un lot, **vérifiées avant qu'un centime parte** (US-128).
+
+        **Deux sortes de lots, et c'est la pièce qui les sépare** (C3). Sans
+        pièce, la grille part vide et le lot crée N corps ; avec, elle part
+        pleine des corps qui existent et le lot les habille. Le second est
+        composé par le service d'équipement — lui seul sait quel corps va dans
+        quelle case, et ce que la portée de la pièce laisse comme place.
 
         Rien en dessous de deux : une seule pose n'est pas un lot, c'est la
         génération de C1, et la plier ferait payer un gabarit et une consigne de
@@ -863,6 +896,13 @@ class ServiceGenerations:
         part dans le prompt, et un repère de fichier n'a jamais décrit une
         attitude à un modèle.
         """
+        if piece:
+            if not personnage or self._equipement is None or not projet:
+                raise DemandeRefusee(
+                    "une planche d'équipement se lance depuis un personnage — "
+                    "une pièce se pose sur un corps, jamais sur rien"
+                )
+            return self._equipement.plier(projet, personnage, piece, poses or ())
         if not poses or len(poses) < 2:
             return None
         if not personnage or self._production is None or not projet:
@@ -876,10 +916,25 @@ class ServiceGenerations:
             cases.append(CasePliee(texte=visee.nom, pose=visee.identifiant))
         return Pliage(cases=tuple(cases))
 
-    def _gabarit(
+    def _jointes(
         self, pliage: Pliage | None, identifiant_modele: str
     ) -> tuple[bytes, ...]:
-        """Le gabarit de cases vides, quand ce modèle-là sait le lire.
+        """L'image que la planche envoie avec l'appel — **et il y en a deux
+        sortes, qui ne se ressemblent pas.**
+
+        **La grille vide de C2 envoie un gabarit** : des cases dessinées d'un
+        trait clair, pour dire au modèle où poser les N sujets qu'il va créer.
+
+        **La grille pleine de C3 envoie la planche elle-même** — les corps
+        déjà là, sur le fond plat du produit, et **rien d'autre** : ni ancre, ni
+        mire, ni silhouette de repère, ni les traits du gabarit (`docs/PLAN.md`,
+        C3). C'est un critère d'acceptation de la tranche, et il est vrai ici :
+        le gabarit et la planche sont deux branches d'un `if`, jamais deux images
+        qui partiraient ensemble.
+
+        Les deux se **redessinent du geste** à la soumission comme à la relance,
+        et aucune ne s'enregistre : les deux appels envoient donc exactement la
+        même chose.
 
         **Mesuré, pas supposé** : compte exact 11 fois sur 12 avec gabarit contre
         9 sur 12 sans (`essais/essai_grille.py`, 28 août 2026). C'est ce qui en
@@ -894,7 +949,18 @@ class ServiceGenerations:
         if pliage is None:
             return ()
         modele = self._catalogue.modele(identifiant_modele)
-        return (reference(pliage),) if modele.references_max > 0 else ()
+        if modele.references_max <= 0:
+            return ()
+        if pliage.geometrie_connue:
+            if self._equipement is None:  # pragma: no cover — l'atelier le compose
+                return ()
+            # **Sans référence possible, la planche ne part pas — et l'appel non
+            # plus.** Le gabarit est un confort dont C2 peut se passer ; la
+            # planche d'équipement *est* la demande. Un modèle qui n'accepte
+            # aucune image ne peut donc pas habiller, et il est grisé par le
+            # catalogue avant d'arriver ici (`Modele.refus`).
+            return (self._equipement.planche(pliage),)
+        return (reference(pliage),)
 
     # ── Le texte qui part, et l'univers qui l'habille ────────────────────────
 
@@ -959,6 +1025,7 @@ class ServiceGenerations:
         projet: str | None = None,
         personnage: str | None = None,
         poses: Sequence[str] | None = None,
+        piece: str | None = None,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -976,7 +1043,7 @@ class ServiceGenerations:
         """
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
-        pliage = self._plier(projet, personnage, poses)
+        pliage = self._plier(projet, personnage, poses, piece)
         parties = self.parties(sujet, repris, projet, pliage)
         return {
             "texte": "\n\n".join(bloc["texte"] for bloc in parties),
@@ -1003,6 +1070,7 @@ class ServiceGenerations:
         manuelles: Sequence[Reinjection] = (),
         personnage: str | None = None,
         cases: int = 0,
+        piece: str | None = None,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -1019,7 +1087,7 @@ class ServiceGenerations:
         """
         demande = Demande(prompt="x", echelle=echelle)
         artworks = self._artworks(demande, projet)
-        concepts = self._concepts(projet, personnage)
+        concepts = self._concepts(projet, personnage, piece)
         ecartees = (
             self._production.ecartees(projet, personnage)
             if self._production is not None and projet
@@ -1030,7 +1098,7 @@ class ServiceGenerations:
         echelle_lue = (
             self._univers.echelle(projet, echelle) if self._univers and echelle else None
         )
-        designes = set(self._concepts_identifiants(projet, personnage))
+        designes = set(self._concepts_identifiants(projet, personnage, piece))
 
         lignes = [
             {
@@ -1067,7 +1135,11 @@ class ServiceGenerations:
         # planche sans dire à quoi elle ressemble. Une ligne qu'on ne peut pas
         # défaire dans une liste de cases à cocher serait une case grisée dont
         # personne ne comprendrait la raison.
-        gabarit = 1 if cases >= 2 else 0
+        # Une planche d'équipement en envoie une aussi — et c'est la planche
+        # elle-même, pas un gabarit. Elle compte pareil : une place dans le
+        # plafond du modèle, et un coût chez ceux qui facturent au token. Dès
+        # **une** case, parce qu'une planche d'une seule pose reste une planche.
+        gabarit = 1 if (cases >= 2 or (piece and cases >= 1)) else 0
 
         return {
             # Ce qui part vraiment — donc ce qui décide du grisé.
@@ -1095,16 +1167,26 @@ class ServiceGenerations:
         return tuple(self._production.ecartees(projet, personnage))
 
     def _concepts_identifiants(
-        self, projet: str | None, personnage: str | None
+        self, projet: str | None, personnage: str | None, piece: str | None = None
     ) -> tuple[str, ...]:
+        """Ce que le personnage désigne, **et ce que la pièce désigne avec lui**.
+
+        Deux désignateurs, une seule liste, dédoublonnée en aval comme les trois
+        sources de références : habiller un nain d'un casque envoie les concept
+        arts du nain *et* ceux du casque, et l'auteur les décoche ligne par ligne
+        comme les autres (US-126).
+        """
         if self._production is None or not projet:
             return ()
-        return self._production.concept_arts(projet, personnage)
+        designes = self._production.concept_arts(projet, personnage)
+        if piece and self._equipement is not None:
+            designes = designes + self._equipement.concept_arts(projet, piece)
+        return tuple(dict.fromkeys(designes))
 
     def _concepts(
-        self, projet: str | None, personnage: str | None
+        self, projet: str | None, personnage: str | None, piece: str | None = None
     ) -> tuple[Reinjection, ...]:
-        """Les concept arts du personnage visé (US-124).
+        """Les concept arts du personnage visé, et de la pièce (US-124).
 
         En rôle `style`, comme les artworks : ils **inspirent**, ils
         n'engendrent pas — une carte en source d'édition donnerait une filiation
@@ -1112,7 +1194,7 @@ class ServiceGenerations:
         """
         return tuple(
             Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
-            for identifiant in self._concepts_identifiants(projet, personnage)
+            for identifiant in self._concepts_identifiants(projet, personnage, piece)
         )
 
     def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:

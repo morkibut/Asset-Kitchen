@@ -1052,6 +1052,19 @@ class ServiceUnivers:
             if vises is None and asset.recette.vide:
                 conserves += 1
                 continue
+            # **Un calque n'est jamais réaligné, même demandé nommément.** Il
+            # n'est pas une image que le projet cadre : il est calé au pixel sur
+            # le corps de sa pose, et lui poser une grille le rééchantillonnerait
+            # — le casque glisserait de la tête. La différence, elle, survivrait
+            # au `replace` ci-dessous ; l'alignement, non, et c'est lui qui fait
+            # tout l'intérêt de l'objet (`docs/PLAN.md`, C3).
+            #
+            # Il n'y perd rien : il hérite de la grille et de la palette du corps
+            # **par construction**, puisque ses pixels sont ceux d'une image déjà
+            # ramenée dans le cadre de ce corps.
+            if asset.recette.calque:
+                conserves += 1
+                continue
 
             suivante = replace(
                 asset.recette,

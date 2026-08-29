@@ -11,6 +11,222 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## C4 — 29 août 2026
+
+**C4 est écrite : la main rattrape ce que la différence ne voit pas.** Le masque d'un calque
+s'affine à main levée puis au pixel, le calque lui-même se retouche au pixel avec le corps en
+repère dessous, l'avant et l'après se comparent en maintenant un contrôle, et une colonne de
+pièce se trie par la mesure la plus défavorable. **Les sept critères sont cochés, tenus par
+16 essais de serveur et 8 d'écran.**
+
+**La décision qui n'était pas dans le cadrage : la retouche ne fait pas que retirer, elle
+ramène.** Une seconde couche qui n'aurait su qu'effacer aurait laissé entier le défaut de la
+séance du 29 août — *la différence trouve ce qui s'ajoute et manque ce qui se substitue* —,
+puisque aucun réglage de masque ne fabrique une différence que la comparaison de couleur n'a
+pas vue. La couche tranche donc **après** la mesure et dans les deux sens : elle ôte ce qui est
+en trop, et elle ramène les pixels revenus là où la mesure n'a rien trouvé. C'est la seule
+moitié de C4 qui répare quelque chose ; l'autre ne fait qu'affiner ce qui marchait déjà.
+
+**Et ça se mesure sur la vraie image.** Le casque du 29 août, celui qui était revenu en semis de
+pixels épars : **451 pixels opaques avant, 1 044 après un seul passage de la main**, et le casque
+est lisible. L'avant, lui, rend toujours 451 — il se calcule, il ne se garde nulle part.
+
+**Un vecteur, jamais une image.** Une couche enregistre le chemin parcouru et son rayon, pas le
+masque qu'il produit. Un masque en octets aurait pesé la taille de l'image à chaque geste, et
+surtout il aurait perdu ce qui fait une recette : se rejouer. Le prix est que la rasterisation
+doit être déterministe — ce qui est un critère depuis T2, et ce qui a immédiatement coûté un
+piège : *une ellipse de taille nulle ne peint aucun pixel*, donc le geste au pixel ne marquait
+rien tant qu'il tenait en un seul point.
+
+**Rayon zéro est le pixel.** « À main levée, puis au pixel » n'est pas deux outils : même liste
+de points, même rasterisation, un nombre de différence. Deux chemins de code séparés auraient
+fini par ne plus se rejoindre au rayon 1, et l'écran aurait dû apprendre lequel appeler.
+
+**Ce que C4 a trouvé en s'en servant, et qui n'était pas de C4.** Ouvrir le panneau sur le
+projet réel a rendu **500** : un calque dont le corps a changé de taille — parce que la cible de
+pixel du projet a été relevée depuis — ne se rendait plus du tout. Le défaut est de C3 ; C4 l'a
+**révélé** en ajoutant deux places à la recette, donc en faisant recalculer tous les calques
+d'un coup. Ce qui l'avait rendu invisible est le cache : tant qu'une recette ne bouge pas, son
+rendu est servi depuis le disque et personne ne recalcule rien. *Un cache cache aussi les pannes
+du calcul qu'il remplace* (`docs/PIEGES.md`). Un corps qui a changé de taille est désormais
+traité comme un corps disparu.
+
+**Deux refus, et ils tiennent le motif.** Le tri par le pire n'est pas le défaut — le plan du
+jeu reste l'ordre des rangées, parce que c'est celui de l'auteur et le seul dans lequel une case
+*vide* se lit. Et « ce qui reste à regarder » ne s'écrit nulle part : c'est un calque sur lequel
+la main n'est pas passée, et ça se lit dans sa recette, comme *ceci est un calque* depuis C3.
+
+**Ce qui reste ouvert.** Le produit ne dit toujours pas **d'avance** qu'une pièce va se
+substituer : aucune des cinq mesures ne l'annonce — celle du 29 août affichait une échelle à
+1,00 et une silhouette à 100 %. Le risque a changé de gravité, pas de nature.
+
+## C5 — 29 août 2026
+
+**C5 est écrite : le personnage part dans le jeu, et l'agent a la boucle entière.** Ses poses
+et ses calques se posent dans le dossier du jeu, à plat, avec un descriptif qui dit ce qu'est
+chaque fichier — sa pose, sa pièce, la place de cette pièce sur le corps et son rang. Cinq
+outils MCP complètent le plan sans que l'écran soit ouvert : lire ce qui manque, ajouter une
+attitude, remplir, habiller, livrer. **Les huit critères sont cochés, tenus par 22 essais de
+serveur et 4 d'écran.** Elle a été écrite pendant que C4 s'éprouvait encore : le plan la
+disait recommandée mais non bloquante, et elle l'était.
+
+**La décision qui n'était pas dans le cadrage : ce qui sort est ce que la matrice retient.**
+Un corps par pose, un calque par pièce — le favori d'abord, sinon la plus récente. Sortir les
+quatre variations d'une pose aurait rendu le tri à qui ouvre le dossier, alors que l'auteur y
+a déjà répondu en marquant son favori, et « utilisable sans manipulation » dit exactement le
+contraire de « choisis toi-même ». La règle n'a pas été écrite pour l'occasion : c'est
+`corps_retenu`, celle qui compose déjà la planche d'équipement de C3. Un second barème aurait
+fait sortir une autre image que celle que l'écran montre comme le corps de la pose.
+
+**À plat, et c'est un refus.** Pas de sous-dossier par personnage, pas de convention de
+moteur : « aucune structure inventée » ne s'arrête pas au code de jeu. Un dossier
+`sprites/héros/` créé d'office est une décision de rangement prise pour un jeu dont l'atelier
+ne sait rien. Ce qui remplace la structure est le descriptif, et c'est pour ça qu'il porte le
+**rang de l'emplacement** : sans lui, un agent qui empile un casque et une cape doit inventer
+lequel passe devant.
+
+**Ce que la première sortie d'un vrai personnage a trouvé, et qu'aucun essai ne voyait.**
+Balthazar est sorti en sept fichiers ; l'un d'eux, annoncé « calque », montrait un nain
+entier. La pièce était le casque de `coeur de pierre - 01`, déclarée « agrandit » : ce qui
+était revenu n'était pas un calque mais un **corps habillé** (US-148), et le descriptif le
+donnait à empiler sur le corps. Ce qui l'avait rendu invisible est le montage des essais —
+une pièce « contenue » qui revient à l'échelle produit toujours un vrai calque, donc le seul
+cas qui distingue les deux n'était jamais joué là où le rôle s'écrit. Le rôle vient
+maintenant de `Recette.calque`, la question que l'écran pose déjà pour afficher « ceci n'est
+pas un calque », et il y en a trois : `corps`, `calque`, `corps_habille`.
+
+**Ce que C5 a trouvé et qui n'était pas de C5 : deux endroits écrivaient le sujet d'une
+case.** L'écran le composait depuis C1 — signalement du personnage et nom de l'attitude pour
+une case, signalement seul pour un lot, description de la pièce pour une planche. L'agent arme
+les mêmes cases ; laisser le MCP le recomposer aurait fait une seconde vérité, et laisser
+l'agent le retaper aurait rompu la promesse d'US-115 au premier appel payé. La composition est
+donc descendue dans `ServiceProduction.sujet`, l'écran la demande en armant, le MCP l'appelle
+en générant. Le prix est un aller-retour de plus sur un geste local et gratuit — et un refus
+n'empêche pas d'armer : la case est visée, le champ reste à écrire.
+
+**Le MCP a perdu sa dernière logique.** `export_assets` rouvrait l'archive de T6 pour en
+ressortir les fichiers un par un : la seule fonction du serveur qui *faisait* quelque chose,
+donc la seule entorse à l'invariant de T7. Le geste vit dans le service, les deux sorties le
+partagent, et l'essai qui lit les imports interdit maintenant `zipfile` en plus des quatre
+autres. Un invariant se répare mieux le jour où l'on rouvre le fichier pour une autre raison.
+
+**Ce qui reste ouvert.** Personne n'a encore sorti un personnage dans un vrai jeu : la règle
+du dépôt — *une tranche n'est finie que lorsqu'on s'en est servi* — n'est pas encore tenue
+pour C5. Deux points attendent cette séance-là : les gestes de finesse de C4 ne sont pas
+exposés à l'agent (borner, affiner, retoucher demandent un œil, et on verra si l'agent les
+réclame), et le vestiaire reste un geste d'auteur — l'agent s'en sert, il ne le peuple pas.
+
+## R5 — 29 août 2026
+
+**R5 est écrite : un calque se recale sans repayer.** Le geste part d'une image sortie d'une
+planche d'équipement, relit la planche payée, et repose l'alignement, les cinq mesures et le
+verdict sur les assets déjà nés — même identifiant, même rang, même place en bibliothèque.
+**Les neuf critères sont cochés, tenus par 9 essais de serveur et 2 d'écran.**
+
+**Le problème que les essais devaient poser, et comment.** Rejouer le même calcul rend le même
+résultat : un essai qui déplierait puis rejouerait sans rien changer entre les deux ne
+prouverait même pas que le rejeu a lu la planche. Deux montages le rendent visible — **abîmer
+le brut du calque** puis rejouer, et il revient ; **changer la portée de la pièce** entre les
+deux, et le verdict bascule pour la planche entière sans qu'un identifiant bouge.
+
+**Une seule lecture de planche pour les deux chemins.** Le dépliage et le rejeu doivent tomber
+sur exactement le même résultat, sans quoi recaler changerait l'image pour une raison qui n'est
+pas le défaut qu'on répare. C'est la raison qui avait déjà sorti `decouper_retour` de `deplier`
+en C3, appliquée un cran plus haut.
+
+**Et ce que le rejeu a mesuré sur les six planches du 29 août.** **Cinq sur six bougent**, pas
+quatre : aux deux calques manifestement faux et aux deux corps habillés prononcés sur une
+échelle inventée s'ajoute un calque dont l'échelle était juste et dont le *placement* se
+déplace — le critère monotone départageait aussi les décalages. La sixième, seule produite
+après la correction, revient **identique**. Le rejeu est donc fidèle là où il n'y a rien à
+réparer, et ne change que ce que le défaut avait changé. Vérifié sur une **copie** du dossier
+de données : rien n'a été écrit dans celui de l'auteur.
+
+## La première séance de C3 — 29 août 2026
+
+**C3 a servi, sur un personnage qui portait déjà la pièce, et six planches ont été payées** —
+un seul modèle, deux pièces, un casque et une hache, chacune envoyée aux deux occupations,
+0,92 et 0,62. Dixième fois de suite que se servir d'une tranche trouve ce qu'aucun test ne
+voyait.
+
+**Le défaut : le recalage cherchait sur une note qui ne peut que monter.** Chaque échelle
+candidate était notée à la part du corps qu'elle recouvre — une mesure juste, et monotone :
+agrandir le revenu finit toujours par tout recouvrir, donc le critère demandait « quelle est la
+plus grande échelle ? » et la bonne réponse ne gagnait que par l'égalité. Un aller-retour de
+rééchantillonnage coûte deux pour mille de contour ; l'égalité tombait, et une planche revenue
+intacte était déclarée revenue à 0,58×, le calque valant toute la silhouette au lieu du seul
+casque. On cherche désormais sur le recouvrement rapporté à l'**union**, et on rend la
+couverture au placement retenu. Les essais ne l'avaient pas vu parce qu'ils dessinent des blocs
+pleins, qui traversent un rééchantillonnage sans perdre un pixel. `docs/PIEGES.md` le porte,
+avec le corollaire : *une note qui ne peut que monter avec le paramètre qu'on optimise n'est pas
+un critère, c'est un classement du paramètre.* La correction porte la suite de serveur de 343
+à **345 essais** ce jour-là.
+
+**La toile avec marge a été tirée, et elle n'a pas eu à servir.** L'échelle au retour est
+restée dans la tolérance sur les six planches, à 0,92 comme à 0,62. Ce n'est pas l'hypothèse
+validée — elle n'a pas été mise à l'épreuve, faute que le dézoom qu'elle prévient se présente.
+Le seul risque de méthode de la V2 tombe donc, et un autre le remplace, mesuré celui-là : **la
+différence trouve ce qui s'ajoute et manque ce qui se substitue.** Le casque est revenu en
+poussière — même empreinte que la chevelure qu'il remplace, valeurs voisines, et la tolérance
+au voisin de 3×3 qui protège du bruit de recalage l'efface avec lui. Et la hache dit les deux
+moitiés du défaut à elle seule : son fer, qui dépasse de la silhouette, revient entier au pixel
+près ; son manche, là où il croise le bras, ne revient pas. Encore deux décisions justes
+séparément dont la composition perd quelque chose. Ce n'est ni cadré ni planifié :
+`docs/releve-usage.md`.
+
+**Et la décision de la séance : une planche déjà dépliée ne réaccouche jamais ; ce qu'elle a
+calculé se rejoue.** Quatre images fausses restent sur le disque — deux calques figés sur un
+mauvais recalage, deux corps habillés prononcés sur une échelle inventée — alors que les
+planches qui les ont payées sont là. Redéplier aurait créé des rangs neufs, obligé à supprimer
+les anciens, et laissé orphelins les calques qui désignent leur corps par identifiant : c'est un
+piège, pas un geste. Ce qui se rejoue est le calcul, sur les assets déjà nés — même
+identifiant, même rang, même place. Ce qui l'autorise tient en une phrase qui dépasse le
+calque : **le brut d'un calque n'a jamais été l'image payée** ; l'image payée est la planche, et
+un brut dérivé est un cache. C'est R5 dans `docs/PLAN.md`.
+
+## C3 — 29 août 2026
+
+**C3 est écrite : la pièce et le calque.** Un projet porte des emplacements ordonnés et des
+pièces décrites une fois ; on coche les poses à habiller, l'atelier compose lui-même la
+planche des corps existants, l'envoie en un appel, redécoupe le retour sur la grille qu'il a
+posée et compare case par case. Chaque différence est un calque, propre à sa pose. **Les
+seize critères sont cochés, tenus par 18 essais de serveur et 9 d'écran.**
+
+**Le pliage de C2 a été réemployé sans être rouvert, et c'est ce qui rend la tranche
+courte.** La grille, le gabarit, le découpeur, le compte et son refus arithmétique n'ont pas
+bougé d'une ligne : `decouper_retour` a simplement été extraite de `deplier`, et les deux
+usages l'appellent. Un booléen — `geometrie_connue` — distingue toujours les deux, et une
+seule ligne du service de génération aiguille entre « ranger N corps » et « fabriquer N
+calques ». La prédiction écrite en C2 s'est vérifiée telle quelle.
+
+**La décision de la tranche : un calque est un asset, et c'est sa recette qui le dit.** Le
+cadrage promettait « une recette, pas un fichier figé » ; la conséquence exacte est une
+sixième place dans la recette, `différence`, qui nomme l'asset du corps et le masque
+rectangle. Trois critères deviennent alors vrais *par construction* au lieu d'être tenus à la
+main — le corps n'est jamais modifié, le masque se déplace sans un centime, et vider la zone
+rend la différence brute. Il n'existe nulle part un drapeau « ceci est un calque » : un corps
+habillé porte la même pièce et la même pose, et seule l'absence de différence l'en sépare.
+
+**Deux pièges payés le même jour, et ils se ressemblent.** Le premier : la plage d'échelles
+du recalage ne contenait pas 1,00 — 0,99 puis 1,01 —, donc une case revenue rigoureusement
+identique se rééchantillonnait d'un centième et sa silhouette entière ressortait en *ajout*.
+Le second : `recadrer_sur` alignait, puis `mesurer_calque` cherchait un **second** alignement
+sur le résultat déjà aligné, et le calque affiché n'était plus celui qu'on venait de mesurer.
+Les deux fonctions étaient justes ; c'est leur composition qui perdait quelque chose — très
+exactement la famille de défaut que T9 avait trouvée en mettant une conception à juger. Tous
+deux sont dans `docs/PIEGES.md`.
+
+**Ce que la tranche n'a pas fait, et qu'il faut dire.** Elle n'a pas servi au navigateur, et
+elle n'a tiré **aucun appel payant**. La toile avec marge — le seul risque de méthode qui
+reste en V2 — est écrite, mesurable et repliable : la toile part à 0,62, l'échelle au retour
+est mesurée case par case, et une dérive au-delà de 0,08 rend des corps habillés au lieu de
+calques sans qu'aucune image ne soit perdue. Il reste à savoir laquelle des deux branches le
+produit prendra, et ça coûte un appel.
+
+*(Écrit à la livraison. La séance est venue le jour même — voir l'entrée en tête : l'appel a été
+tiré six fois, la marge n'a pas eu à servir, et un défaut de recalage qu'aucun des vingt-sept
+essais ne voyait a été trouvé.)*
+
 ## R4 — 29 août 2026
 
 **R4 est écrite, et les quatre reprises sont finies.** L'infobulle sort désormais du panneau

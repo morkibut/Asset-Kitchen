@@ -1450,7 +1450,34 @@ partout ailleurs — une invitation courte en serif 32 px, *Ce jeu n'a encore pe
 premier.*, et **rien d'autre**. Le champ et l'explication sont à gauche ; les redire à droite
 était le doublon que ce document poursuit depuis le bandeau hors ligne.
 
+**La sortie vers le jeu se lit en dernier, et c'est l'ordre du geste** (C5). Le bloc est au
+bas de la fiche, sous les cases, séparé par un filet `--bord` : on regarde ce qui est fait, ce
+qui manque, et alors seulement on livre. Un bouton posé en tête aurait proposé de sortir avant
+d'avoir montré ce qu'il y a à sortir.
+
+**Grisé avec sa raison, et les deux raisons ont un ordre.** Ce qui manque à fabriquer passe
+devant ce qui manque à régler : *aucune attitude remplie* d'abord, *aucun dossier de jeu*
+ensuite. La première se corrige sans quitter l'écran, la seconde renvoie ailleurs, et on
+n'envoie pas quelqu'un dans les Réglages pour un personnage qui n'a de toute façon rien à
+livrer. La raison s'écrit à droite du bouton, en mono 10 px `--texte-3`, et sert de survol —
+le § Le grisé porte sa raison, appliqué tel quel.
+
+**Ce qui revient est un chemin, pas un fichier.** L'export de T6 rendait une archive au
+navigateur ; celui-ci écrit sur la machine, et le compte rendu dit *combien* et *où* — le
+chemin en `--texte`, parce que c'est lui qu'on colle dans un moteur de jeu. « Rien n'a été
+écrasé » est écrit dans la même phrase : c'est la règle du dossier du jeu, et la dire au
+moment où l'on vient d'écrire vaut mieux que de la promettre dans une aide.
+
 #### Ce qui est écarté
+
+**Un choix de dossier dans cet écran.** Le dossier du jeu se pose une fois, dans les Réglages,
+bloc « Les dossiers » — c'est là que le produit range ce qui vaut pour toute la session, et
+c'est le même dossier que l'agent utilise. Un second champ ici en aurait fait deux à tenir
+d'accord, et le geste de livraison serait devenu un formulaire.
+
+**Une confirmation avant de sortir.** Rien n'est écrasé, rien n'est détruit : au pire on pose
+une seconde copie numérotée, qui se supprime dans l'explorateur. Le produit ne confirme que ce
+qu'il ne saurait pas défaire.
 
 **Une confirmation avant de supprimer un personnage.** Le produit n'en pose aucune, et celle-ci
 serait la moins justifiée de toutes : rien ne cascade, les images restent et se marquent
@@ -1463,3 +1490,87 @@ dit ce qu'on venait chercher.
 **Un écran de création de personnage.** On ne crée pas un corps ici : on écrit un nom. Le corps
 naît dans l'atelier — on écrit un sujet, on génère, et c'est l'image obtenue qu'on désigne. Cet
 écran n'a donc aucun champ de prompt, et c'est ce qui garde vraie la phrase du cadrage.
+
+---
+
+### Le panneau du calque, et les trois outils d'une seule surface
+
+Écrit le 29 août 2026, en livrant C4. Il complète le § L'écran Personnages ci-dessus : la
+troisième colonne de cet écran-là, celle qui paraît quand on ouvre un calque.
+
+**380 px, encore.** C'est la colonne de la fiche asset, de l'écran Univers et de la réserve,
+réemployée pour ce qu'elle nomme déjà — *ce qu'on pose et ce qu'on manipule*. Aucune largeur
+neuve n'entre par C4. Le cadre où l'on regarde le calque fait 340, ce qui laisse les marges du
+panneau : assez pour juger un sprite de 64 px agrandi douze fois.
+
+**Un seul cadre pour les trois outils, et c'est le motif.** La zone, le masque et la retouche se
+posent sur la même image — le calque sur son corps, au pixel, damier dessous. Trois surfaces
+auraient donné trois vérités sur la même chose, et il aurait fallu les tenir d'accord ; ici c'est
+la même, et seul ce que la main y fait change. Les segments sont au-dessus du cadre, parce qu'on
+choisit ce qu'on va faire avant de le faire, et **ils ne paraissent que sur un calque** : un corps
+habillé n'a ni masque ni retouche, et trois segments morts au-dessus de son image seraient du
+cadrage affiché.
+
+**Le rectangle reste visible sous les trois, sa poignée non.** Il est ce dont la main part quand
+elle affine le masque ; le cacher pendant qu'on l'affine aurait caché ce qu'on affine. Il passe
+de `--signal` à `--bord-fort` dès qu'un pinceau est en main — il n'est plus ce qu'on manipule, il
+est le décor de ce qu'on manipule. La poignée, elle, disparaît : une cible de retaille au milieu
+d'une surface qu'on peint est un piège à clic.
+
+**Le passage en cours se dessine en `--signal`, dans les deux sens.** Garder et ôter sont deux
+gestes ordinaires ; `--echec` veut dire *ce qui échoue ou ce qui détruit*, et une gomme
+n'échoue pas. Ce que le passage fait est dit par le segment allumé juste dessous, ce qu'il couvre
+est dit par le trait lui-même à la largeur qu'il aura — et les deux suffisent. Le trait est le
+seul élément du produit dont l'épaisseur est une **mesure du sujet** et non une valeur de
+châssis : elle vaut `(2·rayon + 1)` pixels d'image, mise à l'échelle du cadre.
+
+#### La largeur du pinceau est une mesure, donc elle est en mono
+
+`1 px · 5 px · 13 px`, dans la forme des segments du produit. Ce qui s'affiche est le
+**diamètre** — la largeur du trait est ce que la main voit, le rayon est ce que le calcul veut —
+et « au pixel » n'a pas de libellé à lui : c'est le premier cran, et il est déjà écrit `1 px`.
+Nommer les crans *fin · moyen · large* aurait remplacé un fait mesuré par une appréciation, ce
+que le § Typography interdit en une ligne.
+
+#### Tenir montre l'avant — un appui, jamais une bascule
+
+`Avant ›` en mono 10 px `--signal`, à droite de la rangée qui suit le cadre. **On maintient**, et
+l'image devient celle que la différence avait rendue ; on lâche, elle redevient celle qu'on
+modifie. Une bascule aurait laissé l'écran sur l'avant après le regard, et la retouche suivante se
+serait faite sur une image qui n'est plus la bonne — le pire moment pour se tromper de vérité.
+
+**Absent tant que la main n'est passée nulle part**, comme `Fabriquer ensemble ›` sous deux
+attitudes et comme `+ personnage` : le § Le grisé porte sa raison suppose une chose indisponible,
+et ici il n'y a rien à comparer, donc pas de chose.
+
+#### La rangée d'état d'une couche — la même trois fois
+
+Sous le cadre, une seule rangée, et son contenu suit l'outil : ce que porte cette couche à
+gauche — `zone 27 × 28 px`, `toute la case`, `3 passages`, `aucune retouche` —, ce qui la vide à
+droite — `Sans zone ›`, `Sans passages ›`, `Sans retouche ›`. « Chaque couche s'annule » n'est
+donc pas trois boutons à trouver : c'est le même, à la même place, sur la couche qu'on tient.
+
+#### La mesure la plus défavorable monte d'un ton, et rien d'autre
+
+Dans le `<dl>` des cinq mesures, celle qui décide passe de `--texte-3`/`--texte-2` à
+`--texte-2`/`--texte`. **Pas de couleur, pas de signe** : `--echec` dirait *ça a échoué* quand la
+phrase juste est *c'est par là qu'il faut commencer*, et le produit n'ouvre pas de glyphe. La
+marque est de toute façon **redondante** avec le tri de la matrice, qui range sur ce même chiffre —
+ne pas la voir ne fait rien perdre, ce qui est la condition pour avoir le droit d'être discret
+(§ Le texte, sur `--texte-3`).
+
+#### Le tri d'une colonne est un choix, et le plan reste le défaut
+
+`par attitude · par le pire`, deux segments ancrés à droite du libellé de la colonne — et
+**seulement sur une colonne de pièce** : sur celle du corps il n'y a pas de mesure à classer,
+donc pas de chose indisponible, donc rien du tout.
+
+Le défaut est le plan du jeu. C'est l'ordre de l'auteur, celui du § L'écran Personnages — *une
+attitude vient avant une autre parce que c'est ainsi qu'il pense son jeu* — et surtout le seul
+dans lequel une case **vide** se lit : la colonne dit d'abord ce qui manque. Trier d'office aurait
+fait remonter ce qui existe et repoussé ce qui n'existe pas, c'est-à-dire caché la moitié du
+métier de l'écran.
+
+La rangée gagne une troisième ligne en mono 9,5 px `--texte-3`, sous les deux de C2 :
+`à regarder · objet ou poussière`, ou `main posée`. Elle dit ce que le tri ordonne, à l'endroit
+où on le lit — et elle ne paraît que sur un calque, un corps habillé n'ayant rien à retoucher.

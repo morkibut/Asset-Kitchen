@@ -7,10 +7,13 @@ seul appel, sur une grille carrée dont il connaît la géométrie case par case
 V2 en a deux usages — créer N corps (C2) et habiller N corps (C3) —, et ce
 module ne connaît ni l'un ni l'autre. Il parle de **cases** et de textes.
 
-Une seule chose y rattache une case à ce que le produit en fera : `CasePliee.pose`,
-qui est la même désignation que `Generation.pose` porte déjà depuis C1. Elle vaut
-pour les deux usages de la V2 — un corps appartient à une pose, un calque aussi —
-et elle vaut `None` quand ce qui revient n'a pas de case à remplir.
+Deux choses y rattachent une case à ce que le produit en fera, et ce sont deux
+désignations, jamais deux règles : `CasePliee.pose`, la même que `Generation.pose`
+porte depuis C1 — un corps appartient à une pose, un calque aussi —, et
+`CasePliee.base`, l'image qui était dans la case au départ. La seconde est vide
+quand la case est partie vide (C2) et remplie quand l'atelier a composé la
+planche lui-même (C3) ; c'est elle qui rend l'avant relisable à la relance,
+**sans qu'aucune planche soit enregistrée**.
 
 **Le pliage est une ruse d'appel, jamais un format de livraison.** Rien ici ne
 décrit une feuille assemblée qu'on garderait : la planche est le brut de sa
@@ -78,12 +81,23 @@ class CasePliee:
     texte: str
     pose: str | None = None
 
+    # L'asset qui était dans cette case quand la planche est partie. **Un
+    # identifiant, jamais des octets** — même règle qu'une réinjection : la
+    # planche se recompose du geste à partir des images qu'il désigne, à la
+    # soumission comme à la relance, donc les deux envoient exactement la même
+    # chose et rien de neuf n'est écrit sur le disque.
+    base: str | None = None
+
     def en_json(self) -> dict[str, Any]:
-        return {"texte": self.texte, "pose": self.pose}
+        return {"texte": self.texte, "pose": self.pose, "base": self.base}
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "CasePliee":
-        return CasePliee(texte=d.get("texte", ""), pose=d.get("pose") or None)
+        return CasePliee(
+            texte=d.get("texte", ""),
+            pose=d.get("pose") or None,
+            base=d.get("base") or None,
+        )
 
 
 @dataclass(slots=True)
@@ -108,6 +122,16 @@ class Pliage:
 
     cases: tuple[CasePliee, ...] = ()
     geometrie_connue: bool = False
+
+    # **La part du côté de la case que le sujet occupe**, quand c'est l'atelier
+    # qui a composé la planche. Pure géométrie : ce module ne sait pas *pourquoi*
+    # on laisse de la place, seulement qu'on en laisse. Elle est enregistrée
+    # parce qu'une relance doit envoyer **exactement** la même planche, et que la
+    # raison qui l'a fixée — la portée d'une pièce — peut changer entre les deux.
+    #
+    # Sans objet quand la grille part vide : une case vide n'a rien à occuper.
+    occupation: float = 1.0
+
     refus: str | None = None
 
     @property
@@ -123,6 +147,7 @@ class Pliage:
         return {
             "cases": [c.en_json() for c in self.cases],
             "geometrie_connue": self.geometrie_connue,
+            "occupation": self.occupation,
             "refus": self.refus,
             # déduits — présents pour l'interface, jamais relus
             "nombre": self.nombre,
@@ -144,6 +169,7 @@ class Pliage:
         return Pliage(
             cases=cases,
             geometrie_connue=bool(d.get("geometrie_connue", False)),
+            occupation=float(d.get("occupation", 1.0) or 1.0),
             refus=d.get("refus") or None,
         )
 

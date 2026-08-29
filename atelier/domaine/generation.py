@@ -242,6 +242,18 @@ class Generation:
     personnage: str | None = None
     pose: str | None = None
 
+    # ── Et de quelle pièce, quand l'appel habille ────────────────────────────
+    #
+    # Arrivée en C3 (US-140). **C'est elle, et elle seule, qui dit qu'un appel
+    # est une planche d'équipement** : sans elle, une planche pliée crée des
+    # corps ; avec elle, elle en habille. Le service de génération n'a donc pas
+    # à deviner ce qui doit revenir — il lit un champ.
+    #
+    # Ici et pas dans `demande`, pour la raison de `personnage` et `pose` : c'est
+    # un fait sur l'appel. La **description** de la pièce, elle, part bien chez
+    # le fournisseur — c'est le sujet du prompt, écrit par l'auteur.
+    piece: str | None = None
+
     # ── Le pliage — N images demandées en un seul appel ───────────────────────
     #
     # Arrivé en C2 (US-128). **Ici et pas dans `demande`**, pour la raison de
@@ -315,6 +327,7 @@ class Generation:
             "modele": self.modele,
             "personnage": self.personnage,
             "pose": self.pose,
+            "piece": self.piece,
             "pliage": self.pliage.en_json() if self.pliage else None,
             "demande": self.demande,
             "parametres_resolus": self.parametres_resolus,
@@ -338,6 +351,7 @@ class Generation:
             modele=d["modele"],
             personnage=d.get("personnage"),
             pose=d.get("pose"),
+            piece=d.get("piece"),
             pliage=Pliage.depuis_json(d.get("pliage")),
             demande=d.get("demande", {}),
             parametres_resolus=d.get("parametres_resolus", {}),

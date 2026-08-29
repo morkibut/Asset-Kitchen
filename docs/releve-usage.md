@@ -1,0 +1,345 @@
+# Le relevé d'usage
+
+> **Ce document ne fait foi sur rien.** Il note ce qu'une séance d'usage a trouvé, *avant*
+> que ce soit cadré. Quand une entrée est tranchée, elle part dans `docs/PRD.md` (ce que le
+> produit doit faire) ou `docs/PLAN.md` (dans quel ordre), et ne laisse ici qu'une ligne de
+> renvoi. Une entrée qui reste ici est une entrée sur laquelle personne n'a encore décidé.
+>
+> Il se lit **à la demande**, jamais au démarrage d'une session. Les plus récentes en tête.
+
+---
+
+## 29 août 2026 — la première séance de C3, et ce que la différence ne voit pas
+
+Six planches d'équipement payées sur un personnage qui portait déjà la pièce, un seul modèle
+(`openai/gpt-image-2`), deux pièces — un casque et une hache — envoyées chacune aux deux
+occupations, 0,92 et 0,62. Ce qui suit n'est **ni cadré ni planifié** ; le défaut de recalage
+trouvé le même jour l'est, lui, et vit dans `docs/PIEGES.md` et dans R5.
+
+### Une pièce qui s'ajoute revient nette, une pièce qui se substitue revient en poussière
+
+Le casque est revenu en semis de pixels épars, sur les quatre planches où il figurait, y
+compris celle que l'échelle et les mesures déclaraient bonne. **La différence n'est pas
+l'échelle**, qui vaut 1,00 partout, et ce n'est pas non plus la portée déclarée : c'est la
+place que la pièce prend sur le corps.
+
+**La hache dit les deux moitiés du défaut à elle seule** : son fer, qui dépasse de la
+silhouette, revient entier au pixel près ; son manche, là où il croise le bras, ne revient pas.
+Une seule pièce, un seul appel, et le calque s'arrête net à la frontière du corps.
+
+- Ce qui **s'ajoute** occupe des pixels où le corps était transparent, donc `ajout` le trouve
+  entier, et rien ne peut l'effacer.
+- Ce qui **se substitue** occupe l'empreinte de ce qu'il remplace, avec des valeurs voisines.
+  Il relève donc de `touche`, et `touche` compare les couleurs **avec une tolérance au voisin
+  de 3×3** — un choix juste, pris pour ne pas compter un résidu de recalage sous le pixel comme
+  du repeint, et qui absorbe du même coup la substitution.
+
+Deux décisions correctes séparément, dont la composition perd la pièce : la famille de défaut
+que T9 avait trouvée sur la toile, et que la V2 vient de retrouver deux fois — ici, et sur les
+deux recalages successifs du même jour.
+
+### Ce que ça remet en cause
+
+**La taxinomie des pièces.** Le produit oppose *contenue* et *qui agrandit* — la question de
+l'échelle, et elle est bien posée. Ce qui décide de la **lisibilité** du calque est *ajoute*
+contre *substitue*, et les deux découpes ne se recouvrent pas : un casque est contenu et se
+substitue, une hache agrandit et s'ajoute. Rien ne dit qu'il faille une seconde portée déclarée
+— l'auteur en aurait deux à poser au lieu d'une —, mais rien ne dit non plus que le produit
+puisse rester muet sur un cas qu'il rate systématiquement.
+
+**Trois pistes, aucune tranchée.** Baisser le seuil ou renoncer à la tolérance 3×3 sur la seule
+zone de la pièce, quand elle est donnée. Rendre la substitution visible autrement — un cinquième
+chiffre qui dise « la pièce est tombée là où il y avait déjà du corps ». Ou l'assumer et compter
+sur la main de C4, qui est de toute façon ce qui rattrape ce que la différence ne voit pas.
+
+**C'est la troisième qui a été prise, le 29 août 2026 — et il reste la moitié de l'entrée.**
+C4 est livrée, et sa seconde couche ne fait pas que retirer : elle **ramène** les pixels revenus
+là où la mesure n'a rien trouvé. Sur ce casque-ci, mesuré par la route de l'image : 451 pixels
+opaques avant, 1 044 après un seul passage de la main, et la pièce est lisible. Ce qui reste
+ouvert et **non cadré** est la première piste : rien n'annonce *d'avance* qu'une pièce va se
+substituer, et aucune des cinq mesures ne le dit — celle-ci affichait une échelle à 1,00 et une
+silhouette à 100 %. La réparation coûte donc un geste au lieu d'une image perdue, et c'est tout
+ce qui a changé. Voir `docs/PLAN.md`, C4, et `docs/status/etat.md`.
+
+**Ce que ça ne remet pas en cause** : ni le pliage, ni le compte, ni le masque, ni le fait que
+les mesures ne refusent rien. Le calque illisible est **gardé**, comme prévu, et il se retouche.
+
+---
+
+## 29 août 2026 — le point de comparaison avec SpriteCook
+
+Relevé après usage de l'atelier tenu (V1 close, C1, C2, R1 et R2 écrites) et d'une séance
+complète sur SpriteCook, parcours *Create Your Character* de bout en bout.
+
+### Le constat, en une phrase
+
+**L'atelier fait plus de choses que SpriteCook et en demande beaucoup plus à celui qui s'en
+sert.** Sur la matière — le post-traitement non destructif, la palette rétroactive, le pliage
+d'un lot en un seul appel, le MCP, le coût réel enregistré — il est déjà devant. Sur le geste,
+il est derrière : SpriteCook conduit, l'atelier attend qu'on lui dicte.
+
+### Ce qui a été demandé, et ce qui a été construit
+
+| Ce que SpriteCook fait | Ce que l'atelier fait aujourd'hui |
+|---|---|
+| Cinq écrans nommés, un pas à la fois, chacun annonce le suivant sur son bouton | Un écran, trois panneaux, tous les réglages disponibles en même temps |
+| On tape « Dwarf miner » (deux mots) et le produit fabrique le reste | On tape ce qu'on veut, et ce qu'on tape est tout ce qui part |
+| Un style et une perspective se choisissent **en images**, trois vignettes | Sept champs de bible en texte libre, tous vides à l'ouverture |
+| Une image importée est **analysée** : « détecté comme *detailed* », avec la raison, et le réglage reste modifiable | Une image importée déclare tout : famille, échelle, traitement — rien n'est proposé |
+| Chaque animation reçoit un **prompt de mouvement rédigé pour ce personnage-là**, relisible et modifiable, plus un bouton *Enhance* | Le nom de la pose part tel quel dans le prompt : « marche » |
+| Le prix s'affiche sur le bouton avant de payer | Le prix s'affiche aussi — c'est acquis depuis T1 |
+| Rien ne se retouche à la main : ce qui rate se régénère, et se repaie | Tout se retouche sans repayer — sauf au pixel, qui n'existe pas encore |
+
+Le produit a été construit sur une lecture juste de SpriteCook (`readme.md` : « la valeur
+n'est pas dans le modèle d'image, elle est dans le post-traitement et les workflows
+guidés »). **La première moitié a été prise, la seconde a été laissée.**
+
+### La racine : le produit sait, et il ne dit rien
+
+Une règle du PRD dit, à la section *Hors périmètre* : « **Écarté parce que l'auteur fait
+mieux.** Contrôle de conformité automatique. Description automatique du style. Routeur
+d'intention qui devinerait le type d'asset. » Elle est juste, et elle a été écrite contre une
+panne réelle : un produit qui déciderait à la place de l'auteur, ou qui refuserait son travail
+sur une mesure.
+
+**Elle a été appliquée plus loin que ce qu'elle dit.** Elle interdit de *décider* à la place
+de l'auteur ; elle a été lue comme interdisant de lui *proposer* quoi que ce soit. Résultat :
+tout écran de l'atelier ouvre sur du vide, et chaque vide est une décision qu'il faut prendre
+avant d'avancer.
+
+SpriteCook ne décide jamais non plus — il annonce. Sur l'import du nain, il affiche :
+« *Detected as pixel art, but it exceeds the 256×256 pixel animation limit. We switched this
+upload to detailed.* » Il a deviné, il dit qu'il a deviné, il dit pourquoi, et les deux
+boutons restent là pour le contredire. Personne n'a rien perdu.
+
+**Le dépôt a déjà cette règle, mais dans un seul sens.** « Ce qui est indisponible est grisé
+avec sa raison, jamais proposé puis refusé » est un invariant depuis T1. Il lui manque son
+jumeau, et c'est la seule idée neuve de ce relevé :
+
+> **Ce qui est devinable est prérempli avec sa provenance, et se défait d'un clic.**
+
+Un champ prérempli n'est pas un champ décidé : il porte d'où vient sa valeur — « proposé,
+d'après ta bible », « proposé, d'après l'image » —, il s'efface, et ce qui part reste
+exactement ce qui est affiché. L'invariant de R2 — *ce qui est montré est ce qui part, mot
+pour mot* — n'est pas touché : il porte sur le trajet entre le champ et le fournisseur, pas
+sur qui a rempli le champ.
+
+---
+
+### 1 · La consigne de pose — le défaut le plus cher, et le moins cher à réparer
+
+**Le constat.** Une pose est un nom et un nombre d'images, rien d'autre
+(`atelier/domaine/plan.py`). Ce nom part **tel quel** dans le prompt : pour un lot,
+`atelier/services/pliage.py` écrit « *The cells, in reading order, show: 1. marche; 2. idle* » ;
+pour une pose seule, `interface/src/App.tsx` compose `description du personnage + ", " + nom de
+la pose`. Un modèle reçoit donc le mot **« marche »**, en français, au milieu d'une consigne
+anglaise, sans direction, sans vue, sans cadrage.
+
+**Pourquoi c'est comme ça.** Le commentaire de `_plier` le dit sans le voir : « le texte d'une
+case est le **nom** de la pose, pas son identifiant : il part dans le prompt, et un repère de
+fichier n'a jamais décrit une attitude à un modèle ». C'est exact — et un *nom* non plus. La
+règle « le prompt est en anglais, parce que c'est ce sur quoi les modèles sont entraînés » vaut
+pour les consignes de planche ; le nom de pose la traverse en français.
+
+**Ce qu'on propose.** Une pose gagne **un second champ : sa consigne, en anglais**. Le nom
+reste l'étiquette de l'auteur (« Marche sud ») ; la consigne est ce qui part :
+
+> `walking posture, facing south, front view, full body, top-down 2D game pose`
+
+Trois choses en font une correction et pas une option de plus :
+
+- **Elle est préremplie.** Un projet neuf reçoit un plan de poses par défaut ; ces poses-là
+  arrivent avec leur consigne déjà écrite. Créer « marche sud » propose la consigne standard,
+  et l'auteur la garde ou la réécrit.
+- **Elle se voit avant de partir.** Le dépliant « ce qui partira » de R2 gagne un bloc de plus,
+  `pose`, à côté de `bible`, `sujet` et `planche`. Rien n'est ajouté en chemin.
+- **Elle ne dit jamais le style.** Le style vient de la bible, d'un seul endroit — c'est la
+  décision de T4, et elle tient. La consigne de pose dit une **attitude**, une **direction** et
+  une **vue**, jamais un rendu.
+
+**Ce que ça coûte.** Un champ sur `Pose`, une ligne dans `_plier`, un bloc dans `parties()`, un
+champ de plus dans l'écran des poses. C'est la correction au meilleur rapport de toute cette
+liste.
+
+### 2 · Rédiger et étoffer — le bouton qui manque sous le champ de prompt
+
+**Le constat.** Entre « nain mineur » et le texte qui marche, il n'y a rien. Le texte qui
+marche, l'auteur le connaît — il en a donné un exemple de dix lignes, qui décrit la carrure, la
+barbe, la chemise, la ceinture, les sandales, le sac, les deux lanternes, puis l'attitude et la
+vue. Personne ne l'écrit dix fois par séance.
+
+**Pourquoi c'est comme ça.** Les reprises ont écarté « prompt réécrit par l'application,
+traduit ou enrichi automatiquement : ce qui est montré est ce qui part, mot pour mot ». La
+règle vise l'enrichissement **en chemin** — invisible, entre le champ et l'appel. Elle
+n'interdit pas d'écrire **dans le champ**, sous les yeux de l'auteur, avant qu'il relise.
+
+**Ce qu'on propose.** Deux boutons sous le champ, et deux seulement :
+
+- **Rédiger** — le champ est vide ou tient en trois mots ; l'atelier propose un signalement
+  complet, dans la forme de l'exemple : silhouette, visage, vêtement du haut, du bas,
+  chaussures, ce qui est porté, ce qui est tenu, puis l'attitude. Le champ se remplit, il est
+  éditable, et rien n'est parti.
+- **Étoffer** — le champ contient déjà quelque chose ; l'atelier le complète sans le
+  contredire, et **montre ce qu'il a ajouté** avant que l'auteur accepte.
+
+Deux garde-fous qui font que ça ne casse rien :
+
+- **Ça n'appelle pas le fournisseur d'images**, donc ça ne coûte pas un centime d'appel
+  d'image ; ça appelle un modèle de texte, dont le coût s'affiche comme tout le reste et qui se
+  coupe par un réglage. Réseau coupé, les deux boutons sont **grisés avec leur raison**, comme
+  le reste du produit.
+- **Ça n'écrit jamais le style.** Le style est dans la bible. Rédiger décrit un *sujet*.
+
+**Une variante à trancher, et qui vaut peut-être mieux que le bouton :** un **gabarit de
+signalement** — huit champs nommés (silhouette, tête, haut, bas, pieds, porté, tenu, attitude)
+qui se replient en une phrase. Ça ne demande aucun modèle de texte, ça marche réseau coupé, et
+ça apprend à l'auteur la forme qui marche au lieu de la lui rendre. C'est la même idée que la
+bible en champs nommés, appliquée au sujet.
+
+### 3 · Le personnage par le texte, ou par l'image qu'on a déjà
+
+**Le constat.** L'atelier sait faire naître un corps de personnage à partir d'un prompt (C1) :
+on écrit un sujet, on génère, on désigne l'image comme corps. C'est le chemin par le texte, et
+il est bon. **Le chemin par l'image n'existe pas** : quand l'auteur a déjà une planche de son
+nain, il ne peut pas dire « voilà mon personnage, décris-le et reprends à partir de là ».
+
+**Ce qu'on propose.** Une seconde entrée, en face de la première, sur l'écran des personnages :
+*j'ai déjà son image*. On dépose l'image — R3 vient d'apporter l'import depuis l'écran, c'est
+là-dessus que ça se pose —, et l'atelier **propose**, provenance affichée, tout modifiable :
+
+- un **signalement rédigé depuis l'image**, qui remplit la description du personnage ;
+- l'image **désignée comme concept art** du personnage (US-124 existe déjà) ;
+- ce qu'il a **mesuré** de l'image, dit en clair : « grille de pixel détectée : 4 px ; ton
+  projet impose 64 ». `atelier/image/traitement.py` sait déjà mesurer une grille
+  (`mesurer_grille`), et cette mesure n'est aujourd'hui montrée nulle part.
+
+**Ce que ça ne remet pas en cause.** « Le corps naît dans l'atelier, et jamais d'une planche
+venue d'ailleurs » (US-122) reste vrai : l'image importée devient une **référence** et une
+**description**, pas un corps. La première pose se génère toujours ici. C'est la promesse de la
+grille et de la palette connues, et elle tient.
+
+### 4 · Le récap complet de ce qui part
+
+**Le constat.** Ce qui part est réparti sur **quatre endroits de l'écran**, et aucun ne montre
+les images :
+
+| Où | Ce qu'on y voit | Ce qui manque |
+|---|---|---|
+| Dépliant sous le prompt (R2) | le **texte** exact : bible, sujet, planche | aucune image |
+| Bloc « Ce qui part », colonne 2 | le **compte** : 3 / 4 références, dont artworks, dont gabarit | — |
+| Liste sous ce bloc (C1) | une ligne par image, sa **provenance** (« artwork officiel », « concept art », « réinjection »), sa portée, sa case à décocher | **aucune vignette, aucun nom** — on décoche « artwork officiel » sans savoir lequel |
+| Bande « Repart avec », au-dessus du prompt | les vignettes des réinjections **posées à la main** | ni les artworks, ni les concept arts, ni le gabarit |
+
+Le mécanisme est là — `compter_references` rend déjà la ligne avec sa provenance et sa portée
+(`atelier/services/generation.py`). **Il lui manque la vignette et le nom**, et il manque un
+endroit qui montre le texte et les images ensemble.
+
+**Ce qu'on propose.** Un bouton unique, à côté du bouton qui paie : **« Voir ce qui part »**.
+Il ouvre un panneau qui montre, dans l'ordre d'envoi et rien d'autre :
+
+1. le texte complet, bloc par bloc, avec son origine — c'est le dépliant de R2, déplacé ;
+2. **chaque image, en vignette**, avec son nom, sa provenance en clair (« artwork officiel ·
+   famille personnages », « concept art de Balthazar », « réinjection · source d'édition »), et
+   sa case à décocher avec ses trois portées — c'est la liste de C1, avec l'image ;
+3. le **gabarit** de cases vides quand un lot est armé, dessiné, avec sa ligne « on ne le
+   décoche pas, et voici pourquoi » ;
+4. en pied : le compte contre le plafond du modèle, et le coût.
+
+Les quatre endroits actuels ne disparaissent pas tous : la bande « Repart avec » et le compte
+restent, parce qu'ils se lisent sans rien ouvrir. **Ce qui disparaît, c'est la liste aveugle de
+la colonne 2**, remplacée par une ligne « 4 images · voir ce qui part › ».
+
+### 5 · Le détourage : la pipette, la poche fermée, et la gomme
+
+**Le constat, et il est structurel.** Le moteur de détourage courant est un remplissage
+**depuis le bord** de l'image (`_remplir_depuis_le_bord`). Une zone de fond **enfermée par le
+sujet** — le blanc coincé sous un bras, entre la lanterne et la jambe, dans une boucle de
+ceinture — n'est jamais atteinte par ce remplissage. Ce n'est pas un problème de réglage :
+**aucune valeur de tolérance ne peut y arriver**, parce que le chemin n'existe pas. Monter la
+tolérance mange le sujet bien avant d'atteindre la poche.
+
+**Pourquoi ça n'avait pas été vu.** Le moteur a été mesuré le 27 août sur douze images de six
+modèles — douze silhouettes propres. Ces douze images avaient toutes un fond plat *ouvert*. La
+poche fermée est un mode de panne différent, et il ne se voit qu'à l'usage.
+
+**Et le PRD l'avait écarté.** Section *Hors périmètre*, « Écarté par choix d'ergonomie » :
+« **Détourage par couleur.** » C'est la troisième fois qu'une ligne de cette section est
+retournée par une séance d'usage — après la toile du tableau d'inspiration (T8, le 27 août) et
+la génération autre que pixel art (R2, le 28 août). Le motif est chaque fois le même : la ligne
+était juste **comme réglage global** et fausse **comme geste ponctuel**.
+
+**Ce qu'on propose — trois outils, du moins cher au plus fin, et tous non destructifs.**
+
+1. **La pipette.** Un troisième moteur de passe, à côté de `bord` et `modele` : `couleur`. On
+   clique une couleur dans l'image, et ce qui lui ressemble à ± tolérance devient transparent.
+   Deux portées, et c'est l'auteur qui choisit : *cette tache-ci* — la zone connexe sous le
+   curseur — ou *partout dans l'image*. C'est une **passe de recette** de plus, donc rejouable,
+   annulable, nommable, et elle traverse la palette rétroactive comme les autres.
+   `atelier/image/traitement.py` a déjà tout ce qu'il faut (`composantes`, `durcir`, `ronger`) ;
+   il manque la passe et le clic.
+
+2. **La poche fermée, proposée.** C'est le *prérempli* appliqué au détourage : après la passe
+   de bord, l'atelier cherche les zones de fond **entièrement enfermées** par le sujet et les
+   **montre en surbrillance** — « 3 poches trouvées, 412 px au total · les effacer ? ». Il ne
+   les efface pas tout seul : il les montre et attend un clic. Le calcul est un balayage de
+   composantes connexes, il ne coûte rien, ne touche pas le fournisseur et marche réseau coupé.
+   Dans le cas du nain, il aurait réglé le problème sans que l'auteur ait à viser quoi que ce
+   soit.
+
+3. **La gomme au pixel.** Pour les trois pixels que rien n'atteint. Elle est **déjà prévue**,
+   mais au mauvais endroit : la tranche C4 « La main » la réserve à la retouche d'un *calque
+   d'équipement*, qui n'existera qu'après C3. **Il faut la sortir de C4** et la poser sur la
+   recette de n'importe quel asset : une sixième place nommée, « la main », après les bords —
+   dernière, parce qu'elle porte sur l'image telle qu'elle sortira. Elle garde toutes les règles
+   de T2 : couche séparée, annulable, rejouable, et elle ne détruit pas le détourage qu'elle
+   corrige.
+
+### 6 · Choisir en images ce qui décide de l'apparence
+
+**Le constat.** La bible porte sept champs nommés depuis R2, dont les deux qui décident le plus
+: *technique de rendu* et *vue et cadrage*. Ce sont sept boîtes de texte vides. Un auteur qui ne
+sait pas quoi y écrire n'écrit rien — et c'est très exactement ce qu'a montré la séance du
+28 août : les cinq champs vides sur trois projets réels.
+
+**Ce qu'on propose.** Pour ces deux champs-là seulement, **des vignettes plutôt qu'un champ
+vide** — c'est ce que SpriteCook fait avec ses trois perspectives, et ça marche parce qu'on
+choisit une image, pas une phrase. Trois ou quatre vignettes par champ, chacune montrant **le
+texte anglais qu'elle écrit** sous elle. On clique, le champ se remplit, il reste éditable, et
+il porte « proposé ». Les cinq autres champs ne bougent pas.
+
+**Ça ne construit pas un tunnel.** On ne traverse rien : les vignettes sont *dans* le panneau
+d'univers, à la place du champ vide. L'atelier s'ouvre toujours sur un prompt actif.
+
+---
+
+### Ce que ce relevé remet en cause dans les documents d'autorité
+
+Rien n'est modifié par ce document — il note ce qui devra l'être.
+
+| Document | Passage | Ce que l'usage a montré |
+|---|---|---|
+| `docs/PRD.md`, *Hors périmètre* | « Écarté par choix d'ergonomie … Détourage par couleur » | Faux comme geste ponctuel. Troisième retournement d'une ligne de cette section |
+| `docs/PRD.md`, *Hors périmètre* | « Écarté parce que l'auteur fait mieux » | Juste, mais à préciser : **décider** est écarté, **proposer avec sa provenance** ne l'est pas |
+| `docs/PRD.md`, *Hors périmètre* (reprises) | « Prompt réécrit par l'application … automatiquement » | Juste pour l'enrichissement **en chemin**. Écrire **dans le champ**, sous les yeux de l'auteur, est autre chose |
+| `docs/PRD.md`, *Utilisateur cible* | « Il ne veut ni tunnel de configuration, ni assistant, ni écran à traverser » | Tient. Rien ici n'ajoute d'écran à traverser : tout se pose dans les écrans existants |
+| `docs/PLAN.md`, C4 « La main » | la retouche au pixel réservée au calque d'équipement | À sortir de C4 : la gomme sert au détourage de n'importe quel asset, et C3 n'est pas écrite |
+
+### Ce que ce relevé ne remet pas en cause
+
+Les invariants tiennent tous, et c'est ce qui rend ces corrections peu coûteuses : le traitement
+reste non destructif ; le post-traitement ne touche ni le GPU ni le fournisseur ; le style vient
+de la bible et d'un seul endroit ; ce qui est montré est ce qui part ; rien n'est jamais relancé
+automatiquement ; le catalogue décide ; les dimensions mesurées font foi ; le corps naît dans
+l'atelier ; une seule grille d'assets dans tout le produit.
+
+### L'ordre proposé, si on les prend
+
+1. **La consigne de pose** — le plus mauvais résultat de génération aujourd'hui, la correction
+   la plus petite.
+2. **La pipette et la poche fermée** — un blocage constaté, sans contournement possible.
+3. **Le récap complet de ce qui part** — le mécanisme existe, il lui manque la vignette.
+4. **Rédiger / étoffer le sujet** — le plus visible à l'usage, mais il faut d'abord trancher
+   entre le bouton et le gabarit de signalement.
+5. **La gomme au pixel** — sortie de C4, posée sur la recette.
+6. **Le personnage par l'image** — se pose sur R3, qui vient d'arriver.
+7. **Les vignettes de bible** — le moins urgent, le plus tributaire du dessin.

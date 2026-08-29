@@ -24,13 +24,33 @@
 // redevenir une seconde planche contact, et le jour où l'on cochera une image,
 // l'invariant sera tombé.
 //
+// **C3 lui donne son second axe, et il ne devient pas une grille pour autant.**
+// Les emplacements et les pièces se posent à gauche, sous les attitudes — deux
+// listes qu'on écrit une fois, comme les deux autres. Et la matrice **se lit
+// colonne par colonne** : un onglet par pièce, jamais un damier de vignettes.
+// C'est le motif de C1 pris au mot — « on lit une colonne, on ne balaie pas une
+// planche contact » — et c'est ce qui empêche l'écran de redevenir la seconde
+// planche contact que la privation existe pour éviter.
+//
 // **Il couvre l'atelier, donc il porte sa propre fente de refus** : une raison
 // envoyée derrière lui serait invisible au moment précis où elle compte.
 
 import { useEffect, useRef, useState } from "react"
-import { api, type Case, type Personnage, type Pose } from "../api"
+import {
+  api,
+  type Asset,
+  type Case,
+  type EmplacementCorps,
+  type Personnage,
+  type Piece,
+  type Portee,
+  type Pose,
+  type Sortie as SortieAuJeu,
+  type Vestiaire,
+} from "../api"
 import { sujetAsset } from "./Apercu"
-import { Bouton, EnTetePanneau, Libelle } from "./chassis"
+import { PanneauCalque } from "./Calque"
+import { Bouton, EnTetePanneau, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
@@ -43,16 +63,72 @@ import { PANNEAU } from "./Infobulle"
 export const posesTenues = (plan: Pose[], personnage: Personnage): Pose[] =>
   plan.filter((p) => !personnage.ecartees.includes(p.identifiant))
 
+/** Les deux ordres d'une colonne de pièce (C4, US-152). */
+export type Ordre = "attitude" | "pire"
+
+/** Où une attitude se range quand on veut **attaquer par le pire** (US-152).
+ *
+ *  Trois groupes, et l'ordre des groupes est la moitié de la réponse : ce qui
+ *  reste à regarder d'abord, ce dont on s'est déjà occupé ensuite, ce qui n'a
+ *  rien à montrer en dernier. « Ce qui reste à regarder » n'est pas un drapeau
+ *  posé quelque part — c'est un calque **sur lequel la main n'est pas encore
+ *  passée**, et ça se lit dans sa recette, comme tout le reste de C3 et C4.
+ *
+ *  Dans le premier groupe, la mesure la plus défavorable décide, la pire en
+ *  tête. Elle vient du serveur (`calque.gravite`) : un second barème écrit ici
+ *  aurait donné deux classements sur les mêmes cinq nombres, et l'écran aurait
+ *  fini par surligner une mesure et en trier une autre. */
+const rang = (calque: Asset | undefined): [number, number] => {
+  if (!calque?.calque) return [2, 0]
+  if (calque.recette.difference === null) return [2, 0]
+  const vu =
+    calque.recette.difference.affinage.length > 0 ||
+    calque.recette.difference.retouche.length > 0
+  return [vu ? 1 : 0, calque.calque.gravite]
+}
+
+/** Les attitudes d'une colonne de pièce, dans l'ordre demandé.
+ *
+ *  **Le tri est stable sur l'ordre du plan** : deux calques de même gravité
+ *  restent dans l'ordre où l'auteur a écrit ses attitudes, et la liste ne
+ *  frémit pas quand une mesure bouge d'un millième.
+ */
+export function rangees(
+  tenues: Pose[],
+  cases: Record<string, Case>,
+  piece: string,
+  ordre: Ordre,
+): Pose[] {
+  if (ordre === "attitude") return tenues
+  const clef = (pose: Pose) => rang(cases[pose.identifiant]?.calques[piece]?.[0])
+  return tenues
+    .map((pose, place) => ({ pose, place, rang: clef(pose) }))
+    .sort(
+      (a, b) =>
+        a.rang[0] - b.rang[0] || b.rang[1] - a.rang[1] || a.place - b.place,
+    )
+    .map((entree) => entree.pose)
+}
+
 export function EcranPersonnages({
   projet,
   plan,
   personnages,
+  emplacements,
+  pieces,
   onPersonnage,
   onPlan,
+  onVestiaire,
   onArmer,
+  dossierJeu,
   onFermer,
 }: {
   projet: { identifiant: string; nom: string } | null
+  /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
+   *  `App` comme le plan, et pour la même raison : un seul endroit écoute le
+   *  flux, pour toute la vie de l'onglet. */
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
   /** Le plan du jeu et ses personnages, tenus par `App` — comme le tableau.
    *  **Un seul endroit écoute le flux**, pour toute la vie de l'onglet. */
   plan: Pose[]
@@ -63,6 +139,12 @@ export function EcranPersonnages({
    *  L'écran ne garde donc aucune copie à lui : il écrit, et il reçoit. */
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onPlan: (plan: Pose[]) => void
+  /** **Ce que le geste vient de rendre, posé par le même chemin que le flux.**
+   *  Les deux se croisent — le serveur annonce avant que l'appel ne revienne —,
+   *  et c'est la charge entière qui les tient : le vestiaire arrive complet des
+   *  deux côtés, donc il remplace des deux côtés. R1 a payé ce piège : un écran
+   *  qui jette ce qu'on lui rend se réveille ailleurs. */
+  onVestiaire: (vestiaire: Vestiaire) => void
   /** **La matrice arme, l'atelier tire.** Cliquer une case vide ne dépense
    *  rien : ça remplit le prompt de l'atelier avec le signalement du
    *  personnage et le nom de l'attitude, ça retient la case visée, et ça rend
@@ -74,11 +156,27 @@ export function EcranPersonnages({
    *  et c'est le compte qui décide si l'appel se plie. En faire deux gestes
    *  aurait donné deux façons de dire la même intention, qui se seraient
    *  contredites au premier désarmement. */
-  onArmer: (personnage: Personnage, poses: Pose[]) => void
+  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  /** **Où le jeu range ses images** (C5) — le dossier posé dans les Réglages.
+   *
+   *  L'écran ne s'en sert que pour griser avec sa raison ; le geste, lui, le
+   *  redemande au serveur, qui en est le seul dépositaire. Vide, ce n'est pas
+   *  une erreur : c'est un réglage que personne n'a encore posé, et le bouton
+   *  le dit au lieu de partir puis d'échouer. */
+  dossierJeu: string
   onFermer: () => void
 }) {
   const [choisi, setChoisir] = useState<string | null>(null)
   const [refus, setRefus] = useState<string>("")
+  // **La colonne qu'on lit** (C3) : le corps, ou une pièce. Un identifiant et
+  // non l'objet — la pièce continue d'arriver par le flux, renommée ou rangée
+  // ailleurs, et une copie gardée ici serait celle d'avant. Même règle que la
+  // fiche et l'écran de découpe (`docs/PIEGES.md`).
+  const [colonne, setColonne] = useState<string | null>(null)
+  // Le calque ouvert dans le panneau de droite, par identifiant et pour la même
+  // raison : il se recalcule à chaque zone posée, et l'objet gardé serait celui
+  // d'avant le recalcul.
+  const [calque, setCalque] = useState<string | null>(null)
 
   // Le personnage ouvert **est** la sélection quand elle vaut un : deux états
   // pour la même chose se sont déjà contredits une fois dans ce produit, et le
@@ -88,6 +186,22 @@ export function EcranPersonnages({
 
   const echouer = (erreur: unknown, defaut: string) =>
     setRefus(erreur instanceof Error ? erreur.message : defaut)
+
+  const piece = pieces.find((p) => p.identifiant === colonne) ?? null
+  // Une pièce retirée du vestiaire ramène la colonne au corps d'elle-même : on
+  // ne retient qu'un identifiant, et on le relit dans la liste que le flux tient
+  // à jour. Rien à nettoyer, donc rien qui puisse échouer à moitié.
+  const colonneVive = piece ? colonne : null
+
+  // Le calque ouvert, relu dans les cases du personnage — la seule vérité de cet
+  // onglet. Il ne survit ni à la fermeture de sa colonne, ni à la disparition de
+  // son image.
+  const ouvertCalque = ouvert
+    ? (ouvert.cases
+        .flatMap((c) => Object.values(c.calques).flat())
+        .find((a) => a.identifiant === calque) ?? null)
+    : null
+  const caseDuCalque = ouvert?.cases.find((c) => c.pose === ouvertCalque?.pose) ?? null
 
   return (
     // `data-univers` marque ce que cet écran couvre, comme l'écran Univers : un
@@ -119,19 +233,48 @@ export function EcranPersonnages({
         <PanneauGauche
           plan={plan}
           personnages={personnages}
+          emplacements={emplacements}
+          pieces={pieces}
           choisi={ouvert?.identifiant ?? null}
           onChoisir={setChoisir}
           onPersonnage={onPersonnage}
           onPlan={onPlan}
+          onVestiaire={onVestiaire}
           onErreur={echouer}
         />
         <Fiche
           plan={plan}
           personnage={ouvert}
+          emplacements={emplacements}
+          pieces={pieces}
+          colonne={colonneVive}
+          onColonne={(identifiant) => {
+            setColonne(identifiant)
+            setCalque(null)
+          }}
+          onCalque={setCalque}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
+          dossierJeu={dossierJeu}
           onErreur={echouer}
         />
+        {ouvertCalque && piece && (
+          <PanneauCalque
+            calque={ouvertCalque}
+            corps={
+              caseDuCalque?.images.find(
+                (a) => a.identifiant === ouvertCalque.recette.difference?.base,
+              ) ?? null
+            }
+            pose={
+              plan.find((p) => p.identifiant === ouvertCalque.pose)?.nom ??
+              (ouvertCalque.pose ?? "")
+            }
+            piece={piece.nom}
+            onFermer={() => setCalque(null)}
+            onErreur={echouer}
+          />
+        )}
       </div>
     </div>
   )
@@ -142,18 +285,24 @@ export function EcranPersonnages({
 function PanneauGauche({
   plan,
   personnages,
+  emplacements,
+  pieces,
   choisi,
   onChoisir,
   onPersonnage,
   onPlan,
+  onVestiaire,
   onErreur,
 }: {
   plan: Pose[]
   personnages: Personnage[]
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
   choisi: string | null
   onChoisir: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onPlan: (plan: Pose[]) => void
+  onVestiaire: (vestiaire: Vestiaire) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   return (
@@ -172,6 +321,12 @@ function PanneauGauche({
           onErreur={onErreur}
         />
         <PlanDuJeu plan={plan} onPlan={onPlan} onErreur={onErreur} />
+        <Vestiaire
+          emplacements={emplacements}
+          pieces={pieces}
+          onVestiaire={onVestiaire}
+          onErreur={onErreur}
+        />
       </div>
     </aside>
   )
@@ -431,19 +586,259 @@ function LignePose({
   )
 }
 
+/** Le vestiaire du projet — où les pièces se posent, et ce qu'elles sont
+ *  (US-136, US-137).
+ *
+ *  **Deux listes qu'on écrit une fois**, comme les personnages et les attitudes
+ *  juste au-dessus, et rangées dans la même colonne pour cette raison-là. Ni
+ *  vignette, ni recherche : un jeu a des emplacements, pas des centaines.
+ *
+ *  **Nommer, c'est créer** (US-138) — et jusqu'au bout : écrire « casque · tête »
+ *  crée la tête si elle n'existe pas. Ranger n'est jamais un préalable, et il
+ *  n'y a donc aucun ordre imposé entre les deux champs. */
+function Vestiaire({
+  emplacements,
+  pieces,
+  onVestiaire,
+  onErreur,
+}: {
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
+  onVestiaire: (vestiaire: Vestiaire) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const [nom, setNom] = useState("")
+  const [ou, setOu] = useState("")
+
+  const ajouter = async () => {
+    const propre = nom.trim()
+    if (!propre) return
+    try {
+      onVestiaire(await api.ajouterPiece({ nom: propre, emplacement: ou.trim() }))
+      setNom("")
+      setOu("")
+    } catch (erreur) {
+      onErreur(erreur, "pièce refusée")
+    }
+  }
+
+  // **Rangées par emplacement, dans l'ordre de l'auteur**, et les orphelines à
+  // la fin sous un intitulé qui dit ce qu'elles sont : une pièce sans
+  // emplacement n'est pas une erreur, c'est une pièce qu'on vient de nommer.
+  const groupes = [
+    ...emplacements.map((e) => ({
+      cle: e.identifiant,
+      nom: e.nom,
+      pieces: pieces.filter((p) => p.emplacement === e.identifiant),
+    })),
+    {
+      cle: "",
+      nom: "sans emplacement",
+      pieces: pieces.filter(
+        (p) => !emplacements.some((e) => e.identifiant === p.emplacement),
+      ),
+    },
+  ].filter((g) => g.pieces.length > 0 || g.cle !== "")
+
+  return (
+    <section className="flex flex-col gap-1.5">
+      <Libelle>Ce qu'on porte</Libelle>
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        Décrite une fois pour le jeu entier, une pièce se pose sur n'importe
+        lequel de ses personnages. Elle n'a pas d'image à elle : elle n'apparaît
+        que sur un corps.
+      </p>
+
+      {groupes.length === 0 ? (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Aucune pièce — et aucun emplacement. Les deux se créent en nommant.
+        </p>
+      ) : (
+        groupes.map((groupe) => (
+          <div key={groupe.cle} className="flex flex-col">
+            <div className="flex items-center gap-2 pt-1">
+              <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+                {groupe.nom}
+              </span>
+              {groupe.cle && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void api
+                      .retirerEmplacement(groupe.cle)
+                      .then(onVestiaire)
+                      .catch((e) => onErreur(e, "retrait refusé"))
+                  }}
+                  aria-label={`Retirer l'emplacement ${groupe.nom}`}
+                  title="les pièces qui l'occupaient restent — jamais de cascade"
+                  className="mesure ml-auto px-1 text-[10px] text-texte-3 hover:text-echec"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {groupe.pieces.map((piece) => (
+              <LignePiece
+                key={piece.identifiant}
+                piece={piece}
+                onVestiaire={onVestiaire}
+                onErreur={onErreur}
+              />
+            ))}
+          </div>
+        ))
+      )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <input
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void ajouter()
+          }}
+          placeholder="nommer une pièce"
+          aria-label="Nom de la pièce à ajouter"
+          className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        />
+        <input
+          value={ou}
+          onChange={(e) => setOu(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void ajouter()
+          }}
+          // **Un exemple, pas une étiquette.** « où » demandait à l'auteur de
+          // deviner de quoi on parle ; deux endroits du corps le lui disent
+          // sans une ligne de plus (séance du 29 août 2026).
+          placeholder="tête, dos…"
+          aria-label="Emplacement de la pièce sur le corps — créé s'il n'existe pas"
+          className="mesure h-8 w-[86px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        />
+        <Bouton
+          inactif={!nom.trim()}
+          onClick={() => void ajouter()}
+          enfants="Ajouter"
+        />
+      </div>
+    </section>
+  )
+}
+
+/** Une pièce : son nom, ce qu'elle est, où elle se pose, et **sa portée**.
+ *
+ *  La portée est un choix de l'auteur et jamais une déduction (US-139) : c'est
+ *  elle qui décide si l'atelier saura fabriquer un calque, et le produit ne lit
+ *  pas le mot « cape » pour s'en faire une idée. Deux valeurs, la liste est
+ *  close, et le défaut est celle qui marche. */
+function LignePiece({
+  piece,
+  onVestiaire,
+  onErreur,
+}: {
+  piece: Piece
+  onVestiaire: (vestiaire: Vestiaire) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const [nom, setNom] = useState(piece.nom)
+  const [description, setDescription] = useState(piece.description)
+
+  // Une pièce réglée ailleurs — un autre onglet, l'agent — arrive par le flux.
+  // Sans ça, les champs garderaient les valeurs d'avant et les réécriraient au
+  // premier départ du focus.
+  useEffect(() => setNom(piece.nom), [piece.nom])
+  useEffect(() => setDescription(piece.description), [piece.description])
+
+  const regler = async (champs: Parameters<typeof api.reglerPiece>[1]) => {
+    try {
+      onVestiaire(await api.reglerPiece(piece.identifiant, champs))
+    } catch (erreur) {
+      setNom(piece.nom)
+      setDescription(piece.description)
+      onErreur(erreur, "réglage refusé")
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 border-b border-bord py-1.5">
+      <div className="flex items-center gap-2">
+        <input
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          onBlur={() => {
+            const propre = nom.trim()
+            if (!propre || propre === piece.nom) return setNom(piece.nom)
+            void regler({ nom: propre })
+          }}
+          aria-label={`Nom de la pièce ${piece.nom}`}
+          className="mesure h-[22px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11.5px] text-texte-2 hover:border-bord focus:border-bord focus:bg-fond-2"
+        />
+        {/* **La portée, déclarée** (US-139). Un `select` et non deux boutons :
+            la liste est close, et l'auteur choisit dans ce qui existe. */}
+        <select
+          value={piece.portee}
+          onChange={(e) => void regler({ portee: e.target.value as Portee })}
+          aria-label={`Portée de ${piece.nom}`}
+          title="contenue : elle tient dans la silhouette du corps. agrandit : elle en déborde (cape, arme longue), et la planche part alors avec de la marge. L'atelier ne le devine pas."
+          className="mesure h-[22px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+        >
+          <option value="contenue">contenue</option>
+          <option value="agrandit">agrandit</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => {
+            void api
+              .retirerPiece(piece.identifiant)
+              .then(onVestiaire)
+              .catch((e) => onErreur(e, "retrait refusé"))
+          }}
+          aria-label={`Retirer la pièce ${piece.nom}`}
+          title="ses calques restent — jamais de cascade"
+          className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        >
+          ×
+        </button>
+      </div>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        onBlur={() => {
+          if (description === piece.description) return
+          void regler({ description })
+        }}
+        rows={2}
+        placeholder="ce qu'elle est — ce texte part dans le prompt"
+        aria-label={`Description de ${piece.nom}`}
+        className="mesure w-full resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11px] leading-4 text-texte placeholder:text-texte-3"
+      />
+    </div>
+  )
+}
+
 // ── La colonne de droite — ce personnage-là ──────────────────────────────────
 
 function Fiche({
   plan,
   personnage,
+  emplacements,
+  pieces,
+  colonne,
+  onColonne,
+  onCalque,
   onPersonnage,
   onArmer,
+  dossierJeu,
   onErreur,
 }: {
   plan: Pose[]
   personnage: Personnage | null
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
+  colonne: string | null
+  onColonne: (piece: string | null) => void
+  onCalque: (calque: string | null) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onArmer: (personnage: Personnage, poses: Pose[]) => void
+  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   if (!personnage) {
@@ -467,14 +862,197 @@ function Fiche({
         onPersonnage={onPersonnage}
         onErreur={onErreur}
       />
+      <Colonnes
+        emplacements={emplacements}
+        pieces={pieces}
+        colonne={colonne}
+        onColonne={onColonne}
+      />
       <Cases
         plan={plan}
         personnage={personnage}
+        piece={pieces.find((p) => p.identifiant === colonne) ?? null}
+        onCalque={onCalque}
         onPersonnage={onPersonnage}
         onArmer={onArmer}
         onErreur={onErreur}
       />
+      <Sortie personnage={personnage} dossierJeu={dossierJeu} />
     </div>
+  )
+}
+
+/** Le personnage part dans le jeu (US-154, US-155).
+ *
+ *  **En bas de la fiche, et c'est l'ordre du geste** : on regarde ce qui est
+ *  fait, ce qui manque, et alors seulement on livre. Un bouton posé en tête
+ *  aurait proposé de sortir avant d'avoir montré ce qu'il y a à sortir.
+ *
+ *  **Grisé avec sa raison**, jamais caché (`docs/DESIGN.md` § Le grisé porte sa
+ *  raison) : ici la chose existe — c'est un personnage —, et ce qui manque est
+ *  nommé. Deux raisons, et l'ordre compte : ce qu'il faut fabriquer d'abord, le
+ *  réglage ensuite.
+ *
+ *  **Ce qui décide, c'est `corps`**, calculé par le serveur — celui-là même qui
+ *  écrira les fichiers. L'écran ne rejoue pas la règle « cette pose est
+ *  remplie » : il la lit, comme la planche d'équipement la lit déjà pour savoir
+ *  quelle attitude est éligible. */
+function Sortie({
+  personnage,
+  dossierJeu,
+}: {
+  personnage: Personnage
+  dossierJeu: string
+}) {
+  const [sortie, setSortie] = useState<SortieAuJeu | null>(null)
+  const [refus, setRefus] = useState<string | null>(null)
+  const [enCours, setEnCours] = useState(false)
+  const dernier = useRef(personnage.identifiant)
+
+  // Changer de personnage efface le compte rendu du précédent : « 12 fichiers
+  // posés » sous le nom de quelqu'un d'autre serait un mensonge, et c'est le
+  // geste de la fiche asset, repris tel quel.
+  useEffect(() => {
+    if (dernier.current === personnage.identifiant) return
+    dernier.current = personnage.identifiant
+    setSortie(null)
+    setRefus(null)
+  }, [personnage])
+
+  const remplies = personnage.cases.filter((c) => c.corps).length
+  const raison =
+    remplies === 0
+      ? "aucune attitude remplie — il n'y a rien à sortir"
+      : !dossierJeu.trim()
+        ? "aucun dossier de jeu — pose-le dans l'écran Réglages"
+        : null
+
+  const sortir = async () => {
+    setEnCours(true)
+    setRefus(null)
+    try {
+      setSortie(await api.sortirPersonnage(personnage.identifiant))
+    } catch (erreur) {
+      setSortie(null)
+      setRefus(erreur instanceof Error ? erreur.message : "sortie refusée")
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-2 border-t border-bord pt-4">
+      <Libelle>Sortir vers le jeu</Libelle>
+      <div className="flex items-center gap-3">
+        <Bouton
+          inactif={raison !== null || enCours}
+          onClick={() => void sortir()}
+          titre={raison ?? dossierJeu}
+          enfants={enCours ? "Sortie…" : "Poser dans le dossier du jeu"}
+        />
+        <span className="mesure min-w-0 flex-1 truncate text-[10px] text-texte-3">
+          {raison ?? dossierJeu}
+        </span>
+      </div>
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        Un fichier par attitude et par pièce, plus un descriptif qui dit ce
+        qu'est chacun. C'est le rendu qui part ; l'image payée reste ici.
+      </p>
+      {sortie && (
+        <p className="mesure text-[10px] leading-4 text-texte-2">
+          {sortie.compte} fichiers posés dans{" "}
+          <span className="text-texte">{sortie.dossier}</span>. Rien n'a été
+          écrasé.
+        </p>
+      )}
+      {refus && (
+        <p className="mesure flex items-center gap-1.5 text-[10px] text-echec">
+          <span aria-hidden className="inline-block h-px w-2 bg-echec" />
+          {refus}
+        </p>
+      )}
+    </section>
+  )
+}
+
+/** Le second axe de la matrice — **une colonne à la fois** (C3).
+ *
+ *  Deux axes, dit le cadrage : les poses d'un côté, les emplacements de
+ *  l'autre. Un damier de vignettes les aurait croisés à l'écran — et aurait
+ *  redonné à cet écran très exactement ce que la privation de C1 lui refuse, une
+ *  seconde planche contact. On choisit donc **la colonne qu'on lit**, et la
+ *  matrice reste ce qu'elle est : une ligne par attitude.
+ *
+ *  Le motif de C1 le disait déjà, et il est repris au mot : *on lit une colonne,
+ *  on ne balaie pas une planche contact.*
+ *
+ *  **Absent tant qu'il n'y a pas de pièce**, jamais grisé : le § Le grisé porte
+ *  sa raison suppose une chose indisponible, et ici il n'y a pas de chose —
+ *  c'est la bascule de `+ personnage` et celle de `Fabriquer ensemble`. */
+function Colonnes({
+  emplacements,
+  pieces,
+  colonne,
+  onColonne,
+}: {
+  emplacements: EmplacementCorps[]
+  pieces: Piece[]
+  colonne: string | null
+  onColonne: (piece: string | null) => void
+}) {
+  if (pieces.length === 0) return null
+  // Dans l'ordre des emplacements, et les orphelines à la fin : c'est l'ordre
+  // dans lequel l'auteur habille quelqu'un, pas celui de l'alphabet.
+  const rangees = [
+    ...emplacements.flatMap((e) => pieces.filter((p) => p.emplacement === e.identifiant)),
+    ...pieces.filter((p) => !emplacements.some((e) => e.identifiant === p.emplacement)),
+  ]
+  return (
+    <section className="flex flex-col gap-1.5">
+      <Libelle>La colonne qu'on lit</Libelle>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Onglet actif={colonne === null} onClick={() => onColonne(null)}>
+          le corps
+        </Onglet>
+        {rangees.map((piece) => (
+          <Onglet
+            key={piece.identifiant}
+            actif={colonne === piece.identifiant}
+            onClick={() => onColonne(piece.identifiant)}
+          >
+            {piece.nom}
+          </Onglet>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** Le rang de 26 px de l'arbre, couché. Aucune grammaire neuve : actif sur
+ *  `--fond-3`, survol `--fond-2`, 80 ms. */
+function Onglet({
+  actif,
+  onClick,
+  children,
+}: {
+  actif: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={actif}
+      className={[
+        "mesure h-[26px] rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
+        actif
+          ? "bg-fond-3 text-texte"
+          : "bg-fond-1 text-texte-3 hover:bg-fond-2 hover:text-texte-2",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -577,14 +1155,21 @@ function Identite({
 function Cases({
   plan,
   personnage,
+  piece,
+  onCalque,
   onPersonnage,
   onArmer,
   onErreur,
 }: {
   plan: Pose[]
   personnage: Personnage
+  /** La colonne qu'on lit : une pièce, ou le corps (C3). C'est **le seul
+   *  aiguillage de ce composant** — le reste, les attitudes tenues, les cochées,
+   *  les écartées, ne change pas d'une colonne à l'autre. */
+  piece: Piece | null
+  onCalque: (calque: string | null) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onArmer: (personnage: Personnage, poses: Pose[]) => void
+  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const tenues = posesTenues(plan, personnage)
@@ -598,6 +1183,10 @@ function Cases({
   // vrai « la matrice n'offre pas de sélection multiple » : on ne sélectionne
   // toujours aucun asset ici.
   const [cochees, setCochees] = useState<string[]>([])
+  // **L'ordre où l'on regarde une colonne de pièce** (C4, US-152). Il vit dans
+  // l'onglet, comme les attitudes cochées : c'est une façon de lire, pas un
+  // état du jeu, et l'enregistrer en ferait un réglage de plus à tenir.
+  const [ordre, setOrdre] = useState<Ordre>("attitude")
   // Une pose décochée du plan, ou retirée au personnage, sort d'elle-même : on
   // ne retient que des identifiants, et on les relit dans le plan vivant.
   const lot = tenues.filter((p) => cochees.includes(p.identifiant))
@@ -635,13 +1224,54 @@ function Cases({
 
   return (
     <section className="flex flex-col gap-2">
-      <Libelle>Ce qu'il lui faut</Libelle>
+      <div className="flex items-center gap-3">
+        <Libelle>{piece ? `${piece.nom} — pose par pose` : "Ce qu'il lui faut"}</Libelle>
+        {/* **L'ordre est un choix, et le plan reste le défaut** (C4, US-152).
+            Le plan du jeu est l'ordre de l'auteur, et c'est le seul dans lequel
+            une case *vide* se lit — la colonne dit d'abord ce qui manque. Le
+            pire en tête est ce qu'on demande quand on vient travailler la
+            planche qu'on vient de recevoir, et il est à un clic.
+
+            Absent sur la colonne du corps : il n'y a pas de mesure à classer,
+            donc pas de chose indisponible — il n'y a rien du tout. */}
+        {piece && (
+          <div className="ml-auto">
+            <Segments<Ordre>
+              valeurs={["attitude", "pire"] as const}
+              valeur={ordre}
+              onChange={setOrdre}
+              libelles={{ attitude: "par attitude", pire: "par le pire" }}
+            />
+          </div>
+        )}
+      </div>
 
       {plan.length === 0 ? (
         <p className="mesure text-[10px] leading-4 text-texte-3">
           Le plan du jeu est vide — il n'y a aucune case à remplir. Une attitude
           s'écrit à gauche.
         </p>
+      ) : piece ? (
+        <ul className="flex flex-col gap-px">
+          {rangees(tenues, cases, piece.identifiant, ordre).map((pose) => (
+            <LigneCalque
+              key={pose.identifiant}
+              pose={pose}
+              piece={piece}
+              case_={cases[pose.identifiant]}
+              cochee={cochees.includes(pose.identifiant)}
+              onCocher={(veut) =>
+                setCochees((precedentes) =>
+                  veut
+                    ? [...precedentes, pose.identifiant]
+                    : precedentes.filter((p) => p !== pose.identifiant),
+                )
+              }
+              onOuvrir={onCalque}
+              onArmer={() => onArmer(personnage, [pose], piece)}
+            />
+          ))}
+        </ul>
       ) : (
         <ul className="flex flex-col gap-px">
           {tenues.map((pose) => (
@@ -678,21 +1308,27 @@ function Cases({
           Ce qu'il dit, il le dit en clair : **N attitudes, un seul appel**. Le
           prix, lui, se lit dans l'atelier, à côté du bouton qui paie — et c'est
           là qu'on lit aussi ce qu'un compte faux coûterait. */}
-      {lot.length >= 2 && (
+      {/* **Le seuil n'est pas le même des deux côtés, et ce n'est pas une
+          inconséquence.** Créer une pose seule n'est pas un lot : c'est la
+          génération de C1, et la plier ferait payer un gabarit pour une image
+          que le produit sait déjà demander. Habiller une pose seule, si : il n'y
+          a pas d'autre chemin vers un calque, et ce qui part n'est pas un
+          gabarit vide mais le corps lui-même. */}
+      {(piece ? lot.length >= 1 && lot.every((p) => cases[p.identifiant]?.corps) : lot.length >= 2) && (
         <div className="flex items-center gap-2 pt-1">
           <span className="mesure text-[10px] text-texte-3">
-            {lot.length} attitudes, un seul appel
+            {lot.length} {lot.length > 1 ? "attitudes" : "attitude"}, un seul appel
           </span>
           <button
             type="button"
             onClick={() => {
-              onArmer(personnage, lot)
+              onArmer(personnage, lot, piece)
               setCochees([])
             }}
             title="prépare la planche dans l'atelier — rien n'est dépensé ici"
             className="mesure ml-auto px-1 text-[10px] text-signal hover:text-signal-clair"
           >
-            Fabriquer ensemble ›
+            {piece ? "Habiller ensemble ›" : "Fabriquer ensemble ›"}
           </button>
         </div>
       )}
@@ -837,6 +1473,193 @@ function LigneCase({
   )
 }
 
+
+/** Une attitude dans la colonne d'une pièce : ce que le calque a donné, ou ce
+ *  qui l'empêche (US-141, US-143, US-147).
+ *
+ *  **Une pose sans corps est visiblement inéligible, et elle porte sa raison.**
+ *  On ne paie jamais pour habiller une case vide : la coche est éteinte, la
+ *  rangée est en `--texte-3`, et la phrase dit pourquoi. Le serveur refuserait
+ *  de toute façon — c'est lui qui décide —, mais un refus qui n'arrive qu'après
+ *  le clic est un refus qui arrive trop tard.
+ *
+ *  **Le calque se montre superposé à son corps** (US-143), en petit ici et en
+ *  grand dans le panneau : on juge un résultat à l'œil, pas un chiffre. */
+function LigneCalque({
+  pose,
+  piece,
+  case_,
+  cochee,
+  onCocher,
+  onOuvrir,
+  onArmer,
+}: {
+  pose: Pose
+  piece: Piece
+  case_: Case | undefined
+  cochee: boolean
+  onCocher: (veut: boolean) => void
+  onOuvrir: (calque: string | null) => void
+  onArmer: () => void
+}) {
+  const corps = case_?.images.find((a) => a.identifiant === case_?.corps) ?? null
+  const calques = case_?.calques[piece.identifiant] ?? []
+  const habillable = Boolean(case_?.corps)
+
+  return (
+    <li
+      className={[
+        "flex min-h-[52px] items-center gap-3 border-b border-bord px-1 py-1",
+        habillable ? "" : "text-texte-3",
+      ].join(" ")}
+    >
+      <input
+        type="checkbox"
+        checked={cochee && habillable}
+        disabled={!habillable}
+        onChange={(e) => onCocher(e.target.checked)}
+        aria-label={`Habiller ${pose.nom} avec ${piece.nom}`}
+        title={
+          habillable
+            ? "cochées ensemble, elles partent en une seule planche"
+            : "cette attitude n'a pas encore de corps"
+        }
+        className="shrink-0 accent-signal disabled:opacity-40"
+      />
+      <span className="w-[110px] shrink-0 truncate text-[11.5px] text-texte-2">
+        {pose.nom}
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+        {calques.map((asset) => (
+          <Superposition
+            key={asset.identifiant}
+            calque={asset}
+            corps={corps}
+            onOuvrir={() => onOuvrir(asset.identifiant)}
+          />
+        ))}
+        {calques.length === 0 && (
+          <span className="mesure text-[10px] text-texte-3">
+            {habillable
+              ? "rien encore"
+              : `« ${pose.nom} » n'a pas encore de corps — une pièce se pose sur un corps`}
+          </span>
+        )}
+      </div>
+
+      <MesuresDuCalque calque={calques[0]} />
+
+      {/* **Armer, pas payer** — la règle de C1, telle quelle. Absent quand la
+          pose n'a pas de corps : il n'y a pas de chose indisponible, il n'y a
+          rien du tout. */}
+      {habillable && (
+        <button
+          type="button"
+          onClick={onArmer}
+          aria-label={`Habiller ${pose.nom} de ${piece.nom}`}
+          title="prépare la planche dans l'atelier — rien n'est dépensé ici"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          Habiller ›
+        </button>
+      )}
+    </li>
+  )
+}
+
+/** Le calque sur son corps, en vignette. **Les deux images ont les mêmes
+ *  dimensions rendues** — c'est la différence qui les leur donne —, donc la
+ *  superposition est exacte sans qu'aucune mise à l'échelle soit calculée ici.
+ *
+ *  Un corps habillé n'a pas de calque à superposer : il *est* l'image, et il se
+ *  montre seul. C'est `recette.difference` qui les distingue, et rien d'autre. */
+function Superposition({
+  calque,
+  corps,
+  onOuvrir,
+}: {
+  calque: Asset
+  corps: Asset | null
+  onOuvrir: () => void
+}) {
+  const dessus = sujetAsset(calque)
+  const dessous = corps ? sujetAsset(corps) : null
+  const empile = calque.recette.difference !== null
+  return (
+    <button
+      type="button"
+      onClick={onOuvrir}
+      title={
+        empile
+          ? "voir le calque en grand, et borner sa zone"
+          : "corps habillé — il s'exporte, il ne s'empile pas"
+      }
+      aria-label={`Ouvrir ${calque.label}`}
+      className="damier relative h-[44px] w-[44px] shrink-0"
+    >
+      {dessous && empile && (
+        <img
+          src={dessous.src}
+          alt=""
+          className="absolute inset-0 h-full w-full object-contain opacity-45"
+          style={{ imageRendering: "pixelated" }}
+        />
+      )}
+      <img
+        src={dessus.src}
+        alt={calque.label}
+        className="absolute inset-0 h-full w-full object-contain"
+        style={{ imageRendering: "pixelated" }}
+      />
+    </button>
+  )
+}
+
+/** Ce que la différence a mesuré, en deux lignes sur la rangée de sa case.
+ *
+ *  **Elle ne paraît que s'il y a quelque chose à dire**, comme les mesures de
+ *  lot juste en dessous : une colonne vide en permanence serait du cadrage
+ *  affiché. Deux des cinq ici — celles qui décident —, les cinq dans le
+ *  panneau : la rangée sert à repérer, le panneau à juger.
+ *
+ *  **Jamais un seuil, jamais une couleur.** `--echec` veut dire *ce qui échoue
+ *  ou ce qui détruit*, et un calque qui a repeint 4 % du corps n'échoue pas : il
+ *  est là, gardé, et c'est l'auteur qui décide. */
+function MesuresDuCalque({ calque }: { calque: Asset | undefined }) {
+  const mesures = calque?.calque
+  if (!mesures) return null
+  const difference = calque?.recette.difference ?? null
+  const part = (valeur: number) => `${(valeur * 100).toFixed(1).replace(".", ",")} %`
+  return (
+    <span
+      className="mesure shrink-0 text-right text-[9.5px] text-texte-3"
+      title="mesuré au dépliage de la planche — ces chiffres n'empêchent jamais de garder"
+    >
+      <span className="block">
+        repeint {part(mesures.repeint)} · ajout {part(mesures.ajout)}
+      </span>
+      <span className="block">
+        échelle {mesures.echelle.toFixed(2).replace(".", ",")}× ·{" "}
+        {difference ? "calque" : "corps habillé"}
+      </span>
+      {/* **La mesure qui décide de la place de cette rangée** (C4, US-152), et
+          si la main y est passée. Deux faits sur la même ligne parce qu'ils
+          répondent à la même question — *dois-je regarder celle-ci ?* — et que
+          c'est très exactement ce que « par le pire » ordonne.
+
+          Sur un corps habillé, rien : ce n'est pas un calque, il ne se retouche
+          pas, et la ligne au-dessus a déjà dit pourquoi. */}
+      {difference && (
+        <span className="block">
+          {difference.affinage.length || difference.retouche.length
+            ? "main posée"
+            : `à regarder · ${mesures.pire}`}
+        </span>
+      )}
+    </span>
+  )
+}
 
 /** Ressemblance et dérive, quand l'image de cette case est sortie d'une planche.
  *

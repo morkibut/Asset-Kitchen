@@ -35,8 +35,14 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Iterable
 
 from atelier.domaine.carte import DECORS, FAMILLES, INTERFACE, OBJETS, PERSONNAGES, TOUS
-from atelier.domaine.teinte import AUCUNE, teinte_valide
+from atelier.domaine.equipement import (
+    Emplacement,
+    Piece,
+    emplacements_depuis_json,
+    pieces_depuis_json,
+)
 from atelier.domaine.plan import PLAN_PAR_DEFAUT, Pose, plan_depuis_json
+from atelier.domaine.teinte import AUCUNE, teinte_valide
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -461,6 +467,18 @@ class Projet:
     # écrit » et « vidé par l'auteur ».
     plan: tuple[Pose, ...] = PLAN_PAR_DEFAUT
 
+    # ── Le vestiaire ─────────────────────────────────────────────────────────
+    #
+    # Arrivé en C3 (US-136, US-137). **À côté du plan, et pour la même raison** :
+    # ce sont des listes de production, elles n'imposent rien à une image qui
+    # rentre, donc elles ne sont pas dans `Univers`.
+    #
+    # **Vides à la naissance**, à la différence du plan : personne ne sait
+    # d'avance ce qu'un jeu équipe, et « nommer, c'est créer » les remplit sans
+    # qu'aucune ligne inventée ait à être effacée d'abord.
+    emplacements: tuple[Emplacement, ...] = ()
+    pieces: tuple[Piece, ...] = ()
+
     # Ce qui ne doit plus partir en référence avec **rien de ce projet**
     # (US-126) — la plus large des trois portées. Elle ne dépromeut aucun
     # artwork et ne touche pas à l'univers : c'est un critère d'acceptation de
@@ -483,6 +501,8 @@ class Projet:
             "univers": self.univers.en_json(),
             "teintes": dict(self.teintes),
             "plan": [p.en_json() for p in self.plan],
+            "emplacements": [e.en_json() for e in self.emplacements],
+            "pieces": [p.en_json() for p in self.pieces],
             "references_ecartees": list(self.references_ecartees),
         }
 
@@ -501,6 +521,8 @@ class Projet:
                 if isinstance(groupe, str) and groupe and teinte_valide(valeur)
             },
             plan=plan_depuis_json(d.get("plan")),
+            emplacements=emplacements_depuis_json(d.get("emplacements")),
+            pieces=pieces_depuis_json(d.get("pieces")),
             references_ecartees=tuple(
                 r
                 for r in (d.get("references_ecartees") or ())

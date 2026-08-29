@@ -199,6 +199,7 @@ async def modeles(
     echelle: str = Query(""),
     personnage: str = Query(""),
     cases: int = Query(0, ge=0),
+    piece: str = Query(""),
 ) -> dict[str, Any]:
     """Le catalogue, **et la raison du grisé de chaque modèle**.
 
@@ -231,6 +232,11 @@ async def modeles(
         # chose ici, et elle compte : le gabarit part avec l'appel, donc il
         # occupe une place dans le plafond du modèle et décide du grisé.
         cases=cases,
+        # **La pièce armée**, ou rien. Elle change deux choses ici : les concept
+        # arts qu'elle désigne partent avec l'appel, et la planche d'équipement
+        # compte comme une image de plus dès la première case — une planche
+        # d'une seule pose reste une planche.
+        piece=piece or None,
     )
     demande = _demande_de_jauge(compte["total"], proportions, resolution)
     defaut = atelier.catalogue.defaut(demande)
@@ -240,8 +246,15 @@ async def modeles(
     # décide, avant la famille du sujet — mesuré le 28 août, un modèle rend les
     # traits du gabarit dans l'image là où un autre les ignore. Sans réglage,
     # la famille reprend la main, puis le catalogue : trois niveaux, aucun trou.
+    # **Trois niveaux, et le premier dépend de la sorte d'appel.** Habiller un
+    # corps est une édition : c'est `modele_edition` qui décide, écrit en C2 et
+    # lu ici pour la première fois (C3). Créer une planche est autre chose, et
+    # c'est `modele_planche`. Sans réglage, la famille du sujet reprend la main,
+    # puis le catalogue : aucun trou, seulement un réglage qu'on n'a pas posé.
     du_projet = (
-        (univers.modele_planche or None)
+        (univers.modele_edition or None)
+        if piece
+        else (univers.modele_planche or None)
         if cases >= 2
         else (univers.modele(compte["famille"]) if compte["famille"] else None)
     )
@@ -348,6 +361,15 @@ class CorpsGeneration(BaseModel):
     # aurait fait deux. Vide ou à une seule pose, c'est la génération de C1 —
     # `pose` dit alors la case, et rien n'est plié.
     poses: list[str] | None = None
+    # **La pièce que cet appel pose** (US-140). Présente, la planche part
+    # **pleine** des corps que `poses` désigne, et ce qui revient est comparé
+    # case par case à ce qui est parti : N calques pour un appel. Absente, c'est
+    # une planche de création — celle de C2 —, et il n'y a rien à comparer.
+    #
+    # **Le même endroit d'où l'on paie**, encore : il n'existe qu'une route de
+    # génération dans tout le produit, et une seconde pour l'équipement en aurait
+    # fait deux à tenir d'accord.
+    piece: str | None = None
     # **Ce que cette génération-ci n'envoie pas** (US-126). Absent, les deux
     # portées durables — le projet et le personnage — s'appliquent ; présent, il
     # décide seul, parce que c'est la portée la plus étroite. Un agent qui ne
@@ -392,6 +414,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         personnage=corps.personnage,
         pose=corps.pose,
         poses=corps.poses,
+        piece=corps.piece,
         references_ecartees=corps.references_ecartees,
     )
     return generation.en_json()
@@ -410,6 +433,7 @@ class CorpsApercu(BaseModel):
     projet: str | None = None
     personnage: str | None = None
     poses: list[str] | None = None
+    piece: str | None = None
     # Repris, l'aperçu **est** le texte de l'auteur : il ne se recompose pas, il
     # se rend tel quel. La route le sert quand même, pour que l'écran n'ait
     # jamais deux chemins selon l'état d'un interrupteur.
@@ -444,6 +468,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         projet=corps.projet,
         personnage=corps.personnage or None,
         poses=corps.poses,
+        piece=corps.piece or None,
     )
 
 
@@ -723,16 +748,27 @@ async def appliquer_recette_nommee(
 
 @routeur.get("/assets/{identifiant}/image")
 async def image_asset(
-    requete: Request, identifiant: str, brut: bool = Query(False)
+    requete: Request,
+    identifiant: str,
+    brut: bool = Query(False),
+    avant: bool = Query(False),
 ) -> Response:
     """Le rendu, ou le brut si on le demande — c'est la bascule de la fiche.
 
     Un rendu dont le fichier a disparu du disque **se recalcule ici**, sans que
     l'appelant ait à le savoir : « supprimer le fichier de rendu ne perd rien »
     (`docs/PLAN.md`, T2).
+
+    `avant` rend le calque tel que la différence l'avait produit, **avant que la
+    main y passe** (C4, US-151) — l'autre moitié de la comparaison d'un seul
+    geste. Il n'écrit rien : ni cache, ni asset. Sur une image que la main n'a
+    pas touchée, il rend le rendu ordinaire plutôt qu'un refus — la question a
+    une réponse, et c'est l'image elle-même.
     """
     atelier = _atelier(requete)
-    octets, type_media = atelier.assets.octets(_asset(requete, identifiant), brut=brut)
+    octets, type_media = atelier.assets.octets(
+        _asset(requete, identifiant), brut=brut, avant=avant
+    )
     return Response(
         content=octets,
         media_type=type_media,

@@ -339,18 +339,42 @@ class ServiceProduction:
         image que la grille, servie par la même route.
         """
         objet = self._exiger(projet)
-        par_pose: dict[str, list[Asset]] = {}
+        corps: dict[str, list[Asset]] = {}
+        calques: dict[str, dict[str, list[Asset]]] = {}
         for asset in self._base.assets_du_personnage(personnage.identifiant):
-            if asset.pose:
-                par_pose.setdefault(asset.pose, []).append(asset)
+            if not asset.pose:
+                continue
+            # **La pièce sépare les deux axes, et elle seule** (C3). Sans pièce,
+            # l'image est un corps et remplit la case de sa pose ; avec, elle
+            # remplit la case de sa colonne. Sans ce partage, un casque posé sur
+            # six poses ferait paraître six corps de plus dans la colonne de
+            # gauche, et la matrice dirait « fait » d'une pose qui n'a jamais eu
+            # de corps.
+            if asset.piece:
+                calques.setdefault(asset.pose, {}).setdefault(
+                    asset.piece, []
+                ).append(asset)
+            else:
+                corps.setdefault(asset.pose, []).append(asset)
 
         return [
             {
                 "pose": pose.identifiant,
                 "demandees": pose.images,
-                "images": [
-                    a.en_json() for a in par_pose.get(pose.identifiant, ())
-                ],
+                "images": [a.en_json() for a in corps.get(pose.identifiant, ())],
+                # **Le second axe de la matrice** (US-140), pièce par pièce.
+                # Rien de plus enregistré : c'est toujours l'image qui dit sa
+                # case, et une image supprimée vide la sienne toute seule.
+                "calques": {
+                    piece: [a.en_json() for a in liste]
+                    for piece, liste in calques.get(pose.identifiant, {}).items()
+                },
+                # **Le corps que cette pose enverrait en planche d'équipement**,
+                # ou rien — et c'est ce « rien » qui rend une pose visiblement
+                # inéligible (US-141). Le favori d'abord, sinon la plus récente :
+                # la même règle qu'à la composition, écrite une fois et lue des
+                # deux côtés, pour que l'écran montre exactement ce qui partira.
+                "corps": _corps(corps.get(pose.identifiant, ())),
             }
             for pose in personnage.tenues(objet.plan)
         ]
@@ -372,6 +396,53 @@ class ServiceProduction:
         raise ProductionRefusee(
             f"« {vise.nom} » ne tient pas la pose « {pose} »"
         )
+
+    def sujet(
+        self,
+        projet: str,
+        personnage: str,
+        poses: Sequence[str] = (),
+        piece: str | None = None,
+    ) -> str:
+        """Ce qu'une case demande au modèle — **écrit ici, lu des deux côtés**.
+
+        Trois règles, et aucune n'est interchangeable avec une autre :
+
+        - **Une case** : le signalement du personnage, puis le nom de
+          l'attitude. C'est la promesse d'US-115 — la description part avec
+          chaque image de ce personnage et ne se retape jamais.
+        - **Un lot** : le signalement seul. Les attitudes partent case par case
+          dans les consignes de planche, que le pliage replie côté serveur ; les
+          écrire aussi dans le sujet les dirait deux fois, et le prompt
+          enregistré ne dirait plus ce qui est parti.
+        - **Une pièce** : sa description seule (C3). Le signalement du
+          personnage n'a rien à faire là — le corps est **dans l'image** qui
+          part, et le redécrire en mots inviterait le modèle à le redessiner,
+          très exactement ce que la mesure du corps repeint sanctionne.
+
+        **Dans le service depuis C5, et plus à l'écran.** La matrice armait ce
+        texte elle-même ; l'agent arme les mêmes cases, et deux compositions à
+        deux endroits auraient fini par demander deux choses différentes pour la
+        même case — sans que rien ne le signale, puisque les deux auraient
+        semblé raisonnables.
+
+        **Ce n'est pas le prompt** : la bible du projet se replie en tête et les
+        consignes de planche en queue, et cela n'appartient qu'à
+        `ServiceGenerations.parties` (US-158). Ici on n'écrit que le sujet.
+        """
+        vise = self.personnage(projet, personnage)
+        objet = self._exiger(projet)
+        if piece:
+            trouvee = next((p for p in objet.pieces if p.identifiant == piece), None)
+            if trouvee is None:
+                raise ProductionRefusee(f"aucune pièce « {piece} » dans ce projet")
+            return trouvee.description.strip() or trouvee.nom
+        voulues = [p for p in objet.plan if p.identifiant in set(poses)]
+        if len(voulues) == 1:
+            return ", ".join(
+                mot for mot in (vise.description.strip(), voulues[0].nom) if mot
+            )
+        return vise.description.strip()
 
     def concept_arts(self, projet: str, personnage: str | None) -> tuple[str, ...]:
         """Les cartes qu'un personnage désigne (US-124).
@@ -487,6 +558,18 @@ class ServiceProduction:
         if objet is None:
             raise AssetInconnu(asset)
 
+        # **Un calque est solidaire de sa pose** (`docs/PLAN.md`, C3). Un casque
+        # vu de face n'est pas un casque vu de dos : il en faut un par pose, et
+        # ce n'est pas une limite technique a lever, c'est une evidence de
+        # dessin. Le produit ne propose donc nulle part de reposer un calque
+        # ailleurs — et c'est **ici** que la promesse se tient, parce que c'est
+        # le seul geste du produit qui change la case d'une image.
+        if objet.piece:
+            raise ProductionRefusee(
+                "un calque est solidaire de sa pose — il en faut un par pose, "
+                "et c'est le pliage qui en divise le prix"
+            )
+
         if personnage is None and pose is None:
             objet.personnage = None
             objet.pose = None
@@ -600,3 +683,30 @@ class ServiceProduction:
         self._diffusion.publier(
             "personnage", self.en_charge(personnage.projet, personnage)
         )
+
+
+def corps_retenu(images: Sequence[Asset]) -> Asset | None:
+    """Le corps que le produit retiendrait pour cette pose.
+
+    **Le favori d'abord, sinon la plus récente.** Un auteur qui a marqué favori
+    la bonne image sur trois essais a déjà dit laquelle est le corps ; lui
+    redemander à chaque planche serait redemander ce qu'il vient de répondre.
+
+    Écrite ici et lue par `ServiceEquipement`, qui compose la planche : deux
+    règles à deux endroits finiraient par désigner deux images différentes, et
+    l'écran montrerait alors autre chose que ce qui part.
+    """
+    retenu: Asset | None = None
+    for asset in images:
+        if retenu is None or (asset.favori, asset.cree_le, asset.rang) > (
+            retenu.favori,
+            retenu.cree_le,
+            retenu.rang,
+        ):
+            retenu = asset
+    return retenu
+
+
+def _corps(images: Sequence[Asset]) -> str | None:
+    retenu = corps_retenu(images)
+    return retenu.identifiant if retenu else None

@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Quatre-vingt-quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Quatre-vingt-dix pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -480,3 +480,94 @@ la prochaine réécriture retrouvera.
   qu'on ne s'explique pas se corrige au lieu de se vérifier. Un diagnostic incrémental
   surprenant se **rejoue en `--force`** avant qu'on touche au code, et c'est un `npm run build`
   qui fait foi, jamais un `tsc -b` de contrôle.
+
+- **Une plage d'échelles qui enjambe 1,00 fait d'une image inchangée un ajout entier.** Le
+  recalage de C3 cherche l'échelle qui fait le mieux retomber ce qui revient sur ce qui est
+  parti, en essayant une soixantaine de valeurs. La plage était `linspace(0.55, 1.85, 66)` —
+  pas de 0,02, et **1,00 n'y tombe pas** : les voisines sont 0,99 et 1,01. Une case revenue
+  rigoureusement identique se retrouvait donc rééchantillonnée d'un centième, son contour se
+  décalait d'un pixel sur tout le tour, et la silhouette entière ressortait en *ajout* — 9 %
+  du corps « ajouté » sur une image que personne n'avait touchée, et un masque qui ne
+  changeait plus rien parce que le calque était déjà partout. Ce qui l'a rendu invisible est
+  que **la plage est juste** : elle couvre les deux sens, elle est symétrique à l'œil, et
+  aucun de ses trois nombres n'est suspect. Corollaire général : *une recherche discrète doit
+  contenir son hypothèse nulle*, et c'est la première chose à vérifier quand un cas « rien
+  n'a bougé » ne rend pas exactement rien. Payé le 29 août 2026.
+- **Deux recalages successifs mesurent autre chose que ce qu'ils alignent.** Le même jour :
+  `recadrer_sur` alignait la case revenue sur le corps, puis `mesurer_calque` en cherchait un
+  second sur le résultat déjà aligné. Les deux étaient corrects, et pourtant le calque
+  affiché n'était pas celui qu'on venait de mesurer — 216 pixels d'un côté, 146 de l'autre,
+  pour la même case. Ce qui l'a rendu invisible est qu'aucune des deux fonctions n'a tort
+  isolément : c'est leur **composition** qui perd quelque chose, exactement la famille de
+  défaut que T9 avait trouvée en mettant une conception à juger avant la première ligne. Une
+  recherche coûteuse se fait **une fois** et rend tout ce qu'elle a trouvé — ici l'image
+  alignée, l'échelle et la silhouette retrouvée sortent d'un seul objet.
+
+- **Un critère qui croît avec ce qu'on cherche ne cherche rien.** Le recalage de C3 notait
+  chaque échelle candidate à *la part du corps qu'elle recouvre*. La formule est juste, elle
+  répond mot pour mot à « que reste-t-il de la silhouette de départ ? » — et elle est
+  **monotone** : agrandir le revenu finit toujours par recouvrir tout le corps. Le critère
+  demandait donc « quelle est la plus grande échelle ? », et la bonne réponse ne gagnait que
+  par l'égalité, à recouvrement rigoureusement parfait. Un aller-retour de rééchantillonnage
+  lui coûte deux pour mille de contour ; l'égalité tombait, et une planche revenue **intacte**
+  était déclarée revenue à 0,58× — le calque valait toute la silhouette au lieu du seul
+  casque. Ce qui l'a rendu invisible est que la mesure était **bonne** et le résultat
+  plausible : 1,71× recouvre bien 100 % du corps, et rien dans le chiffre ne dit qu'il a été
+  choisi pour sa taille. Les essais ne l'ont pas vu parce qu'ils dessinaient des blocs pleins,
+  qui traversent un rééchantillonnage sans perdre un pixel — l'égalité tenait, et le
+  départage à « l'échelle qui bouge le moins » sauvait la mise. **Ce qu'on rend n'est pas ce
+  qui doit servir à chercher** : on cherche sur le recouvrement rapporté à l'**union**, qui
+  pénalise ce qui déborde, et on rend la couverture au placement retenu. Corollaire général :
+  *une note qui ne peut que monter avec le paramètre qu'on optimise n'est pas un critère,
+  c'est un classement du paramètre* — et le vérifier coûte une colonne dans un tableau. Trouvé
+  à l'usage le 29 août 2026, sur le premier casque envoyé, après deux appels payés.
+
+- **Une image dérivée d'une autre casse quand celle d'en face change de taille.** Le calque de
+  C3 est taillé dans le cadre du corps *tel qu'il était au dépliage*, et son rendu relit le
+  corps à chaque fois. Relever la cible de pixel d'un projet rend le corps à une autre taille :
+  les deux tableaux ne se superposent plus, `opaque_corps & opaque_revenu` lève, et la route de
+  l'image répond **500** — donc un calque qu'on ne peut plus ni voir ni retoucher. Ce qui l'a
+  rendu invisible est le **cache** : tant que la recette du calque ne bouge pas, son rendu est
+  servi depuis le disque et personne ne recalcule rien. Le défaut dort donc entre le jour où la
+  cible change et le premier geste qui touche la recette — ici l'arrivée de C4, qui a ajouté
+  deux places et fait recalculer tous les calques d'un coup. Corollaire général : *un cache
+  cache aussi les pannes du calcul qu'il remplace*, et une donnée dérivée d'une **autre**
+  donnée mutable doit dire ce qu'elle fait quand celle-ci a bougé. Ici : un corps qui a changé
+  de taille est traité comme un corps disparu — le calque redevient sa case, la différence
+  reste dans la recette, et le rejeu du recalage (R5) retaille depuis la planche payée.
+  Rééchantillonner le corps pour le faire tenir aurait été pire : ça fabrique une différence
+  que personne n'a demandée, ce que tout C3 refuse. Trouvé le 29 août 2026 en ouvrant C4 sur
+  `coeur de pierre - 01`.
+
+- **Une ellipse de taille nulle ne peint aucun pixel.** Le pinceau de C4 pose un disque à
+  chaque point du chemin — `ellipse([x-r, y-r, x+r, y+r])` — et relie les points par un trait
+  large. À rayon nul, les deux coins de la boîte se confondent, et Pillow ne dessine **rien** :
+  le geste au pixel, qui est un point seul de rayon zéro, ne marquait aucun pixel. Ce qui l'a
+  rendu invisible est qu'un rayon nul sur un chemin de *deux* points marchait très bien — la
+  ligne, elle, se dessine —, donc la fonction rendait le bon masque partout sauf sur le cas
+  d'un seul point. Corollaire général : *un cas dégénéré d'une primitive de dessin ne se déduit
+  pas de son cas général*, et le seul moyen de le savoir est de compter les pixels. `point()`
+  pour le rayon nul, `ellipse()` au-delà. Payé en écrivant les essais de C4, le 29 août 2026 —
+  et c'est très exactement ce que le premier essai devait trouver.
+
+- **Le double d'écran ouvre toujours sur `ETAT`, pas sur ce que le test a demandé.** Un essai
+  d'écran passe son état au serveur double (`serveurDouble({ agent })`), mais c'est
+  `monter(fetchDouble)` qui pose l'état initial, et il émet la constante `ETAT` du module sur
+  le flux. Le réglage demandé arrive donc **au double** — les routes répondent avec — et
+  **jamais à l'écran**, qui garde celui d'un atelier neuf. Ce qui l'a rendu invisible est que
+  la moitié des essais passent quand même : ils n'interrogent que des routes. Le premier à
+  tomber est celui qui lit un réglage *à l'écran* — ici le bouton de sortie de C5, grisé parce
+  que `dossier_jeu` valait toujours `""`. Corollaire général : *deux chemins posent l'état d'un
+  écran, et le second écrase le premier.* Le geste qui répare est aussi le meilleur essai :
+  émettre le réglage sur le flux (`flux.emettre("agent", …)`) et vérifier que le bouton
+  s'allume **à l'instant** — ce que R1 demande de toute façon. Payé en écrivant les essais
+  d'écran de C5, le 29 août 2026.
+
+- **Une fixture pytest ne s'importe pas avec la fonction qui s'en sert.** `test_c5` réemploie
+  `appeler` et `refuser` de `test_t7` ; la fixture `mcp`, qui vit dans le même fichier, reste
+  invisible tant qu'elle n'est pas **nommée** dans l'import — pytest ne la cherche que dans le
+  module de l'essai et dans les `conftest`. L'erreur est lisible (« fixture 'mcp' not found »)
+  mais elle arrive à la *collecte*, donc neuf essais tombent d'un coup sans qu'aucun n'ait
+  tourné, ce qui ressemble à une casse du montage. `from tests.test_t7 import appeler, mcp,
+  refuser  # noqa: F401`, et le `noqa` dit à qui relit que l'import inutilisé est le mécanisme.
+  Payé en écrivant les essais de C5, le 29 août 2026.
