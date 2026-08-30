@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, le châssis des tables</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:23px;font-weight:400;margin:0 0 8px;line-height:1.2}
+
+  /* ── Wireframe ──────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .inner{min-width:1030px}
+  .wf-barre{height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  .ariane{display:flex;align-items:center;gap:6px;margin-left:8px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .ariane a{color:var(--texte-2);text-decoration:none;border-bottom:1px solid var(--bord-fort)}
+  .ariane .ici{color:var(--texte);border:0}
+  .ariane .sp{color:var(--texte-3)}
+
+  .tables{height:34px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:3px;padding:0 12px}
+  .tb{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .tb .carre{width:8px;height:8px;border:1px solid var(--bord-fort);flex:none}
+  .tb.pose .carre{background:var(--signal);border-color:var(--signal)}
+  .tb.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .tb.on .carre{background:var(--signal);border-color:var(--signal)}
+  .tb.hs{color:var(--texte-3)}            /* indisponible : pas de carré, texte grisé */
+  .tb .vl{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .tbsep{width:1px;height:16px;background:var(--bord);margin:0 6px}
+  .tb.hors{border-style:dashed;border-color:var(--bord)}
+  .toutdefaire{margin-left:auto;display:flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);padding-left:12px;
+    border-left:1px solid var(--bord)}
+
+  .wf-corps{display:flex;align-items:stretch;min-height:300px}
+  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .cg{width:308px;flex:none;border-right:1px solid var(--bord);display:flex;flex-direction:column}
+  .cd{width:186px;flex:none;border-left:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:8px}
+  .centre{flex:1;display:flex;flex-direction:column;min-width:0;padding:11px;gap:8px}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .trou{flex:1;margin:11px;border:1px dashed var(--signal);border-radius:2px;
+    background:var(--signal-sourd);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:6px;text-align:center;padding:14px}
+  .trou .t{font-family:var(--mono);font-size:10px;color:var(--signal-clair);letter-spacing:.06em}
+  .trou .d{font-size:11px;color:var(--texte-2);line-height:1.45;max-width:30ch}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .toile{flex:1;border:1px solid var(--bord);border-radius:2px;position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sujet{width:150px;height:172px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;padding:8px}
+  .sousimage{display:flex;align-items:center;gap:10px}
+  .sousimage .mes{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .cmp{display:flex;gap:4px;margin-left:auto}
+  .sg{height:23px;display:flex;align-items:center;justify-content:center;padding:0 9px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .gr2{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+  .tu{background:var(--fond-2);border:1px solid var(--bord);min-height:44px}
+  .tu.sel{border-color:var(--lumiere)}
+  .tu.vd{background:transparent;border-style:dashed;border-color:var(--bord-fort)}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .raisonbloc{margin:11px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:14px;display:flex;flex-direction:column;gap:8px}
+  .raisonbloc .t{font-size:12.5px;color:var(--texte-2)}
+  .raisonbloc .r{font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.5}
+
+  /* états, en démonstration */
+  .etats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .etat{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .etat .demo{height:56px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;justify-content:center}
+  .etat .txt{padding:12px 14px}
+  .etat .nm{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:5px}
+  .etat .d{font-size:11.5px;color:var(--texte-2);line-height:1.45}
+
+  /* comparateur */
+  .quatre{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .mode{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .mode .mt{height:26px;display:flex;align-items:center;gap:7px;padding:0 10px;
+    border-bottom:1px solid var(--bord);font-size:11.5px;color:var(--texte)}
+  .mode .mt .k{font-family:var(--mono);font-size:9px;color:var(--signal)}
+  .mode .mv{height:104px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;position:relative}
+  .mode .sq{width:50px;height:84px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:8.5px;color:var(--texte-3);text-align:center;line-height:1.4;padding:4px}
+  .mode .sq.brut{background:var(--fond-1);border-color:var(--bord-fort);border-style:dashed;color:var(--texte-2)}
+  .mode .sq.sur{position:absolute;background:rgba(234,244,248,.16);
+    border:1px dashed var(--lumiere);color:var(--lumiere)}
+  .mode .md{padding:9px 10px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.45}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 03 — le châssis des tables</div>
+    <h1>Le menu, la barre de tables,<br><em>et le wrapper de la table active</em></h1>
+    <p>Ce document définit <strong>ce qui ne change jamais d'une table à l'autre</strong> : les trois onglets
+      du menu, le fil d'Ariane, la barre qui sélectionne la table, le cadre qui la reçoit, et le comparateur.</p>
+    <p><strong>Il ne définit le contenu d'aucune table.</strong> Chaque table a sa propre maquette, et n'y
+      décrit que ce qui vient se poser dans le trou du wrapper — sa colonne de réglages, ce que la main fait
+      sur l'image, et ses mesures propres.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Le menu principal — trois onglets, dans l'ordre où ils servent</h2></div>
+    <p class="intro"><strong>Univers · Codex · Galerie.</strong> L'ordre n'est pas alphabétique et n'est pas
+      arbitraire : c'est celui du travail. On pose ce qui s'applique à tout, puis on déclare ce que le monde
+      contient, puis on regarde ce qu'on a produit.</p>
+    <table>
+      <thead><tr><th style="width:18%">Onglet</th><th>Ce qu'il tient</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Univers</td><td>La bible du style, la palette du jeu, les planches d'inspiration et la
+          toile. Ce qui s'applique à tout sans appartenir à personne.</td></tr>
+        <tr><td class="k">Codex</td><td>Ce que le monde contient, par famille — personnages, biomes, types
+          d'objets, interface — plus les deux listes que le projet impose à tous : le plan de poses et le
+          vestiaire. <strong>C'est de là qu'on entre dans un établi</strong>, et donc dans une table.</td></tr>
+        <tr><td class="k">Galerie</td><td>Toutes les images produites, toutes entités confondues. La planche
+          contact : on y juge et on y range. <strong>On n'y paie jamais</strong> — les deux lieux d'où
+          l'argent part sont l'établi d'une chose et le codex.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>La barre complète — menu, fil d'Ariane, tables</h2></div>
+    <p class="intro">Trois bandes empilées, <span class="mesure">44 + 34</span> px, et rien d'autre au-dessus
+      du travail. Le fil d'Ariane occupe la place du nom de l'onglet Codex : il dit où l'on est, et chacun de
+      ses segments ramène. <span class="sourd">Ce paragraphe disait 38, et le croquis dessinait 38, alors
+      que le § 08 de ce même fichier annonce 44 depuis le premier jour. Corrigé le 31 août 2026 : c'est 44
+      partout, et les quatre plus anciennes maquettes ont été alignées.</span></p>
+
+    <div class="croquis"><div class="inner">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="ariane">
+          <a href="#">Cœur de pierre</a><span class="sp">›</span>
+          <a href="#">Personnages</a><span class="sp">›</span>
+          <a href="#">Balthazar</a><span class="sp">›</span>
+          <a href="#">marche · sud · image 3</a><span class="sp">›</span>
+          <span class="ici">Détourage</span>
+        </span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+      </div>
+      <div class="tables">
+        <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
+        <span class="tb pose"><span class="carre"></span>recadrage <span class="vl">2 px</span></span>
+        <span class="tb pose"><span class="carre"></span>grille <span class="vl">64 px · 92 %</span></span>
+        <span class="tb"><span class="carre"></span>quantification</span>
+        <span class="tb"><span class="carre"></span>bords</span>
+        <span class="tb"><span class="carre"></span>contours</span>
+        <span class="tb"><span class="carre"></span>la main</span>
+        <span class="tbsep"></span>
+        <span class="tb hors">découpage</span>
+        <span class="tb hors">superposition</span>
+        <span class="toutdefaire">× tout défaire</span>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>la recette se lit de gauche à droite · l'ordre ne se change pas</span></div>
+    </div></div>
+    <div class="lgd">sept places à gauche du trait, deux fabriques à droite — l'état « indisponible » se voit au § 03, et son wrapper au § 05</div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Le fil d'Ariane a deux formes, selon la porte par laquelle on est entré</span>
+      <p>Le croquis ci-dessus montre la longue : on vient du codex, et le chemin nomme chaque étage
+        traversé — <span class="mesure">Cœur de pierre › Personnages › Balthazar › marche · sud ·
+        image 3 › Détourage</span>. <b>Cinq segments, et pas un de plus</b> : les directions se sont
+        ajoutées au produit le 30 août, et elles n'ajoutent pas d'étage — le segment de la pose porte
+        les trois choses d'un coup, séparées par des points médians. Une image ouverte <b>depuis la
+        galerie</b> n'a pas ces étages : elle
+        n'appartient pas forcément à une chose du jeu, et on n'est passé par aucune famille. Son fil
+        est donc court — <span class="mesure">Cœur de pierre › Galerie › tonneau-cerclé-02 ›
+        Détourage</span> — et <b>la colonne des sœurs montre les voisines de la grille</b> au lieu des
+        attitudes d'une entité, ce que le § 04 prévoit déjà en toutes lettres.</p>
+    </div>
+
+    <div class="note" style="margin-top:9px">
+      <span class="lab">Le total de la barre de tête dit de quoi il est le total</span>
+      <p>Il porte son étiquette — <span class="mesure">ce jeu $2,140</span> — et il est
+        <b>cliquable</b> : il ouvre l'écran des dépenses. La raison tient en une phrase :
+        <strong>un montant affiché est une question posée</strong>, et un chiffre qui laisse deviner
+        sa portée finit par être lu comme le total de tout, ce qu'il n'est pas — l'atelier en compte
+        un second, celui de toutes les séances, qui vit sur l'écran des dépenses.</p>
+      <p style="margin-top:8px"><b>Ce croquis-ci ne le montre pas</b>, et c'est normal : dans une
+        table, la droite de la barre porte les commandes de la table — <span class="mesure">réglages ·
+        sœurs · ?</span>. Le total est dessiné dans les écrans qui portent le nom du jeu.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Les quatre états d'une table, sans un mot</h2></div>
+    <p class="intro">Le carré est la marque : <strong>il dit qu'il y a une place ici</strong>. Une table
+      indisponible n'en a pas, parce qu'il n'y a pas de place à remplir — et son nom passe au grisé. Deux
+      marques, aucun texte, aucun glyphe neuf.</p>
+    <div class="etats">
+      <div class="etat">
+        <div class="demo"><span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span></div>
+        <div class="txt"><div class="nm">Active</div>
+          <div class="d">Bord et fond <span class="mesure">--signal</span>, carré plein. C'est la table
+            ouverte dans le wrapper, et il n'y en a jamais deux.</div></div>
+      </div>
+      <div class="etat">
+        <div class="demo"><span class="tb pose"><span class="carre"></span>grille <span class="vl">64 px · 92 %</span></span></div>
+        <div class="txt"><div class="nm">Posée</div>
+          <div class="d">Carré plein <span class="mesure">--signal</span>, nom en
+            <span class="mesure">--texte-2</span>, et <strong>sa valeur en mono</strong> — un repli qui
+            résume, jamais un repli qui cache.</div></div>
+      </div>
+      <div class="etat">
+        <div class="demo"><span class="tb"><span class="carre"></span>bords</span></div>
+        <div class="txt"><div class="nm">Vide</div>
+          <div class="d">Carré creux, nom en <span class="mesure">--texte-2</span>, aucune valeur. Elle
+            reste parfaitement visible : ce qu'on <em>pourrait</em> faire occupe autant de place que ce
+            qu'on a fait.</div></div>
+      </div>
+      <div class="etat">
+        <div class="demo"><span class="tb hs">contours</span></div>
+        <div class="txt"><div class="nm">Indisponible</div>
+          <div class="d"><strong>Pas de carré</strong>, nom en <span class="mesure">--texte-3</span>. Elle
+            reste cliquable — et c'est le wrapper qui porte la raison, pas la puce.</div></div>
+      </div>
+    </div>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Ce que « posée » veut dire — précisé le 30 août 2026</span>
+      <p><strong>Le carré se remplit quand la place change l'image, pas quand elle figure dans la
+        recette.</strong> Les deux ont longtemps coïncidé, et la table <em>recadrage</em> a montré qu'elles
+        ne coïncident pas toujours : elle est posée dès la naissance de tout asset qui a une silhouette, et
+        dans le cas normal elle ne change rien — son carré serait plein en permanence, sur toutes les images
+        du produit, pour une table inerte.</p>
+      <p>Elle n'est pas seule : <em>bords</em> avec une aire minimale à zéro ne retire aucune tache, et
+        <em>quantification</em> posée sans palette ni compte ne ramène aucune couleur. Dans ces états la
+        table est <strong>vide</strong> — carré creux, aucune valeur en mono — et elle se remplit dès qu'un
+        réglage agit.</p>
+      <p>La raison tient en une phrase : <strong>un carré plein qui ne correspond à aucun changement de
+        l'image est un carré qui ment</strong>, et une barre ne vaut que si on peut la lire sans aller
+        vérifier. Voir <span class="mesure">12-table-recadrage.html § 02</span> pour la mesure qui a levé le
+        cas.</p>
+    </div>
+
+    <div class="note" style="margin-top:9px">
+      <span class="lab">Où passe la raison, puisqu'elle ne s'écrit plus dans la barre</span>
+      <p>La règle du produit — <em>ce qui est indisponible est grisé avec sa raison, jamais proposé puis
+        refusé</em> — n'est pas abandonnée : <strong>elle change d'endroit</strong>. Une table indisponible
+        s'ouvre normalement, et son wrapper porte la raison en clair à la place des réglages :
+        <span class="mesure">— rien n'est transparent sur cette image : il n'y a pas de silhouette à cadrer</span>.</p>
+      <p>C'est mieux qu'un mot dans une puce de 24 px, et mieux qu'une infobulle que le produit s'interdit :
+        la raison a la place de s'expliquer, et elle est là <strong>au moment où l'on est allé la
+        chercher</strong>.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Ce que le trait sépare — la seule lecture que la barre demande</span>
+      <p><strong>À gauche, ce qui règle cette image</strong> : sept places, dans l'ordre où elles
+        s'appliquent, chacune posée ou vide. <strong>À droite, ce qui en fabrique d'autres</strong> : le
+        découpage coupe une image en plusieurs, la superposition en pose deux l'une sur l'autre. Les deux
+        écrivent des fichiers et ne posent rien sur l'image courante — <strong>c'est pour ça qu'elles n'ont
+        pas de carré</strong>.</p>
+      <p>C'est ce critère qui a sorti <em>la différence</em> de la recette le 30 août : elle nomme deux
+        images, donc elle fabrique. Voir <span class="mesure">19-outil-superposition.html</span> — le rang
+        qu'elle occupait dans la barre reste vide, et le trou documente la décision.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Et « tout défaire » quitte l'en-tête de la table</span>
+      <p>Il était posé en face du nom de la table, et il vidait la recette entière — donc il mentait sur sa
+        portée. <strong>Il vit maintenant au bout de la barre de tables</strong>, ancré à droite après un
+        séparateur, parce que <em>la barre est la recette</em> : le geste qui vide la recette appartient à ce
+        qui la représente.</p>
+      <p>La forme est le <span class="mesure">×</span> du produit — le même glyphe que dans l'arbre, la bande
+        des réinjections et la ligne d'une passe : <span class="mesure">--texte-3</span> qui vire à
+        <span class="mesure">--echec</span> au survol. Aucun glyphe neuf n'entre. Le pied de chaque table
+        garde son <span class="mesure">Sans &lt;table&gt; ›</span>, qui ne touche qu'elle : <strong>deux
+        échelles, deux endroits, et chacun dit lequel.</strong></p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Le wrapper — ce que le châssis fournit, et le trou qu'il laisse</h2></div>
+    <p class="intro"><span class="mesure">380px · 1fr · 380px</span>, les deux colonnes repliables depuis la
+      barre de tête. C'est la grille de l'écran Univers en mode toile, réemployée : aucune largeur neuve.
+      <strong>La zone en pointillé est le seul endroit qu'une maquette de table a le droit de définir.</strong></p>
+
+    <div class="croquis"><div class="inner">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="ariane">
+          <a href="#">Cœur de pierre</a><span class="sp">›</span>
+          <a href="#">Personnages</a><span class="sp">›</span>
+          <a href="#">Balthazar</a><span class="sp">›</span>
+          <a href="#">marche · sud · image 3</a><span class="sp">›</span>
+          <span class="ici">Détourage</span>
+        </span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+      </div>
+      <div class="tables">
+        <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
+        <span class="tb pose"><span class="carre"></span>recadrage <span class="vl">2 px</span></span>
+        <span class="tb pose"><span class="carre"></span>grille <span class="vl">64 px · 92 %</span></span>
+        <span class="tb"><span class="carre"></span>quantification</span>
+        <span class="tb"><span class="carre"></span>bords</span>
+        <span class="tb"><span class="carre"></span>contours</span>
+        <span class="tb"><span class="carre"></span>la main</span>
+        <span class="tbsep"></span>
+        <span class="tb hors">découpage</span>
+        <span class="tb hors">superposition</span>
+        <span class="toutdefaire">× tout défaire</span>
+      </div>
+      <div class="wf-corps">
+        <div class="cg">
+          <div class="enpan">détourage</div>
+          <div class="trou">
+            <span class="t">LA COLONNE DE LA TABLE</span>
+            <span class="d">Ses réglages, et rien d'autre. Définie dans la maquette de cette table-là.</span>
+          </div>
+          <div class="etatcouche"><span>2 passes · alpha 61 %</span>
+            <span class="dr">Sans détourage ›</span></div>
+        </div>
+        <div class="centre">
+          <div class="toile"><div class="sujet">le cadre EST l'image,<br>mis à l'échelle par calcul</div></div>
+          <div class="sousimage">
+            <span class="mes">1024 × 512 · image/jpeg · sans alpha</span>
+            <span class="cmp">
+              <span class="sg mono">brut</span><span class="sg on mono">rendu</span>
+              <span class="sg mono">côte à côte</span><span class="sg mono">superposé</span>
+            </span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="col-t">ses attitudes</div>
+          <div class="gr2">
+            <div class="tu"></div><div class="tu"></div>
+            <div class="tu sel"></div><div class="tu"></div>
+            <div class="tu vd"></div><div class="tu vd"></div>
+          </div>
+          <div class="raison">changer d'image garde la table ouverte</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>non destructif · retour au brut à tout moment</span>
+        <span>aucun appel, aucun coût</span></div>
+    </div></div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:34%">Ce que le wrapper fournit, toujours</th><th>Ce que la table fournit, chaque fois</th></tr></thead>
+      <tbody>
+        <tr><td>L'en-tête de 30 px avec le <strong>nom de la table</strong>, et rien d'autre dedans</td>
+          <td>Le contenu de la colonne de gauche — ses réglages, dans l'ordre où on les touche</td></tr>
+        <tr><td>Le pied de colonne : <strong>l'état de la couche</strong> à gauche, <span class="mesure">Sans
+          &lt;table&gt; ›</span> à droite</td>
+          <td>Le texte de l'état — <span class="mesure">2 passes · alpha 61 %</span>,
+            <span class="mesure">aucune retouche</span>, <span class="mesure">4 rectangles</span></td></tr>
+        <tr><td>Le cadre de l'image sur le damier, mis à l'échelle par <strong>calcul</strong> et non par le
+          CSS, et la jauge sous elle</td>
+          <td>Ce que la main fait sur l'image : un curseur, un tracé, des rectangles, un clic de pipette — ou
+            rien</td></tr>
+        <tr><td>La rangée sous l'image, et le <strong>comparateur</strong> à sa droite</td>
+          <td>Ses mesures propres à gauche de la rangée, toutes en mono, aucune n'étant un verdict</td></tr>
+        <tr><td>La colonne des <strong>images sœurs</strong> — les attitudes de l'entité, ou les voisines de
+          la grille</td>
+          <td>Rien : changer d'image garde la table ouverte, quelle qu'elle soit</td></tr>
+        <tr><td>La barre d'état de 24 px, et la fente de refus</td>
+          <td>Sa raison d'indisponibilité, s'il y en a une — rendue à la place de la colonne</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Le wrapper d'une table indisponible</h2></div>
+    <p class="intro">La colonne cède la place à la raison. Le cadre garde l'image — on n'a rien perdu de vue
+      en allant voir. C'est <strong>la seule variation de gabarit</strong> que le wrapper autorise.</p>
+    <div class="croquis"><div class="inner">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="ariane">
+          <a href="#">…</a><span class="sp">›</span>
+          <a href="#">Balthazar</a><span class="sp">›</span>
+          <a href="#">marche · sud · image 3</a><span class="sp">›</span>
+          <span class="ici">Recadrage</span>
+        </span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+      </div>
+      <div class="tables">
+        <span class="tb"><span class="carre"></span>détourage</span>
+        <span class="tb hs on" style="color:var(--texte-3)">recadrage</span>
+        <span class="tb"><span class="carre"></span>grille</span>
+        <span class="tb"><span class="carre"></span>quantification</span>
+        <span class="tb hs">bords</span>
+        <span class="tb hs">contours</span>
+        <span class="tb"><span class="carre"></span>la main</span>
+        <span class="tbsep"></span>
+        <span class="tb hors">découpage</span>
+        <span class="tb hors">superposition</span>
+        <span class="toutdefaire">× tout défaire</span>
+      </div>
+      <div class="wf-corps" style="min-height:220px">
+        <div class="cg">
+          <div class="enpan">recadrage</div>
+          <div class="raisonbloc">
+            <span class="t">Rien à régler ici, sur cette image.</span>
+            <span class="r">— rien n'est transparent sur cette image : il n'y a pas de silhouette à
+              cadrer.</span>
+            <span class="r" style="color:var(--texte-2)">Détoure-la, et la table s'allumera d'elle-même —
+              comme « bords » et « contours », grisées pour la même raison.</span>
+          </div>
+        </div>
+        <div class="centre">
+          <div class="toile"><div class="sujet">l'image reste là</div></div>
+          <div class="sousimage">
+            <span class="mes">1024 × 512 · image/jpeg · sans alpha</span>
+            <span class="cmp">
+              <span class="sg mono">brut</span><span class="sg on mono">rendu</span>
+              <span class="sg mono">côte à côte</span><span class="sg mono">superposé</span>
+            </span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="col-t">ses attitudes</div>
+          <div class="gr2">
+            <div class="tu"></div><div class="tu"></div>
+            <div class="tu sel"></div><div class="tu"></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>aucun appel, aucun coût</span></div>
+    </div></div>
+    <div class="lgd">une seule raison en grise trois — le pied de colonne disparaît aussi : il n'y a pas de couche à vider</div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Le comparateur — sous l'image, sur toutes les tables</h2></div>
+    <div class="quatre">
+      <div class="mode">
+        <div class="mt"><span class="k">1</span>brut</div>
+        <div class="mv"><span class="sq brut">l'origine</span></div>
+        <div class="md">L'image telle qu'elle est revenue du fournisseur. Aucune table ne s'y applique.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">2</span>rendu</div>
+        <div class="mv"><span class="sq">après<br>la recette</span></div>
+        <div class="md">Le défaut. Toutes les tables posées, dans l'ordre — l'image telle qu'elle partira
+          dans le jeu.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">3</span>côte à côte</div>
+        <div class="mv"><span class="sq brut" style="width:42px">brut</span><span class="sq" style="width:42px">rendu</span></div>
+        <div class="md">Les deux, même échelle, zoom et déplacement synchronisés.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">4</span>superposé</div>
+        <div class="mv"><span class="sq">rendu</span><span class="sq brut sur" style="width:50px">brut</span></div>
+        <div class="md">Le rendu dessous, <strong>le brut par-dessus</strong>, opacité réglable au curseur.</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Deux règles</span>
+      <ul>
+        <li><b>Le mode se dit toujours</b> — écrit en clair à côté des segments quand ce n'est pas
+          <span class="mesure">rendu</span>. Un mode durable qu'on oublie est le danger que l'appui
+          <span class="mesure">Avant ›</span> de C4 évitait ; le dire est ce qui autorise à le rendre
+          durable.</li>
+        <li><b>Une table qui se peint force le rendu.</b> Dès que la main touche l'image, le mode revient à
+          <span class="mesure">rendu</span> avec sa raison : <em>on ne peint jamais sur une image qui n'est
+          pas celle qu'on modifie.</em></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Le gabarit d'une maquette de table</h2></div>
+    <p class="intro">Chaque maquette de table répond aux six mêmes questions, dans cet ordre, et ne montre que
+      le contenu du trou. <strong>Aucune ne redessine la barre, le fil, le cadre ni le comparateur.</strong></p>
+    <table>
+      <thead><tr><th style="width:6%">§</th><th style="width:26%">La question</th><th>Ce qu'elle produit</th></tr></thead>
+      <tbody>
+        <tr><td class="k">01</td><td>Ce que la table fait</td>
+          <td>Deux phrases, et la panne qu'elle évite. Plus sa place dans l'ordre de la recette, et pourquoi
+            là.</td></tr>
+        <tr><td class="k">02</td><td>Sa colonne, dessinée</td>
+          <td>Le contenu du trou, à 308 px de large, dans l'état le plus riche qu'elle atteigne.</td></tr>
+        <tr><td class="k">03</td><td>Ses réglages, un par un</td>
+          <td>Un tableau : nom, domaine et défaut, ce qu'il fait, <strong>et ce qu'il coûte</strong>.</td></tr>
+        <tr><td class="k">04</td><td>Ce qu'elle fait sur l'image</td>
+          <td>Le geste direct, s'il y en a un — un clic, un tracé, un rectangle — et sa marque à l'écran.</td></tr>
+        <tr><td class="k">05</td><td>Ses mesures et ses propositions</td>
+          <td>Ce qu'elle écrit sous l'image, et ce qu'elle propose sans jamais l'appliquer seule.</td></tr>
+        <tr><td class="k">06</td><td>Son indisponibilité</td>
+          <td>Quand elle est grisée, et la phrase exacte que porte le wrapper à ce moment-là.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Les mesures du châssis</h2></div>
+    <table>
+      <thead><tr><th style="width:30%">Élément</th><th style="width:20%">Mesure</th><th>D'où elle vient</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Barre de tête</td><td><span class="m">44 px</span></td><td>Inchangée depuis T1.</td></tr>
+        <tr><td class="k">Barre de tables</td><td><span class="m">34 px</span></td>
+          <td>Une puce de 24 px plus 5 px de garde en haut et en bas — la rangée de segment du produit.</td></tr>
+        <tr><td class="k">Colonne de la table</td><td><span class="m">380 px</span></td>
+          <td>La colonne de réglages du produit : fiche asset, écran Univers, réserve. Aucune valeur neuve.</td></tr>
+        <tr><td class="k">Colonne des sœurs</td><td><span class="m">380 px</span></td>
+          <td>La même, réemployée pour ce qu'elle nomme déjà — <em>ce qu'on manipule</em>.</td></tr>
+        <tr><td class="k">En-tête de colonne</td><td><span class="m">30 px</span></td><td>L'en-tête de panneau, inchangé.</td></tr>
+        <tr><td class="k">Barre d'état</td><td><span class="m">26 px</span></td><td>Inchangée.</td></tr>
+        <tr><td class="k">Repli des colonnes</td><td><span class="m">160 ms</span></td>
+          <td>La durée du repli de panneau. Repliées toutes les deux, l'image tient l'écran.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 03, le châssis des tables · 30 août 2026
+  </footer>
+
+</div>
+</body>
+</html>

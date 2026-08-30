@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, l'écran de confirmation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  h4{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:26px 0 10px}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow:hidden;
+    background:var(--fond-0);margin-bottom:10px}
+  .wf-barre{height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{margin-left:14px;font-family:var(--mono);font-size:10px;color:var(--texte-3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fil b{color:var(--texte-2);font-weight:500}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .btxt{color:var(--texte-2)}
+  .sep-v{width:1px;height:14px;background:var(--bord)}
+  .wf-corps{display:flex;min-height:300px}
+  .wf-pied{height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .col{width:240px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:3px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin:8px 0 5px}
+  .col-t:first-child{margin-top:0}
+  .sec{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .sec.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sec.gris{color:var(--texte-3)}
+  .sec .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .sec.on .cpt{color:var(--signal-clair)}
+  .sepr{height:1px;background:var(--bord);margin:9px 0}
+
+  .mil{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mil-c{flex:1;padding:12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .grp{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:baseline;gap:8px;margin:12px 0 5px}
+  .grp:first-child{margin-top:0}
+  .grp .gc{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px}
+  .grp .amb{color:var(--signal-clair);text-transform:none;letter-spacing:0;font-size:10px}
+
+  .ln{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-1)}
+  .ln.off{opacity:.42}
+  .ln.off .tx{text-decoration:line-through}
+  .ln.off.libre{opacity:.62}
+  .ln.off.libre .tx{text-decoration:none}
+  .ln.fig{background:var(--fond-2);border-style:dashed;border-color:var(--bord-fort)}
+  .ln .q{width:9px;height:9px;flex:none;background:var(--signal);margin-top:4px}
+  .ln .q.creux{background:none;border:1px solid var(--bord-fort)}
+  .ln .q.fixe{background:var(--texte-3)}
+  .ln .nm{width:64px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    padding-top:1px}
+  .ln .tx{flex:1;min-width:0;font-size:11px;color:var(--texte-2);line-height:1.45}
+  .ln .tx u{color:var(--epingle);text-decoration:none}
+  .ln .tx i{font-style:normal;color:var(--signal-clair)}
+  .ln .og{flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);padding-top:2px;
+    white-space:nowrap}
+  .ln .og.a{color:var(--signal-clair)}
+  .ln .og.e{color:var(--epingle)}
+  .ln .cor{flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);padding-top:2px}
+
+  .vign{display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap;padding:3px 8px 0}
+  .vg{width:76px;flex:none}
+  .vg .im{width:38px;height:38px;border:1px solid var(--bord);background:var(--fond-3);
+    position:relative;display:block}
+  .vg .im.sg::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--signal);
+    border-right:7px solid transparent}
+  .vg .im.ep::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--epingle);
+    border-right:7px solid transparent}
+  .vg .im.pal{background:none;display:flex;flex-direction:column}
+  .vg .im.pal span{flex:1;display:block}
+  .vg .im.off{opacity:.3}
+  .vg .lb{display:flex;align-items:flex-start;gap:5px;margin-top:5px;
+    font-family:var(--mono);font-size:9px;color:var(--texte-3);line-height:1.35}
+  .vg .lb i{margin-top:2px}
+  .vg .lb i{width:8px;height:8px;flex:none;background:var(--signal);display:block}
+  .vg .px{display:block;margin-top:3px;padding-left:13px;font-family:var(--mono);font-size:9px;
+    color:var(--epingle)}
+  .vg .px.eteint{color:var(--texte-3)}
+  .vg .lb i.creux{background:none;border:1px solid var(--bord-fort)}
+
+  .drt{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .drt-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9px;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--texte-3)}
+  .drt-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:9px;min-width:0}
+  .txt{font-family:var(--mono);font-size:9.5px;line-height:1.6;color:var(--texte-2);
+    background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:9px 10px;
+    white-space:pre-wrap;word-break:break-word}
+  .txt b{color:var(--texte);font-weight:500}
+  .txt s{color:var(--texte-3)}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.55}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.55}
+  .pied-d{border-top:1px solid var(--bord);padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+  .btgen{height:34px;border:1px solid var(--signal);background:var(--signal-sourd);
+    border-radius:2px;display:flex;align-items:center;justify-content:center;gap:9px;
+    color:var(--signal-clair);font-size:12.5px}
+  .btgen .px{font-family:var(--mono);font-size:11px}
+  .btann{height:26px;border:1px solid var(--bord);border-radius:2px;display:flex;
+    align-items:center;justify-content:center;color:var(--texte-3);font-size:11px}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.o{color:var(--texte)}
+  table.t td.k{color:var(--texte);font-weight:500}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .m{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 5px;
+    font-size:11px;white-space:nowrap}
+  .m.no{color:var(--texte-3)}
+  .m.mal{color:var(--echec)}
+  .m.bon{color:var(--ok)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin-bottom:0}
+
+  .deux{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  .trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;align-items:start}
+  .boite{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .boite .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:9px}
+  .boite p{font-size:12.5px;color:var(--texte-2);margin:0 0 8px}
+  .boite p:last-child{margin-bottom:0}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.75}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  ul{margin:0 0 12px;padding-left:18px;max-width:78ch;color:var(--texte-2)}
+  li{margin-bottom:6px}
+  ol{margin:0 0 12px;padding-left:20px;max-width:78ch;color:var(--texte-2)}
+  ol li{margin-bottom:7px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.1 · maquette 08bis — l'écran de confirmation</div>
+  <h1>Le dernier écran<br><em>avant que l'argent parte</em></h1>
+  <p>Demander une image à une intelligence artificielle coûte de l'argent, à chaque fois, et
+  l'image qui revient n'est jamais deux fois la même. <strong>On ne peut donc pas rejouer un appel
+  raté sans le repayer.</strong> Cet écran est là pour qu'on relise, une dernière fois, ce qui va
+  vraiment partir — et pour qu'on puisse encore le changer.</p>
+  <p>Il ne montre pas un résumé. Il montre <strong>le texte exact, mot pour mot</strong>, et chaque
+  image jointe, chacun sur sa ligne, avec un interrupteur. Ce qui est éteint ne part pas. Ce qu'on
+  corrige ici <strong>ne vaut que pour cet appel</strong> et ne remonte nulle part.</p>
+  <p class="sourd">Les chiffres de ce document viennent d'un banc d'essai qui lit les vrais appels
+  déjà payés du dépôt, sans rien dépenser — <em class="it">essais/essai_ce_qui_part.py</em>, relevé
+  le 30 août 2026 sur le projet <span class="mesure">cœur de pierre - 01</span> : 24 générations
+  payées, <span class="mesure">$0,362</span> dépensés en tout.</p>
+</div>
+
+
+<!-- ══ 01 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>Ce qui a été mesuré, et qui rend cet écran nécessaire</h2></div>
+
+  <p class="intro">Quatre relevés, tous pris sur des appels réellement payés. Ils disent la même
+    chose de quatre façons : <strong>personne ne voit ce qui part.</strong></p>
+
+  <h3>1 · Sur le plus long appel payé, ce qu'on dessine pèse 2 %</h3>
+  <p>Le texte envoyé fait <span class="m">1 690</span> caractères, en trois morceaux collés :</p>
+  <table class="t">
+    <thead><tr><th style="width:26%">Le morceau</th><th style="width:14%">Taille</th><th style="width:10%">Part</th><th>Ce qu'il dit</th></tr></thead>
+    <tbody>
+      <tr><td class="k">le style du jeu</td><td class="num"><span class="m">890 car.</span></td><td class="num">53 %</td>
+        <td>Les sept textes qui décrivent l'allure : le monde, l'époque, le rendu, le trait, l'éclairage, la vue, la technique.</td></tr>
+      <tr><td class="k">le sujet</td><td class="num"><span class="m mal">40 car.</span></td><td class="num">2 %</td>
+        <td><b>Ce qu'on demande vraiment.</b> Quarante caractères — le signalement du personnage, et rien d'autre.</td></tr>
+      <tr><td class="k">la consigne</td><td class="num"><span class="m">756 car.</span></td><td class="num">44 %</td>
+        <td>Les instructions de cadrage et de format : fond neutre, corps entier, pas de texte, pas de bordure.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">Ce n'est pas forcément un défaut — un modèle d'image a besoin qu'on lui
+    décrive le style. <strong>Mais personne ne l'a jamais vu.</strong> Le rapport entre les deux ne
+    s'affiche nulle part, et il décide de la ressemblance entre ce qu'on imagine et ce qui revient.</p>
+
+  <h3>2 · Dix appels payés sur vingt-quatre ne portaient ni style ni image</h3>
+  <table class="t">
+    <thead><tr><th style="width:40%">Sur les 24 générations payées du dépôt</th><th style="width:14%">Combien</th><th>Ce que ça veut dire</th></tr></thead>
+    <tbody>
+      <tr><td class="k">portaient les textes de style</td><td class="num"><span class="m">7</span></td><td>Moins d'un tiers.</td></tr>
+      <tr><td class="k">portaient au moins une image de référence</td><td class="num"><span class="m">8</span></td><td>Un tiers.</td></tr>
+      <tr><td class="k">portaient les deux</td><td class="num"><span class="m mal">1</span></td><td>Une seule fois sur vingt-quatre.</td></tr>
+      <tr><td class="k">ne portaient ni l'un ni l'autre</td><td class="num"><span class="m mal">10</span></td><td><b>Dix images payées sans rien qui dise à quoi doit ressembler ce jeu.</b></td></tr>
+      <tr><td class="k">nommaient leur sujet</td><td class="num"><span class="m">9</span></td><td>Les quinze autres partaient sans dire de quel personnage il s'agissait.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">Aucun de ces appels n'a été refusé par le produit : il n'y avait rien
+    pour s'en apercevoir. <strong>Un écran qui affiche les cases vides les rend visibles au moment
+    où elles coûtent quelque chose.</strong></p>
+
+  <h3>3 · Le texte disait 64 pixels, le projet en imposait 128, et ça part depuis toujours</h3>
+  <div class="note att">
+    <span class="lab">La faute qu'aucun écran ne montrait</span>
+    <p>Le réglage du projet dit <span class="m">128</span> pixels de grille. Deux des sept textes de
+      style écrivent <span class="m mal">64x64</span> en toutes lettres — <span class="mesure">rendu</span>
+      et <span class="mesure">technique</span> —, et ce sont eux qui partent au modèle. On demande donc
+      une image en 64 pendant que l'atelier ramène le résultat sur une grille de 128.</p>
+    <p><strong>L'assistant de démarrage répare la cause</strong> : le choix de la taille se fait sur
+      une vignette, une seule fois, et il remplit d'un coup le réglage et les phrases correspondantes.
+      Mais un projet déjà commencé garde ses vieux textes. <strong>Cet écran-ci est le filet</strong> :
+      il compare le texte au réglage, et écrit l'avertissement sur la ligne fautive, à l'endroit exact
+      où on peut encore la corriger.</p>
+  </div>
+
+  <h3>4 · Et depuis le 30 août 2026, une raison de plus : les ambiances</h3>
+  <p>Une <strong>ambiance</strong> est un lot de style réutilisable — une palette de couleurs, des
+    images de référence, et trois textes. On la désigne sur une chose du jeu, et
+    <strong>on choisit ce qu'on lui prend au moment de fabriquer</strong> : tout, ou les couleurs
+    seules, ou tout sauf les images.</p>
+  <p>Ce choix n'a nulle part où se faire. Il ne peut pas se faire sur la fiche de l'objet — ce serait
+    un réglage durable, alors que c'est une décision d'un jour. <strong>Il se fait ici.</strong>
+    C'est cet écran qui rend le modèle des ambiances utilisable.</p>
+
+  <div class="note gris" style="margin-top:22px">
+    <span class="lab">Et la raison la plus ancienne, héritée du dépliant que cet écran remplace</span>
+    <p>Le dépliant <em>ce qui part</em> n'a jamais été décoré : il existait pour une raison mesurée, et
+      cette raison devient celle de cet écran-ci puisqu'il en prend la place. La voici telle qu'elle est
+      écrite dans le produit : <strong>sur trois vrais jeux, les champs de style étaient vides dans les
+      trois</strong>, donc rien du style ne partait — <strong>et pourtant tout ce qui sortait se
+      ressemblait</strong>.</p>
+    <p style="margin-top:8px">Ce qui suit de là est la phrase à retenir sur cet écran : <strong>sans voir
+      ce qui part, il n'y a aucun moyen de savoir si ce qu'on obtient vient de ce qu'on a demandé ou du
+      traitement d'après.</strong> La ressemblance venait du post-traitement — la remise sur grille et la
+      quantification s'appliquent à tout ce qui revient —, et personne ne pouvait le déduire de l'écran.</p>
+    <p style="margin-top:8px">Deux règles du dépliant montent ici avec elle, et elles ne se négocient pas.
+      <b>Le texte n'est pas recomposé à l'écran</b> : il est demandé à l'atelier par le chemin même que
+      l'envoi emprunte, parce que deux compositions écrites à deux endroits finissent par diverger et que
+      celle qui compte est celle qui part. Et <b>ce qui est parti reste attaché à la génération</b>, au
+      même titre que le modèle et le coût — rouvrir une image des mois plus tard rend exactement le même
+      texte.</p>
+  </div>
+</section>
+
+
+<!-- ══ 02 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>L'écran</h2></div>
+
+  <p class="intro">Il s'ouvre en plein cadre par-dessus l'écran où l'on était, sans le fermer —
+    exactement comme un outil de retouche s'ouvre déjà par-dessus l'établi. Trois colonnes,
+    <span class="mesure">240 · 1fr · 380</span>, les mêmes que partout ailleurs. À gauche, les
+    groupes de ce qui part, avec leurs comptes. Au milieu, <strong>une ligne par chose qui part</strong>.
+    À droite, <strong>le texte assemblé tel qu'il sera envoyé</strong>, le prix, et le bouton.</p>
+
+  <div class="croquis">
+    <div class="wf-barre">
+      <span class="wf-nom">Asset Kitchen</span>
+      <span class="tab">Univers</span>
+      <span class="tab on">Codex</span>
+      <span class="tab">Galerie</span>
+      <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b> › marche › <b>avant de payer</b></span>
+      <span class="wf-tard">
+        <span class="mesure">4 images · 1 planche</span>
+        <span class="sep-v"></span>
+        <span class="btxt">Revenir à la planche</span>
+        <span>Guide</span>
+      </span>
+    </div>
+
+    <div class="wf-corps">
+      <!-- 240 — les groupes -->
+      <div class="col">
+        <div class="col-t">ce qui part</div>
+        <div class="sec on">Le sujet<span class="cpt">40 car.</span></div>
+        <div class="sec">Les textes du jeu<span class="cpt">4 sur 7</span></div>
+        <div class="sec">Son ambiance<span class="cpt">3 sur 3</span></div>
+        <div class="sec">Les images<span class="cpt">3 sur 14</span></div>
+        <div class="sec">Les options<span class="cpt">0 sur 2</span></div>
+        <div class="sepr"></div>
+        <div class="col-t">ce qui se passe au retour</div>
+        <div class="sec gris">Découper la planche<span class="cpt">4 cases</span></div>
+        <div class="sec gris">Ramener sur la palette<span class="cpt">32 coul.</span></div>
+        <div class="sec gris">Détourer le fond<span class="cpt">auto</span></div>
+        <div style="margin-top:auto"></div>
+        <div class="raison">1 204 caractères de texte<br>3 images jointes sur 14 places<br>
+          <span style="color:var(--epingle)">486 caractères éteints à la main</span></div>
+      </div>
+
+      <!-- 1fr — les lignes -->
+      <div class="mil">
+        <div class="mil-c">
+
+          <div class="grp">le sujet — ce qu'on dessine<span class="gc">obligatoire</span></div>
+          <div class="ln"><i class="q fixe"></i><span class="nm">sujet</span><span class="tx">dwarf miner, braided beard, two lanterns</span><span class="og">de sa fiche</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q fixe"></i><span class="nm">pose</span><span class="tx">walking posture, full body, facing south, toward the viewer</span><span class="og">de la pose</span><span class="cor">corriger</span></div>
+
+          <div class="grp">les textes du jeu<span class="gc">4 cochés sur 7</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">époque</span><span class="tx">Dark fantasy dwarven antiquity (high Middle Ages, pre-gunpowder, forged iron, and runic magic)</span><span class="og">du jeu</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">rendu</span><span class="tx">2D pixel art on a <u>64x64</u> grid, muted desaturated earthy palette…<br><u>⚠ ce texte dit 64 · le jeu est réglé sur 128 · corriger ici ne corrige que cet appel</u></span><span class="og e">du jeu</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">vue</span><span class="tx">3/4 top-down orthographic view, full-body character centered, grid-aligned tile assets</span><span class="og">du jeu</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">technique</span><span class="tx">Isolated sprite on neutral grey background, strict <u>64x64</u> px tile snap, clean pixel-perfect scaling</span><span class="og e">du jeu</span><span class="cor">corriger</span></div>
+          <div class="ln off"><i class="q creux"></i><span class="nm">monde</span><span class="tx">Desolate subterranean dwarven ruins, grim mineral tunnels…</span><span class="og a">remplacé ↓</span><span class="cor"></span></div>
+          <div class="ln off"><i class="q creux"></i><span class="nm">trait</span><span class="tx">1-pixel dark slate outline, clean pixel clustering, flat shading…</span><span class="og a">remplacé ↓</span><span class="cor"></span></div>
+          <div class="ln off"><i class="q creux"></i><span class="nm">éclairage</span><span class="tx">Dynamic warm radial lighting (lanterns, forge heat, glowing runes)…</span><span class="og a">remplacé ↓</span><span class="cor"></span></div>
+
+          <div class="grp">ce que son ambiance remplace<span class="amb">Forge des profondeurs</span><span class="gc">3 sur 3</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">monde</span><span class="tx">Deep forge halls, molten channels, soot-blackened runic pillars, and anvils worn smooth by centuries.</span><span class="og a">son ambiance</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">trait</span><span class="tx">Heavy 1-pixel outline, ember speckle on metal edges, no gradients</span><span class="og a">son ambiance</span><span class="cor">corriger</span></div>
+          <div class="ln"><i class="q"></i><span class="nm">éclairage</span><span class="tx">Forge-lit from below, orange rim light on every edge, deep soot shadows above the waist</span><span class="og a">son ambiance</span><span class="cor">corriger</span></div>
+
+          <div class="grp">les images jointes<span class="gc">3 cochées · <b style="color:var(--epingle);font-weight:400">$0,024 des $0,051</b> · 14 places sur ce modèle</span></div>
+          <div class="vign">
+            <div class="vg"><span class="im sg"></span><span class="lb"><i></i>artwork<br>officiel</span><span class="px">+$0,008</span></div>
+            <div class="vg"><span class="im ep"></span><span class="lb"><i></i>ambiance<br>1 sur 2</span><span class="px">+$0,008</span></div>
+            <div class="vg"><span class="im ep off"></span><span class="lb"><i class="creux"></i>ambiance<br>2 sur 2</span><span class="px eteint">+$0,008</span></div>
+            <div class="vg"><span class="im"></span><span class="lb"><i></i>son corps<br>au repos</span><span class="px">+$0,008</span></div>
+            <div class="vg"><span class="im off"></span><span class="lb"><i class="creux"></i>concept art<br>du tableau</span><span class="px eteint">+$0,008</span></div>
+            <div class="vg"><span class="im pal off"><span style="background:#2A1D18"></span><span style="background:#7A3B22"></span><span style="background:#C86A2E"></span><span style="background:#E8B45C"></span></span><span class="lb"><i class="creux"></i>sa palette<br>en bande</span><span class="px eteint">+$0,008</span></div>
+          </div>
+
+          <div class="grp">les options<span class="gc">0 cochée sur 2</span></div>
+          <div class="ln off libre"><i class="q creux"></i><span class="nm">palette</span><span class="tx">envoyer la palette en référence — part comme une bande de pastilles et occupe une des 14 places</span><span class="og">option</span><span class="cor"></span></div>
+          <div class="ln fig"><i class="q creux fixe"></i><span class="nm">variantes</span><span class="tx">demander 3 variantes du même sujet<br><i>indisponible : ce modèle ne rend qu'une image par appel</i></span><span class="og">grisé</span><span class="cor"></span></div>
+
+        </div>
+      </div>
+
+      <!-- 380 — le texte assemblé -->
+      <div class="drt">
+        <div class="drt-t">ce qui part, mot pour mot</div>
+        <div class="drt-c">
+          <div class="txt"><b>dwarf miner, braided beard, two lanterns</b>, walking posture, full body, facing south, toward the viewer.
+
+Deep forge halls, molten channels, soot-blackened runic pillars, and anvils worn smooth by centuries. Dark fantasy dwarven antiquity. 2D pixel art on a <b>64x64</b> grid. Heavy 1-pixel outline, ember speckle on metal edges. Forge-lit from below, orange rim light on every edge. 3/4 top-down orthographic view, full-body character centered.
+
+Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, clean pixel-perfect scaling. No text, no border, no watermark.</div>
+          <div class="raison">1 204 caractères · 3 images jointes<br>
+            le sujet pèse <span style="color:var(--texte-2)">99 car.</span>, soit 8 % — contre 2 % avant qu'on éteigne trois textes</div>
+          <div class="prov">2 avertissements non bloquants : la taille écrite ne suit pas le réglage</div>
+        </div>
+        <div class="pied-d">
+          <div class="raison">4 cases sur 1 planche · un compte faux coûte la planche entière</div>
+          <div class="btgen">Payer et lancer <span class="px">$0,051</span></div>
+          <div class="btann">Revenir sans rien dépenser</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-pied">
+      <span><i class="pt"></i>en ligne</span>
+      <span>modèle · seedream 4 · 14 images de référence acceptées</span>
+      <span>espace montre une image en grand</span>
+      <span>rien n'est dépensé tant que le bouton n'est pas pressé</span>
+    </div>
+  </div>
+
+  <div class="lgd">
+    ■ carré plein : cette chose part · □ carré creux : cette chose ne part pas · ■ carré gris : cette chose part et ne se décoche pas<br>
+    ◤ coin bleu : artwork officiel de l'univers · ◤ coin orange : image apportée par l'ambiance · sans coin : image de cette chose du jeu<br>
+    cadre pointillé : indisponible, avec sa raison écrite en clair — jamais caché, jamais proposé pour être refusé ensuite<br>
+    <b>survoler une vignette et appuyer sur la barre d'espace la montre en grand</b> — le geste de la galerie, valable ici comme partout ailleurs<br>
+    <b>les mesures des relevés sont vraies</b> ; l'ambiance « Forge des profondeurs » est inventée pour ce croquis, le vrai projet n'en a aucune
+  </div>
+
+  <div class="note" style="margin-top:22px">
+    <span class="lab">Aucun glyphe neuf, aucune largeur neuve</span>
+    <p>L'interrupteur n'est pas une case à cocher inventée pour l'occasion : <strong>c'est le carré
+      plein et le carré creux que le produit emploie déjà</strong> dans la barre de tables et dans le
+      codex, où ils disent « cette place est prise » et « cette place est vide ». Ici ils disent
+      « cette chose part » et « cette chose ne part pas ». Le sens est le même : une place occupée
+      ou non.</p>
+    <p>Les trois glyphes du produit restent trois — <span class="mesure">+</span>, le triangle plein,
+      <span class="mesure">×</span> —, et les trois largeurs restent
+      <span class="mesure">240 · 300 · 380</span>. <strong>Cet écran n'en ajoute aucun.</strong></p>
+  </div>
+
+  <div class="note att" style="margin-top:9px">
+    <span class="lab">Chaque image jointe porte son prix · ajouté le 30 août 2026</span>
+    <p>C'est le seul chiffre neuf de l'écran, et il vient d'une mesure faite en dessinant la liste des
+      dépenses. Sur les 24 images payées au modèle principal, <strong>le prix suit le nombre d'images de
+      référence jointes, et rien d'autre</strong> — la taille, la qualité et les proportions étaient les
+      mêmes partout :</p>
+    <table class="t" style="margin-top:10px">
+      <thead><tr><th style="width:26%">Images jointes</th><th style="width:20%">Mesuré sur</th><th style="width:22%">Prix d'une image</th><th>Le facteur</th></tr></thead>
+      <tbody>
+        <tr><td class="k">aucune</td><td class="num">9 images</td><td class="num"><span class="m">$0,0063</span></td><td>Le prix de base.</td></tr>
+        <tr><td class="k">une</td><td class="num">12 images</td><td class="num"><span class="m">$0,0139</span></td><td>Un seul exemple joint <b>double le prix</b>.</td></tr>
+        <tr><td class="k">deux</td><td class="num">3 images</td><td class="num"><span class="m">$0,0232</span></td><td>Deux exemples, et l'appel coûte près de <b>quatre fois</b> l'image seule.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px">Sur tout ce qui a été dépensé chez ce modèle, <strong>48 % sont partis
+      dans les images jointes</strong>. Presque la moitié de la facture, pour une chose qui se coche et se
+      décoche — et qui se cochait sans que rien n'en dise le prix.</p>
+    <p style="margin-top:8px"><strong>Ce n'est pas une invitation à les retirer.</strong> Une référence est
+      souvent ce qui fait revenir la bonne image, et une image ratée coûte cent pour cent. C'est une
+      invitation à le savoir : le prix s'écrit <b>sur la ligne où l'on coche</b>, en doré comme tout écart
+      du produit, et l'en-tête du groupe dit ce que les cases cochées pèsent dans le total —
+      <span class="mesure">$0,024 des $0,051</span>. Une case éteinte garde son prix, écrit en gris : c'est
+      ce qu'elle coûterait si on la rallumait.</p>
+    <p style="margin-top:8px" class="sourd">Le pas de <span class="mesure">+$0,008</span> est la moyenne
+      des deux écarts mesurés ci-dessus. Il n'est mesuré que sur 24 images d'un seul modèle, dont trois
+      appels seulement à deux références — <b>à revérifier quand le compte aura doublé</b>. La mesure est
+      gratuite : elle relit la base.</p>
+  </div>
+</section>
+
+
+<!-- ══ 03 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>Ce qu'une ligne montre, et dans quel ordre</h2></div>
+
+  <p class="intro">Toutes les lignes ont la même forme, quel que soit ce qu'elles portent. C'est ce
+    qui permet de descendre l'écran sans réapprendre à lire à chaque groupe.</p>
+
+  <table class="t">
+    <thead><tr><th style="width:20%">La partie</th><th style="width:26%">Ce qu'elle contient</th><th>Pourquoi elle est là</th></tr></thead>
+    <tbody>
+      <tr><td class="k">l'interrupteur</td>
+        <td>Un carré plein ou creux, à cliquer.</td>
+        <td>C'est le geste principal de l'écran. Il est <b>tout à gauche</b>, donc tous alignés en colonne : on descend et on éteint, sans viser.</td></tr>
+      <tr><td class="k">le nom</td>
+        <td>Le nom court de la chose — <span class="mesure">rendu</span>, <span class="mesure">trait</span>, <span class="mesure">sujet</span>.</td>
+        <td>Le même mot que sur la fiche de l'objet et dans l'assistant. <b>Un mot ne change jamais de sens d'un écran à l'autre.</b></td></tr>
+      <tr><td class="k">le texte</td>
+        <td><b>Le texte entier, exact, sans coupure et sans résumé.</b></td>
+        <td>C'est la règle la plus ancienne du produit : <em>ce qui est montré est ce qui part, mot pour mot</em>. Un texte tronqué par des points de suspension trahirait cette règle sur l'écran qui existe justement pour la tenir.</td></tr>
+      <tr><td class="k">l'origine</td>
+        <td>D'où vient ce texte : <span class="mesure">du jeu</span>, <span class="mesure">son ambiance</span>, <span class="mesure">de sa fiche</span>, <span class="mesure">de la pose</span>.</td>
+        <td>Pour savoir où aller le corriger <b>durablement</b>, si on s'aperçoit que la faute n'est pas d'un jour.</td></tr>
+      <tr><td class="k">corriger</td>
+        <td>Un mot, pas une icône. Il ouvre le texte à l'écriture, sur place.</td>
+        <td>La correction se fait <b>là où on lit le problème</b>. Aller changer un texte dans un autre écran, revenir, et espérer que c'est le bon, c'est l'aller-retour que tout ce dossier supprime.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:22px">
+    <span class="lab">L'avertissement s'écrit sur la ligne, pas en haut de l'écran</span>
+    <p>Quand un texte contredit un réglage — <span class="mesure">64x64</span> écrit alors que le jeu
+      est en 128 —, l'avertissement s'écrit <strong>dans la ligne fautive</strong>, sous le texte, en
+      couleur d'attention.</p>
+    <p>Une bannière en haut de l'écran dirait « attention, deux problèmes » et laisserait chercher
+      lesquels. <strong>La ligne dit lequel, et le bouton pour le réparer est déjà à côté.</strong>
+      Le compte, lui, est repris à droite — <span class="mesure">2 avertissements non bloquants</span>
+      — pour qu'on sache qu'il y en a, même si on n'a pas encore descendu jusqu'à eux.</p>
+  </div>
+</section>
+
+
+<!-- ══ 04 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>Les cinq groupes, et pourquoi cet ordre-là</h2></div>
+
+  <p class="intro">L'ordre des groupes est <strong>l'ordre dans lequel le texte est assemblé</strong>.
+    On lit l'écran de haut en bas et on lit le texte final de gauche à droite : c'est la même
+    chose, et il n'y a rien à faire correspondre dans sa tête.</p>
+
+  <table class="t">
+    <thead><tr><th style="width:8%">Rang</th><th style="width:24%">Le groupe</th><th style="width:20%">D'où ça vient</th><th>Ce qu'on peut y faire</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td class="k">Le sujet</td>
+        <td>La fiche de la chose du jeu, et la pose demandée.</td>
+        <td><b>Ne se décoche pas.</b> Un appel sans sujet ne demande rien. Il se corrige, en revanche — c'est même le texte qu'on retouche le plus souvent.</td></tr>
+      <tr><td class="num">2</td><td class="k">Les textes du jeu</td>
+        <td>Les sept textes de style, réglés dans l'assistant.</td>
+        <td>Chacun s'éteint. Ceux que l'ambiance remplace sont <b>éteints d'avance et montrés barrés</b>, pour qu'on voie ce qui a été écarté et par quoi.</td></tr>
+      <tr><td class="num">3</td><td class="k">Ce que l'ambiance remplace</td>
+        <td>L'ambiance désignée sur la fiche : le monde, l'éclairage, le trait.</td>
+        <td>Chacun s'éteint séparément. Tout éteindre revient à ne pas se servir de l'ambiance, et les textes du jeu se rallument alors d'eux-mêmes.</td></tr>
+      <tr><td class="num">4</td><td class="k">Les images jointes</td>
+        <td>Les quatre provenances : artworks de l'univers, images de l'ambiance, concept arts, images déjà fabriquées.</td>
+        <td>Chacune se décoche. On peut aussi <b>en ajouter une pour cet appel seulement</b>, prise dans le tableau d'inspiration.</td></tr>
+      <tr><td class="num">5</td><td class="k">Les options</td>
+        <td>Ce que le modèle choisi sait faire.</td>
+        <td>Se cochent. Celles que le modèle ne sait pas faire sont <b>grisées avec leur raison écrite</b>, jamais absentes.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Le sixième groupe ne part pas : c'est ce qui se passera au retour</h3>
+  <p>La colonne de gauche porte, sous un trait, un second bloc : <em>ce qui se passe au retour</em> —
+    découper la planche en images séparées, ramener les couleurs sur la palette, détourer le fond.</p>
+  <p><strong>Rien de tout ça ne part au modèle</strong>, et rien de tout ça ne coûte un centime : ce
+    sont des traitements qui se font sur la machine, après coup, et qui se refont autant de fois
+    qu'on veut. Ils sont montrés ici parce que <strong>l'image qu'on verra revenir n'est pas celle
+    que le modèle envoie</strong>, et qu'il vaut mieux le savoir avant que le savoir après.</p>
+  <div class="note gris">
+    <span class="lab">Ils sont en gris, et c'est un mot du produit</span>
+    <p>Le gris veut dire la même chose partout dans l'atelier : <em>ce n'est pas de ce dont on
+      parle en ce moment</em>. Ici, ces trois lignes ne se cochent pas depuis cet écran — elles se
+      règlent dans les tables de l'atelier, et une chose est réglée à un seul endroit.</p>
+  </div>
+</section>
+
+
+<!-- ══ 05 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">05</span><h2>Une correction faite ici ne vaut que pour cette image</h2></div>
+
+  <p class="intro">C'est la règle la plus importante de l'écran, et la plus facile à casser sans le
+    vouloir.</p>
+
+  <div class="note">
+    <span class="lab">La règle, en une phrase</span>
+    <p>Éteindre une ligne, corriger un texte, décocher une image : <strong>tout cela vaut pour cet
+      appel-là et disparaît ensuite.</strong> Rien ne remonte dans la fiche de l'objet, rien ne
+      remonte dans l'ambiance, rien ne remonte dans les réglages du jeu.</p>
+  </div>
+
+  <h3>Pourquoi, et ce que coûterait l'inverse</h3>
+  <p>Fabriquer une image est un <strong>essai</strong>. On tente « et si j'enlevais l'éclairage ? »,
+    on regarde ce qui revient, on recommence autrement. Si chaque essai réécrivait le réglage,
+    alors :</p>
+  <ul>
+    <li>La dixième image d'un personnage serait fabriquée avec les réglages du neuvième essai, sans
+      que personne l'ait décidé.</li>
+    <li>Un essai raté <strong>empoisonnerait tout ce qui vient après</strong>, et on ne saurait pas
+      d'où ça vient — le réglage aurait l'air normal, en lecture.</li>
+    <li>Il n'existerait plus d'endroit qui dise <em>l'état voulu</em> de cette chose du jeu, par
+      opposition au <em>dernier bricolage</em>.</li>
+  </ul>
+  <p><strong>La séparation est donc nette et se dit en une phrase</strong> : le réglage durable se
+    fait sur la fiche de l'objet, dans l'ambiance ou dans l'assistant ; l'écart d'un jour se fait ici.</p>
+
+  <h3>Ce qui le rend visible à l'écran</h3>
+  <table class="t">
+    <thead><tr><th style="width:30%">Quand on a corrigé</th><th>Ce que l'écran montre</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Le texte a été changé</td>
+        <td>La ligne porte <span class="mesure">corrigé pour cet appel</span> à la place de son origine, et un mot <span class="mesure">remettre</span> qui rend le texte d'origine. <b>On voit qu'on a divergé, et de combien.</b></td></tr>
+      <tr><td class="k">Plusieurs lignes ont été changées</td>
+        <td>La colonne de gauche compte : <span class="mesure">3 corrections pour cet appel</span>. Un compte que l'on voit sans descendre.</td></tr>
+      <tr><td class="k">On veut garder la correction</td>
+        <td>Un mot, sur la ligne : <span class="mesure">garder ce texte sur Balthazar</span>. Il écrit dans la fiche de l'objet et le dit — <b>ce n'est pas un effet de bord, c'est un second geste</b>, séparé du premier.</td></tr>
+      <tr><td class="k">On repart de l'écran</td>
+        <td>Tout ce qui a été corrigé et non gardé <b>est oublié</b>. Le prochain appel repart des réglages, comme si de rien n'était.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:22px">
+    <span class="lab">La recette de l'image, elle, garde tout</span>
+    <p>Oublier à l'écran ne veut pas dire perdre. <strong>Chaque image produite garde la recette
+      exacte qui l'a fabriquée</strong> — c'est déjà le cas aujourd'hui, et c'est ce qui permet de
+      retrouver, six mois plus tard, pourquoi celle-là est mieux que les autres.</p>
+    <p>Ce qui est oublié, c'est <em>le réglage pour la suite</em>. Ce qui est gardé, c'est
+      <em>l'histoire de ce qui a été fait</em>. Les deux ne servent pas à la même chose et ne
+      doivent pas vivre au même endroit.</p>
+  </div>
+</section>
+
+
+<!-- ══ 06 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">06</span><h2>Ce qui ne se décoche pas, et ce qui n'empêche jamais de payer</h2></div>
+
+  <p class="intro">Un écran de confirmation peut vite devenir un écran qui refuse. Ce n'est pas celui
+    du produit : <strong>il n'existe qu'un seul refus automatique dans tout l'atelier</strong>, et
+    ce n'est pas ici qu'il se joue.</p>
+
+  <h3>Les deux lignes qui ne s'éteignent pas</h3>
+  <table class="t">
+    <thead><tr><th style="width:24%">La ligne</th><th>Pourquoi elle ne s'éteint pas</th></tr></thead>
+    <tbody>
+      <tr><td class="k">le sujet</td><td>Sans lui, l'appel ne demande rien. Ce n'est pas une précaution, c'est une impossibilité : le texte serait une description de style sans objet à décrire.</td></tr>
+      <tr><td class="k">la pose demandée</td><td>C'est elle qui dit dans quelle case du personnage l'image reviendra se ranger. L'éteindre produirait une image qui n'appartient à rien.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">Elles portent un <strong>carré gris</strong> au lieu du carré bleu :
+    la place est occupée, et elle le restera. Le carré n'est pas absent — <em>ce qui est
+    indisponible se montre avec sa raison</em>, il ne se cache pas.</p>
+
+  <h3>Tout le reste s'affiche et n'empêche rien</h3>
+  <table class="t">
+    <thead><tr><th style="width:32%">Ce que l'écran peut constater</th><th style="width:16%">Il fait quoi</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Le texte dit 64, le jeu est en 128</td><td><span class="m">avertit</span></td>
+        <td>Peut-être qu'on le veut : on fabrique une image de plus grande finesse pour la réduire ensuite. Le produit ne connaît pas l'intention.</td></tr>
+      <tr><td class="k">Aucune image de référence n'est cochée</td><td><span class="m">avertit</span></td>
+        <td>C'est ce qui s'est passé dix fois sur vingt-quatre. Le savoir suffit ; l'interdire empêcherait la première image d'un jeu, quand il n'existe encore rien à joindre.</td></tr>
+      <tr><td class="k">Tous les textes de style sont éteints</td><td><span class="m">avertit</span></td>
+        <td>C'est une façon légitime de chercher : voir ce que le modèle fait sans consigne. On l'écrit, on ne l'empêche pas.</td></tr>
+      <tr><td class="k">Le texte dépasse ce que le modèle accepte</td><td><span class="m mal">grise et dit combien</span></td>
+        <td>Ce n'est pas un jugement, c'est une limite du modèle choisi. Elle est lue dans le catalogue, et le dépassement est écrit en clair : <span class="mesure">1 204 sur 1 000 caractères</span>.</td></tr>
+      <tr><td class="k">Plus d'images cochées que le modèle n'en accepte</td><td><span class="m mal">grise et dit combien</span></td>
+        <td>Même raison. Les images en trop sont grisées, avec <span class="mesure">14 places, 16 cochées</span>, et on choisit lesquelles retirer.</td></tr>
+      <tr><td class="k">Le compte d'images d'une planche est faux</td><td><span class="m mal">refuse</span></td>
+        <td><b>Le seul refus automatique du produit</b>, et il ne se joue pas ici : il se joue au retour, quand la planche revient avec sept images pour huit demandées. Cet écran ne fait que rappeler ce que ça coûterait.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note" style="margin-top:22px">
+    <span class="lab">Le mot « avertit » veut dire quelque chose de précis</span>
+    <p>Un avertissement du produit <strong>donne toujours des chiffres</strong>, jamais un conseil.
+      Pas « attention, tu devrais joindre une image », mais <em>« aucune image jointe · sur 24
+      générations, les 10 qui n'en avaient pas ont produit les images les moins ressemblantes »</em>
+      si le chiffre existe, et rien de plus s'il n'existe pas.</p>
+    <p>C'est la même règle que dans l'assistant de démarrage : <strong>averti précisément, jamais
+      bloqué.</strong> Un avertissement qui juge sans mesurer se met à mentir dès que le cas est un
+      peu particulier, et on apprend à ne plus le lire.</p>
+  </div>
+</section>
+
+
+<!-- ══ 07 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">07</span><h2>D'où l'écran s'ouvre — trois portes, un seul écran</h2></div>
+
+  <p class="intro">Le produit tient une règle depuis le début : <strong>il n'existe qu'un seul
+    endroit d'où l'on paie</strong>, et c'est la barre de saisie. Cet écran ne crée pas un second
+    endroit — il s'intercale entre le bouton et la dépense, quel que soit le bouton.</p>
+
+  <table class="t">
+    <thead><tr><th style="width:26%">D'où l'on vient</th><th style="width:24%">Ce qu'on a demandé</th><th>Ce que l'écran montre en plus</th></tr></thead>
+    <tbody>
+      <tr><td class="k">L'établi d'un objet</td><td>Une case précise à remplir.</td>
+        <td>Le sujet et la pose sont remplis d'eux-mêmes, depuis la fiche et depuis la case cliquée.</td></tr>
+      <tr><td class="k">Le codex</td><td><em>Fabriquer ce qui manque</em> — plusieurs cases d'un coup.</td>
+        <td>Une ligne de plus en tête : <b>la répartition en planches</b>. Deux planches de trois cases, et ce qu'un compte faux coûterait.</td></tr>
+      <tr><td class="k">La planche d'une pose</td><td>Les quatre directions d'une pose, en un appel.</td>
+        <td>La position de chaque case dans l'image — <span class="mesure">top-left</span>, <span class="mesure">top-right</span> — parce que c'est elle qui permettra de découper le résultat.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:22px">
+    <span class="lab">Il y avait une quatrième porte, et elle a été retirée le 30 août</span>
+    <p>Le brouillon de cet écran ouvrait aussi <strong>depuis la galerie</strong>, pour une image
+      libre qui n'appartient à aucun objet du jeu. C'était une contradiction : la maquette de la
+      galerie a retiré la barre de saisie de son écran et imprime <span class="mesure">aucun appel
+      ne part d'ici</span>. Deux maquettes ne peuvent pas dire l'inverse l'une de l'autre sur
+      l'endroit où l'argent part.</p>
+    <p><strong>Ce qui a été tranché :</strong> on ne paie jamais depuis la galerie, et un essai
+      libre n'a pas besoin d'un endroit à part. <strong>Écrire le nom crée la chose</strong> —
+      taper <em>tonneau cerclé de fer</em> fait entrer le tonneau dans le codex sur-le-champ, et on
+      génère depuis son établi comme pour n'importe quel objet.</p>
+    <p>C'est un geste que l'atelier connaît déjà : nommer une pose ou une pièce d'équipement les
+      crée de la même façon. Cette réponse ferme la question que la maquette de la galerie laissait
+      ouverte, et elle rend plus vraie la règle du produit — les endroits d'où l'on paie passent de
+      trois à <strong>deux</strong>, l'établi et le codex, tous deux du côté du codex.</p>
+  </div>
+
+  <div class="note gris" style="margin-top:9px">
+    <span class="lab">Ce qu'il remplace</span>
+    <p>La barre de saisie porte aujourd'hui un <strong>dépliant</strong> appelé <em>ce qui part</em> :
+      il montre le texte assemblé, et c'est tout — on ne peut rien y toucher. <strong>Ce dépliant
+      disparaît</strong>, et cet écran prend sa place : même contenu, plus les interrupteurs, plus
+      les corrections, plus les images.</p>
+    <p>Ce n'est donc pas un écran de plus dans le chemin. C'est <strong>un dépliant qui devient un
+      écran</strong>, parce que ce qu'il faut y faire ne tient pas dans une bande dépliée sous une
+      barre de saisie.</p>
+  </div>
+
+  <h3>Et il s'évite</h3>
+  <p>Quand on refait dix fois la même chose, relire dix fois est une punition.
+    <strong>Une case au pied de l'écran</strong> — <span class="mesure">ne plus me le montrer pour
+    cette série</span> — le saute jusqu'à ce qu'on change d'objet ou de pose. La série finie, il
+    revient.</p>
+  <p>Elle ne se coche pas « pour toujours » : une case définitive éteindrait le seul écran qui
+    montre ce qui part, et on la cocherait le premier jour, quand on ne sait pas encore qu'on en
+    aura besoin.</p>
+</section>
+
+
+<!-- ══ 08 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">08</span><h2>Ce que ça coûte, et ce que ça n'ajoute pas</h2></div>
+
+  <h3>Rien de neuf dans le modèle des objets</h3>
+  <p class="intro">C'est le résultat utile de cette maquette : elle donne un écran à des choses qui
+    existent déjà, sans rien créer.</p>
+  <table class="t">
+    <thead><tr><th style="width:34%">Ce que l'écran manipule</th><th style="width:24%">Ça existe où</th><th>État</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Le texte assemblé</td><td>la recette de chaque génération</td><td>En place. C'est ce que le banc d'essai relit pour produire les chiffres du § 01.</td></tr>
+      <tr><td class="k">La liste des images jointes</td><td>les rôles de référence</td><td>En place, avec ses quatre provenances.</td></tr>
+      <tr><td class="k">Éteindre un texte pour un appel</td><td>la recette de la génération</td><td>En place : chaque génération garde déjà ce qui est effectivement parti, et pas seulement le réglage.</td></tr>
+      <tr><td class="k">Choisir ce qu'on prend d'une ambiance</td><td><span class="mesure">07-ambiances-et-couleurs</span></td><td>Décidé là-bas. <b>C'est cet écran qui le rend faisable</b>, et c'est sa seule raison d'exister qui ne soit pas une réparation.</td></tr>
+      <tr><td class="k">Les limites du modèle</td><td>le catalogue</td><td>En place. <b>Le catalogue décide, jamais une liste écrite en dur</b> — le nombre de places d'images, la longueur de texte acceptée.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Ce que ça prend, nommé</h3>
+  <div class="note att">
+    <span class="lab">Le coût, nommé</span>
+    <ul>
+      <li><b>Un écran de plus entre l'envie et l'image.</b> C'est le prix à payer, et il est réel :
+        quand on sait ce qu'on fait, cet écran est une porte de plus à pousser. C'est pour ça qu'il
+        s'évite pour une série (§ 07), et pour ça que le bouton de paiement est <b>toujours au même
+        endroit</b>, en bas à droite — on peut le presser sans rien lire, et c'est un droit.</li>
+      <li><b>Un quatrième écran qui montre les sept textes.</b> Ils paraissent dans l'assistant, dans
+        une ambiance, sur la fiche d'un objet, et ici. Ce ne sont pas quatre vérités : les trois
+        premiers <em>règlent</em>, celui-ci <em>montre le résultat une dernière fois</em>, et il
+        écrit l'origine de chaque ligne pour qu'on sache lequel des trois aller ouvrir.</li>
+      <li><b>Une tentation à surveiller.</b> Cet écran est le seul endroit où l'on voit tout ; on
+        aura donc envie d'y régler durablement. C'est ce que le mot
+        <span class="mesure">garder ce texte sur Balthazar</span> tient en respect : garder est
+        possible, mais c'est un second geste, écrit, jamais un effet de bord.</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ══ 09 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">09</span><h2>Ce qui déborde — à reporter ailleurs</h2></div>
+
+  <table class="t">
+    <thead><tr><th style="width:28%">Où ça va</th><th>Ce qui est reporté</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Le châssis, et les trois écrans qui portent la barre de saisie</td>
+        <td><b>Le dépliant <em>ce qui part</em> disparaît de la barre</b>, remplacé par cet écran. La barre garde son champ, son bouton et son prix ; elle perd sa bande dépliante.</td></tr>
+      <tr><td class="k">La fiche d'une chose du jeu</td>
+        <td><b>Le bloc des images de référence a été renommé</b> : il dit maintenant <em>ses images de référence</em> et non <em>ce qui part en image</em>, puisque ce qui part se coche ici. C'est fait.</td></tr>
+      <tr><td class="k">Le codex</td>
+        <td>Même correction sur son panneau de droite, et une étape de plus dans la liste du lancement groupé : <span class="mesure">4 bis · ce qu'on relit avant de payer</span>. C'est fait.</td></tr>
+      <tr><td class="k">L'assistant de démarrage</td>
+        <td>Rien à changer, mais un lien à faire : <b>l'avertissement 64/128 de cet écran cesse de paraître</b> dès qu'un projet a été repassé par l'étape de la taille. Le filet ne sert qu'aux projets d'avant.</td></tr>
+      <tr><td class="k">Le document du produit</td>
+        <td>Deux choses qui engagent l'usage : <b>l'écran de confirmation lui-même</b>, et la règle <b>une correction faite avant de payer ne vaut que pour cet appel</b>.</td></tr>
+      <tr><td class="k">Le dépôt</td>
+        <td>Le banc <em>essai_ce_qui_part.py</em> mesure déjà tout ce que cet écran affiche. <b>Il faudrait qu'il mesure aussi la part du sujet</b> — 2 % sur l'appel le plus long — sur toutes les générations et pas seulement sur une, pour savoir si le chiffre est un accident ou la règle.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Ce que cette maquette ne tranche pas</h3>
+  <div class="note mes">
+    <span class="lab">Tranché le 30 août · « Envoyer la palette en référence » part en image</span>
+    <p>La palette part <strong>en image</strong> : une bande de pastilles de couleur, qui occupe une
+      des places d'image de référence. C'est ce que les modèles suivent le mieux, et l'atelier
+      dessine déjà cette bande à l'écran — il n'y a rien à fabriquer.</p>
+    <p><strong>L'envoi en texte est écarté.</strong> Une liste de codes couleur ajoutée au texte
+      serait mal suivie, et elle allongerait un texte qui pèse déjà la moitié de l'appel : sur le
+      plus long appel payé du dépôt, les textes de style font <span class="mesure">890 caractères
+      sur 1 690</span>, soit <span class="mesure">53 %</span>.</p>
+  </div>
+  <div class="note gris" style="margin-top:9px">
+    <span class="lab">Deux questions laissées ouvertes</span>
+    <ul>
+      <li><b>Ce qui part change-t-il selon le type d'objet fabriqué ?</b> Une tuile n'a sans doute
+        pas besoin du même texte qu'un personnage. Le sujet a été volontairement remis à plus tard,
+        et <b>cet écran en est la porte d'entrée</b> : c'est ici qu'on verra, à l'usage, quelles
+        lignes on éteint toujours pour quel type — et c'est ce constat qui dira quoi automatiser.</li>
+      <li><b>Faut-il garder l'écran quand on relance un appel identique ?</b> Refaire exactement la
+        même demande est le geste le plus courant quand une image ne plaît pas. La case
+        <em>ne plus me le montrer pour cette série</em> (§ 07) répond à moitié ; savoir si un
+        relancement pur doit sauter l'écran tout seul demande de l'avoir utilisé.</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ══ 10 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">10</span><h2>Les mesures de l'écran</h2></div>
+
+  <p class="intro">Aucune n'est neuve. Toutes viennent du châssis ou d'un écran déjà dessiné.</p>
+
+  <table class="t">
+    <thead><tr><th style="width:16%">Mesure</th><th style="width:30%">Ce que c'est</th><th>D'où elle vient</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><span class="m">44 px</span></td><td>La barre de tête</td><td>Le châssis, inchangé depuis la première tranche.</td></tr>
+      <tr><td class="k"><span class="m">240 px</span></td><td>La colonne des groupes, à gauche</td><td>La colonne de gauche du codex, de la galerie et de la fiche.</td></tr>
+      <tr><td class="k"><span class="m">380 px</span></td><td>Le texte assemblé, à droite</td><td>La colonne de droite du codex et de la galerie.</td></tr>
+      <tr><td class="k"><span class="m">30 px</span></td><td>Le titre d'une colonne</td><td>Le titre du panneau de droite du codex.</td></tr>
+      <tr><td class="k"><span class="m">26 px</span></td><td>Le pied, et une entrée de la colonne de gauche</td><td>Le châssis.</td></tr>
+      <tr><td class="k"><span class="m">34 px</span></td><td>Le bouton qui paie</td><td>Le bouton de génération du codex.</td></tr>
+      <tr><td class="k"><span class="m">38 px</span></td><td>Une vignette d'image jointe</td><td>La vignette d'image de référence de la fiche d'un objet et du codex, telle quelle. <b>Corrigé le 30 août</b> : le brouillon disait 44 en citant le codex, mais le 44 du codex est le portrait d'un objet, pas une image de référence. La barre d'espace la montre en grand — voir ci-dessous.</td></tr>
+      <tr><td class="k"><span class="m">9 px</span></td><td>Le carré d'un interrupteur</td><td>Le carré de la barre de tables, et celui du codex.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note mes" style="margin-top:22px">
+    <span class="lab">La question de la taille des vignettes est réglée par la barre d'espace</span>
+    <p>Une vignette de <span class="m">38 px</span> — un carré d'à peu près un centimètre — ne
+      suffit pas toujours à reconnaître une image qu'on s'apprête à décocher. La tentation était donc
+      de l'agrandir, et le brouillon de cet écran l'avait dessinée à <span class="m no">52</span>,
+      hors de la liste fermée des tailles du produit
+      (<span class="mesure">44 · 38 · 34 · 30 · 26</span>).</p>
+    <p><strong>Ce n'était pas le bon problème.</strong> Le produit a déjà la réponse, dessinée dans
+      la galerie : <strong>survoler une image et appuyer sur la barre d'espace la montre en
+      grand</strong>, et la molette la zoome. <strong>Ce geste vaut désormais pour toutes les
+      vignettes du produit, systématiquement</strong> — ici, sur la fiche d'un objet, dans le codex,
+      partout où une image paraît en petit.</p>
+    <p>Grandir les vignettes aurait coûté une valeur de plus dans la liste fermée, sur tous les
+      écrans, pour ne régler le problème qu'à moitié — <em>une image reste petite à 52 px</em>.
+      La barre d'espace le règle entièrement et ne coûte rien : c'est un geste déjà appris ailleurs
+      dans l'atelier.</p>
+  </div>
+</section>
+
+<!-- ══ 11 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">11</span><h2>Ce que cet écran doit au guide</h2></div>
+  <div class="note att">
+    <span class="lab">Une entrée à écrire, une à déplacer · la dette du guide (D41)</span>
+    <p><strong>C'est le dernier écran avant que l'argent parte, et le guide n'en dit rien.</strong>
+      Il hérite en revanche d'une explication qui existe déjà et qui est bonne — celle du dépliant
+      <em>Ce qui partira</em>, dont il prend la place. Elle n'est pas à réécrire, elle est à
+      déménager.</p>
+    <p style="margin-top:10px"><b>nom</b> · L'écran de confirmation<br>
+      <b>quoi</b> · Ce qui s'ouvre entre le bouton et la dépense. Il montre, ligne par ligne, tout ce
+      qui va être envoyé — les textes du jeu, ceux de l'ambiance, le sujet, chaque image jointe — avec
+      un interrupteur sur chacune et son prix à côté.<br>
+      <b>ce que ça change</b> · Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne
+      vaut que pour cet appel-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.<br>
+      <b>d'où ça vient</b> · composé par l'atelier · l'ordre est celui de l'envoi<br>
+      <b>où ça se range</b> · <span class="mesure">L'établi</span> — c'est de là qu'on le rencontre le
+      plus souvent, et le guide range par lieu, pas par thème</p>
+    <p style="margin-top:10px" class="sourd"><b>L'entrée à déménager</b> : <em>Ce qui partira</em>
+      était rangée dans le groupe de l'atelier, qui n'existe plus. Son texte reste vrai mot pour mot —
+      la mesure sur trois vrais jeux, la règle « le texte n'est pas recomposé à l'écran », et
+      l'attachement de ce qui est parti à la génération. Elle change de groupe, pas de contenu.</p>
+  </div>
+</section>
+
+<footer>
+  Asset Kitchen — V2.1 · maquette 08bis, l'écran de confirmation · 30 août 2026 ·
+  mesures prises par <span class="mesure">essais/essai_ce_qui_part.py</span> sur
+  <span class="mesure">cœur de pierre - 01</span> ·
+  rien n'est encore écrit dans les documents d'autorité
+</footer>
+
+</div>
+</body>
+</html>

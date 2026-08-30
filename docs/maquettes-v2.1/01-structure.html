@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la structure retenue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+
+  /* ── Les trois lieux ────────────────────────────────────────────── */
+  .lieux{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .lieu{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:17px 18px}
+  .lieu .n{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em;margin-bottom:10px}
+  .lieu h3{font-size:28px;margin-bottom:9px}
+  .lieu .quoi{font-size:12.5px;color:var(--texte-2);line-height:1.5;margin:0 0 12px}
+  .lieu .cle{border-top:1px solid var(--bord);padding-top:10px;font-size:11.5px;color:var(--texte-3);line-height:1.45}
+  .lieu .cle b{color:var(--signal-clair);font-weight:500}
+
+  /* ── Wireframes ─────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow:hidden;background:var(--fond-0)}
+  .wf-barre{height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-corps{display:flex;min-height:240px}
+  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .col{border-right:1px solid var(--bord);padding:10px;display:flex;flex-direction:column;gap:6px}
+  .col:last-child{border-right:0}
+  .col.d{border-right:0;border-left:1px solid var(--bord)}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:4px}
+  .fam{height:22px;display:flex;align-items:center;justify-content:space-between;padding:0 7px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .fam.on{border-color:var(--bord);background:var(--fond-3);color:var(--texte)}
+  .fam .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .zone{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .champ{height:26px;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:2px;
+    display:flex;align-items:center;padding:0 9px;font-size:11px;color:var(--texte-3)}
+  .outils{display:flex;gap:5px;align-items:center}
+  .ob{height:20px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:0 7px;display:flex;align-items:center;font-size:9.5px;color:var(--texte-3)}
+  .ob.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .grille{display:grid;gap:5px;flex:1}
+  .tuile{background:var(--fond-2);border:1px solid var(--bord);min-height:34px;position:relative}
+  .tuile.sel{border-color:var(--lumiere)}
+  .tuile.fav::after{content:"";position:absolute;top:0;right:0;border-top:6px solid var(--signal);
+    border-left:6px solid transparent}
+
+  /* ── Codex : cartes d'entités ───────────────────────────────────── */
+  .entites{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .ent{background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:7px}
+  .ent .vig{height:44px;background:var(--fond-3);border:1px solid var(--bord);margin-bottom:6px}
+  .ent .nm{font-size:11px;color:var(--texte);margin-bottom:3px}
+  .ent .jg{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ent .jg b{color:var(--signal);font-weight:400}
+  .ent .jg.manque b{color:var(--epingle)}
+  .ent.neuf{background:transparent;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;min-height:76px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* ── Établi : rangées de cases ──────────────────────────────────── */
+  .rangee{margin-bottom:2px}
+  .rangee-t{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+  .rangee-t .nm{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--texte-2)}
+  .rangee-t .st{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .rangee-t .st.att{color:var(--epingle)}
+  .cases{display:flex;gap:5px;flex-wrap:wrap}
+  .cs{width:46px;height:46px;background:var(--fond-2);border:1px solid var(--bord);border-radius:0}
+  .cs.sel{border-color:var(--lumiere)}
+  .cs.vide{background:transparent;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;color:var(--texte-3);
+    font-family:var(--mono);font-size:13px;line-height:1}
+  .cs.mort{background:transparent;border-style:dashed;border-color:var(--bord);opacity:.45}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:5px}
+  .identite{width:168px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:8px}
+  .portrait{height:104px;background:var(--fond-2);border:1px solid var(--bord)}
+  .sign{font-size:10.5px;color:var(--texte-3);line-height:1.5}
+  .sign b{color:var(--texte-2);font-weight:400}
+
+  .toile-outil{flex:1;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:10px;color:var(--texte-3);letter-spacing:.08em;text-align:center;padding:10px}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  td b.fam{color:var(--texte);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  .barre-txt{text-decoration:line-through;text-decoration-color:var(--echec);
+    text-decoration-thickness:1px;color:var(--texte-3)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+
+  .suite{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .jalon{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:14px}
+  .jalon.ici{border-color:var(--signal);background:var(--signal-sourd)}
+  .jalon .code{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-bottom:7px}
+  .jalon.ici .code{color:var(--signal)}
+  .jalon .nom{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:5px}
+  .jalon .quoi{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · la structure retenue</div>
+    <h1>La galerie, le codex,<br><em>et l'établi d'une entité</em></h1>
+    <p>Quatre lieux, <strong>trois onglets</strong>. L'univers tient ce qui s'applique à tout ; le codex
+      tient les choses du jeu ; la galerie tient les images qu'on a produites. L'établi est là où l'on
+      travaille une chose — on y atterrit depuis le codex, donc il ne coûte pas d'onglet.</p>
+    <p>La distinction qui fait tout tenir : <strong>une image est un résultat, une entité est une chose du
+      jeu.</strong> Balthazar existe dans le codex avant d'avoir la moindre image — et c'est ce qui permet au
+      produit de dire ce qui lui manque.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Les quatre lieux, dans l'ordre de la barre</h2></div>
+    <div class="lieux">
+      <div class="lieu">
+        <div class="n">01 · un onglet</div>
+        <h3>L'univers</h3>
+        <p class="quoi">Ce qui s'applique à tout sans appartenir à personne. <b>Trois côtés, un seul
+          allumé à la fois, chacun plein écran</b> : <em>Inspiration</em>, le tableau de références où
+          l'on rassemble des images pour réfléchir ; <em>Réglages</em>, l'assistant qui pose et repose
+          ce qu'est ce jeu ; <em>Ambiances et couleurs</em>, où se fabriquent les palettes et les lots
+          de style réutilisables. Posé au début d'un projet, rouvert quand on veut.</p>
+        <div class="cle">C'est <b>l'écran Univers d'aujourd'hui</b>, réorganisé le 30 août 2026 — et le
+          premier onglet, parce qu'il précède tout ce qu'on fabrique. Regarder des images et remplir
+          des cases ne demandent pas la même chose à un écran : les mettre côte à côte faisait perdre
+          les deux.</div>
+      </div>
+      <div class="lieu">
+        <div class="n">02 · un onglet</div>
+        <h3>Le codex</h3>
+        <p class="quoi">Ce que le monde contient, rangé par famille : personnages, biomes, types d'objets,
+          interface. Chaque entité y dit ce qu'elle a, ce qui lui manque, et l'ambiance qu'elle porte. Il
+          porte aussi les listes qui s'imposent à plusieurs : les directions, tirées de la vue du jeu ;
+          les poses, attachées à chaque type d'objet ; et le vestiaire.</p>
+        <div class="cle">Absorbe l'écran <b>Personnages</b> d'aujourd'hui, et donne un domicile aux deux
+          listes qui traînaient dans sa colonne de gauche.</div>
+      </div>
+      <div class="lieu">
+        <div class="n">03 · un onglet</div>
+        <h3>La galerie</h3>
+        <p class="quoi">Toutes les images produites, toutes entités confondues. On y juge et on y range.
+          <strong>On n'y paie jamais</strong> : quand on n'a pas d'entité en tête, on écrit son nom dans le
+          codex — le nom crée la chose — et on génère depuis son établi. C'est la planche contact du produit.</p>
+        <div class="cle">C'est <b>l'écran d'aujourd'hui</b>, dégraissé : la grille, la fiche, le
+          rangement. <b>Sans le prompt</b>, qui n'a jamais été à elle.</div>
+      </div>
+      <div class="lieu">
+        <div class="n">une profondeur</div>
+        <h3>L'établi</h3>
+        <p class="quoi">Une entité ouverte. Ce qu'elle est, ce qu'elle a déjà, et <em class="it">ce qu'on peut
+          lui ajouter</em> — en cases vides qui se cliquent. L'étape sur laquelle on travaille décide de
+          l'outil affiché, seul et plein cadre.</p>
+        <div class="cle">On y arrive en cliquant <b>Balthazar</b> dans le codex. Le fil d'Ariane remplace le
+          nom de l'onglet.</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Sur le mot « codex »</span>
+      <p>Je le retiens tel quel : c'est un mot de jeu, il n'entre en collision avec aucun terme du dépôt — la
+        <em class="it">bible</em> y désigne déjà les sept champs de style —, et il dit exactement ce que la
+        chose est : <strong>l'index de ce que le monde contient</strong>. L'alternative sobre serait
+        « Le monde ».</p>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>La galerie</h2></div>
+    <p class="intro">Elle ne change presque pas — c'est déjà ce que le produit fait le mieux. Elle perd
+      seulement ce qui n'a jamais été à elle : les cinq boutons de navigation et la colonne de réglages
+      ouverte en permanence.</p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab">Codex</span><span class="tab on">Galerie</span>
+        <span class="wf-tard"><span>Cœur de pierre — 01 · ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="col" style="width:150px">
+          <div class="col-t">projets · collections</div>
+          <div class="fam on">Cœur de pierre — 01<span class="cpt">88</span></div>
+          <div class="fam">· personnages<span class="cpt">34</span></div>
+          <div class="fam">· décors<span class="cpt">29</span></div>
+          <div class="fam">· objets<span class="cpt">25</span></div>
+          <div class="col-t" style="margin-top:10px">dépenses</div>
+          <div class="fam">dépensé sur ce jeu ›<span class="cpt">$2,140</span></div>
+        </div>
+        <div class="zone">
+          <div class="outils">
+            <span class="ob">Chercher</span><span class="ob">famille</span><span class="ob on">1×</span>
+            <span class="ob">2×</span><span class="ob">4×</span>
+            <span class="ob" style="margin-left:auto">Ranger…</span><span class="ob">Sortir</span>
+          </div>
+          <div class="grille" style="grid-template-columns:repeat(7,1fr)">
+            <div class="tuile fav"></div><div class="tuile"></div><div class="tuile sel"></div><div class="tuile"></div>
+            <div class="tuile"></div><div class="tuile"></div><div class="tuile"></div>
+            <div class="tuile"></div><div class="tuile fav"></div><div class="tuile"></div><div class="tuile"></div>
+            <div class="tuile"></div><div class="tuile"></div><div class="tuile"></div>
+          </div>
+        </div>
+        <div class="col d" style="width:150px">
+          <div class="col-t">fiche</div>
+          <div class="portrait" style="height:74px"></div>
+          <div class="sign"><b>balthazar-03</b><br>512×512 · $0,067<br>pixel · détouré</div>
+          <div class="ob on" style="justify-content:center">Reprendre dans l'établi</div>
+          <div class="ob" style="justify-content:center;margin-top:4px">Ouvrir les tables</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>catalogue · 29/08 14:02</span><span>3 modèles</span></div>
+    </div>
+    <div class="lgd">aucun champ où écrire — la galerie ne paie jamais · la fiche a <b>deux portes</b> :
+      l'établi de l'entité, et les tables · une image qui n'appartient à aucune entité n'a que la seconde</div>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Le codex — ce que le monde contient, et ce qui lui manque</h2></div>
+    <p class="intro">Les familles à gauche, les entités de la famille au milieu. La bible et la palette
+      n'y sont pas : elles vivent dans l'onglet Univers, qui précède celui-ci. Chaque entité porte
+      <strong>une jauge de ce qui lui manque</strong> — c'est le remplaçant de l'écran Personnages, et c'est ce
+      qui fait que le produit ouvre sur du travail plutôt que sur du vide.</p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">Cœur de pierre › <b>Personnages</b></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="col" style="width:172px">
+          <div class="col-t">les familles du monde</div>
+          <div class="fam on">Personnages<span class="cpt">6</span></div>
+          <div class="fam">Biomes<span class="cpt">3</span></div>
+          <div class="fam">Types d'objets<span class="cpt">12</span></div>
+          <div class="fam">Interface<span class="cpt">4</span></div>
+        </div>
+        <div class="zone">
+          <div class="outils">
+            <span class="ob">Chercher</span>
+            <span class="ob on">tout</span><span class="ob">incomplets</span><span class="ob">jamais lancés</span>
+          </div>
+          <div class="entites">
+            <div class="ent"><div class="vig"></div><div class="nm">Balthazar</div>
+              <div class="jg manque">poses <b>4/8</b> · équip. <b>2/5</b></div></div>
+            <div class="ent"><div class="vig"></div><div class="nm">Maeve la guetteuse</div>
+              <div class="jg">poses <b>8/8</b> · équip. <b>5/5</b></div></div>
+            <div class="ent"><div class="vig"></div><div class="nm">Le forgeron</div>
+              <div class="jg manque">poses <b>0/8</b></div></div>
+            <div class="ent"><div class="vig"></div><div class="nm">Garde du nord</div>
+              <div class="jg manque">poses <b>2/8</b></div></div>
+            <div class="ent"><div class="vig"></div><div class="nm">Rat des caves</div>
+              <div class="jg">poses <b>4/4</b></div></div>
+            <div class="ent neuf" style="border-style:solid;border-color:var(--signal);color:var(--signal-clair);flex-direction:column;gap:5px">un tonneau cerclé de fer<span style="font-size:9px;color:var(--texte-3)">Entrée le crée</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>6 personnages · 3 incomplets</span></div>
+    </div>
+    <div class="lgd">la famille décide de ce qu'une entité peut avoir · la jauge dit ce qui manque, jamais ce qui est fait</div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>L'établi — au repos : ce qu'elle est, ce qu'elle a, ce qu'on peut lui ajouter</h2></div>
+    <p class="intro">C'est l'écran que tu décris comme SpriteCook : le personnage est là, et à côté de lui
+      <strong>les cases de ce qu'on peut lui fabriquer</strong>. Une case pleine s'ouvre dans son outil ; une
+      case vide arme le prompt, déjà rempli pour cette case-là. <strong>Rien à chercher : ce qui manque est un
+      trou visible.</strong></p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="identite">
+          <div class="col-t">ce qu'il est</div>
+          <div class="portrait"></div>
+          <div class="sign"><b>Balthazar</b><br>nain mineur, carrure large, barbe tressée, chemise de
+            toile, ceinture à outils, deux lanternes.</div>
+          <div class="sign"><b>pixel · 64×64 · vue 3/4</b><br><span style="color:var(--texte-3)">hérité de la
+            bible</span></div>
+        </div>
+        <div class="zone">
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">Poses</span><span class="st att">4 sur 8</span></div>
+            <div class="cases">
+              <div class="cs"></div><div class="cs sel"></div><div class="cs"></div><div class="cs"></div>
+              <div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div>
+            </div>
+          </div>
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">Animations</span><span class="st">indisponible</span></div>
+            <div class="cases">
+              <div class="cs mort"></div><div class="cs mort"></div><div class="cs mort"></div><div class="cs mort"></div>
+            </div>
+            <div class="raison">— pas encore construit · arrive en V3</div>
+          </div>
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">Équipements</span><span class="st att">2 sur 5</span></div>
+            <div class="cases">
+              <div class="cs"></div><div class="cs"></div>
+              <div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div>
+            </div>
+            <div class="raison">un calque par équipement, décliné sur chaque pose</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>balthazar · $0,412 · 11 images</span></div>
+    </div>
+    <div class="lgd">au repos, aucun outil n'est ouvert · une case pleine ouvre son outil, une case vide arme le prompt</div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>L'établi — au travail : un outil, seul, plein cadre</h2></div>
+    <p class="intro">C'est la discipline qui empêche l'établi de redevenir chargé : <strong>un seul outil à la
+      fois</strong>, et c'est <strong>la case ouverte qui décide duquel</strong>. Une pose ouvre la table de
+      détourage ; un équipement ouvre la superposition ; une frame ouvrira la bande d'animation. Les
+      autres rangées se réduisent à leur nom.</p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">… › Balthazar › <b>Pose · marche sud</b></span>
+        <span class="wf-tard"><span>Fermer l'outil</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="col" style="width:132px">
+          <div class="col-t">l'outil de la pose</div>
+          <div class="ob on" style="justify-content:center">Détourer</div>
+          <div class="ob" style="justify-content:center">Recadrer</div>
+          <div class="ob" style="justify-content:center">Remettre sur grille</div>
+          <div class="ob" style="justify-content:center">Découper la planche</div>
+          <div class="col-t" style="margin-top:12px">tolérance</div>
+          <div class="champ" style="height:20px">— 32 —</div>
+          <div class="col-t" style="margin-top:8px">pipette · poche · gomme</div>
+          <div class="outils"><span class="ob on">◉</span><span class="ob">◍</span><span class="ob">◌</span></div>
+        </div>
+        <div class="zone">
+          <div class="toile-outil">l'image, en grand, avec le damier alpha sous elle</div>
+        </div>
+        <div class="col d" style="width:112px">
+          <div class="col-t">ses poses</div>
+          <div class="grille" style="grid-template-columns:repeat(2,1fr)">
+            <div class="tuile"></div><div class="tuile sel"></div>
+            <div class="tuile"></div><div class="tuile"></div>
+            <div class="tuile" style="border-style:dashed;background:transparent"></div>
+            <div class="tuile" style="border-style:dashed;background:transparent"></div>
+          </div>
+          <div class="raison">on change de pose sans quitter l'outil</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>détourage · non destructif · retour au brut à tout moment</span></div>
+    </div>
+    <div class="lgd">l'outil affiché est décidé par la nature de la case ouverte — c'est « un outil dédié par objectif de génération », rendu par la structure et non par un menu</div>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>La forme de l'établi change avec la famille</h2></div>
+    <p class="intro">Un établi n'a pas de rangées grisées « sans objet » : ce qu'une famille ne peut pas avoir
+      <strong>n'existe pas dans son établi</strong>. Seul ce qui est construit plus tard reste visible et grisé
+      avec sa raison — c'est la règle du produit depuis T1, et elle sert ici à réserver la place.</p>
+    <table>
+      <thead><tr><th style="width:150px">Famille</th><th>Les rangées de son établi</th><th style="width:230px">L'outil de reprise associé</th></tr></thead>
+      <tbody>
+        <tr><td><b class="fam">Personnage</b></td>
+          <td>Identité · <strong>Poses</strong> · <strong>Animations</strong> <span class="sourd">(V3)</span> · <strong>Équipements</strong></td>
+          <td>détourage, superposition, bande de frames</td></tr>
+        <tr><td><b class="fam">Biome</b></td>
+          <td>Identité · <strong>Tuiles</strong> <span class="sourd">(V4)</span> · <strong>Décors</strong> · <strong>Props</strong></td>
+          <td>détourage, découpe de planche, atlas autotile</td></tr>
+        <tr><td><b class="fam">Type d'objet</b></td>
+          <td>Identité · <strong>Variantes</strong> · <strong>États</strong> <span class="sourd">(ouvert / fermé / cassé)</span></td>
+          <td>détourage, découpe de planche</td></tr>
+        <tr><td><b class="fam">Interface</b></td>
+          <td>Identité · <strong>Composants</strong> · <strong>États</strong> <span class="sourd">(repos / survol / pressé)</span></td>
+          <td>découpe 9-slice, détourage</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce qui disparaît</h2></div>
+    <table>
+      <thead><tr><th style="width:46%">Aujourd'hui</th><th>En 2.1</th></tr></thead>
+      <tbody>
+        <tr><td><span class="barre-txt">Sept surfaces qui se recouvrent, cinq boutons de même poids dans la barre</span></td>
+          <td class="apres"><b>Trois onglets</b> — Univers, Codex, Galerie, dans l'ordre où ils servent — plus
+            un fil d'Ariane qui dit à quelle profondeur du codex on se trouve.</td></tr>
+        <tr><td><span class="barre-txt">L'écran Personnages, et les trois listes du projet coincées dans sa colonne de gauche</span></td>
+          <td class="apres">Le <b>codex</b> : les familles, leurs entités, et les deux listes que le projet
+            impose à tous — le plan de poses et le vestiaire.</td></tr>
+        <tr><td><span class="barre-txt">L'écran Découpe, atteignable seulement depuis la fiche</span></td>
+          <td class="apres">Un des <b>outils de l'établi</b>, choisi par la nature de la case ouverte. On ne
+            le cherche plus : il est là quand il sert.</td></tr>
+        <tr><td><span class="barre-txt">La colonne de réglages de 300 px, ouverte même quand on n'y touche pas</span></td>
+          <td class="apres">Elle disparaît. Les réglages vivent dans l'établi, <b>hérités de l'entité</b>, et
+            n'ont plus à être ressaisis. <b>La galerie n'en porte aucun</b> : elle ne paie pas.</td></tr>
+        <tr><td><span class="barre-txt">Un prompt vide, sept champs de bible vides, une pose qui n'est qu'un nom</span></td>
+          <td class="apres">Une case vide de l'établi <b>arme le prompt déjà rempli</b> pour elle : la bible,
+            l'identité de l'entité, la consigne de la pose. Tout reste éditable et porte « proposé ».</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 8 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que ça coûte — nommé d'avance</h2></div>
+    <div class="note att">
+      <span class="lab">Trois coûts réels, aucun caché</span>
+      <p><strong>Une entité devient un objet de premier plan.</strong> Aujourd'hui seul le personnage en est
+        un ; il faut généraliser aux biomes, types d'objets et interface. C'est du modèle, pas de la mise en
+        page — et c'est ce qui rend le reste possible.</p>
+      <p><strong>Un asset appartient désormais à une entité, ou à personne.</strong> Un essai, une texture,
+        une image importée vivent dans la galerie sans établi. C'est acceptable, mais il faut l'assumer : la
+        galerie reste le domicile par défaut, jamais un fourre-tout de second rang.</p>
+      <p><strong>La fiche de 380 px cesse d'être le lieu de la retouche.</strong> Elle reste la fiche —
+        visionneuse, recette, filiation, coût — et tout ce qui se règle en regardant grand passe dans
+        l'établi. C'est le déplacement de code le plus lourd de la V2.1, et c'est le prix de rendre les outils
+        de retouche utilisables.</p>
+    </div>
+    <div class="note">
+      <span class="lab">Ce que la structure ne règle toujours pas</span>
+      <p>Les outils de retouche sont à <strong>refaire</strong>, pas à déplacer. L'établi leur donne la place
+        d'être utilisables ; il ne les rend pas utilisables. Le détourage, le découpage et la
+        superposition ont chacun leur maquette — <strong>juste après celle de l'établi</strong>, qui leur donne
+        leur cadre : dessiner un outil avant de savoir dans quoi il se pose, c'est le dessiner deux fois.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 9 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>La suite</h2></div>
+    <div class="suite">
+      <div class="jalon ici"><div class="code">M0 · ici</div><div class="nom">La structure</div>
+        <div class="quoi">Galerie, codex, établi. Deux onglets, une profondeur.</div></div>
+      <div class="jalon"><div class="code">M1</div><div class="nom">L'établi personnage</div>
+        <div class="quoi">Les cases, l'armement du prompt, l'héritage de l'identité. Il prouve la structure.</div></div>
+      <div class="jalon"><div class="code">M2</div><div class="nom">Les outils de reprise</div>
+        <div class="quoi">Détourage, découpe, calque — refaits, dans le cadre que M1 leur donne.</div></div>
+      <div class="jalon"><div class="code">M3</div><div class="nom">Le codex</div>
+        <div class="quoi">Les familles, les jauges de manque, la bible en tête.</div></div>
+      <div class="jalon"><div class="code">M4</div><div class="nom">La galerie</div>
+        <div class="quoi">L'écran actuel dégraissé — le moins de travail des cinq.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · structure retenue · 29 août 2026 · rien n'est encore écrit dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

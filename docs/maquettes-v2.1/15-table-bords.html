@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Bords</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:78px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:56px;text-align:right}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  /* champ couleur + palette */
+  .champc{display:flex;align-items:center;gap:8px;height:26px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);padding:0 8px}
+  .champc .sw{width:16px;height:16px;border:1px solid var(--bord-fort);flex:none}
+  .champc .hex{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .champc .pip{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .palette{display:flex;gap:4px;flex-wrap:wrap}
+  .pc{width:22px;height:22px;border:1px solid var(--bord);border-radius:2px}
+  .pc.on{border-color:var(--lumiere)}
+  .pc.hors{border-style:dashed;border-color:var(--bord);opacity:.4}
+
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+
+  /* les trois positions, en démonstration */
+  .trois{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .pos{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .pos .pt{height:26px;display:flex;align-items:center;gap:7px;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .pos .pv{height:128px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .forme{width:72px;height:88px;background:var(--fond-3);position:relative}
+  .forme.ext{box-shadow:0 0 0 6px #0B0D10}
+  .forme.int{background:var(--fond-3);border:6px solid #0B0D10}
+  .forme.cen{box-shadow:0 0 0 3px #0B0D10;border:3px solid #0B0D10}
+  .repere{position:absolute;border:1px dashed var(--lumiere);width:72px;height:88px;opacity:.5}
+  .pos .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+  .pos .pm{padding:0 11px 11px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  /* les trous */
+  .deux{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .tr{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .tr .pt{height:26px;display:flex;align-items:center;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .tr .pv{height:128px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center}
+  .anneau{width:96px;height:88px;background:var(--fond-3);position:relative;box-shadow:0 0 0 5px #0B0D10}
+  .anneau .trou{position:absolute;left:32px;top:26px;width:32px;height:36px;
+    background:transparent;box-shadow:inset 0 0 0 0 #0B0D10}
+  .anneau .trou.cercle{box-shadow:0 0 0 5px #0B0D10}
+  .anneau .trou::before{content:"";position:absolute;inset:0;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .tr .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* ── ce que cette maquette ajoute au socle ────────────────────────────── */
+  /* repris de 12-table-recadrage.html, sans modification */
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+  td .m.eg{color:var(--epingle)}
+  td .m.no{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .hp{color:var(--epingle)}
+
+  /* propre à cette table : la liste des taches, et le trait de coupe */
+  .taches{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);overflow:hidden}
+  .tq{display:flex;align-items:center;gap:8px;padding:4px 8px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-2);font-variant-numeric:tabular-nums}
+  .tq .n{color:var(--texte-3)}
+  .tq .a{margin-left:auto}
+  .tq.part{color:var(--texte-3)}
+  .coupe{display:flex;align-items:center;padding:4px 8px;
+    border-top:1px dashed var(--epingle);border-bottom:1px dashed var(--epingle);
+    font-family:var(--mono);font-size:9px;color:var(--epingle)}
+  .cpt{padding:4px 8px;border-top:1px solid var(--bord);
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  /* propre à cette table : la scène de démonstration */
+  .scene{position:relative;width:150px;height:104px}
+  .corps{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .miette{position:absolute;width:4px;height:4px;background:var(--fond-3)}
+  .miette.part{box-shadow:0 0 0 2px var(--epingle)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 15 — bords</div>
+    <h1>Bords —<br><em>effacer les taches trop petites pour être le sujet</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+    <p><strong>Elle a été mesurée avant d'être dessinée</strong>, sur les huit images du corpus du projet, et
+      la mesure dit qu'elle a rarement du travail : six images sur huit n'ont qu'une seule tache, et aucune
+      tache d'un pixel. Le § 02 donne les chiffres, et c'est lui qui décide de tout le reste — quand elle se
+      pose toute seule, à quelle valeur, et dans quel cas elle s'en abstient.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle efface les taches opaques trop petites pour être le sujet. <strong>Une tache est une
+      zone de pixels opaques d'un seul tenant ; une miette est une tache parasite</strong> — un éclat de fond
+      qui a survécu au détourage, un bout de contour détaché. Le réglage est un seuil : en dessous de cette
+      aire, la tache s'en va.</p>
+
+    <div class="note">
+      <span class="lab">La panne qu'elle évite</span>
+      <p><strong>Un pixel isolé se voit sur une case de 64 px, et ne se voyait pas sur l'image de 1024 dont
+        elle sort.</strong> C'est écrit là où le nettoyage se fait
+        (<span class="mesure">atelier/image/traitement.py:nettoyer</span>). La réduction laisse passer une
+        miette sur quatre-vingt-dix : celle qui tombe sur un point échantillonné ressort à un pixel, et ce
+        pixel qui était invisible devient un point qui bave dans le jeu. C'est la dernière place du
+        nettoyage : le domaine l'appelle <em>le dernier mot</em>
+        (<span class="mesure">atelier/domaine/recette.py:Bords</span>) et le sommaire écrit <em>le dernier
+        mot du nettoyage</em>. Deux tables agissent encore après elle dans la barre — <em>contours</em>, qui
+        retrace la ligne du bord, et <em>la main</em>, qui peint. Le domaine ne compte pas leurs places : sa
+        liste s'arrête à six et finit sur <em>bords</em> ; la barre en compte sept.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:24%">Elle vient après…</th><th>Parce que</th></tr></thead>
+      <tbody>
+        <tr><td class="k">détourage</td>
+          <td>Sans alpha, il n'y a pas de tache : l'image entière est d'un seul tenant. C'est aussi de là que
+            viennent les miettes — les éclats de fond que le détourage a laissés, que
+            <span class="mesure">19-outil-superposition.html</span> nomme déjà <em>miettes de fond</em>.</td></tr>
+        <tr><td class="k">grille</td>
+          <td><strong>C'est elle qui décide de l'unité.</strong> La grille décide de ce qu'un pixel vaut, donc
+            de ce que <span class="mesure">3 px</span> désigne : ce n'est pas la même chose sur une image de
+            1024 et sur une case de 64. Argument de coût en plus — compter les taches met
+            <span class="m">81,5 ms</span> sur un masque de 1024 px
+            (<span class="mesure">docs/recherche-vision.md</span>) contre <span class="m">2,8 ms</span> sur la
+            case de 64 px (relevé du 30 août 2026).</td></tr>
+        <tr><td class="k">quantification</td>
+          <td><strong>Et c'est mesuré : ça ne change rien.</strong> Le rendu est identique à l'octet près
+            qu'on nettoie avant ou après, sur les cinq images essayées — le nettoyage ne lit que l'alpha, et
+            la quantification n'y touche pas. Ses deux voisines fixent donc sa place : la grille avant,
+            contours après.</td></tr>
+        <tr><td class="k">et avant contours</td>
+          <td>La cinquième place lui est donnée par la table suivante
+            (<span class="mesure">16-table-contours.html § 01</span>) : <em>« Les miettes partent d'abord. Un
+            contour tracé autour de trois taches de six pixels ferait trois pâtés noirs ».</em> Contours a
+            renoncé à son aire minimale pour cette raison, et l'argument oblige aussi celle-ci —
+            <strong>deux réglages qui font la même chose à deux endroits finissent par se contredire</strong>
+            (§ 07).</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">D'où l'auteur arrive, et avec quoi en tête</span>
+      <p>Contours écrit sous l'image <span class="mesure">4 taches contournées · la plus petite fait 6 px</span>
+        et renvoie ici à un clic dans la barre : <em>« un compte qui surprend envoie dans </em>bords<em> »</em>.
+        L'auteur arrive donc avec <strong>un compte en tête et une seule question</strong> : qu'est-ce qui
+        part. C'est ce que la liste des taches du § 03 et le surlignage du § 05 répondent, l'une en nombres,
+        l'autre sur l'image.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qu'elle trouve devant elle — mesuré le 30 août 2026</h2></div>
+    <p class="intro">Avant de dessiner la table, on a compté les taches. Huit images brutes du dépôt
+      (<span class="mesure">donnees/generations/*/…-brut.png</span>, au moins 512 px de côté), passées par le
+      vrai code (<span class="mesure">atelier/image/traitement.py</span>) avec la vraie recette du projet
+      <em>Cœur de pierre</em> : cible 64 px, palette de 24 couleurs, occupation 85 %, ancrage bas, détourage
+      par le bord. Après la mise sur grille, <strong>un pixel du rendu est un bloc</strong> :
+      <span class="mesure">1 px</span> veut dire un bloc de la case finie.</p>
+
+    <div class="note att">
+      <span class="lab">La mesure</span>
+      <h3>Sur une case de 64 px, il n'y a presque jamais de miettes</h3>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:30%">Image</th><th style="width:12%">Taches</th>
+          <th style="width:20%">La plus grande</th><th>Les autres</th></tr></thead>
+        <tbody>
+          <tr><td class="k">six images sur huit</td><td><span class="m">1</span></td>
+            <td><span class="m">951 à 2 193 px</span></td><td class="sourd">—</td></tr>
+          <tr><td class="k">1769a41b</td><td><span class="m eg">4</span></td><td><span class="m">596 px</span></td>
+            <td><span class="m">529 px</span>, puis <span class="m eg">1 px</span> et <span class="m eg">1 px</span></td></tr>
+          <tr><td class="k">3ef78cc8 <span class="sourd" style="font-weight:400">une planche</span></td>
+            <td><span class="m eg">34</span></td><td><span class="m">45 px</span></td>
+            <td><span class="m">45, 43, 43, 42, 41, 38, 32, 30…</span> — chaque sprite est une tache</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px"><strong>Six images du corpus sur huit n'ont aucune tache d'un pixel.</strong>
+        La septième en a deux, d'un pixel chacune, à côté de deux taches légitimes de 596 et 529 px — un sujet
+        en deux morceaux. La huitième est la planche : dix-huit de ses trente-quatre taches font un pixel, et
+        c'est le cas dangereux du § 04. Elle passe par le découpage et non par cette table.</p>
+      <p style="margin-top:12px"><strong>Le balayage du seuil</strong>, aux valeurs
+        <span class="mesure">1, 2, 3, 4, 8, 16 et 32</span>, sur six de ces images : sur cinq d'entre elles
+        <strong>rien ne part, à aucun seuil</strong> ; sur la sixième les deux taches d'un pixel partent
+        <strong>dès le seuil 2</strong>, et plus rien ne bouge jusqu'à 32. Quand le réglage a quelque chose à
+        faire, un seuil de 2 suffit.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">D'où viennent les miettes, mesuré</span>
+      <p>La note du code dit qu'une réduction au plus proche voisin « laisse derrière elle des pixels
+        isolés ». La mesure dit autre chose : comptées sur l'image source puis sur la case,
+        <span class="mesure">90 taches</span> deviennent <span class="mesure">1</span>. Le mécanisme tient en
+        quatre étapes :</p>
+      <ol>
+        <li>L'image source porte des taches d'un pixel — jusqu'à 90 taches sur l'une d'elles.</li>
+        <li>La réduction au plus proche voisin <strong>échantillonne</strong> : elle prend un pixel de loin en
+          loin et jette les autres.</li>
+        <li>Une miette qui ne tombe pas sur un point échantillonné disparaît. C'est le sort de 89 des 90.</li>
+        <li>Une miette qui tombe dessus <strong>traverse entière</strong>, et ressort à un pixel.</li>
+      </ol>
+      <p style="margin-top:12px"><span class="mesure">13-table-grille.html § 01</span> écrit que les taches
+        effacées ici sont fabriquées par la grille. La mesure précise le mot : la réduction en fait
+        disparaître 89 sur 90, et elle en laisse passer une. La grille en laisse donc survivre une sur
+        quatre-vingt-dix, et c'est la survivante qui arrive ici. Rien n'est cassé dans le code : sa note
+        décrit <em>ce qui reste</em>, la mesure ajoute <em>d'où ça venait</em>.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce que la mesure décide</span>
+      <ul>
+        <li><b>Elle se pose seule quand elle trouve des taches d'un pixel</b>, et à cette valeur-là
+          seulement : <span class="mesure">2</span>. C'est le seuil qui retire les taches d'un pixel et rien
+          d'autre, et la mesure ne montre aucune miette d'une autre taille. Le § 06 donne le mécanisme et sa
+          condition d'arrêt.</li>
+        <li><b>Elle ne se pose pas quand elle n'a rien trouvé</b> — six images sur huit. Le seuil reste à
+          zéro, le carré de la barre reste creux, et la rangée écrit
+          <span class="mesure">aucune miette trouvée</span>.</li>
+        <li><b>Elle ne se pose jamais seule au-dessus de 2.</b> Tout seuil plus haut est un geste de
+          l'auteur, et c'est là que vit le danger du § 04 : la planche du corpus perd
+          <span class="m">18 de ses 34 sprites</span> dès le seuil 2, et la totalité à 48.</li>
+        <li><b>Elle sert aussi quand l'auteur arrive avec un problème</b> : un compte qui l'a surpris
+          ailleurs, ou un point qu'il a vu bouger dans le jeu. Le § 07 dit pourquoi personne d'autre ne le
+          fera à sa place.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro">Un seul réglage, et une liste. L'état dessiné est celui de la seule image du corpus qui
+      ait des miettes : un personnage en deux morceaux, avec deux taches d'un pixel à côté.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">bords</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <div class="rg-reg"><span class="lb">aire minimale</span>
+              <span class="rail"><i style="left:3%"></i></span><span class="vl">2 px</span></div>
+            <div class="prov">posé d'office — 2 taches d'un pixel</div>
+            <div class="raison">2 retirées · la plus grande retirée 1 px · la plus petite gardée 529 px</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">les taches trouvées · 4</span>
+            <div class="taches">
+              <div class="tq"><span class="n">1</span><span class="a">596 px</span></div>
+              <div class="tq"><span class="n">2</span><span class="a">529 px</span></div>
+              <div class="coupe">seuil 2 px — sous ce trait, ça part</div>
+              <div class="tq part"><span class="n">3</span><span class="a">1 px</span></div>
+              <div class="tq part"><span class="n">4</span><span class="a">1 px</span></div>
+            </div>
+            <div class="raison">cliquer une tache pose le seuil juste au-dessus d'elle</div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>2 taches retirées · aire minimale 2 px</span>
+          <span class="dr">Sans bords ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>L'aire se compte en pixels de l'image
+          rendue</b>, donc en blocs quand la grille est posée. La grille est juste avant dans l'ordre et c'est
+          elle qui décide de ce qu'un pixel vaut. Le § 04 dit pourquoi c'est une aire et non un côté.</span></div>
+        <div class="an att"><span class="k">02</span><span class="t"><b>Le seuil s'est posé tout seul, et il
+          dit d'où il vient.</b> <span class="mesure">posé d'office — 2 taches d'un pixel</span> en
+          <span class="mesure">--epingle</span> ; <span class="mesure">Sans bords ›</span> le ramène à zéro
+          d'un clic. Elle ne se pose ainsi que dans un cas précis, et le § 06 en donne la condition : des
+          taches d'un pixel, sur une image dont la plus grande tache est <b>au moins cent fois plus
+          grosse</b>. Ici elle fait 596 px contre 1, soit 596 fois.</span></div>
+        <div class="an"><span class="k">02b</span><span class="t"><b>Quand la condition n'est pas tenue, le
+          même nombre est proposé au lieu d'être posé</b> — c'est le cas de la planche du § 04, où il
+          retirerait dix-huit sprites sur trente-quatre. <b>La couche ne se remplit alors qu'à la pose</b> :
+          le pied de colonne écrit <span class="mesure">aucun réglage posé</span>, et la ligne de mesure se
+          dit au conditionnel — <span class="mesure">2 partiraient</span>, qui devient
+          <span class="mesure">2 retirées</span> une fois le seuil posé (§ 05). Sans aucune tache d'un pixel,
+          elle laisse zéro et écrit <span class="mesure">aucune miette trouvée</span>.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>La liste montre ce que le nombre
+          décide.</b> Les taches sont triées de la plus grande à la plus petite, et le trait de coupe est posé
+          là où le seuil tombe : au-dessus ce qui reste, en dessous ce qui part, en
+          <span class="mesure">--texte-3</span>. Bouger le seuil bouge le trait. <b>Au-delà de huit taches, la
+          liste compte au lieu d'énumérer</b> — <span class="mesure">34 taches, de 1 à 45 px</span>, la coupe,
+          puis <span class="mesure">16 gardées, de 2 à 45 px</span>. <b>Coût</b> : c'est sur la planche, le
+          seul cas dangereux, que la liste cesse d'énumérer. Le surlignage sur l'image reste alors le seul
+          endroit où l'on voit ce qui part, tache par tache.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>À zéro, le carré de la barre reste
+          creux.</b> Le carré dit ce qui agit, pas ce qui est présent : décision de
+          <span class="mesure">03-chassis-des-tables.html § 03</span>, que
+          <span class="mesure">12-table-recadrage.html § 08</span> redit pour cette table-ci — <em>bords avec
+          une aire minimale à zéro ne retire rien non plus</em>.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>Il n'y a rien à cocher dans la liste.</b>
+          Le seul réglage est un nombre ; la liste le montre agir, elle ne protège ni ne condamne les taches
+          une par une. Le § 05 écrit le partage avec <em>la main</em>.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête et le pied sont
+          fournis par le wrapper. <span class="mesure">Sans bords ›</span> ramène le seuil à zéro et ne touche
+          qu'à cette table ; <span class="mesure">× tout défaire</span> vide la recette entière.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Son réglage</h2></div>
+    <table>
+      <thead><tr><th style="width:18%">Réglage</th><th style="width:22%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">aire minimale</td>
+          <td><span class="m">0 – 64 px d'aire</span><br><span class="sourd">défaut du modèle : 0</span>
+            <br><span class="sourd">posé d'office à 2 sous condition (§ 06)</span></td>
+          <td>En dessous de cette aire, une tache opaque d'un seul tenant est effacée : son alpha passe à
+            zéro, sa couleur ne bouge pas. L'aire se compte <strong>en pixels de l'image rendue</strong>, donc
+            en blocs quand la grille est posée. Le rail de 0 à 64 est celui de l'écran d'aujourd'hui
+            (<span class="mesure">interface/src/composants/Fiche.tsx</span>), repris tel quel ; une tache de
+            64 px d'aire tient dans un carré de 8 × 8 blocs, ce qui est déjà un objet.
+            <strong>Coût</strong> : elle ne sait pas distinguer une miette d'un petit sujet.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">L'unité — l'aire ici, le côté dans le découpage</span>
+      <p>Le dossier a déjà tranché une fois, et pas dans le même sens.
+        <span class="mesure">18-table-decoupage.html</span> exprime son seuil en <strong>côté</strong> —
+        <span class="mesure">taille mini · 2 – 256 px de côté, défaut 16 px</span> — avec sa raison,
+        <em>« parce que c'est ce que l'auteur voit »</em>, et son contre-exemple : une lance de 4 × 200 px a un
+        petit côté minuscule et reste un sujet.</p>
+      <p>Ici les objets sont des miettes d'un à quatre pixels. <strong>À un pixel, le côté et l'aire valent
+        tous les deux un</strong>, et il n'y a pas de lance à sauver. L'aire est en plus ce que le code
+        compare : <span class="mesure">composantes()</span> rend le masque de chaque tache et son aire, et
+        <span class="mesure">nettoyer</span> teste <span class="mesure">aire &lt; aire_min</span> — le réglage
+        s'appelle <span class="mesure">aire_min</span> dans le domaine
+        (<span class="mesure">atelier/image/traitement.py</span>,
+        <span class="mesure">atelier/domaine/recette.py:Bords</span>). Le côté serait dérivable du masque, et
+        c'est ce que fait <span class="mesure">atelier/image/decoupe.py:zones_opaques</span> pour la planche —
+        mais c'est justement là que le côté sert : sur des sprites, pas sur des miettes.</p>
+      <p><strong>La règle, écrite ici : une taille de tache s'écrit en aire dans les tables de la recette, en
+        côté dans le découpage.</strong> La nature de l'objet décide : une miette s'écrit en aire, un sprite
+        en côté.</p>
+      <p><strong>Conséquence</strong> : le <span class="mesure">la plus petite fait 6 px</span> que
+        <span class="mesure">16-table-contours.html</span> écrit sous l'image <strong>est une aire</strong>.
+        Les deux nombres se lisent donc ensemble — une tache de 6 px d'aire part au seuil 7, et l'auteur qui
+        arrive de contours avec ce chiffre en tête sait où poser le sien sans convertir.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce que le réglage coûte, mesuré sur la planche</span>
+      <p><strong>La table ne sait pas distinguer une miette d'un petit sujet</strong> : la seule chose qui les
+        sépare est un nombre de pixels. Mesuré sur la planche du § 02 — 34 taches de 1 à 45 px, chaque sprite
+        étant une tache :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:20%">Aire minimale</th><th style="width:24%">Taches retirées</th>
+          <th style="width:24%">Pixels retirés</th><th>Il en reste</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">2</span></td><td><span class="m">18</span></td><td><span class="m">18</span></td><td><span class="m">16</span></td></tr>
+          <tr><td class="k"><span class="m">4</span></td><td><span class="m">23</span></td><td><span class="m">29</span></td><td><span class="m">11</span></td></tr>
+          <tr><td class="k"><span class="m">8</span></td><td><span class="m">23</span></td><td><span class="m">29</span></td><td><span class="m">11</span></td></tr>
+          <tr><td class="k"><span class="m">16</span></td><td><span class="m">24</span></td><td><span class="m">41</span></td><td><span class="m">10</span></td></tr>
+          <tr><td class="k"><span class="m">32</span></td><td><span class="m">26</span></td><td><span class="m">99</span></td><td><span class="m">8</span></td></tr>
+          <tr><td class="k"><span class="m">40</span></td><td><span class="m">28</span></td><td><span class="m">169</span></td><td><span class="m eg">6 sprites</span></td></tr>
+          <tr><td class="k"><span class="m eg">48</span></td><td><span class="m eg">34</span></td><td><span class="m eg">428</span></td>
+            <td><span class="m eg">0 — l'image est vide</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px">À 2 elle retire 18 taches, à 40 il ne reste que 6 sprites, et
+        <strong>à 48 elle vide l'image</strong> — 48 est en dessous du haut du rail.</p>
+      <p>Ce que la table fait contre ça : elle écrit <strong>les trois nombres qui rendent l'accident visible
+        un cran avant</strong> —
+        <span class="mesure">2 retirées · la plus grande retirée 1 px · la plus petite gardée 529 px</span> —
+        et elle surligne ce qui va partir avant que ça parte. <strong>Elle ne refuse pas</strong> : la mesure
+        informe, elle n'interdit pas.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">La connexité, telle que le code la calcule</span>
+      <p><strong>Le code relie les pixels par les quatre côtés, jamais par les diagonales</strong>
+        (<span class="mesure">atelier/image/traitement.py:composantes</span>). Deux pixels qui ne se touchent
+        que par un coin sont donc deux taches.</p>
+      <p>Conséquence à nommer : <strong>un trait fin en diagonale, d'un pixel de large, se compte comme autant
+        de taches que de pixels</strong>, et il part entier au premier seuil. Une antenne, un fil, une
+        étincelle en biais disparaissent d'un coup là où le même trait à l'horizontale tiendrait. Le compte
+        change de sens du même coup : sur une image qui a des diagonales fines,
+        <span class="mesure">34 taches</span> ne veut pas dire trente-quatre objets.</p>
+      <p><strong>Coût nommé</strong> : la liste n'en dit rien, puisqu'elle ne montre que des aires — une
+        diagonale de trente pixels y paraît comme trente lignes à 1 px. Seul le surlignage montre le trait en
+        entier avant qu'il parte.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">Deux gestes, et ils vont ensemble : <strong>le surlignage montre ce qui
+      partirait</strong>, et <strong>un clic sur une tache pose le seuil</strong>.</p>
+
+    <div class="deux">
+      <div class="pos">
+        <div class="pt">le seuil proposé, rien de posé</div>
+        <div class="pv"><span class="scene">
+          <span class="corps" style="left:26px;top:6px;width:52px;height:96px"></span>
+          <span class="corps" style="left:88px;top:34px;width:44px;height:68px"></span>
+          <span class="miette part" style="left:10px;top:24px"></span>
+          <span class="miette part" style="left:134px;top:12px"></span>
+        </span></div>
+        <div class="pd">Les deux taches d'un pixel sont surlignées en
+          <span class="mesure">--epingle</span>. Rien n'a bougé sur l'image.</div>
+        <div class="pm">4 taches · la plus grande 596 px</div>
+      </div>
+      <div class="pos">
+        <div class="pt">le seuil posé à 2</div>
+        <div class="pv"><span class="scene">
+          <span class="corps" style="left:26px;top:6px;width:52px;height:96px"></span>
+          <span class="corps" style="left:88px;top:34px;width:44px;height:68px"></span>
+        </span></div>
+        <div class="pd">Les deux taches sont parties. Le sujet, en deux morceaux, est intact.</div>
+        <div class="pm">2 retirées · la plus grande retirée 1 px</div>
+      </div>
+    </div>
+    <div class="mesrow"><span>64 × 64 · 1 127 px opaques</span><span>4 taches · la plus grande 596 px</span>
+      <span class="hp">2 retirées · la plus grande retirée 1 px · la plus petite gardée 529 px</span></div>
+    <div class="lgd">la rangée sous l'image est fournie par le wrapper — la table n'y met que ses mesures, à gauche</div>
+
+    <p class="intro" style="margin-top:22px"><strong>Le surlignage est en
+      <span class="mesure">--epingle</span></strong>, la couleur de la proposition et non celle de l'échec :
+      rien n'est en panne, et une tache d'un pixel n'est pas une faute de l'image. C'est la même couleur que
+      la ligne de provenance dans la colonne. Il suit le seuil — monter le rail ajoute des taches surlignées,
+      le baisser en retire, et le trait de coupe du § 03 bouge en même temps.</p>
+
+    <p class="intro"><strong>Cliquer une tache pose le seuil juste au-dessus d'elle</strong> : celle-là et tout
+      ce qui est plus petit. C'est ce qui rend le nombre décidable en pointant au lieu de le deviner, et la
+      valeur porte alors sa provenance :
+      <span class="mesure" style="color:var(--epingle)">d'après la tache cliquée</span>. Le clic sur une tache
+      est le seul geste direct de cette table.</p>
+
+    <p class="intro"><strong>Coût</strong> : le clic désigne une taille, et emmène tout ce qui a cette taille
+      ou moins, partout sur l'image. Sur la planche du § 04, cliquer un sprite de 45 px pose 46 et vide
+      l'image — c'est le 48 du tableau atteint en un clic. Les trois nombres et le surlignage sont là pour que
+      ça se voie avant le clic.</p>
+
+    <div class="note att">
+      <span class="lab">Ce qui n'existe pas ici — cocher une tache</span>
+      <p><strong>Aucune tache ne se coche, et aucune ne se protège une par une.</strong> Le seul réglage est
+        un nombre. Des cases à cocher feraient de la table un éditeur de taches, avec un état par tache à
+        garder, à rejouer et à faire survivre au changement d'image — pour un problème qui, six fois sur
+        huit, n'existe pas.</p>
+      <p>Le partage se dit en une ligne : <strong>le seuil vaut pour toute l'image, la main vaut pour
+        l'endroit qu'on touche.</strong> <span class="mesure">17-table-la-main.html</span> le dit déjà pour
+        le cas que cette table ne peut pas traiter du tout — <em>« une miette accrochée à la silhouette »</em>.
+        Accrochée, elle est du même tenant que le sujet, donc ce n'est pas une tache distincte, donc aucun
+        seuil ne l'atteint. <strong>Cette table ne retire que ce qui est détaché.</strong></p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ses mesures, et sa proposition</h2></div>
+    <table>
+      <thead><tr><th style="width:34%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">4 taches · la plus grande 596 px</span></td>
+          <td>Ce qu'elle a trouvé, avant tout réglage. <strong>Ce n'est pas un verdict</strong> : un
+            personnage avec deux lanternes détachées en a légitimement trois. La phrase et l'exemple sont déjà
+            dans <span class="mesure">10-table-detourage.html</span> et
+            <span class="mesure">16-table-contours.html</span>.</td></tr>
+        <tr><td class="k"><span class="m eg">2 retirées · la plus grande retirée 1 px · la plus petite gardée 529 px</span></td>
+          <td>Les trois nombres du § 04. Le premier dit l'ampleur ; <strong>les deux autres se lisent
+            ensemble</strong> et se resserrent quand le seuil monte. C'est la plus <em>petite</em> gardée qui
+            est écrite, et pas la plus grande, parce que c'est elle qui est en danger.</td></tr>
+        <tr><td class="k"><span class="m no">aucune miette trouvée</span></td>
+          <td>Le cas normal, mesuré : six images du corpus sur huit. La rangée l'écrit au lieu de rester
+            vide, parce qu'une rangée vide se lit comme une table qui n'a pas fini de calculer — et elle a
+            fini, en <span class="m">2,8 ms</span>.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce que sa mesure ajoute aux deux autres comptes de taches</span>
+      <p>Le compte de taches existe déjà à deux endroits. <b>Le détourage</b> compte les taches de l'alpha au
+        moment où il le pose — <span class="mesure">512 × 512 · alpha 61 % · 4 taches · boîte 318 × 470</span>.
+        <b>Contours</b> compte celles qu'il a contournées —
+        <span class="mesure">4 taches contournées · la plus petite fait 6 px</span>.</p>
+      <p><strong>Cette table est la seule à dire ce qui partirait.</strong> Les deux autres décrivent l'image ;
+        celle-ci décrit l'effet d'un nombre sur l'image. Elle ajoute la coupe : ce qui partirait, et à partir
+        d'où. Un troisième compte serait le doublon que contours reproche.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Comment elle se pose seule, et quand elle s'en abstient</span>
+      <p>Elle se pose seule à 2 dès qu'elle trouve des taches d'un pixel, <strong>sauf si l'image ressemble
+        à une planche</strong>. Le mécanisme tient en cinq étapes :</p>
+      <ol>
+        <li>À l'ouverture, elle compte les taches d'un pixel — la seule miette que la mesure du § 02 ait vue
+          partir, et la seule qu'elle sache nommer sans se tromper.</li>
+        <li>S'il n'y en a pas, elle ne se pose pas : le seuil reste à zéro, le carré de la barre reste creux,
+          et la rangée écrit <span class="mesure">aucune miette trouvée</span>.</li>
+        <li>S'il y en a, elle compare la plus grande tache de l'image à ce qui partirait.
+          <strong>Elle ne se pose seule que si la plus grande tache est au moins cent fois plus
+          grosse.</strong></li>
+        <li>Quand la condition est tenue, le seuil part à <span class="m">2</span> et la ligne dit d'où il
+          vient : <span class="mesure" style="color:var(--epingle)">posé d'office — 2 taches d'un
+          pixel</span>. Un clic sur <span class="mesure">Sans bords ›</span> le ramène à zéro.</li>
+        <li>Quand elle n'est pas tenue, elle <strong>propose sans poser</strong> : le nombre est écrit en
+          <span class="mesure">--epingle</span>, les taches sont surlignées sur l'image, et rien n'est retiré
+          tant que l'auteur n'a pas posé la valeur.</li>
+      </ol>
+      <p style="margin-top:12px"><strong>D'où vient le facteur cent.</strong> Il sépare les deux cas du
+        corpus, et il n'a pas d'autre origine : sur le sprite en deux morceaux, la plus grande tache fait
+        <span class="m">596 px</span> contre <span class="m">1 px</span> pour ce qui partirait, soit un
+        rapport de 596. Sur la planche, elle fait <span class="m">45 px</span> contre
+        <span class="m">1 px</span>, soit 45. Entre 45 et 596 il n'y a rien, et cent est au milieu de ce
+        vide. <strong>C'est un seuil mesuré, pas un nombre rond</strong> — et il se relèvera le jour où une
+        image tombera entre les deux, ce que le banc dira avant l'auteur.</p>
+      <p><strong>Ce que la condition protège, et c'est mesuré.</strong> Sur la planche du § 04, la table
+        trouve dix-huit taches d'un pixel. Se poser d'office lui ferait retirer
+        <strong>dix-huit sprites sur trente-quatre</strong>, sans que personne l'ait demandé et sans que ça
+        se voie autrement qu'en comptant. La condition l'en empêche, et la table se rabat sur la proposition
+        — qui, elle, n'agit jamais seule (<span class="mesure">10-table-detourage.html</span>).</p>
+      <p><strong>Elle ne pose jamais un nombre rond sorti de nulle part.</strong> L'écran d'aujourd'hui pose
+        3 dès qu'on allume la table (<span class="mesure">interface/src/composants/Fiche.tsx</span>), et rien
+        ne justifie ce 3 : ce n'est ni une mesure de l'image, ni un seuil dont on ait montré qu'il retire
+        quelque chose.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce que cette décision rouvre — à reporter</span>
+      <p>Le dépôt avait tranché dans l'autre sens, et il l'avait écrit deux fois. Le domaine :
+        <em>« Le nettoyage des bords n'est pas un défaut : il efface des taches, et effacer sans qu'on l'ait
+        demandé est le seul geste du post-traitement qui puisse enlever quelque chose au sujet »</em>
+        (<span class="mesure">atelier/domaine/projet.py</span>). Et le guide :
+        <em>« Ne se pose jamais tout seul, et c'est délibéré »</em>
+        (<span class="mesure">interface/src/aide.ts</span>).</p>
+      <p>La décision d'ici les remplace, et elle garde ce qu'ils protégeaient : <strong>ce qui se pose
+        d'office ne retire que des taches d'un pixel, sur une image qui en porte une cent fois plus
+        grosse</strong>. Le geste risqué — monter le seuil — reste entier à l'auteur, et la mesure dit ce
+        qu'il emporte avant qu'il le lâche.</p>
+      <p><strong>Reporté dans <span class="mesure">atelier/domaine/projet.py</span> et
+        <span class="mesure">interface/src/aide.ts</span></strong>, qui portent l'ancienne règle et doivent
+        porter la nouvelle. <span class="mesure">docs/PRD.md</span> ne dit rien de ce point : il n'y a donc
+        rien à y corriger, seulement à y ajouter.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Le réglage qui n'existe pas</h2></div>
+    <div class="note att">
+      <span class="lab">Le bouchage de trou est au détourage</span>
+      <p><strong>Un trou est une zone transparente enfermée dans le sujet</strong> — une boucle de ceinture,
+        l'espace entre le bras et le corps. C'est le symétrique d'une miette, et la question se pose donc
+        naturellement à cette table.</p>
+      <p>La réponse est non. <strong>Cette table ne retire que des taches opaques</strong> : elle lit l'alpha
+        pour y chercher des zones opaques d'un seul tenant. Un trou est transparent, le nettoyage cherche de
+        l'opaque, il ne le voit pas.</p>
+      <p>La question a déjà son lieu. <strong>Le détourage cherche d'office les poches de fond enfermées par
+        le sujet</strong> et les propose une par une, cerclées sur l'image
+        (<span class="mesure">10-table-detourage.html</span>). Un second réglage ici ferait la même chose à un
+        deuxième endroit, et <em>deux réglages qui font la même chose à deux endroits finissent par se
+        contredire</em> — c'est l'argument avec lequel contours a renoncé à l'aire minimale
+        (<span class="mesure">16-table-contours.html § 03</span>), et il vaut dans l'autre sens.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Et ce dont elle ne s'occupe pas</span>
+      <ul>
+        <li><b>Le tramage fabrique des pixels isolés de couleur, que l'alpha ne voit pas.</b> Sur une case de
+          64 px, une image du corpus passe de 432 à 632 pixels isolés quand on l'allume (relevé du 30 août
+          2026). Un bloc vert au milieu d'un aplat brun est opaque comme ses voisins : il appartient à leur
+          tache. L'alpha ne bouge pas, et cette table ne lit que l'alpha.
+          Voir <span class="mesure">14-table-quantification.html</span>.</li>
+        <li><b>Une miette accrochée à la silhouette n'est pas une tache distincte</b> : aucun seuil ne
+          l'atteint. C'est <em>la main</em> qui la retire (§ 05).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Son indisponibilité</h2></div>
+    <div class="note att">
+      <span class="lab">Un seul cas, et trois tables sont grisées ensemble</span>
+      <p><strong>Une image entièrement opaque n'a qu'une seule tache, et c'est l'image.</strong> Le seuil
+        n'aurait rien à couper : il n'y a rien de détaché.</p>
+      <p>Elle est donc grisée dans la barre — <em>pas de carré, nom en</em>
+        <span class="mesure">--texte-3</span> — <strong>en même temps que le recadrage et les contours, et
+        pour la même raison</strong> : sans alpha, aucune des trois n'a de silhouette à quoi s'accrocher. La
+        formule est déjà imprimée dans <span class="mesure">03-chassis-des-tables.html § 05</span> et reprise
+        dans <span class="mesure">12-table-recadrage.html § 07</span> — <em>« Détoure-la, et la table
+        s'allumera d'elle-même — comme "bords" et "contours", grisées pour la même raison. »</em></p>
+      <p>Elle reste cliquable, et son wrapper porte la raison à la place des réglages :</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— cette image est
+        entièrement opaque : tout y tient d'un seul tenant, il n'y a qu'une tache et c'est l'image.
+        Détoure-la d'abord.</span></p>
+      <p style="margin-top:10px">La seconde phrase compte autant que la première : elle dit <strong>quoi
+        faire</strong>, et la table détourage est à quatre crans à gauche dans la barre.</p>
+      <p style="margin-top:12px"><strong>Ce wrapper est déjà dessiné</strong>, en entier, dans
+        <span class="mesure">03-chassis-des-tables.html § 05</span> — c'est le recadrage qui y sert d'exemple,
+        et <em>bords</em> y figure déjà grisée dans la barre. Il n'est pas redessiné ici.</p>
+      <p style="margin-top:12px">Un seuil posé reste posé pendant que la table est grisée : c'est une aire, et
+        une aire ne dépend d'aucune coordonnée de l'image. Détourer l'image la rallume et le nombre est
+        toujours là. <strong>Coût</strong> : le nombre survit à l'image sur laquelle il a été mesuré. Un 2
+        retire deux taches d'un pixel sur un personnage et dix-huit sur trente-quatre sur une planche (§ 04),
+        et la recette voyage telle quelle d'une planche à ses découpes
+        (<span class="mesure">18-table-decoupage.html § 07</span>). C'est pourquoi la rangée réécrit ses trois
+        nombres à chaque image. Le pied de colonne, lui, reparaît dès que la table se rallume : grisée, elle
+        n'a pas de couche à montrer (<span class="mesure">03-chassis-des-tables.html § 05</span>).</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 15, bords · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

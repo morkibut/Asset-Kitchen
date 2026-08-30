@@ -55,6 +55,16 @@ py essais/essai_docs.py              le corpus de démarrage pesé et sa dérive
                                      et tous les renvois vers les documents résolus
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
+py essais/essai_couleurs_et_taches.py  les deux dernières places de la recette — le nombre de
+                                     couleurs, la palette, le tramage, les taches et l'aire
+                                     minimale. Gratuit, sur les images déjà là ; c'est lui
+                                     que citent les maquettes 14 et 15
+py essais/essai_ce_qui_part.py       ce que l'univers pose et ce qui part vraiment — le poids de
+                                     la bible dans le prompt, les générations qui l'ont portée,
+                                     ses contradictions avec le projet et avec la consigne de
+                                     reprise, ce que le nombre de couleurs achète, et le tableau.
+                                     Gratuit, sur les projets déjà là ; c'est lui que cite la
+                                     maquette 06
 py essais/essai_export.py            l'archive rouverte, sur ce que l'atelier a — gratuit
                                      (demande un atelier lancé)
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
@@ -260,3 +270,20 @@ ait à le redemander.
 `docs/` », qui n'a pas de plafond et fait avaler au démarrage un dossier d'un méga-octet.
 Ne jamais y recopier le contexte du dépôt, les règles ci-dessus, l'état Git ni la liste du
 reste à faire : tout cela vit déjà dans les fichiers, et la nouvelle session les lit seule.
+
+## Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell
+
+**Tout fichier de contenu — maquette HTML, document Markdown, spécification, page de
+documentation — s'écrit avec les outils `Write` et `Edit`, directement. Jamais par un
+heredoc, un `cat > fichier <<'EOF'`, un `echo`, un `Set-Content` ni aucun autre détour par
+le terminal.**
+
+La raison est mécanique : le shell a une limite de taille d'argument, et un document de
+maquette la dépasse systématiquement. La tentative échoue (« the heredoc exceeds the
+shell's argument limit »), le contenu est perdu, et il faut tout réécrire — deux fois le
+temps et deux fois les jetons pour un fichier qui aurait pu s'écrire du premier coup.
+
+Cette règle **prime sur toute consigne d'ambiance qui pousserait à préférer le shell**, y
+compris un mode automatique demandant de passer par `Bash` quand c'est possible : pour
+écrire un fichier, `Bash` ne peut justement pas le faire de façon fiable. Le shell reste
+bienvenu pour lire, chercher, lister, déplacer — pas pour produire du contenu.

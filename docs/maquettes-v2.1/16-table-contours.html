@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Contours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:78px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:56px;text-align:right}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  /* champ couleur + palette */
+  .champc{display:flex;align-items:center;gap:8px;height:26px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);padding:0 8px}
+  .champc .sw{width:16px;height:16px;border:1px solid var(--bord-fort);flex:none}
+  .champc .hex{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .champc .pip{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .palette{display:flex;gap:4px;flex-wrap:wrap}
+  .pc{width:22px;height:22px;border:1px solid var(--bord);border-radius:2px}
+  .pc.on{border-color:var(--lumiere)}
+  .pc.hors{border-style:dashed;border-color:var(--bord);opacity:.4}
+
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+
+  /* les trois positions, en démonstration */
+  .trois{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .pos{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .pos .pt{height:26px;display:flex;align-items:center;gap:7px;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .pos .pv{height:128px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .forme{width:72px;height:88px;background:var(--fond-3);position:relative}
+  .forme.ext{box-shadow:0 0 0 6px #0B0D10}
+  .forme.int{background:var(--fond-3);border:6px solid #0B0D10}
+  .forme.cen{box-shadow:0 0 0 3px #0B0D10;border:3px solid #0B0D10}
+  .repere{position:absolute;border:1px dashed var(--lumiere);width:72px;height:88px;opacity:.5}
+  .pos .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+  .pos .pm{padding:0 11px 11px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  /* les trous */
+  .deux{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .tr{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .tr .pt{height:26px;display:flex;align-items:center;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .tr .pv{height:128px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center}
+  .anneau{width:96px;height:88px;background:var(--fond-3);position:relative;box-shadow:0 0 0 5px #0B0D10}
+  .anneau .trou{position:absolute;left:32px;top:26px;width:32px;height:36px;
+    background:transparent;box-shadow:inset 0 0 0 0 #0B0D10}
+  .anneau .trou.cercle{box-shadow:0 0 0 5px #0B0D10}
+  .anneau .trou::before{content:"";position:absolute;inset:0;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .tr .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 16 — contours</div>
+    <h1>Contours —<br><em>remettre la ligne que la grille a mangée</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+    <p><strong>C'est la seule table entièrement neuve du lot</strong> : rien n'en existe dans le produit, donc
+      tout y est tranché ici — y compris les deux questions que la maquette précédente avait laissées
+      ouvertes.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle trace une ligne d'épaisseur et de couleur choisies sur <strong>le bord de la
+      silhouette</strong>. Le cas est celui d'un style qui a un contour — <em>noir, 2 px</em> — que le modèle
+      rend inégalement, ou qu'un traitement a abîmé.</p>
+
+    <div class="note">
+      <span class="lab">La panne qu'elle évite, et c'est elle qui décide de sa place</span>
+      <p><strong>La mise sur grille mange les contours fins.</strong> Réduire un sprite à un bloc de 4 px se
+        fait au plus proche voisin : une ligne d'un pixel de l'image d'origine survit là où elle tombe sur un
+        centre de bloc, et disparaît ailleurs. Le résultat est un contour <em>troué</em> — pas absent, ce qui
+        serait franc, mais irrégulier, ce qui se voit et ne se rattrape pas à la main.</p>
+      <p>Retracer <strong>après</strong> la grille rend le contour régulier par construction : il est dessiné
+        dans les blocs, un bloc d'épaisseur est un bloc, et il n'y a plus de rééchantillonnage derrière pour
+        le casser.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:24%">Elle vient après…</th><th>Parce que</th></tr></thead>
+      <tbody>
+        <tr><td class="k">détourage</td><td>Sans alpha, il n'y a pas de silhouette — donc pas de bord à tracer.</td></tr>
+        <tr><td class="k">recadrage · grille</td><td>Le contour se trace sur la silhouette <strong>définitive</strong>.
+          Tracé avant, il serait recadré et rééchantillonné comme le reste, et c'est exactement la panne qu'on
+          répare.</td></tr>
+        <tr><td class="k">bords</td><td>Les miettes partent d'abord. Un contour tracé autour de trois taches de
+          six pixels ferait trois pâtés noirs — et c'est <em>bords</em> qui a le métier de les retirer, pas
+          celle-ci (§ 03).</td></tr>
+        <tr><td class="k">quantification</td><td><strong>Pour que sa couleur soit exactement celle qu'on a
+          choisie.</strong> Tracé avant, un noir pur ressortirait au plus proche de la palette, c'est-à-dire
+          peut-être pas noir.</td></tr>
+      </tbody>
+    </table>
+    <p class="intro" style="margin-top:16px">Une seule table vient après elle : <strong>la main</strong>, qui
+      porte sur l'image telle qu'elle partira — et qui sert justement à corriger un contour à trois pixels
+      près.</p>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">contours</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <div class="rg-reg"><span class="lb">épaisseur</span>
+              <span class="rail"><i style="left:14%"></i></span><span class="vl">2 blocs</span></div>
+            <div class="raison">2 blocs de 4 px · 8 px dans l'image rendue</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">couleur</span>
+            <div class="champc"><span class="sw" style="background:#14161B"></span>
+              <span class="hex">#14161B</span><span class="pip">pipette</span></div>
+            <div class="palette">
+              <span class="pc on" style="background:#14161B"></span>
+              <span class="pc" style="background:#3A3F4B"></span>
+              <span class="pc" style="background:#6E5A3C"></span>
+              <span class="pc" style="background:#A8895C"></span>
+              <span class="pc" style="background:#4C6B45"></span>
+              <span class="pc" style="background:#8FA98A"></span>
+              <span class="pc" style="background:#B4483C"></span>
+              <span class="pc" style="background:#000000"></span>
+            </div>
+            <div class="prov">proposé, d'après ta palette · la plus sombre</div>
+            <div class="raison">le champ reste libre — une couleur hors palette se marque, elle ne se
+              refuse pas</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">position</span>
+            <div class="segs">
+              <span class="sg on">externe</span><span class="sg">interne</span><span class="sg">centré</span>
+            </div>
+            <div class="raison">la silhouette grandit de 2 blocs sur chaque bord</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">les trous</span>
+            <div class="segs">
+              <span class="sg on">cerclés</span><span class="sg">laissés</span>
+            </div>
+            <div class="raison">3 trous dans la silhouette · le plus petit fait 2 blocs</div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>2 blocs · #14161B · externe</span>
+          <span class="dr">Sans contours ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>L'épaisseur se compte en unités de
+          l'image rendue</b>, pas en pixels d'écran ni en pixels d'origine. Quand la table grille est posée,
+          l'unité est <b>le bloc</b> — et la ligne sœur donne les deux : <span class="mesure">2 blocs de
+          4 px · 8 px</span>. C'est la règle du chiffre et de son jumeau : un nombre seul demanderait
+          « de quoi ? ».</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>La couleur est préremplie avec sa
+          provenance</b> — la plus sombre de la palette du projet, marquée <span class="mesure">proposé</span>
+          en <span class="mesure">--epingle</span>. Elle se change d'un clic dans la rangée de palette, ou à
+          la pipette.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>C'est la quantification qui ferme le
+          choix, pas la palette.</b> Le noir pur est grisé avec sa raison : le poser ajouterait une couleur au
+          jeu sans le dire, et la quantification est <em>déjà passée</em> — elle ne le rattraperait pas. La
+          règle du produit tient en une ligne : <b>la palette est imposée par la quantification, qui ramène
+          chaque pixel sur la couleur la plus proche ; elle est proposée partout ailleurs</b>, où une couleur
+          hors palette se marque au lieu d'être refusée. Ici, on est <em>après</em> — d'où le
+          grisé.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>La position dit ce qu'elle fait à la
+          silhouette</b> en ligne sœur, parce que c'est le seul réglage du produit qui change les dimensions
+          du rendu sans qu'on le lui ait demandé.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>Les trous portent leur compte</b>, et
+          c'est ce qui rend le réglage décidable : <span class="mesure">3 trous · le plus petit fait
+          2 blocs</span> dit d'un coup si les cercler va boucher quelque chose.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête et le pied sont
+          fournis par le wrapper. <span class="mesure">Sans contours ›</span> ne vide que cette
+          table.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:22%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">épaisseur</td><td><span class="m">1 – 8</span><br><span class="sourd">défaut : 1</span></td>
+          <td>En unités de l'image rendue : <strong>en blocs quand la grille est posée</strong>, en pixels
+            sinon. Un contour de 2 blocs sur un sprite à 4 px de bloc fait 8 px — c'est ce que la ligne sœur
+            écrit. Le plafond de 8 n'est pas une limite technique : au-delà, ce n'est plus un contour, c'est
+            un cadre, et il vaut mieux le dessiner à la main.</td></tr>
+        <tr><td class="k">couleur</td><td><span class="m">hex</span><br><span class="sourd">proposé : la plus sombre de la palette</span></td>
+          <td>Préremplie avec sa provenance, modifiable au clic, au champ ou à la pipette. La palette du
+            projet est <strong>proposée en rangée, jamais imposée</strong> : une couleur qui n'y est pas
+            <strong>se marque</strong> — <span class="m">hors palette</span> — au lieu d'être refusée. Elle
+            mérite d'être dite, puisque la quantification est déjà passée et ne la rattrapera pas. Sans
+            palette de projet, le défaut est le noir.</td></tr>
+        <tr><td class="k">position</td><td><span class="m">externe · interne · centré</span><br><span class="sourd">défaut : externe</span></td>
+          <td><strong>externe</strong> pose la ligne autour de la silhouette : le sujet n'est pas entamé, mais
+            les dimensions grandissent de deux fois l'épaisseur. <strong>interne</strong> la pose en dedans :
+            la boîte ne bouge pas, le sujet est mangé. <strong>centré</strong> partage, et
+            <strong>le pixel impair va vers l'extérieur</strong> — agrandir est réversible, manger le sujet ne
+            l'est pas. Le défaut est <em>externe</em> pour la même raison.</td></tr>
+        <tr><td class="k">les trous</td><td><span class="m">cerclés · laissés</span><br><span class="sourd">défaut : cerclés</span></td>
+          <td>Un trou dans la silhouette — une boucle de ceinture, l'espace entre le bras et le corps — est un
+            bord du sujet exactement comme le pourtour. <strong>Cerclés</strong> les traite comme tels, ce que
+            fait un style « contour noir 2 px ». <strong>Laissés</strong> ne trace que le pourtour extérieur,
+            pour les styles qui veulent une découpe nette sans lignes internes. Coût de <em>cerclés</em> : un
+            trou plus petit que deux fois l'épaisseur <strong>se bouche</strong>, et la ligne sœur donne le
+            compte et la plus petite taille pour qu'on le voie venir.</td></tr>
+      </tbody>
+    </table>
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Le réglage qui n'existe pas, et pourquoi</span>
+      <p><strong>Il n'y a pas d'aire minimale ici.</strong> C'était la première question ouverte — un contour
+        tracé autour de trois miettes ferait trois pâtés — et la réponse est <em>non</em> : la table
+        <span class="mesure">bords</span> existe pour retirer les miettes, elle est juste avant dans l'ordre,
+        et deux réglages qui font la même chose à deux endroits finissent par se contredire.</p>
+      <p>Ce que cette table fait à la place, c'est <strong>le dire</strong> : la rangée sous l'image écrit
+        <span class="mesure">4 taches contournées · la plus petite fait 6 px</span>. Un compte qui surprend
+        envoie dans <em>bords</em>, qui est à un clic dans la barre. La mesure informe, elle ne refuse pas —
+        c'est la règle du produit sur les cinq mesures d'un calque, appliquée ici.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">Un seul geste direct : <strong>la pipette</strong>, pour prendre une couleur de contour
+      dans l'image — utile quand un contour existe déjà par endroits et qu'on veut le prolonger à
+      l'identique. C'est le même curseur que dans la table détourage, <strong>un cercle de 15 px en
+      <span class="mesure">--lumiere</span></strong>, et l'emprunt est assumé : le geste est le même, seul le
+      sens change — là on prend une couleur <em>pour la retirer</em>, ici <em>pour la poser</em>. Le contexte
+      le dit : on est dans la table contours, à côté d'un champ de couleur.</p>
+    <p class="intro"><strong>Et la pipette dit ce qu'elle a pris</strong> : la couleur exacte, plus la
+      plus proche de la palette quand elle en diffère —
+      <span class="mesure">#1B1D22 · hors palette · le plus proche : #14161B</span>. Elle ne corrige pas
+      toute seule ; les deux valeurs sont là et un clic choisit. C'est la règle du prérempli avec sa
+      provenance, appliquée à un clic.</p>
+
+    <div class="entete" style="margin-top:34px"><span class="num">04a</span><h2>Les trois positions</h2></div>
+    <p class="intro">Le pointillé clair marque <strong>la silhouette de départ</strong> : c'est par rapport à
+      elle qu'on lit ce que chaque position fait.</p>
+    <div class="trois">
+      <div class="pos">
+        <div class="pt">externe <span class="sourd" style="margin-left:auto;font-size:11px">défaut</span></div>
+        <div class="pv"><span class="forme ext"></span><span class="repere"></span></div>
+        <div class="pd">La ligne se pose autour. Le sujet est intact.</div>
+        <div class="pm">dimensions <span style="color:var(--epingle)">+ 2 × épaisseur</span></div>
+      </div>
+      <div class="pos">
+        <div class="pt">interne</div>
+        <div class="pv"><span class="forme int"></span><span class="repere"></span></div>
+        <div class="pd">La ligne se pose en dedans. Le sujet est mangé de l'épaisseur.</div>
+        <div class="pm">dimensions inchangées</div>
+      </div>
+      <div class="pos">
+        <div class="pt">centré</div>
+        <div class="pv"><span class="forme cen"></span><span class="repere"></span></div>
+        <div class="pd">La ligne est à cheval. Le pixel impair va vers l'extérieur.</div>
+        <div class="pm">dimensions <span style="color:var(--epingle)">+ épaisseur</span></div>
+      </div>
+    </div>
+
+    <div class="entete" style="margin-top:34px"><span class="num">04b</span><h2>Les trous</h2></div>
+    <div class="deux">
+      <div class="tr">
+        <div class="pt">cerclés <span class="sourd" style="margin-left:auto;font-size:11px">défaut</span></div>
+        <div class="pv"><span class="anneau"><span class="trou cercle"></span></span></div>
+        <div class="pd">Chaque trou de la silhouette reçoit la même ligne que le pourtour. C'est ce que fait
+          un style « contour noir 2 px » — un trou est un bord.</div>
+      </div>
+      <div class="tr">
+        <div class="pt">laissés</div>
+        <div class="pv"><span class="anneau"><span class="trou"></span></span></div>
+        <div class="pd">Seul le pourtour extérieur est tracé. Pour les styles qui veulent une découpe nette
+          sans lignes à l'intérieur du sujet.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ses mesures, et sa proposition</h2></div>
+    <table>
+      <thead><tr><th style="width:26%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">2 blocs de 4 px · 8 px</span></td>
+          <td>L'épaisseur dans les deux unités qui comptent. Le chiffre et son jumeau : sans le second, on ne
+            sait pas ce qu'on trace.</td></tr>
+        <tr><td class="k"><span class="m">518 × 478 · + 8 px</span></td>
+          <td>Les dimensions après contour, et l'écart. <strong>Elle ne paraît qu'en externe et en
+            centré</strong> — en interne il n'y a rien à dire, et une rangée qui affiche
+            <span class="mesure">+ 0</span> en permanence serait du cadrage montré.</td></tr>
+        <tr><td class="k"><span class="m">4 taches contournées · la plus petite 6 px</span></td>
+          <td>Combien de zones opaques ont reçu la ligne. Un compte qui surprend envoie dans <em>bords</em>.
+            Ce n'est pas un verdict : un personnage à deux lanternes détachées en fait légitimement trois.</td></tr>
+        <tr><td class="k"><span class="m">3 trous · le plus petit 2 blocs</span></td>
+          <td>Ce que <em>cerclés</em> va traiter. Un trou plus petit que deux fois l'épaisseur se bouchera —
+            la mesure le laisse voir avant, elle ne l'empêche pas.</td></tr>
+        <tr><td class="k"><span class="m">#14161B · dans la palette</span></td>
+          <td>Ou <span class="mesure">hors palette</span> quand elle n'est pas dans celle du projet. Une
+            couleur de contour est une couleur du jeu : elle se lit comme telle, et le produit la constate
+            sans la refuser.</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Sa proposition</span>
+      <p>À l'ouverture, <strong>la couleur est déjà remplie</strong> : la plus sombre de la palette du projet,
+        portant <span class="mesure">proposé, d'après ta palette</span> en
+        <span class="mesure">--epingle</span>. C'est la seule chose que cette table devine, et elle le dit.
+        Sans palette de projet, le champ propose le noir et la provenance dit <span class="mesure">défaut du
+        produit</span>.</p>
+      <p><strong>Elle ne devine pas l'épaisseur.</strong> Elle pourrait — mesurer l'épaisseur du contour
+        existant là où il survit — mais un contour troué donne des épaisseurs qui varient de un à trois, et
+        proposer la médiane de quelque chose de cassé serait deviner à partir de la panne qu'on répare.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Son indisponibilité</h2></div>
+    <div class="note att">
+      <span class="lab">Un seul cas, et il est franc</span>
+      <p><strong>Une image entièrement opaque n'a pas de silhouette.</strong> Tracer un contour dessus
+        reviendrait à encadrer l'image entière — un rectangle noir sur les quatre bords, qui n'est jamais ce
+        qu'on voulait. La table est donc grisée dans la barre : <em>pas de carré, nom en</em>
+        <span class="mesure">--texte-3</span>.</p>
+      <p>Elle reste cliquable, et son wrapper porte la raison à la place des réglages :</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— cette image est
+        entièrement opaque : il n'y a pas de bord de sujet à tracer, seulement les quatre bords du cadre.
+        Détoure-la d'abord.</span></p>
+      <p style="margin-top:10px">La seconde phrase compte autant que la première : elle dit <strong>quoi
+        faire</strong>, et la table détourage est <strong>la première de la barre</strong> — cinq crans à
+        gauche de celle-ci, qui est la sixième. <span class="mesure">Corrigé le 30 août 2026 :</span> ce
+        paragraphe disait « deux crans », ce qui était vrai quand la recette en comptait cinq places ; elle
+        en compte sept depuis que les contours et la main s'y sont ajoutés.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que cette table doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+      <p><strong>Le guide explique cinq des sept places de la recette</strong> — il manque celle-ci et
+        <em>la main</em>, les deux qui se sont ajoutées après. Et le guide compte toujours cinq places
+        en trois endroits, ce qui est à corriger avec.</p>
+      <p style="margin-top:10px"><b>nom</b> · Les contours<br>
+        <b>quoi</b> · La sixième place de la recette. Elle trace un trait sur le bord du sujet, d'une
+        couleur choisie, et le pose dedans, dehors, ou à cheval.<br>
+        <b>ce que ça change</b> · Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage
+        du produit qui change les dimensions du sprite sans qu'on le lui ait demandé, et la table le dit
+        en ligne sœur au moment où on choisit la position.<br>
+        <b>d'où ça vient</b> · toi · éteinte au départ · la couleur proposée est la plus sombre de ta
+        palette<br>
+        <b>où ça se range</b> · <span class="mesure">Les tables</span></p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 16, contours · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

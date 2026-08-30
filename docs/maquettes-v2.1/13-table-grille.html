@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Grille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  /* ── la colonne, à 308 px ─────────────────────────────────────────────── */
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:13px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:84px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rail b{position:absolute;top:-2px;width:1px;height:5px;background:var(--bord-fort)}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:44px;text-align:right}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .raison a{color:var(--signal);text-decoration:none}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px;white-space:nowrap}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+
+  /* ── la case, dessinée à 4 px d'écran pour 1 px logique ───────────────── */
+  .cadre{display:flex;gap:38px;align-items:flex-start;flex-wrap:wrap}
+  .case4{width:256px;height:256px;flex:none;position:relative;border:1px solid var(--bord-fort);
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px}
+  .sil{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .boite{position:absolute;border:1px dashed var(--signal);pointer-events:none}
+  .sol{position:absolute;left:0;right:0;height:1px;background:var(--signal)}
+  .et{position:absolute;font-family:var(--mono);font-size:9px;color:var(--texte-3);white-space:nowrap}
+  .et.sg2{color:var(--signal)}
+  .et.ep{color:var(--epingle)}
+  .lisez{flex:1;min-width:300px;display:flex;flex-direction:column;gap:9px}
+  .mesrow{margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .av{color:var(--signal)}
+  .mesrow .hp{color:var(--epingle)}
+
+  /* ── les trois poses, côte à côte ─────────────────────────────────────── */
+  .trois{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .cas{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .cas .pt{height:26px;display:flex;align-items:center;gap:7px;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .cas .pv{height:164px;position:relative;display:flex;align-items:center;justify-content:center;
+    background:var(--fond-0)}
+  .case2{width:128px;height:128px;position:relative;border:1px solid var(--bord-fort);
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/8px 8px}
+  .cas .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+  .cas .pm{padding:0 11px 11px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cas .pm b{color:var(--epingle);font-weight:400}
+  .cas .pm i{color:var(--ok);font-style:normal}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 13 — grille</div>
+    <h1>Grille —<br><em>la taille du pixel, et la place du sujet dans sa case</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+    <p>C'est <strong>la table qui rend le produit possible</strong> : sans elle, deux images du même
+      personnage ne partagent pas le même pixel. Elle fait ce qu'elle promet — mesuré au § 02 sur trois
+      images du même sujet à trois résolutions, qui ressortent identiques au pixel près.
+      <strong>Et elle rate une chose, mesurée le même jour, qu'elle est seule en position de voir et qu'elle
+      ne dit pas.</strong></p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle ramène le sujet à la taille de pixel du projet. C'est un rééchantillonnage au plus
+      proche voisin, et il règle deux choses d'un coup : <strong>la taille du bloc de pixel</strong> et
+      <strong>l'échelle du sujet</strong>. Les deux ne se séparent pas — c'est la même opération.</p>
+
+    <table>
+      <thead><tr><th style="width:26%">Ce qu'elle sort</th><th>Quand, et à quoi ça sert</th></tr></thead>
+      <tbody>
+        <tr><td class="k">une case carrée</td>
+          <td>Quand la recette porte au moins une passe de détourage. Le sujet est mis à l'échelle, centré
+            horizontalement et posé selon l'ancrage dans un carré de <span class="m">cible × cible</span>.
+            <strong>C'est la case qui fait que deux images d'un même personnage se superposent au lieu de
+            flotter l'une par rapport à l'autre.</strong></td></tr>
+        <tr><td class="k">une homothétie</td>
+          <td>Quand la recette n'a aucune passe — un décor. Le côté long est ramené à la cible et les
+            proportions sont gardées. Enfermer un décor 16:9 dans un carré lui ajouterait des bandes
+            transparentes que personne n'a demandées.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce qui décide entre les deux</span>
+      <p><strong>La présence d'une passe de détourage, et rien d'autre.</strong> Ce n'est pas un réglage de
+        cette table : avoir demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette, donc
+        qu'il vit dans une case. Un décor n'en pose pas, et sort en homothétie.</p>
+      <p>Mesuré sur une image de <span class="m">487 × 320</span>, cible 64 :
+        <span class="m">une passe → 64 × 64</span>, une case ; <span class="m">aucune passe → 64 × 42</span>,
+        une homothétie. <strong>Vider la table du détourage change donc ce que fait la grille</strong>, et
+        rien ne le dit aujourd'hui. Le § 08 s'en occupe.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:26%">Sa place</th><th>Pourquoi là</th></tr></thead>
+      <tbody>
+        <tr><td class="k">après recadrage</td>
+          <td>Par l'ordre fixe de la recette. En pratique elle ne l'attend pas : quand elle pose une case,
+            elle cherche elle-même la boîte du sujet et rogne dessus. C'est ce doublon qui vide la marge du
+            recadrage — mesuré dans <span class="mesure">12-table-recadrage.html § 02</span>.</td></tr>
+        <tr><td class="k">avant quantification</td>
+          <td>Quantifier 1024 px pour les jeter ensuite coûte plus cher pour la même image. Mesuré le 30 août
+            dans <span class="mesure">14-table-quantification.html § 01</span> :
+            <span class="m">20 ms</span> contre <span class="m">0,6 ms</span>, et zéro pixel différent — mais
+            seulement quand la palette du projet est posée. Avec le tramage, ou en couleurs déduites, l'ordre
+            ne coûte plus, <strong>il décide</strong>.</td></tr>
+        <tr><td class="k">avant bords</td>
+          <td>Les miettes que <em>bords</em> efface passent ici. La réduction au plus proche voisin
+            échantillonne, elle ne filtre pas : une tache d'un pixel tombée sur un point échantillonné
+            traverse entière et ressort à 1 px. Mesuré dans
+            <span class="mesure">15-table-bords.html § 02</span> : l'image source porte jusqu'à
+            <span class="m">90 taches</span>, la case de 64 px n'en garde <span class="m">qu'une</span> —
+            la réduction en fait donc disparaître bien plus qu'elle n'en laisse passer.</td></tr>
+      </tbody>
+    </table>
+
+    <p class="intro" style="margin-top:16px">C'est <strong>la seule place de la recette dont les deux valeurs
+      viennent du projet</strong> : la taille de pixel est celle de l'univers, l'occupation vient du barème
+      par la nature du sujet. Les autres tables partent vides, ou avec un défaut du produit.</p>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qu'elle fait aujourd'hui — mesuré le 30 août 2026</h2></div>
+    <p class="intro">Quatre mesures, sur les images réelles de <span class="mesure">donnees/</span> et avec le
+      code du dépôt. La première dit que la table tient sa promesse. Les trois autres disent ce qu'elle coûte
+      et ce qu'elle rate.</p>
+
+    <div class="note bien">
+      <span class="lab">01 · Ce qu'elle promet, elle le tient</span>
+      <h3>Trois résolutions d'entrée, un seul sprite</h3>
+      <p>Le même personnage au repos, arrivé du fournisseur en trois formats différents, passé dans la même
+        recette — une passe de détourage, cible 64, occupation 100, ancrage bas :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:26%">Image reçue</th><th style="width:26%">Boîte du sujet</th><th style="width:20%">Facteur</th><th>Ce qui sort</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">352 × 509</span></td><td><span class="m">352 × 509</span></td>
+            <td><span class="m no">0,1257</span></td><td><span class="m bon">44 × 64</span></td></tr>
+          <tr><td class="k"><span class="m">128 × 128</span></td><td><span class="m">88 × 128</span></td>
+            <td><span class="m no">0,5000</span></td><td><span class="m bon">44 × 64</span></td></tr>
+          <tr><td class="k"><span class="m">96 × 96</span></td><td><span class="m">66 × 96</span></td>
+            <td><span class="m no">0,6667</span></td><td><span class="m bon">44 × 64</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Trois facteurs qui vont du simple au quintuple, <strong>un seul
+        sprite</strong>. C'est très exactement ce que la table existe pour faire, et c'est la raison pour
+        laquelle elle est posée systématiquement plutôt qu'offerte en option.</p>
+    </div>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">02 · Ce qu'elle rate — et personne ne le dit</span>
+      <h3>L'échelle est calée sur la boîte du sujet, pas sur le personnage</h3>
+      <p>Le facteur d'échelle vaut <span class="m">occupation × cible ÷ le plus grand côté de la
+        boîte</span>. Ce plus grand côté change d'une pose à l'autre : un bras qui se tend rend la boîte plus
+        large sans rendre le personnage plus grand. Les six poses d'un même personnage, même recette :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:16%">Pose</th><th style="width:22%">Boîte du sujet</th><th style="width:18%">Facteur</th><th style="width:20%">Dans la case</th><th>Hauteur</th></tr></thead>
+        <tbody>
+          <tr><td class="k">repos</td><td><span class="m">661 × 884</span></td><td><span class="m no">0,0724</span></td><td><span class="m">48 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">marche</td><td><span class="m">1015 × 958</span></td><td><span class="m no">0,0631</span></td><td><span class="m">58 × 59</span></td><td><span class="m eg">59 px</span></td></tr>
+          <tr><td class="k">course</td><td><span class="m">388 × 468</span></td><td><span class="m no">0,1368</span></td><td><span class="m">53 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">attaque</td><td><span class="m">523 × 430</span></td><td><span class="m no">0,1224</span></td><td><span class="m">64 × 53</span></td><td><span class="m eg">53 px</span></td></tr>
+          <tr><td class="k">dégâts</td><td><span class="m">404 × 432</span></td><td><span class="m no">0,1481</span></td><td><span class="m">60 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">mort</td><td><span class="m">492 × 328</span></td><td><span class="m no">0,1301</span></td><td><span class="m">64 × 43</span></td><td><span class="m no">43 px</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px"><strong>Le même personnage sort à trois hauteurs : 64, 59 et 53 px.</strong>
+        Celle de <em>mort</em> est juste — le personnage est couché, il doit être plus court. Celles de
+        <em>marche</em> et d'<em>attaque</em> ne le sont pas : le personnage est debout dans les deux, et il
+        a rapetissé parce que sa boîte est devenue plus large que haute.</p>
+      <p><span class="sourd">Un second personnage du même projet passe les six poses à 64 px, sauf
+        <em>mort</em> à 42. Ses bras restent au-dessus de sa boîte. <strong>Le défaut ne se voit donc pas
+        toujours</strong> — c'est ce qui le rend cher : on le découvre après avoir bâti la
+        matrice.</span></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 bis · La même chose, isolée</span>
+      <p>Pour être sûr que c'est bien le bras et rien d'autre, la mesure est refaite en contrôlé : on part de
+        la pose de repos réelle et on lui allonge un bras horizontal, de plus en plus loin. Rien d'autre ne
+        change.</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:18%">Bras</th><th style="width:22%">Boîte du sujet</th><th style="width:24%">Le corps rendu</th><th style="width:18%">Hauteur perdue</th><th>Dérive du corps</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">+ 0 px</span></td><td><span class="m">661 × 884</span></td><td><span class="m">48 × 64</span></td><td><span class="m bon">0 %</span></td><td><span class="m no">0,0 px</span></td></tr>
+          <tr><td class="k"><span class="m">+ 160 px</span></td><td><span class="m">821 × 884</span></td><td><span class="m">48 × 64</span></td><td><span class="m bon">0 %</span></td><td><span class="m eg">− 6,0 px</span></td></tr>
+          <tr><td class="k"><span class="m">+ 240 px</span></td><td><span class="m">901 × 884</span></td><td><span class="m">47 × 63</span></td><td><span class="m eg">2 %</span></td><td><span class="m eg">− 8,5 px</span></td></tr>
+          <tr><td class="k"><span class="m">+ 320 px</span></td><td><span class="m">981 × 884</span></td><td><span class="m">43 × 58</span></td><td><span class="m eg">9 %</span></td><td><span class="m eg">− 10,4 px</span></td></tr>
+          <tr><td class="k"><span class="m">+ 480 px</span></td><td><span class="m">1141 × 884</span></td><td><span class="m">37 × 50</span></td><td><span class="m eg">22 %</span></td><td><span class="m eg">− 13,4 px</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Deux effets, et ils sont indépendants :</p>
+      <ul>
+        <li><b>La taille.</b> Tant que le bras reste dans la hauteur, il ne coûte rien — c'est encore la
+          hauteur qui touche la case. Dès qu'il la dépasse, le personnage rapetisse, <b>jusqu'à 22 %</b>.</li>
+        <li><b>La position.</b> Le centrage horizontal se fait sur la boîte, donc <b>le corps se décale dès le
+          premier pixel de bras</b>, même quand la taille ne bouge pas : 6 px de dérive dans une case de 64,
+          soit un dixième de la case, pour un bras qui n'a rien coûté en hauteur.</li>
+      </ul>
+      <p style="margin-top:12px">Le dépôt connaît déjà la moitié position de ce problème, et l'a rangée en
+        V3 : <span class="mesure">docs/recherche-vision.md § 8</span> écrit qu'un ancrage sur boîte englobante
+        <em>rate une frame dont la silhouette déborde d'un côté</em>. <strong>La moitié taille n'y est
+        pas</strong>, et c'est celle qui se voit le plus.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · Ce que la cible coûte en détail</span>
+      <p>Sur la boîte du sujet mesurée plus haut — <span class="m">661 × 884</span>, soit 584 324 pixels —
+        voici ce que chaque cible garde :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:16%">Cible</th><th style="width:22%">Le sujet rendu</th><th style="width:26%">Un pixel rendu vaut</th><th>Ce qui arrive dans le sprite</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">16 px</span></td><td><span class="m">12 × 16</span></td><td><span class="m eg">55 × 55 px d'origine</span></td><td><span class="m no">0,3 ‰ des pixels du sujet</span></td></tr>
+          <tr><td class="k"><span class="m">32 px</span></td><td><span class="m">24 × 32</span></td><td><span class="m eg">28 × 28 px d'origine</span></td><td><span class="m no">1,3 ‰</span></td></tr>
+          <tr><td class="k"><span class="m">64 px</span></td><td><span class="m">48 × 64</span></td><td><span class="m eg">14 × 14 px d'origine</span></td><td><span class="m no">5,3 ‰</span></td></tr>
+          <tr><td class="k"><span class="m">128 px</span></td><td><span class="m">96 × 128</span></td><td><span class="m eg">7 × 7 px d'origine</span></td><td><span class="m no">21,0 ‰</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Le plus proche voisin ne moyenne pas : il prend un pixel sur 196 et jette les
+        195 autres. <strong>Un détail plus fin qu'un pixel rendu peut donc disparaître entièrement</strong>,
+        et cela dépend de l'endroit où il tombe. Mesuré à cible 64 en déplaçant un trait vertical de
+        vingt positions sur le sujet :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:26%">Largeur du trait</th><th style="width:26%">Il survit</th><th>Lecture</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">1 px</span></td><td><span class="m eg">4 fois sur 20 · 20 %</span></td><td>quatre fois sur cinq, il n'existe plus dans le sprite</td></tr>
+          <tr><td class="k"><span class="m">4 px</span></td><td><span class="m eg">7 fois sur 20 · 35 %</span></td><td>—</td></tr>
+          <tr><td class="k"><span class="m">8 px</span></td><td><span class="m">14 fois sur 20 · 70 %</span></td><td>—</td></tr>
+          <tr><td class="k"><span class="m">14 px</span></td><td><span class="m bon">20 fois sur 20 · 100 %</span></td><td><strong>la largeur d'un pixel rendu</strong> : à partir de là, il survit toujours</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Ce n'est ni un défaut ni un réglage à corriger : c'est ce que veut dire
+        réduire. <strong>Ça se dit</strong>, en revanche, et la table est la seule à connaître le chiffre.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">04 · Le curseur d'occupation a des crans qui ne changent rien</span>
+      <p>Le curseur va de 10 à 100, soit 91 positions. Le côté que le sujet vise vaut
+        <span class="m">arrondi(cible × occupation ÷ 100)</span> — un entier. Aux petites cibles, plusieurs
+        positions du curseur tombent sur le même entier :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:20%">Cible</th><th style="width:28%">Valeurs distinctes</th><th>Crans qui ne changent rien</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="m">16 px</span></td><td><span class="m">15 sur 91</span></td><td><span class="m eg">76 crans · 84 %</span></td></tr>
+          <tr><td class="k"><span class="m">32 px</span></td><td><span class="m">30 sur 91</span></td><td><span class="m eg">61 crans · 67 %</span></td></tr>
+          <tr><td class="k"><span class="m">64 px</span></td><td><span class="m">59 sur 91</span></td><td><span class="m eg">32 crans · 35 %</span></td></tr>
+          <tr><td class="k"><span class="m">128 px</span></td><td><span class="m">91 sur 91</span></td><td><span class="m bon">aucun</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">À 16 px, <strong>84 % des positions du curseur ne changent rien à
+        l'image</strong>. On tire, le pourcentage bouge, le rendu ne bouge pas. Ce n'est pas un bug à
+        corriger dans le calcul — <strong>c'est un affichage à corriger dans la colonne</strong> : le
+        pourcentage se lit à côté du nombre de pixels sur lequel il tombe, et le curseur crante là où l'image
+        change.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro">Quatre blocs : <strong>taille de pixel</strong>, <strong>occupation</strong>,
+      <strong>ancrage</strong>, et <strong>ce que la table dit</strong> — qui n'a aucun réglage. L'état
+      dessiné est celui de la pose d'attaque du § 02, c'est-à-dire le cas où la table a quelque chose de
+      désagréable à annoncer.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">grille</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">taille de pixel</span>
+            <div class="segs">
+              <span class="sg mono">16</span><span class="sg mono">24</span><span class="sg mono">32</span>
+              <span class="sg mono">48</span><span class="sg mono on">64</span><span class="sg mono">96</span>
+              <span class="sg mono">128</span>
+            </div>
+            <div class="prov">l'univers de Cœur de pierre · 64 px</div>
+            <div class="raison">1 px rendu = 14 × 14 px d'origine · un détail plus fin peut disparaître</div>
+          </div>
+
+          <div class="bloc">
+            <div class="rg-reg"><span class="lb">occupation</span>
+              <span class="rail">
+                <b style="left:0%"></b><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b>
+                <i style="left:100%"></i></span><span class="vl">100 %</span></div>
+            <div class="prov">le barème de l'univers · personnage</div>
+            <div class="raison">le sujet vise 64 px de côté sur les 64 de la case</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">ancrage</span>
+            <div class="segs">
+              <span class="sg on">bas</span><span class="sg">centre</span>
+            </div>
+            <div class="raison">le bas de la boîte se pose sur le bas de la case · le centrage horizontal
+              ne se règle pas</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">ce que la table dit</span>
+            <div class="raison">boîte du sujet 523 × 430 — plus large que haute</div>
+            <div class="raison" style="color:var(--epingle)">c'est la largeur qui touche la case : le sujet
+              sort à 53 px de haut</div>
+            <div class="raison" style="color:var(--epingle)">les cinq autres poses de ce personnage sortent à
+              64 — <a href="#">les calibrer ›</a></div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>64 px · 100 % · bas</span>
+          <span class="dr">Sans grille ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>Sept valeurs de cible, en segments
+          mono.</b> Ce sont les sept que le produit accepte déjà — <span class="mesure">16 24 32 48 64 96
+          128</span> —, pas un curseur : entre deux d'entre elles il n'y a rien à choisir. Sept segments
+          tiennent dans les 286 px utiles de la colonne à 10 px de mono.</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>La provenance est écrite en
+          <span class="mesure">--epingle</span> sous chaque valeur qui vient d'ailleurs.</b> La cible vient de
+          l'univers, l'occupation vient du barème par la nature du sujet. C'est la règle du dossier —
+          <em>ce qui est devinable est prérempli avec sa provenance, et se défait d'un clic</em> — et ici
+          <b>le clic qui défait est le geste ordinaire du réglage</b> : toucher le segment ou le curseur suffit,
+          la ligne de provenance devient alors <span class="mesure">réglé à la main</span>.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>Sous la cible, ce qu'un pixel rendu
+          vaut.</b> <span class="mesure">14 × 14 px d'origine</span> est calculé sur cette image-ci, pas en
+          général : il dépend de la taille de la boîte du sujet. C'est le chiffre qui explique qu'un détail
+          fin ait disparu, et il se met à jour quand on change de cible.</span></div>
+        <div class="an att"><span class="k">04</span><span class="t"><b>Le curseur d'occupation est
+          cranté, et sa raison dit sur quel entier il tombe.</b>
+          <span class="mesure">le sujet vise 64 px de côté sur les 64 de la case</span> remplace un
+          pourcentage seul, qui ment à petite cible (§ 02, mesure 04). <b>Les crans sont les positions où
+          l'image change</b> — 15 à cible 16, 59 à cible 64 —, ce qui supprime les 84 % de course morte sans
+          rien enlever au réglage.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>L'ancrage dit ce qu'il fait, et ce qu'il
+          ne fait pas.</b> Il règle le vertical ; l'horizontal est toujours centré et ne s'offre pas. Le dire
+          coûte une ligne et évite de chercher un réglage qui n'existe pas — <b>et c'est ce centrage-là qui
+          fait la dérive mesurée au § 02</b>.</span></div>
+        <div class="an att"><span class="k">06</span><span class="t"><b>Le quatrième bloc n'a aucun réglage
+          — il porte ce que la table a vu.</b> Trois lignes ici : la boîte est plus large que haute, donc la
+          hauteur retombe à 53 px, <b>et les autres poses du même personnage sortent à 64</b>. La dernière est
+          la seule du produit qui compare une image à ses sœurs, et c'est ce qui la rend utile : un sprite à
+          53 px n'est un problème que par rapport à ceux d'à côté. <b>Le lien mène au calibrage</b>
+          (<span class="mesure">20-outil-calibrage.html</span>), qui est l'écran où l'écart se
+          règle.</span></div>
+        <div class="an att"><span class="k">07</span><span class="t"><b>Elle ne propose aucune
+          correction</b>, et c'est délibéré. Remonter ce personnage à 64 px de haut demanderait 78 px de large
+          dans une case qui en fait 64 : le bras sortirait du cadre. <b>Il n'y a pas de réglage qui répare ça
+          ici</b> — ça se règle sur toutes les poses à la fois, dans le calibrage (§ 08).</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête et le pied viennent
+          du wrapper. <b>Le pied porte les trois valeurs</b> — <span class="mesure">64 px · 100 % · bas</span>
+          —, y compris l'ancrage à son défaut : c'est le repli de la table ouverte, il dit tout son état.
+          <b>La barre, elle, n'en porte que deux</b> et n'ajoute l'ancrage que s'il n'est pas le défaut
+          (§ 08) : elle résume sept places sur une ligne et n'a pas la même place.
+          <span class="mesure">Sans grille ›</span> retire la place : l'image ressort alors aux dimensions
+          rendues par le modèle.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:24%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">taille de pixel</td>
+          <td><span class="m">16 · 24 · 32 · 48 · 64 · 96 · 128</span><br>
+            <span class="sourd">défaut : celle de l'univers, 64</span></td>
+          <td>Le côté de la case, en pixels logiques — la taille finale du sprite avant export. Elle est
+            <strong>demandée, jamais déduite de l'image reçue</strong> : la déduire reviendrait à laisser le
+            fournisseur décider de l'échelle du jeu.
+            <br><br>Coût nommé : <strong>elle jette du détail, et le chiffre est connu.</strong> À 64 sur une
+            boîte de 661 × 884, un pixel rendu vaut 14 × 14 px d'origine et 5,3 ‰ des pixels du sujet
+            arrivent dans le sprite. Un détail plus fin que 14 px survit une fois sur cinq
+            (§ 02).</td></tr>
+        <tr><td class="k">occupation</td>
+          <td><span class="m">10 – 100 %</span>, crantée<br>
+            <span class="sourd">défaut : le barème de l'univers</span></td>
+          <td>La part de la case que le sujet remplit une fois mis à l'échelle. <strong>C'est elle, et non la
+            taille de l'image d'origine, qui met un tonneau et un personnage à la même échelle</strong> — à
+            100 % pour tout le monde, le coffre sortait aussi haut que la prêtresse.
+            <br><br>Depuis <span class="mesure">12-table-recadrage.html</span>, elle porte une charge de
+            plus : <strong>c'est elle qui donne l'air autour du sujet</strong>, la marge du recadrage n'agissant
+            plus quand une case est posée.
+            <br><br>Coût nommé : <strong>l'air qu'elle donne n'est pas symétrique.</strong> Mesuré à cible 64,
+            occupation 90 : <span class="m">6 px en haut, 0 en bas, 10 à gauche, 11 à droite</span>. C'est
+            l'ancrage bas qui fait ça, et c'est ce qu'on veut pour un personnage debout — mais il ne faut pas
+            attendre de la marge en bas.</td></tr>
+        <tr><td class="k">ancrage</td>
+          <td><span class="m">bas · centre</span><br><span class="sourd">défaut : bas</span></td>
+          <td>Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens.
+            <strong>Bas</strong> pour tout ce qui se tient sur un sol : deux images posées au centre
+            flotteraient l'une par rapport à l'autre, et le personnage semblerait monter et descendre entre
+            deux frames. <strong>Centre</strong> pour ce qui n'a pas de sol — une icône, un objet
+            d'inventaire, un effet.
+            <br><br>Coût nommé : <strong>il ne règle que le vertical.</strong> L'horizontal est toujours
+            centré sur la boîte du sujet, et c'est ce centrage qui fait dériver le corps quand un bras sort
+            (§ 02). <strong>Un décalage horizontal vient se poser à côté de lui</strong> — décidé le
+            30 août 2026, écrit par le calibrage et par personne d'autre, zéro par défaut, et il ne part pas
+            dans une recette nommée. Voir <span class="mesure">20-outil-calibrage.html § 03</span>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">La case, dessinée à <strong>4 px d'écran pour 1 px logique</strong> : le carré fait
+      64 × 64 px logiques. L'état montré est celui d'un personnage à <strong>occupation 90</strong>, ancrage
+      bas — les chiffres sont ceux de la mesure, pas une illustration.</p>
+
+    <div class="cadre">
+      <div class="case4">
+        <span class="boite" style="left:40px;top:24px;width:172px;height:232px"></span>
+        <span class="sil" style="left:106px;top:24px;width:40px;height:40px"></span>
+        <span class="sil" style="left:86px;top:64px;width:80px;height:96px"></span>
+        <span class="sil" style="left:40px;top:72px;width:26px;height:88px"></span>
+        <span class="sil" style="left:186px;top:72px;width:26px;height:88px"></span>
+        <span class="sil" style="left:94px;top:160px;width:32px;height:96px"></span>
+        <span class="sil" style="left:126px;top:160px;width:32px;height:96px"></span>
+        <span class="sol" style="bottom:0"></span>
+        <span class="et sg2" style="left:6px;top:6px">6 px</span>
+        <span class="et" style="left:6px;top:132px">10 px</span>
+        <span class="et" style="right:6px;top:132px">11 px</span>
+        <span class="et sg2" style="right:6px;bottom:6px">0 px — le sol</span>
+      </div>
+
+      <div class="lisez">
+        <div class="note">
+          <span class="lab">Ce que le dessin montre</span>
+          <ol>
+            <li><b>La case est carrée</b>, et fait toujours <span class="mesure">cible × cible</span>. Le
+              damier est la transparence : tout ce qui n'est pas le sujet est vide.</li>
+            <li><b>Le sujet est mis à l'échelle sur son plus grand côté</b>, ici la hauteur : 90 % de 64 font
+              58 px, et la largeur suit les proportions.</li>
+            <li><b>Il est posé au bas de la case</b>, sur le trait <span class="mesure">--signal</span>. C'est
+              l'ancrage. Il n'y a jamais d'air en dessous.</li>
+            <li><b>Il est centré horizontalement</b>, et ça ne se règle pas. Les 21 px qui restent sont
+              partagés 10 à gauche, 11 à droite — l'entier ne tombe pas juste, et la moitié perdue va à
+              droite.</li>
+          </ol>
+        </div>
+        <div class="note gris">
+          <span class="lab">Où passe l'air, quand l'occupation descend</span>
+          <p>Mesuré sur le sujet ci-dessus, cible 64 :</p>
+          <p class="mesure" style="font-size:10.5px;color:var(--texte-2);line-height:1.9;margin-top:8px">
+            100 % → sujet 48 × 64 · air 0 haut, 0 bas, 8 et 8<br>
+            &nbsp;90 % → sujet 43 × 58 · air 6 haut, 0 bas, 10 et 11<br>
+            &nbsp;66 % → sujet 31 × 42 · air 22 haut, 0 bas, 16 et 17<br>
+            &nbsp;40 % → sujet 19 × 26 · air 38 haut, 0 bas, 22 et 23</p>
+          <p style="margin-top:10px"><strong>L'air monte, il ne descend pas.</strong> Baisser l'occupation
+            fait de la place au-dessus et sur les côtés, jamais en dessous : le sujet reste sur son sol. C'est
+            juste pour un personnage, et c'est à savoir pour une icône — d'où l'ancrage
+            <em>centre</em>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mesrow"><span>1024 × 1024 · image/png</span>
+      <span class="av">64 × 64</span>
+      <span>boîte du sujet 661 × 884</span>
+      <span>1 px rendu = 15 × 15 px d'origine</span>
+      <span style="margin-left:auto">64 px · 90 % · bas</span></div>
+    <div class="lgd">le sujet dessiné est celui des mesures du § 02 · le damier est la transparence ·
+      1 px logique = 4 px d'écran</div>
+  </section>
+
+  <!-- ═══ 05a ═════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05a</span><h2>Trois poses du même personnage, dans la même case</h2></div>
+    <p class="intro">Les cases sont dessinées à <strong>2 px d'écran pour 1 px logique</strong>. Même
+      personnage, même recette, occupation 100. Ce qui change d'une case à l'autre est
+      <strong>uniquement la forme de la boîte du sujet</strong>.</p>
+
+    <div class="trois">
+      <div class="cas">
+        <div class="pt">repos</div>
+        <div class="pv"><div class="case2">
+          <span class="sil" style="left:55px;top:0;width:18px;height:20px"></span>
+          <span class="sil" style="left:42px;top:20px;width:44px;height:48px"></span>
+          <span class="sil" style="left:16px;top:24px;width:13px;height:44px"></span>
+          <span class="sil" style="left:99px;top:24px;width:13px;height:44px"></span>
+          <span class="sil" style="left:48px;top:68px;width:16px;height:60px"></span>
+          <span class="sil" style="left:64px;top:68px;width:16px;height:60px"></span>
+          <span class="sol" style="bottom:0"></span>
+        </div></div>
+        <div class="pd">La boîte est plus haute que large. C'est la hauteur qui touche la case, et le
+          personnage sort à sa pleine taille.</div>
+        <div class="pm">boîte 661 × 884 · dans la case <i>48 × 64</i></div>
+      </div>
+
+      <div class="cas">
+        <div class="pt">attaque</div>
+        <div class="pv"><div class="case2">
+          <span class="sil" style="left:17px;top:22px;width:18px;height:18px"></span>
+          <span class="sil" style="left:9px;top:40px;width:34px;height:42px"></span>
+          <span class="sil" style="left:0;top:44px;width:9px;height:36px"></span>
+          <span class="sil" style="left:43px;top:48px;width:73px;height:10px"></span>
+          <span class="sil" style="left:116px;top:40px;width:12px;height:24px"></span>
+          <span class="sil" style="left:11px;top:82px;width:13px;height:46px"></span>
+          <span class="sil" style="left:28px;top:82px;width:13px;height:46px"></span>
+          <span class="sol" style="bottom:0"></span>
+        </div></div>
+        <div class="pd">Le bras tendu rend la boîte plus large que haute. C'est la largeur qui touche la
+          case, et <strong>le personnage rapetisse de 11 px</strong>.</div>
+        <div class="pm">boîte 523 × 430 · dans la case <b>64 × 53</b> — 17 % plus court qu'au repos</div>
+      </div>
+
+      <div class="cas">
+        <div class="pt">mort</div>
+        <div class="pv"><div class="case2">
+          <span class="sil" style="left:36px;top:42px;width:16px;height:22px"></span>
+          <span class="sil" style="left:0;top:66px;width:26px;height:26px"></span>
+          <span class="sil" style="left:24px;top:62px;width:56px;height:34px"></span>
+          <span class="sil" style="left:78px;top:78px;width:50px;height:32px"></span>
+          <span class="sil" style="left:108px;top:110px;width:20px;height:18px"></span>
+          <span class="sol" style="bottom:0"></span>
+        </div></div>
+        <div class="pd">La boîte est bien plus large que haute, et c'est juste : le personnage est couché,
+          il <em>doit</em> être plus court.</div>
+        <div class="pm">boîte 492 × 328 · dans la case <i>64 × 43</i></div>
+      </div>
+    </div>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Ce que les trois cases disent ensemble</span>
+      <p><strong>La règle est la même dans les trois, et elle est correcte dans deux.</strong> Aucun réglage
+        ne les distingue : la table applique la même formule, et c'est la forme de la boîte qui décide. Ce
+        qu'elle ne sait pas, c'est <em>pourquoi</em> la boîte est large — un personnage couché et un
+        personnage qui frappe donnent la même mesure.</p>
+      <p>Distinguer les deux demanderait de savoir ce que la pose représente, et le produit le sait :
+        <strong>l'asset porte son entité et sa pose</strong>. Mais le corriger tout seul serait pire que le
+        signaler — <em>mort</em> serait remonté à 64 px et le personnage couché deviendrait aussi haut que le
+        personnage debout. <strong>La table mesure et le dit ; elle ne répare pas.</strong></p>
+    </div>
+    <div class="lgd">les silhouettes sont schématiques · les boîtes, les tailles rendues et les pourcentages
+      sont ceux des mesures du § 02</div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ses mesures, et ce qu'elle propose</h2></div>
+    <table>
+      <thead><tr><th style="width:34%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">661 × 884 → 48 × 64</span></td>
+          <td>La boîte du sujet, et ce qui sort. Le chiffre et son jumeau : une taille seule ne dit pas d'où
+            elle vient.</td></tr>
+        <tr><td class="k"><span class="m">1 px rendu = 14 × 14 px d'origine</span></td>
+          <td>Ce que la cible coûte en détail, sur <em>cette</em> image. <strong>C'est la mesure qui explique
+            qu'un détail ait disparu</strong> — une boucle de ceinture de 10 px n'avait pas de quoi occuper
+            un pixel. Elle change quand on change de cible, et c'est ce qui rend le choix
+            lisible.</td></tr>
+        <tr><td class="k"><span class="m">le sujet vise 64 px de côté</span></td>
+          <td>Sous le curseur d'occupation. Le pourcentage seul ment aux petites cibles : à 16 px, 84 % des
+            positions du curseur donnent le même entier. Le nombre de pixels, lui, ne ment
+            pas.</td></tr>
+        <tr><td class="k"><span class="m eg">plus large que haute · sort à 53 px</span></td>
+          <td>Ne paraît que quand la boîte est plus large que haute, c'est-à-dire quand la hauteur du sujet
+            n'atteint pas la case. Elle dit une chose et une seule : <strong>ce sprite est plus petit que ce
+            que la cible laisse croire</strong>.</td></tr>
+        <tr><td class="k"><span class="m eg">les autres poses sortent à 64</span></td>
+          <td><strong>La seule mesure du produit qui compare une image à ses sœurs.</strong> Elle ne paraît
+            que si l'asset appartient à une entité qui a d'autres poses rendues, et elle est ce qui donne son
+            sens à la ligne précédente : 53 px n'est un problème que par rapport à 64. Elle porte un lien vers
+            la matrice, où on les voit côte à côte.</td></tr>
+        <tr><td class="k"><span class="m no">le curseur a 15 crans à cette taille</span></td>
+          <td>Ne paraît qu'aux cibles où l'écart se voit — 16, 24, 32. Elle évite de croire qu'on règle
+            finement ce qui ne se règle que par entiers.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce qu'elle propose</span>
+      <p><strong>Deux valeurs, et elles viennent toutes les deux du projet.</strong> La cible est celle de
+        l'univers ; l'occupation est celle du barème, par la nature du sujet. Toutes deux préremplies, toutes
+        deux marquées de leur provenance en <span class="mesure">--epingle</span>, toutes deux défaites par le
+        geste ordinaire du réglage.</p>
+      <p><strong>Elle ne propose rien pour la hauteur perdue.</strong> Elle pourrait proposer une occupation
+        qui remette ce sprite à 64 px de haut : ce serait <span class="m">78 px de large dans une case de
+        64</span>, et le bras sortirait du cadre. <strong>Une proposition qui coupe le sujet n'est pas une
+        proposition</strong> — la table dit le chiffre et s'arrête là.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Son indisponibilité</h2></div>
+
+    <div class="note bien">
+      <span class="lab">Elle n'en a pas</span>
+      <p><strong>C'est la seule table du lot qui ait toujours quelque chose à faire.</strong> Les autres
+        se grisent parce qu'il n'y a pas d'alpha : <em>recadrage</em>, <em>bords</em> et <em>contours</em>
+        ont besoin d'une silhouette. La grille n'en a pas besoin — sans alpha elle passe en homothétie et
+        ramène quand même l'image à la taille de pixel du projet.</p>
+      <p>Son carré n'est donc jamais absent de la barre, et son wrapper ne porte jamais de raison à la place
+        des réglages.</p>
+    </div>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">En revanche, elle a un état vide qui a besoin de sa raison</span>
+      <h3>Un univers peut déclarer n'imposer aucune taille de pixel</h3>
+      <p><strong>« Aucune » est une valeur, pas un trou.</strong> Un jeu qui n'est pas en pixel art n'a rien
+        à gagner à une remise sur grille, et l'univers peut le déclarer. La place existe toujours dans la
+        recette, mais elle est vide : <strong>ce que le modèle a rendu revient tel quel</strong>.</p>
+      <p>La table est alors <em>vide</em> au sens du châssis — carré creux, aucune valeur en mono —
+        et le wrapper porte, sous les segments, la même forme de grisé que la marge du recadrage :</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— l'univers de ce projet
+        ne déclare aucune taille de pixel : ce que le modèle rend te revient tel quel.</span><br>
+        <span class="mesure" style="color:var(--signal)">taille de pixel de l'univers ›</span></p>
+      <p style="margin-top:12px"><strong>Les segments restent actifs</strong> : poser une cible à la main sur
+        une image reste possible, et c'est le geste par lequel on essaie une taille avant de la déclarer dans
+        l'univers. Ce n'est pas une indisponibilité, c'est un défaut de projet absent — la différence se voit
+        au fait qu'on peut encore régler.</p>
+      <p><strong>L'occupation, elle, est grisée dans cet état</strong>, et pour une raison mesurable : elle
+        n'existe que dans la case, et sans cible il n'y a pas de case. C'est écrit dans le domaine, mot pour
+        mot — <em>l'occupation n'agit plus</em>.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Trois choses que cette table décide au-delà d'elle-même</h2></div>
+
+    <div class="note bien">
+      <span class="lab">01 · L'échelle d'un jeu de poses a un écran — décidé le 30 août 2026</span>
+      <p>La mesure du § 02 ne se répare pas dans cette table, et il faut le dire nettement : la case est
+        carrée, le sujet doit y tenir en entier, et <strong>une pose qui s'étale ne peut pas garder sa
+        hauteur</strong>. Aucun réglage de la colonne ne change ça.</p>
+      <p>La réparation demande de voir <strong>toutes les poses d'un personnage à la fois</strong>, donc un
+        écran que la barre de tables ne peut pas porter. C'est
+        <span class="mesure">20-outil-calibrage.html</span> : les poses superposées dans une seule case, un
+        bouton qui propose une taille commune, et une reprise à la main pose par pose.</p>
+      <p><strong>Il n'ajoute presque rien</strong> : le calage s'écrit dans l'occupation, qui existe déjà et
+        qui est déjà une part de la case — c'est ce qui fait qu'il survit à un changement de taille de case.
+        La table grille reste donc telle qu'elle est dessinée ici ; elle gagne seulement
+        <strong>la porte</strong> — <span class="mesure">les calibrer ›</span> — et, plus tard, un
+        <strong>décalage horizontal</strong> à côté de l'ancrage (§ 04).</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · Vider le détourage change ce que fait la grille</span>
+      <p>La forme de sortie ne se lit pas dans cette table : elle se déduit de la présence d'une passe de
+        détourage. <strong>Retirer la dernière passe fait passer la grille de la case à l'homothétie</strong>,
+        et le sprite change de dimensions sans qu'on ait touché à la grille — mesuré au § 01,
+        <span class="m">64 × 64</span> contre <span class="m">64 × 42</span>.</p>
+      <p>C'est le détourage qui doit le dire, au moment où on retire la dernière passe, parce que c'est là
+        qu'on fait le geste. Une ligne suffit : <em>sans passe, la grille rendra une homothétie et non une
+        case</em>.</p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">À reporter dans
+        <span class="mesure">10-table-detourage.html</span></strong>, sous le retrait de la dernière passe.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">03 · Ce que la barre affiche pour cette table</span>
+      <p>La valeur en mono de la barre est <span class="mesure">64 px · 100 %</span> — la cible et
+        l'occupation. <strong>L'ancrage s'y ajoute quand il n'est pas le défaut</strong> :
+        <span class="mesure">64 px · 100 % · centre</span>. Une valeur par défaut affichée en permanence
+        occupe de la place sans rien apprendre ; une valeur inhabituelle qui reste cachée se paie plus tard.</p>
+      <p>Son carré est plein dès qu'elle est posée, et il ne ment pas : la règle établie en
+        <span class="mesure">12-table-recadrage.html § 08</span> veut qu'un carré plein signale un changement
+        de l'image. <strong>Une grille posée change toujours l'image</strong> — vérifié aux trois cibles
+        extrêmes, elle ne rend jamais l'image d'entrée telle quelle.</p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">Corrigé dans
+        <span class="mesure">03-chassis-des-tables.html § 02 et § 03</span></strong> : l'exemple y portait
+        <span class="mesure">grille 4 px · 92 %</span>, et 4 n'est pas une cible que le produit accepte. Il
+        porte maintenant <span class="mesure">grille 64 px · 92 %</span>.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 13, grille · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

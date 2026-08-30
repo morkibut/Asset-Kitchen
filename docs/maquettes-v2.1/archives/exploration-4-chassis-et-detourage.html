@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la table Détourage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:23px;font-weight:400;margin:0 0 8px;line-height:1.2}
+
+  /* ── Wireframe ──────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .inner{min-width:1030px}
+  .wf-barre{height:38px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* fil d'Ariane */
+  .ariane{display:flex;align-items:center;gap:6px;margin-left:8px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .ariane a{color:var(--texte-2);text-decoration:none;border-bottom:1px solid var(--bord-fort)}
+  .ariane .ici{color:var(--texte);border:0}
+  .ariane .sp{color:var(--texte-3)}
+
+  /* barre de tables */
+  .tables{height:34px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:3px;padding:0 12px}
+  .tb{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-3);white-space:nowrap}
+  .tb .carre{width:8px;height:8px;border:1px solid var(--bord-fort);flex:none}
+  .tb.pose{color:var(--texte-2)}
+  .tb.pose .carre{background:var(--signal);border-color:var(--signal)}
+  .tb.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .tb .vl{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .tbsep{width:1px;height:16px;background:var(--bord);margin:0 6px}
+  .tb.hors{border-style:dashed;border-color:var(--bord)}
+
+  .wf-corps{display:flex;align-items:stretch;min-height:330px}
+  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .cg{width:308px;flex:none;border-right:1px solid var(--bord);display:flex;flex-direction:column}
+  .cd{width:186px;flex:none;border-left:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:8px}
+  .centre{flex:1;display:flex;flex-direction:column;min-width:0;padding:11px;gap:8px}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    justify-content:space-between;padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .enpan .def{text-transform:none;letter-spacing:0;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:10px;flex:1}
+
+  .passe{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .passe.on{border-color:var(--signal)}
+  .ptete{height:26px;display:flex;align-items:center;gap:7px;padding:0 8px}
+  .ptete .rg{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ptete .nm{font-size:11px;color:var(--texte)}
+  .passe.on .ptete .nm{color:var(--signal-clair)}
+  .ptete .vl{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .ptete .x{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .pcorps{border-top:1px solid var(--bord);padding:8px;display:flex;flex-direction:column;gap:7px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:88px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:44px;text-align:right}
+  .pastille-c{width:14px;height:14px;border:1px solid var(--bord-fort);background:#F2EFE6;flex:none}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .sg.gris{color:var(--texte-3);border-style:dashed}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .ajout{border:1px dashed var(--bord-fort);border-radius:2px;padding:8px;
+    display:flex;flex-direction:column;gap:6px}
+  .propose{border:1px solid var(--lumiere);border-radius:2px;background:var(--fond-2);
+    padding:8px 9px;display:flex;flex-direction:column;gap:6px}
+  .propose .ph{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .propose .pa{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .propose .pb{height:23px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--texte)}
+  .etatcouche{margin-top:auto;border-top:1px solid var(--bord);padding-top:9px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .toile{flex:1;border:1px solid var(--bord);border-radius:2px;position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sujet{width:158px;height:186px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    position:relative;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;padding:8px}
+  .poche{position:absolute;border:1px solid var(--lumiere);border-radius:2px}
+  .poche::after{content:attr(data-n);position:absolute;top:-1px;left:-1px;
+    background:rgba(11,13,16,.82);color:var(--lumiere);font-family:var(--mono);
+    font-size:8.5px;padding:0 3px;line-height:1.5}
+  .jauge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--bord)}
+  .jauge i{display:block;height:2px;width:38%;background:var(--signal)}
+  .curseurpip{position:absolute;left:22px;top:52px;width:13px;height:13px;
+    border:1px solid var(--lumiere);border-radius:9999px}
+
+  .sousimage{display:flex;align-items:center;gap:10px}
+  .sousimage .mes{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .cmp{display:flex;gap:4px;margin-left:auto}
+  .cmp .sg{flex:none;padding:0 9px}
+  .opac{display:flex;align-items:center;gap:7px;width:186px}
+  .opac .lb{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  .gr2{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+  .tu{background:var(--fond-2);border:1px solid var(--bord);min-height:44px}
+  .tu.sel{border-color:var(--lumiere)}
+  .tu.vd{background:transparent;border-style:dashed;border-color:var(--bord-fort)}
+
+  /* comparateur : quatre vignettes */
+  .quatre{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .mode{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .mode .mt{height:26px;display:flex;align-items:center;gap:7px;padding:0 10px;
+    border-bottom:1px solid var(--bord);font-size:11.5px;color:var(--texte)}
+  .mode .mt .k{font-family:var(--mono);font-size:9px;color:var(--signal)}
+  .mode .mv{height:118px;background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px;
+    display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;position:relative}
+  .mode .sq{width:52px;height:96px;background:var(--fond-3);border:1px solid var(--bord-fort);text-align:center;line-height:1.4;padding:4px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:8.5px;color:var(--texte-3)}
+  .mode .sq.brut{background:var(--fond-1);border-color:var(--bord-fort);border-style:dashed;color:var(--texte-2)}
+  .mode .sq.sur{position:absolute;background:rgba(234,244,248,.16);border:1px dashed var(--lumiere);color:var(--lumiere)}
+  .mode .md{padding:9px 10px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.45}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  .suite{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .jalon{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:13px}
+  .jalon.ici{border-color:var(--signal);background:var(--signal-sourd)}
+  .jalon .code{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-bottom:6px}
+  .jalon.ici .code{color:var(--signal)}
+  .jalon .nom{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:4px}
+  .jalon .quoi{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 3 — le châssis des tables, et la première d'entre elles</div>
+    <h1>Une table par outil —<br><em>et la recette est leur suite</em></h1>
+    <p>Chaque outil a sa table, plein cadre, avec ses réglages à elle. <strong>La recette n'est plus une
+      colonne : c'est la barre de tables elle-même</strong>, lue de gauche à droite dans l'ordre où elle
+      s'applique. Une table neuve s'ajoute dans la barre sans que rien d'autre bouge.</p>
+    <p>Ce document définit <strong>deux choses partagées par toutes les tables</strong> — la navigation et le
+      comparateur — puis <strong>la première table, le détourage, de fond en comble</strong>. Les suivantes
+      auront chacune la sienne, sur ce même gabarit.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>La barre de tables est la recette</h2></div>
+    <p class="intro">Huit tables, dans <strong>l'ordre fixe où elles s'appliquent</strong> — cinq d'entre
+      elles n'ont aucun sens avant celle qui les précède. Un carré plein dit que la table porte quelque
+      chose ; sa valeur se lit en mono à côté de son nom. <strong>Le découpage est après la barre de
+      séparation</strong> : il ne modifie pas l'image, il en fabrique d'autres, donc il n'est pas dans la
+      suite.</p>
+
+    <div class="croquis"><div class="inner">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Galerie</span><span class="tab on">Codex</span>
+        <span class="ariane">
+          <a href="#">Cœur de pierre</a><span class="sp">›</span>
+          <a href="#">Personnages</a><span class="sp">›</span>
+          <a href="#">Balthazar</a><span class="sp">›</span>
+          <a href="#">marche · image 3</a><span class="sp">›</span>
+          <span class="ici">Détourage</span>
+        </span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+      </div>
+      <div class="tables">
+        <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
+        <span class="tb"><span class="carre"></span>différence <span class="vl">sans objet</span></span>
+        <span class="tb pose"><span class="carre"></span>recadrage <span class="vl">2 px</span></span>
+        <span class="tb pose"><span class="carre"></span>grille <span class="vl">4 px · 92 %</span></span>
+        <span class="tb"><span class="carre"></span>quantification</span>
+        <span class="tb"><span class="carre"></span>bords</span>
+        <span class="tb"><span class="carre"></span>contours</span>
+        <span class="tb"><span class="carre"></span>la main</span>
+        <span class="tbsep"></span>
+        <span class="tb hors">découpage</span>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>la recette se lit de gauche à droite · l'ordre ne se change pas</span></div>
+    </div></div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Trois règles de la barre</span>
+      <ul>
+        <li><b>L'ordre est fixe et il ne se réordonne pas.</b> Rien ne peut se recadrer avant qu'un alpha
+          existe, rien ne se quantifie avant d'être à l'échelle. La barre montre la contrainte au lieu de
+          l'expliquer.</li>
+        <li><b>Une table vide reste visible</b>, carré creux et sans valeur. C'est la règle de la case vide
+          de la matrice : ce qui n'est pas fait occupe autant de place que ce qui l'est, sans quoi on ne
+          sait plus ce qu'on pourrait faire.</li>
+        <li><b>Une table indisponible porte sa raison</b>, jamais une infobulle — <span class="mesure">différence ·
+          sans objet</span> sur une image qui n'est pas un calque, <span class="mesure">le moteur n'est pas
+          installé</span> sur la passe modèle.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Le fil d'Ariane — et comment on revient</h2></div>
+    <p class="intro">Cinq segments, tous cliquables sauf le dernier, qui est là où l'on est. Il remplace le
+      nom de l'onglet Codex et il porte <strong>toute la navigation de l'établi et des tables</strong> : il
+      n'y a rien d'autre à trouver pour remonter.</p>
+    <table>
+      <thead><tr><th style="width:26%">Le segment</th><th>Où il ramène</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Cœur de pierre</td><td>La racine du codex — la bible, la palette, les familles du monde.</td></tr>
+        <tr><td class="k">Personnages</td><td>La famille : les six personnages du projet, et ce qui manque à chacun.</td></tr>
+        <tr><td class="k">Balthazar</td><td><strong>La fiche du personnage</strong> — son établi au repos, la matrice de ses attitudes. C'est le retour le plus fréquent, et il est à un clic depuis n'importe quelle table.</td></tr>
+        <tr><td class="k">marche · image 3</td><td>L'image seule, sans table ouverte : sa visionneuse, sa recette en résumé, sa filiation, son coût.</td></tr>
+        <tr><td class="k">Détourage</td><td>Là où l'on est. Il ne clique pas — et changer de table se fait dans la barre juste dessous, pas ici.</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Pourquoi le fil, et pas un bouton « retour »</span>
+      <p>Un bouton retour dit <em>d'où tu viens</em> ; un fil dit <strong>où tu es</strong>. Dans un produit à
+        deux onglets et une profondeur, c'est la seconde question qui se pose — et la première n'a plus de
+        sens dès qu'on est arrivé sur une table par trois chemins différents (depuis la matrice, depuis la
+        galerie, depuis une image sœur).</p>
+      <p><span class="mesure">Échap</span> ferme la table et remonte d'un cran, comme partout dans le
+        produit.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Le comparateur — commun à toutes les tables</h2></div>
+    <p class="intro">Quatre modes, sous l'image, dans la forme des segments du produit. Il remplace le
+      <span class="mesure">Avant ›</span> en appui de C4 : quatre régimes explicites valent mieux qu'un
+      coup d'œil qu'on ne peut pas tenir pendant qu'on règle.</p>
+    <div class="quatre">
+      <div class="mode">
+        <div class="mt"><span class="k">1</span>brut</div>
+        <div class="mv"><span class="sq brut">l'origine</span></div>
+        <div class="md">L'image telle qu'elle est revenue du fournisseur. Aucune table ne s'y applique.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">2</span>rendu</div>
+        <div class="mv"><span class="sq">après<br>la recette</span></div>
+        <div class="md">Le défaut. Toutes les tables posées, appliquées dans l'ordre — l'image telle qu'elle
+          partira dans le jeu.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">3</span>côte à côte</div>
+        <div class="mv"><span class="sq brut" style="width:44px">brut</span><span class="sq" style="width:44px">rendu</span></div>
+        <div class="md">Les deux, même échelle, zoom et déplacement synchronisés. Pour juger une silhouette
+          qu'on vient de manger.</div>
+      </div>
+      <div class="mode">
+        <div class="mt"><span class="k">4</span>superposé</div>
+        <div class="mv"><span class="sq">rendu</span><span class="sq brut sur" style="width:52px">brut</span></div>
+        <div class="md">Le rendu dessous, <strong>le brut par-dessus</strong>, opacité réglable au curseur.
+          Pour voir exactement ce que la passe a retiré.</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Deux règles du comparateur</span>
+      <ul>
+        <li><b>Le mode se dit toujours.</b> Il est écrit en clair à côté des segments — <span class="mesure">tu
+          regardes le brut</span> —, parce qu'un mode durable qu'on oublie est très exactement le danger que
+          l'appui de C4 évitait.</li>
+        <li><b>Une table qui se peint force le rendu.</b> Dès que la main touche l'image dans la table
+          <em>la main</em>, le mode revient à <span class="mesure">rendu</span> avec sa raison :
+          <em>on ne peint jamais sur une image qui n'est pas celle qu'on modifie.</em> Sur les tables qui ne
+          se peignent pas, les quatre modes restent libres.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>La table Détourage</h2></div>
+    <p class="intro"><strong><span class="mesure">380px · 1fr · 380px</span></strong> — les passes à gauche,
+      l'image en grand au milieu, les images sœurs à droite ; les deux colonnes se replient et l'image tient
+      alors l'écran. C'est la grille de l'écran Univers en toile, réemployée : aucune largeur neuve.</p>
+
+    <div class="croquis"><div class="inner">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Galerie</span><span class="tab on">Codex</span>
+        <span class="ariane">
+          <a href="#">Cœur de pierre</a><span class="sp">›</span>
+          <a href="#">Personnages</a><span class="sp">›</span>
+          <a href="#">Balthazar</a><span class="sp">›</span>
+          <a href="#">marche · image 3</a><span class="sp">›</span>
+          <span class="ici">Détourage</span>
+        </span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+      </div>
+      <div class="tables">
+        <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
+        <span class="tb"><span class="carre"></span>différence <span class="vl">sans objet</span></span>
+        <span class="tb pose"><span class="carre"></span>recadrage <span class="vl">2 px</span></span>
+        <span class="tb pose"><span class="carre"></span>grille <span class="vl">4 px · 92 %</span></span>
+        <span class="tb"><span class="carre"></span>quantification</span>
+        <span class="tb"><span class="carre"></span>bords</span>
+        <span class="tb"><span class="carre"></span>contours</span>
+        <span class="tb"><span class="carre"></span>la main</span>
+        <span class="tbsep"></span>
+        <span class="tb hors">découpage</span>
+      </div>
+      <div class="wf-corps">
+        <div class="cg">
+          <div class="enpan"><span>détourage</span><span class="def">tout défaire</span></div>
+          <div class="cgcorps">
+            <div class="col-t">les passes · dans leur ordre</div>
+
+            <div class="passe">
+              <div class="ptete"><span class="rg">1</span><span class="nm">depuis le bord</span>
+                <span class="vl">tolérance 42</span><span class="x">×</span></div>
+            </div>
+
+            <div class="passe on">
+              <div class="ptete"><span class="rg">2</span><span class="nm">pipette · #F2EFE6</span>
+                <span class="vl">cette tache</span><span class="x">×</span></div>
+              <div class="pcorps">
+                <div class="rg-reg"><span class="lb">couleur visée</span>
+                  <span class="pastille-c"></span>
+                  <span class="vl" style="flex:1;text-align:left">#F2EFE6</span></div>
+                <div class="segs"><span class="sg on mono">cette tache</span><span class="sg mono">partout</span></div>
+                <div class="rg-reg"><span class="lb">tolérance</span>
+                  <span class="rail"><i style="left:18%"></i></span><span class="vl">18</span></div>
+                <div class="rg-reg"><span class="lb">seuil alpha</span>
+                  <span class="rail"><i style="left:50%"></i></span><span class="vl">128</span></div>
+                <div class="rg-reg"><span class="lb">durcissement</span>
+                  <span class="rail"><i style="left:25%"></i></span><span class="vl">1 px</span></div>
+                <div class="raison">ronger le bord coûte un liseré, ne pas le ronger coûte un halo</div>
+              </div>
+            </div>
+
+            <div class="ajout">
+              <span class="col-t">ajouter une passe</span>
+              <div class="segs">
+                <span class="sg">depuis le bord</span><span class="sg">pipette</span>
+                <span class="sg gris">modèle</span>
+              </div>
+              <div class="raison">— le moteur modèle n'est pas installé sur cette machine</div>
+            </div>
+
+            <div class="propose">
+              <span class="ph">3 poches fermées, 412 px</span>
+              <span class="pa">du fond qu'aucune tolérance n'atteint</span>
+              <span class="pb">Les effacer ›</span>
+            </div>
+
+            <div class="etatcouche"><span>2 passes · alpha 61 %</span>
+              <span class="dr">Sans détourage ›</span></div>
+          </div>
+        </div>
+
+        <div class="centre">
+          <div class="toile">
+            <div class="sujet">l'image, en grand,<br>sur le damier alpha
+              <span class="poche" data-n="1" style="left:28px;top:46px;width:22px;height:30px"></span>
+              <span class="poche" data-n="2" style="left:102px;top:72px;width:18px;height:22px"></span>
+              <span class="poche" data-n="3" style="left:62px;top:138px;width:26px;height:16px"></span>
+              <span class="curseurpip"></span>
+            </div>
+            <span class="jauge"><i></i></span>
+          </div>
+          <div class="sousimage">
+            <span class="mes">512 × 512 · alpha 61 % · 4 taches · boîte 318 × 470</span>
+            <span class="cmp">
+              <span class="sg mono">brut</span><span class="sg on mono">rendu</span>
+              <span class="sg mono">côte à côte</span><span class="sg mono">superposé</span>
+            </span>
+          </div>
+          <div class="sousimage">
+            <span class="mes">passe en cours · ≈ 1,5 s</span>
+            <span class="opac" style="margin-left:auto">
+              <span class="lb">opacité du brut</span><span class="rail"><i style="left:40%"></i></span>
+              <span class="lb">40 %</span></span>
+          </div>
+        </div>
+
+        <div class="cd">
+          <div class="col-t">ses attitudes</div>
+          <div class="gr2">
+            <div class="tu"></div><div class="tu"></div>
+            <div class="tu sel"></div><div class="tu"></div>
+            <div class="tu vd"></div><div class="tu vd"></div>
+          </div>
+          <div class="raison">changer d'image garde la table ouverte — on détoure une série sans jamais
+            remonter</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>non destructif · retour au brut à tout moment</span>
+        <span>aucun appel, aucun coût</span></div>
+    </div></div>
+    <div class="lgd">le curseur de pipette est un cercle en --lumiere sur l'image · les poches trouvées sont cerclées de la même lampe · la jauge se pose sous l'image, jamais dessus</div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ses réglages, un par un</h2></div>
+    <p class="intro">Chaque passe porte <strong>ses propres</strong> réglages — une première passe large
+      dégrossit le fond, une seconde plus serrée nettoie ce qui reste. C'est le modèle actuel, inchangé, plus
+      les deux champs qu'apporte la pipette.</p>
+    <table>
+      <thead><tr><th style="width:20%">Réglage</th><th style="width:22%">Domaine</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">moteur</td><td><span class="m">bord · pipette · modèle</span></td>
+          <td><strong>bord</strong> remplit depuis les quatre bordures — le geste courant, aucun réseau, aucun
+            téléchargement. <strong>pipette</strong> vise une couleur désignée dans l'image.
+            <strong>modèle</strong> pour les images qui n'ont pas été fabriquées ici et n'ont pas de fond
+            plat ; grisé avec sa raison s'il n'est pas installé.</td></tr>
+        <tr><td class="k">couleur visée</td><td><span class="m">hex, cliquée dans l'image</span></td>
+          <td><em>pipette seulement.</em> Le clic pose la couleur ; la pastille l'affiche et le code hex la
+            nomme. Recliquer ailleurs remplace la couleur de la passe — on ne crée pas une passe par clic.</td></tr>
+        <tr><td class="k">portée</td><td><span class="m">cette tache · partout</span></td>
+          <td><em>pipette seulement.</em> <strong>Cette tache</strong> ne retire que la zone connexe sous le
+            curseur — c'est ce qui règle une poche sans toucher au reste. <strong>Partout</strong> retire
+            toutes les zones de cette couleur dans l'image, y compris celles qui touchent le sujet : plus
+            expéditif, plus risqué.</td></tr>
+        <tr><td class="k">tolérance</td><td><span class="m">0 – 255 · défaut 28</span></td>
+          <td>L'écart maximal, par canal, pour qu'un pixel compte comme du fond. Monter mange le sujet ;
+            descendre laisse un halo. Le curseur <strong>pose au relâchement</strong> — vingt-et-un crans, un
+            seul appel — parce qu'un cran coûte 1,5 s de calcul.</td></tr>
+        <tr><td class="k">seuil alpha</td><td><span class="m">0 – 255 · défaut 128</span></td>
+          <td>Au-delà, le pixel appartient au sujet. Il <strong>se durcit avant la réduction, jamais
+            après</strong> : un contour à demi transparent est tranché à pile ou face par un
+            rééchantillonnage au plus proche voisin, et la quantification le ressort <em>opaque, de la couleur
+            du fond</em> — c'est le liseré clair autour du sprite.</td></tr>
+        <tr><td class="k">durcissement</td><td><span class="m">0 – 4 px · défaut 0</span></td>
+          <td>Combien de pixels de bord sont rongés après le seuil. Ce qui reste d'un halo, c'est un ou deux
+            pixels de contour à la couleur du fond : les ronger coûte un liseré de sprite, ne pas les ronger
+            coûte un halo. Le réglage existe pour que l'auteur tranche image par image.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce qu'elle mesure, ce qu'elle propose, ce qu'elle défait</h2></div>
+    <div class="note">
+      <span class="lab">Les quatre mesures sous l'image</span>
+      <p><span class="mesure">512 × 512</span> les dimensions · <span class="mesure">alpha 61 %</span> la part
+        opaque de l'image · <span class="mesure">4 taches</span> le nombre de zones opaques distinctes —
+        au-delà de une, il reste probablement des miettes · <span class="mesure">boîte 318 × 470</span> ce que
+        le recadrage prendra si on l'active. Toutes en mono, toutes des faits mesurés, aucune n'est un
+        verdict.</p>
+    </div>
+    <div class="note">
+      <span class="lab">La proposition — et elle n'agit jamais seule</span>
+      <p>Après chaque passe <em>depuis le bord</em>, l'atelier balaie les composantes connexes et cherche les
+        zones de fond entièrement enfermées par le sujet. Il les cercle en
+        <span class="mesure">--lumiere</span>, les compte, et dit combien de pixels ça représente. Il attend
+        un clic — <strong>il n'efface rien</strong>. Le calcul ne touche ni le fournisseur ni le réseau et
+        marche coupé.</p>
+      <p>Cliquer <span class="mesure">Les effacer ›</span> <strong>ajoute une passe</strong> à la liste, comme
+        n'importe quelle autre : nommée <em>poches · 3 zones</em>, annulable, rejouable. Rien n'arrive à
+        l'image par un chemin qui ne se voit pas dans la colonne.</p>
+    </div>
+    <div class="note">
+      <span class="lab">Défaire — deux échelles, deux endroits</span>
+      <p>Le <span class="mesure">×</span> d'une passe retire cette passe-là. <span class="mesure">Sans
+        détourage ›</span>, en pied de colonne, vide la table entière — c'est la rangée d'état d'une couche de
+        C4, à la même place et dans la même forme sur toutes les tables. Et
+        <span class="mesure">tout défaire</span>, dans l'en-tête, vide <em>la recette entière</em> : c'est le
+        seul geste qui touche les autres tables, donc le seul qui vive dans l'en-tête et pas dans le pied.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>La table Contours — sa place est réservée</h2></div>
+    <p class="intro">Elle entre dans la barre <strong>entre <em>bords</em> et <em>la main</em></strong>, et
+      cette place n'est pas arbitraire : un contour se trace sur la silhouette définitive, donc après tout ce
+      qui la change — recadrage, grille, nettoyage des taches ; et <strong>après la quantification</strong>,
+      pour que sa couleur soit exactement celle qu'on a choisie et non une approximation de la palette. Seule
+      <em>la main</em> vient après, parce qu'elle porte sur l'image telle qu'elle partira.</p>
+    <table>
+      <thead><tr><th style="width:20%">Réglage</th><th style="width:26%">Domaine</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td class="k">épaisseur</td><td><span class="m">1 – 8 px</span></td>
+          <td>En pixels de l'image rendue — donc en <em>blocs</em> quand la table grille est posée, ce qui est
+            le cas voulu : un contour de 2 px sur un sprite à 4 px de bloc doit faire deux blocs, pas deux
+            pixels d'écran.</td></tr>
+        <tr><td class="k">couleur</td><td><span class="m">hex · défaut noir</span></td>
+          <td>Le champ propose les couleurs de la palette du projet quand elle existe — préremplies, avec leur
+            provenance, et modifiables.</td></tr>
+        <tr><td class="k">position</td><td><span class="m">externe · interne · centré</span></td>
+          <td><strong>externe</strong> agrandit la silhouette de l'épaisseur — le sujet n'est pas entamé, mais
+            la boîte grandit. <strong>interne</strong> mange le sujet et garde la boîte.
+            <strong>centré</strong> partage. C'est le seul des trois qui change les dimensions du rendu, et la
+            mesure sous l'image le dira.</td></tr>
+      </tbody>
+    </table>
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Ce qu'elle demandera de trancher, dans sa propre maquette</span>
+      <p>Sur quelles zones : <em>toutes les zones opaques</em>, ou seulement celles au-dessus d'une aire
+        minimale ? Un contour tracé autour de trois miettes ferait trois taches noires. La table
+        <em>bords</em> la précède justement pour ça, mais elle peut être vide.</p>
+      <p>Et si le contour suit les trous : une boucle de ceinture détourée est un trou dans la silhouette —
+        faut-il la cercler aussi ? Le style « contour noir 2 px » dit probablement oui, mais c'est un réglage,
+        pas une évidence.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 8 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>La suite — une maquette par table</h2></div>
+    <p class="intro">Chacune sur ce gabarit : la barre, le fil, le comparateur, <span class="mesure">380 · 1fr
+      · 380</span>. Ce qui change d'une table à l'autre est <strong>uniquement le contenu de la colonne de
+      gauche et ce que la main fait sur l'image</strong>.</p>
+    <div class="suite">
+      <div class="jalon ici"><div class="code">M3 · ici</div><div class="nom">Détourage</div>
+        <div class="quoi">Les passes, la pipette, les poches. Et le châssis commun à toutes.</div></div>
+      <div class="jalon"><div class="code">M4</div><div class="nom">Contours</div>
+        <div class="quoi">La table neuve — épaisseur, couleur, externe / interne / centré.</div></div>
+      <div class="jalon"><div class="code">M5</div><div class="nom">La main</div>
+        <div class="quoi">La gomme au pixel, les trois diamètres, le masque.</div></div>
+      <div class="jalon"><div class="code">M6 →</div><div class="nom">Les cinq autres</div>
+        <div class="quoi">Recadrage, grille, quantification, bords, découpage.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 3, la table Détourage · 29 août 2026 · rien n'est encore écrit dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

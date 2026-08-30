@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, les trois étages de réglages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  h4{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:26px 0 10px}
+
+  /* ── Les trois étages ───────────────────────────────────────────── */
+  .etages{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;align-items:stretch}
+  .etage{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:17px 18px;
+    display:flex;flex-direction:column}
+  .etage .n{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em;margin-bottom:10px}
+  .etage.neuf{border-color:var(--signal);background:var(--signal-sourd)}
+  .etage.neuf .n{color:var(--signal-clair)}
+  .etage h3{font-size:27px;margin-bottom:9px}
+  .etage .quoi{font-size:12.5px;color:var(--texte-2);line-height:1.5;margin:0 0 12px}
+  .etage .cle{margin-top:auto;border-top:1px solid var(--bord);padding-top:10px;
+    font-size:11.5px;color:var(--texte-3);line-height:1.45}
+  .etage .cle b{color:var(--signal-clair);font-weight:500}
+  .fleche{display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);letter-spacing:.08em;
+    margin:14px 0 0;text-align:center}
+
+  /* ── Marques de la cascade ──────────────────────────────────────── */
+  .mk{display:inline-block;width:11px;height:11px;border-radius:1px;vertical-align:-1px;position:relative}
+  .mk-h{border:1px solid var(--bord);background:transparent}
+  .mk-p{border:1px solid var(--signal);background:var(--signal)}
+  .mk-e{border:1px solid var(--bord-fort);background:transparent}
+  .mk-e::after{content:"";position:absolute;left:-1px;top:4px;width:11px;height:1px;
+    background:var(--echec)}
+  .mk-v{border:1px solid var(--bord);
+    background:repeating-linear-gradient(45deg,var(--fond-3) 0 2px,transparent 2px 4px)}
+
+  /* ── Grille de démonstration ────────────────────────────────────── */
+  .casc{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);overflow-x:auto}
+  table.cg{border-collapse:collapse;font-size:11.5px;min-width:100%}
+  table.cg th{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--texte-3);font-weight:500;padding:9px 0 8px;border-bottom:1px solid var(--bord);
+    text-align:center;width:38px;white-space:nowrap}
+  table.cg th.lab{text-align:left;width:auto;min-width:250px;padding-left:14px}
+  table.cg th.imp{background:var(--fond-2)}
+  table.cg td{padding:0;border-bottom:1px solid var(--bord);text-align:center;height:30px}
+  table.cg td.lab{text-align:left;padding-left:14px;color:var(--texte-2);font-size:12px}
+  table.cg td.imp{background:var(--fond-2)}
+  table.cg tr:last-child td{border-bottom:0}
+  table.cg tr.projet td{background:var(--fond-3)}
+  table.cg tr.projet td.lab{color:var(--texte);font-weight:600}
+  table.cg tr.amb td.lab{color:var(--signal-clair)}
+  table.cg td.lab .ind{display:inline-block;width:16px}
+  table.cg td.lab .ind2{display:inline-block;width:32px}
+  table.cg td.lab .nat{font-family:var(--mono);font-size:9px;color:var(--texte-3);margin-left:7px}
+  .lgd{margin-top:12px;display:flex;flex-wrap:wrap;gap:18px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.o{color:var(--texte)}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.tag{white-space:nowrap;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em}
+  .tag-i{color:var(--epingle)}
+  .tag-p{color:var(--signal)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note p:last-child{margin-bottom:0}
+
+  .deux{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .boite{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .boite .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:9px}
+  .boite p{font-size:12.5px;color:var(--texte-2);margin:0 0 8px}
+  .boite p:last-child{margin-bottom:0}
+
+  ul{margin:0 0 12px;padding-left:18px;max-width:78ch;color:var(--texte-2)}
+  li{margin-bottom:6px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · le modèle des réglages</div>
+    <h1>Trois étages de réglages,<br><em>et qui gagne quand ils se contredisent</em></h1>
+    <p>Un réglage, dans ce produit, c'est ce qui décide de quoi une image aura l'air avant même qu'on
+      la demande : les mots de style qui partent dans le prompt, la palette sur laquelle les pixels
+      sont ramenés, le modèle qu'on appelle, la taille à laquelle tout est réduit.</p>
+    <p>Jusqu'ici ces réglages vivaient à un seul endroit — le projet — et s'appliquaient à tout.
+      Ce document en ajoute deux en dessous : <strong>l'ambiance</strong>, qu'un groupe d'entités
+      partage, et <strong>l'entité</strong> elle-même. Il dit ce que chaque étage a le droit de
+      changer, ce qu'aucun n'a le droit de toucher, et comment on lit le résultat.</p>
+    <p class="sourd">Ce fichier ne dessine aucun écran. C'est <b>06bis-univers.html</b> qui montre à quoi
+      tout ça ressemble et où ça se règle.</p>
+  </div>
+
+  <!-- ═══ 1 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Les trois étages</h2></div>
+    <p class="intro">Trois, exactement. Une entité appartient à <strong>au plus une</strong> ambiance,
+      et les ambiances ne s'emboîtent pas. Un réglage a donc toujours au plus trois provenances
+      possibles — c'est ce qui permet de tout montrer dans un tableau lisible d'un coup d'œil, et de
+      n'avoir aucune règle de priorité à retenir.</p>
+
+    <div class="etages">
+      <div class="etage">
+        <div class="n">étage 1 · existe déjà</div>
+        <h3>Le projet</h3>
+        <p class="quoi">C'est <em class="it">l'univers</em> du jeu : la bible en sept champs, la palette,
+          la taille de pixel, le barème d'échelles, les modèles par famille, le plan de poses. Un seul
+          par jeu. Il ne se choisit pas — tout ce qu'on fabrique lui appartient.</p>
+        <div class="cle">Aucun changement de nature : <b>Projet et Univers restent une seule et même
+          chose</b>, comme le dit déjà le modèle d'objets.</div>
+      </div>
+      <div class="etage neuf">
+        <div class="n">étage 2 · objet neuf</div>
+        <h3>L'ambiance</h3>
+        <p class="quoi">Un coin du monde qui ne ressemble pas au reste, et que plusieurs choses
+          partagent. « Marais de cendre » : le décor du marais, les créatures qui y vivent, les objets
+          qu'on y trouve. On la nomme, on lui donne des mots de style et une palette, et les entités
+          s'y rattachent.</p>
+        <div class="cle">C'est <b>le seul objet ajouté</b> par ce document. Elle peut prendre sa palette
+          d'un îlot de la toile — mais elle n'est pas cet îlot.</div>
+      </div>
+      <div class="etage">
+        <div class="n">étage 3 · existe déjà</div>
+        <h3>L'entité</h3>
+        <p class="quoi">Une chose du jeu : un personnage, une créature, un décor, un objet, un élément
+          d'interface. Elle peut poser ses propres réglages, qu'elle ait une ambiance ou non — le héros
+          dont la cape est d'un rouge que rien d'autre ne porte.</p>
+        <div class="cle">Elle gagne <b>un champ</b> — son ambiance — et le droit de poser les réglages
+          que l'étage du dessus lui laisse.</div>
+      </div>
+    </div>
+
+    <div class="fleche">projet &nbsp;↓&nbsp; ambiance &nbsp;↓&nbsp; entité &nbsp;&nbsp;·&nbsp;&nbsp; on descend, et le dernier qui pose quelque chose gagne</div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Une ambiance qui ne sert qu'à une entité n'apporte rien</span>
+      <p>Si un seul personnage doit avoir un style à lui, <strong>ses réglages vont sur lui</strong>, pas
+        dans une ambiance. L'étage du milieu existe uniquement pour ce que <em class="it">plusieurs</em>
+        entités partagent — sinon il ajoute un objet à créer, à nommer et à supprimer sans rien donner
+        en échange. La palette d'un îlot de la toile peut très bien remplir directement les réglages
+        d'une entité : ça ne demande aucune ambiance.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qui s'impose, et ce qui se propose</h2></div>
+    <p class="intro">Tous les réglages ne se valent pas. Certains sont ce qui fait que les images d'un
+      même jeu vont ensemble et rentrent dans le moteur : si une entité pouvait s'en écarter, elle
+      produirait des fichiers inutilisables, et on ne s'en apercevrait qu'à l'export. Ceux-là
+      <strong>s'imposent</strong> — aucun étage du dessous ne peut les toucher. Tout le reste
+      <strong>se propose</strong> : le projet donne une valeur de départ, et ce qui est en dessous peut
+      la remplacer.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:180px">Réglage</th><th style="width:105px">Nature</th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>La taille de pixel</b>, et la forme de la case</td>
+            <td class="tag tag-i">s'impose</td>
+            <td>C'est ce qui met tout le monde au même grain : un tonneau rendu sur 16 px et un
+              personnage rendu sur 8 px ressortent identiquement fins. Une entité qui s'en échappe
+              fabrique un sprite qui ne rentre pas dans le jeu, et la panne ne se voit qu'à l'export.</td></tr>
+        <tr><td class="o"><b>Le type de jeu</b> et sa liste de directions</td>
+            <td class="tag tag-i">s'impose</td>
+            <td>Le jeu déclare une fois comment il regarde le monde, et toutes les poses s'y conforment
+              — c'est déjà acquis dans <code>05-codex.html</code> § 05. Sans ça, deux personnages du
+              même jeu ne se comparent plus ligne à ligne, ce à quoi un plan commun sert exactement.
+              Une pose peut en tenir <em class="it">moins</em> — la mort n'a souvent qu'une direction —
+              mais aucune n'en invente d'autres.</td></tr>
+        <tr><td class="o"><b><code>rendu</code></b> — pixel art, dessin, peinture…</td>
+            <td class="tag tag-i">s'impose</td>
+            <td>Un jeu en pixel art n'a pas un personnage dessiné à la main. Ce champ nomme le médium
+              dont <code>trait</code> et <code>eclairage</code> ne sont que le détail — et ces deux-là,
+              eux, se remplacent librement.</td></tr>
+        <tr><td class="o"><code>monde</code>, <code>epoque</code>, <code>trait</code>,
+              <code>eclairage</code>, <code>vue</code>, <code>technique</code></td>
+            <td class="tag tag-p">se propose</td>
+            <td>Les six autres champs de la bible. Un personnage venu d'ailleurs a le droit de contredire
+              le <code>monde</code> du projet ; un portrait de dialogue a le droit d'échapper à la
+              <code>vue</code> du jeu.</td></tr>
+        <tr><td class="o"><b>La palette</b> et le nombre de couleurs</td>
+            <td class="tag tag-p">se propose</td>
+            <td>C'est le besoin qui a lancé tout ce document : un biome a ses couleurs, un héros a la
+              sienne. Voir § 06 — elle ne se propose pas comme un texte, mais comme une recette.</td></tr>
+        <tr><td class="o"><b>Le modèle</b> appelé</td>
+            <td class="tag tag-p">se propose</td>
+            <td>Il se pose déjà par famille sur le projet. Une ambiance ou une entité peut poser le sien
+              — un décor de marais peut mériter un autre modèle que les personnages du même jeu.</td></tr>
+        <tr><td class="o"><b>L'occupation</b> de la case</td>
+            <td class="tag tag-p">se propose,<br>mais pas ici</td>
+            <td>Elle descend par <em class="it">l'autre axe</em> — voir § 03. Elle se pose par nature de
+              sujet sur le projet, et se reprend à la main sur les poses d'un personnage au calibrage.
+              Elle ne passe pas par l'ambiance : une épée occupe 40 % de sa case parce que c'est un
+              objet tenu, pas parce qu'elle vient du marais.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Ce que cette ligne résout au passage, et qui n'est écrit nulle part</span>
+      <p>Le champ <code>vue</code> de la bible (« <em class="it">View and framing</em> ») et le
+        <strong>type de jeu</strong> de <code>05-codex.html</code> § 05 — vue de dessus 4, latéral 2,
+        isométrique 8 — se recouvrent : les deux disent d'où on regarde le monde. Le dépôt s'interdit
+        explicitement deux vérités sur la même chose, parce qu'elles finissent par diverger.</p>
+      <p>La ligne ci-dessus les sépare pour de bon. <strong>Le type de jeu s'impose</strong> : il décide
+        des cases que chaque pose doit remplir, c'est une contrainte de production.
+        <strong><code>vue</code> se propose</strong> : c'est une consigne de cadrage envoyée au modèle,
+        qu'un portrait ou une icône d'interface a le droit de contredire. Ce ne sont plus deux vérités
+        sur la même chose, ce sont deux réglages de nature différente. <b>Reste à l'écrire dans le
+        domaine</b> — rien ne le dit aujourd'hui.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 3 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>L'autre axe, celui qui existait déjà</h2></div>
+    <p class="intro">Le projet cascade déjà, mais par une voie différente de celle de ce document. Il
+      faut les distinguer, sinon la vue d'ensemble ment sur ce qui décide vraiment.</p>
+
+    <div class="deux">
+      <div class="boite">
+        <div class="t">L'axe de la nature — il existe déjà</div>
+        <p><strong>Ce que la chose <em class="it">est</em>.</strong> Le projet porte un barème de sept
+          natures de sujet : personnage, créature, meuble, objet posé, objet tenu, décor, élément
+          d'interface. Chacune fixe la part de la case que le sujet remplit, et s'il se découpe ou non.
+          Le projet porte aussi un modèle par famille.</p>
+        <p class="sourd">Fermé, technique, en place depuis T4. Voir
+          <code>atelier/domaine/projet.py</code>.</p>
+      </div>
+      <div class="boite">
+        <div class="t">L'axe de l'appartenance — il est neuf</div>
+        <p><strong>D'où la chose <em class="it">vient</em>.</strong> L'ambiance, et les réglages que
+          l'entité pose elle-même. Ouvert : on crée les ambiances qu'on veut, on les nomme comme on
+          veut, et une entité peut n'en avoir aucune.</p>
+        <p class="sourd">C'est ce que ce document ajoute.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:18px">Les deux ne se concurrencent jamais, parce qu'ils ne décident pas des
+      mêmes choses. <strong>Une épée rouillée du marais tire son occupation de sa nature</strong> —
+      40 %, parce que c'est un objet tenu — <strong>et sa palette de son appartenance</strong> — les
+      gris cendreux, parce qu'elle vient du marais. Aucun réglage n'est réclamé par les deux axes à la
+      fois.</p>
+    <p>La conséquence pour la vue d'ensemble : elle doit montrer <strong>les deux</strong>. Une cascade
+      qui ne montrerait que l'appartenance laisserait croire que l'occupation vient du projet sans
+      exception, alors que le calibrage l'a peut-être déjà reprise pose par pose.</p>
+  </section>
+
+  <!-- ═══ 4 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Les trois états d'un champ de style</h2></div>
+    <p class="intro">La bible est déjà découpée en sept champs séparés, et pour cette raison précise :
+      <em class="it">« chacun s'active indépendamment, donc on peut relâcher le trait sans relâcher le
+      monde »</em>. Chaque champ porte déjà, dans le code, un texte <b>et</b> un interrupteur. La
+      cascade se contente de reprendre ces deux-là à chaque étage.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:160px">État</th><th style="width:140px">Ce qu'on voit</th><th>Ce que ça fait</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>Hérité</b></td>
+            <td><span class="mk mk-h"></span> &nbsp;case vide</td>
+            <td>Rien n'est posé à cet étage. Le texte de l'étage au-dessus passe tel quel. C'est l'état
+              par défaut de tous les champs de tous les étages du bas : une ambiance neuve et une entité
+              neuve n'écrasent rien.</td></tr>
+        <tr><td class="o"><b>Remplacé</b></td>
+            <td><span class="mk mk-p"></span> &nbsp;case pleine</td>
+            <td>Un texte est écrit ici. Il prend la place de celui du dessus, entièrement — il ne s'y
+              ajoute pas. C'est ce qui permet de <em class="it">contredire</em> le projet : envoyer
+              « royaume de fantasy » et « désert de verre » dans le même prompt ne donnerait ni l'un ni
+              l'autre.</td></tr>
+        <tr><td class="o"><b>Éteint</b></td>
+            <td><span class="mk mk-e"></span> &nbsp;case barrée</td>
+            <td>Ce champ ne part pas, pour cette entité-là. Ce n'est pas la même chose qu'un texte vide :
+              c'est un refus explicite du texte du dessus. Éteindre <code>eclairage</code> sur une icône
+              d'interface l'empêche de recevoir la lumière rasante du jeu.</td></tr>
+        <tr><td class="o"><b>Verrouillé</b><br><span class="sourd">pas un état, une nature</span></td>
+            <td><span class="mk mk-v"></span> &nbsp;case hachurée</td>
+            <td>Le réglage s'impose (§ 02). La case n'accepte rien, et le dit avec sa raison plutôt que
+              de laisser essayer. C'est la discipline du produit ailleurs : un réglage inopérant est
+              <em class="it">grisé avec sa raison</em>, jamais absent.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>La règle de résolution, en une phrase</h4>
+    <p style="font-size:15px;color:var(--texte);max-width:70ch">Pour chaque réglage qui se propose, on
+      descend <strong>projet → ambiance → entité</strong>, et <strong>le dernier étage qui pose quelque
+      chose gagne</strong> — qu'il pose un texte ou qu'il éteigne.</p>
+    <p>Il n'y a rien d'autre à retenir. Pas d'ordre de priorité entre plusieurs parents, puisqu'il n'y
+      en a qu'un ; pas de fusion de textes, puisqu'on remplace ; pas de cas où deux étages gagnent en
+      même temps.</p>
+
+    <div class="note">
+      <span class="lab">Un étage du bas peut rallumer ce que le haut a éteint</span>
+      <p>Si le projet éteint <code>technique</code> et qu'une entité y écrit un texte, ce texte part.
+        Poser un texte, c'est allumer. Sans ça, éteindre un champ au projet serait irréversible pour
+        tout le monde en dessous — et on se retrouverait à devoir supprimer un réglage
+        <em class="it">en haut</em> pour débloquer une exception <em class="it">en bas</em>, ce qu'une
+        cascade doit précisément éviter.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 5 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>L'ambiance — ce qu'elle est, ce qu'elle porte</h2></div>
+    <p class="intro">Un objet ajouté au modèle. La barre est haute pour ça : depuis T4, seuls deux
+      objets ont été ajoutés en tout — le lien de la toile, et le personnage. Ce qui justifie un objet
+      plutôt qu'un simple champ, c'est <strong>ce qu'aucun objet existant ne peut porter</strong>. Ici :
+      un jeu de réglages partagé par plusieurs entités, nommé, et qui survit au rangement de la toile.</p>
+
+    <div class="deux">
+      <div class="boite">
+        <div class="t">Ce qu'elle porte</div>
+        <p><b>Un nom.</b> C'est par lui qu'elle se désigne et qu'elle paraît dans la cascade.</p>
+        <p><b>Les six champs de style qui se proposent</b>, chacun dans l'un des trois états du § 04.</p>
+        <p><b>Une palette</b>, sous forme de recette — § 06.</p>
+        <p><b>Un modèle</b>, facultatif.</p>
+      </div>
+      <div class="boite">
+        <div class="t">Ce qu'elle ne porte pas</div>
+        <p><b>La taille de pixel, la case, le type de jeu, les directions, <code>rendu</code></b> — ils
+          s'imposent, § 02.</p>
+        <p><b>L'occupation</b> — elle passe par l'axe de la nature, § 03.</p>
+        <p><b>Aucune image à elle.</b> Une ambiance ne produit rien et ne contient rien. Elle règle.</p>
+      </div>
+    </div>
+
+    <h4>Comment une entité s'y rattache</h4>
+    <p>Par un champ sur l'entité, qui nomme son ambiance — pas par un lien de la toile. Un lien de toile
+      relie deux choses <em class="it">visuellement</em>, sur un plan qu'on compose à la main ; ici on
+      déclare une appartenance qui décide de ce qui part dans un prompt. Ce sont deux gestes différents,
+      et les confondre ferait qu'un trait tiré pour se souvenir de quelque chose changerait les réglages
+      d'une entité.</p>
+    <p><strong>Supprimer une ambiance ne casse rien</strong> : ses entités retombent sur le projet. Il
+      n'y a pas de trou, seulement un réglage qu'on n'a plus posé — c'est déjà la façon dont le produit
+      traite un modèle absent ou une palette absente.</p>
+
+    <h4>Le lien avec un îlot de la toile</h4>
+    <p>Une ambiance peut <strong>désigner un îlot</strong> — un groupe d'images épinglées ensemble sur la
+      toile d'inspiration — <strong>comme source de sa palette</strong>. On pose ses images du marais
+      côte à côte, on les groupe, on dit à l'ambiance « prends tes couleurs là-dedans ».</p>
+    <p>Mais l'ambiance <em class="it">lit</em> l'îlot, elle ne le <em class="it">devient</em> pas, et
+      c'est la décision qui protège les deux. Un îlot est un geste de composition : on rapproche trois
+      images pour voir si elles vont ensemble. Il n'a pas d'identité propre — il <em class="it">est</em>
+      le nom de groupe écrit sur ses cartes — et <strong>il disparaît avec sa dernière carte</strong>.
+      Si les réglages vivaient dessus, ranger la toile effacerait une palette et six champs de style.</p>
+    <p>Conséquence à assumer : <strong>un îlot désigné peut disparaître sous une ambiance.</strong> Elle
+      garde alors sa palette — c'est un cache, il ne s'évapore pas — et affiche que sa source n'existe
+      plus, sans rien recalculer et sans rien effacer.</p>
+  </section>
+
+  <!-- ═══ 6 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>La palette n'est pas une liste, c'est une recette</h2></div>
+    <p class="intro">C'est le point le plus délicat du document, parce qu'il touche une règle que le
+      dépôt a écrite noir sur blanc.</p>
+
+    <div class="note att">
+      <span class="lab">La règle qu'on ne veut pas casser</span>
+      <p>Aujourd'hui la palette d'un projet <strong>ne se saisit jamais</strong> : elle se calcule à
+        partir des artworks officiels, et elle est rangée comme un cache avec l'empreinte de ce dont
+        elle est la lecture. Promouvoir un artwork, en retirer un, ou changer le nombre de couleurs
+        invalide l'empreinte, donc recalcule. La raison est écrite dans le code :
+        <em class="it">« la palette est dérivable des artworks — la garder telle quelle serait une
+        seconde vérité, et deux vérités sur la même chose finissent par diverger »</em>.</p>
+      <p>Pouvoir retirer une couleur, en ajouter une, doser entre deux palettes et finir à la main
+        <strong>casse cette règle si la palette devient une liste qu'on édite</strong> : elle cesserait
+        de suivre ses sources, et promouvoir un nouvel artwork ne changerait plus rien.</p>
+    </div>
+
+    <p style="margin-top:18px">Le produit a déjà exactement le motif qui s'en sort, et il l'applique
+      partout ailleurs : <strong>on garde la source et la recette, le résultat est un cache
+      effaçable.</strong> C'est le brut / recette / rendu d'une image, appliqué à la palette. Recalculer
+      coûte des millisecondes ; rien n'est perdu.</p>
+
+    <table class="t" style="margin-top:18px">
+      <thead><tr><th style="width:170px">La recette, en trois parties</th><th>Ce que ça contient</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>1 · Les sources</b></td>
+            <td>Les images dans lesquelles les couleurs se lisent. Au projet, ce sont les artworks
+              officiels — c'est déjà le cas aujourd'hui. Sur une ambiance, l'îlot qu'elle désigne. Sur
+              une entité, ses images de référence, que <code>05-codex.html</code> prévoit déjà. On peut
+              désigner plusieurs sources, y compris celles de l'étage du dessus.</td></tr>
+        <tr><td class="o"><b>2 · La fusion</b><br><span class="sourd">deux rails</span></td>
+            <td><b>La proportion</b> — combien de couleurs viennent d'où. Sur 24 couleurs : 8 du projet,
+              16 de l'ambiance. Chaque couleur du résultat est authentiquement l'une de celles d'une
+              source, donc chaque pastille sait exactement d'où elle vient.
+              <br><br><b>L'attraction</b> — de combien elles se rapprochent. Chaque couleur de l'ambiance
+              est tirée vers la plus proche du projet, de 0 à 100 %. C'est ce qui
+              <em class="it">harmonise</em> : le marais reste un marais, mais il respire l'air du jeu.
+              À 0 %, rien ne bouge.
+              <br><br>Deux rails et non un : ce sont deux questions différentes — combien viennent d'où,
+              et de combien elles se rapprochent. Les confondre en un seul rendrait le résultat
+              imprévisible.</td></tr>
+        <tr><td class="o"><b>3 · Les retouches</b></td>
+            <td>Des gestes rangés un par un : <b>retirer</b> cette couleur, <b>ajouter</b> celle-ci,
+              <b>remplacer</b> celle-là. Rangés et non fondus dans le résultat, pour trois raisons :
+              chacun s'annule seul, chacun se voit dans la vue d'ensemble, et le tout se rejoue si une
+              source change.</td></tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:18px"><strong>L'empreinte du cache couvre les trois</strong> — les sources, les
+      deux rails, et la liste des retouches. Changer n'importe lequel invalide la palette rendue, qui se
+      recalcule. C'est le même mécanisme qu'aujourd'hui, avec plus de choses dedans.</p>
+    <p><strong>Ce que ça préserve, et qui était le vrai enjeu :</strong> promouvoir un nouvel artwork
+      officiel se propage encore, jusqu'en bas, même à travers une ambiance retouchée à la main. Et
+      chaque pastille de la palette peut dire d'où elle vient — du projet, de l'ambiance, ou de la main.</p>
+
+    <div class="note mes">
+      <span class="lab">À mesurer avant de fermer la liste des modes</span>
+      <p>Le banc <code>essais/essai_couleurs_et_taches.py</code> existe, il ne coûte rien, et il tourne
+        sur les images déjà présentes. Il a déjà trouvé une chose que personne ne soupçonnait :
+        <strong>le nombre de couleurs de la quantification ne fait rien dès qu'une palette est
+        posée</strong> — le PNG sort identique à l'octet près à 2, 8, 24 et 256 couleurs.</p>
+      <p>Le même piège guette ici. Deux réglages de fusion peuvent très bien rendre le même fichier.
+        <strong>La proportion et l'attraction sont retenues parce qu'elles répondent à deux questions
+        distinctes, pas parce qu'on a mesuré qu'elles diffèrent.</strong> Avant d'implémenter : étendre
+        le banc, balayer les deux rails sur les images du dépôt, compter les résultats réellement
+        distincts. Un rail qui ne changerait rien se griserait avec sa raison, comme la marge du
+        recadrage et le nombre de couleurs de la quantification l'ont déjà fait.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Un exemple complet, lu ligne à ligne</h2></div>
+    <p class="intro">Le projet <em class="it">Cœur de pierre</em>, une ambiance, cinq entités. C'est la
+      forme que prendra la vue d'ensemble ; <code>06bis-univers.html</code> § 02 la dessine pour de bon,
+      avec ses gestes.</p>
+
+    <div class="casc">
+      <table class="cg">
+        <thead>
+          <tr>
+            <th class="lab">Étage</th>
+            <th class="imp">px</th><th class="imp">dir.</th><th class="imp">rendu</th>
+            <th>monde</th><th>époq.</th><th>trait</th><th>éclair.</th><th>vue</th><th>tech.</th>
+            <th>palette</th><th>coul.</th><th>modèle</th><th>occup.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="projet">
+            <td class="lab">Cœur de pierre <span class="nat">le projet</span></td>
+            <td class="imp"><span class="mk mk-p"></span></td><td class="imp"><span class="mk mk-p"></span></td><td class="imp"><span class="mk mk-p"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+          </tr>
+          <tr>
+            <td class="lab"><span class="ind"></span>Balthazar <span class="nat">personnage · sans ambiance</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-p"></span></td>
+          </tr>
+          <tr>
+            <td class="lab"><span class="ind"></span>Prêtresse <span class="nat">personnage · sans ambiance</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+          </tr>
+          <tr class="amb">
+            <td class="lab"><span class="ind"></span>Marais de cendre <span class="nat">une ambiance</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-v"></span></td>
+          </tr>
+          <tr>
+            <td class="lab"><span class="ind2"></span>Le marais <span class="nat">décor</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td>
+          </tr>
+          <tr>
+            <td class="lab"><span class="ind2"></span>Rôdeur des vases <span class="nat">créature</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-e"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+          </tr>
+          <tr>
+            <td class="lab"><span class="ind2"></span>Épée rouillée <span class="nat">objet tenu</span></td>
+            <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+            <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="lgd">
+      <span><span class="mk mk-p"></span> &nbsp;<b>posé ici</b></span>
+      <span><span class="mk mk-h"></span> &nbsp;<b>hérité de l'étage du dessus</b></span>
+      <span><span class="mk mk-e"></span> &nbsp;<b>éteint ici — ce champ ne part pas</b></span>
+      <span><span class="mk mk-v"></span> &nbsp;<b>verrouillé — le réglage s'impose</b></span>
+      <span>les trois premières colonnes sont l'étage imposé</span>
+    </div>
+
+    <h4>Ce que ce tableau dit, et qu'aucun écran ne dit aujourd'hui</h4>
+    <ul>
+      <li><strong>Le marais change trois choses et pas plus</strong> — <code>monde</code>,
+        <code>eclairage</code> et sa palette. Tout le reste vient du projet, donc les images du marais
+        restent des images de <em class="it">ce</em> jeu.</li>
+      <li><strong>Le rôdeur des vases éteint <code>technique</code></strong> et rien d'autre. Une seule
+        case barrée dans toute la grille : c'est visible, donc c'est explicable.</li>
+      <li><strong>L'épée rouillée ne pose rien du tout.</strong> Elle hérite du marais, qui hérite du
+        projet. Sa ligne est vide, et c'est le bon état — elle n'est pas « pas encore réglée ».</li>
+      <li><strong>Balthazar pose une palette et une occupation sans avoir d'ambiance.</strong> C'est le
+        cas courant, et c'est ce que devient l'exemple du « personnage qui a ses propres réglages ».
+        Son occupation vient du calibrage, sur l'autre axe.</li>
+      <li><strong>La Prêtresse ne pose rien.</strong> Elle prend le jeu tel qu'il est, et sa ligne vide
+        le dit mieux qu'une phrase.</li>
+    </ul>
+    <p>Et une lecture que seule la vue d'ensemble permet : <strong>si quatre entités avaient toutes
+      remplacé <code>trait</code> par le même texte, ce serait le signe qu'il aurait dû monter d'un
+      étage.</strong> Une colonne pleine de cases pleines est un réglage mal placé.</p>
+  </section>
+
+  <!-- ═══ 8 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que ça coûte au modèle d'objets</h2></div>
+    <p class="intro">Écrit franchement, parce que le dépôt tient une barre haute là-dessus : depuis T4,
+      seuls deux objets ont été ajoutés en tout — le lien de la toile, et le personnage.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:215px">Ce qui change</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>Un objet neuf : l'ambiance</b></td>
+            <td>Un nom, six champs de style, une recette de palette, un modèle facultatif, et le nom de
+              l'îlot qu'elle lit. Elle appartient à un projet. C'est le troisième objet ajouté depuis
+              T4.</td></tr>
+        <tr><td class="o"><b>Un champ sur l'entité</b></td>
+            <td>Le nom de son ambiance, ou rien. Plus les six champs de style et sa recette de palette —
+              les mêmes qu'une ambiance porte.</td></tr>
+        <tr><td class="o"><b>La palette gagne une structure</b></td>
+            <td>Elle passe d'un couple <em class="it">(liste de couleurs, empreinte)</em> à une recette
+              en trois parties. Le changement touche les trois étages, mais le mécanisme du cache par
+              empreinte est déjà là et ne bouge pas.</td></tr>
+        <tr><td class="o"><b>Une nature déclarée sur chaque réglage</b></td>
+            <td>« S'impose » ou « se propose ». C'est ce qui permet de verrouiller une case avec sa
+              raison au lieu de laisser essayer puis refuser.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Ce qui ne change pas</h4>
+    <p>L'îlot, la carte, le lien, l'asset, la génération, la collection : rien. L'îlot en particulier
+      garde exactement sa définition d'aujourd'hui — pas d'identité, il <em class="it">est</em> le
+      groupe, il part avec sa dernière carte. Le seul rapport neuf est que quelqu'un peut le lire.</p>
+  </section>
+
+  <!-- ═══ 9 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce que ce document ne tranche pas</h2></div>
+
+    <div class="note mes">
+      <span class="lab">01 · La liste des modes de fusion — à mesurer</span>
+      <p>Deux rails sont retenus, la proportion et l'attraction. Rien ne dit encore qu'ils produisent des
+        résultats réellement différents sur des images réelles. Le banc existe et ne coûte rien.
+        <strong>Le mesurer avant d'implémenter, pas après.</strong></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · Le modèle écrasé par une ambiance : une valeur, ou un par famille ?</span>
+      <p>Le projet porte <em class="it">un modèle par famille</em>. Une ambiance qui poserait aussi un
+        dictionnaire par famille serait cohérente mais lourde ; une valeur unique est plus simple mais
+        écrase le choix par famille d'un coup. <strong>Proposé : une valeur unique</strong>, parce
+        qu'une ambiance ne parle pas de familles, elle parle d'un coin du monde. À rouvrir si l'usage la
+        contredit.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · L'occupation et l'ambiance</span>
+      <p>Écartée ici : l'occupation vient de la nature du sujet, pas de son appartenance. Mais
+        « les créatures du marais sont plus petites que les autres » est une phrase qu'un auteur peut
+        vouloir écrire. <strong>Rien ne bloque, et ça ne se rouvre qu'à l'usage.</strong></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">04 · <code>vue</code> et le type de jeu, dans le domaine</span>
+      <p>Le § 02 les sépare — l'un s'impose, l'autre se propose — mais aucun fichier du dépôt ne le dit.
+        <strong>À écrire dans <code>atelier/domaine/projet.py</code></strong> en même temps que la
+        nature de chaque réglage, sans quoi la séparation ne tiendra que dans ce document.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">05 · Le report dans les documents d'autorité</span>
+      <p>Rien de ce fichier n'est écrit dans <code>ARCHITECTURE.md</code>, <code>PRD.md</code>,
+        <code>PLAN.md</code> ni <code>DESIGN.md</code>, pour la même raison que le reste du dossier :
+        une révision est en cours ailleurs. <strong>Deux choses ici touchent le modèle d'objets</strong>
+        — l'ambiance et la palette-recette —, ce qui n'était plus arrivé depuis le calibrage. Elles
+        doivent s'écrire, pas se glisser.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen · V2.1 · <b>07-les-trois-etages.html</b> — le modèle des réglages en cascade.
+    Écrit le 30 août 2026.<br>
+    L'écran qui le rend visible et réglable est <b>06bis-univers.html</b>.<br>
+    Il s'appuie sur : <code>docs/ARCHITECTURE.md</code> § 5 (modèle d'objets) ·
+    <code>atelier/domaine/projet.py</code> (la bible, le barème, la palette) ·
+    <code>05-codex.html</code> § 04 et § 05 (les entités, le type de jeu, les images de référence) ·
+    <code>14-table-quantification.html</code> (ce que la palette coûte, mesuré).
+  </footer>
+
+</div>
+</body>
+</html>

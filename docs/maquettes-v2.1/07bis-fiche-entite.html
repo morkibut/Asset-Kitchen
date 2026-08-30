@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la fiche d'une chose du jeu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:26px 0 10px;line-height:1.2}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)}
+  .m.mal{color:var(--echec)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  .cite{font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--texte-2);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:10px 12px;margin:0 0 12px;white-space:pre-wrap}
+  .cite b{color:var(--signal-clair);font-weight:500}
+  .cite i{color:var(--echec);font-style:normal}
+  .cite u{color:var(--epingle);text-decoration:none}
+
+  /* ── Le croquis d'écran ─────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1180px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:9px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .btxt{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:12px;color:var(--texte-2)}
+  .sep-v{width:1px;height:16px;background:var(--bord);margin:0 3px}
+  .wf-corps{min-width:1180px;display:flex;align-items:stretch;min-height:420px}
+  .wf-pied{min-width:1180px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  /* colonne de gauche — 240 px, les cinq blocs de la fiche */
+  .rail{width:240px;flex:none;border-right:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:3px}
+  .bl{min-height:38px;display:flex;flex-direction:column;justify-content:center;gap:1px;
+    padding:0 8px;border-radius:2px;font-size:12px;color:var(--texte-2)}
+  .bl.on{background:var(--fond-3);color:var(--texte)}
+  .bl em{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--texte-3);
+    letter-spacing:.03em}
+  .bl.on em{color:var(--texte-2)}
+  .sep{height:1px;background:var(--bord);margin:8px 0 6px}
+
+  /* colonne du milieu — les blocs, dans l'ordre où ils partent */
+  .corps-f{flex:1;min-width:0;display:flex;flex-direction:column}
+  .bloc-t{height:30px;flex:none;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 12px;font-family:var(--mono);font-size:9px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3)}
+  .bloc-t .cpt{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px}
+  .bloc-c{padding:11px 12px;display:flex;flex-direction:column;gap:4px}
+  .ch{display:flex;gap:9px;align-items:flex-start;padding:6px 7px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-1)}
+  .ch .cn{width:62px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);padding-top:1px}
+  .ch .ct{flex:1;min-width:0;font-size:11px;color:var(--texte-2);line-height:1.45}
+  .ch .ct u{color:var(--epingle);text-decoration:none}
+  .ch .cx{flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);padding-top:2px}
+  .ch.range{opacity:.45}
+  .ch.range .ct{text-decoration:line-through}
+  .ch.amb{border-color:var(--signal);background:color-mix(in srgb,var(--signal) 7%,transparent)}
+
+  .refs{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .rf{width:38px;height:38px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/9px 9px}
+  .rf.ep::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--epingle);
+    border-right:7px solid transparent}
+  .rf.sg::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--signal);
+    border-right:7px solid transparent}
+  .rf.plus{background:none;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;color:var(--texte-3);
+    font-family:var(--mono);font-size:12px}
+  .rf.prop{background:none;border-style:dashed;border-color:var(--signal);
+    display:flex;align-items:center;justify-content:center;color:var(--signal);
+    font-family:var(--mono);font-size:8px;text-align:center;line-height:1.15;padding:2px}
+
+  /* colonne de droite — 380 px, la matrice qui répond */
+  .cent{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .cent-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-size:12.5px;color:var(--texte)}
+  .cent-t .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .cent-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:2px}
+  .cases{display:flex;flex-direction:column;gap:3px}
+  .cs{min-height:24px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
+    background:var(--fond-2);border:1px solid var(--bord)}
+  .cs .nm{font-size:11px;color:var(--texte-2);width:64px;flex:none;white-space:nowrap}
+  .cs .marques{display:flex;gap:4px;align-items:center}
+  .cs .cpt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cs .cpt.ok{color:var(--ok)}
+  .cs.hs{opacity:.4}
+  .cs.hs .nm{text-decoration:line-through}
+  .q{width:9px;height:9px;flex:none;border-radius:1px;border:1px solid var(--signal);background:var(--signal)}
+  .q.creux{background:none;border-color:var(--bord-fort)}
+  .q.abs{border:0;background:none;position:relative}
+  .q.abs::before{content:"";position:absolute;left:0;top:4px;width:9px;height:1px;background:var(--bord-fort)}
+  .jauge{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  .jauge b{color:var(--texte-2);font-weight:500}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.55}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.55}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.1 · maquette 07bis — la fiche d'une chose du jeu</div>
+  <h1>Le codex dit ce qui manque.<br>La fiche dit <em>tout le reste</em>.</h1>
+  <p>Dans le codex, une chose du jeu tient sur une ligne : son nom, et combien il lui manque
+    d'images. <strong>On clique dessus et on entre dedans</strong> — c'est l'établi, et c'est là qu'on
+    fabrique. Mais l'établi n'a de la place que pour le travail : une colonne de 300 px à gauche, la
+    matrice des cases à droite, et la barre de prompt en pied.</p>
+  <p>Or une chose du jeu porte bien plus que ça. Elle porte un signalement qui part dans chaque
+    prompt, sept textes de style qui viennent du jeu ou de l'ambiance qu'elle porte, des images de
+    référence qui partent avec elle, et la liste des poses que son type lui réclame — car tout le
+    monde n'a pas besoin de tout.
+    <strong>Rien de ça ne tient dans 300 px, et rien de ça ne coûte un centime.</strong></p>
+  <p>Cette maquette donne à tout ça un écran : <strong>la fiche</strong>. Elle s'ouvre depuis
+    l'établi, en plein cadre, exactement comme un outil de retouche s'y ouvre déjà — et comme lui,
+    elle fait disparaître la barre de prompt, parce que régler ne se paie pas.</p>
+  <p class="sourd">Tous les chiffres de ce document ont été mesurés le 30 août 2026 sur le vrai
+    projet <span class="mesure">cœur de pierre - 01</span> : 3 personnages, 48 images, 28 appels
+    payés, <span class="mesure">$0,362</span> dépensés en tout.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ 01 -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>Pourquoi une fiche, et pas une colonne plus large</h2></div>
+
+  <p class="intro">L'établi a été dessiné dans la maquette <strong>02</strong>, et il est bon : on y
+    lit une colonne de cases à la fois, jamais une planche entière. Sa colonne de gauche fait 300 px
+    et porte quatre choses. Ce que cette maquette doit loger en demande cinq blocs, dont un de sept
+    champs de texte et un de quatorze emplacements d'images.</p>
+
+  <table>
+    <thead><tr><th style="width:34%">Ce que l'établi porte aujourd'hui</th><th>Ce que la fiche doit porter en plus</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Le nom et le signalement</td>
+        <td class="apres">Ça reste, <b>et c'est le premier bloc de la fiche</b>. Le signalement est
+          le texte qui part avec chaque image de cette chose-là ; c'est le seul endroit du produit
+          où on l'écrit.</td>
+      </tr>
+      <tr>
+        <td class="k">Les concept arts · 2</td>
+        <td class="apres">Ils deviennent une ligne parmi <b>trois provenances d'images de
+          référence</b> — les artworks officiels de l'univers, les concept arts, et les images
+          fabriquées qu'on promeut en référence.</td>
+      </tr>
+      <tr>
+        <td class="k">« Hérité de la bible », en une ligne résumée<br>
+          <span class="sourd mesure">pixel · 64×64 · vue 3/4 · palette du jeu</span></td>
+        <td class="apres">Cette ligne est un résumé, et <b>un résumé ne dit pas ce qui part</b>. La
+          fiche montre les sept champs avec leur vrai texte, <b>d'où vient chacun</b> — du jeu, de
+          l'ambiance désignée, ou écrit ici même — et le nom de cette ambiance. Ce que c'est qu'une
+          ambiance se décide dans la maquette des ambiances et des couleurs
+          (<span class="mesure">07</span>) ; la fiche s'en sert, elle ne le redécide pas.</td>
+      </tr>
+      <tr>
+        <td class="k">« Sortir ce personnage »</td>
+        <td class="apres">Inchangé, et toujours dans l'établi.</td>
+      </tr>
+      <tr>
+        <td class="k"><span class="sourd">— rien —</span></td>
+        <td class="apres"><b>Ce que le jeu lui réclame</b> : quelles poses, quelles directions,
+          quelles pièces d'équipement. Aujourd'hui aucun écran ne pose cette question, et le fichier
+          d'un personnage garde pourtant la réponse depuis le début.</td>
+      </tr>
+      <tr>
+        <td class="k"><span class="sourd">— rien —</span></td>
+        <td class="apres"><b>Ce qui est fait</b>, en grand. Le codex compte, l'établi fabrique, et
+          personne ne montre. C'est la mission neuve, et elle a sa maquette
+          (<span class="mesure">09</span>).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note gris" style="margin-top:22px">
+    <span class="lab">La règle qui a décidé de la forme</span>
+    <p>Le produit sait déjà ouvrir un écran <strong>en plein cadre sans quitter l'établi</strong> :
+      cliquer une case pleine ouvre son outil de retouche, la colonne de gauche cède la place aux
+      réglages, et les attitudes restent à droite pour qu'on ne perde pas sa place
+      (<span class="mesure">02</span> § 05). La fiche emprunte ce mécanisme tel quel.
+      <strong>Aucun lieu neuf, aucune largeur neuve, aucun glyphe neuf.</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 02 -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>Ce qui a été mesuré avant de dessiner — 30 août 2026</h2></div>
+
+  <p class="intro">Onze mesures prises sur le vrai projet. Sept d'entre elles disent la même chose :
+    <strong>les mécanismes existent dans les fichiers, et aucun écran ne les atteint.</strong></p>
+
+  <h3>1 · Un personnage sur trois n'a pas de signalement — et il a quand même généré</h3>
+  <p>Les trois signalements du projet font <span class="m">419</span>,
+    <span class="m">733</span> et <span class="m mal">0</span> caractères.
+    <span class="mesure">balthazar-2</span> n'a aucune description, et il a pourtant
+    <span class="m">12 images</span> et <span class="m">4 appels payés</span>. Le texte qui devait
+    partir avec chacune de ses images était vide, et rien ne l'a dit.</p>
+
+  <h3>2 · La bible dit 64, le projet impose 128</h3>
+  <p>Deux des sept champs de la bible écrivent la taille de grille en toutes lettres :
+    <span class="mesure">rendu</span> dit <span class="m eg">2D pixel art on a 64x64 grid</span> et
+    <span class="mesure">technique</span> dit <span class="m eg">strict 64x64 px tile snap</span>.
+    Or le réglage du projet — celui que la mise sur grille applique vraiment —
+    vaut <span class="m">cible_px = 128</span>. <strong>Le texte envoyé au modèle et le traitement
+    appliqué à l'image reçue ne sont pas d'accord</strong>, et aucun écran ne les met côte à côte.</p>
+
+  <h3>3 · Dix-neuf cartes au tableau, deux officielles</h3>
+  <p>Le tableau d'inspiration du projet porte <span class="m">19 cartes</span>. Deux seulement sont
+    marquées <em>officielles</em> — la seule qui parte avec un personnage. Les dix-sept autres sont
+    de famille <span class="mesure">tous</span> et ne partent nulle part. Donc, pour Balthazar
+    aujourd'hui, <strong>ce qui partirait en référence de style, c'est
+    <span class="m">une carte</span></strong>.</p>
+
+  <h3>4 · Dix-sept appels sur vingt-huit sont partis sans une seule image</h3>
+  <table style="margin-top:12px">
+    <thead><tr><th>Images de référence jointes à l'appel</th><th style="width:22%">Nombre d'appels</th><th style="width:42%">Ce que le modèle acceptait</th></tr></thead>
+    <tbody>
+      <tr><td class="k">aucune</td><td><span class="m mal">17</span></td><td rowspan="3" style="vertical-align:middle">
+        <span class="m">14</span> pour les deux modèles Google du projet,
+        <span class="m">16</span> pour GPT Image 2.<br>
+        <span class="sourd">Le plafond n'a jamais été approché : le maximum atteint est deux.</span></td></tr>
+      <tr><td class="k">une</td><td><span class="m">10</span></td></tr>
+      <tr><td class="k">deux</td><td><span class="m">1</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>5 · Un rôle de référence sur trois n'a jamais servi</h3>
+  <p>Le produit distingue trois manières d'attacher une image à un appel :
+    <span class="mesure">style</span> (voilà l'allure), <span class="mesure">reference</span>
+    (voilà le sujet), <span class="mesure">edition</span> (retouche celle-ci). Comptés sur les
+    28 appels : <span class="m">9</span> fois <span class="mesure">style</span>,
+    <span class="m">3</span> fois <span class="mesure">reference</span>,
+    <span class="m mal">0</span> fois <span class="mesure">edition</span>.</p>
+
+  <h3>6 · Aucune image n'a jamais été marquée favorite</h3>
+  <p>Le produit sait déjà désigner <em>le corps retenu</em> d'une pose — celui qui repart en
+    référence quand on habille le personnage. Sa règle est écrite noir sur blanc :
+    <span class="mesure">le favori d'abord, sinon la plus récente</span>. Sur
+    <span class="m">48 images</span>, <strong>il y a <span class="m mal">zéro favori</span></strong> :
+    la règle retombe donc toujours sur sa seconde branche, et c'est le hasard de l'ordre de
+    fabrication qui décide de ce qui part.</p>
+
+  <h3>7 · Aucun écart n'a jamais été posé</h3>
+  <p>Un personnage sait déjà, dans son fichier, ranger ce qu'il ne tient pas : les poses écartées et
+    les références écartées. Sur les trois personnages du projet, les deux listes sont vides —
+    <span class="m mal">0</span> et <span class="m mal">0</span>. Ce ne sont pas des mécanismes
+    inutiles : <strong>ce sont des mécanismes qu'aucun bouton n'atteint.</strong></p>
+
+  <h3>8 · Neuf appels de personnage sur treize ne disent pas leur pose</h3>
+  <p>Treize appels payés portent un personnage. <span class="m mal">Neuf</span> d'entre eux partent
+    sans dire de quelle pose il s'agit ; la pose est posée sur l'image <em>après</em>, à la main.
+    Autrement dit, le chemin « je clique une case vide, elle arme le prompt » est très peu emprunté :
+    on fabrique d'abord, on range ensuite.</p>
+
+  <h3>9 · Six images d'équipement ne disent pas quelle pose elles habillent</h3>
+  <p>Une pièce d'équipement passe par deux images : celle que le modèle rend, et celle que l'atelier
+    compose ensuite en la posant sur le corps. <strong>Seule la seconde porte la pose.</strong> Les
+    six images brutes du projet — trois casques, deux haches — portent leur pièce et rien d'autre :
+    tant qu'elles ne sont pas composées, on ne peut pas les retrouver par la pose qu'elles étaient
+    censées habiller.</p>
+
+  <h3>10 · Les six planches d'équipement n'avaient qu'une seule case</h3>
+  <p>Le produit sait grouper plusieurs sujets dans un seul appel — c'est ce qui fait baisser le
+    prix. Les six planches d'équipement du projet portent toutes
+    <span class="m mal">cases : 1</span>. <strong>Le mécanisme de groupage existe, il tourne, et il
+    n'a jamais groupé quoi que ce soit.</strong></p>
+
+  <h3>11 · Le vestiaire, et ce qu'il coûte en cases</h3>
+  <p>Deux emplacements — <span class="mesure">head</span> et <span class="mesure">back pack</span> —
+    et deux pièces : <span class="mesure">helmet</span> et
+    <span class="mesure">Battle axe</span>, toutes deux de portée
+    <span class="mesure">agrandit</span> (elles débordent du corps). Chaque pièce réclame une case
+    par corps existant : c'est ce qui rend la panoplie d'une entité coûteuse, et c'est pour ça
+    qu'elle se règle.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 03 -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>L'écran</h2></div>
+
+  <p class="intro">Trois colonnes — <span class="mesure">240 · 1fr · 380</span>, les mêmes que le
+    codex et la galerie. À gauche, les cinq blocs de la fiche. Au milieu, les blocs eux-mêmes, dans
+    l'ordre où leur contenu part vers le modèle. À droite, <strong>la matrice de l'entité, qui ne
+    bouge pas</strong> : on règle à gauche et on voit les cases changer à droite, sans rien
+    refermer.</p>
+
+  <div class="croquis">
+    <div class="wf-barre">
+      <span class="wf-nom">Asset Kitchen</span>
+      <span class="tab">Univers</span>
+      <span class="tab on">Codex</span>
+      <span class="tab">Galerie</span>
+      <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b> › sa fiche</span>
+      <span class="wf-tard">
+        <span class="mesure">15 images · $0,155</span>
+        <span class="sep-v"></span>
+        <span class="btxt">Fermer la fiche</span>
+        <span>Réglages</span>
+        <span>Guide</span>
+      </span>
+    </div>
+
+    <div class="wf-corps">
+      <!-- 240 — les cinq blocs -->
+      <div class="rail">
+        <div class="col-t">sa fiche</div>
+        <div class="bl">Ce qu'il est<em>signalement · 419 caractères</em></div>
+        <div class="bl on">Ce qui l'habille<em>7 champs · 3 de son ambiance</em></div>
+        <div class="bl">Ses images de référence<em>3 disponibles sur 14 places</em></div>
+        <div class="bl">Ce que le jeu lui réclame<em>21 cases · rien de rangé</em></div>
+        <div class="bl">Ce qui est fait<em>6 cases sur 21</em></div>
+        <div class="sep"></div>
+        <div class="bl">Sortir ce personnage<em>15 images · $0,155</em></div>
+      </div>
+
+      <!-- 1fr — les blocs -->
+      <div class="corps-f">
+        <div class="bloc-t">Ce qui l'habille<span class="cpt">7 champs · 3 viennent de son ambiance</span></div>
+        <div class="bloc-c">
+          <div class="ch amb"><span class="cn">ambiance</span><span class="ct"><b style="color:var(--texte);font-weight:500">Forge des profondeurs</b> — sa palette, ses 2 images, et 3 de ses textes</span><span class="cx" style="color:var(--signal-clair)">changer · détacher</span></div>
+          <div class="ch"><span class="cn">monde</span><span class="ct">Deep forge halls, molten channels, soot-blackened runic pillars, and anvils worn smooth by centuries.</span><span class="cx" style="color:var(--signal-clair)">son ambiance</span></div>
+          <div class="ch"><span class="cn">époque</span><span class="ct">Dark fantasy dwarven antiquity (high Middle Ages, pre-gunpowder, forged iron, and runic magic)</span><span class="cx">du jeu</span></div>
+          <div class="ch"><span class="cn">rendu</span><span class="ct">2D pixel art on a <u>64x64</u> grid, muted desaturated earthy palette with high-contrast vibrant accents for light and minerals</span><span class="cx">du jeu</span></div>
+          <div class="ch"><span class="cn">trait</span><span class="ct">1-pixel dark slate outline, clean pixel clustering, flat shading with light dithering, zero smooth gradients</span><span class="cx" style="color:var(--signal-clair)">son ambiance</span></div>
+          <div class="ch"><span class="cn">éclairage</span><span class="ct">Forge-lit from below, orange rim light on every edge, deep soot shadows above the waist</span><span class="cx" style="color:var(--signal-clair)">son ambiance</span></div>
+          <div class="ch"><span class="cn">vue</span><span class="ct">3/4 top-down orthographic view, full-body character centered, grid-aligned tile assets</span><span class="cx">du jeu · fermé</span></div>
+          <div class="ch"><span class="cn">technique</span><span class="ct">Isolated sprite on neutral grey background, strict <u>64x64</u> px tile snap, clean pixel-perfect scaling</span><span class="cx">du jeu · fermé</span></div>
+          <div class="ch"><span class="cn">taille</span><span class="ct">128 px de grille — <span style="color:var(--epingle)">deux champs ci-dessus en annoncent 64</span></span><span class="cx" style="color:var(--texte-3)">verrouillé</span></div>
+          <div class="ch"><span class="cn">palette</span><span class="ct">Braise et basalte — 32 couleurs, nées de 3 cartes du tableau</span><span class="cx" style="color:var(--signal-clair)">son ambiance</span></div>
+          <div class="raison" style="padding:2px 1px 0">3 champs sur 7 viennent de l'ambiance · 0 écrit sur ce personnage seul</div>
+          <div class="prov" style="padding:0 1px">on choisit ce qu'on en prend au moment de payer, pas ici ›</div>
+        </div>
+
+        <div class="bloc-t" style="border-top:1px solid var(--bord)">Ses images de référence<span class="cpt">3 disponibles · plafond du modèle 14</span></div>
+        <div class="bloc-c">
+          <div class="refs">
+            <span class="rf sg"></span>
+            <span class="rf ep"></span>
+            <span class="rf ep"></span>
+            <span class="rf prop">corps<br>retenu</span>
+            <span class="rf prop">planche<br>au repos</span>
+            <span class="rf plus">+</span>
+          </div>
+          <div class="raison" style="padding:4px 1px 0">1 artwork officiel de la famille <b style="color:var(--texte-2);font-weight:400">personnages</b> · 2 images de son ambiance · 0 concept art · 0 image promue</div>
+          <div class="prov" style="padding:0 1px">2 proposées, d'après ce qui est fait · à retenir ou à écarter</div>
+        </div>
+      </div>
+
+      <!-- 380 — la matrice, qui répond -->
+      <div class="cent">
+        <div class="cent-t">Sa matrice<span class="x">elle répond pendant qu'on règle</span></div>
+        <div class="cent-c">
+          <div>
+            <div class="col-t">le corps — 4 directions</div>
+            <div class="cases">
+              <div class="cs"><span class="nm">repos</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">marche</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">course</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">attaque</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">dégâts</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">mort</span><span class="marques"><i class="q"></i><i class="q abs"></i><i class="q abs"></i><i class="q abs"></i></span><span class="cpt ok">1 / 1</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="col-t">l'équipement — sur les corps qui existent</div>
+            <div class="cases">
+              <div class="cs"><span class="nm">helmet</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 6</span></div>
+              <div class="cs"><span class="nm">Battle axe</span><span class="marques"><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">0 / 6</span></div>
+            </div>
+          </div>
+          <div class="jauge">corps <b>6 / 21</b> · équip. <b>1 / 12</b> · <b>26 cases manquantes</b><br>
+            ranger une pose ici retire sa ligne et son coût</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-pied">
+      <span><i class="pt"></i>en ligne</span>
+      <span>aucun appel, aucun coût — la barre de prompt s'est retirée</span>
+      <span>Échap ferme la fiche et rend l'établi</span>
+    </div>
+  </div>
+
+  <div class="lgd">
+    ■ case prise · □ case attendue · — direction non réclamée par cette pose<br>
+    ◤ coin bleu : artwork officiel de l'univers · ◤ coin orange : image apportée par son ambiance ·
+    cadre pointillé bleu : image que l'atelier propose de promouvoir<br>
+    les six lignes de droite sont l'état réel de Balthazar au 30 août 2026 — une image par pose, aucune direction déclarée<br>
+    <strong style="color:var(--texte-2);font-weight:500">l'ambiance « Forge des profondeurs » est inventée pour ce croquis</strong> :
+    le vrai projet n'en a aucune, puisque les ambiances n'existent pas encore. Les textes du jeu, eux, sont les siens, mot pour mot
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 04 -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>Comment on entre, comment on sort</h2></div>
+
+  <p class="intro">Trois profondeurs, et un seul geste pour descendre d'un cran : le clic.</p>
+
+  <table>
+    <thead><tr><th style="width:20%">Où l'on est</th><th style="width:30%">Ce qu'on voit</th><th>Ce que le clic fait</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Le codex</td>
+        <td>Une ligne par chose du jeu, et sa jauge.</td>
+        <td class="apres">Un clic <b>sélectionne</b> : la colonne de droite se remplit du résumé de
+          cette chose-là. Un second clic <b>entre dedans</b> et ouvre son établi.</td>
+      </tr>
+      <tr>
+        <td class="k">L'établi</td>
+        <td>La matrice des cases, et la barre de prompt en pied.</td>
+        <td class="apres">Un clic sur une case pleine ouvre <b>son outil de retouche</b>. Un clic sur
+          le nom de l'entité, en tête de colonne, ouvre <b>sa fiche</b>.</td>
+      </tr>
+      <tr>
+        <td class="k">La fiche</td>
+        <td>Les cinq blocs, et la matrice à droite.</td>
+        <td class="apres"><b>Échap</b> ou <b>Fermer la fiche</b> rend l'établi, à l'endroit exact
+          d'où l'on venait.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:22px">
+    <span class="lab">Le survol ne fait rien, et c'est délibéré</span>
+    <p>Un panneau qui se remplit au passage de la souris tremble dès qu'on traverse la liste pour
+      atteindre autre chose, et il empêche de comparer deux choses côte à côte — on perd la première
+      en allant lire la seconde. <strong>La sélection se fait au clic et elle reste.</strong> C'est
+      aussi ce qui permet de garder la fiche ouverte pendant qu'on regarde ailleurs.</p>
+  </div>
+
+  <h3>La barre de prompt dit ce que le geste coûte</h3>
+  <p>Le produit tient une règle depuis le début : <strong>il n'existe qu'un seul endroit d'où l'on
+    paie</strong>, et c'est la barre de prompt. La maquette <span class="mesure">02</span> l'a
+    précisée : la barre se retire quand l'écran ouvert ne peut rien dépenser — retoucher une image
+    ne touche jamais le fournisseur.</p>
+  <p>La fiche suit la même règle, et ça donne une chose qui se lit d'un coup d'œil :</p>
+  <table style="margin-top:14px">
+    <thead><tr><th style="width:34%">Plein cadre ouvert</th><th style="width:22%">Barre de prompt</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Un outil de retouche</td><td><span class="m no">retirée</span></td><td>Le post-traitement est gratuit, et il est réversible.</td></tr>
+      <tr><td class="k">La fiche</td><td><span class="m no">retirée</span></td><td>Régler, ranger, désigner une référence — rien de tout ça n'appelle le fournisseur.</td></tr>
+      <tr><td class="k">La planche d'une pose <span class="sourd mesure">(08)</span></td><td><span class="m">présente</span></td><td>C'est l'écran où l'on achète les images d'une pose. Il faut y voir le prix.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px"><strong>La barre est là quand le geste coûte.</strong> On n'a pas besoin
+    de lire le titre pour savoir où on met les pieds.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 05 -->
+<section>
+  <div class="entete"><span class="num">05</span><h2>Son ambiance — la boîte dans laquelle elle pioche</h2></div>
+
+  <p class="intro">Une <strong>ambiance</strong> est un lot de style tout prêt, qu'on fabrique une
+    fois et qu'on réemploie : une palette de couleurs, une ou deux images qui montrent le genre
+    d'allure voulue, et trois textes — le monde, l'éclairage, le trait. On lui donne un nom
+    — <em>Forge des profondeurs</em>, <em>Monstres de l'ombre</em> — et on la désigne sur les choses
+    du jeu qui doivent se ressembler entre elles.</p>
+
+  <div class="note gris">
+    <span class="lab">Ce que cette section ne décide pas</span>
+    <p>Ce qu'une ambiance contient, comment on la fabrique et comment une palette naît d'un paquet
+      d'images se décide dans la maquette des <strong>ambiances et des couleurs</strong>
+      (<span class="mesure">07</span>). <strong>La fiche ne le redécide pas : elle montre le
+      résultat</strong> pour une chose du jeu à la fois, et c'est le seul endroit où l'on désigne
+      l'ambiance d'une chose.</p>
+  </div>
+
+  <div class="note att" style="margin-top:9px">
+    <span class="lab">Ce qui a changé le 30 août 2026, et pourquoi cette section a été refaite</span>
+    <p>La version précédente reposait sur une <em>cascade</em> : trois niveaux emboîtés — le jeu,
+      puis l'ambiance, puis la chose — où chaque niveau récupérait automatiquement ce que le niveau
+      du dessus avait posé, et où le plus bas qui écrivait quelque chose l'emportait.
+      <strong>C'est abandonné.</strong></p>
+    <p>Ce qui la remplace est plus simple à expliquer et plus souple à l'usage : <strong>une
+      ambiance n'est pas un niveau dont on hérite, c'est une boîte qu'on désigne et dans laquelle on
+      pioche</strong>. Une chose du jeu part toujours des textes du jeu ; désigner une ambiance
+      remplace trois d'entre eux, ajoute des images, pose une palette — et au moment de payer, on
+      décide encore quelles parties on prend vraiment.</p>
+    <p>La différence se voit sur un cas réel : un monstre de l'ombre dont la <em>forme</em> n'a rien
+      à voir avec les images de référence de l'ambiance, mais dont les <em>couleurs</em> doivent être
+      les mêmes. Avec la cascade il fallait éteindre des champs un par un ; avec la boîte, on prend
+      la palette et on laisse le reste.</p>
+  </div>
+
+  <h3>D'où vient un champ — cinq réponses, écrites à côté de lui</h3>
+  <table>
+    <thead><tr><th style="width:18%">Ce qui est écrit</th><th style="width:26%">Ce que ça veut dire</th><th>Ce que la fiche affiche à côté</th></tr></thead>
+    <tbody>
+      <tr><td class="k">du jeu</td><td>Le texte vient des réglages du jeu, tels que l'assistant les a remplis. Rien n'a été changé pour cette chose-là.</td><td class="apres">Le texte, en clair. C'est l'état de <b>tous les champs des trois personnages du projet aujourd'hui</b>, faute d'ambiance et faute d'écran pour en désigner une.</td></tr>
+      <tr><td class="k">son ambiance</td><td>L'ambiance désignée fournit ce texte, et il prend la place de celui du jeu.</td><td class="apres">Le texte de l'ambiance, et <b>le nom de l'ambiance qui le donne</b>. Un clic dessus ouvre l'ambiance, où le corriger le corrige <em>pour tout ce qui s'en sert</em> — ce qui est le but.</td></tr>
+      <tr><td class="k">écrit ici</td><td>Un texte propre à cette chose du jeu, qui prend la place des deux autres.</td><td class="apres">Le texte, et <b>celui qu'il remplace, en dessous et barré</b>. On doit pouvoir lire ce à quoi on a renoncé sans aller le chercher ailleurs.</td></tr>
+      <tr><td class="k">éteint</td><td>Ce champ ne part pas, pour cette chose. C'est un refus écrit, pas une case vide.</td><td class="apres">Le texte qui serait parti, barré, avec <b>rallumer</b> à un clic.</td></tr>
+      <tr><td class="k">verrouillé</td><td>Le réglage s'impose et rien ne le change ici — la taille de grille, par exemple.</td><td class="apres">La valeur, et <b>sa raison</b>. La case n'accepte rien plutôt que de laisser essayer, comme partout ailleurs dans le produit.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Trois cases ouvertes à l'ambiance, quatre qui lui sont fermées</h3>
+  <p>Le jeu tient sept textes. Une ambiance ne peut en remplacer que trois, et ce n'est pas une
+    limite arbitraire : <strong>les quatre autres décrivent la mécanique du jeu, pas son
+    atmosphère</strong>. Changer l'angle de vue au milieu d'un jeu ne produit pas une variante de
+    style, ça produit des images inutilisables.</p>
+  <table>
+    <thead><tr><th style="width:16%">Le texte</th><th style="width:16%">Ouvert&nbsp;?</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td class="k">monde</td><td><span class="m">ouvert</span></td><td>Le décor autour de la chose. C'est ce qui change d'un biome à l'autre.</td></tr>
+      <tr><td class="k">éclairage</td><td><span class="m">ouvert</span></td><td>La lumière et son sens. C'est le levier d'ambiance le plus fort, et le plus visible.</td></tr>
+      <tr><td class="k">trait</td><td><span class="m">ouvert</span></td><td>La façon de poser les contours et les aplats. Une même ambiance a souvent un trait à elle.</td></tr>
+      <tr><td class="k">époque</td><td><span class="m no">fermé</span></td><td>Un seul jeu, une seule époque. Deux époques dans un même jeu, c'est deux jeux.</td></tr>
+      <tr><td class="k">rendu</td><td><span class="m no">fermé</span></td><td>Il porte la technique de dessin et la taille de grille. Il doit rester identique partout, sinon les images ne s'assemblent plus.</td></tr>
+      <tr><td class="k">vue</td><td><span class="m no">fermé</span></td><td>L'angle sous lequel le jeu regarde le monde. Il commande aussi la liste des directions — voir le codex.</td></tr>
+      <tr><td class="k">technique</td><td><span class="m no">fermé</span></td><td>La grille, le fond neutre, l'alignement au pixel. C'est ce qui rend une image utilisable dans un moteur de jeu.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">Les quatre fermées sont <strong>affichées quand même</strong>, en
+    lecture seule, avec <span class="mesure">du jeu · fermé</span> à côté. On voit ce qui part, on
+    voit qu'on n'y touche pas ici, et on sait où aller le changer : l'assistant, dans l'Univers.</p>
+
+  <h3>Ce que ça donne pour une icône d'interface</h3>
+  <p>Une icône de menu n'a pas d'ambiance — elle n'appartient à aucun lieu du jeu. Elle éteint deux
+    textes et en écrit un ; le reste passe tel quel.</p>
+
+  <div style="border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:11px 12px;display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+    <div class="ch"><span class="cn">ambiance</span><span class="ct" style="color:var(--texte-3)">aucune — elle part des textes du jeu</span><span class="cx" style="color:var(--signal-clair)">en désigner une</span></div>
+    <div class="ch"><span class="cn">monde</span><span class="ct">Desolate subterranean dwarven ruins, grim mineral tunnels, ancient runic masonry…</span><span class="cx">du jeu</span></div>
+    <div class="ch"><span class="cn">rendu</span><span class="ct">2D pixel art on a 64x64 grid, muted desaturated earthy palette…</span><span class="cx" style="color:var(--texte-3)">verrouillé</span></div>
+    <div class="ch"><span class="cn">vue</span><span class="ct">flat orthographic icon, centered, no perspective<br><span style="text-decoration:line-through;color:var(--texte-3)">3/4 top-down orthographic view, full-body character centered…</span></span><span class="cx" style="color:var(--signal-clair)">écrit ici</span></div>
+    <div class="ch range"><span class="cn">éclairage</span><span class="ct">Dynamic warm radial lighting (lanterns, forge heat, glowing runes) surrounded by absolute blackness…</span><span class="cx" style="color:var(--epingle)">éteint · rallumer</span></div>
+    <div class="ch range"><span class="cn">technique</span><span class="ct">Isolated sprite on neutral grey background, strict 64x64 px tile snap, clean pixel-perfect scaling</span><span class="cx" style="color:var(--epingle)">éteint · rallumer</span></div>
+    <div class="raison" style="padding:2px 1px 0">3 champs sur 7 posés ici · la ligne du codex porte la même marque</div>
+  </div>
+
+  <div class="note bien">
+    <span class="lab">Le cas qui a fait abandonner la cascade</span>
+    <p>Trois artworks du tableau d'inspiration donnent trois palettes. On en fait une ambiance
+      appelée <em>Monstres de l'ombre</em>, avec ces trois palettes en sources, deux images de
+      référence et un texte à elle. Ensuite :</p>
+    <ul>
+      <li><b>Un monstre ordinaire</b> la prend en entier — couleurs, images, textes.</li>
+      <li><b>Un monstre de forme très différente</b> n'en prend que les couleurs : ses images de
+        référence à lui décrivent une autre silhouette, et les deux images de l'ambiance
+        l'emmèneraient au mauvais endroit.</li>
+      <li><b>La version « de l'ombre » d'un personnage existant</b> prend le texte et les couleurs,
+        mais garde ses propres images — c'est le même personnage, en noir.</li>
+    </ul>
+    <p>Les trois choisissent <strong>au moment de payer, image par image</strong>, sur l'écran de
+      confirmation. La fiche pose seulement le choix par défaut.</p>
+  </div>
+
+  <h3>Ce que la fiche ne dit pas : ce qui part vraiment</h3>
+  <div class="note">
+    <span class="lab">La fiche pose le défaut, l'écran de confirmation tranche</span>
+    <p>La fiche répond à <em>« de quoi cette chose s'habille d'habitude »</em>. Elle ne répond pas à
+      <em>« qu'est-ce qui part dans cet appel-ci »</em> — cette question-là se pose juste avant de
+      payer, sur l'<strong>écran de confirmation</strong>, où chaque texte et chaque image porte un
+      interrupteur et se corrige sur place.</p>
+    <p>Et <strong>une correction faite là-bas ne vaut que pour cette image</strong> : elle ne
+      remonte ni dans la fiche, ni dans l'ambiance, ni dans le jeu. Le réglage durable se fait ici,
+      l'écart d'un jour se fait là-bas. Sans cette séparation, chaque essai contaminerait le réglage
+      de tout ce qui vient après.</p>
+  </div>
+
+  <h3>La contradiction que seule la fiche met sous les yeux</h3>
+  <p>La taille de pixel <strong>s'impose</strong> : ni une ambiance ni une chose du jeu ne la
+    change, et le projet en met <span class="m">128</span>. Deux champs de la bible écrivent pourtant
+    <span class="m eg">64x64</span> en toutes lettres, et ces deux champs
+    <strong>partent dans le prompt</strong>. On demande donc au modèle une grille de 64 pendant que
+    l'atelier ramène l'image sur une grille de 128.</p>
+  <p>Aucun écran du produit ne met ces deux choses côte à côte aujourd'hui. La fiche le fait par
+    construction, parce qu'elle affiche <em>le texte qui part</em> juste au-dessus de
+    <em>la valeur verrouillée qui s'applique</em>. <strong>Elle ne corrige rien</strong> — la bible
+    s'écrit dans l'Univers — mais elle rend la faute impossible à ne pas voir.</p>
+
+  <div class="note att">
+    <span class="lab">Le coût, nommé</span>
+    <p>Une chose du jeu qui écrit ses propres textes ou qui en éteint <strong>diverge du reste du
+      jeu, et rien ne l'empêche</strong>. Ce qui tient contre ça, c'est que l'écart se voit sans
+      qu'on le cherche : la fiche compte <span class="mesure">3 champs sur 7 posés ici</span>, la
+      ligne de l'entité dans le codex porte la même marque, et chaque case remplacée montre le texte
+      qu'elle écarte, barré, juste en dessous. <em>Un écart qu'on lit n'est plus un accident.</em></p>
+    <p><strong>Une ambiance, elle, ne compte pas comme un écart</strong> — elle est faite pour être
+      partagée. Ce qu'on lit à sa place, c'est son nom, sur la fiche et dans la colonne du codex ;
+      et de l'autre côté, l'ambiance liste qui s'en sert. Le désaccord dangereux n'est pas
+      « cette chose diffère du jeu », c'est « cette chose diffère de tout, toute seule ».</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 06 -->
+<section>
+  <div class="entete"><span class="num">06</span><h2>Ses images de référence — quatre provenances, quatorze places</h2></div>
+
+  <p class="intro">Un modèle d'image accepte qu'on lui joigne des images en plus du texte : « voilà
+    l'allure que je veux », « voilà le personnage dont je parle ». Le projet en a joint
+    <strong>au mieux deux</strong>, sur des modèles qui en acceptent quatorze — et
+    <strong>dix-sept appels sur vingt-huit n'en ont joint aucune</strong>.</p>
+
+  <p>Le bloc <em>ses images de référence</em> est là pour ça : montrer les places, ce qu'il y a
+    dedans, et ce qui pourrait y aller.</p>
+
+  <div class="note gris">
+    <span class="lab">Ce bloc dit ce qui est disponible, pas ce qui part</span>
+    <p>Le titre a changé le 30 août 2026. Il disait <em>ce qui part en image</em>, et ce n'est plus
+      vrai : <strong>ce qui part vraiment se coche juste avant de payer</strong>, sur l'écran de
+      confirmation, où chaque image porte un interrupteur et où l'on peut en remplacer une pour
+      cette génération seulement.</p>
+    <p>La fiche garde le bloc quand même, et ce n'est pas un doublon : <strong>c'est ici que les
+      images de référence d'une chose du jeu existent</strong> — on en promeut une, on en écarte une,
+      on en épingle une, et ça vaut pour toutes ses générations à venir. L'écran de confirmation ne
+      fait que trier dans cette liste-là. <em>Une chose est définie à un seul endroit</em> :
+      la liste ici, le tri là-bas.</p>
+  </div>
+
+  <h3>Quatre provenances, et une seule liste</h3>
+  <table>
+    <thead><tr><th style="width:24%">D'où vient l'image</th><th style="width:20%">Aujourd'hui</th><th>Ce que la fiche en fait</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Les images de son ambiance<br><span class="sourd">apportées par le lot de style</span></td>
+        <td><span class="m">neuf</span></td>
+        <td class="apres">Désigner une ambiance amène <b>ses images de référence avec elle</b>, sans
+          les recopier : elles restent celles de l'ambiance, et les corriger là-bas les corrige
+          partout. Elles portent son nom dessous, et elles se décochent comme les autres.</td>
+      </tr>
+      <tr>
+        <td class="k">Les artworks officiels<br><span class="sourd">du tableau de l'univers</span></td>
+        <td><span class="m">1 carte</span><br><span class="sourd mesure">sur 19</span></td>
+        <td class="apres">Elles arrivent toutes seules : <b>le tableau range chaque carte par
+          famille</b>, et une entité reçoit celles de sa famille plus celles marquées
+          <span class="mesure">tous</span>. C'est déjà construit, et c'est ce que tu appelais
+          « mettre en avant les références de l'univers qui correspondent au personnage ».
+          Chacune se range pour cette entité seule, sans quitter le tableau.</td>
+      </tr>
+      <tr>
+        <td class="k">Les concept arts<br><span class="sourd">désignés par l'entité</span></td>
+        <td><span class="m no">0</span></td>
+        <td class="apres">Une carte du tableau qu'on épingle sur cette entité-là. Le mécanisme
+          existe, il est simplement resté inutilisé.</td>
+      </tr>
+      <tr>
+        <td class="k">Les images fabriquées<br><span class="sourd">promues en référence</span></td>
+        <td><span class="m mal">n'existe pas</span></td>
+        <td class="apres"><b>C'est l'ajout.</b> Une image que l'atelier a produite devient une
+          référence permanente de son entité : elle repart avec chaque appel suivant, et c'est ce
+          qui fait qu'un personnage se ressemble d'une pose à l'autre.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Les deux images que l'atelier propose tout seul</h3>
+  <p>Il n'attend pas qu'on y pense, et il ne décide pas non plus : il propose, avec la provenance
+    écrite dessous, et une proposition se refuse d'un clic.</p>
+  <div class="note">
+    <span class="lab">Les deux propositions</span>
+    <ul>
+      <li><b>Le corps retenu de la première pose faite.</b> C'est l'image qui dit à quoi ressemble
+        vraiment ce personnage une fois passé par le style du jeu — bien mieux qu'un artwork
+        d'inspiration. Le produit sait déjà la désigner ; il s'en sert pour composer les planches
+        d'équipement, et jamais pour autre chose.</li>
+      <li><b>La planche des quatre directions au repos.</b> Dès que les quatre directions d'une pose
+        existent, elles forment ensemble la meilleure référence possible pour toutes les poses
+        suivantes : le modèle voit le personnage sous ses quatre angles d'un coup. Elle n'existe
+        qu'à partir du moment où la pose est complète, et le cadre pointillé le dit avant.</li>
+    </ul>
+  </div>
+
+  <div class="note att">
+    <span class="lab">Ce que la mesure 6 oblige à réparer</span>
+    <p>La règle qui choisit le corps retenu dit <em>le favori d'abord, sinon la plus récente</em>.
+      Comme <strong>aucune image n'a jamais été marquée favorite</strong>, c'est toujours la seconde
+      branche qui décide — et « la plus récente » n'est pas forcément la meilleure, c'est juste la
+      dernière. La fiche répare ça sans changer la règle : <strong>elle montre laquelle est
+      retenue</strong>, et retenir une autre image se fait à l'endroit où on la regarde. Un choix
+      qu'on ne voit pas est un choix qu'on ne fait pas.</p>
+  </div>
+
+  <h3>Le compte des places est une mesure, pas une limite du produit</h3>
+  <p>Le bloc affiche <span class="mesure">3 disponibles · plafond du modèle 14</span>. Le quatorze
+    vient du modèle choisi pour cette famille, il est lu dans le catalogue, et il change avec le
+    modèle — seize sur GPT Image 2. <strong>Le catalogue décide, jamais une liste écrite en
+    dur.</strong> Quand le compte dépasse le plafond, ce qui ne part pas est grisé avec sa raison,
+    comme partout ailleurs dans le produit.</p>
+
+  <div class="note att">
+    <span class="lab">Une quinzième chose peut occuper une place : la palette elle-même</span>
+    <p>La palette d'une ambiance sert toujours <strong>au retour</strong> : l'image revient, et
+      l'atelier la ramène sur ces couleurs-là, gratuitement, sur la machine, et de façon réversible.
+      Ça n'occupe aucune place de référence.</p>
+    <p>Mais on peut en plus cocher <span class="mesure">envoyer la palette en référence</span>, et
+      elle part alors <strong>à l'aller, sous forme d'image</strong> : une bande de pastilles de
+      couleur, qui prend une des quatorze places. <strong>La case se coche sur l'écran de
+      confirmation, jamais ici</strong> — c'est un choix qui se prend appel par appel, pas une
+      propriété de la chose du jeu.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 07 -->
+<section>
+  <div class="entete"><span class="num">07</span><h2>Ce que le jeu lui réclame — et la matrice qui répond à droite</h2></div>
+
+  <p class="intro">Toutes les entités n'ont pas besoin de tout. Un figurant qui traverse une salle
+    n'a pas de pose de mort ; un tonneau n'a pas de direction ; un héros les a toutes. C'est le
+    quatrième bloc, et c'est celui qui fait varier le prix du jeu entier.</p>
+
+  <h3>Les poses viennent du type d'objet, pas du jeu entier</h3>
+  <p>Décidé le 30 août 2026, et c'est un changement. Avant, le jeu déclarait <em>une</em> liste de
+    poses, et tout le monde la recevait. Un coffre héritait donc de <span class="mesure">marche</span>
+    et de <span class="mesure">course</span>, qu'il fallait ranger une par une chez chaque coffre.</p>
+  <p><strong>Désormais chaque type d'objet porte sa liste</strong>, remplie à l'étape 7 de
+    l'assistant : un personnage a <em>repos, marche, course, attaque, dégâts, mort</em> ; un coffre a
+    <em>fermé, ouvert, vidé</em> ; une tuile n'a pas de poses du tout. Une chose du jeu reçoit la
+    liste de son type, et rien d'autre.</p>
+
+  <h3>Et une chose du jeu peut ajouter les siennes</h3>
+  <p>Un boss a une pose de transformation qu'aucun autre personnage n'a. On l'ajoute
+    <strong>sur lui</strong>, sans toucher au type : les autres personnages ne voient pas paraître
+    une case vide qui ne les concerne pas.</p>
+  <p>La fiche écrit donc <strong>l'origine de chaque pose</strong>, à côté de son nom :</p>
+  <div style="border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:11px 12px;display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+    <div class="ch"><span class="cn">repos</span><span class="ct">4 images · une par direction</span><span class="cx">du type personnage</span></div>
+    <div class="ch"><span class="cn">marche</span><span class="ct">4 images · une par direction</span><span class="cx">du type personnage</span></div>
+    <div class="ch"><span class="cn">mort</span><span class="ct">1 image · la pose ne tient qu'une direction</span><span class="cx">du type personnage</span></div>
+    <div class="ch"><span class="cn">éveil</span><span class="ct">2 images · l'instant où la statue s'anime</span><span class="cx" style="color:var(--signal-clair)">ajoutée ici</span></div>
+    <div class="ch range"><span class="cn">course</span><span class="ct">4 images</span><span class="cx" style="color:var(--epingle)">rangée · il ne court jamais</span></div>
+    <div class="raison" style="padding:2px 1px 0">3 poses du type · 1 ajoutée ici · 1 rangée · l'ajout ne touche pas les autres personnages</div>
+  </div>
+
+  <h3>On range, on ne coche pas</h3>
+  <p>Pour ce qui vient du type, le principe tranché par le codex ne bouge pas : <strong>une chose du
+    jeu reçoit tout ce que son type déclare, et retire ce qu'elle ne veut pas.</strong> La raison est
+    pratique, pas philosophique : ajouter une pose au type doit ajouter une case vide chez tous les
+    objets de ce type. Avec des listes de ce qu'on tient, il faudrait réécrire chaque personnage à
+    chaque ajout — un balayage qui peut réussir à moitié, pour un geste qui ne devrait rien écrire du
+    tout.</p>
+  <p><strong>Ajouter et ranger ne sont donc pas symétriques, et c'est voulu</strong> : on range ce
+    que le type impose et qu'on ne veut pas ; on ajoute ce que le type ignore et qu'on est seul à
+    vouloir. Une pose ajoutée ici et rangée ensuite disparaît pour de bon, elle ne revient pas se
+    poser sous un trait — il n'y a personne au-dessus pour la reproposer.</p>
+
+  <table>
+    <thead><tr><th style="width:22%">Ce qu'on fait</th><th style="width:16%">Portée</th><th>Ce que ça change</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Une pose</td><td>cette entité</td><td class="apres">Sa ligne entière disparaît de la matrice, avec toutes ses directions et tout son équipement. <b>Balthazar sans la pose de mort : 21 cases → 20.</b></td></tr>
+      <tr><td class="k" style="color:var(--signal-clair)">Ajouter une pose</td><td>cette entité</td><td class="apres">Le seul des sept gestes qui <b>ajoute</b> des cases au lieu d'en retirer. Une ligne paraît dans la matrice, marquée <span class="mesure">ajoutée ici</span>, et le prix monte d'autant. <b>Balthazar avec une pose d'éveil à 2 images : 21 cases → 23.</b></td></tr>
+      <tr><td class="k">Une direction, pour une pose</td><td>tout le projet</td><td class="apres">La mort n'a qu'une direction, et ça vaut pour tout le monde : c'est une propriété de la pose, pas du personnage. <b>Six poses × 4 directions = 24 → 21.</b></td></tr>
+      <tr><td class="k">Une direction, pour une entité</td><td>cette entité</td><td class="apres">Un personnage qu'on ne voit jamais de dos. Même mécanique, portée plus étroite.</td></tr>
+      <tr><td class="k">Une pièce d'équipement</td><td>cette entité</td><td class="apres">Un personnage qui ne porte pas de casque. <b>Balthazar sans la hache : 12 cases d'équipement → 6.</b></td></tr>
+      <tr><td class="k">Éteindre un des sept textes</td><td>cette entité</td><td class="apres">Le texte ne part plus dans ses appels (§ 05). <b>Ne change aucune case</b>, change ce qui est écrit dedans. C'est l'un des deux gestes, sur les sept, qui ne touchent pas la matrice.</td></tr>
+      <tr><td class="k">Désigner une ambiance</td><td>cette entité</td><td class="apres">Change trois textes sur sept et ajoute des images de référence (§ 05). <b>Ne change aucune case non plus</b> — une ambiance décide de l'allure, jamais du nombre d'images.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note bien" style="margin-top:22px">
+    <span class="lab">Pourquoi la matrice reste affichée à droite</span>
+    <p>C'est la seule raison pour laquelle la fiche garde une colonne de 380 px au lieu de s'étaler.
+      <strong>Ranger une pose est un geste qui coûte ou qui économise, et on doit le voir au moment
+      où on le fait</strong> — la ligne s'en va, la jauge tombe, le compte de cases manquantes
+      change. Sans ça on règle à l'aveugle et on découvre le résultat en refermant, ce qui est
+      exactement l'aller-retour que la refonte supprime.</p>
+  </div>
+
+  <h3>Ce qui se range se relègue, et reste lisible</h3>
+  <p>Une pose rangée ne disparaît pas de l'écran : elle passe sous un trait, en bas de la liste,
+    barrée et pâle, avec sa raison. C'est déjà ce que l'établi fait aujourd'hui sous
+    <span class="mesure">pas pour lui</span>, et ça ne change pas. <strong>On doit pouvoir défaire
+    un rangement sans se rappeler ce qu'on a rangé.</strong></p>
+
+  <div class="note att">
+    <span class="lab">Le piège, et ce qui le tient</span>
+    <p>Ranger fait monter la jauge sans qu'une seule image ait été fabriquée. Un personnage à
+      <span class="mesure">6 / 21</span> passe à <span class="mesure">6 / 6</span> si on range tout,
+      et il a l'air fini. <strong>Ce qui l'empêche, c'est que le codex compte les cases rangées
+      séparément</strong> : la ligne dit <span class="mesure">6 / 6 · 15 rangées</span>, jamais
+      <span class="mesure">6 / 6</span> tout court. Une jauge pleine obtenue en rangeant se lit
+      comme telle.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 08 -->
+<section>
+  <div class="entete"><span class="num">08</span><h2>Ce qui est fait — la porte, et pas l'écran</h2></div>
+
+  <p class="intro">C'est la mission neuve du codex : <strong>montrer</strong>. Le codex compte,
+    l'établi fabrique, la galerie range — et personne ne donne à voir. Le cinquième bloc de la fiche
+    est la porte de cet écran-là.</p>
+
+  <p>« Montrer ce qui est fait » recouvre deux choses différentes, et il vaut mieux les nommer
+    séparément :</p>
+  <table>
+    <thead><tr><th style="width:20%"></th><th style="width:34%">Ce que c'est</th><th>Où c'est décidé</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Contempler</td><td>Voir l'image finie en grand, sur un fond qui n'est pas le damier, à l'échelle du jeu.</td><td class="apres">Maquette <b>09</b> — la vitrine.</td></tr>
+      <tr><td class="k">Essayer</td><td>La voir bouger, et plus tard la poser dans une petite scène : sur un sol, à côté d'une autre entité pour l'échelle.</td><td class="apres">Maquette <b>09</b> aussi, et c'est la partie qui n'est pas encore décidée.</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:14px">La fiche n'en dessine aucun des deux. Elle porte la porte, et le compte
+    qui donne envie de l'ouvrir : <span class="mesure">6 cases sur 21</span>.
+    <strong>Une chose est définie à un seul endroit</strong>, et la vitrine sera définie dans sa
+    maquette.</p>
+
+  <div class="note gris">
+    <span class="lab">L'animation, et pourquoi elle ne fait pas de lieu neuf</span>
+    <p>Une pose qui demande plusieurs images dans une même direction, c'est déjà une animation à
+      moitié remplie — la maquette <span class="mesure">02</span> l'avait vu et avait refusé de
+      créer un axe pour ça. Ce que la V3 ajoutera, ce sont trois choses sur une ligne qui existe
+      déjà : <strong>l'ordre des images, une cadence, un bouton pour la lire</strong>. Elles vont
+      dans la planche d'une pose (maquette <span class="mesure">08</span>), parce que c'est là
+      qu'une direction et ses images vivent ensemble.</p>
+    <p>Et les tables d'atelier qui viendront avec — celles qui fabriquent des images intermédiaires
+      à partir de deux images — se rangent dans le groupe qui existe déjà pour ça : celui des
+      <em>fabriques</em>, après le trait qui les sépare de la recette, à côté du découpage et de la
+      superposition. Le critère est écrit : <strong>une table de recette décrit une image, une
+      fabrique en produit d'autres.</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 09 -->
+<section>
+  <div class="entete"><span class="num">09</span><h2>Ce que ça n'ajoute pas, et ce que ça coûte</h2></div>
+
+  <h3>La fiche n'ajoute qu'un champ au modèle</h3>
+  <p class="intro">C'est le résultat le plus utile de cette maquette, et il n'était pas acquis
+    d'avance. Le champ, c'est <em>le nom de l'ambiance désignée</em> ; tout le reste de ce que la
+    fiche manipule existe déjà dans les fichiers du projet.</p>
+  <table>
+    <thead><tr><th style="width:32%">Ce que la fiche manipule</th><th style="width:26%">Ça existe où</th><th>État</th></tr></thead>
+    <tbody>
+      <tr><td class="k">L'ambiance elle-même</td><td><span class="mesure">07-ambiances-et-couleurs</span></td><td class="apres">C'est un objet neuf, et son coût est compté là-bas, pas ici. <b>Ce que la fiche y ajoute tient en un champ</b> : le nom de l'ambiance désignée. Rien d'autre.</td></tr>
+      <tr><td class="k">Écrire un texte sur une chose du jeu</td><td><span class="mesure">surcharges</span></td><td class="apres">En place dans le domaine depuis le début, employé <span class="m mal">0 fois</span> sur 3 personnages — faute d'écran qui l'atteigne.</td></tr>
+      <tr><td class="k">Promouvoir une image en référence</td><td><span class="mesure">rôle « reference » · origine « asset »</span></td><td>En place dans le domaine, déjà employé <span class="m">3 fois</span>.</td></tr>
+      <tr><td class="k">Retenir une image</td><td><span class="mesure">favori</span></td><td>En place, employé <span class="m mal">0 fois</span> sur 48 images.</td></tr>
+      <tr><td class="k">Ranger une pose, une référence</td><td><span class="mesure">ecartees · references_ecartees</span></td><td>En place, employé <span class="m mal">0 fois</span> sur 3 personnages.</td></tr>
+      <tr><td class="k">Ranger une direction, une pièce</td><td><span class="mesure">05-codex</span> § 06</td><td>Décidé là-bas, même mécanique.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px"><strong>Quatre de ces six lignes existent déjà et n'ont jamais
+    servi</strong>, faute d'un écran qui les atteigne : écrire un texte sur une chose, retenir une
+    image, ranger une pose, ranger une référence. Zéro emploi sur trois personnages et quarante-huit
+    images. C'est très exactement ce que cette maquette est venue faire.</p>
+
+  <h3>Ce que la fiche prend, et à qui</h3>
+  <div class="note att">
+    <span class="lab">Le coût, nommé</span>
+    <ul>
+      <li><b>Un cran de profondeur en plus.</b> Le codex, l'établi, la fiche. Trois clics pour
+        atteindre un champ de bible d'un personnage. C'est le prix d'un établi qui reste lisible ;
+        l'alternative était une colonne de gauche à trois onglets, et le dossier a déjà écarté ce
+        genre d'empilement une fois.</li>
+      <li><b>Un troisième écran qui montre les sept textes.</b> Ils paraissent dans l'assistant, où
+        se règlent ceux du jeu ; dans une ambiance, où se règlent les trois qu'elle peut porter ; et
+        dans la fiche, qui les rassemble. Ce ne sont pas trois vérités : <em>chaque texte ne
+        s'écrit qu'à un seul endroit</em>, et la fiche affiche les autres en lecture seule, avec
+        leur provenance écrite à côté et un clic pour aller là où ils s'écrivent.</li>
+      <li><b>Un endroit de plus où une entité peut diverger.</b> Traité au § 05 : l'écart se voit
+        dans la fiche et dans le codex, et se défait d'un clic.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 10 -->
+<section>
+  <div class="entete"><span class="num">10</span><h2>Ce qui déborde de la fiche</h2></div>
+
+  <p class="intro">Sept choses que cette maquette découvre et qui se règlent ailleurs.</p>
+
+  <table>
+    <thead><tr><th style="width:20%">Où ça va</th><th>Ce qui est reporté</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">02 — l'établi</td>
+        <td class="apres">Sa colonne de gauche perd trois de ses quatre blocs, qui montent dans la
+          fiche, et gagne <b>une porte vers elle</b> — le nom de l'entité, en tête de colonne,
+          s'ouvre. Ce qui reste dans l'établi : le nom, le signalement résumé, la sortie.</td>
+      </tr>
+      <tr>
+        <td class="k">05 — le codex</td>
+        <td class="apres">Deux ajouts sur la ligne d'une entité : <b>la marque d'écart</b>
+          (<span class="mesure">3 champs posés ici</span>), et <b>le compte des cases rangées</b> à
+          côté de la jauge, pour qu'une jauge pleine obtenue en rangeant se lise comme telle.</td>
+      </tr>
+      <tr>
+        <td class="k">06ter — l'assistant</td>
+        <td class="apres">Deux textes du jeu annoncent <b>64x64</b> alors que le projet impose
+          <span class="mesure">128</span>. <b>C'est réglé</b> : l'assistant fait choisir la taille
+          sur une vignette, et ce choix unique remplit d'un coup le réglage et les phrases
+          correspondantes dans les textes. La contradiction ne peut plus se former.</td>
+      </tr>
+      <tr>
+        <td class="k">L'écran de confirmation</td>
+        <td class="apres">Tout ce qui relève du <b>tri appel par appel</b> : quels textes partent,
+          quelles images partent, la case <span class="mesure">envoyer la palette en référence</span>,
+          et la correction valable pour une seule image. La fiche pose le défaut durable ; elle ne
+          dessine pas cet écran-là.</td>
+      </tr>
+      <tr>
+        <td class="k">08 — la planche</td>
+        <td class="apres"><b>Six images d'équipement ne disent pas quelle pose elles habillent</b>,
+          et <b>les six planches d'équipement n'avaient qu'une seule case</b>. La planche est
+          l'endroit où une case reçoit sa pose au moment où elle est commandée, et l'endroit où
+          plusieurs cases partent ensemble. C'est elle qui répare les deux.</td>
+      </tr>
+      <tr>
+        <td class="k">09 — la vitrine</td>
+        <td class="apres">Tout le bloc <em>ce qui est fait</em>. La fiche n'en garde que la porte et
+          le compte.</td>
+      </tr>
+      <tr>
+        <td class="k">Le dépôt</td>
+        <td class="apres"><b>Neuf appels de personnage sur treize ne déclarent pas leur pose</b> — elle
+          devrait partir avec l'appel, pas être posée après coup sur l'image reçue. Et
+          <b>quatre mécanismes d'écart existent sans écran</b> : zéro pose écartée, zéro référence
+          écartée, zéro favori sur 48 images.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ce que la fiche ne tranche pas</h3>
+  <div class="note gris">
+    <span class="lab">Trois questions laissées ouvertes</span>
+    <ul>
+      <li><b>Une chose du jeu peut-elle porter deux ambiances ?</b> <em>Tranché le 30 août :
+        non, une seule.</em> Le besoin de mélanger existe bien, mais il se sert ailleurs et mieux :
+        on fabrique <strong>une ambiance qui combine ce qu'on veut</strong> — plusieurs palettes en
+        sources, les images qu'on choisit — et on la désigne. Deux ambiances sur une même chose
+        obligeraient à écrire une règle de priorité pour chaque texte et chaque image, et cette règle
+        serait invisible au moment où elle décide. La fiche n'a donc qu'un champ à afficher.</li>
+      <li><b>Que devient la fiche d'une entité qui n'est pas un personnage ?</b> Un décor n'a pas de
+        poses, une pièce d'équipement n'a pas de directions. Les cinq blocs valent pour tous, mais
+        le quatrième change de contenu selon la famille — l'établi le fait déjà
+        (<span class="mesure">01</span> § « la forme de l'établi change avec la famille »), et la
+        fiche suivra la même règle sans la redessiner.</li>
+      <li><b>Une image promue en référence doit-elle rester promue si on la retouche ?</b> Le
+        traitement est non destructif et le brut ne bouge jamais, donc la question porte sur ce qui
+        part : le brut ou le rendu. À trancher là où les références se composent, pas ici.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 11 -->
+<section>
+  <div class="entete"><span class="num">11</span><h2>Les mesures de l'écran</h2></div>
+
+  <p class="intro">Aucune n'est neuve. Toutes viennent du châssis ou d'un écran déjà dessiné.</p>
+
+  <table>
+    <thead><tr><th style="width:16%">Mesure</th><th style="width:22%">Ce que c'est</th><th>D'où elle vient</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><span class="m">44 px</span></td><td>La barre de tête</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">240 px</span></td><td>La colonne des cinq blocs</td><td>La colonne de gauche du codex et de la galerie</td></tr>
+      <tr><td class="k"><span class="m">380 px</span></td><td>La matrice, à droite</td><td>La colonne de droite du codex et de la galerie</td></tr>
+      <tr><td class="k"><span class="m">26 px</span></td><td>Le pied</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">38 px</span></td><td>Une entrée du sommaire, à gauche</td><td>La barre d'outils de la galerie</td></tr>
+      <tr><td class="k"><span class="m">38 px</span></td><td>Une vignette de référence</td><td>Le panneau de droite du codex · <span class="mesure">05</span>. <b>Survoler et appuyer sur la barre d'espace la montre en grand</b> — le geste de la galerie, systématique dans tout l'atelier depuis le 30 août. C'est lui qui permet de garder les vignettes petites.</td></tr>
+      <tr><td class="k"><span class="m">30 px</span></td><td>Le titre d'un bloc</td><td>Le titre du panneau de droite · <span class="mesure">05</span></td></tr>
+      <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne de pose, dans la matrice</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">9 px</span></td><td>Une marque de case</td><td>Le carré de la barre de tables · <span class="mesure">03</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px">Et les trois glyphes du produit restent trois : <span class="mesure">+</span>,
+    le triangle plein, <span class="mesure">×</span>. <strong>La fiche n'en introduit aucun</strong> —
+    l'origine d'un texte se dit avec des mots : <em>du jeu</em>, <em>son ambiance</em>,
+    <em>écrit ici</em>, <em>éteint</em>, <em>verrouillé</em>, et <em>rallumer</em> pour défaire.</p>
+</section>
+
+<footer>
+  Asset Kitchen — V2.1 · maquette 07bis, la fiche d'une chose du jeu · 30 août 2026,
+  reprise le même jour sur le modèle d'ambiance décidé en fin de journée ·
+  mesures prises sur <span class="mesure">cœur de pierre - 01</span> ·
+  rien n'est encore écrit dans les documents d'autorité
+</footer>
+
+</div>
+</body>
+</html>

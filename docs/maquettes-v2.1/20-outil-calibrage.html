@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, outil Calibrage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  /* ── l'écran ──────────────────────────────────────────────────────────── */
+  .ecran{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);overflow:hidden}
+  .barreh{height:34px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 12px;gap:9px;font-size:11.5px;color:var(--texte-2);background:var(--fond-1)}
+  .barreh a{color:var(--texte-2);text-decoration:none}
+  .barreh .sp{color:var(--texte-3)}
+  .barreh .ici{color:var(--texte)}
+  .barreh .dr{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .corps{display:flex;align-items:stretch;min-height:436px}
+  .gauche{width:308px;flex:none;border-right:1px solid var(--bord);
+    display:flex;flex-direction:column;gap:13px;padding:11px}
+  .droite{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
+    padding:16px;position:relative}
+
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .bouton{height:26px;border:1px solid var(--signal);border-radius:2px;background:var(--signal-sourd);
+    display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--signal-clair)}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .raison a{color:var(--signal);text-decoration:none}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  /* la liste des poses */
+  .poses{display:flex;flex-direction:column;gap:3px}
+  .po{min-height:30px;display:flex;align-items:center;gap:8px;padding:0 7px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .po.sel{border-color:var(--lumiere);background:var(--fond-3)}
+  .po.ref{border-color:var(--epingle)}
+  .po.hs{opacity:.5}
+  .vg{width:22px;height:22px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+  .vg i{position:absolute;background:var(--bord-fort)}
+  .po .nm{font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .po.sel .nm{color:var(--texte)}
+  .po .vl{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3);
+    font-variant-numeric:tabular-nums}
+  .po .tag{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--epingle);border:1px solid var(--epingle);border-radius:2px;padding:0 4px;line-height:14px}
+  .po .vl.on{color:var(--signal-clair)}
+  .po .vl.eg{color:var(--epingle)}
+  .po .oeil{width:12px;height:12px;flex:none;border:1px solid var(--bord-fort);border-radius:9999px}
+  .po .oeil.on{background:var(--bord-fort)}
+
+  /* le réglage de la pose choisie */
+  .rg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg .lb{font-size:11px;color:var(--texte-2);width:60px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rail .cran{position:absolute;top:-3px;width:1px;height:7px;background:var(--bord-fort)}
+  .champ{width:56px;flex:none;height:22px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:flex-end;
+    padding:0 6px;font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .touches{display:flex;gap:4px;padding-left:68px;margin-top:-2px}
+  .tk{min-width:22px;height:19px;padding:0 5px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-2);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .touches .pas{font-family:var(--mono);font-size:9px;color:var(--texte-3);
+    display:flex;align-items:center;margin-left:4px}
+
+  /* le canevas — 5 px d'écran pour 1 px logique */
+  .canev{width:384px;height:384px;position:relative;border:1px solid var(--bord-fort);
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/24px 24px}
+  .grillepx{position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(to right,rgba(57,66,76,.34) 1px,transparent 1px),
+      linear-gradient(to bottom,rgba(57,66,76,.34) 1px,transparent 1px);
+    background-size:48px 48px}
+  .cal{position:absolute;inset:0}
+  .cal span{position:absolute;border-radius:1px}
+  .cal.faible span{background:rgba(57,66,76,.55);border:1px solid rgba(94,103,113,.85)}
+  .cal.pleine span{background:var(--lumiere);border:1px solid var(--lumiere)}
+  .cal.reference span{background:none;border:1px solid var(--epingle)}
+  .ligne{position:absolute;left:0;right:0;height:1px;background:var(--signal);opacity:.75}
+  .solig{position:absolute;left:0;right:0;height:1px;background:var(--signal)}
+  .et{position:absolute;font-family:var(--mono);font-size:9px;color:var(--texte-3);white-space:nowrap}
+  .et.sg2{color:var(--signal)}
+  .et.ep{color:var(--epingle)}
+  .pileC{display:flex;flex-direction:column;gap:10px;align-items:center}
+  .legende{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .legende span{display:flex;align-items:center;gap:6px}
+  .legende u{width:11px;height:11px;flex:none;text-decoration:none;border-radius:1px}
+  .legende u.pl{background:var(--lumiere)}
+  .legende u.rf{border:1px solid var(--epingle)}
+  .legende u.fb{background:rgba(57,66,76,.55);border:1px solid rgba(94,103,113,.85)}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin-top:16px}
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px;white-space:nowrap}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.att .k{color:var(--epingle)}
+  .an.chassis .k{color:var(--texte-3)}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · outil 20 — calibrage</div>
+    <h1>Calibrage —<br><em>toutes les poses d'un personnage à la même taille</em></h1>
+    <p>Un écran qui pose <strong>toutes les poses d'un personnage l'une sur l'autre</strong>, dans la même
+      case, et qui décide de leur taille commune. Un bouton propose un calage, et on le reprend ensuite pose
+      par pose, à la main, en voyant le résultat.</p>
+    <p>Il vient de la mesure de <span class="mesure">13-table-grille.html § 02</span> : aujourd'hui, le même
+      personnage sort à six hauteurs différentes selon la pose, et rien ne le dit. <strong>Ce n'est pas
+      réparable dans la table grille</strong>, qui ne voit qu'une image à la fois — d'où un outil.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce qu'il fait, et pourquoi ce n'est pas une table</h2></div>
+    <p class="intro">Une table de la barre décrit <strong>l'image ouverte</strong> : on la règle, elle change,
+      on voit. Le calibrage travaille sur <strong>toutes les poses d'un personnage à la fois</strong> et
+      écrit dans chacune. Le mettre dans la barre voudrait dire que la barre de l'image A porte un outil qui
+      modifie les images B, C, D et E — la barre cesserait de vouloir dire quelque chose.</p>
+
+    <table>
+      <thead><tr><th style="width:26%">Ce qu'il fait</th><th>En détail</th></tr></thead>
+      <tbody>
+        <tr><td class="k">il superpose</td>
+          <td>Les poses rendues du personnage, toutes dans la même case, l'une sur l'autre. Les non
+            sélectionnées sont en transparence, celle qu'on règle est pleine, la référence est cerclée.</td></tr>
+        <tr><td class="k">il propose</td>
+          <td>Un bouton <span class="m">Calibrer</span> pose une taille commune à toutes les poses, et dit
+            <strong>quelle pose a limité le résultat</strong> et ce que ça coûte.</td></tr>
+        <tr><td class="k">il laisse reprendre</td>
+          <td>Chaque pose se règle ensuite seule, au rail ou au clavier, avec le résultat sous les yeux. La
+            proposition n'est qu'un point de départ.</td></tr>
+        <tr><td class="k">il ne génère rien</td>
+          <td>Aucun appel payant, aucune image neuve. Il change le rendu de poses qui existent déjà, et le
+            rendu est un cache : on recalcule, on ne repaie pas.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Où on l'ouvre</span>
+      <p><strong>Depuis l'établi du personnage</strong>, sur la matrice de ses poses : c'est là qu'on les voit
+        toutes, donc là qu'on remarque qu'elles ne s'accordent pas.</p>
+      <p><strong>Et depuis la table grille</strong>, sur la ligne qui annonce l'écart —
+        <span class="mesure">les cinq autres poses de ce personnage sortent à 64 ›</span>. C'est là qu'on
+        découvre le problème sur une image, et le lien mène à l'endroit qui le règle.</p>
+      <p>Deux portes, <strong>un seul écran</strong>. Il n'est pas dans la barre de tables, ni à gauche du
+        trait ni à droite : les deux fabriques de la barre partent d'une image ouverte, celui-ci part d'un
+        personnage.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qui l'a rendu nécessaire — mesuré le 30 août 2026</h2></div>
+    <p class="intro">Tout ce qui suit est mesuré avec le code du dépôt sur les images réelles de
+      <span class="mesure">donnees/</span>, sur deux personnages qui ont chacun leurs six poses.</p>
+
+    <div class="note att">
+      <span class="lab">Le défaut</span>
+      <h3>La taille est calée sur la boîte du sujet, et la boîte change de forme d'une pose à l'autre</h3>
+      <p>La mise sur grille rétrécit le sujet jusqu'à ce que <strong>le plus grand côté de sa boîte</strong>
+        atteigne la taille de la case. Un bras tendu rend la boîte plus large sans rendre le personnage plus
+        grand : c'est alors la largeur qui atteint la case, et la hauteur tombe en dessous.</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:16%">Pose</th><th style="width:24%">Boîte du sujet</th><th style="width:24%">Rendu en case 64</th><th>Hauteur du personnage</th></tr></thead>
+        <tbody>
+          <tr><td class="k">repos</td><td><span class="m">661 × 884</span></td><td><span class="m">48 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">marche</td><td><span class="m">1015 × 958</span></td><td><span class="m">64 × 60</span></td><td><span class="m eg">60 px</span></td></tr>
+          <tr><td class="k">course</td><td><span class="m">388 × 468</span></td><td><span class="m">53 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">attaque</td><td><span class="m">523 × 430</span></td><td><span class="m">64 × 53</span></td><td><span class="m eg">53 px</span></td></tr>
+          <tr><td class="k">dégâts</td><td><span class="m">404 × 432</span></td><td><span class="m">60 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
+          <tr><td class="k">mort</td><td><span class="m">492 × 328</span></td><td><span class="m">64 × 43</span></td><td><span class="m no">43 px</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">Dans le jeu, le personnage rapetisse au moment où il frappe, puis reprend sa
+        taille. <span class="sourd">Un second personnage du même projet passe ses cinq poses debout à 64 px
+        sans rien faire — ses bras ne sortent jamais de sa hauteur. Le défaut ne se voit donc pas
+        toujours.</span></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce que j'ai essayé, et qui ne marche pas</span>
+      <p>Avant de dessiner un bouton, j'ai comparé quatre façons de calculer une taille commune
+        automatiquement. Trois échouent, et c'est ce qui donne sa forme au bouton.</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:26%">Le repère</th><th>Ce qu'il donne</th></tr></thead>
+        <tbody>
+          <tr><td class="k">le plus grand côté<br><span class="sourd" style="font-weight:400">ce qu'on fait aujourd'hui</span></td>
+            <td>Tout tient dans la case, mais la hauteur du personnage varie :
+              <span class="m eg">64 · 60 · 64 · 53 · 64 · 43</span>.</td></tr>
+          <tr><td class="k">la hauteur de la boîte</td>
+            <td>La hauteur devient constante — c'est ce qu'on veut — mais
+              <strong>quatre poses sur six ne tiennent plus dans la case</strong> : il faudrait
+              <span class="m eg">68, 78 et 96 px</span> de large pour une case qui en fait 64.</td></tr>
+          <tr><td class="k">la racine de l'aire opaque</td>
+            <td>Séduisant — l'aire d'un corps ne change pas quand il tend le bras — mais
+              <strong>elle dépend de la qualité du détourage</strong>. Mesuré : la pose de marche ne remplit
+              que <span class="m eg">20 %</span> de sa boîte contre <span class="m">75 %</span> pour le
+              repos, et le calcul part à côté. Repère écarté.</td></tr>
+          <tr><td class="k">la bande centrale</td>
+            <td>Mesurer la hauteur sur la moitié médiane des colonnes, pour ignorer les bras. Sur ces douze
+              images, elle donne <strong>exactement le même résultat que la hauteur de la boîte</strong> —
+              la tête et les pieds sont au centre. Aucun gain, une formule de plus. Écarté.</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px"><strong>Il n'existe pas de repère automatique fiable.</strong> C'est
+        exactement pour ça que l'outil propose au lieu de décider, et que la reprise à la main est la moitié
+        du travail, pas un rattrapage.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ce qu'il écrit — et il n'ajoute presque rien</h2></div>
+    <p class="intro">La question qui décide du coût de cet outil : <strong>où se range le calage ?</strong>
+      Réponse mesurée : dans un réglage qui existe déjà.</p>
+
+    <div class="note bien">
+      <span class="lab">Le calage est une occupation</span>
+      <h3>Un réglage par pose, déjà dans la recette, déjà exprimé en part de la case</h3>
+      <p>L'occupation dit « ce sujet remplit <em>n</em> % de sa case ». C'est très exactement ce qu'un calage
+        doit écrire. L'outil ne fait donc rien d'autre que <strong>poser une occupation par pose</strong>, et
+        la table grille les affiche comme n'importe quel autre réglage.</p>
+      <p>Les occupations posées par le calage automatique sur le personnage mesuré, pour une hauteur commune
+        de 53 px dans une case de 64 :</p>
+      <p class="mesure" style="font-size:10.5px;color:var(--texte-2);line-height:1.9;margin-top:8px">
+        repos 83 %&nbsp;&nbsp;·&nbsp;&nbsp;marche 88 %&nbsp;&nbsp;·&nbsp;&nbsp;course 83 %&nbsp;&nbsp;·&nbsp;&nbsp;attaque
+        100 %&nbsp;&nbsp;·&nbsp;&nbsp;dégâts 83 %&nbsp;&nbsp;·&nbsp;&nbsp;<span style="color:var(--epingle)">mort :
+        mise de côté</span></p>
+    </div>
+
+    <div class="note bien" style="margin-top:9px">
+      <span class="lab">Et c'est ce qui rend la taille de case gratuite</span>
+      <p>Une occupation est une <em>part</em> de la case, pas un nombre de pixels. <strong>Changer la case de
+        64 à 128 ne défait donc pas le calage</strong> — il n'y a rien à recalculer. Vérifié en repassant les
+        mêmes occupations à trois tailles :</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:16%">Pose</th><th style="width:22%">Case 32</th><th style="width:22%">Case 64</th><th>Case 128</th></tr></thead>
+        <tbody>
+          <tr><td class="k">repos</td><td><span class="m">20 × 27</span></td><td><span class="m">40 × 53</span></td><td><span class="m">79 × 106</span></td></tr>
+          <tr><td class="k">marche</td><td><span class="m">24 × 26</span></td><td><span class="m">53 × 52</span></td><td><span class="m">111 × 106</span></td></tr>
+          <tr><td class="k">course</td><td><span class="m">22 × 27</span></td><td><span class="m">44 × 53</span></td><td><span class="m">88 × 106</span></td></tr>
+          <tr><td class="k">attaque</td><td><span class="m">32 × 26</span></td><td><span class="m">64 × 53</span></td><td><span class="m">128 × 105</span></td></tr>
+          <tr><td class="k">dégâts</td><td><span class="m">25 × 27</span></td><td><span class="m">50 × 53</span></td><td><span class="m">99 × 106</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px">La hauteur est <strong>constante dans chaque colonne</strong> —
+        <span class="m bon">27 · 53 · 106</span> — à un pixel d'arrondi près, qui vient de l'entier et de
+        rien d'autre.</p>
+    </div>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">La seule chose qu'il ajoute — décidé le 30 août 2026</span>
+      <h3>Un décalage horizontal, à côté de l'ancrage</h3>
+      <p>La case centre le sujet horizontalement <strong>sur sa boîte</strong>, et ça ne se règle pas. Mesuré :
+        un bras qui sort de 160 px déplace le corps de <span class="m eg">6 px</span> dans une case de 64,
+        <strong>même quand la taille, elle, n'a pas bougé</strong>. Superposer les poses rend cette dérive
+        parfaitement visible ; sans un décalage, l'outil la montrerait sans pouvoir y toucher.</p>
+      <p><strong>Un entier de plus dans la recette</strong>, en pixels de la case, à côté de l'ancrage qui ne
+        règle que le vertical. Il se comporte comme la boîte tracée du recadrage : c'est une coordonnée, pas
+        un réglage, donc <strong>il ne part pas dans une recette nommée</strong> — même règle, rien de neuf à
+        comprendre.</p>
+      <p><strong>Coût nommé</strong> : c'est le seul ajout au domaine de tout le dossier V2.1, et il a été
+        pesé contre l'autre option — régler la taille seule et laisser la dérive visible. <strong>Montrer un
+        défaut auquel on ne peut pas toucher est pire que de ne pas le montrer</strong>, et c'est ce qui a
+        tranché.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>L'écran</h2></div>
+    <p class="intro">La colonne de gauche est à <strong>308 px</strong>, la largeur du dossier. Le canevas
+      prend tout le reste. L'état dessiné est celui d'un calibrage qui vient d'être proposé et dont on reprend
+      la pose <em>marche</em> à la main.</p>
+
+    <div class="ecran">
+      <div class="barreh">
+        <a href="#">Cœur de pierre</a><span class="sp">›</span>
+        <a href="#">Personnages</a><span class="sp">›</span>
+        <a href="#">Michel le nain</a><span class="sp">›</span>
+        <span class="ici">Calibrage</span>
+        <span class="dr">6 poses · 5 calées · 1 mise de côté</span>
+      </div>
+      <div class="corps">
+        <div class="gauche">
+
+          <div class="bloc">
+            <span class="col-t">la case</span>
+            <div class="segs">
+              <span class="sg mono">16</span><span class="sg mono">24</span><span class="sg mono">32</span>
+              <span class="sg mono">48</span><span class="sg mono on">64</span><span class="sg mono">96</span>
+              <span class="sg mono">128</span>
+            </div>
+            <div class="prov">l'univers de Cœur de pierre · 64 px</div>
+            <div class="raison">essayer une autre taille ne défait pas le calage —
+              <a href="#">adopter pour tout le projet ›</a></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">le calibrage</span>
+            <div class="segs">
+              <span class="sg on">tout doit tenir</span><span class="sg">caler sur la référence</span>
+            </div>
+            <div class="bouton">Calibrer les 6 poses</div>
+            <div class="prov">hauteur commune 53 px sur 64 · c'est « attaque » qui limite</div>
+            <div class="raison">11 px de la case ne servent pas · 17 % de résolution en moins, et c'est le
+              prix de la cohérence</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">les poses</span>
+            <div class="poses">
+              <div class="po ref"><span class="vg"><i style="left:6px;top:2px;width:8px;height:18px"></i></span>
+                <span class="nm">repos</span><span class="tag">réf</span>
+                <span class="vl">83 % · 53 px</span><span class="oeil on"></span></div>
+              <div class="po sel"><span class="vg"><i style="left:5px;top:3px;width:10px;height:17px"></i></span>
+                <span class="nm">marche</span>
+                <span class="vl on">88 % · 52 px</span><span class="oeil on"></span></div>
+              <div class="po"><span class="vg"><i style="left:5px;top:2px;width:9px;height:18px"></i></span>
+                <span class="nm">course</span>
+                <span class="vl">83 % · 53 px</span><span class="oeil on"></span></div>
+              <div class="po"><span class="vg"><i style="left:2px;top:3px;width:16px;height:17px"></i></span>
+                <span class="nm">attaque</span>
+                <span class="vl">100 % · 53 px</span><span class="oeil on"></span></div>
+              <div class="po"><span class="vg"><i style="left:4px;top:2px;width:11px;height:18px"></i></span>
+                <span class="nm">dégâts</span>
+                <span class="vl">83 % · 53 px</span><span class="oeil on"></span></div>
+              <div class="po hs"><span class="vg"><i style="left:2px;top:9px;width:16px;height:11px"></i></span>
+                <span class="nm">mort</span>
+                <span class="vl eg">mise de côté</span><span class="oeil"></span></div>
+            </div>
+            <div class="touches" style="padding-left:0"><span class="tk">↑</span><span class="tk">↓</span>
+              <span class="pas">changer de pose · R = la référence seule</span></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">marche — sa taille</span>
+            <div class="rg"><span class="lb">occupation</span>
+              <span class="rail"><span class="cran" style="left:88%"></span><i style="left:88%"></i></span>
+              <span class="champ">88 %</span></div>
+            <div class="touches"><span class="tk">−</span><span class="tk">+</span>
+              <span class="pas">1 % · Maj ×10</span></div>
+            <div class="rg"><span class="lb">décalage</span>
+              <span class="rail"><span class="cran" style="left:50%"></span><i style="left:46%"></i></span>
+              <span class="champ">−3 px</span></div>
+            <div class="touches"><span class="tk">←</span><span class="tk">→</span>
+              <span class="pas">1 px · Maj ×10</span></div>
+            <div class="prov">taille calée automatiquement · décalage repris à la main</div>
+            <div class="raison">le cran sous la poignée est la proposition —
+              <a href="#">tout remettre dessus ›</a></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">voir</span>
+            <div class="segs">
+              <span class="sg on">pleines</span><span class="sg">contours</span>
+            </div>
+            <div class="touches" style="padding-left:0">
+              <span class="tk">C</span><span class="tk">M</span><span class="tk">R</span>
+              <span class="pas">contours · masquer les autres · référence seule</span></div>
+          </div>
+
+        </div>
+
+        <div class="droite">
+          <div class="pileC">
+          <div class="canev">
+            <span class="grillepx"></span>
+
+            <!-- course · en transparence -->
+            <span class="cal faible">
+              <span style="left:150px;top:66px;width:52px;height:54px"></span>
+              <span style="left:128px;top:120px;width:104px;height:116px"></span>
+              <span style="left:60px;top:130px;width:34px;height:92px"></span>
+              <span style="left:290px;top:130px;width:34px;height:92px"></span>
+              <span style="left:120px;top:236px;width:46px;height:148px"></span>
+              <span style="left:188px;top:236px;width:46px;height:148px"></span>
+            </span>
+
+            <!-- dégâts · en transparence -->
+            <span class="cal faible">
+              <span style="left:168px;top:66px;width:52px;height:54px"></span>
+              <span style="left:140px;top:120px;width:108px;height:116px"></span>
+              <span style="left:42px;top:128px;width:36px;height:96px"></span>
+              <span style="left:306px;top:128px;width:36px;height:96px"></span>
+              <span style="left:140px;top:236px;width:48px;height:148px"></span>
+              <span style="left:206px;top:236px;width:48px;height:148px"></span>
+            </span>
+
+            <!-- attaque · en transparence, son bras sort jusqu'au bord -->
+            <span class="cal faible">
+              <span style="left:54px;top:66px;width:52px;height:52px"></span>
+              <span style="left:30px;top:118px;width:100px;height:118px"></span>
+              <span style="left:0;top:130px;width:30px;height:96px"></span>
+              <span style="left:130px;top:150px;width:210px;height:34px"></span>
+              <span style="left:340px;top:128px;width:44px;height:68px"></span>
+              <span style="left:36px;top:236px;width:44px;height:148px"></span>
+              <span style="left:90px;top:236px;width:44px;height:148px"></span>
+            </span>
+
+            <!-- marche · la pose réglée, pleine -->
+            <span class="cal pleine">
+              <span style="left:159px;top:72px;width:66px;height:60px"></span>
+              <span style="left:132px;top:132px;width:120px;height:120px"></span>
+              <span style="left:33px;top:144px;width:42px;height:108px"></span>
+              <span style="left:309px;top:144px;width:42px;height:108px"></span>
+              <span style="left:138px;top:252px;width:54px;height:132px"></span>
+              <span style="left:204px;top:252px;width:54px;height:132px"></span>
+            </span>
+
+            <!-- repos · la référence, cerclée, dessinée par-dessus tout -->
+            <span class="cal reference">
+              <span style="left:165px;top:66px;width:54px;height:56px"></span>
+              <span style="left:138px;top:122px;width:108px;height:120px"></span>
+              <span style="left:72px;top:132px;width:34px;height:108px"></span>
+              <span style="left:278px;top:132px;width:34px;height:108px"></span>
+              <span style="left:138px;top:242px;width:48px;height:142px"></span>
+              <span style="left:198px;top:242px;width:48px;height:142px"></span>
+            </span>
+
+            <span class="ligne" style="top:66px"></span>
+            <span class="solig" style="bottom:0"></span>
+            <span class="et sg2" style="left:6px;top:50px">la hauteur commune · 53 px</span>
+            <span class="et" style="right:6px;top:6px">64 × 64</span>
+            <span class="et sg2" style="right:6px;bottom:6px">le sol</span>
+          </div>
+          <div class="legende">
+            <span><u class="pl"></u>marche · celle qu'on règle</span>
+            <span><u class="rf"></u>repos · la référence</span>
+            <span><u class="fb"></u>course, dégâts, attaque</span>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banc">
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>Le canevas est une seule case, pas une
+          planche contact.</b> Toutes les poses y sont posées l'une sur l'autre, à la taille qu'elles auront
+          dans le jeu. <b>C'est la superposition qui fait voir le défaut</b> : six vignettes côte à côte ne
+          montrent pas qu'un personnage est plus petit qu'un autre, six silhouettes empilées, si.</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>Trois niveaux de lecture, et aucun texte
+          pour les expliquer.</b> Les poses qu'on ne règle pas sont en transparence forte
+          (<span class="mesure">--bord-fort</span> à 22 %), celle qu'on règle est pleine en
+          <span class="mesure">--lumiere</span>, la référence est <b>cerclée</b> en
+          <span class="mesure">--epingle</span> sans remplissage. Trois traitements, la même
+          silhouette.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>La ligne de hauteur commune traverse le
+          canevas.</b> C'est la mesure que l'outil défend : toutes les têtes doivent la toucher. Une pose qui
+          ne l'atteint pas se voit sans avoir à lire un chiffre — et le sol, en bas, est l'autre trait qu'on
+          ne discute pas.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>La grille de pixels est dessinée
+          par-dessus.</b> Une maille = un pixel du sprite fini. Elle dit ce que la case coûte en détail bien
+          mieux qu'un chiffre : à 64, une jambe fait trois mailles de large.</span></div>
+        <div class="an att"><span class="k">05</span><span class="t"><b>Chaque pose porte son occupation
+          <em>et</em> sa hauteur rendue</b> — <span class="mesure">88 % · 52 px</span>. Le pourcentage est ce
+          qu'on écrit, les pixels sont ce qu'on obtient, et les deux ne disent pas la même chose : c'est la
+          même règle que dans la table grille, où un pourcentage seul ment aux petites
+          cases.</span></div>
+        <div class="an att"><span class="k">06</span><span class="t"><b>« mort » est mise de côté, et l'outil
+          l'a proposé lui-même.</b> Sa boîte est bien plus large que haute — le personnage est couché. La
+          garder tirerait la hauteur commune de 53 px à <span class="mesure">43</span>, et tout le monde
+          rapetisserait pour elle. <b>L'outil ne devine pas qu'elle est couchée</b> : il voit qu'elle est très
+          en dehors des autres, le propose, et un clic sur son œil la fait rentrer.</span></div>
+        <div class="an"><span class="k">07</span><span class="t"><b>La provenance est écrite sous les
+          réglages</b>, comme partout : <span class="mesure">calé automatiquement, puis repris à la
+          main</span>. Et le retour en arrière est explicite —
+          <span class="mesure">remettre la proposition ›</span>. C'est la règle du dossier :
+          <em>ce qui est devinable est prérempli avec sa provenance, et se défait d'un clic</em>.</span></div>
+        <div class="an"><span class="k">08</span><span class="t"><b>Les touches sont dessinées sous ce
+          qu'elles commandent</b>, et cliquables — le motif vient de
+          <span class="mesure">19-outil-superposition.html</span> et n'est pas réinventé ici. <b>Elles sont ce
+          qui rend l'outil rapide</b> : on garde les yeux sur le canevas et on corrige au clavier.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">Le fil d'Ariane est celui du
+          dossier, avec un segment de plus. Il n'y a <b>pas de barre de tables</b> sur cet écran : on n'y
+          règle pas la recette d'une image, et une barre qui ne s'appliquerait à rien ferait
+          croire le contraire.</span></div>
+      </div>
+    </div>
+    <div class="lgd">le canevas est dessiné à 5 px d'écran pour 1 px logique · les silhouettes sont
+      schématiques, les occupations et les hauteurs sont celles des mesures du § 02</div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Le calibrage automatique — ses deux modes</h2></div>
+    <p class="intro">Le bouton propose, il ne tranche pas. Deux modes, parce que la mesure a montré
+      qu'<strong>on ne peut pas avoir les deux à la fois</strong> : garder la pleine résolution, et garder la
+      même taille partout.</p>
+
+    <table>
+      <thead><tr><th style="width:22%">Mode</th><th style="width:30%">Ce qu'il fait</th><th>Ce qu'il coûte, mesuré</th></tr></thead>
+      <tbody>
+        <tr><td class="k">tout doit tenir<br><span class="sourd" style="font-weight:400">le défaut</span></td>
+          <td>Il cherche <strong>la plus grande hauteur commune où toutes les poses tiennent</strong> dans la
+            case. Aucune n'est coupée.</td>
+          <td>Sur le personnage mesuré : <span class="m">53 px sur 64</span>, limité par la pose d'attaque et
+            son bras tendu. <strong>11 px de la case ne servent plus, soit 17 % de résolution en moins</strong>
+            sur les cinq poses.
+            <br><br>Sur le second personnage : <span class="m bon">64 px, rien à céder</span> — ses cinq poses
+            debout s'accordent déjà. <strong>Le bouton ne fait alors rien, et le dit.</strong></td></tr>
+        <tr><td class="k">caler sur la référence</td>
+          <td>Toutes les poses prennent <strong>la hauteur de la pose de référence</strong>, quitte à déborder
+            de la case.</td>
+          <td>Référence <em>repos</em>, hauteur 64 : trois poses sur six débordent —
+            <span class="m eg">marche 68 px, attaque 78 px, mort 96 px</span> de large pour une case qui en
+            fait 64. <strong>Elles sont marquées, pas coupées en silence</strong>, et se reprennent une par
+            une.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">La pose mise de côté</span>
+      <p>Dans les deux modes, l'outil regarde <strong>si une pose est très en dehors des autres</strong> — sa
+        boîte beaucoup plus large que haute quand les autres sont hautes. Il la propose alors comme
+        <em>mise de côté</em> : elle garde sa taille actuelle et ne pèse pas sur le calcul.</p>
+      <p>Mesuré, c'est ce qui sauve le résultat : en gardant la pose de mort dans le calcul, la hauteur commune
+        tombe de <span class="m">53</span> à <span class="m eg">43 px</span> pour le premier personnage, et de
+        <span class="m">64</span> à <span class="m eg">42 px</span> pour le second — <strong>un personnage
+        debout rapetissé d'un tiers parce qu'il meurt dans une autre image</strong>.</p>
+      <p><strong>L'outil ne sait pas qu'elle est couchée.</strong> Il sait qu'elle ne ressemble pas aux autres,
+        il le dit, et l'auteur confirme d'un clic. C'est la différence entre deviner et mesurer, et elle est
+        écrite dans la ligne de provenance.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce que l'outil ne propose pas — et pourquoi</span>
+      <p><strong>Une case qui ne serait pas carrée.</strong> C'est la solution qui garderait tout : mesuré, il
+        faudrait <span class="m">96 × 64</span> pour tenir les six poses à pleine hauteur, ou
+        <span class="m">78 × 64</span> sans la pose de mort. Mais toute la chaîne du produit pose une case
+        carrée, et un rectangle changerait l'export, la matrice et le format des sprites.</p>
+      <p>Ce n'est pas écarté sur le fond — c'est écarté <strong>de cet outil-ci</strong>, qui a le droit de
+        régler des tailles et pas de changer la forme de la case. Le § 07 le reprend.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Le réglage à la main, et les aides à l'œil</h2></div>
+    <p class="intro">La proposition faite, l'essentiel du travail reste : regarder, et corriger ce que le
+      calcul ne pouvait pas voir. Tout est fait pour qu'on ne quitte pas le canevas des yeux.</p>
+
+    <table>
+      <thead><tr><th style="width:20%">L'aide</th><th style="width:16%">Touche</th><th>Ce qu'elle donne</th></tr></thead>
+      <tbody>
+        <tr><td class="k">la référence seule</td><td><span class="m">R</span> maintenue</td>
+          <td>Tant que la touche est enfoncée, <strong>seule la pose de référence s'affiche, pleine</strong>.
+            On relâche, tout revient. C'est le geste qui sert le plus : on compare une silhouette à la seule
+            qui ne bougera pas.</td></tr>
+        <tr><td class="k">masquer les autres</td><td><span class="m">M</span></td>
+          <td>Ne garde que la pose réglée et la référence. Utile quand six silhouettes empilées deviennent
+            une bouillie — au-delà de quatre poses visibles, ça arrive vite.</td></tr>
+        <tr><td class="k">les contours</td><td><span class="m">C</span></td>
+          <td>Chaque pose devient <strong>un contour d'un pixel au lieu d'une surface pleine</strong>. Les
+            écarts de taille se lisent d'un coup, parce que deux contours qui ne se superposent pas laissent
+            un liseré visible là où deux aplats se cachaient l'un l'autre.</td></tr>
+        <tr><td class="k">changer de pose</td><td><span class="m">↑ ↓</span></td>
+          <td>Passe à la pose suivante dans la liste. Le rail suit, le canevas suit.</td></tr>
+        <tr><td class="k">la taille</td><td><span class="m">− +</span></td>
+          <td>1 % par appui, 10 avec <span class="m">Maj</span>. Le rail est <strong>cranté sur les positions
+            où l'image change</strong> — même règle que dans la table grille, où 84 % des positions du curseur
+            ne changent rien à petite case.</td></tr>
+        <tr><td class="k">le décalage</td><td><span class="m">← →</span></td>
+          <td>1 px de la case par appui, 10 avec <span class="m">Maj</span>. Il corrige la dérive horizontale
+            mesurée au § 03.</td></tr>
+        <tr><td class="k">montrer / cacher</td><td><span class="m">clic sur l'œil</span></td>
+          <td>Sort une pose du canevas sans la sortir du calcul. <strong>Mettre de côté est autre chose</strong>
+            — c'est la marque <span class="m eg">mise de côté</span>, qui sort du calcul.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Deux choses qui se ressemblent et qu'il ne faut pas confondre</span>
+      <ul>
+        <li><b>Cacher une pose</b> — elle n'est plus dessinée, mais elle compte toujours dans la hauteur
+          commune. C'est un geste de confort, il ne change rien au rendu.</li>
+        <li><b>Mettre une pose de côté</b> — elle reste dessinée en grisé, mais elle ne compte plus dans le
+          calcul et garde sa taille actuelle. C'est un geste qui change le rendu de toutes les autres.</li>
+      </ul>
+      <p style="margin-top:12px">Deux marques différentes dans la liste : <strong>l'œil</strong> pour le
+        premier, <strong>le mot en</strong> <span class="mesure" style="color:var(--epingle)">--epingle</span>
+        pour le second. Aucune ne demande à être expliquée deux fois.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Changer la taille de la case sans perdre le calage</h2></div>
+    <p class="intro">C'était une demande explicite, et la mesure du § 03 dit qu'elle est déjà satisfaite : le
+      calage s'écrit en parts de la case, donc il traverse un changement de case sans qu'on touche à rien.</p>
+
+    <table>
+      <thead><tr><th style="width:30%">Le geste</th><th>Ce qui se passe</th></tr></thead>
+      <tbody>
+        <tr><td class="k">essayer une taille</td>
+          <td>Les segments du haut de la colonne changent <strong>la case du canevas seulement</strong>. Les
+            occupations ne bougent pas, les rendus se recalculent. C'est un essai, et rien n'est écrit.</td></tr>
+        <tr><td class="k">l'adopter</td>
+          <td><span class="m">adopter pour tout le projet ›</span> écrit la nouvelle taille
+            <strong>dans l'univers</strong>, où elle appartient : c'est une décision de projet, pas de
+            personnage. Le lien mène à l'écran Univers plutôt que d'écrire en silence depuis ici.</td></tr>
+        <tr><td class="k">revenir</td>
+          <td>Reprendre la taille de l'univers dans les segments. Il n'y a rien à défaire : aucun calage
+            n'était accroché à la taille essayée.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note bien" style="margin-top:22px">
+      <span class="lab">Ce que ça vaut, en une phrase</span>
+      <p>Un projet qui décide en cours de route de passer de 64 à 128 px <strong>ne perd aucun calibrage</strong>
+        et n'a rien à refaire. Le seul écart est l'arrondi à l'entier — mesuré à un pixel, et il vient de la
+        grille de pixel elle-même, pas du calage.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que cet outil décide au-delà de lui-même</h2></div>
+
+    <div class="note att">
+      <span class="lab">01 · Un décalage horizontal entre dans la recette — décidé le 30 août 2026</span>
+      <p>C'est <strong>le seul ajout au domaine de tout le dossier V2.1</strong> : un entier, en pixels de la
+        case, à côté de l'ancrage. Il est écrit par cet outil et par personne d'autre, il ne part pas dans une
+        recette nommée — même règle que la boîte tracée du recadrage —, et il vaut zéro par défaut.</p>
+      <p>Sans lui, la dérive mesurée au § 03 se voit sur le canevas et ne se corrige pas. <strong>Montrer un
+        défaut qu'on ne peut pas toucher est pire que de ne pas le montrer.</strong></p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">À reporter dans
+        <span class="mesure">13-table-grille.html § 04</span></strong>, sous l'ancrage, qui est le réglage
+        qu'il complète.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · La matrice de l'établi gagne un bouton, et une colonne de vérité</span>
+      <p>L'établi d'un personnage montre déjà la matrice de ses poses. Il lui faut
+        <strong>une porte vers cet outil</strong>, et <strong>une marque sur les poses qui ne sont pas à la
+        taille commune</strong> — sinon on ne sait qu'il y a un problème qu'en ouvrant l'outil, ce qui revient
+        à ne pas le savoir.</p>
+      <p>La marque est celle qui existe déjà pour un écart : la valeur en
+        <span class="mesure" style="color:var(--epingle)">--epingle</span>. Aucune forme neuve.</p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">À reporter dans
+        <span class="mesure">02-etabli-personnage.html</span></strong>, qui est une maquette déjà validée :
+        c'est un ajout, pas une reprise de ce qui y est tranché.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">03 · La case carrée reste une question ouverte, et elle est plus grosse que cet outil</span>
+      <p>Mesuré : garder les six poses à pleine hauteur demanderait une case de <span class="m">96 × 64</span>.
+        Le produit entier suppose une case carrée — la mise sur grille, l'export, la matrice, le format des
+        sprites.</p>
+      <p>Cet outil rend la question <strong>chiffrable au lieu de théorique</strong> : on sait maintenant ce
+        que la case carrée coûte, personnage par personnage — 17 % de résolution pour l'un, rien du tout pour
+        l'autre. <strong>C'est ce qui permettra de trancher, plus tard, avec autre chose qu'une
+        intuition.</strong></p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">Reste au
+        <span class="mesure">00-sommaire.html § 04</span></strong> comme question ouverte, avec ses
+        chiffres.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 09 ═════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce que cet outil doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+      <p><strong>Il répare un défaut que personne ne sait nommer</strong> — les poses d'un même
+        personnage ne sortent pas toutes à la même taille —, et une explication qui commence par
+        décrire le défaut vaut mieux que dix qui décrivent le remède.</p>
+      <p style="margin-top:10px"><b>nom</b> · Le calibrage<br>
+        <b>quoi</b> · L'outil qui met toutes les poses d'un personnage à la même échelle. Il travaille
+        sur toutes à la fois, et c'est pour ça qu'il n'est pas dans la barre des tables : la barre parle
+        de l'image ouverte, lui écrit dans les autres.<br>
+        <b>ce que ça change</b> · Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut
+        qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 59,
+        64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille
+        rétrécit tout le reste.<br>
+        <b>d'où ça vient</b> · la matrice de l'établi, qui marque en doré les poses hors taille
+        commune<br>
+        <b>où ça se range</b> · <span class="mesure">L'établi</span> — c'est de là qu'on l'ouvre</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · outil 20, calibrage · 30 août 2026 · écran entier
+  </footer>
+
+</div>
+</body>
+</html>

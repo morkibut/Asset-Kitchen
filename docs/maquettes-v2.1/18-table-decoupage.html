@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Découpage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .enpan .dj{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:center}
+  .col-t .dr{margin-left:auto;text-transform:none;letter-spacing:0}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+
+  .segs{display:flex;gap:4px}
+  .sg{height:24px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .sg.gris{color:var(--texte-3);border-style:dashed}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:74px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:52px;text-align:right}
+
+  /* le format de la planche, en tête de la table */
+  .fmt{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:8px 9px;display:flex;flex-direction:column;gap:4px}
+  .fmt .l1{font-family:var(--mono);font-size:10.5px;color:var(--texte)}
+  .fmt .l2{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .fmt .l2 b{color:var(--epingle);font-weight:400}
+
+  /* la liste des rectangles */
+  .rects{display:flex;flex-direction:column;gap:3px}
+  .rc{height:30px;display:flex;align-items:center;gap:8px;padding:0 7px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .rc.sel{border-color:var(--lumiere)}
+  .rc .no{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:9px;flex:none}
+  .vg{width:20px;height:20px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+  .vg i{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .rc .dm{font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .rc .tag{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--epingle)}
+  .rc .x{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:auto}
+  .rc .tag + .x{margin-left:8px}
+  .rc.vide .dm{color:var(--texte-3)}
+
+  .dest{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:8px 9px;display:flex;flex-direction:column;gap:5px}
+  .dest .ou{font-family:var(--mono);font-size:10.5px;color:var(--texte)}
+  .dest .ou b{color:var(--signal-clair);font-weight:400}
+  .dest .de{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+  .dest .alt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+
+  .act{height:26px;border:1px solid var(--signal);border-radius:2px;background:var(--signal-sourd);
+    display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--signal-clair)}
+  .act.hs{border-color:var(--bord);background:var(--fond-2);color:var(--texte-3);border-style:dashed}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+
+  /* la planche, avec ses rectangles */
+  .cadre{overflow-x:auto}
+  .planche{border:1px solid var(--bord);border-radius:2px;position:relative;height:268px;
+    min-width:566px;background:var(--fond-0);overflow:hidden}
+  .sil{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .rect{position:absolute;border:1px solid var(--signal);background:rgba(73,179,206,.06)}
+  .rect .no{position:absolute;left:-1px;bottom:-1px;height:13px;padding:0 4px;
+    background:var(--signal);color:var(--fond-0);font-family:var(--mono);font-size:9px;
+    display:flex;align-items:center;line-height:1}
+  .rect.sel{border-color:var(--lumiere);background:rgba(234,244,248,.05)}
+  .rect.sel .no{background:var(--lumiere)}
+  .rect .p{position:absolute;width:5px;height:5px;background:var(--lumiere)}
+  .liseret{position:absolute;border:1px dashed var(--bord-fort);pointer-events:none}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .av{color:var(--signal)}
+  .mesrow .hp{color:var(--epingle)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  td .mj{font-family:var(--mono);font-size:11px;color:var(--epingle)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  .avenir{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .av{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:14px 16px}
+  .av .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;margin-bottom:8px}
+  .av.mnt .n{color:var(--signal)}
+  .av.plus .n{color:var(--epingle)}
+  .av ul{margin:0;padding:0;list-style:none}
+  .av li{font-size:12px;color:var(--texte-2);padding:4px 0 4px 13px;position:relative;line-height:1.45}
+  .av li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px;background:var(--bord-fort)}
+  .av.mnt li::before{background:var(--signal)}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 18 — découpage</div>
+    <h1>Découpage —<br><em>une image en devient plusieurs</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span>.</p>
+    <p>Les places de la recette changent l'image qu'on regarde. Celle-ci n'y touche pas :
+      <strong>elle en fabrique d'autres</strong>. C'est pour ça qu'elle est après le séparateur de la barre,
+      hors de la suite — et c'est ce qui commande à peu près tout le reste de ce document.</p>
+    <p class="sourd">Elle est <strong>la première des deux fabriques</strong>. La seconde, la superposition,
+      est arrivée le 30 août quand la table <em>différence</em> a quitté la recette — voir
+      <span class="mesure">19-outil-superposition.html</span>. Tout ce qui est écrit ici sur « fabriquer au
+      lieu de modifier » vaut pour les deux.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et pourquoi elle est hors de la recette</h2></div>
+    <p class="intro">Une planche de quatre postures arrive du modèle en <strong>une seule image</strong>. Sans
+      cette table, l'auteur a un asset là où le jeu en attend quatre, et la rangée du personnage reste vide
+      alors que les images existent. La table trouve les rectangles, l'auteur les corrige, et chaque rectangle
+      devient <strong>un asset entier</strong> — avec son brut, sa recette, son rendu et son rang.</p>
+
+    <div class="note">
+      <span class="lab">Trois conséquences du fait qu'elle fabrique au lieu de modifier</span>
+      <ul>
+        <li><b>Son carré ne se remplit jamais.</b> Le carré plein dit <em>il y a une place posée ici, sur
+          cette image</em> ; le découpage n'en pose aucune. Le châssis lui donne son état à part — le bord
+          tireté — et son en-tête porte à la place ce qu'elle a déjà produit :
+          <span class="mesure">4 découpes</span>.</li>
+        <li><b>Elle s'engage, là où une place de recette se règle.</b> Les places se règlent en continu et
+          ne coûtent qu'un rendu qu'on refait. Une fabrique écrit des fichiers sur le disque, donc elle a un
+          bouton, et il dit exactement ce qu'il va produire :
+          <span class="mesure">Découper les 4 ›</span>.</li>
+        <li><b>Elle coupe dans le brut, jamais dans le rendu.</b> Ce qui sort d'ici est du brut à part
+          entière, qui se détourera et se remettra sur grille comme n'importe quelle image arrivée du modèle.
+          Couper dans le rendu figerait dans les pixels ce que la recette doit rester libre de défaire.</li>
+      </ul>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:26%">Sa place</th><th>Pourquoi là</th></tr></thead>
+      <tbody>
+        <tr><td class="k">après le séparateur</td>
+          <td><em>La barre est la recette</em>, et le découpage n'en fait pas partie : il n'a aucune place à
+            tenir entre <span class="mesure">bords</span> et <span class="mesure">la main</span>, puisqu'il ne
+            transforme rien. Le séparateur dit ça sans un mot — <strong>ce qui est à gauche se lit dans
+            l'ordre, ce qui est à droite n'a pas d'ordre.</strong></td></tr>
+        <tr><td class="k">sur toutes les images</td>
+          <td>Y compris une planche qu'on n'a pas encore touchée — c'est même le cas normal. Les réglages déjà
+            posés sur la planche <strong>partent avec les morceaux</strong> (§ 07), donc découper tôt ne fait
+            rien perdre.</td></tr>
+        <tr><td class="k">dans la barre, pas au fond d'une fiche</td>
+          <td>Le relevé d'usage porte la phrase : <em>« l'outil de découpe est trop caché, c'est un outil
+            plutôt important »</em>. Il devient une table comme les autres, visible sur chaque image, au même
+            endroit que tout le reste.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Sa colonne, à sa vraie largeur — et ses deux modes</h2></div>
+    <p class="intro">Les deux modes sont montrés côte à côte parce qu'ils ne se ressemblent pas, et que
+      <strong>le second n'est pas un repli du premier</strong> : une planche régulière dont les sprites se
+      touchent n'a aucune zone séparée à trouver, et c'est l'auteur qui sait laquelle des deux planches il a
+      sous les yeux.</p>
+    <div class="banc">
+
+      <!-- mode auto -->
+      <div class="colonne">
+        <div class="enpan chassispart">découpage<span class="dj">jamais découpée</span></div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">la planche</span>
+            <div class="fmt">
+              <span class="l1">1024 × 512 · image/jpeg</span>
+              <span class="l2"><b>sans alpha</b> — les zones opaques se cherchent sur un détourage</span>
+            </div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">d'où viennent les rectangles</span>
+            <div class="segs">
+              <span class="sg on">zones opaques</span><span class="sg">grille fixe</span>
+            </div>
+            <div class="rg-reg"><span class="lb">taille mini</span>
+              <span class="rail"><i style="left:6%"></i></span><span class="vl">16 px</span></div>
+            <div class="raison">un cran refait une détection — elle pose au relâchement</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">la marge</span>
+            <div class="rg-reg"><span class="lb">autour</span>
+              <span class="rail"><i style="left:25%"></i></span><span class="vl">4 px</span></div>
+            <div class="raison">le fond qu'on emporte — c'est lui qui rend la découpe détourable</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">les rectangles <span class="dr">ordre de lecture</span></span>
+            <div class="rects">
+              <div class="rc"><span class="no">1</span>
+                <span class="vg"><i style="left:5px;top:3px;width:9px;height:14px"></i></span>
+                <span class="dm">214 × 302</span><span class="x">×</span></div>
+              <div class="rc"><span class="no">2</span>
+                <span class="vg"><i style="left:4px;top:4px;width:11px;height:12px"></i></span>
+                <span class="dm">198 × 296</span><span class="x">×</span></div>
+              <div class="rc sel"><span class="no">3</span>
+                <span class="vg"><i style="left:5px;top:2px;width:10px;height:15px"></i></span>
+                <span class="dm">226 × 310</span><span class="x">×</span></div>
+              <div class="rc"><span class="no">4</span>
+                <span class="vg"><i style="left:6px;top:4px;width:8px;height:13px"></i></span>
+                <span class="dm">204 × 288</span><span class="x">×</span></div>
+            </div>
+            <div class="prov">proposés par les zones opaques · seuil 16 px</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">où elles vont</span>
+            <div class="dest">
+              <span class="ou">→ <b>marche</b> · les 4 cases vides</span>
+              <span class="de">depuis la rangée d'où vient la planche</span>
+              <span class="alt">→ la galerie, sous la planche</span>
+            </div>
+          </div>
+
+          <div class="act">Découper les 4 ›</div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>1024 × 512 · 4 rectangles</span>
+          <span class="dr">Tout retirer ›</span></div>
+      </div>
+
+      <!-- mode grille -->
+      <div class="colonne">
+        <div class="enpan chassispart">découpage<span class="dj">jamais découpée</span></div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">la planche</span>
+            <div class="fmt">
+              <span class="l1">1024 × 512 · image/png</span>
+              <span class="l2">avec alpha — 61 % opaque</span>
+            </div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">d'où viennent les rectangles</span>
+            <div class="segs">
+              <span class="sg">zones opaques</span><span class="sg on">grille fixe</span>
+            </div>
+            <div class="rg-reg"><span class="lb">colonnes</span>
+              <span class="rail"><i style="left:8%"></i></span><span class="vl">4</span></div>
+            <div class="rg-reg"><span class="lb">lignes</span>
+              <span class="rail"><i style="left:3%"></i></span><span class="vl">2</span></div>
+            <div class="raison">8 cases de 256 × 256 · le reste va aux premières</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">la marge</span>
+            <div class="rg-reg"><span class="lb">autour</span>
+              <span class="rail"><i style="left:0%"></i></span><span class="vl">0 px</span></div>
+            <div class="raison">une case touche sa voisine : la marge y prendrait le sprite d'à côté</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">les rectangles <span class="dr">8 · 2 vides</span></span>
+            <div class="rects">
+              <div class="rc"><span class="no">1</span>
+                <span class="vg"><i style="left:5px;top:3px;width:9px;height:13px"></i></span>
+                <span class="dm">256 × 256</span><span class="x">×</span></div>
+              <div class="rc"><span class="no">2</span>
+                <span class="vg"><i style="left:5px;top:3px;width:9px;height:13px"></i></span>
+                <span class="dm">256 × 256</span><span class="x">×</span></div>
+              <div class="rc vide"><span class="no">3</span>
+                <span class="vg"></span>
+                <span class="dm">256 × 256</span><span class="tag">vide</span><span class="x">×</span></div>
+              <div class="rc vide"><span class="no">4</span>
+                <span class="vg"></span>
+                <span class="dm">256 × 256</span><span class="tag">vide</span><span class="x">×</span></div>
+              <div class="rc"><span class="no">5</span>
+                <span class="vg"><i style="left:4px;top:4px;width:11px;height:11px"></i></span>
+                <span class="dm">256 × 256</span><span class="x">×</span></div>
+            </div>
+            <div class="raison">… 3 de plus</div>
+            <div class="prov">posés par la grille · 4 × 2</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">où elles vont</span>
+            <div class="dest">
+              <span class="ou">→ la galerie, sous la planche</span>
+              <span class="alt">8 morceaux, et aucune rangée n'a 8 cases vides</span>
+            </div>
+          </div>
+
+          <div class="act">Découper les 8 ›</div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>1024 × 512 · 8 rectangles</span>
+          <span class="dr">Tout retirer ›</span></div>
+      </div>
+
+      <div class="annot" style="min-width:260px">
+        <div class="an"><span class="k">01</span><span class="t"><b>Le format de la planche est écrit en
+          tête, et c'est neuf.</b> Un JPEG n'a pas d'alpha : chercher ses zones opaques revient à le détourer
+          d'abord, et cette ligne le dit avant que la détection déçoive. C'est aussi ce qui manquait le
+          29 août (§ 08).</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>Chaque rectangle porte une vignette de ce
+          qu'il contient.</b> C'est le cœur de cette table : la liste ne montre pas des coordonnées, elle
+          montre <b>ce qui va sortir</b>. Quatre vignettes vides se voient avant le clic, pas après — et
+          l'auteur n'a plus jamais à payer une découpe pour découvrir qu'elle est blanche.</span></div>
+        <div class="an att"><span class="k">03</span><span class="t"><b>Une case vide se marque, elle ne se
+          jette pas.</b> En grille fixe, c'est même souvent voulu : une bande d'animation dont la troisième
+          image est blanche <b>garde son rang</b> si la case est découpée, et se décale de un si elle ne l'est
+          pas. Le produit constate — <span class="mesure">vide</span> en
+          <span class="mesure">--epingle</span> — et laisse le <span class="mesure">×</span> à
+          l'auteur.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>La destination est devinée, et elle dit
+          d'où vient la devinette.</b> Si la planche vient d'une rangée du personnage, les morceaux vont
+          remplir <b>les cases vides de cette rangée</b>, dans l'ordre de lecture. Sinon, la galerie. La
+          ligne du dessous est cliquable : <em>ce qui est devinable est prérempli avec sa provenance, et se
+          défait d'un clic</em>.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>La marge par défaut n'est pas la même dans
+          les deux modes</b>, et c'est le seul défaut du produit qui dépende d'un mode.
+          <span class="mesure">4 px</span> en zones opaques, <span class="mesure">0 px</span> en grille fixe :
+          une case de grille touche sa voisine, et lui prendre 4 px reviendrait à emporter le bord du sprite
+          d'à côté.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">Le pied porte les dimensions de
+          la planche et le compte de rectangles, plus <span class="mesure">Tout retirer ›</span> — qui vide la
+          liste sans rien détruire, puisque rien n'a encore été fabriqué.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:24%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">le mode</td><td><span class="m">zones opaques · grille fixe</span><br><span class="sourd">défaut : zones opaques</span></td>
+          <td><strong>Zones opaques</strong> trouve des sprites posés n'importe où sur un fond ;
+            <strong>grille fixe</strong> découpe une planche régulière en parts égales. Changer de mode
+            <strong>remplace la liste entière</strong>, y compris ce qu'on avait dessiné — c'est ce qu'un
+            changement de mode veut dire, et la ligne sous les réglages le dit plutôt qu'une confirmation qui
+            couperait le geste en deux. <span class="mesure">Coût : 1 492 ms</span> en zones opaques, parce
+            qu'il détoure d'abord ; <span class="mesure">nul</span> en grille.</td></tr>
+        <tr><td class="k">taille mini</td><td><span class="m">2 – 256 px de côté</span><br><span class="sourd">défaut : 16 px</span></td>
+          <td><em>Zones opaques seulement.</em> En dessous de ce côté, une tache n'est pas un sprite mais un
+            éclat de fond qui a survécu au seuil. Exprimé en <strong>côté</strong> et non en aire parce que
+            c'est ce que l'auteur voit — <em>« ignore ce qui fait moins de seize pixels »</em> — alors que la
+            comparaison, elle, se fait sur l'aire : une lance de 4 × 200 px a un petit côté minuscule et reste
+            un sujet. <strong>Chaque cran refait un détourage</strong>, donc il pose au relâchement, comme la
+            tolérance.</td></tr>
+        <tr><td class="k">colonnes · lignes</td><td><span class="m">1 – 64 chacun</span><br><span class="m">produit ≤ 64</span><br><span class="sourd">défaut : 4 × 2</span></td>
+          <td><em>Grille fixe seulement.</em> <strong>Le reste de la division se répartit, il ne se jette
+            pas</strong> : 1000 px en 3 colonnes donnent 334, 333 et 333 — une division qui laisse tomber deux
+            pixels laisse tomber une colonne de sprite au bord droit, et ça ne se voit qu'après découpe.
+            Gratuit : aucune image n'est lue.</td></tr>
+        <tr><td class="k">la marge</td><td><span class="m">0 – 16 px</span><br><span class="sourd">4 px en zones opaques, 0 en grille</span></td>
+          <td>Ce qu'on emporte de fond autour d'une découpe. <strong>Ce n'est pas du confort</strong> : le
+            détourage par défaut lit la couleur du fond sur la bordure de l'image, et une découpe collée au
+            pixel près sur la silhouette n'aurait sur sa bordure que du sujet — le remplissage depuis le bord
+            mangerait alors le sprite au lieu du fond. Gratuit, et visible : un liseré tireté montre ce qui
+            part en plus (§ 04).</td></tr>
+        <tr><td class="k">les rectangles</td><td><span class="m">1 – 64</span><br><span class="sourd">ce que la détection a proposé</span></td>
+          <td>La liste est <strong>la sienne</strong>, pas celle de la détection : il ajoute, retire,
+            redessine, et ce qui part est ce qu'il a sous les yeux. C'est cette séparation, et rien d'autre,
+            qui tient <em>« une détection ratée se corrige à la main, sans jamais bloquer »</em>.
+            <span class="mesure">Suppr</span> retire le rectangle choisi.</td></tr>
+        <tr><td class="k">où elles vont</td><td><span class="m">une rangée · la galerie</span><br><span class="sourd">défaut : la rangée d'origine si elle existe</span></td>
+          <td>Les morceaux remplissent <strong>les cases vides de la rangée</strong> d'où vient la planche,
+            dans l'ordre de lecture, et le surplus va dans la galerie. Sans ce réglage, découper une planche
+            de quatre postures fabriquerait quatre images correctes… qu'il faudrait ensuite ranger une par une
+            dans la matrice. <strong>C'est le geste qui manquait entre « la planche est arrivée » et « la
+            rangée est pleine ».</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">L'ordre de lecture n'est pas un réglage — et c'est une décision, pas un oubli</span>
+      <p>Les rectangles sont numérotés <strong>de haut en bas, puis de gauche à droite, par bandes</strong> :
+        une boîte rejoint la bande courante si son <em>centre vertical</em> y tombe. Pas un tri sur
+        <span class="mesure">(y, x)</span>, qui entrelacerait deux rangées dès qu'un sprite est posé trois
+        pixels plus haut que son voisin ; et le centre plutôt que le bord haut, sans quoi un sprite deux fois
+        plus grand que ses voisins chaînerait toute la planche en une seule bande.</p>
+      <p>Le laisser régler serait offrir un choix dont personne ne connaît la bonne réponse avant de l'avoir
+        essayé — alors que <strong>déplacer un rectangle le renumérote</strong>, exactement, immédiatement, et
+        ça se voit à l'écran.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">C'est <strong>la dernière table à geste direct</strong>, et son geste est le plus simple
+      du produit : on trace un rectangle. Après elle, il ne reste que des curseurs.</p>
+    <div class="banc">
+      <div style="flex:1;min-width:340px">
+        <div class="cadre"><div class="planche">
+          <span class="sil" style="left:38px;top:44px;width:76px;height:150px"></span>
+          <span class="sil" style="left:172px;top:52px;width:70px;height:142px"></span>
+          <span class="sil" style="left:300px;top:38px;width:80px;height:158px"></span>
+          <span class="sil" style="left:438px;top:50px;width:72px;height:138px"></span>
+
+          <span class="liseret" style="left:30px;top:36px;width:92px;height:166px"></span>
+          <span class="rect" style="left:34px;top:40px;width:84px;height:158px"><span class="no">1</span></span>
+          <span class="rect" style="left:168px;top:48px;width:78px;height:150px"><span class="no">2</span></span>
+          <span class="rect sel" style="left:296px;top:34px;width:88px;height:166px"><span class="no">3</span>
+            <span class="p" style="left:-3px;top:-3px"></span><span class="p" style="right:-3px;top:-3px"></span>
+            <span class="p" style="left:-3px;bottom:-3px"></span><span class="p" style="right:-3px;bottom:-3px"></span></span>
+          <span class="rect" style="left:434px;top:46px;width:80px;height:146px"><span class="no">4</span></span>
+        </div></div>
+        <div class="mesrow"><span>1024 × 512 · image/jpeg</span>
+          <span>4 rectangles</span>
+          <span>3 · 226 × 310 <span class="hp">+4</span></span>
+          <span style="margin-left:auto">zones opaques · 16 px</span></div>
+      </div>
+      <div class="annot" style="max-width:430px">
+        <div class="an"><span class="k">le tracé</span><span class="t"><b>On appuie, on tire, on
+          relâche</b> — et le rectangle existe. Sous <span class="mesure">4 px</span> de côté il ne se crée
+          pas : c'est un clic qui a glissé, pas une intention. Rien n'est ramené en silence dans les bornes :
+          un rectangle tiré au-delà du bord <b>s'arrête au bord</b>, visiblement, plutôt que d'être corrigé à
+          l'insu de l'auteur.</span></div>
+        <div class="an"><span class="k">le numéro</span><span class="t"><b>Chaque rectangle porte son numéro
+          en pied</b>, dans l'ordre de lecture, et c'est ce numéro qui se retrouvera dans le nom du morceau —
+          <span class="mesure">balthazar start · 3/4</span>. Il se renumérote quand on en ajoute un : le
+          numéro dit une position, pas une identité.</span></div>
+        <div class="an"><span class="k">le choisi</span><span class="t"><b>Anneau
+          <span class="mesure">--lumiere</span> et quatre poignées de coin</b> — la sélection du produit, et
+          les seules poignées qu'il possède. <span class="mesure">Suppr</span> le retire ;
+          <span class="mesure">Échap</span> ne le désélectionne pas, il remonte d'un cran dans le fil, comme
+          partout.</span></div>
+        <div class="an"><span class="k">le liseré</span><span class="t"><b>La marge se voit.</b> Un liseré
+          tireté <span class="mesure">--bord-fort</span> autour du rectangle 1 montre les 4 px de fond qui
+          partiront avec lui. Un réglage qui change ce qui sort sur le disque et ne se voit pas à l'écran est
+          un réglage qu'on règle au hasard.</span></div>
+        <div class="an att"><span class="k">rien d'autre</span><span class="t"><b>Pas de vignette flottante,
+          pas d'aperçu au survol.</b> La liste de la colonne porte déjà le contenu de chaque rectangle
+          (§ 02) ; le redire sur l'image encombrerait la seule surface où l'on a besoin de voir la planche
+          entière.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ses mesures, et ce qu'elle propose</h2></div>
+    <table>
+      <thead><tr><th style="width:28%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">1024 × 512 · image/jpeg</span></td>
+          <td>Les dimensions de la planche et <strong>le format mesuré, jamais le format annoncé</strong> — le
+            dépôt ne croit pas l'étiquette d'un fournisseur sur ce point, il regarde le fichier. C'est la
+            mesure la plus neuve de cette table, et celle qui manquait (§ 08).</td></tr>
+        <tr><td class="k"><span class="m">4 rectangles</span> ou <span class="mj">8 · 2 vides</span></td>
+          <td>Ce qui sera fabriqué, et combien de morceaux seront transparents. Le second nombre n'apparaît
+            que s'il n'est pas nul — un compte de zéro est du bruit.</td></tr>
+        <tr><td class="k"><span class="m">3 · 226 × 310 <span style="color:var(--epingle)">+4</span></span></td>
+          <td>Le rectangle choisi, à sa taille, et la marge qu'il emportera en plus. Les dimensions écrites
+            sont celles du <strong>rectangle</strong>, pas celles du fichier : additionner en silence ferait
+            croire que la boîte est plus grande qu'on ne l'a tracée.</td></tr>
+        <tr><td class="k"><span class="m">zones opaques · 16 px</span></td>
+          <td>D'où vient la liste. Si l'auteur y a touché, la ligne devient
+            <span class="mesure">corrigée à la main</span> — et la détection ne s'y substitue plus tant qu'il
+            ne change pas de mode.</td></tr>
+        <tr><td class="k"><span class="m">→ marche · 4 cases vides</span></td>
+          <td>Où les morceaux atterriront. La seule mesure de la table qui parle d'autre chose que de l'image,
+            et c'est délibéré : c'est le geste que la table sert.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Elle propose beaucoup, et n'applique jamais</span>
+      <p>C'est la table qui devine le plus : <strong>la liste entière est une proposition</strong>, la
+        destination en est une autre. Rien n'est écrit sur le disque tant que le bouton n'est pas cliqué —
+        <em>la détection ne décide de rien, elle propose</em>. La règle du produit vaut ici mot pour mot :
+        <em>ce qui est devinable est prérempli avec sa provenance, et se défait d'un clic</em>.</p>
+      <p style="margin-top:10px">Et quand elle ne trouve rien, elle le dit sans rien changer :</p>
+      <p style="margin-top:8px"><span class="mesure" style="color:var(--texte-3)">— le détourage n'a rien
+        laissé d'opaque : trace les rectangles à la main</span><br>
+        <span class="mesure" style="color:var(--texte-3)">— aucune zone au-dessus de cette taille : descends
+        la taille minimale</span></p>
+      <p style="margin-top:10px">Une détection qui rend une seule boîte, ou aucune, <strong>est un résultat,
+        pas une panne</strong> : la liste reste vide, le bouton reste grisé, et la planche reste intacte.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Son indisponibilité — et les trois refus qu'elle transforme en grisés</h2></div>
+    <div class="note">
+      <span class="lab">Elle n'est jamais indisponible</span>
+      <p>Toute image se découpe — y compris une découpe (une planche de quatre postures dont l'une est
+        elle-même une bande de marche) et y compris un calque d'équipement, puisque découper une planche de
+        calques en un calque par pose est exactement le geste que l'atelier sert. Son bord tireté est donc
+        toujours là.</p>
+    </div>
+    <div class="note att">
+      <span class="lab">En revanche, elle pouvait refuser après coup</span>
+      <p>Le service porte trois refus. Ils étaient rendus <strong>après le clic</strong>, dans une fente de
+        message — c'est-à-dire exactement ce que le produit s'interdit : <em>proposer puis refuser</em>. Deux
+        deviennent des grisés, sur le bouton, <strong>avant</strong> :</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;max-width:520px">
+        <div class="act hs">Découper — aucun rectangle</div>
+        <div class="raison">— trace un rectangle sur la planche, ou lance une détection</div>
+        <div class="act hs" style="margin-top:8px">Découper — 65 rectangles</div>
+        <div class="raison">— 64 morceaux au plus : au-delà c'est un atlas, et un atlas se découpe dans le moteur</div>
+      </div>
+      <p style="margin-top:14px">Le troisième — <em>un rectangle trop petit</em> — ne peut plus arriver :
+        l'écran ne le crée pas (§ 04). Le refus reste dans le service comme filet, pour une requête écrite à
+        la main ou venue de l'agent, mais <strong>il ne se voit plus jamais</strong> — ce qui est la bonne
+        place pour un filet.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce qu'une découpe hérite de sa planche</h2></div>
+    <p class="intro">Cette section n'existe que pour les deux fabriques, et c'est la contrepartie du § 01 :
+      puisqu'elle fabrique des objets, il faut dire ce que ces objets sont. <strong>Une découpe est un asset
+      entier, pas un morceau d'un autre</strong> — ce qui se paie en octets sur le disque, et achète le seul
+      critère qui compte ici : <em>supprimer la planche laisse ses découpes en place</em>.</p>
+    <table>
+      <thead><tr><th style="width:18%">Ce qu'elle reçoit</th><th style="width:24%">Quoi</th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td class="k">son brut</td><td><span class="m">un morceau du brut de la planche</span></td>
+          <td>Fond compris, marge comprise, en PNG. Elle se détourera, se remettra sur grille et se
+            quantifiera ensuite comme n'importe quelle image arrivée du modèle.</td></tr>
+        <tr><td class="k">sa recette</td><td><span class="m">celle de la planche</span><br><span class="sourd">sauf le recadrage explicite</span></td>
+          <td>Huit découpes d'une planche détourée et quantifiée ressortent détourées et quantifiées pareil —
+            c'est le seul comportement qui rende « découper » utile <strong>en un geste plutôt qu'en
+            neuf</strong>. La boîte de recadrage, elle, ne s'hérite pas : elle désignait un rectangle de la
+            planche, et posée sur un morceau elle désignerait n'importe quoi, le plus souvent hors de
+            l'image. La marge reste, parce que c'est un réglage et pas une coordonnée.</td></tr>
+        <tr><td class="k">son épingle</td><td><span class="m">celle de la planche</span></td>
+          <td><strong>L'épingle voyage avec la recette qu'elle protège.</strong> Hériter d'une recette réglée
+            à la main sans hériter de l'épingle livrerait huit morceaux qu'un balayage de palette écraserait
+            au premier passage — alors que l'auteur avait justement décidé le contraire.</td></tr>
+        <tr><td class="k">son prix</td><td><span class="m">0,00 $</span></td>
+          <td><strong>Une découpe n'a rien coûté.</strong> L'argent a été dépensé une fois, pour la planche,
+            et la filiation y mène. Lui attribuer une part du prix inventerait un chiffre que personne n'a
+            facturé, et le total du projet dirait alors autre chose que la somme des tuiles.</td></tr>
+        <tr><td class="k">sa provenance<br>et son modèle</td><td><span class="m">ceux de la planche</span></td>
+          <td><strong>Découper n'est pas commander : c'est le même appel, poursuivi.</strong> Sans ça, huit
+            morceaux d'une planche demandée par l'agent paraîtraient dans la grille comme s'ils venaient de la
+            main de l'auteur — et un morceau sans modèle serait la seule image de la bibliothèque à ne pas
+            savoir dire qui l'a dessinée.</td></tr>
+        <tr><td class="k">sa date</td><td><span class="m">maintenant</span><br><span class="sourd">pas celle du lot</span></td>
+          <td>Ce qu'on vient de fabriquer se voit en tête de grille. Datée du lot, une découpe de vieille
+            planche atterrirait au fond, invisible au moment précis où on la regarde. Le rang départage les
+            morceaux entre eux, donc ils gardent l'ordre de lecture.</td></tr>
+        <tr><td class="k">son nom</td><td><span class="m">balthazar start · 3/4</span></td>
+          <td>D'où ça vient, et lequel c'est. C'est <strong>le nom de la planche</strong> qui est raccourci,
+            jamais le numéro : le numéro est la seule chose qui distingue huit tuiles voisines dans la
+            grille.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Le format à l'import, et les quatre images sans visuel</h2></div>
+    <p class="intro">Le 29 août, une planche personnelle importée en <span class="mesure">.jfif</span> a été
+      découpée en quatre morceaux — <strong>quatre tuiles dans la grille, aucune image dedans</strong>. En
+      <span class="mesure">.jpeg</span>, pareil. Avec un détourage posé avant la découpe, ça marchait. La
+      remarque se termine par <em>« à contrôler et tester »</em>, et c'est encore vrai aujourd'hui.</p>
+
+    <div class="note gris">
+      <span class="lab">Ce qui est établi, et ce qui ne l'est pas</span>
+      <ul>
+        <li><b>Établi :</b> le mode <em>zones opaques</em> détoure la planche avant de chercher, avec le
+          moteur du geste courant — une planche opaque de bord à bord n'a qu'une seule zone connexe, celle de
+          l'image entière.</li>
+        <li><b>Établi :</b> un JPEG n'a pas d'alpha, et le brut d'un asset reste tel qu'il est arrivé —
+          <em>le rendu est un cache, le brut est la vérité</em>.</li>
+        <li><b>Pas établi :</b> lequel des trois maillons a lâché — la détection sur une planche sans alpha,
+          l'écriture des morceaux, ou leur affichage. <strong>Je ne l'ai pas mesuré, et cette maquette ne fait
+          pas semblant de le savoir.</strong> Que poser un détourage d'abord suffise à réparer désigne le
+          premier maillon, sans le prouver.</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <span class="lab">Ce que le design décide quand même — et qui vaut dans les trois cas</span>
+      <ul>
+        <li><b>La liste montre le contenu.</b> Quatre vignettes vides se voient dans la colonne avant le clic.
+          Quelle que soit la cause, l'auteur ne fabrique plus quatre images blanches sans l'avoir vu
+          venir.</li>
+        <li><b>Le format est écrit en tête de la table</b>, mesuré et pas cru, avec sa conséquence en clair :
+          <span class="mesure">sans alpha — les zones opaques se cherchent sur un détourage</span>. La
+          détection cesse d'être une boîte noire qui déçoit.</li>
+        <li><b>Le mode se change en un geste.</b> Une planche de quatre postures régulières se découpe en
+          <em>grille fixe 4 × 1</em> sans alpha du tout, et sans rien détourer. C'était déjà la sortie de
+          secours ; elle n'était simplement pas lisible.</li>
+      </ul>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce qui reste à trancher — la conversion à l'import</span>
+      <p>Convertir en PNG à l'import réglerait la classe entière de problèmes, et <strong>ça heurte un
+        invariant du dépôt</strong> : <em>l'image brute reste telle qu'elle est arrivée</em>. La question
+        n'est donc pas « faut-il convertir » mais <strong>ce que « brut » veut dire</strong> — les octets
+        reçus, ou l'image reçue.</p>
+      <p style="margin-top:10px">Un fait pèse dans la balance : <strong>le découpage fabrique déjà des bruts
+        en PNG</strong>. Une découpe de planche JPEG a pour brut un PNG que le produit a écrit lui-même.
+        L'invariant tolère donc déjà un brut fabriqué — et la question devient : le tolère-t-il à l'import,
+        c'est-à-dire au moment où l'original existe encore ailleurs, sur le disque de l'auteur ?</p>
+      <div class="avenir" style="margin-top:14px">
+        <div class="av mnt">
+          <div class="n">CE QUE JE PROPOSERAIS</div>
+          <ul>
+            <li>Le brut reste les octets reçus — l'invariant tient</li>
+            <li>Le format se dit partout où il change le comportement d'un outil</li>
+            <li>Une planche sans alpha porte sa mention dans la table qui en dépend</li>
+          </ul>
+        </div>
+        <div class="av plus">
+          <div class="n">CE QU'IL FAUT MESURER AVANT DE TRANCHER</div>
+          <ul>
+            <li>Réimporter le <span class="mesure">.jfif</span> et lire la proposition renvoyée</li>
+            <li>Vérifier les octets écrits d'un morceau, hors de l'interface</li>
+            <li>Vérifier ce que la grille demande au serveur pour afficher une découpe</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:14px" class="sourd">Cette question part au § 04 du sommaire, avec les directions
+        d'une pose et le report dans les documents d'autorité.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 18, découpage · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

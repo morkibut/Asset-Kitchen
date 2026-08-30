@@ -1,0 +1,39 @@
+{
+  "projet": "coeur-de-pierre",
+  "cible": 64,
+  "palette": 24,
+  "images": 8,
+  "nombre_inerte_sur": 8,
+  "rendement": {
+    "4": [
+      4,
+      4
+    ],
+    "8": [
+      6,
+      8
+    ],
+    "16": [
+      9,
+      15
+    ],
+    "32": [
+      14,
+      28
+    ],
+    "64": [
+      28,
+      52
+    ]
+  },
+  "ecart_median": [
+    14,
+    17
+  ],
+  "ecart_pire": 104,
+  "tramage_pc_changes": [
+    38.2,
+    61.9
+  ],
+  "une_seule_tache_sur": 6
+}

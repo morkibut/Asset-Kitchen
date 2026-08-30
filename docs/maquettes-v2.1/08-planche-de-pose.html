@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la planche d'une pose</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:26px 0 10px;line-height:1.2}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)}
+  .m.mal{color:var(--echec)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  .cite{font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--texte-2);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:10px 12px;margin:0 0 12px;white-space:pre-wrap}
+  .cite b{color:var(--signal-clair);font-weight:500}
+  .cite i{color:var(--echec);font-style:normal}
+  .cite u{color:var(--epingle);text-decoration:none}
+
+  /* ── Le croquis d'écran ─────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1180px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:9px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .btxt{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:12px;color:var(--texte-2)}
+  .sep-v{width:1px;height:16px;background:var(--bord);margin:0 3px}
+  .wf-corps{min-width:1180px;display:flex;align-items:stretch;min-height:404px}
+  .wf-pied{min-width:1180px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:2px}
+
+  /* colonne de gauche — 240 px, les réglages de la planche */
+  .reg{width:240px;flex:none;border-right:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:12px}
+  .grp{display:flex;flex-direction:column;gap:4px}
+  .lg{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--texte-2)}
+  .lg .vl{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .lg .vl.on{color:var(--texte-2)}
+  .lg .vl.ok{color:var(--ok)}
+  .lg .vl.eg{color:var(--epingle)}
+  .duo{display:flex;gap:4px}
+  .duo span{flex:1;height:24px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-3)}
+  .duo span.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .refs{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .rf{width:38px;height:38px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/9px 9px}
+  .rf.sg::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--signal);
+    border-right:7px solid transparent}
+  .rf.ep::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--epingle);
+    border-right:7px solid transparent}
+  .rf.plus{background:none;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;color:var(--texte-3);
+    font-family:var(--mono);font-size:12px}
+  .sep{height:1px;background:var(--bord);margin:2px 0}
+
+  /* colonne du milieu — la planche */
+  .pl{flex:1;min-width:0;display:flex;flex-direction:column}
+  .pl-t{height:30px;flex:none;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 12px;font-family:var(--mono);font-size:9px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3)}
+  .pl-t .cpt{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px}
+  .pl-c{padding:12px;display:flex;flex-direction:column;gap:11px}
+  .grille{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .case{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:7px 8px;display:flex;flex-direction:column;gap:5px;min-height:96px}
+  .case.pleine{border-color:var(--epingle)}
+  .case .cd{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:center;gap:6px}
+  .case .cd .et{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--texte-3)}
+  .case.pleine .cd .et{color:var(--epingle)}
+  .case .vg{height:30px;border:1px dashed var(--bord-fort);border-radius:1px}
+  .case.pleine .vg{border-style:solid;border-color:var(--bord);
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/9px 9px}
+  .case .cq{font-family:var(--mono);font-size:9.5px;color:var(--texte-2);line-height:1.5}
+  .case .cq u{color:var(--signal-clair);text-decoration:none}
+  .opt{display:flex;flex-direction:column;gap:3px}
+  .ol{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:11.5px;color:var(--texte-2)}
+  .ol.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--texte)}
+  .ol .px{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .ol.on .px{color:var(--signal-clair)}
+  .ol .pq{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+
+  /* colonne de droite — 380 px, la matrice */
+  .cent{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .cent-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-size:12.5px;color:var(--texte)}
+  .cent-t .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .cent-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:11px}
+  .cases{display:flex;flex-direction:column;gap:3px}
+  .cs{min-height:24px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
+    background:var(--fond-2);border:1px solid var(--bord)}
+  .cs.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .cs .nm{font-size:11px;color:var(--texte-2);width:64px;flex:none;white-space:nowrap}
+  .cs.on .nm{color:var(--texte)}
+  .cs .marques{display:flex;gap:4px;align-items:center}
+  .cs .cpt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cs .cpt.ok{color:var(--ok)}
+  .q{width:9px;height:9px;flex:none;border-radius:1px;border:1px solid var(--signal);background:var(--signal)}
+  .q.creux{background:none;border-color:var(--bord-fort)}
+  .q.part{background:none;border-color:var(--signal);border-style:dashed}
+  .q.abs{border:0;background:none;position:relative}
+  .q.abs::before{content:"";position:absolute;left:0;top:4px;width:9px;height:1px;background:var(--bord-fort)}
+  .jauge{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  .jauge b{color:var(--texte-2);font-weight:500}
+
+  /* la barre de prompt, en pied */
+  .barre-p{min-width:1180px;border-top:1px solid var(--bord);background:var(--fond-1);
+    padding:9px 12px;display:flex;flex-direction:column;gap:7px}
+  .pour{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pour .et{height:20px;display:flex;align-items:center;gap:5px;padding:0 7px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:10px}
+  .champ{min-height:56px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:8px 10px;font-family:var(--mono);font-size:10.5px;color:var(--texte-2);line-height:1.65}
+  .champ b{color:var(--signal-clair);font-weight:500}
+  .champ u{color:var(--epingle);text-decoration:none}
+  .opts{display:flex;align-items:center;gap:9px}
+  .btgen{height:32px;padding:0 14px;border:1px solid var(--signal);background:var(--signal-sourd);
+    border-radius:2px;display:flex;align-items:center;justify-content:center;gap:9px;
+    font-size:13px;color:var(--signal-clair)}
+  .btgen .px{font-family:var(--mono);font-size:11px}
+  .fente{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.55}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.55}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.1 · maquette 08 — la planche d'une pose</div>
+  <h1>Une pose, ses quatre directions,<br>et <em>un seul appel payé</em>.</h1>
+  <p>Quand un jeu regarde le monde de dessus, marcher n'est pas une image : c'est quatre — vers le
+    nord, le sud, l'est, l'ouest. Un modèle d'image fait payer <strong>chaque appel</strong>, pas
+    chaque image. Donc demander les quatre marches d'un coup, sur une seule feuille qu'on découpe
+    ensuite, coûte beaucoup moins cher que quatre demandes séparées.</p>
+  <p>Cette feuille s'appelle <strong>une planche</strong>, et c'est l'unité de ce qu'on achète. Elle
+    mérite son écran pour une raison simple : <strong>il faut voir ce qu'on achète avant de
+    payer</strong> — combien de cases, ce qui est écrit dans chacune, ce qui part en référence avec
+    l'ensemble, et le prix.</p>
+  <p>C'est le cran du dessous de la fiche (<span class="mesure">07bis</span>). On y entre en cliquant
+    une ligne de la matrice de l'établi, et on en sort par Échap. À la différence de la fiche,
+    <strong>la barre de prompt y est présente</strong> : c'est ici qu'on dépense.</p>
+  <p class="sourd">Mesures prises le 30 août 2026 sur <span class="mesure">cœur de pierre - 01</span>.
+    Le prix à quatre cases repose sur <strong>un seul appel mesuré</strong> — il est encadré partout
+    dans ce document, jamais affirmé.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ 01 -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>Ce qu'est une planche, en clair</h2></div>
+
+  <p class="intro">Le mot existe déjà dans le produit et il a un sens précis, qu'il faut poser avant
+    de dessiner quoi que ce soit.</p>
+
+  <table>
+    <thead><tr><th style="width:24%"></th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Une planche</td>
+        <td class="apres">Une seule image demandée au modèle, dans laquelle on lui fait dessiner
+          <b>plusieurs sujets côte à côte</b>, sur une grille dont l'atelier connaît la géométrie
+          case par case. Elle part, elle revient, l'atelier la découpe, et
+          <b>ce qui entre en bibliothèque ce sont les morceaux</b> — jamais la feuille.</td>
+      </tr>
+      <tr>
+        <td class="k">Une case</td>
+        <td class="apres">Un emplacement de cette grille, et un seul sujet. Chaque case porte son
+          propre bout de consigne, et sait d'avance <b>où son image ira se ranger</b> : dans quelle
+          pose, dans quelle direction.</td>
+      </tr>
+      <tr>
+        <td class="k">Ce que ce n'est pas</td>
+        <td>Une feuille de sprites qu'on garderait. Le produit ne conserve aucune planche : c'est une
+          ruse pour payer moins, pas un format de livraison.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note gris" style="margin-top:22px">
+    <span class="lab">Pourquoi cet écran n'existait pas avant</span>
+    <p>Tant qu'une pose valait une image, il n'y avait rien à montrer : une case, un appel, et la
+      barre de prompt de l'établi suffisait. <strong>C'est la déclaration des directions
+      (<span class="mesure">05</span> § 05) qui crée la planche</strong> — une pose devient un
+      paquet de quatre images qui doivent se ressembler entre elles, et un paquet, ça se regarde
+      avant de l'acheter.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 02 -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>Ce qui a été mesuré avant de dessiner — 30 août 2026</h2></div>
+
+  <h3>1 · Le groupage existe, il tourne, et il n'a jamais rien groupé</h3>
+  <p>Six planches d'équipement ont été fabriquées dans le projet. Toutes les six portent
+    <span class="m mal">cases : 1</span>. Le mécanisme qui sait mettre plusieurs sujets dans un
+    appel a donc toujours tourné à vide, et les mesures qu'il produit s'en ressentent :
+    <span class="mesure">ressemblance 0,0</span> et <span class="mesure">jumeau −1</span> sur les
+    six, parce qu'une case toute seule n'a pas de voisine à laquelle se comparer.</p>
+
+  <h3>2 · L'auteur fait déjà des planches, à la main</h3>
+  <p>Quatre images de <span class="mesure">balthazar-2</span>, toutes en pose
+    <span class="mesure">repos</span>, partagent <strong>un même parent</strong> : elles ont été
+    découpées d'une seule et même image, aux rangs <span class="m">104 à 107</span>, et elles
+    mesurent <span class="m">253×321</span>, <span class="m">250×318</span>,
+    <span class="m">205×322</span> et <span class="m">207×322</span>. Un second jeu de quatre existe,
+    de la même façon.</p>
+  <p><strong>C'est exactement ce que la planche automatise</strong> : quatre vues du même personnage,
+    demandées ensemble pour qu'elles se ressemblent, puis découpées. Le besoin est démontré par
+    l'usage, pas supposé.</p>
+
+  <h3>3 · Ce que plier coûte, et à partir de combien ça paie</h3>
+  <table style="margin-top:12px">
+    <thead><tr><th style="width:20%">Cases par appel</th><th style="width:22%">Prix par image</th><th style="width:20%">Appels mesurés</th><th>Ce que ça dit</th></tr></thead>
+    <tbody>
+      <tr><td class="k">1</td><td><span class="m">$0,0128</span></td><td><span class="m">18</span></td><td>La référence — un appel, une image.</td></tr>
+      <tr><td class="k">2</td><td><span class="m mal">$0,0135</span></td><td><span class="m">4</span></td><td><b>Plus cher que de ne pas plier.</b> Deux cases coûtent <span class="m">$0,0270</span> contre <span class="m">$0,0256</span> en deux appels séparés.</td></tr>
+      <tr><td class="k">4</td><td><span class="m bon">$0,0057</span></td><td><span class="m eg">1</span></td><td>Moins de la moitié. <b>Mesuré une seule fois</b> — c'est le chiffre le plus important du dossier et le moins étayé.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4 · Quatre directions font exactement quatre cases</h3>
+  <p>C'est la coïncidence qui a décidé de tout. Plier ne paie qu'à partir de quatre ; un jeu vu de
+    dessus réclame quatre directions par pose. <strong>La planche d'une pose est la plus petite
+    planche qui vaille la peine d'exister.</strong></p>
+
+  <h3>5 · Une case de planche revient assez grande</h3>
+  <p>Les images du projet reviennent en <span class="m">1024 × 1024</span>. Découpées, ça donne :</p>
+  <table style="margin-top:12px">
+    <thead><tr><th style="width:22%">Cases</th><th style="width:22%">Grille</th><th style="width:26%">Taille d'un sujet</th><th>Face à la cible du projet</th></tr></thead>
+    <tbody>
+      <tr><td class="k">1</td><td><span class="mesure">1 × 1</span></td><td><span class="m">1024 px</span></td><td>8 fois la cible</td></tr>
+      <tr><td class="k">4</td><td><span class="mesure">2 × 2</span></td><td><span class="m">512 px</span></td><td>4 fois la cible</td></tr>
+      <tr><td class="k">8</td><td><span class="mesure">3 × 3</span></td><td><span class="m">341 px</span></td><td><span class="m bon">2,7 fois la cible</span> — encore au-dessus</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">La cible du projet est <span class="m">128 px</span>. Même à huit cases,
+    ce qui revient reste plus fin que ce que la mise sur grille gardera. <strong>Plier ne coûte pas
+    de qualité tant qu'on ne dépasse pas huit</strong> — et au-delà, l'écran le dira.</p>
+
+  <h3>6 · Neuf appels de personnage sur treize ne disent pas leur pose</h3>
+  <p>Sur treize appels payés qui portent un personnage, neuf partent sans dire de quelle pose il
+    s'agit. La pose est écrite sur l'image <em>après coup</em>, à la main. Ça veut dire que le
+    chemin « je clique une case vide, elle arme le prompt » est très peu emprunté :
+    <strong>on fabrique d'abord, on range ensuite</strong>, et rien ne relie ce qui a été demandé à
+    ce qui a été rangé.</p>
+
+  <h3>7 · Le plan du projet demande quatre images à deux poses</h3>
+  <p>Le plan porte <span class="mesure">repos 4</span>, <span class="mesure">marche 4</span>, et
+    <span class="mesure">1</span> pour les quatre autres. Ce
+    <em>4</em> voulait dire « quatre images de cette pose » — c'est-à-dire, en pratique, quatre
+    angles. <strong>Avec les directions déclarées, ce chiffre dit deux fois la même chose</strong> :
+    quatre directions × quatre images feraient seize images pour un simple repos. Le § 07 tranche.</p>
+
+  <h3>8 · Le modèle de planche du projet ne rend qu'une variation</h3>
+  <p>Le projet demande ses planches à <span class="mesure">Nano Banana 2 Lite</span>, qui accepte
+    <span class="m">14 images de référence</span> et rend <span class="m">1 variation</span> par
+    appel. On ne peut donc pas demander deux planches d'un coup pour choisir la meilleure :
+    <strong>une planche, un jet.</strong> C'est une contrainte du catalogue, elle s'affiche, et elle
+    changera avec le modèle.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 03 -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>L'écran</h2></div>
+
+  <p class="intro">Trois colonnes, dans la disposition d'un outil plein cadre :
+    <strong>les réglages à gauche, ce qu'on regarde au milieu, la matrice de l'entité à
+    droite</strong>. C'est la forme que la maquette <span class="mesure">02</span> a donnée aux
+    outils de retouche, et la planche la reprend telle quelle — on passe d'une pose à l'autre en
+    cliquant à droite, sans refermer.</p>
+
+  <div class="croquis">
+    <div class="wf-barre">
+      <span class="wf-nom">Asset Kitchen</span>
+      <span class="tab">Univers</span>
+      <span class="tab on">Codex</span>
+      <span class="tab">Galerie</span>
+      <span class="fil">… › Balthazar › <b>marche</b> › la planche</span>
+      <span class="wf-tard">
+        <span class="mesure">4 cases · 2 × 2</span>
+        <span class="sep-v"></span>
+        <span class="btxt">Fermer la planche</span>
+        <span>Réglages</span>
+        <span>Guide</span>
+      </span>
+    </div>
+
+    <div class="wf-corps">
+      <!-- 240 — les réglages de la planche -->
+      <div class="reg">
+        <div class="grp">
+          <div class="col-t">la planche</div>
+          <div class="lg">Cases<span class="vl on">4</span></div>
+          <div class="lg">Grille<span class="vl on">2 × 2</span></div>
+          <div class="lg">Un sujet revient à<span class="vl on">512 px</span></div>
+          <div class="raison">la grille se déduit du nombre de cases · la cible du projet est 128 px</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">les cases déjà pleines</div>
+          <div class="duo"><span class="on">Les refaire</span><span>Les garder</span></div>
+          <div class="raison">refaire les 4 coûte moins cher que compléter les 3 à l'unité · et les 4 se ressemblent</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">les images jointes — 3 sur 14</div>
+          <div class="refs">
+            <span class="rf sg"></span>
+            <span class="rf ep"></span>
+            <span class="rf ep"></span>
+            <span class="rf plus">+</span>
+          </div>
+          <div class="raison">1 artwork officiel · 2 images retenues de Balthazar · de sa fiche</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">ce que chaque case reçoit</div>
+          <div class="lg">Son signalement<span class="vl">419 car.</span></div>
+          <div class="lg">La bible<span class="vl">7 champs</span></div>
+          <div class="lg">Sa consigne de pose<span class="vl on">composée</span></div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">le modèle</div>
+          <div class="lg">Nano Banana 2 Lite<span class="vl">planches</span></div>
+          <div class="lg">Variations<span class="vl eg">1 — maximum</span></div>
+        </div>
+      </div>
+
+      <!-- 1fr — la planche -->
+      <div class="pl">
+        <div class="pl-t">la planche de <span style="color:var(--texte-2)">marche</span><span class="cpt">4 cases · 1 déjà pleine</span></div>
+        <div class="pl-c">
+          <div class="grille">
+            <div class="case">
+              <div class="cd">nord<span class="et">vide</span></div>
+              <div class="vg"></div>
+              <div class="cq">walking posture, full body / <u>facing north, away from the viewer</u></div>
+            </div>
+            <div class="case pleine">
+              <div class="cd">sud<span class="et">1 image · sera refaite</span></div>
+              <div class="vg"></div>
+              <div class="cq">walking posture, full body / <u>facing south, toward the viewer</u></div>
+            </div>
+            <div class="case">
+              <div class="cd">est<span class="et">vide</span></div>
+              <div class="vg"></div>
+              <div class="cq">walking posture, full body / <u>facing east, seen from the right</u></div>
+            </div>
+            <div class="case">
+              <div class="cd">ouest<span class="et">vide</span></div>
+              <div class="vg"></div>
+              <div class="cq">walking posture, full body / <u>facing west, seen from the left</u></div>
+            </div>
+          </div>
+
+          <div class="opt">
+            <div class="col-t">ce qu'on peut demander</div>
+            <div class="ol on">Refaire les quatre — une planche<span class="pq">mesuré 1 fois</span><span class="px">$0,023</span></div>
+            <div class="ol">Compléter les trois — une planche<span class="pq">prix non mesuré à 3 cases</span><span class="px">?</span></div>
+            <div class="ol">Compléter les trois — un appel chacune<span class="pq">mesuré 18 fois</span><span class="px">$0,038</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 380 — la matrice -->
+      <div class="cent">
+        <div class="cent-t">Sa matrice<span class="x">on change de pose sans refermer</span></div>
+        <div class="cent-c">
+          <div>
+            <div class="col-t">le corps — 4 directions</div>
+            <div class="cases">
+              <div class="cs"><span class="nm">repos</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs on"><span class="nm">marche</span><span class="marques"><i class="q part"></i><i class="q part"></i><i class="q part"></i><i class="q part"></i></span><span class="cpt">4 partent</span></div>
+              <div class="cs"><span class="nm">course</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">attaque</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">dégâts</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">mort</span><span class="marques"><i class="q"></i><i class="q abs"></i><i class="q abs"></i><i class="q abs"></i></span><span class="cpt ok">1 / 1</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="col-t">l'équipement — une planche à part, par pièce</div>
+            <div class="cases">
+              <div class="cs"><span class="nm">helmet</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 6</span></div>
+              <div class="cs"><span class="nm">Battle axe</span><span class="marques"><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">0 / 6</span></div>
+            </div>
+          </div>
+          <div class="jauge">corps <b>6 / 21</b> · après cette planche <b>9 / 21</b><br>
+            une case pointillée est une case qui part</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- la barre de prompt — présente, parce qu'ici on paie -->
+    <div class="barre-p">
+      <div class="pour">Pour
+        <span class="et">marche · nord</span>
+        <span class="et">marche · sud</span>
+        <span class="et">marche · est</span>
+        <span class="et">marche · ouest</span>
+        <span style="margin-left:6px">4 cases, un seul appel</span>
+      </div>
+      <div class="champ">a stocky dwarf, broad-shouldered and short-legged, thick auburn beard braided at the tip… <b>— A 2×2 grid of the same character. Top-left: walking posture, full body, <u>facing north, away from the viewer</u>. Top-right: … <u>facing south, toward the viewer</u>. Bottom-left: … <u>facing east</u>. Bottom-right: … <u>facing west</u>.</b></div>
+      <div class="opts">
+        <span class="btgen">Fabriquer la planche <span class="px">$0,023</span></span>
+        <span class="fente">Ctrl + Entrée · un jet unique — le modèle n'en rend pas deux<br>
+          une planche ratée ≈ $0,023 à repayer</span>
+        <span style="margin-left:auto" class="btxt">Fabriquer ouvre l'écran de confirmation ›</span>
+      </div>
+    </div>
+
+    <div class="wf-pied">
+      <span><i class="pt"></i>en ligne</span>
+      <span>la planche n'entre pas en bibliothèque — ses 4 morceaux, oui</span>
+      <span>Échap ferme et rend l'établi</span>
+    </div>
+  </div>
+
+  <div class="lgd">
+    ■ case prise · □ case attendue · ▢ pointillé bleu : case qui part dans cette planche · — direction non réclamée<br>
+    le champ de prompt montre le texte assemblé, mot pour mot — c'est celui qui part<br>
+    l'état de Balthazar est réel au 30 août 2026 ; les consignes de direction sont une proposition de cette maquette
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 04 -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>Quelles cases partent — la décision de l'écran</h2></div>
+
+  <p class="intro">C'est la seule vraie question de cette maquette, et elle a une réponse chiffrée
+    qui n'est pas celle qu'on attend.</p>
+
+  <h3>Une case déjà pleine ne repart pas — sauf que si</h3>
+  <p>Le réflexe est de ne demander que ce qui manque : on a déjà la marche vers le sud, on commande
+    les trois autres. Ça a l'air évident, et <strong>c'est le plus cher des trois choix</strong>.</p>
+
+  <table style="margin-top:14px">
+    <thead><tr><th style="width:36%">Ce qu'on demande</th><th style="width:16%">Prix</th><th style="width:16%">Étayage</th><th>Ce qu'on obtient</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Refaire les quatre, en une planche</td>
+        <td><span class="m bon">$0,023</span></td>
+        <td><span class="m eg">1 appel</span></td>
+        <td class="apres"><b>Quatre images qui se ressemblent</b>, parce qu'elles ont été dessinées
+          ensemble, sur la même feuille, par le même jet.</td>
+      </tr>
+      <tr>
+        <td class="k">Compléter les trois, en une planche</td>
+        <td><span class="m no">non mesuré</span></td>
+        <td><span class="m no">0 appel</span></td>
+        <td>Trois images qui se ressemblent entre elles, et <b>une quatrième qui ne leur ressemble
+          pas</b> — celle qui existait déjà. Prix inconnu : entre celui de deux cases et celui de
+          quatre.</td>
+      </tr>
+      <tr>
+        <td class="k">Compléter les trois, un appel chacune</td>
+        <td><span class="m mal">$0,038</span></td>
+        <td><span class="m">18 appels</span></td>
+        <td>Trois images qui ne se ressemblent ni entre elles ni avec la quatrième. <b>Le plus
+          cher, et le moins bon.</b></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note bien" style="margin-top:20px">
+    <span class="lab">Ce que ça donne comme règle</span>
+    <p><strong>La cohérence est une raison de repayer une case qu'on a déjà.</strong> Et dans le cas
+      le plus courant — une direction faite, trois manquantes — refaire les quatre coûte
+      <span class="m bon">$0,015 de moins</span> que compléter à l'unité. L'écran propose donc
+      <em>refaire les quatre</em> par défaut, avec les deux autres choix visibles à côté et leur
+      prix écrit.</p>
+    <p>Ce n'est pas un réglage caché : c'est <strong>le premier choix de l'écran</strong>, et il est
+      posé sur une mesure, pas sur un principe.</p>
+  </div>
+
+  <div class="note att">
+    <span class="lab">Le coût, nommé — et il est double</span>
+    <ul>
+      <li><b>On jette une image qu'on avait.</b> Elle ne disparaît pas : elle reste en bibliothèque,
+        elle garde son prix payé, et c'est la nouvelle qui prend la case. Mais on a payé deux fois
+        pour une case. L'écran l'écrit avant de lancer.</li>
+      <li><b>Le prix à quatre cases repose sur un seul appel.</b> Si la mesure se dément, tout ce
+        raisonnement tombe et il faudra revenir à « compléter ce qui manque ». C'est pour ça que la
+        colonne <em>étayage</em> existe dans le tableau de l'écran : <b>le nombre d'appels sur
+        lequel chaque prix repose est affiché à côté du prix.</b></li>
+    </ul>
+  </div>
+
+  <h3>Et quand deux cases seulement manquent</h3>
+  <p>Le tableau de mesures dit que <strong>plier deux cases coûte plus cher que deux appels
+    séparés</strong> — <span class="m">$0,0270</span> contre <span class="m">$0,0256</span>. Dans ce
+    cas l'écran ne propose pas la planche à deux : il propose deux appels, ou la planche à quatre.
+    <strong>Une planche de deux cases n'a aucune raison d'exister</strong>, et le produit n'en
+    fabriquera pas.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 05 -->
+<section>
+  <div class="entete"><span class="num">05</span><h2>Ce qui est écrit dans une case</h2></div>
+
+  <p class="intro">Chaque case porte un bout de texte, et ce bout se compose de deux morceaux qui
+    vivent à deux endroits différents. C'est ce que la maquette <span class="mesure">05</span> a
+    tranché ; la planche est l'écran qui le montre.</p>
+
+  <table>
+    <thead><tr><th style="width:22%">Le morceau</th><th style="width:26%">Où il est écrit</th><th>Pourquoi là</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">L'attitude</td>
+        <td><span class="mesure">walking posture, full body</span><br><span class="sourd">sur la pose, dans le plan du projet</span></td>
+        <td>Elle est vraie pour tous les personnages du jeu. L'écrire une fois évite de la retaper à
+          chaque entité.</td>
+      </tr>
+      <tr>
+        <td class="k">La direction</td>
+        <td><span class="mesure">facing south, toward the viewer</span><br><span class="sourd">sur la direction, dans la liste du projet</span></td>
+        <td>Elle est vraie pour toutes les poses. L'écrire sur chaque pose la ferait recopier six
+          fois, et une faute de frappe la sixième fois passerait inaperçue.</td>
+      </tr>
+      <tr>
+        <td class="k">Le sujet</td>
+        <td><span class="sourd">le signalement de l'entité, dans sa fiche</span></td>
+        <td>Il part avec toutes ses images, et il n'est écrit qu'à un seul endroit.</td>
+      </tr>
+      <tr>
+        <td class="k">Le style</td>
+        <td><span class="sourd">les sept textes du jeu, réglés dans l'Univers</span></td>
+        <td class="apres">Le texte <b>rassemblé</b> pour cette entité : les textes du jeu, ceux que son
+          ambiance remplace — le monde, l'éclairage, le trait —, et ceux qu'elle a écrits sur elle-même.
+          Sa fiche écrit l'origine de chacun (<span class="mesure">07bis</span>), et ce qui part
+          vraiment se coche une dernière fois sur l'écran de confirmation. <b>La planche l'affiche,
+          elle ne le décide pas.</b></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>L'atelier les met bout à bout, et montre le résultat</h3>
+  <p>La règle du produit ne bouge pas : <strong>ce qui est montré est ce qui part, mot pour
+    mot</strong>. Le champ de prompt affiche le texte assemblé, avec la position de chaque case
+    nommée — <em>top-left</em>, <em>top-right</em>… — parce que c'est ce qui permet à l'atelier de
+    savoir quel morceau de l'image revenue va dans quelle direction.</p>
+
+  <div class="note att">
+    <span class="lab">Le texte de la grille n'est pas de l'auteur</span>
+    <p>La phrase <span class="mesure">A 2×2 grid of the same character</span> et les positions
+      <span class="mesure">top-left / top-right / …</span> sont écrites par l'atelier, pas par
+      l'auteur : <strong>ce sont elles qui rendent le découpage automatique possible.</strong> Elles
+      sont montrées, comme tout le reste, mais les modifier casserait le rangement de ce qui revient.
+      Elles sont donc <em>affichées et non saisissables</em>, avec leur raison — le motif du produit
+      pour tout ce qui est indisponible.</p>
+  </div>
+
+  <p>Le reste du champ est libre. On peut ajouter un mot à une case, en retirer un, ou écrire
+    autre chose entièrement — <strong>un champ prérempli n'est pas un champ décidé</strong>, et la
+    ligne de provenance sous le champ le dit.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 06 -->
+<section>
+  <div class="entete"><span class="num">06</span><h2>Ce qui revient, et où ça se range</h2></div>
+
+  <p class="intro">Une planche revient en une seule image. L'atelier la découpe et range les
+    morceaux. Cette partie est <strong>déjà construite</strong> — la maquette
+    <span class="mesure">18</span> l'a dessinée — et la planche n'ajoute qu'une chose : elle sait
+    d'avance où va chaque morceau.</p>
+
+  <table>
+    <thead><tr><th style="width:26%">L'étape</th><th>Ce qui se passe</th></tr></thead>
+    <tbody>
+      <tr><td class="k">La feuille revient</td><td>Une image de <span class="mesure">1024 × 1024</span>, avec quatre sujets dessus.</td></tr>
+      <tr><td class="k">L'atelier découpe</td><td class="apres">Il connaît la géométrie case par case, donc <b>il ne cherche pas</b> : il coupe aux endroits qu'il a lui-même demandés. C'est la différence avec le découpage d'une planche importée, où il faut deviner.</td></tr>
+      <tr><td class="k">Les morceaux se rangent</td><td class="apres">Chaque morceau va dans la direction de sa case. <b>Sa pose et sa direction lui sont écrites au moment où il naît</b>, pas après coup — ce qui répare la mesure 6.</td></tr>
+      <tr><td class="k">La feuille disparaît</td><td>Elle n'entre pas en bibliothèque. Ce qui reste, ce sont les quatre images, et le prix payé une fois, réparti sur elles.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note bien" style="margin-top:20px">
+    <span class="lab">Ce que ça répare, et c'est mesuré</span>
+    <p><strong>Neuf appels de personnage sur treize ne disent pas leur pose aujourd'hui.</strong>
+      Avec la planche, une case ne peut pas exister sans dire quelle pose et quelle direction elle
+      remplit — c'est ce qui permet de la découper et de la ranger. <em>Le rangement n'est plus un
+      geste séparé qu'on peut oublier : c'est une condition de l'appel.</em></p>
+  </div>
+
+  <h3>Et si le modèle rend trois sujets au lieu de quatre</h3>
+  <p>Ça arrive : on demande quatre cases, la feuille revient avec un personnage manquant ou deux
+    fondus ensemble. Le produit a déjà sa réponse, et elle ne change pas ici :
+    <strong>chaque rectangle montre son contenu avant qu'on valide le découpage</strong>, et la
+    ligne du bas dit ce qu'un compte faux coûterait à repayer — <span class="m">$0,023</span> dans
+    ce cas. Aucune image fausse n'entre en bibliothèque sans qu'on l'ait vue.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 07 -->
+<section>
+  <div class="entete"><span class="num">07</span><h2>Le champ « images » d'une pose change de sens</h2></div>
+
+  <p class="intro">C'est la conséquence la moins visible de la déclaration des directions, et il faut
+    la trancher ici parce que c'est la planche qui la subit.</p>
+
+  <h3>Le problème, en clair</h3>
+  <p>Aujourd'hui une pose déclare combien d'images elle demande. Dans le projet réel,
+    <span class="mesure">repos</span> et <span class="mesure">marche</span> en demandent
+    <strong>quatre</strong> — et en regardant les images, on voit ce que ce quatre voulait dire :
+    <em>quatre angles</em>. C'est la seule façon qu'avait l'auteur de réclamer plusieurs vues d'une
+    même attitude.</p>
+  <p>Maintenant que les directions sont déclarées à part, les deux chiffres se superposent.
+    <strong>Quatre directions × quatre images feraient seize images pour un simple repos</strong>,
+    et la matrice de Balthazar passerait de vingt et une cases à <span class="m mal">quarante-cinq</span>
+    — pour un jeu où personne n'a jamais demandé seize repos.</p>
+
+  <h3>La décision</h3>
+  <div class="note">
+    <span class="lab">Ce que le chiffre veut dire à partir de maintenant</span>
+    <p><span class="mesure">images</span> devient <strong>le nombre d'images dans une seule
+      direction</strong> — c'est-à-dire les vignettes d'un cycle d'animation. Une marche à huit
+      images en vue de dessus, c'est huit vignettes vers le nord, huit vers le sud, et ainsi de
+      suite.</p>
+    <p>Et <strong>la migration met tous les chiffres à un</strong>, sans exception. La raison est
+      mesurée : aucune pose du projet ne tient réellement un cycle. Les quatre images de
+      <span class="mesure">repos</span> chez <span class="mesure">balthazar-2</span> sont les quatre
+      morceaux d'une seule feuille — <em>quatre angles, pas quatre vignettes</em>. Les remettre à un
+      dit la vérité de ce qui existe.</p>
+  </div>
+
+  <table style="margin-top:14px">
+    <thead><tr><th style="width:24%">Le mot</th><th style="width:26%">Ce qu'il disait</th><th>Ce qu'il dira</th></tr></thead>
+    <tbody>
+      <tr><td class="k">une direction</td><td><span class="sourd">n'existait pas</span></td><td class="apres">Un angle de vue. <b>Combien de fois une pose se décline.</b></td></tr>
+      <tr><td class="k"><span class="mesure">images</span></td><td>Combien d'images cette pose réclame, tous angles confondus.</td><td class="apres">Combien de vignettes dans <b>une</b> direction. C'est le compte d'un cycle d'animation, et il vaut 1 partout tant que l'animation n'existe pas.</td></tr>
+      <tr><td class="k">une case</td><td>Une image attendue.</td><td>Inchangé — une case reste une image attendue. Il y en a simplement <span class="mesure">directions × images</span> par pose au lieu de <span class="mesure">images</span>.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:20px">
+    <span class="lab">Le coût, nommé</span>
+    <p>La migration <strong>ne perd aucune image</strong> — elle change un chiffre dans le fichier du
+      projet, jamais un fichier d'image. Mais elle change ce que les jauges affichent : Balthazar
+      passe de <span class="mesure">7 / 12</span> à <span class="mesure">6 / 21</span> le jour où
+      les directions sont déclarées.</p>
+    <p><strong>Le chiffre de gauche baisse, et c'est normal.</strong> Balthazar a deux images de
+      repos ; dans l'ancien modèle elles remplissaient deux cases sur quatre, dans le nouveau elles
+      tombent toutes les deux dans la même direction — la première — et n'en remplissent qu'une.
+      Aucune image n'a disparu ; <em>deux images de la même vue n'ont jamais fait deux vues</em>, et
+      le compte le dit enfin. C'est écrit sous la jauge le jour où ça arrive.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 08 -->
+<section>
+  <div class="entete"><span class="num">08</span><h2>L'équipement — la même planche, une pièce à la fois</h2></div>
+
+  <p class="intro">Habiller un personnage, c'est prendre un corps existant et lui ajouter un casque
+    sans rien changer d'autre. Le produit sait déjà le faire, et il le fait déjà par planche — sauf
+    que ses planches n'ont jamais eu qu'une case.</p>
+
+  <table>
+    <thead><tr><th style="width:30%">Ce qui change</th><th>Comment</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Les cases ne partent pas vides</td>
+        <td class="apres">Chaque case contient <b>le corps qu'on habille</b>, et la consigne demande
+          d'ajouter la pièce sans rien toucher d'autre. C'est ce qui permet de retrouver le calque
+          ensuite, par différence entre l'avant et l'après.</td>
+      </tr>
+      <tr>
+        <td class="k">Une planche par pièce</td>
+        <td class="apres">Jamais deux pièces sur la même feuille : on ne saurait plus quelle
+          différence appartient à quel calque. <b>Une planche, une pièce, plusieurs corps.</b></td>
+      </tr>
+      <tr>
+        <td class="k">Les cases sont des poses, pas des directions</td>
+        <td class="apres">Un casque se pose sur <em>chaque corps qui existe</em>. Pour Balthazar,
+          six corps — donc six cases, donc <b>une planche qui paie largement</b>
+          (<span class="m">3 × 3</span>, un sujet à <span class="m">341 px</span>).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:20px">
+    <span class="lab">Ce que la mesure impose de réparer</span>
+    <p>Les six images d'équipement du projet <strong>ne disent pas quelle pose elles habillent</strong> :
+      la pose n'apparaît que sur l'image composée, après la superposition. Comme pour les corps, la
+      planche répare ça par construction — <em>une case sait quel corps elle habille avant de
+      partir</em>, donc l'image qui en revient le sait aussi.</p>
+  </div>
+
+  <p style="margin-top:16px">Le reste du chemin ne change pas et n'est pas redessiné ici : ce qui
+    revient passe par la superposition (<span class="mesure">19</span>), qui sort le calque par
+    différence et le range sous sa pièce. La planche s'arrête là où cet outil commence.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 09 -->
+<section>
+  <div class="entete"><span class="num">09</span><h2>L'animation — la place qui l'attend</h2></div>
+
+  <p class="intro">Tu veux que le codex gère l'animation, par entité. La planche est l'endroit où ça
+    se posera, et cette maquette dit <strong>où</strong> sans dessiner l'écran — parce qu'il n'y a
+    pas encore une seule image d'animation dans le projet, et qu'on ne dessine pas ce qu'on n'a pas
+    mesuré.</p>
+
+  <h3>Ce qu'une animation est, dans ce modèle</h3>
+  <p>Une animation, c'est <strong>les images d'une seule direction, lues à la suite</strong>. La
+    marche vers le sud avec ses huit vignettes. C'est exactement ce que le champ
+    <span class="mesure">images</span> compte, une fois qu'il a changé de sens (§ 07) — et c'est
+    pour ça qu'aucun axe neuf n'est nécessaire.</p>
+
+  <table style="margin-top:14px">
+    <thead><tr><th style="width:26%">Ce qu'il faudra</th><th style="width:22%">Où ça se pose</th><th>Ce que ça suppose</th></tr></thead>
+    <tbody>
+      <tr><td class="k">L'ordre des vignettes</td><td>Dans la case d'une direction</td><td>Rien de neuf : les images d'une case portent déjà un rang.</td></tr>
+      <tr><td class="k">Une cadence</td><td>Sur la pose</td><td>Un nombre par pose, comme <span class="mesure">images</span>. Une marche et une mort ne se lisent pas à la même vitesse.</td></tr>
+      <tr><td class="k">Un bouton pour la lire</td><td>Dans la vitrine (<span class="mesure">09</span>)</td><td>C'est « essayer », et c'est la maquette d'à côté.</td></tr>
+      <tr><td class="k">Des images intermédiaires</td><td>Une fabrique</td><td>Voir ci-dessous.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note gris" style="margin-top:20px">
+    <span class="lab">Les nouvelles tables d'atelier — elles ont déjà leur rangement</span>
+    <p>Le produit range ses outils en deux groupes séparés par un trait : <strong>ceux qui décrivent
+      une image</strong> — détourage, recadrage, grille, quantification, bords, contours, la main —
+      et <strong>ceux qui en fabriquent d'autres</strong> : le découpage, la superposition. Le
+      critère est écrit et il tranche tout seul : <em>une table de recette décrit une image, une
+      fabrique en produit d'autres.</em></p>
+    <p>Une table qui interpole deux vignettes pour en fabriquer une troisième est
+      <strong>une fabrique</strong>. Elle se range après le trait, à côté du découpage et de la
+      superposition, et elle n'a pas besoin d'un lieu neuf. <em>C'est tout ce que cette maquette en
+      dit, et c'est volontaire.</em></p>
+  </div>
+
+  <div class="note att">
+    <span class="lab">Ce qui ferait exploser le compte, et qu'il faut regarder en face</span>
+    <p>Une marche à huit vignettes, en quatre directions, c'est <span class="m mal">32 images</span>
+      pour une seule pose d'un seul personnage. Sur six poses, un personnage passerait de
+      <span class="mesure">21</span> cases à plus de <span class="m mal">150</span>. <strong>Aucune
+      décision de cette maquette ne rend ça abordable</strong>, et le prétendre serait mentir.
+      Ce que la planche apporte, c'est que les huit vignettes d'une direction sont exactement
+      <em>huit cases</em> — donc une planche <span class="mesure">3 × 3</span> qui paie. C'est
+      nécessaire, ce n'est pas suffisant, et ça se retranchera quand l'animation aura sa maquette.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 10 -->
+<section>
+  <div class="entete"><span class="num">10</span><h2>Ce qui déborde de la planche</h2></div>
+
+  <table>
+    <thead><tr><th style="width:20%">Où ça va</th><th>Ce qui est reporté</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">02 — l'établi</td>
+        <td class="apres">Une ligne de la matrice s'ouvre désormais sur sa planche. C'est
+          <b>la troisième porte</b> de l'établi, après l'outil d'une case pleine et la fiche de
+          l'entité — et la seule des trois où la barre de prompt reste.</td>
+      </tr>
+      <tr>
+        <td class="k">05 — le codex</td>
+        <td class="apres">Le lancement groupé décrit au § 08 du codex se précise : <b>une planche
+          par pose et par entité</b>, jamais deux poses sur la même feuille — leurs consignes
+          d'attitude diffèrent, et le modèle ne saurait pas laquelle appliquer à quelle case.</td>
+      </tr>
+      <tr>
+        <td class="k">18 — le découpage</td>
+        <td class="apres">Rien à changer, et c'est le point : la planche <b>lui donne la géométrie
+          au lieu de la lui faire deviner</b>. Sa détection de zones opaques reste pour les planches
+          importées de l'extérieur.</td>
+      </tr>
+      <tr>
+        <td class="k">Le dépôt — le plan</td>
+        <td class="apres">Le champ <span class="mesure">images</span> d'une pose change de sens
+          (§ 07) et la migration met tous les chiffres à un. Deux poses du projet réel sont
+          concernées : <span class="mesure">repos</span> et <span class="mesure">marche</span>.</td>
+      </tr>
+      <tr>
+        <td class="k">Le dépôt — la génération</td>
+        <td class="apres">Une case de planche doit porter <b>sa pose et sa direction</b> au moment
+          de l'appel. Le pliage porte déjà la pose case par case ; la direction est le champ à
+          ajouter, et c'est le même que celui que <span class="mesure">05</span> a décidé de poser
+          sur l'image.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ce que la planche ne tranche pas</h3>
+  <div class="note gris">
+    <span class="lab">Trois questions laissées ouvertes</span>
+    <ul>
+      <li><b>Le prix à trois cases, à cinq, à six.</b> On a mesuré un, deux et quatre. L'écran
+        affiche <span class="mesure">?</span> et le nombre d'appels sur lequel chaque prix repose,
+        plutôt que d'interpoler une courbe qu'on n'a pas. <em>Trois appels de mesure suffiraient à
+        combler ça</em>, et ils coûtent moins de cinq centimes.</li>
+      <li><b>Au-delà de neuf cases.</b> La géométrie continue de se calculer — seize cases feraient
+        du <span class="mesure">4 × 4</span>, soit <span class="m">256 px</span> par sujet, encore
+        au-dessus de la cible. Mais aucun appel n'a été fait à ce format, et un modèle qui perd le
+        compte à seize sujets est très plausible. À mesurer avant d'autoriser.</li>
+      <li><b>Que devient une planche ratée ?</b> Elle n'entre pas en bibliothèque, donc elle
+        disparaît — et avec elle la trace de ce qu'on a payé pour rien. Le journal des générations
+        la garde, mais aucun écran ne le montre. À trancher là où les dépenses se lisent.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 11 -->
+<section>
+  <div class="entete"><span class="num">11</span><h2>Les mesures de l'écran</h2></div>
+
+  <p class="intro">Aucune n'est neuve.</p>
+
+  <table>
+    <thead><tr><th style="width:16%">Mesure</th><th style="width:26%">Ce que c'est</th><th>D'où elle vient</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><span class="m">44 px</span></td><td>La barre de tête</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">240 px</span></td><td>Les réglages de la planche</td><td>La colonne de gauche du codex, de la galerie et de la fiche</td></tr>
+      <tr><td class="k"><span class="m">380 px</span></td><td>La matrice, à droite</td><td>La colonne de droite du codex et de la fiche</td></tr>
+      <tr><td class="k"><span class="m">56 px</span></td><td>Le champ de prompt</td><td>La barre de prompt du châssis · <span class="mesure">02</span></td></tr>
+      <tr><td class="k"><span class="m">32 px</span></td><td>Le bouton qui paie</td><td>La barre de prompt du châssis · <span class="mesure">02</span></td></tr>
+      <tr><td class="k"><span class="m">26 px</span></td><td>Le pied</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne de pose · une option</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">9 px</span></td><td>Une marque de case</td><td>Le carré de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">38 px</span></td><td>Une vignette d'image</td><td>La vignette de référence de la fiche et du codex · <span class="mesure">05</span>, <span class="mesure">07bis</span>. <b>Ajouté le 30 août 2026 :</b> survoler une vignette et appuyer sur la barre d'espace la montre en grand, la molette la zoome — le geste de la galerie, systématique dans tout l'atelier. C'est lui qui permet de garder les vignettes petites ici comme ailleurs.</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px">Une seule marque est ajoutée au vocabulaire, et elle est faite des deux
+    qui existent : <strong>le carré en pointillé bleu</strong>, qui dit <em>cette case part dans la
+    planche en cours</em>. Le carré plein dit <em>prise</em>, le carré creux dit <em>attendue</em>,
+    le tiret dit <em>pas réclamée</em>. <span class="sourd">Aucun glyphe neuf — le produit en a
+    toujours trois.</span></p>
+</section>
+
+<!-- ══ 12 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">12</span><h2>Ce que cet écran doit au guide</h2></div>
+  <div class="note att">
+    <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+    <p><strong>C'est de l'argent, et personne ne l'explique.</strong> Une planche est plus rentable
+      qu'un appel par case à partir d'un certain compte — encore faut-il savoir lequel, et pourquoi.
+      Une explication qui parle de prix est celle qu'on va chercher avant de cliquer.</p>
+    <p style="margin-top:10px"><b>nom</b> · La planche de poses<br>
+      <b>quoi</b> · Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul
+      appel, et que l'atelier redécoupe ensuite en images séparées.<br>
+      <b>ce que ça change</b> · Elle divise le prix : au-delà de quatre cases, un appel groupé coûte
+      moins que quatre appels séparés. Et elle achète quelque chose qu'aucun appel séparé ne garantit —
+      les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes
+      ensemble.<br>
+      <b>d'où ça vient</b> · les cases que tu coches dans l'établi ou dans le codex<br>
+      <b>où ça se range</b> · <span class="mesure">Les fabriques</span></p>
+    <p style="margin-top:10px" class="sourd"><b>Le risque se dit aussi</b> : un jet unique, que le
+      modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte faux coûte la
+      planche entière — c'est écrit sur le bouton, ça doit l'être dans le guide.</p>
+  </div>
+</section>
+
+<footer>
+  Asset Kitchen — V2.1 · maquette 08, la planche d'une pose · 30 août 2026 ·
+  mesures prises sur <span class="mesure">cœur de pierre - 01</span> ·
+  le prix à quatre cases repose sur un seul appel ·
+  rien n'est encore écrit dans les documents d'autorité
+</footer>
+
+</div>
+</body>
+</html>

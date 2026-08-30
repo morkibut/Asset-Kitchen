@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la vitrine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:26px 0 10px;line-height:1.2}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)}
+  .m.mal{color:var(--echec)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .cite{font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--texte-2);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:10px 12px;margin:0 0 12px;white-space:pre-wrap}
+  .cite b{color:var(--signal-clair);font-weight:500}
+  .cite u{color:var(--epingle);text-decoration:none}
+
+  /* ── Le croquis d'écran ─────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1180px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:9px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .bascule{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .bascule.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .btxt{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:12px;color:var(--texte-2)}
+  .sep-v{width:1px;height:16px;background:var(--bord);margin:0 3px}
+  .wf-corps{min-width:1180px;display:flex;align-items:stretch;min-height:412px}
+  .wf-pied{min-width:1180px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:2px}
+
+  /* colonne de gauche — 240 px, comment on regarde */
+  .reg{width:240px;flex:none;border-right:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:12px}
+  .grp{display:flex;flex-direction:column;gap:5px}
+  .lg{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--texte-2)}
+  .lg .vl{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .lg .vl.on{color:var(--texte-2)}
+  .lg.hs{color:var(--texte-3)}
+  .rangee{display:flex;gap:4px}
+  .rangee span{flex:1;height:24px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-family:var(--mono);font-size:10.5px;color:var(--texte-3)}
+  .rangee span.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .rangee span.hs{opacity:.45}
+  .fonds{display:flex;gap:4px;align-items:center}
+  .fd{width:24px;height:24px;flex:none;border:1px solid var(--bord);border-radius:2px}
+  .fd.on{border-color:var(--signal)}
+  .fd.dam{background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+  .fd.noir{background:#000}
+  .fd.p1{background:#3A2E28}.fd.p2{background:#6B7A52}.fd.p3{background:#8E6B3F}
+  .fd.plus{background:none;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;color:var(--texte-3);
+    font-family:var(--mono);font-size:11px}
+  .sep{height:1px;background:var(--bord);margin:2px 0}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.55}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.55}
+
+  /* colonne du milieu — ce qu'on regarde */
+  .vit{flex:1;min-width:0;display:flex;flex-direction:column}
+  .vit-t{height:30px;flex:none;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 12px;font-family:var(--mono);font-size:9px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3)}
+  .vit-t .cpt{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px}
+  .vit-c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:10px;padding:12px}
+  .scene{width:256px;height:256px;border:1px solid var(--bord);background:#000;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .sujet{width:180px;height:200px;border:1px dashed var(--bord-fort);border-radius:1px;
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;
+    font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .mes{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;line-height:1.6}
+  .mes b{color:var(--texte-2);font-weight:500}
+  .mes .eg{color:var(--epingle)}
+  .bande{display:flex;gap:5px;align-items:center}
+  .vg{width:44px;height:44px;flex:none;border:1px solid var(--bord);
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/11px 11px}
+  .vg.on{border-color:var(--signal)}
+  .vg.ep{position:relative}
+  .vg.ep::before{content:"";position:absolute;top:0;left:0;border-top:8px solid var(--epingle);
+    border-right:8px solid transparent}
+  .vg.rien{background:none;border-style:dashed;border-color:var(--bord-fort)}
+
+  /* colonne de droite — 380 px, la matrice */
+  .cent{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .cent-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-size:12.5px;color:var(--texte)}
+  .cent-t .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .cent-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:11px}
+  .cases{display:flex;flex-direction:column;gap:3px}
+  .cs{min-height:24px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
+    background:var(--fond-2);border:1px solid var(--bord)}
+  .cs.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .cs .nm{font-size:11px;color:var(--texte-2);width:64px;flex:none;white-space:nowrap}
+  .cs.on .nm{color:var(--texte)}
+  .cs .marques{display:flex;gap:4px;align-items:center}
+  .cs .cpt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cs .cpt.ok{color:var(--ok)}
+  .cs .cpt.eg{color:var(--epingle)}
+  .q{width:9px;height:9px;flex:none;border-radius:1px;border:1px solid var(--signal);background:var(--signal)}
+  .q.creux{background:none;border-color:var(--bord-fort)}
+  .q.brut{background:none;border-color:var(--epingle)}
+  .q.abs{border:0;background:none;position:relative}
+  .q.abs::before{content:"";position:absolute;left:0;top:4px;width:9px;height:1px;background:var(--bord-fort)}
+  .jauge{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  .jauge b{color:var(--texte-2);font-weight:500}
+  .jauge b.eg{color:var(--epingle)}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.1 · maquette 09 — la vitrine</div>
+  <h1>Le codex compte des cases.<br>La vitrine montre <em>des images finies</em>.</h1>
+  <p>Le produit a quatre lieux et aucun ne montre. Le codex dit <em>il manque quinze images</em>,
+    l'établi dit <em>voilà la case et voilà le prompt</em>, la galerie dit <em>voilà les fichiers,
+    rangés</em>. Personne ne dit <strong>voilà ce que ça donne</strong>.</p>
+  <p>Ça ne serait qu'un confort si le compte du codex disait la vérité. Il ne la dit pas, et c'est
+    mesuré : <strong>une case est prise dès qu'une image porte le nom de la pose</strong>, même si
+    cette image n'est jamais passée par la recette, même si elle sort à une taille que le jeu ne peut
+    pas utiliser. Sur les quarante-huit images du projet réel, <strong>dix-huit</strong> sont à la
+    taille du jeu.</p>
+  <p>La vitrine est l'écran qui regarde. Elle ne fabrique rien, elle ne modifie rien, elle ne coûte
+    rien — et comme la fiche, <strong>elle fait disparaître la barre de prompt</strong>. Plus tard,
+    c'est aussi elle qui fera bouger les animations.</p>
+  <p class="sourd">Mesures prises le 30 août 2026 sur <span class="mesure">cœur de pierre - 01</span> :
+    48 images, 3 personnages, cible de <span class="mesure">128 px</span>.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ 01 -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>La mission qui manquait au codex</h2></div>
+
+  <p class="intro">Le codex avait trois verbes dans sa maquette : <strong>il déclare, il compte, il
+    lance</strong>. Il en gagne un quatrième — <strong>il montre</strong> — et ce n'est pas un
+    ajout de confort, c'est ce qui rend les trois autres honnêtes.</p>
+
+  <table>
+    <thead><tr><th style="width:20%">Le verbe</th><th style="width:34%">Ce qu'il fait</th><th>Ce qu'il ne peut pas voir tout seul</th></tr></thead>
+    <tbody>
+      <tr><td class="k">il déclare</td><td>Ce que le jeu réclame — les poses, les directions, les pièces.</td><td>Si ce qui a été fabriqué ressemble à ce qui a été déclaré.</td></tr>
+      <tr><td class="k">il compte</td><td>Combien de cases sont prises, combien manquent.</td><td class="apres"><b>Si une case prise contient une image utilisable.</b> C'est le trou, et il est mesuré au § 02.</td></tr>
+      <tr><td class="k">il lance</td><td>Les appels groupés, avec leur prix.</td><td>Si le résultat valait la dépense.</td></tr>
+      <tr><td class="k">il montre</td><td class="apres"><b>Ce que ça donne, en grand, sur le fond du jeu.</b></td><td><span class="sourd">C'est le verbe neuf.</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:22px">
+    <span class="lab">Pourquoi une jauge pleine peut mentir</span>
+    <p>Le codex remplit une case dès qu'une image déclare la pose. C'est une décision volontaire et
+      elle est bonne — elle permet à une image importée à la main de compter comme les autres. Mais
+      elle a un revers : <strong>une image qui n'a jamais été détourée, mise sur grille ni ramenée à
+      la palette remplit sa case exactement comme une image finie</strong>. Le codex ne peut pas
+      faire la différence sans juger, et il a été construit pour ne pas juger.</p>
+    <p>La vitrine n'ajoute donc <em>aucune règle</em> au codex. Elle montre l'image, et une image
+      qu'on regarde répond toute seule.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 02 -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>Ce qui a été mesuré avant de dessiner — 30 août 2026</h2></div>
+
+  <h3>1 · Sur quarante-huit images, dix-huit sont à la taille du jeu</h3>
+  <table style="margin-top:12px">
+    <thead><tr><th style="width:44%">État de l'image</th><th style="width:16%">Combien</th><th>Ce que ça veut dire</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Aucun rendu — jamais traitée</td><td><span class="m mal">21</span></td><td>Le brut du modèle, tel quel. Pas de découpe du fond, pas de mise sur grille.</td></tr>
+      <tr><td class="k">Un rendu identique au brut</td><td><span class="m eg">9</span></td><td>Une recette existe et n'a rien changé. À l'écran c'est indiscernable de la ligne du dessus.</td></tr>
+      <tr><td class="k">Rendue à la cible du projet</td><td><span class="m bon">15</span></td><td><span class="mesure">128 × 128</span> — utilisable dans le jeu.</td></tr>
+      <tr><td class="k">Rendue à une autre taille</td><td><span class="m eg">3</span></td><td>Traitée, mais pas au format du projet.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">Dix-huit images sortent en <span class="m">128 × 128</span> en comptant
+    celles dont le brut l'était déjà. <strong>Le codex, lui, compte les mêmes cases pleines dans les
+    quatre lignes.</strong></p>
+
+  <h3>2 · Une pose de Balthazar sort un quart plus petite que ses sœurs</h3>
+  <p>Cinq poses sortent en <span class="m">128 × 128</span> ; <span class="mesure">attaque</span>
+    sort en <span class="m eg">96 × 96</span>. Posées côte à côte dans le jeu, le personnage
+    rapetisserait en frappant. <strong>Aucun écran du produit ne met ces six images côte à côte
+    aujourd'hui</strong> — c'est très exactement ce que la vitrine fait par construction.</p>
+
+  <h3>3 · Des quatre morceaux d'une même feuille, un seul est fini</h3>
+  <p>Les quatre images de <span class="mesure">repos</span> de
+    <span class="mesure">balthazar-2</span> viennent d'une seule feuille découpée. Trois ont gardé
+    leur taille de découpe — <span class="m">253×321</span>, <span class="m">250×318</span>,
+    <span class="m">205×322</span> — et une seule est passée à <span class="m bon">128×128</span>.
+    <strong>Le découpage remplit quatre cases d'un coup, et le travail ne suit pas.</strong></p>
+
+  <h3>4 · La bible demande un contour sombre sur un fond noir</h3>
+  <p>Deux champs du projet, mot pour mot :</p>
+  <div class="cite"><b>trait</b> — 1-pixel <u>dark slate outline</u>, clean pixel clustering, flat shading…
+<b>éclairage</b> — Dynamic warm radial lighting (lanterns, forge heat, glowing runes) surrounded by <u>absolute blackness</u>…</div>
+  <p>Un contour <em>ardoise sombre</em> posé sur du <em>noir absolu</em> disparaît. C'est un défaut
+    réel, il vient de la bible elle-même, et <strong>il est parfaitement invisible sur le damier
+    gris que tous les écrans du produit utilisent aujourd'hui</strong>. Il faut un fond pour le voir,
+    et le fond doit être celui du jeu.</p>
+
+  <h3>5 · Aucune image d'animation, zéro</h3>
+  <p>Aucune pose du projet ne tient plus d'une vue dans une même direction. La partie
+    <em>essayer en mouvement</em> n'a donc <strong>rien à montrer</strong> aujourd'hui : elle est
+    dessinée comme grisée avec sa raison, pas comme un bouton qui attend.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 03 -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>L'écran</h2></div>
+
+  <p class="intro">Les trois mêmes colonnes que la fiche et la planche. À gauche
+    <strong>comment on regarde</strong>, au milieu <strong>ce qu'on regarde</strong>, à droite la
+    matrice pour changer de sujet sans refermer. Les deux bascules de la barre de tête replient les
+    colonnes latérales — c'est le mécanisme de la galerie, et il donne ici la pleine largeur pour
+    contempler.</p>
+
+  <div class="croquis">
+    <div class="wf-barre">
+      <span class="wf-nom">Asset Kitchen</span>
+      <span class="tab">Univers</span>
+      <span class="tab on">Codex</span>
+      <span class="tab">Galerie</span>
+      <span class="fil">… › Balthazar › <b>attaque</b> › la vitrine</span>
+      <span class="wf-tard">
+        <span class="bascule on">réglages</span>
+        <span class="bascule on">matrice</span>
+        <span class="sep-v"></span>
+        <span class="btxt">Fermer la vitrine</span>
+        <span>Réglages</span>
+        <span>Guide</span>
+      </span>
+    </div>
+
+    <div class="wf-corps">
+      <!-- 240 — comment on regarde -->
+      <div class="reg">
+        <div class="grp">
+          <div class="col-t">la taille</div>
+          <div class="rangee"><span>×1</span><span class="on">×2</span><span>×4</span><span class="hs">×8</span></div>
+          <div class="raison">multiples entiers seulement · ×8 demande de replier les colonnes</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">le fond</div>
+          <div class="fonds">
+            <span class="fd dam"></span>
+            <span class="fd noir on"></span>
+            <span class="fd p1"></span>
+            <span class="fd p2"></span>
+            <span class="fd p3"></span>
+            <span class="fd plus">+</span>
+          </div>
+          <div class="raison">le damier, le noir de la bible, et 3 couleurs de sa palette résolue</div>
+          <div class="prov">proposé, d'après « surrounded by absolute blackness »</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">ce qu'on montre</div>
+          <div class="lg">Le corps seul<span class="vl on">oui</span></div>
+          <div class="lg">Avec son équipement<span class="vl">helmet</span></div>
+          <div class="lg">Toutes ses poses à la même échelle<span class="vl on">oui</span></div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="grp">
+          <div class="col-t">le mouvement</div>
+          <div class="lg hs">Lire le cycle<span class="vl">—</span></div>
+          <div class="lg hs">Cadence<span class="vl">—</span></div>
+          <div class="raison">aucune pose ne tient plus d'une image dans une direction</div>
+        </div>
+      </div>
+
+      <!-- 1fr — ce qu'on regarde -->
+      <div class="vit">
+        <div class="vit-t">attaque · une seule direction faite<span class="cpt">×2 · fond noir absolu</span></div>
+        <div class="vit-c">
+          <div class="scene"><div class="sujet">le sprite, à ×2</div></div>
+          <div class="mes"><b>96 × 96</b> — <span class="eg">ses cinq sœurs sortent en 128 × 128</span><br>
+            calibrer les poses ›</div>
+          <div class="bande">
+            <span class="vg"></span>
+            <span class="vg"></span>
+            <span class="vg"></span>
+            <span class="vg on ep"></span>
+            <span class="vg"></span>
+            <span class="vg"></span>
+          </div>
+          <div class="mes"><span class="sourd">ses six poses · celle qu'on regarde est encadrée · le coin doré dit « hors taille commune »</span></div>
+        </div>
+      </div>
+
+      <!-- 380 — la matrice -->
+      <div class="cent">
+        <div class="cent-t">Sa matrice<span class="x">on change de sujet sans refermer</span></div>
+        <div class="cent-c">
+          <div>
+            <div class="col-t">le corps — 4 directions</div>
+            <div class="cases">
+              <div class="cs"><span class="nm">repos</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">marche</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">course</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs on"><span class="nm">attaque</span><span class="marques"><i class="q brut"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt eg">96 px</span></div>
+              <div class="cs"><span class="nm">dégâts</span><span class="marques"><i class="q"></i><i class="q creux"></i><i class="q creux"></i><i class="q creux"></i></span><span class="cpt">1 / 4</span></div>
+              <div class="cs"><span class="nm">mort</span><span class="marques"><i class="q"></i><i class="q abs"></i><i class="q abs"></i><i class="q abs"></i></span><span class="cpt ok">1 / 1</span></div>
+            </div>
+          </div>
+          <div class="jauge">corps <b>6 / 21</b> · <b class="eg">1 case hors taille commune</b><br>
+            la vitrine ne compte pas — elle marque ce qu'elle voit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-pied">
+      <span><i class="pt"></i>en ligne</span>
+      <span>aucun appel, aucun coût — la barre de prompt s'est retirée</span>
+      <span>Échap ferme la vitrine</span>
+    </div>
+  </div>
+
+  <div class="lgd">
+    ■ case prise · □ case attendue · ▢ contour doré : image en place mais hors taille commune · — direction non réclamée<br>
+    la scène du milieu est à ×2 : un sprite de 128 px y occupe 256 px · le fond noir est celui que la bible décrit<br>
+    l'état de Balthazar est réel au 30 août 2026, y compris son attaque en 96 × 96
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 04 -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>La taille — des multiples entiers, et rien d'autre</h2></div>
+
+  <p class="intro">C'est la seule règle dure de cet écran, et elle vient de ce qu'est le pixel art.</p>
+
+  <p>Un sprite de 128 px agrandi à 192 px — soit une fois et demie — doit fabriquer 64 pixels qui
+    n'existent pas. Il les prend en doublant une ligne sur deux. <strong>Le résultat a des lignes
+    épaisses et des lignes fines, et il ne ressemble plus à ce qui sortira du jeu.</strong> Le
+    défaut qu'on croirait voir n'existerait que dans la fenêtre où on l'a regardé.</p>
+
+  <p>La vitrine n'offre donc que <span class="mesure">×1 · ×2 · ×4 · ×8</span>, et le navigateur a
+    l'interdiction de lisser — chaque pixel devient un carré net de deux, quatre ou huit pixels
+    d'écran.</p>
+
+  <table style="margin-top:14px">
+    <thead><tr><th style="width:16%">Échelle</th><th style="width:22%">Un sprite de 128</th><th style="width:26%">Tient dans la colonne du milieu</th><th>Ce qu'on y voit</th></tr></thead>
+    <tbody>
+      <tr><td class="k">×1</td><td><span class="m">128 px</span></td><td><span class="m bon">oui</span></td><td>Ce que le jeu affichera vraiment, si le jeu tourne sans zoom.</td></tr>
+      <tr><td class="k">×2</td><td><span class="m">256 px</span></td><td><span class="m bon">oui</span></td><td>La taille de lecture ordinaire — le défaut de silhouette se voit.</td></tr>
+      <tr><td class="k">×4</td><td><span class="m">512 px</span></td><td><span class="m bon">oui</span></td><td>Le pixel individuel devient visible. C'est là qu'on juge un contour.</td></tr>
+      <tr><td class="k">×8</td><td><span class="m">1024 px</span></td><td><span class="m eg">en repliant les deux colonnes</span></td><td>Chaque pixel fait 8 px d'écran. Au-delà, on n'apprend plus rien.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note bien" style="margin-top:20px">
+    <span class="lab">Ce que ça ne coûte pas</span>
+    <p>Replier les colonnes n'est pas un mécanisme neuf : <strong>la barre de tête porte déjà deux
+      bascules</strong> qui montrent et cachent les colonnes latérales, décidées dans la maquette de
+      la galerie. La vitrine s'en sert, elle n'en invente pas.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 05 -->
+<section>
+  <div class="entete"><span class="num">05</span><h2>Le fond — et le défaut que seul un fond révèle</h2></div>
+
+  <p class="intro">Tous les écrans du produit posent les images sur un damier gris. C'est le bon
+    choix pour vérifier une découpe : le damier montre exactement où l'image est transparente. C'est
+    le pire choix pour juger une allure.</p>
+
+  <h3>Quatre fonds, et aucune couleur neuve n'entre dans le produit</h3>
+  <table>
+    <thead><tr><th style="width:24%">Le fond</th><th style="width:22%">D'où il vient</th><th>Ce qu'il sert à voir</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Le damier</td><td>Déjà partout dans le produit</td><td>Ce qui est transparent, et ce qui ne l'est pas. C'est le fond de la retouche.</td></tr>
+      <tr><td class="k">Le noir absolu</td><td class="apres">Le champ <span class="mesure">éclairage</span> de la bible, mot pour mot</td><td class="apres"><b>Si le contour sombre du sprite survit sur le fond que la bible décrit.</b> C'est le défaut de la mesure 4, et il n'a pas d'autre façon de se voir.</td></tr>
+      <tr><td class="k">Une couleur de la palette</td><td class="apres">La palette <b>résolue</b> de l'entité — <span class="mesure">48 couleurs</span> pour Balthazar, qui n'a pas d'ambiance</td><td>Si le sujet se détache du sol, des murs, du ciel du jeu. La palette est le seul jeu de couleurs qu'un décor pourra employer — et deux entités d'ambiances différentes n'ont pas la même.</td></tr>
+      <tr><td class="k">Une image du jeu</td><td><span class="sourd">plus tard — voir § 07</span></td><td>Poser le personnage sur un décor produit. C'est la partie « essayer », et elle n'est pas tranchée.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note" style="margin-top:20px">
+    <span class="lab">La règle qui tient la liste courte</span>
+    <p>Aucune couleur libre. <strong>Un fond de vitrine se choisit dans ce que le projet possède
+      déjà</strong> — sa palette et sa bible. Un sélecteur de couleur libre transformerait cet écran
+      en outil de maquillage : on trouverait toujours un fond sur lequel le sprite est joli, et on
+      ne verrait jamais celui sur lequel il disparaît.</p>
+  </div>
+
+  <h3>Et l'échelle commune, qui est le second défaut invisible</h3>
+  <p>Le réglage <em>toutes ses poses à la même échelle</em> pose les six poses dans la même boîte,
+    au même facteur. C'est comme ça que l'attaque en <span class="m eg">96 × 96</span> se voit —
+    <strong>elle rapetisse d'un quart au milieu des cinq autres</strong>. Le lien
+    <em>calibrer les poses</em>, sous la mesure, ouvre l'écran qui répare
+    (<span class="mesure">20</span>) ; la vitrine constate et n'agit pas.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 06 -->
+<section>
+  <div class="entete"><span class="num">06</span><h2>Trois profondeurs, un seul écran</h2></div>
+
+  <p class="intro">Tu voulais que la mission appartienne au codex, pas seulement à une entité. Elle
+    lui appartient, et sans dupliquer l'écran : <strong>la vitrine montre ce qu'on regardait quand
+    on l'a ouverte.</strong></p>
+
+  <table>
+    <thead><tr><th style="width:22%">D'où on l'ouvre</th><th style="width:28%">Ce qu'elle montre</th><th>À quoi ça sert</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Du codex</td>
+        <td class="apres">Toutes les entités du monde, une image chacune — <b>le corps retenu</b> de chaque chose.</td>
+        <td>Voir si le jeu se tient ensemble. Trois nains côte à côte disent tout de suite s'ils viennent du même monde.</td>
+      </tr>
+      <tr>
+        <td class="k">De la fiche d'une entité</td>
+        <td class="apres">Toutes ses poses, à la même échelle.</td>
+        <td class="apres">Voir si <b>le personnage se ressemble d'une pose à l'autre</b>, et si elles sortent toutes à la même taille.</td>
+      </tr>
+      <tr>
+        <td class="k">De la planche d'une pose</td>
+        <td class="apres">Les images d'une seule pose — ses directions côte à côte.</td>
+        <td class="apres">Voir si les quatre vues sont bien <b>le même personnage tourné</b>, et pas quatre personnages différents.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:14px">Un seul écran, un seul jeu de réglages, trois contenus. Le fil d'Ariane
+    dit lequel, comme partout ailleurs. <strong>Rien n'est défini deux fois.</strong></p>
+
+  <div class="note gris">
+    <span class="lab">Ce que la vitrine ne fait jamais</span>
+    <ul>
+      <li><b>Elle ne modifie aucune image.</b> Pas de retouche, pas de recette, pas de recadrage. Ce
+        qu'elle montre, c'est le rendu tel qu'il est sur le disque.</li>
+      <li><b>Elle ne compte rien.</b> Les jauges restent celles du codex. Elle <em>marque</em> ce
+        qu'elle voit — une taille en écart, une image jamais traitée — et une marque n'est pas un
+        compte.</li>
+      <li><b>Elle ne juge pas.</b> Une image en écart porte la couleur des écarts, pas celle d'un
+        échec. Un jeu en cours de fabrication n'échoue pas.</li>
+      <li><b>Elle ne coûte rien</b>, et la barre de prompt absente le dit avant qu'on ait lu quoi
+        que ce soit.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 07 -->
+<section>
+  <div class="entete"><span class="num">07</span><h2>Essayer — ce que ça voudra dire, et ce qui manque</h2></div>
+
+  <p class="intro">« Contempler » est tranché par les trois sections du dessus. <strong>« Essayer »
+    ne l'est pas</strong>, et cette maquette ne fait pas semblant de le trancher. Elle dit ce que le
+    mot recouvre et ce qu'il faudrait avoir pour chaque morceau.</p>
+
+  <table>
+    <thead><tr><th style="width:24%">Essayer, ça veut dire</th><th style="width:26%">Ce qu'il faut d'abord</th><th>Où on en est</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">Le voir bouger</td>
+        <td>Plusieurs images dans une même direction, ordonnées, et une cadence.</td>
+        <td class="apres"><span class="m mal">0 image</span> dans le projet. Le champ qui les compte
+          existe et change de sens en <span class="mesure">08</span> § 07. <b>Rien à dessiner
+          avant.</b></td>
+      </tr>
+      <tr>
+        <td class="k">Le voir à côté d'autre chose</td>
+        <td>Une seconde entité, à la même échelle, dans la même scène.</td>
+        <td class="apres">Faisable aujourd'hui : <b>c'est la vitrine du codex</b> (§ 06), et c'est
+          déjà la moitié de la réponse.</td>
+      </tr>
+      <tr>
+        <td class="k">Le voir sur un décor</td>
+        <td>Un décor produit — une entité de la famille <span class="mesure">décors</span>.</td>
+        <td class="apres"><span class="m mal">0 décor</span> dans le projet. La famille existe, elle
+          est vide. Le fond « image du jeu » du § 05 attend ça.</td>
+      </tr>
+      <tr>
+        <td class="k">Le voir marcher sur un sol</td>
+        <td>Une notion de sol, de gravité, de point de contact.</td>
+        <td class="apres"><b>Rien de tout ça n'existe dans le produit</b>, et ce serait un moteur de
+          jeu miniature. Hors du dossier.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note att" style="margin-top:20px">
+    <span class="lab">Ce que je propose, et pourquoi c'est court</span>
+    <p>La vitrine réserve la place et l'affiche <strong>grisée avec sa raison</strong> — le motif que
+      le produit emploie partout pour ce qui est indisponible. Le bloc <em>le mouvement</em> est là,
+      à gauche, avec la phrase <span class="mesure">aucune pose ne tient plus d'une image dans une
+      direction</span>. Le jour où une pose en tient deux, le bloc s'allume tout seul.</p>
+    <p>Dessiner aujourd'hui un lecteur d'animation, une cadence et une timeline serait dessiner
+      <strong>sur zéro image</strong>. Le dossier a une règle pour ça, et c'est celle qui l'a rendu
+      utile : <em>mesurer avant de dessiner</em>. Il n'y a rien à mesurer.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 08 -->
+<section>
+  <div class="entete"><span class="num">08</span><h2>Ce qui déborde de la vitrine</h2></div>
+
+  <table>
+    <thead><tr><th style="width:20%">Où ça va</th><th>Ce qui est reporté</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">05 — le codex</td>
+        <td class="apres">Un quatrième verbe : <b>il montre</b>. Et une porte vers la vitrine depuis
+          la barre d'outils du panneau central — <em>voir ce qui est fait</em>.</td>
+      </tr>
+      <tr>
+        <td class="k">07bis — la fiche</td>
+        <td class="apres">Le cinquième bloc, <em>ce qui est fait</em>, ouvre cet écran. C'était déjà
+          écrit comme une porte ; la vitrine confirme qu'elle mène quelque part.</td>
+      </tr>
+      <tr>
+        <td class="k">20 — le calibrage</td>
+        <td class="apres">La vitrine est <b>l'endroit d'où on remarque</b> qu'une pose sort à une
+          autre taille, et le calibrage est l'endroit où on la répare. Le lien
+          <em>calibrer les poses ›</em> les relie.</td>
+      </tr>
+      <tr>
+        <td class="k">06 — l'univers</td>
+        <td class="apres">Les fonds de la vitrine viennent de la palette et de la bible.
+          <b>La bible décrit le fond du jeu et personne ne s'en sert</b> — l'Univers pourrait le
+          nommer explicitement plutôt que de le laisser dans une phrase d'éclairage.</td>
+      </tr>
+      <tr>
+        <td class="k">Le dépôt</td>
+        <td class="apres">Rien à ajouter au modèle. La vitrine lit ce qui existe :
+          <span class="mesure">rendu_largeur</span>, <span class="mesure">rendu_hauteur</span>,
+          <span class="mesure">recette</span>, <span class="mesure">favori</span>.
+          <b>C'est la seule maquette du dossier qui n'ajoute pas un seul champ.</b></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ce que la vitrine ne tranche pas</h3>
+  <div class="note gris">
+    <span class="lab">Trois questions laissées ouvertes</span>
+    <ul>
+      <li><b>Faut-il marquer les images jamais traitées dans le codex aussi ?</b> Vingt et une
+        images sur quarante-huit sont dans ce cas, et le codex les compte comme les autres. Le
+        marquer là-bas ferait du codex un juge, ce qu'il refuse d'être. À trancher en regardant si
+        la vitrine suffit à s'en apercevoir.</li>
+      <li><b>Que montre la vitrine d'une entité qui n'a rien de fini ?</b> Un cadre vide et une
+        phrase, probablement — mais la phrase compte, et elle n'est pas écrite ici.</li>
+      <li><b>Le fond « image du jeu » attend un décor.</b> Tant que la famille
+        <span class="mesure">décors</span> est vide, il est grisé avec sa raison. Ce qui se passe
+        quand elle se remplit — quel décor, cadré comment — n'est pas décidé.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ 09 -->
+<section>
+  <div class="entete"><span class="num">09</span><h2>Les mesures de l'écran</h2></div>
+
+  <p class="intro">Aucune n'est neuve, et aucune marque n'est neuve non plus.</p>
+
+  <table>
+    <thead><tr><th style="width:16%">Mesure</th><th style="width:26%">Ce que c'est</th><th>D'où elle vient</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><span class="m">44 px</span></td><td>La barre de tête</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">240 px</span></td><td>Comment on regarde</td><td>La colonne de gauche du codex, de la fiche et de la planche</td></tr>
+      <tr><td class="k"><span class="m">380 px</span></td><td>La matrice</td><td>La colonne de droite du codex et de la fiche</td></tr>
+      <tr><td class="k"><span class="m">44 px</span></td><td>Une vignette de la bande</td><td>La vignette d'entité du codex · <span class="mesure">05</span></td></tr>
+      <tr><td class="k"><span class="m">26 px</span></td><td>Le pied · une bascule de la barre</td><td>Le châssis · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne de pose · un bouton d'échelle</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">9 px</span></td><td>Une marque de case</td><td>Le carré de la barre de tables · <span class="mesure">03</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px">La scène du milieu n'a pas de mesure fixe : <strong>elle fait la taille
+    du sprite multipliée par l'échelle</strong>, et c'est tout. C'est la seule zone du produit dont
+    la taille est décidée par son contenu, et c'est justifié — une vitrine qui recadrerait le sujet
+    mentirait sur ce qu'il est.</p>
+
+  <p>Le coin doré sur une vignette dit <em>hors taille commune</em> : c'est la marque d'écart du
+    produit, celle que la matrice de l'établi porte déjà depuis la maquette du calibrage. Le contour
+    doré sur une case de la matrice dit la même chose.
+    <span class="sourd">Aucun glyphe neuf — le produit en a toujours trois.</span></p>
+</section>
+
+<!-- ══ 10 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">10</span><h2>Ce que cet écran doit au guide</h2></div>
+  <div class="note att">
+    <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+    <p><strong>C'est l'écran où l'on juge, et juger est un des six temps de la boucle</strong> que le
+      guide raconte en tête. Il décrit le temps sans décrire l'écran qui le sert.</p>
+    <p style="margin-top:10px"><b>nom</b> · La vitrine<br>
+      <b>quoi</b> · L'image en grand, seule, pour la juger : sur le fond qu'on choisit, à la taille
+      qu'elle fait vraiment, et à côté de ce à quoi on veut la comparer.<br>
+      <b>ce que ça change</b> · Rien du tout, et c'est le point. Elle ne modifie aucune image et ne
+      coûte pas un centime — la barre qui paie s'y retire, et son absence le dit avant qu'on ait lu
+      quoi que ce soit.<br>
+      <b>d'où ça vient</b> · une image de la galerie ou une case de la matrice<br>
+      <b>où ça se range</b> · <span class="mesure">La galerie</span> — c'est de là qu'on l'ouvre</p>
+    <p style="margin-top:10px" class="sourd"><b>Le raccourci se dit avec</b> : survoler une vignette et
+      appuyer sur la barre d'espace montre l'image en grand. Il vaut partout dans l'atelier, sans
+      exception, et c'est le genre de geste qu'on n'apprend nulle part si le guide ne le dit pas.</p>
+  </div>
+</section>
+
+<footer>
+  Asset Kitchen — V2.1 · maquette 09, la vitrine · 30 août 2026 ·
+  mesures prises sur <span class="mesure">cœur de pierre - 01</span> ·
+  la partie « essayer en mouvement » est réservée, pas dessinée ·
+  rien n'est encore écrit dans les documents d'autorité
+</footer>
+
+</div>
+</body>
+</html>

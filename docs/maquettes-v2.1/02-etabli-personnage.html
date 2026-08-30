@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, l'établi du personnage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  /* ── Wireframe ──────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1020px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-corps{min-width:1020px;display:flex;align-items:stretch}
+  .wf-pied{min-width:1020px;height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .gauche{width:300px;flex:none;border-right:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .nom-perso{font-size:15px;color:var(--texte);border:1px solid transparent;padding:2px 3px}
+  .zone-txt{border:1px solid var(--bord);background:var(--fond-1);border-radius:2px;padding:7px;
+    font-family:var(--mono);font-size:10px;line-height:1.55;color:var(--texte-2)}
+  .pied-txt{font-family:var(--mono);font-size:9.5px;line-height:1.45;color:var(--texte-3)}
+  .vigs-ca{display:flex;gap:4px}
+  .vig-ca{width:38px;height:38px;background:var(--fond-2);border:1px solid var(--bord);position:relative}
+  .vig-ca::before{content:"";position:absolute;top:0;left:0;border-top:7px solid var(--epingle);
+    border-right:7px solid transparent}
+  .vig-ca.plus{background:transparent;border-style:dashed;border-color:var(--bord-fort);
+    display:flex;align-items:center;justify-content:center;color:var(--texte-3);
+    font-family:var(--mono);font-size:12px}
+  .bar{border-top:1px solid var(--bord);padding-top:10px;margin-top:auto;display:flex;
+    flex-direction:column;gap:7px}
+  .bt{height:26px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--texte-2)}
+  .bt.fort{border-color:var(--bord-fort);color:var(--texte)}
+
+  .droite{flex:1;display:flex;flex-direction:column;min-width:0}
+  .segbar{height:34px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:4px;padding:0 11px}
+  .seg{height:22px;display:flex;align-items:center;padding:0 9px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .seg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .seg.vide{border-style:dashed;border-color:var(--bord-fort);color:var(--texte-3);
+    font-family:var(--mono);font-size:10px}
+  .segbar .droite-txt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);white-space:nowrap}
+
+  .lignes{flex:1;display:flex;flex-direction:column}
+  .mrow{min-height:52px;display:flex;align-items:center;gap:10px;padding:5px 11px;
+    border-bottom:1px solid var(--bord)}
+  .mrow:hover{background:var(--fond-2)}
+  .coche{width:11px;height:11px;border:1px solid var(--bord-fort);border-radius:2px;flex:none}
+  .coche.on{border-color:var(--signal);background:var(--signal)}
+  .mnom{width:104px;flex:none;font-size:12.5px;color:var(--texte);white-space:nowrap}
+  .mvigs{display:flex;gap:4px;flex:1;align-items:center;min-width:0}
+  .mv{width:44px;height:44px;background:var(--fond-2);border:1px solid var(--bord);flex:none}
+  .mv.arm{border-color:var(--lumiere)}
+  .rien{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mmes{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.45;
+    text-align:right;flex:none}
+  .mcpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:42px;
+    text-align:right;flex:none}
+  .mcpt.ok{color:var(--ok)}
+  .ecartees{padding:9px 11px;display:flex;gap:5px;align-items:center}
+  .ecartees .lb{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-right:4px}
+  .et{height:20px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-1);font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* ── La barre de prompt (châssis) ───────────────────────────────── */
+  .promptbar{border-top:1px solid var(--bord);background:var(--fond-1);padding:9px 11px;
+    display:flex;flex-direction:column;gap:7px}
+  .pour{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .pour .lb{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3)}
+  .pour .cadre{display:flex;align-items:center;gap:6px;border:1px solid var(--signal);
+    background:var(--signal-sourd);border-radius:2px;padding:3px 6px 3px 9px}
+  .pour .cadre .nm{font-size:11.5px;color:var(--texte)}
+  .pour .cadre .at{font-family:var(--mono);font-size:10px;color:var(--signal)}
+  .pour .cadre .x{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .pline{display:flex;gap:9px;align-items:stretch}
+  .pchamp{flex:1;min-height:56px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-2);padding:8px 9px;font-size:12px;color:var(--texte);line-height:1.5}
+  .pchamp .prop{color:var(--texte-3)}
+  .pcote{width:186px;flex:none;display:flex;flex-direction:column;gap:5px}
+  .btgen{height:32px;border:1px solid var(--signal);background:var(--signal-sourd);
+    border-radius:2px;display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:13px;color:var(--signal-clair)}
+  .btgen .px{font-family:var(--mono);font-size:11px}
+  .fente{font-family:var(--mono);font-size:10px;color:var(--texte-3);text-align:center}
+  .ppied{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3)}
+  .ppied .op{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:2px 7px;color:var(--texte-2)}
+  .ppied .op.on{border-color:var(--bord-fort);color:var(--texte)}
+
+  .toile-outil{flex:1;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:10px;color:var(--texte-3);letter-spacing:.08em;text-align:center;padding:10px;
+    margin:11px}
+  .colout{width:150px;flex:none;border-right:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:6px}
+  .ob{height:22px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:0 8px;display:flex;align-items:center;font-size:11px;color:var(--texte-2)}
+  .ob.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .champ-s{height:22px;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:10px;color:var(--texte-2)}
+  .colposes{width:118px;flex:none;border-left:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:6px}
+  .gr2{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+  .tu{background:var(--fond-2);border:1px solid var(--bord);min-height:42px}
+  .tu.sel{border-color:var(--lumiere)}
+  .tu.vd{background:transparent;border-style:dashed;border-color:var(--bord-fort)}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.45}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 1 — l'établi du personnage</div>
+    <h1>L'établi existe déjà à moitié —<br><em>il lui manque le prompt</em></h1>
+    <p>L'écran Personnages d'aujourd'hui <strong>est</strong> l'établi : l'identité à gauche, une ligne par
+      attitude à droite, un sélecteur pour lire une colonne à la fois — le corps, ou une pièce d'équipement.
+      Tout cela est construit, éprouvé, et documenté décision par décision.</p>
+    <p>Il lui manque trois choses, et ce sont elles que cette maquette tranche : <strong>il n'est pas un lieu</strong>
+      (il couvre l'atelier), <strong>il ne peut pas générer</strong> (il renvoie ailleurs pour payer), et
+      <strong>sa colonne de gauche porte trois listes qui appartiennent au monde</strong>, pas à Balthazar.</p>
+    <p class="sourd">Correction sur la carte : j'y avais dessiné des rangées côte à côte — Poses, Animations,
+      Équipements. C'est faux. La matrice se lit <em>une colonne à la fois</em>, une ligne par attitude, et
+      cette décision-là est meilleure que mon croquis : elle empêche l'établi de redevenir une planche contact.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce qui monte dans le codex, ce qui reste dans l'établi</h2></div>
+    <p class="intro">La colonne de gauche porte aujourd'hui trois listes — les personnages du projet, le plan
+      de poses, le vestiaire. <strong>Aucune n'appartient à Balthazar : elles appartiennent au monde.</strong>
+      Elles montent dans le codex, et la colonne se libère pour ce qui est vraiment de lui.</p>
+    <table>
+      <thead><tr><th style="width:34%">Aujourd'hui, dans la colonne de gauche</th><th>En 2.1</th></tr></thead>
+      <tbody>
+        <tr><td><strong>La liste des personnages</strong> du projet</td>
+          <td class="apres">C'est <b>la famille « Personnages » du codex</b>. On y était déjà avant d'ouvrir
+            Balthazar — la remettre dans son établi, c'est afficher deux fois le même chemin.</td></tr>
+        <tr><td><strong>Le plan de poses</strong> — repos, marche, course, attaque, dégâts, mort</td>
+          <td class="apres">Il est porté par le <b>projet</b>, pas par le personnage : il monte dans le codex,
+            à côté des familles. Le modifier depuis l'établi d'un seul personnage a toujours été
+            trompeur — ça change la colonne de tous.</td></tr>
+        <tr><td><strong>Le vestiaire</strong> — les emplacements et les pièces</td>
+          <td class="apres">Porté par le projet lui aussi. Il devient une <b>famille du codex</b> à part
+            entière : une pièce a un nom, une description, une portée — c'est une entité, pas un réglage.</td></tr>
+        <tr><td class="apres" colspan="2" style="border-top:1px solid var(--bord-fort)">
+          <b>Ce qui reste dans l'établi</b> : son nom, son signalement, ses concept arts, ses références
+          écartées, la sortie — et la matrice de ses cases.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'établi au repos</h2></div>
+    <p class="intro">Colonne de 300 px à gauche — <em>ce qu'il est</em> —, la matrice à droite, et
+      <strong>la barre de prompt en pied</strong>. Une ligne par attitude, les vignettes en 44 px, le compte
+      <span class="mesure">m / n</span> à droite. Le manque n'a pas de couleur : le vert dit <em>fini</em>,
+      l'absence dit <em>pas encore</em>.</p>
+    <p class="intro" style="margin-top:-4px"><span class="mesure">300</span> et non
+      <span class="mesure">290</span> : le produit n'a que trois largeurs de colonne —
+      <span class="mesure">240 · 300 · 380</span> —, et 290 était la seule mesure du dossier à n'en être
+      aucune. Dix pixels, et une largeur de moins à retenir pour qui construira l'écran.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="gauche">
+          <div class="nom-perso">Balthazar</div>
+          <div>
+            <div class="col-t" style="margin-bottom:5px">Signalement</div>
+            <div class="zone-txt">nain mineur, carrure large, barbe tressée&nbsp;;
+              chemise de toile, ceinture à outils, bottes lourdes, sac de cuir, deux lanternes.</div>
+            <div class="pied-txt" style="margin-top:5px">Il part avec chaque image de ce
+              personnage. Écrit ici une fois, jamais retapé dans un prompt.</div>
+          </div>
+          <div>
+            <div class="col-t" style="margin-bottom:5px">Concept arts · 2</div>
+            <div class="vigs-ca"><span class="vig-ca"></span><span class="vig-ca"></span>
+              <span class="vig-ca plus">+</span></div>
+          </div>
+          <div>
+            <div class="col-t" style="margin-bottom:5px">Hérité de la bible</div>
+            <div class="pied-txt">pixel · 64×64 · vue 3/4 · palette du jeu<br>
+              <span style="color:var(--texte-2)">3 artworks officiels partiront</span></div>
+          </div>
+          <div class="bar">
+            <div class="bt">Sortir ce personnage</div>
+            <div class="pied-txt" style="text-align:center">11 images · $0,412</div>
+          </div>
+        </div>
+
+        <div class="droite">
+          <div class="segbar">
+            <span class="col-t" style="margin-right:5px">colonne</span>
+            <span class="seg on">le corps</span><span class="seg">casque</span>
+            <span class="seg">plastron</span><span class="seg vide">+ pièce</span>
+            <span class="droite-txt">on lit une colonne, on ne balaie pas une planche</span>
+          </div>
+          <div class="lignes">
+            <div class="mrow">
+              <span class="coche"></span><span class="mnom">repos</span>
+              <span class="mvigs"><span class="mv"></span></span>
+              <span class="mcpt ok">1 / 1</span>
+            </div>
+            <div class="mrow">
+              <span class="coche on"></span><span class="mnom">marche</span>
+              <span class="mvigs"><span class="mv"></span><span class="mv"></span><span class="mv"></span><span class="mv"></span></span>
+              <span class="mmes">ressemblance 0,98 · case 3<br>grille 4 px · dérive 1,00×</span>
+              <span class="mcpt">4 / 8</span>
+            </div>
+            <div class="mrow">
+              <span class="coche on"></span><span class="mnom">course</span>
+              <span class="mvigs"><span class="rien">rien encore</span></span>
+              <span class="mcpt">0 / 8</span>
+            </div>
+            <div class="mrow">
+              <span class="coche"></span><span class="mnom">attaque</span>
+              <span class="mvigs"><span class="mv"></span><span class="mv"></span></span>
+              <span class="mcpt ok">2 / 2</span>
+            </div>
+            <div class="mrow">
+              <span class="coche"></span><span class="mnom">dégâts</span>
+              <span class="mvigs"><span class="rien">rien encore</span></span>
+              <span class="mcpt">0 / 1</span>
+            </div>
+            <div class="mrow">
+              <span class="coche"></span><span class="mnom">mort</span>
+              <span class="mvigs"><span class="rien">rien encore</span></span>
+              <span class="mcpt">0 / 1</span>
+            </div>
+            <div class="ecartees">
+              <span class="lb">pas pour lui</span>
+              <span class="et">nage</span><span class="et">grimpe</span>
+            </div>
+          </div>
+
+          <div class="promptbar">
+            <div class="pour">
+              <span class="lb">Pour</span>
+              <span class="cadre"><span class="nm">Balthazar</span>
+                <span class="at">marche</span><span class="x">×</span>
+                <span class="at">course</span><span class="x">×</span></span>
+              <span class="lb" style="text-transform:none;letter-spacing:0">2 attitudes, un seul appel</span>
+              <span class="lb" style="margin-left:auto;text-transform:none;letter-spacing:0">tout retirer</span>
+            </div>
+            <div class="pline">
+              <div class="pchamp">nain mineur, carrure large, barbe tressée ; chemise de toile, ceinture à
+                outils, bottes lourdes, deux lanternes. <span class="prop">— walking posture, facing south,
+                front view, full body / running posture, facing south</span></div>
+              <div class="pcote">
+                <div class="btgen">Générer <span class="px">$0,067</span></div>
+                <div class="fente">Ctrl + Entrée · un compte faux ≈ $0,067 à repayer</div>
+              </div>
+            </div>
+            <div class="ppied">
+              <span class="op">Rédiger</span><span class="op">Étoffer</span>
+              <span style="margin-left:auto">proposé, d'après sa consigne de pose · modifiable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>catalogue · 29/08 14:02</span><span>balthazar · 11 images · $0,412</span></div>
+    </div>
+    <div class="lgd">la matrice arme et tire au même endroit · une case pleine s'ouvre dans son outil · la coche porte une attitude, jamais une image</div>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>La décision qui rend la structure fluide</h2></div>
+    <div class="note">
+      <span class="lab">La barre de prompt est du châssis, pas d'un écran</span>
+      <p>Aujourd'hui, <em>la matrice arme, l'atelier tire</em> : cliquer une case vide remplit le prompt de
+        l'atelier et rend la main — donc on <strong>change d'écran à chaque génération</strong>. C'est
+        exactement l'aller-retour que la refonte doit supprimer.</p>
+      <p>La règle qui l'imposait est <em>« il n'existe qu'un seul endroit d'où l'on paie »</em>, et elle ne
+        tombe pas : <strong>elle se lit sur l'objet, pas sur l'écran.</strong> La barre de prompt est un
+        élément du châssis — même champ, même bouton, même prix, même fente. Elle est rendue
+        <strong>en pied de l'établi et en pied du codex</strong>, et nulle part ailleurs : la galerie n'en
+        a pas, et l'univers s'en est vu refuser une. Il y a toujours un seul endroit d'où l'on paie :
+        <strong>c'est cette barre-là</strong>, et l'apparence dit lequel puisqu'il n'en existe qu'une
+        forme.</p>
+      <p><strong>Elle a perdu sa bande dépliante.</strong> Elle portait un dépliant <em>ce qui part</em>,
+        qui montrait le texte assemblé sans qu'on puisse y toucher. Il est devenu un écran à lui seul —
+        l'écran de confirmation —, qui s'intercale entre le bouton et la dépense et où chaque ligne se
+        décoche et se corrige. La barre garde son champ, son bouton et son prix.</p>
+      <p><strong>Et elle se retire quand un outil de reprise est ouvert.</strong> Ce n'est pas de la place
+        gagnée, c'est une vérité du produit : le post-traitement ne touche jamais le fournisseur et ne coûte
+        jamais un centime. Une barre qui paie, affichée pendant qu'on détoure, mentirait sur ce que le geste
+        en cours dépense.</p>
+    </div>
+    <div class="note att">
+      <span class="lab">Ce que ça coûte</span>
+      <p><strong>Deux lieux portent une hauteur de prompt permanente</strong> — 56 px de champ, la bande
+        « Pour » quand elle existe, le pied d'options. Sur l'établi, c'est autant de moins pour les lignes
+        d'attitudes ; à six poses et 52 px de rangée, ça tient, mais un plan de quinze poses fera défiler la
+        matrice sous une barre fixe. C'est le comportement voulu — la barre ne défile jamais, comme
+        l'en-tête d'un panneau.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Une case vide arme — et ce qu'elle remplit porte sa provenance</h2></div>
+    <p class="intro">C'est la règle jumelle de celle que le produit tient depuis T1. <em>Ce qui est
+      indisponible est grisé avec sa raison</em> avait besoin de son revers :
+      <strong>ce qui est devinable est prérempli avec sa provenance, et se défait d'un clic.</strong></p>
+    <div class="note">
+      <span class="lab">Ce que le clic sur une case vide écrit dans le champ</span>
+      <ul>
+        <li><b>Le signalement du personnage</b>, tel qu'il est dans la colonne de gauche — c'est déjà le cas
+          aujourd'hui, et ça ne change pas.</li>
+        <li><b>La consigne de la pose, en anglais</b> — <span class="mesure">walking posture, facing south,
+          front view, full body</span>. C'est le champ neuf porté par <span class="mesure">Pose</span> :
+          aujourd'hui c'est le <em>nom français</em> de la pose qui part tel quel au milieu d'une consigne
+          anglaise. Le nom reste l'étiquette de l'auteur, la consigne est ce qui part.</li>
+        <li><b>Rien du style</b> — il vient de la bible, d'un seul endroit, et cette décision de T4 tient.
+          Ce que la colonne de gauche affiche sous <em>hérité de la bible</em> est en lecture seule.</li>
+        <li><b>Et la ligne de provenance</b>, sous le champ : <span class="mesure">proposé, d'après sa
+          consigne de pose · modifiable</span>. Un champ prérempli n'est pas un champ décidé.</li>
+      </ul>
+      <p style="margin-top:12px">L'invariant de R2 — <em>ce qui est montré est ce qui part, mot pour
+        mot</em> — n'est pas touché : il porte sur le trajet entre le champ et le fournisseur, jamais sur qui
+        a rempli le champ.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Une case pleine ouvre son outil — plein cadre, sans quitter l'établi</h2></div>
+    <p class="intro">La barre de prompt se retire, la colonne de gauche cède la place aux réglages de l'outil,
+      et <strong>les attitudes restent à droite</strong> : on passe d'une pose à l'autre sans refermer.
+      L'outil affiché est décidé par la colonne qu'on lit — le corps ouvre le détourage, une pièce ouvre la
+      superposition.</p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">… › Balthazar › le corps › <b>marche · image 3</b></span>
+        <span class="wf-tard"><span>Fermer l'outil</span><span>⚙</span><span>?</span></span>
+      </div>
+      <div class="wf-corps" style="min-height:236px">
+        <div class="colout">
+          <div class="col-t">l'outil du corps</div>
+          <div class="ob on">Détourer</div>
+          <div class="ob">Recadrer</div>
+          <div class="ob">Remettre sur grille</div>
+          <div class="ob">Découper la planche</div>
+          <div class="col-t" style="margin-top:8px">tolérance</div>
+          <div class="champ-s">— 32 —</div>
+          <div class="col-t" style="margin-top:6px">pipette · poche · gomme</div>
+          <div style="display:flex;gap:5px"><span class="ob on" style="flex:1;justify-content:center">◉</span>
+            <span class="ob" style="flex:1;justify-content:center">◍</span>
+            <span class="ob" style="flex:1;justify-content:center">◌</span></div>
+        </div>
+        <div class="toile-outil">l'image, en grand, sur le damier alpha</div>
+        <div class="colposes">
+          <div class="col-t">ses attitudes</div>
+          <div class="gr2">
+            <div class="tu"></div><div class="tu"></div>
+            <div class="tu sel"></div><div class="tu"></div>
+            <div class="tu vd"></div><div class="tu vd"></div>
+          </div>
+          <div class="pied-txt">on change d'image sans refermer l'outil</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>détourage · non destructif · retour au brut à tout moment</span><span>aucun appel, aucun coût</span></div>
+    </div>
+    <div class="lgd">la barre de prompt a disparu — on ne paie pas en retouchant, et l'écran le dit</div>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Les animations n'ont pas besoin d'un axe neuf</h2></div>
+    <div class="note">
+      <span class="lab">Corrigé depuis la carte</span>
+      <p>J'avais réservé une rangée « Animations » dans l'établi. Elle est inutile :
+        <strong>une pose déclare déjà combien d'images elle demande</strong> — un pour la plupart, quatre ou
+        huit pour un cycle. <span class="mesure">marche 4 / 8</span> dans le croquis ci-dessus, <em>c'est
+        déjà la bande d'une animation à moitié remplie.</em></p>
+      <p>Ce que la V3 ajoutera n'est donc pas un axe, c'est <strong>trois choses sur la ligne qui existe</strong> :
+        l'ordre des images, une cadence, et un bouton pour la lire. La place est déjà prise, sans qu'une
+        seule case vide ait à être affichée en attendant — ce qui est exactement ce que le produit refuse
+        depuis la maquette écartée.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce qui ne bouge pas — neuf décisions reconduites</h2></div>
+    <p class="intro">Tout ce qui suit est déjà tranché, déjà construit, et cette maquette n'y touche pas.
+      C'est ce qui rend M1 petit : <strong>on déplace un écran et on lui donne un prompt</strong>, on ne le
+      réinvente pas.</p>
+    <div class="note">
+      <ul>
+        <li><b>Ce n'est pas une grille d'assets</b> — ni recherche, ni filtre, ni sélection multiple, ni
+          vignette dans les listes. « Une seule grille dans tout le produit » tient par privation.</li>
+        <li><b>La case vide est une case, pas un trou</b> — même hauteur, <span class="mesure">rien
+          encore</span>, et le compte <span class="mesure">m / n</span> à droite.</li>
+        <li><b>Le manque n'a pas de couleur</b> — <span class="mesure">--ok</span> quand c'est plein, rien
+          sinon. Un jeu en cours de fabrication n'échoue pas.</li>
+        <li><b>La coche porte une attitude, jamais une image</b> — et <span class="mesure">Fabriquer
+          ensemble ›</span> est <em>absent</em>, pas grisé, tant que deux ne sont pas cochées.</li>
+        <li><b>Ce qu'un personnage écarte se relègue</b> sous <span class="mesure">pas pour lui</span> ; ce
+          qu'une génération écarte reste barré sous les yeux.</li>
+        <li><b>Les mesures d'un lot se lisent sur la rangée de leur case</b> — le chiffre et son jumeau
+          nommé, jamais un seuil, jamais une couleur d'alarme.</li>
+        <li><b>Ce qu'un compte faux coûterait</b> reste une rangée de l'écran de confirmation, jamais une
+          probabilité.</li>
+        <li><b>Le second coin de carte en <span class="mesure">--epingle</span></b> dit <em>concept art</em>.
+          Les deux coins sont pris, et le vocabulaire des marques est clos.</li>
+        <li><b>Le rang de 26 px et la rangée de 52 px</b> — aucune hauteur neuve n'entre.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 8 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>La suite</h2></div>
+    <p class="intro">M2 refait les outils de reprise — détourage, découpage, superposition — dans le
+      cadre que M1 vient de leur donner : colonne de réglages à gauche, l'image au milieu, les attitudes à
+      droite, et aucune barre de prompt. C'est là que se règle le « niveau interface, c'est inutilisable ».</p>
+  </section>
+
+  <!-- ═══ 09 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce que la matrice gagne — ajouté le 30 août 2026</h2></div>
+    <div class="note att">
+      <span class="lab">Venu de la maquette du calibrage</span>
+      <p><strong>Les poses d'un même personnage ne sortent pas toutes à la même taille</strong>, et rien ne le
+        dit aujourd'hui. Mesuré sur les images réelles du dépôt : six poses d'un personnage, même recette,
+        sortent à <span class="mesure">64, 59, 64, 53, 64 et 43 px</span> de haut. Un bras tendu suffit —
+        il élargit la boîte du sujet, et la mise sur grille rétrécit tout.</p>
+      <p>La matrice est <strong>le seul endroit où les poses se voient ensemble</strong>. Elle gagne donc deux
+        choses, et aucune n'est une forme neuve :</p>
+      <ul>
+        <li><b>Une marque sur les cases hors taille commune</b> — la hauteur rendue en
+          <span class="mesure">--epingle</span>, comme toute valeur en écart. Sans elle, on n'apprend le
+          problème qu'en ouvrant l'outil, ce qui revient à ne pas l'apprendre.</li>
+        <li><b>Une porte vers le calibrage</b> — au-dessus de la matrice, à côté de ce qui agit déjà sur
+          toute la rangée. Elle ouvre l'écran plein cadre, comme une case pleine ouvre son outil (§ 05).</li>
+      </ul>
+      <p style="margin-top:12px"><strong>Rien de ce qui est tranché plus haut ne bouge.</strong> C'est un ajout
+        sur la matrice, pas une reprise de la structure. L'écran, ses gestes et ses mesures vivent dans
+        <span class="mesure">20-outil-calibrage.html</span> et ne sont pas redessinés ici.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 1, l'établi du personnage · 29 août 2026 · rien n'est encore écrit dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

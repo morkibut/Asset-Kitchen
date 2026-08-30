@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, sommaire des maquettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1180px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3.sst{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:30px 0 12px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:11px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td b{color:var(--texte);font-weight:600}
+  td.f{font-family:var(--mono);font-size:11px;color:var(--texte);white-space:nowrap}
+  td.f.arch{color:var(--texte-3)}
+  td.d{font-family:var(--mono);font-size:10px;color:var(--signal);white-space:nowrap;letter-spacing:.06em}
+  tr:last-child td{border-bottom:0}
+  .st{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;border:1px solid var(--bord);
+    border-radius:2px;padding:2px 7px;display:inline-block;white-space:nowrap}
+  .st.ok{color:var(--ok);border-color:rgba(95,168,113,.5)}
+  .st.att{color:var(--epingle);border-color:rgba(200,160,60,.5)}
+  .st.arch{color:var(--texte-3)}
+  .st.cours{color:var(--signal);border-color:var(--signal)}
+  .st.neuf{color:var(--lumiere);border-color:var(--bord-fort)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note.ok{border-left-color:var(--ok)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note.ok .lab{color:var(--ok)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .regles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .regle{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .regle .n{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em;margin-bottom:9px}
+  .regle .t{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:6px}
+  .regle .d{font-size:11.5px;color:var(--texte-2);line-height:1.5}
+
+  ul.pl{margin:0 0 12px;padding-left:18px;max-width:80ch;color:var(--texte-2)}
+  ul.pl li{margin-bottom:6px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · refonte de l'interface · V2.1</div>
+    <h1>Sommaire des maquettes —<br><em>ce qui est tranché, ce qui reste</em></h1>
+    <p>Ce dossier dessine l'interface future d'Asset Kitchen, l'atelier qui fabrique les images d'un
+    jeu vidéo. On n'y code rien : on y décide à quoi les écrans ressembleront, et on écrit les
+    raisons de chaque décision pour ne pas avoir à les redécouvrir. <strong>Chaque maquette tranche
+    des décisions et les justifie</strong>, et c'est sur elles qu'on implémentera.</p>
+    <p><strong>Le 30 août 2026, une session de questions a changé le modèle de l'onglet Univers en
+    profondeur.</strong> Quarante et une décisions ont été prises, sept maquettes écrites, sept
+    autres reprises, et tout un modèle — celui des ambiances comme étages d'héritage — abandonné.
+    <strong>Le § 01 en tient la liste complète, décision par décision.</strong> C'est le seul endroit
+    où elles sont toutes ensemble : au moindre doute, c'est là qu'il faut regarder d'abord.</p>
+    <p><strong>Tous les écrans du produit ont désormais leur maquette</strong>, et plus aucune ne
+    décrit le modèle abandonné. <strong>Cinq écrans n'en avaient pas</strong> — ils existent tous
+    dans l'application d'aujourd'hui. Deux ont été regardés le 30 août et <strong>gardés tels
+    quels</strong> : l'image en grand, et la fenêtre des réglages de l'atelier. Les trois autres ont
+    été écrits le jour même : <strong>les dépenses</strong>, <strong>le premier lancement</strong>,
+    puis <strong>le guide</strong> — en dernier, parce qu'il décrit tous les autres écrans et se
+    périme à chaque décision prise ailleurs. Le § 03-E les liste un par un.</p>
+    <p>Le reste est d'un autre ordre : des reports d'avant le 30 août, deux dimensions à accorder,
+    et des vignettes d'exemple à produire.</p>
+    <p>Le § 02 dit l'état de chaque fichier, le § 03 ce qu'il reste à faire, le § 04 ce qui n'est
+    toujours pas tranché.</p>
+    <div class="note ok" style="margin-top:18px">
+      <span class="lab">Relecture croisée du 30 août, en fin de journée</span>
+      <p>Les vingt-trois maquettes ont été confrontées les unes aux autres. <strong>Quatorze écarts
+      ont été trouvés et corrigés</strong> : deux contradictions franches — la galerie payait dans
+      une maquette et ne payait pas dans l'autre, une image de référence faisait 38 d'un côté et 44
+      de l'autre —, quatre listes de reports qui réclamaient du travail déjà fait, cinq erreurs de
+      ce sommaire, un renvoi cassé, et une question ouverte perdue en cours de renumérotation. Le
+      détail de chaque correction est écrit dans le fichier corrigé, à l'endroit corrigé.</p>
+      <p><b>Second passage, en écrivant le guide.</b> Trois écarts de plus. Les deux premiers sont
+      des chiffres de ce sommaire restés en arrière : son § 01 annonçait
+      <em class="it">trente et une décisions</em> quand il en listait trente-huit, et son § 02
+      <em class="it">vingt-trois fichiers</em> quand il en listait vingt-cinq. <b>Le troisième est
+      une divergence que personne n'avait relevée</b> : trois explications du produit disent qu'une
+      recette a <em class="it">cinq places</em>, alors que la barre des tables du dossier en dessine
+      sept — les contours et la main s'y sont ajoutés. Reporté au § 03-B.</p>
+      <p><b>Troisième passage, le 31 août, en appliquant les reports.</b> Trois écarts encore, et
+      cette fois ce sont <b>les reports eux-mêmes qui se trompaient de cible</b>. Deux visaient le
+      châssis des tables — l'étiquette du total, et le dépliant <em class="it">ce qui part</em> — alors
+      que le châssis <b>ne dessine ni total, ni prix, ni barre de saisie</b> : c'est la barre des
+      tables, où rien ne se paie. Vérifié mot par mot avant de conclure, et appliqué là où ces choses
+      sont dessinées. Le troisième est le plus gênant : <b>le châssis dessinait sa barre de tête à 38
+      et l'annonçait à 44 dans son propre tableau de mesures</b> — et le § 03-C ne relevait qu'une
+      maquette écartée sur quatre.</p>
+    </div>
+    <div class="note ok" style="margin-top:9px">
+      <span class="lab">Le 31 août 2026 — les reports ont été appliqués</span>
+      <p><strong>La révision de la documentation a atterri</strong>, et le report qui l'attendait a été
+      fait le lendemain. <strong>Cinq corrections sont entrées dans les documents d'autorité du
+      dépôt</strong> — quatre phrases du document du produit que la décision D36 renversait, et
+      l'histoire d'usage n° 1. Ce sont les seules du chantier qui en sortent, et elles ne sortent que
+      de la maquette du premier lancement ; tout le reste des maquettes attend encore d'être écrit
+      ailleurs que dans ce dossier.</p>
+      <p style="margin-top:8px"><strong>Quatorze des seize reports du § 03-B sont soldés.</strong> Les
+      deux qui restent ne peuvent pas l'être ici : ils portent sur le code de l'application, et ce
+      dossier n'y touche pas. Le § 03-B les distingue clairement.</p>
+      <p style="margin-top:8px"><strong>Et le chantier des maquettes se ferme ici.</strong> Les trois
+      corrections de code restantes attendent le début de la construction, et c'est délibéré pour la
+      plus grosse d'entre elles : <b>les quatorze fiches d'aide écrites le 31 août décrivent les écrans
+      de la V2.1</b> — l'onglet Codex, la galerie sans champ, l'écran de confirmation —, et
+      <b>aucun n'existe encore dans l'application</b>. Les écrire aujourd'hui rendrait le guide faux
+      dans l'autre sens : il ferait visiter des pièces que personne ne peut ouvrir. Elles sont prêtes,
+      elles attendent leurs écrans.</p>
+    </div>
+  </div>
+
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Les décisions du 30 août 2026</h2></div>
+
+    <p class="intro">Quarante et une décisions, prises en répondant à vingt-trois questions posées
+    une par une, puis en relisant les maquettes les unes contre les autres. Chacune est écrite ici en
+    une phrase, avec le fichier qui la développe. Le tableau du bas dit ce qu'elles invalident dans
+    les maquettes plus anciennes.</p>
+
+    <h3 class="sst">A · L'onglet Univers — sa forme</h3>
+    <table>
+      <tr><th style="width:38px"></th><th>La décision</th><th style="width:170px">Développée dans</th></tr>
+      <tr><td class="d">D1</td>
+        <td><b>L'onglet a trois côtés</b>, un seul allumé à la fois, chacun plein écran :
+        <b>Inspiration</b> (le tableau de références), <b>Réglages</b> (l'assistant) et
+        <b>Ambiances et couleurs</b>. La raison : regarder des images et remplir des formulaires ne
+        demandent pas la même chose à un écran, et les mettre côte à côte faisait perdre les deux —
+        la bande de réglages faisait presque trois écrans de haut, et la première image
+        d'inspiration arrivait après six écrans et demi de défilement.</td>
+        <td class="f">06-univers § 01</td></tr>
+      <tr><td class="d">D2</td>
+        <td><b>Le tableau de références ne porte aucun réglage.</b> Une seule barre fine en haut :
+        basculer entre la vue rangée et la vue libre, la taille des vignettes, le filtre.</td>
+        <td class="f">06-univers § 03</td></tr>
+      <tr><td class="d">D3</td>
+        <td><b>Il s'appelle « le tableau »</b>, pas « les planches » — <em class="it">planche</em>
+        désigne déjà la feuille de sprites produite en un appel, et les fichiers du projet sont
+        rangés dans un dossier nommé <code>tableau</code>.</td>
+        <td class="f">06-univers § 03</td></tr>
+      <tr><td class="d">D4</td>
+        <td><b>« Rangé » et « à la main » sont deux vues d'une seule surface</b>, avec un bouton pour
+        basculer — pas deux entrées de menu. C'est déjà ainsi dans le code.</td>
+        <td class="f">06-univers § 03</td></tr>
+    </table>
+
+    <h3 class="sst">B · L'assistant de démarrage</h3>
+    <table>
+      <tr><th style="width:38px"></th><th>La décision</th><th style="width:170px">Développée dans</th></tr>
+      <tr><td class="d">D5</td>
+        <td><b>Un assistant complet s'ouvre à la création d'un jeu, et se rouvre quand on veut.</b>
+        Aujourd'hui, créer un jeu ne demande que son nom, et on atterrit devant sept cases de texte
+        vides, en anglais, sans exemple. <span class="sourd">Élargi le 30 août : il s'ouvre aussi à
+        la toute première ouverture de l'atelier, seul moment où il n'y a rien à créer (D36).</span></td>
+        <td class="f">06ter-assistant § 01</td></tr>
+      <tr><td class="d">D6</td>
+        <td><b>L'assistant EST l'écran des réglages.</b> Un seul écran, deux humeurs : la première
+        fois on enchaîne dans l'ordre, ensuite on clique l'étape à changer. <b>Il n'existe aucun
+        autre panneau de réglages</b> — deux endroits qui règlent la même chose finissent par se
+        contredire.</td>
+        <td class="f">06ter-assistant § 02</td></tr>
+      <tr><td class="d">D7</td>
+        <td><b>Dix étapes, en quatre groupes :</b> <em class="it">le jeu</em> — 1 le nom · 2 la vue ·
+        3 la taille des images · 4 les types d'objets ; <em class="it">le style</em> — 5 l'allure ·
+        6 les références et les couleurs ; <em class="it">la production</em> — 7 les poses et états ·
+        8 les emplacements d'équipement · 9 les IA à utiliser ; <em class="it">l'atelier</em> —
+        <b>10 la clé du fournisseur</b>. <span class="sourd">La dixième est entrée le 30 août
+        (D37) ; les neuf premières gardent leur numéro.</span></td>
+        <td class="f">06-univers § 04</td></tr>
+      <tr><td class="d">D8</td>
+        <td><b>La vue et la taille se choisissent sur des vignettes, avec des listes complètes</b> —
+        huit vues de jeu 2D, neuf tailles classiques. On ne choisit pas « 48 » dans l'abstrait, on
+        choisit le sprite qui reste lisible.</td>
+        <td class="f">06ter-assistant § 03, 04</td></tr>
+      <tr><td class="d">D9</td>
+        <td><b>Un choix remplit d'un coup tous les endroits qui doivent s'accorder</b> — le nombre
+        d'images par pose <em class="it">et</em> la phrase correspondante dans le texte envoyé à
+        l'IA. C'est ce qui répare la contradiction mesurée : le réglage dit 128, le texte dit 64
+        trois fois, et c'est le texte qui part.</td>
+        <td class="f">06ter-assistant § 01</td></tr>
+      <tr><td class="d">D10</td>
+        <td><b>L'étape 6 fabrique un texte tout prêt à copier dans ChatGPT</b>, assemblé à partir des
+        étapes précédentes, qui demande un premier aperçu du jeu et trois variantes. Rien n'est payé
+        par l'atelier, et c'est la première fois qu'on voit sa description assemblée.</td>
+        <td class="f">06ter-assistant § 07</td></tr>
+      <tr><td class="d">D11</td>
+        <td><b>Une étiquette est une paire</b> : un libellé qu'on clique, et le texte anglais qui part
+        vraiment. <b>La base est vide au départ, appartient à l'application entière et non à un
+        projet</b>, grandit de chaque étiquette fabriquée, et pourra être nourrie plus tard par des
+        listes apportées. Aucun dictionnaire extérieur ne convient — vérifié : les thésaurus d'art
+        donnent <em class="it">baroque</em>, jamais <em class="it">pixel art 16 bits</em>, et aucun ne
+        donne le texte anglais qui marche sur une IA d'image.</td>
+        <td class="f">06ter-assistant § 06</td></tr>
+      <tr><td class="d">D12</td>
+        <td><b>Les poses viennent du type d'objet, et un objet peut y ajouter les siennes.</b> Un
+        coffre a « fermé, ouvert, vidé », pas « marche ». Sa fiche montre l'origine de chaque pose.</td>
+        <td class="f">06ter-assistant § 08</td></tr>
+      <tr><td class="d">D13</td>
+        <td><b>Le type « tuile » est ajouté</b> à la liste des types d'objets. Il manquait, alors que
+        le projet en fabrique et qu'un outil les découpe.</td>
+        <td class="f">06ter-assistant § 05</td></tr>
+      <tr><td class="d">D14</td>
+        <td><b>Les types sur mesure : bouton présent, grisé</b>, avec sa raison écrite. On apprend
+        qu'ils existeront, on sait pourquoi ils ne sont pas là.</td>
+        <td class="f">06ter-assistant § 05</td></tr>
+      <tr><td class="d">D15</td>
+        <td><b>Averti précisément, jamais bloqué.</b> Changer un réglage qui casse du travail déjà
+        payé affiche les vrais chiffres — <em class="it">« 48 images ont été découpées en 128 px, les
+        refabriquer coûte environ 0,61 $ »</em> — puis laisse décider. Rien n'est grisé : le produit
+        n'a qu'un seul refus automatique, le compte d'images.</td>
+        <td class="f">06ter-assistant § 09</td></tr>
+    </table>
+
+    <h3 class="sst">C · Les ambiances et les couleurs — le modèle a changé</h3>
+    <table>
+      <tr><th style="width:38px"></th><th>La décision</th><th style="width:170px">Développée dans</th></tr>
+      <tr><td class="d">D16</td>
+        <td><b>Une palette de couleurs devient un objet à part entière</b> : nommée, en plusieurs
+        exemplaires, née d'un paquet d'images du tableau, réutilisable par plusieurs ambiances.
+        Aujourd'hui il n'y en a qu'une, sans nom, attachée au projet.</td>
+        <td class="f">07-ambiances § 01, 03</td></tr>
+      <tr><td class="d">D17</td>
+        <td><b>Une ambiance porte trois choses, et trois seulement</b> : une palette, une ou plusieurs
+        images de référence, et <b>trois cases de texte — monde, éclairage, trait</b>. Les quatre
+        autres cases restent celles du jeu ; <em class="it">vue</em> et <em class="it">technique</em>
+        portent la mécanique du jeu (l'angle, la grille, les directions) et lui sont fermées.</td>
+        <td class="f">07-ambiances § 02</td></tr>
+      <tr><td class="d">D18</td>
+        <td><b>Le projet est l'ambiance générale du jeu</b> — même objet, en plus grand : une palette,
+        des images de référence, des cases de texte. Une seule notion à apprendre au lieu de deux.</td>
+        <td class="f">07-ambiances § 01</td></tr>
+      <tr><td class="d">D19</td>
+        <td><b>Une ambiance naît des deux côtés</b> : depuis le menu d'un paquet d'images du tableau
+        (« faire une ambiance de ça »), ou depuis la section Ambiances et couleurs. Une palette naît
+        de la même façon.</td>
+        <td class="f">07-ambiances § 06</td></tr>
+      <tr><td class="d">D20</td>
+        <td><b>L'ambiance s'attribue sur la fiche de chaque objet du jeu.</b> Une collection reste un
+        simple dossier de rangement qui ne décide de rien.</td>
+        <td class="f">07-ambiances § 05</td></tr>
+      <tr><td class="d">D21</td>
+        <td><b>Au moment de générer, on choisit quelles parties de l'ambiance on prend</b> — ses
+        couleurs, ses références, son texte, séparément. Un monstre de forme différente prend les
+        couleurs seules ; une version noire d'un personnage prend tout sauf les images.</td>
+        <td class="f">07-ambiances § 05</td></tr>
+      <tr><td class="d">D22</td>
+        <td><b>La palette agit toujours au retour</b> — l'image revient, l'atelier la ramène sur les
+        couleurs, gratuitement, sur la machine, et rétroactivement. <b>Elle peut en plus partir à
+        l'aller</b> si on coche <em class="it">envoyer la palette en référence</em> : elle part alors
+        comme une image, une bande de pastilles, et occupe une place de référence.
+        <b style="color:var(--ok)">Confirmé le 30 août</b> — c'était la seule question laissée
+        ouverte par la maquette des ambiances, et l'envoi en texte est écarté : les IA d'image
+        suivent mal une liste de codes couleur, et le texte pèse déjà la moitié de l'appel.</td>
+        <td class="f">07-ambiances § 05<br>08bis-confirmation § 02</td></tr>
+      <tr><td class="d">D23</td>
+        <td><b>Le codex gagne une colonne « ambiance ».</b> Pas de grand tableau récapitulatif : c'est
+        déjà l'endroit où tous les objets du jeu s'affichent. De l'autre côté, chaque ambiance liste
+        qui s'en sert et ce qu'il lui prend.</td>
+        <td class="f">07-ambiances § 05</td></tr>
+      <tr><td class="d">D24</td>
+        <td><b>La cascade est abandonnée, et les trois étages d'héritage avec elle.</b> Une ambiance
+        n'est plus un étage dont on hérite automatiquement : c'est une boîte qu'on désigne et dans
+        laquelle on pioche.</td>
+        <td class="f">07-ambiances § 07</td></tr>
+      <tr><td class="d">D25</td>
+        <td><b>Une palette reste une recette, pas une liste</b> : des sources, deux dosages (la
+        proportion et l'attraction), des retouches rangées une par une, et un résultat recalculable.
+        C'est ce qui préserve la règle « la palette est dérivable de ses sources ». Gardé mot pour mot
+        de l'ancien document.</td>
+        <td class="f">07-ambiances § 03</td></tr>
+    </table>
+
+    <h3 class="sst">D · La génération</h3>
+    <table>
+      <tr><th style="width:38px"></th><th>La décision</th><th style="width:170px">Développée dans</th></tr>
+      <tr><td class="d">D26</td>
+        <td><b>Un écran de confirmation paraît avant de payer.</b> Il montre tout ce qui part — chaque
+        case du jeu, chaque case de l'ambiance, chaque image — et on peut y décocher des éléments et
+        corriger des textes sur place.</td>
+        <td class="f">08bis-confirmation § 02, 04</td></tr>
+      <tr><td class="d">D27</td>
+        <td><b>Une correction faite dans cet écran vaut pour cette image seulement.</b> Le réglage
+        habituel reste sur la fiche de l'objet.</td>
+        <td class="f">08bis-confirmation § 05</td></tr>
+      <tr><td class="d">D30</td>
+        <td><b>La barre d'espace montre en grand n'importe quelle vignette, partout dans
+        l'atelier.</b> On survole une petite image, on appuie sur espace, elle s'affiche en grand ;
+        la molette la zoome. Le geste était déjà dessiné dans la galerie ; il devient
+        <b>systématique</b> — l'écran de confirmation, la fiche d'un objet, le codex, partout où une
+        image paraît en petit. <span class="sourd">Conséquence : la taille des vignettes cesse d'être
+        une question. On garde les tailles déjà dans la liste fermée du produit — <b>38 pour une
+        image de référence</b>, partout — au lieu d'y ajouter une sixième valeur pour ne régler le
+        problème qu'à moitié.</span></td>
+        <td class="f">04-galerie § 09<br>08bis-confirmation § 10</td></tr>
+      <tr><td class="d">D31</td>
+        <td><b>On ne paie jamais depuis la galerie, et écrire un nom crée la chose.</b> Pour faire un
+        essai qui n'appartient à aucun objet du jeu — « un tonneau cerclé de fer » — on tape le nom :
+        le tonneau entre dans le codex sur-le-champ, et on génère depuis son établi, comme pour
+        n'importe quel objet. C'est le geste que l'atelier connaît déjà pour les poses et les pièces
+        d'équipement. <span class="sourd">Écartés : une chose « essais » servant de panier, qui
+        fabriquerait un endroit où les images échappent au codex ; et un champ de saisie dans
+        l'univers, qui rouvrirait un troisième lieu où l'argent part. Les lieux qui paient restent
+        deux — l'établi et le codex. Cette décision ferme la question ouverte n° 1 de la galerie et
+        retire une porte à l'écran de confirmation, qui en compte trois.</span></td>
+        <td class="f">04-galerie § 10<br>08bis-confirmation § 07</td></tr>
+    </table>
+
+    <h3 class="sst">E · La conduite du chantier</h3>
+    <table>
+      <tr><th style="width:38px"></th><th>La décision</th><th style="width:170px">Conséquence</th></tr>
+      <tr><td class="d">D28</td>
+        <td><b>Les chiffres d'exemple des maquettes de tables ne sont pas à corriger.</b> Plusieurs
+        montrent des exemples en 64 px et 24 couleurs quand le projet réel est en 128 et 48. Sans
+        importance : <b>on dessine l'interface future, pas un rapport sur l'état du code.</b> Un
+        exemple reste un exemple.</td>
+        <td>Le chantier « aligner les chiffres » est annulé, sauf pour les dimensions d'interface
+        (§ 03-C).</td></tr>
+      <tr><td class="d">D29</td>
+        <td><b>Ordre de travail retenu :</b> l'onglet Univers d'abord, puis l'assistant, puis les
+        ambiances. Le fichier court qui pose la forme sert de plan aux deux gros.</td>
+        <td>Les trois sont faits, puis les reprises et l'écran de confirmation. Tout est soldé le
+        30 août 2026.</td></tr>
+    </table>
+
+    <h3 class="sst">F · Ce qui entoure la fabrication</h3>
+    <table>
+      <tr><th style="width:44px">&nbsp;</th><th>La décision</th><th style="width:170px">Développée dans</th></tr>
+      <tr><td class="d">D32</td>
+        <td><b>Deux écrans existants sont gardés tels quels, sans maquette.</b>
+        <b>L'image en grand</b> — survoler une petite image et appuyer sur la barre d'espace — et
+        <b>la fenêtre des réglages de l'atelier</b> font déjà ce qu'on attend d'eux. Les redessiner
+        serait du travail pour rien. <span class="sourd">Un seul reste à faire côté code : étendre la
+        barre d'espace à <b>toutes</b> les miniatures sans exception, celles des images de référence
+        comprises.</span></td>
+        <td class="f">§ 03-E</td></tr>
+      <tr><td class="d">D33</td>
+        <td><b>Les dépenses se lisent dans un écran à part : la liste complète de tous les
+        appels</b>, du plus récent au plus ancien, avec pour chacun ce qu'il a coûté et ce qu'il a
+        donné. <span class="sourd">Écarté : n'afficher que ce qu'on a payé pour rien. La mesure l'a
+        tué — aucune image du dépôt n'a jamais été supprimée, donc cet écran-là aurait affiché
+        zéro, exactement comme le bloc qu'il devait remplacer.</span></td>
+        <td class="f">30-les-depenses § 02</td></tr>
+      <tr><td class="d">D34</td>
+        <td><b>Le total de la barre du haut reste celui du jeu ouvert, et porte son étiquette.</b>
+        C'est le chiffre utile pendant qu'on travaille. Le total de l'atelier entier et les
+        <span class="mesure">$0,0381</span> dépensés hors de tout jeu — 11 % de l'argent, qu'aucun
+        écran ne montrait — se lisent dans l'écran des dépenses. <span class="sourd">Et le
+        <em class="it">dépensé</em> de la fenêtre des réglages devient <em class="it">dépensé par
+        l'agent</em>, puisque c'est ce qu'il compte : un appel sur vingt-huit.</span></td>
+        <td class="f">30-les-depenses § 06</td></tr>
+      <tr><td class="d">D35</td>
+        <td><b>Une image de référence jointe double le prix d'un appel</b>, deux le quadruplent.
+        Mesuré sur 24 images : <span class="mesure">$0,0063</span> sans référence,
+        <span class="mesure">$0,0139</span> avec une, <span class="mesure">$0,0232</span> avec deux.
+        <b>48 % de la facture du modèle principal vient des images jointes.</b> Conséquence : le prix
+        de chaque référence s'écrit à côté de sa case, sur l'écran de confirmation — là où on la
+        coche.</td>
+        <td class="f">30-les-depenses § 07<br>08bis-confirmation <span class="st att">à reporter</span></td></tr>
+      <tr><td class="d">D36</td>
+        <td><b>L'assistant s'ouvre dès la toute première ouverture de l'atelier</b>, et pas seulement
+        à la création d'un jeu. Sur une machine neuve il n'y a plus nulle part où écrire un prompt :
+        les deux seuls lieux qui paient sont l'établi et le codex, un établi appartient à une chose,
+        et le codex est vide. <span class="sourd">Renverse quatre phrases du document du produit,
+        dont « ni assistant » et « Assistant de premier lancement » écarté nommément. Écartés : un
+        établi sans nom, qui rouvrirait le panier que D31 avait refusé ; et le codex avec son champ
+        allumé, qui tenait la promesse d'origine mais laissait les neuf réglages du jeu invisibles à
+        celui qui vient d'installer.</span></td>
+        <td class="f">31-premier-lancement § 01</td></tr>
+      <tr><td class="d">D37</td>
+        <td><b>L'assistant gagne une dixième étape — la clé du fournisseur — seule dans un quatrième
+        groupe nommé <em class="it">l'atelier</em>.</b> Les trois groupes existants parlent de
+        <em class="it">ce jeu-là</em> ; la clé vaut pour tous les jeux. <b>Elle ne crée pas un second
+        endroit de réglage :</b> elle montre le champ de la fenêtre des réglages, où la clé continue
+        d'habiter. Trois portes — l'assistant, le bouton générer éteint, la barre du haut — une seule
+        pièce. <span class="sourd">Placée en dixième et non en première pour ne pas renuméroter les
+        neuf étapes citées par leur numéro dans tout le dossier.</span></td>
+        <td class="f">31-premier-lancement § 03<br>06ter-assistant § 08</td></tr>
+      <tr><td class="d">D38</td>
+        <td><b>Le codex porte le champ qui nomme</b> — au milieu de l'écran quand le monde est vide,
+        en rangée quand il ne l'est plus. C'est le geste que D31 avait décidé et que
+        <b>aucune maquette ne dessinait</b> : la maquette du codex le raconte en toutes lettres et
+        son croquis n'a pas un seul champ. Ce n'est pas un champ de prompt : on nomme, la chose entre
+        dans le codex, et on paie depuis son établi.</td>
+        <td class="f">31-premier-lancement § 05<br>05-codex <span class="st att">à reporter</span></td></tr>
+      <tr><td class="d">D39</td>
+        <td><b>Le guide fait le tour des quatre lieux de la V2.1, et la boucle gagne un sixième
+        temps : nommer.</b> Il visitait quatre écrans — <em class="it">Atelier, Univers, Découpe,
+        Bibliothèque</em> — dont trois ont disparu ou changé de nom. Il visite désormais l'univers,
+        le codex, la galerie et l'établi, en disant lequel n'est pas un onglet. <b>La découpe cesse
+        d'être un lieu</b> : elle est une table parmi les autres. Et <em class="it">nommer</em>
+        entre en tête de la boucle, parce que c'est devenu le premier geste possible sur une machine
+        neuve. <span class="sourd">L'écran garde son nom — <em class="it">le guide</em>, pas
+        <em class="it">l'aide</em> : c'est le mot que portent déjà dix maquettes du dossier dans leur
+        barre du haut, le titre de l'écran et le lien au pied de chaque bulle.</span></td>
+        <td class="f">32-le-guide § 03, 04</td></tr>
+      <tr><td class="d">D40</td>
+        <td><b>Les 63 explications de réglages se rangent en neuf groupes au lieu de cinq</b>, par
+        lieu du produit et dans l'ordre où on les rencontre. <b>L'univers compte pour trois</b>,
+        puisque ses trois côtés sont trois pleins écrans qui ne se ressemblent pas (D1) ; la fiche
+        d'une image quitte la retouche pour la galerie, où elle habite. <b>Un groupe vide affiche son
+        zéro</b> au lieu de disparaître — le codex n'a aucune explication, et ça se voit.
+        <span class="sourd">Le mot « Dans » passe une fois dans l'en-tête du groupe au lieu d'être
+        répété neuf fois dans une colonne de 240 px.</span></td>
+        <td class="f">32-le-guide § 05</td></tr>
+      <tr><td class="d">D41</td>
+        <td><b>« Ce qui manque » devient une dette que chaque maquette paie.</b> Une maquette qui
+        ajoute un écran ou un réglage doit une ligne au guide, et elle l'écrit dans son propre
+        paragraphe « ce qui déborde » — comme tout autre report. <b>Onze sujets ne sont expliqués
+        nulle part</b>, dix d'entre eux sans une seule ligne, dont la clé du fournisseur, qui empêche
+        pourtant absolument tout tant qu'elle est vide. <span class="sourd">La section existait déjà
+        et contenait une ligne : elle n'avait jamais grandi parce que rien ne rappelait de
+        l'allonger.</span></td>
+        <td class="f">32-le-guide § 06</td></tr>
+    </table>
+
+    <div class="note att" style="margin-top:18px">
+      <span class="lab">Ce que ces décisions invalident dans les maquettes plus anciennes</span>
+      <ul>
+        <li><b>Tout le modèle des trois étages</b> — son document est passé en archives, remplacé par
+        <code>07-ambiances-et-couleurs.html</code>.</li>
+        <li><b>La cascade</b>, dessinée en détail dans la seconde version de l'Univers. Abandonnée.</li>
+        <li><b>La fiche d'un objet</b>, écrite sur « les sept champs avec l'étage d'où chacun
+        vient ». À refaire sur le nouveau modèle.</li>
+        <li><b>La phrase de la planche de pose</b> qui cite les champs de style par étage.</li>
+        <li><b>Le type de jeu réglé dans le codex</b> — il passe à l'étape 2 de l'assistant, du côté
+        Univers. Le codex le lit, il ne le pose plus. La raison écrite par le codex reste vraie, mais
+        elle est désormais servie par un choix unique qui remplit les deux endroits.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'état des maquettes</h2></div>
+
+    <p class="intro">Vingt-six fichiers, plus six en archives. Les états :
+    <span class="st neuf">neuve</span> écrite le 30 août ·
+    <span class="st ok">au propre</span> rien à y faire ·
+    <span class="st att">à reprendre</span> une correction connue l'attend ·
+    <span class="st arch">archivée</span> remplacée, gardée pour ses raisons.</p>
+
+    <table>
+      <tr><th style="width:236px">Le fichier</th><th style="width:106px">État</th><th>Ce qu'il décide</th></tr>
+
+      <tr><td class="f">00-sommaire.html</td><td><span class="st cours">vivant</span></td>
+        <td>Ce document. L'index du dossier, la liste des décisions, et le chantier restant.</td></tr>
+
+      <tr><td class="f">01-structure.html</td><td><span class="st ok">au propre</span></td>
+        <td>Les trois onglets, la barre de tête, le fil qui dit où l'on est. <b>Repris le 30 août :</b>
+        l'onglet Univers y a gagné ses trois côtés, et le codex la mention de l'ambiance et des poses
+        par type. <b>Repris le 31 août :</b> ses deux phrases qui mettaient une barre de saisie dans
+        la galerie, le champ de son croquis de galerie, la fiche qui gagne sa seconde porte, le bloc
+        des dépenses en bas de colonne, et sa barre de tête passée de 38 à 44.</td></tr>
+
+      <tr><td class="f">02-etabli-personnage.html</td><td><span class="st ok">au propre</span></td>
+        <td>L'établi — l'écran où l'on travaille une chose du jeu. <b>Repris le 31 août :</b> la barre
+        de saisie est rendue en pied de l'établi et du codex, plus de la galerie ; elle a perdu son
+        dépliant <em class="it">ce qui part</em> ; et sa colonne de 290 px est passée à 300, une des
+        trois largeurs du produit.</td></tr>
+
+      <tr><td class="f">03-chassis-des-tables.html</td><td><span class="st ok">au propre</span></td>
+        <td>Le cadre commun à toutes les tables de retouche, et la barre des sept tables.
+        <b>Repris le 31 août :</b> ses quatre reports, dont le fil d'une image ouverte depuis la
+        galerie et la règle du total de la barre de tête. <b>Et sa propre contradiction :</b> il
+        dessinait sa barre de tête à 38 en l'annonçant à 44 dans son tableau de mesures.</td></tr>
+
+      <tr><td class="f">04-galerie.html</td><td><span class="st ok">au propre</span></td>
+        <td>L'onglet des images produites, sa fiche, ses filtres. <b>Repris le 31 août :</b> les cinq
+        phrases qui lui mettaient une barre de saisie sont corrigées dans les quatre autres fichiers,
+        et son journal des appels ratés est devenu une porte vers l'écran des dépenses.</td></tr>
+
+      <tr><td class="f">05-codex.html</td><td><span class="st ok">au propre</span></td>
+        <td>L'onglet de la structure du jeu : ce qu'il contient et ce que chaque chose réclame.
+        <b>Repris le 30 août :</b> la colonne « ambiance » (D23) ; la vue du jeu qui se choisit dans
+        l'assistant et se lit ici, avec le paragraphe qui explique pourquoi le réglage a changé de
+        place (D9) ; les poses attachées au type d'objet (D12) ; la table des huit vues alignée sur
+        celle de l'assistant ; et la création d'une chose du jeu d'un mot tapé (D31).
+        <b>Repris le 31 août :</b> son § 08 dit désormais deux lieux qui paient au lieu de trois, le
+        champ qui nomme est dessiné en dernière rangée de la liste, et le dépliant
+        <em class="it">ce qui part</em> a laissé la place à l'écran de confirmation.</td></tr>
+
+      <tr><td class="f">06-univers.html</td><td><span class="st neuf">neuve</span></td>
+        <td><b>L'onglet Univers et ses trois côtés.</b> Remplace les deux versions écrites en
+        parallèle. Porte aussi les quatre décisions mesurées qui survivent : la matière et le cadre,
+        la relecture des nombres tapés, le nombre de couleurs lu avec ce qu'il rend, la liste des
+        types en rangées.</td></tr>
+
+
+      <tr><td class="f">06ter-assistant-demarrage.html</td><td><span class="st neuf">neuve</span></td>
+        <td><b>L'assistant, qui est aussi l'écran des réglages.</b> Les dix étapes, les huit vues,
+        les neuf tailles, le mécanisme des étiquettes, le texte à copier dans ChatGPT, et le tableau
+        des garde-fous. <span class="sourd">Reprise le 30 août : la dixième étape — la clé — et son
+        quatrième groupe, et le second moment où l'assistant s'ouvre tout seul (D36, D37).</span></td></tr>
+
+      <tr><td class="f">07-ambiances-et-couleurs.html</td><td><span class="st neuf">neuve</span></td>
+        <td><b>Les palettes et les ambiances.</b> Remplace le document des trois étages. Porte la
+        palette-recette, l'éditeur de couleurs, la façon dont on pioche dans une ambiance, et un § 07
+        qui dit exactement ce qui est abandonné et ce qui est gardé.</td></tr>
+
+      <tr><td class="f">07bis-fiche-entite.html</td><td><span class="st ok">au propre</span></td>
+        <td>La fiche d'une chose du jeu. <b>Reprise le 30 août :</b> son § 05 entier est refait sur
+        la boîte où l'on pioche au lieu de la cascade — champ « son ambiance », cinq origines
+        possibles pour un texte, les trois cases ouvertes et les quatre fermées ; le bloc des images
+        devient « ses images de référence » avec l'ambiance en quatrième provenance ; les poses
+        viennent du type et un objet peut ajouter les siennes.</td></tr>
+
+      <tr><td class="f">08-planche-de-pose.html</td><td><span class="st ok">au propre</span></td>
+        <td>La feuille où l'IA dessine plusieurs poses en un appel, et le pliage qui la rend rentable
+        à partir de quatre cases. <b>Reprise le 30 août :</b> la phrase qui citait les champs de style
+        par étage.</td></tr>
+
+      <tr><td class="f">08bis-ecran-de-confirmation.html</td><td><span class="st neuf">neuve</span></td>
+        <td><b>Le dernier écran avant que l'argent parte.</b> Chaque texte et chaque image sur une
+        ligne, avec un interrupteur ; le texte assemblé montré mot pour mot à droite ; la règle
+        « une correction ne vaut que pour cet appel » ; ce qui avertit et ce qui refuse. Porte les
+        mesures qui la justifient — sur le plus long appel payé, le sujet pèse 2 %.</td></tr>
+
+      <tr><td class="f">09-la-vitrine.html</td><td><span class="st ok">au propre</span></td>
+        <td>L'écran où l'on juge une image : le fond sur lequel on la regarde, les comparaisons.</td></tr>
+
+      <tr><td class="f">10-table-detourage.html</td><td><span class="st ok">au propre</span></td>
+        <td>Enlever le fond d'une image. <b>Repris le 31 août :</b> ses deux passages qui accusaient
+        la quantification de rendre les pixels opaques. Elle n'y touche pas — <b>le halo naît ici</b>,
+        et c'est ici qu'il se règle. Reste le commentaire de code qui dit encore l'inverse.</td></tr>
+
+      <tr><td class="f">12-table-recadrage.html</td><td><span class="st ok">au propre</span></td>
+        <td>Recadrer, et la marge dont la mesure a montré qu'elle ne changeait rien.</td></tr>
+
+      <tr><td class="f">13-table-grille.html</td><td><span class="st ok">au propre</span></td>
+        <td>Ramener une image sur la grille de pixels du jeu, et ce qu'un pixel rendu coûte.</td></tr>
+
+      <tr><td class="f">14-table-quantification.html</td><td><span class="st ok">au propre</span></td>
+        <td>Ramener une image sur la palette. C'est ici qu'agit toute palette, celle du jeu comme
+        celle d'une ambiance (D22).</td></tr>
+
+      <tr><td class="f">15-table-bords.html</td><td><span class="st ok">au propre</span></td>
+        <td>Nettoyer les bords : les pixels à demi transparents, les franges de couleur.</td></tr>
+
+      <tr><td class="f">16-table-contours.html</td><td><span class="st ok">au propre</span></td>
+        <td>Ajouter ou renforcer le trait de contour. <b>Repris le 31 août :</b> son § 06 disait
+        « deux crans » là où il y en a cinq — c'était vrai quand la recette en comptait cinq places —,
+        et son annotation 03 nomme désormais la quantification plutôt qu'« une palette
+        imposée ».</td></tr>
+
+      <tr><td class="f">17-table-la-main.html</td><td><span class="st ok">au propre</span></td>
+        <td>La retouche au pixel, à la main.</td></tr>
+
+      <tr><td class="f">18-table-decoupage.html</td><td><span class="st ok">au propre</span></td>
+        <td>Découper une feuille en images séparées — c'est aussi elle qui fabrique les tuiles.</td></tr>
+
+      <tr><td class="f">19-outil-superposition.html</td><td><span class="st att">à reprendre</span></td>
+        <td>Poser une pièce d'équipement sur un personnage. <b>À reprendre :</b> elle rouvre deux
+        décisions que le document du produit avait fermées, sans le dire (§ 04).</td></tr>
+
+      <tr><td class="f">20-outil-calibrage.html</td><td><span class="st ok">au propre</span></td>
+        <td>Mettre toutes les choses du jeu à la bonne échelle les unes par rapport aux autres.</td></tr>
+
+      <tr><td class="f">30-les-depenses.html</td><td><span class="st neuf">neuve</span></td>
+        <td>Tous les appels payés, du plus récent au plus ancien, avec ce que chacun a donné.
+        Premier fichier du rang 30. Elle remplace le journal des appels ratés de la galerie, qui ne
+        montrait qu'un cas sur trois — celui qui, mesuré, n'a jamais rien coûté. Elle porte deux
+        relevés neufs : <b>une image de référence jointe double le prix d'un appel</b>, et
+        <b>27 % de tout l'argent est parti en six demandes sur un même personnage en une
+        demi-heure</b>.</td></tr>
+
+      <tr><td class="f">31-le-premier-lancement.html</td><td><span class="st neuf">neuve</span></td>
+        <td>Ce qu'on voit sur une machine neuve : aucun jeu, aucune image, aucune clé. Elle dit ce
+        qui s'ouvre, ce qu'on peut sauter, et où l'on tombe en sortant. Elle porte le relevé qui l'a
+        rendue nécessaire : <b>après le 30 août, il n'existait plus nulle part où écrire un
+        prompt</b> sur une installation neuve. Elle ajoute une dixième étape à l'assistant (D37) et
+        dessine le champ qui nomme que D31 avait décidé sans que personne le trace (D38).</td></tr>
+
+      <tr><td class="f">32-le-guide.html</td><td><span class="st neuf">neuve</span></td>
+        <td>La seule prose du produit : comment l'atelier marche, et ce que fait chaque réglage.
+        <b>Écrite en dernier, exprès</b> — c'est le seul écran qui décrit tous les autres, donc le
+        seul qui se périme à chaque décision prise ailleurs. Elle refait le tour des lieux sur les
+        quatre de la V2.1, ajoute <em class="it">nommer</em> à la boucle (D39), range les
+        63 explications en neuf groupes au lieu de cinq (D40), et transforme sa liste des manques en
+        une dette que chaque maquette paie (D41). <b>Elle porte le relevé le plus large du
+        dossier :</b> onze maquettes sur vingt-quatre ne sont expliquées nulle part dans le guide, dont la clé
+        du fournisseur — et sa section « ce qui manque » en comptait une seule.</td></tr>
+
+      <tr><td class="f arch">archives/06bis-univers.html</td><td><span class="st arch">archivée</span></td>
+        <td>La seconde version de l'Univers, écrite en parallèle de la première. Sa colonne de
+        sections est reprise dans la neuve, son éditeur de couleurs dans <code>07-ambiances</code>,
+        sa cascade est abandonnée.</td></tr>
+
+      <tr><td class="f arch">archives/07-les-trois-etages.html</td><td><span class="st arch">archivée</span></td>
+        <td>Le modèle d'héritage abandonné le 30 août. Gardée parce que sa partie sur la
+        palette-recette a été reprise telle quelle, et qu'elle explique pourquoi.</td></tr>
+
+      <tr><td class="f arch">archives/exploration-1 … 4</td><td><span class="st arch">archivées</span></td>
+        <td>Quatre pistes explorées puis écartées avant le dossier actuel. Gardées pour leurs
+        raisons.</td></tr>
+    </table>
+  </section>
+
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Le chantier — ce qu'il reste à faire</h2></div>
+
+    <h3 class="sst">A · Tout ce que les décisions du 30 août réclamaient est fait</h3>
+    <p class="intro">Les deux listes ci-dessous étaient le chantier ouvert en fin de journée. Elles
+    sont soldées, le même jour. <strong>Tous les écrans où l'on fabrique des images ont désormais
+    leur maquette</strong>, et aucune ne décrit plus le modèle abandonné. Les écrans qui restent à
+    dessiner sont d'une autre nature — ils entourent la fabrication sans en faire partie : voir le
+    § 03-E.</p>
+    <table>
+      <tr><th style="width:236px">Le fichier</th><th style="width:96px">État</th><th>Ce qui y a été écrit</th></tr>
+      <tr><td class="f">08bis-ecran-de-confirmation.html</td><td><span class="st neuf">écrite</span></td>
+        <td><b>La maquette qui manquait.</b> Tout ce qui part, ligne par ligne, avec un interrupteur
+        sur chacune : le sujet, les sept textes du jeu, les trois de l'ambiance, chaque image de
+        référence, et l'option <em class="it">envoyer la palette en référence</em>. On y corrige un
+        texte sur place, et la correction ne vaut que pour cet appel (D26, D27). Elle porte aussi les
+        quatre relevés qui la justifient, et les deux lignes qui ne s'éteignent jamais.</td></tr>
+      <tr><td class="f">07bis-fiche-entite.html</td><td><span class="st neuf">reprise</span></td>
+        <td>Le plus gros des reports. Son § 05 est refait de zéro : champ <em class="it">son
+        ambiance</em>, cinq origines possibles pour un texte, les trois cases ouvertes à l'ambiance et
+        les quatre qui lui sont fermées avec la raison de chacune. Le bloc des images devient
+        <em class="it">ses images de référence</em>, avec l'ambiance en quatrième provenance et le
+        renvoi vers l'écran de confirmation. Les poses viennent du type, et un objet peut ajouter les
+        siennes.</td></tr>
+      <tr><td class="f">05-codex.html</td><td><span class="st neuf">reprise</span></td>
+        <td>La colonne <em class="it">ambiance</em> dans la liste et dans le panneau de droite ; la
+        vue du jeu qui se lit au lieu de se poser, avec le paragraphe qui explique pourquoi le réglage
+        a changé de place ; la table des huit vues alignée sur celle de l'assistant ; les poses
+        attachées au type d'objet, et la colonne de gauche qui le dit avec deux titres.</td></tr>
+      <tr><td class="f">01-structure.html</td><td><span class="st neuf">reprise</span></td>
+        <td>L'onglet Univers a ses trois côtés dans le schéma d'ensemble, et le codex la mention de
+        l'ambiance et des poses par type.</td></tr>
+      <tr><td class="f">08-planche-de-pose.html</td><td><span class="st neuf">reprise</span></td>
+        <td>La phrase qui citait les champs de style par étage. <b>Et le soir :</b> la barre d'espace,
+        qui manquait au dernier fichier montrant des vignettes (D30).</td></tr>
+      <tr><td class="f">04-galerie.html</td><td><span class="st neuf">reprise</span></td>
+        <td>Sa question ouverte n° 1 est fermée : <b>écrire un nom crée la chose</b>, on ne paie
+        jamais depuis la galerie (D31). Ajoutée le soir, en corrigeant la contradiction que la
+        relecture croisée avait trouvée avec l'écran de confirmation.</td></tr>
+      <tr><td class="f">06bis-univers.html</td><td><span class="st arch">archivée</span></td>
+        <td>Déplacée dans <code>archives/</code> — tout ce qu'elle portait est repris ailleurs.</td></tr>
+    </table>
+
+    <h3 class="sst">B · Les reports — quatorze appliqués le 31 août, et ce qui reste est du code</h3>
+    <p class="intro">Une maquette qui découvre quelque chose appartenant à une autre l'écrit dans son
+    paragraphe « ce qui déborde ». Ces reports sont restés en attente jusqu'au 31 août 2026, où ils ont
+    été appliqués d'un bloc. <strong>Deux des seize ne pouvaient pas l'être</strong> : ils ne visent
+    pas un dessin mais du code d'application, et ce dossier n'y touche pas. Une troisième ligne de
+    code s'y ajoute, découverte en appliquant le quinzième. Les voici d'abord, seules, parce que ce
+    sont elles qui restent.</p>
+
+    <table>
+      <tr><th style="width:236px">Ce qui reste — trois choses, toutes dans le code</th><th>Ce qui doit y être écrit</th></tr>
+      <tr><td class="f">Le recueil d'explications<br><span class="sourd">interface/src/aide.ts · venu de 32-le-guide § 07</span></td>
+        <td><b>Six phrases à corriger, deux entrées à réécrire, onze à ajouter.</b> Une phrase nomme
+        « l'Atelier », deux disent « l'écran Univers » sans ses trois côtés, et trois comptent
+        <em class="it">cinq places</em> de recette là où la barre des tables en montre sept. Les deux
+        entrées à réécrire sont la palette et le nombre de couleurs, qui décrivent le modèle d'avant
+        (D16, D25). <b>Et les onze entrées manquantes sont désormais écrites</b>, prêtes à recopier :
+        chacune vit dans le § « ce que cet écran doit au guide » de sa propre maquette (D41).</td></tr>
+      <tr><td class="f">La fenêtre des réglages<br><span class="sourd">venu de 30-les-depenses § 09</span></td>
+        <td><b>Une étiquette et un raccourci.</b> Son <em class="it">dépensé</em> ne compte que ce que
+        l'agent a dépensé : il doit s'appeler <span class="mesure">dépensé par l'agent</span>. Et la
+        barre d'espace, qui montre une image en grand, s'étend à toutes les miniatures sans exception
+        (D32). L'écran lui-même est gardé tel quel — voir le § 03-E.</td></tr>
+      <tr><td class="f">Un commentaire de code<br><span class="sourd">atelier/domaine/recette.py · venu de 14-quantification</span></td>
+        <td><b>Une phrase fausse près de <span class="mesure">SEUIL_ALPHA</span></b> : « la
+        quantification force l'alpha à 255 ». Mesuré sur six images, elle n'y touche pas — elle met
+        l'alpha de côté et le remet tel quel. Les deux passages de maquette qui disaient la même chose
+        ont été corrigés le 31 août ; celui-ci est du code.</td></tr>
+    </table>
+
+    <h4 style="margin:26px 0 0">Les quatorze appliqués le 31 août 2026</h4>
+    <p class="intro">Chacun est écrit dans le fichier corrigé, à l'endroit corrigé — c'est là que vit
+    la raison, jamais ici. Cette table ne sert qu'à dire que la dette est soldée, et à quoi.</p>
+    <table>
+      <tr><th style="width:236px">Où c'était à écrire</th><th>Ce qui y a été écrit</th></tr>
+
+      <tr><td class="f">docs/PRD.md<br><span class="sourd">venu de 31-premier-lancement § 06</span></td>
+        <td><b>Les quatre phrases que D36 renversait sont réécrites.</b> Le portrait de l'auteur ne
+        refuse plus « l'assistant » mais tout <em class="it">écran obligatoire</em>. Le critère de
+        réussite compte les écrans obligatoires, et il en reste zéro. « Le premier lancement » ouvre
+        <b>l'assistant, étape 1</b>, sur le jeu « Bac à sable » qui existait déjà. Et « Assistant de
+        premier lancement » a quitté la liste des choses écartées pour <b>un paragraphe daté du
+        30 août</b> qui dit pourquoi l'exclusion est tombée : elle protégeait un accès direct à un
+        écran qui n'existe plus.</td></tr>
+      <tr><td class="f">docs/user-stories.md § US-1<br><span class="sourd">venu de 31-premier-lancement § 06</span></td>
+        <td><b>Le geste a gagné son mot.</b> « ouvrir l'atelier et écrire un prompt » est devenu
+        « ouvrir l'atelier, <em class="it">nommer une chose</em> et écrire son prompt ». La promesse —
+        une image dès la première minute — n'a pas bougé, et US-2 à US-5 restent vraies telles
+        quelles.</td></tr>
+      <tr><td class="f">05-codex.html<br><span class="sourd">venu de 31-premier-lancement § 05</span></td>
+        <td><b>Le champ qui nomme est dessiné</b>, en dernière rangée de la liste des choses, à
+        <span class="mesure">30 px</span> dans une rangée de <span class="mesure">44</span>. Le bouton
+        <em class="it">+ nouveau personnage</em> a été retiré : deux façons de faire une seule chose,
+        c'en était une de trop. Un § explique la forme double — au milieu quand le monde est vide, en
+        rangée sinon (D38).</td></tr>
+
+      <tr><td class="f">Onze maquettes du dossier<br><span class="sourd">venu de 32-le-guide § 06</span></td>
+        <td><b>Les onze ont payé leur ligne</b>, chacune dans un § intitulé <em class="it">ce que cet
+        écran doit au guide</em> : le codex, les ambiances, la planche de poses, l'écran de
+        confirmation, la vitrine, les contours, la main, la superposition, le calibrage, les dépenses,
+        le premier lancement. Chaque § donne l'entrée prête à recopier, avec les cinq champs du
+        recueil — nom, quoi, ce que ça change, d'où ça vient, dans quel groupe elle se range.
+        <b>Quatorze entrées en tout</b> : trois maquettes en devaient deux, dont celle du premier
+        lancement pour <b>la clé du fournisseur</b>, qui empêche absolument tout tant qu'elle est vide
+        et n'avait pas une ligne. Une quinzième ne change que de groupe — <em class="it">Ce qui
+        partira</em>, rangée jusqu'ici dans un atelier qui n'existe plus (D41).</td></tr>
+
+      <tr><td class="f">08bis-ecran-de-confirmation.html<br><span class="sourd">venu de 32-le-guide § 07</span></td>
+        <td><b>Il a hérité du texte de « Ce qui partira ».</b> La raison mesurée du dépliant devient la
+        sienne : sur trois vrais jeux, les champs de style étaient vides dans les trois, donc rien du
+        style ne partait, <b>et pourtant tout ce qui sortait se ressemblait</b>. Deux règles montent
+        avec elle — le texte n'est pas recomposé à l'écran, et ce qui est parti reste attaché à la
+        génération.</td></tr>
+
+      <tr><td class="f">08bis-ecran-de-confirmation.html<br><span class="sourd">venu de 30-les-depenses § 07</span></td>
+        <td><b>Chaque image jointe porte son prix</b>, en doré, sur la ligne où on la coche —
+        <span class="mesure">+$0,008</span> —, et l'en-tête du groupe dit ce que les cases cochées
+        pèsent dans le total : <span class="mesure">$0,024 des $0,051</span>. Une case éteinte garde
+        son prix en gris : c'est ce qu'elle coûterait. Le tableau des trois mesures et la réserve — 24
+        images d'un seul modèle — sont écrits sous le croquis (D35).</td></tr>
+      <tr><td class="f">04-galerie.html § 06<br><span class="sourd">venu de 30-les-depenses § 08</span></td>
+        <td><b>Le journal des ratés est devenu une porte.</b> Le bloc garde sa place et son métier,
+        dit en une ligne ce que le jeu a coûté, et ouvre l'écran des dépenses ; une seconde ligne dit
+        ce que les ratés y pèsent. Sa justification reste vraie mot pour mot — elle est simplement
+        mieux servie. <b>Le croquis de 01-structure a suivi</b>, sans quoi les deux auraient
+        divergé.</td></tr>
+      <tr><td class="f">Le total de la barre de tête<br><span class="sourd">7 fichiers, 12 croquis · venu de 30-les-depenses § 06</span></td>
+        <td><b>Il porte son étiquette et il est cliquable</b> — <span class="mesure">ce jeu $2,140
+        ›</span> —, parce qu'un montant affiché est une question posée (D34). La règle est écrite une
+        fois, au § 02 du châssis, avec la raison : un chiffre qui laisse deviner sa portée finit par
+        être lu comme le total de tout. <b>Le report visait le châssis, qui ne dessine aucun
+        total</b> — dans une table, la droite de la barre porte les commandes de la table. Il a donc
+        été appliqué là où le total est dessiné.</td></tr>
+
+      <tr><td class="f">Le dépliant <em class="it">ce qui part</em><br><span class="sourd">02, 05 et 08 · venu de 08bis § 09</span></td>
+        <td><b>Il a disparu des trois barres de saisie</b>, remplacé par l'écran de confirmation ; la
+        barre garde son champ, son bouton et son prix. <b>Le report nommait aussi le châssis</b>, qui
+        ne dessine ni barre de saisie, ni prompt, ni prix : c'est la barre des <em class="it">tables</em>,
+        où rien ne se paie. Vérifié mot par mot avant de conclure.</td></tr>
+      <tr><td class="f">Les cinq phrases qui mettaient un prompt dans la galerie<br><span class="sourd">01 ×2, 02, 03, 05 · venu de 04-galerie § 03</span></td>
+        <td><b>Les cinq sont corrigées</b>, et le croquis de 01-structure a perdu son champ. La règle
+        est plus vraie qu'avant, pas moins : les lieux d'où l'argent part passent de trois à
+        <b>deux</b>, l'établi et le codex. <span class="sourd">Deux d'entre elles disaient « en pied de
+        la galerie et en pied de l'établi » ; elles disent maintenant « en pied de l'établi et en pied
+        du codex » — et non « l'établi seul », qui aurait rouvert une divergence avec le
+        codex.</span></td></tr>
+      <tr><td class="f">02-etabli-personnage.html</td>
+        <td><b>Les quatre choses sont faites.</b> La barre de saisie est rendue en pied de l'établi et
+        du codex ; le dépliant est parti ; la colonne de <span class="mesure">290</span> px est passée
+        à <span class="mesure">300</span>, une des trois largeurs du produit, avec la raison écrite en
+        deux lignes. La quatrième — la porte vers le calibrage et la marque des poses hors taille
+        commune — l'était déjà, au § 09.</td></tr>
+      <tr><td class="f">03-chassis-des-tables.html</td>
+        <td><b>Les quatre choses sont faites.</b> Le § 01 ne fait plus générer dans la galerie ; le fil
+        d'Ariane a sa <b>seconde forme</b>, courte, pour une image ouverte depuis la galerie ; son
+        segment de pose porte les trois choses d'un coup — <span class="mesure">marche · sud ·
+        image 3</span> — sans gagner d'étage ; et le total de la barre a sa règle écrite.</td></tr>
+      <tr><td class="f">10-table-detourage.html</td>
+        <td><b>La contradiction avec la quantification est levée.</b> Deux passages disaient que les
+        pixels de halo « ressortent opaques après la quantification ». Faux, et mesuré sur six images :
+        la quantification met l'alpha de côté et le remet tel quel. Les pixels de halo sont déjà
+        opaques en sortant du détourage — <b>le halo naît là, et c'est là qu'il se règle</b>. Reste le
+        commentaire de code, ci-dessus.</td></tr>
+      <tr><td class="f">16-table-contours.html</td>
+        <td><b>Les deux crans sont devenus cinq</b>, et la raison est écrite : la table détourage est
+        la première de la barre, celle-ci est la sixième. « Deux crans » était vrai quand la recette en
+        comptait cinq places. <b>Et le report de la quantification est appliqué</b> : ce n'est pas
+        « une palette imposée » qui ferme le choix du noir pur, c'est la quantification, déjà
+        passée.</td></tr>
+    </table>
+
+    <h3 class="sst">C · Les dimensions d'interface à aligner · soldé le 31 août 2026</h3>
+    <p class="intro">Ce n'est pas de l'audit de code — c'est le vocabulaire de l'interface elle-même.
+    Si une maquette dit 38 là où huit autres disent 44, celui qui construira l'écran devra deviner.
+    <strong>Les deux écarts sont fermés</strong>, et le premier était plus large qu'annoncé.</p>
+    <ul class="pl">
+      <li><b>La barre de tête — quatre maquettes s'en écartaient, pas une.</b> Ce paragraphe annonçait
+      « 44 partout sauf dans la galerie ». Mesuré fichier par fichier le 31 août :
+      <b>quatre dessinaient 38</b> — la structure, l'établi, le châssis et la galerie, les quatre plus
+      anciennes — et <b>onze dessinaient 44</b>. Le plus gênant est que <b>le châssis, qui est le
+      fichier où la barre est définie, dessinait 38 et annonçait 44 dans son propre tableau de
+      mesures</b>. Les six tableaux de mesures du dossier disent tous 44, aucun ne dit 38 :
+      <span style="color:var(--ok)">les quatre sont alignées sur 44</span>.</li>
+      <li><b>La colonne de l'établi disait 290</b> — la seule largeur du dossier qui ne soit dans
+      aucune des trois du produit (240 · 300 · 380).
+      <span style="color:var(--ok)">Passée à 300</span>, avec la raison écrite dans la maquette : dix
+      pixels, et une largeur de moins à retenir.</li>
+    </ul>
+    <div class="note ok" style="margin-top:14px">
+      <span class="lab">Trois divergences annoncées ici ont été vérifiées, et n'existent pas ou plus</span>
+      <ul>
+        <li><b>Le carré de palette n'a jamais divergé.</b> Ce paragraphe annonçait « 20 partout sauf
+        la quantification, qui dit 22 ». Vérifié fichier par fichier : <b>aucune maquette ne dit
+        20</b>, et quatre disent 22 — quantification, bords, contours, la main. Elles sont d'accord
+        entre elles, et 22 est la hauteur de puce du produit. La ligne est retirée pour ne pas
+        envoyer chercher un problème qui n'existe pas.</li>
+        <li><b>La barre d'espace est écrite partout.</b> Elle était annoncée comme restant à écrire
+        dans trois fichiers ; deux l'avaient déjà reçue pendant leur reprise — la fiche d'un objet
+        et le codex — et la planche d'une pose l'a reçue le 30 août au soir. Plus rien à faire
+        (D30).</li>
+        <li><b>La taille des vignettes d'images de référence</b> a été ouverte puis refermée le même
+        jour : 38 partout, et la barre d'espace pour voir en grand. L'écran de confirmation disait
+        44 en citant le codex ; le 44 du codex est le portrait d'un objet, pas une image de
+        référence. Corrigé.</li>
+      </ul>
+    </div>
+
+    <h3 class="sst">D · Ce qui n'est pas une décision d'interface, mais qu'il faut prévoir</h3>
+    <ul class="pl">
+      <li><b>Dix-sept vignettes d'exemple à produire</b> — huit pour les vues de jeu, neuf pour les
+      tailles d'image. Sans elles, les étapes 2 et 3 de l'assistant redeviennent des listes de mots
+      et de nombres, ce qui est exactement ce qu'elles remplacent.</li>
+      <li><b>Le banc d'essai des couleurs à étendre</b>, avant d'implémenter la fusion des palettes :
+      balayer les deux dosages sur les images du dépôt et compter les résultats réellement distincts.
+      Un piège identique a déjà été trouvé — le nombre de couleurs de la quantification ne change
+      rien dès qu'une palette est posée. Le banc ne coûte rien.</li>
+      <li><b>Le report dans les documents d'autorité du dépôt.</b>
+      <span style="color:var(--ok)">Fait le 31 août 2026</span> — la révision qui le retenait a
+      atterri, et les cinq corrections sont entrées dans le document du produit et les histoires
+      d'usage. Voir le § 03-B.</li>
+    </ul>
+
+    <h3 class="sst">E · Les cinq écrans sans maquette — deux gardés tels quels, trois écrits · soldé</h3>
+    <p class="intro">Le dossier a dessiné tous les écrans où l'on fabrique des images. Il n'avait
+    jamais dessiné ceux qui les entourent. <strong>Ces cinq-là existent dans l'application
+    d'aujourd'hui</strong> — on peut les ouvrir, ils ont du code derrière eux — mais aucun n'avait de
+    maquette. <strong>Deux ont été regardés le 30 août et gardés tels quels</strong> : ils font déjà
+    ce qu'on attend d'eux, et les redessiner serait du travail pour rien. <strong>Les trois autres
+    ont été écrits le jour même</strong> — les dépenses, le premier lancement, puis le guide en
+    dernier. <strong>Ce chantier est soldé.</strong> Les voici dans l'ordre où ils ont été pris.</p>
+    <table>
+      <tr><th style="width:210px">L'écran</th><th style="width:96px">Taille</th><th>Ce qu'il doit porter, et pourquoi il presse</th></tr>
+
+      <tr><td class="f">L'image en grand</td><td><span class="st ok">gardé tel quel</span></td>
+        <td><b>C'est ce qu'on voit en survolant une petite image et en appuyant sur la barre
+        d'espace</b> : l'image s'affiche en grand par-dessus l'écran, la molette la zoome, espace ou
+        échap la referme. <b>Tranché le 30 août : la chose existe, elle marche, on la garde sans en
+        faire de maquette.</b> Il n'y a rien à redessiner — la décision D30 ne demandait pas un
+        écran neuf, elle demandait que le geste vaille partout.<br>
+        <b>Le seul travail qui reste :</b> étendre le geste <b>à toutes les miniatures sans
+        exception</b>, y compris celles qui ne l'ont pas encore — les images de référence d'une
+        chose du jeu, les vignettes du codex, celles de l'écran de confirmation, celles d'une
+        planche. C'est du code, pas du dessin.<br><span class="sourd">Existe dans l'application —
+        453 lignes. Promis par 04-galerie § 09, 05-codex § 05, 07bis-fiche § 11, 08-planche § 11,
+        08bis-confirmation § 10.</span></td></tr>
+
+      <tr><td class="f">Les réglages de l'atelier</td><td><span class="st ok">gardé tel quel</span></td>
+        <td>Le seul écran qui ne dépend d'aucun jeu — une fenêtre qui s'ouvre par-dessus le reste.
+        Elle porte <b>la clé du fournisseur d'IA</b> — le mot de passe qui autorise à payer des
+        images —, <b>l'agent</b> avec son plafond de séance et son modèle d'exploration, <b>ce qui a
+        été dépensé</b> dans la séance, et <b>le dossier du disque où le jeu est rangé</b>.
+        <b>Tranché le 30 août : la fenêtre marche, on la garde telle quelle</b>, et aucune maquette
+        n'est écrite pour elle. Elle recevra plus tard <b>l'endroit où verser des listes de mots-clés
+        toutes prêtes</b> (D11), la base de mots-clés appartenant à l'atelier entier et non à un
+        jeu.<br><span class="sourd">Existe dans l'application — 320 lignes. Réclamée par
+        06-univers § 06 et 06ter-assistant § 06 et § 10.</span></td></tr>
+
+      <tr><td class="f">30-les-depenses.html</td><td><span class="st neuf">écrite</span></td>
+        <td>Trois endroits montraient un bout de l'argent dépensé, et aucun ne le montrait en
+        entier : la barre de tête un total, la galerie <b>le journal des appels ratés</b>, la fenêtre
+        des réglages <b>cette séance</b> et <b>dépensé</b>. <b>Écrite le 30 août 2026</b> — un écran
+        à part, la liste complète de tous les appels, avec ce que chacun a donné (D33). Elle a
+        répondu à la question que la planche d'une pose laissait ouverte, et elle a sorti de la base
+        deux faits que personne n'avait vus (D35).<br><span class="sourd">Réclamée par 08-planche
+        § 10 et 04-galerie § 06.</span></td></tr>
+
+      <tr><td class="f">31-le-premier-lancement.html</td><td><span class="st neuf">écrite</span></td>
+        <td>Ce qu'on voit la toute première fois, sans clé et sans jeu. <b>Écrite le 30 août
+        2026</b>, après avoir tranché la question de produit qu'elle posait. Le relevé qui l'a
+        déclenchée : après la réorganisation, <b>il n'existait plus nulle part où écrire un
+        prompt</b> sur une machine neuve — les deux seuls lieux qui paient sont l'établi et le codex,
+        un établi appartient à une chose, et le codex est vide. <b>Décidé : l'assistant s'ouvre dès
+        la première fois</b>, avec une dixième étape pour la clé, et on en sort à n'importe quelle
+        étape (D36, D37). Elle a aussi trouvé que le geste décidé par D31 n'était dessiné nulle part
+        (D38).<br><span class="sourd">Renverse quatre phrases de docs/PRD.md et une histoire d'usage
+        — reportées au § 03-B.</span></td></tr>
+
+      <tr><td class="f">32-le-guide.html</td><td><span class="st neuf">écrite</span></td>
+        <td>L'écran qui explique l'atelier à celui qui l'ouvre — la boucle, le tour des lieux, et
+        l'explication de chaque réglage. <b>Écrite le 30 août 2026, en dernier et exprès</b> : c'est
+        le seul écran qui décrit tous les autres, donc le seul qui se périme à chaque décision prise
+        ailleurs. Il nommait encore « Atelier, Univers, Découpe, Bibliothèque » ; il nomme désormais
+        les quatre lieux de la V2.1, et la boucle gagne un sixième temps — <em class="it">nommer</em>
+        (D39). Les 63 explications passent de cinq groupes à neuf (D40).<br>
+        <b>Son relevé est le plus large du dossier :</b> onze maquettes sur vingt-quatre n'ont pas
+        une ligne dans le guide, dont la clé du fournisseur — et la section faite pour les tenir en
+        comptait une seule. Elle devient une dette que chaque maquette paie (D41).<br>
+        <span class="sourd">L'écran s'appelle <em class="it">le guide</em> et garde ce nom — c'est
+        celui du bouton dans dix maquettes, du titre, et du lien au pied de chaque bulle. Existe dans
+        l'application — 469 lignes, plus 63 explications dans un fichier à part.</span></td></tr>
+    </table>
+    <p style="margin-top:12px" class="sourd">Aucun de ces cinq écrans ne fabrique d'image, et c'est
+    pour ça qu'ils étaient passés à travers : le dossier a été construit en suivant le chemin de la
+    fabrication. Les cinq sont soldés — deux gardés, trois dessinés.</p>
+  </section>
+
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Les questions encore ouvertes</h2></div>
+
+    <p class="intro">Ce qui n'est pas tranché, et qui bloquerait quelqu'un qui implémenterait
+    aujourd'hui. <b>Ce n'est pas la liste de toutes les questions du dossier</b> : chaque maquette
+    porte les siennes, dans son dernier paragraphe, et elles y restent — le tableau du bas dit où
+    les trouver.</p>
+
+    <div class="note ok">
+      <span class="lab">Fermée le 30 août · Où génère-t-on ce qui n'appartient à aucun objet du jeu ?</span>
+      <p><b>Écrire le nom crée la chose.</b> On tape « un tonneau cerclé de fer », le tonneau entre
+      dans le codex sur-le-champ, et on génère depuis son établi. <b>On ne paie jamais depuis la
+      galerie</b>, et les lieux d'où l'argent part restent deux — l'établi et le codex. Voir D31.</p>
+      <p class="sourd">Cette question bloquait vraiment : l'écran de confirmation avait supposé le
+      contraire et s'ouvrait aussi depuis la galerie, ce que la maquette de la galerie contredit en
+      toutes lettres. Il n'a plus que trois portes.</p>
+    </div>
+
+    <div class="note ok" style="margin-top:9px">
+      <span class="lab">Fermée le 30 août · Que voit-on à la toute première ouverture ?</span>
+      <p><b>L'assistant s'ouvre, et il gagne une dixième étape pour la clé.</b> On en sort à
+      n'importe quelle étape, et on tombe alors dans le codex, vide, avec le champ qui nomme allumé.
+      Voir D36, D37, D38.</p>
+      <p class="sourd">Cette question bloquait aussi : après la réorganisation du 30 août, une
+      machine neuve n'avait plus <b>aucun</b> endroit où écrire un prompt. La réponse renverse quatre
+      phrases du document du produit — elles sont listées au § 03-B, avec ce que chacune devient.
+      Écartés : un établi sans nom, et le codex seul avec son champ.</p>
+    </div>
+
+    <div class="note ok" style="margin-top:9px">
+      <span class="lab">Fermée le 30 août · « Envoyer la palette en référence » part en image</span>
+      <p>La palette part sous forme d'<b>image</b> : une bande de pastilles de couleur, qui occupe
+      une des places d'image de référence. C'est ce que les IA d'image suivent le mieux, et l'atelier
+      dessine déjà cette bande à l'écran — il n'y a rien à fabriquer.</p>
+      <p><b>L'envoi en texte est écarté</b> — une liste de codes couleur ajoutée au texte serait mal
+      suivie, et elle allongerait un texte qui pèse déjà la moitié de l'appel :
+      <span class="sourd">sur le plus long appel payé du dépôt, les textes de style font 890
+      caractères sur 1 690, soit 53 %.</span></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">01 · Faut-il remontrer l'écran de confirmation quand on relance à l'identique ?</span>
+      <p>Refaire exactement la même demande est le geste le plus courant quand une image ne plaît pas.
+      La maquette de confirmation prévoit une case <em class="it">ne plus me le montrer pour cette
+      série</em>, qui répond à moitié. Savoir si un relancement pur doit sauter l'écran tout seul
+      demande de s'en être servi — <b>c'est une question d'usage, pas de dessin</b>, et elle est notée
+      ici pour ne pas être tranchée à l'aveugle.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · Trois contradictions entre maquettes, d'avant le 30 août</span>
+      <ul>
+        <li><b>Le groupage d'une planche</b> — le codex et la planche de pose ne disent pas la même
+        chose sur la façon dont les poses se regroupent en un appel.</li>
+        <li><b>La quantification et la transparence</b> — le détourage et la quantification se
+        contredisent sur ce qui arrive aux pixels à demi transparents.</li>
+        <li><b>Le fond sur lequel on juge un sprite</b> — la vitrine et l'outil de superposition n'en
+        proposent pas le même.</li>
+      </ul>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · L'outil de superposition rouvre deux décisions déjà fermées</span>
+      <p><b>Reposer un calque sur les autres poses.</b> La maquette le garde en question ouverte ; le
+      document du produit l'écarte en toutes lettres — un casque vu de face n'est pas un casque vu de
+      dos — et le document d'architecture a retiré ce risque en le nommant « une promesse fausse ».
+      Aucune mesure ne soutient la phrase de la maquette.</p>
+      <p><b>Le refus automatique sur l'échelle.</b> Le document du produit dit qu'une pièce
+      « qui agrandit » revenue à une échelle différente ne produit aucun calque. La maquette traite
+      l'échelle comme une mesure informative. C'est un changement du document du produit, et il doit
+      s'écrire au lieu de se glisser.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">04 · La case carrée coûte de la résolution, et personne n'a tranché</span>
+      <p>Chaque image d'un personnage est dessinée dans une <b>case carrée</b> — même largeur, même
+      hauteur. Tout le produit le suppose : la mise sur grille, l'export, la matrice des poses, le
+      format des sprites. Mais un personnage debout n'est pas carré : garder ses six poses à pleine
+      hauteur demanderait une case de <span class="mesure">96 × 64</span>.</p>
+      <p>L'outil de calibrage a rendu le prix chiffrable au lieu de théorique : <b>17 % de résolution
+      perdue pour un personnage, rien du tout pour un autre</b>. C'est ce qui permettra de trancher
+      avec autre chose qu'une intuition. La maquette du calibrage demande explicitement que la
+      question figure ici, avec ses chiffres — elle y figure depuis le 30 août au soir.
+      <span class="sourd">20-outil-calibrage § 08.</span></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">05 · Les premières images restent-elles dans le bac à sable ?</span>
+      <p>Sur une machine neuve, le jeu s'appelle <b>« Bac à sable »</b> tant qu'on ne l'a pas nommé,
+      et on peut fabriquer des images avant de le nommer. Le code d'aujourd'hui garde ce jeu en place
+      quand un vrai jeu naît ensuite, à côté de lui : <b>les premières images restent donc dans le
+      bac à sable</b>, séparées de tout ce qui suit.</p>
+      <p>Est-ce qu'elles doivent suivre le renommage, être proposées au déménagement, ou rester où
+      elles sont ? C'est une question de rangement, pas de premier lancement — elle ne bloque aucun
+      dessin. <span class="sourd">31-le-premier-lancement § 07 ; le code qui adopte les images sans
+      projet est dans atelier/services/bibliotheque.py.</span></p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">06 · Les onze explications qui manquent s'écrivent avant ou pendant la construction ?</span>
+      <p>Onze sujets du produit ne sont expliqués nulle part dans le guide — un onglet entier, deux tables,
+      deux outils, quatre écrans, et la clé du fournisseur. C'est du <b>texte à rédiger</b>, pas de
+      l'interface à dessiner : rien n'est bloqué.</p>
+      <p>Les écrire maintenant, c'est décrire des écrans encore en maquette, qui bougeront. Les
+      écrire après, c'est livrer un produit dont un tiers n'est expliqué nulle part — et
+      l'expérience de cette liste-là montre qu'un « on le fera après » reste à une ligne pendant des
+      mois. <b>La réponse penche vers « au fil de la construction » :</b> chaque écran paie sa ligne
+      au moment où il est construit. Mais c'est un choix de conduite du chantier, pas de dessin — il
+      se tranche quand la construction commence. <span class="sourd">32-le-guide § 09.</span></p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">07 · Ce qui a été explicitement mis de côté</span>
+      <p><b>Ce qui part à l'IA selon le type d'objet fabriqué.</b> Une étiquette pourrait donner sur
+      un texte plus travaillé, et on n'enverra pas tout selon ce qu'on fabrique. Sujet à part
+      entière, volontairement remis à plus tard. <b>L'écran de confirmation en est la porte
+      d'entrée</b>, et il le dit lui-même : c'est là qu'on verra, à l'usage, quelles lignes on éteint
+      toujours pour quel type d'objet — et c'est ce constat qui dira quoi automatiser. Rien ne se
+      décide avant d'avoir ce relevé.</p>
+    </div>
+
+    <h3 class="sst">Les questions que chaque maquette garde pour elle</h3>
+    <p class="intro">Sept maquettes gardent leurs propres questions ouvertes, quatorze en tout. Elles
+    ne sont pas recopiées ici — chaque chose reste écrite à un seul endroit — mais elles existent, et
+    voici où les lire. Aucune ne bloque la construction d'un écran : ce sont des choix d'usage, ou
+    des mesures à prendre.</p>
+    <table>
+      <tr><th style="width:34%">Où</th><th>Ce qui y reste ouvert</th></tr>
+      <tr><td class="f">04-galerie § 10</td>
+        <td>Ce que devient une sélection de douze images quand on entre dans une table de retouche.</td></tr>
+      <tr><td class="f">07bis-fiche-entite § 10</td>
+        <td>Ce que montre la fiche d'une chose qui n'est pas un personnage ; et si une image promue en
+        référence le reste après qu'on l'a retouchée.</td></tr>
+      <tr><td class="f">08-planche-de-pose § 10</td>
+        <td>Le prix d'une feuille à trois, cinq et six cases — on n'a mesuré qu'un, deux et quatre ;
+        et ce qui se passe au-delà de neuf cases.<br><span class="sourd">Sa troisième question — ce
+        que devient une feuille ratée dont la trace disparaît — est <b>répondue</b> depuis le
+        30 août : elle devient une ligne au carré creux dans l'écran des dépenses, avec son
+        montant.</span></td></tr>
+      <tr><td class="f">30-les-depenses § 09</td>
+        <td>Ce que devient la liste au bout de mille appels — vingt-huit tiennent dans un écran, et
+        la forme n'a été éprouvée que sur trois jours ; et s'il faut un total par chose du jeu, qui
+        appartiendrait plutôt au codex et n'a d'intérêt qu'à trente personnages.</td></tr>
+      <tr><td class="f">09-la-vitrine § 08</td>
+        <td>S'il faut marquer dans le codex les images jamais retouchées ; ce que montre la vitrine
+        d'une chose qui n'a rien de fini ; et ce que devient le fond « image du jeu » quand la
+        famille des décors se remplira.</td></tr>
+      <tr><td class="f">18-table-decoupage § 08</td>
+        <td>S'il faut convertir une image à l'import — ce qui revient à décider ce que « brut » veut
+        dire : les octets reçus, ou l'image reçue.</td></tr>
+      <tr><td class="f">19-outil-superposition § 09</td>
+        <td>Cinq questions de l'outil lui-même. Deux d'entre elles sont reprises au point 03
+        ci-dessus, parce qu'elles touchent les documents d'autorité du dépôt.</td></tr>
+    </table>
+  </section>
+
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Comment ce dossier est organisé</h2></div>
+
+    <div class="regles">
+      <div class="regle">
+        <div class="n">00 – 09</div>
+        <div class="t">Les écrans</div>
+        <div class="d">Le sommaire, la structure d'ensemble, puis un fichier par écran du produit :
+        l'établi, le châssis, la galerie, le codex, l'univers et ses profondeurs, la fiche d'un
+        objet, la planche et l'écran de confirmation, la vitrine. Un <em class="it">bis</em> ou un
+        <em class="it">ter</em> marque un écran qui s'ouvre depuis celui du même numéro.</div>
+      </div>
+      <div class="regle">
+        <div class="n">10 – 19</div>
+        <div class="t">Les tables de retouche</div>
+        <div class="d">Une par outil qui transforme une image après son arrivée : détourage,
+        recadrage, grille, quantification, bords, contours, la main, découpage. Le rang 11 est laissé
+        vide exprès — c'était une table écartée.</div>
+      </div>
+      <div class="regle">
+        <div class="n">20 – 29</div>
+        <div class="t">Les outils</div>
+        <div class="d">Ce qui ne transforme pas une image mais en compare plusieurs : la
+        superposition d'une pièce d'équipement, le calibrage des échelles.</div>
+      </div>
+      <div class="regle">
+        <div class="n">30 – 39</div>
+        <div class="t">Ce qui entoure la fabrication</div>
+        <div class="d">Les écrans qui ne fabriquent aucune image et qu'on traverse quand même :
+        l'image en grand, les réglages de l'atelier, les dépenses, le premier lancement, le guide.
+        <b>Rang neuf, ouvert le 30 août 2026</b> — voir le § 03-E.</div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:14px">
+      <span class="lab">La règle qui produit les reports</span>
+      <p>Chaque maquette finit par un paragraphe <b>« ce qui déborde »</b> : les décisions qu'elle a
+      prises et qui appartiennent à un autre fichier. Elles sont <b>reportées, jamais recopiées</b> —
+      une chose reste définie à un seul endroit.</p>
+      <p><b>Un report non appliqué est une divergence en attente</b>, et c'est pourquoi le § 03 en
+      tient la liste.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce que toute maquette de ce dossier respecte</h2></div>
+
+    <ul class="pl">
+      <li><b>Une chose est définie à un seul endroit.</b> Ailleurs, on la cite.</li>
+      <li><b>Ce qui est indisponible est grisé avec sa raison</b> — et son revers : ce qui est
+      devinable est prérempli avec sa provenance, et se défait d'un clic.</li>
+      <li><b>Ce qui est montré est ce qui part</b>, mot pour mot.</li>
+      <li><b>Le compte d'images est le seul refus automatique</b> de tout l'atelier. Confirmé et
+      étendu par D15 : aucun réglage de projet n'est jamais bloqué, ils avertissent avec le compte et
+      le coût.</li>
+      <li><b>Aucune largeur ni hauteur inventée.</b> La liste est fermée : hauteurs 44 · 38 · 34 ·
+      30 · 26, largeurs 380 · 300 · 240.</li>
+      <li><b>Un chiffre cité est un chiffre mesuré</b>, et la maquette dit par quel banc le rejouer.
+      Les bancs ne coûtent rien et tournent sur les images déjà présentes.</li>
+      <li><b>On écrit pour être compris sans le contexte.</b> Chaque terme du métier est expliqué là
+      où il paraît, chaque mécanisme est décrit en étapes, et un chiffre technique nu est toujours
+      doublé de ce qu'il veut dire.</li>
+    </ul>
+
+    <div class="note gris" style="margin-top:14px">
+      <span class="lab">Ce que ces maquettes ne sont pas</span>
+      <p>Elles ne décrivent pas l'état du code. Un exemple chiffré dans une maquette de table est un
+      exemple, pas un relevé de configuration (D28). Ce qu'elles décrivent, c'est
+      <b>l'interface future et les raisons de chaque décision</b>.</p>
+    </div>
+  </section>
+
+
+  <footer>
+    Asset Kitchen — V2.1 · sommaire des maquettes<br>
+    26 fichiers écrits, 6 en archives · dernière mise à jour 31 août 2026<br>
+    Session du 30 août : 23 questions posées une par une, 41 décisions prises, 7 maquettes écrites —
+    l'onglet Univers, l'assistant de démarrage, les ambiances et les couleurs, l'écran de
+    confirmation, les dépenses, le premier lancement, le guide — et 7 reprises : la fiche d'un objet,
+    le codex, la structure, la planche de pose, la galerie, l'assistant, l'onglet Univers.<br>
+    En fin de journée, une relecture croisée des 23 maquettes d'alors a trouvé et corrigé 14 écarts,
+    dont deux contradictions franches entre maquettes.<br>
+    Tous les écrans du produit ont leur maquette, et plus aucune ne décrit le modèle d'héritage
+    abandonné.<br>
+    Cinq écrans sont hors de la fabrication. Deux sont gardés tels quels et n'auront pas de maquette —
+    l'image en grand, les réglages de l'atelier. Les trois autres sont écrits — les dépenses, le
+    premier lancement, le guide. Ils prennent le rang 30 – 39, ouvert pour eux. Voir le § 03-E.<br>
+    Le dossier des maquettes est complet.<br>
+    Session du 31 août : les seize reports du § 03-B ont été appliqués — quatorze le sont, et
+    <b>cinq corrections sont entrées dans les documents d'autorité du dépôt</b>, les premières et les
+    seules du chantier à en sortir. Les deux qui restent visent le code de l'application et non un
+    dessin : le recueil d'explications, et l'étiquette de la fenêtre des réglages. Les deux dimensions
+    du § 03-C sont alignées par la même occasion, et la première l'était plus mal qu'on ne le
+    croyait — quatre maquettes s'écartaient sur la hauteur de la barre de tête, pas une.<br>
+    Ce qui reste tient au § 03 : trois reports qui appartiennent au code, dix-sept vignettes d'exemple
+    à produire, un banc d'essai à étendre — et les questions du § 04.
+  </footer>
+
+</div>
+</body>
+</html>

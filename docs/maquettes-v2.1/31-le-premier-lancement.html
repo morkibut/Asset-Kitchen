@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, le premier lancement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;
+    background:var(--fond-0);margin-bottom:10px}
+  .wf-barre{min-width:1050px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .wf-tard .ep{color:var(--epingle)}
+  .sep-v{width:1px;height:14px;background:var(--bord)}
+  .wf-cotes{min-width:1050px;height:38px;background:var(--fond-0);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:6px;padding:0 12px}
+  .cote{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;color:var(--texte-3);font-size:11.5px;white-space:nowrap}
+  .cote.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-corps{min-width:1050px;display:flex;min-height:330px}
+  .wf-pied{min-width:1050px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .wf-pied .fin{margin-left:auto}
+
+  /* colonne de gauche — les étapes, ou les familles */
+  .col{width:240px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:2px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin:10px 0 5px}
+  .col-t:first-child{margin-top:0}
+  .sec{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .sec.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sec.vide{color:var(--texte-3)}
+  .sec .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .sec.on .cpt{color:var(--signal-clair)}
+  .sec .cpt.att{color:var(--epingle)}
+  .sepr{height:1px;background:var(--bord);margin:9px 0}
+
+  /* zone de droite — l'étape ouverte, ou le vide du codex */
+  .zone{flex:1;min-width:0;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .zone-t{font-family:var(--serif);font-size:23px;line-height:1.15}
+  .zone-s{color:var(--texte-2);font-size:12px;max-width:68ch;margin:0}
+  .champ{height:30px;max-width:430px;background:var(--fond-2);border:1px solid var(--bord);
+    border-radius:2px;display:flex;align-items:center;padding:0 10px;
+    font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .champ.on{border-color:var(--signal);color:var(--signal-clair)}
+  .champ.ep{border-color:var(--epingle);color:var(--epingle)}
+  .dit{font-size:11.5px;color:var(--texte-3);max-width:68ch;margin:0}
+  .dit b{color:var(--texte-2);font-weight:500}
+  .bta{height:26px;display:inline-flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-3);font-size:11.5px;
+    white-space:nowrap;align-self:flex-start}
+  .bta.gris{border-style:dashed;color:var(--texte-3)}
+
+  /* le codex vide */
+  .rien{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:14px;padding:34px 24px}
+  .rien .ph{font-family:var(--serif);font-size:26px;color:var(--texte-2);text-align:center}
+  .rien .champ{width:400px;max-width:100%;height:34px}
+  .rien .dit{text-align:center;max-width:52ch}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.k{color:var(--texte);font-weight:500}
+  table.t td.o{color:var(--texte)}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;
+    text-align:right;color:var(--texte)}
+  .m{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 5px;
+    font-size:11px;white-space:nowrap}
+  .m.no{color:var(--texte-3)}
+  .m.ep{color:var(--epingle)}
+  .m.bon{color:var(--ok)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .lgd{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);margin-top:8px}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · refonte de l'interface · V2.1 · rang 31</div>
+    <h1>Le premier lancement —<br><em>la seule minute que personne ne revoit jamais</em></h1>
+    <p>Une machine neuve : aucun jeu, aucune image, aucune clé chez le fournisseur d'IA. C'est le
+    seul moment où l'atelier est vide pour de bon, et le seul écran qu'on ne peut pas rattraper
+    plus tard. <strong>Il n'avait jamais été dessiné</strong>, parce que la réorganisation du
+    30 août l'a rendu impossible sans qu'on s'en aperçoive.</p>
+    <p>Cette maquette dit ce qu'on voit à la seconde zéro, ce qu'on peut sauter, et où l'on tombe
+    quand on décide qu'on en a assez répondu. Elle ne redessine pas l'assistant — il a son propre
+    document — <strong>elle lui ajoute une étape et lui donne un moment</strong>.</p>
+    <p class="sourd">Les faits cités sont lus dans le dépôt le 30 août 2026 : le document du
+    produit, les histoires d'usage, et le code qui fabrique le projet de départ.</p>
+  </div>
+
+
+  <!-- ══ 01 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>La panne — il n'y avait plus nulle part où écrire</h2></div>
+
+    <p class="intro">Le document du produit promet la même chose à quatre endroits : on ouvre, on
+    écrit, on obtient une image, sans traverser quoi que ce soit. Cette promesse reposait sur un
+    écran qui n'existe plus.</p>
+
+    <table class="t">
+      <tr><th style="width:210px">Où c'est écrit</th><th>Ce qui est promis</th></tr>
+      <tr><td class="o"><b>Le portrait de l'auteur</b><br><span class="sourd">docs/PRD.md, ligne 110</span></td>
+        <td>« ni tunnel de configuration, <b>ni assistant</b>, ni écran à traverser avant d'écrire
+        son prompt »</td></tr>
+      <tr><td class="o"><b>Ce qui est hors périmètre</b><br><span class="sourd">docs/PRD.md</span></td>
+        <td>« <b>Assistant de premier lancement</b> » — écarté nommément, dans la liste des choses
+        que le produit refuse de faire.</td></tr>
+      <tr><td class="o"><b>La décision « le premier lancement »</b><br><span class="sourd">docs/PRD.md</span></td>
+        <td>« L'application ouvre l'Atelier, <b>prompt actif</b>, sur un projet Bac à sable
+        préexistant. »</td></tr>
+      <tr><td class="o"><b>Le critère de réussite</b><br><span class="sourd">docs/PRD.md</span></td>
+        <td>« la première image est obtenue <b>sans traverser d'autre écran que celui de la
+        clé</b> ».</td></tr>
+    </table>
+
+    <div class="note att" style="margin-top:18px">
+      <span class="lab">Ce que le 30 août a retiré sans le dire</span>
+      <p>Il n'y a plus d'écran qui s'appelle l'Atelier. Il y a trois onglets — l'univers, le codex,
+      la galerie — et <strong>il n'existe plus que deux endroits d'où l'argent part</strong> :
+      l'établi d'une chose, et le codex. La galerie a perdu son champ, et la décision D31 a refusé
+      d'en remettre un dans l'univers, pour ne pas rouvrir un troisième guichet.</p>
+      <p>Or <strong>un établi appartient à une chose</strong>. Pas de chose, pas d'établi. Et sur
+      une installation neuve, le codex est vide. <strong>Il n'y a donc littéralement nulle part où
+      écrire un prompt</strong>, et la première histoire d'usage du produit —
+      <em class="it">« ouvrir l'atelier et écrire un prompt sans rien avoir configuré »</em> — n'est
+      plus réalisable telle qu'elle est écrite.</p>
+    </div>
+
+    <div class="note mes">
+      <span class="lab">Vérifié — et une seconde chose manquait</span>
+      <p>D31 décide un geste : <em class="it">« on tape le nom : le tonneau entre dans le codex
+      sur-le-champ »</em>. La maquette du codex le raconte en toutes lettres, mais
+      <strong>son croquis ne contient aucun champ où taper</strong> : la colonne des familles, la
+      grille, la fiche, et rien d'autre. Le geste décidé n'était dessiné nulle part.</p>
+      <p>C'est cet écran-ci qui doit le dessiner, parce que c'est le seul jour où ce champ est la
+      seule chose qui compte à l'écran. Voir le <span class="mesure">§ 05</span>.</p>
+    </div>
+
+    <p style="margin-top:18px"><strong>Décidé le 30 août 2026 :</strong> l'assistant s'ouvre dès la
+    première fois, et il gagne une étape pour déposer la clé du fournisseur. C'est un renversement
+    assumé du document du produit — le <span class="mesure">§ 06</span> liste les phrases à
+    réécrire, mot pour mot.</p>
+  </section>
+
+
+  <!-- ══ 02 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'écran, à la seconde zéro</h2></div>
+
+    <p class="intro">L'onglet Univers est allumé, sur son côté Réglages. C'est l'assistant, déjà
+    décrit ailleurs, dans son humeur <em class="it">première fois</em> : les étapes s'enchaînent,
+    un bouton <em class="it">passer</em> sur chacune, et <em class="it">j'ai fini pour l'instant</em>
+    visible en permanence.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab on">Univers</span><span class="tab">Codex</span><span class="tab">Galerie</span>
+        <span class="wf-tard">
+          <span>Bac à sable · $0,00</span>
+          <span class="sep-v"></span>
+          <span class="ep">aucune clé</span>
+          <span class="sep-v"></span>
+          <span>Réglages</span><span>Guide</span>
+        </span>
+      </div>
+      <div class="wf-cotes">
+        <span class="cote">Inspiration</span>
+        <span class="cote on">Réglages</span>
+        <span class="cote">Ambiances et couleurs</span>
+      </div>
+      <div class="wf-corps">
+        <div class="col">
+          <div class="col-t">le jeu</div>
+          <div class="sec on">1 · Le nom<span class="cpt">Bac à sable</span></div>
+          <div class="sec vide">2 · La vue<span class="cpt">—</span></div>
+          <div class="sec vide">3 · La taille<span class="cpt">—</span></div>
+          <div class="sec vide">4 · Les types d'objets<span class="cpt">—</span></div>
+          <div class="col-t">le style</div>
+          <div class="sec vide">5 · L'allure<span class="cpt">—</span></div>
+          <div class="sec vide">6 · Références et couleurs<span class="cpt">—</span></div>
+          <div class="col-t">la production</div>
+          <div class="sec vide">7 · Poses et états<span class="cpt">—</span></div>
+          <div class="sec vide">8 · Emplacements<span class="cpt">—</span></div>
+          <div class="sec vide">9 · Les IA à utiliser<span class="cpt">—</span></div>
+          <div class="col-t">l'atelier</div>
+          <div class="sec vide">10 · La clé<span class="cpt att">aucune clé</span></div>
+        </div>
+        <div class="zone">
+          <div class="zone-t">1 · Le nom du jeu</div>
+          <p class="zone-s">Comment s'appelle ce que tu fabriques. Ça n'engage rien : le nom se
+          change quand on veut, et il ne part dans aucun prompt.</p>
+          <div class="champ on">Cœur de pierre</div>
+          <p class="dit">Tant que cette case n'est pas remplie, <b>le jeu s'appelle « Bac à sable »</b>
+          et il existe quand même. Ranger reste un geste, jamais un préalable.</p>
+          <span class="bta">passer cette étape</span>
+        </div>
+      </div>
+      <div class="wf-pied">
+        <span>étape 1 sur 10</span>
+        <span class="fin">j'ai fini pour l'instant</span><span>passer</span><span>suivant →</span>
+      </div>
+    </div>
+    <div class="lgd">
+      <span><b>barre de tête 44</b> · <b>barre des trois côtés 38</b> · <b>colonne 240</b> · <b>rangée 26</b></span>
+      <span><b>aucune mesure neuve</b> — tout est repris de l'assistant</span>
+      <span style="color:var(--epingle)"><b style="color:var(--epingle)">aucune clé</b> écrit en clair dans la barre du haut, dès la première seconde</span>
+    </div>
+
+    <div class="note" style="margin-top:16px">
+      <span class="lab">Trois choses que ce croquis décide</span>
+      <ul>
+        <li><b>La barre du haut dit déjà l'essentiel.</b> Le nom du jeu, ce qui a été dépensé —
+        zéro — et l'état de la clé. Rien n'est caché derrière un menu, et rien n'est inventé :
+        l'application affiche déjà « aucune clé » à cet endroit.</li>
+        <li><b>Les deux autres onglets restent ouverts.</b> Ils sont vides, pas indisponibles —
+        et vide n'est pas la même chose qu'interdit. La règle du produit grise ce qui ne peut pas
+        marcher, avec sa raison ; un codex sans rien dedans marche très bien, il ne contient
+        simplement rien.</li>
+        <li><b>Une dixième étape, dans un quatrième groupe.</b> Les trois groupes existants — le
+        jeu, le style, la production — parlent tous <em class="it">de ce jeu-là</em>. La clé, non :
+        elle est la même pour tous les jeux. Lui donner son propre groupe évite qu'on croie l'avoir
+        réglée pour un jeu seulement.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══ 03 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>L'étape en plus — la clé</h2></div>
+
+    <p class="intro">La clé du fournisseur, c'est le mot de passe qui autorise l'atelier à demander
+    des images à l'IA. Sans elle, tout fonctionne sauf une chose : générer. C'est le seul préalable
+    dur du produit, et le seul réglage qu'on remplit une fois pour ne plus jamais y penser.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab on">Univers</span><span class="tab">Codex</span><span class="tab">Galerie</span>
+        <span class="wf-tard">
+          <span>Cœur de pierre · $0,00</span>
+          <span class="sep-v"></span>
+          <span class="ep">aucune clé</span>
+          <span class="sep-v"></span>
+          <span>Réglages</span><span>Guide</span>
+        </span>
+      </div>
+      <div class="wf-cotes">
+        <span class="cote">Inspiration</span>
+        <span class="cote on">Réglages</span>
+        <span class="cote">Ambiances et couleurs</span>
+      </div>
+      <div class="wf-corps">
+        <div class="col">
+          <div class="col-t">le jeu</div>
+          <div class="sec">1 · Le nom<span class="cpt">Cœur de pierre</span></div>
+          <div class="sec">2 · La vue<span class="cpt">dessus 3/4 · 4 dir.</span></div>
+          <div class="sec">3 · La taille<span class="cpt">128</span></div>
+          <div class="sec">4 · Les types d'objets<span class="cpt">7</span></div>
+          <div class="col-t">le style</div>
+          <div class="sec vide">5 · L'allure<span class="cpt">—</span></div>
+          <div class="sec vide">6 · Références et couleurs<span class="cpt">—</span></div>
+          <div class="col-t">la production</div>
+          <div class="sec">7 · Poses et états<span class="cpt">6 · 3</span></div>
+          <div class="sec vide">8 · Emplacements<span class="cpt">—</span></div>
+          <div class="sec vide">9 · Les IA à utiliser<span class="cpt att">aucun catalogue</span></div>
+          <div class="col-t">l'atelier</div>
+          <div class="sec on">10 · La clé<span class="cpt">—</span></div>
+        </div>
+        <div class="zone">
+          <div class="zone-t">10 · La clé du fournisseur</div>
+          <p class="zone-s">Elle se colle une fois. Elle vaut pour tous les jeux de l'atelier, et
+          elle ne se relit jamais : seuls ses quatre derniers signes se réaffichent, pour qu'on
+          reconnaisse laquelle est en place.</p>
+          <div class="champ on">sk-or-v1-••••••••••••••••••••••••••••••••</div>
+          <p class="dit">Où en obtenir une : <b>un lien qui ouvre la page du fournisseur</b>, pas
+          une explication à lire. Elle est gratuite à créer ; ce sont les images qui se paient.</p>
+          <div class="champ ep">sans clé, le bouton générer reste éteint et dit pourquoi — le reste de l'atelier fonctionne</div>
+          <span class="bta gris">passer — je la déposerai plus tard</span>
+        </div>
+      </div>
+      <div class="wf-pied">
+        <span>étape 10 sur 10</span>
+        <span class="fin">j'ai fini pour l'instant</span><span>passer</span><span>c'est prêt →</span>
+      </div>
+    </div>
+    <div class="lgd">
+      <span><b>même écran, même colonne</b> — seule la zone de droite change d'étape en étape</span>
+      <span><b>étape 9</b> montre sa liste vide et dit qui la remplira, comme toutes les listes vides de l'assistant</span>
+    </div>
+
+    <div class="note att" style="margin-top:16px">
+      <span class="lab">Une seule maison, plusieurs portes — et c'est volontaire</span>
+      <p>La règle qui tient tout le produit dit qu'une chose se règle <strong>à un seul
+      endroit</strong>, sans quoi deux endroits finissent par se contredire. Cette étape ne crée pas
+      un second endroit : <strong>elle montre le champ de la fenêtre des réglages, là où la clé
+      habite pour de bon</strong>. Le remplir ici ou là revient exactement au même.</p>
+      <p>Ce n'est pas une entorse, c'est la même chose qu'ailleurs : le bouton générer éteint porte
+      déjà un lien vers ce réglage, et la barre du haut en montre déjà l'état. <strong>Trois portes,
+      une seule pièce.</strong> Ce qu'il ne faut jamais, c'est deux pièces.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Pourquoi la dixième et pas la première</span>
+      <p>Ouvrir sur « colle ton mot de passe » serait la plus froide des premières questions, et
+      c'est la seule étape qui ne parle pas du jeu. Mise en dernier, elle arrive juste avant d'aller
+      fabriquer, au moment où elle sert.</p>
+      <p>Elle coûte une petite gêne à l'étape 9, qui propose les IA à employer : sur une machine
+      vraiment neuve, aucun catalogue n'a encore été reçu, donc la liste est vide. Elle le dit et
+      renvoie à l'étape suivante — le même geste que l'assistant emploie déjà partout où une liste
+      est vide. <span class="sourd">L'inverse — la clé en premier — obligerait à renuméroter les
+      neuf étapes existantes dans toutes les maquettes qui les citent par leur numéro. Le prix est
+      plus élevé que le confort gagné.</span></p>
+    </div>
+  </section>
+
+
+  <!-- ══ 04 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Sauter, sortir, et le nom qu'on n'a pas donné</h2></div>
+
+    <p class="intro">L'assistant n'est une porte que si elle s'ouvre dans les deux sens. Trois
+    manières d'en sortir, et ce qui arrive dans chacune.</p>
+
+    <table class="t">
+      <tr><th style="width:190px">Le geste</th><th>Ce qui se passe</th><th style="width:150px">Ce qui reste vrai</th></tr>
+      <tr>
+        <td class="o"><b>Passer une étape</b></td>
+        <td>Elle reste marquée à faire dans la colonne, avec un tiret à la place de sa valeur. Rien
+        ne se bloque, rien ne se redemande. On la rouvre d'un clic, plus tard, dans deux ans.</td>
+        <td>Un réglage vide ne contraint rien : les défauts du produit prennent le relais.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>J'ai fini pour l'instant</b></td>
+        <td><strong>On tombe dans le codex</strong>, vide, avec le champ qui nomme allumé — c'est le
+        <span class="mesure">§ 05</span>. Pas dans la galerie : elle ne montre que des images
+        produites, et il n'y en a aucune.</td>
+        <td>On peut partir dès l'étape 1 et fabriquer quand même.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>Passer l'étape de la clé</b></td>
+        <td>Le bouton générer reste éteint, <strong>porte sa raison en clair</strong> et le lien qui
+        mène au réglage. Le reste de l'atelier fonctionne : importer, ranger, détourer, découper,
+        exporter.</td>
+        <td>Ce qui est indisponible est grisé avec sa raison, jamais proposé puis refusé.</td>
+      </tr>
+    </table>
+
+    <div class="note mes" style="margin-top:18px">
+      <span class="lab">Le jeu existe avant d'avoir un nom — et c'est déjà comme ça dans le code</span>
+      <p>Le serveur crée un projet appelé <strong>« Bac à sable »</strong> quand il n'en trouve aucun,
+      et il ne le recrée jamais ensuite. L'assistant ne crée donc pas le premier jeu :
+      <strong>il remplit celui qui est déjà là</strong>, et son étape 1 ne fait que le renommer.</p>
+      <p>C'est ce qui permet aux deux promesses de tenir ensemble : on travaille d'emblée dans un
+      jeu qui existe, <em class="it">et</em> on ne nomme rien avant de savoir ce qu'on fabrique.
+      Créer un <em class="it">vrai</em> jeu, avec son nom et ses réglages, attend qu'on en ressente
+      le besoin — c'est-à-dire le premier passage par l'étape 1.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 05 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>La pièce derrière la porte — le codex vide</h2></div>
+
+    <p class="intro">C'est là qu'on atterrit en quittant l'assistant, et c'est le premier écran
+    où l'on peut dépenser. Il ne contient rien, et il doit quand même dire quoi faire — en un
+    geste, pas en un paragraphe.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
+        <span class="wf-tard">
+          <span>Cœur de pierre · $0,00</span>
+          <span class="sep-v"></span>
+          <span>clé …a41c</span>
+          <span class="sep-v"></span>
+          <span>Réglages</span><span>Guide</span>
+        </span>
+      </div>
+      <div class="wf-corps">
+        <div class="col">
+          <div class="col-t">ce que le monde contient</div>
+          <div class="sec on">Personnages<span class="cpt">0</span></div>
+          <div class="sec vide">Décors<span class="cpt">0</span></div>
+          <div class="sec vide">Objets<span class="cpt">0</span></div>
+          <div class="sec vide">Interface<span class="cpt">0</span></div>
+          <div class="sec vide">Équipement<span class="cpt">0</span></div>
+          <div class="sepr"></div>
+          <div class="col-t">ce que le jeu réclame de tous</div>
+          <div class="sec">Les directions<span class="cpt">4 · lues</span></div>
+          <div class="sec vide">Les poses<span class="cpt">6 · par défaut</span></div>
+          <div class="sec vide">Le vestiaire<span class="cpt">0</span></div>
+        </div>
+        <div class="rien">
+          <div class="ph">Le monde est vide.</div>
+          <div class="champ on">un tonneau cerclé de fer</div>
+          <p class="dit">Écrire un nom crée la chose, tout de suite, dans la famille allumée à
+          gauche. Son établi s'ouvre, et c'est là qu'on écrit le prompt.</p>
+        </div>
+      </div>
+      <div class="wf-pied">
+        <span>aucune chose dans le codex</span>
+        <span class="fin">écrire un nom la crée · on génère depuis son établi</span>
+      </div>
+    </div>
+    <div class="lgd">
+      <span><b>colonne 240</b> · <b>rangée 26</b> · <b>champ 34</b> <span class="sourd">la hauteur de champ du produit</span></span>
+      <span><b>les cinq familles sont fixes</b> — elles existent avant toute chose, et servent à router les références</span>
+      <span><b>personnages allumée par défaut</b> — la première de la liste ; on en change d'un clic avant d'écrire</span>
+    </div>
+
+    <div class="note" style="margin-top:16px">
+      <span class="lab">Ce champ est le geste que D31 avait décidé et que rien ne dessinait</span>
+      <p>Il n'appartient pas à cet écran-ci : <strong>il appartient au codex</strong>, et il y reste
+      quand le codex se remplit — il devient alors une ligne parmi les choses, au lieu d'occuper le
+      milieu. La maquette du codex doit le reprendre ; c'est écrit au
+      <span class="mesure">§ 06</span>.</p>
+      <p>Ce qu'il n'est pas : un champ de prompt. On ne paie pas en tapant ici. On nomme une chose,
+      elle entre dans le codex, et <strong>on paie depuis son établi</strong> — comme partout
+      ailleurs. Les lieux qui dépensent restent deux.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 06 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce que ça change ailleurs — à reporter</h2></div>
+
+    <p class="intro">Cette décision touche six phrases écrites avant elle : <strong>cinq qu'elle
+    contredit, une qu'elle précise</strong>. Les voici toutes, citées mot pour mot, avec ce qu'elles
+    deviennent. Aucune n'est laissée en l'état.</p>
+
+    <div class="note mes" style="margin-bottom:18px">
+      <span class="lab">Les cinq corrections sont appliquées · 30 août 2026</span>
+      <p><strong>Ce sont les premières et les seules du chantier des maquettes à sortir du dossier</strong>
+      et à entrer dans les documents qui font autorité sur le dépôt. Elles attendaient qu'une révision de
+      la documentation, en cours sur une autre branche, ait atterri — c'est fait.</p>
+      <p style="margin-top:8px">Les quatre phrases de <em class="it">docs/PRD.md</em> sont réécrites, et
+      « Assistant de premier lancement » a quitté la liste des choses écartées pour un paragraphe daté qui
+      dit pourquoi l'exclusion est tombée. La phrase de <em class="it">docs/user-stories.md</em> a gagné
+      son mot. <b>Le tableau ci-dessous reste tel quel</b> : il dit ce qui a été changé et pourquoi, et
+      c'est la seule trace de la raison.</p>
+    </div>
+
+    <table class="t">
+      <tr><th style="width:176px">Où</th><th>Ce qui y est écrit</th><th style="width:240px">Ce que ça devient</th></tr>
+      <tr>
+        <td class="o"><b>docs/PRD.md</b><br><span class="sourd">ligne 110 — le portrait de l'auteur</span></td>
+        <td>« Il ne veut ni tunnel de configuration, <b>ni assistant</b>, ni écran à traverser avant
+        d'écrire son prompt. »</td>
+        <td>La phrase tombe. Ce qu'elle protégeait — ne pas être retenu — est tenu autrement :
+        <b>on sort de l'assistant à n'importe quelle étape</b>, et rien n'est exigé.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>docs/PRD.md</b><br><span class="sourd">hors périmètre</span></td>
+        <td>« <b>Assistant de premier lancement</b> » — dans la liste des choses écartées par les
+        décisions du document.</td>
+        <td>La ligne sort de la liste des choses écartées et entre dans le périmètre, datée du
+        30 août 2026.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>docs/PRD.md</b><br><span class="sourd">décision « le premier lancement »</span></td>
+        <td>« L'application ouvre <b>l'Atelier, prompt actif</b>, sur un projet Bac à sable
+        préexistant. »</td>
+        <td>L'application ouvre <b>l'assistant, étape 1</b>, sur le jeu « Bac à sable » qui existe
+        déjà. Le reste du paragraphe — rien n'est exigé, la clé est le seul préalable dur — ne
+        bouge pas d'un mot.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>docs/PRD.md</b><br><span class="sourd">critère de réussite</span></td>
+        <td>« la première image est obtenue <b>sans traverser d'autre écran que celui de la clé</b> »</td>
+        <td>… <b>sans traverser d'autre écran que l'assistant, qu'on peut quitter à toute
+        étape</b>. Le critère reste mesurable : il compte les écrans obligatoires, et il en
+        reste zéro.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>docs/user-stories.md</b><br><span class="sourd">US-1</span></td>
+        <td>« ouvrir l'atelier et <b>écrire un prompt sans rien avoir configuré</b>, afin d'obtenir
+        une image dès la première minute »</td>
+        <td>« … <b>nommer une chose et écrire son prompt</b> sans rien avoir configuré ». Le geste
+        gagne un mot ; la promesse — une image dès la première minute — ne change pas.</td>
+      </tr>
+      <tr>
+        <td class="o"><b>06ter-assistant § 10</b><br><span class="sourd">et 06-univers, deux fois</span></td>
+        <td>« La clé du fournisseur […] → <b>l'écran Réglages général</b>. » La clé est rangée là,
+        parmi ce qui ne dépend d'aucun jeu.</td>
+        <td>Elle y reste. <b>C'est la seule des six qui n'est pas contredite</b> : l'assistant
+        montre ce champ-là, il ne le double pas. La phrase gagne une précision — voir le
+        <span class="mesure">§ 03</span>.</td>
+      </tr>
+    </table>
+
+    <div class="note att" style="margin-top:18px">
+      <span class="lab">Et trois choses à écrire dans les maquettes voisines</span>
+      <ul>
+        <li><b>Le codex gagne son champ qui nomme.</b> Décidé par D31, dessiné ici au
+        <span class="mesure">§ 05</span>, à reprendre dans <em class="it">05-codex.html</em> — au
+        milieu quand le monde est vide, en rangée quand il ne l'est plus.</li>
+        <li><b>L'assistant gagne sa dixième étape et son quatrième groupe.</b> La colonne, le
+        compteur du pied, la table des étapes et la phrase d'ouverture, dans les deux maquettes qui
+        le dessinent — <em class="it">06ter-assistant-demarrage.html</em> et
+        <em class="it">06-univers.html</em>.
+        <b style="color:var(--ok)">Fait le 30 août 2026.</b></li>
+        <li><b>L'assistant gagne un second moment où il s'ouvre tout seul.</b> Il s'ouvrait « à la
+        création d'un jeu » ; il s'ouvre aussi à la toute première ouverture de l'atelier, qui est
+        le seul moment où il n'y a rien à créer.
+        <b style="color:var(--ok)">Fait le 30 août 2026.</b></li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══ 07 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Les mesures</h2></div>
+
+    <p class="intro">Aucune largeur ni hauteur neuve. Cet écran n'est pas un écran de plus : c'est
+    l'assistant et le codex, dans l'état où ils se trouvent le premier jour.</p>
+
+    <table class="t">
+      <tr><th>L'élément</th><th class="mesure" style="width:110px">Sa mesure</th><th>D'où elle vient</th></tr>
+      <tr><td class="o">Barre de tête</td><td class="num">44 px</td><td>Identique partout.</td></tr>
+      <tr><td class="o">Barre des trois côtés de l'univers</td><td class="num">38 px</td><td>La hauteur de barre d'outils du produit.</td></tr>
+      <tr><td class="o">La colonne — dix étapes, ou les familles</td><td class="num">240 px</td><td>La largeur de colonne étroite du produit.</td></tr>
+      <tr><td class="o">Une rangée d'étape, une rangée de famille</td><td class="num">26 px</td><td>La hauteur de rangée d'arbre du produit.</td></tr>
+      <tr><td class="o">Le champ d'une étape</td><td class="num">30 px</td><td>La hauteur de champ étroite du produit.</td></tr>
+      <tr><td class="o">Le champ qui nomme, dans le codex vide</td><td class="num">34 px</td><td>La hauteur de champ du produit — il est seul au milieu, il porte le geste.</td></tr>
+      <tr><td class="o">Barre d'état, en pied</td><td class="num">26 px</td><td>Identique partout.</td></tr>
+      <tr><td class="o">La zone de l'étape ouverte</td><td class="num">tout le reste</td><td>Elle prend la place qui reste, sans largeur imposée.</td></tr>
+    </table>
+
+    <div class="note gris" style="margin-top:16px">
+      <span class="lab">Ce que cette maquette ne décide pas</span>
+      <p><b>Ce que devient le bac à sable quand un vrai jeu naît.</b> Le code d'aujourd'hui le laisse
+      en place à côté, et adopte dans le premier projet les images qui n'appartenaient à personne.
+      Les premières images faites avant d'avoir nommé son jeu restent donc dans le bac à sable.
+      Est-ce qu'elles doivent suivre le renommage ? C'est une question de rangement, pas de premier
+      lancement — elle est portée au registre.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 08 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que cet écran doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Deux entrées à écrire, dont la plus coûteuse du dossier · D41</span>
+      <p><strong>Cas particulier, et il vaut d'être dit :</strong> c'est le seul moment où personne
+        n'ira lire le guide — on vient d'ouvrir l'atelier, on ne sait pas encore qu'il existe. Mais
+        c'est aussi <strong>le seul écran qui marche quand rien n'existe</strong> : le guide s'ouvre
+        avant le premier projet, avant la première image, avant même la clé. Il est déjà dans la barre
+        du haut de cet écran-ci.</p>
+      <p style="margin-top:10px"><b>nom</b> · La clé du fournisseur d'IA<br>
+        <b>quoi</b> · Le mot de passe qui autorise l'atelier à payer des images chez le fournisseur.
+        Elle se dépose une fois, à l'étape 1 de l'assistant ou dans les réglages, et on n'y repense
+        jamais.<br>
+        <b>ce que ça change</b> · Tout. C'est <b>le seul réglage qui empêche absolument tout</b> tant
+        qu'il est vide : le bouton générer reste éteint et porte sa raison, avec le lien vers le
+        réglage. Le reste de l'atelier fonctionne — importer, ranger, détourer, découper, exporter.<br>
+        <b>d'où ça vient</b> · toi · vide au départ · rien d'autre ne la remplace<br>
+        <b>où ça se range</b> · <span class="mesure">Les réglages de l'atelier</span> — elle ne dépend
+        d'aucun jeu</p>
+      <p style="margin-top:10px"><b>nom</b> · L'assistant de démarrage<br>
+        <b>quoi</b> · Les dix étapes qui s'ouvrent à la toute première ouverture et à la création d'un
+        jeu. Elles posent ce qui s'applique à tout : le nom, la vue, la taille d'image, la clé, les
+        types d'objets, les poses.<br>
+        <b>ce que ça change</b> · Rien n'est exigé. <b>On en sort à n'importe quelle étape</b>, une
+        étape passée reste passée sans rien bloquer ni se redemander, et un réglage vide ne contraint
+        rien — les défauts du produit prennent le relais.<br>
+        <b>d'où ça vient</b> · toi · dix étapes vides, et un jeu « Bac à sable » qui existait déjà<br>
+        <b>où ça se range</b> · <span class="mesure">Réglages du jeu</span></p>
+    </div>
+  </section>
+
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 31, le premier lancement · rang 30 – 39, ce qui entoure la fabrication<br>
+    L'assistant lui-même est décrit dans <em class="it">06ter-assistant-demarrage.html</em>, le codex dans
+    <em class="it">05-codex.html</em>. Cette maquette leur ajoute un moment, une étape et un champ.<br>
+    Écrite le 30 août 2026 · faits lus dans docs/PRD.md, docs/user-stories.md, atelier/services/bibliotheque.py
+    et atelier/reglages.py.
+  </footer>
+
+</div>
+</body>
+</html>

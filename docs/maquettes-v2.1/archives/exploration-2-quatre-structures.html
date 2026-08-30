@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, quatre structures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 14px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:70ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:76ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:76ch;margin-bottom:22px}
+
+  /* ── La chaîne du besoin ────────────────────────────────────────── */
+  .chaine{display:flex;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-1);overflow:hidden}
+  .maillon{flex:1;padding:14px;border-right:1px solid var(--bord)}
+  .maillon:last-child{border-right:0}
+  .maillon .n{font-family:var(--mono);font-size:9.5px;color:var(--signal);margin-bottom:7px}
+  .maillon .t{font-family:var(--serif);font-size:20px;margin-bottom:6px;line-height:1.15}
+  .maillon .d{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+  .maillon .o{margin-top:9px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    border-top:1px solid var(--bord);padding-top:7px}
+  .maillon.futur{background:var(--fond-0)}
+  .maillon.futur .t{color:var(--texte-3)}
+  .maillon.futur .n{color:var(--epingle)}
+
+  /* ── Structures ─────────────────────────────────────────────────── */
+  .structure{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    margin-bottom:9px;overflow:hidden}
+  .structure.reco{border-color:var(--signal)}
+  .st-tete{display:flex;align-items:flex-start;gap:16px;padding:16px 18px 14px;
+    border-bottom:1px solid var(--bord)}
+  .st-lettre{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:4px 8px;flex:none;margin-top:5px}
+  .structure.reco .st-lettre{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .st-titres h3{font-family:var(--serif);font-size:27px;font-weight:400;margin:0 0 5px;line-height:1.1}
+  .st-titres .mecanique{font-size:12.5px;color:var(--texte-2);margin:0;max-width:88ch}
+  .st-tag{margin-left:auto;flex:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+    color:var(--signal-clair);background:var(--signal-sourd);border:1px solid var(--signal);
+    border-radius:2px;padding:3px 8px;margin-top:6px}
+  .st-corps{display:grid;grid-template-columns:400px minmax(0,1fr);gap:0}
+  .st-croquis{padding:16px 18px;border-right:1px solid var(--bord);background:var(--fond-0)}
+  .st-avis{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .avis .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    display:block;margin-bottom:9px}
+  .avis.pour .lab{color:var(--ok)}
+  .avis.contre .lab{color:var(--echec)}
+  .avis ul{margin:0;padding:0;list-style:none}
+  .avis li{font-size:12px;color:var(--texte-2);padding:4px 0 4px 13px;position:relative;line-height:1.45}
+  .avis li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px}
+  .avis.pour li::before{background:var(--ok)}
+  .avis.contre li::before{background:var(--echec)}
+  .avis li b{color:var(--texte);font-weight:600}
+
+  /* ── Croquis (wireframes) ───────────────────────────────────────── */
+  .wf{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);overflow:hidden}
+  .wf-barre{height:30px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:3px;padding:0 8px}
+  .wf-nom{font-family:var(--serif);font-size:12px;margin-right:6px;line-height:1}
+  .tab{height:19px;display:flex;align-items:center;padding:0 7px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:9.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .tab.mini{font-family:var(--mono);font-size:8.5px;padding:0 5px}
+  .wf-tard{margin-left:auto;font-family:var(--mono);font-size:8.5px;color:var(--texte-3)}
+  .wf-corps{display:flex;min-height:150px}
+  .col{border-right:1px solid var(--bord);padding:8px;display:flex;flex-direction:column;gap:5px}
+  .col:last-child{border-right:0}
+  .col-t{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--texte-3);margin-bottom:2px}
+  .ligne{height:8px;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px}
+  .ligne.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .zone-g{flex:1;padding:8px;display:flex;flex-direction:column;gap:6px}
+  .grille{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;flex:1}
+  .tuile{background:var(--fond-2);border:1px solid var(--bord)}
+  .tuile.sel{border-color:var(--lumiere)}
+  .champ{height:18px;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:2px}
+  .etapes{display:flex;gap:3px;margin-bottom:2px}
+  .etape-p{flex:1;height:17px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    display:flex;align-items:center;justify-content:center;font-size:8.5px;color:var(--texte-2)}
+  .etape-p.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .etape-p.off{color:var(--texte-3);opacity:.5}
+  .toile{flex:1;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:8.5px;color:var(--texte-3);letter-spacing:.08em;text-align:center;padding:6px}
+  .file{display:flex;flex-direction:column;gap:4px;flex:1}
+  .fl{height:22px;background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;gap:6px;padding:0 6px}
+  .fl .vig{width:14px;height:14px;background:var(--fond-3);border:1px solid var(--bord)}
+  .fl .txt{font-size:9px;color:var(--texte-2)}
+  .croquis-lgd{margin-top:9px;font-family:var(--mono);font-size:9px;color:var(--texte-3);line-height:1.5}
+
+  /* ── Tableau de comparaison ─────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 10px 8px;
+    border-bottom:1px solid var(--bord);vertical-align:bottom}
+  th.c{text-align:center;width:96px}
+  th.c b{display:block;font-family:var(--serif);font-size:16px;color:var(--texte);
+    text-transform:none;letter-spacing:0;font-weight:400;margin-bottom:2px}
+  th.reco b{color:var(--signal-clair)}
+  td{padding:9px 10px;border-bottom:1px solid var(--bord);color:var(--texte-2);line-height:1.4}
+  td.c{text-align:center;font-family:var(--mono);font-size:13px}
+  .oui{color:var(--ok)} .moyen{color:var(--epingle)} .non{color:var(--echec)}
+  tr:last-child td{border-bottom:0}
+  tbody tr.recocol td:nth-child(5){background:rgba(73,179,206,.05)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--epingle);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.signal{border-left-color:var(--signal)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--epingle);display:block;margin-bottom:9px}
+  .note.signal .lab{color:var(--signal)}
+  .note p:last-child{margin-bottom:0}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 0 — deuxième passe</div>
+    <h1>Quatre structures possibles,<br><em>et ce que chacune coûte</em></h1>
+    <p>La première proposition — quatre ateliers par moment de travail — <strong>ratait deux choses</strong>,
+      et ce sont exactement les deux que le besoin nomme.</p>
+    <p><strong>Un.</strong> Elle traitait « Reprendre » comme un seul lieu, avec les mêmes outils pour
+      détourer un décor, recaler un calque d'équipement et corriger une frame d'animation. Or l'outil de
+      reprise dépend de <em>ce qui vient d'être généré et pourquoi</em>.</p>
+    <p><strong>Deux.</strong> La chaîne <span class="mesure">personnage → poses → animations → équipements</span>
+      n'y apparaissait nulle part : elle était répartie entre deux ateliers, donc invisible.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que le besoin décrit — une chaîne, pas une liste</h2></div>
+    <p class="intro">Six maillons. Un décor ou un objet s'arrête au deuxième ; un personnage les traverse tous.
+      Chaque maillon produit une matière différente, donc <strong>appelle un outil de reprise différent</strong> —
+      c'est la phrase clé du besoin.</p>
+
+    <div class="chaine">
+      <div class="maillon">
+        <div class="n">01</div>
+        <div class="t">Créer</div>
+        <div class="d">Un personnage, un objet, un décor, une interface.</div>
+        <div class="o">outil · le prompt</div>
+      </div>
+      <div class="maillon">
+        <div class="n">02</div>
+        <div class="t">Nettoyer</div>
+        <div class="d">Détourer, découper une planche, recadrer, remettre sur grille.</div>
+        <div class="o">outil · la table de détourage</div>
+      </div>
+      <div class="maillon">
+        <div class="n">03</div>
+        <div class="t">Poser</div>
+        <div class="d">Le personnage sous toutes ses coutures — directions, attitudes.</div>
+        <div class="o">outil · la planche de poses</div>
+      </div>
+      <div class="maillon futur">
+        <div class="n">04 · V3</div>
+        <div class="t">Animer</div>
+        <div class="d">Chaque pose devient un mouvement, frame par frame.</div>
+        <div class="o">outil · la bande de frames</div>
+      </div>
+      <div class="maillon">
+        <div class="n">05</div>
+        <div class="t">Équiper</div>
+        <div class="d">Un calque par équipement, adapté à chaque pose et chaque frame.</div>
+        <div class="o">outil · le calque par différence</div>
+      </div>
+      <div class="maillon">
+        <div class="n">06</div>
+        <div class="t">Sortir</div>
+        <div class="d">Le dossier du jeu, l'agent, ce que ça a coûté.</div>
+        <div class="o">outil · l'export</div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Le maillon qui n'existe pas encore décide quand même de la structure</span>
+      <p><strong>Animer est en V3</strong> — rien n'en est construit. Mais si la structure choisie n'a pas
+        déjà une place nommée pour lui, on refera cette discussion dans trois mois, avec du code écrit entre
+        temps. Les quatre structures ci-dessous sont donc jugées <em>aussi</em> sur la place qu'elles laissent
+        à ce qui n'est pas là.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Les quatre structures</h2></div>
+
+    <!-- ── A ────────────────────────────────────────────────────── -->
+    <div class="structure">
+      <div class="st-tete">
+        <span class="st-lettre">A</span>
+        <div class="st-titres">
+          <h3>Les quatre moments</h3>
+          <p class="mecanique">Quatre ateliers nommés par ce qu'on est en train de faire :
+            <strong>Univers · Fabriquer · Reprendre · Sortir</strong>. On change d'atelier quand on change de
+            rythme de travail. <span class="sourd">C'est la première proposition, détaillée dans
+            <span class="mesure">maquette-v21-0-carte.html</span>.</span></p>
+        </div>
+      </div>
+      <div class="st-corps">
+        <div class="st-croquis">
+          <div class="wf">
+            <div class="wf-barre">
+              <span class="wf-nom">Asset Kitchen</span>
+              <span class="tab">Univers</span><span class="tab on">Fabriquer</span>
+              <span class="tab">Reprendre</span><span class="tab">Sortir</span>
+              <span class="wf-tard">$2,140</span>
+            </div>
+            <div class="wf-corps">
+              <div class="col" style="width:78px">
+                <div class="col-t">projets</div>
+                <div class="ligne on"></div><div class="ligne"></div><div class="ligne"></div>
+              </div>
+              <div class="zone-g">
+                <div class="champ"></div>
+                <div class="grille">
+                  <div class="tuile"></div><div class="tuile"></div><div class="tuile sel"></div><div class="tuile"></div>
+                  <div class="tuile"></div><div class="tuile"></div><div class="tuile"></div><div class="tuile"></div>
+                </div>
+              </div>
+              <div class="col" style="width:74px">
+                <div class="col-t">fiche</div>
+                <div class="ligne"></div><div class="ligne"></div><div class="ligne"></div><div class="ligne"></div>
+              </div>
+            </div>
+          </div>
+          <div class="croquis-lgd">un onglet = un moment · la chaîne n'est visible nulle part</div>
+        </div>
+        <div class="st-avis">
+          <div class="avis pour">
+            <span class="lab">Pour</span>
+            <ul>
+              <li><b>Le moins de code neuf</b> — c'est l'écran actuel, dégraissé et réparti.</li>
+              <li>Une seule grille d'assets, la planche contact reste centrale — tout le système de design tient sans retouche.</li>
+              <li>Un décor ou une interface ne voit jamais rien qui ne le concerne pas.</li>
+            </ul>
+          </div>
+          <div class="avis contre">
+            <span class="lab">Contre</span>
+            <ul>
+              <li><b>« Reprendre » est un fourre-tout</b> : les mêmes outils pour trois gestes qui n'ont ni la même matière ni le même objectif.</li>
+              <li>Finir un personnage demande de faire l'aller-retour entre trois ateliers, plusieurs fois.</li>
+              <li>Aucune place nommée pour les animations : elles atterriraient dans « Fabriquer », qui déborde déjà.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── B ────────────────────────────────────────────────────── -->
+    <div class="structure">
+      <div class="st-tete">
+        <span class="st-lettre">B</span>
+        <div class="st-titres">
+          <h3>L'établi par objet</h3>
+          <p class="mecanique">Le produit s'organise autour de <strong>la vie d'un objet</strong>. On ouvre
+            Balthazar, et on a devant soi son identité, ses poses, ses animations, ses équipements — chacun
+            avec l'outil de son étape. Un décor ouvre le même établi, mais court : deux étapes, les autres
+            n'existent pas pour lui. La grille générale devient un tiroir de l'établi.</p>
+        </div>
+      </div>
+      <div class="st-corps">
+        <div class="st-croquis">
+          <div class="wf">
+            <div class="wf-barre">
+              <span class="wf-nom">Asset Kitchen</span>
+              <span class="tab mini">objets</span>
+              <span class="tab on">Balthazar</span>
+              <span class="wf-tard">$2,140</span>
+            </div>
+            <div class="wf-corps">
+              <div class="col" style="width:82px">
+                <div class="col-t">les objets</div>
+                <div class="ligne on"></div><div class="ligne"></div><div class="ligne"></div>
+                <div class="ligne"></div><div class="ligne"></div>
+              </div>
+              <div class="zone-g">
+                <div class="etapes">
+                  <span class="etape-p">identité</span><span class="etape-p on">poses</span>
+                  <span class="etape-p">anim.</span><span class="etape-p">équip.</span>
+                </div>
+                <div class="grille" style="grid-template-columns:repeat(4,1fr)">
+                  <div class="tuile"></div><div class="tuile sel"></div><div class="tuile"></div><div class="tuile"></div>
+                  <div class="tuile"></div><div class="tuile"></div><div class="tuile"></div><div class="tuile"></div>
+                </div>
+                <div class="champ"></div>
+              </div>
+            </div>
+          </div>
+          <div class="croquis-lgd">un onglet = un objet · les étapes sont dedans</div>
+        </div>
+        <div class="st-avis">
+          <div class="avis pour">
+            <span class="lab">Pour</span>
+            <ul>
+              <li><b>C'est littéralement la phrase du besoin</b> : la chaîne est visible, on suit un personnage de bout en bout sans changer de lieu.</li>
+              <li>L'outil de reprise est celui de l'étape où l'on est — dédié par construction, jamais générique.</li>
+              <li>Les animations ont leur place réservée avant d'exister.</li>
+            </ul>
+          </div>
+          <div class="avis contre">
+            <span class="lab">Contre</span>
+            <ul>
+              <li><b>La planche contact perd son rôle central.</b> Or c'est l'endroit où l'on <em>juge</em>, et tout le système de design est bâti autour d'elle.</li>
+              <li><b>Le plus gros chantier de code</b> : l'atelier actuel est construit autour de la grille, pas autour d'un objet.</li>
+              <li>Un asset qui n'appartient à aucun objet — une texture, un essai — n'a plus de domicile évident.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── C ────────────────────────────────────────────────────── -->
+    <div class="structure">
+      <div class="st-tete">
+        <span class="st-lettre">C</span>
+        <div class="st-titres">
+          <h3>La chaîne par étape</h3>
+          <p class="mecanique">Cinq ateliers <em>qui sont</em> les cinq étapes :
+            <strong>Créer · Nettoyer · Poser · Animer · Équiper</strong>. Chacun montre tous les objets qui sont
+            à cette étape, en file d'attente. On travaille par lot : aujourd'hui je nettoie, demain je pose.</p>
+        </div>
+      </div>
+      <div class="st-corps">
+        <div class="st-croquis">
+          <div class="wf">
+            <div class="wf-barre">
+              <span class="wf-nom">Asset Kitchen</span>
+              <span class="tab">Créer</span><span class="tab on">Nettoyer</span>
+              <span class="tab">Poser</span><span class="tab">Animer</span><span class="tab">Équiper</span>
+            </div>
+            <div class="wf-corps">
+              <div class="col" style="width:110px">
+                <div class="col-t">à nettoyer · 7</div>
+                <div class="file">
+                  <div class="fl"><span class="vig"></span><span class="txt">balthazar-03</span></div>
+                  <div class="fl"><span class="vig"></span><span class="txt">coffre-01</span></div>
+                  <div class="fl"><span class="vig"></span><span class="txt">forêt-nord</span></div>
+                  <div class="fl"><span class="vig"></span><span class="txt">torche-02</span></div>
+                </div>
+              </div>
+              <div class="zone-g">
+                <div class="toile">l'outil de détourage, seul, plein cadre</div>
+              </div>
+            </div>
+          </div>
+          <div class="croquis-lgd">un onglet = une étape · un outil unique par écran</div>
+        </div>
+        <div class="st-avis">
+          <div class="avis pour">
+            <span class="lab">Pour</span>
+            <ul>
+              <li><b>L'outil le plus dédié des quatre</b> : un écran, un objectif, un seul outil, plein cadre. Rien ne se dispute la place.</li>
+              <li>On voit d'un coup d'œil ce qui est en retard, et sur quelle étape.</li>
+              <li>Travailler par lot est plus rapide que de finir un objet à la fois.</li>
+            </ul>
+          </div>
+          <div class="avis contre">
+            <span class="lab">Contre</span>
+            <ul>
+              <li><b>On ne suit jamais un personnage de bout en bout</b> — cinq changements d'atelier pour en finir un.</li>
+              <li>Un décor n'a que deux étapes sur cinq : trois onglets vides en permanence pour la moitié du travail.</li>
+              <li><b>Casse « une seule grille d'assets »</b> : une file par étape, donc cinq listes qui divergeront.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── D ────────────────────────────────────────────────────── -->
+    <div class="structure reco">
+      <div class="st-tete">
+        <span class="st-lettre">D</span>
+        <div class="st-titres">
+          <h3>Deux lieux — la bibliothèque et l'établi</h3>
+          <p class="mecanique">Deux surfaces, et deux seulement.
+            <strong>La bibliothèque</strong> est la planche contact : tout ce qui existe, on y juge, on y range,
+            on y génère. <strong>L'établi</strong> tient <em>un</em> objet et se recompose selon ce qu'il est :
+            un personnage y montre poses, animations et équipements ; un décor n'y montre que le nettoyage.
+            L'Univers et les Réglages restent en retrait, rares.</p>
+        </div>
+        <span class="st-tag">recommandée</span>
+      </div>
+      <div class="st-corps">
+        <div class="st-croquis">
+          <div class="wf">
+            <div class="wf-barre">
+              <span class="wf-nom">Asset Kitchen</span>
+              <span class="tab">Bibliothèque</span><span class="tab on">Établi · Balthazar</span>
+              <span class="wf-tard">Univers · ⚙</span>
+            </div>
+            <div class="wf-corps">
+              <div class="zone-g" style="flex:1.5">
+                <div class="etapes">
+                  <span class="etape-p">créer</span><span class="etape-p">nettoyer</span>
+                  <span class="etape-p on">poser</span><span class="etape-p off">animer</span>
+                  <span class="etape-p">équiper</span>
+                </div>
+                <div class="toile">l'outil de l'étape « poser », plein cadre</div>
+                <div class="champ"></div>
+              </div>
+              <div class="col" style="width:86px">
+                <div class="col-t">ses poses</div>
+                <div class="grille" style="grid-template-columns:repeat(2,1fr)">
+                  <div class="tuile"></div><div class="tuile sel"></div>
+                  <div class="tuile"></div><div class="tuile"></div>
+                  <div class="tuile"></div><div class="tuile"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="croquis-lgd">deux lieux · l'étape choisie décide de l'outil affiché</div>
+        </div>
+        <div class="st-avis">
+          <div class="avis pour">
+            <span class="lab">Pour</span>
+            <ul>
+              <li><b>La chaîne est visible et suivie de bout en bout</b>, comme en B — mais sans sacrifier la planche contact, qui reste un lieu à part entière.</li>
+              <li><b>L'outil de reprise est décidé par l'étape</b>, donc dédié à l'objectif de la génération. C'est la demande, mot pour mot.</li>
+              <li>Deux lieux au lieu de sept : la navigation cesse d'être un sujet.</li>
+              <li>« Animer » est une étape grisée avec sa raison — <em>pas encore construit</em> — donc la place existe avant le code.</li>
+              <li>Un décor ne voit que les étapes qui le concernent : l'établi est court pour lui.</li>
+            </ul>
+          </div>
+          <div class="avis contre">
+            <span class="lab">Contre</span>
+            <ul>
+              <li><b>L'établi porte beaucoup</b> — c'est là que le risque de « re-chargé » revient. Discipline obligatoire : une seule étape affichée à la fois, les autres réduites à leur nom.</li>
+              <li>Chantier moyen : la fiche latérale de 380 px devient un établi plein cadre, ce qui déplace le code de la retouche.</li>
+              <li>Un asset sans objet parent (essai, texture) vit dans la bibliothèque et n'a pas d'établi — acceptable, mais il faut l'assumer.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Comparaison — les critères viennent du besoin, pas de mon goût</h2></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Critère</th>
+          <th class="c"><b>A</b>les moments</th>
+          <th class="c"><b>B</b>par objet</th>
+          <th class="c"><b>C</b>par étape</th>
+          <th class="c reco"><b>D</b>deux lieux</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="recocol"><td>Finir un personnage sans changer de lieu</td>
+          <td class="c non">✗</td><td class="c oui">✓</td><td class="c non">✗</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>L'outil de reprise est dédié à l'objectif de la génération</td>
+          <td class="c non">✗</td><td class="c oui">✓</td><td class="c oui">✓</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>Une place nommée pour les animations avant qu'elles existent</td>
+          <td class="c moyen">~</td><td class="c oui">✓</td><td class="c oui">✓</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>La planche contact reste l'endroit où l'on juge</td>
+          <td class="c oui">✓</td><td class="c moyen">~</td><td class="c non">✗</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>Un décor ou un objet simple n'est jamais encombré</td>
+          <td class="c oui">✓</td><td class="c oui">✓</td><td class="c non">✗</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>Respecte « une seule grille d'assets dans tout le produit »</td>
+          <td class="c oui">✓</td><td class="c moyen">~</td><td class="c non">✗</td><td class="c oui">✓</td></tr>
+        <tr class="recocol"><td>Coût de réécriture du front</td>
+          <td class="c oui">faible</td><td class="c non">lourd</td><td class="c moyen">moyen</td><td class="c moyen">moyen</td></tr>
+        <tr class="recocol"><td>Nombre de lieux à connaître</td>
+          <td class="c">4</td><td class="c">1 + n objets</td><td class="c">5</td><td class="c oui">2</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ce que je recommande, et ce que ça coûte</h2></div>
+    <div class="note signal">
+      <span class="lab">D — deux lieux</span>
+      <p><strong>La bibliothèque et l'établi.</strong> C'est la seule des quatre qui tienne les deux bouts :
+        la chaîne du besoin <em>et</em> la planche contact autour de laquelle tout le produit est déjà bâti.</p>
+      <p>Elle donne à la lettre ce que la demande réclame — <em>des outils dédiés pour reprendre proprement
+        chaque génération en fonction de l'objectif de cette génération</em> — parce que c'est
+        <strong>l'étape qui décide de l'outil affiché</strong>, et non un atelier générique qui les empile tous.</p>
+      <p><strong>Ce qu'elle coûte, nommé d'avance</strong> : la fiche latérale de 380 px cesse d'être le lieu de
+        la retouche. Elle reste la fiche — visionneuse, recette, filiation — mais tout ce qui se règle en
+        regardant grand passe dans l'établi. C'est un déplacement de code réel, et c'est le prix de rendre les
+        outils de retouche utilisables.</p>
+    </div>
+    <div class="note">
+      <span class="lab">Vrai quelle que soit la structure retenue</span>
+      <p><strong>Les outils de retouche sont à refaire, pas à déplacer.</strong> Les déménager dans un établi
+        ne les rendra pas utilisables — ça leur donne seulement la place de l'être. Le détourage, la découpe et
+        le calque par différence ont chacun leur maquette à part, après celle de la structure.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 0, deuxième passe · 29 août 2026 · quatre structures, aucune écrite dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

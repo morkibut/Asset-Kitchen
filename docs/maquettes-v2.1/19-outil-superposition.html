@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, outil Superposition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:80ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:80ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .enpan .dj{margin-left:auto;text-transform:none;letter-spacing:0}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:12px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:center}
+  .col-t .dr{margin-left:auto;text-transform:none;letter-spacing:0}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .sepbloc{height:1px;background:var(--bord);margin:2px 0}
+
+  .segs{display:flex;gap:4px}
+  .sg{height:24px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  /* une ligne de réglage : libellé, rail, champ saisissable */
+  .rg{display:flex;align-items:center;gap:7px;height:24px}
+  .rg .lb{font-size:11px;color:var(--texte-2);width:58px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rail .cran{position:absolute;top:-3px;width:1px;height:7px;background:var(--bord-fort)}
+  .champ{width:62px;flex:none;height:22px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:flex-end;
+    padding:0 6px;font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .champ.att{border-color:var(--epingle);color:var(--epingle)}
+  /* les touches, sous le rail : à la fois l'indication et le bouton */
+  .touches{display:flex;gap:4px;padding-left:65px;margin-top:-2px}
+  .tk{min-width:22px;height:19px;padding:0 5px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-2);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .touches .pas{font-family:var(--mono);font-size:9px;color:var(--texte-3);
+    display:flex;align-items:center;margin-left:4px}
+
+  /* les deux opérandes */
+  .duo{display:flex;flex-direction:column;gap:3px}
+  .op{height:38px;display:flex;align-items:center;gap:8px;padding:0 7px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .op.dessus{border-color:var(--lumiere)}
+  .vg{width:26px;height:26px;flex:none;border:1px solid var(--bord);position:relative;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+  .vg i{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .vg u{position:absolute;background:var(--signal);text-decoration:none}
+  .op .col{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .op .nm{font-size:11.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .op .rl{font-family:var(--mono);font-size:8.5px;color:var(--texte-3);letter-spacing:.06em;
+    white-space:nowrap}
+  .op .go{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--signal);flex:none}
+  .echange{align-self:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:1px 8px}
+
+  /* l'état d'alpha des deux images, avant de caler */
+  .alpha{display:flex;align-items:center;gap:7px;height:22px}
+  .alpha .pt{width:8px;height:8px;border:1px solid var(--bord-fort);flex:none}
+  .alpha .pt.on{background:var(--signal);border-color:var(--signal)}
+  .alpha .qui{font-size:11px;color:var(--texte-2);width:66px;flex:none}
+  .alpha .et{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .alpha .et.manque{color:var(--epingle)}
+  .alpha .et.repris{color:var(--epingle)}
+  .alpha .go{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--signal);flex:none}
+  .alerte{border:1px solid var(--epingle);border-radius:2px;background:rgba(200,160,60,.09);
+    padding:7px 8px;display:flex;flex-direction:column;gap:5px}
+  .alerte .t{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+  .alerte .go{font-family:var(--mono);font-size:10px;color:var(--signal)}
+
+  .teintes{display:flex;gap:4px}
+  .tt{width:22px;height:22px;border:1px solid var(--bord);border-radius:2px}
+  .tt.on{border-color:var(--lumiere)}
+  .tt.damier{background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/6px 6px}
+
+  /* cases à cocher */
+  .coche{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .coche.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .cc{width:11px;height:11px;flex:none;border:1px solid var(--bord-fort);margin-top:2px}
+  .coche.on .cc{background:var(--signal);border-color:var(--signal)}
+  .coche .col{display:flex;flex-direction:column;gap:2px}
+  .coche .t{font-size:11.5px;color:var(--texte-2)}
+  .coche.on .t{color:var(--signal-clair)}
+  .coche .d{font-family:var(--mono);font-size:9px;color:var(--texte-3);line-height:1.45}
+
+  .act{height:26px;border:1px solid var(--signal);border-radius:2px;background:var(--signal-sourd);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:11.5px;color:var(--signal-clair)}
+  .act.pale{border-color:var(--bord-fort);background:var(--fond-1);color:var(--texte)}
+  .act.hs{border-color:var(--bord);background:var(--fond-2);color:var(--texte-3);border-style:dashed}
+  .act .kb{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:290px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+
+  /* le canevas de travail */
+  .cadre{overflow-x:auto}
+  .toile{border:1px solid var(--bord);border-radius:2px;position:relative;height:290px;
+    min-width:470px;overflow:hidden;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px}
+  .ref{position:absolute;background:rgba(200,80,180,.30);border:1px solid rgba(200,80,180,.65)}
+  .ref .et{position:absolute;left:-1px;bottom:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--texte-3);white-space:nowrap}
+  .posee{position:absolute;border:1px solid var(--lumiere);background:rgba(30,36,43,.80)}
+  .posee .et{position:absolute;left:-1px;top:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--lumiere);white-space:nowrap}
+  .posee .p{position:absolute;width:5px;height:5px;background:var(--lumiere)}
+  .casque{position:absolute;background:var(--bord-fort);border:1px solid var(--texte-3)}
+  .garde{position:absolute;border:1px dashed var(--epingle)}
+  .garde .et{position:absolute;right:-1px;top:-15px;font-family:var(--mono);font-size:9px;
+    color:var(--epingle);white-space:nowrap}
+  .voile{position:absolute;background:rgba(11,13,16,.62)}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .acc{color:var(--signal)}
+  .mesrow .hp{color:var(--epingle)}
+
+  /* les deux rendus de droite */
+  .rendu{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);
+    display:flex;flex-direction:column}
+  .rendu + .rendu{margin-top:9px}
+  .rendu .tete{height:26px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    gap:8px;padding:0 9px;font-family:var(--mono);font-size:9.5px;color:var(--texte-2)}
+  .rendu .tete .dr{margin-left:auto;color:var(--signal)}
+  .rendu .vue{height:150px;position:relative;display:flex;align-items:center;justify-content:center}
+  .rendu .pied{border-top:1px solid var(--bord);padding:7px 9px;display:flex;align-items:center;gap:5px}
+  .rendu .pied .lb{font-family:var(--mono);font-size:9px;color:var(--texte-3);margin-right:3px}
+  .fondrose{background:#E24A9B}
+  .fonddamier{background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .corps{background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .piece{background:var(--bord-fort);border:1px solid var(--texte-3)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  td .mj{font-family:var(--mono);font-size:11px;color:var(--epingle)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  /* la barre de la V2.1, montrée une fois */
+  .bar{height:34px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    display:flex;align-items:center;gap:3px;padding:0 12px;overflow-x:auto}
+  .tb{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .tb .carre{width:8px;height:8px;border:1px solid var(--bord-fort);flex:none}
+  .tb.hors{border-style:dashed;border-color:var(--bord)}
+  .tb.neuf{border-style:dashed;border-color:var(--signal);color:var(--signal-clair)}
+  .tbsep{width:1px;height:16px;background:var(--bord);margin:0 6px;flex:none}
+
+  .avenir{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .av{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:14px 16px}
+  .av .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;margin-bottom:8px}
+  .av.mnt .n{color:var(--signal)}
+  .av.plus .n{color:var(--epingle)}
+  .av ul{margin:0;padding:0;list-style:none}
+  .av li{font-size:12px;color:var(--texte-2);padding:4px 0 4px 13px;position:relative;line-height:1.45}
+  .av li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px;background:var(--bord-fort)}
+  .av.mnt li::before{background:var(--signal)}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · 19 — la superposition <span style="color:var(--epingle)">· remplace la table 11, différence</span></div>
+    <h1>La superposition —<br><em>deux images, et une troisième en sort</em></h1>
+    <p>La superposition pose deux images l'une sur l'autre et en fabrique une troisième. On choisit les deux
+      images, on cale celle du dessus sur celle du dessous, et on récupère <strong>le calque</strong> (ce que
+      le dessus ajoute au dessous), <strong>l'aplat</strong> (les deux fondues en une), ou les deux.</p>
+    <p>L'ordre du travail est <strong>détourer, caler, comparer</strong> — l'image qui revient du modèle
+      est opaque, et sans alpha il n'y a pas de calque possible (§ 02).</p>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre, le fil d'Ariane et le
+      cadre sont définis dans <span class="mesure">03-chassis-des-tables.html</span>.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que l'outil fait, et pourquoi ce n'est pas une table</h2></div>
+    <p class="intro">Une table règle une image et rend la même image. La superposition en prend deux et en
+      fabrique une troisième.</p>
+    <p>C'est pour ça qu'elle n'est pas une place de la recette. Une recette décrit comment <em>une</em> image
+      se rend ; celle-ci a besoin d'une seconde image pour rendre quoi que ce soit. Concrètement, la place
+      <span class="mesure">Difference</span> portait le champ <span class="mesure">base</span> —
+      l'identifiant d'un autre asset. C'est ce qui rendait la table grisée sur presque toute la bibliothèque :
+      <strong>il n'y a pas de différence à régler tant qu'on n'a pas dit par rapport à quoi.</strong></p>
+    <p>Elle rejoint donc le découpage, à droite du séparateur de la barre. À gauche du trait, les sept places
+      qui règlent l'image courante. À droite, les deux gestes qui en fabriquent d'autres.</p>
+    <div class="cadre"><div class="bar" style="min-width:820px">
+      <span class="tb"><span class="carre"></span>détourage</span>
+      <span class="tb"><span class="carre"></span>recadrage</span>
+      <span class="tb"><span class="carre"></span>grille</span>
+      <span class="tb"><span class="carre"></span>quantification</span>
+      <span class="tb"><span class="carre"></span>bords</span>
+      <span class="tb"><span class="carre"></span>contours</span>
+      <span class="tb"><span class="carre"></span>la main</span>
+      <span class="tbsep"></span>
+      <span class="tb hors">découpage</span>
+      <span class="tb neuf">superposition</span>
+    </div></div>
+    <div class="lgd">les deux gestes de droite n'ont pas de carré : ils ne posent rien sur l'image courante</div>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Les deux images — d'où elles viennent, et comment on les change</h2></div>
+
+    <div class="note">
+      <span class="lab">Le cas principal : l'aller-retour d'un équipement</span>
+      <p>Quand on fabrique une pièce d'équipement, l'atelier fait un aller-retour :</p>
+      <ul style="margin-top:8px">
+        <li>il assemble une <b>planche</b> avec les corps du personnage, posés dans une grille ;</li>
+        <li>il l'envoie au modèle en demandant d'ajouter la pièce ;</li>
+        <li>la planche revient avec la pièce dessinée sur chaque corps ;</li>
+        <li>comme <b>c'est l'atelier qui a posé les corps</b>, il sait où les reprendre : il redécoupe chaque
+          case et obtient, pour chaque corps, <b>l'image envoyée</b> et <b>l'image revenue</b>.</li>
+      </ul>
+      <p style="margin-top:12px">C'est cette paire qui remplit l'outil par défaut : <strong>l'image envoyée
+        en dessous, l'image revenue au-dessus</strong>. Rien de plus — c'est un préremplissage, et les deux
+        images se changent.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">L'image qui revient du modèle n'est pas détourée — et sans ça, le calque est faux</span>
+      <p>Le détourage est ce qui rend le fond transparent. Une image qui revient du modèle ne l'a pas encore
+        subi : elle est <strong>opaque de bord à bord</strong> — le corps, la pièce, et le fond plat
+        derrière.</p>
+      <p style="margin-top:10px">Or le calque se calcule ainsi : <strong>un pixel en fait partie s'il est
+        opaque dans le dessus et transparent dans le dessous.</strong> Suivons le cas d'un dessus non
+        détouré :</p>
+      <ul style="margin-top:8px">
+        <li>le dessous est le corps, détouré : tout ce qui l'entoure y est transparent ;</li>
+        <li>le dessus n'est pas détouré : tout y est opaque, fond compris ;</li>
+        <li>donc <b>tout ce qui entoure le corps remplit la condition</b> et part dans le calque.</li>
+      </ul>
+      <p style="margin-top:12px">Résultat : le calque contient la pièce <em>et tout le fond de l'image</em>.
+        C'est le comportement d'aujourd'hui, et c'est ce que la V2.1 corrige.</p>
+      <p style="margin-top:10px">L'ordre du travail est donc <strong>détourer, puis caler, puis
+        comparer</strong>. La superposition lit les deux images <em>rendues</em>, et le détourage fait partie
+        du rendu : dès qu'une passe est posée, la comparaison se refait dessus.</p>
+      <ul style="margin-top:12px">
+        <li><b>Le dessus hérite du détourage du dessous</b>, prérempli. Même sujet, même fond plat, même
+          modèle : les passes qui ont détouré le corps détourent le corps casqué. C'est la même règle que
+          pour une découpe, qui hérite de la recette de sa planche.</li>
+        <li><b>Quand l'héritage ne suffit pas, on détoure sur place.</b> Le bloc <em>avant de caler</em> dit
+          l'état des deux images, et <span class="mesure">détourer ›</span> ouvre la table de détourage sans
+          quitter la superposition (§ 06).</li>
+      </ul>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Et le reste du temps</span>
+      <p>L'outil marche sur <strong>n'importe quelles deux images</strong> de la bibliothèque, sans
+        aller-retour et sans planche. <span class="mesure">changer ›</span> ouvre la colonne de droite sur les
+        autres images de la même entité, avec la galerie entière derrière.</p>
+      <p style="margin-top:10px"><span class="mesure">↕ échanger</span> intervertit le dessus et le dessous.
+        Ça change le résultat, puisque le calque est fait de ce que le <em>dessus</em> ajoute : poser un corps
+        nu sur un corps casqué donnerait le crâne nu au lieu du casque.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>La colonne de gauche, à sa vraie largeur</h2></div>
+    <p class="intro">Elle est longue et elle défile — <em>un panneau est borné par l'écran, jamais par son
+      contenu</em>. Les blocs se suivent dans l'ordre où on s'en sert : <strong>les deux images</strong>,
+      <strong>l'état de leur détourage</strong>, l'affichage de l'une et de l'autre, <strong>le calage</strong>,
+      ce qu'on garde du dessus, et <strong>ce qui sort</strong>.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">superposition<span class="dj">jamais fabriquée</span></div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">les deux images</span>
+            <div class="duo">
+              <div class="op dessus">
+                <span class="vg"><i style="left:7px;top:6px;width:11px;height:16px"></i>
+                  <u style="left:6px;top:3px;width:13px;height:5px"></u></span>
+                <span class="col"><span class="nm">balthazar · casque</span>
+                  <span class="rl">DESSUS · SE DÉPLACE</span></span>
+                <span class="go">changer ›</span></div>
+              <span class="echange">↕ échanger</span>
+              <div class="op">
+                <span class="vg"><i style="left:7px;top:6px;width:11px;height:16px"></i></span>
+                <span class="col"><span class="nm">balthazar · repos 1</span>
+                  <span class="rl">DESSOUS · FIXE</span></span>
+                <span class="go">changer ›</span></div>
+            </div>
+            <div class="prov">l'image envoyée et l'image revenue de la planche « casque de fer »</div>
+          </div>
+
+          <div class="sepbloc"></div>
+
+          <div class="bloc">
+            <span class="col-t">avant de caler</span>
+            <div class="alpha"><span class="pt on"></span><span class="qui">le dessous</span>
+              <span class="et">détouré · 2 passes</span><span class="go">revoir ›</span></div>
+            <div class="alpha"><span class="pt"></span><span class="qui">le dessus</span>
+              <span class="et manque">pas détouré</span><span class="go">détourer ›</span></div>
+            <div class="alerte">
+              <span class="t">sans alpha sur le dessus, le calque prendrait tout le fond</span>
+              <span class="go">reprendre les 2 passes du dessous ›</span></div>
+          </div>
+
+          <div class="sepbloc"></div>
+
+          <div class="bloc">
+            <span class="col-t">voir le dessous <span class="dr">ne change pas la sortie</span></span>
+            <div class="segs">
+              <span class="sg">normale</span><span class="sg on">teinte</span><span class="sg">négatif</span>
+            </div>
+            <div class="teintes">
+              <span class="tt" style="background:#E24A9B"></span>
+              <span class="tt on" style="background:#C850B4"></span>
+              <span class="tt" style="background:#4ACBE2"></span>
+              <span class="tt" style="background:#63D06A"></span>
+              <span class="tt" style="background:#E2A24A"></span>
+            </div>
+            <div class="rg"><span class="lb">opacité</span>
+              <span class="rail"><i style="left:45%"></i></span><span class="champ">50 %</span></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">voir le dessus</span>
+            <div class="rg"><span class="lb">opacité</span>
+              <span class="rail"><i style="left:88%"></i></span><span class="champ">92 %</span></div>
+          </div>
+
+          <div class="sepbloc"></div>
+
+          <div class="bloc">
+            <span class="col-t">le calage <span class="dr">du dessus</span></span>
+            <div class="act pale">Recaler <span class="kb">≈ 1,5 s</span></div>
+            <div class="raison">cherche l'échelle et le décalage qui superposent le mieux les deux images —
+              puis on ajuste</div>
+
+            <div class="rg" style="margin-top:4px"><span class="lb">échelle</span>
+              <span class="rail"><span class="cran" style="left:50%"></span><i style="left:50%"></i></span>
+              <span class="champ">1,000</span></div>
+            <div class="touches"><span class="tk">−</span><span class="tk">+</span>
+              <span class="pas">0,010 · Maj ×10</span></div>
+
+            <div class="rg"><span class="lb">horizontal</span>
+              <span class="rail"><span class="cran" style="left:50%"></span><i style="left:52%"></i></span>
+              <span class="champ">+2 px</span></div>
+            <div class="touches"><span class="tk">←</span><span class="tk">→</span>
+              <span class="pas">1 px · Maj ×10</span></div>
+
+            <div class="rg"><span class="lb">vertical</span>
+              <span class="rail"><span class="cran" style="left:50%"></span><i style="left:47%"></i></span>
+              <span class="champ">−5 px</span></div>
+            <div class="touches"><span class="tk">↑</span><span class="tk">↓</span>
+              <span class="pas">1 px · Maj ×10</span></div>
+
+            <div class="prov" style="margin-top:4px">recalé, puis ajusté à la main · remettre à zéro ›</div>
+          </div>
+
+          <div class="sepbloc"></div>
+
+          <div class="bloc">
+            <span class="col-t">ce qu'on garde du dessus</span>
+            <div class="segs">
+              <span class="sg mono">toute l'image</span><span class="sg on mono">un rectangle</span>
+            </div>
+            <div class="raison">hors du rectangle, le dessus est masqué — à l'écran comme à la sortie</div>
+            <div class="act pale" style="margin-top:2px">la main ›</div>
+            <div class="raison">effacer et remettre des pixels du dessus · 3 passages</div>
+            <div class="rg" style="margin-top:2px"><span class="lb">seuil</span>
+              <span class="rail"><i style="left:13%"></i></span><span class="champ">32</span></div>
+            <div class="raison">de combien une couleur doit changer pour compter comme changée</div>
+          </div>
+
+          <div class="sepbloc"></div>
+
+          <div class="bloc">
+            <span class="col-t">ce qu'on en sort</span>
+            <div class="coche on"><span class="cc"></span>
+              <span class="col"><span class="t">le calque</span>
+                <span class="d">ce que le dessus ajoute · va au vestiaire</span></span></div>
+            <div class="coche"><span class="cc"></span>
+              <span class="col"><span class="t">l'aplat</span>
+                <span class="d">les deux fondues · un asset ordinaire</span></span></div>
+            <div class="coche on"><span class="cc"></span>
+              <span class="col"><span class="t">enregistrer ces réglages</span>
+                <span class="d">repris quand la référence est « balthazar · repos 1 »</span></span></div>
+          </div>
+
+          <div class="act">Fabriquer — 1 image ›</div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>2 images · recalé + ajusté</span>
+          <span class="dr">Tout défaire ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>Le dessus se déplace, le dessous ne
+          bouge pas.</b> Le dessous est le sol : on ne le manipule jamais. Le dessus porte l'anneau
+          <span class="mesure">--lumiere</span>, parce que c'est lui qu'on cale.
+          <span class="mesure">↕ échanger</span> intervertit les deux, et ça change le résultat, puisque le
+          calque est fait de ce que le <em>dessus</em> ajoute.</span></div>
+
+        <div class="an att"><span class="k">02</span><span class="t"><b>« Avant de caler » dit l'état du
+          détourage des deux images.</b> Il se lit comme la barre de tables : carré plein, il y a des passes
+          posées ; carré creux, il n'y en a aucune. Rien de neuf à apprendre. Quand le dessus n'a pas d'alpha,
+          l'alerte nomme la conséquence — <em>le calque prendrait tout le fond</em> — et
+          <b>l'alerte est aussi le bouton</b> : la ligne du dessous reprend les passes du dessous d'un
+          clic.</span></div>
+
+        <div class="an"><span class="k">03</span><span class="t"><b>Les deux blocs « voir » ne changent que
+          l'affichage.</b> L'opacité du dessous, son mode de couleur, l'opacité du dessus : rien de tout ça ne
+          touche à ce qui sort, et l'en-tête du bloc le dit. Ils existent pour une seule raison —
+          <b>caler à l'œil deux images qui se ressemblent</b>.</span></div>
+
+        <div class="an"><span class="k">04</span><span class="t"><b>Les trois modes de couleur du
+          dessous.</b> <span class="mesure">normale</span> pour vérifier le rendu final ;
+          <span class="mesure">teinte</span> repeint tous ses pixels opaques d'une seule couleur vive — c'est
+          celui qui sert au calage, parce qu'aucune de ces couleurs n'existe dans un sprite ;
+          <span class="mesure">négatif</span> quand les deux images ont déjà des couleurs
+          proches.</span></div>
+
+        <div class="an"><span class="k">05</span><span class="t"><b><span class="mesure">Recaler</span> est un
+          bouton, pas un mode.</b> On est toujours en manuel. Il remplit les trois valeurs avec ce que le
+          calcul a trouvé, et on ajuste ensuite. On le relance autant qu'on veut : il repart alors de zéro,
+          pas de l'ajustement.</span></div>
+
+        <div class="an"><span class="k">06</span><span class="t"><b>Chaque réglage a un rail, un champ et deux
+          touches.</b> Le rail pour aller vite, le champ pour saisir une valeur exacte, les touches pour
+          avancer d'un cran. <b>Les touches sont cliquables</b> : elles disent le raccourci clavier et elles
+          sont le bouton. Le pas est écrit à côté, et <span class="mesure">Maj</span> le multiplie par
+          dix.</span></div>
+
+        <div class="an att"><span class="k">07</span><span class="t"><b>Le rectangle sert deux fois.</b> Il
+          isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et <b>ce qu'il masque à l'écran,
+          il le masque aussi à la sortie</b>. Une seule notion à comprendre au lieu de deux.
+          <span class="mesure">la main ›</span> ouvre l'outil de retouche sur le dessus, pour les pixels
+          qu'aucun rectangle ne borne (§ 06).</span></div>
+
+        <div class="an"><span class="k">08</span><span class="t"><b>Les deux sorties se cochent, elles ne
+          s'excluent pas.</b> On veut souvent le calque pour le réutiliser <em>et</em> l'aplat pour l'avoir
+          tout de suite. Le bouton compte ce qui est coché :
+          <span class="mesure">Fabriquer — 2 images ›</span> si les deux le sont.</span></div>
+
+        <div class="an chassis"><span class="k">châssis</span><span class="t">Le pied porte l'état et
+          <span class="mesure">Tout défaire ›</span>, qui remet le calage à zéro et vide ce qui a été posé à
+          la main. Rien n'est détruit : rien n'est encore fabriqué.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Le calage — les trois réglages, en détail</h2></div>
+    <table>
+      <thead><tr><th style="width:13%">Réglage</th><th style="width:17%">Domaine · pas</th><th style="width:12%">Touches</th><th>Ce qu'il fait</th></tr></thead>
+      <tbody>
+        <tr><td class="k">échelle</td><td><span class="m">0,25 – 4,00</span><br><span class="sourd">pas 0,010 · Maj 0,100</span></td>
+          <td><span class="m">− +</span></td>
+          <td>La taille du dessus par rapport au dessous. Détente à <span class="mesure">1,000</span>.
+            <strong>C'est le seul réglage de l'outil qui abîme l'image</strong> : rééchantillonner du pixel
+            art à un facteur qui n'est pas simple détruit la grille. Le champ passe en
+            <span class="mesure">--epingle</span> hors des rapports simples, avec la mention
+            <span class="mj">rééchantillonne</span>.</td></tr>
+        <tr><td class="k">horizontal</td><td><span class="m">± la largeur</span><br><span class="sourd">pas 1 px · Maj 10 px</span></td>
+          <td><span class="m">← →</span></td>
+          <td>Le décalage du dessus, en pixels de l'image rendue. Détente à <span class="mesure">0</span>.
+            Quand la grille du projet est posée, la valeur en blocs est écrite à côté.</td></tr>
+        <tr><td class="k">vertical</td><td><span class="m">± la hauteur</span><br><span class="sourd">pas 1 px · Maj 10 px</span></td>
+          <td><span class="m">↑ ↓</span></td>
+          <td>Pareil, sur l'autre axe. Le signe suit l'écran : <span class="mesure">↑</span> monte
+            l'image.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Pourquoi les touches sont dessinées sous chaque rail plutôt que listées dans une aide</span>
+      <p>Un raccourci écrit dans une aide n'est jamais lu. Dessiné sous le réglage qu'il commande, il se voit
+        au moment où on en a besoin — et comme <strong>il est aussi le bouton</strong>, il sert même à qui ne
+        retient pas les raccourcis. Une seule chose à l'écran fait donc deux métiers : elle enseigne et elle
+        agit.</p>
+      <p style="margin-top:10px">Les touches suivent l'axe qu'elles commandent :
+        <span class="mesure">← →</span> pour l'horizontal, <span class="mesure">↑ ↓</span> pour le vertical,
+        <span class="mesure">− +</span> pour l'échelle. Il n'y a rien à apprendre.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce que « Recaler » fait, et ce qu'il ne fait pas</span>
+      <p>Il essaie <strong>131 échelles</strong>, de 0,55 à 1,85, et cherche pour chacune le décalage qui fait
+        le mieux coïncider les deux silhouettes. La recherche est menée sur des vignettes de 128 px pour rester
+        rapide — environ une seconde et demie.</p>
+      <p style="margin-top:10px">Il <strong>remplit les trois champs</strong> et s'arrête là. Il ne verrouille
+        rien, ne refuse rien, et n'empêche aucun ajustement. Quand il tombe à côté — ce qui arrive quand le
+        modèle a dézoomé le personnage pour faire de la place à la pièce — on corrige à la main.
+        <strong>Avant, il n'y avait aucun recours : le calque était perdu et il fallait relancer une
+        génération.</strong></p>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'on voit — le canevas, et les deux rendus</h2></div>
+    <p class="intro">C'est le seul endroit du produit où le comparateur à quatre modes du châssis
+      <strong>ne s'applique pas</strong>. Il montre une image dans quatre dispositions ; ici il y a trois
+      choses différentes à regarder en même temps, et ce ne sont pas des dispositions l'une de l'autre.</p>
+
+    <div class="banc">
+      <div style="flex:2 1 340px;min-width:340px">
+        <div class="cadre"><div class="toile">
+          <span class="voile" style="left:0;top:0;width:100%;height:44px"></span>
+          <span class="voile" style="left:0;top:44px;width:150px;height:246px"></span>
+          <span class="voile" style="left:262px;top:44px;width:400px;height:246px"></span>
+          <span class="voile" style="left:150px;top:114px;width:112px;height:176px"></span>
+
+          <span class="ref" style="left:142px;top:66px;width:96px;height:180px">
+            <span class="et">le dessous · teinte · 50 %</span></span>
+          <span class="posee" style="left:158px;top:50px;width:96px;height:180px">
+            <span class="et">le dessus · 92 %</span>
+            <span class="casque" style="left:14px;top:6px;width:68px;height:30px"></span>
+            <span class="p" style="left:-3px;top:-3px"></span><span class="p" style="right:-3px;top:-3px"></span>
+            <span class="p" style="left:-3px;bottom:-3px"></span><span class="p" style="right:-3px;bottom:-3px"></span>
+          </span>
+          <span class="garde" style="left:150px;top:44px;width:112px;height:70px">
+            <span class="et">ce qu'on garde</span></span>
+        </div></div>
+        <div class="mesrow"><span>512 × 512</span>
+          <span>× 1,000 · +2 · −5</span>
+          <span class="acc">ajout 11 %</span>
+          <span class="hp">3 passages à la main</span></div>
+        <div class="lgd">l'écart entre les deux images est exagéré dans le croquis — à
+          <span class="mesure">+2 / −5 px</span> sur 512, il ne se verrait pas</div>
+      </div>
+
+      <div style="width:308px;flex:none">
+        <div class="rendu">
+          <div class="tete">le calque seul</div>
+          <div class="vue fondrose">
+            <span class="piece" style="width:88px;height:32px"></span>
+          </div>
+          <div class="pied"><span class="lb">fond</span>
+            <span class="tt damier"></span>
+            <span class="tt" style="background:#FFFFFF"></span>
+            <span class="tt" style="background:#000000"></span>
+            <span class="tt on" style="background:#E24A9B"></span>
+            <span class="tt" style="background:#2E6BE0"></span>
+            <span class="tt" style="background:#3BA75A"></span>
+          </div>
+        </div>
+        <div class="rendu">
+          <div class="tete">le résultat<span class="dr">masquer le calque</span></div>
+          <div class="vue fonddamier">
+            <span class="corps" style="width:62px;height:114px;position:relative">
+              <span class="piece" style="position:absolute;left:-14px;top:5px;width:88px;height:26px"></span>
+            </span>
+          </div>
+          <div class="pied"><span class="lb">le dessous à 100 % · le calque par-dessus à 100 %</span></div>
+        </div>
+      </div>
+
+      <div class="annot" style="min-width:260px">
+        <div class="an"><span class="k">au centre</span><span class="t"><b>Le travail.</b> Les deux images
+          telles qu'on les a réglées — le dessous teinté à 50 %, le dessus à 92 %, les poignées de coin sur le
+          dessus. <b>Ce qui est hors du rectangle gardé est assombri</b> plutôt que caché : on voit encore où
+          on en est dans l'image.</span></div>
+        <div class="an"><span class="k">rendu 1</span><span class="t"><b>Le calque seul, sur un fond
+          choisi.</b> Six fonds : le damier, blanc, noir, rose, bleu, vert. <b>Ils servent à repérer les
+          pixels oubliés</b> — ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.
+          Sur le damier ils se confondent ; sur un aplat vif ils sautent aux yeux, et la bonne couleur dépend
+          de celles du sprite.</span></div>
+        <div class="an"><span class="k">rendu 2</span><span class="t"><b>Le résultat, tel qu'il sera dans le
+          jeu.</b> Le dessous à 100 %, le calque par-dessus à 100 %. <b>Un clic sur
+          <span class="mesure">masquer le calque</span> le retire</b> tant qu'on appuie : c'est l'avant/après,
+          et c'est ce qui dit si la pièce tient sur le corps.</span></div>
+        <div class="an att"><span class="k">les trois</span><span class="t"><b>Les trois vues sont
+          vivantes.</b> Déplacer le dessus d'un pixel les met toutes à jour. C'est ce qui permet de caler en
+          regardant le résultat plutôt que le travail — <b>et c'est la raison d'être de cette disposition à
+          trois panneaux.</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Les outils empruntés — le détourage et la main</h2></div>
+    <p class="intro">Deux places de la recette sont <strong>empruntées</strong> par la superposition : le
+      détourage, pour donner à une image l'alpha qui lui manque, et la main, pour effacer ou remettre des
+      pixels. Elles ne sont pas recopiées ici. Elles restent définies dans leur maquette, et la superposition
+      dit seulement sur quoi elles travaillent et où ce qu'elles posent est rangé.</p>
+
+    <table>
+      <thead><tr><th style="width:17%">L'outil</th><th style="width:25%">Sur quoi il travaille ici</th><th style="width:22%">Où va ce qu'il pose</th><th>À quoi il sert ici</th></tr></thead>
+      <tbody>
+        <tr><td class="k">le détourage<br><span class="sourd">1ʳᵉ place</span></td>
+          <td>l'une ou l'autre des deux images, entière</td>
+          <td><strong>dans la recette de l'image</strong></td>
+          <td>Donner son alpha à l'image du dessus, qui revient opaque du modèle. Sans ça, le calque prend
+            tout le fond.</td></tr>
+        <tr><td class="k">la main<br><span class="sourd">7ᵉ place</span></td>
+          <td>l'image du dessus, avant la comparaison</td>
+          <td><strong>dans la superposition</strong></td>
+          <td>Effacer des pixels qui ne doivent pas partir dans le calque, en remettre là où la comparaison
+            n'a rien vu.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">La règle qui dit où un outil emprunté écrit</span>
+      <p><strong>Si le réglage est vrai de l'image toute seule, il va dans la recette de l'image. S'il n'est
+        vrai que de cette superposition, il va dans la superposition.</strong></p>
+      <p style="margin-top:10px">Le détourage d'une image est vrai pour elle-même : elle en aura besoin de
+        toute façon pour partir dans le jeu, et personne ne veut la détourer deux fois. Détourer ici, c'est
+        donc exactement détourer dans sa table à elle — même réglages, même résultat, même endroit de
+        rangement.</p>
+      <p style="margin-top:10px">Effacer trois pixels pour qu'ils ne partent pas dans ce calque-ci n'est vrai
+        que de ce calque-ci. Ça va donc dans la superposition, et <strong>l'image du dessus n'est jamais
+        modifiée</strong>.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Ce que l'écran fait pendant qu'on emprunte</span>
+      <p>La colonne de gauche est remplacée par le panneau de l'outil, avec un retour en tête.
+        <strong>Le canevas montre alors l'image qu'on travaille, seule, sur le damier</strong> — c'est ce
+        dont le détourage a besoin pour qu'on voie ce qu'on coupe.</p>
+      <p style="margin-top:10px"><strong>Les deux rendus de droite, eux, continuent de montrer la
+        superposition</strong> et se mettent à jour à chaque passe. C'est le point : <strong>on détoure en
+        regardant le calque se nettoyer.</strong> Le fond rose du premier rendu sert exactement à ça — les
+        miettes de fond que le détourage a laissées y sautent aux yeux.</p>
+      <p style="margin-top:10px" class="sourd">Le calage n'est pas perdu pendant l'emprunt : les trois valeurs
+        restent posées, et le calque se recalcule sur la nouvelle image détourée.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Pourquoi un emprunt plutôt qu'un raccourci vers l'autre écran</span>
+      <p>Envoyer vers la table de détourage de l'image du dessus marcherait — le fil d'Ariane sait revenir.
+        Mais on perdrait de vue <strong>la seule chose qui dit si le détourage est bon ici</strong> : le
+        calque. Un détourage correct pour une image seule peut laisser une frange qui ruine la comparaison,
+        et on ne le voit qu'en regardant les deux ensemble.</p>
+      <p style="margin-top:10px">L'emprunt garde les deux rendus à l'écran. C'est la même raison qui fait
+        que la main est empruntée plutôt que déportée.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce qui reste à décider — le seuil et la main font-ils double emploi ?</span>
+      <p>On garde les deux et on essaie. <strong>Le seuil est un réglage qui décide partout</strong> ;
+        <strong>la main est un geste qui décide à un endroit.</strong> L'hypothèse est qu'ils se complètent :
+        le seuil fait 90 % du travail d'un coup, la main rattrape ce que la couleur ne pouvait pas voir — un
+        casque sombre sur des cheveux sombres, par exemple, qu'aucun seuil ne distingue.</p>
+      <p style="margin-top:10px">Si l'usage montre qu'on ne touche jamais au seuil, il partira dans un repli.
+        S'il montre qu'on ne se sert jamais de la main ici, c'est elle qui partira. <strong>À
+        mesurer.</strong></p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce qu'on en sort, et les réglages qu'on garde</h2></div>
+
+    <div class="note">
+      <span class="lab">Deux sorties, qui se cochent au lieu de s'exclure</span>
+      <ul>
+        <li><b>Le calque</b> — ce que le dessus ajoute au dessous, sur fond transparent. C'est la pièce
+          d'équipement : elle va au vestiaire du personnage et s'empile ensuite sur les autres poses.</li>
+        <li><b>L'aplat</b> — les deux images fondues en une, dans l'ordre de la pile. C'est le personnage
+          habillé, en une seule image, prêt à partir dans le jeu tel quel.</li>
+      </ul>
+      <p style="margin-top:12px">On veut souvent les deux : le calque pour le réutiliser, l'aplat pour l'avoir
+        tout de suite. <strong>Le bouton compte ce qui est coché</strong> —
+        <span class="mesure">Fabriquer — 2 images ›</span> — et il est grisé quand rien ne l'est.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">L'alerte du détourage ne s'affiche que si le calque est coché</span>
+      <p>C'est ce qui décide de sa forme : <strong>l'aplat n'a pas besoin d'alpha, le calque si.</strong>
+        Fondre deux images opaques donne un résultat parfaitement valable ; en extraire un calque n'en donne
+        aucun.</p>
+      <p style="margin-top:10px">Quand le calque est coché et que le dessus n'a pas d'alpha, l'alerte se pose
+        au-dessus du bouton :</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--epingle)">sans alpha sur le dessus,
+        le calque prendrait tout le fond</span><br>
+        <span class="mesure" style="color:var(--signal)">reprendre les 2 passes du dessous ›</span></p>
+      <p style="margin-top:10px"><strong>Le bouton n'est pas grisé pour autant.</strong> Le produit constate
+        et ne refuse pas : une image qui remplit légitimement son cadre existe, et l'atelier n'a pas les
+        moyens de savoir laquelle il a sous les yeux. L'alerte nomme la conséquence et propose le geste ;
+        l'auteur décide.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Enregistrer les réglages — pour les trois casques suivants</span>
+      <p>Un jeu de réglages qui marche pour un casque marchera à 90 % pour le suivant : même corps, même
+        cadrage, même calage à quelques pixels près. La case <span class="mesure">enregistrer ces
+        réglages</span> les attache <strong>à l'image de référence</strong>, et ils reviennent préremplis la
+        prochaine fois qu'on superpose quelque chose sur elle.</p>
+      <p style="margin-top:10px"><strong>Ce qui est enregistré</strong> : le calage, le rectangle gardé, le
+        seuil, les modes d'affichage et les sorties cochées. <strong>Ce qui ne l'est pas : les passages de la
+        main</strong> — ils sont dessinés sur une image précise et n'ont aucun sens sur une autre pièce.</p>
+      <p style="margin-top:10px">Au chargement, la colonne le dit et le défait d'un clic :</p>
+      <p style="margin-top:8px"><span class="mesure" style="color:var(--epingle)">repris de « casque de fer »
+        · 3 septembre</span> <span class="mesure" style="color:var(--signal)">· repartir de zéro ›</span></p>
+      <p style="margin-top:10px" class="sourd">C'est la règle habituelle du produit : <em>ce qui est devinable
+        est prérempli avec sa provenance, et se défait d'un clic</em>.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que la superposition fabrique</h2></div>
+    <p class="intro">Comme le découpage, elle écrit sur le disque, et ce qu'elle écrit est un asset entier.
+      Elle est le seul geste du produit dont le résultat a <strong>deux ascendants</strong>.</p>
+    <table>
+      <thead><tr><th style="width:17%">Ce qu'il reçoit</th><th style="width:25%">Quoi</th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td class="k">ses pixels</td><td><span class="m">ceux de l'image du dessus</span></td>
+          <td>Le calque est fait de la pièce elle-même, pas d'un souvenir du corps. Pour l'aplat, ce sont les
+            deux images fondues dans l'ordre de la pile.</td></tr>
+        <tr><td class="k">son parent</td><td><span class="m">l'image du dessus</span></td>
+          <td>Un asset a un parent, et c'est celui dont il est fait.</td></tr>
+        <tr><td class="k">sa référence</td><td><span class="m">un identifiant, à côté du parent</span></td>
+          <td>Gardée pour que la superposition se rejoue : changer le seuil ou le rectangle ne redemande
+            aucune image. La référence a servi à décider ce qu'on garde ; elle n'a donné aucun pixel, donc
+            elle n'est pas le parent.</td></tr>
+        <tr><td class="k">sa recette</td><td><span class="m">vide</span></td>
+          <td>La superposition a travaillé sur deux images <em>rendues</em>. Leur réappliquer leurs recettes
+            détourerait ce qui est déjà détouré.</td></tr>
+        <tr><td class="k">son prix</td><td><span class="m">0,00 $</span></td>
+          <td>Rien n'a été demandé à personne. L'argent a été dépensé deux fois — pour le corps et pour le
+            corps habillé — et les deux filiations y mènent.</td></tr>
+        <tr><td class="k">ses mesures</td><td><span class="m">cinq nombres, pris à la naissance</span></td>
+          <td>Elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans
+            l'ordre où il faut les regarder. <strong>Aucune ne refuse quoi que ce soit.</strong></td></tr>
+        <tr><td class="k">son nom</td><td><span class="m">balthazar · casque</span><br><span class="sourd">l'aplat : balthazar · repos 1 + casque</span></td>
+          <td>Un calque prend le nom de la pièce, parce que c'est sous ce nom qu'on le cherchera dans le
+            vestiaire. Un aplat nomme les deux, dans l'ordre de la pile.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note gris" style="margin-top:22px">
+      <span class="lab">Les cinq mesures, une ligne chacune</span>
+      <ul>
+        <li><b>silhouette</b> — ce qui reste du corps de départ. Proche de 1 : le modèle a gardé la
+          forme.</li>
+        <li><b>corps repeint</b> — la part du corps dont la couleur a changé, <em>hors de l'endroit où la
+          pièce est tombée</em>. C'est la mesure qui décide : beaucoup de repeint veut dire que le modèle a
+          redessiné le personnage au lieu de l'habiller.</li>
+        <li><b>ajout</b> — ce qui est apparu, en part du corps. Elle s'affiche mais ne se classe pas : une
+          pièce contenue en ajoute peu, une cape en ajoute beaucoup, et les deux vont bien.</li>
+        <li><b>échelle</b> — la taille du dessus au retour. <span class="mesure">0,62</span> veut dire que le
+          modèle a dézoomé pour faire de la place à la pièce.</li>
+        <li><b>compacité</b> — la part de la différence qui tient dans sa plus grosse tache. Proche de 1 :
+          un objet. Proche de 0 : une poussière semée partout, donc un repeint déguisé.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 09 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce que ça règle, et ce qui reste ouvert</h2></div>
+    <div class="avenir">
+      <div class="av mnt">
+        <div class="n">CE QUE CETTE VERSION RÈGLE</div>
+        <ul>
+          <li>Une place de recette ne pointe plus vers un second asset</li>
+          <li>Plus d'outil grisé sur presque toute la bibliothèque</li>
+          <li>Les deux images se choisissent et s'intervertissent</li>
+          <li>Le dessous se teinte et se rend translucide, pour caler à l'œil</li>
+          <li><b>Le dessus se détoure sans quitter l'outil</b>, et hérite du détourage du dessous</li>
+          <li>Le calage se corrige à la main quand l'algorithme tombe à côté</li>
+          <li>Réglage au pixel : champ saisissable, boutons, raccourcis clavier</li>
+          <li>On voit le calque seul et le résultat pendant qu'on cale</li>
+          <li>Les réglages se rejouent d'une pièce à la suivante</li>
+        </ul>
+      </div>
+      <div class="av plus">
+        <div class="n">CE QUI RESTE OUVERT</div>
+        <ul>
+          <li>Le seuil et la main font-ils double emploi ? (§ 06)</li>
+          <li>Le détourage hérité doit-il se reposer tout seul quand celui du dessous change ?</li>
+          <li>Superposer plus de deux images — rien ne l'interdit, rien ne le prévoit</li>
+          <li>Rejouer une superposition quand la référence a changé : automatique ou sur demande ?</li>
+          <li>Appliquer un calque déjà fabriqué aux autres poses du personnage — c'est le geste d'après, et
+            il n'est pas dessiné</li>
+          <li>La planche à quatre directions — <b>répondu le 30 août</b> par
+            <span class="mesure">08-planche-de-pose.html</span> § 04 et § 08 : quatre directions
+            font exactement quatre cases, et l'équipement se fabrique sur la même planche, une pièce
+            à la fois. Cette ligne renvoyait à une question numérotée du sommaire, qui a changé de
+            numéro depuis</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 10 ═════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">10</span><h2>Ce que cet outil doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+      <p><strong>Le guide ne dit nulle part qu'il existe des outils qui ne sont pas des tables.</strong>
+        C'est pourtant la distinction qui décide où on les cherche — une table règle une image et rend
+        la même ; celui-ci en prend deux et en fabrique une troisième.</p>
+      <p style="margin-top:10px"><b>nom</b> · La superposition<br>
+        <b>quoi</b> · L'outil qui pose une pièce d'équipement sur un personnage : il prend le corps nu
+        et le corps habillé, et il en tire le calque de ce qui a été ajouté.<br>
+        <b>ce que ça change</b> · Rien sur les deux images de départ, qui ne sont jamais repeintes.
+        Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle
+        la pièce est apparue : il en faut un par pose.<br>
+        <b>d'où ça vient</b> · deux images que tu désignes, dans la même pose<br>
+        <b>où ça se range</b> · <span class="mesure">Les fabriques</span> — avec le découpage, à droite
+        du trait dans la barre des tables</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · 19, la superposition · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

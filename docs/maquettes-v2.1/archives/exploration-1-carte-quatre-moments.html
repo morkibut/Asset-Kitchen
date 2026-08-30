@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la carte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--fond-0); color:var(--texte);
+    font-family:var(--sans); font-size:13px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1180px;margin:0 auto;padding:56px 32px 96px}
+
+  /* ── Tête ───────────────────────────────────────────────────────── */
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .chapeau .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 14px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:68ch;color:var(--texte-2);font-size:14px;margin:0 0 8px}
+  .chapeau p strong{color:var(--texte);font-weight:600}
+
+  /* ── Sections ───────────────────────────────────────────────────── */
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  h3{font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 10px}
+  p{margin:0 0 12px;max-width:74ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:74ch;margin-bottom:22px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  /* ── Chiffres du constat ────────────────────────────────────────── */
+  .compte{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .compte div{background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:14px 14px 12px}
+  .compte .n{font-family:var(--mono);font-size:28px;color:var(--texte);line-height:1;margin-bottom:8px}
+  .compte .l{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+
+  /* ── Le châssis, wireframe ──────────────────────────────────────── */
+  .chassis{border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);overflow:hidden}
+  .barre{height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:16px;padding:0 14px}
+  .nomproduit{font-family:var(--serif);font-size:17px;line-height:1}
+  .onglets{display:flex;gap:2px}
+  .onglet{height:26px;display:flex;align-items:center;padding:0 11px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px}
+  .onglet.actif{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .droite{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .droite span{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .sep{border-left:1px solid var(--bord);padding-left:14px;margin-left:4px}
+  .zone{height:132px;display:flex;align-items:center;justify-content:center;
+    background:var(--fond-0);color:var(--texte-3);font-family:var(--mono);font-size:10px;
+    letter-spacing:.11em;text-transform:uppercase}
+  .etat{height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 14px}
+  .etat span{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .pastille{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;
+    margin-right:6px;vertical-align:middle}
+  .legende{margin-top:12px;font-size:11.5px;color:var(--texte-3);max-width:74ch}
+
+  /* ── Les quatre ateliers ────────────────────────────────────────── */
+  .ateliers{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .atelier{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;
+    display:flex;flex-direction:column;min-height:0}
+  .atelier > .haut{padding:16px 15px 13px;border-bottom:1px solid var(--bord)}
+  .atelier .rang{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    letter-spacing:.11em;margin-bottom:9px}
+  .atelier h3{font-size:26px;margin:0 0 8px}
+  .atelier .moment{font-size:12px;color:var(--texte-2);line-height:1.45;margin:0}
+  .freq{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.06em;color:var(--texte-3);border:1px solid var(--bord);border-radius:2px;
+    padding:2px 6px;background:var(--fond-2)}
+  .freq.permanent{color:var(--signal);border-color:var(--signal);background:var(--signal-sourd)}
+  .contenu{padding:13px 15px;flex:1}
+  .contenu ul{margin:0;padding:0;list-style:none}
+  .contenu li{font-size:12.5px;color:var(--texte-2);padding:4px 0 4px 13px;position:relative;line-height:1.4}
+  .contenu li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px;background:var(--bord-fort)}
+  .contenu li.neuf{color:var(--texte)}
+  .contenu li.neuf::before{background:var(--signal)}
+  .pied{padding:11px 15px;border-top:1px solid var(--bord);background:var(--fond-2)}
+  .pied .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);display:block;margin-bottom:5px}
+  .pied .txt{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+  .pied .txt b{color:var(--signal-clair);font-weight:500}
+
+  /* ── Le trajet ──────────────────────────────────────────────────── */
+  .trajet{display:flex;align-items:stretch;gap:0;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-1);overflow:hidden}
+  .etape{flex:1;padding:15px;border-right:1px solid var(--bord)}
+  .etape:last-child{border-right:0}
+  .etape .de{font-family:var(--serif);font-size:19px;margin-bottom:7px}
+  .etape .fleche{font-family:var(--mono);font-size:10px;color:var(--signal);margin-bottom:7px}
+  .etape .quoi{font-size:11.5px;color:var(--texte-2);line-height:1.45}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;
+    border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.apres{color:var(--texte)}
+  td.apres b{color:var(--signal-clair);font-weight:500}
+  .barre-txt{text-decoration:line-through;text-decoration-color:var(--echec);
+    text-decoration-thickness:1px;color:var(--texte-3)}
+
+  /* ── Blocs de note ──────────────────────────────────────────────── */
+  .note{border:1px solid var(--bord);border-left:2px solid var(--epingle);border-radius:2px;
+    background:var(--fond-1);padding:15px 17px}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--epingle);display:block;margin-bottom:8px}
+  .note p:last-child{margin-bottom:0}
+
+  .paire{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .carte{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .carte h4{font-family:var(--sans);font-size:12.5px;font-weight:600;margin:0 0 8px;color:var(--texte)}
+  .carte p{font-size:12px;color:var(--texte-2);margin:0}
+
+  /* ── La suite ───────────────────────────────────────────────────── */
+  .suite{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .jalon{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:14px}
+  .jalon.ici{border-color:var(--signal);background:var(--signal-sourd)}
+  .jalon .code{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-bottom:7px}
+  .jalon.ici .code{color:var(--signal)}
+  .jalon .nom{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:5px}
+  .jalon .quoi{font-size:11.5px;color:var(--texte-2);line-height:1.4}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 0 sur 5</div>
+    <h1>La carte — <em>quatre ateliers,<br>un seul écran à la fois</em></h1>
+    <p>Ce document ne dessine aucun écran. Il tranche <strong>ce que le produit contient, et où</strong> — parce
+      qu'une maquette d'écran construite sur le mauvais découpage est du travail jeté.</p>
+    <p class="sourd">Le style, la couleur, la typographie et le mouvement ne sont pas rouverts : ils viennent
+      de <span class="mesure">docs/DESIGN.md</span> et cette page en est faite.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Le constat, en chiffres</h2></div>
+    <p class="intro">Aujourd'hui l'atelier s'ouvre sur un écran à quatre colonnes, surmonté d'une barre qui
+      porte cinq boutons. Chacun de ces boutons ouvre une surface <strong>qui recouvre tout le reste</strong> —
+      et aucune ne dit où tu es ni d'où tu viens.</p>
+    <div class="compte">
+      <div><div class="n">7</div><div class="l">surfaces qui se posent les unes sur les autres</div></div>
+      <div><div class="n">5</div><div class="l">boutons dans la barre de tête, tous du même poids</div></div>
+      <div><div class="n">4</div><div class="l">colonnes ouvertes en permanence sur l'atelier</div></div>
+      <div><div class="n">0</div><div class="l">endroit qui dit où tu es, ni ce qui vient après</div></div>
+    </div>
+    <p class="legende">La charge ne vient pas du nombre de fonctions. Elle vient de ce que
+      <strong>tout est ouvert au repos et que rien ne conduit</strong> — ce que le relevé du 29 août avait déjà
+      écrit : « SpriteCook conduit, l'atelier attend qu'on lui dicte ». Découper cette charge en six fenêtres
+      donnerait six fenêtres chargées, plus un problème de navigation.</p>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Le châssis — ce qui ne change jamais d'un atelier à l'autre</h2></div>
+    <p class="intro">Quatre onglets nommés remplacent les cinq boutons. Ils sont là en permanence, ils disent
+      lequel est ouvert, et c'est <strong>la seule chose du produit qui parle de navigation</strong>. Tout le
+      reste de la barre parle du travail en cours.</p>
+
+    <div class="chassis">
+      <div class="barre">
+        <span class="nomproduit">Asset Kitchen</span>
+        <div class="onglets">
+          <span class="onglet">Univers</span>
+          <span class="onglet actif">Fabriquer</span>
+          <span class="onglet">Reprendre</span>
+          <span class="onglet">Sortir</span>
+        </div>
+        <div class="droite">
+          <span>Cœur de pierre — 01 · $2,140</span>
+          <span class="sep">?</span>
+        </div>
+      </div>
+      <div class="zone">l'atelier ouvert — et rien ne se pose par-dessus</div>
+      <div class="etat">
+        <span><span class="pastille"></span>en ligne</span>
+        <span>catalogue · 29/08 14:02</span>
+        <span>3 modèles</span>
+      </div>
+    </div>
+
+    <p class="legende">44 px en tête, 26 px en pied, exactement comme aujourd'hui. Ce qui change : les cinq
+      boutons deviennent quatre onglets qui <strong>tiennent un état</strong>, les deux bascules de repli
+      disparaissent (un atelier n'a que les colonnes de son moment), et le coût du projet reste le seul chiffre
+      permanent. Les réglages de l'outil quittent la barre — ce n'est pas du travail.</p>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Les quatre ateliers</h2></div>
+    <p class="intro">Découpés par <strong>moment de travail</strong>, jamais par fonctionnalité. On change
+      d'atelier quand on change de rythme, pas quand on change d'objet — c'est pour ça qu'un objet, un décor
+      et une interface ne méritent pas trois ateliers : ils traversent exactement le même geste.
+      Les lignes en clair sont <strong>ce que la 2.1 ajoute</strong>.</p>
+
+    <div class="ateliers">
+
+      <div class="atelier">
+        <div class="haut">
+          <div class="rang">01</div>
+          <h3>Univers</h3>
+          <p class="moment">Ce qu'on pose une fois, et qui s'applique ensuite tout seul.</p>
+          <span class="freq">au début d'un projet</span>
+        </div>
+        <div class="contenu">
+          <ul>
+            <li>La bible — les sept champs nommés</li>
+            <li>La palette du jeu</li>
+            <li>Le tableau d'inspiration</li>
+            <li>La toile de composition, et sa réserve</li>
+            <li>Les défauts du projet : modèle, échelle, proportions</li>
+            <li class="neuf">Les vignettes de style et de cadrage, à la place de deux champs vides</li>
+          </ul>
+        </div>
+        <div class="pied">
+          <span class="lab">Annonce ensuite</span>
+          <span class="txt">L'univers est posé — <b>Fabriquer</b></span>
+        </div>
+      </div>
+
+      <div class="atelier">
+        <div class="haut">
+          <div class="rang">02</div>
+          <h3>Fabriquer</h3>
+          <p class="moment">Le banc. Écrire, générer, juger, garder — tous les jours.</p>
+          <span class="freq permanent">permanent</span>
+        </div>
+        <div class="contenu">
+          <ul>
+            <li>Le plan de production — <em>ce qu'il reste à faire</em></li>
+            <li>Le prompt, et ce qui partira avec</li>
+            <li>Les trois réglages du geste : modèle, variations, proportions</li>
+            <li>La grille d'assets, et son rangement</li>
+            <li>La fiche d'un asset</li>
+            <li>Le journal des ratés</li>
+            <li class="neuf">Rédiger / étoffer, sous le champ</li>
+            <li class="neuf">La consigne de pose, préremplie en anglais</li>
+          </ul>
+        </div>
+        <div class="pied">
+          <span class="lab">Annonce ensuite</span>
+          <span class="txt">Cette image est à corriger — <b>Reprendre</b></span>
+        </div>
+      </div>
+
+      <div class="atelier">
+        <div class="haut">
+          <div class="rang">03</div>
+          <h3>Reprendre</h3>
+          <p class="moment">La table de retouche. Une image à la fois, et rien d'autre à l'écran.</p>
+          <span class="freq">une génération sur deux</span>
+        </div>
+        <div class="contenu">
+          <ul>
+            <li>Le détourage, et son réglage</li>
+            <li>La découpe d'une planche en rectangles</li>
+            <li>Le calque, et son recalage</li>
+            <li>La retouche au pixel</li>
+            <li class="neuf">La pipette, la poche fermée, la gomme</li>
+            <li class="neuf">La découpe cesse d'être cachée derrière la fiche</li>
+          </ul>
+        </div>
+        <div class="pied">
+          <span class="lab">Annonce ensuite</span>
+          <span class="txt">Rendu à la grille — <b>Fabriquer</b></span>
+        </div>
+      </div>
+
+      <div class="atelier">
+        <div class="haut">
+          <div class="rang">04</div>
+          <h3>Sortir</h3>
+          <p class="moment">Le seul atelier qui regarde le jeu, et non l'image.</p>
+          <span class="freq">fin de séance</span>
+        </div>
+        <div class="contenu">
+          <ul>
+            <li>L'export vers le dossier du jeu</li>
+            <li>L'agent qui code le jeu, et le MCP</li>
+            <li>Ce que le projet a produit</li>
+            <li class="neuf">Ce que le projet a coûté, projet par projet</li>
+          </ul>
+        </div>
+        <div class="pied">
+          <span class="lab">Annonce ensuite</span>
+          <span class="txt">Il manque 4 poses — <b>Fabriquer</b></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Le trajet — chaque atelier annonce le suivant</h2></div>
+    <p class="intro">C'est la moitié de SpriteCook qui n'avait pas été prise : cinq écrans nommés, un pas à la
+      fois, et <strong>chacun dit où l'on va sur son propre bouton</strong>. Un atelier qu'on quitte sans savoir
+      quoi faire ensuite redevient un couvercle.</p>
+    <div class="trajet">
+      <div class="etape">
+        <div class="de">Univers</div>
+        <div class="fleche">→ Fabriquer</div>
+        <div class="quoi">La bible est écrite, la palette est posée. Le bouton du pied ouvre le banc avec
+          l'univers déjà branché.</div>
+      </div>
+      <div class="etape">
+        <div class="de">Fabriquer</div>
+        <div class="fleche">→ Reprendre</div>
+        <div class="quoi">Depuis la fiche d'une image : « Reprendre cette image ». C'est le seul chemin —
+          on reprend une image, jamais une sélection.</div>
+      </div>
+      <div class="etape">
+        <div class="de">Reprendre</div>
+        <div class="fleche">→ Fabriquer</div>
+        <div class="quoi">L'image corrigée retourne à sa place exacte dans la grille. L'œil reste où il
+          était.</div>
+      </div>
+      <div class="etape">
+        <div class="de">Fabriquer</div>
+        <div class="fleche">→ Sortir</div>
+        <div class="quoi">Depuis une sélection : « Sortir ces 12 assets ». Le dossier du jeu est déjà connu,
+          il vient des réglages.</div>
+      </div>
+      <div class="etape">
+        <div class="de">Sortir</div>
+        <div class="fleche">→ Fabriquer</div>
+        <div class="quoi">Le plan dit ce qui manque encore. Cliquer une case vide arme le prompt et ramène au
+          banc. La boucle est fermée.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qui disparaît</h2></div>
+    <p class="intro">C'est ici que la charge tombe. Rien n'est retiré du produit : tout ce qui existe reste
+      atteignable — mais plus rien n'est à l'écran en dehors de son moment.</p>
+    <table>
+      <thead><tr><th style="width:46%">Aujourd'hui</th><th>En 2.1</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="barre-txt">Cinq boutons de même poids dans la barre : Univers, Personnages, Catalogue, Réglages, Guide</span></td>
+          <td class="apres"><b>Quatre onglets nommés</b> qui disent où tu es. Le Catalogue redevient une action
+            (il se rafraîchit là où le repli se dit déjà), le Guide reste sur <span class="mesure">?</span>,
+            les Réglages quittent la barre du travail.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Six surfaces qui recouvrent l'atelier sans dire d'où elles viennent</span></td>
+          <td class="apres"><b>Zéro.</b> On change d'atelier ; rien ne se pose par-dessus, sauf l'aperçu plein
+            cadre, qui est une visionneuse et non un lieu.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Deux bascules de repli — arbre, réglages — présentes en permanence</span></td>
+          <td class="apres"><b>Zéro.</b> Un atelier ne porte que les colonnes de son moment : il n'y a plus rien
+            à replier pour faire de la place.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Une colonne de réglages de 300 px, ouverte même quand on n'y touche pas</span></td>
+          <td class="apres">Les <b>trois réglages du geste</b> passent sous le prompt. Le reste — options du
+            modèle, échelle, format — se déplie à la demande. <span class="sourd">Comment, exactement : M1.</span></td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">La découpe atteignable seulement depuis la fiche d'une image</span></td>
+          <td class="apres">L'atelier <b>Reprendre</b>, à un onglet — et la fiche continue d'y envoyer
+            directement sur la bonne image.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Le plan de poses dans un écran à part, qu'il faut penser à ouvrir</span></td>
+          <td class="apres">C'est <b>l'état d'ouverture de Fabriquer</b> : l'atelier ouvre sur ce qu'il reste
+            à faire, pas sur un champ vide.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce qui n'est pas un atelier, et pourquoi</h2></div>
+    <div class="paire">
+      <div class="carte">
+        <h4>Les réglages de l'outil</h4>
+        <p>Clé OpenRouter, dossiers, garde-fous MCP, plafonds. C'est de la quincaillerie, pas du travail : ça
+          n'a pas de moment. Un écran rare, atteint par une entrée à part — jamais un cinquième onglet du même
+          poids que Fabriquer.</p>
+      </div>
+      <div class="carte">
+        <h4>Le Guide</h4>
+        <p>De la prose. Il garde sa touche <span class="mesure">?</span> et sa fermeture sur Échap, il se pose
+          par-dessus n'importe quel atelier. Un écran d'aide qui coûterait un onglet permanent serait de l'aide
+          qu'on ne lit jamais.</p>
+      </div>
+      <div class="carte">
+        <h4>L'aperçu plein cadre</h4>
+        <p>Une visionneuse, pas un lieu. Elle se pose, on regarde, elle se retire, et on est exactement là où
+          l'on était. C'est la seule chose qui a encore le droit de recouvrir un atelier.</p>
+      </div>
+      <div class="carte">
+        <h4>Le catalogue des modèles</h4>
+        <p>Un rafraîchissement, pas un écran — il n'avait de bouton dans la barre que parce qu'il n'avait nulle
+          part où aller. Il rejoint l'endroit qui parle déjà de l'état du fournisseur.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que la carte ne règle pas</h2></div>
+    <div class="note">
+      <span class="lab">À tenir dans les maquettes suivantes</span>
+      <p><strong>Ranger les écrans ne suffit pas.</strong> Si chaque atelier continue d'ouvrir sur du vide, on
+        obtient quatre écrans bien rangés qui demandent toujours à l'auteur de tout décider avant d'avancer —
+        et le reproche « rien n'est fluide » restera vrai.</p>
+      <p>La règle qui manque, et qui vaut pour les quatre : <strong>ce qui est devinable est prérempli avec sa
+        provenance, et se défait d'un clic.</strong> Elle est le jumeau exact de la règle que le produit tient
+        déjà depuis T1 — <em>ce qui est indisponible est grisé avec sa raison, jamais proposé puis refusé</em>.
+        Un champ prérempli n'est pas un champ décidé : il porte d'où vient sa valeur, il s'efface, et ce qui
+        part reste exactement ce qui est affiché.</p>
+      <p class="sourd">C'est la conduite. Elle se dessine écran par écran, dans M1 à M4 — pas ici.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 8 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>La suite</h2></div>
+    <div class="suite">
+      <div class="jalon ici">
+        <div class="code">M0 · ici</div>
+        <div class="nom">La carte</div>
+        <div class="quoi">Quels ateliers, ce que chacun contient, ce qui disparaît.</div>
+      </div>
+      <div class="jalon">
+        <div class="code">M1</div>
+        <div class="nom">Fabriquer</div>
+        <div class="quoi">Le seul écran ouvert en permanence — celui où la charge fait mal.</div>
+      </div>
+      <div class="jalon">
+        <div class="code">M2</div>
+        <div class="nom">Univers</div>
+        <div class="quoi">La bible qui n'ouvre plus sur sept boîtes vides, la palette, la toile.</div>
+      </div>
+      <div class="jalon">
+        <div class="code">M3</div>
+        <div class="nom">Reprendre</div>
+        <div class="quoi">Trois surfaces cachées réunies en une table de retouche.</div>
+      </div>
+      <div class="jalon">
+        <div class="code">M4</div>
+        <div class="nom">Sortir</div>
+        <div class="quoi">Le plan de production, l'export, l'agent, les coûts.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 0 sur 5 · 29 août 2026 · aucun écran n'est dessiné ici
+  </footer>
+
+</div>
+</body>
+</html>

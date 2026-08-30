@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Détourage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  /* ── La colonne, à sa vraie largeur ─────────────────────────────── */
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:10px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .passe{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .passe.on{border-color:var(--signal)}
+  .ptete{height:26px;display:flex;align-items:center;gap:7px;padding:0 8px}
+  .ptete .rg{font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ptete .nm{font-size:11px;color:var(--texte)}
+  .passe.on .ptete .nm{color:var(--signal-clair)}
+  .ptete .vl{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .ptete .x{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .pcorps{border-top:1px solid var(--bord);padding:8px;display:flex;flex-direction:column;gap:7px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:84px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:44px;text-align:right}
+  .pastille-c{width:14px;height:14px;border:1px solid var(--bord-fort);background:#F2EFE6;flex:none}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .sg.gris{color:var(--texte-3);border-style:dashed}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .ajout{border:1px dashed var(--bord-fort);border-radius:2px;padding:8px;
+    display:flex;flex-direction:column;gap:6px}
+  .propose{border:1px solid var(--lumiere);border-radius:2px;background:var(--fond-2);
+    padding:8px 9px;display:flex;flex-direction:column;gap:6px}
+  .propose .ph{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .propose .pa{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .propose .pb{height:23px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--texte)}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+
+  /* ── L'image ────────────────────────────────────────────────────── */
+  .toile{border:1px solid var(--bord);border-radius:2px;position:relative;height:250px;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sujet{width:168px;height:196px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    position:relative;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;padding:8px}
+  .poche{position:absolute;border:1px solid var(--lumiere);border-radius:2px}
+  .poche::after{content:attr(data-n);position:absolute;top:-1px;left:-1px;
+    background:rgba(11,13,16,.82);color:var(--lumiere);font-family:var(--mono);
+    font-size:8.5px;padding:0 3px;line-height:1.5}
+  .pip{position:absolute;left:26px;top:56px;width:15px;height:15px;
+    border:1px solid var(--lumiere);border-radius:9999px}
+  .pip::after{content:"";position:absolute;left:6px;top:6px;width:1px;height:1px;
+    box-shadow:0 0 0 1px var(--lumiere)}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 10 — détourage</div>
+    <h1>Détourage —<br><em>séparer le sujet du fond</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong> : la colonne de la table, ce que
+      la main y fait sur l'image, et ce que la table écrit sous elle. La barre de tables, le fil d'Ariane,
+      le cadre et le comparateur sont définis une fois pour toutes dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle produit <strong>l'alpha</strong> : elle décide, pixel par pixel, ce qui est le sujet
+      et ce qui est le fond. <strong>C'est la première table de la recette</strong>, et elle ne peut pas ne
+      pas l'être : rien ne se recadre, ne se met à l'échelle ni ne se nettoie avant qu'un alpha existe pour
+      dire où est le sujet.</p>
+    <p class="intro">La panne qu'elle évite est le <strong>halo</strong> : un ou deux pixels de contour à la
+      couleur du fond qui <strong>survivent au seuil</strong> — ils sont donc déjà opaques en sortant d'ici —
+      et que les tables suivantes gardent tels quels, jusqu'à dessiner un liseré clair autour du sprite dans
+      le jeu.</p>
+    <p class="intro" style="margin-top:-4px"><span class="mesure">Corrigé le 30 août 2026.</span> Ce
+      paragraphe disait que ces pixels <em>ressortaient opaques après la quantification</em>, ce qui met la
+      faute sur la mauvaise table. <strong>La quantification ne touche jamais à la transparence</strong> —
+      mesuré sur six images, l'alpha est identique avant et après. Elle ne fait que ramener la couleur de ces
+      pixels sur la palette. <b>Le halo naît ici</b>, et c'est ici qu'il se règle.</p>
+    <div class="note">
+      <span class="lab">Ce qu'elle contient de neuf</span>
+      <p>Un <strong>troisième moteur de passe</strong> — <span class="mesure">couleur</span>, la pipette — à
+        côté de <span class="mesure">bord</span> et <span class="mesure">modele</span>. Et une
+        <strong>proposition</strong> : les poches de fond enfermées par le sujet, cherchées d'office après
+        chaque passe de bord, montrées et jamais effacées seules.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro"><span class="mesure">308 px</span> de contenu dans la colonne de 380. En haut et en bas,
+      les deux bandes fournies par le châssis sont rendues en sourdine — elles ne sont pas de cette
+      maquette.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">détourage</div>
+        <div class="cgcorps">
+          <div class="col-t">les passes · dans leur ordre</div>
+
+          <div class="passe">
+            <div class="ptete"><span class="rg">1</span><span class="nm">depuis le bord</span>
+              <span class="vl">tolérance 42</span><span class="x">×</span></div>
+          </div>
+
+          <div class="passe on">
+            <div class="ptete"><span class="rg">2</span><span class="nm">pipette · #F2EFE6</span>
+              <span class="vl">cette tache</span><span class="x">×</span></div>
+            <div class="pcorps">
+              <div class="rg-reg"><span class="lb">couleur visée</span>
+                <span class="pastille-c"></span>
+                <span class="vl" style="flex:1;text-align:left">#F2EFE6</span></div>
+              <div class="segs"><span class="sg on mono">cette tache</span><span class="sg mono">partout</span></div>
+              <div class="rg-reg"><span class="lb">tolérance</span>
+                <span class="rail"><i style="left:18%"></i></span><span class="vl">18</span></div>
+              <div class="rg-reg"><span class="lb">seuil alpha</span>
+                <span class="rail"><i style="left:50%"></i></span><span class="vl">128</span></div>
+              <div class="rg-reg"><span class="lb">durcissement</span>
+                <span class="rail"><i style="left:25%"></i></span><span class="vl">1 px</span></div>
+              <div class="raison">ronger le bord coûte un liseré, ne pas le ronger coûte un halo</div>
+            </div>
+          </div>
+
+          <div class="passe">
+            <div class="ptete"><span class="rg">3</span><span class="nm">poches · 3 zones</span>
+              <span class="vl">412 px</span><span class="x">×</span></div>
+          </div>
+
+          <div class="ajout">
+            <span class="col-t">ajouter une passe</span>
+            <div class="segs">
+              <span class="sg">depuis le bord</span><span class="sg">pipette</span>
+              <span class="sg gris">modèle</span>
+            </div>
+            <div class="raison">— le moteur modèle n'est pas installé sur cette machine</div>
+          </div>
+
+          <div class="propose">
+            <span class="ph">1 poche fermée, 96 px</span>
+            <span class="pa">du fond qu'aucune tolérance n'atteint</span>
+            <span class="pb">L'effacer ›</span>
+          </div>
+        </div>
+        <div class="etatcouche chassispart"><span>3 passes · alpha 61 %</span>
+          <span class="dr">Sans détourage ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête de 30 px porte le
+          <b>nom de la table</b>, et rien d'autre — <span class="mesure">tout défaire</span> vit dans la barre
+          de tables, pas ici.</span></div>
+        <div class="an"><span class="k">01</span><span class="t"><b>Les passes, dans leur ordre.</b> Une
+          première passe large dégrossit le fond, une seconde plus serrée nettoie ce qui reste. Chacune porte
+          <b>ses propres</b> réglages — c'est le modèle actuel, inchangé.</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>Une seule passe est dépliée à la fois</b>,
+          celle qu'on règle. Les autres se réduisent à leur titre et à leur valeur : un repli qui résume,
+          jamais un repli qui cache.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>Une poche acceptée devient une passe.</b>
+          Elle s'appelle <span class="mesure">poches · 3 zones</span>, elle s'annule et se rejoue comme les
+          autres. Rien n'arrive à l'image par un chemin qui ne se voit pas dans la colonne.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>Ajouter une passe</b> est un cadre en
+          pointillé, pas un bouton <span class="mesure">+</span> : les trois moteurs sont visibles, et celui
+          qui manque porte sa raison en ligne sœur.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>La proposition est cerclée de
+          <span class="mesure">--lumiere</span></b>, comme les poches sur l'image. Elle attend un clic et
+          n'agit jamais seule.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">Le pied porte l'état de la
+          couche et <span class="mesure">Sans détourage ›</span>, qui ne vide que cette table.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:17%">Réglage</th><th style="width:21%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">moteur</td><td><span class="m">bord · pipette · modèle</span><br><span class="sourd">défaut : bord</span></td>
+          <td><strong>bord</strong> remplit depuis les quatre bordures — le geste courant, aucun réseau, aucun
+            téléchargement, mesuré propre sur douze images de six modèles. <strong>pipette</strong> vise une
+            couleur désignée dans l'image. <strong>modèle</strong> pour les images qui n'ont pas été
+            fabriquées ici et n'ont pas de fond plat ; grisé avec sa raison s'il n'est pas installé.</td></tr>
+        <tr><td class="k">couleur visée</td><td><span class="m">hex</span><br><span class="sourd">cliquée dans l'image</span></td>
+          <td><em>pipette seulement.</em> Le clic pose la couleur ; la pastille l'affiche et le code hex la
+            nomme. <strong>Recliquer ailleurs remplace la couleur de la passe</strong> — on ne crée pas une
+            passe par clic, sans quoi trois hésitations feraient trois passes.</td></tr>
+        <tr><td class="k">portée</td><td><span class="m">cette tache · partout</span><br><span class="sourd">défaut : cette tache</span></td>
+          <td><strong>Cette tache</strong> ne retire que la zone connexe sous le curseur : c'est ce qui règle
+            une poche sans toucher au reste, et c'est pour ça que c'est le défaut. <strong>Partout</strong>
+            retire toutes les zones de cette couleur, y compris celles qui touchent le sujet — plus expéditif,
+            plus risqué.</td></tr>
+        <tr><td class="k">tolérance</td><td><span class="m">0 – 255</span><br><span class="sourd">défaut : 28</span></td>
+          <td>L'écart maximal, par canal, pour qu'un pixel compte comme du fond. Monter mange le sujet ;
+            descendre laisse un halo. <strong>Le curseur pose au relâchement</strong> — vingt-et-un crans, un
+            seul appel — parce qu'un cran coûte <span class="mesure">1,5 s</span> de calcul mesuré.</td></tr>
+        <tr><td class="k">seuil alpha</td><td><span class="m">0 – 255</span><br><span class="sourd">défaut : 128</span></td>
+          <td>Au-delà, le pixel appartient au sujet. Il <strong>se durcit avant la réduction, jamais
+            après</strong> : un contour à demi transparent est tranché à pile ou face par un rééchantillonnage
+            au plus proche voisin, qui le rend <em>opaque, de la couleur du fond</em>. La quantification, plus
+            loin, n'y touche pas — elle met l'alpha de côté et le remet tel quel — et se contente de ramener
+            cette couleur de fond sur la palette. C'est exactement le liseré clair autour du sprite, et il se
+            joue tout entier sur ce curseur-ci.</td></tr>
+        <tr><td class="k">durcissement</td><td><span class="m">0 – 4 px</span><br><span class="sourd">défaut : 0</span></td>
+          <td>Combien de pixels de bord sont rongés après le seuil, par érosion en croix. Ce qui reste d'un
+            halo, c'est un ou deux pixels à la couleur du fond : les ronger coûte un liseré de sprite, ne pas
+            les ronger coûte un halo. Le réglage existe pour que l'auteur tranche image par image — le produit
+            n'a pas de bonne valeur à proposer.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">Deux marques, et aucune n'ajoute de couleur au produit — les deux sont en
+      <span class="mesure">--lumiere</span>, <em>la lampe de la table</em> : ce que le produit éclaire.</p>
+    <div class="banc">
+      <div style="flex:1;min-width:320px">
+        <div class="toile">
+          <div class="sujet">l'image, en grand, sur le damier
+            <span class="poche" data-n="1" style="left:30px;top:50px;width:24px;height:32px"></span>
+            <span class="poche" data-n="2" style="left:108px;top:78px;width:20px;height:24px"></span>
+            <span class="poche" data-n="3" style="left:66px;top:146px;width:28px;height:18px"></span>
+            <span class="pip"></span>
+          </div>
+        </div>
+        <div class="mesrow"><span>512 × 512 · alpha 61 % · 4 taches · boîte 318 × 470</span></div>
+      </div>
+      <div class="annot" style="max-width:420px">
+        <div class="an"><span class="k">pipette</span><span class="t"><b>Un cercle de 15 px en
+          <span class="mesure">--lumiere</span></b> suit le pointeur, avec le pixel visé marqué en son
+          centre. Le clic pose la couleur dans la passe ouverte. Le cercle ne paraît que quand une passe
+          pipette est dépliée — sinon le pointeur est celui du produit.</span></div>
+        <div class="an"><span class="k">poches</span><span class="t"><b>Chaque poche trouvée est cerclée</b>,
+          numérotée en mono 8,5 px sur le fond <span class="mesure">rgba(11,13,16,.82)</span> — la pastille
+          d'une tuile, réemployée. Le numéro est un fait, pas un classement : c'est l'ordre de balayage.</span></div>
+        <div class="an"><span class="k">rien d'autre</span><span class="t">Pas de tracé, pas de rectangle,
+          pas de poignée. <b>Cette table ne se peint pas</b> — donc les quatre modes du comparateur restent
+          libres, y compris <span class="mesure">brut</span> pendant qu'on règle.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ses mesures, et sa proposition</h2></div>
+    <table>
+      <thead><tr><th style="width:22%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">512 × 512</span></td><td>Les dimensions de l'image d'origine. Elles ne
+          changent pas dans cette table — c'est le recadrage et la grille qui les bougeront.</td></tr>
+        <tr><td class="k"><span class="m">alpha 61 %</span></td><td>La part opaque de l'image après les passes.
+          Chute brutale entre deux réglages = la tolérance vient de manger le sujet.</td></tr>
+        <tr><td class="k"><span class="m">4 taches</span></td><td>Le nombre de zones opaques distinctes.
+          <strong>Au-delà de une, il reste probablement des miettes</strong> — mais ce n'est pas un verdict :
+          un personnage à deux lanternes détachées en fait légitimement trois.</td></tr>
+        <tr><td class="k"><span class="m">boîte 318 × 470</span></td><td>Ce que le recadrage prendra si on
+          l'active. Elle est écrite ici parce que c'est <em>ici</em> qu'on décide de ce qu'elle vaudra.</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">La proposition — et elle n'agit jamais seule</span>
+      <p>Après chaque passe <em>depuis le bord</em>, l'atelier balaie les composantes connexes et cherche les
+        zones de fond <strong>entièrement enfermées</strong> par le sujet — celles qu'aucune valeur de
+        tolérance ne peut atteindre, parce que le remplissage part des bordures et que le chemin n'existe pas.
+        Il les cercle, les compte, dit combien de pixels, et <strong>attend</strong>.</p>
+      <p>Le calcul est un balayage de composantes connexes : il ne touche ni le fournisseur ni le réseau, ne
+        coûte rien, et marche coupé. Cliquer <span class="mesure">L'effacer ›</span> ajoute une passe nommée
+        dans la liste. Ne pas cliquer ne fait rien, et la proposition reste tant que la poche existe.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Son indisponibilité</h2></div>
+    <div class="note att">
+      <span class="lab">La table est toujours disponible — une de ses passes ne l'est pas</span>
+      <p><strong>Toute image peut être détourée</strong>, y compris une image déjà transparente : les passes
+        s'appliquent sur ce qui reste opaque, et une image sans fond donne simplement une passe sans effet.
+        La table n'a donc jamais l'état grisé du châssis, et son carré est toujours là.</p>
+      <p>Ce qui peut manquer, c'est <strong>le moteur modèle</strong>. Le segment est alors grisé dans le
+        cadre <em>ajouter une passe</em>, avec sa raison en ligne sœur juste dessous — le motif du grisé du
+        produit, à sa place habituelle : <span class="mesure">— le moteur modèle n'est pas installé sur cette
+        machine</span>. Les deux autres moteurs restent cliquables, et le geste courant n'a jamais besoin de
+        lui.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que le retrait de la dernière passe change ailleurs</h2></div>
+    <div class="note att">
+      <span class="lab">Ajouté le 30 août 2026, depuis la maquette de la grille</span>
+      <p><strong>La grille lit cette table pour savoir quelle forme rendre.</strong> Avec au moins une passe,
+        elle pose le sujet dans une case carrée ; sans aucune passe, elle rend une homothétie — le côté long
+        ramené à la cible, les proportions gardées. Ce n'est pas un réglage de la grille : c'est déduit d'ici,
+        parce qu'avoir demandé un détourage, c'est avoir dit que ce qu'on traite a une silhouette.</p>
+      <p>Mesuré sur une image de <span class="mesure">487 × 320</span>, cible 64 :
+        <span class="mesure">une passe → 64 × 64</span>, <span class="mesure">aucune passe → 64 × 42</span>.
+        <strong>Retirer la dernière passe change donc les dimensions du sprite</strong>, sans qu'on ait touché
+        à la grille.</p>
+      <p><strong>Ça se dit au moment du geste</strong>, sous le bouton qui retire la dernière passe, en ligne
+        sœur : <span class="mesure" style="color:var(--texte-3)">— sans passe, la grille rendra une homothétie
+        et non une case</span>. Une seule ligne, et seulement quand c'est la dernière — retirer la deuxième
+        passe sur trois ne change rien à la grille.</p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">Venu de
+        <span class="mesure">13-table-grille.html § 08</span></strong>, où la mesure est faite. Elle n'est pas
+        redite là-bas comme un réglage du détourage, et pas redite ici comme un réglage de la grille.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 10, détourage · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

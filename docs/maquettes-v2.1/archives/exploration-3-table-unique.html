@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la table de retouche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  /* ── Les trois pannes ───────────────────────────────────────────── */
+  .pannes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .panne{background:var(--fond-1);border:1px solid var(--bord);border-left:2px solid var(--echec);
+    border-radius:2px;padding:15px 17px}
+  .panne .n{font-family:var(--mono);font-size:26px;color:var(--texte);line-height:1;margin-bottom:9px}
+  .panne .n small{font-size:11px;color:var(--texte-3)}
+  .panne .t{font-size:12.5px;color:var(--texte);font-weight:600;margin-bottom:6px}
+  .panne .d{font-size:11.5px;color:var(--texte-2);line-height:1.5}
+
+  /* ── Wireframe ──────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1020px;height:38px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-corps{min-width:1020px;display:flex;align-items:stretch;min-height:320px}
+  .wf-pied{min-width:1020px;height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .cg{width:300px;flex:none;border-right:1px solid var(--bord);display:flex;flex-direction:column}
+  .cd{width:190px;flex:none;border-left:1px solid var(--bord);padding:11px;
+    display:flex;flex-direction:column;gap:8px}
+  .centre{flex:1;display:flex;flex-direction:column;min-width:0;padding:11px;gap:9px}
+
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    justify-content:space-between;padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .places{display:flex;flex-direction:column}
+  .place{border-bottom:1px solid var(--bord)}
+  .ptitre{height:30px;display:flex;align-items:center;gap:8px;padding:0 11px;font-size:11.5px;
+    color:var(--texte-2)}
+  .ptitre:hover{background:var(--fond-2)}
+  .carre{width:9px;height:9px;border:1px solid var(--bord-fort);flex:none}
+  .carre.on{background:var(--signal);border-color:var(--signal)}
+  .ptitre.ouvert{color:var(--texte)}
+  .pval{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .pval.on{color:var(--signal)}
+  .pcorps{padding:4px 11px 11px;display:flex;flex-direction:column;gap:8px}
+  .lib{font-size:11px;color:var(--texte-2)}
+  .rangee-p{display:flex;align-items:center;gap:7px;height:26px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);padding:0 8px}
+  .rangee-p .nm{font-size:11px;color:var(--texte)}
+  .rangee-p .vl{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .rangee-p .x{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .rangee-p.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .rangee-p.on .nm{color:var(--signal-clair)}
+  .curseur{height:26px;display:flex;align-items:center;gap:8px}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail::after{content:"";position:absolute;left:44%;top:-4px;width:9px;height:9px;
+    background:var(--signal);border-radius:9999px}
+  .curseur .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:34px;text-align:right}
+  .segs{display:flex;gap:4px}
+  .sg{height:24px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .propose{border:1px solid var(--lumiere);border-radius:2px;background:var(--fond-2);
+    padding:8px 9px;display:flex;flex-direction:column;gap:6px}
+  .propose .ph{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .propose .pa{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .propose .pb{height:24px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--texte)}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+
+  .toile{flex:1;border:1px solid var(--bord);border-radius:2px;position:relative;
+    background:
+      repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0 / 16px 16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sujet{width:150px;height:180px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    position:relative;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;padding:8px}
+  .poche{position:absolute;border:1px solid var(--lumiere);border-radius:2px}
+  .poche::after{content:attr(data-n);position:absolute;top:-1px;left:-1px;
+    background:rgba(11,13,16,.82);color:var(--lumiere);font-family:var(--mono);
+    font-size:8.5px;padding:0 3px;line-height:1.5}
+  .jauge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--bord)}
+  .jauge i{display:block;height:2px;width:38%;background:var(--signal)}
+  .sousimage{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:10px;
+    color:var(--texte-3)}
+  .sousimage .av{color:var(--signal)}
+  .sousimage .dr{margin-left:auto}
+
+  .gr2{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+  .tu{background:var(--fond-2);border:1px solid var(--bord);min-height:44px}
+  .tu.sel{border-color:var(--lumiere)}
+  .tu.vd{background:transparent;border-style:dashed;border-color:var(--bord-fort)}
+
+  /* découpe */
+  .rects{position:absolute;inset:0}
+  .rc{position:absolute;border:1px solid var(--signal)}
+  .rc.sel{border-color:var(--lumiere)}
+  .rc::after{content:attr(data-n);position:absolute;top:0;left:0;background:rgba(11,13,16,.82);
+    color:var(--texte-2);font-family:var(--mono);font-size:8.5px;padding:0 3px;line-height:1.6}
+  .lrec{height:26px;display:flex;align-items:center;gap:8px;padding:0 8px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .lrec.sel{border-color:var(--lumiere)}
+  .lrec .nm{font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .lrec .vl{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .btf{height:32px;border:1px solid var(--bord-fort);border-radius:2px;background:var(--fond-2);
+    display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--texte)}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.45}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .trois{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .outil{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:16px 17px}
+  .outil .n{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em;margin-bottom:9px}
+  .outil h3{font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  .outil p{font-size:12px;color:var(--texte-2);line-height:1.5;margin:0 0 10px}
+  .outil .cle{border-top:1px solid var(--bord);padding-top:9px;font-family:var(--mono);
+    font-size:9.5px;color:var(--texte-3);line-height:1.5}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 2 — les outils de reprise</div>
+    <h1>Il n'y a pas trois outils —<br><em>il y a une table</em></h1>
+    <p>Le détourage vit dans un panneau de 380 px, la découpe dans un écran à part, le calque dans un
+      troisième panneau. Ce sont trois surfaces pour <strong>un seul geste : reprendre une image</strong>.</p>
+    <p>Et le produit a déjà le bon modèle pour les réunir. La recette n'est pas une liste que l'auteur
+      ordonne : c'est <strong>une suite de places nommées, chacune remplie ou vide</strong>, dans un ordre
+      fixe. La table de retouche, c'est cette suite-là, rendue — avec l'image en grand au milieu.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Pourquoi c'est inutilisable — trois pannes, toutes mesurées</h2></div>
+    <div class="pannes">
+      <div class="panne">
+        <div class="n">380 <small>px</small></div>
+        <div class="t">On juge un détourage dans un timbre-poste</div>
+        <div class="d">La visionneuse de la fiche est bornée à <span class="mesure">46vh</span> dans une
+          colonne de 380. Sur un écran de 1080, ça fait une image d'environ 400 px de haut pour décider si un
+          contour est propre. Les deux références du produit — Lightroom, Aseprite — donnent l'écran entier
+          à l'image.</div>
+      </div>
+      <div class="panne">
+        <div class="n">1 492 <small>ms</small></div>
+        <div class="t">Chaque cran de tolérance se paie en attente</div>
+        <div class="d">Mesuré au navigateur le 27 août : un cran de détourage coûte
+          <span class="mesure">1,5 s</span>, le moteur modèle <span class="mesure">2,3 s</span>. Le curseur
+          ne pose donc qu'au relâchement — régler devient <em>viser à l'aveugle, attendre, recommencer</em>.
+          Ce n'est pas un réglage, c'est un tâtonnement payé au temps.</div>
+      </div>
+      <div class="panne">
+        <div class="n">0</div>
+        <div class="t">La poche fermée, qu'aucune valeur n'atteint</div>
+        <div class="d">Le moteur remplit <strong>depuis le bord</strong>. Le blanc coincé sous un bras ou
+          dans une boucle de ceinture n'est jamais atteint : le chemin n'existe pas. Monter la tolérance mange
+          le sujet bien avant. Aucun réglage ne peut y arriver — c'est structurel.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>La table de retouche</h2></div>
+    <p class="intro"><strong><span class="mesure">380px · 1fr · 380px</span>, et les deux colonnes se
+      replient</strong> — c'est la grille de l'écran Univers en mode toile, réemployée telle quelle. Aucune
+      largeur neuve n'entre par cette maquette. À gauche les places de la recette, <strong>une seule
+      ouverte</strong> ; au milieu l'image, en grand, sur le damier ; à droite les images sœurs. Repliées
+      toutes les deux, l'image tient l'écran — ce qu'on veut au moment de gommer trois pixels.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Galerie</span><span class="tab on">Codex</span>
+        <span class="fil">… › Balthazar › le corps › <b>marche · image 3</b></span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>Fermer l'outil</span><span>?</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="cg">
+          <div class="enpan"><span>la recette</span><span style="text-transform:none;letter-spacing:0">tout défaire</span></div>
+          <div class="places">
+            <div class="place">
+              <div class="ptitre ouvert"><span class="carre on"></span>détourage
+                <span class="pval on">2 passes</span></div>
+              <div class="pcorps">
+                <div class="rangee-p"><span class="nm">depuis le bord</span>
+                  <span class="vl">tolérance 32</span><span class="x">×</span></div>
+                <div class="curseur"><span class="rail"></span><span class="vl">32</span></div>
+                <div class="segs">
+                  <span class="sg on">pipette</span><span class="sg">modèle</span><span class="sg">bord</span>
+                </div>
+                <div class="segs">
+                  <span class="sg on mono">cette tache</span><span class="sg mono">partout</span>
+                </div>
+                <div class="rangee-p on"><span class="nm">couleur · #F2EFE6</span>
+                  <span class="vl">± 18</span><span class="x">×</span></div>
+                <div class="propose">
+                  <span class="ph">3 poches fermées, 412 px</span>
+                  <span class="pa">du fond qu'aucun réglage n'atteint</span>
+                  <span class="pb">Les effacer ›</span>
+                </div>
+              </div>
+            </div>
+            <div class="place"><div class="ptitre"><span class="carre"></span>différence
+              <span class="pval">sans objet</span></div></div>
+            <div class="place"><div class="ptitre"><span class="carre on"></span>recadrage
+              <span class="pval">marge 2 px</span></div></div>
+            <div class="place"><div class="ptitre"><span class="carre on"></span>grille
+              <span class="pval">4 px · 92 %</span></div></div>
+            <div class="place"><div class="ptitre"><span class="carre"></span>quantification
+              <span class="pval">—</span></div></div>
+            <div class="place"><div class="ptitre"><span class="carre"></span>bords
+              <span class="pval">—</span></div></div>
+            <div class="place"><div class="ptitre"><span class="carre"></span>la main
+              <span class="pval">aucune retouche</span></div></div>
+          </div>
+        </div>
+
+        <div class="centre">
+          <div class="toile">
+            <div class="sujet">l'image, en grand,<br>sur le damier alpha
+              <span class="poche" data-n="1" style="left:26px;top:44px;width:22px;height:30px"></span>
+              <span class="poche" data-n="2" style="left:96px;top:70px;width:18px;height:22px"></span>
+              <span class="poche" data-n="3" style="left:58px;top:132px;width:26px;height:16px"></span>
+            </div>
+            <span class="jauge"><i></i></span>
+          </div>
+          <div class="sousimage">
+            <span>512 × 512 · 4 px · alpha 61 %</span>
+            <span class="av">Avant ›</span>
+            <span class="dr">passe en cours · ≈ 1,5 s</span>
+          </div>
+        </div>
+
+        <div class="cd">
+          <div class="col-t">ses attitudes</div>
+          <div class="gr2">
+            <div class="tu"></div><div class="tu"></div>
+            <div class="tu sel"></div><div class="tu"></div>
+            <div class="tu vd"></div><div class="tu vd"></div>
+          </div>
+          <div class="raison">on change d'image sans refermer l'outil — la place ouverte reste la même</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>non destructif · retour au brut à tout moment</span>
+        <span>aucun appel, aucun coût</span></div>
+    </div>
+    <div class="lgd">une seule place ouverte à la fois · une place repliée porte sa valeur à droite de son titre · aucune barre de prompt : on ne paie pas en retouchant</div>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Les trois gestes neufs — du moins cher au plus fin</h2></div>
+    <p class="intro">Aucun ne touche le fournisseur, aucun ne coûte un centime, tous marchent réseau coupé,
+      et tous sont des <strong>passes de recette</strong> : rejouables, annulables, nommées, et elles
+      traversent la palette rétroactive comme le reste.</p>
+    <div class="trois">
+      <div class="outil">
+        <div class="n">01 · le moins cher</div>
+        <h3>La pipette</h3>
+        <p>On clique <em>la couleur qu'on veut retirer</em>, dans l'image, en grand. Ce qui lui ressemble à
+          ± tolérance devient transparent. Deux portées, et c'est l'auteur qui choisit :
+          <strong>cette tache-ci</strong> — la zone connexe sous le curseur — ou <strong>partout dans
+          l'image</strong>.</p>
+        <div class="cle">un troisième moteur de passe, à côté de <span class="mesure">bord</span> et
+          <span class="mesure">modele</span> · remplace le tâtonnement au curseur par une désignation</div>
+      </div>
+      <div class="outil">
+        <div class="n">02 · proposé</div>
+        <h3>La poche fermée</h3>
+        <p>Après la passe de bord, l'atelier cherche les zones de fond <strong>entièrement enfermées</strong>
+          par le sujet et les <strong>montre</strong> : « 3 poches fermées, 412 px ». Il ne les efface pas
+          tout seul — il les montre et attend un clic.</p>
+        <div class="cle">c'est <em>le prérempli</em> appliqué au détourage : le produit devine, il dit qu'il a
+          deviné, et l'auteur tranche</div>
+      </div>
+      <div class="outil">
+        <div class="n">03 · le plus fin</div>
+        <h3>La gomme au pixel</h3>
+        <p>Pour les trois pixels que rien n'atteint. <strong>Elle sort de C4</strong>, où elle était réservée
+          au calque d'équipement, et devient <em>la main</em> : la dernière place de la recette, disponible
+          sur n'importe quelle image.</p>
+        <div class="cle">trois diamètres en mono — <span class="mesure">1 px · 5 px · 13 px</span> — couche
+          séparée, annulable, et elle ne détruit pas le détourage qu'elle corrige</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">La couleur des poches, et pourquoi ce n'en est pas une neuve</span>
+      <p>Une poche trouvée est cerclée de <span class="mesure">--lumiere</span>, et rien d'autre ne change
+        sur l'image. <span class="mesure">--lumiere</span> veut dire depuis toujours <em>sélection et
+        focus — c'est la lampe de la table</em> : le produit braque sa lampe sur ce qu'il a trouvé.
+        <span class="mesure">--signal</span> aurait dit <em>actif</em> alors que rien n'est fait ;
+        <span class="mesure">--echec</span> aurait dit <em>c'est cassé</em> alors qu'une poche est un fait
+        ordinaire. Aucun token n'entre.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>La découpe est le second régime de la table, pas une place de la recette</h2></div>
+    <p class="intro">Une recette <strong>modifie</strong> une image ; la découpe en <strong>fabrique
+      d'autres</strong>. Ce n'est pas la même sorte de geste, donc ce n'est pas une place de plus dans la
+      colonne de gauche — c'est un régime de la même table, avec les mêmes trois colonnes et le même cadre
+      qui est l'image au pixel près.</p>
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Galerie</span><span class="tab on">Codex</span>
+        <span class="fil">… › Balthazar › <b>planche · 4 postures · découper</b></span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>Fermer l'outil</span><span>?</span></span>
+      </div>
+      <div class="wf-corps" style="min-height:280px">
+        <div class="cg">
+          <div class="enpan"><span>régime</span></div>
+          <div style="padding:11px;display:flex;flex-direction:column;gap:9px">
+            <div class="segs"><span class="sg">régler</span><span class="sg on">découper</span></div>
+            <div class="segs"><span class="sg on mono">trouvé pour moi</span><span class="sg mono">à la main</span></div>
+            <div class="col-t" style="margin-top:4px">4 rectangles · ordre de lecture</div>
+            <div class="lrec"><span class="nm">1</span><span class="vl">248 × 402 px</span></div>
+            <div class="lrec sel"><span class="nm">2</span><span class="vl">251 × 402 px</span></div>
+            <div class="lrec"><span class="nm">3</span><span class="vl">244 × 399 px</span></div>
+            <div class="lrec"><span class="nm">4</span><span class="vl">250 × 402 px</span></div>
+            <div class="raison" style="margin-top:4px">l'ordre de lecture est celui que la découpe garde —
+              c'est un fait mesuré, pas un classement</div>
+            <div class="btf" style="margin-top:auto">Découper en 4 images ›</div>
+          </div>
+        </div>
+        <div class="centre">
+          <div class="toile">
+            <div class="sujet" style="width:330px;height:170px">la planche, au pixel près
+              <span class="rects">
+                <span class="rc" data-n="1" style="left:8px;top:10px;width:74px;height:148px"></span>
+                <span class="rc sel" data-n="2" style="left:88px;top:10px;width:74px;height:148px"></span>
+                <span class="rc" data-n="3" style="left:168px;top:10px;width:74px;height:148px"></span>
+                <span class="rc" data-n="4" style="left:248px;top:10px;width:74px;height:148px"></span>
+              </span>
+            </div>
+          </div>
+          <div class="sousimage">
+            <span>1024 × 512 · jpeg → converti en png</span>
+            <span class="dr">les 4 images iront dans les cases vides de ses attitudes</span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="col-t">où elles iront</div>
+          <div class="gr2">
+            <div class="tu vd"></div><div class="tu vd"></div>
+            <div class="tu vd"></div><div class="tu vd"></div>
+          </div>
+          <div class="raison">quatre cases vides de la colonne ouverte — la découpe remplit la matrice au
+            lieu de tomber dans la galerie</div>
+        </div>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span>
+        <span>découpe · l'image d'origine est gardée</span><span>aucun appel, aucun coût</span></div>
+    </div>
+    <div class="lgd">le cadre est l'image, mis à l'échelle par calcul et non par le CSS · les rectangles gardent la grammaire de la tuile, sans ajouter une couleur</div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce que la table répare, panne par panne</h2></div>
+    <table>
+      <thead><tr><th style="width:40%">La panne</th><th>Ce que la table en fait</th></tr></thead>
+      <tbody>
+        <tr><td><strong>On juge dans un timbre-poste</strong> — 380 px de large, 46vh de haut</td>
+          <td class="apres">L'image prend le <b>1fr</b>, et les deux colonnes de 380 se replient. Sur un
+            écran de 1920, l'image passe d'environ 340 px de large à <b>1160</b>, et à <b>1920</b> colonnes
+            repliées.</td></tr>
+        <tr><td><strong>Chaque cran coûte 1,5 s</strong> — donc on vise à l'aveugle</td>
+          <td class="apres">On ne vise plus : <b>on désigne</b>. La pipette remplace le tâtonnement par un
+            clic sur la couleur, et la poche fermée est trouvée sans qu'on ait rien à régler. Le curseur
+            reste, pour les cas où il est juste.</td></tr>
+        <tr><td><strong>La poche fermée qu'aucun réglage n'atteint</strong></td>
+          <td class="apres">Elle est <b>cherchée d'office et montrée</b> après chaque passe de bord. Dans le
+            cas du nain, ça règle le problème sans que l'auteur ait à viser quoi que ce soit.</td></tr>
+        <tr><td><strong>La découpe cachée derrière la fiche</strong>, et qui ne marchait pas sur un jpeg</td>
+          <td class="apres">Un <b>régime de la table</b>, à un clic. Et la conversion de format se fait à
+            l'import — ta remarque du 29 août : un jfif et un jpeg ressortaient en quatre images sans
+            visuel.</td></tr>
+        <tr><td><strong>Trois surfaces pour un seul geste</strong> — fiche, écran Découpe, panneau du calque</td>
+          <td class="apres">Une seule table, trois régimes de la même colonne de gauche. Le calque devient la
+            place <b>différence</b>, qu'il occupait déjà dans le modèle.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce qui ne bouge pas</h2></div>
+    <div class="note">
+      <ul>
+        <li><b>Le traitement reste non destructif</b> — on garde l'image brute et la recette ; le rendu est un
+          cache effaçable. Retour au brut à tout moment.</li>
+        <li><b>L'ordre des places est fixe</b>, et ce n'est pas une simplification : cinq places sur sept
+          n'ont aucun sens avant celle qui les précède.</li>
+        <li><b>Un curseur envoie ce qu'on a lâché</b>, pas ce qu'on a traversé — vingt-et-un crans, zéro
+          appel ; un relâchement, un appel.</li>
+        <li><b>La jauge s'apprend</b> faute d'être publiée : l'écran garde ce que la dernière retouche du même
+          genre a mis, et le seuil de 240 ms tient.</li>
+        <li><b>Une place repliée porte sa valeur</b> à droite de son titre — un repli qui résume, jamais un
+          repli qui cache.</li>
+        <li><b>Tenir montre l'avant</b> — <span class="mesure">Avant ›</span> est un appui, jamais une
+          bascule, et il est absent tant qu'il n'y a rien à comparer.</li>
+        <li><b>Le cadre est l'image</b>, mis à l'échelle par un seul facteur calculé — pas par le CSS, qui
+          décalait de vingt pixels tout ce qui est posé dessus.</li>
+        <li><b>La largeur du pinceau est une mesure</b>, donc en mono, et c'est le diamètre qui s'affiche.
+          Jamais <em>fin · moyen · large</em>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que ça coûte</h2></div>
+    <div class="note att">
+      <span class="lab">Trois coûts, nommés</span>
+      <p><strong>Une place de plus dans la recette.</strong> <em>La main</em> devient la septième, disponible
+        sur n'importe quelle image et non plus sur le seul calque d'équipement. Toute recette existante gagne
+        une place vide — sans effet, mais c'est une migration du modèle.</p>
+      <p><strong>Un moteur de passe de plus.</strong> <span class="mesure">couleur</span> rejoint
+        <span class="mesure">bord</span> et <span class="mesure">modele</span>. Le module de traitement a
+        déjà ce qu'il faut — composantes connexes, durcir, ronger ; il manque la passe et le clic.</p>
+      <p><strong>Le PRD se contredit sur une ligne, et il faut l'écrire.</strong> <em>Hors périmètre</em>
+        écarte « détourage par couleur ». C'est le troisième retournement d'une ligne de cette section, et
+        le motif est chaque fois le même : la ligne était juste <strong>comme réglage global</strong> et
+        fausse <strong>comme geste ponctuel</strong>.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 2, la table de retouche · 29 août 2026 · rien n'est encore écrit dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

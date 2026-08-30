@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, les ambiances et les couleurs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  h4{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:26px 0 10px}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow:hidden;
+    background:var(--fond-0);margin-bottom:10px}
+  .wf-barre{height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-cotes{height:38px;background:var(--fond-0);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:22px;padding:0 14px}
+  .cote{font-size:13px;color:var(--texte-3);position:relative;height:38px;
+    display:flex;align-items:center}
+  .cote.on{color:var(--texte)}
+  .cote.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:var(--signal)}
+  .wf-corps{display:flex;min-height:300px}
+  .wf-pied{height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .col{width:240px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:3px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin:8px 0 5px}
+  .col-t:first-child{margin-top:0}
+  .sec{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .sec.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sec.gris{color:var(--texte-3)}
+  .sec .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .zone{flex:1;padding:14px;display:flex;flex-direction:column;gap:11px;min-width:0}
+  .zone-t{font-family:var(--serif);font-size:19px;line-height:1;margin-bottom:2px}
+  .zone-s{font-size:12px;color:var(--texte-2);margin:0}
+  .outils{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .ob{height:22px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:0 8px;display:flex;align-items:center;font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .ob.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .champ{min-height:26px;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:2px;
+    display:flex;align-items:center;padding:5px 9px;font-size:11px;color:var(--texte-3)}
+
+  /* ── Palette ────────────────────────────────────────────────────── */
+  .pal{display:flex;flex-wrap:wrap;gap:6px}
+  .pas{width:34px;text-align:center}
+  .pas .sw{display:block;width:34px;height:34px;border:1px solid var(--bord);border-radius:1px}
+  .pas .pv{display:block;font-family:var(--mono);font-size:8.5px;color:var(--texte-3);
+    margin-top:3px;line-height:1}
+  .pas.out .sw{opacity:.28}
+  .pas.out .pv{color:var(--echec)}
+  .rail{margin:0 0 14px;max-width:560px}
+  .rail .rt{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .rail .rn{font-size:12px;color:var(--texte)}
+  .rail .rv{font-family:var(--mono);font-size:10px;color:var(--signal-clair)}
+  .rail .tr{position:relative;height:3px;background:var(--fond-3);border-radius:2px}
+  .rail .tr i{position:absolute;top:-4px;width:11px;height:11px;border-radius:1px;
+    background:var(--signal);border:1px solid var(--signal)}
+  .rail .re{display:flex;justify-content:space-between;margin-top:6px;
+    font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ret{display:flex;align-items:center;gap:9px;height:26px;padding:0 9px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);margin-bottom:4px;max-width:640px}
+  .ret .g{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--texte-3);width:78px;flex:none}
+  .ret .sw{flex:none;display:block;width:14px;height:14px;border:1px solid var(--bord);border-radius:1px}
+  .ret .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.o{color:var(--texte)}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note p:last-child{margin-bottom:0}
+
+  .deux{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  .trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;align-items:start}
+  .boite{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .boite .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:9px}
+  .boite p{font-size:12.5px;color:var(--texte-2);margin:0 0 8px}
+  .boite p:last-child{margin-bottom:0}
+
+  .lgd{margin-top:10px;display:flex;flex-wrap:wrap;gap:18px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  ul{margin:0 0 12px;padding-left:18px;max-width:78ch;color:var(--texte-2)}
+  li{margin-bottom:6px}
+  ol{margin:0 0 12px;padding-left:20px;max-width:78ch;color:var(--texte-2)}
+  ol li{margin-bottom:7px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · V2.1 · maquette 07 — les ambiances et les couleurs</div>
+  <h1>Les ambiances —<br><em>des lots de style où l'on pioche</em></h1>
+  <p>Un jeu n'a pas un seul style. Il a un style général, et des coins qui s'en écartent : le
+  marais plus gris et plus brumeux, les monstres de l'ombre plus froids. Redire ça sur chaque
+  créature serait long et finirait par diverger. Une <strong>ambiance</strong> le dit une fois, et on
+  s'en sert autant de fois qu'on veut.</p>
+  <p>C'est le troisième côté de l'onglet Univers, décrit en entier. Il tient
+  <strong>deux sortes d'objets</strong> — les palettes de couleurs et les ambiances qui s'en
+  servent — parce que les premières sont les ingrédients des secondes.</p>
+  <p class="sourd">Ce document remplace <em class="it">07-les-trois-etages.html</em>, qui décrivait
+  un autre modèle : l'ambiance comme étage d'héritage automatique, avec une grande vue d'ensemble
+  appelée <em class="it">la cascade</em>. Ce modèle est abandonné — le § 07 dit pourquoi et ce qui
+  en a été gardé. L'ancien document est dans <code>archives/</code>.</p>
+</div>
+
+
+<!-- ══ 01 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>Les deux objets, et ce qui les distingue</h2></div>
+
+  <div class="deux">
+    <div class="boite">
+      <div class="t">Une palette de couleurs</div>
+      <p><strong>Une liste de couleurs qui porte un nom</strong>, tirée d'un paquet d'images. On en
+      fabrique autant qu'on veut.</p>
+      <p>Elle naît sur le tableau d'inspiration : on rapproche des images, on en fait un paquet, et
+      le menu du paquet dit <em class="it">« faire une palette de ça »</em>.</p>
+      <p>Elle ne dit rien du style en mots. Elle ne porte que des couleurs.</p>
+    </div>
+    <div class="boite">
+      <div class="t">Une ambiance</div>
+      <p><strong>Un lot de style tout prêt</strong>, réutilisable sur plusieurs choses du jeu. Elle
+      porte trois choses, et trois seulement : une palette, des images de référence, et trois cases
+      de texte.</p>
+      <p>Elle naît des deux côtés : depuis un paquet d'images du tableau, ou depuis cet écran.</p>
+      <p>Elle ne produit rien et ne contient rien. Elle sert à régler ce qu'on produit ailleurs.</p>
+    </div>
+  </div>
+
+  <div class="note mes" style="margin-top:14px">
+    <span class="lab">La simplification qui tient tout le document</span>
+    <p><strong>Le projet est l'ambiance générale du jeu.</strong> Il porte exactement les mêmes trois
+    choses : une palette (l'étape 6 de l'assistant), des images de référence (celles du tableau
+    marquées officielles), et des cases de texte (l'étape 5). Une ambiance, c'est
+    <strong>le même objet, en plus petit et en plusieurs exemplaires</strong>.</p>
+    <p>Il n'y a donc pas deux notions à apprendre. Qui a compris comment son jeu se règle sait déjà
+    comment une ambiance se règle.</p>
+  </div>
+</section>
+
+
+<!-- ══ 02 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>Ce qu'une ambiance porte, et ce qu'elle ne porte pas</h2></div>
+
+  <table class="t">
+    <tr><th style="width:230px">Ce qu'elle porte</th><th>Détail</th></tr>
+    <tr>
+      <td class="o"><b>Un nom</b></td>
+      <td>C'est par lui qu'elle se désigne partout : dans la fiche d'un objet, dans la colonne du
+      codex, dans l'écran de confirmation avant de payer.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Une palette</b></td>
+      <td>Mélangée à partir d'une ou plusieurs palettes sources, avec deux curseurs de dosage et des
+      retouches à la main. C'est le § 03.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Une ou plusieurs images de référence</b></td>
+      <td>Celles qui montrent le mieux ce qu'on veut. Elles partent <strong>en image</strong> avec
+      les générations qui utilisent l'ambiance, et prennent les places de référence que le projet
+      aurait remplies.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Trois cases de texte</b><br><span class="sourd">monde · éclairage · trait</span></td>
+      <td>Elles remplacent celles du jeu pour les objets qui utilisent l'ambiance. Remplies avec les
+      mêmes étiquettes cliquables que dans l'assistant. Une case laissée vide garde ce que dit le
+      jeu.</td>
+    </tr>
+  </table>
+
+  <h4>Ce qu'elle ne porte pas, et pourquoi</h4>
+  <table class="t">
+    <tr><th style="width:230px">Ce qui lui est fermé</th><th>La raison</th></tr>
+    <tr>
+      <td class="o"><b>Les cases <em class="it">vue</em> et <em class="it">technique</em></b></td>
+      <td>Elles ne décrivent pas une ambiance, elles décrivent <strong>la mécanique du jeu</strong> :
+      l'angle de caméra, le calage sur la grille, le nombre de directions. Une ambiance qui pourrait
+      les remplacer fabriquerait des images qui ne rentrent pas dans le jeu, et l'erreur ne se
+      verrait qu'après avoir payé.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Les cases <em class="it">époque</em> et <em class="it">rendu</em></b></td>
+      <td>Un coin plus sombre reste du même siècle et du même pixel art que le reste. Elles
+      pourront s'ouvrir plus tard si l'usage le demande ; l'inverse serait un retrait, et
+      <strong>un réglage retiré se paie plus cher qu'un réglage qui dort</strong>.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>La taille des images, le nombre de directions</b></td>
+      <td>Même raison que la première ligne. Ils s'imposent au jeu entier, et se règlent aux étapes
+      2 et 3 de l'assistant.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>La part de case qu'un objet occupe</b></td>
+      <td>Elle vient du <strong>type de l'objet</strong>, pas de son ambiance : un coffre occupe la
+      même part de sa case qu'il soit dans le marais ou pas. C'est un autre axe.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>La moindre image produite</b></td>
+      <td>Une ambiance ne contient rien. Supprimer une ambiance ne détruit aucune image : les objets
+      qui s'en servaient retombent simplement sur le jeu. Il n'y a pas de trou, seulement un réglage
+      qu'on ne pose plus.</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <span class="lab">Une ambiance qui ne sert qu'à un seul objet n'apporte rien</span>
+    <p>Si un seul personnage doit avoir un style à lui, ses réglages vont <strong>sur lui</strong>,
+    pas dans une ambiance. Une ambiance existe uniquement pour ce que
+    <strong>plusieurs objets partagent</strong> — sinon elle ajoute une chose à créer, à nommer et à
+    supprimer sans rien donner en échange.</p>
+  </div>
+</section>
+
+
+<!-- ══ 03 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>Une palette n'est pas une liste, c'est une recette</h2></div>
+
+  <p class="intro">C'est le point le plus délicat du document, parce qu'il touche une règle que le
+  dépôt a écrite noir sur blanc — et qu'il ne faut pas casser.</p>
+
+  <div class="note att">
+    <span class="lab">La règle qu'on ne veut pas casser</span>
+    <p>Aujourd'hui, la palette d'un projet <strong>ne se saisit jamais</strong>. Elle se calcule à
+    partir des images officielles, et elle est rangée comme un résultat temporaire, avec l'empreinte
+    de ce dont elle est la lecture. Promouvoir une image, en retirer une, ou changer le nombre de
+    couleurs invalide l'empreinte, donc recalcule.</p>
+    <p>La raison est écrite dans le code : <em class="it">« la palette est dérivable des images
+    officielles — la garder telle quelle serait une seconde vérité, et deux vérités sur la même chose
+    finissent par diverger »</em>.</p>
+    <p><strong>Pouvoir retirer une couleur, en ajouter une, doser entre deux palettes et finir à la
+    main casse cette règle</strong> si la palette devient une liste qu'on modifie : elle cesserait de
+    suivre ses sources, et promouvoir une nouvelle image ne changerait plus rien.</p>
+  </div>
+
+  <p style="margin-top:14px"><strong>Le produit a déjà exactement le motif qui s'en sort</strong>, et
+  il l'applique partout ailleurs : <strong>on garde la source et la recette, le résultat est un
+  calcul jetable</strong>. C'est le <em class="it">brut / recette / rendu</em> d'une image, appliqué
+  à une palette. Recalculer coûte des millisecondes ; rien n'est perdu.</p>
+
+  <table class="t" style="margin-top:14px">
+    <tr><th style="width:180px">La recette, en trois parties</th><th>Ce que ça contient</th></tr>
+    <tr>
+      <td class="o"><b>1 · Les sources</b></td>
+      <td>Ce dans quoi les couleurs se lisent. Pour une palette de base : <strong>les images d'un
+      paquet du tableau</strong>. Pour la palette du jeu : les images officielles — c'est déjà le cas
+      aujourd'hui. Pour la palette d'une ambiance : <strong>d'autres palettes</strong>, et celle du
+      jeu si on veut. On peut en désigner plusieurs.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>2 · La fusion</b><br><span class="sourd">deux curseurs</span></td>
+      <td><strong>La proportion</strong> — combien de couleurs viennent d'où. Sur 24 couleurs : 8 du
+      jeu, 16 de l'ambiance. Chaque couleur du résultat est authentiquement l'une de celles d'une
+      source, donc chaque pastille sait exactement d'où elle vient.<br><br>
+      <strong>L'attraction</strong> — de combien elles se rapprochent. Chaque couleur de l'ambiance
+      est tirée vers la plus proche de celles du jeu, de 0 à 100 %. C'est ce qui harmonise : le
+      marais reste un marais, mais il respire l'air du jeu. À 0 %, rien ne bouge.<br><br>
+      <span class="sourd">Deux curseurs et non un : ce sont deux questions différentes — combien
+      viennent d'où, et de combien elles se rapprochent. Les confondre rendrait le résultat
+      imprévisible.</span></td>
+    </tr>
+    <tr>
+      <td class="o"><b>3 · Les retouches</b></td>
+      <td>Des gestes rangés un par un : <em class="it">retirer cette couleur</em>,
+      <em class="it">ajouter celle-ci</em>, <em class="it">remplacer celle-là</em>. Rangés et non
+      fondus dans le résultat, pour trois raisons : chacun s'annule seul, chacun se voit, et le tout
+      se rejoue si une source change.</td>
+    </tr>
+  </table>
+
+  <p style="margin-top:14px"><strong>L'empreinte couvre les trois</strong> — les sources, les deux
+  curseurs, et la liste des retouches. Changer n'importe lequel invalide la palette rendue, qui se
+  recalcule. C'est le même mécanisme qu'aujourd'hui, avec plus de choses dedans.</p>
+
+  <p><strong>Ce que ça préserve, et qui était le vrai enjeu :</strong> promouvoir une nouvelle image
+  officielle se propage encore jusqu'en bas, même à travers une ambiance retouchée à la main. Et
+  chaque pastille peut dire d'où elle vient — du jeu, de l'ambiance, ou de la main.</p>
+
+  <div class="note att">
+    <span class="lab">À mesurer avant d'implémenter — un piège déjà rencontré</span>
+    <p>Un banc d'essai gratuit a déjà trouvé une chose que personne ne soupçonnait :
+    <strong>le nombre de couleurs de la quantification ne change rien dès qu'une palette est
+    posée</strong> — le fichier sort identique à l'octet près à 2, 8, 24 et 256 couleurs. Le réglage
+    existait et ne faisait rien.</p>
+    <p>Le même piège guette ici. Deux réglages de fusion peuvent très bien rendre le même fichier.
+    <strong>La proportion et l'attraction sont retenues parce qu'elles répondent à deux questions
+    distinctes, pas parce qu'on a mesuré qu'elles diffèrent.</strong> Avant d'implémenter : étendre
+    le banc, balayer les deux curseurs sur les images du dépôt, compter les résultats réellement
+    distincts. Un curseur qui ne changerait rien se griserait avec sa raison — c'est déjà arrivé
+    deux fois dans ce produit.</p>
+  </div>
+</section>
+
+
+<!-- ══ 04 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>L'écran</h2></div>
+
+  <p class="intro">Une colonne de <span class="mesure">240 points</span> à gauche avec les deux
+  listes — les ambiances d'abord, les palettes ensuite, parce que les secondes servent les
+  premières. À droite, celle qui est ouverte.</p>
+
+  <div class="croquis">
+    <div class="wf-barre">
+      <span class="wf-nom">Asset Kitchen</span>
+      <span class="tab on">Univers</span><span class="tab">Codex</span><span class="tab">Galerie</span>
+      <span class="wf-tard"><span>Cœur de pierre — 01 · ce jeu $2,140 ›</span><span>Réglages</span><span>Guide</span></span>
+    </div>
+    <div class="wf-cotes">
+      <span class="cote">Inspiration</span>
+      <span class="cote">Réglages</span>
+      <span class="cote on">Ambiances et couleurs</span>
+    </div>
+    <div class="wf-corps">
+      <div class="col">
+        <div class="col-t">les ambiances</div>
+        <div class="sec">Marais de cendre<span class="cpt">3 objets</span></div>
+        <div class="sec on">Monstres de l'ombre<span class="cpt">5 objets</span></div>
+        <div class="sec gris">+ nouvelle ambiance</div>
+        <div class="col-t">les palettes</div>
+        <div class="sec">du jeu<span class="cpt">48 · 2 img</span></div>
+        <div class="sec">marais<span class="cpt">24 · 7 img</span></div>
+        <div class="sec">ombre — froide<span class="cpt">24 · 3 img</span></div>
+        <div class="sec">ombre — chaude<span class="cpt">24 · 3 img</span></div>
+        <div class="sec">ombre — nuit<span class="cpt">24 · 3 img</span></div>
+        <div class="sec gris">+ nouvelle palette</div>
+      </div>
+      <div class="zone">
+        <div class="zone-t">Monstres de l'ombre</div>
+        <div class="outils">
+          <span class="ob on">1 · sa palette</span>
+          <span class="ob">2 · ses images de référence &nbsp;2</span>
+          <span class="ob">3 · ses trois cases</span>
+          <span class="ob" style="margin-left:auto">qui s'en sert &nbsp;5</span>
+        </div>
+        <h4 style="margin:2px 0 6px">1 · les sources</h4>
+        <div class="champ">ombre — froide &nbsp;·&nbsp; ombre — chaude &nbsp;·&nbsp; ombre — nuit &nbsp;·&nbsp; la palette du jeu &nbsp;&nbsp;&nbsp;+ une source</div>
+        <h4 style="margin:6px 0 6px">2 · la fusion</h4>
+        <div class="rail">
+          <div class="rt"><span class="rn">La proportion</span><span class="rv">8 sur 24 viennent du jeu</span></div>
+          <div class="tr"><i style="left:33%"></i></div>
+          <div class="re"><span>tout du jeu</span><span>tout de l'ambiance</span></div>
+        </div>
+        <div class="rail">
+          <div class="rt"><span class="rn">L'attraction</span><span class="rv">35 %</span></div>
+          <div class="tr"><i style="left:35%"></i></div>
+          <div class="re"><span>0 % — aucune ne bouge</span><span>100 % — toutes rejoignent le jeu</span></div>
+        </div>
+        <h4 style="margin:6px 0 6px">3 · les retouches</h4>
+        <div class="ret"><span class="g">retirée</span><span class="sw" style="background:#956a5b"></span><span>le rouge chaud du jeu — rien de chaud dans l'ombre</span><span class="x">×</span></div>
+        <div class="ret"><span class="g">ajoutée</span><span class="sw" style="background:#3c6b5a"></span><span>le vert des feux follets, qu'aucune source ne porte</span><span class="x">×</span></div>
+        <h4 style="margin:6px 0 6px">la palette rendue — 24 couleurs</h4>
+        <div class="pal">
+          <span class="pas"><span class="sw" style="background:#3b4048"></span><span class="pv">J</span></span>
+          <span class="pas"><span class="sw" style="background:#39363a"></span><span class="pv">J</span></span>
+          <span class="pas"><span class="sw" style="background:#2f3d49"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#2f363f"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#2b2f38"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#31303a"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#3c6b5a"></span><span class="pv">M</span></span>
+          <span class="pas"><span class="sw" style="background:#252832"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#212833"></span><span class="pv">A</span></span>
+          <span class="pas"><span class="sw" style="background:#23222a"></span><span class="pv">J</span></span>
+          <span class="pas"><span class="sw" style="background:#1e2129"></span><span class="pv">A</span></span>
+          <span class="pas out"><span class="sw" style="background:#956a5b"></span><span class="pv">×</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="wf-pied"><span>2 ambiances</span><span>5 palettes</span><span style="margin-left:auto">5 objets utilisent celle-ci</span></div>
+  </div>
+  <div class="lgd">
+    <span><b>J</b> venue du jeu</span>
+    <span><b>A</b> venue de l'ambiance</span>
+    <span><b>M</b> posée à la main</span>
+    <span><b>×</b> retirée — montrée, pas cachée</span>
+  </div>
+
+  <h4>Pourquoi chaque pastille dit d'où elle vient</h4>
+  <p>Parce que c'est la seule façon de comprendre ce qu'on regarde. Une palette d'ambiance est un
+  mélange : sans ces marques, on ne saurait pas si un gris vient du jeu — donc si le changer ici
+  serait une exception ou une redite. Et une couleur retirée reste
+  <strong>montrée, barrée</strong>, jamais cachée : c'est une décision qu'on a prise, on doit pouvoir
+  l'annuler d'un clic.</p>
+
+  <h4>L'aperçu — la palette posée sur de vraies images</h4>
+  <p>Sous la palette rendue, deux rangées des mêmes objets : une <strong>avec les couleurs du
+  jeu</strong>, une <strong>avec celles de l'ambiance</strong>. C'est ce qui rend le réglage des
+  deux curseurs jugeable — un mélange se voit sur un sprite, pas sur une bande de pastilles. Une
+  ligne dit aussi combien de couleurs ne servent à rien :
+  <em class="it">19 des 24 employées par ces trois images — 5 ne servent à aucune</em>.</p>
+</section>
+
+
+<!-- ══ 05 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">05</span><h2>Comment une ambiance s'attribue, et comment on y pioche</h2></div>
+
+  <p class="intro">C'est le cœur du modèle, et ce qui le distingue de ce qui avait été écrit avant.
+  Une ambiance ne s'impose pas à ce qui est dessous : <strong>on la désigne, puis on choisit ce
+  qu'on lui prend.</strong></p>
+
+  <h4>1 · On la désigne sur la fiche de l'objet</h4>
+  <p>Chaque chose du jeu porte un champ <em class="it">son ambiance</em>, sur sa fiche dans le codex.
+  C'est son ambiance par défaut, celle qui sera proposée à chaque génération.</p>
+  <p><strong>Une collection ne porte rien.</strong> Elle reste ce qu'elle est aujourd'hui — un simple
+  dossier pour regrouper des objets, qui ne décide de rien. Grouper vingt monstres et régler leur
+  style sont deux gestes différents, et les confondre ferait qu'un rangement changerait des réglages.</p>
+
+  <h4>2 · On choisit ce qu'on lui prend, au moment de générer</h4>
+  <p>L'écran de confirmation qui paraît avant de payer montre les parties de l'ambiance, chacune
+  avec son interrupteur. Trois exemples réels :</p>
+
+  <div class="trois">
+    <div class="boite">
+      <div class="t">tout</div>
+      <p>Un rôdeur des vases : ses couleurs, ses images de référence, son texte. Le cas courant.</p>
+    </div>
+    <div class="boite">
+      <div class="t">les couleurs seulement</div>
+      <p>Une ombre rampante, de forme complètement différente des références. On garde les teintes,
+      on jette le reste.</p>
+    </div>
+    <div class="boite">
+      <div class="t">tout, mais avec sa propre image</div>
+      <p>Balthazar en version noire : les couleurs et le texte de l'ambiance, mais l'image de
+      référence de Balthazar, pour que ce soit reconnaissable comme lui.</p>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:12px">
+    <span class="lab">Ce que « prendre la palette » veut dire exactement</span>
+    <p>La palette agit <strong>toujours au retour</strong>. Quand l'image revient du modèle,
+    l'atelier la ramène sur les couleurs de l'ambiance, sur la machine locale, <strong>sans rien
+    payer</strong> et rétroactivement sur ce qui est déjà fait. C'est déjà la mécanique de la palette
+    du jeu ; l'ambiance ne fait que substituer la sienne.</p>
+    <p>Elle peut <strong>en plus partir à l'aller</strong>, si on coche
+    <em class="it">envoyer la palette en référence</em>. Elle part alors sous forme d'image — une
+    bande de pastilles — et occupe une place d'image de référence. C'est ce que les modèles suivent
+    le mieux, et ça ne coûte rien à fabriquer puisque l'atelier dessine déjà cette bande à l'écran.
+    L'option est décochée par défaut : les places de référence sont rares, et une image de style vaut
+    généralement mieux qu'une bande de couleurs.</p>
+  </div>
+
+  <h4>3 · On voit qui s'en sert, des deux côtés</h4>
+  <table class="t">
+    <tr><th style="width:240px">La question</th><th>Où on lit la réponse</th></tr>
+    <tr>
+      <td class="o"><b>« qui utilise cette ambiance ? »</b></td>
+      <td>Le panneau de l'ambiance, onglet <em class="it">qui s'en sert</em> : la liste des objets, et
+      pour chacun <strong>ce qu'il lui prend</strong> — tout, ou les couleurs seulement, ou tout sauf
+      les images.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>« lesquels de mes objets n'en ont aucune ? »</b></td>
+      <td><strong>Le codex, dans sa colonne <em class="it">ambiance</em></strong> — c'est déjà
+      l'endroit où la liste de tous les objets du jeu s'affiche. On trie dessus, et les trous se
+      voient. Aucun écran dense de plus n'est nécessaire.</td>
+    </tr>
+  </table>
+</section>
+
+
+<!-- ══ 06 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">06</span><h2>Où naissent les palettes et les ambiances</h2></div>
+
+  <p class="intro">Deux chemins, et ils ne font pas double emploi : l'un part des images, l'autre
+  part de l'intention.</p>
+
+  <table class="t">
+    <tr><th style="width:230px">D'où ça part</th><th>Ce qui se passe</th></tr>
+    <tr>
+      <td class="o"><b>Depuis le tableau d'inspiration</b><br><span class="sourd">côté Inspiration, vue à la main</span></td>
+      <td>On rapproche des images en un paquet. Le menu du paquet propose deux choses :<br>
+      <strong>« faire une palette de ça »</strong> — l'atelier lit les couleurs des images et
+      fabrique une palette nommée du nom du paquet.<br>
+      <strong>« faire une ambiance de ça »</strong> — l'atelier fait la palette, crée l'ambiance,
+      lui donne cette palette, et met les images du paquet en références. Il ne reste qu'à écrire
+      les trois cases.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Depuis cet écran</b></td>
+      <td><em class="it">+ nouvelle palette</em> et <em class="it">+ nouvelle ambiance</em>, en pied
+      de chaque liste. On part vide et on choisit ses sources à la main. C'est le chemin quand on
+      sait déjà ce qu'on veut, ou qu'on assemble à partir de palettes existantes.</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <span class="lab">Le paquet d'images n'est pas l'ambiance</span>
+    <p>Un paquet n'a pas d'identité à lui. C'est un nom de groupe écrit sur des cartes, et
+    <strong>il disparaît avec sa dernière carte</strong>. Si les réglages vivaient dessus, ranger son
+    tableau d'inspiration effacerait une palette et trois cases de texte.</p>
+    <p>La palette et l'ambiance qu'un paquet a produites sont donc de <strong>vrais objets, qui lui
+    survivent</strong>. Conséquence à assumer : une palette peut garder en mémoire des images qui
+    n'existent plus. Elle garde alors ses couleurs — c'est un résultat rangé, il ne s'évapore pas —
+    et affiche que sa source a disparu, sans rien recalculer et sans rien effacer.</p>
+  </div>
+</section>
+
+
+<!-- ══ 07 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">07</span><h2>Ce qui est abandonné, et ce qui est gardé</h2></div>
+
+  <p class="intro">Un document entier avait été écrit sur un autre modèle. Il est remplacé, mais pas
+  tout entier : ce qui suit dit exactement ce qui tombe et ce qui reste, pour qu'on ne redécouvre
+  pas plus tard une décision déjà prise.</p>
+
+  <h4>Abandonné</h4>
+  <table class="t">
+    <tr><th style="width:230px">Ce qui tombe</th><th>Pourquoi</th></tr>
+    <tr>
+      <td class="o"><b>Les trois étages d'héritage</b><br><span class="sourd">projet → ambiance → objet</span></td>
+      <td>Le modèle voulait qu'un objet <em class="it">appartienne</em> à une ambiance et en hérite
+      automatiquement. Le modèle retenu est plus souple : on désigne une ambiance et on choisit ce
+      qu'on lui prend, image par image. Ce n'est plus un héritage subi, c'est un choix.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>La cascade</b></td>
+      <td>Un grand tableau montrant, réglage par réglage, qui hérite et qui fait exception. Sans
+      héritage automatique, il n'y a plus grand-chose à montrer. Et la seule question qui restait —
+      <em class="it">qui utilise quoi</em> — est répondue par la liste de chaque ambiance et par une
+      colonne du codex, sans écran dense supplémentaire.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Les quatre états d'un champ</b><br><span class="sourd">hérité · remplacé · éteint · verrouillé</span></td>
+      <td>Ils décrivaient des positions dans la cascade. Deux survivent sous une autre forme :
+      <em class="it">verrouillé</em> devient « cette case est fermée aux ambiances » (§ 02), et
+      <em class="it">éteint</em> devient l'interrupteur de l'écran de confirmation.</td>
+    </tr>
+  </table>
+
+  <h4>Gardé, mot pour mot</h4>
+  <ul>
+    <li><strong>La palette est une recette, pas une liste.</strong> C'est le § 03 de ce document,
+    repris sans une virgule de changement. C'était le vrai apport de l'ancien texte.</li>
+    <li><strong>La distinction entre ce qui s'impose et ce qui se propose.</strong> Elle devient la
+    liste des cases fermées aux ambiances, au § 02.</li>
+    <li><strong>Une ambiance lit un paquet d'images, elle ne le devient pas.</strong> C'est le § 06.</li>
+    <li><strong>Une ambiance qui ne sert qu'à un objet n'apporte rien.</strong> C'est le § 02.</li>
+    <li><strong>L'avertissement sur les deux curseurs à mesurer avant d'implémenter.</strong> C'est
+    la note du § 03, et elle vaut plus que jamais.</li>
+  </ul>
+</section>
+
+
+<!-- ══ 08 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">08</span><h2>Ce que ça coûte au modèle d'objets</h2></div>
+
+  <p class="intro">Écrit franchement, parce que le dépôt tient une barre haute là-dessus : depuis le
+  début du produit, <strong>seuls deux objets ont été ajoutés en tout</strong> — le lien du tableau
+  d'inspiration, et le personnage. Ce document en ajoute deux de plus, et il doit dire pourquoi
+  aucun objet existant ne pouvait faire le travail.</p>
+
+  <table class="t">
+    <tr><th style="width:200px">Ce qui change</th><th>Détail</th><th style="width:230px">Pourquoi rien d'existant ne suffit</th></tr>
+    <tr>
+      <td class="o"><b>Un objet neuf :<br>la palette</b></td>
+      <td>Un nom, une liste de sources, les deux valeurs de fusion, la liste des retouches, et les
+      couleurs rendues avec leur empreinte.</td>
+      <td>Aujourd'hui une palette est un champ du projet, en un seul exemplaire, sans nom. Il en faut
+      plusieurs, nommées et réutilisables par plusieurs ambiances.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Un objet neuf :<br>l'ambiance</b></td>
+      <td>Un nom, le nom de sa palette, la liste de ses images de référence, et ses trois cases de
+      texte. Elle appartient à un projet.</td>
+      <td>Un paquet d'images ne peut pas porter ça : il n'a pas d'identité et disparaît avec sa
+      dernière carte. Une collection ne le peut pas non plus : elle groupe des objets produits, pas
+      des réglages.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Un champ sur chaque objet du jeu</b></td>
+      <td>Le nom de son ambiance par défaut, ou rien.</td>
+      <td>C'est un champ, pas un objet. Vide, il ne coûte rien.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Un champ sur chaque génération</b></td>
+      <td>Ce qui a été pris de l'ambiance pour cette image-là : les couleurs, les références, le
+      texte, chacun oui ou non.</td>
+      <td>Sans lui, on ne pourrait pas relire ce qui a produit une image — et « ce qui est montré est
+      ce qui part » cesserait d'être vrai rétrospectivement.</td>
+    </tr>
+  </table>
+
+  <div class="note mes" style="margin-top:14px">
+    <span class="lab">Ce que ça ne coûte pas</span>
+    <p>Aucune route nouvelle vers le fournisseur. Aucun appel payant supplémentaire : la fusion des
+    palettes et la correction des couleurs se font sur la machine, en millisecondes. Et aucune
+    couleur d'interface nouvelle — l'écran emploie celles qui existent déjà.</p>
+  </div>
+</section>
+
+
+<!-- ══ 09 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">09</span><h2>Ce qui déborde — à reporter ailleurs</h2></div>
+
+  <table class="t">
+    <tr><th style="width:220px">Où ça va</th><th>Ce qui est à y écrire</th></tr>
+    <tr>
+      <td class="o"><b>Le codex</b><br><span class="sourd">05-codex.html</span></td>
+      <td>Une colonne <em class="it">ambiance</em> dans la liste des objets du jeu, qui dit
+      <em class="it">aucune</em> quand il n'y en a pas. C'est la seule vue d'ensemble du produit sur
+      les ambiances. <b style="color:var(--ok)">Fait le 30 août 2026.</b></td>
+    </tr>
+    <tr>
+      <td class="o"><b>La fiche d'un objet</b><br><span class="sourd">07bis-fiche-entite.html</span></td>
+      <td>Elle était écrite sur le modèle des trois étages — elle montrait « les sept champs avec
+      l'étage d'où chacun vient ». Elle devait être refaite sur celui-ci : un champ
+      <em class="it">son ambiance</em>, et les trois cases que l'ambiance remplace, montrées avec
+      leur origine. <b style="color:var(--ok)">Fait le 30 août 2026</b> — son § 05 a été refait de
+      zéro, et une chose du jeu a désormais cinq origines possibles pour chacun de ses textes.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>La planche de pose</b><br><span class="sourd">08-planche-de-pose.html</span></td>
+      <td>Elle citait l'ancien document pour les champs de style par étage. La phrase devait être
+      reprise : il n'y a plus d'étage, il y a une ambiance désignée et des parties prises.
+      <b style="color:var(--ok)">Fait le 30 août 2026.</b></td>
+    </tr>
+    <tr>
+      <td class="o"><b>L'écran de confirmation</b><br><span class="sourd">08bis-ecran-de-confirmation.html</span></td>
+      <td>Les trois interrupteurs de l'ambiance — couleurs, références, texte — plus l'option
+      <em class="it">envoyer la palette en référence</em>, et la possibilité de remplacer une image
+      de référence par une autre. Les corrections faites là valent pour cette image seulement.
+      <b style="color:var(--ok)">Écrit le 30 août 2026.</b> C'est aussi lui qui a tranché la
+      dernière question laissée ouverte ici : la palette part <b>en image</b>, une bande de
+      pastilles qui occupe une place de référence.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Le tableau d'inspiration</b><br><span class="sourd">06-univers.html § 03</span></td>
+      <td>Déjà écrit : le menu d'un paquet gagne <em class="it">faire une palette de ça</em> et
+      <em class="it">faire une ambiance de ça</em>. Rien à reporter, c'est une confirmation.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Le modèle de données</b><br><span class="sourd">docs/ARCHITECTURE.md</span></td>
+      <td>Les deux objets neufs et les deux champs du § 08. Et la mention que la palette du projet
+      devient un cas particulier de palette, pas une chose à part.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Le document du produit</b><br><span class="sourd">docs/PRD.md</span></td>
+      <td>La règle <em class="it">« la palette est dérivable des images officielles »</em> est
+      conservée mais élargie : une palette reste calculée de ses sources, sauf que ses sources
+      peuvent être d'autres palettes, et que sa recette porte deux dosages et des retouches.</td>
+    </tr>
+    <tr>
+      <td class="o"><b>Le banc d'essai des couleurs</b><br><span class="sourd">essais/essai_couleurs_et_taches.py</span></td>
+      <td><strong>À étendre avant d'implémenter.</strong> Balayer la proportion et l'attraction sur
+      les images du dépôt et compter les résultats réellement distincts. Le banc ne coûte rien et
+      tourne sur ce qui est déjà là.</td>
+    </tr>
+  </table>
+</section>
+
+
+<!-- ══ 10 ═════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">10</span><h2>Les mesures de l'écran</h2></div>
+
+  <p class="intro">Aucune largeur ni hauteur neuve, et aucune couleur neuve.</p>
+
+  <table class="t">
+    <tr><th>L'élément</th><th class="mesure" style="width:110px">Sa mesure</th><th>D'où elle vient</th></tr>
+    <tr><td class="o">Barre de tête</td><td class="num o">44 px</td><td>Identique partout.</td></tr>
+    <tr><td class="o">Barre des trois côtés</td><td class="num o">38 px</td><td>La hauteur de barre d'outils du produit.</td></tr>
+    <tr><td class="o">La colonne des deux listes</td><td class="num o">240 px</td><td>La largeur de colonne étroite du produit.</td></tr>
+    <tr><td class="o">Une rangée d'ambiance, une rangée de palette</td><td class="num o">26 px</td><td>La hauteur de rangée d'arbre du produit.</td></tr>
+    <tr><td class="o">Une pastille de couleur</td><td class="num o">34 px</td><td>Inchangée — c'est déjà celle du panneau d'aujourd'hui.</td></tr>
+    <tr><td class="o">Une ligne de retouche</td><td class="num o">26 px</td><td>La même hauteur de rangée.</td></tr>
+    <tr><td class="o">Barre d'état, en pied</td><td class="num o">26 px</td><td>Identique partout.</td></tr>
+    <tr><td class="o">Le panneau de l'ambiance ouverte</td><td class="num o">tout le reste</td><td>Il prend la place qui reste, sans largeur imposée.</td></tr>
+  </table>
+
+  <div class="note mes" style="margin-top:16px">
+    <span class="lab">Ce que ça coûte à calculer</span>
+    <p>La fusion de deux palettes et l'application d'une palette à une image se font sur la machine,
+    en millisecondes, <strong>sans aucun appel payant</strong>. Changer un curseur recalcule la
+    palette rendue et l'aperçu ; changer une source recalcule tout. C'est le même mécanisme que la
+    palette du projet aujourd'hui, avec plus d'entrées.</p>
+  </div>
+</section>
+
+<!-- ══ 11 ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="entete"><span class="num">11</span><h2>Ce que cet écran doit au guide</h2></div>
+  <div class="note att">
+    <span class="lab">Deux explications existent, et toutes deux décrivent le modèle abandonné (D41)</span>
+    <p><strong>C'est le seul manque du dossier qui soit pire qu'un vide</strong> : le guide a bien deux
+      entrées — la palette et le nombre de couleurs — mais elles racontent le modèle d'avant, où il
+      n'existait qu'<em>une</em> palette, sans nom, attachée au projet et extraite de ses artworks. Une
+      explication fausse coûte plus cher qu'une explication absente : on la lit, et on la croit.</p>
+    <p style="margin-top:10px"><b>nom</b> · Une palette<br>
+      <b>quoi</b> · Une liste de couleurs qui porte un nom, tirée d'un paquet d'images. Ton jeu peut en
+      avoir autant que tu veux, et une chose du jeu n'en porte qu'une à la fois.<br>
+      <b>ce que ça change</b> · La quantification ramène chaque pixel sur la couleur la plus proche de
+      la palette en cours. Partout ailleurs, une couleur hors palette se marque au lieu d'être
+      refusée.<br>
+      <b>d'où ça vient</b> · toi · aucune palette au départ, et un jeu sans palette ne quantifie rien<br>
+      <b>où ça se range</b> · <span class="mesure">Ambiances et couleurs</span> — <b>en remplacement de
+      l'entrée existante</b>, pas à côté d'elle</p>
+    <p style="margin-top:10px"><b>nom</b> · Une ambiance<br>
+      <b>quoi</b> · Un lot de style réutilisable : une palette, des images de référence, et trois
+      textes. On la désigne sur une chose du jeu.<br>
+      <b>ce que ça change</b> · Rien tant qu'on ne s'en sert pas. Au moment de fabriquer, on choisit ce
+      qu'on lui prend — tout, les couleurs seules, ou tout sauf les images —, et ce choix ne vaut que
+      pour cet appel-là.<br>
+      <b>d'où ça vient</b> · toi · aucune ambiance au départ<br>
+      <b>où ça se range</b> · <span class="mesure">Ambiances et couleurs</span></p>
+  </div>
+</section>
+
+<footer>
+  Asset Kitchen — V2.1 · maquette 07, les ambiances et les couleurs<br>
+  Remplace <em class="it">07-les-trois-etages.html</em>, désormais dans <code>archives/</code>.
+  Le § 07 dit ce qui en est gardé et ce qui tombe.<br>
+  C'est le troisième côté de l'onglet Univers, dont la forme est décidée dans
+  <em class="it">06-univers.html</em>.
+</footer>
+
+</div>
+</body>
+</html>

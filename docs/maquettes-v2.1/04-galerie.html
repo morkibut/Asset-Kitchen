@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, la galerie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:24px;font-weight:400;margin:26px 0 8px;line-height:1.2}
+
+  ol.etapes{margin:0 0 18px;padding:0;list-style:none;counter-reset:e;max-width:78ch}
+  ol.etapes li{counter-increment:e;position:relative;padding:0 0 12px 30px;color:var(--texte-2);font-size:13px}
+  ol.etapes li::before{content:counter(e);position:absolute;left:0;top:1px;
+    font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;width:18px;height:18px;
+    display:flex;align-items:center;justify-content:center;line-height:1}
+  ol.etapes li b{color:var(--texte);font-weight:600}
+
+  /* ── Wireframe ──────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0)}
+  .wf-barre{min-width:1150px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:10px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .bascule{height:22px;display:flex;align-items:center;padding:0 7px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-family:var(--mono);font-size:10px;color:var(--texte-2)}
+  .btxt{height:22px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);font-size:12px;color:var(--texte-2)}
+  .sep-v{width:1px;height:16px;background:var(--bord)}
+  .wf-corps{min-width:1150px;display:flex;align-items:stretch}
+  .wf-pied{min-width:1150px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
+
+  /* ── Colonne de gauche (240) ────────────────────────────────────── */
+  .arbre{width:240px;flex:none;border-right:1px solid var(--bord);padding:8px;
+    display:flex;flex-direction:column;gap:3px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);padding:0 3px}
+  .rg{height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 7px;border-radius:2px;font-size:12.5px;color:var(--texte-2)}
+  .rg.on{background:var(--fond-3);color:var(--texte)}
+  .rg .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .rg.fils{padding-left:17px;font-size:12px}
+  .journal{margin-top:auto;border-top:1px solid var(--bord);padding-top:8px;
+    display:flex;flex-direction:column;gap:3px}
+  .journal .li{display:flex;justify-content:space-between;font-family:var(--mono);
+    font-size:9.5px;color:var(--texte-3);padding:0 7px}
+  .journal .li b{color:var(--echec);font-weight:400}
+
+  /* ── Colonne centrale ───────────────────────────────────────────── */
+  .centre{flex:1;display:flex;flex-direction:column;min-width:0}
+  .outils{height:38px;border-bottom:1px solid var(--bord);background:var(--fond-1);
+    display:flex;align-items:center;gap:8px;padding:0 12px}
+  .champ-r{height:26px;width:150px;background:var(--fond-2);border:1px solid var(--bord);
+    border-radius:2px;display:flex;align-items:center;padding:0 8px;
+    font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .ob{height:26px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:0 8px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .ob.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .ob.gris{color:var(--texte-3)}
+  .segs{display:flex}
+  .segs .s{height:26px;border:1px solid var(--bord);border-right:0;background:var(--fond-2);
+    padding:0 9px;display:flex;align-items:center;font-family:var(--mono);font-size:11px;color:var(--texte-2)}
+  .segs .s:first-child{border-radius:2px 0 0 2px}
+  .segs .s:last-child{border-right:1px solid var(--bord);border-radius:0 2px 2px 0}
+  .segs .s.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .segs .s.gris{color:var(--texte-3)}
+  .mes{font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+
+  .zone-grille{flex:1;padding:16px;min-height:330px}
+  .grille{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .tuile{background:var(--fond-2);border:1px solid var(--bord);position:relative;
+    display:flex;flex-direction:column}
+  .tuile .img{aspect-ratio:1;
+    background-image:linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+      linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
+    background-size:12px 12px;background-position:0 0,6px 6px}
+  .tuile .nm{font-size:11.5px;color:var(--texte-2);padding:4px 5px 0;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .tuile .mt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);padding:0 5px 4px}
+  .tuile.fav::after{content:"";position:absolute;top:0;right:0;border-top:13px solid var(--signal);
+    border-left:13px solid transparent}
+  .tuile.sel{box-shadow:0 0 0 2px var(--lumiere)}
+  .tuile .past{position:absolute;top:5px;left:5px;background:rgba(11,13,16,.82);
+    font-family:var(--mono);font-size:8.5px;color:var(--texte-2);padding:1px 4px;border-radius:2px}
+
+  /* ── La fiche (380) ─────────────────────────────────────────────── */
+  .fiche{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .fiche-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    justify-content:space-between;padding:0 9px;
+    font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .fiche-c{padding:9px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .vis{height:148px;border:1px solid var(--bord);
+    background-image:linear-gradient(45deg,var(--damier-a) 25%,transparent 25%,transparent 75%,var(--damier-a) 75%),
+      linear-gradient(45deg,var(--damier-a) 25%,var(--damier-b) 25%,var(--damier-b) 75%,var(--damier-a) 75%);
+    background-size:16px 16px;background-position:0 0,8px 8px}
+  .nom-a{font-size:13px;color:var(--texte)}
+  .faits{font-family:var(--mono);font-size:10px;color:var(--texte-2);line-height:1.6}
+  .faits .d{color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:5px}
+  .porte{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);padding:8px 9px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .porte .t{font-size:12px;color:var(--texte)}
+  .porte .s{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:2px}
+  .porte .fl-d{font-family:var(--mono);font-size:12px;color:var(--signal)}
+  .porte.vide{border-style:dashed;border-color:var(--bord-fort)}
+  .porte.vide .t{color:var(--texte-2)}
+  .jug{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:10px;
+    color:var(--texte-2);border-top:1px solid var(--bord);padding-top:9px;margin-top:auto}
+  .jug .sup{margin-left:auto;color:var(--texte-3)}
+
+  /* ── Croquis de détail ──────────────────────────────────────────── */
+  .detail{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:14px;
+    overflow-x:auto}
+  .menu{width:230px;border:1px solid var(--bord-fort);border-radius:2px;background:var(--fond-1);
+    padding:5px;display:flex;flex-direction:column}
+  .menu .m{height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 7px;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .menu .m.on{background:var(--fond-3);color:var(--texte)}
+  .menu .m .p{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .menu .sep{height:1px;background:var(--bord);margin:5px 3px}
+  .fichecol{width:340px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-0);
+    padding:9px;display:flex;flex-direction:column;gap:10px}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.f{font-family:var(--mono);font-size:11px;color:var(--texte);white-space:nowrap}
+  td.apres{color:var(--texte)} td.apres b{color:var(--signal-clair);font-weight:500}
+  td.gal{color:var(--texte)}
+  tr:last-child td{border-bottom:0}
+  .barre-txt{text-decoration:line-through;text-decoration-color:var(--echec);
+    text-decoration-thickness:1px;color:var(--texte-3)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.ok{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.ok .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · maquette 04 — la galerie</div>
+    <h1>La galerie est l'endroit<br>où l'on <em>voit tous les assets</em></h1>
+    <p>Elle montre toutes les images que le projet a produites, à plat, de la plus récente à la
+      plus ancienne. On y regarde ce qui est sorti, on garde ou on jette, on range, et on
+      retrouve. C'est <strong>la planche contact</strong> du produit — le mot vient de la photo :
+      une feuille où toutes les prises d'une pellicule sont tirées en petit, côte à côte, pour
+      choisir celles qu'on agrandira.</p>
+    <p><strong>Deux choses qu'elle ne fait pas, et c'est ce qui la définit.</strong> Elle ne
+      fabrique aucune image : le prompt, les réglages et le bouton qui paie vivent dans
+      <em>l'établi</em> d'une entité, dans le codex. Et elle ne retouche aucune image : le
+      détourage, la grille, la palette et le reste vivent dans <em>les tables</em>. La galerie
+      montre, et elle mène aux deux autres.</p>
+    <p class="sourd">C'est donc le seul des trois onglets qui ne dépense jamais un centime, et le
+      seul qui ne change jamais un pixel. Tout ce qu'on y fait se défait : ranger, marquer favori,
+      supprimer avec son annulation courte.</p>
+  </div>
+
+  <!-- ═══ 1 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>La galerie et le codex — les mêmes images, deux regards</h2></div>
+    <p class="intro">C'est la distinction à tenir, et tout le reste en découle. Les deux onglets
+      montrent le même stock d'images. Ils ne répondent pas à la même question.</p>
+
+    <table>
+      <thead><tr><th style="width:23%"> </th><th style="width:38%">La galerie</th><th>Le codex</th></tr></thead>
+      <tbody>
+        <tr><td class="f">La question</td>
+          <td class="gal">Qu'est-ce que j'ai déjà fabriqué&nbsp;?</td>
+          <td class="apres">Qu'est-ce qui manque à Balthazar&nbsp;?</td></tr>
+        <tr><td class="f">Ce qu'elle montre</td>
+          <td class="gal">Toutes les images, à plat, toutes entités confondues.</td>
+          <td class="apres">Les mêmes images, <b>groupées par entité</b> — et les cases vides à
+            côté des cases pleines.</td></tr>
+        <tr><td class="f">L'ordre</td>
+          <td class="gal">De la plus récente à la plus ancienne. C'est l'ordre du travail : ce
+            qu'on vient de faire est en haut.</td>
+          <td class="apres">L'ordre du plan du jeu — repos, marche, course… Deux personnages du
+            même projet se lisent alors ligne à ligne.</td></tr>
+        <tr><td class="f">Ce qu'on y fait</td>
+          <td class="gal">Regarder, juger, ranger, retrouver.</td>
+          <td class="apres">Fabriquer. C'est de là qu'on ouvre un établi, et c'est dans un établi
+            qu'on écrit un prompt et qu'on paie.</td></tr>
+        <tr><td class="f">Ce que ça coûte</td>
+          <td class="gal"><b>Rien.</b> Aucun bouton de cet écran n'appelle le fournisseur.</td>
+          <td class="apres">Tout. C'est le seul endroit du produit d'où part un appel payant.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Pourquoi les deux, et pas seulement le codex</span>
+      <p>Parce qu'une image peut n'appartenir à aucune entité, et parce qu'on cherche souvent sans
+        savoir d'avance chez qui chercher. <strong>Une texture d'herbe, un mur de pierre, un essai
+        de couleur ne sont ni un personnage ni un biome</strong> — ils existent, ils sont payés, il
+        faut pouvoir les revoir.</p>
+      <p>Et quand on cherche « cette lanterne rouillée que j'ai faite il y a trois jours », on ne
+        se souvient pas de l'entité, on se souvient de <em>quand</em>. La galerie est triée par
+        date, donc elle répond ; le codex, trié par entité, ne répondrait pas.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'écran entier</h2></div>
+    <p class="intro">Trois colonnes — <span class="mesure">240 · 1fr · 380</span> — et trois
+      bandes : le menu en haut, la barre d'outils au-dessus de la grille, la barre d'état en bas.
+      Aucune largeur neuve, aucune barre de prompt, aucun réglage de génération.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab">Codex</span><span class="tab on">Galerie</span>
+        <span class="wf-tard">
+          <span>Cœur de pierre — 01 · ce jeu $2,140 ›</span>
+          <span>$3,180 en tout</span>
+          <span class="bascule">arbre</span><span class="bascule">fiche</span>
+          <span class="sep-v"></span>
+          <span class="btxt">Réglages</span><span class="btxt">Guide</span>
+        </span>
+      </div>
+
+      <div class="wf-corps">
+        <div class="arbre">
+          <div class="col-t">projets · collections</div>
+          <div class="rg on">Cœur de pierre — 01 <span class="cpt">88</span></div>
+          <div class="rg fils">· personnages <span class="cpt">34</span></div>
+          <div class="rg fils">· décors <span class="cpt">29</span></div>
+          <div class="rg fils">· objets <span class="cpt">25</span></div>
+          <div class="rg">Bac à sable <span class="cpt">12</span></div>
+          <div class="rg">sans projet <span class="cpt">3</span></div>
+          <div class="journal">
+            <div class="col-t">dépenses</div>
+            <div class="li">dépensé sur ce jeu ›<span>$2,140</span></div>
+            <div class="li"><span>dont <b>2 appels ratés</b></span><span>$0,04</span></div>
+          </div>
+        </div>
+
+        <div class="centre">
+          <div class="outils">
+            <span class="champ-r">Chercher</span>
+            <span class="ob">famille <span class="mes">toutes</span></span>
+            <span class="ob">Favoris</span>
+            <span class="mes">88 images</span>
+            <span class="segs"><span class="s on">1×</span><span class="s">2×</span><span class="s gris">4×</span></span>
+            <span class="mes">— 4× ne tient pas ici</span>
+            <span class="wf-tard" style="gap:8px">
+              <span class="ob gris">Ranger…</span>
+              <span class="ob">Importer</span>
+              <span class="ob gris">Sortir</span>
+              <span class="mes">— rien de sélectionné</span>
+            </span>
+          </div>
+
+          <div class="zone-grille">
+            <div class="grille">
+              <div class="tuile fav"><div class="img"></div><div class="nm">balthazar-035</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile sel"><div class="img"></div><div class="nm">balthazar-034</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"><span class="past">agent</span></div>
+                <div class="nm">tonneau-cerclé-02</div><div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">lanterne-rouillée</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile fav"><div class="img"></div><div class="nm">planche-poses-01</div>
+                <div class="mt">512×512 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"><span class="past">réglé</span></div>
+                <div class="nm">mur-pierre-sèche</div><div class="mt">96×96 · 6 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">maeve-012</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">herbe-haute-03</div>
+                <div class="mt">64×64 · 4 px · importé</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">maeve-011</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"><span class="past">parent supprimé</span></div>
+                <div class="nm">coffre-ferré-04</div><div class="mt">64×64 · 4 px · $0,000</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">balthazar-033</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile fav"><div class="img"></div><div class="nm">torche-murale-02</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">dalle-fissurée</div>
+                <div class="mt">96×96 · 6 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">maeve-010</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+              <div class="tuile"><div class="img"></div><div class="nm">clé-rouillée-01</div>
+                <div class="mt">64×64 · 4 px · $0,067</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fiche">
+          <div class="fiche-t"><span>fiche</span><span>×</span></div>
+          <div class="fiche-c">
+            <div class="vis"></div>
+            <div class="segs" style="align-self:flex-start">
+              <span class="s">brut</span><span class="s on">rendu</span></div>
+
+            <div>
+              <div class="nom-a">balthazar-034</div>
+              <div class="faits" style="margin-top:4px">
+                64 × 64 · 4 px · 27 couleurs<br>
+                $0,067 <span class="d">· 29/08 14:02</span><br>
+                <span class="d">openai/gpt-image-2</span>
+              </div>
+            </div>
+
+            <div class="bloc">
+              <div class="col-t" style="padding:0">à qui elle appartient</div>
+              <div class="porte">
+                <div><div class="t">Balthazar › marche › image 3</div>
+                  <div class="s">son établi, dans le codex</div></div>
+                <span class="fl-d">›</span>
+              </div>
+            </div>
+
+            <div class="bloc">
+              <div class="col-t" style="padding:0">où on la travaille</div>
+              <div class="porte">
+                <div><div class="t">Reprendre cette image</div>
+                  <div class="s">détourage · grille · palette · découpage</div></div>
+                <span class="fl-d">›</span>
+              </div>
+              <div class="faits"><span class="d">appliqué :</span> détourée · recadrée ·
+                sur grille · quantifiée</div>
+            </div>
+
+            <div class="bloc">
+              <div class="col-t" style="padding:0">ce que le projet lui a imposé</div>
+              <div class="faits">64 px · palette du jeu · vue 3/4</div>
+            </div>
+
+            <div class="bloc">
+              <div class="col-t" style="padding:0">d'où elle vient</div>
+              <div class="faits">planche-poses-01 › case 3<br>
+                <span class="d">2 images en sont nées</span></div>
+            </div>
+
+            <div class="jug"><span>favori</span><span class="sup">supprimer</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-pied">
+        <span><span class="pt"></span>en ligne</span>
+        <span>catalogue · 29/08 14:02</span>
+        <span>88 assets</span>
+        <span style="margin-left:auto">aucun appel ne part d'ici</span>
+      </div>
+    </div>
+    <div class="lgd">pas de barre de prompt, pas de colonne de réglages, pas de curseur de retouche ·
+      la fiche dit ce qu'une image est et ouvre les deux endroits où l'on agit sur elle</div>
+  </section>
+
+  <!-- ═══ 3 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ce qui quitte l'écran, et où ça va</h2></div>
+    <p class="intro">L'écran d'aujourd'hui porte quatre surfaces empilées : un prompt, une colonne
+      de réglages, une grille, une fiche qui règle. Il en garde une et demie. Rien n'est supprimé —
+      chaque ligne du tableau dit l'adresse exacte de ce qui part.</p>
+
+    <table>
+      <thead><tr><th style="width:44%">Sur l'écran d'aujourd'hui</th><th>En 2.1</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="barre-txt">Le champ de prompt, la bande « Pour », le bouton Générer et
+            son prix, la fente qui dit pourquoi il est fermé</span></td>
+          <td class="apres">Dans <b>l'établi d'une entité</b>. On y clique une case vide, le prompt
+            se remplit tout seul avec le signalement de l'entité et la consigne de la pose, et on
+            paie depuis là. Voir <span class="mesure">02-etabli-personnage.html</span>.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">La colonne de réglages de 300 px — le modèle, le format, les
+            variations, le sujet, et le bloc « ce qui part »</span></td>
+          <td class="apres">Dans <b>l'établi</b> aussi, et <b>hérités de l'entité</b> : le modèle
+            vient de l'univers du projet, le sujet et le format de la case ouverte. Il n'y a plus
+            rien à ressaisir, donc plus rien à afficher en permanence.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Les cinq blocs de retouche dans la fiche — détourage,
+            recadrage, grille, quantification, bords — avec leurs curseurs</span></td>
+          <td class="apres">Dans <b>les tables</b>, qui ont l'image en grand sous la main. La fiche
+            garde la <b>ligne d'état</b> — <span class="mesure">détourée · recadrée · sur grille ·
+            quantifiée</span> — et un bouton qui ouvre les tables. Voir
+            <span class="mesure">03-chassis-des-tables.html</span>.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">Les cinq boutons de la barre du haut — Univers, Personnages,
+            Catalogue, Réglages, Guide — tous de même poids</span></td>
+          <td class="apres">Trois <b>onglets</b> : Univers, Codex, Galerie. Plus
+            <span class="mesure">⚙</span> et <span class="mesure">?</span> à droite, qui parlent de
+            l'outil et non du travail. <b>Catalogue</b> disparaît : la liste des modèles se relit au
+            démarrage, la barre d'état la date, et la relire à la main devient un geste de l'écran
+            des réglages, à côté de la clé.</td>
+        </tr>
+        <tr>
+          <td><span class="barre-txt">L'écran Découpe, qu'on n'atteignait que depuis la fiche</span></td>
+          <td class="apres">Une <b>table</b> parmi les autres, à droite du séparateur de la barre
+            des tables. On ne la cherche plus : elle est là quand elle sert.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Ce que ce tableau contredisait ailleurs · les cinq sont corrigées le 31 août 2026</span>
+      <p>Cinq phrases mettaient un prompt dans la galerie. Elles dataient d'avant que l'établi ait sa
+        forme, quand on ne savait pas encore que la matrice pouvait armer <em>et</em> tirer au même
+        endroit. <strong>Cette maquette n'a touché à aucun des fichiers cités</strong> — chaque chose
+        a été corrigée là où elle est définie. La liste reste ici parce qu'elle porte la raison, et
+        parce qu'elle dit ce que chaque phrase est devenue.</p>
+      <p style="margin-top:8px"><strong>Ce que ça rend plus vrai, et non moins :</strong> la règle
+        <em>« il n'existe qu'un seul endroit d'où l'on paie »</em> ne tombe pas — les lieux qui paient
+        passent de trois à <strong>deux</strong>, l'établi et le codex, tous deux du côté du codex.
+        <span class="sourd">Deux des cinq disaient « en pied de la galerie et en pied de l'établi ».
+        Elles disent maintenant « en pied de l'établi et en pied du codex » — et non « l'établi
+        seul », qui était la formule proposée ici et qui aurait rouvert une divergence avec le
+        codex.</span></p>
+      <ul>
+        <li><span class="mesure">01-structure.html</span> § 01 — <em>« on y génère au fil de l'eau
+          quand on n'a pas d'entité en tête »</em>, et le champ dessiné dans son croquis de la
+          galerie. <b>À retirer.</b></li>
+        <li><span class="mesure">01-structure.html</span> § 07 — <em>« dans la galerie, les réglages
+          du geste sous le prompt »</em>. <b>À remplacer</b> : les réglages vivent dans l'établi,
+          hérités de l'entité, et la galerie n'en porte aucun.</li>
+        <li><span class="mesure">02-etabli-personnage.html</span> § 03 — <em>« elle est rendue en
+          pied de la galerie et en pied de l'établi »</em>. <b>À réduire</b> à l'établi seul. La
+          décision que porte ce paragraphe ne bouge pas d'un mot : <em>la barre de prompt est du
+          châssis, pas d'un écran</em>, et <em>il n'existe qu'un seul endroit d'où l'on paie</em> —
+          elle devient même plus vraie, puisque cet endroit est maintenant unique.</li>
+        <li><span class="mesure">03-chassis-des-tables.html</span> § 01 — <em>« on y juge, on y
+          range, on y génère au fil de l'eau »</em>. <b>Retirer</b> les cinq derniers mots.</li>
+        <li><span class="mesure">05-codex.html</span> § 08 — <em>« elle est rendue en pied de la
+          galerie et en pied de l'établi »</em>, et la rangée <em>la galerie</em> de son tableau des
+          trois lieux, qui lui donne <span class="mesure">modèle · format · sujet · variations</span>.
+          <b>Deux lieux au lieu de trois</b> : l'établi et le codex. Ce fichier a été écrit le
+          30 août à partir d'une première version de cette maquette-ci, qui mettait encore un prompt
+          dans la galerie ; il est en refonte par ailleurs, et le report lui appartient.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>La fiche — ce qu'une image est, et où on la travaille</h2></div>
+    <p class="intro">La colonne de droite s'ouvre quand on sélectionne une image. Elle répond à une
+      seule question — <em>qu'est-ce que cette image&nbsp;?</em> — et elle porte deux portes vers
+      les endroits où l'on agit. Elle ne règle plus rien.</p>
+
+    <h3>Ce qu'elle contient, dans l'ordre</h3>
+    <ol class="etapes">
+      <li><b>L'image en grand</b>, sur le damier qui révèle la transparence, avec la bascule
+        <span class="mesure">brut / rendu</span> : l'image telle qu'elle est revenue du modèle, ou
+        telle qu'elle partira dans le jeu.</li>
+      <li><b>Son nom, et les faits mesurés</b> : les dimensions réelles, la taille de pixel, le
+        nombre de couleurs, ce qu'elle a coûté, quand, et quel modèle l'a dessinée. Tout en
+        monospace, parce que dans ce produit un nombre est toujours un fait mesuré.</li>
+      <li><b>À qui elle appartient</b> — <span class="mesure">Balthazar › marche › image 3</span>.
+        Cliquer ouvre l'établi de Balthazar, c'est-à-dire l'endroit où l'on fabrique la suite.</li>
+      <li><b>Où on la travaille</b> — un bouton <span class="mesure">Reprendre</span> qui ouvre les
+        tables, et sous lui une ligne qui dit ce qui est déjà appliqué.</li>
+      <li><b>Ce que le projet lui a imposé</b> : la taille de pixel, la palette, la vue. Ça explique
+        la moitié de ce qu'on voit, et ça ne se règle pas ici.</li>
+      <li><b>D'où elle vient</b> : sa planche d'origine si elle en a une, et ce qui est né d'elle.</li>
+      <li><b>Les deux gestes du jugement</b>, en bas : <span class="mesure">favori</span> et
+        <span class="mesure">supprimer</span>. Ce sont les seuls gestes de tout l'écran qui changent
+        quelque chose, et les deux se défont.</li>
+    </ol>
+
+    <h3>Les deux portes, et le cas de l'image qui n'appartient à personne</h3>
+    <div class="duo">
+      <div>
+        <div class="detail">
+          <div class="fichecol">
+            <div class="bloc">
+              <div class="col-t" style="padding:0">à qui elle appartient</div>
+              <div class="porte">
+                <div><div class="t">Balthazar › marche › image 3</div>
+                  <div class="s">son établi, dans le codex</div></div>
+                <span class="fl-d">›</span>
+              </div>
+            </div>
+            <div class="bloc">
+              <div class="col-t" style="padding:0">où on la travaille</div>
+              <div class="porte">
+                <div><div class="t">Reprendre cette image</div>
+                  <div class="s">détourage · grille · palette · découpage</div></div>
+                <span class="fl-d">›</span>
+              </div>
+              <div class="faits"><span class="d">appliqué :</span> détourée · recadrée ·
+                sur grille · quantifiée</div>
+            </div>
+          </div>
+        </div>
+        <div class="lgd">une image née dans un établi — elle sait de qui elle est</div>
+      </div>
+      <div>
+        <div class="detail">
+          <div class="fichecol">
+            <div class="bloc">
+              <div class="col-t" style="padding:0">à qui elle appartient</div>
+              <div class="porte vide">
+                <div><div class="t">À personne</div>
+                  <div class="s">importée le 30/08 · la rattacher à une entité</div></div>
+                <span class="fl-d">+</span>
+              </div>
+            </div>
+            <div class="bloc">
+              <div class="col-t" style="padding:0">où on la travaille</div>
+              <div class="porte">
+                <div><div class="t">Reprendre cette image</div>
+                  <div class="s">détourage · grille · palette · découpage</div></div>
+                <span class="fl-d">›</span>
+              </div>
+              <div class="faits"><span class="d">appliqué :</span> rien — importée telle quelle</div>
+            </div>
+          </div>
+        </div>
+        <div class="lgd">une image importée — la première porte devient le geste qui la rattache</div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Une conséquence qui simplifie beaucoup</span>
+      <p>Puisqu'on ne génère plus depuis la galerie, <strong>toute image payée naît dans l'établi
+        d'une entité, et appartient donc à quelqu'un dès sa naissance</strong>. La question « à qui
+        est cette image ? » n'a plus de réponse floue.</p>
+      <p>Il ne reste que <strong>deux façons</strong> d'avoir une image qui n'appartient à personne,
+        et les deux sont connues :</p>
+      <ul>
+        <li>elle a été <b>importée</b> depuis le disque — c'est un fichier qu'on avait déjà ;</li>
+        <li>c'est un <b>morceau de découpe en surplus</b> : quand on coupe une planche de huit
+          sprites et que la rangée du personnage n'a que quatre cases vides, les quatre autres
+          morceaux tombent dans la galerie, sous leur planche
+          (<span class="mesure">18-table-decoupage.html</span> § 05).</li>
+      </ul>
+      <p style="margin-top:10px">Dans les deux cas la fiche propose de la rattacher, et le geste
+        existe déjà : désigner une image comme le corps d'une attitude.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce qui a été retiré de la fiche, et le coût</span>
+      <p>La fiche d'aujourd'hui empile cinq blocs de réglage avec leurs curseurs, sur une colonne de
+        <span class="mesure">380 px</span>. On y règle un détourage en regardant une image de la
+        taille d'une carte postale — c'est très exactement la panne que la refonte corrige.</p>
+      <p><strong>Le coût :</strong> corriger une valeur demande maintenant d'ouvrir une table,
+        c'est-à-dire de changer de surface. Avant, tout était sous la main. Ce qu'on gagne, c'est
+        que le réglage se fait en voyant ce qu'on règle ; ce qu'on perd, c'est le petit ajustement
+        fait sans quitter la grille. <strong>C'est un vrai coût et il est assumé</strong> — le § 08
+        de <span class="mesure">01-structure.html</span> l'avait déjà nommé comme le déplacement de
+        code le plus lourd de la V2.1.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>La barre d'outils — chercher, filtrer, ranger, sortir</h2></div>
+    <p class="intro">Une bande de <span class="mesure">38 px</span> au-dessus de la grille. Elle
+      porte tout ce qui aide à retrouver une image, et les deux portes de la bibliothèque : faire
+      entrer, faire sortir.</p>
+
+    <div class="croquis" style="border-radius:2px">
+      <div class="outils" style="min-width:1050px">
+        <span class="champ-r">Chercher</span>
+        <span class="ob on">famille <span class="mes" style="color:var(--signal-clair)">personnages</span></span>
+        <span class="ob">Favoris</span>
+        <span class="mes">34 images sur 88</span>
+        <span class="segs"><span class="s on">1×</span><span class="s">2×</span><span class="s gris">4×</span></span>
+        <span class="mes">— 4× ne tient pas ici</span>
+        <span style="width:1px;height:16px;background:var(--bord)"></span>
+        <span class="mes" style="color:var(--texte-2)">3 sélectionnés</span>
+        <span class="ob">Ranger…</span>
+        <span class="mes">Favori</span><span class="mes">Supprimer</span>
+        <span class="mes" style="color:var(--texte-3)">Désélectionner</span>
+        <span class="wf-tard" style="gap:8px"><span class="ob">Importer</span><span class="ob">Sortir</span></span>
+      </div>
+    </div>
+    <div class="lgd">chercher et filtrer ne disparaissent jamais, même quand une sélection ajoute
+      cinq gestes · sinon, ouvrir une fiche — ce qui sélectionne — effacerait le filtre sans rien dire</div>
+
+    <h3>Le filtre « famille », et pourquoi il attend</h3>
+    <p>Une famille, c'est ce qui range les choses du jeu dans le codex : <strong>personnages,
+      décors, objets, interface</strong>. Le filtre sert à réduire une planche contact de 88 images
+      à ce qu'on cherche.</p>
+    <p><strong>D'où vient la famille d'une image</strong> — la question était ouverte ici, et
+      <span class="mesure">05-codex.html</span> § 04 l'a tranchée en la mesurant : <em>c'est une
+      propriété de l'image, et elle existe déjà</em>. Au moment de générer on choisit un
+      <b>sujet</b> — personnage, créature, meuble, objet posé, objet tenu, décor, élément
+      d'interface —, ce sujet porte sa famille, et c'est lui qui décide quels artworks partent en
+      référence. Une image qui n'appartient à aucune entité a donc quand même une famille.</p>
+    <p><strong>Mais le sujet est vide deux fois sur trois.</strong> Sur les 28 générations du
+      dépôt, <span class="mesure">9</span> portent un sujet — toutes <em>personnage</em> — et
+      <span class="mesure">19</span> n'en portent aucun. Un filtre par famille laisserait donc
+      aujourd'hui les deux tiers de la grille hors de toute case, ce qui est pire que pas de filtre
+      du tout : on croirait avoir tout vu.</p>
+    <p>Sa liste finit par une valeur qui n'est pas une famille et qui reste utile quel que soit ce
+      chiffre : <strong>sans entité</strong>. C'est là que se retrouvent les images importées et
+      les morceaux de découpe en surplus — tout ce qui, sans elle, ne se retrouverait qu'en faisant
+      défiler.</p>
+
+    <div class="duo">
+      <div>
+        <div class="detail">
+          <div class="menu">
+            <div class="m on">toutes <span class="p">88</span></div>
+            <div class="sep"></div>
+            <div class="m">personnages <span class="p">34</span></div>
+            <div class="m">décors <span class="p">21</span></div>
+            <div class="m">objets <span class="p">25</span></div>
+            <div class="m">interface <span class="p">4</span></div>
+            <div class="m" style="color:var(--texte-3)">sans sujet <span class="p">19</span></div>
+            <div class="sep"></div>
+            <div class="m">sans entité <span class="p">4</span></div>
+          </div>
+        </div>
+        <div class="lgd">le trait du bas sépare ce qui est rangé de ce qui ne l'est pas encore</div>
+      </div>
+      <div>
+        <div class="note gris">
+          <span class="lab">Ce que ce filtre n'est pas</span>
+          <p>Ce n'est <strong>pas un rangement</strong> : il ne déplace rien et n'écrit rien. Il
+            cache des images pendant qu'on regarde, et rien de plus. Le rangement, c'est la colonne
+            de gauche — projets et collections.</p>
+          <p>Et ce n'est <strong>pas un second codex</strong> : il donne une famille, pas une
+            entité, et il n'affiche jamais ce qui manque. Grouper par entité et voir les cases
+            vides, c'est le métier de l'autre onglet, et le refaire ici en ferait deux.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Ce que ce filtre attend, et ce n'est pas le codex</span>
+      <p>Il n'attend plus rien du codex : la question est répondue. <strong>Il attend que le sujet
+        soit rempli à chaque génération</strong> — et ça ne se joue pas ici, puisque la galerie ne
+        génère pas. Le sujet se pose au moment de lancer, dans le codex ou dans l'établi ; la
+        galerie ne fait qu'en récolter le résultat.</p>
+      <p>La recommandation est donc : <strong>le dessiner, et reposer la question du seuil quand le
+        chiffre aura monté</strong> — pas sur ces neuf générations-là. Sans le filtre, la barre
+        d'outils reste utilisable telle quelle : la recherche par texte et le tri par date
+        suffisent.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 6 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>La colonne de gauche — le rangement, et ce que ça a coûté</h2></div>
+    <p class="intro">Deux choses, l'une au-dessus de l'autre, et elles n'ont pas le même métier.</p>
+
+    <ol class="etapes">
+      <li><b>L'arbre du rangement.</b> Les projets, et dans chaque projet les collections. Cliquer
+        un nom filtre la grille. C'est le seul endroit du produit où l'on décide où une image
+        <em>habite</em> — le filtre par famille, lui, ne fait que cacher.</li>
+      <li><b>Ce que ce jeu a coûté</b>, en bas, séparé par un trait : une ligne avec le montant, une
+        seconde avec ce que les appels ratés y pèsent. <b>C'est un lien</b> — il ouvre l'écran des
+        dépenses, où chaque appel a sa ligne datée. La seconde ligne ne paraît que s'il y a eu un
+        raté.</li>
+    </ol>
+
+    <div class="note gris">
+      <span class="lab">Pourquoi ce bloc reste dans la galerie alors qu'elle ne paie rien</span>
+      <p>Parce qu'il ne parle pas de <em>fabriquer</em>, il parle de <em>ce que le projet a
+        dépensé</em> — et c'est dans la galerie qu'on regarde ce que le projet a produit. Le total
+        du projet est écrit juste au-dessus, dans la barre du haut, pour la même raison. On lit les
+        deux ensemble : ce qu'on a, et ce que ça a coûté.</p>
+    </div>
+
+    <div class="note att" style="margin-top:9px">
+      <span class="lab">Ce bloc était un journal des ratés · changé le 30 août 2026</span>
+      <p>Il listait les appels ratés, un par un, avec leur heure et leur raison — et rien d'autre.
+        C'était le seul endroit où un échec laissait une trace, parce qu'un appel qui échoue a coûté
+        de l'argent sans produire d'image : il ne peut pas être dans la grille, qui ne montre que ce
+        qu'on peut réutiliser.</p>
+      <p style="margin-top:8px"><strong>L'écran des dépenses fait ça mieux, et fait le reste en
+        plus.</strong> Il donne à chaque appel — réussi, raté, ou interrompu — sa ligne datée avec son
+        montant. Le bloc garde donc sa place et son métier, mais il devient <b>une porte au lieu
+        d'une liste</b> : il annonce ce que le jeu a coûté, et il mène là où le détail se lit. La
+        raison écrite juste au-dessus ne bouge pas d'un mot ; elle est simplement mieux servie.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Faire entrer et faire sortir</h2></div>
+    <p class="intro">Deux gestes touchent des fichiers et restent pourtant dans la galerie. Il faut
+      dire pourquoi : ni l'un ni l'autre n'appelle le fournisseur, donc ni l'un ni l'autre ne
+      contredit « la galerie ne fabrique rien ».</p>
+
+    <table>
+      <thead><tr><th style="width:14%">Le geste</th><th style="width:43%">Ce qu'il fait</th>
+        <th>Pourquoi il est ici</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="f">Importer</td>
+          <td>Fait entrer un fichier du disque dans la bibliothèque. Par un bouton, ou en lâchant le
+            fichier directement sur la grille. On dit au moment du geste si le traitement du projet
+            s'applique ou non, et le défaut est <em>telle quelle</em>.</td>
+          <td>Importer ne fabrique rien : le fichier existait déjà. C'est une <b>porte de la
+            bibliothèque</b>, et la galerie <em>est</em> la bibliothèque. L'image entre sans entité,
+            et la fiche propose de la rattacher.</td>
+        </tr>
+        <tr>
+          <td class="f">Sortir</td>
+          <td>Écrit la sélection dans une archive, avec un descriptif qui nomme chaque fichier. Ce
+            qui part est le <b>rendu</b>, jamais l'image brute qui reste ici.</td>
+          <td>L'autre porte, ancrée à droite juste à côté de la première : deux portes qui se
+            déplacent sont deux portes qu'on cherche. Sélection vide, le bouton est grisé avec sa
+            raison écrite à côté.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">La règle qui tient l'écran</span>
+      <h3>Rien dans la galerie ne coûte un centime, et rien n'y modifie une image</h3>
+      <p>C'est la phrase à laquelle on reviendra dans six semaines, quand on se demandera si tel
+        petit geste a sa place ici. Marquer favori, ranger, supprimer, importer, exporter, chercher,
+        filtrer, zoomer : aucun n'appelle le fournisseur, aucun ne touche aux pixels d'une image.</p>
+      <p>Le corollaire est que <strong>la barre d'état peut le dire</strong>, comme celle d'une
+        table dit déjà <em>aucun appel, aucun coût</em>. Ce n'est pas un ornement : c'est ce qui
+        rend lisible d'un coup d'œil dans quelle moitié du produit on se trouve — celle qui montre,
+        ou celle qui paie.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 8 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que ça rend — la grille grandit de moitié</h2></div>
+    <p class="intro">Retirer la colonne de réglages libère de la largeur ; retirer la barre de
+      prompt libère de la hauteur. Les nombres ci-dessous sont un <strong>calcul</strong> à partir
+      des largeurs déjà posées, pas une mesure faite dans le produit — ils se vérifieront en
+      implémentant.</p>
+    <p>Hypothèses : écran de <span class="mesure">1440 × 900</span>, colonne de rangement ouverte,
+      fiche ouverte, <span class="mesure">16 px</span> de marge autour de la grille,
+      <span class="mesure">9 px</span> de gouttière entre les tuiles, tuile minimale
+      <span class="mesure">128 px</span> au cran 1×.</p>
+
+    <table>
+      <thead><tr><th style="width:38%"> </th><th style="width:31%">Aujourd'hui</th><th>En 2.1</th></tr></thead>
+      <tbody>
+        <tr><td>Colonnes fixes</td>
+          <td class="f">240 + 300 + 380 = 920</td><td class="f">240 + 380 = 620</td></tr>
+        <tr><td>Largeur utile pour la grille</td>
+          <td class="f">488 px</td><td class="f apres">788 px</td></tr>
+        <tr><td>Colonnes de tuiles au cran 1×</td>
+          <td class="f">3</td><td class="f apres">5</td></tr>
+        <tr><td>Crans de zoom disponibles<br>
+            <span class="sourd" style="font-size:11.5px">un cran est disponible quand deux tuiles y
+            tiennent côte à côte</span></td>
+          <td class="f">1× seulement<br><span class="sourd">2× demande 521 px</span></td>
+          <td class="f apres">1× et 2×</td></tr>
+        <tr><td>Hauteur reprise à la barre de prompt</td>
+          <td class="f">—</td><td class="f apres">environ 100 px</td></tr>
+        <tr><td>Rangées visibles</td>
+          <td class="f">4</td>
+          <td class="f apres">4 à 900 px de haut,<br>5 dès 1000</td></tr>
+        <tr><td>Tuiles visibles d'un coup</td>
+          <td class="f">12</td><td class="f apres">20, et 25 sur un écran haut</td></tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:14px">Le cas est réel et il vaut d'être dit en clair : <strong>à 1440 px
+      avec la fiche ouverte, le produit d'aujourd'hui n'a qu'un seul cran de zoom disponible et
+      tient trois images par rangée.</strong> Trois cents pixels de réglages permanents mangeaient
+      la surface où l'on juge — sur l'écran dont c'est le seul métier.</p>
+  </section>
+
+  <!-- ═══ 9 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce qui ne bouge pas</h2></div>
+    <p class="intro">Tout ce qui suit est déjà tranché et déjà construit. C'est ce qui rend la
+      galerie le plus petit morceau du lot : on retire trois surfaces, on n'en réinvente aucune.</p>
+
+    <div class="note">
+      <span class="lab">Onze décisions reconduites</span>
+      <ul>
+        <li><b>La tuile.</b> Une zone image carrée sur le damier, un pied de deux lignes — le nom,
+          puis les mesures. Rayon 0, aucune ombre portée.</li>
+        <li><b>Trois marques et pas une de plus</b> : le coin plein en haut à droite pour le favori
+          — la seule que l'auteur pose lui-même —, l'anneau clair pour le sélectionné, et une
+          pastille pour un état subi (<span class="mesure">réglé</span>,
+          <span class="mesure">agent</span>, <span class="mesure">parent supprimé</span>).</li>
+        <li><b>Le zoom à trois crans</b>, et le cran choisi reste choisi même devenu indisponible :
+          la grille rend au plus grand qui tienne, et elle l'écrit.</li>
+        <li><b>Une seule grille d'assets dans tout le produit.</b> La matrice de l'établi n'en est
+          pas une, et la réserve du tableau non plus.</li>
+        <li><b>La grille reçoit un fichier lâché dessus</b>, avec un liseré de 1 px et jamais un
+          voile — dans ses trois états, y compris quand elle est vide.</li>
+        <li><b>L'annulation courte après une suppression</b>, dans sa fente, jamais dans un
+          bandeau.</li>
+        <li><b>Ce qui est indisponible est grisé avec sa raison</b>, écrite à côté et jamais au
+          survol.</li>
+        <li><b>Tout ce qui est produit entre en bibliothèque de lui-même</b> : pas de sas
+          d'acceptation, juger c'est marquer favori ou supprimer.</li>
+        <li><b>L'aperçu</b> : survoler une tuile et appuyer sur la barre d'espace montre l'image en
+          grand, la molette la zoome. <b>Étendu le 30 août 2026 :</b> ce geste vaut désormais pour
+          <b>toutes les vignettes de l'atelier</b>, systématiquement — la fiche d'un objet, le codex,
+          l'écran de confirmation, partout où une image paraît en petit. C'est lui qui permet de
+          garder les vignettes petites au lieu d'ajouter des tailles à la liste fermée.</li>
+        <li><b>Les trois bandes gardent leurs hauteurs</b> —
+          <span class="mesure">38 · 38 · 26</span>. Aucune mesure neuve n'entre.</li>
+        <li><b>Les deux colonnes se replient par choix</b>, jamais par contrainte de place, et
+          leurs bascules restent visibles dans la barre du haut.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 10 ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">10</span><h2>Ce qui reste ouvert, et ce qui part ailleurs</h2></div>
+
+    <div class="note ok">
+      <span class="lab">Fermée le 30 août · Où génère-t-on ce qui n'appartient à aucune chose du jeu&nbsp;?</span>
+      <p>C'était la seule vraie conséquence de retirer le prompt de la galerie. Aujourd'hui on peut
+        écrire « un tonneau cerclé de fer » et payer une image sans rien déclarer ; si l'on ne paie
+        que depuis l'établi d'une entité, il faut <strong>d'abord créer l'entité</strong>. Trois
+        réponses étaient sur la table : que ce soit très bien ainsi, qu'une entité d'essais serve de
+        panier, ou que l'univers garde un prompt pour lui.</p>
+      <p style="margin-top:10px"><strong>Retenu : écrire le nom crée la chose.</strong> Un tonneau
+        qui existe dans le jeu <em>est</em> une chose du monde, donc une entité du codex. Taper
+        <em>tonneau cerclé de fer</em> le fait entrer dans le codex sur-le-champ, et on génère depuis
+        son établi comme pour n'importe quel objet. Le geste est déjà celui de l'atelier : « nommer,
+        c'est créer » vaut déjà pour les poses et pour les pièces d'équipement.</p>
+      <p style="margin-top:10px">Les deux autres réponses sont écartées pour la même raison :
+        l'entité d'essais fabrique un endroit où les images échappent au codex, et un prompt dans
+        l'univers rouvre un troisième lieu où l'argent part. <b>La galerie ne paie jamais</b> —
+        <span class="mesure">aucun appel ne part d'ici</span> reste vrai sans exception, et les
+        lieux qui paient sont deux : l'établi et le codex.</p>
+      <p style="margin-top:10px"><b>Ce que ça décide ailleurs :</b> le codex crée une chose du jeu
+        d'un mot tapé, et l'écran de confirmation
+        (<span class="mesure">08bis-ecran-de-confirmation.html</span> § 07) n'a que
+        <b>trois portes</b> — l'établi, le codex, la planche d'une pose. Son brouillon en comptait
+        quatre, la galerie comprise ; elle en a été retirée.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Question ouverte · 01</span>
+      <h3>Que devient une sélection de douze images quand on entre dans une table&nbsp;?</h3>
+      <p>On peut sélectionner douze images pour les ranger ou les sortir d'un geste. On peut aussi
+        ouvrir la fiche d'une seule, ce qui la sélectionne. Entrer dans une table pendant qu'une
+        sélection existe est un cas que personne n'a encore essayé.</p>
+      <p style="margin-top:10px">L'hypothèse retenue, à vérifier à l'usage : <strong>la sélection
+        est conservée, et la colonne des images sœurs de la table montre la sélection</strong>
+        plutôt que le voisinage dans la grille. On est entré depuis un lot, on travaille le lot.
+        L'inverse se défend, et rien ne tranche aujourd'hui.</p>
+      <p style="margin-top:10px"><b>Ce que ça bloque : rien.</b> Le cas courant — une image seule —
+        est traité par <span class="mesure">03-chassis-des-tables.html</span>.</p>
+    </div>
+
+    <div class="note ok">
+      <span class="lab">Reporté dans les autres maquettes · fait le 31 août 2026</span>
+      <ul>
+        <li><b>Les cinq phrases du § 03</b> qui mettaient un prompt dans la galerie —
+          <span class="mesure">01</span> § 01 et § 07, <span class="mesure">02</span> § 03,
+          <span class="mesure">03</span> § 01, <span class="mesure">05</span> § 08. C'est le report
+          le plus important de cette maquette, et il ne retire aucune décision : il rend « il
+          n'existe qu'un seul endroit d'où l'on paie » plus vrai qu'avant, puisque les lieux qui
+          paient passent de trois à deux — l'établi et le codex, tous deux du côté du codex.</li>
+        <li><b>Dans <span class="mesure">03-chassis-des-tables.html</span></b> — le fil d'Ariane
+          d'une image ouverte depuis la galerie. Le châssis ne le décrit que pour le chemin du
+          codex (<span class="mesure">Cœur de pierre › Personnages › Balthazar › marche · image 3 ›
+          Détourage</span>) ; depuis la galerie il en faut un plus court
+          (<span class="mesure">Cœur de pierre › Galerie › tonneau-cerclé-02 › Détourage</span>), et
+          la colonne des sœurs y montre les voisines de la grille et non les attitudes d'une
+          entité — ce que le châssis prévoit déjà en toutes lettres.</li>
+        <li><b>Dans <span class="mesure">01-structure.html</span></b> — son croquis de la galerie
+          dessine la fiche avec un seul bouton, <em>Reprendre dans l'établi</em>. Il en faut deux, et
+          ils ne mènent pas au même endroit : l'un ouvre l'établi de l'entité, l'autre ouvre les
+          tables. Une image sans entité n'a que le second.</li>
+        <li><b>Rien sur les glyphes</b> : <span class="mesure">05-codex.html</span> § 03 a déjà
+          tranché que les croquis dessinaient une roue dentée et un point d'interrogation par
+          raccourci, et que ce sont bien les mots <em>Réglages</em> et <em>Guide</em> qui restent.
+          Cette maquette les écrit donc en toutes lettres, comme le codex.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Asset Kitchen — V2.1 · maquette 04, la galerie · 30 août 2026 ·
+    rien n'est encore écrit dans les documents d'autorité</footer>
+
+</div>
+</body>
+</html>

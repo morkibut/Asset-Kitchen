@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table La main</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:center}
+  .col-t .dr{margin-left:auto;text-transform:none;letter-spacing:0}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+
+  /* la pile de calques */
+  .pile{display:flex;flex-direction:column;gap:3px}
+  .cq{height:26px;display:flex;align-items:center;gap:7px;padding:0 7px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2)}
+  .cq.actif{border-color:var(--lumiere)}
+  .cq.sol{background:var(--fond-1)}
+  .cq .oeil{width:9px;height:9px;border:1px solid var(--bord-fort);flex:none}
+  .cq .oeil.on{background:var(--texte-2);border-color:var(--texte-2)}
+  .cq .nm{font-size:11px;color:var(--texte)}
+  .cq.sol .nm{color:var(--texte-2)}
+  .cq .cnt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cq .x{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .cq .fleches{display:flex;gap:2px;font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ajoutcq{height:24px;border:1px dashed var(--bord-fort);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  .segs{display:flex;gap:4px}
+  .sg{height:24px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .sg.gris{color:var(--texte-3);border-style:dashed}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:70px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:52px;text-align:right}
+
+  .champc{display:flex;align-items:center;gap:8px;height:26px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);padding:0 8px}
+  .champc .sw{width:16px;height:16px;border:1px solid var(--bord-fort);flex:none}
+  .champc .hex{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .champc .pip{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .palette{display:flex;gap:4px;flex-wrap:wrap}
+  .pc{width:22px;height:22px;border:1px solid var(--bord);border-radius:2px}
+  .pc.on{border-color:var(--lumiere)}
+
+  .compteur{border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:9px 10px;display:flex;flex-direction:column;gap:6px}
+  .compteur .gros{font-family:var(--mono);font-size:13px;color:var(--texte)}
+  .compteur .pt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .compteur .act{height:23px;border:1px solid var(--bord-fort);border-radius:2px;
+    background:var(--fond-1);display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--texte)}
+  .avant{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;
+    color:var(--signal)}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+
+  .toile{border:1px solid var(--bord);border-radius:2px;position:relative;height:264px;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/16px 16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sujet{width:178px;height:206px;background:var(--fond-3);border:1px solid var(--bord-fort);
+    position:relative;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);text-align:center;padding:8px}
+  .trait{position:absolute;border-radius:9999px}
+  .curseur{position:absolute;border-radius:9999px;border:1px solid var(--signal);
+    background:rgba(73,179,206,.18)}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .av{color:var(--signal)}
+  .mesrow .hp{color:var(--epingle)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  .avenir{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .av{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:14px 16px}
+  .av .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;margin-bottom:8px}
+  .av.mnt .n{color:var(--signal)}
+  .av.plus .n{color:var(--texte-3)}
+  .av ul{margin:0;padding:0;list-style:none}
+  .av li{font-size:12px;color:var(--texte-2);padding:4px 0 4px 13px;position:relative;line-height:1.45}
+  .av li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px;background:var(--bord-fort)}
+  .av.mnt li::before{background:var(--signal)}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 17 — la main</div>
+    <h1>La main —<br><em>le mode manuel, et l'éditeur en devenir</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span>.</p>
+    <p>C'est <strong>la dernière table de la recette</strong>, et c'est ce qui la définit : elle porte sur
+      l'image telle qu'elle partira dans le jeu. Elle fait deux choses — <strong>décider ce qui est là</strong>
+      (ôter, remettre) et <strong>poser des pixels</strong> sur des calques de dessin — et elle est écrite pour
+      en faire beaucoup plus un jour (§ 07).</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">C'est <strong>le mode manuel de modification d'un asset</strong>. Là où toutes les autres
+      tables appliquent une règle à toute l'image, celle-ci fait ce que l'auteur désigne, pixel par pixel.
+      La panne qu'elle évite est celle qui n'a pas d'autre remède : <strong>les trois pixels qu'aucun réglage
+      n'atteint</strong> — un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la
+      silhouette.</p>
+
+    <div class="note">
+      <span class="lab">Ce qui change par rapport au plan — et la première ligne est une correction d'écriture</span>
+      <p><strong>Un — elle n'est plus <em>réservée</em> au calque d'équipement, elle marche partout.</strong>
+        Le plan la limitait à la retouche d'un calque, qui n'existe que sur une planche d'équipement. Elle
+        devient une place de la recette de <strong>n'importe quelle image, calques compris</strong> — un
+        calque est une image comme une autre pour elle.</p>
+      <p><strong>Deux — le masque de la différence, lui, est resté avec elle.</strong> C'est un autre outil
+        et il ne fait pas la même chose : il affine <em>ce que la comparaison a gardé</em> entre un corps et
+        le même corps habillé, et il n'a de sens que là où il y a une comparaison. La main, elle, décide de
+        ce qui est sur l'image finale — et ça vaut sur les 95 % d'images qui ne sont pas des calques comme
+        sur les autres.</p>
+      <p class="sourd">C'est ce partage qui a fini par sortir la différence de la recette, le 30 août : ce
+        qui lui restait ne parlait que de deux images, et une place de recette n'en décrit qu'une. Elle est
+        devenue <span class="mesure">19-outil-superposition.html</span>, et « la main » est désormais la
+        <strong>septième et dernière place</strong> de la recette.</p>
+      <p><strong>Trois — elle gagne des calques de dessin.</strong> Ôter et remettre décident de l'opacité de
+        ce qui est déjà là ; un calque de dessin <strong>ajoute de la matière</strong>, à la couleur choisie.
+        C'est le premier pas vers un éditeur, et la pile est faite pour en recevoir d'autres.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:24%">Elle vient après…</th><th>Parce que</th></tr></thead>
+      <tbody>
+        <tr><td class="k">tout le reste</td>
+          <td>Elle porte sur <strong>l'image telle qu'elle partira</strong>. Poser un pixel avant la mise sur
+            grille reviendrait à le poser dans une image qui n'existera pas — le rééchantillonnage le
+            déplacerait ou le mangerait.</td></tr>
+        <tr><td class="k">contours</td>
+          <td>C'est son usage le plus fréquent : la ligne que <em>contours</em> vient de tracer a une dent, ou
+            déborde d'un bloc. La main la reprend là, et pas ailleurs.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro">C'est la colonne la plus chargée du produit, et elle défile — <em>un panneau est borné par
+      l'écran, jamais par son contenu</em>. L'état montré : trois calques, celui du milieu actif, un pinceau de
+      7 px, une couleur prise dans la palette du projet.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">la main</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">les calques <span class="dr">du dessus au dessous</span></span>
+            <div class="pile">
+              <div class="cq">
+                <span class="oeil on"></span><span class="nm">reflets</span>
+                <span class="cnt">4</span><span class="fleches">↑↓</span><span class="x">×</span></div>
+              <div class="cq actif">
+                <span class="oeil on"></span><span class="nm">rouille</span>
+                <span class="cnt">11</span><span class="fleches">↑↓</span><span class="x">×</span></div>
+              <div class="cq sol">
+                <span class="oeil on"></span><span class="nm">l'opacité</span>
+                <span class="cnt">3</span></div>
+            </div>
+            <div class="ajoutcq">+ calque de dessin</div>
+            <div class="raison">« l'opacité » est le sol de la pile : elle ne se supprime pas
+              et ne se déplace pas</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">le sens</span>
+            <div class="segs">
+              <span class="sg on">poser</span><span class="sg">effacer</span>
+            </div>
+            <div class="raison">sur « l'opacité », les deux segments deviennent
+              <span style="color:var(--texte-2)">ôter · remettre</span></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">le pinceau</span>
+            <div class="rg-reg"><span class="lb">diamètre</span>
+              <span class="rail"><i style="left:6%"></i></span><span class="vl">7 px</span></div>
+            <div class="raison">7 px du rendu · 1,75 bloc · impairs seulement</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">la couleur</span>
+            <div class="champc"><span class="sw" style="background:#6E5A3C"></span>
+              <span class="hex">#6E5A3C</span><span class="pip">pipette</span></div>
+            <div class="palette">
+              <span class="pc" style="background:#14161B"></span>
+              <span class="pc" style="background:#3A3F4B"></span>
+              <span class="pc on" style="background:#6E5A3C"></span>
+              <span class="pc" style="background:#A8895C"></span>
+              <span class="pc" style="background:#4C6B45"></span>
+              <span class="pc" style="background:#8FA98A"></span>
+              <span class="pc" style="background:#B4483C"></span>
+            </div>
+            <div class="prov">dans la palette du projet</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">le calque actif</span>
+            <div class="compteur">
+              <span class="gros">rouille · 11 passages</span>
+              <span class="pt">318 px posés · dernier : poser, 7 px, #6E5A3C</span>
+              <span class="act">Défaire le dernier · Ctrl + Z</span>
+            </div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">comparer</span>
+            <div class="avant"><span>Avant ›</span>
+              <span style="color:var(--texte-3)">maintenir pour voir sans la main</span></div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>3 calques · 18 passages</span>
+          <span class="dr">Sans retouche ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>La pile se lit du dessus au dessous</b>,
+          comme partout où il y a des calques. Le calque actif porte l'anneau
+          <span class="mesure">--lumiere</span> — la sélection du produit, jamais une seconde marque. Le carré
+          plein à gauche est la visibilité ; masquer un calque n'efface rien.</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>« L'opacité » est le sol, et elle est
+          d'une autre nature.</b> Elle ne pose pas de couleur : elle décide de ce qui est là, sur l'image que
+          les sept tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque
+          de dessin sous l'image n'aurait aucun sens.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>Les deux segments changent de nom avec le
+          calque actif.</b> <span class="mesure">ôter · remettre</span> sur l'opacité,
+          <span class="mesure">poser · effacer</span> sur un dessin. C'est la même mécanique — un passage qui
+          ajoute, un passage qui retire — et le segment allumé dit ce que le geste
+          fera.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>Le diamètre est un curseur</b>, de 1 à 129,
+          et il ne rend que des <b>impairs</b> : un pinceau a un centre, et un diamètre pair n'en a pas.
+          Contrairement à la tolérance du détourage, ce curseur <b>ne coûte rien</b> — il ne déclenche aucun
+          calcul tant qu'aucun passage n'est posé, donc il suit la main sans attendre le
+          relâchement.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>La palette du projet est proposée, pas
+          imposée.</b> La rangée montre ses couleurs, le champ accepte n'importe quel hex, et une couleur qui
+          n'y est pas <b>se marque</b> — <span class="mesure">hors palette</span> en
+          <span class="mesure">--epingle</span> — au lieu d'être refusée. Le produit constate ; il ne
+          refuse pas.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">Le pied porte le total de la
+          table — tous calques confondus — et <span class="mesure">Sans retouche ›</span>, qui vide la pile
+          entière.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:23%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">les calques</td><td><span class="m">1 + n</span><br><span class="sourd">« l'opacité » seule au départ</span></td>
+          <td>Une pile ordonnée. <strong>« L'opacité » est toujours au fond</strong> et ne se retire pas ;
+            au-dessus, autant de calques de dessin qu'on veut, chacun nommable, masquable, supprimable et
+            <strong>déplaçable dans l'ordre</strong>. Chaque calque porte ses propres passages.</td></tr>
+        <tr><td class="k">le sens</td><td><span class="m">ôter · remettre</span> sur l'opacité<br>
+          <span class="m">poser · effacer</span> sur un dessin<br><span class="sourd">défaut : le premier des deux</span></td>
+          <td>Sur l'opacité : <strong>ôter</strong> rend transparent, <strong>remettre</strong> ramène ce que
+            l'image avait avant qu'on le retire. Sur un dessin : <strong>poser</strong> ajoute des pixels à la
+            couleur choisie, <strong>effacer</strong> retire ce que ce calque-là avait posé — et rien d'autre.
+            <strong>Le dernier passage l'emporte sur un pixel donné</strong>, comme un pinceau sur une
+            toile.</td></tr>
+        <tr><td class="k">diamètre</td><td><span class="m">1 – 129 px, impairs</span><br><span class="sourd">défaut : 5 px</span></td>
+          <td>En pixels de l'image rendue, avec son jumeau en blocs quand la grille est posée. C'est le
+            <strong>diamètre</strong> qui s'affiche — la largeur du trait est ce que la main voit, le rayon est
+            ce que le calcul veut. <strong>Le cran 1 px est le pixel</strong> : un rayon nul ne couvre qu'un
+            pixel de large, et c'est l'autre bout de « à main levée, puis au pixel ».</td></tr>
+        <tr><td class="k">couleur</td><td><span class="m">hex libre</span><br><span class="sourd">défaut : la première de la palette</span></td>
+          <td><em>Calques de dessin seulement</em> — l'opacité ne pose pas de couleur. La palette du projet est
+            proposée en rangée, le champ accepte n'importe quelle valeur, et la pipette prend une couleur dans
+            l'image. <strong>La couleur est portée par le passage, pas par le calque</strong> : un même calque
+            peut en contenir plusieurs, ce qui évite d'en créer un par teinte.</td></tr>
+        <tr><td class="k">le calque actif</td><td><span class="m">n passages</span><br><span class="sourd">vide au départ</span></td>
+          <td>Pas un réglage : un compte, et un geste. <span class="mesure">Ctrl + Z</span> retire le dernier
+            passage <em>du calque actif</em>. <span class="mesure">Sans retouche ›</span>, en pied, vide la
+            table entière.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Il n'y a pas de liste de passages, et c'est la seule table dans ce cas</span>
+      <p>Un geste à main levée en produit des dizaines : une liste de trente rangées ne se relit pas, elle se
+        subit. <strong>Le calque est l'unité de lecture</strong> — c'est lui qu'on nomme, qu'on masque, qu'on
+        supprime — et le passage n'existe que comme un compte et un <span class="mesure">Ctrl + Z</span>. C'est
+        exactement pour ça que les calques de dessin valaient d'être ajoutés : ils donnent au geste manuel la
+        granularité que le passage ne peut pas porter.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Ce qu'un passage est, et pourquoi ça compte</span>
+      <p><strong>Un vecteur, jamais une image.</strong> Ce qui est enregistré est le chemin parcouru, son
+        rayon et sa couleur — pas les pixels qu'il produit. Trois conséquences : un calque pèse quelques
+        kilo-octets au lieu de la taille de l'image ; il est annulable et rejouable comme une passe de
+        détourage ; et surtout <strong>il se rejoue sur une image dont les dimensions ont changé</strong> —
+        remettre la grille à 8 px ne fait pas perdre le dessin.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <div class="banc">
+      <div style="flex:1;min-width:330px">
+        <div class="toile">
+          <div class="sujet">l'image, en grand, sur le damier
+            <span class="trait" style="left:34px;top:56px;width:56px;height:7px;background:var(--signal)"></span>
+            <span class="trait" style="left:52px;top:104px;width:44px;height:7px;background:#6E5A3C"></span>
+            <span class="trait" style="left:88px;top:130px;width:30px;height:7px;background:#6E5A3C"></span>
+            <span class="curseur" style="left:112px;top:150px;width:7px;height:7px"></span>
+          </div>
+        </div>
+        <div class="mesrow"><span>3 calques · 18 passages</span>
+          <span>7 px · 1,75 bloc</span>
+          <span>#6E5A3C</span>
+          <span class="av" style="margin-left:auto">Avant ›</span></div>
+      </div>
+      <div class="annot" style="max-width:420px">
+        <div class="an"><span class="k">le trait</span><span class="t"><b>Il se dessine à la largeur et à la
+          couleur qu'il aura.</b> Sur un calque de dessin, c'est la couleur choisie ; sur l'opacité, c'est
+          <span class="mesure">--signal</span> dans les deux sens — garder et ôter sont deux gestes ordinaires,
+          et <span class="mesure">--echec</span> voudrait dire <em>ça détruit</em>, ce qu'une gomme ne fait
+          pas.</span></div>
+        <div class="an"><span class="k">l'épaisseur</span><span class="t"><b>Le trait est le seul élément du
+          produit dont l'épaisseur est une mesure du sujet</b> et non une valeur de châssis : elle vaut
+          <span class="mesure">(2 × rayon + 1)</span> pixels d'image, mise à l'échelle du cadre. Zoomer
+          l'épaissit ; c'est voulu, puisqu'elle mesure l'image.</span></div>
+        <div class="an"><span class="k">le curseur</span><span class="t"><b>Un cercle du diamètre choisi</b>,
+          bord <span class="mesure">--signal</span>, fond à 18 %. Il dit ce que le prochain passage couvrira
+          avant qu'on appuie — c'est la moitié du réglage, et sans lui le curseur de diamètre serait un nombre
+          abstrait.</span></div>
+        <div class="an"><span class="k">rien d'autre</span><span class="t"><b>Pas de poignée, pas de
+          rectangle, pas de cible.</b> Une cible de retaille au milieu d'une surface qu'on peint est un piège
+          à clic — et ici toute la surface est peignable.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ses mesures, et ce qu'elle propose</h2></div>
+    <table>
+      <thead><tr><th style="width:26%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">3 calques · 18 passages</span></td>
+          <td>Le total de la table, tous calques confondus. Il ne dit pas ce qu'ils font — un passage peut en
+            effacer un autre.</td></tr>
+        <tr><td class="k"><span class="m">318 px posés</span></td>
+          <td>Ce que le calque actif change, une fois tous ses passages appliqués. Sur l'opacité on lit
+            <span class="mesure">px touchés</span> : c'est le nombre qui dit si la main a servi de correction
+            ou de détourage déguisé.</td></tr>
+        <tr><td class="k"><span class="m">7 px · 1,75 bloc</span></td>
+          <td>Le diamètre courant dans les deux unités. La fraction n'est pas arrondie : un pinceau qui ne
+            tombe pas juste sur la grille est un fait, et le cacher ferait croire à une correspondance qui
+            n'existe pas.</td></tr>
+        <tr><td class="k"><span class="m">#6E5A3C</span> ou <span class="m" style="color:var(--epingle)">2 couleurs hors palette</span></td>
+          <td>La couleur du pinceau, et — quand le projet a une palette — le compte de celles qu'on a posées en
+            dehors. Une couleur de plus dans un jeu est un fait qui se lit, pas une faute qui se refuse.</td></tr>
+        <tr><td class="k"><span class="m">dernier : poser, 7 px, #6E5A3C</span></td>
+          <td>Ce que <span class="mesure">Ctrl + Z</span> va retirer. Sans cette ligne, défaire est un pari.</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Elle propose une palette, et rien d'autre</span>
+      <p>La rangée de couleurs du projet est la seule chose que cette table devine — et c'est une commodité,
+        pas une décision : le champ reste libre à côté. <strong>Aucun geste n'est proposé</strong>, aucun tracé
+        suggéré, aucun seuil écrit. C'est la table où l'auteur fait ce que la machine ne sait pas faire, et lui
+        proposer un tracé serait exactement la ligne que le cadrage écarte — <em>ce qui est écarté parce que
+        l'auteur fait mieux</em>.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Son indisponibilité, et la contrainte qu'elle impose</h2></div>
+    <div class="note">
+      <span class="lab">Elle n'est jamais indisponible</span>
+      <p>Toute image se retouche, y compris une image entièrement opaque — <em>ôter</em> y crée de la
+        transparence, et un calque de dessin s'y pose comme partout. C'est l'exacte symétrie de
+        <em>contours</em>, la seule table que l'opacité pleine rend inutile. Son carré est donc toujours
+        là.</p>
+    </div>
+    <div class="note att">
+      <span class="lab">En revanche, c'est la seule table qui contraint le comparateur</span>
+      <p>Le châssis pose la règle : <em>une table qui se peint force le rendu</em>. Ici elle prend sa forme
+        exacte : <strong>entrer dans la table met le mode sur <span class="mesure">rendu</span>, et les trois
+        autres segments sont grisés</strong> avec leur raison.</p>
+      <p style="margin-top:10px"><span style="display:inline-flex;gap:4px;vertical-align:middle">
+        <span class="sg mono gris" style="padding:0 10px;flex:none">brut</span>
+        <span class="sg on mono" style="padding:0 10px;flex:none">rendu</span>
+        <span class="sg mono gris" style="padding:0 10px;flex:none">côte à côte</span>
+        <span class="sg mono gris" style="padding:0 10px;flex:none">superposé</span></span></p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— la main se pose sur le
+        rendu : les autres vues se lisent en maintenant <span style="color:var(--signal)">Avant ›</span></span></p>
+      <p style="margin-top:10px">Le cas qui a tranché est <em>côte à côte</em> : deux images à l'écran, et la
+        main n'aurait pas su sur laquelle elle écrit. Un outil dont la cible est ambiguë détruit une fois sur
+        deux — <strong>et l'appui « Avant › » récupère exactement ce qu'on retire</strong>, ce qui est la
+        raison pour laquelle il pouvait disparaître partout ailleurs. C'est ici sa dernière maison.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>L'éditeur en devenir — ce qui est là, et ce qui viendra</h2></div>
+    <p class="intro">Cette table est la seule du produit qui <strong>grandira</strong>. Les autres appliquent
+      une règle et s'arrêtent ; celle-ci est un mode manuel, et un mode manuel n'a pas de fin naturelle.
+      Écrire maintenant ce qui viendra n'est pas une promesse — c'est ce qui empêche les décisions
+      d'aujourd'hui de fermer la porte.</p>
+    <div class="avenir">
+      <div class="av mnt">
+        <div class="n">MAINTENANT · V2.1</div>
+        <ul>
+          <li>Ôter et remettre de l'opacité</li>
+          <li>Des calques de dessin empilables, nommables, masquables, réordonnables</li>
+          <li>Poser et effacer des pixels, à la couleur choisie</li>
+          <li>Un curseur de diamètre, du pixel à 129 px</li>
+          <li>La palette du projet proposée, la couleur libre acceptée et marquée</li>
+          <li>La pipette, pour prendre une couleur dans l'image</li>
+        </ul>
+      </div>
+      <div class="av plus">
+        <div class="n">PLUS TARD · hors périmètre pour l'instant</div>
+        <ul>
+          <li>La sélection — rectangle, lasso, baguette</li>
+          <li>Copier, coller, dupliquer un calque</li>
+          <li>Déplacer le contenu d'un calque, le retourner, le faire pivoter</li>
+          <li>L'opacité et le mode de fusion d'un calque</li>
+          <li>Les effets — flou, contour de calque, ombre portée</li>
+          <li>Le remplissage par zone, et le tracé de formes</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Les trois décisions d'aujourd'hui qui gardent la porte ouverte</span>
+      <ul>
+        <li><b>Un passage est un vecteur, jamais une image.</b> Un calque reste léger, rejouable, et il
+          survivra à un changement de dimensions même quand il portera mille traits.</li>
+        <li><b>La couleur est portée par le passage, pas par le calque.</b> Un calque n'est donc pas
+          monochrome, et l'ajout d'un remplissage ou d'un dégradé ne demandera pas de le redéfinir.</li>
+        <li><b>« L'opacité » est un calque de la pile, pas un mode à part.</b> Le jour où la sélection
+          arrivera, elle s'appliquera à un calque quel qu'il soit — sans avoir à traiter la couche
+          d'origine comme une exception.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que cette table doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+      <p><strong>C'est la seule table qui n'applique aucune règle</strong>, et c'est exactement ce
+        qu'une explication doit dire — sinon on la cherche parmi les réglages, où elle n'est pas.</p>
+      <p style="margin-top:10px"><b>nom</b> · La main<br>
+        <b>quoi</b> · La septième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où
+        les six autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu
+        désignes.<br>
+        <b>ce que ça change</b> · Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle
+        existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une
+        dent dans un contour, une miette accrochée à la silhouette.<br>
+        <b>d'où ça vient</b> · toi, geste par geste · rien au départ<br>
+        <b>où ça se range</b> · <span class="mesure">Les tables</span></p>
+      <p style="margin-top:10px" class="sourd"><b>Et une précision qui vaut de l'argent</b> : comme
+        toutes les tables, elle ne coûte rien. Le post-traitement ne touche jamais le fournisseur — on
+        peut y passer une heure sans dépenser un centime, et c'est ce que la barre qui paie, absente
+        ici, annonce avant qu'on ait lu.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 17, la main · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

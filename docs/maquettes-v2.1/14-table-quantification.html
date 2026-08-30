@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Quantification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:11px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:78px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:56px;text-align:right}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+
+  /* champ couleur + palette */
+  .champc{display:flex;align-items:center;gap:8px;height:26px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);padding:0 8px}
+  .champc .sw{width:16px;height:16px;border:1px solid var(--bord-fort);flex:none}
+  .champc .hex{font-family:var(--mono);font-size:10px;color:var(--texte)}
+  .champc .pip{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .palette{display:flex;gap:4px;flex-wrap:wrap}
+  .pc{width:22px;height:22px;border:1px solid var(--bord);border-radius:2px}
+  .pc.on{border-color:var(--lumiere)}
+  .pc.inemploye{border-style:dashed;border-color:var(--bord);opacity:.4}
+
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  td .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note p:last-child{margin-bottom:0}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* ── recopié de 12-table-recadrage.html : le grisé d'un réglage sans effet ── */
+  .rg-reg.hs .lb{color:var(--texte-3)}
+  .rg-reg.hs .rail{background:var(--bord)}
+  .rg-reg.hs .rail i{background:var(--bord-fort)}
+  .rg-reg.hs .vl{color:var(--texte-3)}
+  .raison a,.prov a{color:var(--signal);text-decoration:none}
+  .an.att .k{color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  .m.eg{color:var(--epingle)}
+  .cadre{overflow-x:auto}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+
+  /* ── propres à cette table : la palette de 24, et le sprite en blocs ─────── */
+  .palette.p24{display:grid;grid-template-columns:repeat(8,22px);gap:4px}
+  .toile{border:1px solid var(--bord);border-radius:2px;height:250px;min-width:300px;max-width:380px;
+    display:flex;align-items:center;justify-content:center;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .spr{display:grid;grid-template-columns:repeat(9,12px);grid-auto-rows:12px}
+  .spr i{display:block;width:12px;height:12px}
+  .spr i.o{box-shadow:inset 0 0 0 2px var(--lumiere)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 14 — quantification</div>
+    <h1>Quantification —<br><em>ramener l'image sur les couleurs du jeu</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+    <p>Le modèle donne trois réglages à cette table et l'écran d'aujourd'hui n'en montre qu'un.
+      <strong>C'est celui qui ne fait rien dans le cas normal</strong> : le PNG sort identique à l'octet près
+      à 2, 8, 24 et 256 couleurs. Le § 02 donne le protocole et les chiffres, et le reste de la maquette part
+      de là.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle ramène les couleurs de l'image sur un ensemble fini : celles de la palette du
+      projet, ou un nombre de couleurs déduites de l'image elle-même. Chaque pixel part sur la couleur la
+      plus proche de cet ensemble. Après elle, deux personnages du même jeu sont peints avec les mêmes
+      couleurs.</p>
+
+    <div class="note">
+      <span class="lab">La panne qu'elle évite</span>
+      <p><strong>Sans elle, chaque image sort avec son propre vocabulaire de couleurs.</strong> Mesuré le
+        30 août 2026 sur six images du dépôt : détourées et remises sur grille, elles portent encore
+        <span class="mesure">895 à 1 627 couleurs</span> chacune. Rien ne fait que le brun du manteau de
+        Balthazar soit le brun du manteau du personnage d'à côté.</p>
+      <p>Poser la palette du projet oblige toutes les images à puiser dans le même jeu de couleurs : le
+        rendu tombe de plus de mille couleurs à une vingtaine, et ce sont les mêmes d'une image à
+        l'autre.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:24%">Elle vient après…</th><th>Parce que</th></tr></thead>
+      <tbody>
+        <tr><td class="k">détourage · recadrage</td>
+          <td>Par l'ordre fixe de la recette. Elle lit les couleurs, eux décident de la silhouette. Ce
+            qu'elle leur doit tient en un fait mesuré : <strong>l'alpha arrive durci</strong>, il ne porte
+            plus que <span class="m">0</span> ou <span class="m">255</span>. L'encadré gris ci-dessous dit
+            pourquoi ça compte.</td></tr>
+        <tr><td class="k">grille</td>
+          <td>C'est la table qui décide de ce qu'un pixel vaut, et
+            <span class="mesure">13-table-grille.html § 01</span> pose la raison de coût :
+            <em>quantifier 1024 px pour les jeter ensuite coûte cent fois plus, pour le même résultat</em>.
+            Ce « même résultat » a été mesuré le 30 août : <strong>il ne tient que dans un régime sur
+            trois</strong>, et l'encadré suivant les donne.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Quantifier avant la grille, ou après — mesuré le 30 août 2026</span>
+      <table>
+        <thead><tr><th style="width:24%">Régime</th><th style="width:34%">Ce que l'ordre change à l'image</th>
+          <th>Ce qu'il en coûte</th></tr></thead>
+        <tbody>
+          <tr><td class="k">la palette du projet<br><span class="sourd" style="font-weight:400">le cas normal</span></td>
+            <td><span class="m eg">non — 0 pixel différent</span></td>
+            <td><span class="m">20 ms à 1024 px</span> contre <span class="m">0,6 ms à 64 px</span>.
+              <strong>Là, la place est une économie</strong>, et le facteur mesuré sur ce corpus est de
+              33 fois.</td></tr>
+          <tr><td class="k">palette et tramage</td>
+            <td><span class="m">oui — 48 à 52 % des pixels</span></td>
+            <td>Un motif calculé à 1024 px puis échantillonné une fois sur seize ne ressort plus comme un
+              motif.</td></tr>
+          <tr><td class="k">couleurs déduites</td>
+            <td><span class="m">oui — 81 à 100 % des pixels</span>, et le vocabulaire avec
+              (<span class="m">12 contre 17 couleurs</span>)</td>
+            <td>La coupe médiane se calcule sur les pixels qu'on lui donne. Calculée sur des pixels qu'on va
+              jeter, elle ne décrit pas l'image qui reste.</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px">La place ne bouge pas : elle reste après la grille dans les trois régimes.
+        <strong>Ce que la mesure change, c'est la justification</strong> — la place est une économie dans le
+        premier régime, et dans les deux autres elle décide de l'image.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce qu'elle ne fait pas à l'alpha</span>
+      <p><strong>Elle n'y touche pas.</strong> Mesuré sur six images : l'alpha est identique avant et après,
+        et il ne porte que <span class="m">0</span> ou <span class="m">255</span>. Le code le dit aussi —
+        <span class="mesure">atelier/image/traitement.py</span>, fonction
+        <span class="mesure">quantifier</span> : l'alpha est mis de côté et remis tel quel.</p>
+      <p>Un commentaire du dépôt dit l'inverse, dans
+        <span class="mesure">atelier/domaine/recette.py</span> autour de
+        <span class="mesure">SEUIL_ALPHA</span> : « la quantification force l'alpha à 255 sans toucher à la
+        couleur ». <strong>C'est la description du piège évité.</strong> Le liseré clair autour du sprite
+        arriverait si l'alpha n'était pas durci avant la réduction, et ce durcissement vit dans la table
+        <em>détourage</em>. Le commentaire est à reformuler ; la table n'a rien à corriger.</p>
+      <p>La même affirmation est écrite deux fois dans
+        <span class="mesure">10-table-detourage.html</span> : « ressortent opaques après la
+        quantification » au § 01, « la quantification le ressort <em>opaque, de la couleur du fond</em> »
+        au § 04. <strong>Les deux endroits sont à reformuler avec le commentaire</strong>, et le § 08 porte
+        le report.</p>
+    </div>
+
+    <p class="intro" style="margin-top:16px">Après elle viennent <em>bords</em>, <em>contours</em> et
+      <em>la main</em>. Avec <em>bords</em> l'ordre est indifférent : le rendu est
+      <strong>identique à l'octet près</strong> dans les deux sens, mesuré sur cinq images, parce que
+      <em>bords</em> ne lit que l'alpha et que la quantification n'y touche pas. La place de <em>bords</em>
+      se décide donc ailleurs, dans <span class="mesure">15-table-bords.html § 01</span>.
+      Les deux dernières s'appuient sur le fait qu'elle est passée : <em>contours</em>
+      trace sa ligne à la couleur exacte qu'on a choisie
+      (<span class="mesure">16-table-contours.html § 01</span>), et <em>la main</em> pose des pixels
+      qu'aucune palette ne rattrape (<span class="mesure">17-table-la-main.html</span>).</p>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qu'elle fait aujourd'hui — mesuré le 30 août 2026</h2></div>
+    <p class="intro">Le sommaire annonce cette table comme <em>« le nombre de couleurs, et la palette imposée
+      du projet »</em>. Avant de la dessiner, j'ai fait varier le nombre de couleurs pour voir ce qu'il
+      change. Dans le cas normal, il ne change rien.</p>
+
+    <div class="note att">
+      <span class="lab">La mesure</span>
+      <h3>Le nombre de couleurs ne fait rien quand une palette est posée</h3>
+      <p><strong>Le corpus</strong> : huit images brutes du dépôt
+        (<span class="mesure">donnees/generations/…-brut.png</span>, côté minimum d'au moins 512 px), passées
+        par le code du dépôt avec la recette d'un vrai projet — <em>Cœur de pierre</em>, cible 64 px, palette
+        de 24 couleurs déduite de ses artworks, occupation 85 %, ancrage bas, détourage par le bord. On fait
+        varier le seul nombre de couleurs et on compare les fichiers qui sortent.</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:28%">La recette</th><th style="width:24%">Nombre de couleurs</th>
+          <th>Ce qui sort</th></tr></thead>
+        <tbody>
+          <tr><td class="k">la palette du projet<br><span class="sourd" style="font-weight:400">le cas normal</span></td>
+            <td><span class="m">2 · 8 · 24 · 256</span></td>
+            <td><span class="m eg">le même fichier à l'octet près, sur les huit images, pour les quatre
+              valeurs.</span><br><strong>Le réglage n'entre pas dans le calcul.</strong></td></tr>
+          <tr><td class="k">couleurs déduites<br><span class="sourd" style="font-weight:400">la recette n'a pas de palette</span></td>
+            <td><span class="m">4 · 8 · 16 · 32 · 64</span></td>
+            <td><span class="m">4 · 6 à 8 · 9 à 15 · 14 à 28 · 28 à 52</span><br><strong>Là, il
+              agit</strong> — et l'écart entre ce qu'on demande et ce qu'on reçoit se creuse avec le
+              nombre.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="lab">Pourquoi</span>
+      <p>Le mécanisme tient en quatre étapes, et rien n'y est cassé :</p>
+      <ol>
+        <li>Le projet a une palette, donc la recette la porte : l'écran l'envoie avec chaque rendu
+          (<span class="mesure">interface/src/composants/Fiche.tsx:505-517</span>).</li>
+        <li>Le traitement voit cette palette et la donne à Pillow, qui ramène chaque pixel sur sa couleur la
+          plus proche.</li>
+        <li>Le nombre de couleurs n'est passé qu'à l'autre branche de la même fonction, celle qui s'exécute
+          quand la recette n'a pas de palette.</li>
+        <li>Il reste donc affiché à l'écran, et hors du calcul.</li>
+      </ol>
+      <p style="margin-top:12px">Les deux réglages répondent à deux questions différentes et le code
+        choisit celui qui convient. <strong>C'est un réglage offert au mauvais moment.</strong> L'écran
+        l'offre en permanence, avec un choix <span class="mesure">4 · 8 · 16 · 32 · 64</span>
+        (<span class="mesure">Fiche.tsx:536</span>) qui ne contient même pas la valeur que l'écran pose
+        lui-même en allumant la table, <span class="m">24</span>
+        (<span class="mesure">Fiche.tsx:508</span>).</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Où le réglage agit, et c'est la borne de cette mesure</span>
+      <p><strong>Il agit dans l'autre mode</strong>, celui où l'image est quantifiée sur ses propres
+        couleurs. Ce mode existe déjà dans le modèle, où une palette vide veut dire
+        <em>déduite de l'image elle-même</em> (<span class="mesure">atelier/domaine/recette.py</span>, classe
+        <span class="mesure">Quantification</span>). Le serveur l'autorise dès que le projet a une palette,
+        et <strong>aucun écran ne l'atteint aujourd'hui</strong>. Le § 04 dit ce que la table en fait : elle
+        lui donne le premier segment de sa colonne, et le nombre de couleurs se dégrise avec lui.</p>
+      <p><strong>Le réglage garde donc sa place, et il porte sa raison quand il ne sert pas.</strong> C'est
+        le motif que <span class="mesure">12-table-recadrage.html</span> a posé pour sa marge, réemployé tel
+        quel.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro">Trois blocs qui se règlent — <strong>les couleurs</strong>, <strong>le nombre</strong>,
+      <strong>le tramage</strong> —, <strong>la palette du projet</strong> qui s'affiche sans s'éditer, et un
+      cinquième qui dit où en est cette image vis-à-vis d'elle. L'état dessiné est celui d'un personnage
+      d'un projet qui a une palette, donc celui où le nombre de couleurs est grisé, et dont la recette a été
+      touchée à la main.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">quantification</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">les couleurs</span>
+            <div class="segs">
+              <span class="sg on">la palette du projet</span><span class="sg">couleurs déduites</span>
+            </div>
+            <div class="raison">chaque pixel part sur la plus proche des 24</div>
+          </div>
+
+          <div class="bloc">
+            <div class="rg-reg hs"><span class="lb">nombre</span>
+              <span class="rail"><i style="left:37%"></i></span><span class="vl">24</span></div>
+            <div class="raison">— la palette du projet est posée : le nombre n'entre pas dans le calcul —
+              combien elle en porte se règle dans <a href="#">Univers ›</a></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">la palette du projet</span>
+            <div class="palette p24">
+              <span class="pc" style="background:#0E1014"></span>
+              <span class="pc" style="background:#14161B"></span>
+              <span class="pc" style="background:#232833"></span>
+              <span class="pc" style="background:#3A3F4B"></span>
+              <span class="pc" style="background:#545C6B"></span>
+              <span class="pc inemploye" style="background:#7A8494"></span>
+              <span class="pc" style="background:#4A3524"></span>
+              <span class="pc" style="background:#764731"></span>
+              <span class="pc" style="background:#8F7449"></span>
+              <span class="pc" style="background:#A8895C"></span>
+              <span class="pc" style="background:#C7A97A"></span>
+              <span class="pc" style="background:#6E5A3C"></span>
+              <span class="pc" style="background:#2E3D2C"></span>
+              <span class="pc" style="background:#4C6B45"></span>
+              <span class="pc" style="background:#6E8F63"></span>
+              <span class="pc" style="background:#8FA98A"></span>
+              <span class="pc" style="background:#5A2B24"></span>
+              <span class="pc" style="background:#8A3A30"></span>
+              <span class="pc" style="background:#B4483C"></span>
+              <span class="pc inemploye" style="background:#D4746A"></span>
+              <span class="pc" style="background:#3C4A63"></span>
+              <span class="pc" style="background:#5B7196"></span>
+              <span class="pc inemploye" style="background:#93A9C4"></span>
+              <span class="pc" style="background:#E0CBA4"></span>
+            </div>
+            <div class="prov">déduite de 5 artworks officiels · Cœur de pierre —
+              <a href="#">Univers ›</a></div>
+            <div class="raison">21 des 24 sont employées par cette image · les 3 ternes n'y sont pas</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">tramage</span>
+            <div class="segs">
+              <span class="sg on">aucun</span><span class="sg">Floyd-Steinberg</span>
+            </div>
+            <div class="raison">l'allumer change 38 à 62 % des pixels pour le même vocabulaire</div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">cette image et la palette</span>
+            <div class="prov">— réglé à la main — un changement de palette le saute</div>
+            <div class="raison"><a href="#">Le remettre sur l'univers du projet ›</a></div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>palette du projet · 21 couleurs employées</span>
+          <span class="dr">Sans quantification ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>Deux modes en segments, et c'est le
+          premier réglage de la colonne.</b> <span class="mesure">la palette du projet</span> est le défaut
+          et le cas normal. <span class="mesure">couleurs déduites</span> quantifie l'image sur ses propres
+          couleurs : il existe dans le modèle depuis T2, et aucun écran ne l'atteint aujourd'hui
+          (§ 02).</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>Le second mode ne sert pas à se passer
+          d'une palette.</b> Le serveur refuse la quantification tant que le projet n'en a pas, et cette
+          règle ne change pas (§ 07). Il sert à <b>sortir de la palette pour une image</b>, en le sachant —
+          une carte d'objet, une illustration de menu.</span></div>
+        <div class="an att"><span class="k">03</span><span class="t"><b>Le nombre est grisé avec sa
+          raison, et il garde sa place</b> : libellé et valeur passent en
+          <span class="mesure">--texte-3</span>, le rail en <span class="mesure">--bord</span> et sa pastille
+          en <span class="mesure">--bord-fort</span>, et une ligne sœur s'ajoute dessous. C'est le motif que
+          <span class="mesure">12-table-recadrage.html</span> a posé pour sa marge. <b>Le dégrisage est
+          automatique</b> quand on passe en <span class="mesure">couleurs déduites</span> — rien à
+          cocher.</span></div>
+        <div class="an"><span class="k">04</span><span class="t"><b>La palette du projet s'affiche, et elle
+          se lit.</b> Les couleurs que cette image emploie sont pleines, les trois qu'elle n'emploie pas sont
+          ternes — <span class="mesure">.pc.inemploye</span>, la même forme que
+          <span class="mesure">.pc.hors</span> de <span class="mesure">16-table-contours.html</span>, mais
+          pas le même mot : <em>hors palette</em> y désigne une couleur absente de la palette, et le dossier
+          l'a arrêté (<span class="mesure">16 § 05</span>, <span class="mesure">17 § 05</span>). Mesuré :
+          une palette de 24 est employée à <span class="mesure">18 à 23 couleurs</span>, donc la rangée
+          n'est jamais pleine. Trois rangées de
+          huit, parce qu'en flux libre les carrés de 22 px tombent en 11, 11 et 2.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>La provenance est écrite, et la palette
+          ne s'édite pas ici.</b> <span class="mesure">déduite de 5 artworks officiels · Cœur de pierre</span>
+          dit d'où elle vient, et <span class="mesure">Univers ›</span> mène au seul endroit où elle se
+          change (<span class="mesure">01-structure.html</span>).</span></div>
+        <div class="an"><span class="k">06</span><span class="t"><b>Le tramage a un écran pour la première
+          fois.</b> Il vit dans le modèle depuis T2 et aucun contrôle ne l'expose. Deux valeurs, et le défaut
+          est <span class="mesure">aucun</span> pour une raison mesurée que le § 04 donne.</span></div>
+        <div class="an att"><span class="k">07</span><span class="t"><b>Le dernier bloc ne se règle pas : il
+          dit où en est cette image vis-à-vis de la palette du projet.</b> L'asset dessiné est épinglé, donc
+          la ligne est <span class="mesure">réglé à la main — un changement de palette le saute</span>, avec
+          le geste qui la défait dessous. Quand rien n'a été touché, elle dit
+          <span class="mesure">suit la palette du projet</span> et il n'y a pas de geste. <b>C'est la seule
+          table qui porte cette lecture</b>, et le § 04 en donne le mécanisme.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête et le pied viennent
+          du wrapper. Le texte de l'état de couche est fourni par la table :
+          <span class="mesure">palette du projet · 21 couleurs employées</span>, ou
+          <span class="mesure">couleurs déduites · 16 couleurs</span>.
+          <span class="mesure">Sans quantification ›</span> ne vide que cette table, et la règle du carré est
+          définie dans <span class="mesure">03-chassis-des-tables.html § 03</span>.
+          <b>Le carré se remplit dès que la table ramène des couleurs</b>, c'est-à-dire dès qu'elle est
+          posée : avec une palette dans la recette elle ramène celle-là, et sans palette elle ramène celles
+          de la coupe médiane, parce que le nombre de couleurs vaut alors 32
+          (<span class="mesure">atelier/domaine/recette.py:365</span>). L'état creux que
+          <span class="mesure">03 § 03</span> décrit — <em>posée sans palette ni compte</em> — n'est donc
+          pas atteignable depuis l'écran.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:22%">Domaine · défaut</th>
+        <th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">les couleurs</td>
+          <td><span class="m">la palette du projet · couleurs déduites</span><br>
+            <span class="sourd">défaut : la palette du projet</span></td>
+          <td><strong>la palette du projet</strong> impose les 24 couleurs de l'univers : chaque pixel part
+            sur la plus proche. <strong>couleurs déduites</strong> laisse la coupe médiane trouver les
+            couleurs dans l'image elle-même, et le nombre ci-dessous dit combien en chercher.
+            <br><br>Coût nommé : <strong>choisir <em>couleurs déduites</em> épingle l'asset.</strong> La
+            palette du projet ne le rattrapera plus toute seule, et le réalignement est le geste qui le fait
+            rentrer dans le rang. C'est écrit dans le dernier bloc de la colonne, à l'endroit où on le
+            choisit.</td></tr>
+        <tr><td class="k">nombre de couleurs</td>
+          <td><span class="m">2 – 64</span><br><span class="sourd">défaut : 32 dans le modèle
+            (<span class="mesure">atelier/domaine/recette.py:365</span>) — 24 quand c'est l'écran qui allume
+            la table, parce qu'il y recopie le nombre de couleurs de l'univers
+            (<span class="mesure">Fiche.tsx:508</span>,
+            <span class="mesure">atelier/domaine/projet.py:236</span>). Deux nombres différents portent le
+            même mot.</span></td>
+          <td>Combien de couleurs la coupe médiane cherche dans l'image. <strong>Grisé quand la palette du
+            projet est posée</strong>, parce qu'il n'entre alors pas dans le calcul — mesuré au § 02.
+            <br><br>Le plafond de 64 est mesuré : à 64 demandées, la coupe médiane n'en rend que
+            <span class="m">28 à 52</span>. Au-delà, on demande des couleurs qu'on ne reçoit pas.
+            <br><br>Coût nommé : <strong>le serveur accepte de 2 à 256.</strong> Une recette écrite à la main
+            ou par un agent peut porter un nombre plus grand que le plafond de la table, et
+            <strong>la table affiche alors ce qu'elle reçoit</strong> plutôt que de le ramener au plafond en
+            silence.</td></tr>
+        <tr><td class="k">tramage</td>
+          <td><span class="m">aucun · Floyd-Steinberg</span><br><span class="sourd">défaut : aucun</span></td>
+          <td><strong>aucun</strong> pose chaque pixel sur sa couleur la plus proche, sans regarder les
+            voisins. <strong>Floyd-Steinberg</strong> reporte sur les pixels suivants l'erreur commise sur le
+            pixel courant, ce qui fabrique des mélanges optiques à la place des aplats.
+            <br><br>Coût nommé : <strong>il fabrique des pixels isolés que la table <em>bords</em> ne
+            retirera pas.</strong> Le deuxième encadré ci-dessous le détaille.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Une règle que cette table lève : imposée ici, proposée ailleurs</span>
+      <p><span class="mesure">16-table-contours.html</span> écrit les deux choses : « une palette imposée
+        ferme le choix » dans une annotation, « proposée en rangée, jamais imposée » dans son tableau des
+        réglages. C'est cette table qui tranche, parce que c'est sa question.</p>
+      <p><strong>La palette est imposée par la quantification, qui ramène chaque pixel sur la couleur la plus
+        proche. Elle est proposée partout ailleurs</strong> — dans <em>contours</em> et dans <em>la main</em>,
+        où une couleur hors palette se marque au lieu d'être refusée.</p>
+      <p>C'est aussi pourquoi sa mesure <span class="mesure">21 couleurs employées</span> ne compte pas ce
+        que <em>contours</em> et <em>la main</em> ajoutent : les deux arrivent après elle. Le § 08 reporte la
+        règle au-delà de cette table.</p>
+    </div>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Le tramage, mesuré le 30 août 2026</span>
+      <p>Six des huit images du corpus, quantifiées sur la palette du projet, une fois sans tramage et une
+        fois avec. La case fait 64 px, et « pixel » veut dire un bloc du sprite fini. Trois faits en sortent, et
+        ils décident ensemble du défaut :</p>
+      <ul>
+        <li><b>Il change de 38 à 62 % des pixels du sujet</b> pour un vocabulaire de couleurs qui bouge de
+          trois couleurs au plus.</li>
+        <li><b>Il reste dans la palette</b> : zéro couleur hors palette sur les cinq images vérifiées.</li>
+        <li><b>Il fabrique des pixels isolés sur quatre images</b> — la plus marquée passe de
+          <span class="m">432 à 632</span> — et il en retire sur les deux autres.</li>
+      </ul>
+      <p style="margin-top:12px">Un réglage qui déplace 38 à 62 % des pixels du sujet sans changer les
+        couleurs employées, et qui aide sur deux images et gêne sur quatre, <strong>est un choix de
+        style</strong>. Le produit ne sait pas lequel convient à une image donnée. Il est donc éteint par défaut, et il porte
+        son compte sous l'image quand on l'allume (§ 06).</p>
+      <p style="margin-top:12px"><strong>Coût nommé : les pixels isolés qu'il fabrique sont des pixels de
+        couleur.</strong> La table <em>bords</em> ne les retirera pas : elle lit l'alpha, et l'alpha n'a pas
+        bougé. Un bloc vert isolé au milieu d'un aplat brun est opaque comme ses voisins, donc il appartient
+        à la même tache qu'eux, et aucune aire minimale ne l'atteint. Ce qui les retire est <em>la
+        main</em>, trois crans plus loin, un bloc à la fois — et ce que <em>bords</em> lit est écrit dans
+        <span class="mesure">15-table-bords.html</span>.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">La palette rétroactive, et le mécanisme de l'épingle</span>
+      <p>C'est le dernier bloc de la colonne, et cette table est la seule où il se lit. Le mécanisme tient en
+        quatre étapes :</p>
+      <ol>
+        <li>Toucher un réglage d'un asset <strong>l'épingle</strong>. La ligne du bloc passe alors à
+          <span class="mesure">réglé à la main — un changement de palette le saute</span>.</li>
+        <li>Changer la palette du projet <strong>balaie tous ses assets</strong> et leur repose la palette
+          neuve, sans un seul appel payant.</li>
+        <li>Le balayage <strong>saute les épinglés</strong>, et il rend le compte des deux :
+          <span class="mesure">12 remis à jour, 3 conservés tels quels</span>.</li>
+        <li>Un réalignement demandé pour une image <strong>désépingle cette image-là</strong> : le demander
+          nommément est la décision que l'épingle protégeait.</li>
+      </ol>
+      <p style="margin-top:12px"><strong>C'est de là que vient le coût du mode <em>couleurs déduites</em>.</strong>
+        Le choisir touche un réglage, donc épingle l'asset, donc la palette du projet ne le rattrapera plus
+        toute seule. Le geste <span class="mesure">Le remettre sur l'univers du projet ›</span> est ce qui le
+        fait rentrer dans le rang, et il est dans le même bloc, à portée.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">Deux gestes, et ils servent la même question : <strong>savoir où sont passées les
+      couleurs de l'image reçue</strong>. C'est celle que la fiche d'asset appelle déjà
+      <em>comprendre pourquoi l'image affichée ne ressemble pas à celle qui est arrivée</em>
+      (<span class="mesure">atelier/services/assets.py</span>, US-164).</p>
+    <div class="banc">
+      <div style="flex:none">
+        <div class="cadre"><div class="toile">
+          <span class="spr">
+            <i></i><i></i><i style="background:#14161B"></i><i style="background:#14161B"></i><i style="background:#14161B"></i><i style="background:#14161B"></i><i style="background:#14161B"></i><i></i><i></i>
+            <i></i><i style="background:#14161B"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#14161B"></i><i></i>
+            <i></i><i style="background:#14161B"></i><i style="background:#A8895C"></i><i style="background:#14161B"></i><i style="background:#A8895C"></i><i style="background:#14161B"></i><i style="background:#A8895C"></i><i style="background:#14161B"></i><i></i>
+            <i></i><i style="background:#14161B"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#A8895C"></i><i style="background:#14161B"></i><i></i>
+            <i></i><i></i><i style="background:#14161B"></i><i style="background:#764731"></i><i style="background:#8F7449"></i><i style="background:#764731"></i><i style="background:#14161B"></i><i></i><i></i>
+            <i></i><i style="background:#2E3D2C"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i style="background:#2E3D2C"></i><i></i>
+            <i style="background:#A8895C"></i><i style="background:#2E3D2C"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i style="background:#2E3D2C"></i><i style="background:#A8895C"></i>
+            <i style="background:#A8895C"></i><i style="background:#2E3D2C"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i style="background:#6E8F63"></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i style="background:#2E3D2C"></i><i style="background:#A8895C"></i>
+            <i></i><i style="background:#8A3A30"></i><i style="background:#8A3A30"></i><i style="background:#B4483C"></i><i style="background:#B4483C"></i><i style="background:#B4483C"></i><i style="background:#8A3A30"></i><i style="background:#8A3A30"></i><i></i>
+            <i></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i></i><i></i><i></i><i class="o" style="background:#4C6B45"></i><i class="o" style="background:#4C6B45"></i><i></i>
+            <i></i><i style="background:#3A3F4B"></i><i style="background:#3A3F4B"></i><i></i><i></i><i></i><i style="background:#3A3F4B"></i><i style="background:#3A3F4B"></i><i></i>
+          </span>
+        </div></div>
+        <div class="mesrow"><span>24 couleurs · 21 employées</span>
+          <span>1 627 → 21 couleurs</span>
+          <span>écart médian 15 · pire 46</span></div>
+      </div>
+      <div class="annot">
+        <div class="an"><span class="k">la pastille</span><span class="t"><b>Pointer une pastille de la
+          palette allume dans l'image les pixels qui sont partis sur elle</b>, cerclés de
+          <span class="mesure">--lumiere</span>. C'est ce qui rend une rangée de vingt-quatre carrés
+          lisible : on voit ce que chaque carré tient. La pastille pointée est ici le vert de la tunique,
+          <span class="mesure">#4C6B45</span>, et la rangée est celle du § 03 — elle n'est pas redessinée
+          sous l'image.</span></div>
+        <div class="an"><span class="k">passager</span><span class="t"><b>Le surlignage s'éteint quand on
+          retire le pointeur, et il ne se garde pas.</b> Rien ne se pose sur l'image, rien n'entre dans la
+          recette : un surlignage qui resterait allumé cacherait le rendu qu'on est venu
+          regarder.</span></div>
+        <div class="an"><span class="k">la pipette</span><span class="t"><b>Cliquer un pixel de l'image dit
+          d'où il vient et où il est allé</b> — <span class="mesure">#7a4b2c → #764731 · écart 5</span> — et
+          la pastille qui l'a reçu se cercle dans la rangée. Trois valeurs dans la même ligne : la couleur
+          reçue, celle qui l'a remplacée, et l'écart entre les deux. Un code hex seul ne dirait pas si le
+          pixel a bougé de rien ou de beaucoup.</span></div>
+        <div class="an"><span class="k">empruntée</span><span class="t"><b>C'est le curseur du détourage et
+          de contours</b> : un cercle de 15 px en <span class="mesure">--lumiere</span>, le pixel visé au
+          centre. L'emprunt est assumé et le sens change avec la table : le détourage prend une couleur pour
+          la retirer, contours pour la poser, <b>ici elle interroge et ne pose rien</b>.</span></div>
+        <div class="an"><span class="k">sous l'image</span><span class="t">La rangée de mesures est celle
+          du § 06, reprise ici parce qu'on la lit en même temps que le dessin.</span></div>
+      </div>
+    </div>
+    <div class="lgd">le sprite dessiné est un schéma — l'image réelle porte 21 couleurs, celle-ci en porte
+      dix pour rester lisible à cette taille</div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ses mesures, et sa proposition</h2></div>
+    <table>
+      <thead><tr><th style="width:30%">Ce qu'elle écrit</th>
+        <th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">24 couleurs · 21 employées</span></td>
+          <td>Ce que la palette du projet porte, et ce que cette image en prend. Mesuré : une palette de 24
+            est employée à <span class="m">18 à 23 couleurs</span> selon l'image, donc un compte inférieur au
+            total est l'ordinaire. Un personnage sombre n'emploie pas les bleus clairs du
+            ciel.</td></tr>
+        <tr><td class="k"><span class="m">1 627 → 21 couleurs</span></td>
+          <td>Le vocabulaire avant et après. Mesuré : les images du corpus portent
+            <span class="m">895 à 1 627 couleurs</span> après la grille. La grille a déjà fait 98 % du chemin
+            en jetant soixante mille couleurs sur soixante et un mille ; <strong>cette table fait le dernier
+            centième, et c'est ce centième-là qui donne les aplats</strong>.</td></tr>
+        <tr><td class="k"><span class="m">écart médian 15 · pire 46</span></td>
+          <td>De combien les pixels ont bougé, sur 255. Mesuré : la médiane va de
+            <span class="m">14 à 17</span> selon l'image, le pire jusqu'à <span class="m">104</span>, et
+            <strong>un pixel sur deux bouge de plus de 16</strong>. C'est le prix de la ressemblance entre
+            assets, et il se lit. Un écart large ne dit pas que le rendu est raté : il dit que l'image reçue
+            était loin de la palette.</td></tr>
+        <tr><td class="k"><span class="m">1 327 pixels sur 2 193 changés</span></td>
+          <td>Ne paraît que quand le tramage est allumé, et c'est ce qu'il a déplacé, en blocs du sprite
+            fini. Un réglage qui touche la moitié des pixels sans changer les couleurs doit se
+            voir.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Sa proposition</span>
+      <p><strong>Elle ne devine rien.</strong> La palette vient du projet et le mode par défaut est
+        <span class="mesure">la palette du projet</span>. Aucune valeur n'est donc préremplie ici : la seule
+        provenance à écrire est celle de la palette, et elle est sous la rangée.</p>
+      <p><strong>Elle propose le tramage éteint</strong>, et sa raison est mesurée : il déplace de 38 à
+        62 % des pixels du sujet sans rien changer aux couleurs employées, et il fabrique de la poussière
+        de couleur sur quatre images du corpus tout en en retirant sur les deux autres (§ 04). Un réglage
+        qui aide ou gêne selon l'image se propose éteint, et se lit avant de s'allumer.</p>
+      <p><strong>Elle ne propose pas de nombre de couleurs.</strong> Elle pourrait proposer le compte de la
+        palette, ou celui que l'image emploie déjà. Mais dans le cas normal ce réglage n'agit pas, et dans
+        l'autre mode le bon nombre dépend de ce qu'on veut de l'image. Le défaut de 24 vient de
+        l'univers.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Son indisponibilité</h2></div>
+    <div class="note att">
+      <span class="lab">Un seul cas, et sa phrase existe déjà</span>
+      <p><strong>Elle est grisée quand le projet n'a pas de palette.</strong> Le serveur refuse alors toute
+        quantification qui n'apporte pas sa propre palette, et l'écran n'a aucun moyen d'en apporter une :
+        la palette se déduit des artworks, elle ne se saisit pas. Le mode <em>couleurs déduites</em> tombe
+        avec, et c'est cohérent — sans palette, il n'y a rien à quitter. La table est donc grisée dans la
+        barre — <em>pas de carré, nom en</em>
+        <span class="mesure">--texte-3</span> — et son wrapper porte la raison à la place des réglages. La
+        première phrase est celle du produit, mot pour mot
+        (<span class="mesure">atelier/services/assets.py:112</span>). La seconde est écrite ici : le produit
+        ne dit pas encore quoi faire.</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— aucune palette : elle se
+        déduira des artworks du projet.</span><br>
+        <span class="mesure" style="color:var(--texte-2)">Promeus un artwork officiel dans l'onglet Univers,
+        et elle se déduira toute seule.</span></p>
+      <p style="margin-top:12px">La seconde phrase compte autant que la première : elle dit <strong>quoi
+        faire</strong>. Seule, la première laisse une promesse sans date.</p>
+      <p style="margin-top:12px"><strong>Le wrapper n'est pas redessiné ici.</strong> Il est en entier dans
+        <span class="mesure">03-chassis-des-tables.html § 05</span>, avec le recadrage pour exemple. Une
+        seconde version divergerait à la première correction.</p>
+    </div>
+    <p class="intro" style="margin-top:16px"><strong>Une image sans alpha ne la grise pas.</strong> Le
+      croquis de <span class="mesure">03-chassis-des-tables.html § 05</span> le montre déjà : sur une image
+      entièrement opaque, <em>recadrage</em>, <em>bords</em> et <em>contours</em> sont grisées et
+      <em>quantification</em> garde son carré. Elle lit les couleurs, et une image sans transparence en a
+      autant qu'une autre.</p>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce qui déborde de la table</h2></div>
+    <p class="intro">Trois choses tranchées ici valent au-delà de cette maquette, et sont écrites en clair
+      pour qu'on les retrouve.</p>
+
+    <div class="note att">
+      <span class="lab">01 · Le résumé de la fiche affiche un nombre qui ne décrit pas le rendu</span>
+      <p>La fiche d'asset résume aujourd'hui la quantification par <span class="mesure">32 couleurs</span> —
+        le nombre de couleurs de la recette, mis en forme tel quel
+        (<span class="mesure">interface/src/composants/Fiche.tsx:85</span>). <strong>Le § 02 a mesuré que ce
+        nombre n'entre pas dans le calcul quand une palette est posée</strong>, ce qui est le cas normal. Le
+        résumé annonce donc un chiffre que l'image ne porte pas.</p>
+      <p>L'état de couche de cette table dit à la place ce que la table a fait :
+        <span class="mesure">palette du projet · 21 couleurs employées</span>, ou
+        <span class="mesure">couleurs déduites · 16 couleurs</span>. Les deux formes disent le mode d'abord,
+        parce que c'est lui qui rend le nombre lisible.</p>
+      <p><strong>Reporté à l'écran de la fiche d'asset.</strong> Le partage est déjà prévu par le châssis :
+        le wrapper fournit la forme, la table fournit le texte
+        (<span class="mesure">03-chassis-des-tables.html § 04</span>).</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · Imposée par la quantification, proposée ailleurs</span>
+      <p>La règle est écrite au § 04 et elle vaut pour tout le produit : <strong>la palette est imposée par
+        la quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle est proposée partout
+        ailleurs, où une couleur hors palette se marque au lieu d'être refusée.</strong></p>
+      <p>Les deux phrases que <span class="mesure">16-table-contours.html</span> écrit (§ 04) restent
+        vraies avec cette règle, et son annotation gagne à nommer <em>la quantification</em> plutôt que
+        <em>une palette imposée</em>.</p>
+      <p><strong>Reporté dans <span class="mesure">16-table-contours.html</span> et
+        <span class="mesure">17-table-la-main.html</span></strong>, les deux endroits où la palette est
+        proposée. La règle n'est pas redite ailleurs.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · La quantification ne force pas l'alpha</span>
+      <p>Mesuré le 30 août 2026 sur six images : <strong>l'alpha est identique avant et après la
+        quantification</strong>, et il ne porte que <span class="m">0</span> ou <span class="m">255</span>.
+        Le code le dit aussi (<span class="mesure">atelier/image/traitement.py</span>, fonction
+        <span class="mesure">quantifier</span> : l'alpha est mis de côté et remis tel quel). Le liseré clair
+        autour du sprite vient d'un alpha non durci avant la réduction, et le durcissement vit dans la table
+        <em>détourage</em>.</p>
+      <p>Trois endroits du dossier écrivent encore l'inverse : le commentaire de
+        <span class="mesure">SEUIL_ALPHA</span> dans
+        <span class="mesure">atelier/domaine/recette.py</span>, et deux passages de
+        <span class="mesure">10-table-detourage.html</span> qui portent la même affirmation.</p>
+      <p><strong>Reporté dans <span class="mesure">atelier/domaine/recette.py</span> (commentaire de
+        <span class="mesure">SEUIL_ALPHA</span>) et dans
+        <span class="mesure">10-table-detourage.html § 01 et § 04</span>.</strong> Le § 01 de cette maquette
+        donne la mesure et la reformulation.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 14, quantification · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

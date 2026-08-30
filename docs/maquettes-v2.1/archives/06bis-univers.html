@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, l'écran Univers (version bis)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  h4{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:26px 0 10px}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow:hidden;background:var(--fond-0)}
+  .wf-barre{height:38px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-corps{display:flex;min-height:300px}
+  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .col{width:176px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:3px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin:6px 0 5px}
+  .col-t:first-child{margin-top:0}
+  .sec{height:24px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .sec.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sec .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .zone{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .zone-t{font-family:var(--serif);font-size:19px;line-height:1;margin-bottom:2px}
+  .outils{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .ob{height:20px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    padding:0 7px;display:flex;align-items:center;font-size:9.5px;color:var(--texte-3);white-space:nowrap}
+  .ob.on{border-color:var(--signal);color:var(--signal-clair);background:var(--signal-sourd)}
+  .champ{height:26px;background:var(--fond-2);border:1px solid var(--bord-fort);border-radius:2px;
+    display:flex;align-items:center;padding:0 9px;font-size:11px;color:var(--texte-3)}
+
+  /* ── Marques de la cascade ──────────────────────────────────────── */
+  .mk{display:inline-block;width:11px;height:11px;border-radius:1px;vertical-align:-1px;position:relative}
+  .mk-h{border:1px solid var(--bord);background:transparent}
+  .mk-p{border:1px solid var(--signal);background:var(--signal)}
+  .mk-e{border:1px solid var(--bord-fort);background:transparent}
+  .mk-e::after{content:"";position:absolute;left:-1px;top:4px;width:11px;height:1px;background:var(--echec)}
+  .mk-v{border:1px solid var(--bord);
+    background:repeating-linear-gradient(45deg,var(--fond-3) 0 2px,transparent 2px 4px)}
+
+  /* ── Grille de cascade ──────────────────────────────────────────── */
+  .casc{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);overflow-x:auto}
+  table.cg{border-collapse:collapse;font-size:11.5px;min-width:100%}
+  table.cg th{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--texte-3);font-weight:500;padding:9px 0 8px;border-bottom:1px solid var(--bord);
+    text-align:center;width:38px;white-space:nowrap}
+  table.cg th.lab{text-align:left;width:auto;min-width:250px;padding-left:14px}
+  table.cg th.imp{background:var(--fond-2)}
+  table.cg td{padding:0;border-bottom:1px solid var(--bord);text-align:center;height:30px}
+  table.cg td.lab{text-align:left;padding-left:14px;color:var(--texte-2);font-size:12px}
+  table.cg td.imp{background:var(--fond-2)}
+  table.cg tr:last-child td{border-bottom:0}
+  table.cg tr.projet td{background:var(--fond-3)}
+  table.cg tr.projet td.lab{color:var(--texte);font-weight:600}
+  table.cg tr.amb td.lab{color:var(--signal-clair)}
+  table.cg tr.survol td{background:var(--signal-sourd)}
+  table.cg td.lab .ind{display:inline-block;width:16px}
+  table.cg td.lab .ind2{display:inline-block;width:32px}
+  table.cg td.lab .nat{font-family:var(--mono);font-size:9px;color:var(--texte-3);margin-left:7px}
+  table.cg td.vise{outline:1px solid var(--lumiere);outline-offset:-1px}
+  .lgd{margin-top:12px;display:flex;flex-wrap:wrap;gap:18px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  /* ── Bulle de survol ────────────────────────────────────────────── */
+  .bulle{border:1px solid var(--bord-fort);background:var(--fond-2);border-radius:2px;
+    padding:10px 12px;max-width:330px;font-size:11.5px;color:var(--texte-2);line-height:1.5}
+  .bulle .t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:6px}
+  .bulle .v{color:var(--texte);font-family:var(--mono);font-size:11px}
+  .bulle .src{margin-top:7px;padding-top:7px;border-top:1px solid var(--bord);
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  /* ── Palette ────────────────────────────────────────────────────── */
+  .pal{display:flex;flex-wrap:wrap;gap:6px}
+  .pas{width:34px;text-align:center}
+  .pas .sw{display:block;width:34px;height:34px;border:1px solid var(--bord);border-radius:1px}
+  .pas .pv{display:block;font-family:var(--mono);font-size:8.5px;color:var(--texte-3);
+    margin-top:3px;line-height:1}
+  .pas.out .sw{opacity:.28}
+  .pas.out .pv{color:var(--echec)}
+  .rail{margin:0 0 14px}
+  .rail .rt{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .rail .rn{font-size:12px;color:var(--texte)}
+  .rail .rv{font-family:var(--mono);font-size:10px;color:var(--signal-clair)}
+  .rail .tr{position:relative;height:3px;background:var(--fond-3);border-radius:2px}
+  .rail .tr i{position:absolute;top:-4px;width:11px;height:11px;border-radius:1px;
+    background:var(--signal);border:1px solid var(--signal)}
+  .rail .re{display:flex;justify-content:space-between;margin-top:6px;
+    font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .ret{display:flex;align-items:center;gap:9px;height:26px;padding:0 9px;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11.5px;color:var(--texte-2);margin-bottom:4px}
+  .ret .g{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--texte-3);width:66px}
+  .ret .sw{flex:none;display:block;width:14px;height:14px;border:1px solid var(--bord);border-radius:1px}
+  .ret .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+
+  /* ── L'aperçu ───────────────────────────────────────────────────── */
+  .aprang{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}
+  .aplab{width:132px;flex:none;text-align:right;padding-top:22px;
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--texte-3);line-height:1.35}
+  .aplab.on{color:var(--signal-clair)}
+  .apercu{display:flex;gap:9px;flex-wrap:wrap}
+  .ap{width:64px}
+  .ap svg{display:block;width:64px;height:64px;background:var(--fond-2);
+    border:1px solid var(--bord);border-radius:1px}
+  .aprang.bas .ap svg{border-color:var(--bord-fort)}
+  .ap .nm{font-size:10px;color:var(--texte-2);margin-top:5px;line-height:1.25}
+  .ap .nt{font-family:var(--mono);font-size:8.5px;color:var(--texte-3);line-height:1.2}
+  .apsom{margin-top:4px;padding-left:144px;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);line-height:1.7}
+  .apsom b{color:var(--texte-2);font-weight:400}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.o{color:var(--texte)}
+  table.t tr:last-child td{border-bottom:0}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note p:last-child{margin-bottom:0}
+
+  .deux{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  .boite{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:15px 17px}
+  .boite .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:9px}
+  .boite p{font-size:12.5px;color:var(--texte-2);margin:0 0 8px}
+  .boite p:last-child{margin-bottom:0}
+
+  ul{margin:0 0 12px;padding-left:18px;max-width:78ch;color:var(--texte-2)}
+  li{margin-bottom:6px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · l'écran Univers, version bis</div>
+    <h1>L'onglet Univers,<br><em>et la cascade qu'on y lit</em></h1>
+    <p>Cette maquette est <strong>une version parallèle de <code>06-univers.html</code></strong>, écrite
+      en même temps qu'une autre. Elle ne la remplace pas et ne doit pas être fusionnée à l'aveugle :
+      les deux se comparent, et ce qui est retenu part dans un seul fichier.</p>
+    <p>Elle part de ce que <code>07-les-trois-etages.html</code> a tranché — trois étages de réglages,
+      une ligne entre ce qui s'impose et ce qui se propose, l'ambiance comme étage du milieu, la palette
+      devenue une recette — et elle en tire l'écran : <strong>où on lit tout ça, et où on le règle.</strong></p>
+    <p class="sourd">Ce qui est neuf ici : la vue en cascade (§ 02), le panneau d'une ambiance (§ 04) et
+      l'éditeur de palette (§ 05). Le reste de l'onglet Univers — la bible, les artworks, les planches,
+      la toile — ne change pas, et § 06 dit pourquoi.</p>
+  </div>
+
+  <!-- ═══ 1 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>L'écran en entier</h2></div>
+    <p class="intro">Une colonne de gauche qui liste les sections de l'univers, et une zone qui montre
+      celle qui est ouverte. C'est la forme de l'écran d'aujourd'hui, gardée. Elle gagne deux entrées :
+      <strong>Les ambiances</strong> et <strong>La cascade</strong>.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab on">Univers</span><span class="tab">Codex</span><span class="tab">Galerie</span>
+        <span class="wf-tard"><span>Cœur de pierre — 01 · $2,140</span><span>Réglages</span><span>Guide</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="col">
+          <div class="col-t">Ce qui s'impose</div>
+          <div class="sec">La bible<span class="cpt">7</span></div>
+          <div class="sec">Le format du jeu<span class="cpt">64 px · 4 dir.</span></div>
+          <div class="col-t">Ce qui se propose</div>
+          <div class="sec">Les artworks<span class="cpt">6</span></div>
+          <div class="sec">La palette<span class="cpt">24</span></div>
+          <div class="sec">Les ambiances<span class="cpt">2</span></div>
+          <div class="sec">Le barème<span class="cpt">7</span></div>
+          <div class="col-t">Vue d'ensemble</div>
+          <div class="sec on">La cascade<span class="cpt">9 écrasés</span></div>
+          <div class="col-t">L'inspiration</div>
+          <div class="sec">Les planches<span class="cpt">31</span></div>
+          <div class="sec">La toile<span class="cpt">4 îlots</span></div>
+        </div>
+        <div class="zone">
+          <div class="zone-t">La cascade</div>
+          <div class="outils">
+            <span class="ob on">Tout</span><span class="ob">Seulement ce qui est écrasé</span>
+            <span class="ob">Personnages</span><span class="ob">Objets</span><span class="ob">Décors</span>
+            <span class="ob">Interface</span>
+          </div>
+          <div class="casc" style="border:0">
+            <table class="cg">
+              <thead>
+                <tr>
+                  <th class="lab">Étage</th>
+                  <th class="imp">px</th><th class="imp">dir.</th><th class="imp">rendu</th>
+                  <th>monde</th><th>époq.</th><th>trait</th><th>éclair.</th><th>vue</th><th>tech.</th>
+                  <th>palette</th><th>coul.</th><th>modèle</th><th>occup.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="projet">
+                  <td class="lab">Cœur de pierre <span class="nat">le projet</span></td>
+                  <td class="imp"><span class="mk mk-p"></span></td><td class="imp"><span class="mk mk-p"></span></td><td class="imp"><span class="mk mk-p"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-p"></span></td>
+                </tr>
+                <tr>
+                  <td class="lab"><span class="ind"></span>Balthazar <span class="nat">personnage</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-p"></span></td>
+                </tr>
+                <tr>
+                  <td class="lab"><span class="ind"></span>Prêtresse <span class="nat">personnage</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                </tr>
+                <tr class="amb survol">
+                  <td class="lab"><span class="ind"></span>Marais de cendre <span class="nat">une ambiance · 3 entités</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td class="vise"><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-v"></span></td>
+                </tr>
+                <tr>
+                  <td class="lab"><span class="ind2"></span>Le marais <span class="nat">décor</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-p"></span></td><td><span class="mk mk-h"></span></td>
+                </tr>
+                <tr>
+                  <td class="lab"><span class="ind2"></span>Rôdeur des vases <span class="nat">créature</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-e"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                </tr>
+                <tr>
+                  <td class="lab"><span class="ind2"></span>Épée rouillée <span class="nat">objet tenu</span></td>
+                  <td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td><td class="imp"><span class="mk mk-v"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                  <td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td><td><span class="mk mk-h"></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="wf-pied">
+        <span>9 réglages écrasés sur 117</span><span>2 ambiances</span><span>5 entités</span>
+        <span>palette du projet : 24 couleurs, lue sur 6 artworks</span>
+      </div>
+    </div>
+
+    <h4>Ce que la colonne de gauche décide</h4>
+    <p>Elle range les sections <strong>par nature, pas par ordre d'usage</strong> : ce qui s'impose, ce
+      qui se propose, la vue d'ensemble, l'inspiration. Un auteur qui ouvre l'univers pour la première
+      fois apprend la ligne du § 02 de <code>07</code> <em class="it">en lisant le menu</em>, sans qu'on
+      ait à la lui expliquer ailleurs. C'est le seul endroit du produit où cette ligne se voit sans être
+      écrite.</p>
+    <p>Chaque entrée porte son compte, comme dans le codex. Celui de la cascade —
+      <span class="mesure">9 écrasés</span> — est le seul chiffre du produit qui dise
+      <strong>combien d'exceptions un univers porte</strong>. Un univers sain en a peu ; un univers à
+      trente exceptions est un univers dont le projet est mal réglé.</p>
+  </section>
+
+  <!-- ═══ 2 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>La cascade — comment elle se lit et ce qu'on y fait</h2></div>
+    <p class="intro">Les lignes sont l'arbre : le projet en haut, puis chaque ambiance, puis ses entités
+      en retrait. Les colonnes sont les réglages. Une case dit d'où vient la valeur, jamais quelle est
+      la valeur — c'est ce qui permet de tout tenir dans une image.</p>
+
+    <div class="lgd" style="margin-bottom:22px">
+      <span><span class="mk mk-p"></span> &nbsp;<b>posé ici</b></span>
+      <span><span class="mk mk-h"></span> &nbsp;<b>hérité de l'étage du dessus</b></span>
+      <span><span class="mk mk-e"></span> &nbsp;<b>éteint ici</b></span>
+      <span><span class="mk mk-v"></span> &nbsp;<b>verrouillé — le réglage s'impose</b></span>
+    </div>
+
+    <h4>Les trois gestes, et pas un de plus</h4>
+    <table class="t">
+      <thead><tr><th style="width:150px">Le geste</th><th>Ce qu'il fait</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>Survoler une case</b></td>
+            <td>Une bulle donne <strong>la valeur qui gagne</strong>, et <strong>d'où elle vient</strong>.
+              C'est tout ce que la grille ne peut pas montrer, et c'est disponible sans quitter la vue.
+              La bulle sort de la case, pas du bord de l'écran — même règle que R4.</td></tr>
+        <tr><td class="o"><b>Cliquer une case</b></td>
+            <td><strong>Elle ouvre l'endroit où ce réglage se règle</strong> : la case du projet ouvre la
+              bible, la case d'une ambiance ouvre son panneau, la case d'une entité ouvre son établi.
+              C'est le motif de la fiche de la galerie, où <em class="it">chaque ligne ouvre sa table</em>.
+              <b>La cascade lit, elle ne règle pas</b> — sinon elle deviendrait un second endroit où
+              poser un réglage, et deux endroits divergent.</td></tr>
+        <tr><td class="o"><b>Cliquer un nom</b></td>
+            <td>Le nom d'une ambiance ouvre son panneau ; le nom d'une entité ouvre son établi. Le
+              libellé est la cible, comme partout depuis T7.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>La bulle de survol</h4>
+    <div class="deux">
+      <div class="bulle">
+        <div class="t">Marais de cendre · éclairage</div>
+        <div class="v">overcast, low contrast, cold rim light</div>
+        <div class="src">posé ici · remplace le texte du projet<br>3 entités en héritent</div>
+      </div>
+      <div class="bulle">
+        <div class="t">Épée rouillée · éclairage</div>
+        <div class="v">overcast, low contrast, cold rim light</div>
+        <div class="src">hérité de l'ambiance Marais de cendre<br>le projet disait : « warm torchlight, hard shadows »</div>
+      </div>
+    </div>
+    <p style="margin-top:14px">La deuxième bulle porte la ligne qui fait tout le travail :
+      <strong>elle dit ce que l'étage du dessus disait</strong>. Sans elle, on voit qu'un réglage est
+      écrasé mais pas ce qu'on a perdu, et il faut aller regarder ailleurs — ce qui est exactement le
+      trajet que cette vue existe pour supprimer.</p>
+
+    <h4>Les filtres, et pourquoi celui-là en particulier</h4>
+    <p><strong>« Seulement ce qui est écrasé »</strong> réduit la grille aux lignes qui posent quelque
+      chose. Sur un univers de trente entités dont trois font exception, il fait passer trente lignes à
+      quatre. C'est le filtre qui sert le plus souvent, parce que la question courante n'est pas
+      « qu'est-ce que j'ai » mais <em class="it">« qu'est-ce qui sort du rang »</em>.</p>
+    <p>Les quatre autres filtrent par famille — personnages, objets, décors, interface. Ce sont les
+      familles du codex, pas un vocabulaire de plus : <code>05-codex.html</code> a déjà tranché que
+      deux vocabulaires de famille finiraient par diverger.</p>
+
+    <div class="note">
+      <span class="lab">Une colonne pleine est un diagnostic</span>
+      <p>Si toutes les entités d'une ambiance ont posé le même réglage, la colonne se remplit de cases
+        pleines sous cette ambiance. <strong>Ça se voit sans rien lire, et ça veut dire une seule
+        chose : ce réglage aurait dû monter d'un étage.</strong> C'est le seul endroit du produit qui
+        rende cette erreur visible, et c'est un argument suffisant pour la grille à lui tout seul.</p>
+      <p class="sourd">Ce que la maquette ne fait pas : le dire à la place de l'auteur. Une bannière
+        « vous devriez remonter ce réglage » supposerait qu'on sache que c'est une erreur — or trois
+        entités qui posent la même chose peuvent très bien être trois décisions séparées.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 3 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Pourquoi des formes et pas des couleurs</h2></div>
+    <p class="intro">C'est la contrainte qui a décidé de l'apparence des marques, et elle vient du
+      châssis, pas d'un goût.</p>
+    <p>Le produit n'a que <strong>quatre couleurs qui veulent dire quelque chose</strong> :
+      <code>--ok</code>, <code>--epingle</code>, <code>--echec</code>, <code>--signal</code>. Et il a dix
+      teintes d'îlot qui, en toutes lettres, sont <em class="it">« le seul endroit du produit où une
+      couleur ne veut rien dire »</em> — un auteur les choisit parce qu'il les aime, jamais parce qu'un
+      état les commande.</p>
+    <p>Coder quatre provenances en quatre couleurs aurait donc fait l'un ou l'autre :
+      <strong>inventer une cinquième sémantique</strong> — et le jour où une case est rouge, tout le
+      monde lit « échec » alors que ça veut dire « éteint » —, ou <strong>emprunter aux teintes
+      d'îlot</strong>, et donner un sens à ce qui a été construit pour n'en avoir aucun.</p>
+    <p>D'où les quatre marques : <strong>vide, plein, barré, hachuré</strong>. Elles se distinguent en
+      noir et blanc, à petite taille, et sur une grille dense. La seule couleur employée est
+      <code>--signal</code> pour le plein — la couleur de « ce qui est actif » partout ailleurs dans le
+      produit — et <code>--echec</code> pour le trait du barré, qui dit bien un refus.</p>
+
+    <div class="note att">
+      <span class="lab">Le coût, nommé</span>
+      <p>Quatre marques monochromes se lisent moins vite que quatre couleurs franches. On le paie
+        exprès, et la légende reste visible au-dessus de la grille en permanence — pas dans un repli.
+        <strong>À vérifier à l'usage</strong> : si la distinction vide / hachuré ne se fait pas d'un
+        coup d'œil sur un écran mat, la hachure s'épaissit.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 4 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Le panneau d'une ambiance</h2></div>
+    <p class="intro">C'est là qu'on crée une ambiance, qu'on la nomme, et qu'on pose ses six champs et
+      sa palette. Rien d'autre n'y vit.</p>
+
+    <div class="croquis">
+      <div class="wf-corps" style="min-height:auto">
+        <div class="col" style="width:196px">
+          <div class="col-t">Les ambiances</div>
+          <div class="sec on">Marais de cendre<span class="cpt">3</span></div>
+          <div class="sec">Forge de braise<span class="cpt">2</span></div>
+          <div class="sec" style="border-style:dashed;border-color:var(--bord-fort);color:var(--texte-3);justify-content:center">+ une ambiance</div>
+          <div class="col-t">Sans ambiance</div>
+          <div class="sec">Balthazar</div>
+          <div class="sec">Prêtresse</div>
+        </div>
+        <div class="zone">
+          <div class="zone-t">Marais de cendre</div>
+          <div class="outils">
+            <span class="ob">3 entités : Le marais · Rôdeur des vases · Épée rouillée</span>
+            <span class="ob on">source : îlot « marais » — 7 images</span>
+          </div>
+          <div class="col-t" style="margin-top:6px">Les six champs qui se proposent</div>
+          <div style="display:grid;grid-template-columns:96px 1fr 74px;gap:5px;align-items:center">
+            <span style="font-size:11.5px;color:var(--texte-2)">monde</span>
+            <span class="champ" style="color:var(--texte)">ash marshland, drowned ruins, standing water</span>
+            <span class="ob on" style="justify-content:center">remplacé</span>
+
+            <span style="font-size:11.5px;color:var(--texte-3)">époque</span>
+            <span class="champ">bronze age — hérité du projet</span>
+            <span class="ob" style="justify-content:center">hérité</span>
+
+            <span style="font-size:11.5px;color:var(--texte-3)">trait</span>
+            <span class="champ">clean 1px outline — hérité du projet</span>
+            <span class="ob" style="justify-content:center">hérité</span>
+
+            <span style="font-size:11.5px;color:var(--texte-2)">éclairage</span>
+            <span class="champ" style="color:var(--texte)">overcast, low contrast, cold rim light</span>
+            <span class="ob on" style="justify-content:center">remplacé</span>
+
+            <span style="font-size:11.5px;color:var(--texte-3)">vue</span>
+            <span class="champ">top-down, centered — hérité du projet</span>
+            <span class="ob" style="justify-content:center">hérité</span>
+
+            <span style="font-size:11.5px;color:var(--texte-3)">technique</span>
+            <span class="champ">no text, no background — hérité du projet</span>
+            <span class="ob" style="justify-content:center">hérité</span>
+
+            <span style="font-size:11.5px;color:var(--texte-3)">rendu</span>
+            <span class="champ" style="background:repeating-linear-gradient(45deg,var(--fond-3) 0 3px,transparent 3px 6px);border-style:dashed">pixel art, 64px sprite — s'impose, réglé au projet</span>
+            <span class="ob" style="justify-content:center;color:var(--texte-3)">verrouillé</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4>Quatre décisions dans ce panneau</h4>
+    <ul>
+      <li><strong>Les champs hérités montrent la valeur héritée</strong>, en gris, avec sa provenance.
+        Un champ vide n'apprendrait rien ; un champ qui montre ce qu'il va envoyer permet de décider
+        s'il faut le changer sans ouvrir la bible du projet.</li>
+      <li><strong><code>rendu</code> reste dans la liste, verrouillé, avec sa raison.</strong> Le retirer
+        aurait été plus propre à l'œil et pire à l'usage : on ne saurait pas qu'il existe, et on le
+        chercherait. C'est le motif du réglage grisé avec sa raison, déjà employé pour la marge du
+        recadrage et le nombre de couleurs de la quantification.</li>
+      <li><strong>La colonne de gauche liste aussi les entités sans ambiance.</strong> Elles ne sont pas
+        « non rangées » : c'est l'état normal et le plus fréquent. Les cacher aurait fait croire qu'il
+        faut ranger toutes les entités dans une ambiance.</li>
+      <li><strong>Une ambiance naît aussi depuis la toile.</strong> Le menu d'un îlot gagne une entrée —
+        <em class="it">« en faire une ambiance »</em> —, qui crée l'ambiance, la nomme du nom de l'îlot
+        et la branche dessus comme source. C'est le geste que l'auteur a en tête ; l'objet reste
+        distinct de l'îlot, mais on n'oblige personne à faire le détour par cet écran.</li>
+    </ul>
+  </section>
+
+  <!-- ═══ 5 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>L'éditeur de palette</h2></div>
+    <p class="intro">C'est la surface la plus neuve du dossier. Elle rend visible la recette de
+      <code>07</code> § 06 : des sources, deux rails, des retouches — et une palette rendue dont chaque
+      pastille sait d'où elle vient.</p>
+
+    <div class="croquis">
+      <div class="wf-corps" style="min-height:auto">
+        <div class="zone">
+          <div class="zone-t">La palette de « Marais de cendre »</div>
+
+          <div class="col-t" style="margin-top:4px">1 · Les sources</div>
+          <div class="outils">
+            <span class="ob on">îlot « marais » — 7 images</span>
+            <span class="ob on">les 6 artworks du projet</span>
+            <span class="ob" style="border-style:dashed">+ une source</span>
+          </div>
+
+          <div class="col-t" style="margin-top:12px">2 · La fusion</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+            <div class="rail">
+              <div class="rt"><span class="rn">La proportion</span><span class="rv">8 / 24 du projet</span></div>
+              <div class="tr"><i style="left:31%"></i></div>
+              <div class="re"><span>tout du projet</span><span>tout de l'ambiance</span></div>
+            </div>
+            <div class="rail">
+              <div class="rt"><span class="rn">L'attraction</span><span class="rv">35 %</span></div>
+              <div class="tr"><i style="left:35%"></i></div>
+              <div class="re"><span>0 % — aucune ne bouge</span><span>100 % — toutes rejoignent</span></div>
+            </div>
+          </div>
+
+          <div class="col-t">3 · Les retouches</div>
+          <div class="ret"><span class="g">retirée</span><span class="sw" style="background:#C04A2E"></span><span>le rouge chaud du projet — rien de rouge ne pousse dans un marais</span><span class="x">×</span></div>
+          <div class="ret"><span class="g">ajoutée</span><span class="sw" style="background:#7FE0A8"></span><span>le vert des feux follets, qu'aucune image source ne porte</span><span class="x">×</span></div>
+          <div class="ret"><span class="g">remplacée</span><span class="sw" style="background:#4A5A52"></span><span>par un gris moins vert, à l'œil</span><span class="x">×</span></div>
+
+          <div class="col-t">La palette rendue — 24 couleurs</div>
+          <div class="pal">
+            <span class="pas"><span class="sw" style="background:#2A3230"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#39443F"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#4A5A52"></span><span class="pv">M</span></span>
+            <span class="pas"><span class="sw" style="background:#5E6F63"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#75857A"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#8E9B90"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#A9B3A6"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#C6CCBE"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#3B4450"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#4E5A66"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#657282"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#808C9B"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#7FE0A8"></span><span class="pv">M</span></span>
+            <span class="pas"><span class="sw" style="background:#5A7A5E"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#6E4F3A"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#8A6A4C"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#A98A64"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#25292E"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#14181C"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#E4E9E2"></span><span class="pv">P</span></span>
+            <span class="pas"><span class="sw" style="background:#3E3348"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#55475E"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#6E5F76"></span><span class="pv">A</span></span>
+            <span class="pas"><span class="sw" style="background:#847792"></span><span class="pv">A</span></span>
+            <span class="pas out"><span class="sw" style="background:#C04A2E"></span><span class="pv">×</span></span>
+          </div>
+          <div class="lgd" style="margin-top:10px">
+            <span><b>P</b> venue du projet</span><span><b>A</b> venue de l'ambiance</span>
+            <span><b>M</b> posée à la main</span><span><b>×</b> retirée — montrée, pas cachée</span>
+          </div>
+
+          <div class="col-t" style="margin-top:14px">L'aperçu — la palette sur de vraies images</div>
+          <div class="outils" style="margin-bottom:10px">
+            <span class="ob on">les 3 entités de l'ambiance</span>
+            <span class="ob">les 7 images de l'îlot</span>
+            <span class="ob">5 couleurs ne servent à rien — les montrer</span>
+          </div>
+
+          <div class="aprang">
+            <div class="aplab">avec la palette<br>du projet</div>
+            <div class="apercu">
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="0" y="0" width="16" height="3" fill="#2f3d49"/>
+                  <rect x="0" y="3" width="16" height="2" fill="#3c4b53"/>
+                  <rect x="0" y="5" width="16" height="2" fill="#57534f"/>
+                  <rect x="0" y="7" width="16" height="2" fill="#464143"/>
+                  <rect x="0" y="9" width="16" height="4" fill="#665348"/>
+                  <rect x="0" y="13" width="16" height="3" fill="#3b3c3f"/>
+                  <rect x="3" y="2" width="1" height="8" fill="#23242d"/>
+                  <rect x="2" y="4" width="1" height="1" fill="#23242d"/>
+                  <rect x="11" y="1" width="1" height="9" fill="#23242d"/>
+                  <rect x="12" y="3" width="1" height="1" fill="#23242d"/>
+                  <rect x="6" y="10" width="3" height="1" fill="#815447"/>
+                </svg>
+                <div class="nm">Le marais</div><div class="nt">décor</div>
+              </div>
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="5" y="3" width="6" height="4" fill="#665348"/>
+                  <rect x="4" y="7" width="8" height="5" fill="#57534f"/>
+                  <rect x="3" y="8" width="1" height="3" fill="#3b2d31"/>
+                  <rect x="12" y="8" width="1" height="3" fill="#3b2d31"/>
+                  <rect x="5" y="12" width="2" height="2" fill="#3b2d31"/>
+                  <rect x="9" y="12" width="2" height="2" fill="#3b2d31"/>
+                  <rect x="6" y="4" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="9" y="4" width="1" height="1" fill="#c6b9a8"/>
+                </svg>
+                <div class="nm">Rôdeur des vases</div><div class="nt">créature</div>
+              </div>
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="12" y="2" width="2" height="2" fill="#a18c79"/>
+                  <rect x="11" y="3" width="2" height="2" fill="#a18c79"/>
+                  <rect x="10" y="4" width="2" height="2" fill="#a18c79"/>
+                  <rect x="9" y="5" width="2" height="2" fill="#a18c79"/>
+                  <rect x="8" y="6" width="2" height="2" fill="#a18c79"/>
+                  <rect x="12" y="2" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="11" y="3" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="10" y="4" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="9" y="5" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="8" y="6" width="1" height="1" fill="#c6b9a8"/>
+                  <rect x="4" y="8" width="7" height="1" fill="#693f39"/>
+                  <rect x="6" y="9" width="2" height="2" fill="#523933"/>
+                  <rect x="5" y="10" width="2" height="2" fill="#523933"/>
+                  <rect x="4" y="11" width="2" height="2" fill="#523933"/>
+                  <rect x="3" y="12" width="2" height="2" fill="#815447"/>
+                </svg>
+                <div class="nm">Épée rouillée</div><div class="nt">objet tenu</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aprang bas">
+            <div class="aplab on">avec cette<br>palette</div>
+            <div class="apercu">
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="0" y="0" width="16" height="3" fill="#657282"/>
+                  <rect x="0" y="3" width="16" height="2" fill="#808C9B"/>
+                  <rect x="0" y="5" width="16" height="2" fill="#5E6F63"/>
+                  <rect x="0" y="7" width="16" height="2" fill="#4A5A52"/>
+                  <rect x="0" y="9" width="16" height="4" fill="#39443F"/>
+                  <rect x="0" y="13" width="16" height="3" fill="#2A3230"/>
+                  <rect x="3" y="2" width="1" height="8" fill="#25292E"/>
+                  <rect x="2" y="4" width="1" height="1" fill="#25292E"/>
+                  <rect x="11" y="1" width="1" height="9" fill="#25292E"/>
+                  <rect x="12" y="3" width="1" height="1" fill="#25292E"/>
+                  <rect x="6" y="10" width="3" height="1" fill="#5A7A5E"/>
+                  <rect x="13" y="8" width="1" height="1" fill="#7FE0A8"/>
+                </svg>
+                <div class="nm">Le marais</div><div class="nt">décor</div>
+              </div>
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="5" y="3" width="6" height="4" fill="#5A7A5E"/>
+                  <rect x="4" y="7" width="8" height="5" fill="#4A5A52"/>
+                  <rect x="3" y="8" width="1" height="3" fill="#2A3230"/>
+                  <rect x="12" y="8" width="1" height="3" fill="#2A3230"/>
+                  <rect x="5" y="12" width="2" height="2" fill="#2A3230"/>
+                  <rect x="9" y="12" width="2" height="2" fill="#2A3230"/>
+                  <rect x="6" y="4" width="1" height="1" fill="#7FE0A8"/>
+                  <rect x="9" y="4" width="1" height="1" fill="#7FE0A8"/>
+                </svg>
+                <div class="nm">Rôdeur des vases</div><div class="nt">créature</div>
+              </div>
+              <div class="ap">
+                <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                  <rect x="12" y="2" width="2" height="2" fill="#8E9B90"/>
+                  <rect x="11" y="3" width="2" height="2" fill="#8E9B90"/>
+                  <rect x="10" y="4" width="2" height="2" fill="#8E9B90"/>
+                  <rect x="9" y="5" width="2" height="2" fill="#8E9B90"/>
+                  <rect x="8" y="6" width="2" height="2" fill="#8E9B90"/>
+                  <rect x="12" y="2" width="1" height="1" fill="#C6CCBE"/>
+                  <rect x="11" y="3" width="1" height="1" fill="#C6CCBE"/>
+                  <rect x="10" y="4" width="1" height="1" fill="#C6CCBE"/>
+                  <rect x="9" y="5" width="1" height="1" fill="#C6CCBE"/>
+                  <rect x="8" y="6" width="1" height="1" fill="#C6CCBE"/>
+                  <rect x="4" y="8" width="7" height="1" fill="#6E4F3A"/>
+                  <rect x="6" y="9" width="2" height="2" fill="#3E3348"/>
+                  <rect x="5" y="10" width="2" height="2" fill="#3E3348"/>
+                  <rect x="4" y="11" width="2" height="2" fill="#3E3348"/>
+                  <rect x="3" y="12" width="2" height="2" fill="#A98A64"/>
+                </svg>
+                <div class="nm">Épée rouillée</div><div class="nt">objet tenu</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="apsom">
+            <b>19 des 24 couleurs employées</b> par ces trois images — 5 ne servent à aucune<br>
+            se recalcule en direct, à chaque cran des rails : <b>3 × 2 vignettes = moins de 4 ms</b>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4>Cinq décisions dans cet éditeur</h4>
+    <ul>
+      <li><strong>Chaque pastille porte sa provenance sous elle</strong>, en une lettre. C'est ce que la
+        recette permet et qu'une liste éditée aurait perdu. Une palette dont on ne sait plus d'où
+        viennent les couleurs est une palette qu'on n'ose plus toucher.</li>
+      <li><strong>Une couleur retirée reste affichée, éteinte et barrée</strong>, à la fin. La cacher
+        aurait fait disparaître la trace du geste : on ne saurait plus qu'on a retiré quelque chose, et
+        on chercherait pourquoi le rouge du projet n'apparaît pas.</li>
+      <li><strong>Les retouches sont une liste, et chacune s'annule seule</strong> par sa croix. C'est
+        ce qui distingue une recette d'une édition : on défait un geste, pas l'état entier.</li>
+      <li><strong>Les deux rails portent leur valeur en clair, en chiffres.</strong>
+        <span class="mesure">8 / 24 du projet</span> se lit ; « 33 % » se devine. C'est la leçon du
+        curseur d'occupation de la maquette 13, qui a gagné une lecture en pixels en plus du
+        pourcentage.</li>
+      <li><strong>Les sources se cochent, et celles du dessus sont une source comme une autre.</strong>
+        Cocher « les 6 artworks du projet » est ce qui garde l'harmonie du jeu ; les décocher est ce qui
+        fait un marais qui n'a rien à voir avec le reste. Un seul mécanisme couvre les deux, sans mode à
+        choisir.</li>
+    </ul>
+
+    <h4>L'aperçu — cinq décisions de plus</h4>
+    <p>Vingt-quatre carrés de couleur ne disent pas ce qu'une image va devenir. L'aperçu est la seule
+      partie de cet écran qui réponde à la question qu'on se pose vraiment en tirant un rail :
+      <em class="it">est-ce que ça rend bien ?</em></p>
+    <p><strong>Le même éditeur sert aux trois étages</strong>, puisque la palette y est la même recette
+      (<code>07-les-trois-etages.html</code> § 06). Seul ce que l'aperçu montre par défaut change, et il
+      suit toujours la même règle — <em class="it">ce dont cette palette décide</em> : au projet, une
+      entité par famille ; sur une ambiance, ses entités ; sur une entité, ses propres images. Le
+      dessin ci-dessus est le cas d'une ambiance.</p>
+    <ul>
+      <li><strong>Deux rangées empilées, pas un comparateur.</strong> Le comparateur à quatre modes
+        appartient au châssis des tables et existe parce qu'une table n'a <em class="it">qu'une</em>
+        grande toile. Ici les images font 64 px et trois tiennent côte à côte avec de la place : deux
+        rangées se lisent d'un coup d'œil, là où un mode à basculer demande un geste et une mémoire.
+        Ça évite surtout d'étendre le châssis hors des tables — une décision bien plus lourde que cet
+        aperçu.</li>
+      <li><strong>La même recette des deux côtés, seule la palette change.</strong> L'aperçu ne rejoue
+        ni le détourage, ni le recadrage, ni la grille : il reprend la recette déjà rangée de chaque
+        image et n'échange que la palette. Sans ça, une différence visible pourrait venir de n'importe
+        quelle autre place de la recette, et <strong>l'aperçu mentirait sur ce qu'il montre</strong>.
+        C'est la seule chose qui le rende utilisable pour juger.</li>
+      <li><strong>Une image par entité, pas quatre du même personnage.</strong> La question est
+        « est-ce que ma palette tient sur mes choses », pas « est-ce qu'elle tient sur Balthazar ».
+        L'image retenue est la favorite de l'entité, sinon la plus récente.</li>
+      <li><strong>Sans image, l'aperçu retombe sur les sources de la palette.</strong> Une ambiance se
+        crée le plus souvent <em class="it">avant</em> ses assets — c'est même le cas normal, puisqu'une
+        entité existe dans le codex avant d'avoir la moindre image. La chaîne de repli ne casse jamais :
+        les images de cet étage, sinon les artworks du projet, sinon rien — et « rien » veut dire qu'il
+        n'y a pas de palette non plus, donc rien à prévisualiser. <strong>Aucun état vide à
+        dessiner.</strong> Et le repli n'est pas un pis-aller : quantifier une image de l'îlot sur la
+        palette lue dessus répond exactement à « est-ce que ma palette rend mon inspiration ? ».</li>
+      <li><strong>Il se recalcule en direct, à chaque cran des rails.</strong> C'est mesuré et pas
+        supposé : la quantification coûte <span class="mesure">0,6 ms à 64 px</span> contre 20 ms à
+        1024 px (maquette 14). Six vignettes tiennent sous <span class="mesure">4 ms</span>, donc rien
+        ne justifie un bouton « rafraîchir » — et un aperçu qu'il faut demander est un aperçu qu'on ne
+        regarde pas.</li>
+    </ul>
+
+    <div class="note">
+      <span class="lab">La frontière avec la table de quantification, et pourquoi elle tient</span>
+      <p>La maquette 14 porte déjà <em class="it">« 21 des 24 sont employées par cette image »</em>, et
+        pointer une pastille y allume ses pixels dans le cadre. Il fallait vérifier que cet aperçu-ci
+        n'en soit pas une seconde vérité. Ce n'en est pas une, parce que la question n'est pas la
+        même :</p>
+      <p><strong>Table 14 — une image face à la palette.</strong> On y arrive depuis une image, et on
+        demande : qu'est-ce que la palette fait à celle-ci ?<br>
+        <strong>Ici — une palette face à plusieurs images.</strong> On y arrive depuis la palette qu'on
+        est en train de composer, et on demande : est-ce qu'elle tient sur tout ce qui en hérite ?</p>
+      <p>Le calcul dessous est le même — comparer des pixels à un jeu de couleurs — et il ne doit être
+        écrit qu'une fois, dans le traitement. Ce sont les deux <em class="it">écrans</em> qui diffèrent.
+        <strong>Et si l'un des deux devait porter les deux lectures, c'est celui-ci qui
+        disparaîtrait</strong> : la table est plus ancienne, plus centrale, et on y passe à chaque
+        image.</p>
+    </div>
+
+    <div class="note mes">
+      <span class="lab">Ce qui est mesuré ici, et ce qui est dessiné</span>
+      <p><strong>Mesuré, et rejouable.</strong> Les couleurs de la rangée
+        <em class="it">« avec la palette du projet »</em> sont les vraies : elles sortent de la palette
+        de <code>coeur-de-pierre-01</code> telle qu'elle est sur le disque —
+        <span class="mesure">48 couleurs</span>, empreinte <span class="mesure">f141450a…</span>, lue
+        sur ses artworks. Le coût du recalcul vient de la maquette 14 :
+        <span class="mesure">0,6 ms à 64 px</span>. Et ce qu'une quantification déplace est au banc du
+        30 août : <span class="mesure">écart médian 14 sur 255</span>, le pire à
+        <span class="mesure">104</span>, sur 8 images.</p>
+      <p><strong>Dessiné, donc à ne pas citer.</strong> Les couleurs de l'ambiance, les trois sujets
+        des vignettes, et le compte <em class="it">« 19 des 24 employées »</em>. Aucun n'est sorti d'un
+        calcul — ce sont des valeurs de mise en page.</p>
+      <p><strong>Et il reste la vraie inconnue :</strong> rien ne prouve encore que les deux rails
+        produisent des résultats différents — question ouverte n° 01 de
+        <code>07-les-trois-etages.html</code>. Le banc
+        <code>essais/essai_couleurs_et_taches.py</code> peut y répondre pour zéro centime, sur les
+        images déjà là. <strong>À faire avant d'implémenter cet écran</strong> : deux réglages inertes
+        ont déjà été trouvés de cette façon dans ce dossier — la marge du recadrage et le nombre de
+        couleurs de la quantification — et tous les deux avaient été dessinés avant d'être mesurés.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 6 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce qui ne bouge pas</h2></div>
+    <p class="intro">L'onglet Univers existe déjà et ne souffre pas. Cette maquette lui ajoute trois
+      sections et n'en retouche aucune.</p>
+    <table class="t">
+      <thead><tr><th style="width:180px">Section</th><th>Ce qui lui arrive</th></tr></thead>
+      <tbody>
+        <tr><td class="o"><b>La bible</b></td>
+            <td>Inchangée dans sa forme : sept champs, chacun avec son interrupteur. Elle gagne une seule
+              chose — <strong>les trois champs qui s'imposent sont marqués comme tels</strong>, pour
+              qu'on sache en les écrivant qu'ils ne se contrediront nulle part.</td></tr>
+        <tr><td class="o"><b>Les artworks officiels</b></td>
+            <td>Inchangés. Ils deviennent, sans rien changer, <em class="it">la source de la palette du
+              projet</em> au sens de la recette — c'est déjà exactement leur rôle.</td></tr>
+        <tr><td class="o"><b>Le barème d'échelles</b></td>
+            <td>Inchangé. Il porte l'autre axe (<code>07</code> § 03) et ne participe pas à la cascade
+              des ambiances.</td></tr>
+        <tr><td class="o"><b>Les planches et la toile</b></td>
+            <td>Inchangées, à une entrée de menu près : le menu d'un îlot gagne
+              <em class="it">« en faire une ambiance »</em>. L'îlot lui-même ne gagne ni identité, ni
+              fichier, ni réglage.</td></tr>
+        <tr><td class="o"><b>Le format du jeu</b><br><span class="sourd">taille de pixel, case, type de jeu, directions</span></td>
+            <td>Rassemblé sous une seule entrée de menu, ce qui est neuf. Ces quatre réglages étaient
+              dispersés ; ils ont en commun d'être <strong>les quatre choses qu'aucune entité ne peut
+              contredire</strong>, et les mettre ensemble est ce qui rend cette propriété
+              apprenable.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 7 ═════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que cette maquette ne tranche pas</h2></div>
+
+    <div class="note att">
+      <span class="lab">01 · La fusion avec l'autre version de 06-univers.html</span>
+      <p>Deux versions de cet écran ont été écrites en parallèle. <strong>Celle-ci ne prétend pas
+        gagner.</strong> Ce qui lui est propre et qui vaut d'être défendu : la colonne de gauche rangée
+        par nature de réglage (§ 01), la cascade qui lit sans régler (§ 02), l'éditeur de palette en
+        recette et <strong>son aperçu sur de vraies images</strong> (§ 05). Le reste se remplace sans
+        dommage.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · La largeur de la grille</span>
+      <p>Treize colonnes plus les noms. Sur un écran étroit, la grille défile latéralement, et les noms
+        d'entités devraient rester collés à gauche — ce qui n'est pas dessiné ici. <strong>À vérifier à
+        1440 px avant d'implémenter</strong>, comme la maquette 04 l'a fait pour la galerie.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · Ce que devient la cascade quand il y a cent entités</span>
+      <p>Le filtre « seulement ce qui est écrasé » est la réponse prévue, et elle n'a pas été
+        éprouvée : le plus gros projet du dépôt a une poignée d'entités. <strong>À mesurer à
+        l'usage</strong>, pas à deviner.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">04 · La provenance dans le dépliant « ce qui part »</span>
+      <p>La rangée de réglages de la galerie est déjà <em class="it">préremplie et portant sa
+        provenance</em>. Avec trois étages, cette provenance doit dire lequel — « du projet », « de
+        l'ambiance Marais de cendre », « de cette entité ». <strong>C'est un report à faire dans
+        <code>04-galerie.html</code></strong>, et il est petit : la place existe, seul le texte change.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen · V2.1 · <b>06bis-univers.html</b> — l'écran Univers, version parallèle.
+    Écrite le 30 août 2026.<br>
+    Le modèle qu'elle rend visible est <b>07-les-trois-etages.html</b>. À comparer avec
+    <b>06-univers.html</b>, écrite en même temps ailleurs.<br>
+    Elle s'appuie sur : <code>03-chassis-des-tables.html</code> (les onglets, la bulle, le comparateur
+    qu'elle n'emprunte pas) · <code>04-galerie.html</code> (chaque ligne ouvre sa table, la provenance
+    d'un réglage) · <code>05-codex.html</code> (les familles, les entités) ·
+    <code>13-table-grille.html</code> (le rail lu en chiffres et pas seulement en pourcentage) ·
+    <code>14-table-quantification.html</code> (le réglage grisé avec sa raison, le coût d'une
+    quantification, et « les couleurs que cette image n'emploie pas » — dont § 05 dit la frontière) ·
+    <code>essais/mesures_couleurs_taches.json</code> et
+    <code>donnees/projets/coeur-de-pierre-01</code> (les chiffres et les couleurs réelles de § 05).
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, les dépenses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+  h4{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:26px 0 10px}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;
+    background:var(--fond-0);margin-bottom:10px}
+  .wf-barre{min-width:1150px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{margin-left:14px;font-family:var(--mono);font-size:10px;color:var(--texte-3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fil b{color:var(--texte-2);font-weight:500}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .wf-tard .tot{color:var(--signal-clair);border-bottom:1px solid var(--signal);padding-bottom:1px}
+  .sep-v{width:1px;height:14px;background:var(--bord)}
+  .wf-corps{min-width:1150px;display:flex;min-height:340px}
+  .wf-pied{min-width:1150px;height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+
+  /* colonne de gauche — les totaux et les filtres */
+  .col{width:240px;flex:none;border-right:1px solid var(--bord);padding:10px;
+    display:flex;flex-direction:column;gap:2px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin:10px 0 5px}
+  .col-t:first-child{margin-top:0}
+  .tt{display:flex;align-items:baseline;justify-content:space-between;padding:3px 8px;
+    font-size:11.5px;color:var(--texte-2)}
+  .tt .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:11px;color:var(--texte)}
+  .tt.gros{padding:5px 8px}
+  .tt.gros .l{color:var(--texte)}
+  .tt.gros .v{font-size:14px;color:var(--lumiere)}
+  .tt.hors .v{color:var(--epingle)}
+  .tt.hors .l{color:var(--epingle)}
+  .sec{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border:1px solid transparent;border-radius:2px;font-size:11.5px;color:var(--texte-2)}
+  .sec.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sec .cpt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .sec.on .cpt{color:var(--signal-clair)}
+  .sepr{height:1px;background:var(--bord);margin:9px 0}
+
+  /* colonne du milieu — le journal */
+  .mil{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mil-b{height:38px;border-bottom:1px solid var(--bord);background:var(--fond-1);
+    display:flex;align-items:center;gap:8px;padding:0 12px}
+  .champ-r{height:26px;width:190px;background:var(--fond-2);border:1px solid var(--bord);
+    border-radius:2px;display:flex;align-items:center;padding:0 8px;
+    font-family:var(--mono);font-size:11px;color:var(--texte-3)}
+  .bt{height:26px;display:flex;align-items:center;padding:0 9px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .bt.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .mil-c{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .jour{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);display:flex;align-items:baseline;gap:9px;margin:14px 0 5px}
+  .jour:first-child{margin-top:0}
+  .jour .jt{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px;color:var(--texte-2)}
+
+  .ap{display:flex;gap:10px;align-items:center;height:24px;padding:0 8px;border-radius:2px;
+    font-size:11.5px;color:var(--texte-2);border:1px solid transparent}
+  .ap:hover{background:var(--fond-1)}
+  .ap.on{border-color:var(--signal);background:var(--signal-sourd)}
+  .ap .h{width:38px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .ap .q{width:9px;height:9px;flex:none;background:var(--ok);display:block}
+  .ap .q.perdu{background:none;border:1px solid var(--epingle)}
+  .ap .q.refuse{background:none;border:0;border-top:1px solid var(--texte-3);height:1px;margin-top:4px}
+  .ap .s{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--texte)}
+  .ap .s span{color:var(--texte-3)}
+  .ap .mo{width:104px;flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ap .nb{width:44px;flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);text-align:right}
+  .ap .px{width:60px;flex:none;font-family:var(--mono);font-variant-numeric:tabular-nums;
+    font-size:10.5px;color:var(--texte);text-align:right}
+  .ap .px.zero{color:var(--texte-3)}
+  .ap .px.perdu{color:var(--epingle)}
+  .rafale{border-left:2px solid var(--epingle);margin-left:-2px;padding-left:6px}
+
+  /* colonne de droite — le détail */
+  .drt{width:380px;flex:none;border-left:1px solid var(--bord);display:flex;flex-direction:column}
+  .drt-t{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9px;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--texte-3)}
+  .drt-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .fiche-l{display:flex;align-items:baseline;gap:10px;font-size:11.5px}
+  .fiche-l .k{width:96px;flex:none;font-family:var(--mono);font-size:9px;color:var(--texte-3);
+    text-transform:uppercase;letter-spacing:.09em}
+  .fiche-l .v{flex:1;min-width:0;color:var(--texte-2)}
+  .fiche-l .v b{color:var(--texte);font-weight:500}
+  .bloc{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;padding:9px 10px}
+  .bloc .bt2{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3);margin-bottom:7px}
+  .lg{display:flex;justify-content:space-between;font-size:11px;color:var(--texte-2);padding:2px 0}
+  .lg .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--texte)}
+  .lg .v.ep{color:var(--epingle)}
+  .vign{display:flex;gap:5px;flex-wrap:wrap}
+  .vg{width:38px;height:38px;border:1px solid var(--bord);background:var(--fond-3);display:block}
+  .vg.res{border-color:var(--signal)}
+  .txt{font-family:var(--mono);font-size:9.5px;line-height:1.55;color:var(--texte-3);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:8px 9px;
+    white-space:pre-wrap;word-break:break-word}
+  .txt b{color:var(--texte-2);font-weight:500}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.k{color:var(--texte);font-weight:500}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;
+    text-align:right;color:var(--texte)}
+  .m{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 5px;
+    font-size:11px;white-space:nowrap}
+  .m.no{color:var(--texte-3)}
+  .m.mal{color:var(--echec)}
+  .m.bon{color:var(--ok)}
+  .m.ep{color:var(--epingle)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .lgd{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);margin-top:8px}
+  .lgd i{width:9px;height:9px;display:inline-block;margin-right:6px;vertical-align:-1px}
+  .lgd i.g{background:var(--ok)}
+  .lgd i.p{background:none;border:1px solid var(--epingle)}
+  .lgd i.r{background:none;border:0;border-top:1px solid var(--texte-3);height:1px;vertical-align:3px}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · refonte de l'interface · V2.1 · rang 30</div>
+    <h1>Les dépenses —<br><em>tous les appels, du plus récent au plus ancien</em></h1>
+    <p>Chaque fois que l'atelier demande une image à une IA, ça coûte quelques centimes. Le serveur
+    enregistre l'appel depuis le premier jour : le prix, le modèle, l'heure, le jeu, qui l'a
+    demandé, et la raison quand ça rate. <strong>Rien à l'écran ne montre cette liste.</strong>
+    Trois endroits en montrent un bout, et aucun ne répond à « où va mon argent ».</p>
+    <p>Cet écran est cette liste. Il ne fabrique rien, il ne dépense rien, il n'efface rien —
+    <strong>il regarde en arrière</strong>. C'est le premier fichier du rang 30, celui des écrans
+    qui entourent la fabrication sans en faire partie.</p>
+    <p class="sourd">Tous les chiffres de cette maquette sont mesurés sur la base du dépôt le
+    30 août 2026 — 28 appels, du 27 au 29 août. Aucun n'est inventé, et aucun n'a coûté un centime
+    de plus pour être obtenu : la base était déjà écrite.</p>
+  </div>
+
+
+  <!-- ══ 01 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce qui a été mesuré, et qui rend cet écran nécessaire</h2></div>
+
+    <p class="intro">Quatre relevés. Le premier dit ce qu'il y a à montrer, les trois autres disent
+    pourquoi les écrans d'aujourd'hui ne le montrent pas.</p>
+
+    <h4>1 · Vingt-huit appels, trois jours, et une base complète</h4>
+    <p>Du <span class="m">27</span> au <span class="m">29 août 2026</span> :
+    <span class="m">28 appels</span>, <span class="m">31 images</span> demandées,
+    <span class="m">$0,3619</span> en tout. Trente images sont revenues, un appel a été refusé.
+    <strong>Le serveur garde chaque appel avec son coût</strong>, réussi comme raté, et il y a même
+    déjà une adresse pour les lire. <strong>Il n'y a rien à fabriquer côté serveur</strong> — cet
+    écran est une fenêtre sur ce qui existe.</p>
+
+    <h4>2 · Le compteur de la barre du haut ne compte que le jeu ouvert</h4>
+    <p>L'argent est réparti sur trois jeux, et <strong><span class="m ep">$0,0381</span> — 11 % du
+    total — a été dépensé sans qu'aucun jeu soit ouvert</strong>. Ces onze pour cent ne sont dans
+    aucun total, sur aucun écran. Ils n'existent que dans la base.</p>
+
+    <h4>3 · Le « dépensé » de la fenêtre des réglages ne compte pas ce que l'auteur dépense</h4>
+    <p>Lu dans le code : ce chiffre ne compte que <strong>ce que l'agent qui code a dépensé</strong>
+    depuis le dernier plafond. Sur les 28 appels, <span class="m">27 viennent de l'auteur</span> et
+    <span class="m">1 de l'agent</span>. Le compteur couvre donc <strong>un appel sur
+    vingt-huit</strong>. Ce n'est pas une facture, c'est une laisse pour l'agent — et l'écran ne le
+    dit pas.</p>
+
+    <h4>4 · Le journal de la galerie n'a jamais eu quoi que ce soit à montrer</h4>
+    <p>La colonne de gauche de la galerie porte <em class="it">le journal des appels ratés</em>. Le
+    seul appel raté du dépôt a coûté <span class="m no">$0,0000</span> : le fournisseur l'a rejeté
+    avant de facturer. <strong>Ce bloc est vide depuis le premier jour</strong>, pendant que
+    <strong>100 % de l'argent partait dans des appels qui ont réussi</strong>.</p>
+
+    <div class="note mes" style="margin-top:22px">
+      <span class="lab">Le relevé qui a changé la forme de cet écran</span>
+      <p>Le premier brouillon voulait montrer <strong>ce qu'on a payé pour rien</strong> : l'appel
+      refusé, la feuille rejetée à la découpe, l'image supprimée. C'était l'idée la moins chère —
+      élargir le bloc qui existe déjà dans la galerie au lieu de faire un écran.</p>
+      <p>La mesure l'a écartée. <strong>Sur 53 images en bibliothèque, aucune n'a jamais été
+      supprimée</strong>, et les deux seuls appels qui n'ont rien laissé étaient des imports à
+      <span class="m no">$0,0000</span>. Un écran du gaspillage aurait affiché
+      <strong>zéro</strong> — exactement comme le bloc qu'il devait remplacer.</p>
+      <p><strong>L'argent ne se perd pas ici, il se répète.</strong> Six appels sur le même
+      personnage entre <span class="m">09 h 41</span> et <span class="m">10 h 13</span> le 29 août,
+      à <span class="m">$0,0160</span> chacun : <strong><span class="m ep">$0,0960</span>, soit 27 %
+      de tout l'argent dépensé, sur un seul personnage en trente-deux minutes</strong>. Les six
+      images ont été gardées, donc rien ne signale quoi que ce soit. Seule la liste complète le
+      montre.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 02 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'écran</h2></div>
+
+    <p class="intro">Les trois colonnes du dossier, dans leurs largeurs habituelles : les totaux et
+    les filtres à gauche, la liste au milieu, l'appel choisi à droite. Rien de neuf — c'est la forme
+    du codex, de la galerie et de la fiche, réemployée pour ce qu'elle sait faire : ranger à gauche,
+    lire au milieu, détailler à droite.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span><span class="tab">Codex</span><span class="tab">Galerie</span>
+        <span class="fil">Cœur de pierre — 01 › <b>Les dépenses</b></span>
+        <span class="wf-tard">
+          <span>ce jeu <span class="tot">$0,2743</span></span>
+          <span class="sep-v"></span><span>⚙</span><span>?</span>
+        </span>
+      </div>
+
+      <div class="wf-corps">
+
+        <!-- gauche : les totaux, puis les filtres -->
+        <div class="col">
+          <div class="col-t">Ce qui a été dépensé</div>
+          <div class="tt gros"><span class="l">l'atelier, en tout</span><span class="v">$0,3619</span></div>
+          <div class="tt"><span>Cœur de pierre — 01</span><span class="v">$0,2743</span></div>
+          <div class="tt"><span>Bac à sable</span><span class="v">$0,0495</span></div>
+          <div class="tt hors"><span class="l">hors jeu · 4 appels</span><span class="v">$0,0381</span></div>
+          <div class="sepr"></div>
+
+          <div class="col-t">Par modèle</div>
+          <div class="tt"><span>gpt-image-2</span><span class="v">$0,2935</span></div>
+          <div class="tt"><span>gemini-3.1-flash-lite</span><span class="v">$0,0685</span></div>
+          <div class="tt"><span>import</span><span class="v">$0,0000</span></div>
+          <div class="sepr"></div>
+
+          <div class="col-t">Ne montrer que</div>
+          <div class="sec on">tout<span class="cpt">28</span></div>
+          <div class="sec">gardé<span class="cpt">25</span></div>
+          <div class="sec">payé pour rien<span class="cpt">2</span></div>
+          <div class="sec">refusé<span class="cpt">1</span></div>
+          <div class="sepr"></div>
+          <div class="sec">demandé par l'agent<span class="cpt">1</span></div>
+        </div>
+
+        <!-- milieu : le journal -->
+        <div class="mil">
+          <div class="mil-b">
+            <span class="champ-r">Chercher un sujet…</span>
+            <span class="bt on">ce jeu</span>
+            <span class="bt">tous les jeux</span>
+            <span class="sep-v"></span>
+            <span class="bt">7 derniers jours</span>
+          </div>
+          <div class="mil-c">
+
+            <div class="jour">29 août · 9 appels<span class="jt">$0,1512</span></div>
+            <div class="rafale">
+              <div class="ap on"><span class="h">10:13</span><i class="q"></i><span class="s">balthazar-2 <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+              <div class="ap"><span class="h">10:12</span><i class="q"></i><span class="s">balthazar-2 <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+              <div class="ap"><span class="h">10:03</span><i class="q"></i><span class="s">balthazar-2 <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+              <div class="ap"><span class="h">10:02</span><i class="q"></i><span class="s">balthazar-2 <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+            </div>
+            <div class="ap"><span class="h">09:57</span><i class="q"></i><span class="s">balthazar test <span>· fichier apporté</span></span><span class="mo">import</span><span class="nb">1 img</span><span class="px zero">—</span></div>
+            <div class="rafale">
+              <div class="ap"><span class="h">09:45</span><i class="q"></i><span class="s">balthazar <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+              <div class="ap"><span class="h">09:41</span><i class="q"></i><span class="s">balthazar <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0160</span></div>
+            </div>
+            <div class="ap"><span class="h">08:03</span><i class="q"></i><span class="s">michel-le-nain <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0227</span></div>
+            <div class="ap"><span class="h">07:43</span><i class="q"></i><span class="s"><span>aucun personnage</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0129</span></div>
+            <div class="ap"><span class="h">07:40</span><i class="q"></i><span class="s">michel-le-nain <span>· marche</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0129</span></div>
+
+            <div class="jour">28 août · 4 appels<span class="jt">$0,1231</span></div>
+            <div class="ap"><span class="h">22:22</span><i class="q"></i><span class="s">balthazar <span>· sans pose</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0239</span></div>
+            <div class="ap"><span class="h">22:14</span><i class="q"></i><span class="s">balthazar <span>· sans pose</span></span><span class="mo">gemini-3.1-flash</span><span class="nb">1 img</span><span class="px">$0,0342</span></div>
+            <div class="ap"><span class="h">22:13</span><i class="q"></i><span class="s">balthazar <span>· sans pose</span></span><span class="mo">gemini-3.1-flash</span><span class="nb">1 img</span><span class="px">$0,0342</span></div>
+            <div class="ap"><span class="h">21:59</span><i class="q"></i><span class="s"><span>aucun personnage</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0152</span></div>
+
+            <div class="jour">27 août · 8 appels<span class="jt">$0,0876</span></div>
+            <div class="ap"><span class="h">23:50</span><i class="q refuse"></i><span class="s"><span>refusé par le filtre de sécurité</span></span><span class="mo">gpt-image-2</span><span class="nb">0 img</span><span class="px zero">$0,0000</span></div>
+            <div class="ap"><span class="h">21:33</span><i class="q"></i><span class="s"><span>aucun personnage</span></span><span class="mo">gpt-image-2</span><span class="nb">1 img</span><span class="px">$0,0088</span></div>
+            <div class="ap"><span class="h">12:44</span><i class="q"></i><span class="s"><span>hors jeu</span></span><span class="mo">gpt-image-2</span><span class="nb">2 img</span><span class="px">$0,0128</span></div>
+          </div>
+        </div>
+
+        <!-- droite : l'appel choisi -->
+        <div class="drt">
+          <div class="drt-t">L'appel de 10 h 13</div>
+          <div class="drt-c">
+            <div class="fiche-l"><span class="k">sujet</span><span class="v"><b>balthazar-2</b>, sans pose déclarée</span></div>
+            <div class="fiche-l"><span class="k">demandé par</span><span class="v">l'auteur</span></div>
+            <div class="fiche-l"><span class="k">modèle</span><span class="v">openai/gpt-image-2 · qualité basse</span></div>
+            <div class="fiche-l"><span class="k">durée</span><span class="v">21 s</span></div>
+
+            <div class="bloc">
+              <div class="bt2">Ce que l'appel a coûté</div>
+              <div class="lg"><span>l'image elle-même</span><span class="v">$0,0063</span></div>
+              <div class="lg"><span>1 image de référence jointe</span><span class="v ep">+ $0,0097</span></div>
+              <div class="lg" style="border-top:1px solid var(--bord);margin-top:5px;padding-top:6px">
+                <span style="color:var(--texte)">payé</span><span class="v">$0,0160</span></div>
+            </div>
+
+            <div class="bloc">
+              <div class="bt2">Ce qui est parti · 3 blocs, 1 690 caractères</div>
+              <div class="txt"><b>bible</b> · 890 car. · 53 %
+<b>sujet</b> · 40 car. · 2 %
+<b>consigne</b> · 756 car. · 44 %</div>
+            </div>
+
+            <div class="bloc">
+              <div class="bt2">Ce qui est revenu</div>
+              <div class="vign">
+                <span class="vg res"></span>
+              </div>
+              <div class="lg" style="margin-top:7px"><span>l'image est en bibliothèque</span><span class="v" style="color:var(--ok)">gardée</span></div>
+            </div>
+
+            <div class="bloc" style="border-left:2px solid var(--epingle)">
+              <div class="bt2" style="color:var(--epingle)">Ce que la liste dit de cet appel</div>
+              <div class="lg"><span>4<sup>e</sup> demande sur ce personnage</span><span class="v ep">en 11 minutes</span></div>
+              <div class="lg"><span>dépensé sur balthazar-2</span><span class="v ep">$0,0640</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-pied">
+        <span>28 appels · 31 images · $0,3619</span>
+        <span>27 août → 29 août</span>
+        <span style="margin-left:auto">rien ne se paie ni ne s'efface depuis cet écran</span>
+      </div>
+    </div>
+
+    <div class="lgd">
+      <span><i class="g"></i>gardé — l'image est en bibliothèque</span>
+      <span><i class="p"></i>payé pour rien — l'appel a réussi, rien n'a été gardé</span>
+      <span><i class="r"></i>refusé — l'appel a échoué</span>
+    </div>
+  </section>
+
+
+  <!-- ══ 03 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Ce qu'une ligne montre, et dans quel ordre</h2></div>
+
+    <p class="intro">Une ligne par appel, jamais par image : c'est l'appel qui est facturé. Une
+    demande de quatre variations est <em class="it">une</em> ligne à quatre images, parce que c'est
+    ainsi qu'elle a été payée.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:15%">Ce qu'on lit</th><th style="width:26%">Exemple réel du dépôt</th><th>Pourquoi c'est là, et pas ailleurs</th></tr></thead>
+      <tbody>
+        <tr><td class="k">L'heure</td><td><span class="m">10:13</span></td>
+          <td>Le jour est écrit une fois, en tête du groupe, avec son total. L'heure suffit ensuite, et c'est elle qui rend une rafale visible — quatre appels entre 10 h 02 et 10 h 13 se voient sans rien calculer.</td></tr>
+        <tr><td class="k">Ce que ça a donné</td><td>le carré</td>
+          <td>Trois états, trois marques déjà connues du produit : le carré plein, le carré creux, le trait. Le § 04 dit ce que chacun veut dire. C'est la première chose lue parce que c'est la seule qui distingue une dépense utile d'une dépense perdue.</td></tr>
+        <tr><td class="k">Le sujet</td><td><span class="m">balthazar-2 · sans pose</span></td>
+          <td><b>Le nom de la chose du jeu, pas le texte envoyé.</b> Le texte fait 1 690 caractères et il est presque le même à chaque appel — il ne distingue rien. Quand aucune chose n'est attachée, la ligne le dit : <em class="it">aucun personnage</em>. Sur les 28 appels, <b>9 sont dans ce cas</b>.</td></tr>
+        <tr><td class="k">Le modèle</td><td><span class="m">gpt-image-2</span></td>
+          <td>Le nom court, sans le fournisseur devant. Trois modèles ont servi et leurs prix n'ont rien à voir : voir le § 06.</td></tr>
+        <tr><td class="k">Le nombre d'images</td><td><span class="m">1 img</span> · <span class="m">2 img</span></td>
+          <td>Ce que l'appel a demandé, pas ce qu'il a rendu. Un appel à deux variations qui n'en rend qu'une est un cas à voir, et le cacher le rendrait invisible.</td></tr>
+        <tr><td class="k">Le prix</td><td><span class="m">$0,0160</span></td>
+          <td>Aligné à droite, chiffres de même largeur, quatre décimales. À droite parce que c'est la colonne qu'on parcourt du regard en descendant, et que des montants alignés se comparent sans être lus.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce que la ligne ne montre pas, et pourquoi</span>
+      <ul>
+        <li><b>Le texte envoyé au modèle.</b> Il est presque identique d'un appel à l'autre — c'est
+        mesuré : le style pèse 53 % et le sujet 2 %. Le mettre en ligne ferait vingt-huit lignes qui
+        se ressemblent. Il est <b>dans la colonne de droite</b>, pour l'appel qu'on a choisi.</li>
+        <li><b>L'image revenue.</b> Une vignette par ligne ferait de cet écran une seconde galerie,
+        et la galerie fait déjà ça mieux. L'image est <b>à droite</b>, et la barre d'espace la montre
+        en grand comme partout ailleurs.</li>
+        <li><b>Le jeu.</b> Il est dans le filtre à gauche et dans le titre du groupe quand on regarde
+        tous les jeux à la fois. Le répéter sur chaque ligne alors qu'on est presque toujours dans un
+        seul jeu ajouterait une colonne pour rien.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══ 04 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Les trois états d'un appel payé</h2></div>
+
+    <p class="intro">C'est la seule distinction que cet écran apporte et qu'aucun autre ne fait. La
+    galerie montre ce qu'on a gardé. Le journal montrait ce qui avait échoué. Personne ne montrait
+    <strong>ce qui a réussi et qu'on n'a pas gardé</strong> — et c'est le seul cas où l'argent est
+    vraiment perdu.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:16%">La marque</th><th style="width:20%">Ce que ça veut dire</th><th style="width:22%">Dans le dépôt, aujourd'hui</th><th>Où l'image se trouve</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Le carré plein</td><td><b>Gardé.</b> L'appel a réussi et l'image est en bibliothèque.</td>
+          <td><span class="m bon">25 appels · $0,3619</span><br><span class="sourd">100 % de l'argent</span></td>
+          <td>Dans la galerie, avec son prix écrit sous la vignette.</td></tr>
+        <tr><td class="k">Le carré creux</td><td><b>Payé pour rien.</b> L'appel a réussi, il a été facturé, et rien n'en est resté.</td>
+          <td><span class="m">2 appels · $0,0000</span><br><span class="sourd">deux imports, donc gratuits</span></td>
+          <td>Nulle part. C'est tout le problème : sans cet écran, la dépense n'a aucune trace visible.</td></tr>
+        <tr><td class="k">Le trait</td><td><b>Refusé.</b> L'appel a échoué avant de rendre une image.</td>
+          <td><span class="m">1 appel · $0,0000</span><br><span class="sourd">rejeté par le filtre de sécurité</span></td>
+          <td>Nulle part non plus, mais le fournisseur n'a rien facturé. La raison est écrite en clair à droite.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Le carré creux est vide aujourd'hui, et il doit exister quand même</span>
+      <p>Mesuré le 30 août : <strong>sur 53 images en bibliothèque, aucune n'a jamais été
+      supprimée</strong>. Les deux appels sans résultat étaient des imports, qui ne coûtent rien. La
+      colonne « payé pour rien » affiche donc <span class="m">$0,0000</span>.</p>
+      <p>Elle reste, pour deux raisons. <strong>Le cas est réel dans le produit</strong> — une
+      feuille de poses qui revient avec un personnage manquant se refuse au moment de la découpe, et
+      elle a été payée ; une image supprimée l'a été aussi. <strong>Et une colonne qui apparaîtrait
+      le jour où elle se remplit serait une surprise</strong>, au moment précis où l'on cherche à
+      comprendre une facture. Un écran qui explique l'argent ne change pas de forme quand l'argent
+      commence à se perdre.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Une image supprimée ne fait pas disparaître son appel</span>
+      <p>C'est déjà vrai côté serveur, et il faut que l'écran le tienne : la liste des appels et la
+      bibliothèque sont deux choses séparées. Supprimer une image la retire de la galerie et
+      <strong>fait passer son appel du carré plein au carré creux</strong> — la dépense reste, la
+      ligne reste, seul l'état change. C'est aussi ce qui arrive à un jeu supprimé : ses appels
+      passent au <em class="it">hors jeu</em>, jamais à la poubelle.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 05 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'on filtre, et ce qu'on ne filtre pas</h2></div>
+
+    <p class="intro">Quatre filtres, pas un de plus. Chacun répond à une question qu'on se pose
+    vraiment devant une facture ; tout le reste se lit en descendant la liste, qui est courte.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:24%">Le filtre</th><th style="width:30%">La question à laquelle il répond</th><th>Ce qu'il donne sur le dépôt</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Ce jeu · tous les jeux</td><td>« ce jeu m'a coûté combien, et le reste ? »</td>
+          <td>Par défaut, le jeu ouvert. <b>Tous les jeux</b> fait apparaître les <span class="m ep">$0,0381</span> dépensés hors jeu, qu'aucun autre écran ne montre.</td></tr>
+        <tr><td class="k">Ce que ça a donné</td><td>« qu'est-ce que j'ai payé pour rien ? »</td>
+          <td>Les trois états du § 04, chacun avec son compte. C'est le filtre qui remplace le journal des ratés de la galerie.</td></tr>
+        <tr><td class="k">La période</td><td>« qu'est-ce que j'ai dépensé cette semaine ? »</td>
+          <td>Sept jours par défaut, puis tout. Les appels sont déjà groupés par jour avec le total du jour : <span class="m">$0,1512</span> le 29, <span class="m">$0,1231</span> le 28, <span class="m">$0,0876</span> le 27.</td></tr>
+        <tr><td class="k">Demandé par l'agent</td><td>« qu'est-ce que l'agent a dépensé sans moi ? »</td>
+          <td><b>Un appel sur vingt-huit.</b> C'est exactement ce que compte le chiffre de la fenêtre des réglages — ici il est à sa place, à côté des vingt-sept autres.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Ce qu'on ne filtre pas</h4>
+    <p><strong>Le modèle.</strong> Il est dans la colonne de gauche comme total, pas comme filtre.
+    Filtrer par modèle répond à « lequel coûte le plus », et le total y répond mieux en un coup
+    d'œil : <span class="m">$0,2935</span> pour <span class="m">gpt-image-2</span> sur 22 appels,
+    <span class="m">$0,0685</span> pour <span class="m">gemini-3.1-flash-lite</span> sur 2.</p>
+    <p><strong>Le prix.</strong> Pas de « au-dessus de tant ». Les montants sont alignés et la liste
+    est courte : le regard fait le tri mieux qu'un seuil qu'il faudrait choisir.</p>
+
+    <div class="note">
+      <span class="lab">La recherche cherche le sujet, pas le texte envoyé</span>
+      <p>Taper <em class="it">balthazar</em> retrouve les six appels sur ce personnage. Taper un mot
+      du texte de style les retrouverait <strong>tous</strong>, puisque ce texte est presque le même
+      partout — <b>53 % de chaque appel est du style, et il ne varie pas</b>. Une recherche qui rend
+      tout n'est pas une recherche.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 06 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Les totaux — celui du jeu, celui de l'atelier, et les onze pour cent</h2></div>
+
+    <p class="intro">Il y a deux totaux justes et ils ne disent pas la même chose. La décision est de
+    <strong>garder les deux, chacun à sa place, chacun avec son étiquette</strong> — plutôt que d'en
+    afficher un seul qui aurait tort la moitié du temps.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:22%">Où</th><th style="width:22%">Ce qu'il compte</th><th style="width:16%">Sur le dépôt</th><th>Pourquoi là</th></tr></thead>
+      <tbody>
+        <tr><td class="k">La barre du haut</td><td><b>Le jeu ouvert.</b> Il change quand on change de jeu.</td>
+          <td class="num">$0,2743</td>
+          <td>C'est le chiffre utile pendant qu'on travaille : <em class="it">ce jeu m'a coûté tant</em>. Il gagne son étiquette — <span class="m">ce jeu</span> — parce qu'un montant sans portée se lit comme un total, et se trompe.</td></tr>
+        <tr><td class="k">Ici, en haut à gauche</td><td><b>L'atelier en entier</b>, depuis le premier jour.</td>
+          <td class="num">$0,3619</td>
+          <td>C'est la seule chose qu'on vient chercher ici et qu'on ne trouve nulle part ailleurs. Écrit plus gros que le reste, parce que c'est la réponse à la question qui fait ouvrir l'écran.</td></tr>
+        <tr><td class="k">Ici, ligne dorée</td><td><b>Ce qui n'appartient à aucun jeu.</b></td>
+          <td class="num" style="color:var(--epingle)">$0,0381</td>
+          <td>Onze pour cent du total. En doré, la couleur d'écart du produit, parce que c'est de l'argent dépensé qu'aucun total de jeu ne contient — et qu'on ne le découvre nulle part ailleurs.</td></tr>
+        <tr><td class="k">La fenêtre des réglages</td><td><b>Ce que l'agent a dépensé</b> depuis le dernier plafond.</td>
+          <td class="num">1 appel</td>
+          <td>Elle reste telle quelle, et son étiquette est corrigée : <span class="m">dépensé par l'agent</span>. C'est un garde-fou, pas une facture, et son voisinage avec le plafond de la séance le dit déjà.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">La correction qui vaut le plus cher, et qui coûte deux mots</span>
+      <p>Trois montants s'affichent aujourd'hui dans le produit, et <strong>aucun ne dit de quoi il
+      est le total</strong>. Celui de la barre du haut compte un jeu, celui des réglages compte un
+      agent, et l'écran ne les distingue pas. <strong>Deux étiquettes suffisent</strong> :
+      <span class="m">ce jeu</span> et <span class="m">dépensé par l'agent</span>.</p>
+      <p>C'est la règle du produit appliquée à l'argent : <strong>ce qui est montré dit ce qu'il
+      est</strong>. Un chiffre qui laisse deviner sa portée finit par être lu comme le total, et une
+      facture se compare à ce total.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 07 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que la liste révèle — et qu'aucun écran ne pouvait montrer</h2></div>
+
+    <p class="intro">Deux faits sont sortis de la base en la lisant pour dessiner cet écran. Ni l'un
+    ni l'autre n'était connu, et tous les deux changent des décisions prises ailleurs. C'est
+    l'argument de l'écran : <strong>on ne voit un motif que dans une liste</strong>.</p>
+
+    <h4>1 · Une image de référence jointe multiplie le prix de l'appel</h4>
+    <p>Sur les 24 images payées à <span class="m">gpt-image-2</span>, le prix suit le nombre d'images
+    de référence jointes à la demande — et rien d'autre : la taille, la qualité et les proportions
+    étaient les mêmes partout.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:26%">Images jointes</th><th style="width:14%">Mesuré sur</th><th style="width:20%">Prix d'une image</th><th style="width:12%">Facteur</th><th>Ce que ça veut dire</th></tr></thead>
+      <tbody>
+        <tr><td class="k">aucune</td><td class="num">9 images</td><td class="num">$0,0063</td><td class="num">×1</td>
+          <td>Le prix de base d'une image chez ce modèle.</td></tr>
+        <tr><td class="k">une</td><td class="num">12 images</td><td class="num">$0,0139</td><td class="num" style="color:var(--epingle)">×2,2</td>
+          <td>Joindre un seul dessin d'exemple <b>double le prix</b>.</td></tr>
+        <tr><td class="k">deux</td><td class="num">3 images</td><td class="num">$0,0232</td><td class="num" style="color:var(--epingle)">×3,7</td>
+          <td>Deux exemples, et l'appel coûte près de <b>quatre fois</b> l'image seule.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note att" style="margin-top:16px">
+      <span class="lab">La conséquence, chiffrée</span>
+      <p>Sur les <span class="m">$0,2935</span> dépensés chez ce modèle, <strong>$0,1422 — soit
+      48 % — sont partis dans les images de référence jointes</strong>. Presque la moitié de la
+      facture, pour une chose qui se coche et se décoche.</p>
+      <p>Ça ne veut pas dire qu'il faut les enlever : une référence est souvent ce qui fait revenir
+      la bonne image, et une image ratée coûte cent pour cent. Ça veut dire que <strong>le prix de
+      chaque image jointe doit être écrit à côté de sa case</strong>, sur l'écran de confirmation —
+      là où on la coche. Aujourd'hui cet écran montre un prix total ; il peut montrer d'où il
+      vient.</p>
+      <p class="sourd">À reporter dans 08bis-ecran-de-confirmation.html — voir le § 08.</p>
+    </div>
+
+    <h4>2 · L'argent ne se perd pas, il se répète</h4>
+    <p>Le 29 août, entre <span class="m">09 h 41</span> et <span class="m">10 h 13</span> :
+    <strong>six appels sur le même personnage</strong>, à <span class="m">$0,0160</span> chacun.
+    <span class="m ep">$0,0960</span> en trente-deux minutes, soit <strong>27 % de tout ce que
+    l'atelier a dépensé depuis le premier jour</strong>.</p>
+    <p>Les six images ont été gardées. <strong>Aucun écran ne signale quoi que ce soit</strong>, et
+    il n'y a rien à signaler : refaire une image jusqu'à ce qu'elle convienne est le travail normal.
+    Mais on ne peut le savoir qu'en voyant les six lignes l'une sous l'autre — et c'est la seule
+    chose que cet écran ajoute vraiment.</p>
+    <p>D'où le seul ornement de la liste : <strong>un trait doré à gauche relie les appels
+    consécutifs sur un même sujet</strong>. Il ne juge pas, il groupe. Et le panneau de droite dit,
+    pour l'appel choisi, le rang de la demande et le total dépensé sur ce sujet.</p>
+
+    <div class="note gris">
+      <span class="lab">Ce que ça éclaire ailleurs</span>
+      <p>Cette rafale est exactement le geste que la question ouverte n° 1 du sommaire décrit —
+      <em class="it">faut-il remontrer l'écran de confirmation quand on relance à l'identique ?</em>
+      Elle ne la tranche pas, mais elle la chiffre : <strong>six relances d'affilée, quatre en onze
+      minutes</strong>. Une case à cocher qui saute l'écran de confirmation « pour cette série »
+      aurait servi quatre fois ce matin-là.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 08 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>D'où l'écran s'ouvre, et ce qu'il remplace</h2></div>
+
+    <p class="intro">Deux portes, et elles sont toutes les deux des chiffres qu'on clique. Un montant
+    affiché est une question posée ; l'écran est la réponse.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:28%">D'où l'on vient</th><th>Ce qu'on cherchait, et sur quoi l'écran s'ouvre</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Le total, dans la barre du haut</td>
+          <td>« ce jeu m'a coûté <span class="m">$0,2743</span> — en quoi ? » L'écran s'ouvre sur ce jeu, période complète.</td></tr>
+        <tr><td class="k">La colonne de gauche de la galerie</td>
+          <td>Le bloc du journal <b>devient un lien</b> : il ne liste plus les ratés, il dit en une ligne ce que le jeu a dépensé et ouvre ici. Il perd sa liste, il garde sa place — et il cesse d'être vide.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce qu'il remplace, exactement</span>
+      <p><strong>Le journal des appels ratés quitte la galerie.</strong> Il y était pour expliquer
+      une facture, et il ne montrait qu'un cas sur trois — celui qui, mesuré, n'a jamais rien coûté.
+      Sa raison d'être reste vraie et elle est mieux servie ici : <em class="it">on lit ce que le jeu
+      a produit, et à côté ce qu'il a coûté</em>. La galerie garde le lien, l'écran garde la
+      liste.</p>
+      <p><strong>Rien d'autre ne bouge.</strong> Le prix sous chaque vignette de la galerie reste, le
+      prix du bouton qui paie reste, le plafond de la séance dans les réglages reste. Cet écran
+      n'est le seul endroit de rien — il est le seul endroit où <b>tout</b> est ensemble.</p>
+    </div>
+
+    <h4>Ce qu'il ne fait jamais</h4>
+    <p><strong>Il ne dépense pas, il ne relance pas, il n'efface pas.</strong> Pas de bouton
+    <em class="it">refaire cet appel</em> : la règle du produit dit qu'il n'existe que deux endroits
+    d'où l'on paie, l'établi et le codex, et un écran qui regarde en arrière n'en devient pas un
+    troisième. Pas de suppression non plus — effacer une dépense est exactement ce qu'un journal ne
+    doit pas permettre.</p>
+    <p>Le pied de l'écran l'écrit, comme la galerie écrit
+    <span class="m">aucun appel ne part d'ici</span> : <span class="m">rien ne se paie ni ne s'efface
+    depuis cet écran</span>.</p>
+  </section>
+
+
+  <!-- ══ 09 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce qui déborde — à reporter ailleurs</h2></div>
+
+    <table class="t">
+      <thead><tr><th style="width:28%">Où ça va</th><th>Ce qui est reporté</th></tr></thead>
+      <tbody>
+        <tr><td class="k">L'écran de confirmation<br><span class="sourd">08bis-ecran-de-confirmation.html</span></td>
+          <td><b>Le prix de chaque image de référence, écrit à côté de sa case.</b> Mesuré ici : une
+          référence jointe double le prix de l'appel, deux le quadruplent, et 48 % de la facture du
+          modèle principal vient de là. L'écran affiche déjà un prix total — il peut dire d'où il
+          vient, sur la ligne où l'on coche.</td></tr>
+        <tr><td class="k">La galerie<br><span class="sourd">04-galerie.html § 06</span></td>
+          <td><b>Le journal des appels ratés est remplacé par un lien.</b> Le bloc garde sa place en
+          bas de la colonne de gauche, dit en une ligne ce que le jeu a dépensé, et ouvre cet
+          écran. Sa justification écrite au § 06 reste vraie mot pour mot — elle est simplement
+          mieux servie.</td></tr>
+        <tr><td class="k">Le châssis<br><span class="sourd">03-chassis-des-tables.html</span></td>
+          <td><b>Le total de la barre du haut gagne son étiquette</b> — <span class="m">ce jeu</span>
+          — et devient cliquable. Deux mots et un lien.</td></tr>
+        <tr><td class="k">La fenêtre des réglages<br><span class="sourd">gardée telle quelle</span></td>
+          <td><b>Une étiquette à corriger.</b> Son <em class="it">dépensé</em> ne compte que l'agent :
+          il doit s'appeler <span class="m">dépensé par l'agent</span>. C'est du code, pas du dessin,
+          et c'est la correction la moins chère du dossier.</td></tr>
+        <tr><td class="k">La planche d'une pose<br><span class="sourd">08-planche-de-pose.html § 10</span></td>
+          <td><b>Sa question est répondue.</b> Elle demandait ce que devient une planche ratée, dont
+          la trace disparaît avec elle : elle devient une ligne au carré creux, ici, avec son
+          montant. « À trancher là où les dépenses se lisent » — c'est ici.</td></tr>
+        <tr><td class="k">Le document du produit<br><span class="sourd">docs/PRD.md</span></td>
+          <td>Deux choses : <b>l'écran lui-même</b>, et la règle <b>une dépense ne s'efface
+          jamais</b> — une image supprimée fait changer l'état de son appel, jamais disparaître sa
+          ligne.</td></tr>
+        <tr><td class="k">Le dépôt</td>
+          <td>Le prix par nombre de références n'est mesuré que sur <b>24 images d'un seul
+          modèle</b>. Trois appels à deux références, c'est peu. À revérifier quand le compte aura
+          doublé — la mesure est gratuite, elle relit la base.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Ce que cette maquette ne tranche pas</h4>
+    <div class="note gris">
+      <span class="lab">Deux questions laissées ouvertes</span>
+      <ul>
+        <li><b>Que devient la liste au bout de mille appels ?</b> Vingt-huit tiennent dans un écran.
+        À deux cents par mois, la période à sept jours devient le vrai défaut et le reste se cherche.
+        Rien n'est cassé, mais la forme n'a été éprouvée que sur trois jours — <b>à revoir quand la
+        base aura grossi</b>, pas avant.</li>
+        <li><b>Faut-il un total par chose du jeu ?</b> La liste dit déjà, pour l'appel choisi, ce
+        qu'on a dépensé sur ce sujet. Un classement complet — <em class="it">balthazar m'a coûté
+        tant</em> — serait utile le jour où le jeu aura trente personnages. Il appartiendrait plutôt
+        au codex, qui est l'endroit où les choses du jeu s'affichent, et il n'y a rien à décider
+        avant d'avoir trente personnages.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══ 10 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">10</span><h2>Les mesures de l'écran</h2></div>
+
+    <p class="intro">Aucune n'est neuve. Toutes viennent d'un écran déjà dessiné, et aucune couleur
+    ni aucune marque n'entre dans le produit.</p>
+
+    <table class="t">
+      <thead><tr><th style="width:16%">Mesure</th><th style="width:30%">Ce que c'est</th><th>D'où elle vient</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">44 px</span></td><td>La barre de tête</td><td>Le châssis, inchangée partout.</td></tr>
+        <tr><td class="k"><span class="m">240 px</span></td><td>Les totaux et les filtres, à gauche</td><td>La colonne de gauche du codex, de la galerie et de la fiche.</td></tr>
+        <tr><td class="k"><span class="m">380 px</span></td><td>L'appel choisi, à droite</td><td>La colonne de droite du codex et de la galerie.</td></tr>
+        <tr><td class="k"><span class="m">38 px</span></td><td>La barre des filtres, au-dessus de la liste</td><td>La barre d'outils de la galerie.</td></tr>
+        <tr><td class="k"><span class="m">38 px</span></td><td>Une vignette d'image</td><td>La vignette de référence de la fiche et du codex. La barre d'espace la montre en grand, comme partout.</td></tr>
+        <tr><td class="k"><span class="m">30 px</span></td><td>Le titre de la colonne de droite</td><td>Le titre du panneau de droite du codex.</td></tr>
+        <tr><td class="k"><span class="m">26 px</span></td><td>Le pied · une entrée de filtre · le champ de recherche</td><td>Le châssis, et la rangée d'arbre.</td></tr>
+        <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne d'appel</td><td>Le rang de la barre de tables. La liste est dense parce qu'on la parcourt.</td></tr>
+        <tr><td class="k"><span class="m">9 px</span></td><td>La marque d'état, en tête de ligne</td><td>Le carré de la barre de tables, et celui du codex.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note mes" style="margin-top:22px">
+      <span class="lab">Trois marques, et elles existent déjà toutes les trois</span>
+      <p><strong>Le carré plein, le carré creux, le trait.</strong> Ce sont les trois marques que la
+      barre des tables emploie depuis la première tranche pour dire <em class="it">prise</em>,
+      <em class="it">attendue</em>, <em class="it">pas réclamée</em>. Ici elles disent
+      <em class="it">gardé</em>, <em class="it">payé pour rien</em>, <em class="it">refusé</em> — le
+      même rapport : ce qui est plein a abouti, ce qui est creux attend ou manque, le trait n'a rien
+      donné.</p>
+      <p>Le carré creux est en doré, la couleur d'écart du produit, et le trait en gris. <strong>Les
+      trois glyphes du produit restent trois</strong> — <code>+</code>, le triangle plein,
+      <code>×</code> — et cet écran n'en introduit aucun.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce que ça coûte à construire</span>
+      <p><strong>Rien dans le modèle des objets.</strong> Chaque appel garde déjà son coût, son
+      modèle, son heure, son jeu, sa provenance et sa raison d'échec ; l'adresse qui les lit existe
+      et rend les ratés avec le reste. Le lien entre un appel et l'image qu'il a produite existe
+      aussi, avec la date de suppression — <strong>c'est lui qui donne les trois états du § 04, sans
+      rien ajouter</strong>.</p>
+      <p>Ce qui manque est côté écran seulement : les totaux par jeu et par modèle, et le groupement
+      par jour. Trois sommes sur une liste déjà chargée.</p>
+    </div>
+  </section>
+
+  <!-- ══ 11 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">11</span><h2>Ce que cet écran doit au guide</h2></div>
+    <div class="note att">
+      <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
+      <p><strong>Un écran fait pour répondre à « où est passé l'argent ? » a besoin qu'on dise
+        comment le lire.</strong> C'est le seul du produit dont le contenu est entièrement chiffré, et
+        un chiffre mal lu vaut moins que pas de chiffre.</p>
+      <p style="margin-top:10px"><b>nom</b> · Les dépenses<br>
+        <b>quoi</b> · La liste de tous les appels payés, du plus récent au plus ancien, chacun avec sa
+        date, son sujet, son modèle et son montant réel — les réussis, les ratés et les interrompus.<br>
+        <b>ce que ça change</b> · Rien du tout : on ne règle rien ici, on lit. Une image supprimée fait
+        changer l'état de son appel, jamais disparaître sa ligne — <b>une dépense ne s'efface
+        jamais</b>.<br>
+        <b>d'où ça vient</b> · l'atelier, à chaque appel · rien à remplir<br>
+        <b>où ça se range</b> · <span class="mesure">Les réglages de l'atelier</span> — l'argent
+        n'appartient à aucun jeu en particulier</p>
+      <p style="margin-top:10px" class="sourd"><b>Et les deux totaux se distinguent</b> : celui de la
+        barre du haut compte le jeu ouvert, celui d'ici compte l'atelier depuis le premier jour. C'est
+        exactement la confusion que les étiquettes <span class="mesure">ce jeu</span> et
+        <span class="mesure">dépensé par l'agent</span> ont été ajoutées pour lever — le guide doit la
+        lever aussi.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · maquette 30, les dépenses · 30 août 2026 · premier fichier du rang 30,
+    « ce qui entoure la fabrication »<br>
+    Mesures prises sur la base du dépôt — 28 appels, 53 images, du 27 au 29 août 2026 ·
+    rejouables, et gratuites : elles relisent ce qui est déjà écrit<br>
+    Remplace le journal des appels ratés de 04-galerie § 06 ·
+    rien n'est encore écrit dans les documents d'autorité
+  </footer>
+
+</div>
+</body>
+</html>

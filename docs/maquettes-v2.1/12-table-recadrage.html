@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, table Recadrage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600;white-space:nowrap}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair)}
+  .m.eg{color:var(--epingle)}
+  .m.no{color:var(--texte-3)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:26px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:5px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  /* ── la colonne, à 308 px ─────────────────────────────────────────────── */
+  .banc{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .colonne{width:308px;flex:none;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-0);display:flex;flex-direction:column}
+  .chassispart{opacity:.55}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .cgcorps{padding:11px;display:flex;flex-direction:column;gap:13px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--texte-3)}
+  .bloc{display:flex;flex-direction:column;gap:6px}
+  .segs{display:flex;gap:4px}
+  .sg{height:23px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-size:11px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.mono{font-family:var(--mono);font-size:10px}
+  .rg-reg{display:flex;align-items:center;gap:8px;height:22px}
+  .rg-reg .lb{font-size:11px;color:var(--texte-2);width:52px;flex:none}
+  .rail{flex:1;height:1px;background:var(--bord-fort);position:relative}
+  .rail i{position:absolute;top:-4px;width:9px;height:9px;background:var(--signal);border-radius:9999px}
+  .rg-reg .vl{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:44px;text-align:right}
+  /* le grisé porte sa raison — même forme, réglage par réglage */
+  .rg-reg.hs .lb{color:var(--texte-3)}
+  .rg-reg.hs .rail{background:var(--bord)}
+  .rg-reg.hs .rail i{background:var(--bord-fort)}
+  .rg-reg.hs .vl{color:var(--texte-3)}
+  .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.5}
+  .raison a{color:var(--signal);text-decoration:none}
+  .prov{font-family:var(--mono);font-size:9.5px;color:var(--epingle);line-height:1.5}
+  .etatcouche{border-top:1px solid var(--bord);padding:9px 11px;
+    display:flex;align-items:center;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .etatcouche .dr{margin-left:auto;color:var(--texte-2)}
+
+  .annot{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px}
+  .an{display:flex;gap:11px;align-items:flex-start}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px;white-space:nowrap}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.5}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.chassis .k{color:var(--texte-3)}
+  .an.att .k{color:var(--epingle)}
+
+  /* ── le cadre de l'image, et la boîte tracée ──────────────────────────── */
+  .cadre{overflow-x:auto}
+  .toile{border:1px solid var(--bord);border-radius:2px;position:relative;height:300px;
+    min-width:420px;max-width:560px;overflow:hidden;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .sil{position:absolute;background:var(--fond-3);border:1px solid var(--bord-fort)}
+  .jete{position:absolute;background:rgba(11,13,16,.78)}
+  .rect{position:absolute;border:1px solid var(--signal);background:rgba(73,179,206,.05)}
+  .rect.sel{border-color:var(--lumiere);background:rgba(234,244,248,.04)}
+  .rect .p{position:absolute;width:5px;height:5px;background:var(--lumiere)}
+  .liseret{position:absolute;border:1px dashed var(--bord-fort);pointer-events:none}
+  .et{position:absolute;font-family:var(--mono);font-size:9px;color:var(--texte-3);white-space:nowrap}
+  .mesrow{margin-top:9px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .mesrow .av{color:var(--signal)}
+  .mesrow .hp{color:var(--epingle)}
+
+  /* ── les trois cas de la boîte ────────────────────────────────────────── */
+  .trois{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .cas{background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;overflow:hidden}
+  .cas .pt{height:26px;display:flex;align-items:center;gap:7px;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-size:12px;color:var(--texte)}
+  .cas .pv{height:132px;position:relative;display:flex;align-items:center;justify-content:center;
+    background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+  .cas .pd{padding:10px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.45;
+    border-top:1px solid var(--bord)}
+  .cas .pm{padding:0 11px 11px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .cas .pm b{color:var(--epingle);font-weight:400}
+  .cas .pm i{color:var(--ok);font-style:normal}
+
+  .lgd{margin-top:10px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.6}
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · V2.1 · table 12 — recadrage</div>
+    <h1>Recadrage —<br><em>ce qu'on garde de l'image</em></h1>
+    <p>Cette maquette ne montre que <strong>le contenu du wrapper</strong>. La barre de tables, le fil
+      d'Ariane, le cadre et le comparateur sont définis dans
+      <span class="mesure">03-chassis-des-tables.html</span> et ne sont pas redessinés ici.</p>
+    <p>C'est la plus petite table du lot, et celle qui a demandé le plus de vérification.
+      <strong>Telle qu'elle est écrite aujourd'hui, elle ne change rien à l'image dans le cas
+      normal</strong> — un sujet détouré, remis sur grille. Ce n'est pas une impression : c'est mesuré, et
+      le § 02 donne les chiffres.</p>
+  </div>
+
+  <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que la table fait, et sa place dans l'ordre</h2></div>
+    <p class="intro">Elle rogne l'image sur <strong>la boîte du sujet</strong> — le plus petit rectangle qui
+      contient tout ce qui n'est pas transparent — en gardant une marge autour. Le cas est celui d'un modèle
+      qui rend un personnage étroit au milieu d'une image carrée de 1024 : les trois quarts du fichier ne
+      contiennent rien.</p>
+
+    <div class="note">
+      <span class="lab">La panne qu'elle évite</span>
+      <p><strong>La table suivante mesure l'occupation du sujet dans sa case.</strong> Sur une image non
+        recadrée, elle la mesurerait sur du vide : un personnage qui remplit 30 % de son image d'origine
+        entrerait à 30 % de sa case, et un autre cadré plus serré entrerait à 80 %. Les deux ressortiraient à
+        deux échelles différentes, dans le même jeu.</p>
+      <p>Recadrer d'abord, c'est <strong>ramener tous les sujets à la même convention</strong> — le sujet
+        touche les bords de son image — pour que la mise à l'échelle qui suit ait quelque chose de comparable
+        à mesurer.</p>
+    </div>
+
+    <table style="margin-top:22px">
+      <thead><tr><th style="width:26%">Sa place</th><th>Pourquoi là</th></tr></thead>
+      <tbody>
+        <tr><td class="k">après détourage</td>
+          <td>La boîte du sujet se lit dans l'alpha. Sans alpha il n'y a pas de sujet, seulement un rectangle
+            de pixels — et rien à cadrer. C'est écrit dans le domaine :
+            <em>rien ne peut se recadrer avant</em>.</td></tr>
+        <tr><td class="k">avant grille</td>
+          <td>Pour la raison ci-dessus. <strong>Et c'est très exactement là que la mesure du § 02
+            mord</strong> : la grille, quand elle pose une case, refait ce travail pour son compte.</td></tr>
+      </tbody>
+    </table>
+
+    <p class="intro" style="margin-top:16px">C'est <strong>la deuxième place de la recette</strong>, et la
+      seule qui soit posée dès la naissance de l'asset sans avoir la moindre valeur à régler : le projet
+      l'écrit dans la recette de tout ce qui a une silhouette, marge à zéro.</p>
+  </section>
+
+  <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Ce qu'elle fait aujourd'hui — mesuré le 30 août 2026</h2></div>
+    <p class="intro">Le sommaire annonçait cette table comme <em>« un curseur, une case »</em>. Avant de la
+      dessiner, j'ai fait tourner le curseur pour voir ce qu'il change. Il ne change rien.</p>
+
+    <div class="note att">
+      <span class="lab">La mesure</span>
+      <h3>La marge ne survit pas à la grille</h3>
+      <p>Une image de 200 × 200, un sujet opaque de 40 × 60, une recette avec une passe de détourage et une
+        grille de 64 px. On fait varier la seule marge et on compare les fichiers qui sortent.</p>
+      <table style="margin-top:14px">
+        <thead><tr><th style="width:34%">La recette</th><th style="width:30%">Marge</th><th>Ce qui sort</th></tr></thead>
+        <tbody>
+          <tr><td class="k">grille 64 posée<br><span class="sourd" style="font-weight:400">le cas normal</span></td>
+            <td><span class="m">0 · 4 · 16 · 40</span></td>
+            <td><span class="m eg">64 × 64 — le même fichier à l'octet près dans les quatre cas.</span>
+              <br>Le PNG a la même empreinte <span class="mesure">ee74a794c90d</span> à marge 0 et à marge 40.
+              <strong>La marge n'a aucun effet.</strong></td></tr>
+          <tr><td class="k">grille 64, occupation 80 %</td>
+            <td><span class="m">0 · 16</span></td>
+            <td><span class="m eg">64 × 64 — le même fichier.</span><br>L'occupation ne change rien à la
+              conclusion.</td></tr>
+          <tr><td class="k">aucune grille</td>
+            <td><span class="m">0 · 4 · 16 · 40</span></td>
+            <td><span class="m">40 × 60 · 48 × 68 · 72 × 92 · 120 × 140</span><br><strong>Là, elle
+              agit.</strong></td></tr>
+          <tr><td class="k">décor — aucune passe<br><span class="sourd" style="font-weight:400">la grille passe en homothétie</span></td>
+            <td><span class="m">0 · 16 · 40</span></td>
+            <td><span class="m">43 × 64 · 50 × 64 · 55 × 64</span><br><strong>Là aussi</strong> — mais un
+              décor n'a pas de recadrage dans sa recette de naissance.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="lab">Pourquoi</span>
+      <p>Le mécanisme tient en quatre étapes, et rien n'y est cassé — chaque étape fait ce qu'elle doit :</p>
+      <ol>
+        <li>Le recadrage rogne sur la boîte du sujet, et garde <em>n</em> pixels autour.</li>
+        <li>Ces <em>n</em> pixels sont transparents : le détourage vient de passer, tout ce qui entoure le
+          sujet a un alpha à zéro.</li>
+        <li>La grille, quand elle pose une case, <strong>cherche elle-même la boîte du sujet</strong> et rogne
+          dessus avant de mettre à l'échelle.</li>
+        <li>La bande transparente n'est dans aucune boîte du sujet. Elle disparaît.</li>
+      </ol>
+      <p style="margin-top:12px">La grille a raison de refaire ce calcul : c'est lui qui fait que deux images
+        d'un même personnage se superposent au lieu de flotter l'une par rapport à l'autre. Ce n'est donc pas
+        un défaut à réparer dans la grille — c'est un doublon à constater dans le recadrage.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Et le travail de la marge, quelqu'un le fait déjà</span>
+      <p>La marge existait pour <strong>donner de l'air autour du sujet</strong>, parce qu'un sujet collé aux
+        quatre bords de son image gêne l'export. Quand la grille est posée,
+        <strong>c'est l'occupation qui donne cet air</strong> : un sujet à 90 % d'occupation laisse 10 % de la
+        case autour de lui.</p>
+      <p>Et l'occupation le fait mieux, pour une raison qui se dit en une phrase : <strong>elle s'exprime en
+        part de la case, la marge s'exprime en pixels de l'image d'origine.</strong> Douze pixels de marge ne
+        veulent pas dire la même chose sur une image de 512 et sur une image de 2048 ; 10 % de la case veulent
+        dire la même chose partout.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce qu'on n'a pas fait — retirer la place</span>
+      <p>C'était l'option franche : six places au lieu de sept. Elle est écartée pour deux raisons, et la
+        seconde est celle qui décide.</p>
+      <ul>
+        <li><b>La marge agit quand il n'y a pas de grille.</b> Un projet sans taille de pixel déclarée n'a pas
+          de grille du tout — c'est un état prévu et documenté, pas un accident — et le recadrage y est la
+          seule chose qui cadre.</li>
+        <li><b>La place a un second réglage, qui n'a jamais eu d'écran.</b> La recette porte, à côté de la
+          marge, <strong>une boîte explicite</strong> : quatre coordonnées qui remplacent la boîte du sujet.
+          Le traitement la lit et l'honore. <strong>Rien dans le produit ne l'écrit</strong> — l'écran actuel
+          la remet à vide à chaque cran du curseur de marge. C'est cette table qui lui donne enfin un
+          geste.</li>
+      </ul>
+      <p style="margin-top:12px">Le dépôt a déjà un mot pour un réglage déclaré que personne n'applique :
+        <em>un mensonge qui se réveille des mois plus tard</em>. Ici c'est le contraire et c'est aussi gênant
+        — un réglage appliqué que personne n'écrit. Les deux se règlent pareil : soit on lui donne un écran,
+        soit on le retire. On lui donne un écran.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Sa colonne, à sa vraie largeur</h2></div>
+    <p class="intro">Deux blocs, et c'est tout : <strong>ce qu'on garde</strong>, et <strong>la marge</strong>.
+      L'état dessiné est celui d'un personnage détouré, remis sur grille — le cas normal, donc celui où la
+      marge est grisée.</p>
+    <div class="banc">
+      <div class="colonne">
+        <div class="enpan chassispart">recadrage</div>
+        <div class="cgcorps">
+
+          <div class="bloc">
+            <span class="col-t">ce qu'on garde</span>
+            <div class="segs">
+              <span class="sg on">la boîte du sujet</span><span class="sg">une boîte tracée</span>
+            </div>
+            <div class="prov">mesurée sur l'alpha · 356, 0 → 667, 823</div>
+            <div class="raison">312 × 824 · 76 % de l'image d'origine est jeté</div>
+          </div>
+
+          <div class="bloc">
+            <div class="rg-reg hs"><span class="lb">marge</span>
+              <span class="rail"><i style="left:0%"></i></span><span class="vl">0 px</span></div>
+            <div class="raison">— la grille est posée : c'est l'occupation qui donne l'air autour
+              du sujet — <a href="#">occupation ›</a></div>
+          </div>
+
+          <div class="bloc">
+            <span class="col-t">ce que la table dit</span>
+            <div class="raison">le sujet touche le bord haut de l'image d'origine</div>
+            <div class="raison" style="color:var(--epingle)">le modèle l'a peint contre le bord ; ce qui
+              manque ne se retrouve pas ici</div>
+          </div>
+
+        </div>
+        <div class="etatcouche chassispart"><span>la boîte du sujet · marge 0</span>
+          <span class="dr">Sans recadrage ›</span></div>
+      </div>
+
+      <div class="annot">
+        <div class="an"><span class="k">01</span><span class="t"><b>Deux valeurs, pas une case à
+          cocher.</b> <span class="mesure">la boîte du sujet</span> est le calcul — le rectangle est remesuré
+          à chaque fois que le détourage change. <span class="mesure">une boîte tracée</span> est un rectangle
+          qu'on a posé soi-même sur l'image, et qui ne bouge plus. La deuxième valeur ne se choisit pas dans
+          la colonne : <b>on trace, et le segment bascule</b> (§ 05). <b>Le premier segment est le clic qui
+          défait</b> — le revenir jette le rectangle et rend le calcul, ce qui est la deuxième moitié de la
+          règle du dossier : <em>prérempli avec sa provenance, et se défait d'un clic</em>.</span></div>
+        <div class="an"><span class="k">02</span><span class="t"><b>Les coordonnées sont écrites, en
+          <span class="mesure">--epingle</span>, avec leur provenance.</b>
+          <span class="mesure">mesurée sur l'alpha</span> dit que ce n'est pas un réglage qu'on a posé : c'est
+          un constat. C'est la règle du dossier — <em>ce qui est devinable est prérempli avec sa
+          provenance</em> — appliquée à un rectangle plutôt qu'à une couleur.</span></div>
+        <div class="an"><span class="k">03</span><span class="t"><b>Le pourcentage jeté est la mesure utile
+          de cette table.</b> <span class="mesure">76 %</span> dit d'un coup quelle part du fichier ne
+          contient pas le sujet. Ce n'est pas un reproche — c'est ce qui explique qu'un sprite paraisse flou
+          après la grille, et c'est la seule table qui soit en position de le dire.</span></div>
+        <div class="an att"><span class="k">04</span><span class="t"><b>La marge est grisée avec sa
+          raison</b>, exactement comme un bouton indisponible : tiret de 8 px, mono 10 px,
+          <span class="mesure">--texte-3</span>, et un lien en <span class="mesure">--signal</span> vers
+          l'endroit où aller. Le produit a déjà ce motif pour un contrôle entier ; <b>c'est la première fois
+          qu'un seul réglage d'une table le porte</b>, et c'est justifié : le réglage n'est pas absent, il est
+          sans effet ici.</span></div>
+        <div class="an"><span class="k">05</span><span class="t"><b>La marge se dégrise toute seule</b> quand
+          la grille est vidée, ou quand le projet n'a pas de taille de pixel. Rien à cocher : la table lit
+          l'état de la recette, comme les tables grisées lisent l'état de l'image.</span></div>
+        <div class="an att"><span class="k">06</span><span class="t"><b>Le troisième bloc n'a aucun
+          réglage</b> — il ne porte que ce que la table a vu. Ici : le sujet touche le bord haut de l'image
+          d'origine, ce qui veut dire que <b>le modèle l'a peint coupé</b>. Aucune autre table ne mesure ça, et
+          on préfère l'apprendre avant d'avoir bâti quatre poses dessus.</span></div>
+        <div class="an chassis"><span class="k">châssis</span><span class="t">L'en-tête et le pied viennent
+          du wrapper. <span class="mesure">Sans recadrage ›</span> retire la place de la recette — ce qui,
+          dans le cas normal, ne change rien à l'image non plus, et c'est cohérent : une table qui n'agit pas
+          ne manque pas quand on la retire.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Ses réglages, un par un</h2></div>
+    <table>
+      <thead><tr><th style="width:16%">Réglage</th><th style="width:24%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
+      <tbody>
+        <tr><td class="k">ce qu'on garde</td>
+          <td><span class="m">la boîte du sujet · une boîte tracée</span><br>
+            <span class="sourd">défaut : la boîte du sujet</span></td>
+          <td><strong>la boîte du sujet</strong> est recalculée à chaque rendu : reprendre le détourage
+            déplace le cadrage, et c'est ce qu'on veut. <strong>une boîte tracée</strong> fige quatre
+            coordonnées dans l'image d'origine ; elle ne bouge plus, même si le détourage change.
+            <br><br>Coût nommé : <strong>une boîte tracée est un rectangle de cette image-là</strong>. Elle ne
+            veut rien dire sur une autre, et c'est pour ça qu'elle ne voyage pas (§ 08).</td></tr>
+        <tr><td class="k">marge</td>
+          <td><span class="m">0 – 64 px</span><br><span class="sourd">défaut : 0</span></td>
+          <td>Combien de pixels de l'image d'origine sont gardés autour de ce qu'on garde.
+            <strong>Grisée quand la grille est posée avec une case</strong>, parce qu'elle n'a alors aucun
+            effet — mesuré au § 02. Elle reste active pour un projet sans taille de pixel, et pour un décor.
+            <br><br>Coût nommé : <strong>elle est rognée sur les bords de l'image.</strong> Un sujet à 3 px du
+            haut et une marge de 12 donnent 12 px en bas et 3 en haut — mesuré : un sujet de 40 × 60 collé au
+            bord haut, marge 12, sort en <span class="m">64 × 72</span> et non 64 × 84. Le sujet n'est plus au
+            centre de son image, et rien ne le signale aujourd'hui à part la mesure du bord touché
+            (§ 06).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 05 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Ce qu'elle fait sur l'image</h2></div>
+    <p class="intro">Un rectangle qu'on trace — <strong>le même geste que la table découpage, à une
+      différence près : il n'y en a qu'un</strong>. Découpage trace pour fabriquer plusieurs images ;
+      recadrage trace pour dire ce qu'on garde de celle-ci. Le geste est identique, on ne l'apprend qu'une
+      fois.</p>
+    <p class="intro">Le cas dessiné est le plus courant : <strong>le modèle a peint une ombre portée sous le
+      personnage, et le détourage l'a gardée</strong> — c'est de la matière opaque, il n'avait aucune raison
+      de la retirer. Elle entre donc dans la boîte du sujet et tire le cadrage vers le bas. On trace une boîte
+      qui s'arrête au-dessus : l'ombre part avec le fond.</p>
+    <div class="banc">
+      <div style="flex:1;min-width:440px">
+        <div class="cadre"><div class="toile">
+          <span class="sil" style="left:150px;top:0;width:96px;height:214px"></span>
+          <span class="sil" style="left:140px;top:246px;width:116px;height:20px"></span>
+
+          <span class="jete" style="left:0;top:0;width:132px;height:222px"></span>
+          <span class="jete" style="left:270px;top:0;right:0;height:222px"></span>
+          <span class="jete" style="left:0;top:222px;right:0;bottom:0"></span>
+
+          <span class="liseret" style="left:120px;top:0;width:162px;height:234px"></span>
+          <span class="rect sel" style="left:132px;top:0;width:138px;height:222px">
+            <span class="p" style="left:-3px;top:-1px"></span><span class="p" style="right:-3px;top:-1px"></span>
+            <span class="p" style="left:-3px;bottom:-3px"></span><span class="p" style="right:-3px;bottom:-3px"></span>
+          </span>
+
+          <span class="et" style="left:278px;top:10px">340, 0 → 683, 739</span>
+          <span class="et" style="left:278px;top:26px">344 × 740</span>
+          <span class="et" style="left:294px;top:140px">jeté</span>
+          <span class="et" style="left:290px;top:250px;color:var(--epingle)">l'ombre est coupée</span>
+        </div></div>
+        <div class="mesrow"><span>1024 × 1024 · image/png</span>
+          <span class="av">344 × 740</span>
+          <span>76 % jeté</span>
+          <span class="hp">coupe le sujet · 84 px retirés en bas</span>
+          <span style="margin-left:auto">une boîte tracée · marge 12 px</span></div>
+      </div>
+      <div class="annot" style="max-width:420px">
+        <div class="an"><span class="k">le tracé</span><span class="t"><b>On appuie, on tire, on
+          relâche.</b> Le segment de la colonne bascule sur <span class="mesure">une boîte tracée</span> au
+          relâchement — on ne choisit pas un mode puis on dessine, on dessine et le mode
+          suit.</span></div>
+        <div class="an"><span class="k">un seul</span><span class="t"><b>Tracer un second rectangle remplace
+          le premier</b>, il ne s'ajoute pas. C'est la seule différence de comportement avec le découpage, et
+          elle se voit : l'ancien disparaît sous le curseur pendant qu'on tire le nouveau.</span></div>
+        <div class="an"><span class="k">le choisi</span><span class="t"><b>Anneau
+          <span class="mesure">--lumiere</span> et quatre poignées de coin</b> — la sélection du produit.
+          <span class="mesure">Suppr</span> rend la boîte du sujet, et le segment rebascule.</span></div>
+        <div class="an"><span class="k">le jeté</span><span class="t"><b>Ce qui part est assombri, pas
+          masqué.</b> L'ombre reste visible sous le voile, et c'est le but : on voit qu'on la coupe. Un masque
+          plein montrerait un joli cadrage et cacherait ce qu'on est en train de perdre — un bras, une lame,
+          une ombre qu'on voulait garder.</span></div>
+        <div class="an"><span class="k">la marge</span><span class="t"><b>Elle se voit en liseré tireté
+          <span class="mesure">--bord-fort</span></b> autour du rectangle, comme dans le découpage. Quand elle
+          est grisée — le cas normal, § 03 — le liseré n'est pas dessiné : il n'y a rien à
+          montrer.</span></div>
+        <div class="an att"><span class="k">le bord haut</span><span class="t"><b>Le liseré est collé au bord
+          en haut, et décalé sur les trois autres côtés.</b> C'est la marge rognée : le sujet touche déjà le
+          haut de l'image d'origine, il n'y a pas de pixel à garder au-dessus. Le dessin le dit sans phrase —
+          et la colonne ajoute la phrase, parce que la conséquence est ailleurs : <b>le modèle a peint le
+          sujet coupé</b>.</span></div>
+        <div class="an att"><span class="k">pas de repli</span><span class="t"><b>Aucune poignée de bord, pas
+          de saisie numérique des quatre coordonnées.</b> Le rectangle se retrace, il ne se règle pas au
+          pixel. Cette table cadre à la vue ; le pixel près, c'est <em>la main</em>, sept crans plus
+          loin.</span></div>
+      </div>
+    </div>
+
+    <div class="entete" style="margin-top:34px"><span class="num">05a</span><h2>Quand la boîte agit, et quand elle n'agit pas</h2></div>
+    <p class="intro">Les trois cas ont été mesurés le 30 août avec la grille posée. Le trait clair est la
+      boîte tracée ; la forme sombre est le sujet.</p>
+    <div class="trois">
+      <div class="cas">
+        <div class="pt">plus large que le sujet</div>
+        <div class="pv">
+          <span class="sil" style="left:calc(50% - 21px);top:34px;width:42px;height:64px"></span>
+          <span class="rect sel" style="left:calc(50% - 48px);top:16px;width:96px;height:100px"></span>
+        </div>
+        <div class="pd">La grille recherche la boîte du sujet et rogne dessus. Le surplus de la boîte est
+          transparent : il disparaît.</div>
+        <div class="pm">rendu <i>identique</i> à celui sans boîte</div>
+      </div>
+      <div class="cas">
+        <div class="pt">coupe le sujet</div>
+        <div class="pv">
+          <span class="sil" style="left:calc(50% - 21px);top:34px;width:42px;height:64px"></span>
+          <span class="rect sel" style="left:calc(50% - 29px);top:26px;width:58px;height:48px"></span>
+        </div>
+        <div class="pd">Une partie du sujet part avec le fond. La grille recadre sur ce qui reste et le remet
+          à l'échelle de la case.</div>
+        <div class="pm">rendu <b>différent</b> — c'est le seul cas où la boîte sert</div>
+      </div>
+      <div class="cas">
+        <div class="pt">à côté du sujet</div>
+        <div class="pv">
+          <span class="sil" style="left:calc(50% + 10px);top:34px;width:42px;height:64px"></span>
+          <span class="rect sel" style="left:calc(50% - 58px);top:24px;width:48px;height:44px"></span>
+        </div>
+        <div class="pd">Il ne reste rien d'opaque. Le produit rend l'image vide plutôt que de refuser le
+          geste — l'erreur se voit et se reprend.</div>
+        <div class="pm">rendu <b>vide</b>, aux dimensions de la boîte</div>
+      </div>
+    </div>
+    <div class="lgd">la conséquence à retenir : <strong style="color:var(--texte-2)">une boîte n'agit que
+      quand elle coupe le sujet</strong> — et c'est ce que la ligne sœur écrit, sous le rectangle, dès qu'on
+      le relâche</div>
+  </section>
+
+  <!-- ═══ 06 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ses mesures, et ce qu'elle propose</h2></div>
+    <table>
+      <thead><tr><th style="width:32%">Ce qu'elle écrit</th><th>Ce que ça dit, et ce que ça ne dit pas</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><span class="m">1024 × 1024 → 312 × 824</span></td>
+          <td>Les dimensions avant et après. Le chiffre et son jumeau : une taille seule ne dit pas ce qu'on
+            a enlevé.</td></tr>
+        <tr><td class="k"><span class="m">76 % jeté</span></td>
+          <td>La part de l'image d'origine qui ne contient pas le sujet. <strong>C'est la mesure la plus utile
+            de cette table</strong> : elle explique pourquoi un sprite paraît flou après la grille — un sujet
+            qui n'occupait que 24 % du fichier a peu de pixels à donner. Ce n'est pas un verdict sur le
+            modèle : une pose de saut occupe légitimement moins qu'une pose de repos.</td></tr>
+        <tr><td class="k"><span class="m">356, 0 → 667, 823</span></td>
+          <td>Les quatre coordonnées de ce qu'on garde, dans le repère de l'image d'origine. Écrites en
+            <span class="mesure">--epingle</span> quand elles sont mesurées, en
+            <span class="mesure">--texte-2</span> quand elles ont été tracées.</td></tr>
+        <tr><td class="k"><span class="m">le sujet touche le bord haut</span></td>
+          <td>Ne paraît que quand c'est vrai. Elle dit deux choses : <strong>le modèle a peint le sujet
+            coupé</strong>, et la marge vaudra zéro de ce côté-là. Aucune autre table ne le mesure. Elle ne
+            propose rien — il n'y a rien à faire ici, il faut regénérer.</td></tr>
+        <tr><td class="k"><span class="m">coupe le sujet · 84 px retirés en bas</span></td>
+          <td>Sous le rectangle, dès qu'on le relâche. Ou <span class="m no">plus large que le sujet · sans
+            effet sur le rendu</span>, qui est la phrase importante : elle évite de croire qu'on a réglé
+            quelque chose.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:22px">
+      <span class="lab">Ce qu'elle propose</span>
+      <p><strong>Une seule chose : la boîte du sujet, préremplie et marquée</strong>
+        <span class="mesure">mesurée sur l'alpha</span>. C'est la valeur par défaut et c'est le bon défaut —
+        elle est juste dans l'immense majorité des cas, et elle se défait en traçant.</p>
+      <p><strong>Elle ne propose pas de marge.</strong> Elle pourrait : proposer 4 px, ou 2 % du côté long.
+        Mais dans le cas normal la marge n'agit pas, et proposer une valeur sans effet serait suggérer un
+        réglage qui ne règle rien. Là où elle agit — pas de grille, ou décor — le bon nombre dépend de ce
+        qu'on fera de l'image, et le produit ne le sait pas.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Son indisponibilité</h2></div>
+    <div class="note att">
+      <span class="lab">Un seul cas — et c'est celui déjà dessiné dans le châssis</span>
+      <p><strong>Une image sans alpha n'a pas de boîte de sujet.</strong> Tout y est opaque : le plus petit
+        rectangle qui contient tout ce qui n'est pas transparent est l'image entière, et recadrer dessus ne
+        retirerait rien.</p>
+      <p>La table est donc grisée dans la barre — <em>pas de carré, nom en</em>
+        <span class="mesure">--texte-3</span> — et son wrapper porte la raison à la place des réglages :</p>
+      <p style="margin-top:10px"><span class="mesure" style="color:var(--texte-3)">— rien n'est transparent
+        sur cette image : il n'y a pas de silhouette à cadrer.</span><br>
+        <span class="mesure" style="color:var(--texte-2)">Détoure-la, et la table s'allumera d'elle-même —
+        comme « bords » et « contours », grisées pour la même raison.</span></p>
+      <p style="margin-top:12px"><strong>Ce wrapper est déjà dessiné</strong>, en entier, dans
+        <span class="mesure">03-chassis-des-tables.html § 05</span> : c'est le recadrage qui y sert d'exemple.
+        Il n'est pas redessiné ici — une seconde version divergerait à la première correction.</p>
+    </div>
+    <p class="intro" style="margin-top:16px">Une boîte tracée reste tracée pendant que la table est grisée.
+      Détourer l'image rallume la table et le rectangle est toujours là, à ses coordonnées : c'est un
+      rectangle de l'image d'origine, et l'image d'origine n'a pas bougé.</p>
+  </section>
+
+  <!-- ═══ 08 ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Trois choses que cette table décide au-delà d'elle-même</h2></div>
+
+    <div class="note">
+      <span class="lab">01 · Une boîte tracée ne part pas dans une recette nommée</span>
+      <p>Une recette nommée se réapplique ailleurs, et doit y donner le même résultat. <strong>Quatre
+        coordonnées ne veulent rien dire sur une autre image</strong> : posées sur une image plus petite,
+        elles tombent en partie hors du cadre ; posées sur un sujet cadré autrement, elles coupent
+        n'importe où.</p>
+      <p>Le dépôt a déjà tranché ce cas ailleurs, dans le même sens : <strong>quand une planche découpée
+        transmet sa recette à ses morceaux, la boîte explicite est retirée et la marge est
+        gardée</strong> — parce que la marge est un réglage et la boîte une coordonnée. On applique la même
+        règle ici, ce qui n'ajoute rien à comprendre.</p>
+      <p><strong>Coût nommé</strong> : quatre images d'une même pose qu'on veut cadrer pareil demandent quatre
+        tracés. C'est accepté — un rectangle appliqué à l'aveugle sur une autre image coûte plus cher que de
+        le retracer, parce qu'on ne voit pas tout de suite qu'il a coupé un bras.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">02 · Régler la marge n'efface plus la boîte</span>
+      <p>L'écran actuel réécrit la boîte à vide à chaque cran du curseur de marge. Comme rien n'écrit jamais
+        de boîte, ça ne se voyait pas. <strong>Dès que la table sait tracer, ça se verrait tout de suite</strong> :
+        on trace un cadrage, on ajuste la marge, le cadrage disparaît.</p>
+      <p>Les deux réglages sont indépendants et le restent. C'est une correction d'une ligne, mais elle doit
+        être écrite ici, sinon elle sera réintroduite au premier copier-coller de l'écran voisin.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">03 · Le carré de la barre dit ce qui agit, pas ce qui est présent</span>
+      <p>Le châssis donne quatre états à une table, et le carré plein veut dire <em>posée</em>. Le recadrage
+        est posé dès la naissance de tout asset qui a une silhouette. Son carré serait donc plein en
+        permanence, sur toutes les images du produit, <strong>pour une table qui ne change rien</strong>.</p>
+      <p>La règle se précise, et elle vaut pour toute la barre : <strong>le carré se remplit quand la place
+        change l'image, pas quand elle figure dans la recette.</strong> Un recadrage à la boîte du sujet avec
+        la marge grisée est <em>vide</em> — carré creux, aucune valeur en mono. Il se remplit quand une boîte
+        tracée coupe, ou quand une marge agit.</p>
+      <p>Elle ne concerne pas que cette table : <em>bords</em> avec une aire minimale à zéro ne retire rien
+        non plus. Un carré plein qui ne correspond à aucun changement de l'image est un carré qui ment, et la
+        barre ne vaut que si on peut la lire sans vérifier.</p>
+      <p class="sourd" style="margin-top:12px"><strong style="color:var(--texte-2)">Reporté dans
+        <span class="mesure">03-chassis-des-tables.html § 03</span></strong>, où les quatre états sont
+        définis — c'est là que la règle appartient, et elle n'est pas redite ailleurs.</p>
+    </div>
+  </section>
+
+  <footer>
+    Asset Kitchen — V2.1 · table 12, recadrage · 30 août 2026 · contenu du wrapper uniquement
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — V2.1, le guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.it{font-style:italic}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--signal-clair);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 4px}
+
+  section{margin:0 0 56px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:0 0 8px;line-height:1.15}
+
+  /* ── Croquis ────────────────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;
+    background:var(--fond-0);margin-bottom:10px}
+  .wf-barre{min-width:1000px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:14px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:17px;line-height:1}
+  .wf-sous{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center}
+  .bt-f{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);
+    font-family:var(--mono);font-size:10px;white-space:nowrap}
+  .wf-corps{min-width:1000px;display:flex}
+
+  /* colonne de gauche — le sommaire du guide */
+  .col{width:240px;flex:none;border-right:1px solid var(--bord);background:var(--fond-1);
+    padding:8px;display:flex;flex-direction:column;gap:1px}
+  .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);padding:13px 8px 6px;line-height:1.3}
+  .col-t:first-child{padding-top:4px}
+  .sec{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+    border-radius:2px;font-size:12.5px;color:var(--texte-2)}
+  .sec.on{background:var(--fond-2);color:var(--texte)}
+  .sec .cpt{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .sec .cpt.att{color:var(--epingle)}
+  .sepr{height:1px;background:var(--bord);margin:8px 4px}
+
+  /* zone de droite — la prose */
+  .zone{flex:1;min-width:0;padding:44px 48px 40px;position:relative}
+  .prose{max-width:504px;border-right:1px dashed var(--bord);padding-right:14px}
+  .p-t{font-family:var(--serif);font-size:32px;line-height:1.1;margin:0 0 14px}
+  .p-h{font-size:12.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--texte-3);margin:34px 0 12px}
+  .p-p{font-size:14px;line-height:1.65;color:var(--texte-2);margin:0 0 14px}
+  .p-p b{color:var(--texte);font-weight:600}
+  .cote-d{position:absolute;top:44px;right:24px;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);text-align:right;line-height:1.6;max-width:150px}
+
+  /* le croquis des deux rendus */
+  .duo{display:flex;gap:0;min-width:940px}
+  .duo>div{flex:1;min-width:0;padding:18px 20px}
+  .duo>div+div{border-left:1px solid var(--bord)}
+  .duo-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:14px}
+  .panneau{width:280px;background:var(--fond-1);border:1px solid var(--bord);border-radius:2px;
+    padding:10px}
+  .lig{height:30px;display:flex;align-items:center;justify-content:space-between;
+    font-size:11.5px;color:var(--texte-2)}
+  .pt{border-bottom:1px dotted var(--bord-fort);padding-bottom:1px}
+  .val{font-family:var(--mono);font-size:10.5px;color:var(--texte-3)}
+  .bulle{width:280px;margin-top:8px;background:var(--fond-2);border:1px solid var(--bord-fort);
+    border-radius:2px;padding:10px 11px}
+  .bulle .n{font-size:12.5px;font-weight:600;color:var(--texte);margin-bottom:5px}
+  .bulle .q{font-size:11.5px;color:var(--texte-2);line-height:1.5}
+  .bulle .c{font-size:11.5px;color:var(--texte-2);line-height:1.5;margin-top:5px}
+  .bulle .o{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:7px}
+  .bulle .l{font-size:11px;color:var(--signal);margin-top:9px}
+
+  /* ── Tableaux ───────────────────────────────────────────────────── */
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.45}
+  table.t td b{color:var(--texte);font-weight:600}
+  table.t td.k{color:var(--texte);font-weight:500}
+  table.t td.o{color:var(--texte)}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;
+    text-align:right;color:var(--texte)}
+  table.t td.num.z{color:var(--epingle)}
+  .m{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--texte);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 5px;
+    font-size:11px;white-space:nowrap}
+  .m.no{color:var(--texte-3)}
+  .m.ep{color:var(--epingle)}
+  .m.bon{color:var(--ok)}
+  .st{font-family:var(--mono);font-size:9.5px;border:1px solid var(--bord);border-radius:2px;
+    padding:2px 6px;white-space:nowrap}
+  .st.ok{color:var(--ok);border-color:rgba(95,168,113,.4)}
+  .st.att{color:var(--epingle);border-color:rgba(200,160,60,.4)}
+  .st.no{color:var(--texte-3)}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:9px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.mes{border-left-color:var(--ok)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.mes .lab{color:var(--ok)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:5px 0 5px 14px;position:relative;line-height:1.5}
+  .note li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+
+  .lgd{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;
+    color:var(--texte-3);margin-top:8px}
+  .lgd b{color:var(--texte-2);font-weight:400}
+
+  footer{border-top:1px solid var(--bord);margin-top:56px;padding-top:18px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · refonte de l'interface · V2.1 · rang 32</div>
+    <h1>Le guide —<br><em>le seul écran qui parle de tous les autres</em></h1>
+    <p>C'est la page qu'on ouvre quand on ne sait pas, et qu'on referme quand on sait. Elle
+    explique comment l'atelier marche, et ce que fait chaque réglage. <strong>Elle est la seule
+    prose du produit</strong> — partout ailleurs, on montre au lieu d'expliquer.</p>
+    <p>Elle vient en dernier du dossier, et ce n'est pas un hasard : <strong>c'est le seul écran
+    qui décrit tous les autres</strong>, donc le seul qui se périme à chaque décision prise
+    ailleurs. Vingt-quatre maquettes ont été écrites avant elle ; elle en récolte le solde.</p>
+    <p class="sourd">Les chiffres cités sont lus dans le dépôt le 30 août 2026 : l'écran qui
+    existe aujourd'hui et le recueil d'explications qu'il rend.</p>
+  </div>
+
+
+  <!-- ══ 01 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Le relevé — le guide fait visiter des pièces qui n'existent plus</h2></div>
+
+    <p class="intro">L'écran d'aujourd'hui fait le tour du produit en quatre noms :
+    <em class="it">Atelier, Univers, Découpe, Bibliothèque</em>. La V2.1 en a trois, qui ne
+    portent pas les mêmes noms. Voici, ligne à ligne, ce que le guide raconte et ce qui est vrai
+    depuis le 30 août.</p>
+
+    <table class="t">
+      <tr><th style="width:290px">Ce que le guide dit aujourd'hui</th><th>Ce qui est vrai depuis le 30 août</th></tr>
+
+      <tr><td class="o">« Tu écris ce que tu veux <b>dans le champ du haut</b> »</td>
+        <td>Le champ est <b>en bas</b>, et il n'existe qu'à deux endroits — l'établi d'une chose,
+        et le codex. La galerie a perdu le sien, et on a refusé d'en remettre un dans l'univers
+        (D31).</td></tr>
+
+      <tr><td class="o">« Le bloc <b>Ce qui part</b>, en bas du panneau de réglages, est en
+        lecture seule »</td>
+        <td>Cette bande dépliante disparaît : <b>l'écran de confirmation</b> montre désormais tout
+        ce qui part, ligne à ligne, avec un interrupteur sur chacune (D26). Report déjà inscrit au
+        chantier.</td></tr>
+
+      <tr><td class="o">« il va dans <b>le journal</b>, sous l'arbre, avec son coût »</td>
+        <td>Le journal des appels ratés est remplacé par <b>l'écran des dépenses</b>, qui montre
+        tous les appels et pas seulement le tiers qui a raté (D33).</td></tr>
+
+      <tr><td class="o"><b>Atelier</b> — « quatre colonnes… le prompt et la grille au milieu »</td>
+        <td>Il n'y a plus d'écran qui s'appelle l'Atelier. Ce qu'il faisait se fait sur
+        <b>l'établi</b> d'une chose du jeu, qui n'est pas un onglet mais une profondeur : on
+        y entre en cliquant un nom dans le codex.</td></tr>
+
+      <tr><td class="o"><b>Univers</b> — « c'est un écran et non un panneau »</td>
+        <td>Toujours vrai, mais incomplet : il a maintenant <b>trois côtés</b>, un seul allumé à la
+        fois — Inspiration, Réglages, Ambiances et couleurs (D1).</td></tr>
+
+      <tr><td class="o"><b>Découpe</b> — « elle s'ouvre depuis la fiche, <b>jamais depuis la barre
+        d'outils</b> »</td>
+        <td>Contredit : le découpage est <b>sur la barre des tables</b>, à droite du trait, comme
+        première des deux fabriques.</td></tr>
+
+      <tr><td class="o"><b>Bibliothèque</b> — « les projets et les collections, dans la colonne de
+        gauche »</td>
+        <td>Elle s'appelle <b>la galerie</b>, et son bloc d'argent devient un lien vers l'écran des
+        dépenses.</td></tr>
+
+      <tr><td class="o">« Une recette a <b>cinq places</b>, appliquées dans un ordre fixe —
+        détourage, recadrage, grille, quantification, bords »</td>
+        <td>La barre des tables de la V2.1 en montre <b>sept</b> : les contours et la main s'y sont
+        ajoutés, et chacune est une place qui se garde et se refait. La phrase est juste sur
+        l'atelier d'aujourd'hui, fausse sur celui qu'on dessine.</td></tr>
+    </table>
+
+    <div class="note mes" style="margin-top:18px">
+      <span class="lab">Mesuré — la péremption est moins grave qu'elle n'en a l'air</span>
+      <p>Le recueil d'explications compte <strong>63 entrées</strong> — une par réglage, avec ce
+      que c'est, ce que ça change, et d'où ça sort. On pouvait craindre qu'elles soient toutes à
+      reprendre. <strong>Elles ne le sont pas</strong> : <strong>six phrases en tout</strong> ont
+      vieilli. Une nomme <em class="it">« l'Atelier »</em>, deux disent
+      <em class="it">« l'écran Univers »</em> sans ses trois côtés, et trois comptent
+      <em class="it">cinq places</em> de recette là où la barre en montre sept.</p>
+      <p>La raison tient à une règle qui a bien tenu : <strong>une entrée décrit un réglage, pas
+      un écran</strong>. Ce qui fait un détourage ne change pas parce que la pièce a changé de nom.
+      <strong>Ce qui a vieilli, c'est le cadre du guide</strong> — son tour des lieux, ses titres,
+      et la façon dont les 63 entrées sont rangées. Pas leur contenu.</p>
+    </div>
+
+    <div class="note att">
+      <span class="lab">Et un trou bien plus large que la péremption</span>
+      <p><strong>Onze des vingt-quatre maquettes du dossier ne sont expliquées nulle part dans le
+      guide.</strong> Dix n'ont rien du tout — pas une explication vieillie, <em class="it">rien</em>
+      : le codex · la planche de poses · l'écran de confirmation · la vitrine · les contours · la
+      main · la superposition · le calibrage · les dépenses · le premier lancement. La onzième,
+      <strong>les ambiances et les couleurs</strong>, a deux lignes, et toutes les deux décrivent le
+      modèle abandonné le 30 août.</p>
+      <p>Le guide a bien une section pour ça, appelée <em class="it">« Ce qui n'est pas encore
+      écrit »</em>. <strong>Elle contient une ligne.</strong> Elle n'a jamais grandi parce que
+      personne ne la nourrit — c'est une liste tapée à la main, et rien ne rappelle de l'allonger
+      quand un écran naît. Le § 06 en fait un devoir de chaque maquette.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 02 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>L'écran, sa porte, et les trois règles qu'on ne touche pas</h2></div>
+
+    <p class="intro">La forme est bonne et reste telle quelle : une barre, un sommaire à gauche, la
+    prose à droite. Ce qui change est <strong>ce qu'il y a dans le sommaire</strong> — le reste de
+    cette maquette ne parle que de ça.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Guide</span>
+        <span class="wf-sous">comment marche l'atelier, et ce que fait chaque réglage</span>
+        <span class="wf-tard"><span class="bt-f">fermer · Échap</span></span>
+      </div>
+      <div class="wf-corps">
+        <div class="col">
+          <div class="col-t">Le geste</div>
+          <div class="sec">La boucle</div>
+          <div class="sec">Nommer</div>
+          <div class="sec">Écrire</div>
+          <div class="sec">Générer</div>
+          <div class="sec">Juger</div>
+          <div class="sec">Garder</div>
+
+          <div class="col-t">Les lieux</div>
+          <div class="sec">L'univers</div>
+          <div class="sec">Le codex</div>
+          <div class="sec">La galerie</div>
+          <div class="sec">L'établi</div>
+
+          <div class="col-t">Les réglages · dans l'univers</div>
+          <div class="sec on">Inspiration<span class="cpt">13</span></div>
+          <div class="sec">Réglages du jeu<span class="cpt">14</span></div>
+          <div class="sec">Ambiances et couleurs<span class="cpt">2</span></div>
+
+          <div class="col-t">Les réglages · ailleurs</div>
+          <div class="sec">Le codex<span class="cpt att">0</span></div>
+          <div class="sec">L'établi<span class="cpt">7</span></div>
+          <div class="sec">La galerie<span class="cpt">4</span></div>
+          <div class="sec">Les tables<span class="cpt">16</span></div>
+          <div class="sec">Les fabriques<span class="cpt">4</span></div>
+          <div class="sec">Les réglages de l'atelier<span class="cpt">3</span></div>
+
+          <div class="sepr"></div>
+          <div class="sec">Ce qui manque<span class="cpt att">11</span></div>
+        </div>
+
+        <div class="zone">
+          <div class="prose">
+            <div class="p-t">Inspiration</div>
+            <p class="p-p">Le tableau où l'on rassemble des images pour réfléchir au jeu, avant
+            d'en fabriquer une seule. Rien de ce qui est ici n'a été payé par l'atelier — ce sont
+            des images qu'on apporte.</p>
+            <div class="p-h">groupe</div>
+            <p class="p-p">Un nom libre pour ranger les cartes du tableau. Vide = hors groupe.</p>
+            <p class="p-p"><b>Rien à la génération.</b> C'est un rangement pour l'œil. Ce qui décide
+            des références envoyées, c'est <b>artwork officiel</b> + <b>famille</b>.</p>
+            <p class="p-p sourd" style="font-family:var(--mono);font-size:10px">toi · aucun
+            défaut</p>
+          </div>
+          <div class="cote-d">la prose s'arrête<br>à 504 px<br>— 74 signes —<br>et la place à
+          droite<br>reste vide</div>
+        </div>
+      </div>
+    </div>
+    <div class="lgd">
+      <span><b>44</b> la barre · <b>240</b> le sommaire · <b>26</b> une rangée</span>
+      <span><b>504 px</b> la prose, seule largeur maximale du produit</span>
+      <span><b>0</b> en jaune : un groupe vide dit son zéro</span>
+    </div>
+
+    <div class="note" style="margin-top:20px">
+      <span class="lab">Les trois règles qui restent, mot pour mot</span>
+      <ul>
+        <li><b>C'est un écran, pas un panneau.</b> Il couvre tout le reste. On l'ouvre quand on ne
+        sait pas, on le ferme quand on sait — et fermer ne fait rien perdre, puisqu'on n'a rien
+        quitté.</li>
+        <li><b>Il ne porte pas de bandeau d'erreur, et c'est voulu.</b> Les deux autres écrans qui
+        couvrent tout en portent un, parce qu'un refus arrivé pendant qu'ils sont ouverts serait
+        rendu derrière eux, invisible. Le guide ne demande rien au serveur, ne dépense rien, ne
+        peut pas échouer. <b>On ne pose pas un bandeau vide par symétrie.</b></li>
+        <li><b>Un seul texte, deux rendus.</b> Ce que le guide affiche à la file est exactement ce
+        que les bulles d'aide affichent une par une. Une explication recopiée dans deux fichiers
+        diverge en trois semaines, et c'est celle qui est sous les yeux au moment du doute qui sera
+        la fausse.</li>
+      </ul>
+    </div>
+
+    <div class="croquis" style="margin-top:14px">
+      <div class="duo">
+        <div>
+          <div class="duo-t">Dans un panneau — la bulle, trois lignes</div>
+          <div class="panneau">
+            <div class="lig"><span class="pt">groupe</span><span class="val">pierres</span></div>
+            <div class="lig"><span class="pt">famille</span><span class="val">décors</span></div>
+          </div>
+          <div class="bulle">
+            <div class="n">groupe</div>
+            <div class="q">Un nom libre pour ranger les cartes du tableau. Vide = hors groupe.</div>
+            <div class="c">Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des
+            références envoyées, c'est <b>artwork officiel</b> + <b>famille</b>.</div>
+            <div class="o">toi · aucun défaut</div>
+            <div class="l">Le guide ›</div>
+          </div>
+        </div>
+        <div>
+          <div class="duo-t">Dans le guide — la même chose, plus la version longue</div>
+          <div class="p-h" style="margin-top:0">groupe</div>
+          <p class="p-p">Un nom libre pour ranger les cartes du tableau. Vide = hors groupe.</p>
+          <p class="p-p">Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des
+          références envoyées, c'est <b>artwork officiel</b> + <b>famille</b>.</p>
+          <p class="p-p sourd" style="font-family:var(--mono);font-size:10px">toi · aucun défaut</p>
+          <p class="p-p">Un tableau d'inspiration monte vite à cent cartes, et le groupe est ce qui
+          te permet d'en retrouver douze. Il ne voyage nulle part : ni dans un texte envoyé à l'IA,
+          ni dans une image de référence, ni dans un export…</p>
+        </div>
+      </div>
+    </div>
+    <div class="lgd">
+      <span><b>le pointillé</b> sous un nom = il y a une explication</span>
+      <span><b>Le guide ›</b> ouvre l'écran directement sur ce réglage-là</span>
+      <span>un réglage sans explication n'a pas de pointillé, et rien ne casse</span>
+    </div>
+
+    <div class="note gris" style="margin-top:18px">
+      <span class="lab">Trois portes, et une qui compte plus que les autres</span>
+      <p><strong>Le bouton <em class="it">Guide</em> de la barre du haut</strong>, à droite,
+      séparé du reste par un trait — c'est le seul élément de cette barre qui parle de l'outil et
+      non du travail en cours. <strong>La touche <code>?</code></strong>, qui ne se déclenche pas
+      quand on est en train d'écrire dans un champ. Et <strong>le lien
+      <em class="it">« Le guide › »</em> au pied d'une bulle</strong>, qui ouvre l'écran
+      <em class="it">à la ligne du réglage qu'on survolait</em> — on ne retombe pas en haut d'une
+      page de soixante entrées.</p>
+      <p><strong>Ce qui est neuf, c'est le moment.</strong> Le guide est le seul écran du produit
+      qui marche entièrement quand il n'y a encore rien — pas de clé chez le fournisseur d'IA, pas
+      de jeu, pas une image. Les autres sont vides ou refusent. <strong>Et il est déjà là à la
+      seconde zéro</strong> : le croquis du tout premier lancement porte le bouton
+      <em class="it">Guide</em> dans sa barre, à côté de <em class="it">aucune clé</em>. Rien à
+      ajouter — juste à ne pas le perdre.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 03 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Le geste — un sixième temps entre en tête</h2></div>
+
+    <p class="intro">La première partie du guide raconte la boucle du produit en cinq temps. Il en
+    faut <strong>six</strong> : depuis le 30 août, <strong>nommer une chose est devenu le premier
+    geste</strong>, avant même d'écrire. C'est la conséquence directe de la décision D31, et c'est
+    le seul ajout de cette partie.</p>
+
+    <table class="t">
+      <tr><th style="width:120px">Le temps</th><th>Ce qu'il dit, et ce qui change</th></tr>
+
+      <tr><td class="k">La boucle</td>
+        <td>Tu nommes, tu écris, tu génères, tu regardes, tu gardes ce qui est bon.
+        <b>C'est toute l'application.</b> Le reste existe pour que cette boucle-là demande le moins
+        de décisions possible.<br><span class="sourd">Un mot en plus au début. Rien d'autre.</span></td></tr>
+
+      <tr><td class="k">Nommer<br><span class="st att">neuf</span></td>
+        <td><b>Écrire un nom crée la chose.</b> On tape <em class="it">un tonneau cerclé de
+        fer</em> dans le champ du codex : le tonneau entre dans la liste sur-le-champ, et son
+        établi s'ouvre. Ce n'est pas un champ de prompt — <b>on ne paie rien en nommant</b>. C'est
+        le geste que l'atelier connaît déjà pour les poses et les pièces d'équipement.<br>
+        <span class="sourd">Pourquoi ça devient un temps de la boucle : sur une machine neuve,
+        c'est le seul geste possible. Il n'y a pas d'établi tant qu'il n'y a pas de chose.
+        D31, D38.</span></td></tr>
+
+      <tr><td class="k">Écrire</td>
+        <td>Le champ ne demande que <b>le sujet</b>. Ni le style, ni les couleurs, ni le format :
+        ils sont déjà posés dans l'univers du jeu et partent tout seuls.<br>
+        <span class="sourd">Deux corrections : le champ est en pied, pas en haut ; et la phrase
+        sur le dépliant « ce qui part » est remplacée par un renvoi à l'écran de
+        confirmation.</span></td></tr>
+
+      <tr><td class="k">Générer</td>
+        <td>Le coût est écrit <b>avant</b> le clic, et <b>rien n'est jamais relancé tout seul</b> —
+        relancer est toujours ton geste, partout, sans exception. Les images paraissent aussitôt à
+        leur taille finale ; un échec atterrit là où le succès serait arrivé.<br>
+        <span class="sourd">Une correction : un écran de confirmation s'intercale, et c'est lui
+        qui montre tout ce qui part (D26). Le renvoi au journal des ratés devient un renvoi à
+        l'écran des dépenses (D33).</span></td></tr>
+
+      <tr><td class="k">Juger</td>
+        <td>La grille est une planche contact. Trois marques, et la hiérarchie est volontaire :
+        <b>ce que tu poses est une forme, ce que le système constate est un mot.</b> Le pointeur
+        sur une image + la barre d'espace, et elle emplit l'écran.<br>
+        <span class="sourd">Ce paragraphe se simplifie : la barre d'espace n'a plus de liste
+        d'endroits où elle marche, elle marche partout (D30).</span></td></tr>
+
+      <tr><td class="k">Garder</td>
+        <td>Le traitement est <b>non destructif</b> : l'image d'origine et la recette sont gardées,
+        le fichier fini n'est qu'un cache effaçable. Recalculer coûte des millisecondes ; regénérer
+        coûte de l'argent et ne rend jamais la même image.<br>
+        <span class="sourd">Une correction, la seule : la recette a <b>sept</b> places et non cinq
+        — les contours et la main s'y sont ajoutés. Ce qui suit ne bouge pas : l'ordre ne se
+        change pas, et trois places n'ont aucun sens avant celle qui les précède. Rien ne peut se
+        recadrer avant d'avoir un fond enlevé sur lequel trouver le sujet.</span></td></tr>
+    </table>
+  </section>
+
+
+  <!-- ══ 04 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Les lieux — quatre visites, dans l'ordre où on les rencontre</h2></div>
+
+    <p class="intro">La deuxième partie fait le tour du produit. Elle nommait quatre écrans dont
+    trois ont disparu ou changé de nom. <strong>Elle nomme désormais les quatre lieux de la barre,
+    dans leur ordre</strong> — et elle dit lequel n'est pas un onglet.</p>
+
+    <table class="t">
+      <tr><th style="width:120px">Le lieu</th><th style="width:88px">Ce que c'est</th><th>Ce que la visite doit dire</th></tr>
+
+      <tr><td class="k">L'univers</td><td><span class="st ok">un onglet</span></td>
+        <td>Ce qu'on pose <b>une fois</b> et qui s'applique ensuite tout seul. <b>Trois côtés, un
+        seul allumé à la fois, chacun plein écran</b> : <em class="it">Inspiration</em>, le tableau
+        d'images qu'on rassemble pour réfléchir ; <em class="it">Réglages</em>, les dix questions
+        qui disent ce qu'est ce jeu ; <em class="it">Ambiances et couleurs</em>, où se fabriquent
+        les palettes et les lots de style réutilisables.<br><span class="sourd">Le paragraphe
+        actuel est à moitié bon : il explique bien pourquoi c'est un écran et pas un panneau, il
+        ignore les trois côtés.</span></td></tr>
+
+      <tr><td class="k">Le codex</td><td><span class="st ok">un onglet</span></td>
+        <td><b>Aucun paragraphe n'existe.</b> C'est pourtant l'inventaire de ce que le monde
+        contient, rangé par famille — personnages, biomes, types d'objets, interface — avec ce que
+        chaque chose a déjà et ce qui lui manque. Et c'est <b>le seul endroit où l'on nomme</b>.
+        À écrire de zéro.</td></tr>
+
+      <tr><td class="k">La galerie</td><td><span class="st ok">un onglet</span></td>
+        <td>Toutes les images produites, toutes choses confondues. <b>C'est là qu'on juge et qu'on
+        range, et nulle part on n'y paie.</b><br><span class="sourd">Reprend le paragraphe
+        « Bibliothèque » : nouveau nom, et le bloc d'argent de la colonne devient un lien vers
+        l'écran des dépenses.</span></td></tr>
+
+      <tr><td class="k">L'établi</td><td><span class="st att">une profondeur</span></td>
+        <td>Une chose du jeu, ouverte : ce qu'elle est, ce qu'elle a déjà, et ce qu'on peut lui
+        ajouter. <b>On n'y arrive pas par la barre</b> — on clique un nom dans le codex, et le fil
+        qui dit où l'on est remplace le nom de l'onglet. C'est <b>l'un des deux seuls endroits d'où
+        l'argent part</b>.<br><span class="sourd">Reprend le paragraphe « Atelier », qui décrivait
+        déjà ce travail-là sous l'ancien nom et l'ancienne disposition.</span></td></tr>
+    </table>
+
+    <div class="note att" style="margin-top:18px">
+      <span class="lab">Ce qui sort de cette liste, et pourquoi</span>
+      <p><strong>La découpe n'est plus un lieu.</strong> Elle avait sa visite parce qu'elle était
+      un écran à elle seule. Elle est maintenant <strong>une table parmi les autres</strong>, à
+      droite du trait sur la barre des tables, comme première des deux fabriques. Sa visite
+      disparaît, et ses explications rejoignent le groupe des fabriques (§ 05).</p>
+      <p><strong>Les tables ne sont pas des lieux non plus</strong>, et n'en ont jamais eu.
+      Elles s'ouvrent sur une image, elles ne se visitent pas. Ce qu'il faut savoir d'elles — les
+      places d'une recette, dans un ordre qui ne se change pas — est déjà dit au temps
+      <em class="it">Garder</em> du § 03.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Le mot reste, l'écran s'en va</span>
+      <p><strong>« l'atelier » en minuscule désigne l'application entière</strong> — c'est son nom
+      dans tout le dépôt, et le sous-titre du guide le dit ainsi :
+      <em class="it">« comment marche l'atelier »</em>. <strong>« l'Atelier » en majuscule
+      désignait un écran</strong>, celui qui portait le prompt et la grille ; celui-là n'existe
+      plus. Le guide emploie les deux, et il faut garder le premier en corrigeant le second : ce
+      n'est pas la même chose qui est nommée.</p>
+    </div>
+  </section>
+
+
+  <!-- ══ 05 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Où se range chaque explication — la vraie décision de cette maquette</h2></div>
+
+    <p class="intro">Les 63 explications de réglages sont rangées en cinq groupes, et
+    <strong>trois de ces groupes portent le nom d'un écran qui n'existe plus</strong>. Il faut les
+    refaire. La règle qui les produit, elle, est bonne et ne change pas :</p>
+
+    <div class="note">
+      <span class="lab">La règle — un lieu, pas un thème</span>
+      <p><strong>Quand on cherche une explication, on se souvient d'où l'on était</strong>, pas de
+      quelle catégorie la chose relève. On range donc par endroit du produit, dans
+      <strong>l'ordre où on les rencontre</strong> : ce qu'on pose une fois, ce qu'on nomme, ce
+      qu'on fabrique, ce qu'on juge, ce qu'on retouche, et ce qu'on règle une fois pour toutes.</p>
+    </div>
+
+    <table class="t" style="margin-top:16px">
+      <tr><th style="width:200px">Le groupe</th><th style="width:56px">Entrées</th><th>Ce qu'il contient</th></tr>
+
+      <tr><td class="k">Inspiration<br><span class="sourd">dans l'univers</span></td>
+        <td class="num">13</td>
+        <td>Le tableau de références : ce qui fait une carte (groupe, famille, concept art de,
+        artwork officiel, note, provenance, taille), les liens qu'on tire entre elles, les notes
+        posées à côté, les îlots, et la bascule rangé / à la main.</td></tr>
+
+      <tr><td class="k">Réglages du jeu<br><span class="sourd">dans l'univers</span></td>
+        <td class="num">14</td>
+        <td>Les sept champs qui disent ce qu'est le jeu — monde, époque, technique de rendu, trait,
+        éclairage, vue et cadrage, contraintes techniques — plus leur bloc, la taille de pixel, le
+        barème d'échelles et ses trois réglages, et le modèle d'IA par famille.</td></tr>
+
+      <tr><td class="k">Ambiances et couleurs<br><span class="sourd">dans l'univers</span></td>
+        <td class="num">2</td>
+        <td>La palette, et le nombre de couleurs demandé. <b>Les deux sont à réécrire</b> : elles
+        décrivent le modèle d'avant, où il n'y avait qu'une palette sans nom attachée au projet
+        (D16, D25).</td></tr>
+
+      <tr><td class="k">Le codex</td><td class="num z">0</td>
+        <td>Rien. Le groupe paraît quand même, avec son zéro : <b>un vide se voit, il ne se
+        cache pas.</b> C'est la même règle que partout ailleurs dans le produit — ce qui manque le
+        dit.</td></tr>
+
+      <tr><td class="k">L'établi</td><td class="num">7</td>
+        <td>Le sujet, le modèle d'IA, les proportions, le nombre de variations, l'import d'une
+        image et son option brute-ou-traitée. Plus <em class="it">Ce qui partira</em>, qui
+        <b>déménage vers l'écran de confirmation</b> — sa bande dépliante disparaît, mais ce qu'elle
+        expliquait reste vrai et devient le texte de cet écran-là.</td></tr>
+
+      <tr><td class="k">La galerie</td><td class="num">4</td>
+        <td>La fiche d'une image : ce que le projet lui impose, ses recettes, le bouton
+        <em class="it">Réinjecter</em>, et le corps du personnage auquel elle appartient.<br>
+        <span class="sourd">Ces quatre-là étaient rangées avec la retouche. Elles n'y sont pas :
+        la fiche est le panneau de droite de la galerie.</span></td></tr>
+
+      <tr><td class="k">Les tables</td><td class="num">16</td>
+        <td>Les sept places d'une recette, celles qui ont des explications : détourage (5),
+        recadrage (2), grille (4), quantification (3), bords (2). <b>Les contours et la main n'ont
+        rien</b> — deux tables sur sept sans une ligne.</td></tr>
+
+      <tr><td class="k">Les fabriques</td><td class="num">4</td>
+        <td>Le découpage : détection, taille minimale, colonnes, lignes. <b>La superposition n'a
+        rien.</b> Ce groupe existe parce qu'une fabrique ne modifie pas une image, elle en écrit
+        d'autres sur le disque — ce n'est pas la même chose qu'une retouche qu'on défait.</td></tr>
+
+      <tr><td class="k">Les réglages de l'atelier</td><td class="num">3</td>
+        <td>Le plafond de dépense d'une séance, le modèle d'exploration de l'agent, et le dossier
+        du disque. <b>La clé du fournisseur d'IA n'a aucune entrée</b> — voir le § 06.<br>
+        <span class="sourd">En dernier, et c'est encore l'ordre des lieux : on les pose une fois et
+        on n'y revient qu'en cas de doute. Les mettre en tête ferait commencer un guide de
+        fabrication par une page d'administration.</span></td></tr>
+    </table>
+
+    <div class="note" style="margin-top:18px">
+      <span class="lab">Les deux choix qu'il a fallu faire</span>
+      <ul>
+        <li><b>L'univers se coupe en trois, et pas en un.</b> Il aurait pu rester un seul groupe de
+        29 entrées — c'est le cas aujourd'hui, et c'était juste tant qu'il était un seul écran.
+        Mais ses trois côtés sont maintenant <b>trois pleins écrans</b> qui ne se ressemblent pas :
+        on regarde des images sur l'un, on remplit des cases sur l'autre. Chercher le mot
+        <em class="it">pointe</em> dans un sac de 29 dont 16 parlent de formulaires, c'est
+        exactement ce que la règle « un lieu, pas un thème » cherche à éviter.</li>
+        <li><b>Le mot « Dans » passe dans l'en-tête du groupe.</b> Les groupes s'appelaient
+        <em class="it">Dans l'univers</em>, <em class="it">Dans l'atelier</em>… Répété neuf fois
+        dans une colonne de 240 px, ça mange la place pour rien. Il est écrit une fois, en tête, et
+        les rangées ne portent que le nom du lieu.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══ 06 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce qui manque — d'une ligne à onze, et une règle pour que ça ne recommence pas</h2></div>
+
+    <p class="intro">Le guide finit par une section honnête : <em class="it">« ce qui n'est pas
+    encore écrit »</em>. L'idée est bonne — <strong>un manque d'explication est un fait sur le
+    guide, et il se range dans le guide</strong>. Ce qui n'a pas marché, c'est la tenue de la
+    liste : elle dit une ligne alors qu'il en manque onze.</p>
+
+    <table class="t">
+      <tr><th style="width:220px">Ce dont le guide ne parle pas</th><th>Pourquoi ça compte</th></tr>
+
+      <tr><td class="o"><b>La clé du fournisseur d'IA</b></td>
+        <td>Le mot de passe qui autorise à payer des images. <b>C'est le seul réglage qui empêche
+        absolument tout</b> tant qu'il est vide, il a maintenant une étape à lui dans l'assistant
+        (D37) — et il n'a pas une ligne d'explication. <b>Le manque le plus coûteux de la
+        liste.</b></td></tr>
+
+      <tr><td class="o"><b>Le codex</b></td>
+        <td>Un onglet entier sur trois. Ni visite, ni réglage.</td></tr>
+
+      <tr><td class="o"><b>Les ambiances et les palettes</b></td>
+        <td>Tout le modèle décidé le 30 août — une palette devient un objet nommé, en plusieurs
+        exemplaires ; une ambiance porte une palette, des images et trois textes ; on choisit ce
+        qu'on lui prend au moment de générer. <b>Les deux entrées qui existent décrivent le modèle
+        abandonné</b> (D16 à D25).</td></tr>
+
+      <tr><td class="o"><b>Quatre des dix étapes du jeu</b></td>
+        <td>La vue du jeu, les types d'objets, les poses et états, les emplacements
+        d'équipement. Les six autres étapes sont couvertes.</td></tr>
+
+      <tr><td class="o"><b>Les contours</b> et <b>la main</b></td>
+        <td>Deux tables sur sept. Épaissir un trait, et retoucher au pixel.</td></tr>
+
+      <tr><td class="o"><b>La superposition</b> et <b>le calibrage</b></td>
+        <td>Les deux outils qui comparent plusieurs images au lieu d'en transformer une : poser une
+        pièce d'équipement sur un personnage, et mettre toutes les choses du jeu à la même
+        échelle.</td></tr>
+
+      <tr><td class="o"><b>La planche de poses</b></td>
+        <td>La feuille où l'IA dessine plusieurs poses en un seul appel, et le calcul qui la rend
+        rentable à partir de quatre cases. C'est de l'argent : il faut savoir quand ça vaut le
+        coup.</td></tr>
+
+      <tr><td class="o"><b>L'écran de confirmation</b></td>
+        <td>Le dernier écran avant que l'argent parte. Il hérite en plus du texte de
+        <em class="it">Ce qui partira</em>, qui existe déjà et qui est bon.</td></tr>
+
+      <tr><td class="o"><b>Les dépenses</b></td>
+        <td>La liste de tous les appels payés. Un écran fait pour répondre à
+        <em class="it">« où est passé l'argent ? »</em> a besoin qu'on dise comment le lire.</td></tr>
+
+      <tr><td class="o"><b>La vitrine</b></td>
+        <td>L'écran où l'on juge une image : sur quel fond on la regarde, et à quoi on la
+        compare.</td></tr>
+
+      <tr><td class="o"><b>Le premier lancement</b></td>
+        <td>Ce qu'on voit la toute première fois. Cas particulier : c'est le seul moment où
+        personne n'ira lire le guide — mais c'est aussi le seul écran qui, lui, marche sans
+        rien.</td></tr>
+    </table>
+
+    <div class="note att" style="margin-top:18px">
+      <span class="lab">La règle qui remplace la bonne volonté</span>
+      <p><strong>Une maquette qui ajoute un écran ou un réglage doit une ligne au guide, et elle
+      l'écrit dans son propre paragraphe « ce qui déborde ».</strong> C'est déjà le mécanisme du
+      dossier pour tout le reste — une décision qui appartient à un autre fichier s'y reporte au
+      lieu de s'y recopier. Le guide n'y échappait que parce que personne n'y avait pensé.</p>
+      <p>Ce que ça change concrètement : la liste <em class="it">« ce qui manque »</em> cesse
+      d'être une liste de réglages tenue à la main, et devient <strong>la dette du guide envers le
+      reste du dossier</strong> — à n'importe quel grain, un écran entier comme un seul champ. Onze
+      lignes aujourd'hui. Zéro le jour où elles sont écrites, et jamais une de plus sans qu'on
+      l'ait vue passer.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Ce qui ne casse pas, et c'est important</span>
+      <p>Un réglage sans explication <strong>n'a pas de pointillé sous son nom</strong>, et il ne
+      se passe rien : aucune bulle vide, aucun <em class="it">« à documenter »</em> affiché dans un
+      panneau. L'utilisateur ne voit jamais le trou — il voit seulement qu'il n'y a rien à
+      survoler. <strong>Le trou est visible dans le guide, pas dans le travail.</strong></p>
+    </div>
+  </section>
+
+
+  <!-- ══ 07 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce qui déborde — à reporter ailleurs</h2></div>
+
+    <p class="intro">Ce que cette maquette a décidé et qui appartient à un autre fichier. Rien
+    n'est recopié : chaque chose reste écrite à un seul endroit.</p>
+
+    <div class="note mes" style="margin-bottom:18px">
+      <span class="lab">Trois des quatre sont appliqués · 31 août 2026</span>
+      <p><strong>La dette a été payée en un jour.</strong> Les onze maquettes ont chacune écrit son
+      paragraphe <em class="it">« ce que cet écran doit au guide »</em> —
+      <strong>quatorze entrées en tout</strong>, prêtes à recopier, avec les cinq champs du recueil.
+      Le nom <em class="it">le guide</em> est confirmé au sommaire, et l'écran de confirmation a
+      hérité du texte de <em class="it">Ce qui partira</em>.</p>
+      <p style="margin-top:8px"><strong>Il reste le recueil lui-même</strong>, et c'est le seul qui ne
+      pouvait pas être fait ici : <em class="it">interface/src/aide.ts</em> est du code. Ce qu'il
+      attend est désormais entièrement écrit — six phrases à corriger, deux entrées à réécrire,
+      quatorze à ajouter, une à changer de groupe. <b>Rien n'est plus à décider</b> : il n'y a plus
+      qu'à recopier.</p>
+    </div>
+
+    <table class="t">
+      <tr><th style="width:230px">Où l'écrire</th><th>Ce qui doit y être écrit</th></tr>
+
+      <tr><td class="o"><b>00-sommaire.html</b><br><span class="sourd">§ 03-E et § 02</span></td>
+        <td>L'écran s'appelle <b>le guide</b>, pas <b>l'aide</b>. C'est le mot que porte déjà le
+        bouton de la barre du haut dans <b>dix maquettes</b> du dossier, le titre de l'écran, et le
+        lien au pied de chaque bulle. Le renommer casserait tout ça pour rien.</td></tr>
+
+      <tr><td class="o"><b>Les onze maquettes citées au § 06</b></td>
+        <td>Chacune doit une ligne au guide, et elle l'écrit dans son propre paragraphe
+        <em class="it">« ce qui déborde »</em>. <b>Un seul report est inscrit au chantier</b>, qui
+        pointe ici — les onze lignes ne se recopient pas dans le sommaire.</td></tr>
+
+      <tr><td class="o"><b>Le recueil d'explications</b><br><span class="sourd">du code, pas du
+        dessin</span></td>
+        <td>Six phrases à corriger, et deux entrées à réécrire. <b>Les six phrases</b> : une nomme
+        <em class="it">« l'Atelier »</em>, deux disent <em class="it">« l'écran Univers »</em> sans
+        ses trois côtés, trois comptent <em class="it">cinq places</em> de recette au lieu de sept.
+        <b>Les deux entrées</b> : la palette et le nombre de couleurs décrivent le modèle
+        abandonné, où il n'y avait qu'une palette sans nom (D16, D25).</td></tr>
+
+      <tr><td class="o"><b>08bis-ecran-de-confirmation.html</b></td>
+        <td>Il hérite du texte de <em class="it">Ce qui partira</em> — dont la mesure qui le
+        justifie : sur trois vrais jeux, les sept champs de style étaient vides dans les trois,
+        donc rien du style ne partait, <b>et pourtant tout ce qui sortait se ressemblait</b>. Sans
+        voir ce qui part, impossible de savoir si ce qu'on obtient vient de la demande ou du
+        traitement d'après.</td></tr>
+    </table>
+  </section>
+
+
+  <!-- ══ 08 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Les mesures</h2></div>
+
+    <p class="intro">Toutes lues sur l'écran qui existe. Aucune n'est inventée, et aucune n'ajoute
+    une valeur à la liste fermée du produit.</p>
+
+    <table class="t">
+      <tr><th style="width:110px">Quoi</th><th style="width:100px">Combien</th><th>Pourquoi cette valeur-là</th></tr>
+      <tr><td class="k">La barre du guide</td><td><span class="m">44</span></td>
+        <td>La hauteur de la barre du produit, réemployée. Le titre est en serif — c'est un titre
+        d'écran, le deuxième des trois seuls emplois du serif.</td></tr>
+      <tr><td class="k">Le sommaire</td><td><span class="m">240</span></td>
+        <td>La largeur de la colonne où ça se range, réemployée. Un sommaire, c'est
+        <em class="it">où ça se range</em>. Aucune troisième largeur n'est inventée.</td></tr>
+      <tr><td class="k">Une rangée</td><td><span class="m">26</span></td>
+        <td>La plus petite hauteur de la liste fermée. La même que dans toutes les colonnes du
+        produit.</td></tr>
+      <tr><td class="k">Le bouton fermer</td><td><span class="m">26</span></td>
+        <td>Idem. Il porte <em class="it">fermer · Échap</em> : le raccourci est écrit sur le
+        bouton, pas laissé à deviner.</td></tr>
+      <tr><td class="k">La prose</td><td><span class="m">504 px</span></td>
+        <td><b>La seule largeur maximale du produit</b> — 36 fois la taille du texte, soit 74
+        signes par ligne. Calée à gauche ; la place qui reste à droite reste vide, et
+        <b>c'est ce vide qui dit qu'on est sorti de l'atelier</b>.</td></tr>
+      <tr><td class="k">Ce qu'on n'a pas pris</td><td><span class="m no">671 px</span></td>
+        <td>La mesure « 72 caractères » donne 671 px, soit 88 signes — trop long pour l'œil. Elle
+        vaut la largeur du chiffre zéro, pas celle d'une lettre moyenne.</td></tr>
+      <tr><td class="k">Le corps du texte</td><td><span class="m">15 / 1,65</span></td>
+        <td>Taille et interligne. Plus grand qu'ailleurs dans le produit, parce qu'ici on lit au
+        lieu de balayer.</td></tr>
+      <tr><td class="k">Les explications</td><td><span class="m">63</span></td>
+        <td>Une par réglage. Réparties en neuf groupes au § 05 ; il y en avait cinq.</td></tr>
+      <tr><td class="k">Ce qui manque</td><td><span class="m ep">11</span></td>
+        <td>Onze sujets sans une ligne, contre <b>une</b> seule ligne dans la section qui devait
+        les tenir.</td></tr>
+      <tr><td class="k">Aucun serif de plus</td><td><span class="m bon">3</span></td>
+        <td>Le serif a trois emplois dans tout le produit, et le guide n'en ouvre pas un quatrième.
+        Les titres de section reprennent la forme d'un en-tête de panneau ; la hiérarchie est
+        portée par <b>48 px de blanc</b>, pas par une police de plus.</td></tr>
+    </table>
+  </section>
+
+
+  <!-- ══ 09 ══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">09</span><h2>Ce qui reste ouvert</h2></div>
+
+    <p class="intro">Une seule question, et elle ne bloque aucun dessin.</p>
+
+    <div class="note att">
+      <span class="lab">Faut-il écrire les onze manques avant de construire, ou après ?</span>
+      <p>Les onze sujets du § 06 sont du texte à rédiger, pas de l'interface à dessiner. Les écrire
+      maintenant, c'est <strong>onze textes qui décrivent des écrans encore en maquette</strong> —
+      ils bougeront. Les écrire après, c'est <strong>livrer un produit dont un tiers n'est
+      expliqué nulle part</strong>, et l'expérience de cette liste montre qu'un « on le fera après »
+      reste à une ligne pendant des mois.</p>
+      <p>La réponse penche vers <strong>écrire au fil de la construction</strong> : chaque écran
+      construit paie sa ligne au moment où il est construit, pas avant, pas après. Mais c'est un
+      choix de conduite du chantier, pas de dessin — il se tranche quand la construction
+      commence, pas ici.</p>
+    </div>
+  </section>
+
+
+  <footer>
+    Asset Kitchen — V2.1 · le guide · rang 32<br>
+    Cinquième et dernier écran hors fabrication. Le dossier des maquettes est complet.<br>
+    Ce qu'elle décide : le tour des lieux refait sur les quatre de la V2.1 · un sixième temps
+    dans la boucle, nommer · les 63 explications rangées en neuf groupes au lieu de cinq · la liste
+    des manques passe de une à onze lignes et devient une dette que chaque maquette paie.<br>
+    Chiffres lus dans le dépôt le 30 août 2026.
+  </footer>
+
+</div>
+</body>
+</html>

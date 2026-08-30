@@ -1,21 +1,21 @@
 {
- "releve_le": 1788034669.672077,
+ "releve_le": 1788095112.1985776,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 142796,
+  "octets": 144802,
   "documents": {
    "AGENTS.md": {
-    "octets": 18212,
-    "titres": 10,
+    "octets": 20218,
+    "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 17950
+      "octets": 19929
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
@@ -27,49 +27,55 @@
       "titre": "Lancer",
       "niveau": 2,
       "ligne": 41,
-      "octets": 2331
+      "octets": 3222
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 85,
+      "ligne": 95,
       "octets": 4808
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 147,
+      "ligne": 157,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 177,
+      "ligne": 187,
       "octets": 1653
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 194,
+      "ligne": 204,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 211,
+      "ligne": 221,
       "octets": 1786
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 235,
+      "ligne": 245,
       "octets": 577
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 245,
-      "octets": 1150
+      "ligne": 255,
+      "octets": 1151
+     },
+     {
+      "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
+      "niveau": 2,
+      "ligne": 274,
+      "octets": 1087
      }
     ]
    },
@@ -581,7 +587,7 @@
  },
  "renvois": {
   "code": {
-   "total": 336,
+   "total": 340,
    "casses": []
   },
   "docs": {

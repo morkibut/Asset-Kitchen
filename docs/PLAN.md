@@ -1,6 +1,13 @@
 # Plan : Asset Kitchen — V1, puis V2
 
-> **PRD source** : `docs/PRD.md` — 173 user stories.
+> ⚠ **En cours de reprise — 31 août 2026.** La V2.1 (`docs/maquettes-v2.1/`) a été
+> reportée dans `docs/PRD.md`, dans `docs/user-stories.md` — qui passe de 173 à
+> **308** user stories, `US-174` à `US-308` — et dans `docs/v21-arbitrages.md`.
+> **Ce plan ne la porte pas encore** : sa section V2.1 reste à écrire, et les
+> comptes ci-dessous ne couvrent que les 173 premières. Rien de ce qui suit n'est
+> faux pour la V1 et la V2 ; c'est seulement incomplet.
+>
+> **PRD source** : `docs/PRD.md` — 308 user stories, dont 173 couvertes ici.
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/archi-versions.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
