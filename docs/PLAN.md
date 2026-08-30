@@ -433,7 +433,8 @@ donc un cache, et un cache se recalcule.
 
 *Vingt-et-une étapes, décidées le 31 août 2026.* Elles viennent du chantier de maquettes de
 `docs/maquettes-v2.1/` : vingt-six écrans dessinés, quarante-et-une décisions prises,
-vingt-trois arbitrages tranchés en autonomie et dix-sept questions laissées ouvertes —
+vingt-trois arbitrages tranchés en autonomie et dix-sept questions laissées ouvertes,
+dont une déjà répondue par un banc gratuit —
 `docs/v21-arbitrages.md` les tient toutes, et ne fait foi sur rien.
 
 **Ce qui a déclenché le chantier est une mesure, pas une envie.** Le produit fabriquait bien
@@ -575,7 +576,7 @@ le dépôt pour mesurer, et une dette n'a pas d'utilisateur qui la demande.
 | E20 | 304 à 308 | 5 |
 | | **Total** | **135** |
 
-### Trois choses à produire avant que le code commence
+### Trois choses à produire avant que le code commence — *une faite, deux restent*
 
 Aucune n'est une décision, et aucune ne coûte de réflexion — ce sont des travaux
 préparatoires qui bloquent une étape précise. Les nommer ici évite qu'on découvre le manque
@@ -1430,7 +1431,7 @@ sont décrites en `docs/archi-versions.md` §8 à §10, et ne sont pas découpé
 commencent pas avant que la V2 serve pour de vrai, comme la V2 n'a commencé qu'une fois la V1
 tenue.
 
-**Et dix-sept questions de la V2.1 restent ouvertes**, chacune avec ce qui manque pour y
+**Et seize questions de la V2.1 restent ouvertes** — dix-sept posées, une déjà répondue —, chacune avec ce qui manque pour y
 répondre et l'étape où elle se pose : `docs/v21-arbitrages.md` § B. Aucune n'empêche
 d'ouvrir l'étape qui la porte — ce sont des questions qui se tranchent **à l'usage**, et
 c'est délibéré : les trancher d'avance, c'est décider sans mesure. Trois d'entre elles

@@ -13,11 +13,18 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 ## Où en est le dépôt → `docs/status/etat.md`
 
 **Les dix tranches T1 à T10 sont finies, C1 à C5 — la V2 entière — le sont aussi, et les
-cinq reprises R1 à R5 également.** Les 220 critères d'acceptation sont cochés,
-un fichier par tranche dans `docs/tranches/` ; 392 tests de serveur et 184 d'écran les
+cinq reprises R1 à R5 également.** Leurs 226 critères d'acceptation sont cochés,
+un fichier par tranche dans `docs/tranches/` ; 394 tests de serveur et 186 d'écran les
 tiennent. La V1 s'est arrêtée à
 T7 ; T8, T9 et T10 sont venues après.
-**Le plan n'a plus d'entrée ouverte** : ce qui viendra viendra d'une séance d'usage, comme
+
+**Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
+chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
+135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
+`docs/PLAN.md`. `E0` est tenue ; les vingt autres sont ouvertes, et `E1` est la première
+sans bloqueur. Les arbitrages pris en autonomie et les questions encore ouvertes vivent
+dans `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
+Ce qui viendra après elle viendra d'une séance d'usage, comme
 les cinq reprises — `docs/releve-usage.md` garde ce qui n'est encore ni cadré ni planifié.
 **C5 est écrite mais pas encore usée** : la règle ci-dessous vaut pour elle comme pour les
 autres, et personne n'a encore sorti un personnage dans un vrai jeu.
@@ -130,7 +137,7 @@ contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne l
 | `docs/archi-fournisseur.md` | l'architecture | on rouvre la question du modèle, du catalogue, du contrat de génération ou des outils MCP |
 | `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
 | `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt fichiers, de `T1` à `R5` |
-| `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses dix-sept questions ouvertes se tranchent à l'usage |
+| `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses questions ouvertes se tranchent à l'usage |
 | `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. Elles décrivent l'interface future, jamais l'état du code |
 | `docs/design-motifs.md` | le design | on dessine un écran |
 | `docs/design-decisions.md` | le design | on rouvre une décision d'apparence |

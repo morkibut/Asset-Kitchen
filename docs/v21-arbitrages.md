@@ -19,7 +19,7 @@
 
 ---
 
-## A · Les vingt et un arbitrages pris en autonomie
+## A · Les vingt-trois arbitrages pris en autonomie
 
 Chacun est une décision qui n'était écrite nulle part, ou qui contredisait
 quelque chose d'écrit ailleurs. Ils sont rangés par le document qu'ils touchent.
@@ -381,10 +381,17 @@ suivante devait pouvoir le savoir sans le redécouvrir.
 
 ---
 
-## B · Les questions qui restent à trancher
+## B · Les questions qui restent à trancher — *dix-sept posées, seize ouvertes*
 
 Aucune ne bloque le début de la construction. Chacune dit ce qui manque pour y
 répondre, et l'étape du plan à laquelle elle se pose vraiment.
+
+**Une est déjà répondue : B-10**, le jour même où la liste a été écrite, parce
+que ce qui lui manquait était un banc d'essai gratuit et rien d'autre. Sa
+réponse est écrite chez elle, en encadré, et non déplacée en partie A : une
+question tranchée par une mesure se relit mieux à côté de la question qu'elle
+tranche. Les seize autres attendent de l'usage, une mesure payante, ou une
+décision qui n'a pas encore de raison de se prendre.
 
 ### B-1 · Faut-il remontrer l'écran de confirmation quand on relance à l'identique ?
 
@@ -602,7 +609,10 @@ se passe quand elle se remplit — quel décor, cadré comment — n'est pas dé
 ## Ce qui n'est pas une question, mais qui manque
 
 Trois choses à produire avant que l'étape qui les réclame commence. Aucune n'est
-une décision.
+une décision. **Une des trois est faite — le 31 août 2026, le jour même où cette
+liste a été écrite** ; c'était la seule qui ne coûtait rien du tout, et elle a
+levé le blocage de son étape en répondant à B-10. Restent les deux qui coûtent
+quelque chose : des images à produire, et cinq centimes d'appels.
 
 | Ce qu'il faut | Pour quelle étape | Ce que ça coûte |
 |---|---|---|
