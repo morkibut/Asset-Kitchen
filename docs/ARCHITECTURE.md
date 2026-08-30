@@ -89,8 +89,29 @@ Cinq règles qui tiennent l'ensemble :
    le disque plutôt que le disque en retard sur l'index.
 4. **Le post-traitement ne touche jamais le GPU.** Il est CPU, pur, et ses étapes
    s'appliquent dans un ordre fixe : détourage, recadrage, grille, quantification,
-   bords. Aucune ne se réordonne — trois des cinq n'ont pas de sens avant celle
-   qui les précède.
+   bords, **contours, la main**. Aucune ne se réordonne — cinq des sept n'ont pas
+   de sens avant celle qui les précède.
+
+   **Sept places depuis la V2.1, et les deux dernières sont arrivées par le même
+   raisonnement que les cinq premières** — écrit le 31 août 2026. Les *contours*
+   tracent le trait de bord du sujet, et ils viennent après la grille parce que
+   tracé avant, le trait serait rééchantillonné comme le reste : la panne qu'on
+   veut justement éviter. Ils viennent après la quantification parce qu'un noir pur
+   tracé avant ressortirait au plus proche de la palette, c'est-à-dire pas noir.
+   *La main* est la retouche au pixel et elle est la septième et dernière : rien
+   ne se rejoue après un geste fait à la main, sans quoi le geste serait effacé
+   par la machine.
+
+   **Ce qui règle une image et ce qui en fabrique d'autres sont deux choses, et la
+   V2.1 les sépare formellement.** Les sept places ci-dessus décrivent *cette*
+   image : elles ont un état — posée, vide — et le rendu les rejoue toutes à
+   chaque fois. Les deux **fabriques** — le *découpage*, qui coupe une image en
+   plusieurs, et la *superposition*, qui en pose deux l'une sur l'autre — écrivent
+   des fichiers neufs et ne posent rien sur l'image courante ; elles n'ont donc pas
+   d'état à porter dans la recette. C'est ce critère qui a sorti le calque par
+   différence de la recette : il nomme deux images en entrée et il en produit une
+   troisième, ce qu'aucune place de recette ne fait
+   (`docs/v21-arbitrages.md` A-18).
 
    **Le détourage par défaut ne demande aucun modèle**, et c'est une mesure, pas
    un principe : un remplissage depuis le bord — un pixel n'est du fond que s'il
@@ -166,17 +187,18 @@ du serveur MCP. Le numéro y est conservé : un renvoi `§4 bis` reste valide.
 
 | Entité | Contenu | Note |
 |---|---|---|
-| **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. |
+| **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » —, **la liste de ses directions** | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. Les **directions** sont arrivées en V2.1 : elles se déduisent de la vue du jeu et décident du nombre de cases d'une pose — voir plus bas. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
-| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. |
-| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main. Pour un import : le nom du fichier, l'empreinte de ses octets, et si le traitement du projet lui a été appliqué | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. |
+| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression, **direction** | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. La **direction** est arrivée en V2.1 et elle est vide pour tout ce qui n'en a pas — une icône, un décor, une tuile. |
+| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main, **direction**, **ce qui a été pris de l'ambiance**. Pour un import : le nom du fichier, l'empreinte de ses octets, et si le traitement du projet lui a été appliqué | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. *Ce qui a été pris de l'ambiance* est trois oui/non — les couleurs, les références, le texte : sans lui, « ce qui est montré est ce qui part » cesserait d'être vrai en relisant une vieille image. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
 
 Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,
 personnage, emplacement, pièce, calque — sont décrites en §7, et aucune ne modifie une
 ligne ci-dessus : elles s'ajoutent, et le corps comme le calque rendu restent des assets
-ordinaires.
+ordinaires. **Les trois entités de la V2.1** — étiquette, palette, ambiance — sont
+décrites plus bas, avec les quatre champs qui les accompagnent.
 
 **Pourquoi le personnage mérite une entité et pas un champ.** C'est la deuxième fois seulement
 depuis T4 qu'on ajoute un objet au modèle — le lien de T9 était le premier —, et la barre doit
@@ -301,6 +323,62 @@ en quittant l'écran (`docs/PLAN.md` T8) : annuler, c'est rappeler la même rout
 d'avant. Une route d'annulation aurait fait de la composition un historique de projet — elle est le
 rattrapage du geste en cours, et rien d'autre.
 
+### Ce que la V2.1 ajoute au modèle
+
+*Écrit le 31 août 2026, en reportant `docs/maquettes-v2.1/`.* **Trois entités neuves et
+quatre champs**, et la barre reste celle du §5 : une étiquette sur un objet existant aurait
+suffi partout où elle suffit, et chacune des trois est là parce qu'elle ne suffisait pas.
+Le détail des arbitrages qui les ont posées est dans `docs/v21-arbitrages.md`.
+
+| Entité | Contenu | Note |
+|---|---|---|
+| **Étiquette** | un libellé en français, le texte anglais qui part vraiment au modèle, la case de bible à laquelle elle appartient, le nombre de fois qu'elle a servi | **Elle appartient à l'application, pas à un projet** — comme la clé du fournisseur, elle ne dépend d'aucun. C'est ce qui rend la description d'un univers **mécanique au lieu d'être rédigée** : cliquer *brume basse* écrit `thick low-lying fog, volumetric haze` dans la case. La base naît vide, personne ne l'écrit à la place de l'auteur, et elle grandit de chaque étiquette fabriquée dans n'importe quel projet. |
+| **Palette** | un nom, la liste de ses sources, les deux valeurs de fusion, la liste de ses retouches, et les couleurs rendues avec leur empreinte | Une palette **reste une recette** : elle se recalcule de ses sources, et ses sources peuvent être d'autres palettes. La palette du projet devient **un cas particulier de palette**, pas une chose à part. |
+| **Ambiance** | un nom, le nom de sa palette, la liste de ses images de référence, ses trois cases de texte | Elle appartient à un projet. C'est un **lot de style tout prêt**, fabriqué une fois et réutilisé sur plusieurs choses du jeu. Les palettes sont les ingrédients, les ambiances les recettes — d'où les deux listes au même endroit dans l'univers. |
+
+**Et quatre champs sur des objets qui existent** : la liste des **directions** sur le
+projet, une **direction** sur l'asset et sur la génération, le nom de l'**ambiance par
+défaut** sur une chose du jeu, et **ce qui a été pris de l'ambiance** sur la génération.
+S'y ajoute, dans la recette, un **décalage horizontal** sur la grille — le seul réglage
+que la V2.1 ajoute au traitement d'image, et il n'est écrit que par le calibrage.
+
+**Pourquoi la palette et l'ambiance sont des objets et pas des champs.** Aujourd'hui une
+palette est un champ du projet, en un seul exemplaire et sans nom ; il en faut plusieurs,
+nommées, et réutilisables par plusieurs ambiances — un champ ne se nomme pas et ne se
+partage pas. Pour l'ambiance, deux candidats existaient et échouent tous les deux : un
+paquet d'images du tableau d'inspiration n'a pas d'identité propre et disparaît avec sa
+dernière carte (c'est la même panne que l'îlot, §*Ce que la toile ajoute au modèle*), et
+une collection groupe des objets produits, pas des réglages.
+
+**Pourquoi les directions vivent sur le projet et pas sur la pose.** Une direction n'est
+pas une propriété d'un mouvement, c'est une propriété du **jeu** : un jeu vu de dessus en
+quatre directions les demande pour tout ce qui bouge, un jeu de plateforme n'en demande
+aucune. Posées sur le projet, elles se déduisent de la vue et se rangent une fois pour
+tous les personnages ; posées sur la pose, il faudrait les redire à chaque entité. La
+contrepartie est un compte qui se multiplie — une pose demande désormais *tant d'images
+dans tant de directions* — et **le produit affiche toujours le produit des deux, jamais
+les deux facteurs séparés dans une jauge**.
+
+**Et la liste des poses quitte le projet pour le type d'objet.** Avant, le jeu déclarait
+une seule liste et tous les objets la recevaient : un coffre héritait de *marche* et de
+*course*, qu'il fallait ranger un par un, sur chaque coffre. Désormais un personnage a
+*repos, marche, course, attaque, dégâts, mort*, un coffre a *fermé, ouvert, vidé*, et une
+tuile n'a pas de poses du tout. Un objet peut ajouter les siennes, sur lui seul, et sa
+fiche écrit **l'origine de chaque pose** — du type, ou ajoutée ici — pour qu'on sache
+toujours qui la reproposera demain.
+
+**Le personnage se généralise en entité, et c'est le seul de ces changements qui touche du
+code existant en profondeur.** Les familles *Décors*, *Objets* et *Interface* ont
+aujourd'hui leur ligne et leur compte à zéro : ce qui manque est le modèle, pas la mise en
+page. L'entité gagne au passage **deux listes d'écart de plus** — les directions rangées,
+les pièces rangées — à côté de celle qui existe déjà pour les poses, et **les images de
+référence qu'elle désigne**, qui n'existaient sous aucune forme.
+
+**Ce que la V2.1 ne coûte pas, et c'est la moitié de son intérêt** : aucune route neuve
+vers le fournisseur, aucun appel payant supplémentaire — la fusion des palettes et la
+correction des couleurs se font sur la machine, en millisecondes — et aucune couleur
+d'interface neuve.
+
 ## 6 à 10 · Les versions → `docs/archi-versions.md`
 
 **Ce que chaque version contient, et par quel mécanisme, vit dans
@@ -324,6 +402,7 @@ règles, le squelette, le modèle d'objets, les risques — reste ici.
 | **L'échelle du sujet dérive d'une génération à l'autre** | moyenne — bloque le montage d'animations | constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires** |
 | ~~La couverture image d'OpenRouter~~ | — | **levé le 27 août 2026** par `essais/essai_couverture.py` : 48 modèles image, 11 fournisseurs, 31 acceptant trois références ou plus. Et le catalogue a bougé en un jour — 47 → 48 — ce qu'une liste en dur n'aurait pas vu |
 | **Le coût par image dérive** | moyenne | enregistrer le coût réel de chaque génération dès la T1, et le totaliser par projet |
+| **Le gain d'une planche n'est mesuré qu'à quatre cases** | moyenne — la V2.1 fait de la planche l'unité d'achat | **trois appels de mesure avant d'écrire l'écran**, à trois, cinq et six cases, sur le même sujet. Moins de cinq centimes en tout. Ce qui est su : une case rend l'image à `$0,0128`, deux cases ne gagnent rien, quatre cases descendent à `$0,0057` — *une seule fois*. Un gain annoncé sur une mesure unique est un gain encadré, pas un gain affirmé |
 | ~~La qualité pixel art directe~~ | — | **levé le 27 août 2026** par `essais/essai_pixel.py`, sur 44 images de six modèles et sans un appel : aucune sortie brute n'a de transparence, la médiane est à 33 986 couleurs, et la grille rendue va de 7 à 20 px — facteur 2 **à l'intérieur d'un même lot**. Après traitement : 27 couleurs, alpha franc, grille imposée, 0 sujet perdu sur 44, 0,17 s par image. La question s'est retournée : le post-traitement n'est pas un supplément qui doit prouver son apport, c'est ce sans quoi rien n'est utilisable |
 
 ~~Le deuxième risque est le plus sournois~~ — il a été levé le 26 août, avant même
@@ -340,6 +419,15 @@ conclusion imprimée de `essais/essai_silhouette.py` : une médiane sur trois pi
 que les six modèles tenaient les seuils, alors que la cape échouait sur les six. **Une moyenne
 efface le seul cas qui décide.** Les deux sont corrigés ; ce qui reste à surveiller, c'est le
 geste, pas le chiffre.
+
+**Et il s'est rouvert tout seul le 30 août 2026, dans une maquette de la V2.1 — refusé une
+seconde fois.** La maquette de la superposition proposait de reposer un calque sur une autre
+pose ; le sommaire du dossier la marque lui-même « à reprendre » et écrit qu'aucune mesure ne
+soutient sa phrase. La décision de la V2.1 est donc de **ne rien changer ici**
+(`docs/v21-arbitrages.md` A-12) — et c'est l'un des quatre seuls endroits où une maquette
+n'a pas gagné. Le fait mérite d'être noté : une promesse retirée pour une raison écrite se
+réécrit toute seule dès qu'on redessine l'écran qui la portait. **Ce paragraphe est la
+défense ; il est là pour être lu la prochaine fois.**
 
 ## 12 · Ce qu'on récupère
 
