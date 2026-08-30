@@ -3037,6 +3037,74 @@ describe("l'aperçu", () => {
     fireEvent.pointerUp(scene(), { clientX: 401, clientY: 300 })
     expect(apercu()).toBeNull()
   })
+
+  // ── E0 · « La barre d'espace ouvre l'aperçu depuis **toute** vignette du
+  //     produit, et la liste des endroits où elle sert n'a plus d'exception
+  //     nommée » ────────────────────────────────────────────────────────────
+  //
+  // **Deux surfaces manquaient, et pour la même raison mécanique** : la visée
+  // est un hook, un hook ne s'appelle pas dans une boucle, et les deux endroits
+  // qui manquaient rendaient leurs vignettes dans un `map`. Le chantier des
+  // maquettes les a trouvés en comptant les images de 44 px et de 24 px du
+  // produit (D32, 30 août 2026).
+
+  test("une vignette de la matrice s'ouvre en grand, comme une tuile", async () => {
+    const image = asset("bbbb2222-0", "le nain, au repos")
+    const nain = personnage("Le nain")
+    const avecImage = {
+      ...nain,
+      cases: nain.cases.map((c) =>
+        c.pose === "repos" ? { ...c, images: [image] } : c,
+      ),
+    }
+    const { fetchDouble } = serveurDouble({ personnages: [avecImage] })
+    await monter(fetchDouble)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
+    const vignette = (
+      await screen.findByLabelText("Retirer cette image de la case repos")
+    ).closest("span")!
+
+    survoler(vignette)
+    espace()
+
+    // Même règle que la tuile : l'aperçu est la vignette en grand, à la même
+    // adresse. Un second endroit qui déciderait « rendu ou brut » finirait par
+    // répondre autrement que la case.
+    expect(apercu()).toBeTruthy()
+    expect(apercu()!.querySelector("img")!.getAttribute("src")).toBe(
+      vignette.querySelector("img")!.getAttribute("src"),
+    )
+
+    espace()
+    expect(apercu()).toBeNull()
+  })
+
+  test("une image qui repart avec l'appel s'ouvre en grand, elle aussi", async () => {
+    const seul = asset("cccc3333-0", "un tonneau cerclé")
+    const { fetchDouble } = serveurDouble({ assets: [seul] })
+    await monter(fetchDouble, { ...ETAT, assets: [seul] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.click(tuiles()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "référence" }))
+
+    const bande = (await screen.findByText("Repart avec")).parentElement!
+    const vignette = bande.querySelector("img")!
+
+    // **La bande demande son image par la même route que la grille.** Elle
+    // appelait `rendu` en direct : sur un asset sans recette, cette adresse
+    // n'existe pas, et la bande montrait un trou là où la grille montre
+    // l'image. Corrigé avec la barre d'espace, et pour la même raison — une
+    // seule adresse par asset dans tout le produit.
+    expect(vignette.getAttribute("src")).toBe(
+      tuiles()[0].closest("figure")!.querySelector("img")!.getAttribute("src"),
+    )
+
+    survoler(vignette.closest("span")!)
+    espace()
+    expect(apercu()).toBeTruthy()
+  })
 })
 
 // ── R1 · Le réglage d'univers se voit à l'instant ────────────────────────────

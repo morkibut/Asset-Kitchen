@@ -60,10 +60,16 @@ MOTEURS = (BORD, MODELE)
 # **Se durcit avant la réduction, jamais après** — piège payé au prix fort dans
 # `MySpriteAi/src/lib/pixelPipeline.ts` : un contour à demi transparent est
 # tranché à pile ou face par un rééchantillonnage au plus proche voisin, et deux
-# passes de suite rendent alors deux silhouettes différentes. Pire, la
-# quantification force l'alpha à 255 sans toucher à la couleur : un pixel de
-# contour à peine visible ressort **opaque, de la couleur du fond**. C'est le
-# liseré clair autour du sprite.
+# passes de suite rendent alors deux silhouettes différentes.
+#
+# **Le liseré clair naît ici, et c'est ici qu'il se règle** — corrigé le 31 août
+# 2026 : ce commentaire accusait la quantification de forcer l'alpha à 255, et
+# c'est faux dans ce dépôt. Mesuré sur six images, `quantifier` met l'alpha de
+# côté et le remet tel quel ; il n'y touche pas. Le vrai mécanisme est le
+# durcissement ci-dessous : un pixel de contour à peine visible, dont la couleur
+# est déjà celle du fond, passe le seuil et ressort **opaque, de la couleur du
+# fond**. Baisser ce seuil ou ronger d'un pixel de plus l'efface ; toucher à la
+# quantification ne fera jamais rien.
 SEUIL_ALPHA = 128
 
 

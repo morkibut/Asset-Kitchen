@@ -610,7 +610,7 @@ Tout le reste se prend dans l'ordre qu'on veut, aux blocages nommés sous chaque
 ---
 
 ### E0 · La dette du chantier des maquettes
-**User stories** : aucune
+**User stories** : aucune · *6 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -632,16 +632,38 @@ guide.
 
 #### Critères d'acceptation
 
-- [ ] Le commentaire près du seuil de transparence dit ce que le code fait, et il nomme le détourage comme l'endroit où le halo se règle
-- [ ] Un essai gratuit vérifie sur les images déjà présentes que la quantification ne modifie aucune valeur de transparence
-- [ ] Le total de la fenêtre des réglages s'appelle « dépensé par l'agent »
-- [ ] La barre d'espace ouvre l'aperçu depuis **toute** vignette du produit, et la liste des endroits où elle sert n'a plus d'exception nommée
-- [ ] La molette zoome l'aperçu partout où la barre d'espace l'ouvre
-- [ ] Aucun écran ne change de forme, aucune route n'est ajoutée, aucun objet n'entre au modèle
+- [x] Le commentaire près du seuil de transparence dit ce que le code fait, et il nomme le détourage comme l'endroit où le halo se règle
+- [x] Un essai gratuit vérifie que la quantification ne modifie aucune valeur de transparence — les 256 valeurs, sur les deux régimes de tramage
+- [x] Le total de la fenêtre des réglages s'appelle « dépensé par l'agent »
+- [x] La barre d'espace ouvre l'aperçu depuis **toute** vignette du produit, et la liste des endroits où elle sert n'a plus d'exception nommée
+- [x] La molette zoome l'aperçu partout où la barre d'espace l'ouvre
+- [x] Aucun écran ne change de forme, aucune route n'est ajoutée, aucun objet n'entre au modèle
 
 #### Bloquée par
 
 Aucune — démarrable immédiatement.
+
+#### Ce que la tenir a trouvé
+
+**Le commentaire faux en cachait un second, et une divergence d'adresse.** La phrase
+accusatrice vivait à deux endroits — le commentaire du domaine et l'en-tête du module de
+traitement — et seul le premier était relevé par le chantier ; le second disait la même
+chose en plus doux, ce qui l'avait sauvé de la relecture. Et en cherchant où la barre
+d'espace manquait, la bande *Repart avec* s'est révélée demander son image **en direct**
+plutôt que par le seul endroit du produit qui nomme l'adresse d'un asset : sur une image
+sans recette, cette adresse-là n'existe pas, et la bande montrait un trou pendant que la
+grille montrait l'image. Personne ne l'avait vu parce qu'on réinjecte presque toujours une
+image déjà retouchée.
+
+**Les deux surfaces qui manquaient manquaient pour la même raison mécanique** : la visée est
+un *hook*, un hook ne s'appelle pas dans une boucle, et les deux rendaient leurs vignettes
+dans un `map`. Ce n'est pas un oubli d'attention, c'est une contrainte du langage qui a
+choisi à la place de l'auteur — et ce genre d'oubli-là ne se rattrape qu'en comptant les
+images du produit une par une, ce que le chantier des maquettes a fait.
+
+**Ce qui n'a pas été touché, et pourquoi** : les deux grandes surfaces de travail — le cadre
+de la découpe, le cadre du calque. Ce ne sont pas des vignettes, elles portent déjà leurs
+propres gestes de souris, et la règle dit *toute miniature*, pas *toute image*.
 
 ---
 

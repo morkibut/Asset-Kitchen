@@ -48,7 +48,7 @@ import {
   type Sortie as SortieAuJeu,
   type Vestiaire,
 } from "../api"
-import { sujetAsset } from "./Apercu"
+import { sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, EnTetePanneau, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
@@ -1401,29 +1401,14 @@ function LigneCase({
           la même route** — `sujetAsset` est le seul endroit du produit qui
           nomme l'adresse de l'image d'un asset. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-        {images.map((asset) => {
-          const sujet = sujetAsset(asset)
-          return (
-            <span key={asset.identifiant} className="group relative">
-              <img
-                src={sujet.src}
-                alt={asset.label}
-                title={asset.label}
-                className="damier h-[44px] w-[44px] object-contain"
-                style={{ imageRendering: "pixelated" }}
-              />
-              <button
-                type="button"
-                onClick={() => onDesigner(asset.identifiant)}
-                aria-label={`Retirer cette image de la case ${pose.nom}`}
-                title="l'image reste en bibliothèque — c'est la case qu'on vide"
-                className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
-              >
-                ×
-              </button>
-            </span>
-          )
-        })}
+        {images.map((asset) => (
+          <VignetteDeCase
+            key={asset.identifiant}
+            asset={asset}
+            pose={pose.nom}
+            onDesigner={onDesigner}
+          />
+        ))}
         {images.length === 0 && (
           <span className="mesure text-[10px] text-texte-3">rien encore</span>
         )}
@@ -1470,6 +1455,51 @@ function LigneCase({
         ×
       </button>
     </li>
+  )
+}
+
+
+/** Une image dans une case de la matrice — vignette, retrait, et **la barre
+ *  d'espace**.
+ *
+ *  Elle existe pour la troisième de ces trois choses. La visée est un *hook*, et
+ *  un hook ne s'appelle pas dans une boucle : sans ce composant, les vignettes
+ *  de la matrice restaient le seul endroit du produit où l'on voyait une image
+ *  en 44 px sans pouvoir la regarder en grand. Corrigé le 31 août 2026 (E0) —
+ *  la barre d'espace ne connaît plus d'exception. */
+function VignetteDeCase({
+  asset,
+  pose,
+  onDesigner,
+}: {
+  asset: Asset
+  pose: string
+  onDesigner: (identifiant: string) => void
+}) {
+  const visee = useVisee(sujetAsset(asset))
+  return (
+    <span
+      className="group relative"
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+    >
+      <img
+        src={sujetAsset(asset).src}
+        alt={asset.label}
+        title={asset.label}
+        className="damier h-[44px] w-[44px] object-contain"
+        style={{ imageRendering: "pixelated" }}
+      />
+      <button
+        type="button"
+        onClick={() => onDesigner(asset.identifiant)}
+        aria-label={`Retirer cette image de la case ${pose}`}
+        title="l'image reste en bibliothèque — c'est la case qu'on vide"
+        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
+      >
+        ×
+      </button>
+    </span>
   )
 }
 
@@ -1586,10 +1616,16 @@ function Superposition({
   const dessus = sujetAsset(calque)
   const dessous = corps ? sujetAsset(corps) : null
   const empile = calque.recette.difference !== null
+  // La barre d'espace montre **le calque seul**, pas la superposition : c'est ce
+  // que le bouton nomme, et l'aperçu est la vignette en grand, jamais une
+  // seconde composition. Ajouté le 31 août 2026 (E0).
+  const visee = useVisee(dessus)
   return (
     <button
       type="button"
       onClick={onOuvrir}
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
       title={
         empile
           ? "voir le calque en grand, et borner sa zone"

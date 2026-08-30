@@ -20,8 +20,18 @@ facultatif, et grisé avec sa raison quand il n'est pas installé.
 **L'alpha se durcit avant la réduction, jamais après.** Décision reprise de
 `MySpriteAi/src/lib/pixelPipeline.ts`, où elle a été payée cher : un contour à
 demi transparent est tranché à pile ou face par un rééchantillonnage au plus
-proche voisin, et la quantification le ressort *opaque, de la couleur du fond* —
-c'est le liseré clair autour du sprite.
+proche voisin, et deux passes de suite rendent alors deux silhouettes
+différentes.
+
+**Le liseré clair naît du durcissement, pas de la quantification** — précisé le
+31 août 2026, parce que la phrase d'avant laissait croire l'inverse et qu'un
+commentaire de `atelier/domaine/recette.py` l'affirmait carrément. Ici,
+`quantifier` met l'alpha de côté et le remet tel quel. Ce qui produit le liseré
+est `durcir` : un pixel de contour à peine visible, dont la couleur est déjà
+celle du fond, passe le seuil et ressort opaque de cette couleur-là. Le seuil de
+la passe et son durcissement sont donc les deux seuls réglages qui l'atteignent.
+`MySpriteAi` cumulait les deux moitiés — il forçait *aussi* l'alpha à 255 en
+quantifiant ; c'est cette moitié-là qui n'a pas été reprise.
 """
 
 from __future__ import annotations

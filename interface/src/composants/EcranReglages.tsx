@@ -194,7 +194,12 @@ function BlocAgent({
           {compte.generations} image{compte.generations > 1 ? "s" : ""}
           {compte.reste !== null && ` · ${compte.reste} avant le plafond`}
         </dd>
-        <dt className="text-texte-3">dépensé</dt>
+        {/* « dépensé par l'agent », et pas « dépensé » — corrigé le 31 août 2026
+            (E0). Ce montant ne compte que les appels venus du serveur MCP, et
+            un montant qui laisse deviner sa portée finit lu comme le total de
+            tout. Le produit en compte deux autres — celui du jeu ouvert, celui
+            de toutes les séances —, et chacun porte son étiquette. */}
+        <dt className="text-texte-3">dépensé par l'agent</dt>
         <dd className="text-texte-2">{dollars(compte.depense_usd)}</dd>
       </dl>
 

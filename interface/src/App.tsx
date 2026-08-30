@@ -50,7 +50,13 @@ import {
   type Univers,
   UNIVERS_VIDE,
 } from "./api"
-import { Apercu, fermerApercu, useApercu } from "./composants/Apercu"
+import {
+  Apercu,
+  fermerApercu,
+  sujetAsset,
+  useApercu,
+  useVisee,
+} from "./composants/Apercu"
 import { Arbre } from "./composants/Arbre"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
@@ -1751,44 +1757,78 @@ function Reinjections({
         Repart avec
       </span>
       <div className="flex flex-wrap items-center gap-2">
-        {reinjections.map(({ asset, role }) => {
-          const connu = grille.find((a) => a.identifiant === asset)
-          return (
-            <span
-              key={asset}
-              className="flex items-center gap-1.5 rounded-[2px] border border-bord bg-fond-2 py-1 pr-1 pl-1"
-            >
-              {connu && (
-                <img
-                  src={api.rendu(connu.identifiant, connu.empreinte)}
-                  alt=""
-                  className="damier h-6 w-6 object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                />
-              )}
-              <select
-                aria-label="Rôle de la réinjection"
-                value={role}
-                onChange={(e) => onRole(asset, e.target.value as Role)}
-                className="mesure bg-transparent text-[10px] text-texte-2"
-              >
-                <option value="reference">référence</option>
-                <option value="edition">source d'édition</option>
-                <option value="style">guide de style</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => onRetirer(asset)}
-                aria-label="Retirer la réinjection"
-                className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
-              >
-                ×
-              </button>
-            </span>
-          )
-        })}
+        {reinjections.map(({ asset, role }) => (
+          <UneReinjection
+            key={asset}
+            connu={grille.find((a) => a.identifiant === asset)}
+            asset={asset}
+            role={role}
+            onRetirer={onRetirer}
+            onRole={onRole}
+          />
+        ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * Une réinjection : sa vignette, son rôle, son retrait.
+ *
+ * **Deux corrections du 31 août 2026 (E0), et la même cause.** La vignette
+ * demandait son image à `api.rendu` en direct, alors que `sujetAsset` est le
+ * seul endroit du produit qui nomme l'adresse de l'image d'un asset : un asset
+ * sans recette n'a pas de rendu, et la bande montrait donc un trou là où la
+ * grille montre l'image. Et la barre d'espace ne l'atteignait pas, faute d'un
+ * composant où poser la visée — un hook ne s'appelle pas dans une boucle.
+ */
+function UneReinjection({
+  connu,
+  asset,
+  role,
+  onRetirer,
+  onRole,
+}: {
+  connu: Asset | undefined
+  asset: string
+  role: Role
+  onRetirer: (asset: string) => void
+  onRole: (asset: string, role: Role) => void
+}) {
+  const visee = useVisee(connu ? sujetAsset(connu) : null)
+  return (
+    <span
+      className="flex items-center gap-1.5 rounded-[2px] border border-bord bg-fond-2 py-1 pr-1 pl-1"
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+    >
+      {connu && (
+        <img
+          src={sujetAsset(connu).src}
+          alt=""
+          className="damier h-6 w-6 object-contain"
+          style={{ imageRendering: "pixelated" }}
+        />
+      )}
+      <select
+        aria-label="Rôle de la réinjection"
+        value={role}
+        onChange={(e) => onRole(asset, e.target.value as Role)}
+        className="mesure bg-transparent text-[10px] text-texte-2"
+      >
+        <option value="reference">référence</option>
+        <option value="edition">source d'édition</option>
+        <option value="style">guide de style</option>
+      </select>
+      <button
+        type="button"
+        onClick={() => onRetirer(asset)}
+        aria-label="Retirer la réinjection"
+        className="mesure px-1 text-[10px] text-texte-3 hover:text-echec"
+      >
+        ×
+      </button>
+    </span>
   )
 }
 
