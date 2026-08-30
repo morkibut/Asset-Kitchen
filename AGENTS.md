@@ -127,6 +127,8 @@ contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne l
 | `docs/archi-fournisseur.md` | l'architecture | on rouvre la question du modèle, du catalogue, du contrat de génération ou des outils MCP |
 | `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
 | `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt fichiers, de `T1` à `R5` |
+| `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses dix-sept questions ouvertes se tranchent à l'usage |
+| `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. Elles décrivent l'interface future, jamais l'état du code |
 | `docs/design-motifs.md` | le design | on dessine un écran |
 | `docs/design-decisions.md` | le design | on rouvre une décision d'apparence |
 | `docs/PIEGES.md` | — | avant de toucher un terrain déjà miné, ou sur renvoi du code |
@@ -143,11 +145,21 @@ seuil rond refuserait le jour où l'on écrit une phrase de plus, ce qui n'est p
 faute, et se relèverait le jour où il gêne, ce qui n'est pas un garde-fou.
 
 Ce qui se surveille est la **tendance**. La règle d'avant — *« dès qu'une section pèse
-plus que le document qui la porte, elle sort en annexe »* — n'a jamais déclenché : aucune
-section n'atteint la moitié de son document, et le corpus a triplé deux fois quand même,
-jusqu'à 315 Ko le 29 août 2026. Il est redescendu à 139 le même jour, sans qu'une ligne
-soit supprimée. Ce chiffre-là est le repère : quand le banc annonce une dérive qui
-s'installe, une section descend en annexe et laisse un renvoi.
+plus que le document qui la porte, elle sort en annexe »* — n'a jamais déclenché : le
+corpus a triplé deux fois quand même, jusqu'à 315 Ko le 29 août 2026. Il est redescendu à
+139 le même jour, sans qu'une ligne soit supprimée. Ce chiffre-là est le repère : quand le
+banc annonce une dérive qui s'installe, une section descend en annexe et laisse un renvoi.
+
+**Et la règle a déclenché pour la première fois le 31 août 2026, en reportant la V2.1.** La
+phrase qui tenait ici — *« aucune section n'atteint la moitié de son document »* — est
+devenue fausse : les **décisions d'implémentation** du PRD pèsent **54 %** de leur
+document, et le corpus est remonté de 139 à **248 Ko** en une session. Ce n'est pas une
+dérive lente, c'est un report de chantier, et il était attendu ; mais le seuil est franchi
+et le fait s'écrit ici plutôt que de se découvrir au prochain banc. **Ce qui le relèverait
+est connu et non fait** : les décisions d'implémentation du PRD et les vingt-et-une étapes
+de la V2.1 du plan sont les deux seules sections qui pèsent, et l'une des deux suffirait.
+La descente en annexe n'est pas prise ici parce qu'elle emporte des renvois — c'est le
+paragraphe suivant qui dit pourquoi elle se fait d'un bloc, banc relancé derrière.
 
 **Le banc pèse aussi les renvois**, et c'est l'autre moitié : une section qui part en
 annexe emporte avec elle les renvois du code et des documents qui la visaient, et un
