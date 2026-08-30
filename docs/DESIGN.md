@@ -11,8 +11,17 @@
 - **Quoi** : atelier personnel de production d'assets 2D pour jeu. On définit l'univers d'un jeu une fois, on fabrique au cas par cas ce qui lui appartient. Voir `docs/PRD.md` § Solution.
 - **Pour qui** : une personne — l'auteur du jeu, qui est aussi l'auteur de l'outil. Il juge la qualité à l'œil, mieux et plus vite qu'une machine, et n'a aucune envie qu'on la juge à sa place.
 - **Espace** : outils de production créative à forte densité — Lightroom, Aseprite, Blender, Linear. Référence d'ergonomie explicite du projet : SpriteCook (`screen_spritecook/`, 30 captures).
-- **Type** : **outil interne de production**. Ni site marketing, ni produit grand public. Aucune page d'accueil, aucun tunnel, aucun assistant.
+- **Type** : **outil interne de production**. Ni site marketing, ni produit grand public. Aucune page d'accueil, aucun tunnel.
 - **Memorable thing** : *la table lumineuse* — le châssis est muet, les assets sont la seule chose colorée à l'écran.
+
+**« Aucun assistant » est tombé le 30 août 2026**, et la phrase est corrigée ci-dessus plutôt
+que gardée avec une note. Ce qui l'a fait tomber n'est pas un changement d'avis sur
+l'accueil, c'est une mesure : **11 % de tout l'argent dépensé l'a été sans jeu ouvert**,
+donc sans univers pour contraindre l'image — et un atelier neuf n'a nulle part où écrire un
+premier prompt. L'assistant de démarrage est **l'écran des réglages d'un jeu, en dix étapes
+au lieu d'une bande de 1 843 px** ; il se saute, il se rouvre, et rien n'attend qu'on le
+finisse. Ce que l'exclusion visait — un tunnel qui empêche d'entrer — reste écarté, et
+c'est ce qui reste écrit. Voir `docs/v21-arbitrages.md` A-9 et A-10.
 
 **Écran large uniquement** — tranché par `docs/PRD.md` § Décisions d'implémentation, construit
 par `docs/archi-versions.md` §6.2. La seule chose que ce document ajoute est la conséquence
@@ -32,6 +41,15 @@ largeurs de colonnes du § Layout sont donc absolues et sans condition.
 Le froid retire la concurrence chromatique. Le rayon 0 retire la concurrence de forme. Le
 monospace sur les mesures retire l'ambiguïté entre un fait et un libellé. L'absence de mouvement
 retire la concurrence d'attention.
+
+**Ce que la V2.1 n'a pas dépensé, et c'est ce qui prouve que le système tenait.** Vingt-six
+écrans redessinés, trois onglets neufs, sept écrans qui n'existaient pas — et **aucune
+couleur neuve, aucun glyphe neuf, aucune police, aucune largeur ni hauteur inventée**. Les
+trois glyphes du produit restent trois : `+`, le triangle plein, `×`. Les croquis des
+premières maquettes dessinaient une roue dentée et un point d'interrogation entouré ; les
+deux ont été retirés, et remplacés par des mots. Ce document n'a donc rien gagné en
+vocabulaire ; il a gagné des **listes fermées** — cinq hauteurs, trois largeurs — là où il
+n'avait qu'un tableau ouvert.
 
 **Ce qui est écarté, et pourquoi** — la maquette `docs/maquette-atelier.html` du 26 août 2026 :
 châssis ambre sur charbon (entre en concurrence avec le pixel art, qui sature déjà les ors et les
@@ -253,30 +271,67 @@ doublerait la maintenance des états. Aucun token n'est défini deux fois.
 
 ### Hauteurs de contrôle — la vraie grille de densité
 
-| Élément | Hauteur |
+**La liste est fermée depuis la V2.1 : `44 · 38 · 34 · 30 · 26`.** Cinq valeurs, et rien
+d'autre ne se dessine. C'est la discipline que les vingt-six maquettes se sont imposée et
+qu'elles ont tenue — *aucune largeur ni hauteur inventée* — et elle vaut désormais pour le
+produit entier : une bande neuve prend une des cinq, ou bien la question remonte ici.
+
+| px | Ce qui la porte |
 |---|---|
-| Rangée d'arbre | 26 px |
-| Bouton de segment, champ de recherche | 26 – 28 px |
-| Bouton, champ | 32 px |
-| Bouton compact (`btn-xs`) | 24 px |
-| En-tête de panneau | 30 px |
-| Barre d'outils de grille | 38 px |
-| Barre de tête | 44 px |
-| Barre d'état | 26 px |
-| Champ de prompt | 62 px (min) |
+| **44** | barre de tête — les trois onglets, identique sur tous les écrans |
+| **38** | toute barre d'outils : grille d'assets, tableau d'inspiration, barre des trois côtés de l'Univers. Et la vignette d'une image de référence, partout où elle paraît |
+| **34** | bouton, champ. Dont **le bouton qui paie** et **le champ qui nomme**, et la pastille d'une couleur de palette. C'est aussi la **barre des tables** de l'établi |
+| **30** | en-tête de panneau |
+| **26** | rangée d'arbre, rangée d'une étape ou d'une ambiance, bouton de segment, champ de recherche, barre d'état |
+
+**Deux valeurs sortent de la liste, et les deux sont nommées.** Le **champ de prompt** est à
+**56 px**, parce que ce n'est pas une bande mais une zone de saisie sur plusieurs lignes ;
+et le **bouton compact** reste à **24 px**, parce qu'il vit *à l'intérieur* d'une rangée qui
+est elle-même dans la liste — un bouton de 26 dans une rangée de 26 n'a nulle part où se
+poser. Toute autre exception repasse par ce document.
+
+**Deux corrections d'écriture, et il faut dire laquelle est un vrai changement.** Le champ
+de prompt était noté ici « 62 px (min) » : 62 était la **zone**, marges comprises, et 56 est
+**le champ**. Rien ne bouge à l'écran, seule la mesure était prise au mauvais endroit. Le
+bouton et le champ, eux, **changent réellement** — de 32 px à 34. La maquette qui a posé la
+valeur la croyait déjà en place (« inchangée — c'est déjà celle du panneau d'aujourd'hui ») ;
+elle ne l'était pas, le code est à 32 px partout. La décision reste celle de la V2.1, parce
+que 34 est la valeur que les vingt-six écrans ont dessinée et qu'un produit ne peut pas
+porter deux hauteurs de bouton — mais **la raison invoquée était fausse, et le coût est réel** :
+tous les boutons et tous les champs du produit. La question est rouverte en toutes lettres
+dans `docs/v21-arbitrages.md` B-9, et c'est là qu'elle se tranche, pas ici.
 
 Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone centrale : 16 px.
+
+### Largeurs de colonne — la liste est fermée aussi
+
+**`380 · 300 · 240`.** Trois valeurs, et chacune nomme ce qu'elle porte plutôt qu'une taille :
+
+| px | Ce qu'elle nomme |
+|---|---|
+| **380** | ce qu'on manipule — la fiche d'une image, la réserve de la toile, la colonne d'une table, la colonne des sœurs, la colonne de la chose ouverte dans le codex |
+| **300** | les réglages d'une génération. **Elle disparaît en V2.1** : les réglages descendent dans l'établi, hérités de l'entité, et ne se ressaisissent plus |
+| **240** | où ça se range — les familles du codex, les projets et collections, la liste des étapes de l'assistant, la liste des ambiances |
+
+Tout le reste prend la place qui reste, sans largeur imposée. Une colonne neuve prend une
+des trois, ou la question remonte ici.
 
 ---
 
 ## Layout
 
 - **Approche** : **grid-disciplined**, sans exception. Il n'y a pas de section marketing dans ce produit, donc aucune raison de casser la grille nulle part.
-- **Grid de l'Atelier** : `240px · 300px · minmax(0,1fr) · 380px` — arbre · réglages · prompt + grille · fiche. Largeurs absolues, sans condition.
-- **Grid de l'Univers** : `380px · minmax(0,1fr)` en mode grille, `380px · minmax(0,1fr) · 380px` en mode toile — réglages · tableau, ou réglages · toile · réserve. La troisième colonne n'introduit **aucune largeur nouvelle** : c'est la 380 de la fiche, réemployée pour ce qu'elle nomme déjà, la colonne de ce qu'on manipule. Ajouté le 27 août 2026 avec la toile (`PLAN.md` T8).
-- **Les deux colonnes de 380 de l'Univers se replient par choix**, exactement comme celles de l'Atelier (US-97) : même bascule dans la barre de tête, même case de grille qui tombe à zéro, mêmes 160 ms. Repliées toutes les deux, la toile tient la largeur de l'écran — c'est la surface de composition, et l'écran large est la ressource du produit. **Replier n'est pas fermer** : les deux panneaux restent montés, et la réserve garde ses 380 px sous une case qui les rogne, parce que c'est cette grille-là que l'aimant de la largeur libre mesure. La bascule de la réserve ne paraît **qu'en toile** — en grille, elle n'a pas de colonne, et une bascule pour une colonne absente mentirait sur ce que l'écran contient. Ajouté le 28 août 2026, à l'usage.
-- **La colonne de 240 px porte trois choses, et c'est le même sujet vu de trois hauteurs** : où ça se range (projets, collections), ce que ça coûte (le total du projet ouvert), et **ce qui a raté** — le journal, sous l'arbre. Ajouté le 27 août 2026 avec la bibliothèque : un appel raté a coûté de l'argent sans produire d'image, donc il n'a sa place ni dans la grille, qui ne montre que ce qu'on peut réutiliser, ni nulle part, puisqu'il faut pouvoir expliquer une facture. Le journal ne paraît que s'il y a eu un raté.
-- **Max content width** : **aucune**, à une exception nommée. L'écran large est la ressource du produit, on la dépense, et la grille d'assets remplit ce qui reste. L'exception est la colonne de prose de l'écran Guide, bornée à **72 caractères** : la règle a été écrite pour la chose qui *gagne* à s'étaler, et la prose est la seule matière du produit qui perde à recevoir de la largeur (§ L'écran Guide). Aucune autre surface n'a le droit de s'en réclamer.
+- **Trois onglets, et une profondeur** — la V2.1 remplace les sept surfaces qui se recouvraient par **Univers · Codex · Galerie**, dans l'ordre où ils servent, plus un fil d'Ariane qui dit à quelle profondeur du codex on se trouve. Ce qui suit donne la grille de chacun ; toutes les largeurs viennent de la liste fermée `380 · 300 · 240`.
+- **Un mot du produit qui devient ambigu, et la règle qui le désambiguïse** : **« l'atelier » en minuscule est l'application entière** ; **« l'Atelier » en majuscule était un écran, et cet écran n'existe plus.** Toute occurrence majuscule dans ce document ou dans les motifs est donc soit historique et datée, soit à corriger. La règle est écrite parce que le mot reste juste dans sa lecture minuscule et qu'on ne peut pas le bannir (A-23).
+- **Grid de la Galerie** : `240px · minmax(0,1fr) · 380px` — où ça se range · la grille d'assets · la fiche d'une image. C'est l'ancien Atelier **moins sa colonne de réglages de 300 px**, qui disparaît : la galerie ne paie jamais, donc elle n'a rien à régler avant de payer.
+- **Grid du Codex** : `240px · minmax(0,1fr) · 380px` — les familles · les choses du jeu et ce qu'elles réclament · la chose choisie. Même grille que la galerie, et c'est voulu : ce sont les deux écrans où l'on **parcourt**.
+- **Grid de l'Établi** : `380px · minmax(0,1fr) · 380px` — la table ouverte · l'image en grand · les sœurs. **Les deux colonnes de 380 se replient**, comme celles de l'Univers. L'établi s'ouvre *sous* le codex, à la profondeur du fil d'Ariane ; il n'est pas un quatrième onglet.
+- **Grid de l'Univers** : l'onglet a **trois côtés — Inspiration, Réglages, Ambiances — et un seul est allumé.** Le côté allumé prend tout l'écran sous une barre de 38 px qui porte les trois mots. *Inspiration* : le tableau prend toute la largeur, et **en vue à la main une colonne de 380 px paraît à droite** — la réserve. *Réglages* et *Ambiances* : `240px · minmax(0,1fr)` — la liste des étapes ou des ambiances, puis ce qui est ouvert.
+- **Ce que l'onglet Univers gagne à ces trois côtés, et c'est mesuré** : la bande de réglages faisait **1 843 px de haut dans 646 px visibles** — 2,9 écrans — et une étape seule tient dedans. Le tableau passe de la moitié de la largeur à la totalité, et la première image d'inspiration remonte de **4 161 px de défilement à 712**.
+- **Une colonne de 380 se replie par choix**, partout où il y en a une (US-97) : même bascule dans la barre de tête, même case de grille qui tombe à zéro, mêmes 160 ms. Elle sert à trois endroits — les deux colonnes de l'établi, et la réserve de la toile. Repliées, la toile ou l'image en grand tiennent la largeur de l'écran, qui est la ressource du produit. **Replier n'est pas fermer** : le panneau reste monté, et la réserve garde ses 380 px sous une case qui les rogne, parce que c'est cette grille-là que l'aimant de la largeur libre mesure. La bascule de la réserve ne paraît **qu'en vue à la main** — sans elle il n'y a pas de colonne, et une bascule pour une colonne absente mentirait sur ce que l'écran contient. Ajouté le 28 août 2026, à l'usage ; réécrit le 31 août avec la V2.1, où l'Univers n'a plus qu'une seule 380.
+- **La colonne de 240 px porte deux choses, et c'est le même sujet vu de deux hauteurs** : où ça se range (les familles du codex, les projets et collections) et ce que ça coûte (le total du projet ouvert). **Elle ne porte plus le journal des appels ratés** — retiré le 31 août 2026 : il ne montrait qu'un cas sur trois, et mesuré, c'était celui qui n'a **jamais rien coûté**. Ce qui le remplace est un écran entier, *les dépenses*, où tous les appels payés se lisent du plus récent au plus ancien avec ce que chacun a donné. La raison d'origine ne bouge pas — *il faut pouvoir expliquer une facture* — c'est la portée qui était trop étroite. Voir `docs/v21-arbitrages.md` A-3.
+- **Le total de la barre de tête dit toujours de quoi il est le total**, et il est cliquable : il ouvre les dépenses. `ce jeu $2,140` — jamais un montant nu. La raison tient en une phrase : *un montant affiché est une question posée*, et un chiffre qui laisse deviner sa portée finit par être lu comme le total de tout, ce qu'il n'est pas — l'atelier en compte un second, celui de toutes les séances, qui vit sur l'écran des dépenses. Ajouté le 31 août 2026 (A-4).
+- **Max content width** : **aucune**, à une exception nommée. L'écran large est la ressource du produit, on la dépense, et la grille d'assets remplit ce qui reste. L'exception est la colonne de prose de l'écran Guide, bornée à **72 caractères** : la règle a été écrite pour la chose qui *gagne* à s'étaler, et la prose est la seule matière du produit qui perde à recevoir de la largeur (§ L'écran Guide). **Elle a un second locataire depuis le 31 août 2026, et un seul** : la carte de texte du tableau d'inspiration, quand on l'ouvre en grand. La visionneuse était écrite pour une image ; ouvrir une note de trois paragraphes sur 1 600 px la rend illisible pour la raison exacte qui borne le Guide. Elle défile, comme le Guide. Aucune autre surface n'a le droit de s'en réclamer — et les deux qui l'ont ont la même matière, de la prose, ce qui est le critère d'admission et pas une coïncidence.
 - **Grille d'assets** : `repeat(auto-fill, minmax(128px, 1fr))`, gouttière 9 px. Zoom 1× / 2× / 4× — le cran donne la **largeur minimale d'une tuile** : 128, 256, 512. Un niveau indisponible à la largeur courante est **grisé, pas caché**.
 - **Un cran est disponible quand deux tuiles y tiennent côte à côte**, gouttière et padding compris — pas une. Ajouté le 27 août 2026 en ouvrant l'atelier : `minmax(512px, 1fr)` accepte une colonne unique et l'**étire** jusqu'au bord, et 4× rendait une tuile de 1028 px sur une colonne de 1060. Huit fois la taille de repos pour un contrôle qui en annonce quatre. Une grille d'une colonne n'est plus une planche contact, c'est une visionneuse. **1× reste toujours disponible** : c'est l'état de repos, et quelque chose doit se rendre.
 - **Le cran choisi reste choisi, même devenu indisponible** — c'est la règle du modèle du catalogue (US-9), et il n'y a aucune raison d'en avoir deux. Mais une grille doit rendre quelque chose : elle rend au plus grand cran qui tienne, et la barre d'outils le **dit**, dans la fente et la forme des autres — `— 4× ne tient pas ici, rendu en 2×`. Le seul endroit du produit où l'on rend autre chose que ce qui est choisi, et il ne le fait jamais en silence.
@@ -374,25 +429,50 @@ grille des colonnes, et c'est la place de tout l'écran qui bouge.
 ## Motifs → `docs/design-motifs.md`
 
 Les motifs transversaux — la tuile, l'emplacement, le grisé qui porte sa raison, la fente,
-le menu qui sort du flux, les quatre écrans — vivent dans **`docs/design-motifs.md`**, qui a
+le menu qui sort du flux, les écrans un par un — vivent dans **`docs/design-motifs.md`**, qui a
 la même autorité que ce fichier. Ils y sont sortis parce qu'ils pèsent trois fois le système
 lui-même et qu'on ne les consulte qu'en dessinant un écran.
 
 **Un motif ne redéfinit jamais un token** : il applique ce qui est décidé ci-dessus. En cas
 de contradiction, les sections ci-dessus l'emportent.
 
+> ⚠ **`docs/design-motifs.md` ne porte pas encore la V2.1 — 31 août 2026.** Ses motifs
+> transversaux restent vrais ; ses sections par écran décrivent les quatre écrans d'avant, et
+> il en manque une par écran neuf. Trois motifs y changent et sont à réécrire : **le grisé qui
+> porte sa raison** (dans une table, la raison quitte la puce de 24 px et s'écrit en clair dans
+> le panneau, à la place des réglages — c'est mieux qu'un mot dans une puce et mieux qu'une
+> infobulle que le produit s'interdit) ; **la fiche**, qui se dédouble en *fiche d'une image*
+> — le panneau de 380 px, qui reste — et *fiche d'une chose du jeu* — un écran plein cadre,
+> qui est neuf ; et **la visionneuse**, qui gagne la carte de texte. Les tables de la recette
+> ont en plus un motif à eux, les **quatre états d'une case** — active, posée, vide,
+> indisponible —, dont la règle tient en une phrase : *le carré se remplit quand la place
+> change l'image, pas quand elle figure dans la recette*. En attendant, ce fichier-ci fait
+> foi partout où les deux se croisent.
+
 ---
 
 ## Ce que le design n'affiche pas, et pourquoi
 
-L'Atelier ne montre que ce qu'on touche **à chaque** génération : le sujet, le modèle, le nombre
-de variations — plus un bloc en lecture seule qui répond d'avance à « qu'est-ce qui part avec ? »
-(références, famille, palette, grille imposée, bible active).
+L'endroit où l'on paie ne montre que ce qu'on touche **à chaque** génération : le sujet, le
+modèle, le nombre de variations. Résolution, format, champs de bible dépliés, sélecteur de
+rôle de réinjection : tous ces réglages existent dans le produit. Ils sont repliés, tenus par
+un défaut du projet, ou vivent dans l'onglet Univers. **Une décision du cadrage peut être
+respectée par le code sans être affichée** — c'est la leçon de la maquette écartée.
 
-Résolution, format, champs de bible dépliés, sélecteur de rôle de réinjection, barre d'état
-à quatre blocs : tous ces réglages existent dans le produit. Ils sont repliés, tenus par un défaut
-du projet, ou vivent dans l'écran Univers. **Une décision du cadrage peut être respectée par le
-code sans être affichée** — c'est la leçon de la maquette écartée.
+**Et une chose a changé de camp le 30 août 2026 : « qu'est-ce qui part avec ? ».** Ce bloc
+était en lecture seule, replié sous le prompt, et il répondait d'avance. Il devient **un
+écran entier qui paraît avant de payer**, où tout ce qui part se lit ligne par ligne — le
+sujet, les sept textes du jeu, les trois de l'ambiance, chaque image de référence — chacune
+avec un interrupteur, et où l'on corrige un texte sur place. Ce qui l'a fait basculer est une
+mesure, pas un goût : sur le plus long appel jamais payé, **le style pèse 890 caractères sur
+1 690 et le sujet 40** — 53 % contre 2 %. Un bloc replié qui résume 53 % de ce qui part n'est
+pas un résumé, c'est un angle mort. La règle du produit ne bouge pas d'un mot — *ce qui est
+montré est ce qui part* — c'est sa surface qui a dû grandir pour rester vraie.
+
+**La contrepartie est écrite avec la décision** : une correction faite dans cet écran vaut
+**pour cet appel seulement**. Le réglage durable reste sur la fiche de la chose. Sans cette
+borne, l'écran de confirmation deviendrait un second endroit où se règle l'univers — et deux
+endroits qui règlent la même chose finissent toujours par se contredire.
 
 ---
 
