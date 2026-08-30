@@ -584,7 +584,7 @@ au milieu de l'étape.
 | À produire | Ce que c'est | Ce que ça coûte | Bloque |
 |---|---|---|---|
 | **Dix-sept vignettes d'exemple** | une par vue du jeu — huit — et une par taille d'image — neuf | une petite production d'images, à faire une fois | **E8** — sans elles, deux étapes de l'assistant redeviennent une liste de mots et une liste de nombres, ce qu'elles sont là pour remplacer |
-| **Le banc d'essai des couleurs, étendu** | balayer les deux dosages d'une palette sur les images du dépôt et compter les résultats réellement distincts | rien — il tourne sur ce qui est déjà là | **E11** — si les deux dosages ne produisent que trois résultats distincts, ce sont deux curseurs de trop |
+| ~~**Le banc d'essai des couleurs, étendu**~~ | **fait le 31 août 2026** — les deux dosages agissent, ils sont indépendants, et le seul endroit où l'attraction meurt est nommé | rien, comme prévu | ~~E11~~ — le blocage est levé |
 | **Trois appels de mesure de planche** | le même sujet en trois, cinq et six cases | moins de cinq centimes en tout | **E13** — le gain d'une planche n'est mesuré qu'à quatre cases, et une seule fois : `$0,0128` par image à une case, aucun gain à deux, `$0,0057` à quatre |
 
 ### L'ordre, et les trois endroits où il se resserre
@@ -1078,11 +1078,12 @@ simplement sur le jeu.
 - [ ] Les deux écrans disent qui utilise une ambiance et ce que chacun lui prend
 - [ ] Supprimer une ambiance ne détruit aucune image ; ce qui s'en servait retombe sur le jeu
 - [ ] Aucun appel payant n'est ajouté : la fusion des palettes et la correction des couleurs se font sur la machine
+- [ ] L'attraction est grisée avec sa raison quand la proportion ne laisse aucune couleur à l'ambiance — mesuré : dans ce cas seul, les cinq valeurs rendent le même fichier
 
 #### Bloquée par
 
 - **E7** — les ambiances sont un des trois côtés de l'Univers.
-- **Le banc d'essai des couleurs, étendu** — si les deux dosages ne produisent que trois résultats distincts sur les images du dépôt, ce sont deux curseurs de trop, et c'est le banc qui doit le dire avant qu'on les dessine.
+- ~~Le banc d'essai des couleurs, étendu~~ — **levé le 31 août 2026.** Les deux curseurs agissent, sur les six images essayées et sur les cinq valeurs de chacun, et croisés ils rendent 21 résultats distincts sur 25 combinaisons : ils ne font pas le même travail. Le banc a en plus trouvé le seul endroit où l'attraction meurt — à proportion « tout du jeu », il ne reste aucune couleur d'ambiance à tirer —, et c'est là qu'elle se grisera avec sa raison. Un critère d'acceptation de plus est né de là, le dernier ci-dessus.
 
 ---
 

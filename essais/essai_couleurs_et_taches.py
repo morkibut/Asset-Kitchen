@@ -10,7 +10,13 @@ invérifiable au premier doute.
 vrai projet, et le post-traitement est du processeur pur — aucune clé n'est lue,
 aucun appel n'est fait. Le seul coût est du temps de calcul.
 
-Sept questions, dans cet ordre :
+Neuf questions, dans cet ordre — **les deux dernières ajoutées le 31 août 2026**,
+avant d'écrire l'étape E11 du plan. Elles portent sur les deux curseurs de fusion
+d'une palette, décrits dans `docs/maquettes-v2.1/07-ambiances-et-couleurs.html`
+au paragraphe « Une palette n'est pas une liste, c'est une recette ». Elles
+existent parce que la question n° 1 de ce banc a déjà trouvé un réglage qui ne
+faisait rien. Un curseur qui ne changerait rien se grise avec sa raison ; ce banc
+est ce qui permet de le dire avant de le dessiner, pas après.
 
 1. **Le nombre de couleurs agit-il quand une palette est posée ?** C'est la
    question qui a décidé de la maquette 14. La réponse est non, et elle se voit
@@ -27,6 +33,10 @@ Sept questions, dans cet ordre :
    réduction en laisse ; on compte avant et après pour le savoir.
 7. **L'ordre des places compte-t-il ?** Quantification avant ou après la grille,
    bords avant ou après la quantification.
+8. **La proportion change-t-elle l'image ?** Combien de couleurs viennent du jeu
+   et combien de l'ambiance — c'est le premier des deux curseurs de fusion.
+9. **L'attraction change-t-elle l'image ?** De combien les couleurs de l'ambiance
+   sont tirées vers les plus proches de celles du jeu — le second curseur.
 
     Lancer :  py essais/essai_couleurs_et_taches.py
               py essais/essai_couleurs_et_taches.py --projet coeur-de-pierre --images 8
@@ -61,6 +71,7 @@ from atelier.domaine.recette import (  # noqa: E402
     Recadrage,
     Recette,
 )
+from atelier.image.palette import palette_de  # noqa: E402
 from atelier.image.traitement import (  # noqa: E402
     composantes,
     detourer,
@@ -160,6 +171,90 @@ def titre(numero: str, texte: str) -> None:
     print("=" * 78)
     print(f"{numero}. {texte}")
     print("=" * 78)
+
+
+# ── La fusion de deux palettes — les deux curseurs, tels que la maquette les
+#    décrit ────────────────────────────────────────────────────────────────────
+#
+# **Rien de tout ceci n'existe encore dans le produit**, et c'est le sujet : on
+# mesure avant d'écrire. Les trois fonctions ci-dessous sont la lecture littérale
+# de `docs/maquettes-v2.1/07-ambiances-et-couleurs.html`, au paragraphe « Une
+# palette n'est pas une liste, c'est une recette », et elles n'ont pas d'autre
+# ambition — si le banc dit qu'un curseur est inerte, c'est cette lecture-là qui
+# est en cause autant que le curseur, et il faudra le dire.
+
+
+def _rgb(hexa: str) -> tuple[int, int, int]:
+    entier = int(hexa.lstrip("#"), 16)
+    return (entier >> 16 & 255, entier >> 8 & 255, entier & 255)
+
+
+def _hexa(rgb) -> str:
+    return "#%02x%02x%02x" % tuple(int(round(float(c))) for c in rgb)
+
+
+def reduire(palette: tuple[str, ...], combien: int) -> tuple[str, ...]:
+    """Les `combien` couleurs de cette palette-là.
+
+    **Par la coupe médiane, comme le reste du produit** : `palette_de` réduit
+    déjà les couleurs d'un artwork de cette façon, et prendre les N premières à
+    la place donnerait un résultat qui dépend de l'ordre d'écriture du fichier.
+    """
+    if combien <= 0:
+        return ()
+    if combien >= len(palette):
+        return tuple(palette)
+    bande = np.array([[_rgb(c) for c in palette]], dtype=np.uint8)
+    indexee = Image.fromarray(bande, mode="RGB").quantize(
+        colors=combien, method=Image.Quantize.MEDIANCUT
+    )
+    plate = indexee.getpalette() or []
+    return tuple(
+        "#%02x%02x%02x" % tuple(plate[rang * 3 : rang * 3 + 3])
+        for rang in sorted(set(indexee.tobytes()))
+    )
+
+
+def attirer(ambiance: tuple[str, ...], jeu: tuple[str, ...], part: float) -> tuple[str, ...]:
+    """Chaque couleur de l'ambiance tirée vers la plus proche de celles du jeu.
+
+    `part` va de 0 — rien ne bouge — à 1 — la couleur *devient* celle du jeu.
+    C'est ce qui harmonise : le marais reste un marais, mais il respire l'air du
+    jeu. La distance est euclidienne dans RGB, comme partout ailleurs ici.
+    """
+    if not jeu or part <= 0:
+        return tuple(ambiance)
+    cibles = np.array([_rgb(c) for c in jeu], dtype=np.int16)
+    tirees = []
+    for couleur in ambiance:
+        source = np.array(_rgb(couleur), dtype=np.int16)
+        proche = cibles[int(np.argmin(((cibles - source) ** 2).sum(axis=1)))]
+        tirees.append(_hexa(source + (proche - source) * part))
+    return tuple(tirees)
+
+
+def fusionner(
+    jeu: tuple[str, ...],
+    ambiance: tuple[str, ...],
+    total: int,
+    du_jeu: int,
+    attraction: float,
+) -> tuple[str, ...]:
+    """La palette d'une ambiance : `du_jeu` couleurs du jeu, le reste attiré.
+
+    Le dédoublonnage est la seule liberté prise sur la maquette, et elle est
+    forcée : à forte attraction, deux couleurs de l'ambiance tombent sur la même
+    couleur du jeu, et une palette qui répète une entrée n'est pas une palette.
+    C'est aussi ce qui rend le compte rendu **plus court que demandé** aux fortes
+    valeurs, et le banc l'affiche plutôt que de le taire.
+    """
+    proches = attirer(reduire(ambiance, total - du_jeu), jeu, attraction)
+    vues, sortie = set(), []
+    for couleur in (*reduire(jeu, du_jeu), *proches):
+        if couleur not in vues:
+            vues.add(couleur)
+            sortie.append(couleur)
+    return tuple(sortie)
 
 
 # ── Le banc ──────────────────────────────────────────────────────────────────
@@ -300,6 +395,122 @@ def main() -> None:
               f"({cout_source:.0f} ms contre {cout_case:.1f} ms) · "
               f"bords avant la quantification : "
               f"{'identique' if np.array_equal(inverse, droit) else 'DIFFÉRENT'}")
+
+    # ── Les deux curseurs de fusion d'une palette ────────────────────────────
+    #
+    # **L'ambiance est déduite de deux vraies images du dépôt.** « Les images
+    # d'un paquet du tableau » n'existe pas encore sur le disque, et fabriquer
+    # une palette d'ambiance à la main — six couleurs choisies pour la
+    # démonstration — répondrait d'avance à la question qu'on pose. On prend
+    # donc les deux dernières images du corpus : elles ne servent à rien d'autre
+    # ici, et leurs couleurs sont celles d'un vrai modèle sur un vrai sujet.
+
+    ambiance = palette_de([octets for _, octets in images[-2:]], couleurs=len(palette))
+    total = len(palette)
+    mesurees = images[:6]
+
+    def avec(fusionnee: tuple[str, ...]) -> Recette:
+        return Recette(
+            passes=(Passe(),),
+            recadrage=Recadrage(),
+            grille=Grille(cible=cible, occupation=85, ancrage=BAS),
+            quantification=Quantification(
+                couleurs=couleurs_univers, palette=fusionnee, tramage=AUCUN
+            ),
+            bords=None,
+        )
+
+    def rendus(fusionnee: tuple[str, ...]) -> tuple[bytes, ...]:
+        """Ce que cette palette-là donne, image par image, en octets de PNG.
+
+        Les octets et non les couleurs : c'est la mesure de la question n° 1 de
+        ce banc, et c'est la seule qui réponde vraiment à « est-ce que ça change
+        quelque chose ». Deux palettes différentes peuvent rendre le même
+        fichier ; c'est justement ce qu'on cherche à savoir.
+        """
+        return tuple(finir(detourees[nom], avec(fusionnee)).octets for nom, _ in mesurees)
+
+    def compter(sorties: dict) -> tuple[int, list[int]]:
+        """Combien de rendus distincts en tout, et combien image par image."""
+        entier = len({s for s in sorties.values()})
+        par_image = [
+            len({s[rang] for s in sorties.values()}) for rang in range(len(mesurees))
+        ]
+        return entier, par_image
+
+    titre("8", "La proportion — combien de couleurs viennent du jeu")
+    print(f"  jeu : {total} couleurs · ambiance déduite de "
+          f"{' + '.join(nom for nom, _ in images[-2:])} : {len(ambiance)} couleurs")
+    print(f"  attraction tenue à 0 % — on ne bouge qu'un curseur à la fois")
+    proportions = sorted({0, total // 4, total // 2, 3 * total // 4, total})
+    sorties_proportion = {}
+    for du_jeu in proportions:
+        fusionnee = fusionner(palette, ambiance, total, du_jeu, 0.0)
+        sorties_proportion[du_jeu] = rendus(fusionnee)
+        print(f"  {du_jeu:3d}/{total} du jeu → palette de {len(fusionnee):3d} couleurs "
+              f"{'(dédoublonnée)' if len(fusionnee) < total else '              '} "
+              f"· premières : {' '.join(fusionnee[:4])}")
+    distincts, par_image = compter(sorties_proportion)
+    print(f"  → {distincts} rendus distincts sur {len(proportions)} valeurs essayées · "
+          f"par image : {par_image}")
+    print(f"  → {'LE CURSEUR AGIT' if distincts > 1 else 'CURSEUR INERTE — à griser'}")
+    releve["proportion_distincts"] = [distincts, len(proportions)]
+
+    titre("9", "L'attraction — de combien l'ambiance se rapproche du jeu")
+    milieu = total // 2
+    print(f"  proportion tenue à {milieu}/{total} du jeu — l'autre curseur ne bouge pas")
+    attractions = (0, 25, 50, 75, 100)
+    sorties_attraction = {}
+    for pour_cent in attractions:
+        fusionnee = fusionner(palette, ambiance, total, milieu, pour_cent / 100)
+        sorties_attraction[pour_cent] = rendus(fusionnee)
+        print(f"  {pour_cent:3d} % → palette de {len(fusionnee):3d} couleurs "
+              f"{'(dédoublonnée)' if len(fusionnee) < total else '              '} "
+              f"· premières de l'ambiance : {' '.join(fusionnee[milieu:milieu + 4])}")
+    distincts_a, par_image_a = compter(sorties_attraction)
+    print(f"  → {distincts_a} rendus distincts sur {len(attractions)} valeurs essayées · "
+          f"par image : {par_image_a}")
+    print(f"  → {'LE CURSEUR AGIT' if distincts_a > 1 else 'CURSEUR INERTE — à griser'}")
+    releve["attraction_distincts"] = [distincts_a, len(attractions)]
+
+    # **Et la question que ni l'un ni l'autre ne pose seul** : deux curseurs
+    # valent-ils mieux qu'un ? S'ils sont indépendants, la grille rend autant de
+    # résultats que de cases ; s'ils font le même travail, elle s'effondre sur sa
+    # diagonale, et un seul curseur suffirait.
+    grille_croisee = {
+        (du_jeu, pour_cent): rendus(
+            fusionner(palette, ambiance, total, du_jeu, pour_cent / 100)
+        )
+        for du_jeu in proportions
+        for pour_cent in attractions
+    }
+    cases = len(grille_croisee)
+    distincts_grille, _ = compter(grille_croisee)
+    print()
+    print(f"  les deux ensemble : {distincts_grille} rendus distincts sur {cases} "
+          f"combinaisons — {100 * distincts_grille / cases:.0f} % de la grille")
+    print("  deux curseurs se justifient si ce nombre dépasse nettement "
+          f"{max(distincts, distincts_a)}, ce que chacun rend seul")
+    releve["fusion_grille_distincts"] = [distincts_grille, cases]
+
+    # **Où la grille s'effondre, et c'est le seul endroit.** Un écart entre le
+    # nombre de cases et le nombre de rendus n'est pas du bruit : il nomme une
+    # combinaison où l'un des deux curseurs ne fait rien. C'est ce qui se grise
+    # avec sa raison à l'écran, et il vaut mieux le lire ici que le découvrir en
+    # tirant un curseur mort.
+    inertes = []
+    for du_jeu in proportions:
+        ligne = {grille_croisee[(du_jeu, a)] for a in attractions}
+        if len(ligne) == 1:
+            inertes.append(du_jeu)
+    if inertes:
+        print()
+        print("  l'attraction est INERTE à ces proportions, et la raison est "
+              "mécanique :")
+        for du_jeu in inertes:
+            print(f"    {du_jeu}/{total} du jeu — il ne reste aucune couleur "
+                  "d'ambiance à tirer vers quoi que ce soit")
+    releve["attraction_inerte_a"] = inertes
 
     SORTIE.write_text(json.dumps(releve, ensure_ascii=False, indent=2), encoding="utf-8")
     print()

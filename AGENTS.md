@@ -58,7 +58,10 @@ py essais/essai_pixel.py             brut contre traité, sur les images déjà 
 py essais/essai_couleurs_et_taches.py  les deux dernières places de la recette — le nombre de
                                      couleurs, la palette, le tramage, les taches et l'aire
                                      minimale. Gratuit, sur les images déjà là ; c'est lui
-                                     que citent les maquettes 14 et 15
+                                     que citent les maquettes 14 et 15. Depuis le 31 août
+                                     2026 il pèse aussi les **deux curseurs de fusion d'une
+                                     palette** — la proportion et l'attraction — et c'est ce
+                                     qui a levé le blocage de l'étape E11
 py essais/essai_ce_qui_part.py       ce que l'univers pose et ce qui part vraiment — le poids de
                                      la bible dans le prompt, les générations qui l'ont portée,
                                      ses contradictions avec le projet et avec la consigne de

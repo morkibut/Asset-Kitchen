@@ -35,5 +35,20 @@
     38.2,
     61.9
   ],
-  "une_seule_tache_sur": 6
+  "une_seule_tache_sur": 6,
+  "proportion_distincts": [
+    5,
+    5
+  ],
+  "attraction_distincts": [
+    5,
+    5
+  ],
+  "fusion_grille_distincts": [
+    21,
+    25
+  ],
+  "attraction_inerte_a": [
+    24
+  ]
 }

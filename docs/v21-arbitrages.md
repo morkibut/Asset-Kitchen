@@ -517,6 +517,28 @@ deux dosages sur les images du dépôt, et compter les résultats réellement
 distincts. **À faire avant d'écrire la moindre ligne des palettes.** Un dosage
 qui ne changerait rien se griserait avec sa raison.
 
+> **Répondu le 31 août 2026 — les deux curseurs agissent, et ils sont
+> indépendants.** Le banc est étendu (`py essais/essai_couleurs_et_taches.py`,
+> questions 8 et 9) et il balaie les deux dosages sur six vraies images, avec une
+> palette d'ambiance déduite de deux autres. La proportion rend **cinq images
+> distinctes sur cinq valeurs**, l'attraction aussi, et sur les six images à
+> chaque fois. Croisés, les deux rendent **21 résultats distincts sur 25
+> combinaisons** : ils ne font pas le même travail, et deux curseurs valent mieux
+> qu'un.
+>
+> **Le banc a en plus trouvé le seul endroit où l'un des deux meurt**, ce que la
+> question ne demandait pas. À proportion « tout du jeu », il ne reste aucune
+> couleur d'ambiance à tirer vers quoi que ce soit : l'attraction devient inerte,
+> et les cinq valeurs rendent le même fichier. C'est exactement le cas qui se
+> **grise avec sa raison** à l'écran, et c'est la quatrième fois que ce banc
+> trouve un réglage mort avant qu'il soit dessiné.
+>
+> Une réserve, et elle est nommée : le banc mesure *cette lecture-là* de la
+> maquette — la coupe médiane pour choisir les couleurs d'une source, la distance
+> euclidienne en RGB pour la plus proche. Une autre lecture des deux curseurs
+> pourrait donner d'autres chiffres. Ce qui est établi est que **deux curseurs
+> ainsi définis ne sont pas redondants**, pas que cette définition soit la seule.
+
 ### B-11 · Que devient la liste des dépenses au bout de mille appels ?
 
 Vingt-huit appels tiennent dans un écran, et la forme n'a été éprouvée que sur
@@ -585,5 +607,5 @@ une décision.
 | Ce qu'il faut | Pour quelle étape | Ce que ça coûte |
 |---|---|---|
 | **Dix-sept vignettes d'exemple** — le même petit personnage dessiné dans les huit vues de jeu, et le même sprite aux neuf tailles classiques | L'assistant de démarrage. Sans elles, les étapes de la vue et de la taille redeviennent des listes de mots et de nombres, ce qui est précisément ce qu'elles remplacent | Une petite production d'images |
-| **Le banc d'essai des couleurs étendu** — balayer les deux dosages d'une palette sur les images déjà là, et compter les résultats réellement distincts | Les palettes et les ambiances. Voir B-10 | Rien : il tourne sur ce qui est déjà sur le disque |
+| ~~**Le banc d'essai des couleurs étendu**~~ — **fait le 31 août 2026.** Les deux curseurs agissent, ils sont indépendants (21 résultats distincts sur 25), et l'attraction meurt à un seul endroit, nommé. Voir B-10 | ~~Les palettes et les ambiances~~ — plus rien | Rien, comme prévu |
 | **Trois appels de mesure de planche** — à trois, cinq et six cases | La planche d'une pose. Voir B-8 | Moins de cinq centimes |
