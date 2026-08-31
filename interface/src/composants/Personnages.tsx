@@ -217,7 +217,7 @@ export function EcranEtabli({
     // jeu, sa fente de refus, et un bouton pour retourner à l'atelier. Les
     // trois premiers sont dans la barre du châssis ; le quatrième n'a plus
     // d'objet, un onglet ne se ferme pas.
-    <div data-etabli data-univers className="flex min-h-0 flex-col bg-fond-0">
+    <div data-etabli data-univers className="flex min-h-0 min-w-0 flex-col bg-fond-0">
       {/* **Une case pleine ouvre son outil en plein cadre, et l'on revient sans
           avoir changé d'onglet** (E2). L'outil remplace la matrice, il ne se
           pose pas dessus : c'est la profondeur suivante du même endroit, et le

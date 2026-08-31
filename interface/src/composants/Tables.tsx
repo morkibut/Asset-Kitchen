@@ -190,7 +190,18 @@ export function BarreDesTables({
   onToutDefaire: () => void
 }) {
   return (
-    <div className="flex h-[34px] shrink-0 items-center gap-1 border-b border-bord bg-fond-1 px-4">
+    // **La bande ne grandit pas, et ce qui dépasse défile** — la règle du
+    // panneau borné par l'écran (`docs/DESIGN.md`), appliquée à une bande.
+    // Mesuré au navigateur en tenant E5 : à sept places qui portent chacune
+    // leur valeur, la bande demande 1 323 px pour 1 280 offerts, et une bande
+    // qui s'épaissirait mentirait sur la liste fermée des cinq hauteurs.
+    //
+    // **Ce qui défile, ce sont les places — jamais le geste qui les vide.**
+    // `tout défaire` est hors de la zone qui défile : poussé dedans, il aurait
+    // fallu faire glisser la bande pour l'atteindre, et un geste de portée
+    // générale ne se cherche pas.
+    <div className="flex h-[34px] shrink-0 items-center border-b border-bord bg-fond-1">
+      <div className="defile flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-4">
       {TABLES.map(({ cle, nom, fabrique }, rang) => {
         const dehors = indisponible(cle, traitement, mesures)
         const vaut = valeur(cle, recette)
@@ -207,7 +218,12 @@ export function BarreDesTables({
               aria-pressed={ouverte === cle}
               onClick={() => onOuvrir(cle)}
               className={[
-                "mesure flex h-[24px] items-center gap-1.5 rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
+                // `whitespace-nowrap` : la bande fait 34 px et ne grandit pas.
+                // Trouvé au navigateur en tenant E5 — dès que la sixième et la
+                // septième places portent une valeur, `modèle · 28` et
+                // `128 px · 100 %` se repliaient chacun sur deux lignes et
+                // débordaient de la bande par le haut et par le bas.
+                "mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
                 ouverte === cle
                   ? "bg-fond-3 text-texte"
                   : dehors
@@ -225,17 +241,18 @@ export function BarreDesTables({
           </span>
         )
       })}
+      </div>
 
       {/* **`tout défaire` vit au bout de la barre, pas dans l'en-tête d'une
           table.** Il y était posé en face du nom de la table, et il vidait la
           recette entière — donc il mentait sur sa portée. La barre *est* la
           recette : le geste qui la vide appartient à ce qui la représente. Le
           pied de chaque table garde son `Sans <table> ›`, qui ne touche qu'elle. */}
-      <span aria-hidden className="mx-2 h-4 w-px bg-bord" />
+      <span aria-hidden className="mx-2 h-4 w-px shrink-0 bg-bord" />
       <button
         type="button"
         onClick={onToutDefaire}
-        className="mesure ml-auto flex h-[24px] items-center gap-1.5 px-2 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-echec"
+        className="mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap px-2 pr-4 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-echec"
       >
         <span aria-hidden>×</span> tout défaire
       </button>
@@ -283,7 +300,7 @@ function Comparateur({
 }) {
   return (
     <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px]">
-      <span className="text-texte-3">
+      <span className="whitespace-nowrap text-texte-3">
         {asset.largeur}×{asset.hauteur} · {asset.type_media}
       </span>
       {/* **Un seul groupe de quatre, et non deux de deux.** La maquette les
@@ -298,24 +315,24 @@ function Comparateur({
         indisponibles={peint ? (["brut", "cote", "superpose"] as const) : []}
         onChange={(v) => onMode(v as Mode)}
       />
+      {/* **La bande fait 38 px, et elle ne grandit pas.** Mesuré au navigateur
+          en tenant E5 : la phrase qui expliquait le grisé la faisait passer sur
+          trois lignes, repliait les segments avec elle et poussait le bouton
+          hors de l'écran. **Elle est descendue dans le panneau**, qui a la
+          place d'une phrase ; ici il ne reste que le geste.
+
+          **Sa dernière maison.** L'appui récupère exactement ce que la
+          contrainte retire, et c'est pour ça qu'elle est payable. */}
       {peint && (
-        <>
-          <span className="text-texte-3">
-            la main se pose sur le rendu — les autres vues se lisent en maintenant
-          </span>
-          {/* **Sa dernière maison.** L'appui récupère exactement ce que la
-              contrainte ci-dessus retire, et c'est pour ça qu'elle est
-              payable. */}
-          <button
-            type="button"
-            onPointerDown={() => onAvant?.(true)}
-            onPointerUp={() => onAvant?.(false)}
-            onPointerLeave={() => onAvant?.(false)}
-            className="mesure h-[24px] rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-signal"
-          >
-            Avant ›
-          </button>
-        </>
+        <button
+          type="button"
+          onPointerDown={() => onAvant?.(true)}
+          onPointerUp={() => onAvant?.(false)}
+          onPointerLeave={() => onAvant?.(false)}
+          className="mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-signal"
+        >
+          Avant ›
+        </button>
       )}
       {mode === "superpose" && (
         <input
@@ -410,7 +427,7 @@ export function EcranTables({
   }, [peint, recette, etatMain.actif, poser])
 
   return (
-    <div data-tables className="flex min-h-0 flex-1 flex-col">
+    <div data-tables className="flex min-h-0 min-w-0 flex-1 flex-col">
       <BarreDesTables
         recette={recette}
         traitement={traitement}

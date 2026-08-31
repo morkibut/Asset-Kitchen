@@ -727,10 +727,17 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
             {contournees.length} tache{contournees.length > 1 ? "s" : ""} contournée
             {contournees.length > 1 ? "s" : ""}
           </Libelle>
+          {/* **« La plus petite » d'une seule n'est pas une mesure**, c'est une
+              tournure. À une tache, la phrase dit sa taille ; au-delà, elle dit
+              celle de la plus petite — qui est le nombre qui décide. */}
           <Raison
-            texte={`la plus petite fait ${Math.min(
-              ...contournees.map((t) => t.aire),
-            )} px — un compte qui surprend se règle dans la table des bords`}
+            texte={
+              contournees.length === 1
+                ? `elle fait ${contournees[0].aire} px`
+                : `la plus petite fait ${Math.min(
+                    ...contournees.map((t) => t.aire),
+                  )} px — un compte qui surprend se règle dans la table des bords`
+            }
           />
         </div>
       )}
@@ -1014,6 +1021,12 @@ export function PanneauMain({
 
   return (
     <div className="flex flex-col gap-3">
+      {/* **La raison du grisé du comparateur, et elle vit ici.** La bande de
+          38 px n'a pas la place d'une phrase, et le cas qui a tranché mérite
+          d'être dit : *côte à côte* met deux images à l'écran, et la main
+          n'aurait pas su sur laquelle elle écrit. */}
+      <Raison texte="la main se pose sur le rendu — les trois autres vues du comparateur s'éteignent, et « Avant › » les remplace le temps d'un appui" />
+
       {/* **La pile se lit du dessus au dessous**, comme partout où il y a des
           calques — et elle est *rangée* du dessous vers le dessus, qui est
           l'ordre d'application. Le renversement est écrit ici, et nulle part

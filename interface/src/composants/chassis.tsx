@@ -407,7 +407,11 @@ export function Segments<T extends string | number>({
             disabled={grise}
             onClick={() => onChange(v)}
             className={[
-              "mesure h-[26px] min-w-[34px] rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
+              // `whitespace-nowrap` : un segment qui se replie sur deux lignes
+              // sort de la hauteur de sa bande, et une bande de la liste
+              // fermée ne grandit pas. Trouvé au navigateur en tenant E5, sur
+              // « côte à côte » dans un comparateur devenu étroit.
+              "mesure h-[26px] min-w-[34px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
               grise
                 ? "border-bord bg-fond-2 text-texte-3"
                 : choisi

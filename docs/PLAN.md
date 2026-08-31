@@ -1010,6 +1010,25 @@ d'une autre image. Une différence nomme *une seconde image précise* ; elle ne 
 transporte pas. Elle ne s'enregistre plus, et le rappel passe par le même chemin
 que l'écran.
 
+**Et le rappel de E4 s'est vérifié une seconde fois : un test d'écran ne
+remplace pas un navigateur ouvert.** Les 249 essais d'écran étaient verts, et
+trois défauts de mise en page attendaient dans le vrai atelier — tous les trois
+nés du même fait, *deux places de plus dans une bande qui ne grandit pas*.
+Mesuré : à sept places qui portent chacune leur valeur, la barre des tables
+demande **1 323 px pour 1 280 offerts**. Elle se repliait donc sur deux lignes
+et débordait de ses 34 px ; le comparateur faisait de même, et poussait
+*Avant ›* hors de l'écran ; et une fois la bande passée en ligne unique, c'est
+la **page entière** qui a gagné une barre de défilement horizontale, parce
+qu'une case de grille a `min-width: auto` et se laisse pousser par son contenu.
+
+Ce qui en sort et qui vaut pour la suite : **une bande de la liste fermée ne
+grandit jamais** — ce qu'elle porte ne se replie pas, et ce qui dépasse défile
+*dans* la bande, jamais autour. **Le geste de portée générale reste hors de ce
+qui défile** : `tout défaire` aurait fallu aller le chercher. Et **la raison
+d'un grisé descend là où il y a la place** — celle du comparateur vit désormais
+dans le panneau de la main, parce qu'une bande de 38 px n'a pas la place d'une
+phrase.
+
 ---
 
 ### E6 · La superposition quitte la recette

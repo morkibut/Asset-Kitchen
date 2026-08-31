@@ -7453,7 +7453,9 @@ describe("le contour et la main", () => {
     for (const vue of ["brut", "côte à côte", "superposé"]) {
       expect(cadre.getByRole("button", { name: vue })).toBeDisabled()
     }
-    expect(cadre.getByText(/la main se pose sur le rendu/)).toBeTruthy()
+    // La raison du grisé vit dans le panneau : la bande de 38 px n'a pas la
+    // place d'une phrase, et elle ne grandit pas.
+    expect(cadre.getByText(/les trois autres vues du comparateur s'éteignent/)).toBeTruthy()
     // Et l'appui récupère exactement ce que la contrainte retire — c'est ce qui
     // la rend payable.
     expect(cadre.getByRole("button", { name: "Avant ›" })).toBeTruthy()
