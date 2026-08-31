@@ -18,7 +18,85 @@
 // dépliant qui devient un écran.
 
 import { useEffect, useRef } from "react"
-import { Bouton, Raison, Revers, usePli } from "./chassis"
+import { secondes } from "../api"
+import { Bouton, Jauge, Raison, Revers, useEcoule, usePli } from "./chassis"
+
+/** Ce qui est payé et pas encore arrivé. `null` la plupart du temps. */
+export type EnVol = {
+  /** Combien d'images, tous lots confondus. */
+  images: number
+  /** Le départ du plus ancien encore en route, en secondes Unix. `null` — rien
+   *  n'est parti, tout est en file chez le fournisseur. */
+  demarreLe: number | null
+  /** Ce que ce lot-là a mis la dernière fois, en secondes. */
+  attendue: number
+}
+
+/**
+ * **Le bouton qui paie porte l'état de ce qu'il a payé** — écrit le 31 août
+ * 2026, sur un second signalement de l'auteur : *« je voudrais vraiment un
+ * retour très visuel qui fait comprendre qu'on n'a pas besoin de rappuyer sur
+ * générer »*.
+ *
+ * La correction de la veille avait posé le compte dans la fente, et c'était trop
+ * peu pour trois raisons qui s'additionnent :
+ *
+ * - **la fente est à la place, à la taille et sur la ligne de `Ctrl + Entrée`**,
+ *   que l'œil a appris à lire comme du décor. Un changement de couleur sur dix
+ *   pixels ne se relit pas ;
+ * - **le bouton, lui, ne changeait pas.** On cliquait *Générer*, et *Générer*
+ *   revenait identique, plein, disponible. Tout ce que le bouton disait était
+ *   « il ne s'est rien passé » — et il le disait plus fort que la ligne d'en
+ *   dessous ne disait le contraire ;
+ * - **le résultat atterrit ailleurs.** « Elles arrivent dans la galerie » est
+ *   une consigne d'aller voir : depuis le codex ou l'établi, rien ne bouge.
+ *
+ * Le remède s'attaque à la deuxième, qui est la cause : **la chose qu'on
+ * recliquerait devient la chose qui dit que ça marche.** Le bloc prend la place
+ * exacte du bouton — mêmes 34 px, aucune hauteur neuve — et porte les deux faits
+ * qu'on cherche : combien partent, et depuis quand. La jauge du produit court à
+ * son bord bas, la même qu'une tuile en génération et qu'une retouche de fiche.
+ * Générer redescend dans la fente, en lien : il reste à portée, il cesse d'être
+ * ce qui saute aux yeux.
+ *
+ * **Ce n'est pas un bouton, et c'est délibéré** : il n'y a rien à y cliquer.
+ * `role="status"` le dit aussi aux lecteurs d'écran, qui l'annoncent sans qu'on
+ * ait à aller le chercher — c'est le même service rendu par l'autre bout.
+ *
+ * La moitié qui répond à la troisième raison n'est pas ici : c'est la pastille
+ * de l'onglet Galerie (`BarreChassis`), qui suit d'un lieu à l'autre.
+ *
+ * **`shrink-0` et `whitespace-nowrap` : le bloc garde ses 34 px, quoi qu'il
+ * arrive.** Vu au navigateur en colonne étroite — l'établi, un panneau ouvert —
+ * la phrase passait à deux lignes et le bloc à cinquante-et-un pixels, ce qui
+ * faisait sauter toute la barre au moment précis où elle doit rassurer. C'est le
+ * libellé du prompt négatif qui cède à la place, et c'est le bon ordre : pendant
+ * qu'un lot est en route, le repli du prompt négatif est le contrôle le moins
+ * pressé de la rangée.
+ */
+function EnRoute({ images, demarreLe, attendue }: EnVol) {
+  const ecoule = useEcoule(demarreLe)
+
+  return (
+    <div
+      role="status"
+      className="relative flex h-[34px] shrink-0 items-center overflow-hidden whitespace-nowrap rounded-[2px] border border-signal bg-fond-2 px-3"
+    >
+      <span className="mesure text-[11px] text-signal">
+        {images === 1 ? "1 image en route" : `${images} images en route`}
+        {demarreLe === null
+          ? " · en file"
+          : ` · ${secondes(ecoule)} / ~${secondes(attendue)}`}
+      </span>
+      {/* La jauge telle quelle, sans son compteur : le compteur est déjà dans
+          la ligne au-dessus, et la barre se pose au bord bas — l'endroit exact
+          où une tuile en génération porte la sienne. */}
+      <span className="absolute inset-x-0 bottom-0 block">
+        <Jauge demarreLe={demarreLe} attendue={attendue} compteur={false} />
+      </span>
+    </div>
+  )
+}
 
 export function ChampPrompt({
   prompt,
@@ -34,7 +112,7 @@ export function ChampPrompt({
   provenance,
   onGenerer,
   variations,
-  enVol = 0,
+  enVol = null,
 }: {
   prompt: string
   onPrompt: (v: string) => void
@@ -66,11 +144,11 @@ export function ChampPrompt({
   provenance?: { texte: string; onDefaire: () => void } | null
   onGenerer: () => void
   variations: number
-  /** Combien d'images sont **en route en ce moment** — payées, pas encore
-   *  arrivées. Zéro la plupart du temps. Elle ne se voyaient que dans la grille
-   *  de la galerie, alors qu'on paie aussi depuis le codex et depuis l'établi :
-   *  on dépensait, l'écran ne bougeait pas, et l'on recliquait. */
-  enVol?: number
+  /** Ce qui est **en route en ce moment** — payé, pas encore arrivé. `null` la
+   *  plupart du temps. Ces images-là ne se voyaient que dans la grille de la
+   *  galerie, alors qu'on paie aussi depuis le codex et depuis l'établi : on
+   *  dépensait, l'écran ne bougeait pas, et l'on recliquait. */
+  enVol?: EnVol | null
 }) {
   // **Le repli vit dans le registre du châssis, pas ici.** La galerie était le
   // fond du produit et ce champ ne se démontait jamais ; la V2.1 en fait un
@@ -167,21 +245,38 @@ export function ChampPrompt({
         <button
           type="button"
           onClick={basculerNegatif}
-          className="mesure h-[34px] text-[10px] text-texte-3 hover:text-texte-2"
+          // `min-w-0 truncate` : ce libellé cède la place au bloc en route
+          // quand la colonne est étroite. **Avec un plancher** — sans lui il
+          // tombait à zéro pixel, mesuré au navigateur : un contrôle réduit à
+          // rien n'est plus un contrôle, c'est une panne silencieuse.
+          className="mesure h-[34px] min-w-[3.5rem] truncate text-[10px] text-texte-3 hover:text-texte-2"
         >
           {negatifOuvert ? "− " : "+ "}prompt négatif
           {promptNegatif && !negatifOuvert ? " ·" : ""}
         </button>
 
         <div className="ml-auto flex flex-col items-end">
-          <Bouton principal inactif={refus !== null} onClick={onGenerer} enfants={
-            variations > 1 ? `Générer ${variations} variations` : "Générer"
-          } />
-          {/* La fente : une ligne mono 10 px alignée à droite, trois
+          {/* **Tant que quelque chose est en route, l'état prend la place du
+              bouton** — et Générer redescend dans la fente. C'est l'inversion
+              qui répare le bug : ce qu'on recliquerait est devenu ce qui dit
+              que ça marche. Voir `EnRoute`. */}
+          {enVol && enVol.images > 0 ? (
+            <EnRoute {...enVol} />
+          ) : (
+            <Bouton principal inactif={refus !== null} onClick={onGenerer} enfants={
+              variations > 1 ? `Générer ${variations} variations` : "Générer"
+            } />
+          )}
+          {/* La fente : une ligne mono 10 px alignée à droite, quatre
               locataires, **jamais deux à la fois** — `docs/DESIGN.md`
               `docs/design-motifs.md`, *Le revers*. Le refus l'emporte : quand le catalogue
               n'a jamais été reçu, il n'y a ni date à porter ni nuance à faire,
-              et c'est le grisé ordinaire qui reprend la main. */}
+              et c'est le grisé ordinaire qui reprend la main.
+
+              **Et le refus l'emporte même sur un départ en cours** : quand rien
+              ne peut partir, un lien `Générer encore` mentirait sur le geste
+              disponible. Le bloc au-dessus continue de dire ce qui est en
+              route ; la fente dit ce qu'on peut faire ensuite, comme toujours. */}
           {refus ? (
             <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
           ) : revers ? (
@@ -191,18 +286,18 @@ export function ChampPrompt({
               onGeste={revers.onReessayer}
               enCours={revers.enCours}
             />
-          ) : enVol > 0 ? (
-            /* **Le quatrième locataire de la fente, et il dit qu'on a payé** —
-                ajouté le 31 août 2026, sur un bug signalé par l'auteur. On peut
-                dépenser depuis le codex et depuis l'établi, mais ce qui part ne
-                se voyait que dans la grille de la galerie : on payait, l'écran
-                ne bougeait pas, et l'on recliquait. La fente est l'endroit
-                prévu — la ligne sous le bouton, un locataire à la fois — et le
-                refus continue de l'emporter sur tout. */
-            <p className="mesure mt-1 text-[10px] text-signal">
-              {enVol === 1 ? "1 image part" : `${enVol} images partent`} · elles
-              arrivent dans la galerie
-            </p>
+          ) : enVol && enVol.images > 0 ? (
+            /* **Générer, en lien, pendant qu'un lot est en route.** Il reste à
+                portée — on a le droit de lancer une seconde série sans attendre
+                la première — mais il cesse d'être ce qui saute aux yeux, et
+                c'est tout le remède. */
+            <button
+              type="button"
+              onClick={onGenerer}
+              className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair"
+            >
+              Générer encore ›
+            </button>
           ) : (
             <p className="mesure mt-1 text-[10px] text-texte-3">Ctrl + Entrée</p>
           )}

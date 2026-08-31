@@ -2242,9 +2242,14 @@ async function ouvrirLesReglagesDeLAppel() {
   if (ligne.getAttribute("aria-expanded") !== "true") fireEvent.click(ligne)
 }
 
-/** Revenir à la galerie — là où ce qui a été produit se regarde. */
+/** Revenir à la galerie — là où ce qui a été produit se regarde.
+ *
+ *  **Le nom de l'onglet n'est pas toujours « Galerie » tout court** : tant que
+ *  des images sont en route, il porte leur compte, et c'est délibéré — le champ
+ *  de prompt n'est rendu que sur la galerie, donc depuis l'Univers ou le Codex
+ *  cet onglet est le seul endroit qui dise qu'on a payé. */
 function laGalerie() {
-  fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+  fireEvent.click(screen.getByRole("tab", { name: /^Galerie/ }))
 }
 
 async function cadreDuCodex() {
@@ -12710,11 +12715,13 @@ describe("l'écran de confirmation", () => {
     ).toHaveLength(1)
   })
 
-  test("ce qui est parti se dit sous le bouton, là où l'on vient de payer", async () => {
-    // **L'autre moitié du bug signalé.** On paie depuis le codex et depuis
-    // l'établi, mais ce qui part ne se voyait que dans la grille de la galerie :
-    // l'écran ne bougeait pas, et l'auteur recliquait — ce qui repayait. La
-    // fente sous le bouton est l'endroit du produit pour ça.
+  test("le bouton qui paie devient l'état de ce qu'il a payé", async () => {
+    // **Le cœur du remède**, écrit sur le second signalement de l'auteur : la
+    // ligne posée dans la fente ne suffisait pas, parce que le bouton, lui, ne
+    // changeait pas. On cliquait *Générer*, et *Générer* revenait identique,
+    // plein, disponible — il disait « il ne s'est rien passé » plus fort que la
+    // ligne d'en dessous ne disait le contraire. La chose qu'on recliquerait
+    // devient donc la chose qui dit que ça marche.
     const double = serveurDouble({ personnages: [] })
     await monter(double.fetchDouble)
 
@@ -12722,15 +12729,108 @@ describe("l'écran de confirmation", () => {
     fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
     await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
 
-    // Avant de payer, la fente porte son locataire ordinaire.
+    // Avant de payer : le bouton plein, et la fente à son locataire ordinaire.
+    expect(screen.getByRole("button", { name: /^Générer$/ })).toBeTruthy()
     expect(screen.getByText("Ctrl + Entrée")).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
     fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
 
-    expect(await screen.findByText(/1 image part/)).toBeTruthy()
-    expect(screen.getByText(/elles\s+arrivent dans la galerie/)).toBeTruthy()
+    // Le bloc a pris la place du bouton, et il porte le compte.
+    const enRoute = await screen.findByRole("status")
+    expect(enRoute.textContent).toContain("1 image en route")
+
+    // **Générer n'est plus un bouton plein** : il est descendu dans la fente,
+    // en lien. Il reste à portée — on a le droit de lancer une seconde série —
+    // mais il a cessé d'être ce qui saute aux yeux.
+    expect(screen.queryByRole("button", { name: /^Générer$/ })).toBeNull()
+    expect(screen.getByRole("button", { name: /^Générer encore/ })).toBeTruthy()
     // **Jamais deux locataires à la fois** — la règle de la fente.
     expect(screen.queryByText("Ctrl + Entrée")).toBeNull()
+  })
+
+  test("le lien Générer encore relance vraiment, et repasse par l'écran", async () => {
+    // Le bloc en route ne doit rien fermer : lancer une seconde série pendant
+    // que la première court reste possible, et reste payant — donc il repasse
+    // par l'écran qui fait relire.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
+
+    fireEvent.click(await screen.findByRole("button", { name: /^Générer encore/ }))
+
+    expect(
+      await screen.findByRole("button", { name: /^Payer et lancer/ }),
+    ).toBeTruthy()
+    // Relancer n'a rien payé de plus par lui-même : l'écran s'intercale.
+    expect(
+      double.appels.filter((a) => a.url === "/api/generations"),
+    ).toHaveLength(1)
+  })
+
+  test("un refus l'emporte sur le lien, même pendant qu'un lot est en route", async () => {
+    // La règle de la fente ne plie pas : quand rien ne peut partir, un lien
+    // `Générer encore` mentirait sur le geste disponible. Le bloc au-dessus
+    // continue de dire ce qui est en route — les deux ne disent pas la même
+    // chose, et ils ne se disputent pas la même place.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
+    await screen.findByRole("status")
+
+    // On vide le champ : il n'y a plus rien à envoyer. **Il faut le redemander**
+    // — la barre de prompt est démontée pendant que l'écran de confirmation est
+    // ouvert, donc le nœud d'avant le paiement n'est plus dans la page.
+    const apres = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(apres, { target: { value: "" } })
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Générer encore/ })).toBeNull(),
+    )
+    // Ce qui est en route ne disparaît pas pour autant.
+    expect(screen.getByRole("status").textContent).toContain("1 image en route")
+  })
+
+  test("l'onglet Galerie porte le compte, et il le porte depuis les autres onglets", async () => {
+    // **La moitié qui traverse les onglets.** Le bloc en route vit dans la
+    // barre de prompt, et cette barre suit les écrans qui paient — la galerie,
+    // le codex, l'établi. Elle ne suit pas l'**Univers**, ni un établi dont
+    // l'outil est ouvert, ni l'écran des dépenses : un écran qui ne peut pas
+    // dépenser ne porte pas le champ qui dépense. C'est là qu'on croit que rien
+    // ne s'est passé, puisque rien ne bouge — et c'est là que la pastille est
+    // le seul témoin.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    // Au repos, l'onglet ne porte que son nom.
+    expect(screen.getByRole("tab", { name: "Galerie" })).toBeTruthy()
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
+
+    const onglet = await screen.findByRole("tab", { name: /^Galerie · 1 image en route$/ })
+    expect(onglet.textContent).toContain("1")
+
+    // On part à l'Univers : la barre de prompt n'y est pas, donc le bloc en
+    // route non plus. La pastille, elle, est dans la barre de tête — rendue sur
+    // les trois lieux.
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull())
+    expect(
+      screen.getByRole("tab", { name: /^Galerie · 1 image en route$/ }),
+    ).toBeTruthy()
   })
 })

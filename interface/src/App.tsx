@@ -45,6 +45,7 @@ import {
   type Lien,
   type Teinte,
   type CompteReferences,
+  type Emplacement,
   type EmplacementCorps,
   type Personnage,
   type Piece,
@@ -71,7 +72,7 @@ import {
 } from "./composants/BarreChassis"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { CRANS, Point, usePli, ZOOMS, type Zoom } from "./composants/chassis"
-import { ChampPrompt } from "./composants/ChampPrompt"
+import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
@@ -1097,24 +1098,52 @@ export function App() {
    *  saute pour la série en cours, et seulement pour elle : une case définitive
    *  éteindrait le seul écran qui montre ce qui part, et on la cocherait le
    *  premier jour, quand on ne sait pas encore qu'on en aura besoin. */
-  /** Combien d'images sont **payées et pas encore arrivées**.
+  /** Ce qui est **payé et pas encore arrivé**, tous lots confondus.
    *
    *  Le chantier tenait déjà sa place dans la grille de la galerie, avant même
    *  que l'image existe. Mais on paie aussi depuis le codex et depuis l'établi,
    *  et là rien ne bougeait : l'auteur dépensait, l'écran restait immobile, et
-   *  il recliquait — ce qui repayait. Le compte descend donc dans la fente sous
-   *  le bouton, qui est l'endroit du produit pour ce qui vient d'arriver.
+   *  il recliquait — ce qui repayait. Deux endroits le disent maintenant, et ils
+   *  se partagent le travail : le **bloc en route** prend la place du bouton là
+   *  où l'on vient de payer, la **pastille de l'onglet Galerie** suit d'un lieu
+   *  à l'autre.
    *
    *  Les échecs n'y sont pas : ils ont leur propre locataire dans la fente, le
    *  revers, et deux tenants à la fois est ce que la fente s'interdit. */
-  const enVol = chantier.reduce(
-    (somme, generation) =>
-      somme +
-      generation.emplacements.filter(
-        (e) => e.statut === "en_attente" || e.statut === "en_cours",
-      ).length,
-    0,
+  const enRoute = chantier.flatMap((generation) =>
+    generation.emplacements.filter(
+      (e) => e.statut === "en_attente" || e.statut === "en_cours",
+    ),
   )
+
+  /** Le plus ancien départ encore en route — `null` tant que tout attend en
+   *  file chez le fournisseur.
+   *
+   *  **C'est lui que la jauge mesure, et c'est le bon.** Les emplacements d'un
+   *  lot partent *ensemble* — `atelier/services/generation.py`, « un
+   *  emplacement, un appel, tous en parallèle » —, donc ils partagent leur
+   *  attente et le plus ancien est celui dont on attend la fin. Quand deux lots
+   *  se chevauchent, la barre suit le premier ; il arrive, et elle passe au
+   *  suivant sans jamais reculer. */
+  const plusAncien = enRoute.reduce<Emplacement | null>(
+    (ancien, emplacement) =>
+      emplacement.demarre_le !== null &&
+      (ancien === null ||
+        ancien.demarre_le === null ||
+        emplacement.demarre_le < ancien.demarre_le)
+        ? emplacement
+        : ancien,
+    null,
+  )
+
+  const enVol: EnVol | null =
+    enRoute.length === 0
+      ? null
+      : {
+          images: enRoute.length,
+          demarreLe: plusAncien?.demarre_le ?? null,
+          attendue: plusAncien?.duree_attendue_s ?? 0,
+        }
 
   const generer = () => {
     if (refus || !modele) return
@@ -1932,6 +1961,10 @@ export function App() {
         fente={fente}
         onReglages={() => setReglagesOuverts(true)}
         onGuide={() => ouvrirGuide()}
+        // **La moitié du retour qui traverse les onglets.** Le bloc en route
+        // vit dans la barre de prompt, donc sur la galerie seule ; celle-ci est
+        // rendue partout, et c'est loin du champ qu'on doute le plus.
+        enVol={enVol?.images ?? 0}
       />
 
       {/* **La découpe est une profondeur de la galerie, pas un écran posé

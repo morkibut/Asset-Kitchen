@@ -697,13 +697,7 @@ export function Jauge({
   /** Sous cette durée, la jauge ne paraît pas du tout. En secondes. */
   seuil?: number
 }) {
-  const [ecoule, setEcoule] = useState(() => depuis(demarreLe))
-
-  useEffect(() => {
-    setEcoule(depuis(demarreLe))
-    const battement = setInterval(() => setEcoule(depuis(demarreLe)), 250)
-    return () => clearInterval(battement)
-  }, [demarreLe])
+  const ecoule = useEcoule(demarreLe)
 
   // Pas encore parti : la tuile tient sa place, mais il n'y a rien à mesurer.
   const enAttente = demarreLe === null
@@ -729,6 +723,31 @@ export function Jauge({
 
 const depuis = (horodatage: number | null) =>
   horodatage === null ? 0 : Math.max(0, Date.now() / 1000 - horodatage)
+
+/**
+ * Le temps écoulé depuis un départ, rafraîchi quatre fois par seconde.
+ *
+ * **Extrait de la jauge le 31 août 2026**, quand le bouton qui paie s'est mis à
+ * porter son propre compteur (E-BUG-2). Les deux montrent le même temps, du même
+ * départ, et un second `setInterval` écrit à la main aurait fini par battre à
+ * contretemps du premier — deux durées pour un seul fait est la panne que ce
+ * dépôt refuse partout ailleurs.
+ *
+ * Le quart de seconde n'est pas un réglage de confort : la barre transitionne
+ * sur 240 ms (§ Motion), et rafraîchir plus vite ne ferait qu'écraser une
+ * transition en cours par la suivante.
+ */
+export function useEcoule(demarreLe: number | null): number {
+  const [ecoule, setEcoule] = useState(() => depuis(demarreLe))
+
+  useEffect(() => {
+    setEcoule(depuis(demarreLe))
+    const battement = setInterval(() => setEcoule(depuis(demarreLe)), 250)
+    return () => clearInterval(battement)
+  }, [demarreLe])
+
+  return ecoule
+}
 
 /**
  * Où en est la jauge, entre 0 et 1.

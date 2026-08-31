@@ -256,6 +256,24 @@ function FenteEcran({ fente }: { fente: Fente }) {
   )
 }
 
+/**
+ * Le nom que l'onglet **fait entendre**, quand il diffère de celui qu'il montre.
+ *
+ * Un seul cas : la Galerie pendant qu'un lot est en route. La pastille se lit du
+ * coin de l'œil, mais elle ne se dit pas — mesuré en écrivant l'essai, le calcul
+ * du nom accessible ne descend pas chercher l'`aria-label` d'un enfant, et une
+ * étiquette posée sur la pastille faisait annoncer « Galerie 1 ». Un nombre sans
+ * son unité est la seule chose de la barre qu'on ne pouvait pas comprendre en
+ * l'écoutant.
+ *
+ * `undefined` partout ailleurs : **un nom accessible qu'on n'a pas besoin de
+ * réécrire ne se réécrit pas**, sinon il finit par diverger du mot affiché.
+ */
+function nomLu(cle: Onglet, nom: string, enVol: number): string | undefined {
+  if (cle !== "galerie" || enVol <= 0) return undefined
+  return `${nom} · ${enVol === 1 ? "1 image en route" : `${enVol} images en route`}`
+}
+
 export function BarreChassis({
   onglet,
   onOnglet,
@@ -270,6 +288,7 @@ export function BarreChassis({
   fente,
   onReglages,
   onGuide,
+  enVol = 0,
 }: {
   onglet: Onglet
   onOnglet: (onglet: Onglet) => void
@@ -303,6 +322,15 @@ export function BarreChassis({
   fente: Fente
   onReglages: () => void
   onGuide: () => void
+  /** Combien d'images sont payées et pas encore arrivées — **zéro la plupart
+   *  du temps**, et alors rien ne paraît.
+   *
+   *  **La moitié qui suit d'un lieu à l'autre** (31 août 2026). Le bloc en route
+   *  du champ de prompt dit ce qui part là où l'on a payé ; il ne dit rien une
+   *  fois qu'on est passé à l'Univers ou au Codex, et c'est précisément
+   *  l'endroit où l'on croit que rien ne s'est passé. La barre de tête, elle,
+   *  est rendue sur les trois onglets. */
+  enVol?: number
 }) {
   return (
     <header className="flex h-[44px] items-center gap-4 border-b border-bord bg-fond-1 px-4">
@@ -332,15 +360,40 @@ export function BarreChassis({
             type="button"
             role="tab"
             aria-selected={onglet === cle}
+            aria-label={nomLu(cle, nom, enVol)}
             onClick={() => onOnglet(cle)}
             className={[
-              "h-[26px] rounded-[2px] px-2.5 text-[12px] transition-colors duration-[80ms]",
+              "flex h-[26px] items-center gap-1.5 rounded-[2px] px-2.5 text-[12px] transition-colors duration-[80ms]",
               onglet === cle
                 ? "bg-fond-3 text-texte"
                 : "text-texte-2 hover:bg-fond-2 hover:text-texte",
             ].join(" ")}
           >
             {nom}
+            {/* **La pastille de ce qui arrive, et elle ne vit que sur la
+                Galerie** — c'est le seul des trois lieux où une image se pose.
+                Aucune hauteur neuve : elle tient dans les 26 px de la rangée.
+
+                Pleine, et non un simple chiffre en `--signal` : c'est ce qui la
+                rend visible du coin de l'œil depuis un autre onglet, ce qui est
+                tout son métier. Elle est dans le châssis, jamais dans une
+                grille — la règle « aucune couleur de plus » protège les
+                surfaces où l'on juge des images, et la barre de tête n'en est
+                pas une.
+
+                **`aria-hidden`, et le nom lu est celui du bouton** : voir
+                `nomLu`. Mesuré en écrivant l'essai — le calcul du nom accessible
+                ne descend pas chercher l'`aria-label` d'un enfant, donc une
+                étiquette posée ici aurait fait annoncer « Galerie 1 », un nombre
+                sans son unité. */}
+            {cle === "galerie" && enVol > 0 && (
+              <span
+                aria-hidden
+                className="mesure rounded-[2px] bg-signal px-1 py-px text-[9.5px] leading-[13px] text-fond-0"
+              >
+                {enVol}
+              </span>
+            )}
           </button>
         ))}
       </nav>

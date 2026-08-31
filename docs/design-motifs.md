@@ -65,6 +65,10 @@ neuve sur une colonne qui compte 44 px en tête et 26 px en pied. Sous le bouton
 à droite, il y a une ligne mono 10 px qui a déjà deux locataires : `Ctrl + Entrée` au repos, et la
 raison quand générer est grisé. **Le repli est le troisième, et les trois ne coexistent jamais.**
 
+*Un quatrième est entré le 31 août 2026 — `Générer encore ›`, pendant qu'un lot est en route. Il
+ne change rien à l'ordre ni à la règle : le refus l'emporte toujours, et jamais deux à la fois.
+Voir § Le bouton qui paie porte l'état de ce qu'il a payé.*
+
 ```
    au repos                                    [ Générer 3 variations ]
                                                          Ctrl + Entrée
@@ -163,6 +167,82 @@ l'état peut battre plusieurs fois dans une séance — un fragment qui entre et
 une bande relue avant chaque clic devient un clignotement. Seule s'applique la tolérance générale
 du § Motion : 80 ms de transition de couleur sur le point de la barre d'état, `--ok` →
 `--epingle`.
+
+### Le bouton qui paie porte l'état de ce qu'il a payé
+
+Écrit le 31 août 2026, sur un second signalement de l'auteur, le lendemain du premier :
+*« je voudrais vraiment un retour très visuel qui fait comprendre qu'on n'a pas besoin de
+rappuyer sur générer »*. La correction de la veille avait posé le compte dans la fente ; c'était
+trop peu, et l'échec dit pourquoi mieux que n'importe quel principe.
+
+> **Une fente ne peut pas contredire le contrôle qui est au-dessus d'elle.**
+
+Trois raisons s'additionnaient, et seule la deuxième est la cause :
+
+- la fente est **à la place, à la taille et sur la ligne de `Ctrl + Entrée`**, que l'œil a appris
+  à lire comme du décor. Dix pixels qui changent de couleur ne se relisent pas ;
+- **le bouton, lui, ne changeait pas.** On cliquait *Générer*, et *Générer* revenait identique,
+  plein, disponible. Il disait « il ne s'est rien passé » plus fort que la ligne d'en dessous ne
+  disait le contraire ;
+- **le résultat atterrit ailleurs.** « Elles arrivent dans la galerie » est une consigne d'aller
+  voir : depuis l'Univers, rien ne bouge du tout.
+
+**Le bloc prend la place exacte du bouton** — mêmes 34 px, aucune hauteur neuve, contour
+`--signal` sur `--fond-2` au lieu du plein. Il porte les deux faits qu'on cherche, en mono
+11 px : combien partent, et depuis quand. **La jauge du produit court à son bord bas**, la même
+qu'une tuile en génération et qu'une retouche de fiche — un troisième locataire pour la barre
+unique, pas une barre de plus.
+
+```
+   au repos                                          [ Générer ]
+                                                    Ctrl + Entrée
+
+   pendant qu'un lot est en route      ┌────────────────────────────────────┐
+                                       │  2 images en route · 00:07 / ~00:15│
+                                       └────────────────────────────────────┘
+                                                  Générer encore ›
+```
+
+**Générer redescend dans la fente, en lien.** Il reste à portée — lancer une seconde série sans
+attendre la première est permis, et reste payant, donc il repasse par l'écran qui fait relire —
+mais il cesse d'être ce qui saute aux yeux. C'est toute la réparation : **la chose qu'on
+recliquerait est devenue la chose qui dit que ça marche.**
+
+**Le bloc n'est pas un bouton, et c'est délibéré** : il n'y a rien à y cliquer. `role="status"`
+le dit aussi à qui écoute l'écran, sans avoir à aller le chercher.
+
+**Le refus l'emporte, comme partout.** Quand rien ne peut partir, un lien `Générer encore`
+mentirait sur le geste disponible : la fente reprend sa raison, et le bloc au-dessus continue de
+dire ce qui est en route. Les deux ne disent pas la même chose et ne se disputent pas la même
+place — *ce qui est en route* est un fait, *ce qu'on peut faire ensuite* est une prédiction.
+
+**Le bloc garde ses 34 px, quoi qu'il arrive.** Mesuré au navigateur en colonne étroite : la
+phrase passait à deux lignes et le bloc à 51 px, ce qui faisait sauter toute la barre au moment
+précis où elle doit rassurer. C'est le libellé du prompt négatif qui cède à la place, avec un
+plancher — **un contrôle réduit à zéro pixel n'est plus un contrôle**, et sans ce plancher il
+disparaissait.
+
+#### Et une pastille sur l'onglet Galerie, parce que le bloc ne suit pas partout
+
+La barre de prompt suit les écrans qui paient — la galerie, le codex, l'établi. Elle ne suit ni
+l'**Univers**, ni un établi dont l'outil est ouvert, ni l'écran des dépenses : *un écran qui ne
+peut pas dépenser ne porte pas le champ qui dépense*. Or c'est précisément là qu'on croit que
+rien ne s'est passé, puisque rien ne bouge.
+
+**La barre de tête, elle, est rendue sur les trois lieux.** L'onglet Galerie porte donc le compte
+tant que quelque chose est en route — mono 9,5 px, `--signal` plein sur `--fond-0`, dans les
+26 px de la rangée. Aucune hauteur neuve, et **aucune couleur neuve** : la règle « aucune couleur
+de plus » protège les surfaces où l'on juge des images, et une barre de châssis n'en est pas une.
+Pleine et non en simple texte coloré, parce que se voir du coin de l'œil depuis un autre onglet
+est tout son métier.
+
+Elle ne vit que sur la Galerie : c'est le seul des trois lieux où une image se pose.
+
+**Ce que la pastille montre, l'onglet le dit.** Le calcul du nom accessible ne descend pas
+chercher l'étiquette d'un enfant — mesuré le 31 août 2026 en écrivant l'essai —, donc une
+étiquette posée sur la pastille faisait annoncer « Galerie 1 » : un nombre sans son unité, la
+seule chose de la barre qu'on ne pouvait pas comprendre en l'écoutant. C'est **le bouton** qui
+porte le nom entier, `Galerie · 2 images en route`, et la pastille qui se tait.
 
 ### L'infobulle explique, elle n'excuse jamais
 

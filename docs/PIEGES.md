@@ -806,3 +806,26 @@ la prochaine réécriture retrouvera.
   la hauteur. Le geste qui répare la **mesure** est de comparer le rectangle de l'élément à
   celui de son cadre de défilement, ou de lire `scrollWidth` contre `clientWidth`. Payé le
   31 août 2026, en corrigeant l'audit de design.
+
+- **Le nom accessible d'un bouton ne descend pas chercher l'étiquette de ses enfants.** La
+  pastille de l'onglet Galerie portait son explication en propre — `aria-label="2 images en
+  route"` sur le petit rond — et l'onglet s'annonçait quand même « Galerie 2 » : un nombre sans
+  son unité, c'est-à-dire la seule chose de la barre qu'on ne pouvait pas comprendre en
+  l'écoutant. Le calcul du nom d'un élément **à partir de son contenu** prend le texte des
+  descendants, pas leur étiquette ; celle-ci ne sert qu'à nommer l'enfant lui-même, que personne
+  ne visite. Le geste qui répare est de porter le nom entier **sur le contrôle**, et de taire la
+  marque visuelle avec `aria-hidden`. La leçon générale : **une décoration qui porte du sens
+  doit rendre son sens au contrôle, jamais le garder pour elle.** Et elle vaut au-delà de
+  l'accessibilité — c'est aussi ce qui a fait échouer l'essai, qui cherchait l'onglet par son
+  nom et ne l'a plus trouvé. Payé le 31 août 2026, en réparant le retour de génération.
+
+- **Un nœud du navigateur capturé avant qu'un écran s'ouvre ne sert plus après qu'il se
+  ferme.** L'essai gardait le champ de prompt dans une variable, ouvrait l'écran de
+  confirmation, payait, puis vidait le champ pour vérifier qu'un refus reprenait la fente — et
+  rien ne se passait. La barre de prompt est **démontée** pendant que l'écran de confirmation
+  couvre l'atelier : après paiement, le champ est un nœud neuf, et l'ancien flottait hors de la
+  page, où un événement n'atteint plus rien. Rien ne lève : l'essai échoue trois lignes plus
+  loin, sur une assertion qui semble parler d'autre chose. Le geste qui répare est de
+  **redemander le nœud après tout ce qui démonte l'écran**. Payé le 31 août 2026, en réparant le
+  retour de génération.
+
