@@ -33,6 +33,7 @@ from PIL import Image
 from atelier.domaine.equipement import ECHELLE_TOLEREE, MesuresCalque
 from atelier.domaine.pliage import Geometrie
 from atelier.domaine.recette import BORD, Difference, Passe, Recette, Trait
+from atelier.domaine.superposition import Superposition
 from atelier.image.decoupe import Boite, grille_fixe
 from atelier.image.pliage import COTE, FOND
 from atelier.image.traitement import composantes, detourer, peindre, pinceau
@@ -46,6 +47,7 @@ __all__ = [
     "OCCUPATION_CONTENUE",
     "Place",
     "Retour",
+    "aligner",
     "avec_alpha",
     "cases_de",
     "composer",
@@ -55,7 +57,9 @@ __all__ = [
     "peindre",
     "pinceau",
     "place_de",
+    "proposer",
     "recadrer_sur",
+    "superposer",
 ]
 
 
@@ -383,6 +387,87 @@ def mesurer_calque(corps: np.ndarray, retour: Retour, seuil: int) -> MesuresCalq
         echelle=retour.echelle,
         compacite=round(float(compacite), 4),
     )
+
+
+# ── La superposition — deux images choisies, et ce qui en sort ───────────────
+#
+# **Le même cœur que la différence, appelé par l'autre bout.** La planche
+# d'équipement connaît l'alignement de ses cases parce que c'est elle qui les a
+# posées ; la superposition, elle, le reçoit de l'auteur — et le lui propose
+# d'abord. Ce qui suit est identique : deux images alignées, ce que la seconde
+# ajoute et repeint, un rectangle, un seuil, une main. Une seconde comparaison
+# écrite ici aurait fini par juger autrement la même paire.
+
+
+def aligner(dessus: np.ndarray, dessous: np.ndarray, pose: Superposition) -> np.ndarray:
+    """Le dessus, remis dans le cadre du dessous — mis à l'échelle et décalé.
+
+    **Le cadre du dessous fait loi.** Deux images de tailles différentes ne se
+    comparent pas ; c'est le dessous qui donne la case, parce que c'est lui le
+    sol et que le résultat s'y range. Ce qui déborde est perdu, ce qui manque
+    est transparent — le même contrat que la case d'une planche.
+    """
+    hauteur, largeur = dessous.shape[:2]
+    if dessus.shape[:2] != (hauteur, largeur):
+        cadre = Image.new("RGBA", (largeur, hauteur), (0, 0, 0, 0))
+        cadre.paste(Image.fromarray(dessus, "RGBA"), (0, 0))
+        dessus = np.asarray(cadre)
+    return _poser(dessus, float(pose.echelle), int(pose.dy), int(pose.dx))
+
+
+def proposer(dessous: np.ndarray, dessus: np.ndarray) -> tuple[float, int, int, float]:
+    """L'échelle et le décalage qui superposent le mieux les deux images.
+
+    **Un bouton, pas un mode.** Il remplit les trois valeurs et s'arrête là ; on
+    est toujours en manuel, et on le relance autant qu'on veut — il repart alors
+    de zéro, pas de l'ajustement. Quand il tombe à côté — ce qui arrive quand le
+    modèle a dézoomé le personnage pour faire de la place à la pièce —, on
+    corrige à la main, et c'est très exactement ce qui n'existait pas avant :
+    un recalage raté coûtait une génération.
+    """
+    if dessus.shape[:2] != dessous.shape[:2]:
+        dessus = aligner(dessus, dessous, Superposition())
+    return _recalage(dessous, dessus)
+
+
+def superposer(
+    dessous: np.ndarray, dessus: np.ndarray, pose: Superposition
+) -> tuple[np.ndarray, np.ndarray]:
+    """Le calque et l'aplat, d'un seul calcul.
+
+    **Les deux sorties se cochent au lieu de s'exclure** : on veut souvent le
+    calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Les rendre
+    ensemble évite de refaire l'alignement deux fois, et surtout garantit qu'ils
+    parlent de la même pose — deux appels séparés pourraient être faits de part
+    et d'autre d'un réglage.
+
+    Le calque est fait des pixels du **dessus**, jamais d'un souvenir du
+    dessous : c'est la pièce qu'on empile. L'aplat est les deux fondues dans
+    l'ordre de la pile, et il n'a pas besoin d'alpha pour être valable — fondre
+    deux images opaques donne un résultat parfaitement utilisable, en extraire
+    un calque n'en donne aucun.
+    """
+    pose_dessus = aligner(dessus, dessous, pose)
+    forme = dessous.shape[:2]
+
+    ajout, touche = _parts(dessous, pose_dessus, pose.seuil)
+    garde = ajout | touche
+    if pose.rectangle is not None:
+        garde &= _rectangle(forme, pose.rectangle)
+    # **La main tranche après la mesure**, comme la retouche d'un calque de C4 :
+    # elle ôte ce que la comparaison a gardé de trop, et ramène ce qu'elle n'a
+    # pas vu — un casque sombre sur des cheveux sombres, qu'aucun seuil ne
+    # distingue.
+    garde = peindre(garde, pose.main)
+
+    calque = pose_dessus.copy()
+    calque[~garde] = 0
+
+    # L'aplat : le dessous, et par-dessus ce que le dessus a d'opaque.
+    aplat = dessous.copy()
+    couvre = pose_dessus[:, :, 3] >= OPACITE
+    aplat[couvre] = pose_dessus[couvre]
+    return calque, aplat
 
 
 def avec_alpha(octets: bytes) -> np.ndarray:

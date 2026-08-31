@@ -36,6 +36,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
+from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.generation import ServiceGenerations
@@ -65,6 +66,7 @@ __all__ = [
     "CollectionInconnue",
     "CompteFaux",
     "DecoupeRefusee",
+    "SuperpositionRefusee",
     "DepotRefuse",
     "Diffusion",
     "EtatCatalogue",
@@ -83,6 +85,7 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "ServiceSuperposition",
     "ServiceExport",
     "ServiceGenerations",
     "ServiceEquipement",
@@ -145,6 +148,13 @@ class Atelier:
         # ranger : il ne connaît ni le catalogue, ni l'univers, ni le
         # fournisseur. C'est ce qui fait qu'une planche se découpe réseau coupé.
         self.decoupe = ServiceDecoupe(
+            self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
+        )
+        # **La seconde fabrique, au même rang que la première et pour la même
+        # raison** : superposer deux images déjà payées ne demande ni catalogue
+        # ni fournisseur, et c'est très exactement ce qui fait qu'un recalage
+        # raté ne coûte plus une génération.
+        self.superposition = ServiceSuperposition(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
         # **Après la bibliothèque et les assets, comme le slicer, et pour la

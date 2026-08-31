@@ -25,7 +25,19 @@ from atelier.domaine import (
     Reinjection,
 )
 from atelier.domaine.catalogue import modele_en_json
-from atelier.domaine.recette import CERCLES, DEHORS, EPAISSEUR_MAX, RAYON_MAX
+from atelier.domaine.recette import (
+    CERCLES,
+    DEHORS,
+    EPAISSEUR_MAX,
+    RAYON_MAX,
+    SEUIL_COULEUR,
+)
+from atelier.domaine.superposition import (
+    CALQUE,
+    ECHELLE_MAX,
+    ECHELLE_MIN,
+    Superposition,
+)
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png
 from atelier.reglages import deposer_cle, etat_cle
@@ -922,6 +934,129 @@ async def decouper(
     """Une planche de huit devient huit assets, chacun filié (US-72, US-74)."""
     boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
     return _atelier(requete).decoupe.decouper(identifiant, boites)
+
+
+# ── La superposition ─────────────────────────────────────────────────────────
+#
+# **Quatre routes, et la coupure est la même que pour le slicer** : ce qui ne
+# crée rien se redemande à chaque cran de réglage, ce qui crée des assets ne se
+# redemande jamais. `ouvrir` et `preview` ne touchent pas au disque ; `overlay`
+# écrit, `replay` réécrit à la même place.
+
+
+class CorpsSuperposition(BaseModel):
+    """Une pose, telle qu'elle arrive de l'écran.
+
+    Les bornes sont déclarées deux fois — ici et dans le service —, comme pour
+    la recette : celles-ci rendent un 422 lisible dans `/api/docs`, celles du
+    service valent pour toute provenance.
+    """
+
+    dessus: str = Field(min_length=1)
+    dessous: str = Field(min_length=1)
+    echelle: float = Field(1.0, ge=ECHELLE_MIN, le=ECHELLE_MAX)
+    dx: int = 0
+    dy: int = 0
+    rectangle: list[int] | None = Field(None, min_length=4, max_length=4)
+    seuil: int = Field(SEUIL_COULEUR, ge=0, le=255)
+    main: list[CorpsTrait] = Field(default_factory=list)
+    sortie: str = CALQUE
+
+    def en_pose(self) -> Superposition:
+        return Superposition.depuis_json(self.model_dump())
+
+
+class CorpsFabrique(BaseModel):
+    """Ce qu'on coche avant de fabriquer.
+
+    **Les deux sorties se cochent au lieu de s'exclure** : on veut souvent le
+    calque pour le réutiliser et l'aplat pour l'avoir tout de suite.
+    """
+
+    pose: CorpsSuperposition
+    sorties: list[str] = Field(default_factory=lambda: [CALQUE])
+    garder: bool = False
+
+
+@routeur.get("/assets/{identifiant}/overlay")
+async def ouvrir_superposition(
+    requete: Request, identifiant: str, dessous: str | None = Query(None)
+) -> dict[str, Any]:
+    """L'état de départ de l'outil, en un appel (US-211).
+
+    Rien n'est créé, rien n'est écrit : c'est une lecture, et elle porte le
+    préremplissage avec sa provenance.
+    """
+    return _atelier(requete).superposition.ouvrir(identifiant, dessous)
+
+
+@routeur.get("/assets/{identifiant}/overlay/fit")
+async def recaler_superposition(
+    requete: Request, identifiant: str, dessous: str = Query(...)
+) -> dict[str, Any]:
+    """La proposition de calage — trois valeurs, et rien d'autre (US-213).
+
+    **Un bouton, pas un mode** : elle remplit les champs et s'arrête là.
+    """
+    return _atelier(requete).superposition.recaler(identifiant, dessous)
+
+
+@routeur.post("/assets/{identifiant}/overlay/inherit")
+async def heriter_du_detourage(
+    requete: Request, identifiant: str, dessous: str = Query(...)
+) -> dict[str, Any]:
+    """Le dessus reprend les passes du dessous (US-212).
+
+    Ce qu'elle pose va dans **la recette de l'image**, pas dans la
+    superposition : le détourage d'une image est vrai pour elle-même.
+    """
+    return _atelier(requete).superposition.heriter(identifiant, dessous).en_json()
+
+
+@routeur.post("/overlay/preview")
+async def apercu_superposition(
+    requete: Request, corps: CorpsSuperposition
+) -> dict[str, Any]:
+    """Les deux sorties et les cinq mesures, **sans rien écrire** (US-214).
+
+    Les images repartent en `data:` : un aperçu n'existe nulle part sur le
+    disque, et lui donner une adresse aurait obligé à ranger un brouillon —
+    donc à le nettoyer.
+    """
+    return _atelier(requete).superposition.apercu(corps.en_pose())
+
+
+@routeur.post("/overlay")
+async def fabriquer_superposition(
+    requete: Request, corps: CorpsFabrique
+) -> dict[str, Any]:
+    """Une image par sortie cochée — des assets entiers, sur le disque."""
+    return _atelier(requete).superposition.fabriquer(
+        corps.pose.en_pose(), corps.sorties, corps.garder
+    )
+
+
+@routeur.put("/assets/{identifiant}/overlay")
+async def rejouer_superposition(
+    requete: Request, identifiant: str, corps: CorpsSuperposition
+) -> dict[str, Any]:
+    """Refaire une superposition déjà fabriquée, à la même place (US-213).
+
+    **Pas un centime** : les deux images sont sur le disque.
+    """
+    return (
+        _atelier(requete)
+        .superposition.rejouer(identifiant, corps.en_pose())
+        .en_json()
+    )
+
+
+@routeur.delete("/assets/{identifiant}/overlay/saved")
+async def oublier_reglages_superposition(
+    requete: Request, identifiant: str
+) -> dict[str, Any]:
+    """« Repartir de zéro › » — la règle du prérempli qui se défait d'un clic."""
+    return _atelier(requete).superposition.oublier(identifiant).en_json()
 
 
 # ── Les recettes nommées ─────────────────────────────────────────────────────

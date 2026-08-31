@@ -35,6 +35,7 @@ import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
 import { reinitialiserGuide } from "./composants/Guide"
 import { AIDE, SANS_ENTREE } from "./aide"
+import { POSE_VIDE } from "./api"
 import { COULEUR_TEINTE, NOM_TEINTE, RECETTE_VIDE, TEINTES } from "./api"
 import type {
   ApercuPrompt,
@@ -656,6 +657,40 @@ function serveurDouble(options: {
     // Ce qu'une table sait de l'image (E3) : les taches, les poches, les crans
     // d'occupation. Le double répond comme le serveur — une image d'essai n'a
     // ni tache ni poche, et c'est une réponse, pas un trou.
+    // La seconde fabrique (E6) : ouvrir ne crée rien, et l'aperçu non plus.
+    // Le double répond ce que le serveur répond — un dessous nul quand rien
+    // n'est désigné, et deux images vides en `data:`.
+    if (url.includes("/overlay/preview"))
+      return rendre({
+        calque: "data:image/png;base64,",
+        aplat: "data:image/png;base64,",
+        mesures: {
+          silhouette: 0.99,
+          repeint: 0.01,
+          ajout: 0.08,
+          echelle: 1,
+          compacite: 0.94,
+        },
+      })
+    if (url.includes("/overlay")) {
+      const dessus = String(url).split("/assets/")[1]?.split("/")[0] ?? ""
+      const nomme = new URL(String(url), "http://x").searchParams.get("dessous")
+      // Sans dessous nommé, le serveur reprend celui que la superposition de
+      // cette image désignait. Le double fait pareil, en prenant l'autre image
+      // qu'on lui a donnée.
+      const bas =
+        (options.assets ?? []).find((a) => a.identifiant === (nomme ?? "")) ??
+        (nomme ? null : ((options.assets ?? []).find((a) => a.identifiant !== dessus) ?? null))
+      return rendre({
+        dessus: (options.assets ?? []).find((a) => a.identifiant === dessus) ?? asset(dessus, dessus),
+        dessous: bas,
+        pose: { ...POSE_VIDE, dessus, dessous: bas?.identifiant ?? "" },
+        repris: null,
+        passes_dessus: 0,
+        passes_dessous: bas ? 1 : 0,
+        sans_alpha: true,
+      })
+    }
     if (url.includes("/spots"))
       return rendre({
         taches: [],
@@ -6864,11 +6899,16 @@ describe("le châssis des tables", () => {
     expect(cadre.queryByText(/entièrement opaque/)).toBeNull()
   })
 
-  test("une fabrique n'a pas de carré, et la superposition dit qu'elle n'existe pas encore", async () => {
+  test("une fabrique n'a pas de carré, et les deux s'ouvrent en plein cadre", async () => {
     const { cadre } = await ouvrirUneTable()
 
+    // **Les deux gestes de droite n'ont pas de carré** : ils ne posent rien sur
+    // l'image courante, ils en fabriquent d'autres.
+    expect(puce(cadre, "découpage").textContent).toBe("découpage")
+    expect(puce(cadre, "superposition").textContent).toBe("superposition")
+
     fireEvent.click(puce(cadre, "superposition"))
-    expect(await cadre.findByText(/la superposition n'est pas encore construite/)).toBeTruthy()
+    expect(await cadre.findByText("les deux images")).toBeTruthy()
   })
 
   // ── « L'image brute et l'image rendue se comparent côte à côte et
@@ -7499,5 +7539,119 @@ describe("le contour et la main", () => {
     await waitFor(() => expect(cadre.getByRole("button", { name: "poser" })).toBeTruthy())
     expect(cadre.getByRole("button", { name: "effacer" })).toBeTruthy()
     expect(cadre.getByText("la couleur")).toBeTruthy()
+  })
+
+  // ── E6 : la superposition, seconde fabrique ─────────────────────────────
+  //
+  // Ce qui se mesure sur des pixels — le calque, l'aplat, le recalage — est
+  // tenu par `tests/test_e6.py`. Ce qui vit ici est ce que l'écran montre, et
+  // surtout ce qu'il **ne propose pas**.
+
+  /** La fabrique, ouverte sur **deux** images : c'est ce qu'elle demande, et
+   *  sans la seconde tout ce qui suit serait grisé pour une autre raison que
+   *  celle qu'on veut mesurer. */
+  const ouvrirLaFabrique = async () => {
+    const dessus = asset("bbbb2222-0", "le nain, au repos")
+    const dessous = asset("bbbb2222-1", "le nain, casqué")
+    const { cadre, ...reste } = await ouvrirUneTable({
+      assets: [dessus, dessous],
+    })
+    fireEvent.click(puce(cadre, "superposition"))
+    await cadre.findByText("les deux images")
+    return { cadre, ...reste }
+  }
+
+  test("les deux images se choisissent, et s'intervertissent", async () => {
+    const { cadre } = await ouvrirLaFabrique()
+
+    // Le dessus se déplace, le dessous est le sol : on ne le manipule jamais.
+    expect(cadre.getByText("DESSUS · SE DÉPLACE")).toBeTruthy()
+    expect(cadre.getByRole("button", { name: "↕ échanger" })).toBeTruthy()
+    // Chacune se change — sans quoi la fabrique ne marcherait que sur la paire
+    // qu'un aller-retour d'équipement a préremplie.
+    expect(cadre.getAllByRole("button", { name: "changer ›" }).length).toBeGreaterThan(0)
+  })
+
+  test("le calage se fait au rail, au champ et aux touches, après une proposition", async () => {
+    const { cadre } = await ouvrirLaFabrique()
+
+    // **Un bouton, pas un mode.**
+    expect(cadre.getByRole("button", { name: "Recaler" })).toBeTruthy()
+
+    for (const nom of ["échelle", "horizontal", "vertical"]) {
+      expect(cadre.getByLabelText(nom)).toBeTruthy() // le rail
+      expect(cadre.getByLabelText(`${nom}, en chiffres`)).toBeTruthy() // le champ
+    }
+    // Les touches suivent l'axe qu'elles commandent, et **elles sont aussi les
+    // boutons** : une seule chose à l'écran enseigne et agit.
+    expect(cadre.getByLabelText("horizontal — ←")).toBeTruthy()
+    expect(cadre.getByLabelText("horizontal — →")).toBeTruthy()
+    expect(cadre.getByLabelText("vertical — ↑")).toBeTruthy()
+    expect(cadre.getByLabelText("échelle — +")).toBeTruthy()
+
+    // Et le pas se corrige d'un cran, sans passer par le rail.
+    fireEvent.click(cadre.getByLabelText("horizontal — →"))
+    await waitFor(() =>
+      expect(cadre.getByLabelText("horizontal, en chiffres")).toHaveValue(1),
+    )
+  })
+
+  test("l'alerte du détourage nomme la conséquence et propose le geste", async () => {
+    const { cadre } = await ouvrirLaFabrique()
+
+    // **Le produit constate, il ne refuse pas** : le bouton de fabrique reste
+    // vivant, et l'alerte dit ce qui arriverait.
+    expect(await cadre.findByText(/le calque prendrait tout le fond/)).toBeTruthy()
+    expect(cadre.getByRole("button", { name: /reprendre les .* passes du dessous/ }))
+      .toBeTruthy()
+    expect(cadre.getByRole("button", { name: /^Fabriquer/ })).not.toBeDisabled()
+  })
+
+  test("les trois vues sont là en même temps, et deux d'entre elles ne sortent pas", async () => {
+    const { cadre } = await ouvrirLaFabrique()
+
+    // Le travail au centre, le calque seul et le résultat à droite.
+    expect(cadre.getByText("le calque seul")).toBeTruthy()
+    expect(cadre.getByText("le résultat")).toBeTruthy()
+    expect(cadre.getByRole("button", { name: "masquer le calque" })).toBeTruthy()
+    // **Les blocs « voir » ne changent que l'affichage**, et l'en-tête le dit.
+    expect(cadre.getByText(/ne change pas la sortie/)).toBeTruthy()
+  })
+
+  test("les deux sorties se cochent au lieu de s'exclure, et le bouton les compte", async () => {
+    const { cadre } = await ouvrirLaFabrique()
+
+    expect(cadre.getByRole("button", { name: /^Fabriquer — 1 image/ })).toBeTruthy()
+    fireEvent.click(cadre.getByRole("checkbox", { name: /aplat/ }))
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: /^Fabriquer — 2 images/ })).toBeTruthy(),
+    )
+
+    // Rien de coché : le bouton est grisé, il ne ment pas sur ce qu'il ferait.
+    fireEvent.click(cadre.getByRole("checkbox", { name: /calque/ }))
+    fireEvent.click(cadre.getByRole("checkbox", { name: /aplat/ }))
+    await waitFor(() =>
+      expect(cadre.getByRole("button", { name: /^Fabriquer/ })).toBeDisabled(),
+    )
+  })
+
+  test("aucun écran ne propose de reposer un calque sur une autre pose", async () => {
+    // **La promesse retirée deux fois, et gardée.** Un casque vu de face n'est
+    // pas un casque vu de dos : un calque est solidaire de sa pose, et c'est le
+    // pliage qui divise son prix. La maquette de la superposition rouvrait cette
+    // promesse ; le sommaire du chantier la marque « à reprendre », et aucune
+    // mesure ne la soutient (`docs/v21-arbitrages.md` A-12).
+    const { cadre } = await ouvrirLaFabrique()
+
+    expect(cadre.queryByText(/autre pose/i)).toBeNull()
+    expect(cadre.queryByText(/toutes les poses/i)).toBeNull()
+    expect(cadre.queryByRole("button", { name: /reposer/i })).toBeNull()
+  })
+
+  test("la fabrique dit qu'aucun appel n'en part", async () => {
+    // Le pendant de « la galerie ne paie pas » : ici non plus, et l'écran le
+    // dit avant qu'on ait lu.
+    const { cadre } = await ouvrirLaFabrique()
+    expect(cadre.getByText("aucun appel ne part d'ici")).toBeTruthy()
   })
 })

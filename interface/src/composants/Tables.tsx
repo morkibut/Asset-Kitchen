@@ -36,6 +36,7 @@ import {
 import { sujetAsset, useVisee } from "./Apercu"
 import { EnTetePanneau, Raison, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+import { EcranSuperposition } from "./Superposition"
 import {
   avecPassage,
   mainDe,
@@ -151,9 +152,11 @@ function indisponible(
   // **La main n'est jamais indisponible**, et c'est l'exacte symétrie du
   // contour : toute image se retouche, y compris une image entièrement opaque
   // — *ôter* y crée de la transparence, et un calque de dessin s'y pose comme
-  // partout. Son carré est donc toujours là.
-  if (table === "superposition")
-    return "la superposition n'est pas encore construite — elle arrive avec sa fabrique"
+  // partout. Son carré est donc toujours là. La superposition non plus : elle
+  // marche sur n'importe quelles deux images de la bibliothèque, et c'est très
+  // exactement ce qui l'a sortie de la recette — la place `Difference` était
+  // grisée sur presque toute la bibliothèque, faute de savoir *par rapport à
+  // quoi*.
   return null
 }
 
@@ -442,6 +445,13 @@ export function EcranTables({
           réglages et une colonne de sœurs mentirait sur ce qu'elle fait. */}
       {ouverte === "decoupage" ? (
         decoupe
+      ) : ouverte === "superposition" ? (
+        <EcranSuperposition
+          asset={asset}
+          soeurs={soeurs}
+          onErreur={onErreur}
+          onFabrique={(nees) => nees.length > 0 && onSoeur(nees[0].identifiant)}
+        />
       ) : (
       <div className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px]">
         {/* ── La colonne de la table ────────────────────────────────────── */}

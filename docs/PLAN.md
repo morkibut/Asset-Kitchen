@@ -1032,7 +1032,7 @@ phrase.
 ---
 
 ### E6 · La superposition quitte la recette
-**User stories** : 211, 212, 213, 214, 215
+**User stories** : 211, 212, 213, 214, 215 · *8 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -1053,18 +1053,58 @@ lui-même « à reprendre » et écrit qu'aucune mesure ne la soutient
 
 #### Critères d'acceptation
 
-- [ ] Les deux images d'une superposition se choisissent à l'écran et s'intervertissent
-- [ ] L'image du dessus se détoure sans quitter l'écran, et hérite par défaut des passes de celle du dessous
-- [ ] Le calage se fait au pixel, au rail et au clavier, après une proposition automatique reprenable
-- [ ] Un recalage raté ne demande jamais de repayer une génération
-- [ ] Les trois vues — travail, calque seul sur fond vif, résultat — sont visibles ensemble
-- [ ] Les réglages se conservent pour la pièce suivante posée sur la même image
-- [ ] La superposition écrit des fichiers et ne pose aucun état sur la recette de l'image courante
-- [ ] Le corps d'origine n'est jamais modifié, et aucun écran ne propose de reposer un calque sur une autre pose
+- [x] Les deux images d'une superposition se choisissent à l'écran et s'intervertissent
+- [x] L'image du dessus se détoure sans quitter l'écran, et hérite par défaut des passes de celle du dessous
+- [x] Le calage se fait au pixel, au rail et au clavier, après une proposition automatique reprenable
+- [x] Un recalage raté ne demande jamais de repayer une génération
+- [x] Les trois vues — travail, calque seul sur fond vif, résultat — sont visibles ensemble
+- [x] Les réglages se conservent pour la pièce suivante posée sur la même image
+- [x] La superposition écrit des fichiers et ne pose aucun état sur la recette de l'image courante
+- [x] Le corps d'origine n'est jamais modifié, et aucun écran ne propose de reposer un calque sur une autre pose
 
 #### Bloquée par
 
 - **E3** — elle vit à droite du trait de la barre des tables, et ce trait est ce qui la définit.
+
+#### Ce que la tenir a trouvé
+
+**La fabrique est là, et l'ancienne place ne l'est plus tout à fait — la dette
+est nommée plutôt que cachée.** La superposition écrit désormais des assets
+entiers : pixels et parent du dessus, le dessous en référence, recette vide,
+prix nul, cinq mesures. Elle marche sur **n'importe quelles deux images**, ce
+qui était le premier grief contre la place `Difference` — elle était grisée sur
+presque toute la bibliothèque, faute de savoir *par rapport à quoi*.
+
+Mais **le flux d'équipement de C3 pose toujours sa différence dans la recette**,
+et le déplacer est un chantier à lui seul : il faudrait rejouer `_reposer`,
+`recaler`, `borner` et `affiner`, et surtout **scinder chaque calque déjà sur le
+disque en deux assets** — la case revenue d'un côté, le calque de l'autre —,
+c'est-à-dire une migration de données avec des identifiants neufs. Ce n'est pas
+un détail d'écriture, et le faire à moitié laisserait deux vérités.
+
+Ce qui rend l'attente tenable, et qui n'est pas rien : **il n'y a qu'une seule
+comparaison de pixels dans le dépôt**. La planche d'équipement et la
+superposition appellent le même cœur — le même `_parts`, le même seuil, la même
+tolérance au voisin, le même rectangle, le même pinceau. Ce sont deux appelants
+d'un calcul, pas deux calculs. Ce qui diffère est **d'où vient l'alignement** :
+la planche le connaît parce qu'elle a posé ses cases, la superposition le reçoit
+de l'auteur — et le lui propose d'abord.
+
+**Le détourage est emprunté, pas recopié, et la règle qui range un emprunt tient
+en une phrase** : *si le réglage est vrai de l'image toute seule, il va dans la
+recette de l'image ; s'il n'est vrai que de cette superposition, il va dans la
+superposition*. Détourer le dessus est vrai pour lui-même — il en aura besoin
+pour partir dans le jeu, et personne ne veut le détourer deux fois. Effacer
+trois pixels pour qu'ils ne partent pas dans ce calque-ci n'est vrai que de ce
+calque-ci.
+
+**Et l'écran s'ouvrait sans porte vers sa seconde image** — trouvé au
+navigateur. La rangée qui porte « changer › » n'existe que quand l'image existe,
+donc un outil ouvert sur une image seule n'avait aucun moyen de désigner l'autre.
+La raison est devenue le bouton, comme l'alerte du détourage juste en dessous.
+C'est la troisième fois de la session que le navigateur trouve ce qu'aucun essai
+ne voyait, et les trois fois c'était **une porte manquante ou une bande qui
+déborde** — jamais un calcul.
 
 ---
 

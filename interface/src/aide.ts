@@ -878,6 +878,132 @@ export const AIDE: Record<string, Explication> = {
   // promesse « sans jamais bloquer » — et c'est ce que ces entrées doivent dire
   // avant de décrire un curseur.
 
+  // ── La seconde fabrique : la superposition ───────────────────────────────
+  //
+  // **Le guide ne disait nulle part qu'il existe des outils qui ne sont pas des
+  // tables**, et c'est pourtant la distinction qui décide où on les cherche :
+  // une table règle une image et rend la même ; celui-ci en prend deux et en
+  // fabrique une troisième.
+
+  "superposition.images": {
+    nom: "les deux images",
+    ou: "decoupe",
+    quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
+    change:
+      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
+    origine: "toi · deux images que tu désignes, dans la même pose",
+    long:
+      "Le cas principal est l'aller-retour d'un équipement : l'atelier assemble une planche avec les corps du personnage, la fait habiller par le modèle, et redécoupe chaque case — il obtient alors, pour chaque corps, l'image envoyée et l'image revenue. C'est cette paire qui remplit l'outil par défaut.\n\nMais il marche sur **n'importe quelles deux images** de la bibliothèque, sans aller-retour et sans planche. Poser un corps nu sur un corps casqué donnerait le crâne nu au lieu du casque : c'est pour ça que le sens compte.",
+  },
+
+  "superposition.detourage": {
+    nom: "avant de caler",
+    ou: "decoupe",
+    quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
+    change:
+      "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
+    origine: "la recette de chaque image · reprendre écrit dans celle du dessus",
+    long:
+      "Un pixel entre dans le calque s'il est **opaque dans le dessus et transparent dans le dessous**. Si le dessus n'est pas détouré, tout y est opaque — fond compris —, donc tout ce qui entoure le corps remplit la condition et part avec la pièce.\n\nLe dessus hérite du détourage du dessous, prérempli : même sujet, même fond plat, même modèle. Ce que ça pose va dans la recette de l'image, pas dans la superposition — le détourage d'une image est vrai pour elle-même, elle en aura besoin de toute façon pour partir dans le jeu.\n\nL'alerte nomme la conséquence et propose le geste ; **elle ne refuse pas**. Une image qui remplit légitimement son cadre existe, et l'atelier n'a pas les moyens de savoir laquelle il a sous les yeux.",
+  },
+
+  "superposition.voir": {
+    nom: "voir les deux images",
+    ou: "decoupe",
+    quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
+    change:
+      "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
+    origine: "toi · le dessous teinté à 50 %, le dessus à 92 %",
+    long:
+      "**Teinte** repeint tous les pixels opaques du dessous d'une seule couleur vive : c'est celui qui sert au calage, parce qu'aucune de ces couleurs n'existe dans un sprite. **Négatif** sert quand les deux images ont déjà des couleurs proches. **Normale** sert à vérifier le rendu final.",
+  },
+
+  "superposition.calage": {
+    nom: "le calage",
+    ou: "decoupe",
+    quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
+    change:
+      "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
+    origine: "une proposition du produit, reprise à la main",
+    long:
+      "**Recaler est un bouton, pas un mode.** Il essaie 131 échelles et cherche pour chacune le décalage qui fait le mieux coïncider les deux silhouettes, sur des vignettes de 128 px pour rester rapide. Puis il remplit les trois champs et s'arrête là : il ne verrouille rien, ne refuse rien, et n'empêche aucun ajustement.\n\nOn le relance autant qu'on veut — il repart alors de zéro, pas de l'ajustement. Quand il tombe à côté, ce qui arrive quand le modèle a dézoomé le personnage pour faire de la place à la pièce, on corrige à la main.",
+  },
+
+  "superposition.echelle": {
+    nom: "échelle du dessus",
+    ou: "decoupe",
+    quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
+    change:
+      "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
+    origine: "toi · proposé par le recalage",
+  },
+
+  "superposition.decalage": {
+    nom: "décalage du dessus",
+    ou: "decoupe",
+    quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
+    change:
+      "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
+    origine: "toi · proposé par le recalage",
+    long:
+      "Les touches sont dessinées sous chaque rail plutôt que listées dans une aide, et **elles sont aussi les boutons** : une seule chose à l'écran fait donc deux métiers — elle enseigne et elle agit. Un raccourci écrit dans une aide n'est jamais lu ; dessiné sous le réglage qu'il commande, il se voit au moment où on en a besoin. Maj multiplie le pas par dix.",
+  },
+
+  "superposition.seuil": {
+    nom: "ce qu'on garde du dessus",
+    ou: "decoupe",
+    quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
+    change:
+      "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
+    origine: "toi · aucun rectangle au départ, seuil 32",
+    long:
+      "Le seuil est un réglage qui décide **partout** ; le rectangle est un cadre qui décide **quelque part**. Les deux se complètent : le seuil fait le gros du travail d'un coup, le rectangle rattrape ce qu'une couleur ne pouvait pas voir — un casque sombre sur des cheveux sombres, par exemple, qu'aucun seuil ne distingue.",
+  },
+
+  "superposition.sorties": {
+    nom: "ce qu'on en sort",
+    ou: "decoupe",
+    quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
+    change:
+      "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
+    origine: "toi · le calque seul au départ",
+    long:
+      "Le calque est la pièce d'équipement : elle va au vestiaire du personnage et s'empile ensuite sur les autres poses. L'aplat est le personnage habillé, en une seule image, prêt à partir dans le jeu tel quel.\n\nCe qui sort est un asset entier, et c'est le seul geste du produit dont le résultat a **deux ascendants** : ses pixels et son parent viennent du dessus, le dessous est une référence gardée pour que la superposition se rejoue. Sa recette est vide, parce que les deux images étaient déjà rendues.",
+  },
+
+  "superposition.fond": {
+    nom: "le fond du calque",
+    ou: "decoupe",
+    quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
+    change:
+      "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
+    origine: "toi · le damier au départ",
+    long:
+      "Sur le damier, les miettes de fond se confondent avec la transparence ; sur un aplat vif elles sautent aux yeux. La bonne couleur dépend de celles du sprite, d'où six fonds et pas un.",
+  },
+
+  "superposition.resultat": {
+    nom: "le résultat",
+    ou: "decoupe",
+    quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
+    change:
+      "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
+    origine: "les deux images, telles que tu les as calées",
+    long:
+      "Les trois vues sont **vivantes** : déplacer le dessus d'un pixel les met toutes à jour. C'est ce qui permet de caler en regardant le résultat plutôt que le travail, et c'est la raison d'être de cette disposition à trois panneaux.",
+  },
+
+  "superposition.mesures": {
+    nom: "ce que la comparaison a mesuré",
+    ou: "decoupe",
+    quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
+    change:
+      "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
+    origine: "une mesure sur tes deux images",
+    long:
+      "**Silhouette** : ce qui reste du corps de départ. Proche de 1, le modèle a gardé la forme.\n\n**Corps repeint** : la part du corps dont la couleur a changé, hors de l'endroit où la pièce est tombée. C'est la mesure qui décide — beaucoup de repeint veut dire que le modèle a redessiné le personnage au lieu de l'habiller.\n\n**Ajout** : ce qui est apparu, en part du corps. Elle s'affiche mais ne classe rien : une pièce contenue en ajoute peu, une cape beaucoup, et les deux vont bien.\n\n**Échelle** : la taille du dessus au retour. 0,62 veut dire que le modèle a dézoomé pour faire de la place.\n\n**Compacité** : la part de la différence qui tient dans sa plus grosse tache. Proche de 1, un objet ; proche de 0, une poussière semée partout, donc un repeint déguisé.",
+  },
+
   "decoupe.mode": {
     nom: "Détection",
     ou: "decoupe",

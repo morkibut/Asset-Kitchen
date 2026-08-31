@@ -42,6 +42,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.superposition import SuperpositionRefusee
 from atelier.services.production import (
     PersonnageInconnu,
     PoseInconnue,
@@ -80,6 +81,7 @@ CODES = {
     LienRefuse: 409,
     UniversRefuse: 409,
     DecoupeRefusee: 409,
+    SuperpositionRefusee: 409,
     ExportRefuse: 409,
     PersonnageInconnu: 404,
     PoseInconnue: 404,

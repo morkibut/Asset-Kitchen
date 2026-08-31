@@ -180,6 +180,76 @@ export type Contour = {
 /** Un calque de dessin — de la matière posée par-dessus (US-208). */
 export type CalqueDessin = { nom: string; visible: boolean; passages: Trait[] }
 
+/** Comment deux images ont été posées l'une sur l'autre (E6).
+ *
+ *  **Hors de la recette, et c'est le critère qui l'a rangée là** : une recette
+ *  décrit comment *une* image se rend, et celle-ci nomme un second asset. Le
+ *  dessus se déplace, le dessous est le sol : on ne le manipule jamais.
+ *
+ *  `rectangle` sert deux fois — il isole la pièce pour qu'on voie le corps
+ *  dessous pendant qu'on cale, et **ce qu'il masque à l'écran, il le masque
+ *  aussi à la sortie**. `main` porte les passages posés sur le dessus *avant la
+ *  comparaison* : ils ne sont vrais que de cette superposition-ci, donc
+ *  l'image du dessus n'est jamais modifiée. */
+export type Superposition = {
+  dessus: string
+  dessous: string
+  echelle: number
+  dx: number
+  dy: number
+  rectangle: number[] | null
+  seuil: number
+  main: Trait[]
+  sortie: "calque" | "aplat"
+}
+
+/** Ce qu'on reprendra la prochaine fois qu'on superpose sur cette image-là.
+ *  Attachés à l'image de **référence**, jamais au calque — et sans les
+ *  passages de la main, qui sont dessinés sur une pièce précise. */
+export type ReglagesGardes = {
+  depuis: string
+  le: number
+  echelle: number
+  dx: number
+  dy: number
+  rectangle: number[] | null
+  seuil: number
+}
+
+/** L'état de départ de l'outil, en un appel. */
+export type OuvertureSuperposition = {
+  dessus: Asset
+  dessous: Asset | null
+  pose: Superposition
+  /** D'où vient le préremplissage, ou `null` quand rien n'est repris. */
+  repris: ReglagesGardes | null
+  passes_dessus: number
+  passes_dessous: number
+  /** **Le fait que l'alerte nomme** : sans alpha sur le dessus, le calque
+   *  prendrait tout le fond. Le produit constate ; il ne refuse pas. */
+  sans_alpha: boolean
+}
+
+/** Les deux sorties et les cinq mesures, sans rien écrire. Les images arrivent
+ *  en `data:` — un aperçu n'existe nulle part sur le disque. */
+export type ApercuSuperposition = {
+  calque: string
+  aplat: string
+  mesures: MesuresCalque
+}
+
+export const POSE_VIDE: Superposition = {
+  dessus: "",
+  dessous: "",
+  echelle: 1,
+  dx: 0,
+  dy: 0,
+  rectangle: null,
+  seuil: 32,
+  main: [],
+  sortie: "calque",
+}
+
 /** La septième place : un sol, et ce qu'on empile dessus.
  *
  *  `opacite` est le sol de la pile — elle ne pose aucune couleur, elle décide
@@ -1514,6 +1584,50 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ boites }),
     }),
+
+  // ── La superposition — la seconde fabrique (E6) ────────────────────────────
+  //
+  // **Aucune de ces routes ne coûte un centime**, et c'est tout leur intérêt :
+  // les deux images sont déjà payées. La coupure est celle du slicer — ce qui
+  // ne crée rien se redemande à chaque cran de réglage, ce qui crée des assets
+  // ne se redemande jamais.
+
+  ouvrirSuperposition: (dessus: string, dessous?: string) =>
+    appeler<OuvertureSuperposition>(
+      `/assets/${dessus}/overlay${dessous ? `?dessous=${encodeURIComponent(dessous)}` : ""}`,
+    ),
+
+  recalerSuperposition: (dessus: string, dessous: string) =>
+    appeler<{ echelle: number; dx: number; dy: number; couverture: number }>(
+      `/assets/${dessus}/overlay/fit?dessous=${encodeURIComponent(dessous)}`,
+    ),
+
+  heriterDetourage: (dessus: string, dessous: string) =>
+    appeler<Asset>(
+      `/assets/${dessus}/overlay/inherit?dessous=${encodeURIComponent(dessous)}`,
+      { method: "POST" },
+    ),
+
+  apercuSuperposition: (pose: Superposition) =>
+    appeler<ApercuSuperposition>("/overlay/preview", {
+      method: "POST",
+      body: JSON.stringify(pose),
+    }),
+
+  fabriquerSuperposition: (pose: Superposition, sorties: string[], garder: boolean) =>
+    appeler<{ superpositions: Asset[] }>("/overlay", {
+      method: "POST",
+      body: JSON.stringify({ pose, sorties, garder }),
+    }),
+
+  rejouerSuperposition: (identifiant: string, pose: Superposition) =>
+    appeler<Asset>(`/assets/${identifiant}/overlay`, {
+      method: "PUT",
+      body: JSON.stringify(pose),
+    }),
+
+  oublierReglagesSuperposition: (dessous: string) =>
+    appeler<Asset>(`/assets/${dessous}/overlay/saved`, { method: "DELETE" }),
 
   // ── Le tableau d'inspiration ──────────────────────────────────────────────
   // Une seule de ces routes touche le réseau : celle qui va chercher l'image

@@ -37,6 +37,7 @@ from typing import Any
 from atelier.domaine.equipement import MesuresCalque
 from atelier.domaine.pliage import MesuresLot
 from atelier.domaine.recette import Recette
+from atelier.domaine.superposition import ReglagesGardes, Superposition
 
 
 @dataclass(slots=True)
@@ -168,6 +169,23 @@ class Asset:
     # a fait renoncer au calque (US-148).
     calque: MesuresCalque | None = None
 
+    # ── Ce qui l'a fabriquée, quand deux images l'ont fabriquée ──────────────
+    #
+    # **Arrivée en E6, et hors de la recette** : une recette décrit comment
+    # *une* image se rend, et celle-ci nomme un second asset. Le dessus a donné
+    # les pixels et le parent ; le dessous est une **référence**, gardée pour
+    # que la superposition se rejoue sans redemander une image au fournisseur.
+    # Vide pour tout ce qui n'est pas sorti d'une superposition, c'est-à-dire
+    # pour l'immense majorité des images.
+    superposition: "Superposition | None" = None
+
+    # **Ce qu'on reprendra la prochaine fois qu'on superpose sur cette
+    # image-là.** Attachés à l'image de **référence**, jamais au calque : un jeu
+    # de réglages qui marche pour un casque marche à 90 % pour le suivant, parce
+    # que c'est le même corps et le même cadrage. Les passages de la main n'y
+    # sont pas — ils sont dessinés sur une pièce précise.
+    reglages_superposition: "ReglagesGardes | None" = None
+
     # Posé à l'instant où le personnage part, exactement comme `parent_supprime`
     # et pour la même raison : jamais de cascade, l'image reste, et elle sait
     # seulement de qui elle n'est plus. L'annonce porte alors la vérité au lieu
@@ -241,6 +259,14 @@ class Asset:
             "piece": self.piece,
             "lot": self.lot.en_json() if self.lot else None,
             "calque": self.calque.en_json() if self.calque else None,
+            "superposition": (
+                self.superposition.en_json() if self.superposition else None
+            ),
+            "reglages_superposition": (
+                self.reglages_superposition.en_json()
+                if self.reglages_superposition
+                else None
+            ),
             "personnage_supprime": self.personnage_supprime,
             "projet": self.projet,
             "collection": self.collection,
@@ -294,6 +320,16 @@ class Asset:
             piece=d.get("piece"),
             lot=MesuresLot.depuis_json(d.get("lot")),
             calque=MesuresCalque.depuis_json(d.get("calque")),
+            superposition=(
+                Superposition.depuis_json(d["superposition"])
+                if d.get("superposition")
+                else None
+            ),
+            reglages_superposition=(
+                ReglagesGardes.depuis_json(d["reglages_superposition"])
+                if d.get("reglages_superposition")
+                else None
+            ),
             personnage_supprime=d.get("personnage_supprime", False),
             projet=d.get("projet"),
             collection=d.get("collection"),
