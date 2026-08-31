@@ -359,6 +359,10 @@ class ServiceAssets:
             # l'appel qui l'avait produite.
             personnage=ancien.personnage if ancien else generation.personnage,
             pose=ancien.pose if ancien else generation.pose,
+            # **Et sous quel angle** (E10), à la même règle exactement : une
+            # image que l'auteur a déplacée dans une autre direction n'y revient
+            # pas parce qu'on relance l'appel qui l'avait produite.
+            direction=ancien.direction if ancien else generation.direction,
             personnage_supprime=ancien.personnage_supprime if ancien else False,
             collection=ancien.collection if ancien else None,
             favori=ancien.favori if ancien else False,

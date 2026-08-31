@@ -43,6 +43,7 @@ import {
   type AmbianceDuJeu,
   type Asset,
   type Case,
+  type CaseDirection,
   type EmplacementCorps,
   type Personnage,
   type Piece,
@@ -59,6 +60,23 @@ import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
 import { EcranVitrine } from "./Vitrine"
+
+/** Ce qui remplit vraiment une case — **et ce n'est pas toujours le nombre
+ *  d'images qu'elle porte** (E10).
+ *
+ *  Avec des directions, une image ne compte que si elle est rangée dans une
+ *  direction que cette chose tient encore : sans ça, une image restée dans une
+ *  direction rangée ferait afficher *quatre sur trois*. Sans direction
+ *  déclarée, c'est la longueur de la liste, comme avant.
+ *
+ *  Écrit ici et lu des deux côtés — la matrice et le compte du codex —, parce
+ *  que deux calculs auraient fini par donner deux chiffres pour la même case. */
+export function faitesDeLaCase(case_: Case | undefined): number {
+  if (!case_) return 0
+  if (case_.directions.length + case_.directions_rangees.length > 1)
+    return case_.directions.reduce((somme, a) => somme + a.images.length, 0)
+  return case_.images.length
+}
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
  *
@@ -162,7 +180,12 @@ export function EcranEtabli({
    *  et c'est le compte qui décide si l'appel se plie. En faire deux gestes
    *  aurait donné deux façons de dire la même intention, qui se seraient
    *  contredites au premier désarmement. */
-  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  onArmer: (
+    personnage: Personnage,
+    poses: Pose[],
+    piece?: Piece | null,
+    direction?: string | null,
+  ) => void
   /** **Où le jeu range ses images** (C5) — le dossier posé dans les Réglages.
    *
    *  L'écran ne s'en sert que pour griser avec sa raison ; le geste, lui, le
@@ -433,11 +456,13 @@ function LignePose({
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(pose.nom)
+  const [consigne, setConsigne] = useState(pose.consigne)
 
   // Une pose renommée ailleurs — un autre onglet, l'agent — arrive par le flux.
   // Sans ça, le champ garderait le nom d'avant et le réécrirait au premier
   // départ du focus.
   useEffect(() => setNom(pose.nom), [pose.nom])
+  useEffect(() => setConsigne(pose.consigne), [pose.consigne])
 
   const renommer = async () => {
     const propre = nom.trim()
@@ -461,6 +486,23 @@ function LignePose({
     }
   }
 
+  /** Ce que cette attitude dit au modèle, en anglais (E10, US-241).
+   *
+   *  **Le nom se lit, la consigne part.** Jusqu'à E10 c'était le même texte, et
+   *  le nom français partait au milieu d'une phrase anglaise. Vide, c'est
+   *  encore le nom qui part — le produit ne traduit pas à la place de l'auteur —
+   *  et le champ le dit en clair. */
+  const poser = async () => {
+    const propre = consigne.trim()
+    if (propre === pose.consigne) return
+    try {
+      onPlan((await api.reglerPose(pose.identifiant, { consigne: propre })).plan)
+    } catch (erreur) {
+      setConsigne(pose.consigne)
+      onErreur(erreur, "consigne refusée")
+    }
+  }
+
   return (
     <li className="flex h-[26px] items-center gap-2">
       <input
@@ -471,7 +513,19 @@ function LignePose({
           if (e.key === "Enter") (e.target as HTMLInputElement).blur()
         }}
         aria-label={`Nom de l'attitude ${pose.nom}`}
-        className="mesure h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
+        className="mesure h-[24px] w-[110px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
+      />
+      <input
+        value={consigne}
+        onChange={(e) => setConsigne(e.target.value)}
+        onBlur={() => void poser()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+        }}
+        placeholder={`${pose.nom} — part tel quel`}
+        aria-label={`Ce que « ${pose.nom} » dit au modèle`}
+        title="en anglais : c'est ce texte-là qui part, et il ne se retape jamais sur chaque direction"
+        className="champ h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-3 hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:text-texte-2"
       />
       <input
         type="number"
@@ -756,7 +810,12 @@ function Fiche({
   onCalque: (calque: string | null) => void
   onOuvrirCase: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  onArmer: (
+    personnage: Personnage,
+    poses: Pose[],
+    piece?: Piece | null,
+    direction?: string | null,
+  ) => void
   /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
    *  parce que c'est de là qu'on y entre et qu'on y revient. */
   onFiche: () => void
@@ -1268,7 +1327,12 @@ function Cases({
   piece: Piece | null
   onCalque: (calque: string | null) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  onArmer: (
+    personnage: Personnage,
+    poses: Pose[],
+    piece?: Piece | null,
+    direction?: string | null,
+  ) => void
   /** Ouvrir l'outil d'une case pleine, en plein cadre (E2). */
   onOuvrirCase: (identifiant: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
@@ -1315,6 +1379,47 @@ function Cases({
       await api.designer(asset, null, null)
     } catch (erreur) {
       onErreur(erreur, "désignation refusée")
+    }
+  }
+
+  /** Dire sous quel angle une image montre sa pose (E10).
+   *
+   *  **Confirmer et déplacer sont le même geste** — celui qui écrit la
+   *  direction sur l'image —, et il n'y en a donc qu'un. Le personnage et la
+   *  pose sont renvoyés tels quels : ce qui bouge est la direction, et une
+   *  désignation partielle effacerait la case. */
+  const placer = async (asset: string, direction: string) => {
+    const tenue = personnage.cases.find((c) =>
+      c.images.some((image) => image.identifiant === asset),
+    )
+    try {
+      await api.designer(asset, personnage.identifiant, tenue?.pose ?? null, direction)
+    } catch (erreur) {
+      onErreur(erreur, "direction refusée")
+    }
+  }
+
+  /** Ranger — ou rendre — une direction, **pour cette chose seule**.
+   *
+   *  La portée large — une mort n'a qu'un angle, pour tout le jeu — se prend
+   *  sur l'attitude, dans le codex. Ici on ne parle que de cette chose : le
+   *  dragon n'attaque que vers le sud, les autres continuent d'attaquer
+   *  partout. */
+  const rangerDirection = async (
+    pose: string,
+    direction: string,
+    rangee: boolean,
+  ) => {
+    try {
+      const rendu = await api.rangerDirection(
+        pose,
+        direction,
+        rangee,
+        personnage.identifiant,
+      )
+      if (rendu.personnage) onPersonnage(rendu.personnage)
+    } catch (erreur) {
+      onErreur(erreur, "rangement refusé")
     }
   }
 
@@ -1424,6 +1529,13 @@ function Cases({
               }
               origine={origines[pose.identifiant] ?? "type"}
               onArmer={() => onArmer(personnage, [pose])}
+              onArmerDirection={(direction) =>
+                onArmer(personnage, [pose], null, direction)
+              }
+              onRangerDirection={(direction, rangee) =>
+                void rangerDirection(pose.identifiant, direction, rangee)
+              }
+              onPlacer={(asset, direction) => void placer(asset, direction)}
               // **Le × ne veut pas dire la même chose des deux côtés**, et c'est
               // ce que l'origine sert à trancher. Une pose du type se **range**
               // — elle appartient au type, elle reviendra chez les autres, et
@@ -1590,6 +1702,9 @@ function LigneCase({
   origine,
   onCocher,
   onArmer,
+  onArmerDirection,
+  onRangerDirection,
+  onPlacer,
   onRetirer,
   onDesigner,
   onOuvrirCase,
@@ -1606,15 +1721,43 @@ function LigneCase({
   origine: "type" | "ici"
   onCocher: (veut: boolean) => void
   onArmer: () => void
+  /** Armer **une case** — cette pose dans cette direction-là (E10). Le sujet
+   *  composé par le serveur y ajoute la consigne de la direction. */
+  onArmerDirection?: (direction: string) => void
+  /** Ranger une direction **pour cette chose seule** — la portée étroite. */
+  onRangerDirection?: (direction: string, rangee: boolean) => void
+  /** Dire sous quel angle une image montre sa pose. Confirmer et déplacer sont
+   *  le même geste, et il n'y en a donc qu'un. */
+  onPlacer?: (asset: string, direction: string) => void
   onRetirer: () => void
   onDesigner: (asset: string) => void
   onOuvrirCase: (identifiant: string) => void
 }) {
   const images = case_?.images ?? []
-  const faite = images.length >= pose.images
+  const demandees = case_?.demandees ?? pose.images
+  const faites = faitesDeLaCase(case_)
+  const faite = faites >= demandees
+
+  // **Ce jeu a-t-il des directions ?** Deux ou plus — tenues et rangées
+  // confondues —, et la ligne se découpe en cases. Une seule, ou aucune : le
+  // mot ne paraît nulle part, et l'affichage est celui d'avant E10 au pixel
+  // près. « Un jeu qui ne veut pas de directions ne les voit jamais. »
+  const angles = case_?.directions ?? []
+  const rangees = case_?.directions_rangees ?? []
+  const aDesDirections = angles.length + rangees.length > 1
+
+  // **Le produit nomme la direction qui manque** (US-239) — c'est très
+  // exactement ce qu'il ne savait pas dire avant E10.
+  //
+  // **Manquer, c'est n'avoir rien du tout.** Une direction commencée mais pas
+  // finie n'est pas un manque : sa propre rangée porte déjà son compte, et la
+  // nommer ici ferait lire « il manque sud » sous une image de sud.
+  const vides = angles.filter((a) => a.images.length === 0)
+  const incompletes = angles.filter((a) => a.images.length < a.demandees)
 
   return (
-    <li className="flex min-h-[52px] items-center gap-3 border-b border-bord px-1 py-1">
+    <li className="flex flex-col border-b border-bord">
+    <div className="flex min-h-[52px] items-center gap-3 px-1 py-1">
       <input
         type="checkbox"
         checked={cochee}
@@ -1641,19 +1784,39 @@ function LigneCase({
 
       {/* Les vignettes de cette case. **La même image que la grille, servie par
           la même route** — `sujetAsset` est le seul endroit du produit qui
-          nomme l'adresse de l'image d'un asset. */}
+          nomme l'adresse de l'image d'un asset.
+
+          **Avec des directions, elles descendent d'un cran** : chaque case est
+          une pose dans une direction, et c'est là que les vignettes vont. La
+          rangée dit alors ce qui manque, par son nom. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-        {images.map((asset) => (
-          <VignetteDeCase
-            key={asset.identifiant}
-            asset={asset}
-            pose={pose.nom}
-            onDesigner={onDesigner}
-            onOuvrir={onOuvrirCase}
-          />
-        ))}
-        {images.length === 0 && (
-          <span className="mesure text-[10px] text-texte-3">rien encore</span>
+        {aDesDirections ? (
+          <span className="mesure text-[10px] leading-4 text-texte-3">
+            {angles.length === 0
+              ? "aucune direction — tout est rangé"
+              : vides.length > 0
+                ? `il manque ${vides.map((a) => a.nom).join(", ")}`
+                : incompletes.length > 0
+                  ? `${incompletes.length} direction${
+                      incompletes.length > 1 ? "s" : ""
+                    } à compléter`
+                  : "toutes ses directions sont faites"}
+          </span>
+        ) : (
+          <>
+            {images.map((asset) => (
+              <VignetteDeCase
+                key={asset.identifiant}
+                asset={asset}
+                pose={pose.nom}
+                onDesigner={onDesigner}
+                onOuvrir={onOuvrirCase}
+              />
+            ))}
+            {images.length === 0 && (
+              <span className="mesure text-[10px] text-texte-3">rien encore</span>
+            )}
+          </>
         )}
       </div>
 
@@ -1667,13 +1830,25 @@ function LigneCase({
           lit sans qu'on ait à le trancher. */}
       <MesuresDuLot case_={case_} />
 
+      {/* **Le produit des deux, jamais les deux facteurs séparés** (E10) : une
+          pose demande *tant d'images dans tant de directions*, et écrire « 4 ×
+          4 » demanderait au lecteur de faire la multiplication qu'on cherche à
+          lui épargner. Sans direction déclarée, le produit vaut le facteur et le
+          chiffre est celui d'avant. */}
       <span
         className={[
           "mesure shrink-0 text-[9.5px]",
           faite ? "text-ok" : "text-texte-3",
         ].join(" ")}
+        title={
+          aDesDirections
+            ? `${pose.images} image${pose.images > 1 ? "s" : ""} dans ${
+                angles.length
+              } direction${angles.length > 1 ? "s" : ""}`
+            : undefined
+        }
       >
-        {images.length} / {pose.images}
+        {faites} / {demandees}
       </span>
 
       {/* **Armer, pas payer.** Ce bouton remplit le prompt de l'atelier et rend
@@ -1701,6 +1876,178 @@ function LigneCase({
             ? "elle n'existe que sur cette chose — ses images restent en bibliothèque"
             : "ce personnage n'a pas besoin de cette attitude"
         }
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+      >
+        ×
+      </button>
+    </div>
+
+    {/* ── Une case par direction (E10) ────────────────────────────────────
+        « Une case du plan est une pose dans une direction » : c'est ici que
+        l'idée devient visible, et c'est ce qui permet enfin de dire qu'il
+        manque le nord. */}
+    {aDesDirections && (
+      <ul className="flex flex-col border-t border-bord/60 bg-fond-1/40">
+        {angles.map((angle) => (
+          <SousLigneDirection
+            key={angle.identifiant}
+            pose={pose}
+            angle={angle}
+            onDesigner={onDesigner}
+            onOuvrirCase={onOuvrirCase}
+            onArmer={() => onArmerDirection?.(angle.identifiant)}
+            onRanger={() => onRangerDirection?.(angle.identifiant, true)}
+            onPlacer={onPlacer}
+            angles={angles}
+          />
+        ))}
+
+        {/* **Ce qui est rangé se relègue sous un trait, barré et pâle** —
+            l'idiome de E9, repris tel quel : on défait un rangement sans avoir
+            à se rappeler ce qu'on a rangé. La portée est écrite, parce que
+            dérangée au jeu et dérangée ici ne sont pas le même geste. */}
+        {rangees.length > 0 && (
+          <li className="flex items-center gap-2 border-t border-bord px-1 py-1 pl-[26px]">
+            {rangees.map((angle) => (
+              <button
+                key={angle.identifiant}
+                type="button"
+                onClick={() => onRangerDirection?.(angle.identifiant, false)}
+                aria-label={`Rendre ${angle.nom} à ${pose.nom}`}
+                title={
+                  angle.portee === "ici"
+                    ? "rangée sur cette chose seule"
+                    : "rangée sur l'attitude, pour tout le jeu"
+                }
+                className="mesure text-[10px] text-texte-3 line-through opacity-60 hover:text-signal hover:no-underline hover:opacity-100"
+              >
+                {angle.nom}
+              </button>
+            ))}
+            <span className="mesure text-[9px] text-texte-3">
+              rangées — un clic les rend
+            </span>
+          </li>
+        )}
+
+        {/* **L'orphelin se voit** : une image dont la direction n'existe plus
+            reste montrée plutôt que de retomber en silence dans la première
+            colonne venue. Jamais de cascade, ici comme partout. */}
+        {(case_?.sans_direction.length ?? 0) > 0 && (
+          <li className="mesure flex items-center gap-2 border-t border-bord px-1 py-1 pl-[26px] text-[10px] text-texte-3">
+            {case_?.sans_direction.length} image
+            {(case_?.sans_direction.length ?? 0) > 1 ? "s" : ""} rangée
+            {(case_?.sans_direction.length ?? 0) > 1 ? "s" : ""} dans une
+            direction que ce jeu n'a plus — elles restent en bibliothèque
+          </li>
+        )}
+      </ul>
+    )}
+    </li>
+  )
+}
+
+/** Une case : **une pose dans une direction** (E10).
+ *
+ *  C'est l'unité que le produit ne savait pas nommer avant cette étape. Elle
+ *  porte son nom, ce qui la remplit, son compte — les vignettes d'un cycle,
+ *  dans cette case-là — et les deux gestes qui la concernent : la fabriquer, ou
+ *  la ranger parce que cette chose ne la réclame pas. */
+function SousLigneDirection({
+  pose,
+  angle,
+  angles,
+  onDesigner,
+  onOuvrirCase,
+  onArmer,
+  onRanger,
+  onPlacer,
+}: {
+  pose: Pose
+  angle: CaseDirection
+  /** Toutes les directions tenues — de quoi déplacer une image d'une case à
+   *  l'autre sans quitter la rangée. */
+  angles: CaseDirection[]
+  onDesigner: (asset: string) => void
+  onOuvrirCase: (identifiant: string) => void
+  onArmer: () => void
+  onRanger: () => void
+  onPlacer?: (asset: string, direction: string) => void
+}) {
+  const faite = angle.images.length >= angle.demandees
+
+  return (
+    <li className="flex min-h-[52px] items-center gap-3 border-t border-bord/40 px-1 py-1 pl-[26px]">
+      <span className="w-[92px] shrink-0 truncate text-[11px] text-texte-3">
+        {angle.nom}
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+        {angle.images.map((asset) => (
+          <span key={asset.identifiant} className="flex flex-col items-center gap-0.5">
+            <VignetteDeCase
+              asset={asset}
+              pose={`${pose.nom} — ${angle.nom}`}
+              onDesigner={onDesigner}
+              onOuvrir={onOuvrirCase}
+            />
+            {/* **« À confirmer », et un clic la place** (US-242). Une image
+                faite avant la déclaration ne connaît pas sa direction ; le
+                produit la range dans la première et le dit, plutôt que de faire
+                passer un rangement pour une déduction. */}
+            {!asset.direction && (
+              <select
+                value=""
+                onChange={(e) =>
+                  e.target.value && onPlacer?.(asset.identifiant, e.target.value)
+                }
+                aria-label={`Direction de ${asset.label}`}
+                title="faite avant les directions — le produit ne devine pas la sienne"
+                className="mesure h-[16px] w-[44px] rounded-[2px] border border-attente/60 bg-fond-2 px-0.5 text-[8px] text-attente"
+              >
+                <option value="">à confirmer</option>
+                {angles.map((autre) => (
+                  <option key={autre.identifiant} value={autre.identifiant}>
+                    {autre.nom}
+                  </option>
+                ))}
+              </select>
+            )}
+          </span>
+        ))}
+        {angle.images.length === 0 && (
+          <span className="mesure text-[10px] text-texte-3">rien encore</span>
+        )}
+      </div>
+
+      {/* **Le compte d'un cycle, dans une seule case** — et non une jauge : une
+          jauge porte le nom d'un ensemble, ce compte-ci porte le nom d'une
+          direction — c'est écrit dans la maquette de l'établi,
+          `docs/maquettes-v2.1/02-etabli-personnage.html`. */}
+      <span
+        className={[
+          "mesure shrink-0 text-[9.5px]",
+          faite ? "text-ok" : "text-texte-3",
+        ].join(" ")}
+      >
+        {angle.images.length} / {angle.demandees}
+      </span>
+
+      <button
+        type="button"
+        onClick={onArmer}
+        aria-label={`Fabriquer ${pose.nom} vers ${angle.nom}`}
+        title="prépare le prompt dans l'atelier — l'attitude et la direction, chacune écrite une fois"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+      >
+        Fabriquer ›
+      </button>
+
+      <button
+        type="button"
+        onClick={onRanger}
+        aria-label={`Ranger ${angle.nom} pour ${pose.nom}`}
+        title="cette chose ne réclame pas cet angle — elle reste montrée, barrée, et un clic la rend"
         className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
       >
         ×

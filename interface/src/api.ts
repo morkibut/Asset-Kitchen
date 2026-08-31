@@ -251,7 +251,51 @@ export type VueDuJeu = {
   images: number
   /** Ce que le choix écrit dans la case `vue` de la bible. */
   phrase: string
-  directions: { nom: string; consigne: string }[]
+  directions: Direction[]
+}
+
+/** Un angle sous lequel le jeu regarde une chose (E10).
+ *
+ *  **Deux textes, et un seul part** : le nom se lit, la consigne part au modèle.
+ *  Les confondre faisait partir « sud » au milieu d'une phrase anglaise.
+ *
+ *  L'identifiant ne bouge pas quand le nom change : les images faites le
+ *  portent, exactement comme pour une pose. */
+export type Direction = {
+  identifiant: string
+  nom: string
+  /** Ce qui part au modèle, en anglais. Vide pour une direction qu'on vient
+   *  d'ajouter : le produit ne traduit pas à la place de l'auteur. */
+  consigne: string
+}
+
+/** Les directions d'un jeu, **et d'où la liste lui vient**.
+ *
+ *  `vue` — la liste est celle que la vue du jeu propose, et elle suivra un
+ *  changement de vue. `ici` — l'auteur a renommé, retiré ou ajouté, et elle ne
+ *  suit plus. Le codex écrit l'un ou l'autre : ce ne sont pas la même
+ *  promesse. */
+export type DirectionsDuJeu = {
+  directions: Direction[]
+  origine: "vue" | "ici"
+  vue: string
+  vue_libelle: string
+  /** Ce qu'un « revenir à ce que la vue propose » remettrait. */
+  proposees: Direction[]
+}
+
+/** Ce que déclarer des directions coûterait, et ce que le produit propose
+ *  (US-243). **Sans elle, déclarer quatre directions ferait passer un
+ *  personnage de douze cases à quarante-huit d'un coup.** */
+export type PropositionDeBaisse = {
+  directions: number
+  poses: { pose: string; nom: string; images: number; portee: string }[]
+  /** La phrase écrite, qui cite la bible quand elle porte encore le nombre. */
+  raison: string
+  cases_avant: number
+  cases_apres: number
+  /** Ce qu'un clic rendrait — vide quand il n'y a rien à défaire. */
+  defaite: { pose: string; nom: string; images_avant: number }[]
 }
 
 export type TailleDImage = { cible: number; quoi: string }
@@ -400,6 +444,11 @@ export type Asset = {
    *  bibliothèque est faite d'images qui n'appartiennent à personne. */
   personnage: string | null
   pose: string | null
+  /** **Sous quel angle cette image montre sa pose** (E10). Vide n'est pas le
+   *  sud : c'est une image faite avant que le jeu ne déclare ses directions, et
+   *  le produit ne devine pas la sienne — elle se range dans la première avec la
+   *  marque « à confirmer ». */
+  direction: string | null
   /** **Et de quelle pièce** (C3, US-140). Le second axe de la matrice : la pose
    *  dit la ligne, la pièce dit la colonne. Vide pour un corps — c'est la
    *  colonne de gauche, et c'est le cas courant.
@@ -571,8 +620,31 @@ export type Pose = {
   identifiant: string
   nom: string
   /** Combien d'images cette pose demande — une pour la plupart, quatre ou huit
-   *  pour un cycle. C'est l'auteur qui le décide, jamais le produit. */
+   *  pour un cycle. C'est l'auteur qui le décide, jamais le produit.
+   *
+   *  **Son sens a changé en E10** : il ne compte plus les angles — ça, c'est la
+   *  liste des directions —, mais les étapes d'un mouvement, direction par
+   *  direction. */
   images: number
+  /** Ce que cette attitude dit au modèle, en anglais (E10). Vide, c'est le nom
+   *  qui part, comme avant — et la ligne le dit. */
+  consigne: string
+  /** Les directions que cette pose ne tient pas, **pour tout le jeu** : une mort
+   *  n'a qu'un angle quel que soit le personnage. */
+  ecartees: string[]
+  /** Ce que la pose demandait avant la proposition de baisse. Zéro : rien à
+   *  défaire. */
+  images_avant: number
+}
+
+/** Une case dans une direction : ce qu'elle demande, et ce qui la remplit. */
+export type CaseDirection = Direction & {
+  images: Asset[]
+  demandees: number
+  /** Le compte des images faites **avant** que le jeu ne déclare ses directions.
+   *  Elles se rangent dans la première, et la marque dit que c'est un rangement
+   *  et non une déduction (US-242). */
+  a_confirmer: number
 }
 
 /** Une case de la matrice : ce qu'une attitude demande, et ce qui la remplit.
@@ -608,6 +680,16 @@ export type Case = {
    *  réclame, `ici` quand cette chose-là se l'est ajoutée. La fiche l'écrit,
    *  pour qu'on sache toujours qui la reproposera demain. */
   origine: "type" | "ici"
+  /** **Le second axe de la case** (E10) : une entrée par direction tenue, avec
+   *  ce qui la remplit. Vide pour un jeu qui n'a pas déclaré de directions — le
+   *  mot ne paraît alors nulle part. */
+  directions: CaseDirection[]
+  /** Ce qui est rangé reste montré, avec sa portée : `jeu` quand c'est la pose
+   *  qui le range pour tout le monde, `ici` quand c'est cette chose seule. */
+  directions_rangees: (Direction & { portee: "jeu" | "ici" })[]
+  /** Une image dont la direction n'existe plus. Jamais de cascade : l'orphelin
+   *  se voit au lieu de retomber en silence dans la première colonne venue. */
+  sans_direction: Asset[]
 }
 
 export type Personnage = {
@@ -657,11 +739,14 @@ export type Personnage = {
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
+  /** Les directions qu'elle ne tient pas, pose par pose (E10) — **la portée
+   *  étroite** : le dragon n'attaque que vers le sud, les autres continuent. */
+  directions_ecartees: Record<string, string[]>
 }
 
 /** Le plan et les personnages d'un projet, **en un seul aller-retour** : une
  *  colonne de cases n'existe que par le plan qui la nomme. */
-export type Production = {
+export type Production = DirectionsDuJeu & {
   projet: string
   plan: Pose[]
   personnages: Personnage[]
@@ -1626,6 +1711,9 @@ export const api = {
      *  ordinaire, qui est le cas courant. */
     personnage?: string | null
     pose?: string | null
+    /** **Sous quel angle** (E10). L'image qui reviendra tombe dans la case *et*
+     *  dans la direction, sans que personne ait à l'y ranger. */
+    direction?: string | null
     /** **Les cases d'un lot plié** (C2, US-128). Deux poses ou plus, et l'appel
      *  part en une seule planche que l'atelier dépliera lui-même. La même route
      *  que tout le reste : il n'existe qu'un seul endroit d'où l'on paie. */
@@ -2296,10 +2384,19 @@ export const api = {
   /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,
    *  les deux vides ensemble. Le corps naît dans l'atelier et nulle part
    *  ailleurs : ce geste ne fabrique rien, il dit seulement où l'image va. */
-  designer: (asset: string, personnage: string | null, pose: string | null) =>
+  designer: (
+    asset: string,
+    personnage: string | null,
+    pose: string | null,
+    direction?: string | null,
+  ) =>
     appeler<Asset>(`/assets/${asset}/character`, {
       method: "PUT",
-      body: JSON.stringify({ personnage, pose }),
+      // **`undefined` ne touche pas** : désigner la case et confirmer la
+      // direction sont deux gestes, et `JSON.stringify` retire le champ absent
+      // plutôt que de l'envoyer à `null` — ce qui effacerait la direction à
+      // chaque désignation.
+      body: JSON.stringify({ personnage, pose, direction }),
     }),
 
   /** Le sujet qu'une case demande au modèle — **composé par le serveur**.
@@ -2313,6 +2410,7 @@ export const api = {
     personnage: string
     poses?: string[]
     piece?: string | null
+    direction?: string | null
     projet?: string | null
   }) =>
     appeler<{ sujet: string }>("/characters/subject", {
@@ -2449,18 +2547,86 @@ export const api = {
       method: "POST",
     }),
 
-  ajouterPose: (nom: string, images = 1) =>
+  ajouterPose: (nom: string, images = 1, consigne = "") =>
     appeler<{ pose: Pose; plan: Pose[] }>("/characters/poses", {
       method: "POST",
-      body: JSON.stringify({ nom, images }),
+      body: JSON.stringify({ nom, images, consigne }),
     }),
 
-  /** Renommer, ou changer ce que la pose demande. **L'identifiant ne bouge
-   *  pas** : les images déjà faites le portent. */
-  reglerPose: (pose: string, champs: { nom?: string; images?: number }) =>
+  /** Renommer, corriger ce qu'elle dit au modèle, ou changer ce qu'elle
+   *  demande. **L'identifiant ne bouge pas** : les images déjà faites le
+   *  portent. Ce qu'on n'envoie pas ne bouge pas non plus — la pose porte quatre
+   *  choses de plus que son nom depuis E10. */
+  reglerPose: (
+    pose: string,
+    champs: { nom?: string; images?: number; consigne?: string },
+  ) =>
     appeler<{ pose: Pose; plan: Pose[] }>(`/characters/poses/${pose}`, {
       method: "PUT",
       body: JSON.stringify(champs),
+    }),
+
+  // ── Les directions du jeu (E10) ──────────────────────────────────────────
+
+  /** Les directions de ce jeu, et d'où la liste lui vient. */
+  directions: () => appeler<DirectionsDuJeu>("/characters/directions"),
+
+  /** Une direction de plus. **Nommer, c'est créer**, et rien ne coûte. */
+  ajouterDirection: (nom: string, consigne = "") =>
+    appeler<DirectionsDuJeu>("/characters/directions", {
+      method: "POST",
+      body: JSON.stringify({ nom, consigne }),
+    }),
+
+  /** Renommer une direction, ou corriger ce qu'elle dit — **une seule fois**,
+   *  pour toutes les poses du jeu. */
+  reglerDirection: (
+    direction: string,
+    champs: { nom?: string; consigne?: string },
+  ) =>
+    appeler<DirectionsDuJeu>(`/characters/directions/${direction}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Une direction quitte le jeu. Les images faites restent, avec son
+   *  identifiant : la remettre les remet dans leur case. */
+  retirerDirection: (direction: string) =>
+    appeler<DirectionsDuJeu>(`/characters/directions/${direction}`, {
+      method: "DELETE",
+    }),
+
+  /** La liste **revient à ce que la vue du jeu propose**. */
+  oublierLesDirections: () =>
+    appeler<DirectionsDuJeu>("/characters/directions/reset", { method: "POST" }),
+
+  /** Ranger — ou déranger — une direction pour une pose. Sans personnage, la
+   *  portée est celle où la pose est déclarée ; avec, cette chose seule. */
+  rangerDirection: (
+    pose: string,
+    direction: string,
+    rangee: boolean,
+    personnage?: string,
+  ) =>
+    appeler<{ portee: string; personnage?: Personnage }>(
+      `/characters/poses/${pose}/directions/${direction}`,
+      { method: "PUT", body: JSON.stringify({ rangee, personnage }) },
+    ),
+
+  /** Ce que déclarer des directions coûterait, et ce qu'on propose. */
+  propositionDeBaisse: () =>
+    appeler<PropositionDeBaisse>("/characters/directions/proposal"),
+
+  /** Ramener à une image les poses que la proposition nomme. */
+  baisserLesImages: () =>
+    appeler<PropositionDeBaisse>("/characters/directions/proposal", {
+      method: "POST",
+    }),
+
+  /** **Le clic qui défait** : chaque pose retrouve ce qu'elle demandait. */
+  defaireLaBaisse: () =>
+    appeler<PropositionDeBaisse>("/characters/directions/proposal", {
+      method: "DELETE",
     }),
 
   /** Poser ce qui ne partira plus, à l'une des **deux portées durables**
@@ -2671,6 +2837,12 @@ export type Ecoute = {
    *  La charge porte le plan **entier** : il est court, et un message par pose
    *  ferait un ordre à reconstituer à l'arrivée. */
   plan: (charge: { projet: string; plan: Pose[] }) => void
+  /** Les directions du jeu ont changé — une direction ajoutée, renommée,
+   *  retirée, ou la liste rendue à ce que la vue propose (E10). La charge porte
+   *  la liste **entière** et son origine, comme le plan et pour les mêmes
+   *  raisons. **Son propre genre**, jamais un champ sur `univers` : renommer une
+   *  direction n'a aucune raison de coûter deux appels réseau. */
+  directions: (charge: DirectionsDuJeu & { projet: string }) => void
   /** Ce que le projet n'envoie plus a changé (US-126). **Son propre genre** :
    *  `univers` fait redemander l'état et le catalogue depuis T4, et une case
    *  décochée n'a aucune raison de coûter deux appels réseau. */
@@ -2706,6 +2878,7 @@ export function ecouter(ecoute: Ecoute): () => void {
   lire<Parameters<Ecoute["univers"]>[0]>("univers", ecoute.univers)
   lire<Personnage & { supprime?: boolean }>("personnage", ecoute.personnage)
   lire<Parameters<Ecoute["plan"]>[0]>("plan", ecoute.plan)
+  lire<Parameters<Ecoute["directions"]>[0]>("directions", ecoute.directions)
   lire<Parameters<Ecoute["references"]>[0]>("references", ecoute.references)
   lire<Vestiaire>("vestiaire", ecoute.vestiaire)
   lire<EtatAgent>("agent", ecoute.agent)

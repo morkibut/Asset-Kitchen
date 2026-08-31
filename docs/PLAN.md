@@ -1330,15 +1330,58 @@ déduction.
 
 #### Critères d'acceptation
 
-- [ ] La vue du jeu se déclare une fois, et la liste des directions s'en déduit
-- [ ] Les directions se renomment, se retirent et s'ajoutent depuis le codex
-- [ ] Une case du plan est une pose dans une direction, et le produit nomme la direction qui manque
-- [ ] L'attitude s'écrit une fois sur la pose, la direction une fois sur la direction, et la consigne se compose des deux
-- [ ] Le nom d'une pose part en anglais, et rien de français ne subsiste dans le texte envoyé
-- [ ] Déclarer des directions propose de ramener à un le nombre d'images des poses concernées, avec la raison, et la proposition se défait d'un clic
-- [ ] Les images antérieures se rangent dans la première direction, marquées « à confirmer », avec leur compte
-- [ ] Une direction se range pour une pose du projet entier, ou pour une seule chose du jeu
-- [ ] Une pose demande *tant d'images dans tant de directions*, et la jauge affiche toujours le produit des deux, jamais les deux facteurs séparés
+- [x] La vue du jeu se déclare une fois, et la liste des directions s'en déduit
+- [x] Les directions se renomment, se retirent et s'ajoutent depuis le codex
+- [x] Une case du plan est une pose dans une direction, et le produit nomme la direction qui manque
+- [x] L'attitude s'écrit une fois sur la pose, la direction une fois sur la direction, et la consigne se compose des deux
+- [x] Le nom d'une pose part en anglais, et rien de français ne subsiste dans le texte envoyé
+- [x] Déclarer des directions propose de ramener à un le nombre d'images des poses concernées, avec la raison, et la proposition se défait d'un clic
+- [x] Les images antérieures se rangent dans la première direction, marquées « à confirmer », avec leur compte
+- [x] Une direction se range pour une pose du projet entier, ou pour une seule chose du jeu
+- [x] Une pose demande *tant d'images dans tant de directions*, et la jauge affiche toujours le produit des deux, jamais les deux facteurs séparés
+
+#### Ce qui a été décidé en la faisant
+
+**La liste lue et la liste écrite ne font pas la même promesse, et le codex dit laquelle.**
+Tant qu'on n'y touche pas, la liste des directions **suit la vue du jeu** — c'est ce que la
+colonne affiche, *4 · lues*. Dès qu'on renomme, retire ou ajoute, elle cesse de suivre, et
+elle le dit. L'alternative — réécrire la liste à chaque changement de vue — aurait effacé en
+silence des noms choisis à la main ; l'autre alternative — ne jamais suivre — aurait demandé
+de tout retaper pour un jeu qui change d'angle. Le retour à la proposition est à un clic,
+parce que sans lui il faudrait la retaper de mémoire.
+
+**Le nom se lit, la consigne part — deux textes, et un seul sort.** C'était le même texte
+jusqu'ici, et le nom français d'une pose partait au milieu d'une phrase anglaise. Les séparer
+coûte un champ sur la pose et un sur la direction, et répare ça d'un coup. **Le produit ne
+traduit pas à la place de l'auteur** : une pose qu'il n'a pas proposée n'a pas de consigne, et
+c'est alors le nom qui part, comme avant — inventer un texte qui partira dans un appel payé
+n'est pas une commodité.
+
+**Et les projets d'avant reçoivent l'anglais sans qu'un fichier soit réécrit.** Un plan relu
+d'un fichier d'avant E10 porte les six attitudes que tous les projets partageaient ; la
+consigne que le produit proposait pour chacune leur est rendue **à la lecture**. Mesuré sur le
+vrai projet : `marche` part en `walking posture, full body` dès la génération suivante, et pas
+une ligne n'a été écrite pour ça.
+
+**Manquer, c'est n'avoir rien du tout.** La rangée d'une attitude nomme les directions
+**vides**, pas les incomplètes : une direction commencée porte déjà son compte sur sa propre
+rangée, et la nommer deux fois aurait fait lire *il manque sud* sous une image de sud.
+
+**La portée large écrit là où la pose est déclarée, et la réponse dit laquelle.** Depuis E9
+une pose vit dans le plan du jeu ou dans la liste d'un type ; écrire ailleurs qu'à sa source
+aurait fait deux vérités sur la même question. Le service rend donc *jeu* ou *type meuble*
+plutôt que de promettre « tout le projet » — et une attitude ajoutée sur une seule chose n'a
+pas de portée large du tout, ce que le refus dit plutôt que d'écrire au hasard.
+
+**La défaite de la proposition est gardée sur le disque.** Tout l'intérêt de la baisse est de
+ne pas prendre l'auteur en traître ; une défaite qui disparaîtrait au rechargement laisserait
+ouvert très exactement le piège qu'elle ferme. Un champ sur la pose, qui ne porte que ça, et
+que la première retouche du chiffre à la main efface.
+
+**Mesuré sur le vrai projet, le 31 août 2026.** La bible dit `4-directional orientation`,
+`repos` et `marche` demandent quatre images : la proposition les nomme, cite la bible mot pour
+mot, et annonce **48 cases → 24**. Sans elle, déclarer la vue faisait passer chaque
+personnage de douze cases à quarante-huit d'un coup.
 
 #### Bloquée par
 
@@ -1445,7 +1488,7 @@ coûte ou économise au moment où on le fait — et le compte des places d'imag
 - [x] Un texte écrit ici montre en dessous, barré, celui qu'il remplace
 - [x] La valeur imposée par le projet se lit sous le texte qui part, et un désaccord se voit sans le chercher
 - [x] Une image déjà fabriquée se promeut en référence permanente d'une chose du jeu
-- [x] L'atelier propose de lui-même le corps retenu ~~et la planche des directions~~, avec leur provenance — *la planche attend E10, et la fiche le dit à sa place plutôt que de laisser un vide*
+- [x] L'atelier propose de lui-même le corps retenu ~~et la planche des directions~~, avec leur provenance — *la planche attend `E13` : les directions existent depuis `E10`, mais l'image qui les montre ensemble est une planche de pose. La fiche le dit à sa place plutôt que de laisser un vide*
 - [x] La matrice se met à jour pendant qu'on règle, à droite de la fiche
 - [x] Le nombre de places d'images du modèle se lit à côté du nombre occupé, avant de payer
 - [x] Une jauge ne compte que ce qu'on peut fabriquer maintenant — ce qui est rangé n'est jamais compté comme manquant
@@ -1471,9 +1514,11 @@ projet, elle a nommé les deux champs coupables du premier coup.
 *l'auteur l'a posée pour cet appel* ; une image promue part avec **tous** les appels de sa
 chose. Les confondre aurait fait décocher en aveugle sur l'écran de confirmation.
 
-**La planche des quatre directions n'est pas proposable avant E10**, et la fiche le dit à sa
-place plutôt que de laisser un vide : les directions arrivent avec la vue du jeu, et une pose
-n'a pas encore d'angles à montrer.
+**La planche des quatre directions n'est pas proposable avant E13**, et la fiche le dit à sa
+place plutôt que de laisser un vide. Écrit ici *avant E10*, corrigé après elle : les
+directions existent maintenant, et le produit sait qu'une pose est complète dans toutes les
+siennes — ce qui manque n'est plus la notion, c'est **l'image qui les montre ensemble**, et
+c'est une planche de pose.
 
 #### Bloquée par
 

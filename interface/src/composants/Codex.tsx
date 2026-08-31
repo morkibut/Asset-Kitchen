@@ -28,6 +28,9 @@
 import { useEffect, useState } from "react"
 import {
   api,
+  type Direction,
+  type DirectionsDuJeu,
+  type PropositionDeBaisse,
   type EmplacementCorps,
   type AmbianceDuJeu,
   type Personnage,
@@ -36,10 +39,15 @@ import {
   type Vestiaire,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
-import { Bouton, EnTetePanneau, Raison } from "./chassis"
+import { Bouton, EnTetePanneau, Libelle, Raison } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { EcranVitrine } from "./Vitrine"
-import { PlanDuJeu, Vestiaire as PanneauVestiaire, posesTenues } from "./Personnages"
+import {
+  PlanDuJeu,
+  Vestiaire as PanneauVestiaire,
+  faitesDeLaCase,
+  posesTenues,
+} from "./Personnages"
 
 // ── Ce que le monde contient ────────────────────────────────────────────────
 
@@ -68,6 +76,7 @@ type Rubrique = (typeof FAMILLES)[number]["cle"] | "directions" | "poses"
 
 export function EcranCodex({
   plan,
+  directions,
   personnages,
   emplacements,
   pieces,
@@ -76,6 +85,7 @@ export function EcranCodex({
   onOuvrir,
   onPersonnage,
   onPlan,
+  onDirections,
   onVestiaire,
   onArmer,
   replies,
@@ -83,6 +93,9 @@ export function EcranCodex({
   onErreur,
 }: {
   plan: Pose[]
+  /** Les directions du jeu, et d'où la liste vient (E10). Tenues par l'App, qui
+   *  est le seul endroit qui écoute le flux pour toute la vie de l'onglet. */
+  directions: DirectionsDuJeu
   personnages: Personnage[]
   emplacements: EmplacementCorps[]
   pieces: Piece[]
@@ -95,6 +108,7 @@ export function EcranCodex({
   onOuvrir: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onPlan: (plan: Pose[]) => void
+  onDirections: (directions: DirectionsDuJeu) => void
   onVestiaire: (vestiaire: Vestiaire) => void
   /** Armer ce qui manque à une chose : le même geste que la matrice, vu du
    *  codex. Rien ne part — la barre qui paie annonce le prix, et c'est elle
@@ -153,6 +167,7 @@ export function EcranCodex({
             personnages={personnages}
             pieces={pieces}
             plan={plan}
+            directions={directions}
             rubrique={rubrique}
             onRubrique={setRubrique}
           />
@@ -173,10 +188,13 @@ export function EcranCodex({
               />
             </div>
           ) : rubrique === "directions" ? (
-            <PasEncore
-              titre="Les directions se lisent dans la vue du jeu."
-              raison="La vue du jeu se règle dans l'onglet Univers, et les directions s'en déduisent. Ni l'une ni l'autre n'existent encore : ce qui les tiendra est une étape plus loin."
-            />
+            <div className="defile min-h-0 flex-1 overflow-y-auto p-4">
+              <LesDirections
+                directions={directions}
+                onDirections={onDirections}
+                onErreur={onErreur}
+              />
+            </div>
           ) : rubrique === "personnages" ? (
             <ListeDesChoses
               personnages={personnages}
@@ -219,12 +237,14 @@ function ColonneDesFamilles({
   personnages,
   pieces,
   plan,
+  directions,
   rubrique,
   onRubrique,
 }: {
   personnages: Personnage[]
   pieces: Piece[]
   plan: Pose[]
+  directions: DirectionsDuJeu
   rubrique: Rubrique
   onRubrique: (rubrique: Rubrique) => void
 }) {
@@ -261,9 +281,20 @@ function ColonneDesFamilles({
         <p className="mesure mb-1 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
           Ce que le jeu réclame de tous
         </p>
+        {/* **`4 · lues`, et le mot compte** (E10) : la liste vient de la vue
+            du jeu et suivra un changement de vue. Dès qu'on renomme, elle passe
+            à `à vous` — ce n'est plus la même promesse, et le codex le dit
+            plutôt que de laisser croire qu'elle suit encore. */}
         <Rangee
           nom="Les directions"
-          valeur="pas encore"
+          compte={directions.directions.length}
+          valeur={
+            directions.directions.length === 0
+              ? "aucune"
+              : `${directions.directions.length} · ${
+                  directions.origine === "vue" ? "lues" : "à vous"
+                }`
+          }
           allumee={rubrique === "directions"}
           onChoisir={() => onRubrique("directions")}
         />
@@ -334,9 +365,16 @@ function Rangee({
  *  ce qu'elle a se lit à côté de la jauge, ce qui lui manque est le chiffre. */
 function manque(personnage: Personnage, plan: Pose[], pieces: Piece[]): number {
   const tenues = posesTenues(plan, personnage)
+  // **Le compte porte sur des cases — une pose dans une direction** (E10), et
+  // c'est le serveur qui fait le produit : `demandees` vaut déjà *tant d'images
+  // dans tant de directions*, et `faites` ne compte que ce qui remplit une case
+  // que cette chose tient encore.
   const corps = tenues.reduce((somme, pose) => {
     const case_ = personnage.cases.find((c) => c.pose === pose.identifiant)
-    return somme + Math.max(0, pose.images - (case_?.images.length ?? 0))
+    return (
+      somme +
+      Math.max(0, (case_?.demandees ?? pose.images) - faitesDeLaCase(case_))
+    )
   }, 0)
   // Une pièce se compte **sur les corps** : elle est solidaire de la pose sur
   // laquelle elle est apparue, et il en faut une par corps existant.
@@ -762,6 +800,294 @@ function Ligne({
       {/* **Le manque n'a pas de couleur** : le vert dit *complet*, son absence
           dit *pas encore*. Aucune alerte, aucun message qui réclame. */}
       <span className={complet ? "text-ok" : "text-texte-2"}>{valeur}</span>
+    </p>
+  )
+}
+
+// ── Les directions du jeu (E10) ─────────────────────────────────────────────
+
+/**
+ * Ce que le jeu réclame de tout le monde : les angles sous lesquels il regarde.
+ *
+ * **La liste vient de la vue du jeu, et c'est une proposition.** Elle se
+ * renomme, se retire et se complète ici ; dès qu'on y touche elle cesse de
+ * suivre la vue, et le panneau le dit — ce ne sont pas la même promesse, et un
+ * changement de vue qui effacerait des noms choisis à la main serait une perte
+ * silencieuse.
+ *
+ * **Deux textes par direction, et un seul part** : le nom se lit, la consigne
+ * part au modèle. Écrite ici une fois, elle n'est plus recopiée sur six poses —
+ * et la corriger se fait une fois au lieu de six.
+ */
+function LesDirections({
+  directions,
+  onDirections,
+  onErreur,
+}: {
+  directions: DirectionsDuJeu
+  onDirections: (directions: DirectionsDuJeu) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const [nom, setNom] = useState("")
+  const [proposition, setProposition] = useState<PropositionDeBaisse | null>(null)
+
+  // La proposition de baisse se redemande dès que la liste bouge : déclarer une
+  // direction de plus change ce qu'elle propose, et une phrase périmée
+  // proposerait de ramener des poses qui ne le demandent plus.
+  useEffect(() => {
+    let vivant = true
+    void api
+      .propositionDeBaisse()
+      .then((recue) => vivant && setProposition(recue))
+      .catch(() => vivant && setProposition(null))
+    return () => {
+      vivant = false
+    }
+  }, [directions])
+
+  const ajouter = async () => {
+    const propre = nom.trim()
+    if (!propre) return
+    try {
+      onDirections(await api.ajouterDirection(propre))
+      setNom("")
+    } catch (erreur) {
+      onErreur(erreur, "direction refusée")
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-1.5">
+      <Libelle>Les directions du jeu</Libelle>
+
+      {/* **D'où la liste vient**, et ce que ça engage. Le revers de la règle du
+          grisé : ce qui est devinable est prérempli avec sa provenance. */}
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {directions.origine === "vue" ? (
+          directions.vue_libelle ? (
+            <>
+              {directions.directions.length} direction
+              {directions.directions.length > 1 ? "s" : ""} <b>lues</b> dans la
+              vue du jeu « {directions.vue_libelle} », réglée dans l'Univers.
+              Elles suivront un changement de vue tant qu'on n'y touche pas.
+            </>
+          ) : (
+            <>
+              Ce jeu n'a pas déclaré sa vue : il n'a donc aucune direction, et le
+              mot ne paraît nulle part. La vue se choisit dans l'onglet Univers.
+            </>
+          )
+        ) : (
+          <>
+            {directions.directions.length} direction
+            {directions.directions.length > 1 ? "s" : ""} <b>écrites ici</b> :
+            la liste ne suit plus la vue du jeu. Les images faites gardent leur
+            direction, quoi qu'on renomme.
+          </>
+        )}
+      </p>
+
+      {directions.directions.length > 0 && (
+        <ul className="flex flex-col">
+          {directions.directions.map((direction) => (
+            <LigneDirection
+              key={direction.identifiant}
+              direction={direction}
+              onDirections={onDirections}
+              onErreur={onErreur}
+            />
+          ))}
+        </ul>
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void ajouter()
+          }}
+          placeholder="nommer une direction"
+          aria-label="Nom de la direction à ajouter"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+        />
+        <Bouton
+          inactif={!nom.trim()}
+          onClick={() => void ajouter()}
+          enfants="Ajouter"
+        />
+      </div>
+
+      {/* **Revenir à ce que la vue propose** — le clic qui défait. Sans lui, une
+          liste retouchée ne pourrait jamais y revenir : il faudrait la retaper
+          de mémoire, et la moindre faute de frappe ferait une colonne
+          orpheline. */}
+      {directions.origine === "ici" && directions.proposees.length > 0 && (
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              onDirections(await api.oublierLesDirections())
+            } catch (erreur) {
+              onErreur(erreur, "retour refusé")
+            }
+          }}
+          className="mesure self-start px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          revenir à ce que la vue propose —{" "}
+          {directions.proposees.map((d) => d.nom).join(" · ")} ›
+        </button>
+      )}
+
+      {proposition && <PropositionDeBaisseLigne
+        proposition={proposition}
+        onFait={setProposition}
+        onErreur={onErreur}
+      />}
+    </section>
+  )
+}
+
+/** Une direction : son nom, ce qu'elle dit au modèle, et le geste qui la retire.
+ *
+ *  **L'identifiant ne bouge pas quand le nom change**, ce qui laisse leur case
+ *  aux images déjà faites — exactement comme pour une attitude. */
+function LigneDirection({
+  direction,
+  onDirections,
+  onErreur,
+}: {
+  direction: Direction
+  onDirections: (directions: DirectionsDuJeu) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const [nom, setNom] = useState(direction.nom)
+  const [consigne, setConsigne] = useState(direction.consigne)
+
+  useEffect(() => setNom(direction.nom), [direction.nom])
+  useEffect(() => setConsigne(direction.consigne), [direction.consigne])
+
+  const poser = async (champs: { nom?: string; consigne?: string }) => {
+    try {
+      onDirections(await api.reglerDirection(direction.identifiant, champs))
+    } catch (erreur) {
+      setNom(direction.nom)
+      setConsigne(direction.consigne)
+      onErreur(erreur, "réglage refusé")
+    }
+  }
+
+  return (
+    <li className="flex h-[26px] items-center gap-2">
+      <input
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onBlur={() => {
+          const propre = nom.trim()
+          if (!propre || propre === direction.nom) return setNom(direction.nom)
+          void poser({ nom: propre })
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+        }}
+        aria-label={`Nom de la direction ${direction.nom}`}
+        className="mesure h-[24px] w-[110px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
+      />
+      <input
+        value={consigne}
+        onChange={(e) => setConsigne(e.target.value)}
+        onBlur={() => {
+          if (consigne.trim() === direction.consigne) return
+          void poser({ consigne: consigne.trim() })
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+        }}
+        placeholder="ce qui part au modèle, en anglais"
+        aria-label={`Ce que « ${direction.nom} » dit au modèle`}
+        title="écrit une fois ici, jamais recopié sur les attitudes — le corriger se fait une seule fois"
+        className="champ h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-3 hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:text-texte-2"
+      />
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            onDirections(await api.retirerDirection(direction.identifiant))
+          } catch (erreur) {
+            onErreur(erreur, "retrait refusé")
+          }
+        }}
+        aria-label={`Retirer la direction ${direction.nom}`}
+        title="les images déjà faites restent, avec son identifiant"
+        className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+      >
+        ×
+      </button>
+    </li>
+  )
+}
+
+/** La proposition de ramener à une image les poses qui comptaient les
+ *  directions (US-243).
+ *
+ *  **Sans elle, déclarer quatre directions ferait passer un personnage de douze
+ *  cases à quarante-huit d'un coup**, et l'auteur découvrirait trente-six
+ *  manques qu'il n'a pas demandés. Elle dit sa raison, montre les deux chiffres,
+ *  et se défait d'un clic — le produit propose, il ne décide pas. */
+function PropositionDeBaisseLigne({
+  proposition,
+  onFait,
+  onErreur,
+}: {
+  proposition: PropositionDeBaisse
+  onFait: (proposition: PropositionDeBaisse) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  if (proposition.defaite.length > 0)
+    return (
+      <p className="mesure flex flex-wrap items-baseline gap-x-2 border-t border-bord pt-2 text-[10px] leading-4 text-texte-3">
+        <span>
+          {proposition.defaite.map((p) => `« ${p.nom} »`).join(", ")}{" "}
+          {proposition.defaite.length > 1 ? "sont ramenées" : "est ramenée"} à
+          une image par direction.
+        </span>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              onFait(await api.defaireLaBaisse())
+            } catch (erreur) {
+              onErreur(erreur, "retour refusé")
+            }
+          }}
+          className="text-signal hover:text-signal-clair"
+        >
+          rendre {proposition.defaite.map((p) => p.images_avant).join(" et ")} ›
+        </button>
+      </p>
+    )
+
+  if (proposition.poses.length === 0) return null
+
+  return (
+    <p className="mesure flex flex-wrap items-baseline gap-x-2 border-t border-bord pt-2 text-[10px] leading-4 text-texte-3">
+      <span>{proposition.raison}</span>
+      <span className="text-texte-3">
+        {proposition.cases_avant} cases → {proposition.cases_apres}
+      </span>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            onFait(await api.baisserLesImages())
+          } catch (erreur) {
+            onErreur(erreur, "proposition refusée")
+          }
+        }}
+        className="text-signal hover:text-signal-clair"
+      >
+        ramener à une image ›
+      </button>
     </p>
   )
 }

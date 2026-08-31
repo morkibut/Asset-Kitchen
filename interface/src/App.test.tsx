@@ -42,7 +42,11 @@ import type {
   Asset,
   Bibliotheque,
   Carte,
+  Case,
   Contour,
+  Direction,
+  DirectionsDuJeu,
+  PropositionDeBaisse,
   Depenses,
   Etat,
   Etiquette,
@@ -253,15 +257,57 @@ const UNIVERS: Univers = {
   vide: true,
 }
 
+/** Une attitude comme le serveur la rend depuis E10 : **deux textes, et un seul
+ *  part** — le nom se lit, la consigne part au modèle. */
+const pose = (identifiant: string, nom: string, consigne = "", images = 1): Pose => ({
+  identifiant,
+  nom,
+  images,
+  consigne,
+  ecartees: [],
+  images_avant: 0,
+})
+
 /** Le plan d'un projet neuf — six attitudes, une image chacune. Le vrai serveur
  *  en donne autant sans qu'aucune ligne n'ait été écrite (US-116). */
 const PLAN: Pose[] = [
-  { identifiant: "repos", nom: "repos", images: 1 },
-  { identifiant: "marche", nom: "marche", images: 1 },
-  { identifiant: "course", nom: "course", images: 1 },
-  { identifiant: "attaque", nom: "attaque", images: 1 },
-  { identifiant: "degats", nom: "dégâts", images: 1 },
-  { identifiant: "mort", nom: "mort", images: 1 },
+  pose("repos", "repos", "idle stance, full body"),
+  pose("marche", "marche", "walking posture, full body"),
+  pose("course", "course", "running posture, full body"),
+  pose("attaque", "attaque", "attacking posture, full body"),
+  pose("degats", "dégâts", "hurt reaction, recoiling, full body"),
+  pose("mort", "mort", "dead, lying on the ground"),
+]
+
+/** Un jeu qui n'a pas déclaré de vue n'a **aucune direction**, et le mot ne
+ *  paraît alors nulle part dans le produit. C'est l'état d'un projet neuf, et
+ *  celui que la plupart des essais mesurent (E10). */
+const SANS_DIRECTIONS: DirectionsDuJeu = {
+  directions: [],
+  origine: "vue",
+  vue: "",
+  vue_libelle: "",
+  proposees: [],
+}
+
+/** Les quatre points cardinaux d'un jeu vu de dessus, tels que la vue les
+ *  propose — nom français, consigne anglaise. */
+/** Rien à proposer, rien à défaire : l'état d'un jeu qui n'a pas de directions,
+ *  ou dont aucune pose ne compte les angles. */
+const PROPOSITION_VIDE: PropositionDeBaisse = {
+  directions: 0,
+  poses: [],
+  raison: "",
+  cases_avant: 0,
+  cases_apres: 0,
+  defaite: [],
+}
+
+const QUATRE: Direction[] = [
+  { identifiant: "sud", nom: "sud", consigne: "facing south, toward the viewer" },
+  { identifiant: "nord", nom: "nord", consigne: "facing north, away from the viewer" },
+  { identifiant: "est", nom: "est", consigne: "facing east, to the right" },
+  { identifiant: "ouest", nom: "ouest", consigne: "facing west, to the left" },
 ]
 
 const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
@@ -298,6 +344,8 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     textes: {},
     eteints: [],
     references: [],
+    // Aucune direction rangée : un jeu neuf n'en a pas déclaré (E10).
+    directions_ecartees: {},
     ...sur,
     ecartees,
   }
@@ -393,7 +441,16 @@ const generation = (
 
 // Ce qu'une case porte au-delà de ses images : le second axe de C3, vide, et
 // **l'origine de sa pose** (E9) — venue du type, comme l'immense majorité.
-const VIDE_C3 = { calques: {}, corps: null, origine: "type" } as const
+// **Et le second axe de E10** : une case sans direction est celle d'un jeu qui
+// n'en a pas déclaré — l'immense majorité des essais.
+const VIDE_C3: Omit<Case, "pose" | "demandees" | "images"> = {
+  calques: {},
+  corps: null,
+  origine: "type",
+  directions: [],
+  directions_rangees: [],
+  sans_direction: [],
+}
 
 /** Une palette du double : quatre couleurs, chacune sachant d'où elle vient.
  *
@@ -435,9 +492,9 @@ const ambianceDouble = (nom: string, palette = ""): AmbianceDuJeu => ({
 })
 
 const POSES_DU_MEUBLE: Pose[] = [
-  { identifiant: "ferme", nom: "fermé", images: 1 },
-  { identifiant: "ouvert", nom: "ouvert", images: 1 },
-  { identifiant: "vide", nom: "vidé", images: 1 },
+  pose("ferme", "fermé", "closed"),
+  pose("ouvert", "ouvert", "open, lid raised"),
+  pose("vide", "vidé", "open and empty, contents gone"),
 ]
 
 /** Ce que le produit propose à chaque type d'objet, et d'où sa liste lui vient
@@ -474,6 +531,10 @@ const asset = (
     modele,
     personnage: null,
     pose: null,
+    // **Vide n'est pas le sud** (E10) : une image sans direction est une image
+    // faite avant que le jeu ne déclare les siennes, et le produit ne devine
+    // pas la sienne.
+    direction: null,
     // **Vide pour toute image qui n'est pas sortie d'une planche pliée** (C2) —
     // c'est-à-dire pour l'immense majorité d'entre elles, et pour toutes
     // celles-ci.
@@ -581,6 +642,14 @@ function serveurDouble(options: {
   personnages?: Personnage[]
   emplacements?: EmplacementCorps[]
   pieces?: Piece[]
+  /** Les directions du jeu, et d'où la liste vient (E10). Elles arrivent par la
+   *  même route que le plan : une case est une pose *dans une direction*, et
+   *  deux appels rendraient possible l'instant où les cases sont là mais pas
+   *  les angles qui les nomment. */
+  directions?: DirectionsDuJeu
+  /** Ce que le produit propose quand des directions viennent d'être déclarées
+   *  (US-243). Le test le décide, comme le serveur le déciderait sur le plan. */
+  proposition?: PropositionDeBaisse
   /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
    *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
    *  ni les concept arts, et deux comptes divergeraient. */
@@ -645,6 +714,11 @@ function serveurDouble(options: {
     // l'auteur.
     palettes: options.palettes ?? ([] as PaletteNommee[]),
     ambiances: options.ambiances ?? ([] as AmbianceDuJeu[]),
+    // **Les directions du jeu** (E10). Aucune par défaut, comme un projet qui
+    // n'a pas déclaré sa vue : le mot ne paraît alors nulle part, et c'est ce
+    // que la plupart des essais mesurent.
+    directions: options.directions ?? SANS_DIRECTIONS,
+    proposition: options.proposition ?? PROPOSITION_VIDE,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1133,10 +1207,65 @@ function serveurDouble(options: {
       return rendre({
         projet: "bac-a-sable",
         plan: etat.plan,
+        // **Les directions arrivent avec le plan**, comme le serveur les rend :
+        // une case n'existe que par la direction qui la nomme (E10).
+        ...etat.directions,
         personnages: etat.personnages,
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+
+    // ── Les directions du jeu (E10) ───────────────────────────────────────
+    //
+    // **Le double rend la liste entière et son origine**, comme le serveur : ce
+    // que l'écran prouve est qu'il montre d'où la liste vient et qu'il sait la
+    // rendre à la vue.
+    if (url === "/api/characters/directions/proposal")
+      return rendre(etat.proposition ?? PROPOSITION_VIDE)
+    if (url === "/api/characters/directions/reset" && init?.method === "POST") {
+      etat.directions = { ...etat.directions, origine: "vue",
+        directions: etat.directions.proposees }
+      return rendre(etat.directions)
+    }
+    if (url === "/api/characters/directions" && init?.method === "POST") {
+      etat.directions = {
+        ...etat.directions,
+        origine: "ici",
+        directions: [
+          ...etat.directions.directions,
+          {
+            identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
+            nom: String(corps.nom),
+            consigne: String(corps.consigne ?? ""),
+          },
+        ],
+      }
+      return rendre(etat.directions)
+    }
+    if (url.startsWith("/api/characters/directions/") && init?.method === "PUT") {
+      const identifiant = url.slice("/api/characters/directions/".length)
+      etat.directions = {
+        ...etat.directions,
+        origine: "ici",
+        directions: etat.directions.directions.map((d) =>
+          d.identifiant === identifiant ? { ...d, ...corps } : d,
+        ),
+      }
+      return rendre(etat.directions)
+    }
+    if (url.startsWith("/api/characters/directions/") && init?.method === "DELETE") {
+      const identifiant = url.slice("/api/characters/directions/".length)
+      etat.directions = {
+        ...etat.directions,
+        origine: "ici",
+        directions: etat.directions.directions.filter(
+          (d) => d.identifiant !== identifiant,
+        ),
+      }
+      return rendre(etat.directions)
+    }
+    if (url === "/api/characters/directions")
+      return rendre(etat.directions)
     // ── La vitrine (E16) ──────────────────────────────────────────────────
     //
     // **Le double rend ce que le serveur rend** : les fonds du projet, les
@@ -1564,12 +1693,13 @@ function serveurDouble(options: {
         })
       }
       if (url === "/api/characters/poses" && init?.method === "POST") {
-        const pose: Pose = {
-          identifiant: String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
-          nom: String(corps.nom),
-          images: Number(corps.images ?? 1),
-        }
-        etat.plan = [...etat.plan, pose]
+        const neuve: Pose = pose(
+          String(corps.nom).toLowerCase().replace(/\s+/g, "-"),
+          String(corps.nom),
+          String(corps.consigne ?? ""),
+          Number(corps.images ?? 1),
+        )
+        etat.plan = [...etat.plan, neuve]
         // La case neuve paraît chez chacun sans qu'aucun personnage soit
         // réécrit : c'est le plan qui décide, le personnage ne fait que
         // soustraire. Le double le rejoue, sinon l'essai prouverait un contrat
@@ -1582,12 +1712,12 @@ function serveurDouble(options: {
             ? p
             : {
                 ...p,
-                plan: [...p.plan, pose],
+                plan: [...p.plan, neuve],
                 cases: [
                   ...p.cases,
                   {
-                    pose: pose.identifiant,
-                    demandees: pose.images,
+                    pose: neuve.identifiant,
+                    demandees: neuve.images,
                     images: [],
                     ...VIDE_C3,
                   },
@@ -5471,6 +5601,9 @@ describe("l'écran des personnages — la pièce et le calque", () => {
           : {}) as Record<string, Asset[]>,
         corps: p.identifiant === "repos" ? corps.identifiant : null,
         origine: "type" as const,
+        directions: [],
+        directions_rangees: [],
+        sans_direction: [],
       })),
     })
 
@@ -6048,6 +6181,9 @@ describe("l'écran des personnages — la pièce et le calque", () => {
                   ]!,
                 } as Record<string, Asset[]>)
               : ({} as Record<string, Asset[]>),
+            directions: [],
+            directions_rangees: [],
+            sans_direction: [],
           })),
         }),
       ],
@@ -8437,7 +8573,7 @@ describe("les poses par type d'objet", () => {
     // **Le × ne veut pas dire la même chose des deux côtés.** Une pose du type
     // se range — elle reviendra chez les autres. Une pose ajoutée ici s'efface :
     // la reléguer aurait laissé une ligne barrée que rien ne reproposera jamais.
-    const ajoutee: Pose = { identifiant: "piege", nom: "piégé", images: 1 }
+    const ajoutee: Pose = pose("piege", "piégé")
     const { fetchDouble } = await ouvrir({
       personnages: [
         personnage("Le coffre", {
@@ -8477,7 +8613,7 @@ describe("les poses par type d'objet", () => {
 
   test("l'origine ne s'écrit que quand elle apprend quelque chose", async () => {
     // Une chose dont une pose vient du type et l'autre a été ajoutée ici.
-    const ajoutee: Pose = { identifiant: "piege", nom: "piégé", images: 1 }
+    const ajoutee: Pose = pose("piege", "piégé")
     await ouvrir({
       personnages: [
         personnage("Le coffre", {
@@ -8655,6 +8791,415 @@ describe("les poses par type d'objet", () => {
         ),
       ).toBe(true),
     )
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E10 · La vue du jeu, et les directions qu'elle donne
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. La liste des directions et
+// d'où elle vient — lue dans la vue, ou écrite à la main —, la case qui devient
+// une pose dans une direction, la jauge qui affiche le produit des deux, la
+// direction qui manque nommée, le rangé sous un trait, et la marque « à
+// confirmer » qui ne se fait pas passer pour une déduction. Ce qui se calcule —
+// la composition de la consigne, la portée d'un rangement, la proposition de
+// baisse — vit dans `tests/test_e10.py`.
+
+describe("la vue du jeu et ses directions", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un jeu vu de dessus : quatre directions, lues dans sa vue. */
+  const VU_DE_DESSUS: DirectionsDuJeu = {
+    directions: QUATRE,
+    origine: "vue",
+    vue: "vue-dessus-34",
+    vue_libelle: "De dessus, 3/4",
+    proposees: QUATRE,
+  }
+
+  /** Les cases d'une chose dans un jeu à quatre directions. `faites` dit
+   *  combien d'images la première direction porte — le reste est vide, comme sur
+   *  le vrai projet, où seul le sud a été dessiné. */
+  const casesEnQuatre = (
+    faites: Record<string, Asset[]> = {},
+    rangees: Record<string, string[]> = {},
+  ) =>
+    PLAN.map((p) => {
+      const tenues = QUATRE.filter(
+        (d) => !(rangees[p.identifiant] ?? []).includes(d.identifiant),
+      )
+      return {
+        pose: p.identifiant,
+        demandees: p.images * Math.max(1, tenues.length),
+        images: faites[p.identifiant] ?? [],
+        ...VIDE_C3,
+        directions: tenues.map((d, rang) => ({
+          ...d,
+          demandees: p.images,
+          images: rang === 0 ? (faites[p.identifiant] ?? []) : [],
+          a_confirmer: rang === 0 ? (faites[p.identifiant] ?? []).length : 0,
+        })),
+        directions_rangees: QUATRE.filter((d) =>
+          (rangees[p.identifiant] ?? []).includes(d.identifiant),
+        ).map((d) => ({ ...d, portee: "ici" as const })),
+      }
+    })
+
+  const ouvrirLesDirections = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ directions: VU_DE_DESSUS, ...options })
+    await monter(double.fetchDouble)
+    return { ...double, ecran: await ouvrirLaRubrique("Les directions") }
+  }
+
+  // ── « La liste des directions se déduit de la vue du jeu » ─────────────────
+
+  test("la colonne dit combien de directions, et qu'elles sont lues", async () => {
+    // **`4 · lues`, et le mot compte** : la liste vient de la vue et suivra un
+    // changement de vue. C'est une promesse différente de « à vous », et le
+    // codex l'écrit plutôt que de laisser deviner.
+    const double = serveurDouble({ directions: VU_DE_DESSUS })
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+
+    expect(
+      within(cadre).getByRole("button", { name: /^Les directions/ }).textContent,
+    ).toBe("Les directions4 · lues")
+  })
+
+  test("le panneau nomme la vue d'où la liste vient, et l'onglet qui la règle", async () => {
+    const { ecran } = await ouvrirLesDirections()
+
+    expect(await ecran.findByText(/De dessus, 3\/4/)).toBeTruthy()
+    expect(ecran.getByText(/réglée dans l'Univers/)).toBeTruthy()
+    for (const nom of ["sud", "nord", "est", "ouest"]) {
+      expect(ecran.getByLabelText(`Nom de la direction ${nom}`)).toBeTruthy()
+    }
+  })
+
+  test("un jeu sans vue n'a aucune direction, et le dit", async () => {
+    // **Un jeu qui ne veut pas de directions ne les voit jamais.** Ce n'est pas
+    // un réglage manquant, c'est une réponse.
+    const double = serveurDouble()
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+
+    expect(
+      within(cadre).getByRole("button", { name: /^Les directions/ }).textContent,
+    ).toBe("Les directionsaucune")
+  })
+
+  // ── « Elles se renomment, se retirent et s'ajoutent depuis le codex » ──────
+
+  test("renommer une direction ne touche pas ce qu'elle dit au modèle", async () => {
+    // **Deux textes, et un seul part.** Le nom se lit, la consigne part : les
+    // confondre faisait partir « sud » au milieu d'une phrase anglaise.
+    const { ecran, appels } = await ouvrirLesDirections()
+
+    const champ = ecran.getByLabelText("Nom de la direction sud")
+    fireEvent.change(champ, { target: { value: "vers le joueur" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/directions/sud" &&
+            JSON.stringify(a.corps).includes("vers le joueur"),
+        ),
+      ).toBe(true),
+    )
+    // La consigne n'était pas dans le message : ce qu'il ne dit pas, il ne
+    // l'efface pas.
+    const envoye = appels.find((a) => a.url === "/api/characters/directions/sud")
+    expect(JSON.stringify(envoye?.corps)).not.toContain("facing south")
+  })
+
+  test("corriger la consigne d'une direction se fait à un seul endroit", async () => {
+    const { ecran, appels } = await ouvrirLesDirections()
+
+    const champ = ecran.getByLabelText("Ce que « sud » dit au modèle")
+    expect((champ as HTMLInputElement).value).toBe("facing south, toward the viewer")
+    fireEvent.change(champ, { target: { value: "facing the camera" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/directions/sud" &&
+            JSON.stringify(a.corps).includes("facing the camera"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("ajouter une direction, et revenir à ce que la vue propose", async () => {
+    const { ecran } = await ouvrirLesDirections()
+
+    fireEvent.change(ecran.getByLabelText("Nom de la direction à ajouter"), {
+      target: { value: "sud-est" },
+    })
+    fireEvent.click(ecran.getByRole("button", { name: "Ajouter" }))
+
+    // La liste ne suit plus la vue — et c'est écrit, parce que ce n'est plus la
+    // même promesse.
+    expect(await ecran.findByText(/écrites ici/)).toBeTruthy()
+    const retour = await ecran.findByRole("button", {
+      name: /revenir à ce que la vue propose/,
+    })
+    expect(retour.textContent).toContain("sud · nord · est · ouest")
+  })
+
+  // ── « Une case du plan est une pose dans une direction » ───────────────────
+
+  test("chaque attitude se découpe en une case par direction", async () => {
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [personnage("Balthazar", { cases: casesEnQuatre() })],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    // Quatre cases sous « repos », une par direction, chacune avec son geste.
+    for (const nom of ["sud", "nord", "est", "ouest"]) {
+      expect(
+        etabli.getByRole("button", { name: `Fabriquer repos vers ${nom}` }),
+      ).toBeTruthy()
+    }
+  })
+
+  test("le produit nomme la direction qui manque", async () => {
+    // **C'est très exactement ce qu'il ne savait pas dire avant E10.**
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [
+        personnage("Balthazar", {
+          cases: casesEnQuatre({ repos: [asset("balthazar-repos")] }),
+        }),
+      ],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    expect(await etabli.findByText("il manque nord, est, ouest")).toBeTruthy()
+  })
+
+  test("la jauge affiche le produit des deux, jamais les deux facteurs", async () => {
+    // Une image faite sur quatre cases demandées : `1 / 4`, et non « 1 image ×
+    // 4 directions », qui demanderait au lecteur de faire la multiplication.
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [
+        personnage("Balthazar", {
+          cases: casesEnQuatre({ repos: [asset("balthazar-repos")] }),
+        }),
+      ],
+    })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Balthazar")
+
+    const lignes = document.querySelectorAll("[data-etabli] li")
+    const repos = Array.from(lignes).find((l) =>
+      l.textContent?.startsWith("repos"),
+    )
+    expect(repos?.textContent).toContain("1 / 4")
+    expect(repos?.textContent).not.toContain("× 4")
+  })
+
+  // ── « Les images antérieures se rangent dans la première direction » ───────
+
+  test("une image faite avant les directions est marquée « à confirmer »", async () => {
+    // **Un rangement par défaut ne se fait pas passer pour une déduction** : le
+    // produit ne devine pas la direction d'une image faite avant, il la range
+    // dans la première et le dit.
+    const ancienne = asset("balthazar-repos")
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [
+        personnage("Balthazar", { cases: casesEnQuatre({ repos: [ancienne] }) }),
+      ],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    const choix = await etabli.findByLabelText(`Direction de ${ancienne.label}`)
+    expect((choix as HTMLSelectElement).value).toBe("")
+    expect(choix.textContent).toContain("à confirmer")
+
+    // **Confirmer et déplacer sont le même geste**, et il n'y en a donc qu'un.
+    fireEvent.change(choix, { target: { value: "nord" } })
+    await waitFor(() =>
+      expect(
+        double.appels.some(
+          (a) =>
+            a.url === `/api/assets/${ancienne.identifiant}/character` &&
+            JSON.stringify(a.corps).includes('"direction":"nord"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « Une direction se range pour une seule chose du jeu » ─────────────────
+
+  test("une direction rangée reste montrée, barrée, et un clic la rend", async () => {
+    // L'idiome de E9 repris tel quel : on relègue sous un trait plutôt que de
+    // faire disparaître, pour défaire sans avoir à se rappeler.
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [
+        personnage("Le dragon", {
+          cases: casesEnQuatre({}, { attaque: ["nord", "est", "ouest"] }),
+        }),
+      ],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Le dragon")
+
+    // Le dragon n'attaque que vers le sud.
+    expect(
+      etabli.getByRole("button", { name: "Fabriquer attaque vers sud" }),
+    ).toBeTruthy()
+    expect(
+      etabli.queryByRole("button", { name: "Fabriquer attaque vers nord" }),
+    ).toBeNull()
+
+    const rangee = etabli.getByRole("button", { name: "Rendre nord à attaque" })
+    expect(rangee.className).toContain("line-through")
+
+    fireEvent.click(rangee)
+    await waitFor(() =>
+      expect(
+        double.appels.some(
+          (a) =>
+            a.url === "/api/characters/poses/attaque/directions/nord" &&
+            JSON.stringify(a.corps).includes('"rangee":false'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("ranger une direction depuis l'établi ne vaut que pour cette chose", async () => {
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [personnage("Balthazar", { cases: casesEnQuatre() })],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    fireEvent.click(etabli.getByRole("button", { name: "Ranger nord pour repos" }))
+
+    await waitFor(() =>
+      expect(
+        double.appels.some(
+          (a) =>
+            a.url === "/api/characters/poses/repos/directions/nord" &&
+            JSON.stringify(a.corps).includes('"personnage":"balthazar"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « L'attitude s'écrit une fois, la direction une fois » ─────────────────
+
+  test("armer une case demande le sujet pour cette direction-là", async () => {
+    // La consigne se compose de deux textes écrits chacun à un seul endroit :
+    // c'est le serveur qui les met bout à bout, et l'écran lui dit seulement
+    // quelle case il vise.
+    const double = serveurDouble({
+      directions: VU_DE_DESSUS,
+      personnages: [personnage("Balthazar", { cases: casesEnQuatre() })],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos vers est" }))
+
+    await waitFor(() =>
+      expect(
+        double.appels.some(
+          (a) =>
+            a.url === "/api/characters/subject" &&
+            JSON.stringify(a.corps).includes('"direction":"est"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("l'attitude porte sa consigne anglaise, à côté de son nom français", async () => {
+    // **Le nom se lit, la consigne part** (US-241). Jusqu'à E10 c'était le même
+    // texte, et le nom français partait au milieu d'une phrase anglaise.
+    const double = serveurDouble()
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLaRubrique("Leurs poses")
+
+    const champ = ecran.getByLabelText("Ce que « marche » dit au modèle")
+    expect((champ as HTMLInputElement).value).toBe("walking posture, full body")
+  })
+
+  // ── « La proposition se défait d'un clic » (US-243) ────────────────────────
+
+  test("le produit propose de ramener à une image, avec sa raison", async () => {
+    // **Sans elle, déclarer quatre directions ferait passer un personnage de
+    // douze cases à quarante-huit d'un coup.**
+    const { ecran, appels } = await ouvrirLesDirections({
+      proposition: {
+        directions: 4,
+        poses: [
+          { pose: "repos", nom: "repos", images: 4, portee: "jeu" },
+          { pose: "marche", nom: "marche", images: 4, portee: "jeu" },
+        ],
+        raison:
+          "proposé : ta bible dit « 4-directional orientation » et tes poses "
+          + "« repos » et « marche » demandent 4 images, et ton jeu a maintenant "
+          + "4 directions · se défait d'un clic",
+        cases_avant: 48,
+        cases_apres: 24,
+        defaite: [],
+      },
+    })
+
+    expect(await ecran.findByText(/4-directional orientation/)).toBeTruthy()
+    expect(ecran.getByText("48 cases → 24")).toBeTruthy()
+
+    fireEvent.click(ecran.getByRole("button", { name: /ramener à une image/ }))
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/characters/directions/proposal"),
+      ).toBe(true),
+    )
+  })
+
+  test("une proposition prise se défait, et dit ce qu'elle rendrait", async () => {
+    const { ecran } = await ouvrirLesDirections({
+      proposition: {
+        directions: 4,
+        poses: [],
+        raison: "",
+        cases_avant: 24,
+        cases_apres: 24,
+        defaite: [{ pose: "repos", nom: "repos", images_avant: 4 }],
+      },
+    })
+
+    expect(await ecran.findByText(/est ramenée à une image par direction/)).toBeTruthy()
+    expect(ecran.getByRole("button", { name: "rendre 4 ›" })).toBeTruthy()
   })
 })
 

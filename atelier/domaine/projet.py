@@ -50,7 +50,8 @@ from atelier.domaine.plan import (
     suit_le_plan_du_jeu,
 )
 from atelier.domaine.teinte import AUCUNE, teinte_valide
-from atelier.domaine.vue import AUCUNE_VUE
+from atelier.domaine.direction import Direction, directions_depuis_json
+from atelier.domaine.vue import AUCUNE_VUE, vue as vue_connue
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -276,6 +277,20 @@ class Univers:
     # rien, comme un univers sans artwork ne contraint pas la palette.
     vue: str = AUCUNE_VUE
 
+    # ── Les directions du jeu, arrivées en E10 ───────────────────────────────
+    #
+    # **La vue les propose, le codex les règle.** Un jeu vu de dessus se dessine
+    # dans quatre directions ; le produit ne le savait pas, et ne pouvait donc
+    # pas dire qu'il manquait le nord. La liste vient de la vue — un seul geste
+    # remplit les deux moitiés — mais **c'est une proposition, pas une
+    # contrainte** : on renomme, on retire, on ajoute depuis le codex.
+    #
+    # **`None` n'est pas la liste vide**, et c'est la même décision qu'aux poses
+    # d'un type (E9). *Jamais écrite* suit la vue, et c'est ce que le codex
+    # affiche « lues » ; *vidée par l'auteur* reste vide, et le jeu n'a alors
+    # aucune direction — ce qui est un état normal, celui d'un jeu de face.
+    directions: tuple[Direction, ...] | None = None
+
     # **Combien de couleurs on demande à la palette.** Elle, on ne la saisit
     # jamais : elle se déduit par calcul des artworks officiels (US-54). Ce
     # chiffre-ci est le seul réglage qu'on ait sur elle.
@@ -332,6 +347,30 @@ class Univers:
             if c.nom == nom:
                 return c
         return Champ(nom)
+
+    def directions_du_jeu(self) -> tuple[Direction, ...]:
+        """Les directions de ce jeu — **écrites ici, ou lues dans la vue** (E10).
+
+        Une liste jamais écrite suit la vue : c'est l'état ordinaire, et c'est ce
+        que le codex affiche « lues ». Dès que l'auteur renomme, retire ou
+        ajoute, la liste est écrite et cesse de suivre — sans quoi changer de vue
+        effacerait en silence des noms choisis à la main.
+
+        **Vide est une réponse, pas un manque.** Un jeu vu de face n'a pas de
+        directions, et le mot ne paraît alors nulle part dans le produit : ni
+        colonne dans la matrice, ni segment dans le fil, rien dans le texte qui
+        part. Un jeu qui n'en veut pas ne les voit jamais.
+        """
+        if self.directions is not None:
+            return self.directions
+        connue = vue_connue(self.vue)
+        return connue.directions if connue else ()
+
+    def directions_ecrites(self) -> bool:
+        """La liste a-t-elle été touchée à la main ? Le codex l'écrit — *lues*
+        contre *à vous* —, parce que ce n'est pas la même promesse : la première
+        suivra un changement de vue, la seconde ne le suivra pas."""
+        return self.directions is not None
 
     def echelle(self, nom: str) -> Echelle | None:
         """L'échelle de ce nom, ou rien. Un nom inconnu ne se corrige pas en
@@ -449,6 +488,11 @@ class Univers:
             "bareme": [e.en_json() for e in self.bareme],
             "cible_px": self.cible_px,
             "vue": self.vue,
+            "directions": (
+                None
+                if self.directions is None
+                else [d.en_json() for d in self.directions]
+            ),
             "couleurs": self.couleurs,
             "palette": list(self.palette),
             "palette_empreinte": self.palette_empreinte,
@@ -469,6 +513,7 @@ class Univers:
             bareme=bareme or BAREME_PAR_DEFAUT,
             cible_px=int(d.get("cible_px", CIBLE_PAR_DEFAUT)),
             vue=str(d.get("vue") or AUCUNE_VUE),
+            directions=directions_depuis_json(d.get("directions")),
             couleurs=int(d.get("couleurs", 24)),
             palette=tuple(d.get("palette", ())),
             palette_empreinte=d.get("palette_empreinte", ""),

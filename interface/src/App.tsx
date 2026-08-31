@@ -46,6 +46,7 @@ import {
   type EmplacementCorps,
   type Personnage,
   type Piece,
+  type DirectionsDuJeu,
   type Pose,
   type Univers,
   UNIVERS_VIDE,
@@ -233,6 +234,17 @@ export function App() {
   // à l'ouverture de l'écran Personnages se rebrancherait à chaque aller-retour
   // vers l'atelier, et le serveur renverrait l'état complet à chaque fois.
   const [plan, setPlan] = useState<Pose[]>([])
+  // **Les directions du jeu** (E10) — l'autre liste que le jeu impose à tout le
+  // monde, tenue ici pour la raison du plan : un seul endroit écoute le flux,
+  // pour toute la vie de l'onglet. Elle arrive dans le même aller-retour, parce
+  // qu'une case n'existe que par la direction qui la nomme.
+  const [directions, setDirections] = useState<DirectionsDuJeu>({
+    directions: [],
+    origine: "vue",
+    vue: "",
+    vue_libelle: "",
+    proposees: [],
+  })
   const [personnages, setPersonnages] = useState<Personnage[]>([])
   // **Le vestiaire du projet** (C3) — l'autre axe de la même matrice, tenu ici
   // pour la raison du plan : un seul endroit écoute le flux, pour toute la vie
@@ -265,6 +277,9 @@ export function App() {
     personnage: string
     poses: string[]
     piece?: string | null
+    /** **La direction que cet appel remplira** (E10). Une case est une pose
+     *  dans une direction, et c'est elle qui part avec la génération. */
+    direction?: string | null
   } | null>(null)
   // **Ce que cette génération-ci n'envoie pas** (US-126). `null` — aucun avis,
   // donc les deux portées durables s'appliquent telles que le serveur les rend.
@@ -721,6 +736,13 @@ export function App() {
     try {
       const production = await api.production()
       setPlan(production.plan)
+      setDirections({
+        directions: production.directions,
+        origine: production.origine,
+        vue: production.vue,
+        vue_libelle: production.vue_libelle,
+        proposees: production.proposees,
+      })
       setPersonnages(production.personnages)
       setEmplacements(production.emplacements)
       setPieces(production.pieces)
@@ -874,6 +896,22 @@ export function App() {
       plan: (recu) => {
         if (recu.projet !== vivant.current.courant) return
         setPlan(recu.plan)
+        void vivant.current.relireProduction()
+      },
+      // **Les directions arrivent entières**, comme le plan et pour les mêmes
+      // deux raisons : la liste est courte, et une direction retirée ne se
+      // devinerait pas d'un message qui ne porterait que les ajouts. Les cases
+      // se redemandent avec, parce qu'une case est une pose *dans une
+      // direction* : poser la liste seule aurait laissé les rangées d'avant.
+      directions: (recu) => {
+        if (recu.projet !== vivant.current.courant) return
+        setDirections({
+          directions: recu.directions,
+          origine: recu.origine,
+          vue: recu.vue,
+          vue_libelle: recu.vue_libelle,
+          proposees: recu.proposees,
+        })
         void vivant.current.relireProduction()
       },
       // **Le vestiaire arrive entier**, et il remplace — même règle que le plan,
@@ -1043,6 +1081,10 @@ export function App() {
         // les lots en aurait fait deux, et l'invariant de C1 serait tombé le
         // jour où elle serait apparue. C'est le compte qui décide, pas l'écran.
         pose: cases ? null : (posesCible[0]?.identifiant ?? null),
+        // **Et sous quel angle** (E10). L'image qui reviendra tombe dans la
+        // case *et* dans la direction, sans que personne ait à l'y ranger. Vide
+        // pour un lot, qui vise N cases : c'est `poses` qui les nomme.
+        direction: cases ? null : (cible?.direction ?? null),
         poses: cases ? posesCible.map((p) => p.identifiant) : null,
         // **La pièce que cet appel pose** (C3, US-140). Elle fait de la planche
         // une planche d'*équipement* : elle part pleine des corps que `poses`
@@ -1108,12 +1150,16 @@ export function App() {
     personnage: Personnage,
     poses: Pose[],
     piece?: Piece | null,
+    direction?: string | null,
   ) => {
     if (poses.length === 0) return
     setCible({
       personnage: personnage.identifiant,
       poses: poses.map((p) => p.identifiant),
       piece: piece?.identifiant ?? null,
+      // **Et sous quel angle** (E10) : la case visée est une pose *dans une
+      // direction*, et c'est elle que l'appel remplira.
+      direction: direction ?? null,
     })
     // **Le prompt reçoit le sujet, jamais la grille** — et c'est le serveur qui
     // l'écrit depuis C5. Les trois règles (une case : le signalement et
@@ -1132,6 +1178,7 @@ export function App() {
         personnage: personnage.identifiant,
         poses: poses.map((p) => p.identifiant),
         piece: piece?.identifiant ?? null,
+        direction: direction ?? null,
         projet: bibliotheque.courant,
       })
       setPrompt(recu.sujet)
@@ -1924,6 +1971,8 @@ export function App() {
             setChoseChoisie(identifiant)
           }}
           onPersonnage={fondrePersonnage}
+          directions={directions}
+          onDirections={setDirections}
           onPlan={(recu) => {
             // Le plan touché **et les choses avec** (E9) : la liste d'une chose
             // dépend du plan, et le serveur seul sait laquelle. Le plan est posé

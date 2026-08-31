@@ -242,6 +242,13 @@ class Generation:
     personnage: str | None = None
     pose: str | None = None
 
+    # **Et sous quel angle** (E10). Même règle, même instant : l'image qui en
+    # reviendra tombe dans la case *et* dans la direction sans que personne ait
+    # à l'y ranger, et une relance de cet appel-là visera toujours la même. Vide
+    # pour un jeu qui n'a pas déclaré de directions — le mot ne paraît alors
+    # nulle part dans le produit.
+    direction: str | None = None
+
     # ── Et de quelle pièce, quand l'appel habille ────────────────────────────
     #
     # Arrivée en C3 (US-140). **C'est elle, et elle seule, qui dit qu'un appel
@@ -327,6 +334,7 @@ class Generation:
             "modele": self.modele,
             "personnage": self.personnage,
             "pose": self.pose,
+            "direction": self.direction,
             "piece": self.piece,
             "pliage": self.pliage.en_json() if self.pliage else None,
             "demande": self.demande,
@@ -351,6 +359,7 @@ class Generation:
             modele=d["modele"],
             personnage=d.get("personnage"),
             pose=d.get("pose"),
+            direction=d.get("direction"),
             piece=d.get("piece"),
             pliage=Pliage.depuis_json(d.get("pliage")),
             demande=d.get("demande", {}),

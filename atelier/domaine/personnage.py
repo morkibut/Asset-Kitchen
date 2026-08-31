@@ -37,6 +37,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TOUT
+from atelier.domaine.direction import Direction
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import Pose, plan_depuis_json
 
@@ -111,6 +112,19 @@ class Personnage:
     # références depuis T4.
     references: tuple[str, ...] = ()
 
+    # ── Les directions que cette chose ne tient pas, pose par pose (E10) ─────
+    #
+    # **La portée étroite des deux** : *ce dragon-là n'attaque que vers le sud*.
+    # La portée large — *une mort n'a qu'un angle, pour tout le monde* — vit sur
+    # la pose du plan (`atelier/domaine/plan.py`), parce qu'elle vaut pour le
+    # projet entier et que la redire sur chaque personnage serait la redire
+    # autant de fois qu'il y en a.
+    #
+    # **Un dictionnaire, et non une liste de couples** : la question qu'on lui
+    # pose est toujours *cette pose-ci, quelles directions sont rangées ?*, et
+    # c'est très exactement ce qu'un dictionnaire répond sans balayer.
+    directions_ecartees: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
     # Les poses du plan que ce personnage **ne tient pas** — voir l'en-tête.
     # Une entrée qui ne désigne plus rien ne gêne pas : elle ne peut écarter
     # qu'une pose qui existe, et une pose retirée du plan ne revient pas par
@@ -167,6 +181,20 @@ class Personnage:
         """
         return "ici" if any(p.identifiant == pose for p in self.ajoutees) else "type"
 
+    def directions_tenues(
+        self, pose: Pose, directions: Iterable[Direction]
+    ) -> tuple[Direction, ...]:
+        """Les angles sous lesquels **cette chose-ci** tient **cette pose-là**.
+
+        Deux rangements se soustraient, et ils ne portent pas sur la même chose :
+        celui de la pose vaut pour tout le jeu — une mort n'a qu'un angle —, et
+        celui d'ici ne vaut que pour cette chose — ce dragon n'attaque que vers
+        le sud. Les deux se lisent au même endroit parce que le compte de ce qui
+        manque a besoin des deux, et qu'un seul appel évite qu'on en oublie un.
+        """
+        rangees = set(pose.ecartees) | set(self.directions_ecartees.get(pose.identifiant, ()))
+        return tuple(d for d in directions if d.identifiant not in rangees)
+
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
@@ -180,6 +208,10 @@ class Personnage:
             "textes": dict(self.textes),
             "eteints": list(self.eteints),
             "references": list(self.references),
+            "directions_ecartees": {
+                pose: list(directions)
+                for pose, directions in self.directions_ecartees.items()
+            },
             "ecartees": list(self.ecartees),
             "concept_arts": list(self.concept_arts),
             "references_ecartees": list(self.references_ecartees),
@@ -209,6 +241,11 @@ class Personnage:
                 nom for nom in (d.get("eteints") or ()) if nom in CHAMPS_BIBLE
             ),
             references=tuple(_textes(d.get("references"))),
+            directions_ecartees={
+                str(pose): tuple(_textes(rangees))
+                for pose, rangees in (d.get("directions_ecartees") or {}).items()
+                if str(pose) and _textes(rangees)
+            },
             # Une valeur inconnue retombe sur « tout » : la liste est fermée, et
             # un fichier ne la rouvre pas.
             prend=(

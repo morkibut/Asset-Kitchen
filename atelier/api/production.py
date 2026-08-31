@@ -83,11 +83,16 @@ class CorpsPose(BaseModel):
     # Combien d'images cette pose demande. Un pour la plupart, quatre ou huit
     # pour un cycle — c'est l'auteur qui le décide, jamais le produit.
     images: int = Field(1, ge=1, le=64)
+    # **Ce qui part au modèle, en anglais** (E10). Vide est une valeur : le
+    # produit ne traduit pas le nom qu'on vient de taper, et le nom part alors
+    # tel quel comme avant E10.
+    consigne: str = ""
     projet: str | None = None
 
 
 class CorpsReglagePose(BaseModel):
-    """Renommer une pose, ou changer ce qu'elle demande. `None` ne touche pas.
+    """Renommer une pose, corriger ce qu'elle dit, ou changer ce qu'elle
+    demande. `None` ne touche pas.
 
     **L'identifiant ne bouge jamais** : les images déjà faites le portent, et
     renommer une pose ne doit pas leur faire perdre leur case (US-118).
@@ -95,6 +100,44 @@ class CorpsReglagePose(BaseModel):
 
     nom: str | None = None
     images: int | None = Field(None, ge=1, le=64)
+    consigne: str | None = None
+    projet: str | None = None
+
+
+# ── Les directions du jeu (E10) ──────────────────────────────────────────────
+
+
+class CorpsDirection(BaseModel):
+    """Une direction de plus dans ce jeu. Le nom suffit à la créer."""
+
+    nom: str = Field(min_length=1)
+    consigne: str = ""
+    projet: str | None = None
+
+
+class CorpsReglageDirection(BaseModel):
+    """Renommer une direction, ou corriger ce qu'elle dit au modèle.
+
+    **L'identifiant ne bouge jamais**, pour la raison des poses : les images
+    faites le portent, et renommer « sud » ne doit pas leur faire perdre leur
+    case.
+    """
+
+    nom: str | None = None
+    consigne: str | None = None
+    projet: str | None = None
+
+
+class CorpsRangementDirection(BaseModel):
+    """Ranger — ou déranger — une direction, **à l'une des deux portées**.
+
+    Sans `personnage`, la direction se range sur la pose et vaut là où la pose
+    est déclarée : une mort n'a qu'un angle, pour tout le monde. Avec, elle ne
+    vaut que pour cette chose : le dragon n'attaque que vers le sud.
+    """
+
+    rangee: bool
+    personnage: str | None = None
     projet: str | None = None
 
 
@@ -280,6 +323,12 @@ class CorpsDesignation(BaseModel):
 
     personnage: str | None = None
     pose: str | None = None
+    # **Sous quel angle cette image montre sa pose** (E10). `None` ne touche pas
+    # — désigner la case et confirmer la direction sont deux gestes qu'un même
+    # écran fait séparément, et un `None` traité comme un vide effacerait la
+    # direction à chaque désignation. C'est le motif payé trois fois
+    # (`docs/PIEGES.md`).
+    direction: str | None = None
     projet: str | None = None
 
 
@@ -296,7 +345,9 @@ async def ajouter_pose(requete: Request, corps: CorpsPose) -> dict[str, Any]:
     """
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
-    pose = atelier.production.ajouter_pose(projet, corps.nom, corps.images)
+    pose = atelier.production.ajouter_pose(
+        projet, corps.nom, corps.images, corps.consigne
+    )
     return _avec_plan(atelier, projet, pose)
 
 
@@ -308,7 +359,7 @@ async def regler_pose(
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
     reglee = atelier.production.regler_pose(
-        projet, pose, nom=corps.nom, images=corps.images
+        projet, pose, nom=corps.nom, images=corps.images, consigne=corps.consigne
     )
     return _avec_plan(atelier, projet, reglee)
 
@@ -324,6 +375,126 @@ async def retirer_pose(
     vise = _projet(requete, projet)
     retiree = atelier.production.retirer_pose(vise, pose)
     return _avec_plan(atelier, vise, retiree)
+
+
+# ── Les directions du jeu (E10) ──────────────────────────────────────────────
+#
+# **Déclarées avant `/characters/{identifiant}`**, comme la vitrine du monde et
+# les types : un chemin fixe qui vient après un chemin à segment libre n'est
+# jamais atteint, et FastAPI ne le signale pas — il répond simplement « aucune
+# chose du jeu nommée *directions* » (`docs/PIEGES.md`).
+
+
+@routeur.get("/characters/directions")
+async def directions(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Les directions de ce jeu, et **d'où la liste lui vient** — lue dans la vue
+    du jeu, ou écrite ici."""
+    atelier = _atelier(requete)
+    return atelier.production.directions(_projet(requete, projet))
+
+
+@routeur.post("/characters/directions", status_code=201)
+async def ajouter_direction(
+    requete: Request, corps: CorpsDirection
+) -> dict[str, Any]:
+    """Une direction de plus. **Nommer, c'est créer**, et rien ne coûte : une
+    case vide paraît chez toute chose qui tient une pose, sans qu'un seul fichier
+    de personnage soit écrit."""
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    atelier.production.ajouter_direction(projet, corps.nom, corps.consigne)
+    return atelier.production.directions(projet)
+
+
+@routeur.post("/characters/directions/reset")
+async def oublier_les_directions(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """La liste **revient à ce que la vue du jeu propose**.
+
+    Un `POST` et non un `DELETE` : ce geste n'efface pas des directions, il rend
+    la liste à sa source. Le `DELETE` de ce chemin voudrait dire « ce jeu n'a
+    plus de direction du tout », qui est une autre décision et se prend en les
+    retirant une par une.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    atelier.production.oublier_les_directions(vise)
+    return atelier.production.directions(vise)
+
+
+@routeur.get("/characters/directions/proposal")
+async def proposition_de_baisse(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce que déclarer des directions coûterait, et ce que le produit propose —
+    **avec la raison écrite et les deux chiffres**."""
+    atelier = _atelier(requete)
+    return atelier.production.proposition_de_baisse(_projet(requete, projet))
+
+
+@routeur.post("/characters/directions/proposal")
+async def baisser_les_images(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ramener à une image les poses que la proposition nomme."""
+    atelier = _atelier(requete)
+    return atelier.production.baisser_les_images(_projet(requete, projet))
+
+
+@routeur.delete("/characters/directions/proposal")
+async def defaire_la_baisse(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """**Le clic qui défait** : chaque pose retrouve ce qu'elle demandait."""
+    atelier = _atelier(requete)
+    return atelier.production.defaire_la_baisse(_projet(requete, projet))
+
+
+@routeur.put("/characters/directions/{direction}")
+async def regler_direction(
+    requete: Request, direction: str, corps: CorpsReglageDirection
+) -> dict[str, Any]:
+    """Renommer une direction, ou corriger ce qu'elle dit au modèle — **et le
+    corriger une seule fois**, pour toutes les poses du jeu."""
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    atelier.production.regler_direction(
+        projet, direction, nom=corps.nom, consigne=corps.consigne
+    )
+    return atelier.production.directions(projet)
+
+
+@routeur.delete("/characters/directions/{direction}")
+async def retirer_direction(
+    requete: Request, direction: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Une direction quitte le jeu. **Les images faites restent** — jamais de
+    cascade, et elles gardent son identifiant."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    atelier.production.retirer_direction(vise, direction)
+    return atelier.production.directions(vise)
+
+
+@routeur.put("/characters/poses/{pose}/directions/{direction}")
+async def ranger_direction(
+    requete: Request, pose: str, direction: str, corps: CorpsRangementDirection
+) -> dict[str, Any]:
+    """Ranger une direction pour une pose — **du jeu entier, ou d'une chose**.
+
+    La réponse dit la **portée réellement atteinte** plutôt que celle qu'on
+    croyait viser : depuis E9 une pose est déclarée soit dans le plan du jeu,
+    soit dans la liste d'un type, et le produit écrit à sa source plutôt que de
+    promettre plus large qu'il ne peut tenir.
+    """
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    return atelier.production.ranger_direction(
+        projet, pose, direction, rangee=corps.rangee, personnage=corps.personnage
+    )
 
 
 # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────────
@@ -578,6 +749,7 @@ async def designer(
         projet=_projet(requete, corps.projet),
         personnage=corps.personnage,
         pose=corps.pose,
+        direction=corps.direction,
     )
     return asset.en_json()
 
@@ -752,6 +924,9 @@ class CorpsSujet(BaseModel):
     personnage: str
     poses: list[str] = Field(default_factory=list)
     piece: str | None = None
+    # **Et sous quel angle** (E10) : la consigne de la direction s'ajoute à celle
+    # de l'attitude, et les deux sont écrites chacune à un seul endroit.
+    direction: str | None = None
     projet: str | None = None
 
 
@@ -773,6 +948,7 @@ async def sujet(requete: Request, corps: CorpsSujet) -> dict[str, Any]:
             corps.personnage,
             corps.poses,
             corps.piece,
+            corps.direction,
         )
     }
 

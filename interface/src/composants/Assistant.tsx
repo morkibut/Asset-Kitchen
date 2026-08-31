@@ -1450,6 +1450,12 @@ function LesPoses({
                           identifiant: identifiantDePose(nom, type.poses),
                           nom,
                           images,
+                          // **Vide, et c'est une valeur** (E10) : le produit ne
+                          // traduit pas en anglais le nom qu'on vient de taper.
+                          // C'est alors le nom qui part, et l'écran le dit.
+                          consigne: "",
+                          ecartees: [],
+                          images_avant: 0,
                         },
                       ])
                       .then(fondre)

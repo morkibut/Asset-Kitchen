@@ -498,10 +498,12 @@ function SesReferences({
         </div>
       )}
 
-      {/* **La planche des directions n'est pas encore proposable**, et elle le
-          dit plutôt que d'être absente : les directions arrivent avec la vue du
-          jeu, et une pose n'a pas encore d'angles à montrer. */}
-      <Raison texte="la planche des quatre directions viendra quand le jeu déclarera ses directions" />
+      {/* **La planche des directions n'est toujours pas proposable**, et elle
+          le dit plutôt que d'être absente. Les directions existent depuis E10 —
+          le produit sait désormais qu'une pose est complète dans toutes les
+          siennes —, mais **l'image qui les montre ensemble est une planche**, et
+          une planche de pose est E13. */}
+      <Raison texte="la planche des quatre directions viendra avec la planche d'une pose : les angles existent, l'image qui les montre ensemble pas encore" />
     </section>
   )
 }

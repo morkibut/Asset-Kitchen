@@ -127,6 +127,20 @@ class Asset:
     personnage: str | None = None
     pose: str | None = None
 
+    # ── Et sous quel angle (E10) ─────────────────────────────────────────────
+    #
+    # **L'angle sous lequel cette image-ci montre sa pose.** Une pose dans un
+    # jeu vu de dessus se dessine quatre fois ; sans ce champ, le produit voyait
+    # quatre images de « marche » sans savoir laquelle regardait le nord — et ne
+    # pouvait donc pas dire qu'il en manquait une.
+    #
+    # **Vide n'est pas le sud.** Une image faite avant que le jeu ne déclare ses
+    # directions ne connaît pas la sienne, et le produit ne la devine pas : elle
+    # se range dans la première direction *avec la marque « à confirmer »*, qui
+    # est un fait sur ce qu'on ne sait pas. Un rangement par défaut ne se fait
+    # pas passer pour une déduction, et confirmer écrit la valeur ici.
+    direction: str | None = None
+
     # ── Et de quelle pièce ───────────────────────────────────────────────────
     #
     # Arrivée en C3 (US-140). Le second axe de la matrice : la pose dit la ligne,
@@ -256,6 +270,7 @@ class Asset:
             "modele": self.modele,
             "personnage": self.personnage,
             "pose": self.pose,
+            "direction": self.direction,
             "piece": self.piece,
             "lot": self.lot.en_json() if self.lot else None,
             "calque": self.calque.en_json() if self.calque else None,
@@ -317,6 +332,7 @@ class Asset:
             modele=d.get("modele", ""),
             personnage=d.get("personnage"),
             pose=d.get("pose"),
+            direction=d.get("direction"),
             piece=d.get("piece"),
             lot=MesuresLot.depuis_json(d.get("lot")),
             calque=MesuresCalque.depuis_json(d.get("calque")),

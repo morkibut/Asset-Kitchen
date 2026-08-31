@@ -500,7 +500,8 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "asks for, which of them already have a body, and which pieces of "
             "equipment are already layered on. Also returns the project's "
             "wardrobe — equipment slots in wearing order, and the pieces that "
-            "go in them. Call this before generating: an empty pose is what "
+            "go in them — and the game's directions, since a slot is a pose in "
+            "a direction. Call this before generating: an empty slot is what "
             "needs an image, a filled one does not. Free and offline."
         ),
     )
@@ -518,8 +519,23 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         return {
             "project": projet,
             "poses": [
-                {"id": p.identifiant, "name": p.nom, "images": p.images}
+                {
+                    "id": p.identifiant,
+                    "name": p.nom,
+                    "images": p.images,
+                    # **Ce qui part au modèle, en anglais** (E10) : le nom se
+                    # lit, la consigne part, et l'agent doit voir laquelle il
+                    # compose.
+                    "instruction": p.dit(),
+                }
                 for p in atelier.production.plan(projet)
+            ],
+            # **Les directions du jeu** (E10). Sans elles, un agent remplirait
+            # la première case de chaque pose et croirait la pose finie : une
+            # case est une pose *dans une direction*.
+            "directions": [
+                {"id": d["identifiant"], "name": d["nom"], "instruction": d["consigne"]}
+                for d in atelier.production.directions(projet)["directions"]
             ],
             "slots": [
                 {"id": e["identifiant"], "name": e["nom"], "order": e["rang"]}
@@ -546,6 +562,17 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                             "wanted": case["demandees"],
                             "body": case["corps"],
                             "images": [a["identifiant"] for a in case["images"]],
+                            # Une entrée par direction tenue, avec ce qui la
+                            # remplit : c'est là que l'agent lit qu'il manque le
+                            # nord (E10). Vide pour un jeu sans directions.
+                            "directions": [
+                                {
+                                    "id": d["identifiant"],
+                                    "wanted": d["demandees"],
+                                    "images": [a["identifiant"] for a in d["images"]],
+                                }
+                                for d in case["directions"]
+                            ],
                             "layers": {
                                 piece: [a["identifiant"] for a in liste]
                                 for piece, liste in case["calques"].items()
@@ -564,12 +591,17 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         description=(
             "Add a pose — an attitude the game needs, like 'walk' or 'idle' — "
             "to the project's plan. Every character of the project gains an "
-            "empty slot for it. Naming it creates it. Free and offline."
+            "empty slot for it. Naming it creates it. `instruction` is what "
+            "actually goes to the model, in English — leave it empty and the "
+            "name goes out as-is. Free and offline."
         ),
     )
     @_refus_lisible
     async def add_pose(
-        name: str, images: int = 1, project: str | None = None
+        name: str,
+        images: int = 1,
+        instruction: str = "",
+        project: str | None = None,
     ) -> dict[str, Any]:
         """**Le plan appartient au projet, jamais au personnage** (C1).
 
@@ -578,12 +610,24 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         puis il remplit les cases qui l'intéressent.
         """
         projet = _projet_ouvert(atelier, project)
-        pose = atelier.production.ajouter_pose(projet, name, max(1, int(images)))
+        pose = atelier.production.ajouter_pose(
+            projet, name, max(1, int(images)), instruction
+        )
         return {
             "project": projet,
-            "pose": {"id": pose.identifiant, "name": pose.nom, "images": pose.images},
+            "pose": {
+                "id": pose.identifiant,
+                "name": pose.nom,
+                "images": pose.images,
+                "instruction": pose.dit(),
+            },
             "poses": [
-                {"id": p.identifiant, "name": p.nom, "images": p.images}
+                {
+                    "id": p.identifiant,
+                    "name": p.nom,
+                    "images": p.images,
+                    "instruction": p.dit(),
+                }
                 for p in atelier.production.plan(projet)
             ],
         }
@@ -595,7 +639,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "Generate the body of one or more poses of a character. The "
             "character's own description and the universe are added "
             "automatically — leave `subject` empty unless this image needs "
-            "something the character's description does not say. Two poses or "
+            "something the character's description does not say. `direction` "
+            "says which of the game's directions this image shows — its "
+            "instruction is appended automatically. Two poses or "
             "more go out as a single folded call, which is how a plan gets "
             "filled without paying pose by pose. Costs money."
         ),
@@ -605,6 +651,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         character: str,
         poses: list[str],
         subject: str = "",
+        direction: str = "",
         project: str | None = None,
         model: str | None = None,
         wait_seconds: float = ATTENTE_PAR_DEFAUT,
@@ -640,7 +687,12 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                 identifiant_modele,
                 Demande(
                     prompt=subject.strip()
-                    or atelier.production.sujet(projet, vise.identifiant, voulues),
+                    or atelier.production.sujet(
+                        projet,
+                        vise.identifiant,
+                        voulues,
+                        direction=direction.strip() or None,
+                    ),
                     variations=1,
                     options=options,
                 ),
@@ -648,6 +700,11 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                 provenance=AGENT,
                 personnage=vise.identifiant,
                 pose=voulues[0] if len(voulues) == 1 else None,
+                # **Une direction ne vaut que pour une case** : un lot vise N
+                # poses, et c'est `poses` qui les nomme.
+                direction=(
+                    direction.strip() if len(voulues) == 1 and direction else None
+                ),
                 poses=voulues if len(voulues) > 1 else None,
             )
         finally:

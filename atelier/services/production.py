@@ -41,7 +41,9 @@ from atelier.domaine.plan import (
     plan_du_type,
     suit_le_plan_du_jeu,
 )
+from atelier.domaine.direction import Direction, composer
 from atelier.domaine.projet import Projet, repere
+from atelier.domaine.vue import vue as vue_connue
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
@@ -267,6 +269,394 @@ class ServiceProduction:
         )
         self._sauver_projet(objet)
 
+    # ── Les directions du jeu (E10) ──────────────────────────────────────────
+
+    def directions(self, projet: str) -> dict[str, Any]:
+        """Les directions de ce jeu, **et d'où la liste lui vient**.
+
+        Deux origines, et l'écran les écrit en clair. `vue` : la liste est celle
+        que la vue du jeu propose, et elle suivra un changement de vue — c'est
+        ce que le codex affiche *lues*. `ici` : l'auteur a renommé, retiré ou
+        ajouté, et la liste ne suit plus.
+
+        **La proposition de la vue reste à côté**, parce que c'est elle qu'un
+        « revenir à ce que la vue propose » remettrait, et que l'écran ne doit
+        pas avoir à la deviner.
+        """
+        objet = self._exiger(projet)
+        univers = objet.univers
+        connue = vue_connue(univers.vue)
+        return {
+            "directions": [d.en_json() for d in univers.directions_du_jeu()],
+            "origine": "ici" if univers.directions_ecrites() else "vue",
+            "vue": univers.vue,
+            "vue_libelle": connue.libelle if connue else "",
+            "proposees": [d.en_json() for d in (connue.directions if connue else ())],
+        }
+
+    def ajouter_direction(self, projet: str, nom: str, consigne: str = "") -> Direction:
+        """**Nommer, c'est créer**, ici comme pour une pose.
+
+        Ajouter une direction fait paraître une case vide chez toute chose qui
+        tient une pose — sans qu'un seul fichier de personnage soit écrit,
+        puisqu'on range ce qu'on ne tient pas. Rien ne part, rien ne coûte.
+        """
+        objet = self._exiger(projet)
+        propre = nom.strip()
+        if not propre:
+            raise ProductionRefusee("une direction se crée avec un nom")
+        posees = self._directions_ecrites(objet)
+        if any(d.nom.casefold() == propre.casefold() for d in posees):
+            raise ProductionRefusee(f"« {propre} » est déjà une direction de ce jeu")
+        direction = Direction(
+            identifiant=repere(propre, {d.identifiant for d in posees}, "direction"),
+            nom=propre,
+            consigne=consigne.strip(),
+        )
+        # En queue, jamais trié : l'ordre de la liste est celui des carrés d'une
+        # ligne de la matrice, et c'est l'ordre dans lequel l'auteur pense son
+        # jeu. Trier mettrait « est » avant « nord » et rendrait deux
+        # personnages illisibles côte à côte.
+        objet.univers.directions = posees + (direction,)
+        self._sauver_les_directions(objet)
+        return direction
+
+    def regler_direction(
+        self,
+        projet: str,
+        direction: str,
+        *,
+        nom: str | None = None,
+        consigne: str | None = None,
+    ) -> Direction:
+        """Renommer une direction, ou corriger ce qu'elle dit au modèle.
+
+        **L'identifiant ne bouge pas**, et c'est tout l'intérêt : les images
+        faites le portent, et renommer « sud » en « vers le joueur » ne doit pas
+        leur faire perdre leur case.
+
+        **Corriger la consigne se fait ici et une seule fois.** C'est très
+        exactement ce que E10 répare : `facing south` était recopié sur chaque
+        pose, et le corriger demandait six corrections.
+        """
+        objet = self._exiger(projet)
+        posees = self._directions_ecrites(objet)
+        courante = next((d for d in posees if d.identifiant == direction), None)
+        if courante is None:
+            raise ProductionRefusee(f"« {direction} » n'est pas une direction de ce jeu")
+
+        propre = courante.nom if nom is None else nom.strip()
+        if not propre:
+            raise ProductionRefusee("une direction garde un nom")
+        if any(
+            d.identifiant != courante.identifiant
+            and d.nom.casefold() == propre.casefold()
+            for d in posees
+        ):
+            raise ProductionRefusee(f"« {propre} » est déjà une direction de ce jeu")
+
+        reglee = replace(
+            courante,
+            nom=propre,
+            consigne=courante.consigne if consigne is None else consigne.strip(),
+        )
+        objet.univers.directions = tuple(
+            reglee if d.identifiant == courante.identifiant else d for d in posees
+        )
+        self._sauver_les_directions(objet)
+        return reglee
+
+    def retirer_direction(self, projet: str, direction: str) -> Direction:
+        """Une direction quitte le jeu — **et les images faites restent**.
+
+        Jamais de cascade, ici comme ailleurs. Les images gardent l'identifiant
+        de leur direction : remettre la même direction les remet dans leur case,
+        et en attendant la matrice les compte à part plutôt que de les perdre.
+        """
+        objet = self._exiger(projet)
+        posees = self._directions_ecrites(objet)
+        retiree = next((d for d in posees if d.identifiant == direction), None)
+        if retiree is None:
+            raise ProductionRefusee(f"« {direction} » n'est pas une direction de ce jeu")
+        objet.univers.directions = tuple(
+            d for d in posees if d.identifiant != retiree.identifiant
+        )
+        self._sauver_les_directions(objet)
+        return retiree
+
+    def oublier_les_directions(self, projet: str) -> tuple[Direction, ...]:
+        """La liste **revient à ce que la vue propose** (E10).
+
+        `None` et la liste vide ne disent pas la même chose : vider est une
+        décision qui tient — un jeu sans directions —, oublier est un retour en
+        arrière. Sans ce geste, une liste retouchée ne pourrait jamais revenir à
+        la proposition : il faudrait la retaper de mémoire, et la moindre faute
+        de frappe ferait une colonne orpheline.
+        """
+        objet = self._exiger(projet)
+        objet.univers.directions = None
+        self._sauver_les_directions(objet)
+        return objet.univers.directions_du_jeu()
+
+    @staticmethod
+    def _directions_ecrites(objet: Projet) -> tuple[Direction, ...]:
+        """La liste telle qu'elle est **sur le disque**, matérialisée si besoin.
+
+        Toucher une liste lue la fige : c'est le moment où elle cesse de suivre
+        la vue, et il vaut mieux qu'il soit celui du premier geste que celui d'un
+        changement de vue plus tard. La matérialiser ici, en un seul endroit,
+        évite que trois gestes en décident chacun différemment.
+        """
+        return objet.univers.directions_du_jeu()
+
+    # ── La proposition de baisse (E10, US-243) ───────────────────────────────
+
+    def proposition_de_baisse(self, projet: str) -> dict[str, Any]:
+        """Ce que déclarer des directions coûterait, **et ce qu'on propose**.
+
+        **Sans elle, déclarer quatre directions ferait passer un personnage de
+        douze cases à quarante-huit d'un coup**, et l'auteur découvrirait
+        trente-six manques qu'il n'a pas demandés. Le produit ne décide pas à sa
+        place : il propose, il écrit pourquoi, et un clic défait.
+
+        **Les poses concernées sont celles qui demandent exactement autant
+        d'images qu'il y a de directions** — et c'est un fait, pas une heuristique
+        de plus : dans le vrai projet, `repos` et `marche` demandent quatre
+        images pendant que la bible dit *4-directional orientation*. Ces
+        quatre-là **sont** les quatre directions ; elles étaient un nombre
+        d'images faute d'un endroit où dire l'angle.
+        """
+        objet = self._exiger(projet)
+        combien = len(objet.univers.directions_du_jeu())
+        toutes = self._toutes_les_poses(objet)
+        visees = [
+            (portee, pose)
+            for portee, pose in toutes
+            if combien > 1 and pose.images == combien
+        ]
+        defaisables = [
+            (portee, pose) for portee, pose in toutes if pose.images_avant > 0
+        ]
+        return {
+            "directions": combien,
+            "poses": [
+                {"pose": pose.identifiant, "nom": pose.nom, "images": pose.images,
+                 "portee": portee}
+                for portee, pose in visees
+            ],
+            "raison": self._raison_de_la_baisse(objet, [p for _, p in visees], combien),
+            # **Les deux chiffres, pour que la proposition se juge et non se
+            # croie.** Le produit constate ; c'est l'auteur qui décide sur son
+            # propre jeu.
+            "cases_avant": sum(pose.images * combien for _, pose in toutes),
+            "cases_apres": sum(
+                (1 if (portee, pose) in visees else pose.images) * combien
+                for portee, pose in toutes
+            ),
+            "defaite": [
+                {"pose": pose.identifiant, "nom": pose.nom,
+                 "images_avant": pose.images_avant}
+                for _, pose in defaisables
+            ],
+        }
+
+    def baisser_les_images(self, projet: str) -> dict[str, Any]:
+        """Ramener à une image les poses que la proposition nomme.
+
+        **Ce que la pose demandait est gardé sur elle**, et c'est tout ce qu'il
+        faut pour défaire : une défaite qui ne survivrait pas au rechargement
+        laisserait ouvert très exactement le piège que la proposition ferme.
+        """
+        objet = self._exiger(projet)
+        combien = len(objet.univers.directions_du_jeu())
+        if combien < 2:
+            raise ProductionRefusee(
+                "ce jeu n'a pas de directions — il n'y a rien à ramener"
+            )
+        visees = {
+            pose.identifiant
+            for _, pose in self._toutes_les_poses(objet)
+            if pose.images == combien
+        }
+        if not visees:
+            raise ProductionRefusee(
+                "aucune pose ne demande autant d'images qu'il y a de directions"
+            )
+        self._mapper_les_poses(
+            objet,
+            lambda p: replace(p, images=1, images_avant=p.images)
+            if p.identifiant in visees
+            else p,
+        )
+        self._sauver_projet(objet)
+        return self.proposition_de_baisse(projet)
+
+    def defaire_la_baisse(self, projet: str) -> dict[str, Any]:
+        """Rendre à chaque pose ce qu'elle demandait — **le clic qui défait**."""
+        objet = self._exiger(projet)
+        self._mapper_les_poses(
+            objet,
+            lambda p: replace(p, images=p.images_avant, images_avant=0)
+            if p.images_avant > 0
+            else p,
+        )
+        self._sauver_projet(objet)
+        return self.proposition_de_baisse(projet)
+
+    @staticmethod
+    def _toutes_les_poses(objet: Projet) -> list[tuple[str, Pose]]:
+        """Chaque pose déclarée dans ce jeu, avec la portée qui la porte.
+
+        Depuis E9 une pose vit à deux endroits qui s'écrivent : le plan du jeu,
+        que les personnages et les créatures partagent, et la liste d'un type.
+        Les balayer ensemble évite qu'une proposition ne baisse que la moitié
+        d'un jeu.
+        """
+        posees: list[tuple[str, Pose]] = [("jeu", p) for p in objet.plan]
+        for echelle in objet.univers.bareme:
+            if echelle.poses is not None:
+                posees += [(f"type {echelle.nom}", p) for p in echelle.poses]
+        return posees
+
+    @staticmethod
+    def _mapper_les_poses(objet: Projet, muter) -> None:
+        """Applique la même transformation partout où une pose est déclarée."""
+        objet.plan = tuple(muter(p) for p in objet.plan)
+        objet.univers.bareme = tuple(
+            e if e.poses is None else replace(e, poses=tuple(muter(p) for p in e.poses))
+            for e in objet.univers.bareme
+        )
+
+    @staticmethod
+    def _raison_de_la_baisse(objet: Projet, visees: list[Pose], combien: int) -> str:
+        """La phrase qui accompagne la proposition — **avec ce que la bible dit**.
+
+        Le produit ne propose rien sans écrire d'où ça vient. Quand la bible
+        porte encore le nombre de directions en toutes lettres — c'est le cas du
+        vrai projet, `4-directional orientation` —, la raison le cite mot pour
+        mot : c'est la preuve que ces quatre images-là *étaient* les quatre
+        directions.
+        """
+        if not visees:
+            return ""
+        noms = " et ".join(f"« {p.nom} »" for p in visees)
+        dit = ""
+        for champ in objet.univers.bible:
+            # Le mot qui suit part avec, quand il y en a un : la bible du vrai
+            # projet dit `4-directional orientation`, et citer la moitié d'une
+            # phrase donne une preuve à moitié.
+            trouve = re.search(
+                rf"\b{combien}\s*-?\s*directional(\s+\w+)?", champ.texte, re.I
+            )
+            if trouve:
+                dit = trouve.group(0)
+                break
+        prefixe = f"ta bible dit « {dit} » et " if dit else ""
+        return (
+            f"proposé : {prefixe}{'tes' if len(visees) > 1 else 'ta'} pose"
+            f"{'s' if len(visees) > 1 else ''} {noms} "
+            f"demande{'nt' if len(visees) > 1 else ''} {combien} images, "
+            f"et ton jeu a maintenant {combien} directions · se défait d'un clic"
+        )
+
+    # ── Ce qu'une chose ne tient pas — la seconde portée (E10) ───────────────
+
+    def ranger_direction(
+        self,
+        projet: str,
+        pose: str,
+        direction: str,
+        *,
+        rangee: bool,
+        personnage: str | None = None,
+    ) -> dict[str, Any]:
+        """Ranger une direction, **aux deux portées** (US-244).
+
+        Sans personnage, la direction se range **sur la pose** : une mort n'a
+        qu'un angle quel que soit le personnage, et se le dire une fois vaut
+        mieux que de le redire sur chacun. Avec, elle ne se range que **pour
+        cette chose-là** : le dragon n'attaque que vers le sud, les autres
+        continuent d'attaquer partout.
+
+        **La portée large écrit là où la pose est déclarée**, et c'est ce que la
+        réponse dit. Depuis E9 une pose vit à trois endroits possibles — le plan
+        du jeu, la liste d'un type, ce qu'une chose a ajouté pour elle seule —,
+        et écrire ailleurs qu'à sa source ferait deux vérités sur la même
+        question. La portée exacte est donc rendue plutôt que promise : *tout le
+        jeu*, *les choses de type personnage*, ou *cette chose seule*.
+        """
+        objet = self._exiger(projet)
+        if personnage:
+            vise = self.personnage(projet, personnage)
+            rangees = dict(vise.directions_ecartees)
+            actuelles = set(rangees.get(pose, ()))
+            if rangee:
+                actuelles.add(direction)
+            else:
+                actuelles.discard(direction)
+            if actuelles:
+                rangees[pose] = tuple(sorted(actuelles))
+            else:
+                rangees.pop(pose, None)
+            vise.directions_ecartees = rangees
+            self._sauver(vise)
+            return {"portee": "ici", "personnage": self.en_charge(projet, vise)}
+
+        # Toutes les choses du jeu bougent d'un coup : la pose est déclarée à un
+        # seul endroit, et c'est là qu'on vient d'écrire. L'annonce du plan
+        # suffit donc à les remettre toutes d'accord, sans réécrire un fichier.
+        portee = self._ranger_sur_la_pose(objet, pose, direction, rangee)
+        self._sauver_projet(objet)
+        return {"portee": portee}
+
+    def _ranger_sur_la_pose(
+        self, objet: Projet, pose: str, direction: str, rangee: bool
+    ) -> str:
+        """Écrit le rangement **là où cette pose est déclarée**, et dit où.
+
+        Le plan du jeu d'abord, parce que c'est la liste que les personnages et
+        les créatures partagent, et donc la portée la plus large. Les listes de
+        type ensuite, chacune pour son type. Rien trouvé n'est pas une erreur —
+        c'est une pose ajoutée sur une seule chose, et la portée large n'a alors
+        pas de sens : le refus le dit plutôt que d'écrire au hasard.
+        """
+
+        def _rangee(p: Pose) -> Pose:
+            actuelles = set(p.ecartees)
+            if rangee:
+                actuelles.add(direction)
+            else:
+                actuelles.discard(direction)
+            return replace(p, ecartees=tuple(sorted(actuelles)))
+
+        if any(p.identifiant == pose for p in objet.plan):
+            objet.plan = tuple(
+                _rangee(p) if p.identifiant == pose else p for p in objet.plan
+            )
+            return "jeu"
+
+        for echelle in objet.univers.bareme:
+            if echelle.poses is None:
+                continue
+            if any(p.identifiant == pose for p in echelle.poses):
+                objet.univers.bareme = tuple(
+                    replace(
+                        e,
+                        poses=tuple(
+                            _rangee(p) if p.identifiant == pose else p for p in e.poses
+                        ),
+                    )
+                    if e.nom == echelle.nom
+                    else e
+                    for e in objet.univers.bareme
+                )
+                return f"type {echelle.nom}"
+
+        raise ProductionRefusee(
+            f"« {pose} » n'est déclarée nulle part dans ce jeu — une attitude "
+            "ajoutée sur une seule chose se range sur cette chose-là"
+        )
+
     # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────
 
     def habillage(self, projet: str, identifiant: str) -> dict[str, Any]:
@@ -469,9 +859,12 @@ class ServiceProduction:
         répare ça sans changer la règle : elle montre laquelle est retenue, et
         retenir une autre image se fait là où on la regarde.
 
-        **La planche des quatre directions n'est pas encore proposable**, et
-        elle le dit plutôt que d'être absente : les directions arrivent avec la
-        vue du jeu, et une pose n'a pas encore d'angles à montrer.
+        **La planche des quatre directions n'est toujours pas proposable**, et
+        elle le dit plutôt que d'être absente. Les directions existent depuis
+        E10, et le produit sait dire qu'une pose est complète dans toutes les
+        siennes ; mais **l'image qui les montre ensemble est une planche**, et
+        une planche de pose est E13. Ce qui manque n'est plus la notion, c'est
+        le fichier.
         """
         proposees: list[dict[str, Any]] = []
         deja = set(personnage.references) | set(personnage.concept_arts)
@@ -646,7 +1039,9 @@ class ServiceProduction:
             retombees += 1
         return retombees
 
-    def ajouter_pose(self, projet: str, nom: str, images: int = 1) -> Pose:
+    def ajouter_pose(
+        self, projet: str, nom: str, images: int = 1, consigne: str = ""
+    ) -> Pose:
         """**Nommer, c'est créer** (`docs/PRD.md`) : un nom de pose qui n'existe
         pas encore le crée sur-le-champ, sans passer par un écran de gestion.
 
@@ -667,6 +1062,11 @@ class ServiceProduction:
             identifiant=repere(propre, {p.identifiant for p in objet.plan}, "pose"),
             nom=propre,
             images=max(1, images),
+            # **Vide est une valeur** : le produit ne traduit pas le nom qu'on
+            # vient de taper. Sans consigne écrite, c'est le nom qui part — comme
+            # avant E10 — et la ligne le dit plutôt que d'inventer un anglais que
+            # personne n'a relu avant qu'il ne parte dans un appel payé.
+            consigne=consigne.strip(),
         )
         # **En queue, jamais trié.** L'ordre du plan est celui de la matrice, et
         # c'est l'ordre dans lequel l'auteur pense son jeu ; le ranger par
@@ -683,12 +1083,25 @@ class ServiceProduction:
         *,
         nom: str | None = None,
         images: int | None = None,
+        consigne: str | None = None,
     ) -> Pose:
-        """Renommer une pose, ou changer le nombre d'images qu'elle demande.
+        """Renommer une pose, corriger ce qu'elle dit au modèle, ou changer le
+        nombre d'images qu'elle demande.
 
         **L'identifiant ne bouge pas**, et c'est tout l'intérêt : les images déjà
         faites le portent, et renommer « marche » en « déplacement » ne doit pas
         leur faire perdre leur case (US-118).
+
+        **Ce que le message ne dit pas, il ne l'efface pas.** La pose porte
+        depuis E10 quatre choses de plus que son nom — sa consigne anglaise, les
+        directions qu'elle ne tient pas, et ce qu'elle demandait avant la
+        proposition de baisse —, et l'écran qui renomme n'en envoie aucune. La
+        reconstruire à partir du seul message les viderait à chaque frappe :
+        c'est le motif payé trois fois, en E5 puis en E9 (`docs/PIEGES.md`).
+
+        **Toucher le chiffre à la main efface la défaite**, et c'est voulu : ce
+        que la pose demandait *avant* n'a plus de sens dès que l'auteur a dit ce
+        qu'elle demande maintenant.
         """
         objet = self._exiger(projet)
         courante = self._exiger_pose(objet, pose)
@@ -703,10 +1116,12 @@ class ServiceProduction:
         ):
             raise ProductionRefusee(f"« {propre} » est déjà une pose de ce plan")
 
-        reglee = Pose(
-            identifiant=courante.identifiant,
+        reglee = replace(
+            courante,
             nom=propre,
             images=courante.images if images is None else max(1, images),
+            images_avant=courante.images_avant if images is None else 0,
+            consigne=courante.consigne if consigne is None else consigne.strip(),
         )
         objet.plan = tuple(
             reglee if p.identifiant == courante.identifiant else p for p in objet.plan
@@ -1026,46 +1441,143 @@ class ServiceProduction:
             else:
                 corps.setdefault(asset.pose, []).append(asset)
 
-        return [
-            {
-                "pose": pose.identifiant,
-                "demandees": pose.images,
-                "images": [a.en_json() for a in corps.get(pose.identifiant, ())],
-                # **Le second axe de la matrice** (US-140), pièce par pièce.
-                # Rien de plus enregistré : c'est toujours l'image qui dit sa
-                # case, et une image supprimée vide la sienne toute seule.
-                "calques": {
-                    piece: [a.en_json() for a in liste]
-                    for piece, liste in calques.get(pose.identifiant, {}).items()
-                },
-                # **Le corps que cette pose enverrait en planche d'équipement**,
-                # ou rien — et c'est ce « rien » qui rend une pose visiblement
-                # inéligible (US-141). Le favori d'abord, sinon la plus récente :
-                # la même règle qu'à la composition, écrite une fois et lue des
-                # deux côtés, pour que l'écran montre exactement ce qui partira.
-                "corps": _corps(corps.get(pose.identifiant, ())),
-                # **D'où vient cette pose** (E9) : du type, ou ajoutée ici.
-                # Sans elle on ne saurait plus qui a décidé quoi, ni ce qui
-                # bougerait en changeant le type de la chose.
-                "origine": personnage.origine(pose.identifiant),
-            }
-            for pose in personnage.tenues(self.plan_de(projet, personnage))
-        ]
+        # **Les directions du jeu, lues une fois pour toutes les lignes.** Vide
+        # est un état normal — un jeu vu de face n'en a pas —, et le mot ne
+        # paraît alors nulle part : chaque ligne rend `directions: []` et la
+        # jauge redevient celle d'avant E10, au chiffre près.
+        toutes = objet.univers.directions_du_jeu()
+        connues = {d.identifiant for d in toutes}
+        rendues: list[dict[str, Any]] = []
 
-    def viser(self, projet: str, personnage: str, pose: str) -> tuple[Personnage, Pose]:
+        for pose in personnage.tenues(self.plan_de(projet, personnage)):
+            siennes = corps.get(pose.identifiant, [])
+            tenues = personnage.directions_tenues(pose, toutes)
+            premiere = tenues[0].identifiant if tenues else ""
+            # Une image sans direction ne connaît pas la sienne : elle se range
+            # dans la première, et le produit dit que c'est un rangement.
+            anciennes = [a for a in siennes if a.direction is None]
+
+            par_direction: list[dict[str, Any]] = []
+            for direction in tenues:
+                dedans = [
+                    a
+                    for a in siennes
+                    if a.direction == direction.identifiant
+                    or (a.direction is None and direction.identifiant == premiere)
+                ]
+                par_direction.append(
+                    {
+                        **direction.en_json(),
+                        "images": [a.en_json() for a in dedans],
+                        "demandees": pose.images,
+                        # **« À confirmer », et le compte de celles qui
+                        # l'attendent** (US-242). Un rangement par défaut ne se
+                        # fait pas passer pour une déduction : la marque dit
+                        # qu'on ne sait pas, et un clic la lève.
+                        "a_confirmer": (
+                            len(anciennes) if direction.identifiant == premiere else 0
+                        ),
+                    }
+                )
+
+            rendues.append(
+                {
+                    "pose": pose.identifiant,
+                    # **La jauge affiche le produit des deux, jamais les deux
+                    # facteurs séparés** (E10) : une pose demande *tant d'images
+                    # dans tant de directions*, et lire « 4 × 4 » demanderait au
+                    # lecteur de faire la multiplication qu'on cherche à lui
+                    # épargner. Sans direction déclarée le produit vaut le
+                    # facteur, et rien ne change pour un jeu qui n'en a pas.
+                    "demandees": pose.images * max(1, len(tenues)),
+                    "images": [a.en_json() for a in siennes],
+                    # ── Le second axe de la case (E10) ───────────────────────
+                    #
+                    # Une entrée par direction tenue, avec ce qui la remplit.
+                    # Rien de plus enregistré : c'est toujours l'image qui dit sa
+                    # case, et une image supprimée vide la sienne toute seule.
+                    "directions": par_direction,
+                    # **Ce qui est rangé reste montré**, avec sa portée — c'est
+                    # l'idiome de E9 : on relègue sous un trait plutôt que de
+                    # faire disparaître, pour qu'un rangement se défasse sans
+                    # qu'on ait à se rappeler ce qu'on a rangé.
+                    "directions_rangees": [
+                        {
+                            **direction.en_json(),
+                            "portee": (
+                                "ici"
+                                if direction.identifiant
+                                in personnage.directions_ecartees.get(
+                                    pose.identifiant, ()
+                                )
+                                else "jeu"
+                            ),
+                        }
+                        for direction in toutes
+                        if direction not in tenues
+                    ],
+                    # **Une image dont la direction n'existe plus se voit** —
+                    # jamais de cascade, et l'orphelin se dit plutôt que de
+                    # retomber en silence dans la première colonne venue.
+                    "sans_direction": [
+                        a.en_json()
+                        for a in siennes
+                        if a.direction and a.direction not in connues
+                    ],
+                    # **Le second axe de la matrice** (US-140), pièce par pièce.
+                    # Rien de plus enregistré : c'est toujours l'image qui dit sa
+                    # case, et une image supprimée vide la sienne toute seule.
+                    "calques": {
+                        piece: [a.en_json() for a in liste]
+                        for piece, liste in calques.get(pose.identifiant, {}).items()
+                    },
+                    # **Le corps que cette pose enverrait en planche
+                    # d'équipement**, ou rien — et c'est ce « rien » qui rend une
+                    # pose visiblement inéligible (US-141). Le favori d'abord,
+                    # sinon la plus récente : la même règle qu'à la composition,
+                    # écrite une fois et lue des deux côtés, pour que l'écran
+                    # montre exactement ce qui partira.
+                    "corps": _corps(siennes),
+                    # **D'où vient cette pose** (E9) : du type, ou ajoutée ici.
+                    # Sans elle on ne saurait plus qui a décidé quoi, ni ce qui
+                    # bougerait en changeant le type de la chose.
+                    "origine": personnage.origine(pose.identifiant),
+                }
+            )
+
+        return rendues
+
+    def viser(
+        self,
+        projet: str,
+        personnage: str,
+        pose: str,
+        direction: str | None = None,
+    ) -> tuple[Personnage, Pose]:
         """La case qu'un appel va remplir — vérifiée **avant** qu'un centime parte.
 
-        Deux refus, et ils portent leur raison : un personnage qui n'existe pas,
-        et une pose que ce personnage-là ne tient pas. Le second n'est pas du
-        zèle — l'écran n'arme que des cases visibles, mais un onglet resté ouvert
-        pendant qu'on décochait la pose enverrait sinon une image dans une case
-        que personne ne regarde plus.
+        Trois refus, et ils portent leur raison : un personnage qui n'existe pas,
+        une pose que ce personnage-là ne tient pas, et — depuis E10 — une
+        direction qu'il ne tient pas *pour cette pose*. Aucun n'est du zèle :
+        l'écran n'arme que des cases visibles, mais un onglet resté ouvert
+        pendant qu'on rangeait enverrait sinon une image dans une case que
+        personne ne regarde plus.
         """
         vise = self.personnage(projet, personnage)
         tenues = vise.tenues(self.plan_de(projet, vise))
         for p in tenues:
-            if p.identifiant == pose:
-                return vise, p
+            if p.identifiant != pose:
+                continue
+            if direction:
+                angles = vise.directions_tenues(
+                    p, self._exiger(projet).univers.directions_du_jeu()
+                )
+                if all(d.identifiant != direction for d in angles):
+                    raise ProductionRefusee(
+                        f"« {vise.nom} » ne tient pas la direction "
+                        f"« {direction} » pour la pose « {p.nom} »"
+                    )
+            return vise, p
         raise ProductionRefusee(
             f"« {vise.nom} » ne tient pas la pose « {pose} »"
         )
@@ -1076,14 +1588,18 @@ class ServiceProduction:
         personnage: str,
         poses: Sequence[str] = (),
         piece: str | None = None,
+        direction: str | None = None,
     ) -> str:
         """Ce qu'une case demande au modèle — **écrit ici, lu des deux côtés**.
 
         Trois règles, et aucune n'est interchangeable avec une autre :
 
-        - **Une case** : le signalement du personnage, puis le nom de
-          l'attitude. C'est la promesse d'US-115 — la description part avec
-          chaque image de ce personnage et ne se retape jamais.
+        - **Une case** : le signalement du personnage, la consigne de
+          l'attitude, puis celle de la direction. C'est la promesse d'US-115 —
+          la description part avec chaque image de ce personnage et ne se retape
+          jamais — et celle d'US-240 : deux textes anglais écrits chacun à un
+          seul endroit, mis bout à bout au moment de générer. On ne recopie plus
+          `facing south` sur six poses, et le corriger se fait une fois.
         - **Un lot** : le signalement seul. Les attitudes partent case par case
           dans les consignes de planche, que le pliage replie côté serveur ; les
           écrire aussi dans le sujet les dirait deux fois, et le prompt
@@ -1114,8 +1630,28 @@ class ServiceProduction:
             p for p in self.plan_de(projet, vise) if p.identifiant in set(poses)
         ]
         if len(voulues) == 1:
+            # **Ce qui part est en anglais, du premier mot au dernier** (US-241).
+            # Le nom français de la pose partait au milieu d'une phrase anglaise
+            # jusqu'à E10 ; `Pose.dit` rend ce que le produit ou l'auteur a écrit
+            # pour être lu par le modèle, et la direction s'y ajoute.
+            angle = ""
+            if direction:
+                trouvee = next(
+                    (
+                        d
+                        for d in objet.univers.directions_du_jeu()
+                        if d.identifiant == direction
+                    ),
+                    None,
+                )
+                angle = trouvee.consigne if trouvee else ""
             return ", ".join(
-                mot for mot in (vise.description.strip(), voulues[0].nom) if mot
+                mot
+                for mot in (
+                    vise.description.strip(),
+                    composer(voulues[0].dit(), angle),
+                )
+                if mot
             )
         return vise.description.strip()
 
@@ -1215,7 +1751,13 @@ class ServiceProduction:
         )
 
     def designer(
-        self, asset: str, *, projet: str, personnage: str | None, pose: str | None
+        self,
+        asset: str,
+        *,
+        projet: str,
+        personnage: str | None,
+        pose: str | None,
+        direction: str | None = None,
     ) -> Asset:
         """Cette image **est** le corps de cette case (US-122).
 
@@ -1248,15 +1790,21 @@ class ServiceProduction:
         if personnage is None and pose is None:
             objet.personnage = None
             objet.pose = None
+            objet.direction = None
             objet.personnage_supprime = False
         elif personnage is None or pose is None:
             raise ProductionRefusee(
                 "une image se désigne par un personnage **et** une pose"
             )
         else:
-            vise, visee = self.viser(projet, personnage, pose)
+            vise, visee = self.viser(projet, personnage, pose, direction)
             objet.personnage = vise.identifiant
             objet.pose = visee.identifiant
+            # **C'est ici qu'une image cesse d'être « à confirmer »** (E10).
+            # Confirmer et déplacer sont le même geste — dire sous quel angle
+            # cette image montre sa pose —, et il n'y en a donc qu'un.
+            if direction is not None:
+                objet.direction = direction or None
             objet.personnage_supprime = False
 
         self._assets.sauver(objet)
@@ -1287,6 +1835,11 @@ class ServiceProduction:
         return {
             "projet": objet.identifiant,
             "plan": [p.en_json() for p in objet.plan],
+            # **Les directions viennent avec, pour la même raison que le plan**
+            # (E10) : une ligne de matrice n'existe pas sans les colonnes qui la
+            # découpent, et deux appels rendraient possible l'instant où les
+            # cases sont là mais pas les angles qui les nomment.
+            **self.directions(projet),
             "personnages": [
                 self.en_charge(projet, un) for un in self.personnages(projet)
             ],
@@ -1339,6 +1892,23 @@ class ServiceProduction:
         self._diffusion.publier(
             "plan",
             {"projet": objet.identifiant, "plan": [p.en_json() for p in objet.plan]},
+        )
+
+    def _sauver_les_directions(self, objet: Projet) -> None:
+        """Le projet, puis l'annonce des directions **sous leur propre genre**.
+
+        Pas `plan`, qui ne parle que des attitudes ; pas `univers`, qui fait
+        redemander l'état *et* le catalogue depuis T4 (`docs/PIEGES.md`) — une
+        direction renommée n'a aucune raison de coûter deux appels réseau. C'est
+        la même décision que le plan a prise en C1, prise pour la même raison.
+        """
+        self._bibliotheque.sauver_projet(objet)
+        self._diffusion.publier(
+            "directions",
+            {
+                "projet": objet.identifiant,
+                **self.directions(objet.identifiant),
+            },
         )
 
     def _sauver(self, personnage: Personnage) -> None:

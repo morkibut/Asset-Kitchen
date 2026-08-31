@@ -689,10 +689,10 @@ export const AIDE: Record<string, Explication> = {
     ou: "univers",
     quoi: "D'où l'on regarde le monde — de face, de côté, de dessus, en isométrie.",
     change:
-      "**Combien d'images il faut par pose.** C'est le chiffre qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté, c'est deux images ; le même vu de dessus, c'est quatre.",
+      "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
     origine: "toi · aucune au départ",
     long:
-      "Ce choix ne décide pas de l'apparence du jeu. Il remplit **deux endroits d'un coup** : le nombre d'images par pose, et la phrase de la case *vue* qui part au modèle. Ces deux-là ne peuvent plus se contredire, parce qu'ils viennent du même geste.\n\nAvant, le nombre de directions était retapé **sept fois** — une dans la description, puis à la main sur chaque pose — et rien ne reliait ces sept endroits.\n\n**Le nombre de directions ne part plus dans le texte**, depuis le 31 août 2026 : il contredisait la consigne des planches d'équipement, et chaque image dit déjà elle-même la direction qu'elle montre.",
+      "Ce choix ne décide pas de l'apparence du jeu. Il remplit **deux endroits d'un coup** : la liste des directions, que le codex affiche et qu'on peut y renommer, et la phrase de la case *vue* qui part au modèle. Ces deux-là ne peuvent plus se contredire, parce qu'ils viennent du même geste.\n\nAvant, le nombre de directions était retapé **sept fois** — une dans la description, puis à la main sur chaque pose — et rien ne reliait ces sept endroits.\n\n**La liste est une proposition, jamais une contrainte.** On renomme, on retire, on ajoute depuis le codex, et un clic la rend à ce que la vue propose. Tant qu'on n'y touche pas elle suit la vue ; dès qu'on y touche elle ne la suit plus — et le codex écrit lequel des deux, parce que ce ne sont pas la même promesse.\n\n**Le nombre de directions ne part plus dans le texte**, depuis le 31 août 2026 : il contredisait la consigne des planches d'équipement, et chaque image dit désormais elle-même la direction qu'elle montre.",
   },
 
   "assistant.taille": {

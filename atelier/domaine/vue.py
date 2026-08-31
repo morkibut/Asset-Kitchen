@@ -27,6 +27,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from atelier.domaine.direction import Direction
+
 # Le jeu qui n'a pas déclaré sa vue. **Une valeur, pas un trou** : un univers qui
 # ne dit pas d'où il regarde ne contraint rien, comme un univers sans artwork ne
 # contraint pas la palette.
@@ -53,7 +55,7 @@ class Vue:
     exemples: str
     images: int
     phrase: str
-    directions: tuple[tuple[str, str], ...] = ()
+    directions: tuple[Direction, ...] = ()
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -62,32 +64,68 @@ class Vue:
             "exemples": self.exemples,
             "images": self.images,
             "phrase": self.phrase,
-            "directions": [
-                {"nom": nom, "consigne": consigne} for nom, consigne in self.directions
-            ],
+            "directions": [d.en_json() for d in self.directions],
         }
 
 
-# Les quatre points cardinaux d'un jeu vu de dessus, et la consigne de chacun.
+# ── Les directions que chaque vue propose ────────────────────────────────────
+#
 # **Écrites une fois sur la direction**, jamais recopiées sur six poses : c'est
-# ce qui fait qu'on ne retape plus `facing south` partout (E10).
-QUATRE = (
-    ("sud", "facing south, toward the viewer"),
-    ("ouest", "facing west, to the left"),
-    ("nord", "facing north, away from the viewer"),
-    ("est", "facing east, to the right"),
+# ce qui fait qu'on ne retape plus `facing south` partout (E10). Corriger
+# « south » se fait alors à un seul endroit, et non six fois.
+#
+# **La queue de phrase change avec la vue, les noms ne changent pas.** Le sud
+# d'un jeu isométrique n'est pas le sud d'un jeu vu de dessus — l'un se regarde
+# de trois quarts, l'autre d'aplomb —, mais il s'appelle sud dans les deux. Un
+# gabarit par vue plutôt que trois tables presque identiques : trois tables
+# auraient divergé à la première correction.
+
+
+# Les quatre points cardinaux, chacun avec le repère qui le situe pour un
+# lecteur — **dans l'ordre sud · nord · est · ouest**, qui est celui de la
+# matrice, d'après la maquette du codex (`docs/maquettes-v2.1/05-codex.html`).
+# Le sud vient en premier partout, parce que c'est là que se rangent les images
+# faites avant la déclaration : « la première direction » doit être la même pour
+# tout le monde.
+_CARDINALES = (
+    ("sud", "south", "toward the viewer"),
+    ("nord", "north", "away from the viewer"),
+    ("est", "east", "to the right"),
+    ("ouest", "west", "to the left"),
 )
 
-HUIT = QUATRE + (
-    ("sud-ouest", "facing south-west"),
-    ("nord-ouest", "facing north-west"),
-    ("nord-est", "facing north-est"),
-    ("sud-est", "facing south-east"),
+
+def _cardinales(queue: str = "") -> tuple[Direction, ...]:
+    """Les quatre points cardinaux, dits comme cette vue-là les dit.
+
+    Sans queue, chaque direction garde le repère qui la situe — *toward the
+    viewer*, *to the left*. Avec, c'est la projection qui prend sa place : un
+    jeu isométrique regarde son sud de trois quarts, et le dire quatre fois de
+    la même façon est très exactement ce qu'un gabarit sert à éviter.
+    """
+    return tuple(
+        Direction(nom, nom, f"facing {vers}, {queue or repere}")
+        for nom, vers, repere in _CARDINALES
+    )
+
+
+QUATRE = _cardinales()
+QUATRE_OBLIQUES = _cardinales("oblique projection")
+QUATRE_ISOMETRIQUES = _cardinales("isometric three-quarter view")
+
+HUIT = QUATRE + tuple(
+    Direction(identifiant, identifiant, f"facing {vers}")
+    for identifiant, vers in (
+        ("sud-ouest", "south-west"),
+        ("nord-ouest", "north-west"),
+        ("nord-est", "north-east"),
+        ("sud-est", "south-east"),
+    )
 )
 
 DEUX = (
-    ("droite", "facing right, side view"),
-    ("gauche", "facing left, side view"),
+    Direction("droite", "droite", "facing right, side view"),
+    Direction("gauche", "gauche", "facing left, side view"),
 )
 
 
@@ -147,7 +185,7 @@ VUES: tuple[Vue, ...] = (
         "Ultima, EarthBound",
         4,
         "oblique cavalier projection, no vanishing point, full-body character centered",
-        QUATRE,
+        QUATRE_OBLIQUES,
     ),
     Vue(
         "vue-isometrique",
@@ -155,7 +193,7 @@ VUES: tuple[Vue, ...] = (
         "Diablo 2, Age of Empires 2",
         4,
         "isometric projection, 30 degrees above the horizon, no vanishing point",
-        QUATRE,
+        QUATRE_ISOMETRIQUES,
     ),
 )
 

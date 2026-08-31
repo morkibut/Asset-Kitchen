@@ -367,6 +367,9 @@ class CorpsGeneration(BaseModel):
     # reviendra en héritera à sa naissance, sans que personne ait à la ranger.
     personnage: str | None = None
     pose: str | None = None
+    # **Et sous quel angle** (E10). Vide pour un jeu qui n'a pas déclaré de
+    # directions : le mot ne paraît alors nulle part dans le produit.
+    direction: str | None = None
     # **Les cases d'un lot plié** (US-128). Deux poses ou plus, et l'appel part
     # en une seule planche que l'atelier dépliera lui-même. **La même route que
     # tout le reste**, et c'est la décision : il n'existe qu'un seul endroit
@@ -426,6 +429,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         ],
         personnage=corps.personnage,
         pose=corps.pose,
+        direction=corps.direction,
         poses=corps.poses,
         piece=corps.piece,
         references_ecartees=corps.references_ecartees,

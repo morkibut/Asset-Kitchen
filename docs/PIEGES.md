@@ -582,3 +582,16 @@ la prochaine réécriture retrouvera.
   recette la stockait avec la différence de l'image d'où elle venait (E5) —, et il porte
   toujours la même signature : **un message partiel traité comme un objet entier**. Vu en
   écrivant E9 avant qu'un utilisateur ne le paie, le 31 août 2026.
+
+- **Le banc du corpus ne lit que des titres Markdown : un « § » qui vise une maquette HTML est
+  cassé par construction.** `essais/essai_docs.py` bâtit la liste des sections d'un document en
+  cherchant des lignes qui commencent par `#` ; une maquette de `docs/maquettes-v2.1/` n'en a
+  aucune, donc **zéro section**, donc tout renvoi qui nomme une de ces maquettes *puis* un
+  signe § et un titre ne résout jamais — quel que soit le titre visé, et même si le `<h2>`
+  existe mot pour mot. (L'exemple n'est pas écrit ici tel quel : il se casserait à son tour,
+  et le banc le compterait.) Ce qui l'a rendu invisible est que
+  l'erreur ressemble à une faute de frappe : le banc dit « aucun titre ne répond à … », et on
+  cherche le bon titre au lieu de comprendre qu'il n'y en a aucun. Le geste qui répare est de
+  **nommer le fichier sans `§`** et de laisser la phrase dire ce qu'on y cherche —
+  `atelier/domaine/vue.py` le fait déjà. Payé trois fois en écrivant E10, le 31 août 2026 ;
+  un quatrième cas dort dans `docs/vignettes-vues.md`, qui n'est pas versionné.

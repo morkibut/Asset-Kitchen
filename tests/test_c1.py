@@ -261,7 +261,17 @@ def test_ajouter_une_pose_ajoute_une_case_a_chaque_personnage_sans_rien_generer(
     _ajouter_pose(client, "saut", images=4)
 
     lu = _tableau(client)
-    assert lu["plan"][-1] == {"identifiant": "saut", "nom": "saut", "images": 4}
+    assert lu["plan"][-1] == {
+        "identifiant": "saut",
+        "nom": "saut",
+        "images": 4,
+        # **Vide, et c'est une valeur** (E10) : le produit ne traduit pas en
+        # anglais le nom qu'on vient de taper. C'est alors le nom qui part,
+        # comme avant E10, et la ligne le dit.
+        "consigne": "",
+        "ecartees": [],
+        "images_avant": 0,
+    }
     # La case neuve paraît chez tout le monde — et aucun fichier de personnage
     # n'a eu à être réécrit pour ça, puisqu'un personnage range ce qu'il écarte.
     # C'est **l'absence** de « saut » dans les écartées qui le dit, et c'est
@@ -293,6 +303,13 @@ def test_renommer_une_pose_ne_lui_prend_pas_son_identifiant(client):
         "identifiant": "marche",
         "nom": "déplacement",
         "images": 8,
+        # **Ce que le message ne dit pas, il ne l'efface pas** (E10). L'écran
+        # qui renomme envoie le nom et le compte, jamais la consigne anglaise ;
+        # reconstruire la pose à partir du seul message l'aurait vidée à chaque
+        # frappe — le motif payé trois fois (`docs/PIEGES.md`).
+        "consigne": "walking posture, full body",
+        "ecartees": [],
+        "images_avant": 0,
     }
 
     plan = {p["identifiant"]: p for p in _tableau(client)["plan"]}

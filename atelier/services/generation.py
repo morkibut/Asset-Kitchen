@@ -404,6 +404,7 @@ class ServiceGenerations:
         provenance: str = AUTEUR,
         personnage: str | None = None,
         pose: str | None = None,
+        direction: str | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
@@ -462,7 +463,7 @@ class ServiceGenerations:
         # au-dessus, une par une : un lot ne vise pas *une* case, il en vise N,
         # et `pose` reste vide.
         if pliage is None and personnage and self._production is not None and projet:
-            self._production.viser(projet, personnage, pose or "")
+            self._production.viser(projet, personnage, pose or "", direction)
 
         if pliage is not None and demande.variations > 1:
             raise DemandeRefusee(
@@ -537,6 +538,7 @@ class ServiceGenerations:
             # ranger, et une relance de cet appel-là visera toujours la même.
             personnage=personnage or None,
             pose=pose or None,
+            direction=direction or None,
             # **Et pour combien de cases** (US-128). Une génération ordinaire n'en
             # porte pas, et c'est le cas courant : `pliage` vaut `None`, l'image
             # qui revient naît comme depuis T1.
@@ -560,6 +562,7 @@ class ServiceGenerations:
         provenance: str = AUTEUR,
         personnage: str | None = None,
         pose: str | None = None,
+        direction: str | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
@@ -574,6 +577,7 @@ class ServiceGenerations:
             provenance=provenance,
             personnage=personnage,
             pose=pose,
+            direction=direction,
             poses=poses,
             piece=piece,
             references_ecartees=references_ecartees,
@@ -892,9 +896,11 @@ class ServiceGenerations:
         entier ne part pas** — c'est mieux que de payer neuf images pour en
         ranger huit.
 
-        Le texte d'une case est le **nom** de la pose, pas son identifiant : il
-        part dans le prompt, et un repère de fichier n'a jamais décrit une
-        attitude à un modèle.
+        Le texte d'une case est la **consigne** de la pose, pas son identifiant
+        et — depuis E10 — pas son nom français non plus : il part dans le
+        prompt, un repère de fichier n'a jamais décrit une attitude à un modèle,
+        et un mot français au milieu d'une phrase anglaise se contredisait avec
+        elle.
         """
         if piece:
             if not personnage or self._equipement is None or not projet:
@@ -913,7 +919,11 @@ class ServiceGenerations:
         cases = []
         for pose in dict.fromkeys(poses):
             _, visee = self._production.viser(projet, personnage, pose)
-            cases.append(CasePliee(texte=visee.nom, pose=visee.identifiant))
+            # **Ce qui s'écrit dans la case part en anglais** (E10, US-241) :
+            # `Pose.dit` rend la consigne écrite sur la pose, sinon celle que le
+            # produit propose pour une pose de cet identifiant-là, sinon le nom.
+            # Jusqu'ici, le nom français partait au milieu d'un prompt anglais.
+            cases.append(CasePliee(texte=visee.dit(), pose=visee.identifiant))
         return Pliage(cases=tuple(cases))
 
     def _jointes(

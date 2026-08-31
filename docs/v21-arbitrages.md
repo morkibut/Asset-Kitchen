@@ -137,6 +137,16 @@ jamais un fichier d'image.
 baisse sans qu'une image disparaisse : deux images d'une même vue n'ont jamais
 fait deux vues, et le compte le dit enfin.
 
+**Corrigé en construisant E10, le 31 août 2026.** Ce paragraphe disait que « la
+reprise met tous les chiffres à un », c'est-à-dire toute seule. Ce n'est pas ce
+qui a été construit, et c'est `docs/PLAN.md` qui tranche : l'atelier **propose**,
+il écrit sa raison, et la proposition se défait d'un clic. La différence n'est pas
+cosmétique — baisser tout seul un chiffre que l'auteur a posé lui-même serait une
+décision prise à sa place sur son propre jeu, et le produit n'en prend pas.
+Mesuré sur le vrai projet le jour où l'étape a été faite : quarante-huit cases,
+vingt-quatre après la proposition, et seules `repos` et `marche` sont concernées
+— celles qui demandaient exactement autant d'images qu'il y a de directions.
+
 ### A-7 · Une case du plan est prise dès qu'une image la porte
 
 **Ce qui n'était écrit nulle part.** Aucun document ne disait ce que « faite »

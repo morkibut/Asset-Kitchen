@@ -334,12 +334,14 @@ Le détail des arbitrages qui les ont posées est dans `docs/v21-arbitrages.md`.
 |---|---|---|
 | **Étiquette** | un libellé en français, le texte anglais qui part vraiment au modèle, la case de bible à laquelle elle appartient, le nombre de fois qu'elle a servi | **Elle appartient à l'application, pas à un projet** — comme la clé du fournisseur, elle ne dépend d'aucun. C'est ce qui rend la description d'un univers **mécanique au lieu d'être rédigée** : cliquer *brume basse* écrit `thick low-lying fog, volumetric haze` dans la case. La base naît vide, personne ne l'écrit à la place de l'auteur, et elle grandit de chaque étiquette fabriquée dans n'importe quel projet. |
 | **Palette** | un nom, la liste de ses sources, les deux valeurs de fusion, la liste de ses retouches, et les couleurs rendues avec leur empreinte | Une palette **reste une recette** : elle se recalcule de ses sources, et ses sources peuvent être d'autres palettes. La palette du projet devient **un cas particulier de palette**, pas une chose à part. |
+| **Direction** | un identifiant, un nom en français, la consigne anglaise qui part au modèle | *Ajoutée en la faisant, le 31 août 2026 : elle était prévue comme une simple liste de noms sur le projet, et il lui fallait deux textes.* Le nom se **lit**, la consigne **part** ; les confondre faisait sortir « sud » au milieu d'une phrase anglaise. L'identifiant ne bouge pas quand le nom change, comme pour une pose : les images faites le portent. |
 | **Ambiance** | un nom, le nom de sa palette, la liste de ses images de référence, ses trois cases de texte | Elle appartient à un projet. C'est un **lot de style tout prêt**, fabriqué une fois et réutilisé sur plusieurs choses du jeu. Les palettes sont les ingrédients, les ambiances les recettes — d'où les deux listes au même endroit dans l'univers. |
 
 **Et cinq champs sur des objets qui existent** : la **vue du jeu** et la liste des
 **directions** sur le projet, une **direction** sur l'asset et sur la génération, le nom de
 l'**ambiance par défaut** sur une chose du jeu, et **ce qui a été pris de l'ambiance** sur
-la génération.
+la génération. *Ce compte-là était une prévision, et les étapes l'ont dépassé* — chaque
+paragraphe « écrit en la faisant » ci-dessous nomme ce que la sienne a ajouté.
 
 *La vue a été ajoutée le 31 août 2026, sur un report de la maquette de l'assistant qui
 n'avait pas été appliqué ici.* Elle n'existait que sous forme de phrase, dans la case
@@ -385,6 +387,23 @@ ou si le produit ne connaît pas son nom ; sinon ce que le produit propose pour 
 ce nom, la liste vide du décor et de la tuile comprise. **Et une chose sans type reçoit le
 plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les projets
 existants sans qu'un seul fichier ait eu à être réécrit.
+
+*Écrit en la faisant, le 31 août 2026.* **La liste des directions est une liste ou rien**,
+exactement comme celle d'un type — et pour la même raison, qui est devenue une règle du
+dossier : *rien* veut dire « personne n'y a touché », et la liste **suit alors la vue du
+jeu** ; une liste écrite ne la suit plus. Les confondre aurait laissé un changement de vue
+effacer en silence des noms choisis à la main. Le codex écrit laquelle des deux — *lues* ou
+*à vous* —, parce que ce ne sont pas la même promesse.
+
+*Écrit en la faisant, le 31 août 2026.* **Une pose porte désormais quatre choses de plus que
+son nom.** Sa **consigne** anglaise, parce que le nom se lit et que la consigne part — et
+qu'un texte qui sert aux deux partait en français au milieu d'une phrase anglaise. Les
+**directions qu'elle ne tient pas**, qui est la portée large d'un rangement : une mort n'a
+qu'un angle quel que soit le personnage. Et **ce qu'elle demandait avant la baisse**, un champ
+qui ne porte que sa propre défaite : la proposition de ramener à une image doit se défaire
+d'un clic, et une défaite qui disparaîtrait au rechargement laisserait ouvert le piège
+qu'elle ferme. La portée étroite, elle, vit sur la chose du jeu — *ce dragon n'attaque que
+vers le sud*.
 
 *Écrit en la faisant, le 31 août 2026.* La palette rendue est **un cache nommé par sa
 provenance**, exactement comme celle du projet depuis T4 — mais son empreinte porte les
