@@ -23,6 +23,7 @@ from atelier.image.mesures import (
     extension,
     mesurer,
     rendre_en_png,
+    vignette,
 )
 from atelier.image.palette import (
     COULEURS,
@@ -31,7 +32,13 @@ from atelier.image.palette import (
     bande_de_palette,
     palette_de,
 )
-from atelier.image.taches import Tache, crans_occupation, poches, taches
+from atelier.image.taches import (
+    Tache,
+    crans_occupation,
+    poches_de_fond,
+    taches,
+    trous,
+)
 from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.image.traitement import (
     MoteurAbsent,
@@ -48,7 +55,8 @@ __all__ = [
     "COTE_MIN",
     "Tache",
     "crans_occupation",
-    "poches",
+    "poches_de_fond",
+    "trous",
     "taches",
     "COULEURS",
     "COULEURS_MAX",
@@ -75,5 +83,6 @@ __all__ = [
     "palette_de",
     "raison_moteur",
     "rendre_en_png",
+    "vignette",
     "zones_opaques",
 ]

@@ -38,7 +38,7 @@ import {
   type Teinte,
 } from "../api"
 import { mots, sujetCarte, useVisee } from "./Apercu"
-import { Libelle, Raison, Segments } from "./chassis"
+import { Libelle, Raison, Segments, ZoneTexte } from "./chassis"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
 
@@ -940,10 +940,22 @@ export function CarteTuile({
              un écran dont c'est le métier. `aspect-square` lui rend la mesure
              exacte de ses voisines, quel que soit le cran, **sans inventer
              aucune hauteur** : c'est celle que la colonne donne déjà. */
+          /* **Elle garde ses retours à la ligne, et elle défile** — corrigé le
+             31 août 2026. Une note porte parfois le document de présentation du
+             jeu : 4 350 mots, titres, listes, paragraphes. Ils sont bien dans
+             le texte — c'est l'affichage par défaut qui les effaçait, et tout
+             arrivait abouté en un seul bloc où rien ne se détachait. Et la
+             carte écrivait elle-même en pied *1/6 visible* sans donner le
+             moyen d'atteindre les cinq autres sixièmes : elle annonçait ce
+             qu'elle cachait.
+             `whitespace-pre-wrap` rend les retours à la ligne, ce qui suffit à
+             séparer les paragraphes ; `overflow-y-auto` rend le reste
+             atteignable **sans toucher à la hauteur de la carte**, qui reste
+             celle d'une carte d'image du même cran (E7). */
           <p
             ref={texte}
             className={[
-              "overflow-hidden p-3 text-left text-[12.5px] leading-relaxed text-texte",
+              "defile overflow-y-auto p-3 text-left text-[12.5px] leading-relaxed whitespace-pre-wrap text-texte",
               plan ? "h-full" : "aspect-square",
             ].join(" ")}
           >
@@ -1266,14 +1278,20 @@ function Reglages({
         <div className="flex flex-col gap-2 border-t border-bord pt-2">
           <div className="flex flex-col gap-1">
             <Libelle aide="note.texte">Texte</Libelle>
-            <textarea
-              value={texte}
-              rows={3}
-              onChange={(e) => setTexte(e.target.value)}
+            {/* **C'est le seul endroit où le texte entier se relit** — la
+                carte, elle, en montre ce qu'un carré peut en montrer. Trois
+                lignes n'y suffisaient donc pas : le document de présentation
+                du jeu se corrigeait par un hublot. La zone suit ce qu'on y
+                écrit jusqu'à seize lignes, puis défile. */}
+            <ZoneTexte
+              valeur={texte}
+              lignesMin={3}
+              lignesMax={16}
+              onChange={setTexte}
               onBlur={() =>
-                texte.trim() && texte !== carte.texte && void regler({ texte })
+                void (texte.trim() && texte !== carte.texte && regler({ texte }))
               }
-              className="resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte"
+              className="rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug text-texte"
             />
           </div>
           <div className="flex flex-col gap-1.5">

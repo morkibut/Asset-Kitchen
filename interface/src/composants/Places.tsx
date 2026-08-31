@@ -40,7 +40,11 @@ import { Curseur, Libelle, Raison, Segments } from "./chassis"
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. */
 export const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
 
-export const MOTEUR: Record<Passe["moteur"], string> = { bord: "bord", modele: "modèle" }
+export const MOTEUR: Record<Passe["moteur"], string> = {
+  bord: "bord",
+  couleur: "pipette",
+  modele: "modèle",
+}
 
 /** Ce qu'une place posée dit d'elle-même quand elle est repliée
  *  (`docs/design-motifs.md` § Le bloc repliable). Une ligne, en mono, à droite du
@@ -259,7 +263,18 @@ export function PanneauDetourage({
   poser,
   mesures,
   BlocPasse,
-}: Reglages & { BlocPasse: React.ComponentType<any> }) {
+  visee,
+  onViser,
+}: Reglages & {
+  BlocPasse: React.ComponentType<any>
+  /** Le rang de la passe qui attend son clic dans l'image, ou `null`.
+   *
+   *  **L'état vit au-dessus des deux colonnes**, dans l'écran des tables : la
+   *  passe se règle à gauche et se vise au milieu, et un état tenu d'un seul
+   *  côté aurait laissé l'autre l'ignorer. */
+  visee?: number | null
+  onViser?: (rang: number | null) => void
+}) {
   const raisonModele =
     traitement.moteurs.find((m) => m.nom === "modele")?.raison ?? null
   return (
@@ -270,6 +285,9 @@ export function PanneauDetourage({
           rang={rang}
           passe={passe}
           raisonModele={raisonModele}
+          visee={mesures?.visees?.[rang] ?? null}
+          enVisee={visee === rang}
+          onViser={(arme: boolean) => onViser?.(arme ? rang : null)}
           onChange={(suivante: Passe) =>
             regler({
               ...recette,
@@ -310,18 +328,28 @@ export function PanneauDetourage({
           veut retirer, parfois de la matière qu'on veut garder : un cabochon de
           lanterne, un vitrail.
 
-          **Le produit ne tranche pas.** Il les cercle, il les compte, et il
-          n'en efface aucune de lui-même. */}
+          **Le produit ne tranche pas.** Il les compte, il propose la plus
+          grande, et il n'en efface aucune de lui-même — la proposition attend un
+          clic, et le clic ne fait qu'armer la pipette sur elle.
+
+          **Une liste est devenue une proposition** (E3, 31 août 2026). L'ancien
+          bloc listait des poches qu'il n'avait jamais trouvées : il lisait les
+          trous de la silhouette, qui sont l'inverse, et rendait zéro sur les
+          soixante images du dépôt. La mesure juste, elle, en trouve quarante-
+          trois par image en médiane — dont les trois quarts font un à trois
+          pixels. Les lister toutes ferait une page de chiffres pour un geste qui
+          vise une zone à la fois. */}
       {mesures && mesures.poches.length > 0 && (
         <div className="mt-2 flex flex-col gap-1 border-t border-bord pt-2">
           <Libelle aide="detourage.poches">
-            {mesures.poches.length} poche{mesures.poches.length > 1 ? "s" : ""} de fond
-            enfermée{mesures.poches.length > 1 ? "s" : ""}
+            {mesures.poches_total} poche{mesures.poches_total > 1 ? "s" : ""} de fond
+            enfermée{mesures.poches_total > 1 ? "s" : ""}
           </Libelle>
+          <Raison texte="du fond que le remplissage depuis le bord ne peut pas atteindre : il n'y mène aucun chemin, à aucune tolérance" />
           <ul className="flex flex-col">
-            {mesures.poches.slice(0, 8).map((poche) => (
+            {mesures.poches.map((poche) => (
               <li
-                key={poche.boite.join(",")}
+                key={poche.point.join(",")}
                 className="mesure flex h-[24px] items-center gap-2 text-[10px] text-texte-3"
               >
                 <span
@@ -330,12 +358,38 @@ export function PanneauDetourage({
                   className="inline-block h-3 w-3 shrink-0 rounded-full border border-bord"
                 />
                 <span>{poche.aire} px</span>
-                <span className="ml-auto">
-                  {poche.boite[0]},{poche.boite[1]}
-                </span>
+                {/* **Le geste, sur la ligne de ce qu'il vise.** Il ajoute une
+                    passe pipette déjà visée sur un pixel *de la poche* — jamais
+                    le centre de sa boîte, qui tombe dans le sujet dès que la
+                    zone est courbe. Rien n'est effacé sans que la recette le
+                    dise : c'est une passe comme une autre, qui s'annule. */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    void poser({
+                      ...recette,
+                      passes: [
+                        ...recette.passes,
+                        {
+                          ...PASSE_PAR_DEFAUT,
+                          moteur: "couleur",
+                          point: poche.point,
+                        },
+                      ],
+                    })
+                  }
+                  className="ml-auto text-[10px] text-signal hover:text-signal-clair"
+                >
+                  la retirer ›
+                </button>
               </li>
             ))}
           </ul>
+          {mesures.poches_total > mesures.poches.length && (
+            <Raison
+              texte={`${mesures.poches_total - mesures.poches.length} plus petites, non listées — les plus grandes sont celles dont on se demande vraiment si c'est du fond`}
+            />
+          )}
           <Raison texte="le produit n'en efface aucune — c'est du fond, ou c'est de la matière, et lui ne peut pas le savoir" />
         </div>
       )}
@@ -646,7 +700,10 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
    *  de faire redescendre l'image une seconde fois. */
   const seuil = recette.bords?.aire_min ?? 0
   const contournees = (mesures?.taches ?? []).filter((t) => t.aire >= seuil)
-  const trous = mesures?.poches ?? []
+  // **Les trous, pas les poches** — les deux sont exactement inverses, et le
+  // contour lit bien celui-ci : un trou de silhouette est du transparent que le
+  // sujet entoure, et c'est lui que le trait longe ou pas.
+  const trous = mesures?.trous ?? []
 
   return (
     <div className="flex flex-col gap-2">

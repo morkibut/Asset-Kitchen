@@ -41,7 +41,7 @@ l'intégration ne l'est pas.
 | Fournisseur | Un seul adaptateur : OpenRouter. Un compte, une clé, une facture. | 48 modèles image de 11 fournisseurs, paramètres unifiés, découverte de capacités, `usage.cost` par appel. Écrire trois adaptateurs donnerait le même résultat pour trois fois le travail. |
 | Comptabilité | **Aucun compteur de crédits maison en V1.** Suivi des coûts dans le tableau de bord OpenRouter. | Économise tout un pan de code pour une information déjà rendue ailleurs. |
 | Modèles locaux | Hors application. Import du résultat. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. |
-| Détourage | **Remplissage depuis le bord** par défaut, `rembg` en second moteur facultatif. Passes multiples dans les deux cas. | *Révisé le 27 août 2026, à la mesure.* Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
+| Détourage | **Remplissage depuis le bord** par défaut, la **pipette** en recours pour ce qu'il n'atteint pas, `rembg` en troisième moteur facultatif. Passes multiples dans les trois cas. | *Révisé le 27 août 2026, à la mesure.* Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
 | Post-traitement | Local, CPU, jamais sur le GPU. | Reprise de AD-9 de GAG. Un curseur doit répondre instantanément. |
 | Univers | Bible écrite à la main + planches de référence + palette extraite par calcul. | La palette sert **en entrée** (contrainte de quantification), pas en contrôle. |
 | Conformité | **Aucune vérification automatique.** L'humain juge à l'œil. | Écarté volontairement : coûte de l'analyse d'image pour un jugement que l'auteur fait mieux. Réintégrable plus tard si le besoin apparaît. |
@@ -118,10 +118,20 @@ Cinq règles qui tiennent l'ensemble :
    est *relié au bord* par une chaîne de pixels proches de la couleur de
    bordure — rend une silhouette propre sur les 44 images des bancs, squelette
    blanc sur fond gris clair et fioles translucides compris (`essais/essai_pixel.py`,
-   27 août 2026). `rembg` reste **en second moteur, facultatif** — il embarque
+   27 août 2026). `rembg` reste **en troisième moteur, facultatif** — il embarque
    180 Mo de réseau de neurones et il est là pour les images qui ne viennent pas
    d'ici, donc sans fond plat. Absent, il est grisé avec sa raison, et rien du
    geste courant ne s'arrête.
+
+   **Le deuxième moteur, lui, ne coûte rien : c'est le même remplissage, amorcé
+   ailleurs** (E3). La pipette part d'un point désigné dans l'image au lieu des
+   quatre bordures, et c'est toute leur différence — les graines sont un argument
+   de la fonction, pas une seconde implémentation. Elle existe pour ce que le
+   premier ne peut pas atteindre *par construction* : une poche de fond
+   entièrement enfermée par le sujet n'est reliée à aucune bordure, donc aucune
+   valeur de tolérance ne l'efface. Ce que la recette en garde est un **point**,
+   jamais un identifiant de tache, et la couleur qu'il désigne est une mesure —
+   voir `atelier/domaine/recette.py`, sur `Passe`.
 5. **Le traitement est non destructif.** On garde l'image brute et la **recette** — la
    liste ordonnée des étapes et leurs réglages. Le fichier traité est un rendu, écrit sur
    disque comme cache, effaçable sans rien perdre. Recalculer coûte des millisecondes ;

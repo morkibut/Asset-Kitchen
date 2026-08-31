@@ -32,7 +32,7 @@
 
 ---
 
-## A · Les vingt-cinq arbitrages pris en autonomie
+## A · Les vingt-six arbitrages pris en autonomie
 
 Chacun est une décision qui n'était écrite nulle part, ou qui contredisait
 quelque chose d'écrit ailleurs. Ils sont rangés par le document qu'ils touchent.
@@ -403,10 +403,19 @@ cette tache-là ou toutes les taches de cette couleur.
 
 **Tranché : l'exclusion tombe, et ce qui l'a fait tomber est un cas mesuré.**
 Une poche de fond entièrement enfermée par le sujet — l'espace entre un bras et
-un corps — n'est atteignable par **aucune** valeur de tolérance, parce que le
-remplissage part des bordures de l'image et que le chemin n'existe pas. Le
-remplissage depuis le bord reste le geste courant et le défaut ; la pipette est
-le recours pour ce qu'il ne peut pas atteindre par construction.
+un corps — n'est atteignable par **aucune** valeur de tolérance qui garde le
+sujet, parce que le remplissage part des bordures de l'image et que le chemin
+n'existe pas. Le remplissage depuis le bord reste le geste courant et le défaut ;
+la pipette est le recours pour ce qu'il ne peut pas atteindre par construction.
+
+**Complété le 31 août 2026, en construisant la pipette, et le fait est plus fort
+qu'annoncé.** Mesuré sur les soixante images brutes du dépôt, détourées au
+réglage courant : une image porte **quarante-trois de ces poches en médiane**, et
+jusqu'à seize mille. Le cas n'est donc pas un cas limite qu'on rencontre parfois,
+c'est l'ordinaire. Ce que la phrase ci-dessus a aussi appris à dire : à tolérance
+maximale la poche part bel et bien — mais parce que le moteur a d'abord mangé la
+matière qui l'enfermait, et qu'il ne reste plus rien. *Tant que la matière tient,
+la poche tient avec elle*, sur les deux cent vingt tolérances où c'est le cas.
 
 ### A-23 · Ce que le document du produit ne dit plus jamais « Atelier »
 
@@ -474,6 +483,47 @@ colonne cesse d'exister dans la galerie : vrai, et fait. Qu'elle cesse d'exister
 tout court : pas encore, et le document du design le dit maintenant. La largeur
 de 300 px, elle, ne disparaît pas du tout — l'établi la reprend pour l'identité
 d'une chose du jeu (corrigé en E2).
+
+### A-26 · Ce que la pipette retient d'un clic : un point, jamais une tache
+
+*Pris le 31 août 2026, en fermant le dernier critère ouvert de E3.*
+
+**Ce qui était écrit.** Le critère lui-même posait la question et ne la
+tranchait pas : « elle demande un champ de plus à la recette, et ce qu'il retient
+n'est pas tranché — des identifiants de taches, qui se recalculent et se
+déplacent, ou des points, qui survivent au recalcul ».
+
+**Ce qui décide, et c'est vérifiable.** Une tache n'est pas une chose rangée
+quelque part : c'est une zone d'un seul tenant que le serveur **retrouve à chaque
+rendu**, par le même remplissage par plages qui sert au détourage. Son rang dans
+la liste et sa boîte bougent donc dès qu'une passe au-dessus change d'un cran —
+et une recette qui aurait nommé « la tache numéro trois » se mettrait à en viser
+une autre sans que rien le dise. Un point, lui, ne bouge pas, et pour une raison
+qui tient en une ligne du traitement : **une passe ne fait que fermer de l'alpha,
+elle ne déplace aucun pixel et ne touche pas aux couleurs.** Le recadrage et la
+remise sur grille, eux, déplacent — mais ils viennent après.
+
+**Tranché : la recette garde `point`, en pixels de l'image brute.** Même
+convention que le rectangle de recadrage, qui est déjà exprimé là et pour la même
+raison. Un second champ l'accompagne, `portee`, parce que le point seul ne dit pas
+si l'on retire la zone qu'il touche ou toutes celles de sa couleur — le critère
+disait « un champ de plus », il en fallait deux.
+
+**Et un troisième qui n'y est pas : la couleur.** L'écran affiche une pastille et
+son code hexadécimal, donc la tentation était de les ranger à côté du point. Une
+couleur écrite à côté du point qui la porte est une **copie que plus rien ne met
+à jour** — exactement la faute d'un fichier « avant retouche » gardé sur le
+disque, écartée en C4 pour ce motif. Elle est donc mesurée, et arrive avec les
+autres mesures de la table : `taches_de` en rend une par passe, dans l'ordre des
+passes, `null` là où il n'y a rien à viser.
+
+**Ce que la décision coûte, et il faut le dire.** Une recette nommée qui porte
+une pipette et qu'on rejoue sur une autre image vise un pixel qui n'a plus le même
+sens. C'est déjà vrai de la boîte explicite du recadrage, et le produit l'accepte
+là pour la même raison : ce sont les deux seuls réglages désignés *sur* une image
+plutôt que réglés dans l'absolu. Un point hors cadre n'est pas refusé — il ferait
+disparaître les six autres places pour un point devenu caduc —, il ne retire
+simplement rien.
 
 ---
 

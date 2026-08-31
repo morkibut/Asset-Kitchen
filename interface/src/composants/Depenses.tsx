@@ -97,9 +97,16 @@ const SEMAINE_S = 7 * 24 * 3600
 export function EcranDepenses({
   projetCourant,
   onErreur,
+  onFermer,
 }: {
   projetCourant: string | null
   onErreur: (raison: string) => void
+  /** **La sortie, et elle manquait** — ajoutée le 31 août 2026. Cet écran
+   *  s'ouvre par-dessus les trois onglets et n'appartient à aucun ; il n'avait
+   *  pourtant ni bouton de fermeture ni touche Échap, et sa seule sortie était
+   *  de recliquer un onglet du haut — c'est-à-dire d'aller ailleurs, pas de
+   *  revenir d'où l'on venait. */
+  onFermer: () => void
 }) {
   const [tout, setTout] = useState<Depenses | null>(null)
   const [choisi, setChoisi] = useState<string | null>(null)
@@ -124,6 +131,18 @@ export function EcranDepenses({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // **Échap ramène d'où l'on venait** — le geste du Guide et de la vitrine,
+  // que cet écran-ci n'avait pas. Rien ne s'y saisit qui doive prendre la
+  // touche avant lui : le champ de recherche filtre une liste, il ne compose
+  // aucun texte qu'on puisse perdre.
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFermer()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [onFermer])
 
   const appels = tout?.appels ?? []
 
@@ -230,6 +249,16 @@ export function EcranDepenses({
             {retenus.length} appel{retenus.length > 1 ? "s" : ""} ·{" "}
             {dollars(retenus.reduce((somme, a) => somme + a.cout_usd, 0))}
           </span>
+          {/* La sortie, écrite avec sa touche — la forme qu'ont déjà le Guide
+              et la vitrine. Aucune hauteur neuve : elle prend la fente qui
+              existe, au bout de la barre de 38 px. */}
+          <button
+            type="button"
+            onClick={onFermer}
+            className="mesure h-[26px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3"
+          >
+            Fermer — Échap
+          </button>
         </div>
 
         <div className="defile min-h-0 flex-1 overflow-y-auto">

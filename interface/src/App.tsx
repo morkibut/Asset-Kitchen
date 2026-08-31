@@ -59,6 +59,7 @@ import {
   sujetAsset,
   useApercu,
   useVisee,
+  vignetteAsset,
 } from "./composants/Apercu"
 import { Arbre } from "./composants/Arbre"
 import {
@@ -577,11 +578,17 @@ export function App() {
   // `onglet` en dépendance parce que la galerie se **démonte** quand un autre
   // onglet est allumé (E1) : sans cette ligne, la largeur mesurée resterait
   // celle d'avant le départ, et le grisé du zoom mentirait au retour.
+  // `tablesOuvertes` pour la même raison, depuis le 31 août 2026 : la galerie
+  // se démonte aussi quand une table s'ouvre par-dessus elle, et la mesure
+  // doit se reprendre au retour. L'identifiant plutôt que l'asset trouvé —
+  // celui-ci change d'identité à chaque relecture de grille, et ferait courir
+  // la mesure pour rien.
   useLayoutEffect(mesurerCentre, [
     mesurerCentre,
     replies.arbre,
     fiche,
     onglet,
+    tablesOuvertes,
   ])
 
   const echouer = (erreur: unknown, defaut_: string) =>
@@ -1069,12 +1076,20 @@ export function App() {
    *
    *  C'est elle que la case « ne plus me le montrer » retient. Dès qu'on change
    *  de l'une ou de l'autre, l'écran revient : relire dix fois la même chose est
-   *  une punition, relire la première d'une série ne l'est pas. */
-  const serie = [
-    cible?.personnage ?? "",
-    (cible?.poses ?? []).join("·"),
-    cible?.piece ?? "",
-  ].join("|")
+   *  une punition, relire la première d'une série ne l'est pas.
+   *
+   *  **`null` quand aucune case n'est visée, et c'est un bug payé en argent
+   *  réel** (signalé le 31 août 2026). Sans chose du jeu, les trois morceaux
+   *  sont vides : *toutes* les générations libres partageaient donc la même clé,
+   *  dans tous les jeux. Cocher la case une seule fois éteignait l'écran de
+   *  confirmation pour chacune d'elles jusqu'au rechargement de l'onglet — et le
+   *  clic suivant sur Générer partait droit à la dépense, sans rien montrer.
+   *  C'était très exactement la case « pour toujours » que le produit s'interdit,
+   *  atteinte par accident. Une série est une *répétition* ; un texte écrit à la
+   *  main n'en est pas une, donc il n'y a rien à sauter. */
+  const serie = cible
+    ? [cible.personnage, cible.poses.join("·"), cible.piece ?? ""].join("|")
+    : null
 
   /** Le bouton de la barre qui paie — **il n'envoie plus, il fait relire** (E14).
    *
@@ -1082,9 +1097,32 @@ export function App() {
    *  saute pour la série en cours, et seulement pour elle : une case définitive
    *  éteindrait le seul écran qui montre ce qui part, et on la cocherait le
    *  premier jour, quand on ne sait pas encore qu'on en aura besoin. */
+  /** Combien d'images sont **payées et pas encore arrivées**.
+   *
+   *  Le chantier tenait déjà sa place dans la grille de la galerie, avant même
+   *  que l'image existe. Mais on paie aussi depuis le codex et depuis l'établi,
+   *  et là rien ne bougeait : l'auteur dépensait, l'écran restait immobile, et
+   *  il recliquait — ce qui repayait. Le compte descend donc dans la fente sous
+   *  le bouton, qui est l'endroit du produit pour ce qui vient d'arriver.
+   *
+   *  Les échecs n'y sont pas : ils ont leur propre locataire dans la fente, le
+   *  revers, et deux tenants à la fois est ce que la fente s'interdit. */
+  const enVol = chantier.reduce(
+    (somme, generation) =>
+      somme +
+      generation.emplacements.filter(
+        (e) => e.statut === "en_attente" || e.statut === "en_cours",
+      ).length,
+    0,
+  )
+
   const generer = () => {
     if (refus || !modele) return
-    if (serieSautee === serie) {
+    // **Pas de série, pas de saut.** `serie` vaut `null` quand aucune case n'est
+    // visée, et `serieSautee` vaut `null` quand rien n'a été sauté : les
+    // comparer sans ce garde-fou rendait vrai « rien saute rien », et l'écran
+    // disparaissait pour toutes les générations libres.
+    if (serie !== null && serieSautee === serie) {
       void payer()
       return
     }
@@ -1838,6 +1876,10 @@ export function App() {
         }
         onGenerer={generer}
         variations={variations}
+        /* **Ce qui est parti se voit là où l'on a payé.** Le chantier ne
+           paraissait que dans la grille de la galerie ; le codex et l'établi,
+           d'où l'on paie aussi, ne montraient rien du tout. */
+        enVol={enVol}
       />
     </div>
   )
@@ -1907,6 +1949,7 @@ export function App() {
         <EcranDepenses
           projetCourant={bibliotheque.courant}
           onErreur={setPanne}
+          onFermer={() => setDepensesOuvertes(false)}
         />
       )}
 
@@ -1940,7 +1983,11 @@ export function App() {
           onPayer={() => void payer()}
           onFermer={() => setEnvoiOuvert(false)}
           onGarder={(ligne) => void garderLeTexte(ligne)}
-          onSauter={(saute) => setSerieSautee(saute ? serie : null)}
+          onSauter={
+            serie === null
+              ? null
+              : (saute: boolean) => setSerieSautee(saute ? serie : null)
+          }
           /* **Reprendre pose le texte exact, et referme l'écran** : le champ
              *est* désormais ce qui partira, et le relire ligne par ligne
              n'aurait plus de lignes à montrer — il n'y a plus de bible d'un côté
@@ -2017,7 +2064,18 @@ export function App() {
           se poser dessus ; c'est elle, désormais, qui se retire quand un autre
           onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
           vit de toute façon dans `App`, et lui survit. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !planche && (
+      {/* **Et elle se retire quand une table s'ouvre** — corrigé le 31 août
+          2026. Elle restait montée sous la table de retouche : invisible, mais
+          vivante. Mesuré au navigateur — 152 commandes atteignables à la
+          Tabulation, dont 83 hors de l'écran, appartenant toutes à la grille du
+          dessous, « Supprimer la sélection » comprise : on la traversait à
+          l'aveugle. Et les 54 px dont la page débordait faisaient reparaître sa
+          barre tout en bas de la table, ce que la règle « un panneau est borné
+          par l'écran, jamais par son contenu » interdit. La retirer répare les
+          deux d'un coup, et elle ne perd rien en partant : ce qu'elle tient vit
+          dans `App`, pas dans son montage. */}
+      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !planche &&
+        !imageDesTables && (
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -2488,7 +2546,13 @@ function UneReinjection({
     >
       {connu && (
         <img
-          src={sujetAsset(connu).src}
+          // **Vingt-quatre pixels ne demandent pas un fichier de deux
+          // mégaoctets** — corrigé le 31 août 2026, en même temps que la
+          // grille. Le cran demandé est celui de la grille au repos : la
+          // vignette est déjà dans le cache du navigateur, et la bande ne
+          // coûte alors rien du tout. Ce que le pointeur vise, lui, reste le
+          // fichier entier — c'est ce qu'Espace doit ouvrir.
+          src={vignetteAsset(connu, 256)}
           alt=""
           className="damier h-6 w-6 object-contain"
           style={{ imageRendering: "pixelated" }}
@@ -2600,6 +2664,13 @@ function Grille({
             key={entree.cle}
             entree={entree}
             selectionnee={selection.includes(entree.cle)}
+            // **Deux tailles servies, pas trois, et jamais la largeur rendue.**
+            // Une case d'`auto-fill` mesure entre son cran et presque deux
+            // fois son cran ; demander 256 px au cran 1 couvre donc la case la
+            // plus large **et** un écran à deux points par pixel, sans jamais
+            // agrandir une vignette. Une adresse par largeur de fenêtre, elle,
+            // viderait le cache du navigateur à chaque repli de panneau.
+            cote={Math.max(256, CRANS[zoom])}
             onRelancer={onRelancer}
             onOuvrir={onOuvrir}
           />

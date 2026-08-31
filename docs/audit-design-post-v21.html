@@ -214,9 +214,47 @@
   été fabriquée pendant l'examen — donc aucun euro dépensé, et aucun réglage du projet modifié.</p>
 
   <p class="sourd"><strong style="color:var(--texte-2)">Quatorze défauts</strong>, dont deux
-  erreurs de disposition franches — des boutons qui se recouvrent, un bouton qui sort de l'écran.
-  Sept se corrigent en moins d'une demi-heure chacun.</p>
+  erreurs de disposition franches — des boutons rognés en silence, un bouton qui sort de l'écran.
+  Sept se corrigent en moins d'une demi-heure chacun. <strong style="color:var(--ok)">Onze des
+  quatorze ont été corrigés le soir même</strong> ; l'encadré ci-dessous dit ce qu'il est advenu
+  des trois autres.</p>
 </header>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="encadre">
+  <div class="t">Où en est ce document — corrigé le 31 août 2026, le soir</div>
+  <p>Les défauts listés ici <strong>ont été corrigés dans le code</strong>, à une exception près :
+  le n° 07, <em>« un réglage par écran, sept dixièmes de vide »</em>, laissé de côté sur décision de
+  l'auteur — c'est le seul du lot qui demande une décision de forme, et il appartient à la refonte
+  en cours.</p>
+  <p><strong>Et deux des quatorze n'existaient pas.</strong> Les écrire ici plutôt que de les effacer,
+  parce qu'un audit qui se corrige en silence n'apprend rien :</p>
+  <ul style="margin-bottom:0">
+    <li><strong>Le n° 08 — le guide qui décrit un écran périmé — était déjà réparé.</strong> Il l'avait
+    été le jour même, quelques heures plus tôt. L'examen avait été mené sur <em>l'atelier en train de
+    tourner</em>, et cet atelier-là servait une version compilée de 16 h 35, antérieure à la
+    correction. La leçon vaut au-delà de ce cas : <strong>mesurer sur ce qui tourne, c'est mesurer
+    sur ce qui a été compilé</strong>, et les deux peuvent avoir des heures d'écart.</li>
+    <li><strong>Le n° 14 — la bascule qui annonce l'état inverse — était une erreur de mesure.</strong>
+    Vérification faite au navigateur, trois fois : le bouton annonce <em>appuyé</em> quand la colonne
+    est visible, ce qui est juste. La mesure d'origine avait été prise dans l'instant qui suit le clic,
+    avant que l'écran ne se soit redessiné — elle lisait donc l'état d'avant.</li>
+  </ul>
+</div>
+
+<div class="encadre">
+  <div class="t">Un défaut de plus, trouvé en corrigeant, et il n'est pas dans la liste</div>
+  <p>Le n° 10 disait que deux barres d'outils <em>se recouvrent</em>. Elles ne se recouvrent pas :
+  la première est <strong>rognée en silence</strong> par une zone qui défile horizontalement — et
+  aucune barre de défilement ne se dessine à cette hauteur-là pour le dire. Le défaut constaté
+  était réel — <em>Supprimer</em> coupé en plein mot, <em>Désélectionner</em> entièrement hors du
+  cadre —, mais sa cause était l'inverse de celle qui est écrite plus bas, et la correction qu'elle
+  suggérait aurait fait grandir une bande dont la hauteur est fixée par le document de design.</p>
+  <p style="margin-bottom:0">Ce qui avait trompé la mesure : <strong>le navigateur donne la place
+  d'un bouton dans la mise en page, pas la place de ce qu'on en voit.</strong> Un bouton rogné garde
+  ses coordonnées entières, et son rectangle chevauche alors ses voisins sans que rien ne se
+  chevauche à l'écran. C'est noté dans <span class="mesure">docs/PIEGES.md</span>.</p>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════════════ -->
 <section>
@@ -945,111 +983,132 @@
       <th>Le défaut</th>
       <th style="width:200px">Ce qu'il faut faire</th>
       <th style="width:120px">Coût</th>
+      <th style="width:130px">Où ça en est</th>
     </tr>
     <tr>
       <td class="mesure">04</td>
       <td>La main ne paraît pas sur les boutons</td>
       <td>Une ligne dans la feuille de style</td>
       <td><span class="cout petit">quelques minutes</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">03</td>
       <td>La note de l'univers colle ses paragraphes</td>
       <td>Une ligne de style, plus une zone qui défile</td>
       <td><span class="cout petit">quelques minutes</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">05</td>
       <td>Échap ne ferme ni les réglages ni les dépenses</td>
       <td>Reprendre le comportement déjà écrit pour le guide</td>
       <td><span class="cout petit">une demi-heure</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">02</td>
       <td>Les mesures et les onglets éteints sont trop pâles</td>
       <td>Un gris et deux tailles à changer, en un seul endroit</td>
       <td><span class="cout petit">une demi-heure</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">09</td>
       <td>Deux boutons, un seul endroit où ils mènent</td>
       <td>Retirer ou renommer le lien qui double</td>
       <td><span class="cout petit">quelques minutes</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">14</td>
       <td>La bascule « arbre » annonce l'état inverse</td>
       <td>Une ligne : inverser l'état annoncé</td>
       <td><span class="cout petit">quelques minutes</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--texte-3)">n'existait pas</td>
     </tr>
     <tr>
       <td class="mesure">11</td>
       <td>« Supprimer » sort de la colonne sur l'établi</td>
       <td>Laisser la rangée passer à la ligne</td>
       <td><span class="cout petit">une demi-heure</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">10</td>
       <td>Les deux barres de la galerie se recouvrent</td>
       <td>Une règle de retour à la ligne sur la rangée</td>
       <td><span class="cout petit">une demi-heure</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">12</td>
       <td>La description d'un personnage tient sur quatre lignes</td>
       <td>Même correction que le n° 03 — à traiter ensemble</td>
       <td><span class="cout petit">une demi-heure</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">01</td>
       <td>L'image n'est pas ajustée sur les tables de retouche</td>
       <td>Un état d'ouverture + une commande de zoom</td>
       <td><span class="cout moyen">une demi-journée</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">13</td>
       <td>La vitrine est écrasée par l'image hors format</td>
       <td>Ramener l'intruse à la taille commune, garder la mention</td>
       <td><span class="cout moyen">une demi-journée</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">08</td>
       <td>Le guide décrit un écran périmé</td>
       <td>Réécrire une section du guide</td>
       <td><span class="cout moyen">une demi-journée</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--texte-3)">était déjà corrigé</td>
     </tr>
     <tr>
       <td class="mesure">05b</td>
       <td>La galerie reste vivante sous la table de retouche</td>
       <td>Éteindre vraiment l'écran du dessous</td>
       <td><span class="cout moyen">une demi-journée</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
     <tr>
       <td class="mesure">07</td>
       <td>Un réglage par écran, sept dixièmes de vide</td>
       <td>Regrouper les réglages par section</td>
       <td><span class="cout gros">à décider dans la refonte</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--texte-3)">laissé de côté</td>
     </tr>
     <tr>
       <td class="mesure">06</td>
       <td>Vingt-six mégaoctets pour quarante-neuf vignettes</td>
       <td>Vignettes réduites côté serveur, chargement différé, mise en mémoire</td>
       <td><span class="cout gros">un à deux jours</span></td>
+      <td class="mesure" style="font-size:10px;color:var(--ok)">corrigé</td>
     </tr>
   </table>
 
   <div class="encadre">
-    <div class="t">Le point qui demande un arbitrage</div>
-    <p>Une refonte de l'interface est en cours de dessin dans
-    <span class="mesure">docs/maquettes-v2.1/</span>, et la règle de ce dossier est de ne pas
-    toucher à l'interface actuelle pendant ce temps. Les quatorze défauts ci-dessus existent
-    pourtant dans l'atelier qui sert tous les jours. La question n'est donc pas <em>lesquels
-    corriger</em>, mais <strong>où le travail atterrit</strong> : dans le code d'aujourd'hui, dans
-    les maquettes de demain, ou dans les deux.</p>
-    <p>Une remarque en faveur du code d'aujourd'hui : <strong>sept des quatorze se corrigent en
-    moins d'une demi-heure chacun</strong>, et aucun de ces sept ne touche à une décision de
-    forme — ce sont une ligne de style, un état d'ouverture, une règle de retour à la ligne, un
-    doublon à retirer. Quoi que devienne la version 2.1, ils ne seront pas du travail perdu.</p>
+    <div class="t">L'arbitrage a été rendu — le travail atterrit dans le code d'aujourd'hui</div>
+    <p>La question posée ici était <em>où le travail atterrit</em> : dans le code d'aujourd'hui,
+    dans les maquettes de demain, ou dans les deux. La réponse est le code d'aujourd'hui, et elle
+    a été tenue le 31 août 2026 au soir. Rien n'a été écrit dans
+    <span class="mesure">docs/maquettes-v2.1/</span> : c'est un dossier de conception, il décrit
+    l'interface future et jamais l'état du code.</p>
+    <p>Ce qui a rendu l'arbitrage facile : <strong>aucune de ces corrections ne touche à une
+    décision de forme</strong>. Ce sont une ligne de style, un état d'ouverture, une règle de
+    retour à la ligne, un doublon à retirer, une image servie à la taille où on la regarde. Quoi
+    que devienne la version 2.1, rien de tout cela n'est du travail perdu — et ce qui aurait pu
+    l'être, le n° 07, est justement celui qui a été laissé de côté.</p>
+    <p style="margin-bottom:0"><strong>Ce qui tient les corrections</strong> : onze critères
+    d'acceptation neufs — six d'écran dans
+    <span class="mesure">interface/src/App.test.tsx</span>, cinq de serveur dans
+    <span class="mesure">tests/test_audit_design.py</span>. Les deux bancs entiers passent —
+    411 essais d'écran et 691 de serveur, aucun échec, aucun centime.</p>
   </div>
 </section>
 

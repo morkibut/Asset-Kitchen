@@ -500,7 +500,12 @@ faire est **à relever avant de construire** — voir `docs/PLAN.md`, § F0.*
 - **US-327** — En tant qu'auteur, je veux qu'une réserve que le fournisseur n'annonce pas appel par appel soit comptée ici et annoncée comme un compte tenu ici, afin de ne pas prendre une estimation pour un relevé.
 - **US-328** — En tant qu'auteur, je veux qu'un modèle nouveau chez un fournisseur paraisse sans qu'on ait rien réécrit, afin de ne jamais dépendre d'une liste vieillie.
 
-### Un fournisseur qui répond en deux temps
+### ~~Un fournisseur qui répond en deux temps~~
+
+*Sans objet depuis le relevé du 31 août 2026 (`docs/releve-fournisseurs.md`) : aucun des
+fournisseurs retenus ne répond en deux temps. Les deux stories sont gardées telles quelles —
+elles redeviendront vraies le jour où un fournisseur de cette forme entrera — et **aucune
+tranche ne les porte**.*
 
 - **US-329** — En tant qu'auteur, je veux qu'un fournisseur qui fait attendre affiche son attente comme les autres, afin de ne pas croire que rien ne se passe.
 - **US-330** — En tant qu'auteur, je veux que toutes les images rendues par une même soumission entrent, afin de ne jamais jeter ce qui a déjà été consommé.

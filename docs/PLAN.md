@@ -838,7 +838,9 @@ disparaît : on ne le cherche plus, il est là quand il sert.
 
 #### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-**13 critères tenus sur 14.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
+**14 critères sur 14.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant. Le
+dernier — la pipette — a été fermé après E20 : il portait une question que le critère lui-même
+laissait ouverte, et la réponse est en A-26 du dossier des arbitrages.
 
 #### Bloquée par
 
@@ -1757,11 +1759,11 @@ qu'E0 en V2.1.
 | F2 | 315 à 321 | 7 |
 | F3 | 322 à 326 | 5 |
 | F4 | 327, 328 | 2 |
-| F5 | 329, 330 | 2 |
+| ~~F5~~ | ~~329, 330~~ | 0 — *retirée par le relevé F0* |
 | F6 | 331, 332, 333 | 3 |
-| | **Total** | **25** |
+| | **Total** | **23** *(25 écrites, 2 sans objet)* |
 
-### F0 · Le relevé des trois — *à faire avant que le code commence*
+### F0 · Le relevé des trois — *tenu le 31 août 2026*
 
 **Un relevé, pas un banc, et c'est la seule décision de méthode de cette version.** Le banc
 qui a désigné le modèle par défaut a payé dix sujets en deux jets chez trois modèles, jugés
@@ -1809,11 +1811,69 @@ celle qu'on lui prêtait.
 
 #### Critères d'acceptation → `docs/tranches/V2.2.md`
 
-**8 critères, aucun encore tenu.**
+**8 critères — 6 tenus et 2 partiels le 31 août 2026**, les deux partiels faute d'une
+clé Cloudflare. Ils s'y lisent un par un, avec ce que chacun a donné.
 
 #### Bloquée par
 
-- **E14 et E20** — décision d'ordre : la V2.2 s'ouvre quand la V2.1 est close.
+- ~~**E14 et E20**~~ — **levé le 31 août 2026** : les deux dernières étapes de la V2.1 ont été
+  tenues, la version est close, et la V2.2 est ouverte. *Le relevé, lui, ne coûtant rien et ne
+  touchant à aucun écran, avait été tenu d'avance.*
+
+#### Ce que le relevé a trouvé
+
+**Tenu le 31 août 2026** — `docs/releve-fournisseurs.md` porte les fiches et le verdict,
+`essais/fournisseurs.json` les mesures, `essais/essai_fournisseurs.py` les relance. Onze images
+gratuites, aucun appel payant. Quatre trouvailles, et la troisième renverse le classement de
+départ.
+
+**1 · Il n'existe qu'un seul chemin gratuit vers un univers, et il est sous surveillance.** Le
+produit demande au moins trois références — deux planches de style plus la source d'édition. Un
+seul modèle gratuit les accepte : `flux-2-dev` chez Cloudflare, à quatre, **en octets envoyés
+avec l'appel** — donc depuis le disque de l'auteur, sans rien publier. Tous les autres en
+acceptent zéro, ou une seule par adresse web publique, ce que le périmètre du produit exclut.
+**Mais son petit frère `flux.2-klein-4b` a déjà été disqualifié par le banc du 26 août** pour la
+faute rédhibitoire — *la référence de style écrase le sujet*. Le grand frère partage-t-il le
+défaut de la famille ? C'est la première mesure à faire dès qu'une clé existe, et elle coûte
+deux images. Si oui, **le gratuit est un brouillon, définitivement**.
+
+**2 · Un fournisseur peut répondre « oui » à tout, et c'est un cas neuf.** Pollinations rend une
+image en 200 pour n'importe quelle adresse — `/openapi.json` en a rendu 141 Ko — et **substitue
+son modèle en silence** : demander `flux` ou `turbo` rend `sana`, à l'octet près la même image,
+et seul un en-tête de la réponse le dit. Il rend aussi 768 pixels là où on en demande 1024, sans
+un mot. Deux conséquences pour F1 : *un adaptateur vérifie que le modèle rendu est celui qui a
+été demandé* — règle neuve, candidate au rang d'invariant —, et la règle de T1 *les dimensions
+mesurées font foi* suffit pour le reste, sans qu'on ait à y toucher.
+
+**3 · Leonardo n'a pas de gratuité là où le produit irait la chercher — et ses modèles entrent
+quand même.** Les 150 jetons par jour appartiennent à l'application web ; la documentation dit
+que l'accès programmé en est « séparé », et il se facture en dollars à l'usage. Un fournisseur
+payant de plus ne justifie pas une tranche. **Mais `phoenix-1.0` et `lucid-origin` sont hébergés
+chez Cloudflare** et consomment son allocation gratuite : on obtient les modèles qui motivaient
+son entrée, sans compte chez lui, sans une clé de plus, et sans une forme d'appel de plus.
+
+**4 · Le gratuit achète beaucoup d'images médiocres ou très peu de bonnes, et c'est chiffré.**
+L'allocation quotidienne de Cloudflare vaut environ onze centimes au tarif affiché — quatre à
+cinq images du modèle payant par défaut. Elle donne, selon le modèle choisi, **environ deux
+cents brouillons par jour, ou trois images soignées**. C'est exactement le partage que cette
+version supposait, et il cesse d'être une supposition.
+
+**Ce que ça change au découpage**, et il vaut mieux le lire ici que le découvrir en construisant :
+
+- **F5 perd son objet** — voir le marqueur sous son titre. La version passe de six tranches à
+  cinq, et perd le seul fournisseur qui répondait en deux temps.
+- **F4 change de rang** : Cloudflare n'est plus le second fournisseur à clé, c'est **celui qui
+  porte la version**.
+- **F1 gagne une règle** (vérifier le modèle rendu) **et une lacune à combler** : le grisé ne
+  voit pas un modèle qui ne déclare *aucun* réglage de taille — `flux-1-schnell` n'a ni largeur,
+  ni hauteur, ni proportion, et la règle *imposer la proportion explicitement* n'a aucune prise
+  sur lui.
+- **F2 est confirmée dans son cas le plus ingrat** : aucun des deux fournisseurs retenus ne dit
+  ce qu'il reste. Le compte tenu ici est le cas normal, et le dire devient la règle.
+
+**Ce qui reste à mesurer tient en une clé Cloudflare** — un identifiant de compte et un jeton,
+tous deux gratuits. `.env.example` porte les noms attendus.
+
 
 ---
 
@@ -1966,8 +2026,20 @@ du précédent.
 
 ---
 
-### F5 · Leonardo
-**User stories** : 329, 330
+### F5 · ~~Leonardo~~ — *retirée par le relevé F0, le 31 août 2026*
+**User stories** : 329, 330 — *sans objet depuis le relevé ; aucune tranche ne les porte plus*
+
+> **Le relevé a trouvé qu'il n'y a pas d'allocation gratuite renouvelable de ce côté** : les
+> 150 jetons par jour sont ceux de l'application web, et l'accès programmé s'en sépare pour se
+> facturer en dollars. Un fournisseur payant de plus ne justifie pas une tranche — le produit en
+> a déjà un, qui donne quarante-huit modèles derrière une seule facture. **Ses deux modèles
+> phares arrivent par F4**, hébergés chez Cloudflare et payés par l'allocation gratuite de
+> celui-ci.
+>
+> Le texte ci-dessous est gardé pour la mémoire de ce qu'on avait prévu d'éprouver, et **c'est
+> ce qui s'est perdu avec elle** : plus aucun fournisseur retenu ne répond en deux temps, donc ni
+> l'attente d'une soumission, ni les images multiples d'un même appel ne seront éprouvées par la
+> V2.2.
 
 #### Ce qu'on livre
 
@@ -2072,11 +2144,12 @@ précédente a rendu vrai.
   premier mêlerait deux travaux — le pluriel des fournisseurs et le pluriel des clés — et
   l'on ne saurait pas lequel des deux a cassé quoi. *Un travail à la fois, même quand les
   deux sont courts.*
-- **F2 et F3 avant F4 et F5.** Cloudflare et Leonardo sont précisément les deux qui demandent
-  une clé et qui comptent en jetons. Les faire entrer avant, c'est écrire deux fois la même
-  chose : une fois en dur pour eux, une fois pour de bon.
+- **F2 et F3 avant F4.** Cloudflare est celui qui demande une clé — deux, même — et qui
+  compte en jetons. Le faire entrer avant, c'est écrire deux fois la même chose : une fois en
+  dur pour lui, une fois pour de bon.
 
-**F4 et F5 se prennent dans l'ordre qu'on veut**, ou une seule des deux. **F6 en dernier** :
+**Depuis le relevé, la file est complète et il n'y a plus de choix d'ordre à faire** :
+F1 → F2 → F3 → F4 → F6, avec F3 qui peut se prendre en même temps que F2. **F6 en dernier** :
 le brouillon de l'agent n'a de sens qu'une fois qu'il y a de quoi choisir, et que son plafond
 compte la bonne chose.
 

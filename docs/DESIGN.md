@@ -113,9 +113,9 @@ systématique, virgule décimale, espace fine avant l'unité (`4 px`, `$0,067`, 
 | px | Famille | Usage |
 |---|---|---|
 | 8,5 | mono | pastille d'état sur une tuile |
-| 9,5 | mono | méta de tuile, en-tête de panneau (majuscules, `letter-spacing .11em`), en-tête de tableau |
+| 9,5 | mono | en-tête de panneau (majuscules, `letter-spacing .11em`), en-tête de tableau, pied d'une carte du tableau |
 | 10 | mono | barre d'état, pied de prompt, compteur d'arbre, raison sous un contrôle grisé, erreur de champ |
-| 11 | mono / sans | valeur en fiche · libellé de réglage |
+| 11 | mono / sans | valeur en fiche · libellé de réglage · **méta de tuile** |
 | 11,5 | sans | nom de tuile, bouton de segment, ligne de recette |
 | 12 – 12,5 | sans | arbre, onglets, corps de tableau, bandeau |
 | 13 | sans | bouton, champ |
@@ -162,6 +162,24 @@ tuiles, cartes. Mesurer sur `--fond-0` donnerait des chiffres plus flatteurs et 
 `--texte-3` est en dessous de 4,5 : 1 délibérément. Il ne porte jamais d'information dont
 l'absence bloquerait — il porte le grisé, la méta et la raison, tous redondants avec une autre
 marque. Toute information nécessaire est en `--texte-2` ou au-dessus.
+
+**La règle a été enfreinte à deux endroits, et corrigés le 31 août 2026** — trouvés par l'audit
+de `docs/audit-design-post-v21.html`, qui n'a rien reproché à la règle et tout à son
+application. Les deux cas se ressemblent : une information *non redondante* écrite dans le gris
+réservé à ce qui l'est.
+
+- **Le prix sur une tuile.** C'est le seul chiffre de la carte qui ne se retrouve nulle part
+  ailleurs — l'image ne dit pas ce qu'elle a coûté —, et l'argent est l'enjeu que le produit met
+  au centre : il a un écran à lui. Il passe en `--texte-2`, et la méta de tuile monte de 9,5 à
+  11 px avec lui.
+- **Les deux onglets éteints.** Un onglet de navigation n'est ni un grisé, ni une méta, ni une
+  raison : c'est l'adresse d'un lieu, et rien d'autre à l'écran ne dit que ce lieu existe. Il ne
+  remontait au gris moyen qu'au survol, c'est-à-dire une fois qu'on l'avait déjà trouvé. L'écart
+  avec l'onglet allumé se dit par le fond plein, qui est la marque, pas par l'effacement du
+  texte.
+
+**Le test qui reste** : devant un `--texte-3`, se demander *qu'est-ce qui redit ceci ailleurs ?*
+Si la réponse est « rien », ce n'est pas un grisé.
 
 ### Le signal et la sémantique
 

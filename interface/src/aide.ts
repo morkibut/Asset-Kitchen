@@ -575,12 +575,32 @@ export const AIDE: Record<string, Explication> = {
   "detourage.moteur": {
     nom: "moteur",
     ou: "tables",
-    quoi: "Comment le fond est trouvé : « bord » remplit depuis les bords de l'image, « modèle » demande une silhouette à un réseau.",
+    quoi: "Comment le fond est trouvé : « bord » part des bords de l'image, « pipette » part d'un point que tu désignes, « modèle » demande une silhouette à un réseau.",
     change:
-      "« Bord » ne demande aucun réseau et répond en dizaines de millisecondes ; « modèle » coûte une à deux secondes par passe. Le rendu diffère surtout sur les images qui n'ont pas de fond plat.",
+      "« Bord » et « pipette » ne demandent aucun réseau et répondent en dizaines de millisecondes ; « modèle » coûte une à deux secondes par passe. Le rendu diffère surtout sur les images qui n'ont pas de fond plat.",
     origine: "mesuré le 27/08 sur 12 images · défaut « bord »",
     long:
-      "Le remplissage depuis le bord est le moteur du geste courant : sur douze images issues de six modèles, PNG et JPEG, il a rendu douze silhouettes propres — squelette blanc sur fond gris clair et fioles translucides comprises.\n\nSa règle tient en un mot : relié. Un pixel n'est du fond que s'il est relié à un bord par une chaîne de pixels proches de la couleur de bordure. C'est ce qui le distingue d'un seuil global, qui perce le sujet — l'os d'un squelette et le reflet d'une fiole ont la couleur du fond sans y être reliés. Corollaire assumé : une région fermée reste opaque, donc l'intérieur d'un cadre d'interface survit au détourage. Le rendre transparent est un geste de l'auteur, jamais une décision de l'outil.\n\nLes deux moteurs ont été confrontés le 27 août sur six vraies images plus un cas composé. Sur ce que le produit fabrique — fond plat — ils s'accordent à 96,3 % en médiane : le second n'apporte rien, et c'est ce qui justifie qu'il reste facultatif. Sur un fond chargé, le bord garde 100 % de l'image — il échoue entièrement — quand le modèle en isole 19,8 %. C'est sa raison d'être, et elle se mesure.",
+      "Le remplissage depuis le bord est le moteur du geste courant : sur douze images issues de six modèles, PNG et JPEG, il a rendu douze silhouettes propres — squelette blanc sur fond gris clair et fioles translucides comprises.\n\nSa règle tient en un mot : relié. Un pixel n'est du fond que s'il est relié à un bord par une chaîne de pixels proches de la couleur de bordure. C'est ce qui le distingue d'un seuil global, qui perce le sujet — l'os d'un squelette et le reflet d'une fiole ont la couleur du fond sans y être reliés.\n\nEt c'est aussi ce qui lui interdit une chose. Un creux de fond entièrement entouré par le sujet — la lumière entre un bras et un torse, le trou d'une anse, l'intérieur d'un anneau — n'est relié à aucun bord : aucune valeur de tolérance ne l'atteindra jamais, parce que le chemin n'existe pas. La pipette est là pour ça, et pour rien d'autre : tu désignes ce creux du doigt, et il part.\n\nLes deux premiers moteurs ont été confrontés le 27 août sur six vraies images plus un cas composé. Sur ce que le produit fabrique — fond plat — le bord et le modèle s'accordent à 96,3 % en médiane : le second n'apporte rien, et c'est ce qui justifie qu'il reste facultatif. Sur un fond chargé, le bord garde 100 % de l'image — il échoue entièrement — quand le modèle en isole 19,8 %. C'est sa raison d'être, et elle se mesure.",
+  },
+
+  "detourage.couleur": {
+    nom: "couleur visée",
+    ou: "tables",
+    quoi: "Le point que tu as cliqué dans l'image, et la couleur qu'il y avait dessous — c'est de là que la pipette part.",
+    change:
+      "Tant qu'aucun point n'est posé, la passe ne retire rien du tout. Recliquer ailleurs déplace le point de cette passe, sans en créer une deuxième.",
+    origine: "toi · cliquée dans l'image",
+    long:
+      "Ce qui est gardé est le point, pas la tache qu'il désigne, et ce n'est pas un détail. Une tache est une zone d'un seul tenant que l'atelier retrouve à chaque rendu : elle change de rang et de place dès qu'un réglage au-dessus bouge d'un cran, et ta recette se mettrait alors à viser autre chose sans rien dire. Un point, lui, ne bouge pas.\n\nLa couleur, elle, n'est pas gardée : elle se lit sous le point à chaque fois. Une couleur écrite à côté du point qui la porte serait une copie que plus rien ne met à jour.\n\nLe point est compté sur l'image d'origine — celle d'avant tout traitement —, comme le rectangle de recadrage. C'est pour ça que tu vises sur elle et pas sur le rendu.",
+  },
+
+  "detourage.portee": {
+    nom: "portée",
+    ou: "tables",
+    quoi: "Ce que la pipette retire depuis ton point : « cette tache » ne retire que la zone d'un seul tenant sous le curseur, « partout » retire toutes les zones de cette couleur dans l'image.",
+    change:
+      "« Cette tache » règle un creux sans toucher au reste — c'est le geste pour lequel la pipette existe. « Partout » va plus vite et atteint aussi ce qui touche le sujet : un reflet, un œil, une dent de la même couleur que le fond partiront avec.",
+    origine: "toi · défaut « cette tache »",
   },
 
   "detourage.tolerance": {
@@ -602,7 +622,7 @@ export const AIDE: Record<string, Explication> = {
       "Tranche les contours à demi transparents. Sans ce durcissement, un rééchantillonnage au plus proche voisin les décide à pile ou face, et deux passes identiques rendent deux silhouettes différentes.",
     origine: "défaut du produit · 128",
     long:
-      "C'est le réglage qui évite le liseré clair autour d'un sprite, et le piège est subtil : la quantification force l'alpha à 255 sans toucher à la couleur, donc un pixel de contour à peine visible ressort opaque, de la couleur du fond.\n\nD'où l'ordre fixe des étapes : le seuil se durcit avant la réduction sur grille, jamais après.",
+      "C'est le réglage qui évite le liseré clair autour d'un sprite, et le liseré naît ici, pas ailleurs. Un pixel de contour à peine visible, dont la couleur est déjà celle du fond, passe le seuil et ressort franchement opaque — de la couleur du fond. Baisser ce seuil l'efface, ronger un pixel de plus aussi.\n\nCe paragraphe accusait la quantification, et c'est faux : mesuré sur six images, elle met la transparence de côté et la remet telle quelle. Elle ne fait que ramener la couleur de ces pixels-là sur ta palette. Y toucher ne changera jamais rien au liseré.\n\nD'où l'ordre fixe des étapes : le seuil se durcit avant la réduction sur grille, jamais après.",
   },
 
   "detourage.durcissement": {
@@ -644,10 +664,12 @@ export const AIDE: Record<string, Explication> = {
   "detourage.poches": {
     nom: "poches de fond enfermées",
     ou: "tables",
-    quoi: "Les zones de fond que le sujet entoure complètement, et que le détourage par tolérance de bord n'atteint donc pas.",
+    quoi: "Les zones de fond que le sujet entoure complètement, et que le remplissage depuis le bord n'atteint donc pas : il n'y mène aucun chemin, à aucune tolérance.",
     change:
-      "Rien, tant qu'on n'y touche pas. Le produit les cercle et les compte, il n'en efface aucune : la lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux on regarde.",
+      "Rien, tant que tu n'y touches pas. Le produit les compte et propose de retirer les plus grandes ; il n'en efface aucune tout seul. La lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux tu regardes. « La retirer › » ajoute simplement une passe pipette déjà visée dessus, qui s'annule comme les autres.",
     origine: "mesuré sur l'image détourée",
+    long:
+      "Seules les plus grandes sont listées, et c'est une décision prise à la mesure plutôt qu'au jugé. Sur les soixante images du dépôt, détourées au réglage courant, une image porte quarante-trois de ces zones en médiane et jusqu'à seize mille — mais les trois quarts font un à trois pixels : du bruit de compression qui se trouve avoir la couleur du fond. Aucun seuil de taille ne sépare proprement le bruit du reste, c'est une longue traîne sans marche. On montre donc celles dont on se demande vraiment si c'est du fond ou de la matière, et le compte entier est écrit à côté.\n\nCe bloc annonçait longtemps zéro partout, et c'était une erreur, corrigée le 31 août 2026 : il lisait les trous de la silhouette, qui sont l'inverse exact. Un trou est du transparent — le détourage l'a déjà retiré. Une poche est encore opaque, justement parce que le détourage n'a pas pu l'atteindre. L'ancien bloc ne trouvait donc la poche qu'une fois celle-ci retirée, c'est-à-dire au moment où il n'y avait plus rien à proposer.",
   },
 
   "bords.taches": {

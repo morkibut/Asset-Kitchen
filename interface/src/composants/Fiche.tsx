@@ -211,7 +211,7 @@ export function Fiche({
             ont un écran à leur taille depuis E3 — une table, plein cadre, avec
             l'image en grand entre la table et ses sœurs. La fiche garde ce
             qu'elle a toujours été : ce que l'image **est**. */}
-        <RecetteEnLecture recette={recette} onOuvrirLesTables={onOuvrirLesTables} />
+        <RecetteEnLecture recette={recette} />
 
         {/* ── Faire rentrer un épinglé dans le rang ──────────────────────
             « Je veux réaligner d'un geste, depuis sa fiche, un asset que
@@ -833,6 +833,9 @@ export function BlocPasse({
   rang,
   passe,
   raisonModele,
+  visee,
+  enVisee,
+  onViser,
   onChange,
   onFini,
   onRetirer,
@@ -840,6 +843,13 @@ export function BlocPasse({
   rang: number
   passe: Passe
   raisonModele: string | null
+  /** La couleur sous le point de cette passe, **mesurée par le serveur**, ou
+   *  `null` si la passe n'est pas une pipette ou n'a pas encore été visée. */
+  visee?: string | null
+  /** Cette passe-ci attend son clic dans l'image. */
+  enVisee?: boolean
+  /** Armer — ou désarmer — la visée de cette passe. */
+  onViser?: (arme: boolean) => void
   /** La valeur bouge à l'écran, rien ne part. */
   onChange: (p: Passe) => void
   /** La valeur est arrêtée : elle part. Un segment appelle celui-ci
@@ -847,6 +857,7 @@ export function BlocPasse({
   onFini: (p: Passe) => void
   onRetirer?: () => void
 }) {
+  const pipette = passe.moteur === "couleur"
   return (
     <div className="flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-2 p-2">
       <div className="flex items-center gap-2">
@@ -871,16 +882,77 @@ export function BlocPasse({
           parle du modèle indisponible, pas du réglage. */}
       <Reglage libelle="moteur" aide="detourage.moteur">
         <Segments
-          valeurs={["bord", "modele"] as const}
+          valeurs={["bord", "couleur", "modele"] as const}
           valeur={passe.moteur}
-          onChange={(moteur) => onFini({ ...passe, moteur })}
+          onChange={(moteur) => {
+            onFini({ ...passe, moteur })
+            // **Choisir la pipette, c'est demander à viser.** Le réglage n'a
+            // aucune valeur tant qu'aucun point n'est posé ; obliger à un
+            // second clic sur un bouton pour avoir le droit de faire le seul
+            // geste possible serait une porte devant une porte.
+            onViser?.(moteur === "couleur" && passe.point === null)
+          }}
           indisponibles={raisonModele ? (["modele"] as const) : []}
-          libelles={{ bord: "bord", modele: "modèle" }}
+          libelles={{ bord: "bord", couleur: "pipette", modele: "modèle" }}
         />
       </Reglage>
       {raisonModele && <Raison texte={raisonModele} />}
 
-      {passe.moteur === "bord" && (
+      {/* ── La pipette ────────────────────────────────────────────────────
+          **La couleur ne se tape pas, elle se désigne.** Le clic dans l'image
+          pose le point ; la pastille et son code disent ce qu'il y avait
+          dessous. Recliquer ailleurs *remplace* le point de cette passe — sans
+          quoi trois hésitations feraient trois passes, et personne ne veut
+          d'une passe par clic. */}
+      {pipette && (
+        <>
+          <Reglage libelle="couleur visée" aide="detourage.couleur">
+            {passe.point && visee ? (
+              <span className="flex items-center gap-2">
+                <span
+                  aria-hidden
+                  style={{ background: visee }}
+                  className="inline-block h-3 w-3 shrink-0 rounded-full border border-bord"
+                />
+                <span className="mesure text-[10px] text-texte-2">{visee}</span>
+                <button
+                  type="button"
+                  onClick={() => onViser?.(!enVisee)}
+                  className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+                >
+                  {enVisee ? "annuler" : "viser à nouveau ›"}
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onViser?.(!enVisee)}
+                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+              >
+                {enVisee ? "clique dans l'image" : "viser dans l'image ›"}
+              </button>
+            )}
+          </Reglage>
+          {/* **Une pipette non visée ne retire rien**, et le dire vaut mieux que
+              de laisser croire à une passe qui ne marche pas. */}
+          {!passe.point && (
+            <Raison texte="tant qu'aucun point n'est posé, cette passe ne retire rien" />
+          )}
+          <Reglage libelle="portée" aide="detourage.portee">
+            <Segments
+              valeurs={["tache", "partout"] as const}
+              valeur={passe.portee}
+              libelles={{ tache: "cette tache", partout: "partout" }}
+              onChange={(portee) => onFini({ ...passe, portee })}
+            />
+          </Reglage>
+        </>
+      )}
+
+      {/* **La tolérance sert les deux moteurs qui remplissent par plages**, et
+          c'est le même écart par canal : le bord part des bordures, la pipette
+          part du point, et ce qui les sépare est l'amorce, pas le seuil. */}
+      {(passe.moteur === "bord" || pipette) && (
         <Reglage libelle="tolérance" aide="detourage.tolerance">
           <Curseur
             valeur={passe.tolerance}
@@ -964,13 +1036,7 @@ const estVide = (recette: Recette) =>
  * `Places.RESUME`. Deux façons de résumer la même recette auraient fini par en
  * dire deux choses.
  */
-function RecetteEnLecture({
-  recette,
-  onOuvrirLesTables,
-}: {
-  recette: Recette
-  onOuvrirLesTables: () => void
-}) {
+function RecetteEnLecture({ recette }: { recette: Recette }) {
   const places: [string, string | null][] = [
     ["détourage", recette.passes.length ? RESUME.detourage(recette) : null],
     ["recadrage", recette.recadrage ? RESUME.recadrage(recette.recadrage) : null],
@@ -1000,13 +1066,15 @@ function RecetteEnLecture({
           ))}
         </dl>
       )}
-      <button
-        type="button"
-        onClick={onOuvrirLesTables}
-        className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
-      >
-        La régler dans les tables ›
-      </button>
+      {/* **Aucune porte ici** — retiré le 31 août 2026. Cette rubrique portait
+          un lien « La régler dans les tables › » qui appelait exactement la
+          même fonction que le bouton « Ouvrir les tables » du pied, douze
+          lignes plus bas dans le même panneau : deux noms, une seule
+          destination, dans une colonne qu'on lit d'un coup d'œil. Or le pied de
+          cette fiche écrit lui-même la règle — « la fiche porte **deux portes** :
+          l'établi de la chose à qui elle appartient, et les tables ». Un
+          troisième chemin qui double l'une des deux ne s'annonce pas comme un
+          doublon : il se lit comme une nuance qu'on aurait ratée. */}
     </div>
   )
 }

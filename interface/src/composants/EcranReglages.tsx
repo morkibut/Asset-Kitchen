@@ -15,7 +15,7 @@
 // jamais relue par l'interface : le serveur n'en rend que les six derniers
 // caractères.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   api,
   dollars,
@@ -42,6 +42,19 @@ export function EcranReglages({
   onAgent: (agent: EtatAgent) => void
   onFermer: () => void
 }) {
+  // **Échap ferme les Réglages** — ajouté le 31 août 2026. Le Guide et la
+  // vitrine le faisaient déjà, et tous deux l'écrivent sur leur bouton de
+  // sortie : c'est donc une règle du produit, et ce panneau-ci était l'un des
+  // deux qui ne la tenaient pas. Il ne se fermait qu'en cliquant à côté — un
+  // geste qui ne s'annonce nulle part et qu'on ne devine pas.
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFermer()
+    }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [onFermer])
+
   return (
     <div
       data-reglages
@@ -51,6 +64,12 @@ export function EcranReglages({
       <section
         onClick={(e) => e.stopPropagation()}
         {...PANNEAU}
+        // **Déclaré comme une fenêtre posée par-dessus.** Sans ces trois mots,
+        // un lecteur d'écran continue d'annoncer la page du dessous comme si
+        // elle était encore atteignable.
+        role="dialog"
+        aria-modal="true"
+        aria-label="Réglages"
         className="w-[520px] rounded-[3px] border border-bord bg-fond-1 p-6"
       >
         <h2 className="font-serif text-[24px] leading-tight text-texte">Réglages</h2>
@@ -59,8 +78,11 @@ export function EcranReglages({
         <BlocAgent agent={agent} onAgent={onAgent} />
         <BlocDossiers agent={agent} onAgent={onAgent} />
 
+        {/* Le bouton dit la touche, comme celui du Guide et celui de la
+            vitrine : une sortie au clavier qui ne s'écrit nulle part ne se
+            trouve pas. */}
         <div className="mt-6 flex justify-end">
-          <Bouton onClick={onFermer} enfants="Fermer" />
+          <Bouton onClick={onFermer} enfants="Fermer — Échap" />
         </div>
       </section>
     </div>

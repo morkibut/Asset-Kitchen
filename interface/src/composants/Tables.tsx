@@ -23,7 +23,7 @@
 // grand, ses sœurs. C'est la grille de l'onglet Univers en vue toile, réemployée
 // — aucune largeur neuve.
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   api,
   type Asset,
@@ -289,6 +289,9 @@ function Comparateur({
   onOpacite,
   peint,
   onAvant,
+  zoom,
+  onZoom,
+  ajuste,
 }: {
   asset: Asset
   mode: Mode
@@ -300,6 +303,12 @@ function Comparateur({
    *  maintenant *Avant ›*, qui rend exactement ce qu'elles retiraient. */
   peint?: boolean
   onAvant?: (tenu: boolean) => void
+  /** Le cran d'agrandissement choisi, ou `ajusté`. */
+  zoom: ZoomTable
+  onZoom: (zoom: ZoomTable) => void
+  /** Ce que `ajusté` vaut en ce moment — il se dit à côté du contrôle, parce
+   *  qu'un mot qui cache un nombre laisse deviner ce qu'on regarde. */
+  ajuste: number
 }) {
   return (
     <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px]">
@@ -348,6 +357,23 @@ function Comparateur({
           className="w-[104px]"
         />
       )}
+      {/* **Le zoom, à côté des modes** — ajouté le 31 août 2026. Il vit dans la
+          fente qui existe déjà : la bande fait 38 px et elle ne grandit pas.
+
+          `ajusté` d'abord, parce que c'est l'état d'ouverture et le seul qui
+          suive le cadre ; les crans après lui, dans l'ordre. Ce que vaut
+          `ajusté` s'écrit à côté, parce qu'un mot qui cache un nombre laisse
+          deviner ce qu'on regarde, et ce produit écrit ses mesures. */}
+      <span aria-hidden className="h-4 w-px shrink-0 bg-bord" />
+      <Segments
+        valeurs={["ajuste", 1, ...ZOOMS_TABLE] as const}
+        valeur={zoom}
+        libelles={LIBELLES_ZOOM_TABLE}
+        onChange={(v) => onZoom(v as ZoomTable)}
+      />
+      {zoom === "ajuste" && (
+        <span className="shrink-0 whitespace-nowrap text-texte-3">{ajuste}×</span>
+      )}
       {/* Le mode se dit dès que ce n'est pas le rendu. */}
       {mode !== "rendu" && (
         <span className="ml-auto text-epingle">on regarde : {MODES[mode]}</span>
@@ -355,6 +381,37 @@ function Comparateur({
     </div>
   )
 }
+
+// ── Le zoom de la table ─────────────────────────────────────────────────────
+
+/**
+ * Les crans d'agrandissement de l'image sur une table.
+ *
+ * **Des multiples entiers, et rien d'autre** — la règle de la vitrine, reprise
+ * mot pour mot parce que c'est la même : un sprite de 128 px agrandi à 192 px
+ * doit fabriquer 64 pixels qui n'existent pas, et il les prend en doublant une
+ * ligne sur deux. On jugerait alors un défaut qui n'existe que dans la fenêtre
+ * où on l'a regardé. `docs/DESIGN.md` § Sur la toile, deux échelles.
+ *
+ * `ajusté` n'est pas un cran de plus : c'est **celui de ces crans-là qui remplit
+ * le cadre**, recalculé quand le cadre change. Il est le cran d'ouverture.
+ */
+const ZOOMS_TABLE = [2, 4, 8, 16] as const
+type ZoomTable = (typeof ZOOMS_TABLE)[number] | 1 | "ajuste"
+
+const LIBELLES_ZOOM_TABLE: Partial<Record<string, string>> = {
+  ajuste: "ajusté",
+  1: "1×",
+  2: "2×",
+  4: "4×",
+  8: "8×",
+  16: "16×",
+}
+
+/** Les 24 px de `p-6`, des deux côtés — la marge du cadre, à retirer de ce qui
+ *  est disponible. Écrite ici parce que la mesure et la classe doivent dire la
+ *  même chose, et qu'elles sont à deux endroits. */
+const MARGE_CADRE = 48
 
 // ── L'écran ─────────────────────────────────────────────────────────────────
 
@@ -399,6 +456,21 @@ export function EcranTables({
    *  suivante se ferait sur une image qui n'est pas celle qu'on croit. */
   const [avant, setAvant] = useState(false)
 
+  /** La passe de détourage qui attend son clic dans l'image, ou `null`.
+   *
+   *  **L'état vit ici et pas dans la colonne** : la passe se règle à gauche et
+   *  se vise au milieu, et les deux moitiés du geste n'ont que cet écran-ci en
+   *  commun. */
+  const [viseeArmee, setViseeArmee] = useState<number | null>(null)
+  /** **Dérivée, jamais nettoyée par un effet.** Retirer une passe ou la faire
+   *  repasser au bord laisserait un rang armé qui ne désigne plus rien ; le
+   *  vérifier au moment de s'en servir évite d'avoir à le corriger après coup,
+   *  et un état qu'on corrige après coup est visible un rendu sur deux. */
+  const visee =
+    viseeArmee !== null && recette.passes[viseeArmee]?.moteur === "couleur"
+      ? viseeArmee
+      : null
+
   const dehors = indisponible(ouverte, traitement, mesures)
   const reglages = { recette, univers, traitement, regler, poser, mesures }
 
@@ -411,6 +483,93 @@ export function EcranTables({
   useEffect(() => {
     if (peint) setMode("rendu")
   }, [peint])
+
+  // ── L'image ouvre à la taille du cadre ────────────────────────────────────
+  //
+  // **Cet écran n'a qu'un métier : montrer des pixels assez grands pour qu'on
+  // les juge.** Il ne le tenait pas. L'image s'affichait un pixel d'image pour
+  // un pixel d'écran, quelle que soit la table — mesuré le 31 août 2026, un
+  // sprite de 96 × 96 occupait **1,9 %** d'un cadre de 670 × 742, et aucune
+  // commande de zoom n'existait, ni bouton, ni molette annoncée, ni raccourci.
+  //
+  // Ce qui rendait le défaut invisible est la table de **recadrage** : elle
+  // travaille sur l'image d'origine, qui fait cinq cents pixels de côté et
+  // remplit l'écran. Toutes les tables qui travaillent sur le **résultat** —
+  // celui de 96 ou 128 px, c'est-à-dire le sprite du jeu — redevenaient un
+  // timbre-poste. Le pire cas était **la main**, celle où l'on repeint pixel
+  // par pixel : la table qui demande le plus de précision offrait le moins.
+  //
+  // Rien de neuf n'est inventé : `image-rendering: pixelated` était déjà posé
+  // partout, et les surfaces qui reçoivent un geste — la main, la pipette, le
+  // rectangle de recadrage — lisent toutes leurs coordonnées dans le rectangle
+  // rendu, jamais dans une taille supposée. Agrandir le cadre les suit donc
+  // sans qu'aucune ne change de calcul.
+  const cadre = useRef<HTMLDivElement>(null)
+  const [dispo, setDispo] = useState({ largeur: 0, hauteur: 0 })
+
+  // Pas de `ResizeObserver` — le piège s'est refermé quatre fois dans ce dépôt
+  // (`docs/PIEGES.md`) : un onglet qui ne compose pas ses images ne reçoit
+  // jamais ses rappels. Un rectangle se lit à la demande, dans tous les cas.
+  const mesurerCadre = useCallback(() => {
+    const noeud = cadre.current
+    if (!noeud) return
+    const largeur = noeud.clientWidth - MARGE_CADRE
+    const hauteur = noeud.clientHeight - MARGE_CADRE
+    setDispo((deja) =>
+      Math.abs(deja.largeur - largeur) < 1 && Math.abs(deja.hauteur - hauteur) < 1
+        ? deja
+        : { largeur, hauteur },
+    )
+  }, [])
+
+  useLayoutEffect(mesurerCadre, [mesurerCadre, ouverte, mode, dehors, asset.identifiant])
+  useEffect(() => {
+    window.addEventListener("resize", mesurerCadre)
+    return () => window.removeEventListener("resize", mesurerCadre)
+  }, [mesurerCadre])
+
+  // **Ce qui est réellement sous les yeux, et ce n'est pas toujours le rendu.**
+  // Le rectangle de recadrage et la pipette se posent sur l'image d'origine —
+  // c'est ce qui les fait survivre aux passes qui les précèdent —, et le mode
+  // *brut* la montre aussi. Mesurer le cadre sur le rendu dans ces cas-là
+  // donnerait un ajustement calculé sur une image qui n'est pas à l'écran.
+  const surLeBrut =
+    mode === "brut" ||
+    ouverte === "recadrage" ||
+    (ouverte === "detourage" && visee !== null)
+  const largeurVue = (surLeBrut ? asset.largeur : asset.rendu_largeur || asset.largeur) || 1
+  const hauteurVue = (surLeBrut ? asset.hauteur : asset.rendu_hauteur || asset.hauteur) || 1
+
+  const [zoom, setZoom] = useState<ZoomTable>("ajuste")
+  // Changer d'image rouvre en ajusté : la sœur suivante n'a aucune raison
+  // d'hériter du cran choisi pour la précédente, qui peut faire trois fois sa
+  // taille.
+  useEffect(() => setZoom("ajuste"), [asset.identifiant])
+
+  /** Le plus grand multiple entier qui tient dans le cadre. Jamais moins de 1 :
+   *  au-dessous, c'est `object-contain` qui réduit, et une réduction n'est pas
+   *  un cran — elle ne fabrique aucun pixel. */
+  const ajuste = Math.max(
+    1,
+    Math.min(
+      16,
+      Math.floor(
+        Math.min(
+          dispo.largeur / (largeurVue * (mode === "cote" ? 2 : 1)),
+          dispo.hauteur / hauteurVue,
+        ),
+      ) || 1,
+    ),
+  )
+  const facteur = zoom === "ajuste" ? ajuste : zoom
+
+  /** La boîte où l'image se pose, en pixels d'écran. Tout ce qui se rend au
+   *  milieu la remplit — l'image seule, les deux côte à côte, la surface qui se
+   *  peint —, et c'est elle, et elle seule, qui porte le zoom. */
+  const boiteCadre = {
+    width: largeurVue * facteur * (mode === "cote" ? 2 : 1) + (mode === "cote" ? 16 : 0),
+    height: hauteurVue * facteur,
+  }
 
   // Ctrl + Z retire le dernier passage de la couche active. La touche n'est
   // écoutée que dans la table de la main : ailleurs elle appartient à la toile
@@ -467,7 +626,12 @@ export function EcranTables({
               // sous une raison serait proposer puis refuser.
               <Raison texte={dehors} />
             ) : ouverte === "detourage" ? (
-              <PanneauDetourage {...reglages} BlocPasse={BlocPasse} />
+              <PanneauDetourage
+                {...reglages}
+                BlocPasse={BlocPasse}
+                visee={visee}
+                onViser={setViseeArmee}
+              />
             ) : ouverte === "recadrage" ? (
               <PanneauRecadrage {...reglages} />
             ) : ouverte === "grille" ? (
@@ -499,7 +663,20 @@ export function EcranTables({
 
         {/* ── L'image, en grand ─────────────────────────────────────────── */}
         <div className="flex min-h-0 min-w-0 flex-col">
-          <div className="flex min-h-0 flex-1 items-center justify-center gap-4 p-6">
+          {/* `m-auto` sur la boîte plutôt que `justify-center` sur le cadre :
+              un contenu centré par `justify-center` déborde des **deux** côtés
+              et le début devient inatteignable au défilement. C'est le piège
+              classique de la paire centrage + débordement, et il se voit dès le
+              premier cran au-dessus de l'ajusté. */}
+          <div
+            ref={cadre}
+            className="defile flex min-h-0 flex-1 overflow-auto p-6"
+          >
+            <div
+              data-boite-image
+              className="m-auto flex shrink-0 items-center justify-center gap-4"
+              style={boiteCadre}
+            >
             {peint ? (
               // **La surface se peint, et elle est la seule.** Pas de poignée,
               // pas de rectangle, pas de cible : une cible de retaille au
@@ -515,6 +692,32 @@ export function EcranTables({
                     main: avecPassage(mainDe(recette), etatMain.actif, trait),
                   })
                 }
+              />
+            ) : (mode === "rendu" || mode === "brut") &&
+              ouverte === "detourage" &&
+              visee !== null ? (
+              // **On vise sur le brut, et pas sur le rendu.** Le point est en
+              // pixels de l'image d'origine — c'est ce qui le fait survivre aux
+              // passes qui le précèdent —, et le rendu porte le recadrage et la
+              // remise sur grille, qui déplacent tous les deux ce qu'on montre.
+              // Un cercle posé sur un rendu recadré désignerait un autre pixel
+              // que celui qu'on croit toucher. Même raison, même choix que le
+              // rectangle de recadrage.
+              <PipetteSurImage
+                asset={asset}
+                point={recette.passes[visee].point}
+                onPoint={(point) => {
+                  void poser({
+                    ...recette,
+                    passes: recette.passes.map((p, i) =>
+                      i === visee ? { ...p, point } : p,
+                    ),
+                  })
+                  // **Le clic désarme.** Viser est un geste qui se termine ; une
+                  // visée qui reste armée ferait du prochain regard sur l'image
+                  // un déplacement du point, sans que rien l'ait demandé.
+                  setViseeArmee(null)
+                }}
               />
             ) : (mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
               // **Le rectangle se pose sur l'image, jamais dans un champ.** Le
@@ -539,7 +742,7 @@ export function EcranTables({
               <img
                 src={api.rendu(asset.identifiant, asset.empreinte, mode === "brut")}
                 alt={asset.label}
-                className="damier max-h-full max-w-full object-contain"
+                className="damier h-full w-full object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
             ) : null}
@@ -548,25 +751,25 @@ export function EcranTables({
                 <img
                   src={api.rendu(asset.identifiant, asset.empreinte, true)}
                   alt={`${asset.label}, brut`}
-                  className="damier max-h-full max-w-[50%] object-contain"
+                  className="damier h-full w-1/2 object-contain"
                   style={{ imageRendering: "pixelated" }}
                 />
                 <img
                   src={api.rendu(asset.identifiant, asset.empreinte)}
                   alt={`${asset.label}, rendu`}
-                  className="damier max-h-full max-w-[50%] object-contain"
+                  className="damier h-full w-1/2 object-contain"
                   style={{ imageRendering: "pixelated" }}
                 />
               </>
             )}
             {mode === "superpose" && (
-              <span className="relative flex max-h-full max-w-full">
+              <span className="relative flex h-full w-full">
                 {/* Le rendu dessous, le brut par-dessus : c'est ce qu'on
                     compare — ce que la recette a retiré. */}
                 <img
                   src={api.rendu(asset.identifiant, asset.empreinte)}
                   alt={`${asset.label}, rendu`}
-                  className="damier max-h-full max-w-full object-contain"
+                  className="damier h-full w-full object-contain"
                   style={{ imageRendering: "pixelated" }}
                 />
                 <img
@@ -577,6 +780,7 @@ export function EcranTables({
                 />
               </span>
             )}
+            </div>
           </div>
           <Comparateur
             asset={asset}
@@ -586,6 +790,9 @@ export function EcranTables({
             onOpacite={setOpacite}
             peint={peint}
             onAvant={setAvant}
+            zoom={zoom}
+            onZoom={setZoom}
+            ajuste={ajuste}
           />
         </div>
 
@@ -735,7 +942,7 @@ function ToileDeLaMain({
       ref={cadre}
       data-toile-main
       style={{ aspectRatio: `${largeur} / ${hauteur}` }}
-      className="relative max-h-full max-w-full cursor-none"
+      className="relative h-full w-full cursor-none"
       onPointerDown={(evenement) => {
         if (evenement.button !== 0) return
         setTrace([point(evenement)])
@@ -815,6 +1022,94 @@ function ToileDeLaMain({
   )
 }
 
+// ── La pipette, posée sur l'image ───────────────────────────────────────────
+
+/**
+ * L'image, et le point qu'on y désigne.
+ *
+ * **Un cercle, et rien d'autre.** Pas de tracé, pas de rectangle, pas de
+ * poignée : cette table ne se peint pas. Le cercle suit le pointeur avec le
+ * pixel visé marqué en son centre, et il ne paraît que pendant qu'on vise —
+ * sinon le pointeur est celui du produit, et une pipette permanente ferait de
+ * chaque regard sur l'image un risque de clic.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, comme le rectangle
+ * de recadrage : une seule convention dans tout le produit.
+ */
+function PipetteSurImage({
+  asset,
+  point,
+  onPoint,
+}: {
+  asset: Asset
+  /** Le point déjà posé sur cette passe, marqué en creux — on vise à nouveau
+   *  en voyant d'où l'on part. */
+  point: [number, number] | null
+  onPoint: (point: [number, number]) => void
+}) {
+  const [survol, setSurvol] = useState<{ x: number; y: number } | null>(null)
+
+  /** Le pixel sous le pointeur. **Un plancher, pas un arrondi** : on désigne le
+   *  pixel qu'on survole, et un arrondi ferait basculer la visée sur le voisin
+   *  dès qu'on dépasse sa moitié — le rectangle de recadrage arrondit, lui,
+   *  parce qu'il pose un coin et non un pixel. */
+  const pixel = (evenement: React.MouseEvent<HTMLDivElement>) => {
+    const cadre = evenement.currentTarget.getBoundingClientRect()
+    const x = ((evenement.clientX - cadre.left) / cadre.width) * asset.largeur
+    const y = ((evenement.clientY - cadre.top) / cadre.height) * asset.hauteur
+    return {
+      x: Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      y: Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
+    }
+  }
+
+  /** Le centre d'un pixel, en pour cent du cadre — pas son coin. Un cercle posé
+   *  sur le coin est décalé d'un demi-pixel, ce qui se voit dès que l'image est
+   *  petite et affichée grande. */
+  const centre = (x: number, y: number) => ({
+    left: `${((x + 0.5) / asset.largeur) * 100}%`,
+    top: `${((y + 0.5) / asset.hauteur) * 100}%`,
+  })
+
+  return (
+    <div
+      data-pipette
+      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
+      className="relative h-full w-full cursor-crosshair"
+      onPointerMove={(evenement) => setSurvol(pixel(evenement))}
+      onPointerLeave={() => setSurvol(null)}
+      onClick={(evenement) => {
+        const { x, y } = pixel(evenement)
+        onPoint([x, y])
+      }}
+    >
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {point && (
+        <span
+          aria-hidden
+          style={{ ...centre(point[0], point[1]), width: 9, height: 9 }}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-lumiere"
+        />
+      )}
+      {survol && (
+        <span
+          aria-hidden
+          style={{ ...centre(survol.x, survol.y), width: 15, height: 15 }}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-lumiere"
+        >
+          <span className="absolute left-1/2 top-1/2 h-px w-px -translate-x-1/2 -translate-y-1/2 bg-lumiere" />
+        </span>
+      )}
+    </div>
+  )
+}
+
 // ── Le rectangle de recadrage, posé sur l'image ─────────────────────────────
 
 /**
@@ -859,7 +1154,7 @@ function CadreDeRecadrage({
     <div
       data-cadre-recadrage
       style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
-      className="relative max-h-full max-w-full"
+      className="relative h-full w-full"
       onPointerDown={(evenement) => {
         if (evenement.button !== 0) return
         const { x, y } = point(evenement)

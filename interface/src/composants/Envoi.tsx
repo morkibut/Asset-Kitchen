@@ -74,8 +74,12 @@ export function EcranEnvoi({
   onGarder: (ligne: LigneQuiPart) => void
   /** Sauter cet écran **pour la série en cours**. Il revient dès qu'on change
    *  de chose ou de pose : une case définitive éteindrait le seul écran qui
-   *  montre ce qui part, et on la cocherait le premier jour. */
-  onSauter: (saute: boolean) => void
+   *  montre ce qui part, et on la cocherait le premier jour.
+   *
+   *  **`null` quand il n'y a pas de série** — un texte écrit à la main, sans
+   *  chose du jeu visée, n'a pas de suivant qui lui ressemble. La case ne
+   *  paraît alors pas du tout. */
+  onSauter: ((saute: boolean) => void) | null
   /** **Reprendre le texte à la main** (R2, US-159, US-160) : le champ reçoit
    *  l'assemblé et il part mot pour mot. Il vit ici depuis E14, sous le texte
    *  qu'on reprendrait — on ne reprend pas un texte qu'on ne voit pas. */
@@ -441,19 +445,32 @@ export function EcranEnvoi({
                   fois la même chose, relire dix fois est une punition ; mais une
                   case définitive éteindrait le seul écran qui montre ce qui
                   part, et on la cocherait le premier jour, quand on ne sait pas
-                  encore qu'on en aura besoin. */}
-              <label className="mesure flex cursor-pointer items-center gap-2 pt-1 text-[10px] text-texte-3 hover:text-texte-2">
-                <input
-                  type="checkbox"
-                  onChange={(e) => onSauter(e.target.checked)}
-                  className="h-3 w-3 accent-signal"
-                />
-                <span>ne plus me le montrer pour cette série</span>
-              </label>
-              <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                il revient dès qu'on change de chose ou de pose. Il n'y a pas de
-                case « pour toujours ».
-              </p>
+                  encore qu'on en aura besoin.
+
+                  **Et pas de case du tout quand il n'y a pas de série** —
+                  corrigé le 31 août 2026, sur un bug signalé par l'auteur qui
+                  coûtait de l'argent à chaque clic. Une série est *une chose et
+                  une pose* ; sans chose du jeu, chaque texte est écrit à la main
+                  et n'a rien à voir avec le précédent. Offrir la case là
+                  revenait à proposer d'éteindre l'écran pour toutes les
+                  générations libres à venir, dans tous les jeux — c'est-à-dire
+                  exactement la case « pour toujours » que le produit refuse. */}
+              {onSauter && (
+                <>
+                  <label className="mesure flex cursor-pointer items-center gap-2 pt-1 text-[10px] text-texte-3 hover:text-texte-2">
+                    <input
+                      type="checkbox"
+                      onChange={(e) => onSauter(e.target.checked)}
+                      className="h-3 w-3 accent-signal"
+                    />
+                    <span>ne plus me le montrer pour cette série</span>
+                  </label>
+                  <p className="mesure text-[9.5px] leading-4 text-texte-3">
+                    il revient dès qu'on change de chose ou de pose. Il n'y a pas
+                    de case « pour toujours ».
+                  </p>
+                </>
+              )}
             </section>
           </>
         )}

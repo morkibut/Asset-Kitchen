@@ -314,7 +314,17 @@ export function BarreChassis({
 
       {/* Un seul onglet allumé à la fois, et rien ne se superpose. Le carré
           plein de l'onglet actif est la même marque que celle d'une place de
-          recette qui agit : le produit n'a qu'un vocabulaire de l'état. */}
+          recette qui agit : le produit n'a qu'un vocabulaire de l'état.
+
+          **Un onglet éteint est en `--texte-2`, jamais en `--texte-3`** —
+          corrigé le 31 août 2026. `--texte-3` est sous le seuil de lisibilité
+          délibérément, et `docs/DESIGN.md` § Le texte dit à quelle condition :
+          il ne porte que du redondant. Un onglet de navigation n'est ni un
+          grisé, ni une méta, ni une raison — c'est **l'adresse d'un lieu**, et
+          rien d'autre à l'écran ne dit que ce lieu existe. Le mettre là le
+          rendait lisible seulement au survol, c'est-à-dire une fois qu'on
+          l'avait déjà trouvé. L'écart avec l'onglet allumé se dit par le fond
+          plein, qui est la marque, pas par l'effacement du texte. */}
       <nav aria-label="Les trois lieux" className="flex shrink-0 items-center gap-1">
         {ONGLETS.map(({ cle, nom }) => (
           <button
@@ -327,7 +337,7 @@ export function BarreChassis({
               "h-[26px] rounded-[2px] px-2.5 text-[12px] transition-colors duration-[80ms]",
               onglet === cle
                 ? "bg-fond-3 text-texte"
-                : "text-texte-3 hover:bg-fond-2 hover:text-texte-2",
+                : "text-texte-2 hover:bg-fond-2 hover:text-texte",
             ].join(" ")}
           >
             {nom}

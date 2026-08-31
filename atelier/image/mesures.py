@@ -92,6 +92,40 @@ def rendre_en_png(octets: bytes) -> bytes:
         return tampon.getvalue()
 
 
+def vignette(octets: bytes, cote: int) -> bytes:
+    """La même image, réduite pour tenir dans un carré de `cote` pixels.
+
+    **Pourquoi elle existe.** La galerie affiche ses vignettes à cent quarante-
+    cinq pixels de côté et le serveur envoyait le fichier en taille réelle —
+    jusqu'à 1024 px, presque deux mégaoctets pour la plus lourde. Mesuré au
+    navigateur le 31 août 2026 : **25,5 Mo téléchargés pour 0,5 Mo réellement
+    affiché**, 318 Ko en moyenne par timbre-poste, et 3,8 s pour la plus lente à
+    arriver — en local, sans réseau.
+
+    **Au plus proche voisin, et c'est la seule règle dure d'ici.** Une réduction
+    lissée fabrique des couleurs qui ne sont pas dans le sprite, et la vignette
+    ne montrerait plus ce que la grille prétend montrer. C'est le même choix que
+    `image-rendering: pixelated` à l'écran ; les deux disent la même chose au
+    même endroit du geste.
+
+    **Elle n'agrandit jamais.** Une image plus petite que le carré est rendue
+    telle quelle : agrandir ici fabriquerait des octets pour rien, et c'est la
+    feuille de style qui grandit un sprite, avec les pixels nets qu'elle sait
+    tenir.
+    """
+    with Image.open(io.BytesIO(octets)) as image:
+        if max(image.width, image.height) <= cote:
+            return rendre_en_png(octets)
+        facteur = cote / max(image.width, image.height)
+        reduite = image.convert("RGBA" if "A" in image.getbands() else "RGB").resize(
+            (max(1, round(image.width * facteur)), max(1, round(image.height * facteur))),
+            Image.Resampling.NEAREST,
+        )
+        tampon = io.BytesIO()
+        reduite.save(tampon, format="PNG", optimize=True)
+        return tampon.getvalue()
+
+
 def empreinte_de(octets: bytes) -> str:
     """Ce qui nomme un doublon. Les octets, rien d'autre.
 

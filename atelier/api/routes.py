@@ -40,7 +40,7 @@ from atelier.domaine.superposition import (
     Superposition,
 )
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
-from atelier.image import rendre_en_png
+from atelier.image import rendre_en_png, vignette
 from atelier.reglages import deposer_cle, etat_cle
 from atelier.services import Atelier
 from atelier.services.assets import AssetInconnu
@@ -655,6 +655,12 @@ class CorpsPasse(BaseModel):
     tolerance: int = Field(28, ge=0, le=255)
     seuil_alpha: int = Field(128, ge=0, le=255)
     durcissement: int = Field(0, ge=0, le=4)
+    # La pipette : le pixel visé dans l'image **brute**, et ce qu'on retire
+    # depuis lui. **Un point, jamais une tache** — l'arbitrage de E3, écrit en
+    # long sur `Passe`. Le cadre haut n'est pas borné ici : une image fait la
+    # taille qu'elle fait, et un point qui dépasse ne retire simplement rien.
+    point: list[int] | None = None
+    portee: str = "tache"
 
 
 class CorpsRecadrage(BaseModel):
@@ -968,9 +974,52 @@ async def image_asset(
     return Response(
         content=octets,
         media_type=type_media,
-        # Le rendu change sous la même adresse à chaque cran de curseur : le
-        # mettre en cache ferait regarder l'image d'avant.
-        headers={"Cache-Control": "no-store"},
+        headers={"Cache-Control": _garder(requete)},
+    )
+
+
+# **Combien de temps le navigateur a le droit de garder une image.**
+#
+# L'interdiction était totale — `no-store` —, et elle avait une bonne raison :
+# le rendu change à chaque cran de curseur, et une image gardée ferait regarder
+# la version d'avant. Sauf que **l'adresse porte déjà l'empreinte de la
+# recette** (`v=…`, posé par `interface/src/api.ts`) : elle change dès que
+# l'image change, donc garder ne peut plus servir du périmé. L'interdiction
+# était devenue une interdiction pour rien, et elle coûtait cher — mesuré le
+# 31 août 2026, un seul passage sur la galerie retéléchargeait 25,5 Mo.
+#
+# **Sans `v`, on ne garde rien.** Une adresse sans empreinte est une adresse qui
+# ne changera pas quand son contenu changera — le seul cas où l'ancienne raison
+# tient encore, et il vaut mieux qu'il soit lent que faux.
+_UN_AN = "public, max-age=31536000, immutable"
+
+
+def _garder(requete: Request) -> str:
+    return _UN_AN if requete.query_params.get("v") else "no-store"
+
+
+@routeur.get("/assets/{identifiant}/vignette")
+async def vignette_asset(
+    requete: Request, identifiant: str, cote: int = Query(256, ge=16, le=1024)
+) -> Response:
+    """L'image réduite pour une case de grille — jamais le fichier entier.
+
+    « La galerie télécharge vingt-six mégaoctets pour montrer quarante-neuf
+    timbres-poste » : une vignette de 145 px recevait jusqu'à 1024 px de côté,
+    318 Ko en moyenne, pour en afficher moins d'un vingtième.
+
+    **Le cran demandé, pas une taille libre** : la grille n'a que trois crans
+    (`docs/DESIGN.md`), donc trois adresses par image et pas une par largeur de
+    fenêtre — sans quoi le cache du navigateur ne servirait jamais deux fois.
+
+    La réduction est au plus proche voisin : voir `atelier.image.vignette`.
+    """
+    atelier = _atelier(requete)
+    octets, _ = atelier.assets.octets(_asset(requete, identifiant))
+    return Response(
+        content=vignette(octets, cote),
+        media_type="image/png",
+        headers={"Cache-Control": _garder(requete)},
     )
 
 

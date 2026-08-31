@@ -195,6 +195,35 @@ body {
   outline-offset: 1px;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   La main sur ce qui répond au clic.
+
+   **Ce n'est pas une décision de design, c'est une réparation.** Tailwind v4 a
+   retiré le `cursor: pointer` que le navigateur posait sur un bouton ; le
+   réglage a donc changé sous les pieds du produit, sans qu'une ligne d'ici le
+   demande. Mesuré le 31 août 2026 sur la galerie : trente-huit boutons,
+   trente-huit flèches ordinaires.
+
+   Il mord plus fort ici qu'ailleurs : le châssis est volontairement muet — pas
+   de relief, pas de cadre de rangée, pas de couleur d'appel —, ce qui retire
+   au passage tous les autres indices de ce qui se clique. Le curseur était le
+   dernier qui restait.
+
+   `:disabled` reprend la flèche : un contrôle éteint porte déjà sa raison
+   écrite, et une main dessus promettrait ce qu'il refuse. `not-allowed` reste
+   posé à la main là où l'écran veut le dire plus fort (l'export vide).
+   ───────────────────────────────────────────────────────────────────────────── */
+button:not(:disabled),
+summary,
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+a[href] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+
 /* La barre de défilement — 9 px, la gouttière de la grille d'assets. Un seul
    vocabulaire de largeur dans le produit.
 

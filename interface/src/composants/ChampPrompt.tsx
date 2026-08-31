@@ -34,6 +34,7 @@ export function ChampPrompt({
   provenance,
   onGenerer,
   variations,
+  enVol = 0,
 }: {
   prompt: string
   onPrompt: (v: string) => void
@@ -65,6 +66,11 @@ export function ChampPrompt({
   provenance?: { texte: string; onDefaire: () => void } | null
   onGenerer: () => void
   variations: number
+  /** Combien d'images sont **en route en ce moment** — payées, pas encore
+   *  arrivées. Zéro la plupart du temps. Elle ne se voyaient que dans la grille
+   *  de la galerie, alors qu'on paie aussi depuis le codex et depuis l'établi :
+   *  on dépensait, l'écran ne bougeait pas, et l'on recliquait. */
+  enVol?: number
 }) {
   // **Le repli vit dans le registre du châssis, pas ici.** La galerie était le
   // fond du produit et ce champ ne se démontait jamais ; la V2.1 en fait un
@@ -185,6 +191,18 @@ export function ChampPrompt({
               onGeste={revers.onReessayer}
               enCours={revers.enCours}
             />
+          ) : enVol > 0 ? (
+            /* **Le quatrième locataire de la fente, et il dit qu'on a payé** —
+                ajouté le 31 août 2026, sur un bug signalé par l'auteur. On peut
+                dépenser depuis le codex et depuis l'établi, mais ce qui part ne
+                se voyait que dans la grille de la galerie : on payait, l'écran
+                ne bougeait pas, et l'on recliquait. La fente est l'endroit
+                prévu — la ligne sous le bouton, un locataire à la fois — et le
+                refus continue de l'emporter sur tout. */
+            <p className="mesure mt-1 text-[10px] text-signal">
+              {enVol === 1 ? "1 image part" : `${enVol} images partent`} · elles
+              arrivent dans la galerie
+            </p>
           ) : (
             <p className="mesure mt-1 text-[10px] text-texte-3">Ctrl + Entrée</p>
           )}

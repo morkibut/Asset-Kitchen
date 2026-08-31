@@ -57,7 +57,7 @@ import {
 import type { Fente } from "./BarreChassis"
 import { sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
-import { Bouton, Libelle, Segments } from "./chassis"
+import { Bouton, Libelle, Segments, ZoneTexte } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
 import { EcranCalibrage } from "./Calibrage"
@@ -1282,17 +1282,29 @@ function Identite({
 
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        <input
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-          onBlur={() => {
-            if (nom.trim() && nom !== personnage.nom) void poser({ nom: nom.trim() })
-            else setNom(personnage.nom)
-          }}
-          aria-label="Nom du personnage"
-          className="min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-texte hover:border-bord focus:border-bord-fort focus:bg-fond-1"
-        />
+      {/* **Le nom sur sa ligne, les portes sur la leur** — corrigé le 31 août
+          2026. Les cinq tenaient une seule rangée dans une colonne de 284 px,
+          et la rangée en demandait 372 : `Supprimer` dépassait de 72 px au-delà
+          du bord, atteignable seulement en trouvant une barre de défilement
+          horizontale que personne ne cherche sur une colonne de réglages. C'est
+          aussi ce qu'interdit la règle écrite du projet — « un panneau est
+          borné par l'écran, jamais par son contenu » (`docs/DESIGN.md`
+          § Layout).
+
+          La rangée passe donc à la ligne au lieu de sortir, et le nom prend la
+          sienne : c'est le seul champ des cinq qu'on écrit, et il n'avait
+          aucune raison de disputer sa largeur à des liens. */}
+      <input
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onBlur={() => {
+          if (nom.trim() && nom !== personnage.nom) void poser({ nom: nom.trim() })
+          else setNom(personnage.nom)
+        }}
+        aria-label="Nom du personnage"
+        className="w-full min-w-0 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-texte hover:border-bord focus:border-bord-fort focus:bg-fond-1"
+      />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {/* **Un clic sur « sa fiche » ouvre l'écran plein cadre** (E12). Le
             geste est celui de la maquette : on descend d'un cran depuis
             l'établi, et Échap ramène à l'endroit exact d'où l'on venait. */}
@@ -1327,6 +1339,11 @@ function Identite({
         >
           le calibrage ›
         </button>
+        {/* **Et il sort de la rangée des portes.** Les trois au-dessus ouvrent
+            un écran ; celui-ci détruit. Les mettre côte à côte, du même
+            caractère et de la même taille, faisait du plus dangereux des quatre
+            le voisin des trois plus anodins. `ml-auto` le pousse au bout de la
+            ligne, et il passe seul à la suivante quand la place manque. */}
         <button
           type="button"
           onClick={async () => {
@@ -1338,7 +1355,7 @@ function Identite({
             }
           }}
           title="ses images restent, marquées « personnage supprimé »"
-          className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
         >
           Supprimer
         </button>
@@ -1443,17 +1460,26 @@ function Identite({
 
       <div className="flex flex-col gap-1">
         <Libelle>Description</Libelle>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+        {/* **La boîte suit le texte** — corrigé le 31 août 2026. C'est le texte
+            le plus cher du produit : il repart avec chaque image de cette
+            chose, donc il décide de ce qu'on paie et de ce qu'on obtient. Il
+            s'écrivait dans trois lignes — mesuré sur un personnage réel, 733
+            signes dont un sixième visible —, et un texte qu'on ne relit pas est
+            un texte qu'on ne corrige pas. Le plafond de seize lignes est ce qui
+            empêche la colonne de partir hors de l'écran ; au-delà, la zone
+            défile. */}
+        <ZoneTexte
+          valeur={description}
+          onChange={setDescription}
           onBlur={() => {
             if (description !== personnage.description)
               void poser({ description })
           }}
-          rows={3}
+          lignesMin={3}
+          lignesMax={16}
           placeholder="ce qu'il faut redire au modèle à chaque image de ce personnage"
           aria-label="Description du personnage"
-          className="mesure w-full resize-y rounded-[2px] border border-bord bg-fond-1 p-2 text-[11px] leading-5 text-texte placeholder:text-texte-3"
+          className="mesure w-full rounded-[2px] border border-bord bg-fond-1 p-2 text-[11px] leading-5 text-texte placeholder:text-texte-3"
         />
         <p className="mesure text-[10px] leading-4 text-texte-3">
           Elle part avec chaque image de ce personnage. Écrite ici une fois,

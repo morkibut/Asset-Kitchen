@@ -127,10 +127,22 @@ export type Generation = {
 // places sont vides ne produit aucun rendu : le brut suffit.
 
 export type Passe = {
-  moteur: "bord" | "modele"
+  moteur: "bord" | "couleur" | "modele"
   tolerance: number
   seuil_alpha: number
   durcissement: number
+  /** La pipette : le pixel visé, en pixels de l'image **brute**, `[x, y]`.
+   *
+   *  **Un point, jamais une tache** — l'arbitrage de E3. Une tache est une zone
+   *  retrouvée à chaque rendu : son rang et sa boîte bougent dès qu'une passe
+   *  précédente change d'un cran, et la recette désignerait alors autre chose
+   *  sans le dire. Un point ne bouge pas, parce que les passes ne font que
+   *  fermer de l'alpha et que le recadrage vient après.
+   *
+   *  `null` tant qu'on n'a pas visé — et une pipette non visée ne retire rien. */
+  point: [number, number] | null
+  /** La pipette : cette zone-là, ou toutes celles de sa couleur. */
+  portee: "tache" | "partout"
 }
 
 /** La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -432,6 +444,8 @@ export const PASSE_PAR_DEFAUT: Passe = {
   tolerance: 28,
   seuil_alpha: 128,
   durcissement: 0,
+  point: null,
+  portee: "tache",
 }
 
 export type Asset = {
@@ -1644,17 +1658,31 @@ export type Tache = {
   aire: number
   boite: [number, number, number, number]
   couleur: string
+  /** Un pixel **qui appartient vraiment à la zone**, `[x, y]`. Le centre de la
+   *  boîte n'y est pas dès qu'elle est courbe : un croissant de fond entre un
+   *  bras et un torse a son centre géométrique dans le bras, et une pipette
+   *  visée là retirerait le sujet. */
+  point: [number, number]
 }
 
-/** Trois mesures, et aucune n'est un réglage : elles décrivent ce que l'image
+/** Cinq mesures, et aucune n'est un réglage : elles décrivent ce que l'image
  *  contient, et c'est l'auteur qui décide. */
 export type TachesDeLAsset = {
   /** De la plus petite à la plus grande — l'ordre du seuil. */
   taches: Tache[]
   /** Combien la liste en a coupé. **Dit, jamais tu en silence.** */
   coupees: number
-  /** Le fond que le sujet enferme, de la plus grande à la plus petite. */
+  /** **Le fond que le sujet enferme et qu'aucune tolérance n'atteint**, de la
+   *  plus grande à la plus petite — donc encore *opaque* dans l'image. C'est ce
+   *  que la pipette existe pour retirer. Coupée court : le détourage n'en fait
+   *  pas un inventaire, il en propose une. */
   poches: Tache[]
+  /** Combien il y en avait en tout. **Ce qui est coupé se dit** — une image
+   *  bruitée en porte des milliers d'un pixel. */
+  poches_total: number
+  /** Les **trous de la silhouette** — le transparent que le sujet entoure, donc
+   *  l'exact inverse des poches. C'est ce que le contour longe, ou pas. */
+  trous: Tache[]
   /** Les valeurs d'occupation où l'image change vraiment. */
   crans_occupation: number[]
   /** Aucun pixel transparent — donc **aucun bord de sujet à tracer**. C'est le
@@ -1665,6 +1693,13 @@ export type TachesDeLAsset = {
    *  `null` quand la place est vide : l'écran se tait alors, plutôt que
    *  d'écrire des zéros pour une table qu'on n'a pas ouverte. */
   main: { opacite: number; calques: number[] } | null
+  /** La couleur sous le point de chaque pipette, **une case par passe**, dans
+   *  l'ordre des passes. `null` là où la passe n'est pas une pipette ou n'a pas
+   *  encore été visée.
+   *
+   *  Elle est mesurée et non rangée dans la recette : une couleur écrite à côté
+   *  du point qui la porte est une copie que plus rien ne met à jour. */
+  visees: (string | null)[]
 }
 
 export type Filiation = {
@@ -3122,6 +3157,20 @@ export const api = {
   // neuve au lieu de resservir celle d'avant.
   rendu: (identifiant: string, version: string, brut = false) =>
     `/api/assets/${identifiant}/image?brut=${brut}&v=${encodeURIComponent(version)}`,
+
+  /** **L'image réduite pour une case de grille**, jamais le fichier entier.
+   *
+   *  Mesuré le 31 août 2026 : la galerie téléchargeait 25,5 Mo pour en afficher
+   *  0,5 — 318 Ko en moyenne par vignette de 145 px, et jusqu'à deux mégaoctets
+   *  pour la plus lourde.
+   *
+   *  `cote` est **le cran de la grille et non la largeur rendue** : trois crans
+   *  font trois adresses par image, une largeur de fenêtre en ferait une par
+   *  fenêtre, et le navigateur ne resservirait jamais deux fois la même. Le
+   *  `v=` porte l'empreinte de la recette, ce qui rend la mise en cache sûre —
+   *  l'adresse change dès que l'image change. */
+  vignette: (identifiant: string, version: string, cote: number) =>
+    `/api/assets/${identifiant}/vignette?cote=${cote}&v=${encodeURIComponent(version)}`,
 
   /** Le calque **avant que la main y passe** (C4, US-151) — l'autre moitié de
    *  la comparaison d'un seul geste.

@@ -105,81 +105,107 @@ export function BarreOutils({
           Rogner cacherait Supprimer sans le dire ; défiler le rend atteignable
           et le montre, avec la barre de 9 px que le produit dessine déjà. Ce
           qui cède en premier reste le champ de recherche, celui dont on ne se
-          sert pas pendant qu'on agit sur une sélection. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overflow-y-hidden">
-        {/* **Chercher et filtrer ne disparaissent jamais.** Une sélection ajoute
-            des gestes ; elle ne prend pas la place de ceux qui étaient là. Sans
-            ça, ouvrir une fiche — qui sélectionne — effacerait le filtre posé, et
-            « se retrouver exactement où l'on était » (US-37) deviendrait faux
-            sans que rien ne l'ait dit. */}
-        <input
-          value={recherche}
-          onChange={(e) => onRecherche(e.target.value)}
-          placeholder="Chercher"
-          aria-label="Chercher dans la bibliothèque"
-          className="mesure h-[26px] w-[160px] min-w-[72px] shrink rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
-        />
-        {/* **Le filtre par famille, et sa dernière valeur** (E4). Il range la
-            grille par ce que les images appartiennent — et il a **une valeur
-            pour ce qui n'appartient à aucune chose du jeu**, parce que c'est un
-            état réel et le cas de neuf appels sur vingt-huit : un essai, une
-            texture, une image apportée. La taire ferait de ces images-là des
-            introuvables, alors que la galerie est leur domicile. */}
-        <select
-          value={famille}
-          onChange={(e) => onFamille(e.target.value)}
-          aria-label="Ne montrer que les images d'une famille"
-          className="mesure h-[26px] w-[160px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
-        >
-          <option value="">toutes les familles</option>
-          <option value="personnages">personnages</option>
-          <option value="decors">décors</option>
-          <option value="objets">objets</option>
-          <option value="interface">interface</option>
-          <option value="aucune">sans chose du jeu</option>
-        </select>
-        <button
-          type="button"
-          onClick={() => onFavoris(!favoris)}
-          className={[
-            "mesure h-[26px] shrink-0 rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
-            favoris
-              ? "border-signal bg-signal/13 text-signal"
-              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
-          ].join(" ")}
-        >
-          Favoris
-        </button>
-        <span className="mesure shrink-0 text-[10px] text-texte-3">
-          {compte} image{compte > 1 ? "s" : ""}
-        </span>
+          sert pas pendant qu'on agit sur une sélection.
 
-        {/* **Le zoom de la grille**, dans la fente qui existe déjà : aucune
-            hauteur neuve sur une barre de 38 px. Trois crans, les mêmes que les
-            vignettes du tableau — un seul vocabulaire de taille dans tout le
-            produit, et les deux contrôles ne cohabitent jamais. */}
-        <div className="flex shrink-0 items-center gap-2">
-          <Segments
-            valeurs={ZOOMS}
-            valeur={zoom}
-            onChange={onZoom}
-            indisponibles={zoomsIndisponibles}
-            libelles={LIBELLES_ZOOM}
+          **Et il fallait le dire à la mise en page** — corrigé le 31 août 2026.
+          La phrase ci-dessus était l'intention ; le rendu faisait l'inverse.
+          Tout vivait dans un seul défilement, donc **ce qui sortait était la
+          queue de la rangée**, c'est-à-dire précisément les gestes de la
+          sélection : mesuré au navigateur, *Supprimer* s'affichait coupé en
+          plein mot et *Désélectionner* était entièrement hors du cadre. Rien
+          ne l'annonçait — le défilement horizontal ne dessine aucune barre à
+          cette hauteur-là, et un contrôle rogné en silence est un contrôle qui
+          n'existe plus.
+
+          Deux groupes, donc, et un seul cède : **ce qui consulte** — chercher,
+          filtrer, le compte, le zoom — se replie et défile ; **ce qui agit sur
+          la sélection** ne bouge jamais. C'est la même règle que le fil
+          d'Ariane de la barre du haut, qui cède en dernier parce qu'il porte ce
+          qui ne se devine pas. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overflow-y-hidden">
+        <div className="flex min-w-[96px] shrink items-center gap-2 overflow-x-auto overflow-y-hidden">
+          {/* **Chercher et filtrer ne disparaissent jamais.** Une sélection ajoute
+              des gestes ; elle ne prend pas la place de ceux qui étaient là. Sans
+              ça, ouvrir une fiche — qui sélectionne — effacerait le filtre posé, et
+              « se retrouver exactement où l'on était » (US-37) deviendrait faux
+              sans que rien ne l'ait dit. */}
+          <input
+            value={recherche}
+            onChange={(e) => onRecherche(e.target.value)}
+            placeholder="Chercher"
+            aria-label="Chercher dans la bibliothèque"
+            className="mesure h-[26px] w-[160px] min-w-[72px] shrink rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
           />
-          {/* Le seul endroit où le produit dit qu'il rend autre chose que ce qui
-              est choisi. Il le dit plutôt que de corriger en silence : le cran
-              reste celui qu'on a posé, et il redeviendra vrai dès que la colonne
-              aura repris sa largeur — un panneau replié, la fiche fermée. */}
-          {zoomRendu !== zoom && (
-            <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10px] text-texte-3">
-              <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
-              {zoom}× ne tient pas ici — rendu en {zoomRendu}×
-            </span>
-          )}
+          {/* **Le filtre par famille, et sa dernière valeur** (E4). Il range la
+              grille par ce que les images appartiennent — et il a **une valeur
+              pour ce qui n'appartient à aucune chose du jeu**, parce que c'est un
+              état réel et le cas de neuf appels sur vingt-huit : un essai, une
+              texture, une image apportée. La taire ferait de ces images-là des
+              introuvables, alors que la galerie est leur domicile. */}
+          <select
+            value={famille}
+            onChange={(e) => onFamille(e.target.value)}
+            aria-label="Ne montrer que les images d'une famille"
+            // `shrink` et un plancher, plutôt que `shrink-0` : quand la rangée
+            // manque de place, un filtre dont le nom se rogne vaut mieux qu'un
+            // geste de sélection qui sort du cadre. La liste déroulée, elle,
+            // montre les noms entiers — ce n'est pas elle qui est bornée.
+            className="mesure h-[26px] w-[160px] min-w-[104px] shrink rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+          >
+            <option value="">toutes les familles</option>
+            <option value="personnages">personnages</option>
+            <option value="decors">décors</option>
+            <option value="objets">objets</option>
+            <option value="interface">interface</option>
+            <option value="aucune">sans chose du jeu</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => onFavoris(!favoris)}
+            className={[
+              "mesure h-[26px] shrink-0 rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+              favoris
+                ? "border-signal bg-signal/13 text-signal"
+                : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+            ].join(" ")}
+          >
+            Favoris
+          </button>
+          <span className="mesure shrink-0 text-[10px] text-texte-3">
+            {compte} image{compte > 1 ? "s" : ""}
+          </span>
+  
+          {/* **Le zoom de la grille**, dans la fente qui existe déjà : aucune
+              hauteur neuve sur une barre de 38 px. Trois crans, les mêmes que les
+              vignettes du tableau — un seul vocabulaire de taille dans tout le
+              produit, et les deux contrôles ne cohabitent jamais. */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Segments
+              valeurs={ZOOMS}
+              valeur={zoom}
+              onChange={onZoom}
+              indisponibles={zoomsIndisponibles}
+              libelles={LIBELLES_ZOOM}
+            />
+            {/* Le seul endroit où le produit dit qu'il rend autre chose que ce qui
+                est choisi. Il le dit plutôt que de corriger en silence : le cran
+                reste celui qu'on a posé, et il redeviendra vrai dès que la colonne
+                aura repris sa largeur — un panneau replié, la fiche fermée. */}
+            {zoomRendu !== zoom && (
+              <span className="mesure flex items-center gap-1.5 whitespace-nowrap text-[10px] text-texte-3">
+                <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+                {zoom}× ne tient pas ici — rendu en {zoomRendu}×
+              </span>
+            )}
+          </div>
         </div>
 
+        {/* **Ce qui agit sur la sélection ne cède jamais.** `shrink-0`, hors du
+            défilement du groupe précédent : ces quatre-là ne paraissent que
+            parce qu'on vient de choisir des images, et ce qu'on choisit, on
+            veut en faire quelque chose tout de suite. */}
         {selection.length > 0 && (
-          <>
+          <div className="flex shrink-0 items-center gap-2">
             <span aria-hidden className="h-4 w-px shrink-0 bg-bord" />
             <span className="mesure shrink-0 text-[10px] text-texte-2">
               {selection.length} sélectionné{selection.length > 1 ? "s" : ""}
@@ -213,7 +239,7 @@ export function BarreOutils({
             >
               Désélectionner
             </button>
-          </>
+          </div>
         )}
       </div>
 

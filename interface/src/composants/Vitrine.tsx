@@ -187,6 +187,7 @@ export function EcranVitrine({
                 image={image}
                 asset={assets.find((a) => a.identifiant === image.asset)}
                 echelle={echelle}
+                tailleCommune={vitrine.taille_commune}
                 regardee={image.asset === vue?.asset}
                 onRegarder={() => setRegardee(image.asset)}
                 plan={plan}
@@ -199,6 +200,10 @@ export function EcranVitrine({
             image={vue}
             asset={assets.find((a) => a.identifiant === vue.asset)}
             echelle={echelle}
+            // **Seule, l'intruse n'écrase personne** : la réduction n'a de sens
+            // que dans la comparaison. Zéro veut dire « rien à comparer », et
+            // rend l'image à sa vraie échelle.
+            tailleCommune={0}
             regardee
             onRegarder={() => undefined}
             plan={plan}
@@ -297,6 +302,7 @@ function Sujet({
   image,
   asset,
   echelle,
+  tailleCommune,
   regardee,
   onRegarder,
   plan,
@@ -305,13 +311,39 @@ function Sujet({
   image: VitrineDuJeu["images"][number]
   asset: Parameters<typeof sujetAsset>[0] | undefined
   echelle: Echelle
+  /** La taille que la plupart des images rendent — celle qui fait référence.
+   *  Zéro quand il n'y a rien à comparer. */
+  tailleCommune: number
   regardee: boolean
   onRegarder: () => void
   plan: Pose[]
   /** La portée : le monde entier, ou une chose et ses poses. */
   duMonde: boolean
 }) {
-  const cote = image.largeur * echelle
+  // **Une image plus grande que la taille commune redescend à la taille
+  // commune ; une plus petite reste petite.** Corrigé le 31 août 2026.
+  //
+  // La règle de l'écran est *toutes ses poses à la même échelle*, et elle
+  // existe pour une chose précise : voir qu'une pose est sortie d'un quart
+  // plus petite que ses sœurs. Cette lecture-là est intacte — le plus petit
+  // reste plus petit, c'est même tout ce qu'on lui demande.
+  //
+  // Ce que la règle ne prévoyait pas est l'intruse : une image d'un autre
+  // format, trois fois plus grande, que multiplier par deux laisse trois fois
+  // plus grande. Mesuré sur un vrai personnage : **une image sur six occupait
+  // 67 % de la surface d'image de la page**, et repoussait la deuxième rangée
+  // de poses à un écran et demi de défilement. La comparaison que l'écran
+  // existe pour rendre possible devenait impossible, et l'écran s'arrêtait au
+  // constat — il écrit « hors taille commune » et laisse faire.
+  //
+  // La réduction se dit sous l'image : une échelle tue ne serait plus la même
+  // échelle, et le pied de cet écran ne mentirait plus qu'à moitié.
+  const reduite =
+    tailleCommune > 0 && image.largeur > tailleCommune
+      ? tailleCommune / image.largeur
+      : 1
+  const facteur = echelle * reduite
+  const cote = image.largeur * facteur
   // **Du codex, c'est le nom de la chose ; de son établi, celui de la pose.**
   // Le même sujet, lu à la portée où on le regarde — et la portée se donne,
   // elle ne se devine pas : au monde, la pose existe aussi dans le plan, et la
@@ -339,7 +371,7 @@ function Sujet({
             src={sujetAsset(asset).src}
             alt={nom}
             width={cote}
-            height={image.hauteur * echelle}
+            height={image.hauteur * facteur}
             style={{ imageRendering: "pixelated" }}
             className="block"
           />
@@ -348,6 +380,19 @@ function Sujet({
       <figcaption className="mesure text-center text-[9.5px] text-texte-3">
         {nom} · {image.largeur} × {image.hauteur}
         {image.hors_taille && " — hors taille commune"}
+        {/* **Ce qui n'est pas à l'échelle des autres le dit.** Sans cette
+            ligne, l'écran promettrait « toutes ses poses à la même échelle » en
+            en montrant une qui ne l'est pas — ce serait un mensonge silencieux,
+            et c'est ce que le produit refuse partout ailleurs. */}
+        {reduite < 1 && (
+          <>
+            <br />
+            <span className="text-epingle">
+              ramenée à {Math.round(image.largeur * reduite)} px pour tenir dans
+              la comparaison
+            </span>
+          </>
+        )}
       </figcaption>
     </figure>
   )

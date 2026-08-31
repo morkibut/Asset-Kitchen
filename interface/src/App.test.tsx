@@ -1076,6 +1076,9 @@ function serveurDouble(options: {
         crans_occupation: [],
         opaque: false,
         main: null,
+        visees: [],
+        poches_total: 0,
+        trous: [],
         ...(options.mesures ?? {}),
       })
     if (url.startsWith("/api/spending"))
@@ -3474,6 +3477,31 @@ describe("l'agent, vu de l'atelier", () => {
     expect(section.textContent).toContain("$0,0812")
   })
 
+  // ── « Échap ferme les Réglages » (31 août 2026) ───────────────────────────
+  //
+  // **Le panneau ne se fermait qu'en cliquant à côté** — un geste qui ne
+  // s'annonce nulle part et qu'on ne devine pas. Le Guide et la vitrine
+  // ferment sur Échap et l'écrivent sur leur bouton de sortie : c'est une règle
+  // du produit, et ce panneau-ci était l'un des deux qui ne la tenaient pas.
+
+  test("Échap ferme les Réglages, et le panneau se déclare comme une fenêtre", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+    const panneau = await screen.findByRole("dialog", { name: "Réglages" })
+
+    // Déclaré par-dessus : sans ces mots, un lecteur d'écran continue
+    // d'annoncer la page du dessous comme si elle était atteignable.
+    expect(panneau.getAttribute("aria-modal")).toBe("true")
+    expect(screen.getByRole("button", { name: "Fermer — Échap" })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Réglages" })).toBeNull(),
+    )
+  })
+
   test("clé, garde-fous et dossiers se règlent depuis un seul écran", async () => {
     const { fetchDouble, appels } = serveurDouble()
     await monter(fetchDouble)
@@ -4199,11 +4227,20 @@ describe("l'aperçu", () => {
     survoler(vignette)
     espace()
 
-    // **L'aperçu est la vignette en grand, et rien d'autre** : la même adresse,
+    // **L'aperçu est la vignette en grand, et rien d'autre** : le même asset,
     // pas une seconde décision sur « rendu ou brut ».
+    //
+    // **Deux adresses depuis le 31 août 2026, et c'est le sujet de l'aperçu qui
+    // l'impose.** La grille demande une image réduite — elle en montre cent à
+    // cent quarante-cinq pixels, et recevait jusqu'à deux mégaoctets par
+    // case —, l'aperçu demande le fichier entier, puisque l'ouvrir en grand est
+    // exactement le geste de compter ses pixels. Ce qui ne doit pas changer,
+    // et que cet essai tient, est qu'elles nomment **le même asset** : c'est de
+    // la seconde décision sur « rendu ou brut » qu'on se garde.
     expect(apercu()).toBeTruthy()
-    expect(image().getAttribute("src")).toBe(
-      vignette.querySelector("img")!.getAttribute("src"),
+    expect(image().getAttribute("src")).toBe("/api/generations/aaaa1111/slots/0/image")
+    expect(vignette.querySelector("img")!.getAttribute("src")).toMatch(
+      /^\/api\/assets\/aaaa1111-0\/vignette\?cote=256&v=/,
     )
     // Les dimensions mesurées, et le facteur qu'elles donnent dans cette scène :
     // 1024 px dans 1000 × 800 moins deux marges de 24 → 752 / 1024.
@@ -4440,7 +4477,13 @@ describe("l'aperçu", () => {
     // n'existe pas, et la bande montrait un trou là où la grille montre
     // l'image. Corrigé avec la barre d'espace, et pour la même raison — une
     // seule adresse par asset dans tout le produit.
+    //
+    // **Et c'est la vignette réduite, depuis le 31 août 2026** : la bande
+    // affiche vingt-quatre pixels de côté, et elle recevait le fichier entier.
+    // Le cran demandé est celui de la grille au repos, ce qui la rend gratuite
+    // — l'image est déjà dans le cache du navigateur quand la bande paraît.
     expect(vignette.getAttribute("src")).toBe(adresse)
+    expect(adresse).toMatch(/^\/api\/assets\/cccc3333-0\/vignette\?cote=256&v=/)
 
     survoler(vignette.closest("span")!)
     espace()
@@ -7355,6 +7398,29 @@ describe("l'écran des dépenses", () => {
       .toBeTruthy()
   })
 
+  // ── « Échap ramène d'où l'on vient » (31 août 2026) ───────────────────────
+  //
+  // **Cet écran n'avait aucune sortie à lui.** Ni bouton de fermeture, ni
+  // touche : la seule façon d'en partir était de recliquer un onglet du haut —
+  // c'est-à-dire d'aller ailleurs, pas de revenir. Le Guide et la vitrine
+  // ferment sur Échap et l'écrivent sur leur bouton ; c'est une règle du
+  // produit, et celui-ci était l'un des deux qui ne la tenaient pas.
+
+  test("Échap ferme les dépenses, et le bouton dit la touche", async () => {
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByRole("button", { name: "Fermer — Échap" })).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() =>
+      expect(document.querySelector("[data-depenses]")).toBeNull(),
+    )
+    // On retombe là d'où l'on venait, pas ailleurs : l'onglet n'a pas bougé.
+    expect(
+      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+    ).toBe("true")
+  })
+
   test("le fil ramène d'où l'on vient, et l'onglet ne change pas", async () => {
     await ouvrir()
 
@@ -7467,7 +7533,17 @@ describe("les trois côtés de l'univers", () => {
     // donne déjà à une carte d'image du même cran. Elle grandissait avec son
     // texte jusqu'en E7, ce qui faisait du tableau une colonne de 6 726 px.
     expect(corps.className).toContain("aspect-square")
-    expect(corps.className).toContain("overflow-hidden")
+
+    // **Et ce qui dépasse est atteignable, depuis le 31 août 2026.** La carte
+    // rognait en silence : elle écrivait en pied *1/6 visible* sans donner
+    // aucun moyen d'aller voir les cinq autres sixièmes. Elle défile
+    // maintenant — sans grandir d'un pixel, ce que la ligne au-dessus tient.
+    expect(corps.className).toContain("overflow-y-auto")
+
+    // **Les retours à la ligne sont rendus.** Une note porte parfois le
+    // document de présentation du jeu, avec ses titres et ses paragraphes ;
+    // l'affichage par défaut les effaçait et tout arrivait abouté en un bloc.
+    expect(corps.className).toContain("whitespace-pre-wrap")
   })
 
   // ── « Une carte de texte ouverte en grand se pose en colonne de prose
@@ -7955,6 +8031,48 @@ describe("le châssis des tables", () => {
     expect([...rangs].sort((a, b) => a - b)).toEqual(rangs)
   })
 
+  // ── « L'image s'ouvre à la taille du cadre » (31 août 2026) ────────────────
+  //
+  // **Le seul métier de cet écran est de montrer des pixels assez grands pour
+  // qu'on les juge**, et il ne le tenait pas : l'image s'affichait un pixel
+  // d'image pour un pixel d'écran, quelle que soit la table. Mesuré au
+  // navigateur, un sprite de 96 × 96 occupait 1,9 % d'un cadre de 670 × 742, et
+  // rien ne permettait d'y changer quoi que ce soit — ni bouton, ni molette
+  // annoncée, ni raccourci. Le pire cas était *la main*, la table où l'on
+  // repeint pixel par pixel.
+
+  test("la table ouvre en ajusté, et le zoom n'offre que des multiples entiers", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    // `ajusté` est l'état d'ouverture : c'est le seul cran qui suive le cadre,
+    // donc le seul qui puisse être juste avant qu'on ait regardé.
+    const ajuste = cadre.getByRole("button", { name: "ajusté" })
+    expect(ajuste.className).toContain("border-signal")
+
+    // Les crans sont ceux de la vitrine, et pour la même raison : un sprite
+    // agrandi d'une fois et demie fabrique des pixels qui n'existent pas.
+    for (const cran of ["1×", "2×", "4×", "8×", "16×"])
+      expect(cadre.getByRole("button", { name: cran })).toBeTruthy()
+    expect(cadre.queryByRole("button", { name: "1,5×" })).toBeNull()
+  })
+
+  test("un cran choisi agrandit la boîte de l'image d'autant", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    // La boîte porte le zoom, et elle seule : tout ce qui se rend au milieu la
+    // remplit — l'image seule, les deux côte à côte, la surface qui se peint —,
+    // donc aucune de ces trois surfaces n'a son propre calcul.
+    const boite = () =>
+      document.querySelector("[data-boite-image]") as HTMLElement
+
+    fireEvent.click(cadre.getByRole("button", { name: "4×" }))
+    expect(boite().style.width).toBe("4096px")
+    expect(boite().style.height).toBe("4096px")
+
+    fireEvent.click(cadre.getByRole("button", { name: "1×" }))
+    expect(boite().style.width).toBe("1024px")
+  })
+
   // ── « Le carré d'une place est plein si et seulement si la place change
   //     l'image » ─────────────────────────────────────────────────────────────
 
@@ -8129,9 +8247,9 @@ describe("le châssis des tables", () => {
     const { cadre } = await ouvrirUneTable({
       mesures: {
         taches: [
-          { aire: 1, boite: [3, 3, 3, 3], couleur: "#112233" },
-          { aire: 2, boite: [8, 8, 9, 9], couleur: "#445566" },
-          { aire: 900, boite: [0, 0, 63, 63], couleur: "#778899" },
+          { aire: 1, boite: [3, 3, 3, 3], couleur: "#112233", point: [3, 3] },
+          { aire: 2, boite: [8, 8, 9, 9], couleur: "#445566", point: [8, 8] },
+          { aire: 900, boite: [0, 0, 63, 63], couleur: "#778899", point: [0, 0] },
         ],
         coupees: 12,
         poches: [],
@@ -8154,19 +8272,36 @@ describe("le châssis des tables", () => {
   //     comptées, et n'en efface aucune de lui-même » ─────────────────────────
 
   test("le détourage compte les poches enfermées, et dit qu'il n'en efface aucune", async () => {
-    const { cadre } = await ouvrirUneTable({
+    const { cadre, appels } = await ouvrirUneTable({
       mesures: {
         taches: [],
         coupees: 0,
         poches: [
-          { aire: 42, boite: [10, 10, 19, 19], couleur: "#203040" },
-          { aire: 4, boite: [30, 30, 31, 31], couleur: "#405060" },
+          { aire: 42, boite: [10, 10, 19, 19], couleur: "#203040", point: [12, 10] },
+          { aire: 4, boite: [30, 30, 31, 31], couleur: "#405060", point: [30, 30] },
         ],
+        poches_total: 2,
         crans_occupation: [],
       },
     })
 
     expect(await cadre.findByText(/2 poches de fond enfermées/)).toBeTruthy()
+
+    // **Le geste est une proposition, et elle vise un pixel de la poche** — pas
+    // le centre de sa boîte, qui tombe dans le sujet dès que la zone est courbe.
+    // Rien n'est effacé sans que la recette le dise : c'est une passe pipette
+    // de plus, qui s'annule comme les autres.
+    fireEvent.click(cadre.getAllByRole("button", { name: "la retirer ›" })[0])
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      const passes = (envoi?.corps as { passes: Record<string, unknown>[] }).passes
+      expect(passes[passes.length - 1]).toMatchObject({
+        moteur: "couleur",
+        point: [12, 10],
+        portee: "tache",
+      })
+    })
+
     expect(
       cadre.getByText(/le produit n'en efface aucune/),
     ).toBeTruthy()
@@ -8222,6 +8357,124 @@ describe("le châssis des tables", () => {
         (envoi?.corps as { recadrage: { boite: number[] } }).recadrage.boite,
       ).toEqual([128, 128, 512, 640])
     })
+  })
+
+  // ── « La pipette retire une tache, ou toutes les taches de sa couleur, au
+  //     choix écrit » ────────────────────────────────────────────────────────
+  //
+  // Le dernier critère ouvert de l'étape, et il tenait sur un arbitrage : ce que
+  // la recette retient d'un clic dans l'image. Un identifiant de tache se
+  // recalcule à chaque rendu, donc il désigne autre chose dès qu'un réglage
+  // au-dessus bouge ; un point ne bouge pas. C'est le point qui est retenu, et
+  // ces essais-ci vérifient que c'est bien lui qui part au serveur.
+
+  /** Une image dont la recette porte déjà une passe pipette, visée ou non. */
+  const AVEC_PIPETTE = (point: [number, number] | null) => [
+    {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: {
+        ...RECETTE_VIDE,
+        passes: [
+          {
+            moteur: "couleur" as const,
+            tolerance: 28,
+            seuil_alpha: 128,
+            durcissement: 0,
+            point,
+            portee: "tache" as const,
+          },
+        ],
+      },
+    },
+  ]
+
+  test("la pipette pose un point dans l'image, et c'est le point qui part", async () => {
+    const { cadre, appels } = await ouvrirUneTable(
+      { mesures: { visees: [null] } },
+      AVEC_PIPETTE(null),
+    )
+
+    // **Une pipette non visée ne retire rien, et elle le dit** — plutôt que de
+    // laisser croire à une passe qui ne marche pas.
+    expect(
+      await cadre.findByText(/tant qu'aucun point n'est posé, cette passe ne retire rien/),
+    ).toBeTruthy()
+
+    // Viser arme la surface. Elle n'est pas là avant : une pipette permanente
+    // ferait de chaque regard sur l'image un risque de clic.
+    expect(document.querySelector("[data-pipette]")).toBeNull()
+    fireEvent.click(cadre.getByRole("button", { name: "viser dans l'image ›" }))
+
+    const toile = document.querySelector("[data-pipette]") as HTMLElement
+    expect(toile).toBeTruthy()
+    // Le cadre **est** l'image : la mesure est doublée, comme pour le rectangle
+    // de recadrage.
+    toile.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 512, height: 512 }) as DOMRect
+
+    fireEvent.click(toile, { clientX: 64, clientY: 128 })
+
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      const passe = (envoi?.corps as { passes: { point: number[] }[] }).passes[0]
+      // 512 px d'écran pour 1 024 px d'image : le facteur est deux.
+      expect(passe.point).toEqual([128, 256])
+    })
+  })
+
+  test("la couleur visée se lit dans les mesures, et n'est jamais dans la recette", async () => {
+    const { cadre, appels } = await ouvrirUneTable(
+      { mesures: { visees: ["#f2efe6"] } },
+      AVEC_PIPETTE([120, 200]),
+    )
+
+    // Elle s'affiche telle que le serveur l'a mesurée sous le point.
+    expect(await cadre.findByText("#f2efe6")).toBeTruthy()
+
+    // Et changer un réglage de la passe ne la renvoie pas : ce qui part est le
+    // point, jamais la couleur. Une couleur écrite à côté du point qui la porte
+    // serait une copie que plus rien ne met à jour.
+    fireEvent.click(cadre.getByRole("button", { name: "partout" }))
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      const passe = (envoi?.corps as { passes: Record<string, unknown>[] }).passes[0]
+      expect(passe.portee).toBe("partout")
+      expect(passe.point).toEqual([120, 200])
+      expect(passe.couleur).toBeUndefined()
+    })
+  })
+
+  test("les deux portées sont écrites, et « cette tache » est celle qui est posée", async () => {
+    const { cadre } = await ouvrirUneTable(
+      { mesures: { visees: ["#f2efe6"] } },
+      AVEC_PIPETTE([120, 200]),
+    )
+
+    // **Le choix est écrit, pas deviné** — le critère en toutes lettres. Et le
+    // défaut est le geste pour lequel la pipette a été admise : retirer un creux
+    // de fond sans toucher au reste.
+    const tache = await cadre.findByRole("button", { name: "cette tache" })
+    expect(tache.className).toContain("border-signal")
+    expect(
+      cadre.getByRole("button", { name: "partout" }).className,
+    ).not.toContain("border-signal")
+  })
+
+  test("le clic désarme la visée : regarder l'image ne déplace pas le point", async () => {
+    const { cadre } = await ouvrirUneTable(
+      { mesures: { visees: [null] } },
+      AVEC_PIPETTE(null),
+    )
+
+    fireEvent.click(await cadre.findByRole("button", { name: "viser dans l'image ›" }))
+    const toile = document.querySelector("[data-pipette]") as HTMLElement
+    toile.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 512, height: 512 }) as DOMRect
+    fireEvent.click(toile, { clientX: 64, clientY: 128 })
+
+    // Viser est un geste qui se termine. Une visée qui reste armée ferait du
+    // prochain regard sur l'image un déplacement du point.
+    await waitFor(() => expect(document.querySelector("[data-pipette]")).toBeNull())
   })
 
   // ── « Le découpage s'ouvre depuis la barre » ───────────────────────────────
@@ -8325,6 +8578,36 @@ describe("la galerie dégraissée", () => {
     ).toBe("true")
   })
 
+  // ── « La galerie s'éteint sous la table » (31 août 2026) ──────────────────
+  //
+  // **Elle restait montée dessous : invisible, mais vivante.** Mesuré au
+  // navigateur — 152 commandes atteignables à la Tabulation quand la table est
+  // ouverte, dont 83 hors de l'écran, appartenant toutes à la grille du
+  // dessous, « Supprimer la sélection » comprise : on la traversait à
+  // l'aveugle. Et les 54 px dont la page débordait faisaient reparaître sa
+  // barre tout en bas de la table, ce que la règle « un panneau est borné par
+  // l'écran, jamais par son contenu » interdit.
+
+  test("la grille se démonte quand une table s'ouvre par-dessus elle", async () => {
+    await ouvrirLaFiche(asset("aaaa1111-0"))
+    expect(screen.getByRole("region", { name: "Grille des images" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
+    await screen.findByRole("button", { name: /^détourage/ })
+
+    // Ni à l'œil, ni au clavier : la surface n'existe plus tant que la table
+    // est ouverte. Rien n'est perdu en partant — ce que la grille tient vit
+    // dans `App`, pas dans son montage.
+    expect(screen.queryByRole("region", { name: "Grille des images" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Supprimer la sélection" })).toBeNull()
+
+    // Et elle revient telle quelle quand la table se referme.
+    fireEvent.click(screen.getByRole("button", { name: "Galerie" }))
+    expect(
+      await screen.findByRole("region", { name: "Grille des images" }),
+    ).toBeTruthy()
+  })
+
   test("la fiche d'une image rattachée ouvre l'établi de sa chose", async () => {
     const image = { ...asset("aaaa1111-0"), personnage: "le-nain" }
     const double = serveurDouble({
@@ -8408,7 +8691,18 @@ describe("la galerie dégraissée", () => {
 
     // Et elle dit où elle se règle : le geste n'a pas disparu, il a changé
     // d'endroit — c'est tout ce que « dégraisser » veut dire.
-    fireEvent.click(screen.getByRole("button", { name: "La régler dans les tables ›" }))
+    //
+    // **Par la porte, et par elle seule, depuis le 31 août 2026.** La rubrique
+    // de la recette portait en plus un lien *La régler dans les tables ›* qui
+    // appelait exactement la même chose que ce bouton-ci, douze lignes plus bas
+    // dans le même panneau. Deux noms pour une destination, dans une colonne
+    // qu'on lit d'un coup d'œil : le lecteur ne pouvait pas deviner que le
+    // second ne menait nulle part de nouveau. La fiche porte **deux portes**,
+    // et c'est ce que cet essai tient maintenant.
+    expect(
+      screen.queryByRole("button", { name: "La régler dans les tables ›" }),
+    ).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
     expect(await screen.findByRole("button", { name: /^bords/ })).toBeTruthy()
   })
 })
@@ -11029,6 +11323,63 @@ describe("la vitrine", () => {
     expect((await vitrine.findByAltText("repos")).getAttribute("width")).toBe("512")
   })
 
+  // ── « L'intruse ne écrase plus la comparaison » (31 août 2026) ─────────────
+
+  test("une image hors taille commune redescend à la taille commune, et le dit", async () => {
+    // Trois poses à 128 px, une à 384. La taille commune est donc 128, et
+    // c'est l'écart de la quatrième qui est le sujet de cet essai.
+    const chose = personnage("Balthazar", {
+      cases: PLAN.map((p, rang) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images:
+          rang < 4
+            ? [
+                {
+                  ...asset(`balthazar-${p.identifiant}`),
+                  rendu_largeur: rang === 3 ? 384 : 128,
+                  rendu_hauteur: rang === 3 ? 384 : 128,
+                },
+              ]
+            : [],
+        ...VIDE_C3,
+      })),
+    })
+    const double = serveurDouble({ personnages: [chose] })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "la vitrine ›" }))
+    const vitrine = within(
+      await waitFor(() => {
+        const cadre = document.querySelector("[data-vitrine]")
+        if (!cadre) throw new Error("la vitrine ne s'est pas ouverte")
+        return cadre as HTMLElement
+      }),
+    )
+
+    // **Ce que la règle protège reste intact** : à ×2, une pose à la taille
+    // commune occupe 256 px. C'est cette échelle partagée qui fait voir une
+    // sœur sortie plus petite.
+    expect((await vitrine.findByAltText("repos")).getAttribute("width")).toBe("256")
+
+    // **Et l'intruse ne prend plus toute la page.** À ×2 elle aurait fait
+    // 768 px — trois fois ses sœurs, et 67 % de la surface d'image de la page,
+    // mesuré sur un vrai personnage. Elle redescend à la boîte commune.
+    const intruse = await vitrine.findByAltText("attaque")
+    expect(intruse.getAttribute("width")).toBe("256")
+    expect(intruse.getAttribute("height")).toBe("256")
+
+    // **Et l'écran ne ment pas sur ce qu'il montre.** « Toutes ses poses à la
+    // même échelle » serait faux sans cette ligne : ce qui n'est pas à
+    // l'échelle des autres le dit, sous l'image, dans la couleur des écarts.
+    expect(
+      vitrine.getByText(/ramenée à 128 px pour tenir dans la comparaison/),
+    ).toBeTruthy()
+
+    // Une pose à la taille commune, elle, ne porte aucune mention.
+    expect(vitrine.queryAllByText(/ramenée à/)).toHaveLength(1)
+  })
+
   // ── « Le fond de jugement vient du projet » ────────────────────────────────
 
   test("les fonds viennent du projet, et aucun sélecteur libre n'existe", async () => {
@@ -11845,6 +12196,25 @@ describe("l'écran de confirmation", () => {
     return { ...double, ecran }
   }
 
+  /** La même chose, **avec une case armée** — donc avec une série.
+   *
+   *  La case « ne plus me le montrer » ne paraît que là : une série est une
+   *  chose et une pose, et un texte écrit à la main sans chose visée n'a pas de
+   *  suivant qui lui ressemble. Les essais qui regardent la case passent donc
+   *  par ici, comme l'auteur. */
+  const ouvrirUneSerie = async (nom = "Le nain") => {
+    const double = serveurDouble({
+      univers: MONDE,
+      personnages: [personnage(nom, { description: "un forgeron" })],
+    })
+    await monter(double.fetchDouble, { ...ETAT, univers: MONDE })
+    const etabli = await ouvrirLEtabli(nom)
+    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    await ecrireLeSujet("un forgeron nain")
+    const ecran = await relire()
+    return { ...double, ecran }
+  }
+
   // ── « Chaque texte et chaque image qui part occupe sa propre ligne, avec un
   //     interrupteur » ────────────────────────────────────────────────────────
 
@@ -12129,14 +12499,25 @@ describe("l'écran de confirmation", () => {
 
   test("la case cochée saute l'écran pour la suite de la série", async () => {
     // **Relire dix fois la même chose est une punition** quand on refait dix
-    // fois la même image. La case existe pour ça, et pour ça seulement.
-    const { ecran, appels } = await ouvrir()
+    // fois la même image. La case existe pour ça, et pour ça seulement — donc
+    // seulement là où il y a une série, c'est-à-dire une case armée.
+    const { ecran, appels } = await ouvrirUneSerie()
 
     fireEvent.click(ecran.getByLabelText("ne plus me le montrer pour cette série"))
     fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
     await waitFor(() =>
       expect(appels.filter((a) => a.url === "/api/generations" && a.corps)).toHaveLength(1),
     )
+
+    // **On réarme la même case, et c'est le vrai geste** : payer désarme la
+    // cible — une intention qui vaut pour *cette* génération-là —, donc refaire
+    // la même image passe par la matrice. C'est la même série, et l'écran se
+    // saute. L'essai d'avant ne réarmait pas : il ne vérifiait donc le saut que
+    // sur le chemin sans chose du jeu, celui-là même qui n'aurait jamais dû
+    // l'offrir.
+    const etabli = await ouvrirLEtabli("Le nain")
+    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    await ecrireLeSujet("un forgeron nain")
 
     // Le second envoi ne passe plus par l'écran : un clic, une dépense.
     fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
@@ -12149,9 +12530,7 @@ describe("l'écran de confirmation", () => {
   test("changer de sujet remet l'écran — il n'y a pas de case « pour toujours »", async () => {
     // **On la cocherait le premier jour**, quand on ne sait pas encore qu'on en
     // aura besoin. Elle ne vaut donc que pour la série en cours.
-    const { ecran, appels } = await ouvrir({
-      personnages: [personnage("Le nain", { description: "un forgeron" })],
-    })
+    const { ecran, appels } = await ouvrirUneSerie()
 
     fireEvent.click(ecran.getByLabelText("ne plus me le montrer pour cette série"))
     fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
@@ -12170,7 +12549,7 @@ describe("l'écran de confirmation", () => {
   })
 
   test("l'écran dit lui-même qu'aucune case ne l'éteint pour toujours", async () => {
-    const { ecran } = await ouvrir()
+    const { ecran } = await ouvrirUneSerie()
 
     expect(ecran.getByText(/Il n'y a pas de case « pour toujours »/)).toBeTruthy()
   })
@@ -12259,5 +12638,99 @@ describe("l'écran de confirmation", () => {
     await screen.findByLabelText("Fermer la fiche")
 
     expect(screen.queryByText(/d'après «/)).toBeNull()
+  })
+
+  // ── « La barre qui paie ne dépense plus : elle fait relire » ──────────────
+  //
+  // **Le cas du monde vide, signalé par l'auteur et payé en vrai.** Le premier
+  // parcours du produit — un jeu neuf, aucune chose dedans, un texte tapé au
+  // pied du codex — est aussi celui où l'écran de confirmation compte le plus :
+  // c'est la première fois qu'on dépense, et l'on ne sait pas encore ce qui
+  // part. C'est là qu'il a manqué.
+
+  test("un monde vide fait relire avant de payer, comme tous les autres", async () => {
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+
+    // L'écran s'ouvre…
+    expect(
+      await screen.findByRole("button", { name: /^Payer et lancer/ }),
+    ).toBeTruthy()
+    // …et **rien n'est parti** tant qu'on n'a pas relu. C'est l'assertion qui
+    // compte : le reste de l'écran a ses propres essais, celle-ci dit que le
+    // clic ne facture pas.
+    expect(double.appels.filter((a) => a.url === "/api/generations")).toHaveLength(0)
+  })
+
+  test("sauter l'écran une fois ne le saute pas pour un autre sujet", async () => {
+    // **Le bug signalé par l'auteur, et il coûtait de l'argent à chaque clic.**
+    // « Ne plus me le montrer » vaut *pour la série en cours* — une chose et une
+    // pose. Sans chose du jeu, il n'y a pas de série : chaque texte est écrit à
+    // la main et n'a rien à voir avec le précédent. La clé de série valait
+    // pourtant « rien, rien, rien » pour tous, donc cocher la case une seule
+    // fois éteignait l'écran de confirmation pour **toutes** les générations
+    // sans chose, dans tous les jeux, jusqu'à ce qu'on recharge l'onglet. Le
+    // clic suivant partait droit à la dépense, en silence.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    await screen.findByRole("button", { name: /^Payer et lancer/ })
+
+    // La case n'est **pas offerte** ici : il n'y a pas de série à sauter.
+    expect(screen.queryByLabelText(/ne plus me le montrer/i)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /^Payer et lancer/ }))
+    await waitFor(() =>
+      expect(
+        double.appels.filter((a) => a.url === "/api/generations"),
+      ).toHaveLength(1),
+    )
+
+    // Un second sujet, sans rapport avec le premier : l'écran revient.
+    const suivant = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(suivant, { target: { value: "un petit voyageur, de dos" } })
+    await waitFor(() => expect(suivant.value).toBe("un petit voyageur, de dos"))
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+
+    expect(
+      await screen.findByRole("button", { name: /^Payer et lancer/ }),
+    ).toBeTruthy()
+    expect(
+      double.appels.filter((a) => a.url === "/api/generations"),
+    ).toHaveLength(1)
+  })
+
+  test("ce qui est parti se dit sous le bouton, là où l'on vient de payer", async () => {
+    // **L'autre moitié du bug signalé.** On paie depuis le codex et depuis
+    // l'établi, mais ce qui part ne se voyait que dans la grille de la galerie :
+    // l'écran ne bougeait pas, et l'auteur recliquait — ce qui repayait. La
+    // fente sous le bouton est l'endroit du produit pour ça.
+    const double = serveurDouble({ personnages: [] })
+    await monter(double.fetchDouble)
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un petit voyageur, de face" } })
+    await waitFor(() => expect(champ.value).toBe("un petit voyageur, de face"))
+
+    // Avant de payer, la fente porte son locataire ordinaire.
+    expect(screen.getByText("Ctrl + Entrée")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Payer et lancer/ }))
+
+    expect(await screen.findByText(/1 image part/)).toBeTruthy()
+    expect(screen.getByText(/elles\s+arrivent dans la galerie/)).toBeTruthy()
+    // **Jamais deux locataires à la fois** — la règle de la fente.
+    expect(screen.queryByText("Ctrl + Entrée")).toBeNull()
   })
 })

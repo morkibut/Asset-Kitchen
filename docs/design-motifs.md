@@ -1169,6 +1169,39 @@ l'ordre de lecture, et c'est celui que la découpe garde.
 
 ---
 
+### Le réglage qu'on désigne sur l'image — deux, et ils suivent les mêmes règles
+
+*Écrit en E3, en posant la pipette à côté du rectangle de recadrage.*
+
+Presque tous les réglages du produit se règlent dans l'absolu : un curseur, un segment, un
+nombre. **Deux ne le peuvent pas**, parce que ce qu'ils désignent n'existe que dans cette
+image-là — le rectangle du recadrage, et le point de la pipette. On ne dessine pas un cadrage en
+tapant quatre nombres ; on ne désigne pas un creux de fond en tapant un code de couleur. Ils
+partagent donc quatre règles, et il n'y en a pas de cinquième.
+
+**Ils se posent sur le brut, jamais sur le rendu.** Les deux sont comptés en pixels de l'image
+d'origine — coins inclus pour le rectangle, une seule convention dans tout le produit. C'est ce
+qui les fait survivre aux réglages placés avant eux ; c'est aussi ce qui interdit de les poser
+sur un rendu, que le recadrage et la remise sur grille ont déjà déplacé. Un cercle posé sur un
+rendu recadré désignerait un autre pixel que celui qu'on croit toucher.
+
+**Le cadre *est* l'image, mis à l'échelle par calcul.** Même règle et même raison que le cadre
+de la Découpe, ci-dessus : une boîte qui ment décale de vingt pixels tout ce qu'on pose dessus.
+
+**Une seule marque, en `--lumiere`, et rien d'autre.** La lampe de la table éclaire ce qu'on
+vise : un liseré et un voile à 10 % pour le rectangle, un cercle de 15 px avec le pixel visé
+marqué en son centre pour la pipette. Aucune couleur neuve, aucune poignée, aucun tracé — ces
+tables ne se peignent pas, et c'est ce qui laisse les quatre modes du comparateur libres, y
+compris *brut* pendant qu'on règle.
+
+**La surface n'existe que pendant le geste, et le geste se termine.** Elle remplace l'image
+seulement quand la table concernée est ouverte, et pour la pipette seulement quand une passe
+attend son point : un curseur en croix permanent ferait de chaque regard sur l'image un risque
+de clic. Le clic pose *et* désarme — une visée qui reste armée transforme le regard suivant en
+déplacement de ce qu'on vient de poser.
+
+---
+
 ### L'écran Guide, et la seule prose du produit
 
 **C'est un écran, et le cadrage le dit comme il l'a dit pour les deux autres.** Univers est

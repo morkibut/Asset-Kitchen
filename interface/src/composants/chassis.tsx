@@ -2,7 +2,15 @@
 // Elles portent les hauteurs de contrôle de `docs/DESIGN.md` § Spacing —
 // c'est cette grille de densité, pas les marges, qui fait l'instrument.
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode, type Ref } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+  type Ref,
+} from "react"
 import { secondes } from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
 
@@ -735,6 +743,89 @@ function part(ecoule: number, attendue: number, enAttente: boolean): number {
   const fraction = ecoule / attendue
   if (fraction <= 1) return 0.85 * fraction
   return 0.85 + 0.14 * (1 - 1 / fraction)
+}
+
+// ── La zone de texte qui grandit avec ce qu'on y écrit ──────────────────────
+
+/**
+ * Un champ de texte long dont la hauteur suit son contenu, entre un plancher et
+ * un plafond.
+ *
+ * **Pourquoi il existe** — ajouté le 31 août 2026. Le produit écrivait ses
+ * textes les plus longs dans des boîtes de deux ou trois lignes : la
+ * description d'un personnage, qui repart avec **chaque** image de ce
+ * personnage et décide donc de ce qu'on paie, se composait par un hublot de
+ * quatre lignes sur vingt-quatre — mesuré, 733 signes dont un sixième visible.
+ * Le document de présentation du jeu, 4 350 mots, se corrigeait dans trois
+ * lignes. Écrire long dans une fente courte n'est pas un inconfort : on ne
+ * relit pas, donc on ne corrige pas, et le texte le plus cher du produit est
+ * celui qu'on regarde le moins.
+ *
+ * **Un plafond, et pas seulement un plancher.** Sans lui, une note de quatre
+ * mille mots repousserait tout ce qui la suit hors de l'écran — c'est
+ * exactement le défaut que la carte de texte du tableau avait payé le 31 août
+ * 2026, et qu'`aspect-square` avait réparé. Au-delà du plafond, la zone défile,
+ * et la barre de 9 px du produit dit qu'il y a plus.
+ *
+ * La hauteur se mesure au navigateur (`scrollHeight`), jamais estimée depuis le
+ * nombre de signes : la largeur du champ, la police et les retours à la ligne
+ * décident, et eux seuls savent.
+ */
+export function ZoneTexte({
+  valeur,
+  onChange,
+  onBlur,
+  lignesMin = 3,
+  lignesMax = 16,
+  className = "",
+  ...reste
+}: {
+  valeur: string
+  onChange: (valeur: string) => void
+  onBlur?: () => void
+  /** La hauteur au repos, en lignes. Le champ n'est jamais plus court. */
+  lignesMin?: number
+  /** Là où il s'arrête de grandir et se met à défiler. */
+  lignesMax?: number
+  className?: string
+} & Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "value" | "onChange" | "onBlur" | "rows" | "className"
+>) {
+  const zone = useRef<HTMLTextAreaElement>(null)
+
+  // `useLayoutEffect` et non `useEffect` : la hauteur est posée avant que le
+  // navigateur peigne, sinon le champ saute d'une frappe à l'autre.
+  useLayoutEffect(() => {
+    const noeud = zone.current
+    if (!noeud) return
+    // La ligne se mesure sur le champ lui-même — sa police, son interligne —
+    // plutôt que sur une constante qui vieillirait à la première retouche de
+    // style. `18` n'est employé que si le navigateur ne rend pas encore de
+    // hauteur de ligne calculable, ce qui n'arrive qu'en essai.
+    const ligne = parseFloat(getComputedStyle(noeud).lineHeight) || 18
+    const bords = noeud.offsetHeight - noeud.clientHeight
+    const plancher = ligne * lignesMin
+    const plafond = ligne * lignesMax
+    // Remettre à zéro d'abord : `scrollHeight` ne redescend jamais tout seul
+    // en dessous de la hauteur déjà posée, et le champ ne rétrécirait plus
+    // quand on efface.
+    noeud.style.height = "0px"
+    const voulue = Math.min(Math.max(noeud.scrollHeight, plancher), plafond)
+    noeud.style.height = `${voulue + bords}px`
+    noeud.style.overflowY = noeud.scrollHeight > plafond ? "auto" : "hidden"
+  }, [valeur, lignesMin, lignesMax])
+
+  return (
+    <textarea
+      ref={zone}
+      value={valeur}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
+      className={`defile resize-none ${className}`}
+      {...reste}
+    />
+  )
 }
 
 /** Le point de la barre d'état. Seul endroit du produit avec un rayon plein. */

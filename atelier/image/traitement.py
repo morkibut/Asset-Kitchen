@@ -47,9 +47,11 @@ from PIL import Image, ImageDraw
 from atelier.domaine.recette import (
     BAS,
     BORD,
+    COULEUR,
     FLOYD,
     LAISSES,
     MODELE,
+    PARTOUT,
     Bords,
     CalqueDessin,
     Contour,
@@ -71,6 +73,7 @@ __all__ = [
     "contourner",
     "detourer",
     "detourer_bord",
+    "detourer_couleur",
     "durcir",
     "etendre",
     "finir",
@@ -146,7 +149,9 @@ def raison_moteur(moteur: str) -> str | None:
     modèle ait eu lieu. `find_spec` répond à la même question sans rien charger,
     et l'inférence n'entre dans le processus qu'au moment où on la demande.
     """
-    if moteur == BORD:
+    # La pipette n'a rien à télécharger : c'est le même remplissage par plages
+    # que le bord, amorcé ailleurs. Elle est donc toujours là, comme lui.
+    if moteur in (BORD, COULEUR):
         return None
     if moteur != MODELE:
         return f"moteur inconnu — « {moteur} »"
@@ -183,18 +188,25 @@ def _couleur_du_bord(rgb: np.ndarray) -> np.ndarray:
     return np.median(bordure.astype(np.int16), axis=0)
 
 
-def _remplir_depuis_le_bord(proche: np.ndarray) -> np.ndarray:
-    """Remplissage par plages, amorcé sur les quatre bords.
+def _remplir(proche: np.ndarray, graines: list[tuple[int, int]]) -> np.ndarray:
+    """Remplissage par plages, amorcé où on le lui dit.
 
     Par plages et non pixel à pixel : une file de pixels sur une image de
     1024 × 1024 se compte en centaines de milliers d'entrées et met près d'une
     seconde en Python, ce qui interdirait « chaque réglage répond sans attente
     perceptible ». Une plage est une ligne de fond entière, trouvée d'un coup par
     numpy — il y en a quelques milliers, pas un million.
+
+    **Les graines sont devenues un argument en E3**, quand la pipette est
+    arrivée : elle part d'un point désigné là où le moteur du bord part des
+    quatre bordures, et c'est *toute* leur différence. Deux remplissages par
+    plages dans le même fichier auraient fini par se répondre différemment sur
+    la même image — la crainte est écrite noir sur blanc dans `composantes`, qui
+    a été rendue publique pour la même raison.
     """
     hauteur, largeur = proche.shape
     fond = np.zeros_like(proche)
-    pile: list[tuple[int, int]] = []
+    pile: list[tuple[int, int]] = list(graines)
 
     def semer(y: int, debut: int, fin: int) -> None:
         """Une graine par sous-plage libre, jamais une par pixel."""
@@ -206,14 +218,6 @@ def _remplir_depuis_le_bord(proche: np.ndarray) -> np.ndarray:
         borde = np.concatenate(([False], libre, [False])).astype(np.int8)
         for depart in np.flatnonzero(np.diff(borde) == 1):
             pile.append((y, debut + int(depart)))
-
-    semer(0, 0, largeur - 1)
-    semer(hauteur - 1, 0, largeur - 1)
-    for y in range(hauteur):
-        if proche[y, 0]:
-            pile.append((y, 0))
-        if proche[y, largeur - 1]:
-            pile.append((y, largeur - 1))
 
     while pile:
         y, x = pile.pop()
@@ -232,6 +236,22 @@ def _remplir_depuis_le_bord(proche: np.ndarray) -> np.ndarray:
     return fond
 
 
+def _graines_du_bord(proche: np.ndarray) -> list[tuple[int, int]]:
+    """Les quatre bordures, en plages — les amorces du moteur courant."""
+    hauteur, largeur = proche.shape
+    graines: list[tuple[int, int]] = []
+    for y in (0, hauteur - 1):
+        libre = proche[y]
+        borde = np.concatenate(([False], libre, [False])).astype(np.int8)
+        graines.extend((y, int(d)) for d in np.flatnonzero(np.diff(borde) == 1))
+    for y in range(hauteur):
+        if proche[y, 0]:
+            graines.append((y, 0))
+        if proche[y, largeur - 1]:
+            graines.append((y, largeur - 1))
+    return graines
+
+
 def detourer_bord(rgb: np.ndarray, tolerance: int) -> np.ndarray:
     """L'alpha d'une image dont le fond est plat — le cas de tout ce qui sort d'ici.
 
@@ -243,7 +263,44 @@ def detourer_bord(rgb: np.ndarray, tolerance: int) -> np.ndarray:
     cible = _couleur_du_bord(rgb)
     ecart = np.abs(rgb.astype(np.int16) - cible).max(axis=2)
     proche = ecart <= tolerance
-    fond = _remplir_depuis_le_bord(proche)
+    fond = _remplir(proche, _graines_du_bord(proche))
+    return np.where(fond, np.uint8(0), np.uint8(255))
+
+
+def detourer_couleur(
+    rgb: np.ndarray,
+    point: tuple[int, int],
+    tolerance: int,
+    *,
+    partout: bool = False,
+) -> np.ndarray:
+    """L'alpha d'une image dont on a **désigné le fond du doigt** (E3).
+
+    Le recours pour ce que le remplissage depuis le bord ne peut pas atteindre :
+    une poche de fond entièrement enfermée par le sujet n'est reliée à aucune
+    bordure, donc aucune valeur de tolérance ne l'efface. Ici l'amorce n'est
+    plus la bordure, c'est le point.
+
+    Deux portées, et elles ne se ressemblent pas :
+
+    - **la zone d'un seul tenant** sous le point — le geste pour lequel la
+      pipette a été admise. Elle règle une poche sans toucher au reste, et c'est
+      pour ça que c'est le défaut ;
+    - **toutes les zones de cette couleur**, celles qui touchent le sujet
+      comprises. Plus expéditif, plus risqué, et il n'y a rien à faire pour le
+      rendre sûr : c'est le choix de l'auteur, écrit dans la recette.
+
+    `point` est en pixels de cette image, `(x, y)`. **Hors cadre, rien ne se
+    passe** — une passe qu'on n'a pas encore visée ne mange pas l'image en
+    attendant qu'on la vise.
+    """
+    hauteur, largeur = rgb.shape[:2]
+    x, y = point
+    if not (0 <= x < largeur and 0 <= y < hauteur):
+        return np.full((hauteur, largeur), np.uint8(255))
+    cible = rgb[y, x].astype(np.int16)
+    proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    fond = proche if partout else _remplir(proche, [(y, x)])
     return np.where(fond, np.uint8(0), np.uint8(255))
 
 
@@ -510,7 +567,7 @@ def contourner(rgba: np.ndarray, contour: Contour) -> np.ndarray:
         return rgba
 
     if contour.trous == LAISSES:
-        sujet = ~_remplir_depuis_le_bord(~sujet)
+        sujet = ~_remplir(~sujet, _graines_du_bord(~sujet))
 
     dehors, dedans = contour.parts
     if dehors:
@@ -782,6 +839,18 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
     """
     if passe.moteur == MODELE:
         neuf = _detourer_modele(rgba[:, :, :3])
+    elif passe.moteur == COULEUR:
+        # **Une pipette sans point ne fait rien**, et surtout pas « tout » : on
+        # ajoute la passe avant de viser, et la moitié de seconde entre les deux
+        # ne doit pas manger l'image sous les yeux de celui qui va cliquer.
+        if passe.point is None:
+            return rgba
+        neuf = detourer_couleur(
+            rgba[:, :, :3],
+            passe.point,
+            passe.tolerance,
+            partout=passe.portee == PARTOUT,
+        )
     else:
         neuf = detourer_bord(rgba[:, :, :3], passe.tolerance)
 

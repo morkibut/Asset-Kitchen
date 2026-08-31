@@ -685,3 +685,101 @@ la prochaine réécriture retrouvera.
   ne se cite pas à une autre**. Le geste qui répare est d'écrire la taille sur le bloc qui porte
   la borne, pour que le `em` soit celui de ce qu'on lit. Payé en écrivant E20, le 31 août 2026,
   et trouvé en mesurant l'écran — aucun essai ne pouvait le voir.
+
+- **Un essai dont l'énoncé est plus large que la propriété qu'il défend échoue au bord, et le
+  réflexe est alors de corriger le code.** L'essai de la pipette affirmait qu'*aucune* valeur de
+  tolérance du moteur du bord n'atteint un creux de fond enfermé par le sujet. Il tombait à la
+  valeur maximale — le creux part —, et il avait raison de tomber : à cette tolérance-là le
+  moteur a d'abord mangé la matière qui enfermait le creux, et il ne reste plus rien du tout. Un
+  détourage qui efface l'image entière n'a « atteint » rien du tout. **Le code était juste, la
+  phrase était trop grande.** Le geste qui répare n'est pas de retirer la valeur qui gêne — ce
+  qui aurait laissé un essai qui vérifie quatre points choisis à la main — mais d'écrire la
+  propriété à l'endroit exact où elle vaut : *tant que la matière tient, le creux tient avec
+  elle*, vérifié sur les deux cent vingt tolérances où c'est le cas. La leçon générale :
+  **quand un essai tombe à une valeur extrême, se demander d'abord si l'extrême est encore dans
+  le domaine de la phrase.** Payé en fermant E3, le 31 août 2026.
+
+- **Une clé de série composée de champs vides confond tous les cas « aucun », et c'est de
+  l'argent.** L'écran de confirmation se saute *pour la série en cours* — une chose du jeu et
+  une pose —, et la clé était `chose|poses|pièce` mise bout à bout. Sans chose visée, les trois
+  morceaux sont vides : **toutes** les générations écrites à la main partageaient donc la clé
+  `||`, dans tous les jeux. Cocher la case une seule fois éteignait l'écran pour chacune
+  d'elles jusqu'au rechargement de l'onglet, et le clic suivant sur *Générer* partait droit à
+  la dépense, en silence. C'était très exactement la case « pour toujours » que le produit
+  s'interdit, atteinte par accident. Ce qui l'a rendu invisible est **un essai qui passait pour
+  la mauvaise raison** : il vérifiait le saut sans jamais armer de case, c'est-à-dire sur ce
+  chemin-là précisément — et il cachait du même coup que la case ne fonctionnait *pas* pour une
+  vraie série, puisque payer désarme la cible. Le geste qui répare : **une clé absente vaut
+  `null`, jamais une chaîne vide**, et le contrôle qui la consomme n'est pas offert quand elle
+  est absente. Signalé par l'auteur et payé en argent réel, le 31 août 2026.
+
+- **On peut payer depuis un écran qui ne montre pas ce qui part, et l'on recliquera.** Le
+  chantier — ce qui est acheté, pas encore arrivé — tenait sa place dans la grille de la
+  galerie, avant même que l'image existe. Mais depuis E2 on paie aussi depuis le codex et
+  depuis l'établi, et là rien ne bougeait : l'auteur dépensait, l'écran restait immobile,
+  et le geste naturel est de recliquer. La leçon générale : **partout où l'on peut dépenser,
+  quelque chose doit dire que la dépense est partie** — et l'endroit existait déjà, c'est la
+  fente sous le bouton, qui accueille un locataire à la fois. Trouvé en réparant le piège
+  ci-dessus, le même jour, dans le même signalement.
+
+- **Une mesure peut chercher l'exact inverse de ce qu'elle annonce, et son zéro passe pour une
+  bonne nouvelle.** Le panneau du détourage écrivait « N poches de fond enfermées » en lisant
+  les zones *transparentes* que le sujet entoure. Or ce que le remplissage depuis le bord
+  n'atteint pas reste **opaque** — c'est la définition même de « il ne l'atteint pas ». La
+  mesure ne trouvait donc la poche qu'*après* que la pipette l'eut retirée, c'est-à-dire au
+  moment où il n'y avait plus rien à proposer. **Zéro sur les soixante images du dépôt**, là où
+  la mesure juste en trouve quarante-trois par image en médiane. Ce qui l'a rendu invisible est
+  qu'un bloc qui n'apparaît jamais ne se remarque pas : il n'y a pas d'écran vide à voir, il n'y
+  a rien du tout, et le critère qui le portait était coché. Les essais ne pouvaient pas le voir
+  non plus — ils construisaient l'image *avec* le trou déjà transparent, ce qui est le seul état
+  où la fonction et sa phrase coïncident. Le geste qui répare est de **partir de l'image que le
+  produit fabrique vraiment** : détourer d'abord, puis mesurer, comme l'auteur le fait. Payé en
+  fermant E3, le 31 août 2026, en vérifiant la pipette sur les vraies images plutôt que sur
+  l'anneau des essais.
+
+- **Un plafond de liste posé après la description coûte cinquante-six secondes pour rendre
+  deux cents éléments.** Décrire une zone connexe — sa boîte, sa couleur moyenne, un point
+  dedans — coûte trois balayages de l'image entière. La liste des taches les décrivait *toutes*
+  puis coupait : sur l'image la plus bruitée du dépôt, seize mille zones sur mille pixels de
+  côté, cela faisait **56 s** pour deux cents lignes affichées. L'aire, elle, sort gratuitement
+  du remplissage par plages. Trier dessus, couper, **puis** décrire rend la même liste en
+  138 ms. La leçon est générale et vaut pour toute liste plafonnée : **le plafond doit tomber
+  avant le travail, pas avant l'affichage.** Payé en fermant E3, le 31 août 2026, sur une mesure
+  neuve — et la même faute dormait dans une mesure vieille de toute l'étape.
+
+- **Une fonction privée renommée passe la vérification de types et tombe à l'exécution, dans le
+  fichier même qu'on vient de relire.** `_remplir_depuis_le_bord` a été ouverte en `_remplir`
+  pour que la pipette réutilise le remplissage par plages au lieu d'en écrire un second. Une
+  recherche dans le dépôt avait été faite — mais *après* l'édition, sur le nom neuf. Le second
+  appelant, à quatre cents lignes de là, était le contour qui laisse les trous : il fait
+  exactement le même travail sur le masque inversé, ce qui est la raison même pour laquelle il
+  partageait la fonction. Python ne dit rien avant l'appel, et l'appel n'a lieu que sur une
+  option précise d'une place précise — **deux essais sur six cent soixante-dix**, dans un fichier
+  d'une autre étape. Le geste qui répare est de chercher les appelants **sur l'ancien nom, avant
+  de renommer**. Payé en fermant E3, le 31 août 2026.
+
+- **Une bibliothèque de style peut retirer un comportement du navigateur sous les pieds du
+  produit, et rien ne le dit.** Tailwind v4 a retiré le `cursor: pointer` que le navigateur
+  posait sur un bouton. Aucune ligne du dépôt ne l'avait demandé, aucun test ne pouvait le voir
+  — un curseur ne se rend pas dans jsdom —, et l'écran continue de fonctionner parfaitement :
+  **c'est le signal qui disparaît, pas la fonction**. Mesuré au navigateur le 31 août 2026 sur
+  la galerie : trente-huit boutons, trente-huit flèches ordinaires, aucune main. Il mord plus
+  fort dans ce produit qu'ailleurs, parce que le châssis est volontairement muet — pas de
+  relief, pas de cadre de rangée, pas de couleur d'appel — et que le curseur était donc le
+  dernier indice restant de ce qui répond au clic. Ce qui l'a rendu invisible est qu'on ne
+  regarde pas son propre curseur : on sait où l'on clique. Le geste qui répare tient en une
+  règle dans `interface/src/index.css` ; **la leçon générale est qu'une montée de version
+  majeure d'une bibliothèque de style se relit sur ses *retraits*, pas seulement sur ses
+  ajouts.** Payé par l'audit de design du 31 août 2026 (`docs/audit-design-post-v21.html`).
+
+- **Un `getBoundingClientRect` ne sait pas qu'un élément est rogné, et fait passer un
+  débordement pour un recouvrement.** En mesurant la barre d'outils de la galerie, deux groupes
+  de boutons paraissaient se dessiner l'un par-dessus l'autre — le rectangle de
+  *Désélectionner* chevauchait celui de *brute* de 92 px. Ils ne se recouvraient pas : le
+  premier groupe porte `overflow-x: auto`, et le rectangle rendu par le navigateur est celui de
+  la **mise en page**, pas celui de ce qu'on voit. Le défaut était réel — un contrôle
+  inatteignable —, mais sa cause était l'inverse de celle qu'on lisait, et la correction qu'elle
+  suggérait (un retour à la ligne) aurait grandi une bande dont le § Layout interdit de changer
+  la hauteur. Le geste qui répare la **mesure** est de comparer le rectangle de l'élément à
+  celui de son cadre de défilement, ou de lire `scrollWidth` contre `clientWidth`. Payé le
+  31 août 2026, en corrigeant l'audit de design.

@@ -56,16 +56,36 @@ from typing import Any
 
 # ── Les moteurs de détourage ─────────────────────────────────────────────────
 #
-# Deux, et le second est facultatif. Le remplissage depuis le bord ne demande
-# aucun modèle, aucun téléchargement et aucun réseau : mesuré le 27 août 2026
-# sur douze images de six modèles, PNG et JPEG, il rend douze silhouettes
+# Trois, et deux d'entre eux sont des recours. Le remplissage depuis le bord ne
+# demande aucun modèle, aucun téléchargement et aucun réseau : mesuré le 27 août
+# 2026 sur douze images de six modèles, PNG et JPEG, il rend douze silhouettes
 # propres — squelette blanc sur fond gris clair et fioles translucides compris.
-# C'est le moteur du geste courant. Le modèle, lui, existe pour les images qui
-# n'ont pas été fabriquées ici et n'ont donc pas de fond plat.
+# C'est le moteur du geste courant, et le défaut.
+#
+# La pipette est le recours pour ce que le bord **ne peut pas atteindre par
+# construction** (A-22) : une poche de fond entièrement enfermée par le sujet —
+# la lumière entre un bras et un torse — n'est reliée à aucune bordure, donc
+# aucune valeur de tolérance ne l'efface. On désigne alors le fond du doigt
+# plutôt que de partir des bordures.
+#
+# Le modèle, lui, existe pour les images qui n'ont pas été fabriquées ici et
+# n'ont donc pas de fond plat.
 
 BORD = "bord"
+COULEUR = "couleur"
 MODELE = "modele"
-MOTEURS = (BORD, MODELE)
+MOTEURS = (BORD, COULEUR, MODELE)
+
+# Ce que la pipette retire : la seule zone d'un seul tenant sous le point, ou
+# toutes les zones de cette couleur dans l'image.
+#
+# **`tache` est le défaut, et ce n'est pas de la prudence** : c'est le geste
+# pour lequel la pipette a été admise. Retirer une poche fermée sans toucher au
+# reste est ce que le bord ne sait pas faire ; `partout` est plus expéditif et
+# atteint aussi ce qui touche le sujet.
+TACHE = "tache"
+PARTOUT = "partout"
+PORTEES = (TACHE, PARTOUT)
 
 # Au-delà de ce seuil, un pixel appartient au sujet ; en dessous, au fond.
 # **Se durcit avant la réduction, jamais après** — piège payé au prix fort dans
@@ -275,12 +295,35 @@ class Passe:
 
     Chacune porte **son** seuil et **son** durcissement : une première passe
     large dégrossit le fond, une seconde plus serrée nettoie ce qui reste.
+
+    ── Ce que la pipette ajoute, et ce qu'elle n'ajoute pas ──────────────────
+
+    `point` est le pixel désigné dans l'image, **un point et non une tache**.
+    C'est le seul arbitrage de ce réglage, et il se joue sur ce qui survit à un
+    recalcul : une tache est une zone d'un seul tenant *retrouvée à chaque
+    rendu*, donc son rang et sa boîte bougent dès qu'une passe précédente change
+    d'un cran — la recette désignerait alors une autre zone sans le dire. Un
+    point, lui, ne bouge pas : les passes ne font que fermer de l'alpha, elles
+    ne déplacent aucun pixel, et le recadrage comme la remise sur grille
+    viennent après. Il est donc exprimé dans les pixels de l'image **brute**,
+    comme le rectangle de recadrage.
+
+    `portee` dit ce qu'on retire depuis ce point : la zone d'un seul tenant, ou
+    toutes les zones de la même couleur.
+
+    **La couleur visée n'est pas ici, et c'est délibéré.** L'écran l'affiche —
+    une pastille et son code — mais elle se *lit* sous le point, elle ne s'y
+    range pas : une couleur écrite à côté du point qui la porte est une copie
+    que plus rien ne met à jour, la même faute qu'un fichier « avant retouche »
+    gardé sur le disque. Elle arrive avec les mesures de la table.
     """
 
     moteur: str = BORD
-    tolerance: int = 28  # ± sur chaque composante, pour le moteur « bord »
+    tolerance: int = 28  # ± sur chaque composante, pour « bord » et « couleur »
     seuil_alpha: int = SEUIL_ALPHA
     durcissement: int = 0  # pixels rongés au bord après le seuil, 0 à 4
+    point: tuple[int, int] | None = None  # pipette : le pixel visé, dans le brut
+    portee: str = TACHE  # pipette : cette zone-là, ou toutes celles de sa couleur
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -288,15 +331,20 @@ class Passe:
             "tolerance": self.tolerance,
             "seuil_alpha": self.seuil_alpha,
             "durcissement": self.durcissement,
+            "point": list(self.point) if self.point else None,
+            "portee": self.portee,
         }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Passe":
+        point = d.get("point")
         return Passe(
             moteur=d.get("moteur", BORD),
             tolerance=int(d.get("tolerance", 28)),
             seuil_alpha=int(d.get("seuil_alpha", SEUIL_ALPHA)),
             durcissement=int(d.get("durcissement", 0)),
+            point=(tuple(int(v) for v in point) if point else None),
+            portee=str(d.get("portee") or TACHE),
         )
 
 

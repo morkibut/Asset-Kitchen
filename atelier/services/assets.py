@@ -33,8 +33,11 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation
 from atelier.domaine.recette import (
     ANCRAGES,
+    BORD,
+    COULEUR,
     EPAISSEUR_MAX,
     MOTEURS,
+    PORTEES,
     POSITIONS,
     RAYON_MAX,
     TRAMAGES,
@@ -50,10 +53,11 @@ from atelier.image import (
     crans_occupation,
     detourer,
     finir,
-    poches,
+    poches_de_fond,
     raison_moteur,
     rendre_en_png,
     taches,
+    trous,
 )
 from atelier.image.traitement import (
     composantes,
@@ -75,6 +79,19 @@ from atelier.services.evenements import Diffusion
 CIBLE_MIN, CIBLE_MAX = 8, 512
 DURCISSEMENT_MAX = 4
 COULEURS_MIN, COULEURS_MAX = 2, 256
+
+# La tolérance du moteur du bord quand aucune passe ne la dit — la même valeur
+# que `Passe`, et le seul endroit où elle est répétée : la mesure des poches
+# doit décrire le détourage que l'auteur *aurait* obtenu s'il en posait un.
+TOLERANCE_PAR_DEFAUT = 28
+
+# Combien de poches de fond enfermées partent à l'écran. Le détourage n'en fait
+# pas un inventaire, il en **propose** : mesuré sur les soixante images du dépôt,
+# une image en porte quarante-trois en médiane et jusqu'à seize mille, dont les
+# trois quarts d'un à trois pixels. Les plus grandes sont celles dont on se
+# demande vraiment si c'est du fond ou de la matière ; le compte entier part à
+# côté, pour que ce qui est coupé se dise.
+POCHES_MONTREES = 8
 
 # Combien de détourages restent sous la main. Le détourage coûte 130 ms là où le
 # reste en coûte 28 : le garder évite de le refaire à chaque cran de curseur.
@@ -184,12 +201,12 @@ class ServiceAssets:
     def taches_de(self, identifiant: str, plafond: int = 200) -> dict[str, Any]:
         """Ce qu'une table a besoin de savoir de l'image (E3, étendu en E5).
 
-        **Quatre mesures, et aucune n'est un réglage** : les taches que le
+        **Cinq mesures, et aucune n'est un réglage** : les taches que le
         nettoyage des bords va effacer, les poches de fond que le sujet enferme,
         les crans d'occupation où la remise sur grille change vraiment quelque
-        chose, et ce que chaque couche de la main touche. Toutes répondent à la
-        même question posée quatre fois — *qu'est-ce que ce curseur va faire,
-        avant que je le bouge ?*
+        chose, ce que chaque couche de la main touche, et la couleur que chaque
+        pipette a sous son point. Toutes répondent à la même question posée cinq
+        fois — *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
 
         **À l'échelle où le réglage agit, et c'est une correction du 31 août
         2026.** Elles se prenaient sur l'image *détourée* — donc à la taille du
@@ -221,7 +238,8 @@ class ServiceAssets:
         return {
             "taches": [t.en_json() for t in trouvees],
             "coupees": max(0, toutes - len(trouvees)),
-            "poches": [p.en_json() for p in poches(rgba)],
+            **self._poches_de(asset, rgba),
+            "trous": [t.en_json() for t in trous(rgba)],
             "crans_occupation": crans_occupation(
                 rgba, asset.recette.grille or Grille()
             ),
@@ -231,7 +249,67 @@ class ServiceAssets:
             # mesure de plus : c'est la même image, regardée d'une ligne.
             "opaque": bool(rgba[:, :, 3].all()),
             "main": self._pixels_de_la_main(asset),
+            "visees": self._couleurs_visees(asset),
         }
+
+    def _poches_de(self, asset: Asset, rgba: np.ndarray) -> dict[str, Any]:
+        """Les poches de fond enfermées, **les plus grandes d'abord**, et leur compte.
+
+        La liste est coupée court exprès : le détourage n'en fait pas un
+        inventaire, il en **propose une**. Mesuré le 31 août 2026 sur les
+        soixante images du dépôt, une image en porte quarante-trois en médiane
+        et jusqu'à seize mille — dont les trois quarts font un à trois pixels, du
+        bruit de compression à la couleur du fond. Les lister toutes ferait du
+        panneau une page de chiffres pour un geste qui vise une zone à la fois.
+
+        **Ce qui est coupé se dit**, comme pour les taches : le compte est rendu
+        à part, entier.
+
+        La tolérance est celle de la première passe qui remplit depuis le bord —
+        la mesure décrit ce que *ce* réglage-là n'a pas pu atteindre, et la
+        prendre ailleurs décrirait un détourage que personne n'a demandé. Sans
+        passe de bord, le défaut du produit.
+        """
+        tolerance = next(
+            (p.tolerance for p in asset.recette.passes if p.moteur == BORD),
+            TOLERANCE_PAR_DEFAUT,
+        )
+        trouvees, total = poches_de_fond(rgba, tolerance, plafond=POCHES_MONTREES)
+        return {
+            "poches": [p.en_json() for p in trouvees],
+            "poches_total": total,
+        }
+
+    def _couleurs_visees(self, asset: Asset) -> list[str | None]:
+        """La couleur sous le point de chaque pipette — **une par passe**.
+
+        La liste suit les passes rang par rang, et vaut `None` partout où la
+        passe n'est pas une pipette ou n'a pas encore été visée. C'est ce qui
+        permet à l'écran d'afficher la pastille et son code sans redescendre les
+        pixels : la couleur *se lit*, elle ne se range pas dans la recette (voir
+        `Passe`), et un écran qui la recalculerait de son côté serait la seconde
+        implémentation qu'on refuse partout ailleurs.
+
+        **Prise sur le brut, et il n'y a pas d'autre endroit possible.** Le point
+        est en pixels de l'image d'origine ; le recadrage et la remise sur grille
+        les déplacent tous les deux, et une couleur lue après eux nommerait un
+        autre pixel. Les passes, elles, ne ferment que de l'alpha — la couleur
+        est donc la même avant et après elles, et ce tableau-ci est déjà calculé.
+        """
+        rgba = self.detourage(asset)
+        hauteur, largeur = rgba.shape[:2]
+        visees: list[str | None] = []
+        for passe in asset.recette.passes:
+            if passe.moteur != COULEUR or passe.point is None:
+                visees.append(None)
+                continue
+            x, y = passe.point
+            if not (0 <= x < largeur and 0 <= y < hauteur):
+                visees.append(None)
+                continue
+            r, v, b = (int(c) for c in rgba[y, x, :3])
+            visees.append(f"#{r:02x}{v:02x}{b:02x}")
+        return visees
 
     def _pixels_de_la_main(self, asset: Asset) -> dict[str, Any] | None:
         """Ce que chaque couche de la septième place change (E5).
@@ -860,6 +938,18 @@ class ServiceAssets:
                 raise RecetteRefusee(
                     f"passe {rang} : le durcissement va de 0 à {DURCISSEMENT_MAX}"
                 )
+            if passe.portee not in PORTEES:
+                raise RecetteRefusee(
+                    f"passe {rang} : portée inconnue « {passe.portee} »"
+                )
+            # **Un point négatif est refusé, un point hors cadre ne l'est pas.**
+            # Le premier ne peut venir que d'un fichier écrit à la main ; le
+            # second arrive tout seul le jour où le brut est remplacé par une
+            # image plus petite, et refuser la recette entière ferait alors
+            # disparaître les six autres places pour un point devenu caduc. Le
+            # traitement le tient : hors cadre, la pipette ne retire rien.
+            if passe.point is not None and min(passe.point) < 0:
+                raise RecetteRefusee(f"passe {rang} : le point visé sort de l'image")
 
         grille = recette.grille
         if grille is not None:

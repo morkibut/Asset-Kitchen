@@ -23,7 +23,7 @@ import {
   type Emplacement,
   type Generation,
 } from "../api"
-import { sujetAsset, useVisee } from "./Apercu"
+import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
 import { Jauge } from "./chassis"
 
 /**
@@ -49,11 +49,15 @@ export type Entree =
 export function Tuile({
   entree,
   selectionnee,
+  cote,
   onOuvrir,
   onRelancer,
 }: {
   entree: Entree
   selectionnee: boolean
+  /** Le cran de la grille, en pixels — ce que la tuile demande au serveur, et
+   *  non ce qu'elle rend. Voir `api.vignette`. */
+  cote: number
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRelancer: (generation: string, rang: number) => void
 }) {
@@ -79,7 +83,12 @@ export function Tuile({
   // — la tuile, la fiche et l'aperçu. Espace, le pointeur posé ici, ouvre donc
   // exactement l'image qui est sous les yeux, jamais une autre.
   const sujet = asset ? sujetAsset(asset) : null
-  const source = sujet?.src ?? null
+  // **La grille demande une vignette, l'aperçu demande le fichier.** Ce sont
+  // deux emplois, donc deux adresses : la tuile fait cent quarante-cinq pixels
+  // de côté et recevait jusqu'à mille vingt-quatre — mesuré, 25,5 Mo
+  // téléchargés pour 0,5 Mo affiché sur un seul passage. `sujet` reste ce que
+  // le pointeur vise, et c'est bien le fichier entier qu'Espace doit ouvrir.
+  const source = asset ? vignetteAsset(asset, cote) : null
   const visee = useVisee(sujet)
 
   return (
@@ -105,6 +114,13 @@ export function Tuile({
           <img
             src={source}
             alt={titre.slice(0, 80)}
+            // **Rien ne part pour ce qui est sous le bas de l'écran.** Toutes
+            // les images de la grille partaient d'un coup, y compris celles
+            // qu'il aurait fallu faire défiler pour voir. Mesuré : 82 requêtes
+            // d'image pour un seul passage, la plus lente à arriver après
+            // 3,8 s — en local, sans réseau.
+            loading="lazy"
+            decoding="async"
             className="damier h-full w-full object-contain"
             style={{ imageRendering: "pixelated" }}
           />
@@ -149,10 +165,20 @@ export function Tuile({
 }
 
 /** Une tuile porte au maximum un nom et trois mesures. Au-delà, c'est la fiche
- *  qui prend le relais — c'est la règle qui empêche la grille de se charger. */
+ *  qui prend le relais — c'est la règle qui empêche la grille de se charger.
+ *
+ *  **`--texte-2` et 11 px, et c'est la règle du projet qui l'impose** — corrigé
+ *  le 31 août 2026. `--texte-3` est sous le seuil de lisibilité *délibérément*
+ *  (`docs/DESIGN.md` § Le texte), et la phrase qui l'autorise dit à quelle
+ *  condition : « il ne porte jamais d'information dont l'absence bloquerait —
+ *  il porte le grisé, la méta et la raison, tous redondants avec une autre
+ *  marque ». **Le prix n'est redondant avec rien** : l'image ne dit pas ce
+ *  qu'elle a coûté, et l'argent est l'enjeu que le produit met au centre — il a
+ *  un écran à lui. Il était donc le seul fait non redondant de la carte, écrit
+ *  dans le gris réservé à ce qui l'est. */
 function Mesures({ asset }: { asset: Asset }) {
   return (
-    <div className="mesure flex items-center gap-1.5 text-[9.5px] text-texte-3">
+    <div className="mesure flex items-center gap-1.5 text-[11px] text-texte-2">
       {/* Les dimensions **du rendu** quand il y en a un : c'est l'image qu'on
           regarde, donc c'est elle qu'on mesure. */}
       <span>

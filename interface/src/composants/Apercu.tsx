@@ -69,6 +69,20 @@ export const imageAsset = (asset: Asset, brut = false): string =>
     ? api.rendu(asset.identifiant, asset.empreinte, brut)
     : api.image(asset.generation, asset.rang)
 
+/**
+ * L'adresse de l'image d'un asset **pour une case de grille** — réduite.
+ *
+ * Elle vit à côté d'`imageAsset` parce que c'est la même question posée d'un
+ * cran plus loin : *quelle adresse, pour quel emploi*. La grille en a un à
+ * elle, et il n'a rien à voir avec celui de la fiche — on y regarde cent
+ * images à cent quarante-cinq pixels, et le fichier entier n'y sert jamais.
+ *
+ * **L'aperçu, lui, garde `sujetAsset`** : Espace ouvre l'image en grand, et
+ * c'est très exactement le moment où l'on veut le fichier entier.
+ */
+export const vignetteAsset = (asset: Asset, cote: number): string =>
+  api.vignette(asset.identifiant, asset.empreinte, cote)
+
 export const sujetAsset = (asset: Asset, brut = false): Sujet => ({
   // Le brut et le rendu sont deux images du même asset : les distinguer ici
   // évite qu'un aperçu ouvert sur l'un se croie ouvert sur l'autre.

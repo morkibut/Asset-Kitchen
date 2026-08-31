@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 """Ce qu'une table a besoin de savoir de l'image, et que seul le serveur peut dire.
 
-**Trois mesures, et aucune n'est un réglage.** Elles décrivent ce que l'image
+**Quatre mesures, et aucune n'est un réglage.** Elles décrivent ce que l'image
 *contient* — les taches que le nettoyage des bords va effacer, les poches de fond
-que le sujet enferme, les crans d'occupation où la remise sur grille change
-vraiment quelque chose. Les trois répondent à la même question posée trois fois :
-*qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+que le sujet enferme et qu'aucune tolérance n'atteint, les trous de la silhouette
+que le contour longera ou pas, les crans d'occupation où la remise sur grille
+change vraiment quelque chose. Les quatre répondent à la même question posée
+quatre fois : *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+
+**Les deux du milieu sont exactement inverses, et les confondre coûte cher.**
+Une poche de fond enfermée est **opaque** — c'est ce que le remplissage depuis
+le bord n'a pas pu atteindre ; un trou de silhouette est **transparent** — c'est
+ce qu'il a atteint, ou ce qui est arrivé transparent. Une seule fonction a longtemps
+servi les deux lectures sous le nom de la première, et elle rendait la seconde :
+mesuré le 31 août 2026 sur les soixante images du dépôt, le panneau du détourage
+annonçait **zéro poche** là où il y en avait quarante-trois en médiane.
 
 **Pourquoi elles vivent ici et pas à l'écran.** Elles se lisent dans les pixels,
 et les pixels sont sur le disque. Les recalculer dans le navigateur demanderait
@@ -38,14 +47,27 @@ class Tache:
     découpage. `couleur` est la moyenne de ses pixels : c'est ce qui permet à la
     pipette de retirer *toutes les taches de sa couleur* sans que l'écran ait à
     redescendre les pixels.
+
+    `point` est **un pixel qui appartient vraiment à la zone**, et il existe
+    pour une raison qu'on ne devine pas : le centre de la boîte n'est pas dans
+    la zone dès qu'elle est creuse ou courbe — un croissant de fond entre un
+    bras et un torse a son centre géométrique *dans le bras*. Une proposition
+    qui viserait le centre de la boîte retirerait donc le sujet. Celui-ci est le
+    premier pixel de la zone dans l'ordre de balayage : quelconque, mais dedans.
     """
 
     aire: int
     boite: tuple[int, int, int, int]
     couleur: str
+    point: tuple[int, int] = (0, 0)
 
     def en_json(self) -> dict[str, Any]:
-        return {"aire": self.aire, "boite": list(self.boite), "couleur": self.couleur}
+        return {
+            "aire": self.aire,
+            "boite": list(self.boite),
+            "couleur": self.couleur,
+            "point": list(self.point),
+        }
 
 
 def _boite(masque: np.ndarray) -> tuple[int, int, int, int]:
@@ -54,12 +76,31 @@ def _boite(masque: np.ndarray) -> tuple[int, int, int, int]:
     return int(colonnes[0]), int(lignes[0]), int(colonnes[-1]), int(lignes[-1])
 
 
+def _point(masque: np.ndarray) -> tuple[int, int]:
+    """Un pixel de la zone, en `(x, y)`. Le premier du balayage — dedans, sûr."""
+    lignes, colonnes = np.nonzero(masque)
+    if lignes.size == 0:
+        return (0, 0)
+    return int(colonnes[0]), int(lignes[0])
+
+
 def _couleur(rgba: np.ndarray, masque: np.ndarray) -> str:
     pixels = rgba[masque][:, :3]
     if pixels.size == 0:
         return "#000000"
     r, v, b = (int(round(float(c))) for c in pixels.mean(axis=0))
     return f"#{r:02x}{v:02x}{b:02x}"
+
+
+def _decrire(rgba: np.ndarray, masque: np.ndarray, aire: int) -> Tache:
+    """Décrire une zone — **trois balayages de l'image entière**, et c'est le
+    prix qu'on ne paie qu'aux zones qu'on va vraiment rendre."""
+    return Tache(
+        aire=aire,
+        boite=_boite(masque),
+        couleur=_couleur(rgba, masque),
+        point=_point(masque),
+    )
 
 
 def taches(rgba: np.ndarray, *, plafond: int = 200) -> list[Tache]:
@@ -74,31 +115,104 @@ def taches(rgba: np.ndarray, *, plafond: int = 200) -> list[Tache]:
     Le plafond n'est pas un choix d'apparence : une image bruitée peut porter des
     milliers de taches d'un pixel, et la liste sert à *regarder*. Ce qui est
     coupé est dit par l'appelant, jamais tu en silence.
+
+    **On trie d'abord, on décrit ensuite** — corrigé le 31 août 2026, à la
+    mesure. Décrire une zone coûte trois balayages de l'image entière, et le
+    plafond n'était appliqué qu'*après* les avoir tous payés : sur l'image la
+    plus bruitée du dépôt — seize mille zones sur mille pixels de côté — la
+    mesure mettait **56 secondes** à décrire seize mille zones dont deux cents
+    seulement étaient rendues. L'aire, elle, sort gratuitement du remplissage.
+    Trier dessus puis ne décrire que ce qui sort ramène la même liste en 138 ms.
     """
     alpha = rgba[:, :, 3]
     if not alpha.any():
         return []
-    trouvees = [
-        Tache(aire=aire, boite=_boite(masque), couleur=_couleur(rgba, masque))
-        for masque, aire in composantes(alpha > 0)
-    ]
-    trouvees.sort(key=lambda t: t.aire)
-    return trouvees[:plafond]
+    zones = composantes(alpha > 0)
+    zones.sort(key=lambda z: z[1])
+    return [_decrire(rgba, masque, aire) for masque, aire in zones[:plafond]]
 
 
-def poches(rgba: np.ndarray) -> list[Tache]:
-    """Les poches de fond **enfermées par le sujet**.
+def poches_de_fond(
+    rgba: np.ndarray, tolerance: int = 28, *, plafond: int = 40
+) -> tuple[list[Tache], int]:
+    """Ce que le moteur du bord **aurait effacé s'il avait pu l'atteindre**.
 
-    Un détourage par tolérance de bord efface le fond qu'il atteint depuis les
-    bords de l'image. Ce qu'il n'atteint pas reste : la lumière entre un bras et
-    un torse, le trou d'une anse, l'intérieur d'un anneau. Ces poches-là sont
-    parfois du fond qu'on veut retirer, parfois de la matière qu'on veut garder
-    — un cabochon de lanterne, un vitrail. **Le produit ne tranche pas** : il les
-    cercle, il les compte, et il ne les efface jamais de lui-même.
+    La lumière entre un bras et un torse, le trou d'une anse, l'intérieur d'un
+    anneau : du fond, à la couleur du fond, mais que le remplissage depuis les
+    bordures ne rejoint par aucun chemin. Aucune valeur de tolérance ne les
+    retire — c'est le fait mesuré qui a fait admettre la pipette (A-22), et
+    c'est cette mesure-ci qui les montre.
+
+    **Écrite en fermant E3, le 31 août 2026, parce que `trous` ne le faisait
+    pas.** Le panneau du détourage affichait les *trous de la silhouette* sous
+    le nom de « poches de fond enfermées », et les deux sont exactement
+    inverses : ce que le bord n'atteint pas **reste opaque**, alors que `trous`
+    cherche du transparent. La conséquence se mesure — sur les soixante images
+    brutes du dépôt, détourées au réglage courant, l'ancienne mesure en trouvait
+    **zéro**, et elle n'en trouvait une sur un anneau d'essai qu'*après* que la
+    pipette eut retiré la poche. Elle annonçait la chose au moment où elle avait
+    cessé d'exister.
+
+    Comment on les trouve, et c'est le calcul du moteur du bord lu d'une ligne :
+    les pixels **proches de la couleur de bordure** que le remplissage n'a pas
+    rejoints, et qui sont **encore opaques**. Le premier terme dit « c'est du
+    fond », le deuxième « il est enfermé », le troisième « il est encore là ».
+
+    **Le produit ne tranche pas** : il les cercle, il les compte, et il n'en
+    efface aucune de lui-même. Une poche est parfois de la matière qu'on veut
+    garder — un cabochon de lanterne, un vitrail —, et rien dans les pixels ne
+    permet de le savoir.
+
+    **Rend la liste coupée *et* le compte entier**, ce qui n'est pas une
+    coquetterie de signature : le compte sort gratuitement du remplissage, et le
+    redemander par un second appel coûterait les quatre secondes du remplissage
+    lui-même sur l'image la plus bruitée du dépôt. Ce qui est coupé se dit —
+    même règle que les taches — mais ici il fallait aussi que le dire soit
+    gratuit.
+
+    Les mesures qui ont fixé le plafond, prises le 31 août 2026 sur les soixante
+    images du dépôt détourées au réglage courant : **quarante-trois poches par
+    image en médiane**, jusqu'à seize mille, et les trois quarts font un à trois
+    pixels — du bruit de compression à la couleur du fond. Aucun plancher d'aire
+    ne sépare proprement le bruit du reste, c'est une longue traîne. On rend donc
+    les plus grandes, qui sont celles dont on se demande vraiment si c'est du
+    fond ou de la matière.
+    """
+    from atelier.image.traitement import _couleur_du_bord, _graines_du_bord, _remplir
+
+    rgb = rgba[:, :, :3]
+    cible = _couleur_du_bord(rgb)
+    proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    if not proche.any():
+        return [], 0
+    joignable = _remplir(proche, _graines_du_bord(proche))
+    enferme = proche & ~joignable & (rgba[:, :, 3] > 0)
+    if not enferme.any():
+        return [], 0
+    # De la plus grande à la plus petite : une poche ne s'efface pas sous un
+    # seuil, elle se regarde. Et l'on trie sur l'aire, qui est gratuite, avant
+    # de décrire — voir `taches`, où la même faute coûtait 56 secondes.
+    zones = composantes(enferme)
+    zones.sort(key=lambda z: z[1], reverse=True)
+    return [_decrire(rgba, m, a) for m, a in zones[:plafond]], len(zones)
+
+
+def trous(rgba: np.ndarray) -> list[Tache]:
+    """Les **trous de la silhouette** — le transparent que le sujet entoure.
+
+    C'est ce que le contour longe, ou ne longe pas, selon le réglage « les
+    trous » de la sixième place : un anneau détouré a un trou au milieu, et
+    tracer son pourtour extérieur seul ou ses deux bords ne donne pas la même
+    image.
+
+    **Renommée en fermant E3**, le 31 août 2026 : elle s'appelait `poches` et
+    deux panneaux la lisaient sous deux noms, dont un faux. Le contour, lui, la
+    lisait juste — un trou de silhouette est bien transparent. Le détourage
+    demande une autre question, et l'a maintenant : voir `poches_de_fond`.
 
     Comment on les trouve : les zones **transparentes** qui ne touchent aucun
     bord de l'image. Une zone transparente qui touche un bord est le fond
-    ordinaire, déjà parti ; celle qui n'en touche aucun est enfermée.
+    ordinaire, déjà parti ; celle qui n'en touche aucun est entourée.
     """
     alpha = rgba[:, :, 3]
     vide = alpha == 0
@@ -115,12 +229,11 @@ def poches(rgba: np.ndarray) -> list[Tache]:
         )
         if touche_un_bord:
             continue
-        dedans.append(
-            # La couleur d'une poche est celle qu'elle **avait** — transparente,
-            # elle n'en a plus. On rend donc celle du fond qui l'entoure, prise
-            # sur la boîte : c'est ce qui permet de la reconnaître à l'œil.
-            Tache(aire=aire, boite=_boite(masque), couleur=_couleur(rgba, masque))
-        )
+        # La couleur d'un trou est celle qu'il **avait** — transparent, il n'en
+        # a plus. Les pixels gardent leur teinte d'origine sous une opacité
+        # nulle, donc la moyenne rend bien le fond qu'on a retiré : c'est ce qui
+        # permet de le reconnaître à l'œil.
+        dedans.append(_decrire(rgba, masque, aire))
     dedans.sort(key=lambda t: t.aire, reverse=True)
     return dedans
 
