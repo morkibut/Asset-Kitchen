@@ -838,6 +838,20 @@ class ServiceProduction:
             "candidats": len(candidats),
         }
 
+    def poser_hors_calibrage(
+        self, projet: str, personnage: str, poses: tuple[str, ...]
+    ) -> Personnage:
+        """Les poses que le calage commun laisse de côté (E17).
+
+        **Le seul endroit du dépôt qui écrive un personnage reste `_sauver`** :
+        le calibrage passe donc par ici plutôt que d'écrire lui-même, comme
+        toute chose qui touche une chose du jeu.
+        """
+        vise = self.personnage(projet, personnage)
+        vise.hors_calibrage = poses
+        self._sauver(vise)
+        return vise
+
     def references_promues(self, projet: str, personnage: str) -> tuple[str, ...]:
         """Les images qu'une chose du jeu a promues en référence permanente.
 

@@ -1757,13 +1757,54 @@ quatre, parce que le centrage horizontal se fait sur la boîte du sujet et ne se
 
 #### Critères d'acceptation
 
-- [ ] Toutes les poses d'une chose se superposent dans la même case
-- [ ] Un bouton propose une taille commune, nomme la pose qui a limité le résultat, et dit le coût en résolution
-- [ ] La reprise à la main se fait pose par pose, après la proposition
-- [ ] Une pose très différente des autres est proposée comme mise de côté, et la mise de côté se défait
-- [ ] Le calage s'écrit dans l'occupation, et changer la taille de case ne défait aucun calibrage
-- [ ] Le décalage horizontal se règle et n'est écrit que par le calibrage — jamais à la main dans la table, jamais dans une recette nommée
-- [ ] Le décalage vaut zéro par défaut, et une recette sans calibrage rend exactement l'image d'avant
+- [x] Toutes les poses d'une chose se superposent dans la même case
+- [x] Un bouton propose une taille commune, nomme la pose qui a limité le résultat, et dit le coût en résolution
+- [x] La reprise à la main se fait pose par pose, après la proposition
+- [x] Une pose très différente des autres est proposée comme mise de côté, et la mise de côté se défait
+- [x] Le calage s'écrit dans l'occupation, et changer la taille de case ne défait aucun calibrage
+- [x] Le décalage horizontal se règle et n'est écrit que par le calibrage — jamais à la main dans la table, jamais dans une recette nommée
+- [x] Le décalage vaut zéro par défaut, et une recette sans calibrage rend exactement l'image d'avant
+
+#### Ce qui a été décidé en la faisant
+
+**Le calcul est celui de la mise sur grille, jamais un second.** Ce qu'une pose peut atteindre
+sans sortir de sa case vaut `cible × hauteur / plus grand côté de la boîte`, et l'occupation à
+poser en est l'inverse exact. Deux formules auraient fini par annoncer une hauteur et en
+produire une autre — c'est très exactement la contradiction que cette étape répare, et la
+rejouer ici aurait été comique.
+
+**La hauteur commune est celle de la pose qui plafonne le plus bas**, et le produit la nomme.
+Un bouton qui pose une valeur sans dire d'où elle vient serait une décision prise à la place de
+l'auteur ; celui-ci écrit *c'est « mort » qui limite*, et ce que la cohérence coûte —
+*45 px de la case ne servent pas · 35 % de résolution en moins*.
+
+**Une seule pose est proposée à l'écart, et une décision prise arrête la proposition.**
+Écarter la plus basse fait de la suivante la plus basse ; reproposer alors finirait par ne
+garder qu'une pose, et l'outil aurait décidé à la place de l'auteur ce qu'il prétend seulement
+proposer. Le seuil est **un dixième**, et ce n'est pas un seuil de confort : c'est la part de
+hauteur que garder cette pose coûterait *à toutes les autres*.
+
+**Le décalage est borné à la case, et il s'y arrête.** Sortir de la case couperait le sprite en
+silence, et une case existe justement pour que rien n'en sorte. Aux bords, les boutons cessent
+d'avoir un effet — ce qui se voit, et c'est mieux qu'une image rognée.
+
+**Le calibrage n'épingle pas.** Toucher une recette à la main épingle l'asset depuis T2 ; ici
+ce n'est pas une main posée sur une image, c'est un calage que le jeu impose à toutes les poses
+d'une chose. L'épingler aurait exclu ces images du prochain réalignement de palette — même
+décision que le balayage rétroactif de T4, pour la même raison.
+
+**Ce n'est pas une table, et c'est ce qui décide de son emplacement.** Une table de la barre
+décrit l'image ouverte ; le calibrage travaille sur *toutes* les poses à la fois et écrit dans
+chacune. Le mettre dans la barre voudrait dire que la barre de l'image A porte un outil qui
+modifie les images B, C et D — la barre cesserait de vouloir dire quelque chose. Il est donc
+une profondeur de l'établi, comme la fiche et la vitrine, et comme elles il retire la barre qui
+paie : il ne fabrique rien.
+
+**Mesuré au navigateur sur le vrai projet, le 31 août 2026.** Cinq poses de Balthazar rendent
+128 pixels de haut ; sa mort en rend **83**. Dans le jeu, le nain rapetisse d'un tiers en
+mourant, et aucun écran ne le disait — six vignettes côte à côte ne le montrent pas, six
+silhouettes empilées, si. L'outil propose de mettre la mort de côté, et le fait de lui-même
+sans jamais le décider.
 
 #### Bloquée par
 

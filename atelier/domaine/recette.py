@@ -363,11 +363,31 @@ class Grille:
     occupation: int = 100  # % de la case rempli par le sujet
     ancrage: str = BAS
 
+    # ── Le décalage horizontal, arrivé en E17 ────────────────────────────────
+    #
+    # **La case centre le sujet sur sa boîte, et ça ne se réglait pas.** Mesuré
+    # le 30 août 2026 : un bras qui sort de 160 pixels déplace le corps de six
+    # pixels dans une case de soixante-quatre, *même quand la taille, elle, n'a
+    # pas bougé*. Superposer les poses rend cette dérive parfaitement visible ;
+    # sans ce champ, l'outil la montrerait sans pouvoir y toucher — et **montrer
+    # un défaut auquel on ne peut pas toucher est pire que de ne pas le
+    # montrer**.
+    #
+    # **En pixels de la case, et c'est une coordonnée, pas un réglage.** Il se
+    # comporte comme la boîte tracée du recadrage : il ne part donc pas dans une
+    # recette nommée — même règle, rien de neuf à comprendre. Zéro par défaut,
+    # de sorte qu'une recette sans calibrage rend exactement l'image d'avant.
+    #
+    # **C'est le seul ajout de la V2.1 à la recette d'une image**, et il est
+    # écrit par le calibrage seul.
+    decalage: int = 0
+
     def en_json(self) -> dict[str, Any]:
         return {
             "cible": self.cible,
             "occupation": self.occupation,
             "ancrage": self.ancrage,
+            "decalage": self.decalage,
         }
 
     @staticmethod
@@ -376,6 +396,7 @@ class Grille:
             cible=int(d.get("cible", 64)),
             occupation=int(d.get("occupation", 100)),
             ancrage=d.get("ancrage", BAS),
+            decalage=int(d.get("decalage", 0) or 0),
         )
 
 

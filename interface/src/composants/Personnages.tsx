@@ -60,6 +60,7 @@ import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
+import { EcranCalibrage } from "./Calibrage"
 import { EcranVitrine } from "./Vitrine"
 
 /** Ce qui remplit vraiment une case — **et ce n'est pas toujours le nombre
@@ -223,6 +224,12 @@ export function EcranEtabli({
   // fabrique rien et ne modifie rien : comme la fiche, elle retire la barre qui
   // paie, et Échap rend l'établi.
   const [vitrineOuverte, setVitrineOuverte] = useState(false)
+  // **Le calibrage, quatrième plein cadre du même endroit** (E17). Il n'est pas
+  // dans la barre des tables, et c'est une décision : une table décrit l'image
+  // ouverte, celui-ci travaille sur *toutes* les poses à la fois et écrit dans
+  // chacune. Le mettre dans la barre voudrait dire que la barre de l'image A
+  // porte un outil qui modifie les images B, C et D.
+  const [calibrageOuvert, setCalibrageOuvert] = useState(false)
 
   // Changer de chose referme la fiche : elle décrit celle qu'on regardait, et
   // la garder ouverte sur la suivante ferait croire qu'on a réglé l'une en
@@ -230,6 +237,7 @@ export function EcranEtabli({
   useEffect(() => {
     setFicheOuverte(false)
     setVitrineOuverte(false)
+    setCalibrageOuvert(false)
   }, [ouvert.identifiant])
 
   const setRefus = (texte: string) =>
@@ -286,7 +294,13 @@ export function EcranEtabli({
           Et comme l'outil, elle fait disparaître la barre qui paie — régler ne
           se paie pas. C'est `App` qui la retire, sur le même booléen. */}
       {outil ??
-        (vitrineOuverte ? (
+        (calibrageOuvert ? (
+          <EcranCalibrage
+            personnage={ouvert}
+            onFermer={() => setCalibrageOuvert(false)}
+            onErreur={echouer}
+          />
+        ) : vitrineOuverte ? (
           <EcranVitrine
             personnage={ouvert}
             personnages={[ouvert]}
@@ -327,6 +341,7 @@ export function EcranEtabli({
           onArmer={onArmer}
           onFiche={() => setFicheOuverte(true)}
           onVitrine={() => setVitrineOuverte(true)}
+          onCalibrage={() => setCalibrageOuvert(true)}
           dossierJeu={dossierJeu}
           onErreur={echouer}
         />
@@ -354,7 +369,7 @@ export function EcranEtabli({
           référence n'appelle personne, et un écran incapable de dépenser ne
           porte pas le champ qui dépense. `App` la retire déjà pour l'outil,
           qu'il tient ; celle-ci se décide ici, où la fiche vit. */}
-      {ficheOuverte || vitrineOuverte ? null : barreQuiPaie}
+      {ficheOuverte || vitrineOuverte || calibrageOuvert ? null : barreQuiPaie}
     </div>
   )
 }
@@ -862,6 +877,7 @@ function Fiche({
   onArmer,
   onFiche,
   onVitrine,
+  onCalibrage,
   dossierJeu,
   onErreur,
 }: {
@@ -886,6 +902,8 @@ function Fiche({
   /** Et la vitrine (E16), qui montre ce qu'on regardait — ici, une chose et
    *  toutes ses poses à la même échelle. */
   onVitrine: () => void
+  /** Et le calibrage (E17), qui les empile dans la même case. */
+  onCalibrage: () => void
   dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
@@ -924,6 +942,7 @@ function Fiche({
           onPersonnage={onPersonnage}
           onFiche={onFiche}
           onVitrine={onVitrine}
+          onCalibrage={onCalibrage}
           onErreur={onErreur}
         />
         <Sortie personnage={personnage} dossierJeu={dossierJeu} />
@@ -1145,6 +1164,7 @@ function Identite({
   onPersonnage,
   onFiche,
   onVitrine,
+  onCalibrage,
   onErreur,
 }: {
   personnage: Personnage
@@ -1153,6 +1173,8 @@ function Identite({
   onFiche: () => void
   /** Et la vitrine (E16). */
   onVitrine: () => void
+  /** Et le calibrage (E17). */
+  onCalibrage: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(personnage.nom)
@@ -1241,6 +1263,18 @@ function Identite({
           className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
         >
           la vitrine ›
+        </button>
+        {/* **Le calibrage s'ouvre d'ici** (E17), sur la matrice de ses poses :
+            c'est là qu'on les voit toutes, donc là qu'on remarque qu'elles ne
+            s'accordent pas. Il ne fabrique rien et ne coûte rien — il change le
+            rendu d'images déjà payées. */}
+        <button
+          type="button"
+          onClick={onCalibrage}
+          title="toutes ses poses empilées dans la même case — c'est comme ça qu'on voit qu'il rapetisse en frappant"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          le calibrage ›
         </button>
         <button
           type="button"

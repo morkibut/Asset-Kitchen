@@ -96,6 +96,9 @@ export const defautGrille = (): Grille => ({
   cible: 64,
   occupation: 100,
   ancrage: "bas",
+  // **Zéro** (E17) : le décalage n'est écrit que par le calibrage, et une
+  // recette qu'il n'a pas touchée rend exactement l'image d'avant.
+  decalage: 0,
 })
 
 // ── La machine qui pose une recette ─────────────────────────────────────────

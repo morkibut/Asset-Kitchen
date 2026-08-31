@@ -46,6 +46,8 @@ import type {
   Contour,
   Direction,
   DirectionsDuJeu,
+  Calibrage,
+  PoseCalee,
   PorteeDeLaPiece,
   PropositionDeBaisse,
   Depenses,
@@ -352,6 +354,8 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     // plupart des essais mesurent.
     famille: "personnages" as const,
     equipable: true,
+    // Aucune pose mise de côté du calage commun (E17).
+    hors_calibrage: [],
     ...sur,
     ecartees,
   }
@@ -663,6 +667,12 @@ function serveurDouble(options: {
    *  images ; le double le rend, parce que ce que l'écran prouve est qu'il
    *  montre des porteurs et **aucune image**. */
   portees?: Record<string, PorteeDeLaPiece>
+  /** Ce que le calibrage mesure sur les poses d'une chose (E17). Le test le
+   *  décide, comme le serveur le déciderait sur les images. */
+  calibrage?: Calibrage
+  /** Ce que le calibrage refuse, quand il refuse — un jeu qui n'impose aucune
+   *  taille de case n'a pas de hauteur commune à poser. */
+  refusCalibrage?: string
   /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
    *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
    *  ni les concept arts, et deux comptes divergeraient. */
@@ -733,6 +743,8 @@ function serveurDouble(options: {
     directions: options.directions ?? SANS_DIRECTIONS,
     proposition: options.proposition ?? PROPOSITION_VIDE,
     portees: options.portees ?? ({} as Record<string, PorteeDeLaPiece>),
+    calibrage: options.calibrage,
+    refusCalibrage: options.refusCalibrage,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -949,7 +961,7 @@ function serveurDouble(options: {
             passes: [],
             difference: null,
             recadrage: null,
-            grille: { cible: 64, occupation: 100, ancrage: "bas" },
+            grille: { cible: 64, occupation: 100, ancrage: "bas", decalage: 0 },
             quantification: null,
             bords: null,
             contours: null,
@@ -1025,7 +1037,7 @@ function serveurDouble(options: {
           recadrage: null,
           grille:
             parametres.get("traiter") === "true"
-              ? { cible: 64, occupation: 100, ancrage: "bas" as const }
+              ? { cible: 64, occupation: 100, ancrage: "bas" as const, decalage: 0 }
               : null,
           quantification: null,
           bords: null,
@@ -1280,6 +1292,38 @@ function serveurDouble(options: {
     }
     if (url === "/api/characters/directions")
       return rendre(etat.directions)
+
+    // ── Le calibrage (E17) ────────────────────────────────────────────────
+    //
+    // **Le double rend ce que le serveur rend** : les poses, leur boîte, la
+    // hauteur commune et ce qu'elle coûte. Il ne rejoue pas le calcul — ce que
+    // l'écran prouve est qu'il montre ce qu'il reçoit et qu'il envoie les bons
+    // gestes.
+    if (url.includes("/calibration")) {
+      if (etat.refusCalibrage)
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({ raison: etat.refusCalibrage, code: "refus" }),
+        } as Response
+      const lu = etat.calibrage
+      if (!lu) return rendre({ poses: [], commune: 0, cible: 64 })
+      // Un `PUT` de mise de côté rend la liste avec la pose marquée : l'écran
+      // fond ce qui lui arrive, comme partout.
+      if (url.endsWith("/aside") && init?.method === "PUT") {
+        const pose = url.slice(0, -"/aside".length).split("/").pop() ?? ""
+        etat.calibrage = {
+          ...lu,
+          poses: lu.poses.map((p) =>
+            p.pose === decodeURIComponent(pose)
+              ? { ...p, de_cote: Boolean(corps.de_cote) }
+              : p,
+          ),
+        }
+        return rendre(etat.calibrage)
+      }
+      return rendre(lu)
+    }
 
     // ── L'établi d'une pièce (E15) ────────────────────────────────────────
     if (url.endsWith("/wearers")) {
@@ -5115,7 +5159,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         passes: [],
         difference: null,
         recadrage: null,
-        grille: { cible: 32, occupation: 40, ancrage: "bas" as const },
+        grille: { cible: 32, occupation: 40, ancrage: "bas" as const, decalage: 0 },
         quantification: null,
         bords: null,
         contours: null,
@@ -5130,7 +5174,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           passes: [],
           difference: null,
           recadrage: null,
-          grille: { cible: 64, occupation: 40, ancrage: "bas" },
+          grille: { cible: 64, occupation: 40, ancrage: "bas", decalage: 0 },
           quantification: null,
           bords: null,
           contours: null,
@@ -9993,6 +10037,278 @@ describe("le codex généralisé", () => {
     for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"]) {
       expect(etabli.getByRole("button", { name: `Fabriquer ${attitude}` })).toBeTruthy()
     }
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E17 · Le calibrage
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Les poses empilées dans une
+// seule case, la proposition qui dit ce qu'elle coûte et qui limite, la mise de
+// côté proposée puis défaite, la reprise à la main pose par pose, et la barre
+// qui paie qui se retire — cet écran ne fabrique rien. Ce qui se calcule — la
+// hauteur commune, l'occupation à poser, le décalage — vit dans
+// `tests/test_e17.py`.
+
+describe("le calibrage", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le vrai défaut, mesuré le 30 août 2026 : trois poses, trois hauteurs. */
+  const pose = (
+    nom: string,
+    occupation: number,
+    rendue: number,
+    plafond: number,
+    de_cote = false,
+  ): PoseCalee => ({
+    pose: nom,
+    asset: `${nom}-corps`,
+    boite: { largeur: 64, hauteur: rendue },
+    occupation,
+    decalage: 0,
+    empreinte: `e-${nom}`,
+    rendue,
+    plafond,
+    de_cote,
+  })
+
+  const CALIBRAGE: Calibrage = {
+    personnage: "balthazar",
+    cible: 64,
+    poses: [
+      pose("repos", 100, 64, 64),
+      pose("attaque", 100, 53, 53),
+      pose("mort", 100, 43, 43),
+    ],
+    commune: 43,
+    limite: "mort",
+    perdus: 21,
+    de_cote: "mort",
+  }
+
+  const ouvrir = async (calibrage: Calibrage = CALIBRAGE) => {
+    const double = serveurDouble({
+      calibrage,
+      personnages: [personnage("Balthazar")],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "le calibrage ›" }))
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-calibrage]")
+      if (!trouve) throw new Error("le calibrage ne s'est pas ouvert")
+      return trouve as HTMLElement
+    })
+    return { ...double, ecran: within(cadre) }
+  }
+
+  // ── « Toutes les poses d'une chose se superposent dans la même case » ─────
+
+  test("les poses sont empilées dans une seule case, pas côte à côte", async () => {
+    // **C'est la superposition qui fait voir le défaut** : six vignettes côte à
+    // côte ne montrent pas qu'un personnage est plus petit qu'un autre, six
+    // silhouettes empilées, si.
+    const { ecran } = await ouvrir()
+
+    const canevas = document.querySelector("[data-canevas]") as HTMLElement
+    expect(canevas).toBeTruthy()
+    for (const nom of ["repos", "attaque", "mort"]) {
+      expect(within(canevas).getByAltText(nom)).toBeTruthy()
+    }
+    // Une seule case, à un multiple entier : agrandir d'une fois et demie
+    // fabriquerait des pixels qui n'existent pas.
+    expect(ecran.getByText(/64 × 64 · ×\d+/)).toBeTruthy()
+  })
+
+  test("chaque silhouette porte l'empreinte de sa recette", async () => {
+    // **Le rendu change sous la même adresse à chaque cran** : sans elle, on
+    // réglerait l'occupation en regardant l'image d'avant.
+    await ouvrir()
+
+    const canevas = document.querySelector("[data-canevas]") as HTMLElement
+    expect(
+      within(canevas).getByAltText("repos").getAttribute("src"),
+    ).toContain("v=e-repos")
+  })
+
+  // ── « Un bouton propose, nomme qui limite, et dit le coût » ───────────────
+
+  test("la proposition dit la hauteur commune, qui limite, et ce que ça coûte", async () => {
+    const { ecran } = await ouvrir()
+
+    const dit = ecran.getByText(/qui limite/).textContent ?? ""
+    expect(dit).toContain("hauteur commune")
+    expect(dit).toContain("43 px")
+    expect(dit).toContain("mort")
+    // **Le prix de la cohérence, en clair** — le produit le dit, il ne le cache
+    // pas.
+    expect(ecran.getByText(/21 px de la case ne servent pas/)).toBeTruthy()
+    expect(ecran.getByText(/33 % de résolution en moins/)).toBeTruthy()
+  })
+
+  test("calibrer pose la hauteur commune, et rien ne part chez le fournisseur", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Calibrer les/ }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration" &&
+            a.corps === undefined,
+        ),
+      ).toBe(true),
+    )
+    // Aucun appel de génération : il change le rendu d'images déjà payées.
+    expect(appels.some((a) => a.url.includes("/generations"))).toBe(false)
+  })
+
+  // ── « Une pose très différente est proposée comme mise de côté » ──────────
+
+  test("la pose très en dehors est proposée, et la mise de côté se défait", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    expect(ecran.getByText(/« mort » est très en dehors des autres/)).toBeTruthy()
+    fireEvent.click(ecran.getByRole("button", { name: /la mettre de côté/ }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration/mort/aside" &&
+            JSON.stringify(a.corps).includes('"de_cote":true'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("une pose mise de côté reste montrée, barrée, et rentre d'un clic", async () => {
+    // **Sortir du calage n'est pas disparaître** : sa case existe, elle se
+    // remplit, elle se compte.
+    const { ecran, appels } = await ouvrir({
+      ...CALIBRAGE,
+      poses: [
+        pose("repos", 100, 64, 64),
+        pose("attaque", 100, 53, 53),
+        pose("mort", 100, 43, 43, true),
+      ],
+      commune: 53,
+      limite: "attaque",
+      perdus: 11,
+      de_cote: "",
+    })
+
+    expect(ecran.getByText("mise de côté")).toBeTruthy()
+    expect(document.querySelector("[data-canevas]")).toBeTruthy()
+    // Elle est toujours dans l'empilement.
+    expect(
+      within(document.querySelector("[data-canevas]") as HTMLElement).getByAltText(
+        "mort",
+      ),
+    ).toBeTruthy()
+
+    fireEvent.click(
+      ecran.getByRole("button", { name: "Faire rentrer mort dans le calage" }),
+    )
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration/mort/aside" &&
+            JSON.stringify(a.corps).includes('"de_cote":false'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « La reprise à la main se fait pose par pose » ────────────────────────
+
+  test("on reprend une pose à la main, et elle seule", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.click(ecran.getByRole("button", { name: "attaque" }))
+    const champ = await ecran.findByLabelText("occupation de la pose réglée")
+    fireEvent.change(champ, { target: { value: "80" } })
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration/attaque" &&
+            JSON.stringify(a.corps).includes('"occupation":80'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("le décalage se règle ici, et l'écran dit qu'il n'est écrit que là", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.click(ecran.getByLabelText("décalage — un de plus"))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration/repos" &&
+            JSON.stringify(a.corps).includes('"decalage":1'),
+        ),
+      ).toBe(true),
+    )
+    expect(
+      ecran.getByText(/ne part pas dans une recette nommée/),
+    ).toBeTruthy()
+  })
+
+  // ── Ce que le calibrage ne fait pas ───────────────────────────────────────
+
+  test("la barre qui paie se retire quand le calibrage s'ouvre", async () => {
+    // Il ne fabrique rien, ne modifie aucune image payée, ne coûte rien — et la
+    // barre absente le dit avant qu'on ait lu quoi que ce soit.
+    await ouvrir()
+
+    expect(
+      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeNull()
+  })
+
+  test("Échap ferme le calibrage et rend l'établi", async () => {
+    await ouvrir()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-calibrage]")).toBeNull(),
+    )
+    expect(document.querySelector("[data-etabli]")).toBeTruthy()
+  })
+
+  test("un jeu sans taille de case le dit, plutôt que de calculer sur rien", async () => {
+    const double = serveurDouble({
+      personnages: [personnage("Balthazar")],
+      refusCalibrage: "ce jeu n'impose aucune taille de case",
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "le calibrage ›" }))
+
+    expect(
+      await screen.findByText(/aucune taille de case/),
+    ).toBeTruthy()
   })
 })
 

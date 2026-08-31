@@ -675,7 +675,16 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     reduit = sujet.resize(taille, Image.Resampling.NEAREST)
 
     toile = Image.new("RGBA", (cible, cible), (0, 0, 0, 0))
+    # **Centré sur sa boîte, puis décalé — et jamais hors de la case** (E17). Le
+    # centrage horizontal se fait sur la boîte du sujet ; un bras tendu déplace
+    # donc le corps sans que la taille ait bougé, et le décalage est ce qui
+    # rattrape cette dérive. Il est borné à ce qui reste de place : sortir de la
+    # case couperait le sprite en silence, et une case existe justement pour que
+    # rien n'en sorte. Aux bords, les boutons cessent d'avoir un effet — ce qui
+    # se voit, et c'est mieux qu'une image rognée.
     x = (cible - reduit.width) // 2
+    if grille.decalage:
+        x = max(0, min(cible - reduit.width, x + grille.decalage))
     y = cible - reduit.height if grille.ancrage == BAS else (cible - reduit.height) // 2
     toile.paste(reduit, (x, y))
     return np.asarray(toile)

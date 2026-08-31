@@ -396,7 +396,14 @@ def test_ce_que_le_projet_impose_se_lit_sur_l_asset(client):
     lu = reponse.json()
 
     assert lu["echelle"] == "objet tenu"
-    assert lu["impose"]["grille"] == {"cible": 64, "occupation": 40, "ancrage": "bas"}
+    assert lu["impose"]["grille"] == {
+        "cible": 64,
+        "occupation": 40,
+        "ancrage": "bas",
+        # **Zéro par défaut** (E17) : une image que le calibrage n'a pas touchée
+        # rend exactement ce qu'elle rendait avant qu'il existe.
+        "decalage": 0,
+    }
     # Sans artwork officiel il n'y a pas de palette, et ce n'est pas un trou :
     # c'est l'état réel d'un univers vide, qui ne contraint rien (US-57).
     assert lu["impose"]["quantification"] is None

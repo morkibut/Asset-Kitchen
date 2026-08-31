@@ -388,6 +388,13 @@ ce nom, la liste vide du décor et de la tuile comprise. **Et une chose sans typ
 plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les projets
 existants sans qu'un seul fichier ait eu à être réécrit.
 
+*Écrit en la faisant, le 31 août 2026.* **Le calibrage n'écrit que dans l'occupation**, qui
+existe depuis T4 et qui est déjà exprimée en part de la case. C'est ce qui le rend gratuit à
+conserver : passer une case de 64 à 128 ne défait aucun calage, parce qu'une part n'est pas un
+nombre de pixels. Le **décalage horizontal** reste donc le seul ajout de la V2.1 à la recette
+d'une image, et il se comporte comme la différence d'un calque — une coordonnée qui nomme
+*cette* image-là, donc qui ne part pas dans une recette nommée.
+
 *Écrit en la faisant, le 31 août 2026.* **Les cinq familles n'ont ajouté aucun objet.** Une
 chose du jeu porte son type depuis E9, et un type porte sa famille depuis T4 : un décor est
 donc une chose du jeu au même titre qu'un personnage sans qu'une ligne de modèle soit écrite,

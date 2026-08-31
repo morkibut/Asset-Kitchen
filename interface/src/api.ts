@@ -358,7 +358,17 @@ export type Main = { opacite: Trait[]; calques: CalqueDessin[] }
 export type Couche = "affinage" | "retouche"
 
 export type Recadrage = { marge: number; boite: number[] | null }
-export type Grille = { cible: number; occupation: number; ancrage: "bas" | "centre" }
+export type Grille = {
+  cible: number
+  occupation: number
+  ancrage: "bas" | "centre"
+  /** Le décalage horizontal, en pixels de la case (E17). **Une coordonnée, pas
+   *  un réglage** : il rattrape la dérive de *cette* silhouette dans sa case, il
+   *  est écrit par le calibrage seul, et il ne part pas dans une recette nommée
+   *  — même règle que la différence d'un calque. Zéro par défaut, de sorte
+   *  qu'une recette sans calibrage rend exactement l'image d'avant. */
+  decalage: number
+}
 export type Quantification = {
   couleurs: number
   palette: string[]
@@ -742,6 +752,9 @@ export type Personnage = {
   /** Les directions qu'elle ne tient pas, pose par pose (E10) — **la portée
    *  étroite** : le dragon n'attaque que vers le sud, les autres continuent. */
   directions_ecartees: Record<string, string[]>
+  /** Les poses que le calage commun laisse de côté (E17). **Ni un écart ni un
+   *  rangement** : la case existe, elle se remplit, elle se compte. */
+  hors_calibrage: string[]
   /** **Sa famille, lue dans son type** (E15) — et non gardée sur elle : deux
    *  vérités sur la même question auraient fini par ranger un meuble dans les
    *  décors. Le codex s'en sert pour la classer. */
@@ -751,6 +764,53 @@ export type Personnage = {
    *  pas une colonne grisée : ce qu'une famille ne peut pas avoir n'existe pas
    *  dans son établi. */
   equipable: boolean
+}
+
+/** Une pose dans le calibrage (E17) — ce qu'elle mesure et ce qu'on lui pose.
+ *
+ *  **Le pourcentage est ce qu'on écrit, les pixels sont ce qu'on obtient**, et
+ *  les deux ne disent pas la même chose : c'est la même règle que dans la table
+ *  grille, où un pourcentage seul ment aux petites cases. */
+export type PoseCalee = {
+  pose: string
+  asset: string
+  /** La boîte du sujet, telle que la mise sur grille la regarde — après le
+   *  détourage, avant la case. */
+  boite: { largeur: number; hauteur: number }
+  occupation: number
+  /** Le décalage horizontal, en pixels de la case. **Écrit par le calibrage
+   *  seul** : jamais à la main dans la table grille, jamais dans une recette
+   *  nommée. */
+  decalage: number
+  /** L'empreinte de la recette — ce qui fait chercher une image neuve après
+   *  chaque cran. */
+  empreinte: string
+  /** La hauteur que cette pose rend aujourd'hui. */
+  rendue: number
+  /** La plus haute qu'elle puisse atteindre sans sortir de sa case. C'est la
+   *  plus basse de toutes qui décide de la hauteur commune. */
+  plafond: number
+  de_cote: boolean
+}
+
+/** Toutes les poses d'une chose, empilées dans la même case (E17).
+ *
+ *  **L'outil propose, il ne décide pas** : il n'existe pas de repère automatique
+ *  fiable, et la reprise à la main est la moitié du travail. */
+export type Calibrage = {
+  personnage: string
+  cible: number
+  poses: PoseCalee[]
+  /** La hauteur que toutes les poses retenues peuvent atteindre ensemble. */
+  commune: number
+  /** La pose qui l'a limitée — et limiter n'est pas s'écarter. */
+  limite: string
+  /** Ce que la cohérence coûte, en pixels de la case qui ne servent pas. */
+  perdus: number
+  /** La pose que l'outil **propose** de mettre de côté, ou rien. Une seule,
+   *  jamais une cascade : écarter la plus basse fait de la suivante la plus
+   *  basse, et reproposer finirait par ne garder qu'une pose. */
+  de_cote: string
 }
 
 /** Sur quels personnages une pièce d'équipement est posée (E15, US-284).
@@ -2244,6 +2304,41 @@ export const api = {
   // ── Le plan de poses et les personnages ───────────────────────────────────
 
   production: () => appeler<Production>("/characters"),
+
+  // ── Le calibrage (E17) ───────────────────────────────────────────────────
+  //
+  // **Rien ici ne coûte un centime** : il change le rendu de poses qui existent
+  // déjà, et un rendu est un cache — on recalcule, on ne repaie pas.
+
+  /** Toutes les poses d'une chose, leur boîte, et la hauteur commune proposée. */
+  calibrage: (personnage: string) =>
+    appeler<Calibrage>(`/characters/${personnage}/calibration`),
+
+  /** Poser la hauteur commune sur toutes les poses retenues. **Un point de
+   *  départ, pas un verdict.** */
+  calibrer: (personnage: string) =>
+    appeler<Calibrage>(`/characters/${personnage}/calibration`, {
+      method: "POST",
+    }),
+
+  /** La reprise à la main, pose par pose. `undefined` ne touche pas. */
+  reglerLeCalage: (
+    personnage: string,
+    pose: string,
+    champs: { occupation?: number; decalage?: number },
+  ) =>
+    appeler<Calibrage>(
+      `/characters/${personnage}/calibration/${encodeURIComponent(pose)}`,
+      { method: "PUT", body: JSON.stringify(champs) },
+    ),
+
+  /** Sortir une pose du calage commun, ou l'y faire rentrer. Sa case existe
+   *  toujours — seul le calage commun l'ignore. */
+  mettreDeCote: (personnage: string, pose: string, de_cote: boolean) =>
+    appeler<Calibrage>(
+      `/characters/${personnage}/calibration/${encodeURIComponent(pose)}/aside`,
+      { method: "PUT", body: JSON.stringify({ de_cote }) },
+    ),
 
   /** **Sur quels personnages cette pièce est posée** (E15). Elle n'a pas d'image
    *  à elle : son établi montre ce qui la porte, et ce qui manque se lit comme

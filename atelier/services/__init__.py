@@ -26,6 +26,7 @@ from atelier.services.agent import (
     ServiceAgent,
 )
 from atelier.services.ambiances import AmbianceRefusee, ServiceAmbiances
+from atelier.services.calibrage import CalibrageRefuse, ServiceCalibrage
 from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
 from atelier.services.bibliotheque import (
     ANNULATION_S,
@@ -84,6 +85,8 @@ __all__ = [
     "RangementRefuse",
     "RecetteRefusee",
     "AmbianceRefusee",
+    "CalibrageRefuse",
+    "ServiceCalibrage",
     "ServiceAgent",
     "ServiceAmbiances",
     "ServiceAssets",
@@ -176,6 +179,11 @@ class Atelier:
         self.production = ServiceProduction(
             self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
         )
+        # **Le calibrage, monté après la production** (E17) : il lit les poses
+        # d'une chose et écrit dans la recette de leurs corps. Ni catalogue, ni
+        # fournisseur — il change le rendu d'images déjà payées, et un rendu est
+        # un cache : on recalcule, on ne repaie pas.
+        self.calibrage = ServiceCalibrage(self.base, self.assets, self.production)
         # **Les palettes et les ambiances, montées après la production** (E11) :
         # elles lisent le tableau — les sources d'une palette d'images — et les
         # choses du jeu — qui se sert d'une ambiance. Ni catalogue ni

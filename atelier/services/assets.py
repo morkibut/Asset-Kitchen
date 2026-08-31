@@ -629,7 +629,17 @@ class ServiceAssets:
         # **Sans sa différence** : elle nomme le corps d'une case précise, et
         # une recette nommée est faite pour être reposée ailleurs. La garder
         # aurait fabriqué un calque de l'image d'à côté au premier rappel.
-        enregistrees[propre] = replace(recette.sans_nom(), difference=None).en_json()
+        #
+        # **Et sans son décalage** (E17), pour la même raison exactement : c'est
+        # une coordonnée, pas un réglage. Il rattrape la dérive de *cette*
+        # silhouette-là dans sa case ; le reposer sur une autre image la
+        # décalerait sans qu'aucune mesure ne l'ait demandé.
+        propre_recette = replace(recette.sans_nom(), difference=None)
+        if propre_recette.grille is not None:
+            propre_recette = replace(
+                propre_recette, grille=replace(propre_recette.grille, decalage=0)
+            )
+        enregistrees[propre] = propre_recette.en_json()
         self._fichiers.ecrire_recettes(enregistrees)
         return self.recettes()
 

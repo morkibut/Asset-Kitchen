@@ -125,6 +125,20 @@ class Personnage:
     # c'est très exactement ce qu'un dictionnaire répond sans balayer.
     directions_ecartees: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
+    # ── Les poses que le calibrage laisse de côté (E17) ─────────────────────
+    #
+    # **Une pose couchée tire tout le monde vers le bas.** Sur le vrai projet,
+    # garder la mort ramène la hauteur commune de 53 à 43 pixels : le
+    # personnage rapetisserait d'un cinquième dans toutes ses poses debout parce
+    # qu'il meurt dans une autre image. Le produit ne devine pas qu'elle est
+    # couchée — il voit qu'elle est très en dehors des autres, le **propose**,
+    # et un clic la fait rentrer.
+    #
+    # **Ce n'est ni un écart de pose ni un rangement** : la case existe, elle se
+    # remplit, elle se compte. Seul le calage commun l'ignore, et c'est pour ça
+    # que ça vit ici plutôt que dans `ecartees`.
+    hors_calibrage: tuple[str, ...] = ()
+
     # Les poses du plan que ce personnage **ne tient pas** — voir l'en-tête.
     # Une entrée qui ne désigne plus rien ne gêne pas : elle ne peut écarter
     # qu'une pose qui existe, et une pose retirée du plan ne revient pas par
@@ -208,6 +222,7 @@ class Personnage:
             "textes": dict(self.textes),
             "eteints": list(self.eteints),
             "references": list(self.references),
+            "hors_calibrage": list(self.hors_calibrage),
             "directions_ecartees": {
                 pose: list(directions)
                 for pose, directions in self.directions_ecartees.items()
@@ -241,6 +256,7 @@ class Personnage:
                 nom for nom in (d.get("eteints") or ()) if nom in CHAMPS_BIBLE
             ),
             references=tuple(_textes(d.get("references"))),
+            hors_calibrage=tuple(_textes(d.get("hors_calibrage"))),
             directions_ecartees={
                 str(pose): tuple(_textes(rangees))
                 for pose, rangees in (d.get("directions_ecartees") or {}).items()

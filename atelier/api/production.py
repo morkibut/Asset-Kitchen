@@ -505,6 +505,85 @@ async def ranger_direction(
     )
 
 
+# ── Le calibrage (E17) ───────────────────────────────────────────────────────
+#
+# **Rien ici ne coûte un centime.** Le calibrage change le rendu de poses qui
+# existent déjà, et un rendu est un cache : on recalcule, on ne repaie pas.
+
+
+class CorpsCalage(BaseModel):
+    """La reprise à la main d'une pose. `None` ne touche pas.
+
+    Deux réglages et deux seulement : l'occupation, qui est la taille, et le
+    décalage horizontal, qui est la dérive. Le second est écrit **par le
+    calibrage seul** — jamais à la main dans la table grille, jamais dans une
+    recette nommée.
+    """
+
+    occupation: int | None = Field(None, ge=1, le=100)
+    decalage: int | None = None
+    projet: str | None = None
+
+
+class CorpsMiseDeCote(BaseModel):
+    """Sortir une pose du calage commun, ou l'y faire rentrer.
+
+    **Sa case existe toujours** : elle se remplit, elle se compte, elle part au
+    jeu. Seul le calage commun l'ignore.
+    """
+
+    de_cote: bool
+    projet: str | None = None
+
+
+@routeur.get("/characters/{identifiant}/calibration")
+async def calibrage(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Toutes les poses d'une chose, leur boîte, et la hauteur commune proposée."""
+    atelier = _atelier(requete)
+    return atelier.calibrage.calibrage(_projet(requete, projet), identifiant)
+
+
+@routeur.post("/characters/{identifiant}/calibration")
+async def calibrer(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Poser la hauteur commune sur toutes les poses retenues.
+
+    **Un point de départ, pas un verdict** : chaque pose se reprend ensuite
+    seule, avec le résultat sous les yeux.
+    """
+    atelier = _atelier(requete)
+    return atelier.calibrage.calibrer(_projet(requete, projet), identifiant)
+
+
+@routeur.put("/characters/{identifiant}/calibration/{pose}")
+async def regler_le_calage(
+    requete: Request, identifiant: str, pose: str, corps: CorpsCalage
+) -> dict[str, Any]:
+    """La reprise à la main, pose par pose."""
+    atelier = _atelier(requete)
+    return atelier.calibrage.regler(
+        _projet(requete, corps.projet),
+        identifiant,
+        pose,
+        occupation=corps.occupation,
+        decalage=corps.decalage,
+    )
+
+
+@routeur.put("/characters/{identifiant}/calibration/{pose}/aside")
+async def mettre_de_cote(
+    requete: Request, identifiant: str, pose: str, corps: CorpsMiseDeCote
+) -> dict[str, Any]:
+    """Sortir une pose du calage commun, ou l'y faire rentrer."""
+    atelier = _atelier(requete)
+    return atelier.calibrage.mettre_de_cote(
+        _projet(requete, corps.projet), identifiant, pose, corps.de_cote
+    )
+
+
 # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────────
 #
 # **Aucune de ces routes ne touche le fournisseur.** Régler, ranger, désigner une

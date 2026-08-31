@@ -311,7 +311,15 @@ def test_le_traitement_du_projet_s_applique_quand_on_le_demande(client):
     """
     asset = _entrer(client, image_sujet(toile=200), "sujet.png", traiter=True)["asset"]
 
-    assert asset["recette"]["grille"] == {"cible": 64, "occupation": 100, "ancrage": "bas"}
+    assert asset["recette"]["grille"] == {
+        "cible": 64,
+        "occupation": 100,
+        "ancrage": "bas",
+        # **Zéro par défaut** (E17) : le décalage n'est écrit que par le
+        # calibrage, et une image qu'il n'a pas touchée rend exactement ce
+        # qu'elle rendait avant qu'il existe.
+        "decalage": 0,
+    }
     assert len(asset["recette"]["passes"]) == 1
     assert (asset["rendu_largeur"], asset["rendu_hauteur"]) == (64, 64)
 
