@@ -36,7 +36,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from atelier.domaine.plan import Pose
+from atelier.domaine.plan import Pose, plan_depuis_json
 
 
 @dataclass(slots=True)
@@ -45,6 +45,20 @@ class Personnage:
     projet: str
     nom: str
     description: str = ""
+
+    # ── Le type d'objet, et ce que cette chose ajoute pour elle seule (E9) ───
+    #
+    # **Le type donne la liste de base.** Un personnage a ses six attitudes, un
+    # meuble ses trois états, une tuile aucune ; avant E9 le jeu n'en déclarait
+    # qu'une et un coffre héritait de *marche*. Vide, la chose retombe sur le
+    # plan du projet — c'est ce qui reprend les personnages d'avant sans qu'un
+    # seul fichier ait été réécrit.
+    type: str = ""
+
+    # **Ce que cette chose-là ajoute, et personne d'autre.** Un boss garde les
+    # six poses de son type et en ajoute une à lui seul, sans que les autres
+    # personnages voient paraître une case vide qui ne les concerne pas.
+    ajoutees: tuple[Pose, ...] = ()
 
     # Les poses du plan que ce personnage **ne tient pas** — voir l'en-tête.
     # Une entrée qui ne désigne plus rien ne gêne pas : elle ne peut écarter
@@ -71,8 +85,28 @@ class Personnage:
         L'ordre vient du plan et de nulle part ailleurs : deux personnages du
         même projet se lisent alors ligne à ligne, ce qui est très exactement ce
         qu'un plan commun sert à faire.
+
+        **Ce que la chose ajoute vient après**, jamais mêlé : le type donne la
+        liste, la chose la complète, et l'ordre le dit sans qu'on ait à lire une
+        étiquette.
         """
-        return tuple(p for p in plan if p.identifiant not in self.ecartees)
+        rendues = tuple(p for p in plan if p.identifiant not in self.ecartees)
+        deja = {p.identifiant for p in rendues}
+        ajoutees = tuple(
+            p
+            for p in self.ajoutees
+            if p.identifiant not in self.ecartees and p.identifiant not in deja
+        )
+        return rendues + ajoutees
+
+    def origine(self, pose: str) -> str:
+        """D'où vient cette pose — **du type, ou ajoutée ici** (E9).
+
+        Sans cette réponse, on ne saurait plus qui a décidé quoi, ni ce qui
+        bougerait en changeant le type de la chose. C'est une lecture, pas un
+        drapeau rangé : la liste des ajouts la porte déjà.
+        """
+        return "ici" if any(p.identifiant == pose for p in self.ajoutees) else "type"
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -80,6 +114,8 @@ class Personnage:
             "projet": self.projet,
             "nom": self.nom,
             "description": self.description,
+            "type": self.type,
+            "ajoutees": [p.en_json() for p in self.ajoutees],
             "ecartees": list(self.ecartees),
             "concept_arts": list(self.concept_arts),
             "references_ecartees": list(self.references_ecartees),
@@ -93,6 +129,8 @@ class Personnage:
             projet=d.get("projet", ""),
             nom=d.get("nom", d["identifiant"]),
             description=d.get("description", ""),
+            type=str(d.get("type") or ""),
+            ajoutees=plan_depuis_json(d.get("ajoutees") or []),
             ecartees=tuple(_textes(d.get("ecartees"))),
             concept_arts=tuple(_textes(d.get("concept_arts"))),
             references_ecartees=tuple(_textes(d.get("references_ecartees"))),

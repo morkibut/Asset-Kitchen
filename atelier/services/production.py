@@ -24,13 +24,19 @@ personnages ont un fichier chacun sous leur projet, et c'est ce module qui les
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Sequence
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
-from atelier.domaine.plan import Pose
+from atelier.domaine.plan import (
+    Pose,
+    plan_depuis_json,
+    plan_du_type,
+    suit_le_plan_du_jeu,
+)
 from atelier.domaine.projet import Projet, repere
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
@@ -81,6 +87,106 @@ class ServiceProduction:
         copie qui existe est celle du fichier.
         """
         return self._exiger(projet).plan
+
+    def plan_de(self, projet: str, personnage: Personnage) -> tuple[Pose, ...]:
+        """Ce que **cette chose-là** réclame — le type, puis ce qu'elle ajoute.
+
+        Écrit ici et lu partout : la matrice, la visée d'un appel et le sujet
+        d'un prompt posaient chacun `objet.plan`, et trois listes construites à
+        trois endroits auraient divergé au premier type qui écrit la sienne.
+        """
+        objet = self._exiger(projet)
+        du_type = objet.univers.poses_du_type(personnage.type, objet.plan)
+        # **Ce que la chose ajoute vient après**, jamais mêlé : le type donne la
+        # liste, la chose la complète, et l'ordre le dit sans qu'on ait à lire
+        # une étiquette. Ce qu'elle range n'est pas retiré ici — l'écran a
+        # besoin de la liste entière pour reléguer sous un trait ce qu'elle ne
+        # tient pas, et `Personnage.tenues` fait ce tri-là.
+        deja = {p.identifiant for p in du_type}
+        return du_type + tuple(p for p in personnage.ajoutees if p.identifiant not in deja)
+
+    def poses_des_types(self, projet: str) -> dict[str, Any]:
+        """Ce que chaque type d'objet réclame, **et d'où sa liste lui vient**.
+
+        Trois origines, et l'écran les écrit en clair. `écrite` : l'auteur a
+        posé la sienne. `connue` : c'est celle que le produit propose pour un
+        type de ce nom — un meuble s'ouvre et se vide, un bouton a quatre états.
+        `projet` : ce type n'a rien de particulier et partage le plan du jeu,
+        comme tous les types avant E9.
+
+        Sans cette phrase, une liste héritée aurait l'air d'une liste choisie,
+        et l'auteur ne saurait pas laquelle il peut changer sans conséquence.
+        """
+        objet = self._exiger(projet)
+        types: list[dict[str, Any]] = []
+        for echelle in objet.univers.bareme:
+            if echelle.poses is not None:
+                origine = "écrite"
+            elif suit_le_plan_du_jeu(echelle.nom):
+                origine = "projet"
+            else:
+                origine = "connue"
+            types.append(
+                {
+                    "nom": echelle.nom,
+                    "origine": origine,
+                    "poses": [
+                        p.en_json()
+                        for p in objet.univers.poses_du_type(echelle.nom, objet.plan)
+                    ],
+                    # Ce que le produit sait de ce type-là, gardé à côté : c'est
+                    # ce qu'un « revenir à la liste connue » remettrait, et
+                    # l'écran ne doit pas avoir à le deviner.
+                    "connues": [p.en_json() for p in plan_du_type(echelle.nom)],
+                }
+            )
+        return {"types": types, "plan": [p.en_json() for p in objet.plan]}
+
+    def poser_les_poses_du_type(
+        self, projet: str, type: str, poses: Sequence[dict[str, Any]]
+    ) -> tuple[Pose, ...]:
+        """Écrire la liste d'un **type d'objet** — et de lui seul (E9).
+
+        **Changer l'une ne touche pas les autres** : c'est vrai par
+        construction, puisqu'on écrit sur l'échelle de ce type-là. Les types qui
+        n'ont rien écrit continuent de retomber sur le plan du projet, et c'est
+        ce qui reprend les jeux d'avant sans perte.
+
+        **Ça n'écrit aucun fichier de personnage.** Ajouter une pose à un type
+        fait paraître une case vide chez tous les objets de ce type sans qu'un
+        seul soit réécrit — on range ce qu'on ne tient pas, on ne coche pas ce
+        qu'on tient.
+        """
+        objet = self._exiger(projet)
+        echelle = objet.univers.echelle(type)
+        if echelle is None:
+            connus = ", ".join(e.nom for e in objet.univers.bareme)
+            raise ProductionRefusee(
+                f"aucun type « {type} » dans ce jeu — les types sont : {connus}"
+            )
+        voulues = plan_depuis_json(list(poses))
+        objet.univers.bareme = tuple(
+            replace(e, poses=voulues) if e.nom == type else e
+            for e in objet.univers.bareme
+        )
+        self._sauver_projet(objet)
+        return voulues
+
+    def oublier_les_poses_du_type(self, projet: str, type: str) -> None:
+        """Ce type **n'a plus de liste à lui** — il revient à ce qu'on lui
+        proposait (E9).
+
+        `None` et la liste vide ne disent pas la même chose : vider est une
+        décision qui tient, oublier est un retour en arrière. Sans ce geste, un
+        type ne pourrait jamais revenir à la liste proposée — il faudrait la
+        retaper de mémoire, et la moindre faute de frappe ferait une case
+        orpheline.
+        """
+        objet = self._exiger(projet)
+        objet.univers.bareme = tuple(
+            replace(e, poses=None) if e.nom == type else e for e in objet.univers.bareme
+        )
+        self._sauver_projet(objet)
 
     def ajouter_pose(self, projet: str, nom: str, images: int = 1) -> Pose:
         """**Nommer, c'est créer** (`docs/PRD.md`) : un nom de pose qui n'existe
@@ -226,6 +332,9 @@ class ServiceProduction:
         description: str | None = None,
         tenues: Sequence[str] | None = None,
         concept_arts: Sequence[str] | None = None,
+        type: str | None = None,
+        ajouter: str | None = None,
+        retirer_ajoutee: str | None = None,
     ) -> Personnage:
         """Tout ce qui se règle sur un personnage, **en un seul geste**.
 
@@ -260,10 +369,55 @@ class ServiceProduction:
         if description is not None:
             personnage.description = description.strip()
 
+        # **Le type décide de la liste, et il se change.** Ce qui était rangé
+        # reste rangé : un identifiant qui ne désigne plus rien n'écarte rien,
+        # et le nettoyer demanderait de deviner ce que l'auteur voudra si le
+        # type revient.
+        if type is not None:
+            propre = type.strip()
+            if propre and objet.univers.echelle(propre) is None:
+                connus = ", ".join(e.nom for e in objet.univers.bareme)
+                raise ProductionRefusee(
+                    f"aucun type « {propre} » dans ce jeu — les types sont : {connus}"
+                )
+            personnage.type = propre
+
+        # **Ce que cette chose ajoute pour elle seule** : un boss garde les six
+        # poses de son type et en ajoute une à lui, sans qu'une case vide
+        # paraisse chez les autres.
+        if ajouter is not None:
+            nomme = ajouter.strip()
+            if not nomme:
+                raise ProductionRefusee("une pose se crée avec un nom")
+            deja = self.plan_de(projet, personnage)
+            if any(p.nom.casefold() == nomme.casefold() for p in deja):
+                raise ProductionRefusee(
+                    f"« {nomme} » est déjà une pose de « {personnage.nom} »"
+                )
+            personnage.ajoutees = personnage.ajoutees + (
+                Pose(
+                    identifiant=repere(
+                        nomme, {p.identifiant for p in deja}, "pose"
+                    ),
+                    nom=nomme,
+                    images=1,
+                ),
+            )
+
+        if retirer_ajoutee is not None:
+            personnage.ajoutees = tuple(
+                p for p in personnage.ajoutees if p.identifiant != retirer_ajoutee
+            )
+
         if tenues is not None:
             cochees = set(tenues)
+            # **Sur le plan de cette chose-là**, jamais sur celui du projet : un
+            # personnage qui range une pose de son type ne doit pas ranger du
+            # même coup une pose que le projet porte encore pour les autres.
             personnage.ecartees = tuple(
-                p.identifiant for p in objet.plan if p.identifiant not in cochees
+                p.identifiant
+                for p in self.plan_de(projet, personnage)
+                if p.identifiant not in cochees
             )
 
         if concept_arts is not None:
@@ -321,7 +475,14 @@ class ServiceProduction:
         invisible aux essais d'écran : leur double, lui, rendait la forme
         entière (`docs/PIEGES.md`).
         """
-        return {**personnage.en_json(), "cases": self.cases(projet, personnage)}
+        return {
+            **personnage.en_json(),
+            "cases": self.cases(projet, personnage),
+            # **Ce que cette chose réclame, type compris** : l'écran range ce
+            # qu'elle ne tient pas sous un trait plutôt que de le cacher, et il
+            # lui faut donc la liste entière, pas seulement les cases tenues.
+            "plan": [p.en_json() for p in self.plan_de(projet, personnage)],
+        }
 
     def cases(self, projet: str, personnage: Personnage) -> list[dict[str, Any]]:
         """Ce qui est fait et ce qui manque, pose par pose (US-119).
@@ -375,8 +536,12 @@ class ServiceProduction:
                 # la même règle qu'à la composition, écrite une fois et lue des
                 # deux côtés, pour que l'écran montre exactement ce qui partira.
                 "corps": _corps(corps.get(pose.identifiant, ())),
+                # **D'où vient cette pose** (E9) : du type, ou ajoutée ici.
+                # Sans elle on ne saurait plus qui a décidé quoi, ni ce qui
+                # bougerait en changeant le type de la chose.
+                "origine": personnage.origine(pose.identifiant),
             }
-            for pose in personnage.tenues(objet.plan)
+            for pose in personnage.tenues(self.plan_de(projet, personnage))
         ]
 
     def viser(self, projet: str, personnage: str, pose: str) -> tuple[Personnage, Pose]:
@@ -389,7 +554,7 @@ class ServiceProduction:
         que personne ne regarde plus.
         """
         vise = self.personnage(projet, personnage)
-        tenues = vise.tenues(self._exiger(projet).plan)
+        tenues = vise.tenues(self.plan_de(projet, vise))
         for p in tenues:
             if p.identifiant == pose:
                 return vise, p
@@ -437,7 +602,9 @@ class ServiceProduction:
             if trouvee is None:
                 raise ProductionRefusee(f"aucune pièce « {piece} » dans ce projet")
             return trouvee.description.strip() or trouvee.nom
-        voulues = [p for p in objet.plan if p.identifiant in set(poses)]
+        voulues = [
+            p for p in self.plan_de(projet, vise) if p.identifiant in set(poses)
+        ]
         if len(voulues) == 1:
             return ", ".join(
                 mot for mot in (vise.description.strip(), voulues[0].nom) if mot

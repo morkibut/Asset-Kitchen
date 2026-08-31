@@ -57,6 +57,7 @@ import type {
   Personnage,
   Piece,
   Pose,
+  PosesDesTypes,
   Teinte,
   Trait,
   Univers,
@@ -278,6 +279,12 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
       images: [],
       ...VIDE_C3,
     })),
+    // **Ce que cette chose-là réclame** (E9). Le double rend le plan du jeu,
+    // comme le serveur le fait pour une chose sans type : c'est l'état d'avant
+    // la tranche, et c'est ce que la plupart des essais mesurent.
+    plan: PLAN,
+    type: "",
+    ajoutees: [],
     ...sur,
     ecartees,
   }
@@ -371,7 +378,30 @@ const generation = (
   reussies: 0,
 })
 
-const VIDE_C3 = { calques: {}, corps: null } as const
+// Ce qu'une case porte au-delà de ses images : le second axe de C3, vide, et
+// **l'origine de sa pose** (E9) — venue du type, comme l'immense majorité.
+const VIDE_C3 = { calques: {}, corps: null, origine: "type" } as const
+
+const POSES_DU_MEUBLE: Pose[] = [
+  { identifiant: "ferme", nom: "fermé", images: 1 },
+  { identifiant: "ouvert", nom: "ouvert", images: 1 },
+  { identifiant: "vide", nom: "vidé", images: 1 },
+]
+
+/** Ce que le produit propose à chaque type d'objet, et d'où sa liste lui vient
+ *  (E9). Deux qui suivent le plan du jeu, un qui n'a aucune attitude, un qui a
+ *  la sienne : de quoi mesurer les trois origines sans en inventer une. */
+const TYPES: PosesDesTypes["types"] = [
+  { nom: "personnage", origine: "projet", poses: PLAN, connues: PLAN },
+  { nom: "créature", origine: "projet", poses: PLAN, connues: PLAN },
+  {
+    nom: "meuble",
+    origine: "connue",
+    poses: POSES_DU_MEUBLE,
+    connues: POSES_DU_MEUBLE,
+  },
+  { nom: "tuile", origine: "connue", poses: [], connues: [] },
+]
 
 const asset = (
   identifiant: string,
@@ -531,6 +561,8 @@ function serveurDouble(options: {
   /** La base d'étiquettes (E8). **Vide par défaut**, comme sur un atelier neuf :
    *  personne ne l'écrit à la place de l'auteur. */
   etiquettes?: Etiquette[]
+  /** Ce que chaque type d'objet réclame (E9). */
+  types?: PosesDesTypes["types"]
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -549,6 +581,10 @@ function serveurDouble(options: {
     // dans le même aller-retour que le plan, exactement comme le serveur.
     emplacements: options.emplacements ?? ([] as EmplacementCorps[]),
     pieces: options.pieces ?? ([] as Piece[]),
+    // **Ce que chaque type d'objet réclame** (E9). Le double part de l'état
+    // d'avant la tranche : aucun type n'a écrit sa liste, et ceux qui suivent
+    // le jeu la reçoivent de lui — c'est ce qui reprend les jeux existants.
+    types: options.types ?? TYPES,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1041,6 +1077,36 @@ function serveurDouble(options: {
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+    // ── Ce que chaque type d'objet réclame (E9) ───────────────────────────
+    //
+    // **Le double rend la forme entière**, types et plan du jeu ensemble, comme
+    // les trois gestes du plan juste en dessous : l'écran fond ce qui lui
+    // arrive par les deux chemins avec le même code, et un double qui n'en
+    // rendrait que la moitié prouverait un autre contrat.
+    if (url.startsWith("/api/characters/types")) {
+      const posesDesTypes = () => ({ types: etat.types, plan: etat.plan })
+      if (!init?.method || init.method === "GET") return rendre(posesDesTypes())
+      const nom = decodeURIComponent(
+        url.slice("/api/characters/types/".length, -"/poses".length),
+      )
+      if (init.method === "PUT") {
+        etat.types = etat.types.map((t: PosesDesTypes["types"][number]) =>
+          t.nom === nom
+            ? { ...t, poses: (corps.poses ?? []) as Pose[], origine: "écrite" }
+            : t,
+        )
+        return rendre(posesDesTypes())
+      }
+      if (init.method === "DELETE") {
+        // Oublier, c'est revenir à ce qu'on proposait — jamais vider.
+        etat.types = etat.types.map((t: PosesDesTypes["types"][number]) =>
+          t.nom === nom
+            ? { ...t, poses: t.connues, origine: t.connues.length ? "connue" : "connue" }
+            : t,
+        )
+        return rendre(posesDesTypes())
+      }
+    }
     if (url.startsWith("/api/characters")) {
       // ── Le vestiaire (C3) ─────────────────────────────────────────────────
       //
@@ -1187,13 +1253,26 @@ function serveurDouble(options: {
         // réécrit : c'est le plan qui décide, le personnage ne fait que
         // soustraire. Le double le rejoue, sinon l'essai prouverait un contrat
         // qui n'est pas celui du serveur.
-        etat.personnages = etat.personnages.map((p) => ({
-          ...p,
-          cases: [
-            ...p.cases,
-            { pose: pose.identifiant, demandees: pose.images, images: [], ...VIDE_C3 },
-          ],
-        }))
+        // **Chez ceux qui suivent le jeu, et chez eux seuls** (E9) : une chose
+        // qui porte un type a sa propre liste, et une attitude ajoutée au plan
+        // du jeu ne doit pas y faire paraître de case vide.
+        etat.personnages = etat.personnages.map((p) =>
+          p.type
+            ? p
+            : {
+                ...p,
+                plan: [...p.plan, pose],
+                cases: [
+                  ...p.cases,
+                  {
+                    pose: pose.identifiant,
+                    demandees: pose.images,
+                    images: [],
+                    ...VIDE_C3,
+                  },
+                ],
+              },
+        )
         // **Le plan entier avec la pose**, comme le vrai serveur : l'écran fond
         // ce qui lui arrive par les deux chemins avec le même code, et un double
         // qui n'en rendrait que la moitié prouverait un autre contrat.
@@ -5070,6 +5149,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
           ? { casque: calques }
           : {}) as Record<string, Asset[]>,
         corps: p.identifiant === "repos" ? corps.identifiant : null,
+        origine: "type" as const,
       })),
     })
 
@@ -5637,6 +5717,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
             demandees: p.images,
             images: [corps],
             corps: corps.identifiant,
+            origine: "type" as const,
             calques: { repos: [doux], marche: [pire], course: [fait] }[
               p.identifiant
             ]
@@ -7942,5 +8023,312 @@ describe("l'assistant de démarrage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "La taille" }))
     expect(await screen.findByRole("button", { name: "128 px" })).toBeTruthy()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E9 · Les poses appartiennent au type d'objet
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Le type qui se choisit sur
+// une chose, l'origine écrite sur la ligne, le rangé sous un trait — barré et
+// pâle, dérangé d'un clic —, la tuile qui n'a pas de rangée de poses du tout, et
+// l'étape de l'assistant qui règle la liste d'un type sans toucher celle des
+// autres. Ce qui se calcule — quelle liste une chose reçoit, ce que le fichier
+// garde — vit dans `tests/test_e9.py`.
+
+describe("les poses par type d'objet", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le codex ouvert sur l'établi d'une chose — comme la matrice de C1. */
+  const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble)
+    return { ...double, flux }
+  }
+
+  /** Une chose du jeu qui porte un type, avec la liste que ce type réclame. */
+  const chose = (nom: string, type: string, poses: Pose[]) =>
+    personnage(nom, {
+      type,
+      plan: poses,
+      cases: poses.map((p) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images: [],
+        ...VIDE_C3,
+      })),
+    })
+
+  // ── « La fiche d'une chose écrit l'origine de chaque pose » ────────────────
+
+  test("une chose ajoute une attitude pour elle seule, et sa ligne dit d'où elle vient", async () => {
+    const { fetchDouble } = await ouvrir({
+      personnages: [chose("Le coffre", "meuble", POSES_DU_MEUBLE)],
+    })
+    const ecran = await ouvrirLEtabli("Le coffre")
+
+    // Les trois du type, et rien d'autre : un coffre ne marche pas.
+    expect(
+      ecran.getAllByRole("button", { name: /Retirer .* de ce personnage/ }),
+    ).toHaveLength(3)
+    expect(ecran.queryByRole("button", { name: "Retirer marche de ce personnage" }))
+      .toBeNull()
+
+    fireEvent.change(ecran.getByLabelText("Ajouter une attitude à Le coffre"), {
+      target: { value: "piégé" },
+    })
+    fireEvent.keyDown(ecran.getByLabelText("Ajouter une attitude à Le coffre"), {
+      key: "Enter",
+    })
+
+    // **Le geste part sur cette chose-là**, pas sur le plan du jeu : c'est ce
+    // qui garde les cases des autres coffres intactes.
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/le-coffre" &&
+            String((init as RequestInit)?.method) === "PUT" &&
+            String((init as RequestInit)?.body).includes("ajouter"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("effacer une attitude ajoutée ici n'est pas la ranger", async () => {
+    // **Le × ne veut pas dire la même chose des deux côtés.** Une pose du type
+    // se range — elle reviendra chez les autres. Une pose ajoutée ici s'efface :
+    // la reléguer aurait laissé une ligne barrée que rien ne reproposera jamais.
+    const ajoutee: Pose = { identifiant: "piege", nom: "piégé", images: 1 }
+    const { fetchDouble } = await ouvrir({
+      personnages: [
+        personnage("Le coffre", {
+          type: "meuble",
+          plan: [...POSES_DU_MEUBLE, ajoutee],
+          ajoutees: [ajoutee],
+          cases: [...POSES_DU_MEUBLE, ajoutee].map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: [],
+            ...VIDE_C3,
+            origine: (p.identifiant === "piege" ? "ici" : "type") as "ici" | "type",
+          })),
+        }),
+      ],
+    })
+    const etabli = await ouvrirLEtabli("Le coffre")
+
+    // Les deux gestes portent des noms différents, parce qu'ils ne font pas la
+    // même chose.
+    expect(etabli.getByRole("button", { name: "Retirer fermé de ce personnage" }))
+      .toBeTruthy()
+    fireEvent.click(
+      etabli.getByRole("button", { name: "Effacer piégé, ajoutée ici" }),
+    )
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/le-coffre" &&
+            String((init as RequestInit)?.body).includes("retirer_ajoutee"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("l'origine ne s'écrit que quand elle apprend quelque chose", async () => {
+    // Une chose dont une pose vient du type et l'autre a été ajoutée ici.
+    const ajoutee: Pose = { identifiant: "piege", nom: "piégé", images: 1 }
+    await ouvrir({
+      personnages: [
+        personnage("Le coffre", {
+          type: "meuble",
+          plan: [...POSES_DU_MEUBLE, ajoutee],
+          ajoutees: [ajoutee],
+          cases: [...POSES_DU_MEUBLE, ajoutee].map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: [],
+            ...VIDE_C3,
+            origine: (p.identifiant === "piege" ? "ici" : "type") as "ici" | "type",
+          })),
+        }),
+      ],
+    })
+    const etabli = await ouvrirLEtabli("Le coffre")
+
+    // **Une seule mention**, sur la pose ajoutée. La venue du type est le cas
+    // ordinaire : l'écrire sur chaque ligne aurait fait quatre mentions
+    // identiques que personne ne lit.
+    expect(etabli.getAllByText("ajoutée ici")).toHaveLength(1)
+  })
+
+  // ── « Ce qui est rangé se relègue sous un trait, barré et pâle » ───────────
+
+  test("ce qui est rangé passe sous un trait, barré et pâle, et se dérange d'un clic", async () => {
+    const { fetchDouble } = await ouvrir({
+      personnages: [personnage("Le nain", { ecartees: ["mort", "degats"] })],
+    })
+    const ecran = await ouvrirLEtabli("Le nain")
+
+    // Le trait le sépare de ce qui reste à faire, et le titre dit ce que c'est.
+    expect(ecran.getByText("rangé — pas pour cette chose")).toBeTruthy()
+
+    const range = ecran.getByRole("button", { name: "mort" })
+    expect(range.className).toContain("line-through")
+    expect(range.className).toContain("opacity-60")
+
+    // **Un clic le dérange** — et c'est la liste des tenues qui repart, celle-ci
+    // en plus.
+    fireEvent.click(range)
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/le-nain" &&
+            String((init as RequestInit)?.body).includes('"mort"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── « Une tuile n'a pas de rangée de poses du tout » ───────────────────────
+
+  test("une tuile n'a aucune rangée de poses, et l'écran dit pourquoi", async () => {
+    await ouvrir({ personnages: [chose("Herbe", "tuile", [])] })
+    const ecran = await ouvrirLEtabli("Herbe")
+
+    expect(
+      ecran.queryAllByRole("button", { name: /Retirer .* de ce personnage/ }),
+    ).toHaveLength(0)
+    // **Pas une rangée grisée** : une rangée grisée promet qu'elle en aura une
+    // un jour, et une tuile n'en aura jamais.
+    expect(ecran.getByText(/ne bouge pas, il se raccorde/)).toBeTruthy()
+  })
+
+  // ── « Chaque type porte sa propre liste » (l'assistant) ────────────────────
+
+  const ouvrirLesPoses = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble({ univers: UNIVERS, ...options })
+    await monter(double.fetchDouble, { ...ETAT, univers: UNIVERS })
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Poses et états" }))
+    return double
+  }
+
+  test("l'étape des poses range les types, et chacun dit d'où sa liste lui vient", async () => {
+    await ouvrirLesPoses()
+
+    // Le plan du jeu n'a pas disparu : c'est ce que suivent le personnage, la
+    // créature, et les choses créées avant que les types aient leur liste.
+    expect(await screen.findByText("Le plan du jeu")).toBeTruthy()
+
+    const meuble = await screen.findByRole("button", { name: "meuble" })
+    expect(meuble.textContent).toContain("3 poses")
+    expect(meuble.textContent).toContain("proposée")
+    expect(
+      (await screen.findByRole("button", { name: "personnage" })).textContent,
+    ).toContain("celle du jeu")
+    // Une tuile le dit sur sa rangée, avant même qu'on l'ouvre.
+    expect(
+      (await screen.findByRole("button", { name: "tuile" })).textContent,
+    ).toContain("aucune pose")
+  })
+
+  test("écrire la liste d'un type ne part que sur ce type-là", async () => {
+    const { fetchDouble } = await ouvrirLesPoses()
+
+    fireEvent.click(await screen.findByRole("button", { name: "meuble" }))
+    // Le texte prévient avant qu'on écrive : cette liste va cesser d'être celle
+    // qu'on proposait.
+    expect(
+      await screen.findByText(/l'écrire ici lui donnera la sienne/),
+    ).toBeTruthy()
+
+    const champ = screen.getAllByPlaceholderText("une pose de plus…")
+    fireEvent.change(champ[champ.length - 1], { target: { value: "brûlé" } })
+    fireEvent.keyDown(champ[champ.length - 1], { key: "Enter" })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/types/meuble/poses" &&
+            String((init as RequestInit)?.method) === "PUT",
+        ),
+      ).toBe(true),
+    )
+    // **Et le plan du jeu n'a pas bougé** : aucun appel n'est parti vers lui.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          String(url) === "/api/characters/poses" &&
+          String((init as RequestInit)?.method) === "POST",
+      ),
+    ).toBe(false)
+  })
+
+  test("un type qui a écrit sa liste peut revenir à celle qu'on lui proposait", async () => {
+    const { fetchDouble } = await ouvrirLesPoses({
+      types: TYPES.map((t) =>
+        t.nom === "meuble"
+          ? { ...t, origine: "écrite" as const, poses: [POSES_DU_MEUBLE[0]] }
+          : t,
+      ),
+    })
+
+    fireEvent.click(await screen.findByRole("button", { name: "meuble" }))
+    fireEvent.click(
+      await screen.findByRole("button", { name: "revenir à la liste proposée" }),
+    )
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/types/meuble/poses" &&
+            String((init as RequestInit)?.method) === "DELETE",
+        ),
+      ).toBe(true),
+    )
+  })
+
+  // ── Le type se choisit sur la chose ────────────────────────────────────────
+
+  test("la fiche d'une chose choisit son type, et dit que les images ne bougent pas", async () => {
+    const { fetchDouble } = await ouvrir({
+      personnages: [personnage("La chose")],
+    })
+    const ecran = await ouvrirLEtabli("La chose")
+
+    const choix = await ecran.findByLabelText("Type d'objet")
+    expect(ecran.getByText(/En changer ne déplace aucune image/)).toBeTruthy()
+
+    fireEvent.change(choix, { target: { value: "meuble" } })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/la-chose" &&
+            String((init as RequestInit)?.body).includes('"type":"meuble"'),
+        ),
+      ).toBe(true),
+    )
   })
 })

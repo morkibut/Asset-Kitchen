@@ -551,6 +551,22 @@ export type Portee = "contenue" | "agrandit"
 // sont les cases à remplir, et c'est ce qui permet de voir ce qui manque sans
 // tenir la liste dans sa tête.
 
+/** Ce que chaque type d'objet réclame, type par type (E9). */
+export type PosesDesTypes = {
+  types: {
+    nom: string
+    /** `écrite` — l'auteur a posé la sienne. `connue` — c'est celle que le
+     *  produit propose. `projet` — ce type suit le plan du jeu. */
+    origine: "écrite" | "connue" | "projet"
+    poses: Pose[]
+    /** Ce qu'un « revenir à la liste proposée » remettrait. Envoyé à côté pour
+     *  que l'écran n'ait pas à le deviner. */
+    connues: Pose[]
+  }[]
+  /** Le plan du jeu — ce que suivent les types qui n'ont rien écrit. */
+  plan: Pose[]
+}
+
 export type Pose = {
   identifiant: string
   nom: string
@@ -588,6 +604,10 @@ export type Case = {
    *  serveur, celui-là même qui composera la planche, pour que l'écran montre
    *  exactement ce qui partira. */
   corps: string | null
+  /** **D'où vient cette pose** (E9) : `type` quand c'est le type d'objet qui la
+   *  réclame, `ici` quand cette chose-là se l'est ajoutée. La fiche l'écrit,
+   *  pour qu'on sache toujours qui la reproposera demain. */
+  origine: "type" | "ici"
 }
 
 export type Personnage = {
@@ -616,6 +636,18 @@ export type Personnage = {
    *  saurait pas les calculer : il ne tient qu'une page de la grille, filtrée
    *  sur autre chose, et compterait faux dès la première image hors de vue. */
   cases: Case[]
+  /** **Ce que cette chose-là réclame** (E9) — la liste de son type, puis ce
+   *  qu'elle s'est ajoutée. Ce n'est plus le plan du jeu : un coffre réclame
+   *  *fermé, ouvert, vidé* et une tuile ne réclame rien. Le serveur la calcule,
+   *  parce que la règle qui la compose a quatre branches et qu'un second calcul
+   *  à l'écran aurait divergé au premier type qui écrit la sienne. */
+  plan: Pose[]
+  /** Le type d'objet de cette chose. Vide, elle suit le plan du jeu — c'est
+   *  l'état d'avant E9, et c'est ce qui reprend les jeux existants sans perte. */
+  type: string
+  /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
+   *  type, jamais mêlées. */
+  ajoutees: Pose[]
 }
 
 /** Le plan et les personnages d'un projet, **en un seul aller-retour** : une
@@ -1895,12 +1927,46 @@ export const api = {
       description?: string
       poses?: string[]
       concept_arts?: string[]
+      /** Le type d'objet, qui décide de la liste des poses (E9). */
+      type?: string
+      /** **Ajouter et retirer sont deux gestes**, et non une liste entière : une
+       *  liste envoyée en bloc ferait perdre la pose qu'un autre onglet vient
+       *  de poser. Le nom suffit à créer — « nommer, c'est créer ». */
+      ajouter?: string
+      retirer_ajoutee?: string
     },
   ) =>
     appeler<{ personnage: Personnage }>(`/characters/${personnage}`, {
       method: "PUT",
       body: JSON.stringify(champs),
     }),
+
+  /** Ce que chaque type d'objet réclame, et **d'où sa liste lui vient** (E9).
+   *
+   *  `origine` dit `écrite` quand l'auteur a posé la sienne, `connue` quand
+   *  c'est celle que le produit propose pour ce type-là, et `projet` quand le
+   *  type suit le plan du jeu. Sans cette phrase, une liste héritée aurait
+   *  l'air d'une liste choisie. */
+  posesDesTypes: () => appeler<PosesDesTypes>("/characters/types"),
+
+  /** Écrire la liste d'un type — **et de lui seul**. On envoie ce qui reste,
+   *  pas une pose à la fois : à l'écran on range et on dérange plusieurs lignes
+   *  avant de regarder ailleurs, et un appel par ligne écrirait le fichier du
+   *  projet autant de fois qu'il y a de cases cochées. */
+  poserPosesDuType: (type: string, poses: Pose[]) =>
+    appeler<PosesDesTypes>(
+      `/characters/types/${encodeURIComponent(type)}/poses`,
+      { method: "PUT", body: JSON.stringify({ poses }) },
+    ),
+
+  /** Ce type revient à la liste qu'on lui proposait — il n'écrit plus la
+   *  sienne. Vider et oublier ne sont pas le même geste : vider est une
+   *  décision qui tient, oublier est un retour en arrière. */
+  oublierPosesDuType: (type: string) =>
+    appeler<PosesDesTypes>(
+      `/characters/types/${encodeURIComponent(type)}/poses`,
+      { method: "DELETE" },
+    ),
 
   /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,
    *  les deux vides ensemble. Le corps naît dans l'atelier et nulle part

@@ -733,8 +733,8 @@ export const AIDE: Record<string, Explication> = {
     ou: "univers",
     quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
     change:
-      "Chaque pose est une case à remplir dans le codex. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
-    origine: "toi · six poses de personnage au départ",
+      "Chaque pose est une case à remplir dans le codex. **La liste appartient au type d'objet** : un personnage a ses six attitudes, un meuble ses trois états, une tuile aucune — et changer l'une ne touche pas les autres. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
+    origine: "toi, ou l'atelier · une liste proposée par type",
   },
 
   "assistant.emplacements": {

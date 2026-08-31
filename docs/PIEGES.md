@@ -571,3 +571,14 @@ la prochaine réécriture retrouvera.
   tourné, ce qui ressemble à une casse du montage. `from tests.test_t7 import appeler, mcp,
   refuser  # noqa: F401`, et le `noqa` dit à qui relit que l'import inutilisé est le mécanisme.
   Payé en écrivant les essais de C5, le 29 août 2026.
+
+- **Un écran qui reconstruit un objet à partir de son propre message en efface les champs
+  qu'il ne connaît pas.** Le barème envoie la famille, l'occupation et la silhouette d'un type
+  d'objet ; depuis E9, ce type porte aussi sa liste de poses, réglée ailleurs et par une autre
+  route. `Echelle.depuis_json` d'un message qui n'en parle pas rend `poses=None`, et un simple
+  déplacement de curseur vidait donc la liste. **Ce que le message ne dit pas, il ne l'efface
+  pas** : le service relit ce que le fichier gardait et le repose. C'est la troisième fois que
+  le motif se paie — poster une recette effaçait la différence d'un calque (E5), nommer une
+  recette la stockait avec la différence de l'image d'où elle venait (E5) —, et il porte
+  toujours la même signature : **un message partiel traité comme un objet entier**. Vu en
+  écrivant E9 avant qu'un utilisateur ne le paie, le 31 août 2026.

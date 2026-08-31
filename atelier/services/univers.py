@@ -53,6 +53,7 @@ from atelier.domaine.carte import (
 )
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE, STYLE, Reinjection
+from atelier.domaine.plan import Pose
 from atelier.domaine.projet import (
     AUCUNE_CIBLE,
     CHAMPS_BIBLE,
@@ -851,7 +852,17 @@ class ServiceUnivers:
             )
 
         if bareme is not None:
-            echelles = tuple(Echelle.depuis_json(e) for e in bareme)
+            # **Ce que le message ne dit pas, il ne l'efface pas** (E9). L'écran
+            # du barème envoie la famille, l'occupation et la silhouette ; il
+            # n'envoie pas la liste de poses du type, qui se règle ailleurs et
+            # par une autre route. Reconstruire l'échelle à partir du seul
+            # message aurait donc vidé cette liste à chaque curseur déplacé —
+            # exactement la panne payée en E5, quand poster une recette effaçait
+            # la différence d'un calque (`docs/PIEGES.md`).
+            connues = {e.nom: e.poses for e in univers.bareme}
+            echelles = tuple(
+                _avec_poses_gardees(Echelle.depuis_json(e), connues) for e in bareme
+            )
             noms = [e.nom.strip() for e in echelles]
             if any(not n for n in noms):
                 raise UniversRefuse("une échelle a besoin d'un nom")
@@ -1368,6 +1379,20 @@ def _phrase_posee(bible: tuple[Champ, ...], nom: str, phrase: str) -> tuple[Cham
         else champ
         for champ in bible
     )
+
+
+def _avec_poses_gardees(
+    echelle: Echelle, connues: dict[str, tuple[Pose, ...] | None]
+) -> Echelle:
+    """L'échelle telle qu'elle arrive, **mais sa liste de poses préservée**.
+
+    Une liste absente du message veut dire « je ne parle pas de ça », et non
+    « vide-la ». Un type renommé — ou nouveau — n'a rien à garder, et repart de
+    `None` : il suivra le plan du jeu ou ce que le produit sait de son nom.
+    """
+    if echelle.poses is not None:
+        return echelle
+    return replace(echelle, poses=connues.get(echelle.nom))
 
 
 class ConsequencesDuReglage:

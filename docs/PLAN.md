@@ -1271,12 +1271,34 @@ rangé.
 
 #### Critères d'acceptation
 
-- [ ] Chaque type d'objet porte sa propre liste de poses, et changer l'une ne touche pas les autres
-- [ ] Une chose du jeu peut ajouter une pose à elle seule, sans qu'une case vide paraisse chez les autres
-- [ ] La fiche d'une chose écrit l'origine de chaque pose — venue du type, ou ajoutée ici
-- [ ] Ce qui est rangé se relègue sous un trait, barré et pâle, et se dérange d'un clic
-- [ ] Les plans de poses existants sont repris sans perte : aucune image ne se retrouve orpheline
-- [ ] Une tuile n'a pas de rangée de poses du tout, plutôt qu'une rangée grisée
+- [x] Chaque type d'objet porte sa propre liste de poses, et changer l'une ne touche pas les autres
+- [x] Une chose du jeu peut ajouter une pose à elle seule, sans qu'une case vide paraisse chez les autres
+- [x] La fiche d'une chose écrit l'origine de chaque pose — venue du type, ou ajoutée ici
+- [x] Ce qui est rangé se relègue sous un trait, barré et pâle, et se dérange d'un clic
+- [x] Les plans de poses existants sont repris sans perte : aucune image ne se retrouve orpheline
+- [x] Une tuile n'a pas de rangée de poses du tout, plutôt qu'une rangée grisée
+
+#### Ce qui a été décidé en la faisant
+
+**Deux types suivent le plan du jeu, les autres ont le leur.** Un personnage et une créature
+continuent de recevoir ce que le jeu déclare — sans quoi une attitude ajoutée au plan cesserait
+de paraître là où on l'attend le plus. Les six autres types reçoivent ce que l'atelier propose
+pour eux, et une chose sans type reçoit le plan du jeu : c'est l'état d'avant la tranche, et
+c'est ce qui reprend les jeux existants sans qu'un seul fichier soit réécrit.
+
+**Vider n'est pas oublier.** La liste vide d'un type est une décision qui tient — un décor ne
+réclame rien —, et « revenir à la liste proposée » est un second geste, qui efface la liste
+écrite au lieu de la vider. Sans lui, un type ne pourrait jamais revenir en arrière : il
+faudrait retaper la liste de mémoire, et la moindre faute de frappe ferait une case orpheline.
+
+**Le × ne veut pas dire la même chose des deux côtés.** Une pose du type se *range* — elle
+reviendra chez les autres, et le trait la garde à un clic. Une pose ajoutée ici s'*efface* :
+elle n'existe que sur cette chose, et la reléguer aurait laissé une ligne barrée que rien ne
+reproposera jamais.
+
+**Une liste de poses ne s'efface pas par un message qui n'en parle pas.** Le barème envoie
+trois champs et pas la liste ; le service relit ce que le fichier gardait et le repose. C'est
+le motif payé deux fois en E5, écrit dans `docs/PIEGES.md` avant qu'un utilisateur ne le paie.
 
 #### Bloquée par
 

@@ -375,6 +375,17 @@ tuile n'a pas de poses du tout. Un objet peut ajouter les siennes, sur lui seul,
 fiche écrit **l'origine de chaque pose** — du type, ou ajoutée ici — pour qu'on sache
 toujours qui la reproposera demain.
 
+*Écrit en la faisant, le 31 août 2026.* La liste d'un type est **une liste ou rien**, et
+les deux ne disent pas la même chose : *rien* veut dire « ce type n'a rien décidé », une
+liste vide veut dire « ce type ne réclame aucune pose ». Les confondre aurait fait
+ressusciter à chaque relecture ce qu'on venait de retirer. Un type qui n'a rien décidé
+reçoit alors, dans l'ordre : le plan du jeu s'il est un **personnage** ou une **créature**
+— sans quoi une attitude ajoutée au plan cesserait de paraître là où on l'attend le plus —
+ou si le produit ne connaît pas son nom ; sinon ce que le produit propose pour un type de
+ce nom, la liste vide du décor et de la tuile comprise. **Et une chose sans type reçoit le
+plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les projets
+existants sans qu'un seul fichier ait eu à être réécrit.
+
 **Le personnage se généralise en entité, et c'est le seul de ces changements qui touche du
 code existant en profondeur.** Les familles *Décors*, *Objets* et *Interface* ont
 aujourd'hui leur ligne et leur compte à zéro : ce qui manque est le modèle, pas la mise en

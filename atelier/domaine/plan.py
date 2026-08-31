@@ -116,3 +116,81 @@ def plan_depuis_json(brut: Any) -> tuple[Pose, ...]:
         vues.add(pose.identifiant)
         retenues.append(pose)
     return tuple(retenues)
+
+
+# ── Les listes de départ, par type d'objet (E9) ──────────────────────────────
+#
+# **La liste des poses quitte le projet pour le type d'objet.** Avant, le jeu
+# déclarait une seule liste et tout la recevait : un coffre héritait de *marche*
+# et de *course*, qu'il fallait ranger une par une, sur chaque coffre. Désormais
+# un personnage a ses six attitudes, un meuble ses trois états, et **une tuile
+# n'a pas de poses du tout** — pas une rangée grisée, rien.
+#
+# **Des cases de départ, pas une table de vérité** : elles se renomment, se
+# retirent et se complètent type par type. Un type absent de cette table reçoit
+# une liste vide, ce qui est la réponse honnête — le produit ne sait pas ce
+# qu'un type qu'il ne connaît pas réclame.
+
+PLANS_PAR_TYPE: dict[str, tuple[Pose, ...]] = {
+    "personnage": PLAN_PAR_DEFAUT,
+    "créature": PLAN_PAR_DEFAUT,
+    "meuble": (
+        Pose("ferme", "fermé"),
+        Pose("ouvert", "ouvert"),
+        Pose("vide", "vidé"),
+    ),
+    "objet posé": (Pose("pose", "posé"),),
+    "objet tenu": (Pose("tenu", "tenu"),),
+    "décor": (),
+    # **Une tuile n'a pas de poses**, et c'est un fait sur ce qu'une tuile est :
+    # elle ne bouge pas, elle se raccorde. Lui montrer une rangée grisée
+    # reviendrait à lui promettre qu'elle en aura un jour.
+    "tuile": (),
+    "élément d'interface": (
+        Pose("repos", "repos"),
+        Pose("survol", "survol"),
+        Pose("presse", "pressé"),
+        Pose("inactif", "inactif"),
+    ),
+}
+
+
+# Les types dont le produit **sait** qu'ils n'ont pas de poses. C'est une
+# affirmation, pas un défaut qu'on n'aurait pas rempli : un décor et une tuile ne
+# bougent pas, ils se raccordent. La distinction compte, parce qu'elle décide de
+# ce qui retombe sur le plan du projet et de ce qui reste vide.
+SANS_POSES = frozenset({"décor", "tuile"})
+
+# **Les deux types qui suivent le plan du jeu**, tant qu'ils n'écrivent pas le
+# leur. C'est la reprise, et elle est nommée plutôt que devinée : une pose
+# ajoutée au plan du jeu doit continuer de paraître chez les personnages et les
+# créatures — c'est ce que « nommer, c'est créer » promet depuis la première
+# version. Figer ces deux-là sur la liste de départ aurait fait disparaître
+# l'attitude que l'auteur vient d'écrire pour tout le monde.
+SUIT_LE_JEU = frozenset({"personnage", "créature"})
+
+
+def suit_le_plan_du_jeu(nom: str) -> bool:
+    """Ce type-là n'a pas de liste à lui : il **suit le plan du jeu**.
+
+    Deux cas, et c'est le même effet. Le personnage et la créature, parce que
+    c'est ce que le jeu déclare depuis toujours et qu'une attitude ajoutée au
+    plan doit continuer de leur paraître. Un type que le produit ne connaît pas,
+    parce que l'ignorance retombe sur ce qui existait plutôt que d'effacer des
+    cases.
+
+    Écrit ici et lu deux fois — par la liste elle-même et par la phrase qui dit
+    d'où elle vient. Deux conditions écrites à deux endroits auraient fini par
+    montrer « choisie » sur une liste héritée.
+    """
+    return nom in SUIT_LE_JEU or nom not in PLANS_PAR_TYPE
+
+
+def plan_du_type(nom: str) -> tuple[Pose, ...]:
+    """Ce qu'un type d'objet réclame, avant qu'on y touche.
+
+    Rend une liste vide pour un type inconnu : le produit ne devine pas ce
+    qu'une catégorie qu'il n'a jamais vue demande, et une liste inventée serait
+    pire qu'une liste absente — il faudrait la ranger.
+    """
+    return PLANS_PAR_TYPE.get(nom, ())

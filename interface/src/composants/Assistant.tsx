@@ -41,6 +41,7 @@ import {
   type Etiquette,
   type Famille,
   type Pose,
+  type PosesDesTypes,
   type TailleDImage,
   type VueDuJeu,
   type VuesEtTailles,
@@ -1335,12 +1336,19 @@ function LeTexteACopier({
   )
 }
 
-/** Étape 7 — les poses et les états.
+/** Étape 7 — les poses et les états, **type par type** (E9).
  *
  *  Une pose, c'est un moment d'un objet : un personnage au repos, en marche,
  *  qui attaque ; un coffre fermé, ouvert, vidé. **Le nombre d'images de chaque
  *  pose vient du choix de vue**, à l'étape 2 : il ne se tape plus à la main, et
- *  c'est ce qui répare les sept endroits qui ne se parlaient pas. */
+ *  c'est ce qui répare les sept endroits qui ne se parlaient pas.
+ *
+ *  **La liste appartient au type d'objet, plus au jeu entier** (E9). Avant, le
+ *  jeu déclarait une seule liste et tout la recevait : un coffre héritait de
+ *  *marche* et de *course*, qu'il fallait ranger une par une, sur chaque
+ *  coffre. Chaque rangée dit donc d'où sa liste lui vient — écrite ici, proposée
+ *  par l'atelier, ou partagée avec le jeu — parce qu'une liste héritée ne doit
+ *  pas avoir l'air d'une liste choisie. */
 function LesPoses({
   vue,
   onErreur,
@@ -1349,73 +1357,267 @@ function LesPoses({
   onErreur: (raison: string) => void
 }) {
   const [plan, setPlan] = useState<Pose[]>([])
-  const [neuve, setNeuve] = useState("")
+  const [types, setTypes] = useState<PosesDesTypes["types"]>([])
+  // Quelle rangée est dépliée. **De l'écran, jamais du jeu** : ouvrir un type
+  // ne change rien — c'est la décision déjà prise par le barème, deux étapes
+  // plus haut, et pour la même mesure.
+  const [ouvert, setOuvert] = useState("")
+
+  const fondre = (recu: PosesDesTypes | undefined) => {
+    setTypes(recu?.types ?? [])
+    setPlan(recu?.plan ?? [])
+  }
 
   useEffect(() => {
     void api
-      .production()
-      .then((recu) => setPlan(recu?.plan ?? []))
-      .catch(() => setPlan([]))
+      .posesDesTypes()
+      .then(fondre)
+      .catch(() => fondre(undefined))
   }, [])
+
+  const echouer = (erreur: unknown) => onErreur(String(erreur))
 
   return (
     <EtapeOuverte aide="assistant.poses" titre="7 · Poses et états">
       <p className="text-[12.5px] text-texte-2">
-        Ce que chaque chose du jeu peut faire. Le nombre d'images vient de la vue
+        Ce que chaque type d'objet peut faire. Le nombre d'images vient de la vue
         {vue ? ` — ${vue.libelle}, ${vue.images} par pose` : ""}.
       </p>
-      <ul className="flex flex-col">
-        {plan.map((pose) => (
-          <li
-            key={pose.identifiant}
-            className="mesure flex h-[26px] items-center gap-2 text-[11.5px] text-texte-2"
-          >
-            <span className="min-w-0 flex-1 truncate">{pose.nom}</span>
-            <span className="text-[10px] text-texte-3">
-              {pose.images} image{pose.images > 1 ? "s" : ""}
-            </span>
+
+      {/* **Le plan du jeu en premier, et il n'a pas disparu.** C'est ce que
+          suivent le personnage, la créature, et toutes les choses créées avant
+          que les types aient leur liste — c'est ce qui les reprend sans perte.
+          Le cacher aurait rendu ces choses-là irréglables. */}
+      <ListeDePoses
+        titre="Le plan du jeu"
+        raison="ce que suivent le personnage, la créature, et les choses sans type"
+        poses={plan}
+        images={vue?.images ?? 1}
+        onAjouter={(nom, images) =>
+          void api
+            .ajouterPose(nom, images)
+            .then((recu) => setPlan(recu.plan))
+            .catch(echouer)
+        }
+        onRetirer={(pose) =>
+          void api
+            .retirerPose(pose)
+            .then((recu) => setPlan(recu?.plan ?? []))
+            .catch(echouer)
+        }
+      />
+
+      <ul className="flex flex-col rounded-[2px] border border-bord">
+        {types.map((type) => (
+          <li key={type.nom} className="border-b border-bord last:border-b-0">
             <button
               type="button"
-              aria-label={`Retirer ${pose.nom}`}
-              onClick={() =>
-                void api
-                  .retirerPose(pose.identifiant)
-                  .then((recu) => setPlan(recu?.plan ?? []))
-                  .catch((erreur) => onErreur(String(erreur)))
-              }
-              className="shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+              aria-pressed={ouvert === type.nom}
+              aria-label={type.nom}
+              onClick={() => setOuvert(ouvert === type.nom ? "" : type.nom)}
+              className={[
+                "mesure flex h-[26px] w-full items-center gap-2 px-2 text-left text-[10px] transition-colors duration-[80ms]",
+                ouvert === type.nom ? "bg-fond-3" : "hover:bg-fond-2",
+              ].join(" ")}
             >
-              ×
+              <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
+                {type.nom}
+              </span>
+              <span className="shrink-0 text-texte-3">
+                {type.poses.length === 0
+                  ? "aucune pose"
+                  : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}
+                {" · "}
+                {ORIGINE_DU_TYPE[type.origine]}
+              </span>
             </button>
+
+            {ouvert === type.nom && (
+              <div className="flex flex-col gap-2 px-2 pb-2">
+                <ListeDePoses
+                  raison={RAISON_ORIGINE[type.origine]}
+                  poses={type.poses}
+                  images={vue?.images ?? 1}
+                  // **Écrire ici donne à ce type sa propre liste**, et le texte
+                  // le dit avant qu'on écrive : une liste partagée qui se
+                  // détache d'un jeu sans prévenir serait une surprise, et le
+                  // produit constate plutôt qu'il ne surprenne.
+                  onAjouter={(nom, images) =>
+                    void api
+                      .poserPosesDuType(type.nom, [
+                        ...type.poses,
+                        {
+                          identifiant: identifiantDePose(nom, type.poses),
+                          nom,
+                          images,
+                        },
+                      ])
+                      .then(fondre)
+                      .catch(echouer)
+                  }
+                  onRetirer={(pose) =>
+                    void api
+                      .poserPosesDuType(
+                        type.nom,
+                        type.poses.filter((p) => p.identifiant !== pose),
+                      )
+                      .then(fondre)
+                      .catch(echouer)
+                  }
+                />
+
+                {/* **Revenir à la liste proposée** — et seulement quand il y a
+                    quelque chose à défaire. Sans ce geste, un type ne pourrait
+                    jamais y revenir : il faudrait la retaper de mémoire, et la
+                    moindre faute de frappe ferait une case orpheline. */}
+                {type.origine === "écrite" && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void api
+                        .oublierPosesDuType(type.nom)
+                        .then(fondre)
+                        .catch(echouer)
+                    }
+                    title="les images ne bougent pas — elles gardent l'identifiant de leur pose"
+                    className="mesure self-start px-1 text-[9.5px] text-texte-3 hover:text-signal"
+                  >
+                    revenir à la liste proposée
+                  </button>
+                )}
+              </div>
+            )}
           </li>
         ))}
       </ul>
+    </EtapeOuverte>
+  )
+}
+
+/** Ce que la rangée d'un type dit de sa liste, en un mot. */
+const ORIGINE_DU_TYPE: Record<string, string> = {
+  écrite: "écrite ici",
+  connue: "proposée",
+  projet: "celle du jeu",
+}
+
+/** Et la même chose en une phrase, sous la liste dépliée. */
+const RAISON_ORIGINE: Record<string, string> = {
+  écrite: "cette liste a été écrite pour ce type — elle ne suit plus rien d'autre",
+  connue: "ce que l'atelier propose pour ce type — l'écrire ici lui donnera la sienne",
+  projet:
+    "ce type suit le plan du jeu — écrire ici lui donnera sa propre liste, qui cessera de le suivre",
+}
+
+/** L'identifiant d'une pose neuve, **calculé où on l'écrit**.
+ *
+ *  Le serveur en fabrique un quand on nomme une pose du jeu ; ici c'est une
+ *  liste entière qui part, et il faut donc en poser un. Les accents tombent,
+ *  les espaces deviennent des tirets, et un doublon reçoit un numéro — la même
+ *  règle que `repere` côté serveur, sur le seul point où elle doit s'accorder :
+ *  deux poses de même identifiant seraient deux lignes que la matrice ne
+ *  saurait pas distinguer. */
+function identifiantDePose(nom: string, deja: Pose[]): string {
+  const base =
+    nom
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "pose"
+  const prises = new Set(deja.map((p) => p.identifiant))
+  if (!prises.has(base)) return base
+  let rang = 2
+  while (prises.has(`${base}-${rang}`)) rang += 1
+  return `${base}-${rang}`
+}
+
+/** Une liste de poses qui se lit, se complète et se raccourcit.
+ *
+ *  Écrite une fois et servie deux — au plan du jeu et à chaque type —, parce
+ *  que ces deux listes n'ont aucune raison de se lire différemment. Ce qui
+ *  change entre elles est **où l'écriture part**, et c'est l'appelant qui le
+ *  décide. */
+function ListeDePoses({
+  titre,
+  raison,
+  poses,
+  images,
+  onAjouter,
+  onRetirer,
+}: {
+  titre?: string
+  raison: string
+  poses: Pose[]
+  /** Ce qu'une pose neuve demandera — **le choix de vue**, jamais un nombre
+   *  tapé ici. C'est le lien qui répare les sept endroits qui divergeaient. */
+  images: number
+  onAjouter: (nom: string, images: number) => void
+  onRetirer: (pose: string) => void
+}) {
+  const [neuve, setNeuve] = useState("")
+
+  return (
+    <div className="flex flex-col gap-1">
+      {titre && <Libelle>{titre}</Libelle>}
+      <Raison texte={raison} />
+      {poses.length === 0 ? (
+        // **Aucune pose est une réponse, pas un trou** : un décor et une tuile
+        // ne bougent pas, ils se raccordent. La phrase le dit plutôt que de
+        // laisser une liste vide passer pour un oubli.
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          aucune pose — une seule image remplit ce type
+        </p>
+      ) : (
+        <ul className="flex flex-col">
+          {poses.map((pose) => (
+            <li
+              key={pose.identifiant}
+              className="mesure flex h-[26px] items-center gap-2 text-[11.5px] text-texte-2"
+            >
+              <span className="min-w-0 flex-1 truncate">{pose.nom}</span>
+              <span className="text-[10px] text-texte-3">
+                {pose.images} image{pose.images > 1 ? "s" : ""}
+              </span>
+              <button
+                type="button"
+                aria-label={`Retirer ${pose.nom}`}
+                onClick={() => onRetirer(pose.identifiant)}
+                className="shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="flex items-center gap-2">
         <input
           value={neuve}
-          aria-label="Une pose de plus"
+          aria-label={titre ? "Une pose de plus" : `Une pose de plus — ${raison}`}
           placeholder="une pose de plus…"
           onChange={(e) => setNeuve(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && neuve.trim()) {
+              onAjouter(neuve.trim(), images)
+              setNeuve("")
+            }
+          }}
           className="h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11.5px] text-texte"
         />
         <button
           type="button"
           disabled={!neuve.trim()}
-          onClick={() =>
-            void api
-              .ajouterPose(neuve, vue?.images ?? 1)
-              .then((recu) => {
-                setPlan(recu.plan)
-                setNeuve("")
-              })
-              .catch((erreur) => onErreur(String(erreur)))
-          }
+          onClick={() => {
+            onAjouter(neuve.trim(), images)
+            setNeuve("")
+          }}
           className="mesure h-[26px] shrink-0 px-2 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
         >
           + ajouter
         </button>
       </div>
-    </EtapeOuverte>
+    </div>
   )
 }
 

@@ -45,6 +45,7 @@ import {
   type Piece,
   type Portee,
   type Pose,
+  type PosesDesTypes,
   type Sortie as SortieAuJeu,
   type Vestiaire,
 } from "../api"
@@ -61,6 +62,14 @@ import { PANNEAU } from "./Infobulle"
  *  au plan, puisqu'un ajout n'écrit — et donc n'annonce — aucun personnage.
  *  C'est la même règle que les îlots du tableau, qui se lisent sur les cartes.
  */
+/** Les types d'objet qui n'ont **aucune** attitude, et le savent (E9).
+ *
+ *  Écrit ici pour une seule phrase — celle qui remplace la rangée de poses
+ *  d'une tuile. Le serveur, lui, ne lui envoie simplement aucune pose : l'écran
+ *  n'a pas à rejouer la règle, seulement à dire pourquoi il n'y a rien plutôt
+ *  que de laisser un vide passer pour un oubli. */
+const SANS_ATTITUDES = ["décor", "tuile"]
+
 export const posesTenues = (plan: Pose[], personnage: Personnage): Pose[] =>
   plan.filter((p) => !personnage.ecartees.includes(p.identifiant))
 
@@ -939,6 +948,18 @@ function Identite({
   const [nom, setNom] = useState(personnage.nom)
   const [description, setDescription] = useState(personnage.description)
   const dernier = useRef(personnage.identifiant)
+  // **Les types du jeu, demandés à la route qui les sert** (E9) — les mêmes que
+  // l'assistant règle, et pas une seconde liste écrite ici. Vide tant qu'elle
+  // n'est pas revenue : le choix se montre alors sans option, plutôt que de
+  // proposer huit noms que le jeu ne porte peut-être pas.
+  const [types, setTypes] = useState<PosesDesTypes["types"]>([])
+
+  useEffect(() => {
+    void api
+      .posesDesTypes()
+      .then((recu) => setTypes(recu?.types ?? []))
+      .catch(() => setTypes([]))
+  }, [])
 
   // Changer de personnage remet les champs sur celui-là. Sans ça, le panneau
   // garderait le texte du précédent et on croirait l'avoir écrit ici — c'est
@@ -950,7 +971,11 @@ function Identite({
     setDescription(personnage.description)
   }, [personnage])
 
-  const poser = async (champs: { nom?: string; description?: string }) => {
+  const poser = async (champs: {
+    nom?: string
+    description?: string
+    type?: string
+  }) => {
     try {
       const rendu = await api.reglerPersonnage(personnage.identifiant, champs)
       onPersonnage(rendu.personnage)
@@ -989,6 +1014,39 @@ function Identite({
         >
           Supprimer
         </button>
+      </div>
+
+      {/* **Le type d'objet, et il décide de ce que cette chose réclame** (E9).
+          Un coffre demande *fermé, ouvert, vidé* ; une tuile ne demande rien.
+          Posé juste sous le nom parce que c'est la deuxième chose qu'on sait
+          d'une chose du jeu, et parce qu'il change la matrice entière : le
+          laisser en bas aurait fait chercher pourquoi les cases ont changé.
+
+          **Les images ne bougent pas** en changeant de type — elles gardent
+          l'identifiant de leur pose, et remettre le type d'avant les remet dans
+          leur case. C'est ce que dit l'explication, parce que c'est la première
+          crainte qu'un tel réglage inspire. */}
+      <div className="flex flex-col gap-1">
+        <Libelle>Type d'objet</Libelle>
+        <select
+          value={personnage.type ?? ""}
+          aria-label="Type d'objet"
+          onChange={(e) => void poser({ type: e.target.value })}
+          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+        >
+          <option value="">aucun — suit le plan du jeu</option>
+          {types.map((type) => (
+            <option key={type.nom} value={type.nom}>
+              {type.nom} — {type.poses.length === 0
+                ? "aucune pose"
+                : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}
+            </option>
+          ))}
+        </select>
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Il décide des attitudes qu'on lui demande. En changer ne déplace aucune
+          image : chacune garde l'attitude qu'on lui a donnée.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -1042,8 +1100,17 @@ function Cases({
   onOuvrirCase: (identifiant: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
-  const tenues = posesTenues(plan, personnage)
-  const ecartees = plan.filter((p) => personnage.ecartees.includes(p.identifiant))
+  // **Ce que cette chose-là réclame** (E9), et non plus ce que le jeu réclame :
+  // un coffre demande *fermé, ouvert, vidé*, une tuile ne demande rien. Le
+  // serveur la compose — la règle a quatre branches, et un second calcul écrit
+  // ici aurait divergé au premier type qui écrit sa liste. Le plan du jeu reste
+  // le repli des choses d'avant E9, qui n'ont pas de type.
+  const reclame = personnage.plan ?? plan
+  const tenues = posesTenues(reclame, personnage)
+  const ecartees = reclame.filter((p) => personnage.ecartees.includes(p.identifiant))
+  const origines = Object.fromEntries(
+    personnage.cases.map((c) => [c.pose, c.origine]),
+  ) as Record<string, "type" | "ici" | undefined>
   // **Les attitudes cochées pour partir ensemble** (US-128). Elles vivent dans
   // l'onglet et nulle part ailleurs : c'est une intention qui vaut pour le
   // prochain appel, exactement comme la case visée de C1, et l'enregistrer en
@@ -1075,6 +1142,20 @@ function Cases({
       await api.designer(asset, null, null)
     } catch (erreur) {
       onErreur(erreur, "désignation refusée")
+    }
+  }
+
+  /** Effacer une attitude que cette chose s'était ajoutée. Les images faites
+   *  pour elle **restent en bibliothèque** et gardent son identifiant : la
+   *  remettre les remet dans leur case. */
+  const effacerAjoutee = async (pose: string) => {
+    try {
+      const rendu = await api.reglerPersonnage(personnage.identifiant, {
+        retirer_ajoutee: pose,
+      })
+      onPersonnage(rendu.personnage)
+    } catch (erreur) {
+      onErreur(erreur, "réglage refusé")
     }
   }
 
@@ -1116,10 +1197,17 @@ function Cases({
         )}
       </div>
 
-      {plan.length === 0 ? (
+      {reclame.length === 0 ? (
+        // **Une tuile n'a pas de rangée de poses du tout** (E9) — pas une
+        // rangée grisée, qui lui promettrait qu'elle en aura une un jour. Elle
+        // ne bouge pas, elle se raccorde, et la phrase le dit plutôt que de
+        // laisser une liste vide passer pour un oubli.
         <p className="mesure text-[10px] leading-4 text-texte-3">
-          Le plan du jeu est vide — il n'y a aucune case à remplir. Une attitude
-          s'écrit à gauche.
+          {personnage.type && SANS_ATTITUDES.includes(personnage.type)
+            ? `Un ${personnage.type} n'a pas d'attitudes : il ne bouge pas, il se `
+              + `raccorde. Une seule image le remplit.`
+            : "Rien à remplir pour l'instant — une attitude s'écrit à gauche, ou "
+              + "se pose sur le type de cette chose dans les réglages du jeu."}
         </p>
       ) : piece ? (
         <ul className="flex flex-col gap-px">
@@ -1161,8 +1249,20 @@ function Cases({
                     : precedentes.filter((p) => p !== pose.identifiant),
                 )
               }
+              origine={origines[pose.identifiant] ?? "type"}
               onArmer={() => onArmer(personnage, [pose])}
-              onRetirer={() => void cocher(pose.identifiant, false)}
+              // **Le × ne veut pas dire la même chose des deux côtés**, et c'est
+              // ce que l'origine sert à trancher. Une pose du type se **range**
+              // — elle appartient au type, elle reviendra chez les autres, et
+              // la reléguer sous le trait la garde à un clic. Une pose ajoutée
+              // ici s'**efface** : elle n'existe que sur cette chose, et la
+              // reléguer aurait laissé une ligne barrée que rien ne
+              // reproposera jamais.
+              onRetirer={() =>
+                origines[pose.identifiant] === "ici"
+                  ? void effacerAjoutee(pose.identifiant)
+                  : void cocher(pose.identifiant, false)
+              }
               onDesigner={(asset) => void designer(asset)}
               onOuvrirCase={onOuvrirCase}
             />
@@ -1204,25 +1304,103 @@ function Cases({
         </div>
       )}
 
+      {/* **Ce qu'on range se relègue sous un trait, barré et pâle** (E9) —
+          plutôt que de disparaître. C'est ce qui permet de défaire un rangement
+          sans se rappeler ce qu'on a rangé : la ligne est encore là, elle a
+          seulement cessé de compter. Le barré dit « écarté », le pâle dit
+          « pas ici », et le trait sépare ce qui reste à faire de ce dont on a
+          décidé qu'il n'y avait rien à faire.
+
+          **Un clic la dérange**, et c'est le même geste qu'à la coche : la
+          liste des tenues repart au serveur avec celle-ci en plus. */}
       {ecartees.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 pt-1">
+        <div className="flex flex-col gap-1 border-t border-bord pt-2">
           <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
-            pas pour lui
+            rangé — pas pour cette chose
           </span>
-          {ecartees.map((pose) => (
-            <button
-              key={pose.identifiant}
-              type="button"
-              onClick={() => void cocher(pose.identifiant, true)}
-              title="lui rendre cette attitude"
-              className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-3 hover:bg-fond-2 hover:text-texte-2"
-            >
-              {pose.nom}
-            </button>
-          ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {ecartees.map((pose) => (
+              <button
+                key={pose.identifiant}
+                type="button"
+                onClick={() => void cocher(pose.identifiant, true)}
+                title="lui rendre cette attitude"
+                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-3 line-through decoration-texte-3/60 opacity-60 hover:bg-fond-2 hover:text-texte-2 hover:no-underline hover:opacity-100"
+              >
+                {pose.nom}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* **Une attitude pour cette chose seule** (E9) : un boss garde les six
+          de son type et s'ajoute sa transformation, sans qu'une case vide
+          paraisse chez ses voisines. **Nommer, c'est créer** — un nom tapé, une
+          entrée, et la ligne existe ; rien n'est fabriqué et rien n'est payé.
+
+          Absent sur une colonne de pièce : là on habille des attitudes qui
+          existent, on n'en écrit pas de nouvelles. */}
+      {!piece && (
+        <AjoutDePose
+          personnage={personnage}
+          onPersonnage={onPersonnage}
+          onErreur={onErreur}
+        />
+      )}
     </section>
+  )
+}
+
+/** Écrire une attitude **pour cette chose seule** (E9).
+ *
+ *  Le geste du plan du jeu, ramené d'un cran : le champ crée en validant, sans
+ *  formulaire et sans bouton d'ouverture, exactement comme le nom d'un
+ *  personnage dans le codex. Ce qu'il ajoute ne part nulle part ailleurs — les
+ *  autres choses du même type ne voient rien paraître, et c'est très exactement
+ *  ce que la tranche promet. */
+function AjoutDePose({
+  personnage,
+  onPersonnage,
+  onErreur,
+}: {
+  personnage: Personnage
+  onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const [nom, setNom] = useState("")
+
+  const ajouter = async () => {
+    const propre = nom.trim()
+    if (!propre) return
+    try {
+      const rendu = await api.reglerPersonnage(personnage.identifiant, {
+        ajouter: propre,
+      })
+      onPersonnage(rendu.personnage)
+      setNom("")
+    } catch (erreur) {
+      onErreur(erreur, "attitude refusée")
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <input
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void ajouter()
+        }}
+        placeholder="une attitude pour elle seule…"
+        aria-label={`Ajouter une attitude à ${personnage.nom}`}
+        title="elle n'existera que pour cette chose — les autres du même type ne la verront pas"
+        className="champ h-[26px] w-[240px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[11px] text-texte-1 placeholder:text-texte-3"
+      />
+      <span className="mesure text-[9.5px] text-texte-3">
+        pour cette chose seule — rien n'est fabriqué
+      </span>
+    </div>
   )
 }
 
@@ -1236,6 +1414,7 @@ function LigneCase({
   pose,
   case_,
   cochee,
+  origine,
   onCocher,
   onArmer,
   onRetirer,
@@ -1247,6 +1426,11 @@ function LigneCase({
   /** **Cochée pour partir avec les autres** (US-128). C'est l'attitude qu'on
    *  coche, pas ses images : la case reste une ligne du plan du jeu. */
   cochee: boolean
+  /** **D'où vient cette pose** (E9) : du type d'objet, ou ajoutée sur cette
+   *  chose-là. Écrit sur la ligne parce qu'on ne saurait sinon plus qui la
+   *  reproposera demain — changer le type emporte les siennes, jamais celles
+   *  qu'on a ajoutées ici. */
+  origine: "type" | "ici"
   onCocher: (veut: boolean) => void
   onArmer: () => void
   onRetirer: () => void
@@ -1266,8 +1450,20 @@ function LigneCase({
         title="cochées ensemble, elles partent en une seule planche"
         className="shrink-0 accent-signal"
       />
-      <span className="w-[110px] shrink-0 truncate text-[11.5px] text-texte-2">
-        {pose.nom}
+      <span className="flex w-[110px] shrink-0 flex-col justify-center">
+        <span className="truncate text-[11.5px] text-texte-2">{pose.nom}</span>
+        {/* **L'origine, et seulement quand elle apprend quelque chose.** La
+            venue du type est le cas ordinaire — l'écrire sur chaque ligne
+            aurait fait six mentions identiques que personne ne lit. Ce qu'on a
+            ajouté ici, lui, est une décision, et il se rappelle. */}
+        {origine === "ici" && (
+          <span
+            className="mesure text-[9px] leading-3 text-texte-3"
+            title="ajoutée sur cette chose seule — changer son type ne l'emporte pas"
+          >
+            ajoutée ici
+          </span>
+        )}
       </span>
 
       {/* Les vignettes de cette case. **La même image que la grille, servie par
@@ -1322,8 +1518,16 @@ function LigneCase({
       <button
         type="button"
         onClick={onRetirer}
-        aria-label={`Retirer ${pose.nom} de ce personnage`}
-        title="ce personnage n'a pas besoin de cette attitude"
+        aria-label={
+          origine === "ici"
+            ? `Effacer ${pose.nom}, ajoutée ici`
+            : `Retirer ${pose.nom} de ce personnage`
+        }
+        title={
+          origine === "ici"
+            ? "elle n'existe que sur cette chose — ses images restent en bibliothèque"
+            : "ce personnage n'a pas besoin de cette attitude"
+        }
         className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
       >
         ×

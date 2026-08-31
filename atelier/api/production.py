@@ -57,6 +57,27 @@ def _projet(requete: Request, projet: str | None) -> str:
 # ── Ce que l'écran envoie ────────────────────────────────────────────────────
 
 
+class CorpsPoseDuType(BaseModel):
+    """Une attitude dans la liste d'un type d'objet (E9)."""
+
+    identifiant: str = Field(min_length=1)
+    nom: str = ""
+    images: int = Field(1, ge=1, le=64)
+
+
+class CorpsPosesDuType(BaseModel):
+    """La liste entière d'un type d'objet — on écrit ce qui reste.
+
+    Entière et non pose par pose : à l'écran on range et on dérange plusieurs
+    lignes avant de regarder ailleurs, et un appel par ligne écrirait le fichier
+    du projet autant de fois qu'il y a de cases cochées. Une liste vide est une
+    décision valable — un décor n'a pas de pose du tout.
+    """
+
+    poses: list[CorpsPoseDuType] = []
+    projet: str | None = None
+
+
 class CorpsPose(BaseModel):
     """Une attitude que le jeu réclame. Le nom suffit à la créer."""
 
@@ -107,6 +128,15 @@ class CorpsReglagePersonnage(BaseModel):
     description: str | None = None
     poses: list[str] | None = None
     concept_arts: list[str] | None = None
+    # **Le type d'objet** (E9) : il décide de la liste de base. Vide, la chose
+    # retombe sur le plan du projet — l'état d'avant, repris sans perte.
+    type: str | None = None
+    # Ce que cette chose ajoute pour elle seule, et ce qu'elle retire de ses
+    # propres ajouts. Deux champs plutôt qu'une liste : ajouter et retirer sont
+    # deux gestes, et une liste entière ferait perdre celui qu'un autre onglet
+    # vient de poser.
+    ajouter: str | None = None
+    retirer_ajoutee: str | None = None
     projet: str | None = None
 
 
@@ -285,6 +315,56 @@ async def retirer_pose(
     return _avec_plan(atelier, vise, retiree)
 
 
+# ── La liste d'un type d'objet ───────────────────────────────────────────────
+
+
+@routeur.get("/characters/types")
+async def poses_des_types(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce que chaque type d'objet réclame, et d'où sa liste lui vient (E9).
+
+    `origine` dit `écrite` quand l'auteur a posé la sienne, `connue` quand
+    c'est celle que le produit propose pour ce type-là, et `projet` quand le
+    type n'a rien de particulier et retombe sur le plan du jeu. L'écran l'écrit
+    en clair plutôt que de laisser croire que tout a été décidé.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.production.poses_des_types(vise)
+
+
+@routeur.put("/characters/types/{type}/poses")
+async def poser_les_poses_du_type(
+    requete: Request, type: str, corps: CorpsPosesDuType
+) -> dict[str, Any]:
+    """Écrire la liste d'un type — **et de lui seul**.
+
+    Les choses de ce type voient la liste changer sans qu'un seul de leurs
+    fichiers soit écrit : une case est pleine parce qu'une image la porte, et
+    ranger une pose ne perd donc aucune image.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    atelier.production.poser_les_poses_du_type(
+        vise, type, [p.model_dump() for p in corps.poses]
+    )
+    return atelier.production.poses_des_types(vise)
+
+
+@routeur.delete("/characters/types/{type}/poses")
+async def oublier_les_poses_du_type(
+    requete: Request, type: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce type revient à la liste qu'on lui proposait — **il n'écrit plus la
+    sienne**. Les images ne bougent pas : elles gardent l'identifiant de leur
+    pose, et une pose qui revient les remet dans leur case."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    atelier.production.oublier_les_poses_du_type(vise, type)
+    return atelier.production.poses_des_types(vise)
+
+
 # ── Les personnages ──────────────────────────────────────────────────────────
 
 
@@ -340,6 +420,9 @@ async def regler_personnage(
         description=corps.description,
         tenues=corps.poses,
         concept_arts=corps.concept_arts,
+        type=corps.type,
+        ajouter=corps.ajouter,
+        retirer_ajoutee=corps.retirer_ajoutee,
     )
     return {"personnage": atelier.production.en_charge(projet, personnage)}
 

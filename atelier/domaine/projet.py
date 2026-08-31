@@ -41,7 +41,13 @@ from atelier.domaine.equipement import (
     emplacements_depuis_json,
     pieces_depuis_json,
 )
-from atelier.domaine.plan import PLAN_PAR_DEFAUT, Pose, plan_depuis_json
+from atelier.domaine.plan import (
+    PLAN_PAR_DEFAUT,
+    Pose,
+    plan_depuis_json,
+    plan_du_type,
+    suit_le_plan_du_jeu,
+)
 from atelier.domaine.teinte import AUCUNE, teinte_valide
 from atelier.domaine.vue import AUCUNE_VUE
 from atelier.domaine.recette import (
@@ -162,21 +168,39 @@ class Echelle:
     occupation: int = 100  # % du côté de la case rempli par le sujet
     silhouette: bool = True
 
+    # ── Ce que ce type réclame, arrivé en E9 ─────────────────────────────────
+    #
+    # **La liste des poses appartient au type d'objet, plus au projet.** Avant,
+    # le jeu déclarait une seule liste et tout la recevait : un coffre héritait
+    # de *marche* et de *course*, qu'il fallait ranger une par une, sur chaque
+    # coffre. Désormais un personnage a ses six attitudes, un meuble ses trois
+    # états, et une tuile n'a pas de poses du tout.
+    #
+    # **`None` n'est pas la liste vide**, et c'est ce qui reprend les projets
+    # d'avant sans rien perdre : *jamais rempli* retombe sur le plan du projet,
+    # que tous les types partageaient ; *vidé par l'auteur* reste vide. Le motif
+    # `lu or DEFAUT` ferait ressusciter à chaque relecture ce qu'on vient de
+    # retirer — c'est déjà la décision de `plan_depuis_json`.
+    poses: tuple[Pose, ...] | None = None
+
     def en_json(self) -> dict[str, Any]:
         return {
             "nom": self.nom,
             "famille": self.famille,
             "occupation": self.occupation,
             "silhouette": self.silhouette,
+            "poses": None if self.poses is None else [p.en_json() for p in self.poses],
         }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "Echelle":
+        poses = d.get("poses")
         return Echelle(
             nom=d.get("nom", ""),
             famille=d.get("famille", TOUS),
             occupation=int(d.get("occupation", 100)),
             silhouette=bool(d.get("silhouette", True)),
+            poses=None if poses is None else plan_depuis_json(poses),
         )
 
 
@@ -315,6 +339,46 @@ class Univers:
             if e.nom == nom:
                 return e
         return None
+
+    def poses_du_type(self, nom: str, plan: tuple[Pose, ...]) -> tuple[Pose, ...]:
+        """Ce que ce type d'objet réclame — **et la reprise des projets d'avant**.
+
+        Quatre réponses, dans cet ordre.
+
+        **Le type a écrit sa liste** : c'est elle, et elle seule.
+
+        **Le produit sait que ce type n'en a aucune** — un décor, une tuile :
+        c'est un fait sur ce qu'une tuile *est*, pas un défaut qu'on n'aurait
+        pas rempli. Elle ne bouge pas, elle se raccorde ; lui montrer une rangée
+        grisée reviendrait à lui promettre qu'elle en aura un jour.
+
+        **Le type existe mais n'a rien écrit** : c'est le **plan du projet**,
+        que tous les types partageaient avant E9. C'est ce qui reprend les
+        projets d'avant sans rien perdre — aucune image ne se retrouve
+        orpheline, et pas un fichier n'a eu à être réécrit.
+
+        **Le type est inconnu du barème** : ce que le produit sait d'un type de
+        ce nom, ou rien.
+
+        **Changer la liste d'un type ne touche pas les autres** : écrire sur
+        l'échelle, c'est écrire là et nulle part ailleurs.
+        """
+        # **Un type vide n'est pas un type inconnu.** C'est l'état d'avant E9,
+        # où le jeu n'en déclarait qu'un seul plan : ces choses-là retombent sur
+        # le plan du projet, et c'est ce qui les reprend sans rien perdre.
+        if not nom:
+            return plan
+        echelle = self.echelle(nom)
+        if echelle is not None and echelle.poses is not None:
+            return echelle.poses
+        # **Deux types suivent le jeu** — le personnage et la créature —, et un
+        # type que le produit ne connaît pas le suit aussi : l'ignorance
+        # retombe sur ce qui existait plutôt que d'effacer des cases.
+        if suit_le_plan_du_jeu(nom):
+            return plan
+        # Une liste **connue et vide** est une affirmation du produit : un décor
+        # et une tuile ne réclament rien, et ce n'est pas un oubli.
+        return plan_du_type(nom)
 
     def modele(self, famille: str) -> str | None:
         return self.modeles.get(famille) or None

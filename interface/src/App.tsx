@@ -863,9 +863,18 @@ export function App() {
       // ajouts. Une pose ajoutée fait paraître une case chez chaque personnage
       // sans qu'aucun personnage soit annoncé — c'est ce que « le plan décide,
       // le personnage soustrait » veut dire, vu du flux.
+      //
+      // **Et depuis E9, ce que chaque chose réclame est calculé par le
+      // serveur** : le type décide de la liste, la chose la complète, et la
+      // règle a quatre branches. L'écran ne la rejoue pas — il redemande la
+      // production, qui rend le plan et les choses **en un seul aller-retour**,
+      // exactement comme au premier chargement. Poser le plan seul aurait
+      // laissé les choses avec la liste d'avant, et une attitude neuve ne
+      // serait apparue nulle part.
       plan: (recu) => {
         if (recu.projet !== vivant.current.courant) return
         setPlan(recu.plan)
+        void vivant.current.relireProduction()
       },
       // **Le vestiaire arrive entier**, et il remplace — même règle que le plan,
       // et pour les mêmes deux raisons : il est court, et une pièce retirée ne se
@@ -1915,7 +1924,14 @@ export function App() {
             setChoseChoisie(identifiant)
           }}
           onPersonnage={fondrePersonnage}
-          onPlan={setPlan}
+          onPlan={(recu) => {
+            // Le plan touché **et les choses avec** (E9) : la liste d'une chose
+            // dépend du plan, et le serveur seul sait laquelle. Le plan est posé
+            // tout de suite pour que la liste qui vient d'être écrite s'affiche
+            // sans attendre, et la production suit.
+            setPlan(recu)
+            void relireProduction()
+          }}
           onVestiaire={(recu) => {
             setEmplacements(recu.emplacements)
             setPieces(recu.pieces)
