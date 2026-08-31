@@ -1,80 +1,80 @@
 {
- "releve_le": 1788215390.3440456,
+ "releve_le": 1788217174.6642346,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 302413,
+  "octets": 302664,
   "documents": {
    "AGENTS.md": {
-    "octets": 30063,
+    "octets": 30129,
     "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 29668
+      "octets": 29733
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 8395
+      "octets": 8460
      },
      {
       "titre": "Lancer",
       "niveau": 2,
-      "ligne": 119,
+      "ligne": 120,
       "octets": 4606
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 188,
+      "ligne": 189,
       "octets": 6762
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 263,
+      "ligne": 264,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 293,
+      "ligne": 294,
       "octets": 1653
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 310,
+      "ligne": 311,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 327,
+      "ligne": 328,
       "octets": 1786
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 351,
+      "ligne": 352,
       "octets": 577
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 361,
+      "ligne": 362,
       "octets": 1151
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 380,
+      "ligne": 381,
       "octets": 1087
      }
     ]
@@ -230,14 +230,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 142553,
+    "octets": 142738,
     "titres": 179,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2",
       "niveau": 1,
       "ligne": 1,
-      "octets": 140179
+      "octets": 140364
      },
      {
       "titre": "Décisions architecturales",
@@ -1041,7 +1041,7 @@
       "titre": "U1 à U13 — les treize reprises d'usage de la V2.1",
       "niveau": 2,
       "ligne": 1652,
-      "octets": 9236
+      "octets": 9421
      },
      {
       "titre": "L'ordre, et les quatre endroits où il se resserre",
@@ -1059,7 +1059,7 @@
       "titre": "Les treize étapes",
       "niveau": 3,
       "ligne": 1727,
-      "octets": 1195
+      "octets": 1380
      },
      {
       "titre": "Ce que chacune livre, et ses critères → `docs/tranches/U.md`",

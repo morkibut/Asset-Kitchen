@@ -111,6 +111,8 @@ export function ChampPrompt({
   revers,
   provenance,
   onGenerer,
+  enPaiement = false,
+  echec = null,
   variations,
   enVol = null,
 }: {
@@ -143,6 +145,16 @@ export function ChampPrompt({
    *  la chose, qui restent où ils sont écrits. */
   provenance?: { texte: string; onDefaire: () => void } | null
   onGenerer: () => void
+  /** **Un appel payant est en train de partir** (U1). Ce bouton-ci ouvre
+   *  normalement l'écran de confirmation, qui ne coûte rien ; mais quand la
+   *  série est sautée, il paie directement — il doit alors dire qu'il paie et
+   *  refuser le second clic, comme le bouton de l'autre écran. */
+  enPaiement?: boolean
+  /** **Le dernier appel n'est pas passé** (U1). Locataire de la fente, sous le
+   *  refus : un refus dit que rien ne *peut* partir, un échec dit que quelque
+   *  chose est parti et revenu sans image. Il ne grise pas le bouton — après un
+   *  appel raté, le geste juste est de relancer. */
+  echec?: string | null
   variations: number
   /** Ce qui est **en route en ce moment** — payé, pas encore arrivé. `null` la
    *  plupart du temps. Ces images-là ne se voyaient que dans la grille de la
@@ -160,7 +172,7 @@ export function ChampPrompt({
   useEffect(() => champ.current?.focus(), [])
 
   const toucheGenerer = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !refus) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !refus && !enPaiement) {
       e.preventDefault()
       onGenerer()
     }
@@ -263,8 +275,10 @@ export function ChampPrompt({
           {enVol && enVol.images > 0 ? (
             <EnRoute {...enVol} />
           ) : (
-            <Bouton principal inactif={refus !== null} onClick={onGenerer} enfants={
-              variations > 1 ? `Générer ${variations} variations` : "Générer"
+            <Bouton principal inactif={refus !== null || enPaiement} onClick={onGenerer} enfants={
+              enPaiement
+                ? "Paiement en cours…"
+                : variations > 1 ? `Générer ${variations} variations` : "Générer"
             } />
           )}
           {/* La fente : une ligne mono 10 px alignée à droite, quatre
@@ -279,6 +293,14 @@ export function ChampPrompt({
               route ; la fente dit ce qu'on peut faire ensuite, comme toujours. */}
           {refus ? (
             <Raison texte={refus} ouAller={ouAller} onAller={onAller} />
+          ) : echec ? (
+            /* **Un appel raté est un locataire de la fente** (U1), et il passe
+                avant le revers et avant le départ en cours : c'est la dernière
+                chose qui s'est produite, et c'est celle qui décide du geste
+                suivant. Il ne grise rien — relancer est le bon geste. */
+            <p className="mesure mt-1 text-[10px] leading-4 text-echec">
+              {echec} — rien n'a été facturé.
+            </p>
           ) : revers ? (
             <Revers
               texte={revers.texte}
@@ -294,9 +316,10 @@ export function ChampPrompt({
             <button
               type="button"
               onClick={onGenerer}
-              className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair"
+              disabled={enPaiement}
+              className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair disabled:cursor-not-allowed disabled:text-texte-3"
             >
-              Générer encore ›
+              {enPaiement ? "paiement en cours…" : "Générer encore ›"}
             </button>
           ) : (
             <p className="mesure mt-1 text-[10px] text-texte-3">Ctrl + Entrée</p>

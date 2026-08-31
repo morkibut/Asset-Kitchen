@@ -368,10 +368,15 @@ NOT VISIBLE
 
 FLOOR TILE — draw it corner by corner, in this order
 1. A horizontal edge under the boots, from a point A on the left to a point B on the right.
-2. From A, a straight line going UP AND TO THE LEFT at exactly 45 degrees, ending at C.
+2. From A, a straight line going UP AND TO THE LEFT at exactly 45 degrees, HALF as long as
+   A-B, ending at C.
 3. From B, a straight line going UP AND TO THE LEFT at exactly 45 degrees, THE SAME LENGTH
    as A-C, ending at D.
 4. Close it: the edge C-D is horizontal and EXACTLY AS LONG as A-B.
+The half length in step 2 is a drawing choice, not a foreshortening: it is what Ultima and
+EarthBound do, and both depth edges keep it, so nothing shrinks with distance. Drawn at full
+length instead, the tile climbs a third of the way up the character and reads as a ramp
+behind them — tried, and rejected on sight.
 The result is a parallelogram — a leaning rectangle. It is flat, with no visible side
 thickness. It is NOT a trapezoid: if the far edge is shorter than the near edge, that is
 perspective, which this projection does not have, and the image is wrong. It is NOT a
@@ -434,8 +439,8 @@ trois formes franchement différentes.
 
 ## Où en est la production — contrôle du 1er septembre 2026
 
-Les neuf tailles sont faites, les huit vues existent. Cinq sont bonnes ou récupérables sans
-rien repayer, deux sont à refaire, une n'a jamais appliqué sa projection.
+Les neuf tailles sont faites, les huit vues existent. **Cinq sont bonnes, trois attendent
+qu'on leur rende leur dalle** — et cette dernière opération ne coûte rien.
 
 **Le détourage mange les dalles des vues du dessus, et c'est mesuré.** Trois images — de
 dessus verticale, de dessus stricte, de dessus 3/4 — portent encore leur dalle *dans les
@@ -459,10 +464,10 @@ supprime. C'est gratuit et ça se défait d'un clic dans la table.
 | De face, fixe | **bonne** — visage entier, pas un pixel de sac, dalle en trait fin sous les bottes. Refaite le 1er septembre, et cette fois à la bonne résolution |
 | De dessus, verticale | **dalle à récupérer** — aucun visage, tapis en tête de silhouette, mains et bouts de bottes : le contrat est tenu, et le carré du sol est dans le fichier, effacé |
 | De côté — plateforme | **bonne** — un seul œil, sac entier de profil à gauche, lanterne dégagée à droite, trait de sol présent |
-| De côté — défilement | **à refaire** — le corps est toujours de face après reprise. Deux yeux régulièrement espacés, torse symétrique, bottes côte à côte à la même hauteur : c'est précisément ce que le bloc déclare faux. Et les bottes sont rognées par le bord bas |
+| De côté — défilement | **bonne** — reprise et validée le 1er septembre : le corps part vers la droite, ouvert vers le spectateur, le sac dépasse à gauche, la botte éloignée est en retrait |
 | De dessus, stricte | **dalle à récupérer, et un cran de caméra** — la dalle dessinée est un rectangle plat trois fois plus large que haut, exactement ce qui était demandé, et elle est effacée. Reste que la silhouette est encore 1,15 fois plus haute que large : la caméra n'est pas montée jusqu'au bout |
 | De dessus, 3/4 | **dalle à récupérer** — capuche, visage lisible bas, sac au-dessus des épaules, corps écrasé : tout y est, le sol compris, mais effacé |
-| Oblique (cavalière) | **à refaire** — c'est la vue de face avec un sac à gauche. Rien ne penche : le dessus de la capuche n'est pas dessiné, le tapis ne glisse pas en biais, et la dalle est un trapèze symétrique qui rétrécit vers le fond, c'est-à-dire de la perspective — la seule chose que cette projection n'a pas |
+| Oblique (cavalière) | **montée, pas générée** — plusieurs modèles essayés, tous ont rendu la vue de face avec un sol en fuite. Construite par calcul sur la vue de face par `essais/monter_vignette_oblique.py` : arêtes de devant et du fond égales au pixel près, profondeur à 45° |
 | Isométrique | **bonne** — sac par-dessus l'épaule éloignée, dalle posée. Le corps gagnerait à être vu davantage par le coin |
 
 ## Les deux blocs qui ne sortaient rien, et pourquoi
@@ -502,14 +507,21 @@ propre caméra tire chaque génération vers l'isométrie, et ce sont les deux v
 éloignées d'elle qui en souffrent le plus. Le préambule demandait de garder le personnage
 sans dire de jeter sa caméra ; il le dit maintenant.
 
-**Et si l'oblique résiste encore, elle ne se génère pas : elle se monte.** C'est la seule
-des huit dont le corps doit être *identique* à une autre — la vue de face —, et dont la
-seule différence tient dans une dalle de quatre segments droits et un tapis roulé décalé en
-biais. Repartir de `vue-face-fixe.png`, poser le parallélogramme à la main dans l'atelier et
-glisser le tapis vers le haut-gauche donne le résultat juste du premier coup, sans appel
-payant, et garantit le contrôle que la vue existe pour tenir : *la tête se lit exactement
-comme celle de la vue de face*. Un modèle qui produit une dalle en fuite à chaque essai
-coûte plus cher que quatre traits.
+**L'oblique ne se génère pas : elle se monte, et c'est fait.** L'auteur a essayé plusieurs
+modèles, tous ont rendu une vue de face avec un sol en fuite — il n'existe presque aucun
+exemple de personnage dessiné en projection cavalière, alors que les sols obliques d'Ultima
+et d'EarthBound sont, eux, des rectangles penchés à quatre segments droits. Or c'est la
+seule des huit dont le corps doit être *identique* à une autre : son contrôle final est
+*la tête se lit exactement comme celle de la vue de face*. Une dalle tracée par calcul sur
+la vue de face satisfait donc le contrat entier, exactement, gratuitement et du premier
+coup. C'est ce que fait `essais/monter_vignette_oblique.py` : il retire la bande de sol
+droite de la vue de face, trace le parallélogramme à la maille du dessin, et pose le
+personnage au **centre** de la dalle — pas sur son coin, sinon le sol ne s'étend que d'un
+côté et se lit comme une ombre portée.
+
+Ce que le montage ne rend pas : le dessus de la capuche et le tapis roulé devraient eux
+aussi glisser vers le haut-gauche. À la taille où la vignette est vue — soixante-quatre
+pixels de côté — ni l'un ni l'autre ne se lit ; la dalle, si.
 
 ## Ce que l'application en fait
 

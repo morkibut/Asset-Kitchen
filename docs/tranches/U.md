@@ -80,7 +80,8 @@ posés à l'auteur et tranchés le 31 août 2026 ; le journal des décisions d'a
 
 ## U1 · L'argent ne part qu'une fois, et l'écran de confirmation se quitte
 
-**Critères : 6 · Ce que ça corrige : deux points de la séance**
+**Critères : 6 · Ce que ça corrige : deux points de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -103,23 +104,51 @@ manquait à la liste.
 
 ### Critères d'acceptation
 
-- [ ] Cinq clics consécutifs sur *Payer et lancer* ne produisent **qu'un seul appel payé**,
+- [x] Cinq clics consécutifs sur *Payer et lancer* ne produisent **qu'un seul appel payé**,
       et le journal des dépenses n'en compte qu'un.
-- [ ] Pendant l'appel, le bouton dit qu'il paie et n'est plus cliquable ; il ne redevient
+- [x] Pendant l'appel, le bouton dit qu'il paie et n'est plus cliquable ; il ne redevient
       cliquable que si l'appel échoue.
-- [ ] Modifier le texte, le tri ou le modèle pendant que l'écran est ouvert refait
+- [x] Modifier le texte, le tri ou le modèle pendant que l'écran est ouvert refait
       l'identifiant : deux appels réellement différents restent deux appels.
-- [ ] Le raccourci qui paie sans passer par l'écran — celui d'une série où l'on a coché
+- [x] Le raccourci qui paie sans passer par l'écran — celui d'une série où l'on a coché
       *sauter* — porte le même verrou.
-- [ ] Cliquer *Galerie*, *Univers* ou *Codex* depuis l'écran de confirmation le ferme et
+- [x] Cliquer *Galerie*, *Univers* ou *Codex* depuis l'écran de confirmation le ferme et
       montre l'onglet demandé, sans rien dépenser.
-- [ ] Un essai d'écran envoie deux clics dans la même image de rendu et vérifie qu'un seul
+- [x] Un essai d'écran envoie deux clics dans la même image de rendu et vérifie qu'un seul
       appel part.
 
 ### Bloquée par
 
 Aucune — démarrable immédiatement, et c'est la première parce que c'est la seule qui coûte
 de l'argent réel.
+
+### Ce qu'elle a appris en étant faite
+
+**Il fallait deux verrous, pas un.** Le drapeau d'état qui grise le bouton ne suffit pas :
+il n'est vrai qu'au **rendu suivant**, et deux clics partis dans la même image de rendu
+traversent tous les deux le gestionnaire avant que quoi que ce soit ait été redessiné. Un
+second verrou, lu et écrit dans le même tour de boucle, arrête le second clic ; c'est lui
+que mesure l'essai qui pose deux clics sans rendu entre eux. Le grisé, lui, sert à autre
+chose et il est indispensable aussi : il **dit** que ça paie.
+
+**L'identifiant doit se refaire à deux moments, et le second n'était pas prévu.** Quand ce
+qui part change, l'étape l'annonçait. Mais aussi **quand un appel est réellement parti** :
+le réemployer ferait rendre *déjà soumise* par le serveur, c'est-à-dire qu'une seconde image
+volontairement identique — le geste courant, quand on cherche une variante — serait avalée
+en silence. Un verrou qui ne se rend jamais est un verrou qui ferme la porte de l'intérieur.
+L'identifiant se refait donc quand l'intention change *et* quand elle est consommée ; il ne
+se refait pas quand l'appel échoue, puisque rien n'a été enregistré et que réessayer est la
+même intention.
+
+**Un échec d'appel n'est pas une panne de l'atelier, et les deux vivaient dans le même
+état.** C'est ce qui a rendu le deuxième critère faux au premier essai : une génération
+refusée grisait le bouton qui paie jusqu'à ce qu'un autre geste relise le catalogue, si bien
+que le seul moment où l'on veut recliquer était précisément celui où l'on ne pouvait plus.
+Les deux sont désormais distincts, et ils ne disent pas la même chose — une **panne** dit
+*l'atelier ne répond pas* et empêche de partir, un **échec** dit *cet appel-là n'est pas
+passé, rien n'a été facturé* et invite à recommencer. L'échec est un locataire de plus dans
+la fente sous le champ, et il passe avant le revers hors ligne : c'est la dernière chose qui
+s'est produite, donc celle qui décide du geste suivant.
 
 ---
 

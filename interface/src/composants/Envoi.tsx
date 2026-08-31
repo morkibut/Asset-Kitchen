@@ -51,6 +51,8 @@ export function EcranEnvoi({
   onTri,
   onImage,
   onPayer,
+  enPaiement = false,
+  echec = null,
   onFermer,
   onGarder,
   onSauter,
@@ -68,6 +70,15 @@ export function EcranEnvoi({
    *  contredire. */
   onImage: (asset: string, cochee: boolean) => void
   onPayer: () => void
+  /** **L'appel est parti, on attend** (U1). Le bouton le dit et cesse d'être
+   *  cliquable ; il ne le redevient que si l'appel échoue, puisqu'une réussite
+   *  referme l'écran. Cinq clics rapides lançaient cinq appels payants. */
+  enPaiement?: boolean
+  /** **Ce que le dernier appel a répondu quand il n'est pas passé** (U1).
+   *  Distinct de `refus`, qui empêche de partir : celui-ci dit qu'on est parti
+   *  et qu'on est revenu sans image, et le bouton reste vivant — ce qu'on veut
+   *  faire d'un appel raté est le refaire. */
+  echec?: string | null
   onFermer: () => void
   /** **Le second geste, nommé** : il écrit dans la fiche de la chose du jeu.
    *  Garder est possible ; ce n'est jamais un effet de bord. */
@@ -418,24 +429,40 @@ export function EcranEnvoi({
                 </p>
               )}
 
+              {/* **L'appel raté se lit à l'endroit où l'on a cliqué**, et il ne
+                  grise rien : c'est le seul état de l'écran d'où le bon geste
+                  est de recommencer. */}
+              {echec && (
+                <p className="mesure text-[10px] leading-4 text-echec">
+                  {echec} — rien n'a été facturé, on peut relancer.
+                </p>
+              )}
+              {/* **Le bouton qui paie refuse le second clic** (U1). Le mot
+                  change autant que l'état : un bouton grisé qui garde son
+                  libellé se lit comme un refus, alors que c'est une attente. */}
               <Bouton
                 principal
-                inactif={Boolean(refus) || !envoi}
+                inactif={Boolean(refus) || !envoi || enPaiement}
                 onClick={onPayer}
                 enfants={
                   refus
                     ? refus
-                    : envoi.prix.total !== null
-                      ? `Payer et lancer ${dollars(envoi.prix.total)}`
-                      : "Payer et lancer"
+                    : enPaiement
+                      ? "Paiement en cours…"
+                      : envoi.prix.total !== null
+                        ? `Payer et lancer ${dollars(envoi.prix.total)}`
+                        : "Payer et lancer"
                 }
               />
               <button
                 type="button"
                 onClick={onFermer}
-                className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte-2"
+                disabled={enPaiement}
+                className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte-2 disabled:cursor-not-allowed disabled:hover:text-texte-3"
               >
-                Revenir sans rien dépenser
+                {enPaiement
+                  ? "l'appel est parti — il ne se rattrape plus"
+                  : "Revenir sans rien dépenser"}
               </button>
               <p className="mesure text-[9.5px] leading-4 text-texte-3">
                 rien n'est dépensé tant que le bouton n'est pas pressé.

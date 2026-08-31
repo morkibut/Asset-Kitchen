@@ -1726,21 +1726,21 @@ et le coût.
 
 ### Les treize étapes
 
-| | Ce qu'elle livre | Séance | Bloquée par |
-|---|---|---|---|
-| **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | 1<sup>re</sup> | — |
-| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — |
-| **U3** | Un curseur prend un chiffre | 1<sup>re</sup> | — |
-| **U4** | Une table s'éteint, et ça se voit | 1<sup>re</sup> | — |
-| **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** |
-| **U6** | La palette se règle sans faire attendre | 1<sup>re</sup> | — |
-| **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — |
-| **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — |
-| **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — |
-| **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — |
-| **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — |
-| **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** |
-| **U13** | Un second moteur de détourage, plus lourd et meilleur | 2<sup>e</sup> | — |
+| | Ce qu'elle livre | Séance | Bloquée par | État |
+|---|---|---|---|---|
+| **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
+| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — | à faire |
+| **U3** | Un curseur prend un chiffre | 1<sup>re</sup> | — | à faire |
+| **U4** | Une table s'éteint, et ça se voit | 1<sup>re</sup> | — | à faire |
+| **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** | à faire |
+| **U6** | La palette se règle sans faire attendre | 1<sup>re</sup> | — | à faire |
+| **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — | à faire |
+| **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — | à faire |
+| **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — | à faire |
+| **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — | à faire |
+| **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — | à faire |
+| **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** | à faire |
+| **U13** | Un second moteur de détourage, plus lourd et meilleur | 2<sup>e</sup> | — | à faire |
 
 ### Ce que chacune livre, et ses critères → `docs/tranches/U.md`
 

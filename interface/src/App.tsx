@@ -188,6 +188,15 @@ export function App() {
   // deux archives identiques dans les téléchargements pour un double-clic.
   const [exportEnCours, setExportEnCours] = useState(false)
   const [panne, setPanne] = useState<string | null>(null)
+  // **L'échec d'un appel n'est pas une panne de l'atelier** (U1). Les deux
+  // vivaient dans le même état, et une génération refusée grisait donc le
+  // bouton qui paie jusqu'à ce qu'un autre geste relise le catalogue : le seul
+  // moment où l'on veut recliquer était précisément celui où l'on ne pouvait
+  // plus. Une panne dit *l'atelier ne répond pas* et empêche de partir ; un
+  // échec dit *cet appel-là n'est pas passé* et invite à recommencer. Il se
+  // vide à chaque nouvelle tentative et à chaque ouverture de l'écran de
+  // confirmation.
+  const [echecDuPaiement, setEchecDuPaiement] = useState<string | null>(null)
   const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
   const [relecture, setRelecture] = useState(false)
@@ -334,6 +343,30 @@ export function App() {
   // case « pour toujours » — on la cocherait le premier jour, quand on ne sait
   // pas encore qu'on en aura besoin.
   const [serieSautee, setSerieSautee] = useState<string | null>(null)
+
+  // ── Le verrou de l'argent (U1) ────────────────────────────────────────────
+  //
+  // **L'appel est parti, on ne repaie pas.** Cinq clics rapides sur *Payer et
+  // lancer* lançaient cinq appels payants, en silence — signalé par l'auteur le
+  // 31 août 2026, sur sa machine et sur son argent. Le garde-fou existait
+  // pourtant côté serveur depuis T1 : une génération porte un identifiant, et
+  // `preparer` rend *déjà soumise* sans rien facturer quand il revoit le même.
+  // **C'est l'écran qui le jetait**, en fabriquant un identifiant neuf à chaque
+  // clic : chaque clic était donc une intention neuve, et chacune se payait.
+  //
+  // Deux verrous, et il en faut deux. Le **drapeau d'état** dit à l'écran que
+  // ça paie et grise le bouton ; il ne suffit pas, parce que deux clics dans la
+  // même image de rendu partent tous les deux avant que React ait redessiné
+  // quoi que ce soit. Le **repère** ci-dessous, lui, est lu et écrit dans le
+  // même tour de boucle : c'est lui qui arrête le second clic.
+  const [enPaiement, setEnPaiement] = useState(false)
+  const paiementEnCours = useRef(false)
+  // **Un identifiant par intention, pas un par clic.** Il se refait quand ce
+  // qui part change — c'est `signatureEnvoi` qui le dit — et quand un appel est
+  // réellement parti : le réemployer après coup ferait rendre *déjà soumise*
+  // par le serveur, c'est-à-dire refuserait en silence une seconde image
+  // volontairement identique.
+  const intention = useRef<{ signature: string; identifiant: string } | null>(null)
 
   // La case visée, relue dans ce que le flux tient à jour. Ni l'une ni l'autre
   // ne survit à sa disparition : un personnage supprimé, une pose retirée du
@@ -1145,8 +1178,54 @@ export function App() {
           attendue: plusAncien?.duree_attendue_s ?? 0,
         }
 
+  /** **Ce qui part, réduit à une chaîne** (U1). Deux appels qui rendraient la
+   *  même chaîne sont la même intention, et se partagent donc un identifiant ;
+   *  dès qu'un caractère change, l'intention est neuve et l'identifiant l'est
+   *  aussi. C'est la liste exacte du corps envoyé par `payer` — un champ oublié
+   *  ici ferait passer deux appels différents pour un seul, et le serveur
+   *  refuserait le second sans rien dire.
+   *
+   *  **Ce n'est pas un `useMemo`** : elle se lit dans `payer`, une fois, au
+   *  moment du clic. La mémoriser à chaque rendu coûterait un `JSON.stringify`
+   *  par frappe dans le champ de prompt, pour une valeur qu'on ne regarde qu'en
+   *  payant. */
+  const signatureEnvoi = () =>
+    JSON.stringify([
+      cible?.personnage ?? null,
+      !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
+      cases ? null : (cible?.direction ?? null),
+      enPlanche ? directionsCible : null,
+      cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
+      cible?.piece ?? null,
+      ecarteesGeneration,
+      modele?.identifiant ?? null,
+      prompt.trim(),
+      promptNegatif.trim(),
+      proportions,
+      cases ? 1 : variations,
+      options,
+      reinjections,
+      echelle,
+      repris,
+      tri,
+    ])
+
+  /** L'identifiant de l'intention courante — le même tant que rien de ce qui
+   *  part n'a changé, et **c'est lui qui empêche le second clic de payer**. */
+  const identifiantDeLIntention = () => {
+    const signature = signatureEnvoi()
+    if (intention.current?.signature !== signature)
+      intention.current = {
+        signature,
+        identifiant: crypto.randomUUID().replace(/-/g, ""),
+      }
+    return intention.current.identifiant
+  }
+
   const generer = () => {
     if (refus || !modele) return
+    // L'échec d'avant appartenait à l'appel d'avant.
+    setEchecDuPaiement(null)
     // **Pas de série, pas de saut.** `serie` vaut `null` quand aucune case n'est
     // visée, et `serieSautee` vaut `null` quand rien n'a été sauté : les
     // comparer sans ce garde-fou rendait vrai « rien saute rien », et l'écran
@@ -1164,9 +1243,19 @@ export function App() {
 
   const payer = async () => {
     if (refus || !modele) return
-    // L'identifiant est fabriqué ici : c'est lui qui empêche une double
-    // soumission de facturer deux fois, même si le clic part deux fois.
-    const identifiant = crypto.randomUUID().replace(/-/g, "")
+    // **Le verrou qui arrête le second clic** (U1). Lu et écrit dans le même
+    // tour de boucle, avant tout `await` : c'est la seule façon d'arrêter deux
+    // clics partis dans la même image de rendu, que le drapeau d'état
+    // n'attraperait pas — il n'est vrai qu'au rendu suivant.
+    if (paiementEnCours.current) return
+    paiementEnCours.current = true
+    setEnPaiement(true)
+    setEchecDuPaiement(null)
+    // **Un identifiant par intention** : le même pour deux clics sur le même
+    // envoi, neuf dès que ce qui part change. C'est lui qui empêche une double
+    // soumission de facturer deux fois — le serveur rend *déjà soumise* et ne
+    // facture rien quand il le revoit.
+    const identifiant = identifiantDeLIntention()
     const retenues = Object.fromEntries(
       Object.entries(options).filter(([nom]) => nom in modele.options),
     )
@@ -1247,8 +1336,21 @@ export function App() {
       // — un tonneau, un décor — dans la case d'un personnage, sans que rien
       // ne l'ait demandé. On réarme d'un clic depuis la matrice.
       setCible(null)
+      // **L'intention est consommée** (U1). Le même identifiant réemployé après
+      // un appel parti ferait rendre *déjà soumise* par le serveur : deux images
+      // volontairement identiques, demandées deux fois de suite, n'en feraient
+      // qu'une, et rien ne le dirait.
+      intention.current = null
     } catch (erreur) {
-      echouer(erreur, "génération refusée")
+      // **L'identifiant reste**, et c'est voulu : rien n'a été enregistré côté
+      // serveur, donc réessayer est la *même* intention. Le bouton redevient
+      // cliquable — c'est le seul cas où il le redevient.
+      setEchecDuPaiement(
+        erreur instanceof Refus ? erreur.message : "génération refusée",
+      )
+    } finally {
+      paiementEnCours.current = false
+      setEnPaiement(false)
     }
   }
 
@@ -1904,6 +2006,14 @@ export function App() {
             : null
         }
         onGenerer={generer}
+        /* **Le raccourci porte le même verrou** (U1). Quand la série est
+           sautée, ce bouton-ci paie sans passer par l'écran de confirmation :
+           il doit donc dire qu'il paie et refuser le second clic exactement
+           comme l'autre. */
+        enPaiement={enPaiement}
+        /* **Et le raccourci a besoin du même retour** : quand la série est
+           sautée, il n'y a pas d'écran de confirmation où lire l'échec. */
+        echec={echecDuPaiement}
         variations={variations}
         /* **Ce qui est parti se voit là où l'on a payé.** Le chantier ne
            paraissait que dans la grille de la galerie ; le codex et l'établi,
@@ -1922,8 +2032,16 @@ export function App() {
           // l'on est ; cliquer un onglet est le geste qui dit « ailleurs ».
           // Laisser la découpe ouverte derrière un autre onglet rendrait le
           // produit à ce qu'il vient de quitter — un écran par-dessus un autre.
+          //
+          // **L'écran de confirmation manquait à la liste** (U1). Cliquer
+          // *Galerie* changeait le fil d'Ariane et le laissait en place : on
+          // était enfermé dans un écran qu'aucun onglet ne pouvait fermer. Le
+          // tri part avec lui, comme il part quand on revient par *Échap* — il
+          // ne vaut que pour l'appel qu'on vient d'abandonner.
           setDecoupeOuverte(null)
           setDepensesOuvertes(false)
+          setEnvoiOuvert(false)
+          setTri(TRI_VIDE)
           setChoseOuverte(null)
           setCaseOuverte(null)
           setTablesOuvertes(null)
@@ -2014,6 +2132,14 @@ export function App() {
             })
           }
           onPayer={() => void payer()}
+          /* **Le bouton dit qu'il paie, et n'accepte pas de second clic** (U1).
+             Il ne redevient cliquable que si l'appel échoue : quand il réussit,
+             l'écran se referme avec lui. */
+          enPaiement={enPaiement}
+          /* **L'appel qui n'est pas passé se lit là où on a cliqué** (U1), et
+             il ne grise pas le bouton : ce qu'on veut faire d'un appel raté est
+             le refaire. */
+          echec={echecDuPaiement}
           onFermer={() => setEnvoiOuvert(false)}
           onGarder={(ligne) => void garderLeTexte(ligne)}
           onSauter={

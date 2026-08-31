@@ -12834,3 +12834,311 @@ describe("l'écran de confirmation", () => {
     ).toBeTruthy()
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// U1 · L'argent ne part qu'une fois, et l'écran de confirmation se quitte
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : le seul défaut du lot des treize qui coûtait de
+// l'argent réel. Cinq clics rapides sur *Payer et lancer* lançaient cinq appels
+// payants, en silence. Le garde-fou existait pourtant côté serveur depuis T1 —
+// une génération porte un identifiant, et le service rend *déjà soumise* sans
+// rien facturer quand il revoit le même — mais **l'écran le jetait** : il
+// fabriquait un identifiant neuf à chaque clic, donc chaque clic était une
+// intention neuve, donc chacune se payait.
+//
+// Les essais ci-dessous mesurent les deux moitiés de la réparation : le verrou
+// (un seul appel part, le bouton le dit, il ne redevient cliquable qu'en cas
+// d'échec) et l'identifiant par intention (le même pour un appel retenté,
+// différent dès que ce qui part change). Plus la seconde moitié de l'étape :
+// l'écran de confirmation se quitte en changeant d'onglet.
+
+describe("l'argent ne part qu'une fois", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Les corps réellement partis sur la route qui paie, dans l'ordre.
+   *
+   *  On les lit sur le double lui-même et non sur son journal `appels` : le
+   *  journal est écrit *après* la porte ci-dessous, et un essai qui retient la
+   *  réponse ne verrait rien tant qu'il ne l'a pas relâchée. Ce qu'on mesure
+   *  est **combien de fois l'écran a appelé**, ce qui est la question. */
+  const partis = (fetchDouble: ReturnType<typeof vi.fn>) =>
+    fetchDouble.mock.calls
+      .filter(
+        ([url, init]) =>
+          String(url) === "/api/generations" &&
+          (init as RequestInit | undefined)?.method === "POST",
+      )
+      .map(([, init]) =>
+        JSON.parse(String((init as RequestInit).body)),
+      ) as { identifiant: string; prompt: string }[]
+
+  /** Un double dont la route qui paie **ne répond que sur ordre**, et peut
+   *  refuser une fois.
+   *
+   *  Sans lui, la réponse arrive dans le même tour de boucle que le clic et
+   *  l'état « ça paie » ne dure pas assez pour être lu. Avec, l'attente est
+   *  celle d'un vrai appel : plusieurs secondes, pendant lesquelles l'auteur a
+   *  tout le temps de recliquer — c'est très exactement ce qu'il a fait. */
+  const doubleQuiRetient = (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    { refuseUneFois = false } = {},
+  ) => {
+    const socle = serveurDouble(options)
+    let ouvrirLaPorte: (() => void) | null = null
+    let dejaRefuse = false
+    const fetchDouble = vi.fn(async (chemin: string, init?: RequestInit) => {
+      if (String(chemin) === "/api/generations" && init?.method === "POST") {
+        await new Promise<void>((resoudre) => {
+          ouvrirLaPorte = resoudre
+        })
+        if (refuseUneFois && !dejaRefuse) {
+          dejaRefuse = true
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              code: "generation_refusee",
+              raison: "le fournisseur n'a pas répondu",
+              ou_aller: null,
+            }),
+          } as unknown as Response
+        }
+      }
+      return socle.fetchDouble(chemin, init)
+    })
+    return {
+      ...socle,
+      fetchDouble,
+      /** Laisser la réponse arriver, et attendre qu'elle soit traitée. */
+      repondre: async () => {
+        await act(async () => {
+          ouvrirLaPorte?.()
+          ouvrirLaPorte = null
+          await Promise.resolve()
+        })
+      },
+      /** Vrai tant que l'appel est en vol — la porte n'a pas encore été
+       *  ouverte. */
+      retenu: () => ouvrirLaPorte !== null,
+    }
+  }
+
+  /** Monter l'atelier, écrire un sujet, ouvrir l'écran de confirmation. */
+  const ouvrir = async (double: { fetchDouble: ReturnType<typeof vi.fn> }) => {
+    await monter(double.fetchDouble)
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    fireEvent.change(champ, { target: { value: "un forgeron nain" } })
+    await waitFor(() => expect(champ.value).toBe("un forgeron nain"))
+    return await relire()
+  }
+
+  // ── « Cinq clics consécutifs ne produisent qu'un seul appel payé » ─────────
+
+  test("cinq clics sur le bouton qui paie ne lancent qu'un seul appel", async () => {
+    // **Le geste exact du relevé** : l'auteur a cliqué cinq fois parce que rien
+    // ne bougeait, et il a payé cinq fois.
+    const double = doubleQuiRetient()
+    const ecran = await ouvrir(double)
+
+    const bouton = ecran.getByRole("button", { name: /^Payer et lancer/ })
+    for (let i = 0; i < 5; i++) fireEvent.click(bouton)
+
+    expect(partis(double.fetchDouble)).toHaveLength(1)
+    await double.repondre()
+    expect(partis(double.fetchDouble)).toHaveLength(1)
+  })
+
+  test("deux clics dans la même image de rendu ne lancent qu'un seul appel", async () => {
+    // **Le cas que le grisé ne rattrape pas.** Un bouton grisé l'est au rendu
+    // *suivant* ; deux clics partis avant ce rendu-là traversent tous les deux
+    // le gestionnaire. C'est le repère lu et écrit dans le même tour de boucle
+    // qui arrête le second, et c'est lui que cet essai mesure — les deux
+    // événements sont posés dans un seul `act`, donc sans rendu entre eux.
+    const double = doubleQuiRetient()
+    const ecran = await ouvrir(double)
+
+    const bouton = ecran.getByRole("button", { name: /^Payer et lancer/ })
+    act(() => {
+      bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(partis(double.fetchDouble)).toHaveLength(1)
+    await double.repondre()
+    expect(partis(double.fetchDouble)).toHaveLength(1)
+  })
+
+  // ── « Pendant l'appel, le bouton dit qu'il paie et n'est plus cliquable » ──
+
+  test("le bouton dit qu'il paie, et l'écran ne se quitte plus", async () => {
+    const double = doubleQuiRetient()
+    const ecran = await ouvrir(double)
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+
+    const bouton = (await ecran.findByRole("button", {
+      name: /Paiement en cours/,
+    })) as HTMLButtonElement
+    expect(bouton.disabled).toBe(true)
+    // Et *revenir sans rien dépenser* ne ment plus : la dépense est partie.
+    const revenir = ecran.getByRole("button", {
+      name: /il ne se rattrape plus/,
+    }) as HTMLButtonElement
+    expect(revenir.disabled).toBe(true)
+
+    // L'appel revient : l'écran se referme avec lui.
+    await double.repondre()
+    await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+  })
+
+  test("un appel qui échoue rend le bouton, et garde la même intention", async () => {
+    // **Les deux moitiés d'un même critère.** Le bouton ne redevient cliquable
+    // que si l'appel échoue — c'est le seul cas où il y a quelque chose à
+    // refaire. Et ce qu'on refait est la *même* intention : rien n'a été
+    // enregistré, donc l'identifiant ne bouge pas.
+    const double = doubleQuiRetient({}, { refuseUneFois: true })
+    const ecran = await ouvrir(double)
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+    await ecran.findByRole("button", { name: /Paiement en cours/ })
+    await double.repondre()
+
+    // Le bouton est rendu, et l'écran est resté : il n'y a rien à fermer.
+    const bouton = await ecran.findByRole("button", { name: /^Payer et lancer/ })
+    expect((bouton as HTMLButtonElement).disabled).toBe(false)
+    expect(document.querySelector("[data-envoi]")).toBeTruthy()
+
+    fireEvent.click(bouton)
+    await double.repondre()
+
+    const deux = partis(double.fetchDouble)
+    expect(deux).toHaveLength(2)
+    expect(deux[0].identifiant).toBe(deux[1].identifiant)
+  })
+
+  // ── « Deux appels réellement différents restent deux appels » ──────────────
+
+  test("changer ce qui part refait l'identifiant", async () => {
+    // **La contrepartie du verrou, et elle est indispensable.** Un identifiant
+    // qui ne bougerait jamais ferait rendre *déjà soumise* par le serveur au
+    // second appel : deux images voulues, une seule payée, et rien ne le dirait.
+    const double = doubleQuiRetient({}, { refuseUneFois: true })
+    const ecran = await ouvrir(double)
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+    await double.repondre()
+    await ecran.findByRole("button", { name: /^Payer et lancer/ })
+
+    // On corrige une ligne : ce qui part n'est plus le même, donc l'intention
+    // non plus.
+    fireEvent.click(ecran.getAllByRole("button", { name: "corriger" })[0])
+    fireEvent.change(await ecran.findByLabelText(/^Corriger /), {
+      target: { value: "marais de rouille" },
+    })
+    await waitFor(() => expect(ecran.getByText("corrigé pour cet appel")).toBeTruthy())
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+    await double.repondre()
+
+    const deux = partis(double.fetchDouble)
+    expect(deux).toHaveLength(2)
+    expect(deux[0].identifiant).not.toBe(deux[1].identifiant)
+  })
+
+  test("deux fois la même demande sont deux appels, pas un", async () => {
+    // **L'intention est consommée quand elle part.** Refaire exactement la même
+    // image est un geste légitime — c'est même le geste courant, on cherche une
+    // variante —, et le réemploi de l'identifiant l'aurait avalé en silence.
+    const double = doubleQuiRetient()
+    const ecran = await ouvrir(double)
+
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+    await double.repondre()
+    await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+
+    const encore = await relire()
+    fireEvent.click(encore.getByRole("button", { name: /^Payer et lancer/ }))
+    await double.repondre()
+
+    const deux = partis(double.fetchDouble)
+    expect(deux).toHaveLength(2)
+    expect(deux[0].prompt).toBe(deux[1].prompt)
+    expect(deux[0].identifiant).not.toBe(deux[1].identifiant)
+  })
+
+  // ── « Le raccourci qui paie sans passer par l'écran porte le même verrou » ─
+
+  test("le raccourci d'une série sautée porte le même verrou", async () => {
+    // **Il paie directement**, sans écran entre le bouton et la dépense : le
+    // verrou doit donc être là aussi, sinon on aurait réparé la moitié du
+    // chemin et laissé l'autre ouverte.
+    const double = doubleQuiRetient({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Le nain")
+    fireEvent.click(etabli.getByRole("button", { name: "Fabriquer repos" }))
+    await ecrireLeSujet("un forgeron nain")
+
+    const ecran = await relire()
+    fireEvent.click(ecran.getByLabelText("ne plus me le montrer pour cette série"))
+    fireEvent.click(ecran.getByRole("button", { name: /^Payer et lancer/ }))
+    await double.repondre()
+    await waitFor(() => expect(partis(double.fetchDouble)).toHaveLength(1))
+
+    // On réarme la même case : l'écran se saute, et le bouton qui lance paie
+    // directement. Le premier appel étant encore en route, c'est *Générer
+    // encore* qui porte le geste — l'état a pris la place du bouton.
+    const encore = await ouvrirLEtabli("Le nain")
+    fireEvent.click(encore.getByRole("button", { name: "Fabriquer repos" }))
+    const bouton = await screen.findByRole("button", { name: /^Générer encore/ })
+    act(() => {
+      bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      bouton.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    expect(partis(double.fetchDouble)).toHaveLength(2)
+
+    // Et il le dit, là aussi.
+    expect(await screen.findByRole("button", { name: /paiement en cours/i })).toBeTruthy()
+    await double.repondre()
+    expect(partis(double.fetchDouble)).toHaveLength(2)
+  })
+
+  // ── « Changer d'onglet ferme l'écran de confirmation, sans rien dépenser » ─
+
+  test("les trois onglets ferment l'écran de confirmation", async () => {
+    // **On était enfermé.** Cliquer *Galerie* changeait le fil d'Ariane et
+    // laissait l'écran en place — un écran qu'aucun onglet ne pouvait fermer.
+    // Changer d'onglet remonte de toute profondeur : c'était déjà vrai de la
+    // découpe, des dépenses, de l'établi et des tables.
+    for (const onglet of ["Galerie", "Univers", "Codex"]) {
+      const double = serveurDouble()
+      await monter(double.fetchDouble)
+      const champ = (await champDePrompt()) as HTMLTextAreaElement
+      fireEvent.change(champ, { target: { value: "un forgeron nain" } })
+      await relire()
+
+      fireEvent.click(screen.getByRole("tab", { name: onglet }))
+      await waitFor(() => expect(document.querySelector("[data-envoi]")).toBeNull())
+      expect(screen.getByRole("tab", { name: onglet }).getAttribute("aria-selected")).toBe(
+        "true",
+      )
+      expect(
+        double.appels.filter((a) => a.url === "/api/generations" && a.corps),
+      ).toEqual([])
+      cleanup()
+      FluxDouble.ouverts = []
+    }
+  })
+})
