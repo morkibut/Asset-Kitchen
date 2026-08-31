@@ -1440,16 +1440,40 @@ coûte ou économise au moment où on le fait — et le compte des places d'imag
 
 #### Critères d'acceptation
 
-- [ ] L'écran rassemble l'identité, l'équipement, les références, ce qui est réclamé et ce qui est fait
-- [ ] Chaque texte porte son origine parmi les cinq, et l'origine est lisible sans clic
-- [ ] Un texte écrit ici montre en dessous, barré, celui qu'il remplace
-- [ ] La valeur imposée par le projet se lit sous le texte qui part, et un désaccord se voit sans le chercher
-- [ ] Une image déjà fabriquée se promeut en référence permanente d'une chose du jeu
-- [ ] L'atelier propose de lui-même le corps retenu et la planche des directions, avec leur provenance
-- [ ] La matrice se met à jour pendant qu'on règle, à droite de la fiche
-- [ ] Le nombre de places d'images du modèle se lit à côté du nombre occupé, avant de payer
-- [ ] Une jauge ne compte que ce qu'on peut fabriquer maintenant — ce qui est rangé n'est jamais compté comme manquant
-- [ ] Le panneau de 380 px de la galerie n'a pas changé de métier : il reste la fiche d'une image
+- [x] L'écran rassemble l'identité, l'équipement, les références, ce qui est réclamé et ce qui est fait
+- [x] Chaque texte porte son origine parmi les cinq, et l'origine est lisible sans clic
+- [x] Un texte écrit ici montre en dessous, barré, celui qu'il remplace
+- [x] La valeur imposée par le projet se lit sous le texte qui part, et un désaccord se voit sans le chercher
+- [x] Une image déjà fabriquée se promeut en référence permanente d'une chose du jeu
+- [x] L'atelier propose de lui-même le corps retenu ~~et la planche des directions~~, avec leur provenance — *la planche attend E10, et la fiche le dit à sa place plutôt que de laisser un vide*
+- [x] La matrice se met à jour pendant qu'on règle, à droite de la fiche
+- [x] Le nombre de places d'images du modèle se lit à côté du nombre occupé, avant de payer
+- [x] Une jauge ne compte que ce qu'on peut fabriquer maintenant — ce qui est rangé n'est jamais compté comme manquant
+- [x] Le panneau de 380 px de la galerie n'a pas changé de métier : il reste la fiche d'une image
+
+#### Ce qui a été décidé en la faisant
+
+**Éteindre n'est pas vider, et vider n'est pas éteindre.** Une case vide est un texte qu'on n'a
+pas écrit — elle rend la case au jeu, ou à l'ambiance. Une case éteinte est un refus écrit :
+ce champ ne part pas pour cette chose-là, et il se rallume d'un clic. Les confondre aurait
+rendu le refus indistinguable de l'oubli, donc impossible à défaire.
+
+**Trois couches, et l'ordre est celui de la décision** : ce que la chose écrit gagne sur ce que
+l'ambiance donne, qui gagne sur ce que le jeu dit. *Éteint* passe avant tout — un refus ne se
+discute pas avec ce qu'il refuse.
+
+**Le désaccord se mesure sur les carrés seulement.** `64x64` est une grille, `253x321` est la
+taille d'une image dont personne ne parle. La fiche ne corrige rien — la bible s'écrit dans
+l'Univers —, elle met le texte qui part et la valeur qui s'applique côte à côte. Sur le vrai
+projet, elle a nommé les deux champs coupables du premier coup.
+
+**Une image promue est une quatrième provenance, et elle a son mot.** « Réinjection » dit
+*l'auteur l'a posée pour cet appel* ; une image promue part avec **tous** les appels de sa
+chose. Les confondre aurait fait décocher en aveugle sur l'écran de confirmation.
+
+**La planche des quatre directions n'est pas proposable avant E10**, et la fiche le dit à sa
+place plutôt que de laisser un vide : les directions arrivent avec la vue du jeu, et une pose
+n'a pas encore d'angles à montrer.
 
 #### Bloquée par
 

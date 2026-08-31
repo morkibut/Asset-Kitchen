@@ -142,6 +142,12 @@ class CorpsReglagePersonnage(BaseModel):
     # Ce qu'elle lui prend : tout, les couleurs seulement, ou tout sauf les
     # images. Une ambiance ne s'impose pas — on la désigne, puis on choisit.
     prend: Literal["tout", "couleurs", "sans-images"] | None = None
+    # **Les textes qu'elle écrit pour elle seule** (E12). Un texte vidé rend la
+    # case au jeu — ou à son ambiance ; un texte éteint écrit un refus. Ce ne
+    # sont pas le même geste, et le second se défait d'un clic.
+    textes: dict[str, str] | None = None
+    eteindre: str | None = None
+    rallumer: str | None = None
     projet: str | None = None
 
 
@@ -320,6 +326,77 @@ async def retirer_pose(
     return _avec_plan(atelier, vise, retiree)
 
 
+# ── La fiche d'une chose du jeu (E12) ────────────────────────────────────────
+#
+# **Aucune de ces routes ne touche le fournisseur.** Régler, ranger, désigner une
+# référence — rien de tout ça n'appelle personne, et c'est pour ça que la barre
+# qui paie se retire quand la fiche s'ouvre. Le produit tient une règle depuis le
+# début : il n'existe qu'un seul endroit d'où l'on paie.
+
+
+class CorpsPromotion(BaseModel):
+    """Une image fabriquée devient — ou cesse d'être — une référence permanente.
+
+    **Rien n'est copié** : c'est l'identifiant de l'asset qui est retenu, et
+    l'image reste où elle est.
+    """
+
+    asset: str = Field(min_length=1)
+    promue: bool = True
+    projet: str | None = None
+
+
+@routeur.get("/characters/{identifiant}/style")
+async def habillage(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Les sept textes qui habillent cette chose, **et d'où chacun vient**.
+
+    Cinq origines — du jeu, son ambiance, écrit ici, éteint, verrouillé —, et le
+    texte que chacun remplace, montré barré en dessous. Un résumé ne dit pas ce
+    qui part : la ligne « hérité de la bible » de l'établi cachait sept textes.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.production.habillage(vise, identifiant)
+
+
+@routeur.get("/characters/{identifiant}/references")
+async def references_de(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ses images de référence — **ce qui est disponible, pas ce qui part**.
+
+    Ce qui part vraiment se coche juste avant de payer. C'est ici que les images
+    de référence d'une chose *existent* : on en promeut une, on en écarte une, et
+    ça vaut pour toutes ses générations à venir.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.production.references_de(vise, identifiant)
+
+
+@routeur.put("/characters/{identifiant}/references")
+async def promouvoir_reference(
+    requete: Request, identifiant: str, corps: CorpsPromotion
+) -> dict[str, Any]:
+    """Promouvoir une image fabriquée en référence permanente — ou la dépromouvoir.
+
+    **Elle repart avec chaque appel suivant**, et c'est ce qui fait qu'un
+    personnage se ressemble d'une pose à l'autre. Dix-sept appels payés sur
+    vingt-huit étaient partis sans une seule image de référence.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    personnage = atelier.production.promouvoir_reference(
+        vise, identifiant, corps.asset, corps.promue
+    )
+    return {
+        "personnage": atelier.production.en_charge(vise, personnage),
+        "references": atelier.production.references_de(vise, identifiant),
+    }
+
+
 # ── La liste d'un type d'objet ───────────────────────────────────────────────
 
 
@@ -430,6 +507,9 @@ async def regler_personnage(
         retirer_ajoutee=corps.retirer_ajoutee,
         ambiance=corps.ambiance,
         prend=corps.prend,
+        textes=corps.textes,
+        eteindre=corps.eteindre,
+        rallumer=corps.rallumer,
     )
     return {"personnage": atelier.production.en_charge(projet, personnage)}
 

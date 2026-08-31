@@ -293,6 +293,11 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     // c'est l'état d'un projet neuf (E11).
     ambiance: "",
     prend: "tout",
+    // Rien d'écrit sur la chose, rien d'éteint, rien de promu : l'état des
+    // trois personnages du vrai projet, faute d'écran qui les atteigne (E12).
+    textes: {},
+    eteints: [],
+    references: [],
     ...sur,
     ecartees,
   }
@@ -1132,6 +1137,112 @@ function serveurDouble(options: {
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+    // ── La fiche d'une chose du jeu (E12) ─────────────────────────────────
+    //
+    // **Le double compose l'habillage comme le serveur le compose** : les trois
+    // couches dans l'ordre — le jeu, l'ambiance désignée, ce que la chose écrit
+    // —, et le texte remplacé gardé à côté. Un double qui rendrait des origines
+    // quelconques prouverait que l'écran affiche, jamais qu'il affiche juste.
+    if (url.includes("/style") && url.startsWith("/api/characters/")) {
+      const identifiant = url.slice("/api/characters/".length, -"/style".length)
+      const chose = etat.personnages.find((p) => p.identifiant === identifiant)
+      const ambiance = etat.ambiances.find((a) => a.identifiant === chose?.ambiance)
+      const OUVERTS: Record<string, string> = {
+        monde: "monde",
+        eclairage: "eclairage",
+        trait: "trait",
+      }
+      const champs = etat.univers.bible.map((c) => {
+        const deLAmbiance = ambiance
+          ? String((ambiance as unknown as Record<string, string>)[OUVERTS[c.nom]] ?? "")
+          : ""
+        const ecritIci = chose?.textes?.[c.nom] ?? ""
+        const eteint = (chose?.eteints ?? []).includes(c.nom)
+        const origine = eteint
+          ? "eteint"
+          : ecritIci
+            ? "ici"
+            : deLAmbiance
+              ? "ambiance"
+              : "jeu"
+        return {
+          nom: c.nom,
+          texte: eteint ? "" : ecritIci || deLAmbiance || c.texte,
+          origine,
+          remplace:
+            origine === "ici" || origine === "eteint"
+              ? ecritIci && origine === "eteint"
+                ? ecritIci
+                : deLAmbiance || c.texte
+              : "",
+          ambiance: origine === "ambiance" ? (ambiance?.nom ?? "") : "",
+          ouvert: c.nom in OUVERTS,
+          annonce: /64x64/.test(c.texte) ? [64] : [],
+        }
+      })
+      return rendre({
+        personnage: identifiant,
+        champs,
+        ambiance: ambiance ?? null,
+        prend: chose?.prend ?? "",
+        cible_px: etat.univers.cible_px,
+        desaccord: champs
+          .filter((c) => c.annonce.some((t) => t !== etat.univers.cible_px))
+          .map((c) => c.nom),
+        palette: null,
+        poses_ici: champs.filter(
+          (c) => c.origine === "ici" || c.origine === "eteint",
+        ).length,
+        de_l_ambiance: champs.filter((c) => c.origine === "ambiance").length,
+      })
+    }
+    if (url.includes("/references") && url.startsWith("/api/characters/")) {
+      const identifiant = url.slice("/api/characters/".length, -"/references".length)
+      const chose = etat.personnages.find((p) => p.identifiant === identifiant)
+      if (init?.method === "PUT") {
+        const promues = new Set(chose?.references ?? [])
+        if (corps.promue === false) promues.delete(String(corps.asset))
+        else promues.add(String(corps.asset))
+        etat.personnages = etat.personnages.map((p) =>
+          p.identifiant === identifiant ? { ...p, references: [...promues] } : p,
+        )
+      }
+      const vive = etat.personnages.find((p) => p.identifiant === identifiant)
+      const lignes = (vive?.references ?? []).map((reference) => ({
+        reference,
+        genre: "asset",
+        provenance: "image promue",
+        detail: "fabriquée puis retenue comme référence",
+        ecartee: false,
+      }))
+      // **L'atelier propose le corps retenu de la première pose faite**, et
+      // seulement s'il n'est pas déjà retenu : une proposition acceptée cesse
+      // d'être une proposition.
+      const corpsRetenu = (vive?.cases ?? []).find((c) => c.corps)?.corps ?? ""
+      const propositions =
+        corpsRetenu && !(vive?.references ?? []).includes(corpsRetenu)
+          ? [
+              {
+                reference: corpsRetenu,
+                genre: "asset",
+                provenance: "le corps retenu de « repos »",
+                detail: "ce à quoi il ressemble une fois passé par le style du jeu",
+                ecartee: false,
+              },
+            ]
+          : []
+      const references = {
+        personnage: identifiant,
+        lignes,
+        propositions,
+        disponibles: lignes.length,
+      }
+      // Le geste rend la chose **et** ses références : l'écran fond les deux
+      // par le même chemin, comme partout ailleurs dans ce produit.
+      return rendre(
+        init?.method === "PUT" ? { personnage: vive, references } : references,
+      )
+    }
     // ── Le côté Ambiances et couleurs (E11) ───────────────────────────────
     //
     // **Le double rend le côté entier** à chaque geste, comme le vrai serveur :
@@ -8781,5 +8892,256 @@ describe("les palettes et les ambiances", () => {
       await ecran.findByText(/côté Ambiances et couleurs/),
     ).toBeTruthy()
     expect(ecran.queryByLabelText("Son ambiance")).toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E12 · La fiche d'une chose du jeu
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Les trois colonnes et les
+// cinq blocs, l'origine lisible sans clic à côté de chaque texte, le texte
+// remplacé montré barré en dessous, le désaccord entre la grille annoncée et
+// celle qui s'applique, la promotion d'une image en référence permanente, la
+// matrice qui répond pendant qu'on règle, et la barre qui paie qui se retire.
+// Ce qui se calcule — les trois couches, l'empreinte, ce que le fichier garde —
+// vit dans `tests/test_e12.py`.
+
+describe("la fiche d'une chose du jeu", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** L'établi d'une chose, puis sa fiche — les deux crans de la maquette. */
+  const ouvrirLaFiche = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble({
+      personnages: [personnage("Balthazar")],
+      ...options,
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "sa fiche ›" }))
+    const cadre = await waitFor(() => {
+      const fiche = document.querySelector("[data-fiche]")
+      if (!fiche) throw new Error("la fiche ne s'est pas ouverte")
+      return fiche as HTMLElement
+    })
+    return { ...double, fiche: within(cadre) }
+  }
+
+  // ── « L'écran rassemble l'identité, l'équipement, les références… » ────────
+
+  test("la fiche ouvre les cinq blocs, et la colonne porte leur valeur", async () => {
+    const { fiche } = await ouvrirLaFiche()
+
+    for (const nom of [
+      "Ce qu'il est",
+      "Ce qui l'habille",
+      "Ses images de référence",
+      "Ce que le jeu lui réclame",
+      "Ce qui est fait",
+    ]) {
+      expect(fiche.getByRole("button", { name: new RegExp(`^${nom}`) })).toBeTruthy()
+    }
+    // **La matrice reste affichée à droite** : c'est la seule raison pour
+    // laquelle la fiche garde une colonne de 380 px au lieu de s'étaler.
+    expect(fiche.getByText("Sa matrice")).toBeTruthy()
+    expect(fiche.getByText("elle répond pendant qu'on règle")).toBeTruthy()
+  })
+
+  test("la barre qui paie se retire quand la fiche s'ouvre", async () => {
+    // Régler, ranger, désigner une référence n'appelle personne — et un écran
+    // incapable de dépenser ne porte pas le champ qui dépense.
+    await ouvrirLaFiche()
+
+    expect(
+      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeNull()
+  })
+
+  test("Échap rend l'établi, à l'endroit exact d'où l'on venait", async () => {
+    await ouvrirLaFiche()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-fiche]")).toBeNull(),
+    )
+    expect(document.querySelector("[data-etabli]")).toBeTruthy()
+  })
+
+  // ── « Chaque texte porte son origine parmi les cinq » ──────────────────────
+
+  test("chaque texte porte son origine, et elle se lit sans clic", async () => {
+    const { fiche } = await ouvrirLaFiche({
+      univers: {
+        ...UNIVERS,
+        bible: UNIVERS.bible.map((c) =>
+          c.nom === "monde" ? { ...c, texte: "des salles de forge" } : c,
+        ),
+      },
+    })
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
+
+    expect(await fiche.findByLabelText("monde")).toBeTruthy()
+    // Le cas ordinaire, et il se dit : rien n'a été changé pour cette chose-là.
+    expect(fiche.getAllByText(/du jeu/).length).toBeGreaterThan(0)
+  })
+
+  test("un texte écrit ici montre en dessous, barré, celui qu'il remplace", async () => {
+    const { fiche, fetchDouble } = await ouvrirLaFiche({
+      univers: {
+        ...UNIVERS,
+        bible: UNIVERS.bible.map((c) =>
+          c.nom === "vue" ? { ...c, texte: "3/4 top-down" } : c,
+        ),
+      },
+    })
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
+
+    const champ = await fiche.findByLabelText("vue et cadrage")
+    fireEvent.change(champ, { target: { value: "flat orthographic icon" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/balthazar" &&
+            String((init as RequestInit)?.body).includes("flat orthographic icon"),
+        ),
+      ).toBe(true),
+    )
+    // **On doit pouvoir lire ce à quoi on a renoncé sans aller le chercher** :
+    // l'écran garde la place du texte remplacé, barrée, sous celui qui gagne.
+    expect(fiche.getByLabelText("vue et cadrage")).toBeTruthy()
+  })
+
+  test("éteindre un texte écrit un refus, et rallumer le défait", async () => {
+    const { fiche, fetchDouble } = await ouvrirLaFiche()
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
+
+    const eteindre = (await fiche.findAllByRole("button", { name: "éteindre" }))[0]
+    fireEvent.click(eteindre)
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(([, init]) =>
+          String((init as RequestInit)?.body ?? "").includes("eteindre"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("un texte éteint montre ce qui serait parti, et se rallume d'un clic", async () => {
+    // **Un refus écrit se défait d'un clic** — sinon il serait indistinguable
+    // d'un oubli, donc impossible à défaire.
+    const { fiche } = await ouvrirLaFiche({
+      personnages: [personnage("Balthazar", { eteints: ["technique"] })],
+    })
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
+
+    expect(await fiche.findByRole("button", { name: "rallumer" })).toBeTruthy()
+    // Un seul champ éteint : l'origine est écrite à côté de son nom, et elle
+    // ne paraît que là.
+    expect(fiche.getAllByText(/éteint/).length).toBe(1)
+  })
+
+  // ── « La valeur imposée par le projet se lit sous le texte qui part » ──────
+
+  test("le désaccord entre la grille annoncée et celle qui s'applique se voit", async () => {
+    // **Mesuré sur le vrai projet** : la bible disait 64x64 en toutes lettres
+    // pendant que le projet imposait 128, et aucun écran ne mettait les deux
+    // côte à côte.
+    const { fiche } = await ouvrirLaFiche({
+      univers: {
+        ...UNIVERS,
+        cible_px: 128,
+        bible: UNIVERS.bible.map((c) =>
+          c.nom === "rendu" ? { ...c, texte: "2D pixel art on a 64x64 grid" } : c,
+        ),
+      },
+    })
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
+
+    expect(await fiche.findByText("128 px de grille")).toBeTruthy()
+    expect(fiche.getByText(/annonce une autre grille dans le texte qui part/)).toBeTruthy()
+  })
+
+  // ── « Une image déjà fabriquée se promeut en référence permanente » ────────
+
+  test("l'atelier propose le corps retenu, et une proposition se retient d'un clic", async () => {
+    const corps = asset("corps-1")
+    const { fiche, fetchDouble } = await ouvrirLaFiche({
+      personnages: [
+        personnage("Balthazar", {
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: p.identifiant === "repos" ? [corps] : [],
+            ...VIDE_C3,
+            corps: p.identifiant === "repos" ? corps.identifiant : null,
+          })),
+        }),
+      ],
+    })
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ses images de référence/ }))
+
+    // **Il propose, il ne décide pas** — et la provenance est écrite dessous.
+    expect(await fiche.findByText(/le corps retenu de/)).toBeTruthy()
+    fireEvent.click(await fiche.findByRole("button", { name: "retenir ›" }))
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/balthazar/references" &&
+            String((init as RequestInit)?.method) === "PUT",
+        ),
+      ).toBe(true),
+    )
+    // Une proposition acceptée cesse d'être une proposition, et devient une
+    // ligne de la liste.
+    expect(await fiche.findByText("image promue")).toBeTruthy()
+  })
+
+  test("sans référence, la fiche dit ce que ça coûte", async () => {
+    const { fiche } = await ouvrirLaFiche()
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ses images de référence/ }))
+
+    expect(
+      await fiche.findByText(/Dix-sept appels payés sur vingt-huit/),
+    ).toBeTruthy()
+  })
+
+  // ── « Une jauge ne compte que ce qu'on peut fabriquer maintenant » ─────────
+
+  test("la matrice ne compte pas comme faite une pose qu'on a rangée", async () => {
+    // **Le piège** : ranger fait monter la jauge sans qu'une image ait été
+    // fabriquée. Ce qui le tient est que le compte des rangées est écrit à
+    // côté, jamais fondu dedans.
+    const { fiche } = await ouvrirLaFiche({
+      personnages: [personnage("Balthazar", { ecartees: ["mort", "degats"] })],
+    })
+
+    expect((await fiche.findAllByText(/2 rangées/)).length).toBeGreaterThan(0)
+    // Les quatre poses tenues sont là ; les deux rangées ne comptent ni comme
+    // faites ni comme manquantes — elles sont comptées à côté.
+    expect(fiche.getAllByText("0 / 1").length).toBe(4)
   })
 })

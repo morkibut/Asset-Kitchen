@@ -398,6 +398,15 @@ couleurs seulement, tout sauf les images ; ce que *chaque génération* a réell
 un champ de la génération, en E14, parce que c'est une autre question et que la même liste
 écrite à deux endroits aurait divergé.
 
+*Écrit en faisant E12, le 31 août 2026.* La chose du jeu gagne **trois champs de plus** que
+ce tableau n'annonçait : les textes qu'elle écrit pour elle seule, ceux qu'elle éteint, et les
+images fabriquées qu'elle a promues en référence permanente. Les deux premiers sont les deux
+moitiés d'une même distinction — vider rend la case au jeu, éteindre écrit un refus —, et le
+troisième corrige le frottement le plus cher du dépôt : dix-sept appels payés sur vingt-huit
+étaient partis sans une seule image de référence. Une image promue part en rôle `reference` et
+avec **tous** les appels de sa chose, ce qui la distingue d'une réinjection posée pour un
+appel ; le compte des références le dit en toutes lettres, sans quoi on décocherait en aveugle.
+
 **Le personnage se généralise en entité, et c'est le seul de ces changements qui touche du
 code existant en profondeur.** Les familles *Décors*, *Objets* et *Interface* ont
 aujourd'hui leur ligne et leur compte à zéro : ce qui manque est le modèle, pas la mise en

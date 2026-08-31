@@ -649,6 +649,11 @@ export type Personnage = {
   ambiance: string
   /** Ce qu'elle prend à cette ambiance. */
   prend: string
+  /** Les textes qu'elle écrit pour elle seule, et ceux qu'elle éteint (E12). */
+  textes: Record<string, string>
+  eteints: string[]
+  /** Les images fabriquées qu'elle a promues en référence permanente. */
+  references: string[]
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
@@ -940,6 +945,69 @@ export const NOM_DE_CE_QU_ON_PREND: Record<string, string> = {
   tout: "tout",
   couleurs: "les couleurs seulement",
   "sans-images": "tout sauf les images",
+}
+
+/** ── La fiche d'une chose du jeu (E12) ─────────────────────────────────────
+ *
+ *  **Le codex dit ce qui manque, la fiche dit tout le reste.** Un résumé ne dit
+ *  pas ce qui part : l'établi écrivait « hérité de la bible » et cachait sept
+ *  textes. Ici chacun porte son origine. */
+
+/** Un des sept textes de style, **et d'où il vient**. */
+export type ChampHabille = {
+  nom: string
+  /** Ce qui part vraiment — vide quand le champ est éteint. */
+  texte: string
+  /** `jeu` — rien n'a été changé pour cette chose. `ambiance` — le lot de style
+   *  désigné fournit ce texte. `ici` — un texte propre à cette chose. `eteint` —
+   *  un refus écrit, pas une case vide. `verrouille` — le réglage s'impose. */
+  origine: "jeu" | "ambiance" | "ici" | "eteint" | "verrouille"
+  /** Le texte que celui-ci écarte, montré barré en dessous : on doit pouvoir
+   *  lire ce à quoi on a renoncé sans aller le chercher ailleurs. */
+  remplace: string
+  /** Le nom de l'ambiance qui donne ce texte, quand c'est elle. */
+  ambiance: string
+  /** Une ambiance peut-elle remplacer ce champ ? Les quatre fermées décrivent la
+   *  mécanique du jeu, pas son atmosphère. */
+  ouvert: boolean
+  /** Les tailles de grille que ce texte annonce en toutes lettres. */
+  annonce: number[]
+}
+
+export type Habillage = {
+  personnage: string
+  champs: ChampHabille[]
+  ambiance: AmbianceDuJeu | null
+  prend: string
+  /** La taille de pixel que le projet impose — elle ne se change pas ici. */
+  cible_px: number
+  /** Les champs dont le texte annonce une autre grille que celle qui
+   *  s'applique. Vide est la réponse ordinaire ; non vide est une faute que
+   *  personne n'avait vue en vingt-huit appels. */
+  desaccord: string[]
+  palette: { nom: string; couleurs: number } | null
+  /** Combien de champs sont posés sur cette chose seule — l'écart, compté. */
+  poses_ici: number
+  de_l_ambiance: number
+}
+
+/** Une image de référence disponible pour une chose du jeu. */
+export type ReferenceDeLaChose = {
+  reference: string
+  /** `carte` — une carte du tableau. `asset` — une image fabriquée, promue. */
+  genre: "carte" | "asset"
+  provenance: string
+  detail: string
+  ecartee: boolean
+}
+
+export type ReferencesDeLaChose = {
+  personnage: string
+  lignes: ReferenceDeLaChose[]
+  /** Ce que l'atelier propose de promouvoir, avec sa provenance. Il propose, il
+   *  ne décide pas — et une proposition se refuse d'un clic. */
+  propositions: ReferenceDeLaChose[]
+  disponibles: number
 }
 
 export type Carte = {
@@ -2061,6 +2129,11 @@ export const api = {
       /** Ce qu'elle lui prend : tout, les couleurs seulement, ou tout sauf les
        *  images. Une ambiance ne s'impose pas — on la désigne, puis on choisit. */
       prend?: string
+      /** Les textes qu'elle écrit pour elle seule (E12). Un texte vidé rend la
+       *  case au jeu ; éteindre écrit un refus — ce ne sont pas le même geste. */
+      textes?: Record<string, string>
+      eteindre?: string
+      rallumer?: string
     },
   ) =>
     appeler<{ personnage: Personnage }>(`/characters/${personnage}`, {
@@ -2164,6 +2237,23 @@ export const api = {
     appeler<CoteAmbiances & { retombees: number }>(`/moods/${identifiant}`, {
       method: "DELETE",
     }),
+
+  /** Les sept textes qui habillent une chose, **et d'où chacun vient** (E12). */
+  habillage: (personnage: string) =>
+    appeler<Habillage>(`/characters/${personnage}/style`),
+
+  /** Ses images de référence — **ce qui est disponible, pas ce qui part**. */
+  referencesDeLaChose: (personnage: string) =>
+    appeler<ReferencesDeLaChose>(`/characters/${personnage}/references`),
+
+  /** Une image fabriquée devient — ou cesse d'être — une référence permanente.
+   *  Elle repart alors avec chaque appel suivant, et c'est ce qui fait qu'une
+   *  chose se ressemble d'une pose à l'autre. */
+  promouvoirReference: (personnage: string, asset: string, promue = true) =>
+    appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
+      `/characters/${personnage}/references`,
+      { method: "PUT", body: JSON.stringify({ asset, promue }) },
+    ),
 
   /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,
    *  les deux vides ensemble. Le corps naît dans l'atelier et nulle part

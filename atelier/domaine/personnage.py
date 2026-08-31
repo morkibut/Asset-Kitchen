@@ -37,6 +37,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TOUT
+from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import Pose, plan_depuis_json
 
 
@@ -74,6 +75,41 @@ class Personnage:
     # confondre ferait qu'un rangement changerait des réglages.
     ambiance: str = ""
     prend: str = TOUT
+
+    # ── Ce qu'elle écrit pour elle seule, et ce qu'elle éteint (E12) ─────────
+    #
+    # **Une chose du jeu part toujours des textes du jeu**, puis son ambiance en
+    # remplace trois, puis ce qui est écrit ici remplace les deux autres. Trois
+    # couches, dans cet ordre, et la fiche écrit à côté de chaque texte laquelle
+    # a gagné : *du jeu*, *son ambiance*, *écrit ici*, *éteint*, *verrouillé*.
+    #
+    # **Un texte écrit ici est un écart, et le produit le dit plutôt que de
+    # l'empêcher** : une chose qui écrit ses propres textes diverge du reste du
+    # jeu, et ce qui tient contre ça est que l'écart se voit sans qu'on le
+    # cherche — la fiche compte *3 champs sur 7 posés ici*, et chaque case
+    # remplacée montre le texte qu'elle écarte, barré, juste en dessous.
+    #
+    # **Éteindre n'est pas vider.** Une case vide est un texte qu'on n'a pas
+    # écrit ; une case éteinte est un refus écrit — ce champ ne part pas pour
+    # cette chose-là, et il se rallume d'un clic. Les confondre aurait rendu le
+    # refus indistinguable de l'oubli, et donc impossible à défaire.
+    textes: dict[str, str] = field(default_factory=dict)
+    eteints: tuple[str, ...] = ()
+
+    # ── Les images fabriquées qu'elle promeut en référence (E12) ────────────
+    #
+    # **La correction du frottement le plus cher du dépôt.** Dix-sept appels
+    # payés sur vingt-huit sont partis sans une seule image de référence, sur des
+    # modèles qui en acceptent quatorze. Une image que l'atelier a produite
+    # devient ici une référence permanente de sa chose : elle repart avec chaque
+    # appel suivant, et c'est ce qui fait qu'un personnage se ressemble d'une
+    # pose à l'autre.
+    #
+    # **Des assets, pas des cartes** — c'est ce qui la distingue de
+    # `concept_arts`, qui désigne des cartes du tableau d'inspiration. Les deux
+    # partent ensemble et se dédoublonnent en aval, comme les trois sources de
+    # références depuis T4.
+    references: tuple[str, ...] = ()
 
     # Les poses du plan que ce personnage **ne tient pas** — voir l'en-tête.
     # Une entrée qui ne désigne plus rien ne gêne pas : elle ne peut écarter
@@ -141,6 +177,9 @@ class Personnage:
             "ajoutees": [p.en_json() for p in self.ajoutees],
             "ambiance": self.ambiance,
             "prend": self.prend,
+            "textes": dict(self.textes),
+            "eteints": list(self.eteints),
+            "references": list(self.references),
             "ecartees": list(self.ecartees),
             "concept_arts": list(self.concept_arts),
             "references_ecartees": list(self.references_ecartees),
@@ -157,6 +196,19 @@ class Personnage:
             type=str(d.get("type") or ""),
             ajoutees=plan_depuis_json(d.get("ajoutees") or []),
             ambiance=str(d.get("ambiance") or ""),
+            # **La liste close décide, le fichier n'apporte que les textes.** Un
+            # champ que la bible ne connaît plus ne ressuscite pas ici, et un
+            # champ neuf n'a rien à migrer : il est simplement absent, donc
+            # « du jeu ».
+            textes={
+                nom: str(texte)
+                for nom, texte in (d.get("textes") or {}).items()
+                if nom in CHAMPS_BIBLE and str(texte).strip()
+            },
+            eteints=tuple(
+                nom for nom in (d.get("eteints") or ()) if nom in CHAMPS_BIBLE
+            ),
+            references=tuple(_textes(d.get("references"))),
             # Une valeur inconnue retombe sur « tout » : la liste est fermée, et
             # un fichier ne la rouvre pas.
             prend=(

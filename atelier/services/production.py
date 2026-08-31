@@ -24,6 +24,8 @@ personnages ont un fichier chacun sous leur projet, et c'est ce module qui les
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import replace
 from typing import Any, Sequence
 
@@ -32,6 +34,7 @@ from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.ambiance import CE_QU_ON_PREND
+from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import (
     Pose,
     plan_depuis_json,
@@ -62,6 +65,37 @@ class ProductionRefusee(ErreurAtelier):
     """Un geste que le produit refuse, avec sa raison en clair."""
 
     code = "production_refusee"
+
+
+# Les trois cases de bible qu'une ambiance peut remplacer, et **les quatre qui
+# lui sont fermées** (E12). Ce n'est pas une limite arbitraire : le monde,
+# l'éclairage et le trait décrivent l'atmosphère d'un coin du jeu ; l'époque, le
+# rendu, la vue et la technique décrivent la mécanique du jeu — la taille de
+# grille, l'angle de caméra, l'alignement au pixel. Une ambiance qui les
+# remplacerait fabriquerait des images qui ne rentrent pas dans le jeu, et
+# l'erreur ne se verrait qu'après avoir payé.
+OUVERTS_A_UNE_AMBIANCE = frozenset({"monde", "eclairage", "trait"})
+
+# Une taille de grille écrite en toutes lettres dans un texte de bible —
+# `64x64`, `64 × 64`, `128 px`. Le produit ne corrige rien : il met le texte qui
+# part et la valeur qui s'applique côte à côte, et laisse la faute se voir.
+_GRILLE = re.compile(r"(\d{2,4})\s*[x×]\s*(\d{2,4})|\b(\d{2,4})\s*px\b", re.I)
+
+
+def _tailles_annoncees(texte: str) -> set[int]:
+    """Les tailles de grille qu'un texte annonce, s'il en annonce.
+
+    Seuls les carrés comptent — `64x64` est une grille, `253x321` est la taille
+    d'une image dont personne ne parle ici. Un texte qui n'annonce rien rend un
+    ensemble vide, ce qui est le cas ordinaire et n'est pas un manque.
+    """
+    tailles: set[int] = set()
+    for large, haut, seul in _GRILLE.findall(texte or ""):
+        if seul:
+            tailles.add(int(seul))
+        elif large and large == haut:
+            tailles.add(int(large))
+    return tailles
 
 
 class ServiceProduction:
@@ -188,6 +222,248 @@ class ServiceProduction:
             replace(e, poses=None) if e.nom == type else e for e in objet.univers.bareme
         )
         self._sauver_projet(objet)
+
+    # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────
+
+    def habillage(self, projet: str, identifiant: str) -> dict[str, Any]:
+        """Les sept textes qui habillent cette chose, **et d'où chacun vient**.
+
+        Trois couches, dans cet ordre : les textes du jeu, ceux que l'ambiance
+        désignée remplace, ceux que la chose écrit pour elle seule. La fiche
+        écrit à côté de chaque texte laquelle a gagné, parce qu'**un résumé ne
+        dit pas ce qui part** — la ligne « hérité de la bible » de l'établi
+        disait *pixel · 64×64 · vue 3/4* et cachait sept textes.
+
+        **Cinq origines, et pas une de plus.** `jeu` — rien n'a été changé pour
+        cette chose-là. `ambiance` — le lot de style désigné fournit ce texte, et
+        le corriger là-bas le corrige pour tout ce qui s'en sert. `ici` — un
+        texte propre à cette chose, qui montre en dessous, barré, celui qu'il
+        remplace. `eteint` — un refus écrit, pas une case vide : le texte qui
+        serait parti, barré, et *rallumer* à un clic. `verrouille` — le réglage
+        s'impose et rien ne le change ici.
+
+        **Trois cases sont ouvertes à une ambiance, quatre lui sont fermées**, et
+        ce n'est pas arbitraire : les quatre autres décrivent la mécanique du
+        jeu, pas son atmosphère. Changer l'angle de vue au milieu d'un jeu ne
+        produit pas une variante de style, ça produit des images inutilisables —
+        et l'erreur ne se verrait qu'après avoir payé.
+        """
+        objet = self._exiger(projet)
+        personnage = self.personnage(projet, identifiant)
+        ambiance = objet.ambiance(personnage.ambiance) if personnage.ambiance else None
+        textes_ambiance = (
+            {
+                "monde": ambiance.monde,
+                "eclairage": ambiance.eclairage,
+                "trait": ambiance.trait,
+            }
+            if ambiance
+            else {}
+        )
+
+        champs: list[dict[str, Any]] = []
+        for champ in objet.univers.bible:
+            du_jeu = champ.texte if champ.actif else ""
+            de_l_ambiance = textes_ambiance.get(champ.nom, "") or ""
+            ecrit_ici = personnage.textes.get(champ.nom, "")
+            # **L'ordre des trois couches est l'ordre de la décision** : ce que
+            # la chose écrit gagne sur ce que l'ambiance donne, qui gagne sur ce
+            # que le jeu dit. Et *éteint* passe avant tout — c'est un refus, et
+            # un refus ne se discute pas avec ce qu'il refuse.
+            if champ.nom in personnage.eteints:
+                origine, texte = "eteint", ""
+                remplace = ecrit_ici or de_l_ambiance or du_jeu
+            elif ecrit_ici:
+                origine, texte = "ici", ecrit_ici
+                remplace = de_l_ambiance or du_jeu
+            elif de_l_ambiance:
+                origine, texte, remplace = "ambiance", de_l_ambiance, du_jeu
+            else:
+                origine, texte, remplace = "jeu", du_jeu, ""
+            champs.append(
+                {
+                    "nom": champ.nom,
+                    "texte": texte,
+                    "origine": origine,
+                    # Ce que ce texte-là écarte, montré barré en dessous : on
+                    # doit pouvoir lire ce à quoi on a renoncé sans aller le
+                    # chercher ailleurs.
+                    "remplace": remplace if origine in ("ici", "eteint") else "",
+                    "ambiance": ambiance.nom if origine == "ambiance" else "",
+                    # Une case fermée aux ambiances est affichée quand même, en
+                    # lecture seule : on voit ce qui part, on voit qu'on n'y
+                    # touche pas ici, et on sait où aller le changer.
+                    "ouvert": champ.nom in OUVERTS_A_UNE_AMBIANCE,
+                    "annonce": sorted(_tailles_annoncees(texte)),
+                }
+            )
+
+        # **La taille de pixel s'impose**, et c'est la contradiction que seule la
+        # fiche met sous les yeux : deux champs de la bible écrivent la grille en
+        # toutes lettres, et ils partent dans le prompt. On demande donc au
+        # modèle une grille de 64 pendant que l'atelier ramène l'image sur 128.
+        # La fiche ne corrige rien — la bible s'écrit dans l'Univers — mais elle
+        # rend la faute impossible à ne pas voir.
+        cible = objet.univers.cible_px
+        desaccord = [
+            c["nom"] for c in champs if cible and any(t != cible for t in c["annonce"])
+        ]
+        palette = (
+            objet.palette_nommee(ambiance.palette)
+            if ambiance and ambiance.palette
+            else None
+        )
+        return {
+            "personnage": identifiant,
+            "champs": champs,
+            "ambiance": ambiance.en_json() if ambiance else None,
+            "prend": personnage.prend if ambiance else "",
+            "cible_px": cible,
+            # Les champs dont le texte annonce une autre grille que celle qui
+            # s'applique. Vide est la réponse ordinaire ; non vide est une faute
+            # que personne n'avait vue en vingt-huit appels.
+            "desaccord": desaccord,
+            "palette": (
+                {"nom": palette.nom, "couleurs": len(palette.rendue)}
+                if palette
+                else None
+            ),
+            # **Le coût, nommé** : une chose qui écrit ses propres textes diverge
+            # du reste du jeu, et rien ne l'empêche. Ce qui tient contre ça est
+            # que l'écart se voit sans qu'on le cherche.
+            "poses_ici": sum(1 for c in champs if c["origine"] in ("ici", "eteint")),
+            "de_l_ambiance": sum(1 for c in champs if c["origine"] == "ambiance"),
+        }
+
+    def references_promues(self, projet: str, personnage: str) -> tuple[str, ...]:
+        """Les images qu'une chose du jeu a promues en référence permanente.
+
+        Lue par la génération, qui les fait partir en rôle `reference`. Une
+        chose disparue rend une liste vide plutôt qu'un refus : un appel ne doit
+        pas échouer parce qu'un personnage a été supprimé entre-temps.
+        """
+        try:
+            return self.personnage(projet, personnage).references
+        except (PersonnageInconnu, ProjetInconnu):
+            return ()
+
+    def references_de(self, projet: str, identifiant: str) -> dict[str, Any]:
+        """Les images de référence d'une chose, **quatre provenances, une liste**.
+
+        Ce bloc dit **ce qui est disponible, pas ce qui part** : ce qui part
+        vraiment se coche juste avant de payer, sur l'écran de confirmation, où
+        chaque image porte un interrupteur. La fiche garde le bloc quand même, et
+        ce n'est pas un doublon — c'est ici que les images de référence d'une
+        chose *existent* : on en promeut une, on en écarte une, et ça vaut pour
+        toutes ses générations à venir. **Une chose est définie à un seul
+        endroit** : la liste ici, le tri là-bas.
+
+        **Et l'atelier propose de lui-même.** Il n'attend pas qu'on y pense, et
+        il ne décide pas non plus : il propose, avec la provenance écrite
+        dessous, et une proposition se refuse d'un clic. La première proposition
+        est le corps retenu de la première pose faite — l'image qui dit à quoi
+        ressemble vraiment ce personnage une fois passé par le style du jeu, bien
+        mieux qu'un artwork d'inspiration.
+        """
+        objet = self._exiger(projet)
+        personnage = self.personnage(projet, identifiant)
+        ambiance = objet.ambiance(personnage.ambiance) if personnage.ambiance else None
+        ecartees = set(personnage.references_ecartees)
+
+        lignes: list[dict[str, Any]] = []
+        for reference in ambiance.references if ambiance else ():
+            lignes.append(
+                {
+                    "reference": reference,
+                    "genre": "carte",
+                    "provenance": "image de son ambiance",
+                    "detail": ambiance.nom if ambiance else "",
+                    "ecartee": reference in ecartees,
+                }
+            )
+        for carte in personnage.concept_arts:
+            lignes.append(
+                {
+                    "reference": carte,
+                    "genre": "carte",
+                    "provenance": "concept art",
+                    "detail": "épinglé sur cette chose",
+                    "ecartee": carte in ecartees,
+                }
+            )
+        for asset in personnage.references:
+            lignes.append(
+                {
+                    "reference": asset,
+                    "genre": "asset",
+                    "provenance": "image promue",
+                    "detail": "fabriquée puis retenue comme référence",
+                    "ecartee": asset in ecartees,
+                }
+            )
+
+        return {
+            "personnage": identifiant,
+            "lignes": lignes,
+            # **Ce que l'atelier propose tout seul**, et rien de plus : une
+            # proposition n'est pas une décision, et elle porte sa provenance.
+            "propositions": self._propositions(projet, personnage),
+            "disponibles": sum(1 for l in lignes if not l["ecartee"]),
+        }
+
+    def _propositions(
+        self, projet: str, personnage: Personnage
+    ) -> list[dict[str, Any]]:
+        """Ce que l'atelier propose de promouvoir, avec sa raison.
+
+        **Le corps retenu de la première pose faite.** Le produit sait déjà le
+        désigner — il s'en sert pour composer les planches d'équipement, et
+        jamais pour autre chose. La règle est *le favori d'abord, sinon la plus
+        récente* ; sur quarante-huit images du dépôt, il y avait **zéro
+        favori**, donc c'est toujours la seconde branche qui décidait, et « la
+        plus récente » n'est pas la meilleure — c'est la dernière. La fiche
+        répare ça sans changer la règle : elle montre laquelle est retenue, et
+        retenir une autre image se fait là où on la regarde.
+
+        **La planche des quatre directions n'est pas encore proposable**, et
+        elle le dit plutôt que d'être absente : les directions arrivent avec la
+        vue du jeu, et une pose n'a pas encore d'angles à montrer.
+        """
+        proposees: list[dict[str, Any]] = []
+        deja = set(personnage.references) | set(personnage.concept_arts)
+        for case in self.cases(projet, personnage):
+            if case["corps"] and case["corps"] not in deja:
+                proposees.append(
+                    {
+                        "reference": case["corps"],
+                        "genre": "asset",
+                        "provenance": f"le corps retenu de « {case['pose']} »",
+                        "detail": "ce à quoi il ressemble une fois passé par le style du jeu",
+                    }
+                )
+                break
+        return proposees
+
+    def promouvoir_reference(
+        self, projet: str, identifiant: str, asset: str, promue: bool = True
+    ) -> Personnage:
+        """Une image fabriquée devient — ou cesse d'être — une référence permanente.
+
+        **Rien n'est copié** : c'est l'identifiant de l'asset qui est retenu, et
+        l'image reste où elle est. La dépromouvoir ne la supprime pas, et la
+        supprimer de la bibliothèque la retire d'ici sans laisser de trou : une
+        référence qui ne désigne plus rien ne part pas, elle ne casse rien.
+        """
+        personnage = self.personnage(projet, identifiant)
+        if promue:
+            if asset not in personnage.references:
+                personnage.references = (*personnage.references, asset)
+        else:
+            personnage.references = tuple(
+                r for r in personnage.references if r != asset
+            )
+        self._sauver(personnage)
+        return personnage
 
     def oublier_ambiance(self, projet: str, ambiance: str) -> int:
         """Les choses qui se servaient de cette ambiance **retombent sur le jeu**.
@@ -355,6 +631,9 @@ class ServiceProduction:
         retirer_ajoutee: str | None = None,
         ambiance: str | None = None,
         prend: str | None = None,
+        textes: dict[str, str] | None = None,
+        eteindre: str | None = None,
+        rallumer: str | None = None,
     ) -> Personnage:
         """Tout ce qui se règle sur un personnage, **en un seul geste**.
 
@@ -447,6 +726,32 @@ class ServiceProduction:
 
         if prend is not None and prend in CE_QU_ON_PREND:
             personnage.prend = prend
+
+        # **Un texte écrit ici remplace celui du jeu, pour cette chose seule**
+        # (E12). Un texte vidé n'est pas un texte éteint : vider rend la case au
+        # jeu — ou à l'ambiance —, éteindre écrit un refus. Les confondre aurait
+        # rendu le refus indistinguable de l'oubli, et donc impossible à défaire.
+        if textes is not None:
+            garde = dict(personnage.textes)
+            for nom, texte in textes.items():
+                if nom not in CHAMPS_BIBLE:
+                    continue
+                if texte.strip():
+                    garde[nom] = texte
+                else:
+                    garde.pop(nom, None)
+            personnage.textes = garde
+
+        # Éteindre et rallumer sont **deux gestes**, et non une liste entière :
+        # une liste envoyée en bloc ferait perdre le champ qu'un autre onglet
+        # vient d'éteindre.
+        if eteindre is not None and eteindre in CHAMPS_BIBLE:
+            if eteindre not in personnage.eteints:
+                personnage.eteints = (*personnage.eteints, eteindre)
+        if rallumer is not None:
+            personnage.eteints = tuple(
+                nom for nom in personnage.eteints if nom != rallumer
+            )
 
         if tenues is not None:
             cochees = set(tenues)

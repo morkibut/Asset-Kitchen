@@ -57,6 +57,7 @@ import { sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+import { FicheDeLaChose } from "./FicheChose"
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
  *
@@ -189,6 +190,16 @@ export function EcranEtabli({
    *  connaître pour montrer une matrice. */
   outil: ReactNode
 }) {
+  // **La fiche ouverte, ou non.** De l'écran et non du serveur : ouvrir une
+  // fiche ne change pas le jeu, et l'enregistrer en ferait un état à remettre
+  // d'accord avec la chose ouverte à chaque changement d'onglet.
+  const [ficheOuverte, setFicheOuverte] = useState(false)
+
+  // Changer de chose referme la fiche : elle décrit celle qu'on regardait, et
+  // la garder ouverte sur la suivante ferait croire qu'on a réglé l'une en
+  // réglant l'autre.
+  useEffect(() => setFicheOuverte(false), [ouvert.identifiant])
+
   const setRefus = (texte: string) =>
     onFente(texte ? { ton: 'echec', texte } : null)
   // **La colonne qu'on lit** (C3) : le corps, ou une pièce. Un identifiant et
@@ -235,7 +246,23 @@ export function EcranEtabli({
           pose pas dessus : c'est la profondeur suivante du même endroit, et le
           fil d'Ariane la dit. Les tables de E3 viendront ici ; d'ici là c'est la
           recette, seul outil qui existe. */}
-      {outil ?? (
+      {/* **La fiche s'ouvre en plein cadre, comme un outil** (E12) : c'est la
+          profondeur suivante du même endroit, et elle emprunte le mécanisme
+          existant plutôt que d'en inventer un. Elle passe **après** l'outil :
+          une image ouverte gagne, parce qu'on y est descendu plus loin.
+
+          Et comme l'outil, elle fait disparaître la barre qui paie — régler ne
+          se paie pas. C'est `App` qui la retire, sur le même booléen. */}
+      {outil ??
+        (ficheOuverte ? (
+          <FicheDeLaChose
+            personnage={ouvert}
+            plan={ouvert.plan ?? plan}
+            onPersonnage={onPersonnage}
+            onFermer={() => setFicheOuverte(false)}
+            onErreur={echouer}
+          />
+        ) : (
       <div className="flex min-h-0 flex-1">
         <Fiche
           plan={plan}
@@ -251,6 +278,7 @@ export function EcranEtabli({
           onOuvrirCase={onOuvrirCase}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
+          onFiche={() => setFicheOuverte(true)}
           dossierJeu={dossierJeu}
           onErreur={echouer}
         />
@@ -272,8 +300,13 @@ export function EcranEtabli({
           />
         )}
       </div>
-      )}
-      {barreQuiPaie}
+        ))}
+      {/* **La barre qui paie se retire quand la fiche s'ouvre** (E12) —
+          exactement comme quand un outil s'ouvre : régler, ranger, désigner une
+          référence n'appelle personne, et un écran incapable de dépenser ne
+          porte pas le champ qui dépense. `App` la retire déjà pour l'outil,
+          qu'il tient ; celle-ci se décide ici, où la fiche vit. */}
+      {ficheOuverte ? null : barreQuiPaie}
     </div>
   )
 }
@@ -685,6 +718,7 @@ function Fiche({
   onOuvrirCase,
   onPersonnage,
   onArmer,
+  onFiche,
   dossierJeu,
   onErreur,
 }: {
@@ -698,6 +732,9 @@ function Fiche({
   onOuvrirCase: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
+   *  parce que c'est de là qu'on y entre et qu'on y revient. */
+  onFiche: () => void
   dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
@@ -734,6 +771,7 @@ function Fiche({
         <Identite
           personnage={personnage}
           onPersonnage={onPersonnage}
+          onFiche={onFiche}
           onErreur={onErreur}
         />
         <Sortie personnage={personnage} dossierJeu={dossierJeu} />
@@ -942,10 +980,13 @@ function Onglet({
 function Identite({
   personnage,
   onPersonnage,
+  onFiche,
   onErreur,
 }: {
   personnage: Personnage
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
+  /** Descendre d'un cran : la fiche plein cadre (E12). */
+  onFiche: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(personnage.nom)
@@ -1013,6 +1054,17 @@ function Identite({
           aria-label="Nom du personnage"
           className="min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[15px] leading-none text-texte hover:border-bord focus:border-bord-fort focus:bg-fond-1"
         />
+        {/* **Un clic sur « sa fiche » ouvre l'écran plein cadre** (E12). Le
+            geste est celui de la maquette : on descend d'un cran depuis
+            l'établi, et Échap ramène à l'endroit exact d'où l'on venait. */}
+        <button
+          type="button"
+          onClick={onFiche}
+          title="ce qu'elle est, ce qui l'habille, ses images de référence — rien de tout ça ne coûte"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          sa fiche ›
+        </button>
         <button
           type="button"
           onClick={async () => {

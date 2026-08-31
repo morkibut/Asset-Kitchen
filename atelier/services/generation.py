@@ -47,7 +47,7 @@ from atelier.domaine.erreurs import (
     GenerationInconnue,
     SansCle,
 )
-from atelier.domaine.generation import AUTEUR, CARTE, EDITION, STYLE
+from atelier.domaine.generation import ASSET, AUTEUR, CARTE, EDITION, REFERENCE, STYLE
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
 from atelier.image import empreinte_de, mesurer
@@ -1099,6 +1099,11 @@ class ServiceGenerations:
             self._univers.echelle(projet, echelle) if self._univers and echelle else None
         )
         designes = set(self._concepts_identifiants(projet, personnage, piece))
+        # **Les images promues sont une quatrième provenance** (E12), et elle a
+        # son mot : « réinjection » dit *l'auteur l'a posée pour cet appel*, ce
+        # qu'une image promue n'est pas — elle part avec **tous** les appels de
+        # sa chose, et c'est ce qui la rend décochable en connaissance de cause.
+        promues = set(self._promues(projet, personnage))
 
         lignes = [
             {
@@ -1106,13 +1111,15 @@ class ServiceGenerations:
                 "role": r.role,
                 "origine": r.origine,
                 # **La provenance, nommée** (US-127) : « comprendre pourquoi elle
-                # part avant de décider de la retirer ». Trois sources, trois
+                # part avant de décider de la retirer ». Quatre sources, quatre
                 # phrases, et jamais un mot que l'écran devrait interpréter.
                 "provenance": (
                     "concept art"
                     if r.origine == CARTE and r.asset in designes
                     else "artwork officiel"
                     if r.origine == CARTE
+                    else "image promue"
+                    if r.asset in promues
                     else "réinjection"
                 ),
                 # La portée qui l'écarte, ou rien. C'est **la portée retenue**,
@@ -1191,11 +1198,28 @@ class ServiceGenerations:
         En rôle `style`, comme les artworks : ils **inspirent**, ils
         n'engendrent pas — une carte en source d'édition donnerait une filiation
         vers un objet que la bibliothèque ne connaît pas.
+
+        **Et les images promues avec eux** (E12), en rôle `reference` : celles-là
+        ne disent pas *voilà l'allure*, elles disent *voilà le sujet*. C'est ce
+        qui fait qu'un personnage se ressemble d'une pose à l'autre, et c'est la
+        correction du frottement le plus cher du dépôt — dix-sept appels payés
+        sur vingt-huit étaient partis sans une seule image.
         """
         return tuple(
             Reinjection(asset=identifiant, role=STYLE, origine=CARTE)
             for identifiant in self._concepts_identifiants(projet, personnage, piece)
+        ) + tuple(
+            Reinjection(asset=identifiant, role=REFERENCE, origine=ASSET)
+            for identifiant in self._promues(projet, personnage)
         )
+
+    def _promues(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """Les images que cette chose du jeu a promues en référence permanente."""
+        if self._production is None or not projet or not personnage:
+            return ()
+        return tuple(self._production.references_promues(projet, personnage))
 
     def _octets_references(self, identifiants, projet: str | None = None) -> tuple[bytes, ...]:
         """Les images réinjectées, relues à la source (US-12).
