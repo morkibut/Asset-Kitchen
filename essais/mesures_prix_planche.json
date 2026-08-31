@@ -1,0 +1,63 @@
+{
+  "1": {
+    "appels": 13,
+    "cases": 1,
+    "modele": "openai/gpt-image-2",
+    "origine": "le journal du dépôt",
+    "par_image": 0.0128
+  },
+  "2": {
+    "appels": 1,
+    "cases": 2,
+    "modele": "openai/gpt-image-2",
+    "origine": "le journal du dépôt",
+    "par_image": 0.0128
+  },
+  "3": {
+    "appels": 1,
+    "cases": 3,
+    "cout_usd": 0.013915,
+    "generation": "548a4902b22b4f86859c05b819208c54",
+    "grille": "3×1",
+    "modele": "openai/gpt-image-2",
+    "origine": "essais/essai_prix_planche.py, 31 août 2026",
+    "par_image": 0.004638,
+    "pixels": "1024×1024",
+    "secondes": 25.6,
+    "statut": "reussie"
+  },
+  "4": {
+    "appels": 1,
+    "cases": 4,
+    "modele": "openai/gpt-image-2",
+    "origine": "le journal du dépôt",
+    "par_image": 0.0057
+  },
+  "5": {
+    "appels": 1,
+    "cases": 5,
+    "cout_usd": 0.053425,
+    "generation": "727db81d396f415492071f66a040d1a6",
+    "grille": "5×1",
+    "modele": "openai/gpt-image-2",
+    "origine": "essais/essai_prix_planche.py, 31 août 2026",
+    "par_image": 0.010685,
+    "pixels": "1024×1024",
+    "secondes": 45.2,
+    "statut": "reussie"
+  },
+  "6": {
+    "appels": 1,
+    "cases": 6,
+    "cout_usd": 0.013915,
+    "generation": "256472714f8a463c9b7b71cb26efbd4e",
+    "grille": "3×2",
+    "modele": "openai/gpt-image-2",
+    "origine": "essais/essai_prix_planche.py, 31 août 2026",
+    "par_image": 0.002319,
+    "pixels": "1024×1024",
+    "secondes": 27.1,
+    "statut": "reussie"
+  },
+  "_lecture": "Ce que les trois appels du 31 août 2026 ont trouvé, et ce n'est pas ce qu'on cherchait. Trois cases et six cases ont coûté EXACTEMENT le même prix — $0,013915 —, pour la même taille d'image et la même durée. Cinq cases ont coûté $0,053425, presque quatre fois plus, sur un appel dont rien ne distingue le résultat : même modèle, même 1024×1024, même qualité de planche, cinq nains bien séparés. La lecture honnête est donc double. Une planche coûte le prix d'UN appel, quel que soit le nombre de cases qu'elle porte : le prix par image tombe en 1/N, et six cases reviennent à $0,0023 l'image contre $0,0128 pour une image seule — cinq fois moins. Mais la VARIANCE entre deux appels identiques est plus grande que l'écart entre deux tailles de planche, et c'est ce qu'aucun écran ne doit cacher : un prix affiché par nombre de cases montrerait du bruit comme si c'était une structure."
+}

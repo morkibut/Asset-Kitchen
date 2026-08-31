@@ -1565,7 +1565,7 @@ qui ne se partage jamais, c'est la chose du jeu.
 #### Bloquée par
 
 - **E10** — une case est une pose dans une direction ; sans les directions, la planche n'a rien à ranger.
-- **Les trois appels de mesure de planche** — à trois, cinq et six cases, moins de cinq centimes. Sans eux, l'écran affiche un prix par case qui ne repose que sur une seule mesure.
+- ~~**Les trois appels de mesure de planche**~~ — **tirés le 31 août 2026**, $0,081 (`essais/essai_prix_planche.py`, relevé dans `essais/mesures_prix_planche.json`). Ce qu'ils ont trouvé change la question : trois cases et six cases ont coûté **le même prix**, $0,0139, pour la même taille d'image et la même durée ; cinq cases ont coûté $0,0534 sur un appel dont rien ne distingue le résultat. **Une planche coûte le prix d'un appel** quel que soit ce qu'elle porte — six cases reviennent à $0,0023 l'image contre $0,0128 pour une image seule —, mais **la variance entre deux appels identiques dépasse l'écart entre deux tailles de planche**. Le critère « les trois prix, avec le nombre d'appels derrière chacun » demande donc une décision d'écran avant d'être écrit : un prix par nombre de cases montrerait du bruit comme s'il montrait une structure.
 
 ---
 

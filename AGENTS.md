@@ -28,14 +28,22 @@ non du code — les cases existent et disent *pas encore dessinée* tant qu'elle
 (`docs/vignettes-vues.md` porte les consignes). Deux critères attendent une étape voisine
 plutôt qu'un travail, et tous deux attendent la même : la **planche des quatre directions** en
 référence proposée (`E12`) et la porte de la vitrine **depuis une planche de pose** (`E16`)
-veulent `E13`. Trois étapes restent : `E13`, `E14` et `E20`, et **aucune n'est ouverte sans une
-décision de l'auteur** — `E13` demande trois appels de mesure de planche, `E14` attend `E13`,
-et `E20` attend toutes les autres, parce que c'est le seul écran qui décrit tous les autres et
-donc le seul qui se périme à chaque décision prise ailleurs.
-`E13` attend en plus **trois appels de mesure de planche**, à trois, cinq et six cases : moins
-de cinq centimes en tout, et c'est de l'argent, donc c'est une décision de l'auteur. Les
-arbitrages pris en autonomie et les questions encore ouvertes vivent dans
-`docs/v21-arbitrages.md`, qui ne fait foi sur rien.
+veulent `E13`. Trois étapes restent : `E13`, `E14` et `E20`. `E14` attend `E13` ; `E20` attend
+toutes les autres, parce que c'est le seul écran qui décrit tous les autres et donc le seul qui
+se périme à chaque décision prise ailleurs.
+
+**`E13` a ses trois mesures depuis le 31 août 2026, et elles ne disent pas ce qu'on
+attendait.** Trois appels payés — `essais/essai_prix_planche.py`, $0,081, relevé versionné dans
+`essais/mesures_prix_planche.json`. Trois cases et six cases ont coûté **exactement le même
+prix**, $0,0139, pour la même taille d'image et la même durée ; cinq cases ont coûté $0,0534,
+presque quatre fois plus, sur un appel dont rien ne distingue le résultat. Une planche coûte
+donc le prix d'**un appel** quel que soit ce qu'elle porte — six cases reviennent à $0,0023
+l'image contre $0,0128 pour une image seule, cinq fois moins —, mais **la variance entre deux
+appels identiques est plus grande que l'écart entre deux tailles de planche**. Le critère qui
+demande « les trois prix et le nombre d'appels derrière chacun » a donc besoin d'une décision
+d'écran avant d'être écrit : afficher un prix par nombre de cases montrerait du bruit comme si
+c'était une structure. Les arbitrages pris en autonomie et les questions encore ouvertes vivent
+dans `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
 Ce qui viendra après elle viendra d'une séance d'usage, comme
 les cinq reprises — `docs/releve-usage.md` garde ce qui n'est encore ni cadré ni planifié.
 **C5 est écrite mais pas encore usée** : la règle ci-dessous vaut pour elle comme pour les
@@ -92,6 +100,11 @@ py essais/essai_export.py            l'archive rouverte, sur ce que l'atelier a 
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
 py essais/essai_univers_chaine.py    UN APPEL PAYANT, ~$0,023 — la chaîne de T4 de bout en bout
 py essais/essai_decoupe_planche.py   UN APPEL PAYANT, ~$0,004 — une vraie planche, découpée
+py essais/essai_prix_planche.py      TROIS APPELS PAYANTS, $0,081 le 31 août 2026 — ce qu'une
+                                     planche coûte par image selon son nombre de cases. Son
+                                     relevé, `essais/mesures_prix_planche.json`, est versionné :
+                                     c'est lui que l'écran de `E13` lira, et un prix mesuré qui
+                                     ne serait pas dans le dépôt serait un prix en dur
 ```
 
 **Brancher un agent.** Le serveur MCP vit dans le même processus que l'API, sur `/mcp` :
