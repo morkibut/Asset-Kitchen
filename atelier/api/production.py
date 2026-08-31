@@ -397,6 +397,40 @@ async def promouvoir_reference(
     }
 
 
+@routeur.get("/characters/showcase")
+async def vitrine_du_monde(
+    requete: Request, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """La vitrine du **monde entier** — une image par chose du jeu.
+
+    Trois nains côte à côte disent tout de suite s'ils viennent du même monde.
+    C'est le même écran et les mêmes réglages qu'une chose seule : la vitrine
+    montre ce qu'on regardait quand on l'a ouverte, et rien n'est défini deux
+    fois.
+
+    **Déclarée avant `/characters/{identifiant}/showcase`**, et ce n'est pas
+    cosmétique : FastAPI essaie ses routes dans l'ordre, et `showcase` ne doit
+    pas être pris pour un identifiant de chose.
+    """
+    atelier = _atelier(requete)
+    return atelier.production.vitrine(_projet(requete, projet))
+
+
+@routeur.get("/characters/{identifiant}/showcase")
+async def vitrine(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """De quoi regarder une chose finie : les fonds du projet, et la taille commune.
+
+    **La vitrine ne fabrique rien, ne modifie rien, ne coûte rien.** Elle marque
+    ce qu'elle voit — une taille en écart —, et une marque n'est pas un compte :
+    les jauges restent celles du codex.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.production.vitrine(vise, identifiant)
+
+
 # ── La liste d'un type d'objet ───────────────────────────────────────────────
 
 

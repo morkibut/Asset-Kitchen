@@ -98,6 +98,50 @@ def _tailles_annoncees(texte: str) -> set[int]:
     return tailles
 
 
+# Les mots par lesquels une bible dit que son monde est sombre. **Une liste
+# courte et fermée** : le produit ne devine pas une couleur de fond, il en
+# propose une quand le texte du jeu la nomme, et il cite le texte à côté.
+_NOIRCEURS = ("black", "blackness", "dark", "noir", "obscur", "ténèb")
+
+
+def _parle_de_noir(texte: str) -> bool:
+    bas = (texte or "").casefold()
+    return any(mot in bas for mot in _NOIRCEURS)
+
+
+def _extrait(texte: str, autour: int = 40) -> str:
+    """Le morceau du texte qui a fait proposer ce fond, et rien de plus.
+
+    Citer la phrase entière noierait la raison dans le reste de la bible ; n'en
+    citer aucune ferait un fond apparu de nulle part.
+    """
+    bas = (texte or "").casefold()
+    place = min(
+        (bas.find(mot) for mot in _NOIRCEURS if mot in bas),
+        default=-1,
+    )
+    if place < 0:
+        return (texte or "")[:autour]
+    debut = max(0, place - autour // 2)
+    return ("…" if debut else "") + texte[debut : place + autour] + "…"
+
+
+def _taille_commune(vues: list[dict[str, Any]]) -> int:
+    """La taille que la plupart des images rendent — celle qui fait référence.
+
+    **Pas la cible du projet** : une chose peut avoir été fabriquée entière à
+    une autre taille, et c'est alors elle qui est cohérente. Ce qu'on cherche est
+    la sœur qui sort d'un quart plus petite que les autres, pas l'écart au
+    réglage — celui-là se lit dans la fiche.
+    """
+    if not vues:
+        return 0
+    comptes: dict[int, int] = {}
+    for vue in vues:
+        comptes[vue["largeur"]] = comptes.get(vue["largeur"], 0) + 1
+    return max(comptes, key=lambda taille: (comptes[taille], taille))
+
+
 class ServiceProduction:
     def __init__(
         self,
@@ -464,6 +508,126 @@ class ServiceProduction:
             )
         self._sauver(personnage)
         return personnage
+
+    # ── La vitrine (E16) ─────────────────────────────────────────────────────
+
+    def vitrine(self, projet: str, identifiant: str = "") -> dict[str, Any]:
+        """De quoi regarder une image finie : **les fonds, et la taille commune**.
+
+        **Un fond de jugement vient du projet ; un fond de repérage vient du
+        produit.** Le damier est le second — il montre ce qui est transparent, et
+        c'est le fond de la retouche. Les autres viennent de ce que le projet
+        possède déjà : le noir que sa bible décrit, et les couleurs de sa
+        palette. **Aucune couleur libre** : un sélecteur libre transformerait cet
+        écran en outil de maquillage — on trouverait toujours un fond sur lequel
+        le sprite est joli, et jamais celui sur lequel il disparaît.
+
+        **Et la taille commune, qui est le second défaut invisible.** Mesuré sur
+        le vrai projet : cinq poses de Balthazar sortent en 128 × 128 et son
+        attaque en 96 × 96 — posées côte à côte dans le jeu, le personnage
+        rapetisserait en frappant. Aucun écran ne mettait ces six images côte à
+        côte. La vitrine **marque** ce qu'elle voit ; elle ne compte pas, et une
+        marque n'est pas un compte.
+        """
+        objet = self._exiger(projet)
+        # **Un seul écran, deux contenus** : le monde entier quand on l'ouvre du
+        # codex, une chose et toutes ses poses quand on l'ouvre de son établi.
+        # Le fil d'Ariane dit lequel, et rien n'est défini deux fois.
+        personnage = self.personnage(projet, identifiant) if identifiant else None
+        ambiance = (
+            objet.ambiance(personnage.ambiance)
+            if personnage and personnage.ambiance
+            else None
+        )
+        palette = (
+            objet.palette_nommee(ambiance.palette)
+            if ambiance and ambiance.palette
+            else None
+        )
+        couleurs = list(palette.rendue) if palette else list(objet.univers.palette)
+
+        fonds: list[dict[str, str]] = [
+            {
+                "genre": "damier",
+                "couleur": "",
+                "raison": "ce qui est transparent — c'est le fond de la retouche, pas celui du jugement",
+            }
+        ]
+        # **Le noir n'est proposé que si la bible en parle**, et la raison cite
+        # le texte qui l'a fait proposer : un fond posé sans raison serait un
+        # fond inventé, et le produit n'en invente pas.
+        obscure = next(
+            (
+                c
+                for c in objet.univers.bible
+                if c.nom == "eclairage" and _parle_de_noir(c.texte)
+            ),
+            None,
+        )
+        if obscure is not None:
+            fonds.append(
+                {
+                    "genre": "noir",
+                    "couleur": "#000000",
+                    "raison": f"proposé, d'après « {_extrait(obscure.texte)} »",
+                }
+            )
+        for couleur in couleurs[:3]:
+            fonds.append(
+                {
+                    "genre": "palette",
+                    "couleur": couleur,
+                    "raison": "une couleur que le jeu emploie — le sujet s'y détache, ou non",
+                }
+            )
+
+        # Les images à regarder, avec la taille que chacune rend vraiment.
+        #
+        # **Du codex, une image par chose** — la première qu'elle tient : trois
+        # nains côte à côte disent tout de suite s'ils viennent du même monde.
+        # **De son établi, toutes ses poses** : on voit si le personnage se
+        # ressemble d'une pose à l'autre, et si elles sortent toutes à la même
+        # taille.
+        vues: list[dict[str, Any]] = []
+        for chose in [personnage] if personnage else self.personnages(projet):
+            tenues = [
+                (case, asset)
+                for case in self.cases(projet, chose)
+                for asset in case["images"]
+            ]
+            for case, asset in tenues if personnage else tenues[:1]:
+                vues.append(
+                    {
+                        "asset": asset["identifiant"],
+                        "pose": case["pose"],
+                        "chose": chose.nom,
+                        # **La taille qu'on voit, pas celle qu'on espère** :
+                        # une image jamais traitée n'a pas de rendu, et c'est
+                        # son brut qui s'affiche. Mesuré sur le vrai projet :
+                        # vingt et une des quarante-huit images sont dans ce
+                        # cas, et le codex les compte comme les autres.
+                        "largeur": asset["rendu_largeur"] or asset["largeur"],
+                        "hauteur": asset["rendu_hauteur"] or asset["hauteur"],
+                    }
+                )
+        commune = _taille_commune(vues)
+        return {
+            "personnage": identifiant,
+            "fonds": fonds,
+            "images": [
+                {**vue, "hors_taille": bool(commune) and vue["largeur"] != commune}
+                for vue in vues
+            ],
+            "taille_commune": commune,
+            # **La place du mouvement est réservée et grisée avec sa raison**,
+            # plutôt qu'occupée par un lecteur posé sur zéro image. Aucune pose
+            # du projet ne tient plus d'une vue dans une même direction : il n'y
+            # a rien à lire, et le dire vaut mieux qu'un bouton qui attend.
+            "mouvement": {
+                "possible": False,
+                "raison": "aucune pose ne tient plus d'une image dans une direction",
+            },
+        }
 
     def oublier_ambiance(self, projet: str, ambiance: str) -> int:
         """Les choses qui se servaient de cette ambiance **retombent sur le jeu**.

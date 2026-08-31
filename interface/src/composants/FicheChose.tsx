@@ -48,6 +48,7 @@ export function FicheDeLaChose({
   plan,
   onPersonnage,
   onFermer,
+  onVitrine,
   onErreur,
 }: {
   personnage: Personnage
@@ -55,6 +56,10 @@ export function FicheDeLaChose({
   plan: Pose[]
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onFermer: () => void
+  /** **La fiche porte la porte de la vitrine**, et le compte qui donne envie de
+   *  l'ouvrir. Elle n'en dessine rien : la vitrine est définie dans son propre
+   *  écran, et une chose est définie à un seul endroit. */
+  onVitrine: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [bloc, setBloc] = useState<Bloc>("Ce qu'il est")
@@ -159,7 +164,9 @@ export function FicheDeLaChose({
         {bloc === "Ce que le jeu lui réclame" && (
           <CeQuOnLuiReclame personnage={personnage} plan={plan} />
         )}
-        {bloc === "Ce qui est fait" && <CeQuiEstFait personnage={personnage} plan={plan} />}
+        {bloc === "Ce qui est fait" && (
+          <CeQuiEstFait personnage={personnage} plan={plan} onVitrine={onVitrine} />
+        )}
       </div>
 
       {/* **La matrice reste affichée**, et c'est la seule raison pour laquelle
@@ -562,9 +569,11 @@ function CeQuOnLuiReclame({
 function CeQuiEstFait({
   personnage,
   plan,
+  onVitrine,
 }: {
   personnage: Personnage
   plan: Pose[]
+  onVitrine: () => void
 }) {
   const faites = personnage.cases.filter((c) => c.images.length >= c.demandees).length
 
@@ -574,7 +583,18 @@ function CeQuiEstFait({
       <p className="font-serif text-[32px] leading-tight text-texte-2">
         {faites} case{faites > 1 ? "s" : ""} sur {plan.length}
       </p>
-      <Raison texte="le codex compte, l'établi fabrique — la vitrine montrera, et elle a sa propre étape" />
+      {/* **La porte, et pas l'écran.** Le codex compte, l'établi fabrique, la
+          galerie range — et la vitrine montre. Elle est définie dans son propre
+          écran ; la fiche porte le bouton et le compte qui donne envie de
+          l'ouvrir. */}
+      <button
+        type="button"
+        onClick={onVitrine}
+        className="mesure self-start px-1 text-[11px] text-signal hover:text-signal-clair"
+      >
+        les voir en grand ›
+      </button>
+      <Raison texte="sur le fond que la bible décrit, à des multiples entiers — rien n'est fabriqué ni modifié" />
     </section>
   )
 }

@@ -38,6 +38,7 @@ import {
 import { sujetAsset, useVisee } from "./Apercu"
 import { Bouton, EnTetePanneau, Raison } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+import { EcranVitrine } from "./Vitrine"
 import { PlanDuJeu, Vestiaire as PanneauVestiaire, posesTenues } from "./Personnages"
 
 // ── Ce que le monde contient ────────────────────────────────────────────────
@@ -104,6 +105,12 @@ export function EcranCodex({
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [rubrique, setRubrique] = useState<Rubrique>("personnages")
+  // **Le cinquième verbe du codex : il montre** (E16). Il rangeait, déclarait,
+  // comptait, lançait — et aucun de ces quatre ne peut voir à quoi ressemble ce
+  // qui est rangé. La vitrine ouverte d'ici montre le monde entier, une image
+  // par chose : trois nains côte à côte disent tout de suite s'ils viennent du
+  // même monde.
+  const [vitrineOuverte, setVitrineOuverte] = useState(false)
 
   const ouvert = personnages.find((p) => p.identifiant === choisi) ?? null
 
@@ -114,6 +121,22 @@ export function EcranCodex({
     "minmax(0,1fr)",
     `${replies.fiche ? 0 : 380}px`,
   ].join(" ")
+
+  // **La vitrine remplace le codex en plein cadre**, comme un outil remplace la
+  // matrice : c'est la même profondeur du même endroit, et elle retire la barre
+  // qui paie — elle ne fabrique rien.
+  if (vitrineOuverte)
+    return (
+      <div data-codex className="flex min-h-0 flex-col bg-fond-0">
+        <EcranVitrine
+          personnage={null}
+          personnages={personnages}
+          plan={plan}
+          onFermer={() => setVitrineOuverte(false)}
+          onErreur={onErreur}
+        />
+      </div>
+    )
 
   return (
     <div data-codex className="flex min-h-0 flex-col bg-fond-0">
@@ -163,6 +186,7 @@ export function EcranCodex({
               onChoisir={onChoisir}
               onOuvrir={onOuvrir}
               onPersonnage={onPersonnage}
+              onVitrine={() => setVitrineOuverte(true)}
               onErreur={onErreur}
             />
           ) : (
@@ -337,6 +361,7 @@ function ListeDesChoses({
   onChoisir,
   onOuvrir,
   onPersonnage,
+  onVitrine,
   onErreur,
 }: {
   personnages: Personnage[]
@@ -346,6 +371,8 @@ function ListeDesChoses({
   onChoisir: (identifiant: string | null) => void
   onOuvrir: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
+  /** Ouvrir la vitrine sur le monde entier (E16) — le verbe qui manquait. */
+  onVitrine: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const vide = personnages.length === 0
@@ -376,6 +403,20 @@ function ListeDesChoses({
           Ce jeu n'a encore personne.{" "}
           <em className="text-texte-2">Nomme le premier.</em>
         </p>
+      )}
+
+      {/* **Voir ce que ça donne**, et c'est la mission qui manquait : le codex
+          compte des cases, la vitrine montre des images finies. Absent quand le
+          monde est vide — il n'y a pas de chose à griser, il n'y a rien. */}
+      {!vide && (
+        <button
+          type="button"
+          onClick={onVitrine}
+          title="le monde entier, une image par chose — sur le fond que la bible décrit"
+          className="mesure h-[26px] self-start px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          voir tout le monde en grand ›
+        </button>
       )}
 
       {personnages.map((personnage) => (

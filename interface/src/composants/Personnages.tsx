@@ -58,6 +58,7 @@ import { PanneauCalque } from "./Calque"
 import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
+import { EcranVitrine } from "./Vitrine"
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
  *
@@ -194,11 +195,18 @@ export function EcranEtabli({
   // fiche ne change pas le jeu, et l'enregistrer en ferait un état à remettre
   // d'accord avec la chose ouverte à chaque changement d'onglet.
   const [ficheOuverte, setFicheOuverte] = useState(false)
+  // **La vitrine, troisième plein cadre du même endroit** (E16). Elle ne
+  // fabrique rien et ne modifie rien : comme la fiche, elle retire la barre qui
+  // paie, et Échap rend l'établi.
+  const [vitrineOuverte, setVitrineOuverte] = useState(false)
 
   // Changer de chose referme la fiche : elle décrit celle qu'on regardait, et
   // la garder ouverte sur la suivante ferait croire qu'on a réglé l'une en
   // réglant l'autre.
-  useEffect(() => setFicheOuverte(false), [ouvert.identifiant])
+  useEffect(() => {
+    setFicheOuverte(false)
+    setVitrineOuverte(false)
+  }, [ouvert.identifiant])
 
   const setRefus = (texte: string) =>
     onFente(texte ? { ton: 'echec', texte } : null)
@@ -254,12 +262,27 @@ export function EcranEtabli({
           Et comme l'outil, elle fait disparaître la barre qui paie — régler ne
           se paie pas. C'est `App` qui la retire, sur le même booléen. */}
       {outil ??
-        (ficheOuverte ? (
+        (vitrineOuverte ? (
+          <EcranVitrine
+            personnage={ouvert}
+            personnages={[ouvert]}
+            plan={ouvert.plan ?? plan}
+            onFermer={() => setVitrineOuverte(false)}
+            onErreur={echouer}
+          />
+        ) : ficheOuverte ? (
           <FicheDeLaChose
             personnage={ouvert}
             plan={ouvert.plan ?? plan}
             onPersonnage={onPersonnage}
             onFermer={() => setFicheOuverte(false)}
+            onVitrine={() => {
+              // On passe de la fiche à la vitrine sans repasser par l'établi :
+              // c'est la même profondeur, et refermer pour rouvrir aurait fait
+              // perdre l'endroit où l'on était.
+              setFicheOuverte(false)
+              setVitrineOuverte(true)
+            }}
             onErreur={echouer}
           />
         ) : (
@@ -279,6 +302,7 @@ export function EcranEtabli({
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           onFiche={() => setFicheOuverte(true)}
+          onVitrine={() => setVitrineOuverte(true)}
           dossierJeu={dossierJeu}
           onErreur={echouer}
         />
@@ -306,7 +330,7 @@ export function EcranEtabli({
           référence n'appelle personne, et un écran incapable de dépenser ne
           porte pas le champ qui dépense. `App` la retire déjà pour l'outil,
           qu'il tient ; celle-ci se décide ici, où la fiche vit. */}
-      {ficheOuverte ? null : barreQuiPaie}
+      {ficheOuverte || vitrineOuverte ? null : barreQuiPaie}
     </div>
   )
 }
@@ -719,6 +743,7 @@ function Fiche({
   onPersonnage,
   onArmer,
   onFiche,
+  onVitrine,
   dossierJeu,
   onErreur,
 }: {
@@ -735,6 +760,9 @@ function Fiche({
   /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
    *  parce que c'est de là qu'on y entre et qu'on y revient. */
   onFiche: () => void
+  /** Et la vitrine (E16), qui montre ce qu'on regardait — ici, une chose et
+   *  toutes ses poses à la même échelle. */
+  onVitrine: () => void
   dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
@@ -772,6 +800,7 @@ function Fiche({
           personnage={personnage}
           onPersonnage={onPersonnage}
           onFiche={onFiche}
+          onVitrine={onVitrine}
           onErreur={onErreur}
         />
         <Sortie personnage={personnage} dossierJeu={dossierJeu} />
@@ -981,12 +1010,15 @@ function Identite({
   personnage,
   onPersonnage,
   onFiche,
+  onVitrine,
   onErreur,
 }: {
   personnage: Personnage
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   /** Descendre d'un cran : la fiche plein cadre (E12). */
   onFiche: () => void
+  /** Et la vitrine (E16). */
+  onVitrine: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState(personnage.nom)
@@ -1064,6 +1096,17 @@ function Identite({
           className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
         >
           sa fiche ›
+        </button>
+        {/* **La vitrine montre ce qu'on regardait** (E16) : ouverte d'ici, ce
+            sont toutes les poses de cette chose, à la même échelle — c'est comme
+            ça qu'une pose sortie d'un quart plus petite se voit. */}
+        <button
+          type="button"
+          onClick={onVitrine}
+          title="voir ce que ça donne, en grand, sur le fond que la bible décrit"
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          la vitrine ›
         </button>
         <button
           type="button"

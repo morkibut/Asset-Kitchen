@@ -1621,12 +1621,32 @@ lecteur posé sur zéro image.
 
 #### Critères d'acceptation
 
-- [ ] L'image se regarde seule, en grand, sur le fond que la bible du jeu décrit
-- [ ] Les échelles sont des multiples entiers, et aucun lissage n'est appliqué à aucune
-- [ ] Toutes les poses d'une chose se posent à la même échelle
-- [ ] L'écran s'ouvre depuis le codex, depuis une fiche et depuis une planche, et retient ce qu'on regardait
-- [ ] La place du mouvement est réservée et grisée avec sa raison
-- [ ] Le fond de jugement vient du projet ; le damier de repérage reste ailleurs, et les deux ne se confondent nulle part
+- [x] L'image se regarde seule, en grand, sur le fond que la bible du jeu décrit
+- [x] Les échelles sont des multiples entiers, et aucun lissage n'est appliqué à aucune
+- [x] Toutes les poses d'une chose se posent à la même échelle
+- [x] L'écran s'ouvre depuis le codex, depuis une fiche ~~et depuis une planche~~, et retient ce qu'on regardait — *la planche d'une pose est E13 ; la porte s'y posera avec elle, l'écran ne bouge pas*
+- [x] La place du mouvement est réservée et grisée avec sa raison
+- [x] Le fond de jugement vient du projet ; le damier de repérage reste ailleurs, et les deux ne se confondent nulle part
+
+#### Ce qui a été décidé en la faisant
+
+**La taille montrée est celle qu'on voit, pas celle qu'on espère.** Une image jamais traitée
+n'a pas de rendu, et c'est son brut qui s'affiche — vingt et une des quarante-huit images du
+vrai projet sont dans ce cas, et le codex les compte comme les autres. La vitrine les montre
+telles quelles : c'est très exactement ce qu'elle est venue faire.
+
+**La taille commune se déduit de ce qui existe, pas de la cible du projet.** Une chose peut
+avoir été fabriquée entière à une autre taille, et c'est alors elle qui est cohérente. Ce
+qu'on cherche est la sœur qui sort plus petite que les autres ; l'écart au réglage, lui, se lit
+dans la fiche.
+
+**Le noir n'est proposé que si la bible en parle, et la raison cite le texte.** Un fond posé
+sans raison serait un fond inventé, et le produit n'en invente pas. Vérifié sur le vrai
+projet : la citation nomme *absolute blackness*, mot pour mot.
+
+**La portée se donne, elle ne se devine pas.** Au monde, la pose d'une image existe aussi dans
+le plan du jeu : la deviner aurait écrit « repos » sous chacune des trois choses au lieu de
+leurs noms.
 
 #### Bloquée par
 

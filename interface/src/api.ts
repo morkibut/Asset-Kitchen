@@ -1010,6 +1010,37 @@ export type ReferencesDeLaChose = {
   disponibles: number
 }
 
+/** ── La vitrine (E16) ──────────────────────────────────────────────────────
+ *
+ *  **Le codex compte des cases, la vitrine montre des images finies.** Elle ne
+ *  fabrique rien, ne modifie rien, ne coûte rien — elle marque ce qu'elle voit,
+ *  et une marque n'est pas un compte. */
+export type Vitrine = {
+  personnage: string
+  /** Les fonds sur lesquels juger. **Aucune couleur libre** : ils viennent de ce
+   *  que le projet possède déjà — sa bible et sa palette —, plus le damier, qui
+   *  est le fond de repérage du produit et non un fond de jugement. */
+  fonds: { genre: "damier" | "noir" | "palette"; couleur: string; raison: string }[]
+  images: {
+    asset: string
+    pose: string
+    /** Le nom de la chose à qui cette image appartient — c'est lui qu'on lit à
+     *  la portée du monde. */
+    chose: string
+    largeur: number
+    hauteur: number
+    /** Cette image-là sort à une autre taille que ses sœurs. La couleur des
+     *  écarts, jamais celle d'un échec : un jeu en cours de fabrication
+     *  n'échoue pas. */
+    hors_taille: boolean
+  }[]
+  /** La taille que la plupart des images rendent — celle qui fait référence. */
+  taille_commune: number
+  /** La place du mouvement, **réservée et grisée avec sa raison** plutôt
+   *  qu'occupée par un lecteur posé sur zéro image. */
+  mouvement: { possible: boolean; raison: string }
+}
+
 export type Carte = {
   identifiant: string
   projet: string
@@ -2253,6 +2284,13 @@ export const api = {
     appeler<{ personnage: Personnage; references: ReferencesDeLaChose }>(
       `/characters/${personnage}/references`,
       { method: "PUT", body: JSON.stringify({ asset, promue }) },
+    ),
+
+  /** De quoi regarder une chose finie : les fonds du projet, et la taille
+   *  commune de ses images (E16). Rien n'est fabriqué, rien n'est modifié. */
+  vitrine: (personnage = "") =>
+    appeler<Vitrine>(
+      personnage ? `/characters/${personnage}/showcase` : "/characters/showcase",
     ),
 
   /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,

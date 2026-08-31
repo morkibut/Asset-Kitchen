@@ -1137,6 +1137,69 @@ function serveurDouble(options: {
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+    // ── La vitrine (E16) ──────────────────────────────────────────────────
+    //
+    // **Le double rend ce que le serveur rend** : les fonds du projet, les
+    // images avec la taille qu'elles rendent vraiment, et la taille commune. Il
+    // ne rejoue pas le calcul des couleurs — ce que l'écran prouve est qu'il
+    // montre ce qu'il reçoit, aux multiples entiers et sans lissage.
+    if (url.includes("/showcase")) {
+      const seule = url !== "/api/characters/showcase"
+      const identifiant = seule
+        ? url.slice("/api/characters/".length, -"/showcase".length)
+        : ""
+      const choses = seule
+        ? etat.personnages.filter((p) => p.identifiant === identifiant)
+        : etat.personnages
+      const images = choses.flatMap((chose) => {
+        const tenues = chose.cases.flatMap((c) =>
+          c.images.map((asset) => ({
+            asset: asset.identifiant,
+            pose: c.pose,
+            chose: chose.nom,
+            largeur: asset.rendu_largeur || asset.largeur,
+            hauteur: asset.rendu_hauteur || asset.hauteur,
+          })),
+        )
+        return seule ? tenues : tenues.slice(0, 1)
+      })
+      const commune = images.length
+        ? images
+            .map((i) => i.largeur)
+            .sort(
+              (a, b) =>
+                images.filter((i) => i.largeur === b).length -
+                images.filter((i) => i.largeur === a).length,
+            )[0]
+        : 0
+      return rendre({
+        personnage: identifiant,
+        fonds: [
+          {
+            genre: "damier",
+            couleur: "",
+            raison:
+              "ce qui est transparent — c'est le fond de la retouche, pas celui du jugement",
+          },
+          {
+            genre: "noir",
+            couleur: "#000000",
+            raison: "proposé, d'après « surrounded by absolute blackness »",
+          },
+          {
+            genre: "palette",
+            couleur: "#c6b9a8",
+            raison: "une couleur que le jeu emploie — le sujet s'y détache, ou non",
+          },
+        ],
+        images: images.map((i) => ({ ...i, hors_taille: i.largeur !== commune })),
+        taille_commune: commune,
+        mouvement: {
+          possible: false,
+          raison: "aucune pose ne tient plus d'une image dans une direction",
+        },
+      })
+    }
     // ── La fiche d'une chose du jeu (E12) ─────────────────────────────────
     //
     // **Le double compose l'habillage comme le serveur le compose** : les trois
@@ -9143,5 +9206,197 @@ describe("la fiche d'une chose du jeu", () => {
     // Les quatre poses tenues sont là ; les deux rangées ne comptent ni comme
     // faites ni comme manquantes — elles sont comptées à côté.
     expect(fiche.getAllByText("0 / 1").length).toBe(4)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E16 · La vitrine
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Les quatre échelles et
+// l'absence de lissage, le fond qui vient du projet et jamais d'un sélecteur
+// libre, la place du mouvement grisée avec sa raison, les deux portes — le
+// codex et l'établi — et ce que chacune montre. Ce qui se calcule — les fonds
+// proposés, la taille commune — vit dans `tests/test_e16.py`.
+
+describe("la vitrine", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Une chose qui tient une image, pour avoir quelque chose à regarder. */
+  const avecUneImage = (nom: string, cote = 128) =>
+    personnage(nom, {
+      cases: PLAN.map((p, rang) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images:
+          rang === 0
+            ? [
+                {
+                  ...asset(`${nom.toLowerCase()}-corps`),
+                  rendu_largeur: cote,
+                  rendu_hauteur: cote,
+                },
+              ]
+            : [],
+        ...VIDE_C3,
+      })),
+    })
+
+  const ouvrirDepuisLEtabli = async () => {
+    const double = serveurDouble({ personnages: [avecUneImage("Balthazar")] })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "la vitrine ›" }))
+    const cadre = await waitFor(() => {
+      const vitrine = document.querySelector("[data-vitrine]")
+      if (!vitrine) throw new Error("la vitrine ne s'est pas ouverte")
+      return vitrine as HTMLElement
+    })
+    return { ...double, vitrine: within(cadre) }
+  }
+
+  // ── « Les échelles sont des multiples entiers » ────────────────────────────
+
+  test("la vitrine n'offre que des multiples entiers, et dit pourquoi", async () => {
+    const { vitrine } = await ouvrirDepuisLEtabli()
+
+    for (const echelle of ["×1", "×2", "×4", "×8"]) {
+      expect(vitrine.getByRole("button", { name: echelle })).toBeTruthy()
+    }
+    // Un sprite agrandi d'une fois et demie fabrique des pixels qui n'existent
+    // pas : le défaut qu'on croirait voir n'existerait que dans la fenêtre.
+    expect(vitrine.getByText(/multiples entiers seulement/)).toBeTruthy()
+    expect(vitrine.queryByRole("button", { name: "×1,5" })).toBeNull()
+  })
+
+  test("aucune image n'est lissée, à aucune échelle", async () => {
+    const { vitrine } = await ouvrirDepuisLEtabli()
+
+    const image = await vitrine.findByAltText("repos")
+    expect(image.getAttribute("style")).toContain("pixelated")
+    // ×2 par défaut : un sprite de 128 px y occupe 256 px.
+    expect(image.getAttribute("width")).toBe("256")
+
+    fireEvent.click(vitrine.getByRole("button", { name: "×4" }))
+    expect((await vitrine.findByAltText("repos")).getAttribute("width")).toBe("512")
+  })
+
+  // ── « Le fond de jugement vient du projet » ────────────────────────────────
+
+  test("les fonds viennent du projet, et aucun sélecteur libre n'existe", async () => {
+    const { vitrine } = await ouvrirDepuisLEtabli()
+
+    expect(vitrine.getByRole("button", { name: "Fond damier" })).toBeTruthy()
+    expect(vitrine.getByRole("button", { name: "Fond noir #000000" })).toBeTruthy()
+    expect(vitrine.getByRole("button", { name: "Fond palette #c6b9a8" })).toBeTruthy()
+    // **Aucune couleur libre** : un sélecteur transformerait cet écran en outil
+    // de maquillage.
+    expect(document.querySelector('[data-vitrine] input[type="color"]')).toBeNull()
+  })
+
+  test("le fond choisi porte la raison qui l'a fait proposer", async () => {
+    const { vitrine } = await ouvrirDepuisLEtabli()
+
+    fireEvent.click(vitrine.getByRole("button", { name: "Fond noir #000000" }))
+
+    // Le produit n'invente pas un fond : il cite le texte du jeu qui l'a fait
+    // proposer.
+    expect(await vitrine.findByText(/absolute blackness/)).toBeTruthy()
+  })
+
+  // ── « La place du mouvement est réservée et grisée avec sa raison » ────────
+
+  test("la place du mouvement est réservée, grisée, avec sa raison", async () => {
+    const { vitrine } = await ouvrirDepuisLEtabli()
+
+    const lire = vitrine.getByRole("button", { name: "lire le cycle" })
+    expect((lire as HTMLButtonElement).disabled).toBe(true)
+    expect(
+      vitrine.getByText(/aucune pose ne tient plus d'une image dans une direction/),
+    ).toBeTruthy()
+  })
+
+  // ── « L'écran s'ouvre depuis le codex et depuis une fiche » ────────────────
+
+  test("le codex ouvre la vitrine sur le monde entier", async () => {
+    // **Trois nains côte à côte disent tout de suite s'ils viennent du même
+    // monde.** C'est le cinquième verbe du codex : il montre.
+    const double = serveurDouble({
+      personnages: [avecUneImage("Balthazar"), avecUneImage("Le nain")],
+    })
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+
+    fireEvent.click(
+      within(cadre).getByRole("button", { name: "voir tout le monde en grand ›" }),
+    )
+
+    const vitrine = within(
+      await waitFor(() => {
+        const trouvee = document.querySelector("[data-vitrine]")
+        if (!trouvee) throw new Error("la vitrine ne s'est pas ouverte")
+        return trouvee as HTMLElement
+      }),
+    )
+    // Une image par chose, et c'est le nom de la chose qu'on lit.
+    expect(await vitrine.findByAltText("Balthazar")).toBeTruthy()
+    expect(vitrine.getByAltText("Le nain")).toBeTruthy()
+  })
+
+  test("la fiche ouvre la vitrine sur les poses de cette chose", async () => {
+    const double = serveurDouble({ personnages: [avecUneImage("Balthazar")] })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(await etabli.findByRole("button", { name: "sa fiche ›" }))
+    const fiche = within(
+      await waitFor(() => {
+        const trouvee = document.querySelector("[data-fiche]")
+        if (!trouvee) throw new Error("la fiche ne s'est pas ouverte")
+        return trouvee as HTMLElement
+      }),
+    )
+
+    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui est fait/ }))
+    fireEvent.click(await fiche.findByRole("button", { name: "les voir en grand ›" }))
+
+    // On passe de la fiche à la vitrine sans repasser par l'établi.
+    await waitFor(() =>
+      expect(document.querySelector("[data-vitrine]")).toBeTruthy(),
+    )
+    expect(document.querySelector("[data-fiche]")).toBeNull()
+  })
+
+  test("Échap ferme la vitrine et rend l'établi", async () => {
+    await ouvrirDepuisLEtabli()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-vitrine]")).toBeNull(),
+    )
+    expect(document.querySelector("[data-etabli]")).toBeTruthy()
+  })
+
+  test("la barre qui paie se retire quand la vitrine s'ouvre", async () => {
+    // Elle ne fabrique rien, ne modifie rien, ne coûte rien — et la barre
+    // absente le dit avant qu'on ait lu quoi que ce soit.
+    await ouvrirDepuisLEtabli()
+
+    expect(
+      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeNull()
   })
 })
