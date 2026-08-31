@@ -131,10 +131,11 @@ premier lancement se quitte à n'importe quelle étape, et rien n'y est exigé.
 
 ## User Stories → `docs/user-stories.md`
 
-**Les 308 user stories vivent dans `docs/user-stories.md`**, groupées par geste. Elles
+**Les 333 user stories vivent dans `docs/user-stories.md`**, groupées par geste. Elles
 se consultent par numéro, quand un critère en cite une — pas au démarrage d'une session.
 Quelle tranche porte laquelle se lit dans `docs/PLAN.md`, § Couverture.
-Les 135 dernières — `US-174` à `US-308` — sont celles de la V2.1, écrites le 31 août 2026.
+`US-174` à `US-308` sont celles de la V2.1, écrites le 31 août 2026 ; les 25 dernières —
+`US-309` à `US-333` — celles de la V2.2, écrites le même jour.
 
 ## Critères de succès
 
@@ -233,6 +234,10 @@ Les 135 dernières — `US-174` à `US-308` — sont celles de la V2.1, écrites
 *L'assistant de premier lancement* est revenu le 30 août, et son paragraphe est ci-dessus.
 
 **Écarté par les décisions de la V2.1.** Une entité « essais » servant de panier : elle fabriquerait un endroit où les images échappent au codex. Une barre de saisie dans l'univers, ou dans la galerie : les lieux d'où l'argent part restent deux. Une sixième taille de vignette pour reconnaître une image de référence : la barre d'espace montre n'importe quelle vignette en grand, partout. Un second panneau de réglages à côté de l'assistant : deux endroits qui règlent la même chose finissent par se contredire. Un dictionnaire d'étiquettes de style apporté du dehors : vérifié, les thésaurus d'art donnent *baroque* et jamais *pixel art 16 bits*, et aucun ne donne le texte anglais qui marche sur une IA d'image. Une cascade d'héritage entre le jeu, l'ambiance et une chose : une ambiance est une boîte qu'on désigne et dans laquelle on pioche, pas un étage dont on hérite. Deux ambiances sur une même chose : il faudrait une règle de priorité pour chaque texte et chaque image, et elle serait invisible au moment où elle décide. Un écran du gaspillage qui ne montrerait que ce qu'on a payé pour rien : mesuré, aucune image du dépôt n'a jamais été supprimée, et cet écran-là aurait affiché zéro. Un bouton « refaire cet appel » dans les dépenses : un écran qui regarde en arrière ne devient pas un troisième guichet. Une case définitive « ne plus jamais me montrer ce qui part » : on la cocherait le premier jour, quand on ne sait pas encore qu'on en aura besoin. Un contrôle libre de la couleur de fond dans la vitrine : on trouverait toujours un fond sur lequel le sprite est joli, et jamais celui sur lequel il disparaît.
+
+**Revenu dans le périmètre — 31 août 2026 (la V2.2).** « Un seul adaptateur » n'a jamais été une exclusion du produit : c'était une décision de construction, prise le 26 août parce qu'écrire trois adaptateurs donnait *le même résultat* pour trois fois le travail. Elle cesse de valoir le jour où les trois autres ne donnent pas le même résultat — ils donnent des images **gratuites**, avec une réserve qui se renouvelle chaque jour ou chaque mois. Trois choses entrent donc dans le périmètre : **plusieurs fournisseurs à la fois**, **une consommation qui n'est pas toujours de l'argent**, et **une première image sans compte ni clé**. La troisième est la seule que l'auteur remarquera sans la chercher : sur une machine neuve, il n'y avait rien à faire tant qu'une clé n'était pas déposée.
+
+**Écarté par la V2.2.** Le repli automatique d'un fournisseur sur un autre quand l'un tombe : ce serait une relance que l'auteur n'a pas demandée, et *rien n'est jamais relancé automatiquement* est la règle la plus ancienne du produit. Le mélange de deux fournisseurs dans un même appel. Le choix automatique du moins cher : le modèle est un défaut par type d'objet porté par l'univers, et un arbitrage caché entre gratuit et payé déciderait de l'apparence sans le dire. Publier une image de l'auteur à une adresse web pour qu'un fournisseur puisse la lire en référence : un atelier local ne publie rien, et un modèle qui n'accepte les références que par ce chemin-là est simplement grisé avec cette raison. Une note de qualité par modèle calculée par le produit : elle se juge à l'usage, sur des images qu'on voulait de toute façon — et deux bancs payés ont déjà appris qu'un classement obtenu hors du geste réel s'inverse dès qu'on y revient. Un compteur de crédits maison, qui reste écarté depuis la V1 : la réserve d'un fournisseur se lit chez lui quand il la dit, se compte ici quand il ne la dit pas, et l'écran dit toujours lequel des deux — mais le produit ne tient aucune comptabilité parallèle.
 
 ## Décisions d'implémentation → `docs/prd-decisions.md`
 

@@ -662,3 +662,26 @@ la prochaine réécriture retrouvera.
   appelants lui posent des questions différentes** — il faut aussi qu'ils
   décrivent le même appel.
 
+- **Un écran qui vit dans un magasin de module reste ouvert d'un essai à l'autre, et ce sont
+  les *autres* essais qui échouent.** Le guide s'ouvre depuis n'importe où, donc son état vit
+  hors de React — le même patron que le repli du châssis. `cleanup()` démonte l'arbre ; il ne
+  touche pas au magasin. Un essai qui ouvrait le guide et ne le refermait pas faisait donc
+  échouer **treize essais sans aucun rapport**, qui cherchaient leur texte dans une page de
+  prose qui parle de tout le produit — et le message disait « plusieurs éléments trouvés »,
+  jamais « le guide est ouvert ». Ce qui l'a rendu invisible est que le fichier d'essais avait
+  déjà `reinitialiserGuide()` **dans son `beforeEach`** : la précaution existait, elle était du
+  mauvais côté. Le geste qui répare est de refermer **en sortant** aussi — un état global se
+  rend, il ne se reprend pas. Payé en écrivant E20, le 31 août 2026.
+
+- **`36em` posé sur un bloc qui n'a pas dit sa taille se résout sur la taille du corps, et une
+  borne de lisibilité rate son but d'un cinquième sans que rien ne paraisse.** La colonne de
+  prose du guide est bornée à `36em` — la seule largeur maximale du produit, et sa raison est
+  un nombre de signes par ligne, pas une esthétique. Le bloc héritait les 13 px du corps alors
+  que sa prose s'écrit à 15 : 468 px au lieu de 540, **61 signes au lieu de 70**. Ce qui l'a
+  rendu invisible tient en une phrase : **une colonne trop étroite ne se remarque pas, elle
+  fatigue** — c'est le seul défaut de mise en page dont le symptôme n'est pas visuel. Et les
+  deux documents qui la décrivent annonçaient 504 px et 74 signes, un chiffre juste calculé sur
+  une avance mesurée à 13 px puis appliquée à une prose de 15 : **une mesure prise à une taille
+  ne se cite pas à une autre**. Le geste qui répare est d'écrire la taille sur le bloc qui porte
+  la borne, pour que le `em` soit celui de ce qu'on lit. Payé en écrivant E20, le 31 août 2026,
+  et trouvé en mesurant l'écran — aucun essai ne pouvait le voir.

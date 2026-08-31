@@ -2963,6 +2963,11 @@ describe("l'infobulle et le guide", () => {
     cleanup()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    // **Et on le referme en sortant**, pas seulement en entrant. Le magasin de
+    // module survit au démontage : un essai qui laisse le guide ouvert le laisse
+    // ouvert pour tous ceux qui suivent, et ils cherchent alors leur texte dans
+    // une page de prose qui parle de tout.
+    reinitialiserGuide()
   })
 
   test("aucune entrée du corpus ne saute la deuxième ligne", () => {
@@ -3144,28 +3149,45 @@ describe("l'infobulle et le guide", () => {
     expect(screen.queryByRole("slider")).toBeNull()
   })
 
-  test("le guide range les réglages par écran, découpe comprise", async () => {
+  test("le guide range les explications par lieu, et par les lieux qui existent", async () => {
+    // **Trois des cinq groupes portaient le nom d'un écran disparu** — l'Atelier,
+    // la retouche, la Découpe —, et l'univers tenait tout seul un sac de vingt-
+    // neuf entrées dont la moitié parlent de formulaires et l'autre d'images.
+    // Neuf groupes depuis E20, et l'univers se coupe en ses trois côtés.
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
     fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    await screen.findByRole("heading", { name: "La boucle" })
     for (const groupe of [
-      "Dans l'univers",
-      "Dans l'atelier",
-      "Dans la retouche",
-      "Dans la découpe",
+      "inspiration",
+      "jeu",
+      "ambiances",
+      "codex",
+      "etabli",
+      "galerie",
+      "tables",
+      "fabriques",
+      "reglages",
     ]) {
-      expect(await screen.findByRole("heading", { name: groupe }), groupe).toBeTruthy()
+      const titre = document.querySelector(`#ou-${groupe}`)
+      expect(titre, groupe).toBeTruthy()
+      expect(titre?.textContent, groupe).toBeTruthy()
     }
 
-    // Les six manques d'hier sont comblés : le barème, les champs de la bible,
-    // la palette de l'univers, la tache minimale, les lignes et colonnes de la
-    // découpe. Le seul restant est celui que personne ne peut écrire d'avance.
+    // **Et aucun ne porte plus le nom d'un écran qui n'existe pas.**
+    for (const disparu of ["Dans l'atelier", "Dans la retouche", "Dans la découpe"]) {
+      expect(screen.queryByRole("heading", { name: disparu }), disparu).toBeNull()
+    }
+
+    // Les manques d'hier restent comblés : le barème, les champs de la bible,
+    // la tache minimale, les lignes de la découpe.
     expect(screen.getByRole("heading", { name: "Barème d'échelles" })).toBeTruthy()
     expect(screen.getByRole("heading", { name: "contraintes techniques" })).toBeTruthy()
     expect(screen.getByRole("heading", { name: "tache minimale" })).toBeTruthy()
     expect(screen.getByRole("heading", { name: "lignes" })).toBeTruthy()
-    expect(SANS_ENTREE).toHaveLength(1)
+    // Ce qui reste sans entrée est écrit, et chaque ligne dit ce qui manque.
+    expect(SANS_ENTREE.length).toBeGreaterThan(0)
     expect(SANS_ENTREE[0]).toContain("catalogue")
   })
 
@@ -3178,6 +3200,206 @@ describe("l'infobulle et le guide", () => {
 
     fireEvent.keyDown(window, { key: "Escape" })
     await waitFor(() => expect(screen.queryByRole("heading", { name: "La boucle" })).toBeNull())
+  })
+
+  // ── E20 · Le guide, refait sur les lieux qui existent ─────────────────────
+  //
+  // **Le seul écran qui parle de tous les autres**, donc le seul qui se périme à
+  // chaque décision prise ailleurs. Il faisait visiter quatre pièces dont trois
+  // avaient disparu ou changé de nom, sa boucle commençait par « écrire » alors
+  // que le premier geste possible sur une machine neuve est de *nommer*, et sa
+  // liste de manques annonçait une ligne quand onze sujets entiers n'étaient
+  // expliqués nulle part.
+
+  const ouvrirLeGuide = async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }))
+    await screen.findByRole("heading", { name: "La boucle" })
+  }
+
+  test("le guide fait le tour des lieux qui existent, et dit lequel n'est pas un onglet", async () => {
+    // **On ne visite pas des pièces que personne ne peut ouvrir.** L'écran qui
+    // s'appelait l'Atelier n'existe plus, la Découpe est devenue une table parmi
+    // les autres, et la Bibliothèque s'appelle la galerie.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    // **Par identifiant, et non par nom** : « Le codex » nomme aussi un groupe
+    // de réglages plus bas, et c'est voulu — le lieu se visite, le groupe se
+    // consulte. Deux titres du même nom dans deux parties différentes.
+    for (const lieu of ["l-univers", "le-codex", "la-galerie", "l-etabli"]) {
+      expect(document.querySelector(`#${lieu}`), lieu).toBeTruthy()
+    }
+    for (const parti of ["Atelier", "Découpe", "Bibliothèque"]) {
+      expect(screen.queryByRole("heading", { name: parti }), parti).toBeNull()
+    }
+
+    // **Et il dit lequel n'est pas un onglet** : on n'arrive pas à l'établi par
+    // la barre, on clique un nom dans le codex.
+    const prose = screen
+      .getByRole("heading", { name: "La boucle" })
+      .closest("article")!.textContent!
+    expect(prose).toMatch(/Une profondeur, pas un onglet/)
+  })
+
+  test("la boucle du produit commence par nommer", async () => {
+    // Sur une machine neuve, c'est le **seul geste possible** : il n'y a pas
+    // d'établi tant qu'il n'y a pas de chose.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    const temps = screen
+      .getAllByRole("heading")
+      .map((n) => n.textContent)
+      .filter((t): t is string =>
+        ["Nommer", "Écrire", "Générer", "Juger", "Garder"].includes(t ?? ""),
+      )
+    expect(temps).toEqual(["Nommer", "Écrire", "Générer", "Juger", "Garder"])
+    // Et le mot est dans l'ouverture : « tu nommes, tu écris, tu génères… ».
+    const prose = screen
+      .getByRole("heading", { name: "La boucle" })
+      .closest("article")!.textContent!
+    expect(prose).toMatch(/Tu nommes, tu écris, tu génères/)
+    expect(prose).toMatch(/on ne paie rien en nommant/)
+  })
+
+  test("un groupe sans explication affiche son zéro au lieu de disparaître", async () => {
+    // **Un vide se voit, il ne se cache pas.** C'est la règle du produit partout
+    // ailleurs, et le guide est le dernier endroit où l'on aurait le droit d'y
+    // déroger — un manque du guide est un fait sur le guide.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    // **Chaque groupe porte son compte, et le compte est le vrai.** Un groupe
+    // qui disparaîtrait quand il tombe à zéro rendrait le manque invisible ; un
+    // compte écrit à la main au-dessus d'une liste vieillit à chaque ligne
+    // ajoutée, et personne ne recompte.
+    const sommaire = within(screen.getByRole("navigation", { name: "Le sommaire" }))
+    const attendus: Record<string, string> = {
+      Inspiration: "inspiration",
+      "Réglages du jeu": "jeu",
+      "Ambiances et couleurs": "ambiances",
+      "Le codex": "codex",
+      "L'établi": "etabli",
+      "La galerie": "galerie",
+      "Les tables": "tables",
+      "Les fabriques": "fabriques",
+      "Les réglages de l'atelier": "reglages",
+    }
+    // **Le nom seul ne suffit pas à désigner la rangée** : « Le codex » est aussi
+    // un lieu qu'on visite, plus haut dans le même sommaire, et sa rangée-là ne
+    // porte pas de compte. C'est le compte qui distingue les deux, et c'est très
+    // exactement ce qu'on mesure.
+    const rangees = sommaire
+      .getAllByRole("button")
+      .map((b) => b.textContent ?? "")
+    for (const [nom, ou] of Object.entries(attendus)) {
+      const compte = Object.values(AIDE).filter((e) => e.ou === ou).length
+      expect(rangees, nom).toContain(`${nom}${compte}`)
+    }
+
+    // Et le corps rend le zéro pour un groupe vide plutôt que rien du tout.
+    expect(
+      Object.values(AIDE).filter((e) => e.ou === "codex").length,
+    ).toBeGreaterThan(0)
+  })
+
+  test("les six phrases fausses sont corrigées, et aucune ne compte cinq places", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    // **Sept places, pas cinq** : les contours et la main s'y sont ajoutés.
+    const prose = screen
+      .getByRole("heading", { name: "La boucle" })
+      .closest("article")!.textContent!
+    expect(prose).toMatch(/Une recette a sept places/)
+    expect(prose).not.toMatch(/cinq places/)
+    // Le corpus non plus ne les compte plus à cinq, ni ne nomme un écran parti.
+    const corpus = Object.values(AIDE)
+      .map((e) => `${e.quoi} ${e.change} ${e.long ?? ""}`)
+      .join(" ")
+    expect(corpus).not.toMatch(/cinq places|cinq étapes/)
+    expect(corpus).not.toMatch(/l'Atelier/)
+    expect(corpus).not.toMatch(/l'écran Univers/)
+    // Et le tiroir « ce qui partira », retiré en E14, n'est plus décrit comme
+    // vivant sous le champ.
+    expect(corpus).not.toMatch(/dépliant/)
+  })
+
+  test("les entrées qui manquaient sont là, dont la clé du fournisseur", async () => {
+    // **Onze sujets entiers n'étaient expliqués nulle part**, et le plus coûteux
+    // était la clé : le seul réglage qui empêche absolument tout tant qu'il est
+    // vide.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    for (const nom of [
+      "Le codex",
+      "Écrire un nom",
+      "La vitrine",
+      "Une palette",
+      "Une ambiance",
+      "La planche de poses",
+      "L'écran de confirmation",
+      "Le calibrage",
+      "Les contours",
+      "La main",
+      "La superposition",
+      "Les dépenses",
+      "La clé du fournisseur",
+      "L'assistant de démarrage",
+    ]) {
+      expect(
+        screen.getAllByRole("heading", { name: nom }).length,
+        nom,
+      ).toBeGreaterThan(0)
+    }
+  })
+
+  test("un réglage sans explication n'a pas de trait sous son nom", async () => {
+    // **Le trou est visible dans le guide, jamais dans le travail.** Aucune
+    // bulle vide, aucun « à documenter » dans un panneau : on voit seulement
+    // qu'il n'y a rien à survoler.
+    expect(AIDE["reglage.qui.nexiste.pas"]).toBeUndefined()
+    // Et le guide, lui, tient la liste de ce qu'il ne dit pas.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    expect(
+      screen.getByRole("heading", { name: "Ce qui n'est pas encore écrit" }),
+    ).toBeTruthy()
+    for (const manque of SANS_ENTREE) {
+      expect(screen.getByText(manque)).toBeTruthy()
+    }
+  })
+
+  test("le titre reste en serif, les titres de section en sans majuscules", async () => {
+    // **Aucun quatrième emploi du serif**, et la colonne de prose reste bornée :
+    // c'est la seule largeur maximale du produit.
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    await ouvrirLeGuide()
+
+    const titre = screen.getByRole("heading", { name: "Guide", level: 1 })
+    expect(titre.className).toContain("font-serif")
+
+    const section = screen.getByRole("heading", { name: "Réglages du jeu" })
+    expect(section.className).toContain("uppercase")
+    expect(section.className).not.toContain("font-serif")
+
+    const prose = screen.getByRole("heading", { name: "La boucle" }).closest("article")
+    expect(prose?.className).toContain("max-w-[36em]")
+    // **Et le `em` est celui de la prose, écrit sur le bloc qui porte la
+    // borne.** Sans cette taille, `36em` se résout sur les 13 px hérités du
+    // corps : 468 px au lieu de 540, soit 61 signes par ligne là où la règle en
+    // vise 74. jsdom ne met rien en page — l'essai garde donc la *cause*, la
+    // seule chose qu'il puisse tenir, et la mesure vit dans `docs/PIEGES.md`.
+    expect(prose?.className).toContain("text-[15px]")
   })
 })
 

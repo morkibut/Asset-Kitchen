@@ -285,7 +285,7 @@ export function Fiche({
  *  qui suit.
  *
  *  Elle ne se règle pas — elle se lit. Un bloc quand même, et repliable comme
- *  les cinq étapes : « un bloc replié ne se tait pas, il porte sa valeur »
+ *  les places de la recette : « un bloc replié ne se tait pas, il porte sa valeur »
  *  (`docs/DESIGN.md`), et une ligne d'état suffit alors à dire ce que le projet
  *  a fait. Aucun pointillé sur les valeurs : ce qui se règle est juste en
  *  dessous. */

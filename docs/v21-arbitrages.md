@@ -745,6 +745,24 @@ questions voisines de la même maquette : superposer plus de deux images — rie
 l'interdit, rien ne le prévoit ; et rejouer une superposition quand la référence
 a changé, automatiquement ou sur demande.
 
+### B-18 · Où le modèle se choisit, maintenant que la colonne n'a plus que ça
+
+La bande de 300 px au pied de la barre qui paie devait disparaître le jour où
+l'héritage d'une chose du jeu (E12) et l'écran de confirmation (E14) existeraient.
+Les deux sont livrées le 31 août 2026, et elles lui ont bien pris ce qu'elles
+portent mieux : les textes hérités, les images de référence et leur décochage se
+lisent désormais ligne par ligne avant de payer.
+
+**Elle reste quand même**, et pour une seule raison, celle que A-25 avait déjà
+nommée : **aucun autre écran ne choisit un modèle**. Ce qu'elle porte encore tient
+en trois choses — le modèle, l'échelle, le nombre de variations.
+
+**Ce qui manque : de l'usage.** Déplacer le choix du modèle sur l'écran de
+confirmation en ferait un réglage qu'on relit à chaque appel ; le mettre dans les
+réglages du jeu en ferait un défaut qu'on ne voit plus au moment de payer. Aucune
+des deux ne se juge sur le papier. La question se rouvre quand l'auteur aura
+fabriqué assez pour dire si le choix du modèle le gêne là où il est.
+
 ### B-17 · Le fond « image du jeu » de la vitrine attend un décor
 
 Tant que la famille des décors est vide, ce fond est grisé avec sa raison. Ce qui

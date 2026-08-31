@@ -1,6 +1,6 @@
-# Plan : Asset Kitchen — V1, V2, puis la V2.1
+# Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2
 
-> **PRD source** : `docs/PRD.md` — **308 user stories, toutes couvertes ici.**
+> **PRD source** : `docs/PRD.md` — **333 user stories, toutes couvertes ici.**
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/archi-versions.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
@@ -31,6 +31,13 @@
 > de `docs/maquettes-v2.1/` — vingt-six écrans dessinés, quarante-et-une décisions prises. Elles
 > ne s'intercalent nulle part : **aucune tranche de T1 à R5 ne change d'ordre ni de contenu.**
 > Ce qu'elles refont n'est pas ce que l'atelier fabrique, c'est l'endroit d'où on le fabrique.
+>
+> **Les six tranches F0 à F6 sont venues le 31 août 2026**, d'un constat d'économie et
+> non d'un chantier : trois fournisseurs d'images rendent des crédits à intervalle
+> régulier, et le produit n'en connaît qu'un seul, payant à l'appel. Elles ne
+> s'intercalent nulle part — **la V2.2 s'ouvre quand la V2.1 est close**, et l'ordre est
+> une nécessité plutôt qu'une préférence : l'écran de confirmation d'E14 est celui que
+> traverse tout ce que la V2.2 dit d'un prix.
 >
 > **Le détail de chaque tranche vit dans `docs/tranches/<code>.md`** — vingt fichiers,
 > un par tranche : ce qu'elle livrait, ses critères cochés un par un, ce qui la bloquait,
@@ -314,8 +321,9 @@ d'acceptation de chacune d'elles :
 | | **Total** | **16** |
 
 Avec les 114 de la V1 et les 43 de la V2, les 173 premières user stories du PRD ont chacune
-leur tranche. **Les 135 suivantes — `US-174` à `US-308` — sont celles de la V2.1, et leur
-couverture est plus bas.** Total : **308 user stories, une tranche chacune.**
+leur tranche. **Les 135 suivantes — `US-174` à `US-308` — sont celles de la V2.1, et les 25
+dernières — `US-309` à `US-333` — celles de la V2.2. Les deux couvertures sont plus
+bas.** Total : **333 user stories, une tranche chacune.**
 
 ---
 
@@ -1594,7 +1602,7 @@ que cette étape ferme — sans en creuser un autre, qui serait un tunnel.
 ---
 
 ### E20 · Le guide
-**User stories** : 304, 305, 306, 307, 308
+**User stories** : 304, 305, 306, 307, 308 · *9 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -1618,11 +1626,480 @@ jamais se voir dans le travail.
 
 #### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-**9 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
+**9 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
-- **Toutes les autres.** Un guide écrit au milieu du plan est un guide à réécrire à la fin.
+- ~~**Toutes les autres**~~ — **livrées le 31 août 2026**. Un guide écrit au milieu du plan est un guide à réécrire à la fin ; celui-ci a été écrit une fois, après.
+
+**Livrée le 31 août 2026, et la V2.1 est close.** Le guide passe de cinq groupes à neuf : l'univers
+se coupe en ses trois côtés, et trois anciens groupes portaient le nom d'un écran disparu. Ce qui
+avait vieilli était le **cadre**, pas le contenu — *une entrée décrit un réglage, pas un écran*, et
+c'est ce qui a rendu l'étape courte. Douze entrées neuves, deux réécrites, six phrases corrigées.
+
+---
+
+---
+
+## V2.2 — D'autres fournisseurs, dont des gratuits
+
+*Six tranches, décidées le 31 août 2026.* Elles ne viennent ni d'un chantier de maquettes,
+ni d'une séance d'usage, mais d'un constat d'économie : trois fournisseurs d'images rendent
+des crédits à intervalle régulier — chaque jour pour deux d'entre eux —, et le produit n'en
+connaît qu'un seul, payant à l'appel.
+
+**La V2.2 s'ouvre quand la V2.1 est close**, donc après E14 et E20. Ce n'est pas seulement
+un ordre de valeur : l'écran de confirmation (E14) est celui qui montre ce qui part **et ce
+que ça coûte**, et c'est par lui que passe toute la tranche F2. Le construire une fois en
+dollars puis le rouvrir aussitôt reviendrait à l'écrire deux fois.
+
+**Le critère de découpage ne bouge pas**, celui des trois versions précédentes, mot pour
+mot : *chaque tranche est utilisable à sa livraison, et on ne passe à la suivante que
+lorsque la précédente sert vraiment.*
+
+### Ce qui la déclenche, et ce qui n'est pas une raison
+
+La raison est le prix, et elle se mesure sur ce dépôt : le modèle par défaut coûte $0,0245
+l'image avec un guide de style, et l'écran des dépenses a montré que **six relances en
+trente-deux minutes ont emporté le quart de tout l'argent jamais dépensé ici**. La relance
+est le geste normal du produit — on regarde, ça ne va pas, on refait. Un fournisseur qui
+rend des crédits chaque jour change ce que ce geste coûte.
+
+**Ce qui n'est pas une raison, et qu'il faut écarter tout de suite :** la qualité. Rien ne
+laisse penser qu'un modèle gratuit vaudra le modèle par défaut sur le geste qui compte —
+tenir un univers sur dix sujets. La V2.2 ne cherche pas à remplacer ce qui est payé ; elle
+cherche à rendre gratuit **ce qui n'avait pas besoin d'être payé** : le brouillon, l'essai
+de cadrage, et tout ce que fabrique un agent qui code et regarde ailleurs.
+
+### Ce que la V2.2 hérite et ne rediscute pas
+
+Tout ce que la V1, la V2 et la V2.1 ont instauré tient, et c'est un critère d'acceptation de
+chaque tranche : les dimensions mesurées font foi ; rien n'est jamais relancé
+automatiquement ; ce qui est indisponible est grisé avec sa raison ; le traitement est non
+destructif ; les fichiers font foi et la base est un index reconstructible ; aucune carte
+graphique, aucun modèle génératif local ; tout ce qui ne demande pas un fournisseur
+fonctionne réseau coupé ; le MCP n'a aucune logique propre ; une dépense ne s'efface jamais ;
+il n'y a qu'une barre de saisie et deux lieux d'où l'argent part.
+
+**Et une chose ne bouge pas alors que la frontière du dépôt s'élargit** : le post-traitement.
+C'est lui qui rend les modèles utilisables — *dix modèles sur douze font dériver la taille du
+pixel d'une étape à l'autre*, et sans la remise sur grille commune ils seraient tous à jeter.
+Cette couche est ce qui permet d'accueillir des modèles moins réguliers sans rien changer
+d'autre. **La V2.2 n'ajoute aucune place de recette, aucun écran neuf, et aucun geste de
+fabrication.**
+
+### Les trois invariants que la V2.2 révise, et pourquoi
+
+Un invariant instauré ne se renégocie plus. Trois se renégocient ici, et chacun est écrit
+parce qu'il vaut mieux nommer une révision que la laisser se découvrir en construisant.
+
+**1 · « Le catalogue décide, jamais une liste en dur » garde son sens et change d'autorité.**
+Il a été instauré en T1 contre un défaut mesuré chez SpriteCook, qui code ses plafonds en dur
+et **plafonne sous ses propres modèles** — 14 références déclarées là où le fournisseur en
+donne 16. Des trois fournisseurs qui entrent, tous ne déclarent pas leurs modèles avec le même
+soin, et l'un d'eux ne déclare peut-être rien du tout. La règle survit sous cette forme :
+**c'est l'adaptateur qui répond, et il ne répond jamais de mémoire** — soit il relit le
+fournisseur, soit il sert une fiche relevée ici, **datée**, et l'écran dit laquelle des deux.
+Ce qui reste interdit est ce que la règle visait : une capacité écrite dans le code, jamais
+revérifiée, et plus basse que la réalité.
+
+**2 · « Le coût enregistré est celui que l'appel facture » devient « ce que l'appel a
+consommé, dans l'unité du fournisseur ».** Il a été instauré en T1 parce qu'un tarif de
+catalogue mentait de plus du double — $0,019 annoncés, $0,042 facturés. Il ne dit rien d'un
+fournisseur qui ne facture pas. Ce qui survit, et qui était le fond : **on n'enregistre
+jamais un chiffre annoncé, on enregistre ce que l'appel a réellement consommé** — des
+dollars quand c'en est, un jeton quand c'en est un, rien quand ce n'est rien. **L'unité
+change, la règle ne change pas.**
+
+**3 · « La clé du fournisseur est le seul préalable dur du produit » tombe.** Elle datait de
+T1, quand il n'y avait qu'un fournisseur et qu'il fallait payer pour la première image. Avec
+un fournisseur qui ne demande ni compte ni clé, la première image ne demande plus rien. Ce
+qui reste vrai : un fournisseur sans identifiants utilisables **reste grisé avec sa raison**.
+Ce qui tombe : que le produit entier soit inerte tant qu'aucune clé n'est déposée. C'est la
+seule des trois révisions qui se voit sans la chercher.
+
+### Quand chaque entité de la V2.2 apparaît
+
+| Entité | Apparaît en | Ce qu'elle porte à ce moment-là | Se complète en |
+|---|---|---|---|
+| **Fournisseur** | F1 | son nom, l'état de ses identifiants, la date de sa dernière photo de catalogue, et d'où viennent les fiches de ses modèles | F2 (son unité de consommation), F3 (ses secrets, un ou deux) |
+| **Réserve** *(portée par le fournisseur)* | F2 | ce qui reste, dans quelle unité, quand ça revient, et **si le chiffre est lu chez lui ou compté ici** | F4 (compté ici), F5 (lu chez lui) |
+
+**Deux champs s'ajoutent à des objets qui existent**, et aucun ne rétro-adapte quoi que ce
+soit : le nom du fournisseur sur la génération et sur l'asset (F1), et ce que l'appel a
+consommé avec son unité sur la génération (F2). Une dépense d'avant la V2.2 se relit sans
+rien perdre — elle est en dollars, et elle le dit.
+
+### Les invariants que la V2.2 instaure
+
+| Invariant | Instauré en |
+|---|---|
+| Un modèle se nomme par son fournisseur **et** par son nom ; les deux ensemble, jamais l'un seul | F1 |
+| Un fournisseur injoignable grise ses modèles et n'en efface aucun autre | F1 |
+| Une fiche de capacités dit d'où elle vient, et sa date quand elle vient d'ici | F1 |
+| Aucun repli automatique d'un fournisseur sur un autre — c'est une relance, et elle appartient à l'auteur | F1, et chaque tranche le conserve |
+| Aucune image de l'auteur n'est publiée à une adresse lisible par un tiers pour servir de référence | F1 |
+| Ce qui est enregistré est ce que l'appel a **consommé**, dans l'unité du fournisseur, jamais un chiffre annoncé | F2 |
+| Un total en argent ne compte que de l'argent | F2 |
+| Un chiffre de réserve dit toujours s'il est relevé chez le fournisseur ou compté ici | F2 |
+| Retirer une clé grise, et n'efface jamais ni une image ni une dépense | F3 |
+
+### Couverture des 25 user stories de la V2.2
+
+Chaque user story appartient à une tranche et à une seule. **F0 n'en porte aucune**, et c'est
+la seule : c'est un relevé, et un relevé n'a pas d'utilisateur qui le demande — même raison
+qu'E0 en V2.1.
+
+| Tranche | User stories | Nombre |
+|---|---|---:|
+| F0 | — | 0 |
+| F1 | 309 à 314 | 6 |
+| F2 | 315 à 321 | 7 |
+| F3 | 322 à 326 | 5 |
+| F4 | 327, 328 | 2 |
+| F5 | 329, 330 | 2 |
+| F6 | 331, 332, 333 | 3 |
+| | **Total** | **25** |
+
+### F0 · Le relevé des trois — *à faire avant que le code commence*
+
+**Un relevé, pas un banc, et c'est la seule décision de méthode de cette version.** Le banc
+qui a désigné le modèle par défaut a payé dix sujets en deux jets chez trois modèles, jugés
+image par image. Celui-ci ne peut pas et n'a pas à le faire : les trois fournisseurs
+proposent **chacun plusieurs modèles** et rendent **peu de crédits à la journée**. Un banc de
+qualité épuiserait les réserves avant d'avoir rien conclu — et il conclurait sur la mauvaise
+question, puisque ce qu'on cherche à savoir n'est pas *lequel est le meilleur* mais *ce que
+chacun sait faire, et à quel prix en crédits*.
+
+Ce qu'il faut ici est ce que `essais/essai_couverture.py` a fait sur OpenRouter en une
+poignée d'appels : **demander au fournisseur ce qu'il propose, et croiser sa réponse avec ce
+qui se lit ailleurs.** Cinq questions, fournisseur par fournisseur :
+
+- **la liste de ses modèles**, telle que son interface la donne, et ce qu'elle déclare de
+  chacun ;
+- **lesquels acceptent une image de référence, et par quel chemin** — des octets envoyés avec
+  l'appel, une adresse web publique, ou pas du tout. *C'est la question qui décide de tout le
+  reste* : un modèle qui ne prend une référence que par adresse publique est **inutilisable
+  pour un univers qui vit sur le disque de l'auteur**, et il n'y a aucun contournement
+  acceptable — publier une planche d'artwork pour qu'un fournisseur puisse la lire est exclu ;
+- **ce qu'une image consomme**, dans l'unité du fournisseur, et ce que la réserve d'une
+  journée permet ;
+- **où le fournisseur dit ce qu'il reste**, s'il le dit quelque part ;
+- **ce qu'il fait quand il ne peut pas répondre** : un refus qui se lit, un silence, ou une
+  image vide.
+
+**Sa consommation est un critère du relevé, pas une contrainte extérieure** : au plus une
+image par modèle retenu, et seulement pour vérifier qu'un modèle *fait* ce qu'il *déclare*.
+Un écart entre les deux est le résultat le plus utile qu'il puisse produire — c'est très
+exactement ce qu'`output_format: "png"` accepté puis ignoré chez Seedream avait appris, et
+ce défaut-là n'apparaît dans aucune documentation.
+
+Ce qu'il ne fait pas : juger la qualité. Elle se jugera à l'usage, sur des images que
+l'auteur voulait de toute façon — et deux bancs payés ont appris qu'un classement obtenu hors
+du geste réel s'inverse dès qu'on y revient.
+
+| À produire | Ce que ça coûte | Bloque |
+|---|---|---|
+| **Le relevé des trois** — une fiche par fournisseur, datée, rangée près de `essais/couverture.json` | quelques minutes et une poignée d'images gratuites ; **aucun appel payant** | **F1** (qui entre, et par quel chemin les références passent), **F2** (dans quelle unité chacun compte) |
+
+**Ce que le relevé peut décider, et qu'il faut accepter d'avance** : qu'un des trois n'entre
+pas. Un fournisseur dont aucun modèle ne prend de référence autrement que par adresse
+publique n'a sa place que dans le brouillon — ce qui reste une place, celle de F6, mais pas
+celle qu'on lui prêtait.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**8 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **E14 et E20** — décision d'ordre : la V2.2 s'ouvre quand la V2.1 est close.
+
+---
+
+---
+
+### F1 · Le pluriel, et le fournisseur qui ne demande rien
+**User stories** : 309, 310, 311, 312, 313, 314
+
+#### Ce qu'on livre
+
+Un second fournisseur entre, et **c'est celui qui ne demande ni compte ni clé**. De bout en
+bout : ses modèles paraissent dans la même liste que ceux d'OpenRouter, chacun portant le nom
+de qui le propose ; on en choisit un ; l'image revient, passe le post-traitement du projet,
+entre en bibliothèque ; et l'appel garde le nom du fournisseur qui l'a fait.
+
+**Rien de ce qui existe ne change de forme**, et c'est ce qui rend cette tranche courte : le
+grisé avec sa raison, l'avancement en direct, l'appel raté enregistré avec sa phrase
+française, le repli daté quand la liaison manque — tout continue. Ce qui change est que
+chaque fournisseur a désormais **son** repli et **sa** date, et qu'un fournisseur injoignable
+grise ses modèles au lieu de vider la liste.
+
+**Un point mérite d'être dit parce qu'il économise du travail** : un modèle qui n'accepte
+aucune image de référence est déjà grisé avec sa raison, par la règle de T1, sans qu'une
+ligne soit ajoutée. La principale limite des gratuits tombe donc dans une machinerie qui
+existe depuis la première tranche du produit.
+
+**Et la première image ne demande plus rien.** C'est le seul effet que l'auteur remarquera
+sans le chercher : sur une machine neuve, sans compte et sans clé, on écrit un nom, on écrit
+un prompt, et une image arrive. La phrase « aucune clé » de la barre du haut cesse d'être un
+constat et devient une nuance — il manque une clé **pour ceci**, pas pour tout.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**11 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F0** — le relevé dit lequel des trois entre en premier et par quel chemin ses références passent.
+
+---
+
+---
+
+### F2 · Ce qu'un appel consomme
+**User stories** : 315, 316, 317, 318, 319, 320, 321
+
+#### Ce qu'on livre
+
+Tous les endroits qui parlent d'argent apprennent qu'il existe d'autres unités. Une
+génération enregistre **ce qu'elle a consommé et en quoi**, y compris quand elle échoue. Un
+appel sans prix dit « gratuit » — jamais « 0,00 $ », qui ferait lire *sans limite* là où il
+faut lire *sans prix*. Et quand un fournisseur compte en jetons, l'écran dit ce qui reste
+**et l'heure à laquelle ça revient**, sur celui où l'on choisit comme sur celui qui confirme.
+
+**C'est la tranche qui décide si la V2.2 est honnête.** L'écran des dépenses a été construit
+il y a quelques jours pour arrêter un mensonge par omission : il ne montrait qu'un cas sur
+trois, et mesuré, celui qui n'avait jamais rien coûté. Un modèle gratuit qui afficherait
+« 0,00 $ » rouvrirait exactement le même trou, un cran plus bas — l'auteur brûlerait la
+réserve du jour sans que rien ne le lui dise.
+
+**Le total de la barre du haut ne change pas de nature** : il compte de l'argent, il ne
+comptera que de l'argent, et son étiquette le dit. Ce qui se consomme sans argent se lit dans
+la liste des dépenses, à côté du reste — parce que la question qu'elle pose devient *où va ce
+que je consomme*, et que les trois états — gardé, payé pour rien, refusé — valent aussi pour
+un appel gratuit.
+
+**Enfin, le plafond de l'agent compte deux choses au lieu d'une.** Le refuser au nom d'un
+budget en dollars alors qu'il fabriquait un brouillon gratuit serait un refus faux, et un
+refus faux est ce qui fait désactiver un garde-fou.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**10 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F1** — il faut un fournisseur qui ne compte pas en dollars pour que la question se pose.
+- **E14** — l'écran de confirmation est celui qui annonce ce que l'appel va consommer ; la V2.2 le traverse plutôt que de l'écrire une seconde fois.
+
+---
+
+---
+
+### F3 · Les clés au pluriel
+**User stories** : 322, 323, 324, 325, 326
+
+#### Ce qu'on livre
+
+Le tiroir à clés cesse d'être « la clé ». Une place par fournisseur, chacune avec son état et
+sa raison de grisé, et une forme qui accepte **deux secrets pour un seul fournisseur** — il
+en existe, et un tiroir qui n'en accepterait qu'un les découvrirait en F4. Déposer l'une ne
+touche à aucune autre, et une clé déposée sert au premier appel suivant sans redémarrage :
+c'est la règle de T1, étendue au pluriel plutôt que réécrite.
+
+**La barre du haut change ce qu'elle dit.** Elle disait ce qui manque ; elle dira avec quoi
+on peut produire. « Aucune clé » ne reste vrai que si aucun fournisseur n'est utilisable — et
+depuis F1, il en reste toujours un.
+
+**Retirer une clé ne retire rien d'autre.** Ses modèles se grisent, ses images restent, ses
+dépenses restent : *une dépense ne s'efface jamais* vaut aussi quand on renonce au
+fournisseur qui l'a faite.
+
+**Et l'étape de l'assistant reste une fenêtre, pas un second tiroir.** Elle les proposera
+toutes ; déposer là ou dans les réglages écrira au même endroit. C'est la promesse « trois
+portes, une seule pièce » du premier lancement, qui gagne des portes sans gagner de pièce.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**7 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F1** — le pluriel des fournisseurs vient avant le pluriel de leurs clés ; l'inverse mêlerait deux travaux et l'on ne saurait pas lequel a cassé quoi.
+
+---
+
+---
+
+### F4 · Cloudflare Workers AI
+**User stories** : 327, 328
+
+#### Ce qu'on livre
+
+Le premier fournisseur qui demande une clé **et** qui déclare ses modèles. Il éprouve deux
+choses d'un coup : le tiroir de F3, parce qu'il demande deux secrets là où les autres en
+demandent un ; et la réserve de F2 dans son cas le plus ingrat — **un fournisseur qui ne dit
+pas, appel par appel, ce qu'il vient de consommer**.
+
+**Ce qui se fait alors, et la façon de le dire.** L'atelier compte lui-même, à partir de ce
+que le relevé aura établi, et **l'écran annonce que c'est un compte tenu ici**. C'est la même
+règle que la remise sur grille et que l'attente d'un modèle : *une mesure, jamais une table*
+— et quand ce n'est pas une mesure, ça se dit. Un chiffre présenté comme un relevé alors
+qu'il est une estimation est pire qu'un chiffre absent : on s'y fie.
+
+Le reste est ce qui doit rester banal : une image en revient, passe le post-traitement, entre
+en bibliothèque. Et un modèle nouveau chez ce fournisseur paraît sans qu'une ligne soit
+réécrite — c'est ce que le catalogue relu garantit, et c'est ce qui distingue ce fournisseur
+du précédent.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**6 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F2** — sa réserve n'a nulle part où s'afficher tant que le produit ne connaît qu'une unité.
+- **F3** — il demande deux secrets, et le tiroir doit d'abord savoir en tenir deux.
+
+---
+
+---
+
+### F5 · Leonardo
+**User stories** : 329, 330
+
+#### Ce qu'on livre
+
+Celui dont **la forme diffère**, et c'est pour ça qu'il vient en dernier des trois : on
+soumet, on attend, on revient chercher l'image. Une soumission peut rendre plusieurs images à
+la fois. Et le fournisseur, lui, sait dire ce qu'il reste — c'est le cas inverse de F4, et
+l'écran doit dire lequel des deux il montre.
+
+**Ce que cette tranche éprouve vraiment** : que la porte du dépôt tient un fournisseur qui ne
+répond pas d'un seul coup. L'attente se montre comme les autres, et sa jauge s'appuie sur la
+médiane mesurée **de ce fournisseur** — un fournisseur qui répond en deux temps n'a rien à
+voir avec un autre, et emprunter la durée du voisin ferait une jauge qui ment. Fermer
+l'onglet pendant l'attente ne perd pas la soumission : c'est la règle de T1, et elle n'avait
+jamais eu à tenir sur un fournisseur qui fait patienter.
+
+**Toutes les images d'une soumission entrent**, chacune comme un résultat de l'appel. En
+jeter une reviendrait à jeter ce qui est déjà consommé — et chez un fournisseur qui compte en
+jetons, ce qui est consommé ne revient pas avant le lendemain.
+
+**Les références, s'il en accepte, partent depuis le disque de l'auteur.** Aucune image n'est
+publiée à une adresse qu'un tiers pourrait lire. Si le seul chemin qu'il offre passe par là,
+ses modèles sont grisés avec cette raison — et c'est un résultat, pas un échec.
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**6 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F2** — ce qu'il reste chez lui n'a nulle part où s'afficher avant.
+- **F3** — il demande une clé.
+
+---
+
+---
+
+### F6 · Le brouillon ne coûte plus rien
+**User stories** : 331, 332, 333
+
+#### Ce qu'on livre
+
+Le modèle d'exploration que l'atelier impose à l'agent devient **gratuit par défaut**, et se
+choisit parmi ceux qui ne coûtent pas d'argent. C'est le gain le plus net de la version, et
+il était déjà à moitié écrit : le garde-fou existe depuis le serveur de l'agent, avec sa
+raison — *un agent qui code a besoin d'un visuel correct tout de suite, pas d'un asset
+final*. Il valait un rapport de six sur le coût du travail agentique ; il vaut désormais la
+totalité.
+
+**L'outil qui dit à l'agent ce qui lui reste répond dans les deux unités.** Un plafond qui ne
+se consulte qu'en le heurtant n'est pas un garde-fou — c'était déjà vrai en dollars, ça l'est
+davantage pour une réserve qui ne revient que le lendemain.
+
+**Et une image faite sans les références de l'univers se reconnaît plus tard.** C'est la
+seule chose que cette tranche ajoute à l'écran de l'auteur, et elle répare un trou qu'elle
+creuse elle-même : à multiplier les brouillons, on se retrouve avec des images qui ne
+ressemblent pas aux autres **sans savoir pourquoi**. Sa fiche le dit, une fois pour toutes.
+
+**Le critère qui juge la tranche est mesurable et il se vérifie sur une séance réelle** :
+*une séance de code entière ne fait plus bouger le total en argent.*
+
+#### Critères d'acceptation → `docs/tranches/V2.2.md`
+
+**6 critères, aucun encore tenu.**
+
+#### Bloquée par
+
+- **F1** — il faut au moins un fournisseur gratuit à imposer.
+- **F2** — sans quoi le plafond de l'agent compterait la mauvaise chose et refuserait un brouillon au nom d'un budget en dollars.
+
+---
+
+---
+
+### Ce que la V2.2 rouvre dans ce qui est déjà tenu
+
+Nommé ici plutôt que découvert en construisant. Aucun de ces cinq points n'est une tranche :
+chacun est une reprise à l'intérieur d'une tranche de la V2.2, et son coût est déjà compté.
+
+| Ce qui est tenu | Ce que la V2.2 y rouvre | Dans quelle tranche |
+|---|---|---|
+| **L'écran des dépenses** (E18) | une consommation qui n'est pas de l'argent, à côté de celle qui en est | F2 |
+| **L'écran de confirmation** (E14) | le chiffre annoncé avant l'appel, dans deux unités possibles | F2 |
+| **L'assistant et l'écran des réglages** (E8, E19) | l'étape de la clé en accueille plusieurs, sans devenir un second tiroir | F3 |
+| **Les outils de l'agent** (T7, C5) | le catalogue des modèles porte le fournisseur ; ce qui reste avant un lot répond en deux unités | F1, F2, F6 |
+| **Le guide** (E20) | trois fournisseurs de plus à expliquer, et une phrase à corriger — celle qui dit qu'il faut une clé pour commencer | F1, puis une passe à la fin |
+
+**Le guide est le seul qui coûte deux fois**, et c'est la conséquence assumée de l'ordre
+choisi : E20 est écrit en dernier de la V2.1, donc avant que ces six tranches n'existent. La
+règle « un guide écrit au milieu du plan est un guide à réécrire à la fin » vaut par version,
+pas une fois pour toutes.
+
+### L'ordre, et les trois endroits où il se resserre
+
+Six tranches ne font pas une file d'attente, mais celle-ci en est presque une — c'est la
+version la plus contrainte des quatre, parce que chaque tranche généralise ce que la
+précédente a rendu vrai.
+
+- **F0 avant tout**, et ce n'est pas une formalité : le relevé peut décider qu'un des trois
+  n'entre pas, ou n'entre que pour le brouillon. Construire avant de savoir, c'est écrire un
+  tiroir à trois places dont une restera vide.
+- **F1 avec le fournisseur sans clé, et pas un autre.** Faire entrer un fournisseur à clé en
+  premier mêlerait deux travaux — le pluriel des fournisseurs et le pluriel des clés — et
+  l'on ne saurait pas lequel des deux a cassé quoi. *Un travail à la fois, même quand les
+  deux sont courts.*
+- **F2 et F3 avant F4 et F5.** Cloudflare et Leonardo sont précisément les deux qui demandent
+  une clé et qui comptent en jetons. Les faire entrer avant, c'est écrire deux fois la même
+  chose : une fois en dur pour eux, une fois pour de bon.
+
+**F4 et F5 se prennent dans l'ordre qu'on veut**, ou une seule des deux. **F6 en dernier** :
+le brouillon de l'agent n'a de sens qu'une fois qu'il y a de quoi choisir, et que son plafond
+compte la bonne chose.
+
+### Les trois questions que la V2.2 laisse ouvertes
+
+Aucune n'empêche d'ouvrir la tranche qui la porte. Elles se tranchent à l'usage, et les
+trancher d'avance serait décider sans mesure.
+
+1. **L'essai gratuit avant l'appel payé.** Depuis l'écran qui montre ce qui va partir :
+   essayer d'abord gratuitement — même sujet, même cadrage, mêmes références quand le
+   fournisseur les prend — jusqu'à ce que la composition soit bonne, puis un seul appel payé.
+   La raison est mesurée : *six relances en trente-deux minutes ont coûté le quart de tout*.
+   **Écartée du découpage le 31 août 2026**, et pour une raison de méthode : on ne sait pas
+   encore si un modèle gratuit tient assez la composition pour qu'un essai chez lui prédise
+   quoi que ce soit chez un autre. Si deux séances montrent que oui, c'est une tranche ; si
+   elles montrent que non, c'est une fausse bonne idée qu'on n'aura pas payée.
+2. **Le brouillon gratuit change-t-il le nombre d'images gardées ?** L'écran des dépenses sait
+   déjà distinguer ce qu'on a gardé de ce qu'on a payé pour rien. Il pourra donc dire, après
+   quelques séances, si le gratuit fait produire *mieux* ou seulement *plus*.
+3. **Un fournisseur gratuit est payé autrement.** Envoyer une planche d'artwork en référence,
+   c'est la confier à un tiers ; c'était déjà vrai avec un seul fournisseur, ça le devient
+   avec plusieurs, dont certains dont le modèle économique n'est pas l'appel facturé. Ce que
+   le produit doit en dire à l'auteur, et à quel moment, n'est pas tranché.
 
 ---
 

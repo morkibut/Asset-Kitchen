@@ -19,10 +19,23 @@
 // raison). Une infobulle qui porterait une raison est un bug, pas un arbitrage.
 //
 // **L'ordre du fichier est l'ordre du guide**, et il suit l'ordre où l'on
-// rencontre les choses : ce qu'on pose une fois (l'univers), ce qu'on touche à
-// chaque génération (l'atelier), ce qu'on retouche après (la fiche), ce qu'on
-// ne fait que sur une planche (la découpe), et ce qu'on règle une fois pour
-// toutes — le cadre de l'agent, arrivé en T7.
+// rencontre les choses : ce qu'on pose une fois, ce qu'on nomme, ce qu'on
+// fabrique, ce qu'on juge, ce qu'on retouche, et ce qu'on règle une fois pour
+// toutes.
+//
+// **Neuf groupes depuis E20, et trois d'entre eux sont l'univers coupé en
+// trois.** Il aurait pu rester un seul sac, et c'était juste tant qu'il était un
+// seul écran ; il a maintenant trois côtés qui ne se ressemblent pas — on
+// regarde des images sur l'un, on remplit des cases sur l'autre. Chercher le mot
+// *pointe* dans un sac où la moitié des entrées parlent de formulaires est
+// exactement ce que la règle « un lieu, pas un thème » cherche à éviter.
+//
+// **Trois groupes portent le nom d'un écran qui n'existait plus.** `atelier`,
+// `retouche` et `decoupe` nommaient l'écran de la V1 qui portait le prompt et la
+// grille, le panneau de retouche, et la Découpe quand elle était un écran à elle
+// seule. Les trois ont disparu de l'interface entre E1 et E4 ; leurs entrées,
+// elles, étaient restées justes — *une entrée décrit un réglage, pas un écran*,
+// et ce qui fait un détourage ne change pas parce que la pièce a changé de nom.
 
 export type Explication = {
   /** Le nom du réglage, tel qu'il paraît à l'écran. */
@@ -38,9 +51,23 @@ export type Explication = {
   /** La version longue, rendue par l'écran Guide seul. Le panneau de 280 px ne
    *  la porte jamais : au-delà de trois lignes, c'est le guide qu'on veut. */
   long?: string
-  /** Où ça se règle, pour le sommaire du guide. **Un écran, pas un thème** :
-   *  quand on cherche une explication, on se souvient d'où l'on était. */
-  ou: "univers" | "atelier" | "retouche" | "decoupe" | "reglages"
+  /** Où ça se règle, pour le sommaire du guide. **Un lieu, pas un thème** :
+   *  quand on cherche une explication, on se souvient d'où l'on était.
+   *
+   *  Les trois premiers sont les trois côtés de l'univers ; les six autres sont
+   *  ailleurs dans le produit. Le mot « Dans » n'est pas dans les noms : il est
+   *  écrit une fois, en tête de chaque moitié du sommaire — répété neuf fois
+   *  dans une colonne de 240 px, il mangerait la place pour rien. */
+  ou:
+    | "inspiration"
+    | "jeu"
+    | "ambiances"
+    | "codex"
+    | "etabli"
+    | "galerie"
+    | "tables"
+    | "fabriques"
+    | "reglages"
 }
 
 export const AIDE: Record<string, Explication> = {
@@ -52,10 +79,10 @@ export const AIDE: Record<string, Explication> = {
 
   "univers.bible": {
     nom: "Bible",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Sept champs nommés qui disent ce qu'est ton jeu — monde, époque, technique de rendu, trait, éclairage, vue et cadrage, contraintes techniques.",
     change:
-      "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur. Le dépliant « ce qui partira », sous le champ de prompt de l'atelier, montre le résultat exact.",
+      "Chaque champ actif et non vide part en tête du prompt, à chaque génération, sans que tu le retapes. Un champ éteint ne part pas : l'interrupteur est le doseur. L'écran de confirmation, qui s'ouvre entre le bouton et la dépense, montre le résultat exact — une ligne par champ, avec son interrupteur.",
     origine: "toi, une fois par projet · sept champs vides au départ",
     long:
       "Des champs nommés plutôt qu'un texte libre, et toute la différence est dans le geste : un texte libre est ce qu'on retape, des champs nommés sont ce qu'on dose. Tu peux relâcher le trait sans relâcher le monde, essayer une génération sans les contraintes techniques, et remettre l'interrupteur sans avoir rien réécrit.\n\nLa liste est close, et son ordre est celui de l'écran comme celui du prompt. Un champ de plus se paierait à chaque génération, en lecture et en décision.\n\nDeux d'entre eux sont arrivés après coup, et ils disent pourquoi la liste est close plutôt que libre : une séance sur trois projets réels a montré que la technique de rendu et le cadrage se retapaient dans chaque prompt, faute d'avoir où se poser. Ce ne sont pas deux libertés de plus, ce sont deux décisions déjà prises et écrites nulle part.\n\nLes intitulés partent en anglais — « World: », « Lighting: » —, parce que tous les modèles du catalogue sont entraînés dessus et qu'« Éclairage : » dégraderait ce que « Lighting: » obtient. C'est une traduction de fournisseur : elle ne remonte jamais dans le produit. Ton texte, lui, part exactement tel que tu l'as écrit.",
@@ -63,7 +90,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.monde": {
     nom: "monde",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Où ça se passe et de quoi c'est fait — le lieu, la matière, l'ambiance.",
     change:
       "Part sous « World: » en tête du prompt, à chaque génération. C'est le champ qui tient la cohérence entre deux images faites à trois semaines d'écart.",
@@ -72,7 +99,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.epoque": {
     nom: "époque",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Le moment technologique du jeu — ce qui existe déjà, et ce qui n'existe pas encore.",
     change:
       "Part sous « Era: ». C'est ce qui empêche une arbalète de ressortir avec une lunette de visée.",
@@ -81,7 +108,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.rendu": {
     nom: "technique de rendu",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Avec quoi l'image est censée être faite — pixel art, peinture numérique, trait encré, rendu 3D.",
     change:
       "Part sous « Rendering technique: ». C'est le champ qui décide de l'apparence là où elle se décide vraiment : dans ce que le modèle dessine, pas dans ce que le post-traitement lui fait ensuite.",
@@ -92,7 +119,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.vue": {
     nom: "vue et cadrage",
-    ou: "univers",
+    ou: "jeu",
     quoi: "D'où on regarde le sujet et jusqu'où on le voit — trois quarts, de face, de profil, plan large, corps entier.",
     change:
       "Part sous « View and framing: ». C'est ce qui évite qu'un personnage sorte de face et le suivant de trois quarts, alors que les deux doivent tenir dans la même scène.",
@@ -103,7 +130,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.trait": {
     nom: "trait",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Comment c'est dessiné : le contour, les aplats, les ombres.",
     change:
       "Part sous « Line and shading: ». C'est le champ le plus proche du rendu, donc le premier à relâcher quand tout se ressemble trop.",
@@ -112,7 +139,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.eclairage": {
     nom: "éclairage",
-    ou: "univers",
+    ou: "jeu",
     quoi: "D'où vient la lumière, et ce qu'elle laisse comme ombres.",
     change:
       "Part sous « Lighting: ». Deux sprites éclairés de deux côtés différents ne se montent pas dans la même scène.",
@@ -121,7 +148,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bible.technique": {
     nom: "contraintes techniques",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Ce que l'image doit être, indépendamment de ce qu'elle montre — fond uni, une seule pose, aucun cadre.",
     change:
       "Part sous « Technical constraints: ». C'est le champ qui évite les pièges mesurés des modèles, et il agit en amont de tout le post-traitement.",
@@ -130,33 +157,51 @@ export const AIDE: Record<string, Explication> = {
       "Deux phrases y valent leur place, et elles ont été payées au banc d'essai.\n\n« One single sprite, one pose only » — sans elle, Gemini rend spontanément une planche de trois poses : il calque la mise en page de son image de référence. Le piège est mesuré, pas supposé.\n\nUne consigne de fond uni, ensuite. Le détourage par défaut remplit depuis le bord et rend une silhouette propre sur un fond plat sans demander aucun réseau ; sur un fond chargé, mesuré, il garde 100 % de l'image — il échoue entièrement. Ce champ-là est donc ce qui garde le geste courant gratuit.",
   },
 
-  // ── L'univers — la palette ────────────────────────────────────────────────
+  // ── Les ambiances et les couleurs — le troisième côté de l'univers ────────
+  //
+  // **Les deux entrées d'ici décrivaient le modèle d'avant**, celui où il
+  // n'existait qu'*une* palette, sans nom, attachée au projet et lue sur ses
+  // artworks. Il a changé en E11 : une palette est devenue un objet nommé, en
+  // plusieurs exemplaires, et une ambiance est un lot de style qui en porte une.
+  // **Une explication fausse coûte plus cher qu'une explication absente** : on
+  // la lit, et on la croit. Réécrites en E20.
 
   "univers.palette": {
-    nom: "Palette",
-    ou: "univers",
-    quoi: "Les couleurs de ton univers, lues par calcul sur tes artworks officiels — elle ne se saisit jamais.",
+    nom: "Une palette",
+    ou: "ambiances",
+    quoi: "Une liste de couleurs qui porte un nom, tirée d'un paquet d'images. Ton jeu peut en avoir autant que tu veux, et une chose du jeu n'en porte qu'une à la fois.",
     change:
-      "Elle devient la palette de quantification de tout ce qui naît dans le projet. Sans artwork officiel il n'y a pas de palette, et l'étape Quantification reste grisée avec sa raison.",
-    origine: "calculée · un cache nommé par l'empreinte des artworks qui l'ont produite",
+      "La quantification ramène chaque pixel sur la couleur la plus proche de la palette en cours. Partout ailleurs, une couleur hors palette se marque au lieu d'être refusée.",
+    origine: "toi · aucune palette au départ, et un jeu sans palette ne quantifie rien",
     long:
-      "La palette est dérivable des artworks : la garder comme une valeur saisie serait une seconde vérité sur la même chose, et deux vérités sur la même chose finissent par diverger. Elle porte donc l'empreinte des artworks qui l'ont produite — promouvoir une carte, en retirer une, ou changer le nombre de couleurs ne correspond plus, donc se recalcule tout seul.\n\nElle est lue sur le sujet, jamais sur le fond. La coupe médiane appliquée aux artworks tels quels rendait vingt gris sur vingt-quatre : le fond plat occupe 75 % des pixels et son anti-crénelage l'éclate en autant de seaux. On détoure donc d'abord, et la palette passe à quinze couleurs franchement distinctes.\n\nCorollaire à connaître : une région fermée reste opaque au détourage, donc l'intérieur d'un cadre d'interface entre dans la palette. C'est la même règle qui sauve l'os d'un squelette.\n\nDepuis E11, elle est une palette parmi d'autres : le jeu peut en porter plusieurs, nommées, assemblées à partir d'elle ou d'un paquet du tableau d'inspiration. Celle-ci reste celle du jeu — le projet est l'ambiance générale, et une ambiance n'est que le même objet en plus petit. Les autres vivent dans l'onglet Univers, côté Ambiances et couleurs.",
+      "Le jeu en a une par défaut, et c'est celle que l'assistant montre : elle se lit **par calcul sur les artworks officiels**, et ne se saisit jamais. Elle porte l'empreinte des artworks qui l'ont produite — promouvoir une carte, en retirer une, ou changer le nombre de couleurs ne correspond plus, donc se recalcule tout seul.\n\nElle est lue sur le sujet, jamais sur le fond. La coupe médiane appliquée aux artworks tels quels rendait vingt gris sur vingt-quatre : le fond plat occupe 75 % des pixels et son anti-crénelage l'éclate en autant de seaux. On détoure donc d'abord, et la palette passe à quinze couleurs franchement distinctes. Corollaire à connaître : une région fermée reste opaque au détourage, donc l'intérieur d'un cadre d'interface entre dans la palette. C'est la même règle qui sauve l'os d'un squelette.\n\nLes autres se fabriquent côté Ambiances et couleurs, et ce sont des **recettes** : des sources — d'autres palettes, des paquets du tableau d'inspiration —, deux dosages, et des retouches. Une couleur du résultat dit d'où elle vient, et une couleur retirée reste montrée barrée : on doit pouvoir défaire.",
   },
 
   "univers.couleurs": {
     nom: "Couleurs demandées",
-    ou: "univers",
-    quoi: "Combien de couleurs on demande à la lecture des artworks — le seul réglage qu'on ait sur la palette.",
+    ou: "ambiances",
+    quoi: "Combien de couleurs on demande à la lecture d'un paquet d'images — le seul réglage qu'on ait sur une palette lue par calcul.",
     change:
-      "Change la palette, donc le rendu de tout ce qui se quantifie ensuite. La changer relance le calcul sur les mêmes artworks, sans un appel payant.",
+      "Change la palette, donc le rendu de tout ce qui se quantifie ensuite. La changer relance le calcul sur les mêmes images, sans un appel payant.",
     origine: "toi · défaut 24",
+  },
+
+  "ambiance.lot": {
+    nom: "Une ambiance",
+    ou: "ambiances",
+    quoi: "Un lot de style réutilisable : une palette, des images de référence, et trois textes. On la désigne sur une chose du jeu.",
+    change:
+      "Rien tant qu'on ne s'en sert pas. Au moment de fabriquer, on choisit ce qu'on lui prend — tout, les couleurs seules, ou tout sauf les images —, et ce choix ne vaut que pour cet appel-là.",
+    origine: "toi · aucune ambiance au départ",
+    long:
+      "Les palettes sont les ingrédients, les ambiances les recettes — c'est pour ça que les deux listes vivent au même endroit.\n\nSes trois textes remplacent ceux du jeu, champ par champ : le monde, l'éclairage, le trait. Ils ne s'ajoutent pas, ils prennent la place — et l'écran de confirmation le montre, ligne par ligne, la perdante barrée sous la gagnante. Éteindre les lignes d'une ambiance rallume donc les textes du jeu **d'elles-mêmes** : ils redeviennent la couche la plus haute qui reste candidate.\n\nCe qu'un appel lui a réellement pris est enregistré avec la génération. Sans ça, relire une vieille image ne dirait plus d'où venait ce qu'elle montre : le réglage aura changé, l'ambiance aura été retouchée, et le texte enregistré porte les mots sans dire lequel venait du jeu.",
   },
 
   // ── L'univers — ce qu'il impose ───────────────────────────────────────────
 
   "univers.cible_px": {
     nom: "Taille de pixel",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Le côté de case, en pixels, imposé à tout ce qui entre dans ce projet — ou aucune, et le rendu du modèle entre tel quel.",
     change:
       "Toute image née ici arrive déjà remise sur cette grille. Sur « aucune », il n'y a pas de remise sur grille du tout : le détourage, le recadrage et la palette continuent, l'occupation du barème cesse d'agir. Les assets déjà là ne bougent pas tout seuls — « Tout réaligner » est un geste, jamais un effet de bord.",
@@ -167,7 +212,7 @@ export const AIDE: Record<string, Explication> = {
 
   "univers.bareme": {
     nom: "Barème d'échelles",
-    ou: "univers",
+    ou: "jeu",
     quoi: "La liste des natures de sujet de ton jeu — personnage, meuble, objet tenu, décor — et ce que chacune vaut.",
     change:
       "C'est lui qui remplit le contrôle Sujet de l'atelier. Une échelle porte trois choses à la fois : sa famille, son occupation, et si le sujet se détoure.",
@@ -178,7 +223,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bareme.famille": {
     nom: "famille d'une échelle",
-    ou: "univers",
+    ou: "jeu",
     quoi: "La catégorie d'artworks qu'un sujet de cette nature ira chercher en référence.",
     change:
       "Choisir « objet tenu » à la génération envoie les artworks de la famille objets, plus ceux marqués « tous ». Le nombre de références change le coût.",
@@ -189,7 +234,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bareme.occupation": {
     nom: "occupation d'une échelle",
-    ou: "univers",
+    ou: "jeu",
     quoi: "La part du côté de la case qu'un sujet de cette nature remplit une fois sur grille, en pourcentage.",
     change:
       "C'est la valeur que la recette reprendra à la naissance de l'asset — 100 % pour un personnage, 40 % pour un objet tenu en main.",
@@ -200,7 +245,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bareme.silhouette": {
     nom: "se détoure / plein cadre",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Si un sujet de cette nature a un contour, ou s'il occupe tout le cadre.",
     change:
       "« Plein cadre » retire le détourage et le recadrage de la recette posée à la naissance. C'est le réglage du décor : l'enfermer dans une case carrée lui ajouterait des bandes transparentes que personne n'a demandées.",
@@ -211,7 +256,7 @@ export const AIDE: Record<string, Explication> = {
 
   "univers.modeles": {
     nom: "Modèle par famille",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Le moteur d'image proposé par défaut selon la famille du sujet — pas un réglage global.",
     change:
       "Choisir un sujet à l'atelier propose le modèle de sa famille. Une famille sans modèle retombe sur le défaut du catalogue ; ce n'est pas un trou, c'est un réglage qu'on n'a pas posé.",
@@ -226,7 +271,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.groupe": {
     nom: "groupe",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Un nom libre pour ranger les cartes du tableau. Vide = hors groupe.",
     change:
       "Rien à la génération. C'est un rangement pour l'œil. Ce qui décide des références envoyées, c'est artwork officiel + famille.",
@@ -237,7 +282,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.famille": {
     nom: "famille",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "La catégorie d'un artwork officiel : personnages, objets, décors, interface, ou « tous » pour une planche non figurative.",
     change:
       "Beaucoup. À la génération, seuls les artworks de la famille de ton sujet partent en référence, plus ceux marqués « tous ». Le nombre de références change le coût.",
@@ -248,7 +293,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.concept": {
     nom: "Concept art de",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Les personnages qui se servent de cette carte comme référence.",
     change:
       "Elle part avec chaque génération de ce personnage-là, **quelle que soit la famille du sujet** — un artwork officiel se filtre par famille, un concept art a été désigné pour lui.",
@@ -259,7 +304,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.officiel": {
     nom: "artwork officiel",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Promouvoir une carte : elle cesse d'être une inspiration et devient une référence que l'application enverra toute seule.",
     change:
       "C'est l'interrupteur. Une carte non promue ne part jamais, quoi qu'il y ait dans son groupe ou sa famille.",
@@ -270,7 +315,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.note": {
     nom: "note",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Une annotation libre sur une carte — pourquoi tu l'as gardée, ce que tu veux en retenir.",
     change: "Rien à la génération. Elle ne part nulle part, comme le groupe.",
     origine: "toi · aucun défaut",
@@ -278,7 +323,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.source": {
     nom: "provenance",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "L'adresse d'où vient la carte, gardée telle quelle au collage.",
     change:
       "Rien à la génération. Elle est là pour créditer et retrouver : une image trouvée dont on a perdu la source est une image qu'on ne peut plus faire ni l'un ni l'autre.",
@@ -287,7 +332,7 @@ export const AIDE: Record<string, Explication> = {
 
   "carte.taille": {
     nom: "taille",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "La place qu'une carte occupe dans le tableau : 1×, 2× ou 4×.",
     change:
       "Rien à la génération. Ce sont les crans du zoom de la grille d'assets, réemployés — un seul vocabulaire de taille dans tout le produit.",
@@ -303,7 +348,7 @@ export const AIDE: Record<string, Explication> = {
 
   "tableau.vue": {
     nom: "Vue",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Les deux façons de regarder le même tableau : la grille, qui montre tout d'un coup d'œil, et la toile, où une carte se pose où tu veux et garde sa place.",
     change:
       "Rien à la génération. Mais tirer une carte dans un îlot écrit son groupe, et l'en sortir le vide : sur la toile, composer et classer sont le même geste.",
@@ -320,7 +365,7 @@ export const AIDE: Record<string, Explication> = {
 
   "lien.mot": {
     nom: "mot d'un lien",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Une étiquette courte posée au milieu d'un trait, pour dire *quel* rapport il montre.",
     change:
       "Rien à la génération. Un lien naît muet, et il reste muet tant que tu n'écris rien : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant.",
@@ -331,7 +376,7 @@ export const AIDE: Record<string, Explication> = {
 
   "lien.pointe": {
     nom: "pointe",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "La flèche au bout d'un trait, quand le sens du rapport compte.",
     change:
       "Rien à la génération. Elle ne change que ce que le trait montre : sans elle il dit « ces deux-là ont rapport », avec elle il dit « celui-ci va vers celui-là ».",
@@ -342,7 +387,7 @@ export const AIDE: Record<string, Explication> = {
 
   "note.texte": {
     nom: "texte d'une note",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Ce qu'une carte texte dit — l'intention que tu as posée au milieu des images.",
     change:
       "Rien à la génération. Une note ne part nulle part : ce qui voyage en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
@@ -353,7 +398,7 @@ export const AIDE: Record<string, Explication> = {
 
   "note.teinte": {
     nom: "teinte d'une note",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "Une des dix couleurs sourdes, posée sur le fond d'une note.",
     change:
       "Rien à la génération, et rien au rangement non plus. C'est **le seul endroit du produit où une couleur ne veut rien dire** : elle est là parce que tu l'as choisie, jamais parce qu'un état la commande.",
@@ -364,7 +409,7 @@ export const AIDE: Record<string, Explication> = {
 
   "ilot.teinte": {
     nom: "teinte d'un îlot",
-    ou: "univers",
+    ou: "inspiration",
     quoi: "La même palette de dix, posée sur le cadre, le bandeau et le fond d'un îlot.",
     change:
       "Rien à la génération, et rien au groupe. Un îlot teinté et un îlot nu contiennent exactement les mêmes cartes, et envoient exactement les mêmes références.",
@@ -373,11 +418,46 @@ export const AIDE: Record<string, Explication> = {
       "Elle ne vit pas sur les cartes de l'îlot : six membres feraient six réponses possibles pour un seul cadre. Elle vit avec le projet, une entrée par nom de groupe.\n\nCorollaire de « un îlot *est* son groupe » : quand la dernière carte en sort, l'îlot cesse d'exister, et sa couleur s'en va avec lui — comme les liens qui y aboutissaient. Ctrl+Z rend les trois d'un coup.",
   },
 
-  // ── L'Atelier ─────────────────────────────────────────────────────────────
+  // ── Le codex — l'inventaire du monde, et le seul endroit où l'on nomme ────
+  //
+  // **Un onglet entier sur trois, et le guide n'en disait pas un mot** — ni
+  // visite, ni réglage. Écrit en E20.
+
+  "codex.index": {
+    nom: "Le codex",
+    ou: "codex",
+    quoi: "L'index de ce que ton monde contient, rangé par famille : personnages, décors, objets, interface, équipement. Chaque chose y porte ce qui lui manque encore.",
+    change:
+      "Rien à la génération. C'est de là qu'on ouvre l'établi d'une chose, et c'est le second des deux seuls endroits d'où l'argent part.",
+    origine: "toi, au fur et à mesure · les cinq familles existent avant toute chose",
+  },
+
+  "codex.nommer": {
+    nom: "Écrire un nom",
+    ou: "codex",
+    quoi: "La dernière rangée de la liste. On y tape le nom d'une chose, et la chose entre dans le codex sur-le-champ, dans la famille allumée à gauche.",
+    change:
+      "Rien à la génération : on nomme, on ne paie pas. Mais c'est ce qui permet de fabriquer une image qui n'appartient encore à rien, sans ouvrir un troisième endroit où l'argent part.",
+    origine: "toi · vide, et seul au milieu de l'écran quand le monde l'est aussi",
+  },
+
+  "codex.vitrine": {
+    nom: "La vitrine",
+    ou: "codex",
+    quoi: "L'image en grand, seule, pour la juger : sur le fond qu'on choisit, à la taille qu'elle fait vraiment, et à côté de ce à quoi on veut la comparer.",
+    change:
+      "Rien du tout, et c'est le point. Elle ne modifie aucune image et ne coûte pas un centime — la barre qui paie s'y retire, et son absence le dit avant qu'on ait lu quoi que ce soit.",
+    origine:
+      "trois portes · le codex, la fiche d'une chose, la planche d'une pose",
+    long:
+      "Ce qu'elle montre change avec la porte : tout le monde, toutes les poses d'une chose, ou les quatre vues d'une pose.\n\nElle se range ici et non dans la galerie parce que c'est le cinquième verbe du codex — il *montre*. Dans la galerie on n'ouvre qu'une image à la fois, et par un autre geste : pose le pointeur sur une vignette et appuie sur la barre d'espace, elle emplit l'écran. Ce raccourci vaut partout dans l'atelier, sans exception.",
+  },
+
+  // ── L'établi — ce qu'on touche à chaque génération ────────────────────────
 
   "reglages.modele": {
     nom: "modèle",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "Le moteur d'image qui fabriquera la génération, choisi dans le catalogue du fournisseur.",
     change:
       "Le prix, le rendu, et deux plafonds : le nombre de références acceptées et le nombre de variations possibles. Un modèle qui ne peut pas honorer ta demande reste visible et grisé, avec sa raison — jamais remplacé en silence.",
@@ -388,7 +468,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.proportions": {
     nom: "proportions",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "Le rapport largeur / hauteur de l'image demandée au fournisseur.",
     change:
       "La forme de ce qui revient, avant tout post-traitement. Les valeurs que le modèle choisi n'accepte pas sont grisées, jamais cachées.",
@@ -399,7 +479,7 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.variations": {
     nom: "variations",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "Combien d'images partent d'un seul clic — 1, 2 ou 4.",
     change:
       "Multiplie le prix à l'identique : 4 variations, ce sont 4 appels et 4 fois le coût. Ce ne sont pas 4 images différentes demandées, ce sont 4 tirages de la même demande.",
@@ -410,18 +490,18 @@ export const AIDE: Record<string, Explication> = {
 
   "reglages.sujet": {
     nom: "sujet",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "La nature de ce que tu fabriques — un personnage, un objet tenu en main, un décor — choisie dans le barème de ton univers.",
     change:
       "Trois choses d'un seul geste : quels artworks partent en référence, quel modèle est proposé par défaut, et quelle part de la case le sujet occupera une fois sur grille.",
     origine: "le barème de l'univers · aucun sujet par défaut",
     long:
-      "C'est le seul contrôle que le tableau d'inspiration ajoute à l'Atelier, et il porte trois conséquences parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération.\n\nSans sujet choisi, seules les planches marquées « tous » partiront en référence : c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner.\n\nLe barème lui-même se pose dans l'écran Univers, une fois pour le projet. C'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 % — et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
+      "C'est le seul contrôle que le tableau d'inspiration ajoute à la barre qui paie, et il porte trois conséquences parce que deux taxonomies — une pour l'échelle, une pour la famille — se paieraient deux fois à chaque génération.\n\nSans sujet choisi, seules les planches marquées « tous » partiront en référence : c'est écrit sous le contrôle, en clair, plutôt que laissé à deviner.\n\nLe barème lui-même se pose dans l'univers, côté Réglages du jeu, une fois pour le projet. C'est lui qui dit qu'un personnage remplit 90 % de sa case et une fiole 40 % — et c'est ce qui met un tonneau et un personnage à la même échelle de pixel.",
   },
 
   "atelier.import": {
     nom: "Importer",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "Faire entrer une image de ton disque dans la bibliothèque — par le bouton, ou en la déposant sur la grille.",
     change:
       "Elle devient un asset entier : elle se retouche, se découpe, se réinjecte, s'exporte et se supprime comme celles que tu as payées. Sa fiche dit « importé » et un coût nul, et son nom est celui du fichier.",
@@ -432,7 +512,7 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.import.traitement": {
     nom: "brute ou traitée",
-    ou: "atelier",
+    ou: "etabli",
     quoi: "Ce que le projet appliquera à l'image qui entre : rien du tout, ou sa recette — détourage, taille de pixel, palette.",
     change:
       "Sur « brute », l'image entre aux dimensions du fichier et sa recette reste vide — c'est le même mot que la visionneuse de la fiche, et il veut dire la même chose. Sur « traitée », elle arrive habillée comme une image générée ici.",
@@ -443,24 +523,47 @@ export const AIDE: Record<string, Explication> = {
 
   "atelier.apercu": {
     nom: "Ce qui partira",
-    ou: "atelier",
-    quoi: "Le texte exact envoyé au modèle : la bible active de ton projet, ton sujet, puis les consignes de planche quand un lot d'attitudes est armé.",
+    ou: "etabli",
+    quoi: "Le texte exact envoyé au modèle : les textes actifs de ton jeu, ceux de son ambiance, ton sujet, puis les consignes de planche quand un lot d'attitudes est armé.",
     change:
       "Rien à la génération tant que tu le lis — c'est une lecture, pas un réglage. « Reprendre le texte » en fait le contenu du champ : ce que tu écris alors part mot pour mot, sans que l'atelier ajoute quoi que ce soit.",
     origine: "composé par l'atelier · l'ordre est celui de l'envoi",
     long:
-      "Il existe pour une raison mesurée : sur trois projets réels, la bible était vide dans les trois, donc rien du style ne partait — et pourtant tout ce qui sortait se ressemblait. Sans voir ce qui part, il n'y a aucun moyen de savoir si ce qu'on obtient vient du prompt ou du post-traitement.\n\nLe texte n'est pas recomposé à l'écran : il est demandé à l'atelier, par le chemin même que la soumission emprunte. Deux compositions écrites à deux endroits finiraient par diverger, et celle qui compte est celle qui part.\n\nReprendre le texte ne touche pas à ton univers : la bible reste exactement ce qu'elle était, et la reprise ne vaut que pour cette génération-là. Ce qui est parti reste attaché à la génération, au même titre que le modèle et le coût — reprendre les réglages d'un asset, des mois plus tard, renvoie donc exactement le même texte.\n\nRien d'autre ne change en mode repris : le sujet choisi décide toujours des artworks qui partent, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours.",
+      "Il existe pour une raison mesurée : sur trois projets réels, la bible était vide dans les trois, donc rien du style ne partait — et pourtant tout ce qui sortait se ressemblait. Sans voir ce qui part, il n'y a aucun moyen de savoir si ce qu'on obtient vient du prompt ou du post-traitement.\n\nLe texte n'est pas recomposé à l'écran : il est demandé à l'atelier, par le chemin même que la soumission emprunte. Deux compositions écrites à deux endroits finiraient par diverger, et celle qui compte est celle qui part.\n\nReprendre le texte ne touche pas à ton univers : les textes du jeu restent exactement ce qu'ils étaient, et la reprise ne vaut que pour cette génération-là. Ce qui est parti reste attaché à la génération, au même titre que le modèle et le coût — reprendre les réglages d'un asset, des mois plus tard, renvoie donc exactement le même texte.\n\nRien d'autre ne change en mode repris : le sujet choisi décide toujours des artworks qui partent, du modèle proposé et de la part de case ; le gabarit d'un lot part toujours.\n\nCe texte se lit désormais sur **l'écran de confirmation** : le tiroir replié sous le champ a disparu en E14, parce que deux réponses à la même question finissent par n'en avoir qu'une de vraie.",
   },
 
-  // ── La retouche — les cinq places de la recette ───────────────────────────
+  "envoi.ecran": {
+    nom: "L'écran de confirmation",
+    ou: "etabli",
+    quoi: "Ce qui s'ouvre entre le bouton et la dépense. Il montre, ligne par ligne, tout ce qui va être envoyé — les textes du jeu, ceux de l'ambiance, le sujet, chaque image jointe — avec un interrupteur sur chacune et son prix à côté.",
+    change:
+      "Rien tout seul : c'est une relecture. Ce qu'on y éteint ou corrige ne vaut que pour cet appel-là, et rien ne remonte dans les réglages du jeu ni dans l'ambiance.",
+    origine: "composé par l'atelier · l'ordre est celui de l'envoi",
+    long:
+      "Garder une correction est un **second geste, écrit** : le bouton « garder sur la chose » l'inscrit sur la fiche de la chose visée, et il ne paraît que là où il a une case où aller. Sans chose visée, la correction part quand même — ce qui manque est l'endroit où la garder.\n\nLe sujet et la consigne de la pose ne s'éteignent pas, et leur marque grise le dit : sans le premier l'appel ne demande rien, sans la seconde l'image qui revient n'appartient à aucune case.\n\nUne case le saute **pour la série en cours**, et il revient dès qu'on change de chose ou de pose. Il n'y a pas de case « pour toujours » : on la cocherait le premier jour, quand on ne sait pas encore qu'on en aura besoin.\n\nOn y lit aussi, en gris, ce qui n'agira qu'**au retour** — le découpage, la remise sur grille, le détourage. Rien de tout ça ne part au modèle et rien ne coûte un centime, mais l'image qu'on verra revenir n'est pas celle que le modèle envoie, et il vaut mieux le savoir avant.",
+  },
+
+  "etabli.calibrage": {
+    nom: "Le calibrage",
+    ou: "etabli",
+    quoi: "L'outil qui met toutes les poses d'une chose du jeu à la même échelle. Il travaille sur toutes à la fois, et c'est pour ça qu'il n'est pas dans la barre des tables : la barre parle de l'image ouverte, lui écrit dans les autres.",
+    change:
+      "Il réécrit la taille rendue des poses qu'on lui désigne. Le défaut qu'il corrige est mesuré : six poses du même personnage, même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut — un bras tendu élargit la boîte du sujet, et la mise sur grille rétrécit tout le reste.",
+    origine:
+      "la matrice de l'établi, qui marque en doré les poses hors taille commune",
+    long:
+      "Il n'écrit que dans l'**occupation**, qui existait déjà et qui est une part de la case : c'est ce qui fait qu'un changement de taille de case ne défait aucun calage. Et il n'épingle pas — un calage n'est pas une main posée sur une image.\n\nIl ne coûte rien : aucun appel payant ne part d'ici.",
+  },
+
+  // ── Les tables — les sept places de la recette ────────────────────────────
   //
-  // **L'ordre ne se négocie pas**, et c'est ce que ces cinq entrées ont à dire
-  // avant tout le reste : trois des cinq n'ont aucun sens avant celle qui les
-  // précède. Rien ne peut se recadrer avant qu'un alpha dise où est le sujet.
+  // **L'ordre ne se négocie pas**, et c'est ce que ces entrées ont à dire avant
+  // tout le reste : trois places n'ont aucun sens avant celle qui les précède.
+  // Rien ne peut se recadrer avant qu'un alpha dise où est le sujet.
 
   "etape.detourage": {
     nom: "Détourage",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La première place de la recette : trouver le fond et le rendre transparent.",
     change:
       "Tout ce qui suit en dépend — le recadrage cherche le sujet dans l'alpha, la grille mesure son occupation dessus. C'est aussi l'étape la plus chère : environ 130 ms, contre 28 pour les quatre autres réunies.",
@@ -471,7 +574,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.moteur": {
     nom: "moteur",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Comment le fond est trouvé : « bord » remplit depuis les bords de l'image, « modèle » demande une silhouette à un réseau.",
     change:
       "« Bord » ne demande aucun réseau et répond en dizaines de millisecondes ; « modèle » coûte une à deux secondes par passe. Le rendu diffère surtout sur les images qui n'ont pas de fond plat.",
@@ -482,7 +585,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.tolerance": {
     nom: "tolérance",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Jusqu'où une couleur peut s'écarter du fond et compter quand même comme fond — l'écart toléré sur chaque composante de couleur.",
     change:
       "Monter mange le sujet par les bords ; descendre laisse un halo de fond autour de lui. Chaque cran relance le détourage : environ 1,5 s.",
@@ -493,7 +596,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.seuil_alpha": {
     nom: "seuil alpha",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Au-dessus de cette valeur un pixel appartient au sujet, en dessous il appartient au fond. 0 à 255.",
     change:
       "Tranche les contours à demi transparents. Sans ce durcissement, un rééchantillonnage au plus proche voisin les décide à pile ou face, et deux passes identiques rendent deux silhouettes différentes.",
@@ -504,7 +607,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.durcissement": {
     nom: "durcissement",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Combien de pixels sont rongés au bord de la silhouette après le seuil, de 0 à 4.",
     change:
       "Retire un liseré résiduel quand le seuil seul n'a pas suffi. Trop haut, il grignote les détails fins — une lame, une antenne, un doigt.",
@@ -513,7 +616,7 @@ export const AIDE: Record<string, Explication> = {
 
   "etape.recadrage": {
     nom: "Recadrage",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La deuxième place : rogner l'image sur la boîte opaque du sujet.",
     change:
       "Ramène le sujet contre les bords de son image. Sans lui, l'occupation de l'étape suivante se mesurerait sur du vide, et deux sujets cadrés différemment ne sortiraient pas à la même échelle.",
@@ -522,7 +625,7 @@ export const AIDE: Record<string, Explication> = {
 
   "recadrage.marge": {
     nom: "marge",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Combien de pixels de l'image d'origine sont gardés autour de la boîte opaque du sujet.",
     change:
       "Élargit le recadrage. Sans marge, le sujet touche les quatre bords de son image recadrée — ce qui gêne les étapes suivantes et l'export.",
@@ -531,7 +634,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.recette": {
     nom: "Sa recette",
-    ou: "retouche",
+    ou: "galerie",
     quoi: "Les places du traitement qui sont posées sur cette image, avec ce que chacune vaut.",
     change:
       "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
@@ -540,7 +643,7 @@ export const AIDE: Record<string, Explication> = {
 
   "detourage.poches": {
     nom: "poches de fond enfermées",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Les zones de fond que le sujet entoure complètement, et que le détourage par tolérance de bord n'atteint donc pas.",
     change:
       "Rien, tant qu'on n'y touche pas. Le produit les cercle et les compte, il n'en efface aucune : la lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux on regarde.",
@@ -549,7 +652,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bords.taches": {
     nom: "taches effacées",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Toutes les taches opaques de l'image, de la plus petite à la plus grande, avec celle où le seuil tombe.",
     change:
       "Rien par elle-même : c'est la liste de ce que le curseur au-dessus va faire. Le trait bleu marque le seuil — au-dessus ce qui s'efface, au-dessous ce qui reste.",
@@ -558,7 +661,7 @@ export const AIDE: Record<string, Explication> = {
 
   "recadrage.boite": {
     nom: "rectangle",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Un rectangle posé à la main sur l'image, qui remplace la boîte opaque que le détourage a trouvée.",
     change:
       "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne.",
@@ -567,7 +670,7 @@ export const AIDE: Record<string, Explication> = {
 
   "quantification.tramage": {
     nom: "tramage",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Comment les couleurs qui n'existent pas dans la palette sont approchées : par la plus proche, ou par un mélange de points.",
     change:
       "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.",
@@ -576,7 +679,7 @@ export const AIDE: Record<string, Explication> = {
 
   "etape.grille": {
     nom: "Grille",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La troisième place : remettre le sujet sur la grille de pixel du projet.",
     change:
       "C'est l'étape qui rend le produit possible — elle met toutes tes images sur le même pixel. Posée systématiquement, jamais en option : une grille qui a dérivé est le cas normal, pas l'incident.",
@@ -585,7 +688,7 @@ export const AIDE: Record<string, Explication> = {
 
   "grille.cible": {
     nom: "taille de pixel",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Le côté de la case, en pixels logiques — la taille finale de ton sprite avant export.",
     change:
       "C'est l'étape qui rend le produit possible : elle remet toutes tes images sur le même pixel. Elle est demandée, jamais déduite de l'image reçue.",
@@ -596,7 +699,7 @@ export const AIDE: Record<string, Explication> = {
 
   "grille.occupation": {
     nom: "occupation",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La part de la case que le sujet remplit une fois mis à l'échelle, en pourcentage.",
     change:
       "C'est elle, et non la taille de l'image d'origine, qui met un tonneau et un personnage à la même échelle de pixel.",
@@ -607,7 +710,7 @@ export const AIDE: Record<string, Explication> = {
 
   "grille.ancrage": {
     nom: "ancrage",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Où le sujet se pose dans sa case quand il ne la remplit pas dans les deux sens — en bas ou au centre.",
     change:
       "Décide de l'alignement entre deux frames du même personnage. En bas par défaut, parce qu'un personnage se tient debout sur le bord bas de sa case.",
@@ -618,7 +721,7 @@ export const AIDE: Record<string, Explication> = {
 
   "etape.quantification": {
     nom: "Quantification",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La quatrième place : ramener l'image à un nombre fini de couleurs, celles de la palette du projet.",
     change:
       "Donne au rendu sa cohérence de palette. Elle vient après la grille et jamais avant : quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
@@ -629,16 +732,16 @@ export const AIDE: Record<string, Explication> = {
 
   "quantification.palette": {
     nom: "palette",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Les couleurs auxquelles l'image sera ramenée — celles de l'univers du projet, montrées ici en lecture seule.",
     change:
-      "Rien à régler ici. La palette se déduit par calcul des artworks officiels, dans l'écran Univers ; la poser à la main ferait deux vérités sur la même chose.",
+      "Rien à régler ici. La palette du jeu se déduit par calcul de ses artworks officiels, et les autres se fabriquent dans l'univers, côté Ambiances et couleurs ; la poser à la main ferait deux vérités sur la même chose.",
     origine: "l'univers du projet · absente s'il n'a aucun artwork officiel",
   },
 
   "quantification.couleurs": {
     nom: "couleurs",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Sur combien de couleurs l'image est ramenée.",
     change:
       "Donne au rendu sa cohérence de palette. Cette étape s'applique après la réduction sur grille, jamais avant — quantifier 1024 px pour les jeter ensuite coûte cent fois plus pour le même résultat.",
@@ -647,7 +750,7 @@ export const AIDE: Record<string, Explication> = {
 
   "etape.bords": {
     nom: "Nettoyage des bords",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La cinquième et dernière place : effacer les taches trop petites pour être le sujet.",
     change:
       "Ne se pose jamais tout seul, et c'est délibéré : c'est le seul geste du post-traitement qui puisse enlever quelque chose au sujet. Il reste à la fiche, là où on le voit agir.",
@@ -656,7 +759,7 @@ export const AIDE: Record<string, Explication> = {
 
   "bords.aire_min": {
     nom: "tache minimale",
-    ou: "retouche",
+    ou: "tables",
     quoi: "En dessous de cette aire, en pixels, une tache opaque isolée est effacée.",
     change:
       "Retire les pixels isolés qu'une réduction au plus proche voisin laisse derrière elle. À 64 px de côté un pixel isolé se voit ; à 1024 il ne se voyait pas.",
@@ -673,9 +776,19 @@ export const AIDE: Record<string, Explication> = {
   // qu'un seul choix remplit ailleurs** — c'est cette liaison-là qu'on ne
   // devine pas en regardant un contrôle.
 
+  "assistant.ecran": {
+    nom: "L'assistant de démarrage",
+    ou: "jeu",
+    quoi: "Les dix étapes qui s'ouvrent à la toute première ouverture et à la création d'un jeu. Elles posent ce qui s'applique à tout : le nom, la vue, la taille d'image, la clé, les types d'objets, les poses.",
+    change:
+      "Rien n'est exigé. **On en sort à n'importe quelle étape**, une étape passée reste passée sans rien bloquer ni se redemander, et un réglage vide ne contraint rien — les défauts du produit prennent le relais.",
+    origine:
+      "toi · dix étapes vides, et un jeu « Bac à sable » qui existait déjà",
+  },
+
   "assistant.nom": {
     nom: "Le nom du jeu",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Comment le jeu s'appelle, dans l'atelier.",
     change:
       "Rien à la génération : c'est le seul réglage qui ne part jamais au modèle. Le dossier, lui, ne se renomme pas — un dossier qui change de nom sous ses fichiers est un déménagement.",
@@ -686,7 +799,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.vue": {
     nom: "La vue du jeu",
-    ou: "univers",
+    ou: "jeu",
     quoi: "D'où l'on regarde le monde — de face, de côté, de dessus, en isométrie.",
     change:
       "**La liste des directions de ton jeu**, et la phrase de style qui part au modèle. C'est cette liste qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté se dessine deux fois ; le même vu de dessus, quatre.",
@@ -697,7 +810,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.taille": {
     nom: "La taille des images",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Le côté de la case où tout ce qui rentre est ramené.",
     change:
       "**C'est le plus coûteux des dix réglages.** Tout ce qui a été fabriqué a été découpé à l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer, et chacune se paie. La ligne le dit avec le compte et le coût — puis laisse passer.",
@@ -708,7 +821,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.etiquettes": {
     nom: "Les étiquettes",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment au modèle.",
     change:
       "Cliquer une étiquette écrit son texte anglais dans la case ouverte. Rien d'autre : ce qui est écrit reste du texte libre, que tu corriges à la main.",
@@ -719,7 +832,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.texte": {
     nom: "Le texte à copier",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Ta description assemblée, prête à coller dans un outil d'images grand public.",
     change:
       "**Rien, et pas un centime** : ce texte ne part nulle part depuis l'atelier. Tu le colles où tu veux, tu récupères des images, tu les déposes sur le tableau.",
@@ -730,7 +843,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.poses": {
     nom: "Les poses et les états",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
     change:
       "Chaque pose est une case à remplir dans le codex. **La liste appartient au type d'objet** : un personnage a ses six attitudes, un meuble ses trois états, une tuile aucune — et changer l'une ne touche pas les autres. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
@@ -739,7 +852,7 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.emplacements": {
     nom: "Les emplacements d'équipement",
-    ou: "univers",
+    ou: "jeu",
     quoi: "Les endroits d'un corps où l'on peut accrocher une pièce — la tête, le dos, la main.",
     change:
       "**L'ordre compte** : il décide de quelle pièce se dessine par-dessus l'autre. L'étape ne sert que si un type de ce jeu a une silhouette — un jeu de tuiles et de décors n'équipe personne.",
@@ -748,13 +861,24 @@ export const AIDE: Record<string, Explication> = {
 
   "assistant.cle": {
     nom: "La clé du fournisseur",
-    ou: "univers",
-    quoi: "Ce qui autorise l'atelier à demander une image. Le seul préalable dur du produit.",
+    ou: "reglages",
+    quoi: "Le mot de passe qui autorise l'atelier à payer des images chez le fournisseur d'IA. Le seul préalable dur du produit.",
     change:
-      "Sans elle, **rien ne part** : le bouton qui paie reste éteint et porte sa raison. Elle vaut pour tous tes jeux, pas seulement celui-ci.",
-    origine: "toi · trois portes, une seule pièce",
+      "Sans elle, **rien ne part** : le bouton qui paie reste éteint et porte sa raison, avec le lien vers le réglage. Tout le reste de l'atelier fonctionne — importer, ranger, détourer, découper, exporter. Elle vaut pour tous tes jeux, pas seulement celui-ci.",
+    origine: "toi · vide au départ · trois portes, une seule pièce",
     long:
-      "Elle se dépose ici, dans la fenêtre des réglages, ou par la variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. La changer ne demande aucun redémarrage.",
+      "Elle se dépose à la dernière étape de l'assistant de démarrage, dans la fenêtre des réglages, ou par la variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. La changer ne demande aucun redémarrage.\n\nC'est le réglage le plus coûteux du guide à laisser sans explication : c'est le seul qui empêche absolument tout tant qu'il est vide.",
+  },
+
+  "reglages.depenses": {
+    nom: "Les dépenses",
+    ou: "reglages",
+    quoi: "La liste de tous les appels payés, du plus récent au plus ancien, chacun avec sa date, son sujet, son modèle et son montant réel — les réussis, les ratés et les interrompus.",
+    change:
+      "Rien du tout : on ne règle rien ici, on lit. Une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne — **une dépense ne s'efface jamais**.",
+    origine: "l'atelier, à chaque appel · rien à remplir",
+    long:
+      "Les deux totaux du produit ne comptent pas la même chose, et il vaut mieux le savoir avant de les comparer : celui de la barre du haut compte **le jeu ouvert**, celui d'ici compte **l'atelier depuis le premier jour**. C'est ce que les étiquettes *ce jeu* et *dépensé par l'agent* ont été ajoutées pour lever.\n\nL'argent n'appartient à aucun jeu en particulier, et c'est pour ça que cet écran se range avec les réglages de l'atelier plutôt qu'avec la galerie.",
   },
 
   // ── La sixième place : les contours ───────────────────────────────────────
@@ -764,9 +888,19 @@ export const AIDE: Record<string, Explication> = {
   // les contours fins, et ce qui reste n'est pas un contour absent, ce qui
   // serait franc, mais un contour *troué*, qui se voit et ne se rattrape pas.
 
+  "etape.contours": {
+    nom: "Les contours",
+    ou: "tables",
+    quoi: "La sixième place de la recette. Elle trace un trait sur le bord du sujet, d'une couleur choisie, et le pose dedans, dehors, ou à cheval.",
+    change:
+      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé, et la table le dit en ligne sœur au moment où l'on choisit la position.",
+    origine:
+      "toi · éteinte au départ · la couleur proposée est la plus sombre de ta palette",
+  },
+
   "contours.epaisseur": {
     nom: "épaisseur du contour",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La largeur du trait, en pixels de l'image rendue — celle qui part dans le jeu.",
     change:
       "Rien à la génération. Au-delà de huit ce n'est plus un contour, c'est un cadre, et il vaut mieux le dessiner à la main : le plafond est là pour ça, pas pour une limite technique.",
@@ -777,7 +911,7 @@ export const AIDE: Record<string, Explication> = {
 
   "contours.couleur": {
     nom: "couleur du contour",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La couleur exacte du trait. La palette du jeu est proposée en rangée ; le champ reste libre.",
     change:
       "Rien à la génération. Une couleur qui n'est pas dans la palette du jeu se marque « hors palette » au lieu d'être refusée — le produit constate, il ne décide pas à ta place.",
@@ -788,7 +922,7 @@ export const AIDE: Record<string, Explication> = {
 
   "contours.position": {
     nom: "position du contour",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Dehors, dedans, ou à cheval sur le bord de la silhouette.",
     change:
       "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé. La table écrit de combien, au moment où tu choisis.",
@@ -799,7 +933,7 @@ export const AIDE: Record<string, Explication> = {
 
   "contours.trous": {
     nom: "les trous",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Un trou de la silhouette — une boucle de ceinture, l'espace entre un bras et un torse — reçoit-il la même ligne que le pourtour ?",
     change:
       "Rien à la génération. Cerclés, un trou plus petit que deux fois l'épaisseur se bouche : la table donne le compte et la plus petite taille pour que ça se voie venir.",
@@ -810,7 +944,7 @@ export const AIDE: Record<string, Explication> = {
 
   "contours.taches": {
     nom: "taches contournées",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Combien de zones opaques ont reçu la ligne, et la taille de la plus petite.",
     change:
       "Rien : c'est une lecture. Un compte qui surprend envoie dans la table des bords, qui est juste avant dans l'ordre.",
@@ -825,9 +959,20 @@ export const AIDE: Record<string, Explication> = {
   // ce qu'une explication doit dire — sinon on la cherche parmi les réglages,
   // où elle n'est pas.
 
+  "etape.main": {
+    nom: "La main",
+    ou: "tables",
+    quoi: "La septième et dernière place. Le crayon, la gomme et la pipette, au pixel. Là où les six autres tables appliquent une règle à toute l'image, celle-ci ne fait que ce que tu désignes.",
+    change:
+      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Elle existe pour les trois pixels qu'aucun réglage n'atteint : un coin de fond collé au sujet, une dent dans un contour, une miette accrochée à la silhouette.",
+    origine: "toi, geste par geste · rien au départ",
+    long:
+      "Comme toutes les tables, elle ne coûte rien. Le post-traitement ne touche jamais le fournisseur — on peut y passer une heure sans dépenser un centime, et c'est ce que la barre qui paie, absente ici, annonce avant qu'on ait lu quoi que ce soit.",
+  },
+
   "main.calques": {
     nom: "les calques de la main",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Une pile : « l'opacité » au fond, et autant de calques de dessin qu'on veut au-dessus.",
     change:
       "Rien à la génération, et rien tant que tu ne poses pas un pixel. Masquer un calque n'efface rien — il garde ses passages et cesse simplement d'être appliqué.",
@@ -838,7 +983,7 @@ export const AIDE: Record<string, Explication> = {
 
   "main.sens": {
     nom: "le sens du geste",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Ce que le prochain passage fera : ôter ou remettre sur l'opacité, poser ou effacer sur un calque de dessin.",
     change:
       "Rien à la génération. Le dernier passage l'emporte sur un pixel donné, comme un pinceau sur une toile.",
@@ -849,7 +994,7 @@ export const AIDE: Record<string, Explication> = {
 
   "main.diametre": {
     nom: "le pinceau",
-    ou: "retouche",
+    ou: "tables",
     quoi: "La largeur du trait, en pixels de l'image rendue. Impairs seulement — un pinceau a un centre.",
     change:
       "Rien à la génération, et rien tant qu'aucun passage n'est posé : ce curseur ne déclenche aucun calcul, il suit la main sans attendre le relâchement.",
@@ -860,7 +1005,7 @@ export const AIDE: Record<string, Explication> = {
 
   "main.couleur": {
     nom: "la couleur du pinceau",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Ce qu'un passage pose sur un calque de dessin. La palette du jeu est proposée ; le champ reste libre.",
     change:
       "Rien à la génération. Une couleur hors palette se marque au lieu d'être refusée : une couleur de plus dans un jeu est un fait qui se lit, pas une faute.",
@@ -871,7 +1016,7 @@ export const AIDE: Record<string, Explication> = {
 
   "main.passages": {
     nom: "le calque actif",
-    ou: "retouche",
+    ou: "tables",
     quoi: "Combien de passages porte le calque choisi, et ce que Ctrl + Z va retirer.",
     change:
       "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Sans la main › », en pied, vide la table entière.",
@@ -884,10 +1029,10 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.impose": {
     nom: "Imposé par le projet",
-    ou: "retouche",
+    ou: "galerie",
     quoi: "Ce que l'univers de ton projet a appliqué à cette image-là — la taille de pixel, la part de case qu'elle occupe, la palette.",
     change:
-      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les cinq étapes en dessous sont l'endroit où l'on change.",
+      "Rien : c'est une lecture. Chaque ligne dit si la valeur du projet est encore appliquée ou si tu l'as réglée à la main depuis, et les sept places en dessous sont l'endroit où l'on change.",
     origine: "l'univers du projet, tel qu'il est maintenant · l'échelle demandée à la naissance",
     long:
       "Sans cette rubrique, tu vois une image qui ne ressemble pas à ce que le modèle a rendu, sans jamais savoir pourquoi : la remise sur grille et la quantification s'appliquent à la naissance, sans rien demander et sans rien dire.\n\nElle est calculée à la lecture, jamais rangée avec l'asset : la question posée est « qu'est-ce que le projet impose *maintenant* », et une valeur enregistrée aurait vieilli au premier réglage d'univers.\n\nElle dit « on ne sait pas » quand la génération de l'image n'est plus sur le disque. Une image importée n'en a jamais eu : le produit préfère l'avouer que de répondre « rien d'imposé », qui est une réponse différente et fausse.",
@@ -895,10 +1040,10 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.recettes": {
     nom: "Recettes",
-    ou: "retouche",
+    ou: "galerie",
     quoi: "Les recettes que tu as nommées, à reposer sur cette image d'un clic.",
     change:
-      "Applique les cinq places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
+      "Applique les sept places d'un coup, sans un appel payant. Une recette nommée réappliquée ailleurs donne exactement le même résultat — c'est un critère du produit, et rien dans le traitement ne tire au sort.",
     origine: "toi, en nommant · aucune au départ",
     long:
       "Une recette est nommée par son empreinte autant que par toi : deux recettes égales sont interchangeables, et c'est cette empreinte qui nomme le fichier de rendu sur le disque. Reposer une recette déjà appliquée ne recalcule donc rien.\n\nUne recette vide ne s'enregistre pas — elle n'aurait rien à rejouer.",
@@ -906,7 +1051,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.reinjecter": {
     nom: "Réinjecter",
-    ou: "retouche",
+    ou: "galerie",
     quoi: "Renvoyer cette image dans le générateur, dans l'un de ses quatre rôles.",
     change:
       "Trois rôles envoient l'image — référence (elle inspire), source d'édition (elle engendre), guide de style (elle donne la manière). Le quatrième n'envoie rien : il reprend le prompt, le modèle et les réglages de la génération qui a produit cet asset.",
@@ -917,7 +1062,7 @@ export const AIDE: Record<string, Explication> = {
 
   "fiche.personnage": {
     nom: "Corps de",
-    ou: "retouche",
+    ou: "galerie",
     quoi: "Le personnage et l'attitude dont cette image est le corps.",
     change:
       "Rien à la génération. La case correspondante cesse d'être vide dans l'écran Personnages, et l'image y paraît en vignette — elle ne bouge pas de la bibliothèque pour autant.",
@@ -963,7 +1108,26 @@ export const AIDE: Record<string, Explication> = {
     long:
       "Vide, l'agent nomme son dossier à chaque appel — c'est permis, et c'est même ce qu'il fera s'il range ses sprites et ses tuiles à deux endroits différents.\n\nCe qui est posé là est le rendu, jamais le brut : l'image qu'on voit, celle qui entre dans le jeu. Le brut reste ici, et c'est lui qui permet de refaire le rendu.",
   },
-  // ── L'écran Découpe ───────────────────────────────────────────────────────
+  // ── Les fabriques ─────────────────────────────────────────────────────────
+  //
+  // **Une fabrique ne modifie pas une image, elle en écrit d'autres sur le
+  // disque.** Ce n'est pas la même chose qu'une retouche qu'on défait, et c'est
+  // pour ça que ce groupe existe — le guide ne disait nulle part qu'il y a des
+  // outils qui ne sont pas des tables, et c'est pourtant la distinction qui
+  // décide où on va les chercher.
+
+  "fabrique.planche": {
+    nom: "La planche de poses",
+    ou: "fabriques",
+    quoi: "Une feuille où le modèle dessine plusieurs attitudes du même personnage en un seul appel, et que l'atelier redécoupe ensuite en images séparées.",
+    change:
+      "Elle divise le prix : une planche coûte le prix d'un appel quel que soit le nombre de cases qu'elle porte. Et elle achète quelque chose qu'aucun appel séparé ne garantit — les cases sortent à la même échelle et dans le même style, puisqu'elles ont été peintes ensemble.",
+    origine: "les cases que tu coches dans l'établi ou dans le codex",
+    long:
+      "Le risque se dit avec : c'est **un jet unique**, que le modèle ne rend pas deux fois. Une planche ratée se repaie entière, et un compte de cases faux ne fait rien entrer du tout — la planche entière se relance au prix plein.\n\nLa feuille elle-même n'entre jamais en bibliothèque ; ses morceaux, oui, chacun filié vers elle.",
+  },
+
+  // ── La première fabrique : le découpage ───────────────────────────────────
   //
   // **Deux gestes séparés exprès** : proposer ne crée rien, découper coupe ce
   // qu'on lui donne. C'est cette séparation, et rien d'autre, qui tient la
@@ -977,9 +1141,18 @@ export const AIDE: Record<string, Explication> = {
   // une table règle une image et rend la même ; celui-ci en prend deux et en
   // fabrique une troisième.
 
+  "fabrique.superposition": {
+    nom: "La superposition",
+    ou: "fabriques",
+    quoi: "L'outil qui pose une pièce d'équipement sur un personnage : il prend le corps nu et le corps habillé, et il en tire le calque de ce qui a été ajouté.",
+    change:
+      "Rien sur les deux images de départ, qui ne sont jamais repeintes. Elle en produit une troisième — un calque —, et un calque est solidaire de la pose sur laquelle la pièce est apparue : il en faut un par pose.",
+    origine: "deux images que tu désignes, dans la même pose",
+  },
+
   "superposition.images": {
     nom: "les deux images",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Le dessus, qui se déplace, et le dessous, qui est le sol et ne bouge jamais.",
     change:
       "Rien sur les deux images de départ, qui ne sont jamais repeintes. Intervertir les deux change le résultat, puisque le calque est fait de ce que le **dessus** ajoute.",
@@ -990,7 +1163,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.detourage": {
     nom: "avant de caler",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "L'état du détourage des deux images — c'est lui qui décide si un calque est seulement possible.",
     change:
       "Rien tant que tu ne reprends pas les passes. Une image qui revient du modèle est opaque de bord à bord : sans alpha sur le dessus, le calque emporte tout le fond de l'image.",
@@ -1001,7 +1174,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.voir": {
     nom: "voir les deux images",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "L'opacité et le mode de couleur du dessous, l'opacité du dessus.",
     change:
       "Rien du tout à ce qui sort — c'est de l'affichage, et rien d'autre. Ils existent pour une seule raison : caler à l'œil deux images qui se ressemblent.",
@@ -1012,7 +1185,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.calage": {
     nom: "le calage",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Où le dessus se pose sur le dessous — une proposition, puis ce que tu ajustes.",
     change:
       "Rien à la génération, et pas un centime : les deux images sont déjà payées. Avant, un recalage raté n'avait aucun recours — le calque était perdu et il fallait relancer une génération.",
@@ -1023,7 +1196,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.echelle": {
     nom: "échelle du dessus",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "La taille du dessus par rapport au dessous. Détente à 1,000.",
     change:
       "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
@@ -1032,7 +1205,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.decalage": {
     nom: "décalage du dessus",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "De combien le dessus se déplace, en pixels de l'image rendue.",
     change:
       "Rien à la génération. Le signe suit l'écran : la touche qui monte fait monter l'image.",
@@ -1043,7 +1216,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.seuil": {
     nom: "ce qu'on garde du dessus",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "De combien une couleur doit changer pour compter comme changée, et le rectangle hors duquel le dessus est masqué.",
     change:
       "Rien à la génération. **Le rectangle sert deux fois** : il isole la pièce pour qu'on voie le corps dessous pendant qu'on cale, et ce qu'il masque à l'écran, il le masque aussi à la sortie.",
@@ -1054,7 +1227,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.sorties": {
     nom: "ce qu'on en sort",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Le calque — ce que le dessus ajoute, sur fond transparent — et l'aplat — les deux fondues en une.",
     change:
       "Les deux **se cochent au lieu de s'exclure** : on veut souvent le calque pour le réutiliser et l'aplat pour l'avoir tout de suite. Ce qui est fabriqué n'a rien coûté — l'argent a été dépensé deux fois, pour les deux images, et les deux filiations y mènent.",
@@ -1065,7 +1238,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.fond": {
     nom: "le fond du calque",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Sur quoi on regarde le calque seul — le damier, ou l'un des cinq aplats vifs.",
     change:
       "Rien : c'est de l'affichage. Il sert à repérer les **pixels oubliés**, ceux qui auraient dû partir avec le corps et sont restés accrochés au calque.",
@@ -1076,7 +1249,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.resultat": {
     nom: "le résultat",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Le dessous à 100 %, le calque par-dessus — tel que ce sera dans le jeu.",
     change:
       "Rien : c'est une lecture. Maintenir « masquer le calque » le retire le temps de l'appui, et c'est ce qui dit si la pièce tient sur le corps.",
@@ -1087,7 +1260,7 @@ export const AIDE: Record<string, Explication> = {
 
   "superposition.mesures": {
     nom: "ce que la comparaison a mesuré",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Cinq nombres : silhouette, corps repeint, ajout, échelle, compacité.",
     change:
       "Rien. **Aucune ne refuse quoi que ce soit** — elles disent si la superposition a réussi, et servent à ranger les calques d'un vestiaire dans l'ordre où il faut les regarder. Le seul refus automatique du produit reste le compte d'images.",
@@ -1098,7 +1271,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.mode": {
     nom: "Détection",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Comment les rectangles sont proposés : « auto » cherche les zones opaques, « grille » découpe en cases égales.",
     change:
       "Ne découpe rien — propose. Ce qui part à la découpe est la liste que tu vois à droite, corrections à la main comprises. Changer ce réglage relance la détection et remplace ce que tu as dessiné.",
@@ -1109,7 +1282,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.taille_min": {
     nom: "taille minimale",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "En dessous de ce côté, en pixels, une zone opaque n'est pas un sprite.",
     change:
       "Monte-la pour ignorer les éclats de fond qui ont survécu au seuil ; descends-la pour rattraper un petit sprite oublié. Chaque cran relance la détection et remplace ce que tu avais dessiné.",
@@ -1120,7 +1293,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.colonnes": {
     nom: "colonnes",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Le nombre de colonnes égales dans lesquelles la planche est coupée.",
     change:
       "Avec les lignes, décide du nombre de découpes proposées : colonnes × lignes, cases vides comprises. Le reste de la division se répartit — rien n'est jeté au bord droit.",
@@ -1131,7 +1304,7 @@ export const AIDE: Record<string, Explication> = {
 
   "decoupe.lignes": {
     nom: "lignes",
-    ou: "decoupe",
+    ou: "fabriques",
     quoi: "Le nombre de rangées égales dans lesquelles la planche est coupée.",
     change:
       "Avec les colonnes, décide du nombre de découpes proposées. Une case vide donne quand même un rectangle : la grille fixe ne saute rien, et c'est ce qui la rend prévisible. Retire-le à la main si tu n'en veux pas.",
@@ -1154,9 +1327,20 @@ export const AIDE: Record<string, Explication> = {
  * l'écran ne pourrait porter son pointillé. Il vit dans `docs/DESIGN.md`
  * § Motion, là où les décisions de mouvement se tranchent. Une liste de manques
  * qui garde un item impossible à combler cesse d'être une liste de travail.
+ *
+ * **Elle a été tenue à la main, et c'est pour ça qu'elle mentait.** Elle disait
+ * une ligne quand onze sujets entiers n'étaient expliqués nulle part — le codex,
+ * les ambiances, la planche de poses, l'écran de confirmation, la vitrine, les
+ * contours, la main, la superposition, le calibrage, les dépenses, le premier
+ * lancement. Rien ne rappelait de l'allonger quand un écran naissait. La règle
+ * qui remplace la bonne volonté est écrite ailleurs, dans le dossier des
+ * maquettes : **une maquette qui ajoute un écran ou un réglage doit une ligne au
+ * guide, et elle l'écrit chez elle**. Les onze ont payé, et les entrées sont
+ * ici.
  */
 export const SANS_ENTREE: readonly string[] = [
   "les réglages qu'un modèle déclare en propre — le catalogue les nomme, et il change d'un jour à l'autre",
+  "les deux dosages d'une palette — la proportion et l'attraction : ce qu'ils font est mesuré, ce qu'ils veulent dire ne l'est pas encore écrit",
 ]
 
 /** L'entrée d'un réglage, ou `undefined` — auquel cas rien ne se marque. */

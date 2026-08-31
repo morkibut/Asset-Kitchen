@@ -21,16 +21,24 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Vingt sont livrées** — `E0` à `E19` —, dont **dix-huit sans réserve** ; deux
-gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et `E8`
-les **dix-sept vignettes d'exemple**, qui sont une production d'images et non du code — les
-cases existent et disent *pas encore dessinée* tant qu'elles manquent
+`docs/PLAN.md`. **Les vingt-et-une sont livrées** — `E0` à `E20` —, dont **dix-neuf sans
+réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus à la
+recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une production d'images et non
+du code — les cases existent et disent *pas encore dessinée* tant qu'elles manquent
 (`docs/vignettes-vues.md` porte les consignes). Les deux critères qui attendaient `E13` sont
 réglés : la porte de la vitrine **depuis une planche** s'est posée avec elle, et la **planche
 des quatre directions** en référence proposée est **fermée** — une planche n'entre jamais en
-bibliothèque, donc cette image-là n'existe pas et n'existera pas. **Une seule étape reste :
-`E20`**, le guide, qui attend toutes les autres parce que c'est le seul écran qui décrit tous
-les autres et donc le seul qui se périme à chaque décision prise ailleurs.
+bibliothèque, donc cette image-là n'existe pas et n'existera pas.
+
+**Ce que `E20` a appris, et qui vaut pour la suite.** Le guide est le seul écran qui parle de
+tous les autres, donc le seul qui se périme à chaque décision prise ailleurs. On pouvait craindre
+que ses cent entrées soient toutes à reprendre après vingt étapes d'interface refaite : **six
+phrases seulement avaient vieilli**. La raison est une règle qui a bien tenu — *une entrée décrit
+un réglage, pas un écran* —, et ce qui avait vieilli était le **cadre** : le tour des lieux, les
+noms des groupes, la façon dont les entrées sont rangées. Le corollaire vaut d'être gardé :
+**quand un écran naît, il doit une ligne au guide**, et rien ne le rappelle tout seul —
+`interface/src/aide.ts` est le seul endroit où cette ligne s'écrit, et `SANS_ENTREE`, en bas du
+même fichier, est la liste de ce qu'il ne dit pas encore.
 
 **Ce que `E14` a déplacé, et qu'il faut savoir avant de toucher au chemin de l'envoi.** Le
 tiroir « qu'est-ce qui part avec ? » a quitté le champ de texte : c'est un écran entier, entre

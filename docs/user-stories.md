@@ -1,4 +1,4 @@
-# Asset Kitchen — Les 308 user stories
+# Asset Kitchen — Les 333 user stories
 
 Le catalogue, groupé comme il l'a été écrit — par geste, dans l'ordre où l'auteur les
 rencontre. **On l'ouvre par numéro** : un critère d'acceptation cite `US-65`, on vient
@@ -459,3 +459,54 @@ arbitré en les écrivant vit dans `docs/v21-arbitrages.md`.*
 - **US-307** — En tant qu'auteur, je veux qu'un groupe sans explication affiche son zéro au lieu de disparaître, afin qu'un manque se voie dans le guide.
 - **US-308** — En tant qu'auteur, je veux qu'un réglage sans explication n'ait simplement pas de trait sous son nom, afin qu'un trou du guide ne se voie jamais dans mon travail.
 
+---
+
+## La V2.2 — d'autres fournisseurs, dont des gratuits
+
+*Écrites le 31 août 2026. Elles ne viennent ni d'un chantier de maquettes, ni d'une séance
+d'usage, mais d'un constat d'économie : trois fournisseurs d'images rendent des crédits
+chaque jour, et le produit n'en connaît qu'un seul, payant. Ce que chacun sait réellement
+faire est **à relever avant de construire** — voir `docs/PLAN.md`, § F0.*
+
+### Fabriquer chez plusieurs fournisseurs
+
+- **US-309** — En tant qu'auteur, je veux voir les modèles de tous les fournisseurs dans une seule liste, chacun portant le nom de celui qui le propose, afin de choisir un outil sans avoir à me rappeler chez qui j'ai un compte.
+- **US-310** — En tant qu'auteur, je veux que deux modèles de même nom chez deux fournisseurs ne se confondent jamais, ni à l'écran ni dans le journal, afin de savoir lequel des deux a fait l'image que je regarde.
+- **US-311** — En tant qu'auteur, je veux qu'un fournisseur injoignable grise ses modèles avec sa raison sans faire disparaître ceux des autres, afin qu'une panne chez l'un ne m'arrête pas de travailler chez l'autre.
+- **US-312** — En tant qu'auteur, je veux que chaque image et chaque appel gardent le nom du fournisseur, afin de pouvoir refaire plus tard la même image au même endroit.
+- **US-313** — En tant qu'auteur, je veux savoir si ce qu'un modèle déclare savoir faire vient du fournisseur ou d'un relevé fait ici, afin de savoir si le grisé qu'on me montre est une certitude ou une supposition.
+- **US-314** — En tant qu'auteur, je veux fabriquer ma première image sans avoir ouvert le moindre compte ni déposé la moindre clé, afin qu'une machine neuve ne soit plus un cul-de-sac.
+
+### Ce qu'un appel consomme
+
+- **US-315** — En tant qu'auteur, je veux qu'un appel sans prix s'affiche « gratuit » et jamais « 0,00 $ », afin de ne pas confondre sans prix et sans limite.
+- **US-316** — En tant qu'auteur, je veux voir ce qu'il me reste chez un fournisseur qui compte en jetons et quand la réserve revient, afin de savoir combien d'essais il me reste aujourd'hui.
+- **US-317** — En tant qu'auteur, je veux que le produit dise s'il compte cette réserve lui-même ou s'il la lit chez le fournisseur, afin de savoir si le chiffre est relevé ou déduit.
+- **US-318** — En tant qu'auteur, je veux que les appels gratuits figurent dans la liste des dépenses avec ce qu'ils ont consommé, afin que « où va mon argent » devienne « où va ce que je consomme ».
+- **US-319** — En tant qu'auteur, je veux que le total affiché en argent ne compte que ce qui se paie en argent, afin qu'un total en dollars reste un total en dollars.
+- **US-320** — En tant qu'auteur, je veux être prévenu avant de lancer un lot quand la réserve du jour n'y suffira pas, avec ce qui manquerait, afin de choisir entre attendre demain et payer.
+- **US-321** — En tant qu'auteur, je veux que le plafond de l'agent distingue ce qu'il dépense de ce qu'il consomme gratuitement, afin qu'un brouillon gratuit ne se cogne pas à un plafond posé pour l'argent.
+
+### Les clés au pluriel
+
+- **US-322** — En tant qu'auteur, je veux déposer une clé par fournisseur, chacune à sa place, afin d'en ajouter un sans toucher à ceux qui marchent déjà.
+- **US-323** — En tant qu'auteur, je veux qu'un fournisseur qui demande deux secrets les demande tous les deux et dise lequel manque, afin de ne pas chercher pourquoi il refuse.
+- **US-324** — En tant qu'auteur, je veux que la barre du haut dise avec quoi je peux produire plutôt que ce qui manque, afin de savoir ce qui m'est ouvert dès la première seconde.
+- **US-325** — En tant qu'auteur, je veux retirer la clé d'un fournisseur sans perdre ses images ni ses dépenses, afin qu'arrêter d'utiliser un fournisseur n'efface pas ce qu'il a fait.
+- **US-326** — En tant qu'auteur, je veux que l'étape de l'assistant qui dépose une clé les propose toutes sans devenir un second endroit où elles habitent, afin qu'il y ait plusieurs portes et une seule pièce.
+
+### Un fournisseur qui compte sans le dire
+
+- **US-327** — En tant qu'auteur, je veux qu'une réserve que le fournisseur n'annonce pas appel par appel soit comptée ici et annoncée comme un compte tenu ici, afin de ne pas prendre une estimation pour un relevé.
+- **US-328** — En tant qu'auteur, je veux qu'un modèle nouveau chez un fournisseur paraisse sans qu'on ait rien réécrit, afin de ne jamais dépendre d'une liste vieillie.
+
+### Un fournisseur qui répond en deux temps
+
+- **US-329** — En tant qu'auteur, je veux qu'un fournisseur qui fait attendre affiche son attente comme les autres, afin de ne pas croire que rien ne se passe.
+- **US-330** — En tant qu'auteur, je veux que toutes les images rendues par une même soumission entrent, afin de ne jamais jeter ce qui a déjà été consommé.
+
+### Le brouillon ne coûte plus rien
+
+- **US-331** — En tant qu'auteur, je veux que le modèle imposé à l'agent soit gratuit par défaut, afin qu'un agent qui code ne dépense plus mon argent pour des visuels de travail.
+- **US-332** — En tant qu'auteur, je veux choisir ce modèle d'exploration parmi ceux qui ne coûtent rien, afin de garder la main sur ce que l'agent consomme.
+- **US-333** — En tant qu'auteur, je veux qu'une image faite sans les références de mon univers reste reconnaissable plus tard, afin de ne pas chercher pourquoi elle ne ressemble pas aux autres.

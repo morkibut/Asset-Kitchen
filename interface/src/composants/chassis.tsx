@@ -516,9 +516,10 @@ export function Curseur({
  * Une place de la recette est-elle remplie ou vide ?
  *
  * Pas une case à cocher du système : un titre de section cliquable, dont l'état
- * se lit à la couleur du texte et à un liseré. La recette a cinq places, et
- * cinq cases à cocher alignées dans un panneau de 380 px ressembleraient à un
- * formulaire — or ce panneau est un établi.
+ * se lit à la couleur du texte et à un liseré. La recette a sept places — cinq
+ * quand ce commentaire a été écrit, les contours et la main s'y sont ajoutés —,
+ * et autant de cases à cocher alignées dans un panneau de 380 px
+ * ressembleraient à un formulaire — or ce panneau est un établi.
  *
  * **C'est le cas particulier du bloc repliable**, et la rangée porte deux actes
  * qui ne sont pas le même : le carré dit *posé ou pas* — ça change l'asset —,

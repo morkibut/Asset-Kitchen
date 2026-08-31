@@ -68,27 +68,63 @@ export function reinitialiserGuide() {
 
 // ── Le sommaire ─────────────────────────────────────────────────────────────
 
-// **Un écran, pas un thème.** Quand on cherche une explication, on se souvient
-// d'où l'on était : la Découpe a donc son groupe, comme les trois autres, plutôt
-// que d'aller se ranger sous « la retouche » au motif qu'elle vient après.
+// **Un lieu, pas un thème.** Quand on cherche une explication, on se souvient
+// d'où l'on était, pas de quelle catégorie la chose relève. On range donc par
+// endroit du produit, dans l'ordre où on les rencontre : ce qu'on pose une fois,
+// ce qu'on nomme, ce qu'on fabrique, ce qu'on juge, ce qu'on retouche, et ce
+// qu'on règle une fois pour toutes.
 const OU: Record<Explication["ou"], string> = {
-  univers: "Dans l'univers",
-  atelier: "Dans l'atelier",
-  retouche: "Dans la retouche",
-  decoupe: "Dans la découpe",
-  reglages: "Dans les réglages",
+  inspiration: "Inspiration",
+  jeu: "Réglages du jeu",
+  ambiances: "Ambiances et couleurs",
+  codex: "Le codex",
+  etabli: "L'établi",
+  galerie: "La galerie",
+  tables: "Les tables",
+  fabriques: "Les fabriques",
+  reglages: "Les réglages de l'atelier",
 }
 
-/** L'ordre des groupes de réglages — celui des écrans, et il est écrit une
- *  seule fois : le sommaire et le corps le lisent tous les deux. */
-// **Les réglages en dernier, et c'est encore l'ordre des écrans.** On les pose
-// une fois et on n'y revient qu'en cas de doute : les mettre en tête ferait
-// commencer un guide de fabrication par une page d'administration.
-const OUS = ["univers", "atelier", "retouche", "decoupe", "reglages"] as const
+/** Les trois côtés de l'univers, puis les six lieux d'ailleurs. L'ordre est
+ *  écrit une seule fois : le sommaire et le corps le lisent tous les deux.
+ *
+ *  **Le mot « Dans » n'est pas dans les noms.** Les groupes s'appelaient *Dans
+ *  l'univers*, *Dans l'atelier* : répété neuf fois dans une colonne de 240 px,
+ *  ça mange la place pour rien. Il est écrit une fois, en tête de chaque moitié.
+ *
+ *  **Les réglages de l'atelier en dernier, et c'est encore l'ordre des lieux.**
+ *  On les pose une fois et on n'y revient qu'en cas de doute : les mettre en
+ *  tête ferait commencer un guide de fabrication par une page d'administration. */
+const DANS_LUNIVERS = ["inspiration", "jeu", "ambiances"] as const
+const AILLEURS = [
+  "codex",
+  "etabli",
+  "galerie",
+  "tables",
+  "fabriques",
+  "reglages",
+] as const
+const OUS = [...DANS_LUNIVERS, ...AILLEURS] as const
 
+// **Cinq temps, et « nommer » est le premier.** Sur une machine neuve, c'est le
+// seul geste possible : il n'y a pas d'établi tant qu'il n'y a pas de chose. La
+// boucle est l'ouverture de la partie, pas un temps de plus.
+//
+// **Quatre lieux, et le guide dit lequel n'est pas un onglet.** On ne visite pas
+// des pièces que personne ne peut ouvrir : la Découpe n'est plus un lieu — c'est
+// une table parmi les autres —, et l'écran qui s'appelait l'Atelier n'existe
+// plus. Ce qu'il faisait se fait sur l'établi d'une chose du jeu.
 const PARTIES = [
-  { id: "geste", titre: "Le geste", entrees: ["La boucle", "Écrire", "Générer", "Juger", "Garder"] },
-  { id: "ecrans", titre: "Les écrans", entrees: ["Atelier", "Univers", "Découpe", "Bibliothèque"] },
+  {
+    id: "geste",
+    titre: "Le geste",
+    entrees: ["La boucle", "Nommer", "Écrire", "Générer", "Juger", "Garder"],
+  },
+  {
+    id: "lieux",
+    titre: "Les lieux",
+    entrees: ["L'univers", "Le codex", "La galerie", "L'établi"],
+  },
 ] as const
 
 export function EcranGuide({ onFermer }: { onFermer: () => void }) {
@@ -138,7 +174,10 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
       {/* `240px · 1fr` — 240 est la colonne de l'arbre, réemployée : un sommaire,
           c'est *où ça se range*. Aucune troisième largeur n'est inventée. */}
       <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)]">
-        <nav className="defile min-h-0 overflow-y-auto border-r border-bord bg-fond-1 p-2">
+        <nav
+          aria-label="Le sommaire"
+          className="defile min-h-0 overflow-y-auto border-r border-bord bg-fond-1 p-2"
+        >
           {PARTIES.map((partie) => (
             <div key={partie.id}>
               <Groupe>{partie.titre}</Groupe>
@@ -150,8 +189,15 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
             </div>
           ))}
 
-          <Groupe>Les réglages</Groupe>
-          {OUS.map((ou) => (
+          <Groupe>Les réglages — dans l'univers</Groupe>
+          {DANS_LUNIVERS.map((ou) => (
+            <Rangee key={ou} onClick={() => aller(`ou-${ou}`)} compte={parOu(ou).length}>
+              {OU[ou]}
+            </Rangee>
+          ))}
+
+          <Groupe>Les réglages — ailleurs</Groupe>
+          {AILLEURS.map((ou) => (
             <Rangee key={ou} onClick={() => aller(`ou-${ou}`)} compte={parOu(ou).length}>
               {OU[ou]}
             </Rangee>
@@ -164,35 +210,53 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
         </nav>
 
         <div ref={corps} className="defile min-h-0 overflow-y-auto px-12 pt-11 pb-16">
-          {/* **La prose est bornée à 36em — 504 px, 74 signes par ligne.** La
-              seule largeur maximale du produit, et l'unité n'est pas `ch` :
-              `72ch` rend 671 px, soit 88 signes, parce que `ch` vaut l'avance
-              du zéro. Calée à gauche, et la place qui reste à droite reste
-              vide : c'est ce vide qui dit qu'on est sorti de l'atelier. */}
-          <article className="max-w-[36em]">
+          {/* **La prose est bornée à 36em, et le `em` est celui de la prose.**
+              La seule largeur maximale du produit. L'unité n'est pas `ch` :
+              `72ch` rend 671 px, soit 88 signes, parce que `ch` vaut l'avance du
+              zéro — l'un des signes les plus larges de la police.
+              `text-[15px]` n'est pas décoratif : sans lui, `36em` se résolvait
+              sur les 13 px hérités du corps et rendait **468 px, soit 61 signes
+              par ligne** — mesuré au navigateur le 31 août 2026. La règle en
+              vise 74, et la borne était donc trop étroite d'un cinquième, dans
+              le sens que personne ne regarde : une colonne trop courte ne se
+              remarque pas, elle fatigue. 540 px, 70 signes.
+              Calée à gauche, et la place qui reste à droite reste vide : c'est
+              ce vide qui dit qu'on est sorti de l'atelier. */}
+          <article className="max-w-[36em] text-[15px]">
             <Titre id="la-boucle">La boucle</Titre>
             <P>
-              Tu écris ce que tu veux dans le champ du haut, tu génères, tu regardes, tu
-              gardes ce qui est bon. <B>C'est toute l'application.</B> Le reste — l'univers,
-              la découpe, le catalogue — existe pour que cette boucle-là demande le moins de
-              décisions possible.
+              Tu nommes, tu écris, tu génères, tu regardes, tu gardes ce qui est bon.{" "}
+              <B>C'est toute l'application.</B> Le reste — l'univers, les tables, le
+              catalogue — existe pour que cette boucle-là demande le moins de décisions
+              possible.
+            </P>
+
+            <H id="nommer">Nommer</H>
+            <P>
+              Écrire un nom <B>crée la chose</B>. On tape <C>un tonneau cerclé de fer</C>{" "}
+              dans le champ du codex : le tonneau entre dans la liste sur-le-champ, et son
+              établi s'ouvre. Ce n'est pas un champ de prompt — <B>on ne paie rien en
+              nommant</B>.
+            </P>
+            <P>
+              C'est le premier temps parce que sur une machine neuve, c'est le{" "}
+              <I>seul geste possible</I> : il n'y a pas d'établi tant qu'il n'y a pas de
+              chose. Et c'est le geste que l'atelier connaît déjà pour les poses et les
+              pièces d'équipement — nommer, c'est créer, partout.
             </P>
 
             <H id="ecrire">Écrire</H>
             <P>
-              Le champ de prompt ne demande que <I>le sujet</I>. Ni le style, ni la palette,
-              ni le format : ils sont déjà posés dans l'univers du projet, et ils partent
-              tout seuls à chaque génération. Écrire <C>un tonneau</C> suffit. Écrire{" "}
+              Le champ ne demande que <I>le sujet</I>. Ni le style, ni la palette, ni le
+              format : ils sont déjà posés dans l'univers du jeu, et ils partent tout seuls
+              à chaque génération. Écrire <C>un tonneau</C> suffit. Écrire{" "}
               <C>un tonneau pixel art 32×32 palette sombre</C> fait le travail une seconde
               fois, et moins bien que l'univers ne le fait.
             </P>
             <P>
-              Le bloc <I>Ce qui part</I>, en bas du panneau de réglages, est en lecture seule :
-              il répond d'avance à « qu'est-ce qui accompagne ma demande ? » — le nombre de
-              références et leur plafond, les artworks retenus et leur famille, le projet, les
-              champs de bible actifs, la palette, la grille imposée. Le compte est{" "}
-              <B>calculé par le serveur</B>, jamais par l'écran : celui qui compte est celui
-              qui part.
+              Le champ est <B>en pied d'écran</B>, et il n'existe qu'à deux endroits :
+              l'établi d'une chose, et le codex. La galerie n'en a pas — on y juge, on n'y
+              paie jamais.
             </P>
 
             <H id="generer">Générer</H>
@@ -210,10 +274,17 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               toujours ton geste, partout, sans exception.
             </P>
             <P>
+              Entre le bouton et la dépense, <B>un écran s'intercale</B> : il montre tout ce
+              qui va partir, ligne par ligne — les textes du jeu, ceux de son ambiance, ton
+              sujet, chaque image jointe avec son prix —, chacune avec un interrupteur. Ce
+              qu'on y éteint ou corrige ne vaut que pour cet appel-là. Une case le saute pour
+              la série en cours, jamais pour toujours.
+            </P>
+            <P>
               Un appel qui rate a coûté de l'argent sans produire d'image. Il n'entre donc pas
-              dans la grille, qui ne montre que ce qu'on peut réutiliser — il va dans le{" "}
-              <I>journal</I>, sous l'arbre, avec son coût. Le journal ne paraît que s'il y a eu
-              un raté.
+              dans la grille, qui ne montre que ce qu'on peut réutiliser. Où est passé
+              l'argent se lit dans <I>les dépenses</I>, qui portent{" "}
+              <B>tous les appels payés</B> et pas seulement ceux qui ont raté.
             </P>
 
             <H id="juger">Juger</H>
@@ -240,9 +311,14 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               et appuie sur la barre d'espace</B> : elle emplit l'écran. Espace encore, Échap,
               ou un clic, et elle s'en va — tu n'as rien quitté. La <I>molette</I> zoome autour
               du pointeur, et au-delà de l'ajustement tu déplaces l'image en la tirant ; le
-              pied dit ses dimensions et le facteur, <C>96×96 · 673 %</C>. Ça marche sur les
-              tuiles de la grille, sur l'image de la fiche, et sur les cartes de l'écran
-              Univers, en grille comme sur la toile.
+              pied dit ses dimensions et le facteur, <C>96×96 · 673 %</C>. Ça marche{" "}
+              <B>partout dans l'atelier</B>, sur n'importe quelle vignette, sans exception.
+            </P>
+            <P>
+              Pour juger vraiment, il y a la <I>vitrine</I> : l'image en grand, seule, sur le
+              fond qu'on choisit et à côté de ce à quoi on veut la comparer. Elle ne modifie
+              rien et ne coûte pas un centime — la barre qui paie s'y retire, et son absence
+              le dit avant qu'on ait lu quoi que ce soit.
             </P>
             <P>
               Ce que tu vois en grand est <B>exactement l'image qui était sous le pointeur</B> :
@@ -260,59 +336,77 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               de l'argent et ne rend jamais la même image.
             </P>
             <P>
-              Une recette a cinq places, appliquées dans un ordre fixe — détourage, recadrage,
-              grille, quantification, bords. Ce n'est pas une simplification : trois des cinq
-              n'ont aucun sens avant celle qui les précède. Rien ne peut se recadrer avant
-              d'avoir un alpha sur lequel trouver le sujet.
+              Une recette a <B>sept places</B>, appliquées dans un ordre fixe — détourage,
+              recadrage, grille, quantification, bords, contours, la main. Ce n'est pas une
+              simplification : trois d'entre elles n'ont aucun sens avant celle qui les
+              précède. Rien ne peut se recadrer avant d'avoir un fond enlevé sur lequel
+              trouver le sujet.
             </P>
             <P>
               Une sélection sort en archive avec son descriptif. C'est le seul moment où
               quelque chose quitte l'atelier.
             </P>
 
-            <Titre id="atelier">Atelier</Titre>
+            <Titre id="l-univers">L'univers</Titre>
             <P>
-              Quatre colonnes : où ça se range (240 px), ce qu'on règle (300 px), le prompt et
-              la grille au milieu, la fiche à droite (380 px). L'atelier ne montre que ce que
-              tu touches <B>à chaque</B> génération — le sujet, le modèle, le nombre de
-              variations. Résolution, format, champs de bible, rôles de réinjection existent
-              tous : ils sont repliés, tenus par un défaut du projet, ou vivent dans l'écran
-              Univers.
-            </P>
-
-            <H id="univers">Univers</H>
-            <P>
-              Ce que tu poses <B>une fois</B> et qui s'applique ensuite tout seul : la bible,
-              la palette, le barème d'échelles, la taille de pixel imposée, et le tableau
-              d'inspiration d'où sortent les artworks officiels.
+              <I>Un onglet.</I> Ce que tu poses <B>une fois</B> et qui s'applique ensuite tout
+              seul. Il a trois côtés, un seul allumé à la fois, chacun plein écran :{" "}
+              <I>Inspiration</I>, le tableau d'images qu'on rassemble pour réfléchir au jeu
+              avant d'en fabriquer une seule ; <I>Réglages</I>, les questions qui disent ce
+              qu'est ce jeu — les sept textes, la taille de pixel, le barème d'échelles, le
+              modèle par famille ; <I>Ambiances et couleurs</I>, où se fabriquent les palettes
+              et les lots de style réutilisables.
             </P>
             <P>
               C'est un écran et non un panneau, et c'est le rythme qui le dit : au début d'un
-              projet, puis ponctuellement. Il couvre l'atelier au lieu de s'y ajouter. Le
-              tableau appartient au projet — supprimer un projet emporte son tableau, alors
-              que ses assets sont seulement détachés : une inspiration n'a de sens que dans
-              son univers, une image produite en a un partout.
+              jeu, puis ponctuellement. Il couvre le travail au lieu de s'y ajouter. Le
+              tableau appartient au jeu — supprimer un jeu emporte son tableau, alors que ses
+              images sont seulement détachées : une inspiration n'a de sens que dans son
+              univers, une image produite en a un partout.
             </P>
 
-            <H id="decoupe">Découpe</H>
+            <H id="le-codex">Le codex</H>
             <P>
-              Une planche qui contient plusieurs sprites se découpe en autant d'assets. Tu
-              dessines des rectangles sur l'image, et leur numéro est l'ordre de lecture —
-              c'est celui que la découpe garde.
+              <I>Un onglet.</I> L'inventaire de ce que ton monde contient, rangé par famille —
+              personnages, décors, objets, interface, équipement — avec ce que chaque chose a
+              déjà et ce qui lui manque. C'est le <B>seul endroit où l'on nomme</B>, et le
+              second des deux seuls endroits d'où l'argent part.
             </P>
             <P>
-              Elle s'ouvre <B>depuis la fiche</B>, jamais depuis la barre d'outils : on
-              découpe une image, pas une sélection. Et le geste est toujours visible, parce que
-              rien ne permet de savoir d'avance qu'une image est une planche — un bouton qui
-              paraîtrait ou disparaîtrait selon ce qu'on croit deviner serait faux la moitié du
-              temps.
+              Le manque n'y a aucune couleur d'alerte, et rien n'y réclame jamais rien : une
+              case vide est un fait, pas un reproche. On y compte ce qu'on peut fabriquer
+              maintenant — ce qui est déjà rangé n'est jamais compté comme manquant.
             </P>
 
-            <H id="bibliotheque">Bibliothèque</H>
+            <H id="la-galerie">La galerie</H>
             <P>
-              Les projets et les collections, dans la colonne de gauche. C'est la seule colonne
-              qui parle d'argent : elle porte le total du projet ouvert, et le journal des
-              ratés juste en dessous. Il faut pouvoir expliquer une facture.
+              <I>Un onglet.</I> Toutes les images produites, toutes choses confondues. C'est là
+              qu'on juge et qu'on range, et <B>nulle part on n'y paie</B> — elle n'a pas de
+              champ de saisie, et c'est délibéré.
+            </P>
+            <P>
+              Les jeux et les collections sont dans la colonne de gauche, avec le total du jeu
+              ouvert. Ce total est un lien : il ouvre les dépenses, où tous les appels payés
+              se lisent un par un. Il faut pouvoir expliquer une facture.
+            </P>
+
+            <H id="l-etabli">L'établi</H>
+            <P>
+              <I>Une profondeur, pas un onglet.</I> Une chose du jeu, ouverte : ce qu'elle est,
+              ce qu'elle a déjà, et ce qu'on peut lui ajouter. On n'y arrive pas par la barre —{" "}
+              <B>on clique un nom dans le codex</B>, et le fil qui dit où l'on est remplace le
+              nom de l'onglet.
+            </P>
+            <P>
+              C'est l'un des deux seuls endroits d'où l'argent part. Sa matrice arme, la barre
+              tire : cliquer <I>Fabriquer</I> sur une case remplit le champ et rend la main, il
+              n'y a jamais qu'un endroit qui dépense.
+            </P>
+            <P>
+              La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
+              barre des tables d'une image, à droite du trait — la première des deux fabriques.
+              Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce
+              qu'il faut en savoir est dit au temps <I>Garder</I>.
             </P>
 
             <Titre id="les-reglages">Les réglages</Titre>
@@ -322,14 +416,27 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               dans un panneau : tu retrouveras les trois premières lignes de son entrée.
             </P>
 
-            {OUS.map((ou) => (
-              <section key={ou}>
-                <H id={`ou-${ou}`}>{OU[ou]}</H>
-                {parOu(ou).map(([cle, e]) => (
-                  <Reglage key={cle} cle={cle} entree={e} />
-                ))}
-              </section>
-            ))}
+            {/* **Un groupe sans explication paraît quand même, avec son zéro.**
+                Le faire disparaître cacherait le manque ; c'est la règle du
+                produit partout ailleurs — ce qui manque le dit — et le guide est
+                le dernier endroit où l'on aurait le droit d'y déroger. */}
+            {OUS.map((ou) => {
+              const miennes = parOu(ou)
+              return (
+                <section key={ou}>
+                  <H id={`ou-${ou}`}>{OU[ou]}</H>
+                  {miennes.length === 0 ? (
+                    <p className="mesure text-[11px] text-texte-3">
+                      0 — rien d'écrit ici pour l'instant.
+                    </p>
+                  ) : (
+                    miennes.map(([cle, e]) => (
+                      <Reglage key={cle} cle={cle} entree={e} />
+                    ))
+                  )}
+                </section>
+              )
+            })}
 
             <Titre id="manque">Ce qui n'est pas encore écrit</Titre>
             <P>

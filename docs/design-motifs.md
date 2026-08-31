@@ -1205,8 +1205,12 @@ vaut.
 
 **Et l'unité n'est pas `ch` — mesuré au navigateur, pas déduit.** `72ch` rend **671 px**, soit
 88 signes de français : `ch` vaut l'avance du zéro, et le chiffre d'Instrument Sans est bien
-plus large que ses bas-de-casse. La valeur juste est **`36em`**, soit 504 px pour une avance
-moyenne mesurée à 6,77 px — **74 signes par ligne**. C'est la même erreur de famille que
+plus large que ses bas-de-casse. La valeur juste est **`36em`**, **posé sur la taille de la prose** :
+540 px pour une avance moyenne mesurée à 7,69 px — **70 signes par ligne**. Cette phrase
+annonçait 504 px et 74 signes jusqu'au 31 août 2026, et les deux nombres venaient d'une avance
+mesurée à 13 px appliquée à une prose de 15. Posé sans le dire, `36em` héritait les 13 px du
+corps et rendait **468 px, soit 61 signes** — c'est ce que l'écran de E20 a montré, et la borne
+porte désormais sa taille en toutes lettres. C'est la même erreur de famille que
 `aspect-ratio` cédant devant `max-height` sur le cadre de la planche : une unité qui a l'air
 de dire ce qu'on veut, et qui mesure autre chose.
 
