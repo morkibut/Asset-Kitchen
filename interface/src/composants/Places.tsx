@@ -37,8 +37,21 @@ import {
 import { Curseur, Libelle, Raison, Segments } from "./chassis"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
- *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. */
-export const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
+ *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor.
+ *
+ *  **Les neuf sont celles du domaine, et c'est une correction.** La table n'en
+ *  acceptait que sept, 16 à 128 ; l'assistant de démarrage et l'univers en
+ *  proposent neuf depuis le 30 août 2026, 8 et 256 compris
+ *  (`atelier/domaine/vue.py`, `TAILLES`). **Un jeu réglé sur 8 ou sur 256
+ *  n'avait donc aucun outil pour appliquer sa propre taille** — le réglage du
+ *  projet nommait une case que la table ne savait pas poser. Signalé par
+ *  l'auteur le 31 août 2026, et déjà arbitré dans le croquis de l'écran
+ *  (`docs/maquettes-v2.1/13-table-grille.html`, première annotation).
+ *
+ *  Les deux listes sont tenues ensemble par `tests/test_e8.py` : elles disent le
+ *  même fait, et deux listes pour un fait finissent toujours par diverger — la
+ *  divergence de sept contre neuf en est la preuve. */
+export const CIBLES = [8, 16, 24, 32, 48, 64, 96, 128, 256] as const
 
 export const MOTEUR: Record<Passe["moteur"], string> = {
   bord: "bord",
@@ -463,6 +476,10 @@ export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
     <div className="flex flex-col gap-2">
       <Reglage libelle="cible" aide="grille.cible">
         <Segments
+          // Neuf valeurs ne tiennent pas sur la largeur de la colonne, et
+          // aucune taille de segment ne les y ferait tenir : la suite passe à
+          // la ligne plutôt que de pousser le panneau à défiler de côté.
+          plusieursRangees
           valeurs={CIBLES}
           valeur={(recette.grille?.cible ?? 64) as (typeof CIBLES)[number]}
           onChange={(cible) =>

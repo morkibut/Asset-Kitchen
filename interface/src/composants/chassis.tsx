@@ -393,6 +393,7 @@ export function Segments<T extends string | number>({
   onChange,
   indisponibles = [],
   libelles,
+  plusieursRangees = false,
 }: {
   valeurs: readonly T[]
   valeur: T
@@ -402,9 +403,28 @@ export function Segments<T extends string | number>({
    *  d'un moteur voyage sans accent — il traverse du JSON et des chemins — mais
    *  ce qui s'affiche est français, comme tout le reste de l'écran. */
   libelles?: Partial<Record<string, string>>
+  /** Autorise la suite à passer à la ligne quand elle est trop longue pour sa
+   *  colonne. **Faux par défaut, et c'est voulu** : dans une bande de hauteur
+   *  fermée — la barre d'outils —, une deuxième rangée sortirait de la bande.
+   *
+   *  **Mesuré au navigateur le 31 août 2026**, sur la cible de la table de
+   *  grille : neuf segments réclament 347 px et la colonne n'en offre que 224,
+   *  barre de défilement verticale déduite. Le débordement ne se voyait pas
+   *  comme un défaut — le panneau se mettait simplement à défiler de côté, et
+   *  **les deux plus grandes valeurs, 128 et 256, tombaient hors de l'écran**.
+   *  Un réglage qu'on ne peut pas atteindre n'existe pas. Sur deux rangées la
+   *  suite tient — six puis trois — et le défilement latéral disparaît.
+   *
+   *  **Le croquis les montre sur une rangée, et ce n'est pas une contradiction
+   *  à corriger** : il pose son libellé *au-dessus* des segments, qui disposent
+   *  alors de toute la colonne, et il les dessine plus petits que ceux du
+   *  produit. L'écran, lui, met le libellé *à côté*, comme tous ses autres
+   *  réglages. À cette largeur-là, aucune taille de segment ne fait tenir neuf
+   *  valeurs sur une rangée — vérifié au navigateur avant d'en arriver là. */
+  plusieursRangees?: boolean
 }) {
   return (
-    <div className="flex gap-1">
+    <div className={plusieursRangees ? "flex flex-wrap gap-1" : "flex gap-1"}>
       {valeurs.map((v) => {
         const choisi = v === valeur
         const grise = indisponibles.includes(v)

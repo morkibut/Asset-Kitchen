@@ -16,8 +16,15 @@ endroits.
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 from atelier.domaine.projet import BAREME_PAR_DEFAUT, CHAMPS_BIBLE
 from atelier.domaine.vue import TAILLES, VUES, phrase_de_calage, phrase_de_grille, vue
+
+PLACES = (
+    Path(__file__).resolve().parents[1] / "interface" / "src" / "composants" / "Places.tsx"
+)
 
 
 def _univers(client) -> dict:
@@ -46,6 +53,29 @@ def test_les_huit_vues_et_les_neuf_tailles_se_servent_du_serveur(client):
     # multiplie toute la production, donc tout ce qu'on paiera.
     assert all(v["images"] >= 1 for v in recu["vues"])
     assert {v["identifiant"] for v in recu["vues"]} == {v.identifiant for v in VUES}
+
+
+def test_la_table_grille_propose_les_memes_tailles_que_l_assistant():
+    """**La table de grille propose exactement les neuf tailles du domaine.**
+
+    Ce n'est pas un détail d'affichage : le réglage du projet nomme la case à
+    laquelle tout est ramené, et la table est l'outil qui la pose sur une image.
+    Quand les deux listes divergent, **un jeu réglé sur une taille que la table
+    ignore n'a plus aucun outil pour appliquer sa propre taille** — c'est ce qui
+    est arrivé, sept contre neuf, entre le 30 et le 31 août 2026 : 8 et 256
+    étaient entrés dans le domaine et l'assistant sans entrer dans la table.
+
+    L'essai lit la source de l'écran plutôt que de recopier les neuf nombres :
+    une troisième copie de la même liste serait précisément la panne qu'on ferme
+    ici. Le croquis de l'écran (`docs/maquettes-v2.1/13-table-grille.html`,
+    première annotation) porte le même arbitrage.
+    """
+    ecrit = re.search(r"const CIBLES = \[([^\]]*)\]", PLACES.read_text(encoding="utf-8"))
+    assert ecrit is not None, "CIBLES a été renommée ou déplacée hors de Places.tsx"
+
+    proposees = [int(n) for n in re.findall(r"\d+", ecrit.group(1))]
+
+    assert proposees == [cible for cible, _ in TAILLES]
 
 
 def test_la_tuile_est_entree_au_bareme(client):
