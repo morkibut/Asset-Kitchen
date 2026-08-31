@@ -1635,12 +1635,50 @@ pour autre chose qu'un personnage.
 
 #### Critères d'acceptation
 
-- [ ] Les cinq familles portent des entités de plein droit, avec leur compte de manque
-- [ ] Un établi ne montre aucune rangée « sans objet » ; ce qui n'existe pas pour la famille n'est pas dessiné
-- [ ] Ce qui viendra plus tard reste grisé avec sa raison, et occupe sa place
-- [ ] L'établi d'une pièce d'équipement montre les personnages qui la portent, pas des images
-- [ ] Tout ce qui marchait pour un personnage marche pour une entité des quatre autres familles
-- [ ] Aucun personnage existant ne perd quoi que ce soit à la généralisation
+- [x] Les cinq familles portent des entités de plein droit, avec leur compte de manque
+- [x] Un établi ne montre aucune rangée « sans objet » ; ce qui n'existe pas pour la famille n'est pas dessiné
+- [x] Ce qui viendra plus tard reste grisé avec sa raison, et occupe sa place
+- [x] L'établi d'une pièce d'équipement montre les personnages qui la portent, pas des images
+- [x] Tout ce qui marchait pour un personnage marche pour une entité des quatre autres familles
+- [x] Aucun personnage existant ne perd quoi que ce soit à la généralisation
+
+#### Ce qui a été décidé en la faisant
+
+**Le travail de modèle le plus lourd de la V2.1 n'a ajouté aucun objet.** Une chose du jeu
+porte son **type** depuis E9, et un type porte sa **famille** depuis T4 : la généralisation
+est donc une *lecture*, pas une migration. Garder une famille sur la chose aurait fait deux
+vérités sur la même question, et elles auraient fini par se contredire — un meuble rangé dans
+les décors. C'est aussi ce qui rend vraie sans effort la promesse « aucun personnage existant
+ne perd quoi que ce soit » : pas un fichier n'a eu à être réécrit.
+
+**Nommer crée dans la famille où l'on nomme, et le type se voit.** « Un tonneau cerclé de
+fer » tapé sous *Objets* y reste : le produit pose le premier type de cette famille-là, et ce
+choix est écrit sur l'établi de la chose, dans un menu, changeable. Une décision du produit
+qui ne se verrait pas serait une décision prise à la place de l'auteur.
+
+**Ce qu'une famille ne peut pas avoir n'est pas dessiné, ce qui viendra reste grisé.** Un
+décor n'a pas de vestiaire : son établi ne montre aucune colonne d'équipement, sa fiche ne
+compte aucune pièce, et rien n'est barré ni pâle — il n'y a rien. Le grisé garde son seul
+emploi : réserver la place de ce qui sera construit plus tard, et dire pourquoi.
+
+**Une pièce d'équipement ne montre aucune image, et c'est tout son établi.** Le produit
+interdit de générer un casque sur fond vide — un casque n'existe qu'apparu sur un corps —,
+alors sa ligne dit *posée sur 2 personnages sur 3* et nomme lesquels, pose par pose. Comme
+une case pleine, ça se déduit des images : rien de plus n'est enregistré, et supprimer un
+calque retire la pièce du compte tout seul.
+
+**Trois mensonges d'écran sont tombés en ouvrant les autres familles**, et aucun ne se voyait
+tant que seuls des personnages existaient. Le compte de ce qui manque lisait **le plan du
+jeu** au lieu de ce que la chose réclame : un décor y gagnait douze cases manquantes qu'aucun
+écran ne sait remplir. Le pied de la colonne écrivait *0 décor, 0 objet, 0 élément
+d'interface* en dur. Et le fil d'Ariane disait *Personnages* quoi qu'on regarde — vrai tant
+qu'il n'y avait qu'une famille peuplée, faux dans quatre cas sur cinq dès qu'il y en a cinq.
+La règle générale se lit ici : **une constante écrite en dur est une vérité qui attend de
+devenir fausse**, et c'est la famille voisine qui la démasque.
+
+**Et une phrase périmée avec eux** : la colonne de droite disait « les ambiances n'ont pas
+encore d'écran où vivre », alors que E11 le leur a donné. Elle dit maintenant laquelle une
+chose désigne, ou qu'elle suit le style du jeu.
 
 #### Bloquée par
 

@@ -34,6 +34,7 @@ from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.ambiance import CE_QU_ON_PREND
+from atelier.domaine.carte import PERSONNAGES
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import (
     Pose,
@@ -769,6 +770,74 @@ class ServiceProduction:
             "de_l_ambiance": sum(1 for c in champs if c["origine"] == "ambiance"),
         }
 
+    # ── Les cinq familles (E15) ──────────────────────────────────────────────
+
+    def famille_de(self, projet: str, personnage: Personnage) -> str:
+        """La famille d'une chose du jeu — **lue dans son type**, jamais gardée
+        en double (E15)."""
+        return self._exiger(projet).univers.famille_du_type(personnage.type)
+
+    def porte_de_lequipement(self, projet: str, personnage: Personnage) -> bool:
+        """Cette chose-là peut-elle porter une pièce ? (E15)
+
+        **Une pièce se pose sur un corps, jamais sur rien** — c'est déjà le refus
+        de C3, écrit au moment de plier une planche d'équipement. E15 en tire la
+        conséquence à l'écran : un décor et un bouton n'ont pas de vestiaire, et
+        leur établi ne dessine donc **aucune** colonne d'équipement. Pas une
+        colonne grisée : ce qu'une famille ne peut pas avoir n'existe pas dans
+        son établi, et le grisé est réservé à ce qui viendra.
+        """
+        return self.famille_de(projet, personnage) == PERSONNAGES
+
+    def portee_de_la_piece(self, projet: str, piece: str) -> dict[str, Any]:
+        """Sur quels personnages cette pièce est posée (US-284).
+
+        **Une pièce n'a pas d'image à elle**, et son établi ne fait donc pas
+        semblant d'en avoir : il montre les choses qui la portent. Le produit
+        interdit de générer un casque sur fond vide — un casque n'existe
+        qu'apparu sur un corps —, et ce qui manque se lit comme partout ailleurs :
+        *posée sur 1 personnage sur 3*.
+
+        **Rien n'est enregistré ici non plus.** C'est l'image qui dit sa case et
+        sa pièce ; une pièce posée se déduit donc des assets, comme une case
+        pleine, et supprimer un calque la retire toute seule.
+        """
+        objet = self._exiger(projet)
+        connue = next((p for p in objet.pieces if p.identifiant == piece), None)
+        if connue is None:
+            raise ProductionRefusee(f"aucune pièce « {piece} » dans ce projet")
+
+        portants: dict[str, list[str]] = {}
+        for personnage in self.personnages(projet):
+            if not self.porte_de_lequipement(projet, personnage):
+                continue
+            poses = [
+                asset.pose
+                for asset in self._base.assets_du_personnage(personnage.identifiant)
+                if asset.piece == piece and asset.pose
+            ]
+            if poses:
+                portants[personnage.identifiant] = sorted(set(poses))
+
+        candidats = [
+            p
+            for p in self.personnages(projet)
+            if self.porte_de_lequipement(projet, p)
+        ]
+        return {
+            "piece": connue.en_json(),
+            "portee": [
+                {
+                    "personnage": p.identifiant,
+                    "nom": p.nom,
+                    "poses": portants.get(p.identifiant, []),
+                }
+                for p in candidats
+            ],
+            "posee": len(portants),
+            "candidats": len(candidats),
+        }
+
     def references_promues(self, projet: str, personnage: str) -> tuple[str, ...]:
         """Les images qu'une chose du jeu a promues en référence permanente.
 
@@ -1171,7 +1240,12 @@ class ServiceProduction:
         raise PersonnageInconnu(identifiant)
 
     def creer_personnage(
-        self, projet: str, nom: str, description: str = ""
+        self,
+        projet: str,
+        nom: str,
+        description: str = "",
+        famille: str = "",
+        type: str = "",
     ) -> Personnage:
         """Un nom, une description, et rien d'autre (US-115).
 
@@ -1179,19 +1253,34 @@ class ServiceProduction:
         nulle part ailleurs : on écrit un sujet, on génère, et c'est l'image
         obtenue qu'on désigne. Ce geste-ci ne fabrique qu'une colonne de cases
         vides — il ne demande rien au fournisseur et ne coûte rien.
+
+        **Et depuis E15, dans la famille où on l'a nommée.** « Un tonneau cerclé
+        de fer » tapé dans la colonne *Objets* y reste : c'est le type qui porte
+        la famille, et le produit pose donc le premier type de cette famille-là.
+        Un choix visible, écrit sur l'établi de la chose et changeable d'un menu
+        — jamais un état caché. Sans famille nommée, la chose n'a pas de type et
+        suit le plan du jeu : c'est l'état de toutes celles d'avant E9, et une
+        chose créée aujourd'hui doit ressembler à celles d'hier.
         """
         propre = nom.strip()
         if not propre:
-            raise ProductionRefusee("un personnage se crée avec un nom")
+            raise ProductionRefusee("une chose du jeu se crée avec un nom")
+        objet = self._exiger(projet)
         existants = self.personnages(projet)
         if any(p.nom.casefold() == propre.casefold() for p in existants):
-            raise ProductionRefusee(f"« {propre} » est déjà un personnage de ce projet")
+            raise ProductionRefusee(f"« {propre} » est déjà une chose de ce projet")
 
+        if type and objet.univers.echelle(type) is None:
+            connus = ", ".join(e.nom for e in objet.univers.bareme)
+            raise ProductionRefusee(
+                f"aucun type « {type} » dans ce jeu — les types sont : {connus}"
+            )
         personnage = Personnage(
             identifiant=repere(propre, {p.identifiant for p in existants}, "personnage"),
             projet=projet,
             nom=propre,
             description=description.strip(),
+            type=type or (objet.univers.premier_type_de(famille) if famille else ""),
         )
         self._sauver(personnage)
         return personnage
@@ -1405,6 +1494,15 @@ class ServiceProduction:
             # qu'elle ne tient pas sous un trait plutôt que de le cacher, et il
             # lui faut donc la liste entière, pas seulement les cases tenues.
             "plan": [p.en_json() for p in self.plan_de(projet, personnage)],
+            # **Sa famille, lue dans son type** (E15) — et non gardée sur elle :
+            # deux vérités sur la même question auraient fini par ranger un
+            # meuble dans les décors. Le codex s'en sert pour la classer, et
+            # l'établi pour savoir ce qu'il n'a pas à dessiner.
+            "famille": self.famille_de(projet, personnage),
+            # **Ce que sa famille peut avoir**, pour que l'établi ne dessine pas
+            # une colonne d'équipement à un décor. Ce n'est pas un grisé : ce
+            # qu'une famille ne peut pas avoir n'existe pas dans son établi.
+            "equipable": self.porte_de_lequipement(projet, personnage),
         }
 
     def cases(self, projet: str, personnage: Personnage) -> list[dict[str, Any]]:

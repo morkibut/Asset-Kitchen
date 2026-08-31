@@ -388,6 +388,14 @@ ce nom, la liste vide du décor et de la tuile comprise. **Et une chose sans typ
 plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les projets
 existants sans qu'un seul fichier ait eu à être réécrit.
 
+*Écrit en la faisant, le 31 août 2026.* **Les cinq familles n'ont ajouté aucun objet.** Une
+chose du jeu porte son type depuis E9, et un type porte sa famille depuis T4 : un décor est
+donc une chose du jeu au même titre qu'un personnage sans qu'une ligne de modèle soit écrite,
+et la famille se **lit** dans le type plutôt que de se garder à côté. Deux vérités sur la même
+question auraient fini par ranger un meuble dans les décors. C'est aussi ce qui rend vraie
+sans effort la promesse « aucun personnage existant ne perd quoi que ce soit » : une chose
+sans type est un personnage, et c'est l'état de toutes celles d'avant E9.
+
 *Écrit en la faisant, le 31 août 2026.* **La liste des directions est une liste ou rien**,
 exactement comme celle d'un type — et pour la même raison, qui est devenue une règle du
 dossier : *rien* veut dire « personne n'y a touché », et la liste **suit alors la vue du
@@ -426,12 +434,15 @@ troisième corrige le frottement le plus cher du dépôt : dix-sept appels payé
 avec **tous** les appels de sa chose, ce qui la distingue d'une réinjection posée pour un
 appel ; le compte des références le dit en toutes lettres, sans quoi on décocherait en aveugle.
 
-**Le personnage se généralise en entité, et c'est le seul de ces changements qui touche du
-code existant en profondeur.** Les familles *Décors*, *Objets* et *Interface* ont
-aujourd'hui leur ligne et leur compte à zéro : ce qui manque est le modèle, pas la mise en
-page. L'entité gagne au passage **deux listes d'écart de plus** — les directions rangées,
-les pièces rangées — à côté de celle qui existe déjà pour les poses, et **les images de
-référence qu'elle désigne**, qui n'existaient sous aucune forme.
+**Le personnage se généralise en entité**, ce qui était annoncé comme le seul de ces
+changements à toucher du code existant en profondeur. *Corrigé en le faisant, le 31 août
+2026* : il n'a touché aucun modèle. Les familles *Décors*, *Objets* et *Interface* avaient
+leur ligne et leur compte à zéro faute d'entités ; elles en portent depuis E15, et la famille
+d'une chose se **lit dans son type**, qui la porte depuis T4. Ce qui manquait n'était donc
+pas le modèle — il était là — mais les écrans qui le lisent. L'entité gagne en revanche
+**deux listes d'écart de plus** — les directions rangées (E10), les pièces rangées — à côté
+de celle qui existe déjà pour les poses, et **les images de référence qu'elle désigne**, qui
+n'existaient sous aucune forme.
 
 **Ce que la V2.1 ne coûte pas, et c'est la moitié de son intérêt** : aucune route neuve
 vers le fournisseur, aucun appel payant supplémentaire — la fusion des palettes et la

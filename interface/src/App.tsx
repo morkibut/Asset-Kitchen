@@ -71,7 +71,11 @@ import { CRANS, Point, usePli, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
-import { EcranCodex } from "./composants/Codex"
+import {
+  EcranCodex,
+  NOM_DE_LA_RUBRIQUE,
+  type Rubrique,
+} from "./composants/Codex"
 import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
@@ -238,6 +242,10 @@ export function App() {
   // monde, tenue ici pour la raison du plan : un seul endroit écoute le flux,
   // pour toute la vie de l'onglet. Elle arrive dans le même aller-retour, parce
   // qu'une case n'existe que par la direction qui la nomme.
+  // **La rubrique ouverte du codex** (E15) — tenue ici parce que le fil
+  // d'Ariane la nomme : cinq familles portent des choses, et un fil qui dirait
+  // toujours *Personnages* mentirait dans quatre cas sur cinq.
+  const [rubrique, setRubrique] = useState<Rubrique>("personnages")
   const [directions, setDirections] = useState<DirectionsDuJeu>({
     directions: [],
     origine: "vue",
@@ -1473,7 +1481,12 @@ export function App() {
             },
           },
           {
-            libelle: "Personnages",
+            // **La famille de la chose ouverte, pas la rubrique** : on peut
+            // ouvrir un décor puis changer de rubrique, et le fil doit dire d'où
+            // vient ce qu'on regarde.
+            libelle:
+              NOM_DE_LA_RUBRIQUE[choseOuverte.famille ?? "personnages"] ??
+              "Personnages",
             onAller: () => {
               setCaseOuverte(null)
               setChoseOuverte(null)
@@ -1494,7 +1507,7 @@ export function App() {
               libelle: projetCourant?.nom ?? "sans projet",
               onAller: () => setChoseOuverte(null),
             },
-            { libelle: "Personnages" },
+            { libelle: NOM_DE_LA_RUBRIQUE[rubrique] ?? "Personnages" },
           ]
         : imageDesTables
           ? [
@@ -1973,6 +1986,8 @@ export function App() {
           onPersonnage={fondrePersonnage}
           directions={directions}
           onDirections={setDirections}
+          rubrique={rubrique}
+          onRubrique={setRubrique}
           onPlan={(recu) => {
             // Le plan touché **et les choses avec** (E9) : la liste d'une chose
             // dépend du plan, et le serveur seul sait laquelle. Le plan est posé

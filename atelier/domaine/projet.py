@@ -348,6 +348,43 @@ class Univers:
                 return c
         return Champ(nom)
 
+    def famille_du_type(self, nom: str) -> str:
+        """La famille d'une chose du jeu, **lue dans son type** (E15).
+
+        **Une chose est définie à un seul endroit.** Le type d'objet porte déjà
+        sa famille depuis T4 — c'est elle qui décide quels artworks officiels
+        partent en référence —, et le codex la relit plutôt que d'en garder une
+        seconde sur la chose. Deux vérités sur la même question auraient fini par
+        se contredire : un meuble rangé dans les décors.
+
+        **Sans type, c'est un personnage**, et c'est la reprise : toutes les
+        choses du jeu d'avant E9 n'en portent pas, et elles ne doivent rien
+        perdre à la généralisation. Un type que le barème ne connaît plus retombe
+        sur la même réponse, parce qu'un renommage d'échelle ne doit pas faire
+        disparaître une chose de tout écran.
+        """
+        echelle = self.echelle(nom) if nom else None
+        return echelle.famille if echelle else PERSONNAGES
+
+    def premier_type_de(self, famille: str) -> str:
+        """Le type que le produit pose à une chose créée **dans cette famille**.
+
+        Nommer crée, et une chose créée dans la colonne *Décors* doit y rester ;
+        or c'est le type qui porte la famille. Le produit choisit donc le premier
+        type du barème qui appartient à cette famille — un choix visible et
+        changeable d'un menu sur l'établi de la chose, jamais un état caché.
+
+        **Vide pour les personnages**, et c'est délibéré : c'est l'état de toutes
+        les choses d'avant E9, celui qui suit le plan du jeu. Une chose créée
+        aujourd'hui doit ressembler à celles d'hier.
+        """
+        if famille == PERSONNAGES:
+            return ""
+        for echelle in self.bareme:
+            if echelle.famille == famille:
+                return echelle.nom
+        return ""
+
     def directions_du_jeu(self) -> tuple[Direction, ...]:
         """Les directions de ce jeu — **écrites ici, ou lues dans la vue** (E10).
 

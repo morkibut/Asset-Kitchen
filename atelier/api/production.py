@@ -151,6 +151,14 @@ class CorpsPersonnage(BaseModel):
 
     nom: str = Field(min_length=1)
     description: str = ""
+    # **La famille où on l'a nommée** (E15) : c'est le type qui la porte, et le
+    # produit pose donc le premier type de cette famille-là. Vide, la chose n'a
+    # pas de type et suit le plan du jeu — l'état de toutes celles d'avant E9.
+    famille: Literal["personnages", "objets", "decors", "interface"] | None = None
+    # Ou le type directement, quand l'appelant le connaît — un agent, l'étape de
+    # l'assistant. Il l'emporte sur la famille, qui n'est qu'une façon de le
+    # choisir sans le nommer.
+    type: str | None = None
     projet: str | None = None
 
 
@@ -685,7 +693,11 @@ async def creer_personnage(requete: Request, corps: CorpsPersonnage) -> dict[str
     atelier = _atelier(requete)
     projet = _projet(requete, corps.projet)
     personnage = atelier.production.creer_personnage(
-        projet, corps.nom, corps.description
+        projet,
+        corps.nom,
+        corps.description,
+        famille=corps.famille or "",
+        type=corps.type or "",
     )
     # **La forme complète, comme l'annonce du flux.** L'écran fond ce qui lui
     # arrive par les deux chemins avec le même code : une charge amputée de ses
@@ -797,6 +809,23 @@ async def retirer_emplacement(
     vise = _projet(requete, projet)
     emplacement = atelier.equipement.retirer_emplacement(vise, identifiant)
     return _avec_vestiaire(atelier, vise, "emplacement", emplacement)
+
+
+@routeur.get("/characters/pieces/{identifiant}/wearers")
+async def portee_de_la_piece(
+    requete: Request, identifiant: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """**Sur quels personnages cette pièce est posée** (E15, US-284).
+
+    Une pièce n'a pas d'image à elle — le produit interdit de générer un casque
+    sur fond vide, parce qu'un casque n'existe qu'apparu sur un corps. Son
+    établi montre donc ce qui la porte, et ce qui manque se lit comme partout
+    ailleurs : *posée sur 1 personnage sur 3*.
+    """
+    atelier = _atelier(requete)
+    return atelier.production.portee_de_la_piece(
+        _projet(requete, projet), identifiant
+    )
 
 
 @routeur.post("/characters/pieces", status_code=201)

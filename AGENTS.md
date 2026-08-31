@@ -21,15 +21,15 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Quinze sont livrées** — `E0` à `E12`, plus `E16` et `E18` —, dont **treize
-sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus
-à la recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une production d'images et
-non du code — les cases existent et disent *pas encore dessinée* tant qu'elles manquent
-(`docs/vignettes-vues.md` porte les consignes). Deux critères attendent une étape voisine
-plutôt qu'un travail, et tous deux attendent la même : la **planche des quatre directions** en
-référence proposée (`E12`) et la porte de la vitrine **depuis une planche de pose** (`E16`)
-veulent `E13`. Six étapes restent : `E13`, `E14`, `E15`, `E17`, `E19` et `E20` — et **deux sont
-ouvertes sans aucun bloqueur**, `E15` que `E12` a libérée, et `E19`.
+`docs/PLAN.md`. **Seize sont livrées** — `E0` à `E12`, plus `E15`, `E16` et `E18` —, dont
+**quatorze sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un
+champ de plus à la recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une
+production d'images et non du code — les cases existent et disent *pas encore dessinée* tant
+qu'elles manquent (`docs/vignettes-vues.md` porte les consignes). Deux critères attendent une
+étape voisine plutôt qu'un travail, et tous deux attendent la même : la **planche des quatre
+directions** en référence proposée (`E12`) et la porte de la vitrine **depuis une planche de
+pose** (`E16`) veulent `E13`. Cinq étapes restent : `E13`, `E14`, `E17`, `E19` et `E20` — et
+**une seule est ouverte sans aucun bloqueur**, `E19`.
 `E13` attend en plus **trois appels de mesure de planche**, à trois, cinq et six cases : moins
 de cinq centimes en tout, et c'est de l'argent, donc c'est une décision de l'auteur. Les
 arbitrages pris en autonomie et les questions encore ouvertes vivent dans

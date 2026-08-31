@@ -46,6 +46,7 @@ import type {
   Contour,
   Direction,
   DirectionsDuJeu,
+  PorteeDeLaPiece,
   PropositionDeBaisse,
   Depenses,
   Etat,
@@ -346,6 +347,11 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     references: [],
     // Aucune direction rangée : un jeu neuf n'en a pas déclaré (E10).
     directions_ecartees: {},
+    // **Sa famille, lue dans son type par le serveur** (E15). Sans type, c'est
+    // un personnage — l'état de toutes les choses d'avant E9, et celui que la
+    // plupart des essais mesurent.
+    famille: "personnages" as const,
+    equipable: true,
     ...sur,
     ecartees,
   }
@@ -650,6 +656,10 @@ function serveurDouble(options: {
   /** Ce que le produit propose quand des directions viennent d'être déclarées
    *  (US-243). Le test le décide, comme le serveur le déciderait sur le plan. */
   proposition?: PropositionDeBaisse
+  /** Sur qui chaque pièce d'équipement est posée (E15). Le serveur le déduit des
+   *  images ; le double le rend, parce que ce que l'écran prouve est qu'il
+   *  montre des porteurs et **aucune image**. */
+  portees?: Record<string, PorteeDeLaPiece>
   /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
    *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
    *  ni les concept arts, et deux comptes divergeraient. */
@@ -719,6 +729,7 @@ function serveurDouble(options: {
     // que la plupart des essais mesurent.
     directions: options.directions ?? SANS_DIRECTIONS,
     proposition: options.proposition ?? PROPOSITION_VIDE,
+    portees: options.portees ?? ({} as Record<string, PorteeDeLaPiece>),
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1266,6 +1277,21 @@ function serveurDouble(options: {
     }
     if (url === "/api/characters/directions")
       return rendre(etat.directions)
+
+    // ── L'établi d'une pièce (E15) ────────────────────────────────────────
+    if (url.endsWith("/wearers")) {
+      const piece = decodeURIComponent(
+        url.slice("/api/characters/pieces/".length, -"/wearers".length),
+      )
+      return rendre(
+        etat.portees[piece] ?? {
+          piece: etat.pieces.find((p) => p.identifiant === piece),
+          portee: [],
+          posee: 0,
+          candidats: 0,
+        },
+      )
+    }
     // ── La vitrine (E16) ──────────────────────────────────────────────────
     //
     // **Le double rend ce que le serveur rend** : les fonds du projet, les
@@ -9751,6 +9777,219 @@ describe("la fiche d'une chose du jeu", () => {
     // Les quatre poses tenues sont là ; les deux rangées ne comptent ni comme
     // faites ni comme manquantes — elles sont comptées à côté.
     expect(fiche.getAllByText("0 / 1").length).toBe(4)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E15 · Le codex généralisé — les cinq familles
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Les cinq lignes de la
+// colonne avec leur compte vrai, la liste d'une famille qui ne montre que ses
+// choses, le champ qui nomme dans la famille allumée, l'établi d'un décor qui ne
+// dessine aucune colonne d'équipement — et pas une colonne grisée —, et
+// l'établi d'une pièce qui montre sur qui elle est posée plutôt que des images.
+// Ce qui se calcule — la famille lue dans le type, la portée d'une pièce — vit
+// dans `tests/test_e15.py`.
+
+describe("le codex généralisé", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const CASQUE: Piece = {
+    identifiant: "casque",
+    nom: "casque",
+    description: "un casque de fer à cornes",
+    emplacement: "tete",
+    portee: "contenue",
+    concept_arts: [],
+  }
+  const TETE: EmplacementCorps = { identifiant: "tete", nom: "tête", rang: 0 }
+
+  /** Une chose du jeu d'une famille donnée, telle que le serveur la rend. */
+  const chose = (
+    nom: string,
+    famille: Personnage["famille"],
+    type: string,
+    poses: Pose[],
+  ) =>
+    personnage(nom, {
+      famille,
+      equipable: famille === "personnages",
+      type,
+      plan: poses,
+      cases: poses.map((p) => ({
+        pose: p.identifiant,
+        demandees: p.images,
+        images: [],
+        ...VIDE_C3,
+      })),
+    })
+
+  const LE_MONDE = [
+    personnage("Balthazar"),
+    chose("les cavernes du nord", "decors", "décor", []),
+    chose("un coffre", "objets", "meuble", POSES_DU_MEUBLE),
+    chose("un bouton", "interface", "élément d'interface", []),
+  ]
+
+  // ── « Les cinq familles portent des entités de plein droit » ──────────────
+
+  test("chaque famille compte ses choses, et plus zéro", async () => {
+    // Les trois familles du milieu avaient une ligne et un compte à zéro : « ce
+    // qu'on pourra faire occupe autant de place que ce qu'on fait ». Elles ont
+    // maintenant leurs choses.
+    const double = serveurDouble({ personnages: LE_MONDE })
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+
+    const compte = (nom: string) =>
+      within(cadre).getByRole("button", { name: new RegExp(`^${nom}`) }).textContent
+    expect(compte("Personnages")).toBe("Personnages1")
+    expect(compte("Décors")).toBe("Décors1")
+    expect(compte("Objets")).toBe("Objets1")
+    expect(compte("Interface")).toBe("Interface1")
+  })
+
+  test("une famille ne montre que ses choses", async () => {
+    const double = serveurDouble({ personnages: LE_MONDE })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLaRubrique("Décors")
+
+    expect(ecran.getByRole("button", { name: /les cavernes du nord/ })).toBeTruthy()
+    expect(ecran.queryByRole("button", { name: /Balthazar/ })).toBeNull()
+    expect(ecran.queryByRole("button", { name: /un coffre/ })).toBeNull()
+  })
+
+  test("nommer dans une famille y crée la chose", async () => {
+    // **Nommer, c'est créer** — et dans la famille allumée. L'écran dit où l'on
+    // tape ; c'est le serveur qui pose le type, parce que c'est le type qui
+    // porte la famille.
+    const double = serveurDouble({ personnages: LE_MONDE })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLaRubrique("Objets")
+
+    fireEvent.change(ecran.getByLabelText("Nom de la chose du jeu à créer"), {
+      target: { value: "un tonneau cerclé de fer" },
+    })
+    fireEvent.keyDown(ecran.getByLabelText("Nom de la chose du jeu à créer"), {
+      key: "Enter",
+    })
+
+    await waitFor(() =>
+      expect(
+        double.appels.some(
+          (a) =>
+            a.url === "/api/characters" &&
+            a.corps !== undefined &&
+            JSON.stringify(a.corps).includes('"famille":"objets"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("une famille vide dit ce qui lui manque, dans ses mots", async () => {
+    // « Ce jeu n'a encore personne » sous *Décors* aurait été faux : un décor
+    // n'est personne. Le produit ne réclame rien — c'est un état.
+    const double = serveurDouble({ personnages: [personnage("Balthazar")] })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLaRubrique("Décors")
+
+    expect(ecran.getByText(/Ce jeu n'a encore aucun lieu/)).toBeTruthy()
+  })
+
+  // ── « Un établi ne montre aucune rangée sans objet » ──────────────────────
+
+  test("l'établi d'un décor ne dessine aucune colonne d'équipement", async () => {
+    // **Ce qu'une famille ne peut pas avoir n'existe pas dans son établi.** Ce
+    // n'est pas un grisé : le grisé réserve la place de ce qui viendra.
+    const double = serveurDouble({
+      personnages: LE_MONDE,
+      emplacements: [TETE],
+      pieces: [CASQUE],
+    })
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+    fireEvent.click(within(cadre).getByRole("button", { name: /^Décors/ }))
+    const liste = await cadreDuCodex()
+    fireEvent.click(
+      within(liste).getByRole("button", { name: /les cavernes du nord/ }),
+    )
+
+    const etabli = within(await cadreDuCodex())
+    expect(etabli.queryByText("La colonne qu'on lit")).toBeNull()
+    expect(etabli.queryByRole("button", { name: "casque" })).toBeNull()
+  })
+
+  test("l'établi d'un personnage garde la sienne", async () => {
+    // Le revers du même essai : rien n'a été retiré à ce qui marchait.
+    const double = serveurDouble({
+      personnages: LE_MONDE,
+      emplacements: [TETE],
+      pieces: [CASQUE],
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    expect(etabli.getByText("La colonne qu'on lit")).toBeTruthy()
+    expect(etabli.getByRole("button", { name: "casque" })).toBeTruthy()
+  })
+
+  // ── « L'établi d'une pièce montre les personnages qui la portent » ────────
+
+  test("une pièce dit sur qui elle est posée, et ne montre aucune image", async () => {
+    const double = serveurDouble({
+      personnages: LE_MONDE,
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      portees: {
+        casque: {
+          piece: CASQUE,
+          portee: [
+            { personnage: "balthazar", nom: "Balthazar", poses: ["repos"] },
+            { personnage: "le-nain", nom: "Le nain", poses: [] },
+          ],
+          posee: 1,
+          candidats: 2,
+        },
+      },
+    })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLaRubrique("Équipement")
+
+    expect(await ecran.findByText("Posée sur 1 personnage sur 2.")).toBeTruthy()
+    expect(ecran.getByText("Le nain")).toBeTruthy()
+    expect(ecran.getByText("pas encore posée")).toBeTruthy()
+    // **Aucune image** : une chose qui n'en a pas ne fait pas semblant d'en
+    // avoir. Le produit interdit de générer un casque sur fond vide.
+    expect(document.querySelectorAll("[data-codex] img")).toHaveLength(0)
+  })
+
+  // ── « Aucun personnage existant ne perd quoi que ce soit » ────────────────
+
+  test("une chose sans type reste un personnage entier", async () => {
+    // La généralisation est une **lecture** : le type portait déjà la famille,
+    // et il n'y avait rien à migrer.
+    const double = serveurDouble({ personnages: [personnage("Balthazar")] })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"]) {
+      expect(etabli.getByRole("button", { name: `Fabriquer ${attitude}` })).toBeTruthy()
+    }
   })
 })
 

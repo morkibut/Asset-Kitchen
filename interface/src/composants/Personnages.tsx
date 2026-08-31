@@ -49,6 +49,7 @@ import {
   type Piece,
   type Portee,
   type Pose,
+  type PorteeDeLaPiece,
   type PosesDesTypes,
   type Sortie as SortieAuJeu,
   type Vestiaire,
@@ -779,6 +780,69 @@ function LignePiece({
         aria-label={`Description de ${piece.nom}`}
         className="mesure w-full resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11px] leading-4 text-texte placeholder:text-texte-3"
       />
+      <SurQuiElleEstPosee piece={piece} />
+    </div>
+  )
+}
+
+/** **Sur quels personnages cette pièce est posée** (E15, US-284).
+ *
+ *  C'est tout l'établi d'une pièce, et il ne montre **aucune image** : le
+ *  produit interdit de générer un casque sur fond vide — un casque n'existe
+ *  qu'apparu sur un corps —, et une chose qui n'a pas d'image à elle ne fait pas
+ *  semblant d'en avoir. Ce qui manque se lit comme partout ailleurs : *posée sur
+ *  1 personnage sur 3*.
+ *
+ *  **Rien n'est enregistré** : c'est l'image qui dit sa pièce, et une pièce
+ *  posée se déduit donc des assets, comme une case pleine. */
+function SurQuiElleEstPosee({ piece }: { piece: Piece }) {
+  const [portee, setPortee] = useState<PorteeDeLaPiece | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    void api
+      .porteeDeLaPiece(piece.identifiant)
+      .then((recue) => vivant && setPortee(recue))
+      .catch(() => vivant && setPortee(null))
+    return () => {
+      vivant = false
+    }
+  }, [piece.identifiant])
+
+  if (!portee) return null
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {portee.candidats === 0
+          ? "Aucune chose du jeu ne peut la porter — une pièce se pose sur un corps."
+          : `Posée sur ${portee.posee} personnage${
+              portee.posee > 1 ? "s" : ""
+            } sur ${portee.candidats}.`}
+      </p>
+      {portee.portee.length > 0 && (
+        <ul className="flex flex-col">
+          {portee.portee.map((qui) => (
+            <li
+              key={qui.personnage}
+              className="mesure flex items-baseline gap-2 text-[10px] leading-4"
+            >
+              <span
+                className={
+                  qui.poses.length > 0 ? "text-texte-2" : "text-texte-3"
+                }
+              >
+                {qui.nom}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-texte-3">
+                {qui.poses.length > 0
+                  ? qui.poses.join(" · ")
+                  : "pas encore posée"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -866,12 +930,19 @@ function Fiche({
       </aside>
 
       <div className="defile flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto p-4">
-        <Colonnes
-          emplacements={emplacements}
-          pieces={pieces}
-          colonne={colonne}
-          onColonne={onColonne}
-        />
+        {/* **Un établi n'affiche que ce que sa famille peut avoir** (E15) :
+            un décor et un bouton n'ont pas de vestiaire, et leur établi ne
+            dessine donc aucune colonne d'équipement. Pas une colonne grisée —
+            ce qu'une famille ne peut pas avoir n'existe pas dans son établi, et
+            le grisé reste réservé à ce qui viendra. */}
+        {personnage.equipable && (
+          <Colonnes
+            emplacements={emplacements}
+            pieces={pieces}
+            colonne={colonne}
+            onColonne={onColonne}
+          />
+        )}
         <Cases
           plan={plan}
           personnage={personnage}
@@ -993,7 +1064,11 @@ function Sortie({
  *
  *  **Absent tant qu'il n'y a pas de pièce**, jamais grisé : le § Le grisé porte
  *  sa raison suppose une chose indisponible, et ici il n'y a pas de chose —
- *  c'est la bascule de `+ personnage` et celle de `Fabriquer ensemble`. */
+ *  c'est la bascule de `+ personnage` et celle de `Fabriquer ensemble`.
+ *
+ *  **Et absent pour une famille qui ne porte rien** (E15) : un décor n'a pas de
+ *  vestiaire, et son établi ne dessine donc pas cette section. C'est l'appelant
+ *  qui tranche, parce que c'est lui qui connaît la chose. */
 function Colonnes({
   emplacements,
   pieces,

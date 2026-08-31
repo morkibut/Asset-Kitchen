@@ -742,6 +742,28 @@ export type Personnage = {
   /** Les directions qu'elle ne tient pas, pose par pose (E10) — **la portée
    *  étroite** : le dragon n'attaque que vers le sud, les autres continuent. */
   directions_ecartees: Record<string, string[]>
+  /** **Sa famille, lue dans son type** (E15) — et non gardée sur elle : deux
+   *  vérités sur la même question auraient fini par ranger un meuble dans les
+   *  décors. Le codex s'en sert pour la classer. */
+  famille: "personnages" | "objets" | "decors" | "interface"
+  /** Cette chose-là peut-elle porter une pièce ? Faux pour un décor et pour un
+   *  bouton, et leur établi ne dessine alors **aucune** colonne d'équipement —
+   *  pas une colonne grisée : ce qu'une famille ne peut pas avoir n'existe pas
+   *  dans son établi. */
+  equipable: boolean
+}
+
+/** Sur quels personnages une pièce d'équipement est posée (E15, US-284).
+ *
+ *  **Une pièce n'a pas d'image à elle** — le produit interdit de générer un
+ *  casque sur fond vide, parce qu'un casque n'existe qu'apparu sur un corps. Son
+ *  établi montre donc ce qui la porte, et ce qui manque se lit comme partout
+ *  ailleurs : *posée sur 1 personnage sur 3*. */
+export type PorteeDeLaPiece = {
+  piece: Piece
+  portee: { personnage: string; nom: string; poses: string[] }[]
+  posee: number
+  candidats: number
 }
 
 /** Le plan et les personnages d'un projet, **en un seul aller-retour** : une
@@ -2216,10 +2238,22 @@ export const api = {
 
   production: () => appeler<Production>("/characters"),
 
-  creerPersonnage: (nom: string, description = "") =>
+  /** **Sur quels personnages cette pièce est posée** (E15). Elle n'a pas d'image
+   *  à elle : son établi montre ce qui la porte, et ce qui manque se lit comme
+   *  partout ailleurs. Gratuit, et rien n'est enregistré — une pièce posée se
+   *  déduit des images, comme une case pleine. */
+  porteeDeLaPiece: (piece: string) =>
+    appeler<PorteeDeLaPiece>(
+      `/characters/pieces/${encodeURIComponent(piece)}/wearers`,
+    ),
+
+  /** **Nommer, c'est créer** — et dans la famille où l'on nomme (E15). C'est le
+   *  type qui porte la famille, et c'est le serveur qui le pose : l'écran dit où
+   *  l'on tape, il n'invente pas de type. */
+  creerPersonnage: (nom: string, description = "", famille = "") =>
     appeler<{ personnage: Personnage }>("/characters", {
       method: "POST",
-      body: JSON.stringify({ nom, description }),
+      body: JSON.stringify({ nom, description, famille: famille || null }),
     }),
 
   /** **En un seul geste** : les champs se remplissent ensemble à l'écran, et un

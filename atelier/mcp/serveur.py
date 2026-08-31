@@ -496,7 +496,9 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         name="list_characters",
         title="List characters and what they still need",
         description=(
-            "The game's cast: every character, the poses the project's plan "
+            "The game's cast — characters, but also scenery, objects and UI "
+            "elements, which are things of the game in their own right: every "
+            "one of them, the poses the project's plan "
             "asks for, which of them already have a body, and which pieces of "
             "equipment are already layered on. Also returns the project's "
             "wardrobe — equipment slots in wearing order, and the pieces that "
@@ -556,6 +558,14 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     "id": personnage.identifiant,
                     "name": personnage.nom,
                     "description": personnage.description,
+                    # **Sa famille, et ce qu'elle peut avoir** (E15). Un décor
+                    # et un bouton sont des choses du jeu de plein droit, mais
+                    # ils ne portent pas d'équipement : sans ce champ, un agent
+                    # essaierait d'habiller une salle du trône.
+                    "family": atelier.production.famille_de(projet, personnage),
+                    "wearable": atelier.production.porte_de_lequipement(
+                        projet, personnage
+                    ),
                     "poses": [
                         {
                             "pose": case["pose"],
