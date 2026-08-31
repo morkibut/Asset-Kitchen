@@ -699,6 +699,29 @@ la prochaine réécriture retrouvera.
   **quand un essai tombe à une valeur extrême, se demander d'abord si l'extrême est encore dans
   le domaine de la phrase.** Payé en fermant E3, le 31 août 2026.
 
+- **`uvicorn.run` avale l'échec de liaison : le processus sort avec le code 0 alors que rien
+  n'a démarré.** Il journalise l'erreur en `ERROR`, éteint proprement l'application et rend la
+  main — sans lever quoi que ce soit. Un lanceur qui se fie au code de sortie conclut donc au
+  succès. Combiné à une bannière `Asset Kitchen — http://…` imprimée **avant** l'appel, la
+  dernière ligne visible annonçait une adresse qui ne répondait pas, et le navigateur s'armait
+  quand même. L'auteur voyait sa fenêtre s'ouvrir et se refermer en une seconde, sans rien de
+  lisible. Le geste qui répare tient en trois : **ne rien annoncer avant que le port soit
+  tenu** — on parle depuis un fil qui attend `serveur.started` —, **relire `serveur.started`
+  après `run()`** plutôt que de croire le retour, et **regarder le port avant de le demander**,
+  ce qui transforme le cas courant en réponse utile plutôt qu'en panne. Signalé par l'auteur le
+  31 août 2026.
+
+- **Un serveur qui tourne depuis trois heures servant une interface recompilée à l'instant est
+  invisible, et c'est le pire des deux mondes.** Le lanceur du bureau recompile l'interface dès
+  qu'une source bouge — mais il ne redémarre jamais le serveur, et sa branche « un atelier
+  tourne déjà » se contentait d'ouvrir l'onglet puis de disparaître en deux secondes. Le
+  résultat : une interface neuve qui parle à un serveur périmé, sans que rien le dise, et un
+  auteur convaincu que son lanceur a planté. Ce qui l'a rendu invisible est qu'**aucune des
+  deux moitiés n'est en panne** : chacune fonctionne, c'est leur écart qui ment. Le geste qui
+  répare est de comparer l'heure de démarrage du processus à la date des sources — trois lignes
+  de PowerShell — et de **retenir la fenêtre** quand la réponse est mauvaise, parce qu'une
+  explication qu'on n'a pas le temps de lire n'existe pas.
+
 - **Une clé de série composée de champs vides confond tous les cas « aucun », et c'est de
   l'argent.** L'écran de confirmation se saute *pour la série en cours* — une chose du jeu et
   une pose —, et la clé était `chose|poses|pièce` mise bout à bout. Sans chose visée, les trois

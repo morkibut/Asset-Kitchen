@@ -60,13 +60,43 @@ if not "%SORTIE%"=="0" goto :echec_serveur
 exit /b 0
 
 rem ── Ce qui peut manquer, dit en clair ───────────────────────────────────
+rem ── Un atelier repond deja : deux cas, et ils ne se disent pas pareil ────
+rem
+rem  Corrige le 31 aout 2026, sur un signalement. Cette branche imprimait une
+rem  ligne et se refermait en deux secondes : l'auteur voyait sa fenetre
+rem  disparaitre sans avoir le temps de lire, et concluait que l'atelier avait
+rem  plante. Il n'avait pas plante — il tournait depuis trois heures. Le vrai
+rem  probleme etait ailleurs et personne ne le disait : ce vieil atelier fait
+rem  tourner du code perime pendant que l'interface, elle, vient d'etre
+rem  recompilee. On compare donc l'heure de demarrage du serveur a la date des
+rem  sources, et on le dit.
 :deja_la
+powershell -NoProfile -Command "try { $c = Get-NetTCPConnection -LocalPort 8420 -State Listen -ErrorAction Stop | Select-Object -First 1; $d = (Get-Process -Id $c.OwningProcess -ErrorAction Stop).StartTime; $n = Get-ChildItem 'atelier' -Recurse -File -Filter *.py -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $d }; if ($n) { exit 1 } } catch { }; exit 0"
+if errorlevel 1 goto :deja_la_perime
+
 echo   L'atelier tourne deja sur le port 8420 — j'ouvre l'onglet.
 start "" "http://127.0.0.1:8420"
 rem  ping et non timeout : timeout exige une vraie console et refuse de
 rem  tourner des que l'entree est redirigee. Trois pings font deux secondes,
 rem  le temps de lire la ligne avant que la fenetre se referme.
 %SYS%\ping.exe -n 3 127.0.0.1 >nul
+exit /b 0
+
+:deja_la_perime
+echo   [!] Un atelier tourne deja sur le port 8420, mais il a demarre AVANT
+echo       tes dernieres modifications du serveur. Il fait donc tourner du
+echo       code perime, pendant que l'interface, elle, vient d'etre recompilee.
+echo.
+echo   Rien n'a plante. Ce qu'il faut faire, dans cet ordre :
+echo.
+echo       1. Fermer la fenetre noire de CET atelier-la (pas celle-ci).
+echo       2. Relancer ce fichier.
+echo       3. Recharger l'onglet du navigateur.
+echo.
+echo   J'ouvre quand meme l'onglet, mais il parle encore au vieil atelier.
+start "" "http://127.0.0.1:8420"
+echo.
+pause
 exit /b 0
 
 :sans_venv

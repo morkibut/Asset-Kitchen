@@ -95,8 +95,15 @@ uv pip install -e ".[detourage]"   facultatif — le second moteur de détourage
                                    (le modèle `u2net` se télécharge au premier appel)
 cd interface && npm install && npm run build
 
-py -m atelier                        lance le serveur et ouvre le navigateur
+py -m atelier                        lance le serveur et ouvre le navigateur — si un atelier
+                                     tourne déjà sur ce port, il ouvre celui-là plutôt que
+                                     d'en réclamer un second, et le dit
 py -m atelier --sans-navigateur --port 8421
+lancer-atelier.bat                   le double-clic du bureau : il recompile l'interface si
+                                     les sources ont bougé, et il prévient quand l'atelier
+                                     qui tourne date d'avant les dernières modifications du
+                                     serveur — une interface neuve devant un serveur périmé
+                                     ne se voit pas autrement
 pytest -q                            les critères d'acceptation, sans un centime
 cd interface && npm test             les essais d'écran — flux et fetch doublés, sans serveur
 py essais/essai_docs.py              le corpus de démarrage pesé et sa dérive lue,
