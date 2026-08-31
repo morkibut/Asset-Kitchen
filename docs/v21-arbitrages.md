@@ -610,6 +610,25 @@ premier choix —, mais sa raison, si : ce n'est plus « c'est moins cher », c'
 continue de se calculer mais aucun appel n'a été fait à ce format — un modèle qui
 perd le compte à seize sujets est très plausible. À mesurer avant d'autoriser.
 
+### B-8 bis · Ce que la fiche propose en référence, maintenant que la planche existe
+
+**La question, née de E13.** La fiche d'une chose du jeu propose des images de
+référence — *voici à quoi elle ressemble, garde ça en tête*. Son critère (E12)
+prévoyait qu'elle propose un jour **l'image qui montre les quatre directions
+ensemble**. Or E13 a tranché que cette image n'existe pas : une planche est
+découpée puis jetée, et ce qui reste, ce sont ses quatre morceaux.
+
+**Tranché par l'auteur le 31 août 2026 : rien de plus pour l'instant.** La fiche
+continue de proposer le corps retenu d'une pose — une seule image, une seule
+place sur les quatorze que le modèle accepte. Les deux autres pistes sont
+écrites, et coûtent toutes deux quelque chose : proposer **les quatre corps**
+prend quatre places au lieu d'une et se paie à chaque appel chez les modèles qui
+facturent au texte ; **assembler une feuille de référence** ajoute une image à
+ranger, à tenir à jour, et à refaire dès qu'une direction change.
+
+**Ce qui rouvrira la question** : un personnage qui sort visiblement différent
+selon l'angle. Pas avant.
+
 ### B-9 · Deux hauteurs de contrôle, ou une seule ?
 
 Voir A-15. Les deux contrôles qui portent le geste de premier plan de leur écran
