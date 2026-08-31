@@ -21,14 +21,17 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Quatorze sont tenues** — `E0` à `E9`, plus `E11`, `E12`, `E16` et `E18` —, et
-deux gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et
+`docs/PLAN.md`. **Quatorze sont livrées** — `E0` à `E9`, plus `E11`, `E12`, `E16` et `E18` —, dont
+**douze sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et
 `E8` les **dix-sept vignettes d'exemple**, qui sont une production d'images et non du code —
 les cases existent et disent *pas encore dessinée* tant qu'elles manquent
 (`docs/vignettes-vues.md` porte les consignes). Deux critères attendent une étape voisine
 plutôt qu'un travail : la **planche des quatre directions** en référence proposée (`E12`) veut
-`E10`, et la porte de la vitrine **depuis une planche de pose** (`E16`) veut `E13`. Les étapes
-encore à faire sont `E10`, `E13`, `E14`, `E15`, `E17`, `E19` et `E20`. Les
+`E10`, et la porte de la vitrine **depuis une planche de pose** (`E16`) veut `E13`. Sept étapes
+restent : `E10`, `E13`, `E14`, `E15`, `E17`, `E19` et `E20` — et **trois sont ouvertes sans
+aucun bloqueur**, `E10` que `E9` vient de libérer, `E15` que `E12` vient de libérer, et `E19`.
+`E13` attend en plus **trois appels de mesure de planche**, à trois, cinq et six cases : moins
+de cinq centimes en tout, et c'est de l'argent, donc c'est une décision de l'auteur. Les
 arbitrages pris en autonomie et les questions encore ouvertes vivent dans
 `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
 Ce qui viendra après elle viendra d'une séance d'usage, comme
