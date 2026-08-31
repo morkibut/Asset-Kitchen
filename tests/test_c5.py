@@ -612,13 +612,23 @@ async def test_l_agent_et_l_ecran_arment_le_meme_sujet(atelier, mcp, client, dou
 
     Deux compositions à deux endroits auraient fini par demander deux choses
     différentes pour la même case, sans que rien ne le signale.
+
+    **Comparé sur le texte composé, pas sur le champ** — corrigé en écrivant E14.
+    Le champ ne porte plus que le signalement ; la consigne de l'attitude est
+    ajoutée par le composeur du prompt, pour les deux façades à la fois. Ce que
+    l'écran affiche avant de payer et ce que l'agent envoie sont donc la même
+    phrase, et c'est ce que ce test vérifie maintenant — une comparaison plus
+    forte que la précédente, puisqu'elle porte sur ce qui part.
     """
     personnage, plan = _personnage(client, 1)
 
-    a_l_ecran = client.post(
-        "/api/characters/subject",
-        json={"personnage": personnage, "poses": plan},
+    champ = client.post(
+        "/api/characters/subject", json={"personnage": personnage}
     ).json()["sujet"]
+    a_l_ecran = client.post(
+        "/api/prompt/preview",
+        json={"prompt": champ, "personnage": personnage, "pose": plan[0]},
+    ).json()["texte"]
 
     double.rendre = lambda: image_sujet(bloc=4, toile=24)
     await appeler(mcp, "generate_pose", character="Nain", poses=plan)

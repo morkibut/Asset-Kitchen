@@ -359,6 +359,37 @@ class Base:
                     couts.append(float(emplacement["cout_usd"]))
         return couts
 
+    def couts_par_references(
+        self, modele: str, limite: int = 60
+    ) -> list[tuple[int, float]]:
+        """Ce qu'a coûté chaque appel réussi, **et combien d'images il portait** (E14).
+
+        Jumeau de `couts_mesures`, avec le seul renseignement qui manquait pour
+        répondre à la question de l'écran de confirmation : *que coûte l'image
+        que je m'apprête à cocher ?* Mesuré sur ce que cette machine a payé,
+        jamais sur un tarif — c'est la règle du produit depuis T1, et elle vaut
+        pour un prix décomposé comme pour un prix entier.
+
+        La fenêtre est plus large que celle de `couts_mesures` : décomposer
+        demande des appels **à plusieurs comptes d'images**, et douze appels
+        récents peuvent très bien n'en porter qu'un seul.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM generations WHERE modele = ? "
+                "ORDER BY cree_le DESC LIMIT ?",
+                (modele, limite),
+            ).fetchall()
+
+        mesures: list[tuple[int, float]] = []
+        for ligne in lignes:
+            enregistre = json.loads(ligne["contenu"])
+            jointes = int(enregistre.get("demande", {}).get("references", 0) or 0)
+            for emplacement in enregistre.get("emplacements", []):
+                if emplacement.get("statut") == "reussie" and emplacement.get("cout_usd"):
+                    mesures.append((jointes, float(emplacement["cout_usd"])))
+        return mesures
+
     # ── Assets ───────────────────────────────────────────────────────────────
     #
     # Même règle que pour les générations : `contenu` porte l'enregistrement

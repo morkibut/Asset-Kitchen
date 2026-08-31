@@ -176,25 +176,37 @@ def test_le_sujet_dune_planche_est_le_signalement_seul(client):
         json={"description": "a stocky dwarf miner"},
     )
 
+    # **Lu sur le texte composé** — corrigé en écrivant E14, qui a sorti la
+    # consigne de l'attitude du champ pour en faire une ligne à part. Le champ
+    # porte le signalement dans les deux cas ; ce qui distingue la planche est
+    # que ses consignes partent case par case, et l'assemblé le montre.
+    champ = client.post(
+        "/api/characters/subject", json={"personnage": chose["identifiant"]}
+    ).json()["sujet"]
+    assert champ == "a stocky dwarf miner"
+
     seule = client.post(
-        "/api/characters/subject",
+        "/api/prompt/preview",
         json={
+            "prompt": champ,
             "personnage": chose["identifiant"],
-            "poses": ["marche"],
+            "pose": "marche",
             "direction": "nord",
         },
-    ).json()["sujet"]
+    ).json()["texte"]
     planche = client.post(
-        "/api/characters/subject",
+        "/api/prompt/preview",
         json={
+            "prompt": champ,
             "personnage": chose["identifiant"],
-            "poses": ["marche"],
+            "pose": "marche",
             "directions": ["nord", "sud", "est", "ouest"],
         },
-    ).json()["sujet"]
+    ).json()["lignes"]
 
     assert "facing north" in seule
-    assert planche == "a stocky dwarf miner"
+    sujets = [l["texte"] for l in planche if l["groupe"] == "sujet"]
+    assert sujets == ["a stocky dwarf miner"]
 
 
 # ── La géométrie, écrite par l'atelier ───────────────────────────────────────

@@ -318,7 +318,7 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 | px | Ce qu'elle nomme |
 |---|---|
 | **380** | ce qu'on manipule — la fiche d'une image, la réserve de la toile, la colonne d'une table, la colonne des sœurs, la colonne de la chose ouverte dans le codex |
-| **300** | les réglages d'une génération — **et ce locataire-là s'en va en V2.1** : ils descendent dans l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. *La largeur, elle, reste* : la colonne de gauche de l'établi, celle qui dit ce qu'une chose **est**, la reprend telle quelle. Corrigé le 31 août 2026 en tenant E2 — ce document annonçait que la colonne disparaissait, et c'est son contenu qui change. **Et le départ se fait en deux temps, corrigé le même jour en tenant E4** : la colonne quitte la galerie, elle ne quitte pas encore le produit. Elle se replie au pied de la barre qui paie jusqu'à ce que l'héritage d'une chose du jeu (E12) et l'écran de confirmation (E14) la rendent inutile — la retirer avant retirerait le seul endroit où l'on choisit un modèle (A-25) |
+| **300** | les réglages d'une génération — **et ce locataire-là s'en va en V2.1** : ils descendent dans l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. *La largeur, elle, reste* : la colonne de gauche de l'établi, celle qui dit ce qu'une chose **est**, la reprend telle quelle. Corrigé le 31 août 2026 en tenant E2 — ce document annonçait que la colonne disparaissait, et c'est son contenu qui change. **Et le départ se fait en deux temps, corrigé le même jour en tenant E4** : la colonne quitte la galerie, elle ne quitte pas encore le produit. Elle se replie au pied de la barre qui paie jusqu'à ce que l'héritage d'une chose du jeu (E12) et l'écran de confirmation (E14) la rendent inutile — la retirer avant retirerait le seul endroit où l'on choisit un modèle (A-25). **Les deux étapes sont livrées le 31 août 2026, et elle reste** : elles lui ont retiré ce qu'elles portent mieux — les textes hérités, les images de référence et leur décochage se lisent désormais ligne par ligne avant de payer —, mais **aucune des deux ne choisit un modèle**, et c'est ce que A-25 avait nommé. Ce qui lui reste tient à cela : le modèle, l'échelle, le nombre de variations. Son départ demande donc une décision d'usage sur *où* le modèle se choisit, pas une étape de plus |
 | **240** | où ça se range — les familles du codex, les projets et collections, la liste des étapes de l'assistant, la liste des ambiances |
 
 Tout le reste prend la place qui reste, sans largeur imposée. Une colonne neuve prend une
@@ -481,6 +481,15 @@ montré est ce qui part* — c'est sa surface qui a dû grandir pour rester vrai
 **pour cet appel seulement**. Le réglage durable reste sur la fiche de la chose. Sans cette
 borne, l'écran de confirmation deviendrait un second endroit où se règle l'univers — et deux
 endroits qui règlent la même chose finissent toujours par se contredire.
+
+**Livré le 31 août 2026, et le bloc replié a bien disparu.** Le garder aux deux endroits aurait
+fait deux réponses à la même question, dont une seule est celle qui part : le tiroir sous le
+champ n'existe plus, et « reprendre le texte » l'a suivi sur le nouvel écran — c'est là qu'on
+lit le texte avant de décider de le reprendre. *Rendre la main à l'atelier* est resté près du
+champ, parce que c'est le champ qu'il change. Une conséquence n'était pas prévue et vaut d'être
+notée : **le champ ne porte plus que le signalement**. Il portait aussi la consigne de
+l'attitude, collée derrière ; en faire deux lignes aurait obligé le nouvel écran à deviner où
+finit l'une et où commence l'autre.
 
 ---
 

@@ -33,8 +33,14 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
-from atelier.domaine.ambiance import CE_QU_ON_PREND
+from atelier.domaine.ambiance import CE_QU_ON_PREND, TEXTES, prises_du_mode
 from atelier.domaine.carte import PERSONNAGES
+from atelier.domaine.envoi import (
+    AMBIANCE as GROUPE_AMBIANCE,
+    DE_SA_FICHE,
+    Couches,
+    resoudre,
+)
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.domaine.plan import (
     Pose,
@@ -702,6 +708,127 @@ class ServiceProduction:
 
     # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────
 
+    def couches(self, projet: str | None, identifiant: str | None) -> Couches:
+        """Les trois épaisseurs de texte qui habillent une chose, **brutes** (E14).
+
+        **Deux écrans les résolvent, et il n'y a qu'une résolution** : la fiche
+        montre l'état durable (`habillage`), l'écran de confirmation montre ce
+        que *cet appel* fera une fois les interrupteurs touchés. Toutes deux
+        appellent `resoudre` ; ce qui les distingue est le tri, pas la règle.
+
+        **Sans chose du jeu, il ne reste que la bible** — c'est le cas d'un
+        agent, d'un import, ou d'une image qu'on fabrique sans rien viser. Une
+        chose disparue rend la même chose plutôt qu'un refus : un appel ne doit
+        pas échouer parce qu'un personnage a été supprimé entre-temps.
+        """
+        if not projet:
+            return Couches()
+        try:
+            objet = self._exiger(projet)
+        except ProjetInconnu:
+            return Couches()
+        bible = tuple(
+            (champ.nom, champ.texte.strip() if champ.actif else "")
+            for champ in objet.univers.bible
+        )
+        if not identifiant:
+            return Couches(bible=bible)
+        try:
+            personnage = self.personnage(projet, identifiant)
+        except (PersonnageInconnu, ProjetInconnu):
+            return Couches(bible=bible)
+        ambiance = (
+            objet.ambiance(personnage.ambiance) if personnage.ambiance else None
+        )
+        return Couches(
+            bible=bible,
+            ecrits=dict(personnage.textes),
+            eteints=frozenset(personnage.eteints),
+            ambiance=(
+                {
+                    nom: texte
+                    for nom, texte in (
+                        ("monde", ambiance.monde),
+                        ("eclairage", ambiance.eclairage),
+                        ("trait", ambiance.trait),
+                    )
+                    if (texte or "").strip() and nom in OUVERTS_A_UNE_AMBIANCE
+                }
+                if ambiance
+                else {}
+            ),
+            ambiance_nom=ambiance.nom if ambiance else "",
+            prend_textes=bool(ambiance) and TEXTES in prises_du_mode(personnage.prend),
+            chose=personnage.identifiant,
+        )
+
+    def prend_de(self, projet: str | None, personnage: str | None) -> str:
+        """Ce que cette chose prend à son ambiance — le réglage durable (E14).
+
+        Rend *tout* quand la question ne se pose pas : sans ambiance, il n'y a
+        rien à ne pas prendre, et un refus serait un mot de plus pour dire rien.
+        """
+        if not projet or not personnage:
+            return CE_QU_ON_PREND[0]
+        try:
+            return self.personnage(projet, personnage).prend or CE_QU_ON_PREND[0]
+        except (PersonnageInconnu, ProjetInconnu):
+            return CE_QU_ON_PREND[0]
+
+    def _ambiance_de(self, projet: str | None, personnage: str | None):
+        if not projet or not personnage:
+            return None
+        try:
+            objet = self._exiger(projet)
+            vise = self.personnage(projet, personnage)
+        except (PersonnageInconnu, ProjetInconnu):
+            return None
+        return objet.ambiance(vise.ambiance) if vise.ambiance else None
+
+    def references_de_lambiance(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """Les cartes que l'ambiance de cette chose désigne (E14).
+
+        **Une ambiance ne contient aucune image** : elle en désigne, dans le
+        tableau d'inspiration. La supprimer ne détruit donc rien, et une carte
+        retirée du tableau ne fait pas tomber l'appel — un artwork disparu est
+        sauté, c'est déjà la règle de `_octets_references`.
+        """
+        ambiance = self._ambiance_de(projet, personnage)
+        return tuple(ambiance.references) if ambiance else ()
+
+    def palette_de_lambiance(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """Les couleurs que l'ambiance de cette chose apporte, ou rien (E14)."""
+        ambiance = self._ambiance_de(projet, personnage)
+        if ambiance is None or not ambiance.palette or not projet:
+            return ()
+        palette = self._exiger(projet).palette_nommee(ambiance.palette)
+        return tuple(palette.rendue) if palette else ()
+
+    def couleurs_de(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """La palette qui s'applique à cette chose — la sienne, sinon celle du jeu.
+
+        **Il n'y en a qu'une**, et c'est la même règle que la vitrine applique
+        pour ses fonds (E16) : une chose qui désigne une ambiance en prend la
+        palette, les autres prennent celle du jeu. Deux palettes qui
+        s'appliqueraient ensemble demanderaient une règle de priorité invisible
+        au moment où elle décide.
+        """
+        sienne = self.palette_de_lambiance(projet, personnage)
+        if sienne:
+            return sienne
+        if not projet:
+            return ()
+        try:
+            return tuple(self._exiger(projet).univers.palette)
+        except ProjetInconnu:  # pragma: no cover — `_exiger` est déjà passé
+            return ()
+
     def habillage(self, projet: str, identifiant: str) -> dict[str, Any]:
         """Les sept textes qui habillent cette chose, **et d'où chacun vient**.
 
@@ -728,35 +855,31 @@ class ServiceProduction:
         objet = self._exiger(projet)
         personnage = self.personnage(projet, identifiant)
         ambiance = objet.ambiance(personnage.ambiance) if personnage.ambiance else None
-        textes_ambiance = (
-            {
-                "monde": ambiance.monde,
-                "eclairage": ambiance.eclairage,
-                "trait": ambiance.trait,
-            }
-            if ambiance
-            else {}
-        )
+
+        # **La résolution est écrite une fois, dans le domaine** (E14). Cette
+        # fiche-ci et l'écran de confirmation posaient la même question — quelle
+        # couche gagne — et l'écrire deux fois aurait fini par montrer un texte
+        # sur la fiche et un autre dans le prompt.
+        couches = self.couches(projet, identifiant)
+        resolues = resoudre(couches, None)
 
         champs: list[dict[str, Any]] = []
         for champ in objet.univers.bible:
-            du_jeu = champ.texte if champ.actif else ""
-            de_l_ambiance = textes_ambiance.get(champ.nom, "") or ""
-            ecrit_ici = personnage.textes.get(champ.nom, "")
-            # **L'ordre des trois couches est l'ordre de la décision** : ce que
-            # la chose écrit gagne sur ce que l'ambiance donne, qui gagne sur ce
-            # que le jeu dit. Et *éteint* passe avant tout — c'est un refus, et
-            # un refus ne se discute pas avec ce qu'il refuse.
-            if champ.nom in personnage.eteints:
-                origine, texte = "eteint", ""
-                remplace = ecrit_ici or de_l_ambiance or du_jeu
-            elif ecrit_ici:
-                origine, texte = "ici", ecrit_ici
-                remplace = de_l_ambiance or du_jeu
-            elif de_l_ambiance:
-                origine, texte, remplace = "ambiance", de_l_ambiance, du_jeu
+            miennes = [l for l in resolues if l["nom"] == champ.nom]
+            gagnante = next((l for l in miennes if l["allumee"]), None)
+            ecartee = next((l["texte"] for l in miennes if not l["allumee"]), "")
+            if gagnante is None:
+                # Rien ne part : soit la chose refuse ce champ — et l'on montre,
+                # barré, ce qui serait parti —, soit le jeu n'a rien écrit.
+                origine, texte = ("eteint" if miennes else "jeu"), ""
+                remplace = ecartee
+            elif gagnante["groupe"] == GROUPE_AMBIANCE:
+                origine, texte, remplace = "ambiance", gagnante["texte"], ""
+            elif gagnante["origine"] == DE_SA_FICHE:
+                origine, texte = "ici", gagnante["texte"]
+                remplace = ecartee or gagnante["remplace"]
             else:
-                origine, texte, remplace = "jeu", du_jeu, ""
+                origine, texte, remplace = "jeu", gagnante["texte"], ""
             champs.append(
                 {
                     "nom": champ.nom,
@@ -1745,24 +1868,28 @@ class ServiceProduction:
         direction: str | None = None,
         directions: Sequence[str] = (),
     ) -> str:
-        """Ce qu'une case demande au modèle — **écrit ici, lu des deux côtés**.
+        """Ce que l'auteur écrit dans le champ — **le signalement, et lui seul**.
 
-        Trois règles, et aucune n'est interchangeable avec une autre :
+        Deux règles depuis E14, là où il y en avait trois :
 
-        - **Une case** : le signalement du personnage, la consigne de
-          l'attitude, puis celle de la direction. C'est la promesse d'US-115 —
+        - **Une chose du jeu** : son signalement. C'est la promesse d'US-115 —
           la description part avec chaque image de ce personnage et ne se retape
-          jamais — et celle d'US-240 : deux textes anglais écrits chacun à un
-          seul endroit, mis bout à bout au moment de générer. On ne recopie plus
-          `facing south` sur six poses, et le corriger se fait une fois.
-        - **Un lot** : le signalement seul. Les attitudes partent case par case
-          dans les consignes de planche, que le pliage replie côté serveur ; les
-          écrire aussi dans le sujet les dirait deux fois, et le prompt
-          enregistré ne dirait plus ce qui est parti.
+          jamais.
         - **Une pièce** : sa description seule (C3). Le signalement du
           personnage n'a rien à faire là — le corps est **dans l'image** qui
           part, et le redécrire en mots inviterait le modèle à le redessiner,
           très exactement ce que la mesure du corps repeint sanctionne.
+
+        **La consigne de l'attitude a quitté cette fonction en E14**, et c'est la
+        correction d'une divergence que E13 avait déjà à moitié faite. Une case
+        seule collait ici `walking posture, facing south` ; une planche de pose ne
+        le faisait pas, parce que ses consignes partent case par case. Les deux
+        chemins écrivaient donc le même texte à deux endroits différents, et
+        l'écran de confirmation aurait dû deviner lequel pour poser sa ligne
+        *la pose demandée*. Désormais **le composeur du prompt ajoute la
+        consigne, toujours** (`ServiceGenerations`) : le champ porte le
+        signalement, la consigne est une ligne à part avec sa propre origine, et
+        le texte assemblé est le même qu'avant, mot pour mot.
 
         **Dans le service depuis C5, et plus à l'écran.** La matrice armait ce
         texte elle-même ; l'agent arme les mêmes cases, et deux compositions à
@@ -1772,7 +1899,7 @@ class ServiceProduction:
 
         **Ce n'est pas le prompt** : la bible du projet se replie en tête et les
         consignes de planche en queue, et cela n'appartient qu'à
-        `ServiceGenerations.parties` (US-158). Ici on n'écrit que le sujet.
+        `ServiceGenerations` (US-158). Ici on n'écrit que le sujet.
         """
         vise = self.personnage(projet, personnage)
         objet = self._exiger(projet)
@@ -1781,41 +1908,53 @@ class ServiceProduction:
             if trouvee is None:
                 raise ProductionRefusee(f"aucune pièce « {piece} » dans ce projet")
             return trouvee.description.strip() or trouvee.nom
-        voulues = [
-            p for p in self.plan_de(projet, vise) if p.identifiant in set(poses)
-        ]
-        # **Une planche de pose est un lot, même quand elle n'a qu'une pose**
-        # (E13). Ses attitudes et ses angles partent case par case, dans les
-        # consignes de planche ; les écrire *aussi* dans le sujet les dirait deux
-        # fois, et le modèle recevrait « facing north » pour une planche dont
-        # trois cases sur quatre regardent ailleurs.
-        if len(dict.fromkeys(directions)) > 1:
-            return vise.description.strip()
-        if len(voulues) == 1:
-            # **Ce qui part est en anglais, du premier mot au dernier** (US-241).
-            # Le nom français de la pose partait au milieu d'une phrase anglaise
-            # jusqu'à E10 ; `Pose.dit` rend ce que le produit ou l'auteur a écrit
-            # pour être lu par le modèle, et la direction s'y ajoute.
-            angle = ""
-            if direction:
-                trouvee = next(
-                    (
-                        d
-                        for d in objet.univers.directions_du_jeu()
-                        if d.identifiant == direction
-                    ),
-                    None,
-                )
-                angle = trouvee.consigne if trouvee else ""
-            return ", ".join(
-                mot
-                for mot in (
-                    vise.description.strip(),
-                    composer(voulues[0].dit(), angle),
-                )
-                if mot
-            )
         return vise.description.strip()
+
+    def consigne_de_case(
+        self,
+        projet: str,
+        personnage: str,
+        pose: str,
+        direction: str | None = None,
+    ) -> str:
+        """Ce que la case demande en plus du signalement (E14).
+
+        **Deux textes anglais, écrits chacun à un seul endroit** — l'attitude sur
+        la pose, l'angle sur la direction — et mis bout à bout ici (US-240,
+        US-241). On ne recopie plus `facing south` sur six poses, et le corriger
+        se fait une fois.
+
+        C'est **le même geste que `_texte_de_case` fait pour une planche**, et
+        c'est voulu : une case seule et une case de planche demandent la même
+        chose, elles ne diffèrent que par le nombre. Une pose que la chose ne
+        tient plus rend une consigne vide plutôt qu'un refus — c'est `viser` qui
+        refuse, avant qu'un centime parte, et deux refus pour la même faute en
+        auraient fait un de trop.
+        """
+        if not pose:
+            return ""
+        try:
+            vise = self.personnage(projet, personnage)
+        except (PersonnageInconnu, ProjetInconnu):
+            return ""
+        objet = self._exiger(projet)
+        voulue = next(
+            (p for p in self.plan_de(projet, vise) if p.identifiant == pose), None
+        )
+        if voulue is None:
+            return ""
+        angle = ""
+        if direction:
+            trouvee = next(
+                (
+                    d
+                    for d in objet.univers.directions_du_jeu()
+                    if d.identifiant == direction
+                ),
+                None,
+            )
+            angle = trouvee.consigne if trouvee else ""
+        return composer(voulue.dit(), angle)
 
     def concept_arts(self, projet: str, personnage: str | None) -> tuple[str, ...]:
         """Les cartes qu'un personnage désigne (US-124).

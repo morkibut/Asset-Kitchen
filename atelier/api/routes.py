@@ -23,6 +23,7 @@ from atelier.domaine import (
     Modele,
     Recette,
     Reinjection,
+    Tri,
 )
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.recette import (
@@ -277,15 +278,28 @@ async def modeles(
         "raison": etat.raison,
         "defaut": {"modele": du_projet or defaut.modele, "options": defaut.options},
         "references": compte,
-        # **Ce qu'une image a coûté chez chaque modèle, en médiane** (US-121).
-        # Une mesure, jamais un tarif : le produit ne porte aucun prix de
-        # catalogue, et « le coût réel facturé fait foi » partout ailleurs. Un
-        # modèle jamais appelé n'y figure pas — le produit dit alors qu'il ne
-        # sait pas plutôt que d'inventer un chiffre.
+        # **Ce que cet appel-là coûterait chez chaque modèle** (US-121). Une
+        # mesure, jamais un tarif : le produit ne porte aucun prix de catalogue,
+        # et « le coût réel facturé fait foi » partout ailleurs. Un modèle jamais
+        # appelé n'y figure pas — le produit dit alors qu'il ne sait pas plutôt
+        # que d'inventer un chiffre.
+        #
+        # **Le compte d'images qui partiront entre dans le calcul depuis E14**, et
+        # il le fallait : la barre qui paie affichait la médiane de *tous* les
+        # appels de ce modèle, images ou non, pendant que l'écran de confirmation
+        # — un clic plus loin — comptait celles de cet appel-ci. Les deux
+        # annonçaient $0,0160 et $0,0064 pour la même chose, tous les deux justes.
+        # C'est `compte["total"]` qui les réconcilie : c'est le nombre d'images
+        # qui partiront vraiment, celui-là même dont l'autre écran se sert.
         "couts": {
             m.identifiant: cout
             for m in etat.modeles
-            if (cout := atelier.generations.cout_attendu(m.identifiant)) is not None
+            if (
+                cout := atelier.generations.cout_attendu(
+                    m.identifiant, compte["total"]
+                )
+            )
+            is not None
         },
         "modeles": [_modele_en_json(m, demande) for m in etat.modeles],
     }
@@ -403,6 +417,14 @@ class CorpsGeneration(BaseModel):
     # sont déjà dans ce qu'il a écrit. Il ne touche à rien d'autre — ni à
     # l'univers du projet, ni à l'échelle, ni au gabarit du lot.
     repris: bool = False
+    # **Ce que l'écran de confirmation a trié** (E14). Les lignes éteintes,
+    # celles rallumées, les textes corrigés — et **rien de tout cela ne remonte**
+    # : le tri habille cet appel-ci et disparaît ensuite. Garder une correction
+    # sur la chose du jeu est un second geste, qui passe par sa fiche.
+    tri: dict[str, Any] | None = None
+    # **La palette en image** (E14) : une bande de pastilles qui occupe une des
+    # places de référence du modèle. Redessinée à chaque appel, jamais relue.
+    palette: bool = False
 
 
 @routeur.post("/generations", status_code=202)
@@ -421,6 +443,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         options=corps.options,
         echelle=corps.echelle,
         repris=corps.repris,
+        palette=corps.palette,
     )
     atelier = _atelier(requete)
     generation = await atelier.generations.soumettre(
@@ -440,6 +463,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         poses=corps.poses,
         piece=corps.piece,
         references_ecartees=corps.references_ecartees,
+        tri=Tri.depuis_json(corps.tri),
     )
     return generation.en_json()
 
@@ -462,6 +486,14 @@ class CorpsApercu(BaseModel):
     # le même pliage que l'envoi, donc il montre les mêmes consignes de case.
     pose: str | None = None
     directions: list[str] | None = None
+    # **Et l'angle d'une case seule** (E14). La consigne de l'attitude et celle
+    # de la direction ne vivent plus dans le champ : elles sont une ligne à part,
+    # composée ici, et l'aperçu doit donc savoir laquelle.
+    direction: str | None = None
+    # **Ce que l'écran de confirmation a trié** — les lignes éteintes, celles
+    # rallumées, les textes corrigés. Il ne vaut que pour cet appel, et il ne
+    # s'enregistre nulle part : il habille l'aperçu comme il habillera l'envoi.
+    tri: dict[str, Any] | None = None
     # Repris, l'aperçu **est** le texte de l'auteur : il ne se recompose pas, il
     # se rend tel quel. La route le sert quand même, pour que l'écran n'ait
     # jamais deux chemins selon l'état d'un interrupteur.
@@ -498,7 +530,58 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         poses=corps.poses,
         piece=corps.piece or None,
         pose=corps.pose or None,
+        direction=corps.direction or None,
         directions=corps.directions,
+        tri=Tri.depuis_json(corps.tri),
+    )
+
+
+class CorpsEnvoi(CorpsApercu):
+    """Ce qui part, **texte et images ensemble** (E14).
+
+    **Un `CorpsApercu` élargi, et cette fois les réglages comptent** : le modèle
+    décide du nombre de places d'images et du prix, l'échelle décide des artworks
+    qui partent, les réinjections et les écartées décident de ce qui reste coché.
+    L'aperçu du texte seul n'en avait pas besoin ; l'écran qui montre le prix, si.
+    """
+
+    modele: str = ""
+    echelle: str = ""
+    variations: int = 1
+    references: list[CorpsReinjection] = Field(default_factory=list)
+    references_ecartees: list[str] | None = None
+    direction: str | None = None
+
+
+@routeur.post("/outgoing")
+async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
+    """Tout ce que l'écran de confirmation montre, en un aller-retour (E14).
+
+    **`POST` pour une lecture**, comme l'aperçu du prompt et pour la même
+    raison : le corps porte un prompt entier et des listes d'identifiants, que
+    l'on ne met pas dans une adresse.
+
+    Rien n'est facturé, rien n'est enregistré, aucun appel ne sort de la machine.
+    L'écran arme ; c'est la barre qui paie qui appelle.
+    """
+    return _atelier(requete).envoi.envoi(
+        projet=corps.projet,
+        sujet=corps.prompt.strip(),
+        modele=corps.modele,
+        repris=corps.repris,
+        echelle=corps.echelle,
+        personnage=corps.personnage or None,
+        pose=corps.pose or None,
+        direction=corps.direction or None,
+        poses=corps.poses,
+        directions=corps.directions,
+        piece=corps.piece or None,
+        references=[
+            Reinjection(asset=r.asset, role=r.role) for r in corps.references
+        ],
+        references_ecartees=corps.references_ecartees,
+        variations=corps.variations,
+        tri=Tri.depuis_json(corps.tri),
     )
 
 

@@ -49,9 +49,27 @@ from atelier.domaine.erreurs import (
 )
 from atelier.domaine.generation import ASSET, AUTEUR, CARTE, EDITION, REFERENCE, STYLE
 from atelier.domaine.direction import composer
+from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
+from atelier.domaine.envoi import (
+    AMBIANCE,
+    DE_LA_PLANCHE,
+    DE_LA_POSE,
+    DE_SA_FICHE,
+    DU_JEU,
+    ECRIT_ICI,
+    JEU,
+    PLANCHE,
+    REPRIS,
+    SUJET,
+    Tri,
+    clef,
+    en_blocs,
+    joindre,
+    resoudre,
+)
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
-from atelier.image import empreinte_de, mesurer
+from atelier.image import bande_de_palette, empreinte_de, mesurer
 from atelier.image.mesures import extension
 from atelier.reglages import lire_cle
 from atelier.domaine.asset import Asset
@@ -60,6 +78,8 @@ from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.evenements import Diffusion
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import CompteFaux, ServicePliage, consignes, reference
+from atelier.services.prix import mesures as mesures_de_prix
+from atelier.services.prix import prix_de as prix_de_lappel
 
 
 # **L'attente d'un modèle jamais encore appelé.** Mesuré le 27 août 2026 sur
@@ -226,8 +246,10 @@ class ServiceGenerations:
             return round(durees[milieu], 2)
         return round((durees[milieu - 1] + durees[milieu]) / 2, 2)
 
-    def cout_attendu(self, identifiant_modele: str) -> float | None:
-        """Ce qu'une image de ce modèle a coûté, en médiane, aux derniers appels.
+    def cout_attendu(
+        self, identifiant_modele: str, images: int | None = None
+    ) -> float | None:
+        """Ce que cet appel-là coûterait chez ce modèle, **images comprises**.
 
         « Voir avant de lancer ce qui va partir et **ce que ça va coûter** »
         (US-121). Le chiffre est une **mesure**, pas un tarif : le produit ne
@@ -238,38 +260,42 @@ class ServiceGenerations:
         `None` quand ce modèle n'a jamais rien facturé sur cette machine. Le
         produit dit alors qu'il ne sait pas, ce qui est vrai et utile : c'est le
         premier appel qui l'apprend. Même geste que l'attente de la jauge.
+
+        **`images` est arrivé en E14, et il répare le piège de E13 une seconde
+        fois.** Le prix rendu ici est celui que la barre qui paie affiche ; celui
+        de l'écran de confirmation, un clic plus loin, tient compte du nombre
+        d'images jointes. Sans ce paramètre, la barre annonçait la médiane de
+        *tous* les appels, images ou non, et les deux écrans disaient **$0,0160
+        et $0,0064 pour le même appel** — mesuré au navigateur sur le vrai projet
+        le 31 août 2026, à un clic d'écart au lieu de trois centimètres. Les deux
+        chiffres étaient justes, et c'est précisément ce qui rendait la
+        contradiction impossible à voir depuis les essais.
+
+        Sans `images`, la médiane de tout, comme avant : c'est ce que rend un
+        appelant qui ne sait pas encore ce qui partira.
         """
-        return self.appels_mesures(identifiant_modele)["prix"]
+        mesure = self.appels_mesures(identifiant_modele)
+        if images is None:
+            return mesure["prix"]
+        return prix_de_lappel(mesure, images)
 
     def appels_mesures(self, identifiant_modele: str) -> dict[str, Any]:
         """Ce que ce modèle a coûté ici — **la médiane, l'écart, et le compte**.
 
-        `cout_attendu` n'en rend que la médiane, et c'est tout ce dont la barre
-        qui paie a besoin. La planche, elle, affiche *le nombre d'appels sur
-        lequel le prix repose* à côté du prix (E13) : un gain annoncé sur une
+        `cout_attendu` en tire le chiffre d'un appel, et c'est tout ce dont la
+        barre qui paie a besoin. La planche, elle, affiche *le nombre d'appels
+        sur lequel le prix repose* à côté du prix (E13) : un gain annoncé sur une
         mesure unique est un gain **encadré**, pas un gain affirmé.
 
-        **Une seule lecture pour les deux**, parce que deux médianes calculées à
-        deux endroits auraient fini par annoncer deux prix pour le même appel —
-        et c'est exactement ce que l'écran de la planche a montré la première
-        fois qu'on l'a ouvert.
+        **Une seule lecture pour tout le monde**, parce que deux médianes
+        calculées à deux endroits auraient fini par annoncer deux prix pour le
+        même appel — et c'est exactement ce que l'écran de la planche a montré la
+        première fois qu'on l'a ouvert. E14 a déménagé le calcul dans
+        `atelier/services/prix.py`, où l'écran de confirmation le trouve aussi,
+        et lui a ajouté la décomposition : un prix de base, et le pas de chaque
+        image jointe.
         """
-        recents = self._base.couts_mesures(identifiant_modele)[:FENETRE_MESURES]
-        couts = sorted(recents)
-        if not couts:
-            return {"prix": None, "bas": 0.0, "haut": 0.0, "appels": 0}
-        milieu = len(couts) // 2
-        mediane = (
-            couts[milieu]
-            if len(couts) % 2
-            else (couts[milieu - 1] + couts[milieu]) / 2
-        )
-        return {
-            "prix": round(mediane, 4),
-            "bas": round(couts[0], 4),
-            "haut": round(couts[-1], 4),
-            "appels": len(couts),
-        }
+        return mesures_de_prix(self._base, identifiant_modele)
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -437,6 +463,11 @@ class ServiceGenerations:
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
+        # **Ce que l'écran de confirmation a trié** (E14). Les lignes éteintes,
+        # celles rallumées, les textes corrigés — et rien de tout cela ne
+        # remonte : le tri habille *cet appel* et disparaît ensuite. Absent,
+        # c'est un agent ou une relance, et les réglages durables décident seuls.
+        tri: "Tri | None" = None,
     ) -> tuple[Generation, Modele | None, bool]:
         """Vérifie, enregistre, et dit si c'est neuf. N'appelle pas le fournisseur.
 
@@ -506,27 +537,38 @@ class ServiceGenerations:
         # diverger, et celle qui compte est celle qui part.
         demande = replace(
             demande,
-            prompt=self._texte(demande.prompt, demande.repris, projet, pliage),
+            prompt=self._texte(
+                demande.prompt,
+                demande.repris,
+                projet,
+                pliage,
+                personnage=personnage,
+                pose=pose,
+                direction=direction,
+                tri=tri,
+            ),
         )
-        # **Trois sources, dans cet ordre, puis le dédoublonnage** : ce que
-        # l'auteur a posé à la main, ce que le personnage désigne (US-124), et
-        # les artworks de la famille du sujet. L'ordre décide du rôle gardé en
-        # cas de doublon, et le plafond du modèle se compte après.
+        # **Quatre sources, dans cet ordre, puis le dédoublonnage** : ce que
+        # l'auteur a posé à la main, ce que le personnage désigne (US-124), ce
+        # que son ambiance apporte (E14), et les artworks de la famille du sujet.
+        # L'ordre décide du rôle gardé en cas de doublon, et le plafond du modèle
+        # se compte après.
         reinjectes = _reinjectes(
             tuple(references)
             + self._concepts(projet, personnage, piece)
+            + self._de_lambiance(projet, personnage)
             + self._artworks(demande, projet)
         )
         # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
         # elle a un avis, décide **seule** : c'est la plus étroite, et c'est la
         # règle affichée à l'écran. Sans avis — un agent, une relance —, les
         # deux portées durables s'appliquent.
-        ecartees = (
+        hors_images = (
             set(references_ecartees)
             if references_ecartees is not None
             else set(self._ecartees_durables(projet, personnage))
         )
-        reinjectes = tuple(r for r in reinjectes if r.asset not in ecartees)
+        reinjectes = tuple(r for r in reinjectes if r.asset not in hors_images)
         demande = replace(
             demande,
             references=self._octets_references(reinjectes, projet)
@@ -535,7 +577,12 @@ class ServiceGenerations:
             # ceux qui facturent au token (`docs/PIEGES.md`) : le compter à part
             # aurait fait mentir le grisé au moment précis où l'appel est le plus
             # cher. **Avant le grisé**, pour la même raison que les réinjections.
-            + self._jointes(pliage, identifiant_modele),
+            + self._jointes(pliage, identifiant_modele)
+            # **La bande de couleurs, quand la case est cochée** (E14). Elle part
+            # comme le gabarit — redessinée, jamais relue —, elle occupe une
+            # place dans le plafond du modèle et elle coûte chez ceux qui
+            # facturent au token. **Avant le grisé**, pour la même raison.
+            + self._bande(demande, projet, personnage, identifiant_modele),
         )
 
         modele = self._catalogue.modele(identifiant_modele)
@@ -576,6 +623,13 @@ class ServiceGenerations:
             # fait de cet appel une planche d'équipement : le dépliage le lit
             # pour savoir s'il doit ranger des corps ou fabriquer des calques.
             piece=piece or None,
+            # **Et ce que cet appel-là a pris à l'ambiance** (E14). Constaté
+            # après coup sur ce qui part vraiment, jamais recopié du réglage
+            # durable : un état dérivable ne se garde pas en double, mais
+            # celui-ci ne l'est pas — l'écran de confirmation éteint ligne par
+            # ligne, et le réglage durable ne décrit pas ce qui reste.
+            ambiance=self._ambiance_de(projet, personnage),
+            pris=self._pris(projet, personnage, demande, reinjectes, pose, direction, tri),
         )
         self._sauver(generation)
         return generation, modele, False
@@ -596,6 +650,7 @@ class ServiceGenerations:
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
+        tri: "Tri | None" = None,
     ) -> Generation:
         """Prépare puis lance, sans attendre. L'appelant reçoit l'identifiant."""
         generation, modele, deja = self.preparer(
@@ -612,6 +667,7 @@ class ServiceGenerations:
             poses=poses,
             piece=piece,
             references_ecartees=references_ecartees,
+            tri=tri,
         )
         if deja or modele is None:
             return generation
@@ -831,13 +887,24 @@ class ServiceGenerations:
             proportions=demande.get("proportions", "1:1"),
             resolution=demande.get("resolution"),
             variations=1,
+            # **La bande de couleurs se redessine elle aussi**, et pour la raison
+            # du gabarit deux lignes plus bas : elle n'a pas d'identifiant et
+            # n'est nulle part sur le disque. Une relance qui l'aurait perdue
+            # aurait envoyé un appel différent de celui qu'on relance.
+            palette=bool(demande.get("palette")),
             references=self._octets_references(generation.references, generation.projet)
             # **Le gabarit se redessine, il ne se relit pas.** Il n'est ni un
             # asset ni une carte : il n'a pas d'identifiant, il n'est nulle part
             # sur le disque, et il se refabrique à l'identique depuis la
             # géométrie du pliage. L'appel et la relance envoient donc exactement
             # la même chose, ce qui est la promesse de cette méthode.
-            + self._jointes(generation.pliage, generation.modele),
+            + self._jointes(generation.pliage, generation.modele)
+            + self._bande(
+                Demande(prompt="x", palette=bool(demande.get("palette"))),
+                generation.projet,
+                generation.personnage,
+                generation.modele,
+            ),
             options=demande.get("options", {}),
         )
 
@@ -1104,46 +1171,199 @@ class ServiceGenerations:
 
     # ── Le texte qui part, et l'univers qui l'habille ────────────────────────
 
+    def lignes(
+        self,
+        sujet: str,
+        *,
+        repris: bool = False,
+        projet: str | None = None,
+        personnage: str | None = None,
+        pose: str | None = None,
+        direction: str | None = None,
+        pliage: Pliage | None = None,
+        tri: Tri | None = None,
+    ) -> list[dict[str, Any]]:
+        """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
+
+        C'est le seul endroit du dépôt qui décide de ce que le prompt contient.
+        L'écran de confirmation demande ces lignes-là, le prompt est leur
+        jonction, et il n'y a donc pas deux textes possibles : « le texte montré
+        vient du même chemin que l'envoi » cesse d'être une promesse pour devenir
+        un fait mécanique.
+
+        **Trois groupes, dans l'ordre où le texte s'assemble.** Les sept textes
+        du jeu — avec, mêlées, les trois lignes que l'ambiance remplace —, puis
+        le sujet et la consigne de sa case, puis les consignes de planche quand
+        l'appel part plié. La bible se replie en tête depuis T4 (US-53) et les
+        consignes de planche en queue parce qu'elles parlent du sujet décrit
+        au-dessus.
+
+        **Le sujet et la pose ne s'éteignent pas** (US-278) : sans le premier
+        l'appel ne demande rien, et sans la seconde l'image qui revient
+        n'appartient à aucune case. Leur marque le dit — elles sont montrées,
+        avec leur raison, jamais cachées.
+
+        **Un texte repris n'a qu'une ligne, et c'est la vérité** : l'auteur a
+        pris la main sur l'ensemble, donc il n'y a plus de bible d'un côté et de
+        sujet de l'autre. Le découper aurait été une reconstitution, pas une
+        lecture.
+        """
+        if repris:
+            return [
+                {
+                    "clef": clef(SUJET, "repris"),
+                    "groupe": SUJET,
+                    "nom": "ton texte",
+                    "texte": sujet,
+                    "origine": REPRIS,
+                    "allumee": True,
+                    "eteignable": False,
+                    "raison": "le texte est repris à la main — il part mot pour mot",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": False,
+                    "gardable": False,
+                }
+            ]
+
+        lignes: list[dict[str, Any]] = []
+        if self._production is not None:
+            lignes.extend(
+                resoudre(self._production.couches(projet, personnage), tri)
+            )
+        elif self._univers is not None and projet is not None:  # pragma: no cover
+            # L'atelier monte toujours les deux services ensemble ; ce repli
+            # existe pour les essais qui n'en montent qu'un.
+            lignes.append(
+                {
+                    "clef": clef(JEU, "bible"),
+                    "groupe": JEU,
+                    "nom": "bible",
+                    "texte": self._univers.prompt(projet),
+                    "origine": DU_JEU,
+                    "allumee": True,
+                    "eteignable": True,
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": False,
+                    "gardable": False,
+                }
+            )
+
+        tri = tri or Tri()
+        signalement = tri.texte(clef(SUJET, "sujet"), sujet)
+        lignes.append(
+            {
+                "clef": clef(SUJET, "sujet"),
+                "groupe": SUJET,
+                "nom": "sujet",
+                "texte": signalement,
+                "origine": DE_SA_FICHE if self._est_le_signalement(
+                    projet, personnage, sujet
+                ) else ECRIT_ICI,
+                "allumee": True,
+                "eteignable": False,
+                "raison": "sans lui l'appel ne demande rien",
+                "remplace": "",
+                "remplacee_par": "",
+                "corrigee": clef(SUJET, "sujet") in tri.textes,
+                # Le signalement a une case où vivre : la fiche de la chose.
+                "gardable": bool(personnage),
+            }
+        )
+
+        # **La consigne de la case, écrite à part depuis E14.** Elle vivait dans
+        # le champ, collée au signalement par `ServiceProduction.sujet` ; une
+        # planche, elle, la portait déjà case par case. Les deux chemins
+        # écrivaient donc la même phrase à deux endroits, et l'écran de
+        # confirmation aurait dû deviner où finit le signalement.
+        consigne = ""
+        if pliage is None and personnage and pose and self._production is not None and projet:
+            consigne = self._production.consigne_de_case(
+                projet, personnage, pose, direction
+            )
+        if consigne:
+            lignes.append(
+                {
+                    "clef": clef(SUJET, "pose"),
+                    "groupe": SUJET,
+                    "nom": "pose",
+                    "texte": tri.texte(clef(SUJET, "pose"), consigne),
+                    "origine": DE_LA_POSE,
+                    "allumee": True,
+                    "eteignable": False,
+                    "raison": "elle dit dans quelle case l'image reviendra se ranger",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": clef(SUJET, "pose") in tri.textes,
+                    # L'attitude et l'angle s'écrivent dans le codex, où ils
+                    # servent à toutes les choses du jeu : « garder ici » n'aurait
+                    # pas de case à cette chose-là où aller.
+                    "gardable": False,
+                }
+            )
+
+        if pliage is not None:
+            lignes.append(
+                {
+                    "clef": clef(PLANCHE, "cases"),
+                    "groupe": PLANCHE,
+                    "nom": "les cases",
+                    "texte": consignes(pliage),
+                    "origine": DE_LA_PLANCHE,
+                    "allumee": True,
+                    "eteignable": False,
+                    "raison": "c'est elle qui permettra de découper le retour",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": False,
+                    "gardable": False,
+                }
+            )
+        return lignes
+
+    def _est_le_signalement(
+        self, projet: str | None, personnage: str | None, sujet: str
+    ) -> bool:
+        """Ce qui est écrit dans le champ vient-il encore de la fiche ?
+
+        **Déduit, jamais enregistré** : l'écran arme le champ avec le
+        signalement de la chose, et l'auteur écrit par-dessus quand il veut. Un
+        drapeau posé à l'armement aurait menti dès la première frappe.
+        """
+        if not projet or not personnage or self._production is None or not sujet:
+            return False
+        try:
+            return self._production.sujet(projet, personnage) == sujet
+        except ErreurAtelier:
+            return False
+
     def parties(
         self, sujet: str, repris: bool, projet: str | None, pliage: Pliage | None
     ) -> list[dict[str, str]]:
-        """Ce qui partira, **bloc par bloc et dans l'ordre d'envoi** (US-158).
+        """Les lignes, **groupées comme elles s'assemblent** (US-158).
 
-        Trois origines et pas une de plus : la bible active du projet, le sujet
-        écrit par l'auteur, et les consignes de planche quand un lot est armé.
-        Rien n'est traduit ni enrichi en chemin — montrer autre chose que ce qui
-        part serait pire que ne rien montrer.
-
-        **Un texte repris n'a qu'une partie, et c'est la vérité** : l'auteur a
-        pris la main sur l'ensemble, donc il n'y a plus de bible d'un côté et de
-        sujet de l'autre. Le découpage aurait été une reconstitution, pas une
-        lecture.
-
-        **Le sujet est un texte, pas une `Demande`** : l'aperçu se demande dès
-        le champ vide — l'atelier s'ouvre dessus —, et `Demande` refuse un
-        prompt vide à juste titre. Ce refus appartient à la soumission, pas à la
-        lecture de ce qui partirait.
+        Conservée telle quelle pour ce qui lit encore des blocs — l'agent, les
+        essais de R2. Elle ne compose plus rien : elle groupe ce que `lignes`
+        rend, ce qui garantit qu'un bloc et sa ligne ne peuvent pas diverger.
         """
-        if repris:
-            return [{"origine": "repris", "texte": sujet}]
-        blocs = []
-        bible = (
-            self._univers.prompt(projet)
-            if self._univers is not None and projet is not None
-            else ""
+        return en_blocs(
+            self.lignes(sujet, repris=repris, projet=projet, pliage=pliage)
         )
-        if bible:
-            blocs.append({"origine": "bible", "texte": bible})
-        if sujet:
-            blocs.append({"origine": "sujet", "texte": sujet})
-        if pliage is not None:
-            blocs.append({"origine": "planche", "texte": consignes(pliage)})
-        return blocs
 
     def _texte(
-        self, sujet: str, repris: bool, projet: str | None, pliage: Pliage | None
+        self,
+        sujet: str,
+        repris: bool,
+        projet: str | None,
+        pliage: Pliage | None,
+        *,
+        personnage: str | None = None,
+        pose: str | None = None,
+        direction: str | None = None,
+        tri: Tri | None = None,
     ) -> str:
-        """Les parties, jointes — **le seul endroit qui écrive le prompt final**.
+        """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
         La bible active se replie en tête (US-53) : « je veux que le style de mon
         univers parte avec chaque génération, afin de ne jamais le retaper ». Les
@@ -1153,8 +1373,17 @@ class ServiceGenerations:
         `generation.json` porte le prompt tel qu'il est parti : une génération se
         relit des mois après sans avoir à reconstituer l'univers du jour.
         """
-        return "\n\n".join(
-            bloc["texte"] for bloc in self.parties(sujet, repris, projet, pliage)
+        return joindre(
+            self.lignes(
+                sujet,
+                repris=repris,
+                projet=projet,
+                personnage=personnage,
+                pose=pose,
+                direction=direction,
+                pliage=pliage,
+                tri=tri,
+            )
         )
 
     def apercu(
@@ -1167,7 +1396,9 @@ class ServiceGenerations:
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         pose: str | None = None,
+        direction: str | None = None,
         directions: Sequence[str] | None = None,
+        tri: "Tri | None" = None,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -1186,10 +1417,25 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
         pliage = self._plier(projet, personnage, poses, piece, pose, directions)
-        parties = self.parties(sujet, repris, projet, pliage)
+        lignes = self.lignes(
+            sujet,
+            repris=repris,
+            projet=projet,
+            personnage=personnage,
+            # Une planche porte ses consignes case par case : la pose ne fait
+            # alors pas de ligne à elle, et `_plier` l'a déjà vérifiée.
+            pose=None if pliage is not None else pose,
+            direction=direction,
+            pliage=pliage,
+            tri=tri,
+        )
         return {
-            "texte": "\n\n".join(bloc["texte"] for bloc in parties),
-            "parties": parties,
+            "texte": joindre(lignes),
+            "parties": en_blocs(lignes),
+            # **Une ligne par chose qui part** (E14). Le même appel sert le
+            # dépliant d'hier et l'écran de confirmation : deux routes auraient
+            # rouvert la question de savoir laquelle dit vrai.
+            "lignes": lignes,
         }
 
     def _artworks(self, demande: Demande, projet: str | None) -> tuple[Reinjection, ...]:
@@ -1213,6 +1459,13 @@ class ServiceGenerations:
         personnage: str | None = None,
         cases: int = 0,
         piece: str | None = None,
+        # **Ce que cette génération-ci écarte** (E14). Absent, les portées
+        # durables décident, comme pour un agent ; présent, il décide seul,
+        # parce que c'est la portée la plus étroite. C'est ce qui permet à
+        # l'écran de confirmation de compter ce qui part **après** qu'on a
+        # décoché, et non ce qui partirait si l'on n'avait rien touché.
+        ecartees_ici: Sequence[str] | None = None,
+        palette: bool = False,
     ) -> dict[str, Any]:
         """Ce qui partira, **ligne par ligne, avec sa provenance** (US-52, US-127).
 
@@ -1230,13 +1483,35 @@ class ServiceGenerations:
         demande = Demande(prompt="x", echelle=echelle)
         artworks = self._artworks(demande, projet)
         concepts = self._concepts(projet, personnage, piece)
+        de_lambiance = self._de_lambiance(projet, personnage)
         ecartees = (
             self._production.ecartees(projet, personnage)
             if self._production is not None and projet
             else {}
         )
+        # **Le mode de l'ambiance écarte comme les deux autres portées** (E14) :
+        # une chose qui prend *les couleurs seulement* n'envoie pas les images de
+        # son ambiance, et la ligne le dit plutôt que de disparaître.
+        for carte in de_lambiance:
+            if carte.asset in ecartees:
+                continue
+            if REFERENCES not in prises_du_mode(
+                self._production.prend_de(projet, personnage)
+                if self._production is not None
+                else ""
+            ):
+                ecartees[carte.asset] = "son ambiance — elle n'en prend pas les images"
+        # Puis l'avis de cette génération-ci, qui décide seul quand il existe.
+        if ecartees_ici is not None:
+            retenus = set(ecartees_ici)
+            ecartees = {
+                asset: "décoché pour cet appel"
+                for asset in retenus
+            }
 
-        toutes = _reinjectes(tuple(manuelles) + concepts + artworks)
+        toutes = _reinjectes(
+            tuple(manuelles) + concepts + de_lambiance + artworks
+        )
         echelle_lue = (
             self._univers.echelle(projet, echelle) if self._univers and echelle else None
         )
@@ -1246,6 +1521,11 @@ class ServiceGenerations:
         # qu'une image promue n'est pas — elle part avec **tous** les appels de
         # sa chose, et c'est ce qui la rend décochable en connaissance de cause.
         promues = set(self._promues(projet, personnage))
+        # **Cinquième provenance depuis E14** : une image que l'ambiance apporte.
+        # Elle n'est ni un artwork du jeu — elle ne concerne que ce coin-là — ni
+        # un concept art épinglé sur la chose : la corriger là-bas la corrige
+        # pour tout ce qui s'en sert, et c'est ce que le mot doit dire.
+        siennes = set(r.asset for r in de_lambiance)
 
         lignes = [
             {
@@ -1253,10 +1533,12 @@ class ServiceGenerations:
                 "role": r.role,
                 "origine": r.origine,
                 # **La provenance, nommée** (US-127) : « comprendre pourquoi elle
-                # part avant de décider de la retirer ». Quatre sources, quatre
+                # part avant de décider de la retirer ». Cinq sources, cinq
                 # phrases, et jamais un mot que l'écran devrait interpréter.
                 "provenance": (
-                    "concept art"
+                    "image de son ambiance"
+                    if r.asset in siennes
+                    else "concept art"
                     if r.origine == CARTE and r.asset in designes
                     else "artwork officiel"
                     if r.origine == CARTE
@@ -1290,30 +1572,162 @@ class ServiceGenerations:
         # **une** case, parce qu'une planche d'une seule pose reste une planche.
         gabarit = 1 if (cases >= 2 or (piece and cases >= 1)) else 0
 
+        # **La bande de couleurs compte comme le gabarit**, et pour les mêmes
+        # deux raisons : elle occupe une place dans le plafond du modèle, et elle
+        # coûte chez ceux qui facturent au token. Elle **est** décochable, elle —
+        # c'est une option de l'écran de confirmation, pas une condition de
+        # l'appel —, mais sa case vit dans les options et non dans la liste des
+        # images, où l'auteur ne saurait pas quelle image il décoche.
+        bande = 1 if (palette and self._couleurs(projet, personnage)) else 0
+
         return {
             # Ce qui part vraiment — donc ce qui décide du grisé.
-            "total": len(retenues) + gabarit,
+            "total": len(retenues) + gabarit + bande,
             "gabarit": gabarit,
+            "palette": bande,
             "manuelles": sum(1 for l in retenues if l["origine"] != CARTE),
             "artworks": sum(
                 1 for l in retenues if l["provenance"] == "artwork officiel"
             ),
             "concepts": sum(1 for l in retenues if l["provenance"] == "concept art"),
+            "ambiance": sum(
+                1 for l in retenues if l["provenance"] == "image de son ambiance"
+            ),
             "famille": echelle_lue.famille if echelle_lue else None,
             # Les écartées y sont **aussi**, et elles le disent : une ligne qui
             # disparaîtrait ne laisserait aucun moyen de la remettre.
             "lignes": lignes,
         }
 
+    # ── L'ambiance, et ce que cet appel-là lui prend (E14) ───────────────────
+
+    def _ambiance_de(self, projet: str | None, personnage: str | None) -> str | None:
+        """Le lot de style que cette chose désigne, ou rien."""
+        if self._production is None or not projet or not personnage:
+            return None
+        return self._production.couches(projet, personnage).ambiance_nom or None
+
+    def _de_lambiance(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[Reinjection, ...]:
+        """Les images de référence que l'ambiance apporte (E14).
+
+        En rôle `style`, comme les artworks et les concept arts : elles
+        **inspirent**, elles n'engendrent pas. Ce sont des cartes du tableau —
+        une ambiance ne contient aucune image, elle en désigne.
+
+        **Elles sont toujours listées, même quand la chose ne les prend pas** :
+        c'est `_ecartees_durables` qui les retire alors, avec les autres écartées,
+        et l'écran de confirmation peut donc les rallumer pour un appel. Les
+        omettre ici les aurait rendues invisibles, et une image qu'on ne voit pas
+        ne se coche pas.
+        """
+        if self._production is None or not projet or not personnage:
+            return ()
+        return tuple(
+            Reinjection(asset=carte, role=STYLE, origine=CARTE)
+            for carte in self._production.references_de_lambiance(projet, personnage)
+        )
+
+    def _bande(
+        self,
+        demande: Demande,
+        projet: str | None,
+        personnage: str | None,
+        identifiant_modele: str,
+    ) -> tuple[bytes, ...]:
+        """La palette en image, quand la case est cochée (E14).
+
+        **En image et jamais en texte** : une liste de codes couleur est mal
+        suivie par les modèles, et elle allongerait un texte qui pèse déjà la
+        moitié de l'appel. Celle de l'ambiance quand une ambiance en désigne
+        une, celle du jeu sinon — c'est la même règle que la vitrine applique
+        pour ses fonds, et il n'y a pas deux palettes qui s'appliquent à une
+        chose.
+
+        Un modèle qui n'accepte aucune référence part sans, comme pour le
+        gabarit : la case reste cochée, elle ne trouve simplement pas de place.
+        """
+        if not demande.palette:
+            return ()
+        couleurs = self._couleurs(projet, personnage)
+        if not couleurs:
+            return ()
+        if self._catalogue.modele(identifiant_modele).references_max <= 0:
+            return ()
+        return (bande_de_palette(couleurs),)
+
+    def _couleurs(
+        self, projet: str | None, personnage: str | None
+    ) -> tuple[str, ...]:
+        """Les couleurs qui s'appliquent à cette chose — l'ambiance, sinon le jeu."""
+        if self._production is None or not projet:
+            return ()
+        return self._production.couleurs_de(projet, personnage)
+
+    def _pris(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        demande: Demande,
+        reinjectes: Sequence[Reinjection],
+        pose: str | None,
+        direction: str | None,
+        tri: "Tri | None",
+    ) -> tuple[str, ...]:
+        """Ce que cet appel a **réellement** pris à l'ambiance (E14).
+
+        Constaté sur ce qui part, jamais recopié du réglage durable : les
+        couleurs si la bande est partie et qu'elle venait de l'ambiance, les
+        images si l'une des siennes a survécu aux écartées, les textes si l'une
+        de ses trois lignes est restée allumée.
+
+        **Sans lui, « ce qui est montré est ce qui part » cesserait d'être vrai
+        en relisant une vieille image** : le réglage durable aura changé,
+        l'ambiance aura été retouchée, et rien ne dirait plus d'où venait le
+        monde qu'on lit dans le prompt.
+        """
+        if self._production is None or not projet or not personnage:
+            return ()
+        couches = self._production.couches(projet, personnage)
+        if not couches.ambiance_nom:
+            return ()
+        siennes = set(self._production.references_de_lambiance(projet, personnage))
+        pris: list[str] = []
+        if demande.palette and self._production.palette_de_lambiance(projet, personnage):
+            pris.append(COULEURS)
+        if siennes and any(r.asset in siennes for r in reinjectes):
+            pris.append(REFERENCES)
+        if any(
+            ligne["groupe"] == AMBIANCE and ligne["allumee"]
+            for ligne in resoudre(couches, tri)
+        ):
+            pris.append(TEXTES)
+        return tuple(pris)
+
     def _ecartees_durables(
         self, projet: str | None, personnage: str | None
     ) -> tuple[str, ...]:
         """Ce que le projet et le personnage ont écarté — les deux portées qui
-        s'écrivent. Celle de la génération ne s'écrit nulle part : elle vit dans
-        l'onglet et part avec l'appel."""
+        s'écrivent, **plus ce que le mode de l'ambiance retire** (E14). Celle de
+        la génération ne s'écrit nulle part : elle vit dans l'onglet et part avec
+        l'appel.
+
+        Le mode est un réglage durable au même titre que les deux autres : une
+        chose qui prend *les couleurs seulement* n'envoie pas les images de son
+        ambiance, et un agent qui n'a pas d'écran devant lui doit obtenir la même
+        chose que l'auteur qui n'a touché à rien.
+        """
         if self._production is None or not projet:
             return ()
-        return tuple(self._production.ecartees(projet, personnage))
+        ecartees = tuple(self._production.ecartees(projet, personnage))
+        if not personnage:
+            return ecartees
+        if REFERENCES in prises_du_mode(self._production.prend_de(projet, personnage)):
+            return ecartees
+        return ecartees + tuple(
+            self._production.references_de_lambiance(projet, personnage)
+        )
 
     def _concepts_identifiants(
         self, projet: str | None, personnage: str | None, piece: str | None = None

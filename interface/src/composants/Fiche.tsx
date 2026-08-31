@@ -17,6 +17,7 @@ import {
   ROLES,
   type Asset,
   type Filiation,
+  type Generation,
   type Impose,
   type Passe,
   type Personnage,
@@ -182,6 +183,8 @@ export function Fiche({
         <p className="mesure truncate text-[10px] text-texte-3" title={asset.modele}>
           {nomDuModele(asset.modele)}
         </p>
+
+        <PrisDeLAmbiance asset={asset} />
 
         <Jugement
           asset={asset}
@@ -402,6 +405,61 @@ function ImposeParLeProjet({
         ))}
       </ul>
     </Bloc>
+  )
+}
+
+// ── Ce que le lot de style a donné à cette image ────────────────────────────
+
+/** Une ligne de provenance de plus, et elle ne se lit que sur les images qui en
+ *  ont une (E14).
+ *
+ *  Un **lot de style** est un jeu de textes, d'images et de couleurs désigné sur
+ *  une chose du monde — la forge d'un nain, les ruines d'un donjon. Ce qu'on lui
+ *  prend se décide au moment de fabriquer, et pas une fois pour toutes.
+ *
+ *  **Sans cette ligne, relire une vieille image ne dirait plus d'où venait ce
+ *  qu'elle montre.** Le réglage de la chose aura changé, le lot aura été
+ *  retouché, et le texte enregistré porte les mots sans dire lequel venait du
+ *  monde et lequel du lot. Elle se lit, elle ne se règle pas — comme le nom du
+ *  modèle juste au-dessus : aucun libellé, aucun pointillé, rien à survoler.
+ *
+ *  La génération est allée la chercher, et non l'image : recopier deux champs de
+ *  plus sur chaque image aurait fait une seconde vérité sur une question à
+ *  laquelle l'enregistrement de l'appel répond déjà. La fiche fait déjà cet
+ *  aller-retour-là pour la filiation, et une fiche s'ouvre une à la fois. */
+function PrisDeLAmbiance({ asset }: { asset: Asset }) {
+  const [generation, setGeneration] = useState<Generation | null>(null)
+
+  useEffect(() => {
+    let vivant = true
+    api
+      .generation(asset.generation)
+      .then((lue) => vivant && setGeneration(lue))
+      // **Le silence, et pas un message.** Une génération effacée du disque est
+      // le cas normal d'une vieille image ; s'en plaindre à chaque fiche ouverte
+      // apprendrait moins que de ne rien dire.
+      .catch(() => vivant && setGeneration(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.generation])
+
+  const nom = generation?.ambiance
+  if (!nom) return null
+
+  // Les trois mots du produit, écrits comme on les lit ailleurs. Une liste vide
+  // est un fait : le lot était désigné, et cet appel-là ne lui a rien pris.
+  const dit: Record<string, string> = {
+    textes: "ses textes",
+    references: "ses images",
+    couleurs: "ses couleurs",
+  }
+  const pris = (generation?.pris ?? []).map((quoi) => dit[quoi] ?? quoi)
+
+  return (
+    <p className="mesure text-[10px] leading-4 text-texte-3">
+      d'après « {nom} » — {pris.length ? pris.join(", ") : "rien de repris"}
+    </p>
   )
 }
 

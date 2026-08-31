@@ -40,6 +40,7 @@ from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
+from atelier.services.envoi import EnvoiRefuse, ServiceEnvoi
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.generation import ServiceGenerations
@@ -74,6 +75,7 @@ __all__ = [
     "SuperpositionRefusee",
     "DepotRefuse",
     "Diffusion",
+    "EnvoiRefuse",
     "EtatCatalogue",
     "Evenement",
     "ExportRefuse",
@@ -100,6 +102,7 @@ __all__ = [
     "ServiceGenerations",
     "PlancheRefusee",
     "ServicePlanche",
+    "ServiceEnvoi",
     "ServiceEquipement",
     "ServicePliage",
     "ServiceProduction",
@@ -251,6 +254,13 @@ class Atelier:
         # fabrique rien et n'enregistre rien ; le seul endroit d'où l'argent part
         # reste la barre qui paie.
         self.planche = ServicePlanche(self.production, self.generations)
+        # **Ce qui part, monté après elle** (E14) : l'écran qui s'intercale
+        # entre le bouton et la dépense. Comme la planche, il ne compose rien et
+        # ne dépense rien — il demande ses lignes au chemin de l'envoi et son
+        # compte d'images à celui qui décide du grisé.
+        self.envoi = ServiceEnvoi(
+            self.generations, self.production, self.univers, self.bibliotheque
+        )
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le
         # fichier. **En dernier, et c'est le seul ordre possible** : sa

@@ -500,6 +500,13 @@ La case « ne plus me le montrer pour cette série » répond à moitié. Savoir
 relancement pur doit sauter l'écran tout seul demande de s'en être servi.
 **Ce qui manque : de l'usage.** Se pose à l'étape de l'écran de confirmation.
 
+**L'étape est livrée le 31 août 2026, et la question reste ouverte — c'est
+normal.** La case existe, elle vaut pour la série en cours et se remet dès qu'on
+change de chose ou de pose ; il n'y a **aucune** case « pour toujours », et
+l'écran le dit lui-même. Ce qui manquait n'était pas le code, c'était l'usage :
+la question ne se tranchera qu'après avoir refait dix fois la même image avec la
+case sous la main.
+
 ### B-2 · La case carrée coûte de la résolution, et personne n'a tranché
 
 Chaque image d'une chose du jeu est dessinée dans une case carrée, et tout le
@@ -701,6 +708,13 @@ Le traitement est non destructif et l'image brute ne bouge jamais : la question
 porte donc sur ce qui part — le brut, ou le rendu. **À trancher là où les
 références se composent**, c'est-à-dire à l'étape de l'écran de confirmation.
 
+**L'étape est livrée le 31 août 2026, et elle a rendu la question visible sans la
+trancher.** Chaque image jointe a désormais sa ligne, sa provenance et son prix,
+et l'on décoche celles qu'on ne veut pas pour cet appel-là. Ce que la ligne ne dit
+pas encore, c'est **lequel des deux états part** — le brut ou le rendu —, et le
+produit envoie toujours ce qu'il envoyait avant. Rien n'a changé de ce côté-là,
+et le dire est plus utile que de laisser croire que l'étape a répondu.
+
 ### B-14 · Faut-il marquer dans le codex les images jamais retouchées ?
 
 Vingt et une images sur quarante-huit n'ont jamais été traitées, et le codex les
@@ -715,6 +729,12 @@ Une tuile n'a sans doute pas besoin du même texte qu'un personnage. Le sujet a
 d'entrée : **c'est là qu'on verra, à l'usage, quelles lignes on éteint toujours
 pour quel type d'objet** — et c'est ce constat qui dira quoi automatiser. Rien ne
 se décide avant d'avoir ce relevé.
+
+**La porte est ouverte depuis le 31 août 2026.** Les lignes existent, chacune
+avec son interrupteur, et l'écart d'un appel ne s'enregistre nulle part : ce
+qu'on éteint souvent ne laisse donc aucune trace pour l'instant. C'est un choix
+— *le tri ne porte que des écarts, jamais un état complet* —, et le relevé
+demandera de s'en servir avant de décider s'il faut le garder.
 
 ### B-16 · Le détourage hérité doit-il se reposer tout seul ?
 

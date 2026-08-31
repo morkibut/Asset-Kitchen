@@ -275,6 +275,31 @@ class Generation:
     # l'asset lit la case, pas la génération.
     pliage: Pliage | None = None
 
+    # ── Ce qui a été pris de l'ambiance, et par cet appel-là ──────────────────
+    #
+    # Arrivés en E14 (`docs/ARCHITECTURE.md` §5). Une ambiance est un lot de
+    # style désigné sur une chose du jeu ; **ce qu'on lui prend se décide au
+    # moment de fabriquer**, pas une fois pour toutes — tout, les couleurs
+    # seules, tout sauf les images. La chose porte le réglage durable ; ces deux
+    # champs-ci portent ce que *cet appel* a réellement pris.
+    #
+    # **Sans eux, « ce qui est montré est ce qui part » cesserait d'être vrai en
+    # relisant une vieille image.** Le réglage durable aura changé, l'ambiance
+    # aura été retouchée, et rien ne dirait plus si le monde qu'on lit dans le
+    # prompt venait du jeu ou du lot de style — ni si la bande de couleurs est
+    # partie. Le prompt enregistré porte le texte ; il ne porte pas d'où chaque
+    # morceau venait.
+    #
+    # **Ils ne sont pas dérivables du réglage durable**, et c'est ce qui leur vaut
+    # d'exister : l'écran de confirmation éteint ligne par ligne, donc un appel
+    # peut avoir pris le monde sans l'éclairage, ce qu'aucun des trois modes ne
+    # décrit.
+    ambiance: str | None = None
+    # Parmi « couleurs », « references », « textes ». Vide quand aucune ambiance
+    # n'était désignée — et vide aussi quand tout a été éteint, ce qui est la
+    # même chose du point de vue de l'image produite.
+    pris: tuple[str, ...] = ()
+
     # ── Ce qui se déduit, et n'est donc jamais enregistré deux fois ───────────
 
     @property
@@ -336,6 +361,8 @@ class Generation:
             "pose": self.pose,
             "direction": self.direction,
             "piece": self.piece,
+            "ambiance": self.ambiance,
+            "pris": list(self.pris),
             "pliage": self.pliage.en_json() if self.pliage else None,
             "demande": self.demande,
             "parametres_resolus": self.parametres_resolus,
@@ -361,6 +388,10 @@ class Generation:
             pose=d.get("pose"),
             direction=d.get("direction"),
             piece=d.get("piece"),
+            # Vides pour tout ce qui a été écrit avant E14, et c'est la vérité :
+            # aucune ambiance n'agissait sur un appel avant elle.
+            ambiance=d.get("ambiance"),
+            pris=tuple(str(p) for p in (d.get("pris") or ())),
             pliage=Pliage.depuis_json(d.get("pliage")),
             demande=d.get("demande", {}),
             parametres_resolus=d.get("parametres_resolus", {}),

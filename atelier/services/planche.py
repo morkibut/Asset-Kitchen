@@ -64,6 +64,7 @@ from atelier.domaine.personnage import Personnage
 from atelier.domaine.pliage import geometrie
 from atelier.image.pliage import COTE, cote_de_case
 from atelier.services.generation import ServiceGenerations
+from atelier.services.prix import prix_de
 from atelier.services.production import ServiceProduction
 
 __all__ = ["PlancheRefusee", "ServicePlanche", "prix_du_banc", "prix_dun_appel"]
@@ -177,6 +178,12 @@ def prix_dun_appel(mesure_ici: dict[str, Any] | None = None) -> dict[str, Any]:
             "bas": round(float(mesure_ici["bas"]), 6),
             "haut": round(float(mesure_ici["haut"]), 6),
             "appels": int(mesure_ici["appels"]),
+            # **La décomposition voyage avec la médiane** (E14), sans quoi cet
+            # écran-ci retomberait sur la médiane pendant que l'écran de
+            # confirmation décompose — deux prix pour le même appel, ce qui est
+            # exactement le piège que ce chiffre-là a déjà coûté une fois.
+            "base": mesure_ici.get("base"),
+            "par_image": mesure_ici.get("par_image"),
             "mesure": True,
             "origine": "ici",
         }
@@ -229,6 +236,15 @@ class ServicePlanche:
         # celui de la barre qui paie.** Le modèle du jeu pour les planches, ce
         # qu'il a réellement facturé ici, et le banc en dernier recours.
         prix = prix_dun_appel(self._mesure_ici(projet))
+        # **Et les images que cet appel joindra**, parce que E14 a mesuré ce
+        # qu'elles coûtent : le prix d'un appel n'est pas indépendant d'elles —
+        # une seule image jointe double le prix chez le modèle principal du
+        # dépôt. L'écran de la planche et l'écran de confirmation passent donc
+        # par la même décomposition, sans quoi ils annonceraient deux prix pour
+        # le même appel, ce que E13 a déjà payé une fois.
+        jointes = self._generations.compter_references(
+            projet, vise.type, personnage=vise.identifiant, cases=len(toutes)
+        )
 
         # **Ce qui part par défaut : tout.** Refaire les quatre est le premier
         # choix de l'écran, et il est posé sur une mesure — à prix d'appel égal,
@@ -241,7 +257,9 @@ class ServicePlanche:
             "pose_nom": attitude.nom,
             "cases": self._cases(projet, vise, attitude.identifiant, toutes, vides),
             "geometrie": self.geometrie(len(toutes), projet),
-            "choix": self._choix(len(toutes), len(vides), len(pleines), prix),
+            "choix": self._choix(
+                len(toutes), len(vides), len(pleines), prix, jointes["total"]
+            ),
             "prix": prix,
             # **Le banc, toujours, et à côté du prix affiché.** C'est lui qui a
             # établi ce que l'écran *dit* du prix — qu'il ne dépend pas du
@@ -265,18 +283,26 @@ class ServicePlanche:
             # deux endroits auraient divergé. Le gabarit de la grille en fait
             # partie : il part avec l'appel, il occupe une place dans le plafond
             # du modèle, et chez ceux qui facturent au token il coûte.
-            "jointes": self._generations.compter_references(
-                projet,
-                vise.type,
-                personnage=vise.identifiant,
-                cases=len(toutes),
-            ),
+            "jointes": jointes,
             # **Ce que la planche jette, nommé avant de lancer.** Refaire une
             # case qu'on a ne fait pas disparaître l'ancienne image — elle reste
             # en bibliothèque, elle garde son prix payé —, mais on aura payé deux
             # fois pour une case, et l'écran l'écrit.
             "deja_pleines": pleines,
         }
+
+    def _prix(self, appel: dict[str, Any], images: int, appels: int) -> float:
+        """Ce que ces appels-là coûteront, **images jointes comprises** (E14).
+
+        La décomposition quand la machine a de quoi la calculer, la médiane
+        sinon — et c'est `atelier/services/prix.py` qui tranche, pour les deux
+        écrans à la fois. Sans mesure, zéro : l'écran dit alors qu'il ne sait
+        pas, plutôt que d'annoncer un chiffre que personne n'a payé.
+        """
+        if not appel["mesure"]:
+            return 0.0
+        chiffre = prix_de(appel, images, appels)
+        return round(chiffre, 6) if chiffre is not None else 0.0
 
     def _mesure_ici(self, projet: str) -> dict[str, Any] | None:
         """Ce que le modèle de planche de ce jeu a coûté **sur cette machine**.
@@ -385,7 +411,12 @@ class ServicePlanche:
         return rendues
 
     def _choix(
-        self, toutes: int, vides: int, pleines: int, appel: dict[str, Any]
+        self,
+        toutes: int,
+        vides: int,
+        pleines: int,
+        appel: dict[str, Any],
+        images: int = 0,
     ) -> list[dict[str, Any]]:
         """Les trois façons de remplir ce qui manque, **avec ce qu'elles coûtent**.
 
@@ -410,9 +441,9 @@ class ServicePlanche:
                 "quoi": quoi,
                 "cases": cases,
                 "appels": appels,
-                "prix": round(appel["prix"] * appels, 6) if appel["mesure"] else 0.0,
+                "prix": self._prix(appel, images, appels),
                 "par_image": (
-                    round(appel["prix"] * appels / cases, 6)
+                    round(self._prix(appel, images, appels) / cases, 6)
                     if appel["mesure"] and cases
                     else 0.0
                 ),

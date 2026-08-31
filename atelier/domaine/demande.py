@@ -48,6 +48,18 @@ class Demande:
     # démonter la bible.
     repris: bool = False
 
+    # **La palette part en image, et c'est une case qu'on coche** (E14). Une
+    # bande de pastilles, dessinée par l'atelier, qui occupe une des places de
+    # référence du modèle et qui coûte comme les autres. Elle est **redessinée à
+    # chaque appel et jamais relue** — comme le gabarit d'une planche : elle n'a
+    # pas d'identifiant, elle n'est nulle part sur le disque, et l'appel comme la
+    # relance envoient donc la même image.
+    #
+    # **Ici et pas dans les options du modèle** : les options sont ce que le
+    # catalogue déclare, et aucun fournisseur ne déclare celle-ci. C'est une
+    # décision du produit sur ce qui part, du même genre que le texte repris.
+    palette: bool = False
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -69,4 +81,7 @@ class Demande:
             # génération des mois plus tard doit dire si ce prompt-là est celui
             # que l'atelier a composé ou celui que l'auteur a écrit.
             "repris": self.repris,
+            # Même raison : la bande de couleurs se redessine à la relance, donc
+            # il faut savoir qu'elle était partie.
+            "palette": self.palette,
         }

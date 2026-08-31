@@ -102,6 +102,20 @@ export type Generation = {
   statut: Statut
   cout_usd: number
   reussies: number
+  /** **Le lot de style que cet appel-là a écouté** (E14), par son nom lisible.
+   *  Vide quand la chose n'en désignait aucun — le cas courant.
+   *
+   *  Sans lui, « ce qui est montré est ce qui part » cesserait d'être vrai en
+   *  relisant une vieille image : le réglage durable de la chose aura changé, le
+   *  lot de style aura été retouché, et le prompt enregistré porte le texte sans
+   *  dire d'où chaque morceau venait. Absent des générations d'avant E14, et
+   *  c'est la vérité — elles n'en savaient rien. */
+  ambiance?: string | null
+  /** Ce que cet appel-là lui a **réellement** pris, parmi `couleurs`,
+   *  `references` et `textes`. Ce n'est pas le mode durable de la chose : l'écran
+   *  de confirmation éteint ligne par ligne, donc un appel peut avoir pris le
+   *  monde sans l'éclairage — ce qu'aucun mode ne décrit. */
+  pris?: string[]
 }
 
 // ── Le post-traitement ──────────────────────────────────────────────────────
@@ -1460,10 +1474,20 @@ export type LigneReference = {
   /** D'où elle vient, **nommée par le serveur** : « comprendre pourquoi elle
    *  part avant de décider de la retirer ». L'écran affiche la phrase qu'il
    *  reçoit, il ne la reconstitue pas. */
-  provenance: "artwork officiel" | "concept art" | "réinjection"
-  /** La portée **durable** qui l'écarte, ou rien. Celle de la génération ne
-   *  s'écrit nulle part : elle vit dans l'onglet et part avec l'appel. */
-  ecartee_par: "projet" | "personnage" | null
+  provenance:
+    | "artwork officiel"
+    | "concept art"
+    | "réinjection"
+    | "image promue"
+    /** **Cinquième provenance depuis E14** : une image que l'ambiance apporte.
+     *  Ni un artwork du jeu — elle ne concerne que ce coin-là — ni un concept
+     *  art épinglé sur la chose : la corriger là-bas la corrige pour tout ce
+     *  qui s'en sert. */
+    | "image de son ambiance"
+  /** La portée qui l'écarte, ou rien. **Durable** — le projet, le personnage,
+   *  le mode de son ambiance — ou celle de cet appel-ci, qui ne s'écrit nulle
+   *  part : elle vit dans l'onglet et part avec l'appel. */
+  ecartee_par: string | null
 }
 
 export type CompteReferences = {
@@ -1480,6 +1504,13 @@ export type CompteReferences = {
    *  celle-ci est faite d'images qu'on peut décocher, et décocher le gabarit
    *  reviendrait à demander une planche sans dire à quoi elle ressemble. */
   gabarit: number
+  /** **La bande de couleurs, quand la case est cochée** (E14). Elle compte
+   *  comme le gabarit — une place dans le plafond du modèle, un coût chez ceux
+   *  qui facturent au token — mais elle se décoche, elle : c'est une option de
+   *  l'écran de confirmation, pas une condition de l'appel. */
+  palette?: number
+  /** Les images que l'ambiance de la chose apporte (E14). */
+  ambiance?: number
   lignes: LigneReference[]
 }
 
@@ -1677,21 +1708,136 @@ export const FILTRE_VIDE: Filtre = { collection: null, favoris: false, recherche
 export const filtreActif = (filtre: Filtre) =>
   filtre.collection !== null || filtre.favoris || filtre.recherche.trim() !== ""
 
-/** Ce qui partira chez le modèle, **bloc par bloc et dans l'ordre d'envoi**
- *  (US-158).
+
+// ── Ce qui part, ligne par ligne — l'écran de confirmation (E14) ────────────
+//
+// Il s'intercale entre le bouton et la dépense. Il ne montre pas un résumé : le
+// texte exact, mot pour mot, et chaque image jointe, chacun sur sa ligne, avec
+// un interrupteur. Ce qui est éteint ne part pas ; ce qu'on corrige **ne vaut
+// que pour cet appel** et ne remonte nulle part.
+
+/** Une chose qui part — un texte du jeu, un texte de son ambiance, le sujet, la
+ *  consigne de la case, les consignes d'une planche.
  *
- *  Trois origines, et une quatrième qui les remplace toutes : `repris`, quand
- *  l'auteur a pris la main sur l'ensemble du texte. Le découper alors aurait
- *  été une reconstitution, pas une lecture. */
-export type PartiePrompt = {
-  origine: "bible" | "sujet" | "planche" | "repris"
+ *  **`allumee` est calculé, jamais stocké.** Une ligne s'éteint parce qu'on l'a
+ *  éteinte, ou parce qu'une couche plus haute a gagné — et c'est ce qui fait
+ *  qu'éteindre les trois lignes d'une ambiance rallume les textes du jeu *d'eux-
+ *  mêmes* : ils redeviennent la couche la plus haute qui reste. */
+export type LigneQuiPart = {
+  /** `groupe.nom` — unique dans tout l'écran. Deux couches peuvent porter le
+   *  même champ, et ce sont deux lignes avec deux interrupteurs. */
+  clef: string
+  groupe: "jeu" | "ambiance" | "sujet" | "planche"
+  nom: string
   texte: string
+  /** Ce qui précède le texte dans le prompt — `Lighting`, `World`. Vide pour le
+   *  sujet et pour les consignes de planche, qui n'en portent pas. */
+  intitule?: string
+  /** D'où il vient, pour savoir où aller le corriger **durablement**. */
+  origine: string
+  allumee: boolean
+  eteignable: boolean
+  /** Pourquoi une ligne ne s'éteint pas. **Le carré n'est pas absent** : ce qui
+   *  est indisponible se montre avec sa raison, il ne se cache pas. */
+  raison?: string
+  /** Ce que ce texte-là écarte, montré barré en dessous. */
+  remplace: string
+  /** La clef de la ligne qui l'a supplantée — vide quand elle est simplement
+   *  éteinte. Les deux se lisent différemment : *remplacé* dit qu'il y a mieux
+   *  au-dessus, *éteint* dit qu'on n'en veut pas. */
+  remplacee_par: string
+  corrigee: boolean
+  /** Cette correction a-t-elle une case où se garder durablement ? Le texte
+   *  d'une ambiance sert plusieurs choses du jeu : le garder « sur cette
+   *  chose-là » n'aurait pas de destination. */
+  gardable: boolean
+  /** La taille que le texte annonce contre celle qui s'applique — écrit **sur
+   *  la ligne**, jamais en bandeau. */
+  avertissement?: string
 }
 
-export type ApercuPrompt = {
-  /** Les parties jointes — **exactement** ce que le modèle lira. */
+export type ImageQuiPart = LigneReference & {
+  cochee: boolean
+  /** Cochée au-delà du plafond du modèle : grisée avec son compte, jamais
+   *  retirée — on choisit lesquelles enlever. */
+  hors_plafond: boolean
+  /** Ce que cette image ajoute au prix de l'appel, **mesuré sur ce que cette
+   *  machine a payé**. `null` quand la machine n'a pas de quoi le mesurer : le
+   *  produit dit alors qu'il ne sait pas. */
+  prix: number | null
+}
+
+export type OptionQuiPart = {
+  clef: string
+  nom: string
   texte: string
-  parties: PartiePrompt[]
+  detail: string
+  allumee: boolean
+  /** Grisée avec sa raison, jamais absente — l'absence n'apprend rien. */
+  refus: string
+}
+
+export type PrixDeLEnvoi = {
+  total: number | null
+  /** Combien d'appels celui-ci demandera. */
+  appels: number
+  /** Ce que les cases cochées pèsent dans le total. */
+  images: number | null
+  /** La mesure, **rendue à côté du prix et jamais fondue dedans** : une phrase
+   *  se cite avec les nombres qui la portent. `mesure.appels` dit sur combien
+   *  d'appels payés le prix repose. */
+  mesure: {
+    prix: number | null
+    bas: number
+    haut: number
+    appels: number
+    base: number | null
+    par_image: number | null
+    sur_base: number
+    sur_jointes: number
+  }
+}
+
+export type Envoi = {
+  texte: string
+  lignes: LigneQuiPart[]
+  groupes: { clef: string; nom: string; allumees: number; total: number }[]
+  images: {
+    lignes: ImageQuiPart[]
+    places: number
+    cochees: number
+    gabarit: number
+    palette: number
+    prix: number | null
+    avertissements: { clef: string; texte: string }[]
+  }
+  options: OptionQuiPart[]
+  /** Ce qui agira **au retour**, en gris : rien de tout ça ne part au modèle et
+   *  rien ne coûte un centime — mais l'image qu'on verra n'est pas celle que le
+   *  modèle envoie. */
+  retour: { nom: string; detail: string }[]
+  avertissements: { clef: string; texte: string }[]
+  prix: PrixDeLEnvoi
+  modele: { identifiant: string; nom: string; references_max: number }
+  ambiance: {
+    nom: string
+    prend: string
+    textes: boolean
+    references: boolean
+    couleurs: boolean
+  } | null
+  cases: number
+  caracteres: { total: number; sujet: number; eteints: number }
+  corrections: number
+}
+
+/** Ce que l'écran de confirmation renvoie — **et qui ne vaut que pour cet
+ *  appel**. Il ne porte que des écarts : les lignes éteintes à la main, celles
+ *  rallumées, les textes corrigés. Tout le reste se recalcule. */
+export type Tri = {
+  eteints: string[]
+  allumes: string[]
+  textes: Record<string, string>
 }
 
 /** Ce que le projet impose à une image donnée, aujourd'hui (US-164).
@@ -1941,6 +2087,13 @@ export const api = {
      *  ce qu'il a écrit. Rien d'autre ne change : l'échelle décide toujours des
      *  artworks, du modèle par défaut et de l'occupation. */
     repris: boolean
+    /** **Ce que l'écran de confirmation a trié** (E14). Il ne vaut que pour cet
+     *  appel et ne remonte nulle part : garder une correction sur la chose du
+     *  jeu est un second geste, qui passe par sa fiche. */
+    tri?: Tri | null
+    /** **La palette en image** (E14) : une bande de pastilles qui occupe une
+     *  des places de référence du modèle. */
+    palette?: boolean
   }) =>
     appeler<Generation>("/generations", {
       method: "POST",
@@ -1957,25 +2110,30 @@ export const api = {
   generation: (identifiant: string) =>
     appeler<Generation>(`/generations/${identifiant}`),
 
-  /** **Le texte exact qui partira**, avant de lancer (US-158).
+  /** **Tout ce que l'écran de confirmation montre, en un aller-retour** (E14).
    *
-   *  Composé par le serveur, jamais ici : c'est le même chemin que la
-   *  soumission emprunte, et deux compositions écrites à deux endroits
-   *  finiraient par diverger — celle qui compte étant celle qui part. Rien
-   *  n'est facturé, rien n'est enregistré, et l'appel ne sort pas de la
-   *  machine. */
-  apercuPrompt: (corps: {
+   *  Un écran qui demanderait son texte à une route et son prix à une autre
+   *  finirait par afficher un texte d'avant à côté d'un prix d'après. Rien n'est
+   *  facturé, rien n'est enregistré, aucun appel ne sort de la machine : l'écran
+   *  arme, c'est la barre qui paie qui appelle. */
+  envoi: (corps: {
     prompt: string
+    modele: string
     projet?: string | null
+    echelle?: string
     personnage?: string | null
-    poses?: string[] | null
-    piece?: string | null
-    /** La planche d'une pose (E13) : une pose, ses directions. */
     pose?: string | null
+    direction?: string | null
+    poses?: string[] | null
     directions?: string[] | null
+    piece?: string | null
+    references?: Reinjection[]
+    references_ecartees?: string[] | null
+    variations?: number
     repris?: boolean
+    tri?: Tri | null
   }) =>
-    appeler<ApercuPrompt>("/prompt/preview", {
+    appeler<Envoi>("/outgoing", {
       method: "POST",
       body: JSON.stringify(corps),
     }),
@@ -2662,21 +2820,19 @@ export const api = {
       body: JSON.stringify({ personnage, pose, direction }),
     }),
 
-  /** Le sujet qu'une case demande au modèle — **composé par le serveur**.
+  /** Le sujet qu'une chose demande au modèle — **composé par le serveur**.
    *
    *  L'écran l'écrivait lui-même jusqu'en C5 ; l'agent arme les mêmes cases, et
    *  deux compositions à deux endroits auraient fini par demander deux choses
-   *  différentes pour la même case. Ce n'est pas l'aperçu : la bible et les
-   *  consignes de planche s'ajoutent plus tard, et c'est `apercuPrompt` qui les
-   *  montre. Rien n'est écrit, rien n'est payé. */
+   *  différentes pour la même case.
+   *
+   *  **Depuis E14, c'est le signalement seul.** La consigne de l'attitude et
+   *  celle de l'angle sont ajoutées par le composeur du prompt, où elles font
+   *  leur propre ligne avec leur propre origine : le champ porte ce qu'on
+   *  dessine, la case dit sous quel angle. Rien n'est écrit, rien n'est payé. */
   sujetDeCase: (corps: {
     personnage: string
-    poses?: string[]
     piece?: string | null
-    direction?: string | null
-    /** Deux ou plus, et le sujet redevient le signalement seul : les attitudes
-     *  et les angles partent case par case dans les consignes de planche. */
-    directions?: string[]
     projet?: string | null
   }) =>
     appeler<{ sujet: string }>("/characters/subject", {

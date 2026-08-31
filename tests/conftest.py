@@ -225,6 +225,13 @@ class FournisseurDouble:
         # ce qui est arrivé au bout du port.
         self.references_recues: list[int] = []
         self.demandes: list[Demande] = []
+        # **Ce que cet appel-là facture** (E14). Un prix plat suffisait tant que
+        # personne ne décomposait la facture ; l'écran de confirmation, lui, dit
+        # *ce que chaque image jointe ajoute*, et cette phrase-là ne se vérifie
+        # pas sur un double qui facture pareil quoi qu'il reçoive. Troisième
+        # levier de la même famille que `rendre` et `repondre` — un test lit dans
+        # son nom ce que le double fait.
+        self.couter: "callable[[Demande], float] | None" = None
 
     async def catalogue(self) -> list[Modele]:
         if not self.catalogue_lisible:
@@ -243,13 +250,31 @@ class FournisseurDouble:
             raise self.echec
         if self.repondre is not None:
             return ImageProduite(
-                self.repondre(demande), cout_usd=0.0245, type_media="image/png"
+                self.repondre(demande),
+                cout_usd=self._cout(demande, 0.0245),
+                type_media="image/png",
             )
         if self.rendre is not None:
-            return ImageProduite(self.rendre(), cout_usd=0.0245, type_media="image/png")
+            return ImageProduite(
+                self.rendre(),
+                cout_usd=self._cout(demande, 0.0245),
+                type_media="image/png",
+            )
         if modele.identifiant.endswith("jpeg"):
-            return ImageProduite(image("JPEG"), cout_usd=0.035, type_media="image/jpeg")
-        return ImageProduite(image("PNG"), cout_usd=0.0245, type_media="image/png")
+            return ImageProduite(
+                image("JPEG"),
+                cout_usd=self._cout(demande, 0.035),
+                type_media="image/jpeg",
+            )
+        return ImageProduite(
+            image("PNG"),
+            cout_usd=self._cout(demande, 0.0245),
+            type_media="image/png",
+        )
+
+    def _cout(self, demande: Demande, defaut: float) -> float:
+        """Le prix plat d'avant, sauf si le test en a posé un qui varie."""
+        return defaut if self.couter is None else self.couter(demande)
 
 
 @pytest.fixture

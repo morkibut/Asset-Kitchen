@@ -5,38 +5,27 @@
 // (`docs/PLAN.md`, T1). Le prompt négatif est replié : on l'écrit rarement, on
 // le lit encore moins.
 //
-// **Et depuis R2, ce qui partira se voit** (US-158). Un dépliant sous le champ
-// montre le texte tel qu'il part, dans l'ordre où il part : la bible active, le
-// sujet, puis les consignes de planche quand un lot est armé. Il est replié par
-// défaut — le geste quotidien est d'écrire, pas de relire —, et il ne se compose
-// pas ici : le serveur le rend, parce que c'est le même chemin que la
-// soumission emprunte.
+// **Et depuis R2, ce qui partira se voit** (US-158) — d'abord dans un dépliant
+// posé sous le champ, **puis dans un écran entier depuis E14**. Ce n'est pas un
+// changement d'avis : c'est une mesure. Sur le plus long appel payé du dépôt, le
+// style pèse 890 caractères sur 1 690 et le sujet 40 — 53 % contre 2 %. Un bloc
+// replié qui résume 53 % de ce qui part n'est pas un résumé, c'est un angle
+// mort, et ce qu'il faut y faire — éteindre, corriger, décocher une image — ne
+// tient pas dans une bande dépliée sous une barre de saisie.
+//
+// **La barre garde son champ, son bouton et son prix ; elle perd sa bande
+// dépliante.** Ce n'est donc pas un écran de plus dans le chemin : c'est un
+// dépliant qui devient un écran.
 
-import { useEffect, useRef, type Ref } from "react"
-import type { ApercuPrompt, PartiePrompt } from "../api"
-import { Bouton, ouvrirPli, Raison, Revers, usePli } from "./chassis"
-import { POINTILLE, useInfobulle } from "./Infobulle"
-
-/** D'où vient chaque bloc, en un mot. **Le libellé n'est pas dans le texte** :
- *  ce qui part est le texte seul, et une étiquette collée dedans serait
- *  exactement le « montrer autre chose que ce qui part » que la tranche
- *  refuse. */
-const ORIGINE: Record<PartiePrompt["origine"], string> = {
-  bible: "bible",
-  sujet: "sujet",
-  planche: "planche",
-  repris: "ton texte",
-}
+import { useEffect, useRef } from "react"
+import { Bouton, Raison, Revers, usePli } from "./chassis"
 
 export function ChampPrompt({
   prompt,
   onPrompt,
   promptNegatif,
   onPromptNegatif,
-  apercu,
-  apercuRefus,
   repris,
-  onReprendre,
   onRendre,
   refus,
   ouAller,
@@ -50,19 +39,13 @@ export function ChampPrompt({
   onPrompt: (v: string) => void
   promptNegatif: string
   onPromptNegatif: (v: string) => void
-  /** Ce qui partira, composé par le serveur. `null` tant qu'il n'a pas
-   *  répondu — le dépliant dit alors qu'il ne sait pas encore, jamais un texte
-   *  deviné. */
-  apercu: ApercuPrompt | null
-  /** Pourquoi il n'y a pas d'aperçu — un lot dont une case a disparu, par
-   *  exemple. La raison est celle du serveur, et c'est la même qui refuserait
-   *  la soumission. */
-  apercuRefus: string | null
   /** Le texte est repris à la main : le champ **est** ce qui partira. */
   repris: boolean
-  /** Basculer en édition libre — le champ reçoit le texte complet. */
-  onReprendre: () => void
-  /** Rendre la main à l'atelier : le champ redevient le sujet seul. */
+  /** Rendre la main à l'atelier : le champ redevient le sujet seul.
+   *
+   *  **Reprendre, lui, s'est déplacé** : il vit sous le texte assemblé de
+   *  l'écran de confirmation (E14), c'est-à-dire là où on lit ce qu'on
+   *  reprendrait. */
   onRendre: () => void
   refus: string | null
   ouAller?: string
@@ -83,28 +66,14 @@ export function ChampPrompt({
   onGenerer: () => void
   variations: number
 }) {
-  // **Les deux replis vivent dans le registre du châssis, pas ici.** La
-  // galerie était le fond du produit et ce champ ne se démontait jamais ; la
-  // V2.1 en fait un onglet, et un état local se serait perdu à chaque
-  // aller-retour vers l'Univers ou le Codex — refermant sous la main le
-  // dépliant qu'on venait d'ouvrir pour comparer.
+  // **Le repli vit dans le registre du châssis, pas ici.** La galerie était le
+  // fond du produit et ce champ ne se démontait jamais ; la V2.1 en fait un
+  // onglet, et un état local se serait perdu à chaque aller-retour vers
+  // l'Univers ou le Codex — refermant sous la main ce qu'on venait d'ouvrir.
   const [negatifOuvert, basculerNegatif] = usePli("prompt.negatif")
-  const [apercuOuvert, basculerApercu] = usePli("prompt.ce-qui-partira")
   const champ = useRef<HTMLTextAreaElement>(null)
-  // **Le titre du dépliant n'épingle pas**, comme un en-tête de bloc : son clic
-  // est déjà pris — il déplie. Les gestes vont donc sur le bouton, un élément
-  // focalisable imbriqué dans un bouton étant du HTML invalide et un piège au
-  // clavier.
-  const infobulle = useInfobulle("atelier.apercu", { epinglable: false })
 
   useEffect(() => champ.current?.focus(), [])
-
-  // **Reprendre ouvre le dépliant, et ne le referme jamais tout seul.** On ne
-  // reprend pas un texte qu'on ne voit pas ; et le refermer au retour à
-  // l'atelier ferait disparaître sous la main ce qu'on venait de comparer.
-  useEffect(() => {
-    if (repris) ouvrirPli("prompt.ce-qui-partira")
-  }, [repris])
 
   const toucheGenerer = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !refus) {
@@ -112,11 +81,6 @@ export function ChampPrompt({
       onGenerer()
     }
   }
-
-  // Combien de blocs partiront en plus du sujet : c'est ce que le pied annonce
-  // quand le dépliant est fermé. Repris, il n'y a plus de blocs — il y a un
-  // texte, et le dire autrement serait mentir sur ce qui part.
-  const enPlus = (apercu?.parties ?? []).filter((p) => p.origine !== "sujet").length
 
   return (
     <div className="flex flex-col gap-2 border-b border-bord bg-fond-1 p-4">
@@ -176,94 +140,22 @@ export function ChampPrompt({
         />
       )}
 
-      {/* ── Ce qui partira ──────────────────────────────────────────────────
-          Le dépliant. Fermé, il tient sur une ligne de pied et dit combien de
-          blocs s'ajoutent au sujet ; ouvert, il montre le texte entier, dans
-          l'ordre d'envoi, sans rien de masqué. Il ne coûte rien : le serveur le
-          compose sans sortir de la machine. */}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
+      {/* **Le texte repris se rend là où il a été pris.** Reprendre vit dans
+          l'écran de confirmation, sous le texte assemblé ; rendre la main vit
+          ici, parce que c'est ce champ-là qui change de nature. */}
+      {repris && (
+        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-signal">
+          <span aria-hidden className="inline-block h-px w-2 bg-signal" />
+          <span>le texte part exactement tel qu'il est écrit ici</span>
           <button
             type="button"
-            onClick={basculerApercu}
-            aria-expanded={apercuOuvert}
-            {...infobulle.declencheurs}
-            className="mesure flex h-6 items-center gap-1 text-[10px] text-texte-3 hover:text-texte-2"
+            onClick={onRendre}
+            className="text-signal hover:text-signal-clair"
           >
-            <span>{apercuOuvert ? "−" : "+"}</span>
-            <span
-              ref={infobulle.ancre as Ref<HTMLSpanElement>}
-              className={`w-fit ${infobulle.presente ? POINTILLE : ""}`}
-            >
-              ce qui partira
-            </span>
-            {repris ? (
-              <span className="text-signal">· repris</span>
-            ) : enPlus > 0 ? (
-              <span>· +{enPlus}</span>
-            ) : null}
+            Rendre la main à l'atelier ›
           </button>
-
-          {apercuOuvert &&
-            (repris ? (
-              <button
-                type="button"
-                onClick={onRendre}
-                className="mesure ml-auto h-6 text-[10px] text-signal hover:text-signal-clair"
-              >
-                Rendre la main à l'atelier ›
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onReprendre}
-                disabled={apercu === null}
-                className="mesure ml-auto h-6 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
-              >
-                Reprendre le texte ›
-              </button>
-            ))}
-        </div>
-        {/* Hors du bouton, exprès : la bulle porte le lien « Le guide › », et
-            un bouton dans un bouton est invalide. */}
-        {infobulle.bulle}
-
-        {apercuOuvert && (
-          <div
-            /* Nommé, parce qu'il est lu autant que regardé : un lecteur d'écran
-               doit pouvoir aller à « ce qui partira » comme on y va de l'œil. */
-            role="region"
-            aria-label="Ce qui partira"
-            className="defile max-h-[220px] overflow-y-auto rounded-[2px] border border-bord bg-fond-2 p-2"
-          >
-            {apercuRefus ? (
-              <Raison texte={apercuRefus} />
-            ) : apercu === null ? (
-              <p className="mesure text-[10px] text-texte-3">…</p>
-            ) : apercu.parties.length === 0 ? (
-              /* Ni bible, ni sujet, ni planche. Ce n'est pas un trou : c'est un
-                 atelier qui vient de s'ouvrir sur un champ vide, dans un projet
-                 dont la bible ne dit rien. */
-              <p className="mesure text-[10px] text-texte-3">
-                rien encore — écris un sujet
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {apercu.parties.map((partie, rang) => (
-                  <div key={rang} className="flex flex-col gap-[2px]">
-                    <span className="mesure text-[9.5px] uppercase tracking-[.11em] text-texte-3">
-                      {ORIGINE[partie.origine]}
-                    </span>
-                    <p className="mesure whitespace-pre-wrap text-[10.5px] leading-[1.45] text-texte-2">
-                      {partie.texte}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        </p>
+      )}
 
       <div className="flex items-start gap-3">
         <button

@@ -696,13 +696,14 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             generation = await atelier.generations.soumettre(
                 identifiant_modele,
                 Demande(
+                    # **Le signalement seul** : la consigne de l'attitude et
+                    # celle de la direction sont ajoutées par le composeur du
+                    # prompt depuis E14, pour les deux façades à la fois. Un
+                    # agent qui écrit son propre `subject` les reçoit donc
+                    # aussi — c'est ce qui fait qu'une case ne peut plus partir
+                    # sans dire ce qu'elle demande.
                     prompt=subject.strip()
-                    or atelier.production.sujet(
-                        projet,
-                        vise.identifiant,
-                        voulues,
-                        direction=direction.strip() or None,
-                    ),
+                    or atelier.production.sujet(projet, vise.identifiant),
                     variations=1,
                     options=options,
                 ),
@@ -769,7 +770,7 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                 Demande(
                     prompt=subject.strip()
                     or atelier.production.sujet(
-                        projet, vise.identifiant, voulues, voulue
+                        projet, vise.identifiant, piece=voulue
                     ),
                     variations=1,
                     options=options,

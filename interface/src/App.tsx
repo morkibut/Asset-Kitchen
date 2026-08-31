@@ -30,8 +30,10 @@ import {
   heure,
   poserLeFichier,
   Refus,
-  type ApercuPrompt,
   type Asset,
+  type Envoi,
+  type LigneQuiPart,
+  type Tri,
   type Bibliotheque,
   type Etat,
   type Filtre,
@@ -71,6 +73,7 @@ import { CRANS, Point, usePli, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
+import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
 import {
   EcranCodex,
   NOM_DE_LA_RUBRIQUE,
@@ -313,6 +316,23 @@ export function App() {
   // l'onglet et part avec l'appel — comme la pile d'annulation de la toile.
   const [ecarteesGeneration, setEcarteesGeneration] = useState<string[] | null>(null)
 
+  // ── L'écran de confirmation, entre le bouton et la dépense (E14) ──────────
+  //
+  // **Il s'intercale, il ne remplace pas.** Le bouton reste celui de la barre
+  // qui paie, il n'y a toujours qu'un seul endroit d'où l'argent part, et rien
+  // n'est dépensé tant que le bouton *de cet écran-là* n'est pas pressé.
+  const [envoiOuvert, setEnvoiOuvert] = useState(false)
+  const [envoi, setEnvoi] = useState<Envoi | null>(null)
+  // **Le tri ne porte que des écarts, jamais un état complet**, et il ne
+  // s'enregistre nulle part : une correction faite ici vaut pour cet appel
+  // seulement, et le prochain repart des réglages.
+  const [tri, setTri] = useState<Tri>(TRI_VIDE)
+  // **La série qu'on a choisi de ne plus relire.** Une chose et une pose : dès
+  // qu'on change de l'une ou de l'autre, l'écran revient. Il n'existe aucune
+  // case « pour toujours » — on la cocherait le premier jour, quand on ne sait
+  // pas encore qu'on en aura besoin.
+  const [serieSautee, setSerieSautee] = useState<string | null>(null)
+
   // La case visée, relue dans ce que le flux tient à jour. Ni l'une ni l'autre
   // ne survit à sa disparition : un personnage supprimé, une pose retirée du
   // plan, et la bande s'efface — la case n'existe plus.
@@ -441,11 +461,6 @@ export function App() {
    *  continuer à écrire là où on écrivait — un second éditeur à côté aurait
    *  demandé de choisir lequel des deux part. */
   const [repris, setRepris] = useState(false)
-  /** Ce qui partira, tel que le serveur le compose (US-158). `null` tant qu'il
-   *  n'a pas répondu : le dépliant dit qu'il ne sait pas encore, jamais un
-   *  texte deviné à l'écran. */
-  const [apercuPrompt, setApercuPrompt] = useState<ApercuPrompt | null>(null)
-  const [apercuRefus, setApercuRefus] = useState<string | null>(null)
   const [proportions, setProportions] = useState("1:1")
   const [variations, setVariations] = useState(1)
   const [options, setOptions] = useState<Record<string, string>>({})
@@ -621,86 +636,18 @@ export function App() {
     void relireCatalogue()
   }, [relireCatalogue])
 
-  // ── Ce qui partira, tel que le serveur le compose ─────────────────────────
+  // ── Ce qui partira : ce n'est plus un dépliant, c'est un écran (E14) ──────
   //
-  // « Avant de lancer, le texte exact qui partira s'affiche » (US-158). Il est
-  // **demandé**, jamais recomposé ici : la bible se replie en tête et les
-  // consignes de planche en queue à un seul endroit du dépôt, et c'est celui
-  // que la soumission emprunte. Un aperçu écrit à l'écran aurait été une
-  // seconde vérité sur ce qui part, et « celle qui compte est celle qui part ».
+  // « Avant de lancer, le texte exact qui partira s'affiche » (US-158) tient
+  // toujours, et sa surface a grandi pour rester vraie. Le dépliant montrait le
+  // texte assemblé sans qu'on puisse rien y toucher ; l'écran de confirmation
+  // montre chaque texte et chaque image sur sa ligne, avec un interrupteur.
+  // C'est une mesure qui l'a fait basculer, pas un goût : sur le plus long appel
+  // payé du dépôt, le style pèse 53 % de ce qui part et le sujet 2 %, et un bloc
+  // replié qui résume 53 % de l'appel n'est pas un résumé, c'est un angle mort.
   //
-  // **Attendu 140 ms, et c'est la frappe qui le veut.** Le catalogue se
-  // redemande sur des choix — un modèle, des proportions, une case — qui ne
-  // partent jamais lettre par lettre ; celui-ci suit un champ de texte. L'appel
-  // ne sort pas de la machine et n'écrit rien, mais un aller-retour par
-  // caractère ferait clignoter le dépliant sous la main.
-  //
-  // Il ne tourne **pas** quand le texte est repris : le champ *est* alors ce qui
-  // partira, et demander au serveur de composer ce qu'on est en train d'écrire
-  // n'aurait rien à rendre de plus.
-  useEffect(() => {
-    if (repris) {
-      setApercuPrompt({ texte: prompt, parties: [{ origine: "repris", texte: prompt }] })
-      setApercuRefus(null)
-      return
-    }
-    let vivant = true
-    const minuterie = window.setTimeout(async () => {
-      try {
-        const recu = await api.apercuPrompt({
-          prompt,
-          projet: bibliotheque.courant,
-          personnage: cible?.personnage ?? null,
-          poses:
-            cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
-          piece: cible?.piece ?? null,
-          // **La planche d'une pose passe par le même pliage que l'envoi**
-          // (E13) : l'aperçu montre alors les consignes de case, une par
-          // direction, exactement celles qui partiront.
-          pose: enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
-          directions: enPlanche ? directionsCible : null,
-        })
-        if (!vivant) return
-        setApercuPrompt(recu)
-        setApercuRefus(null)
-      } catch (erreur) {
-        if (!vivant) return
-        // **Le refus va dans le dépliant, jamais dans la fente du bas.** Une
-        // case de lot qui a disparu se dit là où on regarde le texte ; la
-        // fente, elle, porte ce qui empêche de générer, et le bouton a sa
-        // propre raison.
-        setApercuRefus(
-          erreur instanceof Refus ? erreur.message : "l'atelier ne répond pas",
-        )
-      }
-    }, 140)
-    return () => {
-      vivant = false
-      window.clearTimeout(minuterie)
-    }
-    // `univers` n'est pas lu ici, mais il est **la** dépendance qui compte : un
-    // champ de bible décoché change ce qui part sans toucher au prompt, et il
-    // arrive par le flux (R1). Sans lui, décocher ne se verrait pas dans
-    // l'aperçu — le défaut exact que R1 vient de corriger, un cran plus loin.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // Les poses **jointes** et non le tableau : `posesCible` se refabrique à
-    // chaque rendu, et deux lots de même taille sur des cases différentes
-    // n'enverraient pas les mêmes noms dans les consignes de planche.
-  }, [
-    prompt,
-    repris,
-    bibliotheque.courant,
-    cible?.personnage,
-    cible?.poses.join("·"),
-    // Les directions **jointes** et non le tableau, pour la raison exacte qui
-    // vaut pour les poses : il se refabrique à chaque rendu, et deux planches de
-    // même taille sur des angles différents n'enverraient pas les mêmes
-    // consignes de case.
-    directionsCible.join("·"),
-    enPlanche,
-    cases,
-    univers,
-  ])
+  // La composition n'a pas bougé d'un mot : elle est **demandée**, jamais
+  // recomposée ici, et c'est le chemin que la soumission emprunte.
 
   // ── La grille ─────────────────────────────────────────────────────────────
   //
@@ -1118,7 +1065,37 @@ export function App() {
 
   // ── Générer ───────────────────────────────────────────────────────────────
 
-  const generer = async () => {
+  /** La série qu'on est en train de refaire — **une chose et une pose**.
+   *
+   *  C'est elle que la case « ne plus me le montrer » retient. Dès qu'on change
+   *  de l'une ou de l'autre, l'écran revient : relire dix fois la même chose est
+   *  une punition, relire la première d'une série ne l'est pas. */
+  const serie = [
+    cible?.personnage ?? "",
+    (cible?.poses ?? []).join("·"),
+    cible?.piece ?? "",
+  ].join("|")
+
+  /** Le bouton de la barre qui paie — **il n'envoie plus, il fait relire** (E14).
+   *
+   *  L'écran de confirmation s'intercale entre le bouton et la dépense. Il se
+   *  saute pour la série en cours, et seulement pour elle : une case définitive
+   *  éteindrait le seul écran qui montre ce qui part, et on la cocherait le
+   *  premier jour, quand on ne sait pas encore qu'on en aura besoin. */
+  const generer = () => {
+    if (refus || !modele) return
+    if (serieSautee === serie) {
+      void payer()
+      return
+    }
+    // **Le tri repart de rien à chaque ouverture.** Ce qu'on a éteint la fois
+    // d'avant ne vaut que pour l'appel d'avant : c'est la règle de l'écran, et
+    // la garder en mémoire ici l'aurait démentie en silence.
+    setTri(TRI_VIDE)
+    setEnvoiOuvert(true)
+  }
+
+  const payer = async () => {
     if (refus || !modele) return
     // L'identifiant est fabriqué ici : c'est lui qui empêche une double
     // soumission de facturer deux fois, même si le clic part deux fois.
@@ -1181,12 +1158,23 @@ export function App() {
         // l'échelle ci-dessus décide toujours des artworks, du modèle par
         // défaut et de l'occupation, et le gabarit d'un lot part toujours.
         repris,
+        // **Ce que l'écran de confirmation a trié** (E14). Il ne remonte nulle
+        // part : le prochain appel repart des réglages, comme si de rien
+        // n'était.
+        tri,
+        // **La palette en image**, quand la case est cochée : une bande de
+        // pastilles qui occupe une des places de référence du modèle.
+        palette: tri.allumes.includes("options.palette"),
       })
       // Le flux l'a peut-être déjà annoncée — on fond, on n'empile pas.
       setChantier((liste) => fondre(liste, generation))
       // L'avis de cette génération-là est parti avec elle : le suivant se
       // reprend aux portées durables, comme au premier prompt de la séance.
       setEcarteesGeneration(null)
+      // L'écran de confirmation se referme avec l'appel qu'il a relu, et le tri
+      // part avec lui.
+      setEnvoiOuvert(false)
+      setTri(TRI_VIDE)
       // **La cible se désarme dès que l'appel est parti.** C'est une intention
       // qui vaut pour *cette* génération : la garder enverrait l'image suivante
       // — un tonneau, un décor — dans la case d'un personnage, sans que rien
@@ -1194,6 +1182,100 @@ export function App() {
       setCible(null)
     } catch (erreur) {
       echouer(erreur, "génération refusée")
+    }
+  }
+
+  // ── Ce que l'écran de confirmation montre ─────────────────────────────────
+  //
+  // **Un aller-retour, et il porte le texte et le prix ensemble.** Un écran qui
+  // demanderait son texte à une route et son prix à une autre finirait par
+  // afficher un texte d'avant à côté d'un prix d'après. Rien n'est facturé, rien
+  // n'est enregistré, et l'appel ne sort pas de la machine.
+  useEffect(() => {
+    if (!envoiOuvert || !modele) return
+    let vivant = true
+    void api
+      .envoi({
+        prompt: prompt.trim(),
+        modele: modele.identifiant,
+        projet: bibliotheque.courant,
+        echelle,
+        personnage: cible?.personnage ?? null,
+        pose: !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
+        direction: cases ? null : (cible?.direction ?? null),
+        directions: enPlanche ? directionsCible : null,
+        poses: cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
+        piece: cible?.piece ?? null,
+        references: reinjections,
+        references_ecartees: ecarteesGeneration,
+        variations: cases ? 1 : variations,
+        repris,
+        tri,
+      })
+      .then((recu) => {
+        if (!vivant) return
+        setEnvoi(recu)
+      })
+      .catch((erreur) => {
+        if (!vivant) return
+        setEnvoi(null)
+        echouer(erreur, "l'atelier ne dit pas ce qui partirait")
+      })
+    return () => {
+      vivant = false
+    }
+    // Les poses et les directions **jointes** et non les tableaux : ils se
+    // refabriquent à chaque rendu, et deux appels de même taille sur des cases
+    // différentes n'enverraient pas les mêmes consignes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    envoiOuvert,
+    modele?.identifiant,
+    prompt,
+    repris,
+    echelle,
+    variations,
+    bibliotheque.courant,
+    cible?.personnage,
+    cible?.piece,
+    cible?.direction,
+    cible?.poses.join("·"),
+    directionsCible.join("·"),
+    enPlanche,
+    cases,
+    reinjections,
+    ecarteesGeneration,
+    tri,
+    univers,
+  ])
+
+  /** **Garder une correction sur la chose du jeu — le second geste** (E14).
+   *
+   *  Corriger vaut pour cet appel ; garder est écrit, séparé, et il passe par la
+   *  fiche de la chose, qui est le seul endroit où un texte durable s'écrit.
+   *  Sans cette séparation, la dixième image d'un personnage serait fabriquée
+   *  avec les réglages du neuvième essai, sans que personne l'ait décidé. */
+  const garderLeTexte = async (ligne: LigneQuiPart) => {
+    if (!cible?.personnage || !ligne.gardable) return
+    try {
+      if (ligne.groupe === "sujet") {
+        await api.reglerPersonnage(cible.personnage, { description: ligne.texte })
+      } else {
+        await api.reglerPersonnage(cible.personnage, {
+          textes: { [ligne.nom]: ligne.texte },
+        })
+      }
+      // La correction est désormais dans la fiche : la garder aussi dans le tri
+      // en ferait une seconde vérité, et l'écran montrerait « corrigé pour cet
+      // appel » sur un texte qui est devenu celui de la chose.
+      setTri((deja) => {
+        const restant = { ...deja.textes }
+        delete restant[ligne.clef]
+        return { ...deja, textes: restant }
+      })
+      await relireProduction()
+    } catch (erreur) {
+      echouer(erreur, "le texte n'a pas pu être gardé")
     }
   }
 
@@ -1233,13 +1315,12 @@ export function App() {
       direction: angles ? null : (direction ?? null),
       directions: angles,
     })
-    // **Le prompt reçoit le sujet, jamais la grille** — et c'est le serveur qui
-    // l'écrit depuis C5. Les trois règles (une case : le signalement et
-    // l'attitude ; un lot : le signalement seul, les attitudes partant dans les
-    // consignes de planche ; une pièce : sa description seule, parce que le
-    // corps est *dans l'image* qui part) vivent dans le service, où l'agent les
-    // lit aussi. Deux compositions à deux endroits auraient fini par demander
-    // deux choses différentes pour la même case, sans que rien ne le signale.
+    // **Le champ reçoit le signalement, et lui seul** — écrit par le serveur
+    // depuis C5, réduit à ce qu'on dessine depuis E14. La consigne de l'attitude
+    // et celle de l'angle sont une ligne à part, composée par le chemin de
+    // l'envoi, avec leur propre origine et leur propre interrupteur : les coller
+    // ici aurait obligé l'écran de confirmation à deviner où finit le
+    // signalement et où commence la pose.
     //
     // **Un refus n'empêche pas d'armer.** La case est visée, l'atelier est
     // ouvert, et le champ reste à écrire : c'est un geste local et gratuit, pas
@@ -1248,13 +1329,7 @@ export function App() {
     try {
       const recu = await api.sujetDeCase({
         personnage: personnage.identifiant,
-        poses: poses.map((p) => p.identifiant),
         piece: piece?.identifiant ?? null,
-        direction: angles ? null : (direction ?? null),
-        // Deux ou plus, et le sujet redevient le signalement seul : les
-        // attitudes et les angles partent case par case dans les consignes de
-        // planche, et les écrire aussi ici les dirait deux fois.
-        directions: angles ?? [],
         projet: bibliotheque.courant,
       })
       setPrompt(recu.sujet)
@@ -1262,11 +1337,13 @@ export function App() {
       // d'un clic (E2). Le revers de la règle du grisé, qui dit sa raison
       // depuis T1 : un champ prérempli n'est pas un champ décidé.
       setProvenance(
-        angles
-          ? `proposé, d'après son signalement · les consignes des ${angles.length} directions partent case par case · modifiable`
-          : poses.length > 1
-            ? `proposé, d'après son signalement et les consignes de ${poses.length} poses · modifiable`
-            : `proposé, d'après son signalement et la consigne de la pose · modifiable`,
+        piece
+          ? "proposé, d'après la description de la pièce · modifiable"
+          : angles
+            ? `proposé, d'après son signalement · les consignes des ${angles.length} directions partent case par case · modifiable`
+            : poses.length > 1
+              ? `proposé, d'après son signalement · les consignes des ${poses.length} poses partent case par case · modifiable`
+              : "proposé, d'après son signalement · la consigne de l'attitude part à côté · modifiable",
       )
     } catch {
       setPrompt("")
@@ -1730,21 +1807,12 @@ export function App() {
         }}
         promptNegatif={promptNegatif}
         onPromptNegatif={setPromptNegatif}
-        apercu={apercuPrompt}
-        apercuRefus={apercuRefus}
         repris={repris}
-        /* **Reprendre pose le texte exact, et rien d'autre.** L'univers n'est
-           pas touché : rouvrir l'onglet Univers montre la bible inchangée
-           (US-159). C'est la différence entre corriger une formulation et
-           démonter son projet. */
-        onReprendre={() => {
-          if (!apercuPrompt) return
-          setPrompt(apercuPrompt.texte)
-          setRepris(true)
-        }}
         /* Rendre la main : le champ redevient le sujet seul. **Il ne se vide
            pas** — on ne perd pas ce qui a été écrit —, et l'atelier reprend son
-           habillage par-dessus. */
+           habillage par-dessus. Reprendre, lui, s'est déplacé avec le texte
+           assemblé : il vit dans l'écran de confirmation, sous ce qui part mot
+           pour mot (E14). */
         onRendre={() => setRepris(false)}
         refus={refus?.texte ?? null}
         ouAller={refus?.geste}
@@ -1835,10 +1903,54 @@ export function App() {
           s'ouvre depuis le total de la barre de tête, qui est sur les trois ;
           il n'a donc pas de lieu à lui, parce qu'il ne parle d'aucun des
           trois — il parle de l'atelier entier. */}
-      {depensesOuvertes && (
+      {depensesOuvertes && !envoiOuvert && (
         <EcranDepenses
           projetCourant={bibliotheque.courant}
           onErreur={setPanne}
+        />
+      )}
+
+      {/* ── Ce qui part, entre le bouton et la dépense (E14) ──────────────
+          **Il s'intercale, il ne remplace rien.** Il prend la ligne du milieu,
+          comme les dépenses, parce qu'il n'appartient à aucun des trois onglets :
+          il paraît partout où l'on paie. Il n'a pas besoin de la barre qui paie
+          sous lui — c'est lui qui porte le bouton, cette fois, et il n'y a
+          toujours qu'un seul endroit d'où l'argent part. */}
+      {envoiOuvert && (
+        <EcranEnvoi
+          envoi={envoi}
+          tri={tri}
+          onTri={setTri}
+          onImage={(asset, cochee) =>
+            setEcarteesGeneration((deja) => {
+              // **La portée de cette génération-là décide seule quand elle a un
+              // avis** (US-126). La première coche la fabrique à partir de ce
+              // que le serveur écarte déjà, sinon décocher une image
+              // rallumerait toutes celles que les portées durables retiennent.
+              const base =
+                deja ??
+                (envoi?.images.lignes ?? [])
+                  .filter((l) => !l.cochee)
+                  .map((l) => l.asset)
+              return cochee
+                ? [...base.filter((a) => a !== asset), asset]
+                : base.filter((a) => a !== asset)
+            })
+          }
+          onPayer={() => void payer()}
+          onFermer={() => setEnvoiOuvert(false)}
+          onGarder={(ligne) => void garderLeTexte(ligne)}
+          onSauter={(saute) => setSerieSautee(saute ? serie : null)}
+          /* **Reprendre pose le texte exact, et referme l'écran** : le champ
+             *est* désormais ce qui partira, et le relire ligne par ligne
+             n'aurait plus de lignes à montrer — il n'y a plus de bible d'un côté
+             et de sujet de l'autre, il y a un texte. */
+          onReprendre={(texte) => {
+            setPrompt(texte)
+            setRepris(true)
+            setEnvoiOuvert(false)
+          }}
+          refus={refus?.texte ?? null}
         />
       )}
 
@@ -1847,7 +1959,7 @@ export function App() {
           même une recette, et il faut un endroit pour la régler. Ses sœurs sont
           alors les voisines de la grille, ce que la maquette du châssis prévoit
           en toutes lettres. */}
-      {!depensesOuvertes && onglet === "galerie" && imageDesTables && etat && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && imageDesTables && etat && (
         <EcranTables
           asset={imageDesTables}
           soeurs={grille}
@@ -1872,7 +1984,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && onglet === "galerie" && !imageDesTables && planche && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !imageDesTables && planche && (
         <EcranDecoupe
           planche={planche}
           onFermer={() => setDecoupeOuverte(null)}
@@ -1905,7 +2017,7 @@ export function App() {
           se poser dessus ; c'est elle, désormais, qui se retire quand un autre
           onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
           vit de toute façon dans `App`, et lui survit. */}
-      {!depensesOuvertes && onglet === "galerie" && !planche && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !planche && (
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -2026,7 +2138,7 @@ export function App() {
           leur retire leur en-tête de 44 px — il y en avait trois, un par écran,
           et il n'y en a plus qu'un — et leur fente de refus, désormais
           partagée. */}
-      {!depensesOuvertes && onglet === "univers" && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "univers" && (
         <EcranUnivers
           univers={univers}
           modeles={modeles}
@@ -2057,7 +2169,7 @@ export function App() {
           codex par son établi — c'est le même endroit vu de plus près, et le
           fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
           sont les deux lieux d'où l'argent part. */}
-      {!depensesOuvertes && onglet === "codex" && !choseOuverte && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "codex" && !choseOuverte && (
         <EcranCodex
           plan={plan}
           personnages={personnages}
@@ -2094,7 +2206,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && onglet === "codex" && choseOuverte && (
+      {!depensesOuvertes && !envoiOuvert && onglet === "codex" && choseOuverte && (
         <EcranEtabli
           ouvert={choseOuverte}
           plan={plan}

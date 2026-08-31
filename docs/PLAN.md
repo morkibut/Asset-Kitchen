@@ -1372,7 +1372,7 @@ qui ne se partage jamais, c'est la chose du jeu.
 ---
 
 ### E14 · L'écran de confirmation
-**User stories** : 272, 273, 274, 275, 276, 277, 278, 279, 280, 281
+**User stories** : 272, 273, 274, 275, 276, 277, 278, 279, 280, 281 · *11 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -1399,14 +1399,19 @@ qu'on verra n'est pas celle que le modèle envoie.
 
 #### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-**11 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
+**11 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - ~~**E13**~~ — **livrée le 31 août 2026**. Il paraît avant de payer une planche, et la planche est ce qu'on achète.
 - ~~**E11**~~ — **livrée le 31 août 2026**. Il porte les trois interrupteurs de l'ambiance et l'option d'envoyer la palette en image.
 
-**Plus rien ne la bloque.**
+**Livrée le 31 août 2026.** Le tiroir « qu'est-ce qui part avec ? » a quitté le champ de texte —
+deux réponses à la même question dont une seule est celle qui part. Le champ ne porte plus que le
+signalement : la consigne de l'attitude et celle de l'angle sont des lignes à part, composées par
+le chemin de l'envoi, avec leur origine et leur interrupteur. L'ambiance agit enfin — ses textes,
+ses images, sa palette en option d'image —, sans quoi enregistrer *ce qui en a été pris* n'aurait
+rien voulu dire.
 
 ---
 

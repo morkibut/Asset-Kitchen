@@ -1046,20 +1046,18 @@ async def recaler(requete: Request, identifiant: str) -> dict[str, Any]:
 
 
 class CorpsSujet(BaseModel):
-    """La case qu'on arme : qui, quelles attitudes, et quelle pièce."""
+    """La chose qu'on arme, et la pièce qu'on lui pose.
+
+    **Les attitudes et les angles n'y sont plus depuis E14.** Le champ ne porte
+    que le signalement ; la consigne de l'attitude et celle de la direction sont
+    ajoutées par le composeur du prompt, où elles forment leur propre ligne avec
+    leur propre origine. Les demander ici aurait laissé croire qu'elles changent
+    ce qu'on écrit dans le champ, et l'écran de confirmation aurait dû deviner où
+    finit le signalement et où commence la pose.
+    """
 
     personnage: str
-    poses: list[str] = Field(default_factory=list)
     piece: str | None = None
-    # **Et sous quel angle** (E10) : la consigne de la direction s'ajoute à celle
-    # de l'attitude, et les deux sont écrites chacune à un seul endroit.
-    direction: str | None = None
-    # **Les directions d'une planche de pose** (E13). Deux ou plus, et le sujet
-    # redevient le signalement seul : les attitudes et les angles partent case
-    # par case dans les consignes de planche, et les écrire aussi ici les dirait
-    # deux fois — le modèle recevrait « facing north » pour une planche dont
-    # trois cases sur quatre regardent ailleurs.
-    directions: list[str] = Field(default_factory=list)
     projet: str | None = None
 
 
@@ -1067,22 +1065,20 @@ class CorpsSujet(BaseModel):
 async def sujet(requete: Request, corps: CorpsSujet) -> dict[str, Any]:
     """Le sujet que cette case demande au modèle (US-115, C2, C3).
 
-    **Ni la bible ni les consignes de planche** : c'est l'aperçu de R2 qui
-    montre le texte entier, et lui seul. Ici on rend ce qui va dans le champ,
-    c'est-à-dire ce que l'auteur pourra corriger avant de payer.
+    **Ni la bible, ni la consigne de l'attitude, ni les consignes de planche** :
+    c'est l'écran de confirmation qui montre le texte entier ligne par ligne.
+    Ici on rend ce qui va dans le champ, c'est-à-dire ce que l'auteur pourra
+    corriger avant de payer.
 
-    `POST` et non `GET` pour une seule raison : un lot vise N attitudes, et une
-    liste d'identifiants dans une adresse est le genre de détail qui se casse au
-    dixième. Rien n'est écrit — c'est une lecture, comme l'aperçu du prompt.
+    `POST` et non `GET` : rien n'est écrit — c'est une lecture, comme l'aperçu
+    du prompt — mais le corps porte des identifiants qu'on ne met pas dans une
+    adresse.
     """
     return {
         "sujet": _atelier(requete).production.sujet(
             _projet(requete, corps.projet),
             corps.personnage,
-            corps.poses,
-            corps.piece,
-            corps.direction,
-            corps.directions,
+            piece=corps.piece,
         )
     }
 

@@ -291,6 +291,33 @@ NOM_DE_CE_QU_ON_PREND: dict[str, str] = {
     SANS_LES_IMAGES: "tout sauf les images",
 }
 
+# ── Et ce qu'un appel lui a réellement pris (E14) ────────────────────────────
+#
+# **Les trois modes ci-dessus sont un réglage durable ; ceux-ci sont un fait sur
+# un appel.** L'écran de confirmation éteint ligne par ligne, donc un appel peut
+# avoir pris le monde sans l'éclairage — ce qu'aucun des trois modes ne décrit.
+# La génération garde donc les trois oui/non, pas le mode
+# (`docs/ARCHITECTURE.md` §5).
+
+COULEURS = "couleurs"  # la palette de l'ambiance est partie, en bande d'images
+REFERENCES = "references"  # ses images de référence sont parties
+TEXTES = "textes"  # au moins un de ses trois textes a remplacé celui du jeu
+PRISES = (COULEURS, REFERENCES, TEXTES)
+
+
+def prises_du_mode(prend: str) -> tuple[str, ...]:
+    """Ce qu'un mode donne, avant que l'écran de confirmation n'y touche.
+
+    C'est le **point de départ** des interrupteurs, jamais ce qui s'enregistre :
+    ce qui s'enregistre est ce qui est réellement parti, et l'auteur a pu
+    éteindre entre-temps.
+    """
+    if prend == COULEURS_SEULES:
+        return (COULEURS,)
+    if prend == SANS_LES_IMAGES:
+        return (COULEURS, TEXTES)
+    return PRISES
+
 
 def empreinte_de_palette(
     sources: Iterable[str], couleurs: int, du_jeu: int, attraction: float,

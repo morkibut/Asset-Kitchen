@@ -166,6 +166,60 @@ def _hexa(rgb) -> str:
     return "#%02x%02x%02x" % tuple(int(round(float(c))) for c in rgb)
 
 
+# Le côté d'une pastille dans la bande envoyée au modèle, et le nombre de
+# pastilles par rangée. 64 px : assez grand pour qu'un modèle qui rééchantillonne
+# à 512 voie encore des aplats francs, assez petit pour que seize couleurs
+# tiennent dans une image de 1 024 de large — la taille des planches du produit.
+PASTILLE = 64
+PAR_RANGEE = 16
+
+
+def bande_de_palette(couleurs: tuple[str, ...] | list[str]) -> bytes:
+    """Une palette rendue **en image** — des pastilles pleines, et rien d'autre.
+
+    **Une palette part en image, jamais en texte** (E14, tranché le 30 août
+    2026). Une liste de codes hexadécimaux ajoutée au prompt est mal suivie par
+    les modèles, et elle allongerait un texte qui pèse déjà la moitié de
+    l'appel : sur le plus long appel payé du dépôt, les textes de style font
+    890 caractères sur 1 690. Une bande d'aplats, elle, est ce que les modèles
+    d'image suivent le mieux, et l'atelier la dessine déjà à l'écran.
+
+    **Elle se redessine, elle ne se relit jamais** — exactement comme le gabarit
+    d'une planche (`ServiceGenerations._jointes`) : elle n'est ni un asset ni une
+    carte, elle n'a pas d'identifiant, elle n'est nulle part sur le disque, et
+    elle se refabrique à l'identique depuis la liste de couleurs. L'appel et la
+    relance envoient donc la même image.
+
+    **Elle occupe une place de référence, et elle coûte** chez les modèles qui
+    facturent au token. Le compte des références la compte donc comme une image
+    de plus : l'oublier ferait mentir le grisé au moment précis où l'appel est le
+    plus cher.
+
+    Aucun texte, aucun nombre, aucune bordure : ce qui n'est pas une couleur dans
+    cette image serait une couleur de plus pour le modèle.
+    """
+    lues = [c for c in couleurs if c]
+    if not lues:
+        raise ValueError("une bande de palette sans couleur n'est pas une image")
+    colonnes = min(PAR_RANGEE, len(lues))
+    rangees = (len(lues) + colonnes - 1) // colonnes
+    # La dernière rangée est complétée par sa dernière couleur plutôt que par du
+    # blanc : une case vide serait un aplat que la palette ne contient pas, et le
+    # modèle le prendrait pour une couleur du jeu.
+    remplie = lues + [lues[-1]] * (colonnes * rangees - len(lues))
+    pixels = np.array(
+        [[_rgb(c) for c in remplie[r * colonnes : (r + 1) * colonnes]]
+         for r in range(rangees)],
+        dtype=np.uint8,
+    )
+    image = Image.fromarray(pixels, mode="RGB").resize(
+        (colonnes * PASTILLE, rangees * PASTILLE), Image.NEAREST
+    )
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
 def reduire(palette: tuple[str, ...], combien: int) -> tuple[str, ...]:
     """Les `combien` couleurs de cette palette-là, **prises dans la palette**.
 

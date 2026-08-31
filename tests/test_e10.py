@@ -369,16 +369,25 @@ def test_ce_qui_part_est_en_anglais_du_premier_mot_au_dernier(client):
         json={"description": "a dwarf miner with a braided beard"},
     )
 
+    # **Lu sur le texte composé, pas sur le champ** — corrigé en écrivant E14.
+    # Le champ ne porte plus que le signalement ; la consigne de l'attitude et
+    # celle de l'angle sont une ligne à part, ajoutée par le composeur du
+    # prompt. Ce qui se vérifie ici est donc ce qui part, ce qui est la bonne
+    # question et la plus forte.
+    champ = client.post(
+        "/api/characters/subject", json={"personnage": chose["identifiant"]}
+    ).json()["sujet"]
     reponse = client.post(
-        "/api/characters/subject",
+        "/api/prompt/preview",
         json={
+            "prompt": champ,
             "personnage": chose["identifiant"],
-            "poses": ["marche"],
+            "pose": "marche",
             "direction": "sud",
         },
     )
 
-    assert reponse.json()["sujet"] == (
+    assert reponse.json()["texte"].endswith(
         "a dwarf miner with a braided beard, walking posture, full body, "
         "facing south, toward the viewer"
     )
@@ -395,14 +404,15 @@ def test_la_consigne_se_compose_de_deux_textes_ecrits_chacun_une_fois(client):
 
     for pose in ("repos", "marche"):
         reponse = client.post(
-            "/api/characters/subject",
+            "/api/prompt/preview",
             json={
+                "prompt": "",
                 "personnage": chose["identifiant"],
-                "poses": [pose],
+                "pose": pose,
                 "direction": "sud",
             },
         )
-        assert reponse.json()["sujet"].endswith("facing the camera")
+        assert reponse.json()["texte"].endswith("facing the camera")
 
 
 def test_une_pose_ecrite_par_lauteur_part_telle_quelle(client):
@@ -414,11 +424,11 @@ def test_une_pose_ecrite_par_lauteur_part_telle_quelle(client):
     client.post("/api/characters/poses", json={"nom": "grimpe"})
 
     reponse = client.post(
-        "/api/characters/subject",
-        json={"personnage": chose["identifiant"], "poses": ["grimpe"]},
+        "/api/prompt/preview",
+        json={"prompt": "", "personnage": chose["identifiant"], "pose": "grimpe"},
     )
 
-    assert reponse.json()["sujet"] == "grimpe"
+    assert reponse.json()["texte"] == "grimpe"
 
 
 def test_les_projets_davant_recoivent_langlais_sans_quun_fichier_soit_reecrit():

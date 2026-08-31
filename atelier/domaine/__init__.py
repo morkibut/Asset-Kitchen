@@ -7,6 +7,14 @@ Rien ici ne connaît FastAPI, SQLite, httpx, ni le vocabulaire d'un fournisseur.
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.catalogue import Modele, Option
 from atelier.domaine.demande import Demande
+from atelier.domaine.envoi import (
+    Couches,
+    Tri,
+    clef,
+    en_blocs,
+    joindre,
+    resoudre,
+)
 from atelier.domaine.erreurs import ErreurAtelier, ModeleInconnu, SansCle
 from atelier.domaine.generation import (
     ROLES,
@@ -33,6 +41,7 @@ __all__ = [
     "Bords",
     "CasePliee",
     "Collection",
+    "Couches",
     "Demande",
     "Emplacement",
     "ErreurAtelier",
@@ -54,7 +63,12 @@ __all__ = [
     "Resultat",
     "SansCle",
     "Statut",
+    "Tri",
+    "clef",
+    "en_blocs",
     "geometrie",
     "identifiant_de",
+    "joindre",
+    "resoudre",
     "repere",
 ]

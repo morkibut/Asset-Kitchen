@@ -21,17 +21,28 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Dix-neuf sont livrées** — `E0` à `E13`, plus `E15` à `E19` —, dont
-**dix-sept sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un
-champ de plus à la recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une
-production d'images et non du code — les cases existent et disent *pas encore dessinée* tant
-qu'elles manquent (`docs/vignettes-vues.md` porte les consignes). Les deux critères qui
-attendaient `E13` sont réglés : la porte de la vitrine **depuis une planche** s'est posée avec
-elle, et la **planche des quatre directions** en référence proposée est **fermée** — une planche
-n'entre jamais en bibliothèque, donc cette image-là n'existe pas et n'existera pas. Deux étapes
-restent : `E14` et `E20`, et **`E14` n'a plus aucun bloqueur**. `E20` attend toutes les autres,
-parce que c'est le seul écran qui décrit tous les autres et donc le seul qui se périme à chaque
-décision prise ailleurs.
+`docs/PLAN.md`. **Vingt sont livrées** — `E0` à `E19` —, dont **dix-huit sans réserve** ; deux
+gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et `E8`
+les **dix-sept vignettes d'exemple**, qui sont une production d'images et non du code — les
+cases existent et disent *pas encore dessinée* tant qu'elles manquent
+(`docs/vignettes-vues.md` porte les consignes). Les deux critères qui attendaient `E13` sont
+réglés : la porte de la vitrine **depuis une planche** s'est posée avec elle, et la **planche
+des quatre directions** en référence proposée est **fermée** — une planche n'entre jamais en
+bibliothèque, donc cette image-là n'existe pas et n'existera pas. **Une seule étape reste :
+`E20`**, le guide, qui attend toutes les autres parce que c'est le seul écran qui décrit tous
+les autres et donc le seul qui se périme à chaque décision prise ailleurs.
+
+**Ce que `E14` a déplacé, et qu'il faut savoir avant de toucher au chemin de l'envoi.** Le
+tiroir « qu'est-ce qui part avec ? » a quitté le champ de texte : c'est un écran entier, entre
+le bouton et la dépense, et il est le seul endroit où l'on relit ce qui part. Trois conséquences
+qui se rattrapent mal si on les découvre en cours de route. **Le champ ne porte plus que le
+signalement** — la consigne de l'attitude et celle de l'angle sont des lignes à part, composées
+par le chemin de l'envoi ; `POST /api/characters/subject` ne prend donc plus ni poses ni
+directions. **Une seule résolution des trois couches** (`atelier/domaine/envoi.py`, `resoudre`)
+sert la fiche d'une chose du jeu *et* l'écran de confirmation ; ce qui les distingue est le
+tri, pas la règle. Et **le tri ne porte que des écarts** — les lignes éteintes à la main, celles
+rallumées, les textes corrigés —, jamais un état complet : c'est ce qui fait qu'éteindre les
+lignes d'une ambiance rallume les textes du jeu d'eux-mêmes.
 
 **Ce que les trois mesures de planche ont trouvé, et ce que `E13` en a fait.** Trois appels
 payés le 31 août 2026 — `essais/essai_prix_planche.py`, $0,081, relevé versionné dans

@@ -618,3 +618,47 @@ la prochaine réécriture retrouvera.
   rapprochement qui mentait. Le geste qui répare : **une phrase se cite avec les nombres qui la
   portent**, donc le banc est rendu à côté du prix affiché et c'est lui que la phrase nomme.
   Payé dans la même heure que le précédent, en regardant l'écran plutôt que les essais.
+
+- **Un `**mesure` étalé dans un dictionnaire écrase les clés qu'on venait d'y poser, et le
+  compte tombe à zéro sans que rien ne lève.** L'écran de confirmation rend un prix qui porte
+  son nombre d'appels ; la mesure qui le fonde porte, elle aussi, un nombre d'appels — le
+  nombre d'appels *payés* sur lesquels la médiane repose. Deux sens du même mot dans le même
+  dictionnaire, et l'étalement de la seconde a remplacé le premier par le second. **Aucune
+  erreur nulle part** : les deux clés existent, les deux valeurs sont des entiers, et l'écran a
+  affiché « 0 appel » pour un appel qui allait partir. Ce qui l'a rendu invisible est que le
+  code se lit bien — `{"appels": n, **mesure}` a l'air d'ajouter, alors qu'il remplace. Le geste
+  qui répare est de **ne jamais étaler une mesure dans l'objet qu'elle mesure** : elle devient
+  une clé à elle, `"mesure": mesure`, et les deux sens du mot cessent de se disputer la même
+  place. C'est la leçon de E13 rejouée à un cran plus fin — *une phrase se cite avec les nombres
+  qui la portent*, et pas fondue dedans. Payé en écrivant E14, le 31 août 2026.
+
+- **Un champ prérempli par le serveur écrase ce qu'on vient de taper, et l'essai qui tape trop
+  tôt échoue sans dire pourquoi.** Armer une case demande son signalement au serveur et le pose
+  dans le champ. Une chose sans signalement y pose une **chaîne vide** — ce qui est la vérité —,
+  et un essai qui écrit dans le champ avant que la réponse revienne se le fait effacer. Le
+  bouton qui paie redevient gris, l'écran de confirmation ne s'ouvre pas, et le message dit
+  seulement « bouton introuvable ». Ce qui l'a rendu invisible est que **le symptôme est en aval
+  de deux gestes** : on cherche pourquoi l'écran ne s'ouvre pas, pas pourquoi le champ est vide.
+  Le geste qui répare est d'attendre un signe que la réponse est **arrivée** — ici la ligne de
+  provenance, posée dans le même geste que le texte — et non un délai, ni l'état du bouton, qui
+  est gris avant comme après. Payé trois fois dans les essais d'écran de E14, le 31 août 2026.
+
+- **Le même piège se rejoue à un clic d'écart dès qu'un écran s'intercale, et
+  corriger la source ne suffit pas.** E13 avait fait lire **la même source** aux
+  deux prix d'un même écran. E14 a intercalé l'écran de confirmation entre la
+  barre qui paie et la dépense — et les deux ont annoncé **$0,0160 et $0,0064
+  pour le même appel**, mesuré au navigateur sur le vrai projet le 31 août 2026.
+  La source était pourtant la même : la barre rendait la **médiane de tous** les
+  appels de ce modèle, images jointes ou non, et l'écran comptait celles de cet
+  appel-ci. **Deux questions différentes posées à la même mesure**, et les deux
+  réponses justes. Ce qui l'a rendu invisible est que 670 essais serveur et 390
+  essais d'écran passaient : aucun ne compare deux nombres rendus par deux routes
+  différentes, et le double d'essai facturait un **prix plat**, où la médiane et
+  le prix de base sont le même nombre — les deux écrans tombaient d'accord par
+  accident. Le geste qui répare est double : faire descendre le **compte d'images
+  qui partiront** dans le calcul de la barre, et donner au double un levier de
+  prix qui varie (`FournisseurDouble.couter`), sans quoi l'essai qui compare
+  passerait à vide. La leçon générale : **une source unique ne suffit pas si deux
+  appelants lui posent des questions différentes** — il faut aussi qu'ils
+  décrivent le même appel.
+
