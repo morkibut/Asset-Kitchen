@@ -1643,6 +1643,94 @@ c'est ce qui a rendu l'étape courte. Douze entrées neuves, deux réécrites, s
 
 ---
 
+## U1 à U9 — les neuf reprises d'usage de la V2.1
+
+*Neuf étapes, ouvertes le 31 août 2026, le jour même où la V2.1 s'est close.* Elles viennent
+d'une **séance d'usage** de l'auteur sur l'interface refaite : quinze points relevés dans
+l'ordre où il les a rencontrés. C'est la règle du dépôt qui les fait exister — *une tranche
+n'est finie que lorsqu'on s'en est servi* —, et c'est la neuvième fois de suite qu'elle
+trouve ce qu'aucun essai ne voyait.
+
+**Trois des quinze points étaient déjà fermés au moment d'écrire ce lot** : deux par un
+correctif du même soir — la galerie qui restait montée sous les tables, et la case *ne plus
+me le montrer* qui éteignait l'écran de confirmation partout — et un dans la copie de
+travail, les neuf tailles de la table de grille. Il reste douze points, et ils tiennent en
+neuf étapes.
+
+**Ce qui distingue ce lot des cinq reprises de la V2** : chaque point a été **vérifié sur la
+machine de l'auteur avant d'être planifié**, l'atelier tournant. Là-bas on repartait d'un
+symptôme raconté ; ici chaque étape porte ce qu'on a vu, et quand c'était mesurable, ce
+qu'on a mesuré. Trois points sur douze ont changé de nature à la vérification, et le plus
+lourd n'était pas là où le symptôme le désignait : ce que l'auteur décrivait comme « du
+bruit dans la table de recadrage » est un zoom qui ne descend pas sous cent pour cent.
+
+**Le critère de découpage ne bouge pas**, celui des trois versions précédentes : *chaque
+tranche est utilisable à sa livraison.*
+
+### L'ordre, et les deux endroits où il se resserre
+
+**U1 d'abord, et sans discussion** : c'est la seule des neuf qui coûte de l'argent réel —
+cinq clics sur le bouton qui paie lançaient cinq appels payants.
+
+**U2 ensuite, parce que les autres ne se jugent pas sans elle.** Six des sept étapes qui
+suivent se vérifient sur une image qu'il faut pouvoir regarder en entier, et c'est
+précisément ce que l'atelier ne permettait pas.
+
+**U4 avant U5**, et c'est le seul blocage dur du lot : une recette qui voyage doit emporter
+l'état de veille d'une table, sinon la coller rallumerait des places qu'on avait éteintes.
+
+Les six autres sont indépendantes et se prennent dans l'ordre de la gêne.
+
+### Les quatre arbitrages tranchés avant d'écrire
+
+Quatre points demandaient une décision que le code ne pouvait pas prendre seul. Ils ont été
+posés à l'auteur et tranchés le 31 août 2026 ; `docs/design-decisions.md` en garde la raison
+et le coût.
+
+1. **Le zoom de l'atelier est libre, de 1 à 250 %, sans marque.** La règle des multiples
+   entiers appartient à ce qui *montre* une image — la grille, la vitrine —, pas à ce qui la
+   *travaille*. L'avoir appliquée à l'atelier est la cause de U2.
+2. **Éteindre une table la met en veille et garde ses réglages** — un champ de plus dans la
+   recette, et il est nommé.
+3. **Les réglages voyagent de deux façons, et les deux se construisent** : un copier-coller
+   pour la séance, une recette nommée pour la suite.
+4. **L'écran de confirmation replie les longs textes**, y compris là où il promettait de ne
+   jamais couper. L'invariant est amendé et l'amendement est écrit, pas contourné.
+
+### Les neuf étapes
+
+| | Ce qu'elle livre | Bloquée par |
+|---|---|---|
+| **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | — |
+| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | — |
+| **U3** | Un curseur prend un chiffre | — |
+| **U4** | Une table s'éteint, et ça se voit | — |
+| **U5** | Les réglages voyagent d'une image à l'autre | **U4** |
+| **U6** | La palette se règle sans faire attendre | — |
+| **U7** | La toile dit ce qu'elle a fabriqué | — |
+| **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | — |
+| **U9** | L'écran de confirmation se lit d'un coup d'œil | — |
+
+### Ce que chacune livre, et ses critères → `docs/tranches/U.md`
+
+**Cinquante-huit critères d'acceptation**, une section par étape, avec ce qui a été mesuré
+pour l'écrire et les trois points déjà fermés qu'il ne faut pas replanifier. Ils y vivent
+plutôt qu'ici pour la raison qui a déjà fait descendre les vingt-et-une étapes de la V2.1 :
+neuf étapes détaillées pèseraient dans ce plan autant que la V2.2 entière, alors qu'aucune
+n'ouvre une version.
+
+### Ce que ce lot demande au produit avant d'être construit
+
+**Trois des neuf ajoutent une capacité**, et pas seulement une réparation : la veille d'une
+table (U4), les réglages qui voyagent (U5), le prompt qu'on relit sur une image (U8). Ce que
+le produit doit faire est tranché dans `docs/PRD.md`, et ces trois-là n'y sont pas écrites —
+elles n'ont donc **pas de numéro de user story**, et ce plan n'en invente pas. À passer par
+`/cadre` avant de les construire. Les six autres corrigent un écran déjà cadré.
+
+---
+
+---
+
 ## V2.2 — D'autres fournisseurs, dont des gratuits
 
 *Six tranches, décidées le 31 août 2026.* Elles ne viennent ni d'un chantier de maquettes,

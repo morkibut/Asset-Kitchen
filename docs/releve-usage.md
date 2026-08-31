@@ -9,6 +9,42 @@
 
 ---
 
+## 31 août 2026 — la première séance sur la V2.1 entière
+
+Quinze points relevés par l'auteur dans l'ordre où il les a rencontrés, le jour même où la
+V2.1 s'est close. **Tous sont tranchés** : trois étaient déjà réparés, les douze autres sont
+devenus les neuf étapes `U1` à `U9` de `docs/PLAN.md`, avec leurs critères dans
+`docs/tranches/U.md`. Rien ne reste ouvert ici — ce qui suit ne garde que les **quatre
+mesures** prises pendant la vérification, parce qu'elles n'ont pas d'autre endroit où vivre
+et qu'elles seront les points de comparaison quand les étapes seront tenues.
+
+**Chaque point a été vérifié sur la machine de l'auteur, l'atelier tournant**, avant d'être
+planifié. C'est ce qui a fait changer trois points de nature, dont le plus lourd.
+
+### Ce qui a été mesuré, le 31 août 2026
+
+| Ce qu'on a mesuré | La mesure |
+|---|---|
+| Le cadre d'une table contre l'image qu'il doit montrer | Image d'origine **1 024 × 1 024**, cadre **606 × 626**, facteur d'ajustement bloqué à **1×** par une règle qui interdit de réduire. On ne voyait donc qu'un coin — transparent, donc le damier. C'est le « bruit » du relevé, et c'est aussi pourquoi le rectangle de recadrage paraissait sans rapport avec son rendu |
+| Un cran du curseur d'attraction d'une palette | **2 089 puis 2 170 ms** par relâchement, sur un paquet de **trois** images ; l'aperçu qui suit ajoute **462 ms**. La cause n'est pas la fusion des couleurs : c'est l'empreinte, qui relit et requantifie toutes les images du paquet pour décider s'il faut les relire. Un paquet de neuf images existe dans le dépôt |
+| Le lien de téléchargement d'une vignette, au cran de repos | Tuile **132,6 px**, ligne de mesures réclamant **137 px** dans une boîte de **115**, lien débordant de **13,2 px** au-delà du bord droit |
+| Le verrou de double dépense | **Il existe et il est côté serveur** : une génération porte un identifiant, et le service rend *déjà soumise* sans rien facturer quand il revoit le même. L'écran fabriquait un identifiant neuf **à chaque clic** — le verrou était donc jeté avant d'avoir servi, et cinq clics valaient cinq appels payés |
+
+### Ce que la séance apprend, au-delà de ses quinze points
+
+**Deux points sur quinze étaient déjà réparés au moment du relevé** — par un correctif du
+même soir, une heure plus tôt. Ce n'est pas un hasard de calendrier : l'auteur se sert de
+l'atelier pendant qu'on le corrige, et un relevé d'usage a donc une date de péremption
+courte. **Vérifier avant de diagnostiquer** a évité de replanifier deux étapes entières.
+
+**Le symptôme désignait rarement la cause.** « Du bruit dans la table de recadrage » était un
+zoom sans réduction. « Les palettes sont lentes » était l'empreinte qui refait le calcul
+qu'elle sert à éviter. « On peut payer cinq fois » était un verrou existant que l'écran
+jetait. Trois fois sur douze, la réparation n'était pas là où l'on regardait — et les trois
+fois, c'est d'avoir fait tourner le produit qui l'a montré.
+
+---
+
 ## 29 août 2026 — la première séance de C3, et ce que la différence ne voit pas
 
 Six planches d'équipement payées sur un personnage qui portait déjà la pièce, un seul modèle

@@ -1,80 +1,80 @@
 {
- "releve_le": 1788210323.683788,
+ "releve_le": 1788212063.3764787,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 283341,
+  "octets": 289182,
   "documents": {
    "AGENTS.md": {
-    "octets": 27645,
+    "octets": 28487,
     "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 27280
+      "octets": 28111
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 6007
+      "octets": 6838
      },
      {
       "titre": "Lancer",
       "niveau": 2,
-      "ligne": 89,
+      "ligne": 100,
       "octets": 4606
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 158,
+      "ligne": 169,
       "octets": 6762
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 233,
+      "ligne": 244,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 263,
+      "ligne": 274,
       "octets": 1653
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 280,
+      "ligne": 291,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 297,
+      "ligne": 308,
       "octets": 1786
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 321,
+      "ligne": 332,
       "octets": 577
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 331,
+      "ligne": 342,
       "octets": 1151
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 350,
+      "ligne": 361,
       "octets": 1087
      }
     ]
@@ -230,14 +230,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 132744,
-    "titres": 173,
+    "octets": 137743,
+    "titres": 179,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2",
       "niveau": 1,
       "ligne": 1,
-      "octets": 130516
+      "octets": 135427
      },
      {
       "titre": "Décisions architecturales",
@@ -1038,237 +1038,273 @@
       "octets": 623
      },
      {
-      "titre": "V2.2 — D'autres fournisseurs, dont des gratuits",
+      "titre": "U1 à U9 — les neuf reprises d'usage de la V2.1",
       "niveau": 2,
       "ligne": 1646,
+      "octets": 4911
+     },
+     {
+      "titre": "L'ordre, et les deux endroits où il se resserre",
+      "niveau": 3,
+      "ligne": 1670,
+      "octets": 703
+     },
+     {
+      "titre": "Les quatre arbitrages tranchés avant d'écrire",
+      "niveau": 3,
+      "ligne": 1684,
+      "octets": 974
+     },
+     {
+      "titre": "Les neuf étapes",
+      "niveau": 3,
+      "ligne": 1700,
+      "octets": 674
+     },
+     {
+      "titre": "Ce que chacune livre, et ses critères → `docs/tranches/U.md`",
+      "niveau": 3,
+      "ligne": 1714,
+      "octets": 473
+     },
+     {
+      "titre": "Ce que ce lot demande au produit avant d'être construit",
+      "niveau": 3,
+      "ligne": 1722,
+      "octets": 537
+     },
+     {
+      "titre": "V2.2 — D'autres fournisseurs, dont des gratuits",
+      "niveau": 2,
+      "ligne": 1734,
       "octets": 30699
      },
      {
       "titre": "Ce qui la déclenche, et ce qui n'est pas une raison",
       "niveau": 3,
-      "ligne": 1662,
+      "ligne": 1750,
       "octets": 942
      },
      {
       "titre": "Ce que la V2.2 hérite et ne rediscute pas",
       "niveau": 3,
-      "ligne": 1676,
+      "ligne": 1764,
       "octets": 1149
      },
      {
       "titre": "Les trois invariants que la V2.2 révise, et pourquoi",
       "niveau": 3,
-      "ligne": 1693,
+      "ligne": 1781,
       "octets": 2185
      },
      {
       "titre": "Quand chaque entité de la V2.2 apparaît",
       "niveau": 3,
-      "ligne": 1723,
+      "ligne": 1811,
       "octets": 894
      },
      {
       "titre": "Les invariants que la V2.2 instaure",
       "niveau": 3,
-      "ligne": 1735,
+      "ligne": 1823,
       "octets": 975
      },
      {
       "titre": "Couverture des 25 user stories de la V2.2",
       "niveau": 3,
-      "ligne": 1749,
+      "ligne": 1837,
       "octets": 564
      },
      {
       "titre": "F0 · Le relevé des trois — *tenu le 31 août 2026*",
       "niveau": 3,
-      "ligne": 1766,
+      "ligne": 1854,
       "octets": 7567
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 1812,
+      "ligne": 1900,
       "octets": 221
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1817,
+      "ligne": 1905,
       "octets": 276
      },
      {
       "titre": "Ce que le relevé a trouvé",
       "niveau": 4,
-      "ligne": 1823,
+      "ligne": 1911,
       "octets": 3945
      },
      {
       "titre": "F1 · Le pluriel, et le fournisseur qui ne demande rien",
       "niveau": 3,
-      "ligne": 1882,
+      "ligne": 1970,
       "octets": 1834
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1885,
+      "ligne": 1973,
       "octets": 1492
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 1908,
+      "ligne": 1996,
       "octets": 96
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1912,
+      "ligne": 2000,
       "octets": 137
      },
      {
       "titre": "F2 · Ce qu'un appel consomme",
       "niveau": 3,
-      "ligne": 1920,
+      "ligne": 2008,
       "octets": 2018
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1923,
+      "ligne": 2011,
       "octets": 1555
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 1947,
+      "ligne": 2035,
       "octets": 96
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1951,
+      "ligne": 2039,
       "octets": 279
      },
      {
       "titre": "F3 · Les clés au pluriel",
       "niveau": 3,
-      "ligne": 1960,
+      "ligne": 2048,
       "octets": 1553
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1963,
+      "ligne": 2051,
       "octets": 1194
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 1983,
+      "ligne": 2071,
       "octets": 95
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1987,
+      "ligne": 2075,
       "octets": 189
      },
      {
       "titre": "F4 · Cloudflare Workers AI",
       "niveau": 3,
-      "ligne": 1995,
+      "ligne": 2083,
       "octets": 1483
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1998,
+      "ligne": 2086,
       "octets": 1109
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 2016,
+      "ligne": 2104,
       "octets": 95
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 2020,
+      "ligne": 2108,
       "octets": 218
      },
      {
       "titre": "F5 · ~~Leonardo~~ — *retirée par le relevé F0, le 31 août 2026*",
       "niveau": 3,
-      "ligne": 2029,
+      "ligne": 2117,
       "octets": 2620
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 2044,
+      "ligne": 2132,
       "octets": 1408
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 2066,
+      "ligne": 2154,
       "octets": 95
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 2070,
+      "ligne": 2158,
       "octets": 138
      },
      {
       "titre": "F6 · Le brouillon ne coûte plus rien",
       "niveau": 3,
-      "ligne": 2079,
+      "ligne": 2167,
       "octets": 1691
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 2082,
+      "ligne": 2170,
       "octets": 1292
      },
      {
       "titre": "Critères d'acceptation → `docs/tranches/V2.2.md`",
       "niveau": 4,
-      "ligne": 2103,
+      "ligne": 2191,
       "octets": 95
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 2107,
+      "ligne": 2195,
       "octets": 227
      },
      {
       "titre": "Ce que la V2.2 rouvre dans ce qui est déjà tenu",
       "niveau": 3,
-      "ligne": 2116,
+      "ligne": 2204,
       "octets": 1341
      },
      {
       "titre": "L'ordre, et les trois endroits où il se resserre",
       "niveau": 3,
-      "ligne": 2134,
+      "ligne": 2222,
       "octets": 1344
      },
      {
       "titre": "Les trois questions que la V2.2 laisse ouvertes",
       "niveau": 3,
-      "ligne": 2156,
+      "ligne": 2244,
       "octets": 1587
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 2181,
+      "ligne": 2269,
       "octets": 4389
      }
     ]
@@ -1437,7 +1473,7 @@
    "casses": []
   },
   "docs": {
-   "total": 410,
+   "total": 433,
    "casses": []
   }
  }

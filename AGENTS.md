@@ -30,6 +30,17 @@ réglés : la porte de la vitrine **depuis une planche** s'est posée avec elle,
 des quatre directions** en référence proposée est **fermée** — une planche n'entre jamais en
 bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 
+**Et un lot correctif est ouvert depuis le 31 août 2026 : les neuf reprises d'usage `U1` à
+`U9`.** Elles viennent d'une séance de l'auteur sur l'interface refaite — quinze points
+relevés, trois déjà fermés, douze planifiés, cinquante-huit critères. Elles vivent dans
+`docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs critères dans
+`docs/tranches/U.md`. **Aucune n'est encore construite.** `U1` passe d'abord parce que c'est
+la seule qui coûte de l'argent réel — cinq clics sur le bouton qui paie lançaient cinq
+appels payants, un verrou existant que l'écran jetait —, `U2` ensuite parce que rien d'autre
+ne se juge sans elle. Trois des neuf ajoutent une capacité au produit et **n'ont pas encore
+de user story** : à passer par `/cadre` avant de les construire, et le plan n'invente aucun
+numéro.
+
 **Ce que `E20` a appris, et qui vaut pour la suite.** Le guide est le seul écran qui parle de
 tous les autres, donc le seul qui se périme à chaque décision prise ailleurs. On pouvait craindre
 que ses cent entrées soient toutes à reprendre après vingt étapes d'interface refaite : **six
