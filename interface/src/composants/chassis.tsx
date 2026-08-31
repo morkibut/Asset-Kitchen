@@ -3,6 +3,8 @@
 // c'est cette grille de densité, pas les marges, qui fait l'instrument.
 
 import {
+  createContext,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -472,9 +474,30 @@ export function Segments<T extends string | number>({
  * ce qu'on a traversé** — la valeur suit la main sans attendre, le rendu suit
  * le relâchement. Un cran de segment reste un choix, et part tout de suite.
  *
+ * **Et sa valeur s'écrit** (U3, 1<sup>er</sup> septembre 2026). Le geste
+ * d'origine reste le bon — on fait glisser, on regarde — mais il ne suffit pas
+ * quand on connaît déjà le nombre : refaire à la souris un réglage qu'on a noté
+ * sur l'image d'à côté est une punition, et aucun logiciel d'image ne l'impose.
+ * Le champ est à droite, à la place où la valeur s'écrivait déjà ; **la frappe
+ * pendant qu'on tient le curseur le remplit sans qu'on ait à le viser**, comme
+ * ailleurs. Entrée valide, Échap rend la valeur d'avant, quitter le champ vaut
+ * Entrée.
+ *
+ * **Un chiffre écrit vaut un relâchement** : un seul envoi, jamais un par
+ * frappe. C'est la règle de T2, appliquée à l'autre façon de régler.
+ *
  * Il n'introduit aucune couleur : rail en `--bord`, curseur en `--signal`,
  * valeur en mono à droite comme toute mesure du produit.
  */
+/** Le nom du réglage qu'on est en train de rendre (U3).
+ *
+ *  **Une seule ligne à écrire plutôt que dix-sept.** Le champ où une valeur
+ *  s'écrit a besoin d'un nom pour être trouvable — cinq champs de nombre dans
+ *  une colonne se ressemblent tous —, et ce nom est déjà écrit à gauche du
+ *  contrôle, dans la rangée qui le porte. Le lui faire redire à chaque emploi
+ *  aurait fabriqué dix-sept occasions de le laisser diverger du libellé visible. */
+export const NomDuReglage = createContext<string | undefined>(undefined)
+
 export function Curseur({
   valeur,
   min,
@@ -485,6 +508,7 @@ export function Curseur({
   onFini,
   inactif = false,
   crans,
+  libelle,
 }: {
   valeur: number
   min: number
@@ -505,6 +529,10 @@ export function Curseur({
    *  ce qui reste juste pour un réglage qui ne coûte rien à celui d'en face. */
   onFini?: (v: number) => void
   inactif?: boolean
+  /** Le nom du réglage, pour le champ où sa valeur s'écrit (U3). Sans lui le
+   *  champ s'appelle *valeur*, ce qui suffit à le trouver mais pas à savoir
+   *  lequel on tient quand il y en a cinq dans la colonne. */
+  libelle?: string
 }) {
   /** Le cran le plus proche, ou la valeur telle quelle. */
   const arrondir = (brute: number) =>
@@ -513,29 +541,104 @@ export function Curseur({
       : brute
   const fini = (e: { currentTarget: HTMLInputElement }) =>
     onFini?.(arrondir(Number(e.currentTarget.value)))
+
+  // ── Le champ où la valeur s'écrit (U3) ──────────────────────────────────
+  //
+  // **`null` tant qu'on n'écrit pas.** Le champ montre alors la valeur du
+  // curseur, si bien que les deux disent toujours la même chose sans qu'un état
+  // ait à les tenir d'accord. Il ne prend une valeur à lui que pendant la
+  // frappe, qui est un état de passage.
+  const [ecrit, setEcrit] = useState<string | null>(null)
+  // **Ce qu'on a ramené, et il se dit.** Une valeur hors bornes n'est pas
+  // refusée — un champ qui rejette une frappe oblige à deviner ce qu'il
+  // accepte —, elle est ramenée, et la ligne dessous dit laquelle. Elle part à
+  // la frappe suivante.
+  const [ramene, setRamene] = useState<string | null>(null)
+  const champ = useRef<HTMLInputElement>(null)
+  const nom = libelle ?? useContext(NomDuReglage)
+
+  const valider = (texte: string) => {
+    setEcrit(null)
+    const lu = Number.parseFloat(texte.replace(",", ".").replace(/[^\d.-]/g, ""))
+    if (!Number.isFinite(lu)) return
+    const borne = Math.max(min, Math.min(max, lu))
+    const pose = arrondir(borne)
+    if (pose !== lu)
+      setRamene(
+        borne !== lu
+          ? `ramené à ${pose}${unite} — les bornes sont ${min} et ${max}`
+          : `ramené à ${pose}${unite} — c'est le cran le plus proche`,
+      )
+    else setRamene(null)
+    // **Un chiffre écrit vaut un relâchement** : la valeur bouge et se pose
+    // dans le même geste, un seul envoi. `onChange` seul laisserait le réglage
+    // à l'écran sans jamais l'appliquer sur les places qui attendent `onFini`.
+    onChange(pose)
+    onFini?.(pose)
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={pas}
-        value={valeur}
-        disabled={inactif}
-        onChange={(e) => onChange(arrondir(Number(e.target.value)))}
-        onPointerUp={fini}
-        onKeyUp={fini}
-        className="curseur h-[26px] min-w-0 flex-1"
-      />
-      <span
-        className={[
-          "mesure w-[46px] shrink-0 text-right text-[10px]",
-          inactif ? "text-texte-3" : "text-texte-2",
-        ].join(" ")}
-      >
-        {valeur}
-        {unite}
-      </span>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={pas}
+          value={valeur}
+          disabled={inactif}
+          onChange={(e) => onChange(arrondir(Number(e.target.value)))}
+          onPointerUp={fini}
+          onKeyUp={fini}
+          // **La frappe pendant qu'on tient le curseur remplit le champ**
+          // (U3), sans qu'on ait eu à le viser — le geste des logiciels
+          // d'image. Les touches qui font vivre le curseur lui-même — les
+          // flèches, Origine, Fin — ne sont pas détournées.
+          onKeyDown={(e) => {
+            if (!/^[0-9]$/.test(e.key)) return
+            e.preventDefault()
+            setEcrit(e.key)
+            setRamene(null)
+            champ.current?.focus()
+          }}
+          className="curseur h-[26px] min-w-0 flex-1"
+        />
+        <input
+          ref={champ}
+          type="text"
+          inputMode="numeric"
+          aria-label={nom ? `${nom}, en chiffres` : "Valeur, en chiffres"}
+          disabled={inactif}
+          value={ecrit ?? `${valeur}${unite}`}
+          onChange={(e) => {
+            setEcrit(e.target.value)
+            setRamene(null)
+          }}
+          onFocus={(e) => e.target.select()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              valider((e.target as HTMLInputElement).value)
+              ;(e.target as HTMLInputElement).blur()
+            }
+            // Échap rend la valeur d'avant, comme partout ailleurs.
+            if (e.key === "Escape") {
+              setEcrit(null)
+              setRamene(null)
+            }
+          }}
+          // **Quitter le champ vaut Entrée.** Sans quoi une valeur tapée puis
+          // abandonnée resterait à l'écran sans agir : le champ dirait une
+          // chose et l'image en montrerait une autre.
+          onBlur={(e) => ecrit !== null && valider(e.target.value)}
+          className={[
+            "mesure w-[46px] shrink-0 rounded-[2px] border border-transparent bg-transparent px-1 text-right text-[10px] tabular-nums",
+            "hover:border-bord focus:border-bord-fort focus:bg-fond-2 focus:outline-none",
+            inactif ? "text-texte-3" : "text-texte-2",
+          ].join(" ")}
+        />
+      </div>
+      {ramene && <Raison texte={ramene} />}
     </div>
   )
 }

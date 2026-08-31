@@ -33,6 +33,7 @@ import {
   Curseur,
   EnTetePanneau,
   Libelle,
+  NomDuReglage,
   Raison,
   Segments,
 } from "./chassis"
@@ -1007,7 +1008,10 @@ function Reglage({
       >
         {libelle}
       </span>
-      {children}
+      {/* **Le nom descend jusqu'au contrôle** (U3), et le fournisseur ne rend
+          aucun nœud : la grille de deux colonnes reste une grille de deux
+          colonnes. */}
+      <NomDuReglage.Provider value={libelle}>{children}</NomDuReglage.Provider>
       {bulle}
     </div>
   )

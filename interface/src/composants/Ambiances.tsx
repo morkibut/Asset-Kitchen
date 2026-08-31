@@ -545,6 +545,7 @@ function LaFusion({
             </span>
           </div>
           <Curseur
+            libelle="la proportion"
             valeur={duJeu}
             min={0}
             max={palette.couleurs}
@@ -560,6 +561,7 @@ function LaFusion({
           <span>{attraction} %</span>
         </div>
         <Curseur
+          libelle="l'attraction"
           valeur={attraction}
           min={0}
           max={100}

@@ -242,7 +242,8 @@ naît d'une place qui gagne un second réglage sans que son résumé le sache.
 
 ## U3 · Un curseur prend un chiffre
 
-**Critères : 5 · Ce que ça corrige : un point de la séance**
+**Critères : 5 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -261,18 +262,39 @@ traversé**. Un chiffre écrit vaut un relâchement — un seul envoi, jamais un
 
 ### Critères d'acceptation
 
-- [ ] Chaque réglage à curseur porte un champ où sa valeur s'écrit, et les deux disent
+- [x] Chaque réglage à curseur porte un champ où sa valeur s'écrit, et les deux disent
       toujours la même chose.
-- [ ] Taper un chiffre pendant qu'on tient le curseur remplit le champ sans qu'il ait été
+- [x] Taper un chiffre pendant qu'on tient le curseur remplit le champ sans qu'il ait été
       cliqué.
-- [ ] Entrée valide, Échap rend la valeur d'avant, quitter le champ vaut Entrée.
-- [ ] Une valeur hors bornes est ramenée dans les bornes et le dit, elle n'est pas refusée
+- [x] Entrée valide, Échap rend la valeur d'avant, quitter le champ vaut Entrée.
+- [x] Une valeur hors bornes est ramenée dans les bornes et le dit, elle n'est pas refusée
       en silence.
-- [ ] Un chiffre écrit produit **un seul** envoi au serveur, comme un relâchement.
+- [x] Un chiffre écrit produit **un seul** envoi au serveur, comme un relâchement.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Le champ n'a pas de valeur à lui, et c'est ce qui tient le critère.** « Les deux disent
+toujours la même chose » se garantit en n'ayant qu'une seule vérité : le champ montre la
+valeur du curseur, et il ne prend une valeur propre que **pendant la frappe**, qui est un
+état de passage. Un second état tenu d'accord avec le premier aurait fini par diverger, et
+c'est le genre d'écart qu'on ne voit qu'après avoir réglé quelque chose de travers.
+
+**Le nom du réglage descend jusqu'au contrôle, il ne se réécrit pas dix-sept fois.** Un
+champ de nombre a besoin d'un nom pour être trouvable — cinq champs de quarante-six pixels
+dans une colonne se ressemblent tous —, et ce nom est déjà écrit à gauche du contrôle, dans
+la rangée qui le porte. Le faire redire à chaque emploi aurait fabriqué dix-sept occasions
+de le laisser diverger du libellé visible. **Il y a deux rangées de réglage dans le
+produit** — celle des tables et celle de la fiche —, et les deux le fournissent ; c'est
+d'ailleurs le seul endroit où l'étape a touché à autre chose qu'au composant.
+
+**Le champ est invisible au repos, et c'est délibéré.** Bordure transparente, fond
+transparent : il a l'aspect exact de la valeur en mono qu'il remplace, et il ne se révèle
+qu'au survol et au focus. L'étape ne devait rien ajouter à l'écran — elle devait rendre
+saisissable ce qui s'affichait déjà.
 
 ---
 

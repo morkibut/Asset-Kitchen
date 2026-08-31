@@ -238,6 +238,7 @@ function BlocAgent({
           </Libelle>
         </div>
         <Curseur
+          libelle="le plafond de la séance"
           valeur={plafond}
           min={1}
           max={200}

@@ -582,6 +582,7 @@ function Bareme({
                   ))}
                 </select>
                 <Curseur
+                  libelle="l'occupation"
                   valeur={echelle.occupation}
                   min={10}
                   max={100}

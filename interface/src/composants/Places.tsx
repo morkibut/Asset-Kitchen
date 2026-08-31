@@ -34,7 +34,7 @@ import {
   type Trait,
   type Univers,
 } from "../api"
-import { Curseur, Libelle, Raison, Segments } from "./chassis"
+import { Curseur, Libelle, NomDuReglage, Raison, Segments } from "./chassis"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor.
@@ -275,7 +275,13 @@ export function Reglage({
       <span className="w-[104px] shrink-0">
         <Libelle aide={aide}>{libelle}</Libelle>
       </span>
-      <div className="min-w-0 flex-1">{children}</div>
+      {/* **Le nom descend jusqu'au contrôle** (U3). Le champ où une valeur
+          s'écrit a besoin d'un nom pour être trouvable, et ce nom est déjà
+          écrit à gauche : le faire redire à chaque emploi aurait fabriqué
+          autant d'occasions de le laisser diverger de ce qui s'affiche. */}
+      <div className="min-w-0 flex-1">
+        <NomDuReglage.Provider value={libelle}>{children}</NomDuReglage.Provider>
+      </div>
     </div>
   )
 }

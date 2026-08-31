@@ -13747,3 +13747,205 @@ describe("la main peint carré, et là où on la pose", () => {
     expect(Math.round((largeur / 100) * 64) % 2).toBe(1)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// U3 · Un curseur prend un chiffre
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : le champ où la valeur d'un curseur s'écrit. Le
+// geste d'origine reste le bon — on fait glisser, on regarde — mais il ne suffit
+// pas quand on connaît déjà le nombre : refaire à la souris un réglage qu'on a
+// noté sur l'image d'à côté est une punition, et aucun logiciel d'image ne
+// l'impose.
+//
+// **Un seul composant les porte tous** — dix-sept emplois sur sept écrans —, et
+// c'est pour cela que l'étape est courte : la correction se fait une fois et se
+// voit partout. Les essais ci-dessous éprouvent donc le composant à travers deux
+// de ses emplois, et non les dix-sept : ce qui se répète n'a pas à se mesurer
+// dix-sept fois, il a à n'exister qu'une fois.
+
+describe("un curseur prend un chiffre", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  /** La table du détourage, qui porte deux curseurs : la tolérance et le seuil
+   *  alpha. C'est l'emploi le plus courant du composant, et celui où un envoi
+   *  de trop coûte le plus cher — une passe de détourage se recalcule. */
+  const ouvrirLeDetourage = async () => {
+    const images = [
+      {
+        ...asset("bbbb2222-0", "le nain, au repos"),
+        recette: {
+          ...RECETTE_VIDE,
+          passes: [
+            {
+              moteur: "bord" as const,
+              tolerance: 28,
+              seuil_alpha: 128,
+              durcissement: 0,
+              point: null,
+              portee: "tache" as const,
+            },
+          ],
+        },
+      } as Asset,
+    ]
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  const recettesPosees = (appels: { url: string; corps: unknown }[]) =>
+    appels.filter((a) => a.url.includes("/recipe"))
+
+  // ── « Chaque réglage à curseur porte un champ, et les deux disent la même
+  //     chose » ────────────────────────────────────────────────────────────────
+
+  test("le champ porte la valeur du curseur, et il porte son nom", async () => {
+    const { cadre } = await ouvrirLeDetourage()
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    // Le champ montre la valeur du curseur — il ne tient pas un second état.
+    expect(champ.value).toBe("28")
+    // Et il n'a pas fallu l'écrire dix-sept fois : le nom descend de la rangée
+    // qui porte le réglage.
+    expect(cadre.getByLabelText("seuil alpha, en chiffres")).toBeTruthy()
+  })
+
+  // ── « Un chiffre écrit produit un seul envoi, comme un relâchement » ───────
+
+  test("un chiffre écrit vaut un relâchement — un seul envoi", async () => {
+    // **La règle de T2, appliquée à l'autre façon de régler.** Un envoi par
+    // frappe ferait trois appels pour « 128 », dont deux sur des valeurs que
+    // personne n'a demandé à voir — et une passe de détourage coûte deux
+    // secondes au serveur.
+    const { cadre, appels } = await ouvrirLeDetourage()
+    const avant = recettesPosees(appels).length
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "64" } })
+    // Rien n'est parti pendant la frappe.
+    expect(recettesPosees(appels).length).toBe(avant)
+
+    fireEvent.keyDown(champ, { key: "Enter" })
+    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
+    const pose = recettesPosees(appels).at(-1)!.corps as {
+      passes: { tolerance: number }[]
+    }
+    expect(pose.passes[0].tolerance).toBe(64)
+    // Et le curseur a suivi : les deux disent toujours la même chose.
+    await waitFor(() => expect(champ.value).toBe("64"))
+  })
+
+  // ── « Entrée valide, Échap rend la valeur d'avant, quitter vaut Entrée » ───
+
+  test("Échap rend la valeur d'avant, sans rien envoyer", async () => {
+    const { cadre, appels } = await ouvrirLeDetourage()
+    const avant = recettesPosees(appels).length
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "7" } })
+    fireEvent.keyDown(champ, { key: "Escape" })
+
+    expect(champ.value).toBe("28")
+    expect(recettesPosees(appels).length).toBe(avant)
+  })
+
+  test("quitter le champ vaut Entrée", async () => {
+    // **Sans quoi une valeur tapée puis abandonnée resterait à l'écran sans
+    // agir** : le champ dirait une chose et l'image en montrerait une autre.
+    const { cadre, appels } = await ouvrirLeDetourage()
+    const avant = recettesPosees(appels).length
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "12" } })
+    fireEvent.blur(champ)
+
+    await waitFor(() => expect(recettesPosees(appels).length).toBe(avant + 1))
+    expect(
+      (recettesPosees(appels).at(-1)!.corps as { passes: { tolerance: number }[] })
+        .passes[0].tolerance,
+    ).toBe(12)
+  })
+
+  // ── « Une valeur hors bornes est ramenée, et le dit » ──────────────────────
+
+  test("une valeur hors bornes est ramenée dans les bornes, et la table le dit", async () => {
+    // **Ramener plutôt que refuser.** Un champ qui rejette une frappe oblige à
+    // deviner ce qu'il accepte ; un champ qui ramène le dit en affichant la
+    // valeur retenue et ses bornes.
+    const { cadre } = await ouvrirLeDetourage()
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "900" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    // La tolérance va de zéro à cent vingt : neuf cents devient cent vingt, et
+    // la ligne dessous dit les deux bornes plutôt que la seule qu'on a touchée.
+    expect(await cadre.findByText(/ramené à 120 — les bornes sont 0 et 120/)).toBeTruthy()
+    await waitFor(() => expect(champ.value).toBe("120"))
+  })
+
+  // ── « Taper un chiffre pendant qu'on tient le curseur remplit le champ » ───
+
+  test("taper un chiffre sur le curseur remplit le champ sans qu'on l'ait visé", async () => {
+    // **Le geste des logiciels d'image.** La main est sur le curseur, l'œil est
+    // sur l'image : viser un champ de quarante-six pixels pour écrire un nombre
+    // qu'on connaît déjà casse le geste.
+    const { cadre } = await ouvrirLeDetourage()
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    const glissiere = cadre.getAllByRole("slider")[0]
+    fireEvent.keyDown(glissiere, { key: "9" })
+
+    await waitFor(() => expect(champ.value).toBe("9"))
+    // Les flèches, elles, continuent de faire vivre le curseur : on ne détourne
+    // que les chiffres.
+    fireEvent.keyDown(glissiere, { key: "ArrowRight" })
+    expect(champ.value).toBe("9")
+  })
+})
