@@ -218,9 +218,11 @@
 
   <p style="margin-top:16px"><strong>Ce que l'assistant change :</strong> un choix unique remplit
   tous les endroits qui doivent s'accorder. On choisit « vue de dessus 3/4 » une fois, et l'atelier
-  écrit le nombre de directions partout où il va, <strong>et</strong> la phrase correspondante dans
-  la description qui part au modèle. Les deux ne peuvent plus diverger, parce qu'ils viennent du
-  même geste.</p>
+  écrit le nombre de directions partout où il sert — la liste des poses, le compte que le codex
+  affiche. Ces endroits ne peuvent plus diverger, parce qu'ils viennent du même geste.</p>
+  <p class="sourd">Le nombre de directions ne part plus dans le texte envoyé au modèle : la case
+  <em class="it">technique</em> a perdu cette phrase le 31 août 2026, parce que chaque image dit
+  déjà la direction qu'elle montre. Voir plus bas, à l'étape 2.</p>
 </section>
 
 
@@ -350,12 +352,26 @@
     <li><strong>La phrase de vue dans la case <em class="it">vue</em> de l'étape 5</strong>, qui part
     au modèle. Pour « de dessus 3/4 » : <code>3/4 top-down orthographic view, full-body character
     centered</code>.</li>
-    <li><strong>La phrase de directions dans la case <em class="it">technique</em></strong> :
-    <code>4-directional orientation</code>.</li>
   </ol>
-  <p class="sourd">Les deux phrases écrites restent modifiables à la main — c'est du texte libre, et
-  le produit ne réécrit jamais ce que l'auteur a tapé. Mais elles sont écrites juste, la première
-  fois, sans qu'on ait à y penser.</p>
+  <p class="sourd">La phrase écrite reste modifiable à la main — c'est du texte libre, et le produit
+  ne réécrit jamais ce que l'auteur a tapé. Mais elle est écrite juste, la première fois, sans qu'on
+  ait à y penser.</p>
+
+  <div class="note att">
+    <span class="lab">Un troisième remplissage a été retiré le 31 août 2026</span>
+    <p>Le choix de la vue écrivait aussi <code>4-directional orientation</code> dans la case
+    <em class="it">technique</em>. <strong>Il ne l'écrit plus, et la case ne porte plus cette
+    phrase.</strong> C'est une décision du codex (<span class="mesure">05-codex.html</span> § 05),
+    reportée ici et appliquée à cette date.</p>
+    <p><strong>La raison est mesurée.</strong> Cette phrase partait avec les vingt-huit générations
+    du projet, dont six planches d'équipement — un casque, une hache — où elle contredisait la
+    consigne de l'appel : on demandait une pièce posée à plat, et la bible réclamait quatre
+    orientations.</p>
+    <p><strong>Et elle ne manque pas</strong>, parce que chaque image dit déjà elle-même la direction
+    qu'elle montre : <em class="it">facing south, toward the viewer</em> est écrit dans l'appel,
+    case par case. Le nombre de directions reste rempli partout où il sert — la liste des poses, le
+    compte du codex —, il ne part simplement plus dans le texte.</p>
+  </div>
 
   <div class="note att">
     <span class="lab">Quand on change de vue après coup</span>
@@ -410,7 +426,7 @@
   </div>
 
   <div class="note att">
-    <span class="lab">Quand on change de taille après coup — c'est le plus coûteux des neuf</span>
+    <span class="lab">Quand on change de taille après coup — c'est le plus coûteux des dix</span>
     <p>Tout ce qui a été fabriqué a été découpé à l'ancienne taille. Sur le projet actuel, ça fait
     <strong>48 images</strong>. Elles ne se recoupent pas : il faut les refabriquer, et chacune se
     paie. La ligne d'avertissement le dit avec le compte et le coût estimé.</p>
@@ -478,9 +494,9 @@
 <section>
   <div class="entete"><span class="num">06</span><h2>Étape 5 — l'allure, et les étiquettes</h2></div>
 
-  <p class="intro">C'est la plus longue des neuf, et celle qui pèse le plus lourd : sur une
+  <p class="intro">C'est la plus longue des dix, et celle qui pèse le plus lourd : sur une
   génération payée, ces sept cases représentent <strong>890 caractères sur 1 690</strong>, soit
-  <strong>52 %</strong> du texte envoyé — quand le sujet tapé par l'auteur en fait 40, soit 2 %. La
+  <strong>53 %</strong> du texte envoyé — quand le sujet tapé par l'auteur en fait 40, soit 2 %. La
   description pèse vingt-deux fois le sujet. Ce qu'elle dit de travers, elle le dit fort.</p>
 
   <h4>Les sept cases, et ce que chacune décrit</h4>
@@ -492,7 +508,7 @@
     <tr><td class="o"><b>trait</b></td><td>Comment le trait est fait : contour sombre d'un point, aplats, léger tramage, aucun dégradé.</td><td>la matière</td></tr>
     <tr><td class="o"><b>éclairage</b></td><td>D'où vient la lumière : halo chaud de lanterne, noir absolu autour, chute de lumière nette.</td><td>la matière</td></tr>
     <tr><td class="o"><b>vue</b></td><td>D'où on regarde : vue orthographique 3/4 de dessus, personnage entier centré.</td><td class="o"><b>le cadre</b></td></tr>
-    <tr><td class="o"><b>technique</b></td><td>Ce que l'image doit être : sprite isolé sur fond gris, calage strict sur 128, 4 directions.</td><td class="o"><b>le cadre</b></td></tr>
+    <tr><td class="o"><b>technique</b></td><td>Ce que l'image doit être : sprite isolé sur fond gris, calage strict sur 128.<br><span class="sourd">le nombre de directions n'y est plus écrit depuis le 31 août 2026 — chaque image dit la sienne</span></td><td class="o"><b>le cadre</b></td></tr>
   </table>
 
   <div class="note">
@@ -585,6 +601,8 @@
         <div class="sec">7 · Poses et états<span class="cpt">6 · 3</span></div>
         <div class="sec">8 · Emplacements<span class="cpt">2</span></div>
         <div class="sec">9 · Les IA à utiliser<span class="cpt att">4 vides</span></div>
+        <div class="col-t">l'atelier</div>
+        <div class="sec">10 · La clé<span class="cpt">…a41c</span></div>
       </div>
       <div class="zone">
         <div class="zone-t">5 · L'allure — l'éclairage</div>
@@ -617,7 +635,7 @@
         <div class="champ" style="color:var(--texte-2)"><code>Dynamic warm radial lighting (lanterns, forge heat, glowing runes) surrounded by absolute blackness, sharp light falloff</code></div>
       </div>
     </div>
-    <div class="wf-pied"><span>étape 5 sur 9 · case 5 sur 7</span><span style="margin-left:auto">j'ai fini pour l'instant</span><span>suivant →</span></div>
+    <div class="wf-pied"><span>étape 5 sur 10 · case 5 sur 7</span><span style="margin-left:auto">j'ai fini pour l'instant</span><span>suivant →</span></div>
   </div>
 </section>
 
@@ -667,7 +685,7 @@
 
 <b>Name</b>            Cœur de pierre
 <b>Pitch</b>           dwarves who dug too deep into a mineral underworld
-<b>View</b>            3/4 top-down orthographic, 4 directions
+<b>View</b>            3/4 top-down orthographic
 <b>Sprite size</b>     128 x 128 pixels
 <b>World</b>           desolate subterranean dwarven ruins, grim mineral tunnels,
                 ancient runic masonry, raw crystal-infused caverns

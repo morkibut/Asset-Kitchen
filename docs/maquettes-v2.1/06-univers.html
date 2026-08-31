@@ -558,6 +558,29 @@
     donnée. La base accepte en revanche qu'on lui verse des listes toutes prêtes, plus tard.</p>
   </div>
 
+  <div class="note" style="margin-top:9px">
+    <span class="lab">Répondu le 31 août 2026 — le fond du jeu ne devient pas une huitième case</span>
+    <p>La maquette de la vitrine avait posé la question et personne ne l'avait rapportée ici :
+    <strong>la bible décrit le fond sur lequel le jeu se joue, et rien ne s'en sert.</strong> Elle le
+    décrit au bout d'une phrase de la case <em class="it">éclairage</em> —
+    <code>… surrounded by absolute blackness</code> — et la vitrine s'en sert pour proposer un fond
+    noir absolu, mot pour mot. La proposition était de le <strong>nommer franchement ailleurs</strong>,
+    au lieu de le laisser dans une phrase d'éclairage.</p>
+    <p><strong>La réponse est non, et la raison est dans le texte lui-même.</strong> Les sept cases
+    <em>partent au modèle à chaque génération</em>. Une huitième case qui nommerait le fond du jeu
+    partirait avec — et la case <em class="it">technique</em> réclame déjà, mot pour mot, un sprite
+    isolé sur fond gris neutre ou transparent. Les deux se contrediraient à chaque appel, dans le même
+    texte envoyé. <strong>C'est exactement la panne qu'on vient de retirer de cette même case</strong>
+    avec le nombre de directions.</p>
+    <p><strong>Ce qui change quand même :</strong> la phrase cesse d'être perdue. Sous la case
+    <em class="it">éclairage</em>, à l'étape 5, une ligne dit ce qu'elle sert en plus de partir :</p>
+    <div class="champ" style="max-width:470px">cette phrase décrit aussi le fond du jeu · la vitrine le propose comme fond de comparaison</div>
+    <p style="margin-top:12px">Le fond du jeu reste écrit <strong>à un seul endroit</strong> ; il n'y
+    est simplement plus écrit par accident. Et si un jour il lui faut une couleur exacte plutôt qu'une
+    phrase, elle viendra de la palette du projet, qui est déjà l'endroit des couleurs — pas d'une case
+    de description.</p>
+  </div>
+
   <div class="note att" style="margin-top:9px">
     <span class="lab">Ce que l'assistant réclame et qui n'existe pas encore</span>
     <p><strong>Des vignettes d'exemple.</strong> Une par vue — huit — et une par taille — neuf. Sans
@@ -607,7 +630,7 @@
     <span class="lab">Pourquoi trois cases et pas sept</span>
     <p>Deux des sept cases ne décrivent pas une ambiance, elles décrivent
     <strong>la mécanique du jeu</strong> : <em class="it">vue</em> porte l'angle de caméra,
-    <em class="it">technique</em> porte le calage sur la grille et le nombre de directions. Une
+    <em class="it">technique</em> porte le calage sur la grille et le fond exigé. Une
     ambiance qui pourrait les remplacer fabriquerait des images qui ne rentrent pas dans le jeu, et
     l'erreur ne se verrait qu'après avoir payé.</p>
     <p>Les deux autres — <em class="it">époque</em> et <em class="it">rendu</em> — restent au jeu
@@ -640,6 +663,7 @@
         <div class="sec on">Monstres de l'ombre<span class="cpt">5</span></div>
         <div class="sec sourd">+ nouvelle ambiance</div>
         <div class="col-t">les palettes</div>
+        <div class="sec">du jeu<span class="cpt">48 · 2 img</span></div>
         <div class="sec">marais<span class="cpt">7 img</span></div>
         <div class="sec">ombre — froide<span class="cpt">3 img</span></div>
         <div class="sec">ombre — chaude<span class="cpt">3 img</span></div>
@@ -664,8 +688,13 @@
         </table>
       </div>
     </div>
-    <div class="wf-pied"><span>2 ambiances</span><span>4 palettes</span><span style="margin-left:auto">5 objets utilisent celle-ci</span></div>
+    <div class="wf-pied"><span>2 ambiances</span><span>5 palettes</span><span style="margin-left:auto">5 objets utilisent celle-ci</span></div>
   </div>
+  <p class="sourd" style="margin-top:8px"><b>La palette du jeu a été ajoutée à la liste le 31 août
+  2026.</b> Ce croquis en dessinait quatre et n'y mettait pas celle du jeu, alors que la maquette des
+  ambiances en dessine cinq, <span class="mesure">du jeu · 48 · 2 img</span> en tête. C'est elle qui a
+  raison, et sa raison est écrite : <em>le projet est l'ambiance générale du jeu</em>, donc sa palette
+  est une palette comme les autres, pas une chose à part rangée ailleurs.</p>
 
   <h4>Comment une ambiance s'attribue, et comment on la voit</h4>
   <ol>
@@ -861,7 +890,14 @@
       La raison écrite au § 05 du codex — <em class="it">les directions disent combien d'images il
       faut, pas à quoi elles ressemblent</em> — reste vraie, mais elle est désormais servie par un
       choix unique qui remplit les deux endroits d'un coup. <b>3.</b> Les listes de poses viennent
-      du type d'objet, et un objet peut y ajouter les siennes.</td>
+      du type d'objet, et un objet peut y ajouter les siennes.
+      <br><br><b style="color:var(--ok)">Une quatrième chose, reçue et appliquée le 31 août 2026.</b>
+      La case <em class="it">technique</em> perd <code>4-directional orientation</code> : le nombre de
+      directions ne part plus dans le texte envoyé au modèle. La raison est mesurée au § 05 du codex —
+      cette phrase partait avec les vingt-huit générations du projet, dont six planches d'équipement où
+      elle contredisait la consigne de l'appel. Elle ne manque pas : chaque image dit déjà la direction
+      qu'elle montre, case par case. Le nombre de directions reste rempli partout où il sert, il ne
+      s'écrit simplement plus dans la bible.</td>
     </tr>
     <tr>
       <td class="o"><b>La fiche d'un objet</b><br><span class="sourd">07bis-fiche-entite.html</span></td>
@@ -897,8 +933,15 @@
     <tr>
       <td class="o"><b>Le document de conception</b><br><span class="sourd">docs/DESIGN.md</span></td>
       <td><strong>Un motif à ajouter.</strong> La visionneuse gagne une seconde sorte de contenu :
-      une carte de texte s'y ouvre en colonne de 72 caractères, et elle défile — le motif était
-      écrit pour une image.</td>
+      une carte de texte s'y ouvre en colonne de prose bornée, et elle défile — le motif était
+      écrit pour une image.
+      <b style="color:var(--ok)">Reporté le 31 août 2026.</b>
+      <span class="sourd">Le document du design nomme la carte de texte comme <em class="it">second
+      locataire, et le seul</em>, de la seule largeur maximale du produit, avec le critère
+      d'admission : les deux qui l'ont ont la même matière, de la prose. La borne y est écrite
+      <b>en pixels</b> — 504 — et non « en 72 caractères », qui invitait à l'écrire
+      <span class="mesure">72ch</span> dans une feuille de style et donnait une colonne une fois et
+      demie trop longue. Voir le § 08 de la maquette du guide.</span></td>
     </tr>
   </table>
 </section>

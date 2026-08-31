@@ -218,10 +218,17 @@
   <p>Il ne montre pas un résumé. Il montre <strong>le texte exact, mot pour mot</strong>, et chaque
   image jointe, chacun sur sa ligne, avec un interrupteur. Ce qui est éteint ne part pas. Ce qu'on
   corrige ici <strong>ne vaut que pour cet appel</strong> et ne remonte nulle part.</p>
-  <p class="sourd">Les chiffres de ce document viennent d'un banc d'essai qui lit les vrais appels
-  déjà payés du dépôt, sans rien dépenser — <em class="it">essais/essai_ce_qui_part.py</em>, relevé
-  le 30 août 2026 sur le projet <span class="mesure">cœur de pierre - 01</span> : 24 générations
-  payées, <span class="mesure">$0,362</span> dépensés en tout.</p>
+  <p class="sourd">Les chiffres de ce document viennent d'un banc d'essai qui lit les appels déjà
+  payés du dépôt, sans rien dépenser — <em class="it">essais/essai_ce_qui_part.py</em>, relevé le
+  30 août 2026 : <span class="mesure">24 générations payées</span> sur les 28 du dépôt (les quatre
+  autres sont des images importées, qui ne coûtent rien), pour <span class="mesure">$0,362</span> en
+  tout, tous projets confondus.</p>
+  <p class="sourd"><b>Ce sont des chiffres d'exemple, et ils ont déjà bougé.</b> Le relevé date d'un
+  jour ; l'atelier a continué de servir depuis, et le même compte donnerait autre chose aujourd'hui.
+  Ce document n'est pas un rapport sur le dépôt : c'est le dessin d'un écran. Les nombres sont là
+  pour qu'on voie la forme d'une ligne et l'ordre de grandeur d'une dépense — <b>pas pour être
+  rapprochés de ceux des autres maquettes</b> (décision D28, étendue à tout le dossier le 31 août
+  2026). Ce qui engage vraiment, ici, ce sont les mesures de l'interface.</p>
 </div>
 
 
@@ -414,7 +421,7 @@ Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, cl
 
     <div class="wf-pied">
       <span><i class="pt"></i>en ligne</span>
-      <span>modèle · seedream 4 · 14 images de référence acceptées</span>
+      <span>modèle · gpt-image-2 · 14 images de référence acceptées</span>
       <span>espace montre une image en grand</span>
       <span>rien n'est dépensé tant que le bouton n'est pas pressé</span>
     </div>
@@ -422,7 +429,7 @@ Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, cl
 
   <div class="lgd">
     ■ carré plein : cette chose part · □ carré creux : cette chose ne part pas · ■ carré gris : cette chose part et ne se décoche pas<br>
-    ◤ coin bleu : artwork officiel de l'univers · ◤ coin orange : image apportée par l'ambiance · sans coin : image de cette chose du jeu<br>
+    coin haut-gauche, d'où l'image vient — ◤ bleu : artwork officiel de l'univers · ◤ orange : image apportée par l'ambiance · aucun coin : image de cette chose du jeu<br>
     cadre pointillé : indisponible, avec sa raison écrite en clair — jamais caché, jamais proposé pour être refusé ensuite<br>
     <b>survoler une vignette et appuyer sur la barre d'espace la montre en grand</b> — le geste de la galerie, valable ici comme partout ailleurs<br>
     <b>les mesures des relevés sont vraies</b> ; l'ambiance « Forge des profondeurs » est inventée pour ce croquis, le vrai projet n'en a aucune
@@ -463,10 +470,17 @@ Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, cl
       du produit, et l'en-tête du groupe dit ce que les cases cochées pèsent dans le total —
       <span class="mesure">$0,024 des $0,051</span>. Une case éteinte garde son prix, écrit en gris : c'est
       ce qu'elle coûterait si on la rallumait.</p>
-    <p style="margin-top:8px" class="sourd">Le pas de <span class="mesure">+$0,008</span> est la moyenne
-      des deux écarts mesurés ci-dessus. Il n'est mesuré que sur 24 images d'un seul modèle, dont trois
-      appels seulement à deux références — <b>à revérifier quand le compte aura doublé</b>. La mesure est
-      gratuite : elle relit la base.</p>
+    <p style="margin-top:8px" class="sourd"><b>Pourquoi la même planche est à $0,023 ailleurs et à $0,051
+      ici.</b> Ce ne sont pas deux prix de la même chose : <em class="it">la planche d'une pose</em> chiffre
+      les quatre cases seules, cet écran ajoute les images de référence qu'on lui joint — les
+      <span class="mesure">$0,024</span> ci-dessus. C'est justement ce que l'écran est là pour montrer :
+      la part qu'on ne voyait pas.</p>
+    <p style="margin-top:8px" class="sourd">Le pas de <span class="mesure">+$0,008</span> est la
+      <b>moyenne</b> des deux écarts mesurés ci-dessus, et c'est pour ça qu'il ne tombe pas juste sur un
+      appel donné : le relevé des dépenses en montre un à <span class="mesure">+$0,0097</span>, ce qui est
+      normal — une moyenne n'est le prix de personne. Il n'est mesuré que sur 24 images d'un seul modèle,
+      dont trois appels seulement à deux références — <b>à revérifier quand le compte aura doublé</b>. La
+      mesure est gratuite : elle relit la base.</p>
   </div>
 </section>
 
@@ -644,7 +658,13 @@ Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, cl
       <tr><td class="k">Tous les textes de style sont éteints</td><td><span class="m">avertit</span></td>
         <td>C'est une façon légitime de chercher : voir ce que le modèle fait sans consigne. On l'écrit, on ne l'empêche pas.</td></tr>
       <tr><td class="k">Le texte dépasse ce que le modèle accepte</td><td><span class="m mal">grise et dit combien</span></td>
-        <td>Ce n'est pas un jugement, c'est une limite du modèle choisi. Elle est lue dans le catalogue, et le dépassement est écrit en clair : <span class="mesure">1 204 sur 1 000 caractères</span>.</td></tr>
+        <td>Ce n'est pas un jugement, c'est une limite du modèle choisi. Elle est lue dans le catalogue — aucun
+        chiffre n'est écrit ici, parce que chaque modèle a la sienne — et le dépassement est dit en clair, sur la
+        forme de la ligne suivante : <span class="mesure">le texte fait tant, le modèle en accepte tant</span>.
+        <span class="sourd">Cette case donnait <em class="it">« 1 204 sur 1 000 caractères »</em> en exemple, ce
+        qui contredisait le croquis du § 02 : là, les 1 204 caractères passent, les deux avertissements sont non
+        bloquants et le bouton qui paie est actif. Le chiffre de 1 000 n'était mesuré nulle part. Retiré le
+        31 août 2026.</span></td></tr>
       <tr><td class="k">Plus d'images cochées que le modèle n'en accepte</td><td><span class="m mal">grise et dit combien</span></td>
         <td>Même raison. Les images en trop sont grisées, avec <span class="mesure">14 places, 16 cochées</span>, et on choisit lesquelles retirer.</td></tr>
       <tr><td class="k">Le compte d'images d'une planche est faux</td><td><span class="m mal">refuse</span></td>
@@ -684,6 +704,11 @@ Isolated sprite on neutral grey background, strict <b>64x64</b> px tile snap, cl
         <td>La position de chaque case dans l'image — <span class="mesure">top-left</span>, <span class="mesure">top-right</span> — parce que c'est elle qui permettra de découper le résultat.</td></tr>
     </tbody>
   </table>
+
+  <p style="margin-top:14px"><strong>Trois portes, et toujours deux lieux qui paient.</strong> La planche
+    d'une pose s'ouvre depuis l'établi d'une chose, et <em>Échap</em> y ramène : c'est une profondeur de
+    l'établi, pas un endroit de plus. Les deux lieux d'où l'argent part se lisent donc <em>l'établi d'une
+    chose — sa planche comprise — et le codex</em>.</p>
 
   <div class="note att" style="margin-top:22px">
     <span class="lab">Il y avait une quatrième porte, et elle a été retirée le 30 août</span>

@@ -81,7 +81,7 @@
     border-left:1px solid var(--bord)}
 
   .wf-corps{display:flex;align-items:stretch;min-height:300px}
-  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+  .wf-pied{height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
     display:flex;align-items:center;gap:14px;padding:0 12px;
     font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
   .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
@@ -204,9 +204,10 @@
       <tbody>
         <tr><td class="k">Univers</td><td>La bible du style, la palette du jeu, les planches d'inspiration et la
           toile. Ce qui s'applique à tout sans appartenir à personne.</td></tr>
-        <tr><td class="k">Codex</td><td>Ce que le monde contient, par famille — personnages, biomes, types
-          d'objets, interface — plus les deux listes que le projet impose à tous : le plan de poses et le
-          vestiaire. <strong>C'est de là qu'on entre dans un établi</strong>, et donc dans une table.</td></tr>
+        <tr><td class="k">Codex</td><td>Ce que le monde contient, par famille — personnages, décors, objets,
+          interface, équipement — plus les <strong>deux listes</strong> qui s'imposent à plusieurs : les
+          directions, tirées de la vue du jeu, et les poses, attachées à chaque type d'objet.
+          <strong>C'est de là qu'on entre dans un établi</strong>, et donc dans une table.</td></tr>
         <tr><td class="k">Galerie</td><td>Toutes les images produites, toutes entités confondues. La planche
           contact : on y juge et on y range. <strong>On n'y paie jamais</strong> — les deux lieux d'où
           l'argent part sont l'établi d'une chose et le codex.</td></tr>
@@ -217,9 +218,12 @@
   <!-- ═══ 02 ══════════════════════════════════════════════════════ -->
   <section>
     <div class="entete"><span class="num">02</span><h2>La barre complète — menu, fil d'Ariane, tables</h2></div>
-    <p class="intro">Trois bandes empilées, <span class="mesure">44 + 34</span> px, et rien d'autre au-dessus
-      du travail. Le fil d'Ariane occupe la place du nom de l'onglet Codex : il dit où l'on est, et chacun de
-      ses segments ramène. <span class="sourd">Ce paragraphe disait 38, et le croquis dessinait 38, alors
+    <p class="intro">Deux bandes empilées, <span class="mesure">44 + 34</span> px, et rien d'autre au-dessus
+      du travail. Le fil d'Ariane <strong>n'est pas une troisième bande</strong> : il occupe la place du nom de
+      l'onglet Codex, à l'intérieur de la barre de tête, et vit donc dans ses 44 px. Il dit où l'on est, et chacun de
+      ses segments ramène. <span class="sourd">Ce paragraphe annonçait trois bandes et deux hauteurs, ce qui
+      laissait la troisième sans mesure — corrigé le 31 août 2026 : elles sont deux, et le fil est dedans.
+      Ce paragraphe disait 38, et le croquis dessinait 38, alors
       que le § 08 de ce même fichier annonce 44 depuis le premier jour. Corrigé le 31 août 2026 : c'est 44
       partout, et les quatre plus anciennes maquettes ont été alignées.</span></p>
 
@@ -234,7 +238,7 @@
           <a href="#">marche · sud · image 3</a><span class="sp">›</span>
           <span class="ici">Détourage</span>
         </span>
-        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>Guide</span></span>
       </div>
       <div class="tables">
         <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
@@ -277,7 +281,31 @@
         un second, celui de toutes les séances, qui vit sur l'écran des dépenses.</p>
       <p style="margin-top:8px"><b>Ce croquis-ci ne le montre pas</b>, et c'est normal : dans une
         table, la droite de la barre porte les commandes de la table — <span class="mesure">réglages ·
-        sœurs · ?</span>. Le total est dessiné dans les écrans qui portent le nom du jeu.</p>
+        sœurs · Guide</span>. Le total est dessiné dans les écrans qui portent le nom du jeu.</p>
+    </div>
+
+    <div class="note" style="margin-top:9px">
+      <span class="lab">La barre qui paie est du châssis elle aussi — et une table est le seul endroit où elle ne paraît jamais</span>
+      <p><b>Il n'existe qu'une seule barre de saisie dans tout le produit</b> : même champ de
+        <span class="mesure">56 px</span>, même bouton, même prix, même fente. Elle est rendue
+        <b>en pied de l'établi d'une chose du jeu</b> et <b>en pied de la colonne de droite du
+        codex</b>, et nulle part ailleurs — la galerie n'en a pas, l'univers s'en est vu refuser une.
+        La planche d'une pose la porte aussi, mais elle s'ouvre depuis l'établi et
+        <em>Échap</em> y ramène : ce n'est pas un troisième endroit où l'on paie, c'est le même vu de
+        plus près, une pose au lieu de toute la matrice.</p>
+      <p style="margin-top:8px"><b>Ce croquis-ci ne la montre pas non plus, et la raison tient en une
+        phrase :</b> une table de retouche ne coûte jamais un centime. Sa barre d'état l'écrit —
+        <span class="mesure">aucun appel, aucun coût</span> — et une barre qui paie, affichée pendant
+        qu'on détoure, mentirait sur ce que le geste en cours dépense. <b>Elle se retire dès qu'un
+        outil de reprise s'ouvre</b>, et son absence est le message.</p>
+      <p style="margin-top:8px" class="sourd"><b>Écrit ici le 31 août 2026, et voici ce que ça
+        répare.</b> La décision — <em>la barre de saisie appartient au châssis, pas à un écran</em> —
+        était prise dans la maquette de l'établi, c'est-à-dire dans <b>l'un des deux écrans qui la
+        portent</b>, et les deux autres la citaient. Le seul élément partagé par trois écrans n'avait
+        donc pas de domicile, et c'est ce qui a fait qu'on a plusieurs fois adressé des reports à ce
+        document pour des choses qu'il ne dessine pas. Ce fichier est celui du châssis : la barre de
+        tête s'y définit sans qu'aucune table ne porte de total, et la barre qui paie s'y définit sans
+        qu'aucune table ne paie. Les deux se <b>lisent</b> ici et se <b>dessinent</b> ailleurs.</p>
     </div>
   </section>
 
@@ -388,7 +416,7 @@
           <a href="#">marche · sud · image 3</a><span class="sp">›</span>
           <span class="ici">Détourage</span>
         </span>
-        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>Guide</span></span>
       </div>
       <div class="tables">
         <span class="tb on"><span class="carre"></span>détourage <span class="vl">2 passes</span></span>
@@ -456,7 +484,7 @@
         <tr><td>La colonne des <strong>images sœurs</strong> — les attitudes de l'entité, ou les voisines de
           la grille</td>
           <td>Rien : changer d'image garde la table ouverte, quelle qu'elle soit</td></tr>
-        <tr><td>La barre d'état de 24 px, et la fente de refus</td>
+        <tr><td>La barre d'état de 26 px, et la fente de refus</td>
           <td>Sa raison d'indisponibilité, s'il y en a une — rendue à la place de la colonne</td></tr>
       </tbody>
     </table>
@@ -477,7 +505,7 @@
           <a href="#">marche · sud · image 3</a><span class="sp">›</span>
           <span class="ici">Recadrage</span>
         </span>
-        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>?</span></span>
+        <span class="wf-tard"><span>réglages</span><span>sœurs</span><span>Guide</span></span>
       </div>
       <div class="tables">
         <span class="tb"><span class="carre"></span>détourage</span>

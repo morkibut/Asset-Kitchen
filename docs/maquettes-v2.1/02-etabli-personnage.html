@@ -94,14 +94,14 @@
   .segbar .droite-txt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);white-space:nowrap}
 
   .lignes{flex:1;display:flex;flex-direction:column}
-  .mrow{min-height:52px;display:flex;align-items:center;gap:10px;padding:5px 11px;
+  .mrow{min-height:44px;display:flex;align-items:center;gap:10px;padding:4px 11px;
     border-bottom:1px solid var(--bord)}
   .mrow:hover{background:var(--fond-2)}
   .coche{width:11px;height:11px;border:1px solid var(--bord-fort);border-radius:2px;flex:none}
   .coche.on{border-color:var(--signal);background:var(--signal)}
   .mnom{width:104px;flex:none;font-size:12.5px;color:var(--texte);white-space:nowrap}
   .mvigs{display:flex;gap:4px;flex:1;align-items:center;min-width:0}
-  .mv{width:44px;height:44px;background:var(--fond-2);border:1px solid var(--bord);flex:none}
+  .mv{width:34px;height:34px;background:var(--fond-2);border:1px solid var(--bord);flex:none}
   .mv.arm{border-color:var(--lumiere)}
   .rien{font-family:var(--mono);font-size:10px;color:var(--texte-3)}
   .mmes{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.45;
@@ -130,7 +130,7 @@
     background:var(--fond-2);padding:8px 9px;font-size:12px;color:var(--texte);line-height:1.5}
   .pchamp .prop{color:var(--texte-3)}
   .pcote{width:186px;flex:none;display:flex;flex-direction:column;gap:5px}
-  .btgen{height:32px;border:1px solid var(--signal);background:var(--signal-sourd);
+  .btgen{height:34px;border:1px solid var(--signal);background:var(--signal-sourd);
     border-radius:2px;display:flex;align-items:center;justify-content:center;gap:8px;
     font-size:13px;color:var(--signal-clair)}
   .btgen .px{font-family:var(--mono);font-size:11px}
@@ -246,7 +246,7 @@
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
         <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b></span>
-        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps">
         <div class="gauche">
@@ -270,7 +270,7 @@
           </div>
           <div class="bar">
             <div class="bt">Sortir ce personnage</div>
-            <div class="pied-txt" style="text-align:center">11 images · $0,412</div>
+            <div class="pied-txt" style="text-align:center">15 images · $0,155</div>
           </div>
         </div>
 
@@ -344,7 +344,7 @@
           </div>
         </div>
       </div>
-      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>catalogue · 29/08 14:02</span><span>balthazar · 11 images · $0,412</span></div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>catalogue · 29/08 14:02</span><span>balthazar · 15 images · $0,155</span></div>
     </div>
     <div class="lgd">la matrice arme et tire au même endroit · une case pleine s'ouvre dans son outil · la coche porte une attitude, jamais une image</div>
   </section>
@@ -360,10 +360,16 @@
       <p>La règle qui l'imposait est <em>« il n'existe qu'un seul endroit d'où l'on paie »</em>, et elle ne
         tombe pas : <strong>elle se lit sur l'objet, pas sur l'écran.</strong> La barre de prompt est un
         élément du châssis — même champ, même bouton, même prix, même fente. Elle est rendue
-        <strong>en pied de l'établi et en pied du codex</strong>, et nulle part ailleurs : la galerie n'en
-        a pas, et l'univers s'en est vu refuser une. Il y a toujours un seul endroit d'où l'on paie :
-        <strong>c'est cette barre-là</strong>, et l'apparence dit lequel puisqu'il n'en existe qu'une
-        forme.</p>
+        <strong>en pied de l'établi, et en pied de la colonne de droite du codex</strong>, et nulle part
+        ailleurs : la galerie n'en a pas, et l'univers s'en est vu refuser une. Il y a toujours un seul
+        endroit d'où l'on paie : <strong>c'est cette barre-là</strong>, et l'apparence dit lequel puisqu'il
+        n'en existe qu'une forme.</p>
+      <p><strong>La planche d'une pose n'ouvre pas un troisième guichet.</strong> Elle porte bien la barre,
+        avec son texte assemblé et son prix — c'est là qu'on achète les quatre images d'une pose en un seul
+        appel (<span class="mesure">08-planche-de-pose.html</span>). Mais elle s'ouvre depuis cet établi-ci
+        et <em>Échap</em> y ramène : ce n'est pas un autre endroit, c'est le même vu de plus près, une pose
+        au lieu de toute la matrice. Les deux lieux d'où l'argent part sont donc <strong>l'établi d'une
+        chose — sa planche comprise — et le codex</strong>.</p>
       <p><strong>Elle a perdu sa bande dépliante.</strong> Elle portait un dépliant <em>ce qui part</em>,
         qui montrait le texte assemblé sans qu'on puisse y toucher. Il est devenu un écran à lui seul —
         l'écran de confirmation —, qui s'intercale entre le bouton et la dépense et où chaque ligne se
@@ -372,14 +378,28 @@
         gagnée, c'est une vérité du produit : le post-traitement ne touche jamais le fournisseur et ne coûte
         jamais un centime. Une barre qui paie, affichée pendant qu'on détoure, mentirait sur ce que le geste
         en cours dépense.</p>
+      <p class="sourd" style="margin-top:10px"><strong>Cette décision a reçu son domicile le 31 août
+        2026, et ce n'est pas ici.</strong> Elle se prenait dans cette maquette-ci, qui n'est que
+        <em>l'un des deux</em> écrans portant la barre, et le codex comme la planche la citaient sans
+        que personne ne la définisse. Elle est désormais écrite dans la maquette du châssis
+        (<span class="mesure">03-chassis-des-tables.html</span> § 02), à côté de la barre de tête, qui
+        est l'autre élément partagé par tous les écrans. Ce paragraphe garde ce qui lui appartient
+        vraiment : <b>ce que la barre coûte à cet établi-ci</b>, et ce que la matrice y perd en
+        hauteur.</p>
     </div>
     <div class="note att">
       <span class="lab">Ce que ça coûte</span>
       <p><strong>Deux lieux portent une hauteur de prompt permanente</strong> — 56 px de champ, la bande
         « Pour » quand elle existe, le pied d'options. Sur l'établi, c'est autant de moins pour les lignes
-        d'attitudes ; à six poses et 52 px de rangée, ça tient, mais un plan de quinze poses fera défiler la
+        d'attitudes ; à six poses et 44 px de rangée, ça tient, mais un plan de quinze poses fera défiler la
         matrice sous une barre fixe. C'est le comportement voulu — la barre ne défile jamais, comme
         l'en-tête d'un panneau.</p>
+      <p><strong>La rangée est passée de 52 à 44 px le 31 août 2026, et sa vignette de 44 à 34.</strong>
+        52 n'appartenait à aucune des cinq hauteurs du produit, et deux mesures s'y contredisaient : le
+        croquis déclarait 52 mais rendait <span class="mesure">55 px</span> — la vignette de 44 plus les
+        marges et le trait dépassaient de trois pixels le chiffre annoncé. À 44 de rangée et 34 de
+        vignette, <b>les deux sont des hauteurs du produit</b>, le croquis rend exactement 44, et rien ne
+        déborde. <span class="sourd">Mesuré sur le croquis rendu, six rangées sur six.</span></p>
     </div>
   </section>
 
@@ -420,8 +440,8 @@
       <div class="wf-barre">
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
-        <span class="fil">… › Balthazar › le corps › <b>marche · image 3</b></span>
-        <span class="wf-tard"><span>Fermer l'outil</span><span>⚙</span><span>?</span></span>
+        <span class="fil">… › Balthazar › marche · sud · image 3 › <b>Détourage</b></span>
+        <span class="wf-tard"><span>Fermer l'outil</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps" style="min-height:236px">
         <div class="colout">
@@ -462,10 +482,23 @@
         <strong>une pose déclare déjà combien d'images elle demande</strong> — un pour la plupart, quatre ou
         huit pour un cycle. <span class="mesure">marche 4 / 8</span> dans le croquis ci-dessus, <em>c'est
         déjà la bande d'une animation à moitié remplie.</em></p>
-      <p>Ce que la V3 ajoutera n'est donc pas un axe, c'est <strong>trois choses sur la ligne qui existe</strong> :
-        l'ordre des images, une cadence, et un bouton pour la lire. La place est déjà prise, sans qu'une
-        seule case vide ait à être affichée en attendant — ce qui est exactement ce que le produit refuse
-        depuis la maquette écartée.</p>
+      <p class="sourd"><strong>Ce nombre-là n'est pas une jauge, et il faut le dire depuis le 31 août
+        2026.</strong> Une jauge du produit compte des <b>cases</b> — une pose dans une direction —, et
+        elle est définie une seule fois, dans la maquette du codex
+        (<span class="mesure">05-codex.html</span> § 09). Le <span class="mesure">4 / 8</span> d'une
+        rangée compte tout autre chose : <b>les vignettes d'un cycle, dans une seule case</b>. Les deux
+        s'écrivent pareil, alors on les distingue à ce qu'ils nomment — une jauge porte le nom d'un
+        ensemble (<em>corps</em>, <em>équip.</em>), ce compte-ci porte le nom d'une attitude.</p>
+      <p>Ce que la V3 ajoutera n'est donc pas un axe, c'est <strong>trois choses</strong> : l'ordre des
+        images, une cadence, et un bouton pour la lire. La place est déjà prise, sans qu'une seule case
+        vide ait à être affichée en attendant — ce qui est exactement ce que le produit refuse depuis la
+        maquette écartée.</p>
+      <p><strong>Les trois ne tiennent pas toutes sur cette ligne-ci</strong>, et c'est la planche d'une
+        pose qui l'a écrit place par place — <span class="mesure">08-planche-de-pose.html</span> § 09 :
+        l'ordre des vignettes va <em>dans la case d'une direction</em>, la cadence <em>sur la pose</em>,
+        donc bien sur cette rangée, et le bouton pour la lire <em>dans la vitrine</em>, parce que lire une
+        animation c'est essayer. <span class="sourd">Précisé le 31 août 2026 : ce paragraphe mettait les
+        trois sur la rangée. Deux y sont.</span></p>
     </div>
   </section>
 
@@ -491,9 +524,18 @@
           nommé, jamais un seuil, jamais une couleur d'alarme.</li>
         <li><b>Ce qu'un compte faux coûterait</b> reste une rangée de l'écran de confirmation, jamais une
           probabilité.</li>
-        <li><b>Le second coin de carte en <span class="mesure">--epingle</span></b> dit <em>concept art</em>.
-          Les deux coins sont pris, et le vocabulaire des marques est clos.</li>
-        <li><b>Le rang de 26 px et la rangée de 52 px</b> — aucune hauteur neuve n'entre.</li>
+        <li><b>Les marques de coin ne se décident plus ici — retiré le 31 août 2026.</b> Ce point disait
+          <em>« le second coin de carte en <span class="mesure">--epingle</span> dit concept art ; les deux
+          coins sont pris, et le vocabulaire des marques est clos »</em>. Il a été rouvert trois fois depuis
+          sans que personne revienne le corriger : trois maquettes écrites après lui donnent le coin bleu à
+          l'artwork officiel, l'orange à l'image d'une ambiance et <b>aucun coin</b> au concept art, et la
+          vitrine donne le doré à <em>hors taille commune</em> — la même couleur, un autre sens. Le
+          vocabulaire complet, <b>trois angles pour trois sujets</b>, est désormais écrit à un seul endroit :
+          <span class="mesure">04-galerie.html</span> § 09, la maquette qui tient la tuile.</li>
+        <li><b>Le rang de 26 px</b> — aucune hauteur neuve n'entre.
+          <span class="sourd">La rangée de la matrice, qui figurait ici à 52 px, passe à 44 le 31 août
+          2026, et sa vignette de 44 à 34 : 52 n'appartenait à aucune des cinq hauteurs du produit, et le
+          croquis rendait 55 là où il annonçait 52. La raison et la mesure sont au § 03.</span></li>
       </ul>
     </div>
   </section>
@@ -513,7 +555,7 @@
       <span class="lab">Venu de la maquette du calibrage</span>
       <p><strong>Les poses d'un même personnage ne sortent pas toutes à la même taille</strong>, et rien ne le
         dit aujourd'hui. Mesuré sur les images réelles du dépôt : six poses d'un personnage, même recette,
-        sortent à <span class="mesure">64, 59, 64, 53, 64 et 43 px</span> de haut. Un bras tendu suffit —
+        sortent à <span class="mesure">64, 60, 64, 53, 64 et 43 px</span> de haut. Un bras tendu suffit —
         il élargit la boîte du sujet, et la mise sur grille rétrécit tout.</p>
       <p>La matrice est <strong>le seul endroit où les poses se voient ensemble</strong>. Elle gagne donc deux
         choses, et aucune n'est une forme neuve :</p>

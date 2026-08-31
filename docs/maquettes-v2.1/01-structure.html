@@ -68,7 +68,7 @@
   .wf-tard{margin-left:auto;display:flex;gap:12px;align-items:center;
     font-family:var(--mono);font-size:10px;color:var(--texte-3)}
   .wf-corps{display:flex;min-height:240px}
-  .wf-pied{height:24px;background:var(--fond-1);border-top:1px solid var(--bord);
+  .wf-pied{height:26px;background:var(--fond-1);border-top:1px solid var(--bord);
     display:flex;align-items:center;gap:14px;padding:0 12px;
     font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
   .pt{width:5px;height:5px;border-radius:9999px;background:var(--ok);display:inline-block;margin-right:5px}
@@ -122,6 +122,20 @@
     font-family:var(--mono);font-size:13px;line-height:1}
   .cs.mort{background:transparent;border-style:dashed;border-color:var(--bord);opacity:.45}
   .raison{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:5px}
+  .cs.mini{width:26px;height:26px}
+  .colbar{display:flex;align-items:center;gap:5px;padding-bottom:7px;margin-bottom:3px;
+    border-bottom:1px solid var(--bord)}
+  .colbar .sg{font-family:var(--mono);font-size:9.5px;padding:3px 7px;border:1px solid var(--bord);
+    color:var(--texte-2)}
+  .colbar .sg.on{border-color:var(--lumiere);color:var(--texte-1)}
+  .colbar .sg.vide{border-style:dashed;color:var(--texte-3)}
+  .colbar .apres{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--texte-3)}
+  .paie{display:flex;align-items:center;gap:9px;padding:7px 10px;border-top:1px solid var(--bord);
+    background:var(--fond-1)}
+  .paie .ch{flex:1;min-width:0;font-size:10.5px;color:var(--texte-2);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .paie .bt{font-family:var(--mono);font-size:10px;padding:5px 10px;border:1px solid var(--lumiere);
+    color:var(--texte-1);white-space:nowrap}
   .identite{width:168px;flex:none;border-right:1px solid var(--bord);padding:10px;
     display:flex;flex-direction:column;gap:8px}
   .portrait{height:104px;background:var(--fond-2);border:1px solid var(--bord)}
@@ -199,10 +213,11 @@
       <div class="lieu">
         <div class="n">02 · un onglet</div>
         <h3>Le codex</h3>
-        <p class="quoi">Ce que le monde contient, rangé par famille : personnages, biomes, types d'objets,
-          interface. Chaque entité y dit ce qu'elle a, ce qui lui manque, et l'ambiance qu'elle porte. Il
-          porte aussi les listes qui s'imposent à plusieurs : les directions, tirées de la vue du jeu ;
-          les poses, attachées à chaque type d'objet ; et le vestiaire.</p>
+        <p class="quoi">Ce que le monde contient, rangé par famille : personnages, décors, objets,
+          interface — et l'équipement, qui est une famille comme les autres. Chaque entité y dit ce
+          qu'elle a, ce qui lui manque, et l'ambiance qu'elle porte. Il porte aussi <b>les deux listes</b>
+          qui s'imposent à plusieurs : les directions, tirées de la vue du jeu, et les poses, attachées à
+          chaque type d'objet.</p>
         <div class="cle">Absorbe l'écran <b>Personnages</b> d'aujourd'hui, et donne un domicile aux deux
           listes qui traînaient dans sa colonne de gauche.</div>
       </div>
@@ -244,7 +259,7 @@
       <div class="wf-barre">
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab">Codex</span><span class="tab on">Galerie</span>
-        <span class="wf-tard"><span>Cœur de pierre — 01 · ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+        <span class="wf-tard"><span>Cœur de pierre — 01 · ce jeu $2,140 ›</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps">
         <div class="col" style="width:150px">
@@ -295,15 +310,16 @@
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
         <span class="fil">Cœur de pierre › <b>Personnages</b></span>
-        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps">
         <div class="col" style="width:172px">
           <div class="col-t">les familles du monde</div>
           <div class="fam on">Personnages<span class="cpt">6</span></div>
-          <div class="fam">Biomes<span class="cpt">3</span></div>
-          <div class="fam">Types d'objets<span class="cpt">12</span></div>
+          <div class="fam">Décors<span class="cpt">3</span></div>
+          <div class="fam">Objets<span class="cpt">12</span></div>
           <div class="fam">Interface<span class="cpt">4</span></div>
+          <div class="fam">Équipement<span class="cpt">5</span></div>
         </div>
         <div class="zone">
           <div class="outils">
@@ -312,15 +328,15 @@
           </div>
           <div class="entites">
             <div class="ent"><div class="vig"></div><div class="nm">Balthazar</div>
-              <div class="jg manque">poses <b>4/8</b> · équip. <b>2/5</b></div></div>
+              <div class="jg manque">corps <b>6 / 21</b> · équip. <b>1 / 12</b></div></div>
             <div class="ent"><div class="vig"></div><div class="nm">Maeve la guetteuse</div>
-              <div class="jg">poses <b>8/8</b> · équip. <b>5/5</b></div></div>
+              <div class="jg">corps <b>21 / 21</b> · équip. <b>12 / 12</b></div></div>
             <div class="ent"><div class="vig"></div><div class="nm">Le forgeron</div>
-              <div class="jg manque">poses <b>0/8</b></div></div>
+              <div class="jg manque">corps <b>0 / 21</b></div></div>
             <div class="ent"><div class="vig"></div><div class="nm">Garde du nord</div>
-              <div class="jg manque">poses <b>2/8</b></div></div>
+              <div class="jg manque">corps <b>3 / 21</b></div></div>
             <div class="ent"><div class="vig"></div><div class="nm">Rat des caves</div>
-              <div class="jg">poses <b>4/4</b></div></div>
+              <div class="jg">corps <b>4 / 4</b></div></div>
             <div class="ent neuf" style="border-style:solid;border-color:var(--signal);color:var(--signal-clair);flex-direction:column;gap:5px">un tonneau cerclé de fer<span style="font-size:9px;color:var(--texte-3)">Entrée le crée</span></div>
           </div>
         </div>
@@ -328,6 +344,25 @@
       <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>6 personnages · 3 incomplets</span></div>
     </div>
     <div class="lgd">la famille décide de ce qu'une entité peut avoir · la jauge dit ce qui manque, jamais ce qui est fait</div>
+
+    <div class="note att" style="margin-top:16px">
+      <span class="lab">Les jauges de ce croquis ont été refaites le 31 août 2026 — elles ne comptaient pas la bonne chose</span>
+      <p>Elles disaient <span class="mesure">poses 4/8</span> : des <b>poses</b> faites sur des poses
+      demandées. Le produit ne compte pas comme ça. <b>Une jauge compte des cases</b>, et une case est
+      une pose <em>dans une direction</em> — la marche vers le sud et la marche vers le nord sont deux
+      cases, pas une. Le compte se lit donc <span class="mesure">corps 6 / 21</span>, et le
+      dénominateur se calcule : poses tenues × directions tenues × images de la pose.</p>
+      <p><b>Trois formes identiques circulaient dans le dossier, et une seule est celle du
+      produit.</b> Celle-ci, en trois <em>quarts</em> de mot ; celle de la rangée d'une attitude dans
+      l'établi, qui compte les images d'un cycle et non des cases ; celle du codex, qui compte des
+      cases. <b>C'est le codex qui a raison, et c'est lui qui la définit</b> — sa maquette y consacre
+      un paragraphe entier, avec la façon dont le dénominateur se calcule et la raison pour laquelle
+      l'équipement se compte sur les corps qui existent
+      (<span class="mesure">05-codex.html</span> § 09). Les deux autres endroits ne redisent pas la
+      règle : ils disent ce qu'ils comptent.</p>
+      <p class="sourd">Les noms et les nombres de ce croquis restent des exemples inventés pour le
+      dessin ; c'est l'<b>unité</b> qui vient d'être corrigée, pas les chiffres.</p>
+    </div>
   </section>
 
   <!-- ═══ 4 ═══════════════════════════════════════════════════════ -->
@@ -342,7 +377,7 @@
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
         <span class="fil">Cœur de pierre › Personnages › <b>Balthazar</b></span>
-        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>⚙</span><span>?</span></span>
+        <span class="wf-tard"><span>ce jeu $2,140 ›</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps">
         <div class="identite">
@@ -354,33 +389,71 @@
             bible</span></div>
         </div>
         <div class="zone">
+          <div class="colbar">
+            <span class="col-t">colonne</span>
+            <span class="sg on">le corps</span><span class="sg">casque</span><span class="sg">plastron</span>
+            <span class="sg vide">+ pièce</span>
+            <span class="apres">on lit une colonne, on ne balaie pas une planche</span>
+          </div>
           <div class="rangee">
-            <div class="rangee-t"><span class="nm">Poses</span><span class="st att">4 sur 8</span></div>
+            <div class="rangee-t"><span class="nm">repos</span><span class="st">1 / 1</span></div>
+            <div class="cases"><div class="cs mini"></div></div>
+          </div>
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">marche</span><span class="st att">4 / 8</span></div>
             <div class="cases">
-              <div class="cs"></div><div class="cs sel"></div><div class="cs"></div><div class="cs"></div>
-              <div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div>
+              <div class="cs mini"></div><div class="cs mini sel"></div><div class="cs mini"></div><div class="cs mini"></div>
+              <div class="cs mini vide">+</div><div class="cs mini vide">+</div><div class="cs mini vide">+</div><div class="cs mini vide">+</div>
             </div>
           </div>
           <div class="rangee">
-            <div class="rangee-t"><span class="nm">Animations</span><span class="st">indisponible</span></div>
+            <div class="rangee-t"><span class="nm">course</span><span class="st att">0 / 8</span></div>
             <div class="cases">
-              <div class="cs mort"></div><div class="cs mort"></div><div class="cs mort"></div><div class="cs mort"></div>
+              <div class="cs mini vide">+</div><div class="cs mini vide">+</div><div class="cs mini vide">+</div><div class="cs mini vide">+</div>
             </div>
-            <div class="raison">— pas encore construit · arrive en V3</div>
           </div>
           <div class="rangee">
-            <div class="rangee-t"><span class="nm">Équipements</span><span class="st att">2 sur 5</span></div>
-            <div class="cases">
-              <div class="cs"></div><div class="cs"></div>
-              <div class="cs vide">+</div><div class="cs vide">+</div><div class="cs vide">+</div>
-            </div>
-            <div class="raison">un calque par équipement, décliné sur chaque pose</div>
+            <div class="rangee-t"><span class="nm">attaque</span><span class="st">2 / 2</span></div>
+            <div class="cases"><div class="cs mini"></div><div class="cs mini"></div></div>
+          </div>
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">dégâts</span><span class="st att">0 / 1</span></div>
+            <div class="cases"><div class="cs mini vide">+</div></div>
+          </div>
+          <div class="rangee">
+            <div class="rangee-t"><span class="nm">mort</span><span class="st att">0 / 1</span></div>
+            <div class="cases"><div class="cs mini vide">+</div></div>
+            <div class="raison">pas pour lui — nage · grimpe</div>
           </div>
         </div>
       </div>
-      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>balthazar · $0,412 · 11 images</span></div>
+      <div class="paie">
+        <span class="col-t">Pour</span>
+        <span class="ch"><b>Balthazar · marche</b> — nain mineur, carrure large, barbe tressée ; chemise de
+          toile, ceinture à outils, deux lanternes. <span style="color:var(--texte-3)">walking posture,
+          facing south, front view, full body</span></span>
+        <span class="bt">Générer $0,067</span>
+      </div>
+      <div class="wf-pied"><span><span class="pt"></span>en ligne</span><span>balthazar · $0,155 · 15 images</span></div>
     </div>
-    <div class="lgd">au repos, aucun outil n'est ouvert · une case pleine ouvre son outil, une case vide arme le prompt</div>
+    <div class="lgd">au repos, aucun outil n'est ouvert · une case pleine ouvre son outil, une case vide arme
+      la barre qui paie, en pied et en permanence</div>
+
+    <div class="note att" style="margin-top:16px">
+      <span class="lab">Ce croquis a été refait le 31 août 2026</span>
+      <p>Il dessinait <b>trois rangées côte à côte — Poses, Animations, Équipements</b>, et c'est faux :
+      la matrice se lit <b>une colonne à la fois</b>, une rangée par attitude. La correction avait été
+      écrite dans la maquette de l'établi (<span class="mesure">02-etabli-personnage.html</span> § 00) et
+      n'était jamais remontée jusqu'ici.</p>
+      <p><b>Deux autres choses suivent de la même correction.</b> La rangée <em>Animations</em>
+      disparaît : elle n'est pas repoussée en V3, elle est <b>inutile</b> — une animation est la bande
+      d'une pose dans une direction, et cette bande est déjà la rangée qu'on voit (§ 06 de l'établi). Et
+      <b>la barre qui paie est dessinée</b>, en pied et en permanence : elle est du châssis, pas de cet
+      écran-ci.</p>
+      <p class="sourd">Ce croquis reste une carte : l'établi complet — la colonne de gauche avec le
+      signalement, les concept arts et la sortie, la mesure sous chaque rangée, les attitudes écartées —
+      se lit dans sa propre maquette. Ici on ne montre que la forme.</p>
+    </div>
   </section>
 
   <!-- ═══ 5 ═══════════════════════════════════════════════════════ -->
@@ -394,8 +467,8 @@
       <div class="wf-barre">
         <span class="wf-nom">Asset Kitchen</span>
         <span class="tab">Univers</span><span class="tab on">Codex</span><span class="tab">Galerie</span>
-        <span class="fil">… › Balthazar › <b>Pose · marche sud</b></span>
-        <span class="wf-tard"><span>Fermer l'outil</span><span>⚙</span><span>?</span></span>
+        <span class="fil">… › Balthazar › marche · sud · image 3 › <b>Détourage</b></span>
+        <span class="wf-tard"><span>Fermer l'outil</span><span>Réglages</span><span>Guide</span></span>
       </div>
       <div class="wf-corps">
         <div class="col" style="width:132px">
@@ -437,20 +510,46 @@
     <table>
       <thead><tr><th style="width:150px">Famille</th><th>Les rangées de son établi</th><th style="width:230px">L'outil de reprise associé</th></tr></thead>
       <tbody>
-        <tr><td><b class="fam">Personnage</b></td>
-          <td>Identité · <strong>Poses</strong> · <strong>Animations</strong> <span class="sourd">(V3)</span> · <strong>Équipements</strong></td>
-          <td>détourage, superposition, bande de frames</td></tr>
-        <tr><td><b class="fam">Biome</b></td>
-          <td>Identité · <strong>Tuiles</strong> <span class="sourd">(V4)</span> · <strong>Décors</strong> · <strong>Props</strong></td>
+        <tr><td><b class="fam">Personnages</b></td>
+          <td><strong>Une colonne par pièce portée</strong> — le corps, puis chaque pièce d'équipement —,
+            et dans la colonne ouverte <strong>une rangée par attitude</strong> : repos, marche, course,
+            attaque, dégâts, mort.</td>
+          <td>détourage, superposition</td></tr>
+        <tr><td><b class="fam">Décors</b></td>
+          <td>Identité · <strong>Tuiles</strong> <span class="sourd">(V4)</span> · <strong>Fonds</strong> · <strong>Props</strong></td>
           <td>détourage, découpe de planche, atlas autotile</td></tr>
-        <tr><td><b class="fam">Type d'objet</b></td>
+        <tr><td><b class="fam">Objets</b></td>
           <td>Identité · <strong>Variantes</strong> · <strong>États</strong> <span class="sourd">(ouvert / fermé / cassé)</span></td>
           <td>détourage, découpe de planche</td></tr>
         <tr><td><b class="fam">Interface</b></td>
           <td>Identité · <strong>Composants</strong> · <strong>États</strong> <span class="sourd">(repos / survol / pressé)</span></td>
           <td>découpe 9-slice, détourage</td></tr>
+        <tr><td><b class="fam">Équipement</b></td>
+          <td><strong>Aucune rangée d'images</strong> : une pièce n'a jamais d'image à elle — un casque
+            n'existe qu'apparu sur un corps. Son établi montre <strong>sur quels personnages elle est
+            posée</strong>, et ce qui manque : <span class="mesure">posée sur 1 personnage sur 3</span>.</td>
+          <td><span class="sourd">pas encore dessiné — il attend d'être utile</span></td></tr>
       </tbody>
     </table>
+
+    <div class="note att" style="margin-top:16px">
+      <span class="lab">Ce tableau a été refait le 31 août 2026, sur deux points</span>
+      <p><b>Les noms de famille.</b> Il disait <span class="mesure">Personnage · Biome · Type d'objet ·
+      Interface</span>. Les deux du milieu n'existent nulle part dans le produit, qui nomme ses familles
+      <span class="mesure">personnages · objets · décors · interface</span> — et c'est ce vocabulaire-là
+      qui décide déjà de quelque chose : quand on génère un personnage, seuls les artworks officiels de la
+      famille <em>personnages</em> partent en référence. Deux vocabulaires auraient fini par diverger.
+      La correction était écrite dans le codex (<span class="mesure">05-codex.html</span> § 04) et n'était
+      jamais remontée.</p>
+      <p><b>Rien ne se perd au passage :</b> un biome et un type d'objet redeviennent ce qu'ils sont, des
+      choses rangées dans une famille. « Les cavernes du nord » est une entité de la famille
+      <em>décors</em> ; « tonneau » une entité de la famille <em>objets</em>.</p>
+      <p><b>Une cinquième famille, et la forme de la première.</b> L'équipement monte avec les familles —
+      une pièce a un nom, une description, un emplacement sur le corps et une portée : c'est une chose du
+      monde, pas un réglage. Et la ligne des personnages ne dit plus <em>Poses · Animations (V3) ·
+      Équipements</em> : ces trois rangées côte à côte étaient la forme abandonnée de la matrice (voir le
+      § 04).</p>
+    </div>
   </section>
 
   <!-- ═══ 7 ═══════════════════════════════════════════════════════ -->
@@ -463,8 +562,10 @@
           <td class="apres"><b>Trois onglets</b> — Univers, Codex, Galerie, dans l'ordre où ils servent — plus
             un fil d'Ariane qui dit à quelle profondeur du codex on se trouve.</td></tr>
         <tr><td><span class="barre-txt">L'écran Personnages, et les trois listes du projet coincées dans sa colonne de gauche</span></td>
-          <td class="apres">Le <b>codex</b> : les familles, leurs entités, et les deux listes que le projet
-            impose à tous — le plan de poses et le vestiaire.</td></tr>
+          <td class="apres">Le <b>codex</b> : les familles, leurs entités, et les <b>deux listes</b> qui
+            s'imposent à plusieurs — les directions, tirées de la vue du jeu, et les poses, attachées à
+            chaque type d'objet. <span class="sourd">Le vestiaire, lui, n'est pas une liste : c'est la
+            cinquième famille (§ 06).</span></td></tr>
         <tr><td><span class="barre-txt">L'écran Découpe, atteignable seulement depuis la fiche</span></td>
           <td class="apres">Un des <b>outils de l'établi</b>, choisi par la nature de la case ouverte. On ne
             le cherche plus : il est là quand il sert.</td></tr>
@@ -484,8 +585,8 @@
     <div class="note att">
       <span class="lab">Trois coûts réels, aucun caché</span>
       <p><strong>Une entité devient un objet de premier plan.</strong> Aujourd'hui seul le personnage en est
-        un ; il faut généraliser aux biomes, types d'objets et interface. C'est du modèle, pas de la mise en
-        page — et c'est ce qui rend le reste possible.</p>
+        un ; il faut généraliser aux décors, aux objets et à l'interface. C'est du modèle, pas de la mise
+        en page — et c'est ce qui rend le reste possible.</p>
       <p><strong>Un asset appartient désormais à une entité, ou à personne.</strong> Un essai, une texture,
         une image importée vivent dans la galerie sans établi. C'est acceptable, mais il faut l'assumer : la
         galerie reste le domicile par défaut, jamais un fourre-tout de second rang.</p>
@@ -508,13 +609,14 @@
     <div class="entete"><span class="num">09</span><h2>La suite</h2></div>
     <div class="suite">
       <div class="jalon ici"><div class="code">M0 · ici</div><div class="nom">La structure</div>
-        <div class="quoi">Galerie, codex, établi. Deux onglets, une profondeur.</div></div>
+        <div class="quoi">Univers, codex, galerie, établi. Trois onglets, une profondeur.</div></div>
       <div class="jalon"><div class="code">M1</div><div class="nom">L'établi personnage</div>
         <div class="quoi">Les cases, l'armement du prompt, l'héritage de l'identité. Il prouve la structure.</div></div>
       <div class="jalon"><div class="code">M2</div><div class="nom">Les outils de reprise</div>
         <div class="quoi">Détourage, découpe, calque — refaits, dans le cadre que M1 leur donne.</div></div>
       <div class="jalon"><div class="code">M3</div><div class="nom">Le codex</div>
-        <div class="quoi">Les familles, les jauges de manque, la bible en tête.</div></div>
+        <div class="quoi">Les cinq familles, les jauges de manque, les deux listes. <span class="sourd">Pas la
+          bible : elle vit dans l'onglet Univers, qui précède celui-ci (§ 03).</span></div></div>
       <div class="jalon"><div class="code">M4</div><div class="nom">La galerie</div>
         <div class="quoi">L'écran actuel dégraissé — le moins de travail des cinq.</div></div>
     </div>

@@ -189,7 +189,7 @@
     display:flex;align-items:center;justify-content:center;color:var(--texte-3);
     font-family:var(--mono);font-size:12px}
   .pied-c{border-top:1px solid var(--bord);padding:9px 11px;display:flex;flex-direction:column;gap:6px}
-  .btgen{height:32px;border:1px solid var(--signal);background:var(--signal-sourd);
+  .btgen{height:34px;border:1px solid var(--signal);background:var(--signal-sourd);
     border-radius:2px;display:flex;align-items:center;justify-content:center;gap:8px;
     font-size:13px;color:var(--signal-clair)}
   .btgen .px{font-family:var(--mono);font-size:11px}
@@ -215,9 +215,14 @@
       jeu réclame — les directions, les poses, les pièces —, et pour chaque chose du monde ce qu'elle
       réclame parmi tout ça. <strong>Il compte</strong> ce qui est fait et ce qui manque.
       <strong>Il lance</strong> ce qui manque, en groupant plusieurs images dans un seul appel payant.</p>
-    <p>Tout ce qui est chiffré ici a été mesuré le 30 août 2026 dans le dépôt, sur le vrai projet
-      <span class="mesure">cœur de pierre - 01</span> : trois personnages, vingt-huit générations payées,
-      <span class="mesure">$0,3619</span> dépensés.</p>
+    <p>Tout ce qui est chiffré ici a été relevé le 30 août 2026 dans le dépôt, tous projets
+      confondus : trois personnages, vingt-huit générations — dont vingt-quatre payées, les quatre
+      autres étant des images importées, qui ne coûtent rien —, <span class="mesure">$0,3619</span>
+      dépensés.</p>
+    <p class="sourd"><b>Ce sont des chiffres d'exemple.</b> Le relevé date d'un jour, l'atelier a
+      servi depuis, et le même compte donnerait autre chose aujourd'hui. On ne les fait pas concorder
+      d'une maquette à l'autre : ce dossier dessine une interface, il ne rend pas compte de l'état du
+      dépôt (décision D28).</p>
   </div>
 
   <!-- ═══ 01 ══════════════════════════════════════════════════════ -->
@@ -244,6 +249,16 @@
         <tr><td class="k">il lance</td>
           <td>Ce qui manque part d'ici, <strong>groupé</strong> : les images manquantes d'une même chose
             sont réunies sur une seule planche, et une planche coûte un appel. Le prix est annoncé avant.</td></tr>
+        <tr><td class="k">il montre</td>
+          <td>Une porte, à droite de la barre d'outils du panneau du milieu — <em>voir ce qui est
+            fait ›</em> — qui ouvre <strong>la vitrine</strong> : les images finies en grand, sur le
+            fond du jeu. Le codex n'affiche toujours aucun résultat lui-même, il mène à l'écran qui en
+            montre.
+            <span class="sourd"><b>Verbe ajouté le 31 août 2026</b>, sur le report écrit par la
+            maquette de la vitrine, qui l'avait décidé et que personne n'avait rapporté ici. Elle dit
+            pourquoi il manquait : une case du codex se remplit dès qu'une image porte le nom de la
+            pose, donc <b>une jauge pleine ne promet pas que les images soient bonnes</b> — il faut
+            aller les regarder, et le codex n'avait aucun chemin pour y aller.</span></td></tr>
         <tr><td class="k">il ne juge pas</td>
           <td>Aucune vignette de résultat à examiner, aucune recherche, aucun filtre par couleur ou par
             date, aucune sélection multiple. Juger une image se fait dans la galerie ou dans l'établi.</td></tr>
@@ -257,7 +272,8 @@
         reconnaître dans la liste — et <strong>les images qui partiront avec elle</strong>, dans la
         colonne de droite, qui sont des références et pas des résultats.</p>
       <p>La règle qui tient : <strong>la galerie et l'établi montrent ce qui est revenu, le codex montre ce
-        qui va partir.</strong></p>
+        qui va partir.</strong> Et quand on veut voir ce qui est revenu <em>en grand</em>, le codex ne
+        l'affiche pas : il ouvre la vitrine.</p>
     </div>
   </section>
 
@@ -300,7 +316,7 @@
 
     <h3>4 · Presque rien ne part en référence, alors que la place est là</h3>
     <table>
-      <thead><tr><th style="width:34%">Sur les 28 générations payées</th><th style="width:22%">Mesure</th><th>Ce que la place permettrait</th></tr></thead>
+      <thead><tr><th style="width:34%">Sur les 28 générations du dépôt</th><th style="width:22%">Mesure</th><th>Ce que la place permettrait</th></tr></thead>
       <tbody>
         <tr><td class="k">parties sans aucune image</td><td><span class="m mal">17 sur 28</span></td>
           <td rowspan="4" style="vertical-align:middle">Les modèles employés acceptent
@@ -383,7 +399,6 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
         <span class="fil">Cœur de pierre › <b>Personnages</b></span>
         <span class="wf-tard">
           <span>cœur de pierre - 01 · ce jeu $0,274 ›</span>
-          <span>$0,362 en tout ›</span>
           <span class="bascule">familles</span><span class="bascule">fiche</span>
           <span class="sep-v"></span>
           <span class="btxt">Réglages</span><span class="btxt">Guide</span>
@@ -415,19 +430,21 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
           <div class="outils">
             <span class="ob">Chercher</span>
             <span class="ob on">tout</span><span class="ob">incomplets</span><span class="ob">jamais lancés</span>
+            <span style="margin-left:auto"></span>
+            <span class="ob">voir ce qui est fait ›</span>
           </div>
           <div class="ents">
             <div class="ent on">
               <div class="vg"></div>
               <div class="nm">Balthazar<em>nain mineur, barbe tressée, deux lanternes</em></div>
               <div class="amb">Forge des profondeurs</div>
-              <div class="jg">corps <b>6 / 21</b> · équip. <b>1 / 12</b><br>15 cases manquantes</div>
+              <div class="jg">corps <b>6 / 21</b> · équip. <b>1 / 12</b><br>26 cases manquantes</div>
             </div>
             <div class="ent">
               <div class="vg"></div>
               <div class="nm">michel le nain<em>nain, sac de voyage, deux lanternes</em></div>
               <div class="amb">Forge des profondeurs</div>
-              <div class="jg">corps <b>6 / 21</b> · équip. <b>0 / 12</b><br>15 cases manquantes</div>
+              <div class="jg">corps <b>6 / 21</b> · équip. <b>0 / 12</b><br>27 cases manquantes</div>
             </div>
             <div class="ent">
               <div class="vg"></div>
@@ -505,7 +522,7 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
           </div>
 
           <div class="pied-c">
-            <div class="fente">15 cases · 5 planches, une par pose · un compte faux coûte la planche entière</div>
+            <div class="fente">15 cases de corps · 5 planches, une par pose · l'équipement se lance pièce par pièce</div>
             <div class="btgen">Fabriquer ce qui manque <span class="px">≈ $0,07</span></div>
           </div>
         </div>
@@ -519,7 +536,7 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
       </div>
     </div>
     <div class="lgd">le carré plein et le carré creux sont ceux de la barre de tables — ici ils disent « cette case est prise » et « cette case attend » · le trait dit « cette case n'est pas réclamée »<br>
-      ◤ coin bleu : artwork officiel de l'univers · ◤ coin orange : image apportée par son ambiance · sans coin : concept art épinglé sur ce personnage<br>
+      coin haut-gauche, d'où l'image vient — ◤ bleu : artwork officiel de l'univers · ◤ orange : image apportée par son ambiance · aucun coin : concept art épinglé sur ce personnage<br>
       <strong style="color:var(--texte-2);font-weight:500">survoler une vignette et appuyer sur la barre d'espace la montre en grand</strong> — le geste de la galerie, valable partout dans l'atelier<br>
       <strong style="color:var(--texte-2);font-weight:500">l'ambiance « Forge des profondeurs » est inventée pour ce croquis</strong> — le vrai projet n'en a aucune, puisque les ambiances n'existent pas encore<br>
       <strong style="color:var(--texte-2);font-weight:500">tout ce que ce croquis affiche vient du vrai projet du dépôt au 30 août 2026</strong> — les trois personnages, les deux pièces, les coûts<br>
@@ -559,9 +576,14 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
 
     <div class="note gris" style="margin-top:9px">
       <span class="lab">La barre de tête est celle de la galerie, à deux mots près</span>
-      <p>Même barre, même contenu, même ordre : les trois onglets, le fil qui dit où l'on est, le total du
-        projet, le total de tout, les deux bascules de repli, puis <span class="mesure">Réglages</span> et
-        <span class="mesure">Guide</span> après un séparateur. <strong>Les deux bascules changent de mot
+      <p>Même barre, même contenu, même ordre : les trois onglets, le fil qui dit où l'on est,
+        <strong>le total du jeu ouvert et lui seul</strong>, avec son étiquette
+        <span class="mesure">ce jeu</span>, les deux bascules de repli, puis
+        <span class="mesure">Réglages</span> et <span class="mesure">Guide</span> après un séparateur.
+        <span class="sourd">Corrigé le 31 août 2026 : ce croquis affichait aussi
+        <span class="mesure">$0,362 en tout</span>, le total de l'atelier entier. Il n'a rien à faire
+        ici — il vit dans l'écran des dépenses, et c'est même la seule chose qu'on vient y chercher et
+        qu'on ne trouve nulle part ailleurs.</span> <strong>Les deux bascules changent de mot
         d'un écran à l'autre, parce qu'elles replient des colonnes différentes</strong> :
         <span class="mesure">arbre</span> et <span class="mesure">fiche</span> dans la galerie,
         <span class="mesure">familles</span> et <span class="mesure">fiche</span> ici,
@@ -719,13 +741,23 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
         <tr><td class="k">isométrique</td><td><span class="m">4</span> ou <span class="m">8</span></td>
           <td>les mêmes noms, en diagonale sur la grille du jeu</td>
           <td><span class="mesure">facing south, isometric three-quarter view</span></td></tr>
-        <tr><td class="k">libre</td><td><span class="m">n</span></td>
-          <td>l'auteur nomme les siennes</td>
-          <td>l'auteur écrit la sienne</td></tr>
       </tbody>
     </table>
 
-    <div class="note gris" style="margin-top:22px">
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Une neuvième ligne a été retirée le 31 août 2026</span>
+      <p>La table portait une vue de plus, <em>libre · n directions · l'auteur nomme les siennes ·
+        l'auteur écrit la sienne</em> — alors que le titre de cette section, le paragraphe qui suit et
+        l'assistant de démarrage comptaient tous les trois en <strong>huit</strong>. Elle est retirée, et
+        pour une raison de fond : tout l'intérêt du choix de la vue est qu'il <em>écrit tout seul</em> la
+        liste des directions et la phrase en anglais qui part. Une vue « libre » redemande à l'auteur
+        d'écrire cette phrase, c'est-à-dire exactement ce que le produit cherche à lui épargner — et c'est
+        la phrase que cette section retire de la bible, plus bas, pour la même raison.</p>
+      <p>Ce que ça ferme : un jeu à trois ou à six directions n'a pas de vue à lui. Il en choisit une des
+        huit et renomme ses directions depuis le codex, ce qui reste possible et se défait d'un clic.</p>
+    </div>
+
+    <div class="note gris" style="margin-top:9px">
       <span class="lab">Un projet neuf n'a plus de défaut, il a une question</span>
       <p>Avant, un projet neuf partait sur <em>une seule vue</em>, faute de mieux — on créait un jeu en
         donnant son nom, et rien d'autre n'était demandé. <strong>L'assistant supprime ce défaut</strong> :
@@ -979,10 +1011,22 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
       <tbody>
         <tr><td class="k">1 · ce qui est coché</td>
           <td>Des <b>cases manquantes</b> — une case, c'est une pose dans une direction. Tout est coché par
-            défaut ; on décoche ce qu'on ne veut pas maintenant.</td></tr>
+            défaut ; on décoche ce qu'on ne veut pas maintenant.
+            <span class="sourd"><b>Ce que « cases manquantes » compte, fixé le 31 août 2026 : tout ce
+            qui manque à la chose, le corps et l'équipement ensemble.</b> Le compte se lisait
+            <em>quinze</em> ici — le corps seul — et <em>vingt-six</em> sur la fiche de la même chose au
+            même moment — le corps et l'équipement. Les deux étaient justes, c'est le mot qui recouvrait
+            deux périmètres. Le total l'emporte, pour une raison simple : le nombre est écrit
+            <b>juste sous les deux jauges</b>, et un total qui n'additionne pas ce qui est écrit
+            au-dessus de lui ne peut que tromper.</span></td></tr>
         <tr><td class="k">2 · comment ça se groupe</td>
           <td><b>Une planche par pose</b>, avec ses directions manquantes en cases. Les poses qui ne
-            réclament qu'une image se réunissent entre elles sur une planche commune, comme aujourd'hui.</td></tr>
+            réclament qu'une image se réunissent entre elles sur une planche commune, comme aujourd'hui.
+            <b>Le corps et l'équipement ne partent pas ensemble</b> : une planche d'équipement montre
+            une pièce à la fois, posée sur des corps déjà fabriqués, et la fente du bouton dit donc
+            combien de cases <em>de corps</em> il lance. Le compte écrit sous les jauges, lui, dit tout
+            ce qui manque à la chose — les deux nombres ne sont pas le même, et chacun nomme ce qu'il
+            compte.</td></tr>
         <tr><td class="k">3 · ce qui ne se groupe jamais</td>
           <td><b>Deux choses différentes ne partagent jamais une planche.</b> La consigne d'une planche
             promet « le même sujet dans chaque case » ; deux personnages la démentiraient, et ce qui
@@ -1025,9 +1069,13 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
     <div class="note" style="margin-top:9px">
       <span class="lab">La barre qui paie a deux lieux, et le codex est le second</span>
       <p>La barre de prompt est un élément du châssis : même champ, même bouton, même prix. Elle est rendue
-        <strong>en pied de l'établi et en pied du codex</strong>, et nulle part ailleurs. La galerie n'en a
-        pas — <em>on n'y paie jamais</em> —, et l'univers s'en est vu refuser une, pour ne pas ouvrir un
-        troisième guichet (D31).</p>
+        <strong>en pied de l'établi, et en pied de la colonne de droite du codex</strong> — c'est la fente
+        et le bouton <em>Fabriquer ce qui manque</em> qu'on voit au § 03, et pas une bande en pied d'écran —,
+        et nulle part ailleurs. La galerie n'en a pas — <em>on n'y paie jamais</em> —, et l'univers s'en est
+        vu refuser une, pour ne pas ouvrir un troisième guichet (D31).</p>
+      <p><strong>La planche d'une pose porte la même barre et ne compte pas pour un troisième lieu</strong> :
+        elle s'ouvre depuis l'établi d'une chose et y ramène — c'est le même endroit vu de plus près. Le
+        premier des deux lieux se lit donc <em>l'établi d'une chose, sa planche comprise</em>.</p>
       <p>Il y a toujours <strong>un seul endroit d'où l'on paie</strong> : c'est cette barre-là, et elle a
         une seule forme. Ce qui change d'un lieu à l'autre est <strong>ce qui occupe la rangée du
         haut</strong> — celle qui dit, partout, <em>ce qui décide de l'image qu'on va payer</em> :</p>
@@ -1055,6 +1103,24 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
     <p class="intro">Une jauge se lit <span class="mesure">6 / 21</span> : six cases prises sur vingt et une
       réclamées. Reste à dire ce que « prise » veut dire, parce que la mesure a montré que ce n'est pas
       évident.</p>
+
+    <div class="note" style="margin-bottom:22px">
+      <span class="lab">C'est ici que la jauge du produit est définie, et il n'y en a qu'une</span>
+      <p><b>Une jauge compte des cases</b>, et une case est <b>une pose dans une direction</b> : la
+        marche vers le sud et la marche vers le nord sont deux cases, pas une. Cette forme-là est celle
+        du produit, partout où une jauge paraît — dans la liste des choses du jeu, sur la fiche d'une
+        chose, dans le compte d'une famille.</p>
+      <p><b>Une seule lecture s'en écarte, et c'est voulu : la rangée d'une attitude dans
+        l'établi</b>, qui affiche <span class="mesure">marche 4 / 8</span>. Elle ne compte pas des
+        cases, elle compte <b>les images d'un cycle</b> — les vignettes d'une seule case, dans une
+        seule direction. Le nombre ressemble à une jauge et n'en est pas une : c'est le remplissage
+        d'une bande d'animation, et c'est ce que la maquette de l'établi explique à son § 06. On la
+        reconnaît à ce qu'elle porte le nom d'une attitude, jamais celui d'un ensemble.
+        <span class="sourd">Écrit le 31 août 2026. Trois formes identiques circulaient dans le
+        dossier sans que personne ne dise laquelle est celle du produit — celle-ci, celle de l'établi,
+        et une troisième qui comptait des <em>poses</em> dans la maquette de structure. La troisième
+        était simplement en retard : elle a été refaite sur celle-ci.</span></p>
+    </div>
 
     <div class="note att">
       <span class="lab">La règle, écrite telle qu'elle est</span>
@@ -1142,8 +1208,13 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
         <tr><td class="k">03 — le châssis des tables</td>
           <td><b>Le fil d'Ariane ne gagne aucun segment.</b> Le segment de la pose porte les trois choses,
             séparées par des points médians : <span class="mesure">… › Balthazar › marche · sud · image 3 ›
-            Détourage</span>. Cinq segments, comme aujourd'hui — et c'est déjà la forme que la maquette de
-            structure dessinait, <span class="mesure">Pose · marche sud</span>.</td></tr>
+            Détourage</span>. Cinq segments, comme aujourd'hui.
+            <b style="color:var(--ok)">Reporté le 31 août 2026.</b>
+            <span class="sourd">Cette ligne affirmait que la maquette de structure dessinait déjà cette
+            forme. Elle ne la dessinait pas : elle écrivait <span class="mesure">Pose · marche sud</span>,
+            un segment de moins et sans la direction, et l'établi en écrivait une troisième,
+            <span class="mesure">le corps › marche · image 3</span>. Les deux ont été refaits sur la forme
+            du châssis.</span></td></tr>
         <tr><td class="k">04 — la galerie</td>
           <td><b>Ce que son filtre par famille attend est répondu</b> : la famille est une propriété de
             l'image, portée par le sujet choisi au moment de générer, et elle est absente sur 19 des 28
@@ -1154,7 +1225,8 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
         <tr><td class="k">06 — l'univers</td>
           <td><b>La bible n'a plus à porter la direction.</b> Le champ <span class="mesure">technique</span>
             perd <span class="mesure">4-directional orientation</span>, qui partait avec les 28 générations
-            du projet, dont six planches d'équipement où elle contredisait la consigne.</td></tr>
+            du projet, dont six planches d'équipement où elle contredisait la consigne.
+            <b style="color:var(--ok)">Reporté le 31 août 2026</b> — dans l'univers et dans l'assistant.</td></tr>
         <tr><td class="k">06ter — l'assistant</td>
           <td><b>La vue du jeu se choisit là-bas, à l'étape 2, et le codex la lit.</b> Le même clic remplit
             la phrase de style et la liste des directions, ce qui rend la contradiction entre les deux
@@ -1219,8 +1291,8 @@ Return the SAME sheet with the described item added to every sprite. <b>Change a
           <td>La colonne de réglages du produit — fiche, univers, réserve, table. Réemployée pour ce qu'elle
             nomme déjà : <em>ce qu'on manipule</em>.</td></tr>
         <tr><td class="k">Rangée de famille</td><td><span class="m">26 px</span></td><td>La rangée d'arbre.</td></tr>
-        <tr><td class="k">Rangée d'une chose</td><td><span class="m">52 px</span></td><td>La rangée d'attitude de la matrice.</td></tr>
-        <tr><td class="k">Portrait d'une chose</td><td><span class="m">44 px</span></td><td>La vignette de la matrice.</td></tr>
+        <tr><td class="k">Rangée d'une chose</td><td><span class="m">44 px</span></td><td>La rangée d'attitude de la matrice. <span class="sourd">Elle disait 52 px jusqu'au 31 août 2026 — une hauteur qui n'appartenait à aucune liste du produit, et que le croquis de l'établi rendait à 55.</span></td></tr>
+        <tr><td class="k">Portrait d'une chose</td><td><span class="m">34 px</span></td><td>La vignette de la matrice. <span class="sourd">44 px jusqu'au 31 août 2026 : à 44 de vignette, la rangée ne pouvait pas tenir dans 44.</span></td></tr>
         <tr><td class="k">Vignette de référence</td><td><span class="m">38 px</span></td><td>La vignette de concept art de l'établi.</td></tr>
         <tr><td class="k">Barre d'outils</td><td><span class="m">38 px</span></td><td>La barre d'outils de la grille d'assets.</td></tr>
         <tr><td class="k">En-tête de colonne</td><td><span class="m">30 px</span></td><td>L'en-tête de panneau.</td></tr>

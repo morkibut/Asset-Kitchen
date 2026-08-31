@@ -160,7 +160,7 @@
   .col-t{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
     color:var(--texte-3);margin-bottom:2px}
   .cases{display:flex;flex-direction:column;gap:3px}
-  .cs{min-height:24px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
+  .cs{min-height:44px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
     background:var(--fond-2);border:1px solid var(--bord)}
   .cs .nm{font-size:11px;color:var(--texte-2);width:64px;flex:none;white-space:nowrap}
   .cs .marques{display:flex;gap:4px;align-items:center}
@@ -200,9 +200,12 @@
   <p>Cette maquette donne à tout ça un écran : <strong>la fiche</strong>. Elle s'ouvre depuis
     l'établi, en plein cadre, exactement comme un outil de retouche s'y ouvre déjà — et comme lui,
     elle fait disparaître la barre de prompt, parce que régler ne se paie pas.</p>
-  <p class="sourd">Tous les chiffres de ce document ont été mesurés le 30 août 2026 sur le vrai
-    projet <span class="mesure">cœur de pierre - 01</span> : 3 personnages, 48 images, 28 appels
-    payés, <span class="mesure">$0,362</span> dépensés en tout.</p>
+  <p class="sourd">Les chiffres de ce document ont été relevés le 30 août 2026 dans le dépôt, tous
+    projets confondus : 3 personnages, 48 images, 28 appels dont 24 payés,
+    <span class="mesure">$0,362</span> dépensés en tout. <b>Ce sont des chiffres d'exemple.</b> Ils
+    ont déjà bougé depuis — l'atelier sert tous les jours — et on ne cherche pas à les faire
+    concorder d'une maquette à l'autre : ce dossier dessine une interface, il ne rend pas compte de
+    l'état du dépôt (décision D28).</p>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════ 01 -->
@@ -468,7 +471,7 @@
 
   <div class="lgd">
     ■ case prise · □ case attendue · — direction non réclamée par cette pose<br>
-    ◤ coin bleu : artwork officiel de l'univers · ◤ coin orange : image apportée par son ambiance ·
+    coin haut-gauche, d'où l'image vient — ◤ bleu : artwork officiel de l'univers · ◤ orange : image apportée par son ambiance ·
     cadre pointillé bleu : image que l'atelier propose de promouvoir<br>
     les six lignes de droite sont l'état réel de Balthazar au 30 août 2026 — une image par pose, aucune direction déclarée<br>
     <strong style="color:var(--texte-2);font-weight:500">l'ambiance « Forge des profondeurs » est inventée pour ce croquis</strong> :
@@ -525,7 +528,7 @@
     <tbody>
       <tr><td class="k">Un outil de retouche</td><td><span class="m no">retirée</span></td><td>Le post-traitement est gratuit, et il est réversible.</td></tr>
       <tr><td class="k">La fiche</td><td><span class="m no">retirée</span></td><td>Régler, ranger, désigner une référence — rien de tout ça n'appelle le fournisseur.</td></tr>
-      <tr><td class="k">La planche d'une pose <span class="sourd mesure">(08)</span></td><td><span class="m">présente</span></td><td>C'est l'écran où l'on achète les images d'une pose. Il faut y voir le prix.</td></tr>
+      <tr><td class="k">La planche d'une pose <span class="sourd mesure">(08)</span></td><td><span class="m">présente</span></td><td>C'est l'écran où l'on achète les images d'une pose. Il faut y voir le prix. Elle ne fait pas un troisième lieu qui paie : la planche est une profondeur de l'établi, et <em>Échap</em> y ramène.</td></tr>
     </tbody>
   </table>
   <p style="margin-top:14px"><strong>La barre est là quand le geste coûte.</strong> On n'a pas besoin
@@ -888,9 +891,15 @@
     <p>Une pose qui demande plusieurs images dans une même direction, c'est déjà une animation à
       moitié remplie — la maquette <span class="mesure">02</span> l'avait vu et avait refusé de
       créer un axe pour ça. Ce que la V3 ajoutera, ce sont trois choses sur une ligne qui existe
-      déjà : <strong>l'ordre des images, une cadence, un bouton pour la lire</strong>. Elles vont
-      dans la planche d'une pose (maquette <span class="mesure">08</span>), parce que c'est là
-      qu'une direction et ses images vivent ensemble.</p>
+      déjà : <strong>l'ordre des images, une cadence, un bouton pour la lire</strong>.
+      <b>Elles ne vont pas au même endroit</b>, et c'est la planche d'une pose qui le tranche —
+      <span class="mesure">08-planche-de-pose.html</span> § 09, la seule maquette qui l'a écrit place par
+      place : l'ordre des vignettes <em>dans la case d'une direction</em>, la cadence <em>sur la pose</em>,
+      et le bouton pour la lire <em>dans la vitrine</em>, parce que lire une animation c'est essayer, et
+      qu'essayer est la maquette d'à côté.
+      <span class="sourd">Corrigé le 31 août 2026 : ce paragraphe disait que les trois allaient dans la
+      planche. Deux y vont, la troisième va dans la vitrine, qui lui garde déjà sa place sous le nom
+      « le mouvement ».</span></p>
     <p>Et les tables d'atelier qui viendront avec — celles qui fabriquent des images intermédiaires
       à partir de deux images — se rangent dans le groupe qui existe déjà pour ça : celui des
       <em>fabriques</em>, après le trait qui les sépare de la recette, à côté du découpage et de la
@@ -1037,7 +1046,7 @@
       <tr><td class="k"><span class="m">38 px</span></td><td>Une entrée du sommaire, à gauche</td><td>La barre d'outils de la galerie</td></tr>
       <tr><td class="k"><span class="m">38 px</span></td><td>Une vignette de référence</td><td>Le panneau de droite du codex · <span class="mesure">05</span>. <b>Survoler et appuyer sur la barre d'espace la montre en grand</b> — le geste de la galerie, systématique dans tout l'atelier depuis le 30 août. C'est lui qui permet de garder les vignettes petites.</td></tr>
       <tr><td class="k"><span class="m">30 px</span></td><td>Le titre d'un bloc</td><td>Le titre du panneau de droite · <span class="mesure">05</span></td></tr>
-      <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne de pose, dans la matrice</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">44 px</span></td><td>Une ligne de pose, dans la matrice</td><td>La rangée de la matrice de l'établi · <span class="mesure">02</span>. <b>Changé le 31 août 2026</b> : elle valait 24 ici et 52 dans l'établi, pour la même chose. Une seule forme désormais, et c'est une hauteur du produit. <span class="sourd">Coût mesuré : le bloc des six poses du corps passe de 159 à 279 px, et la colonne du milieu défilera là où elle tenait.</span></td></tr>
       <tr><td class="k"><span class="m">9 px</span></td><td>Une marque de case</td><td>Le carré de la barre de tables · <span class="mesure">03</span></td></tr>
     </tbody>
   </table>

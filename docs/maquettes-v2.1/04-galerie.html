@@ -258,7 +258,7 @@
       <span class="lab">Pourquoi les deux, et pas seulement le codex</span>
       <p>Parce qu'une image peut n'appartenir à aucune entité, et parce qu'on cherche souvent sans
         savoir d'avance chez qui chercher. <strong>Une texture d'herbe, un mur de pierre, un essai
-        de couleur ne sont ni un personnage ni un biome</strong> — ils existent, ils sont payés, il
+        de couleur ne sont ni un personnage ni un décor</strong> — ils existent, ils sont payés, il
         faut pouvoir les revoir.</p>
       <p>Et quand on cherche « cette lanterne rouillée que j'ai faite il y a trois jours », on ne
         se souvient pas de l'entité, on se souvient de <em>quand</em>. La galerie est triée par
@@ -279,7 +279,6 @@
         <span class="tab">Univers</span><span class="tab">Codex</span><span class="tab on">Galerie</span>
         <span class="wf-tard">
           <span>Cœur de pierre — 01 · ce jeu $2,140 ›</span>
-          <span>$3,180 en tout</span>
           <span class="bascule">arbre</span><span class="bascule">fiche</span>
           <span class="sep-v"></span>
           <span class="btxt">Réglages</span><span class="btxt">Guide</span>
@@ -291,7 +290,7 @@
           <div class="col-t">projets · collections</div>
           <div class="rg on">Cœur de pierre — 01 <span class="cpt">88</span></div>
           <div class="rg fils">· personnages <span class="cpt">34</span></div>
-          <div class="rg fils">· décors <span class="cpt">29</span></div>
+          <div class="rg fils">· décors <span class="cpt">21</span></div>
           <div class="rg fils">· objets <span class="cpt">25</span></div>
           <div class="rg">Bac à sable <span class="cpt">12</span></div>
           <div class="rg">sans projet <span class="cpt">3</span></div>
@@ -453,8 +452,9 @@
           <td><span class="barre-txt">Les cinq boutons de la barre du haut — Univers, Personnages,
             Catalogue, Réglages, Guide — tous de même poids</span></td>
           <td class="apres">Trois <b>onglets</b> : Univers, Codex, Galerie. Plus
-            <span class="mesure">⚙</span> et <span class="mesure">?</span> à droite, qui parlent de
-            l'outil et non du travail. <b>Catalogue</b> disparaît : la liste des modèles se relit au
+            <span class="mesure">Réglages</span> et <span class="mesure">Guide</span> à droite, qui
+            parlent de l'outil et non du travail — <b>les mots, pas des pictogrammes</b> : voir le
+            § 10. <b>Catalogue</b> disparaît : la liste des modèles se relit au
             démarrage, la barre d'état la date, et la relire à la main devient un geste de l'écran
             des réglages, à côté de la clé.</td>
         </tr>
@@ -643,20 +643,44 @@
       cinq gestes · sinon, ouvrir une fiche — ce qui sélectionne — effacerait le filtre sans rien dire</div>
 
     <h3>Le filtre « famille », et pourquoi il attend</h3>
-    <p>Une famille, c'est ce qui range les choses du jeu dans le codex : <strong>personnages,
-      décors, objets, interface</strong>. Le filtre sert à réduire une planche contact de 88 images
-      à ce qu'on cherche.</p>
+    <p>Une famille, c'est ce qui range les choses du jeu dans le codex. Il y en a <strong>cinq</strong> —
+      personnages, décors, objets, interface, équipement — et ce filtre-ci n'en propose que
+      <strong>quatre</strong>. Le filtre sert à réduire une planche contact de 88 images à ce qu'on
+      cherche.</p>
+    <div class="note att">
+      <span class="lab">Pourquoi l'équipement n'est pas dans la liste — écrit le 31 août 2026</span>
+      <p><strong>Une pièce d'équipement n'a jamais d'image à elle.</strong> Le produit interdit de générer
+        un casque sur fond vide : un casque n'existe qu'apparu sur un corps, et l'image obtenue est alors
+        celle d'un personnage. C'est la raison écrite dans <span class="mesure">05-codex.html</span> § 04,
+        et elle vaut ici sans changement : filtrer la galerie sur <em>équipement</em> ne rendrait jamais
+        rien.</p>
+      <p>Cette absence n'est donc pas un oubli, <strong>c'est une exception, et elle est écrite ici parce
+        qu'elle ne l'était nulle part</strong>. Les cinq familles rangent des choses du jeu ; quatre
+        seulement rangent des images.</p>
+    </div>
     <p><strong>D'où vient la famille d'une image</strong> — la question était ouverte ici, et
       <span class="mesure">05-codex.html</span> § 04 l'a tranchée en la mesurant : <em>c'est une
       propriété de l'image, et elle existe déjà</em>. Au moment de générer on choisit un
       <b>sujet</b> — personnage, créature, meuble, objet posé, objet tenu, décor, élément
       d'interface —, ce sujet porte sa famille, et c'est lui qui décide quels artworks partent en
       référence. Une image qui n'appartient à aucune entité a donc quand même une famille.</p>
-    <p><strong>Mais le sujet est vide deux fois sur trois.</strong> Sur les 28 générations du
-      dépôt, <span class="mesure">9</span> portent un sujet — toutes <em>personnage</em> — et
-      <span class="mesure">19</span> n'en portent aucun. Un filtre par famille laisserait donc
-      aujourd'hui les deux tiers de la grille hors de toute case, ce qui est pire que pas de filtre
-      du tout : on croirait avoir tout vu.</p>
+    <p><strong>Mais le sujet est vide plus d'une fois sur deux.</strong> Sur les 28 générations du
+      dépôt, <span class="mesure">13</span> portent un sujet — toutes <em>personnage</em> — et
+      <span class="mesure">15</span> n'en portent aucun. Un filtre par famille laisserait donc
+      aujourd'hui plus de la moitié de la grille hors de toute case, ce qui est pire que pas de filtre
+      du tout : on croirait avoir tout vu.
+      <span class="sourd">Ce paragraphe disait <em class="it">9 et 19</em>, et <em class="it">deux fois sur
+      trois</em>. Recompté dans <span class="mesure">donnees/atelier.sqlite3</span> le 31 août 2026 : 28
+      générations, 13 rattachées à une chose du jeu, 15 sans. Le raisonnement ne bouge pas, seul le rapport
+      change.</span></p>
+    <p class="sourd"><strong style="color:var(--texte-2)">Ranger et filtrer ne comptent pas la même
+      chose.</strong> La colonne de gauche du § 02 range en <em class="it">collections</em> — des dossiers
+      qu'on fabrique soi-même, et qui n'ont aucune obligation de couvrir tout le projet : les trois du
+      croquis tiennent 80 des 88 images, huit ne sont dans aucune. Ce menu-ci, lui, coupe par
+      <em class="it">famille</em>, qui est une propriété de chaque image : ses cinq lignes couvrent les 88
+      sans reste. L'arbre portait <em class="it">décors 29</em> et le menu <em class="it">décors 21</em>
+      sans que rien ne dise pourquoi, et la somme du menu dépassait le total de l'écran — les deux corrigés
+      le 31 août 2026.</p>
     <p>Sa liste finit par une valeur qui n'est pas une famille et qui reste utile quel que soit ce
       chiffre : <strong>sans entité</strong>. C'est là que se retrouvent les images importées et
       les morceaux de découpe en surplus — tout ce qui, sans elle, ne se retrouverait qu'en faisant
@@ -672,12 +696,14 @@
             <div class="m">décors <span class="p">21</span></div>
             <div class="m">objets <span class="p">25</span></div>
             <div class="m">interface <span class="p">4</span></div>
-            <div class="m" style="color:var(--texte-3)">sans sujet <span class="p">19</span></div>
+            <div class="m" style="color:var(--texte-3)">sans sujet <span class="p">4</span></div>
             <div class="sep"></div>
             <div class="m">sans entité <span class="p">4</span></div>
           </div>
         </div>
-        <div class="lgd">le trait du bas sépare ce qui est rangé de ce qui ne l'est pas encore</div>
+        <div class="lgd">le trait du bas sépare ce qui est rangé de ce qui ne l'est pas encore — les cinq
+          lignes du haut se partagent les 88 images sans en oublier ni en compter deux fois (34 + 21 + 25 + 4
+          + 4) ; celle du bas coupe autrement, et n'entre pas dans ce compte</div>
       </div>
       <div>
         <div class="note gris">
@@ -839,9 +865,19 @@
       <ul>
         <li><b>La tuile.</b> Une zone image carrée sur le damier, un pied de deux lignes — le nom,
           puis les mesures. Rayon 0, aucune ombre portée.</li>
-        <li><b>Trois marques et pas une de plus</b> : le coin plein en haut à droite pour le favori
-          — la seule que l'auteur pose lui-même —, l'anneau clair pour le sélectionné, et une
-          pastille pour un état subi (<span class="mesure">réglé</span>,
+        <li><b>Trois angles, trois sujets — et c'est le vocabulaire de tout le produit</b>, écrit
+          ici parce que c'est cette maquette qui tient la tuile. Une vignette peut porter les trois
+          à la fois sans qu'aucun n'en cache un autre :
+          <br><span class="mesure">haut-gauche · d'où l'image vient</span> — coin bleu : artwork
+          officiel de l'univers ; coin orange : image apportée par une ambiance ; aucun coin : image
+          ordinaire, concept art compris.
+          <br><span class="mesure">haut-droite · ce que l'auteur en a fait</span> — le coin plein du
+          favori, <b>la seule marque qu'il pose lui-même</b>.
+          <br><span class="mesure">bas-droite · ce que la mesure en dit</span> — le coin doré, hors
+          taille commune. C'est la couleur d'écart du produit, et le contour doré d'une case de la
+          matrice dit la même chose.
+          <br>S'y ajoutent, et ce ne sont pas des coins : <b>l'anneau clair</b> pour le sélectionné,
+          et <b>une pastille</b> pour un état subi (<span class="mesure">réglé</span>,
           <span class="mesure">agent</span>, <span class="mesure">parent supprimé</span>).</li>
         <li><b>Le zoom à trois crans</b>, et le cran choisi reste choisi même devenu indisponible :
           la grille rend au plus grand qui tienne, et elle l'écrit.</li>
@@ -861,7 +897,11 @@
           l'écran de confirmation, partout où une image paraît en petit. C'est lui qui permet de
           garder les vignettes petites au lieu d'ajouter des tailles à la liste fermée.</li>
         <li><b>Les trois bandes gardent leurs hauteurs</b> —
-          <span class="mesure">38 · 38 · 26</span>. Aucune mesure neuve n'entre.</li>
+          <span class="mesure">44 · 38 · 26</span> : la barre de tête, la barre d'outils, la barre
+          d'état. Aucune mesure neuve n'entre.
+          <span class="sourd">Cette phrase disait <span class="mesure">38 · 38 · 26</span> jusqu'au
+          31 août 2026, alors que le croquis ci-dessus dessine bien 44 en tête, comme les quinze
+          autres écrans. L'alignement du 31 août avait touché le dessin et oublié la phrase.</span></li>
         <li><b>Les deux colonnes se replient par choix</b>, jamais par contrainte de place, et
           leurs bascules restent visibles dans la barre du haut.</li>
       </ul>

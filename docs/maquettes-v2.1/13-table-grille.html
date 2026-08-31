@@ -270,14 +270,14 @@
         <thead><tr><th style="width:16%">Pose</th><th style="width:22%">Boîte du sujet</th><th style="width:18%">Facteur</th><th style="width:20%">Dans la case</th><th>Hauteur</th></tr></thead>
         <tbody>
           <tr><td class="k">repos</td><td><span class="m">661 × 884</span></td><td><span class="m no">0,0724</span></td><td><span class="m">48 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
-          <tr><td class="k">marche</td><td><span class="m">1015 × 958</span></td><td><span class="m no">0,0631</span></td><td><span class="m">58 × 59</span></td><td><span class="m eg">59 px</span></td></tr>
+          <tr><td class="k">marche</td><td><span class="m">1015 × 958</span></td><td><span class="m no">0,0631</span></td><td><span class="m">64 × 60</span></td><td><span class="m eg">60 px</span></td></tr>
           <tr><td class="k">course</td><td><span class="m">388 × 468</span></td><td><span class="m no">0,1368</span></td><td><span class="m">53 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
           <tr><td class="k">attaque</td><td><span class="m">523 × 430</span></td><td><span class="m no">0,1224</span></td><td><span class="m">64 × 53</span></td><td><span class="m eg">53 px</span></td></tr>
           <tr><td class="k">dégâts</td><td><span class="m">404 × 432</span></td><td><span class="m no">0,1481</span></td><td><span class="m">60 × 64</span></td><td><span class="m bon">64 px</span></td></tr>
           <tr><td class="k">mort</td><td><span class="m">492 × 328</span></td><td><span class="m no">0,1301</span></td><td><span class="m">64 × 43</span></td><td><span class="m no">43 px</span></td></tr>
         </tbody>
       </table>
-      <p style="margin-top:12px"><strong>Le même personnage sort à trois hauteurs : 64, 59 et 53 px.</strong>
+      <p style="margin-top:12px"><strong>Le même personnage sort à trois hauteurs : 64, 60 et 53 px.</strong>
         Celle de <em>mort</em> est juste — le personnage est couché, il doit être plus court. Celles de
         <em>marche</em> et d'<em>attaque</em> ne le sont pas : le personnage est debout dans les deux, et il
         a rapetissé parce que sa boîte est devenue plus large que haute.</p>
@@ -383,9 +383,9 @@
           <div class="bloc">
             <span class="col-t">taille de pixel</span>
             <div class="segs">
-              <span class="sg mono">16</span><span class="sg mono">24</span><span class="sg mono">32</span>
-              <span class="sg mono">48</span><span class="sg mono on">64</span><span class="sg mono">96</span>
-              <span class="sg mono">128</span>
+              <span class="sg mono">8</span><span class="sg mono">16</span><span class="sg mono">24</span>
+              <span class="sg mono">32</span><span class="sg mono">48</span><span class="sg mono on">64</span>
+              <span class="sg mono">96</span><span class="sg mono">128</span><span class="sg mono">256</span>
             </div>
             <div class="prov">l'univers de Cœur de pierre · 64 px</div>
             <div class="raison">1 px rendu = 14 × 14 px d'origine · un détail plus fin peut disparaître</div>
@@ -424,10 +424,17 @@
       </div>
 
       <div class="annot">
-        <div class="an"><span class="k">01</span><span class="t"><b>Sept valeurs de cible, en segments
-          mono.</b> Ce sont les sept que le produit accepte déjà — <span class="mesure">16 24 32 48 64 96
-          128</span> —, pas un curseur : entre deux d'entre elles il n'y a rien à choisir. Sept segments
-          tiennent dans les 286 px utiles de la colonne à 10 px de mono.</span></div>
+        <div class="an"><span class="k">01</span><span class="t"><b>Neuf valeurs de cible, en segments
+          mono.</b> <span class="mesure">8 16 24 32 48 64 96 128 256</span> — pas un curseur : entre deux
+          d'entre elles il n'y a rien à choisir. <b>Mesuré sur ce croquis :</b> les neuf segments tiennent
+          sur une seule rangée dans les <span class="mesure">284 px</span> de la colonne — 28 px chacun,
+          4 px d'écart. Une étiquette de trois signes à 10 px de mono en occupe 18 ; il reste 4 px de part
+          et d'autre, et rien ne déborde. C'est serré, et c'est la limite : une dixième valeur ne
+          tiendrait pas.
+          <br><br><b>Corrigé le 31 août 2026 :</b> la table en acceptait sept — les sept que le produit
+          acceptait déjà, 16 à 128. L'assistant de démarrage et l'univers en proposent neuf depuis le
+          30 août, 8 et 256 compris. Un jeu réglé sur 8 ou sur 256 n'avait donc aucun outil pour appliquer
+          sa propre taille. La table s'aligne sur l'assistant, et le banc d'essai gagne ces deux valeurs.</span></div>
         <div class="an"><span class="k">02</span><span class="t"><b>La provenance est écrite en
           <span class="mesure">--epingle</span> sous chaque valeur qui vient d'ailleurs.</b> La cible vient de
           l'univers, l'occupation vient du barème par la nature du sujet. C'est la règle du dossier —
@@ -477,7 +484,7 @@
       <thead><tr><th style="width:16%">Réglage</th><th style="width:24%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
       <tbody>
         <tr><td class="k">taille de pixel</td>
-          <td><span class="m">16 · 24 · 32 · 48 · 64 · 96 · 128</span><br>
+          <td><span class="m">8 · 16 · 24 · 32 · 48 · 64 · 96 · 128 · 256</span><br>
             <span class="sourd">défaut : celle de l'univers, 64</span></td>
           <td>Le côté de la case, en pixels logiques — la taille finale du sprite avant export. Elle est
             <strong>demandée, jamais déduite de l'image reçue</strong> : la déduire reviendrait à laisser le

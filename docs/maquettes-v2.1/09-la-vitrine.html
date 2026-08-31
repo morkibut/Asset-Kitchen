@@ -168,7 +168,7 @@
   .cent-t .x{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--texte-3)}
   .cent-c{flex:1;padding:11px;display:flex;flex-direction:column;gap:11px}
   .cases{display:flex;flex-direction:column;gap:3px}
-  .cs{min-height:24px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
+  .cs{min-height:44px;display:flex;align-items:center;gap:7px;padding:0 6px;border-radius:2px;
     background:var(--fond-2);border:1px solid var(--bord)}
   .cs.on{border-color:var(--signal);background:var(--signal-sourd)}
   .cs .nm{font-size:11px;color:var(--texte-2);width:64px;flex:none;white-space:nowrap}
@@ -216,13 +216,17 @@
 <section>
   <div class="entete"><span class="num">01</span><h2>La mission qui manquait au codex</h2></div>
 
-  <p class="intro">Le codex avait trois verbes dans sa maquette : <strong>il déclare, il compte, il
-    lance</strong>. Il en gagne un quatrième — <strong>il montre</strong> — et ce n'est pas un
-    ajout de confort, c'est ce qui rend les trois autres honnêtes.</p>
+  <p class="intro">Le codex avait quatre verbes dans sa maquette : <strong>il range, il déclare, il
+    compte, il lance</strong>. Il en gagne un cinquième — <strong>il montre</strong> — et ce n'est pas
+    un ajout de confort, c'est ce qui rend les autres honnêtes.
+    <span class="sourd">Cette page comptait trois verbes et annonçait un quatrième jusqu'au 31 août
+    2026. Le codex en listait quatre depuis toujours, <em>il range</em> en tête, et il fallait
+    recompter avant de lui porter le verbe neuf : il l'a reçu ce jour-là, avec sa porte.</span></p>
 
   <table>
     <thead><tr><th style="width:20%">Le verbe</th><th style="width:34%">Ce qu'il fait</th><th>Ce qu'il ne peut pas voir tout seul</th></tr></thead>
     <tbody>
+      <tr><td class="k">il range</td><td>Toutes les choses du jeu, par famille.</td><td>À quoi ressemble ce qui est rangé.</td></tr>
       <tr><td class="k">il déclare</td><td>Ce que le jeu réclame — les poses, les directions, les pièces.</td><td>Si ce qui a été fabriqué ressemble à ce qui a été déclaré.</td></tr>
       <tr><td class="k">il compte</td><td>Combien de cases sont prises, combien manquent.</td><td class="apres"><b>Si une case prise contient une image utilisable.</b> C'est le trou, et il est mesuré au § 02.</td></tr>
       <tr><td class="k">il lance</td><td>Les appels groupés, avec leur prix.</td><td>Si le résultat valait la dépense.</td></tr>
@@ -577,6 +581,13 @@
     <p>Dessiner aujourd'hui un lecteur d'animation, une cadence et une timeline serait dessiner
       <strong>sur zéro image</strong>. Le dossier a une règle pour ça, et c'est celle qui l'a rendu
       utile : <em>mesurer avant de dessiner</em>. Il n'y a rien à mesurer.</p>
+    <p><strong>Ce bloc attend une chose et une seule, et trois maquettes le disent maintenant de la même
+      façon.</strong> Les commandes d'animation se répartissent sur trois écrans, et c'est
+      <span class="mesure">08-planche-de-pose.html</span> § 09 qui l'a écrit place par place : l'ordre des
+      vignettes dans la case d'une direction, la cadence sur la pose — les deux dans l'établi —, et
+      <b>le bouton pour la lire ici</b>. C'est lui que <em>le mouvement</em> réserve.
+      <span class="sourd">Écrit le 31 août 2026 : les trois maquettes concernées donnaient chacune une
+      réponse différente, et aucune ne citait les deux autres.</span></p>
   </div>
 </section>
 
@@ -589,8 +600,12 @@
     <tbody>
       <tr>
         <td class="k">05 — le codex</td>
-        <td class="apres">Un quatrième verbe : <b>il montre</b>. Et une porte vers la vitrine depuis
-          la barre d'outils du panneau central — <em>voir ce qui est fait</em>.</td>
+        <td class="apres">Un cinquième verbe : <b>il montre</b>. Et une porte vers la vitrine depuis
+          la barre d'outils du panneau central — <em>voir ce qui est fait</em>.
+          <b style="color:var(--ok)">Reporté le 31 août 2026.</b>
+          <span class="sourd">Le codex porte le verbe dans son tableau du § 01 et la porte dans son
+          croquis du § 03. Il dit du même coup ce qu'il ne devient pas : il n'affiche toujours aucun
+          résultat, il ouvre l'écran qui en montre.</span></td>
       </tr>
       <tr>
         <td class="k">07bis — la fiche</td>
@@ -607,7 +622,13 @@
         <td class="k">06 — l'univers</td>
         <td class="apres">Les fonds de la vitrine viennent de la palette et de la bible.
           <b>La bible décrit le fond du jeu et personne ne s'en sert</b> — l'Univers pourrait le
-          nommer explicitement plutôt que de le laisser dans une phrase d'éclairage.</td>
+          nommer explicitement plutôt que de le laisser dans une phrase d'éclairage.
+          <b style="color:var(--ok)">Répondu le 31 août 2026 : non.</b>
+          <span class="sourd">L'Univers a tranché dans son § 04, et il donne la raison : les sept
+          cases de la bible partent au modèle à chaque appel, et la case <em>technique</em> y réclame
+          déjà un sprite isolé sur fond gris neutre. Une huitième case nommant le fond du jeu
+          contredirait la septième dans le même texte envoyé. La phrase reste donc dans l'éclairage,
+          mais elle n'y est plus perdue : une ligne sous la case dit que la vitrine s'en sert.</span></td>
       </tr>
       <tr>
         <td class="k">Le dépôt</td>
@@ -650,7 +671,8 @@
       <tr><td class="k"><span class="m">380 px</span></td><td>La matrice</td><td>La colonne de droite du codex et de la fiche</td></tr>
       <tr><td class="k"><span class="m">44 px</span></td><td>Une vignette de la bande</td><td>La vignette d'entité du codex · <span class="mesure">05</span></td></tr>
       <tr><td class="k"><span class="m">26 px</span></td><td>Le pied · une bascule de la barre</td><td>Le châssis · <span class="mesure">03</span></td></tr>
-      <tr><td class="k"><span class="m">24 px</span></td><td>Une ligne de pose · un bouton d'échelle</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
+      <tr><td class="k"><span class="m">44 px</span></td><td>Une ligne de pose, dans la matrice</td><td>La rangée de la matrice de l'établi · <span class="mesure">02</span>. <b>Changé le 31 août 2026</b> : elle valait 24 ici et 52 dans l'établi, pour la même chose.</td></tr>
+      <tr><td class="k"><span class="m">24 px</span></td><td>Un bouton d'échelle</td><td>Le rang de la barre de tables · <span class="mesure">03</span></td></tr>
       <tr><td class="k"><span class="m">9 px</span></td><td>Une marque de case</td><td>Le carré de la barre de tables · <span class="mesure">03</span></td></tr>
     </tbody>
   </table>
@@ -660,10 +682,13 @@
     la taille est décidée par son contenu, et c'est justifié — une vitrine qui recadrerait le sujet
     mentirait sur ce qu'il est.</p>
 
-  <p>Le coin doré sur une vignette dit <em>hors taille commune</em> : c'est la marque d'écart du
-    produit, celle que la matrice de l'établi porte déjà depuis la maquette du calibrage. Le contour
-    doré sur une case de la matrice dit la même chose.
-    <span class="sourd">Aucun glyphe neuf — le produit en a toujours trois.</span></p>
+  <p>Le coin doré <strong>en bas à droite</strong> d'une vignette dit <em>hors taille commune</em> :
+    c'est la marque d'écart du produit, celle que la matrice de l'établi porte déjà depuis la maquette
+    du calibrage. Le contour doré sur une case de la matrice dit la même chose.
+    <span class="sourd">Aucun glyphe neuf. L'angle est précisé le 31 août 2026 : le produit range
+    désormais ses marques de coin par angle et par sujet — haut-gauche d'où l'image vient, haut-droite
+    ce que l'auteur en a fait, bas-droite ce que la mesure en dit. Le vocabulaire complet est écrit dans
+    <span class="mesure">04-galerie.html</span> § 09.</span></p>
 </section>
 
 <!-- ══ 10 ══════════════════════════════════════════════════════════ -->
@@ -671,7 +696,7 @@
   <div class="entete"><span class="num">10</span><h2>Ce que cet écran doit au guide</h2></div>
   <div class="note att">
     <span class="lab">Rien n'est écrit aujourd'hui · la dette du guide (D41)</span>
-    <p><strong>C'est l'écran où l'on juge, et juger est un des six temps de la boucle</strong> que le
+    <p><strong>C'est l'écran où l'on juge, et juger est un des cinq temps de la boucle</strong> que le
       guide raconte en tête. Il décrit le temps sans décrire l'écran qui le sert.</p>
     <p style="margin-top:10px"><b>nom</b> · La vitrine<br>
       <b>quoi</b> · L'image en grand, seule, pour la juger : sur le fond qu'on choisit, à la taille
@@ -679,8 +704,11 @@
       <b>ce que ça change</b> · Rien du tout, et c'est le point. Elle ne modifie aucune image et ne
       coûte pas un centime — la barre qui paie s'y retire, et son absence le dit avant qu'on ait lu
       quoi que ce soit.<br>
-      <b>d'où ça vient</b> · une image de la galerie ou une case de la matrice<br>
-      <b>où ça se range</b> · <span class="mesure">La galerie</span> — c'est de là qu'on l'ouvre</p>
+      <b>d'où ça vient</b> · <span class="mesure">trois portes</span> — le codex, la fiche d'une chose, la
+      planche d'une pose. Ce qu'elle montre change avec la porte : tout le monde, toutes les poses d'une
+      chose, ou les quatre vues d'une pose (§ 06).<br>
+      <b>où ça se range</b> · <span class="mesure">Le codex</span> — c'est son cinquième verbe, <em>il
+      montre</em> (§ 01). Pas la galerie : on n'y ouvre qu'une image à la fois, par le raccourci ci-dessous.</p>
     <p style="margin-top:10px" class="sourd"><b>Le raccourci se dit avec</b> : survoler une vignette et
       appuyer sur la barre d'espace montre l'image en grand. Il vaut partout dans l'atelier, sans
       exception, et c'est le genre de geste qu'on n'apprend nulle part si le guide ne le dit pas.</p>
