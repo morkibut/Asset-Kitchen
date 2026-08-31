@@ -1,4 +1,4 @@
-# Asset Kitchen — Les 333 user stories
+# Asset Kitchen — Les 366 user stories
 
 Le catalogue, groupé comme il l'a été écrit — par geste, dans l'ordre où l'auteur les
 rencontre. **On l'ouvre par numéro** : un critère d'acceptation cite `US-65`, on vient
@@ -515,3 +515,66 @@ tranche ne les porte**.*
 - **US-331** — En tant qu'auteur, je veux que le modèle imposé à l'agent soit gratuit par défaut, afin qu'un agent qui code ne dépense plus mon argent pour des visuels de travail.
 - **US-332** — En tant qu'auteur, je veux choisir ce modèle d'exploration parmi ceux qui ne coûtent rien, afin de garder la main sur ce que l'agent consomme.
 - **US-333** — En tant qu'auteur, je veux qu'une image faite sans les références de mon univers reste reconnaissable plus tard, afin de ne pas chercher pourquoi elle ne ressemble pas aux autres.
+
+---
+
+## Les cinq capacités que l'usage a réclamées
+
+*Écrites le 1<sup>er</sup> septembre 2026. Elles ne viennent ni d'un chantier de maquettes ni
+d'un besoin d'économie, mais de **deux séances de l'auteur sur l'interface refaite**, le même
+soir : la première sur la V2.1 entière, la seconde sur les seules tables de l'atelier. Sur les
+treize reprises que ces séances ont ouvertes, huit corrigent un écran déjà cadré et **cinq
+demandent au produit quelque chose qu'il n'avait jamais promis** — les voici. Ce que chacune
+livre et ses critères se lisent dans `docs/tranches/U.md`.*
+
+### La veille d'une table — éteindre sans vider
+
+- **US-334** — En tant qu'auteur, je veux éteindre une place de ma recette depuis la barre des tables, sans avoir à l'ouvrir, afin d'essayer mon image sans elle d'un seul clic.
+- **US-335** — En tant qu'auteur, je veux qu'une place éteinte garde tous ses réglages et me les rende tels quels quand je la rallume, afin qu'essayer sans ne me coûte jamais de retaper.
+- **US-336** — En tant qu'auteur, je veux distinguer d'un coup d'œil une place éteinte d'une place vide, afin de ne pas croire que je n'ai rien réglé quand je n'ai fait qu'éteindre.
+- **US-337** — En tant qu'auteur, je veux qu'une table éteinte le dise quand je l'ouvre, et que toucher un de ses réglages la rallume en me l'annonçant, afin de ne jamais régler quelque chose qui n'agit pas.
+- **US-338** — En tant qu'auteur, je veux que la veille soit un réglage de ma recette et non un état d'écran — qu'elle refasse le rendu, qu'elle voyage avec le reste, et que l'agent la lise et la pose comme n'importe quel autre —, afin qu'éteindre soit aussi durable que régler.
+- **US-339** — En tant qu'auteur, je veux qu'une image traitée avec une place en veille sorte identique à la même sans cette place du tout, afin qu'endormie veuille dire sans effet et non presque sans effet.
+
+### Les réglages voyagent d'une image à l'autre
+
+*`US-66` demandait déjà de nommer une recette et de la réappliquer ailleurs : le produit sait
+le faire depuis la V1, et aucun écran ne l'a jamais appelé. Ce qui suit ajoute la surface, le
+geste court, et la règle de ce qui ne voyage pas.*
+
+- **US-340** — En tant qu'auteur, je veux copier les réglages d'une image et les coller sur une autre, sans rien nommer ni ranger, afin de traiter les cinq attitudes suivantes comme la première.
+- **US-341** — En tant qu'auteur, je veux qu'un collage me dise ce qu'il a posé et ce qu'il n'a pas pu poser, afin de savoir où j'en suis sans comparer place par place.
+- **US-342** — En tant qu'auteur, je veux que ce qui désigne un endroit de cette image-là — un cadre tracé, un point de pipette, une forme entourée, un passage de la main — ne voyage jamais, afin qu'un collage ne cadre ni n'efface au hasard sur une silhouette qui n'est pas la même.
+- **US-343** — En tant qu'auteur, je veux qu'une place privée de ce qui la désignait arrive sans effet et le dise, afin de la reprendre moi-même au lieu de découvrir le manque en regardant le rendu.
+- **US-344** — En tant qu'auteur, je veux enregistrer la recette courante sous un nom depuis la barre des tables, afin de garder un traitement qui survive à ma séance.
+- **US-345** — En tant qu'auteur, je veux retrouver mes recettes nommées au même endroit, en appliquer une, en oublier une, afin de n'avoir rien à ranger ailleurs.
+- **US-346** — En tant qu'auteur, je veux qu'un nom déjà pris me propose de remplacer et ne remplace jamais en silence, afin de ne pas perdre un traitement que j'avais gardé.
+- **US-347** — En tant qu'auteur, je veux que mes recettes nommées appartiennent à l'atelier et non à un jeu, afin de poser sur le décor d'un autre jeu le traitement que j'ai mis au point ici.
+
+### Le texte d'une image se relit sur sa fiche
+
+- **US-348** — En tant qu'auteur, je veux lire sur la fiche d'une image le texte entier qui est parti la fabriquer, replié par défaut et dépliable, afin de savoir ce que j'avais demandé sans changer d'onglet.
+- **US-349** — En tant qu'auteur, je veux que ce soit le texte réellement parti, avec ce que le jeu et l'ambiance y avaient ajouté, afin qu'une vieille image dise ce qui l'a faite et non ce que je taperais aujourd'hui.
+- **US-350** — En tant qu'auteur, je veux copier ce texte depuis la fiche sans passer par *reprendre les réglages*, afin de le relire ou l'emporter ailleurs sans armer une génération.
+- **US-351** — En tant qu'auteur, je veux qu'une image entrée par import dise qu'elle n'a pas de texte, afin de ne pas chercher ce qui n'existe pas.
+- **US-352** — En tant qu'auteur, je veux qu'une image née d'une autre — une découpe de planche, un calque rendu — nomme celle dont elle descend et m'y mène, sans afficher ici un texte qui n'y a pas été écrit, afin de remonter à ce qui a été demandé sans confondre les deux images.
+
+### La sélection magique — tracer gros, ajuster au bord
+
+- **US-353** — En tant qu'auteur, je veux entourer grossièrement à main levée ce que je veux garder, et voir ma forme pendant que je la trace, afin de désigner un sujet sans suivre son contour au pixel.
+- **US-354** — En tant qu'auteur, je veux que l'atelier ramène le contour sur le bord du sujet à l'intérieur de ma forme et ne touche à rien au-dehors, afin d'obtenir un fond propre là où le remplissage se trompe et où la main serait trop longue.
+- **US-355** — En tant qu'auteur, je veux que ce tracé soit une façon de plus de désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, afin qu'un seul endroit décide de ce qui est effacé.
+- **US-356** — En tant qu'auteur, je veux qu'il agisse avant le recadrage et la mise sur grille, afin que ces deux places sachent où est le sujet au lieu de travailler sur une image dont le fond est encore là.
+- **US-357** — En tant qu'auteur, je veux retoucher ensuite le résultat à la main sans recommencer, afin de rattraper les quelques pixels que l'ajustement a manqués.
+- **US-358** — En tant qu'auteur, je veux défaire ce tracé d'un seul coup, afin de l'essayer sans risque.
+
+### Un second moteur de détourage
+
+- **US-359** — En tant qu'auteur, je veux choisir le moteur d'une passe dans une liste que l'atelier tient de ce que ma machine sait faire, afin de ne plus dépendre d'un seul nom décidé une fois pour toutes.
+- **US-360** — En tant qu'auteur, je veux que le moteur rapide reste celui que j'obtiens sans rien demander, afin qu'une silhouette facile ne me coûte jamais une attente.
+- **US-361** — En tant qu'auteur, je veux disposer d'un moteur plus lourd et meilleur pour les cheveux, les franges et les objets ajourés, afin de ne pas reprendre à la main ce qu'un meilleur modèle sait faire.
+- **US-362** — En tant qu'auteur, je veux qu'un moteur plus lent l'annonce avant de partir et non pendant, afin de choisir d'attendre plutôt que de le subir.
+- **US-363** — En tant qu'auteur, je veux qu'un moteur installé dont le modèle n'est pas encore descendu me dise ce qu'il va rapatrier et combien ça pèse, avant de partir et une seule fois, afin qu'une attente de plusieurs minutes ne me tombe pas dessus sans prévenir.
+- **US-364** — En tant qu'auteur, je veux qu'un moteur absent de ma machine soit grisé avec sa raison et le geste pour l'installer, afin de ne jamais découvrir l'absence après avoir lancé.
+- **US-365** — En tant qu'auteur, je veux qu'une recette qui nomme un moteur absent le dise sans casser le rendu des autres passes, afin qu'une recette venue d'ailleurs ne me laisse pas devant une image blanche.
+- **US-366** — En tant qu'auteur, je veux savoir sur quoi repose « meilleur » — la durée de chaque moteur et ce qu'ils rendent côte à côte sur des silhouettes difficiles —, afin de choisir sur un relevé et non sur une promesse.

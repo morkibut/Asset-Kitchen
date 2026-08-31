@@ -132,12 +132,32 @@ Cinq règles qui tiennent l'ensemble :
    valeur de tolérance ne l'efface. Ce que la recette en garde est un **point**,
    jamais un identifiant de tache, et la couleur qu'il désigne est une mesure —
    voir `atelier/domaine/recette.py`, sur `Passe`.
+
+   **Ce paragraphe décrit ce qui est construit, et le produit en a promis deux
+   fois plus le 1<sup>er</sup> septembre 2026** (`docs/prd-decisions.md`, § Les
+   décisions des cinq capacités). Une passe désignera aussi par une **forme
+   entourée** — la sélection magique, qui borne la recherche au lieu de la
+   lancer —, et le moteur par modèle cessera d'être un nom écrit en dur pour
+   venir d'une **liste**, avec un second modèle plus lourd qui n'est pas le
+   défaut. Les deux se posent ici, à cet endroit précis, et rien de l'ordre
+   fixe ne bouge : c'est ce qui rendra le report court quand `U12` et `U13`
+   seront construites.
 5. **Le traitement est non destructif.** On garde l'image brute et la **recette** — la
    liste ordonnée des étapes et leurs réglages. Le fichier traité est un rendu, écrit sur
    disque comme cache, effaçable sans rien perdre. Recalculer coûte des millisecondes ;
    regénérer coûte de l'argent et ne rend jamais la même image. Corollaire gratuit : un
    preset *est* une recette nommée, et changer la palette d'un projet la réapplique à tous
    ses assets sans un seul appel payant.
+
+   **Et une recette qui voyage ne porte que des réglages** — décidé le
+   1<sup>er</sup> septembre 2026, en cadrant `U5`. `nommer` retire déjà la
+   différence d'un calque et le décalage du calibrage, chacun avec sa raison
+   écrite au-dessus de la ligne qui l'enlève : *c'est une coordonnée, pas un
+   réglage*. La règle se généralise et devient la promesse du produit — le
+   cadre de recadrage tracé, le point de la pipette, la forme entourée et les
+   passages de la main s'y ajoutent. **Le prix se paie une fois** : une recette
+   nommée emporte les passages de main aujourd'hui, elle cessera de les
+   emporter.
 
 ### Squelette du dépôt
 

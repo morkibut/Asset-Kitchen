@@ -167,3 +167,113 @@ Elles viennent du dossier de maquettes `docs/maquettes-v2.1/`, où quarante et u
 **La barre d'espace montre n'importe quelle vignette en grand, partout.** On survole une petite image, on appuie, elle s'affiche en grand ; la molette la zoome. Le geste vaut sans exception — la fiche d'une chose, le codex, l'écran de confirmation, une planche —, et c'est lui qui permet de garder les vignettes petites au lieu d'ajouter une taille à la liste fermée du produit.
 
 **Le guide fait le tour des quatre lieux, et il doit une ligne à chaque écran.** Un manque d'explication est un fait sur le guide, et il se range dans le guide : sa liste des manques cesse d'être tenue à la main et devient **une dette que chaque écran paie au moment où il est construit**. Un réglage sans explication ne casse rien — il n'a simplement pas de trait sous son nom, et l'auteur voit qu'il n'y a rien à survoler.
+
+### Les décisions des cinq capacités que l'usage a réclamées — 1<sup>er</sup> septembre 2026
+
+Elles viennent de **deux séances de l'auteur sur l'interface refaite**, le même soir, et non
+d'un chantier de maquettes. Les treize reprises qu'elles ont ouvertes vivent dans
+`docs/PLAN.md` ; huit corrigent un écran déjà cadré, et **cinq demandent au produit quelque
+chose qu'il n'avait jamais promis** — celles-ci. Quatre points ont été posés à l'auteur et
+tranchés avant d'écrire ; ils sont signalés là où ils tombent.
+
+**Éteindre n'est pas vider, et la veille s'arrête à la place.** Une place de la recette
+s'éteint depuis la barre des tables, sans qu'on l'ouvre : elle garde tous ses réglages et
+cesse d'agir. C'est l'exact contraire de *Sans cette table ›*, qui existe déjà au pied de
+chaque colonne et qui, lui, vide la place — **éteinte** et **vide** sont deux états et se
+distinguent à l'œil, sans quoi on croirait n'avoir rien réglé quand on n'a fait qu'éteindre.
+Une table éteinte le dit quand on l'ouvre, et toucher l'un de ses réglages la rallume **en
+l'annonçant** : rien ne se règle en silence sur une place qui n'agit pas. La veille descend
+d'un cran jusqu'à la **passe** de détourage, parce qu'une recette en enchaîne plusieurs et
+qu'on ne voit que leur somme ; elle ne descend pas plus bas — un curseur éteint fabriquerait
+un second zéro à côté du sien, et personne ne saurait lequel des deux agit. Les deux
+fabriques, elles, n'ont rien à éteindre : elles ne posent rien sur l'image ouverte.
+
+**La veille est un réglage, pas un état d'écran — et le prix est nommé.** Elle entre dans la
+recette, donc elle refait le rendu, elle voyage avec le reste, et l'agent la lit et la pose
+comme n'importe quel autre réglage. Ce que ça coûte est écrit d'avance : un champ de plus dans
+la recette, donc dans ce qui décide qu'un rendu est à refaire, et dans les outils de l'agent.
+Ce qu'elle promet en échange : une image traitée avec une place en veille sort **identique au
+pixel près** à la même sans cette place du tout. Endormie veut dire sans effet, pas presque
+sans effet.
+
+**Deux gestes de voyage, deux durées de vie, et les deux existent.** *Copier les réglages*
+puis *coller* sur une autre image sert la séance en cours — rien à nommer, rien à ranger,
+c'est le geste des cinq attitudes qui suivent la première, et il meurt avec l'atelier. La
+**recette nommée** sert ce qui doit survivre à la séance : on l'enregistre depuis la barre des
+tables, on la retrouve au même endroit, on l'applique, on l'oublie. Un nom déjà pris propose
+de remplacer et ne remplace jamais en silence. Il n'y a pas de troisième geste : un traitement
+qui suivrait tout seul les images d'une chose du jeu déciderait de l'apparence sans le dire,
+et la palette du projet fait déjà cela pour ce qui la concerne.
+
+**Un réglage voyage, une coordonnée ne voyage pas.** *Tranché par l'auteur le
+1<sup>er</sup> septembre 2026.* Ce qui désigne un endroit de **cette** image-là ne veut rien
+dire sur une autre : le cadre de recadrage tracé à la main, le point de la pipette, la forme
+entourée de la sélection magique, les passages de la main et ses calques de dessin, le
+décalage du calibrage, la différence d'un calque. Ils ne partent ni par un collage ni par une
+recette nommée, et la place qui en dépendait **arrive sans effet et le dit** — un collage
+annonce toujours ce qu'il a posé et ce qu'il n'a pas pu poser. La raison tient en une image :
+six attitudes d'un même personnage n'ont pas la même silhouette, et un passage recopié
+tomberait à côté. **Le prix est réel et il se paie une fois** : une recette nommée emporte la
+main aujourd'hui, elle cessera de l'emporter — les recettes déjà écrites perdent donc leurs
+passages en étant rappelées. Ce qui ne bouge pas : ce qui a voyagé se rejoue à l'identique.
+
+**Une recette nommée appartient à l'atelier, pas à un jeu.** Comme la base d'étiquettes et
+comme la clé du fournisseur, elle ne dépend d'aucun projet : un traitement n'est pas un
+univers, et le nettoyage mis au point sur une chevelure ici sert sur le décor d'un autre jeu.
+Conséquence à connaître : une recette qui nomme des couleurs les emporte **telles quelles** —
+c'est une recette, pas un lien vers la palette d'un jeu —, si bien que la rappeler ailleurs
+n'importe pas la palette d'à côté, elle repose les couleurs sous lesquelles on l'avait
+enregistrée.
+
+**Le texte qui a fabriqué une image se lit sur elle, entier.** La fiche d'une image montre le
+texte **tel qu'il est parti** — avec ce que le jeu et l'ambiance y avaient ajouté —, replié à
+quelques lignes, dépliable et copiable, sans passer par *reprendre les réglages*, qui change
+d'onglet et remplit un champ, c'est-à-dire qui fait tout autre chose que lire. Il était
+enregistré depuis le premier jour et n'était affiché nulle part : la fiche n'en montrait que
+le titre, qui en est les cinquante-six premiers caractères. On ne le modifie pas depuis là —
+la galerie ne fabrique rien, et un texte déjà payé ne se réécrit pas.
+
+**Une image sans texte à elle nomme celle dont elle descend, et ne montre pas son texte.**
+*Tranché par l'auteur le 1<sup>er</sup> septembre 2026.* Une image entrée par import dit
+qu'elle n'a pas de texte, au lieu de laisser un vide. Une image née d'une autre — une découpe
+de planche, un calque rendu — nomme sa parente et y mène : on va lire le texte là où il a été
+écrit. Montrer ici le texte de la planche aurait affiché sur une image un texte qui décrit
+huit, et rien n'est jamais recopié à un endroit où il n'a pas été écrit.
+
+**La sélection magique est une quatrième façon de désigner ce qu'on retire.** *Tranché par
+l'auteur le 1<sup>er</sup> septembre 2026, sur une question qu'il a posée en retour.* On
+entoure grossièrement à main levée ce qu'on veut garder, on voit sa forme se tracer, et
+l'atelier ramène le contour sur le bord du sujet **à l'intérieur** de ce qu'on a entouré,
+sans toucher à rien au-dehors ; le résultat se retouche ensuite à la main sans recommencer, et
+le tracé se défait d'un seul coup. Elle prend place à côté du remplissage depuis le bord, de
+la pipette et du modèle, et **elle agit avec le détourage** — donc avant le recadrage et la
+mise sur grille, qui ont tous les deux besoin de savoir où est le sujet : tant que le fond est
+là, la boîte du sujet, c'est toute l'image. La question posée en retour était la bonne — *un
+tracé propre à une image va-t-il entrer dans une recette ?* — et la réponse est **oui, dans
+les deux emplacements envisagés** : la main est une place de la recette autant que le
+détourage, et ses passages y sont enregistrés comme des tracés. Ce qui protège n'est donc pas
+l'emplacement, c'est la règle du voyage ci-dessus, qui vaut déjà pour le point de la pipette.
+
+**Le moteur d'une passe vient d'une liste, jamais d'un nom écrit une fois pour toutes.** Le
+détourage par modèle n'en connaissait qu'un ; la règle du produit — *ce qui est proposé vient
+d'un catalogue* — vaut ici pour la raison qui la fait valoir ailleurs. On en ajoute un
+**plus lourd et meilleur, qui n'est pas le défaut** : le rapide reste ce qu'on obtient sans
+rien demander, le lourd est là pour les cheveux, les franges et les objets ajourés, et il
+**annonce sa lenteur avant de partir**, pas pendant. Un moteur absent de la machine est grisé
+avec sa raison et le geste pour l'installer, et une recette qui nomme un moteur absent le dit
+sans casser le rendu des autres passes.
+
+**Un moteur installé dont le modèle n'est pas encore descendu reste choisissable, et il
+annonce ce qu'il rapatrie.** *Tranché par l'auteur le 1<sup>er</sup> septembre 2026.* Deux
+absences existent et elles ne se traitent pas pareil : le moteur qui n'est pas installé du
+tout est grisé, comme n'importe quoi d'indisponible ; celui qui est là mais dont le modèle
+doit encore descendre reste proposé, et dit **avant de partir et une seule fois** ce qu'il va
+chercher et combien ça pèse. Griser les deux aurait obligé à sortir de l'atelier pour un
+téléchargement que l'atelier sait faire ; les confondre aurait laissé tomber une attente de
+plusieurs minutes sur un geste annoncé comme lent de quelques secondes.
+
+**« Meilleur » est un relevé, pas une promesse.** Ce qui autorise à le dire : la durée des
+deux moteurs sur les images déjà là, et ce qu'ils rendent côte à côte sur des silhouettes
+difficiles. Le produit ne calcule aucune note de qualité par moteur — écartée pour la raison
+qui l'écarte déjà pour les modèles : elle se juge à l'usage, sur des images qu'on voulait de
+toute façon.

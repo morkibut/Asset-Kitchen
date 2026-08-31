@@ -1,6 +1,6 @@
 # Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2
 
-> **PRD source** : `docs/PRD.md` — **333 user stories, toutes couvertes ici.**
+> **PRD source** : `docs/PRD.md` — **366 user stories, toutes couvertes ici.**
 > **Découpage** : les sept tranches T1→T7 ont été décidées le 26 août 2026, à l'établissement
 > de `docs/archi-versions.md` §6.3. Ce plan ne les redécoupe pas : il leur accroche les user
 > stories, leur donne un ordre et des critères d'acceptation vérifiables. C'est lui, désormais,
@@ -321,9 +321,15 @@ d'acceptation de chacune d'elles :
 | | **Total** | **16** |
 
 Avec les 114 de la V1 et les 43 de la V2, les 173 premières user stories du PRD ont chacune
-leur tranche. **Les 135 suivantes — `US-174` à `US-308` — sont celles de la V2.1, et les 25
-dernières — `US-309` à `US-333` — celles de la V2.2. Les deux couvertures sont plus
-bas.** Total : **333 user stories, une tranche chacune.**
+leur tranche. **Les 135 suivantes — `US-174` à `US-308` — sont celles de la V2.1, les 25
+d'après — `US-309` à `US-333` — celles de la V2.2, et les 33 dernières — `US-334` à
+`US-366` — les cinq capacités du lot d'usage `U1` à `U13`, écrites le 1<sup>er</sup> septembre
+2026. Les trois couvertures sont plus bas.** Total : **366 user stories, une tranche
+chacune.**
+
+*Les numéros suivent le jour où la story a été écrite, jamais l'ordre de construction* : le
+lot `U` se construit avant la V2.2 et porte pourtant les numéros d'après. C'est déjà vrai des
+reprises `R1` à `R5`, et ça évite de renuméroter un catalogue que des critères citent.
 
 ---
 
@@ -1694,8 +1700,11 @@ fois sur l'écran de découpe ; la corriger en deux fois ferait écrire deux foi
 **U4 avant U5**, et c'est le blocage dur du lot : une recette qui voyage doit emporter l'état
 de veille d'une table, sinon la coller rallumerait des places qu'on avait éteintes.
 
-**U11 avant U12** : la sélection magique se pose sur la surface de la main, et cette surface
-doit d'abord dire la vérité sur l'endroit qu'on touche.
+**U11 avant U12** : la sélection magique se trace **sur l'image**, comme la main y peint et
+comme la pipette y désigne un point, et cette surface doit d'abord dire la vérité sur
+l'endroit qu'on touche. *Le cadrage du 1<sup>er</sup> septembre 2026 a déplacé l'outil de la
+table de la main vers celle du détourage, et ce blocage-là ne bouge pas : c'est le tracé sur
+l'image qui le porte, pas la table d'où on l'ouvre.*
 
 Les autres sont indépendantes et se prennent dans l'ordre de la gêne.
 
@@ -1735,7 +1744,8 @@ et le coût.
 
 ### Ce que chacune livre, et ses critères → `docs/tranches/U.md`
 
-**Quatre-vingt-trois critères d'acceptation**, une section par étape, avec ce qui a été
+**Quatre-vingt-sept critères d'acceptation** — quatre-vingt-trois à l'ouverture, quatre
+ajoutés par le cadrage du 1<sup>er</sup> septembre 2026 —, une section par étape, avec ce qui a été
 mesuré pour l'écrire et les trois points déjà fermés qu'il ne faut pas replanifier. Ils y
 vivent plutôt qu'ici pour la raison qui a déjà fait descendre les vingt-et-une étapes de la
 V2.1 : treize étapes détaillées pèseraient dans ce plan plus que la V2.2 entière, alors
@@ -1748,14 +1758,32 @@ s'accumule et ne se rend jamais, mais la **couleur** qu'une passe examine est to
 de l'image d'origine — effacer un pixel ne change pas sa couleur. C'est écrit en U10 parce
 que c'est probablement ce qui explique le défaut de la pipette sur une seconde passe.
 
-### Ce que ce lot demande au produit avant d'être construit
+### Ce que ce lot demandait au produit — *cadré le 1<sup>er</sup> septembre 2026*
 
 **Cinq des treize ajoutent une capacité**, et pas seulement une réparation : la veille d'une
 table (U4), les réglages qui voyagent (U5), le prompt qu'on relit sur une image (U8), la
-sélection magique (U12) et le second moteur de détourage (U13). Ce que le produit doit faire
-est tranché dans `docs/PRD.md`, et ces cinq-là n'y sont pas écrites — elles n'ont donc **pas
-de numéro de user story**, et ce plan n'en invente pas. À passer par `/cadre` avant de les
-construire. Les huit autres corrigent un écran déjà cadré.
+sélection magique (U12) et le second moteur de détourage (U13). Elles n'étaient pas écrites
+dans `docs/PRD.md` et n'avaient donc **aucun numéro de user story**. Elles y sont depuis le
+1<sup>er</sup> septembre 2026 : **trente-trois stories, `US-334` à `US-366`**, et les
+décisions qui les tiennent dans `docs/prd-decisions.md`. Les huit autres étapes corrigent un
+écran déjà cadré et ne demandaient rien.
+
+| | Ce qu'elle ajoute au produit | Stories |
+|---|---|---|
+| **U4** | Une place s'éteint sans se vider, et la veille est un réglage de la recette | `US-334` → `US-339` |
+| **U5** | Les réglages voyagent, par collage et par recette nommée | `US-340` → `US-347` |
+| **U8** | Le texte qui a fabriqué une image se relit sur sa fiche | `US-348` → `US-352` |
+| **U12** | On entoure grossièrement, l'atelier va chercher le bord | `US-353` → `US-358` |
+| **U13** | Un second moteur de détourage, choisi dans une liste | `US-359` → `US-366` |
+
+**Quatre points ont été tranchés par l'auteur pendant le cadrage**, en plus des quatre
+arbitrages ci-dessus, et ils changent ce que les étapes construisent. *Une coordonnée ne
+voyage pas* — ni cadre tracé, ni point de pipette, ni forme entourée, ni passage de la main :
+U5 retire donc à une recette nommée ce qu'elle emporte aujourd'hui. *La sélection magique agit
+avec le détourage*, avant le recadrage et la mise sur grille, et non avec la main comme la
+séance l'avait vue — U12 change d'emplacement. *Une image sans texte à elle nomme sa parente
+sans montrer son texte* — U8 n'hérite pas. *Un moteur installé dont le modèle n'est pas encore
+descendu reste choisissable et annonce son poids* — U13 distingue deux absences au lieu d'une.
 
 ---
 

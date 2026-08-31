@@ -31,8 +31,9 @@ la réponse.
 **Ce que la seconde séance ajoute et que la première n'avait pas** : deux de ses points ne
 sont pas des réparations mais des outils qui manquent — une sélection qu'on trace grossièrement
 et que l'atelier ajuste, et un second moteur de détourage plus lourd. Ils sont ici parce qu'ils
-sont nés d'un usage, comme le reste ; ils demandent un passage par le document du produit
-avant d'être construits, comme les trois autres capacités du lot.
+sont nés d'un usage, comme le reste ; ils demandaient un passage par le document du produit
+avant d'être construits, comme les trois autres capacités du lot — **fait le
+1<sup>er</sup> septembre 2026**, voir la dernière section.
 
 **Chaque point a été vérifié sur la machine de l'auteur avant d'être planifié**, l'atelier
 tournant sur son port habituel. C'est ce qui distingue ce lot des cinq reprises de la V2 :
@@ -264,7 +265,7 @@ sinon un collage rallumerait des places que l'on avait éteintes.
 
 ## U5 · Les réglages voyagent d'une image à l'autre
 
-**Critères : 8 · Ce que ça corrige : un point de la séance**
+**Critères : 9 · Ce que ça corrige : un point de la séance**
 
 ### Ce qu'on livre
 
@@ -284,21 +285,40 @@ oublier.
 Le déterminisme est la promesse du produit et le critère qui la garde ne bouge pas : **une
 recette nommée, réappliquée ailleurs, donne exactement le même résultat.**
 
-**Ce qui ne voyage pas, et pourquoi** : une boîte de recadrage tracée à la main est un
-rectangle *de cette image-là*. Elle ne veut rien dire sur une autre — un collage l'ignore
-et le dit, plutôt que de cadrer au hasard.
+**Ce qui ne voyage pas, et pourquoi.** *Élargi au cadrage du 1<sup>er</sup> septembre 2026,
+où l'auteur a tranché la règle générale* (`docs/prd-decisions.md`, `US-342`). Une boîte de
+recadrage tracée à la main est un rectangle *de cette image-là* : elle ne veut rien dire sur
+une autre. Et elle n'est pas seule — **un réglage voyage, une coordonnée ne voyage pas** : ni
+le cadre tracé, ni le point de la pipette, ni la forme entourée de la sélection magique
+(U12), ni les passages de la main et ses calques de dessin, ni le décalage du calibrage, ni
+la différence d'un calque. Six attitudes d'un même personnage n'ont pas la même silhouette,
+et un passage recopié tomberait à côté. Une place privée de ce qui la désignait **arrive sans
+effet et le dit**, plutôt que d'agir au hasard.
+
+**Le prix de cette règle est réel et il se paie une fois** : une recette nommée emporte la
+main aujourd'hui — le code ne retire que la différence et le décalage. Elle cessera de
+l'emporter, et une recette écrite avant ce jour perdra donc ses passages en étant rappelée.
+
+**Et une recette nommée appartient à l'atelier, pas à un jeu** — comme la base d'étiquettes.
+Elle emporte les couleurs sous lesquelles on l'a enregistrée, telles quelles : c'est une
+recette, pas un lien vers la palette d'un jeu.
 
 ### Critères d'acceptation
 
 - [ ] *Copier les réglages* puis *coller* sur une autre image donnent la même recette, état
       de veille compris.
 - [ ] Un collage annonce ce qu'il a posé, et ce qu'il n'a pas pu poser.
-- [ ] Une boîte de recadrage tracée à la main ne voyage pas, et le collage le dit.
+- [ ] Rien de ce qui désigne un endroit de cette image-là ne voyage — cadre tracé, point de
+      pipette, passage de la main —, ni par collage ni par recette nommée, et la place qui en
+      dépendait arrive sans effet en le disant.
+- [ ] Une recette nommée écrite avant cette étape se rappelle sans lever, et ce qu'elle perd
+      — ses passages de main — est annoncé au lieu d'être posé.
 - [ ] On enregistre la recette courante sous un nom depuis la barre des tables.
 - [ ] La liste des recettes nommées est atteignable depuis la même barre ; on en applique
       une, on en oublie une.
 - [ ] Deux images traitées par la même recette nommée sortent identiques au pixel près.
-- [ ] Une recette nommée survit à la fermeture de l'atelier.
+- [ ] Une recette nommée survit à la fermeture de l'atelier, et s'applique à une image d'un
+      autre jeu que celui où elle a été enregistrée.
 - [ ] Enregistrer un nom déjà pris propose de remplacer, et ne remplace jamais en silence.
 
 ### Bloquée par
@@ -386,7 +406,7 @@ Aucune.
 
 ## U8 · La galerie rend le prompt, et son bouton rentre dans la vignette
 
-**Critères : 6 · Ce que ça corrige : deux points de la séance**
+**Critères : 7 · Ce que ça corrige : deux points de la séance**
 
 ### Ce qu'on livre
 
@@ -398,6 +418,16 @@ ajoute le texte entier, replié à quelques lignes, dépliable, et copiable — 
 *reprendre*, qui change d'onglet et remplit le champ, c'est-à-dire qui fait tout autre chose
 que lire.
 
+**C'est le texte tel qu'il est parti**, avec ce que le jeu et l'ambiance y avaient ajouté, et
+non le seul signalement écrit dans le champ : depuis E14, le champ ne porte plus que le
+sujet, et une vieille image doit dire ce qui l'a faite, pas ce qu'on taperait aujourd'hui.
+
+**Une image sans texte à elle nomme sa parente, et ne montre pas son texte.** *Tranché par
+l'auteur au cadrage du 1<sup>er</sup> septembre 2026* (`US-352`). Une découpe de planche, un
+calque rendu : la fiche dit qu'il n'y a pas de texte ici et mène à l'image dont elle
+descend — on va le lire là où il a été écrit. Montrer le texte de la planche sur l'un de ses
+huit morceaux aurait affiché sur une image un texte qui en décrit huit.
+
 **Et le bouton de téléchargement rentre dans la vignette.** Mesuré : à la taille de repos,
 la vignette fait 132,6 px, la ligne des mesures en réclame 137, et le lien *PNG ↓* dépasse
 de **13,2 px** sur la droite — il sort de la tuile et se pose sur la voisine. Aux deux
@@ -407,9 +437,12 @@ secondaire.
 
 ### Critères d'acceptation
 
-- [ ] La fiche d'une image montre le prompt qui l'a fabriquée, entier, replié par défaut.
+- [ ] La fiche d'une image montre le prompt qui l'a fabriquée, entier, replié par défaut, et
+      c'est bien le texte parti — celui du jeu et de l'ambiance compris, pas le seul sujet.
 - [ ] On le déplie, on le copie, sans quitter la fiche ni toucher au champ de génération.
 - [ ] Une image entrée par import — donc sans prompt — le dit au lieu de laisser un vide.
+- [ ] Une image née d'une autre nomme sa parente et y mène, sans afficher le texte de
+      celle-ci.
 - [ ] À la taille de repos, rien ne dépasse de la vignette : mesuré au navigateur, pas
       estimé.
 - [ ] Le téléchargement reste atteignable aux trois tailles.
@@ -573,16 +606,32 @@ ferait écrire deux fois le même calcul.
 
 ## U12 · La sélection magique — tracer gros, ajuster au bord
 
-**Critères : 6 · Ce que ça ajoute : un point de la seconde séance**
+**Critères : 7 · Ce que ça ajoute : un point de la seconde séance**
 
 ### Ce qu'on livre
 
-Un troisième outil dans la table de la main, à côté de la zone et de la retouche : **on
-entoure grossièrement ce qu'on veut garder, et l'atelier va chercher le bord du sujet
+**On entoure grossièrement ce qu'on veut garder, et l'atelier va chercher le bord du sujet
 lui-même** à l'intérieur de ce qu'on a entouré. Le geste des logiciels d'image, et il
 répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le
 premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au
 pixel près, ce qui est long sur une silhouette entière.
+
+**Elle vit avec le détourage, et non avec la main.** *La séance l'avait vue comme un
+troisième outil de la table de la main, à côté de la zone et de la retouche ; l'auteur a
+tranché l'inverse au cadrage du 1<sup>er</sup> septembre 2026, sur une question qu'il a posée
+en retour.* C'est une **quatrième façon de désigner ce qu'on retire**, à côté du remplissage
+depuis le bord, de la pipette et du modèle — un seul endroit décide de ce qui est effacé. Et
+elle doit agir **avant le recadrage et la mise sur grille**, qui ont tous les deux besoin de
+savoir où est le sujet : tant que le fond est encore là, la boîte du sujet, c'est toute
+l'image, et un détourage fait en dernier rendrait un sprite mal cadré et mal calé dans sa
+case.
+
+**La question posée en retour, et sa réponse**, parce qu'elle vaut pour la suite : *un tracé
+propre à une image va-t-il entrer dans une recette ?* **Oui — dans les deux emplacements
+envisagés**, la main étant une place de la recette autant que le détourage, et ses passages y
+étant enregistrés comme des tracés. Ce qui protège n'est donc pas l'emplacement, c'est la
+règle du voyage tranchée en U5 : une coordonnée ne voyage pas, et le point de la pipette est
+déjà exactement ce cas-là.
 
 **Ce qui le rend possible ici sans rien inventer** : l'atelier sait déjà remplir une zone de
 proche en proche à partir d'un point, et il sait déjà durcir puis ronger un bord — ce sont
@@ -590,10 +639,10 @@ les deux mécanismes du détourage par la couleur et du réglage de durcissement
 magique les emploie dans l'autre sens : la zone tracée borne la recherche au lieu de la
 lancer, et ce qui sort est un masque qu'on peut encore retoucher à la main.
 
-**Ce qui reste à trancher, et qui se tranchera en la construisant** : le résultat est-il un
-huitième réglage de la recette, ou une passe de détourage d'un genre nouveau ? La seconde
-réponse est la plus probable — c'est un détourage, il en a la place dans l'ordre — mais elle
-demande qu'une passe puisse porter une forme dessinée, ce qu'aucune ne fait aujourd'hui.
+**Ce qui reste à faire, et non plus à trancher** : une passe doit pouvoir porter une **forme
+dessinée**, ce qu'aucune ne fait aujourd'hui — elles portent un seuil, une tolérance, un
+durcissement, et au plus un point. C'est le seul travail neuf de l'étape ; le reste emploie
+ce qui existe.
 
 ### Critères d'acceptation
 
@@ -605,19 +654,23 @@ demande qu'une passe puisse porter une forme dessinée, ce qu'aucune ne fait auj
 - [ ] Le geste se défait d'un seul coup, comme un passage de la main.
 - [ ] Deux images traitées par la même recette donnent le même masque : rien n'est tiré au
       sort.
-- [ ] Sa place dans l'ordre du traitement est écrite et justifiée, quel que soit le choix
-      retenu.
+- [ ] Elle agit **avant** le recadrage et la mise sur grille : le sujet détouré par un tracé
+      est cadré et calé dans sa case comme n'importe quel autre.
+- [ ] La forme tracée ne voyage pas — ni par collage, ni par recette nommée —, comme le point
+      de la pipette.
 
 ### Bloquée par
 
-- **U11** — elle se pose sur la même surface que la main, et cette surface doit d'abord dire
-  la vérité sur l'endroit qu'on touche.
+- **U11** — on y trace sur l'image, comme la main y peint et comme la pipette y désigne un
+  point ; c'est la même surface, et elle doit d'abord dire la vérité sur l'endroit qu'on
+  touche. *La raison ne change pas parce que l'outil a changé de table : c'est le tracé sur
+  l'image qui la porte, pas l'endroit d'où on l'ouvre.*
 
 ---
 
 ## U13 · Un second moteur de détourage, plus lourd et meilleur
 
-**Critères : 6 · Ce que ça ajoute : un point de la seconde séance**
+**Critères : 7 · Ce que ça ajoute : un point de la seconde séance**
 
 ### Ce qu'on livre
 
@@ -646,12 +699,22 @@ gratuits pour ça.
 le produit interdit de proposer puis de refuser, et le second moteur pèse assez lourd pour
 qu'on ne l'impose à personne.
 
+**Deux absences, et elles ne se traitent pas pareil.** *Tranché par l'auteur au cadrage du
+1<sup>er</sup> septembre 2026* (`US-363`). Un moteur **pas installé du tout** est grisé, avec
+sa raison et le geste pour l'obtenir. Un moteur **installé dont le modèle n'est pas encore
+descendu** reste choisissable, et dit avant de partir — une seule fois — ce qu'il va
+rapatrier et combien ça pèse. Griser les deux aurait obligé à sortir de l'atelier pour un
+téléchargement que l'atelier sait faire ; les confondre aurait laissé tomber une attente de
+plusieurs minutes sur un geste annoncé comme lent de quelques secondes.
+
 ### Critères d'acceptation
 
 - [ ] Le moteur d'une passe se choisit dans une liste qui n'est plus écrite en dur.
 - [ ] Le moteur rapide reste celui qu'on obtient sans rien demander.
 - [ ] Le moteur lourd annonce qu'il est plus lent **avant** de partir, pas pendant.
 - [ ] Un moteur absent de la machine est grisé avec sa raison et le geste pour l'installer.
+- [ ] Un moteur installé dont le modèle n'est pas encore descendu reste choisissable et
+      annonce, avant de partir et une seule fois, ce qu'il rapatrie et ce que ça pèse.
 - [ ] Un banc gratuit mesure les deux moteurs sur les images déjà là — durée, et ce qu'ils
       rendent — et garde son relevé.
 - [ ] Une recette qui nomme un moteur absent le dit sans casser le rendu des autres passes.
@@ -667,9 +730,17 @@ Aucune.
 **Cinq de ces treize étapes ajoutent une capacité au produit**, et pas seulement une
 réparation : la veille d'une table (U4), les réglages qui voyagent (U5), le prompt qu'on
 relit sur une image (U8), la sélection magique (U12) et le second moteur de détourage (U13).
-Ce que le produit doit faire est tranché dans `docs/PRD.md`, et ces cinq-là n'y sont pas
-encore écrites — elles n'ont donc pas de numéro de user story. **À passer par `/cadre` avant
-de les construire**, sans quoi le plan citerait des renvois qui n'existent pas.
+Ce que le produit doit faire est tranché dans `docs/PRD.md`, et ces cinq-là n'y étaient pas
+écrites. **Elles y sont depuis le 1<sup>er</sup> septembre 2026** — trente-trois user
+stories, `US-334` à `US-366`, et les décisions qui les tiennent dans
+`docs/prd-decisions.md`. Quelle étape porte lesquelles se lit dans `docs/PLAN.md`.
+
+**Le cadrage a tranché quatre points que ce fichier portait comme ouverts**, et les quatre
+sont reportés ci-dessus, dans l'étape qu'ils changent : *une coordonnée ne voyage pas* (U5,
+et une recette nommée y perd les passages de main qu'elle emporte aujourd'hui), *la
+sélection magique agit avec le détourage et non avec la main* (U12), *une image sans texte à
+elle nomme sa parente sans montrer son texte* (U8), et *un moteur installé dont le modèle
+n'est pas encore descendu reste choisissable et annonce son poids* (U13).
 
 Les huit autres corrigent un écran déjà cadré : elles ne demandent rien au produit qu'il
 n'ait déjà promis. **Deux cas limites, et ils sont notés là où ils se paieront** : le

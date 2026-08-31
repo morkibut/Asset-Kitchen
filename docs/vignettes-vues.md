@@ -36,7 +36,9 @@ en voit — ni plus, ni moins.
 Deux invariants tiennent la famille entière, et une image qui les enfreint est à refaire :
 
 1. **La lanterne est toujours dans la moitié droite** du cadre, dégagée de la silhouette.
-2. **Le sac n'est jamais dans la moitié droite** — il est caché, à gauche, ou au-dessus.
+2. **Le sac ne se pose jamais à droite du corps**, à hauteur de hanche, là où vit la
+   lanterne — il est caché, à gauche, ou au-dessus. *Au-dessus* est le cas des caméras
+   hautes : le tapis roulé y déborde des deux côtés de la capuche, et c'est normal.
 
 C'est pour tenir le second que la vue oblique fuit vers le **haut-gauche** et non vers le
 haut-droit : dans l'autre sens, le sac viendrait se poser là où vit la lanterne.
@@ -92,7 +94,10 @@ THE FOUR TELLS — this is what the image exists for
 The face, the backpack, the lantern and the floor tile are what tell the viewer where the
 camera stands. The block below states exactly how much of each one is seen. Draw them
 exactly as stated: not more, not less.
-- The backpack is on the BACK. It NEVER appears in the right half of the frame.
+- The backpack is on the BACK. It NEVER appears beside the body in the right half of the
+  frame at hip height, where the lantern hangs. When the camera is high enough to look down
+  on the tops of the shoulders, the pack may straddle the TOP of the silhouette and show on
+  both sides of the hood — that is the only case, and it is stated in the block that needs it.
 - The lit brass lantern is in the LEFT hand. It ALWAYS reads in the right half of the
   frame, clear of the body silhouette, at hip height.
 
@@ -107,6 +112,9 @@ Square image, 1024 x 1024. Truly transparent alpha background: not a white fill,
 light grey fill, not a checkerboard pattern drawn as pixels. Nothing in the frame but the
 character and its single floor tile — no scenery, no props, no second light source, no cast
 shadow, no contact shadow, no text, no label, no border, no watermark.
+THE FLOOR TILE IS NOT OPTIONAL AND IT IS NOT SCENERY. It is one of the four tells, and it
+is the one that carries the projection: an image without it does not say which camera drew
+it. Every block below states its exact shape. Draw it, every time, in every view.
 The drawing — character plus floor tile — is centred and fills about 70% of the frame in
 its LONGEST direction, whichever direction that turns out to be. When the camera is high
 the silhouette is short and wide, and it is then the WIDTH that reaches 70%: never stretch
@@ -177,7 +185,8 @@ FLOOR TILE
 A perfect full square, seen flat, its four edges parallel to the frame edges. Same length on
 all four sides. No thickness, no side face.
 
-CHECK: no face at all, and the bedroll is the topmost thing in the silhouette.
+CHECK, three things, all three required: NO FACE AT ALL; the bedroll is the topmost thing in
+the silhouette; and the square floor tile IS DRAWN, its four edges parallel to the frame.
 ```
 
 ## 3 · `vue-cote-plateforme` — De côté, plateforme
@@ -213,9 +222,13 @@ CHECK: one eye only, the backpack complete on the left, the lantern clear on the
 
 ```
 Elevation: 0 degrees. The camera sits at the character's chest height.
-Body: facing the RIGHT edge of the frame, then rotated 25 degrees back toward the viewer —
-so about 65 degrees away from square. The walking direction must stay unmistakably to the
-right.
+
+Body: START FROM THE STRICT SIDE VIEW, then turn the body only 25 degrees back toward the
+viewer. **This is a side view that has been opened slightly, NOT a front view that has been
+turned slightly.** The body stays about 65 degrees away from square to the screen, and the
+walking direction stays unmistakably to the RIGHT. Concretely: the two boots are never side
+by side at the same height — the far one is set back, behind and slightly to the left of the
+near one — and the shoulders are never level, the near one being clearly wider and lower.
 
 VISIBLE
 - Both eyes, the far one partly cut by the hood rim, both pushed toward the right side of
@@ -275,8 +288,10 @@ A square seen from that same steep angle: a flat rectangle THREE times wider tha
 tall. Top and bottom edges perfectly horizontal AND exactly the same length. Side edges
 vertical and exactly the same length. No taper, no thickness, no diamond.
 
-CHECK: the silhouette is wider than it is tall, and the boots are two stubs with no legs
-above them.
+CHECK, three things, all three required: the silhouette is WIDER THAN IT IS TALL; the boots
+are two stubs with no legs above them; and the flat wide floor tile IS DRAWN under them. An
+image with no floor tile is not finished — the tile is what tells the viewer which camera
+this is.
 ```
 
 ## 6 · `vue-dessus-34` — De dessus, 3/4
@@ -307,8 +322,10 @@ A square seen from that same angle: a flat rectangle TWICE as wide as it is tall
 bottom edges perfectly horizontal AND exactly the same length. Side edges vertical and
 exactly the same length. No taper, no visible thickness, no diamond.
 
-CHECK: the tops of both shoulders AND the face are readable in the same image — this is the
-only view where both are true.
+CHECK, three things, all three required: the tops of both shoulders AND the face are
+readable in the same image — this is the only view where both are true; the body is
+visibly squashed, not standing at full height; and the wide flat floor tile IS DRAWN under
+the boots.
 ```
 
 ## 7 · `vue-oblique` — Oblique (cavalière)
@@ -349,10 +366,17 @@ NOT VISIBLE
 - A floor tile drawn as a flat horizontal bar under the boots. That is the face-on view,
   and it is wrong here: the tile MUST be a parallelogram.
 
-FLOOR TILE
-A parallelogram: front edge perfectly horizontal under the boots, two side edges running up
-and to the LEFT at exactly 45 degrees, far edge horizontal and exactly as long as the front
-edge. Flat, with no visible side thickness.
+FLOOR TILE — draw it corner by corner, in this order
+1. A horizontal edge under the boots, from a point A on the left to a point B on the right.
+2. From A, a straight line going UP AND TO THE LEFT at exactly 45 degrees, ending at C.
+3. From B, a straight line going UP AND TO THE LEFT at exactly 45 degrees, THE SAME LENGTH
+   as A-C, ending at D.
+4. Close it: the edge C-D is horizontal and EXACTLY AS LONG as A-B.
+The result is a parallelogram — a leaning rectangle. It is flat, with no visible side
+thickness. It is NOT a trapezoid: if the far edge is shorter than the near edge, that is
+perspective, which this projection does not have, and the image is wrong. It is NOT a
+symmetrical shape either: both side edges lean the SAME way, to the left, never one to the
+left and one to the right.
 
 CHECK: the face reads exactly like the face-on thumbnail, AND the tile is a slanted
 parallelogram, AND the top of the hood, the bedroll and the tile all slant the same way.
@@ -408,6 +432,39 @@ Les paires à surveiller sont **1 et 6** — la caméra remonte-t-elle vraiment 
 le corps reste-t-il tourné vers la droite —, et **6, 7, 8** — trois dalles qui doivent être
 trois formes franchement différentes.
 
+## Où en est la production — contrôle du 1er septembre 2026
+
+Les neuf tailles sont faites, les huit vues existent. Cinq sont bonnes ou récupérables sans
+rien repayer, deux sont à refaire, une n'a jamais appliqué sa projection.
+
+**Le détourage mange les dalles des vues du dessus, et c'est mesuré.** Trois images — de
+dessus verticale, de dessus stricte, de dessus 3/4 — portent encore leur dalle *dans les
+couleurs du fichier*, avec une transparence à zéro : le dessin est là, il a été effacé après
+coup. Les comptes sont sans ambiguïté — quatre-vingt-six mille, cinquante-neuf mille et
+trente-et-un mille pixels de sol rendus invisibles, contre un ou deux milliers sur les
+autres, ce qui n'est que le bord adouci d'une dalle intacte.
+
+La cause est de forme, pas de hasard. **Une dalle vue de côté est un trait sous les bottes,
+collé à la silhouette ; une dalle vue de dessus est une surface autour des pieds.** Un
+détourage qui garde *le sujet* garde la première et jette la seconde — elle ne fait pas
+partie du personnage, elle l'entoure. Les vues qui ont conservé leur sol sont exactement
+celles où il touche les bottes.
+
+**Ce qui suit de ça : on ne regénère pas une dalle effacée, on rouvre la recette.** Sur ces
+trois images, un détourage à la pipette sur le blanc garde le sol ; le détourage au modèle le
+supprime. C'est gratuit et ça se défait d'un clic dans la table.
+
+| La vue | Où elle en est |
+|---|---|
+| De face, fixe | **bonne** — visage entier, pas un pixel de sac, dalle en trait fin sous les bottes. Refaite le 1er septembre, et cette fois à la bonne résolution |
+| De dessus, verticale | **dalle à récupérer** — aucun visage, tapis en tête de silhouette, mains et bouts de bottes : le contrat est tenu, et le carré du sol est dans le fichier, effacé |
+| De côté — plateforme | **bonne** — un seul œil, sac entier de profil à gauche, lanterne dégagée à droite, trait de sol présent |
+| De côté — défilement | **à refaire** — le corps est toujours de face après reprise. Deux yeux régulièrement espacés, torse symétrique, bottes côte à côte à la même hauteur : c'est précisément ce que le bloc déclare faux. Et les bottes sont rognées par le bord bas |
+| De dessus, stricte | **dalle à récupérer, et un cran de caméra** — la dalle dessinée est un rectangle plat trois fois plus large que haut, exactement ce qui était demandé, et elle est effacée. Reste que la silhouette est encore 1,15 fois plus haute que large : la caméra n'est pas montée jusqu'au bout |
+| De dessus, 3/4 | **dalle à récupérer** — capuche, visage lisible bas, sac au-dessus des épaules, corps écrasé : tout y est, le sol compris, mais effacé |
+| Oblique (cavalière) | **à refaire** — c'est la vue de face avec un sac à gauche. Rien ne penche : le dessus de la capuche n'est pas dessiné, le tapis ne glisse pas en biais, et la dalle est un trapèze symétrique qui rétrécit vers le fond, c'est-à-dire de la perspective — la seule chose que cette projection n'a pas |
+| Isométrique | **bonne** — sac par-dessus l'épaule éloignée, dalle posée. Le corps gagnerait à être vu davantage par le coin |
+
 ## Les deux blocs qui ne sortaient rien, et pourquoi
 
 *Signalé par l'auteur le 31 août 2026 : « De dessus, stricte » et « Oblique (cavalière) »
@@ -444,6 +501,15 @@ que le corps a pivoté.
 propre caméra tire chaque génération vers l'isométrie, et ce sont les deux vues les plus
 éloignées d'elle qui en souffrent le plus. Le préambule demandait de garder le personnage
 sans dire de jeter sa caméra ; il le dit maintenant.
+
+**Et si l'oblique résiste encore, elle ne se génère pas : elle se monte.** C'est la seule
+des huit dont le corps doit être *identique* à une autre — la vue de face —, et dont la
+seule différence tient dans une dalle de quatre segments droits et un tapis roulé décalé en
+biais. Repartir de `vue-face-fixe.png`, poser le parallélogramme à la main dans l'atelier et
+glisser le tapis vers le haut-gauche donne le résultat juste du premier coup, sans appel
+payant, et garantit le contrôle que la vue existe pour tenir : *la tête se lit exactement
+comme celle de la vue de face*. Un modèle qui produit une dalle en fuite à chaque essai
+coûte plus cher que quatre traits.
 
 ## Ce que l'application en fait
 

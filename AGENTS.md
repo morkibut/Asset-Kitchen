@@ -33,7 +33,7 @@ bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 **Et un lot correctif est ouvert depuis le 31 août 2026 : les treize reprises d'usage `U1` à
 `U13`.** Elles viennent de **deux séances** de l'auteur sur l'interface refaite, le même
 soir — la première sur la V2.1 entière (quinze points, trois déjà fermés, neuf étapes), la
-seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-trois
+seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-sept
 critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
 critères dans `docs/tranches/U.md`. **Aucune n'est encore construite.**
 
@@ -41,9 +41,14 @@ critères dans `docs/tranches/U.md`. **Aucune n'est encore construite.**
 bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`
 ensuite parce que rien d'autre ne se juge sans elle, et `U11` avec elle parce que les deux
 réparent la même erreur à deux endroits : une surface qui reçoit un geste et qui ment sur
-l'image qu'elle porte. **Cinq des treize ajoutent une capacité au produit et n'ont pas encore
-de user story** : à passer par `/cadre` avant de les construire, et le plan n'invente aucun
-numéro.
+l'image qu'elle porte. **Cinq des treize ajoutent une capacité au produit, et elles sont
+cadrées depuis le 1<sup>er</sup> septembre 2026** — `US-334` à `US-366`, trente-trois stories
+et onze décisions dans `docs/prd-decisions.md`. Le cadrage a tranché quatre points que le lot
+portait comme ouverts, et deux d'entre eux changent ce qui sera construit : **une coordonnée
+ne voyage pas** — ni cadre tracé, ni point de pipette, ni passage de la main —, si bien qu'une
+recette nommée perdra les passages qu'elle emporte aujourd'hui ; et **la sélection magique
+agit avec le détourage**, avant le recadrage et la mise sur grille, et non avec la main comme
+la séance l'avait vue.
 
 **Ce que la seconde séance apprend, et qui vaut d'être su avant d'ouvrir une étape.** Regarder
 un écran de près cesse de trouver des défauts et commence à trouver des **absences** : deux

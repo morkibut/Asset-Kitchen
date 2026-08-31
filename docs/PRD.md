@@ -113,6 +113,28 @@ limite est écrite d'avance plutôt que découverte à l'usage : la méthode tie
 **contenue dans la silhouette** — casque, jambières, ceinture, gants, plastron — et casse pour
 une pièce qui **l'agrandit** — cape, ailes, arme longue, sac à dos, monture.
 
+**Puis l'interface refaite a été usée deux fois le même soir, et les tables de retouche ont
+réclamé cinq choses qu'aucun écran ne savait faire.** Les deux premières rendent la recette
+maniable. **Une place s'éteint sans se vider** : on essaie l'image sans elle, on rallume, et
+l'on retrouve ce qu'on avait posé — éteindre et vider cessent d'être le même geste. **Et les
+réglages voyagent**, de deux façons qui n'ont pas la même durée de vie : on les copie d'une
+image sur l'autre pour la séance en cours, on les enregistre sous un nom pour ce qui doit lui
+survivre. Ce qui *ne* voyage pas est écrit avec : un endroit désigné sur **cette** image-là —
+un cadre tracé, un point de pipette, une forme entourée, un passage de la main — ne veut rien
+dire sur une autre, et six attitudes d'un même personnage n'ont pas la même silhouette.
+
+Les trois autres comblent des absences, et c'est ce que la seconde séance a de particulier :
+regarder un écran de près cesse de trouver des défauts et commence à trouver ce qui manque.
+**Le texte qui a fabriqué une image se relit sur sa fiche**, entier et tel qu'il est parti —
+il était enregistré depuis le premier jour et n'était affiché nulle part. **On entoure
+grossièrement un sujet et l'atelier va chercher son bord** à l'intérieur de ce qu'on a
+entouré : une quatrième façon de désigner ce qu'on retire, à côté du remplissage depuis le
+bord, de la pipette et du modèle, pour ce que ni le détourage automatique — qui décide seul
+et se trompe — ni la retouche au pixel — qui demande de suivre un contour entier — ne savent
+faire. **Et le détourage par modèle, qui ne connaissait qu'un seul modèle, en connaît un
+second, plus lourd et meilleur** : il n'est pas le défaut, il annonce sa lenteur avant de
+partir, et il se grise avec sa raison quand la machine ne l'a pas.
+
 ## Utilisateur cible
 
 Une personne : l'auteur du jeu, qui est aussi l'auteur de cet outil. Il travaille seul, pour
@@ -131,11 +153,13 @@ premier lancement se quitte à n'importe quelle étape, et rien n'y est exigé.
 
 ## User Stories → `docs/user-stories.md`
 
-**Les 333 user stories vivent dans `docs/user-stories.md`**, groupées par geste. Elles
+**Les 366 user stories vivent dans `docs/user-stories.md`**, groupées par geste. Elles
 se consultent par numéro, quand un critère en cite une — pas au démarrage d'une session.
 Quelle tranche porte laquelle se lit dans `docs/PLAN.md`, § Couverture.
-`US-174` à `US-308` sont celles de la V2.1, écrites le 31 août 2026 ; les 25 dernières —
-`US-309` à `US-333` — celles de la V2.2, écrites le même jour.
+`US-174` à `US-308` sont celles de la V2.1, écrites le 31 août 2026 ; `US-309` à `US-333`
+celles de la V2.2, écrites le même jour ; les 33 dernières — `US-334` à `US-366` — les cinq
+capacités que les deux séances d'usage de la V2.1 ont réclamées, écrites le 1<sup>er</sup>
+septembre 2026.
 
 ## Critères de succès
 
@@ -195,6 +219,19 @@ Quelle tranche porte laquelle se lit dans `docs/PLAN.md`, § Couverture.
 - Tous les appels payés se lisent dans une seule liste, du plus récent au plus ancien, avec ce que chacun a coûté et ce qu'il a donné ; une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne.
 - Sur une machine neuve, l'assistant s'ouvre à l'étape 1 ; on en sort où l'on veut et on tombe dans le codex vide, le champ qui nomme allumé.
 
+**Les cinq capacités que l'usage a réclamées**
+
+- Une place de la recette s'éteint depuis la barre sans qu'on l'ouvre ; l'image se refait sans elle, et la rallumer rend les réglages d'avant à l'identique.
+- Deux images traitées par la même recette, l'une avec une place en veille et l'autre sans cette place du tout, sortent identiques au pixel près.
+- Les réglages d'une image se posent sur une autre en deux gestes, et le collage nomme ce qu'il a posé et ce qu'il n'a pas pu poser.
+- Une recette enregistrée sous un nom se retrouve après la fermeture de l'atelier, s'applique à une image d'un autre jeu, et deux images qui l'ont reçue sortent identiques au pixel près.
+- Un cadre tracé, un point de pipette, une forme entourée et un passage de la main ne se retrouvent jamais sur une autre image, ni par collage ni par recette nommée.
+- La fiche d'une image montre le texte entier qui est parti la fabriquer ; une image importée dit qu'elle n'en a pas, et une découpe de planche nomme sa planche et y mène au lieu d'afficher un texte qui n'a pas été écrit pour elle.
+- Une forme tracée grossièrement autour d'un sujet rend un contour posé sur le bord du sujet à l'intérieur de cette forme, rien n'est touché au-dehors, et le même tracé rend deux fois le même résultat.
+- Le sujet ainsi détouré est cadré et calé dans sa case comme n'importe quel autre : le recadrage et la mise sur grille travaillent après lui, sur une image dont le fond est déjà parti.
+- Le moteur d'une passe de détourage se choisit dans une liste ; un moteur absent est grisé avec sa raison, et une recette qui le nomme le dit sans casser le rendu des autres passes.
+- Le moteur lourd annonce sa lenteur avant de partir, annonce une seule fois ce qu'il doit rapatrier et combien ça pèse, et le relevé qui le dit meilleur existe — les durées des deux moteurs, et ce qu'ils rendent côte à côte.
+
 ## Hors périmètre
 
 **Écarté par nature du produit.** Comptes, crédits, paiement, multi-utilisateur, distribution, galerie publique, partage, presets communautaires. Pack d'assets par genre — fabriquer de la quantité est le métier d'un autre outil. Compteur de crédits maison : le suivi des coûts se lit chez le fournisseur.
@@ -238,6 +275,8 @@ Quelle tranche porte laquelle se lit dans `docs/PLAN.md`, § Couverture.
 **Revenu dans le périmètre — 31 août 2026 (la V2.2).** « Un seul adaptateur » n'a jamais été une exclusion du produit : c'était une décision de construction, prise le 26 août parce qu'écrire trois adaptateurs donnait *le même résultat* pour trois fois le travail. Elle cesse de valoir le jour où les trois autres ne donnent pas le même résultat — ils donnent des images **gratuites**, avec une réserve qui se renouvelle chaque jour ou chaque mois. Trois choses entrent donc dans le périmètre : **plusieurs fournisseurs à la fois**, **une consommation qui n'est pas toujours de l'argent**, et **une première image sans compte ni clé**. La troisième est la seule que l'auteur remarquera sans la chercher : sur une machine neuve, il n'y avait rien à faire tant qu'une clé n'était pas déposée.
 
 **Écarté par la V2.2.** Le repli automatique d'un fournisseur sur un autre quand l'un tombe : ce serait une relance que l'auteur n'a pas demandée, et *rien n'est jamais relancé automatiquement* est la règle la plus ancienne du produit. Le mélange de deux fournisseurs dans un même appel. Le choix automatique du moins cher : le modèle est un défaut par type d'objet porté par l'univers, et un arbitrage caché entre gratuit et payé déciderait de l'apparence sans le dire. Publier une image de l'auteur à une adresse web pour qu'un fournisseur puisse la lire en référence : un atelier local ne publie rien, et un modèle qui n'accepte les références que par ce chemin-là est simplement grisé avec cette raison. Une note de qualité par modèle calculée par le produit : elle se juge à l'usage, sur des images qu'on voulait de toute façon — et deux bancs payés ont déjà appris qu'un classement obtenu hors du geste réel s'inverse dès qu'on y revient. Un compteur de crédits maison, qui reste écarté depuis la V1 : la réserve d'un fournisseur se lit chez lui quand il la dit, se compte ici quand il ne la dit pas, et l'écran dit toujours lequel des deux — mais le produit ne tient aucune comptabilité parallèle.
+
+**Écarté par les cinq capacités de l'usage — 1<sup>er</sup> septembre 2026.** Une veille plus fine que la place et la passe : on éteint une place de la recette, ou une passe de détourage, jamais un réglage seul — un curseur éteint fabriquerait un second zéro à côté du sien, et personne ne saurait lequel des deux agit. Un troisième geste de voyage, où un traitement suivrait de lui-même toutes les images d'une chose du jeu : la palette du projet fait déjà cela pour ce qui la concerne, et un traitement qui se poserait tout seul déciderait de l'apparence sans le dire. Une bibliothèque de recettes livrée avec le produit : elle naît vide, comme la base d'étiquettes, et grandit de ce qu'on y met. L'historique des recettes appliquées, et le versionnement d'une recette nommée : remplacer sous le même nom se propose, il ne s'archive pas. Modifier le texte d'une image depuis sa fiche : la galerie ne fabrique rien, et un texte déjà payé ne se réécrit pas — le reprendre pour un nouvel appel est un geste qui existe déjà, ailleurs. Une sélection qui trouverait le sujet sans qu'on ait rien tracé : c'est très exactement ce que fait le remplissage depuis le bord, et c'est quand il se trompe qu'on trace. Un moteur de détourage qui mobiliserait la carte graphique, ou qui rapatrierait son modèle sans le dire. Une note de qualité par moteur calculée par le produit, écartée pour la raison qui l'écarte déjà pour les modèles : elle se juge à l'usage, sur des images qu'on voulait de toute façon.
 
 ## Décisions d'implémentation → `docs/prd-decisions.md`
 
