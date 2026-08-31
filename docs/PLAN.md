@@ -1643,19 +1643,28 @@ c'est ce qui a rendu l'étape courte. Douze entrées neuves, deux réécrites, s
 
 ---
 
-## U1 à U9 — les neuf reprises d'usage de la V2.1
+## U1 à U13 — les treize reprises d'usage de la V2.1
 
-*Neuf étapes, ouvertes le 31 août 2026, le jour même où la V2.1 s'est close.* Elles viennent
-d'une **séance d'usage** de l'auteur sur l'interface refaite : quinze points relevés dans
-l'ordre où il les a rencontrés. C'est la règle du dépôt qui les fait exister — *une tranche
-n'est finie que lorsqu'on s'en est servi* —, et c'est la neuvième fois de suite qu'elle
-trouve ce qu'aucun essai ne voyait.
+*Treize étapes, ouvertes le 31 août 2026, le jour même où la V2.1 s'est close.* Elles
+viennent de **deux séances d'usage** de l'auteur sur l'interface refaite, le même soir. C'est
+la règle du dépôt qui les fait exister — *une tranche n'est finie que lorsqu'on s'en est
+servi* —, et c'est la neuvième fois de suite qu'elle trouve ce qu'aucun essai ne voyait.
 
-**Trois des quinze points étaient déjà fermés au moment d'écrire ce lot** : deux par un
-correctif du même soir — la galerie qui restait montée sous les tables, et la case *ne plus
-me le montrer* qui éteignait l'écran de confirmation partout — et un dans la copie de
-travail, les neuf tailles de la table de grille. Il reste douze points, et ils tiennent en
-neuf étapes.
+**La première séance a parcouru la V2.1 entière** : quinze points relevés dans l'ordre où ils
+ont été rencontrés. Trois étaient déjà fermés au moment d'écrire ce lot — deux par un
+correctif du même soir, la galerie qui restait montée sous les tables et la case *ne plus me
+le montrer* qui éteignait l'écran de confirmation partout, et un dans la copie de travail,
+les neuf tailles de la table de grille. Il reste douze points, et ils tiennent en neuf
+étapes.
+
+**La seconde n'a plus regardé que les tables de l'atelier, de près** : six points, dont une
+question sur le comportement du détourage à laquelle le code répond. Quatre étapes de plus.
+Ce qu'elle apporte de neuf, et que la première n'avait pas : **deux de ses points ne sont pas
+des réparations mais des outils qui manquent** — une sélection qu'on trace grossièrement et
+que l'atelier ajuste au bord du sujet, et un second moteur de détourage plus lourd et
+meilleur. Une séance qui regarde de près cesse de trouver des défauts et commence à trouver
+des absences ; c'est ce qui distingue la seconde de la première, et c'est un signe sur
+l'atelier plutôt que sur la séance.
 
 **Ce qui distingue ce lot des cinq reprises de la V2** : chaque point a été **vérifié sur la
 machine de l'auteur avant d'être planifié**, l'atelier tournant. Là-bas on repartait d'un
@@ -1667,19 +1676,28 @@ bruit dans la table de recadrage » est un zoom qui ne descend pas sous cent pou
 **Le critère de découpage ne bouge pas**, celui des trois versions précédentes : *chaque
 tranche est utilisable à sa livraison.*
 
-### L'ordre, et les deux endroits où il se resserre
+### L'ordre, et les quatre endroits où il se resserre
 
-**U1 d'abord, et sans discussion** : c'est la seule des neuf qui coûte de l'argent réel —
+**U1 d'abord, et sans discussion** : c'est la seule des treize qui coûte de l'argent réel —
 cinq clics sur le bouton qui paie lançaient cinq appels payants.
 
-**U2 ensuite, parce que les autres ne se jugent pas sans elle.** Six des sept étapes qui
-suivent se vérifient sur une image qu'il faut pouvoir regarder en entier, et c'est
+**U2 ensuite, parce que les autres ne se jugent pas sans elle.** Presque toutes les étapes
+qui suivent se vérifient sur une image qu'il faut pouvoir regarder en entier, et c'est
 précisément ce que l'atelier ne permettait pas.
 
-**U4 avant U5**, et c'est le seul blocage dur du lot : une recette qui voyage doit emporter
-l'état de veille d'une table, sinon la coller rallumerait des places qu'on avait éteintes.
+**U11 avec U2, ou juste après.** Les deux réparent la **même erreur à deux endroits** — une
+surface qui reçoit un geste et qui ment sur l'image qu'elle porte : le rectangle de recadrage
+d'un côté, le pinceau de la main de l'autre, qui tombe à quelques pixels de l'endroit visé
+dès qu'un recadrage a changé les proportions du rendu. Le dépôt a déjà appris la leçon une
+fois sur l'écran de découpe ; la corriger en deux fois ferait écrire deux fois le même calcul.
 
-Les six autres sont indépendantes et se prennent dans l'ordre de la gêne.
+**U4 avant U5**, et c'est le blocage dur du lot : une recette qui voyage doit emporter l'état
+de veille d'une table, sinon la coller rallumerait des places qu'on avait éteintes.
+
+**U11 avant U12** : la sélection magique se pose sur la surface de la main, et cette surface
+doit d'abord dire la vérité sur l'endroit qu'on touche.
+
+Les autres sont indépendantes et se prennent dans l'ordre de la gêne.
 
 ### Les quatre arbitrages tranchés avant d'écrire
 
@@ -1697,35 +1715,47 @@ et le coût.
 4. **L'écran de confirmation replie les longs textes**, y compris là où il promettait de ne
    jamais couper. L'invariant est amendé et l'amendement est écrit, pas contourné.
 
-### Les neuf étapes
+### Les treize étapes
 
-| | Ce qu'elle livre | Bloquée par |
-|---|---|---|
-| **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | — |
-| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | — |
-| **U3** | Un curseur prend un chiffre | — |
-| **U4** | Une table s'éteint, et ça se voit | — |
-| **U5** | Les réglages voyagent d'une image à l'autre | **U4** |
-| **U6** | La palette se règle sans faire attendre | — |
-| **U7** | La toile dit ce qu'elle a fabriqué | — |
-| **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | — |
-| **U9** | L'écran de confirmation se lit d'un coup d'œil | — |
+| | Ce qu'elle livre | Séance | Bloquée par |
+|---|---|---|---|
+| **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | 1<sup>re</sup> | — |
+| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — |
+| **U3** | Un curseur prend un chiffre | 1<sup>re</sup> | — |
+| **U4** | Une table s'éteint, et ça se voit | 1<sup>re</sup> | — |
+| **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** |
+| **U6** | La palette se règle sans faire attendre | 1<sup>re</sup> | — |
+| **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — |
+| **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — |
+| **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — |
+| **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — |
+| **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — |
+| **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** |
+| **U13** | Un second moteur de détourage, plus lourd et meilleur | 2<sup>e</sup> | — |
 
 ### Ce que chacune livre, et ses critères → `docs/tranches/U.md`
 
-**Cinquante-huit critères d'acceptation**, une section par étape, avec ce qui a été mesuré
-pour l'écrire et les trois points déjà fermés qu'il ne faut pas replanifier. Ils y vivent
-plutôt qu'ici pour la raison qui a déjà fait descendre les vingt-et-une étapes de la V2.1 :
-neuf étapes détaillées pèseraient dans ce plan autant que la V2.2 entière, alors qu'aucune
-n'ouvre une version.
+**Quatre-vingt-trois critères d'acceptation**, une section par étape, avec ce qui a été
+mesuré pour l'écrire et les trois points déjà fermés qu'il ne faut pas replanifier. Ils y
+vivent plutôt qu'ici pour la raison qui a déjà fait descendre les vingt-et-une étapes de la
+V2.1 : treize étapes détaillées pèseraient dans ce plan plus que la V2.2 entière, alors
+qu'aucune n'ouvre une version.
+
+**Une question de la seconde séance y a sa réponse plutôt qu'une étape** — *une passe de
+détourage supplémentaire s'applique-t-elle à l'image d'origine ou au résultat de la
+précédente ?* Le code répond, et la réponse est à moitié surprenante : la **transparence**
+s'accumule et ne se rend jamais, mais la **couleur** qu'une passe examine est toujours celle
+de l'image d'origine — effacer un pixel ne change pas sa couleur. C'est écrit en U10 parce
+que c'est probablement ce qui explique le défaut de la pipette sur une seconde passe.
 
 ### Ce que ce lot demande au produit avant d'être construit
 
-**Trois des neuf ajoutent une capacité**, et pas seulement une réparation : la veille d'une
-table (U4), les réglages qui voyagent (U5), le prompt qu'on relit sur une image (U8). Ce que
-le produit doit faire est tranché dans `docs/PRD.md`, et ces trois-là n'y sont pas écrites —
-elles n'ont donc **pas de numéro de user story**, et ce plan n'en invente pas. À passer par
-`/cadre` avant de les construire. Les six autres corrigent un écran déjà cadré.
+**Cinq des treize ajoutent une capacité**, et pas seulement une réparation : la veille d'une
+table (U4), les réglages qui voyagent (U5), le prompt qu'on relit sur une image (U8), la
+sélection magique (U12) et le second moteur de détourage (U13). Ce que le produit doit faire
+est tranché dans `docs/PRD.md`, et ces cinq-là n'y sont pas écrites — elles n'ont donc **pas
+de numéro de user story**, et ce plan n'en invente pas. À passer par `/cadre` avant de les
+construire. Les huit autres corrigent un écran déjà cadré.
 
 ---
 

@@ -9,7 +9,47 @@
 
 ---
 
-## 31 août 2026 — la première séance sur la V2.1 entière
+## 31 août 2026 — la seconde séance, sur les seules tables de l'atelier
+
+Six points relevés le même soir, en regardant de près ce que la première séance avait
+parcouru de loin. **Tous sont tranchés** : ils sont devenus `U10` à `U13` dans
+`docs/PLAN.md`, et l'un des six était une question — elle a sa réponse en `U10`.
+
+**Ce que cette séance apprend, et qui ne tient pas dans ses six points.** Regarder un écran
+de près cesse de trouver des défauts et commence à trouver des **absences** : deux des six
+ne sont pas des réparations mais des outils qui manquent — une sélection qu'on trace
+grossièrement et que l'atelier ajuste au bord du sujet, et un second moteur de détourage plus
+lourd. C'est un signe sur l'atelier plutôt que sur la séance : un outil qu'on répare est un
+outil dont on se sert.
+
+### La réponse à la question posée, parce qu'elle n'était écrite nulle part
+
+*Une passe de détourage supplémentaire s'applique-t-elle à l'image d'origine ou au résultat de
+la précédente ?* Les deux, et c'est ce qui surprend :
+
+- **La transparence s'accumule et ne se rend jamais.** Chaque passe ne peut que serrer ce que
+  la précédente a laissé — c'est ce qui fait que les passes s'enchaînent au lieu de se
+  remplacer, et c'était écrit dans le code.
+- **Mais la couleur qu'une passe examine est toujours celle de l'image d'origine.** Effacer un
+  pixel ne change que sa transparence, jamais sa couleur. Une seconde passe à la pipette lit
+  donc un fond qui, pour elle, est encore là — et sa tache peut repartir à travers ce qui a
+  déjà été effacé, puisque ce couloir a gardé la couleur qu'elle cherche.
+
+**C'est la première explication du défaut de la pipette sur une seconde passe**, et ce n'est
+pas encore un constat : personne ne l'a reproduit. `U10` l'exige avant qu'une ligne corrige
+quoi que ce soit.
+
+### Deux moteurs, et un nom écrit en dur
+
+Le détourage par modèle n'en connaît **qu'un seul, `u2net`, écrit dans le code** — là où la
+règle du dépôt dit *le catalogue décide, jamais une liste en dur*. Le projet voisin
+`../MySpriteAi` détoure déjà avec **BiRefNet**, du savoir payé au prix fort dans cette maison :
+le second moteur n'est pas une découverte à faire, c'est un nom à cesser d'écrire en dur.
+Voir `U13`.
+
+---
+
+## 31 août 2026 — la première séance, sur la V2.1 entière
 
 Quinze points relevés par l'auteur dans l'ordre où il les a rencontrés, le jour même où la
 V2.1 s'est close. **Tous sont tranchés** : trois étaient déjà réparés, les douze autres sont

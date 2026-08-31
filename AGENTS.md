@@ -30,16 +30,30 @@ réglés : la porte de la vitrine **depuis une planche** s'est posée avec elle,
 des quatre directions** en référence proposée est **fermée** — une planche n'entre jamais en
 bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 
-**Et un lot correctif est ouvert depuis le 31 août 2026 : les neuf reprises d'usage `U1` à
-`U9`.** Elles viennent d'une séance de l'auteur sur l'interface refaite — quinze points
-relevés, trois déjà fermés, douze planifiés, cinquante-huit critères. Elles vivent dans
-`docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs critères dans
-`docs/tranches/U.md`. **Aucune n'est encore construite.** `U1` passe d'abord parce que c'est
-la seule qui coûte de l'argent réel — cinq clics sur le bouton qui paie lançaient cinq
-appels payants, un verrou existant que l'écran jetait —, `U2` ensuite parce que rien d'autre
-ne se juge sans elle. Trois des neuf ajoutent une capacité au produit et **n'ont pas encore
+**Et un lot correctif est ouvert depuis le 31 août 2026 : les treize reprises d'usage `U1` à
+`U13`.** Elles viennent de **deux séances** de l'auteur sur l'interface refaite, le même
+soir — la première sur la V2.1 entière (quinze points, trois déjà fermés, neuf étapes), la
+seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-trois
+critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
+critères dans `docs/tranches/U.md`. **Aucune n'est encore construite.**
+
+`U1` passe d'abord parce que c'est la seule qui coûte de l'argent réel — cinq clics sur le
+bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`
+ensuite parce que rien d'autre ne se juge sans elle, et `U11` avec elle parce que les deux
+réparent la même erreur à deux endroits : une surface qui reçoit un geste et qui ment sur
+l'image qu'elle porte. **Cinq des treize ajoutent une capacité au produit et n'ont pas encore
 de user story** : à passer par `/cadre` avant de les construire, et le plan n'invente aucun
 numéro.
+
+**Ce que la seconde séance apprend, et qui vaut d'être su avant d'ouvrir une étape.** Regarder
+un écran de près cesse de trouver des défauts et commence à trouver des **absences** : deux
+de ses six points ne sont pas des réparations mais des outils qui manquent. Et sa question —
+*une passe de détourage supplémentaire s'applique-t-elle à l'image d'origine ou au résultat de
+la précédente ?* — a une réponse à moitié surprenante que le code portait sans que rien ne
+l'écrive : **la transparence s'accumule et ne se rend jamais, mais la couleur qu'une passe
+examine est toujours celle de l'image d'origine.** Effacer un pixel ne change pas sa couleur.
+C'est écrit en `U10`, et c'est probablement ce qui explique le défaut de la pipette sur une
+seconde passe.
 
 **Ce que `E20` a appris, et qui vaut pour la suite.** Le guide est le seul écran qui parle de
 tous les autres, donc le seul qui se périme à chaque décision prise ailleurs. On pouvait craindre

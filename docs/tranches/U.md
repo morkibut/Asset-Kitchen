@@ -1,6 +1,7 @@
-# U1 à U9 · Les neuf reprises d'usage de la V2.1
+# U1 à U13 · Les treize reprises d'usage de la V2.1
 
-*Ouvertes le 31 août 2026, après une séance d'usage de l'auteur sur la V2.1 entière.*
+*Ouvertes le 31 août 2026, après **deux** séances d'usage de l'auteur sur la V2.1 entière —
+la seconde le même soir, sur les tables de l'atelier seules.*
 
 > Le détail d'un lot en cours — ce que chaque étape livre, ses critères d'acceptation,
 > ce qui la bloque, et ce qui a été mesuré pour l'écrire. **`docs/PLAN.md` fait foi sur
@@ -12,12 +13,26 @@
 
 ---
 
-## D'où viennent ces neuf étapes
+## D'où viennent ces treize étapes
 
-D'une séance, pas d'une relecture. L'auteur s'est servi de l'atelier refait et a relevé
-**quinze points** dans l'ordre où il les a rencontrés. Deux d'entre eux étaient déjà
-réparés au moment du relevé, un troisième l'a été dans la foulée : il en reste douze, et
-ils tiennent en neuf étapes.
+De deux séances, pas d'une relecture.
+
+**La première** a parcouru la V2.1 entière : l'auteur s'est servi de l'atelier refait et a
+relevé **quinze points** dans l'ordre où il les a rencontrés. Deux d'entre eux étaient déjà
+réparés au moment du relevé, un troisième l'a été dans la foulée : il en reste douze, et ils
+tiennent en neuf étapes — `U1` à `U9`.
+
+**La seconde**, le même soir, n'a plus regardé que les tables de l'atelier, de près. Elle a
+relevé **six points**, dont une question sur le comportement du détourage à laquelle le code
+répond — la réponse est écrite en `U10`, parce qu'elle explique probablement l'un des cinq
+autres. Les cinq restants tiennent en quatre étapes — `U11` à `U13`, et `U10` qui porte aussi
+la réponse.
+
+**Ce que la seconde séance ajoute et que la première n'avait pas** : deux de ses points ne
+sont pas des réparations mais des outils qui manquent — une sélection qu'on trace grossièrement
+et que l'atelier ajuste, et un second moteur de détourage plus lourd. Ils sont ici parce qu'ils
+sont nés d'un usage, comme le reste ; ils demandent un passage par le document du produit
+avant d'être construits, comme les trois autres capacités du lot.
 
 **Chaque point a été vérifié sur la machine de l'auteur avant d'être planifié**, l'atelier
 tournant sur son port habituel. C'est ce qui distingue ce lot des cinq reprises de la V2 :
@@ -449,14 +464,215 @@ coûte de l'argent.
 
 ---
 
+## U10 · Chaque passe de détourage dit ce qu'elle enlève
+
+**Critères : 7 · Ce que ça corrige : deux points de la seconde séance**
+
+### Ce qu'on livre
+
+**Un interrupteur par passe.** Une recette de détourage porte plusieurs passes qui
+s'enchaînent, et on ne voit que leur somme : impossible de savoir laquelle a mangé quoi.
+Chaque passe reçoit un bouton *montrer / masquer* qui la retire du calcul le temps qu'on
+regarde. Ce n'est pas la même chose que la retirer — c'est le même geste que la veille d'une
+table (U4), un cran plus bas, et la même règle : ce qu'on éteint garde ses réglages.
+
+**La réponse à la question posée, parce qu'elle change la lecture de tout le reste.** Une
+passe supplémentaire travaille bien **sur le résultat de la précédente**, mais seulement à
+moitié, et c'est cette moitié qui surprend :
+
+- **La transparence s'accumule et ne se rend jamais.** Chaque passe ne peut que serrer ce
+  que la précédente a laissé — c'est ce qui fait que les passes s'enchaînent au lieu de se
+  remplacer.
+- **Mais la couleur qu'une passe examine est toujours celle de l'image d'origine.** Effacer
+  un pixel ne change pas sa couleur, il ne change que sa transparence. Une seconde passe à
+  la pipette lit donc un fond qui, pour elle, est encore là.
+
+**C'est très probablement la cause du défaut de la pipette sur une seconde passe.** Le geste
+« zone d'un seul tenant » se propage de proche en proche à partir du point visé, à travers
+tout ce qui ressemble à la couleur visée — **y compris à travers les pixels que la première
+passe a effacés**, qui ont gardé leur couleur et forment un couloir continu. La tache repart
+alors par ce couloir et ressort ailleurs dans l'image, sur une zone qui n'a rien à voir avec
+ce qu'on désignait. Une hypothèse, pas un constat : elle se vérifie avant de se corriger, et
+l'interrupteur ci-dessus est justement l'instrument qui la rend visible.
+
+**Ce qui décidera** : soit la propagation cesse de traverser ce qui est déjà transparent —
+et c'est le choix qui rend la pipette prévisible —, soit elle continue et l'écran montre
+d'avance la zone qu'elle prendra. On ne tranche pas sans avoir reproduit.
+
+### Critères d'acceptation
+
+- [ ] Chaque passe porte un bouton qui la masque, et le rendu se refait sans elle.
+- [ ] Une passe masquée garde tous ses réglages ; la rallumer rend exactement l'état d'avant.
+- [ ] Masquer une passe ne la retire pas de la recette, et les deux gestes se distinguent à
+      l'écran.
+- [ ] Le défaut de la pipette sur une seconde passe est **reproduit et mesuré** avant qu'une
+      ligne le corrige — quelle image, quel point, quelle zone est prise en trop.
+- [ ] Une pipette posée sur une poche de fond ne prend plus une zone qui n'y touche pas.
+- [ ] Le comportement retenu est écrit là où la question se pose : dans la table, pas
+      seulement dans le code.
+- [ ] Un essai tient le cas des deux passes enchaînées, celui par lequel le défaut est passé.
+
+### Bloquée par
+
+Aucune.
+
+---
+
+## U11 · La main peint carré, et là où on la pose
+
+**Critères : 6 · Ce que ça corrige : un point de la seconde séance, en deux moitiés**
+
+### Ce qu'on livre
+
+**Un pinceau carré, parce qu'on peint des pixels.** La main pose aujourd'hui un **disque** à
+chaque point du tracé, avec des bouts et des joints arrondis. Sur un sprite de soixante-quatre
+pixels de côté, un disque de rayon deux ne produit pas un bord net : il produit un escalier
+que personne n'a dessiné. Le carré est la forme de l'unité qu'on manipule, et c'est la seule
+qui rende ce que la main croit poser.
+
+**Ce que ça coûte, et il faut le dire** : la forme du pinceau fait partie de ce qui rend une
+recette déterministe. Un calque déjà peint se **redessinera légèrement différemment** après
+ce changement — pas beaucoup, mais pas à l'identique. C'est le prix, et il se paie une fois.
+
+**Et le trait tombe là où le pinceau se trouve.** Le clic atterrit aujourd'hui à quelques
+pixels de l'endroit visé, vers la gauche, et l'auteur a raison de soupçonner le recadrage.
+Le mécanisme est le même que celui trouvé dans la table de recadrage en U2, à un endroit
+différent : **la surface qui reçoit le geste et l'image qu'on voit ne sont pas le même
+rectangle.** La surface est dimensionnée d'après les mesures que l'atelier garde de l'image
+rendue ; l'image, elle, est posée dedans en *tenant dans le cadre*, donc centrée avec des
+bandes vides de chaque côté dès que les deux proportions diffèrent d'un cheveu. Le calcul
+qui transforme un clic en pixel d'image mesure alors la surface, pas l'image, et se décale
+de la largeur de la bande. Un recadrage change précisément les proportions du rendu : c'est
+lui qui ouvre l'écart.
+
+Le dépôt a déjà appris cette leçon une fois, sur l'écran de découpe — *le cadre **est**
+l'image, mis à l'échelle par calcul ; une boîte qui ment décale ce qu'on pose dessus.* On
+l'applique ici, et U2 l'applique au rectangle de recadrage : les trois surfaces qui reçoivent
+un geste liront leurs coordonnées dans le rectangle de l'image réellement affichée.
+
+### Critères d'acceptation
+
+- [ ] Le pinceau couvre un carré de côté impair, centré sur le pixel visé ; le tracé entre
+      deux points a des bouts et des joints carrés.
+- [ ] Le curseur à l'écran est le carré exact que le prochain passage couvrira.
+- [ ] L'écart est **mesuré avant correction** — combien de pixels, sur quelle image, avec
+      quel recadrage —, puis mesuré après, et il vaut zéro.
+- [ ] Un clic au bord de l'image marque un pixel du bord, et non le voisin.
+- [ ] Le trait tombe juste à tous les niveaux de zoom, y compris ceux que U2 ouvre sous
+      cent pour cent.
+- [ ] Le changement de forme du pinceau est écrit où la promesse de déterminisme est écrite :
+      une recette d'avant ne rend plus tout à fait la même image, et ça se dit.
+
+### Bloquée par
+
+Aucune, mais **à faire avec U2 ou juste après** : les deux réparent la même erreur — une
+surface qui ment sur l'image qu'elle porte — à deux endroits, et les corriger séparément
+ferait écrire deux fois le même calcul.
+
+---
+
+## U12 · La sélection magique — tracer gros, ajuster au bord
+
+**Critères : 6 · Ce que ça ajoute : un point de la seconde séance**
+
+### Ce qu'on livre
+
+Un troisième outil dans la table de la main, à côté de la zone et de la retouche : **on
+entoure grossièrement ce qu'on veut garder, et l'atelier va chercher le bord du sujet
+lui-même** à l'intérieur de ce qu'on a entouré. Le geste des logiciels d'image, et il
+répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le
+premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au
+pixel près, ce qui est long sur une silhouette entière.
+
+**Ce qui le rend possible ici sans rien inventer** : l'atelier sait déjà remplir une zone de
+proche en proche à partir d'un point, et il sait déjà durcir puis ronger un bord — ce sont
+les deux mécanismes du détourage par la couleur et du réglage de durcissement. La sélection
+magique les emploie dans l'autre sens : la zone tracée borne la recherche au lieu de la
+lancer, et ce qui sort est un masque qu'on peut encore retoucher à la main.
+
+**Ce qui reste à trancher, et qui se tranchera en la construisant** : le résultat est-il un
+huitième réglage de la recette, ou une passe de détourage d'un genre nouveau ? La seconde
+réponse est la plus probable — c'est un détourage, il en a la place dans l'ordre — mais elle
+demande qu'une passe puisse porter une forme dessinée, ce qu'aucune ne fait aujourd'hui.
+
+### Critères d'acceptation
+
+- [ ] On trace une forme grossière autour du sujet, à main levée, et elle se voit pendant
+      qu'on la trace.
+- [ ] L'atelier ramène le contour sur le bord du sujet **à l'intérieur** de la forme tracée,
+      et ne touche à rien au-dehors.
+- [ ] Le résultat se retouche ensuite à la main, sans avoir à recommencer.
+- [ ] Le geste se défait d'un seul coup, comme un passage de la main.
+- [ ] Deux images traitées par la même recette donnent le même masque : rien n'est tiré au
+      sort.
+- [ ] Sa place dans l'ordre du traitement est écrite et justifiée, quel que soit le choix
+      retenu.
+
+### Bloquée par
+
+- **U11** — elle se pose sur la même surface que la main, et cette surface doit d'abord dire
+  la vérité sur l'endroit qu'on touche.
+
+---
+
+## U13 · Un second moteur de détourage, plus lourd et meilleur
+
+**Critères : 6 · Ce que ça ajoute : un point de la seconde séance**
+
+### Ce qu'on livre
+
+Le détourage par modèle n'en connaît **qu'un seul, écrit en dur** : `u2net`. C'est un nom de
+modèle inscrit dans le code, là où la règle du dépôt dit *le catalogue décide, jamais une
+liste en dur* — la règle valait pour les modèles d'image, elle vaut ici pour la même raison.
+
+On en ajoute un second, **plus lourd et meilleur, et qui n'est pas le défaut**. Le choix se
+fait passe par passe, comme le moteur se choisit déjà entre le bord, la pipette et le modèle.
+Le plus rapide reste ce qu'on obtient sans rien demander ; le plus lourd est là quand la
+silhouette est difficile — des cheveux, une frange, un objet ajouré — et il annonce qu'il
+sera plus lent avant de partir.
+
+**Ce qui rend le choix sûr plutôt que théorique** : le projet voisin `../MySpriteAi` détoure
+déjà avec **BiRefNet**, et c'est du savoir payé au prix fort dans cette maison. C'est donc le
+premier candidat, et non une découverte à faire. La bibliothèque employée ici en propose
+plusieurs sous le même appel : ajouter un moteur ne demande pas une seconde mécanique, il
+demande de cesser d'en nommer un seul.
+
+**Ce qui doit être mesuré avant de le déclarer meilleur** : le temps de chaque moteur sur une
+image du dépôt, et ce qu'ils rendent côte à côte sur trois silhouettes difficiles. « Plus
+puissant » est une promesse tant que ce n'est pas un relevé — et le dépôt a déjà des bancs
+gratuits pour ça.
+
+**Et un moteur qui n'est pas installé se grise avec sa raison**, comme celui d'aujourd'hui :
+le produit interdit de proposer puis de refuser, et le second moteur pèse assez lourd pour
+qu'on ne l'impose à personne.
+
+### Critères d'acceptation
+
+- [ ] Le moteur d'une passe se choisit dans une liste qui n'est plus écrite en dur.
+- [ ] Le moteur rapide reste celui qu'on obtient sans rien demander.
+- [ ] Le moteur lourd annonce qu'il est plus lent **avant** de partir, pas pendant.
+- [ ] Un moteur absent de la machine est grisé avec sa raison et le geste pour l'installer.
+- [ ] Un banc gratuit mesure les deux moteurs sur les images déjà là — durée, et ce qu'ils
+      rendent — et garde son relevé.
+- [ ] Une recette qui nomme un moteur absent le dit sans casser le rendu des autres passes.
+
+### Bloquée par
+
+Aucune.
+
+---
+
 ## Ce que ce lot ne couvre pas
 
-**Trois de ces neuf étapes ajoutent une capacité au produit**, et pas seulement une
-réparation : la veille d'une table (U4), les réglages qui voyagent (U5), et le prompt qu'on
-relit sur une image (U8). Ce que le produit doit faire est tranché dans `docs/PRD.md`, et
-ces trois-là n'y sont pas encore écrites — elles n'ont donc pas de numéro de user story.
-**À passer par `/cadre` avant de les construire**, sans quoi le plan citerait des renvois
-qui n'existent pas.
+**Cinq de ces treize étapes ajoutent une capacité au produit**, et pas seulement une
+réparation : la veille d'une table (U4), les réglages qui voyagent (U5), le prompt qu'on
+relit sur une image (U8), la sélection magique (U12) et le second moteur de détourage (U13).
+Ce que le produit doit faire est tranché dans `docs/PRD.md`, et ces cinq-là n'y sont pas
+encore écrites — elles n'ont donc pas de numéro de user story. **À passer par `/cadre` avant
+de les construire**, sans quoi le plan citerait des renvois qui n'existent pas.
 
-Les six autres corrigent un écran déjà cadré : elles ne demandent rien au produit qu'il
-n'ait déjà promis.
+Les huit autres corrigent un écran déjà cadré : elles ne demandent rien au produit qu'il
+n'ait déjà promis. **Deux cas limites, et ils sont notés là où ils se paieront** : le
+pinceau carré de U11 change le rendu de calques déjà peints, et l'interrupteur de passe de
+U10 est la veille de U4 appliquée un cran plus bas — si l'une des deux change de forme,
+l'autre doit suivre.
