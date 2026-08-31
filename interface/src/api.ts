@@ -842,6 +842,69 @@ export type Journal = {
   appels: Appel[]
 }
 
+// ── Les dépenses ────────────────────────────────────────────────────────────
+//
+// « Il faut pouvoir expliquer une facture. » Le journal ci-dessus tenait cette
+// promesse **pour un cas sur trois** — il ne montrait que les appels ratés, et
+// mesuré, ce sont ceux qui n'ont jamais rien coûté. L'écran des dépenses (E18)
+// les montre tous, avec ce que chacun a coûté et ce qu'il a donné.
+
+/** Une ligne de l'écran des dépenses : **un appel, jamais une image**. C'est
+ *  l'appel qui est facturé — une demande de quatre variations est une ligne à
+ *  quatre images, parce que c'est ainsi qu'elle a été payée. */
+export type Depense = {
+  identifiant: string
+  modele: string
+  /** Le texte envoyé. Il n'est **pas** dans la ligne : il fait 1 690 signes et
+   *  il est presque le même à chaque appel — le style y pèse 53 %, le sujet 2 %.
+   *  Il vit dans la colonne de droite, pour l'appel qu'on a choisi. */
+  prompt: string
+  cree_le: number
+  cout_usd: number
+  projet: string | null
+  projet_nom: string | null
+  provenance: string
+  /** Le sujet de la ligne : la chose du jeu visée, ou rien. */
+  personnage: string | null
+  pose: string | null
+  /** Ce que l'appel a **demandé**, pas ce qu'il a rendu. */
+  variations: number
+  /** Les trois issues, comptées en emplacements : un appel à quatre variations
+   *  peut en garder deux, en perdre une et s'en faire refuser une. */
+  garde: number
+  perdu: number
+  refuse: number
+  raison: string | null
+  /** Ce qui est resté. La liste n'en montre aucune vignette — une par ligne
+   *  ferait de cet écran une seconde galerie. */
+  assets: string[]
+  /** La rafale à laquelle il appartient, ou rien. */
+  rafale: string | null
+}
+
+/** Des appels consécutifs sur un même sujet. « Six relances en trente-deux
+ *  minutes ont coûté le quart de tout l'argent jamais dépensé, et rien ne le
+ *  disait. » */
+export type Rafale = {
+  identifiant: string
+  appels: number
+  cout_usd: number
+  debut: number
+  fin: number
+  prompt: string
+}
+
+export type Depenses = {
+  total_usd: number
+  /** Ce qui a été dépensé sans qu'aucun jeu soit ouvert — les onze pour cent
+   *  qu'aucun écran ne montrait. */
+  sans_projet_usd: number
+  par_projet: { projet: string; nom: string; cout_usd: number }[]
+  par_modele: { modele: string; cout_usd: number; appels: number }[]
+  appels: Depense[]
+  rafales: Rafale[]
+}
+
 export type Filiation = {
   parent: Asset | null
   parent_identifiant: string | null
@@ -1262,6 +1325,14 @@ export const api = {
         ? "/journal?sans_projet=true"
         : `/journal?projet=${encodeURIComponent(projet)}`,
     ),
+
+  depenses: () => appeler<Depenses>("/spending"),
+
+  /** Un asset, par son identifiant. L'écran des dépenses en a besoin pour la
+   *  seule chose qu'il montre en image — ce qui est revenu de l'appel choisi —
+   *  et il n'en tient aucune liste : une vignette par ligne ferait de lui une
+   *  seconde galerie. */
+  lireAsset: (identifiant: string) => appeler<Asset>(`/assets/${identifiant}`),
 
   creerProjet: (nom: string) =>
     appeler<{ projet: Projet; bibliotheque: Bibliotheque }>("/projects", {

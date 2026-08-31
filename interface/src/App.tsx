@@ -69,6 +69,7 @@ import { BarreOutils, type Annulation } from "./composants/BarreOutils"
 import { CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
+import { EcranDepenses } from "./composants/Depenses"
 import { EcranPersonnages } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { Fiche } from "./composants/Fiche"
@@ -188,6 +189,12 @@ export function App() {
   // La galerie est l'onglet de départ : c'est l'écran qu'on regardait déjà en
   // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
   const [onglet, setOnglet] = useState<Onglet>("galerie")
+
+  // **L'écran des dépenses est une profondeur, pas un quatrième onglet** (E18).
+  // Il s'ouvre depuis le total de la barre de tête, et le fil dit d'où l'on
+  // vient : `Cœur de pierre › Les dépenses`. Il n'a pas de lieu à lui parce
+  // qu'il ne parle d'aucun des trois — il parle de l'atelier entier.
+  const [depensesOuvertes, setDepensesOuvertes] = useState(false)
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
@@ -1288,23 +1295,31 @@ export function App() {
    *
    *  Chaque segment ramène à son étage, sauf le dernier, qui est l'étage où
    *  l'on est. */
-  const chemin: Segment[] = planche
+  const chemin: Segment[] = depensesOuvertes
     ? [
         {
           libelle: projetCourant?.nom ?? "sans projet",
-          onAller: () => setDecoupeOuverte(null),
+          onAller: () => setDepensesOuvertes(false),
         },
-        { libelle: "Galerie", onAller: () => setDecoupeOuverte(null) },
-        {
-          libelle: planche.label || planche.identifiant,
-          onAller: () => {
-            setDecoupeOuverte(null)
-            setSelection([planche.identifiant])
-          },
-        },
-        { libelle: "Découpage" },
+        { libelle: "Les dépenses" },
       ]
-    : []
+    : planche
+      ? [
+          {
+            libelle: projetCourant?.nom ?? "sans projet",
+            onAller: () => setDecoupeOuverte(null),
+          },
+          { libelle: "Galerie", onAller: () => setDecoupeOuverte(null) },
+          {
+            libelle: planche.label || planche.identifiant,
+            onAller: () => {
+              setDecoupeOuverte(null)
+              setSelection([planche.identifiant])
+            },
+          },
+          { libelle: "Découpage" },
+        ]
+      : []
 
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
@@ -1316,6 +1331,7 @@ export function App() {
           // Laisser la découpe ouverte derrière un autre onglet rendrait le
           // produit à ce qu'il vient de quitter — un écran par-dessus un autre.
           setDecoupeOuverte(null)
+          setDepensesOuvertes(false)
           setFente(null)
           setOnglet(prochain)
         }}
@@ -1329,7 +1345,15 @@ export function App() {
         montant={dollars(
           projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd,
         )}
-        bascules={bascules}
+        // **Le total ouvre l'écran qui l'explique.** Il portait sa raison de
+        // grisé tant que cet écran n'existait pas ; il l'a perdue en E18, qui
+        // est très exactement l'endroit où elle devait disparaître.
+        onDepenses={() => {
+          setDecoupeOuverte(null)
+          setFente(null)
+          setDepensesOuvertes(true)
+        }}
+        bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
         onReglages={() => setReglagesOuverts(true)}
@@ -1343,7 +1367,18 @@ export function App() {
           Découpage`. Elle disparaîtra en E3, quand le découpage deviendra la
           première des deux fabriques de la barre des tables ; d'ici là elle
           garde sa porte, celle de la fiche. */}
-      {onglet === "galerie" && planche && (
+      {/* **Une profondeur de l'onglet où l'on se trouve, quel qu'il soit.** Il
+          s'ouvre depuis le total de la barre de tête, qui est sur les trois ;
+          il n'a donc pas de lieu à lui, parce qu'il ne parle d'aucun des
+          trois — il parle de l'atelier entier. */}
+      {depensesOuvertes && (
+        <EcranDepenses
+          projetCourant={bibliotheque.courant}
+          onErreur={setPanne}
+        />
+      )}
+
+      {!depensesOuvertes && onglet === "galerie" && planche && (
         <EcranDecoupe
           planche={planche}
           onFermer={() => setDecoupeOuverte(null)}
@@ -1376,7 +1411,7 @@ export function App() {
           se poser dessus ; c'est elle, désormais, qui se retire quand un autre
           onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
           vit de toute façon dans `App`, et lui survit. */}
-      {onglet === "galerie" && !planche && (
+      {!depensesOuvertes && onglet === "galerie" && !planche && (
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -1562,7 +1597,7 @@ export function App() {
           leur retire leur en-tête de 44 px — il y en avait trois, un par écran,
           et il n'y en a plus qu'un — et leur fente de refus, désormais
           partagée. */}
-      {onglet === "univers" && (
+      {!depensesOuvertes && onglet === "univers" && (
         <EcranUnivers
           univers={univers}
           modeles={modeles}
@@ -1579,7 +1614,7 @@ export function App() {
         />
       )}
 
-      {onglet === "codex" && (
+      {!depensesOuvertes && onglet === "codex" && (
         <EcranPersonnages
           plan={plan}
           personnages={personnages}

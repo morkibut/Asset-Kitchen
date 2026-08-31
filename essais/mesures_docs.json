@@ -1,11 +1,11 @@
 {
- "releve_le": 1788134751.3652298,
+ "releve_le": 1788135990.2433777,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 263423,
+  "octets": 266238,
   "documents": {
    "AGENTS.md": {
     "octets": 22108,
@@ -80,14 +80,14 @@
     ]
    },
    "docs/PRD.md": {
-    "octets": 64814,
+    "octets": 65521,
     "titres": 10,
     "sections": [
      {
       "titre": "Asset Kitchen — PRD",
       "niveau": 1,
       "ligne": 1,
-      "octets": 64415
+      "octets": 65122
      },
      {
       "titre": "Problème",
@@ -123,13 +123,13 @@
       "titre": "Hors périmètre",
       "niveau": 2,
       "ligne": 197,
-      "octets": 11865
+      "octets": 11961
      },
      {
       "titre": "Décisions d'implémentation",
       "niveau": 2,
       "ligne": 237,
-      "octets": 35641
+      "octets": 36252
      },
      {
       "titre": "Les décisions de la V2.1 — 31 août 2026",
@@ -236,14 +236,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 96851,
-    "titres": 128,
+    "octets": 98959,
+    "titres": 129,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, puis la V2.1",
       "niveau": 1,
       "ligne": 1,
-      "octets": 95332
+      "octets": 97412
      },
      {
       "titre": "Décisions architecturales",
@@ -441,7 +441,7 @@
       "titre": "V2.1 — L'interface refaite",
       "niveau": 2,
       "ligne": 432,
-      "octets": 65352
+      "octets": 67432
      },
      {
       "titre": "Ce que la V2.1 hérite et ne rediscute pas",
@@ -597,7 +597,7 @@
       "titre": "E4 · La galerie, dégraissée",
       "niveau": 3,
       "ligne": 839,
-      "octets": 1821
+      "octets": 1927
      },
      {
       "titre": "Ce qu'on livre",
@@ -609,7 +609,7 @@
       "titre": "Critères d'acceptation",
       "niveau": 4,
       "ligne": 855,
-      "octets": 711
+      "octets": 817
      },
      {
       "titre": "Bloquée par",
@@ -933,7 +933,7 @@
       "titre": "E18 · Les dépenses",
       "niveau": 3,
       "ligne": 1364,
-      "octets": 1896
+      "octets": 3832
      },
      {
       "titre": "Ce qu'on livre",
@@ -945,66 +945,72 @@
       "titre": "Critères d'acceptation",
       "niveau": 4,
       "ligne": 1381,
-      "octets": 710
+      "octets": 786
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
       "ligne": 1391,
-      "octets": 223
+      "octets": 218
+     },
+     {
+      "titre": "Ce que la tenir a trouvé",
+      "niveau": 4,
+      "ligne": 1396,
+      "octets": 1822
      },
      {
       "titre": "E19 · Le premier lancement",
       "niveau": 3,
-      "ligne": 1398,
+      "ligne": 1426,
       "octets": 1696
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1401,
+      "ligne": 1429,
       "octets": 879
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1415,
+      "ligne": 1443,
       "octets": 615
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1424,
+      "ligne": 1452,
       "octets": 131
      },
      {
       "titre": "E20 · Le guide",
       "niveau": 3,
-      "ligne": 1431,
+      "ligne": 1459,
       "octets": 2487
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1434,
+      "ligne": 1462,
       "octets": 1414
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1454,
+      "ligne": 1482,
       "octets": 887
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1466,
+      "ligne": 1494,
       "octets": 122
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 1472,
+      "ligne": 1500,
       "octets": 4389
      }
     ]
@@ -1169,11 +1175,11 @@
  },
  "renvois": {
   "code": {
-   "total": 350,
+   "total": 353,
    "casses": []
   },
   "docs": {
-   "total": 313,
+   "total": 314,
    "casses": []
   }
  }

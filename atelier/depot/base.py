@@ -28,7 +28,7 @@ import json
 import sqlite3
 import unicodedata
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any, Iterable, Iterator, Sequence
 
 from atelier.domaine.asset import Asset
 from atelier.domaine.generation import Generation
@@ -504,6 +504,41 @@ class Base:
                 (personnage,),
             ).fetchall()
         return [Asset.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def rangs_vivants(self, generations: Sequence[str]) -> dict[str, set[int]]:
+        """Quels emplacements ont **encore** leur image, pour un lot d'appels.
+
+        C'est ce qui sépare *gardé* de *payé pour rien* sur l'écran des dépenses
+        (E18) : un emplacement qui a réussi et dont l'image a été supprimée a
+        coûté exactement ce qu'il coûtait, et n'a plus rien à montrer. Le compte
+        se fait donc sur les assets vivants, jamais sur le statut de
+        l'emplacement — qui, lui, ne change plus jamais après l'appel.
+
+        **Un supprimé ne compte pas ici, contrairement à `rangs_de_generation`**,
+        et les deux méthodes ont raison chacune de son côté : celle-là protège
+        des fichiers qu'une annulation peut encore ramener, celle-ci répond à
+        « qu'est-ce qui reste ». Une seule des deux ne pourrait pas faire les
+        deux réponses.
+
+        Une requête pour tout le lot, jamais une par ligne : l'écran en affiche
+        des centaines.
+        """
+        if not generations:
+            return {}
+        vivants: dict[str, set[int]] = {}
+        # SQLite plafonne le nombre de paramètres d'une requête ; on découpe.
+        with self._connexion() as connexion:
+            for depart in range(0, len(generations), 400):
+                paquet = list(generations[depart : depart + 400])
+                trous = ",".join("?" * len(paquet))
+                lignes = connexion.execute(
+                    "SELECT generation, rang FROM assets "
+                    f"WHERE supprime_le IS NULL AND generation IN ({trous})",
+                    paquet,
+                ).fetchall()
+                for ligne in lignes:
+                    vivants.setdefault(str(ligne["generation"]), set()).add(int(ligne["rang"]))
+        return vivants
 
     def rangs_de_generation(self, generation: str) -> list[int]:
         """Les rangs déjà pris dans une génération — **supprimés compris**.

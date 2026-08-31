@@ -41,6 +41,7 @@ import type {
   Asset,
   Bibliotheque,
   Carte,
+  Depenses,
   Etat,
   CompteReferences,
   EtatCatalogue,
@@ -508,6 +509,10 @@ function serveurDouble(options: {
    *  repliée en tête comprise. C'est ce que « reprendre les réglages » doit
    *  faire repartir mot pour mot (US-160). */
   promptParti?: string
+  /** Ce que le serveur rend sur `/api/spending` — les appels payés, leurs trois
+   *  issues, et les rafales. Vide par défaut : l'écran des dépenses n'est
+   *  ouvert que par les essais qui le demandent. */
+  depenses?: Depenses
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -636,6 +641,17 @@ function serveurDouble(options: {
       }
       return rendre(etat.agent)
     }
+    if (url.startsWith("/api/spending"))
+      return rendre(
+        options.depenses ?? {
+          total_usd: 0,
+          sans_projet_usd: 0,
+          par_projet: [],
+          par_modele: [],
+          appels: [],
+          rafales: [],
+        },
+      )
     if (url.startsWith("/api/library")) return rendre(BIBLIOTHEQUE)
     if (url.startsWith("/api/journal"))
       return rendre({
@@ -5602,7 +5618,7 @@ describe("les trois onglets", () => {
   //     clic ouvre l'écran qui l'explique — grisé avec sa raison tant que cet
   //     écran n'existe pas » ──────────────────────────────────────────────────
 
-  test("le total porte son étiquette, et dit pourquoi il ne s'ouvre pas encore", async () => {
+  test("le total porte son étiquette, et un clic ouvre l'écran qui l'explique", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
@@ -5615,12 +5631,12 @@ describe("les trois onglets", () => {
     // chercher. L'afficher aux deux endroits lui retirerait sa raison d'être.
     expect(screen.queryByText(/en tout/)).toBeNull()
 
-    // L'écran des dépenses arrive en E18. D'ici là le contrôle reste visible et
-    // porte sa raison : le produit n'a pas le droit de proposer puis de
-    // refuser, ni de cacher ce qui existera.
-    expect(
-      screen.getByText("— pas encore d'écran des dépenses"),
-    ).toBeTruthy()
+    // Le total est la porte de l'écran qui l'explique — et il l'ouvre à sa
+    // profondeur, sous un fil, sans quitter l'onglet où l'on était.
+    fireEvent.click(screen.getByTitle("Ouvrir les dépenses"))
+    const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
+    expect(fil.getByText("Les dépenses")).toBeTruthy()
+    expect(await screen.findByText("l'atelier, en tout")).toBeTruthy()
   })
 
   test("le nom du jeu ne s'écrit qu'une fois dans la bande", async () => {
@@ -5752,5 +5768,208 @@ describe("les trois onglets", () => {
     // lignes.
     const champ = screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")
     expect(classes(champ)).toContain("min-h-[56px]")
+  })
+})
+
+// ── E18 : les dépenses ──────────────────────────────────────────────────────
+//
+// Cinq des sept critères sont tenus par `tests/test_e18.py`, qui compte les
+// trois issues et les rafales sur de vrais appels. Les deux qui restent portent
+// sur ce que l'écran montre, et ne se vérifient qu'ici : les deux totaux du
+// produit portent chacun son étiquette, et la liste n'est pas une grille
+// d'assets.
+
+describe("l'écran des dépenses", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Ce que le serveur rend sur `/api/spending`. Deux appels, dont une rafale de
+   *  deux sur le même sujet, et un jeu ouvert. */
+  const DEPENSES = {
+    total_usd: 0.3619,
+    sans_projet_usd: 0.0381,
+    par_projet: [{ projet: "bac-a-sable", nom: "Bac à sable", cout_usd: 0.3238 }],
+    par_modele: [
+      { modele: "openai/gpt-image-2", cout_usd: 0.2935, appels: 2 },
+      { modele: "google/gemini-3.1-flash-lite", cout_usd: 0.0684, appels: 1 },
+    ],
+    appels: [
+      {
+        identifiant: "aaaa1111",
+        modele: "openai/gpt-image-2",
+        prompt: "un tonneau cerclé de fer",
+        cree_le: 1_787_800_000,
+        cout_usd: 0.016,
+        projet: "bac-a-sable",
+        projet_nom: "Bac à sable",
+        provenance: "auteur",
+        personnage: "balthazar",
+        pose: null,
+        variations: 1,
+        garde: 1,
+        perdu: 0,
+        refuse: 0,
+        raison: null,
+        assets: [],
+        rafale: "rafale-aaaa1111",
+      },
+      {
+        identifiant: "bbbb2222",
+        modele: "openai/gpt-image-2",
+        prompt: "un tonneau cerclé de fer",
+        cree_le: 1_787_799_700,
+        cout_usd: 0.016,
+        projet: "bac-a-sable",
+        projet_nom: "Bac à sable",
+        provenance: "auteur",
+        personnage: "balthazar",
+        pose: null,
+        variations: 1,
+        garde: 0,
+        perdu: 1,
+        refuse: 0,
+        raison: null,
+        assets: [],
+        rafale: "rafale-aaaa1111",
+      },
+      {
+        identifiant: "cccc3333",
+        modele: "google/gemini-3.1-flash-lite",
+        prompt: "une lanterne",
+        cree_le: 1_787_700_000,
+        cout_usd: 0,
+        projet: "bac-a-sable",
+        projet_nom: "Bac à sable",
+        provenance: "agent",
+        personnage: null,
+        pose: null,
+        variations: 1,
+        garde: 0,
+        perdu: 0,
+        refuse: 1,
+        raison: "refusé par le filtre de sécurité",
+        assets: [],
+        rafale: null,
+      },
+    ],
+    rafales: [
+      {
+        identifiant: "rafale-aaaa1111",
+        appels: 2,
+        cout_usd: 0.032,
+        debut: 1_787_799_700,
+        fin: 1_787_800_000,
+        prompt: "un tonneau cerclé de fer",
+      },
+    ],
+  }
+
+  const ouvrir = async () => {
+    const double = serveurDouble({ depenses: DEPENSES })
+    await monter(double.fetchDouble)
+    fireEvent.click(screen.getByTitle("Ouvrir les dépenses"))
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-depenses]")
+      if (!trouve) throw new Error("l'écran des dépenses n'est pas monté")
+      return trouve as HTMLElement
+    })
+    await screen.findByText("l'atelier, en tout")
+    return { ...double, ecran: within(cadre) }
+  }
+
+  // ── « Les deux totaux du produit portent chacun son étiquette, et aucun
+  //     montant n'est affiché nu » ─────────────────────────────────────────────
+
+  test("les deux totaux portent chacun son étiquette, et la part hors jeu se lit", async () => {
+    const { ecran } = await ouvrir()
+
+    // Le total de l'atelier entier — la seule chose qu'on vient chercher ici et
+    // qu'on ne trouve nulle part ailleurs.
+    expect(ecran.getByText("l'atelier, en tout")).toBeTruthy()
+    expect(ecran.getByText("$0,3619")).toBeTruthy()
+
+    // **Les onze pour cent qu'aucun écran ne montrait** : ce qui a été dépensé
+    // sans qu'aucun jeu soit ouvert.
+    expect(ecran.getByText("hors jeu")).toBeTruthy()
+    expect(ecran.getByText("$0,0381")).toBeTruthy()
+
+    // Et celui du jeu ouvert reste dans la barre de tête, avec son étiquette.
+    expect(within(document.querySelector("header") as HTMLElement).getByText("ce jeu"))
+      .toBeTruthy()
+  })
+
+  // ── « Les trois issues se distinguent : gardé, payé pour rien, refusé » ─────
+
+  test("les trois issues se comptent et se filtrent", async () => {
+    const { ecran } = await ouvrir()
+
+    // Un appel par issue dans le jeu de départ : un gardé, un payé pour rien,
+    // un refusé.
+    for (const nom of ["gardé", "payé pour rien", "refusé"])
+      expect(ecran.getByRole("button", { name: new RegExp(`^${nom}`) })).toBeTruthy()
+
+    // Filtrer sur « payé pour rien » ne laisse que celui-là. C'est le filtre qui
+    // remplace le journal des ratés, et il répond à une question qu'aucun écran
+    // ne savait poser : qu'est-ce que j'ai payé pour rien ?
+    fireEvent.click(ecran.getByRole("button", { name: /^payé pour rien/ }))
+    await waitFor(() => expect(ecran.getAllByText("balthazar")).toHaveLength(1))
+  })
+
+  // ── « Les appels consécutifs sur un même sujet se repèrent sans lire les
+  //     horodatages un par un » ─────────────────────────────────────────────────
+
+  test("une rafale se lit sur la ligne, et son détail dans la colonne de droite", async () => {
+    const { ecran } = await ouvrir()
+
+    // Choisir un appel de la rafale : la colonne de droite dit combien ils
+    // étaient, en combien de temps, et pour combien.
+    fireEvent.click(ecran.getAllByRole("button", { name: /balthazar/ })[0])
+    expect(await ecran.findByText("2 appels d'affilée sur ce sujet")).toBeTruthy()
+    expect(ecran.getByText(/5 min · \$0,0320/)).toBeTruthy()
+  })
+
+  // ── « La liste n'est pas une grille d'assets : ni recherche, ni filtres, ni
+  //     sélection multiple » ────────────────────────────────────────────────────
+
+  test("la liste ne porte aucune vignette et aucune sélection multiple", async () => {
+    const { ecran } = await ouvrir()
+
+    // **C'est l'absence de vignette qui tient la règle**, pas l'absence de
+    // filtre : une vignette par ligne ferait de cet écran une seconde galerie,
+    // et la galerie fait déjà ça mieux. Les filtres, eux, portent sur des
+    // appels et non sur des images (A-24 de `docs/v21-arbitrages.md`).
+    const liste = ecran.getAllByRole("button", { name: /balthazar/ })
+    for (const ligne of liste) expect(ligne.querySelector("img")).toBeNull()
+
+    // Aucune case à cocher : on ne sélectionne pas plusieurs dépenses, il n'y a
+    // rien à leur faire — rien ne se paie ni ne s'efface depuis cet écran.
+    expect(ecran.queryAllByRole("checkbox")).toHaveLength(0)
+    expect(ecran.getByText("rien ne se paie ni ne s'efface depuis cet écran"))
+      .toBeTruthy()
+  })
+
+  test("le fil ramène d'où l'on vient, et l'onglet ne change pas", async () => {
+    await ouvrir()
+
+    // L'écran est une profondeur, pas un quatrième onglet : les trois restent
+    // là, et celui d'où l'on vient reste allumé.
+    expect(
+      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+    ).toBe("true")
+
+    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
+    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer."))
+      .toBeTruthy()
   })
 })

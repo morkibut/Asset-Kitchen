@@ -32,7 +32,7 @@
 
 ---
 
-## A · Les vingt-trois arbitrages pris en autonomie
+## A · Les vingt-quatre arbitrages pris en autonomie
 
 Chacun est une décision qui n'était écrite nulle part, ou qui contredisait
 quelque chose d'écrit ailleurs. Ils sont rangés par le document qu'ils touchent.
@@ -406,6 +406,35 @@ portait le prompt et la grille, et celui-là n'existe plus. Les deux ont été
 distingués partout où ils paraissaient, dans le document du produit comme dans
 celui du design : ce n'est pas la même chose qui est nommée, et la relecture
 suivante devait pouvoir le savoir sans le redécouvrir.
+
+### A-24 · L'écran des dépenses garde ses filtres, et ce n'est pas la règle qui cède
+
+*Pris le 31 août 2026, en construisant E18.*
+
+**Ce qui était écrit des deux côtés.** Le document du produit énonce trois fois
+qu'*une seule grille d'assets existe dans tout le produit*, et il nomme les trois
+surfaces qui n'en sont pas — la matrice d'une chose, la réserve du tableau, la
+liste des dépenses : *« aucune des trois n'a de recherche, de filtre ni de
+sélection multiple, et c'est cette privation qui tient la règle »*. La maquette
+des dépenses, elle, dessine **quatre filtres et un champ de recherche**, et écrit
+pour chacun la question à laquelle il répond.
+
+**Tranché : la maquette l'emporte, et la règle est reformulée là où elle était
+trop large.** Ce que l'invariant protège est qu'il n'existe pas deux endroits où
+l'on manipule des **images** de la même façon. Or les quatre filtres des dépenses
+portent sur des **appels** — ce que ça a donné, quel jeu, quelle semaine, qui l'a
+demandé —, et la recherche cherche le nom d'une chose du jeu, jamais le texte
+envoyé. Ce qui aurait fait de cet écran une seconde galerie est ailleurs, et la
+maquette le refuse explicitement : **aucune vignette dans la liste**, et aucune
+sélection multiple. Une par ligne en aurait fait une planche contact.
+
+**Ce qui a été corrigé plutôt que gardé.** La formule du document du produit
+généralisait aux trois surfaces une privation qui n'est vraie que de deux : la
+matrice et la réserve sont pleines d'images, la liste des dépenses n'en porte
+aucune. Elle dit maintenant ce qui tient réellement la règle, surface par
+surface. Sans quoi le premier lecteur venu aurait retiré à cet écran le filtre
+qui répond à sa seule question propre — *qu'est-ce que j'ai payé pour rien ?* —
+au nom d'une phrase écrite pour une autre surface.
 
 ---
 

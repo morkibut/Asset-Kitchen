@@ -126,6 +126,20 @@ async def journal(
     return bibliotheque.journal(None if sans_projet else projet, limite)
 
 
+@routeur.get("/spending")
+async def depenses(
+    requete: Request,
+    limite: int = Query(500, ge=1, le=2000),
+) -> dict[str, Any]:
+    """Tout ce que l'atelier a dépensé, et ce que chaque appel a donné (E18).
+
+    Le journal ci-dessus reste, et il répond à une autre question : *qu'est-ce
+    qui a raté dans ce projet-ci*. Celui-ci répond à *où est passé l'argent*, sur
+    l'atelier entier, et c'est la seule chose qu'on vient y chercher.
+    """
+    return _atelier(requete).bibliotheque.depenses(limite)
+
+
 # ── Projets et collections ───────────────────────────────────────────────────
 
 

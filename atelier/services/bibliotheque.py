@@ -565,6 +565,180 @@ class ServiceBibliotheque:
             "appels": appels,
         }
 
+    # ── Les dépenses ─────────────────────────────────────────────────────────
+    #
+    # « Il faut pouvoir expliquer une facture. » Le journal ci-dessus tenait
+    # cette promesse **pour un cas sur trois** : il ne montrait que les appels
+    # ratés, et mesuré sur la base du dépôt, ce sont ceux qui n'ont jamais rien
+    # coûté. L'écran des dépenses (E18) les montre tous, avec ce que chacun a
+    # coûté et ce qu'il a donné.
+    #
+    # **Trois issues, et une seule est visible aujourd'hui dans la grille.**
+    # Un emplacement a réussi et son image est encore là : *gardé*. Il a été
+    # facturé et n'a rien laissé — parce qu'il a échoué après avoir coûté, ou
+    # parce que l'image a été supprimée depuis : *payé pour rien*. Il a échoué
+    # sans rien coûter : *refusé*. Les deux derniers se confondaient sous le mot
+    # « raté », qui mélangeait l'argent perdu et l'argent jamais dépensé.
+
+    #: En deçà, deux appels du même sujet sont **la même intention reprise**, et
+    #: non deux séances distinctes. Six relances en trente-deux minutes ont coûté
+    #: le quart de tout l'argent de l'atelier sans que rien ne le dise ; le seuil
+    #: est posé assez large pour les tenir ensemble, assez court pour ne pas
+    #: coudre deux séances d'un même après-midi.
+    ECART_RAFALE_S = 15 * 60
+
+    def depenses(self, limite: int = 500) -> dict[str, Any]:
+        """Tout ce que l'atelier a dépensé, du plus récent au plus ancien.
+
+        **Une dépense ne s'efface jamais.** Supprimer une image change l'état de
+        la ligne de son appel — un gardé devient un payé pour rien — et ne fait
+        jamais disparaître la ligne : l'argent, lui, est parti.
+
+        Les appels sans coût y figurent aussi. Le critère de la tranche demande
+        que *tous les appels payés* soient listés, ce qui n'interdit pas les
+        autres — et les taire ferait disparaître la seule issue que le journal
+        d'avant savait montrer, celle qui n'a rien coûté.
+        """
+        generations = self._base.recentes(limite)
+        vivants = self._base.rangs_vivants([g.identifiant for g in generations])
+        noms = {p.identifiant: p.nom for p in self.projets()}
+
+        appels: list[dict[str, Any]] = []
+        for generation in generations:
+            restants = vivants.get(generation.identifiant, set())
+            garde = perdu = refuse = 0
+            raisons: list[str] = []
+            for emplacement in generation.emplacements:
+                if emplacement.statut is Statut.REUSSIE:
+                    if emplacement.rang in restants:
+                        garde += 1
+                    else:
+                        perdu += 1
+                elif emplacement.statut in (Statut.ECHOUEE, Statut.INTERROMPUE):
+                    if emplacement.cout_usd > 0:
+                        perdu += 1
+                    else:
+                        refuse += 1
+                    if emplacement.raison:
+                        raisons.append(emplacement.raison)
+            appels.append(
+                {
+                    "identifiant": generation.identifiant,
+                    "modele": generation.modele,
+                    "prompt": str(generation.demande.get("prompt", "")),
+                    "cree_le": generation.cree_le,
+                    "cout_usd": generation.cout_usd,
+                    "projet": generation.projet,
+                    # Le nom du jeu, résolu ici : l'écran n'a pas à joindre deux
+                    # listes pour écrire une ligne, et un projet supprimé rend
+                    # `null` plutôt qu'un identifiant nu que personne ne lit.
+                    "projet_nom": noms.get(generation.projet or ""),
+                    "provenance": generation.provenance,
+                    # **Le sujet, et non le texte envoyé.** Le texte fait 1 690
+                    # signes et il est presque le même à chaque appel — le style
+                    # y pèse 53 %, le sujet 2 % : mis en ligne, il ferait vingt
+                    # lignes qui se ressemblent. Ce qui distingue un appel d'un
+                    # autre est la chose du jeu qu'il visait, ou rien.
+                    "personnage": generation.personnage,
+                    "pose": generation.pose,
+                    # Ce que l'appel a **demandé**, pas ce qu'il a rendu. Un
+                    # appel à deux variations qui n'en rend qu'une est un cas à
+                    # voir, et confondre les deux le rendrait invisible.
+                    "variations": len(generation.emplacements),
+                    # Les trois issues. Elles comptent des **emplacements**, pas
+                    # des appels : un appel à quatre variations peut en garder
+                    # deux, en perdre une et s'en faire refuser une.
+                    "garde": garde,
+                    "perdu": perdu,
+                    "refuse": refuse,
+                    "raison": raisons[0] if raisons else None,
+                    # Ce qui est resté, pour la colonne de droite. La liste ne
+                    # porte aucune vignette — une par ligne ferait de cet écran
+                    # une seconde galerie, et la galerie fait déjà ça mieux.
+                    "assets": [
+                        f"{generation.identifiant}-{rang}" for rang in sorted(restants)
+                    ],
+                    "rafale": None,
+                }
+            )
+
+        totaux = self._base.totaux_par_projet()
+        par_modele: dict[str, dict[str, Any]] = {}
+        for appel in appels:
+            entree = par_modele.setdefault(
+                appel["modele"], {"modele": appel["modele"], "cout_usd": 0.0, "appels": 0}
+            )
+            entree["cout_usd"] += appel["cout_usd"]
+            entree["appels"] += 1
+        for entree in par_modele.values():
+            entree["cout_usd"] = round(entree["cout_usd"], 6)
+
+        return {
+            "total_usd": self._base.total_par_projet(None),
+            # **Les onze pour cent qu'aucun écran ne montrait** : ce qui a été
+            # dépensé sans qu'aucun jeu soit ouvert. Ce n'est pas une erreur,
+            # c'est un fait sur la façon dont l'atelier sert — et le seul endroit
+            # du produit qui puisse le dire est celui-ci.
+            "sans_projet_usd": round(totaux.get(None, 0.0), 6),
+            "par_projet": [
+                {"projet": p.identifiant, "nom": p.nom, "cout_usd": totaux.get(p.identifiant, 0.0)}
+                for p in self.projets()
+            ],
+            # Trié par ce qu'il coûte : la question est « lequel coûte le
+            # plus », et un classement alphabétique la laisserait sans réponse.
+            "par_modele": sorted(
+                par_modele.values(), key=lambda e: e["cout_usd"], reverse=True
+            ),
+            "appels": appels,
+            "rafales": self._rafales(appels),
+        }
+
+    def _rafales(self, appels: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Les appels consécutifs sur un même sujet, réunis.
+
+        « Six relances en trente-deux minutes ont coûté le quart de tout
+        l'argent jamais dépensé, et rien ne le disait. » Une rafale se lit d'un
+        coup d'œil au lieu de se reconstituer en comparant les horodatages un
+        par un — ce qu'aucun écran ne fait spontanément, et ce que personne ne
+        fait deux fois.
+
+        **Consécutifs et de même sujet, les deux à la fois.** Le même prompt
+        repris trois jours plus tard n'est pas une rafale, c'est un retour ; et
+        deux sujets différents lancés coup sur coup sont deux intentions. La
+        liste arrivant du plus récent au plus ancien, on la parcourt telle
+        quelle : deux voisins y sont voisins dans le temps.
+        """
+        rafales: list[dict[str, Any]] = []
+        debut = 0
+        while debut < len(appels):
+            fin = debut
+            while (
+                fin + 1 < len(appels)
+                and appels[fin + 1]["prompt"].strip() == appels[debut]["prompt"].strip()
+                and appels[fin]["cree_le"] - appels[fin + 1]["cree_le"] <= self.ECART_RAFALE_S
+            ):
+                fin += 1
+            # Un appel seul n'est pas une rafale. Marquer tout le monde ferait
+            # de la marque un décor, et elle ne dirait plus rien.
+            if fin > debut:
+                identifiant = f"rafale-{appels[debut]['identifiant']}"
+                lot = appels[debut : fin + 1]
+                for appel in lot:
+                    appel["rafale"] = identifiant
+                rafales.append(
+                    {
+                        "identifiant": identifiant,
+                        "appels": len(lot),
+                        "cout_usd": round(sum(a["cout_usd"] for a in lot), 6),
+                        # Du plus ancien au plus récent, comme on les a lancés.
+                        "debut": lot[-1]["cree_le"],
+                        "fin": lot[0]["cree_le"],
+                        "prompt": lot[0]["prompt"],
+                    }
+                )
+            debut = fin + 1
+        return rafales
+
     # ── L'arbre ──────────────────────────────────────────────────────────────
 
     def arbre(self) -> dict[str, Any]:

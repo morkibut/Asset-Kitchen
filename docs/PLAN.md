@@ -433,8 +433,8 @@ donc un cache, et un cache se recalcule.
 
 *Vingt-et-une étapes, décidées le 31 août 2026.* Elles viennent du chantier de maquettes de
 `docs/maquettes-v2.1/` : vingt-six écrans dessinés, quarante-et-une décisions prises,
-vingt-trois arbitrages tranchés en autonomie et dix-sept questions laissées ouvertes,
-dont une déjà répondue par un banc gratuit —
+vingt-quatre arbitrages tranchés en autonomie — dont un pris en construisant — et
+dix-sept questions laissées ouvertes, dont une déjà répondue par un banc gratuit —
 `docs/v21-arbitrages.md` les tient toutes, et ne fait foi sur rien.
 
 **Ce qui a déclenché le chantier est une mesure, pas une envie.** Le produit fabriquait bien
@@ -859,7 +859,7 @@ avant que le geste soit rendu ailleurs, c'est retirer sans donner.
 - [ ] La fiche d'une image porte deux portes : l'établi de sa chose, et les tables
 - [ ] Une image sans chose du jeu propose de la rattacher, et le rattachement se défait
 - [ ] Le filtre par famille a une valeur pour ce qui n'appartient à aucune chose du jeu
-- [ ] Aucune des trois surfaces qui ne sont pas des grilles — la matrice, la réserve, la liste des dépenses — n'a gagné de recherche, de filtres ni de sélection multiple
+- [ ] Aucune des trois surfaces qui ne sont pas des grilles — la matrice, la réserve, la liste des dépenses — n'est devenue une seconde planche contact : les deux premières restent sans recherche, sans filtre et sans sélection multiple, la troisième sans aucune image (A-24)
 - [ ] Tout ce que l'écran d'avant permettait se fait encore, ailleurs, et la fiche dit où
 
 #### Bloquée par
@@ -1362,7 +1362,7 @@ quatre, parce que le centrage horizontal se fait sur la boîte du sujet et ne se
 ---
 
 ### E18 · Les dépenses
-**User stories** : 295, 296, 297, 298, 299
+**User stories** : 295, 296, 297, 298, 299 · *7 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -1380,18 +1380,46 @@ dépensé, et rien ne le disait.
 
 #### Critères d'acceptation
 
-- [ ] Tous les appels payés se listent du plus récent au plus ancien, avec leur coût et leur résultat
-- [ ] Les trois issues se distinguent : gardé, payé pour rien, refusé
-- [ ] Supprimer une image change l'état de la ligne de son appel, et ne fait jamais disparaître la ligne
-- [ ] Le total de l'atelier entier et la part qui n'appartient à aucun jeu se lisent tous les deux
-- [ ] Les deux totaux du produit portent chacun son étiquette, et aucun montant n'est affiché nu
-- [ ] Les appels consécutifs sur un même sujet se repèrent sans lire les horodatages un par un
-- [ ] La liste n'est pas une grille d'assets : ni recherche, ni filtres, ni sélection multiple
+- [x] Tous les appels payés se listent du plus récent au plus ancien, avec leur coût et leur résultat
+- [x] Les trois issues se distinguent : gardé, payé pour rien, refusé
+- [x] Supprimer une image change l'état de la ligne de son appel, et ne fait jamais disparaître la ligne
+- [x] Le total de l'atelier entier et la part qui n'appartient à aucun jeu se lisent tous les deux
+- [x] Les deux totaux du produit portent chacun son étiquette, et aucun montant n'est affiché nu
+- [x] Les appels consécutifs sur un même sujet se repèrent sans lire les horodatages un par un
+- [x] La liste n'est pas une grille d'assets — *reformulé en A-24 : ce n'est pas la privation de filtre qui le tient, c'est l'absence d'image et de sélection multiple*
 
 #### Bloquée par
 
 - **E1** — le total cliquable de la barre de tête est sa porte.
 - **E0** — l'étiquette « dépensé par l'agent » de la fenêtre des réglages est le second des deux totaux, et elle mentait.
+
+#### Ce que la tenir a trouvé
+
+**Le document du produit et la maquette se contredisaient sur le seul point qui
+fait cet écran.** Le premier écrivait que la liste des dépenses n'a « ni
+recherche, ni filtre, ni sélection multiple », la seconde y dessine quatre
+filtres et un champ de recherche, chacun avec la question à laquelle il répond.
+Le conflit n'avait été relevé nulle part — ni par la relecture croisée des
+maquettes, qui ne lit pas les documents d'autorité, ni par l'écriture du plan,
+qui a recopié la phrase du produit sans la confronter au dessin. **C'est A-24**,
+et le document du produit a été corrigé plutôt que la maquette : ce qui tient
+l'invariant d'une seule grille d'assets n'est pas le même sur les trois surfaces,
+et l'écrire d'un seul bloc allait faire retirer à cet écran le filtre qui répond
+à sa seule question propre.
+
+**La trichotomie ne se lit pas sur le statut d'un emplacement, et c'est ce qui la
+rend possible.** Un emplacement qui a réussi reste « réussi » pour toujours ; ce
+qui change quand on supprime l'image, c'est qu'il n'y a plus d'asset vivant à ce
+rang. *Gardé* et *payé pour rien* se séparent donc en interrogeant la
+bibliothèque, pas la génération — une requête pour tout le lot, jamais une par
+ligne. C'est aussi ce qui fait tenir la promesse *une dépense ne s'efface
+jamais* sans rien écrire pour elle : la ligne vient de la génération, l'état vient
+des assets, et les deux ne se croisent qu'à la lecture.
+
+**Le journal des appels ratés reste**, et il n'a pas été supprimé : il répond à
+une autre question — *qu'est-ce qui a raté dans ce projet-ci* —, alors que celui-ci
+répond à *où est passé l'argent*, sur l'atelier entier. C'est la colonne de la
+galerie qui perd son bloc en E4, pas la route qui le sert.
 
 ---
 
