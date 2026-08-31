@@ -14,10 +14,14 @@
 // `imageAsset` ci-dessous, **le seul endroit du produit qui nomme l'adresse de
 // l'image d'un asset** — la tuile, la fiche et l'aperçu la lisent tous les trois.
 //
-// **Une note n'a pas d'aperçu, et c'est une réponse.** Le sujet d'une carte texte
-// est son texte, déjà entier dans la carte : l'agrandir ne montrerait rien de
-// plus. `sujetCarte` rend donc `null`, la touche ne fait rien, et rien ne
-// clignote pour l'annoncer.
+// **Une note a un aperçu depuis E7, et c'est la même réponse par l'autre bout.**
+// Tant que la carte grandissait avec son texte, l'agrandir ne montrait rien de
+// plus, et `sujetCarte` rendait `null`. Depuis que la carte de texte a la
+// hauteur de son cran de zoom — sans quoi une note de quatre mille mots pousse
+// la première image à quatre mille pixels de défilement —, son texte est
+// **coupé**, et il faut un endroit où le lire en entier. C'est ici, et l'aperçu
+// s'y pose en **colonne de prose** au lieu d'une image : la seconde et dernière
+// exception à *aucune largeur maximale* (`docs/DESIGN.md` § Layout).
 
 import {
   useCallback,
@@ -46,6 +50,9 @@ export type Sujet = {
    *  matière du travail. Aucune décision neuve : les deux grilles rendent déjà
    *  leurs images comme ça. */
   pixelise: boolean
+  /** Le texte à lire en entier, quand le sujet n'est pas une image. L'aperçu se
+   *  pose alors en colonne de prose bornée et défile, au lieu de zoomer. */
+  prose?: string
 }
 
 /**
@@ -73,8 +80,29 @@ export const sujetAsset = (asset: Asset, brut = false): Sujet => ({
   pixelise: true,
 })
 
-export const sujetCarte = (carte: Carte): Sujet | null =>
-  carte.genre === "image" && carte.montrable
+/** Combien de mots un texte porte. **Compté, jamais estimé** : c'est le chiffre
+ *  que le pied d'une carte de texte annonce, et un chiffre affiché est un
+ *  chiffre mesuré. */
+export const mots = (texte: string): number =>
+  texte.trim() ? texte.trim().split(/\s+/).length : 0
+
+export const sujetCarte = (carte: Carte): Sujet | null => {
+  if (carte.genre === "texte")
+    return carte.texte.trim()
+      ? {
+          cle: carte.identifiant,
+          src: "",
+          titre: carte.note || carte.groupe || "note",
+          // Zéro des deux côtés : une note n'a pas de dimensions, et l'aperçu
+          // se tait alors sur le facteur — c'est déjà sa règle pour une image
+          // qu'on n'a pas mesurée.
+          largeur: 0,
+          hauteur: 0,
+          pixelise: false,
+          prose: carte.texte,
+        }
+      : null
+  return carte.genre === "image" && carte.montrable
     ? {
         cle: carte.identifiant,
         src: api.imageCarte(carte.identifiant, carte.empreinte),
@@ -84,6 +112,7 @@ export const sujetCarte = (carte: Carte): Sujet | null =>
         pixelise: false,
       }
     : null
+}
 
 // ── Ce que le pointeur vise, et ce qui est à l'écran ────────────────────────
 //
@@ -342,6 +371,49 @@ export function Apercu({ sujet, onFermer }: { sujet: Sujet; onFermer: () => void
       : 0
   const facteur = ajuste * vue.zoom
   const rendu = { imageRendering: sujet.pixelise ? "pixelated" : "auto" } as const
+
+  if (sujet.prose)
+    return (
+      <div
+        role="dialog"
+        aria-modal
+        aria-label="Aperçu"
+        className="fixed inset-0 z-50 flex flex-col bg-fond-0/92"
+      >
+        {/* **Une colonne de prose bornée à 504 px, et elle défile.** C'est la
+            seconde et dernière surface du produit qui a le droit à une largeur
+            maximale, et elle l'a pour la raison exacte qui borne le Guide : la
+            prose est la seule matière du produit qui *perde* à recevoir de la
+            largeur. Ouvrir une note de trois paragraphes sur 1 600 px la rend
+            illisible (`docs/DESIGN.md` § Layout).
+
+            **Et la borne s'écrit en pixels, jamais en `ch`** : un `ch` vaut la
+            largeur du chiffre zéro, l'un des signes les plus larges de la
+            police — `72ch` fait 637 px, où tiennent environ 107 lettres. */}
+        <div
+          data-apercu-prose
+          onPointerDown={(evenement) => {
+            // Le clic « à côté » ferme, comme sur une image ; le clic *dans* la
+            // colonne ne ferme pas, parce qu'on y sélectionne du texte.
+            if (evenement.target === evenement.currentTarget) onFermer()
+          }}
+          className="defile min-h-0 flex-1 overflow-y-auto px-6 py-10"
+        >
+          <p className="mx-auto max-w-[504px] text-[13.5px] leading-relaxed whitespace-pre-wrap text-texte">
+            {sujet.prose}
+          </p>
+        </div>
+        <footer className="flex h-[26px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4">
+          <span className="min-w-0 truncate text-[11.5px] text-texte" title={sujet.titre}>
+            {sujet.titre}
+          </span>
+          <div className="mesure ml-auto flex shrink-0 items-center gap-3 text-[10px] text-texte-3">
+            <span>{mots(sujet.prose)} mots</span>
+            <span>Espace ou Échap · fermer</span>
+          </div>
+        </footer>
+      </div>
+    )
 
   return (
     <div

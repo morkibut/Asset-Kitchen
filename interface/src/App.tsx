@@ -77,7 +77,7 @@ import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
-import { EcranUnivers } from "./composants/Univers"
+import { EcranUnivers, type Cote } from "./composants/Univers"
 import { useDepot, type Vue as VueUnivers } from "./composants/Tableau"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
@@ -301,6 +301,10 @@ export function App() {
   // la réserve n'a de colonne qu'en vue toile. Un état de navigation qui décide
   // du contenu d'une bande partagée ne peut plus vivre sous cette bande.
   const [vueUnivers, setVueUnivers] = useState<VueUnivers>("grille")
+  // **Lequel des trois côtés de l'Univers est allumé** (E7). Monté ici pour la
+  // même raison que la vue : la barre du châssis rend les bascules de repli de
+  // l'écran actif, et il n'y en a qu'au côté Inspiration, en vue toile.
+  const [coteUnivers, setCoteUnivers] = useState<Cote>("inspiration")
 
   // ── T5 : la découpe ───────────────────────────────────────────────────────
   //
@@ -1279,12 +1283,13 @@ export function App() {
           { cle: "reglages", nom: "réglages", repliee: replies.reglages },
         ]
       : onglet === "univers"
-        ? [
-            { cle: "univers", nom: "univers", repliee: replies.univers },
-            ...(vueUnivers === "toile"
-              ? [{ cle: "reserve", nom: "réserve", repliee: replies.reserve }]
-              : []),
-          ]
+        ? // **La colonne de l'univers n'existe plus** (E7) : ses cinq réglages
+          // ont un côté à eux, qui prend l'écran entier. Ne reste que la
+          // réserve, et seulement en vue toile — sans elle il n'y a pas de
+          // colonne, et une bascule pour une colonne absente mentirait.
+          coteUnivers === "inspiration" && vueUnivers === "toile"
+          ? [{ cle: "reserve", nom: "réserve", repliee: replies.reserve }]
+          : []
         : []
 
   /** Le fil d'Ariane, ou rien. **C'est la porte d'entrée qui le décide**, pas
@@ -1605,6 +1610,8 @@ export function App() {
           liens={liens}
           teintes={teintes}
           personnages={personnages}
+          cote={coteUnivers}
+          onCote={setCoteUnivers}
           vue={vueUnivers}
           onVue={setVueUnivers}
           replies={{ univers: replies.univers, reserve: replies.reserve }}

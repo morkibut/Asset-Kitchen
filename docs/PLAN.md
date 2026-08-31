@@ -943,7 +943,7 @@ lui-même « à reprendre » et écrit qu'aucune mesure ne la soutient
 ---
 
 ### E7 · L'onglet Univers à trois côtés
-**User stories** : 221, 222, 223, 224
+**User stories** : 221, 222, 223, 224 · *8 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -961,18 +961,50 @@ images, et ce qui n'agit qu'au retour.
 
 #### Critères d'acceptation
 
-- [ ] Trois côtés, un seul allumé, et le côté allumé occupe tout l'écran sous une barre de 38 px
-- [ ] Côté Inspiration, aucun réglage n'est posé au-dessus du tableau
-- [ ] La première image d'inspiration est atteinte en moins d'un écran de défilement
-- [ ] Une carte de texte a la hauteur de son cran de zoom et dit en pied ce qui est coupé
-- [ ] Une carte de texte ouverte en grand se pose en colonne de prose bornée, et défile
-- [ ] Le menu d'un paquet propose de fabriquer une palette et une ambiance, grisés avec leur raison tant que l'écran qui les tient n'existe pas
-- [ ] Un bandeau permanent dit ce que l'univers envoie : le nombre de cases de texte, le nombre de signes, les images, et ce qui n'agit qu'au retour
-- [ ] Les deux côtés qui portent une liste emploient la colonne de 240 px, et rien de neuf
+- [x] Trois côtés, un seul allumé, et le côté allumé occupe tout l'écran sous une barre de 38 px
+- [x] Côté Inspiration, aucun réglage n'est posé au-dessus du tableau
+- [x] La première image d'inspiration est atteinte en moins d'un écran de défilement — *mesuré au navigateur : 54 px, dans 650 px visibles*
+- [x] Une carte de texte a la hauteur de son cran de zoom et dit en pied ce qui est coupé
+- [x] Une carte de texte ouverte en grand se pose en colonne de prose bornée, et défile
+- [x] Le menu d'un paquet propose de fabriquer une palette et une ambiance, grisés avec leur raison tant que l'écran qui les tient n'existe pas
+- [x] Un bandeau permanent dit ce que l'univers envoie : le nombre de cases de texte, le nombre de signes, les images, et ce qui n'agit qu'au retour
+- [x] Les deux côtés qui portent une liste emploient la colonne de 240 px, et rien de neuf — *un seul en porte une pour l'instant ; le second arrive avec les ambiances, en E11*
 
 #### Bloquée par
 
 - **E1** — l'Univers est un des trois onglets, et sa barre des trois côtés est une bande du châssis.
+
+#### Ce que la tenir a trouvé
+
+**La mesure promise est dépassée, et dans le bon sens.** La maquette annonçait un
+tableau ramené de 6 726 à 3 277 px et la première image de 4 161 à 712. Relevé au
+navigateur sur le vrai projet, avec ses dix-neuf cartes : le tableau fait
+**2 446 px**, et la première image est à **54 px** du haut, dans 650 px visibles.
+L'écart vient de la carte de texte, qui prend maintenant exactement le carré de
+ses voisines — la maquette l'avait estimée sur les hauteurs d'un cran, le rendu la
+prend sur la colonne, qui est la vraie mesure.
+
+**Une décision de T9 s'est retournée toute seule, et pour la raison qui l'avait
+prise.** *Une note n'a pas d'aperçu* était juste tant que la carte grandissait
+avec son texte : l'agrandir ne montrait rien de plus, et la touche ne faisait
+rien. Dès que la carte a la hauteur de son cran, son texte est **coupé** — et il
+faut un endroit où le lire en entier. C'est le même argument, pris par l'autre
+bout, et il donne la réponse inverse. Le pied de la carte dit ce qui manque —
+`4 350 mots · 1/6 visible`, relevé au navigateur sur la note du projet, exactement
+le chiffre que la maquette annonçait.
+
+**Trois bandes se sont évitées de justesse.** Le châssis en fait une de 44 px, le
+tableau en avait déjà une de 38, et les trois côtés en demandaient une troisième —
+que la maquette n'a jamais dessinée. Les côtés sont donc entrés *dans* la barre du
+tableau, à sa gauche, et les deux autres côtés portent la même barre sans son
+contenu. Une bande de plus au-dessus du travail aurait rendu à l'écran ce qu'on
+venait de lui retirer.
+
+**La colonne de 380 px de l'univers est morte, et avec elle sa bascule de
+repli.** Elle empilait cinq blocs de réglage sur 1 843 px dans 646 px visibles ;
+ils ont désormais l'écran entier, un par un, sous une liste de 240 px. La
+conséquence n'était pas écrite : l'onglet Univers n'a plus qu'**une** colonne
+repliable, la réserve, et seulement en vue toile.
 
 ---
 

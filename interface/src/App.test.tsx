@@ -1257,6 +1257,22 @@ async function cadreDuCodex() {
   })
 }
 
+/** Ouvrir l'onglet Univers **et son côté Réglages**.
+ *
+ *  Depuis E7, l'onglet a trois côtés et le premier est Inspiration : les cinq
+ *  blocs de réglage du jeu ne sont plus sous la main dès qu'on ouvre l'onglet.
+ *  Le raccourci existe pour ça, et il dit en un mot ce que chaque essai
+ *  cherchait vraiment — non pas *l'onglet Univers*, mais *les réglages du jeu*.
+ *
+ *  Les deux « Réglages » du produit ne se confondent pas : celui du châssis est
+ *  un bouton, celui-ci est un côté, donc un onglet. */
+async function ouvrirLesReglagesDuJeu(etape: string) {
+  fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+  fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+  fireEvent.click(await screen.findByRole("button", { name: etape }))
+}
+
+
 describe("l'écran de l'atelier", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
@@ -1557,7 +1573,7 @@ describe("l'écran de l'atelier", () => {
   test("promouvoir un artwork montre la palette, et la retirer la fait changer à l'œil", async () => {
     const { fetchDouble } = serveurDouble({ cartes: [carteImage("planche")] })
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La palette du jeu")
 
     // Les blocs de l'univers arrivent repliés — on pose ces réglages une fois,
     // et l'en-tête dit déjà leur état (`docs/design-motifs.md` § Le bloc repliable).
@@ -1642,6 +1658,8 @@ describe("l'écran de l'atelier", () => {
     // collage. Ce que l'essai prouve ne change pas d'un pouce — le collage
     // arrive dans un champ de saisie de l'écran ouvert, et le tableau
     // l'ignore ; il se contente de le prouver dans le seul écran monté.
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "La bible du style" }))
     fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
     const champ = await screen.findByPlaceholderText(
       "royaume de tourbe et de fer, marais au nord",
@@ -1651,7 +1669,10 @@ describe("l'écran de l'atelier", () => {
     expect(fetchDouble.mock.calls.some(([url]) => String(url).includes("/api/board/text"))).toBe(
       false,
     )
-    expect(screen.getByText("Le tableau est vide.")).toBeTruthy()
+    // On revient regarder : le tableau vit du côté Inspiration, et il est resté
+    // vide — c'est ce que l'essai vient prouver.
+    fireEvent.click(screen.getByRole("tab", { name: "Inspiration" }))
+    expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
   })
 
   // ── T4 : ce qui part avec la génération se lit avant de cliquer ───────────
@@ -2333,30 +2354,36 @@ describe("l'agent, vu de l'atelier", () => {
     expect(reserve.querySelectorAll("article")).toHaveLength(2)
   })
 
-  test("l'écran tient trois colonnes, et les réglages de l'univers restent visibles", async () => {
-    // « Les réglages restent visibles pendant qu'on compose, et c'est la raison
-    // d'être de la colonne de gauche » (`docs/archi-versions.md` §6.2).
+  test("côté Inspiration, aucun réglage n'est posé au-dessus du tableau", async () => {
+    // **La règle a changé de forme sans changer de fond, en E7.** Elle disait
+    // « les réglages restent visibles pendant qu'on compose », et la colonne de
+    // gauche existait pour ça. Mesuré : cette colonne faisait 1 843 px de haut
+    // dans 646 px visibles, et repoussait la première image d'inspiration à
+    // 4 161 px de défilement — six écrans et demi avant de voir une image, sur
+    // l'écran dont c'est le métier. Les réglages restent visibles, mais du côté
+    // qui est à eux : les regarder ne demande plus de rogner le tableau.
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
     await monter(fetchDouble)
     await ouvrirLaToile()
 
-    expect(await screen.findByText("L'univers")).toBeTruthy()
-    expect(screen.getByText("Réserve")).toBeTruthy()
+    // La réserve est là — c'est la seule colonne du côté Inspiration.
+    expect(await screen.findByText("Réserve")).toBeTruthy()
+    // Les réglages du jeu, non : ils sont un côté plus loin.
+    expect(screen.queryByRole("button", { name: /^Bible/ })).toBeNull()
 
-    // **La troisième colonne n'introduit aucune largeur nouvelle** : la réserve
-    // reprend la 380 de la fiche asset, telle quelle. Deux nombres pour la même
-    // sorte de chose feraient un troisième vocabulaire de largeur.
+    // **Aucune largeur nouvelle** : la réserve reprend la 380 de la fiche
+    // asset, telle quelle, et elle est désormais la seule.
     const colonnes = [...document.querySelectorAll("aside")].filter((a) =>
       a.className.includes("w-[380px]"),
     )
-    expect(colonnes).toHaveLength(2)
+    expect(colonnes).toHaveLength(1)
   })
 
-  test("les deux colonnes de l'écran se replient, et la toile prend toute la largeur", async () => {
+  test("la réserve se replie, et la toile prend alors toute la largeur", async () => {
     // « Replier un panneau est un choix, jamais une contrainte de place »
-    // (US-97) : c'est la règle de l'atelier, et cet écran-ci n'en a pas une
-    // autre. Repliées toutes les deux, il ne reste que la toile.
+    // (US-97). Il n'en reste qu'un à replier depuis E7, et c'est le seul qui
+    // occupe encore une colonne à côté du tableau.
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
     await monter(fetchDouble)
@@ -2364,33 +2391,26 @@ describe("l'agent, vu de l'atelier", () => {
 
     const pistes = () =>
       (document.querySelector("[data-colonnes]") as HTMLElement).style.gridTemplateColumns
-    const univers = screen.getByRole("button", { name: "univers" })
     const reserve = screen.getByRole("button", { name: "réserve" })
 
-    // Déployées d'emblée : l'écran large est la ressource du produit.
-    expect(univers.getAttribute("aria-pressed")).toBe("true")
+    // Déployée d'emblée : l'écran large est la ressource du produit.
     expect(reserve.getAttribute("aria-pressed")).toBe("true")
-    expect(pistes()).toBe("380px minmax(0,1fr) 380px")
+    expect(pistes()).toBe("minmax(0,1fr) 380px")
 
-    fireEvent.click(univers)
     fireEvent.click(reserve)
-    expect(pistes()).toBe("0px minmax(0,1fr) 0px")
+    expect(pistes()).toBe("minmax(0,1fr) 0px")
 
-    // **Replier n'est pas fermer**, et c'est tout l'enjeu : les deux panneaux
-    // sont toujours montés, avec ce qu'ils portaient. La réserve garde même ses
-    // 380 px — c'est la grille que l'aimant de la toile mesure.
+    // **Replier n'est pas fermer**, et c'est tout l'enjeu : le panneau est
+    // toujours monté, avec ce qu'il portait, et il garde ses 380 px — c'est la
+    // grille que l'aimant de la toile mesure.
     expect(
       document.querySelector("[data-reserve]")!.querySelectorAll("article"),
     ).toHaveLength(2)
-    expect(screen.getByText("L'univers")).toBeTruthy()
-
-    fireEvent.click(univers)
-    expect(pistes()).toBe("380px minmax(0,1fr) 0px")
 
     // En grille, la réserve n'a pas de colonne : elle n'a donc pas de bascule.
     fireEvent.click(screen.getByRole("button", { name: "grille" }))
     expect(screen.queryByRole("button", { name: "réserve" })).toBeNull()
-    expect(pistes()).toBe("380px minmax(0,1fr)")
+    expect(pistes()).toBe("minmax(0,1fr)")
   })
 
   test("la grille du tableau est inchangée : on y revient telle qu'on l'a laissée", async () => {
@@ -2976,23 +2996,42 @@ describe("l'aperçu", () => {
 
     fireEvent.keyDown(window, { key: "Escape" })
     expect(apercu()).toBeNull()
-    expect(screen.getByText("L'univers")).toBeTruthy()
+    // L'onglet est resté ouvert derrière : une pression, un geste.
+    expect(
+      screen.getByRole("tab", { name: "Univers" }).getAttribute("aria-selected"),
+    ).toBe("true")
   })
 
-  test("une note n'a pas d'aperçu, et un champ garde sa barre d'espace", async () => {
+  test("une note s'ouvre en colonne de prose, et une note vide n'a rien à ouvrir", async () => {
     const { fetchDouble } = serveurDouble({
-      cartes: [carteImage("n1", { genre: "texte", texte: "une intention" })],
+      cartes: [
+        carteImage("n1", { genre: "texte", texte: "une intention, longuement écrite" }),
+      ],
       assets: [asset("aaaa1111-0")],
     })
     await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
 
-    // Le sujet d'une note est son texte, déjà entier dans la carte : l'agrandir
-    // ne montrerait rien de plus, donc la touche ne fait rien — et rien ne
-    // clignote pour l'annoncer.
+    // **La réponse a changé en E7, et par l'autre bout.** Tant que la carte
+    // grandissait avec son texte, l'agrandir ne montrait rien de plus, et la
+    // touche ne faisait rien. Depuis que la carte a la hauteur de son cran de
+    // zoom, son texte est coupé — et il faut un endroit où le lire en entier.
     fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     const note = await waitFor(() => document.querySelector("article")!)
     survoler(note)
     espace()
+    const ouvert = apercu()
+    expect(ouvert).toBeTruthy()
+
+    // **En colonne de prose bornée, pas en image** : c'est la seconde et
+    // dernière surface du produit qui a droit à une largeur maximale, et elle
+    // l'a pour la raison qui borne le Guide.
+    const prose = ouvert!.querySelector("[data-apercu-prose] p") as HTMLElement
+    expect(prose.textContent).toBe("une intention, longuement écrite")
+    expect(prose.className).toContain("max-w-[504px]")
+    // Elle ne zoome pas et ne se traîne pas : elle défile.
+    expect(ouvert!.querySelector("[data-apercu-scene]")).toBeNull()
+
+    fireEvent.keyDown(window, { key: "Escape" })
     expect(apercu()).toBeNull()
 
     // Le pointeur repart : la touche n'a plus rien à ouvrir.
@@ -3188,8 +3227,32 @@ describe("le réglage d'univers se voit à l'instant", () => {
         .closest("section") as HTMLElement,
     )
 
-  /** Ouvrir un bloc, et rendre son contenu. */
+  /** L'étape du côté Réglages qui porte ce bloc-là.
+   *
+   *  Depuis E7 les cinq réglages du jeu ne sont plus empilés dans une colonne
+   *  de 380 px : la liste de gauche en montre un à la fois, et il faut donc
+   *  aller le chercher avant de le déplier. Les deux gestes sont distincts et
+   *  le restent — **choisir une étape** n'est pas **déplier un bloc**. */
+  const ETAPE_DU_BLOC: Record<string, string> = {
+    Bible: "La bible du style",
+    Palette: "La palette du jeu",
+    "Taille de pixel": "La taille de pixel",
+    "Barème d'échelles": "Le barème d'échelles",
+    "Modèle par défaut": "Les modèles par défaut",
+  }
+
+  /** Ouvrir un bloc — son côté, son étape, puis son en-tête — et rendre son
+   *  contenu. Les trois gestes restent distincts dans le produit ; le raccourci
+   *  ne les confond que pour les essais qui visent le réglage, pas le chemin. */
   const ouvrir = async (titre: string) => {
+    const etape = Object.entries(ETAPE_DU_BLOC).find(([bloc]) =>
+      bloc.startsWith(titre),
+    )?.[1]
+    if (etape) {
+      const cote = screen.queryByRole("tab", { name: "Réglages" })
+      if (cote && cote.getAttribute("aria-selected") !== "true") fireEvent.click(cote)
+      fireEvent.click(await screen.findByRole("button", { name: etape }))
+    }
     fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${titre}`) }))
     return bloc(titre)
   }
@@ -3217,7 +3280,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
   const ouvrirLUnivers = async (univers: Univers = UNIVERS) => {
     const double = serveurDouble({ univers })
     const flux = await monter(double.fetchDouble, { ...ETAT, univers })
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La bible du style")
     await screen.findByRole("button", { name: /^Bible/ })
     return { ...double, flux }
   }
@@ -3235,7 +3298,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     // brouillon. Remonté, il naît de ce que l'onglet tient de l'univers — donc
     // de la réponse posée. C'est « rouvrir montre la même valeur », vu d'ici.
     fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La bible du style")
     // Le repli des blocs vit dans le châssis et survit au démontage : la bible
     // est déjà ouverte au retour, et la rouvrir la refermerait.
     await screen.findByRole("button", { name: /^Bible/ })
@@ -4133,7 +4196,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     // l'écran Univers, le serveur écrit et rend l'univers entier, l'écran le
     // pose (R1) — et l'aperçu, qui n'a jamais rien composé lui-même, redemande
     // ce qui part.
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La bible du style")
     fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
     fireEvent.click(
       await screen.findByRole("button", { name: "technique de rendu — actif" }),
@@ -4320,7 +4383,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const sansCible: Univers = { ...UNIVERS, cible_px: 0 }
     const double = serveurDouble({ univers: sansCible })
     await monter(double.fetchDouble, { ...ETAT, univers: sansCible })
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La taille de pixel")
 
     const entete = await screen.findByRole("button", { name: /^Taille de pixel/ })
     expect(entete.textContent).toContain("aucune")
@@ -4334,7 +4397,10 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     ).toBeTruthy()
 
     // Et le barème dit son inaction plutôt que de laisser croire qu'il agit.
-    const bareme = screen.getByRole("button", { name: /^Barème d'échelles/ })
+    // Il est une étape plus loin dans la liste depuis E7 : les cinq réglages
+    // ne sont plus empilés dans une colonne, on en lit un à la fois.
+    fireEvent.click(screen.getByRole("button", { name: "Le barème d'échelles" }))
+    const bareme = await screen.findByRole("button", { name: /^Barème d'échelles/ })
     fireEvent.click(bareme)
     expect(
       within(bareme.closest("section") as HTMLElement).getByText(
@@ -4568,7 +4634,7 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
   test("l'univers : le panneau se déclare, et sa poignée est dedans", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await ouvrirLesReglagesDuJeu("La bible du style")
 
     await screen.findByRole("button", { name: /^Bible/ })
     const marque = poignee("Bible")
@@ -5677,12 +5743,13 @@ describe("les trois onglets", () => {
 
     fireEvent.click(onglet("Univers"))
     await screen.findByText("Le tableau est vide.")
-    expect(screen.getByRole("button", { name: "univers" })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "arbre" })).toBeNull()
     // **La réserve n'a de bascule qu'en toile.** Sans elle il n'y a pas de
     // colonne, et une bascule pour une colonne absente mentirait sur ce que
-    // l'écran contient.
+    // l'écran contient. Et depuis E7 c'est la **seule** colonne repliable de
+    // cet onglet : les cinq réglages du jeu ont un côté à eux.
     expect(screen.queryByRole("button", { name: "réserve" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "univers" })).toBeNull()
 
     fireEvent.click(screen.getByRole("button", { name: "toile" }))
     expect(await screen.findByRole("button", { name: "réserve" })).toBeTruthy()
@@ -5700,15 +5767,16 @@ describe("les trois onglets", () => {
 
     fireEvent.click(onglet("Univers"))
     await screen.findByText("Le tableau est vide.")
+    fireEvent.click(screen.getByRole("button", { name: "toile" }))
 
     const colonnes = () =>
       (document.querySelector("[data-colonnes]") as HTMLElement).style.gridTemplateColumns
 
-    expect(colonnes()).toBe("380px minmax(0,1fr)")
-    fireEvent.click(screen.getByRole("button", { name: "univers" }))
+    expect(colonnes()).toBe("minmax(0,1fr) 380px")
+    fireEvent.click(await screen.findByRole("button", { name: "réserve" }))
     // **Replier n'est pas fermer** : la case tombe à zéro, le panneau reste
     // monté sous elle.
-    await waitFor(() => expect(colonnes()).toBe("0px minmax(0,1fr)"))
+    await waitFor(() => expect(colonnes()).toBe("minmax(0,1fr) 0px"))
   })
 
   // ── « Les réglages et le guide sont séparés visuellement de ce qui touche
@@ -5971,5 +6039,187 @@ describe("l'écran des dépenses", () => {
     fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
     expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer."))
       .toBeTruthy()
+  })
+})
+
+// ── E7 : l'onglet Univers à trois côtés ─────────────────────────────────────
+//
+// L'onglet tenait quatre choses très différentes sur le même écran : deux qui
+// servent à **chercher une idée**, deux à **remplir des réglages**. Ce ne sont
+// pas les mêmes besoins, et les mettre côte à côte faisait perdre les deux —
+// mesuré : la bande de réglages faisait 1 843 px de haut dans 646 px visibles,
+// et la première image d'inspiration était à 4 161 px de défilement.
+
+describe("les trois côtés de l'univers", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const cote = (nom: string) => screen.getByRole("tab", { name: nom })
+  const survoler = (element: Element) => fireEvent.pointerOver(element)
+  const espace = () => fireEvent.keyDown(window, { key: " ", code: "Space" })
+
+  const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble)
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    await screen.findByRole("tab", { name: "Inspiration" })
+    return { ...double, flux }
+  }
+
+  // ── « Trois côtés, un seul allumé, et le côté allumé occupe tout l'écran
+  //     sous une barre de 38 px » ───────────────────────────────────────────────
+
+  test("trois côtés, un seul allumé, sous une seule barre de 38 px", async () => {
+    await ouvrir()
+
+    expect(
+      screen
+        .getByRole("tablist", { name: "Les trois côtés de l'univers" })
+        .textContent,
+    ).toBe("InspirationRéglagesAmbiances et couleurs")
+
+    // Inspiration est le côté de repos : on regarde des images avant de régler.
+    expect(cote("Inspiration").getAttribute("aria-selected")).toBe("true")
+    expect(cote("Réglages").getAttribute("aria-selected")).toBe("false")
+
+    // **Deux bandes au-dessus du travail, jamais trois.** Celle du châssis fait
+    // 44 px, celle-ci 38, et les trois côtés vivent *dans* la seconde.
+    const barre = cote("Inspiration").closest("div.h-\\[38px\\]")
+    expect(barre).toBeTruthy()
+
+    fireEvent.click(cote("Réglages"))
+    await waitFor(() =>
+      expect(cote("Réglages").getAttribute("aria-selected")).toBe("true"),
+    )
+    expect(cote("Inspiration").getAttribute("aria-selected")).toBe("false")
+    // Le côté allumé prend tout l'écran : le tableau n'est plus là.
+    expect(screen.queryByText("Le tableau est vide.")).toBeNull()
+  })
+
+  // ── « Côté Inspiration, aucun réglage n'est posé au-dessus du tableau » et
+  //     « la première image est atteinte en moins d'un écran de défilement » ───
+
+  test("le tableau est la première chose sous la barre, sans un réglage dessus", async () => {
+    await ouvrir({ cartes: [carteImage("c1")] })
+
+    // Aucun des cinq réglages du jeu n'est atteignable d'ici : c'est ce qui
+    // rend la première image immédiate. Rien à faire défiler avant elle.
+    for (const bloc of [/^Bible/, /^Palette/, /^Taille de pixel/, /^Barème/])
+      expect(screen.queryByRole("button", { name: bloc })).toBeNull()
+
+    // Et la grille des cartes est bien montée, elle.
+    expect(await waitFor(() => document.querySelector("article"))).toBeTruthy()
+  })
+
+  // ── « Une carte de texte a la hauteur de son cran de zoom et dit en pied ce
+  //     qui est coupé » ────────────────────────────────────────────────────────
+
+  test("une carte de texte prend la mesure de ses voisines, et dit ce qui est coupé", async () => {
+    const long = "un paragraphe. ".repeat(400)
+    await ouvrir({
+      cartes: [carteImage("n1", { genre: "texte", texte: long })],
+    })
+
+    const corps = await waitFor(
+      () => document.querySelector("article p") as HTMLElement,
+    )
+    // **Aucune hauteur neuve** : la carte de texte prend celle que la colonne
+    // donne déjà à une carte d'image du même cran. Elle grandissait avec son
+    // texte jusqu'en E7, ce qui faisait du tableau une colonne de 6 726 px.
+    expect(corps.className).toContain("aspect-square")
+    expect(corps.className).toContain("overflow-hidden")
+  })
+
+  // ── « Une carte de texte ouverte en grand se pose en colonne de prose
+  //     bornée, et défile » ────────────────────────────────────────────────────
+
+  test("une note ouverte en grand se pose en colonne de prose, et défile", async () => {
+    await ouvrir({
+      cartes: [carteImage("n1", { genre: "texte", texte: "trois paragraphes" })],
+    })
+
+    const note = await waitFor(() => document.querySelector("article")!)
+    survoler(note)
+    espace()
+
+    const colonne = document.querySelector("[data-apercu-prose]") as HTMLElement
+    expect(colonne).toBeTruthy()
+    // Elle défile — elle ne zoome pas et ne se traîne pas.
+    expect(colonne.className).toContain("overflow-y-auto")
+    // **Bornée en pixels, jamais en `ch`** : un `ch` vaut la largeur du chiffre
+    // zéro, et `72ch` fait 637 px, où tiennent 107 lettres.
+    expect((colonne.querySelector("p") as HTMLElement).className).toContain(
+      "max-w-[504px]",
+    )
+  })
+
+  // ── « Un bandeau permanent dit ce que l'univers envoie » ────────────────────
+
+  test("le pied de la colonne dit ce que cet univers envoie, et ce qui n'agit qu'au retour", async () => {
+    await ouvrir()
+    fireEvent.click(cote("Réglages"))
+
+    const bloc = within(
+      (await screen.findByText("Ce que cet univers envoie")).parentElement as HTMLElement,
+    )
+    expect(bloc.getByText("cases de style")).toBeTruthy()
+    expect(bloc.getByText("signes de texte")).toBeTruthy()
+    expect(bloc.getByText("images officielles")).toBeTruthy()
+    // **Ce qui n'agit qu'au retour**, dit à part : les mélanger ferait croire
+    // qu'on peut demander au modèle de rendre du 64 px, ce qu'aucun ne fait.
+    expect(
+      bloc.getByText(/ne partent pas : ils s'appliquent à l'image qui revient/),
+    ).toBeTruthy()
+  })
+
+  // ── « Les deux côtés qui portent une liste emploient la colonne de 240 px » ─
+
+  test("le côté Réglages range ses étapes dans la colonne de 240 px", async () => {
+    await ouvrir()
+    fireEvent.click(cote("Réglages"))
+
+    const pistes = await waitFor(() => {
+      const grille = document.querySelector(
+        "[data-univers] .grid-cols-\\[240px_minmax\\(0\\,1fr\\)\\]",
+      )
+      if (!grille) throw new Error("la colonne de 240 px n'est pas là")
+      return grille
+    })
+    expect(pistes).toBeTruthy()
+
+    // Une étape à la fois : la liste dit laquelle est ouverte, et l'écran
+    // entier lui est donné.
+    expect(await screen.findByRole("button", { name: /^Bible/ })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /^Barème/ })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Le barème d'échelles" }))
+    expect(await screen.findByRole("button", { name: /^Barème/ })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /^Bible/ })).toBeNull()
+  })
+
+  // ── « Le menu d'un paquet propose de fabriquer une palette et une ambiance,
+  //     grisés avec leur raison » ───────────────────────────────────────────────
+
+  test("le troisième côté existe, vide, et dit pourquoi", async () => {
+    await ouvrir()
+    fireEvent.click(cote("Ambiances et couleurs"))
+
+    // Un côté qui apparaîtrait le jour où il se remplit serait une surprise au
+    // moment précis où l'on cherche où les choses se règlent.
+    expect(await screen.findByText("Rien n'est encore fabriqué ici.")).toBeTruthy()
+    expect(
+      screen.getByText(/Les deux gestes qui les créent existent déjà/),
+    ).toBeTruthy()
   })
 })

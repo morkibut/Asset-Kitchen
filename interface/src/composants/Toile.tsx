@@ -37,6 +37,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react"
 import {
   Background,
@@ -80,7 +81,7 @@ import {
   useSurvol,
   type Vue,
 } from "./Tableau"
-import { Libelle } from "./chassis"
+import { Libelle, Raison } from "./chassis"
 
 // ── Les mesures de l'îlot ───────────────────────────────────────────────────
 //
@@ -801,6 +802,10 @@ type Parametres = {
    *  lui** : ce n'est pas de l'historique de projet, c'est le rattrapage du
    *  geste en cours (`docs/PLAN.md` T8). */
   pile: React.RefObject<Geste[]>
+  /** Les trois côtés de l'onglet Univers, posés à gauche de la barre du
+   *  tableau. Deux bandes au-dessus du plan en auraient fait trois avec celle
+   *  du châssis, et la maquette n'en dessine que deux. */
+  cotes?: ReactNode
 }
 
 export function Toile(parametres: Parametres) {
@@ -827,6 +832,7 @@ function Plan({
   collage,
   crans,
   pile,
+  cotes,
 }: Parametres) {
   const { screenToFlowPosition, getZoom, setViewport } = useReactFlow()
   // Ce qui est épinglé sans être une carte : un lien, un îlot. Local au plan,
@@ -1636,6 +1642,7 @@ function Plan({
         cartes={cartes}
         vue={vue}
         onVue={onVue}
+        debut={cotes}
         onNote={() => {
           if (!crans || !plan.current) return
           const place = plan.current.getBoundingClientRect()
@@ -2198,9 +2205,36 @@ function NoeudIlot({ data }: NodeProps) {
           onPointerLeave={() => cadre.onSurvol(cle, false)}
           className="nodrag nopan"
         >
-          <div className="paraitre flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2">
+          <div className="paraitre flex w-[240px] flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-1 p-2">
             <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
             <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
+
+            {/* **Les deux gestes de fabrication du tableau** (E7). Ils partent
+                d'un paquet parce que c'est là qu'on a réuni ce qui va
+                ensemble : l'atelier lit les couleurs des images du paquet et
+                en fait une palette nommée, ou une ambiance qui porte cette
+                palette et ces images en références.
+
+                **Grisés, et le grisé porte sa raison** — jamais une infobulle,
+                jamais rien de caché : l'écran qui les tient arrive en E11, et
+                le produit n'a pas le droit de cacher ce qui existera. */}
+            <div className="mt-1 flex flex-col gap-1 border-t border-bord pt-2">
+              <button
+                type="button"
+                disabled
+                className="mesure h-[24px] cursor-not-allowed rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-3"
+              >
+                faire une palette de ce paquet
+              </button>
+              <button
+                type="button"
+                disabled
+                className="mesure h-[24px] cursor-not-allowed rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-3"
+              >
+                faire une ambiance de ce paquet
+              </button>
+              <Raison texte="les palettes et les ambiances n'ont pas encore d'écran où vivre" />
+            </div>
           </div>
         </div>
       )}

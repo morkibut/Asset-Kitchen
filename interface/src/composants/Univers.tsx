@@ -29,7 +29,7 @@
 // de servir le geste est le reproche qui a fait écarter la maquette : un univers
 // vide ne montre donc pas des champs morts, il montre ce qu'ils feront.
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import {
   api,
   FAMILLES,
@@ -88,6 +88,8 @@ export function EcranUnivers({
   liens,
   teintes,
   personnages,
+  cote,
+  onCote,
   vue,
   onVue,
   replies,
@@ -115,6 +117,8 @@ export function EcranUnivers({
    *  avec la V2.1** : la barre du châssis rend les bascules de repli de l'écran
    *  actif, et la réserve n'a de bascule qu'en vue toile. Un état qui décide du
    *  contenu d'une bande partagée ne peut pas vivre sous cette bande. */
+  cote: Cote
+  onCote: (cote: Cote) => void
   vue: Vue
   onVue: (vue: Vue) => void
   replies: { univers: boolean; reserve: boolean }
@@ -202,12 +206,11 @@ export function EcranUnivers({
     }
   }
 
-  // Les colonnes du § Layout, avec la case qui tombe à zéro quand on replie :
-  // `380px · 1fr` en grille, `380px · 1fr · 380px` en toile. Aucune largeur
-  // neuve n'entre ici — replier ne fabrique pas une quatrième colonne, il en
-  // retire une.
+  // Les colonnes du côté Inspiration : `1fr` en grille, `1fr · 380px` en toile,
+  // avec la case qui tombe à zéro quand on replie la réserve. **La colonne de
+  // 380 px de l'univers n'est plus là** : elle est passée du côté Réglages avec
+  // E7, et le tableau prend toute la largeur, ce qui est son métier.
   const colonnes = [
-    `${replies.univers ? 0 : 380}px`,
     "minmax(0,1fr)",
     ...(vue === "toile" ? [`${replies.reserve ? 0 : 380}px`] : []),
   ].join(" ")
@@ -225,90 +228,197 @@ export function EcranUnivers({
           qui les rend pour l'onglet actif ; le quatrième n'a plus d'objet, un
           onglet ne se ferme pas. */}
 
-      {/* Deux colonnes en grille, trois en toile, et 160 ms sur la largeur
-          quand l'une se replie — `docs/DESIGN.md` § Motion, « tu n'as pas perdu
-          ta place ». C'est la grille de l'atelier, à trois colonnes près.
+      {/* **Trois côtés, un seul allumé, et le côté allumé prend tout l'écran**
+          (E7). Personne ne grignote personne : ce qui a cassé la version d'avant
+          est d'avoir mis sur le même écran deux choses qui servent à *chercher
+          une idée* et deux qui servent à *remplir des réglages*. Mesuré : la
+          bande de réglages faisait 1 843 px de haut dans 646 px visibles, et la
+          première image d'inspiration était à 4 161 px de défilement. */}
+      {cote !== "inspiration" && <BarreDesCotes cote={cote} onCote={onCote} />}
 
-          **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
-          porte** (§ Un panneau est borné par l'écran). Cet écran était le seul
-          du produit dont le panneau défilait, et il ne le devait qu'à un parent
-          `flex` : en passant à la grille, il fallait le lui rendre exprès.
-          L'`overflow-hidden` est ce qui rogne le panneau replié, qui garde ses
-          380 px sous une case à zéro. */}
-      <div
-        data-colonnes
-        className="grid min-h-0 flex-1"
-        style={{
-          gridTemplateColumns: colonnes,
-          transition: "grid-template-columns 160ms ease-in-out",
-        }}
-      >
-        <div className="flex min-h-0 overflow-hidden">
-          <PanneauUnivers
-            univers={univers}
-            modeles={modeles}
-            artworks={cartes.filter((c) => c.artwork)}
-            onUnivers={onUnivers}
-            onErreur={setRefus}
-            onRealigner={realigner}
-          />
-        </div>
+      {cote === "inspiration" && (
+        /* Deux colonnes en toile, une seule en grille — et **aucun réglage
+           au-dessus du tableau**. La colonne de 380 px de l'univers est partie
+           du côté Réglages, où elle a de la place ; ce qui reste ici est la
+           matière qu'on regarde, sur toute la largeur.
 
-        {/* `min-w-0` **et** `min-h-0` : une piste en `minmax(0,1fr)` n'empêche
-            pas son contenu de l'élargir — c'est l'élément posé dedans qui vaut
-            `min-width: auto`, donc la largeur de ce qu'il contient. */}
-        <div className="flex min-h-0 min-w-0 overflow-hidden">
-          {vue === "grille" ? (
-            <Tableau
-              cartes={cartes}
-              personnages={personnages}
-              vue={vue}
-              onVue={onVue}
-              choisie={choisie}
-              onChoisir={setChoisir}
-              onErreur={setRefus}
-              collage={collage}
-            />
-          ) : (
-            <Toile
-              cartes={cartes}
-              personnages={personnages}
-              liens={liens}
-              teintes={teintes}
-              vue={vue}
-              onVue={onVue}
-              choisie={choisie}
-              onChoisir={setChoisir}
-              onErreur={setRefus}
-              collage={collage}
-              crans={crans}
-              pile={pile}
-            />
+           **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
+           porte** (`docs/DESIGN.md` § Un panneau est borné par l'écran). */
+        <div
+          data-colonnes
+          className="grid min-h-0 flex-1"
+          style={{
+            gridTemplateColumns: colonnes,
+            transition: "grid-template-columns 160ms ease-in-out",
+          }}
+        >
+          <div className="flex min-h-0 min-w-0 overflow-hidden">
+            {vue === "grille" ? (
+              <Tableau
+                cartes={cartes}
+                personnages={personnages}
+                vue={vue}
+                onVue={onVue}
+                choisie={choisie}
+                onChoisir={setChoisir}
+                onErreur={setRefus}
+                collage={collage}
+                cotes={<Cotes cote={cote} onCote={onCote} />}
+              />
+            ) : (
+              <Toile
+                cartes={cartes}
+                personnages={personnages}
+                liens={liens}
+                teintes={teintes}
+                vue={vue}
+                onVue={onVue}
+                choisie={choisie}
+                onChoisir={setChoisir}
+                onErreur={setRefus}
+                collage={collage}
+                crans={crans}
+                pile={pile}
+                cotes={<Cotes cote={cote} onCote={onCote} />}
+              />
+            )}
+          </div>
+
+          {vue === "toile" && (
+            <div className="flex min-h-0 overflow-hidden">
+              <Reserve
+                cartes={cartes}
+                personnages={personnages}
+                choisie={choisie}
+                onChoisir={setChoisir}
+                onErreur={setRefus}
+                collage={collage}
+                cadre={grilleReserve}
+                onDepot={rendre}
+              />
+            </div>
           )}
         </div>
+      )}
 
-        {vue === "toile" && (
-          <div className="flex min-h-0 overflow-hidden">
-            <Reserve
-              cartes={cartes}
-              personnages={personnages}
-              choisie={choisie}
-              onChoisir={setChoisir}
-              onErreur={setRefus}
-              collage={collage}
-              cadre={grilleReserve}
-              onDepot={rendre}
-            />
-          </div>
-        )}
-      </div>
+      {cote === "reglages" && (
+        <CoteReglages
+          univers={univers}
+          modeles={modeles}
+          artworks={cartes.filter((c) => c.artwork)}
+          onUnivers={onUnivers}
+          onErreur={setRefus}
+          onRealigner={realigner}
+        />
+      )}
+
+      {cote === "ambiances" && <CoteAmbiances />}
     </div>
   )
 }
 
-// ── La colonne de 380 px ────────────────────────────────────────────────────
+// ── Les trois côtés ─────────────────────────────────────────────────────────
+//
+// L'onglet tient quatre choses très différentes, et c'est ce qui a cassé sa
+// version d'avant : deux d'entre elles servent à **chercher une idée** — le
+// tableau rangé, le tableau à la main —, les deux autres à **remplir des
+// réglages** — les réglages du jeu, les ambiances. Ce ne sont pas les mêmes
+// besoins, et les mettre sur le même écran a fait perdre les deux.
+//
+// Trois mots en haut de l'onglet, un seul allumé, et le côté allumé prend tout
+// l'écran. Personne ne grignote personne.
 
-function PanneauUnivers({
+export type Cote = "inspiration" | "reglages" | "ambiances"
+
+/** L'ordre n'est pas arbitraire : on regarde des images pour se donner une
+ *  idée, on règle son jeu, on fabrique les lots de style qui s'en servent. Il
+ *  est écrit une fois, ici. */
+const COTES: readonly { cle: Cote; nom: string }[] = [
+  { cle: "inspiration", nom: "Inspiration" },
+  { cle: "reglages", nom: "Réglages" },
+  { cle: "ambiances", nom: "Ambiances et couleurs" },
+]
+
+/** Les trois mots, sans leur bande — pour les poser dans une barre qui existe
+ *  déjà. **Deux bandes empilées au-dessus du travail, jamais trois** : celle du
+ *  châssis fait 44 px, celle-ci 38, et le côté Inspiration n'en ajoute pas une
+ *  troisième pour ses trois mots (`docs/maquettes-v2.1/06-univers.html`, au
+ *  paragraphe « La forme retenue — trois côtés, jamais deux à la fois »). */
+export function Cotes({ cote, onCote }: { cote: Cote; onCote: (cote: Cote) => void }) {
+  return (
+    <div role="tablist" aria-label="Les trois côtés de l'univers" className="flex shrink-0 items-center gap-1">
+      {COTES.map(({ cle, nom }) => (
+        <button
+          key={cle}
+          type="button"
+          role="tab"
+          aria-selected={cote === cle}
+          onClick={() => onCote(cle)}
+          className={[
+            "h-[26px] rounded-[2px] px-2 text-[11.5px] transition-colors duration-[80ms]",
+            cote === cle
+              ? "bg-fond-3 text-texte"
+              : "text-texte-3 hover:bg-fond-2 hover:text-texte-2",
+          ].join(" ")}
+        >
+          {nom}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** La barre des côtés quand le côté allumé n'en a pas déjà une. Même hauteur —
+ *  38 px, celle de toute barre d'outils du produit —, mêmes trois mots. */
+function BarreDesCotes({
+  cote,
+  onCote,
+  children,
+}: {
+  cote: Cote
+  onCote: (cote: Cote) => void
+  children?: ReactNode
+}) {
+  return (
+    <div className="flex h-[38px] shrink-0 items-center gap-3 border-b border-bord bg-fond-1 px-4">
+      <Cotes cote={cote} onCote={onCote} />
+      {children}
+    </div>
+  )
+}
+
+// ── Le côté Réglages ────────────────────────────────────────────────────────
+
+/** Les étapes du côté Réglages, dans l'ordre où on les remplit.
+ *
+ *  **C'est la liste que l'assistant de E8 reprendra**, et elle est déjà celle
+ *  des blocs d'aujourd'hui : la V2.1 ne change pas ce qu'on règle, elle change
+ *  l'endroit où ça se règle. Écrire ici cinq étapes qui n'existent pas encore
+ *  ferait une liste qui ment sur ce que l'écran contient. */
+const ETAPES = [
+  { cle: "bible", nom: "La bible du style" },
+  { cle: "palette", nom: "La palette du jeu" },
+  { cle: "grille", nom: "La taille de pixel" },
+  { cle: "bareme", nom: "Le barème d'échelles" },
+  { cle: "defauts", nom: "Les modèles par défaut" },
+] as const
+
+type Etape = (typeof ETAPES)[number]["cle"]
+
+/**
+ * Le côté Réglages — la liste des étapes à gauche, l'étape ouverte à droite.
+ *
+ * **240 px, la colonne de ce qui range** (`docs/DESIGN.md` § Largeurs de
+ * colonne), la même que l'arbre de la galerie et que les familles du codex.
+ * Aucune largeur neuve : c'est ce que la V2.1 s'est imposé, et c'est ce que
+ * cette colonne nomme déjà.
+ *
+ * **Ce que ça règle, mesuré.** La même matière tenait dans une bande de 380 px
+ * haute de 1 843 px, dans 646 px visibles : il fallait faire défiler deux fois
+ * et demie sa propre hauteur pour atteindre le dernier bloc, et la liste des
+ * étapes n'existait nulle part. Une étape à la fois tient dans un écran.
+ */
+function CoteReglages({
   univers,
   modeles,
   artworks,
@@ -323,38 +433,164 @@ function PanneauUnivers({
   onErreur: (raison: string) => void
   onRealigner: () => void
 }) {
-  const echouer = (erreur: unknown, defaut: string) =>
-    onErreur(erreur instanceof Refus ? erreur.message : defaut)
+  const [etape, setEtape] = useState<Etape>("bible")
 
   const regler: Regler = async (reglage) => {
     try {
-      // **Ce que le serveur rend est ce que l'écran pose** — le PUT rend
-      // l'univers entier, exactement comme le cadre de l'agent. Rien n'est
-      // redemandé : ce qui manquait était une pose, pas une relecture.
       onUnivers((await api.reglerUnivers(reglage)).univers)
       return true
     } catch (erreur) {
-      echouer(erreur, "réglage refusé")
+      onErreur(erreur instanceof Refus ? erreur.message : "réglage refusé")
       return false
     }
   }
 
   return (
-    <aside
-      {...PANNEAU}
-      className="flex min-h-0 w-[380px] shrink-0 flex-col bg-fond-1"
-    >
-      <EnTetePanneau>L'univers</EnTetePanneau>
-      <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
-        <Bible bible={univers.bible} onRegler={(bible) => regler({ bible })} />
-        <Palette univers={univers} artworks={artworks} onRegler={regler} />
-        <Grille univers={univers} onRegler={regler} onRealigner={onRealigner} />
-        <Bareme univers={univers} onRegler={regler} />
-        <Defauts univers={univers} modeles={modeles} onRegler={regler} />
+    <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)]">
+      <aside
+        {...PANNEAU}
+        className="flex min-h-0 flex-col border-r border-bord bg-fond-1"
+      >
+        <EnTetePanneau>Ce jeu</EnTetePanneau>
+        <div className="defile min-h-0 flex-1 overflow-y-auto p-2">
+          {ETAPES.map(({ cle, nom }) => (
+            <button
+              key={cle}
+              type="button"
+              aria-pressed={etape === cle}
+              onClick={() => setEtape(cle)}
+              className={[
+                "flex h-[26px] w-full items-center rounded-[2px] px-2 text-left text-[11.5px] transition-colors duration-[80ms]",
+                etape === cle ? "bg-fond-3 text-texte" : "text-texte-2 hover:bg-fond-2",
+              ].join(" ")}
+            >
+              {nom}
+            </button>
+          ))}
+        </div>
+        {/* **Ce que cet univers envoie**, en pied de la colonne qui le règle et
+            nulle part ailleurs. Voir `CeQueLUniversEnvoie`. */}
+        <CeQueLUniversEnvoie univers={univers} artworks={artworks} />
+      </aside>
+
+      {/* **C'est un panneau de réglages, et il se déclare** (`docs/design-motifs.md`
+          § L'infobulle explique) : c'est ce qui dit à une bulle de sortir par le
+          bord de la colonne plutôt que par celui de l'écran. Le marqueur vivait
+          sur la colonne de 380 px ; il suit ce qu'elle portait. */}
+      <div
+        {...PANNEAU}
+        className="defile flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto p-4"
+      >
+        {etape === "bible" && (
+          <Bible bible={univers.bible} onRegler={(bible) => regler({ bible })} />
+        )}
+        {etape === "palette" && (
+          <Palette univers={univers} artworks={artworks} onRegler={regler} />
+        )}
+        {etape === "grille" && (
+          <Grille univers={univers} onRegler={regler} onRealigner={onRealigner} />
+        )}
+        {etape === "bareme" && <Bareme univers={univers} onRegler={regler} />}
+        {etape === "defauts" && (
+          <Defauts univers={univers} modeles={modeles} onRegler={regler} />
+        )}
       </div>
-    </aside>
+    </div>
   )
 }
+
+/**
+ * Ce que cet univers envoie — le bloc en pied de colonne.
+ *
+ * **Un univers ne se lisait nulle part.** Sept cases de texte, chacune avec son
+ * interrupteur, une palette, une taille de pixel, un barème : rien ne disait ce
+ * qui part vraiment avec un appel, ni combien ça pèse. Mesuré dans ce dépôt, le
+ * style représente 53 % du texte envoyé et le sujet 2 % — un chiffre qu'aucun
+ * écran ne montrait, et qui décide de ce qu'on peut espérer changer en
+ * réécrivant son prompt.
+ *
+ * **Il dit aussi ce qui n'agit qu'au retour**, et c'est la moitié la moins
+ * évidente : la taille de pixel et le barème ne partent pas chez le
+ * fournisseur — ils s'appliquent à l'image quand elle revient. Les mélanger
+ * avec ce qui part ferait croire qu'on peut demander au modèle de rendre du
+ * 64 px, ce qu'aucun modèle ne fait.
+ */
+function CeQueLUniversEnvoie({
+  univers,
+  artworks,
+}: {
+  univers: Univers
+  artworks: Carte[]
+}) {
+  const actives = univers.bible.filter((c) => c.actif && c.texte.trim())
+  const signes = actives.reduce((somme, c) => somme + c.texte.trim().length, 0)
+  return (
+    <div className="mesure shrink-0 border-t border-bord p-2 text-[10px] text-texte-3">
+      <p className="mb-1 text-[9.5px] tracking-[.11em] uppercase">
+        Ce que cet univers envoie
+      </p>
+      <p className="flex items-center gap-2">
+        <span>cases de style</span>
+        <span className="ml-auto text-texte-2">
+          {actives.length} sur {univers.bible.length}
+        </span>
+      </p>
+      <p className="flex items-center gap-2">
+        <span>signes de texte</span>
+        <span className="ml-auto text-texte-2">{signes}</span>
+      </p>
+      <p className="flex items-center gap-2">
+        <span>images officielles</span>
+        <span className="ml-auto text-texte-2">{artworks.length}</span>
+      </p>
+      {/* **Ce qui n'agit qu'au retour**, dit à part et nommé comme tel. */}
+      <p className="mt-1 flex items-start gap-1.5 border-t border-bord pt-1">
+        <span aria-hidden className="mt-1.5 inline-block h-px w-2 shrink-0 bg-texte-3" />
+        <span>
+          la taille de pixel et le barème ne partent pas : ils s'appliquent à
+          l'image qui revient
+        </span>
+      </p>
+    </div>
+  )
+}
+
+// ── Le côté Ambiances et couleurs ───────────────────────────────────────────
+
+/**
+ * Le troisième côté, et il est vide — **avec sa raison, en toutes lettres**.
+ *
+ * Le produit interdit de proposer puis de refuser ; il n'autorise pas non plus
+ * à cacher ce qui existera. Un côté qui apparaîtrait le jour où il se remplit
+ * serait une surprise au moment précis où l'on cherche à comprendre où les
+ * choses se règlent — c'est l'argument que l'écran des dépenses fait déjà pour
+ * sa colonne vide.
+ */
+function CoteAmbiances() {
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center p-8">
+      <div className="flex max-w-[504px] flex-col items-center gap-3 text-center">
+        <p className="font-serif text-[32px] leading-tight text-texte-3">
+          Rien n'est encore fabriqué ici.
+        </p>
+        <p className="mesure text-[10px] leading-relaxed text-texte-3">
+          Ce côté tiendra deux listes — les palettes qu'on a fabriquées, les
+          ambiances qu'on en a tirées — et le panneau de celle qui est ouverte.
+          Les deux gestes qui les créent existent déjà, dans le menu d'un paquet
+          de cartes du côté Inspiration ; ils y sont grisés pour la même raison.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── Les cinq réglages du jeu ────────────────────────────────────────────────
+//
+// **La colonne de 380 px est morte avec E7.** Elle empilait ces cinq blocs sur
+// 1 843 px de hauteur dans 646 px visibles, à côté d'un tableau qui n'avait plus
+// que la moitié de l'écran. Ils vivent maintenant un par un dans le côté
+// Réglages, où chacun a la place entière, et la liste de gauche dit lequel est
+// ouvert.
 
 /** La bible — sept champs nommés, chacun activable indépendamment (US-56).
  *

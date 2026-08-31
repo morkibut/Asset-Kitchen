@@ -23,7 +23,7 @@
 // Les vignettes 1× / 2× / 4× sont les mêmes crans que le zoom de la grille
 // d'assets — un seul vocabulaire de taille dans tout le produit.
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import {
   api,
   COULEUR_TEINTE,
@@ -37,7 +37,7 @@ import {
   type Famille,
   type Teinte,
 } from "../api"
-import { sujetCarte, useVisee } from "./Apercu"
+import { mots, sujetCarte, useVisee } from "./Apercu"
 import { Libelle, Raison, Segments } from "./chassis"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
@@ -403,6 +403,7 @@ export function Tableau({
   onChoisir,
   onErreur,
   collage,
+  cotes,
 }: {
   cartes: Carte[]
   personnages: Personnage[]
@@ -412,6 +413,8 @@ export function Tableau({
   onChoisir: (identifiant: string | null) => void
   onErreur: (raison: string) => void
   collage: ReturnType<typeof useCollage>
+  /** Les trois côtés de l'onglet Univers, posés à gauche de cette barre. */
+  cotes?: ReactNode
 }) {
   const { survolee, survoler } = useSurvol(choisie !== null)
   const depot = useDepot(collage.collerFichier, collage.collerTexte)
@@ -425,7 +428,7 @@ export function Tableau({
     <section
       {...depot.props}
       className={[
-        "flex min-h-0 min-w-0 flex-1 flex-col border-l border-bord",
+        "flex min-h-0 min-w-0 flex-1 flex-col",
         depot.survole ? "bg-fond-2" : "bg-fond-0",
       ].join(" ")}
     >
@@ -434,6 +437,7 @@ export function Tableau({
         vue={vue}
         onVue={onVue}
         onNote={() => setBrouillon(true)}
+        debut={cotes}
       />
       <BandeauDoublon collage={collage} onChoisir={onChoisir} onErreur={onErreur} />
 
@@ -630,10 +634,16 @@ export function BarreTableau({
   vue,
   onVue,
   onNote,
+  debut,
 }: {
   cartes: Carte[]
   vue: Vue
   onVue: (vue: Vue) => void
+  /** Ce qui se pose **avant** le nom de la surface — les trois côtés de
+   *  l'onglet Univers depuis E7. Deux bandes empilées au-dessus du tableau en
+   *  auraient fait trois avec celle du châssis, et la maquette n'en dessine
+   *  que deux : les côtés vivent donc *dans* cette barre-ci, à sa gauche. */
+  debut?: ReactNode
   /** **`+ note` fait ce que la vue permet** (`docs/design-motifs.md` § La toile
    *  révisée, 28 août 2026). T9 avait refusé un contrôle de barre, et
    *  l'argument était juste — *une note se crée là où elle s'applique*, un
@@ -653,6 +663,7 @@ export function BarreTableau({
   const groupes = groupesDe(cartes)
   return (
     <div className="flex h-[38px] shrink-0 items-center gap-3 border-b border-bord bg-fond-1 px-4">
+      {debut}
       <span className="mesure shrink-0 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
         Tableau
       </span>
@@ -842,6 +853,22 @@ export function CarteTuile({
   // fait rien, et c'est la bonne réponse — son texte est déjà entier.
   const visee = useVisee(sujetCarte(carte))
 
+  // **Ce qui ne rentre pas se dit, et il se mesure.** « Une mesure ne s'affiche
+  // que si elle a été prise » : le pied d'une carte de texte annonce combien de
+  // mots elle porte et quelle fraction en est visible, et cette fraction est le
+  // rapport de la hauteur du texte à celle de la carte — lue au navigateur,
+  // jamais estimée depuis le nombre de signes.
+  const texte = useRef<HTMLParagraphElement>(null)
+  const [parts, setParts] = useState(1)
+  useLayoutEffect(() => {
+    const noeud = texte.current
+    if (!noeud) return
+    // Pas de `ResizeObserver` : il ne livre rien à un onglet qui ne compose pas
+    // ses images, et ce piège s'est déjà refermé quatre fois dans ce dépôt. La
+    // mesure se reprend quand ce qui la change change — le texte et le cran.
+    setParts(Math.max(1, Math.round(noeud.scrollHeight / (noeud.clientHeight || 1))))
+  }, [carte.texte, carte.taille, plan])
+
   // **Qui se sert de cette carte** (US-125). Déduit des personnages, jamais
   // porté par la carte : elle peut servir à deux d'entre eux, et un champ sur
   // elle ne saurait pas dire lequel. Même règle que l'îlot, qui *est* le groupe
@@ -905,10 +932,19 @@ export function CarteTuile({
         ].join(" ")}
       >
         {carte.genre === "texte" ? (
+          /* **Une carte de texte a la hauteur d'une carte d'image du même
+             cran** (E7). Elle grandissait avec son texte jusqu'au 31 août
+             2026 : une note de 4 350 mots faisait du tableau une colonne de
+             6 726 px, et repoussait la première image à 4 161 px de
+             défilement — six écrans et demi avant de voir une inspiration, sur
+             un écran dont c'est le métier. `aspect-square` lui rend la mesure
+             exacte de ses voisines, quel que soit le cran, **sans inventer
+             aucune hauteur** : c'est celle que la colonne donne déjà. */
           <p
+            ref={texte}
             className={[
-              "p-3 text-left text-[12.5px] leading-relaxed text-texte",
-              plan ? "h-full overflow-hidden" : "min-h-[92px]",
+              "overflow-hidden p-3 text-left text-[12.5px] leading-relaxed text-texte",
+              plan ? "h-full" : "aspect-square",
             ].join(" ")}
           >
             {carte.texte}
@@ -959,6 +995,15 @@ export function CarteTuile({
           <span className="truncate">{carte.groupe}</span>
         ) : (
           <span className="truncate">{pied(carte)}</span>
+        )}
+        {/* Là où une carte d'image dit sa famille, une carte de texte dit ce
+            qu'on ne voit pas d'elle. Rien quand tout tient : il n'y a alors
+            rien à annoncer, et l'annoncer quand même ferait de la mesure un
+            décor. */}
+        {carte.genre === "texte" && parts > 1 && (
+          <span className="shrink-0 text-texte-3">
+            {mots(carte.texte)} mots · 1/{parts} visible
+          </span>
         )}
         {/* **Posée n'est pas classée, et le pied le dit** (US-104). Une carte
             sur la toile hors de tout îlot est un état réel — le brouillon,
