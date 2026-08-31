@@ -54,10 +54,14 @@ import type {
   EmplacementCorps,
   Impose,
   Lien,
+  AmbianceDuJeu,
+  PaletteNommee,
   Personnage,
   Piece,
   Pose,
   PosesDesTypes,
+  RetoucheDePalette,
+  SourceDePalette,
   Teinte,
   Trait,
   Univers,
@@ -285,6 +289,10 @@ const personnage = (nom: string, sur: Partial<Personnage> = {}): Personnage => {
     plan: PLAN,
     type: "",
     ajoutees: [],
+    // Aucune ambiance au départ : une chose du jeu retombe sur le jeu, et
+    // c'est l'état d'un projet neuf (E11).
+    ambiance: "",
+    prend: "tout",
     ...sur,
     ecartees,
   }
@@ -381,6 +389,45 @@ const generation = (
 // Ce qu'une case porte au-delà de ses images : le second axe de C3, vide, et
 // **l'origine de sa pose** (E9) — venue du type, comme l'immense majorité.
 const VIDE_C3 = { calques: {}, corps: null, origine: "type" } as const
+
+/** Une palette du double : quatre couleurs, chacune sachant d'où elle vient.
+ *
+ *  Les provenances ne sont pas décoratives — l'écran écrit une lettre par
+ *  pastille, et un double qui les rendrait toutes pareilles ne prouverait pas
+ *  que la marque suit la couleur. */
+const paletteDouble = (nom: string): PaletteNommee => ({
+  identifiant: nom.toLowerCase().replace(/\s+/g, "-"),
+  nom,
+  sources: [],
+  couleurs: 4,
+  du_jeu: 4,
+  attraction: 0,
+  retouches: [],
+  rendue: ["#112233", "#445566", "#778899", "#aabbcc"],
+  pastilles: [
+    { couleur: "#112233", venue: "jeu", retiree: "" },
+    { couleur: "#445566", venue: "jeu", retiree: "" },
+    { couleur: "#778899", venue: "ambiance", retiree: "" },
+    { couleur: "#aabbcc", venue: "main", retiree: "" },
+  ],
+  empreinte: "aaaabbbbccccdddd",
+  attraction_inerte: true,
+  sources_perdues: [],
+  emplois: 0,
+  cree_le: 1_787_800_200,
+})
+
+const ambianceDouble = (nom: string, palette = ""): AmbianceDuJeu => ({
+  identifiant: nom.toLowerCase().replace(/\s+/g, "-"),
+  nom,
+  palette,
+  references: [],
+  monde: "",
+  eclairage: "",
+  trait: "",
+  emplois: [],
+  cree_le: 1_787_800_300,
+})
 
 const POSES_DU_MEUBLE: Pose[] = [
   { identifiant: "ferme", nom: "fermé", images: 1 },
@@ -563,6 +610,9 @@ function serveurDouble(options: {
   etiquettes?: Etiquette[]
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
+  /** Les deux listes du côté Ambiances (E11). */
+  palettes?: PaletteNommee[]
+  ambiances?: AmbianceDuJeu[]
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -585,6 +635,11 @@ function serveurDouble(options: {
     // d'avant la tranche : aucun type n'a écrit sa liste, et ceux qui suivent
     // le jeu la reçoivent de lui — c'est ce qui reprend les jeux existants.
     types: options.types ?? TYPES,
+    // **Les deux listes du côté Ambiances** (E11). Vides par défaut, comme sur
+    // un jeu neuf : le produit n'écrit ni palette ni ambiance à la place de
+    // l'auteur.
+    palettes: options.palettes ?? ([] as PaletteNommee[]),
+    ambiances: options.ambiances ?? ([] as AmbianceDuJeu[]),
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1077,6 +1132,98 @@ function serveurDouble(options: {
         emplacements: etat.emplacements,
         pieces: etat.pieces,
       })
+    // ── Le côté Ambiances et couleurs (E11) ───────────────────────────────
+    //
+    // **Le double rend le côté entier** à chaque geste, comme le vrai serveur :
+    // une palette qui change peut en changer une autre — celle qui l'a prise
+    // pour source —, et l'écran n'a pas à deviner laquelle. Un double qui n'en
+    // rendrait que la moitié prouverait un autre contrat.
+    if (url.startsWith("/api/moods") || url.startsWith("/api/palettes")) {
+      const cote = () => ({
+        projet: "bac-a-sable",
+        palettes: etat.palettes,
+        ambiances: etat.ambiances,
+        du_jeu: etat.univers.palette,
+      })
+      if (url === "/api/moods" && (!init?.method || init.method === "GET"))
+        return rendre(cote())
+      if (url === "/api/moods" && init?.method === "POST") {
+        etat.ambiances = [
+          ...etat.ambiances,
+          ambianceDouble(String(corps.nom), String(corps.palette ?? "")),
+        ]
+        return rendre(cote())
+      }
+      if (url === "/api/palettes" && init?.method === "POST") {
+        etat.palettes = [...etat.palettes, paletteDouble(String(corps.nom))]
+        return rendre(cote())
+      }
+      // L'aperçu ne fabrique rien : deux images en `data:` et le compte de ce
+      // qui sert. Le vrai serveur les calcule ; ce qui se prouve à l'écran est
+      // qu'elles se montrent côte à côte.
+      if (url.includes("/preview")) {
+        const identifiant = url.slice("/api/palettes/".length, -"/preview".length)
+        const palette = etat.palettes.find((p) => p.identifiant === identifiant)
+        return rendre({
+          palette: identifiant,
+          couleurs: palette?.rendue ?? [],
+          images: [
+            {
+              asset: "sujet",
+              nom: "le nain",
+              du_jeu: "data:image/png;base64,AAAA",
+              de_la_palette: "data:image/png;base64,BBBB",
+            },
+          ],
+          employees: (palette?.rendue ?? []).slice(0, 2),
+        })
+      }
+      const identifiant = decodeURIComponent(
+        url.slice(url.startsWith("/api/moods/") ? "/api/moods/".length : "/api/palettes/".length),
+      ).split("?")[0]
+      if (init?.method === "PUT" && url.startsWith("/api/moods/")) {
+        etat.ambiances = etat.ambiances.map((a) =>
+          a.identifiant === identifiant ? { ...a, ...corps } : a,
+        )
+        return rendre(cote())
+      }
+      if (init?.method === "PUT") {
+        etat.palettes = etat.palettes.map((p) =>
+          p.identifiant === identifiant
+            ? {
+                ...p,
+                ...corps,
+                // Le serveur recalcule ; le double rejoue la seule règle que
+                // l'écran lit — une pastille retirée reste dans la liste,
+                // marquée, et sort du rendu.
+                pastilles: p.pastilles.map((pastille) => ({
+                  ...pastille,
+                  retiree: ((corps.retouches ?? []) as RetoucheDePalette[]).some(
+                    (r) => r.geste === "retirer" && r.couleur === pastille.couleur,
+                  )
+                    ? "retirer"
+                    : "",
+                })),
+                attraction_inerte:
+                  ((corps.sources ?? p.sources) as SourceDePalette[]).length < 2 ||
+                  Number(corps.du_jeu ?? p.du_jeu) >= Number(corps.couleurs ?? p.couleurs),
+              }
+            : p,
+        )
+        return rendre(cote())
+      }
+      if (init?.method === "DELETE" && url.startsWith("/api/moods/")) {
+        etat.ambiances = etat.ambiances.filter((a) => a.identifiant !== identifiant)
+        return rendre({ ...cote(), retombees: 0 })
+      }
+      if (init?.method === "DELETE") {
+        etat.palettes = etat.palettes.filter((p) => p.identifiant !== identifiant)
+        etat.ambiances = etat.ambiances.map((a) =>
+          a.palette === identifiant ? { ...a, palette: "" } : a,
+        )
+        return rendre(cote())
+      }
+    }
     // ── Ce que chaque type d'objet réclame (E9) ───────────────────────────
     //
     // **Le double rend la forme entière**, types et plan du jeu ensemble, comme
@@ -6556,19 +6703,23 @@ describe("les trois côtés de l'univers", () => {
     expect(screen.queryByRole("button", { name: /^1 · Le nom/ })).toBeNull()
   })
 
-  // ── « Le menu d'un paquet propose de fabriquer une palette et une ambiance,
-  //     grisés avec leur raison » ───────────────────────────────────────────────
+  // ── Le troisième côté, **rempli en E11** ─────────────────────────────────
+  //
+  // Il annonçait sa raison d'être en E7 — « ce côté tiendra deux listes » — et
+  // la tient depuis E11. L'essai suit ce qu'il montre maintenant : un état vide
+  // qui invite, et les deux listes qui se remplissent. Ce que les palettes et
+  // les ambiances font vit plus bas, dans le bloc de E11.
 
-  test("le troisième côté existe, vide, et dit pourquoi", async () => {
+  test("le troisième côté ouvre sur les deux listes", async () => {
     await ouvrir()
     fireEvent.click(cote("Ambiances et couleurs"))
 
     // Un côté qui apparaîtrait le jour où il se remplit serait une surprise au
-    // moment précis où l'on cherche où les choses se règlent.
-    expect(await screen.findByText("Rien n'est encore fabriqué ici.")).toBeTruthy()
-    expect(
-      screen.getByText(/Les deux gestes qui les créent existent déjà/),
-    ).toBeTruthy()
+    // moment précis où l'on cherche où les choses se règlent : il est là, vide,
+    // et il dit à quoi il sert.
+    expect(await screen.findByText("les ambiances")).toBeTruthy()
+    expect(screen.getByText("les palettes")).toBeTruthy()
+    expect(screen.getByText(/Un jeu n'a pas un seul style/)).toBeTruthy()
   })
 })
 
@@ -8330,5 +8481,305 @@ describe("les poses par type d'objet", () => {
         ),
       ).toBe(true),
     )
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E11 · Les palettes et les ambiances
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre. Les deux listes et leur
+// ordre, les pastilles qui disent d'où chaque couleur vient, la couleur retirée
+// qui reste barrée et se remet d'un clic, les deux rangées d'aperçu, le curseur
+// grisé avec sa raison, les trois cases d'une ambiance et les quatre qui lui
+// sont fermées, et l'ambiance qui se désigne sur la fiche d'une chose. Ce qui se
+// calcule — la fusion, l'empreinte, ce que le fichier garde — vit dans
+// `tests/test_e11.py`.
+
+describe("les palettes et les ambiances", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const ouvrirLeCote = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    await monter(double.fetchDouble)
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Ambiances et couleurs" }))
+    await screen.findByText("les ambiances")
+    return double
+  }
+
+  // ── « Plusieurs palettes nommées coexistent » ──────────────────────────────
+
+  test("les deux listes se lisent, les ambiances d'abord", async () => {
+    await ouvrirLeCote({
+      palettes: [paletteDouble("marais")],
+      ambiances: [ambianceDouble("Marais de cendre", "marais")],
+    })
+
+    // Les ambiances d'abord, les palettes ensuite : les secondes servent les
+    // premières, et l'ordre le dit.
+    const listes = screen.getAllByText(/^les (ambiances|palettes)$/)
+    expect(listes.map((l) => l.textContent)).toEqual([
+      "les ambiances",
+      "les palettes",
+    ])
+
+    expect(screen.getByRole("button", { name: /Marais de cendre/ })).toBeTruthy()
+    expect(screen.getByRole("button", { name: /^marais/ })).toBeTruthy()
+    // **Celle du jeu en est une comme les autres**, et elle est dans la liste.
+    expect(screen.getByText("du jeu")).toBeTruthy()
+  })
+
+  test("nommer crée une palette, sans formulaire et sans rien payer", async () => {
+    const { fetchDouble } = await ouvrirLeCote()
+
+    const champ = screen.getByLabelText("Nouvelle palette")
+    fireEvent.change(champ, { target: { value: "ombre" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/palettes" &&
+            String((init as RequestInit)?.method) === "POST",
+        ),
+      ).toBe(true),
+    )
+    expect(
+      fetchDouble.mock.calls.some(([url]) =>
+        String(url).startsWith("/api/generations"),
+      ),
+    ).toBe(false)
+  })
+
+  // ── « Chaque couleur du résultat dit d'où elle vient » ─────────────────────
+
+  test("chaque pastille dit d'où sa couleur vient", async () => {
+    await ouvrirLeCote({ palettes: [paletteDouble("marais")] })
+
+    fireEvent.click(screen.getByRole("button", { name: /^marais/ }))
+
+    // Trois provenances, trois marques : sans elles on ne saurait pas si un
+    // gris vient du jeu, donc si le changer serait une exception ou une redite.
+    expect(
+      await screen.findByRole("button", {
+        name: /#112233 — venue de la première source/,
+      }),
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("button", { name: /#778899 — venue des autres sources/ }),
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("button", { name: /#aabbcc — posée à la main/ }),
+    ).toBeTruthy()
+  })
+
+  test("une couleur retirée reste montrée barrée, et se remet d'un clic", async () => {
+    const { fetchDouble } = await ouvrirLeCote({ palettes: [paletteDouble("marais")] })
+    fireEvent.click(screen.getByRole("button", { name: /^marais/ }))
+
+    const pastille = await screen.findByRole("button", {
+      name: /#445566 — venue de la première source$/,
+    })
+    fireEvent.click(pastille)
+
+    // **Montrée, pas cachée** : c'est une décision qu'on a prise, on doit
+    // pouvoir l'annuler d'un clic — donc la pastille est encore là, marquée.
+    const barree = await screen.findByRole("button", {
+      name: "#445566 — venue de la première source, retirée",
+    })
+    expect(barree.className).toContain("opacity-40")
+
+    fireEvent.click(barree)
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", {
+          name: "#445566 — venue de la première source, retirée",
+        }),
+      ).toBeNull(),
+    )
+    // Les deux gestes sont partis par la même route : une retouche est un
+    // réglage de la palette, pas une entité de plus.
+    expect(
+      fetchDouble.mock.calls.filter(
+        ([url, init]) =>
+          String(url) === "/api/palettes/marais" &&
+          String((init as RequestInit)?.method) === "PUT",
+      ).length,
+    ).toBe(2)
+  })
+
+  // ── « L'attraction est grisée avec sa raison » ─────────────────────────────
+
+  test("l'attraction est grisée avec sa raison quand il ne reste rien à tirer", async () => {
+    await ouvrirLeCote({ palettes: [paletteDouble("marais")] })
+
+    fireEvent.click(screen.getByRole("button", { name: /^marais/ }))
+
+    // Mesuré au banc d'essai avant que la tranche soit écrite : c'est le seul
+    // endroit où le curseur ne changerait rien, et il le dit.
+    expect(
+      await screen.findByText(/il ne reste aucune couleur à rapprocher/),
+    ).toBeTruthy()
+    const rails = document.querySelectorAll('input[type="range"]')
+    expect([...rails].some((r) => (r as HTMLInputElement).disabled)).toBe(true)
+  })
+
+  // ── « La palette se juge posée sur de vraies images » ──────────────────────
+
+  test("l'aperçu pose la palette sur de vraies images, côte à côte", async () => {
+    await ouvrirLeCote({ palettes: [paletteDouble("marais")] })
+
+    fireEvent.click(screen.getByRole("button", { name: /^marais/ }))
+
+    // Un mélange se voit sur un sprite, pas sur une bande de pastilles — et une
+    // seule rangée ne dirait pas ce qui a changé.
+    expect(
+      await screen.findByAltText("le nain avec les couleurs du jeu"),
+    ).toBeTruthy()
+    expect(screen.getByAltText("le nain avec marais")).toBeTruthy()
+    expect(screen.getByText(/ne servent à aucune/)).toBeTruthy()
+  })
+
+  // ── « Une ambiance porte trois choses, et rien d'autre » ───────────────────
+
+  test("une ambiance porte trois cases, et dit ce qui lui est fermé", async () => {
+    await ouvrirLeCote({ ambiances: [ambianceDouble("Marais de cendre")] })
+
+    fireEvent.click(screen.getByRole("button", { name: /Marais de cendre/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /ses trois cases/ }))
+
+    expect(await screen.findByLabelText("Le monde")).toBeTruthy()
+    expect(screen.getByLabelText("L'éclairage")).toBeTruthy()
+    expect(screen.getByLabelText("Le trait")).toBeTruthy()
+    // Les quatre autres n'existent pas — et l'écran dit pourquoi plutôt que de
+    // laisser chercher.
+    expect(screen.queryByLabelText("La vue")).toBeNull()
+    expect(screen.queryByLabelText("La technique")).toBeNull()
+    expect(
+      screen.getByText(/ne s'ouvrent pas à une ambiance/),
+    ).toBeTruthy()
+  })
+
+  test("l'ambiance dit qui s'en sert et ce que chacun lui prend", async () => {
+    await ouvrirLeCote({
+      ambiances: [
+        {
+          ...ambianceDouble("Marais de cendre"),
+          emplois: [
+            { identifiant: "le-rodeur", nom: "Le rôdeur", prend: "tout" },
+            { identifiant: "l-ombre", nom: "L'ombre", prend: "couleurs" },
+          ],
+        },
+      ],
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /Marais de cendre/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /qui s'en sert/ }))
+
+    expect(await screen.findByText(/Le rôdeur/)).toBeTruthy()
+    expect(screen.getByText(/lui prend tout$/)).toBeTruthy()
+    expect(screen.getByText(/lui prend les couleurs seulement/)).toBeTruthy()
+  })
+
+  test("supprimer une ambiance ne détruit aucune image", async () => {
+    const { fetchDouble } = await ouvrirLeCote({
+      ambiances: [ambianceDouble("Marais de cendre")],
+    })
+    fireEvent.click(screen.getByRole("button", { name: /Marais de cendre/ }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "Supprimer" }))
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/moods/marais-de-cendre" &&
+            String((init as RequestInit)?.method) === "DELETE",
+        ),
+      ).toBe(true),
+    )
+    // Aucun appel vers les images : ce qui s'en servait retombe sur le jeu, et
+    // il n'y a rien à effacer.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          String(url).startsWith("/api/assets") &&
+          String((init as RequestInit)?.method) === "DELETE",
+      ),
+    ).toBe(false)
+  })
+
+  // ── « Une chose du jeu désigne son ambiance sur sa fiche » ─────────────────
+
+  test("une chose du jeu désigne son ambiance sur sa fiche, et ce qu'elle lui prend", async () => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain")],
+      ambiances: [ambianceDouble("Marais de cendre")],
+    })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLEtabli("Le nain")
+
+    const choix = await ecran.findByLabelText("Son ambiance")
+    fireEvent.change(choix, { target: { value: "marais-de-cendre" } })
+
+    await waitFor(() =>
+      expect(
+        double.fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters/le-nain" &&
+            String((init as RequestInit)?.body).includes("marais-de-cendre"),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("le codex écrit l'ambiance de chaque chose, et les trous se voient", async () => {
+    // **Le second endroit où l'on répond à « qui utilise quoi ».** Le panneau
+    // d'une ambiance dit qui s'en sert ; le codex dit, chose par chose, laquelle
+    // chacune porte — c'est déjà l'endroit où la liste de tout le jeu s'affiche.
+    const double = serveurDouble({
+      personnages: [
+        personnage("Le rôdeur", { ambiance: "marais-de-cendre" }),
+        personnage("Le nain"),
+      ],
+      ambiances: [ambianceDouble("Marais de cendre")],
+    })
+    await monter(double.fetchDouble)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const cadre = await cadreDuCodex()
+
+    expect(await within(cadre).findByText("Marais de cendre")).toBeTruthy()
+    // **Ce qui n'en a pas ne se grise pas** : « aucune » n'est pas un manque —
+    // une chose sans ambiance prend le style du jeu, ce qui est le cas courant.
+    const cartes = within(cadre).getAllByRole("article")
+    expect(cartes.length).toBe(2)
+    expect(cartes[1].textContent).not.toContain("Marais de cendre")
+  })
+
+  test("sans ambiance dans le jeu, la fiche dit où en fabriquer", async () => {
+    const double = serveurDouble({ personnages: [personnage("Le nain")] })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLEtabli("Le nain")
+
+    // Il n'y a pas de chose à griser — c'est la bascule de « + personnage », et
+    // non le grisé qui porte sa raison. L'endroit est nommé à la place.
+    expect(
+      await ecran.findByText(/côté Ambiances et couleurs/),
+    ).toBeTruthy()
+    expect(ecran.queryByLabelText("Son ambiance")).toBeNull()
   })
 })

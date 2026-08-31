@@ -645,6 +645,10 @@ export type Personnage = {
   /** Le type d'objet de cette chose. Vide, elle suit le plan du jeu — c'est
    *  l'état d'avant E9, et c'est ce qui reprend les jeux existants sans perte. */
   type: string
+  /** L'ambiance qu'elle désigne, ou rien — et rien veut dire « le jeu ». */
+  ambiance: string
+  /** Ce qu'elle prend à cette ambiance. */
+  prend: string
   /** Ce qu'elle s'est ajouté pour elle seule. Elles viennent après celles du
    *  type, jamais mêlées. */
   ajoutees: Pose[]
@@ -821,6 +825,121 @@ export type Lien = {
   mot: string
   pointe: boolean
   cree_le: number
+}
+
+/** ── Le côté Ambiances et couleurs (E11) ───────────────────────────────────
+ *
+ *  **Deux objets, et ce qui les distingue.** Une palette est une liste de
+ *  couleurs qui porte un nom, tirée d'un paquet d'images : elle ne dit rien du
+ *  style en mots. Une ambiance est un lot de style tout prêt, réutilisable sur
+ *  plusieurs choses du jeu, et elle porte trois choses et trois seulement —
+ *  une palette, des images de référence, trois cases de texte.
+ *
+ *  **Le projet est l'ambiance générale du jeu** : même objet en plus grand. Il
+ *  n'y a donc pas deux notions à apprendre. */
+
+/** Ce dans quoi les couleurs d'une palette se lisent. */
+export type SourceDePalette = {
+  /** `images` — un paquet du tableau d'inspiration. `officiels` — les images
+   *  officielles du jeu, la source de la palette du projet depuis toujours.
+   *  `palette` — une autre palette, ce qui permet d'assembler à partir de ce
+   *  qui existe déjà. */
+  genre: "images" | "officiels" | "palette"
+  /** Le nom du paquet, ou l'identifiant de l'autre palette. Vide pour les
+   *  officiels : ils sont déjà désignés par leur propre marque. */
+  reference: string
+}
+
+/** Un geste de la main sur la palette rendue, **rangé et non fondu**.
+ *
+ *  Chacun s'annule seul, chacun se voit, et le tout se rejoue si une source
+ *  change — c'est ce qui préserve la propagation d'une image promue jusqu'en
+ *  bas, même à travers une ambiance retouchée. */
+export type RetoucheDePalette = {
+  geste: "retirer" | "ajouter" | "remplacer"
+  couleur: string
+  remplacement: string
+}
+
+/** Une couleur de la palette rendue, **et d'où elle vient**.
+ *
+ *  C'est la seule façon de comprendre ce qu'on regarde : sans ces marques, on
+ *  ne saurait pas si un gris vient du jeu, donc si le changer ici serait une
+ *  exception ou une redite. Une couleur retirée reste dans la liste, marquée —
+ *  **montrée barrée, jamais cachée**. */
+export type Pastille = {
+  couleur: string
+  venue: "jeu" | "ambiance" | "main"
+  /** `retirer` quand une retouche l'a écartée, vide sinon. */
+  retiree: string
+}
+
+export type PaletteNommee = {
+  identifiant: string
+  nom: string
+  sources: SourceDePalette[]
+  couleurs: number
+  /** Combien des couleurs viennent de la **première** source. Le reste vient
+   *  des suivantes, réduit puis attiré. */
+  du_jeu: number
+  /** De combien les autres se rapprochent, de 0 à 1. */
+  attraction: number
+  retouches: RetoucheDePalette[]
+  rendue: string[]
+  pastilles: Pastille[]
+  empreinte: string
+  /** **Ce que ce curseur ne ferait pas**, dit en clair plutôt que laissé à
+   *  essayer : à « tout du jeu », il ne reste aucune couleur d'ambiance à tirer,
+   *  et les cinq valeurs rendent le même fichier. Mesuré au banc d'essai avant
+   *  que la tranche soit écrite. */
+  attraction_inerte: boolean
+  /** Les sources qui ne rendent plus rien — un paquet du tableau rangé, une
+   *  palette supprimée. La palette **garde ses couleurs** et le dit. */
+  sources_perdues: string[]
+  emplois: number
+  cree_le: number
+}
+
+export type AmbianceDuJeu = {
+  identifiant: string
+  nom: string
+  palette: string
+  references: string[]
+  monde: string
+  eclairage: string
+  trait: string
+  /** Qui s'en sert, **et ce que chacun lui prend**. Lu des choses du jeu et de
+   *  nulle part ailleurs. */
+  emplois: { identifiant: string; nom: string; prend: string }[]
+  cree_le: number
+}
+
+/** Les deux listes, **en un seul aller-retour** : elles n'existent pas l'une
+ *  sans l'autre. */
+export type CoteAmbiances = {
+  projet: string
+  palettes: PaletteNommee[]
+  ambiances: AmbianceDuJeu[]
+  /** La palette du jeu — c'en est une comme les autres. */
+  du_jeu: string[]
+}
+
+/** La palette posée sur de vraies images du jeu, côte à côte. */
+export type ApercuDePalette = {
+  palette: string
+  couleurs: string[]
+  images: { asset: string; nom: string; du_jeu: string; de_la_palette: string }[]
+  /** Les couleurs qui servent vraiment sur ces images-là. Le produit constate ;
+   *  il ne conseille pas de retirer les autres. */
+  employees: string[]
+}
+
+/** Ce qu'une chose du jeu prend à l'ambiance qu'elle désigne. */
+export const CE_QU_ON_PREND = ["tout", "couleurs", "sans-images"] as const
+export const NOM_DE_CE_QU_ON_PREND: Record<string, string> = {
+  tout: "tout",
+  couleurs: "les couleurs seulement",
+  "sans-images": "tout sauf les images",
 }
 
 export type Carte = {
@@ -1934,6 +2053,14 @@ export const api = {
        *  de poser. Le nom suffit à créer — « nommer, c'est créer ». */
       ajouter?: string
       retirer_ajoutee?: string
+      /** L'ambiance que cette chose désigne (E11) — **sur sa fiche, jamais par
+       *  la collection où elle est rangée** : une collection reste un dossier
+       *  qui ne décide de rien. Le vide la retire, et la chose retombe sur le
+       *  jeu. */
+      ambiance?: string
+      /** Ce qu'elle lui prend : tout, les couleurs seulement, ou tout sauf les
+       *  images. Une ambiance ne s'impose pas — on la désigne, puis on choisit. */
+      prend?: string
     },
   ) =>
     appeler<{ personnage: Personnage }>(`/characters/${personnage}`, {
@@ -1967,6 +2094,76 @@ export const api = {
       `/characters/types/${encodeURIComponent(type)}/poses`,
       { method: "DELETE" },
     ),
+
+  // ── Le côté Ambiances et couleurs (E11) ──────────────────────────────────
+  //
+  // **Aucun de ces appels ne coûte un centime** : la fusion de deux palettes et
+  // l'attraction des couleurs se font sur la machine, en millisecondes. C'est
+  // un critère d'acceptation de la tranche.
+  //
+  // Les six gestes rendent **le côté entier**, comme les trois gestes du plan
+  // rendent le plan entier : une palette qui change peut en changer une autre —
+  // celle qui l'a prise pour source —, et l'écran n'a pas à deviner laquelle.
+
+  coteAmbiances: () => appeler<CoteAmbiances>("/moods"),
+
+  creerPalette: (nom: string, sources: SourceDePalette[] = []) =>
+    appeler<CoteAmbiances>("/palettes", {
+      method: "POST",
+      body: JSON.stringify({ nom, sources }),
+    }),
+
+  reglerPalette: (
+    identifiant: string,
+    champs: {
+      nom?: string
+      sources?: SourceDePalette[]
+      couleurs?: number
+      du_jeu?: number
+      attraction?: number
+      retouches?: RetoucheDePalette[]
+    },
+  ) =>
+    appeler<CoteAmbiances>(`/palettes/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  supprimerPalette: (identifiant: string) =>
+    appeler<CoteAmbiances>(`/palettes/${identifiant}`, { method: "DELETE" }),
+
+  /** La palette posée sur de vraies images du jeu — **rien n'est écrit**. */
+  apercuDePalette: (identifiant: string) =>
+    appeler<ApercuDePalette>(`/palettes/${identifiant}/preview`),
+
+  creerAmbiance: (nom: string, palette = "") =>
+    appeler<CoteAmbiances>("/moods", {
+      method: "POST",
+      body: JSON.stringify({ nom, palette }),
+    }),
+
+  reglerAmbiance: (
+    identifiant: string,
+    champs: {
+      nom?: string
+      palette?: string
+      references?: string[]
+      monde?: string
+      eclairage?: string
+      trait?: string
+    },
+  ) =>
+    appeler<CoteAmbiances>(`/moods/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Une ambiance part, **et aucune image ne bouge** : ce qui s'en servait
+   *  retombe sur le jeu, et la réponse dit combien. */
+  supprimerAmbiance: (identifiant: string) =>
+    appeler<CoteAmbiances & { retombees: number }>(`/moods/${identifiant}`, {
+      method: "DELETE",
+    }),
 
   /** Cette image **est** le corps de cette case (US-122) — ou ne l'est plus,
    *  les deux vides ensemble. Le corps naît dans l'atelier et nulle part

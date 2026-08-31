@@ -25,6 +25,7 @@ from atelier.services.agent import (
     PlafondAtteint,
     ServiceAgent,
 )
+from atelier.services.ambiances import AmbianceRefusee, ServiceAmbiances
 from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
 from atelier.services.bibliotheque import (
     ANNULATION_S,
@@ -82,7 +83,9 @@ __all__ = [
     "ProjetInconnu",
     "RangementRefuse",
     "RecetteRefusee",
+    "AmbianceRefusee",
     "ServiceAgent",
+    "ServiceAmbiances",
     "ServiceAssets",
     "ServiceBibliotheque",
     "ServiceCatalogue",
@@ -172,6 +175,18 @@ class Atelier:
         # elle-même, qui part de l'atelier.
         self.production = ServiceProduction(
             self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
+        )
+        # **Les palettes et les ambiances, montées après la production** (E11) :
+        # elles lisent le tableau — les sources d'une palette d'images — et les
+        # choses du jeu — qui se sert d'une ambiance. Ni catalogue ni
+        # fournisseur : la fusion des couleurs se fait sur la machine, et c'est
+        # un critère d'acceptation de la tranche.
+        self.ambiances = ServiceAmbiances(
+            self.base,
+            self.bibliotheque,
+            self.univers,
+            self.production,
+            self.assets,
         )
         # **Au même rang que le slicer, et pour la même raison** : déplier une
         # planche déjà là ne demande ni catalogue ni fournisseur. Il ne connaît

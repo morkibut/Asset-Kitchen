@@ -25,10 +25,11 @@
 // remplace le nom de l'onglet. Il vit dans `Personnages.tsx`, qui le portait
 // déjà sous le nom de fiche.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   api,
   type EmplacementCorps,
+  type AmbianceDuJeu,
   type Personnage,
   type Piece,
   type Pose,
@@ -348,6 +349,17 @@ function ListeDesChoses({
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const vide = personnages.length === 0
+  // **Les ambiances du jeu, demandées une fois pour toute la liste** (E11) :
+  // une par carte aurait fait autant d'appels qu'il y a de choses. Elles ne
+  // servent qu'à nommer — la désignation, elle, se fait sur la fiche.
+  const [ambiances, setAmbiances] = useState<AmbianceDuJeu[]>([])
+
+  useEffect(() => {
+    void api
+      .coteAmbiances()
+      .then((recu) => setAmbiances(recu?.ambiances ?? []))
+      .catch(() => setAmbiances([]))
+  }, [])
   return (
     <div
       className={[
@@ -372,6 +384,7 @@ function ListeDesChoses({
           personnage={personnage}
           plan={plan}
           pieces={pieces}
+          ambiances={ambiances}
           choisie={personnage.identifiant === choisi}
           onChoisir={() => onChoisir(personnage.identifiant)}
           onOuvrir={() => onOuvrir(personnage.identifiant)}
@@ -454,6 +467,7 @@ function CarteDeLaChose({
   personnage,
   plan,
   pieces,
+  ambiances,
   choisie,
   onChoisir,
   onOuvrir,
@@ -464,6 +478,10 @@ function CarteDeLaChose({
   choisie: boolean
   onChoisir: () => void
   onOuvrir: () => void
+  /** Les ambiances du jeu, pour nommer celle que cette chose porte. Passées
+   *  plutôt que redemandées ici : une carte par chose ferait autant d'appels
+   *  qu'il y a de choses. */
+  ambiances: AmbianceDuJeu[]
 }) {
   const restant = manque(personnage, plan, pieces)
   const premiere = personnage.cases.flatMap((c) => c.images)[0]
@@ -510,6 +528,24 @@ function CarteDeLaChose({
         </span>
       </div>
 
+      {/* **Son ambiance, lue ici** (E11) — le second endroit où l'on répond à
+          « qui utilise quoi ». Le panneau d'une ambiance dit qui s'en sert ; le
+          codex dit, chose par chose, laquelle chacune porte, et **les trous se
+          voient** : c'est déjà l'endroit où la liste de tout le jeu s'affiche,
+          et aucun écran dense de plus n'est nécessaire.
+
+          Ce qui n'en a pas ne se grise pas : « aucune » n'est pas un manque, et
+          la marque est absente plutôt que barrée — une chose sans ambiance
+          prend le style du jeu, ce qui est le cas courant. */}
+      {personnage.ambiance && (
+        <span
+          title="son ambiance — elle se change sur sa fiche"
+          className="mesure shrink-0 truncate rounded-[2px] border border-bord px-1.5 text-[9.5px] text-texte-3"
+        >
+          {nomDAmbiance(ambiances, personnage.ambiance)}
+        </span>
+      )}
+
       <span className="mesure shrink-0 text-right text-[10px]">
         {restant === 0 ? (
           <span className="text-ok">rien ne manque</span>
@@ -522,6 +558,12 @@ function CarteDeLaChose({
     </article>
   )
 }
+
+/** Le nom d'une ambiance, ou son identifiant quand elle vient de partir : une
+ *  chose qui désigne une ambiance supprimée est déjà retombée sur le jeu côté
+ *  serveur, et cet écart ne dure que le temps d'un rendu. */
+const nomDAmbiance = (ambiances: AmbianceDuJeu[], identifiant: string) =>
+  ambiances.find((a) => a.identifiant === identifiant)?.nom ?? identifiant
 
 // ── La colonne de droite : la chose choisie ─────────────────────────────────
 

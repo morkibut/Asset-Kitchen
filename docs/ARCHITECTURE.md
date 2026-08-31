@@ -386,6 +386,18 @@ ce nom, la liste vide du décor et de la tuile comprise. **Et une chose sans typ
 plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les projets
 existants sans qu'un seul fichier ait eu à être réécrit.
 
+*Écrit en la faisant, le 31 août 2026.* La palette rendue est **un cache nommé par sa
+provenance**, exactement comme celle du projet depuis T4 — mais son empreinte porte les
+**couleurs résolues** de chaque source, et non le nom des sources. Sans ça, ajouter une carte
+à un paquet du tableau n'aurait rien recalculé, et c'est très exactement ce que la tranche
+promet de préserver. Chaque couleur du résultat est en outre **l'une de celles d'une source** :
+la coupe médiane rend des moyennes, et chaque seau revient donc à la couleur réelle la plus
+proche — sans quoi une pastille dirait « venue du jeu » en montrant une teinte que le jeu ne
+porte pas. Enfin, **ce qu'une chose prend à son ambiance vit sur la chose** — tout, les
+couleurs seulement, tout sauf les images ; ce que *chaque génération* a réellement pris reste
+un champ de la génération, en E14, parce que c'est une autre question et que la même liste
+écrite à deux endroits aurait divergé.
+
 **Le personnage se généralise en entité, et c'est le seul de ces changements qui touche du
 code existant en profondeur.** Les familles *Décors*, *Objets* et *Interface* ont
 aujourd'hui leur ligne et leur compte à zéro : ce qui manque est le modèle, pas la mise en

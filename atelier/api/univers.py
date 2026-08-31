@@ -634,3 +634,224 @@ async def realigner(
     atelier = _atelier(requete)
     identifiant = _projet(requete, projet)
     return atelier.univers.realigner(identifiant, identifiants=corps.identifiants)
+
+
+# ── Le côté Ambiances et couleurs (E11) ──────────────────────────────────────
+#
+# **Aucune de ces routes ne touche le réseau**, et c'est un critère
+# d'acceptation de la tranche : la fusion de deux palettes et l'attraction des
+# couleurs se font sur la machine, en millisecondes. Rien ici ne coûte un
+# centime.
+
+
+class CorpsSource(BaseModel):
+    """Ce dans quoi les couleurs d'une palette se lisent.
+
+    Trois genres, et pas un de plus : les images d'un paquet du tableau, les
+    images officielles du jeu, ou une autre palette. `reference` désigne la
+    chose selon le genre, et reste vide pour les officiels — ils sont déjà
+    désignés par leur propre marque.
+    """
+
+    genre: Literal["images", "officiels", "palette"] = "images"
+    reference: str = ""
+
+
+class CorpsRetouche(BaseModel):
+    """Un geste de la main sur la palette rendue, **rangé et non fondu**.
+
+    Chacun s'annule seul, chacun se voit, et le tout se rejoue si une source
+    change — c'est ce qui préserve la propagation d'une image promue jusqu'en
+    bas, même à travers une ambiance retouchée.
+    """
+
+    geste: Literal["retirer", "ajouter", "remplacer"] = "retirer"
+    couleur: str = ""
+    remplacement: str = ""
+
+
+class CorpsPalette(BaseModel):
+    """Une palette qui naît. **Nommer, c'est créer** : le nom suffit."""
+
+    nom: str = Field(min_length=1)
+    sources: list[CorpsSource] = []
+    couleurs: int = Field(24, ge=4, le=64)
+    projet: str | None = None
+
+
+class CorpsReglagePalette(BaseModel):
+    """Tout ce qui se règle sur une palette, **en un seul geste**.
+
+    `None` ne touche pas : les curseurs se déplacent ensemble à l'écran, et un
+    appel par champ ferait autant d'allers-retours qu'il y a de réglages.
+    """
+
+    nom: str | None = None
+    sources: list[CorpsSource] | None = None
+    couleurs: int | None = Field(None, ge=4, le=64)
+    # Combien des couleurs viennent de la **première** source. Le reste vient
+    # des suivantes, réduit puis attiré.
+    du_jeu: int | None = Field(None, ge=0, le=64)
+    attraction: float | None = Field(None, ge=0.0, le=1.0)
+    retouches: list[CorpsRetouche] | None = None
+    projet: str | None = None
+
+
+class CorpsAmbiance(BaseModel):
+    """Une ambiance qui naît, vide ou déjà pourvue de sa palette."""
+
+    nom: str = Field(min_length=1)
+    palette: str = ""
+    references: list[str] = []
+    projet: str | None = None
+
+
+class CorpsReglageAmbiance(BaseModel):
+    """Les trois choses qu'une ambiance porte, **et rien d'autre**.
+
+    Il n'y a pas de champ pour la vue, la technique, l'époque ni le rendu, et
+    c'est le critère : les deux premières décrivent la mécanique du jeu — une
+    ambiance qui les remplacerait fabriquerait des images qui ne rentrent pas
+    dans le jeu, erreur qui ne se verrait qu'après avoir payé —, et les deux
+    autres restent au jeu parce qu'un coin plus sombre reste du même siècle et
+    du même pixel art. La fermeture est écrite dans le schéma, donc dans le
+    refus que FastAPI compose tout seul.
+    """
+
+    nom: str | None = None
+    palette: str | None = None
+    references: list[str] | None = None
+    monde: str | None = None
+    eclairage: str | None = None
+    trait: str | None = None
+    projet: str | None = None
+
+
+@routeur.get("/moods")
+async def cote_ambiances(
+    requete: Request, projet: str | None = None
+) -> dict[str, Any]:
+    """Les deux listes, **en un seul aller-retour**.
+
+    Elles n'existent pas l'une sans l'autre — une ambiance porte une palette, et
+    une palette dit combien d'ambiances s'en servent —, et deux appels auraient
+    rendu deux instants différents du même fichier.
+    """
+    atelier = _atelier(requete)
+    return atelier.ambiances.cote(_projet(requete, projet))
+
+
+@routeur.post("/palettes", status_code=201)
+async def creer_palette(requete: Request, corps: CorpsPalette) -> dict[str, Any]:
+    """Une palette nommée de plus. Sans source, elle est vide et le dit."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    atelier.ambiances.creer_palette(
+        vise,
+        corps.nom,
+        sources=[s.model_dump() for s in corps.sources],
+        couleurs=corps.couleurs,
+    )
+    return atelier.ambiances.cote(vise)
+
+
+@routeur.put("/palettes/{identifiant}")
+async def regler_palette(
+    requete: Request, identifiant: str, corps: CorpsReglagePalette
+) -> dict[str, Any]:
+    """Poser les sources, les deux curseurs, les retouches — et **relire**.
+
+    La réponse est le côté entier, comme les gestes du plan rendent le plan
+    entier : l'écran fond ce qui lui arrive par un seul chemin, et une palette
+    qui change peut en changer une autre — celle qui l'a prise pour source.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    atelier.ambiances.regler_palette(
+        vise,
+        identifiant,
+        nom=corps.nom,
+        sources=None if corps.sources is None else [s.model_dump() for s in corps.sources],
+        couleurs=corps.couleurs,
+        du_jeu=corps.du_jeu,
+        attraction=corps.attraction,
+        retouches=(
+            None if corps.retouches is None else [r.model_dump() for r in corps.retouches]
+        ),
+    )
+    return atelier.ambiances.cote(vise)
+
+
+@routeur.delete("/palettes/{identifiant}")
+async def supprimer_palette(
+    requete: Request, identifiant: str, projet: str | None = None
+) -> dict[str, Any]:
+    """Une palette part. **Aucune image ne bouge** : les ambiances qui s'en
+    servaient retombent sur le jeu, et les palettes qui la prenaient pour source
+    se recalculent sur ce qui reste."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    atelier.ambiances.supprimer_palette(vise, identifiant)
+    return atelier.ambiances.cote(vise)
+
+
+@routeur.get("/palettes/{identifiant}/preview")
+async def apercu_de_palette(
+    requete: Request, identifiant: str, projet: str | None = None, combien: int = 3
+) -> dict[str, Any]:
+    """La palette **posée sur de vraies images du jeu**, côte à côte.
+
+    C'est ce qui rend le réglage des deux curseurs jugeable : un mélange se voit
+    sur un sprite, pas sur une bande de pastilles. Rien n'est écrit, rien n'est
+    payé — la quantification tourne sur la machine.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    return atelier.ambiances.apercu(vise, identifiant, max(1, min(8, combien)))
+
+
+@routeur.post("/moods", status_code=201)
+async def creer_ambiance(requete: Request, corps: CorpsAmbiance) -> dict[str, Any]:
+    """Une ambiance de plus. Elle naît vide et se remplit ensuite."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    atelier.ambiances.creer_ambiance(
+        vise, corps.nom, palette=corps.palette, references=corps.references
+    )
+    return atelier.ambiances.cote(vise)
+
+
+@routeur.put("/moods/{identifiant}")
+async def regler_ambiance(
+    requete: Request, identifiant: str, corps: CorpsReglageAmbiance
+) -> dict[str, Any]:
+    """Sa palette, ses images de référence, ses trois textes."""
+    atelier = _atelier(requete)
+    vise = _projet(requete, corps.projet)
+    atelier.ambiances.regler_ambiance(
+        vise,
+        identifiant,
+        nom=corps.nom,
+        palette=corps.palette,
+        references=corps.references,
+        monde=corps.monde,
+        eclairage=corps.eclairage,
+        trait=corps.trait,
+    )
+    return atelier.ambiances.cote(vise)
+
+
+@routeur.delete("/moods/{identifiant}")
+async def supprimer_ambiance(
+    requete: Request, identifiant: str, projet: str | None = None
+) -> dict[str, Any]:
+    """Une ambiance part, **et aucune image ne bouge**.
+
+    Ce qui s'en servait retombe sur le jeu : il n'y a pas de trou, seulement un
+    réglage qu'on ne pose plus. Le compte de ce qui retombe est dans la réponse,
+    parce qu'un geste qui touche plusieurs choses dit combien.
+    """
+    atelier = _atelier(requete)
+    vise = _projet(requete, projet)
+    parti = atelier.ambiances.supprimer_ambiance(vise, identifiant)
+    return {**atelier.ambiances.cote(vise), "retombees": parti["retombees"]}

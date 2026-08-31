@@ -757,6 +757,14 @@ type Cadre = {
   onErreur: (raison: string) => void
   onLargeur: (carte: Carte, largeur: number) => void
   onTeinterIlot: (nom: string, teinte: Teinte) => void
+  /** **Les deux gestes de fabrication du paquet** (E7, ouverts en E11).
+   *
+   *  Ils partent d'un paquet parce que c'est là qu'on a réuni ce qui va
+   *  ensemble : l'atelier lit les couleurs des images du paquet et en fait une
+   *  palette nommée du nom du paquet, ou une ambiance qui porte cette palette.
+   *  Rien n'est payé — la lecture des couleurs se fait sur la machine. */
+  onFairePalette: (nom: string) => void
+  onFaireAmbiance: (nom: string) => void
   /** L'îlot suit la main — sans rien écrire. La formule du dépôt depuis T2 :
    *  *la valeur suit la main, l'écriture suit le relâchement.* */
   onGlisserIlot: (nom: string, ecart: Place) => void
@@ -1569,6 +1577,26 @@ function Plan({
       onLargeur: (carte, largeur) => poser(carte, { largeur_libre: largeur }),
       onTeinterIlot: (nom, teinte) =>
         void api.teinterIlot(nom, teinte).catch((e) => echouer(e, "teinte refusée")),
+      // **Le paquet n'est pas la palette**, et c'est ce que ces deux gestes
+      // fabriquent : un paquet n'a pas d'identité à lui — c'est un nom de
+      // groupe écrit sur des cartes, et il disparaît avec sa dernière carte. La
+      // palette et l'ambiance qu'il produit sont de **vrais objets, qui lui
+      // survivent** ; sans quoi ranger son tableau d'inspiration effacerait une
+      // palette et trois cases de texte.
+      onFairePalette: (nom) =>
+        void api
+          .creerPalette(nom, [{ genre: "images", reference: nom }])
+          .catch((e) => echouer(e, "la palette n'a pas pu être faite")),
+      onFaireAmbiance: (nom) =>
+        void api
+          .creerPalette(nom, [{ genre: "images", reference: nom }])
+          .then((recu) =>
+            api.creerAmbiance(
+              nom,
+              recu.palettes.find((p) => p.nom === nom)?.identifiant ?? "",
+            ),
+          )
+          .catch((e) => echouer(e, "l'ambiance n'a pas pu être faite")),
       onGlisserIlot: glisserIlot,
       onPoserIlot: poserIlot,
       onReglerLien: (un, reglage) =>
@@ -2209,31 +2237,34 @@ function NoeudIlot({ data }: NodeProps) {
             <Libelle aide="ilot.teinte">Teinte de l'îlot</Libelle>
             <Pastilles teinte={teinte} onChoisir={(t) => cadre.onTeinterIlot(nom, t)} />
 
-            {/* **Les deux gestes de fabrication du tableau** (E7). Ils partent
-                d'un paquet parce que c'est là qu'on a réuni ce qui va
-                ensemble : l'atelier lit les couleurs des images du paquet et
-                en fait une palette nommée, ou une ambiance qui porte cette
-                palette et ces images en références.
+            {/* **Les deux gestes de fabrication du tableau** (E7), **ouverts
+                en E11**. Ils partent d'un paquet parce que c'est là qu'on a
+                réuni ce qui va ensemble : l'atelier lit les couleurs des images
+                du paquet et en fait une palette nommée du nom du paquet, ou une
+                ambiance qui porte cette palette.
 
-                **Grisés, et le grisé porte sa raison** — jamais une infobulle,
-                jamais rien de caché : l'écran qui les tient arrive en E11, et
-                le produit n'a pas le droit de cacher ce qui existera. */}
+                Ils étaient grisés avec leur raison — « les palettes et les
+                ambiances n'ont pas encore d'écran où vivre » — jusqu'à ce que
+                cet écran existe. La raison a disparu parce qu'elle a cessé
+                d'être vraie, et non parce qu'on l'a effacée. */}
             <div className="mt-1 flex flex-col gap-1 border-t border-bord pt-2">
               <button
                 type="button"
-                disabled
-                className="mesure h-[24px] cursor-not-allowed rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-3"
+                onClick={() => cadre.onFairePalette(nom)}
+                title="l'atelier lit les couleurs de ces images — rien n'est payé"
+                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal"
               >
                 faire une palette de ce paquet
               </button>
               <button
                 type="button"
-                disabled
-                className="mesure h-[24px] cursor-not-allowed rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-3"
+                onClick={() => cadre.onFaireAmbiance(nom)}
+                title="la palette, l'ambiance qui la porte, et il ne reste qu'à écrire les trois cases"
+                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[10px] text-texte-2 hover:text-signal"
               >
                 faire une ambiance de ce paquet
               </button>
-              <Raison texte="les palettes et les ambiances n'ont pas encore d'écran où vivre" />
+              <Raison texte="elles vivent dans l'onglet Univers, côté Ambiances et couleurs — et survivent au paquet" />
             </div>
           </div>
         </div>

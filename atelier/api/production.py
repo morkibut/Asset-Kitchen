@@ -26,9 +26,7 @@ premier — un lecteur ne devrait pas avoir à vérifier que ça tient.
 
 from __future__ import annotations
 
-from typing import Any
-
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
@@ -137,6 +135,13 @@ class CorpsReglagePersonnage(BaseModel):
     # vient de poser.
     ajouter: str | None = None
     retirer_ajoutee: str | None = None
+    # **L'ambiance se désigne ici, sur la chose du jeu** (E11) — jamais sur la
+    # collection où elle est rangée : une collection reste un dossier qui ne
+    # décide de rien. Le vide la retire, et la chose retombe sur le jeu.
+    ambiance: str | None = None
+    # Ce qu'elle lui prend : tout, les couleurs seulement, ou tout sauf les
+    # images. Une ambiance ne s'impose pas — on la désigne, puis on choisit.
+    prend: Literal["tout", "couleurs", "sans-images"] | None = None
     projet: str | None = None
 
 
@@ -423,6 +428,8 @@ async def regler_personnage(
         type=corps.type,
         ajouter=corps.ajouter,
         retirer_ajoutee=corps.retirer_ajoutee,
+        ambiance=corps.ambiance,
+        prend=corps.prend,
     )
     return {"personnage": atelier.production.en_charge(projet, personnage)}
 

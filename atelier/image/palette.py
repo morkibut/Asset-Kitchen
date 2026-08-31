@@ -139,3 +139,117 @@ def palette_de(artworks: list[bytes], couleurs: int = COULEURS) -> tuple[str, ..
     return tuple(
         "#%02x%02x%02x" % tuple(plate[rang * 3 : rang * 3 + 3]) for rang in utilisees
     )
+
+
+# ── La fusion de deux palettes, arrivée en E11 ───────────────────────────────
+#
+# **Ces trois fonctions viennent du banc d'essai**, où elles ont été mesurées
+# avant d'entrer dans le produit — `essais/essai_couleurs_et_taches.py`, le
+# 31 août 2026. Le banc a répondu à la question qui bloquait la tranche : les
+# deux curseurs ne font-ils pas le même travail ? Croisés sur six images et cinq
+# valeurs chacun, ils rendent **21 résultats distincts sur 25 combinaisons**. Et
+# il a trouvé le seul endroit où l'attraction meurt : à proportion « tout du
+# jeu », il ne reste aucune couleur d'ambiance à tirer.
+#
+# La mesure d'abord, le code ensuite : c'est la deuxième fois que ce produit
+# évite d'écrire un réglage qui ne ferait rien — le nombre de couleurs de la
+# quantification, lui, avait été écrit avant d'être mesuré, et il ne changeait
+# rien dès qu'une palette était posée.
+
+
+def _rgb(hexa: str) -> tuple[int, int, int]:
+    entier = int(hexa.lstrip("#"), 16)
+    return (entier >> 16 & 255, entier >> 8 & 255, entier & 255)
+
+
+def _hexa(rgb) -> str:
+    return "#%02x%02x%02x" % tuple(int(round(float(c))) for c in rgb)
+
+
+def reduire(palette: tuple[str, ...], combien: int) -> tuple[str, ...]:
+    """Les `combien` couleurs de cette palette-là, **prises dans la palette**.
+
+    **Par la coupe médiane, comme le reste du produit** : `palette_de` réduit
+    déjà les couleurs d'un artwork de cette façon, et prendre les N premières à
+    la place donnerait un résultat qui dépend de l'ordre d'écriture du fichier.
+
+    **Puis chaque seau revient à la couleur réelle la plus proche.** La coupe
+    médiane rend des moyennes — le milieu d'un seau —, et une moyenne n'est
+    l'une des couleurs d'aucune source : la pastille dirait « venue du jeu » en
+    montrant une teinte que le jeu ne porte pas. Le raccrochage tient la promesse
+    de la maquette au pied de la lettre : *chaque couleur du résultat est
+    authentiquement l'une de celles d'une source*. C'est le seul écart avec le
+    banc d'essai, et il ajoute une garantie plutôt qu'il n'en retire.
+    """
+    if combien <= 0:
+        return ()
+    if combien >= len(palette):
+        return tuple(palette)
+    reelles = np.array([_rgb(c) for c in palette], dtype=np.int16)
+    bande = np.array([[_rgb(c) for c in palette]], dtype=np.uint8)
+    indexee = Image.fromarray(bande, mode="RGB").quantize(
+        colors=combien, method=Image.Quantize.MEDIANCUT
+    )
+    plate = indexee.getpalette() or []
+    vues: set[str] = set()
+    gardees: list[str] = []
+    for rang in sorted(set(indexee.tobytes())):
+        milieu = np.array(plate[rang * 3 : rang * 3 + 3], dtype=np.int16)
+        proche = palette[int(np.argmin(((reelles - milieu) ** 2).sum(axis=1)))]
+        if proche not in vues:
+            vues.add(proche)
+            gardees.append(proche)
+    return tuple(gardees)
+
+
+def attirer(
+    ambiance: tuple[str, ...], jeu: tuple[str, ...], part: float
+) -> tuple[str, ...]:
+    """Chaque couleur de l'ambiance tirée vers la plus proche de celles du jeu.
+
+    `part` va de 0 — rien ne bouge — à 1 — la couleur *devient* celle du jeu.
+    C'est ce qui harmonise : le marais reste un marais, mais il respire l'air du
+    jeu. La distance est euclidienne dans RGB, comme partout ailleurs ici.
+    """
+    if not jeu or part <= 0:
+        return tuple(ambiance)
+    cibles = np.array([_rgb(c) for c in jeu], dtype=np.int16)
+    tirees = []
+    for couleur in ambiance:
+        source = np.array(_rgb(couleur), dtype=np.int16)
+        proche = cibles[int(np.argmin(((cibles - source) ** 2).sum(axis=1)))]
+        tirees.append(_hexa(source + (proche - source) * part))
+    return tuple(tirees)
+
+
+def fusionner(
+    jeu: tuple[str, ...],
+    ambiance: tuple[str, ...],
+    total: int,
+    du_jeu: int,
+    attraction: float,
+) -> tuple[tuple[str, str], ...]:
+    """La palette d'une ambiance : `du_jeu` couleurs du jeu, le reste attiré.
+
+    Rend **chaque couleur avec sa provenance** — `jeu` ou `ambiance` —, parce
+    que c'est la seule façon de comprendre ce qu'on regarde : sans ces marques,
+    on ne saurait pas si un gris vient du jeu, donc si le changer serait une
+    exception ou une redite.
+
+    Le dédoublonnage est la seule liberté prise sur la maquette, et elle est
+    forcée : à forte attraction, deux couleurs de l'ambiance tombent sur la même
+    couleur du jeu, et une palette qui répète une entrée n'est pas une palette.
+    C'est aussi ce qui rend le compte **plus court que demandé** aux fortes
+    valeurs — le produit l'affiche plutôt que de le taire.
+    """
+    proches = attirer(reduire(ambiance, total - du_jeu), jeu, attraction)
+    vues: set[str] = set()
+    sortie: list[tuple[str, str]] = []
+    for couleur, venue in (
+        *((c, "jeu") for c in reduire(jeu, du_jeu)),
+        *((c, "ambiance") for c in proches),
+    ):
+        if couleur not in vues:
+            vues.add(couleur)
+            sortie.append((couleur, venue))
+    return tuple(sortie)

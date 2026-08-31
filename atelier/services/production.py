@@ -31,6 +31,7 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
+from atelier.domaine.ambiance import CE_QU_ON_PREND
 from atelier.domaine.plan import (
     Pose,
     plan_depuis_json,
@@ -188,6 +189,23 @@ class ServiceProduction:
         )
         self._sauver_projet(objet)
 
+    def oublier_ambiance(self, projet: str, ambiance: str) -> int:
+        """Les choses qui se servaient de cette ambiance **retombent sur le jeu**.
+
+        Aucune image ne bouge, et il n'y a pas de trou : seulement un réglage
+        qu'on ne pose plus. Le compte est rendu, parce qu'un geste qui touche
+        plusieurs choses dit combien — comme la palette rétroactive rend « 12
+        remis à jour, 3 conservés ».
+        """
+        retombees = 0
+        for personnage in self.personnages(projet):
+            if personnage.ambiance != ambiance:
+                continue
+            personnage.ambiance = ""
+            self._sauver(personnage)
+            retombees += 1
+        return retombees
+
     def ajouter_pose(self, projet: str, nom: str, images: int = 1) -> Pose:
         """**Nommer, c'est créer** (`docs/PRD.md`) : un nom de pose qui n'existe
         pas encore le crée sur-le-champ, sans passer par un écran de gestion.
@@ -335,6 +353,8 @@ class ServiceProduction:
         type: str | None = None,
         ajouter: str | None = None,
         retirer_ajoutee: str | None = None,
+        ambiance: str | None = None,
+        prend: str | None = None,
     ) -> Personnage:
         """Tout ce qui se règle sur un personnage, **en un seul geste**.
 
@@ -408,6 +428,25 @@ class ServiceProduction:
             personnage.ajoutees = tuple(
                 p for p in personnage.ajoutees if p.identifiant != retirer_ajoutee
             )
+
+        # **L'ambiance se désigne sur la chose, jamais sur la collection où elle
+        # est rangée** (E11). Une collection reste un dossier qui ne décide de
+        # rien : grouper vingt monstres et régler leur style sont deux gestes
+        # différents, et les confondre ferait qu'un rangement changerait des
+        # réglages. Une ambiance inconnue est refusée en nommant celles qui
+        # existent — c'est un identifiant, pas un texte libre.
+        if ambiance is not None:
+            propre = ambiance.strip()
+            if propre and objet.ambiance(propre) is None:
+                connues = ", ".join(a.nom for a in objet.ambiances) or "aucune"
+                raise ProductionRefusee(
+                    f"aucune ambiance « {propre} » dans ce jeu — les ambiances "
+                    f"sont : {connues}"
+                )
+            personnage.ambiance = propre
+
+        if prend is not None and prend in CE_QU_ON_PREND:
+            personnage.prend = prend
 
         if tenues is not None:
             cochees = set(tenues)

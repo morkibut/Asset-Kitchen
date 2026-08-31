@@ -44,6 +44,7 @@ import type { Fente } from "./BarreChassis"
 import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 import { Assistant } from "./Assistant"
+import { CoteAmbiancesEtCouleurs } from "./Ambiances"
 
 
 export function EcranUnivers({
@@ -277,7 +278,7 @@ export function EcranUnivers({
         />
       )}
 
-      {cote === "ambiances" && <CoteAmbiances />}
+      {cote === "ambiances" && <CoteAmbiancesEtCouleurs onErreur={setRefus} />}
     </div>
   )
 }
@@ -355,30 +356,8 @@ function BarreDesCotes({
 // ── Le côté Réglages ────────────────────────────────────────────────────────
 
 // ── Le côté Ambiances et couleurs ───────────────────────────────────────────
-
-/**
- * Le troisième côté, et il est vide — **avec sa raison, en toutes lettres**.
- *
- * Le produit interdit de proposer puis de refuser ; il n'autorise pas non plus
- * à cacher ce qui existera. Un côté qui apparaîtrait le jour où il se remplit
- * serait une surprise au moment précis où l'on cherche à comprendre où les
- * choses se règlent — c'est l'argument que l'écran des dépenses fait déjà pour
- * sa colonne vide.
- */
-function CoteAmbiances() {
-  return (
-    <div className="flex min-h-0 flex-1 items-center justify-center p-8">
-      <div className="flex max-w-[504px] flex-col items-center gap-3 text-center">
-        <p className="font-serif text-[32px] leading-tight text-texte-3">
-          Rien n'est encore fabriqué ici.
-        </p>
-        <p className="mesure text-[10px] leading-relaxed text-texte-3">
-          Ce côté tiendra deux listes — les palettes qu'on a fabriquées, les
-          ambiances qu'on en a tirées — et le panneau de celle qui est ouverte.
-          Les deux gestes qui les créent existent déjà, dans le menu d'un paquet
-          de cartes du côté Inspiration ; ils y sont grisés pour la même raison.
-        </p>
-      </div>
-    </div>
-  )
-}
+//
+// **Le troisième côté vit dans son propre fichier** (E11) : il tient deux listes
+// et deux panneaux, et le garder ici aurait fait du fichier de l'onglet Univers
+// le troisième écran du produit — le premier était l'atelier, le deuxième
+// l'assistant, et les deux ont fini par sortir.

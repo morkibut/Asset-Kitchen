@@ -38,6 +38,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import {
   api,
+  CE_QU_ON_PREND,
+  NOM_DE_CE_QU_ON_PREND,
+  type AmbianceDuJeu,
   type Asset,
   type Case,
   type EmplacementCorps,
@@ -953,12 +956,21 @@ function Identite({
   // n'est pas revenue : le choix se montre alors sans option, plutôt que de
   // proposer huit noms que le jeu ne porte peut-être pas.
   const [types, setTypes] = useState<PosesDesTypes["types"]>([])
+  // **Les ambiances du jeu** (E11), demandées à la route qui les sert. Elles se
+  // désignent ici et nulle part ailleurs : une collection reste un dossier qui
+  // ne décide de rien, et confondre ranger et régler ferait qu'un rangement
+  // changerait un style.
+  const [ambiances, setAmbiances] = useState<AmbianceDuJeu[]>([])
 
   useEffect(() => {
     void api
       .posesDesTypes()
       .then((recu) => setTypes(recu?.types ?? []))
       .catch(() => setTypes([]))
+    void api
+      .coteAmbiances()
+      .then((recu) => setAmbiances(recu?.ambiances ?? []))
+      .catch(() => setAmbiances([]))
   }, [])
 
   // Changer de personnage remet les champs sur celui-là. Sans ça, le panneau
@@ -975,6 +987,8 @@ function Identite({
     nom?: string
     description?: string
     type?: string
+    ambiance?: string
+    prend?: string
   }) => {
     try {
       const rendu = await api.reglerPersonnage(personnage.identifiant, champs)
@@ -1047,6 +1061,70 @@ function Identite({
           Il décide des attitudes qu'on lui demande. En changer ne déplace aucune
           image : chacune garde l'attitude qu'on lui a donnée.
         </p>
+      </div>
+
+      {/* **Son ambiance, et ce qu'elle lui prend** (E11).
+
+          Une ambiance ne s'impose pas : on la désigne, puis on choisit ce qu'on
+          lui prend. C'est ce qui distingue le modèle retenu de celui qui avait
+          été écrit avant — trois étages d'héritage automatique, abandonnés. Ici
+          ce n'est plus un héritage subi, c'est un choix.
+
+          **Et c'est la chose du jeu qui la porte, jamais la collection où elle
+          est rangée** : grouper vingt monstres et régler leur style sont deux
+          gestes différents.
+
+          Absent quand le jeu n'en a aucune : il n'y a pas de chose à griser —
+          c'est la bascule de « + personnage », et non le grisé qui porte sa
+          raison. L'endroit où l'on en fabrique est nommé à la place. */}
+      <div className="flex flex-col gap-1">
+        <Libelle>Son ambiance</Libelle>
+        {ambiances.length === 0 ? (
+          <p className="mesure text-[10px] leading-4 text-texte-3">
+            Ce jeu n'a encore aucune ambiance. Elles se fabriquent dans
+            l'onglet Univers, côté Ambiances et couleurs.
+          </p>
+        ) : (
+          <>
+            <select
+              value={personnage.ambiance ?? ""}
+              aria-label="Son ambiance"
+              onChange={(e) => void poser({ ambiance: e.target.value })}
+              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+            >
+              <option value="">aucune — le style du jeu</option>
+              {ambiances.map((ambiance) => (
+                <option key={ambiance.identifiant} value={ambiance.identifiant}>
+                  {ambiance.nom}
+                </option>
+              ))}
+            </select>
+            {/* **Ce qu'on lui prend**, et seulement quand il y a une ambiance à
+                qui le prendre. Trois réponses, mesurées sur trois cas réels : un
+                rôdeur des vases prend tout ; une ombre rampante, de forme
+                complètement différente des références, ne prend que les
+                couleurs ; une version noire d'un personnage prend les couleurs
+                et le texte, mais garde sa propre image. */}
+            {personnage.ambiance && (
+              <select
+                value={personnage.prend ?? "tout"}
+                aria-label="Ce qu'elle prend à son ambiance"
+                onChange={(e) => void poser({ prend: e.target.value })}
+                className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-1 text-[11px] text-texte-2"
+              >
+                {CE_QU_ON_PREND.map((quoi) => (
+                  <option key={quoi} value={quoi}>
+                    elle lui prend {NOM_DE_CE_QU_ON_PREND[quoi]}
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              La palette agit au retour, sur la machine : rien n'est payé, et ce
+              qui est déjà fait suit.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">

@@ -1369,17 +1369,46 @@ simplement sur le jeu.
 
 #### Critères d'acceptation
 
-- [ ] Plusieurs palettes nommées coexistent dans un jeu, et celle du projet en est une comme les autres
-- [ ] Une palette se recalcule de ses sources, ses sources peuvent être d'autres palettes, et ses retouches se défont une par une
-- [ ] Chaque couleur du résultat dit d'où elle vient ; une couleur retirée reste montrée barrée et se remet d'un clic
-- [ ] La palette se juge posée sur de vraies images du jeu, côte à côte
-- [ ] Une ambiance porte une palette, des images de référence et trois textes, et rien d'autre
-- [ ] Les textes qui portent la mécanique du jeu ne sont pas ouverts à une ambiance
-- [ ] Une chose du jeu désigne son ambiance sur sa fiche ; aucune collection ne décide d'une ambiance
-- [ ] Les deux écrans disent qui utilise une ambiance et ce que chacun lui prend
-- [ ] Supprimer une ambiance ne détruit aucune image ; ce qui s'en servait retombe sur le jeu
-- [ ] Aucun appel payant n'est ajouté : la fusion des palettes et la correction des couleurs se font sur la machine
-- [ ] L'attraction est grisée avec sa raison quand la proportion ne laisse aucune couleur à l'ambiance — mesuré : dans ce cas seul, les cinq valeurs rendent le même fichier
+- [x] Plusieurs palettes nommées coexistent dans un jeu, et celle du projet en est une comme les autres
+- [x] Une palette se recalcule de ses sources, ses sources peuvent être d'autres palettes, et ses retouches se défont une par une
+- [x] Chaque couleur du résultat dit d'où elle vient ; une couleur retirée reste montrée barrée et se remet d'un clic
+- [x] La palette se juge posée sur de vraies images du jeu, côte à côte
+- [x] Une ambiance porte une palette, des images de référence et trois textes, et rien d'autre
+- [x] Les textes qui portent la mécanique du jeu ne sont pas ouverts à une ambiance
+- [x] Une chose du jeu désigne son ambiance sur sa fiche ; aucune collection ne décide d'une ambiance
+- [x] Les deux écrans disent qui utilise une ambiance et ce que chacun lui prend
+- [x] Supprimer une ambiance ne détruit aucune image ; ce qui s'en servait retombe sur le jeu
+- [x] Aucun appel payant n'est ajouté : la fusion des palettes et la correction des couleurs se font sur la machine
+- [x] L'attraction est grisée avec sa raison quand la proportion ne laisse aucune couleur à l'ambiance — mesuré : dans ce cas seul, les cinq valeurs rendent le même fichier
+
+#### Ce qui a été décidé en la faisant
+
+**Chaque couleur du résultat est vraiment l'une de celles d'une source.** La coupe médiane
+rend des moyennes — le milieu d'un seau —, et une moyenne n'est la couleur d'aucune source :
+la pastille aurait dit « venue du jeu » en montrant une teinte que le jeu ne porte pas. Chaque
+seau revient donc à la couleur réelle la plus proche. C'est le seul écart avec le banc
+d'essai, et il **ajoute** une garantie plutôt qu'il n'en retire : la mesure des deux curseurs
+est refaite après le raccrochage et donne le même compte — 21 résultats distincts sur 25.
+
+**Une source seule donne toute la palette.** Le curseur de proportion partage entre la
+première source et les suivantes ; sans suivante, il n'a rien à partager. Le laisser décider
+aurait rendu une palette **vide** sur le cas le plus courant — celui de la palette du jeu, qui
+n'a jamais qu'une source. Il est alors absent avec sa raison, et l'attraction est grisée avec
+la sienne.
+
+**L'empreinte porte les couleurs résolues, pas la liste des sources.** Sans ça, ajouter une
+carte à un paquet n'aurait rien recalculé, et c'est très exactement ce que la tranche promet
+de préserver : promouvoir une image se propage jusqu'en bas, même à travers une ambiance
+retouchée à la main.
+
+**Ce qu'une chose prend à son ambiance vit sur la chose.** Trois réponses — tout, les couleurs
+seulement, tout sauf les images —, mesurées sur les trois cas réels de la maquette. Ce que
+*chaque génération* a réellement pris reste à E14 : c'est une autre question, et la même
+liste écrite à deux endroits aurait divergé.
+
+**Les deux gestes du paquet cessent d'être grisés.** Ils portaient leur raison depuis E7 —
+« les palettes et les ambiances n'ont pas encore d'écran où vivre » — et cet écran existe. La
+raison a disparu parce qu'elle a cessé d'être vraie, pas parce qu'on l'a effacée.
 
 #### Bloquée par
 

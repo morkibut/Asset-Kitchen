@@ -41,6 +41,7 @@ from atelier.domaine.equipement import (
     emplacements_depuis_json,
     pieces_depuis_json,
 )
+from atelier.domaine.ambiance import Ambiance, Palette
 from atelier.domaine.plan import (
     PLAN_PAR_DEFAUT,
     Pose,
@@ -573,6 +574,23 @@ class Projet:
     # construction.
     references_ecartees: tuple[str, ...] = ()
 
+    # ── Les palettes et les ambiances, arrivées en E11 ───────────────────────
+    #
+    # **La palette du projet en est une comme les autres**, et c'est la
+    # simplification qui tient toute la tranche : le projet *est* l'ambiance
+    # générale du jeu — une palette, des images officielles, des cases de texte.
+    # Il n'y a donc pas deux notions à apprendre. La sienne reste sur
+    # `univers.palette`, où trente routes la lisent déjà ; celles-ci sont des
+    # objets nommés, en plusieurs exemplaires, qu'on assemble à partir d'elle.
+    palettes: tuple[Palette, ...] = ()
+    ambiances: tuple[Ambiance, ...] = ()
+
+    def palette_nommee(self, identifiant: str) -> "Palette | None":
+        return next((p for p in self.palettes if p.identifiant == identifiant), None)
+
+    def ambiance(self, identifiant: str) -> "Ambiance | None":
+        return next((a for a in self.ambiances if a.identifiant == identifiant), None)
+
     def avec(self, univers: Univers) -> "Projet":
         return replace(self, univers=univers)
 
@@ -591,6 +609,17 @@ class Projet:
             "emplacements": [e.en_json() for e in self.emplacements],
             "pieces": [p.en_json() for p in self.pieces],
             "references_ecartees": list(self.references_ecartees),
+            # ── Les deux listes du côté Ambiances (E11) ──────────────────────
+            #
+            # **Elles vivent sur le projet, pas sur l'univers**, et c'est
+            # délibéré : l'univers est ce que le jeu impose à tout ce qui rentre
+            # — la bible, le barème, la taille de pixel —, et le poser réécrit
+            # ce que le message porte. Une palette et une ambiance sont des
+            # objets qu'on crée, nomme et supprime un par un ; les glisser dans
+            # l'univers les aurait exposées au motif payé trois fois : un
+            # message partiel traité comme un objet entier (`docs/PIEGES.md`).
+            "palettes": [p.en_json() for p in self.palettes],
+            "ambiances": [a.en_json() for a in self.ambiances],
         }
 
     @staticmethod
@@ -614,6 +643,16 @@ class Projet:
                 r
                 for r in (d.get("references_ecartees") or ())
                 if isinstance(r, str) and r
+            ),
+            palettes=tuple(
+                Palette.depuis_json(p)
+                for p in (d.get("palettes") or ())
+                if isinstance(p, dict) and p.get("identifiant")
+            ),
+            ambiances=tuple(
+                Ambiance.depuis_json(a)
+                for a in (d.get("ambiances") or ())
+                if isinstance(a, dict) and a.get("identifiant")
             ),
         )
 

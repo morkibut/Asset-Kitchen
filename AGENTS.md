@@ -21,11 +21,12 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Onze sont tenues** — `E0` à `E9`, plus `E18` —, et deux gardent un critère
-ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et `E8` les **dix-sept
-vignettes d'exemple**, qui sont une production d'images et non du code — les cases existent
-et disent *pas encore dessinée* tant qu'elles manquent (`docs/vignettes-vues.md` porte les
-consignes). Deux étapes sont ouvertes **sans aucun bloqueur** : `E11` et `E16`. Les
+`docs/PLAN.md`. **Douze sont tenues** — `E0` à `E9`, plus `E11` et `E18` —, et deux gardent un
+critère ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et `E8` les
+**dix-sept vignettes d'exemple**, qui sont une production d'images et non du code — les cases
+existent et disent *pas encore dessinée* tant qu'elles manquent (`docs/vignettes-vues.md`
+porte les consignes). Deux étapes sont ouvertes **sans aucun bloqueur** : `E12`, que `E11`
+vient de débloquer, et `E16`. Les
 arbitrages pris en autonomie et les questions encore ouvertes vivent dans
 `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
 Ce qui viendra après elle viendra d'une séance d'usage, comme

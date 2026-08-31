@@ -42,6 +42,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.agent import DepotRefuse, PlafondAtteint
 from atelier.services.decoupe import DecoupeRefusee
+from atelier.services.ambiances import AmbianceRefusee
 from atelier.services.etiquettes import EtiquetteRefusee
 from atelier.services.superposition import SuperpositionRefusee
 from atelier.services.production import (
@@ -83,6 +84,7 @@ CODES = {
     UniversRefuse: 409,
     DecoupeRefusee: 409,
     EtiquetteRefusee: 409,
+    AmbianceRefusee: 409,
     SuperpositionRefusee: 409,
     ExportRefuse: 409,
     PersonnageInconnu: 404,

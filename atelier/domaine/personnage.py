@@ -36,6 +36,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
+from atelier.domaine.ambiance import CE_QU_ON_PREND, TOUT
 from atelier.domaine.plan import Pose, plan_depuis_json
 
 
@@ -60,6 +61,20 @@ class Personnage:
     # personnages voient paraître une case vide qui ne les concerne pas.
     ajoutees: tuple[Pose, ...] = ()
 
+    # ── Son ambiance, et ce qu'elle lui prend (E11) ──────────────────────────
+    #
+    # **Une ambiance ne s'impose pas : on la désigne, puis on choisit ce qu'on
+    # lui prend.** C'est ce qui distingue le modèle retenu de celui qui avait
+    # été écrit avant — trois étages d'héritage automatique, abandonnés. Ici ce
+    # n'est plus un héritage subi, c'est un choix.
+    #
+    # **Et c'est la chose du jeu qui la porte, jamais la collection où elle est
+    # rangée.** Une collection reste un dossier qui ne décide de rien : grouper
+    # vingt monstres et régler leur style sont deux gestes différents, et les
+    # confondre ferait qu'un rangement changerait des réglages.
+    ambiance: str = ""
+    prend: str = TOUT
+
     # Les poses du plan que ce personnage **ne tient pas** — voir l'en-tête.
     # Une entrée qui ne désigne plus rien ne gêne pas : elle ne peut écarter
     # qu'une pose qui existe, et une pose retirée du plan ne revient pas par
@@ -78,6 +93,14 @@ class Personnage:
     cree_le: float = field(default_factory=time.time)
 
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
+
+    def prend_de(self, ambiance: str) -> str:
+        """Ce que cette chose prend à l'ambiance qu'elle désigne (E11).
+
+        Sans ambiance, la question ne se pose pas : le vide est la réponse, et
+        non un défaut qu'on n'aurait pas rempli.
+        """
+        return self.prend if self.ambiance == ambiance and ambiance else ""
 
     def tenues(self, plan: Iterable[Pose]) -> tuple[Pose, ...]:
         """Les poses de ce personnage, dans l'ordre du plan.
@@ -116,6 +139,8 @@ class Personnage:
             "description": self.description,
             "type": self.type,
             "ajoutees": [p.en_json() for p in self.ajoutees],
+            "ambiance": self.ambiance,
+            "prend": self.prend,
             "ecartees": list(self.ecartees),
             "concept_arts": list(self.concept_arts),
             "references_ecartees": list(self.references_ecartees),
@@ -131,6 +156,14 @@ class Personnage:
             description=d.get("description", ""),
             type=str(d.get("type") or ""),
             ajoutees=plan_depuis_json(d.get("ajoutees") or []),
+            ambiance=str(d.get("ambiance") or ""),
+            # Une valeur inconnue retombe sur « tout » : la liste est fermée, et
+            # un fichier ne la rouvre pas.
+            prend=(
+                str(d.get("prend"))
+                if str(d.get("prend") or "") in CE_QU_ON_PREND
+                else TOUT
+            ),
             ecartees=tuple(_textes(d.get("ecartees"))),
             concept_arts=tuple(_textes(d.get("concept_arts"))),
             references_ecartees=tuple(_textes(d.get("references_ecartees"))),
