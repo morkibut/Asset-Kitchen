@@ -1,0 +1,142 @@
+{
+ "releve_le": 1788199097.1716363,
+ "fournisseurs": [
+  {
+   "fournisseur": "Pollinations",
+   "cle_requise": false,
+   "cle_presente": true,
+   "catalogue_declare": [
+    "sana"
+   ],
+   "appels": [
+    {
+     "nom": "1024 carré demandé",
+     "demande": {
+      "width": 1024,
+      "height": 1024,
+      "model": "sana",
+      "seed": 11,
+      "nologo": "true"
+     },
+     "statut": 200,
+     "duree_s": 2.1,
+     "type_annonce": "image/jpeg",
+     "octets": 26990,
+     "modele_utilise": "sana",
+     "consomme": "1",
+     "authentification": "unauthenticated",
+     "cache": "MISS",
+     "mesure": {
+      "largeur": 768,
+      "hauteur": 768,
+      "format": "JPEG"
+     }
+    },
+    {
+     "nom": "1024x512 demandé",
+     "demande": {
+      "width": 1024,
+      "height": 512,
+      "model": "sana",
+      "seed": 11,
+      "nologo": "true"
+     },
+     "statut": 200,
+     "duree_s": 28.7,
+     "type_annonce": "image/jpeg",
+     "octets": 37098,
+     "modele_utilise": "sana",
+     "consomme": "1",
+     "authentification": "unauthenticated",
+     "cache": "MISS",
+     "mesure": {
+      "largeur": 1024,
+      "hauteur": 512,
+      "format": "JPEG"
+     }
+    },
+    {
+     "nom": "modèle inexistant",
+     "demande": {
+      "width": 512,
+      "height": 512,
+      "model": "nexistepas",
+      "seed": 11
+     },
+     "statut": 200,
+     "duree_s": 27.5,
+     "type_annonce": "image/jpeg",
+     "octets": 16845,
+     "modele_utilise": "sana",
+     "consomme": "1",
+     "authentification": "unauthenticated",
+     "cache": "MISS",
+     "mesure": {
+      "largeur": 512,
+      "hauteur": 512,
+      "format": "JPEG"
+     }
+    },
+    {
+     "nom": "modèle réservé « kontext »",
+     "demande": {
+      "width": 512,
+      "height": 512,
+      "model": "kontext",
+      "seed": 11
+     },
+     "statut": 500,
+     "duree_s": 0.2,
+     "type_annonce": "application/json",
+     "octets": 577,
+     "modele_utilise": null,
+     "consomme": null,
+     "authentification": null,
+     "cache": "MISS",
+     "refus": "{\"error\":\"Internal Server Error\",\"message\":\"kontext model is only available on enter.pollinations.ai. Visit https://enter.pollinations.ai/?ref=image to get started.\",\"debug\":null,\"timingInfo\":[{\"step\":\"Request received and queued.\",\"timestamp\":0}],\"requestId\":\"jk3rud\",\"requestParameters\":{\"prompt\":\""
+    },
+    {
+     "nom": "adresse hors /prompt",
+     "statut": 200,
+     "type_annonce": "image/jpeg",
+     "octets": 141424,
+     "mesure": {
+      "largeur": 768,
+      "hauteur": 768,
+      "format": "JPEG"
+     }
+    }
+   ]
+  },
+  {
+   "fournisseur": "Cloudflare Workers AI",
+   "cle_requise": true,
+   "cle_presente": false,
+   "manque": [
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN"
+   ],
+   "a_mesurer": [
+    "la liste des modèles image que le compte voit réellement",
+    "ce qu'une image consomme en neurones, mesuré et non calculé",
+    "la taille rendue par flux-1-schnell, qui ne déclare ni largeur ni hauteur",
+    "si les quatre images d'entrée de flux-2-dev passent bien en multipart",
+    "si flux-2-dev reprend le sujet de la référence, comme klein-4b l'a fait"
+   ]
+  },
+  {
+   "fournisseur": "Leonardo",
+   "cle_requise": true,
+   "cle_presente": false,
+   "manque": [
+    "LEONARDO_API_KEY"
+   ],
+   "a_mesurer": [
+    "si une clé d'API se crée sans payer, et avec quel crédit de départ",
+    "ce que /me annonce comme jetons restants, et s'ils se renouvellent",
+    "la liste de /platformModels et leurs plafonds de références",
+    "combien de temps sépare la soumission de l'image"
+   ]
+  }
+ ]
+}
