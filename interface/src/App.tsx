@@ -246,6 +246,14 @@ export function App() {
   // d'Ariane la nomme : cinq familles portent des choses, et un fil qui dirait
   // toujours *Personnages* mentirait dans quatre cas sur cinq.
   const [rubrique, setRubrique] = useState<Rubrique>("personnages")
+  // **On ne rouvre l'assistant qu'une fois** (E19) : le message d'état repart à
+  // chaque rebranchement du flux, et une porte qui se rouvre sous les doigts de
+  // quelqu'un qui travaille n'est plus une porte.
+  const premierLancementVu = useRef(false)
+  // **Le champ qui nomme s'allume quand on sort de l'assistant** (E19). Un
+  // compteur plutôt qu'un drapeau : deux sorties de suite doivent l'allumer deux
+  // fois, et un booléen déjà à vrai ne redéclencherait rien.
+  const [nommer, setNommer] = useState(0)
   const [directions, setDirections] = useState<DirectionsDuJeu>({
     directions: [],
     origine: "vue",
@@ -809,6 +817,17 @@ export function App() {
     return ecouter({
       etat: (recu) => {
         setEtat(recu)
+        // **L'atelier neuf ouvre l'assistant** (E19) — la seule minute que
+        // personne ne revoit jamais. Une seule fois par onglet : ce message
+        // repart à chaque rebranchement du flux, et rouvrir l'assistant sous
+        // les doigts de quelqu'un qui travaille serait une porte qui se referme
+        // sur lui. Le serveur, lui, dit un fait — *l'atelier n'a encore rien* —
+        // et il cesse d'être vrai au premier geste.
+        if (recu.premier_lancement && !premierLancementVu.current) {
+          premierLancementVu.current = true
+          setOnglet("univers")
+          setCoteUnivers("reglages")
+        }
         setBibliotheque(recu.bibliotheque)
         setUnivers(recu.univers ?? UNIVERS_VIDE)
         empreinteUnivers.current = JSON.stringify(recu.univers ?? UNIVERS_VIDE)
@@ -1739,6 +1758,14 @@ export function App() {
           setFente(null)
           setDepensesOuvertes(true)
         }}
+        // **L'état de la clé, dès la première seconde** (E19). Il vivait dans
+        // la barre du bas ; il monte ici, et il n'y est écrit **qu'une fois** —
+        // la même valeur à deux endroits est deux endroits à tenir d'accord.
+        cle={etat ? { presente: etat.cle.presente, apercu: etat.cle.apercu } : null}
+        // **Trois portes, une seule pièce** : ce mot-ci, l'étape 10 de
+        // l'assistant, et le bouton qui paie éteint mènent tous les trois au
+        // champ où la clé habite.
+        onReglagesCle={() => setReglagesOuverts(true)}
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
         fente={fente}
@@ -1958,6 +1985,14 @@ export function App() {
           personnages={personnages}
           cote={coteUnivers}
           onCote={setCoteUnivers}
+          // **On sort de l'assistant à n'importe quelle étape** (E19), et l'on
+          // tombe dans le codex, champ qui nomme allumé. Pas dans la galerie :
+          // elle ne montre que des images produites, et il n'y en a aucune.
+          onSortirDeLAssistant={() => {
+            setOnglet("codex")
+            setRubrique("personnages")
+            setNommer((n) => n + 1)
+          }}
           vue={vueUnivers}
           onVue={setVueUnivers}
           replies={{ univers: replies.univers, reserve: replies.reserve }}
@@ -1988,6 +2023,7 @@ export function App() {
           onDirections={setDirections}
           rubrique={rubrique}
           onRubrique={setRubrique}
+          nommer={nommer}
           onPlan={(recu) => {
             // Le plan touché **et les choses avec** (E9) : la liste d'une chose
             // dépend du plan, et le serveur seul sait laquelle. Le plan est posé
@@ -2492,11 +2528,12 @@ function BarreEtat({
       >
         {etat?.catalogue.modeles ?? 0} modèles
       </button>
-      <span>
-        {assets} asset{assets > 1 ? "s" : ""}
-      </span>
+      {/* **La clé est montée dans la barre du haut** (E19), et elle n'est plus
+          ici : elle est le seul préalable dur du produit, elle se lit dès la
+          première seconde, et la même valeur à deux endroits serait deux
+          endroits à tenir d'accord. */}
       <span className="ml-auto">
-        {etat?.cle.presente ? `clé …${etat.cle.apercu}` : "aucune clé"}
+        {assets} asset{assets > 1 ? "s" : ""}
       </span>
     </footer>
   )

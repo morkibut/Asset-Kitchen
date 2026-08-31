@@ -44,6 +44,7 @@ export function EcranReglages({
 }) {
   return (
     <div
+      data-reglages
       className="fixed inset-0 z-10 flex items-start justify-center overflow-y-auto bg-fond-0/70 py-[8vh]"
       onClick={onFermer}
     >

@@ -1853,12 +1853,49 @@ que cette étape ferme — sans en creuser un autre, qui serait un tunnel.
 
 #### Critères d'acceptation
 
-- [ ] L'assistant s'ouvre à la première ouverture de l'atelier, sur un jeu qui existe déjà
-- [ ] On en sort à n'importe quelle étape, et l'on arrive dans le codex avec le champ qui nomme allumé
-- [ ] La clé se dépose depuis l'assistant, et c'est la même valeur au même endroit que dans la fenêtre des réglages
-- [ ] La barre du haut dit « aucune clé » dès la première seconde
-- [ ] Le compte des écrans obligatoires du produit est zéro, et un essai le vérifie
-- [ ] Sur une installation neuve, on atteint un prompt actif sans avoir répondu à une seule question
+- [x] L'assistant s'ouvre à la première ouverture de l'atelier, sur un jeu qui existe déjà
+- [x] On en sort à n'importe quelle étape, et l'on arrive dans le codex avec le champ qui nomme allumé
+- [x] La clé se dépose depuis l'assistant, et c'est la même valeur au même endroit que dans la fenêtre des réglages
+- [x] La barre du haut dit « aucune clé » dès la première seconde
+- [x] Le compte des écrans obligatoires du produit est zéro, et un essai le vérifie
+- [x] Sur une installation neuve, on atteint un prompt actif sans avoir répondu à une seule question
+
+#### Ce qui a été décidé en la faisant
+
+**Le premier lancement est un fait, jamais un drapeau.** Le reconnaître demandait de savoir
+si on l'avait déjà vu ; un drapeau posé une fois aurait été un état de plus à tenir, à effacer
+quand on remet l'atelier à zéro, et à expliquer le jour où il se serait désaccordé du disque.
+Trois faits suffisent : **aucune image nulle part, un seul jeu, et il porte encore le nom que
+le produit lui a donné**. Chacun cesse d'être vrai au premier geste — importer, nommer son
+jeu, en créer un second —, et c'est exactement quand la porte doit se refermer.
+
+**La clé n'en fait pas partie**, et c'est délibéré : elle peut venir de l'environnement,
+posée par quelqu'un qui n'a jamais ouvert l'atelier. Un jeu neuf reste un jeu neuf, et
+l'étape 10 dira simplement qu'elle est déjà là.
+
+**Et l'assistant ne se rouvre qu'une fois par onglet.** Le message d'état repart à chaque
+rebranchement du flux ; le rejouer aurait ramené l'écran de la première minute par-dessus ce
+qu'on était en train de faire. Une porte qui se rouvre sous les doigts de quelqu'un n'est plus
+une porte.
+
+**La clé est montée dans la barre du haut, et elle a quitté celle du bas.** Elle est le seul
+préalable dur du produit : la lire ne doit pas demander d'ouvrir quoi que ce soit. Écrite aux
+deux endroits, elle aurait été **deux endroits à tenir d'accord** pour une seule valeur — et
+sans clé, le mot mène au champ, comme le bouton qui paie éteint porte déjà sa raison *et* le
+chemin vers son réglage. Trois portes, une seule pièce.
+
+**Le champ qui nomme réclame le curseur après tout le monde.** La barre qui paie monte dans la
+même passe et le prend sans condition — c'est le geste de l'atelier, et il a raison partout
+ailleurs. En sortant de l'assistant, le geste demandé est de *nommer* : le champ le réclame
+donc à la frame suivante, quand chacun a fini de se monter. Écrit ici parce que ça se lit
+comme un détail et que c'en est un — mais un détail qui décide de ce que le premier geste du
+produit peut être.
+
+**Vérifié sur une installation vraiment neuve, et pas sur celle de l'auteur.** Le banc de
+`tests/test_e19.py` monte un atelier vide à chaque essai : c'est le seul endroit du dépôt où
+la seconde zéro se rejoue à volonté. Ce qui a été vu au navigateur, sur le vrai projet, est ce
+qui s'y voit — la clé dans la barre du haut, et la sortie de l'assistant qui dépose dans le
+codex, curseur dans le champ qui nomme.
 
 #### Bloquée par
 

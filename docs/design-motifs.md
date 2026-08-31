@@ -110,8 +110,15 @@ phrase de liaison, **la date** de la photo servie, et — quand le port a su la 
 **la cause**. Elle ne prédit jamais.
 
 ```
- ● hors ligne · catalogue du 26/08 14:02 · aucune connexion au fournisseur · 2 modèles · clé …a1b2
+ ● hors ligne · catalogue du 26/08 14:02 · aucune connexion au fournisseur · 2 modèles
 ```
+
+**La clé a quitté cette barre le 31 août 2026** (E19). Elle y figurait en dernier segment, et
+elle est montée dans la **barre du haut** : elle est le seul préalable dur du produit, elle se
+lit à la seconde zéro d'une installation neuve, et l'écrire aux deux endroits aurait fait deux
+endroits à tenir d'accord pour une seule valeur. Ce n'est pas une exception au paragraphe
+ci-dessus — c'est le même raisonnement, appliqué à un fait qui compte avant qu'on ait cliqué
+quoi que ce soit. Sans clé, le mot mène au champ, comme le bouton qui paie éteint.
 
 **Chacun de ces trois faits est un segment à lui**, et c'est ce qui les rend robustes : la phrase
 de liaison est disputée — une génération refusée ou un flux rompu la prennent, et à juste titre,

@@ -1615,6 +1615,13 @@ export type EtatCatalogueCourt = {
 
 export type Etat = {
   cle: EtatCle
+  /** **L'atelier n'a encore rien** (E19) : aucune image, un seul jeu, et il
+   *  porte encore le nom que le produit lui a donné. C'est là que l'assistant
+   *  s'ouvre — la seule minute que personne ne revoit jamais.
+   *
+   *  Un fait, jamais un drapeau : il cesse d'être vrai au premier geste, et
+   *  c'est exactement quand la porte doit se refermer. */
+  premier_lancement: boolean
   catalogue: EtatCatalogueCourt
   couts: { total_usd: number }
   traitement: EtatTraitement

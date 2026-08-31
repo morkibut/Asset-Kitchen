@@ -306,6 +306,12 @@ class Atelier:
         """
         return {
             "cle": etat_cle().en_json(),
+            # **L'atelier n'a encore rien** (E19) : aucune image, un seul jeu, et
+            # il porte encore le nom que le produit lui a donné. C'est là que
+            # l'assistant s'ouvre — la seule minute que personne ne revoit
+            # jamais. Un fait, jamais un drapeau : il cesse d'être vrai au
+            # premier geste, et c'est exactement quand la porte doit se fermer.
+            "premier_lancement": self.bibliotheque.neuf(),
             "catalogue": self.catalogue.en_json(),
             "couts": {"total_usd": self.generations.total_couts()},
             # Ce que le post-traitement sait faire **sur cette machine**, et ce

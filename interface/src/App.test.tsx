@@ -375,6 +375,9 @@ const BIBLIOTHEQUE: Bibliotheque = {
 
 const ETAT: Etat = {
   cle: { presente: true, origine: "fichier", apercu: "abcdef", raison: null },
+  // **L'atelier des essais n'est pas neuf** : il a un jeu nommé et des images.
+  // Le premier lancement se mesure à part, dans le bloc de E19.
+  premier_lancement: false,
   catalogue: { modeles: 1, recu_le: CATALOGUE.recu_le, repli: false, raison: null },
   couts: { total_usd: 0 },
   traitement: {
@@ -9990,6 +9993,173 @@ describe("le codex généralisé", () => {
     for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"]) {
       expect(etabli.getByRole("button", { name: `Fabriquer ${attitude}` })).toBeTruthy()
     }
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E19 · Le premier lancement
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : la seule minute que personne ne revoit jamais.
+// L'assistant qui s'ouvre sur un atelier neuf et sur lui seul, la sortie à
+// n'importe quelle étape qui dépose dans le codex avec le champ qui nomme
+// allumé, la barre du haut qui dit *aucune clé* dès la première seconde, et le
+// compte des écrans obligatoires — zéro. Ce qui se calcule — ce qui fait qu'un
+// atelier est neuf, et ce qui referme la porte — vit dans `tests/test_e19.py`.
+
+describe("le premier lancement", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** L'état d'un atelier qui n'a encore rien : aucune image, un seul jeu qui
+   *  porte le nom que le produit lui a donné, et aucune clé. */
+  const NEUF: Etat = {
+    ...ETAT,
+    premier_lancement: true,
+    cle: { presente: false, origine: "absente", apercu: "", raison: "aucune clé OpenRouter" },
+    assets: [],
+    generations: [],
+  }
+
+  const ouvrir = async (etat: Etat) => {
+    const double = serveurDouble({ personnages: [] })
+    const flux = await monter(double.fetchDouble, etat)
+    return { ...double, flux }
+  }
+
+  // ── « L'assistant s'ouvre à la première ouverture de l'atelier » ──────────
+
+  test("un atelier neuf ouvre l'assistant, sur un jeu qui existe déjà", async () => {
+    await ouvrir(NEUF)
+
+    // L'onglet Univers, côté Réglages : c'est l'assistant, dans son humeur
+    // première fois.
+    await waitFor(() =>
+      expect(document.querySelector("[data-assistant]")).toBeTruthy(),
+    )
+    expect(
+      screen.getByRole("tab", { name: "Univers" }).getAttribute("aria-selected"),
+    ).toBe("true")
+  })
+
+  test("un atelier déjà servi n'ouvre pas l'assistant", async () => {
+    // **La porte se referme au premier geste**, et elle ne se rouvre pas sous
+    // les doigts de quelqu'un qui travaille.
+    await ouvrir(ETAT)
+
+    expect(document.querySelector("[data-assistant]")).toBeNull()
+    expect(
+      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+    ).toBe("true")
+  })
+
+  test("un second message d'état ne rouvre pas l'assistant", async () => {
+    // Ce message repart **une fois par abonnement**, donc à chaque
+    // rebranchement du flux : le rejouer ne doit pas ramener l'écran de la
+    // première minute par-dessus ce qu'on est en train de faire.
+    const { flux } = await ouvrir(NEUF)
+    await waitFor(() =>
+      expect(document.querySelector("[data-assistant]")).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+
+    await act(async () => {
+      flux.emettre("etat", NEUF)
+    })
+
+    expect(document.querySelector("[data-assistant]")).toBeNull()
+  })
+
+  // ── « La barre du haut dit aucune clé dès la première seconde » ───────────
+
+  test("la barre du haut dit « aucune clé », et elle mène au champ", async () => {
+    await ouvrir(NEUF)
+
+    const dit = await screen.findByRole("button", { name: "aucune clé" })
+    expect(dit).toBeTruthy()
+    // **Ce qui est indisponible porte sa raison et le chemin vers son
+    // réglage** — jamais un constat sans issue.
+    fireEvent.click(dit)
+    await waitFor(() =>
+      expect(document.querySelector("[data-reglages]")).toBeTruthy(),
+    )
+  })
+
+  test("une clé posée se lit dans la barre du haut, et nulle part ailleurs", async () => {
+    await ouvrir(ETAT)
+
+    expect(await screen.findByText("clé …abcdef")).toBeTruthy()
+    // Une seule fois dans tout l'écran : la même valeur à deux endroits serait
+    // deux endroits à tenir d'accord.
+    expect(screen.getAllByText(/clé …abcdef/)).toHaveLength(1)
+  })
+
+  // ── « On en sort à n'importe quelle étape » ───────────────────────────────
+
+  test("on sort de l'assistant dès la première étape, et l'on tombe dans le codex", async () => {
+    await ouvrir(NEUF)
+    await waitFor(() =>
+      expect(document.querySelector("[data-assistant]")).toBeTruthy(),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "j'ai fini pour l'instant" }))
+
+    // **Pas dans la galerie** : elle ne montre que des images produites, et il
+    // n'y en a aucune.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+      ).toBe("true"),
+    )
+    const champ = await screen.findByLabelText("Nom de la chose du jeu à créer")
+    // **Le champ qui nomme est allumé** — c'est le seul geste que cet écran a à
+    // proposer, et le curseur y va. À la frame suivante : la barre qui paie
+    // monte dans la même passe et prend le curseur sans condition, et c'est le
+    // geste demandé qui le lui reprend.
+    await waitFor(() => expect(document.activeElement).toBe(champ))
+  })
+
+  // ── « Le compte des écrans obligatoires est zéro » ────────────────────────
+
+  test("sur une installation neuve, on atteint un prompt actif sans répondre à rien", async () => {
+    // Le critère de réussite du produit, mesuré de bout en bout : de la seconde
+    // zéro au champ qui paie, sans qu'une seule question ait reçu de réponse.
+    const { fetchDouble } = await ouvrir(NEUF)
+    await waitFor(() =>
+      expect(document.querySelector("[data-assistant]")).toBeTruthy(),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "j'ai fini pour l'instant" }))
+    const champ = await screen.findByLabelText("Nom de la chose du jeu à créer")
+    fireEvent.change(champ, { target: { value: "un tonneau cerclé de fer" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(
+          ([url, init]) =>
+            String(url) === "/api/characters" &&
+            (init as RequestInit)?.method === "POST",
+        ),
+      ).toBe(true),
+    )
+    // La chose entre dans le codex, et son établi porte le champ qui paie.
+    const etabli = await ouvrirLEtabli("un tonneau cerclé de fer")
+    expect(etabli).toBeTruthy()
+    expect(
+      await screen.findByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeTruthy()
   })
 })
 

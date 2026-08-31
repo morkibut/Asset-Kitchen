@@ -793,6 +793,31 @@ class ServiceBibliotheque:
             "total_usd": self._base.total_par_projet(None),
         }
 
+    def neuf(self) -> bool:
+        """**L'atelier n'a encore rien** — et c'est un fait, pas un drapeau (E19).
+
+        Le premier lancement est la seule minute que personne ne revoit jamais,
+        et c'est là que l'assistant s'ouvre. Le reconnaître demandait de savoir
+        si on l'avait déjà vu ; **un drapeau posé une fois** aurait été un état
+        de plus à tenir, à effacer quand on remet l'atelier à zéro, et à
+        expliquer le jour où il se serait désaccordé du disque.
+
+        Trois faits suffisent, et ils cessent d'être vrais au premier geste :
+        aucune image nulle part, **un seul jeu**, et il porte encore le nom que
+        le produit lui a donné. Importer une image, nommer son jeu, en créer un
+        second — n'importe lequel referme la porte, et c'est exactement quand
+        elle doit se refermer.
+
+        **La clé n'en fait pas partie.** Elle peut venir de l'environnement,
+        posée par quelqu'un qui n'a jamais ouvert l'atelier ; un jeu neuf reste
+        un jeu neuf, et l'étape de la clé dira simplement qu'elle est déjà là.
+        """
+        projets = self.projets()
+        if len(projets) != 1 or projets[0].nom != NOM_BAC_A_SABLE:
+            return False
+        combien = self._base.compter_par_projet()
+        return not any(combien.values())
+
     # ── Outils ───────────────────────────────────────────────────────────────
 
     def _trouver(self, identifiant: str, *, supprimes: bool = False) -> Asset:

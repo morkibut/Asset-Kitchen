@@ -108,6 +108,7 @@ const GROUPES = ["le jeu", "le style", "la production", "l'atelier"] as const
  * étapes n'existait nulle part. Une étape à la fois tient dans un écran.
  */
 export function Assistant({
+  onSortir,
   univers,
   modeles,
   artworks,
@@ -115,6 +116,11 @@ export function Assistant({
   onErreur,
   onRealigner,
 }: {
+  /** **Sortir de l'assistant** (E19) : on tombe dans le codex, avec le champ
+   *  qui nomme allumé. Absent quand l'assistant est ouvert comme écran de
+   *  réglages ordinaire — il n'y a alors nulle part d'où sortir, on y est
+   *  venu exprès. */
+  onSortir?: () => void
   univers: Univers
   modeles: Modele[]
   artworks: Carte[]
@@ -286,9 +292,18 @@ export function Assistant({
               étape {rang + 1} sur {ETAPES.length}
             </span>
           )}
+          {/* **Une porte n'en est une que si elle s'ouvre dans les deux
+              sens** (E19). Elle ne se contentait plus d'arrêter l'enchaînement :
+              on tombe dans le codex, avec le champ qui nomme allumé — pas dans
+              la galerie, qui ne montre que des images produites et n'en a
+              aucune. On peut partir dès l'étape 1 et fabriquer quand même. */}
           <button
             type="button"
-            onClick={() => setEnchaine(false)}
+            onClick={() => {
+              setEnchaine(false)
+              onSortir?.()
+            }}
+            title="rien n'est exigé — une étape passée reste passée, et se rouvre d'un clic"
             className="text-texte-2 hover:text-signal"
           >
             j'ai fini pour l'instant

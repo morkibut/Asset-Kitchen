@@ -25,7 +25,7 @@
 // remplace le nom de l'onglet. Il vit dans `Personnages.tsx`, qui le portait
 // déjà sous le nom de fiche.
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   api,
   type Direction,
@@ -124,6 +124,7 @@ export function EcranCodex({
   directions,
   rubrique,
   onRubrique,
+  nommer,
   personnages,
   emplacements,
   pieces,
@@ -148,6 +149,11 @@ export function EcranCodex({
    *  toujours *Personnages* mentirait dans quatre cas sur cinq. */
   rubrique: Rubrique
   onRubrique: (rubrique: Rubrique) => void
+  /** **Allumer le champ qui nomme** (E19) — il change de valeur quand on sort
+   *  de l'assistant. Un compteur plutôt qu'un drapeau : deux sorties de suite
+   *  doivent l'allumer deux fois, et un booléen déjà à vrai ne redéclencherait
+   *  rien. */
+  nommer: number
   personnages: Personnage[]
   emplacements: EmplacementCorps[]
   pieces: Piece[]
@@ -263,6 +269,7 @@ export function EcranCodex({
             // codex ne connaît plus de famille de seconde classe.
             <ListeDesChoses
               famille={rubrique}
+              nommer={nommer}
               personnages={deLaFamille(personnages, rubrique)}
               ambiances={ambiances}
               plan={plan}
@@ -477,6 +484,7 @@ function manque(personnage: Personnage, plan: Pose[], pieces: Piece[]): number {
 
 function ListeDesChoses({
   famille,
+  nommer,
   personnages,
   ambiances,
   plan,
@@ -492,6 +500,8 @@ function ListeDesChoses({
    *  cerclé de fer » tapé sous *Objets* y reste, parce que le serveur pose le
    *  premier type de cette famille-là. */
   famille: string
+  /** Le signal qui allume le champ qui nomme (E19). */
+  nommer: number
   personnages: Personnage[]
   /** Les ambiances du jeu, **demandées une fois pour tout l'écran** (E11) : une
    *  par carte aurait fait autant d'appels qu'il y a de choses. Elles ne servent
@@ -555,6 +565,7 @@ function ListeDesChoses({
 
       <ChampQuiNomme
         auMilieu={vide}
+        allumer={nommer}
         famille={famille}
         onCree={(personnage) => {
           onPersonnage(personnage)
@@ -577,11 +588,16 @@ function ListeDesChoses({
  */
 function ChampQuiNomme({
   auMilieu,
+  allumer,
   famille,
   onCree,
   onErreur,
 }: {
   auMilieu: boolean
+  /** **Allumé en sortant de l'assistant** (E19). Il change de valeur à chaque
+   *  sortie ; l'ignorer à zéro évite de voler le curseur à l'ouverture
+   *  ordinaire du codex, où personne n'a demandé à nommer. */
+  allumer: number
   /** **La chose naît dans la famille allumée** (E15). C'est le type qui la
    *  porte, et c'est le serveur qui le pose : l'écran dit où l'on tape, il
    *  n'invente pas de type. */
@@ -590,6 +606,17 @@ function ChampQuiNomme({
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const [nom, setNom] = useState("")
+  const champ = useRef<HTMLInputElement>(null)
+
+  // **Après tout le monde, et c'est voulu.** La barre qui paie monte dans la
+  // même passe et prend le curseur sans condition — c'est le geste de l'atelier,
+  // et il a raison partout ailleurs. Ici le geste demandé est de *nommer* : on
+  // le réclame donc à la frame suivante, quand chacun a fini de se monter.
+  useEffect(() => {
+    if (allumer <= 0) return
+    const trame = requestAnimationFrame(() => champ.current?.focus())
+    return () => cancelAnimationFrame(trame)
+  }, [allumer])
 
   const creer = async () => {
     const propre = nom.trim()
@@ -611,6 +638,7 @@ function ChampQuiNomme({
       ].join(" ")}
     >
       <input
+        ref={champ}
         value={nom}
         onChange={(e) => setNom(e.target.value)}
         onKeyDown={(e) => {

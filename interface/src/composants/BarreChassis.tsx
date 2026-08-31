@@ -109,6 +109,44 @@ function Fil({ chemin }: { chemin: readonly Segment[] }) {
   )
 }
 
+// ── La clé, dès la première seconde (E19) ───────────────────────────────────
+
+/**
+ * `clé …a41c` ou `aucune clé`, dans la barre du haut.
+ *
+ * **Le seul préalable dur du produit se lit sans ouvrir quoi que ce soit.** Sur
+ * une machine neuve, l'assistant s'ouvre et la barre dit déjà ce qui manque ;
+ * rien n'est caché derrière un menu.
+ *
+ * **Sans clé, le mot mène au champ.** C'est la même règle que le bouton qui
+ * paie éteint : ce qui est indisponible porte sa raison *et* le chemin vers son
+ * réglage — jamais un constat sans issue.
+ */
+function EtatDeLaCle({
+  cle,
+  onReglages,
+}: {
+  cle: { presente: boolean; apercu: string } | null
+  onReglages?: () => void
+}) {
+  if (!cle) return null
+  const texte = cle.presente ? `clé …${cle.apercu}` : "aucune clé"
+  if (cle.presente || !onReglages)
+    return (
+      <span className="mesure shrink-0 text-[10px] text-texte-3">{texte}</span>
+    )
+  return (
+    <button
+      type="button"
+      onClick={onReglages}
+      title="sans elle, le bouton qui paie reste éteint — le reste de l'atelier fonctionne"
+      className="mesure shrink-0 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-signal"
+    >
+      {texte}
+    </button>
+  )
+}
+
 // ── Le total, et ce qu'il ne dit plus ───────────────────────────────────────
 
 /**
@@ -224,7 +262,9 @@ export function BarreChassis({
   chemin,
   nomDuJeu,
   montant,
+  cle,
   onDepenses,
+  onReglagesCle,
   bascules,
   onBasculer,
   fente,
@@ -237,7 +277,19 @@ export function BarreChassis({
   chemin: readonly Segment[]
   nomDuJeu: string | null
   montant: string
+  /** **L'état de la clé, dès la première seconde** (E19). Elle est le seul
+   *  préalable dur du produit : sans elle, rien ne part chez le fournisseur, et
+   *  ne pas le dire d'emblée obligerait à ouvrir un menu pour l'apprendre.
+   *
+   *  **Ici, et plus dans la barre du bas** : la même valeur écrite à deux
+   *  endroits est deux endroits à tenir d'accord, et celui-ci est celui que la
+   *  maquette du premier lancement nomme. */
+  cle: { presente: boolean; apercu: string } | null
   onDepenses?: () => void
+  /** Ouvrir la fenêtre où la clé habite. **Trois portes, une seule pièce** : ce
+   *  contrôle-ci, l'étape 10 de l'assistant, et le bouton qui paie quand il est
+   *  éteint mènent tous les trois au même champ. */
+  onReglagesCle?: () => void
   /** **Chaque bascule nomme la colonne qu'elle replie sur l'écran courant.**
    *  Deux mots uniques — `arbre` et `réglages` — servaient les quatre écrans,
    *  et mentaient sur trois. L'écran actif dit donc lui-même ce qu'il replie. */
@@ -293,6 +345,8 @@ export function BarreChassis({
         <FenteEcran fente={fente} />
 
         <Total nomDuJeu={nomDuJeu} montant={montant} onDepenses={onDepenses} />
+
+        <EtatDeLaCle cle={cle} onReglages={onReglagesCle} />
 
         {bascules.length > 0 && (
           <div className="flex shrink-0 items-center gap-1">

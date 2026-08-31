@@ -56,6 +56,7 @@ export function EcranUnivers({
   personnages,
   cote,
   onCote,
+  onSortirDeLAssistant,
   vue,
   onVue,
   replies,
@@ -85,6 +86,10 @@ export function EcranUnivers({
    *  contenu d'une bande partagée ne peut pas vivre sous cette bande. */
   cote: Cote
   onCote: (cote: Cote) => void
+  /** **Sortir de l'assistant** (E19) : on tombe dans le codex, champ qui nomme
+   *  allumé. C'est `App` qui sait où l'on tombe — cet écran-ci ne connaît que
+   *  le sien. */
+  onSortirDeLAssistant: () => void
   vue: Vue
   onVue: (vue: Vue) => void
   replies: { univers: boolean; reserve: boolean }
@@ -269,6 +274,7 @@ export function EcranUnivers({
 
       {cote === "reglages" && (
         <Assistant
+          onSortir={onSortirDeLAssistant}
           univers={univers}
           modeles={modeles}
           artworks={cartes.filter((c) => c.artwork)}
