@@ -23,6 +23,8 @@ export function BarreOutils({
   onRecherche,
   favoris,
   onFavoris,
+  famille,
+  onFamille,
   collection,
   collections,
   projets,
@@ -46,6 +48,10 @@ export function BarreOutils({
   onRecherche: (v: string) => void
   favoris: boolean
   onFavoris: (v: boolean) => void
+  /** La famille qu'on regarde, `""` pour toutes, `"aucune"` pour ce qui
+   *  n'appartient à aucune chose du jeu. */
+  famille: string
+  onFamille: (famille: string) => void
   collection: string | null
   collections: Collection[]
   projets: Projet[]
@@ -113,6 +119,25 @@ export function BarreOutils({
           aria-label="Chercher dans la bibliothèque"
           className="mesure h-[26px] w-[160px] min-w-[72px] shrink rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
+        {/* **Le filtre par famille, et sa dernière valeur** (E4). Il range la
+            grille par ce que les images appartiennent — et il a **une valeur
+            pour ce qui n'appartient à aucune chose du jeu**, parce que c'est un
+            état réel et le cas de neuf appels sur vingt-huit : un essai, une
+            texture, une image apportée. La taire ferait de ces images-là des
+            introuvables, alors que la galerie est leur domicile. */}
+        <select
+          value={famille}
+          onChange={(e) => onFamille(e.target.value)}
+          aria-label="Ne montrer que les images d'une famille"
+          className="mesure h-[26px] w-[160px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[11px] text-texte-2"
+        >
+          <option value="">toutes les familles</option>
+          <option value="personnages">personnages</option>
+          <option value="decors">décors</option>
+          <option value="objets">objets</option>
+          <option value="interface">interface</option>
+          <option value="aucune">sans chose du jeu</option>
+        </select>
         <button
           type="button"
           onClick={() => onFavoris(!favoris)}

@@ -318,7 +318,7 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 | px | Ce qu'elle nomme |
 |---|---|
 | **380** | ce qu'on manipule — la fiche d'une image, la réserve de la toile, la colonne d'une table, la colonne des sœurs, la colonne de la chose ouverte dans le codex |
-| **300** | les réglages d'une génération — **et ce locataire-là s'en va en V2.1** : ils descendent dans l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. *La largeur, elle, reste* : la colonne de gauche de l'établi, celle qui dit ce qu'une chose **est**, la reprend telle quelle. Corrigé le 31 août 2026 en tenant E2 — ce document annonçait que la colonne disparaissait, et c'est son contenu qui change |
+| **300** | les réglages d'une génération — **et ce locataire-là s'en va en V2.1** : ils descendent dans l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. *La largeur, elle, reste* : la colonne de gauche de l'établi, celle qui dit ce qu'une chose **est**, la reprend telle quelle. Corrigé le 31 août 2026 en tenant E2 — ce document annonçait que la colonne disparaissait, et c'est son contenu qui change. **Et le départ se fait en deux temps, corrigé le même jour en tenant E4** : la colonne quitte la galerie, elle ne quitte pas encore le produit. Elle se replie au pied de la barre qui paie jusqu'à ce que l'héritage d'une chose du jeu (E12) et l'écran de confirmation (E14) la rendent inutile — la retirer avant retirerait le seul endroit où l'on choisit un modèle (A-25) |
 | **240** | où ça se range — les familles du codex, les projets et collections, la liste des étapes de l'assistant, la liste des ambiances |
 
 Tout le reste prend la place qui reste, sans largeur imposée. Une colonne neuve prend une

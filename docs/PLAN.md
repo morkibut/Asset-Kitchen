@@ -433,7 +433,7 @@ donc un cache, et un cache se recalcule.
 
 *Vingt-et-une étapes, décidées le 31 août 2026.* Elles viennent du chantier de maquettes de
 `docs/maquettes-v2.1/` : vingt-six écrans dessinés, quarante-et-une décisions prises,
-vingt-quatre arbitrages tranchés en autonomie — dont un pris en construisant — et
+vingt-cinq arbitrages tranchés en autonomie — dont deux pris en construisant — et
 dix-sept questions laissées ouvertes, dont une déjà répondue par un banc gratuit —
 `docs/v21-arbitrages.md` les tient toutes, et ne fait foi sur rien.
 
@@ -869,7 +869,7 @@ disparaît : on ne le cherche plus, il est là quand il sert.
 ---
 
 ### E4 · La galerie, dégraissée
-**User stories** : 216, 217, 218, 219, 220
+**User stories** : 216, 217, 218, 219, 220 · *7 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -886,18 +886,45 @@ avant que le geste soit rendu ailleurs, c'est retirer sans donner.
 
 #### Critères d'acceptation
 
-- [ ] La galerie n'a ni champ de prompt, ni colonne de réglages, ni curseur de retouche
-- [ ] Le pied de l'écran dit qu'aucun appel ne part d'ici
-- [ ] La fiche d'une image porte deux portes : l'établi de sa chose, et les tables
-- [ ] Une image sans chose du jeu propose de la rattacher, et le rattachement se défait
-- [ ] Le filtre par famille a une valeur pour ce qui n'appartient à aucune chose du jeu
-- [ ] Aucune des trois surfaces qui ne sont pas des grilles — la matrice, la réserve, la liste des dépenses — n'est devenue une seconde planche contact : les deux premières restent sans recherche, sans filtre et sans sélection multiple, la troisième sans aucune image (A-24)
-- [ ] Tout ce que l'écran d'avant permettait se fait encore, ailleurs, et la fiche dit où
+- [x] La galerie n'a ni champ de prompt, ni colonne de réglages, ni curseur de retouche
+- [x] Le pied de l'écran dit qu'aucun appel ne part d'ici
+- [x] La fiche d'une image porte deux portes : l'établi de sa chose, et les tables
+- [x] Une image sans chose du jeu propose de la rattacher, et le rattachement se défait
+- [x] Le filtre par famille a une valeur pour ce qui n'appartient à aucune chose du jeu — *posé sur la grille chargée, et non au serveur : la seule famille qui porte des choses est* personnages*, et il descendra avec les quatre autres en E15*
+- [x] Aucune des trois surfaces qui ne sont pas des grilles — la matrice, la réserve, la liste des dépenses — n'est devenue une seconde planche contact : les deux premières restent sans recherche, sans filtre et sans sélection multiple, la troisième sans aucune image (A-24)
+- [x] Tout ce que l'écran d'avant permettait se fait encore, ailleurs, et la fiche dit où
 
 #### Bloquée par
 
 - **E2** — la galerie ne perd son champ de prompt qu'une fois qu'on paie depuis l'établi et le codex.
 - **E3** — elle ne perd sa colonne de réglages qu'une fois qu'on retouche dans les tables.
+
+#### Ce que la tenir a trouvé
+
+**La colonne de réglages ne pouvait pas disparaître, et il a fallu le dire.** Le
+dossier des maquettes écrit qu'elle *disparaît* : les réglages descendent dans
+l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. C'est vrai —
+mais l'héritage arrive en E12 et l'écran qui les montre avant de payer en E14. La
+retirer ici aurait retiré **le seul endroit du produit où l'on choisit un
+modèle**. Elle se replie donc au pied de la barre qui paie, sur une ligne qui dit
+ce qu'elle vaut, et elle disparaîtra pour de bon quand ce qui la remplace
+existera. C'est l'arbitrage A-25.
+
+**Une colonne retirée sans toucher à la grille qui la portait, et l'écran s'est
+tordu en silence.** Les essais sont tous restés verts : ils interrogent des rôles
+et des libellés, pas des largeurs. C'est au navigateur que la galerie s'est
+montrée à trois cent pixels de grille pour sept cent cinquante de vide — la piste
+de 300 px était toujours dans le gabarit de la grille, vide. Le rappel est
+ancien et il vaut d'être réécrit : **un test d'écran ne remplace pas un
+navigateur ouvert**, et c'est précisément pour ça que les critères de mise en
+page vivent dans les essais d'écran *et* que le dépôt en ouvre un.
+
+**`Découper` a quitté la fiche, et son argument tient toujours.** Il y était
+parce qu'*une planche est une image comme une autre* : rien ne permet de deviner
+qu'elle en contient huit, donc rien ne doit paraître ou disparaître selon ce
+qu'on croit deviner. C'est exactement pourquoi le découpage est devenu une
+**fabrique de la barre des tables** — il y est pour toute image, toujours. Une
+porte de moins, pas un geste de moins.
 
 ---
 

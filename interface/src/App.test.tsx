@@ -1334,6 +1334,18 @@ async function ouvrirLaRubrique(nom: string) {
   return within(cadre)
 }
 
+/** Les réglages de l'appel, dépliés.
+ *
+ *  Ils tenaient une colonne de 300 px ouverte en permanence dans la galerie ;
+ *  ils suivent la barre qui paie depuis E4, repliés sur une ligne qui dit ce
+ *  qu'ils valent. Les ouvrir est un geste de plus dans chaque essai, et c'est
+ *  le prix de ne plus les avoir sous les yeux quand on juge une image. */
+async function ouvrirLesReglagesDeLAppel() {
+  await champDePrompt()
+  const ligne = await screen.findByRole("button", { name: /réglages de l'appel/ })
+  if (ligne.getAttribute("aria-expanded") !== "true") fireEvent.click(ligne)
+}
+
 /** Revenir à la galerie — là où ce qui a été produit se regarde. */
 function laGalerie() {
   fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
@@ -1531,17 +1543,18 @@ describe("l'écran de l'atelier", () => {
 
   // ── T3 : « replier un panneau est un choix, jamais une contrainte » ────────
 
-  test("les trois panneaux et la grille tiennent ensemble, et chacun se replie par choix", async () => {
+  test("la colonne qui range se replie par choix, et la grille ne bouge pas", async () => {
     const { fetchDouble } = serveurDouble({ assets: [asset("ffff6666-0")] })
     await monter(fetchDouble, { ...ETAT, assets: [asset("ffff6666-0")] })
 
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     const arbre = screen.getByRole("button", { name: "arbre" })
-    const reglages = screen.getByRole("button", { name: "réglages" })
+    // **Une seule colonne repliable depuis E4** : celle des réglages est partie
+    // avec ce qui paie, et la galerie ne paie plus.
+    expect(screen.queryByRole("button", { name: "réglages" })).toBeNull()
 
-    // Déployés d'emblée : l'écran large est la ressource du produit (US-97).
+    // Déployée d'emblée : l'écran large est la ressource du produit (US-97).
     expect(arbre.getAttribute("aria-pressed")).toBe("true")
-    expect(reglages.getAttribute("aria-pressed")).toBe("true")
 
     fireEvent.click(arbre)
     expect(arbre.getAttribute("aria-pressed")).toBe("false")
@@ -1789,6 +1802,7 @@ describe("l'écran de l'atelier", () => {
       ...ETAT,
       univers: { ...UNIVERS, palette: ["#111111", "#222222"], cible_px: 48, vide: false },
     })
+    await ouvrirLesReglagesDeLAppel()
 
     // Le bloc « Ce qui part » répond d'avance à *qu'est-ce qui part avec ?*
     const bloc = (await screen.findByText("Ce qui part")).parentElement!
@@ -1836,7 +1850,10 @@ describe("le slicer et le zoom de la grille", () => {
     await monter(double.fetchDouble, { ...ETAT, assets: [planche] })
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    // **`Découper` a quitté la fiche** (E3, E4) : c'est une fabrique de la
+    // barre des tables, et la fiche y mène par sa seconde porte.
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(await screen.findByRole("button", { name: /^découpage/ }))
     return double
   }
 
@@ -1846,7 +1863,9 @@ describe("le slicer et le zoom de la grille", () => {
     // **On est descendu d'un étage dans la galerie**, et le fil le dit. Il n'y
     // a plus de titre d'écran à chercher : le nom de l'outil est le dernier
     // segment du fil, et l'écran n'en porte pas d'autre.
-    expect(await screen.findByText("Découpage")).toBeTruthy()
+    expect(
+      (await screen.findAllByText("découpage")).length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText("2 rectangles")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Découper en 2 assets" })).toBeTruthy()
 
@@ -1865,7 +1884,7 @@ describe("le slicer et le zoom de la grille", () => {
 
     // Et l'écran se referme sur ce qu'il vient de fabriquer : la fiche de la
     // première découpe, ouverte dans l'atelier.
-    await waitFor(() => expect(screen.queryByText("Découpage")).toBeNull())
+    await waitFor(() => expect(screen.queryByText("Ce qui sortira")).toBeNull())
   })
 
   test("une détection qui ne trouve rien porte sa raison, et découper est grisé", async () => {
@@ -2074,6 +2093,7 @@ describe("l'infobulle et le guide", () => {
   test("le pointillé ne paraît que sur un réglage documenté", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     const marque = (nom: string) =>
       [...document.querySelectorAll("span")].some(
@@ -2092,6 +2112,7 @@ describe("l'infobulle et le guide", () => {
   test("la poignée n'est jamais plus large que son mot", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     // Trouvé à l'œil dans l'atelier lancé, pas ici : un `<span>` posé dans un
     // conteneur flexible est blockifié, et dans une **colonne** il s'étire sur
@@ -2122,6 +2143,7 @@ describe("l'infobulle et le guide", () => {
   test("le survol explique, et n'excuse jamais", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     const libelle = [...document.querySelectorAll("span")].find(
       (e) => e.textContent === "Variations" && e.className.includes("decoration-dotted"),
@@ -2204,38 +2226,29 @@ describe("l'infobulle et le guide", () => {
     }
   })
 
-  test("une étape grisée s'explique quand même, et sa raison reste dans sa fente", async () => {
-    // « Une explication sur un contrôle grisé. Elle existe — le libellé garde
-    // son pointillé — mais elle ne remplace ni ne déplace la raison, qui reste
-    // dans sa fente, permanente » (`docs/DESIGN.md` § Ce qui est écarté). Les
-    // deux cohabitent parce qu'elles ne disent pas la même chose : *pourquoi
-    // c'est fermé* n'est pas *à quoi ça sert*.
-    const { fetchDouble } = serveurDouble({ assets: [asset("dddd1111-0")] })
-    await monter(fetchDouble, { ...ETAT, assets: [asset("dddd1111-0")] })
+  test("une place grisée s'explique quand même, et sa raison reste dans sa fente", async () => {
+    // **Le grisé porte sa raison, et l'explication reste possible.** Les deux
+    // ne se disputent pas la même fente : la raison vit dans le panneau de la
+    // table, l'explication dans une bulle qui sort du libellé.
+    //
+    // La place a changé d'endroit avec E3 — elle tenait un bloc replié dans la
+    // fiche, elle tient une table à elle —, mais la règle est la même : une
+    // table indisponible **s'ouvre**, et porte sa raison à la place de ses
+    // réglages.
+    const images = [asset("aaaa1111-0")]
+    const double = serveurDouble({ assets: images })
+    await monter(double.fetchDouble, { ...ETAT, assets: images })
 
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
+    fireEvent.click(await screen.findByRole("button", { name: /^quantification/ }))
 
-    // L'univers du double n'a aucune palette : l'étape est grisée avec sa
-    // raison, et la raison est écrite — jamais au survol.
-    const etape = await screen.findByRole("button", { name: "Quantification" })
-    expect(etape.getAttribute("aria-disabled")).toBe("true")
-    expect(screen.getByText("aucune palette")).toBeTruthy()
-
-    // Et elle s'explique. `aria-disabled` plutôt que `disabled` est ce qui le
-    // permet : un `<button disabled>` ne dispatche aucun événement de souris,
-    // pas même sur ses enfants.
-    fireEvent.mouseOver(etape)
-    const bulle = await screen.findByRole("tooltip")
-    expect(bulle.textContent).toContain("La quatrième place")
-    // La bulle explique, elle n'excuse jamais : la raison n'y entre pas.
-    expect(bulle.textContent).not.toContain("aucune palette")
-
-    // Cliquer une étape grisée ne la pose pas quand même.
-    fireEvent.click(etape)
-    expect(
-      fetchDouble.mock.calls.some((appel) => String(appel[0]).includes("/recette")),
-    ).toBe(false)
+    // Le double annonce « aucune palette » : la table s'ouvre, et le dit.
+    expect(await screen.findByText("aucune palette")).toBeTruthy()
+    // **À la place des réglages, jamais à côté d'eux** : aucun contrôle mort
+    // sous la raison.
+    expect(screen.queryByRole("slider")).toBeNull()
   })
 
   test("le guide range les réglages par écran, découpe comprise", async () => {
@@ -4116,6 +4129,7 @@ describe("l'écran des personnages", () => {
   test("chaque référence est listée avec sa provenance, et la préséance est écrite", async () => {
     const { fetchDouble } = serveurDouble({ references: REFERENCES })
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     expect(await screen.findByText("artwork officiel")).toBeTruthy()
     expect(screen.getByText("concept art")).toBeTruthy()
@@ -4128,6 +4142,7 @@ describe("l'écran des personnages", () => {
   test("décocher une référence l'écarte pour cette génération seule, et le dit", async () => {
     const { fetchDouble } = serveurDouble({ references: REFERENCES })
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     fireEvent.click(await screen.findByLabelText("Écarter artwork officiel"))
 
@@ -4160,6 +4175,7 @@ describe("l'écran des personnages", () => {
   test("élargir la portée au projet s'écrit, et ne touche pas l'univers", async () => {
     const { fetchDouble } = serveurDouble({ references: REFERENCES })
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     fireEvent.click(await screen.findByLabelText("Écarter concept art"))
     fireEvent.click(screen.getByRole("button", { name: "+ projet" }))
@@ -4194,19 +4210,25 @@ describe("l'écran des personnages", () => {
     // Jamais appelé : le produit le dit plutôt que d'inventer un tarif.
     const vierge = serveurDouble({ references: REFERENCES })
     await monter(vierge.fetchDouble)
-    expect(await screen.findByText("jamais appelé")).toBeTruthy()
+    await ouvrirLesReglagesDeLAppel()
+    // Le coût se lit deux fois — une dans le panneau, une au pied de la barre
+    // qui paie, où il est écrit depuis E2. Les deux disent la même chose, et
+    // c'est le même composant : on n'en interroge qu'un.
+    expect((await screen.findAllByText("jamais appelé"))[0]).toBeTruthy()
     cleanup()
 
     // Mesuré : la médiane de ce que ce modèle a réellement facturé.
     FluxDouble.ouverts = []
     const mesure = serveurDouble({ references: REFERENCES, couts: { [MODELE.identifiant]: 0.0245 } })
     await monter(mesure.fetchDouble)
-    expect(await screen.findByText("≈ $0,0245")).toBeTruthy()
+    await ouvrirLesReglagesDeLAppel()
+    expect((await screen.findAllByText("≈ $0,0245"))[0]).toBeTruthy()
   })
 
   test("sans case visée, la portée « ce personnage » n'est pas proposée", async () => {
     const { fetchDouble } = serveurDouble({ references: REFERENCES })
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     fireEvent.click(await screen.findByLabelText("Écarter artwork officiel"))
 
@@ -4764,6 +4786,7 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
   test("l'atelier : la colonne des réglages se déclare, et sa poignée est dedans", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     await waitFor(() => expect(poignee("Variations")).toBeTruthy())
     // **Le panneau est l'ancêtre déclaré**, et c'est lui que la règle mesure.
@@ -4793,7 +4816,10 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
 
-    const marque = poignee("Détourage")
+    // **La poignée que la fiche garde après E4.** Les cinq places sont parties
+    // dans les tables ; ce qui reste est ce que l'image *est*, et sa recette
+    // s'y lit sans s'y régler.
+    const marque = poignee("Sa recette")
     expect(marque).toBeTruthy()
     expect(marque!.closest("[data-panneau]")).toBeTruthy()
   })
@@ -4833,6 +4859,7 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
 
     const marque = await waitFor(() => {
       const trouvee = poignee("Variations")
@@ -5788,7 +5815,7 @@ describe("les trois onglets", () => {
     expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
 
     const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
     // Quatre segments : le jeu, l'onglet, l'image, l'outil. C'est la forme
@@ -5797,12 +5824,12 @@ describe("les trois onglets", () => {
     expect(fil.getByText("Bac à sable")).toBeTruthy()
     expect(fil.getByText("Galerie")).toBeTruthy()
     expect(fil.getByText("tonneau-cerclé-02")).toBeTruthy()
-    expect(fil.getByText("Découpage")).toBeTruthy()
+    expect(fil.getByText("détourage")).toBeTruthy()
 
     // **Le dernier segment ne ramène nulle part** : c'est l'étage où l'on est,
     // et c'est ce qui le rend lisible comme la fin du fil.
-    expect(fil.queryByRole("button", { name: "Découpage" })).toBeNull()
-    expect(fil.getByText("Découpage").getAttribute("aria-current")).toBe("page")
+    expect(fil.queryByRole("button", { name: "détourage" })).toBeNull()
+    expect(fil.getByText("détourage").getAttribute("aria-current")).toBe("page")
 
     // Les autres ramènent. Celui de l'onglet remonte d'un étage — et la
     // galerie n'a pas de fil, parce qu'on n'y est descendu nulle part.
@@ -5817,7 +5844,7 @@ describe("les trois onglets", () => {
     await monter(fetchDouble, { ...ETAT, assets: [planche] })
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
     await screen.findByRole("navigation", { name: "Où l'on est" })
 
     // Cliquer un onglet est le geste qui dit « ailleurs ». Laisser la découpe
@@ -5829,7 +5856,7 @@ describe("les trois onglets", () => {
 
     fireEvent.click(onglet("Galerie"))
     expect(await screen.findByLabelText("Chercher dans la bibliothèque")).toBeTruthy()
-    expect(screen.queryByText("Découpage")).toBeNull()
+    expect(screen.queryByText("Ce qui sortira")).toBeNull()
   })
 
   // ── « Le total de la barre de tête porte le nom de ce qu'il compte, et un
@@ -5870,7 +5897,7 @@ describe("les trois onglets", () => {
     expect(bande().getAllByText("Bac à sable")).toHaveLength(1)
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
-    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
     await screen.findByRole("navigation", { name: "Où l'on est" })
 
     // Déployé, le fil le porte à son premier étage — et le total le lâche.
@@ -5890,7 +5917,6 @@ describe("les trois onglets", () => {
     // La galerie replie l'arbre et les réglages ; deux mots uniques servaient
     // les quatre écrans d'avant, et mentaient sur trois.
     expect(screen.getByRole("button", { name: "arbre" })).toBeTruthy()
-    expect(screen.getByRole("button", { name: "réglages" })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "univers" })).toBeNull()
 
     fireEvent.click(onglet("Univers"))
@@ -7028,5 +7054,178 @@ describe("le châssis des tables", () => {
     expect(
       screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
     ).toBe("true")
+  })
+})
+
+// ── E4 : la galerie, dégraissée ─────────────────────────────────────────────
+//
+// L'écran dont le métier est de **juger** rend toute sa place aux images. Il
+// perd ce qui n'a jamais été à lui : le champ de prompt, la colonne de réglages,
+// le curseur de retouche. C'est le moins de travail des cinq écrans, et c'est la
+// dernière de la chaîne — dégraisser avant que le geste soit rendu ailleurs,
+// c'est retirer sans donner.
+
+describe("la galerie dégraissée", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const ouvrirLaFiche = async (asset_: Asset) => {
+    const double = serveurDouble({ assets: [asset_] })
+    await monter(double.fetchDouble, { ...ETAT, assets: [asset_] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    return double
+  }
+
+  // ── « La galerie n'a ni champ de prompt, ni colonne de réglages, ni curseur
+  //     de retouche » ────────────────────────────────────────────────────────
+
+  test("la galerie n'a ni prompt, ni colonne de réglages, ni curseur de retouche", async () => {
+    await ouvrirLaFiche(asset("aaaa1111-0"))
+
+    // Le champ est parti en E2, avec la barre qui paie.
+    expect(screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeNull()
+    // La colonne de 300 px est partie en E4 : elle suit ce qui paie.
+    expect(document.querySelector(".w-\\[300px\\]")).toBeNull()
+    // Et aucun curseur de retouche : la recette se lit ici, elle se règle dans
+    // les tables — sur l'image en grand, ce que 380 px de colonne ne
+    // permettaient pas.
+    expect(screen.queryByRole("slider")).toBeNull()
+  })
+
+  // ── « Le pied de l'écran dit qu'aucun appel ne part d'ici » ────────────────
+
+  test("le pied de la galerie dit qu'aucun appel ne part d'ici", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
+    // trouve : ici on juge et on range, on ne paie jamais.
+    expect(
+      await screen.findByText(/aucun appel ne part d'ici/),
+    ).toBeTruthy()
+  })
+
+  // ── « La fiche d'une image porte deux portes : l'établi de sa chose, et les
+  //     tables » ─────────────────────────────────────────────────────────────
+
+  test("la fiche porte deux portes, et celle de l'établi est grisée sans chose du jeu", async () => {
+    await ouvrirLaFiche(asset("aaaa1111-0"))
+
+    // Une image qui n'appartient à personne n'a que la seconde porte — et le
+    // grisé de la première porte sa raison, comme partout ailleurs.
+    expect(
+      screen.getByRole("button", { name: "Reprendre dans l'établi" }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(/cette image n'appartient à aucune chose du jeu/),
+    ).toBeTruthy()
+
+    // La seconde ouvre les tables, sur n'importe quelle image, sans quitter la
+    // galerie.
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir les tables" }))
+    expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
+    expect(
+      screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+    ).toBe("true")
+  })
+
+  test("la fiche d'une image rattachée ouvre l'établi de sa chose", async () => {
+    const image = { ...asset("aaaa1111-0"), personnage: "le-nain" }
+    const double = serveurDouble({
+      assets: [image],
+      personnages: [personnage("Le nain")],
+    })
+    await monter(double.fetchDouble, { ...ETAT, assets: [image] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Reprendre dans l'établi" }),
+    )
+    // L'établi est un onglet plus loin, à la profondeur de la chose : le fil le
+    // dit, et l'onglet a changé.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+      ).toBe("true"),
+    )
+    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    expect(fil.getByText("Le nain")).toBeTruthy()
+  })
+
+  // ── « Une image sans chose du jeu propose de la rattacher, et le
+  //     rattachement se défait » ─────────────────────────────────────────────
+
+  test("une image sans chose du jeu propose de la rattacher", async () => {
+    const double = serveurDouble({
+      assets: [asset("aaaa1111-0")],
+      personnages: [personnage("Le nain")],
+    })
+    await monter(double.fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+
+    // « Corps de » : le geste qui rattache une image à une chose du jeu. Il
+    // existait déjà en C1 ; ce que E4 ajoute est qu'il est le seul chemin vers
+    // l'établi pour une image qui n'appartient à personne.
+    expect(await screen.findByText("Corps de")).toBeTruthy()
+    expect(screen.getByLabelText("Personnage de cette image")).toBeTruthy()
+  })
+
+  // ── « Le filtre par famille a une valeur pour ce qui n'appartient à aucune
+  //     chose du jeu » ───────────────────────────────────────────────────────
+
+  test("le filtre par famille a une valeur pour ce qui n'appartient à personne", async () => {
+    const orpheline = asset("aaaa1111-0", "un essai")
+    const rattachee = { ...asset("bbbb2222-0", "le nain"), personnage: "le-nain" }
+    const { fetchDouble } = serveurDouble({ assets: [orpheline, rattachee] })
+    await monter(fetchDouble, { ...ETAT, assets: [orpheline, rattachee] })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+
+    const filtre = screen.getByLabelText("Ne montrer que les images d'une famille")
+    // **Neuf appels sur vingt-huit n'ont aucune chose du jeu** : un essai, une
+    // texture, une image apportée. Les taire ferait de ces images-là des
+    // introuvables, alors que la galerie est leur domicile.
+    fireEvent.change(filtre, { target: { value: "aucune" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.change(filtre, { target: { value: "personnages" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    fireEvent.change(filtre, { target: { value: "" } })
+    await waitFor(() => expect(tuiles()).toHaveLength(2))
+  })
+
+  // ── « Tout ce que l'écran d'avant permettait se fait encore, ailleurs, et la
+  //     fiche dit où » ───────────────────────────────────────────────────────
+
+  test("la recette se lit encore dans la fiche, et la fiche dit où elle se règle", async () => {
+    const image = {
+      ...asset("aaaa1111-0"),
+      recette: { ...RECETTE_VIDE, bords: { aire_min: 4 } },
+    }
+    await ouvrirLaFiche(image)
+
+    // Elle se **lit** : la fiche dit ce que l'image est.
+    expect(await screen.findByText("Sa recette")).toBeTruthy()
+    expect(screen.getByText("tache 4 px")).toBeTruthy()
+
+    // Et elle dit où elle se règle : le geste n'a pas disparu, il a changé
+    // d'endroit — c'est tout ce que « dégraisser » veut dire.
+    fireEvent.click(screen.getByRole("button", { name: "La régler dans les tables ›" }))
+    expect(await screen.findByRole("button", { name: /^bords/ })).toBeTruthy()
   })
 })

@@ -32,7 +32,7 @@
 
 ---
 
-## A · Les vingt-quatre arbitrages pris en autonomie
+## A · Les vingt-cinq arbitrages pris en autonomie
 
 Chacun est une décision qui n'était écrite nulle part, ou qui contredisait
 quelque chose d'écrit ailleurs. Ils sont rangés par le document qu'ils touchent.
@@ -435,6 +435,35 @@ aucune. Elle dit maintenant ce qui tient réellement la règle, surface par
 surface. Sans quoi le premier lecteur venu aurait retiré à cet écran le filtre
 qui répond à sa seule question propre — *qu'est-ce que j'ai payé pour rien ?* —
 au nom d'une phrase écrite pour une autre surface.
+
+### A-25 · La colonne de réglages ne disparaît pas, elle se replie dans la barre qui paie
+
+*Pris le 31 août 2026, en tenant E4.*
+
+**Ce qui était écrit.** La colonne de 300 px des réglages d'une génération
+*disparaît* avec la V2.1 : « les réglages descendent dans l'établi, hérités de
+l'entité, et ne se ressaisissent plus ». Le document du design le reprend mot
+pour mot dans sa liste fermée des largeurs.
+
+**Ce que la construire a montré.** L'héritage arrive avec la fiche d'une chose du
+jeu — étape E12 —, et l'écran qui montre ce qui part avant de payer avec E14. La
+retirer en E4, c'est-à-dire huit étapes plus tôt, retirait **le seul endroit du
+produit où l'on choisit un modèle, des proportions et un nombre de variations**.
+Le produit serait resté utilisable au sens où il générait encore ; il ne l'aurait
+plus été au sens où l'auteur n'aurait pas pu changer de modèle.
+
+**Tranché : elle suit la barre qui paie, repliée.** Ce qui sert à payer va où
+l'on paie — c'est la règle déjà appliquée deux fois, au prix attendu en E2 et aux
+trois gestes qui arment. Elle se replie sur une ligne qui dit ce qu'elle vaut,
+`openai/gpt-image-2 · 1:1 · 1 variation`, dans la forme du bloc repliable que le
+produit emploie depuis T2. La galerie, elle, n'en a plus — et c'est ce que le
+critère de la tranche demandait vraiment.
+
+**Ce qui reste vrai de la phrase d'origine, et ce qui a été corrigé.** Que la
+colonne cesse d'exister dans la galerie : vrai, et fait. Qu'elle cesse d'exister
+tout court : pas encore, et le document du design le dit maintenant. La largeur
+de 300 px, elle, ne disparaît pas du tout — l'établi la reprend pour l'identité
+d'une chose du jeu (corrigé en E2).
 
 ---
 

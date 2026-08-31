@@ -20,7 +20,7 @@ import {
   type PorteeDurable,
   type Univers,
 } from "../api"
-import { Bloc, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import { Bloc, Libelle, Raison, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 
 export function PanneauReglages({
@@ -111,15 +111,20 @@ export function PanneauReglages({
   const proportionsPossibles = choisi?.proportions ?? []
 
   return (
-    // `min-h-0` : sans lui, une case de grille prend la hauteur de son contenu
-    // et le panneau pousse la barre d'état hors de l'écran au lieu de défiler.
-    <aside
+    // **Ce n'est plus une colonne, c'est un repli de la barre qui paie** (E4).
+    // Elle était un `aside` de 300 px ouvert en permanence dans la galerie —
+    // *ouvert même quand on n'y touche pas*, et sur l'écran dont le métier est
+    // de juger. La galerie ne paie plus ; ce qui sert à payer suit la barre qui
+    // paie, comme le prix l'a fait en E2.
+    //
+    // **Trois colonnes au lieu d'une**, parce que la place a changé de forme :
+    // 300 px de haut sur 620 devient toute la largeur sur ce que le repli
+    // laisse. Aucune largeur imposée — elles se partagent ce qu'il y a.
+    <div
       {...PANNEAU}
-      className="flex min-h-0 w-[300px] shrink-0 flex-col border-r border-bord bg-fond-1"
+      className="defile max-h-[40vh] overflow-y-auto border-b border-bord bg-fond-1 px-4 py-3"
     >
-      <EnTetePanneau>Réglages</EnTetePanneau>
-
-      <div className="defile flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">
+      <div className="grid grid-cols-3 items-start gap-x-6 gap-y-4">
         {/* ── Le modèle ─────────────────────────────────────────────────────
             **Le premier bloc repliable du produit, et celui qui l'a rendu
             nécessaire.** La liste vaut 280 px à elle seule dans une colonne qui
@@ -260,7 +265,7 @@ export function PanneauReglages({
             ))}
 
         {/* ── Qu'est-ce qui part avec ? ─────────────────────────────────── */}
-        <section className="mt-auto rounded-[2px] border border-bord bg-fond-2 p-2">
+        <section className="rounded-[2px] border border-bord bg-fond-2 p-2">
           <div className="mesure mb-1.5 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
             Ce qui part
           </div>
@@ -327,7 +332,7 @@ export function PanneauReglages({
           />
         </section>
       </div>
-    </aside>
+    </div>
   )
 }
 

@@ -10,24 +10,17 @@
 // lieu de servir le geste est le reproche qui a fait écarter
 // `docs/maquette-atelier.html`.
 
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import {
   api,
   dollars,
-  PASSE_PAR_DEFAUT,
-  RECETTE_VIDE,
   ROLES,
   type Asset,
-  type Bords,
-  type EtatTraitement,
   type Filiation,
-  type Grille,
   type Impose,
   type Passe,
   type Personnage,
   type Pose,
-  type Quantification,
-  type Recadrage,
   type Recette,
   type Role,
   type Univers,
@@ -38,22 +31,13 @@ import {
   Bouton,
   Curseur,
   EnTetePanneau,
-  Etape,
-  Jauge,
   Libelle,
   Raison,
   Segments,
 } from "./chassis"
 import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 import { posesTenues } from "./Personnages"
-
-/** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
- *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor. La valeur
- *  n'est jamais déduite de l'image reçue (US-61) : elle se choisit ici, et
- *  deviendra une propriété du projet en T4. */
-const CIBLES = [16, 24, 32, 48, 64, 96, 128] as const
-
-const MOTEUR: Record<Passe["moteur"], string> = { bord: "bord", modele: "modèle" }
+import { RESUME } from "./Places"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *
@@ -67,28 +51,8 @@ const MOTEUR: Record<Passe["moteur"], string> = { bord: "bord", modele: "modèle
 export const nomDuModele = (modele: string): string =>
   modele === "import" ? "importé" : modele || "modèle inconnu"
 
-/** Ce qu'une étape posée dit d'elle-même quand elle est repliée
- *  (`docs/design-motifs.md` § Le bloc repliable). Une ligne, en mono, à droite du
- *  titre — c'est ce qui permet de lire la recette entière sans rien ouvrir.
- *
- *  Le résumé est **la valeur, jamais le fait qu'il y en ait une** : « 2 passes »
- *  n'apprend rien de plus qu'un carré plein, alors que « bord · 28 » dit ce que
- *  l'image a subi. La seule exception est le pluriel, où la valeur ne tient
- *  plus : deux passes ont deux moteurs, et c'est le nombre qui devient le fait. */
-const RESUME = {
-  detourage: (recette: Recette) =>
-    recette.passes.length === 1
-      ? `${MOTEUR[recette.passes[0].moteur]} · ${recette.passes[0].tolerance}`
-      : `${recette.passes.length} passes`,
-  recadrage: (r: Recadrage) => `marge ${r.marge} px`,
-  grille: (g: Grille) => `${g.cible} px · ${g.occupation} %`,
-  quantification: (q: Quantification) => `${q.couleurs} couleurs`,
-  bords: (b: Bords) => `tache ${b.aire_min} px`,
-}
-
 export function Fiche({
   asset,
-  traitement,
   univers,
   plan,
   personnages,
@@ -97,11 +61,11 @@ export function Fiche({
   onReinjecter,
   onReglages,
   onSupprimer,
-  onDecouper,
+  onOuvrirLEtabli,
+  onOuvrirLesTables,
   onOuvrir,
 }: {
   asset: Asset
-  traitement: EtatTraitement
   /** Le plan du jeu et ses personnages, pour désigner cette image comme le
    *  corps d'une case (US-122). **Il n'y a pas d'écran de création de
    *  personnage avec son propre prompt** : le corps naît dans l'atelier, et
@@ -121,53 +85,31 @@ export function Fiche({
    *  cet asset. Aucune image ne part — c'est le générateur qu'on repeuple. */
   onReglages: () => void
   onSupprimer: () => void
-  /** Ouvrir l'écran de découpe sur cette image (US-72). **Un écran, pas une
-   *  rubrique de plus ici** : on dessine des rectangles sur une planche de
-   *  mille pixels, et cette colonne en fait 380. */
-  onDecouper: () => void
+  /** **Les deux portes de la fiche** (E4). L'établi de la chose à qui l'image
+   *  appartient — grisé avec sa raison quand elle n'appartient à personne — et
+   *  les tables, qui s'ouvrent sur n'importe quelle image. Le découpage n'a
+   *  plus de porte à lui : c'est une fabrique de la barre des tables, et on ne
+   *  le cherche plus. */
+  onOuvrirLEtabli: () => void
+  onOuvrirLesTables: () => void
   /** Remonter ou descendre la filiation sans quitter le panneau. */
   onOuvrir: (identifiant: string) => void
 }) {
-  const [recette, setRecette] = useState<Recette>(asset.recette)
   const [montrerBrut, setMontrerBrut] = useState(false)
-  const [nom, setNom] = useState("")
   /** Ce que le projet impose à **cette** image (US-164). Demandé au serveur —
    *  il est le seul à savoir sur quelle échelle l'image est née, et l'échelle
    *  décide de l'occupation. `null` tant qu'il n'a pas répondu. */
   const [impose, setImpose] = useState<Impose | null>(null)
 
-  // ── Ce qui est en vol, et ce que ça coûte ─────────────────────────────────
-  //
-  // « Chaque réglage répond sans attente perceptible » (critère T2) était vrai
-  // de la queue de recette et faux du détourage : mesuré au navigateur le
-  // 27 août 2026, un cran de tolérance coûte **1 492 ms**, le moteur modèle
-  // 2 255, là où l'occupation en coûte 29. Une seconde et demie de rien, sur
-  // une image qui ne change pas encore — c'est ce que la jauge dit.
-  //
-  // **L'attente s'apprend au lieu d'être écrite.** Le serveur ne publie pas de
-  // durée attendue pour une retouche comme il le fait pour une génération ;
-  // l'écran garde donc ce que la dernière du même genre a mis, sur cette
-  // machine et sur cette image. Les deux valeurs de départ sont celles de la
-  // mesure, et elles se corrigent au premier passage.
-  const attentes = useRef({ detourage: 1.5, queue: 0.05 })
-  const envoyee = useRef<Recette>(asset.recette)
-  const envols = useRef(0)
-  const [enVol, setEnVol] = useState<{ depuis: number; attendue: number } | null>(null)
+  // **La recette se lit ici, elle ne se règle plus ici** (E4) : la machine qui
+  // la pose vit dans `Places`, avec les cinq panneaux qu'elle sert, et les
+  // tables l'emploient. La fiche n'en garde que la lecture — donc rien à tenir,
+  // rien à resynchroniser, et l'asset fait foi à chaque rendu.
+  const recette = asset.recette
 
-  // Changer d'asset remet la fiche sur la recette de celui-là. Sans ça, le
-  // panneau garderait les réglages du précédent et on croirait les avoir posés.
-  //
-  // **Sur l'identifiant seul, jamais sur la recette.** Chaque retouche revient
-  // par le flux d'événements ; se resynchroniser dessus ferait reculer un
-  // curseur qu'on est en train de faire glisser, au rythme des allers-retours.
-  // C'est l'écran qui mène la recette tant que la fiche est ouverte, et le
-  // serveur qui tranche quand il refuse — `poser` remet alors l'état d'avant.
+  // Changer d'asset remet la fiche sur celui-là.
   useEffect(() => {
-    setRecette(asset.recette)
-    envoyee.current = asset.recette
     setMontrerBrut(false)
-    setNom("")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asset.identifiant])
 
   // ── Ce que le projet a imposé à cette image ───────────────────────────────
@@ -195,81 +137,6 @@ export function Fiche({
       vivant = false
     }
   }, [asset.identifiant, univers])
-
-  // ── Poser la recette ──────────────────────────────────────────────────────
-  //
-  // **Deux gestes, pas un.** `regler` bouge la valeur à l'écran et ne demande
-  // rien ; `poser` l'envoie. Un segment fait les deux d'un coup — c'est un
-  // choix, il part. Un curseur ne pose qu'au relâchement : la valeur suit la
-  // main, le rendu suit la main lâchée.
-  //
-  // Le serveur garde le détourage entre deux réglages et ne refait que la queue
-  // de la recette quand les passes n'ont pas bougé — c'est ce qui sépare 29 ms
-  // de 1 492, et c'est aussi ce qui dit à la jauge quelle attente afficher.
-
-  const regler = (suivante: Recette) => setRecette(suivante)
-
-  const poser = async (suivante: Recette) => {
-    setRecette(suivante)
-
-    // Rien à envoyer si c'est déjà ce qui est posé — un relâchement de curseur
-    // qui n'a rien déplacé, un `onKeyUp` sur une touche qui n'est pas une
-    // flèche. Le serveur sérialise les retouches : un appel pour rien, c'est
-    // une seconde et demie de file pour rien.
-    if (JSON.stringify(suivante) === JSON.stringify(envoyee.current)) return
-
-    const lourde =
-      JSON.stringify(suivante.passes) !== JSON.stringify(envoyee.current.passes)
-    envoyee.current = suivante
-
-    const depart = Date.now() / 1000
-    envols.current += 1
-    // La jauge garde le **premier** départ : le serveur sérialise, donc deux
-    // retouches lancées coup sur coup sont une seule attente, pas deux.
-    setEnVol(
-      (deja) =>
-        deja ?? {
-          depuis: depart,
-          attendue: lourde ? attentes.current.detourage : attentes.current.queue,
-        },
-    )
-
-    try {
-      await api.poserRecette(asset.identifiant, suivante)
-      const mise = Date.now() / 1000 - depart
-      attentes.current = lourde
-        ? { ...attentes.current, detourage: mise }
-        : { ...attentes.current, queue: mise }
-    } catch (erreur) {
-      onErreur(erreur instanceof Error ? erreur.message : "retouche refusée")
-      setRecette(asset.recette) // l'écran ne garde pas un réglage que le serveur refuse
-      envoyee.current = asset.recette
-    } finally {
-      envols.current -= 1
-      if (envols.current === 0) setEnVol(null)
-    }
-  }
-
-  const revenirAuBrut = async () => {
-    try {
-      await api.revenirAuBrut(asset.identifiant)
-      setRecette(RECETTE_VIDE)
-    } catch (erreur) {
-      onErreur(erreur instanceof Error ? erreur.message : "retour au brut refusé")
-    }
-  }
-
-  const enregistrer = async () => {
-    try {
-      await api.nommerRecette(nom.trim(), recette)
-      setNom("")
-    } catch (erreur) {
-      onErreur(erreur instanceof Error ? erreur.message : "recette refusée")
-    }
-  }
-
-  const raisonModele =
-    traitement.moteurs.find((m) => m.nom === "modele")?.raison ?? null
 
   return (
     <aside
@@ -300,7 +167,6 @@ export function Fiche({
         brut={montrerBrut}
         onBrut={setMontrerBrut}
         traite={!estVide(recette)}
-        enVol={enVol}
       />
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
@@ -323,7 +189,6 @@ export function Fiche({
           onReinjecter={onReinjecter}
           onReglages={onReglages}
           onSupprimer={onSupprimer}
-          onDecouper={onDecouper}
         />
 
         <CaseDeLAsset
@@ -337,250 +202,13 @@ export function Fiche({
 
         <ImposeParLeProjet impose={impose} recette={recette} />
 
-        <div className="flex flex-col gap-2">
-          {/* ── 1. Détourage ─────────────────────────────────────────────── */}
-          <Etape
-            cle="fiche.detourage"
-            aide="etape.detourage"
-            titre="Détourage"
-            active={recette.passes.length > 0}
-            etat={RESUME.detourage(recette)}
-            onBasculer={() =>
-              poser({
-                ...recette,
-                passes: recette.passes.length ? [] : [{ ...PASSE_PAR_DEFAUT }],
-              })
-            }
-          >
-            <div className="flex flex-col gap-2">
-              {recette.passes.map((passe, rang) => (
-                <BlocPasse
-                  key={rang}
-                  rang={rang}
-                  passe={passe}
-                  raisonModele={raisonModele}
-                  onChange={(suivante) =>
-                    regler({
-                      ...recette,
-                      passes: recette.passes.map((p, i) => (i === rang ? suivante : p)),
-                    })
-                  }
-                  onFini={(suivante) =>
-                    void poser({
-                      ...recette,
-                      passes: recette.passes.map((p, i) => (i === rang ? suivante : p)),
-                    })
-                  }
-                  onRetirer={
-                    recette.passes.length > 1
-                      ? () =>
-                          poser({
-                            ...recette,
-                            passes: recette.passes.filter((_, i) => i !== rang),
-                          })
-                      : undefined
-                  }
-                />
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  poser({
-                    ...recette,
-                    passes: [...recette.passes, { ...PASSE_PAR_DEFAUT }],
-                  })
-                }
-                className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
-              >
-                + une passe
-              </button>
-            </div>
-          </Etape>
-
-          {/* ── 2. Recadrage ─────────────────────────────────────────────── */}
-          <Etape
-            cle="fiche.recadrage"
-            aide="etape.recadrage"
-            titre="Recadrage"
-            active={recette.recadrage !== null}
-            etat={recette.recadrage && RESUME.recadrage(recette.recadrage)}
-            onBasculer={() =>
-              poser({
-                ...recette,
-                recadrage: recette.recadrage ? null : { marge: 0, boite: null },
-              })
-            }
-          >
-            <Reglage libelle="marge" aide="recadrage.marge">
-              <Curseur
-                valeur={recette.recadrage?.marge ?? 0}
-                min={0}
-                max={64}
-                unite=" px"
-                onChange={(marge) =>
-                  regler({ ...recette, recadrage: { marge, boite: null } })
-                }
-                onFini={(marge) =>
-                  void poser({ ...recette, recadrage: { marge, boite: null } })
-                }
-              />
-            </Reglage>
-          </Etape>
-
-          {/* ── 3. Grille ────────────────────────────────────────────────── */}
-          <Etape
-            cle="fiche.grille"
-            aide="etape.grille"
-            titre="Grille"
-            active={recette.grille !== null}
-            etat={recette.grille && RESUME.grille(recette.grille)}
-            onBasculer={() =>
-              poser({
-                ...recette,
-                grille: recette.grille
-                  ? null
-                  : { cible: 64, occupation: 100, ancrage: "bas" },
-              })
-            }
-          >
-            <div className="flex flex-col gap-2">
-              <Reglage libelle="cible" aide="grille.cible">
-                <Segments
-                  valeurs={CIBLES}
-                  valeur={(recette.grille?.cible ?? 64) as (typeof CIBLES)[number]}
-                  onChange={(cible) =>
-                    poser({
-                      ...recette,
-                      grille: { ...(recette.grille ?? defautGrille()), cible },
-                    })
-                  }
-                />
-              </Reglage>
-              <Reglage libelle="occupation" aide="grille.occupation">
-                <Curseur
-                  valeur={recette.grille?.occupation ?? 100}
-                  min={10}
-                  max={100}
-                  unite=" %"
-                  onChange={(occupation) =>
-                    regler({
-                      ...recette,
-                      grille: { ...(recette.grille ?? defautGrille()), occupation },
-                    })
-                  }
-                  onFini={(occupation) =>
-                    void poser({
-                      ...recette,
-                      grille: { ...(recette.grille ?? defautGrille()), occupation },
-                    })
-                  }
-                />
-              </Reglage>
-              <Reglage libelle="ancrage" aide="grille.ancrage">
-                <Segments
-                  valeurs={["bas", "centre"] as const}
-                  valeur={recette.grille?.ancrage ?? "bas"}
-                  onChange={(ancrage) =>
-                    poser({
-                      ...recette,
-                      grille: { ...(recette.grille ?? defautGrille()), ancrage },
-                    })
-                  }
-                />
-              </Reglage>
-            </div>
-          </Etape>
-
-          {/* ── 4. Quantification — branchée, et grisée avec sa raison ────── */}
-          <Etape
-            cle="fiche.quantification"
-            aide="etape.quantification"
-            titre="Quantification"
-            active={recette.quantification !== null}
-            etat={recette.quantification && RESUME.quantification(recette.quantification)}
-            raison={traitement.quantification.raison}
-            onBasculer={() =>
-              poser({
-                ...recette,
-                quantification: recette.quantification
-                  ? null
-                  : {
-                      couleurs: univers.couleurs,
-                      // **La palette vient du projet, jamais d'ici.** Elle se
-                      // déduit par calcul des artworks officiels (US-54) ; une
-                      // palette vide veut dire « déduite de l'image
-                      // elle-même », ce que le serveur refuse à l'écran. La
-                      // reposer vide à chaque cran, comme le faisait T2, aurait
-                      // fait tomber la quantification au premier réglage.
-                      palette: univers.palette,
-                      tramage: "aucun",
-                    },
-              })
-            }
-          >
-            <div className="flex flex-col gap-2">
-              {univers.palette.length > 0 && (
-                <Reglage libelle="palette" aide="quantification.palette">
-                  <div className="flex flex-wrap gap-[2px]">
-                    {univers.palette.map((couleur) => (
-                      <span
-                        key={couleur}
-                        title={couleur}
-                        style={{ background: couleur }}
-                        className="h-4 w-4 rounded-[2px] border border-bord"
-                      />
-                    ))}
-                  </div>
-                </Reglage>
-              )}
-              <Reglage libelle="couleurs" aide="quantification.couleurs">
-                <Segments
-                  valeurs={[4, 8, 16, 32, 64] as const}
-                  valeur={
-                    (recette.quantification?.couleurs ?? 32) as 4 | 8 | 16 | 32 | 64
-                  }
-                  onChange={(couleurs) =>
-                    poser({
-                      ...recette,
-                      quantification: {
-                        couleurs,
-                        palette:
-                          recette.quantification?.palette ?? univers.palette,
-                        tramage: recette.quantification?.tramage ?? "aucun",
-                      },
-                    })
-                  }
-                />
-              </Reglage>
-            </div>
-          </Etape>
-
-          {/* ── 5. Bords ─────────────────────────────────────────────────── */}
-          <Etape
-            cle="fiche.bords"
-            aide="etape.bords"
-            titre="Nettoyage des bords"
-            active={recette.bords !== null}
-            etat={recette.bords && RESUME.bords(recette.bords)}
-            onBasculer={() =>
-              poser({
-                ...recette,
-                bords: recette.bords ? null : { aire_min: 3 },
-              })
-            }
-          >
-            <Reglage libelle="tache minimale" aide="bords.aire_min">
-              <Curseur
-                valeur={recette.bords?.aire_min ?? 3}
-                min={0}
-                max={64}
-                unite=" px"
-                onChange={(aire_min) => regler({ ...recette, bords: { aire_min } })}
-                onFini={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
-              />
-            </Reglage>
-          </Etape>
-        </div>
+        {/* **La recette se lit ici, elle ne se règle plus ici** (E4). Les cinq
+            places tenaient cette colonne de 380 px, à côté d'une image de
+            380 px : on y réglait un détourage en regardant une vignette. Elles
+            ont un écran à leur taille depuis E3 — une table, plein cadre, avec
+            l'image en grand entre la table et ses sœurs. La fiche garde ce
+            qu'elle a toujours été : ce que l'image **est**. */}
+        <RecetteEnLecture recette={recette} onOuvrirLesTables={onOuvrirLesTables} />
 
         {/* ── Faire rentrer un épinglé dans le rang ──────────────────────
             « Je veux réaligner d'un geste, depuis sa fiche, un asset que
@@ -612,69 +240,28 @@ export function Fiche({
           </div>
         )}
 
-        {/* ── La recette elle-même ───────────────────────────────────────── */}
-        <div className="mt-auto flex flex-col gap-2 border-t border-bord pt-2">
-          {traitement.recettes.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <Libelle aide="fiche.recettes">Recettes</Libelle>
-              <div className="flex flex-wrap gap-1">
-                {traitement.recettes.map((enregistree) => (
-                  <button
-                    key={enregistree}
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const suivant = await api.appliquerRecette(
-                          asset.identifiant,
-                          enregistree,
-                        )
-                        setRecette(suivant.recette)
-                      } catch (erreur) {
-                        onErreur(
-                          erreur instanceof Error ? erreur.message : "recette refusée",
-                        )
-                      }
-                    }}
-                    className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte-2 hover:bg-fond-3"
-                  >
-                    {enregistree}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* ── Les deux portes ────────────────────────────────────────────
+            « La fiche d'une image dit ce que l'image est et porte deux portes :
+            l'établi de la chose à qui elle appartient, et les tables. » Une
+            image qui n'appartient à personne n'a que la seconde — et le grisé
+            de la première porte sa raison, comme partout ailleurs. */}
+        <div className="mt-auto flex flex-col gap-1 border-t border-bord pt-2">
+          <Bouton
+            inactif={!asset.personnage}
+            onClick={onOuvrirLEtabli}
+            enfants="Reprendre dans l'établi"
+          />
+          {!asset.personnage && (
+            <Raison texte="cette image n'appartient à aucune chose du jeu — la rattacher plus haut lui ouvre son établi" />
           )}
-
-          <div className="flex items-center gap-2">
-            <input
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="nommer cette recette"
-              className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
-            />
-            <Bouton
-              inactif={!nom.trim() || estVide(recette)}
-              onClick={enregistrer}
-              enfants="Enregistrer"
-            />
-          </div>
-          {estVide(recette) && nom.trim() !== "" && (
-            <Raison texte="une recette vide n'a rien à rejouer" />
-          )}
-
-          <div className="flex items-center gap-2">
-            <Bouton
-              inactif={estVide(recette)}
-              onClick={revenirAuBrut}
-              enfants="Revenir au brut"
-            />
-            <a
-              href={api.telechargementAsset(asset.identifiant, montrerBrut)}
-              download
-              className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
-            >
-              PNG ↓
-            </a>
-          </div>
+          <Bouton onClick={onOuvrirLesTables} enfants="Ouvrir les tables" />
+          <a
+            href={api.telechargementAsset(asset.identifiant, montrerBrut)}
+            download
+            className="mesure mt-1 text-[10px] text-signal hover:text-signal-clair"
+          >
+            PNG ↓
+          </a>
         </div>
       </div>
     </aside>
@@ -833,14 +420,12 @@ function Jugement({
   onReinjecter,
   onReglages,
   onSupprimer,
-  onDecouper,
 }: {
   asset: Asset
   onErreur: (raison: string) => void
   onReinjecter: (role: Role) => void
   onReglages: () => void
   onSupprimer: () => void
-  onDecouper: () => void
 }) {
   const basculerFavori = async () => {
     try {
@@ -868,24 +453,16 @@ function Jugement({
         <span className="mesure text-[10px] text-texte-3">
           {dollars(asset.cout_usd)}
         </span>
-        {/* **Découper vit dans la rangée des gestes, pas dans une rubrique.**
-            Une planche est une image comme une autre : rien ne permet de savoir
-            d'avance qu'elle en contient huit, donc rien ne doit paraître ou
-            disparaître selon ce qu'on croit deviner. Le geste est là, toujours,
-            et il coûte une ligne de mono — la densité que le § La tuile impose
-            à la grille vaut aussi pour la fiche. */}
-        <button
-          type="button"
-          onClick={onDecouper}
-          title="découper une planche multi-sprites en assets"
-          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-signal"
-        >
-          Découper ›
-        </button>
+        {/* **`Découper` a quitté cette rangée** (E3). Le geste était là parce
+            qu'une planche est une image comme une autre et que rien ne permet
+            de deviner qu'elle en contient huit — l'argument tient toujours, et
+            c'est pourquoi le découpage est devenu une **fabrique de la barre
+            des tables** : il y est pour toute image, toujours, sans qu'on ait à
+            le chercher. Une porte de moins ici, pas un geste de moins. */}
         <button
           type="button"
           onClick={onSupprimer}
-          className="mesure h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+          className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
         >
           Supprimer
         </button>
@@ -1133,7 +710,6 @@ function Visionneuse({
   brut,
   onBrut,
   traite,
-  enVol,
 }: {
   asset: Asset
   brut: boolean
@@ -1142,7 +718,6 @@ function Visionneuse({
   /** Une retouche partie et pas encore revenue. L'image affichée est alors
    *  celle d'avant : c'est ce que la jauge vient dire, au bord bas de la zone
    *  image, à l'endroit exact où une tuile en génération porte la sienne. */
-  enVol: { depuis: number; attendue: number } | null
 }) {
   const dimensions = brut || !traite
     ? `${asset.largeur}×${asset.hauteur}`
@@ -1174,16 +749,6 @@ function Visionneuse({
           className="h-full w-full object-contain"
           style={{ imageRendering: "pixelated" }}
         />
-        {enVol && (
-          <div className="absolute inset-x-0 bottom-0">
-            <Jauge
-              demarreLe={enVol.depuis}
-              attendue={enVol.attendue}
-              compteur={false}
-              seuil={0.24}
-            />
-          </div>
-        )}
       </div>
       <div className="flex items-center gap-2">
         {/* La bascule n'est là que s'il y a deux choses à comparer. Un segment
@@ -1318,7 +883,6 @@ function Reglage({
   )
 }
 
-const defautGrille = () => ({ cible: 64, occupation: 100, ancrage: "bas" as const })
 
 const estVide = (recette: Recette) =>
   recette.passes.length === 0 &&
@@ -1326,3 +890,65 @@ const estVide = (recette: Recette) =>
   !recette.grille &&
   !recette.quantification &&
   !recette.bords
+
+
+// ── La recette, en lecture ──────────────────────────────────────────────────
+
+/**
+ * Ce que l'image a subi, et rien de plus.
+ *
+ * **Elle se lit ici, elle se règle ailleurs** — c'est le partage de E4 : la
+ * fiche dit ce que l'image *est*, les tables disent ce qu'on lui *fait*. Les
+ * deux ne se disputent plus la même colonne de 380 px, et la seule qui montre
+ * l'image en grand est celle où l'on règle.
+ *
+ * Le résumé est celui des puces de la barre des tables, écrit au même endroit —
+ * `Places.RESUME`. Deux façons de résumer la même recette auraient fini par en
+ * dire deux choses.
+ */
+function RecetteEnLecture({
+  recette,
+  onOuvrirLesTables,
+}: {
+  recette: Recette
+  onOuvrirLesTables: () => void
+}) {
+  const places: [string, string | null][] = [
+    ["détourage", recette.passes.length ? RESUME.detourage(recette) : null],
+    ["recadrage", recette.recadrage ? RESUME.recadrage(recette.recadrage) : null],
+    ["grille", recette.grille ? RESUME.grille(recette.grille) : null],
+    [
+      "quantification",
+      recette.quantification ? RESUME.quantification(recette.quantification) : null,
+    ],
+    ["bords", recette.bords ? RESUME.bords(recette.bords) : null],
+  ]
+  const posees = places.filter(([, valeur]) => valeur !== null)
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-bord pt-2">
+      <Libelle aide="fiche.recette">Sa recette</Libelle>
+      {posees.length === 0 ? (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Rien n'est posé : cette image est celle qui est arrivée du fournisseur.
+        </p>
+      ) : (
+        <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 text-[10px]">
+          {posees.map(([nom, valeur]) => (
+            <Fragment key={nom}>
+              <dt className="text-texte-3">{nom}</dt>
+              <dd className="text-right text-texte-2">{valeur}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      )}
+      <button
+        type="button"
+        onClick={onOuvrirLesTables}
+        className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+      >
+        La régler dans les tables ›
+      </button>
+    </div>
+  )
+}

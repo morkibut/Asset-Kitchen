@@ -187,7 +187,7 @@ du serveur MCP. Le numéro y est conservé : un renvoi `§4 bis` reste valide.
 
 | Entité | Contenu | Note |
 |---|---|---|
-| **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » —, **la liste de ses directions** | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. Les **directions** sont arrivées en V2.1 : elles se déduisent de la vue du jeu et décident du nombre de cases d'une pose — voir plus bas. |
+| **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » —, **la vue du jeu**, **la liste de ses directions** | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. La **vue** et les **directions** sont arrivées en V2.1 : on choisit la vue une fois, les directions s'en déduisent, et elles décident du nombre de cases d'une pose — voir plus bas. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
 | **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression, **direction** | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. La **direction** est arrivée en V2.1 et elle est vide pour tout ce qui n'en a pas — une icône, un décor, une tuile. |
@@ -198,7 +198,7 @@ Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de
 personnage, emplacement, pièce, calque — sont décrites en §7, et aucune ne modifie une
 ligne ci-dessus : elles s'ajoutent, et le corps comme le calque rendu restent des assets
 ordinaires. **Les trois entités de la V2.1** — étiquette, palette, ambiance — sont
-décrites plus bas, avec les quatre champs qui les accompagnent.
+décrites plus bas, avec les cinq champs qui les accompagnent.
 
 **Pourquoi le personnage mérite une entité et pas un champ.** C'est la deuxième fois seulement
 depuis T4 qu'on ajoute un objet au modèle — le lien de T9 était le premier —, et la barre doit
@@ -326,7 +326,7 @@ rattrapage du geste en cours, et rien d'autre.
 ### Ce que la V2.1 ajoute au modèle
 
 *Écrit le 31 août 2026, en reportant `docs/maquettes-v2.1/`.* **Trois entités neuves et
-quatre champs**, et la barre reste celle du §5 : une étiquette sur un objet existant aurait
+cinq champs**, et la barre reste celle du §5 : une étiquette sur un objet existant aurait
 suffi partout où elle suffit, et chacune des trois est là parce qu'elle ne suffisait pas.
 Le détail des arbitrages qui les ont posées est dans `docs/v21-arbitrages.md`.
 
@@ -336,9 +336,17 @@ Le détail des arbitrages qui les ont posées est dans `docs/v21-arbitrages.md`.
 | **Palette** | un nom, la liste de ses sources, les deux valeurs de fusion, la liste de ses retouches, et les couleurs rendues avec leur empreinte | Une palette **reste une recette** : elle se recalcule de ses sources, et ses sources peuvent être d'autres palettes. La palette du projet devient **un cas particulier de palette**, pas une chose à part. |
 | **Ambiance** | un nom, le nom de sa palette, la liste de ses images de référence, ses trois cases de texte | Elle appartient à un projet. C'est un **lot de style tout prêt**, fabriqué une fois et réutilisé sur plusieurs choses du jeu. Les palettes sont les ingrédients, les ambiances les recettes — d'où les deux listes au même endroit dans l'univers. |
 
-**Et quatre champs sur des objets qui existent** : la liste des **directions** sur le
-projet, une **direction** sur l'asset et sur la génération, le nom de l'**ambiance par
-défaut** sur une chose du jeu, et **ce qui a été pris de l'ambiance** sur la génération.
+**Et cinq champs sur des objets qui existent** : la **vue du jeu** et la liste des
+**directions** sur le projet, une **direction** sur l'asset et sur la génération, le nom de
+l'**ambiance par défaut** sur une chose du jeu, et **ce qui a été pris de l'ambiance** sur
+la génération.
+
+*La vue a été ajoutée le 31 août 2026, sur un report de la maquette de l'assistant qui
+n'avait pas été appliqué ici.* Elle n'existait que sous forme de phrase, dans la case
+`vue` de la bible — un texte anglais qui part au modèle et que rien ne relit. Or le choix
+de la vue remplit **deux endroits d'un coup** : cette phrase, et la liste des directions.
+Sans le champ, l'atelier ne peut ni rouvrir l'étape sur ce qui a été choisi, ni réécrire
+les deux quand on en change : il faudrait deviner la vue en relisant l'anglais.
 S'y ajoute, dans la recette, un **décalage horizontal** sur la grille — le seul réglage
 que la V2.1 ajoute au traitement d'image, et il n'est écrit que par le calibrage.
 

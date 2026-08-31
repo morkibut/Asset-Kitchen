@@ -529,6 +529,15 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 0",
   },
 
+  "fiche.recette": {
+    nom: "Sa recette",
+    ou: "retouche",
+    quoi: "Les places du traitement qui sont posées sur cette image, avec ce que chacune vaut.",
+    change:
+      "Rien : c'est une lecture. La fiche dit ce que l'image est ; les tables disent ce qu'on lui fait, et c'est là qu'on la règle — sur l'image en grand, ce que 380 pixels de colonne ne permettaient pas.",
+    origine: "l'image elle-même",
+  },
+
   "detourage.poches": {
     nom: "poches de fond enfermées",
     ou: "retouche",

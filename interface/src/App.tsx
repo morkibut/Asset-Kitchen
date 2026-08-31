@@ -66,15 +66,15 @@ import {
   type Segment,
 } from "./composants/BarreChassis"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
-import { CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
+import { CRANS, Point, usePli, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranCodex } from "./composants/Codex"
 import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
-import { BlocPasse, Fiche } from "./composants/Fiche"
-import { EcranTables, type Table } from "./composants/Tables"
+import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
+import { EcranTables, TABLES, type Table } from "./composants/Tables"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
@@ -167,6 +167,9 @@ export function App() {
   const [grille, setGrille] = useState<Asset[]>([])
   const [bibliotheque, setBibliotheque] = useState<Bibliotheque>(BIBLIOTHEQUE_VIDE)
   const [filtre, setFiltre] = useState<Filtre>(FILTRE_VIDE)
+  /** La famille qu'on regarde dans la galerie, `""` pour toutes, `"aucune"`
+   *  pour ce qui n'appartient à aucune chose du jeu (E4). */
+  const [famille, setFamille] = useState("")
   const [selection, setSelection] = useState<string[]>([])
   const [annulation, setAnnulation] = useState<Annulation | null>(null)
   // **Le seul geste du produit dont le résultat n'arrive pas par le flux** :
@@ -331,6 +334,14 @@ export function App() {
    *  la même place sur six attitudes à la file, et refermer la table à chaque
    *  voisine ferait du geste six gestes. */
   const [table, setTable] = useState<Table>("detourage")
+  /** L'image dont les tables sont ouvertes **depuis la galerie** (E4). C'est la
+   *  seconde des deux portes de la fiche, et la seule qu'une image sans chose
+   *  du jeu possède : les tables s'ouvrent sur n'importe quelle image. */
+  const [tablesOuvertes, setTablesOuvertes] = useState<string | null>(null)
+  /** Les réglages de l'appel, repliés au pied de la barre qui paie. Le repli
+   *  vit dans le registre du châssis comme tous les autres : il survit au
+   *  changement d'onglet, qui démonte l'écran (E1). */
+  const [reglagesOuvertsDansLaBarre, setReglagesDansLaBarre] = usePli("barre.reglages")
   /** D'où vient ce qui est écrit dans le champ, quand ce n'est pas l'auteur.
    *  Posée en armant une case vide, effacée dès qu'on écrit dedans : un texte
    *  qu'on a repris à la main n'est plus une proposition. */
@@ -344,6 +355,11 @@ export function App() {
   /** L'image dont l'outil est ouvert, **relue dans les cases de la chose**. Une
    *  image retirée de sa case referme donc l'outil, et une image retouchée s'y
    *  montre à jour : la matrice est la seule vérité de cet écran. */
+  /** L'image dont les tables sont ouvertes depuis la galerie, relue dans la
+   *  grille — la seule vérité de cet onglet. */
+  const imageDesTables =
+    grille.find((a) => a.identifiant === tablesOuvertes) ?? null
+
   const imageOuverte =
     choseOuverte?.cases
       .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
@@ -501,7 +517,6 @@ export function App() {
   useLayoutEffect(mesurerCentre, [
     mesurerCentre,
     replies.arbre,
-    replies.reglages,
     fiche,
     onglet,
   ])
@@ -953,6 +968,16 @@ export function App() {
     // Puis la bibliothèque : un asset **remplace** l'emplacement qui l'attendait,
     // à la même clé et donc à la même place.
     for (const asset of grille) {
+      // **Le filtre par famille se pose ici, sur la grille chargée** (E4). Ce
+      // n'est pas un filtre de serveur comme la recherche ou la collection : la
+      // famille d'une image est celle de la chose du jeu à qui elle appartient,
+      // et la seule famille qui existe aujourd'hui est *personnages*. Le jour
+      // où les quatre autres portent des choses (E15), il descendra au serveur
+      // avec elles — d'ici là, le poser en bas lui ferait porter une requête
+      // pour une distinction qui n'existe pas encore.
+      if (famille === "aucune" && asset.personnage) continue
+      if (famille === "personnages" && !asset.personnage) continue
+      if (famille && famille !== "aucune" && famille !== "personnages") continue
       parCle.set(asset.identifiant, {
         cle: asset.identifiant,
         date: asset.cree_le,
@@ -964,7 +989,7 @@ export function App() {
     return [...parCle.values()].sort(
       (a, b) => b.date - a.date || a.rang - b.rang,
     )
-  }, [chantier, grille, filtre])
+  }, [chantier, grille, filtre, famille])
 
   // ── La raison qui rend générer inactif ────────────────────────────────────
 
@@ -1299,9 +1324,12 @@ export function App() {
         }
       : null
 
+  // **Trois colonnes depuis E4** — `240px · 1fr · 380px` : où ça se range, la
+  // grille d'assets, la fiche d'une image. C'est l'ancien atelier **moins sa
+  // colonne de réglages de 300 px**, qui suit la barre qui paie : la galerie ne
+  // paie plus, donc elle n'a rien à régler avant de payer.
   const colonnes = [
     `${replies.arbre ? 0 : 240}px`,
-    `${replies.reglages ? 0 : 300}px`,
     "minmax(0,1fr)",
     `${fiche ? 380 : 0}px`,
   ].join(" ")
@@ -1346,10 +1374,10 @@ export function App() {
           { cle: "fiche", nom: "fiche", repliee: replies.fiche },
         ]
       : onglet === "galerie"
-      ? [
-          { cle: "arbre", nom: "arbre", repliee: replies.arbre },
-          { cle: "reglages", nom: "réglages", repliee: replies.reglages },
-        ]
+      ? // **Une seule colonne repliable depuis E4** : celle de l'arbre. Celle
+        // des réglages est partie avec ce qui paie, et une bascule pour une
+        // colonne absente mentirait sur ce que l'écran contient.
+        [{ cle: "arbre", nom: "arbre", repliee: replies.arbre }]
       : onglet === "univers"
         ? // **La colonne de l'univers n'existe plus** (E7) : ses cinq réglages
           // ont un côté à eux, qui prend l'écran entier. Ne reste que la
@@ -1412,7 +1440,23 @@ export function App() {
             },
             { libelle: "Personnages" },
           ]
-        : planche
+        : imageDesTables
+          ? [
+              {
+                libelle: projetCourant?.nom ?? "sans projet",
+                onAller: () => setTablesOuvertes(null),
+              },
+              { libelle: "Galerie", onAller: () => setTablesOuvertes(null) },
+              {
+                libelle: imageDesTables.label || imageDesTables.identifiant,
+                onAller: () => {
+                  setTablesOuvertes(null)
+                  setSelection([imageDesTables.identifiant])
+                },
+              },
+              { libelle: TABLES.find((t) => t.cle === table)?.nom ?? "" },
+            ]
+          : planche
       ? [
           {
             libelle: projetCourant?.nom ?? "sans projet",
@@ -1444,6 +1488,45 @@ export function App() {
    */
   const barreQuiPaie = (
     <div className="flex shrink-0 flex-col">
+      {/* **Les réglages de l'appel suivent la barre qui paie** (E4, A-25). Ils
+          tenaient une colonne de 300 px ouverte en permanence dans la galerie,
+          *même quand on n'y touchait pas* — et sur l'écran dont le métier est
+          de juger. Ils se replient maintenant sur une ligne qui dit ce qu'ils
+          valent, à côté du champ qui paie.
+
+          **La colonne ne disparaît pas encore, elle se replie**, et la nuance
+          est écrite en A-25 : les réglages hérités d'une chose du jeu arrivent
+          en E12, l'écran de confirmation qui les montre avant de payer en E14.
+          D'ici là, les retirer retirerait le seul endroit où l'on choisit un
+          modèle. */}
+      {reglagesOuvertsDansLaBarre && (
+        <PanneauReglages
+          modeles={modeles}
+          choisi={modele}
+          onChoisir={setModeleChoisi}
+          proportions={proportions}
+          onProportions={setProportions}
+          variations={variations}
+          onVariations={setVariations}
+          options={options}
+          onOptions={setOptions}
+          references={reinjections.length}
+          projet={projetCourant?.nom ?? null}
+          univers={univers}
+          echelle={echelle}
+          onEchelle={setEchelle}
+          compte={compteReferences}
+          cout={modele ? (couts[modele.identifiant] ?? null) : null}
+          // Combien de cases le lot armé demande, ou zéro. Le panneau en tire
+          // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
+          // qu'un compte faux coûterait.
+          cases={cases}
+          cible={personnageCible}
+          ecarteesGeneration={ecarteesGeneration}
+          onEcarterGeneration={setEcarteesGeneration}
+          onErreur={setPanne}
+        />
+      )}
       <Cible
         personnage={personnageCible}
         poses={posesCible}
@@ -1469,6 +1552,23 @@ export function App() {
         }
         onRole={(asset, role) => reinjecter(asset, role)}
       />
+      {/* La ligne qui ouvre les réglages, et qui **dit ce qu'ils valent quand
+          ils sont fermés** — c'est la règle du bloc repliable, appliquée au
+          plus gros panneau du produit. */}
+      <button
+        type="button"
+        onClick={setReglagesDansLaBarre}
+        aria-expanded={reglagesOuvertsDansLaBarre}
+        className="mesure flex h-[26px] shrink-0 items-center gap-2 border-b border-bord bg-fond-1 px-4 text-left text-[10px] text-texte-3 hover:text-texte-2"
+      >
+        <span aria-hidden>{reglagesOuvertsDansLaBarre ? "−" : "+"}</span>
+        <span>réglages de l'appel</span>
+        <span className="text-texte-2">
+          {modele ? nomDuModele(modele.identifiant) : "aucun modèle"} · {proportions} ·{" "}
+          {variations} variation{variations > 1 ? "s" : ""}
+        </span>
+      </button>
+
       {/* **Ce que ça va coûter, au pied de ce qui paie** (E2). Le chiffre
           vivait dans la colonne de réglages de 300 px, qui n'existe que dans la
           galerie — et la galerie ne paie plus. Il suit donc la barre, parce que
@@ -1548,6 +1648,7 @@ export function App() {
           setDepensesOuvertes(false)
           setChoseOuverte(null)
           setCaseOuverte(null)
+          setTablesOuvertes(null)
           setFente(null)
           setOnglet(prochain)
         }}
@@ -1594,7 +1695,37 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && onglet === "galerie" && planche && (
+      {/* **Les tables, à la profondeur de la galerie.** Une image qui
+          n'appartient à aucune chose du jeu n'a pas d'établi ; elle a quand
+          même une recette, et il faut un endroit pour la régler. Ses sœurs sont
+          alors les voisines de la grille, ce que la maquette du châssis prévoit
+          en toutes lettres. */}
+      {!depensesOuvertes && onglet === "galerie" && imageDesTables && etat && (
+        <EcranTables
+          asset={imageDesTables}
+          soeurs={grille}
+          traitement={etat.traitement}
+          univers={univers}
+          ouverte={table}
+          onOuvrir={setTable}
+          onSoeur={setTablesOuvertes}
+          decoupe={
+            <EcranDecoupe
+              planche={imageDesTables}
+              onFermer={() => setTable("detourage")}
+              onFente={setFente}
+              onDecoupe={(decoupes) => {
+                setTable("detourage")
+                if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+              }}
+            />
+          }
+          onErreur={setPanne}
+          BlocPasse={BlocPasse}
+        />
+      )}
+
+      {!depensesOuvertes && onglet === "galerie" && !imageDesTables && planche && (
         <EcranDecoupe
           planche={planche}
           onFermer={() => setDecoupeOuverte(null)}
@@ -1646,37 +1777,6 @@ export function App() {
           />
         </div>
 
-        <div className="flex min-h-0 overflow-hidden">
-          <PanneauReglages
-            modeles={modeles}
-            choisi={modele}
-            onChoisir={setModeleChoisi}
-            proportions={proportions}
-            onProportions={setProportions}
-            variations={variations}
-            onVariations={setVariations}
-            options={options}
-            onOptions={setOptions}
-            references={reinjections.length}
-            projet={
-              bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant)
-                ?.nom ?? null
-            }
-            univers={univers}
-            echelle={echelle}
-            onEchelle={setEchelle}
-            compte={compteReferences}
-            cout={modele ? (couts[modele.identifiant] ?? null) : null}
-            // Combien de cases le lot armé demande, ou zéro. Le panneau en tire
-            // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
-            // qu'un compte faux coûterait.
-            cases={cases}
-            cible={personnageCible}
-            ecarteesGeneration={ecarteesGeneration}
-            onEcarterGeneration={setEcarteesGeneration}
-            onErreur={setPanne}
-          />
-        </div>
 
         {/* `min-w-0` **et** `min-h-0` : une piste de grille en `minmax(0,1fr)`
             n'empêche pas son contenu de l'élargir — c'est l'élément posé dedans
@@ -1690,6 +1790,8 @@ export function App() {
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
             favoris={filtre.favoris}
             onFavoris={(favoris) => setFiltre((f) => ({ ...f, favoris }))}
+            famille={famille}
+            onFamille={setFamille}
             collection={filtre.collection}
             collections={bibliotheque.collections}
             projets={bibliotheque.projets}
@@ -1727,13 +1829,23 @@ export function App() {
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
           />
+
+          {/* **Le pied de la galerie dit qu'aucun appel ne part d'ici** (E4).
+              De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
+              trouve : ici on juge et on range, on ne paie jamais. La phrase
+              tient la place de la barre qui paie, et c'est son absence qui est
+              le message — la même règle que la barre d'état d'une table. */}
+          <p className="mesure flex h-[26px] shrink-0 items-center gap-1.5 border-t border-bord px-4 text-[10px] text-texte-3">
+            <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+            aucun appel ne part d'ici — on paie depuis le codex et depuis
+            l'établi d'une chose du jeu
+          </p>
         </section>
 
         <div className="flex min-h-0 overflow-hidden">
           {ouverte && etat && (
             <Fiche
               asset={ouverte}
-              traitement={etat.traitement}
               univers={univers}
               plan={plan}
               personnages={personnages}
@@ -1742,7 +1854,18 @@ export function App() {
               onReinjecter={(role) => reinjecter(ouverte.identifiant, role)}
               onReglages={() => void reprendreReglages(ouverte)}
               onSupprimer={() => void supprimer([ouverte.identifiant])}
-              onDecouper={() => setDecoupeOuverte(ouverte.identifiant)}
+              // **Les deux portes** (E4). L'établi de la chose à qui l'image
+              // appartient — un onglet plus loin, à la profondeur de la
+              // chose —, et les tables, qui s'ouvrent sur n'importe quelle
+              // image sans quitter la galerie.
+              onOuvrirLEtabli={() => {
+                if (!ouverte.personnage) return
+                setChoseOuverte(ouverte.personnage)
+                setChoseChoisie(ouverte.personnage)
+                setCaseOuverte(ouverte.identifiant)
+                setOnglet("codex")
+              }}
+              onOuvrirLesTables={() => setTablesOuvertes(ouverte.identifiant)}
               onOuvrir={(identifiant) => setSelection([identifiant])}
             />
           )}
