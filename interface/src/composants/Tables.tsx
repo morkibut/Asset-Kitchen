@@ -34,7 +34,7 @@ import {
   type Univers,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
-import { EnTetePanneau, Raison, Segments } from "./chassis"
+import { EnTetePanneau, Raison, rectangleDeLImage, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { EcranSuperposition } from "./Superposition"
 import {
@@ -357,23 +357,32 @@ function Comparateur({
           className="w-[104px]"
         />
       )}
-      {/* **Le zoom, à côté des modes** — ajouté le 31 août 2026. Il vit dans la
-          fente qui existe déjà : la bande fait 38 px et elle ne grandit pas.
+      {/* **Le zoom, à côté des modes** — refait en U2. Il vit dans la fente qui
+          existe déjà : la bande fait 38 px et elle ne grandit pas.
 
-          `ajusté` d'abord, parce que c'est l'état d'ouverture et le seul qui
-          suive le cadre ; les crans après lui, dans l'ordre. Ce que vaut
-          `ajusté` s'écrit à côté, parce qu'un mot qui cache un nombre laisse
-          deviner ce qu'on regarde, et ce produit écrit ses mesures. */}
+          Quatre commandes, et chacune fait une seule chose : *moins*, le pour
+          cent qu'on écrit, *plus*, et le retour à cent — celui qui rend un
+          pixel d'image pour un pixel d'écran. *ajusté* garde sa place, parce
+          que c'est l'état d'ouverture et le seul qui suive le cadre. */}
       <span aria-hidden className="h-4 w-px shrink-0 bg-bord" />
-      <Segments
-        valeurs={["ajuste", 1, ...ZOOMS_TABLE] as const}
-        valeur={zoom}
-        libelles={LIBELLES_ZOOM_TABLE}
-        onChange={(v) => onZoom(v as ZoomTable)}
-      />
-      {zoom === "ajuste" && (
-        <span className="shrink-0 whitespace-nowrap text-texte-3">{ajuste}×</span>
-      )}
+      <CommandesDeZoom zoom={zoom} onZoom={onZoom} ajuste={ajuste} />
+      {/* **Le PNG de l'état courant, depuis n'importe quelle table** (U2). Ce
+          qu'on a sous les yeux, quelle que soit la table ouverte et quel que
+          soit le mode — le brut quand on regarde le brut, le rendu sinon. Il
+          n'existait qu'un seul endroit pour télécharger une image, la tuile de
+          la galerie, et on ne l'atteignait pas depuis ici. */}
+      <a
+        href={api.telechargementAsset(asset.identifiant, mode === "brut")}
+        download={`${asset.label || asset.identifiant}${mode === "brut" ? "-brut" : ""}.png`}
+        title={
+          mode === "brut"
+            ? "Télécharger le PNG de l'image d'origine"
+            : "Télécharger le PNG de l'état courant"
+        }
+        className="mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border border-bord-fort px-2 leading-[22px] text-texte-2 hover:text-signal"
+      >
+        PNG ↓{mode === "brut" ? " brut" : ""}
+      </a>
       {/* Le mode se dit dès que ce n'est pas le rendu. */}
       {mode !== "rendu" && (
         <span className="ml-auto text-epingle">on regarde : {MODES[mode]}</span>
@@ -382,31 +391,151 @@ function Comparateur({
   )
 }
 
+/** *moins*, le pour cent, *plus*, et le retour à cent (U2).
+ *
+ *  **Le champ suit le zoom effectif, y compris en `ajusté`** : un champ vide
+ *  pendant qu'on regarde une image à 59 % laisserait deviner le nombre, et ce
+ *  produit écrit ses mesures. Il se réécrit sous les doigts pendant qu'on tape,
+ *  et ne s'envoie qu'à Entrée ou en sortant — la règle des curseurs de T2, qui
+ *  vaut ici pour la même raison : une valeur en cours de frappe est un état de
+ *  passage, pas une intention. */
+function CommandesDeZoom({
+  zoom,
+  onZoom,
+  ajuste,
+}: {
+  zoom: ZoomTable
+  onZoom: (zoom: ZoomTable) => void
+  ajuste: number
+}) {
+  const effectif = zoom === "ajuste" ? ajuste : zoom
+  const [ecrit, setEcrit] = useState<string | null>(null)
+
+  const valider = (texte: string) => {
+    setEcrit(null)
+    const lu = Number.parseInt(texte.replace(/[^\d]/g, ""), 10)
+    // **Hors bornes, on ramène — on ne refuse pas.** Un champ qui rejette une
+    // frappe oblige à deviner ce qu'il accepte ; un champ qui ramène le dit en
+    // affichant la valeur retenue.
+    if (Number.isFinite(lu)) onZoom(borner(lu))
+  }
+
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      <button
+        type="button"
+        aria-label="Reculer"
+        title="Reculer"
+        disabled={effectif <= ZOOM_MIN}
+        onClick={() =>
+          onZoom(
+            borner(
+              [...ARRETS_ZOOM].reverse().find((a) => a < effectif) ?? ZOOM_MIN,
+            ),
+          )
+        }
+        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+      >
+        −
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label="Pour cent d'agrandissement"
+        value={ecrit ?? `${effectif}`}
+        onChange={(e) => setEcrit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") valider((e.target as HTMLInputElement).value)
+          // Échap rend la valeur d'avant — comme partout ailleurs.
+          if (e.key === "Escape") setEcrit(null)
+        }}
+        onBlur={(e) => ecrit !== null && valider(e.target.value)}
+        className="mesure h-[24px] w-[44px] rounded-[2px] border border-bord bg-fond-2 px-1 text-right text-[10px] text-texte tabular-nums"
+      />
+      <span className="text-texte-3">%</span>
+      <button
+        type="button"
+        aria-label="Approcher"
+        title="Approcher"
+        disabled={effectif >= ZOOM_MAX}
+        onClick={() =>
+          onZoom(borner(ARRETS_ZOOM.find((a) => a > effectif) ?? ZOOM_MAX))
+        }
+        className="h-[24px] w-[24px] rounded-[2px] border border-bord-fort text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        title="Un pixel d'image pour un pixel d'écran"
+        onClick={() => onZoom(100)}
+        className={`mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[10px] ${
+          zoom === 100
+            ? "border-signal bg-signal-sourd text-signal"
+            : "border-bord-fort text-texte-2 hover:text-signal"
+        }`}
+      >
+        100 %
+      </button>
+      <button
+        type="button"
+        title="Toute l'image dans le cadre"
+        onClick={() => onZoom("ajuste")}
+        className={`mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border px-2 text-[10px] ${
+          zoom === "ajuste"
+            ? "border-signal bg-signal-sourd text-signal"
+            : "border-bord-fort text-texte-2 hover:text-signal"
+        }`}
+      >
+        ajusté
+      </button>
+    </span>
+  )
+}
+
 // ── Le zoom de la table ─────────────────────────────────────────────────────
 
 /**
- * Les crans d'agrandissement de l'image sur une table.
+ * **Un zoom d'outil, pas un zoom de vitrine** (U2, arbitrage du 31 août 2026).
  *
- * **Des multiples entiers, et rien d'autre** — la règle de la vitrine, reprise
- * mot pour mot parce que c'est la même : un sprite de 128 px agrandi à 192 px
- * doit fabriquer 64 pixels qui n'existent pas, et il les prend en doublant une
- * ligne sur deux. On jugerait alors un défaut qui n'existe que dans la fenêtre
- * où on l'a regardé. `docs/DESIGN.md` § Sur la toile, deux échelles.
+ * La table n'offrait que des multiples entiers — 1×, 2×, 4×, 8×, 16× — plus un
+ * *ajusté* qui ne descendait jamais sous 1×. La règle qui l'imposait est celle
+ * de la vitrine et de la grille : un sprite agrandi à une échelle qui n'est pas
+ * entière fabrique des pixels qui n'existent pas, et on jugerait alors un
+ * défaut né de la fenêtre où on l'a regardé. **Elle appartient à ce qui
+ * *montre* une image ; l'atelier est ce qui la *travaille*.**
  *
- * `ajusté` n'est pas un cran de plus : c'est **celui de ces crans-là qui remplit
- * le cadre**, recalculé quand le cadre change. Il est le cran d'ouverture.
+ * Le prix de l'avoir appliquée ici est mesuré, et c'est U2 entière : une image
+ * d'origine de 1 024 px de côté dans un cadre de 606 × 626 ne pouvait pas
+ * descendre sous 1×, donc on n'en voyait **qu'un coin** — et ce coin étant
+ * transparent, ce que l'écran montrait était le damier. C'est le « bruit » du
+ * relevé d'usage, et c'est ce qui a fait croire que la table de recadrage était
+ * cassée.
+ *
+ * Le pour cent est donc **libre entre 1 et 250**, il s'écrit à la main, et il
+ * n'a plus de marque.
  */
-const ZOOMS_TABLE = [2, 4, 8, 16] as const
-type ZoomTable = (typeof ZOOMS_TABLE)[number] | 1 | "ajuste"
+const ZOOM_MIN = 1
+const ZOOM_MAX = 250
 
-const LIBELLES_ZOOM_TABLE: Partial<Record<string, string>> = {
-  ajuste: "ajusté",
-  1: "1×",
-  2: "2×",
-  4: "4×",
-  8: "8×",
-  16: "16×",
-}
+/** Les arrêts de *plus* et *moins*.
+ *
+ *  **Une échelle, pas un pas fixe.** Un pas de dix pour cent demanderait vingt
+ *  clics pour traverser la plage, et un pas multiplicatif rendrait des nombres
+ *  que personne n'écrirait — 141 %, 199 %. La liste ci-dessous est serrée là où
+ *  l'on règle et lâche là où l'on regarde de loin, et elle contient 100, qui
+ *  est le seul arrêt qui ait un sens propre. */
+const ARRETS_ZOOM = [
+  1, 3, 6, 12, 25, 33, 50, 66, 75, 100, 125, 150, 175, 200, 225, 250,
+] as const
+
+/** `ajusté` n'est pas un arrêt : c'est **le pour cent qui fait tenir l'image
+ *  entière dans le cadre**, recalculé quand le cadre change. Il est l'état
+ *  d'ouverture, et il peut descendre sous cent — c'était tout le défaut. */
+type ZoomTable = number | "ajuste"
+
+const borner = (pour_cent: number) =>
+  Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(pour_cent)))
 
 /** Les 24 px de `p-6`, des deux côtés — la marge du cadre, à retirer de ce qui
  *  est disponible. Écrite ici parce que la mesure et la classe doivent dire la
@@ -546,30 +675,91 @@ export function EcranTables({
   // taille.
   useEffect(() => setZoom("ajuste"), [asset.identifiant])
 
-  /** Le plus grand multiple entier qui tient dans le cadre. Jamais moins de 1 :
-   *  au-dessous, c'est `object-contain` qui réduit, et une réduction n'est pas
-   *  un cran — elle ne fabrique aucun pixel. */
-  const ajuste = Math.max(
-    1,
+  /** **Le pour cent qui fait tenir l'image entière dans le cadre** (U2).
+   *
+   *  Il descend sous cent, et c'est tout ce qui change : le calcul d'avant
+   *  plafonnait à un plancher de 1× — donc une image de 1 024 px dans un cadre
+   *  de 606 n'en montrait qu'un coin, et ce coin étant transparent, l'écran
+   *  montrait le damier. Il ne s'arrondit plus à un multiple entier non plus :
+   *  la règle des multiples entiers appartient à ce qui *montre* une image, pas
+   *  à ce qui la travaille. */
+  const ajuste = borner(
     Math.min(
-      16,
-      Math.floor(
-        Math.min(
-          dispo.largeur / (largeurVue * (mode === "cote" ? 2 : 1)),
-          dispo.hauteur / hauteurVue,
-        ),
-      ) || 1,
-    ),
+      dispo.largeur > 0 ? dispo.largeur / (largeurVue * (mode === "cote" ? 2 : 1)) : 1,
+      dispo.hauteur > 0 ? dispo.hauteur / hauteurVue : 1,
+    ) * 100 || 100,
   )
-  const facteur = zoom === "ajuste" ? ajuste : zoom
+  const facteur = (zoom === "ajuste" ? ajuste : zoom) / 100
 
   /** La boîte où l'image se pose, en pixels d'écran. Tout ce qui se rend au
    *  milieu la remplit — l'image seule, les deux côte à côte, la surface qui se
    *  peint —, et c'est elle, et elle seule, qui porte le zoom. */
   const boiteCadre = {
-    width: largeurVue * facteur * (mode === "cote" ? 2 : 1) + (mode === "cote" ? 16 : 0),
-    height: hauteurVue * facteur,
+    width: Math.max(
+      1,
+      Math.round(
+        largeurVue * facteur * (mode === "cote" ? 2 : 1) + (mode === "cote" ? 16 : 0),
+      ),
+    ),
+    height: Math.max(1, Math.round(hauteurVue * facteur)),
   }
+
+  // ── La molette approche et recule, et le point visé ne bouge pas ──────────
+  //
+  // **Un écouteur natif et non `onWheel`.** React pose ses écouteurs de molette
+  // en *passif* sur la racine : `preventDefault` y est ignoré, et la page
+  // défilerait derrière le zoom. Posé à la main avec `{ passive: false }`, il
+  // arrête le défilement — c'est un critère de l'étape, et c'est aussi la
+  // seule façon de rendre la molette utilisable dans un cadre qui défile.
+  //
+  // **Le point sous le pointeur reste sous le pointeur**, et ça se fait en deux
+  // temps : on note où l'on était *dans l'image* au moment du geste, puis on
+  // rattrape le défilement une fois que la nouvelle taille est posée. Le faire
+  // en un temps demanderait de prédire la mise en page — les marges
+  // automatiques qui centrent une image plus petite que son cadre, la garde de
+  // 24 px — et une prédiction fausse se voit comme un sursaut.
+  const boite = useRef<HTMLDivElement>(null)
+  const ancre = useRef<{ ux: number; uy: number; x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const noeud = cadre.current
+    if (!noeud) return
+    const molette = (evenement: WheelEvent) => {
+      evenement.preventDefault()
+      const rectangle = boite.current?.getBoundingClientRect()
+      if (rectangle && rectangle.width > 0 && rectangle.height > 0)
+        ancre.current = {
+          ux: (evenement.clientX - rectangle.left) / rectangle.width,
+          uy: (evenement.clientY - rectangle.top) / rectangle.height,
+          x: evenement.clientX,
+          y: evenement.clientY,
+        }
+      // Un cran de molette vaut un huitième d'octave : assez pour que le geste
+      // réponde, assez peu pour qu'on s'arrête où l'on veut.
+      const pas = evenement.deltaY < 0 ? 1.09 : 1 / 1.09
+      setZoom((courant) =>
+        borner((courant === "ajuste" ? ajusteVu.current : courant) * pas),
+      )
+    }
+    noeud.addEventListener("wheel", molette, { passive: false })
+    return () => noeud.removeEventListener("wheel", molette)
+  }, [])
+
+  // `ajuste` est recalculé à chaque rendu ; l'écouteur, lui, est posé une fois.
+  // Un repère plutôt qu'une dépendance : rebrancher l'écouteur à chaque
+  // redimensionnement du cadre en poserait un par image de rendu.
+  const ajusteVu = useRef(ajuste)
+  ajusteVu.current = ajuste
+
+  useLayoutEffect(() => {
+    const vise = ancre.current
+    ancre.current = null
+    const noeud = cadre.current
+    const rectangle = boite.current?.getBoundingClientRect()
+    if (!vise || !noeud || !rectangle) return
+    noeud.scrollLeft += rectangle.left + vise.ux * rectangle.width - vise.x
+    noeud.scrollTop += rectangle.top + vise.uy * rectangle.height - vise.y
+  }, [facteur])
 
   // Ctrl + Z retire le dernier passage de la couche active. La touche n'est
   // écoutée que dans la table de la main : ailleurs elle appartient à la toile
@@ -673,6 +863,7 @@ export function EcranTables({
             className="defile flex min-h-0 flex-1 overflow-auto p-6"
           >
             <div
+              ref={boite}
               data-boite-image
               className="m-auto flex shrink-0 items-center justify-center gap-4"
               style={boiteCadre}
@@ -731,6 +922,7 @@ export function EcranTables({
                     | [number, number, number, number]
                     | undefined) ?? null
                 }
+                obtenue={mesures?.recadrage?.obtenue ?? null}
                 onBoite={(boite) =>
                   void poser({
                     ...recette,
@@ -1128,32 +1320,54 @@ function CadreDeRecadrage({
   asset,
   boite,
   onBoite,
+  obtenue,
 }: {
   asset: Asset
   boite: [number, number, number, number] | null
   onBoite: (boite: [number, number, number, number] | null) => void
+  /** **Le rectangle réellement gardé, marge comprise** (U2) — mesuré par le
+   *  serveur, jamais recalculé ici. La marge s'ajoute à la boîte tracée, ce qui
+   *  est le comportement voulu mais que rien ne montrait : on dessinait un
+   *  rectangle et le rendu en gardait un autre, sans qu'aucun des deux ne soit
+   *  faux. Les deux sont désormais à l'écran ensemble, le second en pointillé. */
+  obtenue: [number, number, number, number] | null
 }) {
   const [trace, setTrace] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(
     null,
   )
 
-  /** Le point sous le pointeur, en pixels de l'image brute. */
+  /** Le point sous le pointeur, en pixels de l'image brute.
+   *
+   *  **Il se lit dans le rectangle de l'image, pas dans celui de la surface**
+   *  (U2, U11). L'image est posée en *tenant dans le cadre* : dès que les deux
+   *  proportions diffèrent d'un cheveu — un arrondi de zoom suffit —, elle est
+   *  centrée avec des bandes vides de chaque côté, et mesurer la surface
+   *  décalerait le tracé de la largeur de la bande. */
   const point = (evenement: React.PointerEvent<HTMLDivElement>) => {
-    const cadre = evenement.currentTarget.getBoundingClientRect()
-    const x = ((evenement.clientX - cadre.left) / cadre.width) * asset.largeur
-    const y = ((evenement.clientY - cadre.top) / cadre.height) * asset.hauteur
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
     return {
-      x: Math.max(0, Math.min(asset.largeur - 1, Math.round(x))),
-      y: Math.max(0, Math.min(asset.hauteur - 1, Math.round(y))),
+      x: Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      y: Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
     }
   }
 
   const dessine = trace ?? (boite ? { x0: boite[0], y0: boite[1], x1: boite[2], y1: boite[3] } : null)
+  /** La place d'un rectangle d'image dans la surface, en pour cent. Une seule
+   *  arithmétique pour les deux rectangles : ils doivent se superposer
+   *  exactement quand la marge est nulle. */
+  const place = (x0: number, y0: number, x1: number, y1: number) => ({
+    left: `${(Math.min(x0, x1) / asset.largeur) * 100}%`,
+    top: `${(Math.min(y0, y1) / asset.hauteur) * 100}%`,
+    width: `${((Math.abs(x1 - x0) + 1) / asset.largeur) * 100}%`,
+    height: `${((Math.abs(y1 - y0) + 1) / asset.hauteur) * 100}%`,
+  })
 
   return (
     <div
       data-cadre-recadrage
-      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
       className="relative h-full w-full"
       onPointerDown={(evenement) => {
         if (evenement.button !== 0) return
@@ -1187,15 +1401,56 @@ function CadreDeRecadrage({
         className="damier h-full w-full object-contain select-none"
         style={{ imageRendering: "pixelated" }}
       />
+      {/* **Ce qui est jeté est assombri, pas masqué** — c'est le but : on voit
+          qu'on le coupe. Un masque plein montrerait un joli cadrage et
+          cacherait ce qu'on est en train de perdre. Quatre bandes plutôt qu'une
+          découpe : la même arithmétique que le rectangle, prise à l'envers. */}
+      {obtenue && (
+        <span aria-hidden className="pointer-events-none absolute inset-0">
+          <span
+            className="absolute left-0 right-0 top-0 bg-fond-0/55"
+            style={{ height: `${(obtenue[1] / asset.hauteur) * 100}%` }}
+          />
+          <span
+            className="absolute bottom-0 left-0 right-0 bg-fond-0/55"
+            style={{
+              height: `${((asset.hauteur - 1 - obtenue[3]) / asset.hauteur) * 100}%`,
+            }}
+          />
+          <span
+            className="absolute left-0 bg-fond-0/55"
+            style={{
+              top: `${(obtenue[1] / asset.hauteur) * 100}%`,
+              height: `${((obtenue[3] - obtenue[1] + 1) / asset.hauteur) * 100}%`,
+              width: `${(obtenue[0] / asset.largeur) * 100}%`,
+            }}
+          />
+          <span
+            className="absolute right-0 bg-fond-0/55"
+            style={{
+              top: `${(obtenue[1] / asset.hauteur) * 100}%`,
+              height: `${((obtenue[3] - obtenue[1] + 1) / asset.hauteur) * 100}%`,
+              width: `${((asset.largeur - 1 - obtenue[2]) / asset.largeur) * 100}%`,
+            }}
+          />
+        </span>
+      )}
+      {/* **Le rectangle obtenu, en pointillé** — celui que le rendu montre. Il
+          se dessine sous le rectangle tracé, pour que le second reste net quand
+          les deux coïncident. */}
+      {obtenue && (
+        <span
+          aria-hidden
+          data-boite-obtenue
+          style={place(obtenue[0], obtenue[1], obtenue[2], obtenue[3])}
+          className="pointer-events-none absolute border border-dashed border-bord-fort"
+        />
+      )}
       {dessine && (
         <span
           aria-hidden
-          style={{
-            left: `${(Math.min(dessine.x0, dessine.x1) / asset.largeur) * 100}%`,
-            top: `${(Math.min(dessine.y0, dessine.y1) / asset.hauteur) * 100}%`,
-            width: `${((Math.abs(dessine.x1 - dessine.x0) + 1) / asset.largeur) * 100}%`,
-            height: `${((Math.abs(dessine.y1 - dessine.y0) + 1) / asset.hauteur) * 100}%`,
-          }}
+          data-boite-tracee
+          style={place(dessine.x0, dessine.y0, dessine.x1, dessine.y1)}
           className="pointer-events-none absolute border border-lumiere bg-lumiere/10"
         />
       )}

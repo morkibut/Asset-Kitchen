@@ -72,7 +72,18 @@ export const RESUME = {
     recette.passes.length === 1
       ? `${MOTEUR[recette.passes[0].moteur]} · ${recette.passes[0].tolerance}`
       : `${recette.passes.length} passes`,
-  recadrage: (r: Recadrage) => `marge ${r.marge} px`,
+  /** **Ce qui agit, et rien d'autre** (U2). Un recadrage porte deux réglages
+   *  indépendants — une boîte tracée, une marge —, et le résumé disait toujours
+   *  la marge, y compris quand elle valait zéro à côté d'un rectangle qui,
+   *  lui, coupait. Il dit maintenant ce qui change l'image, dans l'ordre où ça
+   *  compte. */
+  recadrage: (r: Recadrage) =>
+    [
+      r.boite ? `tracé ${r.boite[2] - r.boite[0] + 1}×${r.boite[3] - r.boite[1] + 1}` : null,
+      r.marge > 0 ? `marge ${r.marge} px` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || `marge ${r.marge} px`,
   grille: (g: Grille) => `${g.cible} px · ${g.occupation} %`,
   quantification: (q: Quantification) => `${q.couleurs} couleurs`,
   bords: (b: Bords) => `tache ${b.aire_min} px`,
@@ -410,53 +421,144 @@ export function PanneauDetourage({
   )
 }
 
-export function PanneauRecadrage({ recette, regler, poser }: Reglages) {
+/** Les côtés d'une image — **avec leur préposition**, parce que le français
+ *  n'en met pas la même devant un bord et devant un côté : *en haut*, mais *à
+ *  gauche*. Deux tables les nomment, et une seule liste évite d'écrire deux
+ *  fois la même exception. */
+const COTES: Record<string, string> = {
+  haut: "en haut",
+  bas: "en bas",
+  gauche: "à gauche",
+  droite: "à droite",
+}
+
+/** Le nom nu d'un bord, pour la phrase qui dit *le sujet touche le bord …*. */
+const BORDS: Record<string, string> = {
+  haut: "haut",
+  bas: "bas",
+  gauche: "gauche",
+  droite: "droit",
+}
+
+export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) {
   const boite = recette.recadrage?.boite ?? null
+  const marge = recette.recadrage?.marge ?? 0
+  const vu = mesures?.recadrage ?? null
+  // **La marge est sans effet quand une case est posée**, et c'est mesuré, pas
+  // supposé : la grille recherche elle-même la boîte du sujet et rogne dessus
+  // avant de mettre à l'échelle, si bien que les pixels transparents gardés par
+  // la marge disparaissent. Le même fichier à l'octet près, marge 0 comme
+  // marge 40 (`docs/maquettes-v2.1/12-table-recadrage.html` § 02).
+  const margeSansEffet = recette.grille != null
+  // Ce qu'on garde, écrit avec sa provenance : un constat n'est pas un réglage.
+  const depart = boite ?? vu?.sujet ?? null
   return (
     <div className="flex flex-col gap-2">
-      <Reglage libelle="marge" aide="recadrage.marge">
-        <Curseur
-          valeur={recette.recadrage?.marge ?? 0}
-          min={0}
-          max={64}
-          unite=" px"
-          onChange={(marge) =>
-            regler({ ...recette, recadrage: { marge, boite } })
-          }
-          onFini={(marge) =>
-            void poser({ ...recette, recadrage: { marge, boite } })
-          }
+      {/* ── Ce qu'on garde ────────────────────────────────────────────────
+          **Deux valeurs, pas une case à cocher.** *La boîte du sujet* est le
+          calcul — remesurée chaque fois que le détourage change. *Une boîte
+          tracée* est un rectangle qu'on a posé soi-même, et qui ne bouge plus.
+          La seconde ne se choisit pas ici : **on trace, et le segment
+          bascule**. Le premier segment est donc le clic qui défait. */}
+      <Reglage libelle="ce qu'on garde" aide="recadrage.boite">
+        <Segments
+          valeurs={["sujet", "tracee"] as const}
+          valeur={boite ? "tracee" : "sujet"}
+          libelles={{ sujet: "la boîte du sujet", tracee: "une boîte tracée" }}
+          // Il n'y a pas de geste pour *devenir* tracée depuis la colonne : on
+          // trace sur l'image. Le segment est donc indisponible tant qu'aucun
+          // rectangle n'existe, avec sa raison sous lui.
+          indisponibles={boite ? [] : (["tracee"] as const)}
+          plusieursRangees
+          onChange={(quoi) => {
+            if (quoi === "sujet" && boite)
+              void poser({ ...recette, recadrage: { marge, boite: null } })
+          }}
         />
       </Reglage>
 
-      {/* **Le rectangle posé à la main.** Le modèle le porte depuis T2 et aucun
-          écran ne l'avait jamais montré : une image recadrée à la main gardait
-          son rectangle sans qu'on puisse ni le lire ni le retirer. Il se pose
-          sur l'image, dans la table — ici on lit ce qu'il vaut, et on le
-          défait. */}
-      <Reglage libelle="rectangle" aide="recadrage.boite">
-        {boite ? (
-          <div className="flex items-center gap-2">
-            <span className="mesure text-[10px] text-texte-2">
-              {boite[2] - boite[0] + 1}×{boite[3] - boite[1] + 1} à {boite[0]},{boite[1]}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                poser({
-                  ...recette,
-                  recadrage: { marge: recette.recadrage?.marge ?? 0, boite: null },
-                })
-              }
-              className="mesure text-[10px] text-texte-3 hover:text-echec"
-            >
-              ×
-            </button>
-          </div>
-        ) : (
-          <Raison texte="aucun — glisse un rectangle sur l'image pour en poser un" />
-        )}
+      {/* **Les coordonnées sont écrites, avec leur provenance.** *mesurée sur
+          l'alpha* dit que ce n'est pas un réglage qu'on a posé : c'est un
+          constat. C'est la règle du dépôt — *ce qui est devinable est prérempli
+          avec sa provenance* — appliquée à un rectangle plutôt qu'à un texte. */}
+      {depart && vu && (
+        <p
+          data-coordonnees-recadrage
+          className={`mesure text-[10px] leading-4 ${boite ? "text-texte-2" : "text-epingle"}`}
+        >
+          {boite ? "tracée à la main" : "mesurée sur l'alpha"} · {depart[0]},
+          {depart[1]} → {depart[2]},{depart[3]}
+        </p>
+      )}
+      {/* **La part jetée est la mesure utile de cette table.** Elle dit d'un
+          coup quelle part du fichier ne contient pas le sujet — et c'est ce qui
+          explique qu'un sprite paraisse flou après la grille : un sujet qui
+          n'occupait qu'un quart du fichier a peu de pixels à donner. */}
+      {vu?.obtenue && (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          {vu.origine[0]}×{vu.origine[1]} →{" "}
+          <span className="text-texte-2">
+            {vu.obtenue[2] - vu.obtenue[0] + 1}×{vu.obtenue[3] - vu.obtenue[1] + 1}
+          </span>{" "}
+          · <span className="text-texte-2">{Math.round(vu.jete * 100)} %</span> de
+          l'image d'origine est jeté
+        </p>
+      )}
+      {/* **Une boîte n'agit que quand elle coupe le sujet.** La phrase
+          importante de la table : plus large que lui, elle est sans effet sur
+          le rendu — la grille recherche la boîte du sujet et rogne dessus. La
+          dire évite de croire qu'on a réglé quelque chose. */}
+      {boite && vu && (
+        <Raison
+          texte={
+            Object.keys(vu.coupe).length === 0
+              ? "plus large que le sujet · sans effet sur le rendu"
+              : `coupe le sujet · ${Object.entries(vu.coupe)
+                  .map(([cote, px]) => `${px} px ${COTES[cote] ?? cote}`)
+                  .join(", ")}`
+          }
+        />
+      )}
+
+      <Reglage libelle="marge" aide="recadrage.marge">
+        <Curseur
+          valeur={marge}
+          min={0}
+          max={64}
+          unite=" px"
+          onChange={(prochaine) =>
+            regler({ ...recette, recadrage: { marge: prochaine, boite } })
+          }
+          // **Régler la marge n'efface plus la boîte.** L'écran d'avant la
+          // réécrivait à vide à chaque cran du curseur ; comme rien n'écrivait
+          // jamais de boîte, ça ne se voyait pas. Dès que la table sait tracer,
+          // ça se verrait tout de suite : on trace un cadrage, on ajuste la
+          // marge, le cadrage disparaît.
+          onFini={(prochaine) =>
+            void poser({ ...recette, recadrage: { marge: prochaine, boite } })
+          }
+        />
       </Reglage>
+      {/* **Grisée avec sa raison, comme un contrôle indisponible.** Le réglage
+          n'est pas absent, il est sans effet ici — et ce qui donne l'air autour
+          du sujet quand une case est posée, c'est l'occupation, qui s'exprime
+          en part de la case là où la marge s'exprime en pixels de l'image
+          d'origine. Douze pixels ne veulent pas dire la même chose sur une
+          image de 512 et sur une de 2048 ; dix pour cent, si. */}
+      {margeSansEffet && (
+        <Raison texte="la grille est posée : c'est l'occupation qui donne l'air autour du sujet" />
+      )}
+      {/* **Ce que la table a vu, et qui n'est pas un réglage.** Le sujet touche
+          un bord de l'image d'origine : le modèle l'a peint coupé, et la marge
+          vaudra zéro de ce côté-là. Aucune autre table ne le mesure, et rien ne
+          se répare ici — il faut regénérer. */}
+      {vu && vu.bords.length > 0 && (
+        <Raison
+          texte={`le sujet touche le bord ${vu.bords
+            .map((b) => BORDS[b] ?? b)
+            .join(" et le bord ")} de l'image d'origine — le modèle l'a peint contre le bord`}
+        />
+      )}
     </div>
   )
 }

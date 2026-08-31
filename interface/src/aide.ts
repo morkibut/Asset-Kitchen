@@ -682,12 +682,34 @@ export const AIDE: Record<string, Explication> = {
   },
 
   "recadrage.boite": {
-    nom: "rectangle",
+    nom: "ce qu'on garde",
     ou: "tables",
-    quoi: "Un rectangle posé à la main sur l'image, qui remplace la boîte opaque que le détourage a trouvée.",
+    quoi: "Deux valeurs, et une seule agit. *La boîte du sujet* est le plus petit rectangle qui contient tout ce qui n'est pas transparent : elle est mesurée, et remesurée chaque fois que le détourage change. *Une boîte tracée* est un rectangle qu'on a posé soi-même sur l'image, et qui ne bouge plus.",
     change:
-      "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne.",
-    origine: "toi · aucun par défaut",
+      "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne. La seconde valeur ne se choisit pas dans la colonne : on trace sur l'image, et le segment bascule tout seul. Le premier segment est le clic qui défait.",
+    origine: "mesurée sur l'alpha, ou tracée par toi",
+    long:
+      "Une boîte tracée n'agit que quand elle **coupe** le sujet, et la table le dit sous le rectangle. Plus large que lui, elle est sans effet sur le rendu : la remise sur grille recherche elle-même la boîte du sujet et rogne dessus, si bien que le surplus transparent disparaît de toute façon. C'est la même mécanique qui rend la marge sans effet quand une case est posée.\n\nElle ne voyage pas non plus. Quatre coordonnées ne veulent rien dire sur une autre image : posées sur une plus petite, elles tombent en partie hors du cadre ; posées sur un sujet cadré autrement, elles coupent n'importe où. C'est la règle générale du produit — un réglage voyage, une coordonnée ne voyage pas.",
+  },
+
+  "tables.zoom": {
+    nom: "le pour cent d'agrandissement",
+    ou: "tables",
+    quoi: "À quelle taille l'image est montrée dans la table. Libre entre 1 et 250 %, écrit à la main ou réglé par *plus* et *moins* ; la molette approche et recule, et le point qu'on vise ne bouge pas de sous le pointeur.",
+    change:
+      "Rien à l'image — c'est une loupe, pas un réglage. *100 %* rend exactement un pixel d'image pour un pixel d'écran ; *ajusté* fait tenir l'image entière dans le cadre, et c'est ce qu'on obtient en ouvrant une table.",
+    origine: "toi · ajusté à l'ouverture",
+    long:
+      "Ailleurs dans le produit — la grille de la galerie, la vitrine — l'agrandissement ne prend que des multiples entiers : un sprite montré à une échelle qui n'est pas entière fabrique des pixels qui n'existent pas, et on jugerait alors un défaut né de la fenêtre où on l'a regardé. Cette règle appartient à ce qui **montre** une image ; la table est ce qui la **travaille**, et on n'y règle rien sans pouvoir approcher et reculer librement.\n\nL'avoir appliquée ici a coûté cher : une image d'origine de 1 024 pixels de côté dans un cadre de 606 ne pouvait pas descendre sous 100 %, donc on n'en voyait qu'un coin — et ce coin étant transparent, l'écran ne montrait que le damier. La table de recadrage paraissait cassée alors qu'elle marchait.",
+  },
+
+  "tables.png": {
+    nom: "PNG ↓",
+    ou: "tables",
+    quoi: "Télécharge l'image telle qu'elle est sous les yeux — le rendu, ou le brut quand on regarde le brut.",
+    change:
+      "Rien : c'est une copie. L'image reste dans la bibliothèque, sa recette aussi, et le fichier reçu est celui qu'on voyait.",
+    origine: "l'état courant de la table",
   },
 
   "quantification.tramage": {

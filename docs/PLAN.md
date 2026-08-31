@@ -1729,7 +1729,7 @@ et le coût.
 | | Ce qu'elle livre | Séance | Bloquée par | État |
 |---|---|---|---|---|
 | **U1** | L'argent ne part qu'une fois, et l'écran de confirmation se quitte | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
-| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — | à faire |
+| **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U3** | Un curseur prend un chiffre | 1<sup>re</sup> | — | à faire |
 | **U4** | Une table s'éteint, et ça se voit | 1<sup>re</sup> | — | à faire |
 | **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** | à faire |

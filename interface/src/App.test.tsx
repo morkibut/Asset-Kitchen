@@ -1079,6 +1079,17 @@ function serveurDouble(options: {
         visees: [],
         poches_total: 0,
         trous: [],
+        // **Ce que la table de recadrage lit** (U2) — un sujet qui occupe le
+        // quart central d'une image de 1 024, comme un modèle en rend un.
+        recadrage: {
+          origine: [1024, 1024],
+          sujet: [256, 256, 768, 768],
+          tracee: null,
+          obtenue: [256, 256, 768, 768],
+          jete: 0.7495,
+          bords: [],
+          coupe: {},
+        },
         ...(options.mesures ?? {}),
       })
     if (url.startsWith("/api/spending"))
@@ -8046,22 +8057,31 @@ describe("le châssis des tables", () => {
   // annoncée, ni raccourci. Le pire cas était *la main*, la table où l'on
   // repeint pixel par pixel.
 
-  test("la table ouvre en ajusté, et le zoom n'offre que des multiples entiers", async () => {
+  test("la table ouvre en ajusté, et le zoom est un pour cent libre", async () => {
+    // **Réécrit en U2.** Les crans entiers — 1×, 2×, 4×, 8×, 16× — étaient la
+    // règle de la vitrine appliquée à un outil, et c'est ce qui a cassé la
+    // table de recadrage : le plancher à 1× empêchait de voir une image de
+    // 1 024 px en entier dans un cadre de 606.
     const { cadre } = await ouvrirUneTable()
 
-    // `ajusté` est l'état d'ouverture : c'est le seul cran qui suive le cadre,
-    // donc le seul qui puisse être juste avant qu'on ait regardé.
-    const ajuste = cadre.getByRole("button", { name: "ajusté" })
-    expect(ajuste.className).toContain("border-signal")
+    // `ajusté` est l'état d'ouverture : c'est le seul réglage qui suive le
+    // cadre, donc le seul qui puisse être juste avant qu'on ait regardé.
+    expect(cadre.getByRole("button", { name: "ajusté" }).className).toContain(
+      "border-signal",
+    )
 
-    // Les crans sont ceux de la vitrine, et pour la même raison : un sprite
-    // agrandi d'une fois et demie fabrique des pixels qui n'existent pas.
+    // Quatre commandes, et chacune fait une seule chose.
+    expect(cadre.getByRole("button", { name: "Approcher" })).toBeTruthy()
+    expect(cadre.getByRole("button", { name: "Reculer" })).toBeTruthy()
+    expect(cadre.getByRole("button", { name: "100 %" })).toBeTruthy()
+    expect(cadre.getByLabelText("Pour cent d'agrandissement")).toBeTruthy()
+
+    // Et plus aucun cran entier.
     for (const cran of ["1×", "2×", "4×", "8×", "16×"])
-      expect(cadre.getByRole("button", { name: cran })).toBeTruthy()
-    expect(cadre.queryByRole("button", { name: "1,5×" })).toBeNull()
+      expect(cadre.queryByRole("button", { name: cran })).toBeNull()
   })
 
-  test("un cran choisi agrandit la boîte de l'image d'autant", async () => {
+  test("cent pour cent rend un pixel d'image pour un pixel d'écran", async () => {
     const { cadre } = await ouvrirUneTable()
 
     // La boîte porte le zoom, et elle seule : tout ce qui se rend au milieu la
@@ -8070,12 +8090,67 @@ describe("le châssis des tables", () => {
     const boite = () =>
       document.querySelector("[data-boite-image]") as HTMLElement
 
-    fireEvent.click(cadre.getByRole("button", { name: "4×" }))
-    expect(boite().style.width).toBe("4096px")
-    expect(boite().style.height).toBe("4096px")
-
-    fireEvent.click(cadre.getByRole("button", { name: "1×" }))
+    fireEvent.click(cadre.getByRole("button", { name: "100 %" }))
     expect(boite().style.width).toBe("1024px")
+    expect(boite().style.height).toBe("1024px")
+
+    // Le pour cent s'écrit à la main, et il agit.
+    const champ = cadre.getByLabelText(
+      "Pour cent d'agrandissement",
+    ) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "37" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+    expect(boite().style.width).toBe("379px")
+  })
+
+  test("un pour cent hors bornes est ramené, jamais refusé", async () => {
+    // **Ramener plutôt que refuser.** Un champ qui rejette une frappe oblige à
+    // deviner ce qu'il accepte ; un champ qui ramène le dit en affichant la
+    // valeur retenue.
+    const { cadre } = await ouvrirUneTable()
+    const champ = cadre.getByLabelText(
+      "Pour cent d'agrandissement",
+    ) as HTMLInputElement
+
+    fireEvent.change(champ, { target: { value: "900" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+    expect(champ.value).toBe("250")
+
+    fireEvent.change(champ, { target: { value: "0" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+    expect(champ.value).toBe("1")
+  })
+
+  test("plus et moins parcourent la plage, chacun dans son sens", async () => {
+    const { cadre } = await ouvrirUneTable()
+    const champ = cadre.getByLabelText(
+      "Pour cent d'agrandissement",
+    ) as HTMLInputElement
+
+    fireEvent.click(cadre.getByRole("button", { name: "100 %" }))
+    expect(champ.value).toBe("100")
+    fireEvent.click(cadre.getByRole("button", { name: "Approcher" }))
+    expect(Number(champ.value)).toBeGreaterThan(100)
+    fireEvent.click(cadre.getByRole("button", { name: "Reculer" }))
+    expect(champ.value).toBe("100")
+    fireEvent.click(cadre.getByRole("button", { name: "Reculer" }))
+    expect(Number(champ.value)).toBeLessThan(100)
+  })
+
+  test("le PNG de l'état courant se télécharge depuis la table", async () => {
+    // **Il n'existait qu'un seul endroit pour télécharger une image**, la tuile
+    // de la galerie, et on ne l'atteignait pas d'ici. Le fichier reçu est celui
+    // qu'on voyait : le rendu quand on regarde le rendu, le brut sinon.
+    const { cadre } = await ouvrirUneTable()
+
+    const lien = cadre.getByRole("link", { name: /^PNG ↓$/ }) as HTMLAnchorElement
+    expect(lien.getAttribute("href")).toContain("/download?brut=false")
+    expect(lien.getAttribute("download")).toMatch(/\.png$/)
+
+    fireEvent.click(cadre.getByRole("button", { name: "brut" }))
+    const brut = cadre.getByRole("link", { name: /^PNG ↓ brut$/ }) as HTMLAnchorElement
+    expect(brut.getAttribute("href")).toContain("/download?brut=true")
+    expect(brut.getAttribute("download")).toContain("-brut")
   })
 
   // ── « Le carré d'une place est plein si et seulement si la place change
@@ -8339,10 +8414,10 @@ describe("le châssis des tables", () => {
     const { cadre, appels } = await ouvrirUneTable()
 
     fireEvent.click(puce(cadre, "recadrage"))
-    // Sans rectangle, la table le dit — et dit comment en poser un.
-    expect(
-      await cadre.findByText(/glisse un rectangle sur l'image/),
-    ).toBeTruthy()
+    // Sans rectangle tracé, c'est la boîte du sujet qui décide, et la table
+    // écrit ses coordonnées avec leur provenance — un constat, pas un réglage.
+    const provenance = await cadre.findByText(/mesurée sur l'alpha/)
+    expect(provenance.className).toContain("text-epingle")
 
     const toile = document.querySelector("[data-cadre-recadrage]") as HTMLElement
     expect(toile).toBeTruthy()
@@ -8362,6 +8437,63 @@ describe("le châssis des tables", () => {
         (envoi?.corps as { recadrage: { boite: number[] } }).recadrage.boite,
       ).toEqual([128, 128, 512, 640])
     })
+  })
+
+  test("le même geste désigne les mêmes pixels à 37 % qu'à 100 %", async () => {
+    // **Le critère de U2, pris à l'écran.** La surface reçoit le geste,
+    // l'image est posée dedans en tenant dans le cadre : dès que les deux
+    // proportions diffèrent d'un cheveu — un arrondi de zoom suffit —, l'image
+    // est centrée avec des bandes vides de chaque côté. Un calcul qui mesure la
+    // surface au lieu de l'image se décale de la largeur de la bande.
+    const tracer = async (largeur: number, hauteur: number) => {
+      const { cadre, appels } = await ouvrirUneTable()
+      fireEvent.click(puce(cadre, "recadrage"))
+      const toile = await waitFor(() => {
+        const noeud = document.querySelector("[data-cadre-recadrage]")
+        if (!noeud) throw new Error("pas de cadre de recadrage")
+        return noeud as HTMLElement
+      })
+      // La surface est plus large que l'image ne l'occupe : c'est le cas que
+      // l'arrondi du zoom fabrique, et celui qui décalait le tracé.
+      toile.getBoundingClientRect = () =>
+        ({ left: 0, top: 0, width: largeur, height: hauteur }) as DOMRect
+      // On vise le quart et les trois quarts **de l'image**, pas de la surface.
+      const echelle = Math.min(largeur / 1024, hauteur / 1024) * 1024
+      const gauche = (largeur - echelle) / 2
+      const haut = (hauteur - echelle) / 2
+      fireEvent.pointerDown(toile, {
+        button: 0,
+        clientX: gauche + echelle * 0.25,
+        clientY: haut + echelle * 0.25,
+        pointerId: 1,
+      })
+      fireEvent.pointerMove(toile, {
+        clientX: gauche + echelle * 0.75,
+        clientY: haut + echelle * 0.75,
+        pointerId: 1,
+      })
+      fireEvent.pointerUp(toile, { pointerId: 1 })
+      const boite = await waitFor(() => {
+        const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+        const lu = (envoi?.corps as { recadrage?: { boite?: number[] } })?.recadrage
+          ?.boite
+        if (!lu) throw new Error("aucun rectangle posé")
+        return lu
+      })
+      cleanup()
+      FluxDouble.ouverts = []
+      return boite
+    }
+
+    // 1 024 px d'image dans une surface carrée de 1 024 : cent pour cent.
+    expect(await tracer(1024, 1024)).toEqual([256, 256, 768, 768])
+    // La même image à trente-sept pour cent, dans une surface qui n'a pas ses
+    // proportions : les mêmes pixels, au pixel d'arrondi près.
+    const a37 = await tracer(600, 379)
+    expect(a37[0]).toBeGreaterThanOrEqual(253)
+    expect(a37[0]).toBeLessThanOrEqual(259)
+    expect(a37[2]).toBeGreaterThanOrEqual(765)
+    expect(a37[2]).toBeLessThanOrEqual(771)
   })
 
   // ── « La pipette retire une tache, ou toutes les taches de sa couleur, au
@@ -13140,5 +13272,257 @@ describe("l'argent ne part qu'une fois", () => {
       cleanup()
       FluxDouble.ouverts = []
     }
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// U2 · Le zoom de l'atelier, et le recadrage qui en dépendait
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : la moitié de l'étape qui ne se voit qu'à l'écran.
+// Que l'image s'ouvre entière quel que soit son format — c'est le défaut qui a
+// fait croire que la table de recadrage était cassée : une image d'origine de
+// 1 024 px dans un cadre de 606 × 626 ne pouvait pas descendre sous cent pour
+// cent, on n'en voyait qu'un coin, et ce coin étant transparent, l'écran ne
+// montrait que le damier. Que la molette approche et recule sans faire défiler
+// la page. Et que la table de recadrage montre les deux rectangles ensemble —
+// celui qu'on trace et celui que le rendu garde, marge comprise.
+//
+// **Ce qui se mesure vit côté serveur, dans `tests/test_u2.py`** : la boîte du
+// sujet, le rectangle obtenu, la part jetée, les bords touchés et ce qu'une
+// boîte tracée coupe. C'est la répartition ordinaire du dépôt — l'écran prouve
+// qu'il montre, le serveur prouve qu'il mesure.
+
+describe("le zoom de la table", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  const ouvrirUneTable = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    images = [asset("bbbb2222-0", "le nain, au repos")],
+  ) => {
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  const boiteDeLImage = () =>
+    document.querySelector("[data-boite-image]") as HTMLElement
+
+  /** Le cadre qui défile — le parent de la boîte, et celui qui porte la
+   *  molette. `jsdom` rend zéro pour toute mesure de mise en page : l'essai
+   *  double donc les deux dimensions, comme il double déjà celles de la grille
+   *  et de l'aperçu. */
+  const poserLeCadre = (largeur: number, hauteur: number) => {
+    const noeud = boiteDeLImage().parentElement as HTMLElement
+    Object.defineProperty(noeud, "clientWidth", {
+      value: largeur,
+      configurable: true,
+    })
+    Object.defineProperty(noeud, "clientHeight", {
+      value: hauteur,
+      configurable: true,
+    })
+    fireEvent(window, new Event("resize"))
+    return noeud
+  }
+
+  // ── « Une image de 1 024 px s'ouvre entière dans le cadre » ────────────────
+
+  test("une image plus grande que le cadre s'ouvre entière", async () => {
+    // **Les mesures sont celles de la machine de l'auteur** : l'image fait
+    // 1 024 px de côté, le cadre en offre 606 sur 626, garde comprise. Le
+    // calcul d'avant plafonnait à un plancher de cent pour cent, donc la boîte
+    // faisait 1 024 px dans un cadre de 606 — on voyait un coin.
+    await ouvrirUneTable()
+    // 654 − 48 de garde = 606 ; 674 − 48 = 626.
+    poserLeCadre(654, 674)
+
+    // 606 / 1 024 fait 59 %, et 1 024 px à 59 % font 604 px : l'image entière
+    // dans le cadre, ce que le plancher à cent pour cent interdisait.
+    await waitFor(() => {
+      expect(boiteDeLImage().style.width).toBe("604px")
+    })
+    expect(Number.parseInt(boiteDeLImage().style.width, 10)).toBeLessThanOrEqual(606)
+    expect(Number.parseInt(boiteDeLImage().style.height, 10)).toBeLessThanOrEqual(626)
+  })
+
+  test("ajusté descend sous cent pour cent, et le dit", async () => {
+    const { cadre } = await ouvrirUneTable()
+    poserLeCadre(654, 674)
+
+    const champ = cadre.getByLabelText(
+      "Pour cent d'agrandissement",
+    ) as HTMLInputElement
+    // Le champ suit le zoom effectif, y compris en ajusté : un champ vide
+    // pendant qu'on regarde une image à 59 % laisserait deviner le nombre.
+    await waitFor(() => expect(Number(champ.value)).toBeLessThan(100))
+    expect(Number(champ.value)).toBeGreaterThan(0)
+  })
+
+  // ── « La molette approche et recule, et ne fait plus défiler la page » ─────
+
+  test("la molette approche, recule, et arrête le défilement de la page", async () => {
+    const { cadre } = await ouvrirUneTable()
+    const noeud = poserLeCadre(654, 674)
+    const champ = cadre.getByLabelText(
+      "Pour cent d'agrandissement",
+    ) as HTMLInputElement
+    fireEvent.click(cadre.getByRole("button", { name: "100 %" }))
+    expect(champ.value).toBe("100")
+
+    // **Un écouteur natif, non passif.** React pose ses écouteurs de molette en
+    // passif sur la racine : `preventDefault` y serait ignoré et la page
+    // défilerait derrière le zoom.
+    const approcher = new WheelEvent("wheel", {
+      deltaY: -100,
+      bubbles: true,
+      cancelable: true,
+    })
+    noeud.dispatchEvent(approcher)
+    expect(approcher.defaultPrevented).toBe(true)
+    await waitFor(() => expect(Number(champ.value)).toBeGreaterThan(100))
+
+    const reculer = new WheelEvent("wheel", {
+      deltaY: 100,
+      bubbles: true,
+      cancelable: true,
+    })
+    noeud.dispatchEvent(reculer)
+    await waitFor(() => expect(Number(champ.value)).toBe(100))
+  })
+
+  // ── « Le rectangle tracé et le rectangle obtenu sont visibles ensemble » ───
+
+  test("la marge s'ajoute à la boîte tracée, et les deux rectangles se voient", async () => {
+    // **C'est le comportement voulu, et rien ne le montrait** : on dessinait un
+    // rectangle, le rendu en gardait un autre, et aucun des deux n'était faux.
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        recadrage: {
+          origine: [1024, 1024],
+          sujet: [256, 256, 768, 768],
+          tracee: [300, 300, 700, 700],
+          obtenue: [288, 288, 712, 712],
+          jete: 0.8283,
+          bords: [],
+          coupe: { gauche: 32, haut: 32, droite: 56, bas: 56 },
+        },
+      },
+    })
+
+    fireEvent.click(
+      cadre.getByRole("button", { name: /^recadrage/ }),
+    )
+    await waitFor(() =>
+      expect(document.querySelector("[data-cadre-recadrage]")).toBeTruthy(),
+    )
+    // Le rectangle obtenu est en pointillé, le tracé plein : les deux sont là.
+    expect(document.querySelector("[data-boite-obtenue]")).toBeTruthy()
+    const obtenue = document.querySelector("[data-boite-obtenue]") as HTMLElement
+    expect(obtenue.style.left).toBe(`${(288 / 1024) * 100}%`)
+    expect(obtenue.className).toContain("border-dashed")
+  })
+
+  test("la table écrit ce qu'elle garde, sa provenance et la part jetée", async () => {
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        recadrage: {
+          origine: [1024, 1024],
+          sujet: [356, 0, 667, 823],
+          tracee: null,
+          obtenue: [356, 0, 667, 823],
+          jete: 0.7551,
+          bords: ["haut"],
+          coupe: {},
+        },
+      },
+    })
+
+    fireEvent.click(cadre.getByRole("button", { name: /^recadrage/ }))
+
+    // Les deux valeurs, et la seconde indisponible tant que rien n'est tracé :
+    // on ne la choisit pas dans la colonne, on trace et le segment bascule.
+    expect(await cadre.findByRole("button", { name: "la boîte du sujet" })).toBeTruthy()
+    const tracee = cadre.getByRole("button", {
+      name: "une boîte tracée",
+    }) as HTMLButtonElement
+    expect(tracee.disabled).toBe(true)
+
+    // Les coordonnées, avec leur provenance.
+    expect(cadre.getByText(/mesurée sur l'alpha · 356,0 → 667,823/)).toBeTruthy()
+    // La mesure utile de la table : ce que le fichier jette, à côté du couple
+    // avant / après — une taille seule ne dit pas ce qu'on a enlevé.
+    const mesure = cadre.getByText(/de l'image d'origine est jeté/)
+    expect(mesure.textContent).toContain("1024×1024")
+    expect(mesure.textContent).toContain("312×824")
+    expect(mesure.textContent).toContain("76 %")
+    // Et ce qu'elle a vu et qui n'est pas un réglage : le modèle a peint le
+    // sujet contre le bord haut.
+    expect(cadre.getByText(/le sujet touche le bord haut/)).toBeTruthy()
+  })
+
+  test("une boîte tracée plus large que le sujet le dit, au lieu de laisser croire", async () => {
+    // **La phrase importante de la table.** Une boîte plus large que le sujet
+    // est sans effet sur le rendu : la remise sur grille recherche elle-même la
+    // boîte du sujet et rogne dessus. La dire évite de croire qu'on a réglé
+    // quelque chose.
+    const image = {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: { ...RECETTE_VIDE, recadrage: { marge: 0, boite: [10, 10, 900, 900] } },
+    } as Asset
+    const { cadre } = await ouvrirUneTable(
+      {
+        mesures: {
+          recadrage: {
+            origine: [1024, 1024],
+            sujet: [256, 256, 768, 768],
+            tracee: [10, 10, 900, 900],
+            obtenue: [10, 10, 900, 900],
+            jete: 0.2437,
+            bords: [],
+            coupe: {},
+          },
+        },
+      },
+      [image],
+    )
+
+    fireEvent.click(cadre.getByRole("button", { name: /^recadrage/ }))
+    expect(
+      await cadre.findByText(/plus large que le sujet · sans effet sur le rendu/),
+    ).toBeTruthy()
+    // Et la provenance passe du constat au tracé.
+    expect(cadre.getByText(/tracée à la main/)).toBeTruthy()
   })
 })

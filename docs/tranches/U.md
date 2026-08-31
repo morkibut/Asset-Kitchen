@@ -154,7 +154,8 @@ s'est produite, donc celle qui décide du geste suivant.
 
 ## U2 · Le zoom de l'atelier, et le recadrage qui en dépendait
 
-**Critères : 9 · Ce que ça corrige : trois points de la séance**
+**Critères : 9 · Ce que ça corrige : trois points de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -185,26 +186,57 @@ sous les yeux, quelle que soit la table ouverte et quel que soit le mode — ren
 
 ### Critères d'acceptation
 
-- [ ] Une image de 1 024 px s'ouvre **entière** dans le cadre de la table, sur tous les
+- [x] Une image de 1 024 px s'ouvre **entière** dans le cadre de la table, sur tous les
       onglets où une table peut s'ouvrir.
-- [ ] Le pour cent s'écrit à la main entre 1 et 250 ; hors bornes, il est ramené sans
+- [x] Le pour cent s'écrit à la main entre 1 et 250 ; hors bornes, il est ramené sans
       refuser.
-- [ ] *Plus*, *moins* et *100 %* sont trois commandes distinctes, et 100 % rend exactement
+- [x] *Plus*, *moins* et *100 %* sont trois commandes distinctes, et 100 % rend exactement
       un pixel d'image pour un pixel d'écran.
-- [ ] La molette approche et recule dans le cadre, et **ne fait plus défiler la page**.
-- [ ] Le point sous le pointeur reste sous le pointeur quand on approche à la molette.
-- [ ] La table de recadrage porte les deux valeurs de sa maquette, les coordonnées écrites
+- [x] La molette approche et recule dans le cadre, et **ne fait plus défiler la page**.
+- [x] Le point sous le pointeur reste sous le pointeur quand on approche à la molette.
+- [x] La table de recadrage porte les deux valeurs de sa maquette, les coordonnées écrites
       avec leur provenance, et la part jetée en pour cent.
-- [ ] Le rectangle tracé **et** le rectangle obtenu après marge sont visibles ensemble ; ce
+- [x] Le rectangle tracé **et** le rectangle obtenu après marge sont visibles ensemble ; ce
       que le rendu montre est ce que le second entoure.
-- [ ] Tracer un rectangle sur une image affichée à 37 % désigne les mêmes pixels qu'à 100 %.
-- [ ] Un bouton télécharge le PNG de l'état courant depuis chaque table, en rendu comme en
+- [x] Tracer un rectangle sur une image affichée à 37 % désigne les mêmes pixels qu'à 100 %.
+- [x] Un bouton télécharge le PNG de l'état courant depuis chaque table, en rendu comme en
       brut, et le fichier reçu est celui qu'on voyait.
 
 ### Bloquée par
 
 Aucune. Mais **rien d'autre ne se juge tant qu'elle n'est pas là** : les six étapes qui
 suivent se vérifient sur des images qu'il faut pouvoir regarder en entier.
+
+### Ce qu'elle a appris en étant faite
+
+**Vérifié sur la machine, sur l'image de la séance.** Une image d'origine de 1 024 px dans un
+cadre de 825 × 758 s'ouvre à **77 %**, soit 640 × 698 pixels d'écran — entière, avec de l'air
+autour. C'est le même écran qui n'en montrait qu'un coin la veille.
+
+**L'ancre du zoom se pose en deux temps, et il n'y a pas de raccourci.** Garder sous le
+pointeur le point qu'on vise demande de connaître la mise en page *après* le changement de
+taille — les marges automatiques qui centrent une image plus petite que son cadre, la garde
+de 24 px du cadre. On note donc où l'on était **dans l'image** au moment du geste, et on
+rattrape le défilement une fois la nouvelle taille posée. Prédire la mise en page aurait
+marché la plupart du temps, et une prédiction fausse se voit comme un sursaut.
+
+**La molette demande un écouteur posé à la main.** React pose les siens en *passif* sur la
+racine du document : `preventDefault` y est ignoré, et la page défilerait derrière le zoom.
+C'est un piège de plateforme et non un choix, et il vaut d'être écrit — le prochain écran qui
+voudra la molette le paiera sinon une seconde fois.
+
+**Le rectangle obtenu est mesuré par le serveur, jamais recalculé à l'écran.** L'étape
+demandait de montrer *le rectangle tracé et le rectangle obtenu ensemble* ; le second est le
+premier élargi de la marge **et rogné sur les bords de l'image**, ce qui est exactement ce que
+le traitement fait. Un second calcul écrit à l'écran aurait divergé au premier arrondi — et
+l'écart entre ce qu'on dessine et ce que le rendu garde est précisément ce que l'étape existe
+pour montrer. Cinq lectures sont donc descendues du serveur : la boîte du sujet, le rectangle
+obtenu, la part jetée, les bords que le sujet touche, et ce qu'une boîte tracée coupe.
+
+**Le résumé du recadrage dans la barre des tables disait toujours la marge**, y compris
+quand elle valait zéro à côté d'un rectangle qui, lui, coupait. Il n'était faux que depuis
+qu'un écran sait tracer — c'est-à-dire depuis cette étape —, et c'est le genre de défaut qui
+naît d'une place qui gagne un second réglage sans que son résumé le sache.
 
 ---
 

@@ -1700,6 +1700,42 @@ export type TachesDeLAsset = {
    *  Elle est mesurée et non rangée dans la recette : une couleur écrite à côté
    *  du point qui la porte est une copie que plus rien ne met à jour. */
   visees: (string | null)[]
+  /** Ce que la table de recadrage lit sur l'image (U2). */
+  recadrage: MesuresRecadrage
+}
+
+/** Ce que le recadrage garde et ce qu'il jette — **cinq lectures, aucun
+ *  réglage** (U2).
+ *
+ *  La table portait un curseur de marge et rien d'autre : le rectangle tracé
+ *  existait dans le modèle depuis T2 sans qu'aucun écran l'écrive, et rien ne
+ *  disait ce que le cadrage gardait. C'est ce que ces mesures rendent. */
+export type MesuresRecadrage = {
+  /** La taille de l'image d'origine, `[largeur, hauteur]`. */
+  origine: [number, number]
+  /** **La boîte du sujet, mesurée sur l'alpha** — le plus petit rectangle qui
+   *  contient tout ce qui n'est pas transparent. Elle se recalcule à chaque
+   *  fois que le détourage change, et c'est ce qu'on veut. `null` quand il ne
+   *  reste rien d'opaque. */
+  sujet: [number, number, number, number] | null
+  /** **La boîte tracée à la main**, figée dans le repère de l'image d'origine,
+   *  ou `null`. Elle ne bouge plus, même si le détourage change. */
+  tracee: [number, number, number, number] | null
+  /** **Ce qui est réellement gardé** — la boîte de départ élargie de la marge
+   *  et rognée sur les bords de l'image. C'est le rectangle que le rendu
+   *  entoure, et il n'est pas toujours celui qu'on a tracé. */
+  obtenue: [number, number, number, number] | null
+  /** La part de l'image d'origine qui ne contient pas le sujet, de 0 à 1.
+   *  **C'est la mesure utile de cette table** : elle explique pourquoi un
+   *  sprite paraît flou après la grille. */
+  jete: number
+  /** Les bords de l'image d'origine que le sujet touche — *le modèle l'a peint
+   *  coupé*, et la marge vaudra zéro de ce côté-là. */
+  bords: string[]
+  /** Ce qu'une boîte tracée retire du sujet, côté par côté, en pixels. Vide
+   *  quand elle est plus large que lui : **une boîte n'agit que quand elle
+   *  coupe**. */
+  coupe: Record<string, number>
 }
 
 export type Filiation = {

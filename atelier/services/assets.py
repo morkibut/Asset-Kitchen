@@ -60,6 +60,7 @@ from atelier.image import (
     trous,
 )
 from atelier.image.traitement import (
+    boite_opaque,
     composantes,
     peindre,
     pinceau,
@@ -250,6 +251,89 @@ class ServiceAssets:
             "opaque": bool(rgba[:, :, 3].all()),
             "main": self._pixels_de_la_main(asset),
             "visees": self._couleurs_visees(asset),
+            "recadrage": self._recadrage_de(asset),
+        }
+
+    def _recadrage_de(self, asset: Asset) -> dict[str, Any]:
+        """Ce que la table de recadrage a besoin de savoir (U2).
+
+        **Cinq lectures, aucune n'est un réglage** : la boîte du sujet mesurée
+        sur l'alpha, le rectangle réellement gardé — marge comprise et rognée
+        sur les bords —, la part du fichier d'origine qui est jetée, les bords
+        de l'image que le sujet touche, et ce qu'une boîte tracée coupe du
+        sujet. Elles répondent toutes à la question que la table posait sans
+        pouvoir y répondre : *qu'est-ce que ce cadrage garde, et qu'est-ce qu'il
+        jette ?*
+
+        **Mesurée sur l'image détourée, et il n'y a pas d'autre endroit
+        possible.** La boîte du sujet est ce que le recadrage lit *en entrant* :
+        la prendre après lui la rendrait égale à l'image entière, à chaque fois,
+        puisque recadrer place justement le sujet contre les quatre bords.
+
+        **La marge est appliquée ici comme le traitement l'applique**, c'est-à-
+        dire rognée sur les bords de l'image d'origine — un sujet à 3 px du haut
+        et une marge de 12 rendent 3 px en haut et 12 en bas. C'est ce que
+        `_recadrer` fait, et l'écran doit montrer ce que le rendu montre, pas ce
+        qu'on aurait souhaité.
+        """
+        rgba = self.detourage(asset)
+        hauteur, largeur = rgba.shape[:2]
+        sujet = boite_opaque(rgba[:, :, 3])
+        recadrage = asset.recette.recadrage
+        marge = max(0, recadrage.marge) if recadrage is not None else 0
+        tracee = recadrage.boite if recadrage is not None else None
+        depart = list(tracee) if tracee is not None else (list(sujet) if sujet else None)
+        obtenue: list[int] | None = None
+        if depart is not None:
+            obtenue = [
+                max(0, depart[0] - marge),
+                max(0, depart[1] - marge),
+                min(largeur - 1, depart[2] + marge),
+                min(hauteur - 1, depart[3] + marge),
+            ]
+        aire = largeur * hauteur
+        jete = (
+            0.0
+            if obtenue is None or aire == 0
+            else 1.0
+            - ((obtenue[2] - obtenue[0] + 1) * (obtenue[3] - obtenue[1] + 1)) / aire
+        )
+        # **Le sujet touche un bord de l'image d'origine, et c'est un fait sur
+        # le modèle** : il l'a peint coupé. Aucune autre table ne le mesure, et
+        # rien ne se répare ici — on l'apprend avant d'avoir bâti quatre poses
+        # dessus.
+        bords: list[str] = []
+        if sujet is not None:
+            if sujet[1] == 0:
+                bords.append("haut")
+            if sujet[3] == hauteur - 1:
+                bords.append("bas")
+            if sujet[0] == 0:
+                bords.append("gauche")
+            if sujet[2] == largeur - 1:
+                bords.append("droite")
+        # **Ce qu'une boîte tracée coupe du sujet**, côté par côté. C'est la
+        # phrase importante de la table : une boîte plus large que le sujet est
+        # *sans effet sur le rendu*, parce que la grille recherche elle-même la
+        # boîte du sujet et rogne dessus. Une boîte n'agit que quand elle coupe.
+        coupe: dict[str, int] = {}
+        if tracee is not None and sujet is not None and obtenue is not None:
+            for nom, retire in (
+                ("gauche", obtenue[0] - sujet[0]),
+                ("haut", obtenue[1] - sujet[1]),
+                ("droite", sujet[2] - obtenue[2]),
+                ("bas", sujet[3] - obtenue[3]),
+            ):
+                if retire > 0:
+                    coupe[nom] = int(retire)
+        return {
+            "origine": [int(largeur), int(hauteur)],
+            "sujet": [int(v) for v in sujet] if sujet is not None else None,
+            "tracee": [int(v) for v in tracee] if tracee is not None else None,
+            "obtenue": [int(v) for v in obtenue] if obtenue is not None else None,
+            "jete": round(max(0.0, jete), 4),
+            "bords": bords,
+            "coupe": coupe,
         }
 
     def _poches_de(self, asset: Asset, rgba: np.ndarray) -> dict[str, Any]:

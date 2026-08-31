@@ -867,6 +867,38 @@ export function ZoneTexte({
   )
 }
 
+/** **Le rectangle que l'image occupe vraiment dans la surface qui reçoit le
+ *  geste** (U2, puis U11).
+ *
+ *  Le dépôt a déjà appris cette leçon une fois, sur l'écran de découpe : *le
+ *  cadre **est** l'image, mis à l'échelle par calcul ; une boîte qui ment
+ *  décale ce qu'on pose dessus.* Elle se réapprend ici, à deux endroits — le
+ *  rectangle de recadrage et le pinceau de la main —, et c'est la même erreur :
+ *  la surface est dimensionnée d'après les mesures que l'atelier garde de
+ *  l'image, l'image est posée dedans en *tenant dans le cadre*, donc centrée
+ *  avec des bandes vides de chaque côté dès que les deux proportions diffèrent
+ *  d'un cheveu. Un calcul qui mesure la surface au lieu de l'image se décale de
+ *  la largeur de la bande, et un recadrage change précisément les proportions
+ *  du rendu.
+ *
+ *  Cette fonction refait ce que `object-contain` fait — la plus grande échelle
+ *  qui tienne, centrée — et rend le rectangle en coordonnées d'écran. Toute
+ *  surface qui transforme un clic en pixel d'image passe par elle. */
+export function rectangleDeLImage(
+  surface: { left: number; top: number; width: number; height: number },
+  largeur: number,
+  hauteur: number,
+) {
+  if (largeur <= 0 || hauteur <= 0) return surface
+  const echelle = Math.min(surface.width / largeur, surface.height / hauteur)
+  const rendue = { width: largeur * echelle, height: hauteur * echelle }
+  return {
+    left: surface.left + (surface.width - rendue.width) / 2,
+    top: surface.top + (surface.height - rendue.height) / 2,
+    ...rendue,
+  }
+}
+
 /** Le point de la barre d'état. Seul endroit du produit avec un rayon plein. */
 export function Point({ couleur }: { couleur: string }) {
   return (
