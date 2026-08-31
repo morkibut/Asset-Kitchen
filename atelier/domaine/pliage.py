@@ -81,6 +81,17 @@ class CasePliee:
     texte: str
     pose: str | None = None
 
+    # **Le second axe de la case, écrit avant le départ** (E13). Une case est une
+    # pose *dans une direction* depuis E10, et jusqu'ici seule la première
+    # partait : l'image revenue tombait dans la ligne de sa pose, et l'angle
+    # s'écrivait à la main après coup. Le relevé du 30 août 2026 mesure ce que ça
+    # coûte — **neuf appels de personnage sur treize ne disent pas leur pose**,
+    # et rien ne reliait ce qui avait été demandé à ce qui avait été rangé.
+    #
+    # Vide reste l'état ordinaire : un jeu qui n'a pas déclaré de directions n'en
+    # a aucune à écrire, et la planche d'équipement range par pose.
+    direction: str | None = None
+
     # L'asset qui était dans cette case quand la planche est partie. **Un
     # identifiant, jamais des octets** — même règle qu'une réinjection : la
     # planche se recompose du geste à partir des images qu'il désigne, à la
@@ -89,13 +100,19 @@ class CasePliee:
     base: str | None = None
 
     def en_json(self) -> dict[str, Any]:
-        return {"texte": self.texte, "pose": self.pose, "base": self.base}
+        return {
+            "texte": self.texte,
+            "pose": self.pose,
+            "direction": self.direction,
+            "base": self.base,
+        }
 
     @staticmethod
     def depuis_json(d: dict[str, Any]) -> "CasePliee":
         return CasePliee(
             texte=d.get("texte", ""),
             pose=d.get("pose") or None,
+            direction=d.get("direction") or None,
             base=d.get("base") or None,
         )
 

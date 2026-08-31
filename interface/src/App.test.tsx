@@ -65,6 +65,7 @@ import type {
   PaletteNommee,
   Personnage,
   Piece,
+  Planche,
   Pose,
   PosesDesTypes,
   RetoucheDePalette,
@@ -673,6 +674,11 @@ function serveurDouble(options: {
   /** Ce que le calibrage refuse, quand il refuse — un jeu qui n'impose aucune
    *  taille de case n'a pas de hauteur commune à poser. */
   refusCalibrage?: string
+  /** Ce que la planche d'une pose enverrait, et ce qu'elle coûterait (E13). Le
+   *  double le rend, parce que le serveur compose les textes de case **par le
+   *  chemin de l'envoi** : les recomposer à l'écran en aurait fait une seconde
+   *  vérité sur ce qui part. */
+  planche?: Planche
   /** Ce que le serveur dit qui partira — **ligne par ligne** (US-127). Le
    *  compte et les lignes viennent de lui : l'écran ne connaît ni les artworks
    *  ni les concept arts, et deux comptes divergeraient. */
@@ -745,6 +751,7 @@ function serveurDouble(options: {
     portees: options.portees ?? ({} as Record<string, PorteeDeLaPiece>),
     calibrage: options.calibrage,
     refusCalibrage: options.refusCalibrage,
+    planche: options.planche,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1292,6 +1299,26 @@ function serveurDouble(options: {
     }
     if (url === "/api/characters/directions")
       return rendre(etat.directions)
+
+    // ── La planche d'une pose (E13) ───────────────────────────────────────
+    //
+    // **Une lecture, et elle ne facture rien.** Le double rend ce que le serveur
+    // rend — les cases, leur texte, la géométrie et les trois choix ; ce que
+    // l'écran prouve est qu'il montre ce qu'il reçoit et qu'il arme les bonnes
+    // directions dans la barre qui paie.
+    if (url.includes("/sheet")) {
+      if (!etat.planche)
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            raison: "cette chose ne tient pas cette pose",
+            code: "refus",
+          }),
+        } as Response
+      const pose = decodeURIComponent(url.split("pose=")[1] ?? "")
+      return rendre({ ...etat.planche, pose, pose_nom: pose })
+    }
 
     // ── Le calibrage (E17) ────────────────────────────────────────────────
     //
@@ -4714,7 +4741,7 @@ describe("l'écran des personnages", () => {
     // **Le coût d'un lot est celui d'un appel, pas de N** — c'est la promesse
     // de la tranche, et c'est le même chiffre qu'un compte faux ferait repayer.
     await screen.findByText("un compte faux")
-    expect(screen.getByText("≈ $0,0245 · 2 attitudes")).toBeTruthy()
+    expect(screen.getByText("≈ $0,0245 · 2 cases")).toBeTruthy()
     expect(screen.getByText("≈ $0,0245 à repayer")).toBeTruthy()
 
     // **Aucune probabilité, nulle part.** Le produit dit ce que ça coûterait,
@@ -10668,5 +10695,484 @@ describe("la vitrine", () => {
     expect(
       screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
     ).toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E13 · La planche d'une pose
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran montre avant de payer. Le nombre de
+// cases et le texte de chacune, la géométrie écrite par l'atelier et non
+// modifiable, le tableau des trois choix avec le nombre d'appels derrière chaque
+// prix, ce que refaire coûte, la matrice qui change de pose sans refermer, et la
+// barre qui paie qui **reste** — c'est le seul plein cadre de l'établi qui
+// dépense. Ce qui se compose — les cases, leur direction, la géométrie, les
+// prix — vit dans `tests/test_e13.py`.
+
+describe("la planche d'une pose", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** La planche de « marche » sur le vrai projet : le sud est fait, les trois
+   *  autres manquent. C'est le cas le plus courant, et celui que la décision de
+   *  l'écran tranche. */
+  const PLANCHE: Planche = {
+    personnage: "balthazar",
+    personnage_nom: "Balthazar",
+    pose: "marche",
+    pose_nom: "marche",
+    cases: [
+      {
+        direction: "sud",
+        nom: "sud",
+        texte: "walking posture, full body, facing south, toward the viewer",
+        images: [],
+        pleine: true,
+        colonne: 0,
+        ligne: 0,
+      },
+      {
+        direction: "nord",
+        nom: "nord",
+        texte: "walking posture, full body, facing north, away from the viewer",
+        images: [],
+        pleine: false,
+        colonne: 1,
+        ligne: 0,
+      },
+      {
+        direction: "est",
+        nom: "est",
+        texte: "walking posture, full body, facing east, to the right",
+        images: [],
+        pleine: false,
+        colonne: 0,
+        ligne: 1,
+      },
+      {
+        direction: "ouest",
+        nom: "ouest",
+        texte: "walking posture, full body, facing west, to the left",
+        images: [],
+        pleine: false,
+        colonne: 1,
+        ligne: 1,
+      },
+    ],
+    geometrie: {
+      cases: 4,
+      colonnes: 2,
+      lignes: 2,
+      cote_px: 1024,
+      sujet_px: 460,
+      cible_px: 128,
+      fois_la_cible: 3.6,
+    },
+    // Les trois prix, chacun avec le nombre d'appels derrière lui. Deux
+    // planches coûtent le même prix — un appel — et c'est ce que la mesure du
+    // 31 août 2026 a trouvé.
+    choix: [
+      {
+        clef: "refaire",
+        quoi: "Refaire les 4 — une planche",
+        cases: 4,
+        appels: 1,
+        prix: 0.0128,
+        par_image: 0.0032,
+        mesure: true,
+        refus: "",
+      },
+      {
+        clef: "completer",
+        quoi: "Compléter les 3 — une planche",
+        cases: 3,
+        appels: 1,
+        prix: 0.0128,
+        par_image: 0.004267,
+        mesure: true,
+        refus: "",
+      },
+      {
+        clef: "unite",
+        quoi: "Compléter les 3 — un appel chacune",
+        cases: 3,
+        appels: 3,
+        prix: 0.0384,
+        par_image: 0.0128,
+        mesure: true,
+        refus: "",
+      },
+    ],
+    prix: {
+      prix: 0.0128,
+      bas: 0.0128,
+      haut: 0.0534,
+      appels: 18,
+      mesure: true,
+      // **Le banc**, parce que ce modèle-là n'a rien facturé sur cette machine.
+      // Quand il l'a fait, c'est le journal qui parle — la même source que la
+      // barre qui paie, sans quoi deux prix pour le même appel voisineraient.
+      origine: "banc",
+    },
+    deja_pleines: ["sud"],
+    // **Le banc, toujours à côté du prix affiché** : c'est lui qui porte les
+    // chiffres de la phrase sur la variance, et le journal de la machine ne les
+    // porte pas toujours.
+    banc: {
+      prix: 0.0128,
+      bas: 0.0128,
+      haut: 0.0534,
+      appels: 18,
+      mesure: true,
+      origine: "banc",
+    },
+    modele: "google/gemini-3.1-flash-lite-image",
+    // **Ce qui part en référence**, compté par le serveur. Le gabarit en fait
+    // partie : il part, il occupe une place dans le plafond du modèle, et il
+    // coûte chez ceux qui facturent au texte.
+    jointes: {
+      total: 3,
+      manuelles: 1,
+      artworks: 1,
+      concepts: 0,
+      famille: "personnages" as const,
+      gabarit: 1,
+      lignes: [],
+    },
+  }
+
+  /** Un Balthazar dont la marche tient ses quatre directions — c'est la
+   *  déclaration des directions qui crée la planche, et sans elle la porte
+   *  n'existe pas. */
+  const AVEC_DIRECTIONS = personnage("Balthazar", {
+    cases: PLAN.map((p) => ({
+      pose: p.identifiant,
+      demandees: p.identifiant === "marche" ? 4 : 1,
+      images: [],
+      ...VIDE_C3,
+      directions:
+        p.identifiant === "marche"
+          ? QUATRE.map((d) => ({
+              ...d,
+              images: [],
+              demandees: 1,
+              a_confirmer: 0,
+            }))
+          : [],
+    })),
+  })
+
+  const ouvrir = async (planche: Planche = PLANCHE) => {
+    const double = serveurDouble({
+      planche,
+      personnages: [AVEC_DIRECTIONS],
+      directions: {
+        directions: QUATRE,
+        origine: "vue",
+        vue: "vue-dessus-34",
+        vue_libelle: "vue de dessus 3/4",
+        proposees: QUATRE,
+      },
+    })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+    fireEvent.click(
+      await etabli.findByRole("button", { name: "Ouvrir la planche de marche" }),
+    )
+    const cadre = await waitFor(() => {
+      const trouve = document.querySelector("[data-planche]")
+      if (!trouve) throw new Error("la planche ne s'est pas ouverte")
+      return trouve as HTMLElement
+    })
+    return { ...double, ecran: within(cadre) }
+  }
+
+  // ── « Avant de payer, l'écran montre le nombre de cases, le texte de
+  //     chacune, ce qui part en référence, et le prix » ──────────────────────
+
+  test("le nombre de cases et le texte de chacune se lisent avant de payer", async () => {
+    // **Une feuille cesse d'être un achat à l'aveugle.** C'est toute la raison
+    // d'être de l'écran : la planche est l'unité de ce qu'on achète.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText("la planche de marche")).toBeTruthy()
+    expect(ecran.getAllByText(/4 cases/).length).toBeGreaterThan(0)
+    for (const attendu of [
+      "walking posture, full body, facing north, away from the viewer",
+      "walking posture, full body, facing east, to the right",
+    ]) {
+      expect(ecran.getByText(attendu)).toBeTruthy()
+    }
+  })
+
+  test("ce qui part en référence se compte avant de payer", async () => {
+    // **Compté par le serveur** : l'écran ne connaît ni les artworks du jeu, ni
+    // les concept arts de la chose, ni le dédoublonnage entre les trois, et
+    // deux comptes calculés à deux endroits auraient divergé.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText("partent avec l'appel")).toBeTruthy()
+    expect(ecran.getByText(/1 gabarit de grille · 1 artwork du jeu/)).toBeTruthy()
+  })
+
+  test("chaque case dit sa direction et sa place dans la grille", async () => {
+    // **La place est écrite par l'atelier**, et c'est elle qui permet de savoir
+    // quel morceau de l'image revenue va dans quelle direction.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText("nord")).toBeTruthy()
+    expect(ecran.getByText("L1 C1")).toBeTruthy()
+    expect(ecran.getByText("L2 C2")).toBeTruthy()
+  })
+
+  // ── « La géométrie de la grille et la place de chaque case sont écrites par
+  //     l'atelier, montrées, et non modifiables » ────────────────────────────
+
+  test("la géométrie est montrée, et rien ne la règle", async () => {
+    // Le motif du produit pour tout ce qui est indisponible : affiché, avec sa
+    // raison. La changer casserait le rangement de ce qui revient.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText("2 × 2")).toBeTruthy()
+    expect(ecran.getByText("460 px")).toBeTruthy()
+    expect(ecran.getByText(/elle n'est pas\s+modifiable/)).toBeTruthy()
+    // Aucun champ, aucun curseur, aucun segment dans la colonne des réglages.
+    const reglages = document.querySelector("[data-planche] aside") as HTMLElement
+    expect(within(reglages).queryAllByRole("textbox")).toHaveLength(0)
+    expect(within(reglages).queryAllByRole("spinbutton")).toHaveLength(0)
+  })
+
+  test("l'écran dit que plier ne coûte pas de qualité, avec le chiffre", async () => {
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(/3.6 fois plus\s+grand/)).toBeTruthy()
+  })
+
+  // ── « Une planche n'est jamais gardée en bibliothèque ; ses morceaux le
+  //     sont » ────────────────────────────────────────────────────────────────
+
+  test("l'écran dit que la feuille n'entre pas en bibliothèque, ses morceaux si", async () => {
+    // **C'est une ruse pour payer moins, pas un format de livraison**, et il
+    // vaut mieux le lire avant de payer qu'après avoir cherché la feuille.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(/ses 4 morceaux, oui/)).toBeTruthy()
+  })
+
+  // ── « Refaire les quatre est proposé à côté de compléter les trois, avec les
+  //     trois prix et le nombre d'appels derrière chacun » ────────────────────
+
+  test("les trois choix portent chacun leur prix et leur nombre d'appels", async () => {
+    // **Un gain annoncé sur une mesure unique est un gain encadré**, pas un
+    // gain affirmé : le nombre d'appels est écrit à côté du prix, jamais
+    // ailleurs.
+    const { ecran } = await ouvrir()
+
+    const refaire = ecran.getByRole("button", {
+      name: /Refaire les 4 — une planche/,
+    })
+    expect(refaire.textContent).toContain("1 appel")
+    expect(refaire.textContent).toContain("$0,0128")
+
+    const unite = ecran.getByRole("button", {
+      name: /Compléter les 3 — un appel chacune/,
+    })
+    expect(unite.textContent).toContain("3 appels")
+    expect(unite.textContent).toContain("$0,0384")
+  })
+
+  test("refaire les quatre est le premier choix, et il est retenu d'entrée", async () => {
+    // **Ce n'est pas un réglage caché** : c'est le premier choix de l'écran, et
+    // il est posé sur une mesure — à prix d'appel égal, quatre cases peintes
+    // ensemble se ressemblent.
+    const { ecran } = await ouvrir()
+
+    const refaire = ecran.getByRole("button", {
+      name: /Refaire les 4 — une planche/,
+    })
+    expect(refaire.getAttribute("aria-pressed")).toBe("true")
+  })
+
+  test("l'écran écrit pourquoi il n'affiche pas un prix par nombre de cases", async () => {
+    // **La seconde moitié de ce que la mesure dit**, et elle n'est pas un
+    // détail : la variance entre deux appels identiques dépasse l'écart entre
+    // deux tailles de planche.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(/Les bancs du dépôt ont payé 18 appels/)).toBeTruthy()
+    expect(ecran.getByText(/payés par les bancs du dépôt/)).toBeTruthy()
+    // **Le modèle chiffré est nommé** : la barre qui paie garde celui que
+    // l'auteur y a choisi, et deux modèles n'ont pas le même prix.
+    expect(ecran.getByText("google/gemini-3.1-flash-lite-image")).toBeTruthy()
+    expect(
+      ecran.getByText(
+        /deux appels identiques s'écartent plus que deux tailles/,
+      ),
+    ).toBeTruthy()
+  })
+
+  test("un choix indisponible est grisé avec sa raison", async () => {
+    const { ecran } = await ouvrir({
+      ...PLANCHE,
+      deja_pleines: ["sud", "nord", "est", "ouest"],
+      cases: PLANCHE.cases.map((c) => ({ ...c, pleine: true })),
+      choix: [
+        PLANCHE.choix[0],
+        {
+          clef: "unite",
+          quoi: "Compléter — rien ne manque",
+          cases: 0,
+          appels: 0,
+          prix: 0,
+          par_image: 0,
+          mesure: true,
+          refus: "les 4 cases sont pleines",
+        },
+      ],
+    })
+
+    const rien = ecran.getByRole("button", { name: /Compléter — rien ne manque/ })
+    expect((rien as HTMLButtonElement).disabled).toBe(true)
+    expect(ecran.getByText("les 4 cases sont pleines")).toBeTruthy()
+  })
+
+  // ── Ce que refaire coûte, nommé avant de lancer ──────────────────────────
+
+  test("l'écran écrit qu'on aura payé deux fois pour la case déjà pleine", async () => {
+    // **On jette une image qu'on avait.** Elle ne disparaît pas — elle reste en
+    // bibliothèque avec son prix payé — mais l'écran le dit avant de lancer,
+    // pas après.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(/payé deux fois pour cette case-là/)).toBeTruthy()
+    expect(ecran.getByText(/sera refaite/)).toBeTruthy()
+  })
+
+  // ── Armer, jamais envoyer ────────────────────────────────────────────────
+
+  test("armer la planche pose les quatre directions dans la barre qui paie", async () => {
+    // **Il n'existe qu'un seul endroit d'où l'on paie dans tout le produit.**
+    // L'écran arme ; la barre envoie.
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.click(ecran.getByRole("button", { name: /Armer la planche — 4 cases/ }))
+
+    await waitFor(() => {
+      const arme = appels.find((a) => a.url === "/api/characters/subject")
+      if (!arme) throw new Error("la case n'a pas été armée")
+      expect((arme.corps as { directions: string[] }).directions).toEqual([
+        "sud",
+        "nord",
+        "est",
+        "ouest",
+      ])
+    })
+  })
+
+  test("compléter n'arme que les cases vides", async () => {
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.click(
+      ecran.getByRole("button", { name: /Compléter les 3 — une planche/ }),
+    )
+    fireEvent.click(ecran.getByRole("button", { name: /Armer la planche — 3 cases/ }))
+
+    await waitFor(() => {
+      const arme = appels.find((a) => a.url === "/api/characters/subject")
+      if (!arme) throw new Error("la case n'a pas été armée")
+      expect((arme.corps as { directions: string[] }).directions).toEqual([
+        "nord",
+        "est",
+        "ouest",
+      ])
+    })
+  })
+
+  // ── La barre qui paie reste — et c'est le seul plein cadre où elle reste ──
+
+  test("la barre qui paie reste ouverte sur la planche", async () => {
+    // Les quatre autres profondeurs de l'établi règlent, jugent ou recalculent :
+    // aucune ne dépense. Celle-ci, si — et l'écarter de la barre aurait obligé à
+    // remonter d'un cran pour payer, c'est-à-dire à perdre de vue ce qu'on
+    // venait de regarder.
+    await ouvrir()
+
+    expect(
+      screen.getByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeTruthy()
+  })
+
+  // ── On change de pose sans refermer ──────────────────────────────────────
+
+  test("la matrice de droite change de pose sans refermer la planche", async () => {
+    const { ecran } = await ouvrir()
+
+    fireEvent.click(ecran.getByRole("button", { name: /^repos/ }))
+
+    await waitFor(() =>
+      expect(ecran.getByText("la planche de repos")).toBeTruthy(),
+    )
+    expect(document.querySelector("[data-planche]")).toBeTruthy()
+  })
+
+  test("la vitrine s'ouvre depuis la planche, sans repasser par l'établi", async () => {
+    // **La quatrième porte de la vitrine** (E16), réservée à E13 par son propre
+    // critère : *la porte s'y posera avec elle, l'écran ne bouge pas*. On
+    // regarde ce qu'on a avant de repayer ce qu'on a.
+    const { ecran } = await ouvrir()
+
+    fireEvent.click(ecran.getByRole("button", { name: "la vitrine ›" }))
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-vitrine]")).toBeTruthy(),
+    )
+    expect(document.querySelector("[data-planche]")).toBeNull()
+  })
+
+  test("la porte de la vitrine n'existe pas quand rien n'est fait", async () => {
+    // Une porte qui ouvre sur le vide est pire qu'une porte absente.
+    const { ecran } = await ouvrir({
+      ...PLANCHE,
+      deja_pleines: [],
+      cases: PLANCHE.cases.map((c) => ({ ...c, pleine: false })),
+    })
+
+    expect(ecran.queryByRole("button", { name: "la vitrine ›" })).toBeNull()
+  })
+
+  test("Échap ferme la planche et rend l'établi", async () => {
+    await ouvrir()
+
+    fireEvent.keyDown(window, { key: "Escape" })
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-planche]")).toBeNull(),
+    )
+    expect(document.querySelector("[data-etabli]")).toBeTruthy()
+  })
+
+  // ── Sans directions, il n'y a rien à plier ───────────────────────────────
+
+  test("une pose sans directions n'ouvre aucune planche", async () => {
+    // **C'est la déclaration des directions qui crée la planche.** Tant qu'une
+    // pose vaut une image, il n'y a rien à montrer : une case, un appel, et la
+    // barre de prompt suffisait.
+    const double = serveurDouble({ personnages: [personnage("Balthazar")] })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Balthazar")
+
+    expect(etabli.queryByRole("button", { name: /Ouvrir la planche/ })).toBeNull()
   })
 })

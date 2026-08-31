@@ -24,7 +24,7 @@ from atelier.domaine.pliage import Geometrie, MesuresLot
 from atelier.image.decoupe import Boite
 from atelier.image.traitement import mesurer_grille
 
-__all__ = ["COTE", "gabarit", "mesurer_lot"]
+__all__ = ["COTE", "cote_de_case", "gabarit", "mesurer_lot"]
 
 
 # Le côté du gabarit, en pixels. 1024 — le format sur lequel l'essai du 28 août
@@ -57,6 +57,22 @@ COTE_SILHOUETTE = 64
 # fois pour toutes, et deux lectures de la même image rendent la même
 # silhouette (`docs/PIEGES.md`).
 OPACITE = 128
+
+
+def cote_de_case(forme: Geometrie) -> int:
+    """Ce qu'un sujet fait de côté, dans une planche de cette forme.
+
+    **Le même calcul que le gabarit, et c'est tout l'intérêt** : l'écran de la
+    planche annonce « un sujet revient à 512 px » avant de payer, et le gabarit
+    dessine les cases où le modèle les posera. Deux formules auraient fini par
+    annoncer une taille et en demander une autre — la même contradiction que le
+    calibrage répare ailleurs, et il n'y a pas de raison de la rejouer ici.
+
+    Le plus petit des deux côtés : c'est lui qui borne le sujet.
+    """
+    large = (COTE - 2 * MARGE - GOUTTIERE * (forme.colonnes - 1)) // forme.colonnes
+    haut = (COTE - 2 * MARGE - GOUTTIERE * (forme.lignes - 1)) // forme.lignes
+    return max(1, min(large, haut))
 
 
 def gabarit(forme: Geometrie) -> bytes:

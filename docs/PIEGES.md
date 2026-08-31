@@ -595,3 +595,26 @@ la prochaine réécriture retrouvera.
   **nommer le fichier sans `§`** et de laisser la phrase dire ce qu'on y cherche —
   `atelier/domaine/vue.py` le fait déjà. Payé trois fois en écrivant E10, le 31 août 2026 ;
   un quatrième cas dort dans `docs/vignettes-vues.md`, qui n'est pas versionné.
+
+- **Deux médianes calculées à deux endroits annoncent deux prix pour le même appel, et rien ne
+  le signale.** L'écran de la planche lisait le banc versionné du dépôt ; la barre qui paie,
+  trois centimètres plus bas dans la même fenêtre, lisait le journal de la machine. Ils ont
+  affiché `$0,0128` et `$0,0160` côte à côte, tous les deux justes, tous les deux « le prix d'un
+  appel ». Ce qui l'a rendu invisible est qu'**aucun essai ne peut le voir** : chacun des deux
+  chiffres est correct pris seul, et il n'existe pas d'assertion qui dise « ces deux nombres
+  parlent de la même chose ». Il a fallu ouvrir l'écran. Le geste qui répare est de faire lire
+  **la même source** aux deux — le journal d'abord, le banc en repli —, et de **nommer** ce que
+  le chiffre mesure quand les deux ne peuvent pas être la même chose : ici le modèle, parce que
+  le jeu en désigne un pour ses planches et que la barre garde celui que l'auteur a choisi.
+  Payé en écrivant E13, le 31 août 2026.
+
+- **Une conclusion tirée d'un corpus et affichée à côté d'un autre corpus se retourne contre
+  celui qui l'écrit.** Le même écran affirmait *« un appel a coûté de $0,0342 à $0,0342 :
+  l'écart entre deux appels identiques dépasse l'écart entre deux tailles de planche »*. La
+  phrase venait du banc — dix-huit appels, de $0,0128 à $0,0534 — et les chiffres qu'elle citait
+  venaient du journal de la machine, où les deux seuls appels connus avaient coûté exactement le
+  même prix. **La phrase démentait ses propres nombres**, dans la même ligne. Ce qui l'a rendu
+  invisible est que la phrase était vraie, et que les nombres l'étaient aussi : c'est leur
+  rapprochement qui mentait. Le geste qui répare : **une phrase se cite avec les nombres qui la
+  portent**, donc le banc est rendu à côté du prix affiché et c'est lui que la phrase nomme.
+  Payé dans la même heure que le précédent, en regardant l'écran plutôt que les essais.

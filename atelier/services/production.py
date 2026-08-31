@@ -295,6 +295,48 @@ class ServiceProduction:
             "proposees": [d.en_json() for d in (connue.directions if connue else ())],
         }
 
+    def directions_du_jeu(self, projet: str) -> tuple[Direction, ...]:
+        """Les directions de ce jeu — la liste écrite, sinon celle que sa vue
+        propose (E10).
+
+        **Lue, jamais recopiée** : trois services en ont besoin — la matrice pour
+        ses colonnes, la planche pour ses cases, le pliage pour ranger ce qui
+        revient — et trois lectures de la même liste valent mieux que trois
+        copies qui divergeraient à la première direction renommée.
+        """
+        return self._exiger(projet).univers.directions_du_jeu()
+
+    def cible_du_projet(self, projet: str) -> int:
+        """La taille de case que ce jeu impose, ou zéro.
+
+        **Zéro est un état normal** : un jeu qui ne contraint pas l'échelle n'a
+        pas de cible, et le mot ne paraît alors nulle part. C'est à l'appelant de
+        décider ce qu'il en fait — la planche l'affiche ou l'omet, le calibrage
+        refuse de travailler sans elle.
+        """
+        return self._exiger(projet).univers.cible_px
+
+    def modele_de_planche(self, projet: str) -> str:
+        """Le modèle auquel ce jeu demande ses planches, ou rien.
+
+        **Lu, jamais recopié** : le catalogue le lit déjà pour choisir le défaut
+        d'un lot, et la planche a besoin du même — un prix mesuré chez un modèle
+        ne dit rien du prix chez un autre.
+        """
+        return self._exiger(projet).univers.modele_planche
+
+    def direction(self, projet: str, identifiant: str) -> Direction | None:
+        """Une direction par son nom, ou rien.
+
+        **Rien plutôt qu'un refus** : celui qui refuse est `viser`, avant qu'un
+        centime parte. Ici on compose un texte, et une direction disparue rend un
+        texte sans elle plutôt qu'une exception au milieu d'un aperçu gratuit.
+        """
+        return next(
+            (d for d in self.directions_du_jeu(projet) if d.identifiant == identifiant),
+            None,
+        )
+
     def ajouter_direction(self, projet: str, nom: str, consigne: str = "") -> Direction:
         """**Nommer, c'est créer**, ici comme pour une pose.
 
@@ -1701,6 +1743,7 @@ class ServiceProduction:
         poses: Sequence[str] = (),
         piece: str | None = None,
         direction: str | None = None,
+        directions: Sequence[str] = (),
     ) -> str:
         """Ce qu'une case demande au modèle — **écrit ici, lu des deux côtés**.
 
@@ -1741,6 +1784,13 @@ class ServiceProduction:
         voulues = [
             p for p in self.plan_de(projet, vise) if p.identifiant in set(poses)
         ]
+        # **Une planche de pose est un lot, même quand elle n'a qu'une pose**
+        # (E13). Ses attitudes et ses angles partent case par case, dans les
+        # consignes de planche ; les écrire *aussi* dans le sujet les dirait deux
+        # fois, et le modèle recevrait « facing north » pour une planche dont
+        # trois cases sur quatre regardent ailleurs.
+        if len(dict.fromkeys(directions)) > 1:
+            return vise.description.strip()
         if len(voulues) == 1:
             # **Ce qui part est en anglais, du premier mot au dernier** (US-241).
             # Le nom français de la pose partait au milieu d'une phrase anglaise

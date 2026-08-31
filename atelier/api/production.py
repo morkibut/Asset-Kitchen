@@ -536,6 +536,25 @@ class CorpsMiseDeCote(BaseModel):
     projet: str | None = None
 
 
+@routeur.get("/characters/{identifiant}/sheet")
+async def planche(
+    requete: Request,
+    identifiant: str,
+    pose: str,
+    projet: str | None = Query(None),
+) -> dict[str, Any]:
+    """Ce que la planche de cette pose enverrait, et ce qu'elle coûterait (E13).
+
+    **Une lecture, et elle ne facture rien.** Elle compose pourtant ses cases par
+    le chemin de l'envoi — c'est ce qui rend vraie la règle *ce qui est montré
+    est ce qui part* — et refuse donc exactement ce que la soumission refuserait :
+    une pose que la chose ne tient plus, une direction qu'elle ne tient pas pour
+    cette pose.
+    """
+    atelier = _atelier(requete)
+    return atelier.planche.planche(_projet(requete, projet), identifiant, pose)
+
+
 @routeur.get("/characters/{identifiant}/calibration")
 async def calibrage(
     requete: Request, identifiant: str, projet: str | None = Query(None)
@@ -1035,6 +1054,12 @@ class CorpsSujet(BaseModel):
     # **Et sous quel angle** (E10) : la consigne de la direction s'ajoute à celle
     # de l'attitude, et les deux sont écrites chacune à un seul endroit.
     direction: str | None = None
+    # **Les directions d'une planche de pose** (E13). Deux ou plus, et le sujet
+    # redevient le signalement seul : les attitudes et les angles partent case
+    # par case dans les consignes de planche, et les écrire aussi ici les dirait
+    # deux fois — le modèle recevrait « facing north » pour une planche dont
+    # trois cases sur quatre regardent ailleurs.
+    directions: list[str] = Field(default_factory=list)
     projet: str | None = None
 
 
@@ -1057,6 +1082,7 @@ async def sujet(requete: Request, corps: CorpsSujet) -> dict[str, Any]:
             corps.poses,
             corps.piece,
             corps.direction,
+            corps.directions,
         )
     }
 

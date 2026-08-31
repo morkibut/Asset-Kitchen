@@ -380,6 +380,12 @@ class ServicePliage:
                 # C1 tombait dans la sienne.
                 personnage=generation.personnage,
                 pose=case.pose,
+                # **Et sa direction, écrite à la naissance** (E13). C'est ce qui
+                # répare la mesure du 30 août 2026 : le rangement cesse d'être un
+                # geste séparé qu'on peut oublier, puisqu'une case ne peut pas
+                # partir sans dire où son image ira. Vide quand le jeu n'a pas
+                # déclaré de directions — l'état ordinaire, et rien ne change.
+                direction=case.direction,
                 lot=mesures,
                 # **Datée du lot**, comme les variations d'un même appel : les N
                 # images sont arrivées ensemble, et le rang les départage dans

@@ -61,6 +61,7 @@ import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import { FicheDeLaChose } from "./FicheChose"
 import { EcranCalibrage } from "./Calibrage"
+import { EcranPlanche } from "./Planche"
 import { EcranVitrine } from "./Vitrine"
 
 /** Ce qui remplit vraiment une case — **et ce n'est pas toujours le nombre
@@ -187,6 +188,9 @@ export function EcranEtabli({
     poses: Pose[],
     piece?: Piece | null,
     direction?: string | null,
+    /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
+     *  plie : une attitude, N directions, un seul appel payé. */
+    directions?: string[] | null,
   ) => void
   /** **Où le jeu range ses images** (C5) — le dossier posé dans les Réglages.
    *
@@ -230,6 +234,15 @@ export function EcranEtabli({
   // chacune. Le mettre dans la barre voudrait dire que la barre de l'image A
   // porte un outil qui modifie les images B, C et D.
   const [calibrageOuvert, setCalibrageOuvert] = useState(false)
+  // **La planche, cinquième plein cadre — et le seul qui garde la barre qui
+  // paie** (E13). Les quatre autres règlent, jugent ou recalculent : aucun ne
+  // dépense. Celui-ci, si, et c'est même tout ce qu'il fait — on y entre pour
+  // voir ce qu'on achète avant de payer.
+  //
+  // Il retient **la pose**, pas un booléen : on change de pose en cliquant dans
+  // sa matrice, sans refermer, et une planche est toujours la planche *d'une*
+  // pose.
+  const [planchePose, setPlanchePose] = useState<string | null>(null)
 
   // Changer de chose referme la fiche : elle décrit celle qu'on regardait, et
   // la garder ouverte sur la suivante ferait croire qu'on a réglé l'une en
@@ -238,6 +251,7 @@ export function EcranEtabli({
     setFicheOuverte(false)
     setVitrineOuverte(false)
     setCalibrageOuvert(false)
+    setPlanchePose(null)
   }, [ouvert.identifiant])
 
   const setRefus = (texte: string) =>
@@ -294,7 +308,30 @@ export function EcranEtabli({
           Et comme l'outil, elle fait disparaître la barre qui paie — régler ne
           se paie pas. C'est `App` qui la retire, sur le même booléen. */}
       {outil ??
-        (calibrageOuvert ? (
+        (planchePose ? (
+          <EcranPlanche
+            personnage={ouvert}
+            pose={planchePose}
+            plan={ouvert.plan ?? plan}
+            onPose={setPlanchePose}
+            onFermer={() => setPlanchePose(null)}
+            onVitrine={() => {
+              // On passe de la planche à la vitrine sans repasser par
+              // l'établi : c'est la même profondeur, et refermer pour rouvrir
+              // aurait fait perdre l'endroit où l'on était. Même geste que
+              // depuis la fiche.
+              setPlanchePose(null)
+              setVitrineOuverte(true)
+            }}
+            onArmer={(pose, directions) => {
+              const attitude = (ouvert.plan ?? plan).find(
+                (p) => p.identifiant === pose,
+              )
+              if (attitude) onArmer(ouvert, [attitude], null, null, directions)
+            }}
+            onErreur={echouer}
+          />
+        ) : calibrageOuvert ? (
           <EcranCalibrage
             personnage={ouvert}
             onFermer={() => setCalibrageOuvert(false)}
@@ -342,6 +379,7 @@ export function EcranEtabli({
           onFiche={() => setFicheOuverte(true)}
           onVitrine={() => setVitrineOuverte(true)}
           onCalibrage={() => setCalibrageOuvert(true)}
+          onPlanche={setPlanchePose}
           dossierJeu={dossierJeu}
           onErreur={echouer}
         />
@@ -369,6 +407,11 @@ export function EcranEtabli({
           référence n'appelle personne, et un écran incapable de dépenser ne
           porte pas le champ qui dépense. `App` la retire déjà pour l'outil,
           qu'il tient ; celle-ci se décide ici, où la fiche vit. */}
+      {/* **La planche est la seule des cinq profondeurs à garder la barre qui
+          paie** (E13) : c'est le seul endroit du produit où l'on regarde ce
+          qu'on achète *avant* de payer, et l'écarter de la barre aurait obligé
+          à remonter d'un cran pour dépenser — c'est-à-dire à perdre de vue ce
+          qu'on venait de regarder. */}
       {ficheOuverte || vitrineOuverte || calibrageOuvert ? null : barreQuiPaie}
     </div>
   )
@@ -878,6 +921,7 @@ function Fiche({
   onFiche,
   onVitrine,
   onCalibrage,
+  onPlanche,
   dossierJeu,
   onErreur,
 }: {
@@ -895,6 +939,9 @@ function Fiche({
     poses: Pose[],
     piece?: Piece | null,
     direction?: string | null,
+    /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
+     *  plie : une attitude, N directions, un seul appel payé. */
+    directions?: string[] | null,
   ) => void
   /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
    *  parce que c'est de là qu'on y entre et qu'on y revient. */
@@ -904,6 +951,9 @@ function Fiche({
   onVitrine: () => void
   /** Et le calibrage (E17), qui les empile dans la même case. */
   onCalibrage: () => void
+  /** **Ouvrir la planche d'une pose** (E13). Portée par la fiche parce que
+   *  c'est sa matrice qui la déclenche, ligne par ligne. */
+  onPlanche: (pose: string) => void
   dossierJeu: string
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
@@ -970,6 +1020,7 @@ function Fiche({
           onOuvrirCase={onOuvrirCase}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
+          onPlanche={onPlanche}
           onErreur={onErreur}
         />
       </div>
@@ -1426,6 +1477,7 @@ function Cases({
   onOuvrirCase,
   onPersonnage,
   onArmer,
+  onPlanche,
   onErreur,
 }: {
   plan: Pose[]
@@ -1441,9 +1493,16 @@ function Cases({
     poses: Pose[],
     piece?: Piece | null,
     direction?: string | null,
+    /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
+     *  plie : une attitude, N directions, un seul appel payé. */
+    directions?: string[] | null,
   ) => void
   /** Ouvrir l'outil d'une case pleine, en plein cadre (E2). */
   onOuvrirCase: (identifiant: string) => void
+  /** **Ouvrir la planche d'une pose** (E13) — voir ce qu'on achète avant de
+   *  payer. Une ligne de la matrice y mène, et c'est la porte que la maquette
+   *  décrit : on y entre en cliquant une pose, on en sort par Échap. */
+  onPlanche: (pose: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   // **Ce que cette chose-là réclame** (E9), et non plus ce que le jeu réclame :
@@ -1641,6 +1700,7 @@ function Cases({
               onArmerDirection={(direction) =>
                 onArmer(personnage, [pose], null, direction)
               }
+              onPlanche={() => onPlanche(pose.identifiant)}
               onRangerDirection={(direction, rangee) =>
                 void rangerDirection(pose.identifiant, direction, rangee)
               }
@@ -1812,6 +1872,7 @@ function LigneCase({
   onCocher,
   onArmer,
   onArmerDirection,
+  onPlanche,
   onRangerDirection,
   onPlacer,
   onRetirer,
@@ -1833,6 +1894,10 @@ function LigneCase({
   /** Armer **une case** — cette pose dans cette direction-là (E10). Le sujet
    *  composé par le serveur y ajoute la consigne de la direction. */
   onArmerDirection?: (direction: string) => void
+  /** **Ouvrir la planche de cette pose** (E13) — voir ce qu'on achète avant de
+   *  payer : combien de cases, ce qui est écrit dans chacune, et le prix.
+   *  Absent quand la pose n'a qu'une direction : il n'y a rien à plier. */
+  onPlanche?: () => void
   /** Ranger une direction **pour cette chose seule** — la portée étroite. */
   onRangerDirection?: (direction: string, rangee: boolean) => void
   /** Dire sous quel angle une image montre sa pose. Confirmer et déplacer sont
@@ -1959,6 +2024,22 @@ function LigneCase({
       >
         {faites} / {demandees}
       </span>
+
+      {/* **La planche s'ouvre d'ici** (E13), et seulement quand il y a quelque
+          chose à plier : sans deux directions, une pose vaut une image et il n'y
+          a pas de feuille à regarder. C'est la troisième porte de l'établi, et
+          la seule des cinq où la barre qui paie reste. */}
+      {aDesDirections && angles.length > 1 && onPlanche && (
+        <button
+          type="button"
+          onClick={onPlanche}
+          aria-label={`Ouvrir la planche de ${pose.nom}`}
+          title={`${angles.length} directions, un seul appel — on voit ce qu'on achète avant de payer`}
+          className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+        >
+          la planche ›
+        </button>
+      )}
 
       {/* **Armer, pas payer.** Ce bouton remplit le prompt de l'atelier et rend
           la main : c'est là-bas qu'on relit et qu'on dépense. */}

@@ -590,13 +590,25 @@ Le dossier a mesuré une case, deux cases et quatre. Le chiffre le plus importan
 appel**, et tout le raisonnement qui fait « refaire les quatre » le premier choix
 de la planche en dépend.
 
-**Ce qui manque, et ça coûte moins de cinq centimes :** trois appels de mesure.
-À faire avant l'étape de la planche, pas après.
+**Tiré le 31 août 2026, et pour $0,081 — pas les cinq centimes annoncés.** Tenir
+le chiffre aurait demandé de baisser la qualité, et trois prix mesurés dans
+d'autres conditions n'auraient pas prolongé la courbe des deux points connus.
 
-Deux questions voisines, du même endroit : au-delà de neuf cases, la géométrie
+**Et ce qu'ils disent n'est pas ce qu'on cherchait.** Trois cases et six cases ont
+coûté *exactement* le même prix, $0,0139 ; cinq cases ont coûté $0,0534, sur un
+appel dont rien ne distingue le résultat. Une planche coûte le prix d'**un appel**
+quel que soit ce qu'elle porte — mais **la variance entre deux appels identiques
+dépasse l'écart entre deux tailles de planche**.
+
+**Tranché en écrivant E13 : l'écran ne montre aucun prix par nombre de cases.** Il
+montre un prix d'appel et le multiplie par le nombre d'appels que chaque choix
+demande. La conclusion de la maquette ne change pas — refaire les quatre reste le
+premier choix —, mais sa raison, si : ce n'est plus « c'est moins cher », c'est
+« **c'est le même prix, et les quatre se ressemblent** ».
+
+**Une question voisine reste ouverte** : au-delà de neuf cases, la géométrie
 continue de se calculer mais aucun appel n'a été fait à ce format — un modèle qui
-perd le compte à seize sujets est très plausible. Et l'on ne sait pas ce que
-donne une planche à trois cases contre trois appels séparés.
+perd le compte à seize sujets est très plausible. À mesurer avant d'autoriser.
 
 ### B-9 · Deux hauteurs de contrôle, ou une seule ?
 

@@ -201,7 +201,12 @@ export function PanneauReglages({
           <Raison
             texte={
               cases
-                ? `${cases} attitudes en une planche — un seul appel`
+                ? // **« cases » et non « attitudes »** (E13) : une planche de
+                  // pose porte *une* attitude vue sous N angles, et l'appeler
+                  // quatre attitudes en aurait fait quatre poses. Le mot juste
+                  // est celui que tout le produit emploie déjà — une case est
+                  // une pose dans une direction.
+                  `${cases} cases en une planche — un seul appel`
                 : variations > 1
                   ? `${variations} appels, ${variations} fois le prix`
                   : null
@@ -574,7 +579,7 @@ export function CoutAttendu({
         {cout === null
           ? "jamais appelé"
           : cases
-            ? `≈ ${dollars(cout)} · ${cases} attitudes`
+            ? `≈ ${dollars(cout)} · ${cases} cases`
             : `≈ ${dollars(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
       </dd>
       {cases > 0 && (

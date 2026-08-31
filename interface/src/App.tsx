@@ -296,6 +296,16 @@ export function App() {
     /** **La direction que cet appel remplira** (E10). Une case est une pose
      *  dans une direction, et c'est elle qui part avec la génération. */
     direction?: string | null
+    /** **Les directions d'une planche de pose** (E13). Deux ou plus, et l'appel
+     *  part en une planche d'une seule attitude vue sous N angles — la plus
+     *  petite planche qui vaille la peine d'exister, et la plus courante : un
+     *  jeu vu de dessus réclame quatre directions par pose.
+     *
+     *  Le quatrième champ du même état plutôt qu'un état de plus, pour la raison
+     *  qui a déjà décidé des trois premiers : c'est la même intention — *ce que
+     *  le prochain appel remplira* —, et un second état se serait contredit avec
+     *  celui-ci au premier désarmement. */
+    directions?: string[] | null
   } | null>(null)
   // **Ce que cette génération-ci n'envoie pas** (US-126). `null` — aucun avis,
   // donc les deux portées durables s'appliquent telles que le serveur les rend.
@@ -321,12 +331,19 @@ export function App() {
   // a pas d'autre chemin : un calque ne se fabrique que par une planche, fût-elle
   // d'une case, et l'image qu'elle porte est le corps — pas un gabarit vide.
   const pieceCible = cible?.piece ? (pieces.find((p) => p.identifiant === cible.piece) ?? null) : null
+  // **La planche d'une pose** (E13) : une attitude, N directions. Deux ou plus,
+  // et l'appel se plie exactement comme un lot de poses — c'est le *nombre de
+  // cases* qui décide de plier, jamais ce qui les distingue les unes des autres.
+  const directionsCible = cible?.directions ?? []
+  const enPlanche = pieceCible === null && directionsCible.length >= 2
   const cases =
     pieceCible !== null
       ? posesCible.length
-      : posesCible.length >= 2
-        ? posesCible.length
-        : 0
+      : enPlanche
+        ? directionsCible.length
+        : posesCible.length >= 2
+          ? posesCible.length
+          : 0
   const [cartes, setCartes] = useState<Carte[]>([])
   // **Les traits et les teintes voyagent avec les cartes**, parce qu'ils
   // viennent de la même route : une toile se lit en un aller-retour. Tenus ici
@@ -634,8 +651,14 @@ export function App() {
           prompt,
           projet: bibliotheque.courant,
           personnage: cible?.personnage ?? null,
-          poses: cases ? posesCible.map((p) => p.identifiant) : null,
+          poses:
+            cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
           piece: cible?.piece ?? null,
+          // **La planche d'une pose passe par le même pliage que l'envoi**
+          // (E13) : l'aperçu montre alors les consignes de case, une par
+          // direction, exactement celles qui partiront.
+          pose: enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
+          directions: enPlanche ? directionsCible : null,
         })
         if (!vivant) return
         setApercuPrompt(recu)
@@ -669,6 +692,12 @@ export function App() {
     bibliotheque.courant,
     cible?.personnage,
     cible?.poses.join("·"),
+    // Les directions **jointes** et non le tableau, pour la raison exacte qui
+    // vaut pour les poses : il se refabrique à chaque rendu, et deux planches de
+    // même taille sur des angles différents n'enverraient pas les mêmes
+    // consignes de case.
+    directionsCible.join("·"),
+    enPlanche,
     cases,
     univers,
   ])
@@ -1107,12 +1136,22 @@ export function App() {
         // endroit d'où l'on paie dans tout le produit : une seconde route pour
         // les lots en aurait fait deux, et l'invariant de C1 serait tombé le
         // jour où elle serait apparue. C'est le compte qui décide, pas l'écran.
-        pose: cases ? null : (posesCible[0]?.identifiant ?? null),
+        // **Une planche de pose garde sa pose** : c'est elle qui porte
+        // l'attitude commune aux N cases, et les directions qui les
+        // distinguent partent à côté.
+        pose:
+          !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
         // **Et sous quel angle** (E10). L'image qui reviendra tombe dans la
         // case *et* dans la direction, sans que personne ait à l'y ranger. Vide
         // pour un lot, qui vise N cases : c'est `poses` qui les nomme.
         direction: cases ? null : (cible?.direction ?? null),
-        poses: cases ? posesCible.map((p) => p.identifiant) : null,
+        // **Les angles d'une planche de pose** (E13). Chaque case sait déjà
+        // dans quelle direction son image se rangera — le rangement cesse
+        // d'être un geste séparé qu'on peut oublier, puisque c'est une
+        // condition de l'appel.
+        directions: enPlanche ? directionsCible : null,
+        poses:
+          cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
         // **La pièce que cet appel pose** (C3, US-140). Elle fait de la planche
         // une planche d'*équipement* : elle part pleine des corps que `poses`
         // désigne, et ce qui revient est comparé case par case à ce qui est
@@ -1178,15 +1217,21 @@ export function App() {
     poses: Pose[],
     piece?: Piece | null,
     direction?: string | null,
+    directions?: string[] | null,
   ) => {
     if (poses.length === 0) return
+    // **Une planche de pose vise N angles d'une seule attitude** (E13). Deux ou
+    // plus, et l'appel se plie ; une seule, et c'est la case de C1 — que
+    // `direction` désigne, et qui n'a jamais changé.
+    const angles = directions && directions.length >= 2 ? directions : null
     setCible({
       personnage: personnage.identifiant,
       poses: poses.map((p) => p.identifiant),
       piece: piece?.identifiant ?? null,
       // **Et sous quel angle** (E10) : la case visée est une pose *dans une
       // direction*, et c'est elle que l'appel remplira.
-      direction: direction ?? null,
+      direction: angles ? null : (direction ?? null),
+      directions: angles,
     })
     // **Le prompt reçoit le sujet, jamais la grille** — et c'est le serveur qui
     // l'écrit depuis C5. Les trois règles (une case : le signalement et
@@ -1205,7 +1250,11 @@ export function App() {
         personnage: personnage.identifiant,
         poses: poses.map((p) => p.identifiant),
         piece: piece?.identifiant ?? null,
-        direction: direction ?? null,
+        direction: angles ? null : (direction ?? null),
+        // Deux ou plus, et le sujet redevient le signalement seul : les
+        // attitudes et les angles partent case par case dans les consignes de
+        // planche, et les écrire aussi ici les dirait deux fois.
+        directions: angles ?? [],
         projet: bibliotheque.courant,
       })
       setPrompt(recu.sujet)
@@ -1213,9 +1262,11 @@ export function App() {
       // d'un clic (E2). Le revers de la règle du grisé, qui dit sa raison
       // depuis T1 : un champ prérempli n'est pas un champ décidé.
       setProvenance(
-        poses.length > 1
-          ? `proposé, d'après son signalement et les consignes de ${poses.length} poses · modifiable`
-          : `proposé, d'après son signalement et la consigne de la pose · modifiable`,
+        angles
+          ? `proposé, d'après son signalement · les consignes des ${angles.length} directions partent case par case · modifiable`
+          : poses.length > 1
+            ? `proposé, d'après son signalement et les consignes de ${poses.length} poses · modifiable`
+            : `proposé, d'après son signalement et la consigne de la pose · modifiable`,
       )
     } catch {
       setPrompt("")

@@ -21,29 +21,31 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Dix-huit sont livrées** — `E0` à `E12`, plus `E15` à `E19` —, dont **seize
-sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un champ de plus
-à la recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une production d'images et
-non du code — les cases existent et disent *pas encore dessinée* tant qu'elles manquent
-(`docs/vignettes-vues.md` porte les consignes). Deux critères attendent une étape voisine
-plutôt qu'un travail, et tous deux attendent la même : la **planche des quatre directions** en
-référence proposée (`E12`) et la porte de la vitrine **depuis une planche de pose** (`E16`)
-veulent `E13`. Trois étapes restent : `E13`, `E14` et `E20`. `E14` attend `E13` ; `E20` attend
-toutes les autres, parce que c'est le seul écran qui décrit tous les autres et donc le seul qui
-se périme à chaque décision prise ailleurs.
+`docs/PLAN.md`. **Dix-neuf sont livrées** — `E0` à `E13`, plus `E15` à `E19` —, dont
+**dix-sept sans réserve** ; deux gardent un critère ouvert : `E3` la pipette, qui demande un
+champ de plus à la recette, et `E8` les **dix-sept vignettes d'exemple**, qui sont une
+production d'images et non du code — les cases existent et disent *pas encore dessinée* tant
+qu'elles manquent (`docs/vignettes-vues.md` porte les consignes). Les deux critères qui
+attendaient `E13` sont réglés : la porte de la vitrine **depuis une planche** s'est posée avec
+elle, et la **planche des quatre directions** en référence proposée est **fermée** — une planche
+n'entre jamais en bibliothèque, donc cette image-là n'existe pas et n'existera pas. Deux étapes
+restent : `E14` et `E20`, et **`E14` n'a plus aucun bloqueur**. `E20` attend toutes les autres,
+parce que c'est le seul écran qui décrit tous les autres et donc le seul qui se périme à chaque
+décision prise ailleurs.
 
-**`E13` a ses trois mesures depuis le 31 août 2026, et elles ne disent pas ce qu'on
-attendait.** Trois appels payés — `essais/essai_prix_planche.py`, $0,081, relevé versionné dans
+**Ce que les trois mesures de planche ont trouvé, et ce que `E13` en a fait.** Trois appels
+payés le 31 août 2026 — `essais/essai_prix_planche.py`, $0,081, relevé versionné dans
 `essais/mesures_prix_planche.json`. Trois cases et six cases ont coûté **exactement le même
 prix**, $0,0139, pour la même taille d'image et la même durée ; cinq cases ont coûté $0,0534,
 presque quatre fois plus, sur un appel dont rien ne distingue le résultat. Une planche coûte
 donc le prix d'**un appel** quel que soit ce qu'elle porte — six cases reviennent à $0,0023
 l'image contre $0,0128 pour une image seule, cinq fois moins —, mais **la variance entre deux
-appels identiques est plus grande que l'écart entre deux tailles de planche**. Le critère qui
-demande « les trois prix et le nombre d'appels derrière chacun » a donc besoin d'une décision
-d'écran avant d'être écrit : afficher un prix par nombre de cases montrerait du bruit comme si
-c'était une structure. Les arbitrages pris en autonomie et les questions encore ouvertes vivent
-dans `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
+appels identiques est plus grande que l'écart entre deux tailles de planche**. L'écran ne montre
+donc **aucun** prix par nombre de cases : il montre un prix d'appel, multiplié par le nombre
+d'appels que chaque choix demande. Refaire les quatre et compléter les trois coûtent alors le
+même prix — et refaire achète en plus quatre images qui se ressemblent. Les arbitrages pris en
+autonomie et les questions encore ouvertes vivent dans `docs/v21-arbitrages.md`, qui ne fait
+foi sur rien.
 Ce qui viendra après elle viendra d'une séance d'usage, comme
 les cinq reprises — `docs/releve-usage.md` garde ce qui n'est encore ni cadré ni planifié.
 **C5 est écrite mais pas encore usée** : la règle ci-dessous vaut pour elle comme pour les
@@ -165,7 +167,7 @@ contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne l
 | `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
 | `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt-et-un fichiers, de `T1` à `R5`, plus `V2.1` |
 | `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses questions ouvertes se tranchent à l'usage |
-| `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. Elles décrivent l'interface future, jamais l'état du code |
+| `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. **Quelle maquette va avec quelle étape se lit dans `docs/tranches/V2.1.md`**, sous le titre de l'étape. Elles décrivent l'interface future, jamais l'état du code |
 | `docs/design-motifs.md` | le design | on dessine un écran |
 | `docs/design-decisions.md` | le design | on rouvre une décision d'apparence |
 | `docs/PIEGES.md` | — | avant de toucher un terrain déjà miné, ou sur renvoi du code |

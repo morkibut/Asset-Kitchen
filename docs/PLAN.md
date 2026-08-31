@@ -1341,10 +1341,18 @@ ses morceaux si, et elle ne porte **qu'une seule chose du jeu** — sans quoi la
 même sujet dans chaque case » cesse d'être vraie.
 
 Et l'écran propose de **refaire les quatre directions plutôt que de compléter les trois qui
-manquent**, avec les trois prix et le nombre d'appels sur lequel chacun repose. C'est
-contre-intuitif et c'est mesuré : à une case l'image revient à `$0,0128`, à quatre elle
-descend à `$0,0057`. Le nombre d'appels est affiché parce que le second chiffre ne repose
-que sur un seul, et qu'un gain annoncé sur une mesure unique est un gain **encadré**.
+manquent**, avec les trois prix et le nombre d'appels sur lequel chacun repose. **Les trois
+appels de mesure ont changé la raison sans changer la conclusion** : une planche coûte le prix
+d'**un appel** quel que soit ce qu'elle porte, donc refaire les quatre et compléter les trois
+coûtent la même chose — et refaire achète en plus quatre images qui se ressemblent, puisqu'elles
+ont été peintes ensemble. Compléter à l'unité coûte **trois** appels. Le nombre d'appels est
+affiché parce que c'est lui qui porte toute la différence, et parce qu'un gain annoncé sur une
+mesure unique est un gain **encadré**.
+
+**Il n'y a pas de prix par nombre de cases, et c'est délibéré.** Trois cases et six cases ont
+coûté exactement le même prix ; cinq cases en ont coûté quatre fois plus. La variance entre deux
+appels identiques dépasse l'écart entre deux tailles de planche : afficher un prix par compte de
+cases montrerait du bruit comme s'il montrait une structure.
 
 **Deux poses peuvent partager une planche quand chacune ne réclame qu'une case** — un appel
 payé du dépôt le prouve, dont les quatre cases portaient course, attaque, dégâts et mort. Ce
@@ -1352,11 +1360,11 @@ qui ne se partage jamais, c'est la chose du jeu.
 
 #### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-**8 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
+**8 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
-- **E10** — une case est une pose dans une direction ; sans les directions, la planche n'a rien à ranger.
+- ~~**E10**~~ — **livrée le 31 août 2026**. Une case est une pose dans une direction ; sans les directions, la planche n'avait rien à ranger.
 - ~~**Les trois appels de mesure de planche**~~ — **tirés le 31 août 2026**, $0,081 (`essais/essai_prix_planche.py`, relevé dans `essais/mesures_prix_planche.json`). Ce qu'ils ont trouvé change la question : trois cases et six cases ont coûté **le même prix**, $0,0139, pour la même taille d'image et la même durée ; cinq cases ont coûté $0,0534 sur un appel dont rien ne distingue le résultat. **Une planche coûte le prix d'un appel** quel que soit ce qu'elle porte — six cases reviennent à $0,0023 l'image contre $0,0128 pour une image seule —, mais **la variance entre deux appels identiques dépasse l'écart entre deux tailles de planche**. Le critère « les trois prix, avec le nombre d'appels derrière chacun » demande donc une décision d'écran avant d'être écrit : un prix par nombre de cases montrerait du bruit comme s'il montrait une structure.
 
 ---
@@ -1395,8 +1403,10 @@ qu'on verra n'est pas celle que le modèle envoie.
 
 #### Bloquée par
 
-- **E13** — il paraît avant de payer une planche, et la planche est ce qu'on achète.
-- **E11** — il porte les trois interrupteurs de l'ambiance et l'option d'envoyer la palette en image.
+- ~~**E13**~~ — **livrée le 31 août 2026**. Il paraît avant de payer une planche, et la planche est ce qu'on achète.
+- ~~**E11**~~ — **livrée le 31 août 2026**. Il porte les trois interrupteurs de l'ambiance et l'option d'envoyer la palette en image.
+
+**Plus rien ne la bloque.**
 
 ---
 

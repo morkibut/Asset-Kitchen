@@ -48,6 +48,7 @@ from atelier.domaine.erreurs import (
     SansCle,
 )
 from atelier.domaine.generation import ASSET, AUTEUR, CARTE, EDITION, REFERENCE, STYLE
+from atelier.domaine.direction import composer
 from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
 from atelier.image import empreinte_de, mesurer
@@ -238,14 +239,37 @@ class ServiceGenerations:
         produit dit alors qu'il ne sait pas, ce qui est vrai et utile : c'est le
         premier appel qui l'apprend. Même geste que l'attente de la jauge.
         """
+        return self.appels_mesures(identifiant_modele)["prix"]
+
+    def appels_mesures(self, identifiant_modele: str) -> dict[str, Any]:
+        """Ce que ce modèle a coûté ici — **la médiane, l'écart, et le compte**.
+
+        `cout_attendu` n'en rend que la médiane, et c'est tout ce dont la barre
+        qui paie a besoin. La planche, elle, affiche *le nombre d'appels sur
+        lequel le prix repose* à côté du prix (E13) : un gain annoncé sur une
+        mesure unique est un gain **encadré**, pas un gain affirmé.
+
+        **Une seule lecture pour les deux**, parce que deux médianes calculées à
+        deux endroits auraient fini par annoncer deux prix pour le même appel —
+        et c'est exactement ce que l'écran de la planche a montré la première
+        fois qu'on l'a ouvert.
+        """
         recents = self._base.couts_mesures(identifiant_modele)[:FENETRE_MESURES]
         couts = sorted(recents)
         if not couts:
-            return None
+            return {"prix": None, "bas": 0.0, "haut": 0.0, "appels": 0}
         milieu = len(couts) // 2
-        if len(couts) % 2:
-            return round(couts[milieu], 4)
-        return round((couts[milieu - 1] + couts[milieu]) / 2, 4)
+        mediane = (
+            couts[milieu]
+            if len(couts) % 2
+            else (couts[milieu - 1] + couts[milieu]) / 2
+        )
+        return {
+            "prix": round(mediane, 4),
+            "bas": round(couts[0], 4),
+            "haut": round(couts[-1], 4),
+            "appels": len(couts),
+        }
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -405,6 +429,11 @@ class ServiceGenerations:
         personnage: str | None = None,
         pose: str | None = None,
         direction: str | None = None,
+        # **Les directions d'une planche de pose** (E13). Deux ou plus, et
+        # l'appel part en une planche dont chaque case sait déjà dans quelle
+        # direction son image se rangera ; une seule, et c'est la case de C1,
+        # que `direction` désigne.
+        directions: Sequence[str] | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
@@ -451,7 +480,7 @@ class ServiceGenerations:
         # pliage, lui, ne connaît ni personnage ni pose, et c'est ce qui laissera
         # C3 le réemployer tel quel. Chaque case est vérifiée avant qu'un centime
         # parte, exactement comme la case unique de C1.
-        pliage = self._plier(projet, personnage, poses, piece)
+        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
         # **La case visée est vérifiée avant qu'un centime parte** (US-120). Un
         # personnage disparu ou une pose qu'il ne tient plus doivent se dire
         # ici : l'écran n'arme que des cases visibles, mais un onglet resté
@@ -563,6 +592,7 @@ class ServiceGenerations:
         personnage: str | None = None,
         pose: str | None = None,
         direction: str | None = None,
+        directions: Sequence[str] | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
         references_ecartees: Sequence[str] | None = None,
@@ -578,6 +608,7 @@ class ServiceGenerations:
             personnage=personnage,
             pose=pose,
             direction=direction,
+            directions=directions,
             poses=poses,
             piece=piece,
             references_ecartees=references_ecartees,
@@ -867,14 +898,47 @@ class ServiceGenerations:
 
     # ── Le lot ───────────────────────────────────────────────────────────────
 
+    def cases_de_planche(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        *,
+        pose: str | None = None,
+        directions: Sequence[str] | None = None,
+        poses: Sequence[str] | None = None,
+        piece: str | None = None,
+    ) -> Pliage | None:
+        """Les cases que cette planche enverrait — **par le chemin de l'envoi**.
+
+        C'est `_plier` rendu public, et rien d'autre. L'écran de la planche
+        montre ce qui est écrit dans chaque case *avant* de payer (E13) ; le
+        recomposer à l'écran en aurait fait une seconde vérité sur ce qui part,
+        et « deux vérités sur la même chose finissent par diverger ». La même
+        décision que l'aperçu du prompt, prise pour la même raison.
+
+        Elle ne facture rien et n'enregistre rien — mais elle **refuse** ce que
+        la soumission refuserait : une pose que la chose ne tient plus, une
+        direction qu'elle ne tient pas pour cette pose. Un écran qui montrerait
+        des cases qui ne partiraient pas serait pire qu'un écran vide.
+        """
+        return self._plier(projet, personnage, poses, piece, pose, directions)
+
     def _plier(
         self,
         projet: str | None,
         personnage: str | None,
         poses: Sequence[str] | None,
         piece: str | None = None,
+        pose: str | None = None,
+        directions: Sequence[str] | None = None,
     ) -> Pliage | None:
         """Les cases d'un lot, **vérifiées avant qu'un centime parte** (US-128).
+
+        **Trois sortes de planches depuis E13**, et c'est ce qu'on lui donne qui
+        les sépare : une pose dans plusieurs directions, plusieurs poses, ou une
+        pièce posée sur plusieurs corps. Ce qu'aucune des trois ne fait, c'est
+        porter deux choses du jeu — le paramètre `personnage` est unique, et la
+        consigne d'une planche promet « le même sujet dans chaque case ».
 
         **Deux sortes de lots, et c'est la pièce qui les sépare** (C3). Sans
         pièce, la grille part vide et le lot crée N corps ; avec, elle part
@@ -909,6 +973,38 @@ class ServiceGenerations:
                     "une pièce se pose sur un corps, jamais sur rien"
                 )
             return self._equipement.plier(projet, personnage, piece, poses or ())
+
+        # **La planche d'une pose** (E13) : une case par direction demandée. Elle
+        # est la plus petite planche qui vaille la peine d'exister — un jeu vu de
+        # dessus réclame quatre directions par pose, et plier ne paie qu'à partir
+        # de quatre. La coïncidence a décidé de tout.
+        if pose and directions:
+            if len(dict.fromkeys(directions)) < 2:
+                # Une seule direction n'est pas une planche : c'est la case de
+                # C1, et la plier ferait payer un gabarit et une consigne de
+                # grille pour une image que le produit sait déjà demander.
+                return None
+            if not personnage or self._production is None or not projet:
+                raise DemandeRefusee(
+                    "une planche de pose se lance depuis un personnage — il n'y "
+                    "a pas de cases à remplir sans lui"
+                )
+            cases = []
+            for angle in dict.fromkeys(directions):
+                # `viser` refuse ici ce qu'il refuse partout, et la direction
+                # avec (E10) : une planche entière qui part dans une direction
+                # que le personnage ne tient plus est une planche entière à
+                # repayer.
+                _, visee = self._production.viser(projet, personnage, pose, angle)
+                cases.append(
+                    CasePliee(
+                        texte=self._texte_de_case(projet, visee, angle),
+                        pose=visee.identifiant,
+                        direction=angle,
+                    )
+                )
+            return Pliage(cases=tuple(cases))
+
         if not poses or len(poses) < 2:
             return None
         if not personnage or self._production is None or not projet:
@@ -917,14 +1013,48 @@ class ServiceGenerations:
                 "de cases à remplir sans lui"
             )
         cases = []
-        for pose in dict.fromkeys(poses):
-            _, visee = self._production.viser(projet, personnage, pose)
-            # **Ce qui s'écrit dans la case part en anglais** (E10, US-241) :
-            # `Pose.dit` rend la consigne écrite sur la pose, sinon celle que le
-            # produit propose pour une pose de cet identifiant-là, sinon le nom.
-            # Jusqu'ici, le nom français partait au milieu d'un prompt anglais.
-            cases.append(CasePliee(texte=visee.dit(), pose=visee.identifiant))
+        for identifiant in dict.fromkeys(poses):
+            vise, visee = self._production.viser(projet, personnage, identifiant)
+            # **Une pose qui ne réclame qu'une case sait laquelle** (E13, A-13).
+            # Elle est *déduite*, jamais demandée : une pose qui ne tient qu'une
+            # direction n'a pas de choix à offrir, et faire cocher à l'auteur la
+            # seule case possible serait lui faire répéter ce que le plan dit
+            # déjà. Deux directions tenues ou plus, et cette pose-là ne partage
+            # pas une planche : elle a la sienne.
+            angles = vise.directions_tenues(
+                visee, self._production.directions_du_jeu(projet)
+            )
+            seule = angles[0].identifiant if len(angles) == 1 else None
+            cases.append(
+                CasePliee(
+                    # **Ce qui s'écrit dans la case part en anglais** (E10,
+                    # US-241) : `Pose.dit` rend la consigne écrite sur la pose,
+                    # sinon celle que le produit propose pour une pose de cet
+                    # identifiant-là, sinon le nom. Jusqu'ici, le nom français
+                    # partait au milieu d'un prompt anglais.
+                    texte=self._texte_de_case(projet, visee, seule),
+                    pose=visee.identifiant,
+                    direction=seule,
+                )
+            )
         return Pliage(cases=tuple(cases))
+
+    def _texte_de_case(
+        self, projet: str, visee: Any, direction: str | None
+    ) -> str:
+        """L'attitude d'une case, et l'angle sous lequel on la veut (E13).
+
+        **Deux textes anglais, écrits chacun à un seul endroit** — celui de la
+        pose dans le plan du jeu, celui de la direction dans la liste du projet —
+        et mis bout à bout ici. C'est la promesse d'US-240, et c'est aussi ce qui
+        rend le découpage possible : le modèle lit *facing north* dans la case en
+        haut à gauche, et l'atelier sait que le morceau en haut à gauche va au
+        nord.
+        """
+        if self._production is None or not direction:
+            return visee.dit()
+        trouvee = self._production.direction(projet, direction)
+        return composer(visee.dit(), trouvee.consigne if trouvee else "")
 
     def _jointes(
         self, pliage: Pliage | None, identifiant_modele: str
@@ -1036,6 +1166,8 @@ class ServiceGenerations:
         personnage: str | None = None,
         poses: Sequence[str] | None = None,
         piece: str | None = None,
+        pose: str | None = None,
+        directions: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -1053,7 +1185,7 @@ class ServiceGenerations:
         """
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
-        pliage = self._plier(projet, personnage, poses, piece)
+        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
         parties = self.parties(sujet, repris, projet, pliage)
         return {
             "texte": "\n\n".join(bloc["texte"] for bloc in parties),

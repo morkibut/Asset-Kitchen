@@ -43,6 +43,7 @@ from atelier.services.superposition import ServiceSuperposition, SuperpositionRe
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.generation import ServiceGenerations
+from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import CompteFaux, ServicePliage
 from atelier.services.production import (
@@ -97,6 +98,8 @@ __all__ = [
     "ServiceSuperposition",
     "ServiceExport",
     "ServiceGenerations",
+    "PlancheRefusee",
+    "ServicePlanche",
     "ServiceEquipement",
     "ServicePliage",
     "ServiceProduction",
@@ -242,6 +245,12 @@ class Atelier:
             # calques qui en reviennent.
             self.equipement,
         )
+        # **La planche, montée après la génération** (E13) : elle montre ce
+        # qu'on achète avant de payer, et ce qu'elle montre est *composé par le
+        # chemin de l'envoi* — donc il lui faut le service qui envoie. Elle ne
+        # fabrique rien et n'enregistre rien ; le seul endroit d'où l'argent part
+        # reste la barre qui paie.
+        self.planche = ServicePlanche(self.production, self.generations)
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le
         # fichier. **En dernier, et c'est le seul ordre possible** : sa

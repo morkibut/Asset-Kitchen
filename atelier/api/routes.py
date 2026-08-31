@@ -370,6 +370,12 @@ class CorpsGeneration(BaseModel):
     # **Et sous quel angle** (E10). Vide pour un jeu qui n'a pas déclaré de
     # directions : le mot ne paraît alors nulle part dans le produit.
     direction: str | None = None
+    # **Les directions d'une planche de pose** (E13). Deux ou plus, et l'appel
+    # part en une planche dont chaque case sait déjà dans quelle direction son
+    # image se rangera — le rangement cesse d'être un geste séparé qu'on peut
+    # oublier, puisque c'est une condition de l'appel. Une seule direction, et
+    # c'est la case de C1, que `direction` désigne.
+    directions: list[str] | None = None
     # **Les cases d'un lot plié** (US-128). Deux poses ou plus, et l'appel part
     # en une seule planche que l'atelier dépliera lui-même. **La même route que
     # tout le reste**, et c'est la décision : il n'existe qu'un seul endroit
@@ -430,6 +436,7 @@ async def generer(requete: Request, corps: CorpsGeneration) -> dict[str, Any]:
         personnage=corps.personnage,
         pose=corps.pose,
         direction=corps.direction,
+        directions=corps.directions,
         poses=corps.poses,
         piece=corps.piece,
         references_ecartees=corps.references_ecartees,
@@ -451,6 +458,10 @@ class CorpsApercu(BaseModel):
     personnage: str | None = None
     poses: list[str] | None = None
     piece: str | None = None
+    # La planche d'une pose (E13) : une pose, ses directions. L'aperçu passe par
+    # le même pliage que l'envoi, donc il montre les mêmes consignes de case.
+    pose: str | None = None
+    directions: list[str] | None = None
     # Repris, l'aperçu **est** le texte de l'auteur : il ne se recompose pas, il
     # se rend tel quel. La route le sert quand même, pour que l'écran n'ait
     # jamais deux chemins selon l'état d'un interrupteur.
@@ -486,6 +497,8 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         personnage=corps.personnage or None,
         poses=corps.poses,
         piece=corps.piece or None,
+        pose=corps.pose or None,
+        directions=corps.directions,
     )
 
 

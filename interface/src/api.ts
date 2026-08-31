@@ -766,6 +766,115 @@ export type Personnage = {
   equipable: boolean
 }
 
+/** Une case de la planche (E13) — une pose dans une direction.
+ *
+ *  **Elle sait où son image ira avant de partir**, et c'est ce qui répare la
+ *  mesure du 30 août 2026 : neuf appels de personnage sur treize ne disaient pas
+ *  leur pose, et le rangement se faisait à la main après coup. Une case ne peut
+ *  pas exister sans dire quelle pose et quelle direction elle remplit. */
+export type CaseDePlanche = {
+  direction: string
+  nom: string
+  /** Ce qui est écrit dans cette case-là, **composé par le chemin de l'envoi**.
+   *  Deux textes anglais, écrits chacun à un seul endroit : l'attitude sur la
+   *  pose, l'angle sur la direction. */
+  texte: string
+  images: Asset[]
+  pleine: boolean
+  /** Sa place dans la grille — écrite par l'atelier, montrée, non modifiable :
+   *  c'est elle qui permet de savoir quel morceau de l'image revenue va dans
+   *  quelle direction. */
+  colonne: number
+  ligne: number
+}
+
+/** La grille que l'atelier posera (E13).
+ *
+ *  **Déduite du nombre de cases, jamais choisie** : deux planches du même compte
+ *  ont la même géométrie, et la changer à la main casserait le rangement de ce
+ *  qui revient. */
+export type GeometrieDePlanche = {
+  cases: number
+  colonnes: number
+  lignes: number
+  /** Le côté de la feuille que le modèle rend. */
+  cote_px: number
+  /** Ce qu'un sujet y fait de côté, une fois découpé. */
+  sujet_px: number
+  /** La taille de case que le jeu impose, ou zéro. */
+  cible_px: number
+  /** Combien de fois la cible — le chiffre qui dit que plier ne coûte pas de
+   *  qualité. */
+  fois_la_cible: number
+}
+
+/** Une façon de remplir ce qui manque, et ce qu'elle coûte (E13).
+ *
+ *  **Le prix est celui des appels, pas celui des cases.** Trois cases et six
+ *  cases ont coûté exactement le même prix le 31 août 2026 ; cinq cases en ont
+ *  coûté quatre fois plus sur un appel dont rien ne distinguait le résultat. Un
+ *  prix par nombre de cases montrerait du bruit comme si c'était une structure. */
+export type ChoixDePlanche = {
+  clef: "refaire" | "completer" | "unite"
+  quoi: string
+  cases: number
+  appels: number
+  prix: number
+  par_image: number
+  mesure: boolean
+  /** Pourquoi ce choix-là est indisponible. Vide quand il l'est. */
+  refus: string
+}
+
+/** Ce qu'un appel a coûté — une valeur, un écart, et un compte d'appels (E13).
+ *
+ *  **L'écart n'est pas décoratif** : c'est lui qui dit pourquoi il n'y a qu'un
+ *  prix ici plutôt qu'un par nombre de cases. */
+export type PrixDunAppel = {
+  prix: number
+  bas: number
+  haut: number
+  appels: number
+  mesure: boolean
+  /** D'où vient le chiffre. `ici` — ce que ce modèle a réellement facturé sur
+   *  cette machine, la même source que la barre qui paie. `banc` — les appels
+   *  payés du dépôt, quand ce modèle n'a encore rien facturé ici. Vide quand
+   *  rien n'est mesuré : l'écran dit alors qu'il ne sait pas. */
+  origine: "ici" | "banc" | ""
+}
+
+/** La planche d'une pose — ce qu'on achète, vu avant de payer (E13). */
+export type Planche = {
+  personnage: string
+  personnage_nom: string
+  pose: string
+  pose_nom: string
+  cases: CaseDePlanche[]
+  geometrie: GeometrieDePlanche
+  choix: ChoixDePlanche[]
+  prix: PrixDunAppel
+  /** Les directions déjà pleines. Les refaire ne les efface pas — elles restent
+   *  en bibliothèque avec leur prix payé —, mais on aura payé deux fois pour une
+   *  case, et l'écran l'écrit avant de lancer. */
+  deja_pleines: string[]
+  /** Ce que les bancs payés du dépôt ont trouvé — **toujours rendu**, même quand
+   *  le prix affiché vient du journal de la machine. C'est le banc qui a établi
+   *  que le prix ne dépend pas du nombre de cases, et cette phrase a besoin des
+   *  chiffres qui la portent : deux appels d'un même modèle peuvent avoir coûté
+   *  le même prix ici sans que la variance ait disparu. */
+  banc: PrixDunAppel
+  /** **Ce qui part en référence avec l'appel**, compté par le serveur — l'écran
+   *  ne connaît ni les artworks du jeu, ni les concept arts de la chose, ni le
+   *  dédoublonnage entre les trois. Le gabarit de la grille en fait partie : il
+   *  part, il occupe une place dans le plafond du modèle, et il coûte. */
+  jointes: CompteReferences
+  /** Le modèle que ce prix chiffre — celui que le jeu désigne pour ses planches.
+   *  La barre qui paie, elle, garde celui que l'auteur a choisi : sans ce nom,
+   *  les deux annonceraient deux prix sans dire que ce ne sont pas les mêmes
+   *  appels. Vide quand le jeu n'en désigne aucun. */
+  modele: string
+}
+
 /** Une pose dans le calibrage (E17) — ce qu'elle mesure et ce qu'on lui pose.
  *
  *  **Le pourcentage est ce qu'on écrit, les pixels sont ce qu'on obtient**, et
@@ -1806,6 +1915,10 @@ export const api = {
     /** **Les cases d'un lot plié** (C2, US-128). Deux poses ou plus, et l'appel
      *  part en une seule planche que l'atelier dépliera lui-même. La même route
      *  que tout le reste : il n'existe qu'un seul endroit d'où l'on paie. */
+    /** **Les directions d'une planche de pose** (E13). Deux ou plus, et l'appel
+     *  part en une planche dont chaque case sait déjà où son image se rangera —
+     *  le rangement cesse d'être un geste séparé qu'on peut oublier. */
+    directions?: string[] | null
     poses?: string[] | null
     /** **La pièce que cet appel pose** (C3, US-140). Présente, la planche part
      *  *pleine* des corps que `poses` désigne, et ce qui revient est comparé
@@ -1857,6 +1970,9 @@ export const api = {
     personnage?: string | null
     poses?: string[] | null
     piece?: string | null
+    /** La planche d'une pose (E13) : une pose, ses directions. */
+    pose?: string | null
+    directions?: string[] | null
     repris?: boolean
   }) =>
     appeler<ApercuPrompt>("/prompt/preview", {
@@ -2305,6 +2421,17 @@ export const api = {
 
   production: () => appeler<Production>("/characters"),
 
+  // ── La planche d'une pose (E13) ──────────────────────────────────────────
+  //
+  // **Une lecture, et elle ne facture rien.** Elle compose pourtant ses cases
+  // par le chemin de l'envoi : ce qui est montré est ce qui part.
+
+  /** Ce que la planche de cette pose enverrait, et ce qu'elle coûterait. */
+  planche: (personnage: string, pose: string) =>
+    appeler<Planche>(
+      `/characters/${personnage}/sheet?pose=${encodeURIComponent(pose)}`,
+    ),
+
   // ── Le calibrage (E17) ───────────────────────────────────────────────────
   //
   // **Rien ici ne coûte un centime** : il change le rendu de poses qui existent
@@ -2547,6 +2674,9 @@ export const api = {
     poses?: string[]
     piece?: string | null
     direction?: string | null
+    /** Deux ou plus, et le sujet redevient le signalement seul : les attitudes
+     *  et les angles partent case par case dans les consignes de planche. */
+    directions?: string[]
     projet?: string | null
   }) =>
     appeler<{ sujet: string }>("/characters/subject", {
