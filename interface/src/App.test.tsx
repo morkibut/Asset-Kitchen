@@ -6558,7 +6558,7 @@ describe("le codex et l'établi", () => {
 
     // L'outil remplace la matrice, il ne se pose pas dessus : c'est la
     // profondeur suivante du même endroit, et le fil la dit.
-    expect(await screen.findByLabelText("Fermer la fiche")).toBeTruthy()
+    expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
     expect(fil.getByText("le nain, au repos")).toBeTruthy()
 

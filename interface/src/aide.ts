@@ -529,6 +529,24 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 0",
   },
 
+  "recadrage.boite": {
+    nom: "rectangle",
+    ou: "retouche",
+    quoi: "Un rectangle posé à la main sur l'image, qui remplace la boîte opaque que le détourage a trouvée.",
+    change:
+      "Le recadrage s'arrête à ce rectangle-là, et non à ce que le sujet occupe. C'est le seul moyen de garder une part de fond que rien ne rend opaque — l'ombre portée d'un sprite, l'auréole d'une lanterne.",
+    origine: "toi · aucun par défaut",
+  },
+
+  "quantification.tramage": {
+    nom: "tramage",
+    ou: "retouche",
+    quoi: "Comment les couleurs qui n'existent pas dans la palette sont approchées : par la plus proche, ou par un mélange de points.",
+    change:
+      "Sans tramage, un dégradé réduit à seize couleurs se pose en bandes franches. Avec, les bandes se mêlent en un semis de points — ce qui ressemble davantage au pixel art d'époque et ce qui, sur un sprite de 64 px, se voit beaucoup.",
+    origine: "toi · défaut aucun",
+  },
+
   "etape.grille": {
     nom: "Grille",
     ou: "retouche",

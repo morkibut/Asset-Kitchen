@@ -53,7 +53,6 @@ import {
 import {
   Apercu,
   fermerApercu,
-  imageAsset,
   sujetAsset,
   useApercu,
   useVisee,
@@ -74,7 +73,8 @@ import { EcranDepenses } from "./composants/Depenses"
 import { EcranCodex } from "./composants/Codex"
 import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
-import { Fiche } from "./composants/Fiche"
+import { BlocPasse, Fiche } from "./composants/Fiche"
+import { EcranTables, type Table } from "./composants/Tables"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
@@ -327,6 +327,10 @@ export function App() {
    *  identifiant, jamais l'objet : l'image continue d'arriver par le flux à
    *  chaque retouche, et une copie gardée ici serait celle d'avant. */
   const [caseOuverte, setCaseOuverte] = useState<string | null>(null)
+  /** Quelle table est ouverte. **Elle survit au changement d'image** : on règle
+   *  la même place sur six attitudes à la file, et refermer la table à chaque
+   *  voisine ferait du geste six gestes. */
+  const [table, setTable] = useState<Table>("detourage")
   /** D'où vient ce qui est écrit dans le champ, quand ce n'est pas l'auteur.
    *  Posée en armant une case vide, effacée dès qu'on écrit dedans : un texte
    *  qu'on a repris à la main n'est plus une proposition. */
@@ -1816,38 +1820,27 @@ export function App() {
           onOuvrirCase={setCaseOuverte}
           outil={
             imageOuverte && etat ? (
-              <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px]">
-                {/* L'image en grand, entre l'outil et ce qui la règle : c'est
-                    ce que « plein cadre » veut dire, et c'est la place que la
-                    fiche de 380 px ne pouvait pas lui donner. */}
-                <div className="flex min-h-0 min-w-0 items-center justify-center p-6">
-                  <img
-                    src={imageAsset(imageOuverte)}
-                    alt={imageOuverte.label}
-                    className="damier max-h-full max-w-full object-contain"
-                    style={{ imageRendering: "pixelated" }}
-                  />
-                </div>
-                <Fiche
-                  asset={imageOuverte}
-                  traitement={etat.traitement}
-                  univers={univers}
-                  plan={plan}
-                  personnages={personnages}
-                  onFermer={() => setCaseOuverte(null)}
-                  onErreur={setPanne}
-                  onReinjecter={(role) => reinjecter(imageOuverte.identifiant, role)}
-                  onReglages={() => void reprendreReglages(imageOuverte)}
-                  onSupprimer={() => void supprimer([imageOuverte.identifiant])}
-                  onDecouper={() => {
-                    setCaseOuverte(null)
-                    setChoseOuverte(null)
-                    setOnglet("galerie")
-                    setDecoupeOuverte(imageOuverte.identifiant)
-                  }}
-                  onOuvrir={setCaseOuverte}
-                />
-              </div>
+              <EcranTables
+                asset={imageOuverte}
+                // **Les sœurs d'une image sont les autres images de la chose**
+                // — ses attitudes. On passe de l'une à l'autre sans que la
+                // table ouverte se referme, et c'est le geste qui distingue une
+                // table d'un panneau : on règle la même chose sur six images.
+                soeurs={(choseOuverte?.cases ?? []).flatMap((c) => c.images)}
+                traitement={etat.traitement}
+                univers={univers}
+                ouverte={table}
+                onOuvrir={setTable}
+                onSoeur={setCaseOuverte}
+                onDecouper={() => {
+                  setCaseOuverte(null)
+                  setChoseOuverte(null)
+                  setOnglet("galerie")
+                  setDecoupeOuverte(imageOuverte.identifiant)
+                }}
+                onErreur={setPanne}
+                BlocPasse={BlocPasse}
+              />
             ) : null
           }
           // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran

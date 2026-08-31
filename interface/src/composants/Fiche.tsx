@@ -1206,7 +1206,7 @@ function Visionneuse({
 
 // ── Une passe de détourage ──────────────────────────────────────────────────
 
-function BlocPasse({
+export function BlocPasse({
   rang,
   passe,
   raisonModele,
