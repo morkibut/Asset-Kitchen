@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from atelier.domaine.teinte import TEINTES
 from atelier.image import rendre_en_png
+from atelier.domaine.vue import TAILLES, VUES
 from atelier.services import Atelier
 
 # **La liste close, rendue au schéma** — donc à `/api/docs`, et donc au refus
@@ -199,6 +200,10 @@ class CorpsUnivers(BaseModel):
     bible: list[CorpsChamp] | None = None
     bareme: list[CorpsEchelle] | None = None
     cible_px: int | None = None
+    # **La vue du jeu** (E8) : un choix unique qui remplit le réglage et la
+    # phrase de la case `vue`. La chaîne vide est une valeur — un jeu qui ne dit
+    # pas d'où il regarde ne contraint rien.
+    vue: str | None = None
     couleurs: int | None = None
     modeles: dict[str, str] | None = None
     # **Deux défauts d'appel, pas de famille** (C2) : produire une planche et
@@ -537,12 +542,84 @@ async def regler_univers(
         bible=[c.model_dump() for c in corps.bible] if corps.bible is not None else None,
         bareme=[e.model_dump() for e in corps.bareme] if corps.bareme is not None else None,
         cible_px=corps.cible_px,
+        vue=corps.vue,
         couleurs=corps.couleurs,
         modeles=corps.modeles,
         modele_planche=corps.modele_planche,
         modele_edition=corps.modele_edition,
     )
     return {"projet": identifiant, "univers": objet.univers.en_json()}
+
+
+@routeur.get("/universe/views")
+async def vues_et_tailles() -> dict[str, Any]:
+    """Les huit vues et les neuf tailles — **deux listes fermées** (E8).
+
+    Servies par le serveur plutôt qu'écrites à l'écran : c'est le même choix
+    qui remplit le réglage *et* la phrase de la bible, et deux listes tenues à
+    deux endroits finiraient par proposer une vue dont le serveur ne saurait
+    rien écrire.
+    """
+    return {
+        "vues": [v.en_json() for v in VUES],
+        "tailles": [{"cible": cible, "quoi": quoi} for cible, quoi in TAILLES],
+    }
+
+
+@routeur.get("/universe/consequences")
+async def consequences(
+    requete: Request, cible_px: int | None = None, projet: str | None = None
+) -> dict[str, Any]:
+    """Ce qu'un changement casserait, **avec les vrais chiffres** (E8).
+
+    Rien n'est jamais grisé dans l'assistant : cette route sert la ligne qui dit
+    le compte et le coût, et l'auteur décide ensuite.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, projet)
+    return atelier.univers.consequences(identifiant, cible_px=cible_px)
+
+
+# ── Les étiquettes — la base appartient à l'atelier, pas à un jeu ─────────────
+
+
+class CorpsEtiquette(BaseModel):
+    """Une paire : un libellé qu'on clique, et le texte anglais qui part."""
+
+    libelle: str = Field(min_length=1)
+    texte: str = Field(min_length=1)
+    case: str = Field(min_length=1)
+
+
+@routeur.get("/labels")
+async def etiquettes(requete: Request) -> dict[str, Any]:
+    """La base entière. **Vide au départ**, et personne ne l'écrit à la place
+    de l'auteur."""
+    return _atelier(requete).etiquettes.en_json()
+
+
+@routeur.post("/labels", status_code=201)
+async def fabriquer_etiquette(requete: Request, corps: CorpsEtiquette) -> dict[str, Any]:
+    """Elle rejoint la base **pour tous les projets** de l'atelier."""
+    service = _atelier(requete).etiquettes
+    service.fabriquer(corps.libelle, corps.texte, corps.case)
+    return service.en_json()
+
+
+@routeur.post("/labels/{identifiant}/used")
+async def etiquette_servie(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Compter un emploi — c'est lui qui met les plus employées en premier."""
+    service = _atelier(requete).etiquettes
+    service.servie(identifiant)
+    return service.en_json()
+
+
+@routeur.delete("/labels/{identifiant}")
+async def oublier_etiquette(requete: Request, identifiant: str) -> dict[str, Any]:
+    """**Ce qu'elle a écrit dans une case ne bouge pas** : jamais de cascade."""
+    service = _atelier(requete).etiquettes
+    service.oublier(identifiant)
+    return service.en_json()
 
 
 @routeur.post("/universe/realign")

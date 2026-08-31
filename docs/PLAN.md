@@ -1175,7 +1175,7 @@ repliable, la réserve, et seulement en vue toile.
 ---
 
 ### E8 · L'assistant de démarrage — dix étapes, et le seul écran de réglages
-**User stories** : 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236
+**User stories** : 225 à 236 · *13 critères, 12 tenus le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -1198,24 +1198,59 @@ vrais chiffres — combien d'images, combien ça coûte — et **ne bloque jamai
 
 #### Critères d'acceptation
 
-- [ ] L'assistant s'ouvre à la création d'un jeu et se rouvre à volonté, sans perdre ce qui est déjà répondu
-- [ ] Il n'existe aucun autre écran qui règle un jeu — l'assistant est celui-là
-- [ ] Les étapes s'enchaînent dans l'ordre la première fois, et se cliquent directement ensuite
-- [ ] La colonne des étapes porte la valeur de chacune, et se lit comme le récapitulatif du jeu
-- [ ] La vue et la taille se choisissent sur des vignettes qui les montrent
-- [ ] Un choix unique remplit le réglage et la phrase du texte qui part, et il n'existe aucun moyen de les rendre contradictoires
-- [ ] Une étiquette porte son libellé et son texte anglais, et cliquer le libellé écrit le texte anglais dans la case
-- [ ] La base d'étiquettes est partagée par tous les jeux de l'atelier, part vide, et n'est jamais préremplie à la place de l'auteur
-- [ ] Une recherche d'étiquettes ne montre que celles de la case où l'on se trouve
-- [ ] Le texte à copier s'assemble depuis les réglages, se copie d'un geste, et ne déclenche aucun appel payant
-- [ ] Chaque type d'objet tient sur une rangée qui dit tout ce qu'il porte, jamais sur trois contrôles dépliés
-- [ ] Un changement qui casse du travail payé annonce le nombre d'images et le coût, et laisse passer
-- [ ] Une liste vide dit ce qui décidera à sa place
+- [x] L'assistant s'ouvre à la création d'un jeu et se rouvre à volonté, sans perdre ce qui est déjà répondu
+- [x] Il n'existe aucun autre écran qui règle un jeu — l'assistant est celui-là
+- [x] Les étapes s'enchaînent dans l'ordre la première fois, et se cliquent directement ensuite
+- [x] La colonne des étapes porte la valeur de chacune, et se lit comme le récapitulatif du jeu
+- [ ] La vue et la taille se choisissent sur des vignettes qui les montrent — **le seul critère ouvert.** Les cases sont là et vont chercher `/vignettes/<identifiant>.png` ; les dix-sept images ne sont pas dessinées, et tant qu'elles manquent chaque case le dit — *pas encore dessinée* — plutôt que de faire semblant. Les consignes de production vivent dans `docs/vignettes-vues.md`
+- [x] Un choix unique remplit le réglage et la phrase du texte qui part, et il n'existe aucun moyen de les rendre contradictoires
+- [x] Une étiquette porte son libellé et son texte anglais, et cliquer le libellé écrit le texte anglais dans la case
+- [x] La base d'étiquettes est partagée par tous les jeux de l'atelier, part vide, et n'est jamais préremplie à la place de l'auteur
+- [x] Une recherche d'étiquettes ne montre que celles de la case où l'on se trouve
+- [x] Le texte à copier s'assemble depuis les réglages, se copie d'un geste, et ne déclenche aucun appel payant
+- [x] Chaque type d'objet tient sur une rangée qui dit tout ce qu'il porte, jamais sur trois contrôles dépliés
+- [x] Un changement qui casse du travail payé annonce le nombre d'images et le coût, et laisse passer
+- [x] Une liste vide dit ce qui décidera à sa place
 
 #### Bloquée par
 
 - **E7** — l'assistant est un des trois côtés de l'Univers.
-- **Les dix-sept vignettes d'exemple** — huit vues, neuf tailles. Sans elles, deux étapes redeviennent une liste de mots et une liste de nombres.
+- ~~**Les dix-sept vignettes d'exemple**~~ — **le blocage a changé de nature le 31 août 2026.** Il ne retient plus le code : les cases existent, elles vont chercher leur image par identifiant, et une image absente le dit. Ce qui reste est une **production d'images**, à faire une fois, et elle décide d'un critère sur treize.
+
+#### Ce que la tenir a trouvé
+
+**L'écran des réglages ne changeait pas de contenu, il changeait de forme — et
+c'est ce qui a permis de ne rien casser.** Les cinq blocs d'avant sont tous
+restés : la bible, la palette, le barème et les modèles se règlent au même
+endroit qu'hier, dans l'étape qui les porte. Ce qui est neuf est ce qui n'avait
+nulle part où se poser — le nom, la vue, les étiquettes, le texte à copier, la
+clé — et le fait que **la colonne dise ce que chaque étape vaut**.
+
+**Une étape n'est pas un bloc repliable, et le confondre coûtait un repli de
+trop.** Les premières étapes neuves ont été écrites dans le `Bloc` du produit,
+qui se replie ; l'écran s'ouvrait alors sur une étape qu'il fallait déplier pour
+voir. Le repli sert à ranger plusieurs réglages dans une colonne étroite ; ici
+l'étape *est* l'unité, elle a l'écran entier, et la colonne dit déjà laquelle
+est ouverte.
+
+**Le produit ne réécrit que ce qu'il a lui-même écrit, et cette borne manquait à
+la première écriture.** Un choix de taille réécrit la phrase de grille et celle
+de calage — c'est ce qui répare la contradiction du dépôt. Mais la première
+version réécrivait *toujours*, y compris une description que l'auteur avait mis
+du temps à trouver. La liste de ce que le produit sait avoir écrit est donc
+close et vient du domaine ; hors d'elle, il n'écrit que dans le vide.
+
+**Et « aucune » ne se nie pas.** La même écriture posait `no pixel grid` dans la
+bible quand la cible passait à *aucune* — une affirmation que personne n'avait
+faite. Un essai de R2 l'a vu tout de suite : « un univers vide ne contraint
+rien » cessait d'être vrai. Sans cible, la phrase est **vide**.
+
+**Le piège du double qui répond « {} » a été payé une troisième fois.** L'écran
+lisait `vues.vues.find(...)` sur une réponse sans forme, et l'application
+entière disparaissait — exactement la panne de E3, au mot près. La règle vaut
+d'être écrite une fois pour toutes : **on regarde la forme d'une réponse avant
+de s'y fier**, parce qu'un serveur plus vieux que l'écran répond 200 sans se
+plaindre.
 
 ---
 

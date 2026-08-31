@@ -162,6 +162,21 @@ async def ouvrir_projet(requete: Request, corps: CorpsProjetCourant) -> dict[str
     return atelier.bibliotheque.arbre()
 
 
+@routeur.put("/projects/{identifiant}")
+async def renommer_projet(
+    requete: Request, identifiant: str, corps: CorpsNom
+) -> dict[str, Any]:
+    """Le nom change, **l'identifiant jamais** (E8, étape 1).
+
+    C'est ce qui permet à l'assistant de *renommer* le « Bac à sable » plutôt
+    que d'en créer un second : sur une machine neuve, le premier lancement
+    s'ouvre sur un jeu qui existe déjà, et rien n'est exigé pour commencer.
+    """
+    atelier = _atelier(requete)
+    projet = atelier.bibliotheque.renommer_projet(identifiant, corps.nom)
+    return {"projet": projet.en_json(), "bibliotheque": atelier.bibliotheque.arbre()}
+
+
 @routeur.delete("/projects/{identifiant}")
 async def supprimer_projet(requete: Request, identifiant: str) -> dict[str, Any]:
     """Détache, ne détruit pas (US-30).

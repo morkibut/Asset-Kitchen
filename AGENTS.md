@@ -21,12 +21,13 @@ T7 ; T8, T9 et T10 sont venues après.
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
 chantier de maquettes de `docs/maquettes-v2.1/` dans les documents qui font foi. Elle ajoute
 135 user stories, `US-174` à `US-308`, et **vingt-et-une étapes `E0` à `E20`** dans
-`docs/PLAN.md`. **Neuf sont tenues** — `E0` à `E7`, plus `E18` —, et `E3` garde un critère
-sur quatorze : la pipette, qui demande un champ de plus à la recette. Deux étapes sont
-ouvertes **sans aucun bloqueur** : `E11` et `E16`. `E8` n'attend qu'une chose, les dix-sept
-vignettes d'exemple, et c'est elle qui commande la plus longue chaîne du plan — `E9`, `E10`,
-puis `E13`, `E17` et `E19`. Les arbitrages pris en autonomie et les questions encore
-ouvertes vivent dans `docs/v21-arbitrages.md`, qui ne fait foi sur rien.
+`docs/PLAN.md`. **Dix sont tenues** — `E0` à `E8`, plus `E18` —, et deux gardent un critère
+ouvert : `E3` la pipette, qui demande un champ de plus à la recette, et `E8` les **dix-sept
+vignettes d'exemple**, qui sont une production d'images et non du code — les cases existent
+et disent *pas encore dessinée* tant qu'elles manquent (`docs/vignettes-vues.md` porte les
+consignes). Trois étapes sont ouvertes **sans aucun bloqueur** : `E9`, `E11` et `E16`. Les
+arbitrages pris en autonomie et les questions encore ouvertes vivent dans
+`docs/v21-arbitrages.md`, qui ne fait foi sur rien.
 Ce qui viendra après elle viendra d'une séance d'usage, comme
 les cinq reprises — `docs/releve-usage.md` garde ce qui n'est encore ni cadré ni planifié.
 **C5 est écrite mais pas encore usée** : la règle ci-dessous vaut pour elle comme pour les

@@ -238,6 +238,27 @@ class ServiceBibliotheque:
         self._annoncer()
         return projet
 
+    def renommer_projet(self, identifiant: str, nom: str) -> Projet:
+        """Le nom change, **l'identifiant jamais** (E8, étape 1).
+
+        « Un dossier qui se renomme sous les fichiers qu'il contient est un
+        déménagement, pas un renommage » : l'identifiant se dérive du nom à la
+        création et ne bouge plus. C'est ce qui permet à l'assistant de
+        *renommer* le « Bac à sable » plutôt que d'en créer un second — le
+        premier lancement s'ouvre sur un jeu qui existe déjà, et rien n'est
+        exigé pour commencer.
+        """
+        propre = " ".join(nom.split())
+        if not propre:
+            raise RangementRefuse("un jeu a besoin d'un nom")
+        objet = next((p for p in self.projets() if p.identifiant == identifiant), None)
+        if objet is None:
+            raise ProjetInconnu(identifiant, [p.identifiant for p in self.projets()])
+        objet.nom = propre
+        self.sauver_projet(objet)
+        self._annoncer()
+        return objet
+
     def supprimer_projet(self, identifiant: str) -> dict[str, Any]:
         """Détache, ne détruit pas (US-30).
 

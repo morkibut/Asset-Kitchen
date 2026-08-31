@@ -45,6 +45,7 @@ import type {
   Contour,
   Depenses,
   Etat,
+  Etiquette,
   Main,
   TachesDeLAsset,
   CompteReferences,
@@ -220,6 +221,7 @@ const INTITULE: Record<string, string> = {
 }
 
 const UNIVERS: Univers = {
+  vue: "",
   bible: [
     { nom: "monde", texte: "", actif: true },
     { nom: "epoque", texte: "", actif: true },
@@ -526,6 +528,9 @@ function serveurDouble(options: {
    *  chaque mesure ajoutée au produit ferait réécrire tous les essais qui ne
    *  la regardent pas. */
   mesures?: Partial<TachesDeLAsset>
+  /** La base d'étiquettes (E8). **Vide par défaut**, comme sur un atelier neuf :
+   *  personne ne l'écrit à la place de l'auteur. */
+  etiquettes?: Etiquette[]
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -657,6 +662,28 @@ function serveurDouble(options: {
     // Ce qu'une table sait de l'image (E3) : les taches, les poches, les crans
     // d'occupation. Le double répond comme le serveur — une image d'essai n'a
     // ni tache ni poche, et c'est une réponse, pas un trou.
+    // L'assistant (E8) : deux listes fermées et une base d'étiquettes qui part
+    // vide — c'est ce que le serveur répond sur un atelier neuf.
+    if (url.includes("/universe/views"))
+      return rendre({
+        vues: [
+          {
+            identifiant: "vue-dessus-34",
+            libelle: "De dessus, 3/4",
+            exemples: "Zelda A Link to the Past",
+            images: 4,
+            phrase: "3/4 top-down orthographic view",
+            directions: [],
+          },
+        ],
+        tailles: [8, 16, 24, 32, 48, 64, 96, 128, 256].map((cible) => ({
+          cible,
+          quoi: `des sujets de ${cible} pixels`,
+        })),
+      })
+    if (url.includes("/universe/consequences"))
+      return rendre({ images: 0, cout_usd: 0, cible: 128, poses: 0, images_de_pose: 0 })
+    if (url.includes("/labels")) return rendre({ etiquettes: options.etiquettes ?? [] })
     // La seconde fabrique (E6) : ouvrir ne crée rien, et l'aperçu non plus.
     // Le double répond ce que le serveur répond — un dessous nul quand rien
     // n'est désigné, et deux images vides en `data:`.
@@ -1740,7 +1767,7 @@ describe("l'écran de l'atelier", () => {
   test("promouvoir un artwork montre la palette, et la retirer la fait changer à l'œil", async () => {
     const { fetchDouble } = serveurDouble({ cartes: [carteImage("planche")] })
     const flux = await monter(fetchDouble)
-    await ouvrirLesReglagesDuJeu("La palette du jeu")
+    await ouvrirLesReglagesDuJeu("Références et couleurs")
 
     // Les blocs de l'univers arrivent repliés — on pose ces réglages une fois,
     // et l'en-tête dit déjà leur état (`docs/design-motifs.md` § Le bloc repliable).
@@ -1826,7 +1853,7 @@ describe("l'écran de l'atelier", () => {
     // arrive dans un champ de saisie de l'écran ouvert, et le tableau
     // l'ignore ; il se contente de le prouver dans le seul écran monté.
     fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
-    fireEvent.click(await screen.findByRole("button", { name: "La bible du style" }))
+    fireEvent.click(await screen.findByRole("button", { name: "L'allure" }))
     fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
     const champ = await screen.findByPlaceholderText(
       "royaume de tourbe et de fer, marais au nord",
@@ -3423,11 +3450,11 @@ describe("le réglage d'univers se voit à l'instant", () => {
    *  aller le chercher avant de le déplier. Les deux gestes sont distincts et
    *  le restent — **choisir une étape** n'est pas **déplier un bloc**. */
   const ETAPE_DU_BLOC: Record<string, string> = {
-    Bible: "La bible du style",
-    Palette: "La palette du jeu",
-    "Taille de pixel": "La taille de pixel",
-    "Barème d'échelles": "Le barème d'échelles",
-    "Modèle par défaut": "Les modèles par défaut",
+    Bible: "L'allure",
+    Palette: "Références et couleurs",
+    "Taille de pixel": "La taille",
+    "Barème d'échelles": "Les types d'objets",
+    "Modèle par défaut": "Les IA à utiliser",
   }
 
   /** Ouvrir un bloc — son côté, son étape, puis son en-tête — et rendre son
@@ -3469,7 +3496,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
   const ouvrirLUnivers = async (univers: Univers = UNIVERS) => {
     const double = serveurDouble({ univers })
     const flux = await monter(double.fetchDouble, { ...ETAT, univers })
-    await ouvrirLesReglagesDuJeu("La bible du style")
+    await ouvrirLesReglagesDuJeu("L'allure")
     await screen.findByRole("button", { name: /^Bible/ })
     return { ...double, flux }
   }
@@ -3487,7 +3514,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     // brouillon. Remonté, il naît de ce que l'onglet tient de l'univers — donc
     // de la réponse posée. C'est « rouvrir montre la même valeur », vu d'ici.
     fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
-    await ouvrirLesReglagesDuJeu("La bible du style")
+    await ouvrirLesReglagesDuJeu("L'allure")
     // Le repli des blocs vit dans le châssis et survit au démontage : la bible
     // est déjà ouverte au retour, et la rouvrir la refermerait.
     await screen.findByRole("button", { name: /^Bible/ })
@@ -3524,19 +3551,18 @@ describe("le réglage d'univers se voit à l'instant", () => {
 
   test("la taille de pixel posée s'affiche, sans rechargement", async () => {
     const { appels } = await ouvrirLUnivers()
-    const grille = await ouvrir("Taille de pixel")
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+    await screen.findByRole("button", { name: "96 px" })
 
     const avant = appels.length
-    fireEvent.click(grille.getByRole("button", { name: "96" }))
+    fireEvent.click(screen.getByRole("button", { name: "96 px" }))
+    // **La vignette allumée est le réglage** : il n'y a rien à replier, et la
+    // valeur se lit là où on l'a posée.
     await waitFor(() =>
-      expect(grille.getByRole("button", { name: "96" }).className).toContain(
-        "border-signal",
-      ),
+      expect(
+        screen.getByRole("button", { name: "96 px" }).getAttribute("aria-pressed"),
+      ).toBe("true"),
     )
-
-    // Replié, l'en-tête porte sa valeur — et c'est elle qu'on lit.
-    replier("Taille de pixel")
-    expect(replie("Taille de pixel", "96 px")).toBeTruthy()
 
     // **Aucune relecture de l'univers** : ce qui manquait est une pose, pas un
     // aller-retour. Le réglage n'a fait qu'un appel sur cette route — le PUT
@@ -3559,14 +3585,23 @@ describe("le réglage d'univers se voit à l'instant", () => {
     await ouvrirLUnivers()
     const bareme = await ouvrir("Barème")
 
+    // **Chaque type tient sur une rangée qui dit tout ce qu'il porte**, et ses
+    // trois réglages s'ouvrent dessous. Mesuré : dépliés en permanence, ils
+    // faisaient 92 px par ligne — plus haut que la description, qui part
+    // pourtant avec chaque génération.
+    const rangee = bareme.getByRole("button", { name: "personnage" })
+    expect(rangee.textContent).toContain("silhouette")
+    fireEvent.click(rangee)
+
     // La silhouette est le seul réglage du barème qui se dise en toutes
     // lettres : c'est donc lui qu'on lit après.
-    fireEvent.click(bareme.getAllByRole("button", { name: /se détoure/ })[0])
+    fireEvent.click(await bareme.findByRole("button", { name: /se détoure/ }))
 
-    expect(
-      await bareme.findByRole("button", { name: "plein cadre, aucun détourage" }),
-    ).toBeTruthy()
-    expect(bareme.getAllByRole("button", { name: /se détoure/ })).toHaveLength(1)
+    await waitFor(() =>
+      expect(
+        bareme.getByRole("button", { name: "personnage" }).textContent,
+      ).not.toContain("silhouette"),
+    )
   })
 
   test("le modèle par défaut d'une famille tient, et l'en-tête la compte", async () => {
@@ -3606,21 +3641,23 @@ describe("le réglage d'univers se voit à l'instant", () => {
 
     await monter(fetchDouble)
     fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
-    const grille = await ouvrir("Taille de pixel")
-
-    fireEvent.click(grille.getByRole("button", { name: "96" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "La taille" }))
+    fireEvent.click(await screen.findByRole("button", { name: "96 px" }))
 
     expect(
       await screen.findByText("la taille de pixel cible va de 8 à 512 pixels"),
     ).toBeTruthy()
     // La valeur d'avant, jamais la valeur tentée.
-    replier("Taille de pixel")
-    expect(replie("Taille de pixel", "64 px")).toBeTruthy()
+    expect(
+      screen.getByRole("button", { name: "64 px" }).getAttribute("aria-pressed"),
+    ).toBe("true")
   })
 
   test("le flux d'un second onglet pose le même réglage, sans qu'on ait rien fait ici", async () => {
     const { flux } = await ouvrirLUnivers()
-    await ouvrir("Taille de pixel")
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+    await screen.findByRole("button", { name: "128 px" })
 
     // Ce que le serveur annonce **à tout onglet ouvert sur le projet** depuis
     // R1 : un réglage posé s'annonce toujours, et plus seulement quand
@@ -3636,11 +3673,9 @@ describe("le réglage d'univers se voit à l'instant", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "128" }).className,
-      ).toContain("border-signal"),
+        screen.getByRole("button", { name: "128 px" }).getAttribute("aria-pressed"),
+      ).toBe("true"),
     )
-    replier("Taille de pixel")
-    expect(replie("Taille de pixel", "128 px")).toBeTruthy()
   })
 })
 
@@ -4402,7 +4437,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     // l'écran Univers, le serveur écrit et rend l'univers entier, l'écran le
     // pose (R1) — et l'aperçu, qui n'a jamais rien composé lui-même, redemande
     // ce qui part.
-    await ouvrirLesReglagesDuJeu("La bible du style")
+    await ouvrirLesReglagesDuJeu("L'allure")
     fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
     fireEvent.click(
       await screen.findByRole("button", { name: "technique de rendu — actif" }),
@@ -4592,15 +4627,16 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const sansCible: Univers = { ...UNIVERS, cible_px: 0 }
     const double = serveurDouble({ univers: sansCible })
     await monter(double.fetchDouble, { ...ETAT, univers: sansCible })
-    await ouvrirLesReglagesDuJeu("La taille de pixel")
+    await ouvrirLesReglagesDuJeu("La taille")
 
-    const entete = await screen.findByRole("button", { name: /^Taille de pixel/ })
-    expect(entete.textContent).toContain("aucune")
-
-    fireEvent.click(entete)
-    const bloc = within(entete.closest("section") as HTMLElement)
+    // **« Aucune » est une valeur, pas un trou**, et elle est en tête : c'est la
+    // première question — *ce jeu est-il en pixel art ?* — et non la dernière.
+    const aucune = await screen.findByRole("button", { name: /^aucune/ })
+    expect(aucune.getAttribute("aria-pressed")).toBe("true")
+    // Et ce qui continue de s'appliquer est dit là où on l'a choisi : sans
+    // cette ligne, « aucune » se lirait comme « plus aucun traitement ».
     expect(
-      bloc.getByText(
+      screen.getByText(
         /aucune remise sur grille — le détourage, le recadrage et la palette/,
       ),
     ).toBeTruthy()
@@ -4608,7 +4644,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     // Et le barème dit son inaction plutôt que de laisser croire qu'il agit.
     // Il est une étape plus loin dans la liste depuis E7 : les cinq réglages
     // ne sont plus empilés dans une colonne, on en lit un à la fois.
-    fireEvent.click(screen.getByRole("button", { name: "Le barème d'échelles" }))
+    fireEvent.click(screen.getByRole("button", { name: "Les types d'objets" }))
     const bareme = await screen.findByRole("button", { name: /^Barème d'échelles/ })
     fireEvent.click(bareme)
     expect(
@@ -4851,7 +4887,7 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
   test("l'univers : le panneau se déclare, et sa poignée est dedans", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    await ouvrirLesReglagesDuJeu("La bible du style")
+    await ouvrirLesReglagesDuJeu("L'allure")
 
     await screen.findByRole("button", { name: /^Bible/ })
     const marque = poignee("Bible")
@@ -6429,13 +6465,14 @@ describe("les trois côtés de l'univers", () => {
     expect(pistes).toBeTruthy()
 
     // Une étape à la fois : la liste dit laquelle est ouverte, et l'écran
-    // entier lui est donné.
-    expect(await screen.findByRole("button", { name: /^Bible/ })).toBeTruthy()
+    // entier lui est donné. La première est le nom du jeu — sur une machine
+    // neuve, c'est la première question.
+    expect(await screen.findByRole("button", { name: /^1 · Le nom/ })).toBeTruthy()
     expect(screen.queryByRole("button", { name: /^Barème/ })).toBeNull()
 
-    fireEvent.click(screen.getByRole("button", { name: "Le barème d'échelles" }))
+    fireEvent.click(screen.getByRole("button", { name: "Les types d'objets" }))
     expect(await screen.findByRole("button", { name: /^Barème/ })).toBeTruthy()
-    expect(screen.queryByRole("button", { name: /^Bible/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /^1 · Le nom/ })).toBeNull()
   })
 
   // ── « Le menu d'un paquet propose de fabriquer une palette et une ambiance,
@@ -7653,5 +7690,257 @@ describe("le contour et la main", () => {
     // dit avant qu'on ait lu.
     const { cadre } = await ouvrirLaFabrique()
     expect(cadre.getByText("aucun appel ne part d'ici")).toBeTruthy()
+  })
+})
+
+// ── E8 : l'assistant de démarrage ──────────────────────────────────────────
+//
+// Ce qui se mesure sur le serveur — qu'un choix unique remplit le réglage *et*
+// la phrase, que le produit ne réécrit jamais ce que l'auteur a tapé — est tenu
+// par `tests/test_e8.py`. Ce qui vit ici est ce que l'écran montre : les dix
+// étapes, leurs deux humeurs, et la colonne qui devient un récapitulatif.
+
+describe("l'assistant de démarrage", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const ouvrirLAssistant = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    univers: Univers = UNIVERS,
+  ) => {
+    const double = serveurDouble({ univers, ...options })
+    await monter(double.fetchDouble, { ...ETAT, univers })
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    await screen.findByRole("button", { name: "Le nom" })
+    return double
+  }
+
+  // ── « Dix étapes en quatre groupes, et la colonne les range » ─────────────
+
+  test("les dix étapes sont là, rangées en quatre groupes", async () => {
+    await ouvrirLAssistant()
+
+    for (const nom of [
+      "Le nom",
+      "La vue",
+      "La taille",
+      "Les types d'objets",
+      "L'allure",
+      "Références et couleurs",
+      "Poses et états",
+      "Emplacements",
+      "Les IA à utiliser",
+      "La clé",
+    ]) {
+      expect(screen.getByRole("button", { name: nom })).toBeTruthy()
+    }
+    // Les quatre groupes : ce qu'on fabrique, comment ça doit avoir l'air,
+    // combien d'images il faudra, ce qui vaut pour tous les jeux.
+    for (const groupe of ["le jeu", "le style", "la production", "l'atelier"]) {
+      expect(screen.getByText(groupe)).toBeTruthy()
+    }
+  })
+
+  test("la colonne porte la valeur de chaque étape, et se lit comme un récapitulatif", async () => {
+    // **Un jeu déjà réglé** : la colonne dit ce qu'il vaut, sans rien ouvrir.
+    await ouvrirLAssistant({}, { ...UNIVERS, vue: "vue-dessus-34", vide: false })
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "La vue" }).textContent).toContain(
+        "De dessus, 3/4",
+      ),
+    )
+    expect(screen.getByRole("button", { name: "La taille" }).textContent).toContain("64")
+    expect(
+      screen.getByRole("button", { name: "Les types d'objets" }).textContent,
+    ).toContain("types")
+  })
+
+  test("la première fois on enchaîne, ensuite on va droit au but", async () => {
+    // **Un univers vide** : c'est la première fois, donc l'ordre s'impose et le
+    // pied dit où l'on en est.
+    await ouvrirLAssistant({}, { ...UNIVERS, vide: true })
+
+    expect(await screen.findByText("étape 1 sur 10")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "suivant →" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "passer" })).toBeTruthy()
+
+    // **On sort à n'importe quelle étape**, et le bouton est visible en
+    // permanence : aucun écran n'est obligatoire.
+    fireEvent.click(screen.getByRole("button", { name: "j'ai fini pour l'instant" }))
+    await waitFor(() => expect(screen.queryByText("étape 1 sur 10")).toBeNull())
+    expect(screen.queryByRole("button", { name: "suivant →" })).toBeNull()
+  })
+
+  test("suivant avance d'une étape, et l'étape ouverte est celle qu'on clique", async () => {
+    await ouvrirLAssistant({}, { ...UNIVERS, vide: true })
+
+    fireEvent.click(screen.getByRole("button", { name: "suivant →" }))
+    expect(await screen.findByText("étape 2 sur 10")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "La clé" }))
+    expect(await screen.findByText("étape 10 sur 10")).toBeTruthy()
+  })
+
+  // ── « La vue et la taille se choisissent sur des vignettes » ──────────────
+
+  test("la vue se choisit sur une vignette, et dit combien d'images elle demande", async () => {
+    const { appels } = await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "La vue" }))
+
+    const vue = await screen.findByRole("button", { name: /De dessus, 3\/4/ })
+    // **C'est le chiffre qui multiplie toute la production**, donc tout ce
+    // qu'on paiera : il se lit sur la vignette, avant de choisir.
+    expect(vue.textContent).toContain("4 images par pose")
+
+    fireEvent.click(vue)
+    await waitFor(() => {
+      const pose = [...appels].reverse().find((a) => a.url.includes("/universe"))
+      expect((pose?.corps as { vue?: string })?.vue).toBe("vue-dessus-34")
+    })
+  })
+
+  test("une vignette qui n'est pas encore dessinée le dit", async () => {
+    // **Les dix-sept vignettes sont une production d'images, pas du code.**
+    // Tant qu'une manque, la case le dit plutôt que de faire semblant — c'est
+    // la règle du grisé qui porte sa raison, appliquée à une image absente.
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "La vue" }))
+
+    const image = (await screen.findAllByAltText("De dessus, 3/4"))[0]
+    fireEvent.error(image)
+    expect(await screen.findByText("pas encore dessinée")).toBeTruthy()
+  })
+
+  // ── « Une étiquette porte son libellé et son texte anglais » ──────────────
+
+  const BRUME = {
+    identifiant: "eclairage-brume-basse-aaa111",
+    libelle: "brume basse",
+    texte: "thick low-lying fog, volumetric haze",
+    case: "eclairage",
+    emplois: 3,
+  }
+  const HACHURE = {
+    identifiant: "trait-hachure-bbb222",
+    libelle: "hachures serrées",
+    texte: "tight cross-hatching",
+    case: "trait",
+    emplois: 0,
+  }
+
+  test("cliquer un libellé écrit le texte anglais dans la case", async () => {
+    const { appels } = await ouvrirLAssistant({ etiquettes: [BRUME] })
+    fireEvent.click(screen.getByRole("button", { name: "L'allure" }))
+    fireEvent.click(await screen.findByRole("button", { name: "éclairage" }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "brume basse" }))
+
+    await waitFor(() => {
+      const pose = [...appels].reverse().find(
+        (a) => a.url.includes("/universe") && (a.corps as { bible?: unknown })?.bible,
+      )
+      const bible = (pose?.corps as { bible: { nom: string; texte: string }[] }).bible
+      expect(bible.find((c) => c.nom === "eclairage")?.texte).toBe(BRUME.texte)
+    })
+  })
+
+  test("la recherche ne montre que les étiquettes de la case où l'on est", async () => {
+    await ouvrirLAssistant({ etiquettes: [BRUME, HACHURE] })
+    fireEvent.click(screen.getByRole("button", { name: "L'allure" }))
+    fireEvent.click(await screen.findByRole("button", { name: "éclairage" }))
+
+    // **Une étiquette d'éclairage ne paraît pas dans la case du trait** : sans
+    // ce filtre, la liste cesserait d'être une liste.
+    expect(await screen.findByRole("button", { name: "brume basse" })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "hachures serrées" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "trait" }))
+    expect(await screen.findByRole("button", { name: "hachures serrées" })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "brume basse" })).toBeNull()
+  })
+
+  test("la base vide le dit franchement plutôt que de faire semblant", async () => {
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "L'allure" }))
+
+    expect(
+      await screen.findByText(/rien dans la base pour cette case/),
+    ).toBeTruthy()
+  })
+
+  // ── « Le texte à copier s'assemble, et ne déclenche aucun appel payant » ──
+
+  test("le texte à copier reprend les réglages, et rien n'est payé", async () => {
+    const univers: Univers = {
+      ...UNIVERS,
+      vue: "vue-dessus-34",
+      bible: UNIVERS.bible.map((c) =>
+        c.nom === "monde" ? { ...c, texte: "ruines naines" } : c,
+      ),
+      vide: false,
+    }
+    const { appels } = await ouvrirLAssistant({ univers }, univers)
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+
+    const avant = appels.length
+    const texte = await screen.findByText(/I am designing a 2D game/)
+    // **Ce qui vient des étapes, repris mot pour mot.**
+    expect(texte.textContent).toContain("ruines naines")
+    expect(texte.textContent).toContain("64 x 64 pixels")
+
+    fireEvent.click(screen.getByRole("button", { name: "copier" }))
+    // **Rien n'est payé par l'atelier** : copier n'appelle personne.
+    expect(appels.length).toBe(avant)
+  })
+
+  // ── « Une liste vide dit ce qui décidera à sa place » ─────────────────────
+
+  test("une famille sans modèle dit ce qui sera employé à la place", async () => {
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Les IA à utiliser" }))
+    fireEvent.click(await screen.findByRole("button", { name: /^Modèle par défaut/ }))
+
+    // Ce n'est pas un réglage inutile : c'est un réglage que rien n'oblige à
+    // toucher, et dont la valeur vide veut dire quelque chose.
+    expect(
+      (await screen.findAllByText(/aucun choisi — l'atelier emploiera/)).length,
+    ).toBeGreaterThan(0)
+  })
+
+  // ── « L'assistant est le seul écran qui règle un jeu » ────────────────────
+
+  test("les dix étapes couvrent tout ce qui se réglait ailleurs", async () => {
+    await ouvrirLAssistant()
+
+    // Les cinq blocs d'avant sont tous atteignables depuis une étape, et aucun
+    // n'a d'autre porte : c'est ce que « il n'y a pas d'autre panneau de
+    // réglages à côté » veut dire, vérifié sur ce qui existe.
+    fireEvent.click(screen.getByRole("button", { name: "L'allure" }))
+    expect(await screen.findByRole("button", { name: /^Bible/ })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+    expect(await screen.findByRole("button", { name: /^Palette/ })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Les types d'objets" }))
+    expect(await screen.findByRole("button", { name: /^Barème/ })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Les IA à utiliser" }))
+    expect(await screen.findByRole("button", { name: /^Modèle par défaut/ })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+    expect(await screen.findByRole("button", { name: "128 px" })).toBeTruthy()
   })
 })

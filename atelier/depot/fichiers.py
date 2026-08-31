@@ -7,6 +7,7 @@
     ├─ catalogue.json             la dernière photo du catalogue, datée
     ├─ recettes.json              les recettes nommées (US-66)
     ├─ prereglages.json           les jeux de réglages nommés (US-134)
+    ├─ etiquettes.json            la base d'étiquettes, partagée par tous les jeux (E8)
     ├─ collections.json           les collections, avec leur projet éventuel
     ├─ projets/<identifiant>/
     │  ├─ projet.json             le projet — bible, barème, palette, défauts
@@ -65,6 +66,7 @@ class Fichiers:
         self.catalogue = self.racine / "catalogue.json"
         self.recettes = self.racine / "recettes.json"
         self.prereglages = self.racine / "prereglages.json"
+        self.etiquettes = self.racine / "etiquettes.json"
         self.collections = self.racine / "collections.json"
         self.etat = self.racine / "atelier.json"
         # Le cadre de l'agent — plafond, modèle imposé, dossier du jeu. Un
@@ -197,6 +199,24 @@ class Fichiers:
 
     def lire_recettes(self) -> dict[str, Any]:
         return self._lire_json(self.recettes) or {}
+
+    def ecrire_etiquettes(self, contenu: list[Any]) -> None:
+        self._ecrire_json(self.etiquettes, contenu)
+
+    def lire_etiquettes(self) -> list[Any]:
+        """La base d'étiquettes (E8).
+
+        **À la racine, pas dans un projet**, et c'est la décision : comme la clé
+        du fournisseur, une étiquette ne dépend d'aucun jeu. Un deuxième jeu
+        part de ce que le premier a nommé — rangée par projet, la base
+        repartirait vide à chaque fois et le mécanisme ne servirait jamais.
+
+        **Une liste, pas un dictionnaire** : l'ordre de fabrication départage
+        les étiquettes d'égal emploi, et c'est l'ordre dans lequel l'auteur les
+        a nommées, donc celui qu'il reconnaît.
+        """
+        lu = self._lire_json(self.etiquettes)
+        return lu if isinstance(lu, list) else []
 
     def ecrire_prereglages(self, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.prereglages, contenu)

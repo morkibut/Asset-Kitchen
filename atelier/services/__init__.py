@@ -36,6 +36,7 @@ from atelier.services.bibliotheque import (
 )
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
+from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
@@ -66,6 +67,7 @@ __all__ = [
     "CollectionInconnue",
     "CompteFaux",
     "DecoupeRefusee",
+    "EtiquetteRefusee",
     "SuperpositionRefusee",
     "DepotRefuse",
     "Diffusion",
@@ -85,6 +87,7 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "ServiceEtiquettes",
     "ServiceSuperposition",
     "ServiceExport",
     "ServiceGenerations",
@@ -154,6 +157,11 @@ class Atelier:
         # raison** : superposer deux images déjà payées ne demande ni catalogue
         # ni fournisseur, et c'est très exactement ce qui fait qu'un recalage
         # raté ne coûte plus une génération.
+        # **La base d'étiquettes ne connaît ni projet ni fournisseur** : elle
+        # lit un fichier à la racine et en rend une liste. Elle est montée ici
+        # plutôt que sur l'univers parce qu'elle n'appartient à aucun jeu —
+        # comme la clé du fournisseur.
+        self.etiquettes = ServiceEtiquettes(self.fichiers)
         self.superposition = ServiceSuperposition(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )

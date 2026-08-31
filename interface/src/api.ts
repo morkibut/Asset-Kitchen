@@ -238,6 +238,50 @@ export type ApercuSuperposition = {
   mesures: MesuresCalque
 }
 
+/** Une manière de regarder le monde, et ce qu'elle impose (E8).
+ *
+ *  **Ce choix ne décide pas de l'apparence du jeu. Il décide de combien
+ *  d'images il faut par pose** — un personnage qui marche vu de côté, c'est
+ *  deux images ; le même vu de dessus, c'est quatre ou huit. C'est le chiffre
+ *  qui multiplie toute la production, donc tout ce qu'on paiera. */
+export type VueDuJeu = {
+  identifiant: string
+  libelle: string
+  exemples: string
+  images: number
+  /** Ce que le choix écrit dans la case `vue` de la bible. */
+  phrase: string
+  directions: { nom: string; consigne: string }[]
+}
+
+export type TailleDImage = { cible: number; quoi: string }
+
+export type VuesEtTailles = { vues: VueDuJeu[]; tailles: TailleDImage[] }
+
+/** Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment.
+ *
+ *  **La base appartient à l'atelier, pas à un jeu** : elle naît vide, personne
+ *  ne l'écrit à la place de l'auteur, et elle grandit de chaque étiquette
+ *  fabriquée dans n'importe quel projet. */
+export type Etiquette = {
+  identifiant: string
+  libelle: string
+  texte: string
+  case: string
+  emplois: number
+}
+
+/** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.
+ *  Rien n'est jamais grisé dans l'assistant : la ligne dit le compte et le
+ *  coût, puis laisse décider. */
+export type Consequences = {
+  images: number
+  cout_usd: number
+  cible: number
+  poses: number
+  images_de_pose: number
+}
+
 export const POSE_VIDE: Superposition = {
   dessus: "",
   dessous: "",
@@ -836,6 +880,10 @@ export type Univers = {
   bareme: Echelle[]
   /** Le côté de case imposé à ce qui rentre — ou `AUCUNE_CIBLE`. */
   cible_px: number
+  /** **La vue du jeu** (E8) : un choix unique qui remplit le réglage *et* la
+   *  phrase de la case `vue`. Vide est une valeur — un jeu qui ne dit pas d'où
+   *  il regarde ne contraint rien. */
+  vue: string
   couleurs: number
   /** Déduite par calcul des artworks officiels, jamais saisie (US-54). */
   palette: string[]
@@ -857,6 +905,7 @@ export const UNIVERS_VIDE: Univers = {
   bible: [],
   bareme: [],
   cible_px: 64,
+  vue: "",
   couleurs: 24,
   palette: [],
   palette_empreinte: "",
@@ -1592,6 +1641,42 @@ export const api = {
   // ne crée rien se redemande à chaque cran de réglage, ce qui crée des assets
   // ne se redemande jamais.
 
+  // ── L'assistant de démarrage (E8) ─────────────────────────────────────────
+
+  /** Les deux listes fermées — huit vues, neuf tailles. Servies par le serveur
+   *  parce que c'est lui qui écrit les phrases qu'elles commandent. */
+  vuesEtTailles: () => appeler<VuesEtTailles>("/universe/views"),
+
+  /** Ce qu'un changement casserait, avant de le faire. */
+  consequences: (cible_px: number) =>
+    appeler<Consequences>(`/universe/consequences?cible_px=${cible_px}`),
+
+  etiquettes: () => appeler<{ etiquettes: Etiquette[] }>("/labels"),
+
+  fabriquerEtiquette: (libelle: string, texte: string, casee: string) =>
+    appeler<{ etiquettes: Etiquette[] }>("/labels", {
+      method: "POST",
+      body: JSON.stringify({ libelle, texte, case: casee }),
+    }),
+
+  /** Compter un emploi — c'est lui qui met les plus employées en premier. */
+  etiquetteServie: (identifiant: string) =>
+    appeler<{ etiquettes: Etiquette[] }>(`/labels/${identifiant}/used`, {
+      method: "POST",
+    }),
+
+  oublierEtiquette: (identifiant: string) =>
+    appeler<{ etiquettes: Etiquette[] }>(`/labels/${identifiant}`, { method: "DELETE" }),
+
+  /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
+   *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un
+   *  second. */
+  renommerProjet: (identifiant: string, nom: string) =>
+    appeler<{ projet: Projet; bibliotheque: Bibliotheque }>(`/projects/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify({ nom }),
+    }),
+
   ouvrirSuperposition: (dessus: string, dessous?: string) =>
     appeler<OuvertureSuperposition>(
       `/assets/${dessus}/overlay${dessous ? `?dessous=${encodeURIComponent(dessous)}` : ""}`,
@@ -2012,6 +2097,7 @@ export const api = {
   /** Tout est facultatif : ce qu'on n'envoie pas ne bouge pas. Un `PUT` qui
    *  exigerait l'univers entier obligerait l'écran à en tenir une copie. */
   reglerUnivers: (reglage: {
+    vue?: string
     bible?: Champ[]
     bareme?: Echelle[]
     cible_px?: number

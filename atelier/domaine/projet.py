@@ -43,6 +43,7 @@ from atelier.domaine.equipement import (
 )
 from atelier.domaine.plan import PLAN_PAR_DEFAUT, Pose, plan_depuis_json
 from atelier.domaine.teinte import AUCUNE, teinte_valide
+from atelier.domaine.vue import AUCUNE_VUE
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -191,6 +192,13 @@ BAREME_PAR_DEFAUT = (
     Echelle("objet posé", OBJETS, 50),
     Echelle("objet tenu", OBJETS, 40),
     Echelle("décor", DECORS, 100, silhouette=False),
+    # **Un type manquait, et le projet en fabriquait déjà.** Sa description dit
+    # `grid-aligned tile assets` et un outil découpe une planche en tuiles ;
+    # mais « tuile » n'était dans aucune liste, donc une tuile arrivait en
+    # « décor » et occupait toute sa case sans que ce soit un choix. Ajoutée en
+    # E8, avec la même silhouette absente qu'un décor : une tuile remplit son
+    # cadre, elle n'a pas de contour à détourer.
+    Echelle("tuile", DECORS, 100, silhouette=False),
     Echelle("élément d'interface", INTERFACE, 100),
 )
 
@@ -229,6 +237,19 @@ class Univers:
     bible: tuple[Champ, ...] = ()
     bareme: tuple[Echelle, ...] = BAREME_PAR_DEFAUT
     cible_px: int = CIBLE_PAR_DEFAUT
+
+    # ── La vue du jeu, arrivée en E8 ─────────────────────────────────────────
+    #
+    # **Elle n'existait que sous forme de phrase**, dans la case `vue` de la
+    # bible — un texte anglais qui part au modèle et que rien ne relit. Or le
+    # choix de la vue remplit **deux endroits d'un coup** : cette phrase, et le
+    # nombre d'images qu'une pose demande. Sans le champ, l'atelier ne peut ni
+    # rouvrir l'étape sur ce qui a été choisi, ni réécrire les deux quand on en
+    # change : il faudrait deviner la vue en relisant l'anglais.
+    #
+    # Vide est une valeur : un jeu qui ne dit pas d'où il regarde ne contraint
+    # rien, comme un univers sans artwork ne contraint pas la palette.
+    vue: str = AUCUNE_VUE
 
     # **Combien de couleurs on demande à la palette.** Elle, on ne la saisit
     # jamais : elle se déduit par calcul des artworks officiels (US-54). Ce
@@ -362,6 +383,7 @@ class Univers:
             "bible": [c.en_json() for c in self.bible],
             "bareme": [e.en_json() for e in self.bareme],
             "cible_px": self.cible_px,
+            "vue": self.vue,
             "couleurs": self.couleurs,
             "palette": list(self.palette),
             "palette_empreinte": self.palette_empreinte,
@@ -381,6 +403,7 @@ class Univers:
             bible=bible_complete(Champ.depuis_json(c) for c in d.get("bible", ())),
             bareme=bareme or BAREME_PAR_DEFAUT,
             cible_px=int(d.get("cible_px", CIBLE_PAR_DEFAUT)),
+            vue=str(d.get("vue") or AUCUNE_VUE),
             couleurs=int(d.get("couleurs", 24)),
             palette=tuple(d.get("palette", ())),
             palette_empreinte=d.get("palette_empreinte", ""),

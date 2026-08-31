@@ -665,6 +665,98 @@ export const AIDE: Record<string, Explication> = {
       "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
   },
 
+  // ── L'assistant de démarrage — le seul écran qui règle un jeu ─────────────
+  //
+  // **Il n'y a pas d'autre panneau de réglages à côté**, et c'est la décision :
+  // deux endroits qui règlent la même chose finissent toujours par se
+  // contredire. Ces entrées disent ce que chaque étape décide, et surtout **ce
+  // qu'un seul choix remplit ailleurs** — c'est cette liaison-là qu'on ne
+  // devine pas en regardant un contrôle.
+
+  "assistant.nom": {
+    nom: "Le nom du jeu",
+    ou: "univers",
+    quoi: "Comment le jeu s'appelle, dans l'atelier.",
+    change:
+      "Rien à la génération : c'est le seul réglage qui ne part jamais au modèle. Le dossier, lui, ne se renomme pas — un dossier qui change de nom sous ses fichiers est un déménagement.",
+    origine: "toi · « Bac à sable » au premier lancement",
+    long:
+      "L'assistant **ne crée pas le jeu, il le renomme** : sur une machine neuve le « Bac à sable » existe déjà, et rien n'est exigé pour commencer. C'est ce qui permet de sortir de l'assistant à n'importe quelle étape et de fabriquer tout de suite.",
+  },
+
+  "assistant.vue": {
+    nom: "La vue du jeu",
+    ou: "univers",
+    quoi: "D'où l'on regarde le monde — de face, de côté, de dessus, en isométrie.",
+    change:
+      "**Combien d'images il faut par pose.** C'est le chiffre qui multiplie toute la production, donc tout ce qu'on paiera : un personnage qui marche vu de côté, c'est deux images ; le même vu de dessus, c'est quatre.",
+    origine: "toi · aucune au départ",
+    long:
+      "Ce choix ne décide pas de l'apparence du jeu. Il remplit **deux endroits d'un coup** : le nombre d'images par pose, et la phrase de la case *vue* qui part au modèle. Ces deux-là ne peuvent plus se contredire, parce qu'ils viennent du même geste.\n\nAvant, le nombre de directions était retapé **sept fois** — une dans la description, puis à la main sur chaque pose — et rien ne reliait ces sept endroits.\n\n**Le nombre de directions ne part plus dans le texte**, depuis le 31 août 2026 : il contredisait la consigne des planches d'équipement, et chaque image dit déjà elle-même la direction qu'elle montre.",
+  },
+
+  "assistant.taille": {
+    nom: "La taille des images",
+    ou: "univers",
+    quoi: "Le côté de la case où tout ce qui rentre est ramené.",
+    change:
+      "**C'est le plus coûteux des dix réglages.** Tout ce qui a été fabriqué a été découpé à l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer, et chacune se paie. La ligne le dit avec le compte et le coût — puis laisse passer.",
+    origine: "toi · 64 px au départ, ou « aucune »",
+    long:
+      "Le choix remplit aussi **la phrase de grille et celle de calage** dans la description, ce qui répare la contradiction mesurée du dépôt : le réglage disait 128 pendant que le texte envoyé disait 64, trois fois.\n\n**Le réglage n'est jamais grisé.** Le produit n'a qu'un seul refus automatique — le compte d'images — et en ajouter un deuxième reviendrait à bloquer un auteur sur son propre jeu. Un chiffre exact aide mieux qu'une case grise.\n\n« Aucune » est une valeur et non un trou : elle dit *ce jeu n'est pas en pixel art*, et l'image entre telle que le modèle l'a rendue.",
+  },
+
+  "assistant.etiquettes": {
+    nom: "Les étiquettes",
+    ou: "univers",
+    quoi: "Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment au modèle.",
+    change:
+      "Cliquer une étiquette écrit son texte anglais dans la case ouverte. Rien d'autre : ce qui est écrit reste du texte libre, que tu corriges à la main.",
+    origine: "toi · la base est vide au départ, et partagée par tous tes jeux",
+    long:
+      "C'est ce qui rend la description **mécanique** au lieu d'être rédigée : on ne cherche plus comment dire « il y a de la brume » à une intelligence artificielle, on l'a trouvé une fois, on l'a nommé, on le reclique.\n\n**La base appartient à l'atelier, pas à un jeu** — comme la clé du fournisseur, elle ne dépend d'aucun. Elle naît vide, personne ne l'écrit à ta place, et elle grandit de chaque étiquette fabriquée dans n'importe quel projet. Au premier jeu, l'étape est donc sept champs de texte libre, et elle le dit franchement.\n\nLa recherche ne montre que les étiquettes **de la case ouverte** : une étiquette d'éclairage n'a rien à faire dans la case du trait.",
+  },
+
+  "assistant.texte": {
+    nom: "Le texte à copier",
+    ou: "univers",
+    quoi: "Ta description assemblée, prête à coller dans un outil d'images grand public.",
+    change:
+      "**Rien, et pas un centime** : ce texte ne part nulle part depuis l'atelier. Tu le colles où tu veux, tu récupères des images, tu les déposes sur le tableau.",
+    origine: "les étapes précédentes, reprises mot pour mot",
+    long:
+      "Il répond à un vrai problème : **on n'a pas toujours d'images à déposer**, et un jeu qui démarre n'a que des mots. L'atelier a bien de quoi générer lui-même, mais chaque image se paierait avant même que le jeu existe, et sur un modèle choisi à un moment où rien n'est réglé.\n\nEt il a une seconde vertu : **c'est la première fois qu'on voit sa description assemblée**. Beaucoup de contradictions se remarquent là, en lisant les lignes à la suite.",
+  },
+
+  "assistant.poses": {
+    nom: "Les poses et les états",
+    ou: "univers",
+    quoi: "Ce que chaque chose du jeu peut faire — au repos, en marche, ouverte, vidée.",
+    change:
+      "Chaque pose est une case à remplir dans le codex. **Le nombre d'images d'une pose vient du choix de vue**, pas d'une saisie : il ne se retape plus.",
+    origine: "toi · six poses de personnage au départ",
+  },
+
+  "assistant.emplacements": {
+    nom: "Les emplacements d'équipement",
+    ou: "univers",
+    quoi: "Les endroits d'un corps où l'on peut accrocher une pièce — la tête, le dos, la main.",
+    change:
+      "**L'ordre compte** : il décide de quelle pièce se dessine par-dessus l'autre. L'étape ne sert que si un type de ce jeu a une silhouette — un jeu de tuiles et de décors n'équipe personne.",
+    origine: "toi · vide au départ",
+  },
+
+  "assistant.cle": {
+    nom: "La clé du fournisseur",
+    ou: "univers",
+    quoi: "Ce qui autorise l'atelier à demander une image. Le seul préalable dur du produit.",
+    change:
+      "Sans elle, **rien ne part** : le bouton qui paie reste éteint et porte sa raison. Elle vaut pour tous tes jeux, pas seulement celui-ci.",
+    origine: "toi · trois portes, une seule pièce",
+    long:
+      "Elle se dépose ici, dans la fenêtre des réglages, ou par la variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. La changer ne demande aucun redémarrage.",
+  },
+
   // ── La sixième place : les contours ───────────────────────────────────────
   //
   // **La seule table entièrement neuve du lot** (E5) : rien n'en existait dans

@@ -36,6 +36,8 @@ from dataclasses import replace
 from typing import Any, Iterable, Mapping
 
 from atelier.depot import Base, Fichiers
+from atelier.domaine.vue import phrase_de_calage, phrase_de_grille, phrases_du_produit
+from atelier.domaine.vue import vue as vue_connue
 from atelier.domaine.carte import (
     ATTENTE,
     ECHOUEE,
@@ -833,6 +835,7 @@ class ServiceUnivers:
         bible: Iterable[dict[str, Any]] | None = None,
         bareme: Iterable[dict[str, Any]] | None = None,
         cible_px: int | None = None,
+        vue: str | None = None,
         couleurs: int | None = None,
         modeles: dict[str, str] | None = None,
         modele_planche: str | None = None,
@@ -875,6 +878,29 @@ class ServiceUnivers:
                     "pixels, ou aucune"
                 )
             univers.cible_px = cible_px
+            # **Un choix unique remplit le réglage et la phrase qui part**, et
+            # c'est ce qui répare la contradiction mesurée du dépôt : le
+            # réglage disait 128 pendant que le texte envoyé disait 64, trois
+            # fois. Les deux ne peuvent plus diverger parce qu'ils viennent du
+            # même geste — et la phrase reste du texte libre, que l'auteur
+            # corrige s'il veut, comme partout ailleurs.
+            univers.bible = _phrase_posee(univers.bible, "rendu", phrase_de_grille(cible_px))
+            univers.bible = _phrase_posee(
+                univers.bible, "technique", phrase_de_calage(cible_px)
+            )
+
+        if vue is not None:
+            connue = vue_connue(vue)
+            if vue and connue is None:
+                raise UniversRefuse(f"vue inconnue « {vue} »")
+            univers.vue = vue
+            # La seconde moitié du même geste : la phrase de vue. **Le nombre de
+            # directions, lui, ne part plus dans le texte** — retiré le 31 août
+            # 2026, parce qu'il contredisait la consigne des six planches
+            # d'équipement du projet, et que chaque image dit déjà elle-même la
+            # direction qu'elle montre.
+            if connue is not None:
+                univers.bible = _phrase_posee(univers.bible, "vue", connue.phrase)
 
         if couleurs is not None:
             if not COULEURS_MIN <= couleurs <= COULEURS_MAX:
@@ -914,6 +940,37 @@ class ServiceUnivers:
         # et le catalogue deux fois.
         self._annoncer_univers(accorde)
         return accorde
+
+    def consequences(self, projet: str, *, cible_px: int | None = None) -> dict[str, Any]:
+        """Ce qu'un changement de taille casserait, avant qu'on le fasse (E8).
+
+        **Le plus coûteux des dix réglages, et de loin.** Tout ce qui a été
+        fabriqué a été découpé à l'ancienne taille ; les images ne se recoupent
+        pas, il faut les refabriquer, et chacune se paie. La ligne le dit avec
+        le compte et le coût estimé — puis laisse passer.
+
+        **Le coût vient de ce qui a été payé dans ce jeu**, jamais d'un tarif
+        écrit ici : un prix moyen d'appel change avec le modèle, et un chiffre
+        en dur aurait vieilli au premier changement de catalogue. Sans aucun
+        appel payé, il vaut zéro, et l'écran dit alors seulement le compte.
+        """
+        objet = self._exige(projet)
+        actuelle = objet.univers.cible_px
+        if cible_px is None or cible_px == actuelle:
+            return ConsequencesDuReglage(cible=actuelle).en_json()
+
+        images = [
+            a
+            for a in self._bibliotheque.chercher(projet=projet, limite=100_000)
+            if a.recette.grille is not None and a.recette.grille.cible == actuelle
+        ]
+        payantes = [a.cout_usd for a in images if a.cout_usd > 0]
+        moyen = (sum(payantes) / len(payantes)) if payantes else 0.0
+        return ConsequencesDuReglage(
+            images=len(images),
+            cout_usd=moyen * len(images),
+            cible=actuelle,
+        ).en_json()
 
     # ── Ce qui part avec une génération ──────────────────────────────────────
 
@@ -1285,3 +1342,71 @@ def _quantification_neuve(univers: Univers):
     projet impose » n'a qu'un seul endroit où se lire.
     """
     return univers.recette_de(None).quantification
+
+
+def _phrase_posee(bible: tuple[Champ, ...], nom: str, phrase: str) -> tuple[Champ, ...]:
+    """Réécrire la phrase d'une case de la bible — **et rien d'autre**.
+
+    « Un choix unique remplit tous les endroits qui doivent s'accorder » (E8) :
+    la taille écrit la grille et le calage, la vue écrit le cadrage. Ce sont les
+    seuls endroits du produit où le code touche à un texte de la bible, et la
+    borne est étroite.
+
+    **Le produit ne réécrit jamais ce que l'auteur a tapé.** Il n'écrit que dans
+    une case vide, ou sur une phrase qu'il avait lui-même écrite — la liste de
+    celles-là est close et vient du domaine. Sans cette borne, changer une
+    taille effacerait sous les yeux de l'auteur une description qu'il a mis du
+    temps à trouver, et « c'est du texte libre » cesserait d'être vrai.
+
+    **L'état actif ne bouge pas.** Une case éteinte le reste : l'auteur a décidé
+    qu'elle ne partait pas, et un réglage de taille n'a pas à revenir là-dessus.
+    """
+    ecrites = phrases_du_produit()
+    return tuple(
+        replace(champ, texte=phrase)
+        if champ.nom == nom and (not champ.texte.strip() or champ.texte in ecrites)
+        else champ
+        for champ in bible
+    )
+
+
+class ConsequencesDuReglage:
+    """Ce qu'un changement de réglage casse, **avec les vrais chiffres**.
+
+    « Rien n'est jamais grisé dans l'assistant » (E8) : un changement qui casse
+    du travail déjà payé affiche le compte et le coût, puis laisse décider. Le
+    produit n'a qu'un seul refus automatique — le compte d'images — et en
+    ajouter un deuxième reviendrait à bloquer un auteur sur son propre jeu. Un
+    chiffre exact aide mieux qu'une case grise.
+
+    **Elle ne se calcule que sur ce qui est là.** Aucune estimation de ce qui
+    n'existe pas, aucune projection : le nombre d'images déjà découpées à
+    l'ancienne taille, et ce que les refabriquer coûterait au prix moyen de ce
+    qui a déjà été payé dans ce jeu. Sans historique de prix, le coût est nul et
+    la phrase le dit plutôt que d'inventer un tarif.
+    """
+
+    __slots__ = ("images", "cout_usd", "cible", "poses", "images_de_pose")
+
+    def __init__(
+        self,
+        images: int = 0,
+        cout_usd: float = 0.0,
+        cible: int = 0,
+        poses: int = 0,
+        images_de_pose: int = 0,
+    ) -> None:
+        self.images = images
+        self.cout_usd = cout_usd
+        self.cible = cible
+        self.poses = poses
+        self.images_de_pose = images_de_pose
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "images": self.images,
+            "cout_usd": round(self.cout_usd, 4),
+            "cible": self.cible,
+            "poses": self.poses,
+            "images_de_pose": self.images_de_pose,
+        }
