@@ -847,20 +847,20 @@ disparaît : on ne le cherche plus, il est là quand il sert.
 
 #### Critères d'acceptation
 
-- [ ] La barre montre les sept places dans l'ordre où elles s'appliquent, et l'ordre ne se change pas
-- [ ] Le carré d'une place est plein si et seulement si la place change l'image — une place posée qui ne change rien a un carré creux
-- [ ] Une table indisponible s'ouvre, et son panneau porte la raison en clair, à la place des réglages, avec ce qu'il faut faire
-- [ ] Le trait de la barre sépare les sept places des deux fabriques, et les fabriques n'ont pas de carré
-- [ ] L'image brute et l'image rendue se comparent côte à côte et superposées, et le mode est écrit dès que ce n'est pas le rendu
-- [ ] On passe à l'image voisine sans que la table ouverte se referme
-- [ ] Vider une place et vider la recette entière sont deux gestes distincts, à deux endroits distincts
-- [ ] Le détourage propose les poches de fond enfermées, cerclées et comptées, et n'en efface aucune de lui-même
-- [ ] La pipette retire une tache, ou toutes les taches de sa couleur, au choix écrit
-- [ ] Le rectangle de recadrage se pose sur l'image, et le traitement l'honore
-- [ ] Le curseur d'occupation ne s'arrête que là où l'image change, et dit sur combien de pixels il tombe
-- [ ] La quantification atteint les couleurs déduites d'une image et le tramage, tous deux déjà portés par le modèle
-- [ ] L'aire minimale liste les taches qu'elle va effacer, triées, et la liste se coupe là où le seuil tombe
-- [ ] Le découpage s'ouvre depuis la barre, et l'écran Découpe n'existe plus
+- [x] La barre montre les sept places dans l'ordre où elles s'appliquent, et l'ordre ne se change pas
+- [x] Le carré d'une place est plein si et seulement si la place change l'image — une place posée qui ne change rien a un carré creux
+- [x] Une table indisponible s'ouvre, et son panneau porte la raison en clair, à la place des réglages, avec ce qu'il faut faire
+- [x] Le trait de la barre sépare les sept places des deux fabriques, et les fabriques n'ont pas de carré
+- [x] L'image brute et l'image rendue se comparent côte à côte et superposées, et le mode est écrit dès que ce n'est pas le rendu
+- [x] On passe à l'image voisine sans que la table ouverte se referme
+- [x] Vider une place et vider la recette entière sont deux gestes distincts, à deux endroits distincts
+- [x] Le détourage propose les poches de fond enfermées, cerclées et comptées, et n'en efface aucune de lui-même
+- [ ] La pipette retire une tache, ou toutes les taches de sa couleur, au choix écrit — **le seul critère ouvert de l'étape.** Elle demande un champ de plus à la recette, et ce qu'il retient n'est pas tranché : des identifiants de taches, qui se recalculent et se déplacent, ou des points, qui survivent au recalcul
+- [x] Le rectangle de recadrage se pose sur l'image, et le traitement l'honore
+- [x] Le curseur d'occupation ne s'arrête que là où l'image change, et dit sur combien de pixels il tombe
+- [x] La quantification atteint les couleurs déduites d'une image et le tramage, tous deux déjà portés par le modèle
+- [x] L'aire minimale liste les taches qu'elle va effacer, triées, et la liste se coupe là où le seuil tombe
+- [x] Le découpage s'ouvre depuis la barre, et l'écran Découpe n'existe plus
 
 #### Bloquée par
 
@@ -929,7 +929,7 @@ porte de moins, pas un geste de moins.
 ---
 
 ### E5 · Les deux places qui manquaient — le contour et la main
-**User stories** : 205, 206, 207, 208, 209, 210
+**User stories** : 205, 206, 207, 208, 209, 210 · *8 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -949,18 +949,66 @@ proposée sans être imposée, et une couleur hors palette est marquée au lieu 
 
 #### Critères d'acceptation
 
-- [ ] Le contour se règle en épaisseur, en couleur et en position, et se pose après la grille et après la quantification
-- [ ] Choisir la position extérieure écrit, au moment du choix, que l'image rendue s'agrandit, et de combien
-- [ ] La main ôte et remet des pixels à main levée puis au pixel
-- [ ] Les passages s'empilent en calques nommables, masquables et réordonnables
-- [ ] Un passage survit à un changement de taille de grille, et se défait passage par passage
-- [ ] La palette du jeu est proposée et jamais imposée ; une couleur hors palette est marquée, pas refusée
-- [ ] La main est la dernière place de la recette, et rien ne se rejoue après elle
-- [ ] Le rendu reste un cache : effacer le rendu et le recalculer redonne exactement la même image
+- [x] Le contour se règle en épaisseur, en couleur et en position, et se pose après la grille et après la quantification
+- [x] Choisir la position extérieure écrit, au moment du choix, que l'image rendue s'agrandit, et de combien
+- [x] La main ôte et remet des pixels à main levée puis au pixel
+- [x] Les passages s'empilent en calques nommables, masquables et réordonnables
+- [x] Un passage survit à un changement de taille de grille, et se défait passage par passage
+- [x] La palette du jeu est proposée et jamais imposée ; une couleur hors palette est marquée, pas refusée
+- [x] La main est la dernière place de la recette, et rien ne se rejoue après elle
+- [x] Le rendu reste un cache : effacer le rendu et le recalculer redonne exactement la même image
 
 #### Bloquée par
 
 - **E3** — les deux places n'existent que dans la barre des tables, et se règlent en voyant grand.
+
+#### Ce que la tenir a trouvé
+
+**Poser un réglage effaçait le calque, et le défaut est plus vieux que les
+tables.** La charge qu'envoie l'écran n'a pas de champ pour dire une différence
+— elle se pose par ses propres routes, le rectangle d'un côté, les deux couches
+de la main de l'autre. Elle repartait donc à *rien* à chaque réglage, et
+**retoucher la grille d'un calque le rendait à sa case**, c'est-à-dire au corps
+habillé, sans un mot. Le défaut vivait dans la fiche depuis C3 ; personne ne
+l'avait vu parce qu'on ne retouche presque jamais un calque par sa recette — les
+tables viennent de le mettre à un clic de toutes les images. Ce qui répare n'est
+pas un champ de plus dans la charge, c'est de dire une fois **de quoi cette
+charge-là parle**.
+
+**Les mesures d'une table étaient prises à une autre échelle que le réglage
+qu'elles décrivent.** Livrées en E3, elles se prenaient sur l'image *détourée* —
+donc à la taille du brut, mille pixels de côté — alors que le nettoyage des
+bords s'applique tout à la fin, sur la case. Une miette de six pixels dans le
+rendu en pesait des centaines dans la liste, et le curseur d'aire minimale,
+gradué de 0 à 64, ne pouvait rien y couper : les deux nombres ne parlaient pas
+de la même image. La mesure rejoue désormais la recette **arrêtée avant les
+bords**, qui est exactement l'image que le seuil va trancher — et c'est aussi
+celle que le contour va longer.
+
+**Une maquette a supposé le code une troisième fois, et sur la même famille de
+détail.** La table des contours compte l'épaisseur « en blocs quand la grille
+est posée », et écrit `2 blocs de 4 px · 8 px dans l'image rendue`. Or dans ce
+dépôt la remise sur grille rend une case de la taille demandée : **un pixel de
+l'image rendue *est* un bloc**, il n'y a pas de second facteur, et le jumeau
+annoncé n'existe pas. L'écran écrit donc ce qui est vrai — *tant de pixels de
+l'image rendue, celle qui part dans le jeu* — plutôt qu'un chiffre et sa
+conversion vers rien. C'est le même défaut que B-9 et A-16, et il vaut la peine
+d'être compté : trois fois sur vingt-six maquettes.
+
+**Le pinceau a changé de maison, et c'est le sens de la dépendance qui l'a
+décidé.** Il vivait dans le module du calque depuis C4, quand la main ne servait
+qu'à affiner un masque de différence. Devenue la septième place, elle passe sur
+n'importe quelle image — donc sur le traitement ordinaire, que le calque importe
+déjà. L'écrire deux fois aurait fini par ne plus rendre le même masque au rayon
+1, et c'est très exactement la panne que le remplissage par plages avait évitée
+en T5.
+
+**Une recette nommée emportait la différence de l'image où on l'avait prise.**
+Trouvé en refermant la première correction : `nommer` enregistrait la recette
+entière, différence comprise, et la rappeler ailleurs aurait fabriqué le calque
+d'une autre image. Une différence nomme *une seconde image précise* ; elle ne se
+transporte pas. Elle ne s'enregistre plus, et le rappel passe par le même chemin
+que l'écran.
 
 ---
 

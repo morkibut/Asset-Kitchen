@@ -287,6 +287,12 @@ def test_le_defaut_est_telle_quelle(client):
         "grille": None,
         "quantification": None,
         "bords": None,
+        # Les deux places de E5. Elles sont dans cette liste-ci parce que le
+        # critère est *toutes les places sont vides*, et qu'une place de plus
+        # qui ne serait pas nommée ici laisserait passer le jour où l'import se
+        # remet à en poser une.
+        "contours": None,
+        "main": None,
         "nom": None,
     }
     # **Le rendu *est* le brut**, et il n'y a donc pas de cache : les

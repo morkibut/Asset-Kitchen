@@ -33,11 +33,15 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation
 from atelier.domaine.recette import (
     ANCRAGES,
+    EPAISSEUR_MAX,
     MOTEURS,
+    POSITIONS,
     RAYON_MAX,
     TRAMAGES,
+    TROUS,
     Grille,
     Difference,
+    Main,
     Passe,
     Recette,
 )
@@ -51,7 +55,14 @@ from atelier.image import (
     rendre_en_png,
     taches,
 )
-from atelier.image.traitement import composantes
+from atelier.image.traitement import (
+    composantes,
+    peindre,
+    pinceau,
+    pose_du_calque,
+    queue,
+    sans_les_deux_dernieres,
+)
 from atelier.image.calque import avec_alpha, differencier
 from atelier.services.evenements import Diffusion
 
@@ -171,26 +182,37 @@ class ServiceAssets:
         }
 
     def taches_de(self, identifiant: str, plafond: int = 200) -> dict[str, Any]:
-        """Ce qu'une table a besoin de savoir de l'image (E3).
+        """Ce qu'une table a besoin de savoir de l'image (E3, étendu en E5).
 
-        **Trois mesures, et aucune n'est un réglage** : les taches que le
+        **Quatre mesures, et aucune n'est un réglage** : les taches que le
         nettoyage des bords va effacer, les poches de fond que le sujet enferme,
-        et les crans d'occupation où la remise sur grille change vraiment
-        quelque chose. Les trois répondent à la même question posée trois fois —
-        *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+        les crans d'occupation où la remise sur grille change vraiment quelque
+        chose, et ce que chaque couche de la main touche. Toutes répondent à la
+        même question posée quatre fois — *qu'est-ce que ce curseur va faire,
+        avant que je le bouge ?*
 
-        **Sur l'image détourée, jamais sur le brut.** Les taches d'un JPEG opaque
-        sont une seule tache : le sujet, plus tout le fond. Ce qui intéresse une
-        table est ce que la recette a laissé — et c'est exactement ce que
-        `detourer` rend.
+        **À l'échelle où le réglage agit, et c'est une correction du 31 août
+        2026.** Elles se prenaient sur l'image *détourée* — donc à la taille du
+        brut, mille pixels de côté — alors que le nettoyage des bords s'applique
+        tout à la fin, sur la case. Une miette de six pixels dans le rendu en
+        pesait quinze cents dans la liste, et le curseur d'aire minimale, gradué
+        de 0 à 64, ne pouvait rien y couper : les deux nombres ne parlaient pas
+        de la même image. La mesure rejoue donc la recette **arrêtée avant les
+        bords**, ce qui est exactement l'image que le seuil va trancher — et
+        c'est aussi celle que le contour va longer, à ce que les bords en
+        retirent près, que l'écran sait retrancher tout seul.
 
         **Une route à part de l'asset**, pour la raison de `impose` : la charge
         d'un asset part deux cents fois par relecture de grille, et un
-        remplissage par plages sur mille pixels de côté n'a rien à faire là.
+        remplissage par plages n'a rien à faire là.
         """
         asset = self._trouver(identifiant)
-        octets, _ = self.octets(asset, brut=True)
-        rgba = detourer(asset.recette, octets)
+        # Avant les bords : la liste doit montrer ce que le seuil va effacer, et
+        # une liste prise après lui aurait déjà perdu ce qu'elle décrit.
+        avant_les_bords = replace(
+            sans_les_deux_dernieres(asset.recette), bords=None
+        )
+        rgba = self._tableau_avec(asset, avant_les_bords)
         trouvees = taches(rgba, plafond=plafond)
         # **Ce qui est coupé se dit**, jamais tu en silence : une image bruitée
         # peut porter des milliers de taches d'un pixel, et une liste tronquée
@@ -203,6 +225,47 @@ class ServiceAssets:
             "crans_occupation": crans_occupation(
                 rgba, asset.recette.grille or Grille()
             ),
+            # **Une image entièrement opaque n'a pas de bord de sujet** — le
+            # seul cas où le contour est indisponible, et l'écran a besoin de
+            # le savoir pour griser la table avec sa raison. Ce n'est pas une
+            # mesure de plus : c'est la même image, regardée d'une ligne.
+            "opaque": bool(rgba[:, :, 3].all()),
+            "main": self._pixels_de_la_main(asset),
+        }
+
+    def _pixels_de_la_main(self, asset: Asset) -> dict[str, Any] | None:
+        """Ce que chaque couche de la septième place change (E5).
+
+        Sur l'opacité, des **pixels touchés** : c'est le nombre qui dit si la
+        main a servi de correction ou de détourage déguisé, et il ne se lit que
+        contre l'image — remettre un pixel déjà présent ne touche rien. Sur un
+        calque de dessin, des **pixels posés**, qui ne dépendent que des
+        passages.
+
+        `None` quand la place est vide, et l'écran se tait alors plutôt que
+        d'écrire des zéros : une table qu'on n'a pas ouverte n'a rien à
+        raconter.
+
+        **L'image est rejouée sans la main, jamais avec** : mesurer sur le rendu
+        final compterait ce qui reste après que le dernier passage a effacé
+        l'avant-dernier, ce qui n'est pas la question posée.
+        """
+        main = asset.recette.main
+        if main is None:
+            return None
+        avant = self._tableau_avec(asset, replace(asset.recette, main=None))
+        forme = avant.shape[:2]
+        present = avant[:, :, 3] > 0
+        touches = (
+            int((peindre(present, main.opacite) != present).sum())
+            if main.opacite
+            else 0
+        )
+        return {
+            "opacite": touches,
+            "calques": [
+                int(pose_du_calque(forme, calque)[0].sum()) for calque in main.calques
+            ],
         }
 
     def recette_du_projet(self, generation: Generation) -> Recette:
@@ -486,6 +549,11 @@ class ServiceAssets:
         **Épingle** : « toucher une recette à la main épingle l'asset »
         (`docs/PRD.md`). Écrit ici, relu en T4 — un changement de palette de
         projet saute les épinglés et rend le compte des deux.
+
+        **Elle pose la recette entière, différence comprise** : c'est ce dont
+        `borner` et `affiner` ont besoin, eux qui n'écrivent qu'elle. Ce qui
+        arrive de l'écran ne sait pas la dire, et passe donc par
+        `poser_les_places`.
         """
         asset = self._trouver(identifiant)
         self._verifier(recette, asset.projet)
@@ -494,6 +562,31 @@ class ServiceAssets:
         self._rendre(asset)
         self.sauver(asset)
         return asset
+
+    def poser_les_places(self, identifiant: str, recette: Recette) -> Asset:
+        """Les places de la recette, **sans toucher à la différence** (E5).
+
+        C'est le geste de l'écran, et le seul que l'écran sache faire : la
+        charge qu'il envoie n'a pas de champ pour dire une différence, parce
+        qu'une différence se pose ailleurs — le rectangle par `borner`, les deux
+        couches de la main par `affiner`. Elle repartait donc à `None` à chaque
+        réglage posé, et **retoucher la grille d'un calque le rendait à sa
+        case**, c'est-à-dire au corps habillé, sans un mot.
+
+        *Trouvé le 31 août 2026 en tenant E5, et le défaut est plus vieux que
+        les tables* : il vivait dans la fiche depuis C3. Personne ne l'avait vu
+        parce qu'on ne retouche presque jamais un calque par sa recette — les
+        tables viennent de le mettre à un clic de toutes les images.
+
+        Ce qui répare n'est pas un champ de plus dans la charge : c'est de dire
+        ici, une fois, **de quoi cette charge-là parle**. Un champ de plus
+        aurait rendu possible qu'un onglet en retard réécrive une différence
+        avec la version qu'il avait chargée.
+        """
+        asset = self._trouver(identifiant)
+        return self.poser_recette(
+            identifiant, replace(recette, difference=asset.recette.difference)
+        )
 
     def revenir_au_brut(self, identifiant: str) -> Asset:
         """Un seul geste, et l'image d'origine est de retour (US-64).
@@ -529,7 +622,10 @@ class ServiceAssets:
             raise RecetteRefusee("une recette nommée a besoin d'un nom")
         self._verifier(recette)
         enregistrees = self._fichiers.lire_recettes()
-        enregistrees[propre] = recette.sans_nom().en_json()
+        # **Sans sa différence** : elle nomme le corps d'une case précise, et
+        # une recette nommée est faite pour être reposée ailleurs. La garder
+        # aurait fabriqué un calque de l'image d'à côté au premier rappel.
+        enregistrees[propre] = replace(recette.sans_nom(), difference=None).en_json()
         self._fichiers.ecrire_recettes(enregistrees)
         return self.recettes()
 
@@ -549,7 +645,11 @@ class ServiceAssets:
         enregistrees = self.recettes()
         if nom not in enregistrees:
             raise RecetteRefusee(f"aucune recette nommée « {nom} »")
-        return self.poser_recette(identifiant, replace(enregistrees[nom], nom=nom))
+        # **Par les places, jamais par la recette entière** : une différence
+        # nomme *une autre image précise*, donc elle ne se transporte pas —
+        # `nommer` ne l'enregistre plus, et ceci protège les recettes déjà
+        # écrites sur le disque avant que ce soit vrai.
+        return self.poser_les_places(identifiant, replace(enregistrees[nom], nom=nom))
 
     # ── Le rendu ─────────────────────────────────────────────────────────────
 
@@ -591,35 +691,58 @@ class ServiceAssets:
     def _calculer_avec(self, asset: Asset, recette: Recette) -> Rendu:
         """Le même calcul, sur une recette qu'on lui donne.
 
-        **Un seul chemin de rendu, deux appelants.** Le second est l'avant
-        d'US-151, qui rejoue la recette de l'asset avec les deux couches de la
-        main vidées : deux chaînes écrites à deux endroits finiraient par ne plus
-        rendre la même image, et la comparaison mesurerait alors l'écart entre
-        deux codes plutôt que l'effet d'une retouche.
+        **Un seul chemin de rendu, trois appelants.** Le deuxième est l'avant
+        d'US-151, qui rejoue la recette de l'asset avec les mains vidées ; le
+        troisième est la mesure d'une table, qui la rejoue arrêtée à un rang.
+        Deux chaînes écrites à deux endroits finiraient par ne plus rendre la
+        même image, et la comparaison mesurerait alors l'écart entre deux codes
+        plutôt que l'effet d'une retouche.
         """
-        return finir(
+        return finir(self._tableau_avec(asset, recette), recette)
+
+    def _tableau_avec(self, asset: Asset, recette: Recette) -> np.ndarray:
+        """Le rendu, en tableau — l'étape d'avant le PNG.
+
+        Ce que les mesures d'une table veulent : elles décrivent des pixels, et
+        les rouvrir depuis des octets paierait un encodage pour rien.
+        """
+        return queue(
             self._differencier(asset, self.detourage(asset), recette.difference),
             recette,
         )
 
     def _avant(self, asset: Asset) -> bytes | None:
-        """Le calque **avant que la main y passe** (C4, US-151).
+        """L'image **avant que la main y passe** (C4 US-151, puis E5).
 
         **Rien n'est écrit** : ni cache sur le disque, ni asset sauvé, ni
         empreinte déplacée. L'avant est une lecture, pas un état — le poser sur
         le disque en ferait une image que plus rien ne met à jour le jour où le
         recalage se rejoue, et il faudrait alors la nettoyer, donc la tenir.
 
-        Rend `None` quand il n'y a pas d'avant : une image sans différence, ou
-        un calque sur lequel la main n'est pas passée. **L'appelant sert alors
-        le rendu ordinaire** plutôt qu'un refus — demander l'avant d'une image
-        que personne n'a touchée est une question dont la réponse est l'image
-        elle-même, pas une erreur.
+        **Deux mains, et une seule question.** Celle de C4 affine le masque d'un
+        calque d'équipement ; celle d'E5 est la septième place de la recette et
+        passe sur n'importe quelle image. *Avant ›* les retire toutes les deux,
+        parce que la question posée est la même — *qu'est-ce que j'ai changé
+        moi-même ?* — et qu'un bouton qui n'en retirerait qu'une mentirait sur
+        un calque qu'on vient de retoucher au pixel.
+
+        Rend `None` quand il n'y a pas d'avant : une image sur laquelle aucune
+        main n'est passée. **L'appelant sert alors le rendu ordinaire** plutôt
+        qu'un refus — demander l'avant d'une image que personne n'a touchée est
+        une question dont la réponse est l'image elle-même, pas une erreur.
         """
         difference = asset.recette.difference
-        if difference is None or not difference.main_posee:
+        main = asset.recette.main
+        touchee = (difference is not None and difference.main_posee) or (
+            main is not None and not main.vide
+        )
+        if not touchee:
             return None
-        recette = replace(asset.recette, difference=difference.sans_main())
+        recette = replace(
+            asset.recette,
+            difference=difference.sans_main() if difference is not None else None,
+            main=None,
+        )
         return self._calculer_avec(asset, recette).octets
 
     def _differencier(
@@ -765,6 +888,38 @@ class ServiceAssets:
                     if not 0 <= trait.rayon <= RAYON_MAX:
                         raise RecetteRefusee(
                             f"{couche}, passage {rang} : le rayon va de 0 à {RAYON_MAX}"
+                        )
+
+        # **Le contour** (E5). Trois valeurs fermées et une borne ; la couleur,
+        # elle, n'est **pas** vérifiée contre la palette du projet — *une
+        # couleur hors palette se marque, elle ne se refuse pas* (US-210), et le
+        # refuser ici en ferait la seule place de la recette qui juge une
+        # couleur.
+        contour = recette.contours
+        if contour is not None:
+            if not 1 <= contour.epaisseur <= EPAISSEUR_MAX:
+                raise RecetteRefusee(
+                    f"l'épaisseur du contour va de 1 à {EPAISSEUR_MAX} pixels"
+                )
+            if contour.position not in POSITIONS:
+                raise RecetteRefusee(f"position de contour inconnue « {contour.position} »")
+            if contour.trous not in TROUS:
+                raise RecetteRefusee(f"traitement des trous inconnu « {contour.trous} »")
+
+        # **La main** (E5). Le même rayon que les deux couches ci-dessus, et
+        # pour la même raison : c'est le même pinceau.
+        main = recette.main
+        if main is not None:
+            couches: list[tuple[str, tuple[Any, ...]]] = [("l'opacité", main.opacite)]
+            couches += [
+                (calque.nom or f"calque {rang}", calque.passages)
+                for rang, calque in enumerate(main.calques, start=1)
+            ]
+            for nom, passages in couches:
+                for rang, trait in enumerate(passages, start=1):
+                    if not 0 <= trait.rayon <= RAYON_MAX:
+                        raise RecetteRefusee(
+                            f"{nom}, passage {rang} : le rayon va de 0 à {RAYON_MAX}"
                         )
 
     # ── Enregistrement ───────────────────────────────────────────────────────

@@ -23,18 +23,35 @@
 // grand, ses sœurs. C'est la grille de l'onglet Univers en vue toile, réemployée
 // — aucune largeur neuve.
 
-import { useState } from "react"
-import { api, type Asset, type EtatTraitement, type Recette, type Univers } from "../api"
+import { useEffect, useRef, useState } from "react"
+import {
+  api,
+  type Asset,
+  type EtatTraitement,
+  type Recette,
+  type TachesDeLAsset,
+  type Trait,
+  type Univers,
+} from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
 import { EnTetePanneau, Raison, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 import {
+  avecPassage,
+  mainDe,
+  OPACITE,
   PanneauBords,
+  PanneauContours,
   PanneauDetourage,
   PanneauGrille,
+  PanneauMain,
   PanneauQuantification,
   PanneauRecadrage,
+  passagesDe,
+  rayonDe,
   RESUME,
+  sansLeDernier,
+  useEtatMain,
   useMesures,
   useRecette,
 } from "./Places"
@@ -98,6 +115,15 @@ function valeur(table: Table, recette: Recette): string | null {
       return recette.bords && recette.bords.aire_min > 0
         ? RESUME.bords(recette.bords)
         : null
+    case "contours":
+      return recette.contours ? RESUME.contours(recette.contours) : null
+    // **Une pile de calques vides ne change pas l'image**, donc son carré reste
+    // creux : le carré se remplit quand la place *change l'image*, pas quand
+    // elle figure dans la recette. Le calque, lui, est gardé — on l'a créé.
+    case "main":
+      return recette.main && passagesDe(recette.main) > 0
+        ? RESUME.main(recette.main)
+        : null
     default:
       return null
   }
@@ -109,12 +135,23 @@ function valeur(table: Table, recette: Recette): string | null {
  *  raison en clair à la place de ses réglages, avec ce qu'il faut faire pour
  *  l'allumer. C'est la règle de T1 — *le grisé porte sa raison* — qui change
  *  d'endroit, pas qui disparaît : une puce n'a pas la place d'une phrase. */
-function indisponible(table: Table, traitement: EtatTraitement): string | null {
+function indisponible(
+  table: Table,
+  traitement: EtatTraitement,
+  mesures: TachesDeLAsset | null,
+): string | null {
   if (table === "quantification") return traitement.quantification.raison
-  if (table === "contours")
-    return "le tracé de contour n'est pas encore construit — il arrive avec la table des contours"
-  if (table === "main")
-    return "la retouche à la main n'est pas encore construite — elle arrive avec la table de la main"
+  // **Le seul cas du contour, et il est franc.** Une image entièrement opaque
+  // n'a pas de silhouette : tracer un contour dessus reviendrait à encadrer
+  // l'image entière — un rectangle sur les quatre bords, qui n'est jamais ce
+  // qu'on voulait. La seconde phrase compte autant que la première : elle dit
+  // quoi faire, et le détourage est la première de la barre.
+  if (table === "contours" && mesures?.opaque)
+    return "cette image est entièrement opaque : il n'y a pas de bord de sujet à tracer, seulement les quatre bords du cadre. Détoure-la d'abord — c'est la première table de la barre."
+  // **La main n'est jamais indisponible**, et c'est l'exacte symétrie du
+  // contour : toute image se retouche, y compris une image entièrement opaque
+  // — *ôter* y crée de la transparence, et un calque de dessin s'y pose comme
+  // partout. Son carré est donc toujours là.
   if (table === "superposition")
     return "la superposition n'est pas encore construite — elle arrive avec sa fabrique"
   return null
@@ -137,12 +174,17 @@ function Carre({ plein }: { plein: boolean }) {
 export function BarreDesTables({
   recette,
   traitement,
+  mesures,
   ouverte,
   onOuvrir,
   onToutDefaire,
 }: {
   recette: Recette
   traitement: EtatTraitement
+  /** Ce que le serveur a mesuré. Le contour s'y lit une seule chose — *cette
+   *  image a-t-elle un bord de sujet ?* — et tant que la réponse n'est pas
+   *  arrivée, la table n'est pas grisée : on ne grise pas sur une ignorance. */
+  mesures: TachesDeLAsset | null
   ouverte: Table
   onOuvrir: (table: Table) => void
   onToutDefaire: () => void
@@ -150,7 +192,7 @@ export function BarreDesTables({
   return (
     <div className="flex h-[34px] shrink-0 items-center gap-1 border-b border-bord bg-fond-1 px-4">
       {TABLES.map(({ cle, nom, fabrique }, rang) => {
-        const dehors = indisponible(cle, traitement)
+        const dehors = indisponible(cle, traitement, mesures)
         const vaut = valeur(cle, recette)
         return (
           <span key={cle} className="flex items-center gap-1">
@@ -225,12 +267,19 @@ function Comparateur({
   onMode,
   opacite,
   onOpacite,
+  peint,
+  onAvant,
 }: {
   asset: Asset
   mode: Mode
   onMode: (mode: Mode) => void
   opacite: number
   onOpacite: (opacite: number) => void
+  /** La table ouverte se peint-elle ? **C'est la seule contrainte que le
+   *  comparateur reçoive** : les trois autres vues se lisent alors en
+   *  maintenant *Avant ›*, qui rend exactement ce qu'elles retiraient. */
+  peint?: boolean
+  onAvant?: (tenu: boolean) => void
 }) {
   return (
     <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px]">
@@ -246,8 +295,28 @@ function Comparateur({
         valeurs={["brut", "rendu", "cote", "superpose"] as const}
         valeur={mode}
         libelles={MODES}
+        indisponibles={peint ? (["brut", "cote", "superpose"] as const) : []}
         onChange={(v) => onMode(v as Mode)}
       />
+      {peint && (
+        <>
+          <span className="text-texte-3">
+            la main se pose sur le rendu — les autres vues se lisent en maintenant
+          </span>
+          {/* **Sa dernière maison.** L'appui récupère exactement ce que la
+              contrainte ci-dessus retire, et c'est pour ça qu'elle est
+              payable. */}
+          <button
+            type="button"
+            onPointerDown={() => onAvant?.(true)}
+            onPointerUp={() => onAvant?.(false)}
+            onPointerLeave={() => onAvant?.(false)}
+            className="mesure h-[24px] rounded-[2px] border border-bord-fort px-2 text-[10px] text-texte-2 hover:text-signal"
+          >
+            Avant ›
+          </button>
+        </>
+      )}
       {mode === "superpose" && (
         <input
           type="range"
@@ -304,15 +373,48 @@ export function EcranTables({
   const mesures = useMesures(asset)
   const [mode, setMode] = useState<Mode>("rendu")
   const [opacite, setOpacite] = useState(50)
+  const etatMain = useEtatMain(univers)
+  /** **Tenir montre l'avant** — un état d'appui, jamais une bascule : une
+   *  bascule laisserait l'écran sur l'avant après le regard, et la retouche
+   *  suivante se ferait sur une image qui n'est pas celle qu'on croit. */
+  const [avant, setAvant] = useState(false)
 
-  const dehors = indisponible(ouverte, traitement)
+  const dehors = indisponible(ouverte, traitement, mesures)
   const reglages = { recette, univers, traitement, regler, poser, mesures }
+
+  /** **Une table qui se peint force le rendu.** Le cas qui a tranché est *côte
+   *  à côte* : deux images à l'écran, et la main n'aurait pas su sur laquelle
+   *  elle écrit. Un outil dont la cible est ambiguë détruit une fois sur deux
+   *  — et l'appui *Avant ›* récupère exactement ce qu'on retire ici, ce qui est
+   *  la raison pour laquelle il pouvait disparaître partout ailleurs. */
+  const peint = ouverte === "main"
+  useEffect(() => {
+    if (peint) setMode("rendu")
+  }, [peint])
+
+  // Ctrl + Z retire le dernier passage de la couche active. La touche n'est
+  // écoutée que dans la table de la main : ailleurs elle appartient à la toile
+  // du tableau d'inspiration, et deux piles d'annulation sur la même touche
+  // seraient une pile de trop.
+  useEffect(() => {
+    if (!peint) return
+    const ecouter = (evenement: KeyboardEvent) => {
+      if (!(evenement.ctrlKey || evenement.metaKey) || evenement.key !== "z") return
+      const main = mainDe(recette)
+      if (passagesDe(main) === 0) return
+      evenement.preventDefault()
+      void poser({ ...recette, main: sansLeDernier(main, etatMain.actif) })
+    }
+    window.addEventListener("keydown", ecouter)
+    return () => window.removeEventListener("keydown", ecouter)
+  }, [peint, recette, etatMain.actif, poser])
 
   return (
     <div data-tables className="flex min-h-0 flex-1 flex-col">
       <BarreDesTables
         recette={recette}
         traitement={traitement}
+        mesures={mesures}
         ouverte={ouverte}
         onOuvrir={onOuvrir}
         onToutDefaire={() => void revenirAuBrut()}
@@ -347,6 +449,10 @@ export function EcranTables({
               <PanneauQuantification {...reglages} />
             ) : ouverte === "bords" ? (
               <PanneauBords {...reglages} />
+            ) : ouverte === "contours" ? (
+              <PanneauContours {...reglages} />
+            ) : ouverte === "main" ? (
+              <PanneauMain {...reglages} etat={etatMain} />
             ) : null}
           </div>
 
@@ -367,7 +473,23 @@ export function EcranTables({
         {/* ── L'image, en grand ─────────────────────────────────────────── */}
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="flex min-h-0 flex-1 items-center justify-center gap-4 p-6">
-            {(mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
+            {peint ? (
+              // **La surface se peint, et elle est la seule.** Pas de poignée,
+              // pas de rectangle, pas de cible : une cible de retaille au
+              // milieu d'une surface qu'on peint est un piège à clic, et ici
+              // toute la surface est peignable.
+              <ToileDeLaMain
+                asset={asset}
+                avant={avant}
+                etat={etatMain}
+                onPassage={(trait) =>
+                  void poser({
+                    ...recette,
+                    main: avecPassage(mainDe(recette), etatMain.actif, trait),
+                  })
+                }
+              />
+            ) : (mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
               // **Le rectangle se pose sur l'image, jamais dans un champ.** Le
               // modèle le porte depuis T2 et aucun écran ne l'avait montré : on
               // ne dessine pas un cadrage en tapant quatre nombres, on le
@@ -435,6 +557,8 @@ export function EcranTables({
             onMode={setMode}
             opacite={opacite}
             onOpacite={setOpacite}
+            peint={peint}
+            onAvant={setAvant}
           />
         </div>
 
@@ -474,6 +598,11 @@ const VIDER: Partial<Record<Table, (r: Recette) => Recette>> = {
   grille: (r) => ({ ...r, grille: null }),
   quantification: (r) => ({ ...r, quantification: null }),
   bords: (r) => ({ ...r, bords: null }),
+  contours: (r) => ({ ...r, contours: null }),
+  // **La pile entière, calques compris.** « Sans la main › » vide la table :
+  // garder les calques vidés de leurs passages laisserait une pile qui ne fait
+  // rien et que rien n'explique.
+  main: (r) => ({ ...r, main: null }),
 }
 
 function Soeur({
@@ -509,6 +638,155 @@ function Soeur({
   )
 }
 
+
+// ── La surface où la main écrit ─────────────────────────────────────────────
+
+/**
+ * L'image en grand, et le passage qu'on y trace.
+ *
+ * **Les coordonnées sont celles de l'image rendue**, coins inclus — c'est sur
+ * elle que la septième place s'applique, et c'est elle qui part dans le jeu.
+ * Le cadre *est* l'image, mis à l'échelle par calcul : une boîte qui ment
+ * décale ce qu'on pose dessus, et c'est la leçon du cadre de la Découpe.
+ *
+ * **Le trait se dessine à la largeur et à la couleur qu'il aura.** Sur un
+ * calque de dessin, la couleur choisie ; sur l'opacité, `--signal` dans les
+ * deux sens — garder et ôter sont deux gestes ordinaires, et `--echec`
+ * voudrait dire *ça détruit*, ce qu'une gomme ne fait pas.
+ *
+ * **Le curseur est un cercle du diamètre choisi.** Il dit ce que le prochain
+ * passage couvrira avant qu'on appuie : c'est la moitié du réglage, et sans lui
+ * le curseur de diamètre serait un nombre abstrait.
+ */
+function ToileDeLaMain({
+  asset,
+  avant,
+  etat,
+  onPassage,
+}: {
+  asset: Asset
+  avant: boolean
+  etat: ReturnType<typeof useEtatMain>
+  onPassage: (trait: Trait) => void
+}) {
+  const [trace, setTrace] = useState<[number, number][] | null>(null)
+  const [pointeur, setPointeur] = useState<{ x: number; y: number } | null>(null)
+  const cadre = useRef<HTMLDivElement | null>(null)
+
+  // Les dimensions du **rendu** : c'est lui que la main touche. Une recette
+  // vide n'en a pas — le rendu *est* le brut, et ce sont ses dimensions.
+  const largeur = asset.rendu_largeur || asset.largeur
+  const hauteur = asset.rendu_hauteur || asset.hauteur
+
+  const surLOpacite = etat.actif === OPACITE
+  const teinte = surLOpacite ? "var(--signal)" : etat.couleur
+
+  /** Le point sous le pointeur, en pixels de l'image rendue. */
+  const point = (evenement: React.PointerEvent<HTMLDivElement>): [number, number] => {
+    const boite = evenement.currentTarget.getBoundingClientRect()
+    const x = ((evenement.clientX - boite.left) / boite.width) * largeur
+    const y = ((evenement.clientY - boite.top) / boite.height) * hauteur
+    return [
+      Math.max(0, Math.min(largeur - 1, Math.floor(x))),
+      Math.max(0, Math.min(hauteur - 1, Math.floor(y))),
+    ]
+  }
+
+  const terminer = () => {
+    if (!trace) return
+    setTrace(null)
+    onPassage({
+      garde: etat.sens,
+      rayon: rayonDe(etat.diametre),
+      points: trace,
+      couleur: surLOpacite ? "" : etat.couleur,
+    })
+  }
+
+  return (
+    <div
+      ref={cadre}
+      data-toile-main
+      style={{ aspectRatio: `${largeur} / ${hauteur}` }}
+      className="relative max-h-full max-w-full cursor-none"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        setTrace([point(evenement)])
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        const boite = evenement.currentTarget.getBoundingClientRect()
+        setPointeur({
+          x: evenement.clientX - boite.left,
+          y: evenement.clientY - boite.top,
+        })
+        if (!trace) return
+        const [x, y] = point(evenement)
+        const dernier = trace[trace.length - 1]
+        // **Un point par pixel, pas un par événement.** Un pointeur envoie ce
+        // qu'il peut ; garder les doublons gonflerait la recette sans rien
+        // ajouter au tracé, que le serveur relie de toute façon.
+        if (dernier[0] === x && dernier[1] === y) return
+        setTrace([...trace, [x, y]])
+      }}
+      onPointerUp={terminer}
+      onPointerLeave={() => {
+        setPointeur(null)
+        terminer()
+      }}
+    >
+      <img
+        src={
+          avant
+            ? api.avant(asset.identifiant, asset.empreinte)
+            : api.rendu(asset.identifiant, asset.empreinte)
+        }
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+
+      {/* Le passage en cours, à sa vraie largeur : elle vaut (2 × rayon + 1)
+          pixels d'image, mise à l'échelle du cadre. Zoomer l'épaissit ; c'est
+          voulu, puisqu'elle mesure l'image et non le châssis. */}
+      {trace && trace.length > 0 && (
+        <svg
+          aria-hidden
+          viewBox={`0 0 ${largeur} ${hauteur}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        >
+          <polyline
+            points={trace.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ")}
+            fill="none"
+            stroke={etat.sens ? teinte : "var(--signal)"}
+            strokeOpacity={etat.sens ? 1 : 0.45}
+            strokeWidth={etat.diametre}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+
+      {/* Le curseur : un cercle du diamètre choisi, bord `--signal`, fond à
+          18 %. Il ne suit pas le zoom du châssis — il mesure l'image, et sa
+          taille à l'écran est celle qu'il couvrira. */}
+      {pointeur && cadre.current && (
+        <span
+          aria-hidden
+          style={{
+            left: pointeur.x,
+            top: pointeur.y,
+            width: (etat.diametre / largeur) * cadre.current.clientWidth,
+            height: (etat.diametre / largeur) * cadre.current.clientWidth,
+          }}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal bg-signal/[.18]"
+        />
+      )}
+    </div>
+  )
+}
 
 // ── Le rectangle de recadrage, posé sur l'image ─────────────────────────────
 

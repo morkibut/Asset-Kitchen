@@ -357,7 +357,11 @@ def test_les_deux_couches_ne_se_detruisent_jamais(client, double):
     )
     difference = _lire(client, identifiant)["recette"]["difference"]
     assert len(difference["affinage"]) == 2
-    assert difference["retouche"] == retouche
+    # Le passage revient avec sa couleur — **vide**, parce qu'une couche de
+    # masque ne pose aucune couleur : elle décide de ce qui reste. Le champ est
+    # arrivé en E5 avec les calques de dessin de la septième place, et le reste
+    # de la charge est mot pour mot ce qui est parti.
+    assert difference["retouche"] == [{**trait, "couleur": ""} for trait in retouche]
 
     # Reprendre la retouche : le masque ne bouge pas.
     _main(client, identifiant, "retouche", [])

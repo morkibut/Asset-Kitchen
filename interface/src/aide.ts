@@ -665,6 +665,129 @@ export const AIDE: Record<string, Explication> = {
       "Une tache est une zone opaque connexe, trouvée par le même remplissage par plages que la détection de la découpe — donc la même réponse sur la même image.\n\nMonter trop haut efface un détail détaché du corps : la pointe d'une lance, une étincelle, un éclat de magie. Le réglage est le dernier de la recette parce qu'il travaille sur ce que les quatre autres ont laissé, et pas sur l'image reçue.",
   },
 
+  // ── La sixième place : les contours ───────────────────────────────────────
+  //
+  // **La seule table entièrement neuve du lot** (E5) : rien n'en existait dans
+  // le produit. La panne qu'elle répare est précise — la mise sur grille mange
+  // les contours fins, et ce qui reste n'est pas un contour absent, ce qui
+  // serait franc, mais un contour *troué*, qui se voit et ne se rattrape pas.
+
+  "contours.epaisseur": {
+    nom: "épaisseur du contour",
+    ou: "retouche",
+    quoi: "La largeur du trait, en pixels de l'image rendue — celle qui part dans le jeu.",
+    change:
+      "Rien à la génération. Au-delà de huit ce n'est plus un contour, c'est un cadre, et il vaut mieux le dessiner à la main : le plafond est là pour ça, pas pour une limite technique.",
+    origine: "toi · défaut 1 px",
+    long:
+      "L'unité est celle de l'image **rendue**, et pas celle de l'image reçue : une fois la grille posée, l'image rendue *est* la case du sprite, et un pixel y est un bloc.\n\nLa table ne devine pas l'épaisseur, et elle pourrait — mesurer celle du contour existant là où il survit. Mais un contour troué donne des épaisseurs qui varient de un à trois, et proposer la médiane de quelque chose de cassé serait deviner à partir de la panne qu'on répare.",
+  },
+
+  "contours.couleur": {
+    nom: "couleur du contour",
+    ou: "retouche",
+    quoi: "La couleur exacte du trait. La palette du jeu est proposée en rangée ; le champ reste libre.",
+    change:
+      "Rien à la génération. Une couleur qui n'est pas dans la palette du jeu se marque « hors palette » au lieu d'être refusée — le produit constate, il ne décide pas à ta place.",
+    origine: "toi · proposé : la plus sombre de ta palette, ou le noir sans palette",
+    long:
+      "La règle du produit tient en une ligne : **la palette est imposée par la quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle est proposée partout ailleurs.** Ici on est *après* la quantification — ce que le trait pose ne sera pas rattrapé, et c'est précisément ce qui mérite d'être dit plutôt que refusé.",
+  },
+
+  "contours.position": {
+    nom: "position du contour",
+    ou: "retouche",
+    quoi: "Dehors, dedans, ou à cheval sur le bord de la silhouette.",
+    change:
+      "Posé dehors, le trait agrandit l'image rendue : c'est le seul réglage du produit qui change les dimensions du sprite sans qu'on le lui ait demandé. La table écrit de combien, au moment où tu choisis.",
+    origine: "toi · défaut externe",
+    long:
+      "**Externe** pose la ligne autour : le sujet n'est pas entamé, et les dimensions grandissent de deux fois l'épaisseur. **Interne** la pose en dedans : la boîte ne bouge pas, le sujet est mangé. **Centré** partage, et le pixel qui ne tombe pas juste va vers l'extérieur.\n\nLe défaut est externe pour la même raison que le pixel impair va dehors : agrandir est réversible, manger le sujet ne l'est pas.",
+  },
+
+  "contours.trous": {
+    nom: "les trous",
+    ou: "retouche",
+    quoi: "Un trou de la silhouette — une boucle de ceinture, l'espace entre un bras et un torse — reçoit-il la même ligne que le pourtour ?",
+    change:
+      "Rien à la génération. Cerclés, un trou plus petit que deux fois l'épaisseur se bouche : la table donne le compte et la plus petite taille pour que ça se voie venir.",
+    origine: "toi · défaut cerclés",
+    long:
+      "Un trou est un bord du sujet exactement comme le pourtour, et c'est ce que fait un style « contour noir 2 px » — d'où le défaut. **Laissés** ne trace que le pourtour extérieur, pour les styles qui veulent une découpe nette sans lignes à l'intérieur du sujet.",
+  },
+
+  "contours.taches": {
+    nom: "taches contournées",
+    ou: "retouche",
+    quoi: "Combien de zones opaques ont reçu la ligne, et la taille de la plus petite.",
+    change:
+      "Rien : c'est une lecture. Un compte qui surprend envoie dans la table des bords, qui est juste avant dans l'ordre.",
+    origine: "une mesure sur ton image",
+    long:
+      "Il n'y a **pas d'aire minimale ici**, et c'est délibéré : un contour tracé autour de trois miettes ferait trois pâtés, mais la table des bords existe déjà pour retirer les miettes, et deux réglages qui font la même chose à deux endroits finissent par se contredire. Ce que cette table fait à la place, c'est le dire.\n\nCe n'est pas un verdict : un personnage à deux lanternes détachées fait légitimement trois taches.",
+  },
+
+  // ── La septième place : la main ───────────────────────────────────────────
+  //
+  // **C'est la seule table qui n'applique aucune règle**, et c'est exactement
+  // ce qu'une explication doit dire — sinon on la cherche parmi les réglages,
+  // où elle n'est pas.
+
+  "main.calques": {
+    nom: "les calques de la main",
+    ou: "retouche",
+    quoi: "Une pile : « l'opacité » au fond, et autant de calques de dessin qu'on veut au-dessus.",
+    change:
+      "Rien à la génération, et rien tant que tu ne poses pas un pixel. Masquer un calque n'efface rien — il garde ses passages et cesse simplement d'être appliqué.",
+    origine: "toi · « l'opacité » seule au départ",
+    long:
+      "**« L'opacité » est le sol, et elle est d'une autre nature** : elle ne pose pas de couleur, elle décide de ce qui est là sur l'image que les six tables précédentes ont produite. Elle ne se supprime pas et ne se déplace pas — un calque de dessin sous l'image n'aurait aucun sens.\n\nLa pile se lit du dessus au dessous, comme partout où il y a des calques ; elle s'applique dans l'autre sens, qui est celui d'un pinceau.",
+  },
+
+  "main.sens": {
+    nom: "le sens du geste",
+    ou: "retouche",
+    quoi: "Ce que le prochain passage fera : ôter ou remettre sur l'opacité, poser ou effacer sur un calque de dessin.",
+    change:
+      "Rien à la génération. Le dernier passage l'emporte sur un pixel donné, comme un pinceau sur une toile.",
+    origine: "toi · le premier des deux",
+    long:
+      "Sur l'opacité : **ôter** rend transparent, **remettre** ramène ce que l'image avait avant qu'on le retire — la couleur est toujours là dessous, ni le détourage ni la quantification n'y touchent.\n\nSur un calque de dessin : **poser** ajoute des pixels à la couleur choisie, **effacer** retire ce que ce calque-là avait posé, et rien d'autre. Le pixel retombe alors sur ce qu'il y avait dessous.",
+  },
+
+  "main.diametre": {
+    nom: "le pinceau",
+    ou: "retouche",
+    quoi: "La largeur du trait, en pixels de l'image rendue. Impairs seulement — un pinceau a un centre.",
+    change:
+      "Rien à la génération, et rien tant qu'aucun passage n'est posé : ce curseur ne déclenche aucun calcul, il suit la main sans attendre le relâchement.",
+    origine: "toi · défaut 5 px",
+    long:
+      "**Le cran 1 px est le pixel** : un rayon nul ne couvre qu'un pixel de large, et c'est l'autre bout de « à main levée, puis au pixel ». Les deux échelles du geste sont les deux bouts d'un seul réglage, et non deux outils.\n\nC'est le diamètre qui s'affiche, pas le rayon : la largeur du trait est ce que la main voit.",
+  },
+
+  "main.couleur": {
+    nom: "la couleur du pinceau",
+    ou: "retouche",
+    quoi: "Ce qu'un passage pose sur un calque de dessin. La palette du jeu est proposée ; le champ reste libre.",
+    change:
+      "Rien à la génération. Une couleur hors palette se marque au lieu d'être refusée : une couleur de plus dans un jeu est un fait qui se lit, pas une faute.",
+    origine: "toi · proposé : la première de ta palette",
+    long:
+      "**La couleur est portée par le passage, pas par le calque** : un même calque peut en contenir plusieurs, ce qui évite d'en créer un par teinte — et ce qui laisse la porte ouverte le jour où un remplissage ou un dégradé s'ajoutera.\n\nL'opacité, elle, ne pose aucune couleur : elle décide de ce qui est là.",
+  },
+
+  "main.passages": {
+    nom: "le calque actif",
+    ou: "retouche",
+    quoi: "Combien de passages porte le calque choisi, et ce que Ctrl + Z va retirer.",
+    change:
+      "Rien : c'est un compte, et un geste. Ctrl + Z retire le dernier passage du calque actif ; « Sans la main › », en pied, vide la table entière.",
+    origine: "toi, geste par geste · rien au départ",
+    long:
+      "**Il n'y a pas de liste de passages, et c'est la seule table dans ce cas.** Un geste à main levée en produit des dizaines : trente rangées ne se relisent pas, elles se subissent. Le calque est l'unité de lecture — c'est lui qu'on nomme, qu'on masque, qu'on supprime — et le passage n'existe que comme un compte et un Ctrl + Z.\n\nUn passage est enregistré comme un **tracé, jamais comme des pixels** : il pèse quelques octets, il se défait un par un, et il se rejoue sur une image dont les dimensions ont changé. Remettre la grille à une autre taille ne fait pas perdre le dessin.",
+  },
+
   // ── La retouche — ce que la fiche fait d'un asset ─────────────────────────
 
   "fiche.impose": {

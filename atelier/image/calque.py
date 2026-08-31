@@ -28,14 +28,14 @@ from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from atelier.domaine.equipement import ECHELLE_TOLEREE, MesuresCalque
 from atelier.domaine.pliage import Geometrie
 from atelier.domaine.recette import BORD, Difference, Passe, Recette, Trait
 from atelier.image.decoupe import Boite, grille_fixe
 from atelier.image.pliage import COTE, FOND
-from atelier.image.traitement import composantes, detourer
+from atelier.image.traitement import composantes, detourer, peindre, pinceau
 
 __all__ = [
     # Re-exporté **exprès** : le seuil vit dans le domaine depuis C4 — c'est un
@@ -324,62 +324,13 @@ def masque_de(
     return peindre(base, difference.affinage)
 
 
-def peindre(masque: np.ndarray, traits: Sequence[Trait]) -> np.ndarray:
-    """Les passages de la main, posés dans leur ordre, sur un masque booléen.
-
-    **Le dernier passage l'emporte**, comme un pinceau sur une toile : un trait
-    qui ôte par-dessus un trait qui garde laisse le pixel ôté. Additionner les
-    surfaces aurait rendu le geste de retrait impossible à faire après coup,
-    donc irrattrapable — et tout C4 est là pour rattraper.
-
-    Rend le masque reçu tel quel quand il n'y a rien à poser : aucune copie
-    inutile sur l'immense majorité des images, qui ne portent aucun trait.
-    """
-    if not traits:
-        return masque
-    peint = masque.copy()
-    for trait in traits:
-        peint[pinceau(peint.shape, trait)] = trait.garde
-    return peint
-
-
-def pinceau(forme: tuple[int, int], trait: Trait) -> np.ndarray:
-    """Les pixels qu'un passage de la main couvre — **une fonction pure**.
-
-    Un disque de `rayon` promené le long du chemin, joints arrondis. Rayon nul :
-    un pixel de large, et c'est le geste « au pixel » d'US-149 — la même
-    fonction, la même liste de points, un seul nombre de différence. Deux
-    rasterisations séparées auraient fini par ne plus se rejoindre au rayon 1.
-
-    **Les points sont reliés, jamais semés.** Un pointeur envoie ce qu'il peut,
-    pas ce que la main a parcouru : sans le segment entre deux points, un geste
-    rapide laisserait des trous que personne n'a dessinés. Le tracé passe donc
-    par `ImageDraw`, dont la rasterisation est fixe — deux rendus de la même
-    recette donnent le même masque, et c'est un critère depuis T2.
-
-    Rien n'est levé pour un point hors du cadre : il se borne, comme le
-    rectangle de C3 (voir `_rectangle`).
-    """
-    hauteur, largeur = forme
-    toile = Image.new("1", (largeur, hauteur), 0)
-    dessin = ImageDraw.Draw(toile)
-    rayon = max(0, trait.rayon)
-    points = [(int(x), int(y)) for x, y in trait.points]
-    if len(points) > 1:
-        dessin.line(points, fill=1, width=2 * rayon + 1, joint="curve")
-    if rayon == 0:
-        # **Un point, et pas une ellipse de taille nulle** : une ellipse dont
-        # les deux coins se confondent ne peint rien du tout, et le geste au
-        # pixel — un seul point, rayon zéro — ne marquait alors aucun pixel.
-        # Payé en écrivant les essais de C4.
-        dessin.point(points, fill=1)
-    else:
-        # Les bouts, et les joints qu'un `width` impair laisse carrés. Un disque
-        # à chaque point rend le trait rond des deux côtés — c'est ce que la
-        # main croit dessiner.
-        for x, y in points:
-            dessin.ellipse([x - rayon, y - rayon, x + rayon, y + rayon], fill=1)
-    return np.asarray(toile, dtype=bool)
+# **`peindre` et `pinceau` ont quitté ce module le 31 août 2026, avec E5.** La
+# main est devenue la septième place de la recette : elle ne sert plus
+# seulement à affiner le masque d'un calque, elle passe sur n'importe quelle
+# image. La rasterisation appartient donc au traitement ordinaire, et ce
+# module l'importe — c'est le sens de la dépendance, puisqu'il importait déjà
+# `composantes` et `detourer` de là. Les deux noms restent exportés ici : le
+# calque est l'endroit où on les cherche quand on lit une différence.
 
 
 def mesurer_calque(corps: np.ndarray, retour: Retour, seuil: int) -> MesuresCalque:

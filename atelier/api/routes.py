@@ -25,6 +25,7 @@ from atelier.domaine import (
     Reinjection,
 )
 from atelier.domaine.catalogue import modele_en_json
+from atelier.domaine.recette import CERCLES, DEHORS, EPAISSEUR_MAX, RAYON_MAX
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png
 from atelier.reglages import deposer_cle, etat_cle
@@ -565,6 +566,63 @@ class CorpsBords(BaseModel):
     aire_min: int = Field(0, ge=0)
 
 
+class CorpsTrait(BaseModel):
+    """Un passage de la main — ce qu'un geste a gardé, ôté, ou posé.
+
+    **Un chemin et un rayon, jamais un masque en octets** : ce qui traverse le
+    port est ce que la recette enregistre, et une recette porte un calcul, pas
+    une image. Les points sont en pixels de l'image **rendue**, et un point hors
+    du cadre se borne au lieu d'être refusé.
+
+    **Rayon 0, c'est le pixel** : les deux échelles — à main levée, puis au
+    pixel — sont les deux bouts d'un seul réglage (US-149, US-207).
+
+    *Écrit ici depuis E5, et importé par la production.* Il servait aux deux
+    couches de la main d'un calque d'équipement ; la main est devenue la
+    septième place de la recette, donc le passage appartient à la recette.
+    `couleur` est vide partout où le passage décide d'un masque — les deux
+    couches d'un calque, et l'opacité de la septième place.
+    """
+
+    garde: bool = True
+    rayon: int = Field(0, ge=0, le=RAYON_MAX)
+    points: list[tuple[int, int]] = Field(default_factory=list)
+    couleur: str = ""
+
+
+class CorpsContour(BaseModel):
+    """La sixième place (E5).
+
+    **La couleur n'a pas de borne**, et c'est une décision : *une couleur hors
+    palette se marque, elle ne se refuse pas* (US-210). Le traitement rend du
+    noir sur une valeur illisible plutôt que de faire tomber un rendu au milieu
+    d'une frappe.
+    """
+
+    epaisseur: int = Field(1, ge=1, le=EPAISSEUR_MAX)
+    couleur: str = "#000000"
+    position: str = DEHORS
+    trous: str = CERCLES
+
+
+class CorpsCalqueDessin(BaseModel):
+    nom: str = ""
+    visible: bool = True
+    passages: list[CorpsTrait] = Field(default_factory=list)
+
+
+class CorpsMainDeLaRecette(BaseModel):
+    """La septième place (E5) — un sol, et ce qu'on empile dessus.
+
+    `calques` est rangé **du dessous vers le dessus**, comme dans le domaine :
+    l'ordre de la charge est l'ordre d'application, et c'est l'écran qui
+    renverse pour montrer une pile.
+    """
+
+    opacite: list[CorpsTrait] = Field(default_factory=list)
+    calques: list[CorpsCalqueDessin] = Field(default_factory=list)
+
+
 class CorpsRecette(BaseModel):
     """La recette telle qu'elle arrive de l'écran.
 
@@ -573,6 +631,12 @@ class CorpsRecette(BaseModel):
     et arrêtent une valeur absurde avant qu'elle n'entre, celles du service
     valent pour **toute** provenance — une recette relue d'un fichier, une
     recette nommée devenue caduque, un agent en T7 qui n'a jamais vu cet écran.
+
+    **Il n'y a pas de champ `difference`, et c'est voulu.** Une différence nomme
+    une seconde image et se pose par ses propres routes — le rectangle par
+    `PUT /assets/{id}/layer`, les deux couches de la main par
+    `PUT /assets/{id}/layer/hand`. La route qui reçoit cette charge appelle donc
+    `poser_les_places`, qui laisse la différence où elle est.
     """
 
     passes: list[CorpsPasse] = Field(default_factory=list)
@@ -580,6 +644,8 @@ class CorpsRecette(BaseModel):
     grille: CorpsGrille | None = None
     quantification: CorpsQuantification | None = None
     bords: CorpsBords | None = None
+    contours: CorpsContour | None = None
+    main: CorpsMainDeLaRecette | None = None
     nom: str | None = None
 
     def en_recette(self) -> Recette:
@@ -746,7 +812,7 @@ async def poser_recette(
     se compte en dizaines de millisecondes — le détourage déjà fait est gardé,
     seule la queue de la recette est refaite.
     """
-    asset = _atelier(requete).assets.poser_recette(identifiant, corps.en_recette())
+    asset = _atelier(requete).assets.poser_les_places(identifiant, corps.en_recette())
     return asset.en_json()
 
 

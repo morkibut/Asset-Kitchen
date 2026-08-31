@@ -16,9 +16,13 @@
 import { useEffect, useRef, useState } from "react"
 import {
   api,
+  CONTOUR_PAR_DEFAUT,
+  MAIN_VIDE,
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
   type Asset,
+  type Contour,
+  type Main,
   type TachesDeLAsset,
   type Bords,
   type EtatTraitement,
@@ -27,6 +31,7 @@ import {
   type Quantification,
   type Recadrage,
   type Recette,
+  type Trait,
   type Univers,
 } from "../api"
 import { Curseur, Libelle, Raison, Segments } from "./chassis"
@@ -54,6 +59,37 @@ export const RESUME = {
   grille: (g: Grille) => `${g.cible} px · ${g.occupation} %`,
   quantification: (q: Quantification) => `${q.couleurs} couleurs`,
   bords: (b: Bords) => `tache ${b.aire_min} px`,
+  contours: (c: Contour) => `${c.epaisseur} px · ${POSITIONS[c.position]}`,
+  /** **Le compte des passages, pas celui des calques.** Trois calques vides ne
+   *  changent rien à l'image, et le résumé d'une place dit ce que l'image a
+   *  subi — c'est la même règle que « 2 passes » plutôt que « détourage ». */
+  main: (m: Main) => {
+    const passages = m.opacite.length + m.calques.reduce((n, c) => n + c.passages.length, 0)
+    return `${passages} passage${passages > 1 ? "s" : ""}`
+  },
+}
+
+export const POSITIONS: Record<Contour["position"], string> = {
+  externe: "externe",
+  interne: "interne",
+  centre: "centré",
+}
+
+export const TROUS: Record<Contour["trous"], string> = {
+  cercles: "cerclés",
+  laisses: "laissés",
+}
+
+/** Ce qu'une position fait aux dimensions du rendu, en pixels et par côté.
+ *
+ *  **Écrit une fois, et c'est la même arithmétique que le serveur** : à cheval,
+ *  la moitié qui ne tombe pas juste va vers l'extérieur — agrandir est
+ *  réversible, manger le sujet ne l'est pas. Un second calcul écrit à l'écran
+ *  aurait fini par annoncer autre chose que ce que l'image fait. */
+export function debord(contour: Contour): number {
+  if (contour.position === "interne") return 0
+  if (contour.position === "centre") return Math.ceil(contour.epaisseur / 2)
+  return contour.epaisseur
 }
 
 export const defautGrille = (): Grille => ({
@@ -504,6 +540,204 @@ export function PanneauQuantification({ recette, univers, poser }: Reglages) {
   )
 }
 
+// ── La couleur, proposée et jamais imposée ──────────────────────────────────
+
+/**
+ * La palette du projet en rangée, et un champ libre à côté.
+ *
+ * **La règle du produit tient en une ligne** : *la palette est imposée par la
+ * quantification, qui ramène chaque pixel sur la couleur la plus proche ; elle
+ * est proposée partout ailleurs, où une couleur hors palette se marque au lieu
+ * d'être refusée* (US-210). Les deux places de E5 sont *après* la
+ * quantification : ce qu'elles posent ne sera pas rattrapé, et c'est
+ * précisément ce qui mérite d'être dit plutôt que refusé.
+ */
+function ChoixDeCouleur({
+  couleur,
+  palette,
+  onChange,
+}: {
+  couleur: string
+  palette: string[]
+  onChange: (couleur: string) => void
+}) {
+  const dedans = palette.some((c) => c.toLowerCase() === couleur.toLowerCase())
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={/^#[0-9a-fA-F]{6}$/.test(couleur) ? couleur : "#000000"}
+          aria-label="Couleur"
+          onChange={(e) => onChange(e.target.value)}
+          className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
+        />
+        <input
+          type="text"
+          value={couleur}
+          aria-label="Couleur, en hexadécimal"
+          spellCheck={false}
+          onChange={(e) => onChange(e.target.value)}
+          className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte"
+        />
+      </div>
+      {palette.length > 0 && (
+        <div className="flex flex-wrap gap-[2px]">
+          {palette.map((c) => (
+            <button
+              key={c}
+              type="button"
+              title={c}
+              aria-label={`Prendre ${c}`}
+              onClick={() => onChange(c)}
+              style={{ background: c }}
+              className={[
+                "h-4 w-4 rounded-[2px] border",
+                c.toLowerCase() === couleur.toLowerCase()
+                  ? "border-lumiere"
+                  : "border-bord",
+              ].join(" ")}
+            />
+          ))}
+        </div>
+      )}
+      {/* **Le produit constate ; il ne refuse pas.** Une couleur de plus dans
+          un jeu est un fait qui se lit, et il mérite d'être dit ici puisque la
+          quantification est déjà passée et ne la rattrapera pas. */}
+      {palette.length > 0 && (
+        <span
+          className={["mesure text-[10px]", dedans ? "text-texte-3" : "text-epingle"].join(
+            " ",
+          )}
+        >
+          {couleur} · {dedans ? "dans la palette" : "hors palette"}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** La plus sombre de la palette du projet — ce que la table propose à
+ *  l'ouverture, et la seule chose qu'elle devine. */
+export function laPlusSombre(palette: string[]): string | null {
+  if (palette.length === 0) return null
+  const clarte = (hexa: string) => {
+    const n = parseInt(hexa.replace("#", ""), 16)
+    if (Number.isNaN(n)) return 255
+    return ((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114
+  }
+  return palette.reduce((a, b) => (clarte(b) < clarte(a) ? b : a))
+}
+
+export function PanneauContours({ recette, univers, poser, regler, mesures }: Reglages) {
+  const contour = recette.contours ?? {
+    ...CONTOUR_PAR_DEFAUT,
+    couleur: laPlusSombre(univers.palette) ?? CONTOUR_PAR_DEFAUT.couleur,
+  }
+  const pose = (suivant: Contour) => void poser({ ...recette, contours: suivant })
+  const croissance = debord(contour) * 2
+
+  /** Les taches que le trait va longer — **celles que les bords laissent**.
+   *  La mesure est prise avant le nettoyage, qui vient juste avant : ce que le
+   *  seuil efface ne recevra pas de trait, et l'écran le retranche plutôt que
+   *  de faire redescendre l'image une seconde fois. */
+  const seuil = recette.bords?.aire_min ?? 0
+  const contournees = (mesures?.taches ?? []).filter((t) => t.aire >= seuil)
+  const trous = mesures?.poches ?? []
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Reglage libelle="épaisseur" aide="contours.epaisseur">
+        <Curseur
+          valeur={contour.epaisseur}
+          min={1}
+          max={8}
+          unite=" px"
+          onChange={(epaisseur) =>
+            regler({ ...recette, contours: { ...contour, epaisseur } })
+          }
+          onFini={(epaisseur) => pose({ ...contour, epaisseur })}
+        />
+      </Reglage>
+      {/* **Le chiffre et son jumeau.** Un nombre seul demanderait « de
+          quoi ? » : l'épaisseur se compte dans l'image rendue, et c'est elle
+          qui part dans le jeu. */}
+      <Raison
+        texte={`${contour.epaisseur} px de l'image rendue — celle qui part dans le jeu`}
+      />
+
+      <Reglage libelle="couleur" aide="contours.couleur">
+        <ChoixDeCouleur
+          couleur={contour.couleur}
+          palette={univers.palette}
+          onChange={(couleur) => pose({ ...contour, couleur })}
+        />
+      </Reglage>
+      {recette.contours === null && univers.palette.length > 0 && (
+        <span className="mesure text-[10px] text-epingle">
+          proposé, d'après ta palette · la plus sombre
+        </span>
+      )}
+
+      <Reglage libelle="position" aide="contours.position">
+        <Segments
+          valeurs={["externe", "interne", "centre"] as const}
+          valeur={contour.position}
+          libelles={POSITIONS}
+          onChange={(position) => pose({ ...contour, position })}
+        />
+      </Reglage>
+      {/* **Le seul réglage du produit qui change les dimensions du rendu sans
+          qu'on le lui ait demandé** (US-206) — donc il le dit, au moment où on
+          choisit, et avec le vrai chiffre. À cheval sur une épaisseur impaire,
+          le pixel qui ne tombe pas juste va dehors : la croissance vaut alors
+          un de plus que l'épaisseur, et l'annoncer autrement serait faux. */}
+      <Raison
+        texte={
+          croissance === 0
+            ? "la boîte ne bouge pas — le sujet est mangé de l'épaisseur"
+            : `la silhouette grandit de ${croissance} px sur chaque dimension`
+        }
+      />
+
+      <Reglage libelle="les trous" aide="contours.trous">
+        <Segments
+          valeurs={["cercles", "laisses"] as const}
+          valeur={contour.trous}
+          libelles={TROUS}
+          onChange={(trous) => pose({ ...contour, trous })}
+        />
+      </Reglage>
+      {trous.length > 0 && (
+        <Raison
+          texte={`${trous.length} trou${trous.length > 1 ? "s" : ""} dans la silhouette · le plus petit fait ${Math.min(
+            ...trous.map((t) => t.aire),
+          )} px`}
+        />
+      )}
+
+      {/* **Il n'y a pas d'aire minimale ici, et c'est écrit.** La table des
+          bords existe pour retirer les miettes, elle est juste avant dans
+          l'ordre, et deux réglages qui font la même chose à deux endroits
+          finissent par se contredire. Ce que cette table fait à la place,
+          c'est le dire — un compte qui surprend envoie dans les bords. */}
+      {contournees.length > 0 && (
+        <div className="border-t border-bord pt-2">
+          <Libelle aide="contours.taches">
+            {contournees.length} tache{contournees.length > 1 ? "s" : ""} contournée
+            {contournees.length > 1 ? "s" : ""}
+          </Libelle>
+          <Raison
+            texte={`la plus petite fait ${Math.min(
+              ...contournees.map((t) => t.aire),
+            )} px — un compte qui surprend se règle dans la table des bords`}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
   const seuil = recette.bords?.aire_min ?? 3
   const liste = mesures?.taches ?? []
@@ -566,6 +800,373 @@ export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── La main — la septième et dernière place ─────────────────────────────────
+//
+// **C'est la seule table du produit qui ne pose pas une règle.** Les six autres
+// appliquent quelque chose à toute l'image ; celle-ci ne fait que ce que
+// l'auteur désigne. Elle est aussi la seule qui grandira — un mode manuel n'a
+// pas de fin naturelle —, et trois décisions d'aujourd'hui gardent la porte
+// ouverte : un passage est un vecteur, la couleur est portée par le passage, et
+// l'opacité est un calque de la pile plutôt qu'un mode à part.
+
+/** Le sol de la pile. **Il ne se supprime pas et ne se déplace pas** — c'est
+ *  vrai par construction, puisqu'il n'est pas dans la liste. */
+export const OPACITE = -1
+
+export const mainDe = (recette: Recette): Main => recette.main ?? MAIN_VIDE
+
+/** Ce que la pile change, tous calques confondus. */
+export const passagesDe = (main: Main): number =>
+  main.opacite.length + main.calques.reduce((n, c) => n + c.passages.length, 0)
+
+/** Le rayon d'un diamètre. **C'est le diamètre qui s'affiche** — la largeur du
+ *  trait est ce que la main voit, le rayon est ce que le calcul veut — et il
+ *  n'est qu'impair, parce qu'un pinceau a un centre. */
+export const rayonDe = (diametre: number): number => Math.max(0, (diametre - 1) / 2)
+
+/** Poser un passage sur la couche active, ou en retirer le dernier.
+ *
+ *  **Écrites ici, appelées par le panneau et par la surface** : la table et
+ *  l'image font le même geste vu de deux endroits, et deux compositions
+ *  écrites séparément auraient fini par ranger le passage à deux places. */
+export function avecPassage(main: Main, actif: number, trait: Trait): Main {
+  if (actif === OPACITE) return { ...main, opacite: [...main.opacite, trait] }
+  return {
+    ...main,
+    calques: main.calques.map((c, i) =>
+      i === actif ? { ...c, passages: [...c.passages, trait] } : c,
+    ),
+  }
+}
+
+export function sansLeDernier(main: Main, actif: number): Main {
+  if (actif === OPACITE) return { ...main, opacite: main.opacite.slice(0, -1) }
+  return {
+    ...main,
+    calques: main.calques.map((c, i) =>
+      i === actif ? { ...c, passages: c.passages.slice(0, -1) } : c,
+    ),
+  }
+}
+
+/** Ce que l'écran tient de la main, et que la recette n'a pas à porter.
+ *
+ *  Le calque actif, le sens du geste, le diamètre et la couleur ne décrivent
+ *  pas l'image : ils décrivent la **main**. Les écrire dans la recette les
+ *  aurait fait entrer dans l'empreinte, donc changer de pinceau aurait
+ *  recalculé un rendu identique.
+ */
+export type EtatMain = ReturnType<typeof useEtatMain>
+
+export function useEtatMain(univers: Univers) {
+  const [actif, choisir] = useState<number>(OPACITE)
+  const [sens, setSens] = useState(true)
+  const [diametre, setDiametre] = useState(5)
+  const [couleur, setCouleur] = useState(univers.palette[0] ?? "#ffffff")
+  return { actif, choisir, sens, setSens, diametre, setDiametre, couleur, setCouleur }
+}
+
+/** Une rangée de la pile. Le calque actif porte l'anneau `--lumiere` — la
+ *  sélection du produit, jamais une seconde marque. */
+function RangeeDeCalque({
+  nom,
+  passages,
+  visible,
+  actif,
+  pixels,
+  onChoisir,
+  onVisible,
+  onNommer,
+  onMonter,
+  onDescendre,
+  onSupprimer,
+}: {
+  nom: string
+  passages: number
+  visible: boolean
+  actif: boolean
+  pixels: number | null
+  onChoisir: () => void
+  onVisible?: () => void
+  onNommer?: (nom: string) => void
+  onMonter?: () => void
+  onDescendre?: () => void
+  onSupprimer?: () => void
+}) {
+  return (
+    <li
+      className={[
+        "flex h-[26px] items-center gap-2 rounded-[2px] border px-1",
+        actif ? "border-lumiere bg-fond-3" : "border-transparent hover:bg-fond-2",
+      ].join(" ")}
+    >
+      {/* Le carré plein à gauche est la visibilité ; **masquer un calque
+          n'efface rien**, et c'est très exactement la différence entre masquer
+          et supprimer. */}
+      <button
+        type="button"
+        aria-label={visible ? `Masquer ${nom}` : `Montrer ${nom}`}
+        aria-pressed={visible}
+        disabled={!onVisible}
+        onClick={onVisible}
+        className={[
+          "h-[9px] w-[9px] shrink-0",
+          visible ? "bg-signal" : "border border-texte-3",
+        ].join(" ")}
+      />
+      {onNommer ? (
+        <input
+          value={nom}
+          aria-label={`Nom du calque ${nom}`}
+          onFocus={onChoisir}
+          onChange={(e) => onNommer(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-[11.5px] text-texte outline-none"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={onChoisir}
+          className="min-w-0 flex-1 text-left text-[11.5px] text-texte"
+        >
+          {nom}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onChoisir}
+        aria-label={`Choisir ${nom}`}
+        className="mesure shrink-0 text-[10px] text-texte-3"
+      >
+        {pixels === null ? passages : `${passages} · ${pixels} px`}
+      </button>
+      {onMonter && (
+        <button
+          type="button"
+          aria-label={`Monter ${nom}`}
+          onClick={onMonter}
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-signal"
+        >
+          ↑
+        </button>
+      )}
+      {onDescendre && (
+        <button
+          type="button"
+          aria-label={`Descendre ${nom}`}
+          onClick={onDescendre}
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-signal"
+        >
+          ↓
+        </button>
+      )}
+      {onSupprimer && (
+        <button
+          type="button"
+          aria-label={`Supprimer ${nom}`}
+          onClick={onSupprimer}
+          className="mesure h-[24px] shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  )
+}
+
+export function PanneauMain({
+  recette,
+  univers,
+  poser,
+  regler,
+  mesures,
+  etat,
+}: Reglages & { etat: EtatMain }) {
+  const main = mainDe(recette)
+  const { actif, choisir, sens, setSens, diametre, setDiametre, couleur, setCouleur } =
+    etat
+  const pose = (suivante: Main) => void poser({ ...recette, main: suivante })
+
+  const surLOpacite = actif === OPACITE
+  const calqueActif = surLOpacite ? null : main.calques[actif]
+  const passagesActifs = surLOpacite
+    ? main.opacite.length
+    : (calqueActif?.passages.length ?? 0)
+  const dernier = surLOpacite
+    ? main.opacite[main.opacite.length - 1]
+    : calqueActif?.passages[(calqueActif?.passages.length ?? 0) - 1]
+
+  const pixels = (rang: number): number | null => {
+    if (!mesures?.main) return null
+    return rang === OPACITE ? mesures.main.opacite : (mesures.main.calques[rang] ?? 0)
+  }
+
+  const deplacer = (rang: number, vers: number) => {
+    const calques = [...main.calques]
+    const [pris] = calques.splice(rang, 1)
+    calques.splice(vers, 0, pris)
+    choisir(vers)
+    pose({ ...main, calques })
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* **La pile se lit du dessus au dessous**, comme partout où il y a des
+          calques — et elle est *rangée* du dessous vers le dessus, qui est
+          l'ordre d'application. Le renversement est écrit ici, et nulle part
+          ailleurs. */}
+      <div className="flex flex-col gap-1">
+        <Libelle aide="main.calques">les calques</Libelle>
+        <ul className="flex flex-col">
+          {main.calques
+            .map((calque, rang) => ({ calque, rang }))
+            .reverse()
+            .map(({ calque, rang }) => (
+              <RangeeDeCalque
+                key={rang}
+                nom={calque.nom || `calque ${rang + 1}`}
+                passages={calque.passages.length}
+                visible={calque.visible}
+                actif={actif === rang}
+                pixels={pixels(rang)}
+                onChoisir={() => choisir(rang)}
+                onVisible={() =>
+                  pose({
+                    ...main,
+                    calques: main.calques.map((c, i) =>
+                      i === rang ? { ...c, visible: !c.visible } : c,
+                    ),
+                  })
+                }
+                onNommer={(nom) =>
+                  regler({
+                    ...recette,
+                    main: {
+                      ...main,
+                      calques: main.calques.map((c, i) => (i === rang ? { ...c, nom } : c)),
+                    },
+                  })
+                }
+                onMonter={
+                  rang < main.calques.length - 1 ? () => deplacer(rang, rang + 1) : undefined
+                }
+                onDescendre={rang > 0 ? () => deplacer(rang, rang - 1) : undefined}
+                onSupprimer={() => {
+                  choisir(OPACITE)
+                  pose({ ...main, calques: main.calques.filter((_, i) => i !== rang) })
+                }}
+              />
+            ))}
+          <RangeeDeCalque
+            nom="l'opacité"
+            passages={main.opacite.length}
+            visible
+            actif={surLOpacite}
+            pixels={pixels(OPACITE)}
+            onChoisir={() => choisir(OPACITE)}
+          />
+        </ul>
+        <Raison texte="« l'opacité » est le sol de la pile : elle ne se supprime pas et ne se déplace pas" />
+        <button
+          type="button"
+          onClick={() => {
+            choisir(main.calques.length)
+            pose({
+              ...main,
+              calques: [
+                ...main.calques,
+                { nom: `calque ${main.calques.length + 1}`, visible: true, passages: [] },
+              ],
+            })
+          }}
+          className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+        >
+          + calque de dessin
+        </button>
+      </div>
+
+      {/* **Les deux segments changent de nom avec le calque actif.** C'est la
+          même mécanique — un passage qui ajoute, un passage qui retire — et le
+          segment allumé dit ce que le geste fera. */}
+      <Reglage libelle="le sens" aide="main.sens">
+        <Segments
+          valeurs={["ajoute", "retire"] as const}
+          valeur={sens ? "ajoute" : "retire"}
+          libelles={
+            surLOpacite
+              ? { ajoute: "remettre", retire: "ôter" }
+              : { ajoute: "poser", retire: "effacer" }
+          }
+          onChange={(v) => setSens(v === "ajoute")}
+        />
+      </Reglage>
+
+      <Reglage libelle="le pinceau" aide="main.diametre">
+        <Curseur
+          valeur={diametre}
+          min={1}
+          max={129}
+          pas={2}
+          unite=" px"
+          onChange={setDiametre}
+        />
+      </Reglage>
+      {/* **Le cran 1 px est le pixel** : un rayon nul ne couvre qu'un pixel de
+          large, et c'est l'autre bout de « à main levée, puis au pixel ». */}
+      <Raison
+        texte={
+          diametre === 1
+            ? "1 px — c'est le pixel, l'autre bout du geste à main levée"
+            : `${diametre} px du rendu · impairs seulement, un pinceau a un centre`
+        }
+      />
+
+      {!surLOpacite && (
+        <Reglage libelle="la couleur" aide="main.couleur">
+          <ChoixDeCouleur
+            couleur={couleur}
+            palette={univers.palette}
+            onChange={setCouleur}
+          />
+        </Reglage>
+      )}
+      {surLOpacite && (
+        <Raison texte="l'opacité ne pose aucune couleur : elle décide de ce qui est là" />
+      )}
+
+      {/* **Il n'y a pas de liste de passages, et c'est la seule table dans ce
+          cas.** Un geste à main levée en produit des dizaines : trente rangées
+          ne se relisent pas, elles se subissent. Le calque est l'unité de
+          lecture ; le passage n'existe que comme un compte et un Ctrl+Z. */}
+      <div className="flex flex-col gap-1 border-t border-bord pt-2">
+        <Libelle aide="main.passages">le calque actif</Libelle>
+        <span className="mesure text-[10px] text-texte-2">
+          {surLOpacite ? "l'opacité" : calqueActif?.nom || "calque"} · {passagesActifs}{" "}
+          passage{passagesActifs > 1 ? "s" : ""}
+        </span>
+        {/* Sans cette ligne, défaire est un pari. */}
+        {dernier && (
+          <span className="mesure text-[10px] text-texte-3">
+            dernier : {dernier.garde ? (surLOpacite ? "remettre" : "poser") : surLOpacite ? "ôter" : "effacer"} ·{" "}
+            {2 * dernier.rayon + 1} px{dernier.couleur ? ` · ${dernier.couleur}` : ""}
+          </span>
+        )}
+        <button
+          type="button"
+          disabled={passagesActifs === 0}
+          onClick={() => pose(sansLeDernier(main, actif))}
+          className="mesure h-6 self-start text-[10px] text-texte-3 hover:text-signal disabled:text-texte-3"
+        >
+          Défaire le dernier · Ctrl + Z
+        </button>
+      </div>
+
+      <Raison
+        texte={`${main.calques.length} calque${main.calques.length > 1 ? "s" : ""} · ${passagesDe(main)} passage${passagesDe(main) > 1 ? "s" : ""}`}
+      />
     </div>
   )
 }

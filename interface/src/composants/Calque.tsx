@@ -250,7 +250,10 @@ export function PanneauCalque({
       // faire : il disparaîtrait, puis reviendrait dessiné. Un passage plus
       // récent ne se laisse pas effacer par la réponse du précédent — d'où la
       // comparaison d'identité plutôt qu'un `null` sec.
-      void affiner(quelle, [...couche, { garde, rayon, points }]).finally(() =>
+      // `couleur` vide : une couche de masque décide de ce qui reste, elle ne
+      // pose aucune couleur. Le champ est arrivé en E5 avec les calques de
+      // dessin de la septième place.
+      void affiner(quelle, [...couche, { garde, rayon, points, couleur: "" }]).finally(() =>
         setTrace((courant) => (courant === points ? null : courant)),
       )
       return

@@ -33,6 +33,7 @@ from typing import Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
+from atelier.api.routes import CorpsTrait
 from atelier.domaine.recette import RAYON_MAX
 from atelier.services import Atelier
 
@@ -197,24 +198,6 @@ class CorpsMasque(BaseModel):
     """
 
     zone: list[int] | None = Field(None, min_length=4, max_length=4)
-
-
-class CorpsTrait(BaseModel):
-    """Un passage de la main — ce qu'un geste a gardé, ou ôté (C4).
-
-    **Un chemin et un rayon, jamais un masque en octets** : ce qui traverse le
-    port est ce que la recette enregistre, et une recette porte un calcul, pas
-    une image. Les points sont en pixels de l'image **rendue**, comme le
-    rectangle ci-dessus, et un point hors du cadre se borne au lieu d'être
-    refusé.
-
-    **Rayon 0, c'est le pixel** : les deux échelles d'US-149 — à main levée,
-    puis au pixel — sont les deux bouts d'un seul réglage.
-    """
-
-    garde: bool = True
-    rayon: int = Field(0, ge=0, le=RAYON_MAX)
-    points: list[tuple[int, int]] = Field(default_factory=list)
 
 
 class CorpsMain(BaseModel):

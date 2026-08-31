@@ -41,8 +41,10 @@ import type {
   Asset,
   Bibliotheque,
   Carte,
+  Contour,
   Depenses,
   Etat,
+  Main,
   TachesDeLAsset,
   CompteReferences,
   EtatCatalogue,
@@ -401,6 +403,8 @@ const asset = (
       grille: null,
       quantification: null,
       bords: null,
+      contours: null,
+      main: null,
       nom: null,
     },
     rendu_largeur: 0,
@@ -515,8 +519,12 @@ function serveurDouble(options: {
    *  ouvert que par les essais qui le demandent. */
   depenses?: Depenses
   /** Ce qu'une table sait de l'image — les taches, les poches, les crans
-   *  d'occupation. Vide par défaut : une image d'essai n'a rien à montrer. */
-  mesures?: TachesDeLAsset
+   *  d'occupation, l'opacité pleine, ce que la main touche. Vide par défaut :
+   *  une image d'essai n'a rien à montrer. **Partielle** : un essai ne nomme
+   *  que la mesure qu'il regarde, et le double complète le reste — sans quoi
+   *  chaque mesure ajoutée au produit ferait réécrire tous les essais qui ne
+   *  la regardent pas. */
+  mesures?: Partial<TachesDeLAsset>
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -649,14 +657,15 @@ function serveurDouble(options: {
     // d'occupation. Le double répond comme le serveur — une image d'essai n'a
     // ni tache ni poche, et c'est une réponse, pas un trou.
     if (url.includes("/spots"))
-      return rendre(
-        options.mesures ?? {
-          taches: [],
-          coupees: 0,
-          poches: [],
-          crans_occupation: [],
-        },
-      )
+      return rendre({
+        taches: [],
+        coupees: 0,
+        poches: [],
+        crans_occupation: [],
+        opaque: false,
+        main: null,
+        ...(options.mesures ?? {}),
+      })
     if (url.startsWith("/api/spending"))
       return rendre(
         options.depenses ?? {
@@ -697,6 +706,8 @@ function serveurDouble(options: {
             grille: { cible: 64, occupation: 100, ancrage: "bas" },
             quantification: null,
             bords: null,
+            contours: null,
+            main: null,
             nom: null,
           },
           echelle: "",
@@ -772,6 +783,8 @@ function serveurDouble(options: {
               : null,
           quantification: null,
           bords: null,
+          contours: null,
+          main: null,
           nom: null,
         },
       }
@@ -4476,6 +4489,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         grille: { cible: 32, occupation: 40, ancrage: "bas" as const },
         quantification: null,
         bords: null,
+        contours: null,
+        main: null,
         nom: null,
       },
     }
@@ -4489,6 +4504,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           grille: { cible: 64, occupation: 40, ancrage: "bas" },
           quantification: null,
           bords: null,
+          contours: null,
+          main: null,
           nom: null,
         },
         echelle: "objet tenu",
@@ -5408,7 +5425,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // Un calque que la main a déjà touché : sans ça il n'y a rien à comparer.
     const touche = calque("bbbb2222-100", corps.identifiant)
     touche.recette.difference!.retouche = [
-      { garde: true, rayon: 2, points: [[4, 4]] },
+      { garde: true, rayon: 2, points: [[4, 4]], couleur: "" },
     ]
     const { ecran, appels } = await ouvrir({
       emplacements: [TETE],
@@ -5460,10 +5477,10 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     const corps = asset("aaaa1111-0", "un nain au repos")
     const deux = calque("bbbb2222-100", corps.identifiant)
     deux.recette.difference!.affinage = [
-      { garde: false, rayon: 2, points: [[1, 1]] },
+      { garde: false, rayon: 2, points: [[1, 1]], couleur: "" },
     ]
     deux.recette.difference!.retouche = [
-      { garde: true, rayon: 0, points: [[4, 4]] },
+      { garde: true, rayon: 0, points: [[4, 4]], couleur: "" },
     ]
     const { ecran, appels } = await ouvrir({
       emplacements: [TETE],
@@ -5531,7 +5548,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
       un.calque = { ...un.calque!, gravite, pire: "corps repeint" }
       if (main)
         un.recette.difference!.retouche = [
-          { garde: true, rayon: 0, points: [[1, 1]] },
+          { garde: true, rayon: 0, points: [[1, 1]], couleur: "" },
         ]
       return un
     }
@@ -6819,16 +6836,32 @@ describe("le châssis des tables", () => {
   //     clair, à la place des réglages » ───────────────────────────────────────
 
   test("une table indisponible s'ouvre quand même, et porte sa raison à la place des réglages", async () => {
-    const { cadre } = await ouvrirUneTable()
+    // **Le seul cas du contour, et il est franc** : une image entièrement
+    // opaque n'a pas de bord de sujet, seulement les quatre bords du cadre.
+    // C'est le serveur qui le mesure — l'écran ne le devine pas.
+    const { cadre } = await ouvrirUneTable({ mesures: { opaque: true } })
 
     // Elle est cliquable — c'est le wrapper qui porte la raison, pas la puce.
     fireEvent.click(puce(cadre, "contours"))
     expect(
-      await cadre.findByText(/le tracé de contour n'est pas encore construit/),
+      await cadre.findByText(/cette image est entièrement opaque/),
     ).toBeTruthy()
+    // **La seconde phrase compte autant que la première** : elle dit quoi
+    // faire, et le détourage est la première table de la barre.
+    expect(cadre.getByText(/Détoure-la d'abord/)).toBeTruthy()
     // **À la place des réglages, jamais à côté d'eux** : aucun curseur mort
     // sous la raison.
     expect(cadre.queryByRole("slider")).toBeNull()
+  })
+
+  test("la main n'est jamais indisponible, et c'est l'exacte symétrie du contour", async () => {
+    // Toute image se retouche, y compris une image entièrement opaque : *ôter*
+    // y crée de la transparence, et un calque de dessin s'y pose comme partout.
+    const { cadre } = await ouvrirUneTable({ mesures: { opaque: true } })
+
+    fireEvent.click(puce(cadre, "la main"))
+    expect(await cadre.findByText("les calques")).toBeTruthy()
+    expect(cadre.queryByText(/entièrement opaque/)).toBeNull()
   })
 
   test("une fabrique n'a pas de carré, et la superposition dit qu'elle n'existe pas encore", async () => {
@@ -7227,5 +7260,242 @@ describe("la galerie dégraissée", () => {
     // d'endroit — c'est tout ce que « dégraisser » veut dire.
     fireEvent.click(screen.getByRole("button", { name: "La régler dans les tables ›" }))
     expect(await screen.findByRole("button", { name: /^bords/ })).toBeTruthy()
+  })
+})
+
+// ── E5 : les deux dernières places — le contour et la main ──────────────────
+//
+// Les deux seules capacités de traitement que la V2.1 ajoute. Ce qui se mesure
+// sur des pixels — où le trait tombe, de combien il agrandit, qu'un passage se
+// rejoue sur une image d'une autre taille — est tenu par `tests/test_e5.py` ;
+// ce qui vit ici est ce que l'écran montre, et ce qu'il refuse de deviner.
+
+describe("le contour et la main", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  /** Une table ouverte, sur un jeu qui a une palette — c'est elle que les deux
+   *  places proposent sans jamais l'imposer. */
+  const ouvrirUneTable = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    palette = ["#1a1420", "#7d5543", "#dfc1a6"],
+  ) => {
+    const images = [asset("bbbb2222-0", "le nain, au repos")]
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
+    await monter(double.fetchDouble, {
+      ...ETAT,
+      univers: { ...UNIVERS, palette, vide: false },
+    })
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  const puce = (cadre: ReturnType<typeof within>, nom: string) =>
+    cadre.getByRole("button", { name: new RegExp(`^${nom}`) })
+
+  const ouvrir = async (cadre: ReturnType<typeof within>, nom: string) => {
+    fireEvent.click(puce(cadre, nom))
+    await waitFor(() => expect(cadre.queryByText(/^cette image est/)).toBeNull())
+  }
+
+  // ── « Le contour se règle en épaisseur, en couleur et en position » ────────
+
+  test("les quatre réglages du contour sont là, et la barre les résume", async () => {
+    const { cadre, appels } = await ouvrirUneTable()
+    await ouvrir(cadre, "contours")
+
+    expect(cadre.getByText("épaisseur")).toBeTruthy()
+    expect(cadre.getByText("couleur")).toBeTruthy()
+    expect(cadre.getByText("position")).toBeTruthy()
+    expect(cadre.getByText("les trous")).toBeTruthy()
+
+    // Poser une position pose la place : la barre l'écrit, et le serveur la
+    // reçoit — c'est la même valeur des deux côtés.
+    fireEvent.click(cadre.getByRole("button", { name: "interne" }))
+    await waitFor(() => expect(puce(cadre, "contours").textContent).toContain("interne"))
+
+    const pose = [...appels].reverse().find((a) => a.url.includes("/recipe"))
+    expect(pose).toBeTruthy()
+    expect((pose!.corps as { contours: Contour }).contours.position).toBe("interne")
+  })
+
+  // ── « Choisir la position extérieure écrit que l'image s'agrandit, et de
+  //     combien » ────────────────────────────────────────────────────────────
+
+  test("la position dit ce qu'elle fait aux dimensions, au moment où on la choisit", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "contours")
+
+    // Le défaut est externe, à une épaisseur de 1 : deux pixels de plus.
+    expect(cadre.getByText(/la silhouette grandit de 2 px/)).toBeTruthy()
+
+    // Interne ne bouge pas la boîte, et le dit autrement — une rangée qui
+    // afficherait « + 0 » en permanence serait du cadrage montré.
+    fireEvent.click(cadre.getByRole("button", { name: "interne" }))
+    await waitFor(() => expect(cadre.getByText(/la boîte ne bouge pas/)).toBeTruthy())
+
+    // **À cheval, le pixel impair va vers l'extérieur** : à trois d'épaisseur,
+    // la croissance vaut quatre et non trois. L'annoncer autrement serait faux.
+    fireEvent.click(cadre.getByRole("button", { name: "centré" }))
+    fireEvent.change(cadre.getAllByRole("slider")[0], { target: { value: "3" } })
+    await waitFor(() => expect(cadre.getByText(/grandit de 4 px/)).toBeTruthy())
+  })
+
+  // ── « La palette du jeu est proposée et jamais imposée ; une couleur hors
+  //     palette est marquée, pas refusée » ───────────────────────────────────
+
+  test("la palette se propose, et une couleur qui n'y est pas se marque", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "contours")
+
+    // La plus sombre de la palette est proposée, et la provenance le dit.
+    expect(cadre.getByText(/proposé, d'après ta palette/)).toBeTruthy()
+    expect(cadre.getByText(/#1a1420 · dans la palette/)).toBeTruthy()
+
+    // Une couleur libre entre, et elle est **marquée** — jamais refusée.
+    fireEvent.change(cadre.getByLabelText("Couleur, en hexadécimal"), {
+      target: { value: "#ff00ff" },
+    })
+    await waitFor(() => expect(cadre.getByText(/#ff00ff · hors palette/)).toBeTruthy())
+  })
+
+  // ── « Les passages s'empilent en calques nommables, masquables et
+  //     réordonnables » ──────────────────────────────────────────────────────
+
+  test("la pile se lit du dessus au dessous, et l'opacité est son sol", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    expect(cadre.getByText("les calques")).toBeTruthy()
+    expect(cadre.getByText(/est le sol de la pile/)).toBeTruthy()
+    // **Elle ne se supprime pas et ne se déplace pas** — vrai par construction,
+    // puisqu'elle n'est pas dans la liste des calques.
+    expect(cadre.queryByLabelText("Supprimer l'opacité")).toBeNull()
+    expect(cadre.queryByLabelText("Monter l'opacité")).toBeNull()
+
+    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
+
+    // Un second calque, et le premier gagne de quoi monter : la pile se
+    // réordonne dès qu'il y a deux choses à ordonner.
+    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    await waitFor(() => expect(cadre.getByLabelText(/Monter calque 1/)).toBeTruthy())
+  })
+
+  test("masquer un calque n'efface rien, et le serveur le sait", async () => {
+    const { cadre, appels } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
+    fireEvent.click(cadre.getByLabelText(/Masquer calque 1/))
+
+    await waitFor(() => {
+      const derniere = [...appels].reverse().find((a) => a.url.includes("/recipe"))
+      const main = (derniere!.corps as { main: Main }).main
+      // Le calque est **toujours là** : masqué, pas supprimé.
+      expect(main.calques).toHaveLength(1)
+      expect(main.calques[0].visible).toBe(false)
+    })
+  })
+
+  test("le carré de la main reste creux tant qu'aucun passage n'est posé", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    await waitFor(() => expect(cadre.getByLabelText(/Masquer calque 1/)).toBeTruthy())
+
+    // **Le carré se remplit quand la place change l'image, pas quand elle
+    // figure dans la recette** : trois calques vides ne changent rien.
+    expect(puce(cadre, "la main").textContent).toBe("la main")
+  })
+
+  // ── « Une table qui se peint force le rendu » ─────────────────────────────
+
+  test("la main force le rendu, grise les trois autres vues, et rend l'avant à l'appui", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    // Le cas qui a tranché est *côte à côte* : deux images à l'écran, et la
+    // main n'aurait pas su sur laquelle elle écrit.
+    for (const vue of ["brut", "côte à côte", "superposé"]) {
+      expect(cadre.getByRole("button", { name: vue })).toBeDisabled()
+    }
+    expect(cadre.getByText(/la main se pose sur le rendu/)).toBeTruthy()
+    // Et l'appui récupère exactement ce que la contrainte retire — c'est ce qui
+    // la rend payable.
+    expect(cadre.getByRole("button", { name: "Avant ›" })).toBeTruthy()
+  })
+
+  test("changer de table rend les quatre vues, et la main les reprend", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+    expect(cadre.getByRole("button", { name: "brut" })).toBeDisabled()
+
+    await ouvrir(cadre, "bords")
+    expect(cadre.getByRole("button", { name: "brut" })).not.toBeDisabled()
+  })
+
+  // ── Le pinceau, et les deux bouts d'un seul réglage ───────────────────────
+
+  test("le pinceau ne rend que des impairs, et le cran de 1 px est le pixel", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    const curseur = cadre.getAllByRole("slider")[0]
+    expect(curseur.getAttribute("step")).toBe("2")
+    expect(curseur.getAttribute("min")).toBe("1")
+    expect(curseur.getAttribute("max")).toBe("129")
+
+    fireEvent.change(curseur, { target: { value: "1" } })
+    await waitFor(() => expect(cadre.getByText(/c'est le pixel/)).toBeTruthy())
+  })
+
+  test("le sens change de nom avec le calque actif", async () => {
+    const { cadre } = await ouvrirUneTable()
+    await ouvrir(cadre, "la main")
+
+    // Sur l'opacité : elle décide de ce qui est là.
+    expect(cadre.getByRole("button", { name: "remettre" })).toBeTruthy()
+    expect(cadre.getByRole("button", { name: "ôter" })).toBeTruthy()
+    expect(cadre.getByText(/l'opacité ne pose aucune couleur/)).toBeTruthy()
+
+    // Sur un calque de dessin : il ajoute de la matière, et il a une couleur.
+    fireEvent.click(cadre.getByRole("button", { name: "+ calque de dessin" }))
+    await waitFor(() => expect(cadre.getByRole("button", { name: "poser" })).toBeTruthy())
+    expect(cadre.getByRole("button", { name: "effacer" })).toBeTruthy()
+    expect(cadre.getByText("la couleur")).toBeTruthy()
   })
 })

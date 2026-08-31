@@ -152,7 +152,45 @@ export type Difference = {
  *
  *  **Rayon 0, c'est le pixel** : les deux échelles d'US-149 — à main levée,
  *  puis au pixel — sont les deux bouts d'un seul réglage, et non deux outils. */
-export type Trait = { garde: boolean; rayon: number; points: [number, number][] }
+export type Trait = {
+  garde: boolean
+  rayon: number
+  points: [number, number][]
+  /** **Portée par le passage, pas par le calque** (E5). Un calque n'est donc
+   *  pas monochrome. Vide partout où le passage décide d'un masque : les deux
+   *  couches d'un calque d'équipement, et l'opacité de la septième place. */
+  couleur: string
+}
+
+/** La sixième place — le trait de bord, retracé (E5, US-205).
+ *
+ *  `epaisseur` est en pixels de **l'image rendue** : une fois la grille posée,
+ *  l'image rendue *est* la case, et un pixel y est un bloc du sprite.
+ *
+ *  `position` est le seul réglage du produit qui change les dimensions du rendu
+ *  sans qu'on le lui ait demandé — d'où US-206, qui exige que l'écran l'écrive
+ *  au moment du choix. */
+export type Contour = {
+  epaisseur: number
+  couleur: string
+  position: "externe" | "interne" | "centre"
+  trous: "cercles" | "laisses"
+}
+
+/** Un calque de dessin — de la matière posée par-dessus (US-208). */
+export type CalqueDessin = { nom: string; visible: boolean; passages: Trait[] }
+
+/** La septième place : un sol, et ce qu'on empile dessus.
+ *
+ *  `opacite` est le sol de la pile — elle ne pose aucune couleur, elle décide
+ *  de ce qui est là. Elle est un champ à part plutôt qu'un calque marqué, et
+ *  c'est ce qui rend « elle ne se supprime pas et ne se déplace pas » vrai par
+ *  construction.
+ *
+ *  `calques` est rangé **du dessous vers le dessus**, comme dans le domaine :
+ *  l'ordre est celui de l'application. L'écran le renverse pour montrer une
+ *  pile, et ce renversement est écrit là où il se fait. */
+export type Main = { opacite: Trait[]; calques: CalqueDessin[] }
 
 /** Les deux couches de la main, par leur nom de domaine (C4).
  *
@@ -177,6 +215,8 @@ export type Recette = {
   grille: Grille | null
   quantification: Quantification | null
   bords: Bords | null
+  contours: Contour | null
+  main: Main | null
   nom: string | null
 }
 
@@ -187,8 +227,23 @@ export const RECETTE_VIDE: Recette = {
   grille: null,
   quantification: null,
   bords: null,
+  contours: null,
+  main: null,
   nom: null,
 }
+
+/** Ce qu'une place vaut quand on l'allume — le défaut du produit, écrit une
+ *  fois. Le contour naît **externe**, parce qu'agrandir est réversible et
+ *  manger le sujet ne l'est pas ; la main naît avec sa seule opacité, parce
+ *  qu'un calque de dessin se crée exprès. */
+export const CONTOUR_PAR_DEFAUT: Contour = {
+  epaisseur: 1,
+  couleur: "#000000",
+  position: "externe",
+  trous: "cercles",
+}
+
+export const MAIN_VIDE: Main = { opacite: [], calques: [] }
 
 export const PASSE_PAR_DEFAUT: Passe = {
   moteur: "bord",
@@ -926,6 +981,14 @@ export type TachesDeLAsset = {
   poches: Tache[]
   /** Les valeurs d'occupation où l'image change vraiment. */
   crans_occupation: number[]
+  /** Aucun pixel transparent — donc **aucun bord de sujet à tracer**. C'est le
+   *  seul cas où la table des contours est indisponible. */
+  opaque: boolean
+  /** Ce que chaque couche de la septième place change (E5) — des **pixels
+   *  touchés** sur l'opacité, des **pixels posés** sur un calque de dessin.
+   *  `null` quand la place est vide : l'écran se tait alors, plutôt que
+   *  d'écrire des zéros pour une table qu'on n'a pas ouverte. */
+  main: { opacite: number; calques: number[] } | null
 }
 
 export type Filiation = {

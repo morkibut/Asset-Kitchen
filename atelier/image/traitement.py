@@ -38,22 +38,28 @@ from __future__ import annotations
 
 import importlib.util
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Sequence
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from atelier.domaine.recette import (
     BAS,
     BORD,
     FLOYD,
+    LAISSES,
     MODELE,
     Bords,
+    CalqueDessin,
+    Contour,
     Grille,
+    Main,
     Passe,
     Quantification,
     Recadrage,
     Recette,
+    Trait,
 )
 
 __all__ = [
@@ -62,14 +68,23 @@ __all__ = [
     "appliquer",
     "boite_opaque",
     "composantes",
+    "contourner",
     "detourer",
     "detourer_bord",
     "durcir",
+    "etendre",
     "finir",
     "mesurer_grille",
     "moteur_disponible",
+    "peindre",
+    "pinceau",
+    "pose_du_calque",
+    "queue",
     "raison_moteur",
+    "restreindre",
+    "retoucher",
     "ronger",
+    "sans_les_deux_dernieres",
 ]
 
 
@@ -343,6 +358,256 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
     return sortie
 
 
+# ── Le pinceau, et ce qu'il couvre ───────────────────────────────────────────
+#
+# **Écrit ici depuis E5, et importé par le calque** — il y vivait depuis C4,
+# quand la main ne servait qu'à affiner un masque de différence. Elle est
+# devenue la septième place de la recette, donc une étape du traitement
+# ordinaire ; et `calque.py` importe déjà ce module, si bien que l'inverse
+# n'était pas possible. Deux rasterisations séparées auraient fini par ne plus
+# se rejoindre au rayon 1.
+
+
+def pinceau(forme: tuple[int, int], trait: Trait) -> np.ndarray:
+    """Les pixels qu'un passage de la main couvre — **une fonction pure**.
+
+    Un disque de `rayon` promené le long du chemin, joints arrondis. Rayon nul :
+    un pixel de large, et c'est le geste « au pixel » d'US-149 et d'US-207 — la
+    même fonction, la même liste de points, un seul nombre de différence.
+
+    **Les points sont reliés, jamais semés.** Un pointeur envoie ce qu'il peut,
+    pas ce que la main a parcouru : sans le segment entre deux points, un geste
+    rapide laisserait des trous que personne n'a dessinés. Le tracé passe donc
+    par `ImageDraw`, dont la rasterisation est fixe — deux rendus de la même
+    recette donnent le même masque, et c'est un critère depuis T2.
+
+    Rien n'est levé pour un point hors du cadre : il se borne, comme le
+    rectangle de C3.
+    """
+    hauteur, largeur = forme
+    toile = Image.new("1", (largeur, hauteur), 0)
+    dessin = ImageDraw.Draw(toile)
+    rayon = max(0, trait.rayon)
+    points = [(int(x), int(y)) for x, y in trait.points]
+    if len(points) > 1:
+        dessin.line(points, fill=1, width=2 * rayon + 1, joint="curve")
+    if rayon == 0:
+        # **Un point, et pas une ellipse de taille nulle** : une ellipse dont
+        # les deux coins se confondent ne peint rien du tout, et le geste au
+        # pixel — un seul point, rayon zéro — ne marquait alors aucun pixel.
+        # Payé en écrivant les essais de C4.
+        dessin.point(points, fill=1)
+    else:
+        # Les bouts, et les joints qu'un `width` impair laisse carrés. Un disque
+        # à chaque point rend le trait rond des deux côtés — c'est ce que la
+        # main croit dessiner.
+        for x, y in points:
+            dessin.ellipse([x - rayon, y - rayon, x + rayon, y + rayon], fill=1)
+    return np.asarray(toile, dtype=bool)
+
+
+def peindre(masque: np.ndarray, traits: Sequence[Trait]) -> np.ndarray:
+    """Les passages de la main, posés dans leur ordre, sur un masque booléen.
+
+    **Le dernier passage l'emporte**, comme un pinceau sur une toile : un trait
+    qui ôte par-dessus un trait qui garde laisse le pixel ôté. Additionner les
+    surfaces aurait rendu le geste de retrait impossible à faire après coup,
+    donc irrattrapable — et toute la main est là pour rattraper.
+
+    Rend le masque reçu tel quel quand il n'y a rien à poser : aucune copie
+    inutile sur l'immense majorité des images, qui ne portent aucun trait.
+    """
+    if not traits:
+        return masque
+    peint = masque.copy()
+    for trait in traits:
+        peint[pinceau(peint.shape, trait)] = trait.garde
+    return peint
+
+
+# ── La morphologie, et son bord de cadre ─────────────────────────────────────
+#
+# **Carrée, jamais en croix.** Une croix répétée donne un losange, et un contour
+# en losange sur un sprite se voit aux quatre coins. Le voisinage de huit rend
+# un trait d'épaisseur constante dans toutes les directions, ce que « épaisseur »
+# promet.
+#
+# **Hors du cadre, c'est du fond, et c'est le même choix des deux côtés.** Un
+# sujet recadré sur sa boîte opaque — le cas normal après le recadrage — touche
+# les quatre bords : sans cette convention, un contour interne s'interromprait
+# précisément là où le sprite est le plus visible.
+
+
+def etendre(masque: np.ndarray, pixels: int) -> np.ndarray:
+    """Dilatation carrée de `pixels`, par décalages bornés."""
+    if pixels <= 0:
+        return masque
+    hauteur, largeur = masque.shape
+    grossi = masque
+    for _ in range(pixels):
+        borde = np.pad(grossi, 1, constant_values=False)
+        suivant = np.zeros_like(grossi)
+        for dy in range(3):
+            for dx in range(3):
+                suivant |= borde[dy : dy + hauteur, dx : dx + largeur]
+        grossi = suivant
+    return grossi
+
+
+def restreindre(masque: np.ndarray, pixels: int) -> np.ndarray:
+    """Érosion carrée de `pixels`. Le bord du cadre ronge, comme du fond."""
+    if pixels <= 0:
+        return masque
+    hauteur, largeur = masque.shape
+    reduit = masque
+    for _ in range(pixels):
+        borde = np.pad(reduit, 1, constant_values=False)
+        suivant = np.ones_like(reduit)
+        for dy in range(3):
+            for dx in range(3):
+                suivant &= borde[dy : dy + hauteur, dx : dx + largeur]
+        reduit = suivant
+    return reduit
+
+
+def _rvb(hexa: str) -> tuple[int, int, int]:
+    """Un `#rrggbb` en trois octets. Une valeur illisible rend du noir.
+
+    Ne lève pas : la couleur vient d'un champ libre — *une couleur hors palette
+    se marque, elle ne se refuse pas* —, et un rendu qui tomberait sur une
+    frappe en cours serait pire que le noir.
+    """
+    propre = hexa.lstrip("#")
+    if len(propre) != 6:
+        return 0, 0, 0
+    try:
+        return tuple(int(propre[i : i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
+    except ValueError:
+        return 0, 0, 0
+
+
+# ── Le contour ───────────────────────────────────────────────────────────────
+
+
+def contourner(rgba: np.ndarray, contour: Contour) -> np.ndarray:
+    """La sixième place — le trait de bord, retracé (E5, US-205).
+
+    **Deux cas ne tracent rien, et ce sont les deux formes du même fait** : une
+    image sans aucun pixel opaque n'a pas de sujet, une image entièrement opaque
+    n'a pas de bord de sujet — seulement les quatre bords du cadre, et un
+    rectangle noir autour de l'image n'est jamais ce qu'on voulait. L'écran
+    grise la table dans le second cas ; ici on se contente de rendre l'image
+    telle quelle, parce qu'un module pur ne refuse pas.
+
+    **`laisses` ne change pas le trait, il change la silhouette qu'on longe** :
+    on bouche d'abord les trous — les zones de fond que le sujet enferme — et
+    l'on trace le bord de ce qui reste. C'est le même remplissage depuis le bord
+    que le détourage, et c'est voulu : *une zone transparente qui ne touche
+    aucun bord est enfermée* est une définition, pas deux.
+    """
+    sujet = rgba[:, :, 3] > 0
+    if not sujet.any() or sujet.all():
+        return rgba
+
+    if contour.trous == LAISSES:
+        sujet = ~_remplir_depuis_le_bord(~sujet)
+
+    dehors, dedans = contour.parts
+    if dehors:
+        rgba = np.pad(
+            rgba, ((dehors, dehors), (dehors, dehors), (0, 0)), constant_values=0
+        )
+        sujet = np.pad(sujet, dehors, constant_values=False)
+
+    anneau = etendre(sujet, dehors) & ~restreindre(sujet, dedans)
+    sortie = rgba.copy()
+    rouge, vert, bleu = _rvb(contour.couleur)
+    sortie[anneau] = (rouge, vert, bleu, 255)
+    return sortie
+
+
+# ── La main ──────────────────────────────────────────────────────────────────
+
+
+def retoucher(rgba: np.ndarray, main: Main) -> np.ndarray:
+    """La septième et dernière place — ce que l'auteur désigne (E5, US-207).
+
+    **L'opacité d'abord, les dessins ensuite, du dessous vers le dessus.** Elle
+    décide de ce qui est là, sur l'image que les six tables précédentes ont
+    produite ; les calques posent de la matière par-dessus. L'ordre est celui de
+    la pile, et il n'est écrit qu'ici.
+
+    **`remettre` ne fabrique aucune couleur** : il rend l'opacité à un pixel
+    dont la couleur est toujours dans le tableau — ni le détourage ni la
+    quantification ne touchent au canal des couleurs quand ils retirent
+    l'alpha. C'est ce qui fait de « remettre ce que l'image avait avant qu'on le
+    retire » une phrase exacte, et non une approximation.
+
+    **Effacer sur un calque de dessin ne retire que ce que ce calque-là a
+    posé** : le pixel retombe sur ce qu'il y avait dessous, jamais sur du vide.
+    C'est pour ça qu'un calque se calcule à part, puis se pose — et non trait
+    par trait à même l'image.
+    """
+    sortie = rgba.copy()
+    forme = sortie.shape[:2]
+
+    if main.opacite:
+        present = sortie[:, :, 3] > 0
+        voulu = peindre(present, main.opacite)
+        canal = sortie[:, :, 3]  # une vue : écrire dedans écrit dans `sortie`
+        canal[voulu & ~present] = 255
+        canal[~voulu & present] = 0
+
+    for calque in main.calques:
+        if not calque.visible or not calque.passages:
+            continue
+        pose, teinte = pose_du_calque(forme, calque)
+        sortie[pose, :3] = teinte[pose]
+        sortie[pose, 3] = 255
+
+    return sortie
+
+
+def pose_du_calque(
+    forme: tuple[int, int], calque: CalqueDessin
+) -> tuple[np.ndarray, np.ndarray]:
+    """Ce qu'un calque de dessin pose, et de quelle couleur — sans image.
+
+    **Écrit une fois, appelé deux** : par le rendu, qui pose ; et par la mesure
+    du panneau, qui compte les pixels posés. Un second parcours écrit ailleurs
+    aurait fini par compter autre chose que ce que le rendu dessine, et le
+    nombre affiché aurait été faux sans que rien ne tombe.
+
+    La composition est indépendante de l'image : c'est ce qui fait qu'un passage
+    **survit à un changement de taille de grille** (US-209) — il ne connaît que
+    ses points et son rayon, et se rejoue sur la forme qu'on lui donne.
+    """
+    pose = np.zeros(forme, dtype=bool)
+    teinte = np.zeros((*forme, 3), dtype=np.uint8)
+    for passage in calque.passages:
+        couvert = pinceau(forme, passage)
+        if passage.garde:
+            pose[couvert] = True
+            teinte[couvert] = _rvb(passage.couleur)
+        else:
+            # **Effacer ne retire que ce que ce calque-là a posé** : le pixel
+            # retombe sur ce qu'il y avait dessous, jamais sur du vide.
+            pose[couvert] = False
+    return pose, teinte
+
+
+def sans_les_deux_dernieres(recette: Recette) -> Recette:
+    """La recette jusqu'aux bords — l'image **que le contour va tracer**.
+
+    Deux appelants, et c'est ce qui justifie de l'écrire une fois : les mesures
+    d'une table, qui doivent décrire l'image *avant* les deux dernières places
+    pour que le seuil des bords et le compte des taches contournées portent sur
+    la même chose ; et l'appui *Avant ›*, qui montre l'image sans ce que la main
+    y a posé.
+    """
+    return replace(recette, contours=None, main=None)
+
+
 # ── La remise sur grille ─────────────────────────────────────────────────────
 
 
@@ -534,7 +799,22 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
 
 
 def finir(rgba: np.ndarray, recette: Recette) -> Rendu:
-    """Les étapes 2 à 5, sur une image déjà détourée. Dans l'ordre, toujours."""
+    """Les places 2 à 7, puis le PNG et ses dimensions."""
+    fini = queue(rgba, recette)
+    hauteur, largeur = fini.shape[:2]
+    return Rendu(octets=_en_png(fini), largeur=largeur, hauteur=hauteur)
+
+
+def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
+    """Les places 2 à 7, sur une image déjà détourée. Dans l'ordre, toujours.
+
+    **Séparée de `finir` le 31 août 2026, et pour une raison qui n'est pas
+    esthétique** : les mesures d'une table décrivent l'image *à un rang donné de
+    la recette* — ce que le seuil des bords va couper se lit avant les bords, ce
+    que la main a touché se lit avant la main. Elles ont donc besoin du tableau,
+    pas du PNG, et le rouvrir depuis les octets aurait payé un encodage pour
+    rien à chaque relecture de curseur.
+    """
     if recette.recadrage is not None:
         rgba = _recadrer(rgba, recette.recadrage)
 
@@ -549,8 +829,15 @@ def finir(rgba: np.ndarray, recette: Recette) -> Rendu:
     if recette.bords is not None:
         rgba = nettoyer(rgba, recette.bords)
 
-    hauteur, largeur = rgba.shape[:2]
-    return Rendu(octets=_en_png(rgba), largeur=largeur, hauteur=hauteur)
+    # Les deux places de E5. Le contour après les miettes et après les
+    # couleurs ; la main après tout, y compris après lui.
+    if recette.contours is not None:
+        rgba = contourner(rgba, recette.contours)
+
+    if recette.main is not None:
+        rgba = retoucher(rgba, recette.main)
+
+    return rgba
 
 
 def appliquer(recette: Recette, octets: bytes) -> Rendu:

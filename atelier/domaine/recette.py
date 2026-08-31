@@ -9,8 +9,7 @@ millisecondes ; regénérer coûte de l'argent et ne rend jamais la même image.
 **Les étapes s'appliquent dans un ordre fixe** (règle 4 du même paragraphe). Une
 recette n'est donc pas une liste que l'auteur ordonne : c'est une suite de
 places nommées, chacune remplie ou vide. Ce n'est pas une simplification, c'est
-la seule forme correcte — cinq des six étapes n'ont aucun sens avant celle qui
-les précède :
+la seule forme correcte — aucune n'a de sens avant celle qui la précède :
 
 1. **détourage** — zéro, une ou plusieurs passes. Rien ne peut se recadrer avant,
    parce qu'il n'y a pas d'alpha sur lequel trouver le sujet.
@@ -28,7 +27,19 @@ les précède :
    opération : c'est le même rééchantillonnage qui règle les deux.
 5. **quantification** — après la réduction, jamais avant : quantifier 1024 px
    pour les jeter ensuite coûte cent fois plus pour le même résultat.
-6. **bords** — le dernier mot, sur l'image telle qu'elle sortira.
+6. **bords** — les miettes, sur l'image telle qu'elle sortira. Avant le
+   contour, parce qu'un trait tracé autour de trois taches de six pixels ferait
+   trois pâtés que personne n'a dessinés.
+7. **contours** — le trait de bord, retracé. Après la grille, qui le mangeait ;
+   après la quantification, pour que sa couleur soit celle qu'on a choisie.
+   Arrivé en E5.
+8. **la main** — la dernière, et rien ne se rejoue après elle : ce qu'une main
+   a posé ne doit pas tomber parce que la machine repasse. Arrivée en E5.
+
+Les deux dernières portent le compte à **sept places** — la différence, elle,
+n'en est plus une aux yeux du produit : elle nomme deux images en entrée et en
+produit une troisième, ce qu'aucune place ne fait, et elle devient une fabrique
+en E6. Elle reste ici tant que cette étape-là n'est pas tenue.
 
 **Une recette nommée est une recette, et rien d'autre** (`docs/ARCHITECTURE.md`
 §4 : « un preset *est* une recette nommée »). Le nom ne fait pas partie de
@@ -103,6 +114,14 @@ class Trait:
     sur une toile ; c'est pour ça que l'ordre de la liste compte et qu'on ne la
     trie jamais.
 
+    **`couleur` est arrivée en E5, et elle est portée par le passage, pas par
+    le calque.** Un calque de dessin n'est donc pas monochrome : un même calque
+    en contient autant qu'on y a posé de teintes, ce qui évite d'en fabriquer un
+    par couleur. Vide — le défaut — le passage ne pose aucune couleur : c'est le
+    cas des deux couches de la main d'un calque d'équipement (C4), qui décident
+    d'un masque, et celui de l'**opacité** de la septième place, qui décide de
+    ce qui est là.
+
     Un trait sans point ne fait rien : `depuis_json` le laisse tomber au lieu de
     lever, comme un lien sans extrémité (`domaine/lien.py`). Les points hors du
     cadre ne lèvent pas non plus — ils se bornent, comme le rectangle de C3.
@@ -111,12 +130,14 @@ class Trait:
     garde: bool = True
     rayon: int = 0
     points: tuple[tuple[int, int], ...] = ()
+    couleur: str = ""
 
     def en_json(self) -> dict[str, Any]:
         return {
             "garde": self.garde,
             "rayon": self.rayon,
             "points": [list(p) for p in self.points],
+            "couleur": self.couleur,
         }
 
     @staticmethod
@@ -132,6 +153,7 @@ class Trait:
             garde=bool(d.get("garde", True)),
             rayon=int(d.get("rayon", 0)),
             points=points,
+            couleur=str(d.get("couleur") or ""),
         )
 
 
@@ -390,7 +412,13 @@ class Quantification:
 
 @dataclass(frozen=True, slots=True)
 class Bords:
-    """Le dernier mot : ce qui traîne autour du sujet une fois tout appliqué."""
+    """Ce qui traîne autour du sujet une fois le sujet à sa taille définitive.
+
+    *A cessé d'être « le dernier mot » le 31 août 2026* : deux places se posent
+    après elle depuis E5, et elle garde son rang — les miettes partent **avant**
+    qu'un contour ne les entoure, sinon trois taches de six pixels rendraient
+    trois pâtés que personne n'a dessinés.
+    """
 
     aire_min: int = 0  # taches plus petites que ça : effacées
 
@@ -402,9 +430,214 @@ class Bords:
         return Bords(aire_min=int(d.get("aire_min", 0)))
 
 
+# ── Le contour ───────────────────────────────────────────────────────────────
+#
+# **La panne qu'il répare, et c'est elle qui décide de son rang.** La mise sur
+# grille mange les contours fins : réduire au plus proche voisin garde une ligne
+# d'un pixel là où elle tombe sur un centre de bloc et la perd ailleurs. Ce qui
+# reste n'est pas un contour absent — ce qui serait franc — mais un contour
+# *troué*, qui se voit et ne se rattrape pas.
+#
+# Retracé **après** la grille, le trait est régulier par construction : plus
+# aucun rééchantillonnage derrière pour le casser. Et **après la
+# quantification**, pour que sa couleur soit exactement celle qu'on a choisie —
+# un noir pur tracé avant ressortirait au plus proche de la palette,
+# c'est-à-dire peut-être pas noir.
+
+DEHORS = "externe"
+DEDANS = "interne"
+# Même valeur que l'ancrage `CENTRE` ci-dessus, et ce n'est pas la même chose :
+# l'un dit où le sujet se pose dans sa case, l'autre où le trait se pose sur le
+# bord. Deux champs, deux domaines ; le mot est celui de l'écran dans les deux.
+A_CHEVAL = "centre"
+POSITIONS = (DEHORS, DEDANS, A_CHEVAL)
+
+# Un trou de la silhouette — une boucle de ceinture, l'espace entre un bras et
+# un torse — est un bord du sujet exactement comme le pourtour. `cercles` les
+# traite comme tels, ce que fait un style « contour noir 2 px » ; `laisses` ne
+# trace que le pourtour extérieur, pour les styles qui veulent une découpe nette
+# sans lignes à l'intérieur.
+CERCLES = "cercles"
+LAISSES = "laisses"
+TROUS = (CERCLES, LAISSES)
+
+# Au-delà, ce n'est plus un contour, c'est un cadre — et il vaut mieux le
+# dessiner à la main. Ce n'est pas une limite technique.
+EPAISSEUR_MAX = 8
+
+
+@dataclass(frozen=True, slots=True)
+class Contour:
+    """La sixième place — le trait de bord, retracé (E5, US-205).
+
+    `epaisseur` est **en pixels de l'image rendue**, seule unité qui ne mente
+    pas : une fois la grille posée, l'image rendue *est* la case, et un pixel
+    d'image y est un bloc du sprite. Sans grille, ce sont les pixels de l'image
+    telle qu'elle est.
+
+    `position` est le seul réglage du produit qui change les dimensions du rendu
+    sans qu'on le lui ait demandé — d'où US-206, qui exige que l'écran l'écrive
+    au moment du choix. `externe` est le défaut parce qu'**agrandir est
+    réversible et manger le sujet ne l'est pas** ; c'est aussi pourquoi, à
+    cheval, le pixel impair va vers l'extérieur.
+    """
+
+    epaisseur: int = 1
+    couleur: str = "#000000"
+    position: str = DEHORS
+    trous: str = CERCLES
+
+    @property
+    def parts(self) -> tuple[int, int]:
+        """Ce qui déborde, et ce qui mange — en pixels, dans cet ordre.
+
+        À cheval, la moitié qui ne tombe pas juste va **dehors** : c'est la
+        conséquence directe du défaut, et elle se lit sur l'agrandissement que
+        l'écran annonce plutôt que de se deviner.
+        """
+        epaisseur = max(1, min(EPAISSEUR_MAX, self.epaisseur))
+        if self.position == DEDANS:
+            return 0, epaisseur
+        if self.position == A_CHEVAL:
+            dehors = (epaisseur + 1) // 2
+            return dehors, epaisseur - dehors
+        return epaisseur, 0
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "epaisseur": self.epaisseur,
+            "couleur": self.couleur,
+            "position": self.position,
+            "trous": self.trous,
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Contour":
+        return Contour(
+            epaisseur=int(d.get("epaisseur", 1)),
+            couleur=str(d.get("couleur") or "#000000"),
+            position=str(d.get("position") or DEHORS),
+            trous=str(d.get("trous") or CERCLES),
+        )
+
+
+# ── La main ──────────────────────────────────────────────────────────────────
+#
+# **La septième et dernière place, et c'est ce qui la définit** : elle porte sur
+# l'image telle qu'elle partira dans le jeu. Rien ne se rejoue après elle, sans
+# quoi la machine effacerait ce qu'une main vient de poser.
+#
+# Là où les six autres places appliquent une règle à toute l'image, celle-ci ne
+# fait que ce que l'auteur désigne. La panne qu'elle répare n'a pas d'autre
+# remède : **les trois pixels qu'aucun réglage n'atteint** — un coin de fond
+# collé au sujet, une dent dans un contour, une miette accrochée à la
+# silhouette.
+
+
+@dataclass(frozen=True, slots=True)
+class CalqueDessin:
+    """Un calque de dessin — de la matière posée par-dessus (US-208).
+
+    Nommable, masquable, supprimable, déplaçable dans l'ordre. `visible` faux
+    n'efface rien : le calque garde ses passages et cesse simplement d'être
+    appliqué, ce qui est très exactement la différence entre masquer et
+    supprimer.
+
+    **Il n'y a pas de liste de passages à l'écran, et c'est voulu** : un geste à
+    main levée en produit des dizaines, et trente rangées ne se relisent pas.
+    Le calque est l'unité de lecture ; le passage n'existe que comme un compte
+    et un Ctrl+Z.
+    """
+
+    nom: str = ""
+    visible: bool = True
+    passages: tuple[Trait, ...] = ()
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "nom": self.nom,
+            "visible": self.visible,
+            "passages": [p.en_json() for p in self.passages],
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "CalqueDessin":
+        return CalqueDessin(
+            nom=str(d.get("nom") or ""),
+            visible=bool(d.get("visible", True)),
+            passages=traits_depuis_json(d.get("passages")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Main:
+    """La pile de la septième place : un sol, et ce qu'on empile dessus.
+
+    **L'opacité est le sol, et elle est d'une autre nature.** Elle ne pose
+    aucune couleur : elle décide de ce qui est là, sur l'image que les six
+    tables précédentes ont produite — `garde` vrai remet, `garde` faux ôte. Elle
+    est un champ à part plutôt qu'un calque marqué, et c'est ce qui rend « elle
+    ne se supprime pas et ne se déplace pas » vrai **par construction** au lieu
+    d'être une règle à tenir.
+
+    `calques` est rangé **du dessous vers le dessus, dans l'ordre où on
+    l'applique** — l'ordre du fichier est l'ordre d'exécution, comme pour les
+    sept places elles-mêmes. L'écran, lui, montre la pile du dessus au dessous,
+    comme partout où il y a des calques ; c'est un renversement d'affichage, et
+    il est écrit là où il se fait.
+    """
+
+    opacite: tuple[Trait, ...] = ()
+    calques: tuple[CalqueDessin, ...] = ()
+
+    @property
+    def vide(self) -> bool:
+        """La main a-t-elle posé quelque chose ?
+
+        Un calque nommé mais sans passage ne change pas l'image : le carré de la
+        barre reste creux, parce que *le carré se remplit quand la place change
+        l'image, pas quand elle figure dans la recette*. Le calque, lui, est
+        gardé — on l'a créé exprès.
+        """
+        return not self.opacite and not any(c.passages for c in self.calques)
+
+    @property
+    def passages(self) -> int:
+        """Le total de la table, tous calques confondus.
+
+        Il ne dit pas ce qu'ils font — un passage peut en effacer un autre —, et
+        c'est pour ça qu'il s'écrit à côté du nombre de calques et jamais à sa
+        place.
+        """
+        return len(self.opacite) + sum(len(c.passages) for c in self.calques)
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "opacite": [t.en_json() for t in self.opacite],
+            "calques": [c.en_json() for c in self.calques],
+        }
+
+    @staticmethod
+    def depuis_json(d: dict[str, Any]) -> "Main":
+        calques = d.get("calques")
+        return Main(
+            opacite=traits_depuis_json(d.get("opacite")),
+            calques=tuple(
+                CalqueDessin.depuis_json(c)
+                for c in (calques if isinstance(calques, (list, tuple)) else ())
+                if isinstance(c, dict)
+            ),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class Recette:
-    """Six places nommées, dans un ordre qui ne se négocie pas."""
+    """Sept places nommées, dans un ordre qui ne se négocie pas.
+
+    *Six jusqu'au 31 août 2026 ; le contour et la main sont arrivées avec E5, et
+    par le même raisonnement que les cinq premières* — chacune n'a de sens
+    qu'après celle qui la précède, et la dernière n'en a qu'à la toute fin.
+    """
 
     passes: tuple[Passe, ...] = ()
 
@@ -420,6 +653,15 @@ class Recette:
     grille: Grille | None = None
     quantification: Quantification | None = None
     bords: Bords | None = None
+
+    # **Les deux dernières places, dans l'ordre où elles s'appliquent.** Le
+    # contour se trace sur la silhouette définitive et dans les couleurs
+    # définitives ; la main passe après tout, y compris après lui — c'est même
+    # son usage le plus fréquent, reprendre la dent que le trait vient de
+    # laisser.
+    contours: "Contour | None" = None
+    main: "Main | None" = None
+
     nom: str | None = None  # une recette nommée est une recette (US-66)
 
     # ── Ce qu'elle est ───────────────────────────────────────────────────────
@@ -434,6 +676,8 @@ class Recette:
             or self.grille
             or self.quantification
             or self.bords
+            or self.contours
+            or self.main
         )
 
     @property
@@ -488,6 +732,8 @@ class Recette:
                 self.quantification.en_json() if self.quantification else None
             ),
             "bords": self.bords.en_json() if self.bords else None,
+            "contours": self.contours.en_json() if self.contours else None,
+            "main": self.main.en_json() if self.main else None,
             "nom": self.nom,
         }
 
@@ -510,5 +756,7 @@ class Recette:
                 else None
             ),
             bords=Bords.depuis_json(d["bords"]) if d.get("bords") else None,
+            contours=Contour.depuis_json(d["contours"]) if d.get("contours") else None,
+            main=Main.depuis_json(d["main"]) if d.get("main") else None,
             nom=d.get("nom"),
         )
