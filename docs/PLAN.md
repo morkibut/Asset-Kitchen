@@ -669,7 +669,7 @@ propres gestes de souris, et la règle dit *toute miniature*, pas *toute image*.
 ---
 
 ### E1 · Trois onglets au lieu de sept surfaces
-**User stories** : 174, 175, 176, 177, 178, 179
+**User stories** : 174, 175, 176, 177, 178, 179 · *8 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -689,18 +689,63 @@ suit.
 
 #### Critères d'acceptation
 
-- [ ] Trois onglets, et un seul allumé à la fois ; aucun écran ne se superpose à un autre
-- [ ] Descendre dans une chose du jeu remplace le nom de l'onglet par un fil, et chaque segment du fil ramène à son étage
-- [ ] Un même écran atteint par deux portes différentes montre deux fils différents, et chacun dit d'où l'on vient
-- [ ] Le total de la barre de tête porte le nom de ce qu'il compte, et un clic ouvre l'écran qui l'explique — grisé avec sa raison tant que cet écran n'existe pas
-- [ ] Chaque bascule de repli nomme la colonne qu'elle replie sur l'écran courant
-- [ ] Les réglages et le guide sont séparés visuellement de ce qui touche au travail
-- [ ] Aucune bande du produit ne porte une hauteur hors de `44 · 38 · 34 · 30 · 26`, aucune colonne une largeur hors de `380 · 300 · 240`, et les deux exceptions — le champ de saisie et le bouton compact — sont les seules
-- [ ] Chaque écran d'avant est atteignable et fonctionne exactement comme avant
+- [x] Trois onglets, et un seul allumé à la fois ; aucun écran ne se superpose à un autre
+- [x] Descendre dans une chose du jeu remplace le nom de l'onglet par un fil, et chaque segment du fil ramène à son étage
+- [x] Un même écran atteint par deux portes différentes montre deux fils différents, et chacun dit d'où l'on vient — *le mécanisme est livré et le fil court est en service ; la seconde porte, celle de l'établi, arrive avec lui en E3*
+- [x] Le total de la barre de tête porte le nom de ce qu'il compte, et un clic ouvre l'écran qui l'explique — grisé avec sa raison tant que cet écran n'existe pas
+- [x] Chaque bascule de repli nomme la colonne qu'elle replie sur l'écran courant
+- [x] Les réglages et le guide sont séparés visuellement de ce qui touche au travail
+- [x] Aucune bande du produit ne porte une hauteur hors de `44 · 38 · 34 · 30 · 26`, aucune colonne une largeur hors de `380 · 300 · 240`, et les deux exceptions — le champ de saisie et le bouton compact — sont les seules
+- [x] Chaque écran d'avant est atteignable et fonctionne exactement comme avant
 
 #### Bloquée par
 
 Aucune — démarrable immédiatement.
+
+#### Ce que la tenir a trouvé
+
+**Un cinquième bouton n'avait pas de place à prendre, et il fallait lui en trouver une.** La
+barre portait `Catalogue` au même poids que les onglets, alors qu'il ne change rien de ce
+qu'on regarde : il redemande la liste des modèles. Il est descendu sur le compte de modèles
+de la barre d'état, qui est déjà l'endroit du produit qui dit ce que le catalogue contient
+et de quand il date. **Le geste rejoint l'état qu'il change**, et la règle vaudra pour les
+autres commandes que la V2.1 délogera.
+
+**Trois écrans portaient chacun leur fente de refus, et pour une raison qui vient de
+tomber.** Chacun écrivait dans son propre en-tête de 44 px, parce qu'il *couvrait* la
+galerie : une raison envoyée à la barre d'état se serait rendue derrière lui, donc invisible
+au moment précis où elle compte. Les onglets ne couvrent rien — la barre d'état est visible
+partout —, et les trois fentes sont devenues une, dans la bande du châssis. **Ce n'est pas
+une économie de lignes, c'est une cause qui disparaît** : il n'y a plus d'écran caché sous
+un autre, donc plus de raison invisible.
+
+**Ce que les onglets ont cassé sans qu'on l'ait vu venir : les replis à état local.** Le
+champ de prompt tenait chez lui l'ouverture de son dépliant *ce qui partira* et celle du
+prompt négatif. C'était sûr tant que la galerie était le fond du produit et ne se démontait
+jamais. Devenue un onglet, elle se démonte — et aller poser un champ de bible dans l'Univers
+puis revenir refermait sous la main le dépliant qu'on venait d'ouvrir pour comparer,
+c'est-à-dire exactement le défaut que le registre de replis du châssis existe pour empêcher.
+Les deux replis y sont entrés, et le registre a gagné la porte qui lui manquait. **Le dépôt
+avait écrit la règle dès T3** — *« il doit survivre au changement d'asset et à la fermeture
+de la fiche, qui se démonte »* — et n'avait jamais eu à l'appliquer ailleurs que dans un
+bloc de réglages.
+
+**La droite de la bande prenait plus de la moitié de la bande.** Mesuré au navigateur sur
+une fenêtre de 1 280 px : 672 px à droite, 268 px au fil, et les quatre segments réduits à
+`cœur de pier… › Gal… › helmet-r… › Décou…`. La raison de grisé du total — une phrase qui
+vivra jusqu'en E18 — poussait dehors la seule chose de la bande qui dise où l'on est. Deux
+règles en sont sorties : **le fil cède en dernier**, et **le dernier segment ne se rogne
+jamais**, parce que c'est le seul dont le nom ne se devine pas par le contexte.
+
+**Une valeur de la liste fermée était fausse dans le code, et une autre l'était dans le
+document.** Le bouton et le champ passent de 32 à 34 px, comme la V2.1 l'a décidé — la
+question de savoir si ces deux pixels valent leur coût reste ouverte en B-9, et c'est là
+qu'elle se tranche. Le champ de prompt, lui, passe de 62 à 56 : le document du design
+annonçait que *« rien ne bouge à l'écran, seule la mesure était prise au mauvais endroit »*,
+et le code dit le contraire — 62 était bien la hauteur du champ. **C'est un vrai changement
+de 6 px**, obtenu en écrivant l'interligne au lieu de l'hériter : deux lignes à 19 px plus
+8 px de garde de chaque côté font exactement 56, là où l'interligne détendu en faisait 62.
+La phrase du document a été corrigée plutôt que gardée.
 
 ---
 

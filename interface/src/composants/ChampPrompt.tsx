@@ -1,4 +1,4 @@
-// Le champ de prompt — 62 px au minimum, 13,5 px, le seul endroit du produit
+// Le champ de prompt — 56 px au minimum, 13,5 px, le seul endroit du produit
 // où le texte est plus gros que le châssis.
 //
 // « L'atelier s'ouvre sur un champ de prompt actif, sans écran à traverser »
@@ -12,9 +12,9 @@
 // pas ici : le serveur le rend, parce que c'est le même chemin que la
 // soumission emprunte.
 
-import { useEffect, useRef, useState, type Ref } from "react"
+import { useEffect, useRef, type Ref } from "react"
 import type { ApercuPrompt, PartiePrompt } from "../api"
-import { Bouton, Raison, Revers } from "./chassis"
+import { Bouton, ouvrirPli, Raison, Revers, usePli } from "./chassis"
 import { POINTILLE, useInfobulle } from "./Infobulle"
 
 /** D'où vient chaque bloc, en un mot. **Le libellé n'est pas dans le texte** :
@@ -71,8 +71,13 @@ export function ChampPrompt({
   onGenerer: () => void
   variations: number
 }) {
-  const [negatifOuvert, setNegatifOuvert] = useState(false)
-  const [apercuOuvert, setApercuOuvert] = useState(false)
+  // **Les deux replis vivent dans le registre du châssis, pas ici.** La
+  // galerie était le fond du produit et ce champ ne se démontait jamais ; la
+  // V2.1 en fait un onglet, et un état local se serait perdu à chaque
+  // aller-retour vers l'Univers ou le Codex — refermant sous la main le
+  // dépliant qu'on venait d'ouvrir pour comparer.
+  const [negatifOuvert, basculerNegatif] = usePli("prompt.negatif")
+  const [apercuOuvert, basculerApercu] = usePli("prompt.ce-qui-partira")
   const champ = useRef<HTMLTextAreaElement>(null)
   // **Le titre du dépliant n'épingle pas**, comme un en-tête de bloc : son clic
   // est déjà pris — il déplie. Les gestes vont donc sur le bouton, un élément
@@ -86,7 +91,7 @@ export function ChampPrompt({
   // reprend pas un texte qu'on ne voit pas ; et le refermer au retour à
   // l'atelier ferait disparaître sous la main ce qu'on venait de comparer.
   useEffect(() => {
-    if (repris) setApercuOuvert(true)
+    if (repris) ouvrirPli("prompt.ce-qui-partira")
   }, [repris])
 
   const toucheGenerer = (e: React.KeyboardEvent) => {
@@ -115,10 +120,20 @@ export function ChampPrompt({
             : "Décris ce que tu veux fabriquer."
         }
         className={[
-          "resize-y rounded-[3px] border px-3 py-2 leading-relaxed placeholder:text-texte-3",
+          "resize-y rounded-[3px] border px-3 py-2 placeholder:text-texte-3",
           repris
-            ? "mesure min-h-[120px] border-signal bg-fond-2 text-[11.5px] text-texte"
-            : "min-h-[62px] border-bord-fort bg-fond-2 text-[13.5px] text-texte",
+            ? "mesure min-h-[120px] leading-relaxed border-signal bg-fond-2 text-[11.5px] text-texte"
+            : // **56 px, la première des deux exceptions nommées à la liste
+              // fermée des hauteurs** (`docs/DESIGN.md` § Spacing) : ce n'est
+              // pas une bande, c'est une zone de saisie sur plusieurs lignes.
+              //
+              // L'interligne est écrit ici et non hérité, parce que c'est lui
+              // qui fait la mesure : deux lignes à 19 px, plus 8 px de garde en
+              // haut et en bas, plus le trait, font exactement 56. Avec
+              // `leading-relaxed` (1,625 → 22 px) les deux mêmes lignes en
+              // faisaient 62, et le `min-h` n'y pouvait rien — il est un
+              // minimum, pas une hauteur.
+              "min-h-[56px] leading-[19px] border-bord-fort bg-fond-2 text-[13.5px] text-texte",
         ].join(" ")}
       />
 
@@ -129,7 +144,7 @@ export function ChampPrompt({
           onKeyDown={toucheGenerer}
           rows={1}
           placeholder="Ce que tu ne veux pas."
-          className="min-h-[32px] resize-y rounded-[3px] border border-bord bg-fond-2 px-3 py-2 text-[12.5px] text-texte-2 placeholder:text-texte-3"
+          className="min-h-[34px] resize-y rounded-[3px] border border-bord bg-fond-2 px-3 py-2 text-[12.5px] leading-[16px] text-texte-2 placeholder:text-texte-3"
         />
       )}
 
@@ -142,7 +157,7 @@ export function ChampPrompt({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setApercuOuvert((o) => !o)}
+            onClick={basculerApercu}
             aria-expanded={apercuOuvert}
             {...infobulle.declencheurs}
             className="mesure flex h-6 items-center gap-1 text-[10px] text-texte-3 hover:text-texte-2"
@@ -225,8 +240,8 @@ export function ChampPrompt({
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={() => setNegatifOuvert((o) => !o)}
-          className="mesure h-8 text-[10px] text-texte-3 hover:text-texte-2"
+          onClick={basculerNegatif}
+          className="mesure h-[34px] text-[10px] text-texte-3 hover:text-texte-2"
         >
           {negatifOuvert ? "− " : "+ "}prompt négatif
           {promptNegatif && !negatifOuvert ? " ·" : ""}

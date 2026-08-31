@@ -1,11 +1,11 @@
 {
- "releve_le": 1788125998.3935785,
+ "releve_le": 1788134751.3652298,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 255685,
+  "octets": 263423,
   "documents": {
    "AGENTS.md": {
     "octets": 22108,
@@ -80,14 +80,14 @@
     ]
    },
    "docs/PRD.md": {
-    "octets": 64025,
+    "octets": 64814,
     "titres": 10,
     "sections": [
      {
       "titre": "Asset Kitchen — PRD",
       "niveau": 1,
       "ligne": 1,
-      "octets": 63628
+      "octets": 64415
      },
      {
       "titre": "Problème",
@@ -129,31 +129,31 @@
       "titre": "Décisions d'implémentation",
       "niveau": 2,
       "ligne": 237,
-      "octets": 34854
+      "octets": 35641
      },
      {
       "titre": "Les décisions de la V2.1 — 31 août 2026",
       "niveau": 3,
-      "ligne": 327,
+      "ligne": 329,
       "octets": 17294
      },
      {
       "titre": "Notes complémentaires → `docs/prd-carnet.md`",
       "niveau": 2,
-      "ligne": 393,
+      "ligne": 395,
       "octets": 288
      }
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 40265,
+    "octets": 40888,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 39810
+      "octets": 40425
      },
      {
       "titre": "1 · Ce que c'est",
@@ -195,7 +195,7 @@
       "titre": "5 · Modèle d'objets",
       "niveau": 2,
       "ligne": 186,
-      "octets": 18259
+      "octets": 18874
      },
      {
       "titre": "Ce que la toile ajoute au modèle",
@@ -207,43 +207,43 @@
       "titre": "Ce que la V2.1 ajoute au modèle",
       "niveau": 3,
       "ligne": 326,
-      "octets": 4892
+      "octets": 5447
      },
      {
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
-      "ligne": 382,
+      "ligne": 390,
       "octets": 566
      },
      {
       "titre": "11 · Risques, et quand les lever",
       "niveau": 2,
-      "ligne": 392,
+      "ligne": 400,
       "octets": 6109
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 432,
+      "ligne": 440,
       "octets": 1016
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 444,
+      "ligne": 452,
       "octets": 990
      }
     ]
    },
    "docs/PLAN.md": {
-    "octets": 91790,
-    "titres": 127,
+    "octets": 96851,
+    "titres": 128,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, puis la V2.1",
       "niveau": 1,
       "ligne": 1,
-      "octets": 91790
+      "octets": 95332
      },
      {
       "titre": "Décisions architecturales",
@@ -441,7 +441,7 @@
       "titre": "V2.1 — L'interface refaite",
       "niveau": 2,
       "ligne": 432,
-      "octets": 61810
+      "octets": 65352
      },
      {
       "titre": "Ce que la V2.1 hérite et ne rediscute pas",
@@ -519,7 +519,7 @@
       "titre": "E1 · Trois onglets au lieu de sept surfaces",
       "niveau": 3,
       "ligne": 671,
-      "octets": 2157
+      "octets": 5699
      },
      {
       "titre": "Ce qu'on livre",
@@ -531,487 +531,493 @@
       "titre": "Critères d'acceptation",
       "niveau": 4,
       "ligne": 690,
-      "octets": 1023
+      "octets": 1147
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
       "ligne": 701,
-      "octets": 64
+      "octets": 59
+     },
+     {
+      "titre": "Ce que la tenir a trouvé",
+      "niveau": 4,
+      "ligne": 705,
+      "octets": 3380
      },
      {
       "titre": "E2 · Le codex et l'établi — nommer une chose, et payer depuis elle",
       "niveau": 3,
-      "ligne": 707,
+      "ligne": 752,
       "octets": 2945
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 710,
+      "ligne": 755,
       "octets": 1244
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 728,
+      "ligne": 773,
       "octets": 1401
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 743,
+      "ligne": 788,
       "octets": 136
      },
      {
       "titre": "E3 · Le châssis des tables, et les cinq places qui existaient déjà",
       "niveau": 3,
-      "ligne": 749,
+      "ligne": 794,
       "octets": 3219
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 752,
+      "ligne": 797,
       "octets": 1386
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 771,
+      "ligne": 816,
       "octets": 1532
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 788,
+      "ligne": 833,
       "octets": 152
      },
      {
       "titre": "E4 · La galerie, dégraissée",
       "niveau": 3,
-      "ligne": 794,
+      "ligne": 839,
       "octets": 1821
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 797,
+      "ligne": 842,
       "octets": 807
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 810,
+      "ligne": 855,
       "octets": 711
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 820,
+      "ligne": 865,
       "octets": 224
      },
      {
       "titre": "E5 · Les deux places qui manquaient — le contour et la main",
       "niveau": 3,
-      "ligne": 827,
+      "ligne": 872,
       "octets": 2169
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 830,
+      "ligne": 875,
       "octets": 1118
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 846,
+      "ligne": 891,
       "octets": 808
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 857,
+      "ligne": 902,
       "octets": 127
      },
      {
       "titre": "E6 · La superposition quitte la recette",
       "niveau": 3,
-      "ligne": 863,
+      "ligne": 908,
       "octets": 2161
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 866,
+      "ligne": 911,
       "octets": 1142
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 883,
+      "ligne": 928,
       "octets": 804
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 894,
+      "ligne": 939,
       "octets": 126
      },
      {
       "titre": "E7 · L'onglet Univers à trois côtés",
       "niveau": 3,
-      "ligne": 900,
+      "ligne": 945,
       "octets": 1991
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 903,
+      "ligne": 948,
       "octets": 911
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 917,
+      "ligne": 962,
       "octets": 866
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 928,
+      "ligne": 973,
       "octets": 131
      },
      {
       "titre": "E8 · L'assistant de démarrage — dix étapes, et le seul écran de réglages",
       "niveau": 3,
-      "ligne": 934,
+      "ligne": 979,
       "octets": 3073
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 937,
+      "ligne": 982,
       "octets": 1304
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 956,
+      "ligne": 1001,
       "octets": 1368
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 972,
+      "ligne": 1017,
       "octets": 238
      },
      {
       "titre": "E9 · Les poses appartiennent au type d'objet",
       "niveau": 3,
-      "ligne": 979,
+      "ligne": 1024,
       "octets": 1641
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 982,
+      "ligne": 1027,
       "octets": 777
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 994,
+      "ligne": 1039,
       "octets": 607
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1003,
+      "ligne": 1048,
       "octets": 168
      },
      {
       "titre": "E10 · La vue du jeu, et les directions qu'elle donne",
       "niveau": 3,
-      "ligne": 1010,
+      "ligne": 1055,
       "octets": 2590
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1013,
+      "ligne": 1058,
       "octets": 1222
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1031,
+      "ligne": 1076,
       "octets": 1020
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1043,
+      "ligne": 1088,
       "octets": 231
      },
      {
       "titre": "E11 · Les palettes et les ambiances",
       "niveau": 3,
-      "ligne": 1050,
+      "ligne": 1095,
       "octets": 3101
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1053,
+      "ligne": 1098,
       "octets": 1131
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1070,
+      "ligne": 1115,
       "octets": 1227
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1084,
+      "ligne": 1129,
       "octets": 638
      },
      {
       "titre": "E12 · La fiche d'une chose du jeu",
       "niveau": 3,
-      "ligne": 1091,
+      "ligne": 1136,
       "octets": 2529
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1094,
+      "ligne": 1139,
       "octets": 1264
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1112,
+      "ligne": 1157,
       "octets": 1006
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1125,
+      "ligne": 1170,
       "octets": 161
      },
      {
       "titre": "E13 · La planche d'une pose",
       "niveau": 3,
-      "ligne": 1132,
+      "ligne": 1177,
       "octets": 2664
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1135,
+      "ligne": 1180,
       "octets": 1446
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1156,
+      "ligne": 1201,
       "octets": 817
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1167,
+      "ligne": 1212,
       "octets": 319
      },
      {
       "titre": "E14 · L'écran de confirmation",
       "niveau": 3,
-      "ligne": 1174,
+      "ligne": 1219,
       "octets": 3008
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1177,
+      "ligne": 1222,
       "octets": 1601
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1200,
+      "ligne": 1245,
       "octets": 1084
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1214,
+      "ligne": 1259,
       "octets": 218
      },
      {
       "titre": "E15 · Le codex généralisé — les cinq familles",
       "niveau": 3,
-      "ligne": 1221,
+      "ligne": 1266,
       "octets": 1746
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1224,
+      "ligne": 1269,
       "octets": 882
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1238,
+      "ligne": 1283,
       "octets": 588
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1247,
+      "ligne": 1292,
       "octets": 186
      },
      {
       "titre": "E16 · La vitrine",
       "niveau": 3,
-      "ligne": 1253,
+      "ligne": 1298,
       "octets": 1483
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1256,
+      "ligne": 1301,
       "octets": 773
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1269,
+      "ligne": 1314,
       "octets": 572
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1278,
+      "ligne": 1323,
       "octets": 72
      },
      {
       "titre": "E17 · Le calibrage",
       "niveau": 3,
-      "ligne": 1284,
+      "ligne": 1329,
       "octets": 2076
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1287,
+      "ligne": 1332,
       "octets": 1067
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1302,
+      "ligne": 1347,
       "octets": 753
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1312,
+      "ligne": 1357,
       "octets": 188
      },
      {
       "titre": "E18 · Les dépenses",
       "niveau": 3,
-      "ligne": 1319,
+      "ligne": 1364,
       "octets": 1896
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1322,
+      "ligne": 1367,
       "octets": 894
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1336,
+      "ligne": 1381,
       "octets": 710
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1346,
+      "ligne": 1391,
       "octets": 223
      },
      {
       "titre": "E19 · Le premier lancement",
       "niveau": 3,
-      "ligne": 1353,
+      "ligne": 1398,
       "octets": 1696
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1356,
+      "ligne": 1401,
       "octets": 879
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1370,
+      "ligne": 1415,
       "octets": 615
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1379,
+      "ligne": 1424,
       "octets": 131
      },
      {
       "titre": "E20 · Le guide",
       "niveau": 3,
-      "ligne": 1386,
+      "ligne": 1431,
       "octets": 2487
      },
      {
       "titre": "Ce qu'on livre",
       "niveau": 4,
-      "ligne": 1389,
+      "ligne": 1434,
       "octets": 1414
      },
      {
       "titre": "Critères d'acceptation",
       "niveau": 4,
-      "ligne": 1409,
+      "ligne": 1454,
       "octets": 887
      },
      {
       "titre": "Bloquée par",
       "niveau": 4,
-      "ligne": 1421,
+      "ligne": 1466,
       "octets": 122
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 1427,
+      "ligne": 1472,
       "octets": 4389
      }
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 37497,
+    "octets": 38762,
     "titres": 25,
     "sections": [
      {
       "titre": "Asset Kitchen — Design System",
       "niveau": 1,
       "ligne": 1,
-      "octets": 37011
+      "octets": 38268
      },
      {
       "titre": "Product Context",
@@ -1089,72 +1095,72 @@
       "titre": "Spacing",
       "niveau": 2,
       "ligne": 266,
-      "octets": 3611
+      "octets": 4302
      },
      {
       "titre": "Hauteurs de contrôle — la vraie grille de densité",
       "niveau": 3,
       "ligne": 272,
-      "octets": 2529
+      "octets": 3220
      },
      {
       "titre": "Largeurs de colonne — la liste est fermée aussi",
       "niveau": 3,
-      "ligne": 306,
+      "ligne": 314,
       "octets": 820
      },
      {
       "titre": "Layout",
       "niveau": 2,
-      "ligne": 321,
-      "octets": 10640
+      "ligne": 329,
+      "octets": 11206
      },
      {
       "titre": "Sur la toile, deux échelles — et tout objet déclare la sienne",
       "niveau": 3,
-      "ligne": 340,
+      "ligne": 348,
       "octets": 974
      },
      {
       "titre": "Le rayon 0 sur la tuile",
       "niveau": 3,
-      "ligne": 354,
+      "ligne": 362,
       "octets": 423
      },
      {
       "titre": "Un panneau est borné par l'écran, jamais par son contenu",
       "niveau": 3,
-      "ligne": 361,
+      "ligne": 369,
       "octets": 2176
      },
      {
       "titre": "Motion",
       "niveau": 2,
-      "ligne": 393,
+      "ligne": 401,
       "octets": 2347
      },
      {
       "titre": "La liste close de ce qui bouge",
       "niveau": 3,
-      "ligne": 399,
+      "ligne": 407,
       "octets": 2016
      },
      {
       "titre": "Motifs → `docs/design-motifs.md`",
       "niveau": 2,
-      "ligne": 429,
+      "ligne": 437,
       "octets": 1633
      },
      {
       "titre": "Ce que le design n'affiche pas, et pourquoi",
       "niveau": 2,
-      "ligne": 454,
+      "ligne": 462,
       "octets": 1739
      },
      {
       "titre": "Decisions Log → `docs/design-decisions.md`",
       "niveau": 2,
-      "ligne": 479,
+      "ligne": 487,
       "octets": 465
      }
     ]
@@ -1163,11 +1169,11 @@
  },
  "renvois": {
   "code": {
-   "total": 342,
+   "total": 350,
    "casses": []
   },
   "docs": {
-   "total": 291,
+   "total": 313,
    "casses": []
   }
  }

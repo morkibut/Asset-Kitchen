@@ -16,6 +16,19 @@
 > l'emporte* — sauf aux quatre endroits nommés en A-12, A-13, A-14 et A-15, où
 > la maquette se contredit elle-même ou contredit une mesure. Chacun de ces
 > quatre est écrit avec ce qui a décidé.
+>
+> **Ce que ce document ne tient pas, et où c'est.** La règle ci-dessus ne dit
+> rien du cas le plus fréquent : **deux maquettes qui se contredisent entre
+> elles**, sans qu'aucun document d'autorité ait son mot à dire. Une relecture
+> croisée des vingt-six fichiers du dossier, le 31 août 2026, en a trouvé
+> soixante-deux — écrans dessinés deux fois de deux façons, fichiers qui se
+> contredisent eux-mêmes, chiffres annoncés comme mesurés et différents d'une
+> page à l'autre, reports décidés et jamais appliqués. Ils vivent dans
+> [`v21-corrections-a-traiter.md`](v21-corrections-a-traiter.md), un point par
+> écart. Ce ne sont pas des arbitrages : il y a une bonne version et une
+> mauvaise, et il faut la choisir. **Quatre d'entre eux sont déjà tranchés par
+> le document du design réécrit le même jour** — il ne reste qu'à les appliquer
+> dans les maquettes.
 
 ---
 
@@ -269,12 +282,27 @@ et payer —, et ils sont les seuls contrôles du produit dans ce cas.
 et il est reporté en B-9 pour cette raison : si les deux hauteurs se confondent à
 l'œil, la valeur unique de 32 vaut mieux qu'une distinction que personne ne voit.
 
+**Une maquette n'a pas suivi, et il faut l'aligner quel que soit le sort de
+B-9** : `08-planche-de-pose` § 11 donne encore 32 px au bouton qui paie, quand
+`08bis-ecran-de-confirmation` § 10 lui en donne 34. Voir E-3 dans
+[`v21-corrections-a-traiter.md`](v21-corrections-a-traiter.md).
+
 ### A-16 · Le champ de saisie du prompt passe de 62 à 56 pixels
 
 Le document du design annonçait 62 pixels de hauteur minimale pour le champ de
 prompt ; les maquettes de l'établi et de la planche le dessinent à 56. La valeur
-des maquettes est retenue, et la nuance qui explique l'écart est écrite : **56 est
-la hauteur du champ**, 62 était celle de la zone qui le porte, marges comprises.
+des maquettes est retenue, et la nuance qui l'expliquait a été écrite ici : **56
+serait la hauteur du champ**, 62 celle de la zone qui le porte, marges comprises.
+
+**Cette nuance est fausse, et le code l'a dit en tenant E1 — 31 août 2026.** La
+hauteur minimale de 62 px était écrite sur le champ lui-même, bordure et garde
+intérieure comprises : c'est bien le champ qui mesurait 62. **Le changement est
+donc réel, et il vaut 6 px** ; il s'obtient en écrivant l'interligne au lieu de
+l'hériter — deux lignes à 19 px plus 8 px de garde de chaque côté font 56, là où
+l'interligne détendu du produit en faisait 62. La décision ne bouge pas, la
+raison si. C'est le second arbitrage de la V2.1 dont la justification supposait
+le code au lieu de le lire, après B-9, et les deux se sont écrits le même jour.
+
 La barre qui l'entoure n'a pas de hauteur fixe — elle grandit avec la bande
 « Pour » quand il y en a une.
 

@@ -136,7 +136,7 @@ function BlocCle({
           onChange={(e) => setCle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && cle.trim().length >= 8 && deposer()}
           placeholder="sk-or-…"
-          className="mesure h-8 flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte placeholder:text-texte-3"
         />
         <Bouton
           principal
@@ -282,7 +282,7 @@ function BlocDossiers({
             onChange={(e) => setDossier(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && change && poser()}
             placeholder="C:\\Jeux\\mon-jeu\\assets"
-            className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte placeholder:text-texte-3"
+            className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte placeholder:text-texte-3"
           />
           <Bouton inactif={!change} onClick={poser} enfants="Poser" />
         </div>

@@ -199,7 +199,7 @@ export function Arbre({
                 if (e.key === "Escape") setNouveau(null)
               }}
               placeholder={nouveau === "projet" ? "nom du projet" : "nom de la collection"}
-              className="h-8 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte placeholder:text-texte-3"
+              className="h-[34px] rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[12px] text-texte placeholder:text-texte-3"
             />
             <Raison texte="Entrée pour créer, Échap pour renoncer" />
           </div>

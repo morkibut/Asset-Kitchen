@@ -4,8 +4,25 @@
     {
       "name": "atelier",
       "runtimeExecutable": ".venv/Scripts/python.exe",
-      "runtimeArgs": ["-m", "atelier", "--sans-navigateur", "--port", "8420"],
+      "runtimeArgs": [
+        "-m",
+        "atelier",
+        "--sans-navigateur",
+        "--port",
+        "8420"
+      ],
       "port": 8420
+    },
+    {
+      "name": "interface",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "interface",
+        "run",
+        "dev"
+      ],
+      "port": 5173
     }
   ]
 }

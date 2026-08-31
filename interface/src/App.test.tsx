@@ -1222,6 +1222,25 @@ async function monter(fetchDouble: ReturnType<typeof vi.fn>, etat: Etat = ETAT) 
   return FluxDouble.ouverts[0]
 }
 
+/** Le cadre de l'onglet ouvert, **et borné à lui**.
+ *
+ *  Avant la V2.1, l'écran se prenait par son titre : chaque surface portait un
+ *  en-tête de 44 px avec son nom dedans. Les trois onglets partagent une seule
+ *  barre, et ces titres n'existent plus — le cadre se prend donc par la marque
+ *  que l'onglet pose sur lui, `data-univers`, qui existait déjà pour que le
+ *  garde de saisie sache dans quel champ on écrit.
+ *
+ *  Le bornage reste indispensable pour la raison inverse d'avant : la galerie
+ *  ne se **rend** plus derrière, mais une assertion posée sur tout le document
+ *  trouverait la barre du châssis et la barre d'état, qui sont à tout le monde. */
+async function cadreDuCodex() {
+  return await waitFor(() => {
+    const cadre = document.querySelector("[data-univers]")
+    if (!cadre) throw new Error("aucun onglet en profondeur n'est monté")
+    return cadre as HTMLElement
+  })
+}
+
 describe("l'écran de l'atelier", () => {
   beforeEach(() => {
     FluxDouble.ouverts = []
@@ -1460,7 +1479,7 @@ describe("l'écran de l'atelier", () => {
     // ne parte, et la suivante n'attend pas la première.
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     expect(await screen.findByText("Le tableau est vide.")).toBeTruthy()
 
     flux.emettre(
@@ -1495,7 +1514,7 @@ describe("l'écran de l'atelier", () => {
   test("une récupération qui échoue garde son adresse, sa raison, et son geste", async () => {
     const { fetchDouble } = serveurDouble()
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     await screen.findByText("Le tableau est vide.")
 
     flux.emettre(
@@ -1522,7 +1541,7 @@ describe("l'écran de l'atelier", () => {
   test("promouvoir un artwork montre la palette, et la retirer la fait changer à l'œil", async () => {
     const { fetchDouble } = serveurDouble({ cartes: [carteImage("planche")] })
     const flux = await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     // Les blocs de l'univers arrivent repliés — on pose ces réglages une fois,
     // et l'en-tête dit déjà leur état (`docs/design-motifs.md` § Le bloc repliable).
@@ -1570,7 +1589,7 @@ describe("l'écran de l'atelier", () => {
   test("un fichier qui n'est pas une image est refusé en le nommant", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     await screen.findByText("Le tableau est vide.")
 
     // `DataTransfer` n'existe pas hors navigateur : on double ce que l'écran
@@ -1593,13 +1612,24 @@ describe("l'écran de l'atelier", () => {
   test("un texte collé dans un champ de saisie ne fabrique pas de carte", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     await screen.findByText("Le tableau est vide.")
 
     // L'écoute est posée sur la fenêtre : elle voit passer aussi les collages
-    // qui ne lui sont pas adressés. Celui-ci remplit une case — le nom d'un
-    // groupe, le mot d'un lien, une recherche — et le tableau n'en sait rien.
-    const champ = screen.getByLabelText("Chercher dans la bibliothèque")
+    // qui ne lui sont pas adressés. Celui-ci remplit une case — un champ de la
+    // bible, le nom d'un groupe, le mot d'un lien — et le tableau n'en sait
+    // rien.
+    //
+    // **Le champ pris est celui de la bible, et non plus la recherche de la
+    // bibliothèque** : la galerie ne se rend plus derrière l'Univers depuis
+    // qu'ils sont deux onglets (E1), et un champ démonté ne reçoit aucun
+    // collage. Ce que l'essai prouve ne change pas d'un pouce — le collage
+    // arrive dans un champ de saisie de l'écran ouvert, et le tableau
+    // l'ignore ; il se contente de le prouver dans le seul écran monté.
+    fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
+    const champ = await screen.findByPlaceholderText(
+      "royaume de tourbe et de fer, marais au nord",
+    )
     fireEvent.paste(champ, { clipboardData: { files: [], getData: () => "héros" } })
 
     expect(fetchDouble.mock.calls.some(([url]) => String(url).includes("/api/board/text"))).toBe(
@@ -1670,8 +1700,10 @@ describe("le slicer et le zoom de la grille", () => {
   test("découper part de la fiche, montre ce qui sortira, et se corrige à la main", async () => {
     const { appels } = await ouvrirLaDecoupe()
 
-    // L'écran couvre l'atelier et montre ce que la détection a trouvé.
-    expect(await screen.findByRole("heading", { name: "Découpe" })).toBeTruthy()
+    // **On est descendu d'un étage dans la galerie**, et le fil le dit. Il n'y
+    // a plus de titre d'écran à chercher : le nom de l'outil est le dernier
+    // segment du fil, et l'écran n'en porte pas d'autre.
+    expect(await screen.findByText("Découpage")).toBeTruthy()
     expect(screen.getByText("2 rectangles")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Découper en 2 assets" })).toBeTruthy()
 
@@ -1690,9 +1722,7 @@ describe("le slicer et le zoom de la grille", () => {
 
     // Et l'écran se referme sur ce qu'il vient de fabriquer : la fiche de la
     // première découpe, ouverte dans l'atelier.
-    await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Découpe" })).toBeNull(),
-    )
+    await waitFor(() => expect(screen.queryByText("Découpage")).toBeNull())
   })
 
   test("une détection qui ne trouve rien porte sa raison, et découper est grisé", async () => {
@@ -2248,7 +2278,7 @@ describe("l'agent, vu de l'atelier", () => {
   ]
 
   const ouvrirLaToile = async () => {
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     fireEvent.click(await screen.findByRole("button", { name: "toile" }))
   }
 
@@ -2351,7 +2381,7 @@ describe("l'agent, vu de l'atelier", () => {
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: compose() })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     // La grille montre **tout** le tableau — classé ou non : c'est ce pour quoi
     // elle est bonne, et la toile ne la remplace pas.
@@ -2441,7 +2471,7 @@ describe("l'agent, vu de l'atelier", () => {
     const reglages = () => appels.filter((a) => a.url === "/api/board/m1")
     await waitFor(() => expect(reglages()).toHaveLength(1))
 
-    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
     await ouvrirLaToile()
     await screen.findByText("3 à classer")
 
@@ -2564,7 +2594,7 @@ describe("l'agent, vu de l'atelier", () => {
     doublerLaGrille(160)
     const { fetchDouble, appels } = serveurDouble({ cartes: compose9() })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     fireEvent.click(await screen.findByRole("button", { name: "+ note" }))
     const champ = await waitFor(() => {
@@ -2701,7 +2731,7 @@ describe("l'agent, vu de l'atelier", () => {
       ],
     })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     // Le menu d'une carte image : pas de rangée de teinte.
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir la carte" }))
@@ -2777,7 +2807,7 @@ describe("l'agent, vu de l'atelier", () => {
       ],
     })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     const carte = () => screen.getByRole("button", { name: "Ouvrir la note" }).closest("article")!
 
@@ -2921,7 +2951,7 @@ describe("l'aperçu", () => {
     doublerLaGrille(160)
     const { fetchDouble } = serveurDouble({ cartes: [carteImage("c1")] })
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     const carte = await waitFor(() => document.querySelector("article")!)
     survoler(carte)
@@ -2943,7 +2973,7 @@ describe("l'aperçu", () => {
     // Le sujet d'une note est son texte, déjà entier dans la carte : l'agrandir
     // ne montrerait rien de plus, donc la touche ne fait rien — et rien ne
     // clignote pour l'annoncer.
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     const note = await waitFor(() => document.querySelector("article")!)
     survoler(note)
     espace()
@@ -3060,7 +3090,7 @@ describe("l'aperçu", () => {
     const { fetchDouble } = serveurDouble({ personnages: [avecImage] })
     await monter(fetchDouble)
 
-    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
     const vignette = (
       await screen.findByLabelText("Retirer cette image de la case repos")
     ).closest("span")!
@@ -3171,7 +3201,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
   const ouvrirLUnivers = async (univers: Univers = UNIVERS) => {
     const double = serveurDouble({ univers })
     const flux = await monter(double.fetchDouble, { ...ETAT, univers })
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     await screen.findByRole("button", { name: /^Bible/ })
     return { ...double, flux }
   }
@@ -3188,8 +3218,8 @@ describe("le réglage d'univers se voit à l'instant", () => {
     // tienne un brouillon : le texte encore à l'écran ne prouverait que le
     // brouillon. Remonté, il naît de ce que l'onglet tient de l'univers — donc
     // de la réponse posée. C'est « rouvrir montre la même valeur », vu d'ici.
-    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     // Le repli des blocs vit dans le châssis et survit au démontage : la bible
     // est déjà ouverte au retour, et la rouvrir la refermerait.
     await screen.findByRole("button", { name: /^Bible/ })
@@ -3307,7 +3337,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
     })
 
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     const grille = await ouvrir("Taille de pixel")
 
     fireEvent.click(grille.getByRole("button", { name: "96" }))
@@ -3375,9 +3405,8 @@ describe("l'écran des personnages", () => {
   const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
-    const titre = await screen.findByRole("heading", { name: "Personnages" })
-    const ecran = within(titre.closest("[data-univers]") as HTMLElement)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const ecran = within(await cadreDuCodex())
     return { ...double, flux, ecran }
   }
 
@@ -3554,7 +3583,9 @@ describe("l'écran des personnages", () => {
 
     // L'écran rend la main : on relit et on dépense **dans l'atelier**.
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
     // Le signalement est écrit à la place de l'auteur — c'est ce qu'il ne veut
     // plus retaper (US-115).
@@ -3581,7 +3612,9 @@ describe("l'écran des personnages", () => {
 
     fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
     fireEvent.click(screen.getByRole("button", { name: "Générer" }))
 
@@ -3626,7 +3659,9 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ensemble)
 
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
 
     // **Le prompt reçoit le sujet, jamais la grille** : les attitudes partent
@@ -3659,7 +3694,9 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByLabelText("Faire partir course avec les autres"))
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
 
     // **Le catalogue apprend qu'un lot est armé** : le gabarit compte dans le
@@ -3697,7 +3734,9 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
 
     fireEvent.click(screen.getByLabelText("Retirer marche de ce qui part"))
@@ -3753,7 +3792,9 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByLabelText("Faire partir marche avec les autres"))
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Personnages" })).toBeNull(),
+      expect(
+        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+      ).toBe("true"),
     )
 
     // **Le coût d'un lot est celui d'un appel, pas de N** — c'est la promesse
@@ -4076,13 +4117,13 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     // l'écran Univers, le serveur écrit et rend l'univers entier, l'écran le
     // pose (R1) — et l'aperçu, qui n'a jamais rien composé lui-même, redemande
     // ce qui part.
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
     fireEvent.click(await screen.findByRole("button", { name: /^Bible/ }))
     fireEvent.click(
       await screen.findByRole("button", { name: "technique de rendu — actif" }),
     )
     await screen.findByRole("button", { name: "technique de rendu — inactif" })
-    fireEvent.click(screen.getByRole("button", { name: "Retour à l'atelier" }))
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
 
     const depliant = within(
       await screen.findByRole("region", { name: "Ce qui partira" }),
@@ -4263,7 +4304,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const sansCible: Univers = { ...UNIVERS, cible_px: 0 }
     const double = serveurDouble({ univers: sansCible })
     await monter(double.fetchDouble, { ...ETAT, univers: sansCible })
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     const entete = await screen.findByRole("button", { name: /^Taille de pixel/ })
     expect(entete.textContent).toContain("aucune")
@@ -4511,7 +4552,7 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
   test("l'univers : le panneau se déclare, et sa poignée est dedans", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
-    fireEvent.click(screen.getByRole("button", { name: /Univers/ }))
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
 
     await screen.findByRole("button", { name: /^Bible/ })
     const marque = poignee("Bible")
@@ -4631,9 +4672,8 @@ describe("l'écran des personnages — la pièce et le calque", () => {
   const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("button", { name: "Personnages" }))
-    const titre = await screen.findByRole("heading", { name: "Personnages" })
-    const ecran = within(titre.closest("[data-univers]") as HTMLElement)
+    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    const ecran = within(await cadreDuCodex())
     return { ...double, flux, ecran }
   }
 
@@ -5424,5 +5464,293 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     await waitFor(() =>
       expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche"),
     )
+  })
+})
+
+// ── E1 : trois onglets au lieu de sept surfaces ─────────────────────────────
+//
+// Les huit critères de la tranche portent tous sur le châssis, et aucun ne se
+// vérifie ailleurs qu'ici : un onglet allumé, un fil d'Ariane, un total qui
+// dit de quoi il est le total, des bascules qui nomment ce qu'elles replient.
+// Le neuvième — « chaque écran d'avant est atteignable et fonctionne
+// exactement comme avant » — n'a pas d'essai à lui : ce sont les cent
+// quatre-vingt-cinq précédents, qui traversent tous le nouveau châssis.
+
+describe("les trois onglets", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserGuide()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const onglet = (nom: string) => screen.getByRole("tab", { name: nom })
+  const allume = (nom: string) => onglet(nom).getAttribute("aria-selected") === "true"
+
+  // ── « Trois onglets, et un seul allumé à la fois ; aucun écran ne se
+  //     superpose à un autre » ────────────────────────────────────────────────
+
+  test("les trois onglets sont là dans l'ordre du travail, et un seul est allumé", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // L'ordre n'est ni alphabétique ni arbitraire : on pose ce qui s'applique à
+    // tout, on déclare ce que le monde contient, on regarde ce qu'on a produit.
+    expect(screen.getAllByRole("tab").map((o) => o.textContent)).toEqual([
+      "Univers",
+      "Codex",
+      "Galerie",
+    ])
+
+    // La galerie est l'onglet de repos : c'est l'écran qu'on regardait déjà en
+    // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
+    expect(allume("Galerie")).toBe(true)
+    expect(allume("Univers")).toBe(false)
+    expect(allume("Codex")).toBe(false)
+  })
+
+  test("allumer un onglet éteint le précédent, et rien ne se rend par-dessus", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // La preuve du non-recouvrement se prend sur ce que la galerie est seule à
+    // avoir : sa barre de saisie. Tant qu'elle se rendait **derrière** les
+    // écrans qui la couvraient, elle restait dans le document — et c'est
+    // exactement ce que sept surfaces empilées voulaient dire.
+    expect(screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+
+    fireEvent.click(onglet("Univers"))
+    await screen.findByText("Le tableau est vide.")
+    expect(allume("Univers")).toBe(true)
+    expect(allume("Galerie")).toBe(false)
+    expect(screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeNull()
+
+    fireEvent.click(onglet("Codex"))
+    await waitFor(() => expect(allume("Codex")).toBe(true))
+    expect(allume("Univers")).toBe(false)
+    // Un seul cadre en profondeur est monté à la fois, jamais deux empilés.
+    expect(document.querySelectorAll("[data-univers]")).toHaveLength(1)
+
+    fireEvent.click(onglet("Galerie"))
+    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    expect(document.querySelectorAll("[data-univers]")).toHaveLength(0)
+  })
+
+  // ── « Descendre dans une chose du jeu remplace le nom de l'onglet par un
+  //     fil, et chaque segment du fil ramène à son étage » ────────────────────
+
+  test("descendre pose un fil d'Ariane, et chaque segment ramène à son étage", async () => {
+    const planche = asset("aaaa1111-0", "tonneau-cerclé-02")
+    const { fetchDouble } = serveurDouble({ assets: [planche] })
+    await monter(fetchDouble, { ...ETAT, assets: [planche] })
+
+    // Au repos, pas de fil : on n'est descendu nulle part.
+    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+
+    const fil = within(await screen.findByRole("navigation", { name: "Où l'on est" }))
+    // Quatre segments : le jeu, l'onglet, l'image, l'outil. C'est la forme
+    // courte — celle d'une image atteinte par la galerie, qui n'appartient pas
+    // forcément à une chose du jeu et n'a traversé aucune famille.
+    expect(fil.getByText("Bac à sable")).toBeTruthy()
+    expect(fil.getByText("Galerie")).toBeTruthy()
+    expect(fil.getByText("tonneau-cerclé-02")).toBeTruthy()
+    expect(fil.getByText("Découpage")).toBeTruthy()
+
+    // **Le dernier segment ne ramène nulle part** : c'est l'étage où l'on est,
+    // et c'est ce qui le rend lisible comme la fin du fil.
+    expect(fil.queryByRole("button", { name: "Découpage" })).toBeNull()
+    expect(fil.getByText("Découpage").getAttribute("aria-current")).toBe("page")
+
+    // Les autres ramènent. Celui de l'onglet remonte d'un étage.
+    fireEvent.click(fil.getByRole("button", { name: "Galerie" }))
+    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+  })
+
+  test("changer d'onglet remonte de toute profondeur", async () => {
+    const planche = asset("aaaa1111-0", "tonneau-cerclé-02")
+    const { fetchDouble } = serveurDouble({ assets: [planche] })
+    await monter(fetchDouble, { ...ETAT, assets: [planche] })
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    await screen.findByRole("navigation", { name: "Où l'on est" })
+
+    // Cliquer un onglet est le geste qui dit « ailleurs ». Laisser la découpe
+    // ouverte derrière rendrait le produit à ce qu'il vient de quitter — un
+    // écran par-dessus un autre, ce que la tranche supprime.
+    fireEvent.click(onglet("Univers"))
+    await screen.findByText("Le tableau est vide.")
+    expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
+
+    fireEvent.click(onglet("Galerie"))
+    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    expect(screen.queryByText("Découpage")).toBeNull()
+  })
+
+  // ── « Le total de la barre de tête porte le nom de ce qu'il compte, et un
+  //     clic ouvre l'écran qui l'explique — grisé avec sa raison tant que cet
+  //     écran n'existe pas » ──────────────────────────────────────────────────
+
+  test("le total porte son étiquette, et dit pourquoi il ne s'ouvre pas encore", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // `ce jeu $0,0000`, jamais un montant nu : un montant affiché est une
+    // question posée, et un chiffre qui laisse deviner sa portée finit par être
+    // lu comme le total de tout, ce qu'il n'est pas.
+    expect(screen.getByText("ce jeu")).toBeTruthy()
+    // **Et le second total est parti d'ici** : « $X en tout » vit maintenant
+    // dans l'écran des dépenses, dont c'est la seule chose qu'on vient y
+    // chercher. L'afficher aux deux endroits lui retirerait sa raison d'être.
+    expect(screen.queryByText(/en tout/)).toBeNull()
+
+    // L'écran des dépenses arrive en E18. D'ici là le contrôle reste visible et
+    // porte sa raison : le produit n'a pas le droit de proposer puis de
+    // refuser, ni de cacher ce qui existera.
+    expect(
+      screen.getByText("— pas encore d'écran des dépenses"),
+    ).toBeTruthy()
+  })
+
+  test("le nom du jeu ne s'écrit qu'une fois dans la bande", async () => {
+    const planche = asset("aaaa1111-0", "tonneau-cerclé-02")
+    const { fetchDouble } = serveurDouble({ assets: [planche] })
+    await monter(fetchDouble, { ...ETAT, assets: [planche] })
+
+    // Sans fil, c'est le total qui porte le nom du jeu. On regarde **dans la
+    // bande** et pas dans tout le document : l'arbre des projets le porte lui
+    // aussi, et c'est sa place.
+    const bande = () => within(document.querySelector("header") as HTMLElement)
+    expect(await bande().findByText("Bac à sable")).toBeTruthy()
+    expect(bande().getAllByText("Bac à sable")).toHaveLength(1)
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
+    fireEvent.click(await screen.findByRole("button", { name: /Découper/ }))
+    await screen.findByRole("navigation", { name: "Où l'on est" })
+
+    // Déployé, le fil le porte à son premier étage — et le total le lâche.
+    // Deux fois le même nom dans la même bande de 44 px serait du cadrage.
+    expect(bande().getAllByText("Bac à sable")).toHaveLength(1)
+    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    expect(fil.getByText("Bac à sable")).toBeTruthy()
+  })
+
+  // ── « Chaque bascule de repli nomme la colonne qu'elle replie sur l'écran
+  //     courant » ──────────────────────────────────────────────────────────────
+
+  test("les bascules nomment les colonnes de l'écran où l'on est", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    // La galerie replie l'arbre et les réglages ; deux mots uniques servaient
+    // les quatre écrans d'avant, et mentaient sur trois.
+    expect(screen.getByRole("button", { name: "arbre" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "réglages" })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "univers" })).toBeNull()
+
+    fireEvent.click(onglet("Univers"))
+    await screen.findByText("Le tableau est vide.")
+    expect(screen.getByRole("button", { name: "univers" })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "arbre" })).toBeNull()
+    // **La réserve n'a de bascule qu'en toile.** Sans elle il n'y a pas de
+    // colonne, et une bascule pour une colonne absente mentirait sur ce que
+    // l'écran contient.
+    expect(screen.queryByRole("button", { name: "réserve" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "toile" }))
+    expect(await screen.findByRole("button", { name: "réserve" })).toBeTruthy()
+
+    // Le codex n'a pas de colonne repliable : il n'annonce donc aucune bascule.
+    fireEvent.click(onglet("Codex"))
+    await waitFor(() => expect(allume("Codex")).toBe(true))
+    expect(screen.queryByRole("button", { name: "univers" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "arbre" })).toBeNull()
+  })
+
+  test("replier depuis la barre replie bien la colonne de l'onglet ouvert", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    fireEvent.click(onglet("Univers"))
+    await screen.findByText("Le tableau est vide.")
+
+    const colonnes = () =>
+      (document.querySelector("[data-colonnes]") as HTMLElement).style.gridTemplateColumns
+
+    expect(colonnes()).toBe("380px minmax(0,1fr)")
+    fireEvent.click(screen.getByRole("button", { name: "univers" }))
+    // **Replier n'est pas fermer** : la case tombe à zéro, le panneau reste
+    // monté sous elle.
+    await waitFor(() => expect(colonnes()).toBe("0px minmax(0,1fr)"))
+  })
+
+  // ── « Les réglages et le guide sont séparés visuellement de ce qui touche
+  //     au travail » ───────────────────────────────────────────────────────────
+
+  test("Réglages et Guide sont dits en toutes lettres, et séparés du travail", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const reglages = screen.getByRole("button", { name: "Réglages" })
+    const guide = screen.getByRole("button", { name: "Guide" })
+
+    // Les deux vivent dans le même groupe, et ce groupe porte le trait qui le
+    // sépare du reste de la barre. Les premiers croquis dessinaient une roue
+    // dentée et un point d'interrogation ; ce sont les mots qui restent.
+    const groupe = reglages.parentElement as HTMLElement
+    expect(groupe.contains(guide)).toBe(true)
+    expect(groupe.className).toContain("border-l")
+
+    // Et rien de ce qui touche au travail n'est dedans : les trois onglets
+    // vivent ailleurs dans la bande.
+    for (const nom of ["Univers", "Codex", "Galerie"])
+      expect(groupe.contains(onglet(nom))).toBe(false)
+  })
+
+  test("le catalogue se redemande depuis la barre d'état, où il se lit déjà", async () => {
+    const { fetchDouble, appels } = serveurDouble()
+    await monter(fetchDouble)
+
+    // La barre de tête portait un bouton `Catalogue` de même poids que les
+    // onglets, alors qu'il ne changeait rien de ce qu'on regarde. Le geste
+    // rejoint l'état qu'il change : le pied dit déjà ce que le catalogue
+    // contient et de quand il date.
+    fireEvent.click(await screen.findByRole("button", { name: /modèles$/ }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/models/refresh")).toBe(true),
+    )
+  })
+
+  // ── « Aucune bande du produit ne porte une hauteur hors de 44 · 38 · 34 ·
+  //     30 · 26, et les deux exceptions sont les seules » ─────────────────────
+
+  test("la barre de tête fait 44, les onglets 26, les boutons 34", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const classes = (e: Element) => e.className
+    expect(classes(document.querySelector("header") as Element)).toContain("h-[44px]")
+    expect(classes(onglet("Galerie"))).toContain("h-[26px]")
+    expect(classes(screen.getByRole("button", { name: "Réglages" }))).toContain(
+      "h-[34px]",
+    )
+    expect(classes(screen.getByRole("button", { name: "arbre" }))).toContain("h-[26px]")
+
+    // Le champ de saisie est la première des deux exceptions nommées : 56 px,
+    // parce que ce n'est pas une bande mais une zone de saisie sur plusieurs
+    // lignes.
+    const champ = screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")
+    expect(classes(champ)).toContain("min-h-[56px]")
   })
 })

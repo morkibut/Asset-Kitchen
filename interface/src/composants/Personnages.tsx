@@ -48,6 +48,7 @@ import {
   type Sortie as SortieAuJeu,
   type Vestiaire,
 } from "../api"
+import type { Fente } from "./BarreChassis"
 import { sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
 import { Bouton, EnTetePanneau, Libelle, Segments } from "./chassis"
@@ -111,7 +112,6 @@ export function rangees(
 }
 
 export function EcranPersonnages({
-  projet,
   plan,
   personnages,
   emplacements,
@@ -121,9 +121,8 @@ export function EcranPersonnages({
   onVestiaire,
   onArmer,
   dossierJeu,
-  onFermer,
+  onFente,
 }: {
-  projet: { identifiant: string; nom: string } | null
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
    *  `App` comme le plan, et pour la même raison : un seul endroit écoute le
    *  flux, pour toute la vie de l'onglet. */
@@ -164,10 +163,15 @@ export function EcranPersonnages({
    *  une erreur : c'est un réglage que personne n'a encore posé, et le bouton
    *  le dit au lieu de partir puis d'échouer. */
   dossierJeu: string
-  onFermer: () => void
+  /** Ce que cet onglet a à dire dans la barre du châssis. **Il n'a plus sa
+   *  fente à lui** : elle n'existait que parce que cet écran couvrait
+   *  l'atelier, et qu'une raison envoyée à la barre d'état se serait rendue
+   *  derrière lui. Devenu un onglet, il partage la fente du châssis. */
+  onFente: (fente: Fente) => void
 }) {
   const [choisi, setChoisir] = useState<string | null>(null)
-  const [refus, setRefus] = useState<string>("")
+  const setRefus = (texte: string) =>
+    onFente(texte ? { ton: 'echec', texte } : null)
   // **La colonne qu'on lit** (C3) : le corps, ou une pièce. Un identifiant et
   // non l'objet — la pièce continue d'arriver par le flux, renommée ou rangée
   // ailleurs, et une copie gardée ici serait celle d'avant. Même règle que la
@@ -204,31 +208,15 @@ export function EcranPersonnages({
   const caseDuCalque = ouvert?.cases.find((c) => c.pose === ouvertCalque?.pose) ?? null
 
   return (
-    // `data-univers` marque ce que cet écran couvre, comme l'écran Univers : un
-    // garde de saisie doit pouvoir distinguer un champ qu'on écrit **ici** du
-    // champ de prompt de l'atelier, resté focalisé derrière depuis le démarrage.
-    <div data-univers className="fixed inset-0 z-10 flex flex-col bg-fond-0">
-      <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
-        <h1 className="font-serif text-[17px] leading-none text-texte">Personnages</h1>
-        <span className="mesure text-[10px] text-texte-2">
-          {projet ? projet.nom : "sans projet"}
-        </span>
-        {personnages.length === 0 && (
-          <span className="mesure text-[10px] text-texte-3">
-            aucun personnage — le plan du jeu, lui, est déjà là
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-3">
-          {refus && (
-            <span className="mesure flex items-center gap-1.5 text-[10px] text-echec">
-              <span aria-hidden className="inline-block h-px w-2 bg-echec" />
-              {refus}
-            </span>
-          )}
-          <Bouton onClick={onFermer} enfants="Retour à l'atelier" />
-        </div>
-      </header>
-
+    // `data-univers` marque ce qui appartient à cet onglet, comme l'onglet
+    // Univers : un garde de saisie doit pouvoir distinguer un champ qu'on écrit
+    // **ici** du champ de prompt de la galerie.
+    //
+    // **Plus d'en-tête à lui.** Il en portait un de 44 px — son nom, le nom du
+    // jeu, sa fente de refus, et un bouton pour retourner à l'atelier. Les
+    // trois premiers sont dans la barre du châssis ; le quatrième n'a plus
+    // d'objet, un onglet ne se ferme pas.
+    <div data-univers className="flex min-h-0 flex-col bg-fond-0">
       <div className="flex min-h-0 flex-1">
         <PanneauGauche
           plan={plan}
@@ -417,7 +405,7 @@ function ListePersonnages({
           }}
           placeholder="nommer un personnage"
           aria-label="Nom du personnage à créer"
-          className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
         <Bouton
           inactif={!nom.trim()}
@@ -492,7 +480,7 @@ function PlanDuJeu({
           }}
           placeholder="nommer une attitude"
           aria-label="Nom de l'attitude à ajouter"
-          className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
         <Bouton
           inactif={!nom.trim()}
@@ -556,7 +544,7 @@ function LignePose({
           if (e.key === "Enter") (e.target as HTMLInputElement).blur()
         }}
         aria-label={`Nom de l'attitude ${pose.nom}`}
-        className="mesure h-[22px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
+        className="mesure h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11px] text-texte-2 hover:border-bord focus:border-bord-fort focus:bg-fond-2"
       />
       <input
         type="number"
@@ -565,7 +553,7 @@ function LignePose({
         value={pose.images}
         onChange={(e) => void regler(Number(e.target.value))}
         aria-label={`Images demandées pour ${pose.nom}`}
-        className="mesure h-[22px] w-[46px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-right text-[10px] text-texte-2"
+        className="mesure h-[24px] w-[46px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-right text-[10px] text-texte-2"
       />
       <button
         type="button"
@@ -698,7 +686,7 @@ function Vestiaire({
           }}
           placeholder="nommer une pièce"
           aria-label="Nom de la pièce à ajouter"
-          className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
         <input
           value={ou}
@@ -711,7 +699,7 @@ function Vestiaire({
           // sans une ligne de plus (séance du 29 août 2026).
           placeholder="tête, dos…"
           aria-label="Emplacement de la pièce sur le corps — créé s'il n'existe pas"
-          className="mesure h-8 w-[86px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+          className="mesure h-[34px] w-[86px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
         />
         <Bouton
           inactif={!nom.trim()}
@@ -769,7 +757,7 @@ function LignePiece({
             void regler({ nom: propre })
           }}
           aria-label={`Nom de la pièce ${piece.nom}`}
-          className="mesure h-[22px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11.5px] text-texte-2 hover:border-bord focus:border-bord focus:bg-fond-2"
+          className="mesure h-[24px] min-w-0 flex-1 rounded-[2px] border border-transparent bg-transparent px-1 text-[11.5px] text-texte-2 hover:border-bord focus:border-bord focus:bg-fond-2"
         />
         {/* **La portée, déclarée** (US-139). Un `select` et non deux boutons :
             la liste est close, et l'auteur choisit dans ce qui existe. */}
@@ -778,7 +766,7 @@ function LignePiece({
           onChange={(e) => void regler({ portee: e.target.value as Portee })}
           aria-label={`Portée de ${piece.nom}`}
           title="contenue : elle tient dans la silhouette du corps. agrandit : elle en déborde (cape, arme longue), et la planche part alors avec de la marge. L'atelier ne le devine pas."
-          className="mesure h-[22px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+          className="mesure h-[24px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
         >
           <option value="contenue">contenue</option>
           <option value="agrandit">agrandit</option>
@@ -1344,7 +1332,7 @@ function Cases({
               type="button"
               onClick={() => void cocher(pose.identifiant, true)}
               title="lui rendre cette attitude"
-              className="mesure h-[22px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-3 hover:bg-fond-2 hover:text-texte-2"
+              className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte-3 hover:bg-fond-2 hover:text-texte-2"
             >
               {pose.nom}
             </button>

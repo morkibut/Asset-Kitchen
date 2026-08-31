@@ -10,9 +10,11 @@
 // ses réglages à gauche parce que c'est son sujet ; ici le sujet est la planche,
 // et 380 reste la colonne de réglages du produit (`docs/DESIGN.md` § Layout).
 //
-// **Il porte sa propre fente de refus.** Même raison que l'écran Univers : une
-// raison envoyée à la barre d'état de l'atelier serait rendue *derrière* lui,
-// donc invisible au moment précis où elle compte.
+// **Sa fente de refus est celle du châssis, depuis la V2.1.** Il en portait une
+// à lui parce qu'il couvrait l'atelier : une raison envoyée à la barre d'état
+// se serait rendue *derrière* lui, donc invisible au moment précis où elle
+// compte. Devenu une profondeur de la galerie, il ne couvre plus rien — et une
+// seule bande dit ce que le dernier geste a donné, quel que soit l'écran.
 //
 // **La détection ne décide de rien.** Elle propose ; l'auteur ajoute, retire,
 // redessine, et ce qui part est sa liste. C'est cette séparation, et rien
@@ -28,6 +30,7 @@ import {
   type Proposition,
 } from "../api"
 import { Bouton, Curseur, EnTetePanneau, Libelle, Raison, Segments } from "./chassis"
+import type { Fente } from "./BarreChassis"
 import { PANNEAU } from "./Infobulle"
 
 /** En dessous, un rectangle est un clic qui a glissé, pas une intention. En
@@ -47,10 +50,13 @@ const LIBELLES: Partial<Record<string, string>> = {
 export function EcranDecoupe({
   planche,
   onFermer,
+  onFente,
   onDecoupe,
 }: {
   planche: Asset
+  /** Remonter d'un étage — la touche Échap, et le fil d'Ariane du châssis. */
   onFermer: () => void
+  onFente: (fente: Fente) => void
   /** Ce que la découpe a produit. L'écran de l'atelier les a déjà reçues par le
    *  flux — elles arrivent une par une, comme les variations d'un appel ; ce
    *  rappel-ci sert à **fermer sur la première découpe**, ouverte dans sa fiche,
@@ -65,7 +71,8 @@ export function EcranDecoupe({
   const [boites, setBoites] = useState<Boite[]>([])
   const [detectee, setDetectee] = useState<Proposition | null>(null)
   const [choisie, setChoisie] = useState<number | null>(null)
-  const [refus, setRefus] = useState("")
+  const setRefus = (texte: string) =>
+    onFente(texte ? { ton: "echec", texte } : null)
   const [enCours, setEnCours] = useState(false)
 
   // ── La proposition ────────────────────────────────────────────────────────
@@ -129,24 +136,14 @@ export function EcranDecoupe({
   const corrigee = detectee !== null && !memesBoites(boites, detectee.boites)
 
   return (
-    <div className="fixed inset-0 z-10 flex flex-col bg-fond-0">
-      <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
-        <h1 className="font-serif text-[17px] leading-none text-texte">Découpe</h1>
-        <span className="mesure truncate text-[10px] text-texte-2">{planche.label}</span>
-        <span className="mesure text-[10px] text-texte-3">
-          {planche.largeur}×{planche.hauteur}
-        </span>
-        <div className="ml-auto flex items-center gap-3">
-          {refus && (
-            <span className="mesure flex items-center gap-1.5 text-[10px] text-echec">
-              <span aria-hidden className="inline-block h-px w-2 bg-echec" />
-              {refus}
-            </span>
-          )}
-          <Bouton onClick={onFermer} enfants="Retour à l'atelier" />
-        </div>
-      </header>
-
+    // **Une profondeur de la galerie, plus un écran posé dessus.** Il occupait
+    // tout l'écran en `fixed`, avec son propre en-tête de 44 px : son nom, le
+    // label de la planche, ses dimensions, sa fente de refus, et un bouton pour
+    // revenir. Le nom et le label sont désormais dans le fil d'Ariane de la
+    // barre du châssis — `Cœur de pierre › Galerie › tonneau-cerclé-02 ›
+    // Découpage` —, la fente est celle du châssis, et le retour se fait par le
+    // fil, dont chaque segment ramène à son étage.
+    <div data-decoupe className="flex min-h-0 flex-col bg-fond-0">
       <div className="flex min-h-0 flex-1">
         <Planche
           planche={planche}
@@ -163,7 +160,16 @@ export function EcranDecoupe({
           {...PANNEAU}
           className="flex min-h-0 w-[380px] shrink-0 flex-col border-l border-bord bg-fond-1"
         >
-          <EnTetePanneau>Ce qui sortira</EnTetePanneau>
+          <EnTetePanneau>
+            Ce qui sortira
+            {/* Les dimensions de la planche viennent d'ici : l'en-tête de
+                panneau est déjà l'endroit du produit où l'on lit ce que
+                l'image est, et le fil d'Ariane porte des noms, pas des
+                mesures. */}
+            <span className="ml-auto normal-case tracking-normal">
+              {planche.largeur}×{planche.hauteur}
+            </span>
+          </EnTetePanneau>
 
           <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
             <div className="flex flex-col gap-1">

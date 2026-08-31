@@ -48,13 +48,13 @@ import {
 } from "../api"
 import {
   Bloc,
-  Bouton,
   Curseur,
   EnTetePanneau,
   Libelle,
   Raison,
   Segments,
 } from "./chassis"
+import type { Fente } from "./BarreChassis"
 import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 import { PANNEAU } from "./Infobulle"
@@ -75,13 +75,6 @@ const CIBLES = [AUCUNE_CIBLE, 16, 24, 32, 48, 64, 96, 128] as const
 const NOM_CIBLE: Partial<Record<string, string>> = { "0": "aucune" }
 const COULEURS = [8, 12, 16, 24, 32, 48] as const
 
-/** Ce qui se replie sur cet écran, et le mot qui le nomme dans la barre de
- *  tête — celui que porte l'en-tête de la colonne, en minuscules comme à
- *  l'atelier. La réserve n'y paraît qu'en toile : en grille elle n'existe pas,
- *  et une bascule pour une colonne absente mentirait sur ce que l'écran a. */
-const BASCULES = { univers: "univers", reserve: "réserve" } as const
-type Repliable = keyof typeof BASCULES
-
 /** Poser un réglage, et **dire s'il a pris**. Le booléen n'est pas de la
  *  politesse : un bloc qui tient un brouillon doit savoir revenir à la valeur
  *  d'avant quand le serveur refuse, sinon l'écran reste sur la valeur tentée —
@@ -89,18 +82,19 @@ type Repliable = keyof typeof BASCULES
 type Regler = (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<boolean>
 
 export function EcranUnivers({
-  projet,
   univers,
   modeles,
   cartes,
   liens,
   teintes,
   personnages,
+  vue,
+  onVue,
+  replies,
+  onFente,
   onUnivers,
   onRelire,
-  onFermer,
 }: {
-  projet: { identifiant: string; nom: string } | null
   univers: Univers
   modeles: Modele[]
   /** Le tableau, tenu par `App` — comme la grille et l'arbre. **Un seul endroit
@@ -117,6 +111,19 @@ export function EcranUnivers({
    *  coup d'œil **ce qui sert et ce qui dort** (US-125), et désigner une carte
    *  comme concept art depuis son menu (US-124). */
   personnages: Personnage[]
+  /** Lequel des côtés est allumé, et les colonnes repliées. **Montés dans `App`
+   *  avec la V2.1** : la barre du châssis rend les bascules de repli de l'écran
+   *  actif, et la réserve n'a de bascule qu'en vue toile. Un état qui décide du
+   *  contenu d'une bande partagée ne peut pas vivre sous cette bande. */
+  vue: Vue
+  onVue: (vue: Vue) => void
+  replies: { univers: boolean; reserve: boolean }
+  /** Ce que cet écran a à dire dans la barre du châssis — un refus, ou le
+   *  compte rendu d'un réalignement. **Il n'a plus sa fente à lui** : elle
+   *  n'existait que parce que cet écran couvrait l'atelier, et qu'une raison
+   *  envoyée à la barre d'état se serait rendue *derrière* lui. Devenu un
+   *  onglet, il partage la fente du châssis et la barre d'état du produit. */
+  onFente: (fente: Fente) => void
   /** Poser l'univers que le serveur vient de rendre. **Un réglage arrive par
    *  deux chemins qui se croisent** — la réponse du PUT et l'annonce du flux —,
    *  comme un personnage ou une carte, et l'écran jetait ici le premier des
@@ -124,39 +131,21 @@ export function EcranUnivers({
    *  réveille ailleurs : il se corrige même quand le flux suffirait. */
   onUnivers: (univers: Univers) => void
   onRelire: () => void
-  onFermer: () => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
-  const [compte, setCompte] = useState<{
-    realignes: number
-    conserves: number
-    /** Le balayage a-t-il remis quelque chose sur grille ? Faux quand le projet
-     *  n'impose aucune taille de pixel : « 12 remis à jour » se lirait sinon
-     *  comme un rééchantillonnage qui n'a pas eu lieu (US-163). */
-    sur_grille: boolean
-  } | null>(null)
-  // **Le refus se pose où le geste a eu lieu.** Cet écran couvre l'atelier :
-  // une raison envoyée à la barre d'état de l'atelier serait rendue derrière
-  // lui, donc invisible au moment précis où elle compte. Elle a donc sa fente
-  // ici, dans la forme des autres — tiret de 8 px, mono 10 px.
-  const [refus, setRefus] = useState<string>("")
+
+  /** **Le refus se pose où le geste a eu lieu**, et il y va par la fente du
+   *  châssis. Cet écran écrit dans la bande du haut, comme avant ; ce qui a
+   *  changé, c'est qu'il ne la possède plus. */
+  const setRefus = (texte: string) =>
+    onFente(texte ? { ton: "echec", texte } : null)
 
   // ── Les deux vues, et ce qu'elles partagent ──────────────────────────────
   //
   // « L'écran ne se dédouble pas, c'est la même matière regardée autrement » :
   // le collage est donc branché **ici**, au-dessus des deux. Deux surfaces qui
   // l'installeraient chacune feraient deux cartes pour un seul Ctrl+V.
-  const [vue, setVue] = useState<Vue>("grille")
   const collage = useCollage({ onErreur: setRefus, onRafraichir: onRelire })
-
-  // **Replier est un choix, jamais une contrainte de place** (US-97). C'est la
-  // règle de l'atelier, et cet écran-ci n'a aucune raison d'en avoir une autre :
-  // les deux colonnes tombent à zéro, la toile prend tout ce qui reste, et rien
-  // n'est fermé pour autant.
-  const [replies, setReplies] = useState<{ univers: boolean; reserve: boolean }>({
-    univers: false,
-    reserve: false,
-  })
 
   // La grille de la réserve, mesurée pour donner ses trois crans à l'aimant de
   // la largeur libre. Une seule mesure, trois déclencheurs.
@@ -196,20 +185,22 @@ export function EcranUnivers({
   const realigner = async () => {
     try {
       const fait = await api.realigner()
-      setCompte({
-        realignes: fait.realignes,
-        conserves: fait.conserves,
-        sur_grille: fait.sur_grille,
+      onFente({
+        ton: "ok",
+        texte: (
+          <>
+            {fait.realignes} remis à jour · {fait.conserves} conservés tels quels
+            {/* Sans cible, le balayage a remis la palette et **retiré** la
+                grille : il n'a rééchantillonné personne, et le dire tient en
+                quatre mots plutôt qu'en une infobulle (US-163). */}
+            {!fait.sur_grille && " · aucune remise sur grille"}
+          </>
+        ),
       })
-      setRefus("")
     } catch (erreur) {
       setRefus(erreur instanceof Refus ? erreur.message : "réalignement refusé")
     }
   }
-
-  // La réserve n'a de bascule qu'en toile — c'est là, et là seulement, qu'elle
-  // occupe une colonne.
-  const repliables: Repliable[] = vue === "toile" ? ["univers", "reserve"] : ["univers"]
 
   // Les colonnes du § Layout, avec la case qui tombe à zéro quand on replie :
   // `380px · 1fr` en grille, `380px · 1fr · 380px` en toile. Aucune largeur
@@ -222,63 +213,17 @@ export function EcranUnivers({
   ].join(" ")
 
   return (
-    // `data-univers` marque ce que cet écran couvre : c'est ce qui permet à
-    // Ctrl+Z de distinguer un champ qu'on est en train d'écrire *ici* d'un champ
-    // de l'atelier, resté focalisé **derrière** l'écran depuis le démarrage.
-    <div data-univers className="fixed inset-0 z-10 flex flex-col bg-fond-0">
-      <header className="flex h-[44px] shrink-0 items-center gap-4 border-b border-bord bg-fond-1 px-4">
-        <h1 className="font-serif text-[17px] leading-none text-texte">Univers</h1>
-
-        {/* Replier est **un choix**, jamais une contrainte de place (US-97) :
-            la bascule est là en permanence et dit l'état où elle est, dans la
-            forme exacte de celles de l'atelier. Repliées toutes les deux, la
-            toile tient la largeur de l'écran. */}
-        <div className="flex items-center gap-1">
-          {repliables.map((quoi) => (
-            <button
-              key={quoi}
-              type="button"
-              onClick={() => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
-              aria-pressed={!replies[quoi]}
-              className={[
-                "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
-                replies[quoi]
-                  ? "border-bord bg-fond-2 text-texte-3"
-                  : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
-              ].join(" ")}
-            >
-              {BASCULES[quoi]}
-            </button>
-          ))}
-        </div>
-
-        <span className="mesure text-[10px] text-texte-2">
-          {projet ? projet.nom : "sans projet"}
-        </span>
-        {univers.vide && (
-          <span className="mesure text-[10px] text-texte-3">
-            rien n'est posé — les défauts du produit s'appliquent
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-3">
-          {refus && (
-            <span className="mesure flex items-center gap-1.5 text-[10px] text-echec">
-              <span aria-hidden className="inline-block h-px w-2 bg-echec" />
-              {refus}
-            </span>
-          )}
-          {compte && (
-            <span className="mesure text-[10px] text-ok">
-              {compte.realignes} remis à jour · {compte.conserves} conservés tels quels
-              {/* Sans cible, le balayage a remis la palette et **retiré** la
-                  grille : il n'a rééchantillonné personne, et le dire tient en
-                  quatre mots plutôt qu'en une infobulle. */}
-              {!compte.sur_grille && " · aucune remise sur grille"}
-            </span>
-          )}
-          <Bouton onClick={onFermer} enfants="Retour à l'atelier" />
-        </div>
-      </header>
+    // `data-univers` marque ce qui appartient à cet écran : c'est ce qui permet
+    // à Ctrl+Z de distinguer un champ qu'on est en train d'écrire *ici* d'un
+    // champ de la galerie, resté focalisé sur l'autre onglet depuis le
+    // démarrage. La marque reste utile après la V2.1 : les onglets se
+    // démontent, mais le focus, lui, se rétablit au retour.
+    <div data-univers className="flex min-h-0 flex-col bg-fond-0">
+      {/* **Plus d'en-tête à lui.** Il en portait un de 44 px — son nom, ses
+          bascules de repli, sa fente de refus, et un bouton pour retourner à
+          l'atelier. Les trois premiers sont montés dans la barre du châssis,
+          qui les rend pour l'onglet actif ; le quatrième n'a plus d'objet, un
+          onglet ne se ferme pas. */}
 
       {/* Deux colonnes en grille, trois en toile, et 160 ms sur la largeur
           quand l'une se replie — `docs/DESIGN.md` § Motion, « tu n'as pas perdu
@@ -318,7 +263,7 @@ export function EcranUnivers({
               cartes={cartes}
               personnages={personnages}
               vue={vue}
-              onVue={setVue}
+              onVue={onVue}
               choisie={choisie}
               onChoisir={setChoisir}
               onErreur={setRefus}
@@ -331,7 +276,7 @@ export function EcranUnivers({
               liens={liens}
               teintes={teintes}
               vue={vue}
-              onVue={setVue}
+              onVue={onVue}
               choisie={choisie}
               onChoisir={setChoisir}
               onErreur={setRefus}

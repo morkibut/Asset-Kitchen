@@ -649,7 +649,7 @@ export function Fiche({
               value={nom}
               onChange={(e) => setNom(e.target.value)}
               placeholder="nommer cette recette"
-              className="mesure h-8 min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
+              className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
             />
             <Bouton
               inactif={!nom.trim() || estVide(recette)}

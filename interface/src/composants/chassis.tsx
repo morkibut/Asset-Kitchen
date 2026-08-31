@@ -221,6 +221,28 @@ function useOuvert(cle: string) {
   )
 }
 
+/**
+ * Un repli qui n'est pas un `Bloc`, mais qui vit dans le même registre.
+ *
+ * Le dépliant « Ce qui partira » et le prompt négatif se replient sans être des
+ * blocs de réglages : ils n'ont ni en-tête de rangée ni valeur résumée. Ils
+ * n'en tenaient pas moins leur état chez eux, ce qui allait tant que le champ
+ * de saisie ne se démontait jamais — la galerie était le fond du produit.
+ *
+ * **La V2.1 en fait un onglet, et le fond disparaît.** Aller poser un champ de
+ * bible dans l'Univers puis revenir refermait le dépliant qu'on avait ouvert,
+ * exactement le défaut que le registre existe pour empêcher : « fermer le
+ * panneau remet exactement où l'on était » (US-37). Le registre est déjà
+ * global, déjà remis à zéro par les essais, déjà abonné — il ne manquait que la
+ * porte.
+ */
+export function usePli(cle: string): [boolean, () => void] {
+  return [useOuvert(cle), () => basculer(cle)]
+}
+
+/** Ouvrir un pli sans le basculer — pour le geste qui *implique* de voir. */
+export const ouvrirPli = ouvrir
+
 /** La valeur d'un bloc replié. `null` — rien de posé — se dit par le tiret du
  *  produit, en `--texte-3` ; un réglage posé se dit en `--signal`, la couleur
  *  de ce qui est choisi partout ailleurs. */
@@ -336,7 +358,7 @@ export function Bouton({
   titre?: string
 }) {
   const base =
-    "h-8 rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
+    "h-[34px] rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms] disabled:cursor-not-allowed"
   const couleurs = inactif
     ? "border border-bord bg-fond-2 text-texte-3"
     : principal

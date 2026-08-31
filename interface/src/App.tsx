@@ -58,8 +58,15 @@ import {
   useVisee,
 } from "./composants/Apercu"
 import { Arbre } from "./composants/Arbre"
+import {
+  BarreChassis,
+  type Bascule,
+  type Fente,
+  type Onglet,
+  type Segment,
+} from "./composants/BarreChassis"
 import { BarreOutils, type Annulation } from "./composants/BarreOutils"
-import { Bouton, CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
+import { CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranPersonnages } from "./composants/Personnages"
@@ -70,7 +77,7 @@ import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Gui
 import { PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers } from "./composants/Univers"
-import { useDepot } from "./composants/Tableau"
+import { useDepot, type Vue as VueUnivers } from "./composants/Tableau"
 
 type Repli = { repli: boolean; raison: string | null; recu_le: number }
 type Geste = "Réglages" | "Réessayer"
@@ -168,10 +175,35 @@ export function App() {
   const [liaison, setLiaison] = useState(true)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
   const [relecture, setRelecture] = useState(false)
-  const [replies, setReplies] = useState<{ arbre: boolean; reglages: boolean }>({
+
+  // ── Les trois onglets (E1) ────────────────────────────────────────────────
+  //
+  // **Un seul allumé à la fois, et rien ne se superpose.** Avant la V2.1, quatre
+  // booléens indépendants — `universOuvert`, `personnagesOuverts`, et deux
+  // autres — décidaient chacun de couvrir l'atelier : rien n'empêchait deux
+  // écrans d'être « ouverts » ensemble, et le dessous était celui qui avait été
+  // monté en dernier. Un seul état à trois valeurs rend cette question
+  // impossible à poser.
+  //
+  // La galerie est l'onglet de départ : c'est l'écran qu'on regardait déjà en
+  // arrivant, et un produit ne change pas d'accueil pour se réorganiser.
+  const [onglet, setOnglet] = useState<Onglet>("galerie")
+
+  // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
+  // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
+  // rend que celles de l'onglet où l'on est. Les deux mots uniques d'avant —
+  // `arbre` et `réglages` — servaient les quatre écrans et mentaient sur trois.
+  const [replies, setReplies] = useState<Record<string, boolean>>({
     arbre: false,
     reglages: false,
+    univers: false,
+    reserve: false,
   })
+
+  // Ce que l'écran actif a à dire au moment du geste : un refus, ou le compte
+  // rendu d'un balayage. **Une seule fente pour les trois onglets** — tant que
+  // chaque écran couvrait les autres, chacun devait porter la sienne.
+  const [fente, setFente] = useState<Fente>(null)
 
   // ── T4 : le tableau et l'univers ──────────────────────────────────────────
   //
@@ -194,7 +226,6 @@ export function App() {
   // personnages, parce qu'une colonne n'existe que par la pièce qui la nomme.
   const [emplacements, setEmplacements] = useState<EmplacementCorps[]>([])
   const [pieces, setPieces] = useState<Piece[]>([])
-  const [personnagesOuverts, setPersonnagesOuverts] = useState(false)
   // **La case que le prochain appel remplira** (US-120). Armée depuis la
   // matrice, désarmée dès que l'appel est parti : c'est une intention qui vaut
   // pour *cette* génération, et une intention qui survivrait à son geste
@@ -258,7 +289,11 @@ export function App() {
   // écoute le flux, pour toute la vie de l'onglet.
   const [liens, setLiens] = useState<Lien[]>([])
   const [teintes, setTeintes] = useState<Record<string, Teinte>>({})
-  const [universOuvert, setUniversOuvert] = useState(false)
+  // Lequel des trois côtés de l'onglet Univers est allumé. **Monté ici avec la
+  // V2.1** : la barre du châssis doit savoir quelles colonnes l'écran replie, et
+  // la réserve n'a de colonne qu'en vue toile. Un état de navigation qui décide
+  // du contenu d'une bande partagée ne peut plus vivre sous cette bande.
+  const [vueUnivers, setVueUnivers] = useState<VueUnivers>("grille")
 
   // ── T5 : la découpe ───────────────────────────────────────────────────────
   //
@@ -406,11 +441,15 @@ export function App() {
   // fait que la mesure prise ici est celle d'**avant**, et c'est
   // `onTransitionEnd` qui pose la bonne. Les deux servent : sans celle-ci, un
   // onglet où les transitions ne s'exécutent pas ne remesurerait jamais.
+  // `onglet` en dépendance parce que la galerie se **démonte** quand un autre
+  // onglet est allumé (E1) : sans cette ligne, la largeur mesurée resterait
+  // celle d'avant le départ, et le grisé du zoom mentirait au retour.
   useLayoutEffect(mesurerCentre, [
     mesurerCentre,
     replies.arbre,
     replies.reglages,
     fiche,
+    onglet,
   ])
 
   const echouer = (erreur: unknown, defaut_: string) =>
@@ -1017,7 +1056,11 @@ export function App() {
     // consignes de planche — c'est-à-dire sans rien de ce que la matrice
     // arme.
     setRepris(false)
-    setPersonnagesOuverts(false)
+    // **Armer ramène là où l'on paie.** Le geste dit « pour cette case-là » ;
+    // rester sur le codex laisserait la bande « Pour » et le bouton qui paie
+    // hors de vue, sur l'autre onglet. L'établi les rapatriera à sa place en
+    // E2 ; d'ici là, la seule barre de saisie est celle de la galerie.
+    setOnglet("galerie")
   }
 
   const relancer = async (identifiant: string, rang: number) => {
@@ -1213,19 +1256,104 @@ export function App() {
     ? ([...ZOOMS].reverse().find((cran) => !indisponibles.includes(cran)) ?? 1)
     : zoom
 
+  // ── Ce que la barre du châssis lit de l'onglet ouvert ─────────────────────
+
+  const projetCourant =
+    bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ?? null
+
+  /** Les colonnes que l'écran actif peut replier, **nommées par lui**. La
+   *  réserve n'a de bascule qu'en vue toile : sans elle il n'y a pas de
+   *  colonne, et une bascule pour une colonne absente mentirait sur ce que
+   *  l'écran contient (`docs/DESIGN.md` § Layout). */
+  const bascules: Bascule[] =
+    onglet === "galerie"
+      ? [
+          { cle: "arbre", nom: "arbre", repliee: replies.arbre },
+          { cle: "reglages", nom: "réglages", repliee: replies.reglages },
+        ]
+      : onglet === "univers"
+        ? [
+            { cle: "univers", nom: "univers", repliee: replies.univers },
+            ...(vueUnivers === "toile"
+              ? [{ cle: "reserve", nom: "réserve", repliee: replies.reserve }]
+              : []),
+          ]
+        : []
+
+  /** Le fil d'Ariane, ou rien. **C'est la porte d'entrée qui le décide**, pas
+   *  l'écran d'arrivée : la découpe atteinte depuis la fiche d'une image porte
+   *  le fil court de la galerie — le jeu, l'onglet, l'image, l'outil — et le
+   *  même écran atteint plus tard depuis l'établi d'une chose portera le fil
+   *  long, qui nommera la famille et l'entité traversées (E3).
+   *
+   *  Chaque segment ramène à son étage, sauf le dernier, qui est l'étage où
+   *  l'on est. */
+  const chemin: Segment[] = planche
+    ? [
+        {
+          libelle: projetCourant?.nom ?? "sans projet",
+          onAller: () => setDecoupeOuverte(null),
+        },
+        { libelle: "Galerie", onAller: () => setDecoupeOuverte(null) },
+        {
+          libelle: planche.label || planche.identifiant,
+          onAller: () => {
+            setDecoupeOuverte(null)
+            setSelection([planche.identifiant])
+          },
+        },
+        { libelle: "Découpage" },
+      ]
+    : []
+
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
-      <BarreDeTete
-        etat={etat}
-        bibliotheque={bibliotheque}
-        replies={replies}
-        onReplier={(quoi) => setReplies((r) => ({ ...r, [quoi]: !r[quoi] }))}
+      <BarreChassis
+        onglet={onglet}
+        onOnglet={(prochain) => {
+          // **Changer d'onglet remonte de toute profondeur.** Le fil dit où
+          // l'on est ; cliquer un onglet est le geste qui dit « ailleurs ».
+          // Laisser la découpe ouverte derrière un autre onglet rendrait le
+          // produit à ce qu'il vient de quitter — un écran par-dessus un autre.
+          setDecoupeOuverte(null)
+          setFente(null)
+          setOnglet(prochain)
+        }}
+        chemin={chemin}
+        // **Le nom du jeu ne s'écrit qu'une fois dans la bande.** Déployé, le
+        // fil le porte à son premier étage ; sans fil, c'est le total qui le
+        // porte. C'est la différence entre les deux croquis de
+        // `docs/maquettes-v2.1/01-structure.html` — celui de la galerie et
+        // celui de l'établi.
+        nomDuJeu={chemin.length ? null : (projetCourant?.nom ?? "sans projet")}
+        montant={dollars(
+          projetCourant ? projetCourant.total_usd : bibliotheque.sans_projet.total_usd,
+        )}
+        bascules={bascules}
+        onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
+        fente={fente}
         onReglages={() => setReglagesOuverts(true)}
-        onUnivers={() => setUniversOuvert(true)}
-        onPersonnages={() => setPersonnagesOuverts(true)}
-        univers={univers}
-        onRafraichir={redemanderCatalogue}
+        onGuide={() => ouvrirGuide()}
       />
+
+      {/* **La découpe est une profondeur de la galerie, pas un écran posé
+          dessus.** Elle occupait tout l'écran ; elle occupe maintenant la même
+          case que la grille, et c'est le fil d'Ariane qui dit qu'on est
+          descendu — `Cœur de pierre › Galerie › tonneau-cerclé-02 ›
+          Découpage`. Elle disparaîtra en E3, quand le découpage deviendra la
+          première des deux fabriques de la barre des tables ; d'ici là elle
+          garde sa porte, celle de la fiche. */}
+      {onglet === "galerie" && planche && (
+        <EcranDecoupe
+          planche={planche}
+          onFermer={() => setDecoupeOuverte(null)}
+          onFente={setFente}
+          onDecoupe={(decoupes) => {
+            setDecoupeOuverte(null)
+            if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+          }}
+        />
+      )}
 
       {/* Quatre colonnes, largeurs absolues, et 160 ms sur la largeur quand
           l'une se replie ou que la fiche s'ouvre — `docs/DESIGN.md` § Motion,
@@ -1241,7 +1369,14 @@ export function App() {
           en silence. Mesuré au navigateur le 27 août 2026 : 300 px coupés dans
           les réglages, 660 px dans la fiche — la filiation entière hors
           d'atteinte. En `flex`, l'`aside` est étiré, exactement comme sur
-          l'écran Univers, seul panneau du produit qui défilait. */}
+          l'écran Univers, seul panneau du produit qui défilait.
+
+          **Elle n'est plus le fond du produit, elle est un onglet.** Jusqu'à la
+          V2.1 cette grille était toujours montée et les autres écrans venaient
+          se poser dessus ; c'est elle, désormais, qui se retire quand un autre
+          onglet est allumé. Ce qu'elle tient — la grille, l'arbre, le tableau —
+          vit de toute façon dans `App`, et lui survit. */}
+      {onglet === "galerie" && !planche && (
       <main
         className="grid min-h-0"
         onTransitionEnd={mesurerCentre}
@@ -1419,63 +1554,33 @@ export function App() {
           )}
         </div>
       </main>
-
-      <BarreEtat
-        etat={etat}
-        catalogue={catalogueRepli}
-        panne={panne}
-        liaison={liaison}
-        bibliotheque={bibliotheque}
-      />
-
-      {/* **L'écran de découpe couvre l'atelier**, comme l'écran Univers : on
-          dessine des rectangles sur une planche de mille pixels, et la fiche en
-          fait 380. Il se ferme sur la première découpe, ouverte dans sa fiche —
-          la grille, elle, les a déjà toutes reçues par le flux. */}
-      {planche && (
-        <EcranDecoupe
-          planche={planche}
-          onFermer={() => setDecoupeOuverte(null)}
-          onDecoupe={(decoupes) => {
-            setDecoupeOuverte(null)
-            if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
-          }}
-        />
       )}
 
-      {/* **Le Guide couvre l'atelier**, comme Univers et Découpe — on l'ouvre
-          quand on ne sait pas, on le ferme quand on sait. Il ne porte pas de
-          fente de refus : il ne demande rien au serveur, ne dépense rien, ne
-          peut pas échouer. On ne pose pas une fente vide pour la symétrie. */}
-      {guideOuvert && <EcranGuide onFermer={fermerGuide} />}
-
-      {universOuvert && (
+      {/* **Les deux autres onglets, dans la même case de grille.** Ils ne
+          couvrent plus rien : ils occupent la ligne du milieu, entre la barre du
+          châssis et la barre d'état, exactement comme la galerie. C'est ce qui
+          leur retire leur en-tête de 44 px — il y en avait trois, un par écran,
+          et il n'y en a plus qu'un — et leur fente de refus, désormais
+          partagée. */}
+      {onglet === "univers" && (
         <EcranUnivers
-          projet={
-            bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ??
-            null
-          }
           univers={univers}
           modeles={modeles}
           cartes={cartes}
           liens={liens}
           teintes={teintes}
           personnages={personnages}
+          vue={vueUnivers}
+          onVue={setVueUnivers}
+          replies={{ univers: replies.univers, reserve: replies.reserve }}
+          onFente={setFente}
           onUnivers={setUnivers}
           onRelire={relireTableau}
-          onFermer={() => setUniversOuvert(false)}
         />
       )}
 
-      {/* **Ce qu'il reste à fabriquer**, et l'écran d'où l'on arme une pose. Il
-          couvre l'atelier comme Univers, avec la même contrepartie : il porte
-          sa propre fente de refus. */}
-      {personnagesOuverts && (
+      {onglet === "codex" && (
         <EcranPersonnages
-          projet={
-            bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ??
-            null
-          }
           plan={plan}
           personnages={personnages}
           onPersonnage={fondrePersonnage}
@@ -1487,15 +1592,30 @@ export function App() {
             setPieces(recu.pieces)
           }}
           onArmer={armer}
+          onFente={setFente}
           // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran
           // ne s'en sert que pour griser avec sa raison : le geste, lui, le
           // redemande au serveur, qui en est le seul dépositaire. Il arrive par
           // le flux comme le reste du cadre de l'agent, donc le bouton
           // s'allume à l'instant où l'auteur pose le dossier dans l'autre écran.
           dossierJeu={etat?.agent.garde_fous.dossier_jeu ?? ""}
-          onFermer={() => setPersonnagesOuverts(false)}
         />
       )}
+
+      <BarreEtat
+        etat={etat}
+        catalogue={catalogueRepli}
+        panne={panne}
+        liaison={liaison}
+        bibliotheque={bibliotheque}
+        onRelireCatalogue={redemanderCatalogue}
+      />
+
+      {/* **Le Guide couvre l'atelier**, comme Univers et Découpe — on l'ouvre
+          quand on ne sait pas, on le ferme quand on sait. Il ne porte pas de
+          fente de refus : il ne demande rien au serveur, ne dépense rien, ne
+          peut pas échouer. On ne pose pas une fente vide pour la symétrie. */}
+      {guideOuvert && <EcranGuide onFermer={fermerGuide} />}
 
       {reglagesOuverts && etat && (
         <EcranReglages
@@ -1553,104 +1673,6 @@ function fondreAsset(
     return liste.map((a) => (a.identifiant === recu.identifiant ? recu : a))
   if (filtre.recherche.trim()) return liste
   return [recu, ...liste].sort((a, b) => b.cree_le - a.cree_le || a.rang - b.rang)
-}
-
-// ── La barre de tête ────────────────────────────────────────────────────────
-
-function BarreDeTete({
-  etat,
-  bibliotheque,
-  univers,
-  replies,
-  onReplier,
-  onReglages,
-  onUnivers,
-  onPersonnages,
-  onRafraichir,
-}: {
-  etat: Etat | null
-  bibliotheque: Bibliotheque
-  univers: Univers
-  replies: { arbre: boolean; reglages: boolean }
-  onReplier: (quoi: "arbre" | "reglages") => void
-  onReglages: () => void
-  onUnivers: () => void
-  onPersonnages: () => void
-  onRafraichir: () => void
-}) {
-  const projet =
-    bibliotheque.projets.find((p) => p.identifiant === bibliotheque.courant) ?? null
-
-  return (
-    <header className="flex items-center gap-4 border-b border-bord bg-fond-1 px-4">
-      {/* Le seul endroit où l'outil a un visage — 17 px, l'unique exception à
-          la règle « Instrument Serif ne descend jamais sous 24 px ». */}
-      <h1 className="font-serif text-[17px] leading-none text-texte">Asset Kitchen</h1>
-
-      {/* Replier est **un choix**, jamais une contrainte de place (US-97) : les
-          deux bascules sont là en permanence, et disent l'état où elles sont. */}
-      <div className="flex items-center gap-1">
-        {(["arbre", "reglages"] as const).map((quoi) => (
-          <button
-            key={quoi}
-            type="button"
-            onClick={() => onReplier(quoi)}
-            aria-pressed={!replies[quoi]}
-            className={[
-              "mesure h-[26px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
-              replies[quoi]
-                ? "border-bord bg-fond-2 text-texte-3"
-                : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
-            ].join(" ")}
-          >
-            {quoi === "arbre" ? "arbre" : "réglages"}
-          </button>
-        ))}
-      </div>
-
-      <div className="ml-auto flex items-center gap-4">
-        <span className="mesure text-[10px] text-texte-3">
-          {projet ? projet.nom : "sans projet"} ·{" "}
-          {dollars(projet ? projet.total_usd : bibliotheque.sans_projet.total_usd)}
-        </span>
-        <span className="mesure text-[10px] text-texte-3">
-          {dollars(etat?.couts.total_usd ?? 0)} en tout
-        </span>
-        {/* L'écran où l'on pose ce qui s'appliquera ensuite tout seul. Il
-            dit d'un mot s'il a quelque chose à dire : un univers vide n'est pas
-            un réglage manquant, c'est un état — et il ne réclame rien. */}
-        <Bouton
-          onClick={onUnivers}
-          enfants={
-            univers.vide ? (
-              "Univers"
-            ) : (
-              <span className="flex items-center gap-2">
-                Univers
-                <span className="mesure text-[10px] text-signal">
-                  {univers.palette.length
-                    ? `${univers.palette.length} couleurs`
-                    : "bible"}
-                </span>
-              </span>
-            )
-          }
-        />
-        {/* Ce qu'il reste à fabriquer — « savoir quoi lancer sans tenir la
-            liste dans ma tête » (US-119). */}
-        <Bouton onClick={onPersonnages} enfants="Personnages" />
-        <Bouton onClick={onRafraichir} enfants="Catalogue" />
-        <Bouton onClick={onReglages} enfants="Réglages" />
-        {/* Le seul élément de cette barre qui ne parle pas du travail en cours
-            mais de l'outil, donc le seul qui soit séparé — 24 px, la seule
-            respiration d'une barre de 44. Il ne change jamais d'état. */}
-        <div className="ml-2 flex items-center gap-2 border-l border-bord pl-4">
-          <Bouton onClick={() => ouvrirGuide()} enfants="Guide" />
-          <span className="mesure text-[10px] text-texte-3">?</span>
-        </div>
-      </div>
-    </header>
-  )
 }
 
 // ── La case visée ───────────────────────────────────────────────────────────
@@ -1956,12 +1978,20 @@ function BarreEtat({
   panne,
   liaison,
   bibliotheque,
+  onRelireCatalogue,
 }: {
   etat: Etat | null
   catalogue: Repli
   panne: string | null
   liaison: boolean
   bibliotheque: Bibliotheque
+  /** **Le geste vient rejoindre l'état qu'il change.** La barre de tête portait
+   *  un bouton `Catalogue` de même poids que les onglets, alors qu'il ne
+   *  changeait rien de ce qu'on regarde : il redemandait la liste des modèles.
+   *  La V2.1 lui retire cette place — trois onglets, pas cinq boutons — et le
+   *  pose ici, sur le compte de modèles, qui est déjà l'endroit du produit qui
+   *  dit ce que le catalogue contient et de quand il date. */
+  onRelireCatalogue: () => void
 }) {
   // Trois choses différentes, et il ne faut pas les confondre : l'atelier est
   // arrêté (liaison rompue), le fournisseur est injoignable (repli), ou tout
@@ -1991,7 +2021,14 @@ function BarreEtat({
         <span className="text-epingle">catalogue du {heure(catalogue.recu_le)}</span>
       )}
       {catalogue.repli && catalogue.raison && <span>{catalogue.raison}</span>}
-      <span>{etat?.catalogue.modeles ?? 0} modèles</span>
+      <button
+        type="button"
+        onClick={onRelireCatalogue}
+        title="Redemander le catalogue des modèles"
+        className="transition-colors duration-[80ms] hover:text-texte-2"
+      >
+        {etat?.catalogue.modeles ?? 0} modèles
+      </button>
       <span>
         {assets} asset{assets > 1 ? "s" : ""}
       </span>
