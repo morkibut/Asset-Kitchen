@@ -35,6 +35,7 @@ import {
   PanneauQuantification,
   PanneauRecadrage,
   RESUME,
+  useMesures,
   useRecette,
 } from "./Places"
 
@@ -276,7 +277,7 @@ export function EcranTables({
   ouverte,
   onOuvrir,
   onSoeur,
-  onDecouper,
+  decoupe,
   onErreur,
   BlocPasse,
 }: {
@@ -290,7 +291,9 @@ export function EcranTables({
   ouverte: Table
   onOuvrir: (table: Table) => void
   onSoeur: (identifiant: string) => void
-  onDecouper: () => void
+  /** La fabrique du découpage, rendue **dans le cadre de la table** — pas
+   *  ailleurs. « On ne le cherche plus : il est là quand il sert. » */
+  decoupe: React.ReactNode
   onErreur: (raison: string) => void
   /** Le bloc d'une passe de détourage, rendu par la fiche depuis T2. Passé en
    *  paramètre plutôt qu'importé : il vit encore dans la fiche, et E4 le fera
@@ -298,11 +301,12 @@ export function EcranTables({
   BlocPasse: React.ComponentType<any>
 }) {
   const { recette, regler, poser, revenirAuBrut } = useRecette(asset, onErreur)
+  const mesures = useMesures(asset)
   const [mode, setMode] = useState<Mode>("rendu")
   const [opacite, setOpacite] = useState(50)
 
   const dehors = indisponible(ouverte, traitement)
-  const reglages = { recette, univers, traitement, regler, poser }
+  const reglages = { recette, univers, traitement, regler, poser, mesures }
 
   return (
     <div data-tables className="flex min-h-0 flex-1 flex-col">
@@ -314,6 +318,12 @@ export function EcranTables({
         onToutDefaire={() => void revenirAuBrut()}
       />
 
+      {/* **La fabrique prend le cadre entier.** Elle ne pose rien sur l'image
+          courante : elle en écrit d'autres, et le montrer entre une colonne de
+          réglages et une colonne de sœurs mentirait sur ce qu'elle fait. */}
+      {ouverte === "decoupage" ? (
+        decoupe
+      ) : (
       <div className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px]">
         {/* ── La colonne de la table ────────────────────────────────────── */}
         <aside
@@ -337,20 +347,6 @@ export function EcranTables({
               <PanneauQuantification {...reglages} />
             ) : ouverte === "bords" ? (
               <PanneauBords {...reglages} />
-            ) : ouverte === "decoupage" ? (
-              <div className="flex flex-col gap-2">
-                <p className="mesure text-[10px] leading-4 text-texte-3">
-                  Le découpage coupe cette image en plusieurs. Il n'écrit rien
-                  sur elle — c'est une fabrique, et elle n'a pas de carré.
-                </p>
-                <button
-                  type="button"
-                  onClick={onDecouper}
-                  className="mesure h-[34px] rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte hover:bg-fond-3"
-                >
-                  Ouvrir le découpage
-                </button>
-              </div>
             ) : null}
           </div>
 
@@ -371,14 +367,33 @@ export function EcranTables({
         {/* ── L'image, en grand ─────────────────────────────────────────── */}
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="flex min-h-0 flex-1 items-center justify-center gap-4 p-6">
-            {(mode === "rendu" || mode === "brut") && (
+            {(mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
+              // **Le rectangle se pose sur l'image, jamais dans un champ.** Le
+              // modèle le porte depuis T2 et aucun écran ne l'avait montré : on
+              // ne dessine pas un cadrage en tapant quatre nombres, on le
+              // dessine en regardant ce qu'il garde.
+              <CadreDeRecadrage
+                asset={asset}
+                boite={
+                  (recette.recadrage?.boite as
+                    | [number, number, number, number]
+                    | undefined) ?? null
+                }
+                onBoite={(boite) =>
+                  void poser({
+                    ...recette,
+                    recadrage: { marge: recette.recadrage?.marge ?? 0, boite },
+                  })
+                }
+              />
+            ) : mode === "rendu" || mode === "brut" ? (
               <img
                 src={api.rendu(asset.identifiant, asset.empreinte, mode === "brut")}
                 alt={asset.label}
                 className="damier max-h-full max-w-full object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
-            )}
+            ) : null}
             {mode === "cote" && (
               <>
                 <img
@@ -446,6 +461,7 @@ export function EcranTables({
           </div>
         </aside>
       </div>
+      )}
     </div>
   )
 }
@@ -490,5 +506,99 @@ function Soeur({
         style={{ imageRendering: "pixelated" }}
       />
     </button>
+  )
+}
+
+
+// ── Le rectangle de recadrage, posé sur l'image ─────────────────────────────
+
+/**
+ * L'image, et le rectangle qu'on y glisse.
+ *
+ * **Le cadre *est* l'image**, mis à l'échelle par calcul : c'est la leçon du
+ * cadre de la Découpe, qui dessine des rectangles depuis T5 — une boîte qui ment
+ * décale ce qu'on pose dessus, et ici c'est le rectangle qui tomberait à côté.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, coins inclus : une
+ * seule convention de rectangle dans tout le produit, celle du serveur. Le
+ * recadrage s'applique avant la remise sur grille, donc c'est bien le brut qu'il
+ * découpe.
+ */
+function CadreDeRecadrage({
+  asset,
+  boite,
+  onBoite,
+}: {
+  asset: Asset
+  boite: [number, number, number, number] | null
+  onBoite: (boite: [number, number, number, number] | null) => void
+}) {
+  const [trace, setTrace] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(
+    null,
+  )
+
+  /** Le point sous le pointeur, en pixels de l'image brute. */
+  const point = (evenement: React.PointerEvent<HTMLDivElement>) => {
+    const cadre = evenement.currentTarget.getBoundingClientRect()
+    const x = ((evenement.clientX - cadre.left) / cadre.width) * asset.largeur
+    const y = ((evenement.clientY - cadre.top) / cadre.height) * asset.hauteur
+    return {
+      x: Math.max(0, Math.min(asset.largeur - 1, Math.round(x))),
+      y: Math.max(0, Math.min(asset.hauteur - 1, Math.round(y))),
+    }
+  }
+
+  const dessine = trace ?? (boite ? { x0: boite[0], y0: boite[1], x1: boite[2], y1: boite[3] } : null)
+
+  return (
+    <div
+      data-cadre-recadrage
+      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
+      className="relative max-h-full max-w-full"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        const { x, y } = point(evenement)
+        setTrace({ x0: x, y0: y, x1: x, y1: y })
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        if (!trace) return
+        const { x, y } = point(evenement)
+        setTrace({ ...trace, x1: x, y1: y })
+      }}
+      onPointerUp={() => {
+        if (!trace) return
+        const x0 = Math.min(trace.x0, trace.x1)
+        const y0 = Math.min(trace.y0, trace.y1)
+        const x1 = Math.max(trace.x0, trace.x1)
+        const y1 = Math.max(trace.y0, trace.y1)
+        setTrace(null)
+        // **Un clic n'est pas un rectangle.** Sous trois pixels de côté, le
+        // geste était un clic : il retire le rectangle au lieu d'en poser un
+        // d'un pixel, que personne ne voulait.
+        if (x1 - x0 < 3 || y1 - y0 < 3) onBoite(null)
+        else onBoite([x0, y0, x1, y1])
+      }}
+    >
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {dessine && (
+        <span
+          aria-hidden
+          style={{
+            left: `${(Math.min(dessine.x0, dessine.x1) / asset.largeur) * 100}%`,
+            top: `${(Math.min(dessine.y0, dessine.y1) / asset.hauteur) * 100}%`,
+            width: `${((Math.abs(dessine.x1 - dessine.x0) + 1) / asset.largeur) * 100}%`,
+            height: `${((Math.abs(dessine.y1 - dessine.y0) + 1) / asset.hauteur) * 100}%`,
+          }}
+          className="pointer-events-none absolute border border-lumiere bg-lumiere/10"
+        />
+      )}
+    </div>
   )
 }

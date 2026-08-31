@@ -36,11 +36,22 @@ from atelier.domaine.recette import (
     MOTEURS,
     RAYON_MAX,
     TRAMAGES,
+    Grille,
     Difference,
     Passe,
     Recette,
 )
-from atelier.image import Rendu, detourer, finir, raison_moteur, rendre_en_png
+from atelier.image import (
+    Rendu,
+    crans_occupation,
+    detourer,
+    finir,
+    poches,
+    raison_moteur,
+    rendre_en_png,
+    taches,
+)
+from atelier.image.traitement import composantes
 from atelier.image.calque import avec_alpha, differencier
 from atelier.services.evenements import Diffusion
 
@@ -157,6 +168,41 @@ class ServiceAssets:
             # décide de l'occupation : « imposé 40 % » ne s'explique que si la
             # fiche peut ajouter « objet tenu ».
             "echelle": str(generation.demande.get("echelle", "") or ""),
+        }
+
+    def taches_de(self, identifiant: str, plafond: int = 200) -> dict[str, Any]:
+        """Ce qu'une table a besoin de savoir de l'image (E3).
+
+        **Trois mesures, et aucune n'est un réglage** : les taches que le
+        nettoyage des bords va effacer, les poches de fond que le sujet enferme,
+        et les crans d'occupation où la remise sur grille change vraiment
+        quelque chose. Les trois répondent à la même question posée trois fois —
+        *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+
+        **Sur l'image détourée, jamais sur le brut.** Les taches d'un JPEG opaque
+        sont une seule tache : le sujet, plus tout le fond. Ce qui intéresse une
+        table est ce que la recette a laissé — et c'est exactement ce que
+        `detourer` rend.
+
+        **Une route à part de l'asset**, pour la raison de `impose` : la charge
+        d'un asset part deux cents fois par relecture de grille, et un
+        remplissage par plages sur mille pixels de côté n'a rien à faire là.
+        """
+        asset = self._trouver(identifiant)
+        octets, _ = self.octets(asset, brut=True)
+        rgba = detourer(asset.recette, octets)
+        trouvees = taches(rgba, plafond=plafond)
+        # **Ce qui est coupé se dit**, jamais tu en silence : une image bruitée
+        # peut porter des milliers de taches d'un pixel, et une liste tronquée
+        # sans le dire se lirait comme la liste entière.
+        toutes = len([m for m, _ in composantes(rgba[:, :, 3] > 0)])
+        return {
+            "taches": [t.en_json() for t in trouvees],
+            "coupees": max(0, toutes - len(trouvees)),
+            "poches": [p.en_json() for p in poches(rgba)],
+            "crans_occupation": crans_occupation(
+                rgba, asset.recette.grille or Grille()
+            ),
         }
 
     def recette_du_projet(self, generation: Generation) -> Recette:

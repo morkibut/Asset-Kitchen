@@ -824,7 +824,7 @@ laquelle a le plus de manque.
 ---
 
 ### E3 · Le châssis des tables, et les cinq places qui existaient déjà
-**User stories** : 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204
+**User stories** : 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204 · *14 critères, 13 tenus le 31 août 2026*
 
 #### Ce qu'on livre
 

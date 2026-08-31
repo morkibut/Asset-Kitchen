@@ -1,11 +1,11 @@
 {
- "releve_le": 1788140192.2085307,
+ "releve_le": 1788141849.398061,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 270853,
+  "octets": 270898,
   "documents": {
    "AGENTS.md": {
     "octets": 22108,
@@ -236,14 +236,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 103307,
+    "octets": 103352,
     "titres": 131,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, puis la V2.1",
       "niveau": 1,
       "ligne": 1,
-      "octets": 101696
+      "octets": 101741
      },
      {
       "titre": "Décisions architecturales",
@@ -441,7 +441,7 @@
       "titre": "V2.1 — L'interface refaite",
       "niveau": 2,
       "ligne": 432,
-      "octets": 71716
+      "octets": 71761
      },
      {
       "titre": "Ce que la V2.1 hérite et ne rediscute pas",
@@ -579,7 +579,7 @@
       "titre": "E3 · Le châssis des tables, et les cinq places qui existaient déjà",
       "niveau": 3,
       "ligne": 826,
-      "octets": 3219
+      "octets": 3264
      },
      {
       "titre": "Ce qu'on livre",
@@ -1187,7 +1187,7 @@
  },
  "renvois": {
   "code": {
-   "total": 358,
+   "total": 360,
    "casses": []
   },
   "docs": {

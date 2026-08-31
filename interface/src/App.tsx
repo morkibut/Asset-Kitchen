@@ -1832,12 +1832,22 @@ export function App() {
                 ouverte={table}
                 onOuvrir={setTable}
                 onSoeur={setCaseOuverte}
-                onDecouper={() => {
-                  setCaseOuverte(null)
-                  setChoseOuverte(null)
-                  setOnglet("galerie")
-                  setDecoupeOuverte(imageOuverte.identifiant)
-                }}
+                // **Le découpage est là, dans le cadre de la table** : on ne
+                // le cherche plus, et l'écran Découpe cesse d'être un endroit
+                // où aller. Il reste atteignable depuis la fiche d'une image
+                // tant que la galerie porte un bouton pour lui (E4).
+                decoupe={
+                  <EcranDecoupe
+                    planche={imageOuverte}
+                    onFermer={() => setTable("detourage")}
+                    onFente={setFente}
+                    onDecoupe={(decoupes) => {
+                      setTable("detourage")
+                      if (decoupes.length > 0)
+                        setSelection([decoupes[0].identifiant])
+                    }}
+                  />
+                }
                 onErreur={setPanne}
                 BlocPasse={BlocPasse}
               />

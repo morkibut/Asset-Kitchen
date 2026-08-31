@@ -19,6 +19,7 @@ import {
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
   type Asset,
+  type TachesDeLAsset,
   type Bords,
   type EtatTraitement,
   type Grille,
@@ -160,6 +161,36 @@ export type Reglages = {
   traitement: EtatTraitement
   regler: (recette: Recette) => void
   poser: (recette: Recette) => void
+  /** Ce que le serveur a mesuré sur cette image — les taches, les poches, les
+   *  crans d'occupation. `null` tant qu'il n'a pas répondu : une place se rend
+   *  sans, et se tait alors sur ce qu'elle ne sait pas encore. */
+  mesures: TachesDeLAsset | null
+}
+
+/**
+ * Demander au serveur ce qu'une table a besoin de savoir de l'image.
+ *
+ * **Une lecture à part de l'asset**, comme `impose` : un remplissage par plages
+ * sur mille pixels de côté n'a rien à faire dans la charge que la grille relit
+ * deux cents fois. Elle se redemande quand la recette **posée** change, parce
+ * que c'est ce qui change les taches — pas à chaque cran de curseur.
+ */
+export function useMesures(asset: Asset) {
+  const [mesures, setMesures] = useState<TachesDeLAsset | null>(null)
+  useEffect(() => {
+    let vivant = true
+    setMesures(null)
+    api
+      .taches(asset.identifiant)
+      .then((recu) => vivant && setMesures(recu))
+      // Une image disparue pendant qu'on la regardait : il n'y a rien à dire de
+      // plus ici qu'« on ne sait pas », et c'est ce que `null` veut dire.
+      .catch(() => vivant && setMesures(null))
+    return () => {
+      vivant = false
+    }
+  }, [asset.identifiant, asset.empreinte])
+  return mesures
 }
 
 /** Un réglage : son libellé à gauche, sa commande à droite. */
@@ -187,6 +218,7 @@ export function PanneauDetourage({
   traitement,
   regler,
   poser,
+  mesures,
   BlocPasse,
 }: Reglages & { BlocPasse: React.ComponentType<any> }) {
   const raisonModele =
@@ -231,6 +263,43 @@ export function PanneauDetourage({
       >
         + une passe
       </button>
+
+      {/* **Les poches de fond enfermées par le sujet.** Un détourage par
+          tolérance de bord efface le fond qu'il atteint depuis les bords ; ce
+          qu'il n'atteint pas reste — la lumière entre un bras et un torse, le
+          trou d'une anse, l'intérieur d'un anneau. Parfois c'est du fond qu'on
+          veut retirer, parfois de la matière qu'on veut garder : un cabochon de
+          lanterne, un vitrail.
+
+          **Le produit ne tranche pas.** Il les cercle, il les compte, et il
+          n'en efface aucune de lui-même. */}
+      {mesures && mesures.poches.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1 border-t border-bord pt-2">
+          <Libelle aide="detourage.poches">
+            {mesures.poches.length} poche{mesures.poches.length > 1 ? "s" : ""} de fond
+            enfermée{mesures.poches.length > 1 ? "s" : ""}
+          </Libelle>
+          <ul className="flex flex-col">
+            {mesures.poches.slice(0, 8).map((poche) => (
+              <li
+                key={poche.boite.join(",")}
+                className="mesure flex h-[24px] items-center gap-2 text-[10px] text-texte-3"
+              >
+                <span
+                  aria-hidden
+                  style={{ background: poche.couleur }}
+                  className="inline-block h-3 w-3 shrink-0 rounded-full border border-bord"
+                />
+                <span>{poche.aire} px</span>
+                <span className="ml-auto">
+                  {poche.boite[0]},{poche.boite[1]}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Raison texte="le produit n'en efface aucune — c'est du fond, ou c'est de la matière, et lui ne peut pas le savoir" />
+        </div>
+      )}
     </div>
   )
 }
@@ -286,7 +355,17 @@ export function PanneauRecadrage({ recette, regler, poser }: Reglages) {
   )
 }
 
-export function PanneauGrille({ recette, regler, poser }: Reglages) {
+export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
+  /** **Le curseur ne s'arrête que là où l'image change.** Quatre-vingt-onze
+   *  positions pour une trentaine de tailles possibles : deux crans voisins
+   *  rendaient la même image, et la main croyait régler quelque chose. */
+  const crans = mesures?.crans_occupation ?? []
+  /** Sur combien de pixels le curseur tombe, à la position où il est. C'est la
+   *  même arithmétique que le serveur applique — cible × occupation —, et
+   *  c'est elle qui décide de ce que la case contiendra vraiment. */
+  const cote = Math.round(
+    ((recette.grille?.cible ?? 64) * (recette.grille?.occupation ?? 100)) / 100,
+  )
   return (
     <div className="flex flex-col gap-2">
       <Reglage libelle="cible" aide="grille.cible">
@@ -318,6 +397,14 @@ export function PanneauGrille({ recette, regler, poser }: Reglages) {
           }
         />
       </Reglage>
+      {/* **Et il dit sur combien de pixels il tombe.** Un pour cent n'est pas
+          une mesure : ce que l'occupation décide est un nombre de pixels dans
+          la case, et c'est ce nombre-là qu'on compare d'une image à l'autre. */}
+      {crans.length > 0 && (
+        <Raison
+          texte={`${cote} px dans la case · ${crans.length} crans changent l'image, sur les 91 du curseur`}
+        />
+      )}
       <Reglage libelle="ancrage" aide="grille.ancrage">
         <Segments
           valeurs={["bas", "centre"] as const}
@@ -417,17 +504,68 @@ export function PanneauQuantification({ recette, univers, poser }: Reglages) {
   )
 }
 
-export function PanneauBords({ recette, regler, poser }: Reglages) {
+export function PanneauBords({ recette, regler, poser, mesures }: Reglages) {
+  const seuil = recette.bords?.aire_min ?? 3
+  const liste = mesures?.taches ?? []
+  const partent = liste.filter((t) => t.aire < seuil).length
   return (
-    <Reglage libelle="tache minimale" aide="bords.aire_min">
-      <Curseur
-        valeur={recette.bords?.aire_min ?? 3}
-        min={0}
-        max={64}
-        unite=" px"
-        onChange={(aire_min) => regler({ ...recette, bords: { aire_min } })}
-        onFini={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
-      />
-    </Reglage>
+    <div className="flex flex-col gap-2">
+      <Reglage libelle="tache minimale" aide="bords.aire_min">
+        <Curseur
+          valeur={seuil}
+          min={0}
+          max={64}
+          unite=" px"
+          onChange={(aire_min) => regler({ ...recette, bords: { aire_min } })}
+          onFini={(aire_min) => void poser({ ...recette, bords: { aire_min } })}
+        />
+      </Reglage>
+
+      {/* **La liste de ce qui va partir, triée du plus petit au plus grand, et
+          coupée là où le seuil tombe.** L'ordre est la moitié de la réponse :
+          le nettoyage efface *en dessous d'un seuil*, donc ce qu'on veut lire
+          d'abord est ce qui partira en premier. Le trait dit où le curseur est
+          posé — au-dessus ce qui s'efface, au-dessous ce qui reste. */}
+      {liste.length > 0 && (
+        <div className="flex flex-col gap-1 border-t border-bord pt-2">
+          <Libelle aide="bords.taches">
+            {partent} tache{partent > 1 ? "s" : ""} effacée{partent > 1 ? "s" : ""} sur{" "}
+            {liste.length}
+          </Libelle>
+          <ul className="flex flex-col">
+            {liste.map((tache, rang) => {
+              const part = tache.aire < seuil
+              const dernierEfface =
+                part && liste[rang + 1] !== undefined && liste[rang + 1].aire >= seuil
+              return (
+                <li
+                  key={tache.boite.join(",")}
+                  className={[
+                    "mesure flex h-[24px] items-center gap-2 text-[10px]",
+                    part ? "text-texte-2" : "text-texte-3",
+                    dernierEfface ? "border-b border-signal" : "",
+                  ].join(" ")}
+                >
+                  <span
+                    aria-hidden
+                    style={{ background: tache.couleur }}
+                    className="inline-block h-3 w-3 shrink-0 rounded-[2px] border border-bord"
+                  />
+                  <span>{tache.aire} px</span>
+                  <span className="ml-auto">
+                    {tache.boite[0]},{tache.boite[1]}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+          {mesures && mesures.coupees > 0 && (
+            <Raison
+              texte={`${mesures.coupees} taches de plus, non listées — la liste sert à regarder`}
+            />
+          )}
+        </div>
+      )}
+    </div>
   )
 }

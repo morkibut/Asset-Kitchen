@@ -452,20 +452,35 @@ export function Curseur({
   onChange,
   onFini,
   inactif = false,
+  crans,
 }: {
   valeur: number
   min: number
   max: number
   pas?: number
   unite?: string
+  /** **Les seules valeurs où quelque chose change.** Un curseur qui s'arrête à
+   *  chaque pour cent sur une échelle qui n'a qu'une trentaine d'états
+   *  distincts fait croire à la main qu'elle règle quelque chose. Quand la
+   *  liste est donnée, la valeur saute au cran le plus proche — et le nombre
+   *  affiché reste celui du cran, jamais celui de la position de la main.
+   *
+   *  Sans liste, le curseur est celui de T2 : rien ne change pour les six
+   *  autres réglages du produit, qui n'ont pas de crans à eux. */
+  crans?: readonly number[]
   onChange: (v: number) => void
   /** Le relâchement — souris, doigt ou touche. Sans lui, `onChange` fait tout,
    *  ce qui reste juste pour un réglage qui ne coûte rien à celui d'en face. */
   onFini?: (v: number) => void
   inactif?: boolean
 }) {
+  /** Le cran le plus proche, ou la valeur telle quelle. */
+  const arrondir = (brute: number) =>
+    crans && crans.length
+      ? crans.reduce((a, b) => (Math.abs(b - brute) < Math.abs(a - brute) ? b : a))
+      : brute
   const fini = (e: { currentTarget: HTMLInputElement }) =>
-    onFini?.(Number(e.currentTarget.value))
+    onFini?.(arrondir(Number(e.currentTarget.value)))
   return (
     <div className="flex items-center gap-2">
       <input
@@ -475,7 +490,7 @@ export function Curseur({
         step={pas}
         value={valeur}
         disabled={inactif}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e) => onChange(arrondir(Number(e.target.value)))}
         onPointerUp={fini}
         onKeyUp={fini}
         className="curseur h-[26px] min-w-0 flex-1"

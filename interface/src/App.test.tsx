@@ -43,6 +43,7 @@ import type {
   Carte,
   Depenses,
   Etat,
+  TachesDeLAsset,
   CompteReferences,
   EtatCatalogue,
   Generation,
@@ -513,6 +514,9 @@ function serveurDouble(options: {
    *  issues, et les rafales. Vide par défaut : l'écran des dépenses n'est
    *  ouvert que par les essais qui le demandent. */
   depenses?: Depenses
+  /** Ce qu'une table sait de l'image — les taches, les poches, les crans
+   *  d'occupation. Vide par défaut : une image d'essai n'a rien à montrer. */
+  mesures?: TachesDeLAsset
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -641,6 +645,18 @@ function serveurDouble(options: {
       }
       return rendre(etat.agent)
     }
+    // Ce qu'une table sait de l'image (E3) : les taches, les poches, les crans
+    // d'occupation. Le double répond comme le serveur — une image d'essai n'a
+    // ni tache ni poche, et c'est une réponse, pas un trou.
+    if (url.includes("/spots"))
+      return rendre(
+        options.mesures ?? {
+          taches: [],
+          coupees: 0,
+          poches: [],
+          crans_occupation: [],
+        },
+      )
     if (url.startsWith("/api/spending"))
       return rendre(
         options.depenses ?? {
@@ -6559,7 +6575,9 @@ describe("le codex et l'établi", () => {
     // L'outil remplace la matrice, il ne se pose pas dessus : c'est la
     // profondeur suivante du même endroit, et le fil la dit.
     expect(await screen.findByRole("button", { name: /^détourage/ })).toBeTruthy()
-    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    const fil = within(
+      await screen.findByRole("navigation", { name: "Où l'on est" }),
+    )
     expect(fil.getByText("le nain, au repos")).toBeTruthy()
 
     // **La barre de prompt se retire** : on retouche, on ne paie pas.
@@ -6638,5 +6656,377 @@ describe("le codex et l'établi", () => {
     // La case *repos* n'en réclame qu'une : elle est faite, et le compte le dit.
     const rangee = ecran.getByText("repos").closest("li") as HTMLElement
     expect(within(rangee).getByText("1 / 1")).toBeTruthy()
+  })
+})
+
+// ── E3 : le châssis des tables ──────────────────────────────────────────────
+//
+// L'endroit où l'on retouche. Onze des quatorze critères de la tranche portent
+// sur ce que l'écran montre et vivent ici ; les trois qui restent sont des
+// mesures sur les pixels et sont tenus par `tests/test_e3.py`.
+
+describe("le châssis des tables", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  /** Une table ouverte sur une image d'une chose du jeu. */
+  const ouvrirUneTable = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    images = [asset("bbbb2222-0", "le nain, au repos")],
+  ) => {
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)], ...options })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  /** La même chose, avec une quantification **disponible** : le double annonce
+   *  « aucune palette » dans son état de départ, ce qui grise la table. */
+  const monterAvecQuantification = async () => {
+    const images = [asset("bbbb2222-0", "le nain, au repos")]
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
+    await monter(double.fetchDouble, {
+      ...ETAT,
+      traitement: {
+        ...ETAT.traitement,
+        quantification: { raison: null },
+      },
+    })
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  const puce = (cadre: ReturnType<typeof within>, nom: string) =>
+    cadre.getByRole("button", { name: new RegExp(`^${nom}`) })
+
+  // ── « La barre montre les sept places dans l'ordre où elles s'appliquent, et
+  //     l'ordre ne se change pas » et « le trait sépare les sept places des deux
+  //     fabriques » ───────────────────────────────────────────────────────────
+
+  test("les sept places sont dans l'ordre du traitement, puis les deux fabriques", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    // L'ordre est celui du domaine. Le lire autrement serait mentir sur ce que
+    // l'image a subi.
+    const barre = cadre.getAllByRole("button").map((b) => b.textContent ?? "")
+    const rangs = [
+      "détourage",
+      "recadrage",
+      "grille",
+      "quantification",
+      "bords",
+      "contours",
+      "la main",
+      "découpage",
+      "superposition",
+    ].map((nom) => barre.findIndex((t) => t.startsWith(nom)))
+    expect(rangs.every((r) => r >= 0)).toBe(true)
+    expect([...rangs].sort((a, b) => a - b)).toEqual(rangs)
+  })
+
+  // ── « Le carré d'une place est plein si et seulement si la place change
+  //     l'image » ─────────────────────────────────────────────────────────────
+
+  test("le carré se remplit quand la place change l'image, pas quand elle est posée", async () => {
+    // Un recadrage de marge zéro **est** dans la recette et ne change rien :
+    // c'est le cas qui a montré que « posée » et « agit » ne coïncident pas.
+    const image = {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: {
+        ...RECETTE_VIDE,
+        recadrage: { marge: 0, boite: null },
+        bords: { aire_min: 4 },
+      },
+    }
+    const { cadre } = await ouvrirUneTable({}, [image])
+
+    // Le recadrage n'a pas de valeur à montrer : carré creux.
+    expect(puce(cadre, "recadrage").textContent).toBe("recadrage")
+    // Les bords en ont une : carré plein, et la valeur avec.
+    expect(puce(cadre, "bords").textContent).toContain("tache 4 px")
+  })
+
+  // ── « Une table indisponible s'ouvre, et son panneau porte la raison en
+  //     clair, à la place des réglages » ───────────────────────────────────────
+
+  test("une table indisponible s'ouvre quand même, et porte sa raison à la place des réglages", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    // Elle est cliquable — c'est le wrapper qui porte la raison, pas la puce.
+    fireEvent.click(puce(cadre, "contours"))
+    expect(
+      await cadre.findByText(/le tracé de contour n'est pas encore construit/),
+    ).toBeTruthy()
+    // **À la place des réglages, jamais à côté d'eux** : aucun curseur mort
+    // sous la raison.
+    expect(cadre.queryByRole("slider")).toBeNull()
+  })
+
+  test("une fabrique n'a pas de carré, et la superposition dit qu'elle n'existe pas encore", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    fireEvent.click(puce(cadre, "superposition"))
+    expect(await cadre.findByText(/la superposition n'est pas encore construite/)).toBeTruthy()
+  })
+
+  // ── « L'image brute et l'image rendue se comparent côte à côte et
+  //     superposées, et le mode est écrit dès que ce n'est pas le rendu » ──────
+
+  test("les quatre modes de comparaison, et le mode s'écrit dès que ce n'est pas le rendu", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    // Au repos, rien n'est écrit : c'est le rendu, et le dire serait du bruit.
+    expect(cadre.queryByText(/on regarde/)).toBeNull()
+
+    for (const [bouton, dit] of [
+      ["brut", "on regarde : brut"],
+      ["côte à côte", "on regarde : côte à côte"],
+      ["superposé", "on regarde : superposé"],
+    ] as const) {
+      fireEvent.click(cadre.getByRole("button", { name: bouton }))
+      expect(await cadre.findByText(dit)).toBeTruthy()
+    }
+
+    // Et revenir au rendu fait taire la phrase : un mode durable qu'on oublie
+    // est le danger ; le dire est ce qui autorise à le rendre durable.
+    fireEvent.click(cadre.getByRole("button", { name: "rendu" }))
+    await waitFor(() => expect(cadre.queryByText(/on regarde/)).toBeNull())
+  })
+
+  // ── « On passe à l'image voisine sans que la table ouverte se referme » ─────
+
+  test("changer de sœur garde la table ouverte", async () => {
+    const images = [
+      asset("bbbb2222-0", "le nain, au repos"),
+      asset("bbbb2222-1", "le nain, de dos"),
+    ]
+    const { cadre } = await ouvrirUneTable({}, images)
+
+    fireEvent.click(puce(cadre, "grille"))
+    expect(await cadre.findByText("cible")).toBeTruthy()
+
+    // On change d'image dans la colonne des sœurs…
+    fireEvent.click(cadre.getByRole("button", { name: "le nain, de dos" }))
+    // …et la table est toujours celle qu'on avait ouverte. C'est le geste qui
+    // distingue une table d'un panneau : on règle la même place sur six images.
+    expect(await cadre.findByText("cible")).toBeTruthy()
+  })
+
+  // ── « Vider une place et vider la recette entière sont deux gestes distincts,
+  //     à deux endroits distincts » ────────────────────────────────────────────
+
+  test("vider une place et vider la recette sont deux gestes, à deux endroits", async () => {
+    // Une image dont les bords sont posés : vider une place qui n'a rien
+    // n'envoie rien, et c'est très bien — le serveur sérialise les retouches.
+    const image = {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: { ...RECETTE_VIDE, bords: { aire_min: 4 } },
+    }
+    const { cadre, appels } = await ouvrirUneTable({}, [image])
+
+    fireEvent.click(puce(cadre, "bords"))
+    // Le pied de la table ne touche qu'elle.
+    fireEvent.click(await cadre.findByRole("button", { name: "Sans bords ›" }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.includes("/recipe"))).toBe(true),
+    )
+
+    // `tout défaire` vit au bout de la barre, pas dans l'en-tête d'une table :
+    // il y mentait sur sa portée. Il passe par une autre route — celle du
+    // retour au brut, qui vide la recette entière.
+    fireEvent.click(cadre.getByRole("button", { name: /tout défaire/ }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.includes("/reset"))).toBe(true),
+    )
+  })
+
+  // ── « La quantification atteint les couleurs déduites d'une image et le
+  //     tramage, tous deux déjà portés par le modèle » ─────────────────────────
+
+  test("la quantification atteint enfin les couleurs de l'image et le tramage", async () => {
+    // Le double annonce « aucune palette » dans son état de départ, ce qui rend
+    // la table indisponible : on lui donne un traitement qui marche, puisque
+    // c'est la table qu'on regarde et non son grisé.
+    const { cadre, appels } = await monterAvecQuantification()
+
+    fireEvent.click(puce(cadre, "quantification"))
+    // **Deux sources de couleurs**, et le modèle les portait déjà : une palette
+    // vide veut dire *déduite de l'image elle-même*, ce qu'aucun écran n'avait
+    // jamais proposé.
+    fireEvent.click(await cadre.findByRole("button", { name: "l'image" }))
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      expect((envoi?.corps as { quantification: { palette: string[] } }).quantification
+        .palette).toEqual([])
+    })
+
+    // Et le tramage, porté depuis T2 et jamais montré : sans lui un dégradé
+    // réduit à seize couleurs se pose en bandes.
+    fireEvent.click(cadre.getByRole("button", { name: "floyd" }))
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      expect((envoi?.corps as { quantification: { tramage: string } }).quantification
+        .tramage).toBe("floyd")
+    })
+  })
+
+  // ── « L'aire minimale liste les taches qu'elle va effacer, triées, et la
+  //     liste se coupe là où le seuil tombe » ─────────────────────────────────
+
+  test("l'aire minimale liste les taches, triées, et dit combien partent", async () => {
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        taches: [
+          { aire: 1, boite: [3, 3, 3, 3], couleur: "#112233" },
+          { aire: 2, boite: [8, 8, 9, 9], couleur: "#445566" },
+          { aire: 900, boite: [0, 0, 63, 63], couleur: "#778899" },
+        ],
+        coupees: 12,
+        poches: [],
+        crans_occupation: [],
+      },
+    })
+
+    fireEvent.click(puce(cadre, "bords"))
+    // Le seuil par défaut est 3 px : les deux petites partent, le sujet reste.
+    expect(await cadre.findByText("2 taches effacées sur 3")).toBeTruthy()
+    // Triées de la plus petite à la plus grande — l'ordre du seuil.
+    const aires = within(cadre.getByRole("list")).getAllByText(/^\d+ px$/)
+      .map((n) => n.textContent)
+    expect(aires).toEqual(["1 px", "2 px", "900 px"])
+    // **Ce qui est coupé se dit**, jamais tu en silence.
+    expect(cadre.getByText(/12 taches de plus, non listées/)).toBeTruthy()
+  })
+
+  // ── « Le détourage propose les poches de fond enfermées, cerclées et
+  //     comptées, et n'en efface aucune de lui-même » ─────────────────────────
+
+  test("le détourage compte les poches enfermées, et dit qu'il n'en efface aucune", async () => {
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        taches: [],
+        coupees: 0,
+        poches: [
+          { aire: 42, boite: [10, 10, 19, 19], couleur: "#203040" },
+          { aire: 4, boite: [30, 30, 31, 31], couleur: "#405060" },
+        ],
+        crans_occupation: [],
+      },
+    })
+
+    expect(await cadre.findByText(/2 poches de fond enfermées/)).toBeTruthy()
+    expect(
+      cadre.getByText(/le produit n'en efface aucune/),
+    ).toBeTruthy()
+  })
+
+  // ── « Le curseur d'occupation ne s'arrête que là où l'image change, et dit
+  //     sur combien de pixels il tombe » ──────────────────────────────────────
+
+  test("le curseur d'occupation dit ses crans et le nombre de pixels", async () => {
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        taches: [],
+        coupees: 0,
+        poches: [],
+        crans_occupation: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      },
+    })
+
+    fireEvent.click(puce(cadre, "grille"))
+    // **Un pour cent n'est pas une mesure** : ce que l'occupation décide est un
+    // nombre de pixels dans la case, et c'est ce nombre qu'on compare.
+    expect(
+      await cadre.findByText(/64 px dans la case · 10 crans changent l'image/),
+    ).toBeTruthy()
+  })
+
+  // ── « Le rectangle de recadrage se pose sur l'image » ──────────────────────
+
+  test("le rectangle de recadrage se glisse sur l'image, et se lit dans la table", async () => {
+    const { cadre, appels } = await ouvrirUneTable()
+
+    fireEvent.click(puce(cadre, "recadrage"))
+    // Sans rectangle, la table le dit — et dit comment en poser un.
+    expect(
+      await cadre.findByText(/glisse un rectangle sur l'image/),
+    ).toBeTruthy()
+
+    const toile = document.querySelector("[data-cadre-recadrage]") as HTMLElement
+    expect(toile).toBeTruthy()
+    // Le cadre **est** l'image : la mesure est doublée par l'essai, comme pour
+    // la grille et l'aperçu.
+    toile.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 512, height: 512 }) as DOMRect
+
+    fireEvent.pointerDown(toile, { button: 0, clientX: 64, clientY: 64, pointerId: 1 })
+    fireEvent.pointerMove(toile, { clientX: 256, clientY: 320, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      // 512 px d'écran pour 1 024 px d'image : le facteur est deux.
+      expect(
+        (envoi?.corps as { recadrage: { boite: number[] } }).recadrage.boite,
+      ).toEqual([128, 128, 512, 640])
+    })
+  })
+
+  // ── « Le découpage s'ouvre depuis la barre » ───────────────────────────────
+
+  test("le découpage s'ouvre dans le cadre de la table, sans changer d'onglet", async () => {
+    const { cadre } = await ouvrirUneTable()
+
+    fireEvent.click(puce(cadre, "découpage"))
+    // **On ne le cherche plus : il est là quand il sert.** La fabrique prend le
+    // cadre entier — elle n'écrit rien sur l'image courante, et la montrer
+    // entre deux colonnes de réglages mentirait sur ce qu'elle fait.
+    expect(await screen.findByText("Ce qui sortira")).toBeTruthy()
+    expect(
+      screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+    ).toBe("true")
   })
 })

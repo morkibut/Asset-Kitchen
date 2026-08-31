@@ -529,6 +529,24 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · défaut 0",
   },
 
+  "detourage.poches": {
+    nom: "poches de fond enfermées",
+    ou: "retouche",
+    quoi: "Les zones de fond que le sujet entoure complètement, et que le détourage par tolérance de bord n'atteint donc pas.",
+    change:
+      "Rien, tant qu'on n'y touche pas. Le produit les cercle et les compte, il n'en efface aucune : la lumière entre un bras et un torse est du fond, l'intérieur d'un cabochon de lanterne est de la matière, et rien dans les pixels ne dit lequel des deux on regarde.",
+    origine: "mesuré sur l'image détourée",
+  },
+
+  "bords.taches": {
+    nom: "taches effacées",
+    ou: "retouche",
+    quoi: "Toutes les taches opaques de l'image, de la plus petite à la plus grande, avec celle où le seuil tombe.",
+    change:
+      "Rien par elle-même : c'est la liste de ce que le curseur au-dessus va faire. Le trait bleu marque le seuil — au-dessus ce qui s'efface, au-dessous ce qui reste.",
+    origine: "mesuré sur l'image détourée",
+  },
+
   "recadrage.boite": {
     nom: "rectangle",
     ou: "retouche",

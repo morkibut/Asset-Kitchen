@@ -717,6 +717,24 @@ async def impose_sur_asset(requete: Request, identifiant: str) -> dict[str, Any]
     return _atelier(requete).assets.impose(identifiant)
 
 
+@routeur.get("/assets/{identifiant}/spots")
+async def taches_de_asset(
+    requete: Request, identifiant: str, limite: int = Query(200, ge=1, le=2000)
+) -> dict[str, Any]:
+    """Ce qu'une table a besoin de savoir de l'image (E3).
+
+    Les taches que le nettoyage des bords va effacer, les poches de fond que le
+    sujet enferme, et les crans d'occupation où la remise sur grille change
+    quelque chose. **Aucune n'est un réglage** : elles décrivent, et c'est
+    l'auteur qui décide.
+
+    À part de l'asset pour la raison de `imposed` : la charge d'un asset part
+    deux cents fois par relecture de grille, et un remplissage par plages sur
+    mille pixels de côté n'a rien à y faire.
+    """
+    return _atelier(requete).assets.taches_de(identifiant, limite)
+
+
 @routeur.put("/assets/{identifiant}/recipe")
 async def poser_recette(
     requete: Request, identifiant: str, corps: CorpsRecette

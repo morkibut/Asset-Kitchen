@@ -905,6 +905,29 @@ export type Depenses = {
   rafales: Rafale[]
 }
 
+// ── Ce qu'une table sait de l'image ─────────────────────────────────────────
+
+/** Une tache opaque de l'image détourée. `boite` est en pixels de cette
+ *  image-là, coins inclus — la convention de rectangle du produit. */
+export type Tache = {
+  aire: number
+  boite: [number, number, number, number]
+  couleur: string
+}
+
+/** Trois mesures, et aucune n'est un réglage : elles décrivent ce que l'image
+ *  contient, et c'est l'auteur qui décide. */
+export type TachesDeLAsset = {
+  /** De la plus petite à la plus grande — l'ordre du seuil. */
+  taches: Tache[]
+  /** Combien la liste en a coupé. **Dit, jamais tu en silence.** */
+  coupees: number
+  /** Le fond que le sujet enferme, de la plus grande à la plus petite. */
+  poches: Tache[]
+  /** Les valeurs d'occupation où l'image change vraiment. */
+  crans_occupation: number[]
+}
+
 export type Filiation = {
   parent: Asset | null
   parent_identifiant: string | null
@@ -1333,6 +1356,12 @@ export const api = {
    *  et il n'en tient aucune liste : une vignette par ligne ferait de lui une
    *  seconde galerie. */
   lireAsset: (identifiant: string) => appeler<Asset>(`/assets/${identifiant}`),
+
+  /** Ce qu'une table a besoin de savoir de l'image. Demandé au serveur, qui est
+   *  le seul à avoir les pixels — et qui porte déjà le remplissage par plages
+   *  que le découpage emploie. */
+  taches: (identifiant: string) =>
+    appeler<TachesDeLAsset>(`/assets/${identifiant}/spots`),
 
   creerProjet: (nom: string) =>
     appeler<{ projet: Projet; bibliotheque: Bibliotheque }>("/projects", {
