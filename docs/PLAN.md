@@ -750,7 +750,7 @@ La phrase du document a été corrigée plutôt que gardée.
 ---
 
 ### E2 · Le codex et l'établi — nommer une chose, et payer depuis elle
-**User stories** : 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193
+**User stories** : 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193 · *12 critères · tenue le 31 août 2026*
 
 #### Ce qu'on livre
 
@@ -772,22 +772,54 @@ dès qu'un écran ouvert ne peut rien dépenser.
 
 #### Critères d'acceptation
 
-- [ ] Le codex liste tout ce que le monde contient, rangé par famille, et chaque famille dit ce qu'elle réclame
-- [ ] Une chose du jeu porte le compte de ce qui lui manque ; le compte de ce qu'elle a rangé se lit à côté de la jauge
-- [ ] Aucune couleur d'alerte sur un manque, aucun message qui réclame quoi que ce soit
-- [ ] Écrire un nom crée la chose immédiatement, sans formulaire, sans appel et sans dépense
-- [ ] Le champ qui nomme est au milieu de l'écran quand le monde est vide, en rangée sinon, et c'est le même champ
-- [ ] Une case de l'établi est prise dès qu'une image la porte, quelle que soit la qualité de l'image
-- [ ] Cliquer une case vide remplit le prompt avec ce que la chose et le jeu imposent, et chaque valeur préremplie porte sa provenance
-- [ ] Ce qui est prérempli se défait d'un clic, et se défaire ne change rien au réglage durable
-- [ ] Cliquer une case pleine ouvre son outil en plein cadre, et l'on revient à l'établi sans avoir changé d'onglet
-- [ ] Il n'existe qu'un seul champ de saisie dans le produit ; il paraît au pied de l'établi et du codex, et nulle part ailleurs
-- [ ] La barre qui paie disparaît sur tout écran incapable de dépenser
-- [ ] Lancer tout ce qui manque à une chose annonce le nombre d'images, le groupement en planches, le prix, et ce qu'un compte faux coûterait — avant de payer
+- [x] Le codex liste tout ce que le monde contient, rangé par famille, et chaque famille dit ce qu'elle réclame
+- [x] Une chose du jeu porte le compte de ce qui lui manque ; le compte de ce qu'elle a rangé se lit à côté de la jauge
+- [x] Aucune couleur d'alerte sur un manque, aucun message qui réclame quoi que ce soit
+- [x] Écrire un nom crée la chose immédiatement, sans formulaire, sans appel et sans dépense
+- [x] Le champ qui nomme est au milieu de l'écran quand le monde est vide, en rangée sinon, et c'est le même champ
+- [x] Une case de l'établi est prise dès qu'une image la porte, quelle que soit la qualité de l'image
+- [x] Cliquer une case vide remplit le prompt avec ce que la chose et le jeu imposent, et chaque valeur préremplie porte sa provenance
+- [x] Ce qui est prérempli se défait d'un clic, et se défaire ne change rien au réglage durable
+- [x] Cliquer une case pleine ouvre son outil en plein cadre, et l'on revient à l'établi sans avoir changé d'onglet — *le cadre et la porte sont livrés ; les tables qui les rempliront arrivent en E3, et d'ici là c'est la recette qui s'y ouvre*
+- [x] Il n'existe qu'un seul champ de saisie dans le produit ; il paraît au pied de l'établi et du codex, et nulle part ailleurs
+- [x] La barre qui paie disparaît sur tout écran incapable de dépenser
+- [x] Lancer tout ce qui manque à une chose annonce le nombre d'images, le groupement en planches, le prix, et ce qu'un compte faux coûterait — avant de payer
 
 #### Bloquée par
 
 - **E1** — l'établi est une profondeur du codex, pas un onglet : sans le fil d'Ariane il n'a pas d'adresse.
+
+#### Ce que la tenir a trouvé
+
+**Déplacer la barre qui paie a déplacé trois gestes avec elle, et personne ne
+l'avait écrit.** Réinjecter une image, reprendre les réglages d'un appel passé,
+armer une case : les trois ont leur effet **dans** la barre — la bande *Repart
+avec*, le texte du champ, la bande *Pour*. Tant que la barre vivait dans la
+galerie, les trois y menaient ou y restaient. Elle vit maintenant au pied du
+codex et de l'établi, et deux d'entre eux partent de la galerie : ils changent
+donc d'onglet, parce que **le geste va où son effet se voit**. Le troisième, lui,
+cesse d'en changer — armer une case ne déplace plus personne, la barre est à
+quelques pixels de la case.
+
+**Le prix a suivi la barre, et il fallait le remarquer.** *Coût attendu* et *un
+compte faux* vivaient dans la colonne de réglages de 300 px, qui n'existe que
+dans la galerie — et la galerie ne paie plus. Un critère de la tranche demande
+que le prix s'annonce avant de payer : il aurait été tenu par un écran qui ne
+paie pas. Le bloc est donc écrit une fois et rendu à deux endroits, en attendant
+que E4 retire le second.
+
+**La colonne de 300 px ne disparaît pas : elle change de locataire.** Le document
+du design annonçait qu'elle disparaissait avec la V2.1, et c'est vrai de ce
+qu'elle portait — les réglages d'une génération, qui descendent dans l'établi et
+ne se ressaisissent plus. La maquette de l'établi lui redonne la même largeur
+pour autre chose : l'identité d'une chose du jeu. La ligne du document a été
+corrigée.
+
+**Deux états, et les confondre aurait cassé le geste le plus courant.** *Choisie*
+est la chose dont la colonne de droite parle ; *ouverte* est celle dans l'établi
+de laquelle on est descendu. Un seul état aurait fait descendre d'un étage au
+premier regard porté sur une carte, c'est-à-dire à chaque fois qu'on cherche
+laquelle a le plus de manque.
 
 ---
 

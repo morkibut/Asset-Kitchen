@@ -1249,9 +1249,83 @@ async function monter(fetchDouble: ReturnType<typeof vi.fn>, etat: Etat = ETAT) 
  *  Le bornage reste indispensable pour la raison inverse d'avant : la galerie
  *  ne se **rend** plus derrière, mais une assertion posée sur tout le document
  *  trouverait la barre du châssis et la barre d'état, qui sont à tout le monde. */
+/** Le champ de prompt, **et l'écran d'où l'on paie**.
+ *
+ *  Depuis E2 il n'existe qu'un seul champ de saisie dans le produit, et il vit
+ *  au pied des deux lieux d'où l'argent part : le codex et l'établi d'une
+ *  chose. La galerie n'en a plus — on y juge, on n'y paie jamais. Le raccourci
+ *  va donc le chercher là où il est, sans que chaque essai ait à savoir par
+ *  quel onglet il passe. */
+async function champDePrompt() {
+  const deja = screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")
+  if (deja) return deja
+  fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
+  return await champDePrompt()
+}
+
+/** L'établi d'une chose du jeu — **la profondeur du codex**.
+ *
+ *  Depuis E2, ouvrir le codex montre ce que le monde contient ; la matrice
+ *  d'une chose est un étage plus bas, et l'on y descend en cliquant son nom.
+ *  Sans nom, on reste au codex : c'est le cas d'un monde vide, et l'essai qui
+ *  le vise n'a rien à ouvrir.
+ *
+ *  Le cadre reste borné à l'écran ouvert, comme avant : une assertion posée sur
+ *  tout le document trouverait la barre du châssis et la barre d'état. */
+async function ouvrirLEtabli(nom?: string) {
+  fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+  // La rubrique ouverte survit d'un essai à l'autre dans un même écran : on
+  // revient d'abord aux choses du jeu, sans quoi le nom cherché n'est pas
+  // rendu.
+  const familles = document.querySelector("[data-codex]")
+  if (familles) {
+    const rangee = within(familles as HTMLElement).queryByRole("button", {
+      name: /^Personnages/,
+    })
+    if (rangee) fireEvent.click(rangee)
+  }
+  const cadre = await cadreDuCodex()
+  const noms = within(cadre).queryAllByRole("button", { name: nom })
+  const premier = nom
+    ? noms[0]
+    : within(cadre)
+        .queryAllByRole("article")
+        .map((a) => a.querySelector("button"))
+        .filter(Boolean)[0]
+  if (premier) {
+    fireEvent.click(premier)
+    return within(
+      await waitFor(() => {
+        const etabli = document.querySelector("[data-etabli]")
+        if (!etabli) throw new Error("l'établi ne s'est pas ouvert")
+        return etabli as HTMLElement
+      }),
+    )
+  }
+  return within(cadre)
+}
+
+/** Une rubrique de la colonne du codex — les poses, l'équipement, une famille.
+ *
+ *  Les deux listes que le jeu impose à plusieurs — le plan de poses, le
+ *  vestiaire — vivaient dans la colonne de gauche de l'écran des personnages.
+ *  Elles sont montées dans le codex avec E2, parce qu'elles ne sont la colonne
+ *  de personne en particulier. */
+async function ouvrirLaRubrique(nom: string) {
+  fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+  const cadre = await cadreDuCodex()
+  fireEvent.click(within(cadre).getByRole("button", { name: new RegExp(`^${nom}`) }))
+  return within(cadre)
+}
+
+/** Revenir à la galerie — là où ce qui a été produit se regarde. */
+function laGalerie() {
+  fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+}
+
 async function cadreDuCodex() {
   return await waitFor(() => {
-    const cadre = document.querySelector("[data-univers]")
+    const cadre = document.querySelector("[data-codex], [data-etabli], [data-univers]")
     if (!cadre) throw new Error("aucun onglet en profondeur n'est monté")
     return cadre as HTMLElement
   })
@@ -1297,9 +1371,13 @@ describe("l'écran de l'atelier", () => {
     const { fetchDouble } = serveurDouble({ aPublier: () => lancee })
     await monter(fetchDouble)
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
     fireEvent.click(screen.getByRole("button", { name: /^Générer/ }))
+
+    // **On paie d'un côté, on regarde de l'autre.** La galerie est la planche
+    // contact du produit ; c'est là que ce qui sort se juge.
+    laGalerie()
 
     // Deux emplacements, donc deux tuiles — jamais quatre.
     await waitFor(() => expect(tuiles()).toHaveLength(2))
@@ -1322,6 +1400,9 @@ describe("l'écran de l'atelier", () => {
   test("sans prompt, générer est inactif et dit pourquoi", async () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
+    // Le bouton qui paie vit là où l'on paie — au pied du codex, jamais dans
+    // la galerie, où l'on juge (E2).
+    await champDePrompt()
 
     const bouton = await screen.findByRole("button", { name: /^Générer/ })
     expect(bouton).toBeDisabled()
@@ -1367,9 +1448,16 @@ describe("l'écran de l'atelier", () => {
       assets: [asset("eeee5555-0", "un tonneau"), asset("eeee5555-1", "un tonneau")],
     })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
-    fireEvent.change(champ, { target: { value: "un prompt en cours d'écriture" } })
-    fireEvent.change(screen.getByLabelText("Chercher dans la bibliothèque"), {
+    // **Le prompt s'écrit là où l'on paie, la fiche s'ouvre là où l'on juge**
+    // (E2) : les deux vivent désormais sur deux onglets. L'essai en devient
+    // plus exigeant qu'avant — il faut que le texte survive à un aller-retour
+    // entre les deux, alors qu'un onglet quitté se **démonte** depuis E1.
+    fireEvent.change(await champDePrompt(), {
+      target: { value: "un prompt en cours d'écriture" },
+    })
+
+    laGalerie()
+    fireEvent.change(await screen.findByLabelText("Chercher dans la bibliothèque"), {
       target: { value: "tonneau" },
     })
     await waitFor(() => expect(tuiles()).toHaveLength(2))
@@ -1385,13 +1473,15 @@ describe("l'écran de l'atelier", () => {
       expect(screen.queryByLabelText("Fermer la fiche")).toBeNull(),
     )
 
-    // « Se retrouver exactement où l'on était » (US-37) : le prompt, le filtre,
-    // et la grille qu'il donne.
-    expect((champ as HTMLTextAreaElement).value).toBe("un prompt en cours d'écriture")
+    // « Se retrouver exactement où l'on était » (US-37) : le filtre, la grille
+    // qu'il donne, et le prompt de l'autre onglet.
     expect(
       (screen.getByLabelText("Chercher dans la bibliothèque") as HTMLInputElement).value,
     ).toBe("tonneau")
     expect(tuiles()).toHaveLength(2)
+    expect(((await champDePrompt()) as HTMLTextAreaElement).value).toBe(
+      "un prompt en cours d'écriture",
+    )
   })
 
   // ── C1 : « la fiche de n'importe quel asset nomme le modèle qui l'a
@@ -3049,10 +3139,28 @@ describe("l'aperçu", () => {
     //
     // Le garde tient donc sur deux conditions : un champ où l'on peut écrire,
     // **et** que la dernière chose faite ait été d'y écrire.
-    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0")] })
-    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0")] })
-    await waitFor(() => expect(tuiles()).toHaveLength(1))
-    const vignette = tuiles()[0].closest("figure")!
+    //
+    // **L'essai se joue dans l'établi depuis E2**, et c'est là qu'il a le plus
+    // de sens : c'est le seul écran du produit où une vignette et le champ où
+    // l'on écrit sont côte à côte, à quelques pixels l'un de l'autre. La
+    // galerie, elle, n'a plus de champ du tout — on y juge, on n'y paie jamais.
+    const image = asset("bbbb2222-0", "le nain, au repos")
+    const nain = personnage("Le nain")
+    const { fetchDouble } = serveurDouble({
+      personnages: [
+        {
+          ...nain,
+          cases: nain.cases.map((c) =>
+            c.pose === "repos" ? { ...c, images: [image] } : c,
+          ),
+        },
+      ],
+    })
+    await monter(fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    const vignette = (
+      await screen.findByLabelText("Retirer cette image de la case repos")
+    ).closest("span")!
 
     // Le pointeur se pose : la touche est à l'image.
     survoler(vignette)
@@ -3060,9 +3168,9 @@ describe("l'aperçu", () => {
     expect(apercu()).toBeTruthy()
     espace()
 
-    // On tape un signe dans le prompt, la souris toujours posée sur la tuile :
-    // la barre d'espace redevient une espace, et rien ne s'ouvre.
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    // On tape un signe dans le prompt, la souris toujours posée sur la
+    // vignette : la barre d'espace redevient une espace, et rien ne s'ouvre.
+    const champ = await champDePrompt()
     champ.focus()
     fireEvent.keyDown(champ, { key: "u" })
     const passe = fireEvent.keyDown(window, { key: " ", code: "Space" })
@@ -3145,7 +3253,7 @@ describe("l'aperçu", () => {
     const { fetchDouble } = serveurDouble({ personnages: [avecImage] })
     await monter(fetchDouble)
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
+    await ouvrirLEtabli("Le nain")
     const vignette = (
       await screen.findByLabelText("Retirer cette image de la case repos")
     ).closest("span")!
@@ -3172,6 +3280,12 @@ describe("l'aperçu", () => {
     await waitFor(() => expect(tuiles()).toHaveLength(1))
 
     fireEvent.click(tuiles()[0])
+    // L'adresse que la grille sert, lue **avant** de changer d'onglet : c'est
+    // elle que la bande doit redonner.
+    const adresse = tuiles()[0]
+      .closest("figure")!
+      .querySelector("img")!
+      .getAttribute("src")
     fireEvent.click(await screen.findByRole("button", { name: "référence" }))
 
     const bande = (await screen.findByText("Repart avec")).parentElement!
@@ -3182,9 +3296,7 @@ describe("l'aperçu", () => {
     // n'existe pas, et la bande montrait un trou là où la grille montre
     // l'image. Corrigé avec la barre d'espace, et pour la même raison — une
     // seule adresse par asset dans tout le produit.
-    expect(vignette.getAttribute("src")).toBe(
-      tuiles()[0].closest("figure")!.querySelector("img")!.getAttribute("src"),
-    )
+    expect(vignette.getAttribute("src")).toBe(adresse)
 
     survoler(vignette.closest("span")!)
     espace()
@@ -3484,8 +3596,7 @@ describe("l'écran des personnages", () => {
   const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
-    const ecran = within(await cadreDuCodex())
+    const ecran = await ouvrirLEtabli()
     return { ...double, flux, ecran }
   }
 
@@ -3493,7 +3604,8 @@ describe("l'écran des personnages", () => {
   //     n'ait été écrite » (US-116) ────────────────────────────────────────────
 
   test("le plan du jeu est là au premier lancement, sans qu'on ait rien écrit", async () => {
-    const { ecran } = await ouvrir()
+    await ouvrir()
+    const ecran = await ouvrirLaRubrique("Leurs poses")
 
     for (const attitude of ["repos", "marche", "course", "attaque", "dégâts", "mort"])
       expect(ecran.getByLabelText(`Nom de l'attitude ${attitude}`)).toBeTruthy()
@@ -3503,23 +3615,21 @@ describe("l'écran des personnages", () => {
   //     la grille de la bibliothèque reste la seule grille d'assets du
   //     produit » ──────────────────────────────────────────────────────────────
 
-  test("l'écran n'offre ni recherche, ni filtre, ni sélection multiple", async () => {
+  test("ni le codex ni l'établi n'offrent recherche, filtre ou sélection multiple", async () => {
     const { ecran } = await ouvrir({
       personnages: [personnage("Le nain"), personnage("La prêtresse")],
     })
 
-    // La barre d'outils de la bibliothèque est **derrière** cet écran, pas
-    // dedans : il n'y a qu'un endroit dans le produit où l'on cherche.
-    expect(ecran.queryByLabelText("Chercher dans la bibliothèque")).toBeNull()
+    // **La barre d'outils de la bibliothèque n'est plus derrière, elle est
+    // ailleurs** (E1) : les trois onglets ne se recouvrent plus. L'assertion
+    // dit donc quelque chose de plus fort qu'avant — il n'y a qu'un endroit
+    // dans le produit où l'on cherche, et il n'est pas ici.
+    expect(screen.queryByLabelText("Chercher dans la bibliothèque")).toBeNull()
     expect(ecran.queryByRole("searchbox")).toBeNull()
 
-    // Et choisir un personnage remplace le précédent : il n'y a pas de
-    // sélection à accumuler.
-    const nain = ecran.getByRole("button", { name: /Le nain/ })
-    const pretresse = ecran.getByRole("button", { name: /La prêtresse/ })
-    fireEvent.click(pretresse)
-    await waitFor(() => expect(pretresse.getAttribute("aria-pressed")).toBe("true"))
-    expect(nain.getAttribute("aria-pressed")).toBe("false")
+    // Le codex non plus : ses cartes se choisissent une à une.
+    const codex = within(await cadreDuCodex())
+    expect(codex.queryByRole("searchbox")).toBeNull()
 
     // **Les cases à cocher de C2 portent des attitudes, jamais des images**, et
     // c'est très exactement ce qui garde l'invariant vrai : on ne sélectionne
@@ -3538,13 +3648,16 @@ describe("l'écran des personnages", () => {
   //     part avec chaque génération de pose, sans être retapée » (US-115) ──────
 
   test("un personnage se crée d'un nom, et se décrit une fois", async () => {
-    const { fetchDouble, ecran } = await ouvrir()
+    const { fetchDouble } = await ouvrir()
+    // **Écrire un nom crée la chose**, sur-le-champ : Entrée suffit, et il n'y
+    // a pas de bouton *Ajouter* — un formulaire pour une déclaration aurait
+    // fait deux gestes pour un.
+    const nommer = await screen.findByLabelText("Nom de la chose du jeu à créer")
+    fireEvent.change(nommer, { target: { value: "Le nain" } })
+    fireEvent.keyDown(nommer, { key: "Enter" })
 
-    fireEvent.change(ecran.getByLabelText("Nom du personnage à créer"), {
-      target: { value: "Le nain" },
-    })
-    fireEvent.click(ecran.getByRole("button", { name: "Ajouter un personnage" }))
-
+    // La chose créée s'ouvre : on la nomme pour la décrire, pas pour la ranger.
+    fireEvent.click(await screen.findByRole("button", { name: "Ouvrir son établi" }))
     const description = await screen.findByLabelText("Description du personnage")
     fireEvent.change(description, {
       target: { value: "un forgeron nain à la barbe tressée" },
@@ -3582,19 +3695,24 @@ describe("l'écran des personnages", () => {
   //     personnage qui porte ce plan, et ne lance AUCUNE génération » (US-118) ──
 
   test("ajouter une attitude ajoute une case à chaque personnage, sans rien générer", async () => {
-    const { fetchDouble, ecran } = await ouvrir({
+    const { fetchDouble } = await ouvrir({
       personnages: [personnage("Le nain"), personnage("La prêtresse")],
     })
+    const ecran = await ouvrirLaRubrique("Leurs poses")
 
     fireEvent.change(ecran.getByLabelText("Nom de l'attitude à ajouter"), {
       target: { value: "saut" },
     })
     fireEvent.click(ecran.getByRole("button", { name: "Ajouter une attitude" }))
 
-    // La case neuve paraît chez le personnage ouvert…
+    // **La case ajoutée se lit dans l'établi de chaque chose, pas dans la liste
+    // qui la déclare** : ce sont deux étages, et la V2.1 les sépare — la liste
+    // s'impose à tout le monde, l'établi montre ce qu'elle donne à une chose.
+    await ouvrirLEtabli("Le nain")
     await screen.findByRole("button", { name: "Retirer saut de ce personnage" })
+
     // …et chez l'autre, sans qu'il ait été réécrit : c'est le plan qui décide.
-    fireEvent.click(ecran.getByRole("button", { name: /La prêtresse/ }))
+    await ouvrirLEtabli("La prêtresse")
     await screen.findByRole("button", { name: "Retirer saut de ce personnage" })
 
     // « Ajouter une pose ajoute une case vide, jamais une génération. »
@@ -3660,20 +3778,24 @@ describe("l'écran des personnages", () => {
 
     fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
 
-    // L'écran rend la main : on relit et on dépense **dans l'atelier**.
+    // **Armer ne déplace plus personne** (E2) : la barre qui paie est au pied
+    // de l'établi, à quelques pixels de la case qu'on vient d'armer. Il fallait
+    // retourner à la galerie tant qu'elle était le seul écran à porter un
+    // champ ; c'est fini, et l'onglet ne bouge pas.
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
     // Le signalement est écrit à la place de l'auteur — c'est ce qu'il ne veut
     // plus retaper (US-115).
-    const champ = screen.getByPlaceholderText(
-      "Décris ce que tu veux fabriquer.",
-    ) as HTMLTextAreaElement
+    const champ = await champDePrompt() as HTMLTextAreaElement
     expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche")
-    // Et la case visée se **voit**, à côté du bouton qui paie.
-    expect(screen.getByText("Le nain")).toBeTruthy()
+    // Et la case visée se **voit**, à côté du bouton qui paie. On cherche dans
+    // la bande « Pour » et non dans tout l'écran : le fil d'Ariane porte lui
+    // aussi le nom de la chose, et c'est sa place — dire où l'on est.
+    const pour = within(screen.getByText("Pour").parentElement as HTMLElement)
+    expect(pour.getByText("Le nain")).toBeTruthy()
     expect(screen.getByLabelText("Retirer marche de ce qui part")).toBeTruthy()
     // Rien n'est parti.
     expect(
@@ -3692,7 +3814,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(ecran.getByRole("button", { name: "Fabriquer repos" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
     fireEvent.click(screen.getByRole("button", { name: "Générer" }))
@@ -3739,15 +3861,13 @@ describe("l'écran des personnages", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
     // **Le prompt reçoit le sujet, jamais la grille** : les attitudes partent
     // case par case dans les consignes de planche, repliées côté serveur.
-    const champ = screen.getByPlaceholderText(
-      "Décris ce que tu veux fabriquer.",
-    ) as HTMLTextAreaElement
+    const champ = await champDePrompt() as HTMLTextAreaElement
     expect(champ.value).toBe("un forgeron nain à la barbe tressée")
 
     // Les deux attitudes se lisent à côté du bouton qui paie, et le lot le dit.
@@ -3774,7 +3894,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -3814,7 +3934,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -3872,7 +3992,7 @@ describe("l'écran des personnages", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "Fabriquer ensemble ›" }))
     await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Galerie" }).getAttribute("aria-selected"),
+        screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
       ).toBe("true"),
     )
 
@@ -4005,7 +4125,7 @@ describe("l'écran des personnages", () => {
     ).toBe(false)
 
     // Elle part avec l'appel, et avec lui seul.
-    const champ = screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
     fireEvent.click(screen.getByRole("button", { name: "Générer" }))
 
@@ -4145,7 +4265,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
     await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau cerclé" } })
     const depliant = await deplier()
 
@@ -4167,7 +4287,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const { fetchDouble, appels } = serveurDouble({ univers: AVEC_BIBLE })
     await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
 
     await waitFor(() =>
@@ -4188,7 +4308,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
     await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
     await (await deplier()).findByText(BIBLE_PARTIE, brut)
 
@@ -4202,7 +4322,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
       await screen.findByRole("button", { name: "technique de rendu — actif" }),
     )
     await screen.findByRole("button", { name: "technique de rendu — inactif" })
-    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    // On revient là où l'on paie — c'est là que le dépliant vit, avec le champ.
+    fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
 
     const depliant = within(
       await screen.findByRole("region", { name: "Ce qui partira" }),
@@ -4218,7 +4339,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const { fetchDouble, appels } = serveurDouble({ univers: AVEC_BIBLE })
     await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
     const depliant = await deplier()
     await depliant.findByText(BIBLE_PARTIE, brut)
@@ -4251,7 +4372,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const { fetchDouble } = serveurDouble({ univers: AVEC_BIBLE })
     await monter(fetchDouble, { ...ETAT, univers: AVEC_BIBLE })
 
-    const champ = await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
     const depliant = await deplier()
     await depliant.findByText(BIBLE_PARTIE, brut)
@@ -4262,9 +4383,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
 
     // Le champ redevient le champ de sujet, et il garde ce qu'on y avait mis :
     // on ne perd pas du texte en changeant d'avis.
-    const revenu = (await screen.findByPlaceholderText(
-      "Décris ce que tu veux fabriquer.",
-    )) as HTMLTextAreaElement
+    const revenu = (await champDePrompt()) as HTMLTextAreaElement
     expect(revenu.value).toContain("un tonneau")
     // Et l'habillage est de retour — la bible reparaît comme un bloc à part.
     await waitFor(() => expect(depliant.getByText(BIBLE_PARTIE, brut)).toBeTruthy())
@@ -4488,9 +4607,13 @@ describe("faire entrer une image depuis l'écran", () => {
 
     // Un prompt écrit **avant** le dépôt : sans lui, Générer est déjà grisé
     // faute de sujet, et l'essai ne prouverait rien de ce qu'il annonce.
-    fireEvent.change(screen.getByPlaceholderText("Décris ce que tu veux fabriquer."), {
+    fireEvent.change(await champDePrompt(), {
       target: { value: "un tonneau" },
     })
+    // Le dépôt se fait sur la grille, qui est dans la galerie : on paie d'un
+    // côté, on fait entrer et l'on juge de l'autre.
+    laGalerie()
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
 
     deposer(laGrille(), [
       fichier("epee.png"),
@@ -4506,7 +4629,10 @@ describe("faire entrer une image depuis l'écran", () => {
     expect(await screen.findByText(/« notes.txt » n'est pas une image/)).toBeTruthy()
 
     // **Il ne va pas à la barre d'état**, où il griserait Générer : un import
-    // refusé n'empêche pas de générer.
+    // refusé n'empêche pas de générer. Le bouton qui paie est au pied du codex
+    // depuis E2 — la galerie n'en a plus, et c'est très exactement pourquoi le
+    // refus ne peut pas l'atteindre.
+    await champDePrompt()
     expect(screen.getByRole("button", { name: /^Générer/ })).not.toBeDisabled()
   })
 
@@ -4754,8 +4880,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
   const ouvrir = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble(options)
     const flux = await monter(double.fetchDouble)
-    fireEvent.click(await screen.findByRole("tab", { name: "Codex" }))
-    const ecran = within(await cadreDuCodex())
+    const ecran = await ouvrirLEtabli()
     return { ...double, flux, ecran }
   }
 
@@ -4821,7 +4946,8 @@ describe("l'écran des personnages — la pièce et le calque", () => {
   //     sur-le-champ » (US-138) ────────────────────────────────────────────────
 
   test("nommer une pièce la crée, et crée son emplacement avec elle", async () => {
-    const { ecran, appels } = await ouvrir()
+    const { appels } = await ouvrir()
+    const ecran = await ouvrirLaRubrique("Équipement")
 
     fireEvent.change(ecran.getByLabelText("Nom de la pièce à ajouter"), {
       target: { value: "casque" },
@@ -4850,7 +4976,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
   //     « contenue », et rien ne la devine à la place de l'auteur » (US-139) ────
 
   test("la portée d'une pièce se déclare, et le défaut est « contenue »", async () => {
-    const { ecran, appels } = await ouvrir({
+    const { appels } = await ouvrir({
       emplacements: [{ identifiant: "dos", nom: "dos", rang: 0 }],
       pieces: [
         {
@@ -4866,6 +4992,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
       ],
     })
 
+    const ecran = await ouvrirLaRubrique("Équipement")
     const portee = ecran.getByLabelText("Portée de cape") as HTMLSelectElement
     expect(portee.value).toBe("contenue")
 
@@ -5540,9 +5667,7 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     expect(envoye.personnage).toBe("le-nain")
     expect(envoye.poses).toEqual(["marche"])
 
-    const champ = screen.getByPlaceholderText(
-      "Décris ce que tu veux fabriquer.",
-    ) as HTMLTextAreaElement
+    const champ = await champDePrompt() as HTMLTextAreaElement
     await waitFor(() =>
       expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche"),
     )
@@ -5602,27 +5727,35 @@ describe("les trois onglets", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // La preuve du non-recouvrement se prend sur ce que la galerie est seule à
-    // avoir : sa barre de saisie. Tant qu'elle se rendait **derrière** les
-    // écrans qui la couvraient, elle restait dans le document — et c'est
-    // exactement ce que sept surfaces empilées voulaient dire.
-    expect(screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    // La preuve du non-recouvrement se prend sur ce que chaque onglet est seul
+    // à avoir. Tant qu'ils se rendaient les uns **derrière** les autres, tout
+    // restait dans le document — et c'est exactement ce que sept surfaces
+    // empilées voulaient dire.
+    expect(await screen.findByLabelText("Chercher dans la bibliothèque")).toBeTruthy()
 
     fireEvent.click(onglet("Univers"))
     await screen.findByText("Le tableau est vide.")
     expect(allume("Univers")).toBe(true)
     expect(allume("Galerie")).toBe(false)
-    expect(screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeNull()
+    expect(screen.queryByLabelText("Chercher dans la bibliothèque")).toBeNull()
 
     fireEvent.click(onglet("Codex"))
     await waitFor(() => expect(allume("Codex")).toBe(true))
     expect(allume("Univers")).toBe(false)
     // Un seul cadre en profondeur est monté à la fois, jamais deux empilés.
-    expect(document.querySelectorAll("[data-univers]")).toHaveLength(1)
+    expect(document.querySelectorAll("[data-univers], [data-codex]")).toHaveLength(1)
+    // **La barre qui paie est ici, et nulle part ailleurs** (E2) : c'est ce qui
+    // fait du codex l'un des deux lieux d'où l'argent part.
+    expect(
+      screen.getByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeTruthy()
 
     fireEvent.click(onglet("Galerie"))
-    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
-    expect(document.querySelectorAll("[data-univers]")).toHaveLength(0)
+    expect(await screen.findByLabelText("Chercher dans la bibliothèque")).toBeTruthy()
+    expect(document.querySelectorAll("[data-univers], [data-codex]")).toHaveLength(0)
+    // **La barre qui paie disparaît de tout écran incapable de dépenser.** La
+    // galerie juge, elle ne paie jamais.
+    expect(screen.queryByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeNull()
   })
 
   // ── « Descendre dans une chose du jeu remplace le nom de l'onglet par un
@@ -5633,7 +5766,9 @@ describe("les trois onglets", () => {
     const { fetchDouble } = serveurDouble({ assets: [planche] })
     await monter(fetchDouble, { ...ETAT, assets: [planche] })
 
-    // Au repos, pas de fil : on n'est descendu nulle part.
+    // Au repos, dans la galerie, pas de fil : on n'est descendu nulle part.
+    // Le codex, lui, en porte un dès qu'il s'ouvre — son premier étage est le
+    // jeu, son second la famille.
     expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Ouvrir la fiche" }))[0])
@@ -5653,9 +5788,10 @@ describe("les trois onglets", () => {
     expect(fil.queryByRole("button", { name: "Découpage" })).toBeNull()
     expect(fil.getByText("Découpage").getAttribute("aria-current")).toBe("page")
 
-    // Les autres ramènent. Celui de l'onglet remonte d'un étage.
+    // Les autres ramènent. Celui de l'onglet remonte d'un étage — et la
+    // galerie n'a pas de fil, parce qu'on n'y est descendu nulle part.
     fireEvent.click(fil.getByRole("button", { name: "Galerie" }))
-    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    expect(await screen.findByLabelText("Chercher dans la bibliothèque")).toBeTruthy()
     expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
   })
 
@@ -5676,7 +5812,7 @@ describe("les trois onglets", () => {
     expect(screen.queryByRole("navigation", { name: "Où l'on est" })).toBeNull()
 
     fireEvent.click(onglet("Galerie"))
-    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer.")).toBeTruthy()
+    expect(await screen.findByLabelText("Chercher dans la bibliothèque")).toBeTruthy()
     expect(screen.queryByText("Découpage")).toBeNull()
   })
 
@@ -5834,7 +5970,7 @@ describe("les trois onglets", () => {
     // Le champ de saisie est la première des deux exceptions nommées : 56 px,
     // parce que ce n'est pas une bande mais une zone de saisie sur plusieurs
     // lignes.
-    const champ = screen.getByPlaceholderText("Décris ce que tu veux fabriquer.")
+    const champ = await champDePrompt()
     expect(classes(champ)).toContain("min-h-[56px]")
   })
 })
@@ -6037,7 +6173,7 @@ describe("l'écran des dépenses", () => {
 
     const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
     fireEvent.click(fil.getByRole("button", { name: "Bac à sable" }))
-    expect(await screen.findByPlaceholderText("Décris ce que tu veux fabriquer."))
+    expect(await champDePrompt())
       .toBeTruthy()
   })
 })
@@ -6221,5 +6357,286 @@ describe("les trois côtés de l'univers", () => {
     expect(
       screen.getByText(/Les deux gestes qui les créent existent déjà/),
     ).toBeTruthy()
+  })
+})
+
+// ── E2 : le codex et l'établi ───────────────────────────────────────────────
+//
+// Le cœur de la V2.1, et la seule étape qui vaut deux tranches ordinaires. Le
+// codex montre ce que le monde contient, rangé par famille, avec pour chaque
+// chose le compte de ce qui lui **manque** et non de ce qu'elle tient.
+// L'établi s'ouvre sous une chose, à la profondeur du fil.
+//
+// Les onze critères de la tranche portent tous sur l'écran. Ceux qui touchent
+// à la matrice elle-même — armer, cocher, mesurer un lot — sont tenus depuis
+// C1 et C2 par les essais de `l'écran des personnages`, qui traversent
+// désormais le codex pour y arriver.
+
+describe("le codex et l'établi", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const codex = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
+    const double = serveurDouble(options)
+    const flux = await monter(double.fetchDouble)
+    fireEvent.click(screen.getByRole("tab", { name: "Codex" }))
+    const cadre = within(await cadreDuCodex())
+    return { ...double, flux, cadre }
+  }
+
+  // ── « Le codex liste tout ce que le monde contient, rangé par famille, et
+  //     chaque famille dit ce qu'elle réclame » ─────────────────────────────────
+
+  test("les cinq familles se lisent avec leur compte, et les deux listes du jeu aussi", async () => {
+    const { cadre } = await codex({
+      personnages: [personnage("Le nain"), personnage("La prêtresse")],
+    })
+
+    // Quatre familles du produit, plus le vestiaire. Le vocabulaire est celui
+    // du dépôt, et il décide déjà de ce qui part en référence.
+    for (const famille of ["Personnages", "Décors", "Objets", "Interface", "Équipement"])
+      expect(cadre.getByRole("button", { name: new RegExp(`^${famille}`) })).toBeTruthy()
+
+    // **Ce que le jeu réclame de tous**, par opposition à ce qu'une famille
+    // réclame : les directions s'imposent à toute chose qui en a.
+    expect(cadre.getByText("Ce que le jeu réclame de tous")).toBeTruthy()
+    expect(cadre.getByRole("button", { name: /^Les directions/ })).toBeTruthy()
+    expect(cadre.getByRole("button", { name: /^Leurs poses/ })).toBeTruthy()
+  })
+
+  // ── « Une chose du jeu porte le compte de ce qui lui manque » et « aucune
+  //     couleur d'alerte sur un manque » ───────────────────────────────────────
+
+  test("une chose porte le compte de ce qui lui manque, sans couleur d'alerte", async () => {
+    const { cadre } = await codex({ personnages: [personnage("Le nain")] })
+
+    // Six poses, une image chacune sauf marche et course qui en veulent quatre
+    // — le compte est celui du **manque**, jamais celui de ce qui est rangé.
+    const carte = cadre.getByText("Le nain").closest("article") as HTMLElement
+    expect(within(carte).getByText(/cases manquantes/)).toBeTruthy()
+
+    // **Le manque n'a pas de couleur** : le vert dit *complet*, son absence dit
+    // *pas encore*. Aucune alerte, aucun message qui réclame quoi que ce soit.
+    const compte = within(carte).getByText(/cases manquantes/)
+    expect(compte.className).not.toContain("echec")
+    expect(compte.className).not.toContain("epingle")
+    expect(cadre.queryByRole("alert")).toBeNull()
+  })
+
+  // ── « Écrire un nom crée la chose immédiatement, sans formulaire, sans appel
+  //     et sans dépense » et « le champ qui nomme est au milieu de l'écran quand
+  //     le monde est vide, en rangée sinon, et c'est le même champ » ────────────
+
+  test("écrire un nom crée la chose, sans formulaire et sans un centime", async () => {
+    const { fetchDouble, cadre } = await codex()
+
+    // **Au milieu de l'écran quand le monde est vide** : c'est le seul geste
+    // qu'un monde vide ait à proposer.
+    expect(cadre.getByText(/Nomme le premier/)).toBeTruthy()
+    const champ = cadre.getByLabelText("Nom de la chose du jeu à créer")
+
+    // Entrée suffit — pas de bouton *Ajouter*, qui aurait fait deux gestes pour
+    // une déclaration.
+    expect(cadre.queryByRole("button", { name: /^Ajouter/ })).toBeNull()
+    expect(cadre.getByText("Entrée le crée")).toBeTruthy()
+
+    fireEvent.change(champ, { target: { value: "Balthazar" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() =>
+      expect(
+        fetchDouble.mock.calls.some(([url]) => String(url) === "/api/characters"),
+      ).toBe(true),
+    )
+    // **Sans un centime** : créer une chose du jeu est une déclaration, pas un
+    // appel. C'est ce qui permet à Balthazar d'exister avant sa première image.
+    expect(
+      fetchDouble.mock.calls.some(([url]) => String(url).startsWith("/api/generations")),
+    ).toBe(false)
+  })
+
+  test("le champ qui nomme est le même, au milieu ou en rangée", async () => {
+    const { cadre } = await codex({ personnages: [personnage("Le nain")] })
+
+    // Le monde n'est plus vide : le même champ, la même étiquette, mais en
+    // rangée au pied de la liste, où il ne demande rien.
+    expect(cadre.getByLabelText("Nom de la chose du jeu à créer")).toBeTruthy()
+    expect(cadre.queryByText(/Nomme le premier/)).toBeNull()
+  })
+
+  // ── « Il n'existe qu'un seul champ de saisie dans le produit ; il paraît au
+  //     pied de l'établi et du codex, et nulle part ailleurs » ─────────────────
+
+  test("un seul champ de saisie, au pied du codex et de l'établi", async () => {
+    await codex({ personnages: [personnage("Le nain")] })
+    const champ = () => screen.queryAllByPlaceholderText("Décris ce que tu veux fabriquer.")
+
+    // Un seul, jamais deux : deux champs auraient fini par accepter deux textes
+    // différents pour la même intention.
+    expect(champ()).toHaveLength(1)
+
+    await ouvrirLEtabli("Le nain")
+    expect(champ()).toHaveLength(1)
+
+    // **La barre qui paie disparaît sur tout écran incapable de dépenser.**
+    fireEvent.click(screen.getByRole("tab", { name: "Galerie" }))
+    expect(champ()).toHaveLength(0)
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    expect(champ()).toHaveLength(0)
+  })
+
+  // ── « Cliquer une case vide remplit le prompt avec ce que la chose et le jeu
+  //     imposent, et chaque valeur préremplie porte sa provenance » et « ce qui
+  //     est prérempli se défait d'un clic » ───────────────────────────────────
+
+  test("armer une case vide préremplit le prompt, avec sa provenance, et ça se défait", async () => {
+    const { fetchDouble } = await codex({
+      personnages: [
+        personnage("Le nain", { description: "un forgeron nain à la barbe tressée" }),
+      ],
+    })
+    const ecran = await ouvrirLEtabli("Le nain")
+
+    fireEvent.click(ecran.getByRole("button", { name: "Fabriquer marche" }))
+
+    const champ = (await champDePrompt()) as HTMLTextAreaElement
+    await waitFor(() =>
+      expect(champ.value).toBe("un forgeron nain à la barbe tressée, marche"),
+    )
+
+    // **La règle jumelle du grisé.** *Ce qui est indisponible est grisé avec sa
+    // raison* avait besoin de son revers : ce qui est devinable est prérempli
+    // **avec sa provenance**. Un champ prérempli n'est pas un champ décidé.
+    expect(screen.getByText(/proposé, d'après son signalement/)).toBeTruthy()
+
+    // Et ça se défait d'un clic. **Se défaire ne change rien au réglage
+    // durable** : c'est le texte de cet appel-ci qui s'efface, pas le
+    // signalement de la chose, qui reste là où il est écrit.
+    const avant = fetchDouble.mock.calls.length
+    fireEvent.click(screen.getByRole("button", { name: "défaire ›" }))
+    expect(champ.value).toBe("")
+    expect(screen.queryByText(/proposé, d'après/)).toBeNull()
+    expect(fetchDouble.mock.calls.length).toBe(avant)
+
+    // Le signalement, lui, n'a pas bougé.
+    const identite = screen.getByLabelText("Description du personnage") as HTMLTextAreaElement
+    expect(identite.value).toBe("un forgeron nain à la barbe tressée")
+  })
+
+  // ── « Cliquer une case pleine ouvre son outil en plein cadre, et l'on revient
+  //     à l'établi sans avoir changé d'onglet » ────────────────────────────────
+
+  test("une case pleine ouvre son outil en plein cadre, et l'on revient sans changer d'onglet", async () => {
+    const image = asset("bbbb2222-0", "le nain, au repos")
+    const nain = personnage("Le nain")
+    await codex({
+      personnages: [
+        {
+          ...nain,
+          cases: nain.cases.map((c) =>
+            c.pose === "repos" ? { ...c, images: [image] } : c,
+          ),
+        },
+      ],
+    })
+    await ouvrirLEtabli("Le nain")
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Ouvrir le nain, au repos dans son outil" }),
+    )
+
+    // L'outil remplace la matrice, il ne se pose pas dessus : c'est la
+    // profondeur suivante du même endroit, et le fil la dit.
+    expect(await screen.findByLabelText("Fermer la fiche")).toBeTruthy()
+    const fil = within(screen.getByRole("navigation", { name: "Où l'on est" }))
+    expect(fil.getByText("le nain, au repos")).toBeTruthy()
+
+    // **La barre de prompt se retire** : on retouche, on ne paie pas.
+    expect(
+      screen.queryByPlaceholderText("Décris ce que tu veux fabriquer."),
+    ).toBeNull()
+
+    // Et l'onglet n'a pas bougé — on revient à l'établi par le fil.
+    expect(
+      screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+    ).toBe("true")
+    fireEvent.click(fil.getByRole("button", { name: "Le nain" }))
+    expect(await screen.findByRole("button", { name: "Fabriquer marche" })).toBeTruthy()
+    expect(await champDePrompt()).toBeTruthy()
+  })
+
+  // ── « Lancer tout ce qui manque à une chose annonce le nombre d'images, le
+  //     groupement en planches, le prix, et ce qu'un compte faux coûterait —
+  //     avant de payer » ───────────────────────────────────────────────────────
+
+  test("fabriquer ce qui manque annonce les images, les planches et le prix avant de payer", async () => {
+    const { fetchDouble, cadre } = await codex({
+      personnages: [personnage("Le nain", { description: "un forgeron" })],
+      couts: { [MODELE.identifiant]: 0.0245 },
+    })
+
+    // **Choisir n'est pas ouvrir** : un clic sur la carte désigne la chose et
+    // remplit la colonne de droite ; un clic sur son *nom* descend d'un étage.
+    fireEvent.click(cadre.getByText("Le nain").closest("article") as HTMLElement)
+
+    // Le compte se lit avant tout geste : combien d'images, combien de planches.
+    // Le texte est coupé par les nombres qu'il porte — on interroge donc le
+    // nœud entier, comme le produit l'affiche.
+    expect(
+      (await screen.findAllByText((_, noeud) =>
+        /^\d+ images? · \d+ planches?, une par pose$/.test(noeud?.textContent ?? ""),
+      ))[0],
+    ).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Fabriquer ce qui manque" }))
+
+    // **Rien n'est parti** : le bouton arme, il ne paie pas.
+    expect(
+      fetchDouble.mock.calls.some(
+        ([url, init]) =>
+          String(url) === "/api/generations" && (init as RequestInit)?.method === "POST",
+      ),
+    ).toBe(false)
+
+    // Et le prix se lit au pied de la barre qui paie, avec ce qu'un compte faux
+    // coûterait — la seconde moitié de l'arbitrage.
+    await screen.findByText("un compte faux")
+    expect(screen.getByText(/à repayer$/)).toBeTruthy()
+  })
+
+  // ── « Une case de l'établi est prise dès qu'une image la porte, quelle que
+  //     soit la qualité de l'image » ────────────────────────────────────────────
+
+  test("une case est prise dès qu'une image la porte, sa qualité n'y change rien", async () => {
+    // Une image dont toutes les mesures sont mauvaises tient quand même sa
+    // case : « les mesures informent, seul le compte d'images refuse ».
+    const mediocre = asset("bbbb2222-0", "un essai raté")
+    const nain = personnage("Le nain")
+    await codex({
+      personnages: [
+        {
+          ...nain,
+          cases: nain.cases.map((c) =>
+            c.pose === "repos" ? { ...c, images: [mediocre] } : c,
+          ),
+        },
+      ],
+    })
+    const ecran = await ouvrirLEtabli("Le nain")
+
+    // La case *repos* n'en réclame qu'une : elle est faite, et le compte le dit.
+    const rangee = ecran.getByText("repos").closest("li") as HTMLElement
+    expect(within(rangee).getByText("1 / 1")).toBeTruthy()
   })
 })

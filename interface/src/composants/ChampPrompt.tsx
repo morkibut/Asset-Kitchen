@@ -42,6 +42,7 @@ export function ChampPrompt({
   ouAller,
   onAller,
   revers,
+  provenance,
   onGenerer,
   variations,
 }: {
@@ -68,6 +69,17 @@ export function ChampPrompt({
   onAller?: () => void
   /** Le repli hors ligne, quand il y a un catalogue à servir. */
   revers?: { texte: string; enCours: boolean; onReessayer: () => void } | null
+  /** **D'où vient ce qui est écrit là, quand ce n'est pas l'auteur** (E2).
+   *
+   *  C'est la règle jumelle de celle que le produit tient depuis T1 : *ce qui
+   *  est indisponible est grisé avec sa raison* avait besoin de son revers —
+   *  **ce qui est devinable est prérempli avec sa provenance, et se défait d'un
+   *  clic**. Un champ prérempli n'est pas un champ décidé.
+   *
+   *  Et se défaire ne change **rien** au réglage durable : c'est le texte de
+   *  cet appel-ci qu'on efface, pas la consigne de la pose ni le signalement de
+   *  la chose, qui restent où ils sont écrits. */
+  provenance?: { texte: string; onDefaire: () => void } | null
   onGenerer: () => void
   variations: number
 }) {
@@ -136,6 +148,22 @@ export function ChampPrompt({
               "min-h-[56px] leading-[19px] border-bord-fort bg-fond-2 text-[13.5px] text-texte",
         ].join(" ")}
       />
+
+      {/* La ligne de provenance, **sous le champ** : elle parle de ce qui est
+          écrit dedans, pas de ce qui va partir. */}
+      {provenance && (
+        <p className="mesure flex items-center gap-1.5 text-[10px] leading-4 text-texte-3">
+          <span aria-hidden className="inline-block h-px w-2 bg-texte-3" />
+          <span>{provenance.texte}</span>
+          <button
+            type="button"
+            onClick={provenance.onDefaire}
+            className="text-signal hover:text-signal-clair"
+          >
+            défaire ›
+          </button>
+        </p>
+      )}
 
       {negatifOuvert && (
         <textarea

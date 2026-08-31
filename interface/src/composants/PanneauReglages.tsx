@@ -315,49 +315,7 @@ export function PanneauReglages({
             </dd>
             <dt className="text-texte-3">grille imposée</dt>
             <dd className="text-right text-texte-2">{univers.cible_px} px</dd>
-            {/* **Ce que ça va coûter** (US-121) — mesuré sur les derniers appels
-                de ce modèle, jamais lu dans un tarif : le produit n'en porte
-                aucun, et « le coût réel facturé fait foi » partout ailleurs. Un
-                modèle jamais appelé le dit ; c'est le premier appel qui
-                l'apprend, comme pour l'attente de la jauge. */}
-            <dt className="text-texte-3">coût attendu</dt>
-            <dd
-              className="text-right text-texte-2"
-              title={
-                cout === null
-                  ? "ce modèle n'a encore rien facturé sur cette machine"
-                  : "médiane des derniers appels réussis de ce modèle"
-              }
-            >
-              {cout === null
-                ? "jamais appelé"
-                : cases
-                  ? `≈ ${dollars(cout)} · ${cases} attitudes`
-                  : `≈ ${dollars(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
-            </dd>
-            {/* **Ce qu'un compte faux coûterait** (US-129) — « afin d'arbitrer
-                moi-même entre le coût et le risque de tout rater d'un coup ».
-                Le produit annonce **ce que ça coûte**, jamais une probabilité :
-                il ne sait pas si ça arrivera, il sait ce que ça vaudrait. Et il
-                ne plafonne pas — la taille du lot est le choix de l'auteur.
-
-                Le chiffre est le même que celui du dessus, et c'est le fait :
-                un lot refusé sur le compte est un lot entier à repayer au prix
-                plein. L'écrire deux fois n'est pas une redite — c'est la
-                seconde moitié de l'arbitrage. */}
-            {cases > 0 && (
-              <>
-                <dt className="text-texte-3">un compte faux</dt>
-                <dd
-                  className="text-right text-texte-2"
-                  title="le lot entier est refusé, rien n'entre, et il se relance au prix plein"
-                >
-                  {cout === null
-                    ? "jamais appelé"
-                    : `≈ ${dollars(cout)} à repayer`}
-                </dd>
-              </>
-            )}
+            <CoutAttendu cout={cout} cases={cases} variations={variations} />
           </dl>
 
           <References
@@ -563,5 +521,68 @@ function References({
         })}
       </ul>
     </div>
+  )
+}
+
+
+/**
+ * Ce que ça va coûter, et ce qu'un compte faux coûterait.
+ *
+ * **Mesuré sur les derniers appels de ce modèle, jamais lu dans un tarif**
+ * (US-121) : le produit n'en porte aucun, et *le coût réel facturé fait foi*
+ * partout ailleurs. Un modèle jamais appelé le dit ; c'est le premier appel qui
+ * l'apprend, comme pour l'attente de la jauge.
+ *
+ * **Et ce qu'un compte faux coûterait** (US-129) — « afin d'arbitrer moi-même
+ * entre le coût et le risque de tout rater d'un coup ». Le produit annonce **ce
+ * que ça coûte**, jamais une probabilité : il ne sait pas si ça arrivera, il
+ * sait ce que ça vaudrait. Et il ne plafonne pas — la taille du lot est le choix
+ * de l'auteur. Le chiffre est le même que celui du dessus, et c'est le fait : un
+ * lot refusé sur le compte est un lot entier à repayer au prix plein. L'écrire
+ * deux fois n'est pas une redite, c'est la seconde moitié de l'arbitrage.
+ *
+ * **Écrit ici, rendu à deux endroits** (E2). Il vivait dans la colonne de
+ * réglages de 300 px, qui n'existe que dans la galerie — et la galerie ne paie
+ * plus. Il suit donc la barre qui paie, au pied du codex et de l'établi. Deux
+ * copies auraient fini par annoncer deux prix pour le même appel.
+ */
+export function CoutAttendu({
+  cout,
+  cases,
+  variations,
+}: {
+  cout: number | null
+  cases: number
+  variations: number
+}) {
+  return (
+    <>
+      <dt className="text-texte-3">coût attendu</dt>
+      <dd
+        className="text-right text-texte-2"
+        title={
+          cout === null
+            ? "ce modèle n'a encore rien facturé sur cette machine"
+            : "médiane des derniers appels réussis de ce modèle"
+        }
+      >
+        {cout === null
+          ? "jamais appelé"
+          : cases
+            ? `≈ ${dollars(cout)} · ${cases} attitudes`
+            : `≈ ${dollars(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
+      </dd>
+      {cases > 0 && (
+        <>
+          <dt className="text-texte-3">un compte faux</dt>
+          <dd
+            className="text-right text-texte-2"
+            title="le lot entier est refusé, rien n'entre, et il se relance au prix plein"
+          >
+            {cout === null ? "jamais appelé" : `≈ ${dollars(cout)} à repayer`}
+          </dd>
+        </>
+      )}
+    </>
   )
 }

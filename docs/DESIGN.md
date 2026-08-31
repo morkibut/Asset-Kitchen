@@ -318,7 +318,7 @@ Gouttière de grille d'assets : 9 px. Padding de panneau : 8 px. Padding de zone
 | px | Ce qu'elle nomme |
 |---|---|
 | **380** | ce qu'on manipule — la fiche d'une image, la réserve de la toile, la colonne d'une table, la colonne des sœurs, la colonne de la chose ouverte dans le codex |
-| **300** | les réglages d'une génération. **Elle disparaît en V2.1** : les réglages descendent dans l'établi, hérités de l'entité, et ne se ressaisissent plus |
+| **300** | les réglages d'une génération — **et ce locataire-là s'en va en V2.1** : ils descendent dans l'établi, hérités de la chose du jeu, et ne se ressaisissent plus. *La largeur, elle, reste* : la colonne de gauche de l'établi, celle qui dit ce qu'une chose **est**, la reprend telle quelle. Corrigé le 31 août 2026 en tenant E2 — ce document annonçait que la colonne disparaissait, et c'est son contenu qui change |
 | **240** | où ça se range — les familles du codex, les projets et collections, la liste des étapes de l'assistant, la liste des ambiances |
 
 Tout le reste prend la place qui reste, sans largeur imposée. Une colonne neuve prend une

@@ -35,7 +35,7 @@
 // **Il couvre l'atelier, donc il porte sa propre fente de refus** : une raison
 // envoyée derrière lui serait invisible au moment précis où elle compte.
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import {
   api,
   type Asset,
@@ -51,7 +51,7 @@ import {
 import type { Fente } from "./BarreChassis"
 import { sujetAsset, useVisee } from "./Apercu"
 import { PanneauCalque } from "./Calque"
-import { Bouton, EnTetePanneau, Libelle, Segments } from "./chassis"
+import { Bouton, Libelle, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
 
 /** Les poses qu'un personnage tient, dans l'ordre du plan.
@@ -111,39 +111,32 @@ export function rangees(
     .map((entree) => entree.pose)
 }
 
-export function EcranPersonnages({
+export function EcranEtabli({
+  ouvert,
   plan,
-  personnages,
   emplacements,
   pieces,
   onPersonnage,
-  onPlan,
-  onVestiaire,
   onArmer,
   dossierJeu,
   onFente,
+  barreQuiPaie,
+  onOuvrirCase,
+  outil,
 }: {
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
    *  `App` comme le plan, et pour la même raison : un seul endroit écoute le
    *  flux, pour toute la vie de l'onglet. */
   emplacements: EmplacementCorps[]
   pieces: Piece[]
-  /** Le plan du jeu et ses personnages, tenus par `App` — comme le tableau.
-   *  **Un seul endroit écoute le flux**, pour toute la vie de l'onglet. */
+  /** Le plan du jeu, tenu par `App` — comme le tableau. **Un seul endroit
+   *  écoute le flux**, pour toute la vie de l'onglet. */
   plan: Pose[]
-  personnages: Personnage[]
   /** **Ce que l'appel vient de rendre, posé par le même chemin que le flux.**
    *  Les deux se croisent — le serveur annonce avant que l'appel ne revienne —,
    *  et c'est la fonte par identifiant qui les tient (`docs/PIEGES.md`).
    *  L'écran ne garde donc aucune copie à lui : il écrit, et il reçoit. */
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onPlan: (plan: Pose[]) => void
-  /** **Ce que le geste vient de rendre, posé par le même chemin que le flux.**
-   *  Les deux se croisent — le serveur annonce avant que l'appel ne revienne —,
-   *  et c'est la charge entière qui les tient : le vestiaire arrive complet des
-   *  deux côtés, donc il remplace des deux côtés. R1 a payé ce piège : un écran
-   *  qui jette ce qu'on lui rend se réveille ailleurs. */
-  onVestiaire: (vestiaire: Vestiaire) => void
   /** **La matrice arme, l'atelier tire.** Cliquer une case vide ne dépense
    *  rien : ça remplit le prompt de l'atelier avec le signalement du
    *  personnage et le nom de l'attitude, ça retient la case visée, et ça rend
@@ -162,14 +155,28 @@ export function EcranPersonnages({
    *  redemande au serveur, qui en est le seul dépositaire. Vide, ce n'est pas
    *  une erreur : c'est un réglage que personne n'a encore posé, et le bouton
    *  le dit au lieu de partir puis d'échouer. */
+  /** La chose du jeu ouverte — **c'est le codex qui la désigne**, en descendant
+   *  d'un étage. L'établi n'en choisit aucune : il est la profondeur d'une
+   *  chose, et sans elle il n'existe pas. */
+  ouvert: Personnage
   dossierJeu: string
   /** Ce que cet onglet a à dire dans la barre du châssis. **Il n'a plus sa
    *  fente à lui** : elle n'existait que parce que cet écran couvrait
    *  l'atelier, et qu'une raison envoyée à la barre d'état se serait rendue
    *  derrière lui. Devenu un onglet, il partage la fente du châssis. */
   onFente: (fente: Fente) => void
+  /** **La barre qui paie, rendue au pied de l'établi** (E2). Elle appartient au
+   *  châssis, pas à cet écran : il n'en existe qu'une dans le produit, et elle
+   *  sert les deux lieux d'où l'argent part. */
+  barreQuiPaie: ReactNode
+  /** **Tenu par `App`**, comme la chose ouverte : c'est un étage du fil
+   *  d'Ariane, et le fil vit dans le châssis. */
+  onOuvrirCase: (identifiant: string) => void
+  /** L'outil rendu en plein cadre. `App` le compose, parce qu'il a besoin du
+   *  traitement, de l'univers et du plan — que cet écran-ci n'a pas à
+   *  connaître pour montrer une matrice. */
+  outil: ReactNode
 }) {
-  const [choisi, setChoisir] = useState<string | null>(null)
   const setRefus = (texte: string) =>
     onFente(texte ? { ton: 'echec', texte } : null)
   // **La colonne qu'on lit** (C3) : le corps, ou une pièce. Un identifiant et
@@ -181,12 +188,6 @@ export function EcranPersonnages({
   // raison : il se recalcule à chaque zone posée, et l'objet gardé serait celui
   // d'avant le recalcul.
   const [calque, setCalque] = useState<string | null>(null)
-
-  // Le personnage ouvert **est** la sélection quand elle vaut un : deux états
-  // pour la même chose se sont déjà contredits une fois dans ce produit, et le
-  // second clic effaçait le premier (`docs/PIEGES.md`).
-  const ouvert =
-    personnages.find((p) => p.identifiant === choisi) ?? personnages[0] ?? null
 
   const echouer = (erreur: unknown, defaut: string) =>
     setRefus(erreur instanceof Error ? erreur.message : defaut)
@@ -216,20 +217,14 @@ export function EcranPersonnages({
     // jeu, sa fente de refus, et un bouton pour retourner à l'atelier. Les
     // trois premiers sont dans la barre du châssis ; le quatrième n'a plus
     // d'objet, un onglet ne se ferme pas.
-    <div data-univers className="flex min-h-0 flex-col bg-fond-0">
+    <div data-etabli data-univers className="flex min-h-0 flex-col bg-fond-0">
+      {/* **Une case pleine ouvre son outil en plein cadre, et l'on revient sans
+          avoir changé d'onglet** (E2). L'outil remplace la matrice, il ne se
+          pose pas dessus : c'est la profondeur suivante du même endroit, et le
+          fil d'Ariane la dit. Les tables de E3 viendront ici ; d'ici là c'est la
+          recette, seul outil qui existe. */}
+      {outil ?? (
       <div className="flex min-h-0 flex-1">
-        <PanneauGauche
-          plan={plan}
-          personnages={personnages}
-          emplacements={emplacements}
-          pieces={pieces}
-          choisi={ouvert?.identifiant ?? null}
-          onChoisir={setChoisir}
-          onPersonnage={onPersonnage}
-          onPlan={onPlan}
-          onVestiaire={onVestiaire}
-          onErreur={echouer}
-        />
         <Fiche
           plan={plan}
           personnage={ouvert}
@@ -241,6 +236,7 @@ export function EcranPersonnages({
             setCalque(null)
           }}
           onCalque={setCalque}
+          onOuvrirCase={onOuvrirCase}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
           dossierJeu={dossierJeu}
@@ -264,158 +260,20 @@ export function EcranPersonnages({
           />
         )}
       </div>
+      )}
+      {barreQuiPaie}
     </div>
   )
 }
 
-// ── La colonne de gauche — qui il y a, et ce que le jeu réclame ──────────────
-
-function PanneauGauche({
-  plan,
-  personnages,
-  emplacements,
-  pieces,
-  choisi,
-  onChoisir,
-  onPersonnage,
-  onPlan,
-  onVestiaire,
-  onErreur,
-}: {
-  plan: Pose[]
-  personnages: Personnage[]
-  emplacements: EmplacementCorps[]
-  pieces: Piece[]
-  choisi: string | null
-  onChoisir: (identifiant: string) => void
-  onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onPlan: (plan: Pose[]) => void
-  onVestiaire: (vestiaire: Vestiaire) => void
-  onErreur: (erreur: unknown, defaut: string) => void
-}) {
-  return (
-    <aside
-      {...PANNEAU}
-      className="flex min-h-0 w-[380px] shrink-0 flex-col border-r border-bord bg-fond-1"
-    >
-      <EnTetePanneau>Le jeu</EnTetePanneau>
-      <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-2">
-        <ListePersonnages
-          personnages={personnages}
-          plan={plan}
-          choisi={choisi}
-          onChoisir={onChoisir}
-          onPersonnage={onPersonnage}
-          onErreur={onErreur}
-        />
-        <PlanDuJeu plan={plan} onPlan={onPlan} onErreur={onErreur} />
-        <Vestiaire
-          emplacements={emplacements}
-          pieces={pieces}
-          onVestiaire={onVestiaire}
-          onErreur={onErreur}
-        />
-      </div>
-    </aside>
-  )
-}
-
-/** Les personnages du projet, et le geste qui en ajoute un.
- *
- *  **Une liste, pas une grille** : pas de vignette, pas de sélection multiple,
- *  pas de recherche. Un jeu a des personnages, pas des centaines. */
-function ListePersonnages({
-  personnages,
-  plan,
-  choisi,
-  onChoisir,
-  onPersonnage,
-  onErreur,
-}: {
-  personnages: Personnage[]
-  plan: Pose[]
-  choisi: string | null
-  onChoisir: (identifiant: string) => void
-  onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
-  onErreur: (erreur: unknown, defaut: string) => void
-}) {
-  const [nom, setNom] = useState("")
-
-  const creer = async () => {
-    const propre = nom.trim()
-    if (!propre) return
-    try {
-      const { personnage } = await api.creerPersonnage(propre)
-      setNom("")
-      onPersonnage(personnage)
-      onChoisir(personnage.identifiant)
-    } catch (erreur) {
-      onErreur(erreur, "personnage refusé")
-    }
-  }
-
-  return (
-    <section className="flex flex-col gap-1.5">
-      <Libelle>Personnages</Libelle>
-
-      {personnages.length === 0 ? (
-        // Une rubrique vide **dit ce qu'elle fera**, elle ne montre pas un
-        // cadre mort : c'est le reproche qui a fait écarter la maquette.
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          Un personnage est un nom, une description, et les attitudes qu'il
-          réclame. Son corps, lui, naît dans l'atelier — on écrit un sujet, on
-          génère, et c'est l'image obtenue qu'on désigne.
-        </p>
-      ) : (
-        <ul className="flex flex-col">
-          {personnages.map((personnage) => {
-            const tenues = posesTenues(plan, personnage).length
-            return (
-              <li key={personnage.identifiant}>
-                <button
-                  type="button"
-                  onClick={() => onChoisir(personnage.identifiant)}
-                  aria-pressed={personnage.identifiant === choisi}
-                  className={[
-                    "flex h-[26px] w-full items-center gap-2 rounded-[2px] px-1 text-left transition-colors duration-[80ms]",
-                    personnage.identifiant === choisi
-                      ? "bg-fond-3 text-texte"
-                      : "text-texte-2 hover:bg-fond-2",
-                  ].join(" ")}
-                >
-                  <span className="min-w-0 flex-1 truncate text-[11.5px]">
-                    {personnage.nom}
-                  </span>
-                  <span className="mesure shrink-0 text-[9.5px] text-texte-3">
-                    {tenues} pose{tenues > 1 ? "s" : ""}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
-      <div className="flex items-center gap-2">
-        <input
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void creer()
-          }}
-          placeholder="nommer un personnage"
-          aria-label="Nom du personnage à créer"
-          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11px] text-texte placeholder:text-texte-3"
-        />
-        <Bouton
-          inactif={!nom.trim()}
-          onClick={() => void creer()}
-          enfants="Ajouter un personnage"
-        />
-      </div>
-    </section>
-  )
-}
+// ── Ce qui est monté dans le codex ───────────────────────────────────────────
+//
+// La colonne de gauche de cet écran portait trois listes : les personnages, le
+// plan de poses, le vestiaire. **Les trois sont montées dans le codex** — la
+// première parce qu'elle *est* le codex, les deux autres parce qu'elles
+// s'imposent à plusieurs choses du jeu et n'appartenaient donc pas à la colonne
+// d'une seule. Les deux dernières sont exportées telles quelles ; la liste des
+// personnages est réécrite là-bas, en cartes.
 
 /** Le plan du jeu — la liste des attitudes que chaque personnage se voit
  *  proposer (US-116, US-118).
@@ -423,7 +281,7 @@ function ListePersonnages({
  *  **Nommer, c'est créer** : écrire un nom qui n'existe pas encore l'ajoute
  *  sur-le-champ, sans écran de gestion. Et l'ajout ne lance **aucune
  *  génération** — il ajoute une case vide chez chacun, ce qui ne coûte rien. */
-function PlanDuJeu({
+export function PlanDuJeu({
   plan,
   onPlan,
   onErreur,
@@ -584,7 +442,7 @@ function LignePose({
  *  **Nommer, c'est créer** (US-138) — et jusqu'au bout : écrire « casque · tête »
  *  crée la tête si elle n'existe pas. Ranger n'est jamais un préalable, et il
  *  n'y a donc aucun ordre imposé entre les deux champs. */
-function Vestiaire({
+export function Vestiaire({
   emplacements,
   pieces,
   onVestiaire,
@@ -812,6 +670,7 @@ function Fiche({
   colonne,
   onColonne,
   onCalque,
+  onOuvrirCase,
   onPersonnage,
   onArmer,
   dossierJeu,
@@ -824,6 +683,7 @@ function Fiche({
   colonne: string | null
   onColonne: (piece: string | null) => void
   onCalque: (calque: string | null) => void
+  onOuvrirCase: (identifiant: string) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
   dossierJeu: string
@@ -833,8 +693,8 @@ function Fiche({
     return (
       // L'état vide en serif, comme la bibliothèque et le tableau : c'est une
       // invitation, et le troisième emploi du display (`docs/DESIGN.md`
-      // § Typography, règle 1). **Rien de plus** — la colonne de gauche porte
-      // déjà le champ et l'explication, et les redire ici en ferait un doublon.
+      // § Typography, règle 1). **Rien de plus** — le codex porte déjà le champ
+      // qui nomme et son explication, et les redire ici en ferait un doublon.
       <div className="flex min-h-0 flex-1 items-center justify-center p-8">
         <p className="max-w-[380px] text-center font-serif text-[32px] leading-tight text-texte-3">
           Ce jeu n'a encore personne. <em className="text-texte-2">Nomme le premier.</em>
@@ -844,28 +704,47 @@ function Fiche({
   }
 
   return (
-    <div className="defile flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
-      <Identite
-        personnage={personnage}
-        onPersonnage={onPersonnage}
-        onErreur={onErreur}
-      />
-      <Colonnes
-        emplacements={emplacements}
-        pieces={pieces}
-        colonne={colonne}
-        onColonne={onColonne}
-      />
-      <Cases
-        plan={plan}
-        personnage={personnage}
-        piece={pieces.find((p) => p.identifiant === colonne) ?? null}
-        onCalque={onCalque}
-        onPersonnage={onPersonnage}
-        onArmer={onArmer}
-        onErreur={onErreur}
-      />
-      <Sortie personnage={personnage} dossierJeu={dossierJeu} />
+    // **Deux colonnes, `300px · 1fr`** (E2) : ce qu'elle *est* à gauche, ce
+    // qu'elle *a* et ce qu'on peut lui ajouter à droite. La 300 ne disparaît
+    // donc pas avec la V2.1 — elle **change de locataire** : c'était la colonne
+    // des réglages d'une génération, qui descend dans l'établi et n'a plus à se
+    // ressaisir ; c'est maintenant l'identité d'une chose du jeu.
+    //
+    // Les quatre blocs empilés sur toute la largeur tenaient tant que l'écran
+    // n'était qu'une fiche. La matrice a besoin de la largeur — une pose y a
+    // quatre cases depuis les directions — et l'identité n'en a jamais eu
+    // besoin : elle est du texte.
+    <div className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)]">
+      <aside
+        {...PANNEAU}
+        className="defile flex min-h-0 flex-col gap-5 overflow-y-auto border-r border-bord bg-fond-1 p-3"
+      >
+        <Identite
+          personnage={personnage}
+          onPersonnage={onPersonnage}
+          onErreur={onErreur}
+        />
+        <Sortie personnage={personnage} dossierJeu={dossierJeu} />
+      </aside>
+
+      <div className="defile flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto p-4">
+        <Colonnes
+          emplacements={emplacements}
+          pieces={pieces}
+          colonne={colonne}
+          onColonne={onColonne}
+        />
+        <Cases
+          plan={plan}
+          personnage={personnage}
+          piece={pieces.find((p) => p.identifiant === colonne) ?? null}
+          onCalque={onCalque}
+          onOuvrirCase={onOuvrirCase}
+          onPersonnage={onPersonnage}
+          onArmer={onArmer}
+          onErreur={onErreur}
+        />
+      </div>
     </div>
   )
 }
@@ -1145,6 +1024,7 @@ function Cases({
   personnage,
   piece,
   onCalque,
+  onOuvrirCase,
   onPersonnage,
   onArmer,
   onErreur,
@@ -1158,6 +1038,8 @@ function Cases({
   onCalque: (calque: string | null) => void
   onPersonnage: (personnage: Personnage & { supprime?: boolean }) => void
   onArmer: (personnage: Personnage, poses: Pose[], piece?: Piece | null) => void
+  /** Ouvrir l'outil d'une case pleine, en plein cadre (E2). */
+  onOuvrirCase: (identifiant: string) => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const tenues = posesTenues(plan, personnage)
@@ -1282,6 +1164,7 @@ function Cases({
               onArmer={() => onArmer(personnage, [pose])}
               onRetirer={() => void cocher(pose.identifiant, false)}
               onDesigner={(asset) => void designer(asset)}
+              onOuvrirCase={onOuvrirCase}
             />
           ))}
         </ul>
@@ -1357,6 +1240,7 @@ function LigneCase({
   onArmer,
   onRetirer,
   onDesigner,
+  onOuvrirCase,
 }: {
   pose: Pose
   case_: Case | undefined
@@ -1367,6 +1251,7 @@ function LigneCase({
   onArmer: () => void
   onRetirer: () => void
   onDesigner: (asset: string) => void
+  onOuvrirCase: (identifiant: string) => void
 }) {
   const images = case_?.images ?? []
   const faite = images.length >= pose.images
@@ -1395,6 +1280,7 @@ function LigneCase({
             asset={asset}
             pose={pose.nom}
             onDesigner={onDesigner}
+            onOuvrir={onOuvrirCase}
           />
         ))}
         {images.length === 0 && (
@@ -1459,10 +1345,15 @@ function VignetteDeCase({
   asset,
   pose,
   onDesigner,
+  onOuvrir,
 }: {
   asset: Asset
   pose: string
   onDesigner: (identifiant: string) => void
+  /** **Une case pleine ouvre son outil en plein cadre** (E2), sans quitter
+   *  l'établi ni changer d'onglet. C'est la porte que les tables de E3
+   *  franchiront ; d'ici là elle donne la recette, seul outil qui existe. */
+  onOuvrir: (identifiant: string) => void
 }) {
   const visee = useVisee(sujetAsset(asset))
   return (
@@ -1471,13 +1362,20 @@ function VignetteDeCase({
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
     >
-      <img
-        src={sujetAsset(asset).src}
-        alt={asset.label}
-        title={asset.label}
-        className="damier h-[44px] w-[44px] object-contain"
-        style={{ imageRendering: "pixelated" }}
-      />
+      <button
+        type="button"
+        onClick={() => onOuvrir(asset.identifiant)}
+        aria-label={`Ouvrir ${asset.label} dans son outil`}
+        title="l'outil s'ouvre en plein cadre, sans quitter l'établi"
+        className="block"
+      >
+        <img
+          src={sujetAsset(asset).src}
+          alt={asset.label}
+          className="damier h-[44px] w-[44px] object-contain"
+          style={{ imageRendering: "pixelated" }}
+        />
+      </button>
       <button
         type="button"
         onClick={() => onDesigner(asset.identifiant)}

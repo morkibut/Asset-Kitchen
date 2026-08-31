@@ -53,6 +53,7 @@ import {
 import {
   Apercu,
   fermerApercu,
+  imageAsset,
   sujetAsset,
   useApercu,
   useVisee,
@@ -70,12 +71,13 @@ import { CRANS, Point, ZOOMS, type Zoom } from "./composants/chassis"
 import { ChampPrompt } from "./composants/ChampPrompt"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
-import { EcranPersonnages } from "./composants/Personnages"
+import { EcranCodex } from "./composants/Codex"
+import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { Fiche } from "./composants/Fiche"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
-import { PanneauReglages } from "./composants/PanneauReglages"
+import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
 import { Tuile, type Entree } from "./composants/Tuile"
 import { EcranUnivers, type Cote } from "./composants/Univers"
 import { useDepot, type Vue as VueUnivers } from "./composants/Tableau"
@@ -205,6 +207,8 @@ export function App() {
     reglages: false,
     univers: false,
     reserve: false,
+    familles: false,
+    fiche: false,
   })
 
   // Ce que l'écran actif a à dire au moment du geste : un refus, ou le compte
@@ -305,6 +309,41 @@ export function App() {
   // même raison que la vue : la barre du châssis rend les bascules de repli de
   // l'écran actif, et il n'y en a qu'au côté Inspiration, en vue toile.
   const [coteUnivers, setCoteUnivers] = useState<Cote>("inspiration")
+
+  // ── Le codex et sa profondeur (E2) ────────────────────────────────────────
+  //
+  // **Deux états, et ils ne disent pas la même chose.** *Choisie* est la chose
+  // dont la colonne de droite parle — un clic sur sa carte. *Ouverte* est la
+  // chose dans l'établi de laquelle on est descendu — un clic sur son nom, et le
+  // fil d'Ariane s'allonge. Les confondre ferait descendre d'un étage au premier
+  // regard porté sur une carte.
+  //
+  // **Des identifiants, jamais des objets** (`docs/PIEGES.md`) : un personnage
+  // arrive par le flux à chaque image produite, et une copie gardée ici serait
+  // celle d'avant.
+  const [choseChoisie, setChoseChoisie] = useState<string | null>(null)
+  const [choseOuverteId, setChoseOuverte] = useState<string | null>(null)
+  /** L'image dont l'outil est ouvert **en plein cadre dans l'établi** (E2). Un
+   *  identifiant, jamais l'objet : l'image continue d'arriver par le flux à
+   *  chaque retouche, et une copie gardée ici serait celle d'avant. */
+  const [caseOuverte, setCaseOuverte] = useState<string | null>(null)
+  /** D'où vient ce qui est écrit dans le champ, quand ce n'est pas l'auteur.
+   *  Posée en armant une case vide, effacée dès qu'on écrit dedans : un texte
+   *  qu'on a repris à la main n'est plus une proposition. */
+  const [provenance, setProvenance] = useState<string | null>(null)
+
+  /** La chose ouverte, **relue dans la liste vivante**. Un personnage supprimé
+   *  ou renommé ferme donc l'établi, ou l'y suit, sans qu'on écrive un mot. */
+  const choseOuverte =
+    personnages.find((p) => p.identifiant === choseOuverteId) ?? null
+
+  /** L'image dont l'outil est ouvert, **relue dans les cases de la chose**. Une
+   *  image retirée de sa case referme donc l'outil, et une image retouchée s'y
+   *  montre à jour : la matrice est la seule vérité de cet écran. */
+  const imageOuverte =
+    choseOuverte?.cases
+      .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+      .find((a) => a.identifiant === caseOuverte) ?? null
 
   // ── T5 : la découpe ───────────────────────────────────────────────────────
   //
@@ -1058,8 +1097,17 @@ export function App() {
         projet: bibliotheque.courant,
       })
       setPrompt(recu.sujet)
+      // **Ce qui est devinable est prérempli avec sa provenance**, et se défait
+      // d'un clic (E2). Le revers de la règle du grisé, qui dit sa raison
+      // depuis T1 : un champ prérempli n'est pas un champ décidé.
+      setProvenance(
+        poses.length > 1
+          ? `proposé, d'après son signalement et les consignes de ${poses.length} poses · modifiable`
+          : `proposé, d'après son signalement et la consigne de la pose · modifiable`,
+      )
     } catch {
       setPrompt("")
+      setProvenance(null)
     }
     // **Armer rend la main à l'atelier.** Ce qui vient d'être posé dans le
     // champ est un *sujet*, pas un texte complet : le laisser en mode repris
@@ -1067,11 +1115,10 @@ export function App() {
     // consignes de planche — c'est-à-dire sans rien de ce que la matrice
     // arme.
     setRepris(false)
-    // **Armer ramène là où l'on paie.** Le geste dit « pour cette case-là » ;
-    // rester sur le codex laisserait la bande « Pour » et le bouton qui paie
-    // hors de vue, sur l'autre onglet. L'établi les rapatriera à sa place en
-    // E2 ; d'ici là, la seule barre de saisie est celle de la galerie.
-    setOnglet("galerie")
+    // **Armer ne déplace plus personne.** Le geste dit « pour cette case-là »,
+    // et la barre qui paie est déjà sous la main : elle est au pied de
+    // l'établi, à quelques pixels de la case qu'on vient d'armer. Jusqu'en E2
+    // il fallait retourner à la galerie, seul endroit qui portait un champ.
   }
 
   const relancer = async (identifiant: string, rang: number) => {
@@ -1181,11 +1228,20 @@ export function App() {
 
   // ── Réinjecter ────────────────────────────────────────────────────────────
 
-  const reinjecter = (asset: string, role: Role) =>
+  /** Faire repartir une image avec le prochain appel.
+   *
+   *  **Le geste va où son effet se voit** (E2). La bande *Repart avec* et le
+   *  champ de prompt vivent au pied du codex et de l'établi, et plus dans la
+   *  galerie — qui juge et ne paie jamais. Réinjecter depuis la fiche d'une
+   *  image sans changer d'onglet laisserait l'auteur devant un geste dont rien
+   *  n'a bougé à l'écran, ce que le produit refuse partout ailleurs. */
+  const reinjecter = (asset: string, role: Role) => {
     setReinjections((deja) => [
       ...deja.filter((r) => r.asset !== asset),
       { asset, role },
     ])
+    setOnglet("codex")
+  }
 
   /** Le quatrième rôle : reprendre les réglages, sans envoyer d'image.
    *
@@ -1209,6 +1265,9 @@ export function App() {
           Object.entries(generation.demande.options).map(([n, v]) => [n, String(v)]),
         ),
       )
+      // Même règle que la réinjection : le texte repris se lit dans le champ,
+      // et le champ n'est pas ici.
+      setOnglet("codex")
     } catch (erreur) {
       echouer(erreur, "réglages illisibles")
     }
@@ -1277,7 +1336,12 @@ export function App() {
    *  colonne, et une bascule pour une colonne absente mentirait sur ce que
    *  l'écran contient (`docs/DESIGN.md` § Layout). */
   const bascules: Bascule[] =
-    onglet === "galerie"
+    onglet === "codex" && !choseOuverteId
+      ? [
+          { cle: "familles", nom: "familles", repliee: replies.familles },
+          { cle: "fiche", nom: "fiche", repliee: replies.fiche },
+        ]
+      : onglet === "galerie"
       ? [
           { cle: "arbre", nom: "arbre", repliee: replies.arbre },
           { cle: "reglages", nom: "réglages", repliee: replies.reglages },
@@ -1308,7 +1372,43 @@ export function App() {
         },
         { libelle: "Les dépenses" },
       ]
-    : planche
+    : // **La profondeur du codex.** Une chose du jeu ouverte allonge le fil
+      // d'un étage : `Cœur de pierre › Personnages › Balthazar`. C'est le même
+      // endroit vu de plus près, et chaque segment ramène au sien.
+      choseOuverte
+      ? [
+          {
+            libelle: projetCourant?.nom ?? "sans projet",
+            onAller: () => {
+              setCaseOuverte(null)
+              setChoseOuverte(null)
+            },
+          },
+          {
+            libelle: "Personnages",
+            onAller: () => {
+              setCaseOuverte(null)
+              setChoseOuverte(null)
+            },
+          },
+          {
+            libelle: choseOuverte.nom,
+            onAller: () => setCaseOuverte(null),
+          },
+          // L'outil ouvert est un étage de plus, et il ne l'est que quand il
+          // est ouvert : un fil qui montrerait toujours cinq segments dirait
+          // une profondeur où l'on n'est pas.
+          ...(imageOuverte ? [{ libelle: imageOuverte.label }] : []),
+        ]
+      : onglet === "codex"
+        ? [
+            {
+              libelle: projetCourant?.nom ?? "sans projet",
+              onAller: () => setChoseOuverte(null),
+            },
+            { libelle: "Personnages" },
+          ]
+        : planche
       ? [
           {
             libelle: projetCourant?.nom ?? "sans projet",
@@ -1326,6 +1426,111 @@ export function App() {
         ]
       : []
 
+  /**
+   * La barre qui paie — **une seule dans tout le produit** (E2).
+   *
+   * Elle vivait au-dessus de la grille de la galerie, parce que la galerie
+   * *était* l'atelier. La V2.1 la décolle de cet écran-là : elle appartient au
+   * châssis, elle sert les deux lieux d'où l'argent part — l'établi d'une chose
+   * et le codex —, et **elle se retire de tout écran incapable de dépenser**.
+   *
+   * C'est ce qui donne à la galerie son métier propre : on y juge, on n'y paie
+   * jamais. Deux champs de saisie auraient fini par accepter deux textes
+   * différents pour la même intention.
+   */
+  const barreQuiPaie = (
+    <div className="flex shrink-0 flex-col">
+      <Cible
+        personnage={personnageCible}
+        poses={posesCible}
+        onRetirer={(pose) =>
+          setCible((precedente) => {
+            // La forme fonctionnelle, jamais la valeur du rendu : deux retraits
+            // rapprochés partagent le même rendu, donc la même liste périmée,
+            // et le second effacerait le premier.
+            const restantes =
+              precedente?.poses.filter((p) => p !== pose.identifiant) ?? []
+            return restantes.length && precedente
+              ? { ...precedente, poses: restantes }
+              : null
+          })
+        }
+        onDesarmer={() => setCible(null)}
+      />
+      <Reinjections
+        reinjections={reinjections}
+        grille={grille}
+        onRetirer={(asset) =>
+          setReinjections((deja) => deja.filter((r) => r.asset !== asset))
+        }
+        onRole={(asset, role) => reinjecter(asset, role)}
+      />
+      {/* **Ce que ça va coûter, au pied de ce qui paie** (E2). Le chiffre
+          vivait dans la colonne de réglages de 300 px, qui n'existe que dans la
+          galerie — et la galerie ne paie plus. Il suit donc la barre, parce que
+          le prix se lit au moment où l'on décide, jamais deux écrans plus
+          loin. */}
+      <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 border-b border-bord bg-fond-1 px-4 pt-3 text-[10px]">
+        <CoutAttendu
+          cout={modele ? (couts[modele.identifiant] ?? null) : null}
+          cases={cases}
+          variations={variations}
+        />
+      </dl>
+      <ChampPrompt
+        prompt={prompt}
+        onPrompt={(texte) => {
+          setPrompt(texte)
+          // Écrire dedans en fait le texte de l'auteur : la provenance ne
+          // décrit plus rien, et la garder mentirait sur qui l'a écrit.
+          setProvenance(null)
+        }}
+        promptNegatif={promptNegatif}
+        onPromptNegatif={setPromptNegatif}
+        apercu={apercuPrompt}
+        apercuRefus={apercuRefus}
+        repris={repris}
+        /* **Reprendre pose le texte exact, et rien d'autre.** L'univers n'est
+           pas touché : rouvrir l'onglet Univers montre la bible inchangée
+           (US-159). C'est la différence entre corriger une formulation et
+           démonter son projet. */
+        onReprendre={() => {
+          if (!apercuPrompt) return
+          setPrompt(apercuPrompt.texte)
+          setRepris(true)
+        }}
+        /* Rendre la main : le champ redevient le sujet seul. **Il ne se vide
+           pas** — on ne perd pas ce qui a été écrit —, et l'atelier reprend son
+           habillage par-dessus. */
+        onRendre={() => setRepris(false)}
+        refus={refus?.texte ?? null}
+        ouAller={refus?.geste}
+        onAller={
+          refus?.geste === "Réessayer"
+            ? redemanderCatalogue
+            : () => setReglagesOuverts(true)
+        }
+        revers={revers}
+        provenance={
+          provenance
+            ? {
+                texte: provenance,
+                // **Se défaire ne change rien au réglage durable** : c'est le
+                // texte de cet appel-ci qui s'efface, pas la consigne de la
+                // pose ni le signalement de la chose.
+                onDefaire: () => {
+                  setPrompt("")
+                  setProvenance(null)
+                },
+              }
+            : null
+        }
+        onGenerer={generer}
+        variations={variations}
+      />
+    </div>
+  )
+
   return (
     <div className="grid h-full grid-rows-[44px_minmax(0,1fr)_26px] bg-fond-0">
       <BarreChassis
@@ -1337,6 +1542,8 @@ export function App() {
           // produit à ce qu'il vient de quitter — un écran par-dessus un autre.
           setDecoupeOuverte(null)
           setDepensesOuvertes(false)
+          setChoseOuverte(null)
+          setCaseOuverte(null)
           setFente(null)
           setOnglet(prochain)
         }}
@@ -1474,63 +1681,6 @@ export function App() {
             la droite, en-tête et pied compris. Constaté au navigateur le 27 août
             2026, à la première sélection. */}
         <section ref={centre} className="flex min-h-0 min-w-0 flex-col">
-          <Cible
-            personnage={personnageCible}
-            poses={posesCible}
-            onRetirer={(pose) =>
-              setCible((precedente) => {
-                // La forme fonctionnelle, jamais la valeur du rendu : deux
-                // retraits rapprochés partagent le même rendu, donc la même
-                // liste périmée, et le second effacerait le premier.
-                const restantes =
-                  precedente?.poses.filter((p) => p !== pose.identifiant) ?? []
-                return restantes.length && precedente
-                  ? { ...precedente, poses: restantes }
-                  : null
-              })
-            }
-            onDesarmer={() => setCible(null)}
-          />
-          <Reinjections
-            reinjections={reinjections}
-            grille={grille}
-            onRetirer={(asset) =>
-              setReinjections((deja) => deja.filter((r) => r.asset !== asset))
-            }
-            onRole={(asset, role) => reinjecter(asset, role)}
-          />
-          <ChampPrompt
-            prompt={prompt}
-            onPrompt={setPrompt}
-            promptNegatif={promptNegatif}
-            onPromptNegatif={setPromptNegatif}
-            apercu={apercuPrompt}
-            apercuRefus={apercuRefus}
-            repris={repris}
-            /* **Reprendre pose le texte exact, et rien d'autre.** L'univers
-               n'est pas touché : rouvrir l'écran Univers montre la bible
-               inchangée (US-159). C'est la différence entre corriger une
-               formulation et démonter son projet. */
-            onReprendre={() => {
-              if (!apercuPrompt) return
-              setPrompt(apercuPrompt.texte)
-              setRepris(true)
-            }}
-            /* Rendre la main : le champ redevient le sujet seul. **Il ne se
-               vide pas** — on ne perd pas ce qui a été écrit —, et l'atelier
-               reprend son habillage par-dessus. */
-            onRendre={() => setRepris(false)}
-            refus={refus?.texte ?? null}
-            ouAller={refus?.geste}
-            onAller={
-              refus?.geste === "Réessayer"
-                ? redemanderCatalogue
-                : () => setReglagesOuverts(true)
-            }
-            revers={revers}
-            onGenerer={generer}
-            variations={variations}
-          />
           <BarreOutils
             recherche={filtre.recherche}
             onRecherche={(recherche) => setFiltre((f) => ({ ...f, recherche }))}
@@ -1621,20 +1771,85 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && onglet === "codex" && (
-        <EcranPersonnages
+      {/* **Le codex, et sa profondeur.** Une chose du jeu ouverte remplace le
+          codex par son établi — c'est le même endroit vu de plus près, et le
+          fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
+          sont les deux lieux d'où l'argent part. */}
+      {!depensesOuvertes && onglet === "codex" && !choseOuverte && (
+        <EcranCodex
           plan={plan}
           personnages={personnages}
-          onPersonnage={fondrePersonnage}
           emplacements={emplacements}
           pieces={pieces}
+          choisi={choseChoisie}
+          onChoisir={setChoseChoisie}
+          onOuvrir={(identifiant) => {
+            setChoseOuverte(identifiant)
+            setChoseChoisie(identifiant)
+          }}
+          onPersonnage={fondrePersonnage}
           onPlan={setPlan}
           onVestiaire={(recu) => {
             setEmplacements(recu.emplacements)
             setPieces(recu.pieces)
           }}
+          onArmer={(personnage, poses) => void armer(personnage, poses)}
+          replies={{ familles: replies.familles, fiche: replies.fiche }}
+          barreQuiPaie={barreQuiPaie}
+          onErreur={(erreur, defaut) => echouer(erreur, defaut)}
+        />
+      )}
+
+      {!depensesOuvertes && onglet === "codex" && choseOuverte && (
+        <EcranEtabli
+          ouvert={choseOuverte}
+          plan={plan}
+          onPersonnage={fondrePersonnage}
+          emplacements={emplacements}
+          pieces={pieces}
           onArmer={armer}
           onFente={setFente}
+          // **La barre de prompt se retire quand l'outil s'ouvre** : on
+          // retouche, on ne paie pas — et un écran incapable de dépenser ne
+          // porte pas le champ qui dépense.
+          barreQuiPaie={imageOuverte ? null : barreQuiPaie}
+          onOuvrirCase={setCaseOuverte}
+          outil={
+            imageOuverte && etat ? (
+              <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px]">
+                {/* L'image en grand, entre l'outil et ce qui la règle : c'est
+                    ce que « plein cadre » veut dire, et c'est la place que la
+                    fiche de 380 px ne pouvait pas lui donner. */}
+                <div className="flex min-h-0 min-w-0 items-center justify-center p-6">
+                  <img
+                    src={imageAsset(imageOuverte)}
+                    alt={imageOuverte.label}
+                    className="damier max-h-full max-w-full object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
+                <Fiche
+                  asset={imageOuverte}
+                  traitement={etat.traitement}
+                  univers={univers}
+                  plan={plan}
+                  personnages={personnages}
+                  onFermer={() => setCaseOuverte(null)}
+                  onErreur={setPanne}
+                  onReinjecter={(role) => reinjecter(imageOuverte.identifiant, role)}
+                  onReglages={() => void reprendreReglages(imageOuverte)}
+                  onSupprimer={() => void supprimer([imageOuverte.identifiant])}
+                  onDecouper={() => {
+                    setCaseOuverte(null)
+                    setChoseOuverte(null)
+                    setOnglet("galerie")
+                    setDecoupeOuverte(imageOuverte.identifiant)
+                  }}
+                  onOuvrir={setCaseOuverte}
+                />
+              </div>
+            ) : null
+          }
           // **Le dossier du jeu, tenu par les Réglages et lu ici** (C5). L'écran
           // ne s'en sert que pour griser avec sa raison : le geste, lui, le
           // redemande au serveur, qui en est le seul dépositaire. Il arrive par
