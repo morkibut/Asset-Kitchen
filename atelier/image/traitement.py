@@ -428,15 +428,30 @@ def nettoyer(rgba: np.ndarray, bords: Bords) -> np.ndarray:
 def pinceau(forme: tuple[int, int], trait: Trait) -> np.ndarray:
     """Les pixels qu'un passage de la main couvre — **une fonction pure**.
 
-    Un disque de `rayon` promené le long du chemin, joints arrondis. Rayon nul :
-    un pixel de large, et c'est le geste « au pixel » d'US-149 et d'US-207 — la
-    même fonction, la même liste de points, un seul nombre de différence.
+    **Un carré de côté `2 × rayon + 1`, promené le long du chemin** — bouts et
+    joints carrés. Rayon nul : un pixel de large, et c'est le geste « au pixel »
+    d'US-149 et d'US-207 — la même fonction, la même liste de points, un seul
+    nombre de différence.
+
+    **Carré depuis U11, et il était rond** (1<sup>er</sup> septembre 2026). Le
+    disque était le bon choix de C4, où la main affinait un masque de différence
+    sur une image de mille pixels ; elle est depuis devenue la septième place de
+    la recette, donc un outil qu'on emploie sur le sprite fini. Sur soixante-
+    quatre pixels de côté, un disque de rayon deux ne fait pas un bord net : il
+    fait un escalier que personne n'a dessiné. **Le carré est la forme de
+    l'unité qu'on manipule**, et c'est la seule qui rende ce que la main croit
+    poser. Le prix est nommé et il se paie une fois : un calque déjà peint se
+    redessine légèrement différemment — voir `docs/tranches/U.md`, U11, et la
+    promesse de déterminisme du §4 de `docs/ARCHITECTURE.md`.
 
     **Les points sont reliés, jamais semés.** Un pointeur envoie ce qu'il peut,
     pas ce que la main a parcouru : sans le segment entre deux points, un geste
-    rapide laisserait des trous que personne n'a dessinés. Le tracé passe donc
-    par `ImageDraw`, dont la rasterisation est fixe — deux rendus de la même
-    recette donnent le même masque, et c'est un critère depuis T2.
+    rapide laisserait des trous que personne n'a dessinés. Le chemin est donc
+    tracé d'un pixel de large par `ImageDraw`, dont la rasterisation est fixe —
+    deux rendus de la même recette donnent le même masque, et c'est un critère
+    depuis T2 —, puis **épaissi par la dilatation carrée du produit**. Un
+    rectangle posé à chaque pixel du chemin donnerait exactement le même masque,
+    en mille fois plus d'appels de dessin.
 
     Rien n'est levé pour un point hors du cadre : il se borne, comme le
     rectangle de C3.
@@ -444,23 +459,14 @@ def pinceau(forme: tuple[int, int], trait: Trait) -> np.ndarray:
     hauteur, largeur = forme
     toile = Image.new("1", (largeur, hauteur), 0)
     dessin = ImageDraw.Draw(toile)
-    rayon = max(0, trait.rayon)
     points = [(int(x), int(y)) for x, y in trait.points]
     if len(points) > 1:
-        dessin.line(points, fill=1, width=2 * rayon + 1, joint="curve")
-    if rayon == 0:
-        # **Un point, et pas une ellipse de taille nulle** : une ellipse dont
-        # les deux coins se confondent ne peint rien du tout, et le geste au
-        # pixel — un seul point, rayon zéro — ne marquait alors aucun pixel.
-        # Payé en écrivant les essais de C4.
-        dessin.point(points, fill=1)
-    else:
-        # Les bouts, et les joints qu'un `width` impair laisse carrés. Un disque
-        # à chaque point rend le trait rond des deux côtés — c'est ce que la
-        # main croit dessiner.
-        for x, y in points:
-            dessin.ellipse([x - rayon, y - rayon, x + rayon, y + rayon], fill=1)
-    return np.asarray(toile, dtype=bool)
+        dessin.line(points, fill=1, width=1)
+    # **Un point, et pas une ligne d'un seul sommet** : `line` ne trace rien
+    # quand elle n'a qu'un point, et le geste au pixel — un seul point — ne
+    # marquait alors aucun pixel. Payé en écrivant les essais de C4, et gardé.
+    dessin.point(points, fill=1)
+    return etendre(np.asarray(toile, dtype=bool), max(0, trait.rayon))
 
 
 def peindre(masque: np.ndarray, traits: Sequence[Trait]) -> np.ndarray:

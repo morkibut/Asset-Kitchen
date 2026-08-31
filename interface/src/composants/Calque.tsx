@@ -361,8 +361,12 @@ export function PanneauCalque({
                 fill="none"
                 stroke="var(--signal)"
                 strokeWidth={(2 * rayon + 1) * echelle}
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                /* **Bouts et joints carrés depuis U11**, parce que le pinceau
+                    du serveur l'est : c'est la même fonction qui peint ici et
+                    dans la table de la main, et un aperçu rond au-dessus d'un
+                    pinceau carré serait une promesse fausse. */
+                strokeLinecap="square"
+                strokeLinejoin="miter"
               />
             </svg>
           )}

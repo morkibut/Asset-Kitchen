@@ -614,7 +614,8 @@ Aucune.
 
 ## U11 · La main peint carré, et là où on la pose
 
-**Critères : 6 · Ce que ça corrige : un point de la seconde séance, en deux moitiés**
+**Critères : 6 · Ce que ça corrige : un point de la seconde séance, en deux moitiés ·
+*tenue le 1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -646,15 +647,15 @@ un geste liront leurs coordonnées dans le rectangle de l'image réellement affi
 
 ### Critères d'acceptation
 
-- [ ] Le pinceau couvre un carré de côté impair, centré sur le pixel visé ; le tracé entre
+- [x] Le pinceau couvre un carré de côté impair, centré sur le pixel visé ; le tracé entre
       deux points a des bouts et des joints carrés.
-- [ ] Le curseur à l'écran est le carré exact que le prochain passage couvrira.
-- [ ] L'écart est **mesuré avant correction** — combien de pixels, sur quelle image, avec
+- [x] Le curseur à l'écran est le carré exact que le prochain passage couvrira.
+- [x] L'écart est **mesuré avant correction** — combien de pixels, sur quelle image, avec
       quel recadrage —, puis mesuré après, et il vaut zéro.
-- [ ] Un clic au bord de l'image marque un pixel du bord, et non le voisin.
-- [ ] Le trait tombe juste à tous les niveaux de zoom, y compris ceux que U2 ouvre sous
+- [x] Un clic au bord de l'image marque un pixel du bord, et non le voisin.
+- [x] Le trait tombe juste à tous les niveaux de zoom, y compris ceux que U2 ouvre sous
       cent pour cent.
-- [ ] Le changement de forme du pinceau est écrit où la promesse de déterminisme est écrite :
+- [x] Le changement de forme du pinceau est écrit où la promesse de déterminisme est écrite :
       une recette d'avant ne rend plus tout à fait la même image, et ça se dit.
 
 ### Bloquée par
@@ -662,6 +663,44 @@ un geste liront leurs coordonnées dans le rectangle de l'image réellement affi
 Aucune, mais **à faire avec U2 ou juste après** : les deux réparent la même erreur — une
 surface qui ment sur l'image qu'elle porte — à deux endroits, et les corriger séparément
 ferait écrire deux fois le même calcul.
+
+### Ce qu'elle a appris en étant faite
+
+**L'hypothèse du relevé était juste dans son mécanisme et fausse dans son ampleur, et c'est
+la mesure qui l'a dit.** Deux choses pouvaient décaler le trait, et l'étape n'en nommait
+qu'une.
+
+*La première, celle que l'étape décrivait* — une surface qui ment sur l'image qu'elle
+porte —, **existe et a été mesurée à un huitième de pixel** sur l'image de la séance :
+surface de 648 × 707, image de 831 × 907, donc 0,12 px de bande vide de chaque côté. Elle
+est réelle et elle est corrigée pour les trois surfaces, mais elle n'explique pas ce que
+l'auteur a vu. La raison est que l'atelier tient ses mesures de rendu à jour — `rendu_largeur`
+et `rendu_hauteur` sont réécrites à chaque rendu —, si bien que le rectangle supposé et le
+rectangle réel coïncident presque toujours. **C'est un défaut qui attend son heure**, pas
+celui qu'on cherchait ; le jour où une mesure vieillira d'un rendu, il mordra d'un coup, et
+alors ce sera de dix pixels et non d'un huitième : mesuré sur un cas construit, une image de
+64 px dans une surface de 600 × 400 déplaçait le clic de **quatre pixels au milieu et de dix
+au bord**, dans un sens à gauche et dans l'autre à droite. C'est ce qui rendait le défaut
+difficile à décrire : il ne se comporte pas comme un décalage constant.
+
+*La seconde, que l'étape ne nommait pas, est celle qui mordait* : **le curseur suivait le
+pointeur, le pinceau peint le pixel plancher.** Le cercle se dessinait exactement sous la
+pointe ; le carré peint est centré sur `floor(x)`, donc jusqu'à un demi-pixel d'image à
+gauche et en haut de là où le cercle se dessinait. À seize fois — l'agrandissement courant
+sur un sprite de soixante-quatre —, cela fait **huit pixels d'écran, vers la gauche et vers
+le haut**. C'est le symptôme du relevé au mot près. Le curseur est désormais calé sur la
+grille de l'image : il *est* le carré que le passage couvrira, et non plus une indication.
+
+**La leçon générale**, et elle vaut au-delà de cette étape : un aperçu qui suit le pointeur
+au pixel d'écran ment dès que l'écran est plus fin que la grille qu'on manipule. Toute
+surface qui montre ce qu'un geste va faire doit se caler sur l'unité du geste, pas sur celle
+du pointeur.
+
+**Et le pinceau carré s'obtient sans écrire un second pinceau.** Le chemin se trace d'un
+pixel de large — la rasterisation fixe de `ImageDraw`, qui est ce qui rend le tracé
+déterministe —, puis il s'épaissit par la **dilatation carrée** que le produit emploie déjà
+pour les contours et les bords. Un rectangle posé à chaque pixel du chemin donnerait
+exactement le même masque, en mille fois plus d'appels de dessin.
 
 ---
 

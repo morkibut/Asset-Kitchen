@@ -35,8 +35,8 @@ bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 soir — la première sur la V2.1 entière (quinze points, trois déjà fermés, neuf étapes), la
 seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-sept
 critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
-critères dans `docs/tranches/U.md`. **`U1` et `U2` sont tenues depuis le
-1<sup>er</sup> septembre 2026 ; les onze autres restent à construire.**
+critères dans `docs/tranches/U.md`. **`U1`, `U2` et `U11` sont tenues depuis le
+1<sup>er</sup> septembre 2026 ; les dix autres restent à construire.**
 
 `U1` passe d'abord parce que c'est la seule qui coûte de l'argent réel — cinq clics sur le
 bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`
@@ -346,6 +346,15 @@ deux vivent côte à côte.
   ailleurs, donne exactement le même résultat » : une initialisation tirée au sort — le
   k-means++ de MySpriteAi, par exemple — rendrait deux images différentes pour la même
   recette. La coupe médiane de Pillow ne tire rien au sort ; c'est elle qui quantifie.
+
+  **Déterministe ne veut pas dire immuable, et la différence se paie une fois.** Le
+  1<sup>er</sup> septembre 2026, `U11` a changé la forme du pinceau de la main — un
+  **carré** de côté impair là où c'était un disque, parce qu'on peint des pixels et qu'un
+  disque de rayon deux sur un sprite de soixante-quatre fait un escalier que personne n'a
+  dessiné. Un calque peint avant ce jour ne se redessine donc plus tout à fait à
+  l'identique : douze pixels de plus par point de rayon deux, mesuré. Quand une forme de ce
+  genre change, le prix se nomme et s'écrit ici ; ce qui ne change jamais, c'est que **deux
+  rendus de la même recette au même moment donnent le même résultat**.
 - **Pas de ComfyUI dans l'application.** Le local reste dehors : on génère ailleurs, on importe.
 - **Aucune clé en dur.** `.env` seul, jamais versionné ; `.env.example` documente les noms.
 

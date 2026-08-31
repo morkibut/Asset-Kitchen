@@ -13526,3 +13526,224 @@ describe("le zoom de la table", () => {
     expect(cadre.getByText(/tracée à la main/)).toBeTruthy()
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// U11 · La main peint carré, et là où on la pose
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : la seconde moitié de l'étape, celle qui est une
+// affaire de mise en page. Le trait tombait à quelques pixels de l'endroit visé,
+// et l'auteur soupçonnait le recadrage.
+//
+// **La vérification a rendu une réponse plus simple que l'hypothèse, et elle
+// est mesurée** — voir `docs/tranches/U.md`, U11. Deux mécanismes pouvaient
+// décaler le geste, et un seul mordait vraiment sur cette machine :
+//
+// 1. *La surface qui ment sur l'image qu'elle porte.* Réel, et corrigé pour les
+//    trois surfaces — le rectangle de recadrage, la pipette, le pinceau ; mais
+//    **mesuré à un huitième de pixel** sur l'image de la séance, parce que
+//    l'atelier tient ses mesures de rendu à jour. C'est un défaut qui attend son
+//    heure, pas celui qu'on a vu.
+// 2. *Le curseur qui suit le pointeur au lieu de la grille.* Celui-là mord tout
+//    de suite : le carré peint est centré sur le pixel **plancher** du pointeur,
+//    donc jusqu'à un demi-pixel d'image à gauche et en haut de là où le cercle
+//    se dessinait — à seize fois, huit pixels d'écran. C'est le symptôme du
+//    relevé, au mot près.
+//
+// Ce qui se mesure sur des pixels — la forme carrée, les bouts, les joints, le
+// bord du cadre — est tenu par `tests/test_u11.py`.
+
+describe("la main peint carré, et là où on la pose", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  /** La table de la main, ouverte sur une image dont le **rendu n'a pas les
+   *  proportions du brut** — c'est ce qu'un recadrage fabrique, et c'est le cas
+   *  où la surface et l'image cessent de coïncider. */
+  const ouvrirLaMain = async (rendu = { largeur: 64, hauteur: 64 }) => {
+    const image = {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      rendu_largeur: rendu.largeur,
+      rendu_hauteur: rendu.hauteur,
+    } as Asset
+    const double = serveurDouble({ personnages: [AVEC_IMAGE([image])] })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${image.label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    fireEvent.click(cadre.getByRole("button", { name: /^la main/ }))
+    const toile = await waitFor(() => {
+      const noeud = document.querySelector("[data-toile-main]")
+      if (!noeud) throw new Error("la toile de la main ne s'est pas ouverte")
+      return noeud as HTMLElement
+    })
+    return { ...double, cadre, toile, rendu }
+  }
+
+  /** Poser une surface **plus large que l'image ne l'occupe**, et rendre de quoi
+   *  viser un pixel d'image donné.
+   *
+   *  C'est la panne qu'on mesure : la surface est dimensionnée d'après les
+   *  mesures que l'atelier garde ; l'image est posée dedans en *tenant dans le
+   *  cadre*, donc centrée avec des bandes vides de chaque côté. */
+  const poserLaSurface = (
+    toile: HTMLElement,
+    surface: { largeur: number; hauteur: number },
+    image: { largeur: number; hauteur: number },
+  ) => {
+    toile.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: surface.largeur,
+        height: surface.hauteur,
+      }) as DOMRect
+    const echelle = Math.min(
+      surface.largeur / image.largeur,
+      surface.hauteur / image.hauteur,
+    )
+    const rendue = { l: image.largeur * echelle, h: image.hauteur * echelle }
+    const gauche = (surface.largeur - rendue.l) / 2
+    const haut = (surface.hauteur - rendue.h) / 2
+    /** Le centre à l'écran du pixel `(x, y)` de l'image. */
+    return (x: number, y: number) => ({
+      clientX: gauche + ((x + 0.5) / image.largeur) * rendue.l,
+      clientY: haut + ((y + 0.5) / image.hauteur) * rendue.h,
+    })
+  }
+
+  const dernierPassage = (appels: { url: string; corps: unknown }[]) => {
+    const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+    const main = (envoi?.corps as { main?: { opacite?: { points: number[][] }[] } })
+      ?.main
+    return main?.opacite?.at(-1)?.points ?? null
+  }
+
+  // ── « L'écart est mesuré avant correction, puis après, et il vaut zéro » ───
+
+  test("le trait tombe sur le pixel visé, même quand la surface ment", async () => {
+    // **La surface fait 600 × 400 pour une image de 64 × 64.** L'image y est
+    // donc dessinée en 400 × 400, centrée : cent pixels de bande vide à gauche
+    // et autant à droite. L'ancien calcul mesurait la surface — il aurait rendu
+    // `(clientX / 600) × 64`, soit **seize pixels d'image trop à droite** au
+    // milieu du cadre. Le nouveau lit dans le rectangle de l'image.
+    const { toile, appels } = await ouvrirLaMain()
+    const viser = poserLaSurface(toile, { largeur: 600, hauteur: 400 }, { largeur: 64, hauteur: 64 })
+
+    const { clientX, clientY } = viser(20, 30)
+    fireEvent.pointerDown(toile, { button: 0, clientX, clientY, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => expect(dernierPassage(appels)).toEqual([[20, 30]]))
+
+    // **Et l'écart de l'ancien calcul, mesuré sur les mêmes clics.** Il mesurait
+    // la surface : `(clientX / 600) × 64` au lieu de `((clientX − 100) / 400) ×
+    // 64`. L'écart est nul au centre et croît vers les bords, dans un sens à
+    // gauche et dans l'autre à droite — quatre pixels d'image ici, dix au bord
+    // droit. C'est ce qui rendait le défaut difficile à décrire : il ne se
+    // comportait pas comme un décalage constant.
+    expect(Math.floor((clientX / 600) * 64) - 20).toBe(4)
+    const aDroite = viser(63, 30)
+    expect(Math.floor((aDroite.clientX / 600) * 64) - 63).toBe(-10)
+  })
+
+  test("un clic au bord de l'image marque un pixel du bord, et non le voisin", async () => {
+    const { toile, appels } = await ouvrirLaMain()
+    const viser = poserLaSurface(toile, { largeur: 600, hauteur: 400 }, { largeur: 64, hauteur: 64 })
+
+    const { clientX, clientY } = viser(63, 63)
+    fireEvent.pointerDown(toile, { button: 0, clientX, clientY, pointerId: 1 })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+    await waitFor(() => expect(dernierPassage(appels)).toEqual([[63, 63]]))
+  })
+
+  test("le trait tombe juste quel que soit le zoom", async () => {
+    // **Y compris sous cent pour cent**, que U2 vient d'ouvrir : le calcul ne
+    // connaît pas le zoom, il lit le rectangle qu'il a sous les yeux, et c'est
+    // précisément ce qui le rend indifférent à l'échelle.
+    for (const cote of [37, 64, 512]) {
+      const { toile, appels } = await ouvrirLaMain()
+      const viser = poserLaSurface(
+        toile,
+        { largeur: cote, hauteur: Math.round(cote * 1.37) },
+        { largeur: 64, hauteur: 64 },
+      )
+      const { clientX, clientY } = viser(11, 42)
+      fireEvent.pointerDown(toile, { button: 0, clientX, clientY, pointerId: 1 })
+      fireEvent.pointerUp(toile, { pointerId: 1 })
+      await waitFor(() => expect(dernierPassage(appels)).toEqual([[11, 42]]))
+      cleanup()
+      FluxDouble.ouverts = []
+    }
+  })
+
+  // ── « Le curseur est le carré exact que le prochain passage couvrira » ─────
+
+  test("le curseur est un carré calé sur le pixel visé, pas un cercle sous le pointeur", async () => {
+    // **C'est le mécanisme qui mordait vraiment.** Le cercle suivait le
+    // pointeur ; le carré peint est centré sur le pixel plancher. À seize fois,
+    // un demi-pixel d'image fait huit pixels d'écran, et le trait paraissait
+    // tomber en haut à gauche de ce qu'on visait.
+    const { toile } = await ouvrirLaMain()
+    const viser = poserLaSurface(toile, { largeur: 640, hauteur: 640 }, { largeur: 64, hauteur: 64 })
+
+    // On vise le pixel (20, 30), mais **en son coin bas-droit** — l'endroit où
+    // le cercle et le carré divergeaient le plus.
+    const bord = viser(20, 30)
+    fireEvent.pointerMove(toile, {
+      clientX: bord.clientX + 4,
+      clientY: bord.clientY + 4,
+      pointerId: 1,
+    })
+
+    const curseur = await waitFor(() => {
+      const noeud = document.querySelector("[data-curseur-main]")
+      if (!noeud) throw new Error("pas de curseur")
+      return noeud as HTMLElement
+    })
+    // Carré, et non rond.
+    expect(curseur.className).not.toContain("rounded-full")
+    // **Calé sur la grille de l'image**, et centré sur le pixel visé : c'est la
+    // promesse « le carré exact que le prochain passage couvrira ». Sa largeur
+    // est impaire en pixels d'image, donc son centre tombe au milieu de la case
+    // — et non sous le pointeur, qui est quatre pixels d'écran plus loin.
+    const enPourCent = (valeur: string) => Number.parseFloat(valeur)
+    const largeur = enPourCent(curseur.style.width)
+    const centreX = enPourCent(curseur.style.left) + largeur / 2
+    const centreY = enPourCent(curseur.style.top) + enPourCent(curseur.style.height) / 2
+    expect(centreX).toBeCloseTo((20.5 / 64) * 100, 6)
+    expect(centreY).toBeCloseTo((30.5 / 64) * 100, 6)
+    // Et sa largeur est un nombre impair de pixels d'image — la forme du
+    // pinceau, pas une approximation.
+    expect(Math.round((largeur / 100) * 64) % 2).toBe(1)
+  })
+})

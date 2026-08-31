@@ -1080,9 +1080,11 @@ function Soeur({
  * deux sens — garder et ôter sont deux gestes ordinaires, et `--echec`
  * voudrait dire *ça détruit*, ce qu'une gomme ne fait pas.
  *
- * **Le curseur est un cercle du diamètre choisi.** Il dit ce que le prochain
- * passage couvrira avant qu'on appuie : c'est la moitié du réglage, et sans lui
- * le curseur de diamètre serait un nombre abstrait.
+ * **Le curseur est le carré exact que le prochain passage couvrira** (U11). Il
+ * était un cercle qui suivait le pointeur ; il est désormais calé sur le pixel
+ * visé, à la taille qu'il aura vraiment — c'est la moitié du réglage, et sans
+ * lui le curseur de diamètre serait un nombre abstrait. La forme suit celle du
+ * pinceau, qui est carrée parce qu'on peint des pixels.
  */
 function ToileDeLaMain({
   asset,
@@ -1096,7 +1098,11 @@ function ToileDeLaMain({
   onPassage: (trait: Trait) => void
 }) {
   const [trace, setTrace] = useState<[number, number][] | null>(null)
-  const [pointeur, setPointeur] = useState<{ x: number; y: number } | null>(null)
+  /** Le pixel visé — **et non la place du pointeur** (U11). Le curseur est le
+   *  carré que le prochain passage couvrira, donc il se cale sur la grille de
+   *  l'image ; le suivre au pixel d'écran près le décalerait d'un demi-pixel
+   *  d'image dès que le zoom dépasse cent pour cent. */
+  const [vise, setVise] = useState<[number, number] | null>(null)
   const cadre = useRef<HTMLDivElement | null>(null)
 
   // Les dimensions du **rendu** : c'est lui que la main touche. Une recette
@@ -1107,11 +1113,22 @@ function ToileDeLaMain({
   const surLOpacite = etat.actif === OPACITE
   const teinte = surLOpacite ? "var(--signal)" : etat.couleur
 
-  /** Le point sous le pointeur, en pixels de l'image rendue. */
+  /** Le point sous le pointeur, en pixels de l'image rendue.
+   *
+   *  **Il se lit dans le rectangle de l'image, pas dans celui de la surface**
+   *  (U11). C'est le défaut que la seconde séance a relevé — *le trait tombe à
+   *  quelques pixels de l'endroit visé, vers la gauche* —, et le mécanisme est
+   *  le même que celui trouvé dans la table de recadrage : la surface est
+   *  dimensionnée d'après les mesures que l'atelier garde de l'image rendue,
+   *  l'image est posée dedans en *tenant dans le cadre*, donc centrée avec des
+   *  bandes vides de chaque côté dès que les deux proportions diffèrent d'un
+   *  cheveu. Un recadrage change précisément les proportions du rendu : c'est
+   *  lui qui ouvrait l'écart, et l'auteur avait raison de le soupçonner. */
   const point = (evenement: React.PointerEvent<HTMLDivElement>): [number, number] => {
-    const boite = evenement.currentTarget.getBoundingClientRect()
-    const x = ((evenement.clientX - boite.left) / boite.width) * largeur
-    const y = ((evenement.clientY - boite.top) / boite.height) * hauteur
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, largeur, hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * largeur
+    const y = ((evenement.clientY - image.top) / image.height) * hauteur
     return [
       Math.max(0, Math.min(largeur - 1, Math.floor(x))),
       Math.max(0, Math.min(hauteur - 1, Math.floor(y))),
@@ -1141,13 +1158,9 @@ function ToileDeLaMain({
         evenement.currentTarget.setPointerCapture(evenement.pointerId)
       }}
       onPointerMove={(evenement) => {
-        const boite = evenement.currentTarget.getBoundingClientRect()
-        setPointeur({
-          x: evenement.clientX - boite.left,
-          y: evenement.clientY - boite.top,
-        })
-        if (!trace) return
         const [x, y] = point(evenement)
+        setVise([x, y])
+        if (!trace) return
         const dernier = trace[trace.length - 1]
         // **Un point par pixel, pas un par événement.** Un pointeur envoie ce
         // qu'il peut ; garder les doublons gonflerait la recette sans rien
@@ -1157,7 +1170,7 @@ function ToileDeLaMain({
       }}
       onPointerUp={terminer}
       onPointerLeave={() => {
-        setPointeur(null)
+        setVise(null)
         terminer()
       }}
     >
@@ -1183,31 +1196,38 @@ function ToileDeLaMain({
           preserveAspectRatio="xMidYMid meet"
           className="pointer-events-none absolute inset-0 h-full w-full"
         >
+          {/* **Bouts et joints carrés** (U11), parce que le pinceau l'est. Un
+              bout carré déborde d'une demi-largeur au-delà du dernier point,
+              ce qui est exactement ce qu'un carré posé sur ce point couvre. */}
           <polyline
             points={trace.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ")}
             fill="none"
             stroke={etat.sens ? teinte : "var(--signal)"}
             strokeOpacity={etat.sens ? 1 : 0.45}
             strokeWidth={etat.diametre}
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
           />
         </svg>
       )}
 
-      {/* Le curseur : un cercle du diamètre choisi, bord `--signal`, fond à
-          18 %. Il ne suit pas le zoom du châssis — il mesure l'image, et sa
-          taille à l'écran est celle qu'il couvrira. */}
-      {pointeur && cadre.current && (
+      {/* Le curseur : **le carré exact que le prochain passage couvrira**
+          (U11). Il est calé sur la grille de l'image et non sur le pointeur —
+          c'est ce qui en fait une promesse plutôt qu'une indication —, et il
+          fait `2 × rayon + 1` pixels d'image, la largeur que le serveur peint.
+          Il ne suit pas le zoom du châssis : il mesure l'image, donc il
+          grandit avec elle. */}
+      {vise && (
         <span
           aria-hidden
+          data-curseur-main
           style={{
-            left: pointeur.x,
-            top: pointeur.y,
-            width: (etat.diametre / largeur) * cadre.current.clientWidth,
-            height: (etat.diametre / largeur) * cadre.current.clientWidth,
+            left: `${((vise[0] - rayonDe(etat.diametre)) / largeur) * 100}%`,
+            top: `${((vise[1] - rayonDe(etat.diametre)) / hauteur) * 100}%`,
+            width: `${((2 * rayonDe(etat.diametre) + 1) / largeur) * 100}%`,
+            height: `${((2 * rayonDe(etat.diametre) + 1) / hauteur) * 100}%`,
           }}
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal bg-signal/[.18]"
+          className="pointer-events-none absolute border border-signal bg-signal/[.18]"
         />
       )}
     </div>
@@ -1246,9 +1266,13 @@ function PipetteSurImage({
    *  dès qu'on dépasse sa moitié — le rectangle de recadrage arrondit, lui,
    *  parce qu'il pose un coin et non un pixel. */
   const pixel = (evenement: React.MouseEvent<HTMLDivElement>) => {
-    const cadre = evenement.currentTarget.getBoundingClientRect()
-    const x = ((evenement.clientX - cadre.left) / cadre.width) * asset.largeur
-    const y = ((evenement.clientY - cadre.top) / cadre.height) * asset.hauteur
+    // **Dans le rectangle de l'image, pas dans celui de la surface** (U11) —
+    // la troisième des trois surfaces qui reçoivent un geste, et le même
+    // calcul pour les trois.
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
     return {
       x: Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
       y: Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),

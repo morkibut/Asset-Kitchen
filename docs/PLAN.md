@@ -1738,7 +1738,7 @@ et le coût.
 | **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — | à faire |
 | **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — | à faire |
 | **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — | à faire |
-| **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — | à faire |
+| **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** | à faire |
 | **U13** | Un second moteur de détourage, plus lourd et meilleur | 2<sup>e</sup> | — | à faire |
 

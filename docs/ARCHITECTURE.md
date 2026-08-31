@@ -102,6 +102,17 @@ Cinq règles qui tiennent l'ensemble :
    ne se rejoue après un geste fait à la main, sans quoi le geste serait effacé
    par la machine.
 
+   **Son pinceau est carré depuis le 1<sup>er</sup> septembre 2026** (`U11`), et
+   c'est le seul changement de forme qu'une place ait connu. Le disque était le
+   choix de C4, où la main affinait un masque de différence sur une image de
+   mille pixels ; elle est depuis la septième place, donc un outil qu'on emploie
+   sur le sprite fini, et un disque de rayon deux sur soixante-quatre pixels de
+   côté ne fait pas un bord net — il fait un escalier que personne n'a dessiné.
+   **Le prix est nommé et il se paie une fois** : un calque peint avant ce jour
+   ne se redessine plus à l'identique, douze pixels de plus par point de rayon
+   deux, mesuré. C'est la seule entorse jamais faite à la règle 5 ci-dessous, et
+   elle est datée pour qu'on ne la refasse pas sans le dire.
+
    **Ce qui règle une image et ce qui en fabrique d'autres sont deux choses, et la
    V2.1 les sépare formellement.** Les sept places ci-dessus décrivent *cette*
    image : elles ont un état — posée, vide — et le rendu les rejoue toutes à
