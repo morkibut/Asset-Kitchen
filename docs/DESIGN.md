@@ -23,7 +23,7 @@ au lieu d'une bande de 1 843 px** ; il se saute, il se rouvre, et rien n'attend 
 finisse. Ce que l'exclusion visait — un tunnel qui empêche d'entrer — reste écarté, et
 c'est ce qui reste écrit. Voir `docs/v21-arbitrages.md` A-9 et A-10.
 
-**Écran large uniquement** — tranché par `docs/PRD.md` § Décisions d'implémentation, construit
+**Écran large uniquement** — tranché par `docs/prd-decisions.md`, construit
 par `docs/archi-versions.md` §6.2. La seule chose que ce document ajoute est la conséquence
 d'apparence : **aucune media query, aucune valeur de repli, aucun style alternatif**. Les
 largeurs de colonnes du § Layout sont donc absolues et sans condition.

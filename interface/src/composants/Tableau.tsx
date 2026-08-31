@@ -130,7 +130,7 @@ export function useSurvol(epingle: boolean) {
 
 // ── Coller ──────────────────────────────────────────────────────────────────
 //
-// **Le collage devine et le dit** (`docs/PRD.md` § Ce qui entre par la main) :
+// **Le collage devine et le dit** (`docs/prd-decisions.md` § Ce qui entre par la main) :
 // des octets d'image font une carte image, une adresse fait une carte en
 // attente, le reste fait une carte texte. Il n'y a aucun menu à traverser
 // avant de coller.

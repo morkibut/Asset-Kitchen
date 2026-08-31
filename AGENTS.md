@@ -156,12 +156,14 @@ contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne l
 
 | Annexe | Ce qu'elle prolonge | On l'ouvre quand |
 |---|---|---|
+| `docs/prd-decisions.md` | le PRD | on veut savoir **ce que le produit a tranché** sur une question d'usage — ce qui entre en bibliothèque, ce qui se juge, ce que la génération refuse, ce que l'agent peut. *Descendu du PRD le 31 août 2026, où il pesait 55 % du document* |
+| `docs/tranches/V2.1.md` | le plan | on construit une étape de la V2.1 et on veut ses critères d'acceptation, ou ce qui a été décidé en la faisant. *Descendu du plan le 31 août 2026, où les vingt-et-une étapes pesaient 43 % du document* |
 | `docs/user-stories.md` | le PRD | on cherche ce qu'une user story demande, par son numéro |
 | `docs/prd-carnet.md` | le PRD | une décision du PRD paraît arbitraire et on veut ce qui l'a dictée |
 | `docs/archi-versions.md` | l'architecture | on travaille *dans* une version — les briques de la V1, le pliage et le calque de la V2, ce que les V3 à V5 supposent |
 | `docs/archi-fournisseur.md` | l'architecture | on rouvre la question du modèle, du catalogue, du contrat de génération ou des outils MCP |
 | `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
-| `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt fichiers, de `T1` à `R5` |
+| `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt-et-un fichiers, de `T1` à `R5`, plus `V2.1` |
 | `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses questions ouvertes se tranchent à l'usage |
 | `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. Elles décrivent l'interface future, jamais l'état du code |
 | `docs/design-motifs.md` | le design | on dessine un écran |
@@ -185,16 +187,15 @@ corpus a triplé deux fois quand même, jusqu'à 315 Ko le 29 août 2026. Il est
 139 le même jour, sans qu'une ligne soit supprimée. Ce chiffre-là est le repère : quand le
 banc annonce une dérive qui s'installe, une section descend en annexe et laisse un renvoi.
 
-**Et la règle a déclenché pour la première fois le 31 août 2026, en reportant la V2.1.** La
-phrase qui tenait ici — *« aucune section n'atteint la moitié de son document »* — est
-devenue fausse : les **décisions d'implémentation** du PRD pèsent **54 %** de leur
-document, et le corpus est remonté de 139 à **248 Ko** en une session. Ce n'est pas une
-dérive lente, c'est un report de chantier, et il était attendu ; mais le seuil est franchi
-et le fait s'écrit ici plutôt que de se découvrir au prochain banc. **Ce qui le relèverait
-est connu et non fait** : les décisions d'implémentation du PRD et les vingt-et-une étapes
-de la V2.1 du plan sont les deux seules sections qui pèsent, et l'une des deux suffirait.
-La descente en annexe n'est pas prise ici parce qu'elle emporte des renvois — c'est le
-paragraphe suivant qui dit pourquoi elle se fait d'un bloc, banc relancé derrière.
+**La règle a déclenché pour la première fois le 31 août 2026, en reportant la V2.1**, et la
+descente a été faite le même jour. La phrase qui tenait ici — *« aucune section n'atteint la
+moitié de son document »* — était devenue fausse : les **décisions d'implémentation** du PRD
+pesaient **55 %** de leur document, les vingt-et-une étapes de la V2.1 **43 %** du plan, et le
+corpus était monté à **301 Ko**. Les deux sections sont descendues **d'un bloc** —
+`docs/prd-decisions.md` et `docs/tranches/V2.1.md` —, sans qu'un mot soit réécrit : le corpus
+est retombé à **235 Ko**, et les trois renvois que le déplacement a cassés ont été nommés par
+le banc et réparés dans la foulée. C'est cette dernière phrase qui compte, et le paragraphe
+suivant dit pourquoi.
 
 **Le banc pèse aussi les renvois**, et c'est l'autre moitié : une section qui part en
 annexe emporte avec elle les renvois du code et des documents qui la visaient, et un

@@ -69,9 +69,10 @@ class Asset:
 
     # ── Ce que l'auteur a posé de sa main ────────────────────────────────────
     #
-    # « Toucher une recette à la main épingle l'asset » (`docs/PRD.md`, § La
-    # palette rétroactive). Écrit dès T2, relu en T4 : un changement de palette
-    # de projet saute les épinglés et rend son compte.
+    # « Toucher une recette à la main épingle l'asset »
+    # (`docs/prd-decisions.md` § La palette rétroactive). Écrit dès T2, relu en
+    # T4 : un changement de palette de projet saute les épinglés et rend son
+    # compte.
     epingle: bool = False
 
     # ── Ce que l'appel a facturé pour cette image-là ─────────────────────────

@@ -631,14 +631,9 @@ quatorze entrées neuves décrivent des écrans qui n'existent pas encore, et le
 corriger ne deviennent fausses qu'une fois E1, E3 et E7 livrées. Elle est en E20, avec le
 guide.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Le commentaire près du seuil de transparence dit ce que le code fait, et il nomme le détourage comme l'endroit où le halo se règle
-- [x] Un essai gratuit vérifie que la quantification ne modifie aucune valeur de transparence — les 256 valeurs, sur les deux régimes de tramage
-- [x] Le total de la fenêtre des réglages s'appelle « dépensé par l'agent »
-- [x] La barre d'espace ouvre l'aperçu depuis **toute** vignette du produit, et la liste des endroits où elle sert n'a plus d'exception nommée
-- [x] La molette zoome l'aperçu partout où la barre d'espace l'ouvre
-- [x] Aucun écran ne change de forme, aucune route n'est ajoutée, aucun objet n'entre au modèle
+**6 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -668,6 +663,8 @@ propres gestes de souris, et la règle dit *toute miniature*, pas *toute image*.
 
 ---
 
+---
+
 ### E1 · Trois onglets au lieu de sept surfaces
 **User stories** : 174, 175, 176, 177, 178, 179 · *8 critères · tenue le 31 août 2026*
 
@@ -687,16 +684,9 @@ trois onglets tels quels ; c'est le cadre qu'on livre, et il doit servir seul. L
 fermée des cinq hauteurs et des trois largeurs entre en vigueur ici et vaut pour tout ce qui
 suit.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Trois onglets, et un seul allumé à la fois ; aucun écran ne se superpose à un autre
-- [x] Descendre dans une chose du jeu remplace le nom de l'onglet par un fil, et chaque segment du fil ramène à son étage
-- [x] Un même écran atteint par deux portes différentes montre deux fils différents, et chacun dit d'où l'on vient — *le mécanisme est livré et le fil court est en service ; la seconde porte, celle de l'établi, arrive avec lui en E3*
-- [x] Le total de la barre de tête porte le nom de ce qu'il compte, et un clic ouvre l'écran qui l'explique — grisé avec sa raison tant que cet écran n'existe pas
-- [x] Chaque bascule de repli nomme la colonne qu'elle replie sur l'écran courant
-- [x] Les réglages et le guide sont séparés visuellement de ce qui touche au travail
-- [x] Aucune bande du produit ne porte une hauteur hors de `44 · 38 · 34 · 30 · 26`, aucune colonne une largeur hors de `380 · 300 · 240`, et les deux exceptions — le champ de saisie et le bouton compact — sont les seules
-- [x] Chaque écran d'avant est atteignable et fonctionne exactement comme avant
+**8 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -749,6 +739,8 @@ La phrase du document a été corrigée plutôt que gardée.
 
 ---
 
+---
+
 ### E2 · Le codex et l'établi — nommer une chose, et payer depuis elle
 **User stories** : 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193 · *12 critères · tenue le 31 août 2026*
 
@@ -770,20 +762,9 @@ case en plein cadre sans quitter l'établi. **Une seule barre de saisie existe d
 produit** : elle appartient au châssis, elle sert l'établi et le codex, et elle se retire
 dès qu'un écran ouvert ne peut rien dépenser.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Le codex liste tout ce que le monde contient, rangé par famille, et chaque famille dit ce qu'elle réclame
-- [x] Une chose du jeu porte le compte de ce qui lui manque ; le compte de ce qu'elle a rangé se lit à côté de la jauge
-- [x] Aucune couleur d'alerte sur un manque, aucun message qui réclame quoi que ce soit
-- [x] Écrire un nom crée la chose immédiatement, sans formulaire, sans appel et sans dépense
-- [x] Le champ qui nomme est au milieu de l'écran quand le monde est vide, en rangée sinon, et c'est le même champ
-- [x] Une case de l'établi est prise dès qu'une image la porte, quelle que soit la qualité de l'image
-- [x] Cliquer une case vide remplit le prompt avec ce que la chose et le jeu imposent, et chaque valeur préremplie porte sa provenance
-- [x] Ce qui est prérempli se défait d'un clic, et se défaire ne change rien au réglage durable
-- [x] Cliquer une case pleine ouvre son outil en plein cadre, et l'on revient à l'établi sans avoir changé d'onglet — *le cadre et la porte sont livrés ; les tables qui les rempliront arrivent en E3, et d'ici là c'est la recette qui s'y ouvre*
-- [x] Il n'existe qu'un seul champ de saisie dans le produit ; il paraît au pied de l'établi et du codex, et nulle part ailleurs
-- [x] La barre qui paie disparaît sur tout écran incapable de dépenser
-- [x] Lancer tout ce qui manque à une chose annonce le nombre d'images, le groupement en planches, le prix, et ce qu'un compte faux coûterait — avant de payer
+**12 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -823,6 +804,8 @@ laquelle a le plus de manque.
 
 ---
 
+---
+
 ### E3 · Le châssis des tables, et les cinq places qui existaient déjà
 **User stories** : 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204 · *14 critères, 13 tenus le 31 août 2026*
 
@@ -845,26 +828,15 @@ et comptées, jamais effacées seules — et la pipette, qui retire une tache ou
 sa couleur. Enfin le **découpage** devient la première des deux fabriques, et l'écran Découpe
 disparaît : on ne le cherche plus, il est là quand il sert.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] La barre montre les sept places dans l'ordre où elles s'appliquent, et l'ordre ne se change pas
-- [x] Le carré d'une place est plein si et seulement si la place change l'image — une place posée qui ne change rien a un carré creux
-- [x] Une table indisponible s'ouvre, et son panneau porte la raison en clair, à la place des réglages, avec ce qu'il faut faire
-- [x] Le trait de la barre sépare les sept places des deux fabriques, et les fabriques n'ont pas de carré
-- [x] L'image brute et l'image rendue se comparent côte à côte et superposées, et le mode est écrit dès que ce n'est pas le rendu
-- [x] On passe à l'image voisine sans que la table ouverte se referme
-- [x] Vider une place et vider la recette entière sont deux gestes distincts, à deux endroits distincts
-- [x] Le détourage propose les poches de fond enfermées, cerclées et comptées, et n'en efface aucune de lui-même
-- [ ] La pipette retire une tache, ou toutes les taches de sa couleur, au choix écrit — **le seul critère ouvert de l'étape.** Elle demande un champ de plus à la recette, et ce qu'il retient n'est pas tranché : des identifiants de taches, qui se recalculent et se déplacent, ou des points, qui survivent au recalcul
-- [x] Le rectangle de recadrage se pose sur l'image, et le traitement l'honore
-- [x] Le curseur d'occupation ne s'arrête que là où l'image change, et dit sur combien de pixels il tombe
-- [x] La quantification atteint les couleurs déduites d'une image et le tramage, tous deux déjà portés par le modèle
-- [x] L'aire minimale liste les taches qu'elle va effacer, triées, et la liste se coupe là où le seuil tombe
-- [x] Le découpage s'ouvre depuis la barre, et l'écran Découpe n'existe plus
+**13 critères tenus sur 14.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E2** — un outil se dessine dans le cadre où il se pose, jamais avant : l'établi lui donne son plein cadre et sa porte.
+
+---
 
 ---
 
@@ -884,15 +856,9 @@ dernière valeur pour ce qui n'appartient à aucune chose du jeu.
 **C'est le moins de travail des cinq écrans, et c'est la dernière de la chaîne** : dégraisser
 avant que le geste soit rendu ailleurs, c'est retirer sans donner.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] La galerie n'a ni champ de prompt, ni colonne de réglages, ni curseur de retouche
-- [x] Le pied de l'écran dit qu'aucun appel ne part d'ici
-- [x] La fiche d'une image porte deux portes : l'établi de sa chose, et les tables
-- [x] Une image sans chose du jeu propose de la rattacher, et le rattachement se défait
-- [x] Le filtre par famille a une valeur pour ce qui n'appartient à aucune chose du jeu — *posé sur la grille chargée, et non au serveur : la seule famille qui porte des choses est* personnages*, et il descendra avec les quatre autres en E15*
-- [x] Aucune des trois surfaces qui ne sont pas des grilles — la matrice, la réserve, la liste des dépenses — n'est devenue une seconde planche contact : les deux premières restent sans recherche, sans filtre et sans sélection multiple, la troisième sans aucune image (A-24)
-- [x] Tout ce que l'écran d'avant permettait se fait encore, ailleurs, et la fiche dit où
+**7 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -928,6 +894,8 @@ porte de moins, pas un geste de moins.
 
 ---
 
+---
+
 ### E5 · Les deux places qui manquaient — le contour et la main
 **User stories** : 205, 206, 207, 208, 209, 210 · *8 critères · tenue le 31 août 2026*
 
@@ -947,16 +915,9 @@ réordonnables, et un passage est enregistré comme un **tracé et non comme des
 survit donc à un changement de taille de grille, et se défait un par un. La palette du jeu est
 proposée sans être imposée, et une couleur hors palette est marquée au lieu d'être refusée.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Le contour se règle en épaisseur, en couleur et en position, et se pose après la grille et après la quantification
-- [x] Choisir la position extérieure écrit, au moment du choix, que l'image rendue s'agrandit, et de combien
-- [x] La main ôte et remet des pixels à main levée puis au pixel
-- [x] Les passages s'empilent en calques nommables, masquables et réordonnables
-- [x] Un passage survit à un changement de taille de grille, et se défait passage par passage
-- [x] La palette du jeu est proposée et jamais imposée ; une couleur hors palette est marquée, pas refusée
-- [x] La main est la dernière place de la recette, et rien ne se rejoue après elle
-- [x] Le rendu reste un cache : effacer le rendu et le recalculer redonne exactement la même image
+**8 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -1031,6 +992,8 @@ phrase.
 
 ---
 
+---
+
 ### E6 · La superposition quitte la recette
 **User stories** : 211, 212, 213, 214, 215 · *8 critères · tenue le 31 août 2026*
 
@@ -1051,16 +1014,9 @@ La maquette de la superposition rouvrait cette promesse ; le sommaire du chantie
 lui-même « à reprendre » et écrit qu'aucune mesure ne la soutient
 (`docs/v21-arbitrages.md` A-12).
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Les deux images d'une superposition se choisissent à l'écran et s'intervertissent
-- [x] L'image du dessus se détoure sans quitter l'écran, et hérite par défaut des passes de celle du dessous
-- [x] Le calage se fait au pixel, au rail et au clavier, après une proposition automatique reprenable
-- [x] Un recalage raté ne demande jamais de repayer une génération
-- [x] Les trois vues — travail, calque seul sur fond vif, résultat — sont visibles ensemble
-- [x] Les réglages se conservent pour la pièce suivante posée sur la même image
-- [x] La superposition écrit des fichiers et ne pose aucun état sur la recette de l'image courante
-- [x] Le corps d'origine n'est jamais modifié, et aucun écran ne propose de reposer un calque sur une autre pose
+**8 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -1108,6 +1064,8 @@ déborde** — jamais un calcul.
 
 ---
 
+---
+
 ### E7 · L'onglet Univers à trois côtés
 **User stories** : 221, 222, 223, 224 · *8 critères · tenue le 31 août 2026*
 
@@ -1125,16 +1083,9 @@ colonne de prose et défile. Le menu d'un paquet d'images gagne **faire une pale
 Et l'univers se lit enfin : combien de cases de texte partent, combien de signes, quelles
 images, et ce qui n'agit qu'au retour.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Trois côtés, un seul allumé, et le côté allumé occupe tout l'écran sous une barre de 38 px
-- [x] Côté Inspiration, aucun réglage n'est posé au-dessus du tableau
-- [x] La première image d'inspiration est atteinte en moins d'un écran de défilement — *mesuré au navigateur : 54 px, dans 650 px visibles*
-- [x] Une carte de texte a la hauteur de son cran de zoom et dit en pied ce qui est coupé
-- [x] Une carte de texte ouverte en grand se pose en colonne de prose bornée, et défile
-- [x] Le menu d'un paquet propose de fabriquer une palette et une ambiance, grisés avec leur raison tant que l'écran qui les tient n'existe pas
-- [x] Un bandeau permanent dit ce que l'univers envoie : le nombre de cases de texte, le nombre de signes, les images, et ce qui n'agit qu'au retour
-- [x] Les deux côtés qui portent une liste emploient la colonne de 240 px, et rien de neuf — *un seul en porte une pour l'instant ; le second arrive avec les ambiances, en E11*
+**8 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -1174,6 +1125,8 @@ repliable, la réserve, et seulement en vue toile.
 
 ---
 
+---
+
 ### E8 · L'assistant de démarrage — dix étapes, et le seul écran de réglages
 **User stories** : 225 à 236 · *13 critères, 12 tenus le 31 août 2026*
 
@@ -1196,21 +1149,9 @@ L'étape 6 assemble un texte tout prêt à copier dans un outil d'images grand p
 qu'un centime passe par l'atelier. Un changement qui casse du travail déjà payé annonce les
 vrais chiffres — combien d'images, combien ça coûte — et **ne bloque jamais**.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] L'assistant s'ouvre à la création d'un jeu et se rouvre à volonté, sans perdre ce qui est déjà répondu
-- [x] Il n'existe aucun autre écran qui règle un jeu — l'assistant est celui-là
-- [x] Les étapes s'enchaînent dans l'ordre la première fois, et se cliquent directement ensuite
-- [x] La colonne des étapes porte la valeur de chacune, et se lit comme le récapitulatif du jeu
-- [ ] La vue et la taille se choisissent sur des vignettes qui les montrent — **le seul critère ouvert.** Les cases sont là et vont chercher `/vignettes/<identifiant>.png` ; les dix-sept images ne sont pas dessinées, et tant qu'elles manquent chaque case le dit — *pas encore dessinée* — plutôt que de faire semblant. Les consignes de production vivent dans `docs/vignettes-vues.md`
-- [x] Un choix unique remplit le réglage et la phrase du texte qui part, et il n'existe aucun moyen de les rendre contradictoires
-- [x] Une étiquette porte son libellé et son texte anglais, et cliquer le libellé écrit le texte anglais dans la case
-- [x] La base d'étiquettes est partagée par tous les jeux de l'atelier, part vide, et n'est jamais préremplie à la place de l'auteur
-- [x] Une recherche d'étiquettes ne montre que celles de la case où l'on se trouve
-- [x] Le texte à copier s'assemble depuis les réglages, se copie d'un geste, et ne déclenche aucun appel payant
-- [x] Chaque type d'objet tient sur une rangée qui dit tout ce qu'il porte, jamais sur trois contrôles dépliés
-- [x] Un changement qui casse du travail payé annonce le nombre d'images et le coût, et laisse passer
-- [x] Une liste vide dit ce qui décidera à sa place
+**12 critères tenus sur 13.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -1254,6 +1195,8 @@ plaindre.
 
 ---
 
+---
+
 ### E9 · Les poses appartiennent au type d'objet
 **User stories** : 245, 246, 247, 248
 
@@ -1269,41 +1212,16 @@ qu'on sache toujours qui la reproposera demain. Et ce qu'on range se relègue so
 barré et pâle, plutôt que de disparaître : on défait un rangement sans se rappeler ce qu'on a
 rangé.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Chaque type d'objet porte sa propre liste de poses, et changer l'une ne touche pas les autres
-- [x] Une chose du jeu peut ajouter une pose à elle seule, sans qu'une case vide paraisse chez les autres
-- [x] La fiche d'une chose écrit l'origine de chaque pose — venue du type, ou ajoutée ici
-- [x] Ce qui est rangé se relègue sous un trait, barré et pâle, et se dérange d'un clic
-- [x] Les plans de poses existants sont repris sans perte : aucune image ne se retrouve orpheline
-- [x] Une tuile n'a pas de rangée de poses du tout, plutôt qu'une rangée grisée
-
-#### Ce qui a été décidé en la faisant
-
-**Deux types suivent le plan du jeu, les autres ont le leur.** Un personnage et une créature
-continuent de recevoir ce que le jeu déclare — sans quoi une attitude ajoutée au plan cesserait
-de paraître là où on l'attend le plus. Les six autres types reçoivent ce que l'atelier propose
-pour eux, et une chose sans type reçoit le plan du jeu : c'est l'état d'avant la tranche, et
-c'est ce qui reprend les jeux existants sans qu'un seul fichier soit réécrit.
-
-**Vider n'est pas oublier.** La liste vide d'un type est une décision qui tient — un décor ne
-réclame rien —, et « revenir à la liste proposée » est un second geste, qui efface la liste
-écrite au lieu de la vider. Sans lui, un type ne pourrait jamais revenir en arrière : il
-faudrait retaper la liste de mémoire, et la moindre faute de frappe ferait une case orpheline.
-
-**Le × ne veut pas dire la même chose des deux côtés.** Une pose du type se *range* — elle
-reviendra chez les autres, et le trait la garde à un clic. Une pose ajoutée ici s'*efface* :
-elle n'existe que sur cette chose, et la reléguer aurait laissé une ligne barrée que rien ne
-reproposera jamais.
-
-**Une liste de poses ne s'efface pas par un message qui n'en parle pas.** Le barème envoie
-trois champs et pas la liste ; le service relit ce que le fichier gardait et le repose. C'est
-le motif payé deux fois en E5, écrit dans `docs/PIEGES.md` avant qu'un utilisateur ne le paie.
+**6 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E2** — le codex est l'endroit où les listes que le jeu impose se règlent.
 - **E8** — l'étape des types d'objets remplit ces listes.
+
+---
 
 ---
 
@@ -1328,65 +1246,16 @@ la déclaration se rangent dans la première direction avec la marque **à confi
 compte de celles qui l'attendent : un rangement par défaut ne se fait pas passer pour une
 déduction.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] La vue du jeu se déclare une fois, et la liste des directions s'en déduit
-- [x] Les directions se renomment, se retirent et s'ajoutent depuis le codex
-- [x] Une case du plan est une pose dans une direction, et le produit nomme la direction qui manque
-- [x] L'attitude s'écrit une fois sur la pose, la direction une fois sur la direction, et la consigne se compose des deux
-- [x] Le nom d'une pose part en anglais, et rien de français ne subsiste dans le texte envoyé
-- [x] Déclarer des directions propose de ramener à un le nombre d'images des poses concernées, avec la raison, et la proposition se défait d'un clic
-- [x] Les images antérieures se rangent dans la première direction, marquées « à confirmer », avec leur compte
-- [x] Une direction se range pour une pose du projet entier, ou pour une seule chose du jeu
-- [x] Une pose demande *tant d'images dans tant de directions*, et la jauge affiche toujours le produit des deux, jamais les deux facteurs séparés
-
-#### Ce qui a été décidé en la faisant
-
-**La liste lue et la liste écrite ne font pas la même promesse, et le codex dit laquelle.**
-Tant qu'on n'y touche pas, la liste des directions **suit la vue du jeu** — c'est ce que la
-colonne affiche, *4 · lues*. Dès qu'on renomme, retire ou ajoute, elle cesse de suivre, et
-elle le dit. L'alternative — réécrire la liste à chaque changement de vue — aurait effacé en
-silence des noms choisis à la main ; l'autre alternative — ne jamais suivre — aurait demandé
-de tout retaper pour un jeu qui change d'angle. Le retour à la proposition est à un clic,
-parce que sans lui il faudrait la retaper de mémoire.
-
-**Le nom se lit, la consigne part — deux textes, et un seul sort.** C'était le même texte
-jusqu'ici, et le nom français d'une pose partait au milieu d'une phrase anglaise. Les séparer
-coûte un champ sur la pose et un sur la direction, et répare ça d'un coup. **Le produit ne
-traduit pas à la place de l'auteur** : une pose qu'il n'a pas proposée n'a pas de consigne, et
-c'est alors le nom qui part, comme avant — inventer un texte qui partira dans un appel payé
-n'est pas une commodité.
-
-**Et les projets d'avant reçoivent l'anglais sans qu'un fichier soit réécrit.** Un plan relu
-d'un fichier d'avant E10 porte les six attitudes que tous les projets partageaient ; la
-consigne que le produit proposait pour chacune leur est rendue **à la lecture**. Mesuré sur le
-vrai projet : `marche` part en `walking posture, full body` dès la génération suivante, et pas
-une ligne n'a été écrite pour ça.
-
-**Manquer, c'est n'avoir rien du tout.** La rangée d'une attitude nomme les directions
-**vides**, pas les incomplètes : une direction commencée porte déjà son compte sur sa propre
-rangée, et la nommer deux fois aurait fait lire *il manque sud* sous une image de sud.
-
-**La portée large écrit là où la pose est déclarée, et la réponse dit laquelle.** Depuis E9
-une pose vit dans le plan du jeu ou dans la liste d'un type ; écrire ailleurs qu'à sa source
-aurait fait deux vérités sur la même question. Le service rend donc *jeu* ou *type meuble*
-plutôt que de promettre « tout le projet » — et une attitude ajoutée sur une seule chose n'a
-pas de portée large du tout, ce que le refus dit plutôt que d'écrire au hasard.
-
-**La défaite de la proposition est gardée sur le disque.** Tout l'intérêt de la baisse est de
-ne pas prendre l'auteur en traître ; une défaite qui disparaîtrait au rechargement laisserait
-ouvert très exactement le piège qu'elle ferme. Un champ sur la pose, qui ne porte que ça, et
-que la première retouche du chiffre à la main efface.
-
-**Mesuré sur le vrai projet, le 31 août 2026.** La bible dit `4-directional orientation`,
-`repos` et `marche` demandent quatre images : la proposition les nomme, cite la bible mot pour
-mot, et annonce **48 cases → 24**. Sans elle, déclarer la vue faisait passer chaque
-personnage de douze cases à quarante-huit d'un coup.
+**9 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E9** — les deux étapes touchent la même liste : déplacer une liste courte coûte moins que déplacer une liste déjà multipliée par quatre.
 - **E8** — la vue du jeu se déclare à l'assistant.
+
+---
 
 ---
 
@@ -1410,53 +1279,16 @@ jamais par la collection où elle est rangée — une collection reste un dossie
 rien. Et supprimer une ambiance ne détruit aucune image : ce qui s'en servait retombe
 simplement sur le jeu.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Plusieurs palettes nommées coexistent dans un jeu, et celle du projet en est une comme les autres
-- [x] Une palette se recalcule de ses sources, ses sources peuvent être d'autres palettes, et ses retouches se défont une par une
-- [x] Chaque couleur du résultat dit d'où elle vient ; une couleur retirée reste montrée barrée et se remet d'un clic
-- [x] La palette se juge posée sur de vraies images du jeu, côte à côte
-- [x] Une ambiance porte une palette, des images de référence et trois textes, et rien d'autre
-- [x] Les textes qui portent la mécanique du jeu ne sont pas ouverts à une ambiance
-- [x] Une chose du jeu désigne son ambiance sur sa fiche ; aucune collection ne décide d'une ambiance
-- [x] Les deux écrans disent qui utilise une ambiance et ce que chacun lui prend
-- [x] Supprimer une ambiance ne détruit aucune image ; ce qui s'en servait retombe sur le jeu
-- [x] Aucun appel payant n'est ajouté : la fusion des palettes et la correction des couleurs se font sur la machine
-- [x] L'attraction est grisée avec sa raison quand la proportion ne laisse aucune couleur à l'ambiance — mesuré : dans ce cas seul, les cinq valeurs rendent le même fichier
-
-#### Ce qui a été décidé en la faisant
-
-**Chaque couleur du résultat est vraiment l'une de celles d'une source.** La coupe médiane
-rend des moyennes — le milieu d'un seau —, et une moyenne n'est la couleur d'aucune source :
-la pastille aurait dit « venue du jeu » en montrant une teinte que le jeu ne porte pas. Chaque
-seau revient donc à la couleur réelle la plus proche. C'est le seul écart avec le banc
-d'essai, et il **ajoute** une garantie plutôt qu'il n'en retire : la mesure des deux curseurs
-est refaite après le raccrochage et donne le même compte — 21 résultats distincts sur 25.
-
-**Une source seule donne toute la palette.** Le curseur de proportion partage entre la
-première source et les suivantes ; sans suivante, il n'a rien à partager. Le laisser décider
-aurait rendu une palette **vide** sur le cas le plus courant — celui de la palette du jeu, qui
-n'a jamais qu'une source. Il est alors absent avec sa raison, et l'attraction est grisée avec
-la sienne.
-
-**L'empreinte porte les couleurs résolues, pas la liste des sources.** Sans ça, ajouter une
-carte à un paquet n'aurait rien recalculé, et c'est très exactement ce que la tranche promet
-de préserver : promouvoir une image se propage jusqu'en bas, même à travers une ambiance
-retouchée à la main.
-
-**Ce qu'une chose prend à son ambiance vit sur la chose.** Trois réponses — tout, les couleurs
-seulement, tout sauf les images —, mesurées sur les trois cas réels de la maquette. Ce que
-*chaque génération* a réellement pris reste à E14 : c'est une autre question, et la même
-liste écrite à deux endroits aurait divergé.
-
-**Les deux gestes du paquet cessent d'être grisés.** Ils portaient leur raison depuis E7 —
-« les palettes et les ambiances n'ont pas encore d'écran où vivre » — et cet écran existe. La
-raison a disparu parce qu'elle a cessé d'être vraie, pas parce qu'on l'a effacée.
+**11 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E7** — les ambiances sont un des trois côtés de l'Univers.
 - ~~Le banc d'essai des couleurs, étendu~~ — **levé le 31 août 2026.** Les deux curseurs agissent, sur les six images essayées et sur les cinq valeurs de chacun, et croisés ils rendent 21 résultats distincts sur 25 combinaisons : ils ne font pas le même travail. Le banc a en plus trouvé le seul endroit où l'attraction meurt — à proportion « tout du jeu », il ne reste aucune couleur d'ambiance à tirer —, et c'est là qu'elle se grisera avec sa raison. Un critère d'acceptation de plus est né de là, le dernier ci-dessus.
+
+---
 
 ---
 
@@ -1481,49 +1313,16 @@ cela difficile. La matrice change à droite pendant qu'on règle — on voit ce 
 coûte ou économise au moment où on le fait — et le compte des places d'images du modèle se lit
 à côté de celles qu'on occupe.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] L'écran rassemble l'identité, l'équipement, les références, ce qui est réclamé et ce qui est fait
-- [x] Chaque texte porte son origine parmi les cinq, et l'origine est lisible sans clic
-- [x] Un texte écrit ici montre en dessous, barré, celui qu'il remplace
-- [x] La valeur imposée par le projet se lit sous le texte qui part, et un désaccord se voit sans le chercher
-- [x] Une image déjà fabriquée se promeut en référence permanente d'une chose du jeu
-- [x] L'atelier propose de lui-même le corps retenu ~~et la planche des directions~~, avec leur provenance — *la planche attend `E13` : les directions existent depuis `E10`, mais l'image qui les montre ensemble est une planche de pose. La fiche le dit à sa place plutôt que de laisser un vide*
-- [x] La matrice se met à jour pendant qu'on règle, à droite de la fiche
-- [x] Le nombre de places d'images du modèle se lit à côté du nombre occupé, avant de payer
-- [x] Une jauge ne compte que ce qu'on peut fabriquer maintenant — ce qui est rangé n'est jamais compté comme manquant
-- [x] Le panneau de 380 px de la galerie n'a pas changé de métier : il reste la fiche d'une image
-
-#### Ce qui a été décidé en la faisant
-
-**Éteindre n'est pas vider, et vider n'est pas éteindre.** Une case vide est un texte qu'on n'a
-pas écrit — elle rend la case au jeu, ou à l'ambiance. Une case éteinte est un refus écrit :
-ce champ ne part pas pour cette chose-là, et il se rallume d'un clic. Les confondre aurait
-rendu le refus indistinguable de l'oubli, donc impossible à défaire.
-
-**Trois couches, et l'ordre est celui de la décision** : ce que la chose écrit gagne sur ce que
-l'ambiance donne, qui gagne sur ce que le jeu dit. *Éteint* passe avant tout — un refus ne se
-discute pas avec ce qu'il refuse.
-
-**Le désaccord se mesure sur les carrés seulement.** `64x64` est une grille, `253x321` est la
-taille d'une image dont personne ne parle. La fiche ne corrige rien — la bible s'écrit dans
-l'Univers —, elle met le texte qui part et la valeur qui s'applique côte à côte. Sur le vrai
-projet, elle a nommé les deux champs coupables du premier coup.
-
-**Une image promue est une quatrième provenance, et elle a son mot.** « Réinjection » dit
-*l'auteur l'a posée pour cet appel* ; une image promue part avec **tous** les appels de sa
-chose. Les confondre aurait fait décocher en aveugle sur l'écran de confirmation.
-
-**La planche des quatre directions n'est pas proposable avant E13**, et la fiche le dit à sa
-place plutôt que de laisser un vide. Écrit ici *avant E10*, corrigé après elle : les
-directions existent maintenant, et le produit sait qu'une pose est complète dans toutes les
-siennes — ce qui manque n'est plus la notion, c'est **l'image qui les montre ensemble**, et
-c'est une planche de pose.
+**10 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E2** — le codex ouvre cette fiche.
 - **E11** — elle porte le champ « son ambiance », et ce champ n'a rien à désigner avant.
+
+---
 
 ---
 
@@ -1551,21 +1350,16 @@ que sur un seul, et qu'un gain annoncé sur une mesure unique est un gain **enca
 payé du dépôt le prouve, dont les quatre cases portaient course, attaque, dégâts et mort. Ce
 qui ne se partage jamais, c'est la chose du jeu.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [ ] Avant de payer, l'écran montre le nombre de cases, le texte de chacune, ce qui part en référence, et le prix
-- [ ] Chaque case porte sa pose et sa direction de destination avant l'envoi
-- [ ] La géométrie de la grille et la place de chaque case sont écrites par l'atelier, montrées, et non modifiables
-- [ ] Une planche n'est jamais gardée en bibliothèque ; ses morceaux le sont, filiés vers elle
-- [ ] Une planche ne porte qu'une seule chose du jeu
-- [ ] Deux poses partagent une planche quand chacune ne réclame qu'une case
-- [ ] Refaire les quatre est proposé à côté de compléter les trois, avec les trois prix et le nombre d'appels derrière chacun
-- [ ] Un compte de cases faux ne fait rien entrer, et le lot se relance d'un geste — l'invariant de C2 tient
+**8 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E10** — une case est une pose dans une direction ; sans les directions, la planche n'a rien à ranger.
 - ~~**Les trois appels de mesure de planche**~~ — **tirés le 31 août 2026**, $0,081 (`essais/essai_prix_planche.py`, relevé dans `essais/mesures_prix_planche.json`). Ce qu'ils ont trouvé change la question : trois cases et six cases ont coûté **le même prix**, $0,0139, pour la même taille d'image et la même durée ; cinq cases ont coûté $0,0534 sur un appel dont rien ne distingue le résultat. **Une planche coûte le prix d'un appel** quel que soit ce qu'elle porte — six cases reviennent à $0,0023 l'image contre $0,0128 pour une image seule —, mais **la variance entre deux appels identiques dépasse l'écart entre deux tailles de planche**. Le critère « les trois prix, avec le nombre d'appels derrière chacun » demande donc une décision d'écran avant d'être écrit : un prix par nombre de cases montrerait du bruit comme s'il montrait une structure.
+
+---
 
 ---
 
@@ -1595,24 +1389,16 @@ cours**, sans jamais pouvoir l'éteindre pour toujours. Et l'on lit aussi, en gr
 passera au retour — le découpage, la palette, le détourage — pour savoir d'avance que l'image
 qu'on verra n'est pas celle que le modèle envoie.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [ ] Chaque texte et chaque image qui part occupe sa propre ligne, avec un interrupteur
-- [ ] Une ligne éteinte ne part pas, et l'extinction ne remonte nulle part
-- [ ] Une correction faite ici vaut pour cet appel seulement ; un second geste, nommé, la garde sur la chose du jeu
-- [ ] Le sujet et la pose demandée ne peuvent pas s'éteindre, et leur marque le dit
-- [ ] Chaque image jointe porte son prix sur sa ligne ; une case éteinte garde le sien en gris
-- [ ] L'en-tête du groupe dit ce que les cases cochées pèsent dans le total de l'appel
-- [ ] Le texte montré vient du même chemin que l'envoi, et un essai le vérifie
-- [ ] Un avertissement s'écrit sur la ligne fautive, avec des chiffres, jamais en bandeau
-- [ ] Une case saute l'écran pour la série en cours et se remet à chaque nouvelle série ; aucun réglage ne l'éteint définitivement
-- [ ] Ce qui agira au retour se lit en gris, et se distingue de ce qui part
-- [ ] Ce qui a été pris de l'ambiance est enregistré avec la génération, et se relit sur une vieille image
+**11 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E13** — il paraît avant de payer une planche, et la planche est ce qu'on achète.
 - **E11** — il porte les trois interrupteurs de l'ambiance et l'option d'envoyer la palette en image.
+
+---
 
 ---
 
@@ -1633,56 +1419,15 @@ d'image à elle ne fait pas semblant d'en avoir.
 **C'est le travail de modèle le plus lourd de la V2.1**, et c'est ce qui rend le reste vrai
 pour autre chose qu'un personnage.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Les cinq familles portent des entités de plein droit, avec leur compte de manque
-- [x] Un établi ne montre aucune rangée « sans objet » ; ce qui n'existe pas pour la famille n'est pas dessiné
-- [x] Ce qui viendra plus tard reste grisé avec sa raison, et occupe sa place
-- [x] L'établi d'une pièce d'équipement montre les personnages qui la portent, pas des images
-- [x] Tout ce qui marchait pour un personnage marche pour une entité des quatre autres familles
-- [x] Aucun personnage existant ne perd quoi que ce soit à la généralisation
-
-#### Ce qui a été décidé en la faisant
-
-**Le travail de modèle le plus lourd de la V2.1 n'a ajouté aucun objet.** Une chose du jeu
-porte son **type** depuis E9, et un type porte sa **famille** depuis T4 : la généralisation
-est donc une *lecture*, pas une migration. Garder une famille sur la chose aurait fait deux
-vérités sur la même question, et elles auraient fini par se contredire — un meuble rangé dans
-les décors. C'est aussi ce qui rend vraie sans effort la promesse « aucun personnage existant
-ne perd quoi que ce soit » : pas un fichier n'a eu à être réécrit.
-
-**Nommer crée dans la famille où l'on nomme, et le type se voit.** « Un tonneau cerclé de
-fer » tapé sous *Objets* y reste : le produit pose le premier type de cette famille-là, et ce
-choix est écrit sur l'établi de la chose, dans un menu, changeable. Une décision du produit
-qui ne se verrait pas serait une décision prise à la place de l'auteur.
-
-**Ce qu'une famille ne peut pas avoir n'est pas dessiné, ce qui viendra reste grisé.** Un
-décor n'a pas de vestiaire : son établi ne montre aucune colonne d'équipement, sa fiche ne
-compte aucune pièce, et rien n'est barré ni pâle — il n'y a rien. Le grisé garde son seul
-emploi : réserver la place de ce qui sera construit plus tard, et dire pourquoi.
-
-**Une pièce d'équipement ne montre aucune image, et c'est tout son établi.** Le produit
-interdit de générer un casque sur fond vide — un casque n'existe qu'apparu sur un corps —,
-alors sa ligne dit *posée sur 2 personnages sur 3* et nomme lesquels, pose par pose. Comme
-une case pleine, ça se déduit des images : rien de plus n'est enregistré, et supprimer un
-calque retire la pièce du compte tout seul.
-
-**Trois mensonges d'écran sont tombés en ouvrant les autres familles**, et aucun ne se voyait
-tant que seuls des personnages existaient. Le compte de ce qui manque lisait **le plan du
-jeu** au lieu de ce que la chose réclame : un décor y gagnait douze cases manquantes qu'aucun
-écran ne sait remplir. Le pied de la colonne écrivait *0 décor, 0 objet, 0 élément
-d'interface* en dur. Et le fil d'Ariane disait *Personnages* quoi qu'on regarde — vrai tant
-qu'il n'y avait qu'une famille peuplée, faux dans quatre cas sur cinq dès qu'il y en a cinq.
-La règle générale se lit ici : **une constante écrite en dur est une vérité qui attend de
-devenir fausse**, et c'est la famille voisine qui la démasque.
-
-**Et une phrase périmée avec eux** : la colonne de droite disait « les ambiances n'ont pas
-encore d'écran où vivre », alors que E11 le leur a donné. Elle dit maintenant laquelle une
-chose désigne, ou qu'elle suit le style du jeu.
+**6 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E12** — la fiche d'une chose doit exister avant d'être servie à cinq familles ; l'écrire pour une puis la refaire pour cinq, c'est l'écrire deux fois.
+
+---
 
 ---
 
@@ -1702,38 +1447,15 @@ chose, ou une pose — sans trois écrans pour trois portées.
 La place du mouvement est **réservée et grisée avec sa raison**, plutôt qu'occupée par un
 lecteur posé sur zéro image.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] L'image se regarde seule, en grand, sur le fond que la bible du jeu décrit
-- [x] Les échelles sont des multiples entiers, et aucun lissage n'est appliqué à aucune
-- [x] Toutes les poses d'une chose se posent à la même échelle
-- [x] L'écran s'ouvre depuis le codex, depuis une fiche ~~et depuis une planche~~, et retient ce qu'on regardait — *la planche d'une pose est E13 ; la porte s'y posera avec elle, l'écran ne bouge pas*
-- [x] La place du mouvement est réservée et grisée avec sa raison
-- [x] Le fond de jugement vient du projet ; le damier de repérage reste ailleurs, et les deux ne se confondent nulle part
-
-#### Ce qui a été décidé en la faisant
-
-**La taille montrée est celle qu'on voit, pas celle qu'on espère.** Une image jamais traitée
-n'a pas de rendu, et c'est son brut qui s'affiche — vingt et une des quarante-huit images du
-vrai projet sont dans ce cas, et le codex les compte comme les autres. La vitrine les montre
-telles quelles : c'est très exactement ce qu'elle est venue faire.
-
-**La taille commune se déduit de ce qui existe, pas de la cible du projet.** Une chose peut
-avoir été fabriquée entière à une autre taille, et c'est alors elle qui est cohérente. Ce
-qu'on cherche est la sœur qui sort plus petite que les autres ; l'écart au réglage, lui, se lit
-dans la fiche.
-
-**Le noir n'est proposé que si la bible en parle, et la raison cite le texte.** Un fond posé
-sans raison serait un fond inventé, et le produit n'en invente pas. Vérifié sur le vrai
-projet : la citation nomme *absolute blackness*, mot pour mot.
-
-**La portée se donne, elle ne se devine pas.** Au monde, la pose d'une image existe aussi dans
-le plan du jeu : la deviner aurait écrit « repos » sous chacune des trois choses au lieu de
-leurs noms.
+**6 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E2** — le codex est sa porte principale.
+
+---
 
 ---
 
@@ -1755,61 +1477,16 @@ défait aucun calibrage. Il ajoute une seule chose au traitement, le **décalage
 la place *grille* : un bras tendu déplace le corps de six pixels dans une case de soixante-
 quatre, parce que le centrage horizontal se fait sur la boîte du sujet et ne se règle pas.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Toutes les poses d'une chose se superposent dans la même case
-- [x] Un bouton propose une taille commune, nomme la pose qui a limité le résultat, et dit le coût en résolution
-- [x] La reprise à la main se fait pose par pose, après la proposition
-- [x] Une pose très différente des autres est proposée comme mise de côté, et la mise de côté se défait
-- [x] Le calage s'écrit dans l'occupation, et changer la taille de case ne défait aucun calibrage
-- [x] Le décalage horizontal se règle et n'est écrit que par le calibrage — jamais à la main dans la table, jamais dans une recette nommée
-- [x] Le décalage vaut zéro par défaut, et une recette sans calibrage rend exactement l'image d'avant
-
-#### Ce qui a été décidé en la faisant
-
-**Le calcul est celui de la mise sur grille, jamais un second.** Ce qu'une pose peut atteindre
-sans sortir de sa case vaut `cible × hauteur / plus grand côté de la boîte`, et l'occupation à
-poser en est l'inverse exact. Deux formules auraient fini par annoncer une hauteur et en
-produire une autre — c'est très exactement la contradiction que cette étape répare, et la
-rejouer ici aurait été comique.
-
-**La hauteur commune est celle de la pose qui plafonne le plus bas**, et le produit la nomme.
-Un bouton qui pose une valeur sans dire d'où elle vient serait une décision prise à la place de
-l'auteur ; celui-ci écrit *c'est « mort » qui limite*, et ce que la cohérence coûte —
-*45 px de la case ne servent pas · 35 % de résolution en moins*.
-
-**Une seule pose est proposée à l'écart, et une décision prise arrête la proposition.**
-Écarter la plus basse fait de la suivante la plus basse ; reproposer alors finirait par ne
-garder qu'une pose, et l'outil aurait décidé à la place de l'auteur ce qu'il prétend seulement
-proposer. Le seuil est **un dixième**, et ce n'est pas un seuil de confort : c'est la part de
-hauteur que garder cette pose coûterait *à toutes les autres*.
-
-**Le décalage est borné à la case, et il s'y arrête.** Sortir de la case couperait le sprite en
-silence, et une case existe justement pour que rien n'en sorte. Aux bords, les boutons cessent
-d'avoir un effet — ce qui se voit, et c'est mieux qu'une image rognée.
-
-**Le calibrage n'épingle pas.** Toucher une recette à la main épingle l'asset depuis T2 ; ici
-ce n'est pas une main posée sur une image, c'est un calage que le jeu impose à toutes les poses
-d'une chose. L'épingler aurait exclu ces images du prochain réalignement de palette — même
-décision que le balayage rétroactif de T4, pour la même raison.
-
-**Ce n'est pas une table, et c'est ce qui décide de son emplacement.** Une table de la barre
-décrit l'image ouverte ; le calibrage travaille sur *toutes* les poses à la fois et écrit dans
-chacune. Le mettre dans la barre voudrait dire que la barre de l'image A porte un outil qui
-modifie les images B, C et D — la barre cesserait de vouloir dire quelque chose. Il est donc
-une profondeur de l'établi, comme la fiche et la vitrine, et comme elles il retire la barre qui
-paie : il ne fabrique rien.
-
-**Mesuré au navigateur sur le vrai projet, le 31 août 2026.** Cinq poses de Balthazar rendent
-128 pixels de haut ; sa mort en rend **83**. Dans le jeu, le nain rapetisse d'un tiers en
-mourant, et aucun écran ne le disait — six vignettes côte à côte ne le montrent pas, six
-silhouettes empilées, si. L'outil propose de mettre la mort de côté, et le fait de lui-même
-sans jamais le décider.
+**7 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E10** — le calibrage porte toutes les poses d'une chose, direction comprise.
 - **E3** — le décalage se pose à côté de l'ancrage, dans la table grille.
+
+---
 
 ---
 
@@ -1830,15 +1507,9 @@ cent** qu'aucun écran ne montrait. Et les appels consécutifs sur un même suje
 coup d'œil : six relances en trente-deux minutes ont coûté le quart de tout l'argent jamais
 dépensé, et rien ne le disait.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] Tous les appels payés se listent du plus récent au plus ancien, avec leur coût et leur résultat
-- [x] Les trois issues se distinguent : gardé, payé pour rien, refusé
-- [x] Supprimer une image change l'état de la ligne de son appel, et ne fait jamais disparaître la ligne
-- [x] Le total de l'atelier entier et la part qui n'appartient à aucun jeu se lisent tous les deux
-- [x] Les deux totaux du produit portent chacun son étiquette, et aucun montant n'est affiché nu
-- [x] Les appels consécutifs sur un même sujet se repèrent sans lire les horodatages un par un
-- [x] La liste n'est pas une grille d'assets — *reformulé en A-24 : ce n'est pas la privation de filtre qui le tient, c'est l'absence d'image et de sélection multiple*
+**7 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
@@ -1875,6 +1546,8 @@ galerie qui perd son bloc en E4, pas la route qui le sert.
 
 ---
 
+---
+
 ### E19 · Le premier lancement
 **User stories** : 300, 301, 302, 303
 
@@ -1892,56 +1565,16 @@ un menu.
 n'existait plus nulle part où écrire un prompt sur une installation neuve, et c'est ce trou
 que cette étape ferme — sans en creuser un autre, qui serait un tunnel.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [x] L'assistant s'ouvre à la première ouverture de l'atelier, sur un jeu qui existe déjà
-- [x] On en sort à n'importe quelle étape, et l'on arrive dans le codex avec le champ qui nomme allumé
-- [x] La clé se dépose depuis l'assistant, et c'est la même valeur au même endroit que dans la fenêtre des réglages
-- [x] La barre du haut dit « aucune clé » dès la première seconde
-- [x] Le compte des écrans obligatoires du produit est zéro, et un essai le vérifie
-- [x] Sur une installation neuve, on atteint un prompt actif sans avoir répondu à une seule question
-
-#### Ce qui a été décidé en la faisant
-
-**Le premier lancement est un fait, jamais un drapeau.** Le reconnaître demandait de savoir
-si on l'avait déjà vu ; un drapeau posé une fois aurait été un état de plus à tenir, à effacer
-quand on remet l'atelier à zéro, et à expliquer le jour où il se serait désaccordé du disque.
-Trois faits suffisent : **aucune image nulle part, un seul jeu, et il porte encore le nom que
-le produit lui a donné**. Chacun cesse d'être vrai au premier geste — importer, nommer son
-jeu, en créer un second —, et c'est exactement quand la porte doit se refermer.
-
-**La clé n'en fait pas partie**, et c'est délibéré : elle peut venir de l'environnement,
-posée par quelqu'un qui n'a jamais ouvert l'atelier. Un jeu neuf reste un jeu neuf, et
-l'étape 10 dira simplement qu'elle est déjà là.
-
-**Et l'assistant ne se rouvre qu'une fois par onglet.** Le message d'état repart à chaque
-rebranchement du flux ; le rejouer aurait ramené l'écran de la première minute par-dessus ce
-qu'on était en train de faire. Une porte qui se rouvre sous les doigts de quelqu'un n'est plus
-une porte.
-
-**La clé est montée dans la barre du haut, et elle a quitté celle du bas.** Elle est le seul
-préalable dur du produit : la lire ne doit pas demander d'ouvrir quoi que ce soit. Écrite aux
-deux endroits, elle aurait été **deux endroits à tenir d'accord** pour une seule valeur — et
-sans clé, le mot mène au champ, comme le bouton qui paie éteint porte déjà sa raison *et* le
-chemin vers son réglage. Trois portes, une seule pièce.
-
-**Le champ qui nomme réclame le curseur après tout le monde.** La barre qui paie monte dans la
-même passe et le prend sans condition — c'est le geste de l'atelier, et il a raison partout
-ailleurs. En sortant de l'assistant, le geste demandé est de *nommer* : le champ le réclame
-donc à la frame suivante, quand chacun a fini de se monter. Écrit ici parce que ça se lit
-comme un détail et que c'en est un — mais un détail qui décide de ce que le premier geste du
-produit peut être.
-
-**Vérifié sur une installation vraiment neuve, et pas sur celle de l'auteur.** Le banc de
-`tests/test_e19.py` monte un atelier vide à chaque essai : c'est le seul endroit du dépôt où
-la seconde zéro se rejoue à volonté. Ce qui a été vu au navigateur, sur le vrai projet, est ce
-qui s'y voit — la clé dans la barre du haut, et la sortie de l'assistant qui dépose dans le
-codex, curseur dans le champ qui nomme.
+**6 critères, tous tenus.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **E8** — c'est l'assistant qui s'ouvre.
 - **E2** — c'est le champ qui nomme qui rattrape la sortie.
+
+---
 
 ---
 
@@ -1968,21 +1601,15 @@ affiche son zéro** au lieu de disparaître — un manque doit se voir dans le g
 réglage sans explication n'a simplement pas de trait sous son nom** — un trou du guide ne doit
 jamais se voir dans le travail.
 
-#### Critères d'acceptation
+#### Critères d'acceptation → `docs/tranches/V2.1.md`
 
-- [ ] Le guide fait le tour des lieux qui existent, et dit lequel n'est pas un onglet
-- [ ] La boucle du produit commence par « nommer »
-- [ ] Les explications sont rangées par lieu et dans l'ordre où on les rencontre
-- [ ] Un groupe sans explication affiche son zéro
-- [ ] Un réglage sans explication n'a pas de trait sous son nom, et rien ne signale le manque dans le travail
-- [ ] Les six phrases fausses sont corrigées, et aucune ne nomme un écran disparu ni ne compte cinq places
-- [ ] Les deux entrées du modèle de palette d'avant sont réécrites
-- [ ] Les quatorze entrées manquantes sont présentes, dont celle de la clé du fournisseur — qui empêche absolument tout tant qu'elle est vide et n'avait pas une ligne
-- [ ] Le titre du guide reste en serif, ses titres de section en sans majuscules, et sa colonne de prose reste bornée
+**9 critères, aucun encore tenu.** Ils s'y lisent un par un, avec ce qui a été décidé en la faisant.
 
 #### Bloquée par
 
 - **Toutes les autres.** Un guide écrit au milieu du plan est un guide à réécrire à la fin.
+
+---
 
 ---
 
