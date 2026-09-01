@@ -35,8 +35,8 @@ bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 soir — la première sur la V2.1 entière (quinze points, trois déjà fermés, neuf étapes), la
 seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-sept
 critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
-critères dans `docs/tranches/U.md`. **`U1`, `U2`, `U3`, `U4` et `U11` sont tenues depuis le
-1<sup>er</sup> septembre 2026 ; les huit autres restent à construire.**
+critères dans `docs/tranches/U.md`. **`U1` à `U5` et `U11` sont tenues depuis le
+1<sup>er</sup> septembre 2026 ; les sept autres restent à construire.**
 
 `U1` passe d'abord parce que c'est la seule qui coûte de l'argent réel — cinq clics sur le
 bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`

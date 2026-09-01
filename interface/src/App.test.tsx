@@ -34,6 +34,7 @@ import { App } from "./App"
 import { reinitialiserApercu } from "./composants/Apercu"
 import { toutReplier } from "./composants/chassis"
 import { reinitialiserGuide } from "./composants/Guide"
+import { reinitialiserPressePapier } from "./composants/Tables"
 import { AIDE, SANS_ENTREE } from "./aide"
 import { POSE_VIDE } from "./api"
 import { COULEUR_TEINTE, NOM_TEINTE, RECETTE_VIDE, TEINTES } from "./api"
@@ -69,6 +70,7 @@ import type {
   Planche,
   Pose,
   PosesDesTypes,
+  Recette,
   RetoucheDePalette,
   SourceDePalette,
   Teinte,
@@ -629,6 +631,54 @@ const carteImage = (identifiant: string, sur: Partial<Carte> = {}): Carte => {
  * Le POST de génération **publie avant de répondre** : l'ordre du vrai serveur,
  * qui enregistre, annonce, puis rend la main.
  */
+/** La règle du voyage, rejouée par le double — *un réglage voyage, une
+ *  coordonnée ne voyage pas* (U5).
+ *
+ *  **Elle est écrite deux fois dans le dépôt, ici et dans le domaine**, et
+ *  c'est le prix ordinaire d'un double : il doit répondre comme le serveur
+ *  répond, sans quoi l'essai mesure l'écran contre une fiction. Ce qu'elle rend
+ *  n'est jamais comparé au serveur ici — c'est `tests/test_u5.py` qui tient la
+ *  vraie règle, et c'est lui qui la vérifie place par place. */
+function voyageDouble(recette: Recette): [Recette, string[]] {
+  const laisse: string[] = []
+  if (recette.difference) laisse.push("la différence du calque")
+  const vises = recette.passes.filter((p) => p.point !== null).length
+  if (vises) laisse.push(`${vises} point de pipette`)
+  if (recette.recadrage?.boite) laisse.push("le cadre tracé à la main")
+  if (recette.grille && recette.grille.decalage !== 0)
+    laisse.push("le décalage du calibrage")
+  if (recette.main && (recette.main.opacite.length || recette.main.calques.length))
+    laisse.push("les passages de la main")
+  return [
+    {
+      ...recette,
+      passes: recette.passes.map((p) => ({ ...p, point: null })),
+      difference: null,
+      recadrage: recette.recadrage ? { ...recette.recadrage, boite: null } : null,
+      grille: recette.grille ? { ...recette.grille, decalage: 0 } : null,
+      main: null,
+      nom: null,
+    },
+    laisse,
+  ]
+}
+
+/** L'asset visé, où qu'il soit rangé — en galerie ou dans une case. */
+function trouverAsset(
+  etat: { assets: Asset[]; personnages: Personnage[] },
+  identifiant: string,
+): Asset {
+  const range = etat.personnages
+    .flatMap((p) => p.cases)
+    .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+    .find((a) => a.identifiant === identifiant)
+  return (
+    range ??
+    etat.assets.find((a) => a.identifiant === identifiant) ??
+    asset(identifiant, "une image")
+  )
+}
+
 function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
@@ -719,6 +769,9 @@ function serveurDouble(options: {
   /** Les deux listes du côté Ambiances (E11). */
   palettes?: PaletteNommee[]
   ambiances?: AmbianceDuJeu[]
+  /** Les recettes nommées déjà sur le disque (U5). Le double les tient comme le
+   *  serveur les tient : enregistrer, rappeler et oublier agissent dessus. */
+  recettes?: Record<string, Recette>
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -755,6 +808,11 @@ function serveurDouble(options: {
     calibrage: options.calibrage,
     refusCalibrage: options.refusCalibrage,
     planche: options.planche,
+    // **Les recettes nommées** (U5). Elles vivent sur le disque du vrai
+    // serveur, donc dans l'état du double : les tenir dans le corps de la
+    // requête aurait fait d'*enregistrer puis rappeler* deux gestes sans lien,
+    // et c'est précisément le lien que l'étape ajoute.
+    recettes: options.recettes ?? ({} as Record<string, Recette>),
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -1221,6 +1279,62 @@ function serveurDouble(options: {
       etat.assets = [ne, ...etat.assets]
       return rendre({ asset: ne, doublon: null })
     }
+    // ── Ce qui voyage d'une image à l'autre (U5) ───────────────────────────
+    //
+    // **Le double coupe comme le serveur coupe**, et c'est indispensable : ce
+    // que l'étape promet est qu'une coordonnée ne voyage pas et que ce qui est
+    // laissé se dit. Un double qui rendrait la recette telle qu'elle est partie
+    // laisserait passer un écran qui ne montre jamais l'annonce, et l'essai
+    // dirait vert sur un produit muet.
+    if (url === "/api/recipes" && init?.method === undefined)
+      return rendre({ recettes: etat.recettes })
+
+    if (url.startsWith("/api/recipes/")) {
+      const nom = decodeURIComponent(url.slice("/api/recipes/".length))
+      if (init?.method === "DELETE") {
+        const restantes = { ...etat.recettes }
+        delete restantes[nom]
+        etat.recettes = restantes
+        return rendre({ recettes: etat.recettes })
+      }
+      if (init?.method === "PUT") {
+        const [voyageable, laisse] = voyageDouble(corps as Recette)
+        etat.recettes = { ...etat.recettes, [nom]: voyageable }
+        return rendre({ recettes: etat.recettes, laisse })
+      }
+    }
+
+    if (url.endsWith("/paste") && init?.method === "POST") {
+      const vise = url.split("/")[3]
+      const [voyageable, laisse] = voyageDouble(corps as Recette)
+      return rendre({
+        asset: { ...trouverAsset(etat, vise), recette: voyageable },
+        laisse,
+      })
+    }
+
+    if (url.includes("/apply/") && init?.method === "POST") {
+      const [vise, nom] = [url.split("/")[3], decodeURIComponent(url.split("/apply/")[1])]
+      const enregistree = etat.recettes[nom]
+      if (!enregistree)
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "recette_refusee",
+            raison: `aucune recette nommée « ${nom} »`,
+            ou_aller: null,
+          }),
+        } as unknown as Response
+      // **Le voyage est refait au rappel**, comme le serveur le refait : le
+      // disque porte des recettes écrites avant que la règle existe.
+      const [voyageable, laisse] = voyageDouble(enregistree)
+      return rendre({
+        asset: { ...trouverAsset(etat, vise), recette: { ...voyageable, nom } },
+        laisse,
+      })
+    }
+
     // ── La main sur un calque (C4) ─────────────────────────────────────────
     //
     // **Le double écrit, puis il annonce** — l'ordre du vrai serveur, celui dont
@@ -14189,5 +14303,278 @@ describe("une table s'éteint, et ça se voit", () => {
     await waitFor(() =>
       expect(document.querySelector("[data-table-reveillee]")).toBeNull(),
     )
+  })
+})
+
+// ── U5 · Les réglages voyagent d'une image à l'autre ─────────────────────────
+//
+// **Deux gestes, deux durées de vie.** Copier-coller sert la séance en cours ;
+// les recettes nommées lui survivent. Ils répondent à la même question — *je
+// veux ces réglages-là, ailleurs* — et vivent donc au même endroit, un panneau
+// au bout de la barre des tables, à côté de `tout défaire` : les deux ont la
+// portée de la recette entière.
+//
+// **La règle du voyage n'est pas vérifiée ici** : elle vit dans le domaine, et
+// `tests/test_u5.py` la mesure place par place. Ce qui se vérifie ici est que
+// l'écran envoie la recette entière, prend ce que le serveur a décidé, et
+// **répète ce qu'il a laissé** — le critère « un collage annonce ce qu'il a
+// posé, et ce qu'il n'a pas pu poser ».
+
+describe("les réglages voyagent d'une image à l'autre", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+    reinitialiserPressePapier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const PASSE = {
+    moteur: "bord" as const,
+    tolerance: 28,
+    seuil_alpha: 128,
+    durcissement: 0,
+    point: null,
+    portee: "tache" as const,
+  }
+
+  const AVEC_IMAGES = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  /** Deux images sous la même case : celle qui porte les réglages, et la voisine
+   *  vide sur laquelle on collera. La colonne *Ses sœurs* les met à un clic
+   *  l'une de l'autre, ce qui est exactement le geste que l'étape sert. */
+  const DEUX = (recette: Partial<Recette> = {}) => [
+    {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: { ...RECETTE_VIDE, passes: [PASSE], ...recette },
+    } as Asset,
+    { ...asset("bbbb2222-1", "le nain, au repos, encore") } as Asset,
+  ]
+
+  const ouvrirLesTables = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    images = DEUX(),
+  ) => {
+    const double = serveurDouble({ personnages: [AVEC_IMAGES(images)], ...options })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  /** Le panneau des recettes, ouvert — et **laissé ouvert s'il l'était déjà**.
+   *
+   *  Il survit au passage à l'image voisine, et c'est délibéré : copier ici,
+   *  aller là, coller est le geste que l'étape sert, et un panneau qui se
+   *  refermerait au passage demanderait de le rouvrir au milieu du geste. */
+  const ouvrirLePanneau = async (cadre: ReturnType<typeof within>) => {
+    const bouton = cadre.getByRole("button", { name: /recettes/ })
+    if (bouton.getAttribute("aria-expanded") !== "true") fireEvent.click(bouton)
+    return within(
+      await waitFor(() => {
+        const panneau = document.querySelector("[data-recettes]")
+        if (!panneau) throw new Error("le panneau des recettes ne s'est pas ouvert")
+        return panneau as HTMLElement
+      }),
+    )
+  }
+
+  /** Passer à l'image voisine sans refermer la table — le geste de la colonne
+   *  des sœurs, et celui que le collage suppose. */
+  const passerALaSoeur = async (cadre: ReturnType<typeof within>, label: string) => {
+    fireEvent.click(cadre.getByRole("button", { name: new RegExp(label) }))
+    await waitFor(() =>
+      expect(document.querySelector("[data-tables]")).not.toBeNull(),
+    )
+  }
+
+  // ── « Copier puis coller donnent la même recette » ─────────────────────────
+
+  test("copier ici, coller là — et la recette entière est envoyée", async () => {
+    const { cadre, appels } = await ouvrirLesTables()
+
+    const panneau = await ouvrirLePanneau(cadre)
+    fireEvent.click(panneau.getByRole("button", { name: "Copier les réglages" }))
+    await passerALaSoeur(cadre, "le nain, au repos, encore")
+
+    const second = await ouvrirLePanneau(cadre)
+    fireEvent.click(second.getByRole("button", { name: "Coller" }))
+
+    const collage = await waitFor(() => {
+      const trouve = appels.filter((a) => a.url.endsWith("/paste")).pop()
+      if (!trouve) throw new Error("rien n'a été collé")
+      return trouve
+    })
+    // **L'écran envoie ce qu'il a sous les yeux, entier.** C'est le serveur qui
+    // coupe : deux découpages auraient fini par diverger.
+    expect((collage.corps as Recette).passes[0].tolerance).toBe(28)
+    expect(collage.url).toContain("bbbb2222-1")
+  })
+
+  test("tant que rien n'est copié, coller est inactif et dit pourquoi", async () => {
+    const { cadre } = await ouvrirLesTables()
+    const panneau = await ouvrirLePanneau(cadre)
+
+    const coller = panneau.getByRole("button", { name: "Coller" }) as HTMLButtonElement
+    expect(coller.disabled).toBe(true)
+    expect(panneau.getByText(/rien de copié/)).toBeTruthy()
+
+    fireEvent.click(panneau.getByRole("button", { name: "Copier les réglages" }))
+    await waitFor(() =>
+      expect(
+        (panneau.getByRole("button", { name: "Coller" }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    )
+  })
+
+  // ── « Un collage annonce ce qu'il a posé, et ce qu'il n'a pas pu poser » ───
+
+  test("un collage dit ce qui n'a pas voyagé, en le nommant", async () => {
+    const { cadre } = await ouvrirLesTables(
+      {},
+      DEUX({ recadrage: { marge: 0, boite: [4, 4, 20, 20] } }),
+    )
+
+    const panneau = await ouvrirLePanneau(cadre)
+    fireEvent.click(panneau.getByRole("button", { name: "Copier les réglages" }))
+    await passerALaSoeur(cadre, "le nain, au repos, encore")
+    const second = await ouvrirLePanneau(cadre)
+    fireEvent.click(second.getByRole("button", { name: "Coller" }))
+
+    const annonce = await waitFor(() => {
+      const trouve = document.querySelector("[data-recettes-annonce]")
+      if (!trouve) throw new Error("le collage n'a rien annoncé")
+      return trouve as HTMLElement
+    })
+    expect(annonce.textContent).toContain("cadre tracé")
+    expect(annonce.textContent).toContain("un endroit de l'autre image")
+  })
+
+  test("un collage qui n'a rien laissé le dit aussi", async () => {
+    // **Une liste vide et *rien du tout* ne disent pas la même chose.** La
+    // première est la seule bonne nouvelle que le panneau ait à donner ; les
+    // confondre l'aurait effacée.
+    const { cadre } = await ouvrirLesTables()
+
+    const panneau = await ouvrirLePanneau(cadre)
+    fireEvent.click(panneau.getByRole("button", { name: "Copier les réglages" }))
+    await passerALaSoeur(cadre, "le nain, au repos, encore")
+    const second = await ouvrirLePanneau(cadre)
+    fireEvent.click(second.getByRole("button", { name: "Coller" }))
+
+    await waitFor(() => {
+      const annonce = document.querySelector("[data-recettes-annonce]")
+      expect(annonce?.textContent).toContain("tous les réglages ont voyagé")
+    })
+  })
+
+  // ── « On enregistre, on applique, on oublie » ──────────────────────────────
+
+  test("on enregistre la recette courante sous un nom depuis la barre", async () => {
+    const { cadre, appels } = await ouvrirLesTables()
+    const panneau = await ouvrirLePanneau(cadre)
+
+    fireEvent.change(panneau.getByLabelText("le nom de la recette"), {
+      target: { value: "sprite 32" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: "Enregistrer" }))
+
+    const envoi = await waitFor(() => {
+      const trouve = appels.filter((a) => a.url.includes("/api/recipes/")).pop()
+      if (!trouve) throw new Error("rien n'a été enregistré")
+      return trouve
+    })
+    expect(decodeURIComponent(envoi.url)).toContain("sprite 32")
+    // Et la liste s'est remplie sans qu'on ait rouvert le panneau : le serveur
+    // rend la liste entière à chaque geste qui la change.
+    expect(await panneau.findByText("sprite 32")).toBeTruthy()
+  })
+
+  test("un nom déjà pris propose de remplacer, et ne remplace pas au premier clic", async () => {
+    const { cadre, appels } = await ouvrirLesTables({
+      recettes: { "sprite 32": { ...RECETTE_VIDE, passes: [PASSE] } },
+    })
+    const panneau = await ouvrirLePanneau(cadre)
+
+    fireEvent.change(panneau.getByLabelText("le nom de la recette"), {
+      target: { value: "sprite 32" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: "Enregistrer" }))
+
+    // Rien n'est parti — le bouton demande d'abord.
+    expect(appels.filter((a) => a.url.includes("/api/recipes/")).length).toBe(0)
+    expect(await panneau.findByText(/existe déjà/)).toBeTruthy()
+
+    fireEvent.click(panneau.getByRole("button", { name: /Remplacer/ }))
+    await waitFor(() =>
+      expect(appels.filter((a) => a.url.includes("/api/recipes/")).length).toBe(1),
+    )
+  })
+
+  test("appliquer une recette nommée pose ce qu'elle emporte, et dit le reste", async () => {
+    const { cadre } = await ouvrirLesTables({
+      recettes: {
+        "d'avant": {
+          ...RECETTE_VIDE,
+          passes: [PASSE],
+          recadrage: { marge: 6, boite: [4, 4, 20, 20] },
+          grille: { cible: 32, occupation: 100, ancrage: "bas", decalage: 3 },
+        },
+      },
+    })
+    const panneau = await ouvrirLePanneau(cadre)
+
+    fireEvent.click(panneau.getByRole("button", { name: "appliquer" }))
+
+    const annonce = await waitFor(() => {
+      const trouve = document.querySelector("[data-recettes-annonce]")
+      if (!trouve) throw new Error("le rappel n'a rien annoncé")
+      return trouve as HTMLElement
+    })
+    expect(annonce.textContent).toContain("cadre tracé")
+    expect(annonce.textContent).toContain("décalage")
+    // Et ce qui a voyagé est arrivé dans la barre : la grille porte sa case.
+    expect(await cadre.findByText("32 px · 100 %")).toBeTruthy()
+  })
+
+  test("oublier une recette la retire de la liste", async () => {
+    const { cadre, appels } = await ouvrirLesTables({
+      recettes: { "sprite 32": { ...RECETTE_VIDE, passes: [PASSE] } },
+    })
+    const panneau = await ouvrirLePanneau(cadre)
+
+    fireEvent.click(panneau.getByRole("button", { name: /oublier « sprite 32 »/ }))
+
+    await waitFor(() => expect(panneau.queryByText("sprite 32")).toBeNull())
+    expect(
+      appels.some(
+        (a) => a.url.includes("/api/recipes/") && decodeURIComponent(a.url).includes("sprite 32"),
+      ),
+    ).toBe(true)
+    expect(panneau.getByText(/aucune recette nommée/)).toBeTruthy()
   })
 })

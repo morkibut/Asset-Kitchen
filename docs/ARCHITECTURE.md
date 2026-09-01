@@ -186,6 +186,20 @@ Cinq règles qui tiennent l'ensemble :
    nommée emporte les passages de main aujourd'hui, elle cessera de les
    emporter.
 
+   *Tenue le 1<sup>er</sup> septembre 2026 (`U5`).* La règle est **une fonction
+   du domaine**, `voyage`, et elle a trois portes : coller d'une image à
+   l'autre, enregistrer une recette nommée, rappeler une recette nommée. La
+   troisième n'est pas une redite des deux autres — le disque porte des recettes
+   écrites avant que la règle existe, et celles-là doivent se rappeler **sans
+   lever**, en annonçant ce qu'elles perdent au lieu de le poser.
+
+   **Elle rend ce qu'elle a laissé, en clair.** « Une place privée de ce qui la
+   désignait arrive sans effet et le dit » : le dire suppose de le savoir, et le
+   savoir suppose que le domaine le rende — un écran qui recalculerait la liste
+   de son côté serait la seconde implémentation qu'on refuse partout ailleurs.
+   Ce qui reste, reste entier : on retire la coordonnée, jamais la place qui la
+   portait. Le recadrage garde sa marge, la passe garde sa tolérance.
+
 ### Squelette du dépôt
 
 ```

@@ -400,7 +400,8 @@ empreinte — donc un autre rendu à calculer — que l'inverse, pour exactement
 
 ## U5 · Les réglages voyagent d'une image à l'autre
 
-**Critères : 9 · Ce que ça corrige : un point de la séance**
+**Critères : 9 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -440,25 +441,67 @@ recette, pas un lien vers la palette d'un jeu.
 
 ### Critères d'acceptation
 
-- [ ] *Copier les réglages* puis *coller* sur une autre image donnent la même recette, état
+- [x] *Copier les réglages* puis *coller* sur une autre image donnent la même recette, état
       de veille compris.
-- [ ] Un collage annonce ce qu'il a posé, et ce qu'il n'a pas pu poser.
-- [ ] Rien de ce qui désigne un endroit de cette image-là ne voyage — cadre tracé, point de
+- [x] Un collage annonce ce qu'il a posé, et ce qu'il n'a pas pu poser.
+- [x] Rien de ce qui désigne un endroit de cette image-là ne voyage — cadre tracé, point de
       pipette, passage de la main —, ni par collage ni par recette nommée, et la place qui en
       dépendait arrive sans effet en le disant.
-- [ ] Une recette nommée écrite avant cette étape se rappelle sans lever, et ce qu'elle perd
+- [x] Une recette nommée écrite avant cette étape se rappelle sans lever, et ce qu'elle perd
       — ses passages de main — est annoncé au lieu d'être posé.
-- [ ] On enregistre la recette courante sous un nom depuis la barre des tables.
-- [ ] La liste des recettes nommées est atteignable depuis la même barre ; on en applique
+- [x] On enregistre la recette courante sous un nom depuis la barre des tables.
+- [x] La liste des recettes nommées est atteignable depuis la même barre ; on en applique
       une, on en oublie une.
-- [ ] Deux images traitées par la même recette nommée sortent identiques au pixel près.
-- [ ] Une recette nommée survit à la fermeture de l'atelier, et s'applique à une image d'un
+- [x] Deux images traitées par la même recette nommée sortent identiques au pixel près.
+- [x] Une recette nommée survit à la fermeture de l'atelier, et s'applique à une image d'un
       autre jeu que celui où elle a été enregistrée.
-- [ ] Enregistrer un nom déjà pris propose de remplacer, et ne remplace jamais en silence.
+- [x] Enregistrer un nom déjà pris propose de remplacer, et ne remplace jamais en silence.
 
 ### Bloquée par
 
 - **U4** — l'état de veille fait partie de ce qui voyage.
+
+### Ce qu'elle a appris en étant faite
+
+**Une règle, trois portes, et la troisième n'est pas une redite.** Coller, enregistrer et
+rappeler passent tous par la même fonction du domaine. On aurait pu croire que couper à
+l'enregistrement suffisait — puisque le disque ne porterait alors plus rien à couper —, et
+c'est faux pour une raison qui ne se voit qu'en regardant le disque existant : il porte des
+recettes écrites avant que la règle existe. Le critère « se rappelle **sans lever**, et ce
+qu'elle perd est annoncé au lieu d'être posé » est exactement le critère de cette
+troisième porte.
+
+**C'est le serveur qui coupe, jamais l'écran.** L'écran envoie la recette qu'il a sous les
+yeux, entière, et prend ce que le serveur a décidé. La tentation était de couper dans
+l'écran — il connaît la recette, la règle tient en dix lignes —, et elle aurait fabriqué
+deux découpages : l'auteur aurait fini par apprendre que *coller* et *rappeler* ne font pas
+tout à fait la même chose, sans jamais savoir lequel croire.
+
+**Une route à part pour coller, et c'est le contrat qui l'exige.** `PUT …/recipe` pose
+exactement ce qu'on lui donne ; `POST …/paste` coupe ce qui ne voyage pas et le dit. Les
+confondre aurait fait de chaque réglage posé un collage — et un cadre tracé serait tombé au
+premier envoi de la table de recadrage.
+
+**Ce qui reste, reste entier.** On retire la coordonnée, pas la place qui la portait : le
+recadrage garde sa marge, la passe garde sa tolérance. C'est ce qui rend lisible « la place
+arrive sans effet » — c'est bien la place qui est là et qui ne fait rien, pas la recette qui
+manque un morceau.
+
+**Une liste vide et *rien du tout* ne disent pas la même chose.** Le panneau distingue
+« aucun voyage n'a encore eu lieu » de « tout a voyagé » : les confondre aurait effacé la
+seule bonne nouvelle que le panneau ait à donner, et laissé l'auteur se demander à chaque
+collage si le silence voulait dire *réussi* ou *pas encore parti*.
+
+**Un seul point d'entrée pour deux durées de vie.** Copier-coller sert la séance, les
+recettes nommées lui survivent — et ils répondent à la même question : *je veux ces
+réglages-là, ailleurs*. Les éloigner l'un de l'autre aurait obligé à savoir d'avance lequel
+on voulait. La barre fait 34 px et déborde déjà à sept places : quatre boutons de plus en
+auraient fait une bande à faire glisser pour atteindre un geste de portée générale.
+
+**Le presse-papiers vit hors de React.** Copier ici et coller là suppose de survivre au
+démontage de l'écran — on change d'image, donc de composant. Le tenir dans un état de React
+aurait demandé de le remonter jusqu'à l'ancêtre commun de toutes les images, c'est-à-dire
+l'application entière, pour un usage qui ne concerne que cette barre-ci.
 
 ---
 

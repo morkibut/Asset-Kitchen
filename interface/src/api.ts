@@ -2283,15 +2283,46 @@ export const api = {
   imposeSurAsset: (identifiant: string) =>
     appeler<Impose>(`/assets/${identifiant}/imposed`),
 
+  // ── Ce qui voyage d'une image à l'autre (U5) ──────────────────────────────
+  //
+  // **Trois portes pour une seule règle** — *un réglage voyage, une coordonnée
+  // ne voyage pas* —, et la règle vit côté serveur. L'écran envoie la recette
+  // qu'il a sous les yeux, entière ; c'est le serveur qui coupe et qui **rend
+  // ce qu'il a laissé**, en clair, pour que l'écran n'ait qu'à le répéter. Un
+  // second découpage écrit ici aurait fini par diverger, et l'auteur aurait
+  // appris que coller et rappeler ne font pas tout à fait la même chose.
+
+  recettesNommees: () => appeler<{ recettes: Record<string, Recette> }>("/recipes"),
+
   nommerRecette: (nom: string, recette: Recette) =>
-    appeler<{ recettes: Record<string, Recette> }>(
+    appeler<{ recettes: Record<string, Recette>; laisse: string[] }>(
       `/recipes/${encodeURIComponent(nom)}`,
       { method: "PUT", body: JSON.stringify(recette) },
     ),
 
+  oublierRecette: (nom: string) =>
+    appeler<{ recettes: Record<string, Recette> }>(
+      `/recipes/${encodeURIComponent(nom)}`,
+      { method: "DELETE" },
+    ),
+
   appliquerRecette: (identifiant: string, nom: string) =>
-    appeler<Asset>(`/assets/${identifiant}/apply/${encodeURIComponent(nom)}`, {
+    appeler<{ asset: Asset; laisse: string[] }>(
+      `/assets/${identifiant}/apply/${encodeURIComponent(nom)}`,
+      { method: "POST" },
+    ),
+
+  /** Coller sur cette image les réglages copiés sur une autre.
+   *
+   *  **Une route à part de `poserRecette`**, et la différence est le contrat :
+   *  celle-ci coupe ce qui ne voyage pas et le dit, l'autre pose exactement ce
+   *  qu'on lui donne. Les confondre aurait fait de chaque réglage posé un
+   *  collage — et un cadre tracé serait tombé au premier envoi de la table de
+   *  recadrage. */
+  collerRecette: (identifiant: string, recette: Recette) =>
+    appeler<{ asset: Asset; laisse: string[] }>(`/assets/${identifiant}/paste`, {
       method: "POST",
+      body: JSON.stringify(recette),
     }),
 
   // ── La bibliothèque ───────────────────────────────────────────────────────

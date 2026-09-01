@@ -349,7 +349,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "`veille` list names the steps that keep their settings but do "
             "nothing: `[\"quantification\"]` renders as if the palette step "
             "were not there, and dropping the name back out restores it "
-            "untouched. get_asset reports the same list."
+            "untouched. get_asset reports the same list. A named `recipe` only "
+            "carries settings, never coordinates — a traced crop box, an "
+            "eyedropper point, hand strokes stay on the image they were made "
+            "on; `not_applied` lists what it left behind."
         ),
     )
     @_refus_lisible
@@ -379,10 +382,11 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
                     f"veille : place inconnue « {', '.join(inconnues)} » — "
                     f"les places sont {', '.join(PLACES)}"
                 )
+        laisse: tuple[str, ...] = ()
         if revert:
             asset = atelier.assets.revenir_au_brut(asset_id)
         elif recipe:
-            asset = atelier.assets.appliquer_nommee(asset_id, recipe)
+            asset, laisse = atelier.assets.appliquer_nommee(asset_id, recipe)
         elif steps is not None:
             asset = atelier.assets.poser_recette(
                 asset_id, Recette.depuis_json(steps)
@@ -391,7 +395,11 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             raise ErreurAtelier(
                 "dis ce qu'il faut faire : « recipe », « steps », ou « revert »"
             )
-        return _asset_en_json(atelier, asset, folder)
+        # **Ce qu'une recette nommée n'a pas emporté est dit à l'agent aussi**
+        # (U5). Il pose la recette et lit ensuite l'image : sans cette ligne, il
+        # conclurait que la recette est fautive là où c'est la règle du voyage
+        # qui a joué.
+        return {**_asset_en_json(atelier, asset, folder), "not_applied": list(laisse)}
 
     @serveur.tool(
         name="slice_asset",

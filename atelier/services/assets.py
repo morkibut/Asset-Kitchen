@@ -50,6 +50,7 @@ from atelier.domaine.recette import (
     Main,
     Passe,
     Recette,
+    voyage,
 )
 from atelier.image import (
     Rendu,
@@ -784,29 +785,30 @@ class ServiceAssets:
             for nom, contenu in self._fichiers.lire_recettes().items()
         }
 
-    def nommer(self, nom: str, recette: Recette) -> dict[str, Recette]:
-        """« Un preset *est* une recette nommée » — rien de plus (§4, règle 5)."""
+    def nommer(
+        self, nom: str, recette: Recette
+    ) -> tuple[dict[str, Recette], tuple[str, ...]]:
+        """« Un preset *est* une recette nommée » — rien de plus (§4, règle 5).
+
+        Rend les recettes **et ce qui n'a pas été enregistré** : une recette
+        nommée ne garde que ce qui voyage, et l'auteur doit l'apprendre en
+        l'enregistrant plutôt qu'en la rappelant.
+        """
         propre = nom.strip()
         if not propre:
             raise RecetteRefusee("une recette nommée a besoin d'un nom")
         self._verifier(recette)
         enregistrees = self._fichiers.lire_recettes()
-        # **Sans sa différence** : elle nomme le corps d'une case précise, et
-        # une recette nommée est faite pour être reposée ailleurs. La garder
-        # aurait fabriqué un calque de l'image d'à côté au premier rappel.
-        #
-        # **Et sans son décalage** (E17), pour la même raison exactement : c'est
-        # une coordonnée, pas un réglage. Il rattrape la dérive de *cette*
-        # silhouette-là dans sa case ; le reposer sur une autre image la
-        # décalerait sans qu'aucune mesure ne l'ait demandé.
-        propre_recette = replace(recette.sans_nom(), difference=None)
-        if propre_recette.grille is not None:
-            propre_recette = replace(
-                propre_recette, grille=replace(propre_recette.grille, decalage=0)
-            )
+        # **Sans ce qui désigne un endroit de cette image-là** (U5). La règle est
+        # écrite une fois, dans le domaine : la différence, les points de
+        # pipette, le cadre tracé, le décalage du calibrage et les passages de la
+        # main ne veulent rien dire sur une autre silhouette. Ce qui est laissé
+        # est **rendu** plutôt que tu, pour que l'écran puisse le dire au moment
+        # où l'on enregistre — et non au moment où l'on s'étonne.
+        propre_recette, laisse = voyage(recette.sans_nom())
         enregistrees[propre] = propre_recette.en_json()
         self._fichiers.ecrire_recettes(enregistrees)
-        return self.recettes()
+        return self.recettes(), laisse
 
     def oublier_recette(self, nom: str) -> dict[str, Recette]:
         enregistrees = self._fichiers.lire_recettes()
@@ -814,21 +816,48 @@ class ServiceAssets:
         self._fichiers.ecrire_recettes(enregistrees)
         return self.recettes()
 
-    def appliquer_nommee(self, identifiant: str, nom: str) -> Asset:
+    def appliquer_nommee(
+        self, identifiant: str, nom: str
+    ) -> tuple[Asset, tuple[str, ...]]:
         """Deux assets traités par la même recette nommée sortent identiques.
 
         C'est vrai par construction et non par soin : l'empreinte de la recette
         ne dépend que de ses réglages, et chaque étape est déterministe — d'où
         la coupe médiane plutôt que des k-moyennes tirées au sort.
+
+        **Le voyage est refait ici, alors que `nommer` l'a déjà fait.** Ce n'est
+        pas une redite : le disque porte des recettes écrites avant que la règle
+        existe, et celles-là emportent encore des passages de main et des cadres
+        tracés. Le critère demande qu'elles se rappellent **sans lever**, et que
+        ce qu'elles perdent soit annoncé plutôt que posé. Une recette écrite
+        depuis passe ici sans rien perdre, et sans rien dire.
         """
         enregistrees = self.recettes()
         if nom not in enregistrees:
             raise RecetteRefusee(f"aucune recette nommée « {nom} »")
+        voyageable, laisse = voyage(enregistrees[nom])
         # **Par les places, jamais par la recette entière** : une différence
-        # nomme *une autre image précise*, donc elle ne se transporte pas —
-        # `nommer` ne l'enregistre plus, et ceci protège les recettes déjà
-        # écrites sur le disque avant que ce soit vrai.
-        return self.poser_les_places(identifiant, replace(enregistrees[nom], nom=nom))
+        # nomme *une autre image précise*, et celle de l'image d'arrivée doit
+        # rester là où elle est.
+        pose = self.poser_les_places(identifiant, replace(voyageable, nom=nom))
+        return pose, laisse
+
+    def coller(self, identifiant: str, recette: Recette) -> tuple[Asset, tuple[str, ...]]:
+        """Les réglages d'une image, posés sur une autre (U5).
+
+        **Le même chemin qu'une recette nommée, sans le disque.** Copier-coller
+        et les recettes nommées répondent à deux durées de vie — la séance, et ce
+        qui lui survit —, mais à une seule question : *qu'est-ce qui a du sens
+        ailleurs ?* Deux réponses écrites à deux endroits auraient fini par
+        diverger, et l'auteur aurait alors appris que coller et rappeler ne font
+        pas tout à fait la même chose sans jamais savoir laquelle croire.
+
+        **Et c'est le serveur qui coupe, pas l'écran.** L'écran garde la recette
+        copiée telle quelle — c'est ce qu'il a sous les yeux — et l'envoie
+        entière ; la règle du voyage vit d'un seul côté.
+        """
+        voyageable, laisse = voyage(recette.sans_nom())
+        return self.poser_les_places(identifiant, voyageable), laisse
 
     # ── Le rendu ─────────────────────────────────────────────────────────────
 

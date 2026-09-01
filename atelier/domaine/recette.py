@@ -928,3 +928,87 @@ class Recette:
         if dort:
             restantes.add(place)
         return replace(self, veille=tuple(sorted(restantes)))
+
+
+# ── Ce qui voyage d'une image à l'autre (U5) ─────────────────────────────────
+
+
+def voyage(recette: Recette) -> tuple[Recette, tuple[str, ...]]:
+    """La même recette, débarrassée de ce qui ne veut rien dire ailleurs.
+
+    **Un réglage voyage, une coordonnée ne voyage pas.** Une tolérance de 28 dit
+    la même chose sur n'importe quelle image ; un rectangle tracé à (12, 40) ne
+    dit quelque chose que sur *celle-là*. Six attitudes d'un même personnage
+    n'ont pas la même silhouette, et un passage de main recopié tomberait à côté
+    — sur le bras au lieu du casque. La règle a été tranchée le 1<sup>er</sup>
+    septembre 2026 (`docs/prd-decisions.md`, `US-342`), et elle est écrite ici,
+    **une fois**, parce qu'elle a trois portes : le collage d'une image à
+    l'autre, l'enregistrement d'une recette nommée, et le rappel d'une recette
+    nommée écrite avant que la règle existe.
+
+    Rend la recette voyageable **et la liste de ce qui a été laissé**, en clair.
+    « Une place privée de ce qui la désignait arrive sans effet et le dit » : le
+    dire suppose de le savoir, et le savoir suppose de le rendre — un appelant
+    qui recalculerait la liste de son côté serait la seconde implémentation
+    qu'on refuse partout ailleurs.
+
+    **Ce qui reste, reste entier.** Le recadrage garde sa marge, la passe garde
+    sa tolérance, la grille garde sa case : on ne retire que la coordonnée, pas
+    la place qui la portait. Une place qui n'a plus que sa coordonnée arrive
+    donc sans effet, ce qui est exactement ce qu'on veut lire.
+    """
+    laisse: list[str] = []
+
+    # **La différence.** Elle nomme *une autre image précise* — le corps sous le
+    # calque. La reposer ailleurs fabriquerait un calque de l'image d'à côté.
+    if recette.difference is not None:
+        laisse.append("la différence du calque — elle nomme une autre image")
+
+    # **Les points de pipette.** Une passe « couleur » sans point ne ferme rien :
+    # elle arrive sans effet, et c'est ce que la ligne dit.
+    vises = sum(1 for p in recette.passes if p.point is not None)
+    if vises:
+        laisse.append(
+            f"{vises} point{'s' if vises > 1 else ''} de pipette — "
+            "la couleur se vise sur cette image-là"
+        )
+    passes = tuple(replace(p, point=None) for p in recette.passes)
+
+    # **Le cadre tracé.** La marge, elle, voyage : c'est un nombre de pixels
+    # autour du sujet, et le sujet se remesure sur chaque image.
+    recadrage = recette.recadrage
+    if recadrage is not None and recadrage.boite is not None:
+        laisse.append("le cadre tracé à la main — c'est un rectangle de cette image")
+        recadrage = replace(recadrage, boite=None)
+
+    # **Le décalage du calibrage.** Il rattrape la dérive de *cette*
+    # silhouette-là dans sa case (E17) ; ailleurs il décale sans raison.
+    grille = recette.grille
+    if grille is not None and grille.decalage != 0:
+        laisse.append("le décalage du calibrage — il rattrape cette silhouette-là")
+        grille = replace(grille, decalage=0)
+
+    # **La main.** Le prix nommé de la règle, et il se paie une fois : une
+    # recette nommée emportait les passages jusqu'à ce jour. Un calque *nommé*
+    # ne se garde pas non plus : sans ses passages il ne serait qu'un titre, et
+    # un titre qui arrive avec une recette est une pile qu'on n'a pas demandée.
+    main = recette.main
+    if main is not None and not main.vide:
+        laisse.append(
+            f"{main.passages} passage{'s' if main.passages > 1 else ''} de la main "
+            "— ils sont posés sur cette silhouette-là"
+        )
+    if main is not None:
+        main = None
+
+    return (
+        replace(
+            recette,
+            passes=passes,
+            difference=None,
+            recadrage=recadrage,
+            grille=grille,
+            main=main,
+        ),
+        tuple(laisse),
+    )

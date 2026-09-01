@@ -235,6 +235,225 @@ function Carre({ etat }: { etat: "posee" | "vide" | "eteinte" }) {
   )
 }
 
+// ── Ce qui voyage d'une image à l'autre (U5) ────────────────────────────────
+//
+// **Le presse-papiers vit hors de React, et c'est délibéré.** Copier sur une
+// image et coller sur une autre suppose de survivre au démontage de l'écran :
+// on change d'image, donc de composant. Le tenir dans un état de React aurait
+// demandé de le remonter jusqu'à l'ancêtre commun de toutes les images, qui est
+// l'application entière — une variable de séance de plus dans le composant qui
+// en a déjà le plus, pour un usage qui ne concerne que cette barre-ci.
+//
+// **Il ne survit pas au rechargement de la page**, et c'est le contrat : « pour
+// la séance en cours ». Ce qui survit à la séance a un autre nom et un autre
+// geste — les recettes nommées, juste en dessous.
+let copiee: Recette | null = null
+
+/** Oublier ce qui a été copié. **N'existe que pour les essais** : deux essais
+ *  qui partageraient un presse-papiers se raconteraient l'un l'autre. */
+export function reinitialiserPressePapier(): void {
+  copiee = null
+}
+
+/** Les gestes qui font voyager une recette, dans un panneau de la barre.
+ *
+ *  **Un seul point d'entrée pour les deux durées de vie.** Copier-coller sert
+ *  la séance, les recettes nommées lui survivent ; ils répondent à la même
+ *  question — *je veux ces réglages-là, ailleurs* — et les éloigner l'un de
+ *  l'autre aurait obligé à savoir d'avance lequel on voulait. La barre fait
+ *  34 px et déborde déjà : quatre boutons de plus en auraient fait une bande à
+ *  faire glisser pour atteindre un geste de portée générale. */
+function PanneauDesRecettes({
+  recette,
+  nommees,
+  onFermer,
+  onLister,
+  onCopier,
+  onColler,
+  onEnregistrer,
+  onAppliquer,
+  onOublier,
+  aCopier,
+  annonce,
+}: {
+  recette: Recette
+  nommees: string[]
+  onFermer: () => void
+  /** Relire la liste. Appelée à l'ouverture du panneau et nulle part ailleurs :
+   *  les gestes qui changent la liste la rendent entière. */
+  onLister: () => void
+  onCopier: () => void
+  onColler: () => void
+  onEnregistrer: (nom: string) => void
+  onAppliquer: (nom: string) => void
+  onOublier: (nom: string) => void
+  /** Y a-t-il quelque chose dans le presse-papiers ? */
+  aCopier: boolean
+  /** Ce que le serveur a laissé au dernier voyage, ou ce qui vient d'être
+   *  fait. **Rendue par le serveur, jamais recalculée ici** : la règle du
+   *  voyage vit d'un seul côté. */
+  annonce: string[] | null
+}) {
+  const [nom, setNom] = useState("")
+  const [aRemplacer, setARemplacer] = useState<string | null>(null)
+  const propre = nom.trim()
+  const dejaPris = nommees.includes(propre)
+
+  useEffect(() => {
+    const ecouter = (evenement: KeyboardEvent) => {
+      if (evenement.key === "Escape") onFermer()
+    }
+    window.addEventListener("keydown", ecouter)
+    return () => window.removeEventListener("keydown", ecouter)
+  }, [onFermer])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => onLister(), [])
+
+  const enregistrer = () => {
+    if (!propre) return
+    // **Un nom déjà pris propose de remplacer, et ne remplace jamais en
+    // silence.** Le second clic est la confirmation : un dialogue par-dessus
+    // un panneau par-dessus une barre aurait empilé trois surfaces pour une
+    // question à un mot.
+    if (dejaPris && aRemplacer !== propre) return setARemplacer(propre)
+    setARemplacer(null)
+    onEnregistrer(propre)
+  }
+
+  return (
+    <div
+      data-recettes
+      className="paraitre absolute right-0 top-full z-30 mt-[3px] w-[300px] rounded-[2px] border border-bord bg-fond-1 p-3 text-left"
+    >
+      {/* ── La séance ──────────────────────────────────────────────────── */}
+      <p className="mesure mb-2 text-[10px] text-texte-3">
+        Les réglages de cette image, ailleurs
+      </p>
+      <div className="mb-3 flex gap-2">
+        <button
+          type="button"
+          onClick={onCopier}
+          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-signal"
+        >
+          Copier les réglages
+        </button>
+        <button
+          type="button"
+          onClick={onColler}
+          disabled={!aCopier}
+          className="mesure h-[26px] flex-1 rounded-[2px] border border-bord text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
+        >
+          Coller
+        </button>
+      </div>
+      {!aCopier && (
+        <Raison texte="rien de copié pour l'instant — copie d'abord les réglages d'une image." />
+      )}
+
+      {/* ── Ce qui survit à la séance ──────────────────────────────────── */}
+      <p className="mesure mb-2 mt-3 border-t border-bord pt-3 text-[10px] text-texte-3">
+        Les recettes nommées
+      </p>
+      <div className="mb-2 flex gap-2">
+        <input
+          value={nom}
+          onChange={(evenement) => {
+            setNom(evenement.target.value)
+            setARemplacer(null)
+          }}
+          onKeyDown={(evenement) => evenement.key === "Enter" && enregistrer()}
+          placeholder="un nom pour ces réglages"
+          aria-label="le nom de la recette"
+          className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte placeholder:text-texte-3"
+        />
+        <button
+          type="button"
+          onClick={enregistrer}
+          disabled={!propre}
+          className="mesure h-[26px] shrink-0 rounded-[2px] border border-bord px-2 text-[10px] text-texte-2 hover:text-signal disabled:cursor-not-allowed disabled:text-texte-3 disabled:hover:text-texte-3"
+        >
+          {aRemplacer === propre ? "Remplacer ›" : "Enregistrer"}
+        </button>
+      </div>
+      {aRemplacer === propre && (
+        <Raison
+          texte={`« ${propre} » existe déjà — reclique pour la remplacer par les réglages de cette image.`}
+        />
+      )}
+
+      {nommees.length === 0 ? (
+        <p className="mesure text-[10px] text-texte-3">
+          aucune recette nommée pour l'instant.
+        </p>
+      ) : (
+        <ul className="defile flex max-h-[180px] flex-col overflow-y-auto">
+          {nommees.map((enregistree) => (
+            <li
+              key={enregistree}
+              className="flex items-center gap-2 border-t border-bord/50 py-1 first:border-t-0"
+            >
+              <span className="mesure min-w-0 flex-1 truncate text-[10px] text-texte-2">
+                {enregistree}
+              </span>
+              <button
+                type="button"
+                onClick={() => onAppliquer(enregistree)}
+                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-signal"
+              >
+                appliquer
+              </button>
+              <button
+                type="button"
+                onClick={() => onOublier(enregistree)}
+                aria-label={`oublier « ${enregistree} »`}
+                className="mesure shrink-0 text-[10px] text-texte-3 hover:text-echec"
+              >
+                oublier
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* **Ce qui n'a pas voyagé se dit là où le geste a eu lieu**, et reste
+          jusqu'au geste suivant : la phrase décrit une image qu'on est en
+          train de regarder, et l'effacer au bout de trois secondes la ferait
+          rater exactement quand on la lisait sur l'image plutôt qu'ici. */}
+      {annonce !== null && (
+        <div
+          data-recettes-annonce
+          role="status"
+          className="mesure mt-3 border-t border-bord pt-3 text-[10px] leading-snug text-texte-2"
+        >
+          {annonce.length === 0 ? (
+            <span>c'est posé — tous les réglages ont voyagé.</span>
+          ) : (
+            <>
+              <span className="text-epingle">
+                posé, sauf ce qui désignait un endroit de l'autre image :
+              </span>
+              <ul className="mt-1 flex flex-col gap-0.5 text-texte-3">
+                {annonce.map((phrase) => (
+                  <li key={phrase}>· {phrase}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* La recette courante en un mot, pour savoir ce qu'on s'apprête à
+          copier ou à nommer sans avoir à parcourir la barre. */}
+      <p className="mesure mt-3 border-t border-bord pt-2 text-[9.5px] text-texte-3">
+        {TABLES.filter((t) => valeur(t.cle, recette) !== null)
+          .map((t) => t.nom)
+          .join(" · ") || "cette image n'a aucun réglage posé"}
+      </p>
+    </div>
+  )
+}
+
 export function BarreDesTables({
   recette,
   traitement,
@@ -243,6 +462,7 @@ export function BarreDesTables({
   onOuvrir,
   onVeille,
   onToutDefaire,
+  recettes,
 }: {
   recette: Recette
   traitement: EtatTraitement
@@ -257,7 +477,23 @@ export function BarreDesTables({
    *  recette, pas un état d'écran. */
   onVeille: (table: Table, dort: boolean) => void
   onToutDefaire: () => void
+  /** Les recettes nommées, et les gestes qui les servent (U5). Tenus par
+   *  l'écran des tables plutôt que par la barre : appliquer une recette change
+   *  l'image, donc l'état de l'écran, et une barre qui poserait des recettes
+   *  aurait à rendre compte de ce que l'écran affiche. */
+  recettes: {
+    nommees: string[]
+    annonce: string[] | null
+    aCopier: boolean
+    onLister: () => void
+    onCopier: () => void
+    onColler: () => void
+    onEnregistrer: (nom: string) => void
+    onAppliquer: (nom: string) => void
+    onOublier: (nom: string) => void
+  }
 }) {
+  const [ouvertes, setOuvertes] = useState(false)
   return (
     // **La bande ne grandit pas, et ce qui dépasse défile** — la règle du
     // panneau borné par l'écran (`docs/DESIGN.md`), appliquée à une bande.
@@ -370,6 +606,40 @@ export function BarreDesTables({
           recette : le geste qui la vide appartient à ce qui la représente. Le
           pied de chaque table garde son `Sans <table> ›`, qui ne touche qu'elle. */}
       <span aria-hidden className="mx-2 h-4 w-px shrink-0 bg-bord" />
+
+      {/* **Les recettes vivent au bout de la barre, à côté de `tout défaire`.**
+          Les deux ont la même portée — la recette entière, pas une place — et
+          c'est ce qui les range ensemble, hors de ce qui défile : un geste de
+          portée générale ne se cherche pas en faisant glisser une bande. */}
+      <div className="relative shrink-0">
+        <button
+          type="button"
+          aria-expanded={ouvertes}
+          onClick={() => setOuvertes((deja) => !deja)}
+          className={[
+            "mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
+            ouvertes ? "bg-fond-3 text-texte" : "text-texte-2 hover:bg-fond-2",
+          ].join(" ")}
+        >
+          recettes ›
+        </button>
+        {ouvertes && (
+          <PanneauDesRecettes
+            recette={recette}
+            nommees={recettes.nommees}
+            annonce={recettes.annonce}
+            aCopier={recettes.aCopier}
+            onFermer={() => setOuvertes(false)}
+            onLister={recettes.onLister}
+            onCopier={recettes.onCopier}
+            onColler={recettes.onColler}
+            onEnregistrer={recettes.onEnregistrer}
+            onAppliquer={recettes.onAppliquer}
+            onOublier={recettes.onOublier}
+          />
+        )}
+      </div>
+
       <button
         type="button"
         onClick={onToutDefaire}
@@ -693,7 +963,10 @@ export function EcranTables({
    *  descendre ici avec le reste. */
   BlocPasse: React.ComponentType<any>
 }) {
-  const { recette, regler, poser, revenirAuBrut } = useRecette(asset, onErreur)
+  const { recette, setRecette, regler, poser, revenirAuBrut } = useRecette(
+    asset,
+    onErreur,
+  )
   const mesures = useMesures(asset)
   const [mode, setMode] = useState<Mode>("rendu")
   const [opacite, setOpacite] = useState(50)
@@ -774,6 +1047,98 @@ export function EcranTables({
     regler,
     poser: poserEveille,
     mesures,
+  }
+
+  // ── Ce qui voyage d'une image à l'autre (U5) ──────────────────────────────
+  //
+  // **La liste des noms est relue à l'ouverture du panneau, et une seule fois
+  // par ouverture.** Elle vit sur le disque de l'atelier, pas dans cet écran :
+  // une seconde fenêtre peut en avoir nommé une entre-temps. Les gestes qui la
+  // changent — enregistrer, oublier — rendent la liste entière, donc rien n'est
+  // relu entre deux ouvertures.
+  const [nommees, setNommees] = useState<string[]>([])
+
+  /** Ce que le dernier voyage a laissé — `null` tant qu'il n'y en a pas eu.
+   *
+   *  **Une liste vide et `null` ne disent pas la même chose** : la première dit
+   *  *tout a voyagé*, la seconde dit *rien ne s'est encore passé*. Les
+   *  confondre aurait effacé la seule bonne nouvelle que le panneau ait à
+   *  donner. */
+  const [annonce, setAnnonce] = useState<string[] | null>(null)
+  const [aCopier, setACopier] = useState(copiee !== null)
+
+  // **L'annonce ne suit pas l'image.** Elle décrit ce qui vient d'être posé
+  // *ici* ; la garder en passant à la sœur d'à côté la ferait lire comme le
+  // compte rendu d'un collage qui n'a pas eu lieu sur celle-là.
+  useEffect(() => setAnnonce(null), [asset.identifiant])
+
+  /** Ce que le serveur a posé revient dans l'écran, recette comprise.
+   *
+   *  Coller et appliquer ne passent pas par `poser` : c'est le serveur qui
+   *  décide de ce qui arrive, et l'écran doit prendre ce qu'il a décidé plutôt
+   *  que ce qu'il avait envoyé. */
+  const recevoir = (recu: { asset: Asset; laisse: string[] }) => {
+    setRecette(recu.asset.recette)
+    setAnnonce(recu.laisse)
+  }
+
+  const recettes = {
+    nommees,
+    annonce,
+    aCopier,
+    onLister: () => {
+      void api
+        .recettesNommees()
+        .then((recu) => setNommees(Object.keys(recu.recettes).sort()))
+        // Une liste qu'on n'a pas pu lire est une liste vide **et rien de
+        // plus** : le panneau dit alors « aucune recette nommée », ce qui est
+        // faux mais sans conséquence, là où un refus en travers du panneau
+        // empêcherait de copier et de coller, qui n'en dépendent pas.
+        .catch(() => setNommees([]))
+    },
+    onCopier: () => {
+      copiee = recette
+      setACopier(true)
+      setAnnonce(null)
+    },
+    onColler: () => {
+      if (copiee === null) return
+      void api
+        .collerRecette(asset.identifiant, copiee)
+        .then(recevoir)
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "collage refusé"),
+        )
+    },
+    onEnregistrer: (nom: string) => {
+      void api
+        .nommerRecette(nom, recette)
+        .then((recu) => {
+          setNommees(Object.keys(recu.recettes).sort())
+          setAnnonce(recu.laisse)
+        })
+        .catch((erreur) =>
+          onErreur(
+            erreur instanceof Error ? erreur.message : "recette non enregistrée",
+          ),
+        )
+    },
+    onAppliquer: (nom: string) => {
+      void api
+        .appliquerRecette(asset.identifiant, nom)
+        .then(recevoir)
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "recette refusée"),
+        )
+    },
+    onOublier: (nom: string) => {
+      void api
+        .oublierRecette(nom)
+        .then((recu) => setNommees(Object.keys(recu.recettes).sort()))
+        .catch((erreur) =>
+          onErreur(erreur instanceof Error ? erreur.message : "oubli refusé"),
+        )
+    },
   }
 
   /** **Une table qui se peint force le rendu.** Le cas qui a tranché est *côte
@@ -961,6 +1326,7 @@ export function EcranTables({
         onOuvrir={onOuvrir}
         onVeille={veiller}
         onToutDefaire={() => void revenirAuBrut()}
+        recettes={recettes}
       />
 
       {/* **La fabrique prend le cadre entier.** Elle ne pose rien sur l'image

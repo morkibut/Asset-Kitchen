@@ -1732,7 +1732,7 @@ et le coût.
 | **U2** | Le zoom de l'atelier, et le recadrage qui en dépendait | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U3** | Un curseur prend un chiffre | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U4** | Une table s'éteint, et ça se voit | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
-| **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** | à faire |
+| **U5** | Les réglages voyagent d'une image à l'autre | 1<sup>re</sup> | **U4** | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U6** | La palette se règle sans faire attendre | 1<sup>re</sup> | — | à faire |
 | **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — | à faire |
 | **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — | à faire |

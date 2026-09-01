@@ -963,8 +963,29 @@ async def revenir_au_brut(requete: Request, identifiant: str) -> dict[str, Any]:
 async def appliquer_recette_nommee(
     requete: Request, identifiant: str, nom: str
 ) -> dict[str, Any]:
-    """La même recette, sur un autre asset, au pixel près (US-66)."""
-    return _atelier(requete).assets.appliquer_nommee(identifiant, nom).en_json()
+    """La même recette, sur un autre asset, au pixel près (US-66).
+
+    **Rend l'asset et ce qui n'a pas voyagé** (U5). Un rappel qui poserait en
+    silence une recette amputée laisserait l'auteur devant une image qui n'est
+    pas celle qu'il attendait, sans rien pour comprendre pourquoi.
+    """
+    asset, laisse = _atelier(requete).assets.appliquer_nommee(identifiant, nom)
+    return {"asset": asset.en_json(), "laisse": list(laisse)}
+
+
+@routeur.post("/assets/{identifiant}/paste")
+async def coller_recette(
+    requete: Request, identifiant: str, corps: CorpsRecette
+) -> dict[str, Any]:
+    """Coller sur cette image les réglages d'une autre (U5).
+
+    **Une route à part de `PUT …/recipe`**, et la différence est le contrat :
+    celle-ci *coupe* ce qui ne voyage pas et le dit, l'autre pose exactement ce
+    qu'on lui donne. Les confondre aurait fait de chaque réglage posé un collage
+    — et un cadre tracé serait tombé au premier envoi de la table de recadrage.
+    """
+    asset, laisse = _atelier(requete).assets.coller(identifiant, corps.en_recette())
+    return {"asset": asset.en_json(), "laisse": list(laisse)}
 
 
 @routeur.get("/assets/{identifiant}/image")
@@ -1240,8 +1261,13 @@ async def liste_recettes(requete: Request) -> dict[str, Any]:
 async def nommer_recette(
     requete: Request, nom: str, corps: CorpsRecette
 ) -> dict[str, Any]:
-    recettes = _atelier(requete).assets.nommer(nom, corps.en_recette())
-    return {"recettes": {n: r.en_json() for n, r in recettes.items()}}
+    recettes, laisse = _atelier(requete).assets.nommer(nom, corps.en_recette())
+    # **Ce qui n'a pas été enregistré se dit tout de suite** (U5) : au moment où
+    # l'on nomme, pas au moment où l'on s'étonne de ce qui revient.
+    return {
+        "recettes": {n: r.en_json() for n, r in recettes.items()},
+        "laisse": list(laisse),
+    }
 
 
 @routeur.delete("/recipes/{nom}")
