@@ -160,15 +160,23 @@ Cinq règles qui tiennent l'ensemble :
    jamais un identifiant de tache, et la couleur qu'il désigne est une mesure —
    voir `atelier/domaine/recette.py`, sur `Passe`.
 
-   **Ce paragraphe décrit ce qui est construit, et le produit en a promis deux
-   fois plus le 1<sup>er</sup> septembre 2026** (`docs/prd-decisions.md`, § Les
-   décisions des cinq capacités). Une passe désignera aussi par une **forme
-   entourée** — la sélection magique, qui borne la recherche au lieu de la
-   lancer —, et le moteur par modèle cessera d'être un nom écrit en dur pour
-   venir d'une **liste**, avec un second modèle plus lourd qui n'est pas le
-   défaut. Les deux se posent ici, à cet endroit précis, et rien de l'ordre
-   fixe ne bouge : c'est ce qui rendra le report court quand `U12` et `U13`
-   seront construites.
+   **Les quatre moteurs, depuis le 1<sup>er</sup> septembre 2026** (`U12` et
+   `U13`, `docs/prd-decisions.md` § Les décisions des cinq capacités). Le
+   troisième est la **sélection magique** : on entoure grossièrement ce qu'on
+   veut garder, et le remplissage part du liseré de la forme sans droit d'en
+   sortir — le tracé **borne** la recherche au lieu de la lancer, et rien ne
+   bouge au-dehors. C'est encore le même remplissage, amorcé une troisième fois
+   ailleurs. Le quatrième est le moteur par modèle, qui a cessé d'être un nom
+   écrit en dur pour venir d'un **catalogue** : trois modèles, du plus rapide au
+   plus lourd, choisis passe par passe, le rapide restant le défaut. Rien de
+   l'ordre fixe n'a bougé — les deux se sont posés à cet endroit précis, comme
+   annoncé.
+
+   **Et une passe qui vient après une autre ne traverse plus ce qui est déjà
+   effacé** (`U10`). Effacer un pixel ne change pas sa couleur, seulement sa
+   transparence : le fond retiré restait un chemin coloré et invisible, par où
+   la pipette d'une seconde passe ressortait ailleurs dans l'image. Reproduit et
+   chiffré avant d'être corrigé — `essais/essai_pipette_seconde.py`.
 5. **Le traitement est non destructif.** On garde l'image brute et la **recette** — la
    liste ordonnée des étapes et leurs réglages. Le fichier traité est un rendu, écrit sur
    disque comme cache, effaçable sans rien perdre. Recalculer coûte des millisecondes ;

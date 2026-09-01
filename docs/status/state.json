@@ -1228,10 +1228,45 @@
       "title": "Leonardo — retirée du plan par le relevé F0"
     },
     "U5": {
-      "blocked_by": "U4"
+      "blocked_by": "U4",
+      "status": "done"
     },
     "U12": {
-      "blocked_by": "U11"
+      "blocked_by": "U11",
+      "status": "done"
+    },
+    "U1": {
+      "status": "done"
+    },
+    "U2": {
+      "status": "done"
+    },
+    "U3": {
+      "status": "done"
+    },
+    "U4": {
+      "status": "done"
+    },
+    "U6": {
+      "status": "done"
+    },
+    "U7": {
+      "status": "done"
+    },
+    "U8": {
+      "status": "done"
+    },
+    "U9": {
+      "status": "done"
+    },
+    "U10": {
+      "status": "done"
+    },
+    "U11": {
+      "status": "done"
+    },
+    "U13": {
+      "status": "done"
     }
   },
   "notes": [
@@ -1260,14 +1295,6 @@
       "scope_label": null
     },
     {
-      "id": "n4",
-      "level": "info",
-      "text": "Le lot en cours, ce sont les treize reprises d'usage U1 à U13, nées de deux séances de l'auteur sur l'interface refaite. Rien n'est encore construit : quatre-vingt-sept critères ouverts. Le détail vit dans docs/tranches/U.md.",
-      "date": "2026-09-01",
-      "scope": "global",
-      "scope_label": null
-    },
-    {
       "id": "n5",
       "level": "decision",
       "text": "U1 se prend en premier, sans discussion : c'est la seule des treize qui coûte de l'argent réel — cinq clics sur le bouton qui paie lançaient cinq appels payants. Puis U2, parce que les autres ne se jugent pas sans elle.",
@@ -1290,69 +1317,77 @@
       "date": "2026-09-01",
       "scope": "E8",
       "scope_label": "L'assistant de démarrage — dix étapes, et le seul écran de réglages"
+    },
+    {
+      "id": "n8",
+      "level": "win",
+      "text": "Les treize reprises d'usage U1 à U13 sont tenues depuis le 1er septembre 2026 : quatre-vingt-sept critères, tous cochés. Ce qui a été tranché seul en les construisant attend l'auteur dans docs/questions-du-lot-U.md — quinze choix, écrits pour être lus sans rien savoir du code.",
+      "date": "2026-09-01",
+      "scope": "global",
+      "scope_label": null
     }
   ],
   "milestones": [],
   "activity": [
     {
-      "hash": "b9e0e85",
-      "date": "2026-08-31",
-      "text": "docs: U10 Ã  U13 â€” la seconde sÃ©ance, sur les seules tables de l'atelier"
+      "hash": "710d86f",
+      "date": "2026-09-01",
+      "text": "docs: les quinze choix tranchÃ©s seuls, mis de cÃ´tÃ© pour l'auteur"
     },
     {
-      "hash": "080bcf9",
-      "date": "2026-08-31",
-      "text": "docs: le mannequin articulÃ© â€” l'Ã©tude d'une idÃ©e, qui ne dÃ©cide rien"
+      "hash": "e6c6227",
+      "date": "2026-09-01",
+      "text": "feat: U13 â€” un second moteur de dÃ©tourage, et le catalogue qui les tient"
     },
     {
-      "hash": "dea9eba",
-      "date": "2026-08-31",
-      "text": "test: le seul dÃ©faut de l'audit de design qui touchait le serveur"
+      "hash": "2a5f178",
+      "date": "2026-09-01",
+      "text": "feat: U12 â€” la sÃ©lection magique, tracer gros et ajuster au bord"
     },
     {
-      "hash": "fde0e2f",
-      "date": "2026-08-31",
-      "text": "docs: F0 â€” les trois fournisseurs gratuits, mesurÃ©s avant que la V2.2 commence"
+      "hash": "1d70e7c",
+      "date": "2026-09-01",
+      "text": "feat: U10 â€” chaque passe de dÃ©tourage dit ce qu'elle enlÃ¨ve"
     },
     {
-      "hash": "22d4474",
-      "date": "2026-08-31",
-      "text": "feat: E8 â€” quinze des dix-sept vignettes d'exemple, et les consignes qui les produisent"
+      "hash": "748fce9",
+      "date": "2026-09-01",
+      "text": "feat: U9 â€” l'Ã©cran de confirmation se lit d'un coup d'Å“il"
     },
     {
-      "hash": "320248e",
-      "date": "2026-08-31",
-      "text": "docs: U1 Ã  U9 â€” ce qu'une sÃ©ance d'usage a trouvÃ© sur la V2.1 entiÃ¨re"
+      "hash": "2280018",
+      "date": "2026-09-01",
+      "text": "feat: U8 â€” le texte qui a fait l'image, et la tuile qui ne dÃ©borde plus"
     },
     {
-      "hash": "ac57410",
-      "date": "2026-08-31",
-      "text": "fix: la table de grille accepte les neuf tailles du projet"
+      "hash": "8d91b01",
+      "date": "2026-09-01",
+      "text": "feat: U7 â€” la toile dit ce qu'elle a fabriquÃ©"
     },
     {
-      "hash": "1f206f3",
-      "date": "2026-08-31",
-      "text": "feat: le bouton qui paie porte l'Ã©tat de ce qu'il a payÃ©"
+      "hash": "e43fc56",
+      "date": "2026-09-01",
+      "text": "perf: U6 â€” la palette se rÃ¨gle sans faire attendre"
     },
     {
-      "hash": "785c258",
-      "date": "2026-08-31",
-      "text": "fix: le lanceur cesse de se refermer sans rien dire"
+      "hash": "50c292c",
+      "date": "2026-09-01",
+      "text": "feat: U5 â€” les rÃ©glages voyagent, les coordonnÃ©es restent"
     },
     {
-      "hash": "4afcaa8",
-      "date": "2026-08-31",
-      "text": "fix: l'Ã©cran qui montre ce qui part revient, et E3 se ferme sur sa pipette"
+      "hash": "ed63c72",
+      "date": "2026-09-01",
+      "text": "feat: U4 â€” une table s'Ã©teint sans se vider, et Ã§a se voit"
     },
     {
-      "hash": "b258fd6",
-      "date": "2026-08-31",
-      "text": "feat: E20 â€” le guide refait sur les lieux qui existent, et la V2.1 est close"
+      "hash": "034ec86",
+      "date": "2026-09-01",
+      "text": "feat: U3 â€” un curseur prend un chiffre"
     },
     {
-      "hash": "ad4290a",
-      "date": "2026-08-31",
-      "text": "feat: E14 â€” l'Ã©cran oÃ¹ l'on relit ce qui part, avant de payer"
+      "hash": "c7f2c37",
+      "date": "2026-09-01",
+      "text": "feat: U11 â€” la main peint carrÃ©, et lÃ  oÃ¹ on la pose"
     }
   ]
 }

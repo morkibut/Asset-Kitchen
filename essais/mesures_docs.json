@@ -1,11 +1,11 @@
 {
- "releve_le": 1788233686.3102915,
+ "releve_le": 1788233849.1632187,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 304791,
+  "octets": 305356,
   "documents": {
    "AGENTS.md": {
     "octets": 31214,
@@ -140,14 +140,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 52956,
+    "octets": 53521,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 52350
+      "octets": 52907
      },
      {
       "titre": "1 · Ce que c'est",
@@ -171,60 +171,60 @@
       "titre": "4 · Architecture",
       "niveau": 2,
       "ligne": 53,
-      "octets": 11751
+      "octets": 12308
      },
      {
       "titre": "Squelette du dépôt",
       "niveau": 3,
-      "ligne": 203,
+      "ligne": 211,
       "octets": 1914
      },
      {
       "titre": "4 bis · Fournisseur et modèles → `docs/archi-fournisseur.md`",
       "niveau": 2,
-      "ligne": 240,
+      "ligne": 248,
       "octets": 1126
      },
      {
       "titre": "5 · Modèle d'objets",
       "niveau": 2,
-      "ligne": 257,
+      "ligne": 265,
       "octets": 25423
      },
      {
       "titre": "Ce que la toile ajoute au modèle",
       "niveau": 3,
-      "ligne": 283,
+      "ligne": 291,
       "octets": 8853
      },
      {
       "titre": "Ce que la V2.1 ajoute au modèle",
       "niveau": 3,
-      "ligne": 397,
+      "ligne": 405,
       "octets": 11766
      },
      {
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
-      "ligne": 533,
+      "ligne": 541,
       "octets": 566
      },
      {
       "titre": "11 · Risques, et quand les lever",
       "niveau": 2,
-      "ligne": 543,
+      "ligne": 551,
       "octets": 6580
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 583,
+      "ligne": 591,
       "octets": 1016
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 595,
+      "ligne": 603,
       "octets": 990
      }
     ]
