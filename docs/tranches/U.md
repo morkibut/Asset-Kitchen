@@ -762,7 +762,8 @@ recette, le réalignement — hors de portée du défilement, pour un texte qu'o
 
 ## U9 · L'écran de confirmation se lit d'un coup d'œil
 
-**Critères : 6 · Ce que ça corrige : un point de la séance**
+**Critères : 6 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -785,14 +786,14 @@ existe déjà partout ailleurs dans le produit et qui n'a jamais de bouton pour 
 
 ### Critères d'acceptation
 
-- [ ] Un texte long est replié à quelques lignes avec un bouton qui dit ce qu'il cache.
-- [ ] Déplié, le texte est **entier**, sans coupure ni résumé, et le repli se referme.
-- [ ] Chaque image jointe porte sa vignette, à côté de son prix et de son interrupteur.
-- [ ] Le pointeur sur une vignette et la barre d'espace ouvrent l'image en grand ; la
+- [x] Un texte long est replié à quelques lignes avec un bouton qui dit ce qu'il cache.
+- [x] Déplié, le texte est **entier**, sans coupure ni résumé, et le repli se referme.
+- [x] Chaque image jointe porte sa vignette, à côté de son prix et de son interrupteur.
+- [x] Le pointeur sur une vignette et la barre d'espace ouvrent l'image en grand ; la
       relâcher referme.
-- [ ] L'aperçu passe **au-dessus** de l'écran de confirmation, comme au-dessus des autres
+- [x] L'aperçu passe **au-dessus** de l'écran de confirmation, comme au-dessus des autres
       écrans qui couvrent l'atelier.
-- [ ] La phrase de l'invariant est réécrite **aux trois endroits où elle vit** — la carte du
+- [x] La phrase de l'invariant est réécrite **aux trois endroits où elle vit** — la carte du
       dépôt, la maquette de l'écran de confirmation, et le commentaire du code —, avec sa
       date et sa raison. Corrigée à un seul, elle deviendrait une contradiction.
 
@@ -800,6 +801,51 @@ existe déjà partout ailleurs dans le produit et qui n'a jamais de bouton pour 
 
 Aucune. Elle touche le même écran que U1 sans en dépendre — U1 passe d'abord parce qu'elle
 coûte de l'argent.
+
+### Ce qu'elle a appris en étant faite
+
+**Amender un invariant coûte plus cher que le tenir, et c'est tant mieux.** La phrase vivait
+à trois endroits — la carte du dépôt, la maquette 08bis, l'en-tête de `Envoi.tsx` —, et
+chacun l'énonçait avec ses mots. Corrigée à un seul, elle serait devenue une contradiction
+que rien n'aurait signalée : deux documents du dépôt disant l'inverse l'un de l'autre sur la
+règle que l'écran existe pour tenir. Les trois portent désormais la même phrase neuve, sa
+date et sa raison — et la raison est ce qui compte, parce que la phrase d'origine n'était pas
+fausse : elle était vraie pour un texte de cent caractères et devenue impraticable pour un
+texte de mille deux cents.
+
+**Le pli est annoncé, sans quoi ce serait la troncature qu'on venait d'interdire.** Le bouton
+dit *déplier — N caractères de plus*, et N est compté sur le texte réel, pas arrondi. La
+coupure tombe sur une fin de mot : un pli qui couperait « pixe » ferait douter de ce qu'il
+cache, ce qui est exactement ce qu'un pli ne doit pas faire. Trois cent vingt caractères, cinq
+lignes environ dans la colonne du milieu — assez pour reconnaître un texte, trop peu pour
+qu'il mange l'écran.
+
+**Les vignettes ont demandé l'objet entier, jamais une adresse.** L'écran sait déjà nommer
+l'adresse de l'image d'un asset et celle d'une carte, à un seul endroit chacune —
+`imageAsset` et `sujetCarte`. Envoyer depuis le serveur une adresse toute faite aurait posé
+là un second vocabulaire d'adresses, que la première empreinte ajoutée aurait fait diverger :
+deux écrans montrant deux images différentes de la même chose, sans que rien ne le dise. Le
+serveur envoie donc `montre` — la carte entière ou l'asset entier —, et l'écran s'en sert
+avec les fonctions qu'il a. `tests/test_u9.py` compare l'objet reçu à celui que rendent
+`GET /api/assets/{id}` et `GET /api/board` : c'est le même, mot pour mot.
+
+**Une image disparue rend `None`, jamais une erreur.** Une référence peut nommer une carte
+retirée du tableau entre le moment où la ligne a été composée et celui où on la regarde. La
+ligne reste — elle dit ce qui partirait, avec son prix et sa case —, elle n'a simplement pas
+de vignette. Une exception à cet endroit aurait éteint l'écran entier juste avant un
+paiement, pour une image qu'on ne comptait pas regarder.
+
+**Le service de l'envoi ne connaissait pas la bibliothèque, et ça ne s'est vu qu'à l'essai.**
+Il recevait les générations, la production, l'univers et le projet ouvert : de quoi montrer
+une carte du tableau, pas un asset promu. Le câblage manquant rendait `montre` vide sur la
+moitié des lignes sans rien casser — c'est `test_u9.py` qui l'a nommé, et c'est le genre de
+trou qu'un écran ne signale jamais puisqu'il se contente d'afficher un peu moins.
+
+**Le passage au-dessus ne se mesure pas en pixels ici.** L'aperçu est `fixed inset-0 z-50` et
+il est monté **hors** de l'écran de confirmation, à la racine de l'atelier : c'est ce qui fait
+qu'aucune colonne ni aucun défilement ne le rogne. L'essai tient les deux faits — les classes
+et la position dans l'arbre — plutôt qu'un rectangle, parce que jsdom ne met rien en page et
+qu'une assertion sur des pixels y serait vraie sans rien prouver.
 
 ---
 

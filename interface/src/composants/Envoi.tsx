@@ -11,6 +11,21 @@
 // part : le réglage durable se fait sur la fiche de la chose, dans l'ambiance ou
 // dans l'assistant, et garder une correction est un second geste, écrit.
 //
+// **L'invariant a été amendé le 1ᵉʳ septembre 2026 (U9), et il l'est aux trois
+// endroits où il vit** — ici, dans `docs/carte-du-depot.md` et dans
+// `docs/maquettes-v2.1/08bis-ecran-de-confirmation.html`. Corrigé à un seul, il
+// serait devenu une contradiction. Il disait *sans coupure et sans résumé*, et
+// la séance a montré la limite : le texte réellement employé dans ce dépôt fait
+// plus de mille deux cents caractères, et un écran qu'on doit parcourir d'un
+// coup d'œil avant de payer ne le fait pas quand une seule ligne l'occupe tout
+// entier. Ce qui le remplace est plus fort que lui : **rien n'est résumé, rien
+// n'est réécrit, et tout est atteignable en un clic depuis l'endroit où on le
+// lit.** Un long texte se replie, le bouton du pli dit combien de caractères il
+// cache, et le déplier rend le texte entier — ce n'est pas une troncature
+// muette, c'est un pli qu'on ouvre. Et chaque image jointe porte **sa
+// vignette** : la barre d'espace l'ouvre en grand, du même geste que partout
+// ailleurs dans le produit.
+//
 // **Ce qui l'a fait basculer d'un dépliant à un écran est une mesure.** Sur le
 // plus long appel payé du dépôt, le style pèse 890 caractères sur 1 690 et le
 // sujet 40 — 53 % contre 2 %. Un bloc replié qui résume 53 % de ce qui part
@@ -32,6 +47,7 @@ import {
   type Tri,
 } from "../api"
 import { Bouton, Libelle, Raison } from "./chassis"
+import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
  *  complet : c'est ce qui fait qu'éteindre les trois lignes d'une ambiance
@@ -625,18 +641,7 @@ function Ligne({
             className="mesure min-h-[44px] resize-y rounded-[2px] border border-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"
           />
         ) : (
-          /* **Le texte entier, exact, sans coupure et sans résumé.** Un texte
-             tronqué par des points de suspension trahirait la règle la plus
-             ancienne du produit sur l'écran qui existe justement pour la
-             tenir. */
-          <p
-            className={[
-              "mesure whitespace-pre-wrap text-[10.5px] leading-[1.45]",
-              ligne.allumee ? "text-texte-2" : "text-texte-3 line-through",
-            ].join(" ")}
-          >
-            {ligne.texte}
-          </p>
+          <TexteQuiPart texte={ligne.texte} allumee={ligne.allumee} />
         )}
 
         {ligne.remplace && (
@@ -659,6 +664,64 @@ function Ligne({
   )
 }
 
+/** Le texte d'une ligne — **entier, jamais résumé, et replié quand il est long**
+ *  (U9, 1ᵉʳ septembre 2026).
+ *
+ *  **L'invariant est amendé, et l'amendement est écrit.** La règle disait *mot
+ *  pour mot, sans coupure et sans résumé — des points de suspension trahiraient
+ *  la règle que cet écran existe pour tenir*. Elle tenait tant qu'un texte
+ *  faisait quelques lignes ; le prompt réellement employé dans ce dépôt fait
+ *  plus de mille deux cents caractères, et un écran qui doit se parcourir d'un
+ *  coup d'œil avant de payer ne le fait pas quand une seule ligne occupe tout.
+ *
+ *  **Ce qui remplace la promesse est plus fort qu'elle** : *rien n'est résumé,
+ *  rien n'est réécrit, et tout est atteignable en un clic depuis l'endroit où on
+ *  le lit.* Le repli est visible, son bouton dit combien de caractères il cache,
+ *  et il se referme. Ce n'est pas une troncature muette — c'est un pli qu'on
+ *  ouvre. La phrase d'origine est réécrite aux trois endroits où elle vit : ici,
+ *  dans `docs/carte-du-depot.md` et dans
+ *  `docs/maquettes-v2.1/08bis-ecran-de-confirmation.html`.
+ */
+const LONG = 320
+
+function TexteQuiPart({ texte, allumee }: { texte: string; allumee: boolean }) {
+  const [ouvert, setOuvert] = useState(false)
+  const long = texte.length > LONG
+  // **La coupure tombe sur une fin de mot**, jamais au milieu d'un : un pli qui
+  // couperait « pixe » ferait douter de ce qu'il cache, et c'est exactement ce
+  // que le pli ne doit pas faire.
+  const coupe = long && !ouvert
+  const debut = coupe
+    ? texte.slice(0, texte.lastIndexOf(" ", LONG) > 0 ? texte.lastIndexOf(" ", LONG) : LONG)
+    : texte
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p
+        data-texte-qui-part
+        className={[
+          "mesure whitespace-pre-wrap text-[10.5px] leading-[1.45]",
+          allumee ? "text-texte-2" : "text-texte-3 line-through",
+        ].join(" ")}
+      >
+        {debut}
+        {coupe && <span className="text-texte-3"> …</span>}
+      </p>
+      {long && (
+        <button
+          type="button"
+          onClick={() => setOuvert((o) => !o)}
+          className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+        >
+          {ouvert
+            ? "replier"
+            : `déplier — ${texte.length - debut.length} caractères de plus`}
+        </button>
+      )}
+    </div>
+  )
+}
+
 /** Une image jointe : son interrupteur, sa provenance, son prix.
  *
  *  **Le prix s'écrit sur la ligne où l'on coche**, en doré comme tout écart du
@@ -671,8 +734,29 @@ function LigneImage({
   image: ImageQuiPart
   onBasculer: () => void
 }) {
+  // **Ce que l'image montre, et le geste qui l'ouvre en grand** (U9). L'écran
+  // qui décide de ce qui part ne montrait aucune image : les références y
+  // étaient des lignes de texte avec un prix. La barre d'espace ouvre celle que
+  // le pointeur vise — le geste de l'aperçu, celui qui existe déjà partout
+  // ailleurs dans le produit et qui n'a jamais de bouton pour l'annoncer.
+  const sujet =
+    image.montre?.sorte === "asset"
+      ? sujetAsset(image.montre.asset)
+      : image.montre?.sorte === "carte"
+        ? sujetCarte(image.montre.carte)
+        : null
+  const visee = useVisee(sujet)
+  const vignette =
+    image.montre?.sorte === "asset"
+      ? vignetteAsset(image.montre.asset, 128)
+      : (sujet?.src ?? "")
+
   return (
-    <li className="flex items-center gap-3 border-b border-bord py-2">
+    <li
+      className="flex items-center gap-3 border-b border-bord py-2"
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+    >
       <button
         type="button"
         onClick={onBasculer}
@@ -688,6 +772,27 @@ function LigneImage({
           ].join(" ")}
         />
       </button>
+      {/* **La vignette est le sujet de la ligne**, pas une décoration : c'est
+          elle qu'on regarde pour décider de décocher. Une image décochée est
+          grisée comme son prix — elle dit ce qui *ne* partira pas. */}
+      <span
+        data-vignette-jointe
+        className={[
+          "damier h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[1px] border border-bord",
+          image.cochee ? "" : "opacity-40",
+        ].join(" ")}
+      >
+        {vignette && (
+          <img
+            src={vignette}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-contain"
+            style={{ imageRendering: "pixelated" }}
+          />
+        )}
+      </span>
       <span className="mesure min-w-0 flex-1 truncate text-[10px] text-texte-2">
         {image.provenance}
         {image.ecartee_par && (

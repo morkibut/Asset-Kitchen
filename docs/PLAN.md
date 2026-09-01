@@ -1736,7 +1736,7 @@ et le coût.
 | **U6** | La palette se règle sans faire attendre | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
-| **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — | à faire |
+| **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — | à faire |
 | **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** | à faire |

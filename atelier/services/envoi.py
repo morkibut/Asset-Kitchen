@@ -50,6 +50,7 @@ from atelier.domaine.envoi import (
     clef,
 )
 from atelier.domaine.erreurs import ErreurAtelier
+from atelier.domaine.generation import CARTE
 from atelier.domaine.projet import AUCUNE_CIBLE
 from atelier.services.generation import ServiceGenerations
 from atelier.services.prix import prix_de
@@ -82,10 +83,15 @@ class ServiceEnvoi:
         production: ServiceProduction,
         univers: ServiceUnivers,
         bibliotheque: Any = None,
+        assets: Any = None,
     ) -> None:
         self._generations = generations
         self._production = production
         self._univers = univers
+        # **Les assets, pour montrer les images jointes** (U9) : l'écran qui
+        # décide de ce qui part ne montrait aucune image, et une vignette a
+        # besoin de l'objet qu'elle montre.
+        self._assets = assets
         # **Le projet ouvert se lit ici comme partout ailleurs**, et pas à la
         # route : le défaut vit dans les services depuis T7, pour que le MCP en
         # hérite sans le réécrire.
@@ -207,6 +213,32 @@ class ServiceEnvoi:
 
     # ── Les images, et ce que chacune coûte ──────────────────────────────────
 
+    def _montre(self, projet: str | None, ligne: dict[str, Any]) -> dict[str, Any] | None:
+        """De quoi montrer cette image jointe — l'objet entier (U9).
+
+        **L'objet, et pas une adresse.** L'écran sait déjà nommer l'adresse d'un
+        asset et celle d'une carte, à un seul endroit chacune ; lui envoyer une
+        adresse toute faite aurait posé ici un second vocabulaire d'adresses,
+        que la première empreinte ajoutée ferait diverger. Il reçoit donc ce
+        qu'il reçoit partout ailleurs, et s'en sert avec les fonctions qu'il a.
+
+        **Une image disparue rend `None`**, jamais une erreur : une référence
+        peut nommer un asset supprimé ou une carte retirée du tableau entre le
+        moment où la ligne a été composée et celui où on la regarde. La ligne
+        reste — elle dit ce qui partirait —, elle n'a simplement pas de vignette.
+        """
+        identifiant = ligne.get("asset")
+        if not identifiant:
+            return None
+        try:
+            if ligne.get("origine") == CARTE:
+                carte = self._univers.carte(projet or "", identifiant)
+                return {"sorte": "carte", "carte": carte.en_json()}
+            asset = self._assets.lire(identifiant) if self._assets else None
+            return {"sorte": "asset", "asset": asset.en_json()} if asset else None
+        except Exception:  # noqa: BLE001 — une image disparue se voit en moins
+            return None
+
     def _images(
         self,
         compte: dict[str, Any],
@@ -246,6 +278,15 @@ class ServiceEnvoi:
                     # **Une place au-delà du plafond est grisée, pas cachée.**
                     "hors_plafond": cochee and places > 0 and rang > places,
                     "prix": pas,
+                    # **L'objet entier, et pas une adresse** (U9). L'écran qui
+                    # décide de ce qui part ne montrait aucune image : les
+                    # références y étaient des lignes de texte avec un prix.
+                    # Chacune porte désormais sa vignette — et l'écran sait
+                    # déjà nommer l'adresse d'un asset et celle d'une carte, à
+                    # un seul endroit chacune. Lui envoyer une adresse toute
+                    # faite aurait posé ici un second vocabulaire d'adresses,
+                    # que la première empreinte ajoutée ferait diverger.
+                    "montre": self._montre(projet, ligne),
                 }
             )
         avertissements: list[dict[str, str]] = []

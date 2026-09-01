@@ -1,27 +1,27 @@
 {
- "releve_le": 1788227368.9621098,
+ "releve_le": 1788228796.3160715,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 304196,
+  "octets": 304225,
   "documents": {
    "AGENTS.md": {
-    "octets": 30913,
+    "octets": 30912,
     "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 30913
+      "octets": 30912
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 8480
+      "octets": 8479
      },
      {
       "titre": "Lancer",
@@ -230,14 +230,14 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 140604,
+    "octets": 140634,
     "titres": 179,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2",
       "niveau": 1,
       "ligne": 1,
-      "octets": 140604
+      "octets": 140634
      },
      {
       "titre": "Décisions architecturales",
@@ -1041,7 +1041,7 @@
       "titre": "U1 à U13 — les treize reprises d'usage de la V2.1",
       "niveau": 2,
       "ligne": 1652,
-      "octets": 9661
+      "octets": 9691
      },
      {
       "titre": "L'ordre, et les quatre endroits où il se resserre",
@@ -1059,7 +1059,7 @@
       "titre": "Les treize étapes",
       "niveau": 3,
       "ligne": 1727,
-      "octets": 1620
+      "octets": 1650
      },
      {
       "titre": "Ce que chacune livre, et ses critères → `docs/tranches/U.md`",
@@ -1469,7 +1469,7 @@
  },
  "renvois": {
   "code": {
-   "total": 400,
+   "total": 404,
    "casses": []
   },
   "docs": {

@@ -12301,12 +12301,17 @@ describe("l'écran de confirmation", () => {
     FluxDouble.ouverts = []
     vi.stubGlobal("EventSource", FluxDouble)
     doublerLaMesure()
+    // Depuis U9, les images jointes s'ouvrent en grand : l'aperçu est un
+    // magasin de module, et un essai qui le laisserait ouvert le passerait au
+    // suivant.
+    reinitialiserApercu()
   })
 
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    reinitialiserApercu()
   })
 
   /** Un envoi entier, rendu par le serveur — **et non recomposé ici**.
@@ -12391,6 +12396,8 @@ describe("l'écran de confirmation", () => {
           asset: "carte-officielle",
           role: "style",
           origine: "carte",
+          // De quoi la montrer : l'objet entier, tel que le serveur l'envoie.
+          montre: { sorte: "carte" as const, carte: carteImage("carte-officielle") },
           provenance: "artwork officiel",
           ecartee_par: null,
           cochee: true,
@@ -12401,6 +12408,7 @@ describe("l'écran de confirmation", () => {
           asset: "carte-concept",
           role: "style",
           origine: "carte",
+          montre: { sorte: "carte" as const, carte: carteImage("carte-concept") },
           provenance: "concept art",
           ecartee_par: null,
           cochee: false,
@@ -13127,6 +13135,158 @@ describe("l'écran de confirmation", () => {
     expect(
       screen.getByRole("tab", { name: /^Galerie · 1 image en route$/ }),
     ).toBeTruthy()
+  })
+
+  // ── U9 · Il se lit d'un coup d'œil ────────────────────────────────────────
+  //
+  // **L'invariant est amendé, et l'amendement est mesuré ici.** L'écran promet
+  // de montrer ce qui part *mot pour mot, sans coupure et sans résumé*, et la
+  // séance du 1er septembre 2026 a montré la limite : le prompt réellement
+  // employé dans ce dépôt fait plus de mille deux cents caractères, et un écran
+  // qu'on doit parcourir d'un coup d'œil avant de payer ne le fait pas quand une
+  // seule ligne l'occupe tout entier.
+  //
+  // Ce qui remplace la promesse est plus fort qu'elle : *rien n'est résumé, rien
+  // n'est réécrit, et tout est atteignable en un clic depuis l'endroit où on le
+  // lit.* Les deux essais du repli tiennent les deux moitiés — ce qui se cache
+  // est annoncé, et ce qui se déplie est entier.
+
+  /** Un texte de bible **plus long que le pli** — 320 caractères —, écrit comme
+   *  ceux du dépôt : c'est celui du style, celui qui pèse 53 % de l'appel. */
+  const LONG =
+    "marais de fer, forge creusée sous la tourbe, brumes rousses au ras du sol, " +
+    "lanternes de fonte accrochées aux poutres, escaliers de pierre noire luisants " +
+    "d'humidité, enclumes tièdes, limaille en suspension dans l'air, palette de " +
+    "vingt-quatre couleurs, contour sombre d'un pixel, éclairage rasant venu de la " +
+    "gauche, fond uni, aucune perspective en fuite"
+
+  const ENVOI_LONG: Envoi = {
+    ...ENVOI,
+    lignes: ENVOI.lignes.map((l) =>
+      l.clef === "jeu.monde" ? { ...l, texte: LONG } : l,
+    ),
+  }
+
+  /** Le cadre de l'écran ouvert. `within` ne rend que des requêtes ; ce qui se
+   *  cherche par attribut a besoin du nœud lui-même. */
+  const cadre = () => document.querySelector("[data-envoi]") as HTMLElement
+
+  const textesQuiPartent = () =>
+    Array.from(
+      cadre().querySelectorAll("[data-texte-qui-part]"),
+    ) as HTMLElement[]
+
+  test("un texte long est replié, et son bouton dit ce qu'il cache", async () => {
+    const { ecran } = await ouvrir({ envoi: ENVOI_LONG })
+
+    const replie = textesQuiPartent().find((p) =>
+      p.textContent!.startsWith("marais de fer"),
+    )!
+    // **Ce n'est pas une troncature muette** : le pli s'annonce, et il dit son
+    // compte. Un « … » seul aurait été exactement ce que l'invariant interdit.
+    expect(replie.textContent!.length).toBeLessThan(LONG.length)
+    expect(replie.textContent).toContain("…")
+    const bouton = ecran.getByRole("button", {
+      name: /^déplier — \d+ caractères de plus$/,
+    })
+    const caches = Number(bouton.textContent!.match(/\d+/)![0])
+    expect(caches).toBeGreaterThan(0)
+    // La coupure tombe sur une fin de mot : le début replié est un préfixe
+    // exact du texte, jamais un mot coupé en deux.
+    const debut = replie.textContent!.replace(" …", "")
+    expect(LONG.startsWith(debut)).toBe(true)
+    expect(debut.length + caches).toBe(LONG.length)
+  })
+
+  test("déplié, le texte est entier — et le repli se referme", async () => {
+    const { ecran } = await ouvrir({ envoi: ENVOI_LONG })
+
+    fireEvent.click(
+      ecran.getByRole("button", { name: /^déplier — \d+ caractères de plus$/ }),
+    )
+
+    // **Mot pour mot.** C'est la moitié de l'invariant qui n'a pas bougé : ce
+    // qui se déplie est le texte du serveur, pas un résumé de lui.
+    await waitFor(() =>
+      expect(textesQuiPartent().some((p) => p.textContent === LONG)).toBe(true),
+    )
+
+    fireEvent.click(ecran.getByRole("button", { name: "replier" }))
+    await waitFor(() =>
+      expect(textesQuiPartent().some((p) => p.textContent === LONG)).toBe(false),
+    )
+  })
+
+  test("chaque image jointe porte sa vignette, à côté de son prix", async () => {
+    // L'écran qui décide de ce qui part ne montrait **aucune image** : les
+    // références y étaient des lignes de texte avec un prix. On décochait de
+    // mémoire.
+    await ouvrir({ envoi: ENVOI })
+
+    const vignettes = Array.from(
+      cadre().querySelectorAll("[data-vignette-jointe]"),
+    ) as HTMLElement[]
+    expect(vignettes).toHaveLength(2)
+    expect(
+      vignettes[0].querySelector("img")!.getAttribute("src"),
+    ).toContain("carte-officielle")
+    // **Une image décochée est grisée comme son prix** — elle dit ce qui *ne*
+    // partira pas, et son prix reste écrit : c'est ce qu'elle coûterait.
+    expect(vignettes[0].className).not.toContain("opacity-40")
+    expect(vignettes[1].className).toContain("opacity-40")
+  })
+
+  test("le pointeur sur une vignette et Espace l'ouvrent en grand", async () => {
+    // **Le geste de l'aperçu, celui qui existe déjà partout ailleurs** et qui
+    // n'a jamais de bouton pour l'annoncer. Aucun geste neuf n'est inventé ici.
+    await ouvrir({ envoi: ENVOI })
+    const ligne = cadre()
+      .querySelector("[data-vignette-jointe]")!
+      .closest("li")!
+
+    fireEvent.pointerOver(ligne)
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+
+    const apercu = screen.getByRole("dialog", { name: "Aperçu" })
+    expect(apercu.querySelector("img")!.getAttribute("src")).toContain(
+      "carte-officielle",
+    )
+
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Aperçu" })).toBeNull(),
+    )
+
+    // Et le pointeur sorti, la touche ne prend plus rien : elle ne garde pas la
+    // dernière vignette survolée.
+    fireEvent.pointerOut(ligne)
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+    expect(screen.queryByRole("dialog", { name: "Aperçu" })).toBeNull()
+  })
+
+  test("l'aperçu passe au-dessus de l'écran de confirmation", async () => {
+    // **Comme au-dessus des autres écrans qui couvrent l'atelier.** Il ne le
+    // remplace pas : on tient l'image une seconde, on la relâche, et l'écran
+    // qu'on était en train de lire est intact, avec son bouton qui paie.
+    const { ecran } = await ouvrir({ envoi: ENVOI })
+    const ligne = cadre()
+      .querySelector("[data-vignette-jointe]")!
+      .closest("li")!
+
+    fireEvent.pointerOver(ligne)
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+
+    const apercu = screen.getByRole("dialog", { name: "Aperçu" })
+    // Il couvre la fenêtre entière et vit **hors** de l'écran de confirmation :
+    // c'est ce qui fait qu'aucun défilement ni aucune colonne ne le rogne. La
+    // mesure en pixels, elle, a été faite au navigateur — jsdom ne met rien en
+    // page, donc tout rectangle y vaudrait zéro.
+    expect(apercu.className).toContain("fixed")
+    expect(apercu.className).toContain("inset-0")
+    expect(apercu.className).toContain("z-50")
+    const envoiOuvert = document.querySelector("[data-envoi]")!
+    expect(envoiOuvert.contains(apercu)).toBe(false)
+    expect(ecran.getByRole("button", { name: /^Payer et lancer/ })).toBeTruthy()
   })
 })
 

@@ -259,7 +259,11 @@ class Atelier:
         # ne dépense rien — il demande ses lignes au chemin de l'envoi et son
         # compte d'images à celui qui décide du grisé.
         self.envoi = ServiceEnvoi(
-            self.generations, self.production, self.univers, self.bibliotheque
+            self.generations,
+            self.production,
+            self.univers,
+            self.bibliotheque,
+            self.assets,
         )
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le

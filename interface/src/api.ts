@@ -1871,6 +1871,19 @@ export type ImageQuiPart = LigneReference & {
    *  machine a payé**. `null` quand la machine n'a pas de quoi le mesurer : le
    *  produit dit alors qu'il ne sait pas. */
   prix: number | null
+  /** De quoi la montrer — **l'objet entier, pas une adresse** (U9).
+   *
+   *  L'écran qui décide de ce qui part ne montrait aucune image : les
+   *  références y étaient des lignes de texte avec un prix. Il reçoit désormais
+   *  l'asset ou la carte, et nomme l'adresse avec les fonctions qu'il a déjà —
+   *  `sujetAsset`, `sujetCarte`, `vignetteAsset`. Une adresse toute faite
+   *  envoyée par le serveur aurait posé un second vocabulaire d'adresses, que
+   *  la première empreinte ajoutée ferait diverger.
+   *
+   *  `null` quand l'image a disparu entre la composition de la ligne et sa
+   *  lecture. La ligne reste — elle dit ce qui partirait —, elle n'a
+   *  simplement pas de vignette. */
+  montre: { sorte: "asset"; asset: Asset } | { sorte: "carte"; carte: Carte } | null
 }
 
 export type OptionQuiPart = {
