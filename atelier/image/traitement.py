@@ -47,11 +47,18 @@ from PIL import Image, ImageDraw
 from atelier.domaine.recette import (
     BAS,
     BORD,
+    BORDS,
+    CONTOURS,
     COULEUR,
+    DETOURAGE,
     FLOYD,
+    GRILLE,
+    LA_MAIN,
     LAISSES,
     MODELE,
     PARTOUT,
+    QUANTIFICATION,
+    RECADRAGE,
     Bords,
     CalqueDessin,
     Contour,
@@ -877,6 +884,12 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
     passes ne changent pas, et ne repaie que la queue.
     """
     rgba = _tableau(octets)
+    # **Une place endormie est sautée, elle n'est pas vidée** (U4). Le détourage
+    # est la seule place dont l'endormissement se lise ici : les six autres
+    # vivent dans la queue. Rien de l'ordre fixe ne bouge — on saute, on ne
+    # réordonne pas.
+    if recette.dort(DETOURAGE):
+        return rgba
     for passe in recette.passes:
         rgba = _detourer(rgba, passe)
     return rgba
@@ -899,26 +912,44 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
     pas du PNG, et le rouvrir depuis les octets aurait payé un encodage pour
     rien à chaque relecture de curseur.
     """
-    if recette.recadrage is not None:
+    # **Une place endormie est sautée, et l'ordre ne bouge pas d'un cran** (U4).
+    # `dort` est la seule lecture de la veille dans tout le dépôt : l'écran,
+    # l'agent et les mesures posent la même question au même endroit, et une
+    # seconde façon de la poser finirait par répondre autrement. Ce qui est
+    # promis en échange est mesuré par un essai : *une image traitée avec une
+    # place en veille sort identique au pixel près à la même sans cette place du
+    # tout.*
+    if recette.recadrage is not None and not recette.dort(RECADRAGE):
         rgba = _recadrer(rgba, recette.recadrage)
 
-    if recette.grille is not None:
+    if recette.grille is not None and not recette.dort(GRILLE):
         # La case suit le détourage : avoir demandé une silhouette, c'est avoir
         # dit que ce qu'on traite est un sprite et qu'il vit dans une case.
-        rgba = sur_grille(rgba, recette.grille, case=bool(recette.passes))
+        #
+        # **Et elle suit le détourage qui agit, pas celui qui est écrit** (U4).
+        # C'est le seul endroit du traitement où une place en regarde une autre,
+        # donc le seul où la veille pouvait fuir. La tentation était de garder la
+        # case pendant qu'on éteint le détourage, pour que l'image ne change pas
+        # de taille en même temps qu'elle change de fond ; on ne l'a pas suivie,
+        # parce que ce que la veille promet est plus précieux que ce confort-là :
+        # *endormie veut dire sans effet, pas presque sans effet.* Une place à
+        # qui l'on doit se demander ce qu'elle laisse traîner n'est pas un
+        # interrupteur, c'est une nuance de plus à tenir en tête.
+        detoure = bool(recette.passes) and not recette.dort(DETOURAGE)
+        rgba = sur_grille(rgba, recette.grille, case=detoure)
 
-    if recette.quantification is not None:
+    if recette.quantification is not None and not recette.dort(QUANTIFICATION):
         rgba = quantifier(rgba, recette.quantification)
 
-    if recette.bords is not None:
+    if recette.bords is not None and not recette.dort(BORDS):
         rgba = nettoyer(rgba, recette.bords)
 
     # Les deux places de E5. Le contour après les miettes et après les
     # couleurs ; la main après tout, y compris après lui.
-    if recette.contours is not None:
+    if recette.contours is not None and not recette.dort(CONTOURS):
         rgba = contourner(rgba, recette.contours)
 
-    if recette.main is not None:
+    if recette.main is not None and not recette.dort(LA_MAIN):
         rgba = retoucher(rgba, recette.main)
 
     return rgba

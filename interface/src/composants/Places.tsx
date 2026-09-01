@@ -454,7 +454,8 @@ export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) 
   // supposé : la grille recherche elle-même la boîte du sujet et rogne dessus
   // avant de mettre à l'échelle, si bien que les pixels transparents gardés par
   // la marge disparaissent. Le même fichier à l'octet près, marge 0 comme
-  // marge 40 (`docs/maquettes-v2.1/12-table-recadrage.html` § 02).
+  // marge 40 — la mesure du 30 août 2026, dans
+  // `docs/maquettes-v2.1/12-table-recadrage.html`.
   const margeSansEffet = recette.grille != null
   // Ce qu'on garde, écrit avec sa provenance : un constat n'est pas un réglage.
   const depart = boite ?? vu?.sujet ?? null

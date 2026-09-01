@@ -44,7 +44,7 @@ from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT, Generation
 from atelier.domaine.personnage import Personnage
-from atelier.domaine.recette import Recette
+from atelier.domaine.recette import PLACES, Recette, places_inconnues
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ProjetInconnu
 
@@ -345,7 +345,11 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
             "Re-process an existing asset without calling the provider: cut "
             "out the background, snap to a pixel grid, quantise to the project "
             "palette, or revert to the original image. Free, offline, and "
-            "non-destructive — the raw image is always kept."
+            "non-destructive — the raw image is always kept. In `steps`, the "
+            "`veille` list names the steps that keep their settings but do "
+            "nothing: `[\"quantification\"]` renders as if the palette step "
+            "were not there, and dropping the name back out restores it "
+            "untouched. get_asset reports the same list."
         ),
     )
     @_refus_lisible
@@ -361,7 +365,20 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         `revert` d'abord parce que c'est le geste qui annule les deux autres ;
         `recipe` ensuite, une recette nommée, qui est le geste épais ; `steps`
         en dernier, la recette écrite à la main pour qui sait ce qu'il veut.
+
+        **La veille est vérifiée ici** (U4), comme la route HTTP la vérifie de
+        son côté. Le domaine, lui, ignore en silence un nom de place qu'il ne
+        connaît pas — il doit pouvoir relire un vieux fichier. Mais un agent qui
+        écrit *quantifications* au pluriel croirait avoir éteint la palette et
+        regarderait ensuite un rendu quantifié sans comprendre pourquoi.
         """
+        if steps is not None:
+            inconnues = places_inconnues(steps.get("veille"))
+            if inconnues:
+                raise ErreurAtelier(
+                    f"veille : place inconnue « {', '.join(inconnues)} » — "
+                    f"les places sont {', '.join(PLACES)}"
+                )
         if revert:
             asset = atelier.assets.revenir_au_brut(asset_id)
         elif recipe:

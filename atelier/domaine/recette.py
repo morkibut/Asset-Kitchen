@@ -76,6 +76,45 @@ COULEUR = "couleur"
 MODELE = "modele"
 MOTEURS = (BORD, COULEUR, MODELE)
 
+# ── Les places, nommées une fois (U4) ────────────────────────────────────────
+#
+# **Les sept places du traitement, dans l'ordre où elles s'appliquent**, plus la
+# différence qui vit en seconde position sans être une table de l'écran. Elles
+# n'avaient jamais eu besoin d'un nom en tant que liste : chacune était un champ,
+# et l'ordre était celui du fichier. La veille en demande un — *quelles places
+# dorment* est une liste de noms —, et une liste écrite ici est une liste que le
+# domaine peut vérifier, plutôt qu'une chaîne libre qu'un agent inventerait.
+DETOURAGE = "detourage"
+DIFFERENCE = "difference"
+RECADRAGE = "recadrage"
+GRILLE = "grille"
+QUANTIFICATION = "quantification"
+BORDS = "bords"
+CONTOURS = "contours"
+LA_MAIN = "main"
+PLACES = (
+    DETOURAGE,
+    DIFFERENCE,
+    RECADRAGE,
+    GRILLE,
+    QUANTIFICATION,
+    BORDS,
+    CONTOURS,
+    LA_MAIN,
+)
+
+
+def places_inconnues(noms: Any) -> list[str]:
+    """Les noms qui ne désignent aucune place, dans l'ordre où ils arrivent.
+
+    **Écrite ici parce qu'elle est posée à deux portes** : la route HTTP et
+    l'outil de l'agent. Le domaine, lui, ne lève pas — il relit des fichiers, et
+    une recette écrite avant qu'une place soit renommée doit continuer de
+    s'ouvrir. Ce sont les portes d'entrée qui refusent, avec la raison et la
+    liste de ce qui existe.
+    """
+    return [n for n in (noms or ()) if n not in PLACES]
+
 # Ce que la pipette retire : la seule zone d'un seul tenant sous le point, ou
 # toutes les zones de cette couleur dans l'image.
 #
@@ -731,6 +770,26 @@ class Recette:
     contours: "Contour | None" = None
     main: "Main | None" = None
 
+    # **Les places endormies** (U4, `US-334` à `US-339`, 1<sup>er</sup> septembre
+    # 2026). Une place en veille garde tous ses réglages et cesse d'agir sur
+    # l'image : c'est l'exact contraire de la vider, et **éteinte et vide sont
+    # deux états**. Sans quoi on ne pouvait essayer une image sans une place
+    # qu'en retapant ses réglages ensuite.
+    #
+    # **Un champ de la recette, pas un état d'écran**, et le prix est nommé :
+    # elle entre dans l'empreinte — donc elle refait le rendu —, elle voyage
+    # avec le reste, et l'agent la lit et la pose comme n'importe quel autre
+    # réglage. Ce qu'elle promet en échange : *une image traitée avec une place
+    # en veille sort identique au pixel près à la même sans cette place du
+    # tout.* Endormie veut dire sans effet, pas presque sans effet.
+    #
+    # **Un ensemble de noms de places, et jamais un drapeau par place.** Sept
+    # booléens auraient demandé sept champs de sérialisation, sept valeurs par
+    # défaut et sept lignes de traitement ; une liste de noms en demande une, et
+    # elle est vide dans l'immense majorité des recettes — donc elle ne pèse
+    # rien dans l'empreinte de celles qui ne s'en servent pas.
+    veille: tuple[str, ...] = ()
+
     nom: str | None = None  # une recette nommée est une recette (US-66)
 
     # ── Ce qu'elle est ───────────────────────────────────────────────────────
@@ -803,6 +862,11 @@ class Recette:
             "bords": self.bords.en_json() if self.bords else None,
             "contours": self.contours.en_json() if self.contours else None,
             "main": self.main.en_json() if self.main else None,
+            # **Triée, toujours** (U4). L'empreinte est le JSON canonique de la
+            # recette : deux recettes qui endorment les mêmes places dans un
+            # ordre différent doivent rendre la même empreinte, sinon un collage
+            # ferait recalculer un rendu déjà en cache.
+            "veille": sorted(self.veille),
             "nom": self.nom,
         }
 
@@ -827,5 +891,40 @@ class Recette:
             bords=Bords.depuis_json(d["bords"]) if d.get("bords") else None,
             contours=Contour.depuis_json(d["contours"]) if d.get("contours") else None,
             main=Main.depuis_json(d["main"]) if d.get("main") else None,
+            # **Ce qui n'est pas une place connue tombe** (U4). Une recette
+            # écrite par un agent, ou relue d'un disque plus vieux que ce champ,
+            # ne doit pas pouvoir endormir une place qui n'existe pas : le nom
+            # se perdrait en silence et ferait croire à un réglage posé. Le
+            # domaine ne lève pas ici — il relit un fichier —, c'est la route
+            # qui refuse un nom inconnu, avec sa raison.
+            veille=tuple(
+                sorted({p for p in d.get("veille") or () if p in PLACES})
+            ),
             nom=d.get("nom"),
         )
+
+    # ── La veille ────────────────────────────────────────────────────────────
+
+    def dort(self, place: str) -> bool:
+        """Cette place-là est-elle endormie ?
+
+        **Une seule lecture pour tout le dépôt** — le traitement, l'écran de la
+        barre, les mesures et l'agent posent tous la même question, et une
+        seconde façon de la poser finirait par répondre autrement.
+        """
+        return place in self.veille
+
+    def endormie(self, place: str, dort: bool) -> "Recette":
+        """La même recette, cette place-là endormie ou réveillée.
+
+        **Elle ne vide rien** : c'est toute la différence avec *Sans cette
+        table ›*, qui existe au pied de chaque colonne. Une place en veille
+        reste écrite avec toutes ses valeurs, et on la retrouve telle quelle en
+        la rallumant.
+        """
+        if place not in PLACES:
+            return self
+        restantes = {p for p in self.veille if p != place}
+        if dort:
+            restantes.add(place)
+        return replace(self, veille=tuple(sorted(restantes)))

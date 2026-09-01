@@ -300,7 +300,8 @@ saisissable ce qui s'affichait déjà.
 
 ## U4 · Une table s'éteint, et ça se voit
 
-**Critères : 7 · Ce que ça corrige : un point de la séance**
+**Critères : 7 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -327,22 +328,73 @@ endormie sans que l'ordre des sept places bouge d'un cran.
 
 ### Critères d'acceptation
 
-- [ ] Cliquer le carré d'une place l'éteint ; recliquer la rallume, et les réglages sont
+- [x] Cliquer le carré d'une place l'éteint ; recliquer la rallume, et les réglages sont
       ceux d'avant.
-- [ ] Une place éteinte ne change plus l'image, et son carré se distingue d'un carré creux
+- [x] Une place éteinte ne change plus l'image, et son carré se distingue d'un carré creux
       — *éteinte* et *vide* sont deux états, pas un.
-- [ ] Ouvrir une table éteinte montre une colonne visiblement éteinte, avec le geste pour
+- [x] Ouvrir une table éteinte montre une colonne visiblement éteinte, avec le geste pour
       la rallumer.
-- [ ] Toucher un réglage d'une table éteinte la rallume **et l'annonce**.
-- [ ] Deux images traitées par la même recette, l'une avec une place en veille et l'autre
+- [x] Toucher un réglage d'une table éteinte la rallume **et l'annonce**.
+- [x] Deux images traitées par la même recette, l'une avec une place en veille et l'autre
       sans cette place du tout, sortent identiques au pixel près.
-- [ ] L'empreinte de la recette change quand une place s'endort : le rendu se refait.
-- [ ] L'agent lit et pose l'état de veille comme n'importe quel autre réglage de recette.
+- [x] L'empreinte de la recette change quand une place s'endort : le rendu se refait.
+- [x] L'agent lit et pose l'état de veille comme n'importe quel autre réglage de recette.
 
 ### Bloquée par
 
 Aucune. **À faire avant U5** : une recette qui voyage doit emporter l'état de veille,
 sinon un collage rallumerait des places que l'on avait éteintes.
+
+### Ce qu'elle a appris en étant faite
+
+**La promesse « endormie veut dire sans effet » est facile à écrire et facile à trahir**, et
+elle a été trahie deux fois en une heure. Les deux fuites viennent du même endroit : un
+chemin du dépôt qui lit les réglages d'une place **sans lui demander si elle dort**.
+
+- *Le cache du détourage.* Il se reconstruisait une recette neuve — `Recette(passes=…)` —
+  pour n'en garder que les passes, et la veille n'y montait pas. Le détourage endormi
+  continuait donc de s'appliquer, et pas seulement à l'image : ce cache est le seul endroit
+  du dépôt qui détoure, et tout ce qui en descend en héritait, y compris la boîte du sujet
+  que la table de recadrage affiche depuis U2 et la couleur que lit la pipette. La
+  correction n'est pas de porter la veille jusque-là mais de **vider les passes** : la clé
+  du cache ne pèse que les passes, donc porter un drapeau à côté aurait fait partager une
+  entrée à deux états très différents. Un détourage endormi *est* un détourage sans passe.
+- *La grille.* C'est la seule place du traitement qui en regarde une autre — elle demande
+  au détourage si l'image est un sprite, pour décider de la poser dans une case carrée. Elle
+  lisait « le détourage est écrit », et il fallait lire « le détourage agit ».
+
+**Il y avait une tentation, et on ne l'a pas suivie.** Garder la case pendant qu'on éteint
+le détourage aurait évité que l'image change de taille en même temps qu'elle change de fond
+— ce qui est plus agréable à regarder. Mais une place dont il faut se demander ce qu'elle
+laisse traîner n'est pas un interrupteur : c'est une nuance de plus à tenir en tête, et
+c'est très exactement ce que l'étape existe pour supprimer.
+
+**Le carré ne se clique que là où il y a quelque chose à éteindre.** Endormir une place vide
+n'aurait rien changé à l'image tout en écrivant un mot dans la recette — un interrupteur qui
+ne commande rien. Sur une place vide, le carré reste ce qu'il a toujours été : une marque.
+
+**Deux boutons collés, et pas un bouton dans un bouton.** Le carré commande la veille, le
+nom ouvre la table : ce sont deux gestes, et un bouton imbriqué dans un autre n'est ni du
+HTML valide ni atteignable au clavier. Ils partagent le fond et l'arrondi, donc la puce
+reste une puce à l'œil — c'est la mise en page qui les réunit, pas le balisage.
+
+**Le réveil se pose autour du couple `regler`/`poser`, jamais dans le crochet de recette.**
+Le crochet sert *toutes* les recettes de l'écran, y compris celle que la barre pose pour
+endormir : un réveil câblé là-dedans aurait rendu l'endormissement impossible — poser la
+recette qui endort aurait rallumé la place dans le même souffle. Et le réveil ne s'accroche
+qu'à `poser`, pas à `regler` : `regler` part cent fois pendant qu'un curseur glisse, et
+l'annonce serait partie avant le geste qu'elle décrit.
+
+**Le domaine ne refuse pas un nom de place inconnu ; les portes d'entrée, si.** Le domaine
+relit des fichiers, et une recette écrite avant qu'une place soit renommée doit continuer de
+s'ouvrir — il filtre en silence. Mais un agent qui écrit *quantifications* au pluriel
+croirait avoir éteint la palette et regarderait ensuite un rendu quantifié sans comprendre :
+la route HTTP et l'outil de l'agent vérifient donc tous les deux, avec la même phrase et la
+liste de ce qui existe.
+
+**La veille est triée à l'écriture comme à la lecture.** L'empreinte se calcule sur le texte
+de la recette : sans tri, éteindre la grille puis la palette aurait donné une autre
+empreinte — donc un autre rendu à calculer — que l'inverse, pour exactement la même image.
 
 ---
 

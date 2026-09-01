@@ -35,8 +35,11 @@ from atelier.domaine.recette import (
     ANCRAGES,
     BORD,
     COULEUR,
+    DETOURAGE,
+    DIFFERENCE,
     EPAISSEUR_MAX,
     MOTEURS,
+    PLACES,
     PORTEES,
     POSITIONS,
     RAYON_MAX,
@@ -882,8 +885,15 @@ class ServiceAssets:
         Ce que les mesures d'une table veulent : elles décrivent des pixels, et
         les rouvrir depuis des octets paierait un encodage pour rien.
         """
+        # **La différence s'endort ici et pas dans `queue`** (U4). Elle est la
+        # seule des huit places à s'appliquer hors du module de traitement —
+        # elle a besoin d'une seconde image, que seul un service sait aller
+        # chercher — donc sa veille se lit là où elle s'applique. Lui passer
+        # `None` est exactement ce que « endormie » veut dire : la place garde
+        # ses réglages dans la recette, et le calcul ne la voit pas.
+        difference = None if recette.dort(DIFFERENCE) else recette.difference
         return queue(
-            self._differencier(asset, self.detourage(asset), recette.difference),
+            self._differencier(asset, self.detourage(asset), difference),
             recette,
         )
 
@@ -977,8 +987,22 @@ class ServiceAssets:
         détourée, sinon ses zones connexes n'en font qu'une, celle de l'image
         entière. La clé du cache porte l'empreinte des passes, donc les deux
         vues cohabitent sans se confondre.
+
+        **Un détourage endormi est un détourage sans passe** (U4), et c'est la
+        seule écriture juste. Ce cache est le seul endroit du dépôt qui détoure ;
+        tout ce qui en descend — le rendu, la boîte du sujet de la table de
+        recadrage, la couleur que lit la pipette — doit voir la même image que
+        le rendu. Poser la veille sur la recette du cache aurait suffi au
+        traitement mais pas à la clé, qui ne pèse que les passes : deux états
+        très différents auraient partagé une entrée. Vider les passes règle les
+        deux d'un coup, parce que c'est le même tableau **et** la même clé.
         """
-        recette = Recette(passes=asset.recette.passes if passes is None else passes)
+        endormi = passes is None and asset.recette.dort(DETOURAGE)
+        recette = Recette(
+            passes=()
+            if endormi
+            else (asset.recette.passes if passes is None else passes)
+        )
         cle = f"{asset.identifiant}:{recette.empreinte_passes()}"
         rgba = self._detourages.get(cle)
         if rgba is None:
@@ -1109,6 +1133,18 @@ class ServiceAssets:
                         raise RecetteRefusee(
                             f"{nom}, passage {rang} : le rayon va de 0 à {RAYON_MAX}"
                         )
+
+        # **La veille** (U4). Une place endormie qui n'existe pas est un réglage
+        # qu'on croit avoir posé et qui n'agit nulle part — le contraire exact
+        # de ce que la veille promet. Le filet vaut pour toute provenance : une
+        # recette nommée écrite avant qu'une place soit renommée, un agent, un
+        # fichier retouché à la main.
+        for place in recette.veille:
+            if place not in PLACES:
+                raise RecetteRefusee(
+                    f"veille : place inconnue « {place} » — "
+                    f"les places sont {', '.join(PLACES)}"
+                )
 
     # ── Enregistrement ───────────────────────────────────────────────────────
 

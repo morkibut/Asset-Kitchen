@@ -28,6 +28,7 @@ import {
   api,
   type Asset,
   type EtatTraitement,
+  type Place,
   type Recette,
   type TachesDeLAsset,
   type Trait,
@@ -160,15 +161,75 @@ function indisponible(
   return null
 }
 
+// ── La veille : quelle table occupe quelle place ────────────────────────────
+
+/** La place de la recette qu'une table règle — ou rien, pour une fabrique.
+ *
+ *  **Deux listes qui se ressemblent, et il fallait les relier quelque part.**
+ *  La barre compte neuf tables, la recette sept places : les deux fabriques
+ *  écrivent d'autres fichiers et ne posent rien sur celle-ci, donc elles n'ont
+ *  rien à éteindre. Écrit ici, au même endroit que l'ordre des tables, pour que
+ *  la correspondance se relise d'un coup d'œil le jour où une place bouge. */
+export function placeDe(table: Table): Place | null {
+  return table === "decoupage" || table === "superposition" ? null : table
+}
+
+/** Cette table dort-elle ? **La seule lecture de la veille dans l'écran.** */
+export function dort(recette: Recette, table: Table): boolean {
+  const place = placeDe(table)
+  return place !== null && recette.veille.includes(place)
+}
+
+/** La même recette, cette place-ci endormie ou réveillée.
+ *
+ *  Triée à l'écriture comme le serveur la trie à la lecture : éteindre la
+ *  grille puis la palette doit donner exactement le même rendu que l'inverse,
+ *  et l'empreinte se calcule sur le texte de la recette. */
+export function avecVeille(recette: Recette, table: Table, dort: boolean): Recette {
+  const place = placeDe(table)
+  if (place === null) return recette
+  const restantes = recette.veille.filter((p) => p !== place)
+  return {
+    ...recette,
+    veille: (dort ? [...restantes, place] : restantes).sort(),
+  }
+}
+
 // ── La barre ────────────────────────────────────────────────────────────────
 
-function Carre({ plein }: { plein: boolean }) {
+/** Les trois états d'une place, et ils se distinguent à l'œil.
+ *
+ *  **Éteinte et vide ne sont pas le même état** (U4), et c'est tout l'intérêt
+ *  de la veille : l'une garde ses réglages, l'autre n'en a pas. Un carré grisé
+ *  aurait dit *presque vide* ; le carré barré dit *il y a quelque chose ici, et
+ *  ça ne s'applique pas* — la seule phrase qui soit vraie. */
+function Carre({ etat }: { etat: "posee" | "vide" | "eteinte" }) {
+  if (etat === "eteinte")
+    return (
+      <svg
+        aria-hidden
+        data-carre="eteinte"
+        viewBox="0 0 9 9"
+        className="inline-block h-[9px] w-[9px] shrink-0 text-texte-3"
+      >
+        <rect
+          x="0.5"
+          y="0.5"
+          width="8"
+          height="8"
+          fill="none"
+          stroke="currentColor"
+        />
+        <line x1="1" y1="8" x2="8" y2="1" stroke="currentColor" />
+      </svg>
+    )
   return (
     <span
       aria-hidden
+      data-carre={etat}
       className={[
         "inline-block h-[9px] w-[9px] shrink-0",
-        plein ? "bg-signal" : "border border-texte-3",
+        etat === "posee" ? "bg-signal" : "border border-texte-3",
       ].join(" ")}
     />
   )
@@ -180,6 +241,7 @@ export function BarreDesTables({
   mesures,
   ouverte,
   onOuvrir,
+  onVeille,
   onToutDefaire,
 }: {
   recette: Recette
@@ -190,6 +252,10 @@ export function BarreDesTables({
   mesures: TachesDeLAsset | null
   ouverte: Table
   onOuvrir: (table: Table) => void
+  /** Éteindre ou rallumer une place **sans ouvrir sa table** (U4). C'est le
+   *  geste de la barre, et il pose la recette : la veille est un champ de la
+   *  recette, pas un état d'écran. */
+  onVeille: (table: Table, dort: boolean) => void
   onToutDefaire: () => void
 }) {
   return (
@@ -208,6 +274,26 @@ export function BarreDesTables({
       {TABLES.map(({ cle, nom, fabrique }, rang) => {
         const dehors = indisponible(cle, traitement, mesures)
         const vaut = valeur(cle, recette)
+        const eteinte = dort(recette, cle)
+        // **Le carré ne se clique que là où il y a quelque chose à éteindre.**
+        // Une place vide qu'on endort ne change rien à l'image et écrit
+        // pourtant un mot dans la recette : c'est un interrupteur qui ne
+        // commande rien, donc un mensonge poli. Sur une place vide, le carré
+        // reste ce qu'il a toujours été — une marque, pas un bouton.
+        const commutable = !fabrique && !dehors && vaut !== null
+        const chip = [
+          // `whitespace-nowrap` : la bande fait 34 px et ne grandit pas.
+          // Trouvé au navigateur en tenant E5 — dès que la sixième et la
+          // septième places portent une valeur, `modèle · 28` et
+          // `128 px · 100 %` se repliaient chacun sur deux lignes et
+          // débordaient de la bande par le haut et par le bas.
+          "mesure flex h-[24px] shrink-0 items-center whitespace-nowrap text-[10px] transition-colors duration-[80ms]",
+          ouverte === cle
+            ? "bg-fond-3 text-texte"
+            : dehors || eteinte
+              ? "text-texte-3 hover:bg-fond-2"
+              : "text-texte-2 hover:bg-fond-2",
+        ].join(" ")
         return (
           <span key={cle} className="flex items-center gap-1">
             {/* Le trait qui sépare les sept places des deux fabriques. Il ne
@@ -216,31 +302,63 @@ export function BarreDesTables({
             {fabrique && rang > 0 && !TABLES[rang - 1].fabrique && (
               <span aria-hidden className="mx-2 h-4 w-px bg-bord" />
             )}
-            <button
-              type="button"
-              aria-pressed={ouverte === cle}
-              onClick={() => onOuvrir(cle)}
-              className={[
-                // `whitespace-nowrap` : la bande fait 34 px et ne grandit pas.
-                // Trouvé au navigateur en tenant E5 — dès que la sixième et la
-                // septième places portent une valeur, `modèle · 28` et
-                // `128 px · 100 %` se repliaient chacun sur deux lignes et
-                // débordaient de la bande par le haut et par le bas.
-                "mesure flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[2px] px-2 text-[10px] transition-colors duration-[80ms]",
-                ouverte === cle
-                  ? "bg-fond-3 text-texte"
-                  : dehors
-                    ? "text-texte-3 hover:bg-fond-2"
-                    : "text-texte-2 hover:bg-fond-2",
-              ].join(" ")}
-            >
-              {/* Une fabrique n'a pas de carré : il n'y a pas de place à
-                  remplir. Une place indisponible non plus, et pour la même
-                  raison — le carré dit *qu'il y a une place ici*. */}
-              {!fabrique && !dehors && <Carre plein={vaut !== null} />}
-              <span>{nom}</span>
-              {vaut && <span className="text-signal">{vaut}</span>}
-            </button>
+            {/* **Deux boutons collés, et pas un bouton dans un bouton** (U4).
+                Le carré commande la veille, le nom ouvre la table : ce sont
+                deux gestes, et un bouton imbriqué dans un autre n'est ni du
+                HTML valide ni atteignable au clavier. Ils partagent le fond et
+                l'arrondi, donc à l'œil la puce reste une puce. */}
+            <span className={["flex items-center rounded-[2px]", chip].join(" ")}>
+              {commutable ? (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!eteinte}
+                  aria-label={`${nom} — ${eteinte ? "éteinte" : "allumée"}`}
+                  title={
+                    eteinte
+                      ? `${nom} est éteinte : ses réglages sont gardés et elle ne change pas l'image. Clique pour la rallumer.`
+                      : `éteindre ${nom} sans perdre ses réglages`
+                  }
+                  onClick={() => onVeille(cle, !eteinte)}
+                  className="flex h-[24px] shrink-0 items-center pl-2 pr-1.5 hover:text-signal"
+                >
+                  <Carre etat={eteinte ? "eteinte" : "posee"} />
+                </button>
+              ) : (
+                // Une fabrique n'a pas de carré : il n'y a pas de place à
+                // remplir. Une place indisponible non plus, et pour la même
+                // raison — le carré dit *qu'il y a une place ici*.
+                !fabrique && !dehors && (
+                  <span className="flex h-[24px] shrink-0 items-center pl-2 pr-1.5">
+                    <Carre etat="vide" />
+                  </span>
+                )
+              )}
+              <button
+                type="button"
+                aria-pressed={ouverte === cle}
+                onClick={() => onOuvrir(cle)}
+                className={[
+                  "flex h-[24px] shrink-0 items-center gap-1.5 whitespace-nowrap pr-2",
+                  fabrique || dehors ? "pl-2" : "",
+                ].join(" ")}
+              >
+                <span>{nom}</span>
+                {/* **Une valeur barrée, jamais une valeur effacée.** La place
+                    porte toujours ses réglages : les cacher pendant qu'elle
+                    dort les ferait croire perdus, et c'est exactement ce que la
+                    veille promet de ne pas faire. */}
+                {vaut && (
+                  <span
+                    className={
+                      eteinte ? "text-texte-3 line-through" : "text-signal"
+                    }
+                  >
+                    {vaut}
+                  </span>
+                )}
+              </button>
+            </span>
           </span>
         )
       })}
@@ -601,7 +719,62 @@ export function EcranTables({
       : null
 
   const dehors = indisponible(ouverte, traitement, mesures)
-  const reglages = { recette, univers, traitement, regler, poser, mesures }
+
+  // ── Une table éteinte se réveille dès qu'on la touche, et elle le dit ─────
+  //
+  // **C'était l'autre moitié du relevé de séance** (U4). Rien ne distinguait à
+  // l'écran une table qui agit d'une table qui n'agit pas, et toucher n'importe
+  // quel réglage la rallumait sans prévenir : on posait une valeur, l'image
+  // changeait pour deux raisons à la fois, et l'on ne savait plus laquelle
+  // regarder.
+  //
+  // **Réveiller plutôt que refuser**, et c'est le choix qui compte : bloquer un
+  // curseur parce que sa table dort obligerait à faire un geste préalable pour
+  // avoir le droit de faire le geste qu'on voulait. Toucher un réglage *dit*
+  // qu'on veut cette place ; la rallumer est la lecture juste de ce geste. Ce
+  // qu'on doit à l'auteur, c'est de le lui dire — pas de l'en empêcher.
+  const eteinte = dort(recette, ouverte)
+  const [reveil, setReveil] = useState<string | null>(null)
+  useEffect(() => setReveil(null), [ouverte, asset.identifiant])
+
+  const veiller = useCallback(
+    (table: Table, endort: boolean) => {
+      if (table === ouverte) setReveil(null)
+      void poser(avecVeille(recette, table, endort))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recette, ouverte, poser],
+  )
+
+  /** Le même `poser`, qui réveille la table ouverte au passage.
+   *
+   *  **Posé autour du couple, jamais dans `useRecette`.** Le crochet sert toutes
+   *  les recettes de l'écran, y compris celle que la barre pose pour endormir ;
+   *  un réveil câblé là-dedans aurait rendu l'endormissement impossible — poser
+   *  la recette qui endort aurait rallumé la place dans le même souffle. Ici, le
+   *  réveil sait *quelle table est ouverte* et n'agit que pour elle.
+   *
+   *  **Et sur `poser` seul, pas sur `regler`.** `regler` ne fait que bouger
+   *  l'état local — il part cent fois pendant qu'un curseur glisse. Réveiller
+   *  là aurait annoncé le réveil au premier pixel de glissement, avant même
+   *  qu'une valeur soit posée, et l'annonce serait partie avant le geste
+   *  qu'elle décrit. */
+  const poserEveille = (suivante: Recette) => {
+    if (!dort(suivante, ouverte)) return poser(suivante)
+    setReveil(
+      `${TABLES.find((t) => t.cle === ouverte)?.nom ?? "cette table"} s'est rallumée : tu viens d'y toucher un réglage.`,
+    )
+    return poser(avecVeille(suivante, ouverte, false))
+  }
+
+  const reglages = {
+    recette,
+    univers,
+    traitement,
+    regler,
+    poser: poserEveille,
+    mesures,
+  }
 
   /** **Une table qui se peint force le rendu.** Le cas qui a tranché est *côte
    *  à côte* : deux images à l'écran, et la main n'aurait pas su sur laquelle
@@ -786,6 +959,7 @@ export function EcranTables({
         mesures={mesures}
         ouverte={ouverte}
         onOuvrir={onOuvrir}
+        onVeille={veiller}
         onToutDefaire={() => void revenirAuBrut()}
       />
 
@@ -809,7 +983,58 @@ export function EcranTables({
           className="flex min-h-0 flex-col border-r border-bord bg-fond-1"
         >
           <EnTetePanneau>{TABLES.find((t) => t.cle === ouverte)?.nom}</EnTetePanneau>
-          <div className="defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+
+          {/* **Une table éteinte le dit quand on l'ouvre** (U4), et le geste
+              pour la rallumer est là, dans la phrase qui l'annonce. Au-dessus
+              de la zone qui défile : une bande qui dirait *ceci ne s'applique
+              pas* et qui pourrait sortir de l'écran en faisant glisser les
+              réglages serait pire que pas de bande du tout. */}
+          {!dehors && eteinte && (
+            <div
+              data-table-eteinte
+              className="mesure flex shrink-0 items-start gap-2 border-b border-bord bg-fond-2 px-3 py-2 text-[10px] text-texte-2"
+            >
+              <span aria-hidden className="mt-[3px]">
+                <Carre etat="eteinte" />
+              </span>
+              <p className="min-w-0 flex-1">
+                Cette table est éteinte : ses réglages sont gardés et elle ne
+                change pas l'image.{" "}
+                <button
+                  type="button"
+                  onClick={() => veiller(ouverte, false)}
+                  className="text-signal underline-offset-2 hover:underline"
+                >
+                  La rallumer ›
+                </button>
+              </p>
+            </div>
+          )}
+
+          {/* L'annonce du réveil. Elle reste jusqu'à ce qu'on change de table :
+              une phrase qui s'efface toute seule au bout de trois secondes se
+              rate exactement quand on regardait l'image plutôt que la colonne
+              — c'est-à-dire toujours, puisqu'on venait de poser un réglage. */}
+          {!dehors && reveil && (
+            <p
+              data-table-reveillee
+              role="status"
+              className="mesure shrink-0 border-b border-bord bg-fond-2 px-3 py-2 text-[10px] text-signal"
+            >
+              {reveil}
+            </p>
+          )}
+
+          <div
+            className={[
+              "defile flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3",
+              // **Éteinte, pas verrouillée.** Les réglages restent lisibles et
+              // manœuvrables — les toucher rallume la table, et c'est le geste
+              // que l'on veut rendre possible. L'opacité dit *ceci ne
+              // s'applique pas en ce moment*, elle n'interdit rien.
+              eteinte ? "opacity-50" : "",
+            ].join(" ")}
+          >
             {dehors ? (
               // **À la place des réglages, jamais à côté d'eux.** Une table
               // indisponible n'a rien à régler : montrer des contrôles morts
@@ -840,10 +1065,17 @@ export function EcranTables({
           {/* **Le pied de chaque table ne touche qu'elle.** Deux échelles, deux
               endroits, et chacun dit lequel : `tout défaire` vide la recette au
               bout de la barre, `Sans <table>` vide cette place-ci. */}
+          {/* **Vider une table éteinte l'éteint plus** : la place n'a plus rien
+              à mettre en veille, et laisser son nom dans la liste garderait un
+              interrupteur qui ne commande rien. C'est `poser` et non le `poser`
+              qui réveille : on ne vient pas de toucher un réglage, on vient de
+              tout retirer, et l'annoncer comme un réveil serait faux. */}
           {!dehors && VIDER[ouverte] && (
             <button
               type="button"
-              onClick={() => void poser(VIDER[ouverte]!(recette))}
+              onClick={() =>
+                void poser(avecVeille(VIDER[ouverte]!(recette), ouverte, false))
+              }
               className="mesure h-[26px] shrink-0 border-t border-bord px-3 text-left text-[10px] text-texte-3 hover:text-signal"
             >
               Sans {TABLES.find((t) => t.cle === ouverte)?.nom} ›

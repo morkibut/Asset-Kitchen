@@ -293,6 +293,11 @@ def test_le_defaut_est_telle_quelle(client):
         # remet à en poser une.
         "contours": None,
         "main": None,
+        # **Et la veille de U4**, pour la raison exacte des deux lignes
+        # ci-dessus : le critère est *toutes les places sont vides*, et une
+        # place endormie serait un réglage posé sur une image qui entre telle
+        # quelle.
+        "veille": [],
         "nom": None,
     }
     # **Le rendu *est* le brut**, et il n'y a donc pas de cache : les

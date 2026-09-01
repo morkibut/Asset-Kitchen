@@ -113,6 +113,22 @@ Cinq règles qui tiennent l'ensemble :
    deux, mesuré. C'est la seule entorse jamais faite à la règle 5 ci-dessous, et
    elle est datée pour qu'on ne la refasse pas sans le dire.
 
+   **Une place peut dormir, et dormir veut dire sans effet** — pas presque sans
+   effet (`U4`, 1<sup>er</sup> septembre 2026). La recette porte la liste des
+   places en veille : elles gardent tous leurs réglages et cessent d'agir. C'est
+   l'exact contraire de les vider, et **éteinte et vide sont deux états**.
+   L'ordre ne bouge pas d'un cran pour autant : une place endormie est sautée là
+   où elle se serait appliquée. La liste entre dans l'empreinte de la recette —
+   donc le rendu se refait —, elle voyage avec le reste, et l'agent la lit et la
+   pose comme n'importe quel autre réglage.
+
+   **La promesse se vérifie et ne se suppose pas** : une image traitée avec une
+   place en veille sort *identique au pixel près* à la même sans cette place du
+   tout. Le prix à payer est qu'aucun chemin du dépôt n'a le droit de lire les
+   réglages d'une place sans lui demander d'abord si elle dort — le cache du
+   détourage et la grille, qui regarde le détourage pour décider si le sujet vit
+   dans une case, ont tous les deux fui à la première écriture.
+
    **Ce qui règle une image et ce qui en fabrique d'autres sont deux choses, et la
    V2.1 les sépare formellement.** Les sept places ci-dessus décrivent *cette*
    image : elles ont un état — posée, vide — et le rendu les rejoue toutes à

@@ -1,27 +1,27 @@
 {
- "releve_le": 1788217174.6642346,
+ "releve_le": 1788222472.0034637,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 302664,
+  "octets": 302665,
   "documents": {
    "AGENTS.md": {
-    "octets": 30129,
+    "octets": 30466,
     "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 29733
+      "octets": 30466
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 8460
+      "octets": 8488
      },
      {
       "titre": "Lancer",
@@ -57,24 +57,24 @@
       "titre": "Règles durables",
       "niveau": 2,
       "ligne": 328,
-      "octets": 1786
+      "octets": 2491
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 352,
+      "ligne": 361,
       "octets": 577
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 362,
+      "ligne": 371,
       "octets": 1151
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 381,
+      "ligne": 390,
       "octets": 1087
      }
     ]
@@ -140,14 +140,14 @@
     ]
    },
    "docs/ARCHITECTURE.md": {
-    "octets": 50074,
+    "octets": 51992,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen — Architecture",
       "niveau": 1,
       "ligne": 1,
-      "octets": 49509
+      "octets": 51400
      },
      {
       "titre": "1 · Ce que c'est",
@@ -171,73 +171,73 @@
       "titre": "4 · Architecture",
       "niveau": 2,
       "ligne": 53,
-      "octets": 8910
+      "octets": 10801
      },
      {
       "titre": "Squelette du dépôt",
       "niveau": 3,
-      "ligne": 162,
+      "ligne": 189,
       "octets": 1914
      },
      {
       "titre": "4 bis · Fournisseur et modèles → `docs/archi-fournisseur.md`",
       "niveau": 2,
-      "ligne": 199,
+      "ligne": 226,
       "octets": 1126
      },
      {
       "titre": "5 · Modèle d'objets",
       "niveau": 2,
-      "ligne": 216,
+      "ligne": 243,
       "octets": 25423
      },
      {
       "titre": "Ce que la toile ajoute au modèle",
       "niveau": 3,
-      "ligne": 242,
+      "ligne": 269,
       "octets": 8853
      },
      {
       "titre": "Ce que la V2.1 ajoute au modèle",
       "niveau": 3,
-      "ligne": 356,
+      "ligne": 383,
       "octets": 11766
      },
      {
       "titre": "6 à 10 · Les versions → `docs/archi-versions.md`",
       "niveau": 2,
-      "ligne": 492,
+      "ligne": 519,
       "octets": 566
      },
      {
       "titre": "11 · Risques, et quand les lever",
       "niveau": 2,
-      "ligne": 502,
+      "ligne": 529,
       "octets": 6580
      },
      {
       "titre": "12 · Ce qu'on récupère",
       "niveau": 2,
-      "ligne": 542,
+      "ligne": 569,
       "octets": 1016
      },
      {
       "titre": "13 · Hors périmètre, et pourquoi",
       "niveau": 2,
-      "ligne": 554,
+      "ligne": 581,
       "octets": 990
      }
     ]
    },
    "docs/PLAN.md": {
-    "octets": 142738,
+    "octets": 140484,
     "titres": 179,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — V1, V2, la V2.1, puis la V2.2",
       "niveau": 1,
       "ligne": 1,
-      "octets": 140364
+      "octets": 140484
      },
      {
       "titre": "Décisions architecturales",
@@ -1041,7 +1041,7 @@
       "titre": "U1 à U13 — les treize reprises d'usage de la V2.1",
       "niveau": 2,
       "ligne": 1652,
-      "octets": 9421
+      "octets": 9541
      },
      {
       "titre": "L'ordre, et les quatre endroits où il se resserre",
@@ -1059,7 +1059,7 @@
       "titre": "Les treize étapes",
       "niveau": 3,
       "ligne": 1727,
-      "octets": 1380
+      "octets": 1500
      },
      {
       "titre": "Ce que chacune livre, et ses critères → `docs/tranches/U.md`",
@@ -1469,7 +1469,7 @@
  },
  "renvois": {
   "code": {
-   "total": 394,
+   "total": 398,
    "casses": []
   },
   "docs": {

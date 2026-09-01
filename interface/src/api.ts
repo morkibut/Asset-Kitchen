@@ -411,8 +411,31 @@ export type Recette = {
   bords: Bords | null
   contours: Contour | null
   main: Main | null
+  /** Les places en veille : elles gardent leurs réglages et cessent d'agir sur
+   *  l'image (U4). **Éteinte et vide sont deux états** — vider une place efface
+   *  ce qu'on y avait posé, l'éteindre le garde. La liste est vide dans
+   *  l'immense majorité des recettes, et le serveur la rend toujours triée pour
+   *  que l'ordre des clics n'entre pas dans l'empreinte du rendu. */
+  veille: Place[]
   nom: string | null
 }
+
+/** Les noms que la veille accepte — ceux des places du traitement.
+ *
+ *  **Ce ne sont pas les clés des tables** : la barre en compte neuf, dont deux
+ *  fabriques qui n'ont pas de place dans la recette, et elle nomme le détourage
+ *  `detourage` là où la recette l'écrit `passes`. Les deux listes se ressemblent
+ *  assez pour qu'on soit tenté de n'en garder qu'une, et diffèrent assez pour
+ *  que ce soit faux. */
+export type Place =
+  | "detourage"
+  | "difference"
+  | "recadrage"
+  | "grille"
+  | "quantification"
+  | "bords"
+  | "contours"
+  | "main"
 
 export const RECETTE_VIDE: Recette = {
   passes: [],
@@ -423,6 +446,7 @@ export const RECETTE_VIDE: Recette = {
   bords: null,
   contours: null,
   main: null,
+  veille: [],
   nom: null,
 }
 

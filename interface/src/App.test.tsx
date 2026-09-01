@@ -566,6 +566,7 @@ const asset = (
       bords: null,
       contours: null,
       main: null,
+      veille: [],
       nom: null,
     },
     rendu_largeur: 0,
@@ -1134,6 +1135,7 @@ function serveurDouble(options: {
             bords: null,
             contours: null,
             main: null,
+            veille: [],
             nom: null,
           },
           echelle: "",
@@ -1211,6 +1213,7 @@ function serveurDouble(options: {
           bords: null,
           contours: null,
           main: null,
+          veille: [],
           nom: null,
         },
       }
@@ -5673,6 +5676,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         bords: null,
         contours: null,
         main: null,
+        veille: [],
         nom: null,
       },
     }
@@ -5688,6 +5692,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           bords: null,
           contours: null,
           main: null,
+          veille: [],
           nom: null,
         },
         echelle: "objet tenu",
@@ -13947,5 +13952,242 @@ describe("un curseur prend un chiffre", () => {
     // que les chiffres.
     fireEvent.keyDown(glissiere, { key: "ArrowRight" })
     expect(champ.value).toBe("9")
+  })
+})
+
+// ── U4 · Une table s'éteint, et ça se voit ───────────────────────────────────
+//
+// **Le carré de la barre était une marque ; il devient un interrupteur.** Il
+// disait déjà *cette place change l'image*, et rien ne permettait d'arrêter une
+// place sans la vider — c'est-à-dire sans perdre ses réglages. Ce qui se mesure
+// en pixels — *une place endormie sort identique à la même sans cette place du
+// tout* — vit dans `tests/test_u4.py` ; ce qui se voit vit ici.
+//
+// Quatre choses, et ce sont les quatre premiers critères de l'étape : le clic
+// qui éteint et rallume, les **trois** états du carré — posée, vide, éteinte —,
+// la colonne visiblement éteinte avec son geste, et le réveil qui s'annonce.
+
+describe("une table s'éteint, et ça se voit", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const AVEC_IMAGE = (images: Asset[]) => {
+    const nain = personnage("Le nain")
+    return {
+      ...nain,
+      cases: nain.cases.map((c) => (c.pose === "repos" ? { ...c, images } : c)),
+    }
+  }
+
+  const PASSE = {
+    moteur: "bord" as const,
+    tolerance: 28,
+    seuil_alpha: 128,
+    durcissement: 0,
+    point: null,
+    portee: "tache" as const,
+  }
+
+  /** Une image dont **deux** places portent une valeur et une troisième non.
+   *
+   *  Le détourage et la grille, parce qu'il en faut deux pour vérifier qu'on
+   *  n'éteint que celle qu'on a visée ; les bords vides, parce que le critère
+   *  demande que *éteinte* et *vide* se distinguent, ce qui suppose d'avoir les
+   *  deux sous les yeux en même temps. */
+  const ouvrirLesTables = async (veille: Recette["veille"] = []) => {
+    const images = [
+      {
+        ...asset("bbbb2222-0", "le nain, au repos"),
+        recette: {
+          ...RECETTE_VIDE,
+          passes: [PASSE],
+          grille: {
+            cible: 64,
+            occupation: 100,
+            ancrage: "bas" as const,
+            decalage: 0,
+          },
+          veille,
+        },
+      } as Asset,
+    ]
+    const double = serveurDouble({ personnages: [AVEC_IMAGE(images)] })
+    await monter(double.fetchDouble)
+    await ouvrirLEtabli("Le nain")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Ouvrir ${images[0].label} dans son outil`,
+      }),
+    )
+    const cadre = within(
+      await waitFor(() => {
+        const tables = document.querySelector("[data-tables]")
+        if (!tables) throw new Error("les tables ne se sont pas ouvertes")
+        return tables as HTMLElement
+      }),
+    )
+    return { ...double, cadre }
+  }
+
+  const recettesPosees = (appels: { url: string; corps: unknown }[]) =>
+    appels
+      .filter((a) => a.url.includes("/recipe"))
+      .map((a) => a.corps as Recette)
+
+  const carreDe = (cadre: ReturnType<typeof within>, nom: string) =>
+    cadre.getByRole("switch", { name: new RegExp(nom) })
+
+  // ── « Cliquer le carré l'éteint ; recliquer la rallume » ───────────────────
+
+  test("le carré éteint la place, et la rallume", async () => {
+    const { cadre, appels } = await ouvrirLesTables()
+
+    // Allumée au départ : le carré le dit, et il ne le dit qu'une fois.
+    expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("true")
+
+    fireEvent.click(carreDe(cadre, "détourage"))
+    await waitFor(() =>
+      expect(recettesPosees(appels).at(-1)?.veille).toEqual(["detourage"]),
+    )
+    await waitFor(() =>
+      expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("false"),
+    )
+
+    fireEvent.click(carreDe(cadre, "détourage"))
+    await waitFor(() => expect(recettesPosees(appels).at(-1)?.veille).toEqual([]))
+    await waitFor(() =>
+      expect(carreDe(cadre, "détourage").getAttribute("aria-checked")).toBe("true"),
+    )
+  })
+
+  test("éteindre garde les réglages, et n'éteint que la place visée", async () => {
+    // **C'est toute la différence avec *Sans cette table ›***, qui vide la
+    // place. Une passe qu'on a réglée pendant dix minutes ne doit pas être le
+    // prix à payer pour regarder l'image sans elle.
+    const { cadre, appels } = await ouvrirLesTables()
+
+    fireEvent.click(carreDe(cadre, "détourage"))
+    const posee = await waitFor(() => {
+      const derniere = recettesPosees(appels).at(-1)
+      if (!derniere?.veille.length) throw new Error("rien n'a été endormi")
+      return derniere
+    })
+
+    expect(posee.passes).toEqual([PASSE])
+    expect(posee.grille?.cible).toBe(64)
+    // La grille dort-elle aussi ? Non : on n'a touché qu'un carré.
+    expect(posee.veille).toEqual(["detourage"])
+    expect(carreDe(cadre, "grille").getAttribute("aria-checked")).toBe("true")
+  })
+
+  // ── « Éteinte et vide sont deux états, pas un » ────────────────────────────
+
+  test("le carré d'une place éteinte se distingue d'un carré creux", async () => {
+    const { cadre } = await ouvrirLesTables(["detourage"])
+
+    const eteint = carreDe(cadre, "détourage").querySelector("[data-carre]")
+    expect(eteint?.getAttribute("data-carre")).toBe("eteinte")
+    // Les bords n'ont rien : leur carré est creux, et il ne se clique pas —
+    // il n'y a rien à éteindre.
+    const bords = cadre.getByRole("button", { name: /^bords/ })
+    expect(
+      bords.parentElement?.querySelector("[data-carre]")?.getAttribute("data-carre"),
+    ).toBe("vide")
+    expect(cadre.queryByRole("switch", { name: /bords/ })).toBeNull()
+    // Et la grille, qui agit, porte le troisième état.
+    expect(
+      carreDe(cadre, "grille").querySelector("[data-carre]")?.getAttribute("data-carre"),
+    ).toBe("posee")
+  })
+
+  test("une place éteinte garde sa valeur sous les yeux, barrée", async () => {
+    // **Cacher la valeur pendant qu'elle dort la ferait croire perdue**, et
+    // c'est exactement ce que la veille promet de ne pas faire.
+    const { cadre } = await ouvrirLesTables(["grille"])
+    const valeur = cadre.getByText("64 px · 100 %")
+    expect(valeur.className).toContain("line-through")
+    expect(valeur.className).not.toContain("text-signal")
+  })
+
+  // ── « Ouvrir une table éteinte montre une colonne éteinte » ────────────────
+
+  test("ouvrir une table éteinte le dit, avec le geste pour la rallumer", async () => {
+    const { cadre, appels } = await ouvrirLesTables(["grille"])
+
+    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
+    const bandeau = await waitFor(() => {
+      const trouve = document.querySelector("[data-table-eteinte]")
+      if (!trouve) throw new Error("la colonne ne dit pas qu'elle est éteinte")
+      return trouve as HTMLElement
+    })
+    expect(bandeau.textContent).toContain("ses réglages sont gardés")
+
+    fireEvent.click(within(bandeau).getByRole("button", { name: /rallumer/i }))
+    await waitFor(() => expect(recettesPosees(appels).at(-1)?.veille).toEqual([]))
+    await waitFor(() =>
+      expect(document.querySelector("[data-table-eteinte]")).toBeNull(),
+    )
+  })
+
+  // ── « Toucher un réglage la rallume, et l'annonce » ────────────────────────
+
+  test("toucher un réglage d'une table éteinte la rallume et le dit", async () => {
+    // **Réveiller plutôt que refuser** : bloquer un curseur parce que sa table
+    // dort obligerait à faire un geste préalable pour avoir le droit de faire
+    // le geste qu'on voulait. Ce qu'on doit à l'auteur, c'est de le dire.
+    const { cadre, appels } = await ouvrirLesTables(["detourage"])
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "64" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    const posee = await waitFor(() => {
+      const derniere = recettesPosees(appels).at(-1)
+      if (derniere?.passes[0]?.tolerance !== 64) throw new Error("rien n'est parti")
+      return derniere
+    })
+    // Le réglage est parti **et** la place s'est rallumée, en un seul envoi.
+    expect(posee.veille).toEqual([])
+
+    const annonce = await waitFor(() => {
+      const trouve = document.querySelector("[data-table-reveillee]")
+      if (!trouve) throw new Error("le réveil ne s'est pas annoncé")
+      return trouve as HTMLElement
+    })
+    expect(annonce.textContent).toContain("s'est rallumée")
+    expect(document.querySelector("[data-table-eteinte]")).toBeNull()
+  })
+
+  test("changer de table efface l'annonce du réveil", async () => {
+    // Une phrase qui survivrait à la table qu'elle décrit se lirait comme une
+    // annonce sur celle qu'on vient d'ouvrir.
+    const { cadre } = await ouvrirLesTables(["detourage"])
+
+    const champ = (await cadre.findByLabelText(
+      "tolérance, en chiffres",
+    )) as HTMLInputElement
+    fireEvent.change(champ, { target: { value: "64" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+    await waitFor(() =>
+      expect(document.querySelector("[data-table-reveillee]")).not.toBeNull(),
+    )
+
+    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
+    await waitFor(() =>
+      expect(document.querySelector("[data-table-reveillee]")).toBeNull(),
+    )
   })
 })

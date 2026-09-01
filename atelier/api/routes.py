@@ -14,7 +14,7 @@ from typing import Any, AsyncIterator, Literal
 
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from atelier.domaine import (
     Asset,
@@ -30,8 +30,10 @@ from atelier.domaine.recette import (
     CERCLES,
     DEHORS,
     EPAISSEUR_MAX,
+    PLACES,
     RAYON_MAX,
     SEUIL_COULEUR,
+    places_inconnues,
 )
 from atelier.domaine.superposition import (
     CALQUE,
@@ -764,7 +766,24 @@ class CorpsRecette(BaseModel):
     bords: CorpsBords | None = None
     contours: CorpsContour | None = None
     main: CorpsMainDeLaRecette | None = None
+    # **Les places endormies** (U4). Une liste de noms de places, vide dans
+    # l'immense majorité des recettes. Le nom est vérifié ici plutôt que d'être
+    # perdu en silence par le domaine : une recette venue d'un agent qui
+    # écrirait *quantifications* au pluriel doit l'apprendre, sans quoi elle
+    # croirait avoir endormi une place et regarderait le rendu sans comprendre.
+    veille: list[str] = Field(default_factory=list)
     nom: str | None = None
+
+    @field_validator("veille")
+    @classmethod
+    def _places_connues(cls, valeur: list[str]) -> list[str]:
+        inconnues = places_inconnues(valeur)
+        if inconnues:
+            raise ValueError(
+                f"place inconnue : {', '.join(inconnues)} — "
+                f"les places sont {', '.join(PLACES)}"
+            )
+        return valeur
 
     def en_recette(self) -> Recette:
         return Recette.depuis_json(self.model_dump())
