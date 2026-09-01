@@ -38,6 +38,7 @@ from atelier.domaine.recette import (
     DETOURAGE,
     DIFFERENCE,
     EPAISSEUR_MAX,
+    MODELE,
     MOTEURS,
     PLACES,
     PORTEES,
@@ -66,11 +67,14 @@ from atelier.image import (
 from atelier.image.traitement import (
     boite_opaque,
     composantes,
+    etat_des_silhouettes,
     peindre,
     pinceau,
     pose_du_calque,
     queue,
+    raison_du_modele,
     sans_les_deux_dernieres,
+    silhouette,
 )
 from atelier.image.calque import avec_alpha, differencier
 from atelier.services.evenements import Diffusion
@@ -168,6 +172,10 @@ class ServiceAssets:
             "moteurs": [
                 {"nom": moteur, "raison": raison_moteur(moteur)} for moteur in MOTEURS
             ],
+            # **Le catalogue des modèles de silhouette** (U13) — il n'est plus
+            # écrit en dur, donc il se sert comme tout le reste : le serveur le
+            # rend, l'écran le montre, et personne ne le recompose.
+            "silhouettes": etat_des_silhouettes(),
             "quantification": {"raison": self.raison_quantification(projet)},
             "recettes": sorted(self._fichiers.lire_recettes()),
         }
@@ -1077,6 +1085,15 @@ class ServiceAssets:
             raison = raison_moteur(passe.moteur)
             if raison is not None:
                 raise RecetteRefusee(f"passe {rang} : {raison}")
+            # **Un modèle inconnu du catalogue est refusé en le nommant** (U13),
+            # comme une portée inconnue. Un modèle *pas encore descendu*, lui,
+            # passe : il se rapatrie au premier rendu, et l'écran l'annonce
+            # avant de partir — les deux absences ne se traitent pas pareil.
+            if passe.moteur == MODELE and silhouette(passe.modele) is None:
+                raise RecetteRefusee(
+                    f"passe {rang} : modèle de silhouette inconnu "
+                    f"« {passe.modele} »"
+                )
             if not 0 <= passe.tolerance <= 255:
                 raise RecetteRefusee(f"passe {rang} : la tolérance va de 0 à 255")
             if not 0 <= passe.seuil_alpha <= 255:

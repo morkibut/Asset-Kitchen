@@ -390,6 +390,31 @@ const ETAT: Etat = {
   couts: { total_usd: 0 },
   traitement: {
     moteurs: [{ nom: "bord", raison: null }],
+    // Le catalogue des modèles de silhouette, tel que le serveur le rend (U13)
+    // — **deux absences différentes** : le lourd n'est pas descendu, et il reste
+    // choisissable ; un moteur absent porterait une `raison` et se griserait.
+    silhouettes: [
+      {
+        nom: "u2net",
+        titre: "rapide",
+        octets: 175_997_641,
+        lent: false,
+        note: "le plus rapide",
+        defaut: true,
+        descendu: true,
+        raison: null,
+      },
+      {
+        nom: "birefnet-general",
+        titre: "lourd",
+        octets: 972_666_916,
+        lent: true,
+        note: "le meilleur sur les silhouettes difficiles",
+        defaut: false,
+        descendu: false,
+        raison: null,
+      },
+    ],
     quantification: { raison: "aucune palette" },
     recettes: [],
   },
@@ -8550,6 +8575,7 @@ describe("le châssis des tables", () => {
         portee: "tache",
         masquee: false,
         trace: [],
+        modele: "",
       })
     })
 
@@ -8692,6 +8718,7 @@ describe("le châssis des tables", () => {
             portee: "tache" as const,
             masquee: false as const,
             trace: [],
+            modele: "",
           },
         ],
       },
@@ -8833,6 +8860,7 @@ describe("le châssis des tables", () => {
             portee: "tache" as const,
             masquee: false,
             trace: [],
+            modele: "",
           },
           {
             moteur: "couleur" as const,
@@ -8843,6 +8871,7 @@ describe("le châssis des tables", () => {
             portee: "tache" as const,
             masquee,
             trace: [],
+            modele: "",
           },
         ],
       },
@@ -8973,6 +9002,7 @@ describe("le châssis des tables", () => {
             portee: "tache" as const,
             masquee: false,
             trace,
+            modele: "",
           },
         ],
       },
@@ -9089,6 +9119,96 @@ describe("le châssis des tables", () => {
     expect(
       cadre.getByText(/le bord est cherché à l'intérieur de ce que tu as entouré/),
     ).toBeTruthy()
+  })
+
+  // ── U13 · Un second moteur de détourage, plus lourd et meilleur ───────────
+  //
+  // **Le catalogue décide, jamais une liste en dur.** Le moteur par modèle n'en
+  // connaissait qu'un seul, écrit dans le code : on ne pouvait pas en essayer un
+  // autre sans toucher au code. Le choix se fait maintenant passe par passe, et
+  // le rapide reste ce qu'on obtient sans rien demander.
+  //
+  // **Deux absences, et elles ne se traitent pas pareil.** Un moteur pas
+  // installé du tout est grisé avec sa raison ; un modèle installé mais pas
+  // encore descendu reste choisissable et annonce ce qu'il va rapatrier. Ce que
+  // les modèles valent l'un contre l'autre vit dans le banc gratuit
+  // `essais/essai_moteurs_silhouette.py`.
+
+  /** Une image dont la recette porte une passe « modèle », sur tel modèle. */
+  const AVEC_MODELE = (modele: string) => [
+    {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: {
+        ...RECETTE_VIDE,
+        passes: [
+          {
+            moteur: "modele" as const,
+            tolerance: 28,
+            seuil_alpha: 128,
+            durcissement: 0,
+            point: null,
+            portee: "tache" as const,
+            masquee: false,
+            trace: [],
+            modele,
+          },
+        ],
+      },
+    },
+  ]
+
+  test("le modèle se choisit dans le catalogue du serveur", async () => {
+    // **L'écran ne tient aucune liste** : il rend celle qu'il reçoit, comme
+    // pour les modèles d'image. Un catalogue recopié à l'écran aurait divergé du
+    // serveur au premier modèle ajouté.
+    const { cadre, appels } = await ouvrirUneTable({}, AVEC_MODELE(""))
+
+    expect(await cadre.findByRole("button", { name: "rapide" })).toBeTruthy()
+    fireEvent.click(cadre.getByRole("button", { name: "lourd" }))
+
+    await waitFor(() => {
+      const passes = derniereRecette(appels) as unknown as { modele: string }[]
+      if (!passes) throw new Error("la recette n'est pas partie")
+      expect(passes[0].modele).toBe("birefnet-general")
+    })
+  })
+
+  test("le lourd dit ce qu'il coûte avant de partir, pas pendant", async () => {
+    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE("birefnet-general"))
+
+    // Ce qu'il vaut et ce qu'il coûte, sur la ligne où on le choisit.
+    expect(
+      await cadre.findByText(/le meilleur sur les silhouettes difficiles/),
+    ).toBeTruthy()
+    // **Et le poids du téléchargement, parce qu'il n'est pas descendu.** C'est
+    // la seconde absence : elle ne grise pas, elle prévient. Le chiffre vient du
+    // serveur — 972 666 916 octets relevés, soit 928 Mo.
+    const annonce = document.querySelector("[data-modele-a-descendre]")
+    expect(annonce?.textContent).toContain("928 Mo")
+    expect(annonce?.getAttribute("role")).toBe("status")
+  })
+
+  test("un modèle déjà là n'annonce aucun téléchargement", async () => {
+    // Le rapide est descendu : il n'y a rien à annoncer, et une annonce qui
+    // reste après coup serait une phrase qu'on apprend à ne plus lire.
+    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE("u2net"))
+
+    expect(await cadre.findByRole("button", { name: "rapide" })).toBeTruthy()
+    expect(document.querySelector("[data-modele-a-descendre]")).toBeNull()
+  })
+
+  test("sans modèle écrit, la passe montre le défaut du produit", async () => {
+    // **Vide veut dire *le défaut*, et c'est le serveur qui dit lequel.** Une
+    // recette écrite avant ce champ rend donc ce qu'elle rendait, et l'écran
+    // n'invente aucun défaut de son côté.
+    const { cadre } = await ouvrirUneTable({}, AVEC_MODELE(""))
+
+    const rapide = await cadre.findByRole("button", { name: "rapide" })
+    expect(rapide.className).toContain("border-signal")
+    expect(cadre.getByRole("button", { name: "lourd" }).className).not.toContain(
+      "border-signal",
+    )
+    expect(document.querySelector("[data-modele-a-descendre]")).toBeNull()
   })
 })
 
@@ -14428,6 +14548,7 @@ describe("un curseur prend un chiffre", () => {
               portee: "tache" as const,
               masquee: false as const,
               trace: [],
+              modele: "",
             },
           ],
         },
@@ -14618,6 +14739,7 @@ describe("une table s'éteint, et ça se voit", () => {
     portee: "tache" as const,
     masquee: false as const,
     trace: [],
+    modele: "",
   }
 
   /** Une image dont **deux** places portent une valeur et une troisième non.
@@ -14852,6 +14974,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     portee: "tache" as const,
     masquee: false as const,
     trace: [],
+    modele: "",
   }
 
   const AVEC_IMAGES = (images: Asset[]) => {

@@ -38,8 +38,9 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import os
 from dataclasses import dataclass, replace
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -84,19 +85,24 @@ __all__ = [
     "detourer_couleur",
     "detourer_trace",
     "durcir",
+    "etat_des_silhouettes",
     "etendre",
     "finir",
     "mesurer_grille",
+    "modele_descendu",
     "moteur_disponible",
     "peindre",
     "pinceau",
     "pose_du_calque",
     "queue",
+    "raison_du_modele",
     "raison_moteur",
     "restreindre",
     "retoucher",
     "ronger",
     "sans_les_deux_dernieres",
+    "sans_moteur",
+    "silhouette",
 ]
 
 
@@ -133,9 +139,149 @@ class Rendu:
 # silhouette équivalente à deux points de pourcentage près. Le défaut d'une
 # bibliothèque est une cible mouvante : celui-ci a changé sous une note du dépôt
 # qui annonçait « ~180 Mo », et c'est la taille de `u2net`. On le nomme.
+#
+# **Et depuis U13, on n'en nomme plus un seul.** *Le catalogue décide, jamais une
+# liste en dur* est la règle du dépôt pour les modèles d'image ; elle vaut ici
+# pour la même raison, et un nom inscrit dans le code interdisait d'en essayer un
+# autre sans toucher au code. Trois modèles, du plus rapide au plus lourd, et le
+# choix se fait passe par passe.
 MODELE_ONNX = "u2net"
 
-_session_modele: object | None = None
+
+@dataclass(frozen=True, slots=True)
+class Silhouette:
+    """Un modèle de détourage — ce qu'il pèse, ce qu'il vaut, ce qu'il coûte.
+
+    `nom` est celui de `rembg`, écrit tel quel dans la recette ; `fichier` est
+    le `.onnx` qu'il pose sur le disque, et c'est par lui qu'on sait s'il est
+    déjà descendu.
+
+    **Les octets sont un relevé, pas une estimation** — `essais/essai_moteurs_silhouette.py`,
+    le 1ᵉʳ septembre 2026 : deux sont lus sur le disque de cette machine, le
+    troisième par une question à l'adresse de téléchargement qui ne rapatrie
+    rien. Un poids annoncé au jugé serait exactement le genre de chiffre qu'on
+    croit avant de lancer une attente de plusieurs minutes.
+    """
+
+    nom: str
+    titre: str
+    fichier: str
+    octets: int
+    lent: bool
+    note: str
+
+
+SILHOUETTES: tuple[Silhouette, ...] = (
+    Silhouette(
+        nom="u2net",
+        titre="rapide",
+        fichier="u2net.onnx",
+        octets=175_997_641,
+        lent=False,
+        note="le plus rapide — 0,9 s par image, mesuré le 1er septembre 2026",
+    ),
+    Silhouette(
+        nom="isnet-general-use",
+        titre="intermédiaire",
+        fichier="isnet-general-use.onnx",
+        octets=178_648_008,
+        lent=False,
+        note=(
+            "presque le même résultat que le rapide — 96 à 99 % d'accord — "
+            "pour un cinquième de temps en plus"
+        ),
+    ),
+    Silhouette(
+        nom="birefnet-general",
+        titre="lourd",
+        fichier="birefnet-general.onnx",
+        octets=972_666_916,
+        lent=True,
+        note=(
+            "cinq fois plus lourd, et il vise les silhouettes difficiles — "
+            "des cheveux, une frange, un objet ajouré. Compte plusieurs "
+            "secondes par image"
+        ),
+    ),
+)
+
+
+def silhouette(nom: str) -> Silhouette | None:
+    """Le modèle de ce nom-là, ou rien. Vide veut dire *le défaut du produit*."""
+    cherche = nom or MODELE_ONNX
+    return next((s for s in SILHOUETTES if s.nom == cherche), None)
+
+
+def _dossiers_des_modeles() -> tuple[str, ...]:
+    """Où `rembg` pose ses `.onnx`, **lus et jamais écrits**.
+
+    **Une lecture du disque, et non une seconde mécanique de téléchargement.**
+    On ne peut pas le demander à `rembg` : l'importer tire `onnxruntime` dans le
+    processus, or « le post-traitement ne touche jamais le GPU » se *prouve* en
+    regardant `sys.modules` (`tests/test_t2.py`), et cette question-ci se pose à
+    chaque ouverture d'atelier. On regarde donc aux deux endroits qu'il emploie
+    — le dossier par modèle d'aujourd'hui, et l'ancien dossier plat qu'il relit
+    encore —, et `tests/test_u13.py` confronte ces chemins à ceux que `rembg`
+    calcule, **dans un autre processus**, pour que la comparaison ne charge rien
+    ici. Le pire qu'une divergence puisse faire est d'annoncer un
+    téléchargement qui n'aura pas lieu ; elle ne peut pas fausser un rendu.
+    """
+    maison = os.getenv("U2NET_HOME")
+    plat = os.path.expanduser(
+        maison or os.path.join(os.getenv("XDG_DATA_HOME", "~"), ".u2net")
+    )
+    if maison:
+        return (plat,)
+    xdg = os.getenv("XDG_DATA_HOME")
+    racine = os.path.expanduser(
+        os.path.join(xdg, "rembg") if xdg else os.path.join("~", ".rembg")
+    )
+    return (os.path.join(racine, "models"), plat)
+
+
+def modele_descendu(nom: str) -> bool:
+    """Le `.onnx` de ce modèle est-il déjà sur cette machine ?
+
+    **La seconde des deux absences** (U13) : un moteur *pas installé du tout*
+    est grisé avec sa raison ; un moteur *installé dont le modèle n'est pas
+    encore descendu* reste choisissable et dit ce qu'il va rapatrier. Griser les
+    deux aurait obligé à sortir de l'atelier pour un téléchargement que
+    l'atelier sait faire ; les confondre aurait laissé tomber une attente de
+    plusieurs minutes sur un geste annoncé comme lent de quelques secondes.
+    """
+    sil = silhouette(nom)
+    if sil is None:
+        return False
+    for dossier in _dossiers_des_modeles():
+        if os.path.exists(os.path.join(dossier, sil.nom, sil.fichier)):
+            return True
+        if os.path.exists(os.path.join(dossier, sil.fichier)):
+            return True
+    return False
+
+
+def etat_des_silhouettes() -> list[dict[str, Any]]:
+    """Le catalogue tel que l'écran le lit — **il n'en recompose aucun**."""
+    absent = raison_moteur(MODELE)
+    return [
+        {
+            "nom": s.nom,
+            "titre": s.titre,
+            "octets": s.octets,
+            "lent": s.lent,
+            "note": s.note,
+            "defaut": s.nom == MODELE_ONNX,
+            "descendu": modele_descendu(s.nom),
+            "raison": absent,
+        }
+        for s in SILHOUETTES
+    ]
+
+
+#: Une session par modèle, gardée entre deux rendus. Un modèle ONNX met une
+#: seconde à s'ouvrir et pèse jusqu'à un gigaoctet : le recharger à chaque passe
+#: coûterait plus cher que le détourage lui-même.
+_sessions_modeles: dict[str, object] = {}
 
 
 def moteur_disponible(moteur: str) -> bool:
@@ -174,16 +320,21 @@ def raison_moteur(moteur: str) -> str | None:
     return None
 
 
-def _detourer_modele(rgb: np.ndarray) -> np.ndarray:
-    global _session_modele
+def _detourer_modele(rgb: np.ndarray, modele: str = "") -> np.ndarray:
+    """La silhouette rendue par un modèle. **Une session par modèle** (U13) :
+    en garder une seule aurait rechargé un gigaoctet à chaque va-et-vient entre
+    deux passes qui ne nomment pas le même."""
     if raison_moteur(MODELE) is not None:
         raise MoteurAbsent("le moteur par modèle n'est pas installé")
+    sil = silhouette(modele)
+    if sil is None:
+        raise MoteurAbsent(f"modèle de silhouette inconnu — « {modele} »")
     import rembg  # type: ignore[import-not-found]
 
-    if _session_modele is None:
-        _session_modele = rembg.new_session(MODELE_ONNX)
+    if sil.nom not in _sessions_modeles:
+        _sessions_modeles[sil.nom] = rembg.new_session(sil.nom)
     image = Image.fromarray(rgb, mode="RGB")
-    sortie = rembg.remove(image, session=_session_modele)
+    sortie = rembg.remove(image, session=_sessions_modeles[sil.nom])
     return np.asarray(sortie.convert("RGBA"))[:, :, 3]
 
 
@@ -957,7 +1108,7 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
     se remplacer.
     """
     if passe.moteur == MODELE:
-        neuf = _detourer_modele(rgba[:, :, :3])
+        neuf = _detourer_modele(rgba[:, :, :3], passe.modele)
     elif passe.moteur == TRACE:
         # **Une sélection magique sans forme ne fait rien** — même règle que la
         # pipette non visée : on ajoute la passe avant d'entourer, et le temps
@@ -1016,8 +1167,42 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
     # rallumer rend exactement l'état d'avant. `passes_vives` répond pour les
     # deux extinctions à la fois, celle de la place et celle de la passe.
     for passe in recette.passes_vives():
+        # **Une passe dont le moteur manque est sautée, elle ne fait pas tomber
+        # les autres** (U13). Une recette voyage : elle peut nommer un modèle
+        # qu'une autre machine n'a pas, et l'image doit alors sortir avec les
+        # six autres places plutôt que pas du tout. Ce qui manque est **dit** —
+        # l'écran grise le moteur avec sa raison, sur la passe elle-même — et
+        # `sans_moteur` en donne la liste à qui la demande.
+        if passe.moteur == MODELE and raison_du_modele(passe.modele) is not None:
+            continue
         rgba = _detourer(rgba, passe)
     return rgba
+
+
+def raison_du_modele(modele: str) -> str | None:
+    """Pourquoi cette passe par modèle n'agira pas — ou `None` (U13).
+
+    **Deux absences, et une seule des deux se grise.** Le paquet absent est une
+    raison de griser le moteur ; un nom de modèle inconnu est une recette qui
+    parle d'un catalogue qu'elle ne connaît pas. Le modèle *pas encore descendu*,
+    lui, n'est **pas** une raison : il se rapatrie tout seul au premier rendu, et
+    c'est ce que l'écran annonce avant de partir.
+    """
+    absent = raison_moteur(MODELE)
+    if absent is not None:
+        return absent
+    if silhouette(modele) is None:
+        return f"modèle de silhouette inconnu — « {modele} »"
+    return None
+
+
+def sans_moteur(recette: Recette) -> list[str]:
+    """Les passes qui n'agiront pas faute de moteur, nommées par leur rang."""
+    return [
+        f"passe {rang} : {raison_du_modele(p.modele)}"
+        for rang, p in enumerate(recette.passes, start=1)
+        if p.moteur == MODELE and not p.masquee and raison_du_modele(p.modele)
+    ]
 
 
 def finir(rgba: np.ndarray, recette: Recette) -> Rendu:

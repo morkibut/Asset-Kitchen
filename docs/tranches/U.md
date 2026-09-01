@@ -1139,7 +1139,8 @@ qu'on n'ajoute rien, et qui paie le jour où l'on ajoute.
 
 ## U13 · Un second moteur de détourage, plus lourd et meilleur
 
-**Critères : 7 · Ce que ça ajoute : un point de la seconde séance**
+**Critères : 7 · Ce que ça ajoute : un point de la seconde séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -1178,19 +1179,61 @@ plusieurs minutes sur un geste annoncé comme lent de quelques secondes.
 
 ### Critères d'acceptation
 
-- [ ] Le moteur d'une passe se choisit dans une liste qui n'est plus écrite en dur.
-- [ ] Le moteur rapide reste celui qu'on obtient sans rien demander.
-- [ ] Le moteur lourd annonce qu'il est plus lent **avant** de partir, pas pendant.
-- [ ] Un moteur absent de la machine est grisé avec sa raison et le geste pour l'installer.
-- [ ] Un moteur installé dont le modèle n'est pas encore descendu reste choisissable et
+- [x] Le moteur d'une passe se choisit dans une liste qui n'est plus écrite en dur.
+- [x] Le moteur rapide reste celui qu'on obtient sans rien demander.
+- [x] Le moteur lourd annonce qu'il est plus lent **avant** de partir, pas pendant.
+- [x] Un moteur absent de la machine est grisé avec sa raison et le geste pour l'installer.
+- [x] Un moteur installé dont le modèle n'est pas encore descendu reste choisissable et
       annonce, avant de partir et une seule fois, ce qu'il rapatrie et ce que ça pèse.
-- [ ] Un banc gratuit mesure les deux moteurs sur les images déjà là — durée, et ce qu'ils
+- [x] Un banc gratuit mesure les deux moteurs sur les images déjà là — durée, et ce qu'ils
       rendent — et garde son relevé.
-- [ ] Une recette qui nomme un moteur absent le dit sans casser le rendu des autres passes.
+- [x] Une recette qui nomme un moteur absent le dit sans casser le rendu des autres passes.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Trois modèles au catalogue, et le relevé du banc.** `essais/essai_moteurs_silhouette.py`,
+gratuit, sur quatre images déjà sur le disque : le **rapide** (`u2net`, 176 Mo) met 929 ms
+par image et garde 21,9 % de l'image ; l'**intermédiaire** (`isnet-general-use`, 179 Mo) met
+1 138 ms pour 21,5 %, et les deux s'accordent à **96 à 99 %** — un cinquième de temps en plus
+pour presque le même résultat. Le **lourd** (`birefnet-general`, 928 Mo) n'est pas descendu
+sur cette machine : le banc le **saute en le disant** plutôt que de déclencher un gigaoctet de
+téléchargement, ce qui cesserait d'en faire un banc gratuit.
+
+**Le poids annoncé est vérifié, pas estimé.** `--poids` pose une question à l'adresse de
+téléchargement — elle rend la taille sans rapatrier un octet — et confronte les trois chiffres
+du catalogue : les trois tombent juste, à l'octet. C'est le seul geste du banc qui demande le
+réseau, et il est derrière une option pour cette raison. Un « ~900 Mo » écrit au jugé aurait
+été exactement le genre de chiffre qu'on croit avant de lancer plusieurs minutes de patience.
+
+**Deux absences, deux mécaniques, et la seconde ne pouvait pas passer par `rembg`.** Savoir
+si un modèle est descendu, c'est regarder un fichier sur le disque ; le demander à `rembg`
+aurait tiré `onnxruntime` dans le processus de l'atelier, or *le post-traitement ne touche
+jamais le GPU* se **prouve** en regardant `sys.modules`, et cette question-là se pose à chaque
+ouverture d'atelier. L'atelier recalcule donc les deux dossiers que `rembg` emploie, et un
+essai les confronte aux siens **dans un autre processus**. Le pire qu'une divergence puisse
+faire est d'annoncer un téléchargement qui n'aura pas lieu ; elle ne peut pas fausser un rendu.
+
+**Un essai a mesuré l'état laissé par un autre, et il a fallu le reprendre.** La vérification
+« lire le catalogue ne charge pas le moteur » regardait `sys.modules` sur place — et `rembg`
+y était déjà, chargé par l'essai de T5 qui détoure pour de vrai quand le paquet est installé.
+Elle passait sur une machine sans `rembg` et tombait sur une machine avec : exactement
+l'essai qui ment dans un sens et pas dans l'autre. Elle repart maintenant d'un processus neuf.
+
+**Une passe dont le moteur manque est sautée, elle ne fait pas tomber les autres.** Une
+recette voyage : elle peut nommer un modèle qu'une autre machine n'a pas, et l'image doit
+alors sortir avec les six autres places plutôt que pas du tout. C'est la règle de la passe
+masquée (U10) appliquée à une absence subie au lieu d'une extinction voulue — et `sans_moteur`
+en donne la liste, parce que sauter en silence serait la moitié du critère.
+
+**Le champ absent d'une vieille recette vaut *le défaut du produit*.** Une passe par modèle
+écrite avant ce jour se relit sans nom de modèle, prend le rapide, et rend exactement ce
+qu'elle rendait. Nommer explicitement ce même défaut change l'empreinte — c'est un autre texte
+dans le fichier — et c'est voulu : on ne fait pas passer deux écritures différentes pour la
+même, même quand le calcul est identique.
 
 ---
 

@@ -316,6 +316,7 @@ export function PanneauDetourage({
           rang={rang}
           passe={passe}
           raisonModele={raisonModele}
+          silhouettes={traitement.silhouettes ?? []}
           visee={mesures?.visees?.[rang] ?? null}
           enVisee={visee === rang}
           onViser={(arme: boolean) => onViser?.(arme ? rang : null)}

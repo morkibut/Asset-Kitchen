@@ -14,6 +14,7 @@ import { Fragment, useEffect, useState } from "react"
 import {
   api,
   dollars,
+  megaoctets,
   ROLES,
   type Asset,
   type Filiation,
@@ -24,6 +25,7 @@ import {
   type Pose,
   type Recette,
   type Role,
+  type Silhouette,
   type Univers,
 } from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
@@ -975,6 +977,7 @@ export function BlocPasse({
   rang,
   passe,
   raisonModele,
+  silhouettes = [],
   visee,
   enVisee,
   onViser,
@@ -985,6 +988,10 @@ export function BlocPasse({
   rang: number
   passe: Passe
   raisonModele: string | null
+  /** Le catalogue des modèles de silhouette, tel que le serveur le rend (U13).
+   *  Vide tant qu'il n'a pas répondu : le bloc montre alors le moteur sans son
+   *  choix de modèle, plutôt qu'une liste devinée. */
+  silhouettes?: Silhouette[]
   /** La couleur sous le point de cette passe, **mesurée par le serveur**, ou
    *  `null` si la passe n'est pas une pipette ou n'a pas encore été visée. */
   visee?: string | null
@@ -1001,6 +1008,12 @@ export function BlocPasse({
 }) {
   const pipette = passe.moteur === "couleur"
   const selection = passe.moteur === "trace"
+  /** Le modèle de cette passe. **Vide veut dire le défaut du produit**, et
+   *  c'est le serveur qui dit lequel — l'écran ne choisit pas de défaut. */
+  const choisi =
+    silhouettes.find((s) => s.nom === passe.modele) ??
+    silhouettes.find((s) => s.defaut) ??
+    silhouettes[0]
 
   // ── Masquer une passe, et pourquoi toucher un réglage la remontre (U10) ───
   //
@@ -1112,6 +1125,45 @@ export function BlocPasse({
           />
         </Reglage>
         {raisonModele && <Raison texte={raisonModele} />}
+
+        {/* ── Quel modèle de silhouette (U13) ───────────────────────────────
+            **Le catalogue décide, jamais une liste en dur.** Le moteur par
+            modèle n'en connaissait qu'un seul, écrit dans le code : on ne
+            pouvait pas en essayer un autre sans toucher au code. Le choix se
+            fait ici, passe par passe, comme le moteur lui-même.
+
+            **Le rapide reste ce qu'on obtient sans rien demander**, et le lourd
+            dit qu'il est lent *avant* de partir, jamais pendant. */}
+        {passe.moteur === "modele" && silhouettes.length > 0 && (
+          <>
+            <Reglage libelle="modèle" aide="detourage.silhouette">
+              <Segments
+                valeurs={silhouettes.map((s) => s.nom)}
+                valeur={choisi.nom}
+                plusieursRangees
+                libelles={Object.fromEntries(
+                  silhouettes.map((s) => [s.nom, s.titre]),
+                )}
+                onChange={(modele) => fini({ ...passe, modele })}
+              />
+            </Reglage>
+            <Raison texte={choisi.note} />
+            {/* **La seconde des deux absences**, et elle ne grise pas : un
+                modèle qui n'est pas encore descendu se rapatrie tout seul au
+                premier rendu. Ce qu'on doit à l'auteur, c'est de lui dire ce
+                que ça pèse *avant* de lancer l'attente — pas de l'envoyer
+                l'installer à la main. */}
+            {!choisi.descendu && !choisi.raison && (
+              <p
+                data-modele-a-descendre
+                role="status"
+                className="mesure text-[10px] text-epingle"
+              >
+                {`la première fois, l'atelier descendra ce modèle — ${megaoctets(choisi.octets)}`}
+              </p>
+            )}
+          </>
+        )}
 
         {/* ── La sélection magique (U12) ────────────────────────────────────
             **On entoure gros, l'atelier ajuste au bord.** Le trait qu'on fait

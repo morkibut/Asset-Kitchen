@@ -1,0 +1,107 @@
+{
+  "lignes": [
+    {
+      "image": "guide · goblin",
+      "modele": "u2net",
+      "ms": 2357.3,
+      "part": 0.2321
+    },
+    {
+      "image": "guide · goblin",
+      "modele": "isnet-general-use",
+      "ms": 1367.8,
+      "part": 0.2274
+    },
+    {
+      "image": "guide · goblin",
+      "accord": 0.9794,
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ]
+    },
+    {
+      "image": "guide · nain",
+      "modele": "u2net",
+      "ms": 439.3,
+      "part": 0.2545
+    },
+    {
+      "image": "guide · nain",
+      "modele": "isnet-general-use",
+      "ms": 1035.6,
+      "part": 0.2514
+    },
+    {
+      "image": "guide · nain",
+      "accord": 0.9868,
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ]
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "u2net",
+      "ms": 397.8,
+      "part": 0.1585
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "isnet-general-use",
+      "ms": 1009.5,
+      "part": 0.1528
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "accord": 0.9625,
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ]
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "u2net",
+      "ms": 521.8,
+      "part": 0.2321
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "isnet-general-use",
+      "ms": 1140.4,
+      "part": 0.2277
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "accord": 0.98,
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ]
+    }
+  ],
+  "sautes": [
+    "birefnet-general"
+  ],
+  "poids": [
+    {
+      "modele": "u2net",
+      "annonce": 175997641,
+      "mesure": 175997641,
+      "juste": true
+    },
+    {
+      "modele": "isnet-general-use",
+      "annonce": 178648008,
+      "mesure": 178648008,
+      "juste": true
+    },
+    {
+      "modele": "birefnet-general",
+      "annonce": 972666916,
+      "mesure": 972666916,
+      "juste": true
+    }
+  ]
+}

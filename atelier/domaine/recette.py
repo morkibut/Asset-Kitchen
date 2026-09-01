@@ -400,6 +400,14 @@ class Passe:
     #: qu'est le dedans d'une ligne qui ne se referme pas, et il n'y a pas de
     #: réponse à ça.
     trace: tuple[tuple[int, int], ...] = ()
+    #: Quel modèle de silhouette, quand le moteur est `modele` (U13).
+    #:
+    #: **Vide veut dire *le défaut du produit*** — le plus rapide. C'est ce qui
+    #: fait qu'une recette écrite avant ce champ rend exactement ce qu'elle
+    #: rendait, et le catalogue vit dans `atelier/image/traitement.py` : le
+    #: domaine porte le choix, il ne tient pas la liste. Un nom inconnu ne casse
+    #: pas la recette — la passe arrive sans effet, et la route le dit.
+    modele: str = ""
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -411,6 +419,7 @@ class Passe:
             "portee": self.portee,
             "masquee": self.masquee,
             "trace": [list(p) for p in self.trace],
+            "modele": self.modele,
         }
 
     @staticmethod
@@ -430,6 +439,7 @@ class Passe:
             trace=tuple(
                 (int(p[0]), int(p[1])) for p in (d.get("trace") or ()) if len(p) >= 2
             ),
+            modele=str(d.get("modele") or ""),
         )
 
 

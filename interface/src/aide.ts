@@ -605,6 +605,17 @@ export const AIDE: Record<string, Explication> = {
       "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
   },
 
+  "detourage.silhouette": {
+    nom: "modèle",
+    ou: "tables",
+    quoi: "Quel modèle va chercher la silhouette, du plus rapide au plus lourd. Le rapide est ce que tu obtiens sans rien demander.",
+    change:
+      "Le lourd trouve un meilleur bord sur les silhouettes difficiles — des cheveux, une frange, un objet ajouré — et met plusieurs secondes par image au lieu d'une demi-seconde. Le choix se fait passe par passe : deux passes du même détourage peuvent employer deux modèles.",
+    origine: "toi · défaut « rapide »",
+    long:
+      "Le détourage par modèle n'en connaissait qu'un seul, écrit dans le code. C'était une liste en dur là où la règle de la maison dit que le catalogue décide — et il fallait toucher au code pour en essayer un autre.\n\nUn modèle est un fichier de plusieurs centaines de mégaoctets, et il n'est pas dans le produit : il descend la première fois qu'on s'en sert, puis il reste. Deux absences se ressemblent et ne se traitent pas pareil. Si le moteur par modèle n'est pas installé du tout, il est grisé avec sa raison : rien ne le rendra choisissable sans une installation. Si le moteur est là mais que ce modèle-ci n'est pas encore descendu, il reste choisissable, et l'atelier dit ce qu'il va rapatrier et ce que ça pèse avant de partir. Griser les deux t'aurait envoyé faire à la main un téléchargement que l'atelier sait faire ; les confondre t'aurait laissé attendre plusieurs minutes sur un geste annoncé comme lent de quelques secondes.\n\nUne recette qui nomme un modèle absent de ta machine ne casse rien : cette passe-là n'agit pas, les autres places s'appliquent, et l'image sort. C'est la même règle que pour une passe masquée — ce qui n'agit pas n'empêche pas le reste d'agir.",
+  },
+
   "detourage.trace": {
     nom: "forme entourée",
     ou: "tables",

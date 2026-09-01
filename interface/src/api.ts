@@ -163,6 +163,13 @@ export type Passe = {
    *  comme une pipette sans point. Elle **ne voyage pas** : une coordonnée ne
    *  voyage pas, et une suite de coordonnées encore moins. */
   trace: [number, number][]
+  /** Quel modèle de silhouette, quand le moteur est `modele` (U13).
+   *
+   *  **Vide veut dire *le défaut du produit*** — le plus rapide —, et c'est ce
+   *  qui fait qu'une recette écrite avant ce champ rend exactement ce qu'elle
+   *  rendait. Le catalogue vit au serveur : la recette porte le choix, elle ne
+   *  tient pas la liste. */
+  modele: string
 }
 
 /** La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -492,6 +499,7 @@ export const PASSE_PAR_DEFAUT: Passe = {
   portee: "tache",
   masquee: false,
   trace: [],
+  modele: "",
 }
 
 export type Asset = {
@@ -1996,8 +2004,31 @@ export type Impose = {
 /** Ce que le post-traitement peut faire **sur cette machine**, et ce qu'il ne
  *  peut pas. Chaque raison est écrite par le serveur : l'interface l'affiche,
  *  elle ne rejoue jamais la règle de son côté. */
+/** Un modèle de silhouette du catalogue (U13).
+ *
+ *  **Le catalogue décide, jamais une liste en dur** — la règle du dépôt pour les
+ *  modèles d'image, appliquée ici pour la même raison. L'écran le lit, il ne le
+ *  recompose pas.
+ *
+ *  `raison` et `descendu` disent **deux absences différentes**, et c'est tout
+ *  l'arbitrage : un moteur *pas installé du tout* porte une `raison` et se
+ *  grise ; un modèle *pas encore descendu* reste choisissable et annonce ce
+ *  qu'il va rapatrier. Griser les deux aurait obligé à sortir de l'atelier pour
+ *  un téléchargement que l'atelier sait faire. */
+export type Silhouette = {
+  nom: string
+  titre: string
+  octets: number
+  lent: boolean
+  note: string
+  defaut: boolean
+  descendu: boolean
+  raison: string | null
+}
+
 export type EtatTraitement = {
   moteurs: { nom: Passe["moteur"]; raison: string | null }[]
+  silhouettes: Silhouette[]
   quantification: { raison: string | null }
   recettes: string[]
 }
@@ -3505,6 +3536,15 @@ export function ecouter(ecoute: Ecoute): () => void {
 
 export const dollars = (montant: number) =>
   `$${montant.toFixed(4).replace(".", ",")}`
+
+/** Un poids de fichier, en mégaoctets — **jamais arrondi vers le bas** (U13).
+ *
+ *  Le seul endroit du produit qui annonce un téléchargement à venir, et le
+ *  chiffre qu'il donne est celui du serveur : « 928 Mo » est ce qu'on va
+ *  attendre, et un « ~900 » aurait été le genre d'estimation qu'on croit avant
+ *  de lancer plusieurs minutes de patience. */
+export const megaoctets = (octets: number) =>
+  `${Math.round(octets / 1_048_576)} Mo`
 
 // `00:08` — deux chiffres des deux côtés, chiffres de largeur fixe : le
 // compteur ne doit pas changer de largeur pendant qu'on le regarde.

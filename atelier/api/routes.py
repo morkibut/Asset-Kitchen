@@ -673,6 +673,10 @@ class CorpsPasse(BaseModel):
     # un tracé est une suite de points, et une suite sans borne est une porte
     # ouverte à un seul appel qui occupe la machine.
     trace: list[list[int]] | None = Field(default=None, max_length=TRACE_MAX)
+    # **Quel modèle de silhouette** (U13), quand le moteur est `modele`. Vide
+    # veut dire *le défaut du produit* — le plus rapide —, et c'est ce qui fait
+    # qu'une recette écrite avant ce champ rend exactement ce qu'elle rendait.
+    modele: str = ""
 
 
 class CorpsRecadrage(BaseModel):
