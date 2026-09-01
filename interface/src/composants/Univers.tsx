@@ -34,6 +34,7 @@ import {
   api,
   Refus,
   type Carte,
+  type Fabrique,
   type Lien,
   type Modele,
   type Personnage,
@@ -44,7 +45,7 @@ import type { Fente } from "./BarreChassis"
 import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 import { Assistant } from "./Assistant"
-import { CoteAmbiancesEtCouleurs } from "./Ambiances"
+import { CoteAmbiancesEtCouleurs, type CibleAmbiances } from "./Ambiances"
 
 
 export function EcranUnivers({
@@ -63,6 +64,10 @@ export function EcranUnivers({
   onFente,
   onUnivers,
   onRelire,
+  fabriques,
+  onAllerAuxAmbiances,
+  cibleAmbiances,
+  onCibleVue,
 }: {
   univers: Univers
   modeles: Modele[]
@@ -106,6 +111,16 @@ export function EcranUnivers({
    *  réveille ailleurs : il se corrige même quand le flux suffirait. */
   onUnivers: (univers: Univers) => void
   onRelire: () => void
+  /** Ce que chaque paquet du tableau a produit (U7) — sa palette, son ambiance.
+   *  Il arrive avec les cartes, par la même route, pour la même raison que les
+   *  liens : un îlot qui montrerait sa marque un aller-retour après les cartes
+   *  aurait un instant où il paraît n'avoir rien fabriqué. */
+  fabriques: Record<string, Fabrique>
+  /** Ouvrir un objet du côté Ambiances depuis la toile (U7). **C'est `App` qui
+   *  sait, parce que le côté et la toile n'ont que lui en commun.** */
+  onAllerAuxAmbiances: (cible: CibleAmbiances) => void
+  cibleAmbiances: CibleAmbiances | null
+  onCibleVue: () => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
 
@@ -251,6 +266,9 @@ export function EcranUnivers({
                 crans={crans}
                 pile={pile}
                 cotes={<Cotes cote={cote} onCote={onCote} />}
+                fabriques={fabriques}
+                onAllerAuxAmbiances={onAllerAuxAmbiances}
+                onRelire={onRelire}
               />
             )}
           </div>
@@ -284,7 +302,13 @@ export function EcranUnivers({
         />
       )}
 
-      {cote === "ambiances" && <CoteAmbiancesEtCouleurs onErreur={setRefus} />}
+      {cote === "ambiances" && (
+        <CoteAmbiancesEtCouleurs
+          onErreur={setRefus}
+          cible={cibleAmbiances}
+          onCibleVue={onCibleVue}
+        />
+      )}
     </div>
   )
 }

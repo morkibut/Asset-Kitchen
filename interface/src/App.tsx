@@ -43,6 +43,7 @@ import {
   type Role,
   type Carte,
   type Lien,
+  type Fabrique,
   type Teinte,
   type CompteReferences,
   type Emplacement,
@@ -406,6 +407,20 @@ export function App() {
   // écoute le flux, pour toute la vie de l'onglet.
   const [liens, setLiens] = useState<Lien[]>([])
   const [teintes, setTeintes] = useState<Record<string, Teinte>>({})
+  // **Ce que chaque paquet a produit** (U7) — sa palette, son ambiance. Même
+  // route, même raison : un îlot qui montrerait sa marque un aller-retour après
+  // les cartes aurait un instant où il paraît n'avoir rien fabriqué.
+  const [fabriques, setFabriques] = useState<Record<string, Fabrique>>({})
+  /** Ce que la toile demande d'ouvrir côté Ambiances, ou rien (U7).
+   *
+   *  **L'objet fabriqué vit dans un autre côté de l'onglet**, et c'est très
+   *  exactement ce que la séance a relevé : le geste partait sans retour, vers
+   *  un endroit qu'il ne montrait pas. Le chemin passe donc par ici, qui est le
+   *  seul point commun entre la toile et le côté Ambiances. */
+  const [cibleAmbiances, setCibleAmbiances] = useState<{
+    genre: "palette" | "ambiance"
+    identifiant: string
+  } | null>(null)
   // Lequel des trois côtés de l'onglet Univers est allumé. **Monté ici avec la
   // V2.1** : la barre du châssis doit savoir quelles colonnes l'écran replie, et
   // la réserve n'a de colonne qu'en vue toile. Un état de navigation qui décide
@@ -730,6 +745,7 @@ export function App() {
       setCartes(toile.cartes)
       setLiens(toile.liens)
       setTeintes(toile.teintes)
+      setFabriques(toile.fabriques ?? {})
     } catch (erreur) {
       echouer(erreur, "le tableau ne répond pas")
     }
@@ -2379,6 +2395,17 @@ export function App() {
           onFente={setFente}
           onUnivers={setUnivers}
           onRelire={relireTableau}
+          fabriques={fabriques}
+          // **Aller voir ce qu'on vient de fabriquer** (U7) : le côté change et
+          // l'objet s'ouvre, en un geste. La cible est consommée par le côté
+          // Ambiances, qui la rend ensuite — sans quoi rouvrir l'onglet
+          // rouvrirait toujours la même palette.
+          onAllerAuxAmbiances={(cible) => {
+            setCoteUnivers("ambiances")
+            setCibleAmbiances(cible)
+          }}
+          cibleAmbiances={cibleAmbiances}
+          onCibleVue={() => setCibleAmbiances(null)}
         />
       )}
 

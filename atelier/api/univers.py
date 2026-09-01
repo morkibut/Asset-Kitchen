@@ -258,6 +258,12 @@ async def tableau(requete: Request, projet: str | None = None) -> dict[str, Any]
             for nom, t in atelier.univers.teintes(identifiant).items()
             if nom in groupes
         },
+        # **Ce que chaque paquet a produit** (U7). Il part avec le tableau pour
+        # la raison des liens juste au-dessus : un îlot qui montrerait sa marque
+        # un aller-retour après les cartes aurait un instant où il paraît
+        # n'avoir rien fabriqué. Lu dans les palettes, jamais rangé sur le
+        # paquet — un paquet n'a pas d'identité à lui.
+        "fabriques": atelier.ambiances.fabriques_par_paquet(identifiant),
     }
 
 

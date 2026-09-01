@@ -38,13 +38,35 @@ type Onglet = string
  *  ambiance peuvent porter le même identifiant sans se confondre. */
 type Ouvert = { genre: "ambiance" | "palette"; identifiant: string } | null
 
+/** Ce qu'un autre écran demande d'ouvrir ici (U7).
+ *
+ *  **Le même type que `Ouvert`, et c'est délibéré** : la toile ne demande rien
+ *  d'autre que ce que la colonne sait ouvrir, et un second vocabulaire pour la
+ *  même chose aurait fabriqué une traduction à tenir. */
+export type CibleAmbiances = NonNullable<Ouvert>
+
 export function CoteAmbiancesEtCouleurs({
   onErreur,
+  cible = null,
+  onCibleVue,
 }: {
   onErreur: (raison: string) => void
+  /** L'objet qu'un autre écran veut voir ouvert ici — la palette qu'on vient de
+   *  fabriquer depuis un îlot de la toile (U7). */
+  cible?: CibleAmbiances | null
+  /** **La cible se consomme**, sans quoi revenir sur ce côté rouvrirait
+   *  toujours le même objet, longtemps après le geste qui l'a demandé. */
+  onCibleVue?: () => void
 }) {
   const [cote, setCote] = useState<CoteAmbiances | null>(null)
   const [ouvert, setOuvert] = useState<Ouvert>(null)
+
+  useEffect(() => {
+    if (!cible) return
+    setOuvert(cible)
+    onCibleVue?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cible])
 
   const fondre = useCallback((recu: CoteAmbiances | undefined) => {
     // **Toute réponse d'une route est traitée comme une forme inconnue.** Le

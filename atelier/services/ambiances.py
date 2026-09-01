@@ -132,6 +132,41 @@ class ServiceAmbiances:
     def ambiances(self, projet: str) -> tuple[Ambiance, ...]:
         return self._exiger(projet).ambiances
 
+    def fabriques_par_paquet(self, projet: str) -> dict[str, dict[str, str]]:
+        """Ce que chaque paquet du tableau a produit — palette, ambiance (U7).
+
+        **Lu, jamais rangé.** Un paquet n'a pas d'identité à lui : c'est un nom
+        de groupe écrit sur des cartes, et il disparaît avec sa dernière carte.
+        Lui accrocher un champ « sa palette » aurait fabriqué une seconde vérité
+        que renommer un îlot ferait diverger, et un objet qui pointe vers un
+        paquet qui n'existe plus. La réponse se lit dans l'autre sens : une
+        palette dit de quel paquet elle est la lecture, et il suffit de
+        retourner la liste.
+
+        C'est ce qui tient deux critères d'un coup — *un îlot montre ce qu'il a
+        produit* et *refaire le geste ne crée pas de doublon et mène à
+        l'existant* — parce que les deux posent la même question.
+
+        **Une seule palette et une seule ambiance par paquet**, la première
+        trouvée dans l'ordre de création. Deux palettes d'un même paquet sont
+        possibles — on peut en faire une seconde à la main, avec d'autres
+        réglages —, et l'îlot montre alors celle qui est née la première : c'est
+        celle que le geste a faite.
+        """
+        objet = self._exiger(projet)
+        par_paquet: dict[str, dict[str, str]] = {}
+        for palette in objet.palettes:
+            for source in palette.sources:
+                if source.genre != IMAGES or not source.reference:
+                    continue
+                fabrique = par_paquet.setdefault(source.reference, {})
+                fabrique.setdefault("palette", palette.identifiant)
+        for ambiance in objet.ambiances:
+            for paquet, fabrique in par_paquet.items():
+                if fabrique.get("palette") == ambiance.palette:
+                    fabrique.setdefault("ambiance", ambiance.identifiant)
+        return par_paquet
+
     def cote(self, projet: str) -> dict[str, Any]:
         """Tout ce que le côté Ambiances montre, **en un seul aller-retour**.
 

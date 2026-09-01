@@ -1081,6 +1081,17 @@ export type Teinte =
   | "lichen"
   | "paille"
 
+/** Ce qu'un paquet du tableau a produit (U7) — sa palette, son ambiance.
+ *
+ *  **Lu par le serveur dans les palettes, jamais rangé sur le paquet.** Un
+ *  paquet n'a pas d'identité à lui : c'est un nom de groupe écrit sur des
+ *  cartes, et il disparaît avec sa dernière carte. C'est la palette qui dit de
+ *  quel paquet elle est la lecture, et l'atelier retourne la liste.
+ *
+ *  Les deux champs sont absents quand rien n'a été fait — un paquet qui n'a
+ *  rien produit n'a pas d'entrée du tout. */
+export type Fabrique = { palette?: string; ambiance?: string }
+
 export const TEINTES = [
   "ardoise",
   "pervenche",
@@ -2545,10 +2556,12 @@ export const api = {
   // Une seule de ces routes touche le réseau : celle qui va chercher l'image
   // d'une adresse collée. Toutes les autres marchent hors ligne.
 
-  /** La toile en un aller-retour : les cartes, les groupes, les traits et les
-   *  teintes. Une seconde route pour les liens aurait fait paraître les cartes
-   *  avant eux — donc un instant, à chaque ouverture, où la toile montre des
-   *  objets sans ce qu'on en avait dit. */
+  /** La toile en un aller-retour : les cartes, les groupes, les traits, les
+   *  teintes et **ce que chaque paquet a produit**. Une seconde route pour les
+   *  liens aurait fait paraître les cartes avant eux — donc un instant, à chaque
+   *  ouverture, où la toile montre des objets sans ce qu'on en avait dit ; une
+   *  seconde route pour les fabriques ferait la même chose à la marque d'un
+   *  îlot (U7). */
   tableau: () =>
     appeler<{
       projet: string
@@ -2556,6 +2569,7 @@ export const api = {
       groupes: string[]
       liens: Lien[]
       teintes: Record<string, Teinte>
+      fabriques: Record<string, Fabrique>
     }>("/board"),
 
   /** Coller **une** image. Les octets sont le corps, bruts — pas de

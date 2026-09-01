@@ -596,7 +596,8 @@ sauter ce qu'on regarde, et c'est précisément le geste où l'œil est resté s
 
 ## U7 · La toile dit ce qu'elle a fabriqué
 
-**Critères : 5 · Ce que ça corrige : un point de la séance**
+**Critères : 5 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -615,15 +616,53 @@ on voit, sur la toile, quels paquets ont une palette ou une ambiance accrochée,
 
 ### Critères d'acceptation
 
-- [ ] Faire une palette depuis un îlot le dit, nomme ce qui a été créé, et propose d'y aller.
-- [ ] Faire une ambiance fait de même, et l'ambiance porte bien la palette du paquet.
-- [ ] Un îlot dont le paquet a une palette ou une ambiance le montre sur la toile.
-- [ ] Refaire le geste sur un paquet déjà servi ne crée pas de doublon et mène à l'existant.
-- [ ] Un refus du serveur se lit à l'endroit où l'on a cliqué, jamais ailleurs.
+- [x] Faire une palette depuis un îlot le dit, nomme ce qui a été créé, et propose d'y aller.
+- [x] Faire une ambiance fait de même, et l'ambiance porte bien la palette du paquet.
+- [x] Un îlot dont le paquet a une palette ou une ambiance le montre sur la toile.
+- [x] Refaire le geste sur un paquet déjà servi ne crée pas de doublon et mène à l'existant.
+- [x] Un refus du serveur se lit à l'endroit où l'on a cliqué, jamais ailleurs.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Les cinq critères posent une seule question au serveur** : *ce paquet-là a-t-il déjà
+produit quelque chose, et quoi ?* La marque sur l'îlot, le second clic qui ne fait pas de
+doublon, le chemin vers l'existant — les trois s'y répondent d'un coup. Une fois la question
+posée au bon endroit, le reste est de l'écriture.
+
+**Lu, jamais rangé.** Un paquet n'a pas d'identité à lui : c'est un nom de groupe écrit sur
+des cartes, et il disparaît avec sa dernière carte. Lui accrocher un champ *sa palette*
+aurait fabriqué une seconde vérité que renommer un îlot ferait diverger, et un objet qui
+pointe vers un paquet qui n'existe plus. La réponse se lit dans l'autre sens : une palette
+dit de quel paquet elle est la lecture, et il suffit de retourner la liste. C'est aussi ce
+qui rend la marque juste sans qu'on ait à la nettoyer — supprimer la palette retire la
+marque, sans une ligne pour le faire.
+
+**Elle part avec les cartes, pas par une seconde route.** Même raison que les liens de T9 :
+un îlot qui montrerait sa marque un aller-retour après les cartes aurait, à chaque
+ouverture, un instant où il paraît n'avoir rien fabriqué.
+
+**Le bouton change de mot avant qu'on clique**, plutôt que de s'excuser après. *Ouvrir sa
+palette ›* au lieu de *faire une palette de ce paquet* : le geste dit ce qu'il fera. Le
+refus du serveur pour un nom déjà pris reste en place — c'est le filet, pour une palette
+créée dans une autre fenêtre entre-temps.
+
+**Le compte rendu se lit là où l'on a cliqué, le refus part par le chemin des refus.** Les
+deux ne sont pas de la même nature : la bonne nouvelle appartient au geste — elle nomme ce
+qui vient d'être créé et porte le chemin pour y aller —, la mauvaise est du même genre que
+toutes les autres du produit et passe par la fente du châssis. Lui inventer une seconde
+place dans le menu aurait fait deux grammaires pour une mauvaise nouvelle.
+
+**La marque n'a demandé ni glyphe, ni couleur, ni surface.** Elle se pose là où l'îlot parle
+déjà de lui-même — `2 cartes · ambiance`, dans la même encre que le compte. Et elle
+disparaît pendant qu'on tire une carte : l'îlot dit alors ce qu'il *vaudra*, et ce qu'il a
+fabriqué n'est pas ce qui est en jeu à cet instant-là.
+
+**L'ambiance l'emporte sur la palette dans la marque**, parce qu'elle la contient : dire les
+deux serait redondant, dire la palette seule serait dire la moitié.
 
 ---
 

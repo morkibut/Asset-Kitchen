@@ -1510,6 +1510,30 @@ function serveurDouble(options: {
         groupes: [...new Set(etat.cartes.map((c) => c.groupe).filter(Boolean))].sort(),
         liens: etat.liens,
         teintes: etat.teintes,
+        // **Ce que chaque paquet a produit** (U7), lu dans les palettes comme le
+        // serveur le lit : une palette dit de quel paquet elle est la lecture,
+        // et on retourne la liste. Un double qui porterait un champ « sa
+        // palette » sur le paquet prouverait un autre contrat — celui qu'on a
+        // justement refusé, parce qu'un paquet n'a pas d'identité à lui.
+        fabriques: Object.fromEntries(
+          etat.palettes.flatMap((p) =>
+            p.sources
+              .filter((s) => s.genre === "images" && s.reference)
+              .map((s) => [
+                s.reference,
+                {
+                  palette: p.identifiant,
+                  ...(etat.ambiances.find((a) => a.palette === p.identifiant)
+                    ? {
+                        ambiance: etat.ambiances.find(
+                          (a) => a.palette === p.identifiant,
+                        )!.identifiant,
+                      }
+                    : {}),
+                },
+              ]),
+          ),
+        ),
       })
     // **Le plan et les personnages arrivent ensemble**, comme la toile : le
     // double rend ce que le vrai serveur rend, sans les poses tenues — elles se
@@ -1836,7 +1860,17 @@ function serveurDouble(options: {
         return rendre(cote())
       }
       if (url === "/api/palettes" && init?.method === "POST") {
-        etat.palettes = [...etat.palettes, paletteDouble(String(corps.nom))]
+        // **Les sources sont gardées** : c'est par elles que le tableau sait de
+        // quel paquet une palette est la lecture (U7). Un double qui les
+        // jetterait rendrait une palette qui ne vient de nulle part, et l'îlot
+        // qui l'a faite ne porterait jamais sa marque.
+        etat.palettes = [
+          ...etat.palettes,
+          {
+            ...paletteDouble(String(corps.nom)),
+            sources: (corps.sources ?? []) as SourceDePalette[],
+          },
+        ]
         return rendre(cote())
       }
       // L'aperçu ne fabrique rien : deux images en `data:` et le compte de ce
@@ -14722,5 +14756,227 @@ describe("la palette se règle sans faire attendre", () => {
 
     relacher()
     await waitFor(() => expect(laJauge()).toBeNull())
+  })
+})
+
+// ── U7 · La toile dit ce qu'elle a fabriqué ──────────────────────────────────
+//
+// Les deux boutons d'un îlot **partaient sans le moindre retour**. Le serveur
+// répondait correctement et fabriquait bien la palette ; l'écran ne bougeait pas
+// d'un pixel, ne disait rien, ne menait nulle part, et l'objet fabriqué vivait
+// dans un autre côté de l'onglet. De l'endroit où l'on clique, cela ne se
+// distinguait pas d'un bouton mort — et c'est ce que la séance a conclu.
+//
+// Ce que le serveur a appris à dire — *ce paquet a-t-il déjà produit quelque
+// chose, et quoi ?* — se mesure dans `tests/test_u7.py`. Ici : le geste le dit,
+// l'îlot porte sa marque, un second clic mène à l'existant.
+
+describe("la toile dit ce qu'elle a fabriqué", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    doublerLaGrille(160)
+    toutReplier()
+    // La capture de pointeur n'existe pas dans jsdom, et le bandeau de l'îlot
+    // s'en sert pour tenir le geste : on la double, comme le flux et la mesure.
+    Element.prototype.setPointerCapture = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const CARTES = [
+    carteImage("m1", { groupe: "marais" }),
+    carteImage("m2", { groupe: "marais", position: [200, 0] }),
+  ]
+
+  /** La toile ouverte, et le menu de l'îlot déplié.
+   *
+   *  Le menu s'ouvre au clic sur le **nom** de l'îlot — c'est le seul endroit
+   *  d'où un clic ouvre quelque chose sur cette bande, et le geste souris passe
+   *  par le `pointerup` du bandeau, qui sait si le pointeur a tiré. */
+  const ouvrirLeMenuDeLIlot = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ cartes: CARTES, ...options })
+    await monter(double.fetchDouble)
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    const bandeau = await waitFor(() => {
+      const trouve = document.querySelector("[data-ilot='marais'] [data-nom-ilot]")
+      if (!trouve) throw new Error("l'îlot du marais n'est pas dessiné")
+      return trouve as HTMLElement
+    })
+    // **Le chemin du clavier**, et c'est le seul que jsdom sache jouer : un
+    // clic de souris passe par le `pointerup` du bandeau, qui a besoin d'une
+    // capture de pointeur et d'une distance parcourue. `fireEvent.click` pose
+    // `detail` à zéro, ce que le bouton lit comme « ceci ne vient pas d'un
+    // pointeur » — exactement ce que fait la touche Entrée.
+    fireEvent.click(bandeau)
+    return double
+  }
+
+  const bouton = (nom: RegExp) => screen.getByRole("button", { name: nom })
+
+  // ── « Faire une palette le dit, nomme ce qui a été créé, et propose d'y
+  //     aller » ─────────────────────────────────────────────────────────────
+
+  test("faire une palette dit ce qui a été créé, et mène à l'objet", async () => {
+    const { appels } = await ouvrirLeMenuDeLIlot()
+
+    fireEvent.click(bouton(/faire une palette de ce paquet/))
+
+    const dit = await waitFor(() => {
+      const trouve = document.querySelector("[data-fabrique-faite]")
+      if (!trouve) throw new Error("le geste n'a rien dit")
+      return trouve as HTMLElement
+    })
+    // Il **nomme** ce qui a été créé : « la palette est faite » sans son nom
+    // laisserait l'auteur chercher laquelle, parmi celles qu'il a déjà.
+    expect(dit.textContent).toContain("marais")
+    expect(dit.textContent).toContain("faite")
+    expect(appels.some((a) => a.url === "/api/palettes")).toBe(true)
+
+    // Et le chemin y mène : le côté change, l'objet s'ouvre.
+    fireEvent.click(within(dit).getByRole("button", { name: /aller la voir/ }))
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Ambiances et couleurs" })
+        .getAttribute("aria-selected")).toBe("true"),
+    )
+    expect(await screen.findByText(/l'aperçu/)).toBeTruthy()
+  })
+
+  test("faire une ambiance fait de même, et l'ambiance porte la palette du paquet", async () => {
+    const { appels, etat } = await ouvrirLeMenuDeLIlot()
+
+    fireEvent.click(bouton(/faire une ambiance de ce paquet/))
+
+    const dit = await waitFor(() => {
+      const trouve = document.querySelector("[data-fabrique-faite]")
+      if (!trouve) throw new Error("le geste n'a rien dit")
+      return trouve as HTMLElement
+    })
+    expect(dit.textContent).toContain("ambiance")
+    expect(dit.textContent).toContain("marais")
+
+    // **Les deux objets, et le lien entre eux.** Une ambiance qui ne porterait
+    // pas la palette du paquet serait une ambiance vide portant son nom.
+    expect(appels.some((a) => a.url === "/api/palettes")).toBe(true)
+    expect(appels.some((a) => a.url === "/api/moods" && a.corps)).toBe(true)
+    const nee = etat.ambiances.find((a) => a.nom === "marais")
+    expect(nee?.palette).toBe(etat.palettes.find((p) => p.nom === "marais")?.identifiant)
+  })
+
+  // ── « Un îlot dont le paquet a une palette le montre sur la toile » ────────
+
+  test("l'îlot porte la marque de ce qu'il a produit", async () => {
+    // **Aucun glyphe neuf, aucune couleur dépensée** : le mot se pose là où
+    // l'îlot parle déjà de lui-même, à côté de son compte de cartes.
+    await ouvrirLeMenuDeLIlot()
+    const bandeDeLIlot = () =>
+      document.querySelector("[data-ilot='marais']")?.textContent ?? ""
+
+    expect(bandeDeLIlot()).toContain("2 cartes")
+    expect(bandeDeLIlot()).not.toContain("2 cartes · palette")
+
+    fireEvent.click(bouton(/faire une palette de ce paquet/))
+
+    await waitFor(() => expect(bandeDeLIlot()).toContain("2 cartes · palette"))
+  })
+
+  test("l'ambiance l'emporte sur la palette dans la marque", async () => {
+    // Elle *contient* la palette du paquet : dire les deux serait redondant, et
+    // dire la palette seule serait dire la moitié.
+    await ouvrirLeMenuDeLIlot({
+      palettes: [
+        {
+          ...paletteDouble("marais"),
+          sources: [{ genre: "images", reference: "marais" }],
+        },
+      ],
+      ambiances: [ambianceDouble("Marais de cendre", "marais")],
+    })
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-ilot='marais']")?.textContent).toContain(
+        "2 cartes · ambiance",
+      ),
+    )
+  })
+
+  // ── « Refaire le geste ne crée pas de doublon et mène à l'existant » ───────
+
+  test("un paquet déjà servi propose d'ouvrir ce qui existe, et ne refait rien", async () => {
+    const { appels } = await ouvrirLeMenuDeLIlot({
+      palettes: [
+        {
+          ...paletteDouble("marais"),
+          sources: [{ genre: "images", reference: "marais" }],
+        },
+      ],
+    })
+
+    // Le bouton **le dit avant qu'on clique** plutôt que de s'excuser après.
+    const ouvrir = await screen.findByRole("button", { name: /ouvrir sa palette/ })
+    expect(screen.queryByRole("button", { name: /faire une palette de ce paquet/ })).toBeNull()
+
+    const avant = appels.filter((a) => a.url === "/api/palettes").length
+    fireEvent.click(ouvrir)
+
+    // Rien n'a été fabriqué, et le chemin mène quand même à l'objet.
+    expect(appels.filter((a) => a.url === "/api/palettes").length).toBe(avant)
+    const dit = await waitFor(() => {
+      const trouve = document.querySelector("[data-fabrique-faite]")
+      if (!trouve) throw new Error("le geste n'a rien dit")
+      return trouve as HTMLElement
+    })
+    expect(dit.textContent).toContain("existe déjà")
+  })
+
+  // ── « Un refus se lit à l'endroit où l'on a cliqué » ───────────────────────
+
+  test("un refus du serveur se lit dans la bande du châssis, avec sa raison", async () => {
+    // **Un refus est du même genre partout dans le produit**, et il part par le
+    // même chemin : la fente du châssis. Lui inventer une seconde place dans le
+    // menu aurait fait deux grammaires pour une mauvaise nouvelle.
+    const double = serveurDouble({ cartes: CARTES })
+    const refuse = vi.fn(async (chemin: string, init?: RequestInit) => {
+      if (String(chemin) === "/api/palettes" && init?.method === "POST")
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            code: "ambiance_refusee",
+            raison: "une palette « marais » existe déjà dans ce jeu",
+            ou_aller: null,
+          }),
+        } as unknown as Response
+      return double.fetchDouble(chemin, init)
+    })
+    await monter(refuse as unknown as ReturnType<typeof vi.fn>)
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("button", { name: "toile" }))
+    const bandeau = await waitFor(() => {
+      const trouve = document.querySelector("[data-ilot='marais'] [data-nom-ilot]")
+      if (!trouve) throw new Error("l'îlot du marais n'est pas dessiné")
+      return trouve as HTMLElement
+    })
+    // **Le chemin du clavier**, et c'est le seul que jsdom sache jouer : un
+    // clic de souris passe par le `pointerup` du bandeau, qui a besoin d'une
+    // capture de pointeur et d'une distance parcourue. `fireEvent.click` pose
+    // `detail` à zéro, ce que le bouton lit comme « ceci ne vient pas d'un
+    // pointeur » — exactement ce que fait la touche Entrée.
+    fireEvent.click(bandeau)
+
+    fireEvent.click(bouton(/faire une palette de ce paquet/))
+
+    expect(await screen.findByText(/existe déjà dans ce jeu/)).toBeTruthy()
+    expect(document.querySelector("[data-fabrique-faite]")).toBeNull()
   })
 })
