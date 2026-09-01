@@ -668,7 +668,8 @@ deux serait redondant, dire la palette seule serait dire la moitié.
 
 ## U8 · La galerie rend le prompt, et son bouton rentre dans la vignette
 
-**Critères : 7 · Ce que ça corrige : deux points de la séance**
+**Critères : 7 · Ce que ça corrige : deux points de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -699,20 +700,63 @@ secondaire.
 
 ### Critères d'acceptation
 
-- [ ] La fiche d'une image montre le prompt qui l'a fabriquée, entier, replié par défaut, et
+- [x] La fiche d'une image montre le prompt qui l'a fabriquée, entier, replié par défaut, et
       c'est bien le texte parti — celui du jeu et de l'ambiance compris, pas le seul sujet.
-- [ ] On le déplie, on le copie, sans quitter la fiche ni toucher au champ de génération.
-- [ ] Une image entrée par import — donc sans prompt — le dit au lieu de laisser un vide.
-- [ ] Une image née d'une autre nomme sa parente et y mène, sans afficher le texte de
+- [x] On le déplie, on le copie, sans quitter la fiche ni toucher au champ de génération.
+- [x] Une image entrée par import — donc sans prompt — le dit au lieu de laisser un vide.
+- [x] Une image née d'une autre nomme sa parente et y mène, sans afficher le texte de
       celle-ci.
-- [ ] À la taille de repos, rien ne dépasse de la vignette : mesuré au navigateur, pas
+- [x] À la taille de repos, rien ne dépasse de la vignette : mesuré au navigateur, pas
       estimé.
-- [ ] Le téléchargement reste atteignable aux trois tailles.
-- [ ] La ligne des mesures ne pousse plus la tuile : c'est ce qui produisait le débordement.
+- [x] Le téléchargement reste atteignable aux trois tailles.
+- [x] La ligne des mesures ne pousse plus la tuile : c'est ce qui produisait le débordement.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Le débordement tenait en trois caractères de feuille de style, et ce n'étaient pas ceux
+qu'on aurait cherchés.** Une case de grille vaut `min-width: auto` par défaut, c'est-à-dire
+*au moins la largeur de mon contenu* : la tuile s'élargissait pour loger sa ligne de
+mesures, et sortait de sa colonne. Ce n'est donc pas le lien qui débordait de la tuile,
+c'est la tuile qui débordait de sa case — le lien n'était que l'endroit où ça se voyait.
+Une fois `min-w-0` posé, tout le reste — la flèche seule, le point qui cède — n'est plus
+qu'une question de tenir dans une largeur qui, elle, ne bouge plus.
+
+**Mesuré trois fois au navigateur, et la troisième mesure a changé le dessin.** À la taille
+de repos, la ligne dispose de 120 pixels et ses quatre morceaux en réclament 124 : les
+dimensions se coupaient de trois pixels, et `831×907` se lisait `831×9…`. Le point de
+séparation et son écart valent treize pixels à eux deux — il cède donc à la taille de repos,
+parce qu'un point n'est pas une mesure et que ce qu'il fait, l'écart le fait déjà. Relevé
+final, tuile de 137,9 px : la ligne demande exactement 120, rien ne se coupe, et le lien
+reste à 9 px du bord droit. Aux deux autres crans, 321 px et 652 px, la place est large.
+
+**Ce qui cède est choisi, et il est écrit pourquoi.** Le prix est l'enjeu que le produit met
+au centre ; le téléchargement est une cible qu'on vise. Ni l'un ni l'autre ne se tronque.
+Les dimensions, elles, sont redites en entier sur la fiche à un clic — et une largeur
+coupée reste lisible là où un prix coupé ne veut plus rien dire.
+
+**Le cran de zoom descend jusqu'à la tuile, plutôt qu'une largeur mesurée.** La tuile
+pourrait se mesurer elle-même ; elle dépendrait alors d'une mise en page qui n'existe pas au
+premier rendu, et clignoterait le temps d'une image. Le cran est connu d'avance, et c'est
+déjà lui qui décide de tout le reste de la grille.
+
+**Le prompt n'a demandé aucune route neuve.** Le fichier de la génération porte le texte
+*tel qu'il est parti*, bible repliée comprise, depuis T4 : la fiche allait déjà le chercher
+pour dire ce que l'ambiance avait donné. Une seule lecture pour les deux blocs — deux appels
+sur le même fichier auraient fait deux instants différents du même fait.
+
+**Trois cas, et le troisième est le seul qui demandait une décision.** Un texte, pas de
+texte, ou un texte qui est ailleurs. Le troisième — une découpe de planche, un calque rendu
+— nomme sa parente et y mène plutôt que d'afficher le texte de celle-ci : montrer le texte
+de la planche sur l'un de ses huit morceaux aurait affiché sur une image un texte qui en
+décrit huit.
+
+**Le texte défile dans sa boîte, il n'étale pas la fiche.** Mesuré sur une vraie image du
+jeu : 3 816 signes. Le laisser s'étaler enverrait tout ce qui suit — la filiation, la
+recette, le réalignement — hors de portée du défilement, pour un texte qu'on lit une fois.
 
 ---
 

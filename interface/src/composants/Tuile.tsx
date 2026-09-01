@@ -24,7 +24,7 @@ import {
   type Generation,
 } from "../api"
 import { sujetAsset, useVisee, vignetteAsset } from "./Apercu"
-import { Jauge } from "./chassis"
+import { Jauge, type Zoom } from "./chassis"
 
 /**
  * Ce que la grille itère. Un asset, ou un emplacement qui l'attend encore.
@@ -50,6 +50,7 @@ export function Tuile({
   entree,
   selectionnee,
   cote,
+  zoom,
   onOuvrir,
   onRelancer,
 }: {
@@ -58,6 +59,14 @@ export function Tuile({
   /** Le cran de la grille, en pixels — ce que la tuile demande au serveur, et
    *  non ce qu'elle rend. Voir `api.vignette`. */
   cote: number
+  /** Le cran de zoom de la grille — 1, 2 ou 4 (U8).
+   *
+   *  **Le vocabulaire du produit, pas une largeur mesurée.** La tuile pourrait
+   *  se mesurer elle-même et décider à partir de sa largeur ; elle dépendrait
+   *  alors d'une mise en page qui n'existe pas encore au premier rendu, et
+   *  clignoterait le temps d'une image. Le cran, lui, est connu d'avance et
+   *  c'est déjà lui qui décide de tout le reste de la grille. */
+  zoom: Zoom
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRelancer: (generation: string, rang: number) => void
 }) {
@@ -91,12 +100,25 @@ export function Tuile({
   const source = asset ? vignetteAsset(asset, cote) : null
   const visee = useVisee(sujet)
 
+  /** La tuile est-elle à la taille de repos ? **Mesuré, pas estimé** : à 1× la
+   *  tuile fait 132,6 px et la ligne des mesures en réclame 137 (U8). Aux deux
+   *  autres crans, la place suffit largement. */
+  const serree = zoom === 1
+
   return (
     <figure
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
       className={[
-        "arrivee relative flex flex-col border",
+        // **`min-w-0`, et c'est lui qui répare le débordement** (U8). Une case
+        // de grille vaut `min-width: auto` par défaut, c'est-à-dire *au moins
+        // la largeur de mon contenu* : la ligne des mesures réclamait 137 px
+        // dans une tuile de 132,6, et la tuile s'élargissait pour la loger —
+        // donc le lien *PNG ↓* sortait de 13,2 px sur la droite et se posait
+        // sur la voisine. Mesuré au navigateur le 31 août 2026. La tuile est
+        // désormais bornée par sa colonne, et c'est à son contenu de tenir
+        // dedans.
+        "arrivee relative flex min-w-0 flex-col border",
         rate ? "border-echec/45 bg-echec/5" : "border-bord bg-fond-2",
         // L'anneau du sélectionné — « la lampe de la table », `docs/design-motifs.md`
         // § La tuile. Aucune couleur de plus dans la grille.
@@ -155,7 +177,7 @@ export function Tuile({
             Relancer
           </button>
         ) : asset ? (
-          <Mesures asset={asset} />
+          <Mesures asset={asset} serree={serree} />
         ) : (
           <span className="mesure text-[9.5px] text-texte-3">en attente</span>
         )}
@@ -176,25 +198,51 @@ export function Tuile({
  *  qu'elle a coûté, et l'argent est l'enjeu que le produit met au centre — il a
  *  un écran à lui. Il était donc le seul fait non redondant de la carte, écrit
  *  dans le gris réservé à ce qui l'est. */
-function Mesures({ asset }: { asset: Asset }) {
+function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
   return (
-    <div className="mesure flex items-center gap-1.5 text-[11px] text-texte-2">
+    <div
+      data-mesures
+      className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-texte-2"
+    >
       {/* Les dimensions **du rendu** quand il y en a un : c'est l'image qu'on
-          regarde, donc c'est elle qu'on mesure. */}
-      <span>
+          regarde, donc c'est elle qu'on mesure.
+
+          **Elle est la seule des trois qui cède** (U8). Le prix est l'enjeu que
+          le produit met au centre et le téléchargement est une cible : ni l'un
+          ni l'autre ne se tronque. Les dimensions, elles, sont redites en entier
+          sur la fiche, à un clic — et une largeur coupée reste lisible là où un
+          prix coupé ne veut plus rien dire. */}
+      <span className="min-w-0 truncate">
         {asset.traite
           ? `${asset.rendu_largeur}×${asset.rendu_hauteur}`
           : `${asset.largeur}×${asset.hauteur}`}
       </span>
-      <span aria-hidden>·</span>
-      <span>{dollars(asset.cout_usd)}</span>
+      {/* **Le point de séparation cède avant les mesures.** Mesuré au
+          navigateur : à la taille de repos, la ligne dispose de 120 px et ses
+          quatre morceaux en réclament 124 — les dimensions se coupaient donc de
+          trois pixels, et `831×907` se lisait `831×9…`. Le point et son écart
+          valent treize pixels à eux deux, et un point n'est pas une mesure : ce
+          qu'il fait, l'écart le fait déjà. */}
+      {!serree && (
+        <span aria-hidden className="shrink-0">
+          ·
+        </span>
+      )}
+      <span className="shrink-0">{dollars(asset.cout_usd)}</span>
+      {/* **À la taille de repos, le lien se réduit à sa flèche.** La planche
+          contact ne perd pas une colonne pour un bouton secondaire, et le
+          téléchargement reste atteignable aux trois tailles — c'est le mot qui
+          part, pas la cible. Le nom complet reste dans le `title` et dans le
+          nom accessible, pour qui lit l'écran autrement qu'avec les yeux. */}
       <a
         href={api.telechargementAsset(asset.identifiant)}
         download
         onClick={(e) => e.stopPropagation()}
-        className="ml-auto text-signal hover:text-signal-clair"
+        title="télécharger le PNG"
+        aria-label="télécharger le PNG"
+        className="ml-auto shrink-0 text-signal hover:text-signal-clair"
       >
-        PNG ↓
+        {serree ? "↓" : "PNG ↓"}
       </a>
     </div>
   )

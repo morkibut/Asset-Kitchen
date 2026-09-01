@@ -98,6 +98,11 @@ export function Fiche({
   onOuvrir: (identifiant: string) => void
 }) {
   const [montrerBrut, setMontrerBrut] = useState(false)
+  /** La génération de cette image, **lue une fois pour la fiche entière** (U8) :
+   *  deux blocs la lisent — ce que l'ambiance a donné, et le texte qui a fait
+   *  l'image —, et deux appels pour le même fichier auraient fait deux instants
+   *  différents du même fait. */
+  const generation = useGeneration(asset)
   /** Ce que le projet impose à **cette** image (US-164). Demandé au serveur —
    *  il est le seul à savoir sur quelle échelle l'image est née, et l'échelle
    *  décide de l'occupation. `null` tant qu'il n'a pas répondu. */
@@ -185,7 +190,7 @@ export function Fiche({
           {nomDuModele(asset.modele)}
         </p>
 
-        <PrisDeLAmbiance asset={asset} />
+        <PrisDeLAmbiance generation={generation} />
 
         <Jugement
           asset={asset}
@@ -200,6 +205,17 @@ export function Fiche({
           plan={plan}
           personnages={personnages}
           onErreur={onErreur}
+        />
+
+        {/* **Le texte avant la filiation, et après le jugement.** On juge une
+            image en la regardant ; on lit son texte quand on se demande d'où
+            elle vient — c'est la même question que la filiation, en amont d'un
+            cran, et les deux se répondent l'une à l'autre sur les images nées
+            d'une planche. */}
+        <LeTexteQuiLAFaite
+          asset={asset}
+          generation={generation}
+          onOuvrir={onOuvrir}
         />
 
         <Descendance asset={asset} onOuvrir={onOuvrir} onErreur={onErreur} />
@@ -428,23 +444,35 @@ function ImposeParLeProjet({
  *  plus sur chaque image aurait fait une seconde vérité sur une question à
  *  laquelle l'enregistrement de l'appel répond déjà. La fiche fait déjà cet
  *  aller-retour-là pour la filiation, et une fiche s'ouvre une à la fois. */
-function PrisDeLAmbiance({ asset }: { asset: Asset }) {
+/** La génération d'une image, lue **une fois pour la fiche entière** (U8).
+ *
+ *  Deux blocs la lisent — ce que l'ambiance a donné, et le texte qui a fait
+ *  l'image —, et deux appels pour le même fichier auraient fait deux instants
+ *  différents du même fait. Elle est donc lue en haut et descendue en
+ *  paramètre, comme le tableau descend ses cartes.
+ *
+ *  **Le silence, et pas un message**, quand elle a disparu : une génération
+ *  effacée du disque est le cas normal d'une vieille image ; s'en plaindre à
+ *  chaque fiche ouverte apprendrait moins que de ne rien dire. */
+function useGeneration(asset: Asset): Generation | null {
   const [generation, setGeneration] = useState<Generation | null>(null)
 
   useEffect(() => {
     let vivant = true
+    setGeneration(null)
     api
       .generation(asset.generation)
       .then((lue) => vivant && setGeneration(lue))
-      // **Le silence, et pas un message.** Une génération effacée du disque est
-      // le cas normal d'une vieille image ; s'en plaindre à chaque fiche ouverte
-      // apprendrait moins que de ne rien dire.
       .catch(() => vivant && setGeneration(null))
     return () => {
       vivant = false
     }
   }, [asset.generation])
 
+  return generation
+}
+
+function PrisDeLAmbiance({ generation }: { generation: Generation | null }) {
   const nom = generation?.ambiance
   if (!nom) return null
 
@@ -461,6 +489,119 @@ function PrisDeLAmbiance({ asset }: { asset: Asset }) {
     <p className="mesure text-[10px] leading-4 text-texte-3">
       d'après « {nom} » — {pris.length ? pris.join(", ") : "rien de repris"}
     </p>
+  )
+}
+
+// ── Le texte qui a fait cette image (U8) ────────────────────────────────────
+
+/**
+ * Le prompt d'origine, **entier**, replié par défaut, dépliable et copiable.
+ *
+ * **Il était enregistré depuis toujours, et affiché nulle part.** La fiche ne
+ * montrait que le titre — les cinquante-six premiers caractères — et le seul
+ * moyen de lire le reste était *reprendre les réglages*, qui change d'onglet et
+ * remplit le champ de génération : c'est-à-dire qui fait tout autre chose que
+ * lire.
+ *
+ * **C'est le texte tel qu'il est parti**, avec ce que le jeu et l'ambiance y
+ * avaient ajouté, et non le seul sujet écrit dans le champ. Depuis E14 le champ
+ * ne porte plus que le sujet, et une vieille image doit dire ce qui l'a faite,
+ * pas ce qu'on taperait aujourd'hui. Le fichier de la génération porte le texte
+ * complet ; il n'y a rien à recomposer.
+ *
+ * **Une image sans texte à elle nomme sa parente et ne montre pas son texte**
+ * (`US-352`, tranché au cadrage du 1ᵉʳ septembre 2026). Une découpe de planche,
+ * un calque rendu : on va le lire là où il a été écrit. Montrer le texte de la
+ * planche sur l'un de ses huit morceaux aurait affiché sur une image un texte
+ * qui en décrit huit.
+ */
+function LeTexteQuiLAFaite({
+  asset,
+  generation,
+  onOuvrir,
+}: {
+  asset: Asset
+  generation: Generation | null
+  onOuvrir: (identifiant: string) => void
+}) {
+  const [copie, setCopie] = useState(false)
+  const parti = generation?.demande.prompt?.trim() ?? ""
+
+  // **Née d'une autre image** : sa parente porte le texte, pas elle.
+  if (asset.parent)
+    return (
+      <Bloc
+        cle="fiche.prompt"
+        titre="Son texte"
+        etat="vient d'une autre image"
+        mesure="le texte est sur sa parente"
+      >
+        <p className="text-[11px] leading-snug text-texte-2">
+          Cette image est née d'une autre — une planche découpée, un calque posé.
+          Le texte qui l'a fabriquée est écrit là-bas, sur l'image dont elle
+          descend.{" "}
+          <button
+            type="button"
+            onClick={() => onOuvrir(asset.parent!)}
+            className="mesure text-[10px] text-signal underline-offset-2 hover:underline"
+          >
+            aller la lire ›
+          </button>
+        </p>
+      </Bloc>
+    )
+
+  // **Entrée par import, ou génération disparue** : il n'y a pas de texte, et
+  // le dire vaut mieux qu'un blanc dont on ne sait pas s'il charge encore.
+  if (!parti)
+    return (
+      <Bloc cle="fiche.prompt" titre="Son texte" etat="aucun texte">
+        <p className="text-[11px] leading-snug text-texte-2">
+          {asset.modele === "import"
+            ? "Cette image est entrée par import : personne ne l'a décrite ici."
+            : "Le texte de cette image n'est plus sur le disque — sa génération a été effacée."}
+        </p>
+      </Bloc>
+    )
+
+  return (
+    <Bloc
+      cle="fiche.prompt"
+      titre="Son texte"
+      /* Replié, il porte son début : c'est ce qui permet de reconnaître une
+         image dans une fiche sans rien ouvrir. Ouvert, il porte sa longueur —
+         un texte de mille signes ne se lit pas comme un texte de trente. */
+      etat={parti}
+      mesure={`${parti.length} signes`}
+    >
+      <div className="flex flex-col gap-1.5">
+        {/* **Il défile dedans, il ne pousse pas la fiche.** Un prompt de bible
+            repliée fait plusieurs milliers de signes ; le laisser s'étaler
+            enverrait tout ce qui suit — la recette, le réalignement — hors de
+            portée du défilement, pour un texte qu'on lit une fois. */}
+        <p
+          data-prompt-parti
+          className="defile max-h-[220px] overflow-y-auto rounded-[2px] border border-bord bg-fond-0 p-2 text-[11px] leading-snug whitespace-pre-wrap text-texte-2"
+        >
+          {parti}
+        </p>
+        {/* **Copier, et rien d'autre.** *Reprendre les réglages* existe déjà
+            deux blocs plus haut et fait autre chose : il change d'onglet et
+            remplit le champ qui paie. Ici on lit, et on emporte le texte. */}
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard
+              ?.writeText(parti)
+              .then(() => setCopie(true))
+              .catch(() => setCopie(false))
+          }}
+          className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+        >
+          {copie ? "copié" : "copier le texte"}
+        </button>
+      </div>
+    </Bloc>
   )
 }
 

@@ -2857,6 +2857,7 @@ function Grille({
             // agrandir une vignette. Une adresse par largeur de fenêtre, elle,
             // viderait le cache du navigateur à chaque repli de panneau.
             cote={Math.max(256, CRANS[zoom])}
+            zoom={zoom}
             onRelancer={onRelancer}
             onOuvrir={onOuvrir}
           />

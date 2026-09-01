@@ -14980,3 +14980,177 @@ describe("la toile dit ce qu'elle a fabriqué", () => {
     expect(document.querySelector("[data-fabrique-faite]")).toBeNull()
   })
 })
+
+// ── U8 · La galerie rend le prompt, et son bouton rentre dans la vignette ────
+//
+// Deux points de la séance, et ils n'ont rien à voir l'un avec l'autre sinon
+// l'écran où ils se voient.
+//
+// **Le prompt était enregistré depuis toujours et affiché nulle part.** La
+// fiche ne montrait que le titre — les cinquante-six premiers caractères — et
+// le seul moyen de lire le reste était *reprendre les réglages*, qui change
+// d'onglet et remplit le champ de génération, c'est-à-dire qui fait tout autre
+// chose que lire.
+//
+// **Et le lien PNG sortait de la tuile.** Mesuré au navigateur : à la taille de
+// repos la vignette fait 132,6 px, la ligne des mesures en réclame 137, et le
+// lien dépassait de 13,2 px sur la droite, posé sur la voisine.
+
+describe("la galerie rend le prompt, et son bouton rentre dans la vignette", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le texte **tel qu'il est parti** : le sujet, plus ce que le jeu et
+   *  l'ambiance y ont replié. C'est ce que le fichier de la génération porte,
+   *  et c'est ce que la fiche doit rendre — pas le seul sujet du champ. */
+  const PARTI =
+    "un tonneau de chêne cerclé de fer — pixel art, palette de vingt-quatre " +
+    "couleurs, fond uni, vue de trois quarts, éclairage rasant venu de la gauche"
+
+  const ouvrirLaFiche = async (
+    asset_: Asset,
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ assets: [asset_], promptParti: PARTI, ...options })
+    await monter(double.fetchDouble, { ...ETAT, assets: [asset_] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    return double
+  }
+
+  const blocDuTexte = () => screen.getByRole("button", { name: /^Son texte/ })
+
+  // ── « La fiche montre le prompt qui l'a fabriquée, entier et replié » ──────
+
+  test("le bloc du texte porte son début replié, et le texte entier ouvert", async () => {
+    await ouvrirLaFiche(asset("aaaa1111-0", "un tonneau"))
+
+    // **Replié par défaut**, et il porte assez de texte pour reconnaître
+    // l'image sans rien ouvrir.
+    const bloc = await waitFor(() => {
+      const trouve = screen.getByRole("button", { name: /^Son texte/ })
+      if (trouve.getAttribute("aria-expanded") !== "false")
+        throw new Error("le bloc devait être replié")
+      return trouve
+    })
+    expect(bloc.textContent).toContain("un tonneau de chêne")
+    expect(document.querySelector("[data-prompt-parti]")).toBeNull()
+
+    fireEvent.click(bloc)
+
+    // Ouvert, il porte le texte **entier** — celui du jeu et de l'ambiance
+    // compris, pas le seul sujet écrit dans le champ.
+    const texte = await waitFor(() => {
+      const trouve = document.querySelector("[data-prompt-parti]")
+      if (!trouve) throw new Error("le texte ne s'est pas déplié")
+      return trouve as HTMLElement
+    })
+    expect(texte.textContent).toBe(PARTI)
+    expect(texte.textContent).toContain("éclairage rasant")
+  })
+
+  test("on copie le texte sans quitter la fiche ni toucher au champ", async () => {
+    const ecrit = vi.fn(() => Promise.resolve())
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: ecrit } })
+    await ouvrirLaFiche(asset("aaaa1111-0", "un tonneau"))
+    fireEvent.click(blocDuTexte())
+
+    fireEvent.click(await screen.findByRole("button", { name: "copier le texte" }))
+
+    await waitFor(() => expect(ecrit).toHaveBeenCalledWith(PARTI))
+    // **La fiche est toujours là**, et le champ de génération n'a pas bougé :
+    // *reprendre les réglages* fait déjà cela, et fait tout autre chose.
+    expect(screen.getByLabelText("Fermer la fiche")).toBeTruthy()
+    expect(await screen.findByText("copié")).toBeTruthy()
+  })
+
+  // ── « Une image sans prompt le dit » ──────────────────────────────────────
+
+  test("une image importée dit qu'elle n'a pas de texte", async () => {
+    await ouvrirLaFiche(
+      { ...asset("aaaa1111-0", "épée.png", "auteur", "import") } as Asset,
+      { promptParti: "" },
+    )
+
+    const bloc = blocDuTexte()
+    expect(bloc.textContent).toContain("aucun texte")
+    fireEvent.click(bloc)
+    expect(await screen.findByText(/entrée par import/)).toBeTruthy()
+    expect(document.querySelector("[data-prompt-parti]")).toBeNull()
+  })
+
+  // ── « Une image née d'une autre nomme sa parente et y mène » ───────────────
+
+  test("une découpe renvoie à sa parente sans montrer son texte", async () => {
+    // **Montrer le texte de la planche sur l'un de ses huit morceaux aurait
+    // affiché sur une image un texte qui en décrit huit.**
+    await ouvrirLaFiche({
+      ...asset("aaaa1111-0", "un tonneau, morceau 1"),
+      parent: "pppp0000-0",
+    } as Asset)
+
+    const bloc = blocDuTexte()
+    expect(bloc.textContent).toContain("vient d'une autre image")
+    fireEvent.click(bloc)
+
+    expect(await screen.findByText(/née d'une autre/)).toBeTruthy()
+    // Le texte de la planche n'est **pas** affiché ici.
+    expect(document.querySelector("[data-prompt-parti]")).toBeNull()
+    expect(screen.queryByText(new RegExp("éclairage rasant"))).toBeNull()
+    // Et le chemin y mène.
+    expect(screen.getByRole("button", { name: /aller la lire/ })).toBeTruthy()
+  })
+
+  // ── « Rien ne dépasse de la vignette, et le téléchargement reste là » ──────
+
+  test("à la taille de repos le lien se réduit à sa flèche, et reste atteignable", async () => {
+    // **Le mot part, pas la cible.** La planche contact ne perd pas une colonne
+    // pour un bouton secondaire, et le nom complet reste dans le nom
+    // accessible — pour qui lit l'écran autrement qu'avec les yeux.
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0", "un tonneau")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0", "un tonneau")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    const lien = () =>
+      screen.getByRole("link", { name: "télécharger le PNG" }) as HTMLAnchorElement
+    expect(lien().textContent).toBe("↓")
+    expect(lien().getAttribute("href")).toContain("aaaa1111-0")
+
+    // Aux deux autres crans, la place suffit et le mot revient.
+    fireEvent.click(screen.getByRole("button", { name: "2×" }))
+    await waitFor(() => expect(lien().textContent).toBe("PNG ↓"))
+    fireEvent.click(screen.getByRole("button", { name: "4×" }))
+    await waitFor(() => expect(lien().textContent).toBe("PNG ↓"))
+  })
+
+  test("la ligne des mesures ne pousse plus la tuile", async () => {
+    // **C'est `min-w-0` qui répare le débordement**, et il se vérifie sur la
+    // classe plutôt qu'à la mesure : jsdom ne met rien en page, donc tout
+    // rectangle y vaut zéro et une assertion sur des pixels y serait vraie sans
+    // rien prouver. La mesure, elle, a été faite au navigateur — c'est un
+    // critère de l'étape, et elle est écrite dans `docs/tranches/U.md`.
+    const { fetchDouble } = serveurDouble({ assets: [asset("aaaa1111-0", "un tonneau")] })
+    await monter(fetchDouble, { ...ETAT, assets: [asset("aaaa1111-0", "un tonneau")] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+
+    const tuile = tuiles()[0].closest("figure") as HTMLElement
+    expect(tuile.className).toContain("min-w-0")
+    const mesures = tuile.querySelector("[data-mesures]") as HTMLElement
+    expect(mesures.className).toContain("min-w-0")
+    // Le prix et le lien ne cèdent pas : ce sont les dimensions qui se coupent,
+    // et elles sont redites en entier sur la fiche, à un clic.
+    expect(mesures.querySelector(".truncate")?.textContent).toContain("×")
+  })
+})
