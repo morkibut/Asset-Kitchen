@@ -25,7 +25,7 @@ import time
 from conftest import image_sujet
 from PIL import Image
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 def _generer(client, double, **image) -> dict:

@@ -458,12 +458,12 @@ export const AIDE: Record<string, Explication> = {
   "reglages.modele": {
     nom: "modèle",
     ou: "etabli",
-    quoi: "Le moteur d'image qui fabriquera la génération, choisi dans le catalogue du fournisseur.",
+    quoi: "Le moteur d'image qui fabriquera la génération, choisi dans une liste où plusieurs fournisseurs se mélangent — chaque ligne dit qui le propose.",
     change:
       "Le prix, le rendu, et deux plafonds : le nombre de références acceptées et le nombre de variations possibles. Un modèle qui ne peut pas honorer ta demande reste visible et grisé, avec sa raison — jamais remplacé en silence.",
-    origine: "le catalogue · la barre d'état en donne la date",
+    origine: "les catalogues · chaque ligne dit d'où vient sa fiche",
     long:
-      "Le catalogue est une photo, pas un flux : il est relu au démarrage et par le bouton Catalogue, et la barre d'état dit toujours de quand elle date. Hors ligne, le produit sert la dernière photo reçue — générer reste actif, et c'est le seul endroit du produit où l'on propose puis refuse, assumé, avec la conséquence écrite sous le bouton.\n\nLes réglages propres à un modèle ne sont écrits nulle part dans le code de l'interface : ils sont dessinés depuis ce que le catalogue déclare. Un modèle qui gagne un réglage demain l'affiche demain.",
+      "Un modèle se nomme par deux choses ensemble : qui le propose, et son nom chez lui. C'est nécessaire depuis qu'il y en a plusieurs — deux fournisseurs peuvent offrir un modèle du même nom, et le nom seul ne dirait plus lequel a fait l'image. Tu le retrouves partout : sur la ligne du choix, sur la fiche d'une image, et dans la liste des dépenses.\n\nTous ne demandent pas la même chose. L'un veut une clé, un autre ne demande rien du tout — et c'est celui-là qui fait qu'une image peut arriver sur une machine où rien n'a été déposé. Ce qui manque à un fournisseur grise ses modèles à lui, et eux seuls ; les autres restent choisissables.\n\nLe catalogue est une photo, pas un flux : il est relu au démarrage et par le bouton Catalogue, et chaque ligne dit si sa fiche vient d'être relue chez le fournisseur ou si elle a été relevée à telle date. Hors ligne, le produit sert la dernière photo reçue — générer reste actif, et c'est le seul endroit du produit où l'on propose puis refuse, assumé, avec la conséquence écrite sous le bouton.\n\nLes réglages propres à un modèle ne sont écrits nulle part dans le code de l'interface : ils sont dessinés depuis ce que le catalogue déclare. Un modèle qui gagne un réglage demain l'affiche demain.",
   },
 
   "reglages.proportions": {
@@ -938,26 +938,37 @@ export const AIDE: Record<string, Explication> = {
     origine: "toi · vide au départ",
   },
 
-  "assistant.cle": {
-    nom: "La clé du fournisseur",
+  "assistant.fournisseurs": {
+    nom: "Les fournisseurs, et ce qu'ils demandent",
     ou: "reglages",
-    quoi: "Le mot de passe qui autorise l'atelier à payer des images chez le fournisseur d'IA. Le seul préalable dur du produit.",
+    quoi: "Un tiroir par fournisseur. Chacun dit ce qu'il lui faut pour travailler — une clé, un compte et un jeton, ou rien du tout — et ce que tu y déposes n'est jamais redemandé.",
     change:
-      "Sans elle, **rien ne part** : le bouton qui paie reste éteint et porte sa raison, avec le lien vers le réglage. Tout le reste de l'atelier fonctionne — importer, ranger, détourer, découper, exporter. Elle vaut pour tous tes jeux, pas seulement celui-ci.",
+      "Un fournisseur à qui il manque quelque chose a ses modèles **grisés, avec leur raison** — mais l'atelier n'est pas éteint pour autant : l'un d'eux ne demande ni compte ni clé, et le bouton qui paie reste actif sur ses modèles à lui. Tu peux donc fabriquer une première image sur une machine où rien n'a été déposé. Ce que tu n'auras pas sans le fournisseur payant, c'est ce qui a besoin d'images de référence : le gratuit n'en accepte aucune, donc pas d'univers, pas de casting dans un style commun. Ce que tu déposes vaut pour tous tes jeux, pas seulement celui-ci.",
     origine: "toi · vide au départ · trois portes, une seule pièce",
     long:
-      "Elle se dépose à la dernière étape de l'assistant de démarrage, dans la fenêtre des réglages, ou par la variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. La changer ne demande aucun redémarrage.\n\nC'est le réglage le plus coûteux du guide à laisser sans explication : c'est le seul qui empêche absolument tout tant qu'il est vide.",
+      "Chaque place se dépose à la dernière étape de l'assistant de démarrage, dans la fenêtre des réglages, ou par une variable d'environnement — **c'est la même valeur au même endroit**, et l'atelier la relit à chaque appel. En changer une ne demande aucun redémarrage, et n'efface aucune autre.\n\nUn fournisseur peut en demander plusieurs : un compte *et* un jeton, par exemple. Il te dit alors lequel manque, pas seulement qu'il manque quelque chose. Un autre n'en demande aucune, et son tiroir le dit plutôt que de rester vide sans explication.\n\nUne clé n'apparaît jamais en entier, nulle part : tu en vois les six derniers caractères, de quoi la reconnaître sans la lire. Celle qui vient de l'environnement de ta machine ne se retire pas depuis cet écran — l'atelier n'écrit pas là-dedans, et un bouton qui semblerait le faire mentirait.\n\nEn retirer une grise les modèles de son fournisseur, et **rien d'autre** : ni une image, ni une ligne de dépense. Ce qui est parti est parti, et le compte le dit toujours.",
   },
 
   "reglages.depenses": {
     nom: "Les dépenses",
     ou: "reglages",
-    quoi: "La liste de tous les appels payés, du plus récent au plus ancien, chacun avec sa date, son sujet, son modèle et son montant réel — les réussis, les ratés et les interrompus.",
+    quoi: "La liste de tous les appels, du plus récent au plus ancien, chacun avec sa date, son sujet, son modèle et ce qu'il a réellement consommé — les réussis, les ratés et les interrompus.",
     change:
       "Rien du tout : on ne règle rien ici, on lit. Une image supprimée fait changer l'état de son appel, jamais disparaître sa ligne — **une dépense ne s'efface jamais**.",
     origine: "l'atelier, à chaque appel · rien à remplir",
     long:
-      "Les deux totaux du produit ne comptent pas la même chose, et il vaut mieux le savoir avant de les comparer : celui de la barre du haut compte **le jeu ouvert**, celui d'ici compte **l'atelier depuis le premier jour**. C'est ce que les étiquettes *ce jeu* et *dépensé par l'agent* ont été ajoutées pour lever.\n\nL'argent n'appartient à aucun jeu en particulier, et c'est pour ça que cet écran se range avec les réglages de l'atelier plutôt qu'avec la galerie.",
+      "Les deux totaux du produit ne comptent pas la même chose, et il vaut mieux le savoir avant de les comparer : celui de la barre du haut compte **le jeu ouvert**, celui d'ici compte **l'atelier depuis le premier jour**. C'est ce que les étiquettes *ce jeu, en argent* et *dépensé par l'agent* ont été ajoutées pour lever.\n\nDepuis qu'un fournisseur ne facture rien, un appel peut ne rien coûter et consommer quand même. Ces appels-là sont dans la liste comme les autres, et ils y disent **gratuit** — jamais *0,00 $*, qui se lirait *sans limite* là où il faut lire *sans prix*. Ce qu'ils ont pris est écrit à côté, avec son mot, et il n'est jamais ajouté au total : un total en argent ne compte que de l'argent.\n\nL'argent n'appartient à aucun jeu en particulier, et c'est pour ça que cet écran se range avec les réglages de l'atelier plutôt qu'avec la galerie.",
+  },
+
+  "reglages.consommation": {
+    nom: "Ce qu'un appel consomme",
+    ou: "reglages",
+    quoi: "Ce qu'un appel prend chez son fournisseur, dans l'unité de celui-ci : des dollars chez l'un, des jetons chez l'autre — et « rien du tout » n'existe pas, un appel consomme toujours quelque chose.",
+    change:
+      "Rien à la génération : c'est ce qui s'enregistre après, et ce que l'écran annonce avant. Le chiffre affiché sur un modèle est la **médiane de ses derniers appels sur cette machine**, jamais un tarif lu quelque part.",
+    origine: "la réponse du fournisseur, à chaque appel · rien à remplir",
+    long:
+      "Le mot **gratuit** veut dire *sans prix*, pas *sans limite*. Un modèle qui ne coûte rien prend quand même quelque chose chez celui qui le sert, et ce quelque chose est écrit à côté du mot : *gratuit · 1 jeton*.\n\nCe qu'il reste chez un fournisseur est dit aux deux endroits où ça sert — l'écran où l'on choisit un modèle, et celui qui confirme un appel —, avec **d'où le chiffre vient**. *Compté ici* veut dire compté sur les appels partis de cette machine : c'est un minimum, pas un relevé, parce qu'un appel lancé ailleurs entame la même réserve sans que ce compteur-là le voie. *Relevé chez le fournisseur* veut dire que c'est lui qui l'a dit, et c'est alors un fait.\n\nAucun des deux fournisseurs du produit n'annonce de réserve aujourd'hui. Celui qui ne demande rien limite une **cadence** — un appel toutes les quinze secondes — et non un nombre d'images : l'écran dit donc ce qui est parti depuis minuit, et à quel rythme on peut relancer, plutôt qu'un « il vous reste » que personne n'a mesuré.",
   },
 
   // ── La sixième place : les contours ───────────────────────────────────────
@@ -1170,12 +1181,12 @@ export const AIDE: Record<string, Explication> = {
   "agent.modele": {
     nom: "Modèle d'exploration",
     ou: "reglages",
-    quoi: "Le modèle imposé à l'agent, quel que soit celui qu'il demande.",
+    quoi: "Le modèle imposé à l'agent, quel que soit celui qu'il demande. Il se choisit parmi ceux qui ne coûtent pas d'argent, et il n'y a que ceux-là dans la liste.",
     change:
-      "Toutes ses générations partent sur ce modèle et ces options. Éteint, l'agent choisit — et s'il ne choisit pas, c'est encore celui-ci qui sert : personne ne doit tomber sur le modèle le plus cher du catalogue par accident.",
-    origine: "toi · défaut gpt-image-2 en quality low, actif",
+      "Toutes ses générations partent sur ce modèle. Éteint, l'agent choisit — et s'il ne choisit pas, c'est encore celui-ci qui sert : personne ne doit tomber sur le modèle le plus cher du catalogue par accident. **C'est aussi le seul moyen de lui laisser un modèle payant**, et c'est voulu : un « modèle d'exploration » qui pourrait être le plus cher ne protégerait de rien.",
+    origine: "toi · défaut : le modèle gratuit, actif",
     long:
-      "Un agent qui code a besoin d'un visuel correct tout de suite, pas d'un asset final : rapport de six sur le coût du travail agentique, pour une perte de qualité qui ne compte pas à ce moment-là. La version de production se regénère depuis l'atelier, avec le modèle que tu veux.\n\nSi le catalogue ne déclare pas ce modèle — il a disparu, ou l'atelier tourne sur son catalogue de repli —, c'est le défaut du catalogue qui prend la main. Un garde-fou qui rendrait l'agent inutilisable te protégerait de la dépense en supprimant le produit.",
+      "Un agent qui code a besoin d'un visuel correct tout de suite, pas d'un asset final. C'était déjà l'idée avant : un modèle payant en qualité basse, rapport de six sur le coût du travail agentique. Depuis qu'un fournisseur ne facture rien, c'est la totalité — **une séance de code entière ne fait plus bouger ton total en argent**.\n\nCe qu'un modèle gratuit ne sait pas faire : prendre des images d'entrée. Le style de ton jeu — tes artworks officiels, les concept arts de la chose, les images de son ambiance — **ne part donc pas avec ces images-là**. L'appel part quand même, sur le texte seul, et la fiche de l'image le dit ensuite : *partie sans le style du jeu*. Sans cette phrase tu retrouverais des semaines plus tard des images qui ne ressemblent pas aux autres sans savoir pourquoi.\n\nLa version de production se regénère depuis l'atelier : *reprendre les réglages* repose le texte tel qu'il est parti, tu choisis un modèle payant, et le style du jeu repart tout seul — rien à recocher.\n\nSi le catalogue ne déclare pas ce modèle — il a disparu, ou l'atelier tourne sur son catalogue de repli —, l'atelier en cherche un autre gratuit avant de prendre le défaut du catalogue. Un garde-fou posé pour ne rien dépenser qui se replierait sur un payant coûterait de l'argent en silence, ce qui est pire que pas de garde-fou.",
   },
   "agent.dossier": {
     nom: "Dossier du jeu",

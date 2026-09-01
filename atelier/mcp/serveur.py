@@ -40,6 +40,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from atelier.domaine.asset import Asset
+from atelier.domaine.consommation import ICI, Reserve
 from atelier.domaine.demande import Demande
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT, Generation
@@ -263,28 +264,58 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         name="list_models",
         title="List image models",
         description=(
-            "The provider catalogue: models, their reference limits, aspect "
-            "ratios and options. A model the workshop forces on the agent is "
-            "marked as such."
+            "The catalogue of every provider: models, who offers each one, "
+            "their reference limits, aspect ratios and options. A model id "
+            "always carries its provider — two providers may offer the same "
+            "model name. A model whose provider cannot work right now carries "
+            "the reason. A model the workshop forces on the agent is marked as "
+            "such."
         ),
     )
     @_refus_lisible
     async def list_models() -> dict[str, Any]:
         cadre = atelier.agent.garde_fous()
         etat = atelier.catalogue.etat
+        # **La même règle que l'écran, par le même chemin** : le MCP n'a aucune
+        # logique propre (T7). Ce qui grise un modèle chez l'auteur le grise
+        # chez l'agent, et c'est le service qui le dit.
+        grises = atelier.catalogue.grises()
+        # **Ce qui reste chez chacun, dans son unité** (F2). Même chemin que le
+        # grisé, et pour la même raison : le MCP n'a aucune logique propre.
+        reserves = {r.fournisseur: r for r in atelier.reserves.toutes()}
         return {
             "forced_model": cadre.modele if cadre.modele_actif else None,
             "fallback": etat.repli,
             "reason": etat.raison,
+            "providers": [
+                {
+                    "name": f.nom,
+                    "models": len(f.modeles),
+                    "fallback": f.repli,
+                    "reason": f.raison,
+                    "unavailable": grises.get(f.nom),
+                    "budget": _reserve(reserves.get(f.nom)),
+                }
+                for f in etat.fournisseurs
+            ],
             "models": [
                 {
                     "id": m.identifiant,
                     "name": m.nom,
+                    "provider": m.fournisseur,
                     "references_max": m.references_max,
                     "aspect_ratios": list(m.proportions),
                     "resolutions": list(m.resolutions),
                     "variations_max": m.variations_max,
                     "options": sorted(m.options),
+                    "unavailable": grises.get(m.fournisseur),
+                    # Dans quoi ce modèle-là se paie. `usd` pour tout ce qui
+                    # facture ; autre chose pour ce qui consomme sans facturer,
+                    # et l'agent doit pouvoir faire la différence avant de
+                    # lancer un lot.
+                    "unit": reserves[m.fournisseur].unite
+                    if m.fournisseur in reserves
+                    else "usd",
                 }
                 for m in etat.modeles
             ],
@@ -868,8 +899,10 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         name="get_budget",
         title="Session budget",
         description=(
-            "How many generations this session has used, what they cost, and "
-            "what is left before the cap. Check it before a batch."
+            "How many generations this session has used, what they cost in "
+            "money, what they consumed in other units, and what is left "
+            "before the cap. Money and other units are never added together. "
+            "Check it before a batch."
         ),
     )
     @_refus_lisible
@@ -878,8 +911,16 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
         return {
             "generations": consommation["generations"],
             "spent_usd": consommation["depense_usd"],
+            # **Ce qui a été consommé sans argent, compté à part** (F2). Une
+            # séance entière passée chez un fournisseur gratuit se lisait
+            # `spent_usd: 0` — c'est-à-dire comme une séance sans un seul appel.
+            "consumed": consommation["consomme"],
             "cap": consommation["plafond"] if consommation["plafond_actif"] else None,
             "left": consommation["reste"],
+            # Ce qui reste chez chaque fournisseur qui ne compte pas en argent,
+            # et **d'où le chiffre vient**. Le plafond ci-dessus compte des
+            # images ; celui-ci compte ce que le fournisseur alloue.
+            "providers": [_reserve(r) for r in atelier.reserves.toutes()],
         }
 
     return serveur
@@ -890,6 +931,30 @@ def creer_serveur(atelier: Atelier) -> MCPServer:
 # Ces trois fonctions ne décident de rien : elles renomment. Le vocabulaire du
 # produit est français, celui d'un outil MCP est anglais, et la frontière est
 # ici — exactement comme l'adaptateur du fournisseur traduit dans l'autre sens.
+
+
+def _reserve(reserve: "Reserve | None") -> dict[str, Any] | None:
+    """La réserve d'un fournisseur, en vocabulaire d'outil (F2).
+
+    `remaining` vaut `null` quand le fournisseur n'annonce aucune allocation —
+    ce qui est le cas des deux fournisseurs du produit. **Ce n'est pas zéro**,
+    et un agent qui confondrait les deux s'arrêterait de travailler là où rien
+    ne le limite. `counted` dit d'où le chiffre vient : `here` — compté sur les
+    appels partis de cette machine, donc un minimum ; `provider` — relevé chez
+    lui, donc un fait.
+    """
+    if reserve is None:
+        return None
+    return {
+        "provider": reserve.fournisseur,
+        "unit": reserve.unite,
+        "used": reserve.consomme,
+        "allowance": reserve.plafond,
+        "remaining": reserve.reste,
+        "counted": "here" if reserve.source == ICI else "provider",
+        "renews": reserve.renouvellement or None,
+        "min_seconds_between_calls": reserve.cadence_s or None,
+    }
 
 
 def _projet(atelier: Atelier, nomme: str | None) -> str | None:

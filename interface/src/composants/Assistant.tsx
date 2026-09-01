@@ -35,7 +35,7 @@ import {
   Refus,
   type Carte,
   type Consequences,
-  type EtatCle,
+  type Tiroir,
   type Echelle,
   type EmplacementCorps,
   type Etiquette,
@@ -52,11 +52,13 @@ import {
   Bloc,
   Curseur,
   EnTetePanneau,
+  libelleModele,
   Libelle,
   Raison,
   Segments,
 } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+import { TiroirDesSecrets } from "./Secrets"
 
 /** Ce que l'auteur lit d'une cible. Zéro n'est pas « 0 px » — c'est l'absence
  *  de remise sur grille, et l'écrire en pixels serait un mensonge de mesure. */
@@ -87,7 +89,7 @@ const ETAPES = [
   { cle: "poses", groupe: "la production", nom: "Poses et états" },
   { cle: "emplacements", groupe: "la production", nom: "Emplacements" },
   { cle: "modeles", groupe: "la production", nom: "Les IA à utiliser" },
-  { cle: "cle", groupe: "l'atelier", nom: "La clé" },
+  { cle: "cle", groupe: "l'atelier", nom: "Les fournisseurs" },
 ] as const
 
 type Etape = (typeof ETAPES)[number]["cle"]
@@ -115,6 +117,7 @@ export function Assistant({
   onUnivers,
   onErreur,
   onRealigner,
+  onDeposee,
 }: {
   /** **Sortir de l'assistant** (E19) : on tombe dans le codex, avec le champ
    *  qui nomme allumé. Absent quand l'assistant est ouvert comme écran de
@@ -127,6 +130,9 @@ export function Assistant({
   onUnivers: (univers: Univers) => void
   onErreur: (raison: string) => void
   onRealigner: () => void
+  /** Ce qu'il faut relire quand un secret vient d'être déposé — l'état, donc la
+   *  barre du haut, et le catalogue, donc le grisé des modèles (F3). */
+  onDeposee: () => void
 }) {
   const [etape, setEtape] = useState<Etape>("nom")
   const [enchaine, setEnchaine] = useState(univers.vide)
@@ -278,7 +284,7 @@ export function Assistant({
           {etape === "modeles" && (
             <Defauts univers={univers} modeles={modeles} onRegler={regler} />
           )}
-          {etape === "cle" && <LaCle onErreur={onErreur} />}
+          {etape === "cle" && <LaCle onErreur={onErreur} onDeposee={onDeposee} />}
         </div>
 
         {/* **Le pied ne change qu'entre les deux humeurs.** En enchaînant :
@@ -675,7 +681,7 @@ function Defauts({
               <option value="">—</option>
               {modeles.map((m) => (
                 <option key={m.identifiant} value={m.identifiant}>
-                  {m.nom}
+                  {libelleModele(m)}
                 </option>
               ))}
             </select>
@@ -726,7 +732,7 @@ function Defauts({
               <option value="">—</option>
               {modeles.map((m) => (
                 <option key={m.identifiant} value={m.identifiant}>
-                  {m.nom}
+                  {libelleModele(m)}
                 </option>
               ))}
             </select>
@@ -1733,69 +1739,64 @@ function LesEmplacements({
   )
 }
 
-/** Étape 10 — la clé du fournisseur.
+/** Étape 10 — **ce que les fournisseurs demandent** (F3).
  *
  *  **Seule dans son groupe, parce qu'elle vaut pour tous les jeux** — comme la
- *  base d'étiquettes, elle ne dépend d'aucun. Trois portes, une seule pièce :
- *  ce qu'on dépose ici est la même valeur au même endroit que dans la fenêtre
- *  des réglages. */
-function LaCle({ onErreur }: { onErreur: (raison: string) => void }) {
-  const [etat, setEtat] = useState<EtatCle | null>(null)
-  const [saisie, setSaisie] = useState("")
+ *  base d'étiquettes, elle ne dépend d'aucun.
+ *
+ *  **Trois portes, une seule pièce**, et l'étape gagne des portes sans gagner de
+ *  pièce : elle rend le tiroir de la fenêtre des réglages, tel quel. Ce qu'on
+ *  dépose ici est la même valeur au même endroit — et il n'y a pas deux façons
+ *  d'écrire le `.env`, parce qu'il n'y a qu'un composant.
+ */
+function LaCle({
+  onErreur,
+  onDeposee,
+}: {
+  onErreur: (raison: string) => void
+  /** **La barre du haut lit le même tiroir, et elle est rendue ailleurs.**
+   *  Sans ce mot-là, déposer ici laisserait la barre annoncer *1 sur 2* sur un
+   *  atelier où les deux fournisseurs sont prêts — et le grisé des modèles du
+   *  fournisseur qu'on vient de servir ne tomberait qu'au prochain
+   *  rafraîchissement. C'est le même geste que dans la fenêtre des réglages,
+   *  parce que c'est le même dépôt. */
+  onDeposee: () => void
+}) {
+  const [tiroirs, setTiroirs] = useState<Tiroir[]>([])
 
-  // **Trois portes, une seule pièce** : ce qu'on lit ici est ce que la fenêtre
-  // des réglages lit, et ce que la barre du haut annonce. L'état vient donc du
-  // serveur, jamais d'une copie tenue à l'écran.
+  // **Ce qu'on lit ici est ce que la fenêtre des réglages lit**, et ce que la
+  // barre du haut annonce. L'état vient donc du serveur, jamais d'une copie
+  // tenue à l'écran.
   useEffect(() => {
     void api
       .etat()
-      .then((recu) => setEtat(recu.cle))
-      .catch(() => setEtat(null))
-  }, [])
+      .then((recu) => setTiroirs(recu.secrets))
+      .catch((erreur) => onErreur(String(erreur)))
+  }, [onErreur])
 
   return (
-    <EtapeOuverte aide="assistant.cle" titre="10 · La clé">
+    <EtapeOuverte aide="assistant.fournisseurs" titre="10 · Les fournisseurs">
+      {/* **Cette étape ne bloque plus rien, et le texte le dit** (F1). Elle a
+          été écrite quand la clé était le seul préalable dur du produit ; un
+          fournisseur n'en demande plus aucune, et laisser « rien ne part »
+          aurait fait sauter l'étape à quelqu'un qui pouvait déjà fabriquer.
+          **Et elle parle au pluriel depuis F3** : il y en a plusieurs, l'un ne
+          demande rien, et un autre en demandera deux. */}
       <p className="text-[12.5px] text-texte-2">
-        Le seul préalable dur du produit : sans elle, rien ne part chez le
-        fournisseur. Elle vaut pour <strong className="text-texte">tous les
-        jeux</strong> de l'atelier.
+        Un fournisseur payant tient un style sur dix sujets, et il demande une
+        clé ; sans elle, ses modèles sont grisés et les autres restent
+        utilisables. Ce qu'on dépose ici vaut pour{" "}
+        <strong className="text-texte">tous les jeux</strong> de l'atelier, et
+        c'est le même tiroir que dans la fenêtre des réglages.
       </p>
-      {etat?.presente ? (
-        <Raison texte={`posée — ${etat.apercu}, depuis ${etat.origine}`} />
-      ) : (
-        <Raison
-          texte={
-            etat?.raison ??
-            "aucune clé — le bouton qui paie reste éteint tant qu'elle manque"
-          }
-        />
-      )}
-      <div className="flex items-center gap-2">
-        <input
-          value={saisie}
-          type="password"
-          aria-label="La clé du fournisseur"
-          placeholder="sk-or-…"
-          onChange={(e) => setSaisie(e.target.value)}
-          className="mesure h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[10px] text-texte"
-        />
-        <button
-          type="button"
-          disabled={saisie.trim().length < 8}
-          onClick={() =>
-            void api
-              .deposerCle(saisie)
-              .then((recu) => {
-                setEtat(recu)
-                setSaisie("")
-              })
-              .catch((erreur) => onErreur(String(erreur)))
-          }
-          className="mesure h-[34px] shrink-0 rounded-[2px] border border-bord-fort px-3 text-[11.5px] text-texte-2 hover:text-signal disabled:text-texte-3"
-        >
-          déposer
-        </button>
-      </div>
+      <TiroirDesSecrets
+        tiroirs={tiroirs}
+        onChange={(rendus) => {
+          setTiroirs(rendus)
+          onDeposee()
+        }}
+        compact
+      />
     </EtapeOuverte>
   )
 }

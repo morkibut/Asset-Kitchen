@@ -247,7 +247,8 @@ class ServiceSuperposition:
                         # **Rien n'a été demandé à personne.** L'argent a été
                         # dépensé deux fois — pour le corps et pour le corps
                         # habillé — et les deux filiations y mènent.
-                        cout_usd=0.0,
+                        consomme=0.0,
+                        unite=haut.unite,  # zéro, dans l'unité de l'appel (F2)
                         provenance=haut.provenance,
                         modele=haut.modele,
                         projet=haut.projet,

@@ -17,8 +17,18 @@ export type Option = {
 }
 
 export type Modele = {
+  /** **Le nom complet : qui le propose, et son nom chez lui.** Deux fournisseurs
+   *  peuvent offrir un modèle du même nom — un nom seul ne dirait plus lequel a
+   *  fait l'image. C'est cet identifiant-là qu'on choisit, qu'on envoie et qu'on
+   *  relit sur une génération (F1). */
   identifiant: string
   nom: string
+  /** Qui le propose, tel qu'on l'écrit à l'écran. Vide pour un modèle relu
+   *  d'une photo de catalogue antérieure à la V2.2 — le seul cas. */
+  fournisseur: string
+  /** Son nom chez lui. L'écran ne s'en sert pas ; il est là pour que la fiche
+   *  d'un modèle soit complète sans aller ouvrir un fichier. */
+  chez_lui: string
   references_max: number
   proportions: string[]
   resolutions: string[]
@@ -28,6 +38,18 @@ export type Modele = {
    *  la recalcule jamais : la règle « indisponible avec sa raison » vit côté
    *  serveur, en un seul endroit. */
   refus: string | null
+  /** **D'où vient cette fiche** (F1) : `false` — relue chez le fournisseur à
+   *  l'instant ; `true` — relevée ici, et `recu_le` dit quand. La règle du
+   *  catalogue de T1 n'a de sens que si l'on sait de quand date ce qu'on lit. */
+  repli: boolean
+  /** Quand cette fiche a été reçue, en secondes epoch. Zéro : jamais reçue. */
+  recu_le: number
+  /** **Dans quoi ce modèle-là se paie** (F2) : `usd` pour ce qui facture,
+   *  `jeton` pour ce qui consomme sans facturer. Dérivée de son fournisseur,
+   *  jamais enregistrée sur la fiche. Sans elle, l'estimation affichée à côté
+   *  du nom d'un modèle gratuit s'écrirait « $0,0000 » — et se lirait *sans
+   *  limite* là où il faut lire *sans prix*. */
+  unite: string
 }
 
 export type Resultat = {
@@ -41,6 +63,10 @@ export type Resultat = {
 export type Emplacement = {
   rang: number
   statut: Statut
+  /** Ce que cet appel-là a consommé, et en quoi (F2). `cout_usd` juste en
+   *  dessous en est la part en argent — zéro dès que l'unité n'en est pas une. */
+  consomme: number
+  unite: string
   cout_usd: number
   duree_s: number
   resultat: Resultat | null
@@ -96,11 +122,26 @@ export type Generation = {
   cree_le: number
   projet: string | null
   references: Reinjection[]
+  /** **Ce que le plafond du modèle a laissé au sol** (F6). Ce que le produit
+   *  ajoute de lui-même — artworks du jeu, concept arts, images d'ambiance —
+   *  cède devant un modèle qui n'a pas la place ; ce que l'auteur a joint ne
+   *  cède jamais.
+   *
+   *  Vide dans l'immense majorité des appels, et vide pour tout ce qui a été
+   *  fait avant F6 : l'appel était alors refusé tout entier. C'est la fiche de
+   *  l'image qui le lit, des mois plus tard — sans lui, une image faite sans le
+   *  style du jeu et une image faite dans un jeu sans style se liraient pareil. */
+  hors_plafond: Reinjection[]
   /** L'asset dont ce lot descend — la réinjection marquée « edition ». Déduit
    *  par le serveur, jamais enregistré deux fois. */
   parent: string | null
   statut: Statut
   cout_usd: number
+  /** Ce que l'appel entier a consommé, et dans quelle unité (F2). Une
+   *  génération part chez un seul modèle, donc chez un seul fournisseur : il
+   *  n'y a jamais deux unités à mélanger. */
+  consomme: number
+  unite: string
   reussies: number
   /** **Le lot de style que cet appel-là a écouté** (E14), par son nom lisible.
    *  Vide quand la chose n'en désignait aucun — le cas courant.
@@ -518,6 +559,11 @@ export type Asset = {
    *  naissance : le total d'un projet, lui, se calcule sur les générations, qui
    *  sont les seules à connaître les appels ratés. */
   cout_usd: number
+  /** Ce que l'appel a consommé pour cette image-là, et en quoi (F2). La tuile
+   *  et la fiche lisent ces deux-là plutôt que `cout_usd` seul : une image
+   *  faite chez un fournisseur gratuit dit « gratuit », jamais « $0,0000 ». */
+  consomme: number
+  unite: string
   /** Qui a demandé l'appel — `auteur` ou `agent` (US-39). Hérité de la
    *  génération à la naissance, jamais recalculé ici : retoucher une image de
    *  l'agent ne la fait pas devenir celle de l'auteur, et une découpe appartient
@@ -1629,6 +1675,40 @@ export type Rate = {
   statut: Statut
   raison: string | null
   cout_usd: number
+  /** Ce que ce raté-là a consommé, et en quoi (F2). Un refus qui a brûlé un
+   *  jeton l'a brûlé pour de bon. */
+  consomme: number
+  unite: string
+}
+
+/** Ce qui reste chez un fournisseur — **et d'où le chiffre vient** (F2).
+ *
+ *  `reste` vaut `null` quand le fournisseur n'annonce **aucune** allocation, et
+ *  ce n'est pas zéro : zéro veut dire « la réserve est vide, attends demain »,
+ *  `null` veut dire « ce fournisseur ne limite pas le nombre d'images ». C'est
+ *  le cas des deux fournisseurs du produit aujourd'hui, mesuré par le relevé du
+ *  31 août 2026 — Pollinations limite une **cadence**, pas un quota. */
+export type Reserve = {
+  fournisseur: string
+  unite: string
+  /** Ce qui est parti depuis `depuis`, dans l'unité ci-dessus. */
+  consomme: number
+  plafond: number | null
+  reste: number | null
+  /** `ici` — compté sur les appels partis de cette machine, donc un minimum ;
+   *  `fournisseur` — relevé chez lui, donc un fait. L'écran l'écrit toujours. */
+  source: "ici" | "fournisseur"
+  /** L'heure à laquelle le compte repart, en clair. Vide : rien ne se renouvelle. */
+  renouvellement: string
+  /** Le délai minimal entre deux appels, en secondes. Zéro : aucun. */
+  cadence_s: number
+  /** L'instant depuis lequel `consomme` compte. Zéro : depuis toujours. */
+  depuis: number
+  /** Ce que l'appel qu'on s'apprête à lancer consommerait — posé par l'écran
+   *  qui confirme seulement, et `null` sans mesure. */
+  besoin?: number | null
+  /** Ce qui manquerait pour le finir, ou `null` quand rien ne manque. */
+  manque?: number | null
 }
 
 export type Appel = {
@@ -1671,6 +1751,11 @@ export type Depense = {
   prompt: string
   cree_le: number
   cout_usd: number
+  /** Ce que l'appel a consommé, et en quoi (F2). En argent c'est le même
+   *  chiffre que `cout_usd` ; autrement c'est le seul des deux qui dise
+   *  quelque chose. */
+  consomme: number
+  unite: string
   projet: string | null
   projet_nom: string | null
   provenance: string
@@ -1699,6 +1784,10 @@ export type Rafale = {
   identifiant: string
   appels: number
   cout_usd: number
+  /** Ce que la rafale a consommé, et en quoi. Six relances gratuites brûlent
+   *  six jetons : c'est là que cette marque est le plus utile. */
+  consomme: number
+  unite: string
   debut: number
   fin: number
   prompt: string
@@ -1710,7 +1799,17 @@ export type Depenses = {
    *  qu'aucun écran ne montrait. */
   sans_projet_usd: number
   par_projet: { projet: string; nom: string; cout_usd: number }[]
-  par_modele: { modele: string; cout_usd: number; appels: number }[]
+  par_modele: {
+    modele: string
+    cout_usd: number
+    consomme: number
+    unite: string
+    appels: number
+  }[]
+  /** Ce qui s'est consommé **sans argent**, une ligne par unité (F2). Jamais
+   *  ajouté au total : *un total en argent ne compte que de l'argent*. Vide
+   *  tant qu'aucun appel gratuit n'est parti. */
+  par_unite: { unite: string; quantite: number; appels: number }[]
   appels: Depense[]
   rafales: Rafale[]
 }
@@ -1936,6 +2035,10 @@ export type PrixDeLEnvoi = {
    *  se cite avec les nombres qui la portent. `mesure.appels` dit sur combien
    *  d'appels payés le prix repose. */
   mesure: {
+    /** **Dans quoi tous les chiffres de ce bloc sont écrits** (F2). `usd`
+     *  partout où le fournisseur facture ; autre chose quand il consomme sans
+     *  facturer, et alors `total` n'est pas un prix mais une quantité. */
+    unite: string
     prix: number | null
     bas: number
     haut: number
@@ -1955,6 +2058,11 @@ export type Envoi = {
     lignes: ImageQuiPart[]
     places: number
     cochees: number
+    /** Combien partiront vraiment (F6). Égal à `cochees` sauf chez un modèle
+     *  qui n'a pas assez de places : ce que le jeu ajoute de lui-même cède
+     *  alors, et le sommaire des groupes lit ce chiffre-ci. Calculé par le
+     *  serveur, comme le prix et la réserve qui le lisent aussi. */
+    partent: number
     gabarit: number
     palette: number
     prix: number | null
@@ -1967,7 +2075,17 @@ export type Envoi = {
   retour: { nom: string; detail: string }[]
   avertissements: { clef: string; texte: string }[]
   prix: PrixDeLEnvoi
-  modele: { identifiant: string; nom: string; references_max: number }
+  /** Ce qui reste chez le fournisseur de ce modèle-là, **avant de partir**
+   *  (F2). `null` quand il compte en argent : l'argent a la barre de tête et la
+   *  ligne de prix, et une seconde réserve en dollars serait un second endroit
+   *  à tenir d'accord. `manque` porte ce qui manquerait pour finir ce lot-ci. */
+  reserve: Reserve | null
+  modele: {
+    identifiant: string
+    nom: string
+    references_max: number
+    fournisseur?: string
+  }
   ambiance: {
     nom: string
     prend: string
@@ -2033,11 +2151,39 @@ export type EtatTraitement = {
   recettes: string[]
 }
 
-export type EtatCle = {
+/** Une place à remplir chez un fournisseur (F3).
+ *
+ *  **Jamais la valeur** : `apercu` porte les six derniers caractères, et c'est
+ *  tout ce qui sort du serveur depuis T1. */
+export type EtatSecret = {
+  /** Le nom d'environnement — c'est lui qu'on passe pour déposer ou retirer. */
+  nom: string
+  /** Comment on en parle, article compris : « la clé », « le jeton ». */
+  libelle: string
+  /** Où on l'obtient, en clair. Vide quand il n'y a rien à dire. */
+  ou: string
   presente: boolean
+  /** `environnement` | `fichier` | `absente`. */
   origine: string
   apercu: string
-  raison: string | null
+  /** Peut-on l'enlever d'ici ? Non pour une valeur venue de l'environnement :
+   *  le produit n'écrit pas dans l'environnement de la machine, et un bouton
+   *  qui semblerait retirer sans rien retirer serait pire que pas de bouton. */
+  retirable: boolean
+}
+
+/** Les places d'**un** fournisseur, et ce qui lui manque (F3).
+ *
+ *  Un fournisseur qui ne demande rien y paraît avec un tiroir vide : « celui-ci
+ *  ne demande rien » est un renseignement, et c'est le premier que l'auteur
+ *  cherche sur une machine neuve. */
+export type Tiroir = {
+  fournisseur: string
+  secrets: EtatSecret[]
+  /** La même phrase que le grisé de ses modèles, ou `null`. Elle vient du
+   *  serveur : l'écran l'affiche, il ne la recalcule jamais. */
+  manque: string | null
+  pret: boolean
 }
 
 /** Le cadre de l'agent — ce que l'auteur lui a laissé faire (US-91).
@@ -2062,6 +2208,11 @@ export type GardeFous = {
 export type ConsommationAgent = {
   generations: number
   depense_usd: number
+  /** Ce qu'il a consommé **sans argent**, une ligne par unité (F2). À côté de
+   *  la dépense, jamais dedans : une séance entière passée chez un fournisseur
+   *  gratuit se lisait « $0,0000 », c'est-à-dire comme une séance sans un seul
+   *  appel. Vide tant qu'il n'a travaillé que chez un fournisseur qui facture. */
+  consomme: { unite: string; quantite: number }[]
   plafond_actif: boolean
   plafond: number
   /** Ce qui reste avant le plafond, ou `null` quand il est éteint. */
@@ -2074,10 +2225,38 @@ export type EtatAgent = {
   consommation: ConsommationAgent
 }
 
+/** L'état d'**un** fournisseur (F1).
+ *
+ *  Il y en a deux depuis la V2.2, et couper la liaison de l'un ne doit rien
+ *  faire à l'autre : la barre du haut continue de dire « il y a du repli », et
+ *  c'est ici qu'on lit *lequel*, et de quand date sa photo.
+ */
+export type EtatFournisseur = {
+  nom: string
+  /** Combien de modèles il apporte à la liste. */
+  modeles: number
+  recu_le: number
+  repli: boolean
+  /** Pourquoi sa photo sert à la place de sa réponse. */
+  raison: string | null
+  /** Ce qui lui manque pour travailler — une clé, aujourd'hui. */
+  indisponible: string | null
+  /** La phrase qui grise ses modèles, ou `null`. **Ce n'est pas la même chose
+   *  que `raison`** : ce qui manque grise, une liaison coupée non — l'échec
+   *  survient au moment où on génère, jamais à l'ouverture (US-95). */
+  grise: string | null
+  /** Ce qui lui reste, et d'où le chiffre vient (F2). `null` pour un
+   *  fournisseur qui compte en argent : ce qu'il a coûté se lit dans la barre
+   *  de tête, qui est faite pour ça. */
+  reserve: Reserve | null
+}
+
 export type EtatCatalogue = {
   recu_le: number
   repli: boolean
   raison: string | null
+  /** Un état par fournisseur (F1) — voir `EtatFournisseur`. */
+  fournisseurs: EtatFournisseur[]
   /** Par quoi commencer une séance. Décidé par le serveur — le banc du 26 août
    *  a tranché, et depuis T4 c'est l'univers du projet qui le porte, famille
    *  par famille (US-58). Sans réglage pour cette famille-là, le défaut du
@@ -2098,10 +2277,18 @@ export type EtatCatalogueCourt = {
   recu_le: number
   repli: boolean
   raison: string | null
+  /** Un état par fournisseur (F1). Sert la même chose que dans `EtatCatalogue`,
+   *  et arrive par le même tuyau : la barre du haut n'ouvre pas de liaison de
+   *  plus pour savoir lequel des deux est coupé. */
+  fournisseurs: EtatFournisseur[]
 }
 
 export type Etat = {
-  cle: EtatCle
+  /** **Le tiroir à secrets, une place par fournisseur** (F3). Il remplace
+   *  `cle`, qui ne pouvait décrire qu'un monde à un fournisseur : la barre de
+   *  tête y lit *avec quoi on peut produire* plutôt que *ce qui manque*, et
+   *  il en reste toujours un. */
+  secrets: Tiroir[]
   /** **L'atelier n'a encore rien** (E19) : aucune image, un seul jeu, et il
    *  porte encore le nom que le produit lui a donné. C'est là que l'assistant
    *  s'ouvre — la seule minute que personne ne revoit jamais.
@@ -2110,7 +2297,9 @@ export type Etat = {
    *  c'est exactement quand la porte doit se refermer. */
   premier_lancement: boolean
   catalogue: EtatCatalogueCourt
-  couts: { total_usd: number }
+  /** **Le total ne compte que de l'argent, et l'étiquette le dit** (F2). Ce
+   *  qui se consomme sans argent est à côté, une réserve par fournisseur. */
+  couts: { total_usd: number; reserves: Reserve[] }
   traitement: EtatTraitement
   bibliotheque: Bibliotheque
   /** L'univers du projet ouvert — bible, barème, palette, défauts. Servi à
@@ -2198,10 +2387,7 @@ export const api = {
     ),
 
   rafraichirCatalogue: () =>
-    appeler<{ modeles: number; recu_le: number; repli: boolean; raison: string | null }>(
-      "/models/refresh",
-      { method: "POST" },
-    ),
+    appeler<EtatCatalogueCourt>("/models/refresh", { method: "POST" }),
 
   agent: () => appeler<EtatAgent>("/settings/agent"),
   /** **Champ par champ** : ce qui n'est pas envoyé ne change pas. L'écran
@@ -2212,10 +2398,19 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(champs),
     }),
-  deposerCle: (cle: string) =>
-    appeler<EtatCle>("/settings/key", {
+  /** Déposer une valeur dans **une place nommée** (F3) — et ne toucher à aucune
+   *  autre. `nom` est le nom d'environnement que le tiroir donne ; le serveur
+   *  refuse tout nom qu'aucun fournisseur ne demande. */
+  deposerSecret: (nom: string, valeur: string) =>
+    appeler<{ tiroirs: Tiroir[] }>(`/settings/keys/${encodeURIComponent(nom)}`, {
       method: "PUT",
-      body: JSON.stringify({ cle }),
+      body: JSON.stringify({ valeur }),
+    }),
+  /** Retirer une valeur — **et rien d'autre** : ses modèles se grisent, ses
+   *  images et ses lignes de dépense restent. */
+  retirerSecret: (nom: string) =>
+    appeler<{ tiroirs: Tiroir[] }>(`/settings/keys/${encodeURIComponent(nom)}`, {
+      method: "DELETE",
     }),
 
   generer: (corps: {
@@ -3536,6 +3731,36 @@ export function ecouter(ecoute: Ecoute): () => void {
 
 export const dollars = (montant: number) =>
   `$${montant.toFixed(4).replace(".", ",")}`
+
+/** L'unité de l'argent — la seule que le produit ait connue avant la V2.2. */
+export const ARGENT = "usd"
+
+/** Cette unité-là se paie-t-elle en argent ? Une unité absente en est (F2). */
+export const estArgent = (unite?: string | null) => (unite ?? ARGENT) === ARGENT
+
+/** Une quantité **avec son mot** : `$0,0245`, `1 jeton`, `3 jetons`.
+ *
+ *  Le pluriel se fait sur le mot que le serveur envoie, sans table de
+ *  traduction : les unités du produit sont des noms français ordinaires, et le
+ *  jour où l'une ne l'est pas, elle arrivera écrite comme elle doit se lire. */
+export const quantite = (valeur: number, unite?: string | null) => {
+  if (estArgent(unite)) return dollars(valeur)
+  const arrondi = Math.round(valeur * 100) / 100
+  const ecrit = Number.isInteger(arrondi)
+    ? String(arrondi)
+    : String(arrondi).replace(".", ",")
+  return `${ecrit} ${unite}${arrondi >= 2 ? "s" : ""}`
+}
+
+/** Ce qu'un appel a coûté, **du point de vue de l'argent** : un montant, ou le
+ *  mot `gratuit`.
+ *
+ *  C'est la phrase que F2 existe pour écrire. « 0,00 $ » sur un appel sans prix
+ *  se lit *sans limite* là où il faut lire *sans prix* — et l'auteur brûlerait
+ *  la réserve du jour sans que rien ne le lui dise. Ce qui a été consommé
+ *  s'écrit à côté, avec `quantite`, jamais à la place. */
+export const depense = (valeur: number, unite?: string | null) =>
+  estArgent(unite) ? dollars(valeur) : "gratuit"
 
 /** Un poids de fichier, en mégaoctets — **jamais arrondi vers le bas** (U13).
  *

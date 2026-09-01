@@ -29,7 +29,7 @@ import pytest
 
 from atelier.domaine.projet import AUCUNE_CIBLE, CHAMPS_BIBLE
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 # ── De quoi jouer une séance ─────────────────────────────────────────────────

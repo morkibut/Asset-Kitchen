@@ -59,7 +59,9 @@ import type {
   TachesDeLAsset,
   CompteReferences,
   EtatCatalogue,
+  EtatSecret,
   Generation,
+  Reserve,
   EmplacementCorps,
   Impose,
   Lien,
@@ -74,6 +76,7 @@ import type {
   RetoucheDePalette,
   SourceDePalette,
   Teinte,
+  Tiroir,
   Trait,
   Univers,
 } from "./api"
@@ -184,20 +187,48 @@ function doublerLaGrille(colonne: number) {
 // ── Ce que le serveur répond ─────────────────────────────────────────────────
 
 const MODELE = {
-  identifiant: "essai/modele",
+  // **Le nom complet, fournisseur compris** (F1) : `essai:modele` se lit « le
+  // modèle *modele* de chez *essai* ». C'est ce que le serveur rend depuis la
+  // V2.2, et le double se construit sur ce que la route dit vraiment.
+  identifiant: "essai:modele",
   nom: "Essai : Modèle",
+  fournisseur: "essai",
+  chez_lui: "modele",
   references_max: 4,
   proportions: ["1:1", "3:2", "2:3", "16:9"],
   resolutions: [],
   variations_max: 4,
   options: {},
   refus: null,
+  // D'où vient cette fiche (F1) : relue chez le fournisseur, pas depuis une
+  // photo. C'est le cas courant, et celui de tous les essais d'écran.
+  repli: false,
+  recu_le: 1_787_800_000,
+  // Dans quoi ce modele se paie (F2). `usd` : c'est ce qu'etait tout le
+  // produit avant la V2.2, et ce que la quasi-totalite des essais verifie.
+  unite: "usd",
 }
 
 const CATALOGUE: EtatCatalogue = {
   recu_le: 1_787_800_000,
   repli: false,
   raison: null,
+  // Un état par fournisseur (F1). Un seul ici : c'est ce que le produit était
+  // avant la V2.2, et ce que la quasi-totalité des essais d'écran vérifie.
+  fournisseurs: [
+    {
+      nom: "essai",
+      modeles: 1,
+      recu_le: 1_787_800_000,
+      repli: false,
+      raison: null,
+      indisponible: null,
+      grise: null,
+      // Il compte en argent, donc aucune reserve (F2) : ce qu'il a coute se lit
+      // dans la barre de tete.
+      reserve: null,
+    },
+  ],
   defaut: { modele: MODELE.identifiant, options: {} },
   // Ce qui partira vraiment, artworks compris — calculé par le serveur (US-52),
   // et depuis C1 **ligne par ligne, avec sa provenance** (US-127).
@@ -381,13 +412,51 @@ const BIBLIOTHEQUE: Bibliotheque = {
   total_usd: 0,
 }
 
+/** La place d'un fournisseur qui demande une clé, remplie. */
+const PLACE_PLEINE = {
+  nom: "OPENROUTER_API_KEY",
+  libelle: "la clé",
+  ou: "openrouter.ai/settings/keys",
+  presente: true,
+  origine: "fichier",
+  apercu: "abcdef",
+  retirable: true,
+}
+
+/** La même, vide. */
+const PLACE_VIDE = {
+  ...PLACE_PLEINE,
+  presente: false,
+  origine: "absente",
+  apercu: "",
+  retirable: false,
+}
+
+/** **Le tiroir vide paraît quand même** : un fournisseur qui ne demande rien
+ *  est un renseignement, et c'est le premier que l'auteur cherche. */
+const SANS_SECRET = {
+  fournisseur: "Pollinations",
+  secrets: [],
+  manque: null,
+  pret: true,
+}
+
 const ETAT: Etat = {
-  cle: { presente: true, origine: "fichier", apercu: "abcdef", raison: null },
+  secrets: [
+    { fournisseur: "OpenRouter", secrets: [PLACE_PLEINE], manque: null, pret: true },
+    SANS_SECRET,
+  ],
   // **L'atelier des essais n'est pas neuf** : il a un jeu nommé et des images.
   // Le premier lancement se mesure à part, dans le bloc de E19.
   premier_lancement: false,
-  catalogue: { modeles: 1, recu_le: CATALOGUE.recu_le, repli: false, raison: null },
-  couts: { total_usd: 0 },
+  catalogue: {
+    modeles: 1,
+    recu_le: CATALOGUE.recu_le,
+    repli: false,
+    raison: null,
+    fournisseurs: CATALOGUE.fournisseurs,
+  },
+  couts: { total_usd: 0, reserves: [] },
   traitement: {
     moteurs: [{ nom: "bord", raison: null }],
     // Le catalogue des modèles de silhouette, tel que le serveur le rend (U13)
@@ -432,6 +501,7 @@ const ETAT: Etat = {
     consommation: {
       generations: 0,
       depense_usd: 0,
+      consomme: [],
       plafond_actif: true,
       plafond: 20,
       reste: 20,
@@ -462,9 +532,14 @@ const generation = (
   },
   parametres_resolus: {},
   ecartees: [],
+  // **Rien n'a cédé devant le plafond du modèle** (F6) — le cas de presque tous
+  // les appels, et le seul que la plupart des essais ont à jouer.
+  hors_plafond: [],
   emplacements: Array.from({ length: variations }, (_, rang) => ({
     rang,
     statut,
+    consomme: 0,
+    unite: "usd",
     cout_usd: 0,
     duree_s: 0,
     resultat: null,
@@ -478,6 +553,8 @@ const generation = (
   parent: null,
   statut,
   cout_usd: 0,
+  consomme: 0,
+  unite: "usd",
   reussies: 0,
 })
 
@@ -600,6 +677,8 @@ const asset = (
     rendu_hauteur: 0,
     cree_le: 1_787_800_100,
     cout_usd: 0.0245,
+    consomme: 0.0245,
+    unite: "usd",
     epingle: false,
     projet: "bac-a-sable",
     collection: null,
@@ -762,6 +841,11 @@ function serveurDouble(options: {
   references?: CompteReferences
   /** Ce qu'une image a coûté chez chaque modèle — **mesuré**, jamais un tarif. */
   couts?: Record<string, number>
+  /** Le catalogue entier, quand le test en veut un autre que celui à un seul
+   *  fournisseur (F1). C'est le serveur qui décide de la liste, du grisé de
+   *  chaque modèle et du défaut : le double le rend donc en bloc, plutôt que de
+   *  laisser l'écran rejouer une règle qui vit là-bas. */
+  catalogue?: EtatCatalogue
   /** Ce que le projet impose à l'image ouverte dans la fiche (US-164). Calculé
    *  par le serveur, qui est le seul à savoir sur quelle échelle l'image est
    *  née — l'écran ne le devine jamais. */
@@ -794,6 +878,9 @@ function serveurDouble(options: {
   /** Les deux listes du côté Ambiances (E11). */
   palettes?: PaletteNommee[]
   ambiances?: AmbianceDuJeu[]
+  /** Le tiroir à secrets, quand le test veut autre chose que celui d'`ETAT` —
+   *  une place vide, ou un fournisseur qui en demande deux (F3). */
+  secrets?: Tiroir[]
   /** Les recettes nommées déjà sur le disque (U5). Le double les tient comme le
    *  serveur les tient : enregistrer, rappeler et oublier agissent dessus. */
   recettes?: Record<string, Recette>
@@ -838,6 +925,11 @@ function serveurDouble(options: {
     // requête aurait fait d'*enregistrer puis rappeler* deux gestes sans lien,
     // et c'est précisément le lien que l'étape ajoute.
     recettes: options.recettes ?? ({} as Record<string, Recette>),
+    // **Le tiroir à secrets** (F3). Il vit dans `.env` chez le vrai serveur,
+    // donc dans l'état du double : ce que la tranche vérifie est qu'un dépôt
+    // **ne touche à aucune autre place**, et ça ne se voit que sur le tiroir
+    // entier rendu après coup.
+    secrets: options.secrets ?? ETAT.secrets,
   }
 
   const appels: { url: string; corps: unknown }[] = []
@@ -890,7 +982,7 @@ function serveurDouble(options: {
     }
     if (url.startsWith("/api/models"))
       return rendre({
-        ...CATALOGUE,
+        ...(options.catalogue ?? CATALOGUE),
         references: options.references ?? CATALOGUE.references,
         couts: options.couts ?? CATALOGUE.couts,
       })
@@ -1072,7 +1164,47 @@ function serveurDouble(options: {
         corrections: Object.keys(tri.textes).length,
       })
     }
-    if (url === "/api/status") return rendre({ ...ETAT, agent: etat.agent })
+    if (url === "/api/status")
+      return rendre({ ...ETAT, agent: etat.agent, secrets: etat.secrets })
+    // **Déposer et retirer, une place à la fois** (F3). Les deux rendent le
+    // tiroir entier, comme le vrai serveur : l'écran ne recalcule jamais l'état
+    // lui-même — une valeur déposée peut être masquée par une variable
+    // d'environnement, et seul le serveur le sait.
+    if (url.startsWith("/api/settings/keys")) {
+      const nom = decodeURIComponent(url.slice("/api/settings/keys/".length))
+      const poser = (place: EtatSecret): EtatSecret =>
+        place.nom !== nom
+          ? place
+          : init?.method === "DELETE"
+            ? { ...place, presente: false, origine: "absente", apercu: "", retirable: false }
+            : {
+                ...place,
+                presente: true,
+                origine: "fichier",
+                apercu: String((corps as { valeur?: string })?.valeur ?? "").slice(-6),
+                retirable: true,
+              }
+      if (init?.method === "PUT" || init?.method === "DELETE")
+        etat.secrets = etat.secrets.map((tiroir) => {
+          const secrets = tiroir.secrets.map(poser)
+          const vides = secrets.filter((p) => !p.presente)
+          return {
+            ...tiroir,
+            secrets,
+            // La phrase se recompose comme celle du serveur : elle **dit
+            // lequel** manque dès qu'il y a plus d'une place.
+            manque: !vides.length
+              ? null
+              : secrets.length === 1
+                ? `aucune clé ${tiroir.fournisseur}`
+                : `il manque, chez ${tiroir.fournisseur} : ${vides
+                    .map((p) => p.libelle)
+                    .join(", ")}`,
+            pret: vides.length === 0,
+          }
+        })
+      return rendre({ tiroirs: etat.secrets })
+    }
     // Le cadre de l'agent. Le PUT rend **le cadre entier et sa consommation**,
     // comme le vrai serveur : l'écran pose un champ et reçoit tout, ce qui lui
     // évite d'en recalculer un seul — et c'est justement ce qu'on vérifie.
@@ -2616,7 +2748,7 @@ describe("l'écran de l'atelier", () => {
 
   test("la fiche nomme le modèle qui a produit l'image, et « importé » quand il n'y en a pas", async () => {
     const images = [
-      asset("eeee5555-0", "un tonneau", "auteur", "essai/rend-du-png"),
+      asset("eeee5555-0", "un tonneau", "auteur", "essai:rend-du-png"),
       asset("eeee5555-1", "un voisin", "auteur", "import"),
     ]
     const { fetchDouble } = serveurDouble({ assets: images })
@@ -2626,9 +2758,15 @@ describe("l'écran de l'atelier", () => {
 
     // L'identifiant exact du fournisseur, pas le nom du catalogue : c'est lui
     // qu'on redemande, et il reste vrai quand le catalogue est hors ligne.
+    //
+    // **Le fournisseur y est, et il y reste** (F1) : le deux-points de
+    // l'identifiant se lit comme un point médian, et la moitié gauche est très
+    // exactement ce qui répond à *à qui redemander*. Le titre du champ, lui,
+    // porte l'identifiant tel quel — celui qu'on retape.
     fireEvent.click(tuiles()[0])
     await screen.findByLabelText("Fermer la fiche")
-    expect(screen.getByText("essai/rend-du-png")).toBeTruthy()
+    expect(screen.getByText("essai · rend-du-png")).toBeTruthy()
+    expect(screen.getByTitle("essai:rend-du-png")).toBeTruthy()
 
     // Une image importée n'a pas de modèle, et son absence est une réponse.
     fireEvent.click(screen.getByLabelText("Fermer la fiche"))
@@ -3555,7 +3693,7 @@ describe("l'infobulle et le guide", () => {
       "La main",
       "La superposition",
       "Les dépenses",
-      "La clé du fournisseur",
+      "Les fournisseurs, et ce qu'ils demandent",
       "L'assistant de démarrage",
     ]) {
       expect(
@@ -3704,14 +3842,16 @@ describe("l'agent, vu de l'atelier", () => {
     )
   })
 
-  test("clé, garde-fous et dossiers se règlent depuis un seul écran", async () => {
+  test("fournisseurs, garde-fous et dossiers se règlent depuis un seul écran", async () => {
     const { fetchDouble, appels } = serveurDouble()
     await monter(fetchDouble)
 
     fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
 
     // Les trois blocs, dans un seul panneau (US-96).
-    expect(await screen.findByRole("heading", { name: "La clé" })).toBeTruthy()
+    expect(
+      await screen.findByRole("heading", { name: "Les fournisseurs" }),
+    ).toBeTruthy()
     expect(screen.getByRole("heading", { name: "L'agent" })).toBeTruthy()
     expect(screen.getByRole("heading", { name: "Les dossiers" })).toBeTruthy()
 
@@ -4894,11 +5034,11 @@ describe("le réglage d'univers se voit à l'instant", () => {
     const defauts = await ouvrir("Modèle par défaut")
 
     const personnages = defauts.getAllByRole("combobox")[0]
-    fireEvent.change(personnages, { target: { value: "essai/modele" } })
+    fireEvent.change(personnages, { target: { value: "essai:modele" } })
 
     await waitFor(() =>
       expect((defauts.getAllByRole("combobox")[0] as HTMLSelectElement).value).toBe(
-        "essai/modele",
+        "essai:modele",
       ),
     )
     replier("Modèle par défaut")
@@ -7265,10 +7405,14 @@ describe("les trois onglets", () => {
     const { fetchDouble } = serveurDouble()
     await monter(fetchDouble)
 
-    // `ce jeu $0,0000`, jamais un montant nu : un montant affiché est une
-    // question posée, et un chiffre qui laisse deviner sa portée finit par être
-    // lu comme le total de tout, ce qu'il n'est pas.
-    expect(screen.getByText("ce jeu")).toBeTruthy()
+    // `ce jeu, en argent $0,0000`, jamais un montant nu : un montant affiché
+    // est une question posée, et un chiffre qui laisse deviner sa portée finit
+    // par être lu comme le total de tout, ce qu'il n'est pas.
+    //
+    // **« en argent » est arrivé en F2** : le total ne compte que ce qui se
+    // paie en argent, et depuis qu'un fournisseur consomme des jetons, il
+    // fallait que l'étiquette le dise. Le reste vit dans l'écran des dépenses.
+    expect(screen.getByText("ce jeu, en argent")).toBeTruthy()
     // **Et le second total est parti d'ici** : « $X en tout » vit maintenant
     // dans l'écran des dépenses, dont c'est la seule chose qu'on vient y
     // chercher. L'afficher aux deux endroits lui retirerait sa raison d'être.
@@ -7444,9 +7588,22 @@ describe("l'écran des dépenses", () => {
     sans_projet_usd: 0.0381,
     par_projet: [{ projet: "bac-a-sable", nom: "Bac à sable", cout_usd: 0.3238 }],
     par_modele: [
-      { modele: "openai/gpt-image-2", cout_usd: 0.2935, appels: 2 },
-      { modele: "google/gemini-3.1-flash-lite", cout_usd: 0.0684, appels: 1 },
+      {
+        modele: "openai/gpt-image-2",
+        cout_usd: 0.2935,
+        consomme: 0.2935,
+        unite: "usd",
+        appels: 2,
+      },
+      {
+        modele: "google/gemini-3.1-flash-lite",
+        cout_usd: 0.0684,
+        consomme: 0.0684,
+        unite: "usd",
+        appels: 1,
+      },
     ],
+    par_unite: [],
     appels: [
       {
         identifiant: "aaaa1111",
@@ -7454,6 +7611,8 @@ describe("l'écran des dépenses", () => {
         prompt: "un tonneau cerclé de fer",
         cree_le: 1_787_800_000,
         cout_usd: 0.016,
+        consomme: 0.016,
+        unite: "usd",
         projet: "bac-a-sable",
         projet_nom: "Bac à sable",
         provenance: "auteur",
@@ -7473,6 +7632,8 @@ describe("l'écran des dépenses", () => {
         prompt: "un tonneau cerclé de fer",
         cree_le: 1_787_799_700,
         cout_usd: 0.016,
+        consomme: 0.016,
+        unite: "usd",
         projet: "bac-a-sable",
         projet_nom: "Bac à sable",
         provenance: "auteur",
@@ -7492,6 +7653,8 @@ describe("l'écran des dépenses", () => {
         prompt: "une lanterne",
         cree_le: 1_787_700_000,
         cout_usd: 0,
+        consomme: 0,
+        unite: "usd",
         projet: "bac-a-sable",
         projet_nom: "Bac à sable",
         provenance: "agent",
@@ -7511,6 +7674,8 @@ describe("l'écran des dépenses", () => {
         identifiant: "rafale-aaaa1111",
         appels: 2,
         cout_usd: 0.032,
+        consomme: 0.032,
+        unite: "usd",
         debut: 1_787_799_700,
         fin: 1_787_800_000,
         prompt: "un tonneau cerclé de fer",
@@ -7548,8 +7713,11 @@ describe("l'écran des dépenses", () => {
     expect(ecran.getByText("$0,0381")).toBeTruthy()
 
     // Et celui du jeu ouvert reste dans la barre de tête, avec son étiquette.
-    expect(within(document.querySelector("header") as HTMLElement).getByText("ce jeu"))
-      .toBeTruthy()
+    expect(
+      within(document.querySelector("header") as HTMLElement).getByText(
+        "ce jeu, en argent",
+      ),
+    ).toBeTruthy()
   })
 
   // ── « Les trois issues se distinguent : gardé, payé pour rien, refusé » ─────
@@ -9828,7 +9996,7 @@ describe("l'assistant de démarrage", () => {
       "Poses et états",
       "Emplacements",
       "Les IA à utiliser",
-      "La clé",
+      "Les fournisseurs",
     ]) {
       expect(screen.getByRole("button", { name: nom })).toBeTruthy()
     }
@@ -9876,7 +10044,7 @@ describe("l'assistant de démarrage", () => {
     fireEvent.click(screen.getByRole("button", { name: "suivant →" }))
     expect(await screen.findByText("étape 2 sur 10")).toBeTruthy()
 
-    fireEvent.click(screen.getByRole("button", { name: "La clé" }))
+    fireEvent.click(screen.getByRole("button", { name: "Les fournisseurs" }))
     expect(await screen.findByText("étape 10 sur 10")).toBeTruthy()
   })
 
@@ -11818,11 +11986,20 @@ describe("le premier lancement", () => {
   })
 
   /** L'état d'un atelier qui n'a encore rien : aucune image, un seul jeu qui
-   *  porte le nom que le produit lui a donné, et aucune clé. */
+   *  porte le nom que le produit lui a donné, et un fournisseur qui attend sa
+   *  clé — **pas les deux**, depuis F1 : il en reste toujours un qui produit. */
   const NEUF: Etat = {
     ...ETAT,
     premier_lancement: true,
-    cle: { presente: false, origine: "absente", apercu: "", raison: "aucune clé OpenRouter" },
+    secrets: [
+      {
+        fournisseur: "OpenRouter",
+        secrets: [PLACE_VIDE],
+        manque: "aucune clé OpenRouter",
+        pret: false,
+      },
+      SANS_SECRET,
+    ],
     assets: [],
     generations: [],
   }
@@ -11876,28 +12053,38 @@ describe("le premier lancement", () => {
     expect(document.querySelector("[data-assistant]")).toBeNull()
   })
 
-  // ── « La barre du haut dit aucune clé dès la première seconde » ───────────
+  // ── « La barre du haut dit avec quoi on peut produire, dès la première
+  //     seconde » (E19, réécrit en F3) ────────────────────────────────────────
+  //
+  // Elle disait *aucune clé*, et c'était juste tant qu'il n'y avait qu'un
+  // fournisseur. Depuis F1 il y en a plusieurs et l'un ne demande rien : dire
+  // *aucune clé* laisserait croire que rien ne peut produire alors qu'une image
+  // part très bien.
 
-  test("la barre du haut dit « aucune clé », et elle mène au champ", async () => {
+  test("la barre du haut dit combien de fournisseurs sont prêts, et mène au tiroir", async () => {
     await ouvrir(NEUF)
 
-    const dit = await screen.findByRole("button", { name: "aucune clé" })
-    expect(dit).toBeTruthy()
+    // Un attend sa clé, l'autre ne demande rien : **on peut produire**.
+    const dit = await screen.findByRole("button", { name: "1 sur 2" })
     // **Ce qui est indisponible porte sa raison et le chemin vers son
     // réglage** — jamais un constat sans issue.
+    expect(dit.getAttribute("title")).toContain("aucune clé OpenRouter")
     fireEvent.click(dit)
     await waitFor(() =>
       expect(document.querySelector("[data-reglages]")).toBeTruthy(),
     )
   })
 
-  test("une clé posée se lit dans la barre du haut, et nulle part ailleurs", async () => {
+  test("tout déposé, la barre du haut le constate et n'ouvre plus rien", async () => {
     await ouvrir(ETAT)
 
-    expect(await screen.findByText("clé …abcdef")).toBeTruthy()
+    expect(await screen.findByText("2 fournisseurs prêts")).toBeTruthy()
     // Une seule fois dans tout l'écran : la même valeur à deux endroits serait
     // deux endroits à tenir d'accord.
-    expect(screen.getAllByText(/clé …abcdef/)).toHaveLength(1)
+    expect(screen.getAllByText("2 fournisseurs prêts")).toHaveLength(1)
+    // **Rien à réparer, donc pas de porte** : un bouton qui n'ouvre sur aucun
+    // geste utile est un bouton de trop.
+    expect(screen.queryByRole("button", { name: "2 fournisseurs prêts" })).toBeNull()
   })
 
   // ── « On en sort à n'importe quelle étape » ───────────────────────────────
@@ -12837,6 +13024,7 @@ describe("l'écran de confirmation", () => {
       ],
       places: 14,
       cochees: 1,
+      partent: 1,
       gabarit: 0,
       palette: 0,
       prix: 0.008,
@@ -12868,6 +13056,7 @@ describe("l'écran de confirmation", () => {
       appels: 1,
       images: 0.008,
       mesure: {
+        unite: "usd",
         prix: 0.0139,
         bas: 0.0063,
         haut: 0.0232,
@@ -12878,6 +13067,9 @@ describe("l'écran de confirmation", () => {
         sur_jointes: 15,
       },
     },
+    // Aucune reserve : ce modele-la compte en argent, et l'argent a la barre
+    // de tete (F2). C'est le cas de la quasi-totalite des essais d'ecran.
+    reserve: null,
     modele: {
       identifiant: "openai/gpt-image-2",
       nom: "GPT-Image-2",
@@ -13133,6 +13325,74 @@ describe("l'écran de confirmation", () => {
     expect(ecran.queryByText(/aucune image ne part avec cet appel/)).toBeNull()
   })
 
+  // ── Un modèle qui n'accepte aucune image (F6) ─────────────────────────────
+  //
+  // **Le cas n'existait pas avant F6** : un modèle sans places refusait l'appel
+  // tout entier, et l'écran de confirmation ne s'ouvrait donc jamais sur lui.
+  // Depuis que ce que le jeu ajoute de lui-même cède plutôt que de refuser, il
+  // s'ouvre — et c'est ici, entre le clic et le paiement, que la surprise doit
+  // être évitée.
+
+  const SANS_PLACES: Envoi = {
+    ...ENVOI,
+    // Le sommaire vient du serveur, comme tout le reste de cet écran : il dit
+    // **combien partent sur combien sont cochées**, et l'écran ne le recalcule
+    // pas — c'est la règle de la tranche.
+    groupes: ENVOI.groupes.map((g) =>
+      g.clef === "images" ? { ...g, allumees: 0, total: 1 } : g,
+    ),
+    images: {
+      ...ENVOI.images,
+      places: 0,
+      partent: 0,
+      lignes: ENVOI.images.lignes.map((l) => ({
+        ...l,
+        hors_plafond: l.cochee,
+      })),
+      avertissements: [
+        {
+          clef: "images.sans_images",
+          texte:
+            "ce modèle n'accepte aucune image · l'appel partira sans elle, sur le texte seul",
+        },
+      ],
+    },
+  }
+
+  test("un modèle sans places le dit sur la ligne, avec ses mots à lui", async () => {
+    const { ecran } = await ouvrir({ envoi: SANS_PLACES })
+
+    // **« Au-delà des places du modèle » suppose qu'il y en a**, et laisserait
+    // croire qu'en décocher une ferait passer l'autre. Il n'y en a aucune.
+    expect(ecran.getByText(/ce modèle n'en prend aucune/)).toBeTruthy()
+    expect(ecran.queryByText(/au-delà des places du modèle/)).toBeNull()
+  })
+
+  test("ce que les images ont à dire s'écrit là où elles sont", async () => {
+    // **L'en-tête annonce « N avertissements, écrits sur la ligne concernée »**,
+    // et les avertissements du bloc d'images n'ont pas de ligne de prompt à
+    // eux : ils étaient comptés et affichés nulle part. On lisait « 1
+    // avertissement » et l'on cherchait où. Trouvé en regardant l'écran chez un
+    // modèle sans places ; les deux autres l'attendaient depuis E14.
+    const { ecran } = await ouvrir({ envoi: SANS_PLACES })
+
+    expect(
+      ecran.getByText(/l'appel partira sans elle, sur le texte seul/),
+    ).toBeTruthy()
+  })
+
+  test("le sommaire compte ce qui part, pas la capacité du modèle", async () => {
+    // **« 1 sur 0 » se lisait comme une contradiction.** Les quatre autres
+    // groupes disent « allumées sur disponibles » ; celui des images disait
+    // « cochées sur places du modèle », c'est-à-dire un compte sur une
+    // capacité. Les places restent écrites en tête du bloc, où elles
+    // expliquent l'écart.
+    const { ecran } = await ouvrir({ envoi: SANS_PLACES })
+
+    const sommaire = ecran.getByText("les images").parentElement!
+    expect(sommaire.textContent).toContain("0 sur 1")
+  })
+
   // ── « L'en-tête du groupe dit ce que les cases cochées pèsent dans le total
   //     de l'appel » ──────────────────────────────────────────────────────────
 
@@ -13306,6 +13566,7 @@ describe("l'écran de confirmation", () => {
           appels: 1,
           images: null,
           mesure: {
+            unite: "usd",
             prix: null,
             bas: 0,
             haut: 0,
@@ -15740,5 +16001,709 @@ describe("la galerie rend le prompt, et son bouton rentre dans la vignette", () 
     // Le prix et le lien ne cèdent pas : ce sont les dimensions qui se coupent,
     // et elles sont redites en entier sur la fiche, à un clic.
     expect(mesures.querySelector(".truncate")?.textContent).toContain("×")
+  })
+})
+
+// ── F1 · Le pluriel, et le fournisseur qui ne demande rien ───────────────────
+//
+// Les deux critères de la tranche que **seul l'écran** peut tenir : chaque
+// modèle porte le nom de qui le propose, et le bouton qui paie cesse d'être
+// éteint par une clé qui ne concerne pas le modèle choisi.
+//
+// Le reste des onze critères vit dans `tests/test_f1.py` : ils parlent de ce que
+// le serveur décide — le grisé, la photo datée, le nom enregistré —, et l'écran
+// n'a que le droit de l'afficher.
+
+describe("plusieurs fournisseurs dans une seule liste", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** **Le même nom chez deux fournisseurs**, et c'est le cas qui casse tout si
+   *  une ligne ne dit pas qui la propose : le relevé du 31 août a trouvé les
+   *  modèles de Leonardo hébergés chez Cloudflare. */
+  const PAYANT = {
+    ...MODELE,
+    identifiant: "payant:copie",
+    nom: "Copie",
+    fournisseur: "payant",
+    chez_lui: "copie",
+  }
+  const LIBRE = {
+    ...MODELE,
+    identifiant: "libre:copie",
+    nom: "Copie",
+    fournisseur: "libre",
+    chez_lui: "copie",
+    references_max: 0,
+    variations_max: 1,
+  }
+
+  /** La liste des modèles est **repliée par défaut** — c'est le cas d'école du
+   *  bloc repliable (E4) : un choix déjà fait, qui se dit en une ligne. Les
+   *  essais remettent le registre à zéro, donc il faut l'ouvrir pour voir les
+   *  lignes plutôt que la seule valeur résumée. */
+  const ouvrirLaListeDesModeles = async () => {
+    await ouvrirLesReglagesDeLAppel()
+    const entete = await screen.findByRole("button", { name: /^Modèle/ })
+    if (entete.getAttribute("aria-expanded") !== "true") fireEvent.click(entete)
+  }
+
+  const catalogueADeux = (refusDuPayant: string | null = null): EtatCatalogue => ({
+    ...CATALOGUE,
+    defaut: { modele: refusDuPayant ? LIBRE.identifiant : PAYANT.identifiant, options: {} },
+    fournisseurs: [
+      { ...CATALOGUE.fournisseurs[0], nom: "payant", modeles: 1, grise: refusDuPayant },
+      { ...CATALOGUE.fournisseurs[0], nom: "libre", modeles: 1 },
+    ],
+    modeles: [{ ...PAYANT, refus: refusDuPayant }, LIBRE],
+  })
+
+  // ── « Les modèles des deux paraissent dans la même liste, et chacun porte le
+  //     nom de celui qui le propose » ───────────────────────────────────────
+
+  test("deux modèles du même nom se distinguent par qui les propose", async () => {
+    const { fetchDouble } = serveurDouble({ catalogue: catalogueADeux() })
+    await monter(fetchDouble)
+    await ouvrirLaListeDesModeles()
+
+    // Deux lignes, un seul nom affiché — sans le fournisseur, le choix serait
+    // un tirage au sort.
+    const lignes = await screen.findAllByRole("button", { name: /Copie/ })
+    expect(lignes).toHaveLength(2)
+    expect(lignes[0].textContent).toContain("payant")
+    expect(lignes[1].textContent).toContain("libre")
+  })
+
+  test("le filtre trouve un fournisseur par son nom", async () => {
+    const { fetchDouble } = serveurDouble({ catalogue: catalogueADeux() })
+    await monter(fetchDouble)
+    await ouvrirLaListeDesModeles()
+
+    await screen.findAllByRole("button", { name: /Copie/ })
+    fireEvent.change(screen.getByPlaceholderText("filtrer"), {
+      target: { value: "libre" },
+    })
+
+    const restantes = screen.getAllByRole("button", { name: /Copie/ })
+    expect(restantes).toHaveLength(1)
+    expect(restantes[0].textContent).toContain("libre")
+  })
+
+  // ── « Sur une installation neuve, sans aucune clé, on écrit un nom puis un
+  //     prompt et une image arrive » ─────────────────────────────────────────
+  //
+  // **Ce que l'écran doit tenir de ce critère est étroit et il compte** : ne
+  // plus éteindre le bouton qui paie au nom d'une clé qui ne concerne pas le
+  // modèle choisi. Avant la V2.2 c'était juste — il n'y avait qu'un
+  // fournisseur. Un refus faux est ce qui fait douter de tous les autres.
+
+  test("sans clé, le bouton qui paie reste actif sur un modèle qui n'en demande pas", async () => {
+    const { fetchDouble } = serveurDouble({
+      catalogue: catalogueADeux("aucune clé OpenRouter"),
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      secrets: [
+        {
+          fournisseur: "OpenRouter",
+          secrets: [PLACE_VIDE],
+          manque: "aucune clé OpenRouter",
+          pret: false,
+        },
+        SANS_SECRET,
+      ],
+    })
+
+    const champ = await champDePrompt()
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+
+    // Le défaut a glissé vers celui qui ne demande rien, et générer est actif.
+    const generer = await screen.findByRole("button", { name: "Générer" })
+    await waitFor(() => expect(generer.hasAttribute("disabled")).toBe(false))
+  })
+
+  test("choisir le modèle du fournisseur qui manque éteint le bouton, avec sa phrase", async () => {
+    const { fetchDouble } = serveurDouble({
+      catalogue: catalogueADeux("aucune clé OpenRouter"),
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      secrets: [
+        {
+          fournisseur: "OpenRouter",
+          secrets: [PLACE_VIDE],
+          manque: "aucune clé OpenRouter",
+          pret: false,
+        },
+        SANS_SECRET,
+      ],
+    })
+
+    const champ = await champDePrompt()
+    fireEvent.change(champ, { target: { value: "un tonneau" } })
+    await ouvrirLaListeDesModeles()
+
+    const lignes = await screen.findAllByRole("button", { name: /Copie/ })
+    fireEvent.click(lignes[0]) // celui du fournisseur sans clé
+
+    // **La phrase est celle du fournisseur, pas une phrase de l'écran** : elle
+    // vient du serveur, comme toutes les raisons de grisé depuis T1.
+    const generer = await screen.findByRole("button", { name: "Générer" })
+    await waitFor(() => expect(generer.hasAttribute("disabled")).toBe(true))
+    expect(document.body.textContent).toContain("aucune clé OpenRouter")
+  })
+})
+
+// ── F2 · Ce qu'un appel consomme ─────────────────────────────────────────────
+//
+// **Deux critères de la tranche ne se tiennent qu'ici**, et ce sont les deux
+// qu'elle existe pour tenir : *un appel sans prix affiche « gratuit » ; « 0,00 $ »
+// n'apparaît nulle part pour lui*, et *ce qui reste chez un fournisseur se lit
+// sur l'écran où l'on choisit comme sur celui qui confirme*.
+//
+// Le serveur, lui, ne connaît pas le mot « gratuit » : il donne une quantité et
+// son unité, et c'est l'écran qui écrit la phrase. C'est la même répartition
+// que pour les raisons de grisé depuis T1 — à ceci près qu'ici c'est l'inverse,
+// et volontairement : une mise en forme n'est pas une règle.
+
+describe("ce qu'un appel consomme", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le fournisseur qui ne facture pas — un jeton par image, **aucune réserve
+   *  annoncée**, une cadence. C'est celui du produit, mesuré le 31 août 2026. */
+  const SANS_RESERVE: Reserve = {
+    fournisseur: "libre",
+    unite: "jeton",
+    consomme: 7,
+    plafond: null,
+    reste: null,
+    source: "ici",
+    renouvellement: "minuit",
+    cadence_s: 15,
+    depuis: 1_787_750_000,
+  }
+
+  /** Un fournisseur **qui annonce sa réserve**. Aucun n'en annonce une
+   *  aujourd'hui ; celui-ci existe pour que la phrase « il reste » soit écrite
+   *  et vérifiée avant que F4 ne l'utilise pour de bon. */
+  const AVEC_RESERVE: Reserve = {
+    ...SANS_RESERVE,
+    plafond: 10,
+    reste: 3,
+  }
+
+  const GRATUIT = {
+    ...MODELE,
+    identifiant: "libre:sana",
+    nom: "Sana",
+    fournisseur: "libre",
+    chez_lui: "sana",
+    references_max: 0,
+    variations_max: 1,
+    unite: "jeton",
+  }
+
+  const catalogueGratuit = (reserve: Reserve): EtatCatalogue => ({
+    ...CATALOGUE,
+    defaut: { modele: GRATUIT.identifiant, options: {} },
+    fournisseurs: [{ ...CATALOGUE.fournisseurs[0], nom: "libre", reserve }],
+    couts: { [GRATUIT.identifiant]: 1 },
+    modeles: [GRATUIT],
+  })
+
+  // ── « Un appel sans prix affiche gratuit » ────────────────────────────────
+
+  test("la tuile d'une image sans prix dit « gratuit », jamais « $0,0000 »", async () => {
+    const image = {
+      ...asset("g1-0", "un tonneau"),
+      cout_usd: 0,
+      consomme: 1,
+      unite: "jeton",
+    }
+    const { fetchDouble } = serveurDouble({ assets: [image] })
+    await monter(fetchDouble)
+
+    const mesure = await screen.findByText("gratuit")
+    // **Le mot remplace le montant**, il ne s'y ajoute pas : « gratuit $0,0000 »
+    // laisserait le chiffre faire son travail de mensonge. Cherché sur la ligne
+    // de la tuile, pas sur la page : la barre de tête porte son propre total en
+    // dollars, et c'est très bien ainsi.
+    expect(mesure.parentElement?.textContent).not.toContain("$0,0000")
+  })
+
+  test("une image payée zéro dollar garde son « $0,0000 »", async () => {
+    // **Le contraire du précédent, et il compte autant** : une découpe de
+    // planche n'a rien coûté seule, et elle a bel et bien été payée en amont.
+    const image = {
+      ...asset("g1-0", "une découpe"),
+      cout_usd: 0,
+      consomme: 0,
+      unite: "usd",
+    }
+    const { fetchDouble } = serveurDouble({ assets: [image] })
+    await monter(fetchDouble)
+
+    expect((await screen.findAllByText("$0,0000")).length).toBeGreaterThan(0)
+    expect(screen.queryByText("gratuit")).toBeNull()
+  })
+
+  // ── « Ce qui reste, et d'où le chiffre vient » ────────────────────────────
+
+  test("l'écran où l'on choisit dit ce qui est parti et d'où le chiffre vient", async () => {
+    const { fetchDouble } = serveurDouble({
+      catalogue: catalogueGratuit(SANS_RESERVE),
+    })
+    await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
+
+    // **« Aucune réserve » n'est pas « il reste zéro »** : le premier dit que
+    // rien ne limite le nombre d'images, le second qu'il faut attendre demain.
+    // Deux fois à l'écran : la barre qui paie et le panneau des réglages
+    // lisent la même phrase, écrite à un seul endroit.
+    expect(
+      (await screen.findAllByText(/n'annonce aucune réserve/)).length,
+    ).toBeGreaterThan(0)
+    expect(document.body.textContent).toContain("7 jetons partis depuis minuit")
+    // Et d'où vient le chiffre — un invariant de la version.
+    expect(document.body.textContent).toContain("compté ici")
+    expect(document.body.textContent).toContain("un appel toutes les 15 secondes")
+  })
+
+  test("un fournisseur qui annonce une réserve dit ce qui reste et quand ça revient", async () => {
+    const { fetchDouble } = serveurDouble({
+      catalogue: catalogueGratuit(AVEC_RESERVE),
+    })
+    await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
+
+    expect(
+      (await screen.findAllByText(/il reste 3 jetons sur 10/)).length,
+    ).toBeGreaterThan(0)
+    expect(document.body.textContent).toContain("renouvelés à minuit")
+  })
+
+  test("ce qu'un modèle gratuit prendra s'écrit en jetons, jamais en dollars", async () => {
+    const { fetchDouble } = serveurDouble({
+      catalogue: catalogueGratuit(SANS_RESERVE),
+      // La médiane mesurée de ce modèle-là, dans son unité à lui : un jeton.
+      couts: { [GRATUIT.identifiant]: 1 },
+    })
+    await monter(fetchDouble)
+    await ouvrirLesReglagesDeLAppel()
+
+    // L'estimation change de mot **et** d'unité : « coût attendu ≈ $1,0000 »
+    // serait faux deux fois.
+    expect((await screen.findAllByText("ce qu'il prendra"))[0]).toBeTruthy()
+    expect(screen.getAllByText("≈ 1 jeton")[0]).toBeTruthy()
+  })
+
+  // ── « Le total de la barre de tête ne compte que de l'argent » ────────────
+
+  test("le total de la barre dit qu'il ne compte que de l'argent", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+
+    const barre = document.querySelector("header") as HTMLElement
+    expect(within(barre).getByText("ce jeu, en argent")).toBeTruthy()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F3 · Les clés au pluriel
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran fait du tiroir. Une place par
+// fournisseur, un fournisseur qui ne demande rien qui le dise, un fournisseur à
+// deux places qui dise **lequel** manque, le retrait qui ne se propose que
+// quand il retire vraiment, et les deux portes — les réglages, l'étape 10 de
+// l'assistant — qui rendent le même tiroir. Ce qui se calcule — l'écriture du
+// fichier, le refus d'un nom inconnu, la relecture à chaque appel — vit dans
+// `tests/test_f3.py`.
+//
+// **Ce que la tranche a fermé, côté écran** : le produit avait *la* clé, un
+// champ unique. Le relevé du 31 août a trouvé un fournisseur qui en demande
+// deux, et un formulaire à un champ l'aurait découvert en F4, au pire moment.
+
+describe("les clés au pluriel", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Un fournisseur qui demande **deux** places, la forme de Cloudflare. Elle
+   *  arrive pour de bon en F4 ; l'écran doit savoir la tenir avant. */
+  const A_DEUX_PLACES: Tiroir = {
+    fournisseur: "Cloudflare",
+    secrets: [
+      {
+        nom: "CLOUDFLARE_ACCOUNT_ID",
+        libelle: "le compte",
+        ou: "dash.cloudflare.com",
+        presente: false,
+        origine: "absente",
+        apercu: "",
+        retirable: false,
+      },
+      {
+        nom: "CLOUDFLARE_API_TOKEN",
+        libelle: "le jeton",
+        ou: "dash.cloudflare.com/jetons",
+        presente: false,
+        origine: "absente",
+        apercu: "",
+        retirable: false,
+      },
+    ],
+    manque: "il manque, chez Cloudflare : le compte, le jeton",
+    pret: false,
+  }
+
+  const ouvrirLesReglages = async (secrets: Tiroir[] = ETAT.secrets) => {
+    const double = serveurDouble({ secrets })
+    await monter(double.fetchDouble, { ...ETAT, secrets })
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+    await screen.findByRole("heading", { name: "Les fournisseurs" })
+    return double
+  }
+
+  // ── « Chaque fournisseur a sa place à lui » ───────────────────────────────
+
+  test("chaque fournisseur a sa place, et celui qui ne demande rien le dit", async () => {
+    await ouvrirLesReglages()
+
+    // **Un tiroir vide paraît quand même** : caché, il passerait pour un
+    // fournisseur absent, et c'est le premier renseignement que l'auteur
+    // cherche sur une machine neuve.
+    expect(await screen.findByText("OpenRouter")).toBeTruthy()
+    expect(screen.getByText("Pollinations")).toBeTruthy()
+    expect(screen.getByText(/ne demande rien/)).toBeTruthy()
+
+    // Celle qui est remplie ne montre que son aperçu, jamais sa valeur.
+    expect(screen.getByText(/…abcdef/)).toBeTruthy()
+  })
+
+  test("un fournisseur qui demande deux places les demande toutes les deux", async () => {
+    await ouvrirLesReglages([A_DEUX_PLACES])
+
+    // Deux champs, deux étiquettes — et la phrase **dit lesquels** manquent,
+    // pas seulement qu'il manque quelque chose.
+    expect(await screen.findByLabelText("le compte")).toBeTruthy()
+    expect(screen.getByLabelText("le jeton")).toBeTruthy()
+    expect(screen.getByText(/le compte, le jeton/)).toBeTruthy()
+  })
+
+  // ── « Déposer une clé ne touche à aucune autre » ──────────────────────────
+
+  test("déposer une place n'écrit que la sienne, et la phrase rétrécit", async () => {
+    const { appels } = await ouvrirLesReglages([A_DEUX_PLACES])
+
+    fireEvent.change(await screen.findByLabelText("le compte"), {
+      target: { value: "compte-de-lessai" },
+    })
+    fireEvent.click(screen.getAllByRole("button", { name: "Déposer" })[0])
+
+    // **Un seul appel, sur un seul nom** : l'écran n'envoie jamais le tiroir
+    // entier, sinon un formulaire partiel effacerait ce qu'un autre a posé.
+    const envoi = await waitFor(() => {
+      const trouve = appels.filter((a) => a.url.includes("/settings/keys/")).pop()
+      if (!trouve) throw new Error("rien n'a été déposé")
+      return trouve
+    })
+    expect(envoi.url).toContain("CLOUDFLARE_ACCOUNT_ID")
+    expect(envoi.corps).toEqual({ valeur: "compte-de-lessai" })
+
+    // Et l'écran relit ce que le serveur rend : il ne recalcule rien lui-même.
+    expect(
+      await screen.findByText(/il manque, chez Cloudflare : le jeton/),
+    ).toBeTruthy()
+    expect(screen.queryByText(/le compte, le jeton/)).toBeNull()
+  })
+
+  // ── « Retirer une clé grise ses modèles » ─────────────────────────────────
+
+  test("retirer ne se propose que là où ça retire vraiment", async () => {
+    const { appels } = await ouvrirLesReglages([
+      {
+        fournisseur: "OpenRouter",
+        secrets: [
+          { ...PLACE_PLEINE, origine: "environnement", retirable: false },
+          {
+            ...PLACE_PLEINE,
+            nom: "AUTRE_CLE",
+            libelle: "l'autre clé",
+            origine: "fichier",
+            retirable: true,
+          },
+        ],
+        manque: null,
+        pret: true,
+      },
+    ])
+
+    // **Une valeur venue de la machine ne s'enlève pas d'ici**, et un bouton
+    // qui semblerait le faire serait pire que pas de bouton du tout.
+    const retirer = await screen.findAllByRole("button", { name: "retirer" })
+    expect(retirer).toHaveLength(1)
+
+    fireEvent.click(retirer[0])
+    const envoi = await waitFor(() => {
+      const trouve = appels.filter((a) => a.url.includes("/settings/keys/")).pop()
+      if (!trouve) throw new Error("rien n'a été retiré")
+      return trouve
+    })
+    expect(envoi.url).toContain("AUTRE_CLE")
+  })
+
+  // ── « L'étape de l'assistant reste une fenêtre sur le même tiroir » ───────
+
+  test("l'assistant montre le même tiroir, et déposer là écrit au même endroit", async () => {
+    const secrets = [A_DEUX_PLACES]
+    const { appels, fetchDouble } = serveurDouble({ secrets, univers: UNIVERS })
+    await monter(fetchDouble, { ...ETAT, secrets, univers: UNIVERS })
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Les fournisseurs" }))
+
+    // **Trois portes, une seule pièce** : c'est le composant des réglages qui
+    // est rendu ici, et il envoie sur la même route.
+    expect(await screen.findByText("10 · Les fournisseurs")).toBeTruthy()
+    fireEvent.change(await screen.findByLabelText("le jeton"), {
+      target: { value: "jeton-de-lessai" },
+    })
+    fireEvent.click(screen.getAllByRole("button", { name: "Déposer" })[1])
+
+    const envoi = await waitFor(() => {
+      const trouve = appels.filter((a) => a.url.includes("/settings/keys/")).pop()
+      if (!trouve) throw new Error("rien n'a été déposé")
+      return trouve
+    })
+    expect(envoi.url).toContain("CLOUDFLARE_API_TOKEN")
+  })
+
+  // ── « Aucune clé ne s'affiche jamais en entier » ──────────────────────────
+
+  test("une valeur déposée disparaît du champ, et seul son aperçu reste", async () => {
+    await ouvrirLesReglages([A_DEUX_PLACES])
+
+    const champ = (await screen.findByLabelText("le compte")) as HTMLInputElement
+    // **Un champ de mot de passe** : la valeur ne se lit pas par-dessus
+    // l'épaule pendant qu'on la colle.
+    expect(champ.getAttribute("type")).toBe("password")
+
+    fireEvent.change(champ, { target: { value: "compte-tres-secret-123456" } })
+    fireEvent.click(screen.getAllByRole("button", { name: "Déposer" })[0])
+
+    await waitFor(() => expect(champ.value).toBe(""))
+    expect(document.body.textContent).not.toContain("compte-tres-secret")
+    expect(await screen.findByText(/…123456/)).toBeTruthy()
+  })
+
+  // ── La barre du haut suit ce qu'on vient de déposer ───────────────────────
+  //
+  // **Trouvé en vérifiant à la main, pas par un essai** : déposer depuis
+  // l'assistant laissait la barre annoncer `1 sur 2` sur un atelier où les deux
+  // fournisseurs étaient prêts. Le tiroir de l'étape se tenait à jour tout seul
+  // et ne prévenait personne ; la fenêtre des réglages, elle, prévenait déjà.
+  // C'est le même dépôt, donc c'est le même geste.
+
+  test("déposer depuis l'assistant met la barre du haut d'accord", async () => {
+    const secrets: Tiroir[] = [
+      {
+        fournisseur: "OpenRouter",
+        secrets: [PLACE_VIDE],
+        manque: "aucune clé OpenRouter",
+        pret: false,
+      },
+      SANS_SECRET,
+    ]
+    const { fetchDouble } = serveurDouble({ secrets, univers: UNIVERS })
+    await monter(fetchDouble, { ...ETAT, secrets, univers: UNIVERS })
+
+    const barre = document.querySelector("header") as HTMLElement
+    expect(await within(barre).findByText("1 sur 2")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Réglages" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Les fournisseurs" }))
+
+    fireEvent.change(await screen.findByLabelText("la clé"), {
+      target: { value: "sk-or-v1-depuis-lassistant" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Déposer" }))
+
+    // **Et le grisé des modèles tombe avec**, par le même chemin : ce qu'on
+    // vient de servir cesse d'être refusé.
+    await waitFor(() =>
+      expect(within(barre).getByText("2 fournisseurs prêts")).toBeTruthy(),
+    )
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F6 · Le brouillon ne coûte plus rien
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Ce qui se mesure ici** : ce que l'écran fait du modèle d'exploration devenu
+// gratuit. Le garde-fou ne propose que des modèles qui ne coûtent pas d'argent,
+// il le dit quand il n'y en a aucun, et la fiche d'une image reconnaît celle qui
+// est partie sans le style du jeu. Ce qui se calcule — le modèle imposé, le
+// repli quand il disparaît, ce que le plafond du modèle laisse au sol — vit dans
+// `tests/test_f6.py`.
+//
+// **Le trou que la tranche creuse elle-même.** Un modèle gratuit n'accepte
+// aucune image d'entrée : le style du jeu ne part pas avec ces images-là. À
+// multiplier les brouillons, on se retrouve des semaines plus tard avec des
+// images qui ne ressemblent pas aux autres **sans savoir pourquoi** — et c'est
+// le genre de question qu'on ne pose jamais deux fois : on jette et on
+// recommence.
+
+describe("le brouillon ne coûte plus rien", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+    reinitialiserApercu()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le modèle du fournisseur qui ne facture rien — un jeton par image, aucune
+   *  image d'entrée. C'est la forme du seul gratuit mesuré. */
+  const LIBRE = {
+    ...MODELE,
+    identifiant: "libre:sana",
+    nom: "sana",
+    fournisseur: "libre",
+    chez_lui: "sana",
+    references_max: 0,
+    variations_max: 1,
+    unite: "jeton",
+  }
+
+  const catalogueAvec = (modeles: typeof CATALOGUE.modeles) => ({
+    ...CATALOGUE,
+    modeles,
+  })
+
+  const ouvrirLesReglages = async (modeles: typeof CATALOGUE.modeles) => {
+    const double = serveurDouble({ catalogue: catalogueAvec(modeles) })
+    await monter(double.fetchDouble, ETAT)
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+    await screen.findByRole("heading", { name: "L'agent" })
+    return double
+  }
+
+  // ── « Il se choisit parmi les modèles qui ne coûtent pas d'argent » ───────
+
+  test("le garde-fou ne propose que des modèles gratuits", async () => {
+    await ouvrirLesReglages([MODELE, LIBRE])
+
+    // **Pas un filtre d'affichage : c'est ce que le garde-fou est.** Un modèle
+    // d'exploration qui pourrait être le plus cher du catalogue ne protégerait
+    // de rien, et le seul moyen honnête de le dire est de ne pas le proposer.
+    expect(await screen.findByRole("button", { name: /sana/ })).toBeTruthy()
+    expect(screen.queryByRole("button", { name: new RegExp(MODELE.nom) })).toBeNull()
+  })
+
+  test("choisir un gratuit le pose, et n'envoie que lui", async () => {
+    const { appels } = await ouvrirLesReglages([MODELE, LIBRE])
+
+    fireEvent.click(await screen.findByRole("button", { name: /sana/ }))
+
+    const envoi = await waitFor(() => {
+      const trouve = appels
+        .filter((a) => a.url === "/api/settings/agent" && a.corps)
+        .pop()
+      if (!trouve) throw new Error("rien n'a été posé")
+      return trouve
+    })
+    // **Ce qui n'est pas dit ne change pas** : un formulaire partiel effacerait
+    // le plafond que l'autre bloc vient de poser.
+    expect(envoi.corps).toEqual({ modele: "libre:sana" })
+  })
+
+  test("un atelier sans modèle gratuit le dit, plutôt que de montrer un vide", async () => {
+    await ouvrirLesReglages([MODELE])
+
+    expect(await screen.findByText(/aucun modèle gratuit/)).toBeTruthy()
+  })
+
+  // ── « Une image faite sans les références de l'univers se reconnaît » ─────
+
+  const ouvrirLaFicheDe = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const image = asset("aaaa1111-0")
+    const double = serveurDouble({ assets: [image], ...options })
+    await monter(double.fetchDouble, { ...ETAT, assets: [image] })
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+    return double
+  }
+
+  test("la fiche dit qu'une image est partie sans le style du jeu", async () => {
+    await ouvrirLaFicheDe({
+      aPublier: () => ({
+        ...generation("aaaa1111", 1, "reussie"),
+        hors_plafond: [
+          { asset: "carte-officielle", role: "style", origine: "carte" },
+          { asset: "carte-concept", role: "style", origine: "carte" },
+        ],
+      }),
+    })
+
+    // **Le compte, pas un simple avertissement** : savoir combien d'images
+    // n'ont pas suivi est la moitié du renseignement.
+    expect(await screen.findByText(/partie sans le style du jeu/)).toBeTruthy()
+    expect(screen.getByText(/2 images n'ont pas suivi/)).toBeTruthy()
+  })
+
+  test("une image faite avec tout ce qu'il fallait ne dit rien", async () => {
+    await ouvrirLaFicheDe()
+
+    // **Une ligne qui paraîtrait toujours ne dirait plus rien.** Elle ne
+    // s'écrit que quand il y a quelque chose à dire — et une image d'avant F6
+    // n'a rien laissé au sol, puisque l'appel était alors refusé tout entier.
+    await waitFor(() =>
+      expect(screen.queryByText(/sans le style du jeu/)).toBeNull(),
+    )
   })
 })

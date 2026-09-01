@@ -40,7 +40,7 @@ def _generer(client, double, **image) -> dict:
     double.rendre = lambda: image_sujet(**image)
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un sujet d'essai"},
+        json={"modele": "essai:rend-du-png", "prompt": "un sujet d'essai"},
     ).json()
     identifiant = f"{generation['identifiant']}-0"
     reponse = client.get(f"/api/assets/{identifiant}")

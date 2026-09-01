@@ -15,8 +15,8 @@ import time
 
 from conftest import image, image_sujet
 
-MODELE = "essai/rend-du-png"
-AUTRE_MODELE = "essai/rend-du-jpeg"
+MODELE = "essai:rend-du-png"
+AUTRE_MODELE = "essai:rend-du-jpeg"
 
 
 # ── De quoi jouer une séance ─────────────────────────────────────────────────

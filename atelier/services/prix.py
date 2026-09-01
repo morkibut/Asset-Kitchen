@@ -34,6 +34,7 @@ from __future__ import annotations
 from typing import Any, Sequence
 
 from atelier.depot import Base
+from atelier.domaine.consommation import USD
 
 # Sur combien d'appels la médiane se calcule. Court exprès, comme la fenêtre des
 # durées : un modèle dont le prix bouge doit se voir en quelques images, pas en
@@ -54,8 +55,8 @@ def _mediane(valeurs: Sequence[float]) -> float:
     return (triees[milieu - 1] + triees[milieu]) / 2
 
 
-def mesures(base: Base, modele: str) -> dict[str, Any]:
-    """Ce que ce modèle a coûté ici — **la médiane, l'écart, le compte, et le pas**.
+def mesures(base: Base, modele: str, unite: str | None = None) -> dict[str, Any]:
+    """Ce que ce modèle a consommé ici — **la médiane, l'écart, le compte, le pas**.
 
     Rend toujours la même forme, y compris quand il n'y a rien à mesurer : le
     prix vaut alors `None`, et l'écran dit qu'il ne sait pas plutôt que
@@ -69,6 +70,15 @@ def mesures(base: Base, modele: str) -> dict[str, Any]:
     """
     couts = base.couts_mesures(modele)[:FENETRE]
     entier: dict[str, Any] = {
+        # **L'unité voyage avec le chiffre, depuis F2.** Un « 1 » annoncé avant
+        # un appel ne veut rien dire s'il ne dit pas s'il est un dollar ou un
+        # jeton, et les deux écrans qui lisent cette mesure — la barre qui paie
+        # et celui qui confirme — l'écrivent tel quel.
+        #
+        # Trois sources, dans cet ordre : ce que le fournisseur déclare, ce que
+        # les appels d'ici ont réellement porté, et l'argent — qui était la
+        # seule unité du produit avant la V2.2.
+        "unite": unite or base.unite_du_modele(modele) or USD,
         "prix": round(_mediane(couts), 4) if couts else None,
         "bas": round(min(couts), 4) if couts else 0.0,
         "haut": round(max(couts), 4) if couts else 0.0,
@@ -105,7 +115,10 @@ def mesures(base: Base, modele: str) -> dict[str, Any]:
 
 
 def prix_de(mesure: dict[str, Any], images: int, appels: int = 1) -> float | None:
-    """Ce que cet appel-là coûterait, **images jointes comprises**.
+    """Ce que cet appel-là consommerait, **images jointes comprises**.
+
+    Dans l'unité de `mesure["unite"]`, et l'appelant la transporte avec le
+    chiffre : ce module ne met jamais en forme, il compte.
 
     La décomposition quand elle existe, la médiane sinon. Rendre la médiane en
     repli plutôt que rien est ce qui évite d'avoir deux écrans dont l'un annonce

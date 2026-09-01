@@ -159,7 +159,7 @@ def _deux_images(client, double) -> tuple[str, str]:
         double.rendre = lambda o=octets: o
         generation = client.post(
             "/api/generations",
-            json={"modele": "essai/rend-du-png", "prompt": "un sujet d'essai"},
+            json={"modele": "essai:rend-du-png", "prompt": "un sujet d'essai"},
         ).json()
         identifiants.append(f"{generation['identifiant']}-0")
     return identifiants[0], identifiants[1]

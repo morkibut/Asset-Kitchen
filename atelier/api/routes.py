@@ -17,12 +17,14 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 from atelier.domaine import (
+    USD,
     Asset,
     Demande,
     Generation,
     Modele,
     Recette,
     Reinjection,
+    Reserve,
     Tri,
 )
 from atelier.domaine.catalogue import modele_en_json
@@ -43,9 +45,10 @@ from atelier.domaine.superposition import (
 )
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png, vignette
-from atelier.reglages import deposer_cle, etat_cle
+from atelier.reglages import deposer_secret, retirer_secret
 from atelier.services import Atelier
 from atelier.services.assets import AssetInconnu, TRACE_MAX
+from atelier.services.catalogue import EtatFournisseur
 
 routeur = APIRouter()
 
@@ -149,22 +152,59 @@ def _sse(genre: str, charge: dict[str, Any]) -> str:
 # ── La clé ───────────────────────────────────────────────────────────────────
 
 
-class CorpsCle(BaseModel):
-    cle: str = Field(min_length=8)
+class CorpsSecret(BaseModel):
+    valeur: str = Field(min_length=8)
 
 
-@routeur.get("/settings/key")
-async def lire_etat_cle() -> dict[str, Any]:
-    return etat_cle().en_json()
+@routeur.get("/settings/keys")
+async def lire_tiroirs(requete: Request) -> dict[str, Any]:
+    """Le tiroir à secrets, **une place par fournisseur** (F3).
+
+    Il remplace `GET /settings/key`, qui ne pouvait décrire qu'un monde à un
+    fournisseur. Un fournisseur qui ne demande rien y paraît quand même, avec un
+    tiroir vide : *« celui-ci ne demande rien »* est un renseignement, et c'est
+    le premier que l'auteur cherche sur une machine neuve.
+    """
+    return {"tiroirs": [t.en_json() for t in _atelier(requete).fournisseurs.tiroirs()]}
 
 
-@routeur.put("/settings/key")
-async def poser_cle(corps: CorpsCle) -> dict[str, Any]:
-    """Se dépose une fois, et n'est plus jamais redemandée (US-4)."""
+@routeur.put("/settings/keys/{nom}")
+async def poser_secret(requete: Request, nom: str, corps: CorpsSecret) -> dict[str, Any]:
+    """Déposer une valeur — **et ne toucher à aucune autre** (F3, US-4).
+
+    `nom` est le nom d'environnement d'une place **qu'un fournisseur a
+    déclarée** : le produit n'écrit pas ailleurs. Une route qui accepterait
+    n'importe quel nom laisserait écrire n'importe quoi dans le `.env` de
+    l'auteur, depuis un navigateur.
+    """
+    atelier = _atelier(requete)
+    if atelier.fournisseurs.secret(nom) is None:
+        raise ErreurAtelier(
+            f"aucun fournisseur ne demande « {nom} »", ou_aller="reglages"
+        )
     try:
-        return deposer_cle(corps.cle).en_json()
+        deposer_secret(nom, corps.valeur)
     except ValueError as erreur:
         raise ErreurAtelier(str(erreur), ou_aller="reglages") from None
+    return {"tiroirs": [t.en_json() for t in atelier.fournisseurs.tiroirs()]}
+
+
+@routeur.delete("/settings/keys/{nom}")
+async def enlever_secret(requete: Request, nom: str) -> dict[str, Any]:
+    """Retirer une valeur — **et rien d'autre** (F3).
+
+    *Retirer une clé grise ses modèles et ne supprime ni une image, ni une ligne
+    de dépense.* Cette route ne touche qu'à un fichier de configuration, et il
+    n'existe aucun chemin d'ici vers `donnees/` : la règle est tenue par ce qui
+    n'est pas écrit plutôt que par une précaution.
+    """
+    atelier = _atelier(requete)
+    if atelier.fournisseurs.secret(nom) is None:
+        raise ErreurAtelier(
+            f"aucun fournisseur ne demande « {nom} »", ou_aller="reglages"
+        )
+    retirer_secret(nom)
+    return {"tiroirs": [t.en_json() for t in atelier.fournisseurs.tiroirs()]}
 
 
 class CorpsAgent(BaseModel):
@@ -238,6 +278,14 @@ async def modeles(
     """
     atelier = _atelier(requete)
     etat = atelier.catalogue.etat
+    # **Une lecture pour toute la liste** (F1) : ce qui manque à un fournisseur
+    # se redemande à chaque affichage — une clé déposée agit sans redémarrer —,
+    # mais une fois par fournisseur, jamais une fois par modèle.
+    grises = atelier.catalogue.grises()
+    # **Ce qui reste chez chacun, et d'où le chiffre vient** (F2). Une lecture
+    # pour toute la liste, comme le grisé : c'est une question par fournisseur,
+    # jamais une par modèle.
+    reserves = {r.fournisseur: r for r in atelier.reserves.toutes()}
     projet = atelier.bibliotheque.courant
     compte = atelier.generations.compter_references(
         projet,
@@ -254,7 +302,15 @@ async def modeles(
         # d'une seule pose reste une planche.
         piece=piece or None,
     )
-    demande = _demande_de_jauge(compte["total"], proportions, resolution)
+    # **Le grisé se compte sur ce qui ne cède pas** (F6), et non sur tout ce qui
+    # partirait. Ce que le produit ajoute de lui-même — artworks du jeu, concept
+    # arts, images d'ambiance — cède devant le plafond du modèle plutôt que de
+    # le refuser ; garder le total ici griserait tout modèle sans place sur un
+    # jeu qui a un seul artwork officiel, c'est-à-dire **le gratuit, presque
+    # toujours**. Ce qui cède n'est pas perdu pour autant : l'écran de
+    # confirmation le montre avant de lancer, et la fiche de l'image le dit
+    # ensuite.
+    demande = _demande_de_jauge(compte["incompressibles"], proportions, resolution)
     defaut = atelier.catalogue.defaut(demande)
     univers = atelier.univers.univers(projet)
     # **Le défaut suit ce qu'on fabrique, et une planche n'est pas un sujet.**
@@ -278,6 +334,13 @@ async def modeles(
         "recu_le": etat.recu_le,
         "repli": etat.repli,
         "raison": etat.raison,
+        # **Un état par fournisseur** (F1). L'écran en a besoin pour dire *lequel*
+        # est coupé, et pour ne pas annoncer une panne générale quand un seul des
+        # deux ne répond pas.
+        "fournisseurs": [
+            f.en_json(grises.get(f.nom), reserves.get(f.nom))
+            for f in etat.fournisseurs
+        ],
         "defaut": {"modele": du_projet or defaut.modele, "options": defaut.options},
         "references": compte,
         # **Ce que cet appel-là coûterait chez chaque modèle** (US-121). Une
@@ -303,7 +366,16 @@ async def modeles(
             )
             is not None
         },
-        "modeles": [_modele_en_json(m, demande) for m in etat.modeles],
+        "modeles": [
+            _modele_en_json(
+                m,
+                demande,
+                grises.get(m.fournisseur),
+                etat.fournisseur(m.fournisseur),
+                reserves.get(m.fournisseur),
+            )
+            for m in etat.modeles
+        ],
     }
 
 
@@ -334,9 +406,36 @@ def _demande_de_jauge(references: int, proportions: str, resolution: str | None)
     return _Jauge(references, proportions, resolution)
 
 
-def _modele_en_json(modele: Modele, demande) -> dict[str, Any]:
+def _modele_en_json(
+    modele: Modele,
+    demande,
+    indisponible: str | None,
+    source: "EtatFournisseur | None" = None,
+    reserve: "Reserve | None" = None,
+) -> dict[str, Any]:
+    """La fiche d'un modèle, **la phrase qui le grise, et d'où elle vient**.
+
+    Deux choses peuvent l'empêcher, et l'écran n'en affiche qu'une : ce que son
+    fournisseur n'a pas — une clé —, et ce que le modèle ne sait pas faire.
+    **Le fournisseur passe en premier**, parce que sa phrase mène à un geste qui
+    débloque *tous* ses modèles, là où l'autre ne parle que de celui-ci.
+
+    **Et la fiche dit d'où elle vient** (F1) : relue chez le fournisseur, ou
+    relevée ici à telle date. C'est la règle du catalogue de T1 poussée d'un
+    cran — *le catalogue décide, jamais une liste en dur* n'a de sens que si
+    l'on sait de quand date ce qu'on lit. Les deux champs sont **dérivés** de
+    l'état du fournisseur, jamais enregistrés : une fiche ne porte pas sa propre
+    fraîcheur, son fournisseur la porte pour elle.
+    """
     fiche = modele_en_json(modele)
-    fiche["refus"] = modele.refus(demande)
+    fiche["refus"] = indisponible or modele.refus(demande)
+    fiche["repli"] = bool(source.repli) if source is not None else False
+    fiche["recu_le"] = source.recu_le if source is not None else 0.0
+    # **Dans quelle unité ce modèle-là consomme** (F2), dérivée elle aussi de
+    # son fournisseur. Sans elle, l'estimation que la barre qui paie affiche à
+    # côté de son nom s'écrirait « $0,0000 » pour un modèle gratuit — et se
+    # lirait *sans limite* là où il faut lire *sans prix*.
+    fiche["unite"] = reserve.unite if reserve is not None else USD
     return fiche
 
 

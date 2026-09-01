@@ -74,7 +74,7 @@ def _planche_generee(client, double, **forme) -> dict:
     double.rendre = lambda: planche(**forme)
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "une planche de huit"},
+        json={"modele": "essai:rend-du-png", "prompt": "une planche de huit"},
     ).json()
     reponse = client.get(f"/api/assets/{generation['identifiant']}-0")
     assert reponse.status_code == 200, reponse.text
@@ -472,7 +472,7 @@ def test_le_moteur_par_modele_detoure_pour_de_vrai_quand_il_est_installe(
     double.rendre = lambda: octets
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un archer gobelin"},
+        json={"modele": "essai:rend-du-png", "prompt": "un archer gobelin"},
     ).json()
     identifiant = f"{generation['identifiant']}-0"
 

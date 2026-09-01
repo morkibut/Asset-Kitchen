@@ -58,6 +58,7 @@ export function EcranUnivers({
   cote,
   onCote,
   onSortirDeLAssistant,
+  onDeposee,
   vue,
   onVue,
   replies,
@@ -95,6 +96,10 @@ export function EcranUnivers({
    *  allumé. C'est `App` qui sait où l'on tombe — cet écran-ci ne connaît que
    *  le sien. */
   onSortirDeLAssistant: () => void
+  /** **Un secret vient d'être déposé à l'étape 10** (F3). L'écran ne s'en sert
+   *  pas lui-même : il le fait passer à l'assistant, parce que ce que le dépôt
+   *  change — la barre du haut et le grisé des modèles — est rendu ailleurs. */
+  onDeposee: () => void
   vue: Vue
   onVue: (vue: Vue) => void
   replies: { univers: boolean; reserve: boolean }
@@ -299,6 +304,7 @@ export function EcranUnivers({
           onUnivers={onUnivers}
           onErreur={setRefus}
           onRealigner={realigner}
+          onDeposee={onDeposee}
         />
       )}
 

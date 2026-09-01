@@ -33,7 +33,7 @@ from atelier.services.prix import prix_de
 
 from tests.conftest import image_sujet
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 # ── Les échafaudages ─────────────────────────────────────────────────────────

@@ -34,6 +34,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from atelier.domaine.consommation import USD, argent
 from atelier.domaine.equipement import MesuresCalque
 from atelier.domaine.pliage import MesuresLot
 from atelier.domaine.recette import Recette
@@ -87,7 +88,14 @@ class Asset:
     # calcule sur elle seule — elle est la seule à porter les appels **ratés**,
     # qui coûtent et ne produisent aucun asset (US-24). Aucune divergence
     # possible : `naitre()` est le seul endroit qui écrive ce champ.
-    cout_usd: float = 0.0
+    #
+    # **Et depuis F2, l'unité voyage avec la quantité.** Sans elle, la tuile
+    # d'une image faite chez un fournisseur gratuit afficherait `$0,0000` — le
+    # mensonge par omission que la tranche existe pour fermer. `cout_usd` reste
+    # lisible juste en dessous, déduit : c'est la part en argent, et elle vaut
+    # zéro dès que l'unité n'est pas celle de l'argent.
+    consomme: float = 0.0
+    unite: str = USD
 
     # ── Qui l'a demandé ──────────────────────────────────────────────────────
     #
@@ -237,6 +245,16 @@ class Asset:
         return not self.recette.vide
 
     @property
+    def cout_usd(self) -> float:
+        """La part en argent de ce que l'appel a consommé pour cette image (F2).
+
+        Déduite, comme sur l'emplacement dont elle est la copie : une image
+        faite chez un fournisseur qui compte en jetons vaut zéro dollar, et
+        aucun total en argent ne peut donc la compter.
+        """
+        return argent(self.consomme, self.unite)
+
+    @property
     def supprime(self) -> bool:
         """Hors bibliothèque. Les fichiers sont peut-être encore là — l'annulation
         court —, mais plus rien ne le montre ni ne le compte."""
@@ -266,6 +284,9 @@ class Asset:
             "rendu_hauteur": self.rendu_hauteur,
             "cree_le": self.cree_le,
             "epingle": self.epingle,
+            "consomme": self.consomme,
+            "unite": self.unite,
+            # Déduit, écrit quand même — la tuile d'avant la V2.2 le lit.
             "cout_usd": self.cout_usd,
             "provenance": self.provenance,
             "modele": self.modele,
@@ -328,7 +349,10 @@ class Asset:
             rendu_hauteur=d.get("rendu_hauteur", 0),
             cree_le=d.get("cree_le", 0.0),
             epingle=d.get("epingle", False),
-            cout_usd=float(d.get("cout_usd", 0.0)),
+            # Une image d'avant la V2.2 n'a pas d'unité : elle est en dollars,
+            # et sa quantité est le montant qu'elle portait.
+            consomme=float(d.get("consomme", d.get("cout_usd", 0.0))),
+            unite=str(d.get("unite", USD)),
             provenance=d.get("provenance", "auteur"),
             modele=d.get("modele", ""),
             personnage=d.get("personnage"),

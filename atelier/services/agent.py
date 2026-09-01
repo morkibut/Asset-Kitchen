@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Any
 
 from atelier.depot import Fichiers
+from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import AGENT
 from atelier.services.catalogue import ServiceCatalogue
@@ -47,8 +48,22 @@ from atelier.services.evenements import Diffusion
 # Le modèle d'exploration, et ses options. Nommé ici et pas dans le catalogue :
 # c'est une décision du produit sur ce que l'agent dépense, pas une propriété du
 # fournisseur. `docs/archi-fournisseur.md` § Serveur MCP.
-MODELE_EXPLORATION = "openai/gpt-image-2"
-OPTIONS_EXPLORATION: dict[str, Any] = {"quality": "low"}
+#
+# **Gratuit depuis F6, et c'est le gain le plus net de la V2.2.** Il était
+# `OpenRouter:openai/gpt-image-2` en `quality: low` : un rapport de six sur le
+# coût du travail agentique, pour une perte de qualité qui ne compte pas quand
+# on code. Il vaut désormais la totalité — *une séance de code entière ne fait
+# plus bouger le total en argent*, et c'est le critère qui juge la tranche.
+#
+# **Le nom est celui du seul modèle gratuit mesuré** (`docs/releve-fournisseurs.md`,
+# palier sans compte de Pollinations). S'il disparaissait du catalogue, l'agent
+# ne retombe pas sur le modèle le plus cher : `_connu` cherche d'abord un autre
+# gratuit — voir sa docstring.
+MODELE_EXPLORATION = "Pollinations:sana"
+# Vides, et ce n'est pas un oubli : `quality` était un réglage d'OpenRouter, et
+# un réglage qu'un modèle ne déclare pas est écarté avec sa raison (T1). Le
+# garde-fou n'a plus rien à imposer que le modèle lui-même.
+OPTIONS_EXPLORATION: dict[str, Any] = {}
 
 # Vingt générations : de quoi tenir une séance de code entière sans y penser, et
 # assez bas pour qu'un agent parti en boucle se cogne avant d'avoir coûté un
@@ -222,8 +237,8 @@ class ServiceAgent:
         self._reserve = max(0, self._reserve - variations)
         self._annoncer()
 
-    def _mesurer(self) -> tuple[int, float]:
-        """Ce que l'agent a demandé et dépensé depuis l'ouverture.
+    def _mesurer(self) -> tuple[int, float, dict[str, float]]:
+        """Ce que l'agent a demandé, dépensé, et consommé sans argent.
 
         Lu sur les générations à chaque question. **Les emplacements, pas les
         générations** : le plafond compte des images, c'est-à-dire ce qui est
@@ -232,17 +247,29 @@ class ServiceAgent:
         Le coût inclut celui des appels **ratés** : « un appel qui échoue peut
         avoir coûté », et c'est justement celui qu'on cherche à expliquer quand
         on regarde ce compteur.
+
+        **Le troisième chiffre est arrivé en F2, et il est compté à part.** Le
+        plafond de l'agent compte des images et n'a donc jamais refusé au nom
+        d'un montant — mais le compteur qu'il affiche, lui, ne disait qu'un
+        chiffre en dollars. Une séance entière passée chez un fournisseur
+        gratuit s'y lisait « $0,0000 », c'est-à-dire comme une séance sans
+        aucun appel. Les deux ne se somment jamais : un total en argent ne
+        compte que de l'argent.
         """
         if self._generations is None:
-            return self._reserve, 0.0
+            return self._reserve, 0.0, {}
         faites = self._reserve
         depense = 0.0
+        gratuit: dict[str, float] = {}
         for generation in self._generations.recentes(500):
             if generation.provenance != AGENT or generation.cree_le < self._depuis:
                 continue
             faites += len(generation.emplacements)
             depense += generation.cout_usd
-        return faites, round(depense, 6)
+            if not est_argent(generation.unite) and generation.consomme:
+                unite = generation.unite
+                gratuit[unite] = round(gratuit.get(unite, 0.0) + generation.consomme, 6)
+        return faites, round(depense, 6), gratuit
 
     def _compter_faites(self) -> int:
         return self._mesurer()[0]
@@ -270,11 +297,32 @@ class ServiceAgent:
         return self._connu(cadre.modele), dict(cadre.options)
 
     def _connu(self, identifiant: str) -> str:
-        """`identifiant` s'il est au catalogue, le défaut du catalogue sinon."""
+        """`identifiant` s'il est au catalogue, **un gratuit** sinon (F6).
+
+        **On passe par le catalogue plutôt que de comparer des chaînes** (F1) :
+        un garde-fou enregistré avant la V2.2 porte un nom sans fournisseur, et
+        c'est le catalogue qui sait le rattacher. Le comparer tel quel ferait
+        silencieusement retomber l'agent sur le défaut, ce qui est un changement
+        de modèle que personne n'a demandé.
+
+        **Le repli a changé en F6, et c'est le même raisonnement qu'en T7 poussé
+        d'un cran.** Il rendait le défaut du catalogue — le meilleur modèle du
+        banc, donc un payant. Un garde-fou posé pour ne rien dépenser qui se
+        replie sur un modèle payant le jour où le gratuit change de nom est un
+        garde-fou qui coûte de l'argent en silence, ce qui est pire que pas de
+        garde-fou du tout. On cherche donc **un autre gratuit** d'abord, et le
+        défaut du catalogue seulement s'il n'en existe aucun — un atelier composé
+        sans fournisseur gratuit reste un atelier où l'agent travaille.
+        """
         if self._catalogue is None:
             return identifiant
-        if any(m.identifiant == identifiant for m in self._catalogue.etat.modeles):
-            return identifiant
+        try:
+            return self._catalogue.modele(identifiant).identifiant
+        except ErreurAtelier:
+            pass
+        gratuits = self._catalogue.gratuits()
+        if gratuits:
+            return gratuits[0].identifiant
         return self._catalogue.defaut().modele or identifiant
 
     # ── Le compteur ──────────────────────────────────────────────────────────
@@ -282,10 +330,18 @@ class ServiceAgent:
     def consommation(self) -> dict[str, Any]:
         """Ce que l'écran affiche, discrètement (US-90)."""
         cadre = self.garde_fous()
-        faites, depense = self._mesurer()
+        faites, depense, gratuit = self._mesurer()
         return {
             "generations": faites,
             "depense_usd": depense,
+            # **Ce qu'il a consommé sans argent, une ligne par unité** (F2). À
+            # côté de la dépense, jamais dedans — et vide tant qu'il n'a
+            # travaillé que chez un fournisseur qui facture, ce qui était tout
+            # le produit avant la V2.2.
+            "consomme": [
+                {"unite": unite, "quantite": quantite}
+                for unite, quantite in sorted(gratuit.items())
+            ],
             "plafond_actif": cadre.plafond_actif,
             "plafond": cadre.plafond,
             # Ce qui reste — calculé **ici et nulle part ailleurs**, pour que le

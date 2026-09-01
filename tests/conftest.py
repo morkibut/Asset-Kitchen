@@ -23,15 +23,24 @@ from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
 from atelier.api.app import creer_application
-from atelier.domaine import Demande, Modele, Option
+from atelier.domaine import USD, Compte, Demande, Modele, Option
 from atelier.domaine.erreurs import FournisseurIndisponible
+from atelier.domaine.secret import Secret
 from atelier.fournisseur.port import ImageProduite
 from atelier.services import Atelier
 
+# **Le nom du fournisseur double, et il qualifie ses modèles** (F1). Un modèle se
+# nomme par son fournisseur et par son nom depuis la V2.2 : `essai:rend-du-png`
+# se lit « le modèle *rend-du-png* de chez *essai* », et c'est très exactement ce
+# que le produit écrit désormais dans une génération.
+FOURNISSEUR = "essai"
+
 CATALOGUE = [
     Modele(
-        identifiant="essai/rend-du-png",
+        identifiant="essai:rend-du-png",
         nom="Essai PNG",
+        fournisseur=FOURNISSEUR,
+        chez_lui="rend-du-png",
         references_max=2,
         proportions=("1:1", "16:9"),
         resolutions=(),
@@ -39,8 +48,10 @@ CATALOGUE = [
         options={"quality": Option("quality", "choix", ("low", "high"))},
     ),
     Modele(
-        identifiant="essai/rend-du-jpeg",
+        identifiant="essai:rend-du-jpeg",
         nom="Essai JPEG",
+        fournisseur=FOURNISSEUR,
+        chez_lui="rend-du-jpeg",
         references_max=0,
         proportions=("1:1",),
         variations_max=1,
@@ -195,17 +206,28 @@ def bloc_mesure(octets: bytes) -> int:
 class FournisseurDouble:
     """Implémente `PortFournisseur`, sans réseau et sans facture.
 
-    Trois leviers, et ils suffisent à jouer tous les cas du produit :
-    `catalogue_lisible` coupe le réseau, `echec` fait rater les appels, et
+    Quatre leviers, et ils suffisent à jouer tous les cas du produit :
+    `catalogue_lisible` coupe le réseau, `echec` fait rater les appels,
     `retenir` les fait attendre — c'est ce dernier qui permet de regarder un
-    emplacement **pendant** qu'il tourne, donc de vérifier la jauge.
+    emplacement **pendant** qu'il tourne, donc de vérifier la jauge — et
+    `manque` lui retire ce qu'il lui faut pour travailler.
+
+    S'y sont ajoutés `compte_declare` (F2), qui le fait compter en jetons, et
+    `secrets_declares` (F3), qui lui donne des places à remplir. Tous partent
+    éteints : un essai lit dans son nom ce que le double fait.
     """
 
-    nom = "Double"
+    nom = FOURNISSEUR
 
     def __init__(self) -> None:
         self.appels = 0
         self.catalogue_lisible = True
+        # **Ce qui lui manque pour travailler**, arrivé en F1. Avant la V2.2 la
+        # question était « y a-t-il une clé ? » et la réponse valait pour
+        # l'atelier entier ; elle appartient maintenant à chaque fournisseur, et
+        # un essai la pose sur celui qu'il veut. `None` — il ne manque rien, ce
+        # qui est le cas courant et celui de tous les essais d'avant.
+        self.manque: str | None = None
         self.echec: Exception | None = None
         self.retenir: asyncio.Event | None = None
         self.duree_annoncee_s = 0.0
@@ -232,6 +254,31 @@ class FournisseurDouble:
         # levier de la même famille que `rendre` et `repondre` — un test lit dans
         # son nom ce que le double fait.
         self.couter: "callable[[Demande], float] | None" = None
+        # **Dans quelle unité ce double compte** (F2). `None` — il compte en
+        # argent, ce qu'était tout le produit avant la V2.2 et ce que font tous
+        # les essais d'avant cette tranche. Posé par un test, il joue un
+        # fournisseur qui consomme des jetons : `compte()` déclare alors sa
+        # réserve, et chaque image en consomme `par_appel`.
+        self.compte_declare: "Compte | None" = None
+        # **Les places qu'il demande** (F3). Vide — il ne demande rien, ce qui
+        # est le cas de tous les essais d'avant cette tranche et reste le défaut.
+        # Un essai qui veut jouer un fournisseur à secrets pose les siennes ; il
+        # pose alors `manque` en même temps s'il les veut vides, les deux
+        # leviers restant indépendants pour qu'un essai puisse jouer *déclarée
+        # et remplie* aussi bien que *déclarée et vide*.
+        self.secrets_declares: "tuple[Secret, ...]" = ()
+
+    def compte(self) -> "Compte | None":
+        return self.compte_declare
+
+    def secrets(self) -> "tuple[Secret, ...]":
+        return self.secrets_declares
+
+    def indisponible(self) -> str | None:
+        return self.manque
+
+    def _unite(self) -> str:
+        return self.compte_declare.unite if self.compte_declare else USD
 
     async def catalogue(self) -> list[Modele]:
         if not self.catalogue_lisible:
@@ -251,30 +298,41 @@ class FournisseurDouble:
         if self.repondre is not None:
             return ImageProduite(
                 self.repondre(demande),
-                cout_usd=self._cout(demande, 0.0245),
+                consomme=self._cout(demande, 0.0245),
+                unite=self._unite(),
                 type_media="image/png",
             )
         if self.rendre is not None:
             return ImageProduite(
                 self.rendre(),
-                cout_usd=self._cout(demande, 0.0245),
+                consomme=self._cout(demande, 0.0245),
+                unite=self._unite(),
                 type_media="image/png",
             )
-        if modele.identifiant.endswith("jpeg"):
+        if modele.envoi.endswith("jpeg"):
             return ImageProduite(
                 image("JPEG"),
-                cout_usd=self._cout(demande, 0.035),
+                consomme=self._cout(demande, 0.035),
+                unite=self._unite(),
                 type_media="image/jpeg",
             )
         return ImageProduite(
             image("PNG"),
-            cout_usd=self._cout(demande, 0.0245),
+            consomme=self._cout(demande, 0.0245),
+                unite=self._unite(),
             type_media="image/png",
         )
 
     def _cout(self, demande: Demande, defaut: float) -> float:
-        """Le prix plat d'avant, sauf si le test en a posé un qui varie."""
-        return defaut if self.couter is None else self.couter(demande)
+        """Le prix plat d'avant, sauf si le test en a posé un qui varie.
+
+        **Un fournisseur qui ne compte pas en argent consomme un par appel**, et
+        pas `0.0245` — un chiffre d'argent porté par une unité de jetons serait
+        le genre de confusion que F2 existe pour empêcher.
+        """
+        if self.couter is not None:
+            return self.couter(demande)
+        return defaut if self.compte_declare is None else 1.0
 
 
 @pytest.fixture
@@ -283,8 +341,19 @@ def double() -> FournisseurDouble:
 
 
 @pytest.fixture
-def atelier(tmp_path, double, monkeypatch) -> Atelier:
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
+def atelier(tmp_path, double) -> Atelier:
+    """Un atelier **sur un seul fournisseur**, et c'est délibéré.
+
+    C'est ce que le produit était avant la V2.2, et c'est ce que la quasi-totalité
+    des critères d'acceptation vérifie : ils ne parlent pas de fournisseurs, ils
+    parlent d'images, de recettes et d'écrans. Les essais qui ont besoin de deux
+    fournisseurs à la fois — ceux de F1 — montent leur atelier eux-mêmes, avec
+    `fabriques_fournisseurs`.
+
+    **Aucune clé n'est plus nécessaire ici** : le double n'en demande pas, et un
+    fournisseur qui ne demande rien est très exactement ce que F1 a fait entrer
+    dans le produit.
+    """
     return Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
 
 

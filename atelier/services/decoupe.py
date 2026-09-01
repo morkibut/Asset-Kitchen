@@ -196,7 +196,11 @@ class ServiceDecoupe:
                         # personne n'a facturé — et le total du projet, qui se
                         # calcule sur les générations, dirait alors autre chose
                         # que la somme des tuiles.
-                        cout_usd=0.0,
+                        consomme=0.0,
+                        # **L'unité de l'appel, avec une quantité nulle** (F2).
+                        # Zéro dollar et zéro jeton ne se lisent pas pareil :
+                        # le premier s'écrit « $0,0000 », le second « gratuit ».
+                        unite=planche.unite,
                         # **Une découpe appartient à qui a demandé la planche**
                         # (US-39). Couper n'est pas commander : c'est le même
                         # appel, poursuivi. Sans cette ligne, huit morceaux d'une

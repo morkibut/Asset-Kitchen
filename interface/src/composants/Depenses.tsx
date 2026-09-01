@@ -27,7 +27,16 @@
 // dont c'est vrai des deux côtés à la fois, et son pied le dit.
 
 import { useEffect, useMemo, useState } from "react"
-import { api, dollars, type Asset, type Depense, type Depenses } from "../api"
+import {
+  api,
+  depense,
+  dollars,
+  estArgent,
+  quantite,
+  type Asset,
+  type Depense,
+  type Depenses,
+} from "../api"
 import { sujetAsset, useVisee } from "./Apercu"
 import { EnTetePanneau } from "./chassis"
 import { PANNEAU } from "./Infobulle"
@@ -75,10 +84,21 @@ function Marque({ pour }: { pour: Issue }) {
 const HEURE = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" })
 const JOUR = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" })
 
-/** Le nom court du modèle, sans le fournisseur devant. `openai/gpt-image-2`
- *  devient `gpt-image-2` : le fournisseur est le même pour tous, il ne
- *  distingue rien, et il prend la moitié de la colonne. */
-const court = (modele: string) => modele.split("/").pop() ?? modele
+/** Le nom court du modèle — **le fournisseur reste, l'éditeur part**.
+ *
+ *  `OpenRouter:openai/gpt-image-2` devient `OpenRouter · gpt-image-2`. La règle
+ *  d'avant la V2.2 était de tout couper avant la barre oblique, et sa raison
+ *  était écrite : *le fournisseur est le même pour tous, il ne distingue rien*.
+ *  Elle a cessé d'être vraie en F1. Ce qui est coupé est l'éditeur du modèle —
+ *  `openai`, `google` —, qui ne distingue toujours rien puisque le nom qui suit
+ *  est déjà unique chez son fournisseur ; ce qui reste est celui à qui l'appel
+ *  a été payé, et c'est la question que cet écran pose. */
+const court = (modele: string) => {
+  const coupe = modele.indexOf(":")
+  const chezLui = modele.slice(coupe + 1)
+  const sansEditeur = chezLui.split("/").pop() ?? chezLui
+  return coupe < 0 ? sansEditeur : `${modele.slice(0, coupe)} · ${sansEditeur}`
+}
 
 /** Le sujet d'un appel — **la chose du jeu, jamais le texte envoyé**. */
 function sujet(appel: Depense): { nom: string; precision: string | null } {
@@ -245,9 +265,15 @@ export function EcranDepenses({
             valeur={periode}
             onChange={(v) => setPeriode(v as Periode)}
           />
+          {/* **Le total en argent, et ce qui est parti sans argent à côté**
+              (F2). Jamais additionnés : un total en dollars reste un total en
+              dollars, et une quantité de jetons ne s'y fond pas. */}
           <span className="mesure ml-auto shrink-0 whitespace-nowrap text-[10px] text-texte-3">
             {retenus.length} appel{retenus.length > 1 ? "s" : ""} ·{" "}
             {dollars(retenus.reduce((somme, a) => somme + a.cout_usd, 0))}
+            {sansArgent(retenus).map((ligne) => (
+              <span key={ligne.unite}> · {quantite(ligne.quantite, ligne.unite)}</span>
+            ))}
           </span>
           {/* La sortie, écrite avec sa touche — la forme qu'ont déjà le Guide
               et la vitrine. Aucune hauteur neuve : elle prend la fente qui
@@ -277,8 +303,18 @@ export function EcranDepenses({
                 <span className="normal-case tracking-normal">
                   · {paquet.appels.length} appel{paquet.appels.length > 1 ? "s" : ""}
                 </span>
+                {/* **Le total du jour en argent, et ce qui est parti sans
+                    argent à côté** (F2). Une journée dont tous les appels sont
+                    gratuits affichait « $0,0000 » — le même mensonge par
+                    omission que sur la ligne d'un appel, un cran plus haut. */}
                 <span className="ml-auto normal-case tracking-normal text-texte-2">
                   {dollars(paquet.cout_usd)}
+                  {sansArgent(paquet.appels).map((ligne) => (
+                    <span key={ligne.unite} className="text-texte-3">
+                      {" "}
+                      · {quantite(ligne.quantite, ligne.unite)}
+                    </span>
+                  ))}
                 </span>
               </div>
               {paquet.appels.map((appel, rang) => (
@@ -366,11 +402,30 @@ function ColonneTotaux({
             un fait sur la façon dont l'atelier sert. */}
         <Total nom="hors jeu" montant={tout?.sans_projet_usd ?? 0} epingle />
 
+        {/* **Ce qui s'est consommé sans argent, sous le total et non dedans**
+            (F2). *Un total en argent ne compte que de l'argent* : ajouter des
+            jetons à des dollars ferait un chiffre qui n'est celui de rien.
+            Absent tant qu'aucun appel gratuit n'est parti. */}
+        {(tout?.par_unite ?? []).map((u) => (
+          <Total
+            key={u.unite}
+            nom={`et, sans argent, ${u.appels} appel${u.appels > 1 ? "s" : ""}`}
+            texte={quantite(u.quantite, u.unite)}
+          />
+        ))}
+
         <div className="my-3 h-px bg-bord" />
 
         <EnTeteRubrique>Par modèle</EnTeteRubrique>
         {(tout?.par_modele ?? []).map((m) => (
-          <Total key={m.modele} nom={court(m.modele)} montant={m.cout_usd} />
+          <Total
+            key={m.modele}
+            nom={court(m.modele)}
+            montant={m.cout_usd}
+            texte={
+              estArgent(m.unite) ? undefined : quantite(m.consomme, m.unite)
+            }
+          />
         ))}
 
         <div className="my-3 h-px bg-bord" />
@@ -423,11 +478,17 @@ function EnTeteRubrique({ children }: { children: React.ReactNode }) {
 function Total({
   nom,
   montant,
+  texte,
   gros = false,
   epingle = false,
 }: {
   nom: string
-  montant: number
+  /** Le montant en argent. Ignoré quand `texte` est donné. */
+  montant?: number
+  /** Ce qu'on écrit à droite quand ce n'est pas de l'argent — « 7 jetons »
+   *  (F2). La colonne reste alignée : ce qu'on parcourt du regard est la même
+   *  colonne, et elle porte parfois un mot au lieu d'un chiffre. */
+  texte?: string
   gros?: boolean
   epingle?: boolean
 }) {
@@ -445,10 +506,26 @@ function Total({
           epingle ? "text-epingle" : gros ? "text-texte" : "text-texte-2",
         ].join(" ")}
       >
-        {dollars(montant)}
+        {texte ?? dollars(montant ?? 0)}
       </span>
     </p>
   )
+}
+
+/** Ce qui s'est consommé **sans argent** dans ce lot d'appels, par unité (F2).
+ *
+ *  Calculé ici et non côté serveur : la barre du haut compte ce que les filtres
+ *  ont retenu, et le serveur ne connaît pas les filtres. Le total de gauche,
+ *  lui, vient du serveur et compte tout. */
+function sansArgent(appels: Depense[]): { unite: string; quantite: number }[] {
+  const comptes = new Map<string, number>()
+  for (const appel of appels) {
+    if (estArgent(appel.unite) || !appel.consomme) continue
+    comptes.set(appel.unite, (comptes.get(appel.unite) ?? 0) + appel.consomme)
+  }
+  return [...comptes.entries()]
+    .map(([unite, quantite]) => ({ unite, quantite }))
+    .sort((a, b) => a.unite.localeCompare(b.unite))
 }
 
 function Choix({
@@ -569,13 +646,17 @@ function Ligne({
         <span className="w-[48px] shrink-0 text-right text-texte-3">
           {appel.variations} img
         </span>
+        {/* **« gratuit », jamais « $0,0000 »** (F2) : c'est le mensonge par
+            omission que cet écran a été construit pour arrêter, un cran plus
+            bas. Ce que l'appel a consommé se lit dans la colonne de droite,
+            avec son mot. */}
         <span
           className={[
             "w-[64px] shrink-0 text-right tabular-nums",
-            appel.cout_usd > 0 ? "text-texte-2" : "text-texte-3",
+            appel.consomme > 0 ? "text-texte-2" : "text-texte-3",
           ].join(" ")}
         >
-          {dollars(appel.cout_usd)}
+          {depense(appel.cout_usd, appel.unite)}
         </span>
       </button>
     </div>
@@ -604,9 +685,17 @@ function FicheAppel({
 
   const quoi = issue(appel)
   const rafale = depenses?.rafales.find((r) => r.identifiant === appel.rafale) ?? null
+  // **Dans l'unité de l'appel qu'on regarde** (F2). Sommer les dollars d'un
+  // sujet fabriqué gratuitement rendrait zéro, et la ligne disparaîtrait au
+  // moment précis où elle a quelque chose à apprendre.
   const surLeSujet = (depenses?.appels ?? [])
-    .filter((a) => appel.personnage && a.personnage === appel.personnage)
-    .reduce((somme, a) => somme + a.cout_usd, 0)
+    .filter(
+      (a) =>
+        appel.personnage &&
+        a.personnage === appel.personnage &&
+        a.unite === appel.unite,
+    )
+    .reduce((somme, a) => somme + a.consomme, 0)
 
   return (
     <aside {...PANNEAU} className="flex min-h-0 flex-col bg-fond-1">
@@ -624,8 +713,17 @@ function FicheAppel({
           <Rangee cle_="jeu" valeur={appel.projet_nom ?? "hors jeu"} />
         </div>
 
-        <Bloc titre="Ce que l'appel a coûté">
-          <Rangee cle_="payé" valeur={dollars(appel.cout_usd)} />
+        <Bloc titre="Ce que l'appel a consommé">
+          <Rangee cle_="payé" valeur={depense(appel.cout_usd, appel.unite)} />
+          {/* **Ce qu'il a consommé, avec son mot** (F2). La ligne n'apparaît
+              que chez un fournisseur qui ne facture pas : chez les autres, elle
+              redirait en dollars ce que « payé » vient de dire. */}
+          {!estArgent(appel.unite) && (
+            <Rangee
+              cle_="consommé"
+              valeur={quantite(appel.consomme, appel.unite)}
+            />
+          )}
           <Rangee cle_="images demandées" valeur={String(appel.variations)} />
         </Bloc>
 
@@ -670,14 +768,18 @@ function FicheAppel({
             {rafale && (
               <Rangee
                 cle_={`${rafale.appels} appels d'affilée sur ce sujet`}
-                valeur={`${Math.max(1, Math.round((rafale.fin - rafale.debut) / 60))} min · ${dollars(rafale.cout_usd)}`}
+                valeur={`${Math.max(1, Math.round((rafale.fin - rafale.debut) / 60))} min · ${
+                  estArgent(rafale.unite)
+                    ? dollars(rafale.cout_usd)
+                    : quantite(rafale.consomme, rafale.unite)
+                }`}
                 epingle
               />
             )}
             {appel.personnage && (
               <Rangee
-                cle_={`dépensé sur ${appel.personnage}`}
-                valeur={dollars(surLeSujet)}
+                cle_={`parti sur ${appel.personnage}`}
+                valeur={quantite(surLeSujet, appel.unite)}
                 epingle
               />
             )}

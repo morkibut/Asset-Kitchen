@@ -30,7 +30,7 @@ from atelier.domaine.erreurs import FournisseurIndisponible
 from atelier.domaine.projet import CHAMPS_BIBLE
 from atelier.services import Atelier
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 GUIDE = Path(__file__).resolve().parents[1] / "essais" / "guide"
 
 
@@ -597,17 +597,17 @@ def test_un_asset_epingle_se_realigne_d_un_geste(client, double):
 def test_le_modele_est_un_defaut_par_type_d_asset_pas_un_reglage_global(client):
     client.put(
         "/api/universe",
-        json={"modeles": {"personnages": "essai/rend-du-png", "decors": "essai/rend-du-jpeg"}},
+        json={"modeles": {"personnages": "essai:rend-du-png", "decors": "essai:rend-du-jpeg"}},
     )
     _univers_peuple(client, "personnages", "tous")
 
     assert (
         client.get("/api/models", params={"echelle": "personnage"}).json()["defaut"]["modele"]
-        == "essai/rend-du-png"
+        == "essai:rend-du-png"
     )
     assert (
         client.get("/api/models", params={"echelle": "décor"}).json()["defaut"]["modele"]
-        == "essai/rend-du-jpeg"
+        == "essai:rend-du-jpeg"
     )
     # Une famille sans réglage retombe sur le défaut du catalogue : il n'y a pas
     # de trou, seulement un réglage qu'on n'a pas posé.

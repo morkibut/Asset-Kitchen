@@ -17,6 +17,7 @@
 import { useEffect, useState } from "react"
 import {
   api,
+  depense,
   dollars,
   heure,
   Refus,
@@ -357,7 +358,9 @@ function JournalDuProjet({
               </span>
               <span className="mesure flex items-center gap-2 text-[9.5px] text-texte-3">
                 <span>{heure(appel.cree_le)}</span>
-                <span>{dollars(rate.cout_usd)}</span>
+                {/* « gratuit », jamais « $0,0000 » (F2) — même règle que sur
+                    la tuile et dans les dépenses. */}
+                <span>{depense(rate.cout_usd, rate.unite)}</span>
                 <button
                   type="button"
                   onClick={() => onRelancer(appel.identifiant, rate.rang)}

@@ -18,7 +18,7 @@
 
 import {
   api,
-  dollars,
+  depense,
   type Asset,
   type Emplacement,
   type Generation,
@@ -228,7 +228,12 @@ function Mesures({ asset, serree }: { asset: Asset; serree: boolean }) {
           ·
         </span>
       )}
-      <span className="shrink-0">{dollars(asset.cout_usd)}</span>
+      {/* **« gratuit », jamais « $0,0000 »** (F2). Une tuile faite chez un
+          fournisseur qui ne facture pas n'a pas de prix ; afficher zéro dollar
+          se lirait *sans limite* là où il faut lire *sans prix*. Ce qu'elle a
+          consommé — un jeton — se lit sur sa fiche, où il y a la place de le
+          dire avec son mot. */}
+      <span className="shrink-0">{depense(asset.consomme, asset.unite)}</span>
       {/* **À la taille de repos, le lien se réduit à sa flèche.** La planche
           contact ne perd pas une colonne pour un bouton secondaire, et le
           téléchargement reste atteignable aux trois tailles — c'est le mot qui

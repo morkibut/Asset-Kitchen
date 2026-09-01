@@ -20,7 +20,7 @@ import pytest
 
 from atelier.domaine.erreurs import AppelRefuse
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 def _attendre(client, identifiant: str) -> dict:
@@ -103,7 +103,7 @@ def test_un_appel_facture_qui_n_a_rien_rendu_est_de_l_argent_perdu(client, doubl
     argent-là est parti pour rien, et le confondre avec un refus gratuit fait
     dire au total une chose fausse sur ce qui a été gâché.
     """
-    double.echec = AppelRefuse("crédit épuisé", cout_usd=0.011)
+    double.echec = AppelRefuse("crédit épuisé", consomme=0.011)
     lance = _generer(client, "un tonneau")
 
     ligne = _ligne(_depenses(client), lance["identifiant"])

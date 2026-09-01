@@ -21,6 +21,7 @@ import pytest
 from atelier.api.app import creer_application
 from atelier.domaine import Demande, Statut
 from atelier.domaine.erreurs import AppelRefuse, ErreurAtelier
+from atelier.fournisseur.openrouter import CLE
 from atelier.services import Atelier
 from fastapi.testclient import TestClient
 
@@ -31,7 +32,7 @@ from fastapi.testclient import TestClient
 def test_le_catalogue_vient_du_fournisseur(client):
     reponse = client.get("/api/models").json()
     identifiants = [m["identifiant"] for m in reponse["modeles"]]
-    assert identifiants == ["essai/rend-du-png", "essai/rend-du-jpeg"]
+    assert identifiants == ["essai:rend-du-png", "essai:rend-du-jpeg"]
     assert reponse["modeles"][0]["references_max"] == 2  # déclaré, pas écrit en dur
     assert reponse["repli"] is False
 
@@ -42,9 +43,9 @@ def test_le_catalogue_vient_du_fournisseur(client):
 def test_un_modele_qui_ne_peut_pas_est_grise_avec_sa_raison(client):
     modeles = client.get("/api/models", params={"references": 1}).json()["modeles"]
     par_identifiant = {m["identifiant"]: m for m in modeles}
-    assert par_identifiant["essai/rend-du-png"]["refus"] is None
+    assert par_identifiant["essai:rend-du-png"]["refus"] is None
     assert (
-        par_identifiant["essai/rend-du-jpeg"]["refus"]
+        par_identifiant["essai:rend-du-jpeg"]["refus"]
         == "n'accepte aucune image de référence"
     )
 
@@ -55,14 +56,19 @@ def test_la_raison_du_grise_dit_la_proportion_manquante(client):
 
 
 # ── « Sans clé : générer est inactif, dit pourquoi, et mène au réglage » ──────
+#
+# **Le critère de T1 tient, et il a changé de portée en F1.** Ce qui manque
+# n'appartient plus au produit mais au fournisseur du modèle choisi : c'est donc
+# le double qui le dit, et le refus reste mot pour mot celui d'avant — même code,
+# même phrase, même écran où aller.
 
 
-def test_sans_cle_generer_refuse_en_disant_ou_aller(tmp_path, double, monkeypatch):
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "")
+def test_sans_cle_generer_refuse_en_disant_ou_aller(tmp_path, double):
+    double.manque = "aucune clé OpenRouter"
     atelier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
     with TestClient(creer_application(atelier)) as client:
         reponse = client.post(
-            "/api/generations", json={"modele": "essai/rend-du-png", "prompt": "un rat"}
+            "/api/generations", json={"modele": "essai:rend-du-png", "prompt": "un rat"}
         )
         assert reponse.status_code == 409
         assert reponse.json() == {
@@ -73,12 +79,21 @@ def test_sans_cle_generer_refuse_en_disant_ou_aller(tmp_path, double, monkeypatc
         assert double.appels == 0  # rien n'est parti, donc rien n'est facturé
 
 
-def test_l_etat_de_la_cle_ne_montre_jamais_la_cle(client, monkeypatch):
-    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-v1-secrete-0123456789")
-    etat = client.get("/api/settings/key").json()
-    assert etat["presente"] is True
-    assert etat["apercu"] == "456789"
-    assert "sk-or-v1-secrete" not in str(etat)
+def test_l_etat_de_la_cle_ne_montre_jamais_la_cle(client, double, monkeypatch):
+    """**Jamais la valeur, son aperçu** — six caractères, et rien de plus.
+
+    Vrai d'une clé en T1, vrai de n'importe quelle place depuis F3 : c'est le
+    tiroir entier qu'on relit ici, et la chaîne secrète n'y paraît nulle part.
+    """
+    monkeypatch.setenv(CLE.nom, "sk-or-v1-secrete-0123456789")
+    double.secrets_declares = (CLE,)
+
+    tiroirs = client.get("/api/settings/keys").json()["tiroirs"]
+
+    place = tiroirs[0]["secrets"][0]
+    assert place["presente"] is True
+    assert place["apercu"] == "456789"
+    assert "sk-or-v1-secrete" not in str(tiroirs)
 
 
 # ── « Deux soumissions de la même génération ne facturent qu'une fois » ───────
@@ -86,7 +101,7 @@ def test_l_etat_de_la_cle_ne_montre_jamais_la_cle(client, monkeypatch):
 
 def test_deux_soumissions_du_meme_identifiant_ne_facturent_qu_une_fois(client, double):
     corps = {
-        "modele": "essai/rend-du-png",
+        "modele": "essai:rend-du-png",
         "prompt": "un tonneau",
         "identifiant": "toujours-le-meme",
     }
@@ -103,7 +118,7 @@ def test_deux_soumissions_du_meme_identifiant_ne_facturent_qu_une_fois(client, d
 
 def test_le_cout_enregistre_est_celui_de_l_appel(client):
     generation = client.post(
-        "/api/generations", json={"modele": "essai/rend-du-png", "prompt": "une épée"}
+        "/api/generations", json={"modele": "essai:rend-du-png", "prompt": "une épée"}
     ).json()
     relue = client.get(f"/api/generations/{generation['identifiant']}").json()
     assert relue["statut"] == "reussie"
@@ -117,7 +132,7 @@ def test_le_cout_enregistre_est_celui_de_l_appel(client):
 def test_les_dimensions_sont_mesurees_sur_l_image_recue(client):
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un coffre", "proportions": "1:1"},
+        json={"modele": "essai:rend-du-png", "prompt": "un coffre", "proportions": "1:1"},
     ).json()
     resultat = client.get(f"/api/generations/{generation['identifiant']}").json()[
         "emplacements"
@@ -132,7 +147,7 @@ def test_les_dimensions_sont_mesurees_sur_l_image_recue(client):
 
 def test_l_image_se_telecharge_en_png_meme_quand_le_modele_rend_du_jpeg(client):
     generation = client.post(
-        "/api/generations", json={"modele": "essai/rend-du-jpeg", "prompt": "une potion"}
+        "/api/generations", json={"modele": "essai:rend-du-jpeg", "prompt": "une potion"}
     ).json()
     identifiant = generation["identifiant"]
 
@@ -151,7 +166,7 @@ def test_l_image_se_telecharge_en_png_meme_quand_le_modele_rend_du_jpeg(client):
 def test_un_appel_rate_porte_sa_raison_en_clair(client, double):
     double.echec = AppelRefuse("crédit OpenRouter épuisé", statut=402)
     generation = client.post(
-        "/api/generations", json={"modele": "essai/rend-du-png", "prompt": "un rat"}
+        "/api/generations", json={"modele": "essai:rend-du-png", "prompt": "un rat"}
     ).json()
     relue = client.get(f"/api/generations/{generation['identifiant']}").json()
     assert relue["statut"] == "echouee"
@@ -179,7 +194,7 @@ def test_les_emplacements_sont_independants(atelier, double):
     async def scenario():
         await atelier.ouvrir()
         generation = await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("quatre variations", variations=4)
+            "essai:rend-du-png", Demande("quatre variations", variations=4)
         )
         return await atelier.generations.attendre(generation.identifiant, 5.0)
 
@@ -196,13 +211,12 @@ def test_les_emplacements_sont_independants(atelier, double):
 def test_une_generation_coupee_par_un_redemarrage_est_marquee_pas_relancee(
     tmp_path, double, monkeypatch
 ):
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     atelier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
 
     async def coupee():
         await atelier.ouvrir()
         generation, modele, _ = atelier.generations.preparer(
-            "essai/rend-du-png", Demande("interrompue")
+            "essai:rend-du-png", Demande("interrompue")
         )
         return generation.identifiant
 
@@ -223,7 +237,6 @@ def test_une_generation_coupee_par_un_redemarrage_est_marquee_pas_relancee(
 def test_reseau_coupe_le_demarrage_sert_le_dernier_catalogue_date(
     tmp_path, double, monkeypatch
 ):
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     premier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
     asyncio.run(premier.ouvrir())  # une photo du catalogue est écrite sur le disque
 
@@ -265,7 +278,7 @@ def test_relancer_un_rate_ne_rejoue_que_lui(atelier, double):
     async def scenario():
         await atelier.ouvrir()
         generation = await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("deux variations", variations=2)
+            "essai:rend-du-png", Demande("deux variations", variations=2)
         )
         avant = await atelier.generations.attendre(generation.identifiant, 5.0)
         rate = next(e for e in avant.emplacements if e.statut == Statut.ECHOUEE)
@@ -285,7 +298,7 @@ def test_un_emplacement_reussi_ne_se_relance_pas(atelier):
     async def scenario():
         await atelier.ouvrir()
         generation = await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("une seule")
+            "essai:rend-du-png", Demande("une seule")
         )
         await atelier.generations.attendre(generation.identifiant, 5.0)
         return await atelier.generations.relancer(generation.identifiant, 0)

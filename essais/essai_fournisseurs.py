@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Relevé F0 — les trois fournisseurs gratuits, avant de décider lequel entre.
 
-**Un relevé, pas un banc** (`docs/PLAN.md` § F0). Le banc qui a désigné le modèle
+**Un relevé, pas un banc** (`docs/tranches/V2.2.md` § F0). Le banc qui a désigné le modèle
 par défaut a payé dix sujets en deux jets chez trois modèles, jugés image par
 image. Celui-ci ne peut pas : les trois fournisseurs rendent peu de crédits par
 jour, et un banc de qualité les épuiserait avant d'avoir rien conclu — sur la
@@ -53,8 +53,6 @@ import httpx
 
 RACINE = Path(__file__).resolve().parent
 sys.path.insert(0, str(RACINE.parent))
-
-from atelier.reglages import lire_cle as _lire_cle_openrouter  # noqa: E402,F401
 
 SORTIE = RACINE / "fournisseurs.json"
 

@@ -56,7 +56,7 @@ def _asset(client, double, octets: bytes | None = None) -> dict:
     double.rendre = lambda: octets if octets is not None else image_sujet()
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un sujet d'essai"},
+        json={"modele": "essai:rend-du-png", "prompt": "un sujet d'essai"},
     ).json()
     reponse = client.get(f"/api/assets/{generation['identifiant']}-0")
     assert reponse.status_code == 200, reponse.text

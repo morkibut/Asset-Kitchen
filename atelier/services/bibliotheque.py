@@ -32,6 +32,7 @@ from typing import Any, Iterable
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
+from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Generation, Statut
 from atelier.domaine.projet import NOM_BAC_A_SABLE, Collection, Projet, repere
@@ -179,10 +180,11 @@ class ServiceBibliotheque:
                 # le lui reprend plutôt que d'afficher `$0,0000` sur une image
                 # qui a bel et bien été payée. Trouvé en relisant les six
                 # images de T1 et T2, pas au banc.
-                if not asset.cout_usd:
+                if not asset.consomme:
                     emplacement = generation.emplacement(asset.rang)
                     if emplacement is not None:
-                        asset.cout_usd = emplacement.cout_usd
+                        asset.consomme = emplacement.consomme
+                        asset.unite = emplacement.unite
                 # **Ni son modèle** — le champ n'existait pas avant C1, et la
                 # génération le porte depuis T1 (US-123). Même réparation, même
                 # endroit, même raison : la fiche d'une image payée doit
@@ -560,6 +562,10 @@ class ServiceBibliotheque:
                     "statut": e.statut.value,
                     "raison": e.raison,
                     "cout_usd": e.cout_usd,
+                    # Ce qu'il a consommé, et en quoi (F2) : un raté gratuit
+                    # dit « gratuit », jamais « $0,0000 ».
+                    "consomme": e.consomme,
+                    "unite": e.unite,
                 }
                 for e in generation.emplacements
                 if e.statut in (Statut.ECHOUEE, Statut.INTERROMPUE)
@@ -619,6 +625,12 @@ class ServiceBibliotheque:
         que *tous les appels payés* soient listés, ce qui n'interdit pas les
         autres — et les taire ferait disparaître la seule issue que le journal
         d'avant savait montrer, celle qui n'a rien coûté.
+
+        **Et depuis F2, ce qu'ils ont consommé figure à côté de ce qu'ils ont
+        coûté.** La question que pose cet écran cesse d'être *où va mon argent*
+        pour devenir *où va ce que je consomme* : un appel gratuit qui n'aurait
+        montré que `$0,0000` rouvrirait, un cran plus bas, le mensonge par
+        omission que cet écran a été construit pour fermer.
         """
         generations = self._base.recentes(limite)
         vivants = self._base.rangs_vivants([g.identifiant for g in generations])
@@ -636,7 +648,12 @@ class ServiceBibliotheque:
                     else:
                         perdu += 1
                 elif emplacement.statut in (Statut.ECHOUEE, Statut.INTERROMPUE):
-                    if emplacement.cout_usd > 0:
+                    # **Ce qui a été consommé, pas ce qui a été payé** (F2). Un
+                    # refus qui a brûlé un jeton n'est pas « refusé sans rien
+                    # dépenser » : c'est un consommé pour rien, et c'est très
+                    # exactement la distinction que ces trois issues existent
+                    # pour montrer. En argent, la ligne ne bouge pas d'un iota.
+                    if emplacement.consomme > 0:
                         perdu += 1
                     else:
                         refuse += 1
@@ -649,6 +666,11 @@ class ServiceBibliotheque:
                     "prompt": str(generation.demande.get("prompt", "")),
                     "cree_le": generation.cree_le,
                     "cout_usd": generation.cout_usd,
+                    # **Ce que l'appel a consommé, et en quoi** (F2). En argent,
+                    # c'est le même chiffre que juste au-dessus ; autrement,
+                    # c'est le seul des deux qui dise quelque chose.
+                    "consomme": generation.consomme,
+                    "unite": generation.unite,
                     "projet": generation.projet,
                     # Le nom du jeu, résolu ici : l'écran n'a pas à joindre deux
                     # listes pour écrire une ligne, et un projet supprimé rend
@@ -685,14 +707,37 @@ class ServiceBibliotheque:
 
         totaux = self._base.totaux_par_projet()
         par_modele: dict[str, dict[str, Any]] = {}
+        # **Un total par unité, à côté du total en argent** (F2). Jamais dedans :
+        # *un total en argent ne compte que de l'argent* est un invariant de la
+        # V2.2, et c'est ce qui permet de lire la barre de tête sans se demander
+        # ce qu'elle mélange.
+        par_unite: dict[str, dict[str, Any]] = {}
         for appel in appels:
             entree = par_modele.setdefault(
-                appel["modele"], {"modele": appel["modele"], "cout_usd": 0.0, "appels": 0}
+                appel["modele"],
+                {
+                    "modele": appel["modele"],
+                    "cout_usd": 0.0,
+                    "consomme": 0.0,
+                    "unite": appel["unite"],
+                    "appels": 0,
+                },
             )
             entree["cout_usd"] += appel["cout_usd"]
+            entree["consomme"] += appel["consomme"]
             entree["appels"] += 1
+            if not est_argent(appel["unite"]) and appel["consomme"]:
+                compte = par_unite.setdefault(
+                    appel["unite"],
+                    {"unite": appel["unite"], "quantite": 0.0, "appels": 0},
+                )
+                compte["quantite"] += appel["consomme"]
+                compte["appels"] += 1
         for entree in par_modele.values():
             entree["cout_usd"] = round(entree["cout_usd"], 6)
+            entree["consomme"] = round(entree["consomme"], 6)
+        for compte in par_unite.values():
+            compte["quantite"] = round(compte["quantite"], 6)
 
         return {
             "total_usd": self._base.total_par_projet(None),
@@ -710,6 +755,10 @@ class ServiceBibliotheque:
             "par_modele": sorted(
                 par_modele.values(), key=lambda e: e["cout_usd"], reverse=True
             ),
+            # Ce qui s'est consommé sans argent, une ligne par unité. Vide tant
+            # qu'aucun appel gratuit n'est parti — c'est-à-dire pour tout ce que
+            # ce dépôt a fait avant la V2.2.
+            "par_unite": sorted(par_unite.values(), key=lambda e: e["unite"]),
             "appels": appels,
             "rafales": self._rafales(appels),
         }
@@ -751,6 +800,13 @@ class ServiceBibliotheque:
                         "identifiant": identifiant,
                         "appels": len(lot),
                         "cout_usd": round(sum(a["cout_usd"] for a in lot), 6),
+                        # **Ce que la rafale a consommé, et en quoi** (F2). Six
+                        # relances gratuites brûlent six jetons ; c'est ce que
+                        # cette marque existe pour montrer, et l'annoncer à
+                        # `$0,0000` la rendrait muette là où elle est le plus
+                        # utile — chez le fournisseur où l'on relance le plus.
+                        "consomme": round(sum(a["consomme"] for a in lot), 6),
+                        "unite": lot[0]["unite"],
                         # Du plus ancien au plus récent, comme on les a lancés.
                         "debut": lot[-1]["cree_le"],
                         "fin": lot[0]["cree_le"],

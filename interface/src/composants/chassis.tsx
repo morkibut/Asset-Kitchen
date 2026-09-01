@@ -13,8 +13,104 @@ import {
   type ReactNode,
   type Ref,
 } from "react"
-import { secondes } from "../api"
+import { quantite, secondes, type Modele, type Reserve } from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
+
+/** Comment un modèle se dit dans une liste déroulante (F1).
+ *
+ *  **Le fournisseur devant, toujours.** Deux fournisseurs peuvent proposer un
+ *  modèle du même nom — le relevé du 31 août a trouvé les modèles de Leonardo
+ *  hébergés chez Cloudflare —, et deux lignes identiques dans un menu déroulant
+ *  font du choix un tirage au sort. C'est écrit ici, une fois, parce que ces
+ *  listes sont trois et qu'une quatrième viendra.
+ *
+ *  Le nom du catalogue porte déjà l'éditeur quand il en a un — `Meta: Muse
+ *  Image` —, donc on ne le répète pas : ce qu'on ajoute est **à qui l'appel se
+ *  paie**, qui est une autre question. */
+export function libelleModele(modele: Modele): string {
+  return modele.fournisseur ? `${modele.fournisseur} · ${modele.nom}` : modele.nom
+}
+
+/** Ce qui reste chez un fournisseur, **et d'où le chiffre vient** (F2).
+ *
+ *  Écrit ici parce que deux écrans le disent — celui où l'on choisit un modèle
+ *  et celui qui confirme un appel — et qu'ils doivent dire *la même chose*.
+ *  C'est la règle payée en écrivant E13 : deux calculs à deux endroits ont
+ *  annoncé $0,0128 et $0,0160 pour le même appel, à trois centimètres l'un de
+ *  l'autre.
+ *
+ *  **Trois phrases possibles, et la première est la plus fréquente.** Aucun
+ *  fournisseur du produit n'annonce d'allocation aujourd'hui : Pollinations
+ *  limite une cadence, pas un nombre. Écrire « il reste 0 » serait faux —
+ *  *rien* ne reste à épuiser. On dit alors ce qui est parti, et depuis quand.
+ */
+export function phrasesDeReserve(reserve: Reserve): string[] {
+  const dit: string[] = []
+  const releve =
+    reserve.source === "fournisseur"
+      ? "relevé chez le fournisseur"
+      : "compté ici, sur les appels partis de cette machine"
+
+  if (reserve.reste === null) {
+    dit.push(
+      `ce fournisseur n'annonce aucune réserve — ${quantite(
+        reserve.consomme,
+        reserve.unite,
+      )} parti${reserve.consomme >= 2 ? "s" : ""}${
+        reserve.renouvellement ? ` depuis ${reserve.renouvellement}` : ""
+      }, ${releve}.`,
+    )
+  } else {
+    dit.push(
+      `il reste ${quantite(reserve.reste, reserve.unite)} sur ${quantite(
+        reserve.plafond ?? 0,
+        reserve.unite,
+      )}${
+        reserve.renouvellement ? `, renouvelés à ${reserve.renouvellement}` : ""
+      } — ${releve}.`,
+    )
+  }
+
+  if (reserve.cadence_s)
+    dit.push(
+      `un appel toutes les ${reserve.cadence_s} secondes, pas davantage — c'est une cadence, pas un quota.`,
+    )
+
+  // **Ce qui manquerait pour finir ce lot-ci**, annoncé avant qu'il ne parte.
+  // Posé par l'écran qui confirme seulement : celui où l'on choisit ne sait pas
+  // encore ce qui partira.
+  if (reserve.manque)
+    dit.push(
+      `il manquerait ${quantite(
+        reserve.manque,
+        reserve.unite,
+      )} pour finir ce lot — la réserve n'y suffit pas.`,
+    )
+
+  return dit
+}
+
+/** Les mêmes phrases, posées à l'écran. Le manque passe en épinglé : c'est le
+ *  seul des trois qui demande une décision — attendre demain, ou payer. */
+export function LigneReserve({ reserve }: { reserve: Reserve }) {
+  return (
+    <p className="mesure text-[9.5px] leading-4 text-texte-3">
+      {phrasesDeReserve(reserve).map((phrase, rang) => (
+        <span
+          key={phrase}
+          className={
+            rang === phrasesDeReserve(reserve).length - 1 && reserve.manque
+              ? "text-epingle"
+              : undefined
+          }
+        >
+          {rang > 0 ? " " : ""}
+          {phrase}
+        </span>
+      ))}
+    </p>
+  )
+}
 
 // ── Les crans de taille ─────────────────────────────────────────────────────
 //

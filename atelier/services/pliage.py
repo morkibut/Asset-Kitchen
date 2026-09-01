@@ -369,7 +369,8 @@ class ServicePliage:
                 # que personne n'a facturé — et le total du projet, qui se
                 # calcule sur les générations, dirait alors autre chose que la
                 # somme des tuiles. Même règle que les découpes de T5.
-                cout_usd=0.0,
+                consomme=0.0,
+                unite=generation.unite,  # zéro, mais dans l'unité de l'appel (F2)
                 provenance=generation.provenance,
                 modele=generation.modele,
                 projet=generation.projet,

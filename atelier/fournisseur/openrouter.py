@@ -28,10 +28,23 @@ from typing import Any
 import httpx
 
 from atelier.domaine import Demande, Modele, Option
+from atelier.domaine.catalogue import nommer
 from atelier.domaine.erreurs import AppelRefuse, FournisseurIndisponible, SansCle
+from atelier.domaine.secret import Secret, ce_qui_manque
 from atelier.fournisseur.port import ImageProduite
 
 BASE = "https://openrouter.ai/api/v1"
+
+# **La seule place que ce fournisseur demande** (F3). Son nom est celui de la
+# variable d'environnement, documenté dans `.env.example` depuis T1 ; les trois
+# autres champs sont les mots avec lesquels le produit en parle à l'auteur, et
+# ils vivent ici parce que c'est l'adaptateur qui sait ce qu'il demande.
+CLE = Secret(
+    nom="OPENROUTER_API_KEY",
+    libelle="la clé",
+    aucun="aucune clé",
+    ou="openrouter.ai/settings/keys",
+)
 DELAI_CATALOGUE = 30.0
 DELAI_APPEL = 300.0
 
@@ -64,6 +77,35 @@ class OpenRouter:
     def __init__(self, cle: str | None = None) -> None:
         self._cle = (cle or "").strip()
 
+    def secrets(self) -> tuple[Secret, ...]:
+        """Une seule place, et c'est la clé (F3)."""
+        return (CLE,)
+
+    def indisponible(self) -> str | None:
+        """Sans clé, ses modèles sont grisés — **et lui seul** (F1).
+
+        La phrase nomme le fournisseur : depuis qu'il y en a deux, « aucune
+        clé » tout court laisserait croire que rien ne peut produire, alors
+        qu'un autre fournisseur n'en demande aucune.
+
+        **Elle se compose depuis F3**, au lieu d'être écrite ici — mot pour mot
+        la même pour une seule place vide, et *« il manque, chez X : … »* dès
+        qu'il y en a plusieurs. Un adaptateur à deux secrets hérite donc de la
+        phrase sans l'écrire.
+        """
+        return ce_qui_manque(self.nom, self.secrets(), {CLE.nom: self._cle})
+
+    def compte(self) -> None:
+        """Rien : **ce fournisseur compte en argent, et l'argent a sa barre** (F2).
+
+        Il facture à l'appel, en dollars, et ce qu'il reste sur un compte
+        OpenRouter est un solde prépayé qu'aucune des routes du produit ne lit.
+        Rendre ici un chiffre qu'aucun appel n'a mesuré serait très exactement
+        ce que la règle de T1 interdit — et le produit sait déjà dire ce qu'il a
+        dépensé chez lui : c'est le total de la barre de tête.
+        """
+        return None
+
     # ── Le catalogue ─────────────────────────────────────────────────────────
 
     async def catalogue(self) -> list[Modele]:
@@ -94,8 +136,8 @@ class OpenRouter:
                 modeles.append(modele)
         return modeles
 
-    @staticmethod
-    def _lire_fiche(fiche: dict[str, Any]) -> Modele | None:
+    @classmethod
+    def _lire_fiche(cls, fiche: dict[str, Any]) -> Modele | None:
         sorties = (fiche.get("architecture") or {}).get("output_modalities") or []
         if "image" not in sorties:
             return None
@@ -117,8 +159,10 @@ class OpenRouter:
             )
 
         return Modele(
-            identifiant=fiche["id"],
+            identifiant=nommer(cls.nom, fiche["id"]),
             nom=fiche.get("name") or fiche["id"],
+            fournisseur=cls.nom,
+            chez_lui=fiche["id"],
             references_max=_borne(declares.get(_REFERENCES), "max", 0),
             proportions=_valeurs(declares.get(_PROPORTIONS)),
             resolutions=_valeurs(declares.get(_RESOLUTION)),
@@ -161,10 +205,10 @@ class OpenRouter:
         cout = float((resultat.get("usage") or {}).get("cost") or 0.0)
         images = resultat.get("data") or []
         if not images:
-            raise AppelRefuse("le fournisseur n'a rendu aucune image", cout_usd=cout)
+            raise AppelRefuse("le fournisseur n'a rendu aucune image", consomme=cout)
 
         octets, type_media = await _octets_de(images[0])
-        return ImageProduite(octets=octets, cout_usd=cout, type_media=type_media)
+        return ImageProduite(octets=octets, consomme=cout, type_media=type_media)
 
     @staticmethod
     def corps_appel(modele: Modele, demande: Demande) -> dict[str, Any]:
@@ -174,7 +218,10 @@ class OpenRouter:
         mégaoctets de base64 dans un journal.
         """
         corps: dict[str, Any] = {
-            "model": modele.identifiant,
+            # **Son nom chez lui, jamais l'identifiant du produit** : celui-ci
+            # porte le fournisseur en tête depuis F1, et OpenRouter ne le
+            # reconnaîtrait pas.
+            "model": modele.envoi,
             "prompt": _prompt_complet(demande),
         }
         if demande.proportions and demande.proportions in modele.proportions:

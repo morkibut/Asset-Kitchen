@@ -522,7 +522,8 @@ class ServiceAssets:
             # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
             # le total du projet, lui, se calcule sur les générations, qui sont
             # les seules à connaître les appels ratés.
-            cout_usd=emplacement.cout_usd,
+            consomme=emplacement.consomme,
+            unite=emplacement.unite,
             # **Qui l'a demandé**, hérité de l'appel et jamais recalculé (US-39).
             # Une relance ne le rejoue pas depuis l'ancien : c'est la génération
             # qui fait foi, et c'est elle qu'on relance.
@@ -647,8 +648,9 @@ class ServiceAssets:
                     # le total du projet, lui, dirait autre chose. Un rattrapage
                     # de plus, et c'est exactement le métier de cette méthode.
                     repare = False
-                    if not connu.cout_usd and emplacement.cout_usd:
-                        connu.cout_usd = emplacement.cout_usd
+                    if not connu.consomme and emplacement.consomme:
+                        connu.consomme = emplacement.consomme
+                        connu.unite = emplacement.unite
                         repare = True
                     # **La date du lot, pas celle de l'arrivée.** Les assets
                     # d'avant T3 portent l'instant où leur image est tombée :

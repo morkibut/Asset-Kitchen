@@ -156,8 +156,8 @@ async def test_les_cinq_gestes_de_l_agent(atelier, mcp, double, tmp_path):
 
     modeles = await appeler(mcp, "list_models")
     assert {m["id"] for m in modeles["models"]} == {
-        "essai/rend-du-png",
-        "essai/rend-du-jpeg",
+        "essai:rend-du-png",
+        "essai:rend-du-jpeg",
     }
 
     # Importer : un fichier local devient un asset entier.
@@ -254,19 +254,19 @@ async def test_le_modele_impose_s_applique_et_se_leve_sans_redemarrage(
 ):
     """« Relever le plafond, le désactiver, changer ou lever le modèle imposé
     prend effet à l'appel suivant, sans redémarrage. » (US-91)"""
-    atelier.agent.regler(modele_actif=True, modele="essai/rend-du-png")
+    atelier.agent.regler(modele_actif=True, modele="essai:rend-du-png")
 
-    await appeler(mcp, "generate_asset", subject="un", model="essai/rend-du-jpeg")
+    await appeler(mcp, "generate_asset", subject="un", model="essai:rend-du-jpeg")
     await atelier.generations.attendre_tout()
     # Le modèle demandé par l'agent n'a pas été écouté : le garde-fou décide.
-    assert atelier.generations.recentes(1)[0].modele == "essai/rend-du-png"
+    assert atelier.generations.recentes(1)[0].modele == "essai:rend-du-png"
 
     # On lève le garde-fou. **Aucun redémarrage**, aucun nouvel objet : le
     # service relit le fichier à chaque appel.
     atelier.agent.regler(modele_actif=False)
-    await appeler(mcp, "generate_asset", subject="deux", model="essai/rend-du-jpeg")
+    await appeler(mcp, "generate_asset", subject="deux", model="essai:rend-du-jpeg")
     await atelier.generations.attendre_tout()
-    assert atelier.generations.recentes(1)[0].modele == "essai/rend-du-jpeg"
+    assert atelier.generations.recentes(1)[0].modele == "essai:rend-du-jpeg"
 
     # Et le plafond suit la même règle, dans les deux sens.
     atelier.agent.regler(plafond_actif=True, plafond=1)
@@ -282,11 +282,15 @@ async def test_le_modele_d_exploration_est_le_defaut(atelier):
     « Un agent qui code a besoin d'un visuel correct tout de suite, pas d'un
     asset final » : le garde-fou est actif par défaut, sinon il ne protège que
     ceux qui pensent à l'allumer.
+
+    **Les options sont vides depuis F6**, et ce n'est pas un oubli : `quality`
+    était un réglage d'OpenRouter, et le modèle imposé est désormais gratuit —
+    un réglage qu'un modèle ne déclare pas est écarté avec sa raison depuis T1.
     """
     cadre = atelier.agent.garde_fous()
     assert cadre.modele_actif is True
     assert cadre.modele == MODELE_EXPLORATION
-    assert cadre.options == {"quality": "low"}
+    assert cadre.options == {}
     assert cadre.plafond_actif is True
 
 
@@ -414,7 +418,7 @@ async def test_ce_que_l_auteur_produit_reste_de_l_auteur(atelier, client):
     """La contrepartie, sans laquelle le marquage ne distingue rien."""
     reponse = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "une épée", "variations": 1},
+        json={"modele": "essai:rend-du-png", "prompt": "une épée", "variations": 1},
     )
     assert reponse.status_code == 202
     assert reponse.json()["provenance"] == "auteur"
@@ -447,7 +451,7 @@ async def test_cle_garde_fous_et_dossiers_se_reglent_depuis_un_seul_ecran(
     atelier, client, tmp_path
 ):
     """« Clé, garde-fous et dossiers se règlent depuis un seul écran. » (US-96)"""
-    assert client.get("/api/settings/key").status_code == 200
+    assert client.get("/api/settings/keys").status_code == 200
 
     lu = client.get("/api/settings/agent").json()
     assert lu["garde_fous"]["plafond_actif"] is True

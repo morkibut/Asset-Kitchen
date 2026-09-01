@@ -44,7 +44,7 @@ def _asset(client, double) -> str:
     double.rendre = lambda: image_sujet()
     generation = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un sujet d'essai"},
+        json={"modele": "essai:rend-du-png", "prompt": "un sujet d'essai"},
     ).json()
     return f"{generation['identifiant']}-0"
 

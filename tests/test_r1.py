@@ -68,8 +68,8 @@ REGLAGES: list[tuple[str, dict, callable]] = [
     ),
     (
         "modeles",
-        {"modeles": {"personnages": "essai/rend-du-png"}},
-        lambda u: u["modeles"].get("personnages") == "essai/rend-du-png",
+        {"modeles": {"personnages": "essai:rend-du-png"}},
+        lambda u: u["modeles"].get("personnages") == "essai:rend-du-png",
     ),
     (
         "couleurs",

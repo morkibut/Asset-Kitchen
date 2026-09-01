@@ -13,7 +13,9 @@
 import { Fragment, useEffect, useState } from "react"
 import {
   api,
-  dollars,
+  depense,
+  estArgent,
+  quantite,
   megaoctets,
   ROLES,
   type Asset,
@@ -51,9 +53,22 @@ import { RESUME } from "./Places"
  *  a disparu du disque ne peut plus le savoir. Elle ne l'invente pas : « zéro
  *  n'est pas une dimension mesurée, c'est l'absence de mesure »
  *  (`docs/PIEGES.md`), et un nom de modèle deviné vaudrait pire que rien —
- *  c'est très exactement l'information à qui l'on va faire confiance. */
-export const nomDuModele = (modele: string): string =>
-  modele === "import" ? "importé" : modele || "modèle inconnu"
+ *  c'est très exactement l'information à qui l'on va faire confiance.
+ *
+ *  **Le fournisseur reste devant, et il ne se coupe jamais** (F1). Un modèle se
+ *  nomme par son fournisseur *et* par son nom depuis la V2.2 ; deux
+ *  fournisseurs peuvent proposer le même — Cloudflare héberge les modèles de
+ *  Leonardo — et couper la moitié gauche rendrait deux images indiscernables
+ *  sur la seule question qui compte ici : *à qui redemander*. Le deux-points de
+ *  l'identifiant devient un point médian, parce qu'on le lit et qu'on ne le
+ *  tape pas. Un nom sans deux-points date d'avant la V2.2 et se rend tel quel. */
+export const nomDuModele = (modele: string): string => {
+  if (modele === "import") return "importé"
+  if (!modele) return "modèle inconnu"
+  const coupe = modele.indexOf(":")
+  if (coupe < 0) return modele
+  return `${modele.slice(0, coupe)} · ${modele.slice(coupe + 1)}`
+}
 
 export function Fiche({
   asset,
@@ -193,6 +208,7 @@ export function Fiche({
         </p>
 
         <PrisDeLAmbiance generation={generation} />
+        <SansLeStyleDuJeu generation={generation} />
 
         <Jugement
           asset={asset}
@@ -474,6 +490,41 @@ function useGeneration(asset: Asset): Generation | null {
   return generation
 }
 
+/**
+ * **Cette image est partie sans le style du jeu** (F6), et voici combien
+ * d'images ne l'ont pas accompagnée.
+ *
+ * **Elle répare un trou que la tranche creuse elle-même.** Le modèle
+ * d'exploration de l'agent est devenu gratuit, et un modèle gratuit n'accepte
+ * aucune image d'entrée : ce que le jeu ajoute de lui-même — ses artworks, les
+ * concept arts de la chose, les images de son ambiance — ne part donc pas. À
+ * multiplier les brouillons, on se retrouve des semaines plus tard avec des
+ * images qui ne ressemblent pas aux autres **sans savoir pourquoi**, et c'est
+ * exactement le genre de question qu'on ne pose jamais deux fois : on jette
+ * l'image et on recommence.
+ *
+ * **Elle ne paraît que quand il y a quelque chose à dire.** Aucune ligne sur
+ * une image faite avec tout ce qu'il fallait, aucune sur une image d'avant F6 —
+ * l'appel était alors refusé tout entier, donc le cas n'existait pas.
+ *
+ * **Et elle ne juge pas.** « Sans » plutôt que « privée de » : la même image
+ * refaite chez un modèle qui prend des références est un geste d'un clic —
+ * *reprendre les réglages*, changer de modèle —, et rien ici ne suggère qu'il
+ * fallait le faire.
+ */
+function SansLeStyleDuJeu({ generation }: { generation: Generation | null }) {
+  const laissees = generation?.hors_plafond ?? []
+  if (laissees.length === 0) return null
+
+  return (
+    <p className="mesure text-[10px] leading-4 text-texte-3">
+      partie sans le style du jeu — {laissees.length}{" "}
+      {laissees.length === 1 ? "image n'a" : "images n'ont"} pas suivi, ce modèle
+      n'en accepte pas
+    </p>
+  )
+}
+
 function PrisDeLAmbiance({ generation }: { generation: Generation | null }) {
   const nom = generation?.ambiance
   if (!nom) return null
@@ -652,8 +703,18 @@ function Jugement({
         >
           {asset.favori ? "◤ favori" : "favori"}
         </button>
+        {/* **Le prix, ou le mot « gratuit »** — et ce qu'il a consommé
+            derrière, avec son unité (F2). La fiche est le seul des deux
+            endroits qui ait la place des deux : la tuile ne porte que le
+            premier. */}
         <span className="mesure text-[10px] text-texte-3">
-          {dollars(asset.cout_usd)}
+          {depense(asset.consomme, asset.unite)}
+          {!estArgent(asset.unite) && asset.consomme > 0 && (
+            <span className="text-texte-3">
+              {" "}
+              · {quantite(asset.consomme, asset.unite)}
+            </span>
+          )}
         </span>
         {/* **`Découper` a quitté cette rangée** (E3). Le geste était là parce
             qu'une planche est une image comme une autre et que rien ne permet

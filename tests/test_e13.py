@@ -39,7 +39,7 @@ from tests.conftest import image_sujet, planche_sujets
 
 # Le modèle du double — celui que tout le dépôt emploie pour un appel qui rend
 # une image.
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 def _creer(client, nom: str = "Balthazar") -> dict:

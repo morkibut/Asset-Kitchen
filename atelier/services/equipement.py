@@ -859,7 +859,8 @@ class ServiceEquipement:
                 # **Une image dépliée n'a rien coûté seule.** L'argent a été
                 # dépensé une fois, pour l'appel, et le journal du projet le
                 # porte. Même règle que les corps de C2 et les découpes de T5.
-                cout_usd=0.0,
+                consomme=0.0,
+                unite=generation.unite,  # zéro, mais dans l'unité de l'appel (F2)
                 provenance=generation.provenance,
                 modele=generation.modele,
                 projet=generation.projet,

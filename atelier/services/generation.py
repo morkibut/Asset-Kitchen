@@ -29,10 +29,11 @@ import asyncio
 import time
 import uuid
 from dataclasses import replace
-from typing import Any, Callable, Sequence
+from typing import Any, Sequence
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine import (
+    USD,
     Demande,
     Emplacement,
     Generation,
@@ -71,10 +72,10 @@ from atelier.domaine.pliage import CasePliee, Pliage
 from atelier.fournisseur import PortFournisseur
 from atelier.image import bande_de_palette, empreinte_de, mesurer
 from atelier.image.mesures import extension
-from atelier.reglages import lire_cle
 from atelier.domaine.asset import Asset
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.catalogue import ServiceCatalogue
+from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.evenements import Diffusion
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import CompteFaux, ServicePliage, consignes, reference
@@ -120,7 +121,7 @@ class ServiceGenerations:
         base: Base,
         fichiers: Fichiers,
         catalogue: ServiceCatalogue,
-        fabrique_fournisseur: Callable[[], PortFournisseur],
+        fournisseurs: Fournisseurs,
         diffusion: Diffusion | None = None,
         assets: ServiceAssets | None = None,
         bibliotheque: "ServiceBibliotheque | None" = None,
@@ -132,7 +133,11 @@ class ServiceGenerations:
         self._base = base
         self._fichiers = fichiers
         self._catalogue = catalogue
-        self._fournisseur = fabrique_fournisseur
+        # **Ils sont plusieurs depuis F1**, et ce service ne choisit jamais : il
+        # demande *le fournisseur de ce modèle-là*. C'est ce qui interdit
+        # structurellement le repli automatique d'un fournisseur sur un autre —
+        # il n'y a nulle part de « et sinon, l'autre ».
+        self._fournisseurs = fournisseurs
         self._diffusion = diffusion or Diffusion()
         # **L'asset naît ici, à l'arrivée de l'image** — pas au premier geste de
         # retouche (`docs/PLAN.md`, calendrier des entités : l'asset apparaît en
@@ -294,8 +299,16 @@ class ServiceGenerations:
         `atelier/services/prix.py`, où l'écran de confirmation le trouve aussi,
         et lui a ajouté la décomposition : un prix de base, et le pas de chaque
         image jointe.
+
+        **L'unité vient du fournisseur, jamais de l'historique seul** (F2). Un
+        modèle gratuit qu'on n'a encore jamais appelé n'a rien laissé dans
+        l'index ; annoncer sa consommation en dollars serait annoncer un prix
+        pour quelque chose qui n'en a pas — le défaut exact que la tranche
+        ferme.
         """
-        return mesures_de_prix(self._base, identifiant_modele)
+        return mesures_de_prix(
+            self._base, identifiant_modele, self._catalogue.unite_de(identifiant_modele)
+        )
 
     def octets(self, generation: Generation, rang: int) -> tuple[bytes, str]:
         """Les octets bruts d'un emplacement réussi, et leur type de média."""
@@ -569,6 +582,11 @@ class ServiceGenerations:
             else set(self._ecartees_durables(projet, personnage))
         )
         reinjectes = tuple(r for r in reinjectes if r.asset not in hors_images)
+        # **Puis le plafond du modèle** (F6). Ce que le produit ajoute de
+        # lui-même cède ; ce que l'auteur a joint ne cède jamais.
+        reinjectes, hors_plafond = self._sous_le_plafond(
+            reinjectes, {r.asset for r in references}, identifiant_modele
+        )
         demande = replace(
             demande,
             references=self._octets_references(reinjectes, projet)
@@ -591,8 +609,14 @@ class ServiceGenerations:
         if refus is not None:
             raise DemandeRefusee(f"{modele.nom} {refus}")
 
-        if not lire_cle():
-            raise SansCle()
+        # **Ce qui manque à *son* fournisseur, pas au produit** (F1). Avant la
+        # V2.2 la question était « y a-t-il une clé ? » et la réponse valait pour
+        # tout l'atelier. Elle vaut maintenant pour un modèle : l'un demande une
+        # clé, l'autre non, et refuser les deux au nom du premier serait un refus
+        # faux.
+        manque = self._catalogue.grise(modele)
+        if manque is not None:
+            raise SansCle(manque)
 
         gardees, ecartees = modele.retenir(demande.options)
         generation = Generation(
@@ -605,6 +629,10 @@ class ServiceGenerations:
             cree_le=time.time(),
             projet=projet,
             references=reinjectes,
+            # **Ce que le plafond du modèle a laissé au sol** (F6). Vide dans
+            # l'immense majorité des appels — il ne se remplit que chez un
+            # modèle qui prend moins d'images que le jeu n'en propose.
+            hors_plafond=hors_plafond,
             # **Qui a demandé cet appel** (US-39). Posé ici, à la soumission, et
             # nulle part ailleurs : c'est le seul instant où l'on sait par quelle
             # façade la demande est entrée. L'asset en héritera à sa naissance.
@@ -702,17 +730,18 @@ class ServiceGenerations:
         if emplacement.statut in (Statut.EN_COURS, Statut.EN_ATTENTE):
             return generation  # il tourne déjà : relancer le doublerait
 
-        if not lire_cle():
-            raise SansCle()
-
         modele = self._catalogue.modele(generation.modele)
+        manque = self._catalogue.grise(modele)
+        if manque is not None:
+            raise SansCle(manque)
+
         demande = self._demande_de(generation)
 
         emplacement.statut = Statut.EN_ATTENTE
         emplacement.raison = None
         self._sauver(generation)
 
-        fournisseur = self._fournisseur()
+        fournisseur = self._fournisseurs.de(modele.fournisseur)
         tache = asyncio.create_task(
             self._executer_emplacement(
                 generation, emplacement, modele, demande, fournisseur
@@ -753,7 +782,7 @@ class ServiceGenerations:
         Les plafonds du fournisseur sont larges — 50 requêtes par minute sur
         GPT-Image-2. Quatre variations partent ensemble, pas l'une après l'autre.
         """
-        fournisseur = self._fournisseur()
+        fournisseur = self._fournisseurs.de(modele.fournisseur)
         await asyncio.gather(
             *(
                 self._executer_emplacement(generation, e, modele, demande, fournisseur)
@@ -786,7 +815,8 @@ class ServiceGenerations:
                 emplacement,
                 erreur.raison,
                 depart,
-                cout_usd=getattr(erreur, "cout_usd", 0.0),
+                consomme=getattr(erreur, "consomme", 0.0),
+                unite=getattr(erreur, "unite", USD),
             )
             return
         except ValueError as erreur:  # image illisible
@@ -809,7 +839,8 @@ class ServiceGenerations:
             type_media=mesure.type_media,
             octets=mesure.octets,
         )
-        emplacement.cout_usd = image.cout_usd
+        emplacement.consomme = image.consomme
+        emplacement.unite = image.unite
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         emplacement.statut = Statut.REUSSIE
         self._sauver(generation)
@@ -862,12 +893,20 @@ class ServiceGenerations:
         emplacement: Emplacement,
         raison: str,
         depart: float,
-        cout_usd: float = 0.0,
+        consomme: float = 0.0,
+        unite: str = USD,
     ) -> None:
-        """Un appel raté garde son coût : il reste lisible dans le journal (US-24)."""
+        """Un appel raté garde ce qu'il a consommé : il reste lisible au journal.
+
+        US-24, et **l'unité avec la quantité depuis F2** : *une génération
+        enregistre ce qu'elle a consommé et dans quelle unité, y compris quand
+        elle échoue*. Un refus qui a brûlé un jeton l'a brûlé pour de bon, et un
+        compte de réserve qui l'oublierait serait faux vers le haut.
+        """
         emplacement.statut = Statut.ECHOUEE
         emplacement.raison = raison
-        emplacement.cout_usd = cout_usd
+        emplacement.consomme = consomme
+        emplacement.unite = unite
         emplacement.duree_s = round(time.monotonic() - depart, 2)
         self._sauver(generation)
 
@@ -1438,6 +1477,61 @@ class ServiceGenerations:
             "lignes": lignes,
         }
 
+    def _sous_le_plafond(
+        self,
+        reinjectes: tuple[Reinjection, ...],
+        nommees: set[str],
+        identifiant_modele: str,
+    ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
+        """Ce qui part, et ce que le plafond du modèle laisse au sol (F6).
+
+        **Ce que le produit ajoute de lui-même cède ; ce que l'auteur a joint ne
+        cède jamais.** `nommees` porte les identifiants que l'appelant a
+        désignés — l'auteur depuis l'écran, l'agent depuis son outil —, et
+        ceux-là gardent leur sens : s'ils ne tiennent pas, le modèle est refusé
+        comme avant, parce qu'on a demandé qu'ils partent. Les autres viennent du
+        produit — les concept arts du personnage, les images de son ambiance, les
+        artworks du jeu — et ils cèdent **par la fin**, ce qui les fait tomber du
+        plus large au plus étroit : l'artwork du jeu d'abord, puis l'image que
+        l'ambiance apporte, puis le concept art désigné pour *ce* personnage-là.
+        C'est l'ordre d'assemblage lu à l'envers, et c'est le même classement du
+        large à l'étroit que les portées de US-126.
+
+        **La panne que ça répare.** Un modèle gratuit n'accepte aucune image
+        d'entrée. Avant F6, un jeu qui avait un seul artwork officiel refusait
+        donc tout appel chez lui — *« n'accepte aucune image de référence »* —,
+        et l'agent forcé sur le gratuit n'aurait rien pu produire. Le garde-fou
+        aurait été éteint le jour même, ce qui est la façon la plus sûre de
+        perdre un garde-fou.
+
+        **Rien ne se perd en silence** : ce qui cède est enregistré sur la
+        génération, l'écran de confirmation le montre avant de lancer, et la
+        fiche de l'image le dit des mois plus tard.
+        """
+        if self._catalogue is None:
+            return reinjectes, ()
+        try:
+            places = self._catalogue.modele(identifiant_modele).references_max
+        except ErreurAtelier:
+            # Un modèle inconnu se refuse quelques lignes plus bas, avec sa
+            # phrase à lui. Ici, on ne décide rien.
+            return reinjectes, ()
+
+        if len(reinjectes) <= places:
+            return reinjectes, ()
+
+        incompressibles = tuple(r for r in reinjectes if r.asset in nommees)
+        cedent = tuple(r for r in reinjectes if r.asset not in nommees)
+        gardees = max(0, places - len(incompressibles))
+        # **On repasse par l'ordre d'assemblage** — `_reinjectes` a dédoublonné,
+        # donc un identifiant d'asset désigne une réinjection et une seule, et
+        # la liste enregistrée reste celle qu'on lit à l'écran de confirmation.
+        garde = {r.asset for r in incompressibles + cedent[:gardees]}
+        return (
+            tuple(r for r in reinjectes if r.asset in garde),
+            cedent[gardees:],
+        )
+
     def _artworks(self, demande: Demande, projet: str | None) -> tuple[Reinjection, ...]:
         """Les artworks que le sujet demandé fait partir (US-51).
 
@@ -1583,6 +1677,15 @@ class ServiceGenerations:
         return {
             # Ce qui part vraiment — donc ce qui décide du grisé.
             "total": len(retenues) + gabarit + bande,
+            # **Ce qui ne cède pas devant le plafond d'un modèle** (F6). Ce que
+            # l'appelant a nommé, plus le gabarit et la bande de couleurs, qui
+            # *sont* la demande plutôt qu'un ornement : une planche sans son
+            # gabarit n'est pas la même planche. Le reste — artworks, concept
+            # arts, images d'ambiance — cède, et la génération enregistre ce qui
+            # a cédé. C'est **ce chiffre-ci** qui décide du grisé d'un modèle,
+            # pas le total : le total dit ce qu'on aimerait envoyer, celui-ci
+            # dit ce qu'on ne peut pas ne pas envoyer.
+            "incompressibles": len({r.asset for r in manuelles}) + gabarit + bande,
             "gabarit": gabarit,
             "palette": bande,
             "manuelles": sum(1 for l in retenues if l["origine"] != CARTE),

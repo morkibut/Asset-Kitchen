@@ -8,6 +8,8 @@ porte sa raison).
 
 from __future__ import annotations
 
+from atelier.domaine.consommation import USD, argent
+
 
 class ErreurAtelier(Exception):
     """Toute erreur que l'interface peut afficher telle quelle."""
@@ -21,10 +23,19 @@ class ErreurAtelier(Exception):
 
 
 class SansCle(ErreurAtelier):
+    """Ce qui manque **au fournisseur de ce modèle-là**, jamais au produit.
+
+    Le nom de la classe a survécu à la V2.2 et la phrase a changé de portée.
+    Avant F1, il n'y avait qu'un fournisseur, une clé, et l'absence de la clé
+    éteignait l'atelier entier. Depuis, un fournisseur ne demande rien du tout :
+    ce refus ne vaut donc plus que pour les modèles de celui qui manque, et il
+    porte **sa** phrase — celle que son adaptateur écrit.
+    """
+
     code = "sans_cle"
 
-    def __init__(self) -> None:
-        super().__init__("aucune clé OpenRouter", ou_aller="reglages")
+    def __init__(self, raison: str | None = None) -> None:
+        super().__init__(raison or "aucune clé OpenRouter", ou_aller="reglages")
 
 
 class ModeleInconnu(ErreurAtelier):
@@ -61,18 +72,34 @@ class FournisseurIndisponible(ErreurAtelier):
 class AppelRefuse(ErreurAtelier):
     """Le fournisseur a répondu, et il a dit non.
 
-    **Un refus peut coûter.** Un appel qui atteint le modèle est facturé même
-    quand il ne rend aucune image exploitable : `cout_usd` porte alors ce que la
+    **Un refus peut consommer.** Un appel qui atteint le modèle est facturé même
+    quand il ne rend aucune image exploitable : `consomme` porte alors ce que la
     réponse déclare, et c'est ce chiffre-là qui va au journal du projet (US-24).
     Le jeter rendrait un total de projet faux du montant exact qu'on cherche à
     expliquer.
+
+    **`unite` est arrivée en F2**, et le critère qu'elle tient est écrit tel
+    quel : *une génération enregistre ce qu'elle a consommé et dans quelle
+    unité, **y compris quand elle échoue***. Un refus qui a brûlé un jeton l'a
+    brûlé pour de bon.
     """
 
     code = "appel_refuse"
 
     def __init__(
-        self, raison: str, *, statut: int | None = None, cout_usd: float = 0.0
+        self,
+        raison: str,
+        *,
+        statut: int | None = None,
+        consomme: float = 0.0,
+        unite: str = USD,
     ) -> None:
         super().__init__(raison)
         self.statut = statut
-        self.cout_usd = cout_usd
+        self.consomme = consomme
+        self.unite = unite
+
+    @property
+    def cout_usd(self) -> float:
+        """La part en argent de ce que ce refus a consommé."""
+        return argent(self.consomme, self.unite)

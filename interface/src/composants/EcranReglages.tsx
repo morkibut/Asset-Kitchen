@@ -15,29 +15,42 @@
 // jamais relue par l'interface : le serveur n'en rend que les six derniers
 // caractères.
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import {
   api,
   dollars,
+  estArgent,
+  quantite,
   type EtatAgent,
-  type EtatCle,
+  type Modele,
+  type Tiroir,
   type GardeFous,
 } from "../api"
-import { Bouton, Curseur, Libelle, Raison } from "./chassis"
+import { Bouton, Curseur, Libelle, libelleModele, Raison } from "./chassis"
+import { nomDuModele } from "./Fiche"
+import { TiroirDesSecrets } from "./Secrets"
 import { PANNEAU } from "./Infobulle"
 
 export function EcranReglages({
-  etat,
+  tiroirs,
   agent,
+  modeles,
   onDeposee,
   onAgent,
   onFermer,
 }: {
-  etat: EtatCle
+  /** **Une place par fournisseur** (F3) — le même objet que rend l'étape 10 de
+   *  l'assistant, et le même composant le dessine : trois portes, une seule
+   *  pièce. */
+  tiroirs: Tiroir[]
   /** Le cadre et la consommation, tels que le serveur les sert. **Jamais
    *  recalculés ici** : le refus opposé à l'agent et le chiffre lu par l'auteur
    *  doivent être le même calcul. */
   agent: EtatAgent
+  /** Le catalogue entier. **L'écran n'en garde que les gratuits** (F6), et il
+   *  le fait au moment de proposer plutôt qu'en amont : c'est ce réglage-ci qui
+   *  a la règle, et la lui prendre en ferait deux endroits à tenir d'accord. */
+  modeles: Modele[]
   onDeposee: () => void
   onAgent: (agent: EtatAgent) => void
   onFermer: () => void
@@ -74,8 +87,8 @@ export function EcranReglages({
       >
         <h2 className="font-serif text-[24px] leading-tight text-texte">Réglages</h2>
 
-        <BlocCle etat={etat} onDeposee={onDeposee} onFermer={onFermer} />
-        <BlocAgent agent={agent} onAgent={onAgent} />
+        <BlocSecrets tiroirs={tiroirs} onDeposee={onDeposee} />
+        <BlocAgent agent={agent} modeles={modeles} onAgent={onAgent} />
         <BlocDossiers agent={agent} onAgent={onAgent} />
 
         {/* Le bouton dit la touche, comme celui du Guide et celui de la
@@ -102,73 +115,31 @@ function Titre({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ── La clé ──────────────────────────────────────────────────────────────────
+// ── Le tiroir à secrets (F3) ────────────────────────────────────────────────
 
-function BlocCle({
-  etat,
+function BlocSecrets({
+  tiroirs,
   onDeposee,
-  onFermer,
 }: {
-  etat: EtatCle
+  tiroirs: Tiroir[]
   onDeposee: () => void
-  onFermer: () => void
 }) {
-  const [cle, setCle] = useState("")
-  const [refus, setRefus] = useState<string | null>(null)
-  const [enCours, setEnCours] = useState(false)
-
-  const deposer = async () => {
-    setEnCours(true)
-    setRefus(null)
-    try {
-      await api.deposerCle(cle.trim())
-      setCle("")
-      onDeposee()
-      onFermer()
-    } catch (erreur) {
-      setRefus(erreur instanceof Error ? erreur.message : "dépôt refusé")
-    } finally {
-      setEnCours(false)
-    }
-  }
-
   return (
     <>
-      <Titre>La clé</Titre>
+      <Titre>Les fournisseurs</Titre>
       <p className="text-[12.5px] leading-relaxed text-texte-2">
-        La clé OpenRouter se dépose une fois. Elle est écrite dans{" "}
+        Ce qu'un fournisseur demande se dépose une fois, et l'atelier ne le
+        réaffiche plus jamais. Tout est écrit dans{" "}
         <span className="mesure text-[11px] text-texte">.env</span>, qui n'est
-        jamais versionné, et l'atelier ne la réaffiche plus jamais.
+        jamais versionné.{" "}
+        <strong className="text-texte">Déposer chez l'un ne touche à aucun autre</strong>,
+        et retirer ne grise que ses modèles : ses images et ses lignes de dépense
+        restent.
       </p>
 
-      {etat.presente ? (
-        <div className="mt-3 flex items-center gap-3 rounded-[2px] border border-bord bg-fond-2 px-3 py-2">
-          <span className="mesure text-[11px] text-ok">clé présente</span>
-          <span className="mesure text-[11px] text-texte-3">
-            …{etat.apercu} · {etat.origine}
-          </span>
-        </div>
-      ) : (
-        <Raison texte={etat.raison} />
-      )}
-
-      <div className="mt-3 flex items-start gap-2">
-        <input
-          type="password"
-          value={cle}
-          onChange={(e) => setCle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && cle.trim().length >= 8 && deposer()}
-          placeholder="sk-or-…"
-          className="mesure h-[34px] flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11px] text-texte placeholder:text-texte-3"
-        />
-        <Bouton
-          principal
-          inactif={cle.trim().length < 8 || enCours}
-          onClick={deposer}
-          enfants={etat.presente ? "Remplacer" : "Déposer"}
-        />
+      <div className="mt-3">
+        <TiroirDesSecrets tiroirs={tiroirs} onChange={() => onDeposee()} />
       </div>
-      <Raison texte={refus} />
     </>
   )
 }
@@ -177,9 +148,11 @@ function BlocCle({
 
 function BlocAgent({
   agent,
+  modeles,
   onAgent,
 }: {
   agent: EtatAgent
+  modeles: Modele[]
   onAgent: (agent: EtatAgent) => void
 }) {
   const [refus, setRefus] = useState<string | null>(null)
@@ -224,6 +197,18 @@ function BlocAgent({
             de toutes les séances —, et chacun porte son étiquette. */}
         <dt className="text-texte-3">dépensé par l'agent</dt>
         <dd className="text-texte-2">{dollars(compte.depense_usd)}</dd>
+        {/* **Et ce qu'il a consommé sans argent, compté à part** (F2). Sans
+            cette ligne, une séance entière passée chez un fournisseur gratuit
+            se lisait « $0,0000 » — c'est-à-dire comme une séance sans un seul
+            appel. Absente tant qu'il n'a travaillé que chez un payant. */}
+        {compte.consomme.map((ligne) => (
+          <Fragment key={ligne.unite}>
+            <dt className="text-texte-3">consommé sans argent</dt>
+            <dd className="text-texte-2">
+              {quantite(ligne.quantite, ligne.unite)}
+            </dd>
+          </Fragment>
+        ))}
       </dl>
 
       <div className="mt-4 flex flex-col gap-1.5">
@@ -260,16 +245,101 @@ function BlocAgent({
             Modèle d'exploration
           </Libelle>
         </div>
-        <p className="mesure text-[10px] leading-4 text-texte-3">
-          {cadre.modele}
-          {Object.entries(cadre.options).map(([nom, valeur]) => (
-            <span key={nom}> · {nom} {valeur}</span>
-          ))}
-        </p>
+        {/* **Le nom seulement quand la liste ne le porte pas** (F6). La liste
+            ci-dessous marque le modèle choisi ; l'écrire aussi au-dessus ferait
+            deux endroits à tenir d'accord pour une seule valeur, et ils se
+            liraient à trois centimètres l'un de l'autre. Il reste utile dans le
+            cas contraire : un garde-fou posé avant F6 porte un modèle payant,
+            et un modèle dont le fournisseur ne répond plus n'est plus proposé —
+            dans les deux cas, ce qui est imposé doit se lire quelque part. */}
+        {!modeles.some((m) => m.identifiant === cadre.modele) && (
+          <p className="mesure text-[10px] leading-4 text-texte-3" title={cadre.modele}>
+            {/* Le fournisseur devant, comme partout ailleurs (F1) : ce réglage
+                impose un modèle, et un modèle se nomme par deux choses. */}
+            {nomDuModele(cadre.modele)}
+            {Object.entries(cadre.options).map(([nom, valeur]) => (
+              <span key={nom}> · {nom} {valeur}</span>
+            ))}
+          </p>
+        )}
+
+        <ChoixDuGratuit
+          modeles={modeles}
+          choisi={cadre.modele}
+          eteint={!cadre.modele_actif}
+          onChoisir={(modele) => void poser({ modele })}
+        />
       </div>
 
       <Raison texte={refus} />
     </>
+  )
+}
+
+/**
+ * Parmi quoi le modèle d'exploration se choisit — **les gratuits, et eux seuls**
+ * (F6).
+ *
+ * **Ce garde-fou n'était pas réglable, et il se lisait comme un fait du
+ * produit.** L'écran l'affichait ; on ne pouvait qu'éteindre l'interrupteur,
+ * c'est-à-dire rendre la main à l'agent. Depuis que le modèle imposé ne coûte
+ * plus rien, le choix a un sens : deux fournisseurs gratuits ne rendent pas la
+ * même image, et l'auteur est le seul à savoir lequel lui parle.
+ *
+ * **La liste ne contient aucun modèle payant, et ce n'est pas un filtre
+ * d'affichage** : c'est ce que le garde-fou *est*. Un « modèle d'exploration »
+ * qui pourrait être le plus cher du catalogue ne protégerait de rien, et le
+ * seul moyen honnête de dire ça à l'écran est de ne pas les proposer. Pour
+ * imposer un payant, on éteint l'interrupteur — l'agent nomme alors ce qu'il
+ * veut, et c'est un autre réglage.
+ *
+ * **Une liste vide se dit.** Un atelier composé sans fournisseur gratuit est un
+ * état légitime ; l'écran l'écrit plutôt que d'afficher un cadre vide dont on
+ * ne saurait pas s'il charge encore.
+ */
+function ChoixDuGratuit({
+  modeles,
+  choisi,
+  eteint,
+  onChoisir,
+}: {
+  modeles: Modele[]
+  choisi: string
+  eteint: boolean
+  onChoisir: (modele: string) => void
+}) {
+  // **Le serveur dit l'unité, l'écran ne la devine pas** (F2). Un tarif à zéro
+  // ne veut pas dire gratuit : il veut dire *jamais appelé*.
+  const gratuits = modeles.filter((m) => !estArgent(m.unite) && !m.refus)
+  if (gratuits.length === 0)
+    return (
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        aucun modèle gratuit dans cet atelier — le garde-fou n'a rien à imposer
+      </p>
+    )
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {gratuits.map((modele) => (
+        <button
+          key={modele.identifiant}
+          type="button"
+          disabled={eteint}
+          onClick={() => onChoisir(modele.identifiant)}
+          aria-pressed={modele.identifiant === choisi}
+          title={modele.identifiant}
+          className={[
+            "mesure h-[24px] rounded-[2px] border px-2 text-[10px] transition-colors duration-[80ms]",
+            modele.identifiant === choisi
+              ? "border-signal bg-fond-3 text-texte"
+              : "border-bord bg-fond-2 text-texte-3 hover:bg-fond-3",
+            eteint ? "opacity-40" : "",
+          ].join(" ")}
+        >
+          {libelleModele(modele)}
+        </button>
+      ))}
+    </div>
   )
 }
 

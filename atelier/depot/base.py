@@ -36,14 +36,22 @@ from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 4
+VERSION = 5
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
     identifiant TEXT PRIMARY KEY,
     modele      TEXT NOT NULL,
     statut      TEXT NOT NULL,
+    -- **Ce que l'appel a consommé, et en quoi** (F2). `cout_usd` reste la part
+    -- en argent : c'est lui que somment les totaux, et il vaut zéro dès que
+    -- l'unité n'est pas celle de l'argent. Deux colonnes plutôt qu'une parce
+    -- qu'une quantité sans unité ne veut plus rien dire depuis qu'un
+    -- fournisseur compte en jetons — et parce que la réserve du jour se somme
+    -- par unité, ce qui est une question, donc une colonne.
     cout_usd    REAL NOT NULL DEFAULT 0,
+    consomme    REAL NOT NULL DEFAULT 0,
+    unite       TEXT NOT NULL DEFAULT 'usd',
     cree_le     REAL NOT NULL,
     projet      TEXT,
     contenu     TEXT NOT NULL
@@ -177,11 +185,14 @@ class Base:
             connexion.execute(
                 """
                 INSERT INTO generations
-                    (identifiant, modele, statut, cout_usd, cree_le, projet, contenu)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                    (identifiant, modele, statut, cout_usd, consomme, unite,
+                     cree_le, projet, contenu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(identifiant) DO UPDATE SET
                     statut = excluded.statut,
                     cout_usd = excluded.cout_usd,
+                    consomme = excluded.consomme,
+                    unite = excluded.unite,
                     projet = excluded.projet,
                     contenu = excluded.contenu
                 """,
@@ -190,6 +201,8 @@ class Base:
                     generation.modele,
                     generation.statut.value,
                     generation.cout_usd,
+                    generation.consomme,
+                    generation.unite,
                     generation.cree_le,
                     generation.projet,
                     json.dumps(contenu, ensure_ascii=False),
@@ -332,7 +345,7 @@ class Base:
         return durees
 
     def couts_mesures(self, modele: str, limite: int = 12) -> list[float]:
-        """Ce que ce modèle a réellement **facturé**, aux derniers appels réussis.
+        """Ce que ce modèle a réellement **consommé**, aux derniers appels réussis.
 
         Jumeau exact de `durees_mesurees`, et pour la même raison : le produit
         ne porte aucun tarif de catalogue, et il ne doit pas en porter. « Le
@@ -355,8 +368,14 @@ class Base:
         couts: list[float] = []
         for ligne in lignes:
             for emplacement in json.loads(ligne["contenu"]).get("emplacements", []):
-                if emplacement.get("statut") == "reussie" and emplacement.get("cout_usd"):
-                    couts.append(float(emplacement["cout_usd"]))
+                # **La quantité, pas la part en argent** (F2) : un modèle qui
+                # compte en jetons a une médiane, et elle vaut d'être annoncée
+                # avant l'appel exactement comme un prix. Un emplacement
+                # d'avant la V2.2 n'a pas de `consomme` et porte son montant
+                # dans `cout_usd` — il se relit sans rien perdre.
+                quantite = emplacement.get("consomme", emplacement.get("cout_usd"))
+                if emplacement.get("statut") == "reussie" and quantite:
+                    couts.append(float(quantite))
         return couts
 
     def couts_par_references(
@@ -386,8 +405,9 @@ class Base:
             enregistre = json.loads(ligne["contenu"])
             jointes = int(enregistre.get("demande", {}).get("references", 0) or 0)
             for emplacement in enregistre.get("emplacements", []):
-                if emplacement.get("statut") == "reussie" and emplacement.get("cout_usd"):
-                    mesures.append((jointes, float(emplacement["cout_usd"])))
+                quantite = emplacement.get("consomme", emplacement.get("cout_usd"))
+                if emplacement.get("statut") == "reussie" and quantite:
+                    mesures.append((jointes, float(quantite)))
         return mesures
 
     # ── Assets ───────────────────────────────────────────────────────────────
@@ -623,6 +643,46 @@ class Base:
         """Retire la ligne. Les fichiers, c'est `Fichiers` qui les efface."""
         with self._connexion() as connexion:
             connexion.execute("DELETE FROM assets WHERE identifiant = ?", (identifiant,))
+
+    def unite_du_modele(self, modele: str) -> str | None:
+        """L'unité dans laquelle ce modèle a consommé, au dernier appel connu.
+
+        Arrivée en F2, et lue sur ce qui est parti plutôt que sur le catalogue :
+        un modèle disparu du catalogue garde ses dépenses, et l'écran des
+        dépenses doit encore savoir les écrire. `None` quand il n'a jamais servi
+        ici — l'appelant prend alors l'unité que le fournisseur déclare.
+        """
+        with self._connexion() as connexion:
+            ligne = connexion.execute(
+                "SELECT unite FROM generations WHERE modele = ? "
+                "ORDER BY cree_le DESC LIMIT 1",
+                (modele,),
+            ).fetchone()
+        return str(ligne["unite"]) if ligne else None
+
+    def consomme_depuis(self, depuis: float) -> list[tuple[str, str, float]]:
+        """`(modèle, unité, quantité)` de tout ce qui est parti depuis `depuis`.
+
+        Arrivée en F2 : c'est la question que pose la réserve d'un fournisseur —
+        *combien est parti chez lui depuis le dernier renouvellement ?* — et
+        c'est une question, donc une requête, et non une relecture de toutes les
+        générations en mémoire.
+
+        **Les appels ratés comptés avec les autres.** Un refus qui a atteint le
+        modèle a consommé ; l'oublier ferait un compte de réserve faux vers le
+        haut, c'est-à-dire faux du côté qui laisse partir un lot qui ne passera
+        pas.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT modele, unite, COALESCE(SUM(consomme), 0) AS total "
+                "FROM generations WHERE cree_le >= ? GROUP BY modele, unite",
+                (depuis,),
+            ).fetchall()
+        return [
+            (str(l["modele"]), str(l["unite"]), round(float(l["total"]), 6))
+            for l in lignes
+        ]
 
     def total_par_projet(self, projet: str | None) -> float:
         """Le total des coûts, **appels ratés compris** (US-14, achevée en T3)."""

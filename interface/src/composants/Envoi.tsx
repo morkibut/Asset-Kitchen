@@ -40,13 +40,15 @@
 import { useEffect, useRef, useState } from "react"
 import {
   dollars,
+  estArgent,
+  quantite,
   type Envoi,
   type ImageQuiPart,
   type LigneQuiPart,
   type OptionQuiPart,
   type Tri,
 } from "../api"
-import { Bouton, Libelle, Raison } from "./chassis"
+import { Bouton, Libelle, LigneReserve, Raison } from "./chassis"
 import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
@@ -266,13 +268,18 @@ export function EcranEnvoi({
               <span className="mesure text-[9.5px] text-texte-3">
                 {envoi.images.cochees} cochée
                 {envoi.images.cochees > 1 ? "s" : ""}
+                {/* **La part des images, dans l'unité de l'appel** (F2). Chez
+                    un fournisseur qui ne facture pas, une image jointe n'ajoute
+                    aucun dollar — mais l'écran ne doit pas pour autant écrire
+                    « $0,0000 », qui se lit *sans limite*. */}
                 {envoi.prix.images !== null && (
                   <>
                     {" · "}
                     <span className="text-epingle">
-                      {dollars(envoi.prix.images)}
+                      {quantite(envoi.prix.images, envoi.prix.mesure.unite)}
                     </span>
-                    {envoi.prix.total !== null && ` des ${dollars(envoi.prix.total)}`}
+                    {envoi.prix.total !== null &&
+                      ` des ${quantite(envoi.prix.total, envoi.prix.mesure.unite)}`}
                   </>
                 )}
                 {envoi.images.places > 0 &&
@@ -291,6 +298,7 @@ export function EcranEnvoi({
                   <LigneImage
                     key={image.asset}
                     image={image}
+                    places={envoi.images.places}
                     onBasculer={() => onImage(image.asset, image.cochee)}
                   />
                 ))}
@@ -317,6 +325,22 @@ export function EcranEnvoi({
                 Elle compte dans les places du modèle, et dans le prix.
               </p>
             )}
+            {/* **Ce que les images ont à dire, écrit là où elles sont** — et
+                c'était un trou. L'en-tête de l'écran annonce « N avertissements,
+                écrits sur la ligne concernée » ; les avertissements du bloc
+                d'images n'ont pas de ligne de prompt à eux, et n'étaient donc
+                **comptés nulle part visible**. On lisait « 1 avertissement » et
+                l'on cherchait où. Trouvé en regardant l'écran chez un modèle
+                sans places (F6) ; les deux autres — *aucune image jointe*, *14
+                places pour 16 cochées* — l'attendaient depuis E14. */}
+            {envoi.images.avertissements.map((a) => (
+              <p
+                key={a.clef}
+                className="mesure text-[9.5px] leading-4 text-epingle"
+              >
+                ⚠ {a.texte}
+              </p>
+            ))}
           </section>
         )}
 
@@ -407,27 +431,39 @@ export function EcranEnvoi({
 
             {/* ── Le prix, et la mesure qui le porte ───────────────────────── */}
             <section className="flex flex-col gap-1.5 border-t border-bord pt-4">
+              {/* **Ce qui reste chez ce fournisseur, avant de partir** (F2).
+                  Le même objet que l'écran où l'on choisit lit : deux calculs à
+                  deux endroits ont déjà annoncé deux chiffres pour le même
+                  appel, à trois centimètres l'un de l'autre (E13). */}
+              {envoi.reserve && <LigneReserve reserve={envoi.reserve} />}
+
               {envoi.prix.mesure.prix === null ? (
                 <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                  ce modèle n'a encore rien facturé sur cette machine — le prix
-                  reste inconnu plutôt que deviné.
+                  {estArgent(envoi.prix.mesure.unite)
+                    ? "ce modèle n'a encore rien facturé sur cette machine — le prix reste inconnu plutôt que deviné."
+                    : "ce modèle n'a encore rien consommé sur cette machine — ce qu'il prendra reste inconnu plutôt que deviné."}
                 </p>
               ) : (
                 <p className="mesure text-[9.5px] leading-4 text-texte-3">
                   mesuré sur {envoi.prix.mesure.appels} appel
-                  {envoi.prix.mesure.appels > 1 ? "s" : ""} payé
+                  {envoi.prix.mesure.appels > 1 ? "s" : ""}{" "}
+                  {estArgent(envoi.prix.mesure.unite) ? "payé" : "passé"}
                   {envoi.prix.mesure.appels > 1 ? "s" : ""} à{" "}
                   <span className="text-texte-2">{envoi.modele.nom}</span>.
                   {envoi.prix.mesure.par_image !== null &&
                     envoi.prix.mesure.base !== null && (
                       <>
                         {" "}
-                        Un appel sans image jointe a coûté{" "}
-                        {dollars(envoi.prix.mesure.base)} sur{" "}
-                        {envoi.prix.mesure.sur_base} appels ; chaque image
+                        Un appel sans image jointe a{" "}
+                        {estArgent(envoi.prix.mesure.unite) ? "coûté" : "pris"}{" "}
+                        {quantite(envoi.prix.mesure.base, envoi.prix.mesure.unite)}{" "}
+                        sur {envoi.prix.mesure.sur_base} appels ; chaque image
                         jointe en ajoute{" "}
                         <span className="text-epingle">
-                          {dollars(envoi.prix.mesure.par_image)}
+                          {quantite(
+                            envoi.prix.mesure.par_image,
+                            envoi.prix.mesure.unite,
+                          )}
                         </span>
                         , mesuré sur {envoi.prix.mesure.sur_jointes}. Une moyenne
                         n'est le prix de personne : elle ne tombera juste sur
@@ -438,8 +474,8 @@ export function EcranEnvoi({
                     <>
                       {" "}
                       Le pas d'une image jointe n'est pas mesurable ici — il y
-                      faudrait des appels à plusieurs comptes d'images. Le prix
-                      affiché est la médiane, images comprises.
+                      faudrait des appels à plusieurs comptes d'images. Le
+                      chiffre affiché est la médiane, images comprises.
                     </>
                   )}
                 </p>
@@ -466,8 +502,15 @@ export function EcranEnvoi({
                     : enPaiement
                       ? "Paiement en cours…"
                       : envoi.prix.total !== null
-                        ? `Payer et lancer ${dollars(envoi.prix.total)}`
-                        : "Payer et lancer"
+                        ? estArgent(envoi.prix.mesure.unite)
+                          ? `Payer et lancer ${dollars(envoi.prix.total)}`
+                          : `Lancer — gratuit, ${quantite(
+                              envoi.prix.total,
+                              envoi.prix.mesure.unite,
+                            )}`
+                        : estArgent(envoi.prix.mesure.unite)
+                          ? "Payer et lancer"
+                          : "Lancer — gratuit"
                 }
               />
               <button
@@ -481,7 +524,7 @@ export function EcranEnvoi({
                   : "Revenir sans rien dépenser"}
               </button>
               <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                rien n'est dépensé tant que le bouton n'est pas pressé.
+                rien n'est consommé tant que le bouton n'est pas pressé.
               </p>
 
               {/* **Il s'évite, et jamais pour toujours.** Quand on refait dix
@@ -729,9 +772,14 @@ function TexteQuiPart({ texte, allumee }: { texte: string; allumee: boolean }) {
  *  la rallumait. */
 function LigneImage({
   image,
+  places,
   onBasculer,
 }: {
   image: ImageQuiPart
+  /** Combien d'images ce modèle prend. **Zéro est un cas à part** (F6), et il
+   *  a besoin d'autres mots : « au-delà des places du modèle » suppose qu'il y
+   *  en a, et laisse croire qu'en décocher deux ferait passer la troisième. */
+  places: number
   onBasculer: () => void
 }) {
   // **Ce que l'image montre, et le geste qui l'ouvre en grand** (U9). L'écran
@@ -799,7 +847,12 @@ function LigneImage({
           <span className="text-texte-3"> · {image.ecartee_par}</span>
         )}
         {image.hors_plafond && (
-          <span className="text-epingle"> · au-delà des places du modèle</span>
+          <span className="text-epingle">
+            {" · "}
+            {places > 0
+              ? "au-delà des places du modèle"
+              : "ce modèle n'en prend aucune"}
+          </span>
         )}
       </span>
       {image.prix !== null && (

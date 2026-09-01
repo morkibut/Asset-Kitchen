@@ -22,8 +22,8 @@ import time
 
 from conftest import planche_sujets
 
-MODELE = "essai/rend-du-png"
-SANS_REFERENCE = "essai/rend-du-jpeg"
+MODELE = "essai:rend-du-png"
+SANS_REFERENCE = "essai:rend-du-jpeg"
 
 
 # ── De quoi jouer une séance ─────────────────────────────────────────────────

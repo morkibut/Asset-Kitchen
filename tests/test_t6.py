@@ -42,7 +42,7 @@ def _generer(client, prompt: str = "un tonneau", variations: int = 1) -> dict:
     reponse = client.post(
         "/api/generations",
         json={
-            "modele": "essai/rend-du-png",
+            "modele": "essai:rend-du-png",
             "prompt": prompt,
             "prompt_negatif": "flou",
             "variations": variations,
@@ -191,7 +191,7 @@ def test_le_descriptif_porte_label_prompt_reglages_dimensions_et_filiation(
     #     dossier de jeu, une image sans histoire.
     assert fiche["generation"]["prompt"] == "une planche de deux"
     assert fiche["generation"]["prompt_negatif"] == "flou"
-    assert fiche["generation"]["modele"] == "essai/rend-du-png"
+    assert fiche["generation"]["modele"] == "essai:rend-du-png"
 
     # 3 · les réglages résolus — ce qui est réellement parti, pas ce qui a été
     #     demandé. C'est l'invariant de T1, reconduit jusque dans l'archive.
@@ -312,7 +312,7 @@ def test_une_image_de_modele_jpeg_sort_en_png(client):
     """
     lance = client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-jpeg", "prompt": "un tonneau"},
+        json={"modele": "essai:rend-du-jpeg", "prompt": "un tonneau"},
     )
     assert lance.status_code == 202, lance.text
     identifiant = f"{lance.json()['identifiant']}-0"

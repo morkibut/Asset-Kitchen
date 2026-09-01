@@ -49,17 +49,51 @@ class Option:
         return False
 
 
+def nommer(fournisseur: str, chez_lui: str) -> str:
+    """Le nom complet d'un modèle : **qui le propose, et son nom chez lui**.
+
+    Instauré en F1 (`docs/PLAN.md` § V2.2) : *un modèle se nomme par son
+    fournisseur **et** par son nom ; les deux ensemble, jamais l'un seul*. Deux
+    fournisseurs peuvent proposer un modèle du même nom — Cloudflare héberge les
+    modèles de Leonardo, Pollinations annonce des `flux` qui n'en sont pas — et
+    un nom seul ne dirait plus lequel a fait l'image.
+
+    Le séparateur est le deux-points parce qu'aucun fournisseur n'en met dans
+    ses identifiants : OpenRouter sépare par une barre oblique
+    (`openai/gpt-image-2`), Cloudflare aussi (`@cf/black-forest-labs/…`), et
+    Pollinations n'utilise qu'un mot. Un nom sans deux-points est donc un nom
+    d'avant la V2.2, et le catalogue sait le rattraper.
+    """
+    return f"{fournisseur}:{chez_lui}" if fournisseur else chez_lui
+
+
 @dataclass(frozen=True, slots=True)
 class Modele:
     """Ce qu'un modèle du catalogue sait faire, en vocabulaire du produit."""
 
+    # **Le nom complet, fournisseur compris** — voir `nommer` juste au-dessus.
+    # C'est lui qu'on transporte, qu'on enregistre sur une génération et qu'on
+    # relit des mois plus tard ; il n'est jamais comparé à une constante.
     identifiant: str
     nom: str
+    # Qui le propose, tel que l'écran l'écrit. Vide pour un modèle relu d'une
+    # photo de catalogue antérieure à la V2.2 — le seul cas, et il se répare
+    # au premier rafraîchissement.
+    fournisseur: str = ""
+    # Son nom **chez lui**, celui qui part dans l'appel. Vide veut dire « le
+    # même que l'identifiant », ce qui était la règle avant qu'il y ait deux
+    # fournisseurs.
+    chez_lui: str = ""
     references_max: int = 0
     proportions: tuple[str, ...] = ()
     resolutions: tuple[str, ...] = ()
     variations_max: int = 1
     options: Mapping[str, Option] = field(default_factory=dict)
+
+    @property
+    def envoi(self) -> str:
+        """Le nom que l'adaptateur écrit dans l'appel. Jamais l'identifiant."""
+        return self.chez_lui or self.identifiant
 
     # ── Le grisé et sa raison ────────────────────────────────────────────────
 
@@ -162,6 +196,8 @@ def modele_en_json(modele: Modele) -> dict[str, Any]:
     return {
         "identifiant": modele.identifiant,
         "nom": modele.nom,
+        "fournisseur": modele.fournisseur,
+        "chez_lui": modele.chez_lui,
         "references_max": modele.references_max,
         "proportions": list(modele.proportions),
         "resolutions": list(modele.resolutions),
@@ -174,6 +210,11 @@ def modele_depuis_json(d: dict[str, Any]) -> Modele:
     return Modele(
         identifiant=d["identifiant"],
         nom=d.get("nom", d["identifiant"]),
+        # Absents d'une photo écrite avant la V2.2, et c'est sans conséquence :
+        # cette photo-là ne pouvait venir que d'OpenRouter, et le service de
+        # catalogue le sait en la relisant.
+        fournisseur=d.get("fournisseur", ""),
+        chez_lui=d.get("chez_lui", ""),
         references_max=d.get("references_max", 0),
         proportions=tuple(d.get("proportions", ())),
         resolutions=tuple(d.get("resolutions", ())),

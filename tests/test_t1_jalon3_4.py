@@ -111,7 +111,7 @@ def test_chaque_changement_part_sur_le_flux_sans_qu_on_redemande(atelier, double
         await atelier.ouvrir()
         with atelier.diffusion.abonnement() as file:
             generation = await atelier.generations.soumettre(
-                "essai/rend-du-png", Demande("un rat"), identifiant="annoncee"
+                "essai:rend-du-png", Demande("un rat"), identifiant="annoncee"
             )
             await atelier.generations.attendre(generation.identifiant, 5.0)
             return _vider(file)
@@ -162,7 +162,7 @@ def test_le_flux_http_ouvre_sur_l_etat_complet(atelier):
 
     assert statut == 200
     assert genre == "etat"
-    assert set(charge) >= {"cle", "catalogue", "couts", "generations"}
+    assert set(charge) >= {"secrets", "catalogue", "couts", "generations"}
     assert charge["catalogue"]["modeles"] == 2
 
 
@@ -187,7 +187,7 @@ def test_l_onglet_rouvert_retrouve_l_image_sans_la_redemander(atelier):
         await atelier.ouvrir()
         # Personne n'écoute : la génération part et arrive dans le vide.
         await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("un tonneau"), identifiant=identifiant
+            "essai:rend-du-png", Demande("un tonneau"), identifiant=identifiant
         )
         await atelier.generations.attendre(identifiant, 5.0)
         # Puis l'onglet se rouvre.
@@ -221,7 +221,7 @@ def test_un_emplacement_en_cours_porte_son_depart_et_son_attente(atelier, double
         await atelier.ouvrir()
         double.retenir = asyncio.Event()
         generation = await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("deux variations", variations=2)
+            "essai:rend-du-png", Demande("deux variations", variations=2)
         )
         while atelier.generations.lire(generation.identifiant).statut != Statut.EN_COURS:
             await asyncio.sleep(0)
@@ -250,7 +250,7 @@ def test_une_generation_se_lance_pendant_qu_une_autre_tourne(atelier, double):
         double.retenir = asyncio.Event()
 
         premiere = await atelier.generations.soumettre(
-            "essai/rend-du-png", Demande("la lente", variations=2), identifiant="lente"
+            "essai:rend-du-png", Demande("la lente", variations=2), identifiant="lente"
         )
         while atelier.generations.lire(premiere.identifiant).statut != Statut.EN_COURS:
             await asyncio.sleep(0)
@@ -258,7 +258,7 @@ def test_une_generation_se_lance_pendant_qu_une_autre_tourne(atelier, double):
         # La première est chez le fournisseur, et n'en revient pas encore.
         double.retenir = None
         await atelier.generations.soumettre(
-            "essai/rend-du-jpeg", Demande("la rapide"), identifiant="rapide"
+            "essai:rend-du-jpeg", Demande("la rapide"), identifiant="rapide"
         )
         rapide = await atelier.generations.attendre("rapide", 5.0)
         lente_pendant = atelier.generations.lire("lente")
@@ -277,13 +277,13 @@ def test_l_attente_se_recale_sur_les_durees_reellement_mesurees(atelier, double)
 
     async def scenario():
         await atelier.ouvrir()
-        avant = atelier.generations.attente_estimee("essai/rend-du-png")
+        avant = atelier.generations.attente_estimee("essai:rend-du-png")
         for numero in range(3):
             generation = await atelier.generations.soumettre(
-                "essai/rend-du-png", Demande(f"sujet {numero}")
+                "essai:rend-du-png", Demande(f"sujet {numero}")
             )
             await atelier.generations.attendre(generation.identifiant, 5.0)
-        return avant, atelier.generations.attente_estimee("essai/rend-du-png")
+        return avant, atelier.generations.attente_estimee("essai:rend-du-png")
 
     avant, apres = asyncio.run(scenario())
 
@@ -294,13 +294,12 @@ def test_l_attente_se_recale_sur_les_durees_reellement_mesurees(atelier, double)
 
 def test_une_generation_interrompue_n_affiche_plus_de_jauge(tmp_path, double, monkeypatch):
     """Interrompue, elle n'est plus en cours : il n'y a plus rien à mesurer."""
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     atelier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
 
     async def coupee():
         await atelier.ouvrir()
         generation, _, _ = atelier.generations.preparer(
-            "essai/rend-du-png", Demande("interrompue")
+            "essai:rend-du-png", Demande("interrompue")
         )
         return generation.identifiant
 
@@ -320,7 +319,6 @@ def test_une_generation_interrompue_n_affiche_plus_de_jauge(tmp_path, double, mo
 
 def test_hors_ligne_l_ecran_a_de_quoi_dater_son_repli(tmp_path, double, monkeypatch):
     """Tout ce que le repli affiche vient de `GET /api/status`, en un appel."""
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     premier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
     asyncio.run(premier.ouvrir())  # une photo du catalogue est écrite sur le disque
 
@@ -339,7 +337,6 @@ def test_hors_ligne_l_echec_ne_survient_qu_au_moment_de_generer(
     tmp_path, double, monkeypatch
 ):
     """Le démarrage ne dit rien, le prompt part, c'est l'appel qui échoue."""
-    monkeypatch.setattr("atelier.services.generation.lire_cle", lambda: "sk-or-essai")
     premier = Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
     asyncio.run(premier.ouvrir())
 
@@ -352,7 +349,7 @@ def test_hors_ligne_l_echec_ne_survient_qu_au_moment_de_generer(
 
         depot = client.post(
             "/api/generations",
-            json={"modele": "essai/rend-du-png", "prompt": "un rat", "variations": 2},
+            json={"modele": "essai:rend-du-png", "prompt": "un rat", "variations": 2},
         )
         assert depot.status_code == 202  # la demande est acceptée, elle n'est pas refusée
 

@@ -84,8 +84,14 @@ class ServiceEnvoi:
         univers: ServiceUnivers,
         bibliotheque: Any = None,
         assets: Any = None,
+        reserves: Any = None,
     ) -> None:
         self._generations = generations
+        # **Ce qui reste chez le fournisseur de ce modèle-là** (F2). L'écran qui
+        # confirme et celui où l'on choisit annoncent le même chiffre parce
+        # qu'ils lisent le même objet — la règle payée en E13, tenue sans être
+        # réécrite.
+        self._reserves = reserves
         self._production = production
         self._univers = univers
         # **Les assets, pour montrer les images jointes** (U9) : l'écran qui
@@ -174,7 +180,11 @@ class ServiceEnvoi:
             projet, personnage, modele_lu, palette_cochee, compte, places
         )
         appels = 1 if cases else max(1, variations)
-        total = prix_de(mesure, compte["total"], appels)
+        # **Le prix compte ce qui part, pas ce qui est coché** (F6). Depuis que
+        # ce que le produit ajoute de lui-même cède devant le plafond du modèle,
+        # les deux ne sont plus le même chiffre — et c'est le prix, pas la liste,
+        # qui doit suivre : une image qui ne part pas n'est pas facturée.
+        total = prix_de(mesure, images["partent"], appels)
 
         return {
             "texte": apercu["texte"],
@@ -195,7 +205,7 @@ class ServiceEnvoi:
             "prix": {
                 "total": total,
                 "appels": appels,
-                "images": self._part_des_images(mesure, compte["total"], appels),
+                "images": self._part_des_images(mesure, images["partent"], appels),
                 # **La mesure est rendue à côté du prix, pas fondue dedans** —
                 # c'est la leçon de E13, payée en affirmant un écart avec des
                 # nombres qui le démentaient : une phrase se cite avec les
@@ -204,12 +214,42 @@ class ServiceEnvoi:
                 # nombre d'appels que celui-ci demandera.
                 "mesure": mesure,
             },
+            # **Ce qui reste chez ce fournisseur-là, avant de partir** (F2).
+            # `None` quand il compte en argent : l'argent a la barre de tête et
+            # la ligne de prix juste au-dessus, et une seconde réserve en
+            # dollars serait un second endroit à tenir d'accord.
+            "reserve": self._reserve(modele_lu, images["partent"], appels),
             "modele": modele_lu,
             "ambiance": self._ambiance(projet, personnage, lignes, images),
             "cases": cases,
             "caracteres": self._caracteres(apercu["texte"], lignes),
             "corrections": sum(1 for l in lignes if l.get("corrigee")),
         }
+
+    def _reserve(
+        self, modele_lu: dict[str, Any], images: int, appels: int
+    ) -> dict[str, Any] | None:
+        """La réserve du fournisseur de ce modèle, **et ce qui manquerait**.
+
+        Un lot que la réserve du jour ne peut pas finir est annoncé *avant* de
+        partir, avec ce qui manquerait — c'est un critère de F2, et c'est ici
+        que l'écran l'apprend. La quantité qu'il faudrait est celle que la
+        mesure annonce ; sans mesure, on ne peut rien manquer d'avance, et
+        l'écran ne dit rien plutôt que d'inventer.
+        """
+        if self._reserves is None:
+            return None
+        fournisseur = str(modele_lu.get("fournisseur") or "")
+        reserve = self._reserves.de(fournisseur)
+        if reserve is None:
+            return None
+        lu = reserve.en_json()
+        besoin = prix_de(
+            self._generations.appels_mesures(modele_lu["identifiant"]), images, appels
+        )
+        lu["besoin"] = besoin
+        lu["manque"] = reserve.manque_pour(besoin) if besoin is not None else None
+        return lu
 
     # ── Les images, et ce que chacune coûte ──────────────────────────────────
 
@@ -276,7 +316,14 @@ class ServiceEnvoi:
                     **ligne,
                     "cochee": cochee,
                     # **Une place au-delà du plafond est grisée, pas cachée.**
-                    "hors_plafond": cochee and places > 0 and rang > places,
+                    #
+                    # **Et « zéro place » est un plafond comme un autre** (F6) :
+                    # la garde `places > 0` d'avant faisait qu'un modèle qui
+                    # n'accepte aucune image n'en grisait aucune — l'écran
+                    # montrait alors des lignes cochées, avec leur prix, qui ne
+                    # partiraient pas. C'était sans conséquence tant qu'un tel
+                    # modèle était refusé avant d'arriver ici ; il ne l'est plus.
+                    "hors_plafond": cochee and rang > places,
                     "prix": pas,
                     # **L'objet entier, et pas une adresse** (U9). L'écran qui
                     # décide de ce qui part ne montrait aucune image : les
@@ -301,7 +348,21 @@ class ServiceEnvoi:
                     "du dépôt, 10 sont parties sans texte de style ni image",
                 }
             )
-        if places > 0 and compte["total"] > places:
+        if places <= 0 and compte["total"] > 0:
+            # **Le cas du brouillon gratuit** (F6), et il mérite sa phrase : un
+            # « 0 places · 3 cochées » dirait la même chose en laissant deviner
+            # ce qui va se passer. Ce qui se passe est que l'appel part quand
+            # même, sans elles — et c'est le contraire du grisé, donc ça ne peut
+            # pas s'écrire dans les mots du grisé.
+            reste = compte["total"] - compte["incompressibles"]
+            avertissements.append(
+                {
+                    "clef": clef(IMAGES, "sans_images"),
+                    "texte": f"ce modèle n'accepte aucune image · l'appel partira "
+                    f"sans {'elle' if reste == 1 else 'elles'}, sur le texte seul",
+                }
+            )
+        elif places > 0 and compte["total"] > places:
             avertissements.append(
                 {
                     "clef": clef(IMAGES, "plafond"),
@@ -312,6 +373,14 @@ class ServiceEnvoi:
             "lignes": lignes,
             "places": places,
             "cochees": compte["total"],
+            # **Combien partiront vraiment** (F6), calculé ici et nulle part
+            # ailleurs : le sommaire des groupes, le prix et la réserve le
+            # lisent tous les trois, et trois calculs finiraient par annoncer
+            # trois chiffres — la leçon de E13, payée en affichant $0,0128 et
+            # $0,0160 pour le même appel à trois centimètres l'un de l'autre.
+            "partent": min(
+                compte["total"], max(places, compte["incompressibles"])
+            ),
             "gabarit": compte["gabarit"],
             "palette": compte.get("palette", 0),
             "prix": pas,
@@ -444,12 +513,19 @@ class ServiceEnvoi:
                 groupes.append(
                     {"clef": groupe, "nom": nom, "allumees": allumees, "total": total}
                 )
+        # **Combien partent, sur combien sont cochées** (corrigé en F6). Le
+        # total était les *places du modèle*, ce qui était une capacité et non
+        # un compte de choses : chez un modèle qui n'en prend aucune, le
+        # sommaire annonçait « 1 sur 0 ». Les quatre autres groupes se lisent
+        # tous « allumées sur disponibles », et celui-ci se lit maintenant
+        # pareil — les places, elles, restent écrites en tête du bloc, où elles
+        # expliquent l'écart.
         groupes.append(
             {
                 "clef": IMAGES,
                 "nom": "les images",
-                "allumees": images["cochees"],
-                "total": images["places"],
+                "allumees": images["partent"],
+                "total": images["cochees"],
             }
         )
         groupes.append(
@@ -540,6 +616,10 @@ class ServiceEnvoi:
             "identifiant": lu.identifiant,
             "nom": lu.nom,
             "references_max": lu.references_max,
+            # **Qui le propose** (F2) : c'est par lui que l'écran retrouve la
+            # réserve de son fournisseur, et un modèle relu d'une photo d'avant
+            # la V2.2 rend une chaîne vide plutôt que rien.
+            "fournisseur": lu.fournisseur,
         }
 
     def _cible(self, projet: str | None) -> int:

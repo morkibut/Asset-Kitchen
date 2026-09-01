@@ -6,9 +6,11 @@ façades sur ce dossier, et aucune des deux ne réimplémente quoi que ce soit :
 c'est ce qui garantit que ce qu'un agent peut faire est exactement ce que
 l'écran peut faire (`docs/ARCHITECTURE.md` §4, règle 2).
 
-`Atelier` est le point de composition — le seul endroit du dépôt qui sache que
-le fournisseur est OpenRouter, que l'index est du SQLite et que les fichiers
-sont sur le disque.
+`Atelier` est le point de composition — le seul endroit du dépôt qui sache
+**quels** fournisseurs existent, que l'index est du SQLite et que les fichiers
+sont sur le disque. Ils sont deux depuis F1, et c'est la ligne `FOURNISSEURS`
+plus bas qui le dit : nulle part ailleurs le produit ne nomme OpenRouter ni
+Pollinations.
 """
 
 from __future__ import annotations
@@ -17,8 +19,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from atelier.depot import Base, Fichiers
-from atelier.fournisseur import OpenRouter, PortFournisseur
-from atelier.reglages import etat_cle, lire_cle
+from atelier.fournisseur import OpenRouter, Pollinations, PortFournisseur
+from atelier.fournisseur.openrouter import CLE
+from atelier.reglages import lire_secret
 from atelier.services.agent import (
     DepotRefuse,
     GardeFous,
@@ -37,12 +40,14 @@ from atelier.services.bibliotheque import (
     ServiceBibliotheque,
 )
 from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
+from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.envoi import EnvoiRefuse, ServiceEnvoi
 from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
+from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
@@ -79,6 +84,7 @@ __all__ = [
     "EtatCatalogue",
     "Evenement",
     "ExportRefuse",
+    "Fournisseurs",
     "GardeFous",
     "PersonnageInconnu",
     "PlafondAtteint",
@@ -117,19 +123,48 @@ def _openrouter() -> PortFournisseur:
 
     On doit pouvoir la déposer sans redémarrer le serveur — et, en T7, changer
     les garde-fous de l'agent en cours de session pour la même raison.
+
+    **La place demandée est celle que l'adaptateur déclare** (F3), et non un nom
+    écrit ici : c'est lui qui sait ce qu'il lui faut, et le point de composition
+    n'a pas à le savoir une seconde fois.
     """
-    return OpenRouter(lire_cle())
+    return OpenRouter(lire_secret(CLE.nom))
+
+
+def _pollinations() -> PortFournisseur:
+    """Celui qui ne demande rien — arrivé en F1. Il n'a pas d'état à relire."""
+    return Pollinations()
+
+
+# **L'ordre est celui de la liste des modèles à l'écran, et il est délibéré** :
+# le payant d'abord, parce que c'est lui qui porte les univers et que le gratuit
+# est un brouillon (`docs/PLAN.md` § V2.2 — *ce qui n'est pas une raison*). Il
+# décide aussi du repli du défaut quand aucune clé n'est déposée : on descend la
+# liste jusqu'au premier modèle utilisable, et c'est ainsi qu'une machine neuve
+# tombe sur celui qui ne demande rien.
+FOURNISSEURS = [_openrouter, _pollinations]
 
 
 class Atelier:
     def __init__(
         self,
         racine: Path | None = None,
-        fabrique_fournisseur: Callable[[], PortFournisseur] = _openrouter,
+        fabrique_fournisseur: Callable[[], PortFournisseur] | None = None,
+        fabriques_fournisseurs: list[Callable[[], PortFournisseur]] | None = None,
     ) -> None:
         self.fichiers = Fichiers(racine)
         self.fichiers.preparer()
         self.base = Base(self.fichiers.base)
+        # **Deux entrées pour une seule liste, et la seconde est celle de F1.**
+        # `fabrique_fournisseur` au singulier monte un atelier sur un fournisseur
+        # unique : c'est ce que font tous les essais du dépôt, et ça décrit
+        # exactement le produit d'avant la V2.2. `fabriques_fournisseurs` au
+        # pluriel est ce que le produit utilise, et ce dont les essais de F1 ont
+        # besoin pour jouer deux fournisseurs à la fois.
+        self.fournisseurs = Fournisseurs(
+            fabriques_fournisseurs
+            or ([fabrique_fournisseur] if fabrique_fournisseur else FOURNISSEURS)
+        )
         self.fabrique_fournisseur = fabrique_fournisseur
         # **Une seule diffusion pour tout l'atelier.** Un abonné voit passer
         # l'avancement d'une génération, le retour du catalogue et le rangement
@@ -137,8 +172,13 @@ class Atelier:
         # l'interface de n'ouvrir qu'une liaison.
         self.diffusion = Diffusion()
         self.catalogue = ServiceCatalogue(
-            fabrique_fournisseur(), self.fichiers, self.diffusion
+            self.fournisseurs, self.fichiers, self.diffusion
         )
+        # **Ce qui reste chez chacun, et d'où le chiffre vient** (F2). Placé ici,
+        # juste après le catalogue, parce que les deux répondent à la même
+        # question posée à deux niveaux : le catalogue dit ce qu'un fournisseur
+        # sait faire, la réserve dit ce qu'il lui reste pour le faire.
+        self.reserves = ServiceReserves(self.fournisseurs, self.base)
         # Les assets avant les générations : c'est une génération qui les fait
         # naître, pas l'inverse. Le post-traitement ne connaît ni le fournisseur
         # ni le catalogue — il n'y a rien à lui passer d'autre que le disque.
@@ -229,7 +269,7 @@ class Atelier:
             self.base,
             self.fichiers,
             self.catalogue,
-            fabrique_fournisseur,
+            self.fournisseurs,
             self.diffusion,
             self.assets,
             self.bibliotheque,
@@ -264,6 +304,7 @@ class Atelier:
             self.univers,
             self.bibliotheque,
             self.assets,
+            self.reserves,
         )
         # **Le cadre de l'agent, pas un geste de plus.** Il ne fabrique rien : il
         # dit si une dépense est permise, avec quel modèle, et où poser le
@@ -336,7 +377,11 @@ class Atelier:
         avec les générations déjà terminées pendant son absence.
         """
         return {
-            "cle": etat_cle().en_json(),
+            # **Le tiroir à secrets, une place par fournisseur** (F3). Il
+            # remplace `cle`, qui ne pouvait décrire qu'un monde à un
+            # fournisseur : la barre de tête y lit *avec quoi on peut produire*
+            # plutôt que *ce qui manque*, et il en reste toujours un.
+            "secrets": [t.en_json() for t in self.fournisseurs.tiroirs()],
             # **L'atelier n'a encore rien** (E19) : aucune image, un seul jeu, et
             # il porte encore le nom que le produit lui a donné. C'est là que
             # l'assistant s'ouvre — la seule minute que personne ne revoit
@@ -344,7 +389,14 @@ class Atelier:
             # premier geste, et c'est exactement quand la porte doit se fermer.
             "premier_lancement": self.bibliotheque.neuf(),
             "catalogue": self.catalogue.en_json(),
-            "couts": {"total_usd": self.generations.total_couts()},
+            # **Le total ne compte que de l'argent, et son étiquette le dit**
+            # (F2). Ce qui se consomme sans argent est à côté, une ligne par
+            # unité : le mélanger au total rouvrirait au premier jeton le
+            # mensonge par omission que l'écran des dépenses a fermé.
+            "couts": {
+                "total_usd": self.generations.total_couts(),
+                "reserves": self.reserves.en_json(),
+            },
             # Ce que le post-traitement sait faire **sur cette machine**, et ce
             # qu'il ne peut pas : un moteur de détourage absent, une palette qui
             # n'existe pas encore. L'écran grise avec la phrase qu'il reçoit, il

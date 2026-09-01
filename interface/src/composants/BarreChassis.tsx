@@ -109,37 +109,56 @@ function Fil({ chemin }: { chemin: readonly Segment[] }) {
   )
 }
 
-// ── La clé, dès la première seconde (E19) ───────────────────────────────────
+// ── Avec quoi on peut produire (E19, réécrit en F3) ─────────────────────────
 
 /**
- * `clé …a41c` ou `aucune clé`, dans la barre du haut.
+ * `2 fournisseurs prêts`, `1 sur 2`, ou `rien pour produire`.
  *
- * **Le seul préalable dur du produit se lit sans ouvrir quoi que ce soit.** Sur
- * une machine neuve, l'assistant s'ouvre et la barre dit déjà ce qui manque ;
- * rien n'est caché derrière un menu.
+ * **Ce qui manque se lit sans ouvrir quoi que ce soit.** Sur une machine neuve,
+ * l'assistant s'ouvre et la barre dit déjà où l'on en est ; rien n'est caché
+ * derrière un menu. C'était vrai en E19, ça l'est resté.
  *
- * **Sans clé, le mot mène au champ.** C'est la même règle que le bouton qui
- * paie éteint : ce qui est indisponible porte sa raison *et* le chemin vers son
- * réglage — jamais un constat sans issue.
+ * **Mais elle disait la mauvaise chose.** `clé …a41c` / `aucune clé` décrivait un
+ * monde à un fournisseur : depuis F1 il y en a plusieurs, l'un ne demande rien,
+ * et « aucune clé » laissait croire que rien ne pouvait produire alors qu'une
+ * image partait très bien. F3 lui fait dire **avec quoi on peut produire**
+ * plutôt que **ce qui manque** — et `rien pour produire` ne s'affiche que si
+ * aucun fournisseur n'est utilisable, ce qui n'arrive plus : il en reste
+ * toujours un.
+ *
+ * **Ce qui n'est pas prêt mène au tiroir.** Même règle que le grisé d'un modèle :
+ * ce qui manque porte sa raison *et* le chemin vers son réglage — jamais un
+ * constat sans issue.
  */
-function EtatDeLaCle({
-  cle,
+function EtatDesFournisseurs({
+  tiroirs,
   onReglages,
 }: {
-  cle: { presente: boolean; apercu: string } | null
+  tiroirs: readonly { fournisseur: string; manque: string | null; pret: boolean }[] | null
   onReglages?: () => void
 }) {
-  if (!cle) return null
-  const texte = cle.presente ? `clé …${cle.apercu}` : "aucune clé"
-  if (cle.presente || !onReglages)
+  if (!tiroirs || tiroirs.length === 0) return null
+  const prets = tiroirs.filter((t) => t.pret)
+  const manquants = tiroirs.filter((t) => !t.pret)
+
+  const texte =
+    prets.length === 0
+      ? "rien pour produire"
+      : manquants.length === 0
+        ? `${prets.length} fournisseur${prets.length > 1 ? "s" : ""} prêt${prets.length > 1 ? "s" : ""}`
+        : `${prets.length} sur ${tiroirs.length}`
+
+  // Tout est prêt : un constat, pas une porte. Rien à réparer, rien à ouvrir.
+  if (manquants.length === 0 || !onReglages)
     return (
       <span className="mesure shrink-0 text-[10px] text-texte-3">{texte}</span>
     )
+
   return (
     <button
       type="button"
       onClick={onReglages}
-      title="sans elle, le bouton qui paie reste éteint — le reste de l'atelier fonctionne"
+      title={manquants.map((t) => t.manque).filter(Boolean).join(" · ")}
       className="mesure shrink-0 text-[10px] text-texte-3 transition-colors duration-[80ms] hover:text-signal"
     >
       {texte}
@@ -193,7 +212,12 @@ function Total({
           <span aria-hidden className="text-texte-3"> · </span>
         </>
       )}
-      <span className="text-texte-3">ce jeu </span>
+      {/* **« en argent », et c'est un critère de F2** : le total de la barre
+          de tête ne compte que ce qui se paie en argent, et son étiquette le
+          dit. Depuis qu'un fournisseur consomme des jetons, « ce jeu $2,140 »
+          se lirait comme *tout* ce que ce jeu a consommé — ce qu'il n'est
+          plus. Le reste vit dans l'écran des dépenses, qui l'ouvre d'un clic. */}
+      <span className="text-texte-3">ce jeu, en argent </span>
       <span className="text-texte-2">{montant}</span>
     </>
   )
@@ -280,7 +304,7 @@ export function BarreChassis({
   chemin,
   nomDuJeu,
   montant,
-  cle,
+  tiroirs,
   onDepenses,
   onReglagesCle,
   bascules,
@@ -296,18 +320,20 @@ export function BarreChassis({
   chemin: readonly Segment[]
   nomDuJeu: string | null
   montant: string
-  /** **L'état de la clé, dès la première seconde** (E19). Elle est le seul
-   *  préalable dur du produit : sans elle, rien ne part chez le fournisseur, et
-   *  ne pas le dire d'emblée obligerait à ouvrir un menu pour l'apprendre.
+  /** **Avec quoi on peut produire, dès la première seconde** (E19, au pluriel
+   *  en F3). Ce qui manque à un fournisseur se lit sans ouvrir de menu.
    *
    *  **Ici, et plus dans la barre du bas** : la même valeur écrite à deux
    *  endroits est deux endroits à tenir d'accord, et celui-ci est celui que la
-   *  maquette du premier lancement nomme. */
-  cle: { presente: boolean; apercu: string } | null
+   *  maquette du premier lancement nomme.
+   *
+   *  Un tableau vide et `null` se valent — la barre ne dit rien tant qu'elle ne
+   *  sait pas, plutôt que d'annoncer un manque le temps d'un chargement. */
+  tiroirs: readonly { fournisseur: string; manque: string | null; pret: boolean }[] | null
   onDepenses?: () => void
-  /** Ouvrir la fenêtre où la clé habite. **Trois portes, une seule pièce** : ce
-   *  contrôle-ci, l'étape 10 de l'assistant, et le bouton qui paie quand il est
-   *  éteint mènent tous les trois au même champ. */
+  /** Ouvrir la fenêtre où les secrets habitent. **Trois portes, une seule
+   *  pièce** : ce contrôle-ci, l'étape 10 de l'assistant, et le bouton qui paie
+   *  quand il est éteint mènent tous les trois au même tiroir. */
   onReglagesCle?: () => void
   /** **Chaque bascule nomme la colonne qu'elle replie sur l'écran courant.**
    *  Deux mots uniques — `arbre` et `réglages` — servaient les quatre écrans,
@@ -409,7 +435,7 @@ export function BarreChassis({
 
         <Total nomDuJeu={nomDuJeu} montant={montant} onDepenses={onDepenses} />
 
-        <EtatDeLaCle cle={cle} onReglages={onReglagesCle} />
+        <EtatDesFournisseurs tiroirs={tiroirs} onReglages={onReglagesCle} />
 
         {bascules.length > 0 && (
           <div className="flex shrink-0 items-center gap-1">

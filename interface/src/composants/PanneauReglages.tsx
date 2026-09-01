@@ -11,17 +11,23 @@
 import { useMemo, useState } from "react"
 import {
   api,
-  dollars,
+  estArgent,
   NOM_FAMILLE,
+  quantite,
   type CompteReferences,
   type LigneReference,
   type Modele,
   type Personnage,
   type PorteeDurable,
+  type Reserve,
   type Univers,
 } from "../api"
-import { Bloc, Libelle, Raison, Segments } from "./chassis"
+import { Bloc, Libelle, LigneReserve, Raison, Segments } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+
+/** La date d'une photo de catalogue (F1). Le jour et le mois suffisent : ce
+ *  qu'on cherche à savoir est *si c'est vieux*, pas à quelle minute. */
+const JOUR = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" })
 
 export function PanneauReglages({
   modeles,
@@ -41,6 +47,7 @@ export function PanneauReglages({
   compte,
   cases,
   cout,
+  reserve = null,
   cible,
   ecarteesGeneration,
   onEcarterGeneration,
@@ -81,6 +88,9 @@ export function PanneauReglages({
    *  réussis **sur cette machine** (US-121). `null` — jamais appelé, et le
    *  produit le dit plutôt que d'inventer un tarif. */
   cout: number | null
+  /** Ce qui reste chez le fournisseur du modèle choisi, ou `null` s'il compte
+   *  en argent (F2). Vient de `/models`, jamais recalculé ici. */
+  reserve?: Reserve | null
   /** Le personnage visé, quand la matrice a armé (US-120). Il ouvre la portée
    *  du milieu — « pour ce personnage » —, et son absence la **grise avec sa
    *  raison** plutôt que de la cacher. */
@@ -100,7 +110,12 @@ export function PanneauReglages({
       ? modeles.filter(
           (m) =>
             m.nom.toLowerCase().includes(terme) ||
-            m.identifiant.toLowerCase().includes(terme),
+            m.identifiant.toLowerCase().includes(terme) ||
+            // Le nom du fournisseur filtre aussi : « écrire *pollinations* et
+            // ne voir que le gratuit » est le geste que la V2.2 rend utile, et
+            // l'identifiant le porte déjà — c'est écrit pour que ça reste vrai
+            // si l'identifiant change un jour de forme.
+            m.fournisseur.toLowerCase().includes(terme),
         )
       : modeles
     // Le modèle choisi reste visible même quand il devient invalide : c'est
@@ -325,7 +340,13 @@ export function PanneauReglages({
             </dd>
             <dt className="text-texte-3">grille imposée</dt>
             <dd className="text-right text-texte-2">{univers.cible_px} px</dd>
-            <CoutAttendu cout={cout} cases={cases} variations={variations} />
+            <CoutAttendu
+              cout={cout}
+              cases={cases}
+              variations={variations}
+              unite={choisi?.unite}
+              reserve={reserve}
+            />
           </dl>
 
           <References
@@ -369,6 +390,25 @@ function LigneModele({
         >
           {modele.nom}
         </span>
+        {/* **Qui le propose, sous son nom** (F1). Ils sont deux depuis la V2.2,
+            et deux modèles peuvent porter le même nom chez deux fournisseurs :
+            la ligne serait alors la même deux fois, et le choix un tirage au
+            sort. C'est écrit sur toutes les lignes, jamais sur les seules qui
+            se ressemblent — une distinction qui n'apparaît que quand elle sert
+            oblige à comparer pour comprendre.
+
+            **Et la fiche dit d'où elle vient** : relue chez lui à l'instant, ou
+            relevée ici à telle date. Une capacité lue sur une photo de la
+            semaine dernière n'est pas fausse, elle est datée — et c'est ce que
+            l'auteur doit pouvoir lire avant de choisir. */}
+        {modele.fournisseur ? (
+          <span className="mesure text-[9.5px] leading-tight text-texte-3">
+            {modele.fournisseur}
+            {modele.repli && modele.recu_le > 0
+              ? ` · relevé le ${JOUR.format(new Date(modele.recu_le * 1000))}`
+              : ""}
+          </span>
+        ) : null}
         {grise ? (
           <Raison texte={modele.refus} />
         ) : (
@@ -560,27 +600,36 @@ export function CoutAttendu({
   cout,
   cases,
   variations,
+  unite,
+  reserve = null,
 }: {
   cout: number | null
   cases: number
   variations: number
+  /** L'unité du modèle choisi (F2). Sans elle, l'estimation d'un modèle
+   *  gratuit s'écrirait « ≈ $0,0000 » — et se lirait *sans limite*. */
+  unite?: string
+  /** Ce qui reste chez son fournisseur, ou `null` s'il compte en argent. */
+  reserve?: Reserve | null
 }) {
+  const argent = estArgent(unite)
+  const combien = (valeur: number) => `≈ ${quantite(valeur, unite)}`
   return (
     <>
-      <dt className="text-texte-3">coût attendu</dt>
+      <dt className="text-texte-3">{argent ? "coût attendu" : "ce qu'il prendra"}</dt>
       <dd
         className="text-right text-texte-2"
         title={
           cout === null
-            ? "ce modèle n'a encore rien facturé sur cette machine"
+            ? "ce modèle n'a encore rien consommé sur cette machine"
             : "médiane des derniers appels réussis de ce modèle"
         }
       >
         {cout === null
           ? "jamais appelé"
           : cases
-            ? `≈ ${dollars(cout)} · ${cases} cases`
-            : `≈ ${dollars(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
+            ? `${combien(cout)} · ${cases} cases`
+            : `${combien(cout * variations)}${variations > 1 ? ` · ${variations} appels` : ""}`}
       </dd>
       {cases > 0 && (
         <>
@@ -589,9 +638,23 @@ export function CoutAttendu({
             className="text-right text-texte-2"
             title="le lot entier est refusé, rien n'entre, et il se relance au prix plein"
           >
-            {cout === null ? "jamais appelé" : `≈ ${dollars(cout)} à repayer`}
+            {/* « à repayer » chez un fournisseur qui facture, « à reprendre »
+                chez un gratuit (F2) : repayer ce qui ne coûte rien n'aurait
+                aucun sens, et le lot est quand même entier à refaire. */}
+            {cout === null
+              ? "jamais appelé"
+              : `${combien(cout)} ${argent ? "à repayer" : "à reprendre"}`}
           </dd>
         </>
+      )}
+      {/* **Ce qui reste chez son fournisseur, sur l'écran où l'on choisit**
+          (F2) — la même phrase que sur celui qui confirme, écrite au même
+          endroit du code. Prend les deux colonnes : c'est une phrase, pas une
+          mesure alignée. */}
+      {reserve && (
+        <dd className="col-span-2 pt-1">
+          <LigneReserve reserve={reserve} />
+        </dd>
       )}
     </>
   )

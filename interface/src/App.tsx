@@ -40,6 +40,7 @@ import {
   type Generation,
   type Modele,
   type Reinjection,
+  type Reserve,
   type Role,
   type Carte,
   type Lien,
@@ -162,6 +163,10 @@ export function App() {
   // (US-121). Une mesure, jamais un tarif — le produit ne porte aucun prix de
   // catalogue, et il dit « jamais appelé » plutôt que d'inventer.
   const [couts, setCouts] = useState<Record<string, number>>({})
+  // **Ce qui reste chez chaque fournisseur** (F2), tel que `/models` le rend.
+  // Gardé par nom de fournisseur : un modèle dit le sien, et c'est ainsi que
+  // l'écran où l'on choisit et celui qui confirme montrent le même chiffre.
+  const [reserves, setReserves] = useState<Record<string, Reserve>>({})
   const [compteReferences, setCompteReferences] = useState<CompteReferences | null>(
     null,
   )
@@ -677,6 +682,13 @@ export function App() {
       // connaît pas les artworks, et deux comptes finiraient par diverger.
       setCompteReferences(catalogue.references)
       setCouts(catalogue.couts ?? {})
+      setReserves(
+        Object.fromEntries(
+          (catalogue.fournisseurs ?? [])
+            .filter((f) => f.reserve)
+            .map((f) => [f.nom, f.reserve as Reserve]),
+        ),
+      )
       setCatalogueRepli({
         repli: catalogue.repli,
         raison: catalogue.raison,
@@ -1105,20 +1117,28 @@ export function App() {
   const refus = useMemo<{ texte: string; geste?: Geste } | null>(() => {
     if (panne) return { texte: panne }
     if (!liaison) return { texte: "l'atelier ne répond pas" }
-    if (!etat?.cle.presente)
-      return {
-        texte: etat?.cle.raison ?? "aucune clé OpenRouter",
-        geste: "Réglages",
-      }
     if (modeles.length === 0)
       return { texte: "le catalogue n'a jamais été reçu", geste: "Réessayer" }
     if (!modele) return { texte: "aucun modèle choisi" }
-    if (modele.refus) return { texte: `${modele.nom} ${modele.refus}` }
+    // **Ce qui manque appartient au modèle choisi, plus au produit** (F1).
+    // Jusqu'à la V2.2, l'absence de clé éteignait le bouton quel que soit le
+    // modèle : il n'y avait qu'un fournisseur, et c'était juste. Un fournisseur
+    // ne demande désormais ni compte ni clé — refuser au nom de la clé d'un
+    // autre serait un refus faux, et un refus faux est ce qui fait douter de
+    // tous les autres. La phrase du fournisseur arrive donc dans `refus`, écrite
+    // par le serveur, comme toutes les raisons de grisé depuis T1.
+    if (modele.refus)
+      return {
+        texte: modele.refus.startsWith("aucune clé")
+          ? modele.refus
+          : `${modele.nom} ${modele.refus}`,
+        geste: modele.refus.startsWith("aucune clé") ? "Réglages" : undefined,
+      }
     if (!prompt.trim()) return { texte: "aucun prompt" }
     // Hors ligne, générer reste **actif** : « l'échec ne survient qu'au moment
     // où on génère, jamais à l'ouverture » (US-95).
     return null
-  }, [panne, liaison, etat, modeles, modele, prompt])
+  }, [panne, liaison, modeles, modele, prompt])
 
   // ── Générer ───────────────────────────────────────────────────────────────
 
@@ -1918,6 +1938,7 @@ export function App() {
           onEchelle={setEchelle}
           compte={compteReferences}
           cout={modele ? (couts[modele.identifiant] ?? null) : null}
+          reserve={modele ? (reserves[modele.fournisseur] ?? null) : null}
           // Combien de cases le lot armé demande, ou zéro. Le panneau en tire
           // deux choses : ce que le lot coûte — **un appel, pas N** — et ce
           // qu'un compte faux coûterait.
@@ -1980,6 +2001,8 @@ export function App() {
           cout={modele ? (couts[modele.identifiant] ?? null) : null}
           cases={cases}
           variations={variations}
+          unite={modele?.unite}
+          reserve={modele ? (reserves[modele.fournisseur] ?? null) : null}
         />
       </dl>
       <ChampPrompt
@@ -2085,7 +2108,11 @@ export function App() {
         // **L'état de la clé, dès la première seconde** (E19). Il vivait dans
         // la barre du bas ; il monte ici, et il n'y est écrit **qu'une fois** —
         // la même valeur à deux endroits est deux endroits à tenir d'accord.
-        cle={etat ? { presente: etat.cle.presente, apercu: etat.cle.apercu } : null}
+        // **Avec quoi on peut produire** (F3), et non plus *ce qui manque* :
+        // la barre lit le tiroir entier, un fournisseur par place, et elle ne
+        // dit « aucune clé » que si aucun n'est utilisable — ce qui n'arrive
+        // plus, puisqu'il en reste toujours un.
+        tiroirs={etat?.secrets ?? null}
         // **Trois portes, une seule pièce** : ce mot-ci, l'étape 10 de
         // l'assistant, et le bouton qui paie éteint mènent tous les trois au
         // champ où la clé habite.
@@ -2389,6 +2416,13 @@ export function App() {
             setRubrique("personnages")
             setNommer((n) => n + 1)
           }}
+          // **Le même geste que dans la fenêtre des réglages, parce que c'est
+          // le même dépôt** (F3) : l'état pour la barre du haut, le catalogue
+          // pour le grisé des modèles du fournisseur qu'on vient de servir.
+          onDeposee={async () => {
+            await relireEtat()
+            await relireCatalogue()
+          }}
           vue={vueUnivers}
           onVue={setVueUnivers}
           replies={{ univers: replies.univers, reserve: replies.reserve }}
@@ -2525,8 +2559,13 @@ export function App() {
 
       {reglagesOuverts && etat && (
         <EcranReglages
-          etat={etat.cle}
+          tiroirs={etat.secrets}
           agent={etat.agent}
+          // **Le catalogue entier, filtré par l'écran** (F6). Le garde-fou du
+          // modèle d'exploration ne propose que des gratuits, et c'est lui qui
+          // porte cette règle : la filtrer ici en ferait deux endroits à tenir
+          // d'accord.
+          modeles={modeles}
           onDeposee={async () => {
             setEtat(await api.etat().catch(() => etat))
             await relireCatalogue()

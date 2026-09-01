@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from atelier.domaine.consommation import USD, argent
 from atelier.domaine.pliage import Pliage
 
 
@@ -156,7 +157,20 @@ class Emplacement:
 
     rang: int
     statut: Statut = Statut.EN_ATTENTE
-    cout_usd: float = 0.0  # ce que l'appel a facturé, y compris quand il échoue
+
+    # ── Ce que cet appel-là a consommé, et en quoi ───────────────────────────
+    #
+    # **Deux champs et un seul fait** (F2). Jusqu'à la V2.2 il n'y avait qu'un
+    # `cout_usd` : il n'y avait qu'un fournisseur, et il facturait en dollars.
+    # Depuis qu'un fournisseur consomme des jetons, une quantité seule ne veut
+    # plus rien dire — un `1.0` qui ne dit pas s'il est un dollar ou un jeton
+    # est très exactement le défaut que cette tranche ferme.
+    #
+    # **Y compris quand l'appel échoue** : un refus qui a atteint le modèle a
+    # consommé, et c'est ce chiffre-là qu'on cherchera à expliquer (US-24).
+    consomme: float = 0.0
+    unite: str = USD
+
     duree_s: float = 0.0
     resultat: Resultat | None = None
     raison: str | None = None
@@ -175,10 +189,25 @@ class Emplacement:
     demarre_le: float | None = None
     duree_attendue_s: float = 0.0
 
+    @property
+    def cout_usd(self) -> float:
+        """La part de cette consommation qui est de l'argent. **Déduite** (F2).
+
+        *Un total en argent ne compte que de l'argent* — invariant de la V2.2 —
+        est tenu ici par construction : un emplacement qui a consommé un jeton
+        vaut zéro dollar partout où une somme de dollars se calcule, sans qu'un
+        seul de ces endroits ait eu à apprendre qu'il existe d'autres unités.
+        """
+        return argent(self.consomme, self.unite)
+
     def en_json(self) -> dict[str, Any]:
         return {
             "rang": self.rang,
             "statut": self.statut.value,
+            "consomme": self.consomme,
+            "unite": self.unite,
+            # Déduit, écrit quand même : la base l'interroge, et un écran
+            # d'avant la V2.2 le lit tel quel. Jamais relu — voir `depuis_json`.
             "cout_usd": self.cout_usd,
             "duree_s": self.duree_s,
             "resultat": self.resultat.en_json() if self.resultat else None,
@@ -193,7 +222,12 @@ class Emplacement:
         return Emplacement(
             rang=d["rang"],
             statut=Statut(d["statut"]),
-            cout_usd=d.get("cout_usd", 0.0),
+            # **Une dépense d'avant la V2.2 se relit sans rien perdre**, et
+            # c'est un critère de F2 : elle n'a pas d'unité, elle est en
+            # dollars, et sa quantité est le montant qu'elle portait. Aucune
+            # ligne du disque n'a été réécrite pour ça.
+            consomme=d.get("consomme", d.get("cout_usd", 0.0)),
+            unite=d.get("unite", USD),
             duree_s=d.get("duree_s", 0.0),
             resultat=Resultat.depuis_json(brut) if brut else None,
             raison=d.get("raison"),
@@ -300,6 +334,27 @@ class Generation:
     # même chose du point de vue de l'image produite.
     pris: tuple[str, ...] = ()
 
+    # ── Ce que le plafond du modèle a laissé au sol ──────────────────────────
+    #
+    # Arrivé en F6 (US-333). **Ce que le produit ajoute de lui-même cède devant
+    # le plafond du modèle ; ce que l'auteur a joint ne cède jamais.** Un modèle
+    # gratuit n'accepte aucune image d'entrée : sans cette règle, un jeu qui a
+    # un seul artwork officiel rendrait le brouillon gratuit inutilisable, et le
+    # garde-fou de l'agent serait éteint le jour même.
+    #
+    # **Ce champ est le prix de cette règle.** À multiplier les brouillons, on
+    # se retrouve avec des images qui ne ressemblent pas aux autres *sans savoir
+    # pourquoi* ; la fiche le dit, une fois pour toutes. Sans lui, l'absence
+    # d'une référence et le fait qu'elle ait été écartée se liraient pareil.
+    #
+    # Le nom vient de l'écran de confirmation, qui appelle déjà `hors_plafond`
+    # les lignes qu'un modèle ne peut pas prendre. Un seul mot pour une seule
+    # chose, des deux côtés du port.
+    #
+    # À ne pas confondre avec `ecartees` ci-dessus, qui parle de **réglages** que
+    # le modèle ne déclare pas — un autre plafond, un autre objet.
+    hors_plafond: tuple[Reinjection, ...] = ()
+
     # ── Ce qui se déduit, et n'est donc jamais enregistré deux fois ───────────
 
     @property
@@ -342,6 +397,26 @@ class Generation:
         return round(sum(e.cout_usd for e in self.emplacements), 6)
 
     @property
+    def unite(self) -> str:
+        """L'unité de cet appel-là. **Une génération, un modèle, un fournisseur.**
+
+        Donc une seule unité, et il n'y a jamais à en mélanger deux : la
+        question « et si un lot avait consommé des dollars et des jetons ? » ne
+        se pose pas, parce qu'un lot part chez un seul modèle. Le premier
+        emplacement qui porte quelque chose dit laquelle ; à défaut, l'argent,
+        qui est ce qu'était tout le produit avant la V2.2.
+        """
+        for emplacement in self.emplacements:
+            if emplacement.consomme:
+                return emplacement.unite
+        return self.emplacements[0].unite if self.emplacements else USD
+
+    @property
+    def consomme(self) -> float:
+        """Ce que l'appel entier a consommé, dans l'unité ci-dessus (F2)."""
+        return round(sum(e.consomme for e in self.emplacements), 6)
+
+    @property
     def reussies(self) -> int:
         return sum(1 for e in self.emplacements if e.statut == Statut.REUSSIE)
 
@@ -371,10 +446,13 @@ class Generation:
             "cree_le": self.cree_le,
             "projet": self.projet,
             "references": [r.en_json() for r in self.references],
+            "hors_plafond": [r.en_json() for r in self.hors_plafond],
             "provenance": self.provenance,
             # déduits — présents pour l'interface, jamais relus
             "statut": self.statut.value,
             "cout_usd": self.cout_usd,
+            "consomme": self.consomme,
+            "unite": self.unite,
             "reussies": self.reussies,
             "parent": self.parent,
         }
@@ -392,6 +470,12 @@ class Generation:
             # aucune ambiance n'agissait sur un appel avant elle.
             ambiance=d.get("ambiance"),
             pris=tuple(str(p) for p in (d.get("pris") or ())),
+            # Vide pour tout ce qui a été écrit avant F6, et c'est la vérité :
+            # rien n'était alors écarté par le plafond d'un modèle — l'appel
+            # était refusé tout entier.
+            hors_plafond=tuple(
+                Reinjection.depuis_json(r) for r in (d.get("hors_plafond") or ())
+            ),
             pliage=Pliage.depuis_json(d.get("pliage")),
             demande=d.get("demande", {}),
             parametres_resolus=d.get("parametres_resolus", {}),

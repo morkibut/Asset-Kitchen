@@ -6,6 +6,17 @@ Rien ici ne connaît FastAPI, SQLite, httpx, ni le vocabulaire d'un fournisseur.
 
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.catalogue import Modele, Option
+from atelier.domaine.consommation import (
+    ICI,
+    JETON,
+    LU,
+    USD,
+    Compte,
+    Reserve,
+    accorde,
+    argent,
+    est_argent,
+)
 from atelier.domaine.demande import Demande
 from atelier.domaine.envoi import (
     Couches,
@@ -41,6 +52,7 @@ __all__ = [
     "Bords",
     "CasePliee",
     "Collection",
+    "Compte",
     "Couches",
     "Demande",
     "Emplacement",
@@ -60,12 +72,20 @@ __all__ = [
     "Recadrage",
     "Recette",
     "Reinjection",
+    "Reserve",
     "Resultat",
     "SansCle",
     "Statut",
     "Tri",
+    "ICI",
+    "JETON",
+    "LU",
+    "USD",
+    "accorde",
+    "argent",
     "clef",
     "en_blocs",
+    "est_argent",
     "geometrie",
     "identifiant_de",
     "joindre",

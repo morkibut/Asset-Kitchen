@@ -5,7 +5,8 @@
 fait cesse d'être vrai au premier geste, que le jeu de départ existe avant d'avoir
 un nom, et que la clé se dépose au même endroit quel que soit le chemin. Ce que
 l'écran montre — l'assistant qui s'ouvre, la sortie qui dépose dans le codex, la
-barre du haut qui dit *aucune clé* — vit dans `interface/src/App.test.tsx`.
+barre du haut qui dit avec quoi on peut produire — vit dans
+`interface/src/App.test.tsx`.
 
 **La panne que ça répare.** La réorganisation du 30 août 2026 a retiré l'écran
 qui s'appelait *l'Atelier*. Il ne reste que deux endroits d'où l'argent part —
@@ -24,6 +25,7 @@ d'être vrais au premier geste.
 from __future__ import annotations
 
 from atelier.domaine.projet import NOM_BAC_A_SABLE
+from atelier.fournisseur.openrouter import CLE
 
 from tests.conftest import image_sujet
 
@@ -101,15 +103,17 @@ def test_un_second_jeu_referme_la_porte(client):
     assert _etat(client)["premier_lancement"] is False
 
 
-def test_la_cle_ne_referme_pas_la_porte(client, monkeypatch):
+def test_la_cle_ne_referme_pas_la_porte(client, double, monkeypatch):
     """**Elle peut venir de l'environnement**, posée par quelqu'un qui n'a jamais
-    ouvert l'atelier. Un jeu neuf reste un jeu neuf, et l'étape de la clé dira
-    simplement qu'elle est déjà là."""
-    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-v1-essai-de-cle")
+    ouvert l'atelier. Un jeu neuf reste un jeu neuf, et l'étape des fournisseurs
+    dira simplement qu'elle est déjà là."""
+    monkeypatch.setenv(CLE.nom, "sk-or-v1-essai-de-cle")
+    double.secrets_declares = (CLE,)
 
     etat = _etat(client)
 
-    assert etat["cle"]["presente"] is True
+    place = etat["secrets"][0]["secrets"][0]
+    assert place["presente"] is True
     assert etat["premier_lancement"] is True
 
 
@@ -142,18 +146,22 @@ def test_un_univers_vide_ne_contraint_rien(client):
     assert univers["vide"] is True
 
 
-def test_la_cle_a_un_seul_endroit_ou_elle_habite(client, tmp_path, monkeypatch):
+def test_la_cle_a_un_seul_endroit_ou_elle_habite(
+    client, double, tmp_path, monkeypatch
+):
     """**Trois portes, une seule pièce.** L'étape 10 de l'assistant, la fenêtre
     des réglages et le bouton qui paie éteint mènent tous les trois au même
     champ ; le déposer par l'un revient exactement au même que par l'autre."""
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv(CLE.nom, raising=False)
     monkeypatch.setattr("atelier.reglages.FICHIER_ENV", tmp_path / ".env")
+    double.secrets_declares = (CLE,)
 
     reponse = client.put(
-        "/api/settings/key", json={"cle": "sk-or-v1-essai-de-cle-longue"}
+        f"/api/settings/keys/{CLE.nom}", json={"valeur": "sk-or-v1-essai-de-cle-longue"}
     )
     assert reponse.status_code == 200, reponse.text
 
     # La route et l'état lisent la même valeur, au même endroit.
-    assert reponse.json()["presente"] is True
-    assert _etat(client)["cle"]["apercu"] == reponse.json()["apercu"]
+    depose = reponse.json()["tiroirs"][0]["secrets"][0]
+    assert depose["presente"] is True
+    assert _etat(client)["secrets"][0]["secrets"][0]["apercu"] == depose["apercu"]

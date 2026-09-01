@@ -24,7 +24,7 @@ from atelier.domaine.pliage import geometrie
 from atelier.image import calque as calc
 from conftest import FOND, image_sujet
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 # ── Ce que le modèle rend : la planche reçue, avec la pièce en plus ──────────

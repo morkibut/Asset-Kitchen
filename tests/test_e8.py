@@ -192,7 +192,7 @@ def test_les_consequences_disent_le_compte_et_ne_bloquent_jamais(client, double)
     client.put("/api/universe", json={"cible_px": 64})
     client.post(
         "/api/generations",
-        json={"modele": "essai/rend-du-png", "prompt": "un sujet d'essai"},
+        json={"modele": "essai:rend-du-png", "prompt": "un sujet d'essai"},
     )
 
     dit = client.get("/api/universe/consequences", params={"cible_px": 128}).json()

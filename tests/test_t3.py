@@ -25,7 +25,7 @@ from atelier.domaine.erreurs import AppelRefuse, FournisseurIndisponible
 from atelier.services import Atelier
 from atelier.services.bibliotheque import ANNULATION_S
 
-MODELE = "essai/rend-du-png"
+MODELE = "essai:rend-du-png"
 
 
 # ── De quoi jouer une séance ─────────────────────────────────────────────────
@@ -130,7 +130,7 @@ def test_une_image_produite_entre_en_bibliotheque_sans_qu_on_l_accepte(client):
 
 
 def test_aucun_echec_n_entre_en_bibliotheque_et_le_journal_le_garde(client, double):
-    double.echec = AppelRefuse("le fournisseur n'a rendu aucune image", cout_usd=0.011)
+    double.echec = AppelRefuse("le fournisseur n'a rendu aucune image", consomme=0.011)
     generation = _generer(client, "un raté")
 
     assert _bibliotheque(client) == []
@@ -154,7 +154,7 @@ def test_le_total_du_projet_compte_les_appels_rates(client, double):
     """
     _generer(client, "celui qui marche")
 
-    double.echec = AppelRefuse("crédit épuisé", cout_usd=0.011)
+    double.echec = AppelRefuse("crédit épuisé", consomme=0.011)
     _generer(client, "celui qui rate")
 
     journal = client.get("/api/journal").json()
@@ -773,6 +773,7 @@ def test_un_asset_d_avant_t3_retrouve_son_cout_a_la_reconstruction(
     fiche = tmp_path / "generations" / asset["generation"] / "0-asset.json"
     contenu = json.loads(fiche.read_text(encoding="utf-8"))
     contenu.pop("cout_usd")
+    contenu.pop("consomme")
     fiche.write_text(json.dumps(contenu, ensure_ascii=False), encoding="utf-8")
 
     atelier.bibliotheque.reconstruire()
@@ -782,7 +783,7 @@ def test_un_asset_d_avant_t3_retrouve_son_cout_a_la_reconstruction(
     # Et sans reconstruction non plus : un index déjà rempli d'assets sans coût
     # se répare au démarrage suivant, là où le rattrapage passe de toute façon.
     appauvri = atelier.base.lire_asset(asset["identifiant"])
-    appauvri.cout_usd = 0.0
+    appauvri.consomme = 0.0
     atelier.assets.sauver(appauvri)
     asyncio.run(atelier.ouvrir())
     assert atelier.base.lire_asset(asset["identifiant"]).cout_usd == 0.0245
