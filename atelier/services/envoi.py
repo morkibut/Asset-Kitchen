@@ -41,8 +41,10 @@ from typing import Any, Sequence
 from atelier.domaine import Reinjection
 from atelier.domaine.envoi import (
     AMBIANCE,
+    CADRAGE,
     IMAGES,
     JEU,
+    JOINTES,
     OPTIONS,
     PLANCHE,
     SUJET,
@@ -147,6 +149,17 @@ class ServiceEnvoi:
             direction=direction,
             directions=directions,
             tri=tri,
+            # **Ce que l'écran sait déjà des images, passé à la composition**
+            # (1ᵉʳ septembre 2026). Le prompt nomme les images jointes depuis
+            # qu'un banc a montré qu'une planche dessinée de face décide de la
+            # caméra quand rien ne la contredit ; l'aperçu doit donc les
+            # connaître, sans quoi il montrerait un texte plus court que celui
+            # qui part.
+            echelle=echelle,
+            modele=modele,
+            references=references,
+            references_ecartees=references_ecartees,
+            palette=palette_cochee,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece)
@@ -507,6 +520,8 @@ class ServiceEnvoi:
             (AMBIANCE, "son ambiance"),
             (SUJET, "le sujet"),
             (PLANCHE, "la planche"),
+            (JOINTES, "ce que les images disent"),
+            (CADRAGE, "la caméra"),
         ):
             allumees, total = compter(groupe)
             if total:

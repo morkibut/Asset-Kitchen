@@ -1,4 +1,13 @@
+# Ce que les bancs produisent : des images payées, et les rapports qui les
+# incrustent. On garde les relevés — les `.json` de mesure sont légers et se
+# relisent — mais pas les pixels : 126 Mo figés dans l'historique ne se
+# reprennent qu'en le réécrivant. `essais/resultats/` avait déjà cette règle ;
+# les dossiers ci-dessous sont la même chose sous d'autres noms.
 essais/resultats/
+essais/resultats_animation/
+essais/resultats_recette/
+essais/planches/
+essais/rapport-animation.html
 .env
 __pycache__/
 donnees/

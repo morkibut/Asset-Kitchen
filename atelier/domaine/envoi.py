@@ -48,10 +48,32 @@ JEU = "jeu"  # les sept textes de la bible, tels que cette chose-là les porte
 AMBIANCE = "ambiance"  # ce que son lot de style remplace — trois cases au plus
 SUJET = "sujet"  # ce qu'on dessine : le signalement, puis la consigne de la case
 PLANCHE = "planche"  # les consignes de case, quand l'appel part plié
+JOINTES = "jointes"  # ce que les images attachées veulent dire, en mots
+CADRAGE = "cadrage"  # la caméra, redite en dernier — voir plus bas
 IMAGES = "images"  # ce qui part en image, et ce que chacune coûte
 OPTIONS = "options"  # ce que le modèle choisi sait faire en plus
 
-GROUPES = (JEU, AMBIANCE, SUJET, PLANCHE, IMAGES, OPTIONS)
+# **Deux groupes ajoutés le 1ᵉʳ septembre 2026, et ils partent en queue.**
+#
+# `cadrage` est la caméra du jeu, redite en dernier et à l'impératif. Ce n'est
+# pas une préférence de rédaction : `essais/essai_vue.py` a payé trente images
+# pour comparer six façons de réparer le même prompt, et **une seule a marché**.
+# Un sprite debout de face fait deux fois plus haut que large ; le même corps vu
+# d'aplomb est presque rond. Le rapport passe de **1,55 à 1,13** quand la caméra
+# est redite en queue, et il ne bouge pas quand on retire l'image de référence
+# (1,46) ni quand on ajoute un prompt négatif (1,69).
+#
+# La raison tient en une phrase : **un modèle d'image pondère la fin.** La
+# caméra était au sixième rang de sept intitulés, et les derniers mots du prompt
+# étaient ceux de la pose — `idle stance, full body`, une phrase de vue de face
+# écrite en dur pour les huit vues du produit. On demandait le dessus au milieu
+# et la face à la fin ; c'est la fin qui gagnait.
+#
+# `jointes` dit **ce que les images attachées veulent dire**. Jusqu'ici elles
+# partaient muettes : le prompt ne les mentionnait nulle part, sauf pour une
+# planche. Le banc mesure 1,15 pour ce seul ajout — il travaille, mais moins que
+# `cadrage`, et pour une autre raison : sa dernière phrase redit la caméra.
+GROUPES = (JEU, AMBIANCE, SUJET, PLANCHE, JOINTES, CADRAGE, IMAGES, OPTIONS)
 
 
 def clef(groupe: str, nom: str) -> str:
@@ -178,6 +200,13 @@ DE_SA_FICHE = "de sa fiche"
 DE_SON_AMBIANCE = "son ambiance"
 DE_LA_POSE = "de la pose"
 DE_LA_PLANCHE = "de la planche"
+# **Deux origines qui ne renvoient à aucun champ de texte**, et c'est voulu : la
+# caméra vient du choix de vue du jeu, et la phrase des images jointes vient du
+# rôle des images cochées. Aucune des deux ne se corrige en tapant dedans — on
+# change la vue, ou on décoche une image.
+DE_LA_VUE = "de la vue du jeu"
+DU_PRODUIT = "de l'atelier"
+DES_IMAGES = "des images jointes"
 ECRIT_ICI = "écrit ici"
 REPRIS = "ton texte"
 
@@ -308,7 +337,12 @@ def joindre(lignes: Iterable[Mapping[str, Any]]) -> str:
     **Le sujet et sa consigne de case se joignent par une virgule**, comme la
     phrase que `ServiceProduction.sujet` écrivait d'un bloc jusqu'à E14 : le
     texte assemblé est le même, mot pour mot, et seul son découpage à l'écran a
-    changé.
+    changé — **tant que le signalement tient sur une ligne**. Voir `_sujet`.
+
+    **Ce que les images jointes veulent dire, puis la caméra, ferment le
+    texte** (1ᵉʳ septembre 2026). C'est la place qui décide chez un modèle
+    d'image, et elle était occupée jusqu'ici par la consigne de pose — la seule
+    phrase du prompt qui ne savait pas d'où le jeu regarde.
     """
     lues = list(lignes)
     rang = {nom: i for i, nom in enumerate(CHAMPS_BIBLE)}
@@ -326,16 +360,51 @@ def joindre(lignes: Iterable[Mapping[str, Any]]) -> str:
                 for l in style
             )
         )
-    sujet = [str(l["texte"]).strip() for l in _allumees(lues, SUJET)]
+    sujet = _sujet([str(l["texte"]).strip() for l in _allumees(lues, SUJET)])
     if sujet:
-        blocs.append(", ".join(sujet))
+        blocs.append(sujet)
     blocs.extend(str(l["texte"]) for l in _allumees(lues, PLANCHE))
+    blocs.extend(str(l["texte"]).strip() for l in _allumees(lues, JOINTES))
+    blocs.extend(str(l["texte"]).strip() for l in _allumees(lues, CADRAGE))
     return "\n\n".join(blocs)
+
+
+def _sujet(morceaux: list[str]) -> str:
+    """Le signalement et la consigne de sa case, joints — **et la virgule a une
+    condition** (1ᵉʳ septembre 2026).
+
+    La virgule vient d'E14 et elle est juste tant que le signalement tient sur
+    une ligne : `a stocky dwarf miner` + `walking posture` fait bien
+    `a stocky dwarf miner, walking posture`.
+
+    Elle est fausse dès que le signalement est une **liste**, et c'est ce que le
+    relevé du projet « Le Marais du Vieux Moulin » a montré. Le pèlerin est décrit
+    en cinq puces ; la virgule a collé la pose à la dernière, et le prompt payé
+    s'est terminé par `- handheld torch, idle stance, full body`. Ce n'était plus
+    une pose : c'était une torche tenue à pleine hauteur.
+
+    On garde donc la virgule pour ce qu'elle sait faire — une ligne plus une
+    ligne — et on passe à la ligne dès qu'un morceau en contient déjà une. Les
+    prompts d'avant ne bougent pas d'un caractère ; ceux qui étaient cassés
+    cessent de l'être.
+    """
+    if not morceaux:
+        return ""
+    if any("\n" in m for m in morceaux):
+        return "\n".join(morceaux)
+    return ", ".join(morceaux)
 
 
 # Ce que les blocs de R2 appelaient une origine. **Une lecture des lignes, pas
 # une seconde composition** : un bloc et sa ligne ne peuvent donc pas diverger.
-_BLOC = {JEU: "bible", AMBIANCE: "bible", SUJET: "sujet", PLANCHE: "planche"}
+_BLOC = {
+    JEU: "bible",
+    AMBIANCE: "bible",
+    SUJET: "sujet",
+    PLANCHE: "planche",
+    JOINTES: "jointes",
+    CADRAGE: "cadrage",
+}
 
 
 def en_blocs(lignes: Iterable[Mapping[str, Any]]) -> list[dict[str, str]]:
@@ -344,7 +413,7 @@ def en_blocs(lignes: Iterable[Mapping[str, Any]]) -> list[dict[str, str]]:
     if any(l.get("origine") == REPRIS for l in lues):
         return [{"origine": "repris", "texte": joindre(lues)}]
     blocs: list[dict[str, str]] = []
-    for groupe in (JEU, SUJET, PLANCHE):
+    for groupe in (JEU, SUJET, PLANCHE, JOINTES, CADRAGE):
         morceau = joindre(
             [l for l in lues if _BLOC.get(str(l["groupe"])) == _BLOC.get(groupe)]
         )

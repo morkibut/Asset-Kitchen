@@ -37,6 +37,7 @@ from atelier.image.traitement import composantes
 __all__ = [
     "COTE_MIN",
     "ECART",
+    "EPAISSEUR_MIN",
     "MARGE",
     "Boite",
     "decouper",
@@ -56,6 +57,20 @@ Boite = tuple[int, int, int, int]
 # fait moins de seize pixels ». La comparaison, elle, se fait sur l'aire — une
 # lance de 4 × 200 pixels a un petit côté minuscule et reste un sujet.
 COTE_MIN = 16
+
+# **Un sujet a deux dimensions.** En dessous, une boîte est une ligne : une
+# rangée de pixels sur toute la largeur d'une image, ce que laissent un bord
+# rogné, une bande de compression, un liseré de cadre. L'aire ne les attrape pas
+# — une ligne de 1024 × 1 pèse 1024, largement au-dessus de `COTE_MIN²` — et
+# c'est exactement ce qui s'est passé sur la planche de quatre nains de ce dépôt
+# : sa première rangée est sombre là où le fond est gris clair, donc le
+# détourage la garde, à juste titre, et la détection proposait un cinquième
+# rectangle de 1024 × 1 par-dessus les quatre nains.
+#
+# **Deux, et pas quatre** : `COTE_MIN` dit en toutes lettres qu'une lance de
+# 4 × 200 reste un sujet. Ce plancher-ci ne juge pas de la finesse, il écarte ce
+# qui n'a pas d'épaisseur du tout.
+EPAISSEUR_MIN = 2
 
 # Deux boîtes séparées par moins que ça sont le même sprite. Un arc détaché du
 # corps, un chapeau que l'anti-crénelage a coupé : ce sont des morceaux, pas des
@@ -87,7 +102,9 @@ def zones_opaques(alpha: np.ndarray, *, cote_min: int = COTE_MIN) -> list[Boite]
        chevauchent, ou qui passent à moins de `ECART`, fusionnent. C'est ce qui
        recolle un arc au corps qui le tient ;
     3. **un sujet trop petit n'en est pas un** — en dessous de `cote_min²` d'aire,
-       c'est un éclat de fond qui a survécu au seuil.
+       c'est un éclat de fond qui a survécu au seuil ; et en dessous de
+       `EPAISSEUR_MIN` d'épaisseur, c'est une ligne et pas une forme, quelle que
+       soit sa longueur.
 
     La fusion vient **avant** le rejet, jamais après : deux morceaux de 12 px
     d'un même sprite valent 24 px une fois réunis, et les rejeter d'abord les
@@ -96,7 +113,9 @@ def zones_opaques(alpha: np.ndarray, *, cote_min: int = COTE_MIN) -> list[Boite]
     boites = [_boite_de(tache) for tache, _ in composantes(alpha > 0)]
     boites = _fusionner(boites, ECART)
     seuil = max(0, cote_min) ** 2
-    boites = [b for b in boites if _aire(b) >= seuil]
+    boites = [
+        b for b in boites if _aire(b) >= seuil and _epaisseur(b) >= EPAISSEUR_MIN
+    ]
     return en_ordre_de_lecture(boites)
 
 
@@ -190,6 +209,12 @@ def _boite_de(tache: np.ndarray) -> Boite:
 def _aire(boite: Boite) -> int:
     x0, y0, x1, y1 = boite
     return (x1 - x0 + 1) * (y1 - y0 + 1)
+
+
+def _epaisseur(boite: Boite) -> int:
+    """Le petit côté d'une boîte — ce qui distingue une forme d'une ligne."""
+    x0, y0, x1, y1 = boite
+    return min(x1 - x0 + 1, y1 - y0 + 1)
 
 
 def _proches(a: Boite, b: Boite, ecart: int) -> bool:

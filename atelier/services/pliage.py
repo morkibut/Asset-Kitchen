@@ -101,8 +101,15 @@ def _creer(pliage: Pliage) -> str:
     consigne = (
         f"Render this as a sprite sheet of {forme.cases} sprites of the SAME subject. "
         f"Exactly {forme.colonnes} columns and {forme.lignes} rows, {forme.cases} cells "
+        # **`all standing on the same baseline` est parti le 1ᵉʳ septembre 2026.**
+        # Ce que cette phrase achetait — des sujets alignés, donc découpables —
+        # est gardé mot pour mot ; ce qu'elle disait en plus, *ils sont debout sur
+        # un sol*, était une phrase de vue de face, et elle partait telle quelle
+        # à un jeu vu d'aplomb. Elle contredisait alors la caméra qui ferme le
+        # même prompt — *les pieds restent cachés sous le corps* — dans le seul
+        # texte du produit où deux phrases se répondent d'aussi près.
         f"total, one single sprite per cell, evenly spaced on a regular grid, every "
-        f"sprite the same height, all standing on the same baseline. "
+        f"sprite the same height, each one aligned the same way inside its cell. "
         f"The cells, in reading order, show: {liste}. "
         f"It must be the same subject in every cell: same colors, same outfit, same "
         f"proportions, same size, same style. Plain flat light gray background, no cell "

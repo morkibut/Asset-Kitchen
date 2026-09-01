@@ -3,7 +3,7 @@
 
 **Ce qui se mesure ici** : qu'un choix unique remplit tous les endroits qui
 doivent s'accorder, que le produit ne réécrit jamais ce que l'auteur a tapé, que
-la base d'étiquettes appartient à l'atelier et part vide, et qu'un changement
+la base d'étiquettes appartient à l'atelier et naît pleine, et qu'un changement
 coûteux annonce ses chiffres sans jamais bloquer. Ce que l'écran montre — les
 dix étapes, les deux humeurs, les vignettes — vit dans
 `interface/src/App.test.tsx`.
@@ -95,33 +95,84 @@ def test_la_tuile_est_entree_au_bareme(client):
 
 
 # ── « Un choix unique remplit le réglage et la phrase » ──────────────────────
+#
+# **Ce qui a changé le 1ᵉʳ septembre 2026, et ce qui n'a pas changé.** La phrase
+# du produit n'est plus *écrite dans la case* : elle est *calculée à l'envoi*
+# depuis la taille et la vue, qui la déterminent entièrement. Le critère de E8
+# ne bouge pas d'un mot — un choix unique remplit le réglage et la phrase, et
+# les deux ne peuvent pas diverger —, il devient même plus fort : il ne dépend
+# plus de la borne d'une réécriture, il n'y a plus de réécriture du tout.
+#
+# La panne que ça répare est nommée dans `phrase_de_grille` : rangée dans la
+# case, la phrase cessait d'être mise à jour dès qu'un mot s'ajoutait à côté
+# d'elle, parce que la case devenait « du texte d'auteur ».
 
 
-def test_la_vue_ecrit_sa_phrase_dans_la_case_vue(client):
-    """Elle est écrite **juste, la première fois**, sans qu'on ait à y penser."""
+def test_la_vue_dit_sa_phrase_sans_l_ecrire_dans_la_case(client):
+    """La case reste vide ; la phrase se lit dans `phrases`, et elle part."""
     client.put("/api/universe", json={"vue": "vue-dessus-34"})
 
-    assert _univers(client)["vue"] == "vue-dessus-34"
-    assert _case(client, "vue")["texte"] == vue("vue-dessus-34").phrase
+    univers = _univers(client)
+    assert univers["vue"] == "vue-dessus-34"
+    # Rien n'a été écrit dans la case : c'est ce qui protège la phrase du gel.
+    assert _case(client, "vue")["texte"] == ""
+    # Et elle est bien là, calculée, à l'endroit où l'écran la lit.
+    assert univers["phrases"]["vue"] == vue("vue-dessus-34").phrase
 
 
-def test_la_taille_ecrit_la_grille_et_le_calage(client):
+def test_la_taille_dit_la_grille_et_le_calage(client):
     """**La contradiction mesurée du dépôt, réparée à sa source.**
 
     Le réglage disait 128 pendant que le texte envoyé disait 64, trois fois. Les
-    deux ne peuvent plus diverger parce qu'ils viennent du même geste.
+    deux ne peuvent plus diverger parce qu'il n'y a plus qu'un seul endroit :
+    le réglage. La phrase est sa lecture, pas sa copie.
     """
     client.put("/api/universe", json={"cible_px": 128})
 
-    assert _univers(client)["cible_px"] == 128
-    assert _case(client, "rendu")["texte"] == phrase_de_grille(128)
-    assert _case(client, "technique")["texte"] == phrase_de_calage(128)
-    assert "128x128" in _case(client, "technique")["texte"]
+    univers = _univers(client)
+    assert univers["cible_px"] == 128
+    assert univers["phrases"]["rendu"] == phrase_de_grille(128)
+    assert univers["phrases"]["technique"] == phrase_de_calage(128)
+    assert "128x128" in univers["phrases"]["technique"]
+    # Les cases, elles, n'ont rien reçu.
+    assert _case(client, "rendu")["texte"] == ""
+    assert _case(client, "technique")["texte"] == ""
 
-    # Et changer de taille réécrit les deux — c'est ce qui interdit la dérive.
+    # Changer de taille change les deux, immédiatement et sans condition —
+    # c'est ce qui interdit la dérive, et ça ne dépend plus de savoir si
+    # l'auteur avait touché la case.
     client.put("/api/universe", json={"cible_px": 32})
-    assert "32x32" in _case(client, "rendu")["texte"]
-    assert "128" not in _case(client, "technique")["texte"]
+    phrases = _univers(client)["phrases"]
+    assert "32x32" in phrases["rendu"]
+    assert "128" not in phrases["technique"]
+
+
+def test_une_etiquette_ajoutee_ne_gele_plus_la_phrase(client):
+    """**La panne exacte que ce déplacement répare**, et elle était silencieuse.
+
+    Tant que la phrase vivait dans la case, ajouter un mot à côté d'elle faisait
+    de la case « du texte d'auteur », et le produit s'interdisant d'y toucher, la
+    grille cessait de suivre la taille. Une seule étiquette cliquée gelait donc
+    le prompt sur une taille qu'on venait de quitter.
+    """
+    client.put("/api/universe", json={"cible_px": 64})
+    # L'auteur clique une étiquette : elle s'ajoute au texte de la case.
+    client.put(
+        "/api/universe",
+        json={
+            "bible": [
+                {"nom": "rendu", "texte": "16-bit pixel art, SNES era", "actif": True}
+            ]
+        },
+    )
+
+    client.put("/api/universe", json={"cible_px": 128})
+
+    univers = _univers(client)
+    # Le texte de l'auteur est intact…
+    assert _case(client, "rendu")["texte"] == "16-bit pixel art, SNES era"
+    # …et la phrase a suivi la taille, ce qu'elle ne faisait plus avant.
+    assert univers["phrases"]["rendu"] == phrase_de_grille(128)
 
 
 def test_le_nombre_de_directions_ne_part_plus_dans_le_texte(client):
@@ -139,12 +190,12 @@ def test_le_nombre_de_directions_ne_part_plus_dans_le_texte(client):
         assert "directional" not in _case(client, nom)["texte"]
 
 
-def test_le_produit_ne_reecrit_jamais_ce_que_l_auteur_a_tape(client):
-    """**La borne qui rend la réécriture sûre.**
+def test_le_produit_ne_touche_jamais_ce_que_l_auteur_a_tape(client):
+    """**La promesse tient, et elle ne coûte plus de borne.**
 
-    Sans elle, changer une taille effacerait sous les yeux de l'auteur une
-    description qu'il a mis du temps à trouver, et « c'est du texte libre »
-    cesserait d'être vrai.
+    Le produit n'écrivant plus rien dans les cases, il ne peut plus rien y
+    effacer : « c'est du texte libre » devient vrai par construction, au lieu
+    de l'être par une liste close de phrases qu'on avait le droit d'écraser.
     """
     a_la_main = "chunky 2D pixel art, hand-placed, no snapping at all"
     client.put(
@@ -155,21 +206,56 @@ def test_le_produit_ne_reecrit_jamais_ce_que_l_auteur_a_tape(client):
     client.put("/api/universe", json={"cible_px": 96})
 
     assert _case(client, "rendu")["texte"] == a_la_main
-    # La case que l'auteur n'a pas touchée, elle, reçoit sa phrase.
-    assert "96x96" in _case(client, "technique")["texte"]
+    # Et les deux partent ensemble : l'atelier d'abord, l'auteur ensuite.
+    assert _univers(client)["phrases"]["rendu"] == phrase_de_grille(96)
+    assert "96x96" in _univers(client)["phrases"]["technique"]
 
 
-def test_sans_cible_aucune_phrase_n_est_ecrite(client):
+def test_sans_cible_aucune_phrase_n_est_dite(client):
     """« Un univers vide ne contraint rien » (US-57), et *aucune* est une valeur.
 
-    Écrire `no pixel grid` serait une affirmation que personne n'a faite.
+    Écrire `no pixel grid` serait une affirmation que personne n'a faite. La
+    case n'a donc pas de ligne d'atelier du tout — pas une ligne vide.
     """
     client.put("/api/universe", json={"cible_px": 128})
-    assert _case(client, "rendu")["texte"]
+    assert _univers(client)["phrases"]["rendu"]
 
     client.put("/api/universe", json={"cible_px": 0})
-    assert _case(client, "rendu")["texte"] == ""
+    phrases = _univers(client)["phrases"]
+    assert "rendu" not in phrases
+    assert "technique" not in phrases
+
+
+def test_la_phrase_de_l_atelier_ne_survit_pas_dans_un_fichier_ancien(client):
+    """**La migration du 1ᵉʳ septembre 2026, vue depuis l'API.**
+
+    Un `projet.json` écrit avant porte la phrase du produit *dans* la case —
+    seule, ou collée devant le texte de l'auteur. La relecture la retire, et
+    elle ne retire que ça.
+    """
+    client.put("/api/universe", json={"cible_px": 64})
+    client.put(
+        "/api/universe",
+        json={
+            "bible": [
+                {
+                    "nom": "rendu",
+                    # Exactement ce qu'un fichier d'avant contient.
+                    "texte": phrase_de_grille(64) + ", 16-bit pixel art",
+                    "actif": True,
+                },
+                {"nom": "technique", "texte": phrase_de_calage(64), "actif": True},
+            ]
+        },
+    )
+
+    # Le projet est relu du disque à chaque appel : la migration a déjà eu lieu.
+    assert _case(client, "rendu")["texte"] == "16-bit pixel art"
     assert _case(client, "technique")["texte"] == ""
+    # Et ce qui part n'a pas changé d'un signe.
+    phrases = _univers(client)["phrases"]
+    assert phrases["rendu"] == phrase_de_grille(64)
+    assert phrases["technique"] == phrase_de_calage(64)
 
 
 def test_une_vue_inconnue_est_refusee_en_la_nommant(client):
@@ -217,13 +303,23 @@ def test_la_meme_taille_ne_casse_rien(client):
 # ── Les étiquettes ───────────────────────────────────────────────────────────
 
 
-def test_la_base_d_etiquettes_part_vide(client):
-    """**Personne ne l'écrit à la place de l'auteur.**
+def test_la_base_d_etiquettes_part_pleine(client):
+    """**Renversé le 1ᵉʳ septembre 2026, et pour un compte, pas pour un goût.**
 
-    Au premier jeu, l'étape de l'allure est donc sept champs de texte libre, et
-    elle le dit franchement plutôt que de faire semblant.
+    La décision d'origine était *personne ne l'écrit à la place de l'auteur*, et
+    ce qu'elle produisait était mesurable : au premier jeu l'étape de l'allure
+    était sept champs de texte libre, en anglais, avec trois lignes qui disaient
+    la même absence et rien à cliquer. Le mécanisme des étiquettes existe pour
+    rendre la description *mécanique au lieu d'être rédigée* — une base vide ne
+    rend rien de mécanique.
+
+    Ce que la base contient, et la page qui la porte, vivent dans
+    `tests/test_etiquettes_livrees.py`. Ici on ne vérifie que le renversement.
     """
-    assert client.get("/api/labels").json()["etiquettes"] == []
+    recu = client.get("/api/labels").json()["etiquettes"]
+
+    assert recu
+    assert all(e["livree"] for e in recu)
 
 
 def test_une_etiquette_est_une_paire_et_les_deux_moities_sont_exigees(client):
@@ -251,22 +347,25 @@ def test_une_etiquette_appartient_a_l_atelier_et_pas_a_un_projet(client):
     client.post(
         "/api/labels",
         json={
-            "libelle": "brume basse",
-            "texte": "thick low-lying fog, volumetric haze",
+            "libelle": "brume de tourbe",
+            "texte": "peat smoke haze, low and clinging",
             "case": "eclairage",
         },
     )
     autre = client.post("/api/projects", json={"nom": "Un autre jeu"}).json()["projet"]
     client.put("/api/projects/current", json={"projet": autre["identifiant"]})
 
-    (etiquette,) = client.get("/api/labels").json()["etiquettes"]
-    assert etiquette["libelle"] == "brume basse"
-    assert etiquette["texte"] == "thick low-lying fog, volumetric haze"
+    # **Une seule fabriquée dans une base qui en porte soixante-dix livrées** :
+    # c'est celle-là qu'on cherche, et c'est sa marque qui la désigne.
+    recu = client.get("/api/labels").json()["etiquettes"]
+    (etiquette,) = [e for e in recu if not e["livree"]]
+    assert etiquette["libelle"] == "brume de tourbe"
+    assert etiquette["texte"] == "peat smoke haze, low and clinging"
     assert etiquette["case"] == "eclairage"
 
 
 def test_deux_fois_le_meme_libelle_dans_la_meme_case_est_refuse(client):
-    charge = {"libelle": "brume basse", "texte": "low fog", "case": "eclairage"}
+    charge = {"libelle": "brume de tourbe", "texte": "peat smoke haze", "case": "eclairage"}
     assert client.post("/api/labels", json=charge).status_code == 201
 
     encore = client.post("/api/labels", json=charge)
@@ -274,7 +373,7 @@ def test_deux_fois_le_meme_libelle_dans_la_meme_case_est_refuse(client):
     assert "existe déjà" in encore.json()["raison"]
 
     # Le même libellé dans une autre case, en revanche, est une autre étiquette :
-    # « brume basse » ne dit pas la même chose au trait qu'à l'éclairage.
+    # « brume de tourbe » ne dit pas la même chose au trait qu'à l'éclairage.
     ailleurs = {**charge, "case": "trait"}
     assert client.post("/api/labels", json=ailleurs).status_code == 201
 
@@ -282,12 +381,13 @@ def test_deux_fois_le_meme_libelle_dans_la_meme_case_est_refuse(client):
 def test_les_plus_employees_passent_devant(client):
     """**Un compte, jamais un classement enregistré** : l'ordre de fabrication
     départage les ex æquo, et c'est celui que l'auteur reconnaît."""
-    for libelle in ("brume basse", "contre-jour", "lueur de forge"):
+    for libelle in ("brume de tourbe", "halo de vitrail", "lueur de creuset"):
         client.post(
             "/api/labels",
             json={"libelle": libelle, "texte": f"{libelle} en anglais", "case": "eclairage"},
         )
-    milieu = client.get("/api/labels").json()["etiquettes"][1]["identifiant"]
+    recu = client.get("/api/labels").json()["etiquettes"]
+    milieu = [e for e in recu if not e["livree"]][1]["identifiant"]
 
     client.post(f"/api/labels/{milieu}/used")
     client.post(f"/api/labels/{milieu}/used")
@@ -302,9 +402,10 @@ def test_oublier_une_etiquette_ne_touche_a_aucune_case(client):
     et l'étiquette n'en est que l'origine."""
     client.post(
         "/api/labels",
-        json={"libelle": "brume basse", "texte": "low fog", "case": "eclairage"},
+        json={"libelle": "brume de tourbe", "texte": "peat smoke haze", "case": "eclairage"},
     )
-    (etiquette,) = client.get("/api/labels").json()["etiquettes"]
+    recu = client.get("/api/labels").json()["etiquettes"]
+    (etiquette,) = [e for e in recu if not e["livree"]]
     client.put(
         "/api/universe",
         json={"bible": [{"nom": "eclairage", "texte": "low fog", "actif": True}]},
@@ -312,7 +413,8 @@ def test_oublier_une_etiquette_ne_touche_a_aucune_case(client):
 
     client.delete(f"/api/labels/{etiquette['identifiant']}")
 
-    assert client.get("/api/labels").json()["etiquettes"] == []
+    apres = client.get("/api/labels").json()["etiquettes"]
+    assert not [e for e in apres if not e["livree"]]
     assert _case(client, "eclairage")["texte"] == "low fog"
 
 

@@ -384,7 +384,15 @@ def test_chaque_champ_de_la_bible_s_active_independamment(client, double):
     assert "tourbe et fer" in parti
     assert "contour brun" in parti
     assert "haut moyen âge" not in parti, "un champ désactivé est parti quand même"
-    assert parti.endswith("un tonneau"), "le sujet de l'auteur doit rester en dernier"
+    # **Le sujet n'est plus le dernier mot, et c'est mesuré** (1ᵉʳ septembre
+    # 2026). Le cadre et la caméra ferment le texte depuis qu'un banc a montré
+    # que la dernière phrase décide de la vue — `essais/essai_vue.py`, 1,55 à
+    # 1,13 — et de la place du sujet dans l'image — `essais/essai_deux_jeux.py`,
+    # 14,7 % à 20,1 % d'aire. Ce que cet essai protège reste entier : le sujet de
+    # l'auteur part, et il part après la bible.
+    bloc_du_sujet = "\n\nun tonneau\n\n"
+    assert bloc_du_sujet in parti, "le sujet de l'auteur doit partir, après la bible"
+    assert parti.rstrip().endswith("no frame, no border."), "le cadre ferme le texte"
 
     # Le champ inactif n'est pas perdu pour autant : il attend d'être rallumé.
     bible = {c["nom"]: c for c in client.get("/api/universe").json()["univers"]["bible"]}

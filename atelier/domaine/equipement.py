@@ -36,6 +36,7 @@ __all__ = [
     "AGRANDIT",
     "CONTENUE",
     "ECHELLE_TOLEREE",
+    "EMPLACEMENTS_PROPOSES",
     "Emplacement",
     "MesuresCalque",
     "PORTEES",
@@ -333,3 +334,33 @@ def _sans_doublon(objets: Iterable[Any]) -> list[Any]:
 # **en queue**, jamais trié — même règle que l'ajout d'une pose au plan.
 def rang_suivant(emplacements: Iterable[Emplacement]) -> int:
     return max((e.rang for e in emplacements), default=-1) + 1
+
+
+# ── Les six que l'atelier propose, et il les propose sans les poser ──────────
+#
+# **Le vestiaire naît vide, et il continue** — la décision d'`emplacements_depuis_json`
+# ne bouge pas d'un mot : personne ne sait d'avance ce qu'un jeu équipe, et une
+# ligne inventée qu'il faut effacer d'abord coûte plus qu'une liste vide.
+#
+# **Ce qui change le 1ᵉʳ septembre 2026 est ailleurs, et c'est mesuré** : l'étape
+# 8 de l'assistant montrait une liste vide sous la demi-phrase « L'ordre compte »,
+# et cette moitié de phrase énonçait une règle sur un ordre que rien ne
+# permettait de changer. Une liste vide ne décourage pas seulement — elle rend la
+# règle indémontrable.
+#
+# La réponse n'est donc pas de garnir le fichier, c'est de **proposer en un
+# geste** : l'étape offre de poser ces six-là, l'auteur clique ou n'y touche pas,
+# et rien n'a jamais été écrit derrière son dos. C'est le même équilibre que
+# « nommer, c'est créer », avec six noms tapés d'avance.
+#
+# **L'ordre est celui de l'empilement, du fond vers l'avant**, et c'est lui qui
+# fait la démonstration : le dos passe derrière le corps, le casque devant tout.
+# Un ordre alphabétique n'apprendrait rien.
+EMPLACEMENTS_PROPOSES: tuple[str, ...] = (
+    "le dos",
+    "le corps",
+    "les jambes",
+    "le torse",
+    "les mains",
+    "la tête",
+)

@@ -652,27 +652,62 @@ export function BarreDesTables({
 }
 
 // ── Le comparateur ──────────────────────────────────────────────────────────
+//
+// **Deux contrôles, parce qu'il y a deux questions.** Un seul groupe de quatre
+// segments — `brut · rendu · côte à côte · superposé` — mélangeait *quelle image
+// je regarde* et *combien d'images sont à l'écran*. Les quatre s'excluaient,
+// donc c'était un choix ; ils s'excluaient parce qu'on les avait mis ensemble.
+//
+// **Ce que ça coûtait, mesuré table par table** : les quatre surfaces qui
+// portent un geste — la pipette qui vise une couleur, le tracé de la sélection
+// magique, le rectangle de recadrage, le pinceau — étaient toutes gardées par la
+// même condition, `mode === "rendu" || mode === "brut"`, répétée quatre fois.
+// Choisir une comparaison rendait deux balises `img` et **plus rien d'autre** :
+// le panneau de gauche montrait toujours les réglages de la table, on pouvait
+// changer un seuil, et on ne pouvait plus désigner un point sur l'image —
+// c'est-à-dire faire ce pour quoi on avait ouvert les deux vues côte à côte.
+//
+// **La règle qui en sort** : *une comparaison ne retire jamais un geste ; elle
+// pose un témoin à côté.* C'est elle qui interdit que le défaut revienne — la
+// prochaine façon de comparer, un rideau, un clignotement, ne demandera pas non
+// plus si l'outil doit disparaître.
+//
+// Douze combinaisons, douze qui marchent. Le tout est dessiné dans
+// `docs/maquettes-v2.1/03bis-comparer-sans-lacher-l-outil.html`.
 
-type Mode = "rendu" | "brut" | "cote" | "superpose"
+/** L'image que l'outil touche. **C'est toujours celle-là**, quel que soit le
+ *  témoin posé à côté. */
+type Travail = "brut" | "rendu"
 
-const MODES: Record<Mode, string> = {
-  rendu: "rendu",
-  brut: "brut",
-  cote: "côte à côte",
-  superpose: "superposé",
+/** Ce qu'on met à côté pour comparer. **Il ne porte jamais rien** : on le
+ *  regarde, on n'y touche pas. */
+type Temoin = "aucun" | "cote" | "dessus"
+
+const TRAVAUX: Record<Travail, string> = { brut: "brut", rendu: "rendu" }
+
+const TEMOINS: Record<Temoin, string> = {
+  aucun: "aucun",
+  cote: "à côté",
+  dessus: "par-dessus",
 }
 
 /**
  * Sous l'image, sur toutes les tables.
  *
- * **Le mode se dit toujours** — écrit en clair à côté des segments dès que ce
- * n'est pas *rendu*. Un mode durable qu'on oublie est le danger que l'appui
+ * **Ce qu'on travaille se dit toujours** — écrit en clair, en ambre, dès que ce
+ * n'est pas le rendu. Un état durable qu'on oublie est le danger que l'appui
  * *Avant ›* de C4 évitait ; le dire est ce qui autorise à le rendre durable.
+ *
+ * **Le témoin, lui, ne se redit pas** : son contrôle est à trois valeurs et il
+ * porte déjà la sienne. La phrase ambre ne reste que pour le seul état qui
+ * change ce qu'un outil touche vraiment.
  */
 function Comparateur({
   asset,
-  mode,
-  onMode,
+  travail,
+  onTravail,
+  temoin,
+  onTemoin,
   opacite,
   onOpacite,
   peint,
@@ -682,13 +717,17 @@ function Comparateur({
   ajuste,
 }: {
   asset: Asset
-  mode: Mode
-  onMode: (mode: Mode) => void
+  travail: Travail
+  onTravail: (travail: Travail) => void
+  temoin: Temoin
+  onTemoin: (temoin: Temoin) => void
   opacite: number
   onOpacite: (opacite: number) => void
-  /** La table ouverte se peint-elle ? **C'est la seule contrainte que le
-   *  comparateur reçoive** : les trois autres vues se lisent alors en
-   *  maintenant *Avant ›*, qui rend exactement ce qu'elles retiraient. */
+  /** La table ouverte se peint-elle ? **La seule chose que ça retire est le
+   *  brut** : le pinceau écrit sur le résultat, et il n'y a rien à peindre sur
+   *  une image d'origine que la recette réécrit ensuite. Les trois témoins,
+   *  eux, lui sont ouverts — c'est même la table où comparer sert le plus, on
+   *  peint un masque et on veut voir ce qu'il enlève pendant qu'on peint. */
   peint?: boolean
   onAvant?: (tenu: boolean) => void
   /** Le cran d'agrandissement choisi, ou `ajusté`. */
@@ -698,31 +737,71 @@ function Comparateur({
    *  qu'un mot qui cache un nombre laisse deviner ce qu'on regarde. */
   ajuste: number
 }) {
+  /** Le mot qui dit de quoi le contrôle d'à côté répond.
+   *
+   *  **Il part avant les gestes**, comme les dimensions et pour la même raison :
+   *  un libellé n'est pas un geste. L'ordre de sacrifice de la bande est donc
+   *  entier — les dimensions, les deux libellés, et rien d'autre ne bouge. */
+  const libelle = (nom: string) => (
+    <span className="min-w-0 shrink overflow-hidden whitespace-nowrap text-texte-3">
+      {nom}
+    </span>
+  )
   return (
     <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px]">
-      <span className="whitespace-nowrap text-texte-3">
+      {/* **Ce qui sort quand la place manque est une mesure, jamais un geste**
+          (`docs/DESIGN.md`). Les dimensions sont la seule mesure de la bande
+          qui se relise ailleurs — dans la fiche, dans le panneau —, donc elles
+          partent en premier, et tout le reste est `shrink-0`.
+
+          **Ce que ça rend, mesuré au navigateur** : la bande d'avant réclamait
+          973 px en superposé pour 840 disponibles à 1 600 de fenêtre, les deux
+          colonnes ouvertes, et ce qui sortait était le bouton. Celle-ci en
+          réclame 753 avec ses libellés, 681 sans eux — elle tient à 1 600, et
+          elle tient à 1 440 dès que les dimensions partent, ce qu'aucun
+          arrangement de la bande d'avant ne permettait.
+
+          **Une barre de défilement a été essayée et retirée** : elle prend
+          16 px sur les 38 de la bande, et les segments de 26 s'y trouvent
+          rognés de quatre. Une bande qui écrase ses contrôles ment sur leur
+          état, ce que le produit s'interdit ailleurs ; sous 1 440, replier une
+          colonne rend 380 px d'un coup. */}
+      <span className="min-w-0 shrink truncate text-texte-3">
         {asset.largeur}×{asset.hauteur} · {asset.type_media}
       </span>
-      {/* **Un seul groupe de quatre, et non deux de deux.** La maquette les
-          dessine sur deux rangées, ce qui est de la mise en page ; en faire
-          deux contrôles obligerait le second à montrer une valeur choisie
-          quand le mode est *rendu* — c'est-à-dire à dire faux. Les quatre
-          modes s'excluent, donc ils sont un choix. */}
+
+      {/* **Deux contrôles, deux questions.** *On travaille sur* dit quelle
+          image porte l'outil ; *témoin* dit ce qu'on met à côté pour comparer.
+          Aucun croisement n'est interdit. */}
+      {libelle("sur")}
       <Segments
-        valeurs={["brut", "rendu", "cote", "superpose"] as const}
-        valeur={mode}
-        libelles={MODES}
-        indisponibles={peint ? (["brut", "cote", "superpose"] as const) : []}
-        onChange={(v) => onMode(v as Mode)}
+        valeurs={["brut", "rendu"] as const}
+        valeur={travail}
+        libelles={TRAVAUX}
+        // **Montré grisé plutôt que caché**, la règle du produit : on apprend
+        // qu'il existe. Le pinceau écrit sur le résultat, et l'appui *Avant ›*
+        // juste à côté rend l'image d'origine le temps qu'on le tient.
+        indisponibles={peint ? (["brut"] as const) : []}
+        onChange={(v) => onTravail(v as Travail)}
       />
+      {libelle("témoin")}
+      <Segments
+        valeurs={["aucun", "cote", "dessus"] as const}
+        valeur={temoin}
+        libelles={TEMOINS}
+        onChange={(v) => onTemoin(v as Temoin)}
+      />
+
       {/* **La bande fait 38 px, et elle ne grandit pas.** Mesuré au navigateur
           en tenant E5 : la phrase qui expliquait le grisé la faisait passer sur
           trois lignes, repliait les segments avec elle et poussait le bouton
           hors de l'écran. **Elle est descendue dans le panneau**, qui a la
           place d'une phrase ; ici il ne reste que le geste.
 
-          **Sa dernière maison.** L'appui récupère exactement ce que la
-          contrainte retire, et c'est pour ça qu'elle est payable. */}
+          **Il reste, et il change de raison.** Il existait pour compenser ce
+          que la table qui peint retirait ; il n'y a plus rien à compenser. Un
+          appui maintenu est simplement plus rapide que deux clics, et il ne
+          coûte aucune place — c'est un geste, pas un réglage. */}
       {peint && (
         <button
           type="button"
@@ -734,17 +813,18 @@ function Comparateur({
           Avant ›
         </button>
       )}
-      {mode === "superpose" && (
+      {temoin === "dessus" && (
         <input
           type="range"
           min={0}
           max={100}
           value={opacite}
-          aria-label="Opacité du brut par-dessus le rendu"
+          aria-label="Opacité du témoin par-dessus"
           onChange={(e) => onOpacite(Number(e.target.value))}
-          className="w-[104px]"
+          className="w-[104px] shrink-0"
         />
       )}
+
       {/* **Le zoom, à côté des modes** — refait en U2. Il vit dans la fente qui
           existe déjà : la bande fait 38 px et elle ne grandit pas.
 
@@ -754,26 +834,38 @@ function Comparateur({
           que c'est l'état d'ouverture et le seul qui suive le cadre. */}
       <span aria-hidden className="h-4 w-px shrink-0 bg-bord" />
       <CommandesDeZoom zoom={zoom} onZoom={onZoom} ajuste={ajuste} />
-      {/* **Le PNG de l'état courant, depuis n'importe quelle table** (U2). Ce
-          qu'on a sous les yeux, quelle que soit la table ouverte et quel que
-          soit le mode — le brut quand on regarde le brut, le rendu sinon. Il
-          n'existait qu'un seul endroit pour télécharger une image, la tuile de
-          la galerie, et on ne l'atteignait pas depuis ici. */}
+
+      {/* **Le PNG de l'état courant, depuis n'importe quelle table** (U2), et
+          **habillé en bouton**. Il existait déjà, présent partout, et on ne le
+          voyait pas : son libellé était en JetBrains Mono 10 px dans
+          `--texte-2`, exactement l'habit des mesures de la bande. Dans une
+          bande où sept éléments sur huit sont des faits en mono, un huitième
+          fait en mono ne se lit pas comme un geste. Instrument Sans 11,5 px sur
+          `--fond-2`, donc : la forme de tous les boutons compacts du produit,
+          et la seule chose de la bande qui ne soit pas en mono. */}
       <a
-        href={api.telechargementAsset(asset.identifiant, mode === "brut")}
-        download={`${asset.label || asset.identifiant}${mode === "brut" ? "-brut" : ""}.png`}
+        href={api.telechargementAsset(asset.identifiant, travail === "brut")}
+        download={`${asset.label || asset.identifiant}${travail === "brut" ? "-brut" : ""}.png`}
+        // **L'infobulle nomme toujours ce qu'il emporte** : le geste est le
+        // même, ce qui part ne l'est pas.
         title={
-          mode === "brut"
-            ? "Télécharger le PNG de l'image d'origine"
-            : "Télécharger le PNG de l'état courant"
+          travail === "brut"
+            ? "Télécharger l'image d'origine, telle qu'elle est arrivée"
+            : "Télécharger le rendu, avec les passes de la recette"
         }
-        className="mesure h-[24px] shrink-0 whitespace-nowrap rounded-[2px] border border-bord-fort px-2 leading-[22px] text-texte-2 hover:text-signal"
+        className="flex h-[26px] shrink-0 items-center rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[11.5px] whitespace-nowrap text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3 hover:text-signal"
       >
-        PNG ↓{mode === "brut" ? " brut" : ""}
+        PNG ↓
       </a>
-      {/* Le mode se dit dès que ce n'est pas le rendu. */}
-      {mode !== "rendu" && (
-        <span className="ml-auto text-epingle">on regarde : {MODES[mode]}</span>
+
+      {/* **Le seul état durable qui change ce qu'un outil touche.** La phrase
+          du mode disparaît avec le mode qu'elle nommait — le contrôle du témoin
+          dit déjà la sienne, et redire une valeur qu'un segment allumé porte
+          est du bruit. */}
+      {travail === "brut" && (
+        <span className="ml-auto shrink-0 whitespace-nowrap text-epingle">
+          on travaille sur le brut
+        </span>
       )}
     </div>
   )
@@ -968,7 +1060,8 @@ export function EcranTables({
     onErreur,
   )
   const mesures = useMesures(asset)
-  const [mode, setMode] = useState<Mode>("rendu")
+  const [travail, setTravail] = useState<Travail>("rendu")
+  const [temoin, setTemoin] = useState<Temoin>("aucun")
   const [opacite, setOpacite] = useState(50)
   const etatMain = useEtatMain(univers)
   /** **Tenir montre l'avant** — un état d'appui, jamais une bascule : une
@@ -1148,14 +1241,21 @@ export function EcranTables({
     },
   }
 
-  /** **Une table qui se peint force le rendu.** Le cas qui a tranché est *côte
-   *  à côte* : deux images à l'écran, et la main n'aurait pas su sur laquelle
-   *  elle écrit. Un outil dont la cible est ambiguë détruit une fois sur deux
-   *  — et l'appui *Avant ›* récupère exactement ce qu'on retire ici, ce qui est
-   *  la raison pour laquelle il pouvait disparaître partout ailleurs. */
+  /** **Une table qui se peint travaille sur le rendu**, et c'est tout ce
+   *  qu'elle impose désormais.
+   *
+   *  Elle forçait les quatre modes à un seul, et l'argument qui l'imposait
+   *  était *côte à côte* : deux images à l'écran, et la main n'aurait pas su
+   *  sur laquelle elle écrit. L'argument tombe avec la scène qui l'a créé — le
+   *  témoin ne porte plus rien, l'anneau `--lumiere` dit laquelle est
+   *  l'ouvrage, et la surimpression ne prend pas le pointeur. **Il ne reste que
+   *  le brut**, et pour une autre raison : le pinceau écrit sur le résultat,
+   *  et une image d'origine que la recette réécrit derrière n'a rien à
+   *  recevoir. C'est même la table où comparer sert le plus — on peint un
+   *  masque, on veut voir ce qu'il enlève pendant qu'on peint. */
   const peint = ouverte === "main"
   useEffect(() => {
-    if (peint) setMode("rendu")
+    if (peint) setTravail("rendu")
   }, [peint])
 
   // ── L'image ouvre à la taille du cadre ────────────────────────────────────
@@ -1196,7 +1296,14 @@ export function EcranTables({
     )
   }, [])
 
-  useLayoutEffect(mesurerCadre, [mesurerCadre, ouverte, mode, dehors, asset.identifiant])
+  useLayoutEffect(mesurerCadre, [
+    mesurerCadre,
+    ouverte,
+    travail,
+    temoin,
+    dehors,
+    asset.identifiant,
+  ])
   useEffect(() => {
     window.addEventListener("resize", mesurerCadre)
     return () => window.removeEventListener("resize", mesurerCadre)
@@ -1208,7 +1315,7 @@ export function EcranTables({
   // *brut* la montre aussi. Mesurer le cadre sur le rendu dans ces cas-là
   // donnerait un ajustement calculé sur une image qui n'est pas à l'écran.
   const surLeBrut =
-    mode === "brut" ||
+    travail === "brut" ||
     ouverte === "recadrage" ||
     (ouverte === "detourage" && visee !== null)
   const largeurVue = (surLeBrut ? asset.largeur : asset.rendu_largeur || asset.largeur) || 1
@@ -1230,7 +1337,9 @@ export function EcranTables({
    *  à ce qui la travaille. */
   const ajuste = borner(
     Math.min(
-      dispo.largeur > 0 ? dispo.largeur / (largeurVue * (mode === "cote" ? 2 : 1)) : 1,
+      dispo.largeur > 0
+        ? dispo.largeur / (largeurVue * (temoin === "cote" ? 2 : 1))
+        : 1,
       dispo.hauteur > 0 ? dispo.hauteur / hauteurVue : 1,
     ) * 100 || 100,
   )
@@ -1243,7 +1352,8 @@ export function EcranTables({
     width: Math.max(
       1,
       Math.round(
-        largeurVue * facteur * (mode === "cote" ? 2 : 1) + (mode === "cote" ? 16 : 0),
+        largeurVue * facteur * (temoin === "cote" ? 2 : 1) +
+          (temoin === "cote" ? 16 : 0),
       ),
     ),
     height: Math.max(1, Math.round(hauteurVue * facteur)),
@@ -1473,138 +1583,156 @@ export function EcranTables({
               className="m-auto flex shrink-0 items-center justify-center gap-4"
               style={boiteCadre}
             >
-            {peint ? (
-              // **La surface se peint, et elle est la seule.** Pas de poignée,
-              // pas de rectangle, pas de cible : une cible de retaille au
-              // milieu d'une surface qu'on peint est un piège à clic, et ici
-              // toute la surface est peignable.
-              <ToileDeLaMain
-                asset={asset}
-                avant={avant}
-                etat={etatMain}
-                onPassage={(trait) =>
-                  void poser({
-                    ...recette,
-                    main: avecPassage(mainDe(recette), etatMain.actif, trait),
-                  })
-                }
-              />
-            ) : (mode === "rendu" || mode === "brut") &&
-              ouverte === "detourage" &&
-              visee !== null ? (
-              // **On vise sur le brut, et pas sur le rendu.** Le point est en
-              // pixels de l'image d'origine — c'est ce qui le fait survivre aux
-              // passes qui le précèdent —, et le rendu porte le recadrage et la
-              // remise sur grille, qui déplacent tous les deux ce qu'on montre.
-              // Un cercle posé sur un rendu recadré désignerait un autre pixel
-              // que celui qu'on croit toucher. Même raison, même choix que le
-              // rectangle de recadrage.
-              <PipetteSurImage
-                asset={asset}
-                point={recette.passes[visee].point}
-                onPoint={(point) => {
-                  void poser({
-                    ...recette,
-                    passes: recette.passes.map((p, i) =>
-                      i === visee ? { ...p, point } : p,
-                    ),
-                  })
-                  // **Le clic désarme.** Viser est un geste qui se termine ; une
-                  // visée qui reste armée ferait du prochain regard sur l'image
-                  // un déplacement du point, sans que rien l'ait demandé.
-                  setViseeArmee(null)
-                }}
-              />
-            ) : (mode === "rendu" || mode === "brut") &&
-              ouverte === "detourage" &&
-              entourage !== null ? (
-              // **On entoure sur le brut, exactement comme on y vise** (U12) :
-              // la forme est en pixels de l'image d'origine, ce qui la fait
-              // survivre aux passes qui la précèdent, et le rendu porte le
-              // recadrage et la remise sur grille, qui déplacent tous les deux
-              // ce qu'on montre.
-              <TraceSurImage
-                asset={asset}
-                trace={recette.passes[entourage].trace}
-                onTrace={(trace) => {
-                  void poser({
-                    ...recette,
-                    passes: recette.passes.map((p, i) =>
-                      i === entourage ? { ...p, trace } : p,
-                    ),
-                  })
-                  // Le tracé fini désarme, pour la raison du clic de la pipette.
-                  setViseeArmee(null)
-                }}
-              />
-            ) : (mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
-              // **Le rectangle se pose sur l'image, jamais dans un champ.** Le
-              // modèle le porte depuis T2 et aucun écran ne l'avait montré : on
-              // ne dessine pas un cadrage en tapant quatre nombres, on le
-              // dessine en regardant ce qu'il garde.
-              <CadreDeRecadrage
-                asset={asset}
-                boite={
-                  (recette.recadrage?.boite as
-                    | [number, number, number, number]
-                    | undefined) ?? null
-                }
-                obtenue={mesures?.recadrage?.obtenue ?? null}
-                onBoite={(boite) =>
-                  void poser({
-                    ...recette,
-                    recadrage: { marge: recette.recadrage?.marge ?? 0, boite },
-                  })
-                }
-              />
-            ) : mode === "rendu" || mode === "brut" ? (
+            {/* **Le témoin à gauche, le travail à droite**, comme le côte à
+                côte d'avant — le brut était déjà à gauche et le rendu à droite.
+                On ne déplace pas une habitude pour rien : ce qui change est ce
+                qu'on peut faire dans la moitié droite, pas où elle est. */}
+            {temoin === "cote" && (
               <img
-                src={api.rendu(asset.identifiant, asset.empreinte, mode === "brut")}
-                alt={asset.label}
-                className="damier h-full w-full object-contain"
+                src={api.rendu(
+                  asset.identifiant,
+                  asset.empreinte,
+                  travail !== "brut",
+                )}
+                alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
+                className="damier h-full w-1/2 object-contain"
                 style={{ imageRendering: "pixelated" }}
               />
-            ) : null}
-            {mode === "cote" && (
-              <>
-                <img
-                  src={api.rendu(asset.identifiant, asset.empreinte, true)}
-                  alt={`${asset.label}, brut`}
-                  className="damier h-full w-1/2 object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                />
-                <img
-                  src={api.rendu(asset.identifiant, asset.empreinte)}
-                  alt={`${asset.label}, rendu`}
-                  className="damier h-full w-1/2 object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                />
-              </>
             )}
-            {mode === "superpose" && (
-              <span className="relative flex h-full w-full">
-                {/* Le rendu dessous, le brut par-dessus : c'est ce qu'on
-                    compare — ce que la recette a retiré. */}
+
+            {/* **L'image de travail, cerclée de la lampe.** `--lumiere` est ce
+                que le produit emploie déjà pour dire *choisi* — le calque
+                actif, la vignette retenue, la teinte posée. Aucune couleur
+                neuve, et l'anneau ne paraît que quand un témoin est là : seule,
+                il n'y aurait rien à distinguer. */}
+            <span
+              className={[
+                "relative flex items-center justify-center",
+                temoin === "cote" ? "h-full w-1/2" : "h-full w-full",
+                temoin === "aucun" ? "" : "ring-1 ring-lumiere",
+              ].join(" ")}
+            >
+              {peint ? (
+                // **La surface se peint, et elle est la seule.** Pas de
+                // poignée, pas de rectangle, pas de cible : une cible de
+                // retaille au milieu d'une surface qu'on peint est un piège à
+                // clic, et ici toute la surface est peignable.
+                <ToileDeLaMain
+                  asset={asset}
+                  avant={avant}
+                  etat={etatMain}
+                  onPassage={(trait) =>
+                    void poser({
+                      ...recette,
+                      main: avecPassage(mainDe(recette), etatMain.actif, trait),
+                    })
+                  }
+                />
+              ) : ouverte === "detourage" && visee !== null ? (
+                // **On vise sur le brut, et pas sur le rendu.** Le point est en
+                // pixels de l'image d'origine — c'est ce qui le fait survivre
+                // aux passes qui le précèdent —, et le rendu porte le recadrage
+                // et la remise sur grille, qui déplacent tous les deux ce qu'on
+                // montre. Un cercle posé sur un rendu recadré désignerait un
+                // autre pixel que celui qu'on croit toucher. Même raison, même
+                // choix que le rectangle de recadrage.
+                <PipetteSurImage
+                  asset={asset}
+                  point={recette.passes[visee].point}
+                  onPoint={(point) => {
+                    void poser({
+                      ...recette,
+                      passes: recette.passes.map((p, i) =>
+                        i === visee ? { ...p, point } : p,
+                      ),
+                    })
+                    // **Le clic désarme.** Viser est un geste qui se termine ;
+                    // une visée qui reste armée ferait du prochain regard sur
+                    // l'image un déplacement du point, sans que rien l'ait
+                    // demandé.
+                    setViseeArmee(null)
+                  }}
+                />
+              ) : ouverte === "detourage" && entourage !== null ? (
+                // **On entoure sur le brut, exactement comme on y vise** (U12) :
+                // la forme est en pixels de l'image d'origine, ce qui la fait
+                // survivre aux passes qui la précèdent, et le rendu porte le
+                // recadrage et la remise sur grille, qui déplacent tous les
+                // deux ce qu'on montre.
+                <TraceSurImage
+                  asset={asset}
+                  trace={recette.passes[entourage].trace}
+                  onTrace={(trace) => {
+                    void poser({
+                      ...recette,
+                      passes: recette.passes.map((p, i) =>
+                        i === entourage ? { ...p, trace } : p,
+                      ),
+                    })
+                    // Le tracé fini désarme, pour la raison du clic de la
+                    // pipette.
+                    setViseeArmee(null)
+                  }}
+                />
+              ) : ouverte === "recadrage" ? (
+                // **Le rectangle se pose sur l'image, jamais dans un champ.**
+                // Le modèle le porte depuis T2 et aucun écran ne l'avait
+                // montré : on ne dessine pas un cadrage en tapant quatre
+                // nombres, on le dessine en regardant ce qu'il garde.
+                <CadreDeRecadrage
+                  asset={asset}
+                  boite={
+                    (recette.recadrage?.boite as
+                      | [number, number, number, number]
+                      | undefined) ?? null
+                  }
+                  obtenue={mesures?.recadrage?.obtenue ?? null}
+                  onBoite={(boite) =>
+                    void poser({
+                      ...recette,
+                      recadrage: { marge: recette.recadrage?.marge ?? 0, boite },
+                    })
+                  }
+                />
+              ) : (
                 <img
-                  src={api.rendu(asset.identifiant, asset.empreinte)}
-                  alt={`${asset.label}, rendu`}
+                  src={api.rendu(
+                    asset.identifiant,
+                    asset.empreinte,
+                    travail === "brut",
+                  )}
+                  alt={asset.label}
                   className="damier h-full w-full object-contain"
                   style={{ imageRendering: "pixelated" }}
                 />
+              )}
+
+              {/* **Un calque de lecture, et il ne prend pas le pointeur.** Le
+                  curseur le traverse, le geste tombe sur l'image de travail, et
+                  le curseur d'opacité continue de dire ce qu'on voit. Une image
+                  posée par-dessus qui intercepte les clics serait le défaut
+                  d'hier déguisé. */}
+              {temoin === "dessus" && (
                 <img
-                  src={api.rendu(asset.identifiant, asset.empreinte, true)}
-                  alt={`${asset.label}, brut`}
+                  src={api.rendu(
+                    asset.identifiant,
+                    asset.empreinte,
+                    travail !== "brut",
+                  )}
+                  alt={`${asset.label}, témoin — ${travail === "brut" ? "le rendu" : "l'image d'origine"}`}
                   style={{ imageRendering: "pixelated", opacity: opacite / 100 }}
-                  className="absolute inset-0 h-full w-full object-contain"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-contain"
                 />
-              </span>
-            )}
+              )}
+            </span>
             </div>
           </div>
           <Comparateur
             asset={asset}
-            mode={mode}
-            onMode={setMode}
+            travail={travail}
+            onTravail={setTravail}
+            temoin={temoin}
+            onTemoin={setTemoin}
             opacite={opacite}
             onOpacite={setOpacite}
             peint={peint}

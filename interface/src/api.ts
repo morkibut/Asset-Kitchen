@@ -407,6 +407,18 @@ export type Etiquette = {
   texte: string
   case: string
   emplois: number
+  /** **D'où elle vient**, et l'écran s'en sert pour une seule chose : marquer en
+   *  `--epingle` ce que l'auteur a nommé lui-même, comme partout ailleurs dans
+   *  le produit. Une livrée arrive avec l'atelier — soixante-dix, cinq cases —
+   *  et est la même chez tout le monde.
+   *
+   *  Elle ne change rien à ce qui part : cliquer l'une ou l'autre écrit le même
+   *  texte anglais. */
+  livree: boolean
+  /** Une livrée retirée laisse une pierre — sans quoi le catalogue la rendrait
+   *  à la lecture suivante. Elle ne sort jamais du serveur ; ce champ n'est là
+   *  que parce que la forme est celle du fichier. */
+  oubliee: boolean
 }
 
 /** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.
@@ -1561,9 +1573,24 @@ export type Univers = {
    *  sujet puis le catalogue reprennent la main. */
   modele_planche: string
   modele_edition: string
-  /** Ni bible qui parle, ni palette. Un état normal, pas une configuration
-   *  manquante : « un univers vide ne contraint rien » (US-57). */
+  /** Ni bible qui parle, ni palette, ni vue. Un état normal, pas une
+   *  configuration manquante : « un univers vide ne contraint rien » (US-57). */
   vide: boolean
+  /** **Ce que l'atelier dit de lui-même, case par case** — la grille et le
+   *  calage viennent de la taille, le cadrage vient de la vue.
+   *
+   *  **Calculé à chaque lecture, rangé nulle part.** Ces phrases vivaient dans
+   *  le texte de la case jusqu'au 1ᵉʳ septembre 2026 ; y ajouter un mot faisait
+   *  de la case « du texte d'auteur », et le serveur s'interdisant d'y toucher,
+   *  la phrase cessait de suivre le réglage. Une seule étiquette cliquée gelait
+   *  donc la grille sur une taille qu'on venait de quitter.
+   *
+   *  L'écran des réglages les montre **en `--epingle`, au-dessus du texte de
+   *  l'auteur et hors de son champ de saisie** : on lit ce qui part sans l'avoir
+   *  tapé, et on sait lequel des deux on corrige. Une case sans phrase n'a pas
+   *  d'entrée — jamais une chaîne vide, qui ferait dessiner un cadre autour de
+   *  rien. */
+  phrases: Partial<Record<string, string>>
 }
 
 export const UNIVERS_VIDE: Univers = {
@@ -1578,6 +1605,7 @@ export const UNIVERS_VIDE: Univers = {
   modele_planche: "",
   modele_edition: "",
   vide: true,
+  phrases: {},
 }
 
 /** Combien d'images partiront, et d'où elles viennent (US-52).
@@ -1919,17 +1947,49 @@ export type Boite = [number, number, number, number]
 
 export type ModeDecoupe = "auto" | "grille"
 
-/** Ce que le serveur propose de découper — rien n'est créé tant qu'on ne l'a pas
- *  demandé. `raison` est le grisé du produit : une détection qui ne trouve rien
- *  dit pourquoi, elle ne se tait pas. */
-export type Proposition = {
+/** Ce qu'une proposition de découpe a de commun aux deux familles d'images —
+ *  et **c'est tout ce que l'écran en lit**. Il montre les rectangles et la
+ *  raison ; d'où vient l'image, il le sait déjà par le sujet qu'on lui a donné.
+ *
+ *  `raison` est le grisé du produit : une détection qui ne trouve rien dit
+ *  pourquoi, elle ne se tait pas. */
+export type Decoupable = {
+  boites: Boite[]
+  raison: string | null
+}
+
+/** Ce que le serveur propose de découper d'une planche — rien n'est créé tant
+ *  qu'on ne l'a pas demandé. */
+export type Proposition = Decoupable & {
   asset: string
   label: string
   largeur: number
   hauteur: number
   mode: ModeDecoupe
-  boites: Boite[]
-  raison: string | null
+}
+
+/** La même chose d'une carte du tableau d'inspiration. **`carte` et non
+ *  `asset`, et le mot compte** : les deux familles d'images ne se confondent
+ *  pas, et un morceau de carte est une carte. */
+export type PropositionDeCarte = Decoupable & {
+  carte: string
+  largeur: number
+  hauteur: number
+  mode: ModeDecoupe
+}
+
+/** Ce que la palette lit d'une carte promue.
+ *
+ *  **`entiere` n'est pas un détail** : quand le détourage a tout mangé — une
+ *  matière plein cadre, une texture sans bord franc —, la palette reprend
+ *  l'image entière. Écrire « 0 % » serait alors faux au sens exactement
+ *  inverse de ce qui se passe. */
+export type LectureDePalette = {
+  carte: string
+  part: number
+  entiere: boolean
+  largeur: number
+  hauteur: number
 }
 
 export type Filtre = {
@@ -1962,7 +2022,7 @@ export type LigneQuiPart = {
   /** `groupe.nom` — unique dans tout l'écran. Deux couches peuvent porter le
    *  même champ, et ce sont deux lignes avec deux interrupteurs. */
   clef: string
-  groupe: "jeu" | "ambiance" | "sujet" | "planche"
+  groupe: "jeu" | "ambiance" | "sujet" | "planche" | "jointes" | "cadrage"
   nom: string
   texte: string
   /** Ce qui précède le texte dans le prompt — `Lighting`, `World`. Vide pour le
@@ -2923,6 +2983,60 @@ export const api = {
   imageCarte: (carte: string, version: string) =>
     `/api/board/${carte}/image?v=${encodeURIComponent(version)}`,
 
+  // ── Découper une carte, et voir ce que la palette y lit ────────────────────
+  //
+  // **Le même verbe et le même nom que pour une planche**, parce que c'est le
+  // même geste : ce qui ne crée rien se redemande à chaque cran de réglage, ce
+  // qui crée des choses ne se redemande jamais. Ce qui change est la famille de
+  // ce qui en sort — des cartes, jamais des assets.
+
+  decoupeDeCarteProposee: (
+    carte: string,
+    reglage: {
+      mode?: ModeDecoupe
+      colonnes?: number
+      lignes?: number
+      cote_min?: number
+    } = {},
+  ) => {
+    const parametres = new URLSearchParams()
+    for (const [nom, valeur] of Object.entries(reglage))
+      if (valeur !== undefined) parametres.set(nom, String(valeur))
+    return appeler<PropositionDeCarte>(`/board/${carte}/slices?${parametres}`)
+  },
+
+  /** Chaque rectangle devient une carte du même tableau.
+   *
+   *  `remplacer` n'a de sens qu'avec **un seul** rectangle, et c'est alors un
+   *  recadrage : le morceau prend tout ce qui faisait l'originale, et
+   *  l'originale s'en va. Rend l'univers avec, parce que remplacer un artwork
+   *  officiel refait la palette. */
+  decouperCarte: (carte: string, boites: Boite[], remplacer = false) =>
+    appeler<{
+      carte: string
+      morceaux: Carte[]
+      retiree: Carte | null
+      univers: Univers
+    }>(`/board/${carte}/slices`, {
+      method: "POST",
+      body: JSON.stringify({ boites, remplacer }),
+    }),
+
+  /** Quelle part de cette carte nourrit la palette du jeu. */
+  lectureDePalette: (carte: string) =>
+    appeler<LectureDePalette>(`/board/${carte}/palette`),
+
+  /** L'image d'une carte, avec en magenta ce que la palette en écarte.
+   *
+   *  **Ce n'est pas l'image de la carte** : c'est un instrument, il ne
+   *  s'enregistre pas, et il ne remplace jamais l'image sous son propre nom.
+   *
+   *  Nommée d'après ce qu'elle montre — *la lecture* — et non d'après la
+   *  palette : `apercuDePalette` existe déjà, et il rend tout autre chose,
+   *  une palette d'ambiance posée sur de vraies images du jeu. */
+  apercuDeLaLecture: (carte: string, version: string) =>
+    `/api/board/${carte}/palette/image?v=${encodeURIComponent(version)}`,
+
   // ── Les liens de la toile ─────────────────────────────────────────────────
   // Aucune ne touche le réseau extérieur : toute la tranche est du dire.
 
@@ -3277,6 +3391,21 @@ export const api = {
     appeler<{ emplacement: EmplacementCorps } & Vestiaire>("/characters/slots", {
       method: "POST",
       body: JSON.stringify({ nom }),
+    }),
+
+  /** **Les six que l'atelier propose, posés d'un geste** — le dos, le corps, les
+   *  jambes, le torse, les mains, la tête, dans l'ordre de l'empilement.
+   *
+   *  **Le vestiaire naît toujours vide**, et ceci est un geste de l'auteur, pas
+   *  un effet de bord : rien n'est écrit derrière son dos. Ce que ça répare est
+   *  mesuré — l'étape 8 montrait une liste vide sous une demi-phrase qui
+   *  énonçait une règle sur un ordre que rien ne permettait de changer.
+   *
+   *  Rappelée deux fois, elle n'ajoute que ce qui manque. */
+  poserLesEmplacementsProposes: () =>
+    appeler<Vestiaire>("/characters/slots/suggested", {
+      method: "POST",
+      body: JSON.stringify({}),
     }),
 
   /** Renommer un emplacement, ou le déplacer dans l'ordre. **L'identifiant ne

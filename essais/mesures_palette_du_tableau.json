@@ -1,0 +1,315 @@
+{
+  "artworks": [
+    {
+      "projet": "bac-a-sable",
+      "carte": "c28e7f5934e244c0",
+      "largeur": 672,
+      "hauteur": 84,
+      "famille": "personnages",
+      "garde_pc": 37.6,
+      "couleurs": 47,
+      "noirs_avec_detourage": 2,
+      "noirs_sans_detourage": 4
+    },
+    {
+      "projet": "bac-a-sable",
+      "carte": "901216fafd5d49bb",
+      "largeur": 1122,
+      "hauteur": 1402,
+      "famille": "decors",
+      "garde_pc": 40.5,
+      "couleurs": 48,
+      "noirs_avec_detourage": 12,
+      "noirs_sans_detourage": 35
+    },
+    {
+      "projet": "bac-a-sable",
+      "carte": "4f48ff169f00446b",
+      "largeur": 1122,
+      "hauteur": 1402,
+      "famille": "decors",
+      "garde_pc": 37.8,
+      "couleurs": 48,
+      "noirs_avec_detourage": 6,
+      "noirs_sans_detourage": 34
+    },
+    {
+      "projet": "coeur-de-pierre",
+      "carte": "4e7e3763d6e14729",
+      "largeur": 78,
+      "hauteur": 78,
+      "famille": "personnages",
+      "garde_pc": 42.2,
+      "couleurs": 24,
+      "noirs_avec_detourage": 4,
+      "noirs_sans_detourage": 4
+    },
+    {
+      "projet": "coeur-de-pierre-01",
+      "carte": "5f39fe00e03d4070",
+      "largeur": 1024,
+      "hauteur": 1038,
+      "famille": "personnages",
+      "garde_pc": 30.3,
+      "couleurs": 48,
+      "noirs_avec_detourage": 4,
+      "noirs_sans_detourage": 1
+    },
+    {
+      "projet": "coeur-de-pierre-01",
+      "carte": "d95fb4bd5515433a",
+      "largeur": 1010,
+      "hauteur": 1024,
+      "famille": "decors",
+      "garde_pc": 59.8,
+      "couleurs": 48,
+      "noirs_avec_detourage": 3,
+      "noirs_sans_detourage": 20
+    },
+    {
+      "projet": "essai-animation",
+      "carte": "1e6e6ae04ccf449e",
+      "largeur": 479,
+      "hauteur": 742,
+      "famille": "personnages",
+      "garde_pc": 33.9,
+      "couleurs": 23,
+      "noirs_avec_detourage": 1,
+      "noirs_sans_detourage": 5
+    }
+  ],
+  "recoupes": [
+    {
+      "carte": "4f48ff169f00446b",
+      "quoi": "la salle éclairée seule",
+      "boite": [
+        150,
+        40,
+        540,
+        300
+      ],
+      "garde_entiere_pc": 37.8,
+      "garde_recoupee_pc": 32.3
+    },
+    {
+      "carte": "d95fb4bd5515433a",
+      "quoi": "la salle de gauche seule",
+      "boite": [
+        30,
+        60,
+        480,
+        780
+      ],
+      "garde_entiere_pc": 59.8,
+      "garde_recoupee_pc": 75.4
+    }
+  ],
+  "zones": [
+    {
+      "projet": "bac-a-sable",
+      "carte": "c28e7f5934e244c0",
+      "zones": 8,
+      "boites": [
+        [
+          11,
+          10,
+          71,
+          82
+        ],
+        [
+          95,
+          10,
+          155,
+          82
+        ],
+        [
+          179,
+          9,
+          239,
+          82
+        ],
+        [
+          263,
+          9,
+          323,
+          82
+        ],
+        [
+          347,
+          9,
+          407,
+          82
+        ],
+        [
+          431,
+          9,
+          491,
+          82
+        ],
+        [
+          515,
+          10,
+          575,
+          82
+        ],
+        [
+          599,
+          10,
+          659,
+          82
+        ]
+      ],
+      "petit_cote_min": 61
+    },
+    {
+      "projet": "bac-a-sable",
+      "carte": "901216fafd5d49bb",
+      "zones": 1,
+      "boites": [
+        [
+          7,
+          91,
+          1118,
+          1347
+        ]
+      ],
+      "petit_cote_min": 1112
+    },
+    {
+      "projet": "bac-a-sable",
+      "carte": "4f48ff169f00446b",
+      "zones": 1,
+      "boites": [
+        [
+          17,
+          100,
+          1107,
+          1337
+        ]
+      ],
+      "petit_cote_min": 1091
+    },
+    {
+      "projet": "coeur-de-pierre",
+      "carte": "4e7e3763d6e14729",
+      "zones": 1,
+      "boites": [
+        [
+          8,
+          2,
+          68,
+          74
+        ]
+      ],
+      "petit_cote_min": 61
+    },
+    {
+      "projet": "coeur-de-pierre-01",
+      "carte": "5f39fe00e03d4070",
+      "zones": 4,
+      "boites": [
+        [
+          117,
+          94,
+          423,
+          499
+        ],
+        [
+          602,
+          93,
+          910,
+          500
+        ],
+        [
+          116,
+          586,
+          374,
+          986
+        ],
+        [
+          652,
+          586,
+          930,
+          1002
+        ]
+      ],
+      "petit_cote_min": 259
+    },
+    {
+      "projet": "coeur-de-pierre-01",
+      "carte": "d95fb4bd5515433a",
+      "zones": 8,
+      "boites": [
+        [
+          30,
+          109,
+          471,
+          874
+        ],
+        [
+          48,
+          26,
+          153,
+          52
+        ],
+        [
+          66,
+          935,
+          247,
+          959
+        ],
+        [
+          90,
+          964,
+          409,
+          1023
+        ],
+        [
+          165,
+          26,
+          313,
+          52
+        ],
+        [
+          325,
+          26,
+          357,
+          52
+        ],
+        [
+          362,
+          26,
+          450,
+          52
+        ],
+        [
+          504,
+          0,
+          1004,
+          1023
+        ]
+      ],
+      "petit_cote_min": 25
+    },
+    {
+      "projet": "essai-animation",
+      "carte": "1e6e6ae04ccf449e",
+      "zones": 2,
+      "boites": [
+        [
+          61,
+          63,
+          407,
+          668
+        ],
+        [
+          55,
+          675,
+          423,
+          686
+        ]
+      ],
+      "petit_cote_min": 12
+    }
+  ]
+}

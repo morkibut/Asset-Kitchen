@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 """La base d'étiquettes — elle appartient à l'atelier, pas à un jeu.
 
-**Vide au départ, et personne ne l'écrit à la place de l'auteur.** Elle se
-remplit de chaque étiquette fabriquée dans n'importe quel projet, et elle est
-partagée par tous : comme la clé du fournisseur, elle ne dépend d'aucun d'eux.
-Au premier jeu, l'étape de l'allure est donc sept champs de texte libre, et elle
-le dit franchement plutôt que de faire semblant. Au deuxième, tout ce qui a été
-nommé une fois est là, avec sa recherche.
+**Elle naît pleine depuis le 1ᵉʳ septembre 2026**, et elle naissait vide avant.
+Le renversement est écrit dans `atelier/domaine/etiquettes_livrees.py` : le
+mécanisme des étiquettes existe pour rendre la description *mécanique au lieu
+d'être rédigée*, et une base vide ne rend rien de mécanique — elle rend sept
+cases blanches, en anglais, exactement l'écran d'avant l'assistant.
+
+**Deux origines, une seule liste.** Les soixante-dix **livrées** arrivent avec
+l'atelier ; les **fabriquées** sont ce que l'auteur a nommé, dans n'importe quel
+jeu. Les deux se cliquent pareil et écrivent le même genre de texte ; ce qui les
+distingue est une marque à l'écran, et le fait qu'une livrée retirée laisse une
+pierre pour qu'on ne la lui rende pas.
+
+**La base reste partagée par tous les jeux** : comme la clé du fournisseur, elle
+ne dépend d'aucun d'eux. Ce qui a été nommé dans le premier sert au deuxième.
 
 **Ce service ne connaît ni projet ni fournisseur.** Il lit un fichier à la
 racine des données et il en rend une liste ; c'est tout, et ça se lit dans ses
@@ -19,11 +27,13 @@ import hashlib
 import re
 import time
 import unicodedata
+from dataclasses import replace
 from typing import Any
 
 from atelier.depot import Fichiers
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.etiquette import Etiquette, etiquettes_depuis_json, rangees
+from atelier.domaine.etiquettes_livrees import LIVREES
 from atelier.domaine.projet import CHAMPS_BIBLE
 
 
@@ -38,7 +48,27 @@ class ServiceEtiquettes:
         self._fichiers = fichiers
 
     def toutes(self) -> tuple[Etiquette, ...]:
-        return etiquettes_depuis_json(self._fichiers.lire_etiquettes())
+        """La base entière — **les livrées d'abord, les fabriquées ensuite**.
+
+        **Le fichier fait foi sur ce qu'il porte ; le catalogue complète.** Une
+        livrée que le fichier connaît déjà garde ce qu'il en dit — son compte
+        d'emplois, et le fait qu'elle ait été retirée. Une livrée qu'il ne
+        connaît pas est ajoutée. C'est ce qui permet d'en livrer de nouvelles
+        dans une version suivante **sans redonner celles qu'on avait retirées**,
+        et sans jamais remettre un compteur à zéro.
+
+        **Les pierres ne sortent pas d'ici.** Une livrée retirée est dans le
+        fichier avec `oubliee`, uniquement pour qu'on ne la lui rende pas ; elle
+        n'a rien à faire dans une liste qu'on affiche.
+
+        L'ordre est celui de la fabrication, livrées en tête : c'est
+        `rangees` qui trie par emploi au moment de servir une case, et deux tris
+        écrits à deux endroits finiraient par se contredire.
+        """
+        du_fichier = etiquettes_depuis_json(self._fichiers.lire_etiquettes())
+        connues = {e.identifiant for e in du_fichier}
+        neuves = tuple(e for e in LIVREES if e.identifiant not in connues)
+        return tuple(e for e in neuves + du_fichier if not e.oubliee)
 
     def de_la_case(self, case: str) -> list[Etiquette]:
         """Celles de cette case-là, les plus employées en premier.
@@ -71,7 +101,7 @@ class ServiceEtiquettes:
         deja = list(self.toutes())
         if any(e.case == case and e.libelle.lower() == propre.lower() for e in deja):
             raise EtiquetteRefusee(
-                f"« {propre} » existe déjà dans cette case — la reclíquer suffit"
+                f"« {propre} » existe déjà dans cette case — la recliquer suffit"
             )
 
         deja.append(
@@ -99,16 +129,41 @@ class ServiceEtiquettes:
         **Ce qu'elle a écrit dans une case ne bouge pas** : le texte est du
         texte, il est parti dans la case au moment du clic, et l'étiquette n'en
         est que l'origine. Jamais de cascade, ici comme ailleurs.
+
+        **Une livrée laisse une pierre, une fabriquée disparaît.** La différence
+        n'est pas un raffinement : le catalogue des livrées se relit à chaque
+        lecture, donc effacer une livrée la ferait revenir à la ligne suivante,
+        et l'auteur retirerait la même étiquette indéfiniment. La pierre porte
+        son identifiant et rien d'autre d'utile — elle ne s'affiche nulle part.
+        Une fabriquée n'a personne pour la remettre, donc rien à marquer.
         """
-        restantes = [e for e in self.toutes() if e.identifiant != identifiant]
+        restantes = [
+            replace(e, oubliee=True) if e.identifiant == identifiant and e.livree else e
+            for e in self.toutes()
+            if e.identifiant != identifiant or e.livree
+        ]
         self._ecrire(restantes)
-        return tuple(restantes)
+        return tuple(e for e in restantes if not e.oubliee)
 
     def en_json(self) -> dict[str, Any]:
         return {"etiquettes": [e.en_json() for e in self.toutes()]}
 
     def _ecrire(self, etiquettes: list[Etiquette]) -> None:
-        self._fichiers.ecrire_etiquettes([e.en_json() for e in etiquettes])
+        """Écrire la base — **et jamais perdre une pierre au passage**.
+
+        Les appelants travaillent sur `toutes()`, qui ne rend pas les livrées
+        retirées : écrire tel quel les ressusciterait au prochain rafraîchissement,
+        parce que le catalogue complète ce que le fichier ne connaît pas. Elles
+        sont donc reprises du disque et ajoutées en queue, quel que soit le
+        geste qui a mené ici.
+        """
+        rendues = {e.identifiant for e in etiquettes}
+        pierres = [
+            e
+            for e in etiquettes_depuis_json(self._fichiers.lire_etiquettes())
+            if e.oubliee and e.identifiant not in rendues
+        ]
+        self._fichiers.ecrire_etiquettes([e.en_json() for e in etiquettes + pierres])
 
 
 def _identifiant(case: str, libelle: str) -> str:

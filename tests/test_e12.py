@@ -143,7 +143,12 @@ def test_eteindre_nest_pas_vider(client):
     cette chose-là. Les confondre aurait rendu le refus indistinguable de
     l'oubli, et donc impossible à défaire.
     """
-    _bible(client, technique="strict 64x64 px tile snap")
+    # **Sans cible**, pour que la ligne barrée ne porte que le texte de l'auteur :
+    # depuis le 1ᵉʳ septembre 2026, ce qui part est la phrase de l'atelier
+    # *plus* ce texte-ci, et le sujet de cet essai-là est l'extinction, pas la
+    # composition. Elle a son essai à elle, deux fichiers plus loin.
+    client.put("/api/universe", json={"cible_px": 0})
+    _bible(client, technique="no bleed on the sprite edges")
     chose = _creer(client)
 
     _regler(client, chose["identifiant"], eteindre="technique")
@@ -152,7 +157,7 @@ def test_eteindre_nest_pas_vider(client):
     assert eteint["origine"] == "eteint"
     assert eteint["texte"] == ""
     # Le texte qui serait parti, montré barré — et *rallumer* à un clic.
-    assert eteint["remplace"] == "strict 64x64 px tile snap"
+    assert eteint["remplace"] == "no bleed on the sprite edges"
 
     _regler(client, chose["identifiant"], rallumer="technique")
     assert _champ(_habillage(client, chose["identifiant"]), "technique")["origine"] == "jeu"
@@ -178,12 +183,21 @@ def test_le_desaccord_entre_le_texte_et_la_grille_se_voit(client):
     toutes lettres et partent dans le prompt ; le réglage du projet — celui que
     la mise sur grille applique vraiment — vaut 128. Aucun écran ne mettait ces
     deux choses côte à côte. La fiche ne corrige rien : elle rend la faute
-    impossible à ne pas voir."""
+    impossible à ne pas voir.
+
+    **Et la faute a changé de forme le 1ᵉʳ septembre 2026** — c'est le seul mot
+    de cet essai qui bouge. Les deux textes d'origine étaient les phrases que le
+    produit écrivait lui-même, gelées sur 64 par une étiquette ajoutée à côté ;
+    elles ne peuvent plus l'être, puisqu'elles ne sont plus rangées dans la
+    case. Ce qui reste possible — et ce que le vrai projet porte, mot pour mot,
+    en français — est un texte **tapé à la main** qui nomme une taille. Celui-là
+    ne se corrige pas tout seul, et c'est très exactement pour lui que cet écran
+    existe."""
     client.put("/api/universe", json={"cible_px": 128})
     _bible(
         client,
-        rendu="2D pixel art on a 64x64 grid",
-        technique="strict 64x64 px tile snap",
+        rendu="chunky 64x64 pixel art, no smoothing",
+        technique="Sprite isolé sur fond plat, grille stricte 64x64 px",
     )
     chose = _creer(client)
 

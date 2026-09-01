@@ -387,10 +387,18 @@ def test_ce_qui_part_est_en_anglais_du_premier_mot_au_dernier(client):
         },
     )
 
-    assert reponse.json()["texte"].endswith(
+    # **Ce n'est plus la fin du texte, et c'est voulu** (1ᵉʳ septembre 2026). La
+    # caméra du jeu ferme le prompt depuis qu'un banc a mesuré que la dernière
+    # phrase décide de la vue (`essais/essai_vue.py`). Ce que cet essai protège
+    # n'a pas changé — l'attitude et l'angle partent en anglais, composés une
+    # fois — et c'est ce qu'il vérifie maintenant, au lieu de le vérifier par sa
+    # place.
+    texte = reponse.json()["texte"]
+    assert (
         "a dwarf miner with a braided beard, walking posture, full body, "
-        "facing south, toward the viewer"
+        "facing south, toward the viewer" in texte
     )
+    assert texte.rstrip().endswith("with the feet showing.")
 
 
 def test_la_consigne_se_compose_de_deux_textes_ecrits_chacun_une_fois(client):
@@ -412,7 +420,10 @@ def test_la_consigne_se_compose_de_deux_textes_ecrits_chacun_une_fois(client):
                 "direction": "sud",
             },
         )
-        assert reponse.json()["texte"].endswith("facing the camera")
+        # La consigne d'angle n'est plus le dernier mot du prompt — la caméra du
+        # jeu l'est. Ce que cet essai protège reste entier : les deux poses la
+        # portent, et elle n'a été écrite qu'une fois.
+        assert "facing the camera" in reponse.json()["texte"]
 
 
 def test_une_pose_ecrite_par_lauteur_part_telle_quelle(client):

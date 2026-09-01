@@ -36,7 +36,6 @@ from dataclasses import replace
 from typing import Any, Iterable, Mapping
 
 from atelier.depot import Base, Fichiers
-from atelier.domaine.vue import phrase_de_calage, phrase_de_grille, phrases_du_produit
 from atelier.domaine.vue import vue as vue_connue
 from atelier.domaine.carte import (
     ATTENTE,
@@ -75,18 +74,38 @@ from atelier.domaine.lien import (
 )
 from atelier.domaine.teinte import AUCUNE, TEINTES
 from atelier.image import (
+    COTE_MIN,
     COULEURS_MAX,
     COULEURS_MIN,
+    Boite,
+    alpha_du_sujet,
+    apercu_de_la_lecture,
+    decouper,
     empreinte_de,
     extension,
+    grille_fixe,
     mesurer,
     palette_de,
+    part_lue,
+    zones_opaques,
 )
 # `CIBLE_MIN` et `CIBLE_MAX` viennent de la recette et pas d'ici : la taille
 # de pixel d'un projet et celle d'une recette sont la même grandeur, et deux
 # plages écrites à deux endroits finiraient par se contredire — l'une refusant
 # ce que l'autre propose.
 from atelier.services.assets import CIBLE_MAX, CIBLE_MIN, ServiceAssets
+# **La découpe d'une carte emprunte à celle d'une planche, et c'est voulu** : ce
+# qu'un rectangle doit valoir pour être découpable ne dépend pas de ce qu'on en
+# tire. Deux vérifications écrites à deux endroits finiraient par accepter deux
+# choses différentes, et l'écart ne se verrait qu'une fois l'image coupée.
+from atelier.services.decoupe import (
+    AUTO,
+    DECOUPES_MAX,
+    GRILLE,
+    MODES,
+    DecoupeRefusee,
+    verifier_boites,
+)
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
 
@@ -484,6 +503,205 @@ class ServiceUnivers:
         if groupe is not None and carte.groupe != avant:
             self._elaguer(projet)
         return carte
+
+    # ── Découper une carte ───────────────────────────────────────────────────
+    #
+    # **L'écran de découpe gagne une seconde porte d'entrée, et rien de plus**
+    # (maquette `06bis-decouper-une-carte.html`). L'outil existe entier depuis
+    # U8 — l'image à gauche, les rectangles qu'on dessine, une détection qui
+    # propose sans jamais décider — et il ne s'ouvrait que sur une image
+    # produite. Ce qui traverse la frontière des deux familles est **l'outil**,
+    # jamais l'image : un morceau de carte est une carte, pas un asset. Elle ne
+    # s'exporte pas, ne compte pas dans la bibliothèque, et n'a ni recette ni
+    # rendu.
+    #
+    # **Rien n'est modifié sur place.** Une carte ne change jamais sous son
+    # identifiant — c'est ce qui autorise le cache éternel de son image —, donc
+    # découper fabrique des cartes neuves et laisse l'originale intacte.
+
+    def proposer_decoupe(
+        self,
+        projet: str,
+        identifiant: str,
+        *,
+        mode: str = AUTO,
+        colonnes: int = 2,
+        lignes: int = 1,
+        cote_min: int = COTE_MIN,
+    ) -> dict[str, Any]:
+        """Où l'on pourrait couper cette carte. **Rien n'est créé, rien n'écrit.**
+
+        **L'alpha du mode automatique est celui de la palette**, et ce n'est pas
+        une commodité : c'est ce qui rend la proposition honnête. Les rectangles
+        proposés sont exactement les zones que la palette lit — mesuré sur la
+        planche de quatre nains de ce dépôt, quatre zones, une par personnage,
+        sans qu'un réglage soit touché. Un second détourage ici montrerait des
+        rectangles qui ne correspondraient à rien de ce que l'aperçu affiche.
+        """
+        if mode not in MODES:
+            raise DecoupeRefusee(f"mode de découpe inconnu « {mode} »")
+        carte = self.carte(projet, identifiant)
+        if carte.genre != IMAGE:
+            raise CarteRefusee("une carte texte ne se découpe pas")
+        octets, _ = self.octets(projet, identifiant)
+
+        raison: str | None = None
+        if mode == GRILLE:
+            if not 1 <= colonnes <= DECOUPES_MAX or not 1 <= lignes <= DECOUPES_MAX:
+                raise DecoupeRefusee(f"la grille va de 1 à {DECOUPES_MAX} de côté")
+            if colonnes * lignes > DECOUPES_MAX:
+                raise DecoupeRefusee(
+                    f"une carte se découpe en {DECOUPES_MAX} morceaux au plus"
+                )
+            boites = grille_fixe(carte.largeur, carte.hauteur, colonnes, lignes)
+        else:
+            alpha = alpha_du_sujet(octets)
+            boites = zones_opaques(alpha, cote_min=max(0, cote_min))
+            if not boites:
+                # Deux vides, deux raisons, et l'auteur n'a pas le même geste à
+                # faire selon laquelle : remonter le fond, ou descendre la
+                # taille minimale.
+                raison = (
+                    "le fond a tout mangé — passe en grille fixe, ou dessine à la main"
+                    if not alpha.any()
+                    else "aucune zone au-dessus de cette taille — descends la taille"
+                )
+
+        return {
+            "carte": carte.identifiant,
+            "largeur": carte.largeur,
+            "hauteur": carte.hauteur,
+            "mode": mode,
+            "boites": [list(b) for b in boites],
+            "raison": raison,
+        }
+
+    def decouper_carte(
+        self,
+        projet: str,
+        identifiant: str,
+        boites: Iterable[Boite],
+        *,
+        remplacer: bool = False,
+    ) -> dict[str, Any]:
+        """Chaque rectangle devient une carte du même tableau.
+
+        **Les morceaux arrivent dans la réserve, non promus.** La réserve *est*
+        l'endroit de ce qui n'est pas rangé — ni classé, ni posé —, et c'est la
+        seule place qui ne demande à personne de deviner un rangement. Non
+        promus, parce que « promouvoir reste un geste unique » : quatre
+        promotions automatiques seraient quatre artworks que personne n'a
+        choisis.
+
+        **Ils héritent de la source, et de rien d'autre.** Une image dont on perd
+        la provenance ne se crédite plus ni ne se retrouve.
+
+        `remplacer` n'a de sens qu'avec **un seul** rectangle, et c'est alors un
+        recadrage : le morceau prend tout ce qui faisait l'originale — sa
+        promotion, sa famille, son groupe, sa place sur la toile, sa largeur, sa
+        note — et l'originale s'en va. **C'est le seul endroit du produit où
+        découper efface quelque chose**, et ça reste tenable pour la raison qui
+        autorise déjà `oublier` sans confirmation : une carte n'a rien coûté.
+        """
+        carte = self.carte(projet, identifiant)
+        if carte.genre != IMAGE:
+            raise CarteRefusee("une carte texte ne se découpe pas")
+        octets, _ = self.octets(projet, identifiant)
+        rectangles = verifier_boites(
+            boites, carte.largeur, carte.hauteur, quoi="carte"
+        )
+        if remplacer and len(rectangles) != 1:
+            raise DecoupeRefusee(
+                "prendre la place de l'originale demande un seul rectangle"
+            )
+
+        nees: list[Carte] = []
+        for taillee in decouper(octets, rectangles):
+            mesure = mesurer(taillee)
+            neuve = uuid.uuid4().hex[:16]
+            fille = Carte(
+                identifiant=neuve,
+                projet=projet,
+                genre=IMAGE,
+                statut=PRETE,
+                source=carte.source,
+                empreinte=empreinte_de(taillee),
+                largeur=mesure.largeur,
+                hauteur=mesure.hauteur,
+                type_media=mesure.type_media,
+                octets=mesure.octets,
+                fichier=self._fichiers.ecrire_octets_carte(
+                    projet, neuve, taillee, extension(mesure.type_media)
+                ),
+            )
+            # **Le recadrage hérite, la découpe non.** Un morceau parmi plusieurs
+            # ne peut pas prétendre être l'originale ; un morceau unique qui
+            # vient prendre sa place le peut, et c'est exactement ce que l'auteur
+            # a demandé en cochant la case.
+            if remplacer:
+                fille = replace(
+                    fille,
+                    officiel=carte.officiel,
+                    famille=carte.famille,
+                    groupe=carte.groupe,
+                    note=carte.note,
+                    taille=carte.taille,
+                    position=carte.position,
+                    largeur_libre=carte.largeur_libre,
+                )
+            self._sauver(fille)
+            nees.append(fille)
+
+        # **`oublier` referme le geste, et il fait les trois choses qu'il faut**
+        # : effacer, élaguer les liens qui pendaient à la carte, et raccorder la
+        # palette. Sans remplacement il n'y a rien à raccorder — aucun morceau
+        # n'est promu, donc aucune couleur n'a bougé.
+        retiree = self.oublier(projet, identifiant).en_json() if remplacer else None
+
+        return {
+            "carte": carte.identifiant,
+            "morceaux": [c.en_json() for c in nees],
+            "retiree": retiree,
+            "univers": self._exige(projet).univers.en_json(),
+        }
+
+    # ── Ce que la palette lit d'une carte ────────────────────────────────────
+    #
+    # **Le détourage préalable de la palette existe depuis le premier jour, et
+    # personne ne l'a jamais vu** : il ne laisse aucune trace. Mesuré sur les six
+    # artworks officiels de ce dépôt, il écarte de 30 à 60 % des pixels — et sur
+    # une capture d'écran promue en artwork, il garde le titre de l'interface et
+    # la barre de vie, qui écrivent alors les couleurs du jeu.
+    #
+    # Ces deux méthodes ne règlent rien et n'écrivent rien. Elles montrent.
+
+    def lecture_de_palette(self, projet: str, identifiant: str) -> dict[str, Any]:
+        """Quelle part de cette carte nourrit la palette du jeu.
+
+        **`entiere` n'est pas un détail** : quand le détourage a tout mangé — une
+        matière plein cadre, une texture sans bord franc —, la palette reprend
+        l'image entière. Écrire « 0 % » serait alors faux au sens exactement
+        inverse de ce qui se passe.
+        """
+        carte = self.carte(projet, identifiant)
+        if carte.genre != IMAGE:
+            raise CarteRefusee("une carte texte n'écrit aucune palette")
+        octets, _ = self.octets(projet, identifiant)
+        part = part_lue(octets)
+        return {
+            "carte": carte.identifiant,
+            "part": round(part, 1),
+            "entiere": part == 0.0,
+            "largeur": carte.largeur,
+            "hauteur": carte.hauteur,
+        }
+
+    def apercu_de_palette(self, projet: str, identifiant: str) -> bytes:
+        """L'image, avec en magenta ce que la palette en écarte. Un PNG."""
+        carte = self.carte(projet, identifiant)
+        if carte.genre != IMAGE:
+            raise CarteRefusee("une carte texte n'écrit aucune palette")
+        return apercu_de_la_lecture(self.octets(projet, identifiant)[0])
 
     def promouvoir(
         self, projet: str, identifiant: str, *, officiel: bool, famille: str = TOUS
@@ -888,30 +1106,26 @@ class ServiceUnivers:
                     f"la taille de pixel cible va de {CIBLE_MIN} à {CIBLE_MAX} "
                     "pixels, ou aucune"
                 )
-            univers.cible_px = cible_px
             # **Un choix unique remplit le réglage et la phrase qui part**, et
             # c'est ce qui répare la contradiction mesurée du dépôt : le
             # réglage disait 128 pendant que le texte envoyé disait 64, trois
-            # fois. Les deux ne peuvent plus diverger parce qu'ils viennent du
-            # même geste — et la phrase reste du texte libre, que l'auteur
-            # corrige s'il veut, comme partout ailleurs.
-            univers.bible = _phrase_posee(univers.bible, "rendu", phrase_de_grille(cible_px))
-            univers.bible = _phrase_posee(
-                univers.bible, "technique", phrase_de_calage(cible_px)
-            )
+            # fois. Ce qui change le 1ᵉʳ septembre 2026 est **où la phrase
+            # vit** : plus dans la case, mais calculée à l'envoi depuis ce
+            # réglage-ci — `Univers.phrase_du_produit`. Le geste unique reste
+            # unique ; il n'a simplement plus rien à recopier.
+            univers.cible_px = cible_px
 
         if vue is not None:
             connue = vue_connue(vue)
             if vue and connue is None:
                 raise UniversRefuse(f"vue inconnue « {vue} »")
+            # Même changement, et la seconde moitié du même geste : la phrase de
+            # cadrage se lit dans la vue plutôt que d'être recopiée dans la
+            # case. **Le nombre de directions, lui, ne part plus dans le
+            # texte** — retiré le 31 août 2026, parce qu'il contredisait la
+            # consigne des six planches d'équipement du projet, et que chaque
+            # image dit déjà elle-même la direction qu'elle montre.
             univers.vue = vue
-            # La seconde moitié du même geste : la phrase de vue. **Le nombre de
-            # directions, lui, ne part plus dans le texte** — retiré le 31 août
-            # 2026, parce qu'il contredisait la consigne des six planches
-            # d'équipement du projet, et que chaque image dit déjà elle-même la
-            # direction qu'elle montre.
-            if connue is not None:
-                univers.bible = _phrase_posee(univers.bible, "vue", connue.phrase)
 
         if couleurs is not None:
             if not COULEURS_MIN <= couleurs <= COULEURS_MAX:
@@ -1353,32 +1567,6 @@ def _quantification_neuve(univers: Univers):
     projet impose » n'a qu'un seul endroit où se lire.
     """
     return univers.recette_de(None).quantification
-
-
-def _phrase_posee(bible: tuple[Champ, ...], nom: str, phrase: str) -> tuple[Champ, ...]:
-    """Réécrire la phrase d'une case de la bible — **et rien d'autre**.
-
-    « Un choix unique remplit tous les endroits qui doivent s'accorder » (E8) :
-    la taille écrit la grille et le calage, la vue écrit le cadrage. Ce sont les
-    seuls endroits du produit où le code touche à un texte de la bible, et la
-    borne est étroite.
-
-    **Le produit ne réécrit jamais ce que l'auteur a tapé.** Il n'écrit que dans
-    une case vide, ou sur une phrase qu'il avait lui-même écrite — la liste de
-    celles-là est close et vient du domaine. Sans cette borne, changer une
-    taille effacerait sous les yeux de l'auteur une description qu'il a mis du
-    temps à trouver, et « c'est du texte libre » cesserait d'être vrai.
-
-    **L'état actif ne bouge pas.** Une case éteinte le reste : l'auteur a décidé
-    qu'elle ne partait pas, et un réglage de taille n'a pas à revenir là-dessus.
-    """
-    ecrites = phrases_du_produit()
-    return tuple(
-        replace(champ, texte=phrase)
-        if champ.nom == nom and (not champ.texte.strip() or champ.texte in ecrites)
-        else champ
-        for champ in bible
-    )
 
 
 def _avec_poses_gardees(

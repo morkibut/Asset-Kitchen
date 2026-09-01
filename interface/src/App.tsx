@@ -416,6 +416,14 @@ export function App() {
   // route, même raison : un îlot qui montrerait sa marque un aller-retour après
   // les cartes aurait un instant où il paraît n'avoir rien fabriqué.
   const [fabriques, setFabriques] = useState<Record<string, Fabrique>>({})
+  /** La carte qu'on est en train de découper, ou rien.
+   *
+   *  **Tenue ici et pas dans l'écran Univers**, pour une seule raison : c'est un
+   *  étage, et un étage se dit dans le fil d'Ariane. La découpe d'une planche a
+   *  le sien depuis E3 ; celle d'une carte l'aurait perdu, et *Échap* aurait été
+   *  la seule porte de sortie d'un écran plein cadre. */
+  const [carteDecoupee, setCarteDecoupee] = useState<Carte | null>(null)
+
   /** Ce que la toile demande d'ouvrir côté Ambiances, ou rien (U7).
    *
    *  **L'objet fabriqué vit dans un autre côté de l'onglet**, et c'est très
@@ -1820,7 +1828,27 @@ export function App() {
         },
         { libelle: "Les dépenses" },
       ]
-    : // **La profondeur du codex.** Une chose du jeu ouverte allonge le fil
+    : // **Découper une carte du tableau.** Le même fil que la découpe d'une
+      // planche, à un mot près : *Inspiration* au lieu de *Galerie*, parce que
+      // ce ne sont pas les mêmes images et que le produit ne les confond nulle
+      // part. Le dernier segment ne ramène nulle part — c'est l'étage où l'on
+      // est.
+      carteDecoupee
+      ? [
+          {
+            libelle: projetCourant?.nom ?? "sans projet",
+            onAller: () => setCarteDecoupee(null),
+          },
+          { libelle: "Inspiration", onAller: () => setCarteDecoupee(null) },
+          {
+            // Le groupe d'une carte est le seul nom qu'elle porte ; sans
+            // groupe, son identifiant, qui en est un aussi.
+            libelle: carteDecoupee.groupe || carteDecoupee.identifiant,
+            onAller: () => setCarteDecoupee(null),
+          },
+          { libelle: "Découpage" },
+        ]
+      : // **La profondeur du codex.** Une chose du jeu ouverte allonge le fil
       // d'un étage : `Cœur de pierre › Personnages › Balthazar`. C'est le même
       // endroit vu de plus près, et chaque segment ramène au sien.
       choseOuverte
@@ -2078,6 +2106,7 @@ export function App() {
           // tri part avec lui, comme il part quand on revient par *Échap* — il
           // ne vaut que pour l'appel qu'on vient d'abandonner.
           setDecoupeOuverte(null)
+          setCarteDecoupee(null)
           setDepensesOuvertes(false)
           setEnvoiOuvert(false)
           setTri(TRI_VIDE)
@@ -2219,13 +2248,17 @@ export function App() {
           onSoeur={setTablesOuvertes}
           decoupe={
             <EcranDecoupe
-              planche={imageDesTables}
+              sujet={{
+                famille: "planche",
+                planche: imageDesTables,
+                onDecoupe: (decoupes) => {
+                  setTable("detourage")
+                  if (decoupes.length > 0)
+                    setSelection([decoupes[0].identifiant])
+                },
+              }}
               onFermer={() => setTable("detourage")}
               onFente={setFente}
-              onDecoupe={(decoupes) => {
-                setTable("detourage")
-                if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
-              }}
             />
           }
           onErreur={setPanne}
@@ -2235,13 +2268,16 @@ export function App() {
 
       {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !imageDesTables && planche && (
         <EcranDecoupe
-          planche={planche}
+          sujet={{
+            famille: "planche",
+            planche,
+            onDecoupe: (decoupes) => {
+              setDecoupeOuverte(null)
+              if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
+            },
+          }}
           onFermer={() => setDecoupeOuverte(null)}
           onFente={setFente}
-          onDecoupe={(decoupes) => {
-            setDecoupeOuverte(null)
-            if (decoupes.length > 0) setSelection([decoupes[0].identifiant])
-          }}
         />
       )}
 
@@ -2440,6 +2476,11 @@ export function App() {
           }}
           cibleAmbiances={cibleAmbiances}
           onCibleVue={() => setCibleAmbiances(null)}
+          // **Découper une carte, depuis son menu** (06bis). L'état monte jusqu'ici
+          // parce que le fil d'Ariane le nomme ; l'écran, lui, se rend en bas,
+          // à la place du tableau.
+          carteDecoupee={carteDecoupee}
+          onDecouperCarte={setCarteDecoupee}
         />
       )}
 
@@ -2518,14 +2559,17 @@ export function App() {
                 // tant que la galerie porte un bouton pour lui (E4).
                 decoupe={
                   <EcranDecoupe
-                    planche={imageOuverte}
+                    sujet={{
+                      famille: "planche",
+                      planche: imageOuverte,
+                      onDecoupe: (decoupes) => {
+                        setTable("detourage")
+                        if (decoupes.length > 0)
+                          setSelection([decoupes[0].identifiant])
+                      },
+                    }}
                     onFermer={() => setTable("detourage")}
                     onFente={setFente}
-                    onDecoupe={(decoupes) => {
-                      setTable("detourage")
-                      if (decoupes.length > 0)
-                        setSelection([decoupes[0].identifiant])
-                    }}
                   />
                 }
                 onErreur={setPanne}

@@ -72,6 +72,49 @@ class DecoupeRefusee(ErreurAtelier):
     code = "decoupe_refusee"
 
 
+def verifier_boites(
+    boites: Iterable[Boite], largeur: int, hauteur: int, *, quoi: str = "planche"
+) -> list[Boite]:
+    """Des rectangles utilisables, ou un refus qui nomme le fautif.
+
+    L'écran a déjà empêché de dessiner hors de l'image ; c'est le filet, pour une
+    requête écrite à la main et pour l'agent de T7. **Rien n'est ramené en
+    silence dans les bornes** : un rectangle corrigé à l'insu de l'auteur
+    découperait autre chose que ce qu'il a vu.
+
+    **Écrite ici et servie deux fois** — à la planche d'assets et à la carte du
+    tableau d'inspiration, qui se découpe depuis le 1ᵉʳ septembre 2026. Les deux
+    fabriquent des choses différentes ; ce qu'un rectangle doit valoir pour être
+    découpable ne dépend pas de ce qu'on en tire. Deux copies de cette
+    vérification finiraient par accepter deux choses différentes, et c'est
+    exactement le genre d'écart qu'on ne voit qu'au moment où l'image est déjà
+    coupée. `quoi` ne sert qu'au texte du refus.
+    """
+    rectangles: list[Boite] = []
+    for numero, brute in enumerate(boites, start=1):
+        valeurs = [int(v) for v in brute]
+        if len(valeurs) != 4:
+            raise DecoupeRefusee(
+                f"rectangle {numero} : quatre nombres attendus — x0, y0, x1, y1"
+            )
+        x0, y0, x1, y1 = valeurs
+        if x1 - x0 + 1 < COTE_UTILE or y1 - y0 + 1 < COTE_UTILE:
+            raise DecoupeRefusee(f"rectangle {numero} : trop petit pour être découpé")
+        if not (0 <= x0 and 0 <= y0 and x1 < largeur and y1 < hauteur):
+            raise DecoupeRefusee(
+                f"rectangle {numero} : hors de l'image ({largeur}×{hauteur})"
+            )
+        rectangles.append((x0, y0, x1, y1))
+
+    if not rectangles:
+        raise DecoupeRefusee("aucun rectangle — il n'y a rien à découper")
+    if len(rectangles) > DECOUPES_MAX:
+        raise DecoupeRefusee(
+            f"une {quoi} se découpe en {DECOUPES_MAX} morceaux au plus"
+        )
+    return rectangles
+
+
 class ServiceDecoupe:
     def __init__(
         self,
@@ -245,37 +288,10 @@ class ServiceDecoupe:
         return asset
 
     def _verifier(self, planche: Asset, boites: Iterable[Boite]) -> list[Boite]:
-        """Des rectangles utilisables, ou un refus qui nomme le fautif.
-
-        L'écran a déjà empêché de dessiner hors de l'image ; c'est le filet, pour
-        une requête écrite à la main et pour l'agent de T7. Rien n'est ramené en
-        silence dans les bornes : un rectangle corrigé à l'insu de l'auteur
-        découperait autre chose que ce qu'il a vu.
-        """
-        rectangles: list[Boite] = []
-        for numero, brute in enumerate(boites, start=1):
-            valeurs = [int(v) for v in brute]
-            if len(valeurs) != 4:
-                raise DecoupeRefusee(
-                    f"rectangle {numero} : quatre nombres attendus — x0, y0, x1, y1"
-                )
-            x0, y0, x1, y1 = valeurs
-            if x1 - x0 + 1 < COTE_UTILE or y1 - y0 + 1 < COTE_UTILE:
-                raise DecoupeRefusee(f"rectangle {numero} : trop petit pour être découpé")
-            if not (0 <= x0 and 0 <= y0 and x1 < planche.largeur and y1 < planche.hauteur):
-                raise DecoupeRefusee(
-                    f"rectangle {numero} : hors de la planche "
-                    f"({planche.largeur}×{planche.hauteur})"
-                )
-            rectangles.append((x0, y0, x1, y1))
-
-        if not rectangles:
-            raise DecoupeRefusee("aucun rectangle — il n'y a rien à découper")
-        if len(rectangles) > DECOUPES_MAX:
-            raise DecoupeRefusee(
-                f"une planche se découpe en {DECOUPES_MAX} morceaux au plus"
-            )
-        return rectangles
+        """Les rectangles de cette planche-là, vérifiés."""
+        return verifier_boites(
+            boites, planche.largeur, planche.hauteur, quoi="planche"
+        )
 
     def _premier_rang_libre(self, generation: str) -> int:
         """Le rang de la prochaine découpe.

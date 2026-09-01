@@ -313,6 +313,28 @@ export const AIDE: Record<string, Explication> = {
       "Promouvoir est un geste unique : tu poses officiel et famille une fois, et l'application choisit seule à chaque génération. Il n'y a rien à sélectionner au moment de générer, et c'est délibéré — le cadrage du produit écarte explicitement la sélection manuelle des artworks, génération par génération.\n\nUn texte ne peut pas être promu : ce qui part en référence, ce sont des octets d'image, et la bible dit déjà ce qu'un texte aurait à dire.",
   },
 
+  "carte.lecture": {
+    nom: "ce que la palette y lit",
+    ou: "inspiration",
+    quoi: "La part de cet artwork qui donne ses couleurs au jeu — et l'image avec, en magenta, ce qui a été mis de côté.",
+    change:
+      "Rien. C'est une mesure, elle ne règle rien : elle montre ce que l'application fait déjà de cette image.",
+    origine: "mesuré sur l'image · rien n'est calculé tant que tu n'as pas cliqué",
+    long:
+      "Avant de tirer les couleurs d'un artwork, l'application en détoure le fond : un ciel, un mur, un carré uni derrière un personnage sont écartés d'eux-mêmes, et n'entrent pas dans la palette du jeu. C'est vrai depuis toujours, mais rien ne le montrait — d'où la question qui revenait à chaque promotion, « est-ce que mon fond va polluer mes couleurs ? ». Non.\n\nCe qui pollue vraiment, ce sont les voisins : un titre d'interface, une barre de vie, un second personnage dans le même cadre. Eux sont opaques, donc ils comptent. C'est là que découper la carte sert à quelque chose — pas pour retirer un fond, qui ne compte déjà pas.\n\nQuand rien n'est mis de côté, ce n'est pas une panne : une matière ou une texture qui remplit son cadre n'a pas de fond à retirer, et la palette prend l'image entière. L'écran le dit avec cette phrase-là plutôt qu'avec un « 0 % », qui voudrait dire l'inverse.",
+  },
+
+  "carte.decouper": {
+    nom: "découper une carte",
+    ou: "inspiration",
+    quoi: "Couper une carte en plusieurs, ou la recadrer — sans quitter le tableau.",
+    change:
+      "Chaque morceau devient une carte du même tableau, dans la réserve, non promue. Ce sont des cartes et jamais des images produites : elles n'ont ni recette ni rendu.",
+    origine: "toi · l'originale reste, sauf si tu demandes le remplacement",
+    long:
+      "Une planche trouvée porte souvent trois personnages sur un même fond. Découper en fait trois cartes, qu'on promeut séparément — et c'est ce qui compte pour la palette : ce n'est pas le fond qui la pollue, ce sont les voisins.\n\nLe remplacement n'existe qu'avec **un seul** rectangle, et c'est alors un recadrage : le morceau prend tout ce qui faisait l'originale — son groupe, sa note, sa place, sa promotion — et l'originale s'en va. C'est le seul endroit du produit où découper efface quelque chose, d'où la case décochée par défaut.",
+  },
+
   "carte.note": {
     nom: "note",
     ou: "inspiration",

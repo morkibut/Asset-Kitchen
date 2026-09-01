@@ -1260,6 +1260,16 @@ class ServiceAssets:
 
 
 def _label(generation: Generation) -> str:
-    """Le début du prompt. Un nom se change ; il ne se demande pas à l'avance."""
-    prompt = str(generation.demande.get("prompt", "")).strip()
-    return prompt[:60] if prompt else "sans titre"
+    """Le début du **sujet**. Un nom se change ; il ne se demande pas à l'avance.
+
+    **Le sujet, et non le prompt** — corrigé le 1ᵉʳ septembre 2026. Le prompt
+    est le texte assemblé : la bible du jeu s'y replie en tête, donc ses
+    soixante premiers signes sont ceux du jeu et jamais ceux du sujet. Sur un
+    jeu qui a une description, toutes les images naissaient donc avec le même
+    nom — celui de la technique de rendu. Le sujet est gardé à part depuis
+    `Demande.sujet` ; sans lui, on retombe sur le prompt, qui est le
+    comportement juste quand il n'y a pas de sujet distinct.
+    """
+    demande = generation.demande
+    texte = str(demande.get("sujet") or demande.get("prompt") or "").strip()
+    return texte[:60] if texte else "sans titre"

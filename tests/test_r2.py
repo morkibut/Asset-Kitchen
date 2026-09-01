@@ -447,11 +447,23 @@ def test_un_univers_vide_ne_contraint_toujours_rien(client, double):
 
 def test_l_apercu_d_un_champ_vide_montre_la_bible_seule(client):
     """L'atelier s'ouvre sur un champ vide : l'aperçu montre alors ce qui
-    partirait quand même, et ne refuse pas."""
+    partirait quand même, et ne refuse pas.
+
+    **Sans taille de pixel**, pour que la bible soit seule à parler : depuis le
+    1ᵉʳ septembre 2026, une cible posée fait dire à l'atelier sa grille et son
+    calage, et ces deux lignes-là partent aussi. Le sujet de cet essai est
+    l'aperçu d'un champ vide, pas la composition — elle a le sien.
+    """
+    client.put("/api/universe", json={"cible_px": 0})
     _bible(client, monde="marais de fer")
     apercu = _apercu(client, "")
-    assert _origines(apercu) == ["bible"]
-    assert apercu["texte"] == "World: marais de fer"
+    # **Le cadre s'ajoute depuis le 1ᵉʳ septembre 2026**, et c'est mesuré : il
+    # fait passer l'aire du sujet de 14,7 % à 20,1 % de l'image. Ce que cet
+    # essai protège n'a pas changé — un champ vide ne refuse pas, et la bible
+    # part telle quelle —, et c'est ce qu'il vérifie.
+    assert _origines(apercu) == ["bible", "cadrage"]
+    assert apercu["texte"].startswith("World: marais de fer")
+    assert "FRAMING —" in apercu["texte"]
 
 
 # ── « Réseau coupé : l'aperçu du prompt, l'édition du texte et le réglage de la

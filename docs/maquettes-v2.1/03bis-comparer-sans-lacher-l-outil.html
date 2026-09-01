@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — comparer sans lâcher l'outil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+  .damier{background:repeating-conic-gradient(var(--damier-a) 0% 25%, var(--damier-b) 0% 50%) 0 0/12px 12px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:72ch;color:var(--texte-2);font-size:14px;margin:0 0 10px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+  em.i{font-style:italic}
+
+  section{margin:0 0 60px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 12px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:22px}
+  h3{font-size:13px;font-weight:600;color:var(--texte);margin:26px 0 10px}
+  code{font-family:var(--mono);font-size:11px;color:var(--texte-2);
+    background:var(--fond-2);border:1px solid var(--bord);border-radius:2px;padding:1px 5px}
+
+  .chiffres{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));gap:9px;margin:18px 0 26px}
+  .ch{border:1px solid var(--bord);background:var(--fond-1);border-radius:2px;padding:13px 14px}
+  .ch .gros{font-family:var(--mono);font-size:26px;color:var(--signal);line-height:1.1;
+    font-variant-numeric:tabular-nums}
+  .ch .gros.mal{color:var(--echec)}
+  .ch .gros.or{color:var(--epingle)}
+  .ch .quoi{font-size:11.5px;color:var(--texte-2);margin-top:6px;line-height:1.45}
+  .ch .ou{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:6px}
+
+  table.audit{border-collapse:collapse;width:100%;margin:8px 0 18px}
+  table.audit th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);text-align:left;font-weight:500;
+    padding:0 10px 7px 0;border-bottom:1px solid var(--bord)}
+  table.audit td{padding:6px 10px 6px 0;border-bottom:1px solid var(--bord);
+    font-size:12px;color:var(--texte-2);vertical-align:top}
+  table.audit td.m{font-family:var(--mono);font-size:10px;text-align:right;white-space:nowrap}
+  .pastille{font-family:var(--mono);font-size:9.5px;padding:1px 6px;border-radius:2px;
+    border:1px solid var(--bord);color:var(--texte-3);white-space:nowrap}
+  .pastille.rouge{border-color:var(--echec);color:var(--echec)}
+  .pastille.ok{border-color:var(--ok);color:var(--ok)}
+
+  /* la bande du comparateur */
+  .bande{height:38px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    display:flex;align-items:center;gap:12px;padding:0 16px;overflow:hidden;position:relative}
+  .bande .dim{font-family:var(--mono);font-size:10px;color:var(--texte-3);white-space:nowrap}
+  .segs{display:flex;gap:4px}
+  .sg{height:26px;min-width:34px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);padding:0 8px;
+    font-family:var(--mono);font-size:11.5px;color:var(--texte-2);white-space:nowrap}
+  .sg.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .sg.eteint{color:var(--texte-3);border-color:var(--bord);background:var(--fond-2)}
+  .lgr{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);white-space:nowrap}
+  .zoomctl{display:flex;align-items:center;gap:4px}
+  .zoomctl b{width:24px;height:24px;border:1px solid var(--bord-fort);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+    font-size:10px;color:var(--texte-2);font-weight:400}
+  .zoomctl .ch2{width:44px;height:24px;border:1px solid var(--bord);border-radius:2px;
+    background:var(--fond-2);font-family:var(--mono);font-size:10px;color:var(--texte);
+    display:flex;align-items:center;justify-content:flex-end;padding-right:5px}
+  .sep{width:1px;height:16px;background:var(--bord);flex:none}
+  .btnpng{height:24px;border:1px solid var(--bord-fort);border-radius:2px;padding:0 10px;
+    display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--texte);
+    background:var(--fond-2);white-space:nowrap}
+  .btnpng.vieux{font-family:var(--mono);font-size:10px;color:var(--texte-2);background:transparent}
+  .ambre{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--epingle);white-space:nowrap}
+  .coupe{position:absolute;right:0;top:0;bottom:0;width:52px;
+    background:linear-gradient(90deg,rgba(11,13,16,0),var(--fond-0))}
+  .bordcoupe{border-right:1px dashed var(--echec)}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin:14px 0 8px}
+  @media(max-width:980px){.duo{grid-template-columns:1fr}}
+  .volet{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);overflow:hidden}
+  .volet .vt{height:26px;display:flex;align-items:center;gap:8px;padding:0 11px;
+    border-bottom:1px solid var(--bord);font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .volet.avant .vt{color:var(--echec)}
+  .volet.apres .vt{color:var(--ok)}
+  .volet .vc{padding:14px;background:var(--fond-0)}
+  .volet .vn{padding:9px 11px;border-top:1px solid var(--bord);font-family:var(--mono);
+    font-size:9.5px;color:var(--texte-3);line-height:1.5}
+
+  /* la scène d'une table */
+  .table{border:1px solid var(--bord);border-radius:2px;overflow:hidden;background:var(--fond-0);margin:12px 0}
+  .table .grille{display:grid;grid-template-columns:200px minmax(0,1fr) 130px}
+  .table .pan{border-right:1px solid var(--bord);background:var(--fond-1);min-height:280px}
+  .table .pan.dr{border-right:0;border-left:1px solid var(--bord)}
+  .enpan{height:30px;border-bottom:1px solid var(--bord);display:flex;align-items:center;
+    padding:0 11px;font-family:var(--mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.11em;color:var(--texte-3)}
+  .pan .l{padding:8px 11px;font-size:11.5px;color:var(--texte-2);line-height:1.5}
+  .scene{display:flex;flex-direction:column;min-width:0}
+  .aire{flex:1;padding:20px;display:flex;align-items:center;justify-content:center;gap:16px;
+    background:var(--fond-0);min-height:250px}
+  .img{border:1px solid var(--bord);position:relative;width:150px;height:190px}
+  .img .sujet{position:absolute;inset:22px 34px;background:var(--fond-3);border-radius:2px}
+  .img .etiq{position:absolute;left:0;right:0;bottom:-19px;text-align:center;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .img.temoin{opacity:.72}
+  .img.temoin .sujet{background:#2A3138}
+  .img.travail{outline:1px solid var(--signal);outline-offset:2px}
+  .img.travail .etiq{color:var(--signal)}
+  .outil{position:absolute;border:1px dashed var(--lumiere);left:26px;top:26px;right:26px;bottom:56px}
+  .pipette{position:absolute;width:16px;height:16px;border-radius:9999px;
+    border:1px solid var(--lumiere);left:60px;top:120px;background:rgba(234,244,248,.14)}
+  .barbouille{position:absolute;left:44px;top:60px;width:56px;height:70px;border-radius:20px;
+    background:rgba(73,179,206,.28)}
+  .curseur{position:absolute;width:0;height:0;border-left:8px solid var(--lumiere);
+    border-bottom:6px solid transparent;border-top:6px solid transparent;left:96px;top:104px;
+    transform:rotate(35deg)}
+  .interdit{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--echec);background:rgba(11,13,16,.55)}
+
+  ul.raisons{list-style:none;padding:0;margin:10px 0 0;max-width:80ch}
+  ul.raisons li{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px}
+  ul.raisons li .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);
+    border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);
+    padding:2px 7px;flex:none;margin-top:2px;white-space:nowrap}
+  ul.raisons li .k.gris{color:var(--texte-3)}
+  ul.raisons li .k.or{color:var(--epingle);border-color:var(--epingle)}
+  ul.raisons li .t{font-size:12.5px;color:var(--texte-2);line-height:1.55}
+  ul.raisons li .t b{color:var(--texte);font-weight:600}
+
+  .encart{border:1px solid var(--bord);border-left:2px solid var(--epingle);
+    background:var(--fond-1);border-radius:2px;padding:13px 15px;margin:16px 0;max-width:82ch}
+  .encart .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--epingle);margin-bottom:7px}
+  .encart p{font-size:12.5px;color:var(--texte-2);margin:0 0 8px}
+  .encart p:last-child{margin:0}
+  .encart.signal{border-left-color:var(--signal)}
+  .encart.signal .t{color:var(--signal)}
+
+  .fin{border-top:1px solid var(--bord);margin-top:60px;padding-top:22px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="chapeau">
+  <div class="kicker">Asset Kitchen · maquette 03bis — la bande sous l'image, dans l'établi</div>
+  <h1>Comparer <em>sans lâcher l'outil</em></h1>
+  <p>Les tables de l'établi ont quatre façons de regarder une image : <em class="i">brut</em>,
+  <em class="i">rendu</em>, <em class="i">côte à côte</em>, <em class="i">superposé</em>. Les
+  deux dernières existent pour voir ce qu'une passe a changé. <strong>Et ce sont exactement
+  celles où l'on ne peut plus rien faire</strong> : la pipette, le tracé, le rectangle de
+  recadrage et le pinceau disparaissent tous.</p>
+  <p>La cause est une seule ligne de condition, répétée quatre fois, et derrière elle une
+  confusion : <strong>le produit a mis dans un seul contrôle deux questions qui n'en font
+  pas une</strong> — <em class="i">quelle image je regarde</em> et <em class="i">combien
+  d'images sont à l'écran</em>.</p>
+  <p class="sourd">Cette page traite aussi le bouton de téléchargement du PNG, qui existe
+  depuis U2 et qu'on ne trouve pas : c'est le même sujet, la même bande, et la même cause.</p>
+  <div style="border:1px solid var(--bord);border-left:2px solid var(--epingle);
+    background:var(--fond-1);border-radius:2px;padding:13px 15px;margin-top:20px;max-width:82ch">
+    <div style="font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+      letter-spacing:.11em;color:var(--epingle);margin-bottom:7px">Construite le 1<sup>er</sup> septembre 2026</div>
+    <p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px"><strong>Tout ce qui est décrit ici est dans le produit</strong> : les deux contrôles, les douze croisements, l'anneau <code>--lumiere</code> sur la moitié qui travaille, la surimpression qui ne prend pas le pointeur, la table qui peint avec ses trois témoins, et le bouton PNG habillé en bouton. <em class="i">Vu à l'écran</em> sur l'atelier de l'auteur pour le témoin à côté d'une table à outil et pour les largeurs de la bande ; <em class="i">tenu par les essais d'écran</em> pour le reste, y compris la table qui peint. Deux choses ont bougé entre le dessin et la construction, et les voici.</p>
+    <p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px"><strong>Un — les libellés partent avec les dimensions.</strong> Le § 03 posait un seul ordre de sacrifice, les dimensions d'abord. Un libellé n'est pas un geste non plus : <em class="i">sur</em> et <em class="i">témoin</em> le suivent. Mesuré après construction, la bande réclame <b>753 px</b> avec ses libellés et <b>681 sans</b>, contre les 799 et 673 annoncés — l'écart tient au libellé <em class="i">sur</em>, rendu à 18 px et non aux 24 estimés, et aux segments du témoin, plus larges que dessinés.</p>
+    <p style="font-size:12.5px;color:var(--texte-2);margin:0"><strong>Deux — une barre de défilement a été construite puis retirée.</strong> Le § 03 reproche à la bande de déborder <em class="i">en silence</em> ; une barre horizontale était la réponse évidente. Elle prend <b>16 px sur les 38 de la bande</b>, ce qui rogne de quatre les segments de 26 — une bande qui écrase ses contrôles ment sur leur état, et c'est ce que le produit s'interdit ailleurs. Sous 1 440 de fenêtre, ce qui reste est de replier une colonne, qui rend 380 px d'un coup.</p>
+  </div>
+</div>
+
+
+<!-- ─────────────────────────────────────────────────────────── 01 -->
+<section>
+  <div class="entete"><span class="num">01</span><h2>Ce qui se passe aujourd'hui</h2></div>
+
+  <p class="intro">Les quatre surfaces qui portent un geste dans la scène centrale sont toutes
+  gardées par la même condition — <code>mode === "rendu" || mode === "brut"</code>. Dès qu'on
+  choisit une des deux comparaisons, la scène rend deux balises <code>&lt;img&gt;</code>, et
+  plus rien d'autre.</p>
+
+  <table class="audit">
+    <tr><th>L'outil</th><th>Sur quelle table</th><th>rendu</th><th>brut</th><th>côte à côte</th><th>superposé</th></tr>
+    <tr><td>la pipette qui vise une couleur</td><td class="sourd">détourage</td>
+      <td><span class="pastille ok">actif</span></td><td><span class="pastille ok">actif</span></td>
+      <td><span class="pastille rouge">absent</span></td><td><span class="pastille rouge">absent</span></td></tr>
+    <tr><td>le tracé de la sélection magique</td><td class="sourd">détourage</td>
+      <td><span class="pastille ok">actif</span></td><td><span class="pastille ok">actif</span></td>
+      <td><span class="pastille rouge">absent</span></td><td><span class="pastille rouge">absent</span></td></tr>
+    <tr><td>le rectangle de recadrage</td><td class="sourd">recadrage</td>
+      <td><span class="pastille ok">actif</span></td><td><span class="pastille ok">actif</span></td>
+      <td><span class="pastille rouge">absent</span></td><td><span class="pastille rouge">absent</span></td></tr>
+    <tr><td>le pinceau</td><td class="sourd">la main</td>
+      <td><span class="pastille ok">actif</span></td><td colspan="3"><span class="pastille rouge">les trois autres modes sont grisés d'office</span></td></tr>
+  </table>
+
+  <div class="duo">
+    <div class="volet avant">
+      <div class="vt">côte à côte, aujourd'hui — la table est ouverte, l'outil n'est plus là</div>
+      <div class="vc">
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 0 22px">
+          <div class="img temoin"><div class="sujet"></div><div class="etiq">brut</div></div>
+          <div class="img"><div class="sujet"></div><div class="etiq">rendu</div>
+            <div class="interdit">rien à viser, rien à tracer</div></div>
+        </div>
+      </div>
+      <div class="vn">Le panneau de gauche montre toujours les réglages de la table de
+      détourage. On peut changer un seuil, on ne peut plus désigner un point sur l'image —
+      c'est-à-dire faire ce pour quoi on avait ouvert les deux vues côte à côte.</div>
+    </div>
+    <div class="volet apres">
+      <div class="vt">refait — le témoin à gauche, le travail à droite, l'outil dessus</div>
+      <div class="vc">
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 0 22px">
+          <div class="img temoin"><div class="sujet"></div><div class="etiq">témoin · brut</div></div>
+          <div class="img travail"><div class="sujet"></div>
+            <div class="pipette"></div><div class="curseur"></div>
+            <div class="etiq">on travaille ici</div></div>
+        </div>
+      </div>
+      <div class="vn">Une seule image porte le geste, elle est cerclée de la lampe, et l'autre
+      est un témoin : on la regarde, on n'y touche pas. Le curseur ne change jamais de sens
+      selon la moitié où il se trouve.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────────────────── 02 -->
+<section>
+  <div class="entete"><span class="num">02</span><h2>La décision — comparer n'est pas un mode, c'est un témoin de plus</h2></div>
+
+  <p class="intro">Le contrôle unique de quatre segments mélange deux questions. On le coupe en
+  deux, et tout le reste en découle sans qu'aucune règle neuve soit nécessaire.</p>
+
+  <div class="duo">
+    <div class="volet avant">
+      <div class="vt">un contrôle, quatre valeurs</div>
+      <div class="vc">
+        <div class="segs">
+          <span class="sg">brut</span><span class="sg">rendu</span>
+          <span class="sg on">côte à côte</span><span class="sg">superposé</span>
+        </div>
+      </div>
+      <div class="vn">Les quatre s'excluent, donc c'est un choix — l'argument est juste, et la
+      conclusion fausse : ils s'excluent parce qu'on les a mis ensemble. <em>brut</em> et
+      <em>côte à côte</em> ne répondent pas à la même question.</div>
+    </div>
+    <div class="volet apres">
+      <div class="vt">deux contrôles, deux questions</div>
+      <div class="vc">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span class="lgr">on travaille sur</span>
+          <span class="segs"><span class="sg">brut</span><span class="sg on">rendu</span></span>
+          <span class="sep"></span>
+          <span class="lgr">témoin</span>
+          <span class="segs"><span class="sg">aucun</span><span class="sg on">à côté</span><span class="sg">par-dessus</span></span>
+        </div>
+      </div>
+      <div class="vn"><b>On travaille sur</b> : quelle image porte l'outil, et c'est toujours
+      celle-là. <b>Témoin</b> : ce qu'on met à côté pour comparer, et il ne porte jamais rien.
+      Aucun croisement n'est interdit — douze combinaisons, douze qui marchent.</div>
+    </div>
+  </div>
+
+  <ul class="raisons">
+    <li><span class="k">règle</span><span class="t"><b>Une comparaison ne retire jamais un
+      geste ; elle pose un témoin à côté.</b> C'est la phrase entière de la décision, et c'est
+      elle qui interdit que le défaut revienne : la prochaine façon de comparer — un rideau, un
+      clignotement — ne demandera pas non plus si l'outil doit disparaître.</span></li>
+    <li><span class="k">travail</span><span class="t"><b>L'image de travail est cerclée de
+      <code>--lumiere</code></b>, la lampe de la table, qui est déjà ce que le produit emploie
+      pour la sélection et le focus. Aucune couleur neuve, et l'anneau ne paraît que quand un
+      témoin est là — seul, il n'y aurait rien à distinguer.</span></li>
+    <li><span class="k">côté</span><span class="t"><b>Le témoin à gauche, le travail à
+      droite</b>, comme aujourd'hui — le brut est déjà à gauche et le rendu à droite. On ne
+      déplace pas une habitude pour rien : ce qui change est ce qu'on peut faire dans la moitié
+      droite, pas où elle est.</span></li>
+    <li><span class="k">par-dessus</span><span class="t"><b>En surimpression, le témoin est
+      au-dessus et il ne prend pas le pointeur.</b> C'est un calque de lecture : le curseur le
+      traverse, le geste tombe sur l'image de travail, et le curseur de zoom d'opacité continue
+      de dire ce qu'on voit. Une image posée par-dessus qui intercepte les clics est le défaut
+      d'aujourd'hui déguisé.</span></li>
+    <li><span class="k">peint</span><span class="t"><b>La table qui peint gagne les trois
+      témoins.</b> Ils lui étaient tous grisés, et c'est la table où la comparaison sert le
+      plus : on peint un masque, on veut voir ce qu'il enlève <em class="i">pendant</em> qu'on
+      peint. Le grisé n'était pas une décision, c'était la conséquence d'une scène qui ne
+      savait rendre qu'une chose à la fois.</span></li>
+    <li><span class="k gris">avant</span><span class="t"><b><em class="i">Avant ›</em> reste</b>,
+      et change de raison. Il existait pour compenser ce qu'on retirait à la table qui peint ;
+      il n'y a plus rien à compenser. Il reste parce qu'un appui maintenu est plus rapide que
+      deux clics, et parce qu'il ne coûte aucune place — c'est un geste, pas un
+      réglage.</span></li>
+  </ul>
+
+  <h3>La scène, en surimpression, sur la table qui peint</h3>
+  <div class="table">
+    <div class="grille">
+      <aside class="pan">
+        <div class="enpan">la main</div>
+        <div class="l">gomme · pinceau<br><span class="sourd mesure" style="font-size:10px">taille 24 px · dureté 80 %</span></div>
+        <div class="l sourd" style="border-top:1px solid var(--bord)">calque 1 — 3 passages</div>
+      </aside>
+      <div class="scene">
+        <div class="aire">
+          <div class="img travail" style="width:190px;height:230px">
+            <div class="sujet"></div>
+            <div class="barbouille"></div>
+            <div class="curseur" style="left:106px;top:96px"></div>
+            <div class="etiq">on travaille ici — le témoin est par-dessus, à 40 %</div>
+          </div>
+        </div>
+        <div class="bande">
+          <span class="dim">512×512 · image/png</span>
+          <span class="lgr">on travaille sur</span>
+          <span class="segs"><span class="sg">brut</span><span class="sg on">rendu</span></span>
+          <span class="lgr">témoin</span>
+          <span class="segs"><span class="sg">aucun</span><span class="sg">à côté</span><span class="sg on">par-dessus</span></span>
+          <span class="sep"></span>
+          <span class="zoomctl"><b>−</b><span class="ch2">100</span><span class="sourd mesure" style="font-size:10px">%</span><b>+</b></span>
+          <span class="sep"></span>
+          <span class="btnpng">Télécharger le PNG ↓</span>
+        </div>
+      </div>
+      <aside class="pan dr">
+        <div class="enpan">ses sœurs</div>
+        <div class="l sourd" style="font-size:10px">4 voisines</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────────────────── 03 -->
+<section>
+  <div class="entete"><span class="num">03</span><h2>Le PNG existe depuis U2 — et il est habillé en mesure</h2></div>
+
+  <p class="intro">La demande était : « <em class="i">ajoute un bouton pour télécharger le PNG
+  de l'état actuel, quelle que soit la table active</em> ». <strong>Ce bouton a été livré</strong>
+  avec l'étape U2 : il est dans la bande, il est présent sur toutes les tables, il télécharge le
+  brut quand on regarde le brut et le rendu sinon. Il est aussi dans la version compilée du
+  1<sup>er</sup> septembre à 12 h 32. La question n'est donc pas de l'ajouter, c'est de
+  comprendre pourquoi on ne le voit pas — et il y a deux raisons, mesurées toutes les deux.</p>
+
+  <div class="chiffres">
+    <div class="ch"><div class="gros or">10 px</div>
+      <div class="quoi">le libellé <span class="mesure">PNG ↓</span>, en JetBrains Mono, dans
+      <code>--texte-2</code>. Exactement l'habit des mesures de la bande.</div>
+      <div class="ou">le seul geste vêtu comme un fait</div></div>
+    <div class="ch"><div class="gros mal">973 px</div>
+      <div class="quoi">ce que la bande réclame en <em class="i">superposé</em>, pour
+      <span class="mesure">840 px</span> disponibles à 1 600 de fenêtre, les deux colonnes de
+      380 ouvertes.</div>
+      <div class="ou">mesuré aux vraies polices</div></div>
+    <div class="ch"><div class="gros mal">−133 px</div>
+      <div class="quoi">ce qui sort de l'écran, sans barre de défilement et sans que rien ne le
+      dise. Ce qui tombe en premier est la phrase du mode, puis le bouton.</div>
+      <div class="ou">1 600 × 900 · superposé</div></div>
+    <div class="ch"><div class="gros">1 473 px</div>
+      <div class="quoi">la largeur de fenêtre sous laquelle le bouton lui-même passe hors du
+      cadre en <em class="i">côte à côte</em>, les deux panneaux ouverts.</div>
+      <div class="ou">seuil calculé</div></div>
+  </div>
+
+  <h3>La première raison — un geste habillé en fait</h3>
+  <p>Le produit a une règle, et elle est bonne : <strong>toute mesure est en monospace,
+  partout</strong>. La bande sous l'image en applique la moitié — les dimensions, le pour cent,
+  la phrase du mode sont bien en mono — et l'applique <em class="i">aussi</em> à la seule chose
+  qui n'est pas une mesure. Dans une bande où sept éléments sur huit sont des faits en mono de
+  10 px, un huitième fait en mono de 10 px ne se lit pas comme un bouton.</p>
+
+  <div class="duo">
+    <div class="volet avant">
+      <div class="vt">aujourd'hui — 8 éléments, un seul est un geste</div>
+      <div class="vc">
+        <div class="bande bordcoupe" style="border-radius:2px">
+          <span class="dim">1024×1024 · image/png</span>
+          <span class="segs"><span class="sg">brut</span><span class="sg">rendu</span>
+            <span class="sg on">côte à côte</span><span class="sg">superposé</span></span>
+          <span class="sep"></span>
+          <span class="zoomctl"><b>−</b><span class="ch2">100</span><span class="sourd mesure" style="font-size:10px">%</span><b>+</b></span>
+          <span class="btnpng vieux">PNG ↓</span>
+          <span class="ambre">on regarde : côte à…</span>
+          <span class="coupe"></span>
+        </div>
+      </div>
+      <div class="vn">Le trait rouge marque le bord de l'écran à 1 440 de fenêtre. Ce qui est à
+      droite existe, répond au clavier, et personne ne le voit.</div>
+    </div>
+    <div class="volet apres">
+      <div class="vt">refait — les mesures à gauche, les gestes à droite</div>
+      <div class="vc">
+        <div class="bande" style="border-radius:2px">
+          <span class="dim">1024×1024</span>
+          <span class="lgr">sur</span>
+          <span class="segs"><span class="sg">brut</span><span class="sg on">rendu</span></span>
+          <span class="lgr">témoin</span>
+          <span class="segs"><span class="sg">aucun</span><span class="sg on">à côté</span><span class="sg">par-dessus</span></span>
+          <span class="sep"></span>
+          <span class="zoomctl"><b>−</b><span class="ch2">100</span><span class="sourd mesure" style="font-size:10px">%</span><b>+</b></span>
+          <span class="sep"></span>
+          <span class="btnpng">PNG ↓</span>
+        </div>
+      </div>
+      <div class="vn">Le libellé passe en Instrument Sans 11,5 px, sur fond
+      <code>--fond-2</code> et bord <code>--bord-fort</code> : la même forme que tous les
+      boutons compacts du produit. C'est la seule chose de la bande qui ne soit pas en mono, et
+      c'est ce qui la désigne.</div>
+    </div>
+  </div>
+
+  <h3>La seconde raison — une bande fermée qui déborde en silence</h3>
+  <p>La bande fait 38 px et <strong>elle ne grandit pas</strong> : c'est une décision, et elle
+  est juste. Mais ce qui n'y tient pas ne va nulle part — pas de barre, pas de repli, pas de
+  menu. Le produit sait pourtant faire mieux ailleurs : sur la grille d'assets, un cran de zoom
+  indisponible est <em class="i">grisé, pas caché</em>, et la barre écrit
+  <span class="mesure">— 4× ne tient pas ici, rendu en 2×</span>.</p>
+
+  <div class="encart signal">
+    <div class="t">La règle qui manquait</div>
+    <p style="font-size:14px;color:var(--texte-2)"><strong>Dans une bande de la liste fermée, ce
+    qui sort quand la place manque est une mesure, jamais un geste.</strong></p>
+    <p>Elle donne un ordre de sacrifice, et il n'y a rien à décider au cas par cas : les
+    dimensions de l'image partent en premier — c'est la seule mesure de la bande qui se relise
+    ailleurs, dans la fiche et dans le panneau. Le zoom, les modes, le témoin et le PNG restent
+    jusqu'au bout, parce qu'aucun d'eux n'existe autre part.</p>
+    <p>Avec les deux contrôles du § 02 et le libellé court, la bande réclame
+    <span class="mesure">799 px</span> au lieu de 973 ; sans les dimensions,
+    <span class="mesure">673 px</span> — <strong>elle tient à 1 440 de fenêtre, les deux
+    colonnes ouvertes</strong>, ce qu'aucun arrangement de la bande d'aujourd'hui ne permet.</p>
+  </div>
+
+  <ul class="raisons">
+    <li><span class="k">nom</span><span class="t"><b>Le bouton dit ce qu'il emporte.</b>
+      <span class="mesure">PNG ↓</span> quand la place est courte, <em class="i">Télécharger le
+      PNG ↓</em> quand elle ne l'est pas — et son infobulle nomme toujours l'état :
+      <em class="i">le rendu, avec les six passes de la recette</em> ou <em class="i">l'image
+      d'origine, telle qu'elle est arrivée</em>. Le geste est le même, ce qu'il emporte ne
+      l'est pas.</span></li>
+    <li><span class="k or">rappel</span><span class="t"><b>La phrase ambre n'est plus la même
+      chose.</b> <em class="i">on regarde : côte à côte</em> disparaît avec le mode qu'elle
+      nommait — le contrôle du témoin le dit lui-même. <b><em class="i">on travaille sur le
+      brut</em> reste</b>, en ambre, parce que c'est le seul état durable qui change ce qu'un
+      outil touche vraiment.</span></li>
+  </ul>
+</section>
+
+
+<!-- ─────────────────────────────────────────────────────────── 04 -->
+<section>
+  <div class="entete"><span class="num">04</span><h2>Les mesures de la bande</h2></div>
+
+  <table class="audit">
+    <tr><th>Version</th><th>Ce qu'elle contient</th><th>Largeur réclamée</th><th>Tient à 1 600 ?</th><th>Tient à 1 440 ?</th></tr>
+    <tr><td>aujourd'hui · rendu</td><td class="sourd">dims · 4 modes · zoom · PNG</td>
+      <td class="m">713 px</td><td><span class="pastille ok">oui</span></td><td><span class="pastille ok">oui</span></td></tr>
+    <tr><td>aujourd'hui · côte à côte</td><td class="sourd">+ la phrase du mode</td>
+      <td class="m">869 px</td><td><span class="pastille rouge">non — −29</span></td><td><span class="pastille rouge">non — −189</span></td></tr>
+    <tr><td>aujourd'hui · superposé</td><td class="sourd">+ le curseur d'opacité</td>
+      <td class="m">973 px</td><td><span class="pastille rouge">non — −133</span></td><td><span class="pastille rouge">non — −293</span></td></tr>
+    <tr><td>refait · complet</td><td class="sourd">dims · 2 modes · 3 témoins · zoom · bouton PNG</td>
+      <td class="m">799 px</td><td><span class="pastille ok">oui</span></td><td><span class="pastille rouge">non — −119</span></td></tr>
+    <tr><td>refait · dimensions retirées</td><td class="sourd">la mesure part, les gestes restent</td>
+      <td class="m">673 px</td><td><span class="pastille ok">oui</span></td><td><span class="pastille ok">oui</span></td></tr>
+  </table>
+
+  <p class="sourd" style="font-size:11.5px">Largeurs calculées au navigateur avec les polices du
+  produit — Instrument Sans et JetBrains Mono chargées —, sur la scène centrale d'un établi dont
+  les deux colonnes de 380 px sont ouvertes. Replier une colonne rend 380 px et repousse tous
+  les seuils d'autant : c'est le geste qui fait réapparaître le bouton aujourd'hui, et personne
+  n'a de raison de le deviner.</p>
+</section>
+
+<div class="fin">
+  Asset Kitchen · maquette 03bis — 1<sup>er</sup> septembre 2026<br>
+  Complète <code>03-chassis-des-tables.html</code>, qui reste vrai sur les cinq places et sur la
+  colonne des sœurs.<br>
+  Fait foi sur l'apparence : <code>docs/DESIGN.md</code>. Journal :
+  <code>docs/design-decisions.md</code>.
+</div>
+
+</div>
+</body>
+</html>

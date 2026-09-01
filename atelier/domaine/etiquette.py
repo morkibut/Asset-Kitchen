@@ -48,6 +48,22 @@ class Etiquette:
     case: str
     emplois: int = 0
 
+    # **D'où elle vient, et l'écran s'en sert pour une seule chose** — marquer
+    # en `--epingle` ce que l'auteur a nommé lui-même, comme partout ailleurs
+    # dans le produit. Une livrée arrive avec l'atelier et est la même chez tout
+    # le monde ; une fabriquée n'existe que dans cet atelier-ci.
+    #
+    # **Elle ne change rien à ce qui part** : les deux moitiés d'une paire sont
+    # les mêmes des deux côtés, et cliquer l'une ou l'autre écrit le même texte
+    # anglais. Ce champ ne décide donc d'aucun comportement, seulement d'une
+    # marque — et c'est pour ça qu'il peut être faux par défaut sans risque.
+    livree: bool = False
+
+    # **Une livrée retirée laisse une pierre**, et c'est la seule façon de ne
+    # pas la lui rendre à la lecture suivante. Une fabriquée, elle, disparaît :
+    # il n'y a personne pour la remettre. Voir `ServiceEtiquettes.oublier`.
+    oubliee: bool = False
+
     def en_json(self) -> dict[str, Any]:
         return {
             "identifiant": self.identifiant,
@@ -55,6 +71,8 @@ class Etiquette:
             "texte": self.texte,
             "case": self.case,
             "emplois": self.emplois,
+            "livree": self.livree,
+            "oubliee": self.oubliee,
         }
 
     @staticmethod
@@ -65,6 +83,8 @@ class Etiquette:
             texte=str(d.get("texte") or ""),
             case=str(d.get("case") or ""),
             emplois=int(d.get("emplois", 0)),
+            livree=bool(d.get("livree", False)),
+            oubliee=bool(d.get("oubliee", False)),
         )
 
     def servie(self) -> "Etiquette":

@@ -143,7 +143,19 @@ export function EcranEnvoi({
     onTri({ ...tri, textes: restant })
   }
 
-  const groupes = ["jeu", "ambiance", "sujet", "planche"] as const
+  // **L'ordre est celui de l'assemblage**, et les deux derniers sont arrivés le
+  // 1ᵉʳ septembre 2026 : ce que les images jointes veulent dire, puis la caméra
+  // du jeu. Elles ferment le prompt parce qu'un banc a mesuré que la dernière
+  // phrase décide de la vue (`essais/essai_vue.py`), et elles ferment donc aussi
+  // l'écran — on lit de haut en bas ce qui part de gauche à droite.
+  const groupes = [
+    "jeu",
+    "ambiance",
+    "sujet",
+    "planche",
+    "jointes",
+    "cadrage",
+  ] as const
 
   return (
     <div

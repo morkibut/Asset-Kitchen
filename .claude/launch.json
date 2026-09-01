@@ -23,6 +23,18 @@
         "dev"
       ],
       "port": 5173
+    },
+    {
+      "name": "rapports",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8931",
+        "--directory",
+        "essais"
+      ],
+      "port": 8931
     }
   ]
 }

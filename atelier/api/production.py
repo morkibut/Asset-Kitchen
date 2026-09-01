@@ -243,6 +243,12 @@ class CorpsEmplacement(BaseModel):
     projet: str | None = None
 
 
+class CorpsProjetSeul(BaseModel):
+    """Un geste qui ne demande rien d'autre que sur quel jeu il porte."""
+
+    projet: str | None = None
+
+
 class CorpsReglageEmplacement(BaseModel):
     """Renommer un emplacement, ou le déplacer. `None` ne touche pas."""
 
@@ -881,6 +887,26 @@ async def ajouter_emplacement(
     projet = _projet(requete, corps.projet)
     emplacement = atelier.equipement.ajouter_emplacement(projet, corps.nom)
     return _avec_vestiaire(atelier, projet, "emplacement", emplacement)
+
+
+@routeur.post("/characters/slots/suggested", status_code=201)
+async def poser_les_emplacements_proposes(
+    requete: Request, corps: CorpsProjetSeul
+) -> dict[str, Any]:
+    """Poser d'un geste les six emplacements que l'atelier propose.
+
+    **Avant `/characters/slots/{identifiant}` dans ce fichier, et il faut que ça
+    le reste** : `suggested` serait sinon lu comme un identifiant par la route
+    qui suit, et laquelle gagne dépendrait de l'ordre des fonctions
+    (`docs/PIEGES.md`).
+
+    **Le vestiaire naît toujours vide** ; ceci est un geste, pas un effet de
+    bord. Rappelée deux fois, elle n'ajoute que ce qui manque.
+    """
+    atelier = _atelier(requete)
+    projet = _projet(requete, corps.projet)
+    atelier.equipement.poser_les_proposes(projet)
+    return atelier.equipement.vestiaire(projet)
 
 
 @routeur.put("/characters/slots/{identifiant}")

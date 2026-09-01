@@ -39,6 +39,7 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.equipement import (
     CONTENUE,
+    EMPLACEMENTS_PROPOSES,
     PORTEES,
     Emplacement,
     MesuresCalque,
@@ -144,6 +145,40 @@ class ServiceEquipement:
         objet.emplacements = objet.emplacements + (emplacement,)
         self._sauver(objet)
         return emplacement
+
+    def poser_les_proposes(self, projet: str) -> tuple[Emplacement, ...]:
+        """Poser d'un geste les six emplacements que l'atelier propose.
+
+        **Le vestiaire naît toujours vide**, et cette méthode ne change pas ça :
+        elle est un geste de l'auteur, pas un effet de bord de la création d'un
+        projet. Ce qu'elle répare est mesuré à l'étape 8 de l'assistant — une
+        liste vide sous une demi-phrase qui énonçait une règle sur un ordre que
+        rien ne permettait de changer.
+
+        **Elle n'ajoute que ce qui manque, et ne renomme rien.** Un vestiaire
+        déjà commencé garde ce qu'il porte : la cliquer deux fois ne fabrique pas
+        de doublon, et un nom déjà pris est simplement sauté. C'est ce qui la
+        rend sans danger sur un projet en cours.
+
+        L'ordre posé est celui du domaine — de l'arrière vers l'avant, parce que
+        c'est le rang qui décide de ce qui se dessine par-dessus quoi.
+        """
+        objet = self._exiger(projet)
+        prises = {e.nom.casefold() for e in objet.emplacements}
+        rang = rang_suivant(objet.emplacements)
+        neufs: list[Emplacement] = []
+        reperes = {e.identifiant for e in objet.emplacements}
+        for nom in EMPLACEMENTS_PROPOSES:
+            if nom.casefold() in prises:
+                continue
+            identifiant = repere(nom, reperes, "emplacement")
+            reperes.add(identifiant)
+            neufs.append(Emplacement(identifiant=identifiant, nom=nom, rang=rang))
+            rang += 1
+        if neufs:
+            objet.emplacements = objet.emplacements + tuple(neufs)
+            self._sauver(objet)
+        return tuple(sorted(objet.emplacements, key=lambda e: e.rang))
 
     def regler_emplacement(
         self, projet: str, identifiant: str, *, nom: str | None = None,

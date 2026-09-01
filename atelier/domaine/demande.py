@@ -60,6 +60,24 @@ class Demande:
     # décision du produit sur ce qui part, du même genre que le texte repris.
     palette: bool = False
 
+    # **Ce que l'auteur a tapé, gardé à part de ce qui part** — 1ᵉʳ septembre
+    # 2026. `prompt` est remplacé par le texte assemblé juste avant l'appel :
+    # la bible se replie en tête, les consignes de pose s'ajoutent, et le sujet
+    # se retrouve au milieu. Ce champ-ci garde le sujet seul, et il n'a qu'un
+    # emploi — **nommer l'asset**.
+    #
+    # La panne qu'il répare se voit dès qu'un jeu a une bible : un asset naissait
+    # nommé `Rendering technique: 2D pixel art on a 64x64 grid, Technical…`,
+    # parce que son nom est les soixante premiers signes du prompt et que les
+    # soixante premiers signes du prompt sont ceux du jeu, pas ceux du sujet.
+    # Deux épées du même jeu portaient donc le même nom, et ce nom ne disait
+    # ni l'une ni l'autre.
+    #
+    # Vide, on retombe sur le prompt : c'est le cas d'un appel qui n'a pas de
+    # sujet distinct — une reprise mot pour mot, un import — et le
+    # comportement d'avant y est exactement le bon.
+    sujet: str = ""
+
     def __post_init__(self) -> None:
         if not self.prompt.strip():
             raise ValueError("prompt vide")
@@ -84,4 +102,7 @@ class Demande:
             # Même raison : la bande de couleurs se redessine à la relance, donc
             # il faut savoir qu'elle était partie.
             "palette": self.palette,
+            # Le sujet seul, pour nommer l'asset. Enregistré parce qu'une
+            # génération relue doit pouvoir se renommer comme elle s'est nommée.
+            "sujet": self.sujet,
         }

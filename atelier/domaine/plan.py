@@ -229,13 +229,37 @@ def plan_depuis_json(brut: Any) -> tuple[Pose, ...]:
 PLANS_PAR_TYPE: dict[str, tuple[Pose, ...]] = {
     "personnage": PLAN_PAR_DEFAUT,
     "créature": PLAN_PAR_DEFAUT,
+    # ── Trois consignes corrigées le 1ᵉʳ septembre 2026, sur images payées ────
+    #
+    # **Une consigne d'état ne doit pas décrire un objet qu'on n'a pas décrit.**
+    # Le banc des deux jeux (`essais/essai_deux_jeux.py`) a demandé une carte
+    # d'accès en `objet tenu` : la consigne disait `held in one hand`, et les
+    # deux images sont revenues avec **une main** que personne n'avait décrite.
+    # Un objet tenu se range dans l'inventaire ; la main appartient au
+    # personnage, et elle se compose à l'usage. La consigne dit donc l'angle —
+    # celui sous lequel l'objet sera tenu — et rien de plus.
+    #
+    # **Et un meuble n'est pas toujours un coffre.** `open, lid raised` a fait
+    # lever un couvercle à un distributeur de boissons. Le mot `lid` décrivait
+    # la seule chose que la liste avait en tête en naissant ; il part maintenant,
+    # et ce qui reste — *ouvert, ce qu'il contient est visible* — est vrai d'un
+    # coffre, d'une armoire et d'un distributeur.
     "meuble": (
-        Pose("ferme", "fermé", consigne="closed"),
-        Pose("ouvert", "ouvert", consigne="open, lid raised"),
-        Pose("vide", "vidé", consigne="open and empty, contents gone"),
+        Pose("ferme", "fermé", consigne="closed, its contents hidden"),
+        Pose("ouvert", "ouvert", consigne="open, its contents visible"),
+        Pose("vide", "vidé", consigne="open and empty, its contents gone"),
     ),
-    "objet posé": (Pose("pose", "posé", consigne="resting on the ground"),),
-    "objet tenu": (Pose("tenu", "tenu", consigne="held in one hand"),),
+    "objet posé": (
+        Pose("pose", "posé", consigne="the item alone, resting on the ground"),
+    ),
+    "objet tenu": (
+        Pose(
+            "tenu",
+            "tenu",
+            consigne="the item alone, angled the way it is held — no hand, "
+            "no arm, nothing holding it",
+        ),
+    ),
     "décor": (),
     # **Une tuile n'a pas de poses**, et c'est un fait sur ce qu'une tuile est :
     # elle ne bouge pas, elle se raccorde. Lui montrer une rangée grisée

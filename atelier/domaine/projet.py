@@ -51,7 +51,13 @@ from atelier.domaine.plan import (
 )
 from atelier.domaine.teinte import AUCUNE, teinte_valide
 from atelier.domaine.direction import Direction, directions_depuis_json
-from atelier.domaine.vue import AUCUNE_VUE, vue as vue_connue
+from atelier.domaine.vue import (
+    AUCUNE_VUE,
+    phrase_de_calage,
+    phrase_de_grille,
+    sans_phrase_du_produit,
+    vue as vue_connue,
+)
 from atelier.domaine.recette import (
     BAS,
     Grille,
@@ -105,6 +111,50 @@ INTITULES = {
     "vue": "View and framing",
     "technique": "Technical constraints",
 }
+
+
+# ── Quand l'auteur redit ce que l'atelier allait dire ────────────────────────
+#
+# **Trois cases seulement**, celles où l'atelier écrit une phrase de lui-même :
+# le rendu dit la grille, la technique dit le calage, la vue dit la caméra. Les
+# quatre autres — le monde, l'époque, le trait, l'éclairage — n'ont pas de
+# phrase d'atelier, et rien à arbitrer.
+#
+# **Des mots, pas une intention.** On ne devine pas si l'auteur voulait préciser
+# ou remplacer ; on regarde s'il parle déjà du même sujet. Une case `vue` qui
+# contient `top-down`, `camera`, `isometric` ou `side view` parle bien de la
+# caméra, et la phrase de l'atelier en ferait une seconde. Une case `vue` qui
+# dirait seulement *un peu resserré sur le sujet* n'en parle pas, et les deux
+# s'empilent comme avant.
+#
+# **La liste est courte exprès.** Chaque mot ajouté est un cas où l'atelier se
+# tait ; en ajouter un de trop ferait disparaître une phrase que personne
+# n'aurait remplacée. On préfère l'empilement — visible, et corrigeable d'un
+# clic à l'écran de confirmation — au silence.
+_REDITES: dict[str, tuple[str, ...]] = {
+    "vue": (
+        "top-down",
+        "top down",
+        "overhead",
+        "side view",
+        "front view",
+        "front-facing",
+        "isometric",
+        "oblique",
+        "camera",
+        "3/4",
+        "three-quarter",
+        "orthographic",
+    ),
+    "rendu": ("pixel art on a", "px grid", "x grid", "grid,"),
+    "technique": ("tile snap", "isolated sprite", "sprite isolé", "flat background"),
+}
+
+
+def _redit(nom: str, ecrit: str) -> bool:
+    """Ce que l'auteur a tapé parle-t-il déjà du sujet de la phrase d'atelier ?"""
+    minuscules = ecrit.lower()
+    return any(mot in minuscules for mot in _REDITES.get(nom, ()))
 
 
 @dataclass(frozen=True, slots=True)
@@ -338,15 +388,132 @@ class Univers:
 
     @property
     def vide(self) -> bool:
-        """Rien de posé : ni bible qui parle, ni palette. Le produit prend le
-        relais, et c'est un état normal, pas une configuration manquante."""
-        return not (self.palette or any(c.porte for c in self.bible))
+        """Rien de posé : ni bible qui parle, ni palette, ni vue. Le produit
+        prend le relais, et c'est un état normal, pas une configuration
+        manquante.
+
+        **La vue est entrée dans le compte le 1ᵉʳ septembre 2026**, et elle y
+        entre parce qu'elle en sortait par accident. Choisir une vue écrivait sa
+        phrase dans la case `vue` de la bible, donc un champ portait, donc
+        l'univers n'était plus vide : le compte était juste, par un détour.
+        Depuis que la phrase se calcule au lieu d'être rangée, ce détour a
+        disparu — et sans cette ligne, un jeu dont on vient de choisir la vue se
+        redéclarerait vierge. La taille, elle, n'y entre pas : son défaut est
+        64, donc « posée » et « pas encore touchée » n'y sont pas
+        distinguables, et un univers ne se dira jamais réglé pour une valeur
+        que personne n'a choisie.
+        """
+        return not (
+            self.palette or self.vue or any(c.porte for c in self.bible)
+        )
 
     def champ(self, nom: str) -> Champ:
         for c in self.bible:
             if c.nom == nom:
                 return c
         return Champ(nom)
+
+    # ── Ce que l'atelier dit lui-même, et qui n'est rangé nulle part ─────────
+    #
+    # **Trois cases de la bible portent une phrase que l'auteur n'a pas tapée** :
+    # `rendu` dit la grille, `technique` dit le calage, `vue` dit le cadrage. Ces
+    # trois-là étaient *écrites dans la case* jusqu'au 1ᵉʳ septembre 2026, et
+    # elles se recalculent maintenant à chaque envoi.
+    #
+    # **Ce changement retire de l'état, il n'en ajoute pas.** Les trois phrases
+    # sont entièrement déterminées par `cible_px` et `vue`, qui sont déjà là :
+    # les ranger une seconde fois dans un texte, c'était tenir deux vérités sur
+    # la même chose. La panne que ça répare est nommée dans `phrase_de_grille` —
+    # une seule étiquette cliquée gelait la phrase pour toujours.
+
+    def phrase_du_produit(self, nom: str) -> str:
+        """Ce que l'atelier écrit de lui-même dans cette case. Vide ailleurs.
+
+        **Vide est une réponse, pas un trou** : sans taille de pixel, l'atelier
+        ne dit rien de la grille, et écrire `no pixel grid` serait une
+        affirmation que personne n'a faite (US-57).
+        """
+        if nom == "rendu":
+            return phrase_de_grille(self.cible_px)
+        if nom == "technique":
+            return phrase_de_calage(self.cible_px)
+        if nom == "vue":
+            connue = vue_connue(self.vue) if self.vue else None
+            return connue.phrase if connue else ""
+        return ""
+
+    @property
+    def phrases(self) -> dict[str, str]:
+        """Les trois phrases, pour l'écran qui les montre en épinglé.
+
+        Seules celles qui disent quelque chose : une case sans phrase n'a pas
+        de ligne d'atelier, et en rendre une vide ferait dessiner un cadre
+        autour de rien.
+        """
+        dites = ((nom, self.phrase_du_produit(nom)) for nom in CHAMPS_BIBLE)
+        return {nom: phrase for nom, phrase in dites if phrase}
+
+    def texte_de_la_case(self, nom: str) -> str:
+        """Ce qui part vraiment pour cette case — l'atelier d'abord, l'auteur ensuite.
+
+        **L'ordre n'est pas indifférent.** La phrase de l'atelier pose le médium
+        et le cadre ; ce que l'auteur ajoute les précise. Un modèle d'image lit
+        de gauche à droite et pondère de même : mettre `16-bit pixel art` avant
+        `2D pixel art on a 32x32 grid` ferait discuter les deux au lieu de les
+        empiler.
+
+        **Une case éteinte ne dit rien du tout**, phrase de l'atelier comprise.
+        L'auteur a décidé que cette case ne partait pas ; elle ne part pas.
+        C'est ce que le réglage faisait déjà quand la phrase était rangée
+        dedans, et il n'y a aucune raison que l'interrupteur change de sens.
+
+        **Et un univers vide ne dit rien non plus** (US-57). La taille par
+        défaut est 64 : sur un univers où personne n'a rien posé, « choisie » et
+        « pas encore touchée » ne se distinguent pas, et calculer la phrase
+        ferait parler un jeu que personne n'a décrit — un agent, un import, un
+        premier essai. **Ça ne coûte rien de réel** : la grille est un
+        rééchantillonnage, pas une consigne. L'image tombe sur 64 px que le
+        prompt le dise ou non ; la phrase est un renfort, jamais le mécanisme.
+        Dès qu'une case, une palette ou une vue est posée, l'univers dit
+        quelque chose, et l'atelier dit la sienne avec.
+
+        ── **L'atelier se tait quand l'auteur parle de la même chose** ──────────
+
+        Ajouté le 1ᵉʳ septembre 2026, sur trois contradictions relevées dans des
+        prompts réellement payés :
+
+            View and framing: strict top-down view seen from directly above,
+                              Camera: strict 90-degree top-down view, …
+            Technical constraints: single isolated sprite on a flat background,
+                              strict 128x128 px tile snap, Isolated sprite on
+                              neutral grey…, strict 64x64 px tile snap, …
+
+        La caméra dite deux fois ; le calage dit deux fois, une fois en anglais
+        et une fois en français ; et, sur le projet du nain, **deux tailles de
+        pixel différentes dans la même phrase**.
+
+        La règle d'empilement était juste pour ce qu'elle décrit — un auteur qui
+        *précise* le médium — et fausse dès qu'il le **redit**. On ne peut pas
+        deviner l'intention ; on peut lire les mots. Quand la case de l'auteur
+        parle déjà du même sujet que la phrase de l'atelier — une caméra pour la
+        vue, un calage ou une grille pour la technique et le rendu —, c'est
+        **l'auteur qui gagne, seul**. C'est le même arbitrage qu'entre une chose
+        du jeu et son ambiance, et il n'y avait aucune raison qu'il s'arrête à la
+        porte de l'atelier.
+
+        **Le perdant ne disparaît pas** : `resoudre` le montre barré à l'écran de
+        confirmation, avec ce qui l'a remplacé, comme pour toutes les autres
+        couches.
+        """
+        champ = self.champ(nom)
+        if not champ.actif:
+            return ""
+        atelier = "" if self.vide else self.phrase_du_produit(nom)
+        ecrit = champ.texte.strip()
+        if atelier and ecrit and _redit(nom, ecrit):
+            return ecrit
+        morceaux = [atelier, ecrit]
+        return ", ".join(m for m in morceaux if m)
 
     def famille_du_type(self, nom: str) -> str:
         """La famille d'une chose du jeu, **lue dans son type** (E15).
@@ -536,17 +703,44 @@ class Univers:
             "modeles": dict(self.modeles),
             "modele_planche": self.modele_planche,
             "modele_edition": self.modele_edition,
-            # déduit — présent pour l'interface, jamais relu
+            # déduits — présents pour l'interface, jamais relus
             "vide": self.vide,
+            # **Ce que l'atelier dit de lui-même, case par case.** L'écran des
+            # réglages le montre en épinglé au-dessus du texte de l'auteur : on
+            # doit pouvoir lire ce qui part sans le taper, et savoir lequel des
+            # deux on est en train de corriger. Calculé à chaque lecture, donc
+            # toujours d'accord avec la taille et la vue.
+            "phrases": self.phrases,
         }
 
     @staticmethod
     def depuis_json(d: dict[str, Any] | None) -> "Univers":
+        """Relire un univers — **et retirer des cases ce que le produit y avait écrit**.
+
+        La migration du 1ᵉʳ septembre 2026 vit ici, et nulle part ailleurs, pour
+        la raison qui a fait vivre celle de R2 dans `bible_complete` : c'est le
+        seul passage obligé entre un fichier et un univers. Rien à lancer, rien
+        à se rappeler de lancer, et un projet qui n'a jamais été rouvert se
+        migrera le jour où il le sera.
+
+        **Elle ne perd rien.** `sans_phrase_du_produit` ne retire que des
+        phrases d'une liste close, écrites par le produit lui-même ; ce que
+        l'auteur a tapé à côté ressort mot pour mot. Et elle est idempotente :
+        relire un fichier déjà migré ne trouve plus rien à retirer.
+
+        **Elle ne réécrit pas le fichier toute seule** — la migration n'a lieu
+        qu'en mémoire, et le disque ne change qu'au prochain enregistrement,
+        comme pour toutes les autres. Un projet lu et refermé sans qu'on y
+        touche garde ses octets.
+        """
         if not d:
             return Univers(bible=bible_complete(()))
         bareme = tuple(Echelle.depuis_json(e) for e in d.get("bareme", ()))
+        relus = (Champ.depuis_json(c) for c in d.get("bible", ()))
         return Univers(
-            bible=bible_complete(Champ.depuis_json(c) for c in d.get("bible", ())),
+            bible=bible_complete(
+                replace(c, texte=sans_phrase_du_produit(c.texte)) for c in relus
+            ),
             bareme=bareme or BAREME_PAR_DEFAUT,
             cible_px=int(d.get("cible_px", CIBLE_PAR_DEFAUT)),
             vue=str(d.get("vue") or AUCUNE_VUE),

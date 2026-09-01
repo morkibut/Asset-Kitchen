@@ -300,7 +300,7 @@ produit entier : une bande neuve prend une des cinq, ou bien la question remonte
 
 | px | Ce qui la porte |
 |---|---|
-| **44** | barre de tête — les trois onglets, identique sur tous les écrans |
+| **44** | barre de tête — les trois onglets, identique sur tous les écrans. **Et, depuis le 1<sup>er</sup> septembre 2026, le pied de l'assistant** : c'est la seule bande du produit qui porte un bouton de 34 px, et 38 lui laisserait 2 px de garde de chaque côté — le bouton toucherait les traits |
 | **38** | toute barre d'outils : grille d'assets, tableau d'inspiration, barre des trois côtés de l'Univers. Et la vignette d'une image de référence, partout où elle paraît |
 | **34** | bouton, champ. Dont **le bouton qui paie** et **le champ qui nomme**, et la pastille d'une couleur de palette. C'est aussi la **barre des tables** de l'établi |
 | **30** | en-tête de panneau |
@@ -311,6 +311,26 @@ produit entier : une bande neuve prend une des cinq, ou bien la question remonte
 et le **bouton compact** reste à **24 px**, parce qu'il vit *à l'intérieur* d'une rangée qui
 est elle-même dans la liste — un bouton de 26 dans une rangée de 26 n'a nulle part où se
 poser. Toute autre exception repasse par ce document.
+
+**Une bande de la liste ne grandit pas — et ce qui en sort est une mesure, jamais un geste.**
+Écrit le 1<sup>er</sup> septembre 2026. La première moitié était déjà tenue partout ; la
+seconde manquait, et son absence se paie exactement là où la bande est la plus pleine. Mesuré
+au navigateur sur la bande du comparateur des tables, aux polices du produit : elle réclame
+**869 px en côte à côte et 973 en superposé**, pour **840 px** de scène centrale à 1 600 px de
+fenêtre avec les deux colonnes de 380 ouvertes — et ce qui déborde n'a ni barre, ni repli, ni
+mot. Ce qui sortait était le **bouton de téléchargement**, c'est-à-dire le seul geste de la
+bande. La règle donne l'ordre du sacrifice sans qu'on ait à le décider au cas par cas : les
+dimensions de l'image partent en premier, parce que c'est la seule mesure de cette bande qui
+se relise ailleurs — dans la fiche et dans le panneau —, **puis les libellés des contrôles**,
+parce qu'un libellé n'est pas un geste non plus. Un geste qu'on ne voit pas n'existe pas ;
+une mesure qu'on ne voit pas ici se lit deux écrans plus loin.
+
+**Et rien ne se comprime pour rester dedans.** Une barre de défilement horizontale rendrait
+atteignable ce qui sort ; elle prend **16 px sur les 38 de la bande**, ce qui rogne de quatre
+les segments de 26 — construite le 1<sup>er</sup> septembre 2026, mesurée, retirée le jour
+même. Une bande qui écrase ses contrôles ment sur leur état, et c'est ce que ce document
+interdit partout ailleurs. Ce qui reste à l'auteur quand la fenêtre est trop étroite est de
+replier une colonne, qui rend 380 px d'un coup.
 
 **Deux changements, et les deux sont réels — corrigé le 31 août 2026 en tenant E1.** Ce
 paragraphe annonçait que le champ de prompt passait de 62 à 56 px sans que rien ne bouge :
@@ -417,6 +437,17 @@ contact au moment où l'on y cherchait quelque chose.
 
 C'est la seule pièce du châssis qui a le droit de se faire remarquer, et elle ne paraît que quand
 elle a quelque chose à dire.
+
+**Et une image ne se met pas dans ce qui est borné plus court qu'elle.** Corollaire ajouté le
+1er septembre 2026, payé sur l'aperçu de palette d'une carte. Le menu d'une carte suit cette
+règle-ci : il prend la place offerte autour de son ancre et défile en dedans. Mesuré au
+navigateur, sur une carte du bas de la grille, cette place vaut **206 px** — pendant que
+l'aperçu en réclamait 240. L'image était donc là, entière, et illisible : on la faisait défiler
+dans un hublot plus petit qu'elle. Un texte défile bien, parce qu'on le lit ligne à ligne ; une
+image se regarde d'un coup ou pas du tout. **Ce qui se lit par morceaux peut vivre dans un
+panneau borné ; ce qui ne se comprend qu'entier demande son propre écran.** L'aperçu est
+descendu dans l'écran de découpe, où il prend la moitié gauche ; le menu a gardé le chiffre et
+sa phrase, qui tiennent partout.
 
 ---
 

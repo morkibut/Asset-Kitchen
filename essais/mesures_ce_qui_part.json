@@ -1,6 +1,6 @@
 {
-  "projet": "coeur-de-pierre-01",
-  "nom": "coeur de pierre - 01",
+  "projet": "test-v2",
+  "nom": "Le Marais du Vieux Moulin",
   "prompt_exemple": {
     "generation": "0e231d92c4b04436b960e5297062b61f",
     "total": 1690,
@@ -10,15 +10,15 @@
       756
     ]
   },
-  "bible_caracteres": 782,
-  "bible_assemblee": 891,
+  "bible_caracteres": 536,
+  "bible_assemblee": 645,
   "envoi": {
-    "payees": 24,
-    "bible": 7,
-    "artwork": 8,
-    "les_deux": 1,
-    "ni_l_un_ni_l_autre": 10,
-    "sujet_nomme": 9
+    "payees": 52,
+    "bible": 10,
+    "artwork": 32,
+    "les_deux": 4,
+    "ni_l_un_ni_l_autre": 14,
+    "sujet_nomme": 11
   },
   "tailles_ecrites": [
     [
@@ -30,83 +30,23 @@
       64
     ]
   ],
-  "cible_px": 128,
+  "cible_px": 64,
   "collisions": {
-    "verifiees": 7,
+    "verifiees": 1,
     "sur": 7,
     "generations_de_reprise": 6
   },
-  "palette_posee": {
-    "couleurs": 48,
-    "plus_proche": 3.6,
-    "paires_sous_seuil": 78
-  },
-  "courbe_couleurs": [
-    {
-      "demandees": 8,
-      "rendues": 8,
-      "distinctes_12": 7,
-      "distinctes_24": 6
-    },
-    {
-      "demandees": 12,
-      "rendues": 12,
-      "distinctes_12": 11,
-      "distinctes_24": 8
-    },
-    {
-      "demandees": 16,
-      "rendues": 16,
-      "distinctes_12": 11,
-      "distinctes_24": 8
-    },
-    {
-      "demandees": 24,
-      "rendues": 24,
-      "distinctes_12": 17,
-      "distinctes_24": 12
-    },
-    {
-      "demandees": 32,
-      "rendues": 32,
-      "distinctes_12": 20,
-      "distinctes_24": 13
-    },
-    {
-      "demandees": 48,
-      "rendues": 48,
-      "distinctes_12": 25,
-      "distinctes_24": 14
-    },
-    {
-      "demandees": 64,
-      "rendues": 64,
-      "distinctes_12": 30,
-      "distinctes_24": 16
-    }
-  ],
-  "rendus": {
-    "sur_palette": 14,
-    "hors_palette": 13,
-    "part_pixels": 11,
-    "emplois_min": 27,
-    "emplois_max": 47
-  },
-  "carte_texte": {
-    "caracteres": 24440,
-    "mots": 4350,
-    "rapport_bible": 31.3
-  },
+  "courbe_couleurs": [],
   "tableau": {
-    "cartes": 19,
-    "images": 17,
-    "textes": 2,
-    "artworks": 2,
-    "ilots": 5,
-    "sans_famille": 17
+    "cartes": 6,
+    "images": 6,
+    "textes": 0,
+    "artworks": 0,
+    "ilots": 4,
+    "sans_famille": 6
   },
   "bareme": {
-    "valeurs": 63,
+    "valeurs": 111,
     "bougees": 1,
     "bougees_ici": 0,
     "familles_reglees": 0

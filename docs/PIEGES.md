@@ -890,3 +890,19 @@ la prochaine réécriture retrouvera.
   du modèle*, c'est-à-dire un compte sur une **capacité**, ce qui se lit bien tant que la
   capacité dépasse le compte et devient une contradiction dès qu'elle vaut zéro. Payé le
   1<sup>er</sup> septembre 2026, en rendant le brouillon de l'agent gratuit (F6).
+
+- **Un seuil qui porte le nom d'une grandeur et en compare une autre laisse passer les cas
+  dégénérés.** `zones_opaques` reçoit `cote_min`, et son commentaire l'explique très bien : le
+  nom est en **côté** parce que c'est ce que l'auteur voit — *ignore ce qui fait moins de seize
+  pixels* —, la comparaison est en **aire** parce qu'une lance de 4 × 200 a un petit côté
+  minuscule et reste un sujet. Les deux moitiés sont justes, et l'écart entre elles est un trou :
+  une rangée de 1 024 × 1 pèse 1 024, largement au-dessus des 256 du réglage par défaut, et
+  passe. Trouvé le 1<sup>er</sup> septembre 2026 en ouvrant la découpe sur l'artwork de
+  l'auteur — sa toute première rangée est sombre là où son fond est gris clair, un liseré de
+  cadre, donc le détourage la garde à juste titre, et l'écran proposait **cinq rectangles pour
+  quatre nains**. Rien ne pouvait le signaler : la détection ne lève jamais, le liseré est un
+  vrai résultat, et le seul symptôme est un rectangle de trop que l'œil ne voit pas sur une
+  image de mille pixels. La garde qui l'aurait trouvé : *quand un seuil compare autre chose que
+  ce que son nom dit, demander ce que l'autre grandeur laisse entrer.* Ici, tout ce qui est long
+  et plat. Un plancher d'épaisseur s'est ajouté à côté du rejet par l'aire — il n'écarte que ce
+  qui n'a pas d'épaisseur du tout, et la lance reste un sujet.

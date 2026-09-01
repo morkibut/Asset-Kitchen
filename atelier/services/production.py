@@ -50,7 +50,7 @@ from atelier.domaine.plan import (
 )
 from atelier.domaine.direction import Direction, composer
 from atelier.domaine.projet import Projet, repere
-from atelier.domaine.vue import vue as vue_connue
+from atelier.domaine.vue import CADRE, sans_phrase_du_produit, vue as vue_connue
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
@@ -727,8 +727,13 @@ class ServiceProduction:
             objet = self._exiger(projet)
         except ProjetInconnu:
             return Couches()
+        # **Ce que la case dit vraiment**, et non ce qu'elle range : depuis le
+        # 1ᵉʳ septembre 2026 la phrase de l'atelier — la grille, le calage, le
+        # cadrage — se calcule ici plutôt que d'être recopiée dans le texte.
+        # `texte_de_la_case` fait les deux moitiés et tient l'ordre, l'atelier
+        # d'abord et l'auteur ensuite ; une case éteinte ne dit toujours rien.
         bible = tuple(
-            (champ.nom, champ.texte.strip() if champ.actif else "")
+            (champ.nom, objet.univers.texte_de_la_case(champ.nom))
             for champ in objet.univers.bible
         )
         if not identifiant:
@@ -894,7 +899,15 @@ class ServiceProduction:
                     # lecture seule : on voit ce qui part, on voit qu'on n'y
                     # touche pas ici, et on sait où aller le changer.
                     "ouvert": champ.nom in OUVERTS_A_UNE_AMBIANCE,
-                    "annonce": sorted(_tailles_annoncees(texte)),
+                    # **Les tailles que le texte annonce, sans celle de
+                    # l'atelier.** Depuis le 1ᵉʳ septembre 2026, ce qui part
+                    # commence par la phrase de l'atelier, et cette phrase-là
+                    # dit la cible du projet — par construction, elle ne peut
+                    # pas être en désaccord avec elle. La compter ferait
+                    # apparaître la taille du jeu dans la liste de ce qu'on lui
+                    # reproche. Ne restent donc que les tailles **tapées à la
+                    # main**, qui sont les seules qui puissent se tromper.
+                    "annonce": sorted(_tailles_annoncees(sans_phrase_du_produit(texte))),
                 }
             )
 
@@ -1955,6 +1968,90 @@ class ServiceProduction:
             )
             angle = trouvee.consigne if trouvee else ""
         return composer(voulue.dit(), angle)
+
+    # ── La caméra du jeu, redite en queue de prompt ──────────────────────────
+
+    def cadre(self, projet: str | None) -> str:
+        """La phrase de cadre, quand le jeu dit déjà quelque chose de lui-même.
+
+        **Elle tombe sous la règle d'US-57 comme les trois autres phrases de
+        l'atelier** : *un univers vide ne contraint rien*. Un projet où personne
+        n'a rien posé — un import, un agent, un premier essai — reçoit son sujet
+        et rien d'autre, et c'est ce que `essais/verifier.py` vérifie depuis R2.
+        La première version de cette ligne partait toujours ; elle a cassé
+        l'invariant dans l'heure, et c'est l'essai qui l'a dit.
+
+        **Ce qu'elle achète est mesuré** : l'aire du sujet passe de 14,7 % à
+        20,1 % de l'image, soit 37 % de pixels en plus avant que le
+        rééchantillonnage les emporte (`essais/essai_deux_jeux.py`).
+        """
+        if not projet:
+            return ""
+        try:
+            objet = self._exiger(projet)
+        except ProjetInconnu:
+            return ""
+        return "" if objet.univers.vide else CADRE
+
+    def cadrage(self, projet: str | None, personnage: str | None = None) -> str:
+        """La caméra déclarée par le jeu, dite en dernier et à l'impératif.
+
+        **Mesuré, pas supposé.** `essais/essai_vue.py` a payé trente images le
+        1ᵉʳ septembre 2026 pour comparer six réparations du même prompt. Une
+        seule a marché, et c'est celle-ci : le rapport hauteur/largeur du sujet
+        passe de 1,55 — un corps debout de face — à 1,13 — un corps vu d'aplomb.
+        Retirer l'image de référence ne fait rien (1,46) ; ajouter un prompt
+        négatif ne fait rien (1,69).
+
+        **Trois morceaux, et le troisième seul dépend de la chose visée.** La
+        caméra est vraie pour tout ce que le jeu dessine, une tuile de sol
+        comprise. **Les faces qu'on voit aussi** — corrigé le 1ᵉʳ septembre 2026,
+        après qu'un coffre de caravane est revenu de trois quarts dans un jeu vu
+        de dessus strict : la caméra seule ne tenait pas, et la phrase qui la
+        faisait tenir ne partait que pour les personnages. Seul l'exemple humain
+        — *la tête, les épaules, les pieds* — reste réservé à la famille qui en a
+        un.
+
+        **Vide est une réponse.** Un jeu qui n'a pas déclaré de vue ne contraint
+        aucune caméra, et en inventer une ferait parler un jeu que personne n'a
+        décrit — c'est la règle d'US-57, appliquée une fois de plus.
+        """
+        if not projet:
+            return ""
+        try:
+            objet = self._exiger(projet)
+        except ProjetInconnu:
+            return ""
+        connue = vue_connue(objet.univers.vue) if objet.univers.vue else None
+        if connue is None or not connue.contrainte:
+            return ""
+        morceaux = [connue.contrainte, connue.volume]
+        if connue.corps and self._a_un_corps(objet, personnage):
+            morceaux.append(connue.corps)
+        return " ".join(m for m in morceaux if m)
+
+    def _a_un_corps(self, objet: Projet, personnage: str | None) -> bool:
+        """Cette chose-là a-t-elle une tête et des pieds ?
+
+        **La famille répond, pas le type.** Le barème range déjà les types en
+        cinq familles depuis T4, et « personnages » est celle qui porte les
+        créatures avec les héros. Un meuble, une tuile, un décor, un bouton n'ont
+        pas de silhouette humaine, et leur dire où est leur visage n'apprendrait
+        rien à personne.
+
+        **Sans chose visée, on ne dit rien du corps.** C'est le cas d'un import,
+        d'un agent, d'un sujet libre tapé dans le champ : le produit ne sait pas
+        si l'on dessine un garde ou une porte, et affirmer l'un des deux serait
+        se tromper une fois sur deux. Les *faces* qu'on voit, elles, partent
+        quand même — elles sont vraies de n'importe quel volume.
+        """
+        if not personnage:
+            return False
+        try:
+            vise = self.personnage(objet.identifiant, personnage)
+        except (PersonnageInconnu, ProjetInconnu):
+            return False
+        return objet.univers.famille_du_type(vise.type) == PERSONNAGES
 
     def concept_arts(self, projet: str, personnage: str | None) -> tuple[str, ...]:
         """Les cartes qu'un personnage désigne (US-124).

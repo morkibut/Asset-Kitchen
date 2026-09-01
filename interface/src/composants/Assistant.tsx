@@ -18,12 +18,36 @@
 // écrit la phrase qui part *et* le nombre d'images par pose. Ces endroits ne
 // peuvent plus diverger, parce qu'ils viennent du même geste.
 //
-// **Dix étapes, en quatre groupes, et deux humeurs.** La première fois elles
-// s'enchaînent dans l'ordre, avec un bouton *suivant* et une coche sur ce qui
-// est fait. Ensuite on clique directement l'étape à changer, et la colonne
-// affiche la **valeur** de chacune : elle devient le récapitulatif du jeu,
-// lisible sans rien ouvrir. Les aides, les vignettes et les exemples ne
-// disparaissent jamais.
+// ── Ce que la séance d'usage du 1ᵉʳ septembre 2026 a changé ──────────────────
+//
+// **Dix étapes, et quatre d'entre elles n'étaient pas des étapes.** Ce fichier
+// définissait `EtapeOuverte` avec sa règle en commentaire — *titrée, entière, et
+// jamais repliable* — et construisait quand même quatre étapes avec le bloc
+// repliable du châssis. Le repli global naissant fermé, ouvrir *Les types
+// d'objets* rendait **26 points de contenu dans une scène de 1 360 × 754**, dont
+// le seul mot était `Barème d'échelles`. Mesuré au navigateur ; six étapes sur
+// dix employaient moins de la moitié de la place qu'on leur donnait, et quatre
+// n'avaient aucun titre.
+//
+// Ce qui suit applique la règle aux dix, et en tire les conséquences :
+//
+// * **Une étape a un numéro et un titre**, en serif 24 px — le deuxième des
+//   trois emplois que `docs/DESIGN.md` accorde au serif, celui des titres
+//   d'écran. Une étape *est* un écran.
+// * **Une étape explique avant de demander**, en 14 px — la taille que
+//   l'échelle réserve à la prose longue —, et elle dit ce que le choix change
+//   ailleurs, pas ce que le contrôle fait.
+// * **Le pied porte le geste** : 44 px, `‹ Retour` à gauche, `Continuer →` en
+//   bouton principal à droite. Le geste qu'on répète dix fois était le plus
+//   petit contrôle du produit — 10 px de mono —, et il n'y avait **aucun
+//   retour**. Un écran où l'on avance ou l'on abandonne est un tunnel.
+// * **Une seule humeur.** L'enchaînement n'existait que sur un univers vierge et
+//   se perdait au premier *j'ai fini pour l'instant* : l'auteur qui rouvrait ses
+//   réglages n'avait plus rien pour avancer. Le pied est toujours là.
+// * **Ce qui se montre passe devant ce qui se décrit** : les huit vues en
+//   cartes, les neuf tailles à leur vraie échelle, les huit types côte à côte.
+//
+// Le tout est dessiné dans `docs/maquettes-v2.1/06quater-assistant-pas-a-pas.html`.
 
 import { useEffect, useState, type ReactNode } from "react"
 import {
@@ -49,7 +73,6 @@ import {
   type Univers,
 } from "../api"
 import {
-  Bloc,
   Curseur,
   EnTetePanneau,
   libelleModele,
@@ -135,9 +158,18 @@ export function Assistant({
   onDeposee: () => void
 }) {
   const [etape, setEtape] = useState<Etape>("nom")
-  const [enchaine, setEnchaine] = useState(univers.vide)
   const [vues, setVues] = useState<VuesEtTailles | null>(null)
   const [etiquettes, setEtiquettes] = useState<Etiquette[]>([])
+  /** **Ce qu'on a ouvert au moins une fois**, et c'est tout ce que le fil du
+   *  pied a besoin de savoir de plus que la valeur d'une étape. Une étape sans
+   *  valeur qu'on a lue n'est pas en retard ; une étape qu'on n'a jamais
+   *  ouverte non plus — mais elle n'a rien à dire, et le point creux le dit. */
+  const [vues_une_fois, setVuesUneFois] = useState<Set<Etape>>(new Set(["nom"]))
+
+  const aller = (cle: Etape) => {
+    setEtape(cle)
+    setVuesUneFois((deja) => (deja.has(cle) ? deja : new Set(deja).add(cle)))
+  }
 
   // Les deux listes fermées et la base d'étiquettes viennent du serveur : c'est
   // le même choix qui remplit le réglage *et* la phrase de la bible, et deux
@@ -175,10 +207,12 @@ export function Assistant({
         className="flex min-h-0 flex-col border-r border-bord bg-fond-1"
       >
         <EnTetePanneau>Ce jeu</EnTetePanneau>
-        {/* **La colonne change de métier avec l'humeur**, et c'est la seule
-            chose qui change entre les deux : en enchaînant elle dit *où on en
-            est*, ensuite elle dit *ce que le jeu vaut* — et devient le
-            récapitulatif, lisible sans rien ouvrir. */}
+        {/* **La colonne dit deux choses à la fois, et c'est la même colonne** :
+            ce que le jeu vaut — donc le récapitulatif, lisible sans rien
+            ouvrir — et où l'on en est. Elle ne change plus d'humeur : la
+            valeur d'une étape est ce qu'elle porte, et la coche verte dit
+            *ça porte quelque chose*, jamais *c'est fait*. Rien n'est exigé ici,
+            donc une étape sans coche n'est pas en retard. */}
         <div className="defile min-h-0 flex-1 overflow-y-auto p-2">
           {GROUPES.map((groupe) => (
             <div key={groupe} className="mb-2">
@@ -198,7 +232,7 @@ export function Assistant({
                     // par ce qu'elle vaut n'est plus une rangée qu'on désigne.
                     aria-label={nom}
                     aria-pressed={etape === cle}
-                    onClick={() => setEtape(cle)}
+                    onClick={() => aller(cle)}
                     className={[
                       "flex h-[26px] w-full items-center gap-2 rounded-[2px] px-2 text-left text-[11.5px] transition-colors duration-[80ms]",
                       etape === cle
@@ -210,20 +244,9 @@ export function Assistant({
                       {numero}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{nom}</span>
-                    {enchaine ? (
-                      // Une coche pour ce qui est fait, rien pour ce qui n'a
-                      // pas été ouvert. **Le manque n'a pas de couleur** : c'est
-                      // la règle du codex, et elle vaut ici aussi.
-                      vaut && (
-                        <span aria-label="fait" className="shrink-0 text-ok">
-                          ✓
-                        </span>
-                      )
-                    ) : (
-                      <span className="mesure shrink-0 truncate text-[10px] text-texte-3">
-                        {vaut}
-                      </span>
-                    )}
+                    <span className="mesure shrink-0 truncate text-[10px] text-texte-3">
+                      {vaut}
+                    </span>
                   </button>
                 )
               })}
@@ -254,91 +277,147 @@ export function Assistant({
               tailles={vues?.tailles ?? []}
               onRegler={regler}
               onRealigner={onRealigner}
-                    />
+            />
           )}
-          {etape === "types" && <Bareme univers={univers} onRegler={regler} />}
-          {/* **La bible ne change pas, seul l'endroit change** : ce qu'on
-              règle est le même, et les étiquettes se posent à côté d'elle plutôt
-              qu'à sa place. Un second contrôle du même texte aurait fait deux
-              endroits qui règlent la même chose. */}
+          {etape === "types" && <LesTypes univers={univers} onRegler={regler} />}
           {etape === "allure" && (
-            <>
-              <Bible bible={univers.bible} onRegler={(bible) => regler({ bible })} />
-              <LesEtiquettes
-                univers={univers}
-                etiquettes={etiquettes}
-                onEtiquettes={setEtiquettes}
-                onRegler={(bible) => regler({ bible })}
-                onErreur={onErreur}
-              />
-            </>
+            <LAllure
+              univers={univers}
+              etiquettes={etiquettes}
+              onEtiquettes={setEtiquettes}
+              onRegler={(bible) => regler({ bible })}
+              onErreur={onErreur}
+            />
           )}
           {etape === "references" && (
-            <>
-              <Palette univers={univers} artworks={artworks} onRegler={regler} />
-              <LeTexteACopier univers={univers} vue={laVue} />
-            </>
+            <LesReferences
+              univers={univers}
+              artworks={artworks}
+              vue={laVue}
+              onRegler={regler}
+            />
           )}
           {etape === "poses" && <LesPoses onErreur={onErreur} vue={laVue} />}
-          {etape === "emplacements" && <LesEmplacements univers={univers} onErreur={onErreur} />}
+          {etape === "emplacements" && (
+            <LesEmplacements univers={univers} onErreur={onErreur} />
+          )}
           {etape === "modeles" && (
-            <Defauts univers={univers} modeles={modeles} onRegler={regler} />
+            <LesIA univers={univers} modeles={modeles} onRegler={regler} />
           )}
           {etape === "cle" && <LaCle onErreur={onErreur} onDeposee={onDeposee} />}
         </div>
 
-        {/* **Le pied ne change qu'entre les deux humeurs.** En enchaînant :
-            l'étape sur dix, *passer*, *suivant*. Ensuite : rien — on est allé
-            droit au but, il n'y a nulle part où aller ensuite. Et
-            *j'ai fini pour l'instant* est visible en permanence, parce qu'on
-            sort à n'importe quelle étape. */}
-        <div className="mesure flex h-[38px] shrink-0 items-center gap-3 border-t border-bord bg-fond-1 px-4 text-[10px]">
-          {enchaine && (
-            <span className="text-texte-3">
-              étape {rang + 1} sur {ETAPES.length}
-            </span>
-          )}
-          {/* **Une porte n'en est une que si elle s'ouvre dans les deux
-              sens** (E19). Elle ne se contentait plus d'arrêter l'enchaînement :
-              on tombe dans le codex, avec le champ qui nomme allumé — pas dans
-              la galerie, qui ne montre que des images produites et n'en a
-              aucune. On peut partir dès l'étape 1 et fabriquer quand même. */}
-          <button
-            type="button"
-            onClick={() => {
-              setEnchaine(false)
-              onSortir?.()
-            }}
-            title="rien n'est exigé — une étape passée reste passée, et se rouvre d'un clic"
-            className="text-texte-2 hover:text-signal"
-          >
-            j'ai fini pour l'instant
-          </button>
-          {enchaine && (
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  setEtape(ETAPES[Math.min(rang + 1, ETAPES.length - 1)].cle)
-                }
-                className="ml-auto text-texte-3 hover:text-signal"
-              >
-                passer
-              </button>
-              <button
-                type="button"
-                disabled={rang >= ETAPES.length - 1}
-                onClick={() =>
-                  setEtape(ETAPES[Math.min(rang + 1, ETAPES.length - 1)].cle)
-                }
-                className="rounded-[2px] border border-bord-fort px-2 py-1 text-texte-2 hover:text-signal disabled:text-texte-3"
-              >
-                suivant →
-              </button>
-            </>
-          )}
-        </div>
+        <PiedDeLAssistant
+          rang={rang}
+          vues={vues_une_fois}
+          univers={univers}
+          laVue={laVue}
+          onAller={aller}
+          onSortir={onSortir}
+        />
       </div>
+    </div>
+  )
+}
+
+/**
+ * Le pied de l'assistant — **44 px, et le geste qu'on répète y est un bouton**.
+ *
+ * **La panne était mesurable à l'œil.** Le geste qu'on fait dix fois dans un
+ * assistant de dix étapes était `suivant →` en JetBrains Mono 10 px, dans une
+ * bande de 38, à côté d'un `passer` en `--texte-3` — c'est-à-dire le plus petit
+ * contrôle du produit pour son geste le plus répété. L'échelle de
+ * `docs/DESIGN.md` donne 13 px sur 34 de haut à un bouton, et le fond plein
+ * `--signal` à ce qui doit être pressé.
+ *
+ * **44 px, et la liste fermée des hauteurs gagne un locataire, pas une valeur** :
+ * c'est celle de la barre de tête. 38 laisserait 2 px de garde autour d'un
+ * bouton de 34, qui toucherait les traits.
+ *
+ * **Et il y a un retour.** Il n'y en avait aucun : on avançait ou l'on
+ * abandonnait, ce qui est la définition d'un tunnel — et le produit s'est
+ * expressément interdit les tunnels en ouvrant cet écran (A-9, A-10).
+ */
+function PiedDeLAssistant({
+  rang,
+  vues,
+  univers,
+  laVue,
+  onAller,
+  onSortir,
+}: {
+  rang: number
+  vues: Set<Etape>
+  univers: Univers
+  laVue: VueDuJeu | null
+  onAller: (cle: Etape) => void
+  onSortir?: () => void
+}) {
+  const bouton =
+    "mesure flex h-[34px] shrink-0 items-center rounded-[2px] px-3 text-[13px] transition-colors duration-[80ms]"
+  return (
+    <div className="flex h-[44px] shrink-0 items-center gap-4 border-t border-bord bg-fond-1 px-4">
+      <button
+        type="button"
+        disabled={rang <= 0}
+        onClick={() => onAller(ETAPES[Math.max(rang - 1, 0)].cle)}
+        className={`${bouton} border border-bord-fort bg-fond-2 text-texte hover:bg-fond-3 disabled:border-bord disabled:bg-transparent disabled:text-texte-3`}
+      >
+        ‹ Retour
+      </button>
+
+      {/* **Dix points, et ils disent trois choses d'un coup** : vert ce qui
+          porte une valeur, allongé en `--signal` où l'on est, creux ce qui n'a
+          pas été ouvert. C'est le vocabulaire de la coche de la colonne, en une
+          seule ligne — et il n'y a ni glyphe ni couleur neufs.
+
+          **Muet pour qui ne voit pas l'écran** : le compteur juste à côté dit
+          la même chose en toutes lettres, et deux fois la même information au
+          clavier est du bruit. */}
+      <span aria-hidden className="flex shrink-0 items-center gap-[5px]">
+        {ETAPES.map(({ cle }, i) => {
+          const porte = Boolean(valeurDeLEtape(cle, univers, laVue))
+          return (
+            <i
+              key={cle}
+              className={[
+                "block h-[6px] rounded-full transition-colors duration-[80ms]",
+                i === rang
+                  ? "w-4 bg-signal"
+                  : porte
+                    ? "w-[6px] bg-ok"
+                    : vues.has(cle)
+                      ? "w-[6px] bg-bord-fort"
+                      : "w-[6px] bg-bord",
+              ].join(" ")}
+            />
+          )
+        })}
+      </span>
+      <span className="mesure shrink-0 text-[10px] text-texte-3">
+        étape {rang + 1} sur {ETAPES.length}
+      </span>
+
+      {/* **Une porte n'en est une que si elle s'ouvre dans les deux sens**
+          (E19). On tombe dans le codex, avec le champ qui nomme allumé — pas
+          dans la galerie, qui ne montre que des images produites et n'en a
+          aucune. On peut partir dès l'étape 1 et fabriquer quand même. */}
+      <button
+        type="button"
+        onClick={() => onSortir?.()}
+        title="rien n'est exigé — une étape passée reste passée, et se rouvre d'un clic"
+        className={`${bouton} ml-auto text-texte-2 hover:text-signal`}
+      >
+        j'ai fini pour l'instant
+      </button>
+      <button
+        type="button"
+        disabled={rang >= ETAPES.length - 1}
+        onClick={() => onAller(ETAPES[Math.min(rang + 1, ETAPES.length - 1)].cle)}
+        className={`${bouton} bg-signal font-medium text-fond-0 hover:bg-signal-clair disabled:bg-fond-2 disabled:text-texte-3`}
+      >
+        Continuer →
+      </button>
     </div>
   )
 }
@@ -360,12 +439,17 @@ function valeurDeLEtape(
     case "types":
       return `${univers.bareme.length} types`
     case "allure":
-      return cases ? `${cases} cases` : ""
+      return cases ? `${cases} sur ${univers.bible.length}` : ""
     case "references":
       return univers.palette.length ? `${univers.palette.length} coul.` : ""
     case "modeles": {
-      const vides = FAMILLES.filter((f) => !univers.modeles[f]).length
-      return vides ? `${vides} vides` : "toutes réglées"
+      // **Les quatre familles de sujet, et « tous » n'en est pas une** : c'est
+      // la clé du catalogue qui dit *n'importe quel sujet*, et l'étape ne lui
+      // offre pas de rangée. La compter ferait dire quatre à une colonne qui
+      // en montre trois.
+      const familles = FAMILLES.filter((f) => f !== "tous")
+      const reglees = familles.filter((f) => univers.modeles[f]).length
+      return reglees ? `${reglees} sur ${familles.length}` : ""
     }
     default:
       return ""
@@ -428,458 +512,87 @@ function CeQueLUniversEnvoie({
   )
 }
 
-
-// ── Les cinq réglages du jeu ────────────────────────────────────────────────
-//
-// **La colonne de 380 px est morte avec E7.** Elle empilait ces cinq blocs sur
-// 1 843 px de hauteur dans 646 px visibles, à côté d'un tableau qui n'avait plus
-// que la moitié de l'écran. Ils vivent maintenant un par un dans le côté
-// Réglages, où chacun a la place entière, et la liste de gauche dit lequel est
-// ouvert.
-
-
-
-/** La palette — **déduite par calcul, jamais saisie** (US-54).
- *
- *  Montrée pour qu'on vérifie ce que la machine y a lu, et recalculée dès qu'on
- *  retire un artwork (US-55). Le seul réglage qu'on ait sur elle est le nombre
- *  de couleurs qu'on lui demande. */
-function Palette({
-  univers,
-  artworks,
-  onRegler,
-}: {
-  univers: Univers
-  artworks: Carte[]
-  onRegler: Regler
-}) {
-  return (
-    <Bloc
-      cle="univers.palette"
-      aide="univers.palette"
-      titre="Palette"
-      etat={univers.palette.length ? `${univers.palette.length} couleurs` : null}
-      mesure={
-        univers.palette.length
-          ? `${univers.palette.length} couleurs · ${artworks.length} artwork${artworks.length > 1 ? "s" : ""}`
-          : "déduite des artworks"
-      }
-    >
-
-      {univers.palette.length > 0 ? (
-        <>
-          <div className="flex flex-wrap gap-[2px]">
-            {univers.palette.map((couleur) => (
-              <span
-                key={couleur}
-                title={couleur}
-                style={{ background: couleur }}
-                className="h-5 w-5 rounded-[2px] border border-bord"
-              />
-            ))}
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <Libelle aide="univers.couleurs">Couleurs demandées</Libelle>
-            <Segments
-              valeurs={COULEURS}
-              valeur={
-                (COULEURS.includes(univers.couleurs as (typeof COULEURS)[number])
-                  ? univers.couleurs
-                  : 24) as (typeof COULEURS)[number]
-              }
-              onChange={(couleurs) => void onRegler({ couleurs })}
-            />
-          </div>
-        </>
-      ) : (
-        <div className="rounded-[2px] border border-bord bg-fond-2 px-2 py-2">
-          <Raison texte="aucun artwork officiel — promeus une carte du tableau" />
-        </div>
-      )}
-    </Bloc>
-  )
-}
-
-
-/** Le barème d'échelles — quelle part de la toile un sujet occupe selon sa nature.
- *
- *  « Sans lui, tout ce qui sort du produit fait la même hauteur » : la séance du
- *  27 août l'a montré sur cinq sujets réels, un coffre aussi haut qu'un
- *  personnage. Une échelle porte aussi sa **famille**, et c'est ce qui garde un
- *  seul contrôle au générateur : dire « c'est un objet tenu en main », c'est du
- *  même coup dire quels artworks partent. */
-function Bareme({
-  univers,
-  onRegler,
-}: {
-  univers: Univers
-  onRegler: Regler
-}) {
-  const poser = (bareme: Echelle[]) => void onRegler({ bareme })
-  // Quelle rangée est dépliée. **De l'écran, jamais de l'univers** : ouvrir une
-  // rangée ne change pas le jeu.
-  const [ouvert, setOuvert] = useState("")
-
-  return (
-    <Bloc
-      cle="univers.bareme"
-      aide="univers.bareme"
-      titre="Barème d'échelles"
-      etat={
-        univers.bareme.length
-          ? `${univers.bareme.length} échelle${univers.bareme.length > 1 ? "s" : ""}`
-          : null
-      }
-      mesure="part de la case, et famille"
-    >
-      {/* **L'occupation n'agit que par la grille**, qui est ce qui met un sujet
-          à l'échelle de sa case : sans taille de pixel, elle ne s'applique
-          pas. La famille et la silhouette, elles, continuent — l'une décide des
-          artworks qui partent, l'autre du détourage. Le barème reste donc
-          lisible et réglable : ce qui manque est une étape, pas un droit. */}
-      {univers.cible_px === AUCUNE_CIBLE && (
-        <Raison texte="sans taille de pixel, l'occupation ne s'applique pas — la famille et la silhouette, si" />
-      )}
-      {/* **Une rangée de 26 px par type, et ses trois réglages dessous.**
-          Mesuré : les trois contrôles dépliés en permanence faisaient 92 px par
-          ligne, soit 644 px pour sept types — plus haut que la description, qui
-          part pourtant avec chaque génération. Régler deux types de suite
-          demande deux clics de plus ; c'est un geste rare — une valeur sur 63 a
-          bougé en trois projets — et la lecture, elle, est permanente. */}
-      <ul className="flex flex-col rounded-[2px] border border-bord">
-        {univers.bareme.map((echelle, rang) => (
-          <li key={echelle.nom} className="border-b border-bord last:border-b-0">
-            <button
-              type="button"
-              aria-pressed={ouvert === echelle.nom}
-              aria-label={echelle.nom}
-              onClick={() => setOuvert(ouvert === echelle.nom ? "" : echelle.nom)}
-              className={[
-                "mesure flex h-[26px] w-full items-center gap-2 px-2 text-left text-[10px] transition-colors duration-[80ms]",
-                ouvert === echelle.nom ? "bg-fond-3" : "hover:bg-fond-2",
-              ].join(" ")}
-            >
-              <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
-                {echelle.nom}
-              </span>
-              <span className="shrink-0 text-texte-3">
-                {NOM_FAMILLE[echelle.famille]} · {echelle.occupation} %
-                {echelle.silhouette ? " · silhouette" : ""}
-              </span>
-            </button>
-            {ouvert === echelle.nom && (
-              <div className="flex flex-col gap-1 px-2 pb-2">
-                <select
-                  value={echelle.famille}
-                  aria-label={`Famille de ${echelle.nom}`}
-                  onChange={(e) =>
-                    poser(
-                      univers.bareme.map((x, i) =>
-                        i === rang ? { ...x, famille: e.target.value as Famille } : x,
-                      ),
-                    )
-                  }
-                  className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
-                >
-                  {FAMILLES.map((f) => (
-                    <option key={f} value={f}>
-                      {NOM_FAMILLE[f]}
-                    </option>
-                  ))}
-                </select>
-                <Curseur
-                  libelle="l'occupation"
-                  valeur={echelle.occupation}
-                  min={10}
-                  max={100}
-                  unite=" %"
-                  onChange={(occupation) =>
-                    poser(
-                      univers.bareme.map((x, i) =>
-                        i === rang ? { ...x, occupation } : x,
-                      ),
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    poser(
-                      univers.bareme.map((x, i) =>
-                        i === rang ? { ...x, silhouette: !x.silhouette } : x,
-                      ),
-                    )
-                  }
-                  className={[
-                    "mesure self-start text-[9.5px] transition-colors duration-[80ms]",
-                    echelle.silhouette ? "text-texte-3 hover:text-signal" : "text-epingle",
-                  ].join(" ")}
-                >
-                  {echelle.silhouette
-                    ? "se détoure et vit dans une case"
-                    : "plein cadre, aucun détourage"}
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-      {/* **Montré grisé plutôt que caché** : on apprend qu'il existe, et on sait
-          pourquoi il n'est pas là. C'est déjà la règle du produit pour tout ce
-          qui est indisponible. */}
-      <button
-        type="button"
-        disabled
-        className="mesure h-[26px] self-start px-2 text-[10px] text-texte-3"
-      >
-        + type sur mesure — plus tard, les huit types couvrent ce qu'on sait faire
-      </button>
-    </Bloc>
-  )
-}
-
-/** Le modèle par défaut, **par famille** — pas un réglage global (US-58). */
-function Defauts({
-  univers,
-  modeles,
-  onRegler,
-}: {
-  univers: Univers
-  modeles: Modele[]
-  onRegler: Regler
-}) {
-  const poses = FAMILLES.filter((f) => f !== "tous" && univers.modeles[f]).length
-
-  return (
-    <Bloc
-      cle="univers.defauts"
-      aide="univers.modeles"
-      titre="Modèle par défaut"
-      etat={
-        poses ? `${poses} famille${poses > 1 ? "s" : ""} réglée${poses > 1 ? "s" : ""}` : null
-      }
-      mesure="sinon, le défaut du catalogue"
-    >
-      <ul className="flex flex-col rounded-[2px] border border-bord">
-        {FAMILLES.filter((f) => f !== "tous").map((famille) => (
-          <li
-            key={famille}
-            className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0"
-          >
-            <span className="w-[80px] shrink-0 text-[11px] text-texte-2">
-              {NOM_FAMILLE[famille]}
-            </span>
-            <select
-              value={univers.modeles[famille] ?? ""}
-              onChange={(e) =>
-                void onRegler({
-                  modeles: { ...univers.modeles, [famille]: e.target.value },
-                })
-              }
-              className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
-            >
-              <option value="">—</option>
-              {modeles.map((m) => (
-                <option key={m.identifiant} value={m.identifiant}>
-                  {libelleModele(m)}
-                </option>
-              ))}
-            </select>
-            {/* **Une liste vide dit ce qui décidera à sa place.** Ce n'est pas
-                un réglage inutile : c'est un réglage que rien n'oblige à
-                toucher, et dont la valeur vide veut dire quelque chose. On
-                apprend la règle en lisant le réglage, sans avoir à la chercher
-                ailleurs. */}
-            {!univers.modeles[famille] && (
-              <span className="mesure shrink-0 text-[9.5px] text-texte-3">
-                aucun choisi —{" "}
-                {univers.modele_planche
-                  ? "l'atelier emploiera le modèle de planche"
-                  : "l'atelier emploiera le défaut du catalogue"}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {/* **Deux défauts d'appel, et pas une famille de plus** (C2). La liste
-          au-dessus est indexée par *ce qu'on fabrique* ; ces deux-ci répondent
-          à *quelle sorte d'appel on fait*, et les mêler aurait demandé deux clés
-          réservées dans un espace de noms qui est celui de l'auteur.
-
-          Deux, et pas un : à l'essai du 28 août, un modèle rend les traits du
-          gabarit dans l'image là où un autre les ignore comme demandé. */}
-      <ul className="mt-2 flex flex-col rounded-[2px] border border-bord">
-        {(
-          [
-            ["modele_planche", "planche", "quand un lot d'attitudes part"],
-            ["modele_edition", "édition", "quand un corps se retouche"],
-          ] as const
-        ).map(([champ, nom, quand]) => (
-          <li
-            key={champ}
-            className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0"
-          >
-            <span className="w-[80px] shrink-0 text-[11px] text-texte-2" title={quand}>
-              {nom}
-            </span>
-            <select
-              value={univers[champ] ?? ""}
-              onChange={(e) => void onRegler({ [champ]: e.target.value })}
-              aria-label={`Modèle par défaut pour une ${nom}`}
-              className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
-            >
-              <option value="">—</option>
-              {modeles.map((m) => (
-                <option key={m.identifiant} value={m.identifiant}>
-                  {libelleModele(m)}
-                </option>
-              ))}
-            </select>
-          </li>
-        ))}
-      </ul>
-    </Bloc>
-  )
-}
-
-/** La bible — sept champs nommés, chacun activable indépendamment (US-56).
- *
- *  Le texte libre est ce qu'on retape ; les champs nommés sont ce qu'on dose.
- *  L'interrupteur est à côté du champ et pas dans un menu : « doser ce qui
- *  contraint » est un geste qu'on fait en regardant ce qu'on relâche. */
-function Bible({
-  bible,
-  onRegler,
-}: {
-  bible: { nom: string; texte: string; actif: boolean }[]
-  onRegler: (bible: { nom: string; texte: string; actif: boolean }[]) => Promise<boolean>
-}) {
-  const [brouillon, setBrouillon] = useState(bible)
-
-  useEffect(() => setBrouillon(bible), [bible])
-
-  /** **Le seul bloc de l'univers qui tienne un brouillon**, parce qu'il porte
-   *  du texte qu'on tape. Les quatre autres lisent l'univers tel qu'il est, et
-   *  une valeur refusée ne s'y affiche donc jamais. Ici il faut le dire :
-   *  refusé, le brouillon revient à ce que le projet porte. */
-  const poser = async (suivante: typeof bible) => {
-    setBrouillon(suivante)
-    if (!(await onRegler(suivante))) setBrouillon(bible)
-  }
-
-  const actifs = brouillon.filter((c) => c.actif && c.texte.trim()).length
-
-  return (
-    <Bloc
-      cle="univers.bible"
-      aide="univers.bible"
-      titre="Bible"
-      etat={actifs ? `${actifs} champ${actifs > 1 ? "s" : ""}` : null}
-      mesure={`${actifs} champ${actifs > 1 ? "s" : ""} part${actifs > 1 ? "ent" : ""} avec chaque génération`}
-    >
-      {brouillon.map((champ, rang) => (
-        <div key={champ.nom} className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-pressed={champ.actif}
-              aria-label={`${NOM_CHAMP[champ.nom] ?? champ.nom} — ${champ.actif ? "actif" : "inactif"}`}
-              onClick={() =>
-                void poser(
-                  brouillon.map((c, i) => (i === rang ? { ...c, actif: !c.actif } : c)),
-                )
-              }
-              className={[
-                "mesure h-[26px] w-[26px] shrink-0 rounded-[2px] border text-[10px] transition-colors duration-[80ms]",
-                champ.actif
-                  ? "border-signal bg-signal/13 text-signal"
-                  : "border-bord bg-fond-2 text-texte-3 hover:bg-fond-3",
-              ].join(" ")}
-            >
-              {champ.actif ? "●" : "○"}
-            </button>
-            {/* Sept champs voisins, tous du texte libre, et rien à l'écran ne
-                disait lequel porte quoi : la forme exacte du défaut `groupe`
-                contre `famille`, à sept exemplaires. Chacun porte donc son
-                pointillé, et son entrée dit sous quel intitulé anglais il
-                part. */}
-            <Libelle aide={`bible.${champ.nom}`} eteint={!(champ.actif && champ.texte.trim())}>
-              {NOM_CHAMP[champ.nom] ?? champ.nom}
-            </Libelle>
-          </div>
-          <textarea
-            value={champ.texte}
-            rows={2}
-            placeholder={PLACEHOLDERS[champ.nom] ?? ""}
-            onChange={(e) =>
-              setBrouillon(
-                brouillon.map((c, i) => (i === rang ? { ...c, texte: e.target.value } : c)),
-              )
-            }
-            onBlur={() => void poser(brouillon)}
-            className={[
-              "resize-none rounded-[2px] border border-bord bg-fond-2 px-2 py-1 text-[11.5px] leading-snug placeholder:text-texte-3",
-              champ.actif ? "text-texte" : "text-texte-3",
-            ].join(" ")}
-          />
-        </div>
-      ))}
-    </Bloc>
-  )
-}
-
-const PLACEHOLDERS: Record<string, string> = {
-  monde: "royaume de tourbe et de fer, marais au nord",
-  epoque: "haut moyen âge, avant la poudre",
-  rendu: "pixel art 16 bits, palette limitée",
-  trait: "contour brun d'un pixel, aplats, pas de dégradé",
-  eclairage: "lumière rasante, ombres portées courtes",
-  vue: "trois quarts, corps entier, sujet centré",
-  technique: "sprite sur fond uni, une seule pose",
-}
-
-/** Une étape ouverte — titrée, entière, et **jamais repliable**.
+/** Une étape ouverte — **titrée, entière, et jamais repliable**.
  *
  *  Le bloc repliable sert à ranger plusieurs réglages dans une colonne étroite.
  *  Ici l'étape *est* l'unité : la colonne de gauche dit laquelle est ouverte, et
  *  l'écran entier lui est donné. Un repli à l'intérieur serait un repli de trop
- *  — il faudrait déplier pour voir ce qu'on vient d'ouvrir. */
+ *  — il faudrait déplier pour voir ce qu'on vient d'ouvrir.
+ *
+ *  **La règle était écrite ici et enfreinte quatre fois** : quatre étapes sur
+ *  dix étaient construites avec le `Bloc` du châssis, dont le registre naît
+ *  fermé. Elles ne le sont plus, et ce composant est désormais le seul chemin
+ *  vers une étape — c'est ce qui empêche la cinquième.
+ *
+ *  **Le titre est en serif 24 px**, le deuxième des trois emplois que
+ *  `docs/DESIGN.md` accorde au serif : celui des titres d'écran. Aucune règle
+ *  neuve — une étape *est* un écran, et la version d'avant le disait déjà en
+ *  lui donnant la scène entière. Il est nu, comme celui de la fenêtre des
+ *  réglages : **la poignée d'infobulle ne monte pas dessus**, parce qu'un
+ *  libellé du produit fait 11 px et que le pointillé est dessiné pour cette
+ *  taille-là. Elle se pose sur la ligne de repère juste au-dessus, qui dit le
+ *  rang de l'étape et son groupe — donc où l'on est dans les dix.
+ *
+ *  **La conduite est en 14 px**, la taille que l'échelle réserve à la prose
+ *  longue. Elle dit ce que ce choix change **ailleurs**, jamais ce que le
+ *  contrôle fait : ça, on le voit. */
 function EtapeOuverte({
   titre,
   aide,
+  conduite,
   children,
 }: {
+  /** Le nom de l'étape, tel que la colonne le range. **Le rang et le groupe
+   *  s'en déduisent** : deux endroits qui numéroteraient les mêmes dix étapes
+   *  finiraient par se contredire, et c'est exactement la panne que
+   *  l'assistant répare ailleurs. Un titre absent de la liste — le texte à
+   *  copier, qui vit sous les références — n'a pas de ligne de repère, et c'est
+   *  ce qui le dit demi-étape. */
   titre: string
   aide?: string
+  conduite?: ReactNode
   children: ReactNode
 }) {
+  const rang = ETAPES.findIndex((e) => e.nom === titre)
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-[12.5px] text-texte">
-        <Libelle aide={aide}>{titre}</Libelle>
-      </h2>
+    <section data-etape={titre} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        {rang >= 0 && (
+          <Libelle aide={aide}>
+            étape {rang + 1} · {ETAPES[rang].groupe}
+          </Libelle>
+        )}
+        <h2 className="font-serif text-[24px] leading-tight text-texte">{titre}</h2>
+        {conduite && (
+          <p className="max-w-[66ch] text-[14px] leading-normal text-texte-2">
+            {conduite}
+          </p>
+        )}
+      </div>
       {children}
     </section>
   )
 }
 
-// ── Les étapes neuves de E8 ─────────────────────────────────────────────────
+// ── Les vignettes d'exemple ─────────────────────────────────────────────────
 
 /**
- * Une vignette d'exemple, ou son identifiant quand l'image n'est pas là.
+ * Le dessin d'une vue, **en grand** — et c'est tout ce qui change.
  *
- * **Les dix-sept vignettes sont une production d'images, pas du code** : huit
- * vues, neuf tailles, à faire une fois. Tant qu'une manque, la case le dit
- * plutôt que de faire semblant — c'est la règle du grisé qui porte sa raison,
- * appliquée à une image absente. Les consignes de production vivent dans
- * `docs/vignettes-vues.md`.
+ * **Mesuré, dessin par dessin, le 1ᵉʳ septembre 2026** : les huit vignettes de
+ * vue font entre 438 et 1 763 points de haut, et l'écran les montrait dans une
+ * case de 64 × 64. Entre **0,20 % et 1,89 % de leurs pixels** survivaient — 1 %
+ * en moyenne. Pendant ce temps la liste verticale débordait en hauteur (778 px
+ * de contenu pour 754 offerts) et n'employait que 240 des 1 360 px de largeur.
+ *
+ * On ne choisit pas *isométrique* dans l'abstrait : on choisit la vue qu'on
+ * reconnaît. Une bande de 190 px la rend reconnaissable ; 64 px non.
  */
 function Vignette({ nom, alt }: { nom: string; alt: string }) {
   const [absente, setAbsente] = useState(false)
   if (absente) {
     return (
-      <span className="mesure flex h-[64px] w-[64px] shrink-0 items-center justify-center border border-bord bg-fond-2 p-1 text-center text-[9.5px] text-texte-3">
+      <span className="mesure flex h-full w-full items-center justify-center p-2 text-center text-[9.5px] text-texte-3">
         pas encore dessinée
       </span>
     )
@@ -889,11 +602,48 @@ function Vignette({ nom, alt }: { nom: string; alt: string }) {
       src={`/vignettes/${nom}.png`}
       alt={alt}
       onError={() => setAbsente(true)}
-      className="damier h-[64px] w-[64px] shrink-0 border border-bord object-contain"
+      className="max-h-full max-w-full object-contain"
       style={{ imageRendering: "pixelated" }}
     />
   )
 }
+
+/**
+ * Un sprite de taille, **à sa taille**, posé sur le sol commun.
+ *
+ * **L'écran contredisait sa propre phrase.** Il écrit — et il a raison — *« un
+ * nombre ne dit rien, deux personnages côte à côte disent tout »*, puis il
+ * posait les neuf sprites dans neuf cases de 64 px : le 8 agrandi huit fois, le
+ * 256 réduit au quart. **L'écart de ×32 qui existe dans le jeu devenait ×1 à
+ * l'écran**, et la seule chose que le choix demande de voir était exactement
+ * celle qui était effacée.
+ *
+ * Un pixel d'image pour un pixel d'écran, donc, et rien d'autre à décider.
+ */
+function SpriteDeTaille({ cible }: { cible: number }) {
+  const [absent, setAbsent] = useState(false)
+  if (absent) {
+    return (
+      <span
+        style={{ width: cible, height: cible }}
+        className="mesure flex items-center justify-center border border-dashed border-bord text-center text-[9px] text-texte-3"
+      />
+    )
+  }
+  return (
+    <img
+      src={`/vignettes/taille-${cible}.png`}
+      alt=""
+      width={cible}
+      height={cible}
+      onError={() => setAbsent(true)}
+      className="block"
+      style={{ imageRendering: "pixelated" }}
+    />
+  )
+}
+
+// ── Les dix étapes ──────────────────────────────────────────────────────────
 
 /** Étape 1 — le nom du jeu.
  *
@@ -917,17 +667,23 @@ function LeNom({ onErreur }: { onErreur: (raison: string) => void }) {
   }, [])
 
   return (
-    <EtapeOuverte aide="assistant.nom" titre="1 · Le nom">
-      <p className="text-[12.5px] text-texte-2">
-        Comment le jeu s'appelle. C'est le seul réglage qui ne part jamais au
-        modèle : il sert à s'y retrouver.
-      </p>
+    <EtapeOuverte
+      aide="assistant.nom"
+      titre="Le nom"
+      conduite={
+        <>
+          Comment le jeu s'appelle. C'est le seul réglage qui{" "}
+          <strong className="text-texte">ne part jamais au modèle</strong> : il
+          sert à s'y retrouver, et rien d'autre.
+        </>
+      }
+    >
       <div className="flex items-center gap-2">
         <input
           value={brouillon}
           aria-label="Le nom du jeu"
           onChange={(e) => setBrouillon(e.target.value)}
-          className="h-[34px] min-w-0 flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[13px] text-texte"
+          className="h-[34px] min-w-0 max-w-[420px] flex-1 rounded-[2px] border border-bord-fort bg-fond-2 px-2 text-[13px] text-texte"
         />
         <button
           type="button"
@@ -957,8 +713,10 @@ function LeNom({ onErreur }: { onErreur: (raison: string) => void }) {
 
 /** Étape 2 — la vue du jeu.
  *
- *  **Chaque vue est une vignette, pas une ligne de texte** : on ne choisit pas
- *  *isométrique* dans l'abstrait, on choisit celle qu'on reconnaît. */
+ *  **Chaque vue est une carte, pas une ligne de texte** : on ne choisit pas
+ *  *isométrique* dans l'abstrait, on choisit celle qu'on reconnaît. Le dessin
+ *  passe devant, et il a la place — quatre par rangée, bande de 190 px. La
+ *  mesure qui a fait passer la vignette de 64 à 190 est dans `Vignette`. */
 function LaVue({
   univers,
   vues,
@@ -969,43 +727,65 @@ function LaVue({
   onRegler: Regler
 }) {
   return (
-    <EtapeOuverte aide="assistant.vue" titre="2 · La vue">
-      <p className="text-[12.5px] text-texte-2">
-        Ce choix ne décide pas de l'apparence du jeu. Il décide de{" "}
-        <strong className="text-texte">combien d'images il faut par pose</strong>{" "}
-        — c'est le chiffre qui multiplie toute la production, donc tout ce qu'on
-        paiera.
-      </p>
-      <ul className="flex flex-col gap-1">
-        {(vues ?? []).map((vue) => (
-          <li key={vue.identifiant}>
-            <button
-              type="button"
-              aria-pressed={univers.vue === vue.identifiant}
-              onClick={() => void onRegler({ vue: vue.identifiant })}
-              className={[
-                "flex w-full items-center gap-3 rounded-[2px] border p-2 text-left transition-colors duration-[80ms]",
-                univers.vue === vue.identifiant
-                  ? "border-signal bg-signal/13"
-                  : "border-bord hover:bg-fond-2",
-              ].join(" ")}
-            >
-              <Vignette nom={vue.identifiant} alt={vue.libelle} />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[12.5px] text-texte">{vue.libelle}</span>
-                <span className="mesure block text-[10px] text-texte-3">
-                  {vue.exemples}
+    <EtapeOuverte
+      aide="assistant.vue"
+      titre="La vue"
+      conduite={
+        <>
+          D'où l'on regarde le monde. Ce choix ne décide pas de l'apparence du
+          jeu : il décide de{" "}
+          <strong className="text-texte">combien d'images il faut par pose</strong>{" "}
+          — le chiffre qui multiplie toute la production, donc tout ce qu'on
+          paiera.
+        </>
+      }
+    >
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[9px]">
+        {(vues ?? []).map((vue) => {
+          const choisie = univers.vue === vue.identifiant
+          return (
+            <li key={vue.identifiant}>
+              <button
+                type="button"
+                aria-pressed={choisie}
+                aria-label={vue.libelle}
+                onClick={() => void onRegler({ vue: vue.identifiant })}
+                className={[
+                  "flex h-full w-full flex-col overflow-hidden rounded-[2px] border text-left transition-colors duration-[80ms]",
+                  choisie
+                    ? "border-signal bg-signal/13"
+                    : "border-bord hover:bg-fond-2",
+                ].join(" ")}
+              >
+                <span className="flex h-[190px] items-center justify-center overflow-hidden border-b border-bord bg-fond-0">
+                  <Vignette nom={vue.identifiant} alt={vue.libelle} />
                 </span>
-              </span>
-              <span className="mesure shrink-0 text-[10px] text-texte-2">
-                {vue.images} image{vue.images > 1 ? "s" : ""} par pose
-              </span>
-            </button>
-          </li>
-        ))}
+                <span className="flex flex-1 flex-col gap-1 p-3">
+                  <span className="text-[14px] leading-tight text-texte">
+                    {vue.libelle}
+                  </span>
+                  <span className="mesure text-[10px] leading-snug text-texte-3">
+                    {vue.exemples}
+                  </span>
+                  {/* **Le gros chiffre n'est pas décoratif** : c'est le
+                      multiplicateur de tout ce qu'on paiera. La phrase de
+                      conduite le dit déjà — et le chiffre le dit mieux. */}
+                  <span className="mesure mt-auto flex items-baseline gap-1.5 border-t border-bord pt-2 text-[11px] text-texte-2">
+                    <b
+                      className={`text-[15px] font-medium ${choisie ? "text-signal-clair" : "text-signal"}`}
+                    >
+                      {vue.images}
+                    </b>{" "}
+                    image{vue.images > 1 ? "s" : ""} par pose
+                  </span>
+                </span>
+              </button>
+            </li>
+          )
+        })}
       </ul>
       {univers.vue && (
-        <Raison texte="ce choix écrit aussi la phrase de la case « vue » — les deux ne peuvent plus se contredire" />
+        <Raison texte="ce choix écrit aussi la phrase de cadrage qui part au modèle — le réglage et le texte envoyé ne peuvent plus se contredire" />
       )}
     </EtapeOuverte>
   )
@@ -1016,7 +796,12 @@ function LaVue({
  *  **Le plus coûteux des dix.** Tout ce qui a été fabriqué a été découpé à
  *  l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer,
  *  et chacune se paie. La ligne le dit avec le compte et le coût — puis laisse
- *  passer. **Le réglage n'est jamais grisé.** */
+ *  passer. **Le réglage n'est jamais grisé.**
+ *
+ *  **Et les neuf sprites sont à leur vraie taille**, sur un seul sol : voir
+ *  `SpriteDeTaille` pour la mesure qui l'impose. La bande fait 256 px de haut et
+ *  672 de large ; c'est cher, et c'est payé volontiers — l'étape en employait
+ *  269 sur 754 pour un résultat qui ne montrait rien. */
 function LaTaille({
   univers,
   tailles,
@@ -1042,16 +827,27 @@ function LaTaille({
       .catch(() => setCasse(null))
   }, [vise, univers.cible_px])
 
+  const survolee = tailles.find((t) => t.cible === vise)
+  const choisie = tailles.find((t) => t.cible === univers.cible_px)
+  const dite = survolee ?? choisie
+
   return (
-    <EtapeOuverte aide="assistant.taille" titre="3 · La taille">
-      <p className="text-[12.5px] text-texte-2">
-        Le côté de la case où tout ce qui rentre est ramené. Le même personnage
-        est dessiné à chaque taille : un nombre ne dit rien, deux personnages
-        côte à côte disent tout.
-      </p>
+    <EtapeOuverte
+      aide="assistant.taille"
+      titre="La taille"
+      conduite={
+        <>
+          Le côté de la case où tout ce qui rentre est ramené.{" "}
+          <strong className="text-texte">
+            Le même personnage est dessiné à chaque taille, et à sa vraie taille
+          </strong>{" "}
+          : un nombre ne dit rien, deux personnages côte à côte disent tout.
+        </>
+      }
+    >
       {/* **« Aucune » est une valeur, pas un trou** (US-163), et elle est en
           tête parce qu'elle est la première question — *ce jeu est-il en pixel
-          art ?* — et non la dernière. Elle n'a pas de vignette : il n'y a rien
+          art ?* — et non la dernière. Elle n'a pas de sprite : il n'y a rien
           à montrer d'une image qu'on ne ramène nulle part. */}
       <button
         type="button"
@@ -1060,7 +856,7 @@ function LaTaille({
         onPointerLeave={() => setVise(null)}
         onClick={() => void onRegler({ cible_px: AUCUNE_CIBLE })}
         className={[
-          "flex h-[34px] items-center gap-2 rounded-[2px] border px-2 text-left text-[11.5px] transition-colors duration-[80ms]",
+          "flex h-[34px] w-fit items-center gap-2 rounded-[2px] border px-3 text-left text-[11.5px] transition-colors duration-[80ms]",
           univers.cible_px === AUCUNE_CIBLE
             ? "border-signal bg-signal/13 text-signal"
             : "border-bord text-texte-2 hover:bg-fond-2",
@@ -1077,33 +873,62 @@ function LaTaille({
       {univers.cible_px === AUCUNE_CIBLE && (
         <Raison texte="aucune remise sur grille — le détourage, le recadrage et la palette s'appliquent toujours" />
       )}
-      <ul className="flex flex-wrap gap-1">
-        {tailles.map(({ cible, quoi }) => (
-          <li key={cible}>
-            <button
-              type="button"
-              aria-pressed={univers.cible_px === cible}
-              onPointerEnter={() => setVise(cible)}
-              onPointerLeave={() => setVise(null)}
-              onClick={() => void onRegler({ cible_px: cible })}
-              // Le nom accessible est la mesure, et rien de plus : l'alternative
-              // de la vignette et le libellé s'ajouteraient sinon au nom, et une
-              // case qu'on désigne par trois choses n'est plus une case.
-              aria-label={`${cible} px`}
-              title={quoi}
-              className={[
-                "flex w-[86px] flex-col items-center gap-1 rounded-[2px] border p-1 transition-colors duration-[80ms]",
-                univers.cible_px === cible
-                  ? "border-signal bg-signal/13"
-                  : "border-bord hover:bg-fond-2",
-              ].join(" ")}
-            >
-              <Vignette nom={`taille-${cible}`} alt={`${cible} pixels`} />
-              <span className="mesure text-[10px] text-texte-2">{cible} px</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      {/* **La règle des neuf tailles.** Elle déborde latéralement plutôt que de
+          se réduire : une règle qui triche sur l'échelle ne sert à rien du tout.
+          C'est la seule surface de l'assistant qui ait ce droit, et elle le dit
+          avec la barre de 9 px de partout ailleurs. */}
+      <div className="defile overflow-x-auto rounded-[2px] border border-bord bg-fond-0 px-4">
+        <ul className="flex items-end gap-4 pt-6">
+          {tailles.map(({ cible, quoi }) => {
+            const marquee = univers.cible_px === cible
+            return (
+              <li key={cible} className="flex shrink-0 flex-col items-center">
+                <button
+                  type="button"
+                  aria-pressed={marquee}
+                  onPointerEnter={() => setVise(cible)}
+                  onPointerLeave={() => setVise(null)}
+                  onClick={() => void onRegler({ cible_px: cible })}
+                  // Le nom accessible est la mesure, et rien de plus : le titre
+                  // et l'alternative de l'image s'ajouteraient sinon au nom, et
+                  // une case qu'on désigne par trois choses n'est plus une case.
+                  aria-label={`${cible} px`}
+                  title={quoi}
+                  className={[
+                    "flex items-end justify-center rounded-[2px] border p-1 transition-colors duration-[80ms]",
+                    marquee
+                      ? "border-signal bg-signal/13"
+                      : "border-transparent hover:border-bord",
+                  ].join(" ")}
+                >
+                  <SpriteDeTaille cible={cible} />
+                </button>
+                <span aria-hidden className="mt-1 h-px w-full bg-bord-fort" />
+                <span
+                  className={`mesure pt-2 pb-4 text-[10px] whitespace-nowrap ${marquee ? "text-signal" : "text-texte-3"}`}
+                >
+                  {cible}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+        {/* **Une seule phrase, à un seul endroit** : celle de la taille visée,
+            ou de la taille choisie. Neuf phrases à la fois ne se lisent pas. */}
+        <p className="mesure flex items-center gap-3 border-t border-bord py-2 text-[9.5px] text-texte-3">
+          <span>
+            le même personnage, dessiné neuf fois — un pixel d'image pour un
+            pixel d'écran
+          </span>
+          {dite && (
+            <span className="ml-auto text-texte-2">
+              {dite.cible} px · {dite.quoi}
+            </span>
+          )}
+        </p>
+      </div>
+
       {/* **Un changement qui casse du travail payé annonce les vrais chiffres**,
           puis laisse décider : le produit n'a qu'un seul refus automatique, et
           en ajouter un deuxième reviendrait à bloquer un auteur sur son jeu. */}
@@ -1126,24 +951,226 @@ function LaTaille({
   )
 }
 
+/** Étape 4 — ce que le jeu contient.
+ *
+ *  **« Barème d'échelles » a quitté l'écran le 1ᵉʳ septembre 2026.** Le mot est
+ *  juste, il est même précis, et il ne se comprend pas : personne ne cherche un
+ *  barème en créant un jeu. Il survit dans l'aide, où il sert à retrouver le mot
+ *  du code ; l'étape, elle, demande *de quoi ton jeu est fait*.
+ *
+ *  **Et l'étape s'ouvre entière.** Elle était un bloc repliable dont le registre
+ *  naît fermé : ouverte, elle rendait 26 points de contenu dans 754. La mesure
+ *  qui plaidait le repli — « trois contrôles dépliés faisaient 92 px par ligne,
+ *  644 px pour sept types » — était juste **sur une colonne de 380 px**, et
+ *  cette colonne n'existe plus depuis E7. Sur 1 360, quatre cartes tiennent par
+ *  rangée.
+ *
+ *  **Les huit sont visibles ensemble, et c'est le point** : l'échelle d'un type
+ *  ne veut rien dire toute seule. Ce qui compte est que le tonneau soit plus
+ *  petit que le nain, et cela ne se voit que si les deux sont à l'écran. */
+function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler }) {
+  const poser = (bareme: Echelle[]) => void onRegler({ bareme })
+
+  return (
+    <EtapeOuverte
+      aide="univers.bareme"
+      titre="Les types d'objets"
+      conduite={
+        <>
+          Les sortes d'objets que tu vas fabriquer. Chacune décide de{" "}
+          <strong className="text-texte">trois choses à la fois</strong> : quelles
+          images de référence partent avec elle, quelle part de la case elle
+          remplit, et si elle se découpe.
+        </>
+      }
+    >
+      {/* **L'occupation n'agit que par la grille**, qui est ce qui met un sujet
+          à l'échelle de sa case : sans taille de pixel, elle ne s'applique pas.
+          La famille et la silhouette, elles, continuent — l'une décide des
+          artworks qui partent, l'autre du détourage. */}
+      {univers.cible_px === AUCUNE_CIBLE && (
+        <Raison texte="sans taille de pixel, la part de case ne s'applique pas — les images de référence et le découpage, si" />
+      )}
+
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(232px,1fr))] gap-[9px]">
+        {univers.bareme.map((echelle, rang) => (
+          <li
+            key={echelle.nom}
+            className="flex flex-col gap-2 rounded-[2px] border border-bord bg-fond-1 p-3"
+          >
+            <div className="flex flex-col gap-1">
+              <span className="text-[14px] leading-tight text-texte">{echelle.nom}</span>
+              <label className="mesure flex items-center gap-2 text-[9.5px] text-texte-3">
+                <span className="shrink-0">images de référence</span>
+                <select
+                  value={echelle.famille}
+                  aria-label={`Images de référence de ${echelle.nom}`}
+                  onChange={(e) =>
+                    poser(
+                      univers.bareme.map((x, i) =>
+                        i === rang ? { ...x, famille: e.target.value as Famille } : x,
+                      ),
+                    )
+                  }
+                  className="mesure ml-auto h-[24px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+                >
+                  {FAMILLES.map((f) => (
+                    <option key={f} value={f}>
+                      {NOM_FAMILLE[f]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* **La case dessinée est le réglage.** Un pourcentage n'a pas de
+                sens sans la case ; la case dessinée en a un sans le
+                pourcentage — qui se lit quand même à côté, en mono, comme
+                toute mesure du produit. Le carré fait 56 px : c'est un dessin
+                et non une bande, comme la vignette d'une image de référence. */}
+            <div className="flex items-end gap-3">
+              <span
+                aria-hidden
+                className="flex h-[56px] w-[56px] shrink-0 items-end justify-center border border-bord-fort bg-fond-0"
+              >
+                <span
+                  className="block w-full bg-texte-3"
+                  style={{ height: `${echelle.occupation}%` }}
+                />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <Curseur
+                  libelle={`la part de case de ${echelle.nom}`}
+                  valeur={echelle.occupation}
+                  min={10}
+                  max={100}
+                  unite=" %"
+                  onChange={(occupation) =>
+                    poser(
+                      univers.bareme.map((x, i) =>
+                        i === rang ? { ...x, occupation } : x,
+                      ),
+                    )
+                  }
+                />
+                <span className="mesure text-[9.5px] text-texte-3">
+                  la part de la case qu'il remplit
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                poser(
+                  univers.bareme.map((x, i) =>
+                    i === rang ? { ...x, silhouette: !x.silhouette } : x,
+                  ),
+                )
+              }
+              className={[
+                "flex h-[26px] items-center gap-2 rounded-[2px] border border-bord bg-fond-2 px-2 text-left text-[11.5px] transition-colors duration-[80ms] hover:bg-fond-3",
+                echelle.silhouette ? "text-texte-2" : "text-epingle",
+              ].join(" ")}
+            >
+              {/* **Plein quand c'est vrai** — une case cochée est une case
+                  remplie, et l'inverse se lirait à contresens. */}
+              <span
+                aria-hidden
+                className={`h-[14px] w-[14px] shrink-0 border ${echelle.silhouette ? "border-signal bg-signal" : "border-bord-fort"}`}
+              />
+              {echelle.silhouette ? "il se découpe" : "plein cadre, pas de découpe"}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* **Montré grisé plutôt que caché** : on apprend qu'il existe, et on sait
+          pourquoi il n'est pas là. C'est déjà la règle du produit pour tout ce
+          qui est indisponible. */}
+      <button
+        type="button"
+        disabled
+        className="mesure h-[26px] self-start px-2 text-[10px] text-texte-3"
+      >
+        + type sur mesure — plus tard, les huit types couvrent ce qu'on sait faire
+      </button>
+    </EtapeOuverte>
+  )
+}
+
 /** Les deux cases qui décrivent **le cadre**, et non la matière.
  *
  *  La frontière passe exactement là où elle était déjà dans l'ordre des sept ;
- *  elle n'avait simplement jamais rien fait. Elle fait maintenant deux choses :
+ *  elle n'avait simplement jamais rien fait. Elle fait maintenant trois choses :
  *  sur une **reprise**, seules les cinq cases de matière partent — la pièce
  *  ajoutée a besoin de savoir qu'elle est naine et forgée, pas qu'on lui redise
  *  l'angle de caméra que la feuille montre déjà et que la consigne interdit de
- *  changer. Et **une ambiance ne peut toucher qu'à la matière**. */
+ *  changer. **Une ambiance ne peut toucher qu'à la matière.** Et **aucune
+ *  étiquette n'y est livrée** : ces deux cases se choisissent deux étapes plus
+ *  haut, avec une vignette, et un second endroit qui règle la même chose finit
+ *  toujours par la contredire. */
 const CADRE = ["vue", "technique"] as const
 
-/** Étape 5 — l'allure, et les étiquettes.
+/** Les sept cases de la bible, **posées en questions**.
  *
- *  **La plus longue des dix, et celle qui pèse le plus lourd** : sur une
- *  génération payée, ces sept cases représentent 890 caractères sur 1 690 — 53 %
- *  du texte envoyé — quand le sujet tapé en fait 40, soit 2 %. La description
- *  pèse vingt-deux fois le sujet ; ce qu'elle dit de travers, elle le dit fort.
+ *  Un nom de champ ne se répond pas ; une question, si. C'est le seul
+ *  changement de vocabulaire de l'étape, et il ne coûte rien : `NOM_CHAMP`
+ *  reste ce que le reste du produit affiche — la fiche d'une chose, l'écran de
+ *  confirmation —, où l'on lit un intitulé plutôt qu'on ne remplit un champ. */
+const QUESTIONS: Record<string, string> = {
+  monde: "Où ça se passe",
+  epoque: "À quelle époque",
+  rendu: "Comment c'est dessiné",
+  trait: "Le trait et les aplats",
+  eclairage: "La lumière",
+  vue: "D'où l'on regarde",
+  technique: "Comment l'image est calée",
+}
+
+/** L'aide de chaque question, en une phrase — elle paraît sous la question
+ *  ouverte et nulle part ailleurs. */
+const AIDE_DE_LA_CASE: Record<string, string> = {
+  monde: "Le lieu et l'univers du jeu — ce qu'on verrait en regardant autour de soi.",
+  epoque: "Le moment de l'histoire, ou son équivalent inventé. C'est lui qui décide des armes, des vêtements et des outils.",
+  rendu: "La technique de dessin — pas le sujet, la manière. C'est la case qui décide si ton jeu ressemble à du 16 bits, à de l'aquarelle ou à du papier découpé.",
+  trait: "Comment les formes sont bordées et remplies : un contour ou pas, des aplats ou des dégradés.",
+  eclairage: "D'où vient la lumière et de quelle couleur elle est. C'est ce qui donne l'heure et l'humeur.",
+  vue: "Écrit par l'étape 2. On le lit ici, on le choisit là-bas — sur une vignette.",
+  technique: "Écrit par l'étape 3. On le lit ici, on le choisit là-bas — sur la règle des neuf tailles.",
+}
+
+const PLACEHOLDERS: Record<string, string> = {
+  monde: "royaume de tourbe et de fer, marais au nord",
+  epoque: "haut moyen âge, avant la poudre",
+  rendu: "pixel art 16 bits, palette limitée",
+  trait: "contour brun d'un pixel, aplats, pas de dégradé",
+  eclairage: "lumière rasante, ombres portées courtes",
+  vue: "",
+  technique: "",
+}
+
+/**
+ * Étape 5 — l'allure, en **sept questions qui s'ouvrent une à une**.
+ *
+ * **La plus longue des dix, et celle qui pèse le plus lourd** : sur une
+ * génération payée, ces sept cases représentent 890 caractères sur 1 690 — 53 %
+ * du texte envoyé — quand le sujet tapé en fait 40, soit 2 %. La description
+ * pèse vingt-deux fois le sujet ; ce qu'elle dit de travers, elle le dit fort.
+ *
+ * **Elle éditait le même texte à deux endroits, et le commentaire du fichier
+ * annonçait le contraire.** Le bloc *Bible* avait une zone de saisie par case ;
+ * le bloc des étiquettes en avait une de plus, intitulée *ce qui partira*. Le
+ * code disait pourtant : « un second contrôle du même texte aurait fait deux
+ * endroits qui règlent la même chose ». Il y en avait deux. **Il n'y en a plus
+ * qu'un**, et l'interrupteur de la case est descendu sur sa rangée.
+ *
+ * **Et la liste d'étiquettes n'est plus vide.** Trois lignes de l'écran disaient
+ * la même absence — `disponibles — 0 dans la base`, la phrase qui l'expliquait,
+ * et une zone de saisie à `0 caractère`. Soixante-dix paires arrivent désormais
+ * avec l'atelier (`docs/etiquettes-livrees.md`).
  */
-function LesEtiquettes({
+function LAllure({
   univers,
   etiquettes,
   onEtiquettes,
@@ -1156,143 +1183,387 @@ function LesEtiquettes({
   onRegler: (bible: { nom: string; texte: string; actif: boolean }[]) => Promise<boolean>
   onErreur: (raison: string) => void
 }) {
-  const [ouverte, setOuverte] = useState<string>("monde")
+  const [ouverte, setOuverte] = useState<string>("")
   const [cherche, setCherche] = useState("")
   const [neuve, setNeuve] = useState<{ libelle: string; texte: string } | null>(null)
+  const [brouillon, setBrouillon] = useState(univers.bible)
 
-  const champ = univers.bible.find((c) => c.nom === ouverte) ?? {
-    nom: ouverte,
-    texte: "",
-    actif: true,
+  useEffect(() => setBrouillon(univers.bible), [univers.bible])
+
+  /** **Le seul endroit de l'univers qui tienne un brouillon**, parce qu'il porte
+   *  du texte qu'on tape. Refusé, le brouillon revient à ce que le projet
+   *  porte : sans ça l'écran resterait sur la valeur tentée, celle que le
+   *  fichier ne connaît pas. */
+  const poser = async (suivante: typeof univers.bible) => {
+    setBrouillon(suivante)
+    if (!(await onRegler(suivante))) setBrouillon(univers.bible)
   }
 
-  const poser = (texte: string) =>
-    void onRegler(
-      univers.bible.map((c) => (c.nom === ouverte ? { ...c, texte } : c)),
-    )
+  const cadre = (nom: string) => CADRE.includes(nom as (typeof CADRE)[number])
 
-  // **Une recherche d'étiquettes ne montre que celles de la case où l'on se
-  // trouve** : une étiquette d'éclairage ne paraît pas dans la case du trait.
-  // Sans ce filtre, la liste cesserait d'être une liste.
   const disponibles = etiquettes
     .filter((e) => e.case === ouverte)
     .filter((e) => e.libelle.toLowerCase().includes(cherche.trim().toLowerCase()))
     .sort((a, b) => b.emplois - a.emplois)
 
+  const actives = brouillon.filter((c) => c.actif && c.texte.trim()).length
+
   return (
-    <EtapeOuverte aide="assistant.etiquettes" titre="Décrire en cliquant plutôt qu'en rédigeant">
-      <Segments
-        valeurs={univers.bible.map((c) => c.nom)}
-        valeur={ouverte}
-        libelles={NOM_CHAMP}
-        onChange={setOuverte}
-      />
-      {CADRE.includes(ouverte as (typeof CADRE)[number]) && (
-        <Raison texte="ces deux cases décrivent le cadre : elles ne partent pas dans une reprise" />
-      )}
-
-
-
-      {/* **Une étiquette est une paire** : un libellé qu'on clique, et le texte
-          anglais qui part vraiment. C'est ce qui rend la description mécanique
-          au lieu d'être rédigée. */}
-      <div className="flex flex-col gap-1">
-        <Libelle aide="assistant.etiquettes">
-          disponibles — {disponibles.length} dans la base
-        </Libelle>
-        <input
-          value={cherche}
-          aria-label={`Rechercher une étiquette de ${NOM_CHAMP[ouverte] ?? ouverte}`}
-          placeholder={`rechercher une étiquette de ${NOM_CHAMP[ouverte] ?? ouverte}…`}
-          onChange={(e) => setCherche(e.target.value)}
-          className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte"
-        />
-        {disponibles.length === 0 && (
-          // **La base naît vide, et elle le dit franchement** plutôt que de
-          // faire semblant : au premier jeu, cette étape est sept champs de
-          // texte libre.
-          <Raison texte="rien dans la base pour cette case — au premier jeu c'est normal, et chaque étiquette fabriquée sert ensuite à tous les jeux" />
-        )}
-        <ul className="flex flex-wrap gap-1">
-          {disponibles.map((etiquette) => (
-            <li key={etiquette.identifiant}>
+    <EtapeOuverte
+      aide="univers.bible"
+      titre="L'allure"
+      conduite={
+        <>
+          Sept questions sur la tête que ton jeu doit avoir. C'est ce qui pèse le
+          plus lourd dans ce qui part au modèle —{" "}
+          <strong className="text-texte">plus de la moitié du texte</strong> — et
+          donc ce qui décide le plus de ce que tu recevras.{" "}
+          <strong className="text-texte">Clique plutôt que d'écrire</strong> :
+          chaque étiquette pose une formule qui marche.
+        </>
+      }
+    >
+      <ul className="flex flex-col overflow-hidden rounded-[2px] border border-bord bg-fond-1">
+        {brouillon.map((champ, rang) => {
+          const question = QUESTIONS[champ.nom] ?? NOM_CHAMP[champ.nom] ?? champ.nom
+          const est_ouverte = ouverte === champ.nom
+          // **On regarde la forme avant de s'y fier** : un serveur plus vieux
+          // que l'écran répond 200 sans se plaindre, et il ne connaît pas
+          // encore les phrases que l'atelier écrit lui-même. C'est le piège que
+          // E3 a payé, et il se paie ici en écran blanc.
+          const atelier = (univers.phrases ?? {})[champ.nom] ?? ""
+          const porte = champ.actif && Boolean(champ.texte.trim() || atelier)
+          return (
+            <li key={champ.nom} className="border-b border-bord last:border-b-0">
               <button
                 type="button"
-                title={etiquette.texte}
+                aria-expanded={est_ouverte}
+                aria-label={question}
                 onClick={() => {
-                  poser(
-                    champ.texte.trim()
-                      ? `${champ.texte.trim()}, ${etiquette.texte}`
-                      : etiquette.texte,
-                  )
-                  void api
-                    .etiquetteServie(etiquette.identifiant)
-                    .then((recu) => onEtiquettes(recu.etiquettes))
-                    .catch(() => undefined)
+                  setOuverte(est_ouverte ? "" : champ.nom)
+                  setCherche("")
+                  setNeuve(null)
                 }}
-                className="mesure h-[24px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte-2 hover:text-signal"
+                className={[
+                  "flex h-[38px] w-full items-center gap-3 px-3 text-left transition-colors duration-[80ms]",
+                  est_ouverte ? "bg-fond-2" : "hover:bg-fond-2",
+                ].join(" ")}
               >
-                {etiquette.libelle}
+                <span
+                  className={`mesure w-[14px] shrink-0 text-[10px] ${est_ouverte ? "text-signal" : "text-texte-3"}`}
+                >
+                  {rang + 1}
+                </span>
+                <span
+                  className={
+                    est_ouverte
+                      ? "min-w-0 flex-1 text-[14px] text-texte"
+                      : "min-w-0 flex-1 text-[13px] text-texte-2"
+                  }
+                >
+                  {question}
+                </span>
+                {/* **Une rangée fermée dit ce qu'elle porte** — le début du
+                    texte, tronqué, en mono. On lit sa description entière sans
+                    rien ouvrir, ce que ni le bloc replié ni les segments ne
+                    permettaient. */}
+                {!est_ouverte && (
+                  <span className="mesure max-w-[38ch] truncate text-[10px] text-texte-3">
+                    {champ.texte.trim() || atelier}
+                  </span>
+                )}
+                <span className="mesure w-[14px] shrink-0 text-right text-[11px] text-ok">
+                  {porte ? "✓" : ""}
+                </span>
               </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={() => setNeuve({ libelle: "", texte: "" })}
-          className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
-        >
-          + fabriquer une étiquette
-        </button>
-        {neuve && (
-          <div className="flex flex-col gap-1 border-t border-bord pt-2">
-            <input
-              value={neuve.libelle}
-              aria-label="Le libellé français"
-              placeholder="le libellé, en français — « brume basse »"
-              onChange={(e) => setNeuve({ ...neuve, libelle: e.target.value })}
-              className="h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[11.5px] text-texte"
-            />
-            <input
-              value={neuve.texte}
-              aria-label="Le texte anglais qui partira"
-              placeholder="le texte anglais qui partira — « thick low-lying fog »"
-              onChange={(e) => setNeuve({ ...neuve, texte: e.target.value })}
-              className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte"
-            />
-            <button
-              type="button"
-              disabled={!neuve.libelle.trim() || !neuve.texte.trim()}
-              onClick={() =>
-                void api
-                  .fabriquerEtiquette(neuve.libelle, neuve.texte, ouverte)
-                  .then((recu) => {
-                    onEtiquettes(recu.etiquettes)
-                    setNeuve(null)
-                  })
-                  .catch((erreur) => onErreur(String(erreur)))
-              }
-              className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
-            >
-              la fabriquer ›
-            </button>
-            <Raison texte="elle rejoint la base pour tous les jeux de l'atelier — comme la clé du fournisseur, elle ne dépend d'aucun" />
-          </div>
-        )}
-      </div>
 
-      {/* **Le texte final, en lecture seule** : c'est la règle du produit — ce
-          qui est montré est ce qui part, mot pour mot. */}
-      <div className="flex flex-col gap-1 border-t border-bord pt-2">
-        <Libelle>ce qui partira — {champ.texte.trim().length} caractères</Libelle>
-        <textarea
-          value={champ.texte}
-          aria-label={`Le texte de la case ${NOM_CHAMP[ouverte] ?? ouverte}`}
-          onChange={(e) => poser(e.target.value)}
-          rows={3}
-          className="mesure rounded-[2px] border border-bord bg-fond-2 p-2 text-[10px] text-texte"
-        />
-      </div>
+              {est_ouverte && (
+                <div className="flex flex-col gap-3 border-b border-bord bg-fond-2 px-3 pb-4 pl-9">
+                  <p className="max-w-[64ch] text-[13px] text-texte-2">
+                    {AIDE_DE_LA_CASE[champ.nom]}
+                  </p>
+
+                  {/* **L'interrupteur de la case est ici, et nulle part
+                      ailleurs.** « Doser ce qui contraint » est un geste qu'on
+                      fait en regardant ce qu'on relâche. */}
+                  <button
+                    type="button"
+                    aria-pressed={champ.actif}
+                    aria-label={`${question} — ${champ.actif ? "part avec chaque génération" : "ne part pas"}`}
+                    onClick={() =>
+                      void poser(
+                        brouillon.map((c, i) =>
+                          i === rang ? { ...c, actif: !c.actif } : c,
+                        ),
+                      )
+                    }
+                    className={[
+                      "flex h-[26px] w-fit items-center gap-2 rounded-[2px] border px-2 text-[11.5px] transition-colors duration-[80ms]",
+                      champ.actif
+                        ? "border-signal bg-signal/13 text-signal"
+                        : "border-bord bg-fond-1 text-texte-3 hover:bg-fond-3",
+                    ].join(" ")}
+                  >
+                    <span aria-hidden className="mesure text-[10px]">
+                      {champ.actif ? "●" : "○"}
+                    </span>
+                    {champ.actif
+                      ? "part avec chaque génération"
+                      : "ne part pas"}
+                  </button>
+
+                  {/* ── Les étiquettes de cette case ─────────────────────── */}
+                  {cadre(champ.nom) ? (
+                    <Raison
+                      texte={
+                        champ.nom === "vue"
+                          ? "cette case est écrite par l'étape 2 — on la choisit sur une vignette, pas en mots"
+                          : "cette case est écrite par l'étape 3 — on la choisit sur la règle des tailles"
+                      }
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Libelle aide="assistant.etiquettes">
+                        à cliquer — {disponibles.length} étiquette
+                        {disponibles.length > 1 ? "s" : ""}
+                      </Libelle>
+                      {etiquettes.filter((e) => e.case === champ.nom).length > 6 && (
+                        <input
+                          value={cherche}
+                          aria-label={`Rechercher une étiquette de ${question.toLowerCase()}`}
+                          placeholder="rechercher…"
+                          onChange={(e) => setCherche(e.target.value)}
+                          className="mesure h-[26px] w-full max-w-[260px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte"
+                        />
+                      )}
+                      {/* **Une base vide le dit franchement.** Soixante-dix
+                          paires arrivent avec l'atelier, mais une case peut
+                          n'en avoir aucune qui reste — on les oublie une à une
+                          —, et trois lignes qui répètent la même absence ne
+                          valent pas une phrase qui dit quoi faire. */}
+                      {disponibles.length === 0 && (
+                        <Raison
+                          texte={
+                            cherche.trim()
+                              ? "rien qui porte ces lettres — le texte se tape aussi à la main, juste en dessous"
+                              : "rien dans la base pour cette case — fabriques-en une, et elle servira à tous tes jeux"
+                          }
+                        />
+                      )}
+                      <ul className="flex flex-wrap gap-[5px]">
+                        {disponibles.map((etiquette) => (
+                          <li key={etiquette.identifiant}>
+                            <button
+                              type="button"
+                              title={etiquette.texte}
+                              onClick={() => {
+                                const deja = champ.texte.trim()
+                                void poser(
+                                  brouillon.map((c, i) =>
+                                    i === rang
+                                      ? {
+                                          ...c,
+                                          texte: deja
+                                            ? `${deja}, ${etiquette.texte}`
+                                            : etiquette.texte,
+                                        }
+                                      : c,
+                                  ),
+                                )
+                                void api
+                                  .etiquetteServie(etiquette.identifiant)
+                                  .then((recu) => onEtiquettes(recu.etiquettes))
+                                  .catch(() => undefined)
+                              }}
+                              className={[
+                                "flex h-[24px] items-center rounded-[2px] border bg-fond-1 px-[9px] text-[11.5px] transition-colors duration-[80ms] hover:text-signal",
+                                // **Ce qui vient de l'auteur porte l'ambre**,
+                                // comme le modèle réglé à la main et
+                                // l'occupation épinglée d'un asset. Aucun
+                                // vocabulaire neuf.
+                                etiquette.livree
+                                  ? "border-bord text-texte-2"
+                                  : "border-epingle text-epingle",
+                              ].join(" ")}
+                            >
+                              {etiquette.libelle}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() => setNeuve({ libelle: "", texte: "" })}
+                        className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair"
+                      >
+                        + fabriquer une étiquette
+                      </button>
+                      {neuve && (
+                        <div className="flex max-w-[420px] flex-col gap-1 border-t border-bord pt-2">
+                          <input
+                            value={neuve.libelle}
+                            aria-label="Le libellé français"
+                            placeholder="le libellé, en français — « brume basse »"
+                            onChange={(e) =>
+                              setNeuve({ ...neuve, libelle: e.target.value })
+                            }
+                            className="h-[26px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[11.5px] text-texte"
+                          />
+                          <input
+                            value={neuve.texte}
+                            aria-label="Le texte anglais qui partira"
+                            placeholder="le texte anglais qui partira — « thick low-lying fog »"
+                            onChange={(e) =>
+                              setNeuve({ ...neuve, texte: e.target.value })
+                            }
+                            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-1 px-2 text-[10px] text-texte"
+                          />
+                          <button
+                            type="button"
+                            disabled={!neuve.libelle.trim() || !neuve.texte.trim()}
+                            onClick={() =>
+                              void api
+                                .fabriquerEtiquette(
+                                  neuve.libelle,
+                                  neuve.texte,
+                                  champ.nom,
+                                )
+                                .then((recu) => {
+                                  onEtiquettes(recu.etiquettes)
+                                  setNeuve(null)
+                                })
+                                .catch((erreur) => onErreur(String(erreur)))
+                            }
+                            className="mesure h-6 self-start text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
+                          >
+                            la fabriquer ›
+                          </button>
+                          <Raison texte="elle rejoint la base pour tous les jeux de l'atelier — comme la clé du fournisseur, elle ne dépend d'aucun" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Ce qui partira ───────────────────────────────────── */}
+                  <div className="flex flex-col gap-1">
+                    <Libelle>
+                      ce qui partira — {(atelier ? atelier.length + 2 : 0) + champ.texte.trim().length}{" "}
+                      caractères
+                    </Libelle>
+                    {/* **La phrase de l'atelier, en ambre, hors du champ de
+                        saisie** — c'est la grille, le calage ou le cadrage, et
+                        elle se calcule depuis la taille et la vue. Rangée dans
+                        le texte, elle cessait de suivre le réglage dès qu'un mot
+                        s'ajoutait à côté d'elle : une seule étiquette cliquée
+                        gelait la grille pour toujours. */}
+                    {atelier && (
+                      <p className="mesure rounded-[2px] border border-bord bg-fond-1 px-2 py-1 text-[10px] leading-relaxed text-epingle">
+                        {atelier}
+                        <span className="ml-2 text-texte-3">
+                          — écrit par l'atelier, depuis l'étape{" "}
+                          {champ.nom === "vue" ? "2" : "3"}
+                        </span>
+                      </p>
+                    )}
+                    {!cadre(champ.nom) && (
+                      <textarea
+                        value={champ.texte}
+                        aria-label={`Le texte de la case ${NOM_CHAMP[champ.nom] ?? champ.nom}`}
+                        placeholder={PLACEHOLDERS[champ.nom] ?? ""}
+                        rows={3}
+                        onChange={(e) =>
+                          setBrouillon(
+                            brouillon.map((c, i) =>
+                              i === rang ? { ...c, texte: e.target.value } : c,
+                            ),
+                          )
+                        }
+                        onBlur={() => void poser(brouillon)}
+                        className={[
+                          "mesure resize-none rounded-[2px] border border-bord bg-fond-1 p-2 text-[10px] leading-relaxed placeholder:text-texte-3",
+                          champ.actif ? "text-texte" : "text-texte-3",
+                        ].join(" ")}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      <Raison
+        texte={`${actives} case${actives > 1 ? "s" : ""} sur ${brouillon.length} part${actives > 1 ? "ent" : ""} avec chaque génération`}
+      />
+    </EtapeOuverte>
+  )
+}
+
+/** Étape 6 — les références et les couleurs.
+ *
+ *  **La palette est déduite par calcul, jamais saisie** (US-54). Montrée pour
+ *  qu'on vérifie ce que la machine y a lu, et recalculée dès qu'on retire un
+ *  artwork (US-55). Le seul réglage qu'on ait sur elle est le nombre de
+ *  couleurs qu'on lui demande. */
+function LesReferences({
+  univers,
+  artworks,
+  vue,
+  onRegler,
+}: {
+  univers: Univers
+  artworks: Carte[]
+  vue: VueDuJeu | null
+  onRegler: Regler
+}) {
+  return (
+    <EtapeOuverte
+      aide="univers.palette"
+      titre="Références et couleurs"
+      conduite={
+        <>
+          Les couleurs du jeu ne se saisissent jamais :{" "}
+          <strong className="text-texte">elles se calculent</strong> à partir
+          des images que tu as promues en artworks officiels, sur le tableau
+          d'inspiration.
+        </>
+      }
+    >
+      {univers.palette.length > 0 ? (
+        <>
+          <div className="flex flex-wrap gap-[2px]">
+            {univers.palette.map((couleur) => (
+              <span
+                key={couleur}
+                title={couleur}
+                style={{ background: couleur }}
+                className="h-6 w-6 rounded-[2px] border border-bord"
+              />
+            ))}
+          </div>
+          <p className="mesure text-[10px] text-texte-3">
+            {univers.palette.length} couleurs · lues sur {artworks.length}{" "}
+            artwork{artworks.length > 1 ? "s" : ""}
+          </p>
+          <div className="flex w-fit items-center gap-3 pt-1">
+            <Libelle aide="univers.couleurs">Couleurs demandées</Libelle>
+            <Segments
+              valeurs={COULEURS}
+              valeur={
+                (COULEURS.includes(univers.couleurs as (typeof COULEURS)[number])
+                  ? univers.couleurs
+                  : 24) as (typeof COULEURS)[number]
+              }
+              onChange={(couleurs) => void onRegler({ couleurs })}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="w-fit rounded-[2px] border border-bord bg-fond-2 px-3 py-2">
+          <Raison texte="aucun artwork officiel — promeus une carte du tableau d'inspiration, et la palette se lira dessus" />
+        </div>
+      )}
+      <LeTexteACopier univers={univers} vue={vue} />
     </EtapeOuverte>
   )
 }
@@ -1334,14 +1605,16 @@ function LeTexteACopier({
   const texte = lignes.join("\n")
 
   return (
-    <EtapeOuverte aide="assistant.texte" titre="Le texte à copier — pour ne pas partir de rien">
-      <p className="text-[12.5px] text-texte-2">
-        Collez-le dans ChatGPT, Midjourney ou tout autre outil d'images, puis
-        déposez ici ce qui vous plaît. <strong className="text-texte">Rien
-        n'est payé par l'atelier</strong> : c'est la première fois qu'on voit sa
-        description assemblée, et beaucoup de contradictions se remarquent là.
+    <section className="flex flex-col gap-2 border-t border-bord pt-4">
+      <Libelle aide="assistant.texte">Le texte à copier — pour ne pas partir de rien</Libelle>
+      <p className="max-w-[66ch] text-[14px] leading-normal text-texte-2">
+        Colle-le dans ChatGPT, Midjourney ou tout autre outil d'images, puis
+        dépose ici ce qui te plaît.{" "}
+        <strong className="text-texte">Rien n'est payé par l'atelier</strong> :
+        c'est la première fois qu'on voit sa description assemblée, et beaucoup
+        de contradictions se remarquent là.
       </p>
-      <pre className="mesure defile max-h-[220px] overflow-auto rounded-[2px] border border-bord bg-fond-2 p-2 text-[10px] whitespace-pre-wrap text-texte-2">
+      <pre className="mesure defile max-h-[220px] max-w-[720px] overflow-auto rounded-[2px] border border-bord bg-fond-2 p-2 text-[10px] whitespace-pre-wrap text-texte-2">
         {texte}
       </pre>
       <button
@@ -1354,11 +1627,11 @@ function LeTexteACopier({
       >
         {copie ? "copié" : "copier"}
       </button>
-    </EtapeOuverte>
+    </section>
   )
 }
 
-/** Étape 7 — les poses et les états, **type par type** (E9).
+/** Étape 7 — ce que les choses font, **type par type** (E9).
  *
  *  Une pose, c'est un moment d'un objet : un personnage au repos, en marche,
  *  qui attaque ; un coffre fermé, ouvert, vidé. **Le nombre d'images de chaque
@@ -1370,7 +1643,11 @@ function LeTexteACopier({
  *  *marche* et de *course*, qu'il fallait ranger une par une, sur chaque
  *  coffre. Chaque rangée dit donc d'où sa liste lui vient — écrite ici, proposée
  *  par l'atelier, ou partagée avec le jeu — parce qu'une liste héritée ne doit
- *  pas avoir l'air d'une liste choisie. */
+ *  pas avoir l'air d'une liste choisie.
+ *
+ *  **Et le produit `poses × images` s'affiche**, ce qui n'était nulle part : le
+ *  compte existait pose par pose et jamais en somme, alors que c'est lui qu'on
+ *  vient chercher — c'est lui qui devient une facture. */
 function LesPoses({
   vue,
   onErreur,
@@ -1381,8 +1658,7 @@ function LesPoses({
   const [plan, setPlan] = useState<Pose[]>([])
   const [types, setTypes] = useState<PosesDesTypes["types"]>([])
   // Quelle rangée est dépliée. **De l'écran, jamais du jeu** : ouvrir un type
-  // ne change rien — c'est la décision déjà prise par le barème, deux étapes
-  // plus haut, et pour la même mesure.
+  // ne change rien.
   const [ouvert, setOuvert] = useState("")
 
   const fondre = (recu: PosesDesTypes | undefined) => {
@@ -1398,13 +1674,68 @@ function LesPoses({
   }, [])
 
   const echouer = (erreur: unknown) => onErreur(String(erreur))
+  const parPose = vue?.images ?? 1
+  const total = types.reduce(
+    (somme, type) =>
+      somme + type.poses.reduce((n, p) => n + (p.images || parPose), 0),
+    0,
+  )
 
   return (
-    <EtapeOuverte aide="assistant.poses" titre="7 · Poses et états">
-      <p className="text-[12.5px] text-texte-2">
-        Ce que chaque type d'objet peut faire. Le nombre d'images vient de la vue
-        {vue ? ` — ${vue.libelle}, ${vue.images} par pose` : ""}.
-      </p>
+    <EtapeOuverte
+      aide="assistant.poses"
+      titre="Poses et états"
+      conduite={
+        <>
+          Un personnage est <strong className="text-texte">au repos</strong>, il{" "}
+          <strong className="text-texte">marche</strong>, il{" "}
+          <strong className="text-texte">attaque</strong>. Un coffre est{" "}
+          <strong className="text-texte">fermé</strong>,{" "}
+          <strong className="text-texte">ouvert</strong>,{" "}
+          <strong className="text-texte">vidé</strong>. Une tuile ne fait rien du
+          tout. Chacun de ces moments est une image à fabriquer — c'est ici qu'on
+          dit lesquels.
+        </>
+      }
+    >
+      {/* **Le produit est le fait de l'étape.** Ajouter une pose ajoute N
+          images ; changer de vue les multiplie toutes. C'est le nombre qui
+          devient une facture, et il n'était nulle part. */}
+      <div className="flex w-fit items-stretch overflow-hidden rounded-[2px] border border-bord bg-fond-1">
+        <span className="flex flex-col gap-1 px-4 py-3">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+            poses déclarées
+          </span>
+          <span className="mesure text-[22px] text-texte">
+            {types.reduce((n, t) => n + t.poses.length, 0)}
+          </span>
+        </span>
+        <span className="mesure flex items-center border-l border-bord px-3 text-[15px] text-texte-3">
+          ×
+        </span>
+        <span className="flex flex-col gap-1 border-l border-bord px-4 py-3">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+            images par pose
+          </span>
+          <span className="mesure text-[22px] text-texte">{parPose}</span>
+        </span>
+        <span className="mesure flex items-center border-l border-bord px-3 text-[15px] text-texte-3">
+          =
+        </span>
+        <span className="flex flex-col gap-1 border-l border-bord bg-fond-2 px-4 py-3">
+          <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+            images à fabriquer
+          </span>
+          <span className="mesure text-[22px] text-signal">{total}</span>
+        </span>
+      </div>
+      <Raison
+        texte={
+          vue
+            ? `le second nombre vient de la vue choisie à l'étape 2 — ${vue.libelle} — et ne se tape pas ici`
+            : "aucune vue choisie — l'étape 2 décide du nombre d'images par pose"
+        }
+      />
 
       {/* **Le plan du jeu en premier, et il n'a pas disparu.** C'est ce que
           suivent le personnage, la créature, et toutes les choses créées avant
@@ -1414,7 +1745,7 @@ function LesPoses({
         titre="Le plan du jeu"
         raison="ce que suivent le personnage, la créature, et les choses sans type"
         poses={plan}
-        images={vue?.images ?? 1}
+        images={parPose}
         onAjouter={(nom, images) =>
           void api
             .ajouterPose(nom, images)
@@ -1430,93 +1761,97 @@ function LesPoses({
       />
 
       <ul className="flex flex-col rounded-[2px] border border-bord">
-        {types.map((type) => (
-          <li key={type.nom} className="border-b border-bord last:border-b-0">
-            <button
-              type="button"
-              aria-pressed={ouvert === type.nom}
-              aria-label={type.nom}
-              onClick={() => setOuvert(ouvert === type.nom ? "" : type.nom)}
-              className={[
-                "mesure flex h-[26px] w-full items-center gap-2 px-2 text-left text-[10px] transition-colors duration-[80ms]",
-                ouvert === type.nom ? "bg-fond-3" : "hover:bg-fond-2",
-              ].join(" ")}
-            >
-              <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
-                {type.nom}
-              </span>
-              <span className="shrink-0 text-texte-3">
-                {type.poses.length === 0
-                  ? "aucune pose"
-                  : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""}`}
-                {" · "}
-                {ORIGINE_DU_TYPE[type.origine]}
-              </span>
-            </button>
+        {types.map((type) => {
+          const images = type.poses.reduce((n, p) => n + (p.images || parPose), 0)
+          return (
+            <li key={type.nom} className="border-b border-bord last:border-b-0">
+              <button
+                type="button"
+                aria-pressed={ouvert === type.nom}
+                aria-label={type.nom}
+                onClick={() => setOuvert(ouvert === type.nom ? "" : type.nom)}
+                className={[
+                  "mesure flex h-[26px] w-full items-center gap-2 px-2 text-left text-[10px] transition-colors duration-[80ms]",
+                  ouvert === type.nom ? "bg-fond-3" : "hover:bg-fond-2",
+                ].join(" ")}
+              >
+                <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte">
+                  {type.nom}
+                </span>
+                <span className="shrink-0 text-texte-3">
+                  {type.poses.length === 0
+                    ? "aucune pose"
+                    : `${type.poses.length} pose${type.poses.length > 1 ? "s" : ""} · ${images} image${images > 1 ? "s" : ""}`}
+                  {" · "}
+                  {ORIGINE_DU_TYPE[type.origine]}
+                </span>
+              </button>
 
-            {ouvert === type.nom && (
-              <div className="flex flex-col gap-2 px-2 pb-2">
-                <ListeDePoses
-                  raison={RAISON_ORIGINE[type.origine]}
-                  poses={type.poses}
-                  images={vue?.images ?? 1}
-                  // **Écrire ici donne à ce type sa propre liste**, et le texte
-                  // le dit avant qu'on écrive : une liste partagée qui se
-                  // détache d'un jeu sans prévenir serait une surprise, et le
-                  // produit constate plutôt qu'il ne surprenne.
-                  onAjouter={(nom, images) =>
-                    void api
-                      .poserPosesDuType(type.nom, [
-                        ...type.poses,
-                        {
-                          identifiant: identifiantDePose(nom, type.poses),
-                          nom,
-                          images,
-                          // **Vide, et c'est une valeur** (E10) : le produit ne
-                          // traduit pas en anglais le nom qu'on vient de taper.
-                          // C'est alors le nom qui part, et l'écran le dit.
-                          consigne: "",
-                          ecartees: [],
-                          images_avant: 0,
-                        },
-                      ])
-                      .then(fondre)
-                      .catch(echouer)
-                  }
-                  onRetirer={(pose) =>
-                    void api
-                      .poserPosesDuType(
-                        type.nom,
-                        type.poses.filter((p) => p.identifiant !== pose),
-                      )
-                      .then(fondre)
-                      .catch(echouer)
-                  }
-                />
-
-                {/* **Revenir à la liste proposée** — et seulement quand il y a
-                    quelque chose à défaire. Sans ce geste, un type ne pourrait
-                    jamais y revenir : il faudrait la retaper de mémoire, et la
-                    moindre faute de frappe ferait une case orpheline. */}
-                {type.origine === "écrite" && (
-                  <button
-                    type="button"
-                    onClick={() =>
+              {ouvert === type.nom && (
+                <div className="flex flex-col gap-2 px-2 pb-2">
+                  <ListeDePoses
+                    raison={RAISON_ORIGINE[type.origine]}
+                    poses={type.poses}
+                    images={parPose}
+                    // **Écrire ici donne à ce type sa propre liste**, et le
+                    // texte le dit avant qu'on écrive : une liste partagée qui
+                    // se détache d'un jeu sans prévenir serait une surprise, et
+                    // le produit constate plutôt qu'il ne surprenne.
+                    onAjouter={(nom, images) =>
                       void api
-                        .oublierPosesDuType(type.nom)
+                        .poserPosesDuType(type.nom, [
+                          ...type.poses,
+                          {
+                            identifiant: identifiantDePose(nom, type.poses),
+                            nom,
+                            images,
+                            // **Vide, et c'est une valeur** (E10) : le produit
+                            // ne traduit pas en anglais le nom qu'on vient de
+                            // taper. C'est alors le nom qui part, et l'écran le
+                            // dit.
+                            consigne: "",
+                            ecartees: [],
+                            images_avant: 0,
+                          },
+                        ])
                         .then(fondre)
                         .catch(echouer)
                     }
-                    title="les images ne bougent pas — elles gardent l'identifiant de leur pose"
-                    className="mesure self-start px-1 text-[9.5px] text-texte-3 hover:text-signal"
-                  >
-                    revenir à la liste proposée
-                  </button>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
+                    onRetirer={(pose) =>
+                      void api
+                        .poserPosesDuType(
+                          type.nom,
+                          type.poses.filter((p) => p.identifiant !== pose),
+                        )
+                        .then(fondre)
+                        .catch(echouer)
+                    }
+                  />
+
+                  {/* **Revenir à la liste proposée** — et seulement quand il y a
+                      quelque chose à défaire. Sans ce geste, un type ne pourrait
+                      jamais y revenir : il faudrait la retaper de mémoire, et la
+                      moindre faute de frappe ferait une case orpheline. */}
+                  {type.origine === "écrite" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void api
+                          .oublierPosesDuType(type.nom)
+                          .then(fondre)
+                          .catch(echouer)
+                      }
+                      title="les images ne bougent pas — elles gardent l'identifiant de leur pose"
+                      className="mesure self-start px-1 text-[9.5px] text-texte-3 hover:text-signal"
+                    >
+                      revenir à la liste proposée
+                    </button>
+                  )}
+                </div>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </EtapeOuverte>
   )
@@ -1586,7 +1921,7 @@ function ListeDePoses({
   const [neuve, setNeuve] = useState("")
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex max-w-[560px] flex-col gap-1">
       {titre && <Libelle>{titre}</Libelle>}
       <Raison texte={raison} />
       {poses.length === 0 ? (
@@ -1651,6 +1986,18 @@ function ListeDePoses({
 
 /** Étape 8 — les emplacements d'équipement.
  *
+ *  **« L'ordre compte » n'était pas une phrase, et l'ordre ne se changeait
+ *  pas.** Cette demi-phrase énonçait une règle au-dessus d'une liste qui
+ *  n'offrait que *retirer* et *ajouter* : le serveur sait pourtant reclasser —
+ *  `reglerEmplacement` accepte un rang — et **aucun écran de l'interface ne
+ *  l'appelait**. L'étape énonçait donc une règle sur une chose qu'elle ne
+ *  permettait pas de faire.
+ *
+ *  **Deux flèches plutôt qu'un glissé** : le glisser-déposer appartient à la
+ *  toile, où l'on place à main levée. Ici l'ordre est une liste de six lignes, et
+ *  deux boutons de 24 px sont plus rapides, atteignables au clavier, et
+ *  n'exigent aucun apprentissage.
+ *
  *  **Proposée seulement si un type à silhouette existe** : un jeu de tuiles et
  *  de décors n'équipe personne, et lui montrer une liste vide serait lui
  *  demander de comprendre pourquoi elle l'est. */
@@ -1672,49 +2019,128 @@ function LesEmplacements({
       .catch(() => setEmplacements([]))
   }, [])
 
+  const echouer = (erreur: unknown) => onErreur(String(erreur))
+
+  /** Échanger deux rangs. **Deux appels, et c'est assez** : le serveur relit le
+   *  projet à chacun, et l'ordre est un tri stable — deux rangs égaux, le temps
+   *  d'un aller-retour raté, ne perdent aucune ligne. */
+  const deplacer = (rang: number, vers: number) => {
+    const un = emplacements[rang]
+    const autre = emplacements[vers]
+    if (!un || !autre) return
+    void api
+      .reglerEmplacement(un.identifiant, { rang: autre.rang })
+      .then(() => api.reglerEmplacement(autre.identifiant, { rang: un.rang }))
+      .then((recu) => setEmplacements(recu?.emplacements ?? []))
+      .catch(echouer)
+  }
+
   if (!equipe) {
     return (
-      <EtapeOuverte aide="assistant.emplacements" titre="8 · Emplacements">
-        <Raison texte="aucun type de ce jeu n'a de silhouette — un jeu de tuiles et de décors n'équipe personne, et cette étape n'a rien à régler" />
+      <EtapeOuverte
+        aide="assistant.emplacements"
+        titre="Emplacements"
+        conduite="Rien à régler ici, et c'est une réponse, pas un trou."
+      >
+        <Raison texte="aucun type de ce jeu n'a de silhouette — un jeu de tuiles et de décors ne porte pas d'équipement. Donne une silhouette à un type à l'étape 4, et cette étape se remplira d'elle-même" />
       </EtapeOuverte>
     )
   }
 
   return (
-    <EtapeOuverte aide="assistant.emplacements" titre="8 · Emplacements">
-      <p className="text-[12.5px] text-texte-2">
-        Où l'on peut accrocher une pièce sur un corps. <strong className="text-texte">
-        L'ordre compte</strong> : il décide de quelle pièce se dessine par-dessus
-        l'autre.
-      </p>
-      <ul className="flex flex-col">
-        {emplacements.map((emplacement) => (
-          <li
-            key={emplacement.identifiant}
-            className="mesure flex h-[26px] items-center gap-2 text-[11.5px] text-texte-2"
+    <EtapeOuverte
+      aide="assistant.emplacements"
+      titre="Emplacements"
+      conduite={
+        <>
+          Les endroits d'un corps où l'on peut accrocher une pièce d'équipement.{" "}
+          <strong className="text-texte">
+            Le rang décide de ce qui se dessine par-dessus quoi
+          </strong>{" "}
+          : la cape au rang 1 passe derrière le corps, le casque au dernier rang
+          passe devant tout le reste. Monte et descends les rangées jusqu'à ce
+          que l'empilement soit juste.
+        </>
+      }
+    >
+      {emplacements.length === 0 ? (
+        // **Une liste vide ne se laisse pas vide.** Le vestiaire naît vide et
+        // continue — personne ne sait d'avance ce qu'un jeu équipe —, mais une
+        // liste vide sous une règle sur l'ordre rend la règle indémontrable.
+        // Le geste est proposé, jamais fait derrière le dos de l'auteur.
+        <div className="flex w-fit flex-col gap-2 rounded-[2px] border border-bord bg-fond-1 p-3">
+          <p className="max-w-[52ch] text-[12.5px] text-texte-2">
+            Rien n'est encore posé. L'atelier en propose six, dans l'ordre de
+            l'empilement — le dos, le corps, les jambes, le torse, les mains, la
+            tête.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              void api
+                .poserLesEmplacementsProposes()
+                .then((recu) => setEmplacements(recu?.emplacements ?? []))
+                .catch(echouer)
+            }
+            className="mesure h-[34px] w-fit rounded-[2px] border border-bord-fort bg-fond-2 px-3 text-[11.5px] text-texte hover:bg-fond-3"
           >
-            <span className="min-w-0 flex-1 truncate">{emplacement.nom}</span>
-            <button
-              type="button"
-              aria-label={`Retirer ${emplacement.nom}`}
-              onClick={() =>
-                void api
-                  .retirerEmplacement(emplacement.identifiant)
-                  .then((recu) => setEmplacements(recu?.emplacements ?? []))
-                  .catch((erreur) => onErreur(String(erreur)))
-              }
-              className="shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+            poser les six ›
+          </button>
+        </div>
+      ) : (
+        <ul className="flex max-w-[420px] flex-col overflow-hidden rounded-[2px] border border-bord bg-fond-1">
+          {emplacements.map((emplacement, rang) => (
+            <li
+              key={emplacement.identifiant}
+              className="flex h-[34px] items-center gap-2 border-b border-bord px-2 text-[12.5px] text-texte-2 last:border-b-0"
             >
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="flex items-center gap-2">
+              <span className="mesure w-[14px] shrink-0 text-[10px] text-texte-3">
+                {rang + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{emplacement.nom}</span>
+              <span className="flex shrink-0 gap-[3px]">
+                <button
+                  type="button"
+                  aria-label={`Monter ${emplacement.nom}`}
+                  disabled={rang === 0}
+                  onClick={() => deplacer(rang, rang - 1)}
+                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-signal disabled:border-bord disabled:text-texte-3"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Descendre ${emplacement.nom}`}
+                  disabled={rang === emplacements.length - 1}
+                  onClick={() => deplacer(rang, rang + 1)}
+                  className="mesure flex h-[24px] w-[24px] items-center justify-center rounded-[2px] border border-bord-fort text-[10px] text-texte-2 hover:text-signal disabled:border-bord disabled:text-texte-3"
+                >
+                  ↓
+                </button>
+              </span>
+              <button
+                type="button"
+                aria-label={`Retirer ${emplacement.nom}`}
+                onClick={() =>
+                  void api
+                    .retirerEmplacement(emplacement.identifiant)
+                    .then((recu) => setEmplacements(recu?.emplacements ?? []))
+                    .catch(echouer)
+                }
+                className="mesure shrink-0 px-1 text-[10px] text-texte-3 hover:text-echec"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="flex max-w-[420px] items-center gap-2">
         <input
           value={neuf}
           aria-label="Un emplacement de plus"
-          placeholder="un emplacement de plus — la tête, le dos…"
+          placeholder="un emplacement de plus — la ceinture, l'épaule…"
           onChange={(e) => setNeuf(e.target.value)}
           className="h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-2 text-[11.5px] text-texte"
         />
@@ -1728,13 +2154,117 @@ function LesEmplacements({
                 setEmplacements(recu.emplacements)
                 setNeuf("")
               })
-              .catch((erreur) => onErreur(String(erreur)))
+              .catch(echouer)
           }
           className="mesure h-[26px] shrink-0 px-2 text-[10px] text-signal hover:text-signal-clair disabled:text-texte-3"
         >
           + ajouter
         </button>
       </div>
+    </EtapeOuverte>
+  )
+}
+
+/** Étape 9 — le modèle par défaut, **par famille** — pas un réglage global
+ *  (US-58). */
+function LesIA({
+  univers,
+  modeles,
+  onRegler,
+}: {
+  univers: Univers
+  modeles: Modele[]
+  onRegler: Regler
+}) {
+  return (
+    <EtapeOuverte
+      aide="univers.modeles"
+      titre="Les IA à utiliser"
+      conduite={
+        <>
+          Quel moteur d'image l'atelier proposera selon{" "}
+          <strong className="text-texte">ce que tu fabriques</strong>. Une famille
+          sans modèle n'est pas un trou : c'est un réglage que rien ne t'oblige à
+          poser, et le catalogue décide alors à ta place.
+        </>
+      }
+    >
+      <ul className="flex max-w-[560px] flex-col rounded-[2px] border border-bord">
+        {FAMILLES.filter((f) => f !== "tous").map((famille) => (
+          <li
+            key={famille}
+            className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0"
+          >
+            <span className="w-[80px] shrink-0 text-[11px] text-texte-2">
+              {NOM_FAMILLE[famille]}
+            </span>
+            <select
+              value={univers.modeles[famille] ?? ""}
+              onChange={(e) =>
+                void onRegler({
+                  modeles: { ...univers.modeles, [famille]: e.target.value },
+                })
+              }
+              className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+            >
+              <option value="">—</option>
+              {modeles.map((m) => (
+                <option key={m.identifiant} value={m.identifiant}>
+                  {libelleModele(m)}
+                </option>
+              ))}
+            </select>
+            {/* **Une liste vide dit ce qui décidera à sa place.** On apprend la
+                règle en lisant le réglage, sans avoir à la chercher ailleurs. */}
+            {!univers.modeles[famille] && (
+              <span className="mesure shrink-0 text-[9.5px] text-texte-3">
+                aucun choisi —{" "}
+                {univers.modele_planche
+                  ? "l'atelier emploiera le modèle de planche"
+                  : "l'atelier emploiera le défaut du catalogue"}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {/* **Deux défauts d'appel, et pas une famille de plus** (C2). La liste
+          au-dessus est indexée par *ce qu'on fabrique* ; ces deux-ci répondent
+          à *quelle sorte d'appel on fait*, et les mêler aurait demandé deux clés
+          réservées dans un espace de noms qui est celui de l'auteur.
+
+          Deux, et pas un : à l'essai du 28 août, un modèle rend les traits du
+          gabarit dans l'image là où un autre les ignore comme demandé. */}
+      <ul className="mt-2 flex max-w-[560px] flex-col rounded-[2px] border border-bord">
+        {(
+          [
+            ["modele_planche", "planche", "quand un lot d'attitudes part"],
+            ["modele_edition", "édition", "quand un corps se retouche"],
+          ] as const
+        ).map(([champ, nom, quand]) => (
+          <li
+            key={champ}
+            className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0"
+          >
+            <span className="w-[80px] shrink-0 text-[11px] text-texte-2" title={quand}>
+              {nom}
+            </span>
+            <select
+              value={univers[champ] ?? ""}
+              onChange={(e) => void onRegler({ [champ]: e.target.value })}
+              aria-label={`Modèle par défaut pour une ${nom}`}
+              className="mesure h-[26px] min-w-0 flex-1 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+            >
+              <option value="">—</option>
+              {modeles.map((m) => (
+                <option key={m.identifiant} value={m.identifiant}>
+                  {libelleModele(m)}
+                </option>
+              ))}
+            </select>
+          </li>
+        ))}
+      </ul>
     </EtapeOuverte>
   )
 }
@@ -1775,20 +2305,19 @@ function LaCle({
   }, [onErreur])
 
   return (
-    <EtapeOuverte aide="assistant.fournisseurs" titre="10 · Les fournisseurs">
-      {/* **Cette étape ne bloque plus rien, et le texte le dit** (F1). Elle a
-          été écrite quand la clé était le seul préalable dur du produit ; un
-          fournisseur n'en demande plus aucune, et laisser « rien ne part »
-          aurait fait sauter l'étape à quelqu'un qui pouvait déjà fabriquer.
-          **Et elle parle au pluriel depuis F3** : il y en a plusieurs, l'un ne
-          demande rien, et un autre en demandera deux. */}
-      <p className="text-[12.5px] text-texte-2">
-        Un fournisseur payant tient un style sur dix sujets, et il demande une
-        clé ; sans elle, ses modèles sont grisés et les autres restent
-        utilisables. Ce qu'on dépose ici vaut pour{" "}
-        <strong className="text-texte">tous les jeux</strong> de l'atelier, et
-        c'est le même tiroir que dans la fenêtre des réglages.
-      </p>
+    <EtapeOuverte
+      aide="assistant.fournisseurs"
+      titre="Les fournisseurs"
+      conduite={
+        <>
+          Un fournisseur payant tient un style sur dix sujets, et il demande une
+          clé ; sans elle, ses modèles sont grisés et les autres restent
+          utilisables. Ce qu'on dépose ici vaut pour{" "}
+          <strong className="text-texte">tous les jeux</strong> de l'atelier, et
+          c'est le même tiroir que dans la fenêtre des réglages.
+        </>
+      }
+    >
       <TiroirDesSecrets
         tiroirs={tiroirs}
         onChange={(rendus) => {

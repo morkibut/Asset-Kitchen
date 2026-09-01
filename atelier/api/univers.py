@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from atelier.domaine.teinte import TEINTES
@@ -167,6 +167,22 @@ class CorpsDeplacementIlot(BaseModel):
 
     groupe: str = Field(min_length=1)
     places: dict[str, list[float]] = Field(default_factory=dict)
+    projet: str | None = None
+
+
+class CorpsDecoupeCarte(BaseModel):
+    """Ce qui part à la découpe d'une carte.
+
+    **Des boîtes explicites plutôt qu'un mode**, comme pour une planche : ce qui
+    part est exactement ce que l'écran montre, y compris ce qu'on y a dessiné à
+    la main. La détection propose ; elle ne décide pas.
+    """
+
+    boites: list[list[int]] = Field(default_factory=list)
+    # **Décoché par défaut, et c'est la moitié de la décision.** C'est le seul
+    # endroit du produit où découper efface quelque chose ; un défaut à vrai en
+    # ferait le comportement ordinaire.
+    remplacer: bool = False
     projet: str | None = None
 
 
@@ -429,6 +445,93 @@ async def reessayer(
     atelier = _atelier(requete)
     identifiant = _projet(requete, projet)
     return (await atelier.univers.recuperer(identifiant, carte)).en_json()
+
+
+# ── Découper une carte, et voir ce que la palette y lit ──────────────────────
+#
+# **Deux routes empruntées à la planche, à l'identique** : `GET /…/slices`
+# propose sans rien écrire, `POST /…/slices` coupe. Même verbe, même nom, même
+# coupure — ce qui ne crée rien se redemande à chaque cran de réglage, ce qui
+# crée des choses ne se redemande jamais. Un second vocabulaire pour le même
+# geste sur une autre famille d'images n'apprendrait rien à personne.
+#
+# **Elles sont déclarées après `/board/{carte}/retry` et avant `/board/{carte}`,
+# et leur place n'a rien d'un hasard** : trois segments ne se disputent pas
+# l'adresse de deux, mais les lire d'affilée est ce qui rend visible qu'aucune
+# ne commence par un mot fixe qu'une autre pourrait prendre pour un identifiant
+# (`docs/PIEGES.md`).
+
+
+@routeur.get("/board/{carte}/slices")
+async def proposer_decoupe_carte(
+    requete: Request,
+    carte: str,
+    projet: str | None = None,
+    mode: str = Query("auto"),
+    colonnes: int = Query(2, ge=1, le=64),
+    lignes: int = Query(1, ge=1, le=64),
+    cote_min: int = Query(16, ge=0, le=256),
+) -> dict[str, Any]:
+    """Où l'on pourrait couper cette carte — sans rien créer, sans rien écrire."""
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, projet)
+    return atelier.univers.proposer_decoupe(
+        identifiant, carte, mode=mode, colonnes=colonnes, lignes=lignes,
+        cote_min=cote_min,
+    )
+
+
+@routeur.post("/board/{carte}/slices", status_code=201)
+async def decouper_carte(
+    requete: Request, carte: str, corps: CorpsDecoupeCarte
+) -> dict[str, Any]:
+    """Chaque rectangle devient une carte du même tableau.
+
+    Rend les morceaux, l'univers, et la carte retirée s'il y en a une : la
+    palette peut avoir bougé — un recadrage qui prend la place d'un artwork
+    officiel la refait —, et l'écran doit l'apprendre sans redemander.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, corps.projet)
+    boites = [tuple(b) for b in corps.boites]  # type: ignore[misc]
+    return atelier.univers.decouper_carte(
+        identifiant, carte, boites, remplacer=corps.remplacer
+    )
+
+
+@routeur.get("/board/{carte}/palette")
+async def lecture_de_palette(
+    requete: Request, carte: str, projet: str | None = None
+) -> dict[str, Any]:
+    """Quelle part de cette carte nourrit la palette du jeu.
+
+    **Calculée à la demande, jamais posée sur la carte** : elle dépend de
+    l'image et de rien d'autre, elle coûte une centaine de millisecondes, et la
+    ranger dans le fichier de la carte ferait un second endroit à tenir d'accord
+    avec le premier.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, projet)
+    return atelier.univers.lecture_de_palette(identifiant, carte)
+
+
+@routeur.get("/board/{carte}/palette/image")
+async def apercu_de_palette(
+    requete: Request, carte: str, projet: str | None = None
+) -> Response:
+    """L'image, avec en magenta ce que la palette en écarte.
+
+    **Ce n'est pas l'image de la carte** : c'est un instrument, et il ne se range
+    nulle part. On le demande quand on veut voir, il ne s'enregistre pas, et il
+    ne remplace jamais l'image sous son propre nom.
+    """
+    atelier = _atelier(requete)
+    identifiant = _projet(requete, projet)
+    return Response(
+        content=atelier.univers.apercu_de_palette(identifiant, carte),
+        media_type="image/png",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 @routeur.put("/board/{carte}")

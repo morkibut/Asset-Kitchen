@@ -343,6 +343,50 @@ def test_rien_n_est_ajoute_a_l_image_envoyee(client, double):
     assert not (couleurs == numpy.array(TRAIT, dtype=couleurs.dtype)).all(axis=1).any()
 
 
+def test_les_six_proposes_se_posent_en_un_geste_et_pas_deux_fois(client):
+    """L'atelier propose six emplacements ; les poser est un geste de l'auteur,
+    il respecte l'ordre de l'empilement, et le rappeler n'ajoute rien."""
+    from atelier.domaine.equipement import EMPLACEMENTS_PROPOSES
+
+    # **Le vestiaire naît vide et le reste** : personne ne sait d'avance ce
+    # qu'un jeu équipe, et six noms écrits derrière le dos de l'auteur seraient
+    # six noms à effacer.
+    assert client.get("/api/characters").json()["emplacements"] == []
+
+    pose = client.post("/api/characters/slots/suggested", json={}).json()
+    # **L'ordre est celui de l'empilement, du fond vers l'avant**, et c'est lui
+    # qui fait la démonstration de la règle que l'étape énonce : le dos passe
+    # derrière le corps, la tête devant tout le reste. Un ordre alphabétique
+    # n'apprendrait rien.
+    assert [e["nom"] for e in pose["emplacements"]] == list(EMPLACEMENTS_PROPOSES)
+    assert [e["rang"] for e in pose["emplacements"]] == list(
+        range(len(EMPLACEMENTS_PROPOSES))
+    )
+
+    # Rappelée, elle n'ajoute que ce qui manque — donc rien. C'est ce qui la
+    # rend sans danger sur un projet en cours.
+    encore = client.post("/api/characters/slots/suggested", json={}).json()
+    assert [e["nom"] for e in encore["emplacements"]] == list(EMPLACEMENTS_PROPOSES)
+
+
+def test_les_proposes_completent_un_vestiaire_commence_sans_rien_renommer(client):
+    """Sur un vestiaire déjà commencé, le geste ajoute ce qui manque et laisse
+    intact ce qui est là — identifiant compris."""
+    deja = client.post("/api/characters/slots", json={"nom": "la tête"}).json()
+    tete = deja["emplacement"]["identifiant"]
+
+    apres = client.post("/api/characters/slots/suggested", json={}).json()
+    noms = [e["nom"] for e in apres["emplacements"]]
+    # Six noms proposés, un déjà pris : cinq de plus, et pas de doublon.
+    assert noms[0] == "la tête"
+    assert sorted(noms) == sorted({"la tête", *noms})
+    assert len(noms) == 6
+
+    # **L'identifiant de ce qui existait ne bouge pas** : les pièces déjà
+    # rangées le portent, et le geste ne doit ranger personne ailleurs.
+    assert apres["emplacements"][0]["identifiant"] == tete
+
+
 def test_nommer_cree_et_les_emplacements_sont_ordonnes(client):
     """Écrire un nom d'emplacement ou de pièce qui n'existe pas le crée
     sur-le-champ ; les emplacements gardent leur ordre."""

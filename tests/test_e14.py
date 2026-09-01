@@ -141,7 +141,12 @@ def test_chaque_texte_qui_part_a_sa_ligne_et_son_interrupteur(client):
     envoi = _envoi(client, personnage=chose["identifiant"])
 
     du_jeu = [l for l in envoi["lignes"] if l["groupe"] == "jeu"]
-    assert [l["nom"] for l in du_jeu] == ["monde", "trait"]
+    # **Quatre lignes et non deux, depuis le 1ᵉʳ septembre 2026**, et c'est le
+    # critère qui se renforce plutôt qu'il ne se relâche : la grille et le
+    # calage partent depuis toujours, et l'écran qui montre *ce qui part* ne
+    # les montrait pas. Il ne peut plus les cacher, puisqu'elles ne sont plus
+    # rangées dans une case qu'on pouvait laisser vide.
+    assert [l["nom"] for l in du_jeu] == ["monde", "rendu", "trait", "technique"]
     assert all(l["eteignable"] for l in du_jeu)
     assert all(l["allumee"] for l in du_jeu)
     # Et le sujet est une ligne comme les autres, à ceci près qu'elle ne s'éteint
@@ -162,7 +167,9 @@ def test_les_groupes_disent_ce_quils_pesent_sans_descendre_lecran(client):
     )
 
     groupe = next(g for g in envoi["groupes"] if g["clef"] == "jeu")
-    assert (groupe["allumees"], groupe["total"]) == (1, 2)
+    # Quatre lignes du jeu — monde, trait, plus la grille et le calage que
+    # l'atelier dit lui-même —, dont une éteinte par le tri.
+    assert (groupe["allumees"], groupe["total"]) == (3, 4)
 
 
 # ── « Une ligne éteinte ne part pas, et l'extinction ne remonte nulle part » ──
@@ -368,7 +375,13 @@ def test_le_texte_montre_est_exactement_celui_qui_part(client, double):
 def test_le_texte_ne_bouge_pas_quand_on_ne_trie_rien(client):
     """**Le découpage a changé, pas le texte.** E14 a sorti la consigne de
     l'attitude du champ pour en faire une ligne à part ; l'assemblé est le même,
-    mot pour mot, et c'est ce qui permet de livrer sans repayer une image."""
+    mot pour mot, et c'est ce qui permet de livrer sans repayer une image.
+
+    **Le bloc du sujet ne bouge toujours pas — mais il ne ferme plus le texte**
+    (1ᵉʳ septembre 2026). La caméra du jeu se replie derrière lui, parce qu'un
+    banc a mesuré que c'est la dernière phrase qui décide de la vue
+    (`essais/essai_vue.py`, trente images). La virgule d'E14 est intacte : elle
+    joint bien le signalement et l'attitude sur une seule ligne."""
     client.put("/api/universe", json={"vue": "vue-dessus-34"})
     chose = _creer(client)
     _regler(client, chose["identifiant"], description="a stocky dwarf miner")
@@ -381,10 +394,11 @@ def test_le_texte_ne_bouge_pas_quand_on_ne_trie_rien(client):
         direction="sud",
     )
 
-    assert envoi["texte"].endswith(
-        "a stocky dwarf miner, walking posture, full body, facing south, "
-        "toward the viewer"
+    assert (
+        "\n\na stocky dwarf miner, walking posture, full body, facing south, "
+        "toward the viewer\n\n" in envoi["texte"]
     )
+    assert envoi["texte"].rstrip().endswith("with the feet showing.")
 
 
 # ── « Chaque image jointe porte son prix » ────────────────────────────────────
@@ -512,9 +526,14 @@ def test_lavertissement_sur_la_taille_est_sur_la_ligne_fautive(client):
     toujours.** Une bannière en haut dirait « attention, deux problèmes » et
     laisserait chercher lesquels."""
     client.put("/api/universe", json={"cible_px": 128})
+    # **Un texte tapé à la main, et c'est le seul qui puisse encore se
+    # tromper** (1ᵉʳ septembre 2026) : la phrase que le produit écrivait
+    # lui-même n'est plus rangée dans la case, donc elle ne peut plus rester
+    # sur une taille qu'on a quittée. Ce que le vrai projet porte, en revanche,
+    # est bien ce genre de ligne-ci — tapée, en français, avec un nombre.
     _bible(
         client,
-        rendu="2D pixel art on a 64x64 grid",
+        rendu="chunky 64x64 pixel art, no smoothing",
         monde="Deep forge halls",
     )
     chose = _creer(client)

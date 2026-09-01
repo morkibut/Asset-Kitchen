@@ -23,7 +23,15 @@
 // Les vignettes 1× / 2× / 4× sont les mêmes crans que le zoom de la grille
 // d'assets — un seul vocabulaire de taille dans tout le produit.
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import {
   api,
   COULEUR_TEINTE,
@@ -33,6 +41,7 @@ import {
   Refus,
   TEINTES,
   type Carte,
+  type LectureDePalette,
   type Personnage,
   type Famille,
   type Teinte,
@@ -41,6 +50,20 @@ import { mots, sujetCarte, useVisee } from "./Apercu"
 import { Libelle, Raison, Segments, ZoneTexte } from "./chassis"
 
 const SPAN: Record<number, string> = { 1: "span 1", 2: "span 2", 4: "span 4" }
+
+/** Ouvrir l'écran Découpe sur une carte — ou rien, si l'endroit ne sait pas le
+ *  faire.
+ *
+ *  **Un contexte et non une prop**, parce que le chemin est long et qu'il ne dit
+ *  rien : de l'écran Univers jusqu'au menu d'une carte, il traverse la toile, la
+ *  grille, la réserve, la tuile. Six composants qui se passeraient une fonction
+ *  sans jamais s'en servir. C'est le même motif que le cadre de la toile
+ *  (`Toile.tsx`), et pour la même raison.
+ *
+ *  Vaut `null` là où découper n'a pas de sens — un aperçu, une capture d'essai.
+ *  Le menu montre alors une carte sans ce lien, ce qui est la bonne réponse :
+ *  rien de grisé, rien à expliquer. */
+export const DECOUPER = createContext<((carte: Carte) => void) | null>(null)
 
 /** La gouttière de la grille — un seul vocabulaire d'écart dans tout le produit.
  *  La toile la reprend telle quelle pour ranger ce qu'elle dispose seule. */
@@ -1142,6 +1165,99 @@ function Menu({
   )
 }
 
+/** Ce que la palette du jeu lit vraiment de cet artwork.
+ *
+ *  **Le fond n'entre pas dans la palette, et personne ne le savait.** L'atelier
+ *  détoure l'image avant d'en tirer les couleurs — un ciel, un mur, un carré uni
+ *  derrière un personnage sont écartés d'eux-mêmes. La question revenait quand
+ *  même à chaque promotion, faute d'un endroit qui le montre. Le voici : un
+ *  chiffre, et l'image avec en magenta ce qui a été mis de côté.
+ *
+ *  **Rien ne part tant qu'on n'a pas cliqué.** Ce menu s'ouvre au survol ; une
+ *  mesure qui se lancerait toute seule ferait travailler l'atelier chaque fois
+ *  que le pointeur traverse une carte promue. Elle coûte une fraction de
+ *  seconde, elle vaut un geste.
+ *
+ *  **Un chiffre et une phrase, jamais l'image.** L'image y était, et elle a été
+ *  retirée après mesure : ce menu est borné par l'écran, et sur une carte du bas
+ *  de la grille il tombe à 206 px de haut. Un aperçu de 240 px y défilait dans
+ *  un hublot plus petit que lui — techniquement présent, illisible. L'image vit
+ *  maintenant dans l'écran de découpe, où elle occupe la moitié gauche et où
+ *  l'on peut agir sur ce qu'elle montre. « Découper › », deux lignes plus bas,
+ *  y mène.
+ *
+ *  **Et zéro pour cent ne s'écrit jamais.** Quand le détourage a tout mangé —
+ *  une matière plein cadre, une texture sans bord franc —, la palette reprend
+ *  l'image entière ; écrire « 0 % » dirait l'inverse exact de ce qui se passe.
+ *  C'est `entiere`, et il a sa phrase à lui. */
+function LectureDePalette({
+  carte,
+  onErreur,
+}: {
+  carte: Carte
+  onErreur: (raison: string) => void
+}) {
+  const [lu, setLu] = useState<LectureDePalette | null>(null)
+  const [enCours, setEnCours] = useState(false)
+
+  // Une autre carte sous le même menu : la mesure de la précédente ne la
+  // concerne pas, et la laisser affichée serait un chiffre faux.
+  useEffect(() => setLu(null), [carte.identifiant])
+
+  const mesurer = async () => {
+    setEnCours(true)
+    try {
+      setLu(await api.lectureDePalette(carte.identifiant))
+    } catch (erreur) {
+      onErreur(
+        erreur instanceof Refus ? erreur.message : "lecture de palette refusée",
+      )
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
+      <div className="flex items-center justify-between gap-2">
+        <Libelle aide="carte.lecture">Ce que la palette y lit</Libelle>
+        {!lu && (
+          <button
+            type="button"
+            onClick={() => void mesurer()}
+            disabled={enCours}
+            className="mesure h-[26px] rounded-[2px] border border-bord bg-fond-2 px-2 text-[10px] text-texte-2 transition-colors duration-[80ms] hover:bg-fond-3 disabled:text-texte-3"
+          >
+            {enCours ? "…" : "regarder"}
+          </button>
+        )}
+      </div>
+
+      {lu &&
+        (lu.entiere ? (
+          <p className="text-[11.5px] leading-snug text-texte-2">
+            Rien n'a été mis de côté : l'image entière donne ses couleurs. C'est
+            ce qui arrive à une matière ou à une texture, qui n'ont pas de fond.
+          </p>
+        ) : (
+          <p className="text-[11.5px] leading-snug text-texte-2">
+            <span className="mesure text-texte">{lu.part} %</span> de l'image
+            donne ses couleurs au jeu. Le reste — le fond — est écarté tout seul.
+          </p>
+        ))}
+
+      {/* Où voir la chose plutôt que la lire. **Ce n'est pas un renvoi vers un
+          ailleurs vague** : le lien qui y mène est deux lignes plus bas, dans ce
+          même menu. */}
+      {lu && !lu.entiere && (
+        <p className="mesure text-[9.5px] leading-snug text-texte-3">
+          Découper le montre en magenta, sur l'image en grand.
+        </p>
+      )}
+    </div>
+  )
+}
+
 /** Une carte d'adresse qui n'a pas encore son image — ou qui ne l'aura pas.
  *
  *  Elle garde son adresse et sa raison (US-43), et elle ne se retente pas toute
@@ -1192,6 +1308,7 @@ function Reglages({
   personnages: Personnage[]
   onErreur: (r: string) => void
 }) {
+  const decouper = useContext(DECOUPER)
   const [groupe, setGroupe] = useState(carte.groupe)
   const [note, setNote] = useState(carte.note)
   const [texte, setTexte] = useState(carte.texte)
@@ -1399,12 +1516,28 @@ function Reglages({
                   ? "part avec toutes les générations"
                   : `ne part qu'avec les sujets de la famille ${NOM_FAMILLE[carte.famille]}`}
               </p>
+              {carte.statut === "prete" && (
+                <LectureDePalette carte={carte} onErreur={onErreur} />
+              )}
             </>
           )}
         </div>
       )}
 
       <div className="flex items-center gap-2 border-t border-bord pt-2">
+        {/* **Découper est un lien, pas un bouton** : il ne règle rien ici, il
+            emmène ailleurs — la même grammaire que « Réessayer › », et le
+            chevron le dit. Il ne paraît que sur une image arrivée : découper
+            une adresse qui n'a pas encore rendu son image n'a pas d'objet. */}
+        {decouper && carte.genre === "image" && carte.statut === "prete" && (
+          <button
+            type="button"
+            onClick={() => decouper(carte)}
+            className="mesure text-[10px] text-signal hover:text-signal-clair"
+          >
+            Découper ›
+          </button>
+        )}
         {carte.source && carte.statut === "echouee" && (
           <button
             type="button"

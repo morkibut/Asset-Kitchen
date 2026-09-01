@@ -1288,8 +1288,24 @@ de la Découpe, ci-dessus : une boîte qui ment décale de vingt pixels tout ce 
 **Une seule marque, en `--lumiere`, et rien d'autre.** La lampe de la table éclaire ce qu'on
 vise : un liseré et un voile à 10 % pour le rectangle, un cercle de 15 px avec le pixel visé
 marqué en son centre pour la pipette. Aucune couleur neuve, aucune poignée, aucun tracé — ces
-tables ne se peignent pas, et c'est ce qui laisse les quatre modes du comparateur libres, y
-compris *brut* pendant qu'on règle.
+tables ne se peignent pas, et c'est ce qui laisse le comparateur libre, y compris *brut*
+pendant qu'on règle.
+
+> ⚠ **La phrase a été fausse du premier jour au 1<sup>er</sup> septembre 2026, et le code le
+> disait.** Elle parlait alors de *quatre modes libres* ; ils ne l'étaient que sur deux d'entre
+> eux. La surface qui vise et celle qui trace étaient gardées par
+> `mode === "rendu" || mode === "brut"`, comme le rectangle de recadrage : **en côte à côte et
+> en superposé, la pipette et le tracé n'existaient tout simplement pas**, la scène ne rendait
+> que deux balises d'image. Ce que la phrase décrivait bien était le contraire de ce qui était
+> construit — les deux vues faites pour voir ce qu'une passe a changé étaient exactement celles
+> où l'on ne pouvait plus rien régler.
+>
+> **Réparé le même jour**, et la phrase est redevenue vraie en perdant un mot : le contrôle
+> unique de quatre segments est coupé en deux — *sur* `brut · rendu`, qui dit qui porte
+> l'outil, et *témoin* `aucun · à côté · par-dessus`, qui ne porte jamais rien. Les quatre
+> modes n'existent plus, donc la phrase ne les compte plus. **Une comparaison ne retire jamais
+> un geste ; elle pose un témoin à côté** — le dessin est dans
+> `docs/maquettes-v2.1/03bis-comparer-sans-lacher-l-outil.html`.
 
 **La surface n'existe que pendant le geste, et le geste se termine.** Elle remplace l'image
 seulement quand la table concernée est ouverte, et pour la pipette seulement quand une passe

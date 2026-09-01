@@ -42,7 +42,8 @@ import {
   type Univers,
 } from "../api"
 import type { Fente } from "./BarreChassis"
-import { Reserve, Tableau, useCollage, type Vue } from "./Tableau"
+import { DECOUPER, Reserve, Tableau, useCollage, type Vue } from "./Tableau"
+import { EcranDecoupe } from "./Decoupe"
 import { Toile, ilotPerdu, useCrans, type Geste } from "./Toile"
 import { Assistant } from "./Assistant"
 import { CoteAmbiancesEtCouleurs, type CibleAmbiances } from "./Ambiances"
@@ -69,6 +70,8 @@ export function EcranUnivers({
   onAllerAuxAmbiances,
   cibleAmbiances,
   onCibleVue,
+  carteDecoupee,
+  onDecouperCarte,
 }: {
   univers: Univers
   modeles: Modele[]
@@ -126,6 +129,12 @@ export function EcranUnivers({
   onAllerAuxAmbiances: (cible: CibleAmbiances) => void
   cibleAmbiances: CibleAmbiances | null
   onCibleVue: () => void
+  /** La carte qu'on découpe, ou rien — **tenue par `App`, parce que c'est le fil
+   *  d'Ariane qui la nomme**. Cet écran-ci n'en fait que deux choses : il ouvre
+   *  la découpe depuis le menu d'une carte, et il la rend à la place du
+   *  tableau. */
+  carteDecoupee: Carte | null
+  onDecouperCarte: (carte: Carte | null) => void
 }) {
   const [choisie, setChoisir] = useState<string | null>(null)
 
@@ -227,7 +236,32 @@ export function EcranUnivers({
           première image d'inspiration était à 4 161 px de défilement. */}
       {cote !== "inspiration" && <BarreDesCotes cote={cote} onCote={onCote} />}
 
-      {cote === "inspiration" && (
+      {/* **Découper prend la place du tableau, il ne se pose pas dessus.**
+          C'est un étage de plus, comme la découpe d'une planche dans la
+          galerie : le fil d'Ariane dit où l'on est, et chaque segment ramène.
+          Un écran par-dessus un autre serait la faute que la V2.1 a passé son
+          temps à défaire. */}
+      {cote === "inspiration" && carteDecoupee && (
+        <div className="grid min-h-0 flex-1">
+          <EcranDecoupe
+            sujet={{
+              famille: "carte",
+              carte: carteDecoupee,
+              onDecoupe: () => {
+                // **Rien à ouvrir derrière.** Les morceaux arrivent dans la
+                // réserve, non promus, et promouvoir reste un geste : on
+                // retombe sur le tableau, où ils sont.
+                onDecouperCarte(null)
+                onRelire()
+              },
+            }}
+            onFermer={() => onDecouperCarte(null)}
+            onFente={onFente}
+          />
+        </div>
+      )}
+
+      {cote === "inspiration" && !carteDecoupee && (
         /* Deux colonnes en toile, une seule en grille — et **aucun réglage
            au-dessus du tableau**. La colonne de 380 px de l'univers est partie
            du côté Réglages, où elle a de la place ; ce qui reste ici est la
@@ -235,64 +269,66 @@ export function EcranUnivers({
 
            **Chaque case est `flex`, et c'est ce qui borne le panneau qu'elle
            porte** (`docs/DESIGN.md` § Un panneau est borné par l'écran). */
-        <div
-          data-colonnes
-          className="grid min-h-0 flex-1"
-          style={{
-            gridTemplateColumns: colonnes,
-            transition: "grid-template-columns 160ms ease-in-out",
-          }}
-        >
-          <div className="flex min-h-0 min-w-0 overflow-hidden">
-            {vue === "grille" ? (
-              <Tableau
-                cartes={cartes}
-                personnages={personnages}
-                vue={vue}
-                onVue={onVue}
-                choisie={choisie}
-                onChoisir={setChoisir}
-                onErreur={setRefus}
-                collage={collage}
-                cotes={<Cotes cote={cote} onCote={onCote} />}
-              />
-            ) : (
-              <Toile
-                cartes={cartes}
-                personnages={personnages}
-                liens={liens}
-                teintes={teintes}
-                vue={vue}
-                onVue={onVue}
-                choisie={choisie}
-                onChoisir={setChoisir}
-                onErreur={setRefus}
-                collage={collage}
-                crans={crans}
-                pile={pile}
-                cotes={<Cotes cote={cote} onCote={onCote} />}
-                fabriques={fabriques}
-                onAllerAuxAmbiances={onAllerAuxAmbiances}
-                onRelire={onRelire}
-              />
+        <DECOUPER.Provider value={onDecouperCarte}>
+          <div
+            data-colonnes
+            className="grid min-h-0 flex-1"
+            style={{
+              gridTemplateColumns: colonnes,
+              transition: "grid-template-columns 160ms ease-in-out",
+            }}
+          >
+            <div className="flex min-h-0 min-w-0 overflow-hidden">
+              {vue === "grille" ? (
+                <Tableau
+                  cartes={cartes}
+                  personnages={personnages}
+                  vue={vue}
+                  onVue={onVue}
+                  choisie={choisie}
+                  onChoisir={setChoisir}
+                  onErreur={setRefus}
+                  collage={collage}
+                  cotes={<Cotes cote={cote} onCote={onCote} />}
+                />
+              ) : (
+                <Toile
+                  cartes={cartes}
+                  personnages={personnages}
+                  liens={liens}
+                  teintes={teintes}
+                  vue={vue}
+                  onVue={onVue}
+                  choisie={choisie}
+                  onChoisir={setChoisir}
+                  onErreur={setRefus}
+                  collage={collage}
+                  crans={crans}
+                  pile={pile}
+                  cotes={<Cotes cote={cote} onCote={onCote} />}
+                  fabriques={fabriques}
+                  onAllerAuxAmbiances={onAllerAuxAmbiances}
+                  onRelire={onRelire}
+                />
+              )}
+            </div>
+
+            {vue === "toile" && (
+              <div className="flex min-h-0 overflow-hidden">
+                <Reserve
+                  cartes={cartes}
+                  personnages={personnages}
+                  choisie={choisie}
+                  onChoisir={setChoisir}
+                  onErreur={setRefus}
+                  collage={collage}
+                  cadre={grilleReserve}
+                  onDepot={rendre}
+                />
+              </div>
             )}
           </div>
-
-          {vue === "toile" && (
-            <div className="flex min-h-0 overflow-hidden">
-              <Reserve
-                cartes={cartes}
-                personnages={personnages}
-                choisie={choisie}
-                onChoisir={setChoisir}
-                onErreur={setRefus}
-                collage={collage}
-                cadre={grilleReserve}
-                onDepot={rendre}
-              />
-            </div>
-          )}
-        </div>
+        </DECOUPER.Provider>
       )}
 
       {cote === "reglages" && (

@@ -53,12 +53,17 @@ from atelier.domaine.direction import composer
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
     AMBIANCE,
+    CADRAGE,
     DE_LA_PLANCHE,
     DE_LA_POSE,
+    DE_LA_VUE,
     DE_SA_FICHE,
+    DU_PRODUIT,
+    DES_IMAGES,
     DU_JEU,
     ECRIT_ICI,
     JEU,
+    JOINTES,
     PLANCHE,
     REPRIS,
     SUJET,
@@ -544,12 +549,50 @@ class ServiceGenerations:
                 "et les variations ne s'y appliquent pas"
             )
 
+        # **Un appel qui ne dit pas quoi dessiner ne part pas** (1ᵉʳ septembre
+        # 2026). Relevé sur « Le Marais du Vieux Moulin » : deux des trois
+        # personnages du projet n'avaient aucun signalement, et leur prompt se
+        # réduisait à la bible du jeu plus `idle stance, full body`. On payait
+        # pour demander « une posture de repos », sans dire de quoi — et l'image
+        # qui revenait était ce que le modèle avait bien voulu inventer.
+        #
+        # **Le refus porte l'endroit où le réparer**, parce que c'est une case
+        # vide sur une fiche et non une panne : trois mots à écrire, et l'appel
+        # part. La règle vaut pour les deux façades — un agent qui vise une chose
+        # sans description reçoit la même phrase que l'auteur.
+        if not demande.repris and not demande.prompt.strip():
+            raise DemandeRefusee(
+                "rien ne dit ce qu'il faut dessiner — écrivez le signalement de "
+                "la chose sur sa fiche, ou décrivez le sujet dans le champ"
+            )
+
+        # **Les images d'abord, le texte ensuite** — l'ordre a changé le
+        # 1ᵉʳ septembre 2026, et c'est la seule façon que le prompt ait de
+        # **dire** ce que les images jointes veulent dire. Jusque-là il était
+        # composé avant qu'elles soient connues, et il partait donc muet à leur
+        # sujet : une planche de quatre poses dessinées de face partait avec un
+        # texte qui demandait le dessus, sans une phrase pour arbitrer.
+        # Rien d'autre ne bouge — la composition des références n'a jamais lu le
+        # prompt, elle ne lit que l'échelle et la case « palette ».
+        reinjectes, hors_plafond = self._reinjections(
+            projet,
+            personnage,
+            piece,
+            demande.echelle,
+            references,
+            references_ecartees,
+            identifiant_modele,
+        )
         # **Le texte tel qu'il partira, et un seul endroit le compose** (US-158).
         # `_texte` est aussi ce que l'aperçu du champ de prompt montre avant de
         # lancer : deux compositions écrites à deux endroits finiraient par
         # diverger, et celle qui compte est celle qui part.
         demande = replace(
             demande,
+            # **Le sujet est gardé avant d'être noyé** : c'est lui qui nommera
+            # l'asset, et il n'existe plus une ligne plus bas. Voir
+            # `Demande.sujet`.
+            sujet=demande.prompt.strip(),
             prompt=self._texte(
                 demande.prompt,
                 demande.repris,
@@ -559,33 +602,9 @@ class ServiceGenerations:
                 pose=pose,
                 direction=direction,
                 tri=tri,
+                roles=tuple(r.role for r in reinjectes),
+                palette=demande.palette,
             ),
-        )
-        # **Quatre sources, dans cet ordre, puis le dédoublonnage** : ce que
-        # l'auteur a posé à la main, ce que le personnage désigne (US-124), ce
-        # que son ambiance apporte (E14), et les artworks de la famille du sujet.
-        # L'ordre décide du rôle gardé en cas de doublon, et le plafond du modèle
-        # se compte après.
-        reinjectes = _reinjectes(
-            tuple(references)
-            + self._concepts(projet, personnage, piece)
-            + self._de_lambiance(projet, personnage)
-            + self._artworks(demande, projet)
-        )
-        # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
-        # elle a un avis, décide **seule** : c'est la plus étroite, et c'est la
-        # règle affichée à l'écran. Sans avis — un agent, une relance —, les
-        # deux portées durables s'appliquent.
-        hors_images = (
-            set(references_ecartees)
-            if references_ecartees is not None
-            else set(self._ecartees_durables(projet, personnage))
-        )
-        reinjectes = tuple(r for r in reinjectes if r.asset not in hors_images)
-        # **Puis le plafond du modèle** (F6). Ce que le produit ajoute de
-        # lui-même cède ; ce que l'auteur a joint ne cède jamais.
-        reinjectes, hors_plafond = self._sous_le_plafond(
-            reinjectes, {r.asset for r in references}, identifiant_modele
         )
         demande = replace(
             demande,
@@ -1221,6 +1240,8 @@ class ServiceGenerations:
         direction: str | None = None,
         pliage: Pliage | None = None,
         tri: Tri | None = None,
+        roles: Sequence[str] = (),
+        palette: bool = False,
     ) -> list[dict[str, Any]]:
         """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
 
@@ -1230,12 +1251,21 @@ class ServiceGenerations:
         vient du même chemin que l'envoi » cesse d'être une promesse pour devenir
         un fait mécanique.
 
-        **Trois groupes, dans l'ordre où le texte s'assemble.** Les sept textes
+        **Cinq groupes, dans l'ordre où le texte s'assemble.** Les sept textes
         du jeu — avec, mêlées, les trois lignes que l'ambiance remplace —, puis
         le sujet et la consigne de sa case, puis les consignes de planche quand
-        l'appel part plié. La bible se replie en tête depuis T4 (US-53) et les
+        l'appel part plié, puis **ce que les images jointes veulent dire**, puis
+        **la caméra du jeu**. La bible se replie en tête depuis T4 (US-53) et les
         consignes de planche en queue parce qu'elles parlent du sujet décrit
         au-dessus.
+
+        **Les deux derniers groupes sont arrivés le 1ᵉʳ septembre 2026, et leur
+        place est la mesure** (`essais/essai_vue.py`, trente images payées). Un
+        modèle d'image pondère la fin du texte ; la fin du texte était la
+        consigne de pose, la seule phrase du prompt qui ne sait pas d'où le jeu
+        regarde. Le rapport hauteur/largeur du sujet — deux pour un corps debout
+        de face, un pour un corps vu d'aplomb — passe de 1,55 à 1,13 quand la
+        caméra ferme le texte.
 
         **Le sujet et la pose ne s'éteignent pas** (US-278) : sans le premier
         l'appel ne demande rien, et sans la seconde l'image qui revient
@@ -1359,7 +1389,141 @@ class ServiceGenerations:
                     "gardable": False,
                 }
             )
+
+        dites = self._dire_les_images(roles, palette, pliage)
+        if dites:
+            lignes.append(
+                {
+                    "clef": clef(JOINTES, "role"),
+                    "groupe": JOINTES,
+                    "nom": "les images jointes",
+                    "texte": tri.texte(clef(JOINTES, "role"), dites),
+                    "origine": DES_IMAGES,
+                    "allumee": tri.etat(clef(JOINTES, "role"), True),
+                    "eteignable": True,
+                    "raison": "sans elle, l'image jointe décide toute seule",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": clef(JOINTES, "role") in tri.textes,
+                    "gardable": False,
+                }
+            )
+
+        # **Le cadre, juste avant la caméra** (1ᵉʳ septembre 2026). Il ne part
+        # pas avec une planche, qui vient de demander plusieurs sujets dans une
+        # grille — « un seul sprite et rien d'autre » la contredirait mot pour
+        # mot. Mesuré : l'aire du sujet passe de 14,7 % à 20,1 % de l'image,
+        # soit 37 % de pixels en plus avant le rééchantillonnage.
+        cadre = ""
+        if pliage is None and self._production is not None:
+            cadre = self._production.cadre(projet)
+        if cadre:
+            lignes.append(
+                {
+                    "clef": clef(CADRAGE, "cadre"),
+                    "groupe": CADRAGE,
+                    "nom": "le cadre",
+                    "texte": tri.texte(clef(CADRAGE, "cadre"), cadre),
+                    "origine": DU_PRODUIT,
+                    "allumee": tri.etat(clef(CADRAGE, "cadre"), True),
+                    "eteignable": True,
+                    "raison": "c'est elle qui remplit l'image du sujet plutôt que de fond",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": clef(CADRAGE, "cadre") in tri.textes,
+                    "gardable": False,
+                }
+            )
+
+        # **La caméra ferme le texte, sauf quand on habille une planche.** Une
+        # planche d'équipement dit « rends la même feuille avec la pièce en
+        # plus, ne change rien d'autre » : lui redonner une caméra derrière
+        # serait l'inviter à tout redessiner, ce qui est le défaut le plus cher
+        # de C3.
+        cadrage = ""
+        if self._production is not None and not (
+            pliage is not None and pliage.geometrie_connue
+        ):
+            cadrage = self._production.cadrage(projet, personnage)
+        if cadrage:
+            lignes.append(
+                {
+                    "clef": clef(CADRAGE, "camera"),
+                    "groupe": CADRAGE,
+                    "nom": "la caméra du jeu",
+                    "texte": tri.texte(clef(CADRAGE, "camera"), cadrage),
+                    "origine": DE_LA_VUE,
+                    "allumee": tri.etat(clef(CADRAGE, "camera"), True),
+                    # **Éteignable, comme tout le reste** : un essai où l'on veut
+                    # voir ce que le modèle fait sans elle est un geste légitime,
+                    # et c'est aussi comme ça qu'on refait la mesure.
+                    "eteignable": True,
+                    "raison": "c'est elle qui décide de la vue, parce qu'elle est en dernier",
+                    "remplace": "",
+                    "remplacee_par": "",
+                    "corrigee": clef(CADRAGE, "camera") in tri.textes,
+                    # Elle s'écrit en changeant la vue du jeu, dans le codex, où
+                    # elle sert à toutes les choses : « garder ici » n'aurait pas
+                    # de case à cette chose-là où aller.
+                    "gardable": False,
+                }
+            )
         return lignes
+
+    def _dire_les_images(
+        self, roles: Sequence[str], palette: bool, pliage: Pliage | None
+    ) -> str:
+        """Ce que les images jointes veulent dire, en mots.
+
+        **Elles partaient muettes jusqu'au 1ᵉʳ septembre 2026.** Le prompt ne les
+        mentionnait nulle part, sauf pour une planche — vérifié : les deux seules
+        phrases anglaises du dépôt qui parlaient d'une image jointe étaient dans
+        `atelier/services/pliage.py`. Le modèle recevait donc une planche de
+        quatre poses dessinées de face et un texte qui demandait le dessus, sans
+        rien pour arbitrer. Il a fait la chose raisonnable : il a recopié ce
+        qu'il voyait.
+
+        **Deux rôles, deux phrases, et une troisième qui vaut pour les deux.**
+        Un artwork dit *voilà l'allure* ; une image promue dit *voilà le sujet
+        déjà dessiné*. Aucun des deux ne dit *voilà la caméra*, et c'est cette
+        phrase-là qui manquait.
+
+        **Rien pour une édition.** L'image qu'on retouche *est* la demande : lui
+        dire de ne pas copier sa mise en page serait exactement le contraire de
+        ce qu'on veut. Le bloc entier se tait alors, plutôt que de risquer une
+        contradiction dans le même texte.
+
+        **Et la mise en page se tait pour une planche**, qui vient justement de
+        demander qu'on la recopie. Il ne reste que la caméra et la pose, qui
+        restent vraies.
+        """
+        vus = set(roles)
+        if EDITION in vus:
+            return ""
+        phrases: list[str] = []
+        if STYLE in vus:
+            phrases.append(
+                "One or more reference images are attached: they show the look to "
+                "follow — the same colours, the same outfit, the same proportions, "
+                "the same drawing style."
+            )
+        if REFERENCE in vus:
+            phrases.append(
+                "One or more attached images show this same subject already drawn: "
+                "keep it recognisably the same thing."
+            )
+        if phrases:
+            phrases.append(
+                "Do NOT copy the camera angle or the pose of the attached images"
+                + ("" if pliage is not None else ", and do not copy their framing or their layout")
+                + " — those are set below, and they override what the images show."
+            )
+        if palette:
+            phrases.append(
+                "One attached image is a flat strip of colour swatches: it is not a "
+                "subject, it is the palette to draw with."
+            )
+        return " ".join(phrases)
 
     def _est_le_signalement(
         self, projet: str | None, personnage: str | None, sujet: str
@@ -1401,6 +1565,8 @@ class ServiceGenerations:
         pose: str | None = None,
         direction: str | None = None,
         tri: Tri | None = None,
+        roles: Sequence[str] = (),
+        palette: bool = False,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -1422,6 +1588,8 @@ class ServiceGenerations:
                 direction=direction,
                 pliage=pliage,
                 tri=tri,
+                roles=roles,
+                palette=palette,
             )
         )
 
@@ -1438,6 +1606,11 @@ class ServiceGenerations:
         direction: str | None = None,
         directions: Sequence[str] | None = None,
         tri: "Tri | None" = None,
+        echelle: str = "",
+        modele: str = "",
+        references: Sequence[Reinjection] = (),
+        references_ecartees: Sequence[str] | None = None,
+        palette: bool = False,
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -1452,10 +1625,28 @@ class ServiceGenerations:
         qui les nomme : leur texte est le nom des poses, et il part dans le
         prompt. Le refus est donc le même avant et à la soumission — l'aperçu ne
         montre jamais un texte qui ne partirait pas.
+
+        **Et depuis le 1ᵉʳ septembre 2026 il connaît les images**, parce que le
+        prompt les nomme. Les cinq derniers arguments sont ceux que l'écran de
+        confirmation a déjà sous la main ; sans eux — un appel d'essai, un
+        dépliant — l'aperçu compose comme si rien n'était joint, ce qui reste
+        vrai pour un modèle sans place de référence.
         """
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
         pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        roles: tuple[str, ...] = ()
+        if modele:
+            partantes, _ = self._reinjections(
+                projet,
+                personnage,
+                piece,
+                echelle,
+                references,
+                references_ecartees,
+                modele,
+            )
+            roles = tuple(r.role for r in partantes)
         lignes = self.lignes(
             sujet,
             repris=repris,
@@ -1467,6 +1658,8 @@ class ServiceGenerations:
             direction=direction,
             pliage=pliage,
             tri=tri,
+            roles=roles,
+            palette=palette,
         )
         return {
             "texte": joindre(lignes),
@@ -1532,7 +1725,54 @@ class ServiceGenerations:
             cedent[gardees:],
         )
 
-    def _artworks(self, demande: Demande, projet: str | None) -> tuple[Reinjection, ...]:
+    def _reinjections(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        piece: str | None,
+        echelle: str,
+        references: Sequence[Reinjection],
+        references_ecartees: Sequence[str] | None,
+        identifiant_modele: str,
+    ) -> tuple[tuple[Reinjection, ...], tuple[Reinjection, ...]]:
+        """Ce qui part en image, et ce que le plafond laisse au sol.
+
+        **Sorti de `preparer` le 1ᵉʳ septembre 2026**, quand le prompt s'est mis
+        à parler des images jointes : l'aperçu doit alors savoir ce qui part
+        *avant* de composer le texte, exactement comme la soumission. Deux
+        compositions écrites à deux endroits auraient fini par montrer un texte
+        qui annonce une image que l'appel n'envoie pas — et c'est précisément la
+        divergence que l'aperçu existe pour interdire.
+
+        **Quatre sources, dans cet ordre, puis le dédoublonnage** : ce que
+        l'auteur a posé à la main, ce que le personnage désigne (US-124), ce que
+        son ambiance apporte (E14), et les artworks de la famille du sujet.
+        L'ordre décide du rôle gardé en cas de doublon, et le plafond du modèle
+        se compte après.
+        """
+        reinjectes = _reinjectes(
+            tuple(references)
+            + self._concepts(projet, personnage, piece)
+            + self._de_lambiance(projet, personnage)
+            + self._artworks(echelle, projet)
+        )
+        # **Puis ce qui est écarté** (US-126). La portée de la génération, quand
+        # elle a un avis, décide **seule** : c'est la plus étroite, et c'est la
+        # règle affichée à l'écran. Sans avis — un agent, une relance —, les
+        # deux portées durables s'appliquent.
+        hors_images = (
+            set(references_ecartees)
+            if references_ecartees is not None
+            else set(self._ecartees_durables(projet, personnage))
+        )
+        reinjectes = tuple(r for r in reinjectes if r.asset not in hors_images)
+        # **Puis le plafond du modèle** (F6). Ce que le produit ajoute de
+        # lui-même cède ; ce que l'auteur a joint ne cède jamais.
+        return self._sous_le_plafond(
+            reinjectes, {r.asset for r in references}, identifiant_modele
+        )
+
+    def _artworks(self, echelle: str, projet: str | None) -> tuple[Reinjection, ...]:
         """Les artworks que le sujet demandé fait partir (US-51).
 
         Le sujet est une échelle du barème du projet, et elle porte sa famille.
@@ -1542,8 +1782,8 @@ class ServiceGenerations:
         """
         if self._univers is None or projet is None:
             return ()
-        echelle = self._univers.echelle(projet, demande.echelle)
-        return self._univers.references(projet, echelle.famille if echelle else None)
+        lue = self._univers.echelle(projet, echelle)
+        return self._univers.references(projet, lue.famille if lue else None)
 
     def compter_references(
         self,
@@ -1574,8 +1814,7 @@ class ServiceGenerations:
         si quelque chose l'écarte, à quelle portée. Le total, lui, ne compte que
         ce qui part vraiment — c'est lui qui décide du grisé du modèle.
         """
-        demande = Demande(prompt="x", echelle=echelle)
-        artworks = self._artworks(demande, projet)
+        artworks = self._artworks(echelle, projet)
         concepts = self._concepts(projet, personnage, piece)
         de_lambiance = self._de_lambiance(projet, personnage)
         ecartees = (

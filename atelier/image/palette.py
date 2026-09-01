@@ -58,6 +58,19 @@ VUE = 192
 # question se répond.
 TOLERANCE = 28
 
+# Le plus grand côté de l'aperçu qui montre ce que ce module lit. 720 px : assez
+# pour qu'un titre d'interface de vingt pixels reste lisible sur une capture de
+# mille, assez petit pour que l'image tienne dans un menu de carte sans peser
+# plus que la carte elle-même.
+APERCU = 720
+
+# Ce qui marque, dans cet aperçu, les pixels que la palette écarte. **Une
+# couleur d'instrument, pas une couleur du produit** : elle n'entre dans aucune
+# liste fermée de `docs/DESIGN.md`, parce qu'elle est choisie pour n'exister
+# nulle part ailleurs — un magenta pur ne se confond avec aucun pixel d'un
+# artwork de jeu, et c'est tout ce qu'on lui demande.
+MAGENTA = (255, 0, 255, 255)
+
 # Combien de couleurs une palette d'univers porte par défaut. Mesuré le
 # 27 août 2026 sur les deux planches du guide : 24 demandées rendent 15 couleurs
 # franchement distinctes, 32 en rendent 18, 48 n'en rendent que 22 — la coupe
@@ -83,19 +96,30 @@ def _vue(rgba: np.ndarray, cote: int = VUE) -> np.ndarray:
     return np.asarray(image.resize(taille, Image.Resampling.BOX))
 
 
-def _sujet(octets: bytes) -> np.ndarray:
-    """Les pixels opaques d'un artwork, une fois son fond retiré.
+def alpha_du_sujet(octets: bytes) -> np.ndarray:
+    """L'opacité de ce que ce module lit d'un artwork, à sa taille d'origine.
+
+    **Le seul endroit qui décide ce qui compte dans une palette**, et c'est ce
+    qui le rend partageable : la découpe d'une carte propose ses rectangles sur
+    cet alpha-là, et l'aperçu montre exactement ce qu'il retient. Trois écrans
+    qui recalculeraient chacun leur détourage finiraient par montrer trois
+    choses différentes de la même image.
 
     Le détourage n'est pas conservé : c'est une lecture, pas une retouche.
     L'artwork sur le disque n'est jamais modifié — le tableau d'inspiration ne
     traite rien, il rassemble.
     """
     with Image.open(io.BytesIO(octets)) as ouverte:
-        rgba = np.asarray(ouverte.convert("RGBA")).copy()
-
+        rgba = np.asarray(ouverte.convert("RGBA"))
     neuf = detourer_bord(rgba[:, :, :3], TOLERANCE)
-    alpha = durcir(np.minimum(rgba[:, :, 3], neuf), SEUIL_ALPHA)
-    rgba[:, :, 3] = alpha
+    return durcir(np.minimum(rgba[:, :, 3], neuf), SEUIL_ALPHA)
+
+
+def _sujet(octets: bytes) -> np.ndarray:
+    """Les pixels opaques d'un artwork, une fois son fond retiré."""
+    with Image.open(io.BytesIO(octets)) as ouverte:
+        rgba = np.asarray(ouverte.convert("RGBA")).copy()
+    rgba[:, :, 3] = alpha_du_sujet(octets)
 
     vue = _vue(rgba).reshape(-1, 4)
     opaques = vue[vue[:, 3] >= SEUIL_ALPHA][:, :3]
@@ -103,6 +127,73 @@ def _sujet(octets: bytes) -> np.ndarray:
     # une texture sans bord franc — compte quand même : il vaut mieux sa palette
     # entière que rien du tout.
     return opaques if opaques.size else vue[:, :3]
+
+
+def part_lue(octets: bytes) -> float:
+    """Quelle part de cet artwork nourrit la palette, en pour cent.
+
+    **Zéro n'est pas un trou, c'est un cas nommé** : le détourage a tout mangé —
+    une matière plein cadre, une texture sans bord franc —, et `_sujet` reprend
+    alors l'image entière. L'appelant qui affiche ce chiffre doit dire cette
+    phrase-là plutôt que « 0 % », qui serait faux.
+
+    Mesurée sur la **vue**, celle de 192 px, et pas sur l'image d'origine : c'est
+    elle qui entre dans la coupe médiane, donc c'est elle qui pèse. Sur une image
+    de mille pixels, les deux ne donnent pas le même chiffre.
+    """
+    with Image.open(io.BytesIO(octets)) as ouverte:
+        rgba = np.asarray(ouverte.convert("RGBA")).copy()
+    rgba[:, :, 3] = alpha_du_sujet(octets)
+    vue = _vue(rgba).reshape(-1, 4)
+    if not vue.shape[0]:
+        return 0.0
+    return float((vue[:, 3] >= SEUIL_ALPHA).sum()) / vue.shape[0] * 100
+
+
+def apercu_de_la_lecture(octets: bytes, *, cote: int = APERCU) -> bytes:
+    """L'artwork, avec en magenta ce que la palette en écarte. Un PNG.
+
+    **C'est la seule chose que la lecture de palette ait jamais eu à gagner.**
+    Le détourage préalable existe depuis le premier jour, il est juste, et
+    personne ne l'a jamais vu — il ne laisse aucune trace. Mesuré sur les
+    artworks de ce dépôt : il écarte de 30 à 60 % des pixels, et sur une capture
+    d'écran promue en artwork il garde le titre de l'interface et la barre de
+    vie, qui écrivent alors les couleurs du jeu. Cet aperçu est ce qui le fait
+    découvrir.
+
+    **Magenta, et il n'entre dans aucune liste fermée** : ce n'est pas une
+    couleur du produit, c'est une couleur d'instrument — celle qu'on emploie
+    précisément parce qu'elle n'existe nulle part ailleurs et ne peut donc pas
+    être confondue avec un pixel de l'image. Elle ne vit que dans cette image-ci,
+    jamais dans un écran.
+    """
+    with Image.open(io.BytesIO(octets)) as ouverte:
+        rgba = np.asarray(ouverte.convert("RGBA")).copy()
+    rgba[alpha_du_sujet(octets) < SEUIL_ALPHA] = MAGENTA
+
+    image = Image.fromarray(rgba, mode="RGBA").convert("RGB")
+    facteur = cote / max(image.width, image.height)
+    if facteur < 1:
+        # `BOX` et non `NEAREST` : on montre une **part**, et moyenner sur la
+        # surface est ce qui la rend lisible. Le plus proche voisin ferait
+        # clignoter une zone mitée là où elle est écartée à moitié.
+        image = image.resize(
+            (max(1, round(image.width * facteur)), max(1, round(image.height * facteur))),
+            Image.Resampling.BOX,
+        )
+    # **Réduit à 128 couleurs, et c'est un instrument qu'on allège.** L'aperçu
+    # n'est pas une image du jeu : on y cherche une forme — ce qui reste, ce qui
+    # part —, pas une teinte. Un PNG plein sur une capture de mille pixels pèse
+    # 270 Ko, ce qui est plus lourd que la carte elle-même ; réduit, il en pèse
+    # une fraction. **Et la réduction ne peut pas mentir sur le magenta** : une
+    # couleur qui occupe un tiers de l'image est toujours dans les 128 premières
+    # de la coupe médiane, alors qu'un JPEG lui ferait un halo sur le bord exact
+    # qu'on vient regarder.
+    tampon = io.BytesIO()
+    image.quantize(colors=128, method=Image.Quantize.MEDIANCUT).save(
+        tampon, format="PNG", optimize=True
+    )
+    return tampon.getvalue()
 
 
 def palette_de(artworks: list[bytes], couleurs: int = COULEURS) -> tuple[str, ...]:

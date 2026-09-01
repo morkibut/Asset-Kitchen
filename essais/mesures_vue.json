@@ -1,0 +1,56 @@
+{
+  "date": "2026-09-01",
+  "modele": "openai/gpt-image-2",
+  "options": { "aspect_ratio": "1:1", "quality": "low" },
+  "jets_par_bras": 3,
+  "note_usd_totale": 0.572,
+  "mesure": {
+    "nom": "rapport hauteur/largeur de la boîte du sujet",
+    "comment": "Le fond est plat : on le lit sur le bord, on garde ce qui s'en écarte, et la boîte de ce qui reste est le sujet. Un corps debout de face fait environ deux fois plus haut que large ; le même corps vu d'aplomb est presque rond.",
+    "portee": "Elle ne vaut que pour les vues d'aplomb. Une vue de côté juste est légitimement haute et étroite : le chiffre ne sait pas l'en distinguer, et c'est l'œil qui juge — de face ou de profil.",
+    "seuils": { "de_dessus": "< 1,25", "entre_deux": "1,25 à 1,50", "de_face": "> 1,50" }
+  },
+  "tour_1_ce_qui_repare": {
+    "question": "Sur un jeu déclaré vu de dessus, qu'est-ce qui fait revenir un sprite vu de dessus ?",
+    "bras": {
+      "A0": { "quoi": "le prompt payé le 1er septembre 2026, tel quel", "ratios": [1.44, 1.55, 1.69], "mediane": 1.55, "verdict": "de face" },
+      "A1": { "quoi": "+ une phrase qui explique l'image jointe", "ratios": [1.15, 0.93, 1.44], "mediane": 1.15, "verdict": "de dessus" },
+      "A2": { "quoi": "+ la caméra répétée en queue, à l'impératif", "ratios": [1.15, 1.13, 1.01], "mediane": 1.13, "verdict": "de dessus" },
+      "A3": { "quoi": "+ la pose dite dans la caméra du jeu, sans « full body »", "ratios": [1.26, 1.28, 1.15], "mediane": 1.26, "verdict": "de dessus à l'œil ; la torche levée gonfle le chiffre" },
+      "A4": { "quoi": "+ le prompt négatif composé", "ratios": [1.74, 1.69, 1.59], "mediane": 1.69, "verdict": "de face — aucun gain" },
+      "A5": { "quoi": "les quatre ensemble", "ratios": [1.10, 1.21, 1.17], "mediane": 1.17, "verdict": "de dessus" },
+      "A6": { "quoi": "le prompt payé, image de référence RETIRÉE", "ratios": [1.48, 1.46, 1.36], "mediane": 1.46, "verdict": "de face — l'image n'était pas la cause" },
+      "B1": { "quoi": "+ un gabarit de silhouette vue de dessus, en seconde image", "ratios": [0.99, 0.94, 1.09], "mediane": 0.99, "verdict": "de dessus — le meilleur du tour" },
+      "B2a": { "quoi": "la chose refaite une fois dans la caméra du jeu", "ratios": [1.22, 1.14, 0.96], "mediane": 1.14, "verdict": "de dessus" },
+      "B2b": { "quoi": "une pose demandée sur cette image-là", "ratios": [1.24, 1.26, 1.10], "mediane": 1.24, "verdict": "de dessus, mais la torche a disparu — le sujet n'était plus décrit" }
+    },
+    "ce_qui_est_refute": [
+      "L'image de référence dominait le texte : FAUX. Sans elle, c'est toujours de face (1,46 contre 1,55).",
+      "Le prompt négatif manquait : FAUX. Avec lui, rien ne change (1,69). Dire ce qu'on ne veut pas ne dit pas ce qu'on veut."
+    ],
+    "ce_qui_est_retenu": "Une caméra dite en dernier, en mots qui décrivent ce qu'on doit voir. Tous les bras qui gagnent finissent par une phrase de caméra ; le seul qui perd est celui qui n'en a pas."
+  },
+  "tour_2_le_produit_corrige": {
+    "question": "Le produit corrigé tient-il la promesse, et sur les autres vues ?",
+    "methode": "Le texte est composé par le produit lui-même. Le témoin est le même chemin, les deux nouveaux blocs éteints par un tri — une seule chose change entre les deux bras.",
+    "bras": {
+      "C0": { "vue": "de dessus, verticale", "quoi": "avant", "ratios": [1.61, 1.53, 1.41], "mediane": 1.53, "verdict": "de face — faux" },
+      "C1": { "vue": "de dessus, verticale", "quoi": "après", "ratios": [1.13, 1.10, 1.20], "mediane": 1.13, "verdict": "de dessus — juste" },
+      "C2": { "vue": "de côté, plateforme", "quoi": "avant", "ratios": [1.52, 1.60, 1.59], "mediane": 1.59, "verdict": "de FACE — faux, le jeu demandait le profil" },
+      "C3": { "vue": "de côté, plateforme", "quoi": "après", "ratios": [1.79, 1.81, 1.56], "mediane": 1.79, "verdict": "de PROFIL — juste ; le chiffre monte parce qu'un profil debout est haut, et c'est l'œil qui tranche ici" },
+      "C4": { "vue": "de dessus, 3/4", "quoi": "avant", "ratios": [1.68, 1.55, 1.73], "mediane": 1.68, "verdict": "juste — cette vue-là marchait déjà" },
+      "C5": { "vue": "de dessus, 3/4", "quoi": "après", "ratios": [1.39, 1.58, 1.73], "mediane": 1.58, "verdict": "juste, un peu plus vu d'en haut" }
+    },
+    "ce_qu_on_apprend": "Le prompt d'avant ne marchait que pour les vues qui tombaient d'accord avec « full body » — de face, et de dessus 3/4. Il était faux pour la verticale ET pour le côté, où il rendait un personnage de face à un jeu de plateforme."
+  },
+  "tour_3_la_reference_normalisee": {
+    "question": "Trois poses de suite se ressemblent-elles davantage quand l'image jointe est d'accord avec le texte ?",
+    "methode": "Le prompt corrigé dans les deux bras ; seule l'image jointe change. La vue est juste des deux côtés — ce qui se mesure ici est la constance.",
+    "bras": {
+      "D-carte": { "quoi": "la carte du tableau, dessinée de face", "constat": "les trois poses tiennent la vue mais pas l'échelle — trois tailles nettement différentes — et l'attaque a inventé une dague absente du signalement", "usd_par_image": 0.0100 },
+      "D-referent": { "quoi": "la chose refaite une fois dans la caméra du jeu", "constat": "même taille, même silhouette, mêmes couleurs sur les trois poses ; aucun objet inventé", "usd_par_image": 0.0158 }
+    },
+    "ce_qu_on_apprend": "La caméra se règle par le texte ; la constance se règle par l'image. Ce sont deux problèmes distincts et ils ont deux réparations distinctes.",
+    "le_prix_de_l_idee": "Le référent envoyé en 1024x1024 coûte 58 % de plus par appel que la petite carte du tableau. S'il entre dans le produit, il doit partir à la taille du sprite, pas à celle du rendu."
+  }
+}

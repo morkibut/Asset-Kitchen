@@ -24,6 +24,7 @@ du codex, reportée ici (`docs/maquettes-v2.1/05-codex.html`).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -48,6 +49,42 @@ class Vue:
     modifiable à la main — c'est du texte libre, et le produit ne réécrit jamais
     ce que l'auteur a tapé — mais elle est écrite juste, la première fois, sans
     qu'on ait à y penser.
+
+    ── Les deux textes qui partent **en queue de prompt** (1ᵉʳ septembre 2026) ──
+
+    `contrainte` est la caméra redite en dernier, à l'impératif. `volume` dit
+    **quelles faces du sujet on voit** dans cette caméra-là, et il part pour tout
+    ce que le jeu dessine. `corps` est l'exemple humain, et lui seul dépend de la
+    famille.
+
+    **Deux champs et non un, et c'est le banc des deux jeux qui l'a exigé** (1ᵉʳ
+    septembre 2026). La première version n'en avait qu'un, il parlait de tête,
+    d'épaules et de pieds, et il ne partait que pour les personnages. Les deux
+    moitiés étaient fausses :
+
+    · Il partait **tel quel à un quadricoptère** (*« from the head down to the
+      feet »*) et à un lézard (*« the shoulders are wide »*), parce que le
+      produit range les créatures avec les personnages — et il a raison, ce sont
+      les mêmes cases et les mêmes poses. Ce n'est donc pas la famille qu'il
+      fallait affiner, c'est la phrase : une caméra décrit des faces, pas des
+      membres.
+    · Et il **ne partait pas du tout pour un objet**, faute d'un corps. Résultat
+      mesuré : un coffre de caravane, dans un jeu déclaré vu de dessus strict,
+      est revenu dessiné de trois quarts. La caméra seule ne suffisait pas ; ce
+      qui la faisait tenir était la phrase des faces, et les objets ne l'avaient
+      pas.
+
+    **Ce sont les deux seuls champs du domaine dont l'utilité est mesurée**
+    (`essais/essai_vue.py`, 1ᵉʳ septembre 2026, trente images payées). Le banc a
+    comparé six façons de réparer le même prompt, et il n'en a retenu qu'une :
+    **une caméra dite en dernier, en mots qui décrivent ce qu'on doit voir.** Le
+    rapport hauteur/largeur du sujet — deux pour un debout de face, un pour un
+    corps vu d'aplomb — passe de **1,55 à 1,13** avec cette seule addition.
+
+    Et le banc a **réfuté** les deux réparations qu'on croyait décisives :
+    retirer l'image de référence ne change rien (1,46 contre 1,55), et le prompt
+    négatif seul ne change rien non plus (1,69). Dire ce qu'on ne veut pas ne dit
+    pas ce qu'on veut ; dire la caméra en dernier, si.
     """
 
     identifiant: str
@@ -56,6 +93,9 @@ class Vue:
     images: int
     phrase: str
     directions: tuple[Direction, ...] = ()
+    contrainte: str = ""
+    volume: str = ""
+    corps: str = ""
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -64,6 +104,9 @@ class Vue:
             "exemples": self.exemples,
             "images": self.images,
             "phrase": self.phrase,
+            "contrainte": self.contrainte,
+            "volume": self.volume,
+            "corps": self.corps,
             "directions": [d.en_json() for d in self.directions],
         }
 
@@ -88,30 +131,87 @@ class Vue:
 # faites avant la déclaration : « la première direction » doit être la même pour
 # tout le monde.
 _CARDINALES = (
-    ("sud", "south", "toward the viewer"),
-    ("nord", "north", "away from the viewer"),
-    ("est", "east", "to the right"),
-    ("ouest", "west", "to the left"),
+    ("sud", "south", "toward the viewer", "toward the bottom of the image"),
+    ("nord", "north", "away from the viewer", "toward the top of the image"),
+    ("est", "east", "to the right", "toward the right of the image"),
+    ("ouest", "west", "to the left", "toward the left of the image"),
 )
 
 
-def _cardinales(queue: str = "") -> tuple[Direction, ...]:
+def _cardinales(queue: str = "", du_cadre: bool = False) -> tuple[Direction, ...]:
     """Les quatre points cardinaux, dits comme cette vue-là les dit.
 
-    Sans queue, chaque direction garde le repère qui la situe — *toward the
-    viewer*, *to the left*. Avec, c'est la projection qui prend sa place : un
-    jeu isométrique regarde son sud de trois quarts, et le dire quatre fois de
-    la même façon est très exactement ce qu'un gabarit sert à éviter.
+    **Deux repères, et c'est la caméra qui décide lequel a un sens** — corrigé le
+    1ᵉʳ septembre 2026, sur images payées.
+
+    Un jeu vu de face ou de trois quarts se repère par rapport au **spectateur** :
+    *toward the viewer*, *to the left*. C'était le seul repère du produit, et il
+    est juste là.
+
+    Il ne veut plus rien dire dès que la caméra passe à l'aplomb, **parce que le
+    spectateur est alors au-dessus** : « face au spectateur » demanderait à un
+    personnage vu de dessus de regarder le ciel. Le banc des deux jeux l'a
+    mesuré sur le jeu vu de dessus strict — *marche vers le sud* et *marche vers
+    le nord* ont rendu **la même image**, deux fois. La direction est le second
+    axe de la matrice ; elle multiplie la production par quatre, et elle
+    n'arrivait pas.
+
+    Ces caméras-là se repèrent donc par rapport au **cadre** : vers le bas de
+    l'image, vers la droite de l'image. C'est ce qu'un jeu vu de dessus veut
+    dire.
+
+    ── **Et ça ne suffit pas. Le dire ici parce que c'est cher à réapprendre** ──
+
+    Le nouveau repère **corrige un contresens ; il ne répare pas le symptôme.**
+    Mesuré le même jour, sur la masse du sujet dans sa propre boîte — un corps
+    qui marche vers le bas du cadre y pousse ses pieds, et le tiers haut se vide :
+
+        bruit, dix appels identiques      haut 26,1 %   dispersion ±0,9 %
+        repère du cadre, sud              haut 27,4 %
+        repère du cadre, nord             haut 28,0 %   ← 0,6 % d'écart, sous le bruit
+
+    Deux autres réparations ont été essayées et **échouent aussi** : replier la
+    consigne d'angle en queue de prompt, et la réécrire comme une rotation dans
+    le plan de l'image (*« tourné pour marcher vers le bord bas »*). Les deux
+    changent le cadrage — le tiers haut passe à 38-40 % — mais **de la même façon
+    pour le sud et pour le nord**. Ce n'est pas la direction qui est obéie.
+
+    **Conclusion, et elle dépasse ce fichier : la direction ne s'obtient pas par
+    des mots.** Elle est le second axe de la matrice et multiplie la production
+    par quatre ; aucune phrase testée ne la fait arriver dans un jeu vu d'aplomb.
+    C'est exactement ce que `docs/etude-mannequin.md` avait supposé pour
+    l'attitude — *les mots ne savent pas dire une posture* — et cette mesure-ci
+    l'étend à l'orientation. La réparation, si elle vient, sera une **image** :
+    un référent par direction, ou la scène articulée de la V3.
+
+    Ce repère-ci reste, parce qu'un contresens qui ne coûte rien reste un
+    contresens : demander à un personnage vu de dessus de faire face au
+    spectateur, c'est lui demander de regarder le ciel.
+
+    La queue de projection, elle, ne change pas : elle **s'ajoute** au repère au
+    lieu de le remplacer. La remplacer était la faute jumelle — un sud
+    isométrique disait `facing south, isometric three-quarter view`, ce qui
+    nomme la projection et ne dit rien de l'orientation.
     """
     return tuple(
-        Direction(nom, nom, f"facing {vers}, {queue or repere}")
-        for nom, vers, repere in _CARDINALES
+        Direction(
+            nom,
+            nom,
+            ", ".join(
+                mot
+                for mot in (f"facing {vers}", cadre if du_cadre else spectateur, queue)
+                if mot
+            ),
+        )
+        for nom, vers, spectateur, cadre in _CARDINALES
     )
 
 
 QUATRE = _cardinales()
-QUATRE_OBLIQUES = _cardinales("oblique projection")
-QUATRE_ISOMETRIQUES = _cardinales("isometric three-quarter view")
+# **Les vues d'aplomb se repèrent au cadre**, pas au spectateur.
+QUATRE_DU_CADRE = _cardinales(du_cadre=True)
+QUATRE_OBLIQUES = _cardinales("oblique projection", du_cadre=True)
+QUATRE_ISOMETRIQUES = _cardinales("isometric three-quarter view", du_cadre=True)
 
 HUIT = QUATRE + tuple(
     Direction(identifiant, identifiant, f"facing {vers}")
@@ -132,13 +232,29 @@ DEUX = (
 # **Huit vues, et la liste est fermée.** Elles couvrent ce que le produit sait
 # fabriquer ; une neuvième demanderait de savoir ce qu'elle change au nombre
 # d'images, et c'est cette question-là qui fait entrer une vue, pas son nom.
+#
+# **La phrase ne nomme plus un personnage** depuis le 1ᵉʳ septembre 2026. Elle
+# disait `full-body character centered` sur cinq vues, et elle part avec *toutes*
+# les générations du jeu — une tuile de sol recevait donc l'ordre de centrer un
+# personnage en pied. Ce que la phrase dit du corps est passé dans `corps`, qui
+# ne part que pour les choses qui en ont un. Les anciennes phrases restent
+# connues du produit, juste en dessous, pour que les projets d'avant continuent
+# de se relire.
 VUES: tuple[Vue, ...] = (
     Vue(
         "vue-face-fixe",
         "De face, fixe",
         "les écrans de combat au tour par tour",
         1,
-        "front-facing orthographic view, full-body character centered",
+        "front-facing orthographic view, subject centered",
+        (),
+        "CAMERA — this overrides everything above. The camera faces the subject "
+        "head-on, at the subject's own height, with no tilt at all. Not a side "
+        "view, not a three-quarter view, not seen from above. No perspective, no "
+        "vanishing point.",
+        "You see the subject's front face, its whole height, from its top down "
+        "to where it meets the ground.",
+        "On a character, that means head to feet, facing you.",
     ),
     Vue(
         "vue-dessus-verticale",
@@ -146,46 +262,93 @@ VUES: tuple[Vue, ...] = (
         "les jeux de tir à défilement vertical",
         1,
         "strict top-down view seen from directly above",
+        (),
+        "CAMERA — this overrides everything above. The camera is directly "
+        "overhead, looking straight down at the ground at 90 degrees. Not a side "
+        "view, not a three-quarter view, not a front view. No horizon line, no "
+        "perspective, no vanishing point.",
+        "You are looking down onto the subject's upper surface: its top face is "
+        "what fills the sprite, and nothing that faces forwards or sideways is "
+        "visible.",
+        "On a character, that means the top of the head and the shoulders, never "
+        "the face, and the feet stay hidden under the body.",
     ),
     Vue(
         "vue-cote-plateforme",
         "De côté — plateforme",
         "Mario, Celeste, Hollow Knight",
         2,
-        "side view, orthographic, full-body character centered",
+        "side view, orthographic, subject centered",
         DEUX,
+        "CAMERA — this overrides everything above. The camera is at the subject's "
+        "own height and looks at it from the side, in pure profile. Not a front "
+        "view, not a three-quarter view, not seen from above. No perspective, no "
+        "vanishing point.",
+        "You see one whole flank of the subject, from its top down to where it "
+        "meets the ground, and nothing of its front or its back.",
+        "On a character, that means a pure profile, head to feet.",
     ),
     Vue(
         "vue-cote-defilement",
         "De côté — défilement",
         "les jeux de baston de rue",
         2,
-        "side view, orthographic, full-body character centered",
+        "side view, orthographic, subject centered",
         DEUX,
+        "CAMERA — this overrides everything above. The camera is at the subject's "
+        "own height and looks at it from the side, in pure profile. Not a front "
+        "view, not a three-quarter view, not seen from above. No perspective, no "
+        "vanishing point.",
+        "You see one whole flank of the subject, from its top down to where it "
+        "meets the ground, and nothing of its front or its back — on a "
+        "character, that means a pure profile, head to feet.",
     ),
     Vue(
         "vue-dessus-stricte",
         "De dessus, stricte",
         "le premier Zelda, Hotline Miami",
         4,
-        "top-down view, full-body character centered",
-        QUATRE,
+        "top-down view, subject centered",
+        QUATRE_DU_CADRE,
+        "CAMERA — this overrides everything above. The camera is high above the "
+        "subject and looks down at a steep angle, close to straight down. Not a "
+        "side view, not a front view. No horizon line, no perspective, no "
+        "vanishing point.",
+        "You see mostly the subject's upper surface, and only a narrow band of "
+        "its front.",
+        "On a character, the head reads from above and the shoulders are wide, "
+        "while the feet are barely visible.",
     ),
     Vue(
         "vue-dessus-34",
         "De dessus, 3/4",
         "Zelda A Link to the Past, Stardew Valley",
         4,
-        "3/4 top-down orthographic view, full-body character centered",
+        "3/4 top-down orthographic view, subject centered",
         QUATRE,
+        "CAMERA — this overrides everything above. The camera is above the "
+        "subject and tilted down towards it, the way A Link to the Past and "
+        "Stardew Valley look at their world. Not straight overhead, not at eye "
+        "level. No horizon line, no vanishing point.",
+        "You see the subject's front face and its upper surface at the same "
+        "time, and its base is visible below it.",
+        "On a character, the face and the top of the head at once, with the feet "
+        "showing.",
     ),
     Vue(
         "vue-oblique",
         "Oblique (cavalière)",
         "Ultima, EarthBound",
         4,
-        "oblique cavalier projection, no vanishing point, full-body character centered",
+        "oblique cavalier projection, no vanishing point, subject centered",
         QUATRE_OBLIQUES,
+        "CAMERA — this overrides everything above. Cavalier oblique projection: "
+        "the camera looks down at one fixed angle and parallel lines stay "
+        "parallel everywhere. No vanishing point, no horizon line, no "
+        "foreshortening.",
+        "You see the subject's front face and its top face at once, neither of "
+        "them squashed.",
+        "On a character, the front of the body and the top of the head together.",
     ),
     Vue(
         "vue-isometrique",
@@ -194,7 +357,29 @@ VUES: tuple[Vue, ...] = (
         4,
         "isometric projection, 30 degrees above the horizon, no vanishing point",
         QUATRE_ISOMETRIQUES,
+        "CAMERA — this overrides everything above. Isometric projection, seen "
+        "from a corner, 30 degrees above the horizon. Parallel lines stay "
+        "parallel everywhere. No vanishing point, no horizon line.",
+        "You see two side faces of the subject and its top face at the same "
+        "time, all at the same scale.",
+        "On a character, one shoulder, the chest and the top of the head "
+        "together.",
     ),
+)
+
+
+# Les phrases que le produit écrivait dans la case `vue` **avant** le
+# 1ᵉʳ septembre 2026. Elles ne sont plus proposées ; elles restent connues pour
+# que `sans_phrase_du_produit` les retire des fichiers écrits avant — sans quoi
+# elles resteraient dans la case de l'auteur et se diraient deux fois.
+_PHRASES_D_AVANT = frozenset(
+    {
+        "front-facing orthographic view, full-body character centered",
+        "side view, orthographic, full-body character centered",
+        "top-down view, full-body character centered",
+        "3/4 top-down orthographic view, full-body character centered",
+        "oblique cavalier projection, no vanishing point, full-body character centered",
+    }
 )
 
 
@@ -230,7 +415,7 @@ TAILLES: tuple[tuple[int, str], ...] = (
 
 
 def phrase_de_grille(cible: int) -> str:
-    """Ce que le choix de taille écrit dans la case `rendu`.
+    """Ce que le choix de taille dit dans la case `rendu`.
 
     **Un choix unique remplit le réglage et la phrase**, et c'est ce qui répare
     la contradiction mesurée du dépôt : le réglage disait 128 pendant que le
@@ -240,6 +425,14 @@ def phrase_de_grille(cible: int) -> str:
     univers vide ne contraint rien » (US-57) : *aucune* veut dire que le produit
     ne dit rien de la grille, et écrire `no pixel grid` serait une affirmation
     que personne n'a faite.
+
+    **Elle n'est plus *écrite* dans la case depuis le 1ᵉʳ septembre 2026, elle
+    est *calculée* à l'envoi** — voir `Univers.phrase_du_produit`. La différence
+    n'est pas de goût : rangée dans la case, elle cessait d'être mise à jour dès
+    que l'auteur ajoutait un mot à côté d'elle, parce que la case devenait « du
+    texte d'auteur » et que le produit s'interdit d'y toucher. Une seule
+    étiquette cliquée gelait donc la grille pour toujours, et rouvrait la
+    contradiction que ce mécanisme existe pour fermer.
     """
     return f"2D pixel art on a {cible}x{cible} grid" if cible else ""
 
@@ -254,16 +447,79 @@ def phrase_de_calage(cible: int) -> str:
     )
 
 
+# ── Le cadre, replié juste avant la caméra ───────────────────────────────────
+#
+# **Une phrase, et la moitié qu'elle contient est celle qui a été mesurée.**
+# Le banc des deux jeux (`essais/essai_deux_jeux.py`) a comparé le même appel
+# avec et sans, trois tirages chacun : l'aire du sujet passe de **14,7 % à
+# 20,1 %** de l'image, sans recouvrement entre les deux bras. C'est **37 % de
+# pixels en plus** pour le sprite, avant qu'il soit ramené à 32 ou 64 px — et le
+# détail perdu au rééchantillonnage ne se rattrape jamais.
+#
+# **Ce qui n'y est pas y était, et le banc l'a retiré.** La version essayée
+# demandait aussi *un fond d'une seule couleur plate, sans dégradé ni vignette*.
+# Mesuré sur les pixels d'un coin, le fond est ressorti **plus bruité** avec la
+# phrase que sans — amplitude de 17 niveaux contre 4. La demande n'a pas été
+# tenue ; on ne garde pas une phrase qui ne fait pas ce qu'elle dit. Le décor et
+# le sol, eux, restent interdits : ce sont des objets, pas une texture, et le
+# reste de la phrase les tient.
+#
+# **Elle ne part pas avec une planche.** Une planche vient précisément de
+# demander plusieurs sujets dans une grille ; « un seul sprite et rien d'autre »
+# la contredirait mot pour mot.
+CADRE = (
+    "FRAMING — one single sprite and nothing else: no scenery, no ground, no "
+    "extra props, nothing the description above does not name. The subject is "
+    "centred and fills most of the image. No text, no letters, no numbers, no "
+    "logo, no frame, no border."
+)
+
+
 def phrases_du_produit() -> frozenset[str]:
     """Tout ce que le produit a pu écrire lui-même dans une case de la bible.
 
-    **C'est la borne qui rend la réécriture sûre** : le produit ne réécrit que
-    le vide ou ce qu'il avait lui-même écrit. Ce que l'auteur a tapé ne se
-    réécrit jamais sous ses yeux — c'est du texte libre, et le dire est la
-    moitié de la promesse.
+    **Elle ne borne plus une réécriture, elle borne une relecture.** Tant que la
+    phrase était rangée dans la case, cette liste disait ce que le produit avait
+    le droit d'écraser ; depuis qu'elle se calcule à l'envoi, elle dit ce qu'il
+    faut **retirer** des fichiers écrits avant — c'est `sans_phrase_du_produit`,
+    juste dessous, et c'est toute la migration.
+
+    La liste est close et vient d'ici : huit vues, neuf tailles, deux phrases
+    par taille — **plus les cinq phrases de vue d'avant le 1ᵉʳ septembre 2026**,
+    celles qui nommaient un personnage. C'est le cas que la version précédente
+    de ce texte annonçait comme sûr et qui vient de se produire : une phrase a
+    changé, et sans ces cinq lignes elle serait restée dans la case de l'auteur,
+    à se dire une seconde fois.
     """
-    ecrites = {v.phrase for v in VUES}
+    ecrites = {v.phrase for v in VUES} | set(_PHRASES_D_AVANT)
     for cible, _ in TAILLES:
         ecrites.add(phrase_de_grille(cible))
         ecrites.add(phrase_de_calage(cible))
     return frozenset(ecrites)
+
+
+def sans_phrase_du_produit(texte: str) -> str:
+    """Le texte d'une case, débarrassé de ce que le produit y avait écrit.
+
+    **La migration du 1ᵉʳ septembre 2026, et elle tient en une fonction.** Les
+    fichiers écrits avant portent la phrase du produit *dans* la case — seule,
+    quand personne n'a rien ajouté, ou collée devant le texte de l'auteur avec
+    une virgule quand une étiquette est passée par là. Les deux se relisent ici.
+
+    **Les plus longues d'abord** : `single isolated sprite …, strict 8x8 px tile
+    snap` et son jumeau en 128 partagent tout sauf leur nombre, et retirer la
+    courte avant la longue laisserait des miettes. Trier par longueur
+    décroissante est la seule précaution que ce retrait demande.
+
+    Ce qu'il reste est **le texte de l'auteur, et rien d'autre** — d'où le
+    nettoyage des virgules orphelines que le retrait laisse derrière lui. Un
+    texte qui ne contenait aucune phrase du produit ressort mot pour mot.
+    """
+    reste = texte
+    for phrase in sorted(phrases_du_produit(), key=len, reverse=True):
+        if phrase and phrase in reste:
+            reste = reste.replace(phrase, "")
+    # Les séparateurs que le retrait laisse : une virgule en tête, une en queue,
+    # deux qui se suivent. Nettoyés ici plutôt que devinés par l'appelant.
+    reste = re.sub(r"\s*,\s*(?=,)", "", reste)
+    return reste.strip().strip(",").strip()

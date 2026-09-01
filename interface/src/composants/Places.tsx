@@ -1210,10 +1210,16 @@ export function PanneauMain({
   return (
     <div className="flex flex-col gap-3">
       {/* **La raison du grisé du comparateur, et elle vit ici.** La bande de
-          38 px n'a pas la place d'une phrase, et le cas qui a tranché mérite
-          d'être dit : *côte à côte* met deux images à l'écran, et la main
-          n'aurait pas su sur laquelle elle écrit. */}
-      <Raison texte="la main se pose sur le rendu — les trois autres vues du comparateur s'éteignent, et « Avant › » les remplace le temps d'un appui" />
+          38 px n'a pas la place d'une phrase.
+
+          **Elle a fondu de trois grisés à un.** Elle en expliquait trois : le
+          brut et les deux comparaisons, au motif que *côte à côte* met deux
+          images à l'écran et que la main n'aurait pas su sur laquelle elle
+          écrit. L'argument tombe avec la scène qui l'a créé — le témoin ne
+          porte plus rien, il est cerclé ou il ne prend pas le pointeur. Ne
+          reste que le brut, et pour une autre raison : le pinceau écrit sur le
+          résultat. */}
+      <Raison texte="la main se pose sur le rendu — le brut s'éteint dans le comparateur, et « Avant › » le rend le temps d'un appui" />
 
       {/* **La pile se lit du dessus au dessous**, comme partout où il y a des
           calques — et elle est *rangée* du dessous vers le dessus, qui est
