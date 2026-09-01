@@ -990,6 +990,13 @@ export function EcranTables({
     viseeArmee !== null && recette.passes[viseeArmee]?.moteur === "couleur"
       ? viseeArmee
       : null
+  /** La passe qui attend qu'on **entoure** dans l'image (U12) — le même état
+   *  armé, lu par l'autre moteur. Deux états auraient pu s'armer ensemble, et
+   *  la surface aurait alors reçu deux gestes à la fois. */
+  const entourage =
+    viseeArmee !== null && recette.passes[viseeArmee]?.moteur === "trace"
+      ? viseeArmee
+      : null
 
   const dehors = indisponible(ouverte, traitement, mesures)
 
@@ -1508,6 +1515,28 @@ export function EcranTables({
                   setViseeArmee(null)
                 }}
               />
+            ) : (mode === "rendu" || mode === "brut") &&
+              ouverte === "detourage" &&
+              entourage !== null ? (
+              // **On entoure sur le brut, exactement comme on y vise** (U12) :
+              // la forme est en pixels de l'image d'origine, ce qui la fait
+              // survivre aux passes qui la précèdent, et le rendu porte le
+              // recadrage et la remise sur grille, qui déplacent tous les deux
+              // ce qu'on montre.
+              <TraceSurImage
+                asset={asset}
+                trace={recette.passes[entourage].trace}
+                onTrace={(trace) => {
+                  void poser({
+                    ...recette,
+                    passes: recette.passes.map((p, i) =>
+                      i === entourage ? { ...p, trace } : p,
+                    ),
+                  })
+                  // Le tracé fini désarme, pour la raison du clic de la pipette.
+                  setViseeArmee(null)
+                }}
+              />
             ) : (mode === "rendu" || mode === "brut") && ouverte === "recadrage" ? (
               // **Le rectangle se pose sur l'image, jamais dans un champ.** Le
               // modèle le porte depuis T2 et aucun écran ne l'avait montré : on
@@ -1919,6 +1948,114 @@ function PipetteSurImage({
         >
           <span className="absolute left-1/2 top-1/2 h-px w-px -translate-x-1/2 -translate-y-1/2 bg-lumiere" />
         </span>
+      )}
+    </div>
+  )
+}
+
+// ── La sélection magique, entourée sur l'image (U12) ────────────────────────
+
+/**
+ * L'image, et la forme qu'on entoure à main levée autour du sujet.
+ *
+ * **On trace gros, l'atelier ajuste au bord.** Le trait qu'on fait ne devient
+ * jamais le contour du sprite : il borne la recherche, et c'est le serveur qui
+ * va chercher le bord du sujet à l'intérieur. C'est pour ça qu'on peut trembler.
+ *
+ * **La forme se ferme d'elle-même**, et le trait de fermeture se voit pendant
+ * qu'on trace : le geste est *entourer*, pas *dessiner une ligne*, et montrer la
+ * corde qui manque évite de croire qu'on a laissé un trou.
+ *
+ * Les coordonnées vont dans les pixels de l'image **brute**, comme le point de
+ * la pipette et le rectangle de recadrage : une seule convention dans tout le
+ * produit, et c'est ce qui fait survivre le tracé aux passes qui le précèdent.
+ */
+function TraceSurImage({
+  asset,
+  trace,
+  onTrace,
+}: {
+  asset: Asset
+  /** La forme déjà posée sur cette passe, montrée en creux — on entoure à
+   *  nouveau en voyant ce qu'on remplace. */
+  trace: [number, number][]
+  onTrace: (trace: [number, number][]) => void
+}) {
+  const [encours, setEncours] = useState<[number, number][] | null>(null)
+
+  const point = (evenement: React.PointerEvent<HTMLDivElement>): [number, number] => {
+    const surface = evenement.currentTarget.getBoundingClientRect()
+    const image = rectangleDeLImage(surface, asset.largeur, asset.hauteur)
+    const x = ((evenement.clientX - image.left) / image.width) * asset.largeur
+    const y = ((evenement.clientY - image.top) / image.height) * asset.hauteur
+    return [
+      Math.max(0, Math.min(asset.largeur - 1, Math.floor(x))),
+      Math.max(0, Math.min(asset.hauteur - 1, Math.floor(y))),
+    ]
+  }
+
+  const terminer = () => {
+    if (!encours) return
+    setEncours(null)
+    // **Moins de trois points n'entoure rien**, et un clic isolé n'est pas un
+    // geste raté : c'est un geste qu'on n'a pas fait. On ne pose donc rien
+    // plutôt que de poser une forme vide qui n'effacerait rien en silence.
+    if (encours.length >= 3) onTrace(encours)
+  }
+
+  const montree = encours ?? trace
+
+  return (
+    <div
+      data-trace
+      style={{ aspectRatio: `${asset.largeur} / ${asset.hauteur}` }}
+      className="relative h-full w-full cursor-crosshair"
+      onPointerDown={(evenement) => {
+        if (evenement.button !== 0) return
+        setEncours([point(evenement)])
+        evenement.currentTarget.setPointerCapture(evenement.pointerId)
+      }}
+      onPointerMove={(evenement) => {
+        if (!encours) return
+        const [x, y] = point(evenement)
+        const dernier = encours[encours.length - 1]
+        // **Un point tous les deux pixels, pas un par événement.** Un pointeur
+        // envoie ce qu'il peut ; garder les doublons gonflerait la recette sans
+        // rien ajouter à une forme que le serveur remplit de toute façon.
+        if (Math.abs(dernier[0] - x) < 2 && Math.abs(dernier[1] - y) < 2) return
+        setEncours([...encours, [x, y]])
+      }}
+      onPointerUp={terminer}
+      onPointerLeave={terminer}
+    >
+      {/* **On entoure sur le brut, et pas sur le rendu**, pour la raison exacte
+          de la pipette : la forme est en pixels de l'image d'origine, et le
+          rendu porte le recadrage et la remise sur grille, qui déplacent tous
+          les deux ce qu'on montre. */}
+      <img
+        src={api.rendu(asset.identifiant, asset.empreinte, true)}
+        alt={asset.label}
+        draggable={false}
+        className="damier h-full w-full object-contain select-none"
+        style={{ imageRendering: "pixelated" }}
+      />
+      {montree.length > 1 && (
+        <svg
+          aria-hidden
+          viewBox={`0 0 ${asset.largeur} ${asset.hauteur}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        >
+          <polygon
+            points={montree.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ")}
+            fill="var(--signal)"
+            fillOpacity={0.14}
+            stroke="var(--lumiere)"
+            strokeWidth={1}
+            strokeDasharray="3 2"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
       )}
     </div>
   )

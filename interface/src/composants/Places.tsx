@@ -57,6 +57,7 @@ export const MOTEUR: Record<Passe["moteur"], string> = {
   bord: "bord",
   couleur: "pipette",
   modele: "modèle",
+  trace: "sélection",
 }
 
 /** Ce qu'une place posée dit d'elle-même quand elle est repliée

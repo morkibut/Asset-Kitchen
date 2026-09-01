@@ -268,11 +268,20 @@
     <table>
       <thead><tr><th style="width:17%">Réglage</th><th style="width:21%">Domaine · défaut</th><th>Ce qu'il fait, et ce qu'il coûte</th></tr></thead>
       <tbody>
-        <tr><td class="k">moteur</td><td><span class="m">bord · pipette · modèle</span><br><span class="sourd">défaut : bord</span></td>
+        <tr><td class="k">moteur</td><td><span class="m">bord · pipette · sélection · modèle</span><br><span class="sourd">défaut : bord</span></td>
           <td><strong>bord</strong> remplit depuis les quatre bordures — le geste courant, aucun réseau, aucun
             téléchargement, mesuré propre sur douze images de six modèles. <strong>pipette</strong> vise une
-            couleur désignée dans l'image. <strong>modèle</strong> pour les images qui n'ont pas été
-            fabriquées ici et n'ont pas de fond plat ; grisé avec sa raison s'il n'est pas installé.</td></tr>
+            couleur désignée dans l'image. <strong>sélection</strong> part du liseré d'une forme entourée à
+            main levée — même remplissage, borné cette fois par ce qu'on a tracé. <strong>modèle</strong> pour
+            les images qui n'ont pas été fabriquées ici et n'ont pas de fond plat ; grisé avec sa raison s'il
+            n'est pas installé.</td></tr>
+        <tr><td class="k">forme entourée</td><td><span class="m">tracée à main levée</span><br><span class="sourd">ajoutée le 1<sup>er</sup> sept. 2026</span></td>
+          <td><em>sélection seulement.</em> On entoure <strong>grossièrement</strong> ce qu'on veut garder, et
+            l'atelier va chercher le bord du sujet lui-même à l'intérieur. <strong>Le trait qu'on fait ne
+            devient jamais le contour du sprite</strong> : il borne la recherche au lieu de la lancer, et
+            c'est pour ça qu'on peut trembler. Rien ne bouge au-dehors, ce qui rend les tracés cumulables —
+            un bras, puis l'autre. La forme se ferme d'office, et elle <strong>ne voyage pas</strong> : c'est
+            une coordonnée, comme le point de la pipette.</td></tr>
         <tr><td class="k">couleur visée</td><td><span class="m">hex</span><br><span class="sourd">cliquée dans l'image</span></td>
           <td><em>pipette seulement.</em> Le clic pose la couleur ; la pastille l'affiche et le code hex la
             nomme. <strong>Recliquer ailleurs remplace la couleur de la passe</strong> — on ne crée pas une

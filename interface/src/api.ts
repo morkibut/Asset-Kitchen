@@ -127,7 +127,7 @@ export type Generation = {
 // places sont vides ne produit aucun rendu : le brut suffit.
 
 export type Passe = {
-  moteur: "bord" | "couleur" | "modele"
+  moteur: "bord" | "couleur" | "modele" | "trace"
   tolerance: number
   seuil_alpha: number
   durcissement: number
@@ -151,6 +151,18 @@ export type Passe = {
    *  ce qu'on éteint garde tous ses réglages, et la rallumer rend exactement
    *  l'état d'avant. */
   masquee: boolean
+  /** La sélection magique : la forme entourée à main levée autour du sujet, en
+   *  pixels de l'image **brute** (U12).
+   *
+   *  **Elle borne la recherche, elle ne la lance pas.** Le trait qu'on fait ne
+   *  devient jamais le contour du sprite : l'atelier va chercher le bord du
+   *  sujet *à l'intérieur* de ce qu'on a entouré, et ne touche à rien au-dehors.
+   *  C'est pour ça qu'on peut trembler.
+   *
+   *  Vide tant qu'on n'a rien entouré — et une passe sans forme ne retire rien,
+   *  comme une pipette sans point. Elle **ne voyage pas** : une coordonnée ne
+   *  voyage pas, et une suite de coordonnées encore moins. */
+  trace: [number, number][]
 }
 
 /** La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -479,6 +491,7 @@ export const PASSE_PAR_DEFAUT: Passe = {
   point: null,
   portee: "tache",
   masquee: false,
+  trace: [],
 }
 
 export type Asset = {

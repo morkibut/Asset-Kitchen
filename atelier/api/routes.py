@@ -45,7 +45,7 @@ from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.image import rendre_en_png, vignette
 from atelier.reglages import deposer_cle, etat_cle
 from atelier.services import Atelier
-from atelier.services.assets import AssetInconnu
+from atelier.services.assets import AssetInconnu, TRACE_MAX
 
 routeur = APIRouter()
 
@@ -668,6 +668,11 @@ class CorpsPasse(BaseModel):
     # l'image d'avant. Le défaut par défaut est *visible*, si bien qu'une
     # recette écrite avant ce champ arrive inchangée.
     masquee: bool = False
+    # **La forme entourée à main levée** (U12), en pixels de l'image brute. Le
+    # plafond est celui du service, redit ici pour que `/api/docs` le montre :
+    # un tracé est une suite de points, et une suite sans borne est une porte
+    # ouverte à un seul appel qui occupe la machine.
+    trace: list[list[int]] | None = Field(default=None, max_length=TRACE_MAX)
 
 
 class CorpsRecadrage(BaseModel):

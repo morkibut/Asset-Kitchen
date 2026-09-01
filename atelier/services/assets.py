@@ -85,6 +85,13 @@ CIBLE_MIN, CIBLE_MAX = 8, 512
 DURCISSEMENT_MAX = 4
 COULEURS_MIN, COULEURS_MAX = 2, 256
 
+# Combien de points une forme entourée à main levée peut porter (U12). **Un
+# plafond, pas une précision** : l'écran ne garde un point que lorsque le
+# pointeur s'est déplacé d'au moins deux pixels, et un tour complet d'une image
+# de mille pixels en demande quelques centaines. Quatre mille laisse toute la
+# place au geste et ferme la porte à un appel qui occuperait la machine.
+TRACE_MAX = 4000
+
 # La tolérance du moteur du bord quand aucune passe ne la dit — la même valeur
 # que `Passe`, et le seul endroit où elle est répétée : la mesure des poches
 # doit décrire le détourage que l'auteur *aurait* obtenu s'il en posait un.
@@ -1090,6 +1097,20 @@ class ServiceAssets:
             # traitement le tient : hors cadre, la pipette ne retire rien.
             if passe.point is not None and min(passe.point) < 0:
                 raise RecetteRefusee(f"passe {rang} : le point visé sort de l'image")
+            # **La forme entourée suit la règle du point, exactement** (U12) :
+            # un point négatif est refusé, un point hors cadre ne l'est pas —
+            # celui-là arrive tout seul le jour où le brut est remplacé par une
+            # image plus petite. Seul le plafond de points est à part : il ne
+            # protège pas la recette, il protège la machine.
+            if len(passe.trace) > TRACE_MAX:
+                raise RecetteRefusee(
+                    f"passe {rang} : une forme entourée porte au plus "
+                    f"{TRACE_MAX} points"
+                )
+            if any(x < 0 or y < 0 for x, y in passe.trace):
+                raise RecetteRefusee(
+                    f"passe {rang} : la forme entourée sort de l'image"
+                )
 
         grille = recette.grille
         if grille is not None:

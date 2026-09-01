@@ -59,6 +59,7 @@ from atelier.domaine.recette import (
     PARTOUT,
     QUANTIFICATION,
     RECADRAGE,
+    TRACE,
     Bords,
     CalqueDessin,
     Contour,
@@ -81,6 +82,7 @@ __all__ = [
     "detourer",
     "detourer_bord",
     "detourer_couleur",
+    "detourer_trace",
     "durcir",
     "etendre",
     "finir",
@@ -157,8 +159,10 @@ def raison_moteur(moteur: str) -> str | None:
     et l'inférence n'entre dans le processus qu'au moment où on la demande.
     """
     # La pipette n'a rien à télécharger : c'est le même remplissage par plages
-    # que le bord, amorcé ailleurs. Elle est donc toujours là, comme lui.
-    if moteur in (BORD, COULEUR):
+    # que le bord, amorcé ailleurs. Elle est donc toujours là, comme lui. La
+    # sélection magique non plus (U12) : c'est encore le même remplissage, borné
+    # cette fois par ce qu'on a entouré.
+    if moteur in (BORD, COULEUR, TRACE):
         return None
     if moteur != MODELE:
         return f"moteur inconnu — « {moteur} »"
@@ -328,6 +332,88 @@ def detourer_couleur(
     if reste is not None:
         proche = proche & reste
     fond = proche if partout else _remplir(proche, [(y, x)])
+    return np.where(fond, np.uint8(0), np.uint8(255))
+
+
+# ── La sélection magique — tracer gros, ajuster au bord (U12) ────────────────
+
+
+def dedans_du_trace(
+    trace: Sequence[tuple[int, int]], forme: tuple[int, int]
+) -> np.ndarray:
+    """Le dedans de la forme entourée, en pixels — **fermée d'office**.
+
+    **La seconde rasterisation du dépôt, et elle est déterministe comme la
+    première.** `pinceau` l'était par obligation — une recette rejouée doit
+    rendre le même masque, c'est un critère depuis T2 —, et celle-ci l'est pour
+    la même raison. Le remplissage de polygone de Pillow en mode `L` ne lisse
+    rien : un pixel est dedans ou dehors, jamais à demi. Un remplissage lissé
+    aurait fabriqué un bord flou dont le seuil aurait ensuite décidé à pile ou
+    face, et deux rendus de la même recette auraient différé d'un pixel.
+
+    Moins de trois points ne délimite rien : un masque vide, et la passe ne
+    retire rien — comme une pipette qu'on n'a pas encore visée.
+    """
+    hauteur, largeur = forme
+    if len(trace) < 3:
+        return np.zeros((hauteur, largeur), dtype=bool)
+    toile = Image.new("L", (largeur, hauteur), 0)
+    ImageDraw.Draw(toile).polygon(
+        [(int(x), int(y)) for x, y in trace], fill=255, outline=255
+    )
+    return np.asarray(toile) > 0
+
+
+def detourer_trace(
+    rgb: np.ndarray,
+    trace: Sequence[tuple[int, int]],
+    tolerance: int,
+    *,
+    reste: np.ndarray | None = None,
+) -> np.ndarray:
+    """L'alpha d'une image dont on a **entouré grossièrement le sujet** (U12).
+
+    **Le tracé borne la recherche, il ne la lance pas**, et c'est toute l'idée.
+    On entoure largement ce qu'on veut garder ; l'atelier part du liseré de ce
+    qu'on a tracé — des pixels de fond, puisqu'on a tracé *autour* — et remplit
+    vers l'intérieur jusqu'à buter sur le sujet. Ce qui sort est le bord du
+    sujet lui-même, trouvé dans les pixels, et non le trait tremblant qu'on a
+    fait à la main.
+
+    **Rien ne bouge au-dehors.** Le remplissage est enfermé dans la forme : une
+    sélection magique ne décide pas du reste de l'image, elle répond de ce qu'on
+    a entouré. C'est ce qui la rend cumulable avec les autres passes plutôt que
+    concurrente — on peut entourer un bras, puis l'autre.
+
+    **La couleur visée est la médiane du liseré**, comme le moteur du bord prend
+    la médiane de la bordure de l'image, et pour la même raison : un sujet qui
+    dépasse du tracé déplacerait une moyenne, il ne déplace pas une médiane.
+    Elle se lit à chaque rendu et ne se range pas dans la recette — même règle
+    que la couleur de la pipette.
+
+    `reste` est ce qui n'a pas encore été effacé (U10) : ce qui est déjà parti
+    n'est plus un chemin.
+    """
+    hauteur, largeur = rgb.shape[:2]
+    dedans = dedans_du_trace(trace, (hauteur, largeur))
+    if not dedans.any():
+        return np.full((hauteur, largeur), np.uint8(255))
+
+    # Le liseré : l'anneau d'un pixel juste à l'intérieur du trait. C'est de là
+    # qu'on part, et c'est lui qui donne la couleur du fond.
+    lisere = dedans & ~restreindre(dedans, 1)
+    if not lisere.any():
+        return np.full((hauteur, largeur), np.uint8(255))
+    cible = np.median(rgb[lisere].astype(np.int16), axis=0)
+    proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    proche = proche & dedans
+    if reste is not None:
+        proche = proche & reste
+
+    graines = [(int(y), int(x)) for y, x in np.argwhere(lisere & proche)]
+    if not graines:
+        return np.full((hauteur, largeur), np.uint8(255))
+    fond = _remplir(proche, graines)
     return np.where(fond, np.uint8(0), np.uint8(255))
 
 
@@ -872,6 +958,18 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
     """
     if passe.moteur == MODELE:
         neuf = _detourer_modele(rgba[:, :, :3])
+    elif passe.moteur == TRACE:
+        # **Une sélection magique sans forme ne fait rien** — même règle que la
+        # pipette non visée : on ajoute la passe avant d'entourer, et le temps
+        # qu'on prenne la souris ne doit pas manger l'image.
+        if len(passe.trace) < 3:
+            return rgba
+        neuf = detourer_trace(
+            rgba[:, :, :3],
+            passe.trace,
+            passe.tolerance,
+            reste=rgba[:, :, 3] > 0,
+        )
     elif passe.moteur == COULEUR:
         # **Une pipette sans point ne fait rien**, et surtout pas « tout » : on
         # ajoute la passe avant de viser, et la moitié de seconde entre les deux

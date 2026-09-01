@@ -605,6 +605,17 @@ export const AIDE: Record<string, Explication> = {
       "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
   },
 
+  "detourage.trace": {
+    nom: "forme entourée",
+    ou: "tables",
+    quoi: "La forme que tu as tracée à main levée autour du sujet, dans l'image. Elle se referme toute seule : le geste est d'entourer, pas de dessiner une ligne.",
+    change:
+      "Rien tant qu'elle est vide. Une fois tracée, l'atelier cherche le bord du sujet à l'intérieur de ce que tu as entouré et ne touche à rien au-dehors. Retracer remplace la forme de cette passe ; retirer la passe défait le geste d'un coup.",
+    origine: "toi · tracée dans l'image",
+    long:
+      "C'est la sélection magique des logiciels d'image, et elle répond à ce que ni le détourage automatique ni la retouche au pixel ne savent faire : le premier décide tout seul et se trompe parfois, la seconde demande de suivre un contour au pixel près, ce qui est très long sur une silhouette entière.\n\nTu traces gros, et c'est voulu : ton trait ne devient jamais le contour du sprite. Il borne la recherche. L'atelier part du liseré de ta forme — des pixels de fond, puisque tu as entouré large — et remplit vers l'intérieur jusqu'à buter sur le sujet. Ce qui sort est le bord du sujet lui-même, trouvé dans les pixels, pas ta main.\n\nElle vit avec le détourage et non avec la main : c'est une quatrième façon de désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, et un seul endroit décide de ce qui est effacé. Elle agit donc avant le recadrage et la mise sur grille, qui ont tous les deux besoin de savoir où est le sujet — tant que le fond est là, la boîte du sujet, c'est toute l'image.\n\nLa forme ne voyage pas. Coller les réglages sur une autre image ou enregistrer une recette sous un nom la laisse derrière : c'est une coordonnée, comme le point de la pipette et comme le rectangle de recadrage, et une silhouette entourée sur une attitude tomberait à côté sur l'attitude suivante.",
+  },
+
   "detourage.masquee": {
     nom: "masquer une passe",
     ou: "tables",

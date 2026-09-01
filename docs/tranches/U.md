@@ -1037,7 +1037,8 @@ exactement le même masque, en mille fois plus d'appels de dessin.
 
 ## U12 · La sélection magique — tracer gros, ajuster au bord
 
-**Critères : 7 · Ce que ça ajoute : un point de la seconde séance**
+**Critères : 7 · Ce que ça ajoute : un point de la seconde séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -1077,17 +1078,17 @@ ce qui existe.
 
 ### Critères d'acceptation
 
-- [ ] On trace une forme grossière autour du sujet, à main levée, et elle se voit pendant
+- [x] On trace une forme grossière autour du sujet, à main levée, et elle se voit pendant
       qu'on la trace.
-- [ ] L'atelier ramène le contour sur le bord du sujet **à l'intérieur** de la forme tracée,
+- [x] L'atelier ramène le contour sur le bord du sujet **à l'intérieur** de la forme tracée,
       et ne touche à rien au-dehors.
-- [ ] Le résultat se retouche ensuite à la main, sans avoir à recommencer.
-- [ ] Le geste se défait d'un seul coup, comme un passage de la main.
-- [ ] Deux images traitées par la même recette donnent le même masque : rien n'est tiré au
+- [x] Le résultat se retouche ensuite à la main, sans avoir à recommencer.
+- [x] Le geste se défait d'un seul coup, comme un passage de la main.
+- [x] Deux images traitées par la même recette donnent le même masque : rien n'est tiré au
       sort.
-- [ ] Elle agit **avant** le recadrage et la mise sur grille : le sujet détouré par un tracé
+- [x] Elle agit **avant** le recadrage et la mise sur grille : le sujet détouré par un tracé
       est cadré et calé dans sa case comme n'importe quel autre.
-- [ ] La forme tracée ne voyage pas — ni par collage, ni par recette nommée —, comme le point
+- [x] La forme tracée ne voyage pas — ni par collage, ni par recette nommée —, comme le point
       de la pipette.
 
 ### Bloquée par
@@ -1096,6 +1097,43 @@ ce qui existe.
   point ; c'est la même surface, et elle doit d'abord dire la vérité sur l'endroit qu'on
   touche. *La raison ne change pas parce que l'outil a changé de table : c'est le tracé sur
   l'image qui la porte, pas l'endroit d'où on l'ouvre.*
+
+### Ce qu'elle a appris en étant faite
+
+**Tout le geste tient dans une inversion d'une ligne : le tracé borne le remplissage au lieu
+de l'amorcer.** `_remplir` reçoit ses graines depuis E3 — les quatre bordures pour le moteur
+du bord, le point désigné pour la pipette. La sélection magique lui donne le **liseré de la
+forme entourée**, et lui interdit d'en sortir. Le seul travail neuf de l'étape est ce que le
+cadrage avait annoncé : qu'une passe puisse porter une forme dessinée. Le reste est déjà là.
+
+**« Rien ne bouge au-dehors » a une conséquence qu'il fallait mesurer pour la voir.** Un
+essai voulait montrer que la sélection agit avant le recadrage, et il attendait un sprite
+ramené sur la boîte du sujet. Il a rendu l'image entière — et c'était juste : ce qui est hors
+du tracé reste opaque, donc la boîte opaque reste celle de l'image. L'essai a été refait en
+entourant tout le cadre. La règle n'a pas plié devant l'essai ; c'est l'essai qui disait la
+mauvaise chose.
+
+**La seconde rasterisation du dépôt, et elle hérite de l'obligation de la première.**
+`pinceau` est déterministe parce qu'une recette rejouée doit rendre le même masque — un
+critère depuis T2. Le remplissage de polygone l'est pour la même raison, et il ne lisse rien :
+un bord lissé aurait été tranché à pile ou face par le seuil qui suit, et deux rendus de la
+même recette auraient différé d'un pixel sans que rien l'explique.
+
+**La couleur du fond se lit sur le liseré, jamais dans la recette.** Médiane, comme la
+bordure de l'image pour le moteur du bord, et pour la raison exacte : un sujet qui dépasse du
+tracé déplacerait une moyenne, il ne déplace pas une médiane. Une couleur rangée à côté de la
+forme serait une copie que plus rien ne met à jour — la faute écrite en long sur `Passe`
+depuis E3.
+
+**Un état armé, deux lectures.** La visée de la pipette et l'entourage de la sélection
+partagent `viseeArmee` et se dérivent chacune de leur côté. Deux états auraient pu s'armer
+ensemble, et la surface aurait alors reçu deux gestes à la fois — un clic qui pose un point
+*et* commence un tracé.
+
+**Le corpus a refusé la clé avant nous.** L'écran branchait `detourage.trace` sur une entrée
+qui n'existait pas ; l'essai qui tient « toute clé branchée à l'écran a son entrée dans le
+corpus » l'a nommée à la première exécution. C'est le genre de règle qui ne sert à rien tant
+qu'on n'ajoute rien, et qui paie le jour où l'on ajoute.
 
 ---
 

@@ -8115,6 +8115,12 @@ describe("le châssis des tables", () => {
     doublerLaMesure()
     toutReplier()
     reinitialiserApercu()
+    // jsdom ne connaît pas la capture de pointeur, et la sélection magique s'en
+    // sert comme la main et le cadre de recadrage : on la double ici plutôt que
+    // de compter sur celle qu'un autre bloc d'essais a laissée derrière lui.
+    Element.prototype.setPointerCapture = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
   })
 
   afterEach(() => {
@@ -8543,6 +8549,7 @@ describe("le châssis des tables", () => {
         point: [12, 10],
         portee: "tache",
         masquee: false,
+        trace: [],
       })
     })
 
@@ -8684,6 +8691,7 @@ describe("le châssis des tables", () => {
             point,
             portee: "tache" as const,
             masquee: false as const,
+            trace: [],
           },
         ],
       },
@@ -8824,6 +8832,7 @@ describe("le châssis des tables", () => {
             point: null,
             portee: "tache" as const,
             masquee: false,
+            trace: [],
           },
           {
             moteur: "couleur" as const,
@@ -8833,6 +8842,7 @@ describe("le châssis des tables", () => {
             point: [16, 32] as [number, number],
             portee: "tache" as const,
             masquee,
+            trace: [],
           },
         ],
       },
@@ -8930,6 +8940,155 @@ describe("le châssis des tables", () => {
     expect(AIDE["detourage.portee"].long).toContain(
       "jamais elle ne traverse ce qu'une passe précédente a déjà effacé",
     )
+  })
+
+  // ── U12 · La sélection magique — tracer gros, ajuster au bord ─────────────
+  //
+  // **On entoure grossièrement ce qu'on veut garder, et l'atelier va chercher
+  // le bord du sujet lui-même à l'intérieur.** Le trait qu'on fait ne devient
+  // jamais le contour du sprite : il borne la recherche. C'est pour ça qu'on
+  // peut trembler, et c'est ce qui la distingue de la retouche au pixel.
+  //
+  // **Elle vit avec le détourage, pas avec la main** — quatrième façon de
+  // désigner ce qu'on retire, à côté du bord, de la pipette et du modèle, parce
+  // qu'un seul endroit décide de ce qui est effacé. Ce que le calcul en fait —
+  // le bord retrouvé, le dehors intact, l'ordre avant le recadrage — vit dans
+  // `tests/test_u12.py`.
+
+  /** Une image dont la recette porte une passe « sélection », déjà entourée ou
+   *  non. Le brut fait 1 024 px : c'est dans ses pixels que la forme est
+   *  exprimée, comme le point de la pipette. */
+  const AVEC_SELECTION = (trace: [number, number][]) => [
+    {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: {
+        ...RECETTE_VIDE,
+        passes: [
+          {
+            moteur: "trace" as const,
+            tolerance: 20,
+            seuil_alpha: 128,
+            durcissement: 0,
+            point: null,
+            portee: "tache" as const,
+            masquee: false,
+            trace,
+          },
+        ],
+      },
+    },
+  ]
+
+  /** Poser une surface **plus large que l'image ne l'occupe**, et rendre de quoi
+   *  viser un pixel d'image donné — le même échafaudage que la table de la
+   *  main (U11), parce que c'est le même piège : la surface et l'image ne sont
+   *  pas le même rectangle. */
+  const poserLaToile = (toile: HTMLElement, cote: number) => {
+    toile.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 600, height: 400 }) as DOMRect
+    const rendue = 400
+    const gauche = (600 - rendue) / 2
+    return (x: number, y: number) => ({
+      clientX: gauche + ((x + 0.5) / cote) * rendue,
+      clientY: ((y + 0.5) / cote) * rendue,
+      pointerId: 1,
+    })
+  }
+
+  test("choisir la sélection ouvre la surface où l'on entoure", async () => {
+    // **Choisir la sélection, c'est demander à entourer.** Le réglage n'a
+    // aucune valeur tant qu'aucune forme n'est posée ; un second clic sur un
+    // bouton pour avoir le droit de faire le seul geste possible serait une
+    // porte devant une porte — la règle de la pipette, mot pour mot.
+    const { cadre } = await ouvrirUneTable({}, AVEC_SELECTION([]))
+
+    expect(
+      await cadre.findByText(/tant qu'aucune forme n'est entourée/),
+    ).toBeTruthy()
+    expect(document.querySelector("[data-trace]")).toBeNull()
+
+    fireEvent.click(cadre.getByRole("button", { name: "entourer dans l'image ›" }))
+
+    expect(document.querySelector("[data-trace]")).toBeTruthy()
+  })
+
+  test("ce qu'on entoure part en pixels de l'image brute", async () => {
+    const { cadre, appels } = await ouvrirUneTable({}, AVEC_SELECTION([]))
+    fireEvent.click(cadre.getByRole("button", { name: "entourer dans l'image ›" }))
+    const toile = document.querySelector("[data-trace]") as HTMLElement
+    const viser = poserLaToile(toile, 1024)
+
+    fireEvent.pointerDown(toile, { button: 0, ...viser(100, 100) })
+    fireEvent.pointerMove(toile, viser(400, 100))
+    fireEvent.pointerMove(toile, viser(400, 400))
+    fireEvent.pointerMove(toile, viser(100, 400))
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    await waitFor(() => {
+      const envoi = appels.filter((a) => a.url.includes("/recipe")).pop()
+      const passe = (envoi?.corps as { passes: { trace: number[][] }[] })?.passes[0]
+      if (!passe) throw new Error("la recette n'est pas partie")
+      // Quatre points, dans les pixels du brut — et non dans ceux de la
+      // surface, qui fait 600 de large pour une image dessinée en 400.
+      expect(passe.trace).toEqual([
+        [100, 100],
+        [400, 100],
+        [400, 400],
+        [100, 400],
+      ])
+    })
+  })
+
+  test("la forme se voit pendant qu'on la trace, refermée", async () => {
+    // **Le trait de fermeture se voit aussi**, et ce n'est pas un détail : le
+    // geste est *entourer*, pas *dessiner une ligne*, et montrer la corde qui
+    // manque évite de croire qu'on a laissé un trou.
+    const { cadre } = await ouvrirUneTable({}, AVEC_SELECTION([]))
+    fireEvent.click(cadre.getByRole("button", { name: "entourer dans l'image ›" }))
+    const toile = document.querySelector("[data-trace]") as HTMLElement
+    const viser = poserLaToile(toile, 1024)
+
+    fireEvent.pointerDown(toile, { button: 0, ...viser(100, 100) })
+    fireEvent.pointerMove(toile, viser(400, 100))
+
+    const forme = toile.querySelector("polygon")
+    expect(forme, "la forme en cours ne se voit pas").toBeTruthy()
+    expect(forme!.getAttribute("points")).toBe("100.5,100.5 400.5,100.5")
+  })
+
+  test("un clic sans tracé ne pose pas de forme vide", async () => {
+    // Un clic isolé n'est pas un geste raté : c'est un geste qu'on n'a pas
+    // fait. On ne pose donc rien, plutôt qu'une forme qui n'effacerait rien en
+    // silence.
+    const { cadre, appels } = await ouvrirUneTable({}, AVEC_SELECTION([]))
+    fireEvent.click(cadre.getByRole("button", { name: "entourer dans l'image ›" }))
+    const toile = document.querySelector("[data-trace]") as HTMLElement
+    const viser = poserLaToile(toile, 1024)
+
+    const avant = appels.filter((a) => a.url.includes("/recipe")).length
+    fireEvent.pointerDown(toile, { button: 0, ...viser(100, 100) })
+    fireEvent.pointerUp(toile, { pointerId: 1 })
+
+    expect(appels.filter((a) => a.url.includes("/recipe"))).toHaveLength(avant)
+  })
+
+  test("une forme déjà posée se compte, et se retrace", async () => {
+    const { cadre } = await ouvrirUneTable(
+      {},
+      AVEC_SELECTION([
+        [10, 10],
+        [40, 10],
+        [40, 40],
+      ]),
+    )
+
+    expect(
+      await cadre.findByRole("button", { name: "3 points · entourer à nouveau ›" }),
+    ).toBeTruthy()
+    // Et la passe dit ce qu'elle fait, plutôt que de laisser deviner.
+    expect(
+      cadre.getByText(/le bord est cherché à l'intérieur de ce que tu as entouré/),
+    ).toBeTruthy()
   })
 })
 
@@ -14268,6 +14427,7 @@ describe("un curseur prend un chiffre", () => {
               point: null,
               portee: "tache" as const,
               masquee: false as const,
+              trace: [],
             },
           ],
         },
@@ -14457,6 +14617,7 @@ describe("une table s'éteint, et ça se voit", () => {
     point: null,
     portee: "tache" as const,
     masquee: false as const,
+    trace: [],
   }
 
   /** Une image dont **deux** places portent une valeur et une troisième non.
@@ -14690,6 +14851,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     point: null,
     portee: "tache" as const,
     masquee: false as const,
+    trace: [],
   }
 
   const AVEC_IMAGES = (images: Asset[]) => {

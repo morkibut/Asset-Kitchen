@@ -1000,6 +1000,7 @@ export function BlocPasse({
   onRetirer?: () => void
 }) {
   const pipette = passe.moteur === "couleur"
+  const selection = passe.moteur === "trace"
 
   // ── Masquer une passe, et pourquoi toucher un réglage la remontre (U10) ───
   //
@@ -1086,21 +1087,65 @@ export function BlocPasse({
             parle du modèle indisponible, pas du réglage. */}
         <Reglage libelle="moteur" aide="detourage.moteur">
           <Segments
-            valeurs={["bord", "couleur", "modele"] as const}
+            valeurs={["bord", "couleur", "trace", "modele"] as const}
             valeur={passe.moteur}
+            plusieursRangees
             onChange={(moteur) => {
               fini({ ...passe, moteur })
               // **Choisir la pipette, c'est demander à viser.** Le réglage n'a
               // aucune valeur tant qu'aucun point n'est posé ; obliger à un
               // second clic sur un bouton pour avoir le droit de faire le seul
-              // geste possible serait une porte devant une porte.
-              onViser?.(moteur === "couleur" && passe.point === null)
+              // geste possible serait une porte devant une porte. La sélection
+              // magique suit la même règle, avec sa forme au lieu de son point.
+              onViser?.(
+                (moteur === "couleur" && passe.point === null) ||
+                  (moteur === "trace" && passe.trace.length === 0),
+              )
             }}
             indisponibles={raisonModele ? (["modele"] as const) : []}
-            libelles={{ bord: "bord", couleur: "pipette", modele: "modèle" }}
+            libelles={{
+              bord: "bord",
+              couleur: "pipette",
+              trace: "sélection",
+              modele: "modèle",
+            }}
           />
         </Reglage>
         {raisonModele && <Raison texte={raisonModele} />}
+
+        {/* ── La sélection magique (U12) ────────────────────────────────────
+            **On entoure gros, l'atelier ajuste au bord.** Le trait qu'on fait
+            ne devient jamais le contour du sprite : il borne la recherche, et
+            c'est l'atelier qui va chercher le bord du sujet à l'intérieur de ce
+            qu'on a entouré. C'est pour ça qu'on peut trembler — et c'est la
+            différence avec la retouche au pixel, qui demande de suivre un
+            contour entier à la main. */}
+        {selection && (
+          <>
+            <Reglage libelle="forme entourée" aide="detourage.trace">
+              <button
+                type="button"
+                onClick={() => onViser?.(!enVisee)}
+                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
+              >
+                {enVisee
+                  ? "entoure le sujet dans l'image"
+                  : passe.trace.length
+                    ? `${passe.trace.length} points · entourer à nouveau ›`
+                    : "entourer dans l'image ›"}
+              </button>
+            </Reglage>
+            {/* **Une sélection sans forme ne retire rien**, et le dire vaut
+                mieux que de laisser croire à une passe qui ne marche pas —
+                même phrase que la pipette non visée, même raison. */}
+            {passe.trace.length === 0 && (
+              <Raison texte="tant qu'aucune forme n'est entourée, cette passe ne retire rien" />
+            )}
+            {passe.trace.length > 0 && (
+              <Raison texte="le bord est cherché à l'intérieur de ce que tu as entouré — rien ne bouge au-dehors" />
+            )}
+          </>
+        )}
 
         {/* ── La pipette ────────────────────────────────────────────────────
             **La couleur ne se tape pas, elle se désigne.** Le clic dans l'image
@@ -1153,10 +1198,11 @@ export function BlocPasse({
           </>
         )}
 
-        {/* **La tolérance sert les deux moteurs qui remplissent par plages**, et
-            c'est le même écart par canal : le bord part des bordures, la pipette
-            part du point, et ce qui les sépare est l'amorce, pas le seuil. */}
-        {(passe.moteur === "bord" || pipette) && (
+        {/* **La tolérance sert les trois moteurs qui remplissent par plages**,
+            et c'est le même écart par canal : le bord part des bordures, la
+            pipette part du point, la sélection part du liseré de ce qu'on a
+            entouré. Ce qui les sépare est l'amorce, pas le seuil. */}
+        {(passe.moteur === "bord" || pipette || selection) && (
           <Reglage libelle="tolérance" aide="detourage.tolerance">
             <Curseur
               valeur={passe.tolerance}

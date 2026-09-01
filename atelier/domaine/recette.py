@@ -71,10 +71,23 @@ from typing import Any
 # Le modèle, lui, existe pour les images qui n'ont pas été fabriquées ici et
 # n'ont donc pas de fond plat.
 
+# La **sélection magique** est le quatrième, et elle prend le problème par
+# l'autre bout (U12) : on entoure grossièrement ce qu'on veut garder, et
+# l'atelier va chercher le bord du sujet *à l'intérieur* de ce qu'on a entouré.
+# Le tracé ne décide de rien — il **borne la recherche** au lieu de la lancer, et
+# rien ne bouge au-dehors. Elle est une quatrième façon de désigner ce qu'on
+# retire et non un outil de la main : un seul endroit décide de ce qui est
+# effacé, et ce qui efface doit agir avant le recadrage et la mise sur grille,
+# qui ont tous les deux besoin de savoir où est le sujet.
+#
+# *Tranché par l'auteur au cadrage du 1ᵉʳ septembre 2026 (`US-361`), contre la
+# séance qui la voyait comme un troisième outil de la table de la main.*
+
 BORD = "bord"
 COULEUR = "couleur"
 MODELE = "modele"
-MOTEURS = (BORD, COULEUR, MODELE)
+TRACE = "trace"
+MOTEURS = (BORD, COULEUR, MODELE, TRACE)
 
 # ── Les places, nommées une fois (U4) ────────────────────────────────────────
 #
@@ -376,6 +389,17 @@ class Passe:
     point: tuple[int, int] | None = None  # pipette : le pixel visé, dans le brut
     portee: str = TACHE  # pipette : cette zone-là, ou toutes celles de sa couleur
     masquee: bool = False  # retirée du calcul, sans rien perdre de ses réglages
+    #: La forme tracée à main levée, en pixels de l'image **brute** (U12).
+    #:
+    #: **La seule passe qui porte une forme dessinée** — les autres portent un
+    #: seuil, une tolérance, un durcissement, et au plus un point. C'est le seul
+    #: travail neuf de l'étape ; le reste emploie ce qui existe.
+    #:
+    #: Elle est **fermée d'office** : le dernier point rejoint le premier, et
+    #: c'est le geste — on entoure. La laisser ouverte demanderait de dire ce
+    #: qu'est le dedans d'une ligne qui ne se referme pas, et il n'y a pas de
+    #: réponse à ça.
+    trace: tuple[tuple[int, int], ...] = ()
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -386,6 +410,7 @@ class Passe:
             "point": list(self.point) if self.point else None,
             "portee": self.portee,
             "masquee": self.masquee,
+            "trace": [list(p) for p in self.trace],
         }
 
     @staticmethod
@@ -402,6 +427,9 @@ class Passe:
             # veut dire *visible* : les fichiers du disque continuent de rendre
             # exactement ce qu'ils rendaient.
             masquee=bool(d.get("masquee", False)),
+            trace=tuple(
+                (int(p[0]), int(p[1])) for p in (d.get("trace") or ()) if len(p) >= 2
+            ),
         )
 
 
@@ -1006,7 +1034,19 @@ def voyage(recette: Recette) -> tuple[Recette, tuple[str, ...]]:
             f"{vises} point{'s' if vises > 1 else ''} de pipette — "
             "la couleur se vise sur cette image-là"
         )
-    passes = tuple(replace(p, point=None) for p in recette.passes)
+
+    # **Les formes tracées** (U12). Même règle, un cran plus loin : un point ne
+    # voyage pas, une suite de points encore moins. Une silhouette entourée sur
+    # une attitude tomberait sur le bras au lieu du casque à l'attitude d'à
+    # côté — c'est la raison qui a déjà retiré les passages de la main.
+    entourees = sum(1 for p in recette.passes if p.trace)
+    if entourees:
+        laisse.append(
+            f"{entourees} forme{'s' if entourees > 1 else ''} entourée"
+            f"{'s' if entourees > 1 else ''} à la main — "
+            "elles suivent la silhouette de cette image-là"
+        )
+    passes = tuple(replace(p, point=None, trace=()) for p in recette.passes)
 
     # **Le cadre tracé.** La marge, elle, voyage : c'est un nombre de pixels
     # autour du sujet, et le sujet se remesure sur chaque image.
