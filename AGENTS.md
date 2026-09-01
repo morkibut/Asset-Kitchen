@@ -36,7 +36,10 @@ soir — la première sur la V2.1 entière (quinze points, trois déjà fermés,
 seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-sept
 critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
 critères dans `docs/tranches/U.md`. **Les treize sont tenues depuis le
-1<sup>er</sup> septembre 2026** — quatre-vingt-sept critères, tous cochés.
+1<sup>er</sup> septembre 2026** — quatre-vingt-sept critères, tous cochés. **Ce qui a été
+tranché seul en les construisant attend l'auteur dans `docs/questions-du-lot-U.md`** : quinze
+choix, écrits pour être lus sans rien savoir du code, dont un seul touche une règle et non un
+écran — la promesse de l'écran de confirmation, réécrite aux trois endroits où elle vivait.
 
 `U1` passe d'abord parce que c'est la seule qui coûte de l'argent réel — cinq clics sur le
 bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`

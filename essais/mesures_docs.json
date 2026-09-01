@@ -1,80 +1,80 @@
 {
- "releve_le": 1788233496.0314417,
+ "releve_le": 1788233686.3102915,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 304483,
+  "octets": 304791,
   "documents": {
    "AGENTS.md": {
-    "octets": 30906,
+    "octets": 31214,
     "titres": 11,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 30906
+      "octets": 31214
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
       "niveau": 2,
       "ligne": 13,
-      "octets": 8473
+      "octets": 8781
      },
      {
       "titre": "Lancer",
       "niveau": 2,
-      "ligne": 120,
+      "ligne": 123,
       "octets": 5061
      },
      {
       "titre": "Les documents et leur autorité",
       "niveau": 2,
-      "ligne": 194,
+      "ligne": 197,
       "octets": 6762
      },
      {
       "titre": "Les skills et leurs frontières",
       "niveau": 2,
-      "ligne": 269,
+      "ligne": 272,
       "octets": 1963
      },
      {
       "titre": "Où sont les choses → `docs/carte-du-depot.md`",
       "niveau": 2,
-      "ligne": 299,
+      "ligne": 302,
       "octets": 1653
      },
      {
       "titre": "Les projets voisins — les lire avant de réinventer",
       "niveau": 2,
-      "ligne": 316,
+      "ligne": 319,
       "octets": 1035
      },
      {
       "titre": "Règles durables",
       "niveau": 2,
-      "ligne": 333,
+      "ligne": 336,
       "octets": 2491
      },
      {
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
-      "ligne": 366,
+      "ligne": 369,
       "octets": 577
      },
      {
       "titre": "Règle systématique : comment finir une étape",
       "niveau": 2,
-      "ligne": 376,
+      "ligne": 379,
       "octets": 1151
      },
      {
       "titre": "Règle systématique : écrire les fichiers avec l'outil Write, jamais par le shell",
       "niveau": 2,
-      "ligne": 395,
+      "ligne": 398,
       "octets": 1087
      }
     ]
@@ -1473,7 +1473,7 @@
    "casses": []
   },
   "docs": {
-   "total": 442,
+   "total": 445,
    "casses": []
   }
  }

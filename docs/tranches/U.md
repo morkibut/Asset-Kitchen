@@ -1259,3 +1259,19 @@ n'ait déjà promis. **Deux cas limites, et ils sont notés là où ils se paier
 pinceau carré de U11 change le rendu de calques déjà peints, et l'interrupteur de passe de
 U10 est la veille de U4 appliquée un cran plus bas — si l'une des deux change de forme,
 l'autre doit suivre.
+
+---
+
+## Ce qui a été tranché seul, et reste à confirmer → `docs/questions-du-lot-U.md`
+
+**Quinze choix, écrits pour être lus sans rien savoir du code.** Construire les treize étapes
+a demandé de choisir une quinzaine de fois entre deux comportements possibles, là où les
+critères disaient *quoi* livrer sans dire *comment se comporter dans ce cas précis*. Rien n'y
+est cassé et rien n'y attend une réparation : ce sont des questions de goût et d'usage, et
+c'est l'auteur qui les tranche. Chacune dit ce qui se passe aujourd'hui, l'autre choix
+possible, ce que ça changerait en usage, et l'argument qui a fait pencher.
+
+**La plus lourde des quinze est la septième** : la promesse de l'écran de confirmation a été
+**réécrite** — c'est la seule fois du lot où une règle a bougé plutôt qu'un écran. Elle l'est
+aux trois endroits où elle vivait, avec sa date et sa raison ; revenir en arrière demanderait
+donc de rouvrir trois documents plutôt qu'un.

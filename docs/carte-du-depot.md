@@ -157,6 +157,7 @@ tranche seul. Ce qui suit ne dit que ce que chacun contient.
 | `docs/PRD.md` | ce que le produit doit faire, à l'usage — 97 user stories, états vides, erreurs, cas limites |
 | `docs/PLAN.md` | l'ordre de construction — les sept tranches, leurs user stories, leurs dépendances et leurs critères d'acceptation |
 | `docs/DESIGN.md` + `docs/design-preview.html` | l'apparence — typographie, palette, densité, mouvement, et le spécimen qui les montre |
+| `docs/questions-du-lot-U.md` | **ce qui a été tranché seul en construisant les treize reprises d'usage, et qui attend l'auteur** — quinze choix, écrits pour être lus sans rien savoir du code : ce qui se passe aujourd'hui, l'autre choix possible, ce que ça changerait en usage, et l'argument qui a fait pencher. Rien n'y est cassé : ce sont des questions de goût, et ne pas répondre est une réponse. Un seul touche une **règle** et non un écran — la promesse de l'écran de confirmation, réécrite le 1<sup>er</sup> septembre 2026 |
 | `docs/maquette-atelier.html` | **brouillon écarté** — jugé trop chargé et trop loin de la fluidité recherchée. Reste sur disque, ne sert pas de base. L'interface part du geste quotidien : écrire, générer, juger, garder. |
 
 ## Ce qui vient d'ailleurs
