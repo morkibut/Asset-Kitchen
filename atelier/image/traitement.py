@@ -280,6 +280,7 @@ def detourer_couleur(
     tolerance: int,
     *,
     partout: bool = False,
+    reste: np.ndarray | None = None,
 ) -> np.ndarray:
     """L'alpha d'une image dont on a **désigné le fond du doigt** (E3).
 
@@ -300,6 +301,23 @@ def detourer_couleur(
     `point` est en pixels de cette image, `(x, y)`. **Hors cadre, rien ne se
     passe** — une passe qu'on n'a pas encore visée ne mange pas l'image en
     attendant qu'on la vise.
+
+    ── `reste` : ce qui est encore là, et pourquoi ça change tout (U10) ──────
+
+    **Effacer un pixel ne change pas sa couleur, il ne change que sa
+    transparence.** Une seconde passe lit donc, dans `rgb`, un fond que la
+    première a déjà retiré et qui, pour elle, est encore là. La propagation de
+    proche en proche traversait ces pixels-là : ils forment un couloir continu
+    à la couleur du fond, la tache repartait par ce couloir et ressortait
+    ailleurs dans l'image, sur une zone qui n'avait rien à voir avec le point
+    désigné. C'est le défaut de la pipette sur une seconde passe, reproduit et
+    mesuré le 1<sup>er</sup> septembre 2026 — `essais/essai_pipette_seconde.py`.
+
+    `reste` est le masque de ce qui n'a pas encore été effacé. **Rien de ce qui
+    est déjà parti ne peut servir de chemin ni de cible** : la zone d'un seul
+    tenant est celle qu'on voit, et c'est la seule lecture qui rende la pipette
+    prévisible. Sans lui — un appel qui ne le passe pas —, le comportement
+    d'avant est conservé tel quel.
     """
     hauteur, largeur = rgb.shape[:2]
     x, y = point
@@ -307,6 +325,8 @@ def detourer_couleur(
         return np.full((hauteur, largeur), np.uint8(255))
     cible = rgb[y, x].astype(np.int16)
     proche = np.abs(rgb.astype(np.int16) - cible).max(axis=2) <= tolerance
+    if reste is not None:
+        proche = proche & reste
     fond = proche if partout else _remplir(proche, [(y, x)])
     return np.where(fond, np.uint8(0), np.uint8(255))
 
@@ -863,6 +883,10 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
             passe.point,
             passe.tolerance,
             partout=passe.portee == PARTOUT,
+            # **Ce qui est déjà effacé n'est plus un chemin** (U10) : sans
+            # cette ligne, la tache repart par le couloir que la passe
+            # précédente a ouvert et ressort ailleurs dans l'image.
+            reste=rgba[:, :, 3] > 0,
         )
     else:
         neuf = detourer_bord(rgba[:, :, :3], passe.tolerance)
@@ -888,9 +912,12 @@ def detourer(recette: Recette, octets: bytes) -> np.ndarray:
     # est la seule place dont l'endormissement se lise ici : les six autres
     # vivent dans la queue. Rien de l'ordre fixe ne bouge — on saute, on ne
     # réordonne pas.
-    if recette.dort(DETOURAGE):
-        return rgba
-    for passe in recette.passes:
+    #
+    # **Une passe masquée est sautée, elle n'est pas vidée** (U10) — le geste de
+    # la veille d'une table, un cran plus bas. Elle garde tous ses réglages ; la
+    # rallumer rend exactement l'état d'avant. `passes_vives` répond pour les
+    # deux extinctions à la fois, celle de la place et celle de la passe.
+    for passe in recette.passes_vives():
         rgba = _detourer(rgba, passe)
     return rgba
 
@@ -935,7 +962,10 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
         # *endormie veut dire sans effet, pas presque sans effet.* Une place à
         # qui l'on doit se demander ce qu'elle laisse traîner n'est pas un
         # interrupteur, c'est une nuance de plus à tenir en tête.
-        detoure = bool(recette.passes) and not recette.dort(DETOURAGE)
+        # **Et la même fuite guettait au cran d'en dessous** (U10) : lire « des
+        # passes sont écrites » plutôt que « des passes agissent » aurait gardé
+        # la case pendant qu'on masque la dernière.
+        detoure = bool(recette.passes_vives())
         rgba = sur_grille(rgba, recette.grille, case=detoure)
 
     if recette.quantification is not None and not recette.dort(QUANTIFICATION):

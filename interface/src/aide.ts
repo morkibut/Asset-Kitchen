@@ -601,6 +601,19 @@ export const AIDE: Record<string, Explication> = {
     change:
       "« Cette tache » règle un creux sans toucher au reste — c'est le geste pour lequel la pipette existe. « Partout » va plus vite et atteint aussi ce qui touche le sujet : un reflet, un œil, une dent de la même couleur que le fond partiront avec.",
     origine: "toi · défaut « cette tache »",
+    long:
+      "« Cette tache » veut dire : la zone d'un seul tenant que tu vois, et rien d'autre. Elle s'arrête à ce qui reste de l'image — jamais elle ne traverse ce qu'une passe précédente a déjà effacé.\n\nCette phrase a été écrite le 1er septembre 2026, et elle répare un défaut. Effacer un pixel ne change pas sa couleur ; ça ne change que sa transparence. Une seconde pipette lisait donc un fond qui, pour elle, était encore là, elle s'y propageait de proche en proche et ressortait ailleurs dans l'image — sur une zone qui n'avait rien à voir avec le point désigné, et qui à l'écran ne le touchait même pas. Entre les deux il n'y avait que du damier.\n\nDeux réponses étaient possibles : montrer d'avance la zone que la pipette prendra, ou l'empêcher de traverser ce qui n'est plus là. C'est la seconde qui a été retenue, parce qu'elle rend le geste prévisible au lieu de rendre sa surprise lisible.",
+  },
+
+  "detourage.masquee": {
+    nom: "masquer une passe",
+    ou: "tables",
+    quoi: "Retire cette passe du calcul le temps que tu regardes. Elle garde tous ses réglages, et « montrer » rend exactement l'image d'avant.",
+    change:
+      "L'image se refait sans elle, et c'est tout ce que ça fait. Masquer n'est pas retirer : retirer la perd, masquer la met de côté. Toucher un de ses réglages la remontre — poser une valeur, c'est dire qu'on veut cette passe.",
+    origine: "toi · défaut visible",
+    long:
+      "Plusieurs passes s'enchaînent et tu ne vois que leur somme : impossible de savoir laquelle a mangé quoi. C'est le même geste que d'endormir une table, un cran plus bas, et la même règle — ce qu'on éteint garde ses réglages.\n\nUne passe supplémentaire travaille bien sur le résultat de la précédente, mais seulement à moitié, et c'est cette moitié qui surprend. La transparence s'accumule et ne se rend jamais : chaque passe ne peut que serrer ce que la précédente a laissé. La couleur, elle, ne bouge pas — effacer un pixel ne change pas sa couleur.\n\nC'est de là que venait le défaut de la pipette sur une seconde passe, corrigé le 1er septembre 2026 : la tache repartait à travers le fond déjà effacé, qui avait gardé sa couleur et formait un couloir invisible, et elle ressortait ailleurs dans l'image. Mesuré sur une image d'essai : 120 pixels pris sur une zone qui ne touchait pas le point désigné. Depuis, la propagation s'arrête à ce qui reste.",
   },
 
   "detourage.tolerance": {

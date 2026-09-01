@@ -1,0 +1,16 @@
+{
+  "cote": 64,
+  "point": [
+    16,
+    32
+  ],
+  "tolerance_bord": 8,
+  "tolerance_pipette": 20,
+  "fond_efface_px": 3064,
+  "poches_intactes_px": 240,
+  "visee_px": 120,
+  "avant_visee_px": 120,
+  "avant_voisine_px": 120,
+  "apres_visee_px": 120,
+  "apres_voisine_px": 0
+}

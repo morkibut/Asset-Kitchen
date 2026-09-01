@@ -355,6 +355,18 @@ class Passe:
     range pas : une couleur écrite à côté du point qui la porte est une copie
     que plus rien ne met à jour, la même faute qu'un fichier « avant retouche »
     gardé sur le disque. Elle arrive avec les mesures de la table.
+
+    ── Masquer une passe, et pourquoi ce n'est pas la retirer (U10) ──────────
+
+    Plusieurs passes s'enchaînent et l'on ne voit que leur somme : impossible de
+    savoir laquelle a mangé quoi. `masquee` la retire du calcul **le temps qu'on
+    regarde**, sans toucher à un seul de ses réglages. C'est le geste de la
+    veille d'une table (U4), un cran plus bas, et la même règle : *ce qu'on
+    éteint garde ses réglages, et endormie veut dire sans effet, pas presque
+    sans effet*.
+
+    Elle reste dans la recette, donc elle entre dans l'empreinte : masquer une
+    passe **change le rendu**, et un rendu qui change doit changer de nom.
     """
 
     moteur: str = BORD
@@ -363,6 +375,7 @@ class Passe:
     durcissement: int = 0  # pixels rongés au bord après le seuil, 0 à 4
     point: tuple[int, int] | None = None  # pipette : le pixel visé, dans le brut
     portee: str = TACHE  # pipette : cette zone-là, ou toutes celles de sa couleur
+    masquee: bool = False  # retirée du calcul, sans rien perdre de ses réglages
 
     def en_json(self) -> dict[str, Any]:
         return {
@@ -372,6 +385,7 @@ class Passe:
             "durcissement": self.durcissement,
             "point": list(self.point) if self.point else None,
             "portee": self.portee,
+            "masquee": self.masquee,
         }
 
     @staticmethod
@@ -384,6 +398,10 @@ class Passe:
             durcissement=int(d.get("durcissement", 0)),
             point=(tuple(int(v) for v in point) if point else None),
             portee=str(d.get("portee") or TACHE),
+            # **Une recette écrite avant U10 n'a pas ce champ**, et son absence
+            # veut dire *visible* : les fichiers du disque continuent de rendre
+            # exactement ce qu'ils rendaient.
+            masquee=bool(d.get("masquee", False)),
         )
 
 
@@ -928,6 +946,22 @@ class Recette:
         if dort:
             restantes.add(place)
         return replace(self, veille=tuple(sorted(restantes)))
+
+    # ── Les passes qui agissent (U10) ────────────────────────────────────────
+
+    def passes_vives(self) -> tuple["Passe", ...]:
+        """Les passes qui **font** quelque chose — ni masquées, ni endormies.
+
+        **Une seule lecture pour tout le dépôt**, exactement comme `dort` : le
+        traitement, la remise sur grille, la mesure des poches, la découpe et la
+        superposition posent tous la même question, et c'est la question qui a
+        fui deux fois en U4 quand chacun la posait à sa façon. Ce qui compte
+        n'est jamais *une passe est écrite*, c'est *une passe agit* — et
+        `self.passes` répond à la première, celle-ci à la seconde.
+        """
+        if self.dort(DETOURAGE):
+            return ()
+        return tuple(p for p in self.passes if not p.masquee)
 
 
 # ── Ce qui voyage d'une image à l'autre (U5) ─────────────────────────────────

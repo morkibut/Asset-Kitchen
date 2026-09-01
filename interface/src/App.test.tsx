@@ -8542,6 +8542,7 @@ describe("le châssis des tables", () => {
         moteur: "couleur",
         point: [12, 10],
         portee: "tache",
+        masquee: false,
       })
     })
 
@@ -8682,6 +8683,7 @@ describe("le châssis des tables", () => {
             durcissement: 0,
             point,
             portee: "tache" as const,
+            masquee: false as const,
           },
         ],
       },
@@ -8790,6 +8792,144 @@ describe("le châssis des tables", () => {
     expect(
       screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
     ).toBe("true")
+  })
+
+  // ── U10 · Chaque passe dit ce qu'elle enlève ──────────────────────────────
+  //
+  // **Une recette de détourage porte plusieurs passes qui s'enchaînent, et l'on
+  // ne voit que leur somme** : impossible de savoir laquelle a mangé quoi.
+  // Chacune reçoit un interrupteur qui la retire du calcul le temps qu'on
+  // regarde. Ce n'est pas la retirer — c'est le geste de la veille d'une table
+  // (U4), un cran plus bas, et la même règle : ce qu'on éteint garde ses
+  // réglages.
+  //
+  // Ce que le calcul en fait — la passe sautée, la case de la grille qui suit,
+  // la pipette qui cesse de traverser ce qui est déjà effacé — vit dans
+  // `tests/test_u10.py`, et le défaut de la pipette est reproduit et chiffré
+  // dans le banc `essais/essai_pipette_seconde.py`.
+
+  /** Une image dont la recette porte **deux** passes : un bord, puis une
+   *  pipette visée. C'est l'enchaînement par lequel le défaut est passé. */
+  const DEUX_PASSES = (masquee = false) => [
+    {
+      ...asset("bbbb2222-0", "le nain, au repos"),
+      recette: {
+        ...RECETTE_VIDE,
+        passes: [
+          {
+            moteur: "bord" as const,
+            tolerance: 8,
+            seuil_alpha: 128,
+            durcissement: 0,
+            point: null,
+            portee: "tache" as const,
+            masquee: false,
+          },
+          {
+            moteur: "couleur" as const,
+            tolerance: 20,
+            seuil_alpha: 128,
+            durcissement: 0,
+            point: [16, 32] as [number, number],
+            portee: "tache" as const,
+            masquee,
+          },
+        ],
+      },
+    },
+  ]
+
+  const derniereRecette = (appels: { url: string; corps?: unknown }[]) =>
+    (
+      appels.filter((a) => a.url.includes("/recipe")).pop()?.corps as {
+        passes: { masquee: boolean; tolerance: number }[]
+      }
+    )?.passes
+
+  test("chaque passe porte un interrupteur, et le masquer part au serveur", async () => {
+    const { cadre, appels } = await ouvrirUneTable(
+      { mesures: { visees: [null, "#2a2a2a"] } },
+      DEUX_PASSES(),
+    )
+
+    fireEvent.click(cadre.getByRole("switch", { name: "passe 2 — visible" }))
+
+    await waitFor(() => {
+      const passes = derniereRecette(appels)
+      if (!passes) throw new Error("la recette n'est pas partie")
+      // **Deux passes, toujours** : masquer n'en retire aucune. C'est le
+      // serveur qui refait l'image sans elle, l'écran ne recalcule rien.
+      expect(passes).toHaveLength(2)
+      expect(passes[1].masquee).toBe(true)
+      expect(passes[0].masquee).toBe(false)
+    })
+  })
+
+  test("masquer n'est pas retirer, et la passe garde tous ses réglages", async () => {
+    const { cadre } = await ouvrirUneTable(
+      { mesures: { visees: [null, "#2a2a2a"] } },
+      DEUX_PASSES(true),
+    )
+
+    // Le mot a changé de sens dans les deux directions : on remontre ce qu'on
+    // avait masqué, et « retirer » est toujours là, à côté, pour l'autre geste.
+    expect(
+      await cadre.findByRole("switch", { name: "passe 2 — masquée" }),
+    ).toBeTruthy()
+    expect(cadre.getAllByRole("button", { name: "retirer" })).toHaveLength(2)
+    expect(
+      cadre.getByText(/retirée du calcul, elle garde tous ses réglages/),
+    ).toBeTruthy()
+
+    // **Et ses réglages sont sous les yeux, pas cachés** : les cacher rendrait
+    // le masque impossible à défaire en connaissance de cause.
+    const tolerances = cadre.getAllByLabelText(
+      "tolérance, en chiffres",
+    ) as HTMLInputElement[]
+    expect(tolerances[1].value).toBe("20")
+  })
+
+  test("toucher un réglage d'une passe masquée la remontre", async () => {
+    // **La règle de la veille d'une table, un cran plus bas** : poser une
+    // valeur *dit* qu'on veut cette passe. Refuser le curseur obligerait à un
+    // geste préalable pour avoir le droit de faire le geste qu'on voulait.
+    const { cadre, appels } = await ouvrirUneTable(
+      { mesures: { visees: [null, "#2a2a2a"] } },
+      DEUX_PASSES(true),
+    )
+
+    const champ = (
+      cadre.getAllByLabelText("tolérance, en chiffres") as HTMLInputElement[]
+    )[1]
+    fireEvent.change(champ, { target: { value: "40" } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+
+    await waitFor(() => {
+      const passes = derniereRecette(appels)
+      if (!passes) throw new Error("la recette n'est pas partie")
+      expect(passes[1].tolerance).toBe(40)
+      expect(passes[1].masquee).toBe(false)
+    })
+  })
+
+  test("la table dit ce qu'une passe fait de celle qui la précède", async () => {
+    // **Le comportement retenu est écrit là où la question se pose.** Elle se
+    // pose sur la passe — c'est en en ajoutant une seconde qu'on se demande sur
+    // quoi elle travaille —, donc le nom de la passe devient sa poignée.
+    const { cadre } = await ouvrirUneTable(
+      { mesures: { visees: [null, "#2a2a2a"] } },
+      DEUX_PASSES(),
+    )
+
+    const nom = cadre.getByText("passe 2")
+    expect(nom.className).toContain("decoration-dotted")
+
+    // Et ce que la poignée ouvre répond à la question de la séance, en clair.
+    expect(AIDE["detourage.masquee"].long).toContain("ne change pas sa couleur")
+    expect(AIDE["detourage.masquee"].long).toContain("couloir invisible")
+    expect(AIDE["detourage.portee"].long).toContain(
+      "jamais elle ne traverse ce qu'une passe précédente a déjà effacé",
+    )
   })
 })
 
@@ -14127,6 +14267,7 @@ describe("un curseur prend un chiffre", () => {
               durcissement: 0,
               point: null,
               portee: "tache" as const,
+              masquee: false as const,
             },
           ],
         },
@@ -14315,6 +14456,7 @@ describe("une table s'éteint, et ça se voit", () => {
     durcissement: 0,
     point: null,
     portee: "tache" as const,
+    masquee: false as const,
   }
 
   /** Une image dont **deux** places portent une valeur et une troisième non.
@@ -14547,6 +14689,7 @@ describe("les réglages voyagent d'une image à l'autre", () => {
     durcissement: 0,
     point: null,
     portee: "tache" as const,
+    masquee: false as const,
   }
 
   const AVEC_IMAGES = (images: Asset[]) => {

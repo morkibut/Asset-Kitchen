@@ -281,7 +281,16 @@
           <td><strong>Cette tache</strong> ne retire que la zone connexe sous le curseur : c'est ce qui règle
             une poche sans toucher au reste, et c'est pour ça que c'est le défaut. <strong>Partout</strong>
             retire toutes les zones de cette couleur, y compris celles qui touchent le sujet — plus expéditif,
-            plus risqué.</td></tr>
+            plus risqué.<br><span class="sourd">La zone connexe s'arrête à <b>ce qui reste de l'image</b> :
+            jamais elle ne traverse ce qu'une passe précédente a déjà effacé (précisé le 1<sup>er</sup> septembre
+            2026 — voir la note ci-dessous).</span></td></tr>
+        <tr><td class="k">masquer</td><td><span class="m">montrer · masquer</span><br><span class="sourd">défaut : montrer</span></td>
+          <td>Retire cette passe du calcul <strong>le temps qu'on regarde</strong>. Plusieurs passes
+            s'enchaînent et l'on ne voit que leur somme : impossible de savoir laquelle a mangé quoi.
+            <strong>Masquer n'est pas retirer</strong> — la passe garde tous ses réglages et la remontrer rend
+            exactement l'image d'avant. C'est le geste de la veille d'une table, un cran plus bas, et la même
+            règle. Toucher un de ses réglages la remontre : poser une valeur, c'est dire qu'on veut cette
+            passe.</td></tr>
         <tr><td class="k">tolérance</td><td><span class="m">0 – 255</span><br><span class="sourd">défaut : 28</span></td>
           <td>L'écart maximal, par canal, pour qu'un pixel compte comme du fond. Monter mange le sujet ;
             descendre laisse un halo. <strong>Le curseur pose au relâchement</strong> — vingt-et-un crans, un
@@ -300,6 +309,23 @@
             n'a pas de bonne valeur à proposer.</td></tr>
       </tbody>
     </table>
+
+    <div class="note att" style="margin-top:22px">
+      <span class="lab">Sur quoi travaille une passe qui vient après une autre — répondu le 1<sup>er</sup> septembre 2026</span>
+      <p><strong>Sur le résultat de la précédente, mais à moitié seulement</strong>, et c'est cette moitié qui
+        surprenait. La <em>transparence</em> s'accumule et ne se rend jamais : chaque passe ne peut que serrer
+        ce que la précédente a laissé — c'est ce qui fait que les passes s'enchaînent au lieu de se remplacer.
+        Mais la <em>couleur</em> qu'une passe examine est toujours celle de l'image d'origine : effacer un
+        pixel ne change pas sa couleur.</p>
+      <p>D'où le défaut de la pipette sur une seconde passe. La zone d'un seul tenant se propageait
+        <strong>à travers les pixels que la première passe avait effacés</strong> — ils avaient gardé leur
+        couleur et formaient un couloir continu —, et la tache ressortait ailleurs dans l'image, sur une zone
+        qui à l'écran ne touchait même pas le point désigné : entre les deux, il n'y avait que du damier.
+        Reproduit et chiffré sur une image d'essai : <span class="mesure">120 px</span> pris en trop.</p>
+      <p><strong>Ce qui a été retenu :</strong> la propagation s'arrête à ce qui reste. L'autre issue
+        possible — la laisser passer et montrer d'avance la zone qu'elle prendra — a été écartée : elle
+        rendait la surprise lisible au lieu de rendre le geste prévisible.</p>
+    </div>
   </section>
 
   <!-- ═══ 04 ══════════════════════════════════════════════════════ -->

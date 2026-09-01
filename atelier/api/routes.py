@@ -663,6 +663,11 @@ class CorpsPasse(BaseModel):
     # taille qu'elle fait, et un point qui dépasse ne retire simplement rien.
     point: list[int] | None = None
     portee: str = "tache"
+    # **Retirée du calcul le temps qu'on regarde** (U10) — jamais retirée de la
+    # recette : elle garde tous ses réglages, et la remontrer rend exactement
+    # l'image d'avant. Le défaut par défaut est *visible*, si bien qu'une
+    # recette écrite avant ce champ arrive inchangée.
+    masquee: bool = False
 
 
 class CorpsRecadrage(BaseModel):

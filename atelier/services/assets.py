@@ -359,7 +359,10 @@ class ServiceAssets:
         passe de bord, le défaut du produit.
         """
         tolerance = next(
-            (p.tolerance for p in asset.recette.passes if p.moteur == BORD),
+            # **Celle de la première passe de bord qui agit** (U10) : une passe
+            # masquée n'efface rien, et prendre sa tolérance décrirait des
+            # poches laissées par un détourage qui n'a pas eu lieu.
+            (p.tolerance for p in asset.recette.passes_vives() if p.moteur == BORD),
             TOLERANCE_PAR_DEFAUT,
         )
         trouvees, total = poches_de_fond(rgba, tolerance, plafond=POCHES_MONTREES)

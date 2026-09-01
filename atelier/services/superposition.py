@@ -121,14 +121,17 @@ class ServiceSuperposition:
         pas.** Une image qui remplit légitimement son cadre existe, et l'atelier
         n'a pas les moyens de savoir laquelle il a sous les yeux.
         """
-        passes_bas = len(bas.recette.passes) if bas is not None else 0
+        # **Ce qui agit, et non ce qui est écrit** (U10) : une passe masquée
+        # n'ouvre aucun alpha, et l'alerte parle de ce que le calque va trouver.
+        vives_bas = bas.recette.passes_vives() if bas is not None else ()
+        vives_haut = haut.recette.passes_vives()
         return {
-            "passes_dessus": len(haut.recette.passes),
-            "passes_dessous": passes_bas,
+            "passes_dessus": len(vives_haut),
+            "passes_dessous": len(vives_bas),
             # Sans alpha sur le dessus, le calque prendrait tout le fond : le
             # dessous est transparent partout autour du sujet, le dessus est
             # opaque partout, donc tout ce qui entoure remplit la condition.
-            "sans_alpha": len(haut.recette.passes) == 0,
+            "sans_alpha": len(vives_haut) == 0,
         }
 
     def heriter(self, dessus: str, dessous: str) -> Asset:
@@ -145,7 +148,7 @@ class ServiceSuperposition:
         """
         haut = self._exiger(dessus)
         bas = self._exiger(dessous)
-        if not bas.recette.passes:
+        if not bas.recette.passes_vives():
             raise SuperpositionRefusee(
                 "l'image du dessous n'est pas détourée non plus — il n'y a rien à reprendre"
             )

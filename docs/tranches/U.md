@@ -851,7 +851,8 @@ qu'une assertion sur des pixels y serait vraie sans rien prouver.
 
 ## U10 · Chaque passe de détourage dit ce qu'elle enlève
 
-**Critères : 7 · Ce que ça corrige : deux points de la seconde séance**
+**Critères : 7 · Ce que ça corrige : deux points de la seconde séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -872,34 +873,73 @@ moitié, et c'est cette moitié qui surprend :
   un pixel ne change pas sa couleur, il ne change que sa transparence. Une seconde passe à
   la pipette lit donc un fond qui, pour elle, est encore là.
 
-**C'est très probablement la cause du défaut de la pipette sur une seconde passe.** Le geste
-« zone d'un seul tenant » se propage de proche en proche à partir du point visé, à travers
-tout ce qui ressemble à la couleur visée — **y compris à travers les pixels que la première
-passe a effacés**, qui ont gardé leur couleur et forment un couloir continu. La tache repart
-alors par ce couloir et ressort ailleurs dans l'image, sur une zone qui n'a rien à voir avec
-ce qu'on désignait. Une hypothèse, pas un constat : elle se vérifie avant de se corriger, et
-l'interrupteur ci-dessus est justement l'instrument qui la rend visible.
+**C'était bien la cause du défaut de la pipette sur une seconde passe — reproduit et chiffré
+avant qu'une ligne le corrige.** Le geste « zone d'un seul tenant » se propage de proche en
+proche à partir du point visé, à travers tout ce qui ressemble à la couleur visée — **y
+compris à travers les pixels que la première passe a effacés**, qui ont gardé leur couleur et
+forment un couloir continu. La tache repart alors par ce couloir et ressort ailleurs dans
+l'image, sur une zone qui n'a rien à voir avec ce qu'on désignait.
 
-**Ce qui décidera** : soit la propagation cesse de traverser ce qui est déjà transparent —
-et c'est le choix qui rend la pipette prévisible —, soit elle continue et l'écran montre
-d'avance la zone qu'elle prendra. On ne tranche pas sans avoir reproduit.
+**Le banc `essais/essai_pipette_seconde.py`** le montre sur une image dessinée pour lui —
+deux poches de la même couleur, chacune dans son bloc, reliées au dehors par deux pixels de
+fond. Une passe de bord à tolérance 8 retire le fond et les deux couloirs ; une pipette posée
+sur la poche de gauche à tolérance 20 prenait **les deux**, soit **120 pixels sur une zone qui
+ne touchait pas le point désigné**. À l'écran, entre elles, il n'y avait que du damier.
+
+**Ce qui a été retenu** : la propagation s'arrête à ce qui reste. L'autre issue possible —
+la laisser passer et montrer d'avance la zone qu'elle prendra — a été écartée : elle rendait
+la surprise lisible au lieu de rendre le geste prévisible.
 
 ### Critères d'acceptation
 
-- [ ] Chaque passe porte un bouton qui la masque, et le rendu se refait sans elle.
-- [ ] Une passe masquée garde tous ses réglages ; la rallumer rend exactement l'état d'avant.
-- [ ] Masquer une passe ne la retire pas de la recette, et les deux gestes se distinguent à
+- [x] Chaque passe porte un bouton qui la masque, et le rendu se refait sans elle.
+- [x] Une passe masquée garde tous ses réglages ; la rallumer rend exactement l'état d'avant.
+- [x] Masquer une passe ne la retire pas de la recette, et les deux gestes se distinguent à
       l'écran.
-- [ ] Le défaut de la pipette sur une seconde passe est **reproduit et mesuré** avant qu'une
+- [x] Le défaut de la pipette sur une seconde passe est **reproduit et mesuré** avant qu'une
       ligne le corrige — quelle image, quel point, quelle zone est prise en trop.
-- [ ] Une pipette posée sur une poche de fond ne prend plus une zone qui n'y touche pas.
-- [ ] Le comportement retenu est écrit là où la question se pose : dans la table, pas
+- [x] Une pipette posée sur une poche de fond ne prend plus une zone qui n'y touche pas.
+- [x] Le comportement retenu est écrit là où la question se pose : dans la table, pas
       seulement dans le code.
-- [ ] Un essai tient le cas des deux passes enchaînées, celui par lequel le défaut est passé.
+- [x] Un essai tient le cas des deux passes enchaînées, celui par lequel le défaut est passé.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Le défaut ne se voyait pas parce que la preuve était invisible par construction.** Le
+couloir par lequel la tache s'échappe est du fond déjà effacé : il est transparent à l'écran
+et coloré dans les nombres. Aucune capture d'écran ne pouvait le montrer, et c'est pour ça
+que la question a traîné une séance entière. Le banc le dessine plutôt que de le chercher
+dans une image du dépôt — un banc qui ouvrirait une vraie image donnerait un chiffre que la
+prochaine retouche ferait mentir.
+
+**« Une passe est écrite » et « une passe agit » sont deux questions, et cinq endroits les
+posaient.** C'est très exactement la fuite de U4, un cran plus bas : le traitement, la remise
+sur grille, la mesure des poches, la découpe et la superposition demandaient tous la première
+en croyant demander la seconde. Une lecture unique — `Recette.passes_vives()` — répond
+maintenant pour les deux extinctions à la fois, celle de la place et celle de la passe. Sans
+elle, masquer la dernière passe aurait gardé la case de la grille, et l'image aurait changé
+de taille pour une raison que rien n'affiche.
+
+**L'essai de la case de la grille a d'abord passé sans rien prouver.** Il tournait sur une
+image opaque de bord à bord, dont la boîte du sujet *est* l'image entière : la case ne
+changeait donc rien, et l'essai aurait dit vrai avec la lecture fautive comme avec la bonne.
+Il a fallu une image déjà trouée pour que la question ait une réponse visible — et la
+vérification de cette vérification est ce qui a rattrapé l'essai.
+
+**Toucher un réglage remontre la passe, mais sans bandeau d'annonce.** La règle est celle de
+U4 ; l'annonce, non. Là-bas l'interrupteur vit dans une barre, loin de la colonne où l'on
+règle, et le réveil se produisait hors du regard. Ici le bouton est vingt pixels au-dessus du
+curseur qu'on touche et le bloc entier cesse d'être grisé sous les doigts : le dire une
+seconde fois serait dire ce qu'on voit.
+
+**Un champ neuf sur une passe est un champ qui doit être absent des vieux fichiers.** Son
+absence vaut *visible*, et c'est ce qui fait qu'une recette écrite avant ce jour rend
+exactement ce qu'elle rendait. Le champ entre en revanche dans l'empreinte, et c'est voulu :
+masquer une passe change le rendu, et un rendu qui change doit changer de nom.
 
 ---
 

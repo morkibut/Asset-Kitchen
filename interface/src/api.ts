@@ -143,6 +143,14 @@ export type Passe = {
   point: [number, number] | null
   /** La pipette : cette zone-là, ou toutes celles de sa couleur. */
   portee: "tache" | "partout"
+  /** Retirée du calcul **le temps qu'on regarde** (U10).
+   *
+   *  Plusieurs passes s'enchaînent et l'on ne voit que leur somme : impossible
+   *  de savoir laquelle a mangé quoi. Masquer n'est pas retirer — c'est le
+   *  geste de la veille d'une table (U4), un cran plus bas, et la même règle :
+   *  ce qu'on éteint garde tous ses réglages, et la rallumer rend exactement
+   *  l'état d'avant. */
+  masquee: boolean
 }
 
 /** La seconde place — celle qui fait d'une image un **calque** (C3).
@@ -470,6 +478,7 @@ export const PASSE_PAR_DEFAUT: Passe = {
   durcissement: 0,
   point: null,
   portee: "tache",
+  masquee: false,
 }
 
 export type Asset = {

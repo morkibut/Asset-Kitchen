@@ -124,7 +124,7 @@ class ServiceDecoupe:
             # sa seule zone connexe est l'image entière. Le moteur du geste
             # courant est celui qui ne charge aucun modèle et marche hors ligne
             # — même choix, et même phrase, que l'extraction de palette.
-            passes = asset.recette.passes or (Passe(),)
+            passes = asset.recette.passes_vives() or (Passe(),)
             alpha = self._assets.detourage(asset, passes)[:, :, 3]
             boites = zones_opaques(alpha, cote_min=max(0, cote_min))
             if not boites:

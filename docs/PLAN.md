@@ -1737,7 +1737,7 @@ et le coût.
 | **U7** | La toile dit ce qu'elle a fabriqué | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U8** | La galerie rend le prompt, et son bouton rentre dans la vignette | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U9** | L'écran de confirmation se lit d'un coup d'œil | 1<sup>re</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
-| **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — | à faire |
+| **U10** | Chaque passe de détourage dit ce qu'elle enlève | 2<sup>e</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U11** | La main peint carré, et là où on la pose | 2<sup>e</sup> | — | **tenue** le 1<sup>er</sup> sept. 2026 |
 | **U12** | La sélection magique — tracer gros, ajuster au bord | 2<sup>e</sup> | **U11** | à faire |
 | **U13** | Un second moteur de détourage, plus lourd et meilleur | 2<sup>e</sup> | — | à faire |
@@ -1755,8 +1755,10 @@ qu'aucune n'ouvre une version.
 détourage supplémentaire s'applique-t-elle à l'image d'origine ou au résultat de la
 précédente ?* Le code répond, et la réponse est à moitié surprenante : la **transparence**
 s'accumule et ne se rend jamais, mais la **couleur** qu'une passe examine est toujours celle
-de l'image d'origine — effacer un pixel ne change pas sa couleur. C'est écrit en U10 parce
-que c'est probablement ce qui explique le défaut de la pipette sur une seconde passe.
+de l'image d'origine — effacer un pixel ne change pas sa couleur. C'était bien la cause du
+défaut de la pipette sur une seconde passe : reproduit et chiffré le 1<sup>er</sup> septembre
+2026 — **120 pixels pris sur une zone qui ne touchait pas le point désigné** —, puis corrigé.
+La propagation s'arrête désormais à ce qui reste de l'image.
 
 ### Ce que ce lot demandait au produit — *cadré le 1<sup>er</sup> septembre 2026*
 

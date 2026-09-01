@@ -1000,127 +1000,190 @@ export function BlocPasse({
   onRetirer?: () => void
 }) {
   const pipette = passe.moteur === "couleur"
+
+  // ── Masquer une passe, et pourquoi toucher un réglage la remontre (U10) ───
+  //
+  // **C'est la règle de la veille d'une table (U4), un cran plus bas** : poser
+  // une valeur *dit* qu'on veut cette passe, et bloquer le curseur parce
+  // qu'elle est masquée obligerait à faire un geste préalable pour avoir le
+  // droit de faire le geste qu'on voulait. On remontre plutôt que de refuser.
+  //
+  // **Et sans bandeau d'annonce, contrairement à la table.** L'annonce existait
+  // là-bas parce que l'interrupteur d'une table vit dans une barre, loin de la
+  // colonne où l'on règle : le réveil se produisait hors du regard. Ici le
+  // bouton est vingt pixels au-dessus du curseur qu'on touche, et le bloc
+  // entier cesse d'être grisé sous les doigts — le dire une seconde fois serait
+  // dire ce qu'on voit.
+  const remontrer = (p: Passe): Passe => (p.masquee ? { ...p, masquee: false } : p)
+  const change = (p: Passe) => onChange(remontrer(p))
+  const fini = (p: Passe) => onFini(remontrer(p))
+
+  // **Le nom de la passe devient sa propre poignée**, comme les libellés de
+  // réglage : le corpus y dit ce que masquer veut dire, et surtout ce qu'une
+  // passe supplémentaire fait de celle qui la précède — la question qui a
+  // ouvert cette étape se pose ici, elle doit avoir sa réponse ici.
+  const { presente, ancre, declencheurs, bulle } = useInfobulle("detourage.masquee")
+
   return (
     <div className="flex flex-col gap-1.5 rounded-[2px] border border-bord bg-fond-2 p-2">
       <div className="flex items-center gap-2">
-        <span className="mesure text-[9.5px] text-texte-3">passe {rang + 1}</span>
+        <span
+          ref={ancre as React.Ref<HTMLSpanElement>}
+          {...declencheurs}
+          className={[
+            "mesure text-[9.5px] text-texte-3",
+            presente ? POINTILLE : "",
+            passe.masquee ? "line-through" : "",
+          ].join(" ")}
+        >
+          passe {rang + 1}
+        </span>
+        {/* **Masquer n'est pas retirer, et les deux mots le disent** : l'un
+            rend la passe au calcul d'un clic, l'autre la perd. Ils sont côte à
+            côte parce que c'est là qu'on hésite entre les deux, et seul le
+            second est de la couleur d'un échec. */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={!passe.masquee}
+          aria-label={`passe ${rang + 1} — ${passe.masquee ? "masquée" : "visible"}`}
+          title="la retirer du calcul le temps de regarder — elle garde ses réglages"
+          onClick={() => onFini({ ...passe, masquee: !passe.masquee })}
+          className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+        >
+          {passe.masquee ? "montrer" : "masquer"}
+        </button>
         {onRetirer && (
           <button
             type="button"
             onClick={onRetirer}
-            className="mesure ml-auto text-[10px] text-texte-3 hover:text-echec"
+            className="mesure text-[10px] text-texte-3 hover:text-echec"
           >
             retirer
           </button>
         )}
+        {bulle}
       </div>
+      {passe.masquee && (
+        <Raison texte="masquée : retirée du calcul, elle garde tous ses réglages — la remontrer rend l'image d'avant" />
+      )}
 
-      {/* **Le seul contrôle de la passe qui n'avait pas de nom.** Ses trois
-          voisins en portaient un ; celui-ci se lisait sur ses deux segments,
-          « bord » et « modèle », c'est-à-dire sur ses valeurs. Un contrôle qui
-          n'est nommé que par ce qu'il vaut n'a nulle part où accrocher son
-          explication — la même règle que les `placeholder` du menu de carte.
-          La raison du grisé reste sous la rangée, sur toute la largeur : elle
-          parle du modèle indisponible, pas du réglage. */}
-      <Reglage libelle="moteur" aide="detourage.moteur">
-        <Segments
-          valeurs={["bord", "couleur", "modele"] as const}
-          valeur={passe.moteur}
-          onChange={(moteur) => {
-            onFini({ ...passe, moteur })
-            // **Choisir la pipette, c'est demander à viser.** Le réglage n'a
-            // aucune valeur tant qu'aucun point n'est posé ; obliger à un
-            // second clic sur un bouton pour avoir le droit de faire le seul
-            // geste possible serait une porte devant une porte.
-            onViser?.(moteur === "couleur" && passe.point === null)
-          }}
-          indisponibles={raisonModele ? (["modele"] as const) : []}
-          libelles={{ bord: "bord", couleur: "pipette", modele: "modèle" }}
-        />
-      </Reglage>
-      {raisonModele && <Raison texte={raisonModele} />}
+      {/* **Les réglages restent lisibles, et ils restent réglables** — c'est le
+          grisé de la table endormie (U4), pas un verrou. Ce qu'on éteint garde
+          ses réglages, et les cacher rendrait le masque impossible à défaire en
+          connaissance de cause. */}
+      <div
+        className={["flex flex-col gap-1.5", passe.masquee ? "opacity-50" : ""].join(
+          " ",
+        )}
+      >
+        {/* **Le seul contrôle de la passe qui n'avait pas de nom.** Ses trois
+            voisins en portaient un ; celui-ci se lisait sur ses deux segments,
+            « bord » et « modèle », c'est-à-dire sur ses valeurs. Un contrôle qui
+            n'est nommé que par ce qu'il vaut n'a nulle part où accrocher son
+            explication — la même règle que les `placeholder` du menu de carte.
+            La raison du grisé reste sous la rangée, sur toute la largeur : elle
+            parle du modèle indisponible, pas du réglage. */}
+        <Reglage libelle="moteur" aide="detourage.moteur">
+          <Segments
+            valeurs={["bord", "couleur", "modele"] as const}
+            valeur={passe.moteur}
+            onChange={(moteur) => {
+              fini({ ...passe, moteur })
+              // **Choisir la pipette, c'est demander à viser.** Le réglage n'a
+              // aucune valeur tant qu'aucun point n'est posé ; obliger à un
+              // second clic sur un bouton pour avoir le droit de faire le seul
+              // geste possible serait une porte devant une porte.
+              onViser?.(moteur === "couleur" && passe.point === null)
+            }}
+            indisponibles={raisonModele ? (["modele"] as const) : []}
+            libelles={{ bord: "bord", couleur: "pipette", modele: "modèle" }}
+          />
+        </Reglage>
+        {raisonModele && <Raison texte={raisonModele} />}
 
-      {/* ── La pipette ────────────────────────────────────────────────────
-          **La couleur ne se tape pas, elle se désigne.** Le clic dans l'image
-          pose le point ; la pastille et son code disent ce qu'il y avait
-          dessous. Recliquer ailleurs *remplace* le point de cette passe — sans
-          quoi trois hésitations feraient trois passes, et personne ne veut
-          d'une passe par clic. */}
-      {pipette && (
-        <>
-          <Reglage libelle="couleur visée" aide="detourage.couleur">
-            {passe.point && visee ? (
-              <span className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  style={{ background: visee }}
-                  className="inline-block h-3 w-3 shrink-0 rounded-full border border-bord"
-                />
-                <span className="mesure text-[10px] text-texte-2">{visee}</span>
+        {/* ── La pipette ────────────────────────────────────────────────────
+            **La couleur ne se tape pas, elle se désigne.** Le clic dans l'image
+            pose le point ; la pastille et son code disent ce qu'il y avait
+            dessous. Recliquer ailleurs *remplace* le point de cette passe — sans
+            quoi trois hésitations feraient trois passes, et personne ne veut
+            d'une passe par clic. */}
+        {pipette && (
+          <>
+            <Reglage libelle="couleur visée" aide="detourage.couleur">
+              {passe.point && visee ? (
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    style={{ background: visee }}
+                    className="inline-block h-3 w-3 shrink-0 rounded-full border border-bord"
+                  />
+                  <span className="mesure text-[10px] text-texte-2">{visee}</span>
+                  <button
+                    type="button"
+                    onClick={() => onViser?.(!enVisee)}
+                    className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+                  >
+                    {enVisee ? "annuler" : "viser à nouveau ›"}
+                  </button>
+                </span>
+              ) : (
                 <button
                   type="button"
                   onClick={() => onViser?.(!enVisee)}
-                  className="mesure ml-auto text-[10px] text-signal hover:text-signal-clair"
+                  className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
                 >
-                  {enVisee ? "annuler" : "viser à nouveau ›"}
+                  {enVisee ? "clique dans l'image" : "viser dans l'image ›"}
                 </button>
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onViser?.(!enVisee)}
-                className="mesure self-start text-[10px] text-signal hover:text-signal-clair"
-              >
-                {enVisee ? "clique dans l'image" : "viser dans l'image ›"}
-              </button>
+              )}
+            </Reglage>
+            {/* **Une pipette non visée ne retire rien**, et le dire vaut mieux que
+                de laisser croire à une passe qui ne marche pas. */}
+            {!passe.point && (
+              <Raison texte="tant qu'aucun point n'est posé, cette passe ne retire rien" />
             )}
-          </Reglage>
-          {/* **Une pipette non visée ne retire rien**, et le dire vaut mieux que
-              de laisser croire à une passe qui ne marche pas. */}
-          {!passe.point && (
-            <Raison texte="tant qu'aucun point n'est posé, cette passe ne retire rien" />
-          )}
-          <Reglage libelle="portée" aide="detourage.portee">
-            <Segments
-              valeurs={["tache", "partout"] as const}
-              valeur={passe.portee}
-              libelles={{ tache: "cette tache", partout: "partout" }}
-              onChange={(portee) => onFini({ ...passe, portee })}
+            <Reglage libelle="portée" aide="detourage.portee">
+              <Segments
+                valeurs={["tache", "partout"] as const}
+                valeur={passe.portee}
+                libelles={{ tache: "cette tache", partout: "partout" }}
+                onChange={(portee) => fini({ ...passe, portee })}
+              />
+            </Reglage>
+          </>
+        )}
+
+        {/* **La tolérance sert les deux moteurs qui remplissent par plages**, et
+            c'est le même écart par canal : le bord part des bordures, la pipette
+            part du point, et ce qui les sépare est l'amorce, pas le seuil. */}
+        {(passe.moteur === "bord" || pipette) && (
+          <Reglage libelle="tolérance" aide="detourage.tolerance">
+            <Curseur
+              valeur={passe.tolerance}
+              min={0}
+              max={120}
+              onChange={(tolerance) => change({ ...passe, tolerance })}
+              onFini={(tolerance) => fini({ ...passe, tolerance })}
             />
           </Reglage>
-        </>
-      )}
-
-      {/* **La tolérance sert les deux moteurs qui remplissent par plages**, et
-          c'est le même écart par canal : le bord part des bordures, la pipette
-          part du point, et ce qui les sépare est l'amorce, pas le seuil. */}
-      {(passe.moteur === "bord" || pipette) && (
-        <Reglage libelle="tolérance" aide="detourage.tolerance">
+        )}
+        <Reglage libelle="seuil alpha" aide="detourage.seuil_alpha">
           <Curseur
-            valeur={passe.tolerance}
-            min={0}
-            max={120}
-            onChange={(tolerance) => onChange({ ...passe, tolerance })}
-            onFini={(tolerance) => onFini({ ...passe, tolerance })}
+            valeur={passe.seuil_alpha}
+            min={1}
+            max={255}
+            onChange={(seuil_alpha) => change({ ...passe, seuil_alpha })}
+            onFini={(seuil_alpha) => fini({ ...passe, seuil_alpha })}
           />
         </Reglage>
-      )}
-      <Reglage libelle="seuil alpha" aide="detourage.seuil_alpha">
-        <Curseur
-          valeur={passe.seuil_alpha}
-          min={1}
-          max={255}
-          onChange={(seuil_alpha) => onChange({ ...passe, seuil_alpha })}
-          onFini={(seuil_alpha) => onFini({ ...passe, seuil_alpha })}
-        />
-      </Reglage>
-      <Reglage libelle="durcissement" aide="detourage.durcissement">
-        <Segments
-          valeurs={[0, 1, 2, 3, 4] as const}
-          valeur={passe.durcissement as 0 | 1 | 2 | 3 | 4}
-          onChange={(durcissement) => onFini({ ...passe, durcissement })}
-        />
-      </Reglage>
+        <Reglage libelle="durcissement" aide="detourage.durcissement">
+          <Segments
+            valeurs={[0, 1, 2, 3, 4] as const}
+            valeur={passe.durcissement as 0 | 1 | 2 | 3 | 4}
+            onChange={(durcissement) => fini({ ...passe, durcissement })}
+          />
+        </Reglage>
+      </div>
     </div>
   )
 }
