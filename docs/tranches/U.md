@@ -507,7 +507,8 @@ l'application entière, pour un usage qui ne concerne que cette barre-ci.
 
 ## U6 · La palette se règle sans faire attendre
 
-**Critères : 6 · Ce que ça corrige : un point de la séance**
+**Critères : 6 · Ce que ça corrige : un point de la séance · *tenue le
+1<sup>er</sup> septembre 2026***
 
 ### Ce qu'on livre
 
@@ -534,18 +535,62 @@ pour ne pas clignoter sur les gestes courts : c'est celle-là qu'on emploie, pas
 
 ### Critères d'acceptation
 
-- [ ] Bouger l'attraction ou la proportion sans toucher aux sources répond **sous 300 ms**
+- [x] Bouger l'attraction ou la proportion sans toucher aux sources répond **sous 300 ms**
       sur le paquet de trois images qui en coûte 2 100 aujourd'hui.
-- [ ] Ajouter, retirer ou remplacer une carte du paquet recalcule bien la palette.
-- [ ] Renommer une palette ou une ambiance ne recalcule aucune couleur.
-- [ ] Un calcul qui dépasse 240 ms montre la jauge du produit, et elle disparaît avec lui.
-- [ ] L'aperçu de la palette sur de vraies images ne se redemande pas tant que rien
+- [x] Ajouter, retirer ou remplacer une carte du paquet recalcule bien la palette.
+- [x] Renommer une palette ou une ambiance ne recalcule aucune couleur.
+- [x] Un calcul qui dépasse 240 ms montre la jauge du produit, et elle disparaît avec lui.
+- [x] L'aperçu de la palette sur de vraies images ne se redemande pas tant que rien
       n'a changé.
-- [ ] Un banc gratuit mesure les deux temps — avant et après — et garde son relevé.
+- [x] Un banc gratuit mesure les deux temps — avant et après — et garde son relevé.
 
 ### Bloquée par
 
 Aucune.
+
+### Ce qu'elle a appris en étant faite
+
+**Le chiffre est pire que ce que la séance disait, et le banc le montre.**
+`essais/essai_palette_vive.py` mesure sur trois vraies cartes du disque, de 1 254 pixels de
+côté : **11 500 millisecondes avant, 25 après** — 460 fois. L'auteur avait relevé 2,1
+secondes, sur des images plus petites ; l'écart entre les deux relevés n'est pas une
+contradiction, c'est la taille des images, et c'est ce qui rend le défaut pénible à
+diagnostiquer sur une séance et évident sur un banc.
+
+**On ne fixe pas une durée dans les essais, on fixe un nombre de lectures.** Une assertion
+sur une milliseconde mesurerait la machine qui la lance. Ce qui produit le temps est
+structurel — *combien de fois le paquet est-il ouvert ?* — et c'est ça que
+`tests/test_u6.py` fixe : zéro, pour trois relâchements de curseur, contre quinze avant.
+La durée, elle, vit dans le banc, qui garde son relevé et qu'on peut refaire.
+
+**Une empreinte qui n'ouvre plus les fichiers doit quand même savoir qu'un fichier a
+bougé**, et c'était toute la difficulté. Elle le sait parce qu'une carte du tableau porte
+déjà l'empreinte de ses octets : la signature d'un paquet est la liste triée de ses cartes
+et de leurs empreintes. Trié, parce que l'ordre de lecture du disque n'est pas une propriété
+du paquet — le laisser entrer aurait fait recalculer une palette parce qu'un dossier a été
+parcouru dans un autre ordre.
+
+**Le service disait « il ne tient aucun cache en mémoire », et il en tient un maintenant.**
+La phrase a été réécrite plutôt que contournée. La distinction qu'elle protégeait tient
+toujours : les *palettes* ne sont pas gardées — elles vivent dans le fichier du projet, et
+une copie ici serait une seconde vérité. Ce qui est gardé est la *lecture d'un paquet de
+fichiers*, dont la clé porte l'empreinte de chaque fichier lu : une entrée ne peut pas
+survivre à ce dont elle est la lecture. C'est l'arrangement du détourage gardé dans le
+service des assets, pour la même raison.
+
+**Le banc a trouvé un second défaut, qui n'est pas dans cette étape.** L'aperçu de la
+palette coûte **2 900 millisecondes sur des images brutes de mille pixels**, et 20 sur des
+sprites de soixante-quatre. C'est le cas ordinaire qui est rapide — une bibliothèque rangée
+porte des sprites —, mais un auteur qui règle une palette avant d'avoir posé la moindre
+grille attend trois secondes par mouvement de curseur. Le relevé est gardé ; rien n'a été
+changé, parce que ce n'est pas ce que l'étape promettait et qu'un correctif au passage
+n'aurait été ni mesuré ni cadré.
+
+**La jauge n'est pas neuve, et c'est la moitié du travail.** Le produit en a exactement une,
+avec son seuil de 240 ms qui l'empêche de clignoter sur un geste court. L'employer telle
+quelle a demandé de la poser au-dessus du panneau plutôt que dedans — et de réserver ses
+deux pixels en permanence : une jauge qui pousse le panneau vers le bas en paraissant fait
+sauter ce qu'on regarde, et c'est précisément le geste où l'œil est resté sur les couleurs.
 
 ---
 

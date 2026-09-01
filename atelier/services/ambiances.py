@@ -64,6 +64,14 @@ PROFONDEUR = 8
 # tirée d'une lecture à 24 n'aurait plus rien à choisir.
 LARGEMENT = 64
 
+# Combien de paquets d'images gardent leurs couleurs sous la main (U6).
+# **Un cache de lecture, pas une copie des palettes** : la clé est la liste des
+# cartes du paquet avec l'empreinte de chacune, donc une entrée ne survit
+# jamais à ce dont elle est la lecture. Trente-deux couvre très largement
+# l'usage — un jeu a une poignée de paquets, et une entrée pèse quelques
+# dizaines de chaînes de sept caractères.
+PAQUETS_GARDES = 32
+
 
 class AmbianceRefusee(ErreurAtelier):
     """Une palette ou une ambiance ne peut pas être posée, et on dit pourquoi."""
@@ -74,10 +82,17 @@ class AmbianceRefusee(ErreurAtelier):
 class ServiceAmbiances:
     """Les deux listes du côté Ambiances, et le calcul qui les tient à jour.
 
-    Il ne tient **aucun cache en mémoire** : les palettes vivent dans
-    `projet.json`, relu à chaque fois comme le tableau et le plan. Une copie ici
-    serait une seconde vérité, et deux écritures concurrentes la feraient
-    diverger.
+    **Il ne garde aucune palette en mémoire** : elles vivent dans `projet.json`,
+    relu à chaque fois comme le tableau et le plan. Une copie ici serait une
+    seconde vérité, et deux écritures concurrentes la feraient diverger.
+
+    **Il garde en revanche les couleurs lues dans un paquet d'images** (U6), et
+    ce n'est pas la même chose : ce ne sont les couleurs de personne, c'est la
+    lecture d'un fichier, et la clé porte l'empreinte de chaque fichier lu. Une
+    entrée ne peut donc pas survivre à ce dont elle est la lecture — c'est le
+    même arrangement que le détourage gardé dans le service des assets, pour la
+    même raison : le calcul coûte cent fois ce qui l'entoure et il rend deux
+    fois la même chose.
     """
 
     def __init__(self, base, bibliotheque, univers, production, assets) -> None:
@@ -91,6 +106,8 @@ class ServiceAmbiances:
         self._univers = univers
         self._production = production
         self._assets = assets
+        # Les couleurs d'un paquet d'images, par signature du paquet (U6).
+        self._paquets: dict[str, tuple[str, ...]] = {}
 
     # ── Lire ─────────────────────────────────────────────────────────────────
 
@@ -160,6 +177,18 @@ class ServiceAmbiances:
         # projet les lit — même fonction, même détourage préalable, mêmes
         # couleurs. Un second calcul ici aurait donné deux palettes différentes
         # pour les mêmes images.
+        #
+        # **C'est le seul calcul cher de ce module, et il est gardé** (U6) : lire
+        # un paquet de trois images coûtait 2,1 secondes à chaque relâchement de
+        # curseur, alors même que le curseur ne touche pas aux sources. La clé
+        # est la signature du paquet — quelles cartes, dans quel état —, donc
+        # ajouter, retirer ou remplacer une carte donne une autre clé et rend
+        # une autre lecture. La propriété que tout ceci protège ne bouge pas :
+        # ajouter une carte au paquet recalcule bien la palette.
+        marque = self._signature_de_source(objet, source, profondeur)
+        gardees = self._paquets.get(marque)
+        if gardees is not None:
+            return gardees
         octets = []
         for carte in self._univers.cartes(objet.identifiant):
             if carte.groupe != source.reference:
@@ -168,7 +197,72 @@ class ServiceAmbiances:
                 octets.append(self._univers.octets(objet.identifiant, carte.identifiant)[0])
             except Exception:  # noqa: BLE001 — un fichier disparu se voit en moins
                 continue
-        return palette_de(octets, LARGEMENT) if octets else ()
+        lues = palette_de(octets, LARGEMENT) if octets else ()
+        if len(self._paquets) >= PAQUETS_GARDES:
+            self._paquets.pop(next(iter(self._paquets)))
+        self._paquets[marque] = lues
+        return lues
+
+    # ── De quoi une palette est la lecture, **sans ouvrir un fichier** ────────
+
+    def _signature_de_source(
+        self, objet: Projet, source: Source, profondeur: int
+    ) -> str:
+        """Ce qui identifie une source sans la lire (U6).
+
+        **C'était toute l'étape.** L'empreinte d'une palette servait à décider
+        s'il fallait la recalculer, et elle était faite des couleurs elles-mêmes
+        — donc la fabriquer relisait et requantifiait tout le paquet. Le calcul
+        qu'on refaisait était très exactement celui dont on voulait savoir s'il
+        fallait le refaire, et il coûtait 2,1 secondes par relâchement de
+        curseur sur trois images.
+
+        Une carte porte déjà l'empreinte de ses octets : deux paquets aux mêmes
+        cartes dans le même état rendent la même signature, et un paquet dont
+        une carte a bougé en rend une autre. C'est exactement ce que l'empreinte
+        d'avant disait, obtenu sans ouvrir un fichier.
+
+        **Les cartes sont triées.** L'ordre de lecture du tableau n'est pas une
+        propriété du paquet, et le laisser entrer aurait fait recalculer une
+        palette parce qu'un fichier a été relu dans un autre ordre.
+        """
+        if profondeur <= 0:
+            return ""
+        if source.genre == OFFICIELS:
+            # La palette du projet est déjà en mémoire, calculée et gardée par
+            # le service d'univers : la lire ne coûte rien, et ses couleurs
+            # *sont* son identité.
+            return "officiels:" + ",".join(objet.univers.palette)
+        if source.genre == PALETTE:
+            autre = objet.palette_nommee(source.reference)
+            if autre is None:
+                return f"palette:{source.reference}:absente"
+            return (
+                f"palette:{source.reference}:"
+                + self._signature_de_palette(objet, autre, profondeur - 1)
+            )
+        marques = sorted(
+            f"{carte.identifiant}@{carte.empreinte}"
+            for carte in self._univers.cartes(objet.identifiant)
+            if carte.groupe == source.reference
+        )
+        return f"images:{source.reference}:" + ",".join(marques)
+
+    def _signature_de_palette(
+        self, objet: Projet, palette: Palette, profondeur: int
+    ) -> str:
+        """De quoi cette palette est la lecture — sources **et** réglages.
+
+        Le nom n'y entre pas, et c'est un critère : renommer une palette ou une
+        ambiance ne recalcule aucune couleur.
+        """
+        return empreinte_de_palette(
+            [self._signature_de_source(objet, s, profondeur) for s in palette.sources],
+            palette.couleurs,
+            palette.du_jeu,
+            palette.attraction,
+            palette.retouches,
+        )
 
     def _rendre(
         self, objet: Projet, palette: Palette, profondeur: int = PROFONDEUR
@@ -234,23 +328,16 @@ class ServiceAmbiances:
         return rendue, pastilles
 
     def _empreinte(self, objet: Projet, palette: Palette) -> str:
-        """De quoi cette palette est la lecture, **sources résolues comprises**.
+        """De quoi cette palette est la lecture — **sans ouvrir une image** (U6).
 
-        L'empreinte d'une source `images` porte les couleurs qu'elle rend, et non
-        le nom du paquet : sans quoi ajouter une carte au paquet ne recalculerait
-        rien, et c'est exactement ce que la tranche promet de préserver.
+        Elle portait les couleurs que chaque source rend, ce qui obligeait à les
+        lire toutes pour savoir s'il fallait les relire. Elle porte désormais ce
+        qui identifie les sources : les cartes d'un paquet et l'empreinte de
+        chacune, la palette du jeu telle qu'elle est en mémoire, les réglages
+        d'une palette citée. Ce que l'empreinte protégeait est gardé — ajouter
+        une carte au paquet change la signature, donc recalcule la palette.
         """
-        matieres = []
-        for source in palette.sources:
-            couleurs = self._couleurs_de_source(objet, source, PROFONDEUR)
-            matieres.append(f"{source.genre}:{source.reference}:{','.join(couleurs)}")
-        return empreinte_de_palette(
-            matieres,
-            palette.couleurs,
-            palette.du_jeu,
-            palette.attraction,
-            palette.retouches,
-        )
+        return self._signature_de_palette(objet, palette, PROFONDEUR)
 
     def _accorder(self, projet: str) -> Projet:
         """Remet les palettes d'accord avec leurs sources, si elles ne le sont plus.

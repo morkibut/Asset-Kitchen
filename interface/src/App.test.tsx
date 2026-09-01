@@ -1869,11 +1869,21 @@ function serveurDouble(options: {
         return rendre(cote())
       }
       if (init?.method === "PUT") {
+        // **L'empreinte suit les couleurs, pas le nom** (U6). Le serveur la
+        // fabrique de ce qui identifie les sources et des réglages ; renommer
+        // ne la bouge pas, et c'est ce qui fait que l'aperçu ne se redemande
+        // pas. Le double rejoue cette règle-là, sans quoi l'essai qui compte
+        // les aperçus mesurerait une fiction.
+        const touchePalette = ["sources", "couleurs", "du_jeu", "attraction", "retouches"]
+          .some((champ) => champ in (corps as Record<string, unknown>))
         etat.palettes = etat.palettes.map((p) =>
           p.identifiant === identifiant
             ? {
                 ...p,
                 ...corps,
+                empreinte: touchePalette
+                  ? `${p.empreinte}+`
+                  : p.empreinte,
                 // Le serveur recalcule ; le double rejoue la seule règle que
                 // l'écran lit — une pastille retirée reste dans la liste,
                 // marquée, et sort du rendu.
@@ -14576,5 +14586,141 @@ describe("les réglages voyagent d'une image à l'autre", () => {
       ),
     ).toBe(true)
     expect(panneau.getByText(/aucune recette nommée/)).toBeTruthy()
+  })
+})
+
+// ── U6 · La palette se règle sans faire attendre ─────────────────────────────
+//
+// **Ce qui rendait l'attente est parti côté serveur** — l'empreinte relisait le
+// paquet d'images pour savoir s'il fallait le relire — et se mesure dans
+// `tests/test_u6.py` et `essais/essai_palette_vive.py` : 11,5 secondes contre
+// 25 millisecondes sur trois vraies cartes, mesuré le 1ᵉʳ septembre 2026.
+//
+// Restent les deux critères qui se voient : **l'attente se montre** avec la
+// jauge du produit et son seuil de 240 ms, et **l'aperçu ne se redemande pas**
+// tant que les couleurs n'ont pas bougé.
+
+describe("la palette se règle sans faire attendre", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Une palette dont l'attraction agit — donc dont le curseur n'est pas grisé.
+   *
+   *  À une seule source, l'attraction est inerte et **se grise avec sa
+   *  raison** : il ne reste aucune couleur à rapprocher. Deux sources, donc. */
+  const MELANGEE = {
+    ...paletteDouble("marais"),
+    sources: [
+      { genre: "officiels" as const, reference: "" },
+      { genre: "images" as const, reference: "le paquet" },
+    ],
+    du_jeu: 2,
+    attraction_inerte: false,
+  }
+
+  const ouvrirUnePalette = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    fetchDouble?: (chemin: string, init?: RequestInit) => Promise<Response>,
+  ) => {
+    const double = serveurDouble({ palettes: [MELANGEE], ...options })
+    await monter(
+      (fetchDouble ?? double.fetchDouble) as unknown as ReturnType<typeof vi.fn>,
+    )
+    fireEvent.click(screen.getByRole("tab", { name: "Univers" }))
+    fireEvent.click(await screen.findByRole("tab", { name: "Ambiances et couleurs" }))
+    fireEvent.click(await screen.findByRole("button", { name: /marais/ }))
+    await screen.findByText(/l'aperçu/)
+    return double
+  }
+
+  const apercus = (appels: { url: string }[]) =>
+    appels.filter((a) => a.url.includes("/preview")).length
+
+  const laJauge = () => document.querySelector("[data-attente-palette] span.bg-bord")
+
+  /** Poser l'attraction par son champ de nombre — un seul envoi, comme un
+   *  relâchement de curseur (U3). Plus sûr qu'un `mouseUp` simulé, et c'est
+   *  exactement le même chemin dans le produit. */
+  const poserLAttraction = (valeur: number) => {
+    const champ = screen.getByLabelText("l'attraction, en chiffres")
+    fireEvent.change(champ, { target: { value: String(valeur) } })
+    fireEvent.keyDown(champ, { key: "Enter" })
+  }
+
+  // ── « L'aperçu ne se redemande pas tant que rien n'a changé » ──────────────
+
+  test("rouvrir la même palette ne redemande pas l'aperçu", async () => {
+    // **C'est l'empreinte qui décide, pas la palette.** L'aperçu pose la
+    // palette sur de vraies images et coûte des centaines de millisecondes ;
+    // le redemander à chaque rendu du panneau — un clic dans la colonne, une
+    // liste qui revient du serveur — l'aurait payé pour rien.
+    const { appels } = await ouvrirUnePalette()
+    const avant = apercus(appels)
+    expect(avant).toBe(1)
+
+    fireEvent.click(screen.getByRole("button", { name: /marais/ }))
+    fireEvent.click(screen.getByRole("button", { name: /marais/ }))
+    await waitFor(() => expect(screen.getByText(/l'aperçu/)).toBeTruthy())
+
+    expect(apercus(appels)).toBe(avant)
+  })
+
+  test("bouger l'attraction, lui, redemande l'aperçu — les couleurs ont changé", async () => {
+    // L'autre moitié du critère : *ne pas redemander* ne doit pas devenir *ne
+    // jamais redemander*, sans quoi l'aperçu montrerait une palette qui n'est
+    // plus celle qu'on règle.
+    const { appels } = await ouvrirUnePalette()
+    const avant = apercus(appels)
+
+    poserLAttraction(60)
+
+    await waitFor(() => expect(apercus(appels)).toBe(avant + 1))
+  })
+
+  // ── « Un calcul qui dépasse 240 ms montre la jauge, et elle part avec lui » ─
+
+  test("une attente longue montre la jauge du produit, et elle disparaît avec elle", async () => {
+    // **Une jauge, pas une neuve** : celle de la génération et de la retouche,
+    // avec le seuil de 240 ms qui l'empêche de clignoter sur un geste court.
+    let relacher: () => void = () => {}
+    const lente = new Promise<void>((resoudre) => {
+      relacher = resoudre
+    })
+
+    const double = serveurDouble({ palettes: [MELANGEE] })
+    const freine = vi.fn(async (chemin: string, init?: RequestInit) => {
+      if (String(chemin).startsWith("/api/palettes/") && init?.method === "PUT")
+        await lente
+      return double.fetchDouble(chemin, init)
+    })
+    await ouvrirUnePalette({}, freine as unknown as typeof double.fetchDouble)
+
+    // Rien tant que rien n'attend.
+    expect(laJauge()).toBeNull()
+
+    const depart = Date.now()
+    poserLAttraction(60)
+
+    // Sous le seuil, elle ne paraît toujours pas : une jauge qui clignoterait
+    // sur un geste court serait pire que pas de jauge du tout.
+    expect(laJauge()).toBeNull()
+
+    // L'horloge avance au-delà des 240 ms ; la jauge se rafraîchit d'elle-même
+    // quatre fois par seconde, comme partout ailleurs dans le produit.
+    vi.spyOn(Date, "now").mockImplementation(() => depart + 900)
+    await waitFor(() => expect(laJauge()).not.toBeNull())
+
+    relacher()
+    await waitFor(() => expect(laJauge()).toBeNull())
   })
 })

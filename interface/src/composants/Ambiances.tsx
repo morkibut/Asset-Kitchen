@@ -15,7 +15,7 @@
 // ambiance, c'est le même objet en plus petit et en plusieurs exemplaires. Il
 // n'y a donc pas deux notions à apprendre.
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   api,
   NOM_DE_CE_QU_ON_PREND,
@@ -27,7 +27,7 @@ import {
   type RetoucheDePalette,
   type SourceDePalette,
 } from "../api"
-import { Curseur, Libelle, Raison, Segments } from "./chassis"
+import { Curseur, Jauge, Libelle, Raison, Segments } from "./chassis"
 
 /** Ce qu'un onglet du panneau montre. Les mêmes quatre pour une ambiance, les
  *  mêmes quatre pour une palette : c'est le même geste — ouvrir une partie —,
@@ -67,8 +67,44 @@ export function CoteAmbiancesEtCouleurs({
   }, [fondre])
 
   const echouer = (erreur: unknown) => onErreur(String(erreur))
-  const poser = (promesse: Promise<CoteAmbiances>) =>
-    void promesse.then(fondre).catch(echouer)
+
+  // ── L'attente se voit, avec la jauge du produit (U6) ──────────────────────
+  //
+  // **Une jauge, pas une neuve.** Le produit en a exactement une — celle de la
+  // génération et de la retouche — et elle porte déjà le seuil de 240 ms qui
+  // l'empêche de clignoter sur un geste court. C'est celle-là qu'on emploie :
+  // un second indicateur d'attente aurait été une seconde grammaire à
+  // apprendre pour la même chose.
+  //
+  // **Sans compteur.** Une palette se règle la main sur le curseur, comme une
+  // retouche : `00:00 / ~00:00` y serait un nombre qui ne change jamais.
+  //
+  // *Après l'étape, elle ne devrait presque jamais paraître* — c'est le but.
+  // Elle reste pour le seul cas qui coûte encore : la première lecture d'un
+  // paquet d'images que rien n'a encore lu.
+  const [enVol, setEnVol] = useState<{ depuis: number; attendue: number } | null>(
+    null,
+  )
+  const attendue = useRef(0.3)
+  const envols = useRef(0)
+
+  const poser = (promesse: Promise<CoteAmbiances>) => {
+    const depart = Date.now() / 1000
+    envols.current += 1
+    // La jauge garde le **premier** départ, comme celle de la retouche : deux
+    // réglages posés coup sur coup sont une seule attente, pas deux.
+    setEnVol((deja) => deja ?? { depuis: depart, attendue: attendue.current })
+    void promesse
+      .then((recu) => {
+        attendue.current = Math.max(0.05, Date.now() / 1000 - depart)
+        fondre(recu)
+      })
+      .catch(echouer)
+      .finally(() => {
+        envols.current -= 1
+        if (envols.current === 0) setEnVol(null)
+      })
+  }
 
   if (!cote) return null
 
@@ -105,6 +141,19 @@ export function CoteAmbiancesEtCouleurs({
       </aside>
 
       <div className="defile flex min-h-0 min-w-0 flex-col overflow-y-auto p-4">
+        {/* Deux pixels réservés en permanence : une jauge qui pousserait le
+            panneau vers le bas en paraissant ferait sauter ce qu'on regarde,
+            et c'est précisément le geste où l'œil est resté sur les couleurs. */}
+        <div data-attente-palette className="mb-3 h-[2px] shrink-0">
+          {enVol && (
+            <Jauge
+              demarreLe={enVol.depuis}
+              attendue={enVol.attendue}
+              compteur={false}
+              seuil={0.24}
+            />
+          )}
+        </div>
         {ambiance ? (
           <PanneauAmbiance
             ambiance={ambiance}

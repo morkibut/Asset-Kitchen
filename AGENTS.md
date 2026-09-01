@@ -35,8 +35,8 @@ bibliothèque, donc cette image-là n'existe pas et n'existera pas.
 soir — la première sur la V2.1 entière (quinze points, trois déjà fermés, neuf étapes), la
 seconde sur les seules tables de l'atelier (six points, quatre étapes). Quatre-vingt-sept
 critères. Elles vivent dans `docs/PLAN.md` après la V2.1 et **avant** la V2.2, et leurs
-critères dans `docs/tranches/U.md`. **`U1` à `U5` et `U11` sont tenues depuis le
-1<sup>er</sup> septembre 2026 ; les sept autres restent à construire.**
+critères dans `docs/tranches/U.md`. **`U1` à `U6` et `U11` sont tenues depuis le
+1<sup>er</sup> septembre 2026 ; les six autres restent à construire.**
 
 `U1` passe d'abord parce que c'est la seule qui coûte de l'argent réel — cinq clics sur le
 bouton qui paie lançaient cinq appels payants, un verrou existant que l'écran jetait ; `U2`
@@ -154,6 +154,11 @@ py essais/essai_ce_qui_part.py       ce que l'univers pose et ce qui part vraime
                                      reprise, ce que le nombre de couleurs achète, et le tableau.
                                      Gratuit, sur les projets déjà là ; c'est lui que cite la
                                      maquette 06
+py essais/essai_palette_vive.py      le temps d'un relâchement de curseur sur une palette,
+                                     avant et après U6 : 11 500 ms contre 25 sur trois vraies
+                                     cartes, mesuré le 1er septembre 2026. Gratuit, et il
+                                     n'écrit rien du jeu — il monte un atelier jetable dans
+                                     un dossier temporaire et emprunte des octets
 py essais/essai_export.py            l'archive rouverte, sur ce que l'atelier a — gratuit
                                      (demande un atelier lancé)
 py essais/essai_premiere_image.py    UN APPEL PAYANT, ~$0,006
