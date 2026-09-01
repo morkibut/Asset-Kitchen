@@ -706,125 +706,6 @@
         "source": "plan",
         "order": 40,
         "blocked_by": "- ~~**Toutes les autres**~~ — **livrées le 31 août 2026**. Un guide écrit au milieu du plan est un guide à réécrire à la fin ; celui-ci a été écrit une fois, après."
-      },
-      {
-        "id": "F0",
-        "type": "epic",
-        "parent": null,
-        "title": "Le relevé des trois — *tenu le 31 août 2026*",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 41,
-        "blocked_by": "- ~~**E14 et E20**~~ — **levé le 31 août 2026** : les deux dernières étapes de la V2.1 ont été"
-      },
-      {
-        "id": "F1",
-        "type": "epic",
-        "parent": null,
-        "title": "Le pluriel, et le fournisseur qui ne demande rien",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 42,
-        "blocked_by": "- **F0** — le relevé dit lequel des trois entre en premier et par quel chemin ses références passent."
-      },
-      {
-        "id": "F2",
-        "type": "epic",
-        "parent": null,
-        "title": "Ce qu'un appel consomme",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 43,
-        "blocked_by": "- **F1** — il faut un fournisseur qui ne compte pas en dollars pour que la question se pose."
-      },
-      {
-        "id": "F3",
-        "type": "epic",
-        "parent": null,
-        "title": "Les clés au pluriel",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 44,
-        "blocked_by": "- **F1** — le pluriel des fournisseurs vient avant le pluriel de leurs clés ; l'inverse mêlerait deux travaux et l'on ne saurait pas lequel a cassé quoi."
-      },
-      {
-        "id": "F4",
-        "type": "epic",
-        "parent": null,
-        "title": "Cloudflare Workers AI",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 45,
-        "blocked_by": "- **F2** — sa réserve n'a nulle part où s'afficher tant que le produit ne connaît qu'une unité."
-      },
-      {
-        "id": "F5",
-        "type": "epic",
-        "parent": null,
-        "title": "~~Leonardo~~ — *retirée par le relevé F0, le 31 août 2026*",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 46,
-        "blocked_by": "- **F2** — ce qu'il reste chez lui n'a nulle part où s'afficher avant."
-      },
-      {
-        "id": "F6",
-        "type": "epic",
-        "parent": null,
-        "title": "Le brouillon ne coûte plus rien",
-        "status": "todo",
-        "status_raw": null,
-        "team": null,
-        "path": "docs/PLAN.md",
-        "checks": {
-          "done": 0,
-          "total": 0
-        },
-        "source": "plan",
-        "order": 47,
-        "blocked_by": "- **F1** — il faut au moins un fournisseur gratuit à imposer."
       }
     ],
     "sources": [
@@ -1091,6 +972,102 @@
         },
         "source": "manual",
         "order": 512
+      },
+      {
+        "id": "F0",
+        "type": "epic",
+        "parent": null,
+        "title": "F0 · Le relevé des trois (V2.2)",
+        "status": "done",
+        "status_raw": "done",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 513
+      },
+      {
+        "id": "F1",
+        "type": "epic",
+        "parent": null,
+        "title": "F1 · Le pluriel, et le fournisseur qui ne demande rien (V2.2)",
+        "status": "done",
+        "status_raw": "done",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 514
+      },
+      {
+        "id": "F2",
+        "type": "epic",
+        "parent": null,
+        "title": "F2 · Ce qu'un appel consomme (V2.2)",
+        "status": "done",
+        "status_raw": "done",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 515
+      },
+      {
+        "id": "F3",
+        "type": "epic",
+        "parent": null,
+        "title": "F3 · Les clés au pluriel (V2.2)",
+        "status": "done",
+        "status_raw": "done",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 516
+      },
+      {
+        "id": "F4",
+        "type": "epic",
+        "parent": null,
+        "title": "F4 · Cloudflare Workers AI (V2.2)",
+        "status": "blocked",
+        "status_raw": "blocked",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 517
+      },
+      {
+        "id": "F6",
+        "type": "epic",
+        "parent": null,
+        "title": "F6 · Le brouillon ne coûte plus rien (V2.2)",
+        "status": "done",
+        "status_raw": "done",
+        "team": null,
+        "path": null,
+        "checks": {
+          "done": 0,
+          "total": 0
+        },
+        "source": "manual",
+        "order": 518
       }
     ]
   },
@@ -1267,6 +1244,22 @@
     },
     "U13": {
       "status": "done"
+    },
+    "F1": {
+      "status": "done",
+      "title": "Le pluriel, et le fournisseur qui ne demande rien"
+    },
+    "F2": {
+      "status": "done"
+    },
+    "F3": {
+      "status": "done"
+    },
+    "F6": {
+      "status": "done"
+    },
+    "F4": {
+      "blocked_by": "un compte Cloudflare — le dépôt n'en a pas"
     }
   },
   "notes": [
@@ -1303,14 +1296,6 @@
       "scope_label": "L'argent ne part qu'une fois, et l'écran de confirmation se quitte"
     },
     {
-      "id": "n6",
-      "level": "info",
-      "text": "La V2.2 — les fournisseurs gratuits, F1 à F6 — ne s'ouvre qu'une fois les treize reprises d'usage passées. Seul le relevé F0 est fait ; il a retiré Leonardo du plan.",
-      "date": "2026-09-01",
-      "scope": "global",
-      "scope_label": null
-    },
-    {
       "id": "n7",
       "level": "info",
       "text": "Dernier critère de l'assistant de démarrage : les dix-sept vignettes d'exemple sont produites sur le disque mais deux ne sont pas encore versionnées.",
@@ -1325,10 +1310,55 @@
       "date": "2026-09-01",
       "scope": "global",
       "scope_label": null
+    },
+    {
+      "id": "n9",
+      "level": "win",
+      "text": "F1 est tenue depuis le 1er septembre 2026 : l'atelier connaît plusieurs fournisseurs d'images, et le second — Pollinations — ne demande ni compte ni clé. Sur une machine où rien n'a été déposé, on écrit un sujet et une image arrive. Dix critères sur onze tenus sans réserve ; le onzième a été arbitré et l'arbitrage est écrit dans docs/tranches/V2.2.md.",
+      "date": "2026-09-01",
+      "scope": "global",
+      "scope_label": null
+    },
+    {
+      "id": "n11",
+      "level": "win",
+      "text": "F2 est tenue depuis le 1er septembre 2026 : le produit compte dans l'unite du fournisseur. Un appel sans prix dit gratuit et non 0,00 dollar, et ce qu'il a pris est enregistre a cote — un jeton, lu chez le fournisseur. Huit criteres sur dix tenus sans reserve ; les deux autres demandent un fournisseur qui annonce une reserve, et aucun n'en annonce : le plafond est donc facultatif dans le produit, et F4 branchera le premier reel.",
+      "date": "2026-09-01",
+      "scope": "global",
+      "scope_label": null
+    },
+    {
+      "id": "n12",
+      "level": "risk",
+      "text": "Le banc gratuit a annonce une regression qui n'existait pas : le cache du fournisseur rend l'image sans aucun de ses en-tetes, ni le modele qui a repondu ni ce que l'appel a consomme. Le garde du modele de F1 garde donc un trou sur une reponse cachee — sans consequence tant que ce palier ne declare qu'un modele, a rouvrir sinon.",
+      "date": "2026-09-01",
+      "scope": "F2",
+      "scope_label": "Ce qu'un appel consomme — *tenue le 1<sup>er</sup> septembre 2026*"
+    },
+    {
+      "id": "n13",
+      "level": "win",
+      "text": "La V2.2 est close le 1er septembre 2026, a cinq tranches sur six. Le produit connait plusieurs fournisseurs, compte dans l'unite de chacun, tient une place a secrets par fournisseur, et le travail de l'agent ne coute plus d'argent. Il reste F4 — Cloudflare —, qui n'attend ni decision ni construction : elle attend un compte que ce depot n'a pas.",
+      "date": "2026-09-01",
+      "scope": "global",
+      "scope_label": null
+    },
+    {
+      "id": "n14",
+      "level": "info",
+      "text": "F4 se prend le jour ou un compte Cloudflare existe, sans rien reviser : la reserve a plafond facultatif de F2 et le tiroir a deux secrets de F3 ont chacun un double d'essai qui les verifie deja.",
+      "date": "2026-09-01",
+      "scope": "F4",
+      "scope_label": "F4 · Cloudflare Workers AI (V2.2)"
     }
   ],
   "milestones": [],
   "activity": [
+    {
+      "hash": "f826b6c",
+      "date": "2026-09-01",
+      "text": "docs: l'architecture et le tableau de bord rattrapent les treize"
+    },
     {
       "hash": "710d86f",
       "date": "2026-09-01",
@@ -1383,11 +1413,6 @@
       "hash": "034ec86",
       "date": "2026-09-01",
       "text": "feat: U3 â€” un curseur prend un chiffre"
-    },
-    {
-      "hash": "c7f2c37",
-      "date": "2026-09-01",
-      "text": "feat: U11 â€” la main peint carrÃ©, et lÃ  oÃ¹ on la pose"
     }
   ]
 }

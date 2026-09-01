@@ -107,6 +107,10 @@ nombre est toujours un fait mesuré, jamais un libellé — et les mesures devie
 comme une colonne même là où elles n'en forment pas une : sur une tuile, dans la fiche, dans la
 barre d'état, dans le journal du projet. Corollaire : `font-variant-numeric: tabular-nums`
 systématique, virgule décimale, espace fine avant l'unité (`4 px`, `$0,067`, `64×64`).
+**Une seule exception, et elle dit la même chose qu'un nombre** : `gratuit`, à la place d'un
+montant, chez un fournisseur qui ne facture pas. `$0,0000` serait un nombre juste qui se lit
+*sans limite* là où il faut lire *sans prix* — et ce que l'appel a consommé garde, lui, son
+chiffre et son unité (`1 jeton`) juste à côté.
 
 ### Échelle
 

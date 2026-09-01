@@ -180,7 +180,8 @@ septembre 2026.
 - L'agent atteint le plafond : il reçoit un message qui nomme le plafond et le moyen de le relever, et aucune invite n'apparaît à l'écran.
 - L'agent nomme un projet inexistant : il reçoit la liste des projets existants, et aucun projet n'a été créé.
 - Coller une adresse d'image fait apparaître une carte en moins d'une seconde, avant que l'image ne soit récupérée.
-- Le coût réel de chaque génération est enregistré et totalisé par projet, et le nombre de références envoyées est visible.
+- Ce que chaque génération a réellement consommé est enregistré **dans l'unité de son fournisseur**, l'argent est totalisé par projet, et le nombre de références envoyées est visible.
+- Un appel qui ne coûte rien dit **gratuit**, jamais « 0,00 $ » — et ce qu'il a consommé se lit à côté du mot.
 - Le tout tourne sans aucun modèle local et sans mobiliser de carte graphique.
 
 **Le personnage et son équipement**

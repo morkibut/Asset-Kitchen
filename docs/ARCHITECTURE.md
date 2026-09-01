@@ -37,8 +37,8 @@ l'intégration ne l'est pas.
 | Sujet | Décision | Pourquoi |
 |---|---|---|
 | Socle | Nouveau dépôt. Récupération ciblée, pas de fork. | Paradigme opposé à GAG, moteur opposé à MySpriteAi. |
-| Moteur d'image | **API seulement**, via **OpenRouter comme passerelle unique**. | Cohérence d'identité impossible en local sur 8 Go — mesuré : Flux GGUF 1024 à 106,9 s/image sur cette machine. |
-| Fournisseur | Un seul adaptateur : OpenRouter. Un compte, une clé, une facture. | 48 modèles image de 11 fournisseurs, paramètres unifiés, découverte de capacités, `usage.cost` par appel. Écrire trois adaptateurs donnerait le même résultat pour trois fois le travail. |
+| Moteur d'image | **API seulement.** OpenRouter d'abord ; **plusieurs fournisseurs depuis F1**, voir la ligne suivante. | Cohérence d'identité impossible en local sur 8 Go — mesuré : Flux GGUF 1024 à 106,9 s/image sur cette machine. C'est le *local* qui est écarté, et cette moitié-là n'a jamais bougé. |
+| Fournisseur | **Plusieurs adaptateurs depuis F1**, et OpenRouter reste celui qui porte les univers. Un modèle se nomme par son fournisseur **et** par son nom, les deux ensemble. | *Révisé le 1<sup>er</sup> septembre 2026.* La décision de départ tenait tant que la question était la couverture : 48 modèles de 11 éditeurs derrière un seul jeu de paramètres, et écrire trois adaptateurs pour ça aurait coûté trois fois le travail pour le même résultat. Elle est tombée sur une autre question — **le prix** : six relances en trente-deux minutes ont emporté le quart de tout l'argent dépensé ici, et un fournisseur qui ne demande ni compte ni clé change ce que ce geste coûte. Ce qui ne change pas : **aucun repli automatique de l'un sur l'autre**, et aucun mélange dans un même appel. |
 | Comptabilité | **Aucun compteur de crédits maison en V1.** Suivi des coûts dans le tableau de bord OpenRouter. | Économise tout un pan de code pour une information déjà rendue ailleurs. |
 | Modèles locaux | Hors application. Import du résultat. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. |
 | Détourage | **Remplissage depuis le bord** par défaut, la **pipette** en recours pour ce qu'il n'atteint pas, `rembg` en troisième moteur facultatif. Passes multiples dans les trois cas. | *Révisé le 27 août 2026, à la mesure.* Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
@@ -220,7 +220,7 @@ gag2/
 │  ├─ mcp/                   serveur MCP — façade, aucune logique propre
 │  ├─ services/              les gestes du produit
 │  ├─ domaine/               objets et règles, aucune dépendance sortante
-│  ├─ fournisseur/           le port + l'adaptateur OpenRouter
+│  ├─ fournisseur/           le port + un adaptateur par fournisseur
 │  ├─ image/                 mesures, détourage, grille, quantification, découpe, PNG
 │  └─ depot/                 SQLite + fichiers
 ├─ interface/                React + Vite + Tailwind
@@ -252,15 +252,61 @@ Trois décisions tiennent ici, et le relevé qui les a dictées vit dans
 les pièges de fournisseur vérifiés par appel, le contrat de génération et les seize outils
 du serveur MCP. Le numéro y est conservé : un renvoi `§4 bis` reste valide.
 
-- **Un seul adaptateur, OpenRouter.** Le vocabulaire d'un fournisseur ne franchit pas son
-  adaptateur — c'est la règle 1 du §4.
-- **Le catalogue décide, jamais une liste en dur.** `GET /api/v1/images/models` est relu au
-  démarrage ; un modèle qui ne peut pas honorer la demande est **grisé avec sa raison**,
+- **Un adaptateur par fournisseur, et son vocabulaire ne franchit pas son fichier** — c'est la
+  règle 1 du §4, et elle n'a pas bougé d'un pouce quand ils sont devenus deux en F1. Ce qui a
+  changé est que le produit ne dit plus *le fournisseur* mais **celui de ce modèle-là** :
+  `atelier/services/fournisseurs.py` tient la liste, et lui seul. **Aucun repli automatique de
+  l'un sur l'autre** — c'est une relance, et une relance appartient à l'auteur.
+- **Un modèle se nomme par son fournisseur et par son nom, les deux ensemble** —
+  `OpenRouter:openai/gpt-image-2`. Instauré en F1, parce que deux fournisseurs peuvent proposer
+  le même nom : Cloudflare héberge les modèles de Leonardo. C'est cette chaîne-là qui
+  s'enregistre sur une génération, et un nom seul ne dirait plus qui a fait l'image.
+- **Le catalogue décide, jamais une liste en dur.** Il est relu au démarrage, **fournisseur par
+  fournisseur** ; un modèle qui ne peut pas honorer la demande est **grisé avec sa raison**,
   jamais proposé puis rejeté en 400. SpriteCook code ses limites en dur, et plafonne sous
-  les modèles.
+  les modèles. Depuis F1, chacun garde **sa** photo datée, et la fiche d'un modèle dit d'où
+  elle vient — relue chez lui, ou relevée ici à telle date.
 - **Un seul modèle par défaut : `openai/gpt-image-2` en `quality: low`.** Et la leçon qui a
   coûté deux bancs : *ne jamais conclure d'un banc dont le protocole n'est pas le geste réel
   du produit* — le classement s'est inversé dès qu'on est passé d'un sujet à un univers.
+  **Un défaut dont le fournisseur est grisé n'en est pas un** (F1) : sur une machine sans
+  aucune clé, il glisse tout seul vers celui qui n'en demande pas.
+- **Ce qui est enregistré est ce que l'appel a consommé, dans l'unité du fournisseur** — F2, et
+  c'est la révision n°2 de la V2.2. Des dollars quand c'en est, un jeton quand c'en est un.
+  *On n'enregistre jamais un chiffre annoncé* n'a pas changé de fond ; seule l'unité a changé.
+  **Un fournisseur déclare son compte** — son unité, ce qu'il alloue, d'où le chiffre viendra,
+  sa cadence — et le produit le remplit : le plafond y est **facultatif**, parce qu'aucun des
+  deux fournisseurs n'en annonce, et *ce qui reste* vaut alors `null`, qui n'est pas zéro.
+- **Un total en argent ne compte que de l'argent** (F2), et c'est tenu par construction :
+  `cout_usd` est **déduit** de la quantité et de son unité, et vaut zéro dès que l'unité n'est
+  pas celle de l'argent. Aucune des sommes du dépôt n'a eu à apprendre qu'il en existe d'autres.
+- **Un fournisseur déclare les places qu'il demande ; il ne les lit jamais lui-même** — F3.
+  L'adaptateur dit *quelles places existent et comment on en parle* (`atelier/domaine/secret.py`) ;
+  ce qu'il y a dedans se lit dans `atelier/reglages.py`, **à chaque appel**, pour qu'une valeur
+  déposée serve au premier appel suivant sans redémarrer — règle de T1, étendue au pluriel
+  plutôt que réécrite. Un fournisseur peut en demander **zéro, une, ou deux** : Cloudflare veut
+  un compte *et* un jeton, et la phrase de ce qui manque **dit lequel**. C'est la même phrase
+  qui grise ses modèles, écrite une seule fois — trois rédactions finiraient par dire trois
+  choses.
+- **Ce que le produit ajoute de lui-même cède devant le plafond du modèle ; ce que l'auteur a
+  joint ne cède jamais** — F6. Un modèle gratuit n'accepte aucune image d'entrée, et refuser
+  l'appel entier rendait le brouillon gratuit inutilisable sur tout jeu ayant **un seul**
+  artwork officiel. Ce qui cède le fait du plus large au plus étroit — l'artwork du jeu, puis
+  l'image que l'ambiance apporte, puis le concept art désigné pour cette chose-là —, et le
+  gabarit d'une planche ne cède pas : il *est* la demande. **Rien ne se perd en silence** : le
+  grisé d'un modèle se compte sur ce qui ne cède pas, l'écran de confirmation marque ce qui ne
+  partira pas, le prix ne compte que ce qui part, et la génération enregistre ce qu'elle a
+  laissé au sol pour que la fiche de l'image le dise des mois plus tard.
+- **Le modèle imposé à l'agent est gratuit, et son repli l'est aussi** (F6). Un garde-fou posé
+  pour ne rien dépenser qui se replierait sur le défaut du catalogue — le meilleur modèle du
+  banc, donc un payant — coûterait de l'argent en silence, ce qui est pire que pas de
+  garde-fou. Le défaut du catalogue ne sert qu'en dernier recours, quand l'atelier est composé
+  sans aucun fournisseur gratuit.
+- **Le produit n'écrit que dans une place qu'un fournisseur a déclarée** (F3). Les routes de
+  dépôt et de retrait refusent tout autre nom : sans cette garde, un navigateur pourrait écrire
+  n'importe quoi dans le fichier de configuration de l'auteur. Et **rien n'y touche à
+  `donnees/`** — *retirer une clé grise ses modèles et n'efface ni une image ni une dépense*
+  est tenu par ce qui n'est pas écrit, non par une précaution à retenir.
 
 ## 5 · Modèle d'objets
 
@@ -269,8 +315,8 @@ du serveur MCP. Le numéro y est conservé : un renvoi `§4 bis` reste valide.
 | **Projet** *(= l'univers)* | nom, bible (sept champs nommés), planches de référence, palette extraite, réglages par défaut — dont la taille de pixel, qui accepte « aucune » —, **la vue du jeu**, **la liste de ses directions** | Chez SpriteCook le projet est un dossier. Ici il **contraint** — c'est la différence centrale. La **vue** et les **directions** sont arrivées en V2.1 : on choisit la vue une fois, les directions s'en déduisent, et elles décident du nombre de cases d'une pose — voir plus bas. |
 | **Collection** | nom, projet optionnel | Rangement à plat, comme SpriteCook : Projet › Collection › Asset, et rien d'autre. Une collection qui appartient à un projet **décide** du projet de ce qu'on y range ; une collection sans projet traverse les univers. |
 | **Carte** *(tableau d'inspiration)* | type (image \| texte), contenu, groupe, note, provenance (URL, date), taille d'affichage, **position sur la toile**, **largeur libre**, **teinte** (une note seulement), **artwork officiel** oui/non, **famille** (personnages \| objets \| décors \| interface \| tous) | Deuxième famille d'images du produit. Ne s'exporte jamais, ne compte pas dans la bibliothèque. La **famille** décide de ce qui part en référence — voir §6.1. La **position** et la **largeur libre** sont arrivées en T8 : elles portent la place de la carte sur la toile, et ne se confondent pas avec la taille d'affichage — voir plus bas. |
-| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, coût, date de suppression, **direction** | Les dimensions **mesurées** font foi, jamais celles demandées. Le **coût** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. La **direction** est arrivée en V2.1 et elle est vide pour tout ce qui n'en a pas — une icône, un décor, une tuile. |
-| **Génération** | statut, avancement, paramètres résolus, coût réel, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main, **direction**, **ce qui a été pris de l'ambiance**. Pour un import : le nom du fichier, l'empreinte de ses octets, et si le traitement du projet lui a été appliqué | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. *Ce qui a été pris de l'ambiance* est **le nom du lot de style et la liste de ce qu'il a réellement donné** — parmi les couleurs, les images et les textes : sans lui, « ce qui est montré est ce qui part » cesserait d'être vrai en relisant une vieille image. Écrit en faisant E14 : trois oui/non étaient prévus, un nom et une liste ont été posés, parce qu'un lot retouché après coup ne se reconnaît plus sans son nom. |
+| **Asset** | fichier(s), label, prompt, réglages résolus, dimensions mesurées, type, projet, collection, parent (filiation), favori, **ce qu'il a consommé et dans quelle unité**, date de suppression, **direction** | Les dimensions **mesurées** font foi, jamais celles demandées. Ce qu'il a **consommé** est une copie prise à la naissance, pour la tuile ; la génération reste la vérité, elle seule connaît les appels ratés. L'**unité** est arrivée en F2 : sans elle, une image faite chez un fournisseur qui ne facture pas afficherait `$0,0000`, qui se lit *sans limite* là où il faut lire *sans prix*. Le coût en argent s'en **déduit**, il ne s'enregistre pas. La **date de suppression** dure le temps de l'annulation, puis les fichiers partent. La **direction** est arrivée en V2.1 et elle est vide pour tout ce qui n'en a pas — une icône, un décor, une tuile. |
+| **Génération** | statut, avancement, paramètres résolus, **ce que l'appel a consommé et dans quelle unité**, résultats, réinjections, **prompt tel qu'il est parti** et s'il a été repris à la main, **direction**, **ce qui a été pris de l'ambiance**. Pour un import : le nom du fichier, l'empreinte de ses octets, et si le traitement du projet lui a été appliqué | Un enregistrement par appel, y compris ceux qui échouent. Une **réinjection** est un identifiant d'asset et son rôle — jamais des octets : ils se relisent depuis l'asset au moment de l'appel, et de la relance. Le rôle `edition` donne sa filiation à ce qui sort. *Ce qui a été pris de l'ambiance* est **le nom du lot de style et la liste de ce qu'il a réellement donné** — parmi les couleurs, les images et les textes : sans lui, « ce qui est montré est ce qui part » cesserait d'être vrai en relisant une vieille image. Écrit en faisant E14 : trois oui/non étaient prévus, un nom et une liste ont été posés, parce qu'un lot retouché après coup ne se reconnaît plus sans son nom. |
 | **Lien** *(toile)* | ses deux extrémités, son mot, sa pointe | Ajouté en T9, et **le seul objet neuf du modèle depuis T4**. Le mot et la pointe naissent vides : un trait nu dit déjà « ceci a rapport avec cela », et c'est le cas courant — le défaut est muet, l'exception s'exprime. Une extrémité est soit une carte, par identifiant, soit un îlot, par nom de groupe : l'îlot n'a pas d'identité propre (voir plus bas). Un lien ne survit pas à ses extrémités. |
 
 Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,

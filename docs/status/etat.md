@@ -11,6 +11,225 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## La V2.2 se ferme à cinq tranches sur six — 1<sup>er</sup> septembre 2026
+
+**Ce qui l'a fermée n'est pas une décision de portée, c'est un compte que ce dépôt n'a pas.**
+Il reste `F4` — Cloudflare Workers AI —, et elle ne demande ni décision ni construction
+préalable : elle demande un identifiant de compte et un jeton, tous deux gratuits, chez un
+fournisseur où personne n'a ouvert de compte. Le relevé `F0` avait déjà dû le décrire sur sa
+documentation seule, pour la même raison, et il l'avait écrit.
+
+**La marche à suivre pour ouvrir ce compte a été écrite le jour de la clôture**, dans
+`docs/tranches/V2.2.md` § F4 : cinq gestes, et le seul piège qu'ils portent — un jeton créé à
+la main veut le droit de lire **et** celui d'écrire, faute de quoi l'atelier afficherait tous
+les modèles sans pouvoir fabriquer une image. Écrite d'avance parce qu'une manip qu'on
+retrouve six mois plus tard se refait deux fois : une fois de travers, une fois bien.
+
+**Ce que la version a livré**, dans l'ordre où ça se remarque : sur une machine où rien n'a
+été déposé, **une image arrive** ; un appel qui ne coûte rien dit **gratuit** et non `0,00 $`,
+avec ce qu'il a réellement pris écrit à côté ; chaque fournisseur a **sa place à secrets**, y
+compris celui qui en demandera deux ; et **une séance de code entière ne fait plus bouger le
+total en argent**.
+
+**Ce qu'elle laisse en état de marche pour `F4`**, et qui ne sera pas à inventer ce jour-là :
+la réserve du domaine accepte un plafond **facultatif** — parce qu'aucun fournisseur d'ici
+n'en annonce —, et `F4` sera la première à en brancher un vrai ; le tiroir à secrets tient
+deux places pour un seul fournisseur, ce que Cloudflare demande. Chacune des deux a **un
+double d'essai qui la vérifie déjà**, écrit exprès : `FournisseurAvecPlafond` dans
+`tests/test_f2.py`, `FournisseurADeuxPlaces` dans `tests/test_f3.py`.
+
+**Et une leçon revenue quatre fois de suite, sous quatre formes.** Des commentaires du domaine
+en `F1`, trois mots du produit en `F2`, une garde du lecteur de configuration en `F3`, deux
+affichages de l'écran de confirmation en `F6` : *une chose juste sous une hypothèse devient
+fausse quand l'hypothèse s'élargit.* Rien dans le code ne le signale — chaque morceau reste
+juste tout seul —, et le seul remède qui a marché est de relire ce qui parlait au singulier :
+« la clé », « l'argent », « au moins une place ». C'est la façon la moins chère de trouver, et
+c'est aussi la seule.
+
+**Le détail des six tranches est descendu ici**, dans `docs/tranches/V2.2.md`, le jour de la
+clôture. Le plan portait ce que chaque tranche livre, l'annexe portait ses critères : deux
+fichiers qui se renvoyaient l'un à l'autre pour un seul sujet. Ce qu'on lit avant d'avoir rien
+lu — les cinq documents ouverts au début de chaque séance — passe de **320,6 Ko à 300,6 Ko**,
+et l'on ouvre désormais un seul fichier pour reprendre une tranche.
+
+## F6 — 1<sup>er</sup> septembre 2026
+
+**Le travail de l'agent ne coûte plus d'argent.** Le modèle qu'il impose est celui du
+fournisseur qui ne facture rien. C'était déjà l'idée en `T7` — *un agent qui code a besoin
+d'un visuel correct tout de suite, pas d'un asset final* —, et elle valait alors un rapport de
+six sur le coût du travail agentique ; elle vaut désormais la totalité.
+
+**La tranche creuse un trou en le faisant, et c'est là qu'est passé le travail.** Un modèle
+gratuit n'accepte aucune image d'entrée. Avant `F6`, cela voulait dire que le produit refusait
+l'appel **tout entier** dès qu'un jeu avait un seul artwork officiel — c'est-à-dire sur
+presque tout jeu réel. Le garde-fou aurait donc été éteint le jour même, ce qui est la façon
+la plus sûre de perdre un garde-fou. La règle posée tient en une phrase : **ce que le produit
+ajoute de lui-même cède devant le plafond du modèle ; ce que l'auteur a joint ne cède jamais.**
+
+**Ce qui a coûté n'est pas la règle, c'est tout ce qui l'entoure.** *Rien ne se perd en
+silence* demandait quatre choses, et chacune touchait un endroit différent : le grisé d'un
+modèle se compte désormais sur ce qui ne cède pas — sinon la liste dirait *indisponible* d'un
+modèle chez qui la soumission passe, c'est-à-dire l'inverse exact de la règle de `T1` ;
+l'écran de confirmation marque les lignes qui ne partiront pas et l'écrit en toutes lettres ;
+le prix ne compte que ce qui part ; et la génération enregistre ce qu'elle a laissé au sol.
+Cette dernière ligne est celle qui se lit le plus tard : sans elle, une image faite sans le
+style du jeu et une image faite dans un jeu sans style se liraient pareil, des mois après.
+
+**Le repli du garde-fou a changé, et c'est le même raisonnement poussé d'un cran.** Il rendait
+le défaut du catalogue quand le modèle imposé n'y était plus — c'est-à-dire le meilleur modèle
+du banc, c'est-à-dire un payant. Un garde-fou posé pour ne rien dépenser qui se replie sur un
+payant le jour où le gratuit change de nom **coûte de l'argent en silence**, ce qui est pire
+que pas de garde-fou du tout. Il cherche donc un autre gratuit d'abord.
+
+**Deux défauts d'affichage attendaient depuis E14, et c'est un modèle sans places qui les a
+montrés.** Le premier : l'écran de confirmation annonce *« N avertissements — non bloquants,
+écrits sur la ligne concernée »*, et les avertissements du bloc d'images n'ont pas de ligne de
+prompt à eux — ils n'étaient donc rendus par **aucun chemin**. On lisait « 1 avertissement » et
+l'on cherchait où. Le second : son sommaire annonçait « 1 sur 0 », parce qu'il comptait *les
+cochées sur les places du modèle*, c'est-à-dire un compte sur une **capacité**. Les deux
+étaient justes tant qu'un modèle avait au moins une place, et faux dès qu'il n'en avait
+aucune — c'est le même piège que les trois tranches précédentes ont payé sous trois autres
+formes.
+
+**Ce que la vérification a montré, et qu'aucun essai ne montrait.** Un appel réel chez le
+gratuit, sur un jeu portant un artwork officiel : l'image revient en **1 jeton et $0,00**, et
+sa fiche dit *partie sans le style du jeu — 1 image n'a pas suivi, ce modèle n'en accepte
+pas*. C'est la phrase entière de la tranche, lue à l'endroit où elle servira.
+
+## F3 — 1<sup>er</sup> septembre 2026
+
+**Le tiroir à clés a cessé d'être « la clé ».** Une place par fournisseur, chacun déclarant ce
+qu'il demande — une clé, deux secrets, ou rien du tout —, et déposer l'une ne touche à aucune
+autre. Le produit n'avait jamais eu qu'un champ ; le relevé `F0` avait trouvé un fournisseur
+qui en demande **deux** — un compte *et* un jeton —, et un formulaire à un champ l'aurait
+découvert en `F4`, au pire moment.
+
+**La séparation qui a rendu la tranche courte.** L'adaptateur déclare *quelles places existent
+et comment on en parle à l'auteur* ; ce qu'il y a dedans se lit ailleurs, dans le module des
+réglages, qui ne connaît plus qu'une chose : **une place nommée, et sa valeur**. Le module ne
+sait donc plus qu'OpenRouter existe, et un fournisseur neuf n'y ajoute pas une ligne. La règle
+de T1 — *la valeur se relit à chaque appel, jamais au démarrage* — n'a pas été réécrite, elle
+a été **étendue au pluriel** : les fabriques reconstruisent chaque fournisseur au moment où
+l'on s'en sert, et chacun relit ses valeurs en naissant.
+
+**Une garde du lecteur de configuration attendait de devenir une panne.** Pour deviner
+l'encodage du fichier — PowerShell écrit en UTF-16, piège payé en T1 —, il gardait le premier
+décodage **qui contenait le nom de la clé d'OpenRouter**. Imparable tant qu'il n'existe qu'un
+secret au monde ; le jour où un fichier ne porte que les deux valeurs de Cloudflare, il n'est
+plus reconnu comme un fichier de configuration **du tout**, et le produit annonce *aucun jeton*
+sur un fichier qui en porte un. La panne se serait présentée en `F4` comme un problème de
+Cloudflare. C'est le troisième jour de suite que la même chose se produit sous une forme
+différente — des commentaires en `F1`, trois mots du produit en `F2`, une garde technique
+ici : *une chose juste sous une hypothèse devient fausse quand l'hypothèse s'élargit*, et rien
+dans le code ne le signale, puisque chaque morceau reste juste tout seul.
+
+**Deux mots de la barre du haut n'ont pas survécu.** Elle disait `clé …a41c` ou `aucune clé` ;
+le critère demandait de garder les seconds pour le cas où rien ne peut produire. Ils nomment
+la mauvaise chose dès qu'un fournisseur demande autre chose qu'une clé, et la barre dit donc
+**avec quoi on peut produire** — `2 fournisseurs prêts`, `1 sur 2`, `rien pour produire`. Ce
+n'est pas un changement de mots mais un renversement de ce qu'elle annonce : elle décrivait
+*ce qui manque*, dans un monde où un seul manque éteignait tout ; il en manque désormais un
+sur deux et une image part quand même.
+
+**Et le français a coûté un champ de plus.** *« aucune clé OpenRouter »* et *« aucun jeton
+Cloudflare »* ne se composent pas avec la même règle : une phrase du produit ne se fabrique
+pas par concaténation. Chaque place déclare donc sa forme négative en toutes lettres, ce qui a
+permis de reproduire la phrase d'avant **mot pour mot** quand il n'y a qu'une place — et de ne
+réécrire aucun essai de T1.
+
+**Ce qu'une vérification à la main a trouvé et qu'aucun essai ne cherchait.** Déposer une clé
+depuis l'étape de l'assistant laissait la barre du haut annoncer `1 sur 2` sur un atelier où
+les deux fournisseurs étaient prêts : l'étape tenait son tiroir à jour toute seule et ne
+prévenait personne, là où la fenêtre des réglages prévenait déjà. Deux rendus du même
+composant, un seul branché. C'est exactement la leçon d'E13 — *deux endroits qui montrent la
+même chose divergent par ce qu'ils font, pas par ce qu'ils affichent*.
+
+## F2 — 1<sup>er</sup> septembre 2026
+
+**Le produit compte dans l'unité du fournisseur, et « gratuit » a cessé de s'écrire
+`$0,0000`.** C'était le mensonge par omission que l'écran des dépenses avait été construit
+pour arrêter, rouvert un cran plus bas par l'arrivée d'un fournisseur qui ne facture pas :
+zéro dollar est vrai, et se lit *sans limite* là où il faut lire *sans prix*. Ce qu'un appel
+prend chez Pollinations — un jeton, annoncé dans ses en-têtes — est désormais enregistré à
+côté du mot.
+
+**La forme trouvée est plus petite que la tranche ne le laissait croire, et c'est ce qui l'a
+rendue tenable.** Le premier réflexe était d'ajouter une unité à côté du coût, partout. Le
+second, celui qui a été suivi : **le coût en argent est *déduit* de la quantité et de son
+unité**, et vaut zéro dès que l'unité n'en est pas une. L'invariant *un total en argent ne
+compte que de l'argent* est alors tenu **par construction** — un jeton ne peut pas entrer dans
+une somme de dollars, où qu'elle soit calculée —, et aucune des dizaines de sommes de
+`cout_usd` du dépôt n'a eu à apprendre qu'il existe d'autres unités. Huit cents essais sont
+restés verts à travers un changement de modèle d'objets.
+
+**Le relevé avait écrit la contrainte, et le plan ne l'avait pas lue.** Deux des dix critères
+demandaient d'afficher *ce qui reste*. Or « ce qui reste » demande un plafond, et **aucun des
+deux fournisseurs n'en annonce** : celui qui ne demande rien limite une **cadence**, un appel
+toutes les quinze secondes, pas un quota. C'était écrit noir sur blanc dans la cinquième
+conclusion du relevé `F0`, un jour plus tôt. Le produit a donc été construit avec un plafond
+**facultatif** — `reste` vaut alors `null`, qui n'est pas zéro : zéro veut dire *attends
+demain*, `null` veut dire *rien ne te limite*. Un double annonce un plafond pour que la
+machinerie soit vérifiée avant que `F4` ne l'utilise pour de bon.
+
+**Et le banc gratuit a annoncé une régression qui n'existait pas.** Il redemandait la même
+phrase à chaque lancement ; le fournisseur la servait de son cache en 0,2 s au lieu de 25, et
+**sans aucun de ses deux en-têtes** — ni celui qui dit quel modèle a répondu, ni celui qui dit
+ce que l'appel a consommé. Le garde du modèle instauré en `F1` ne pouvait donc pas se
+déclencher, et le banc a écrit que l'adaptateur avait cessé de refuser. Deux choses valaient
+d'être apprises. La première : **la durée était la preuve, et personne ne la lit** — 0,2 s
+pour une image qui en demande vingt-cinq n'est pas une bonne surprise, c'est un aveu. La
+seconde : **un banc qui mesure un fournisseur demande une phrase que personne n'a demandée**,
+sinon il mesure un cache en croyant mesurer un adaptateur. Le garde, lui, garde son trou : sur
+une réponse cachée, on ne peut pas savoir quel modèle a fait l'image. Sans conséquence tant
+que ce palier ne déclare **qu'un** modèle — ce qui est mesuré —, et à rouvrir sinon.
+
+**Trois mots du produit étaient justes parce qu'il n'y avait qu'une unité** : *payé*,
+*facturé*, *à repayer*. Chacun devient faux chez un fournisseur qui ne facture pas, et aucun
+n'aurait levé d'erreur. C'est le même piège qu'`F1` avait payé sur les commentaires, une
+couche plus haut — *une phrase juste sous une hypothèse devient fausse quand l'hypothèse
+s'élargit* —, et il vaut la peine de noter qu'il s'est reproduit **le lendemain**, sur le même
+sujet, sans que la première leçon suffise à le voir venir.
+
+## F1 — 1<sup>er</sup> septembre 2026
+
+**Le produit connaît plusieurs fournisseurs d'images, et le second ne demande rien.** Sans
+compte, sans clé, sans carte : on écrit un sujet, et une image arrive en une seconde et demie.
+C'est Pollinations, celui que le relevé `F0` avait désigné — un seul modèle sur le palier
+anonyme, aucune image de référence, et un jeton par appel.
+
+**Ce qui a été le plus difficile n'était pas d'ajouter un fournisseur, c'était de nommer un
+modèle.** Jusqu'ici un modèle s'appelait `openai/gpt-image-2`, et ce nom se promenait partout
+— dans la liste où l'on choisit, dans le fichier d'une génération, sur la fiche d'une image,
+dans le journal des dépenses. Deux fournisseurs peuvent proposer le même nom : Cloudflare
+héberge les modèles de Leonardo, et le relevé l'a trouvé. Le nom est donc devenu
+`OpenRouter:openai/gpt-image-2` — **les deux ensemble, jamais l'un seul** —, et il a fallu le
+suivre jusqu'au bout de chaque chemin. Toutes les images déjà sur ce disque portent l'ancien
+nom : le catalogue les rattrape, **mais seulement quand un seul fournisseur revendique ce
+nom-là**. Sinon il dit qu'il ne sait pas, plutôt que de choisir entre un payant et un gratuit
+à pile ou face.
+
+**Une règle du dépôt a rencontré une autre, et il a fallu trancher.** Le critère de la tranche
+demandait que couper la liaison d'un fournisseur **grise** ses modèles. Une règle plus
+ancienne dit que *l'échec survient au moment où on génère, jamais au démarrage* — et la V2.2
+l'hérite sans la rediscuter. Un catalogue qui n'a pas répondu ne prouve rien sur l'adresse qui
+génère : éteindre le bouton sur cette base, c'est accueillir l'auteur par une erreur que rien
+n'a mesurée. **La règle plus ancienne l'emporte**, et la distinction est désormais écrite dans
+le produit : ce qui **manque** — une clé — grise et refuse ; ce qui est **injoignable** sert sa
+photo datée et laisse générer. L'arbitrage entier, avec ce qu'il faudrait changer pour le
+renverser, est dans `docs/tranches/V2.2.md` § F1.
+
+**Et trois phrases du produit sont devenues fausses le même jour**, aux trois endroits où
+elles vivaient : *« sans clé, le bouton qui paie reste éteint »*. Le plan l'avait annoncé —
+c'est la seule des trois révisions de la V2.2 qui *se voit sans la chercher*. Le piège n'est
+pas d'avoir écrit la phrase, c'est qu'elle était **justifiée par un commentaire honnête** :
+« le fournisseur est le même pour tous, il ne distingue rien ». On lit ça, on trouve ça
+prudent, on passe. C'est écrit dans `docs/PIEGES.md`.
+
+**Ce qui reste ouvert, et qui appartient à F2** : un appel gratuit affiche encore `$0,0000`.
+Rien n'est faux — zéro dollar est bien parti —, mais c'est le mensonge par omission que
+l'écran des dépenses avait été construit pour arrêter, un cran plus bas. Ce que l'appel
+consomme vraiment est connu et non enregistré : un jeton, annoncé dans les en-têtes.
+
 ## Le compactage des documents — 29 août 2026
 
 **Le corpus de démarrage est passé de 315 à 139 Ko sans qu'une ligne soit supprimée.** Sept

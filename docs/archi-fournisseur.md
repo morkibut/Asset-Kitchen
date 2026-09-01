@@ -9,16 +9,27 @@ des pièges de fournisseur vérifiés par appel, et une leçon qui vaut plus que
 *ne jamais conclure d'un banc dont le protocole n'est pas le geste réel du produit*. Un
 relevé se consulte quand on rouvre la question du modèle ; il ne se lit pas au démarrage.
 
-**`docs/ARCHITECTURE.md` fait foi sur la construction**, et garde les trois décisions que
-ce relevé a dictées : un seul adaptateur, le catalogue décide plutôt qu'une liste en dur,
-et un seul modèle par défaut.
+**`docs/ARCHITECTURE.md` fait foi sur la construction**, et garde les décisions que
+ce relevé a dictées : le catalogue décide plutôt qu'une liste en dur, et un seul modèle par
+défaut.
+
+> **« Un seul adaptateur » a été révisé le 1<sup>er</sup> septembre 2026** par la tranche `F1`,
+> et pour une raison qui n'est pas celle de ce relevé-ci : lui parlait de **couverture** — 48
+> modèles de 11 éditeurs derrière un seul jeu de paramètres —, et sur cette question-là sa
+> conclusion tient toujours. Ce qui l'a renversée est le **prix**. Tout ce que ce document dit
+> d'OpenRouter reste vrai d'OpenRouter ; il ne dit simplement plus tout le produit. La suite
+> est portée par `docs/ARCHITECTURE.md` § 4 et par `docs/tranches/V2.2.md`, sous le titre de
+> l'étape.
 
 ---
 
 ## 4 bis · Fournisseur et modèles
 
-Un seul adaptateur, OpenRouter (`https://openrouter.ai/api/v1`). Relevé du 26 août 2026,
-recompté le 27 : **48 modèles image, 11 fournisseurs** (`essais/couverture.json`).
+L'adaptateur OpenRouter (`https://openrouter.ai/api/v1`), **qui a été le seul jusqu'à `F1`**.
+Relevé du 26 août 2026, recompté le 27 : **48 modèles image, 11 fournisseurs**
+(`essais/couverture.json`). Ce que ce paragraphe décrit reste vrai de lui, et Pollinations —
+le second, arrivé le 1<sup>er</sup> septembre 2026 — a sa fiche dans
+`docs/releve-fournisseurs.md`.
 
 **Le catalogue décide, jamais une liste en dur.** `GET /api/v1/images/models` est relu au
 démarrage : il donne par modèle le plafond de références, les résolutions, les paramètres
@@ -170,6 +181,19 @@ Absents du catalogue image, contrairement à ce qu'on espérait : **Wan** (famil
   ses derniers appels réussis, relues dans l'index ; une valeur d'amorçage sert le temps de
   la première image, puis ne resert jamais. C'est ce qui rend possible la jauge *déterminée*
   que `docs/DESIGN.md` § Motion demande, sans inventer de pourcentage.
+- **Ce qu'un appel a consommé revient avec l'image, unité comprise** (F2). L'adaptateur lit
+  la quantité **dans la réponse** — `usage.cost` chez OpenRouter, l'en-tête
+  `x-usage-total-tokens` chez Pollinations — et nomme son unité. Quand la réponse n'annonce
+  rien, la quantité est **zéro** : c'est ce que la réponse dit, et un chiffre de repli serait
+  un chiffre que personne n'a mesuré. Le cas se produit vraiment — une image servie du cache
+  de Pollinations n'annonce ni son modèle ni son usage.
+- **Un fournisseur déclare aussi son *compte*** (F2) : son unité, ce qu'il alloue s'il alloue
+  quelque chose, d'où viendra le chiffre de ce qui reste, et sa cadence minimale entre deux
+  appels. **Il ne dit jamais ce qui est parti** — ça se compte dans le produit, sur les
+  générations, et l'écran doit pouvoir écrire *compté ici* à côté du chiffre. Un adaptateur
+  qui rendrait « il reste 42 » sans dire d'où il le tient enfreindrait l'invariant de la
+  V2.2 : *un chiffre de réserve dit toujours s'il est relevé chez le fournisseur ou compté
+  ici*. Le plafond est **facultatif**, et il manque chez les deux fournisseurs du produit.
 
 ### Serveur MCP — outils et garde-fous
 
@@ -238,8 +262,21 @@ en cours de session sans redémarrer.
 | Garde-fou | Défaut | Réglable |
 |---|---|---|
 | Plafond de générations par session | activé | seuil libre, ou désactivé |
-| Modèle d'exploration imposé au MCP (`gpt-image-2`, `quality: low`) | activé | modèle libre, ou désactivé |
+| Modèle d'exploration imposé au MCP (`Pollinations:sana`, sans option) | activé | **parmi les gratuits**, ou désactivé |
 
 Raison du second : un agent qui code a besoin d'un visuel correct tout de suite, pas d'un
 asset final. Rapport de six sur le coût du travail agentique, pour une perte de qualité qui
 ne compte pas à ce moment-là. La version de production se regénère depuis l'interface.
+
+> **Révisé le 1<sup>er</sup> septembre 2026 par `F6`.** Le modèle imposé était
+> `gpt-image-2` en `quality: low` — payant, d'où le rapport de six. Il est désormais celui du
+> fournisseur qui ne facture rien, et le rapport devient la totalité : *une séance de code
+> entière ne fait plus bouger le total en argent*. Le réglage ne propose que des modèles
+> gratuits, ce qui est ce que le garde-fou **est** plutôt qu'un filtre d'affichage ; pour
+> imposer un payant, on l'éteint et l'agent nomme ce qu'il veut. Ses options sont vides :
+> `quality` était un réglage d'OpenRouter.
+>
+> **Ce que le gratuit ne sait pas faire** : prendre des images d'entrée. Le style du jeu ne
+> part donc pas avec ses appels — ce que le produit ajoute de lui-même cède devant le plafond
+> du modèle —, et la fiche de l'image le dit ensuite. Le détail est dans
+> `docs/tranches/V2.2.md` § F6.

@@ -15,8 +15,9 @@ la prochaine réécriture retrouvera.
 ## Pièges connus
 
 - **`.env` en UTF-16.** PowerShell écrit en UTF-16 avec `>` et `Out-File`. Le lire comme de
-  l'UTF-8 lève sur le tout premier octet. `lire_cle()` essaie plusieurs encodages — toute
-  autre lecture de fichier écrit au terminal Windows doit faire pareil.
+  l'UTF-8 lève sur le tout premier octet. `atelier.reglages.lire_secret()` essaie plusieurs
+  encodages — toute autre lecture de fichier écrit au terminal Windows doit faire pareil.
+  **Et la façon d'essayer compte** : voir la dernière entrée de cette liste.
 - **Toujours reconfigurer `sys.stdout` en UTF-8 dans un script à sortie longue.** Dès que la
   sortie est redirigée, Windows encode en cp1252 : un simple `──` lève un
   `UnicodeEncodeError`. Levée depuis un thread d'un `ThreadPoolExecutor`, elle remonte par
@@ -829,3 +830,63 @@ la prochaine réécriture retrouvera.
   **redemander le nœud après tout ce qui démonte l'écran**. Payé le 31 août 2026, en réparant le
   retour de génération.
 
+- **Un commentaire qui justifie un raccourci par une vérité d'aujourd'hui devient un mensonge
+  sans que rien ne bouge.** L'écran des dépenses coupait le nom d'un modèle avant la barre
+  oblique — `openai/gpt-image-2` devenait `gpt-image-2` — et le commentaire disait pourquoi :
+  *le fournisseur est le même pour tous, il ne distingue rien*. C'était exact tant qu'il n'y en
+  avait qu'un. Le jour où un second est entré, la ligne de code n'avait pas changé, le
+  commentaire non plus, et le journal des dépenses s'est mis à afficher deux modèles
+  indiscernables — sur l'écran dont la question est précisément *où va mon argent*. Ce qui rend
+  ce piège invisible est que **le commentaire a l'air d'un aveu de prudence** : on le lit, on le
+  trouve honnête, on passe. Le geste qui répare est de chercher, avant d'élargir une hypothèse
+  du produit, **les endroits qui l'ont écrite comme une raison** — `grep` sur les mots de
+  l'hypothèse trouve du commentaire, pas du code, et c'est justement là qu'elle se cache. Trois
+  phrases du produit sont tombées de la même façon le même jour — *sans clé, le bouton qui paie
+  reste éteint*, dans la barre de tête, dans l'assistant et dans le guide. Payé le
+  1<sup>er</sup> septembre 2026, en faisant entrer un second fournisseur (F1).
+
+- **Le cache d'un fournisseur rend l'image et tait tout le reste.** Le banc gratuit de
+  Pollinations a annoncé, en une phrase et sans rien d'autre, que l'adaptateur avait cessé de
+  refuser un modèle inventé. Il n'avait rien cessé : le banc redemandait **la même phrase** à
+  chaque lancement, et le fournisseur la servait de son cache en 0,2 s au lieu de 25 —
+  `x-cache: HIT`, et **aucun de ses deux en-têtes**. Ni celui qui dit quel modèle a répondu, ni
+  celui qui dit ce que l'appel a consommé. Le garde du modèle ne peut donc pas se déclencher, et
+  le compte de consommation lit du vide. Deux choses rendent ce piège coûteux. La première est
+  que **l'échec ressemble exactement à une régression du code** : la phrase imprimée est celle
+  qu'on a écrite pour le mauvais jour, et rien ne dit que la réponse vient d'ailleurs. La
+  seconde est que **la durée était la preuve, et personne ne la lit** : 0,2 s pour une image que
+  ce fournisseur met une demi-minute à faire n'est pas une bonne surprise, c'est un aveu. Le
+  geste qui répare tient en une ligne — **un banc qui mesure un fournisseur demande une phrase
+  que personne n'a demandée**, ici le sujet suivi de l'horodatage. Et la leçon générale vaut
+  au-delà : *une réponse plus rapide que la mesure connue n'est pas la même réponse.* Payé le
+  1<sup>er</sup> septembre 2026, en enregistrant ce qu'un appel consomme (F2).
+
+
+- **Une garde qui reconnaît un fichier par ce qu'il contient devient un refus quand le contenu
+  change.** Le lecteur du `.env` doit deviner son encodage — PowerShell écrit en UTF-16 avec
+  `>` et `Out-File`, et c'est un piège déjà payé en T1. La façon dont il devinait était de
+  garder le premier décodage **qui contenait `OPENROUTER_API_KEY`** : imparable tant qu'il
+  n'existe qu'un secret au monde, et rien n'en signalait le prix. Le jour où un fournisseur en
+  demande deux autres, un fichier qui ne porte que ceux-là n'est plus reconnu comme un `.env`
+  du tout — **il est illisible en entier**, et le produit annonce *aucun jeton* sur un fichier
+  qui en porte un. Ce qui rend le piège coûteux est le moment : la panne se serait présentée
+  le jour de F4 comme un problème de Cloudflare, alors qu'elle attendait dans un module que
+  personne n'aurait ouvert. Le geste qui répare : **décoder au premier encodage qui accepte
+  les octets**, et laisser l'ordre des tentatives faire le reste — une garde sur la *forme*,
+  jamais sur le *contenu*. Payé le 1<sup>er</sup> septembre 2026, en passant le tiroir à clés
+  au pluriel (F3).
+
+- **Un message qui n'a pas d'endroit où s'écrire est compté et jamais lu.** L'écran de
+  confirmation annonce en tête *« N avertissements — non bloquants, écrits sur la ligne
+  concernée »*, et c'est vrai des avertissements qui portent la clé d'une ligne de prompt. Ceux
+  du bloc d'images n'en ont pas : ils étaient rendus **par aucun chemin**. On lisait « 1
+  avertissement » et l'on cherchait où — trois d'entre eux, dont deux écrits en E14, ont vécu
+  ainsi jusqu'au 1<sup>er</sup> septembre 2026. Rien ne pouvait le signaler : le compte est
+  juste, la liste est complète, et le seul symptôme est une phrase d'en-tête qui promet ce que
+  personne ne rend. Le geste qui répare est de **rendre un message là où vit ce dont il
+  parle**, et la garde qui l'aurait trouvé est plus simple encore : *un compte affiché sans
+  l'objet qu'il compte est une promesse à vérifier.* Trouvé en même temps, et de la même
+  façon, un sommaire qui annonçait « 1 sur 0 » — il comptait *ce qui est coché sur les places
+  du modèle*, c'est-à-dire un compte sur une **capacité**, ce qui se lit bien tant que la
+  capacité dépasse le compte et devient une contradiction dès qu'elle vaut zéro. Payé le
+  1<sup>er</sup> septembre 2026, en rendant le brouillon de l'agent gratuit (F6).

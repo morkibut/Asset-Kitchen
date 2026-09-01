@@ -1,6 +1,6 @@
 # Relevé F0 — les trois fournisseurs gratuits, mesurés
 
-> Relevé du 31 août 2026. **C'est le préalable de la V2.2** (`docs/PLAN.md` § F0) : savoir ce
+> Relevé du 31 août 2026. **C'est le préalable de la V2.2** (`docs/tranches/V2.2.md` § F0) : savoir ce
 > que chacun sait faire, et à quel prix dans sa monnaie, avant qu'une ligne de code soit
 > écrite. Ce n'est pas un banc de qualité — les crédits sont trop rares pour ça, et ce n'est
 > pas la question.
@@ -141,6 +141,12 @@ V2.2 doit faire paraître à l'écran.
 facture est de onze millièmes de dollar pour mille neurones — ce qui donne un ordre de grandeur
 utile : **l'allocation d'une journée vaut environ onze centimes.**
 
+> **Précision ajoutée le 1<sup>er</sup> septembre 2026, en écrivant la marche à suivre de
+> `F4`.** Ce tarif ne s'applique qu'à un compte **passé au palier payant**, ce qui demande une
+> action explicite et une carte. **Sur le palier gratuit, dépasser l'allocation ne facture
+> rien : l'appel est refusé, et c'est tout.** La phrase ci-dessus est donc juste sur le prix et
+> trompeuse sur le risque — ouvrir ce compte ne peut pas produire de facture surprise.
+
 Onze centimes, c'est quatre à cinq images du modèle payant par défaut du dépôt, qui coûte
 deux centimes et demi l'image avec un guide de style. Mais un neurone n'achète pas la même
 chose selon le modèle, et l'écart est considérable.
@@ -246,8 +252,10 @@ un s'en retire.
 ## Ce qui reste à mesurer, et ce qu'il faut pour le faire
 
 Une seule chose manque, et c'est **une clé Cloudflare** — un identifiant de compte et un jeton,
-tous deux gratuits, sur le palier sans frais. Les noms attendus sont dans `.env.example`. Avec
-eux, `essais/essai_fournisseurs.py` mesure sans rien changer :
+tous deux gratuits, sur le palier sans frais. Les noms attendus sont dans `.env.example`, et
+**la marche à suivre pour les obtenir a été écrite d'avance** : `docs/tranches/V2.2.md` § F4,
+cinq gestes, avec le piège du jeton créé à la main qui ne peut que lire. Avec eux,
+`essais/essai_fournisseurs.py` mesure sans rien changer :
 
 - **si `flux-2-dev` reprend le sujet de sa référence**, comme `flux.2-klein-4b` l'a fait. *C'est
   la mesure qui décide s'il existe un chemin gratuit vers un univers*, et elle coûte deux

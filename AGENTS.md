@@ -14,8 +14,8 @@ dans `docs/`, réparti selon la règle d'autorité ci-dessous.
 
 **Les dix tranches T1 à T10 sont finies, C1 à C5 — la V2 entière — le sont aussi, et les
 cinq reprises R1 à R5 également.** Leurs 226 critères d'acceptation sont cochés,
-un fichier par tranche dans `docs/tranches/` ; 394 tests de serveur et 186 d'écran les
-tiennent. La V1 s'est arrêtée à
+un fichier par tranche dans `docs/tranches/` ; **822 essais de serveur et 500 d'écran** tiennent
+aujourd'hui l'ensemble du dépôt, toutes tranches confondues. La V1 s'est arrêtée à
 T7 ; T8, T9 et T10 sont venues après.
 
 **Et la V2.1 est ouverte depuis le 31 août 2026** — l'interface refaite, reportée du
@@ -53,6 +53,74 @@ ne voyage pas** — ni cadre tracé, ni point de pipette, ni passage de la main 
 recette nommée perdra les passages qu'elle emporte aujourd'hui ; et **la sélection magique
 agit avec le détourage**, avant le recadrage et la mise sur grille, et non avec la main comme
 la séance l'avait vue.
+
+**La V2.2 est close depuis le 1<sup>er</sup> septembre 2026, à cinq tranches sur six** — il
+reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas, et rien d'autre. Ce que les
+quatre tranches construites ont livré se lit ci-dessous — le relevé `F0` qui les a précédées
+n'a rien changé au produit —, et le détail entier dans `docs/tranches/V2.2.md`, qui
+porte désormais **et** ce qu'elle livre **et** ses critères : un seul fichier à ouvrir pour
+reprendre une tranche de cette version-là.
+
+**`F1` d'abord.** Le produit connaît **plusieurs fournisseurs d'images**, et le second est celui qui ne demande ni
+compte ni clé — Pollinations, désigné par le relevé `F0`. Trois choses ont changé de forme, et
+il faut les connaître avant de toucher au chemin d'un appel. **Un modèle se nomme désormais par
+son fournisseur *et* par son nom, les deux ensemble** : `OpenRouter:openai/gpt-image-2`, et
+c'est cette chaîne-là qui s'enregistre sur une génération et sur un asset. **Chaque fournisseur
+a son état à lui** — sa photo de catalogue datée, sa raison de repli, ce qui lui manque —, et
+couper la liaison de l'un ne touche plus à la liste de l'autre. **Et la clé n'est plus le seul
+préalable dur du produit** : sur une machine où rien n'a été déposé, une image arrive. Les onze
+critères, dont un arbitré à moitié, sont dans `docs/tranches/V2.2.md` § F1 — **et cet arbitrage
+mérite d'être lu avant d'ouvrir F2**, parce qu'il oppose deux règles écrites du dépôt.
+
+**Et `F2` est tenue depuis le 1<sup>er</sup> septembre 2026 : le produit compte dans l'unité
+du fournisseur.** Ce que `F1` laissait ouvert est fermé — un appel gratuit ne dit plus
+`$0,0000` mais **gratuit**, et ce qu'il a réellement pris est enregistré à côté : un jeton,
+lu dans l'en-tête `x-usage-total-tokens` de chaque réponse. Trois choses valent d'être connues
+avant de toucher à un chiffre du produit. **Un emplacement, un asset et une génération portent
+`consomme` et `unite`**, et `cout_usd` en est **déduit** — c'est la part en argent, nulle dès
+que l'unité n'est pas celle de l'argent : *un total en argent ne compte que de l'argent* est
+donc tenu par construction, et aucune des dizaines de sommes du dépôt n'a eu à apprendre qu'il
+existe d'autres unités. **Un fournisseur déclare son compte** — son unité, ce qu'il alloue,
+d'où le chiffre vient, sa cadence —, et `atelier/services/reserves.py` le remplit ; le plafond
+y est **facultatif**, parce qu'aucun fournisseur n'en annonce et que `reste = null` n'est pas
+`reste = 0`. **Et une dépense d'avant la V2.2 se relit sans rien perdre** : pas d'unité veut
+dire des dollars. Les dix critères, dont deux tenus à moitié faute d'un fournisseur qui
+annonce une réserve, sont dans `docs/tranches/V2.2.md` § F2 — **avec un quatrième défaut du
+gratuit trouvé en construisant** : son cache rend l'image sans aucun de ses en-têtes, ce qui
+désarme en silence le garde du modèle de `F1` (sans conséquence tant qu'il ne déclare qu'un
+modèle) et fait qu'un banc qui redemande la même phrase vérifie le cache en croyant vérifier
+l'adaptateur (`docs/PIEGES.md`).
+
+**Et `F3` est tenue depuis le 1<sup>er</sup> septembre 2026 : le tiroir à clés est passé au
+pluriel.** Il y a **une place par fournisseur**, chacun déclare ce qu'il demande — une clé,
+deux secrets, ou rien du tout —, et déposer l'une ne touche à aucune autre. Trois choses
+valent d'être connues avant de toucher à ce qui lit ou écrit un secret. **`atelier/reglages.py`
+ne connaît plus que « une place nommée, et ce qu'il y a dedans »** : quelles places existent,
+c'est aux adaptateurs de le dire (`PortFournisseur.secrets`, et `atelier/domaine/secret.py`
+pour la forme). **`PUT` et `DELETE /api/settings/keys/{nom}` remplacent l'ancienne route à
+clé unique, et refusent tout nom qu'aucun fournisseur n'a déclaré** — sans quoi un navigateur
+pourrait écrire n'importe quoi dans le `.env` de l'auteur. **Et la barre de tête dit
+désormais avec quoi on peut produire** — `2 fournisseurs prêts`, `1 sur 2` — plutôt que ce
+qui manque ; les deux mots « aucune clé » n'ont pas survécu au pluriel, et l'arbitrage est
+dans `docs/tranches/V2.2.md` § F3. Les sept critères y sont, tous tenus — **avec ce que la
+construction a trouvé** : le lecteur du `.env` gardait le premier décodage contenant le nom
+de la clé d'OpenRouter, si bien qu'un fichier ne portant que des valeurs Cloudflare aurait
+été illisible en entier. Trouvé avant `F4`, ce qui était tout l'intérêt de faire `F3` d'abord.
+
+**Et `F6` est tenue depuis le 1<sup>er</sup> septembre 2026 : le travail de l'agent ne coûte
+plus d'argent.** Le modèle qu'il impose est **gratuit**, il se choisit parmi les gratuits, et
+son repli en cherche un autre avant de céder au défaut du catalogue — un garde-fou posé pour
+ne rien dépenser qui se replierait sur un payant coûterait de l'argent en silence. Une chose
+est à connaître avant de toucher aux références d'un appel : **ce que le produit ajoute de
+lui-même cède devant le plafond du modèle, ce que l'auteur a joint ne cède jamais**. Un
+modèle gratuit n'accepte aucune image d'entrée ; sans cette règle, un jeu ayant **un seul**
+artwork officiel refusait tout appel chez lui, et le garde-fou aurait été éteint le jour même.
+Ce qui cède — artworks du jeu, concept arts, images d'ambiance — est enregistré sur la
+génération (`hors_plafond`), montré avant de partir, et relu sur la fiche de l'image :
+*partie sans le style du jeu*. Les six critères, dont un qui ne se ferme que sur une séance de
+code réelle, sont dans `docs/tranches/V2.2.md` § F6 — **avec deux défauts d'affichage de
+l'écran de confirmation trouvés au passage**, tous deux antérieurs : ses avertissements
+d'images n'étaient rendus par aucun chemin, et son sommaire annonçait « 1 sur 0 ».
 
 **Ce que la seconde séance apprend, et qui vaut d'être su avant d'ouvrir une étape.** Regarder
 un écran de près cesse de trouver des défauts et commence à trouver des **absences** : deux
@@ -143,6 +211,18 @@ cd interface && npm test             les essais d'écran — flux et fetch doubl
 py essais/essai_docs.py              le corpus de démarrage pesé et sa dérive lue,
                                      et tous les renvois vers les documents résolus
 py essais/essai_couverture.py        la couverture du fournisseur, gratuit
+py essais/essai_pollinations.py      l'adaptateur du fournisseur sans clé, contre le vrai
+                                     fournisseur. GRATUIT — deux appels, un jeton chacun,
+                                     aucun dollar, et une trentaine de secondes d'attente
+                                     entre les deux : le palier sans compte n'accepte qu'un
+                                     appel toutes les quinze secondes. C'est le seul essai
+                                     qui prouve la promesse de F1 — *sans compte, sans clé,
+                                     une image arrive* — et le seul qui lise chez lui
+                                     l'en-tête de consommation de F2. **Il demande une phrase
+                                     que personne n'a demandée**, l'horodatage compris : la
+                                     même phrase reviendrait de son cache, sans en-têtes, et
+                                     l'essai vérifierait le cache en croyant vérifier
+                                     l'adaptateur (`docs/PIEGES.md`)
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
 py essais/essai_couleurs_et_taches.py  les deux dernières places de la recette — le nombre de
                                      couleurs, la palette, le tramage, les taches et l'aire
@@ -230,7 +310,7 @@ contexte » : c'est là qu'un corpus de démarrage triple sans que personne ne l
 | `docs/archi-versions.md` | l'architecture | on travaille *dans* une version — les briques de la V1, le pliage et le calque de la V2, ce que les V3 à V5 supposent |
 | `docs/archi-fournisseur.md` | l'architecture | on rouvre la question du modèle, du catalogue, du contrat de génération ou des outils MCP |
 | `docs/carte-du-depot.md` | l'architecture | avant de toucher un fichier — ce qu'il tient, et pourquoi lui plutôt qu'un autre |
-| `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt-et-un fichiers, de `T1` à `R5`, plus `V2.1` |
+| `docs/tranches/<code>.md` | le plan | on veut les critères d'acceptation, ce qui bloquait une tranche ou son rapport de tenue — vingt-trois fichiers : les vingt tranches de `T1` à `R5`, le lot correctif `U`, et les deux versions d'écrans et de fournisseurs `V2.1` et `V2.2`. **`V2.2.md` porte en plus ce que chaque tranche livre**, descendu du plan le 1<sup>er</sup> septembre 2026 : on y ouvre **un seul** fichier pour reprendre une tranche de cette version-là |
 | `docs/v21-arbitrages.md` | — | on ouvre une étape de la V2.1 et on veut savoir ce qui a été tranché en autonomie, ou ce qui reste ouvert. **Il ne fait foi sur rien** : ce qui est décidé vit dans le PRD, l'architecture, le design et le plan. Il garde la trace, et ses questions ouvertes se tranchent à l'usage |
 | `docs/maquettes-v2.1/` | le design | on construit un écran de la V2.1 — vingt-six maquettes, une par écran, plus un sommaire qui dit dans quel ordre elles se lisent. **Quelle maquette va avec quelle étape se lit dans `docs/tranches/V2.1.md`**, sous le titre de l'étape. Elles décrivent l'interface future, jamais l'état du code |
 | `docs/design-motifs.md` | le design | on dessine un écran |

@@ -21,6 +21,14 @@ comportement qu'ils rendent visible est tranché par `docs/PRD.md`.
 L'objet central du produit. Structure fixe : zone image carrée sur damier alpha, pied à deux
 lignes — nom (11,5 px sans, tronqué) puis méta (9,5 px mono : `64×64 · 4 px · $0,067`).
 
+**Le dernier morceau de la méta dit ce que l'image a coûté, et « gratuit » y est un mot**
+(F2). Un montant chez un fournisseur qui facture, le mot `gratuit` chez un fournisseur qui
+n'en demande pas — jamais `$0,0000`, qui se lit *sans limite* là où il faut lire *sans prix*.
+La tuile ne porte que celui des deux ; ce que l'image a **consommé** — `1 jeton` — se lit sur
+sa fiche, où il y a la place de le dire avec son unité. Et un zéro en argent reste un zéro en
+argent : une découpe de planche n'a rien coûté seule, elle a été payée en amont, et elle
+continue d'écrire `$0,0000`.
+
 | Marque | Forme | Ce qu'elle porte |
 |---|---|---|
 | **Coin plein** haut-droit, `--signal`, 13 px | triangle | favori — **la seule marque visuelle**, parce que c'est la seule que l'auteur pose lui-même |
@@ -118,11 +126,20 @@ phrase de liaison, **la date** de la photo servie, et — quand le port a su la 
 ```
 
 **La clé a quitté cette barre le 31 août 2026** (E19). Elle y figurait en dernier segment, et
-elle est montée dans la **barre du haut** : elle est le seul préalable dur du produit, elle se
-lit à la seconde zéro d'une installation neuve, et l'écrire aux deux endroits aurait fait deux
-endroits à tenir d'accord pour une seule valeur. Ce n'est pas une exception au paragraphe
-ci-dessus — c'est le même raisonnement, appliqué à un fait qui compte avant qu'on ait cliqué
-quoi que ce soit. Sans clé, le mot mène au champ, comme le bouton qui paie éteint.
+elle est montée dans la **barre du haut** : elle était alors le seul préalable dur du produit,
+elle se lit à la seconde zéro d'une installation neuve, et l'écrire aux deux endroits aurait
+fait deux endroits à tenir d'accord pour une seule valeur. Ce n'est pas une exception au
+paragraphe ci-dessus — c'est le même raisonnement, appliqué à un fait qui compte avant qu'on
+ait cliqué quoi que ce soit.
+
+**Et elle y parle au pluriel depuis F3**, le 1<sup>er</sup> septembre 2026. Le segment disait
+`clé …a41c` ou `aucune clé` ; il dit maintenant **avec quoi on peut produire** — `2
+fournisseurs prêts`, `1 sur 2`, et `rien pour produire` dans le cas qui n'arrive plus. C'est
+un renversement de ce que la barre annonce, pas un changement de mots : elle décrivait *ce qui
+manque*, dans un monde où un seul manque suffisait à tout éteindre ; il en manque désormais un
+sur deux et une image part quand même. **Ce qui n'est pas prêt reste un bouton** et mène au
+tiroir, en portant sa raison ; ce qui l'est n'en est plus un — un contrôle qui n'ouvre sur
+aucun geste utile est un contrôle de trop.
 
 **Chacun de ces trois faits est un segment à lui**, et c'est ce qui les rend robustes : la phrase
 de liaison est disputée — une génération refusée ou un flux rompu la prennent, et à juste titre,
@@ -1528,6 +1545,13 @@ retirer une attitude n'est pas tout défaire, et il faut les deux gestes.
 
 Il entre dans le `<dl>` de *Ce qui part*, en dernier, dans la forme des cinq autres : libellé
 `--texte-3` à gauche, valeur `--texte-2` à droite, mono. `≈ $0,067`, ou **`jamais appelé`**.
+
+**Son libellé suit l'unité du modèle** (F2) : *coût attendu* chez un fournisseur qui facture,
+*ce qu'il prendra* chez un fournisseur qui compte autrement — et la valeur porte le mot de
+son unité, `≈ 1 jeton`. **Ce qui reste chez ce fournisseur-là s'écrit juste en dessous**, sur
+les deux colonnes : c'est une phrase et non une mesure alignée, et c'est **la même phrase**
+que porte l'écran de confirmation — écrite à un seul endroit, parce que deux calculs à deux
+endroits ont déjà annoncé deux chiffres pour le même appel.
 
 **Il est mesuré, jamais lu dans un tarif** — le produit n'en porte aucun, et « le coût réel
 facturé fait foi » partout ailleurs. C'est la médiane de ce que ce modèle-là a réellement facturé
