@@ -1296,14 +1296,6 @@
       "scope_label": "L'argent ne part qu'une fois, et l'écran de confirmation se quitte"
     },
     {
-      "id": "n7",
-      "level": "info",
-      "text": "Dernier critère de l'assistant de démarrage : les dix-sept vignettes d'exemple sont produites sur le disque mais deux ne sont pas encore versionnées.",
-      "date": "2026-09-01",
-      "scope": "E8",
-      "scope_label": "L'assistant de démarrage — dix étapes, et le seul écran de réglages"
-    },
-    {
       "id": "n8",
       "level": "win",
       "text": "Les treize reprises d'usage U1 à U13 sont tenues depuis le 1er septembre 2026 : quatre-vingt-sept critères, tous cochés. Ce qui a été tranché seul en les construisant attend l'auteur dans docs/questions-du-lot-U.md — quinze choix, écrits pour être lus sans rien savoir du code.",
@@ -1350,6 +1342,14 @@
       "date": "2026-09-01",
       "scope": "F4",
       "scope_label": "F4 · Cloudflare Workers AI (V2.2)"
+    },
+    {
+      "id": "n15",
+      "level": "win",
+      "text": "Les dix-sept vignettes d'exemple sont produites et versionnees depuis le 1er septembre 2026 (interface/public/vignettes/). Les trois travaux preparatoires du plan sont clos : vignettes, banc des couleurs, mesure de planche.",
+      "date": "2026-09-01",
+      "scope": "global",
+      "scope_label": null
     }
   ],
   "milestones": [],

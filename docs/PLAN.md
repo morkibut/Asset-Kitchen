@@ -592,17 +592,18 @@ le dépôt pour mesurer, et une dette n'a pas d'utilisateur qui la demande.
 | E20 | 304 à 308 | 5 |
 | | **Total** | **135** |
 
-### Trois choses à produire avant que le code commence — *une faite, deux restent*
+### Trois choses à produire avant que le code commence — *les trois faites*
 
-Aucune n'est une décision, et aucune ne coûte de réflexion — ce sont des travaux
-préparatoires qui bloquent une étape précise. Les nommer ici évite qu'on découvre le manque
-au milieu de l'étape.
+Aucune n'était une décision, et aucune n'a coûté de réflexion — ce sont des travaux
+préparatoires qui bloquaient une étape précise. Les nommer ici a évité qu'on découvre le
+manque au milieu de l'étape. **Le tableau est clos depuis le 1<sup>er</sup> septembre 2026**,
+et il est gardé parce que deux des trois ont rendu autre chose que ce qu'on leur demandait.
 
-| À produire | Ce que c'est | Ce que ça coûte | Bloque |
+| À produire | Ce que c'est | Ce que ça a coûté | Bloquait |
 |---|---|---|---|
-| **Dix-sept vignettes d'exemple** | une par vue du jeu — huit — et une par taille d'image — neuf | une petite production d'images, à faire une fois | **E8** — sans elles, deux étapes de l'assistant redeviennent une liste de mots et une liste de nombres, ce qu'elles sont là pour remplacer |
+| ~~**Dix-sept vignettes d'exemple**~~ | **faites le 1<sup>er</sup> septembre 2026** — huit vues du jeu, neuf tailles d'image, toutes versionnées dans `interface/public/vignettes/` | une petite production d'images, faite une fois | ~~E8~~ — le blocage est levé, et le dernier critère de l'assistant avec lui |
 | ~~**Le banc d'essai des couleurs, étendu**~~ | **fait le 31 août 2026** — les deux dosages agissent, ils sont indépendants, et le seul endroit où l'attraction meurt est nommé | rien, comme prévu | ~~E11~~ — le blocage est levé |
-| **Trois appels de mesure de planche** | le même sujet en trois, cinq et six cases | moins de cinq centimes en tout | **E13** — le gain d'une planche n'est mesuré qu'à quatre cases, et une seule fois : `$0,0128` par image à une case, aucun gain à deux, `$0,0057` à quatre |
+| ~~**Trois appels de mesure de planche**~~ | **tirés le 31 août 2026** — et ils ont changé la question : une planche coûte le prix d'**un appel**, quel que soit ce qu'elle porte, mais la variance entre deux appels identiques dépasse l'écart entre deux tailles de planche | $0,081, relevé dans `essais/mesures_prix_planche.json` | ~~E13~~ — le blocage est levé ; ce qui reste est une décision d'écran, § E13 |
 
 ### L'ordre, et les trois endroits où il se resserre
 
