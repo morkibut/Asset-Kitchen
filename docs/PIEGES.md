@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent cinquante pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent cinquante et un pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1261,3 +1261,18 @@ la prochaine réécriture retrouvera.
   déjà la transparence partout ailleurs) et on laisse le contrôle dessous, atteignable*. Le
   laisser atteignable est la seconde moitié : le retirer aurait fermé le seul chemin qui reste
   quand l'atelier ne peut proposer aucune couleur sûre. Payé le 3 septembre 2026.
+
+- **Un affichage placé sous un filtre doit suivre ce filtre.** Deux fautes de la même famille
+  dans le même panneau : *« 48 au catalogue »* au-dessus d'une liste de huit — un chiffre pris à
+  sa source et non à ce qui est rendu —, et le modèle choisi écarté de la liste par le filtre
+  alors qu'aucun autre endroit de l'écran ne le nommait. Corollaire, et il a fallu les deux :
+  **ce qui décide d'un appel ne quitte jamais l'écran** — le choisi revient en tête quand le
+  filtre l'écarte, avec un liseré qui dit qu'il n'est pas un résultat — **et se lit à une place
+  fixe** que le défilement n'emporte pas, ce qui est le rôle du bloc « Ce qui part ». Le
+  compteur, lui, compte les résultats du filtre et non les lignes rendues. Et un commentaire
+  n'est pas une preuve : celui du code annonçait *« le modèle choisi reste visible »*, vrai du
+  grisé et faux du filtre. ⚠️ **Payé deux fois** : trouvé et corrigé le 27 août 2026, la
+  correction est restée sur une branche jamais fusionnée, la V2.1 a réécrit le panneau sans elle,
+  et le défaut est revenu intact. La garde en sort élargie : *une correction de séance qui ne
+  rejoint pas la branche principale le jour même n'existe pas — c'est la réécriture suivante qui
+  décide, et elle ne sait rien.* Remise en place le 3 septembre 2026.

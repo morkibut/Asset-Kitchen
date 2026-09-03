@@ -104,24 +104,39 @@ export function PanneauReglages({
   const [filtre, setFiltre] = useState("")
   const echelleLue = univers.bareme.find((e) => e.nom === echelle) ?? null
 
-  const listes = useMemo(() => {
-    const terme = filtre.trim().toLowerCase()
-    const retenus = terme
-      ? modeles.filter(
-          (m) =>
-            m.nom.toLowerCase().includes(terme) ||
-            m.identifiant.toLowerCase().includes(terme) ||
-            // Le nom du fournisseur filtre aussi : « écrire *pollinations* et
-            // ne voir que le gratuit » est le geste que la V2.2 rend utile, et
-            // l'identifiant le porte déjà — c'est écrit pour que ça reste vrai
-            // si l'identifiant change un jour de forme.
-            m.fournisseur.toLowerCase().includes(terme),
-        )
-      : modeles
-    // Le modèle choisi reste visible même quand il devient invalide : c'est
-    // générer qui devient inactif, jamais une substitution silencieuse (US-9).
-    return retenus
-  }, [modeles, filtre])
+  const terme = filtre.trim().toLowerCase()
+
+  /** Ce que le filtre a trouvé. C'est ce nombre-là que le compteur annonce :
+   *  un chiffre posé au-dessus d'une liste doit compter ce que la liste a
+   *  cherché, pas ce que le catalogue contient. */
+  const correspondances = useMemo(
+    () =>
+      terme
+        ? modeles.filter(
+            (m) =>
+              m.nom.toLowerCase().includes(terme) ||
+              m.identifiant.toLowerCase().includes(terme) ||
+              // Le nom du fournisseur filtre aussi : « écrire *pollinations* et
+              // ne voir que le gratuit » est le geste que la V2.2 rend utile, et
+              // l'identifiant le porte déjà — c'est écrit pour que ça reste vrai
+              // si l'identifiant change un jour de forme.
+              m.fournisseur.toLowerCase().includes(terme),
+          )
+        : modeles,
+    [modeles, terme],
+  )
+
+  /** Le modèle choisi ne quitte jamais l'écran. Le filtre écarte, il ne
+   *  substitue rien — c'est générer qui devient inactif quand le choix devient
+   *  invalide, jamais une substitution silencieuse (US-9) —, alors le choisi
+   *  revient **en tête**, séparé des résultats par un liseré : il n'est pas une
+   *  réponse au filtre, c'est le choix en cours. Et « Ce qui part » le nomme de
+   *  toute façon, pour le jour où c'est le défilement, et non le filtre, qui
+   *  l'emporte hors de vue. */
+  const epingle =
+    choisi && !correspondances.some((m) => m.identifiant === choisi.identifiant)
+      ? choisi
+      : null
 
   const proportionsPossibles = choisi?.proportions ?? []
 
@@ -155,7 +170,15 @@ export function PanneauReglages({
           titre="Modèle"
           aide="reglages.modele"
           etat={choisi?.nom ?? null}
-          mesure={`${modeles.length} au catalogue`}
+          // Le compteur suit ce qu'on voit. « 48 au catalogue » au-dessus d'une
+          // liste de huit annonçait une liste qui n'était pas là. Il compte
+          // **les résultats du filtre**, jamais les lignes rendues : l'épinglé
+          // n'en est pas un, et compter ce qui est rendu recréerait le défaut.
+          mesure={
+            terme
+              ? `${correspondances.length} sur ${modeles.length}`
+              : `${modeles.length} au catalogue`
+          }
         >
           <div className="flex flex-col gap-1.5">
             <input
@@ -166,7 +189,15 @@ export function PanneauReglages({
             />
 
             <ul className="max-h-[280px] overflow-y-auto rounded-[2px] border border-bord">
-              {listes.map((modele) => (
+              {epingle && (
+                <LigneModele
+                  modele={epingle}
+                  choisi
+                  epingle
+                  onChoisir={() => onChoisir(epingle.identifiant)}
+                />
+              )}
+              {correspondances.map((modele) => (
                 <LigneModele
                   key={modele.identifiant}
                   modele={modele}
@@ -174,7 +205,7 @@ export function PanneauReglages({
                   onChoisir={() => onChoisir(modele.identifiant)}
                 />
               ))}
-              {listes.length === 0 && (
+              {correspondances.length === 0 && (
                 <li className="mesure px-2 py-3 text-[10px] text-texte-3">
                   aucun modèle ne porte ce nom
                 </li>
@@ -290,6 +321,16 @@ export function PanneauReglages({
             Ce qui part
           </div>
           <dl className="mesure grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
+            {/* Le modèle en tête, et c'est une correction de séance : plus rien
+                à l'écran ne disait avec quoi on allait générer dès que la liste
+                cessait de le montrer. L'épinglage règle le filtre ; ceci règle
+                aussi le défilement, qu'un catalogue de quarante-huit rend
+                inévitable. C'est enfin ce qui rend lisible le « n / max » juste
+                dessous — ce plafond est le sien. */}
+            <dt className="text-texte-3">modèle</dt>
+            <dd className="text-right break-words text-texte-2">
+              {choisi?.nom ?? "aucun"}
+            </dd>
             <dt className="text-texte-3">références</dt>
             <dd
               className={[
@@ -365,15 +406,24 @@ export function PanneauReglages({
 function LigneModele({
   modele,
   choisi,
+  epingle = false,
   onChoisir,
 }: {
   modele: Modele
   choisi: boolean
+  /** Tenu en tête alors que le filtre l'écarte. Le liseré fort dit ce que la
+   *  position seule ne dirait pas : cette ligne n'est pas un résultat. */
+  epingle?: boolean
   onChoisir: () => void
 }) {
   const grise = modele.refus !== null
   return (
-    <li className="border-b border-bord last:border-b-0">
+    <li
+      className={[
+        "border-b border-bord last:border-b-0",
+        epingle ? "border-b-bord-fort" : "",
+      ].join(" ")}
+    >
       <button
         type="button"
         onClick={onChoisir}

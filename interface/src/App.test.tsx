@@ -59,6 +59,7 @@ import type {
   Etiquette,
   FondPropose,
   Main,
+  Modele,
   TachesDeLAsset,
   CompteReferences,
   EtatCatalogue,
@@ -833,6 +834,9 @@ function serveurDouble(options: {
    *  réponse a deux branches — une couleur sûre, ou un refus qui dit de quelle
    *  couleur du jeu il s'approchait —, et l'écran ne se comporte pas pareil. */
   fondPropose?: FondPropose
+  /** Un catalogue à plusieurs modèles — ce qu'il faut pour qu'un filtre ait
+   *  quelque chose à écarter. Par défaut, ceux du `CATALOGUE`. */
+  modeles?: Modele[]
   aPublier?: () => Generation
   /** Ce que la détection propose de découper. Le test le décide, comme le vrai
    *  serveur le déciderait sur l'image : c'est ce que l'écran affiche, et c'est
@@ -1036,6 +1040,10 @@ function serveurDouble(options: {
     if (url.startsWith("/api/models"))
       return rendre({
         ...(options.catalogue ?? CATALOGUE),
+        // **Plusieurs modèles quand le test en demande** : c'est ce qu'il faut
+        // pour qu'un filtre ait quelque chose à écarter, et un catalogue d'un
+        // seul modèle ne prouverait rien de l'épinglage.
+        ...(options.modeles ? { modeles: options.modeles } : {}),
         references: options.references ?? CATALOGUE.references,
         couts: options.couts ?? CATALOGUE.couts,
       })
@@ -3336,6 +3344,92 @@ describe("l'écran de l'atelier", () => {
     // Et le sujet est le seul geste qui reste : promouvoir a déjà tout décidé.
     expect(screen.getByRole("button", { name: "personnage" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "objet tenu" })).toBeTruthy()
+  })
+
+  // ── Le filtre du catalogue ne fait pas disparaître ce qui va générer ──────
+  //
+  // Vu en séance le 27 août : filtrer écartait le modèle choisi de la liste, et
+  // plus rien à l'écran ne disait avec quoi on allait générer — le modèle
+  // manquait au bloc « Ce qui part », qui nommait pourtant tout le reste. Le
+  // compteur, lui, continuait d'annoncer le catalogue entier au-dessus d'une
+  // liste réduite. Deux fois la même faute : un affichage qui ne suit pas le
+  // filtre posé juste au-dessus de lui.
+
+  /** La liste des modèles, telle qu'elle est rendue — l'épinglé compris. */
+  const listeModeles = () =>
+    screen.getByPlaceholderText("filtrer").parentElement!.querySelector("ul")!
+
+  /** ⚠️ **Le panneau est devenu un bloc repliable en V2.1**, et le registre du
+   *  repli naît fermé : sans ce geste, la liste n'est pas montée du tout et les
+   *  deux essais ci-dessous cherchent un compteur qui n'existe pas encore. */
+  const ouvrirLesModeles = async () => {
+    await ouvrirLesReglagesDeLAppel()
+    const entete = await screen.findByRole("button", { name: /^Modèle/ })
+    if (entete.getAttribute("aria-expanded") !== "true") fireEvent.click(entete)
+  }
+
+  test("un filtre qui écarte le modèle choisi le garde en tête, et le compteur suit", async () => {
+    const { fetchDouble } = serveurDouble({
+      modeles: [
+        { ...MODELE, identifiant: "autre/rapide", nom: "Autre : Rapide" },
+        MODELE,
+        { ...MODELE, identifiant: "autre/lent", nom: "Autre : Lent" },
+      ],
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      catalogue: { ...ETAT.catalogue, modeles: 3 },
+    })
+    await ouvrirLesModeles()
+
+    // Sans filtre : le compteur dit le catalogue entier, et le choisi garde sa
+    // place dans l'ordre du serveur — épingler n'est pas réordonner.
+    expect(await screen.findByText("3 au catalogue")).toBeTruthy()
+    await waitFor(() => expect(listeModeles().children).toHaveLength(3))
+    expect(listeModeles().children[0].textContent).toContain("Autre : Rapide")
+
+    fireEvent.change(screen.getByPlaceholderText("filtrer"), {
+      target: { value: "autre" },
+    })
+
+    // Le filtre l'écarte, donc il revient **en tête** : il ne quitte pas
+    // l'écran, et il n'est pas une réponse au filtre.
+    await waitFor(() =>
+      expect(listeModeles().children[0].textContent).toContain("Essai : Modèle"),
+    )
+    expect(listeModeles().children).toHaveLength(3)
+
+    // Le compteur compte ce que le filtre a trouvé — deux —, jamais les trois
+    // du catalogue ni les trois lignes rendues.
+    expect(screen.getByText("2 sur 3")).toBeTruthy()
+    expect(screen.queryByText("3 au catalogue")).toBeNull()
+
+    // Et « Ce qui part » le nomme de toute façon : c'est la place que ni le
+    // filtre ni le défilement n'emportent.
+    const bloc = screen.getByText("Ce qui part").parentElement!
+    expect(bloc.textContent).toContain("modèle")
+    expect(bloc.textContent).toContain("Essai : Modèle")
+  })
+
+  test("un filtre sans réponse garde le modèle choisi, et le dit", async () => {
+    const { fetchDouble } = serveurDouble({
+      modeles: [MODELE, { ...MODELE, identifiant: "autre/lent", nom: "Autre : Lent" }],
+    })
+    await monter(fetchDouble, {
+      ...ETAT,
+      catalogue: { ...ETAT.catalogue, modeles: 2 },
+    })
+    await ouvrirLesModeles()
+    await screen.findByText("2 au catalogue")
+
+    fireEvent.change(screen.getByPlaceholderText("filtrer"), {
+      target: { value: "zzz" },
+    })
+
+    // Zéro trouvé, et l'écran le dit — mais le choix en cours reste lisible.
+    await waitFor(() => expect(screen.getByText("0 sur 2")).toBeTruthy())
+    expect(screen.getByText("aucun modèle ne porte ce nom")).toBeTruthy()
+    expect(listeModeles().children[0].textContent).toContain("Essai : Modèle")
   })
 })
 
@@ -17748,9 +17842,18 @@ describe("plusieurs fournisseurs dans une seule liste", () => {
       target: { value: "libre" },
     })
 
+    // ⚠️ **Deux lignes et non une**, et c'est la correction du 27 août 2026
+    // remise en place : le filtre écarte le modèle choisi — celui du payant —,
+    // et il revient donc **en tête**, séparé du résultat par un liseré. Il ne
+    // quitte jamais l'écran, sans quoi plus rien ne dirait avec quoi on génère.
     const restantes = screen.getAllByRole("button", { name: /Copie/ })
-    expect(restantes).toHaveLength(1)
-    expect(restantes[0].textContent).toContain("libre")
+    expect(restantes).toHaveLength(2)
+    expect(restantes[0].textContent).toContain("payant")
+    expect(restantes[1].textContent).toContain("libre")
+
+    // Et le compteur compte **ce que le filtre a trouvé**, jamais les lignes
+    // rendues : l'épinglé n'est pas un résultat.
+    expect(screen.getByText("1 sur 2")).toBeTruthy()
   })
 
   // ── « Sur une installation neuve, sans aucune clé, on écrit un nom puis un

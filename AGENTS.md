@@ -503,7 +503,7 @@ deux vivent côte à côte.
 
 ## Pièges connus → `docs/PIEGES.md`
 
-Cent cinquante pièges payés une fois chacun — encodage Windows, lots payants,
+Cent cinquante et un pièges payés une fois chacun — encodage Windows, lots payants,
 `ResizeObserver`, onglet d'arrière-plan, SQLite, montages FastAPI et Starlette, transport
 MCP, mise en page CSS, préparation cachée d'une bibliothèque de vision — vivent dans
 **`docs/PIEGES.md`**, que le code cite là où chacun mord.

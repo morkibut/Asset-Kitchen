@@ -1,21 +1,21 @@
 {
- "releve_le": 1788474198.512481,
+ "releve_le": 1788475143.5719695,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 445026,
+  "octets": 448816,
   "documents": {
    "AGENTS.md": {
-    "octets": 44601,
+    "octets": 44058,
     "titres": 14,
     "sections": [
      {
       "titre": "Asset Kitchen",
       "niveau": 1,
       "ligne": 1,
-      "octets": 44052
+      "octets": 44058
      },
      {
       "titre": "Où en est le dépôt → `docs/status/etat.md`",
@@ -81,7 +81,7 @@
       "titre": "Pièges connus → `docs/PIEGES.md`",
       "niveau": 2,
       "ligne": 504,
-      "octets": 627
+      "octets": 633
      },
      {
       "titre": "Règle systématique : comment finir une étape",
@@ -98,7 +98,7 @@
     ]
    },
    "docs/PRD.md": {
-    "octets": 62153,
+    "octets": 62711,
     "titres": 9,
     "sections": [
      {
@@ -248,7 +248,7 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 225676,
+    "octets": 228882,
     "titres": 80,
     "sections": [
      {
@@ -734,7 +734,7 @@
     ]
    },
    "docs/DESIGN.md": {
-    "octets": 45766,
+    "octets": 46335,
     "titres": 25,
     "sections": [
      {
