@@ -492,7 +492,10 @@ export function PanneauDetourage({
  *  elle-même n'aurait rien mesuré. */
 function MesuresDuFondRendues({ mesures }: { mesures: MesuresDuFond }) {
   if (mesures.sujet === 0) return null
-  const part = Math.round(mesures.part_collee * 1000) / 10
+  // **Une virgule et non un point** — c'est ainsi que le produit écrit tous ses
+  // nombres décimaux, prix compris. Vu au navigateur : un « 9.1 % » au milieu
+  // d'une phrase française se remarque, et il se remarque comme une faute.
+  const part = (mesures.part_collee * 100).toFixed(1).replace(".", ",")
   return (
     <div className="border-t border-bord pt-2">
       <Libelle aide="detourage.fond">Le fond, tel qu'il est revenu</Libelle>

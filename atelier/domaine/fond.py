@@ -308,10 +308,20 @@ def interdiction(couleur: str) -> str:
 
     **Elle interdit la couleur dans le sujet, pas dans l'image.** L'inverse
     serait un contresens : le fond *est* cette couleur, et la lui interdire
-    reviendrait à annuler la demande qu'on vient de faire. Les quatre endroits
-    nommés — la tenue, la peau, les accessoires, les reflets et les ombres — sont
-    ceux qui trahissent le plus souvent, parce qu'un modèle qui pose un sujet sur
-    un fond franc en laisse volontiers un peu déborder.
+    reviendrait à annuler la demande qu'on vient de faire. Les six endroits
+    nommés — la tenue, la peau, les cheveux, les accessoires, les reflets et les
+    ombres — sont ceux qui trahissent le plus souvent, parce qu'un modèle qui
+    pose un sujet sur un fond franc en laisse volontiers un peu déborder.
+
+    ⚠️ **Et la parenthèse ne porte aucune négation, exprès.** La première
+    écriture disait *« (not on its outfit, its skin… ) »*, ce qui, replié
+    derrière *« Do not include: »*, faisait une négation dans une négation :
+    l'énumération se lisait alors comme une liste d'**exceptions** — ne mets pas
+    cette couleur sur le sujet, sauf sur sa tenue et sa peau —, soit très
+    exactement le contraire de ce que la story demande. Trouvé en lisant la
+    phrase entière dans la console d'un atelier jetable, pas dans le code : le
+    code seul se lit toujours comme on l'a pensé. La parenthèse **énumère** donc,
+    elle ne retranche pas.
 
     Vide sans fond : un appel qui ne demande pas de couleur de fond n'a rien à
     interdire, et *« do not include: »* suivi de rien serait une phrase qui ne dit
@@ -326,7 +336,7 @@ def interdiction(couleur: str) -> str:
     # fait qu'une.
     return (
         f"the background colour {nomme}, or any shade close to it, anywhere on "
-        f"the subject itself (not on its outfit, its skin, its hair, its "
+        f"the subject itself (on its outfit, its skin, its hair, its "
         f"accessories, its reflections or its shadows)"
     )
 

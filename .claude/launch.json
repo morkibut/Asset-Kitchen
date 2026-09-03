@@ -71,6 +71,14 @@
         "essais/atelier_jetable_g16.py"
       ],
       "port": 8423
+    },
+    {
+      "name": "atelier-jetable-d3-d4",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_d3_d4.py"
+      ],
+      "port": 8424
     }
   ]
 }

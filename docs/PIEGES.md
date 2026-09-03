@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent quarante-six pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent cinquante pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1205,3 +1205,59 @@ la prochaine réécriture retrouvera.
   haut. La garde : *une règle de « ce qui est en vue » se vérifie sur les hauteurs réelles du
   contenu, pas sur l'idée qu'on s'en fait — une section plus haute que la fenêtre casse toutes
   les heuristiques de tri*. Payé le 3 septembre 2026.
+
+- **La bibliothèque de détourage normalise par le maximum de l'image, pas par 255.** Chaque
+  moteur de `rembg` prépare l'image avant de la donner au modèle, et cette préparation
+  (`BaseSession.normalize`) divise par **le plus grand nombre trouvé dans l'image**, jamais par
+  255. Conséquence : *deux images identiques à un éclaircissement près n'entrent pas dans le
+  modèle sous la même forme*, et un sprite dont aucun pixel n'atteint le blanc pur est
+  silencieusement remonté. Ça ne casse rien — le modèle rend quand même un masque plausible —,
+  ce qui est exactement pourquoi personne ne le voit : **il n'y a pas de symptôme**, juste deux
+  masques qui diffèrent sans raison apparente entre deux versions d'une même image. On l'a
+  trouvé en lisant le code de la bibliothèque pour comprendre pourquoi le banc ne reproduisait
+  pas deux fois le même chiffre sur une image retouchée. La garde : *une bibliothèque de vision
+  qui prend une image en entrée fait toujours une préparation qu'elle ne documente pas — la lire
+  avant de comparer deux passes, et ne jamais comparer deux passes sur des images qui ne sont
+  pas bit à bit les mêmes*. Payé le 3 septembre 2026.
+
+- **Un moteur de détourage peut regarder une image huit fois plus petite que celle qu'on lui
+  donne, et rendre quand même un masque de la bonne taille.** `u2net` — le moteur par défaut du
+  dépôt jusqu'au 3 septembre 2026 — infère à **320 × 320**, puis réagrandit son masque en
+  LANCZOS jusqu'à la taille d'origine. Sur une image de 1024, chaque pixel du masque décidé
+  couvre donc **neuf pixels rendus**, et le bord n'est pas mesuré : il est interpolé. Les quatre
+  autres moteurs du catalogue infèrent à 1024. Rien dans l'appel ne le dit, rien dans le
+  résultat ne le montre — le masque a la bonne taille dans tous les cas, et c'est ce qui rend le
+  piège invisible. La conséquence pratique s'est vue à la mesure : le moteur qui n'étire rien
+  trouve **une moitié de détails ajourés en plus** entre un bras et un torse, pour la même part
+  d'image gardée. ⚠️ **Et l'explication qu'on en tirait était fausse** : on croyait que les
+  95 % de pixels à demi transparents venaient de ce réagrandissement. Le moteur qui infère à
+  1024 en rend autant, à 3 % près. C'est la sortie douce du modèle, pas l'étirement. La
+  garde : *la taille d'entrée d'un modèle de vision se lit dans sa fiche et s'écrit à côté de
+  lui dans le catalogue — sans quoi on compare deux moteurs en croyant comparer deux
+  algorithmes, alors qu'on compare deux résolutions*. Payé le 3 septembre 2026.
+
+- **Une négation dans un champ déjà négatif dit le contraire de ce qu'on croit.** La phrase qui
+  interdit au modèle d'employer la couleur de fond sur le sujet énumérait les endroits qui
+  trahissent — *« (not on its outfit, its skin, its hair… ) »*. Elle part dans le champ négatif
+  de la demande, que les deux adaptateurs replient derrière **« Do not include: »**. Le lecteur
+  — humain ou modèle — reçoit donc *ne mets pas … pas sur sa tenue*, et l'énumération, qui
+  devait **étendre** l'interdiction, se lit comme une liste d'**exceptions** : exactement
+  l'inverse de la story. **Le code ne le montrait pas** ; il se lit toujours comme on l'a pensé,
+  et la phrase n'existe en entier qu'une fois assemblée. Ce qui l'a trouvé est d'avoir imprimé
+  le texte final dans la console d'un atelier jetable, à côté du reste. La garde : *tout texte
+  qui part dans un champ négatif s'écrit en affirmations, et se relit assemblé, jamais dans le
+  code qui le compose — et une garde mécanique vaut mieux qu'une relecture : « aucun " not " dans
+  ce qui part en interdiction » est une ligne d'essai*. Payé le 3 septembre 2026.
+
+- **Un contrôle qui ne sait pas être vide affiche une valeur qu'il n'a pas.** `<input
+  type="color">` n'a pas d'état vide : il *doit* porter une couleur. Les deux écrans du fond en
+  posaient donc une par défaut — celle de la proposition —, et une pastille magenta se
+  retrouvait collée aux mots *« aucun fond posé »*. L'écran affirmait le contraire de ce qu'il
+  disait, sur le réglage même que la tranche venait d'ouvrir. **Aucun essai ne pouvait le
+  voir** : en `jsdom` la valeur est celle qu'on a écrite, et l'essai l'aurait confirmée. C'est la
+  **famille** du piège de la case à cocher qui ne change rien, et la garde s'élargit : *un
+  contrôle natif qui n'a pas d'état vide ne doit pas être le seul à porter l'affichage d'un
+  réglage facultatif — on montre l'absence avec le vocabulaire du produit (ici le damier, qui dit
+  déjà la transparence partout ailleurs) et on laisse le contrôle dessous, atteignable*. Le
+  laisser atteignable est la seconde moitié : le retirer aurait fermé le seul chemin qui reste
+  quand l'atelier ne peut proposer aucune couleur sûre. Payé le 3 septembre 2026.

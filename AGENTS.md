@@ -30,8 +30,9 @@ points.
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
 | **V3** — `A0` à `A10` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos, `A9` écrite côté serveur. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 822 essais de
-serveur et 500 d'écran** tiennent aujourd'hui l'ensemble du dépôt.
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 170 essais de
+serveur et 580 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 3 septembre 2026,
+et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — neuf points, et pas un de plus
 
@@ -140,9 +141,9 @@ uv pip install -e ".[dev]"
 uv pip install -e ".[detourage]"   facultatif — le détourage par modèle, ~180 Mo. Le modèle
                                    se télécharge au premier appel, et **c'est
                                    `isnet-general-use` depuis le 3 septembre 2026**, pas
-                                   `u2net` : 176 Mo, une moitié de détails ajourés en plus
-                                   pour 0,7 seconde. Le catalogue en propose cinq, et chacun
-                                   arrive de la même façon, à son tour
+                                   `u2net` : 170 Mo au lieu de 168, une moitié de détails
+                                   ajourés en plus pour 0,7 seconde. Le catalogue en propose
+                                   cinq, et chacun arrive de la même façon, à son tour
 cd interface && npm install && npm run build
 
 py -m atelier                        lance le serveur et ouvre le navigateur — si un atelier
@@ -201,9 +202,10 @@ py essais/essai_moteurs_de_detourage.py  les cinq moteurs de détourage par mod�
                                      côte, sur quatre images du dépôt. GRATUIT — rien ne part
                                      chez un fournisseur, tout tourne sur le processeur. **Le
                                      premier lancement rapatrie les modèles manquants depuis
-                                     github.com/danielgatis/rembg, 257 Mo pour les deux qui
-                                     manquaient le 3 septembre 2026** ; les suivants ne
-                                     téléchargent rien. Il compte la part de l'image gardée,
+                                     github.com/danielgatis/rembg — 382 Mo pour les deux qui
+                                     manquaient le 3 septembre 2026, et non les 257 annoncés :
+                                     l'allégé pèse 214 Mo, pas 88,6** ; les lancements suivants
+                                     ne téléchargent rien. Il compte la part de l'image gardée,
                                      le temps, et surtout **l'ajouré trouvé** — c'est la seule
                                      colonne qui sépare les moteurs, et c'est elle qui a fait
                                      changer le moteur par défaut. Comptez trois minutes
@@ -501,9 +503,10 @@ deux vivent côte à côte.
 
 ## Pièges connus → `docs/PIEGES.md`
 
-Quatre-vingt-dix pièges payés une fois chacun — encodage Windows, lots payants,
+Cent cinquante pièges payés une fois chacun — encodage Windows, lots payants,
 `ResizeObserver`, onglet d'arrière-plan, SQLite, montages FastAPI et Starlette, transport
-MCP, mise en page CSS — vivent dans **`docs/PIEGES.md`**, que le code cite là où chacun mord.
+MCP, mise en page CSS, préparation cachée d'une bibliothèque de vision — vivent dans
+**`docs/PIEGES.md`**, que le code cite là où chacun mord.
 
 **Se lit à la demande, jamais au démarrage** : on y cherche avant d'attaquer un terrain déjà
 miné, et on y ajoute en bas dès qu'un piège a coûté quelque chose. Un piège s'écrit avec ce

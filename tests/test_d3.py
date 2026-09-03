@@ -344,6 +344,30 @@ def test_l_interdiction_vise_le_sujet_et_jamais_le_fond():
         assert endroit in phrase
 
 
+def test_l_interdiction_ne_porte_aucune_negation(client):
+    """⚠️ **Une négation dans un champ déjà négatif inverse la phrase.**
+
+    La première écriture disait *« (not on its outfit, its skin… ) »*. Repliée
+    derrière *« Do not include: »*, la parenthèse cessait d'énumérer pour
+    **retrancher** : ne mets pas cette couleur sur le sujet, sauf sur sa tenue et
+    sa peau — le contraire de `US-421`. Le défaut ne se voyait pas dans le code,
+    qui se lit toujours comme on l'a pensé ; il s'est vu en lisant la phrase
+    entière dans la console.
+
+    **La garde porte sur ce qui part vraiment**, pas sur la phrase seule : c'est
+    le texte replié derrière l'en-tête négatif qui doit rester une énumération.
+    """
+    phrase = interdiction("#FF00FF")
+
+    assert " not " not in f" {phrase} "
+    assert "(on its outfit" in phrase
+
+    _regler(client, fond="#FF00FF")
+    negatif = _lancer(client)["demande"]["prompt_negatif"]
+
+    assert " not " not in f" {negatif} "
+
+
 def test_sans_fond_rien_n_est_interdit(client):
     """*« Do not include: »* suivi de rien serait une phrase qui ne dit rien au
     prix d'un appel."""

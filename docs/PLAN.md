@@ -1098,12 +1098,29 @@ puisqu'elle porte le calage en carrés ; elle se coupe désormais en deux moiti�
 seul quand il n'y a pas de carrés. Sans ça la tranche aurait été muette pour la moitié des
 projets.
 
-**Le seuil de sûreté est le seul chiffre de la tranche qui ne vienne pas d'un relevé**, et c'est
-écrit dans le code plutôt que tu : trois fois la tolérance du détourage. Une tolérance parce
+**Le seuil de sûreté est le seul chiffre de la tranche qui ne vienne pas d'un relevé**, et il est
+écrit comme tel plutôt que tu : trois fois la tolérance du détourage. Une tolérance parce
 qu'en dessous la couleur serait mangée avec le fond ; les deux autres paient le fait que **le
 modèle ne rend jamais exactement l'hexadécimal demandé**. Cette dérive-là n'est pas connue —
 aucune image du dépôt n'a été tirée sur un fond franc — et c'est la mesure « pixels encore
 collés à la couleur de fond » qui la dira sur les premières qui reviendront.
+
+#### ⚠️ Ce que le passage au navigateur a corrigé, une fois tout au vert
+
+Les essais étaient tous verts quand un atelier jetable a été monté sur deux jeux — l'un dont la
+palette laisse le magenta loin, l'autre construit pour qu'aucune couleur candidate ne soit sûre.
+Deux défauts en sont sortis, et **aucun essai ne pouvait les voir**.
+
+- **La phrase d'interdiction disait le contraire de ce qu'elle voulait dire.** Elle énumérait en
+  écrivant *« (not on its outfit, its skin… ) »*, et elle part derrière *« Do not include: »* —
+  une négation dans une négation, qui transformait l'énumération en liste d'exceptions. Corrigée
+  en affirmations, et gardée par un essai : *aucun « not » dans ce qui part en interdiction*.
+- **Les deux écrans du fond affichaient une couleur qu'ils n'avaient pas.** `<input
+  type="color">` n'a pas d'état vide, donc une pastille magenta jouxtait les mots *« aucun fond
+  posé »*. Le damier prend sa place, et le sélecteur reste dessous, atteignable — le retirer
+  aurait fermé le seul chemin qui reste quand rien de sûr ne se propose.
+
+*Les deux sont consignés dans `docs/PIEGES.md`, et le second élargit une garde déjà payée.*
 
 ---
 

@@ -293,11 +293,12 @@ SILHOUETTES: tuple[Silhouette, ...] = (
         lent=False,
         entree=320,
         licence="Apache-2.0",
-        note=(
-            "le plus rapide — 0,9 s par image, mesuré le 1er septembre 2026. "
-            "Il infère à 320 px et réagrandit son masque : ce qui est plus fin "
-            "que trois pixels disparaît"
-        ),
+        # ⚠️ **La note ne redit pas le côté d'inférence**, et c'est une
+        # correction du 3 septembre 2026 : l'écran l'écrit désormais pour *tous*
+        # les modèles à partir de `entree`, et la note le répétait mot pour mot
+        # juste au-dessus. Vu au navigateur, pas dans le code. La note ne garde
+        # donc que ce qu'elle seule peut dire.
+        note="le plus rapide — 0,9 s par image, mesuré le 1er septembre 2026",
     ),
     Silhouette(
         nom="isnet-general-use",
@@ -308,9 +309,9 @@ SILHOUETTES: tuple[Silhouette, ...] = (
         entree=1024,
         licence="Apache-2.0",
         note=(
-            "presque le même résultat que le rapide — 96 à 99 % d'accord — "
-            "pour un cinquième de temps en plus, et il infère à 1024 px sans "
-            "réagrandir"
+            "le défaut du produit depuis le 3 septembre 2026 : presque le même "
+            "résultat que le rapide — 96 à 99 % d'accord — pour un cinquième de "
+            "temps en plus, et une moitié d'ajouré en plus"
         ),
     ),
     Silhouette(

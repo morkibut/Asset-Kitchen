@@ -371,10 +371,13 @@ quelle unité, quand ça revient, et **si le chiffre est lu chez lui ou compté 
 n'ajoutent que deux champs à ce qui existe : le nom du fournisseur sur la génération et sur
 l'asset, et ce que l'appel a consommé avec son unité.
 
-> **Ce que les deux versions ouvertes poseront, écrit d'avance pour qu'aucune ne le découvre en
-> route.** La **V2.3** ne pose aucune entité neuve — elle répare : la recette par défaut cesse
+> **Ce que les versions poseront, écrit d'avance pour qu'aucune ne le découvre en route.** La
+> **V2.3** ne pose aucune entité neuve — elle répare : la recette par défaut cesse
 > d'être unique et se range **par nature d'image** comme le modèle par défaut se range déjà par
-> famille, et le **fond de génération** devient un champ de l'univers. La **V3** en pose cinq, et
+> famille, et le **fond de génération** devient un champ de l'univers. ✅ *Close le 3 septembre
+> 2026, et la prévision a tenu mot pour mot : `Univers.fond` est un champ, et le seul module
+> neuf — `atelier/domaine/fond.py` — est du vocabulaire partagé, comme `domaine/teinte.py`, pas
+> une chose rangée.* La **V3** en pose cinq, et
 > c'est beaucoup : la **planche** cesse d'être le brut jetable de sa génération pour devenir un
 > objet visible et gardé ; le **dépliage** est neuf et c'est lui qui porte la filiation, parce
 > qu'une planche se déplie plusieurs fois et qu'une génération seule ne distingue pas deux

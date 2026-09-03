@@ -2018,13 +2018,39 @@ function LeFondDuJeu({
         mange avec le fond.
       </p>
       <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={/^#[0-9a-fA-F]{6}$/.test(univers.fond) ? univers.fond : "#FF00FF"}
-          aria-label="Couleur du fond"
-          onChange={(e) => void onRegler({ fond: e.target.value })}
-          className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
-        />
+        {/* ⚠️ **Pas de sélecteur de couleur tant qu'aucun fond n'est posé**, et
+            c'est une correction, pas un choix d'origine. Un `input type=color`
+            n'a pas d'état vide : il *doit* porter une couleur, et il portait donc
+            le magenta de la proposition — une pastille magenta juste à côté des
+            mots « aucun fond posé ». Vu au navigateur le 3 septembre 2026, et
+            c'est le piège déjà payé de la case qui ne change rien : un contrôle
+            qui montre un état qu'il n'a pas est pire qu'un contrôle absent.
+            Le damier est la réponse du produit à « pas de couleur » partout
+            ailleurs — c'est lui qui dit la transparence d'un sprite détouré. */}
+        {pose ? (
+          <input
+            type="color"
+            value={univers.fond}
+            aria-label="Couleur du fond"
+            onChange={(e) => void onRegler({ fond: e.target.value })}
+            className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
+          />
+        ) : (
+          // **Le damier reste cliquable**, et il le faut : quand aucun candidat
+          // n'est sûr, le refus lui-même invite à en choisir une à la main.
+          // Un carré seulement décoratif aurait fermé le seul chemin qui reste.
+          // Le sélecteur s'ouvre donc dessous, transparent, sur la couleur
+          // proposée — qu'il montre à l'ouverture sans la donner d'avance.
+          <span className="damier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-[2px] border border-bord">
+            <input
+              type="color"
+              value={propose?.couleur || "#FF00FF"}
+              aria-label="Couleur du fond"
+              onChange={(e) => void onRegler({ fond: e.target.value })}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </span>
+        )}
         <span className="mesure text-[10px] text-texte-2">
           {pose ? univers.fond : "aucun fond posé"}
         </span>
@@ -2068,7 +2094,7 @@ function LeFondDuJeu({
           tranche, pris à la lettre. */}
       {propose?.raison && <Raison texte={propose.raison} />}
       {pose && (
-        <Raison texte="la couleur part dans le texte, et une phrase interdit au modèle de l'employer sur le sujet — sur sa tenue, sa peau, ses accessoires, ses reflets et ses ombres" />
+        <Raison texte="la couleur part dans le texte, et une phrase interdit au modèle de l'employer sur le sujet — sur sa tenue, sa peau, ses cheveux, ses accessoires, ses reflets et ses ombres" />
       )}
       {/* ⚠️ **Le prix, dit une fois et écrit** : changer le fond change ce qui
           part au fournisseur, donc les images d'avant et d'après ne se comparent

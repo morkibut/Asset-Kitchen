@@ -57,6 +57,7 @@ import type {
   Depenses,
   Etat,
   Etiquette,
+  FondPropose,
   Main,
   TachesDeLAsset,
   CompteReferences,
@@ -827,6 +828,11 @@ function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
   univers?: Univers
+  /** Ce que l'atelier propose comme fond, d'après la palette du jeu (D3). Le
+   *  test le décide, comme le vrai serveur le déciderait sur les artworks : la
+   *  réponse a deux branches — une couleur sûre, ou un refus qui dit de quelle
+   *  couleur du jeu il s'approchait —, et l'écran ne se comporte pas pareil. */
+  fondPropose?: FondPropose
   aPublier?: () => Generation
   /** Ce que la détection propose de découper. Le test le décide, comme le vrai
    *  serveur le déciderait sur l'image : c'est ce que l'écran affiche, et c'est
@@ -2638,7 +2644,22 @@ function serveurDouble(options: {
         )
         etat.univers = { ...etat.univers, ...pose }
       }
-      return rendre({ projet: "bac-a-sable", univers: etat.univers, artworks: [] })
+      // **La proposition de fond voyage avec l'univers** (D3), en lecture et en
+      // écriture : régler le fond doit rendre la proposition *à jour*, sans que
+      // l'écran ait à redemander. Le double la rend donc sur les deux verbes,
+      // comme la vraie route.
+      return rendre({
+        projet: "bac-a-sable",
+        univers: etat.univers,
+        artworks: [],
+        fond_propose: options.fondPropose ?? {
+          couleur: "#FF00FF",
+          nom: "magenta",
+          ecart: 192,
+          voisine: "#C0C0C0",
+          raison: null,
+        },
+      })
     }
     if (url === "/api/generations" && init?.method === "POST") {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
@@ -10796,6 +10817,77 @@ describe("l'assistant de démarrage", () => {
     expect(appels.length).toBe(avant)
   })
 
+  // ── « Le fond du jeu se propose, il ne s'impose jamais » (D3) ─────────────
+
+  test("sans fond posé, rien ne montre de couleur — et la proposition reste offerte", async () => {
+    // ⚠️ **Un `input type=color` n'a pas d'état vide**, il *doit* porter une
+    // couleur : il portait donc le magenta de la proposition juste à côté des
+    // mots « aucun fond posé ». L'écran disait alors le contraire de ce qu'il
+    // voulait dire, et c'est le piège déjà payé de la case qui ne change rien —
+    // un contrôle qui montre un état qu'il n'a pas est pire qu'un contrôle
+    // absent. Trouvé au navigateur, pas dans le code.
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+
+    expect(await screen.findByText("aucun fond posé")).toBeTruthy()
+    const choix = screen.getByLabelText("Couleur du fond")
+    // Le damier est la réponse du produit à « pas de couleur » partout
+    // ailleurs : c'est lui qui dit la transparence d'un sprite détouré.
+    expect(choix.parentElement?.className).toContain("damier")
+    // **Et le sélecteur reste dessous**, parce que le refus de proposer invite
+    // lui-même à choisir à la main : un carré décoratif aurait fermé ce
+    // chemin-là.
+    expect(choix.tagName).toBe("INPUT")
+  })
+
+  test("prendre la couleur proposée l'écrit dans le jeu, et l'écart dit sur quoi", async () => {
+    // **L'atelier propose, il n'impose jamais** : c'est l'arbitrage du
+    // 2 septembre 2026, et c'est ce qui a retiré à la tranche son banc de huit
+    // tirages — une mauvaise couleur se change en un geste.
+    const { appels } = await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+
+    // **L'écart est dit avec ce sur quoi il porte** : un « 192 » nu ne se lit
+    // pas, « à 192 de #C0C0C0, la couleur de ton jeu la plus proche » se lit.
+    expect(await screen.findByText(/à 192 de #C0C0C0/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Prendre magenta" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url.startsWith("/api/universe") &&
+            // **Le corps est facultatif sur cette route** : l'écran la lit aussi
+            // sans rien envoyer, et un `JSON.stringify(undefined)` ne rend pas
+            // une chaîne.
+            (a.corps ? JSON.stringify(a.corps) : "").includes('"fond":"#FF00FF"'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("quand aucune couleur n'est sûre, l'atelier le dit au lieu de choisir", async () => {
+    // **Aucun candidat sûr est une réponse, pas une panne.** Elle arrive sur un
+    // jeu dont la palette couvre la roue, et la bonne conduite est de laisser le
+    // fond en place en disant ce qu'on achète si on en pose un quand même.
+    await ouvrirLAssistant({
+      fondPropose: {
+        couleur: "",
+        nom: "",
+        ecart: 56,
+        voisine: "#EC1CD0",
+        raison:
+          "aucune des couleurs franches que l'atelier connaît n'est assez loin de la palette de ce jeu",
+      },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+
+    expect(await screen.findByText(/n'est assez loin de la palette/)).toBeTruthy()
+    // Et surtout : aucun bouton ne propose de couleur, puisqu'aucune n'est sûre.
+    expect(screen.queryByText(/^Prendre /)).toBeNull()
+  })
+
   // ── « Une liste vide dit ce qui décidera à sa place » ─────────────────────
 
   test("une famille sans modèle dit ce qui sera employé à la place", async () => {
@@ -14665,6 +14757,26 @@ describe("l'écran de confirmation", () => {
     expect(ecran.getByText("le fond")).toBeTruthy()
     expect(ecran.getByText("#FF00FF")).toBeTruthy()
     expect(ecran.getByText(/or any shade close to it/)).toBeTruthy()
+  })
+
+  test("sans fond, la pastille est un damier et non une couleur", async () => {
+    // ⚠️ **Un `input type=color` n'a pas d'état vide.** Il portait donc le
+    // magenta de la proposition juste à côté des mots « aucun fond », ce qui
+    // disait très exactement le contraire de ce que l'écran voulait dire. Vu au
+    // navigateur le 3 septembre 2026, pas dans le code : le code se lit toujours
+    // comme on l'a pensé, et c'est le piège déjà payé de la case qui ne change
+    // rien — un contrôle qui montre un état qu'il n'a pas est pire qu'un
+    // contrôle absent.
+    //
+    // **Et le sélecteur reste atteignable dessous.** Le supprimer aurait fermé
+    // le seul chemin qui reste quand aucune couleur candidate n'est sûre : le
+    // refus lui-même invite à en choisir une à la main.
+    const { ecran } = await ouvrir()
+
+    const choix = await ecran.findByLabelText("Couleur du fond, pour cet appel")
+
+    expect(ecran.getByText(/aucun fond/)).toBeTruthy()
+    expect(choix.parentElement?.className).toContain("damier")
   })
 
   test("corriger le fond ne part que dans le tri de cet appel", async () => {

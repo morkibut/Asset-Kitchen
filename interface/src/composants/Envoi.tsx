@@ -745,13 +745,30 @@ function SectionFond({
       <Libelle>le fond</Libelle>
       <div className="flex flex-col gap-2 border-t border-bord pt-2">
         <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={/^#[0-9a-fA-F]{6}$/.test(fond.couleur) ? fond.couleur : "#FF00FF"}
-            aria-label="Couleur du fond, pour cet appel"
-            onChange={(e) => onFond(e.target.value)}
-            className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
-          />
+          {/* ⚠️ **Le damier quand il n'y a pas de fond**, la même correction
+              qu'au codex et pour la même raison : un `input type=color` n'a pas
+              d'état vide, il portait donc une pastille magenta juste à côté des
+              mots « aucun fond ». Le sélecteur reste dessous, transparent — sans
+              lui, un appel sans fond ne pourrait plus en reprendre un. */}
+          {fond.couleur ? (
+            <input
+              type="color"
+              value={fond.couleur}
+              aria-label="Couleur du fond, pour cet appel"
+              onChange={(e) => onFond(e.target.value)}
+              className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
+            />
+          ) : (
+            <span className="damier relative h-[26px] w-[34px] shrink-0 overflow-hidden rounded-[2px] border border-bord">
+              <input
+                type="color"
+                value={propose.couleur || "#FF00FF"}
+                aria-label="Couleur du fond, pour cet appel"
+                onChange={(e) => onFond(e.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </span>
+          )}
           <span className="mesure text-[10px] text-texte-2">
             {fond.couleur || "aucun fond — le modèle rendra ce qu'il voudra"}
           </span>

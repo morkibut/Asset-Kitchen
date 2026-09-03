@@ -72,8 +72,11 @@ modèle ne rend qu'un masque —, mais tous laissent derrière eux les pixels qu
 *effacer un pixel ne change pas sa couleur*. **Le fond d'une passe se lit dans son propre
 résultat.**
 
-- **Le rongement conditionnel épargne 47 185 pixels de sujet** sur les quatre images, et il ne
-  peut jamais en manger plus que l'érosion aveugle — c'est un sous-ensemble, vérifié. Un trait
+- **Le rongement conditionnel épargne 47 185 pixels de sujet** sur les quatre images du banc,
+  à un cran de rongement et à deux — 15 538 au premier, 31 647 au second, ce qui dit assez que
+  le second cran est celui qui mangeait vraiment. Et il ne peut **jamais** en manger plus que
+  l'érosion aveugle — c'est un sous-ensemble, vérifié une fois pour toutes plutôt qu'image par
+  image. Un trait
   d'un pixel d'épaisseur ne se ronge plus jamais, parce qu'aucun de ses pixels n'a de voisin
   franchement intérieur à qui se comparer. *C'est le cas que l'érosion effaçait en entier : une
   antenne, une lanière, la pointe d'une épée.*
@@ -160,6 +163,39 @@ pas connue — aucune image du dépôt n'a été tirée sur un fond franc —, e
 tirées avant ne se comparent plus à celles d'après — pas parce qu'elles sont moins bonnes, mais
 parce qu'on n'a plus demandé la même chose. Les 135 notes d'animation restent valables entre
 elles, jamais contre un tirage postérieur.
+
+### Et le passage au navigateur a trouvé trois choses que rien d'autre ne pouvait trouver
+
+Les 1 169 essais de serveur et les 576 d'écran étaient au vert avant. Un atelier jetable monté
+sur le port 8424, avec deux jeux — l'un dont la palette laisse le magenta très loin, l'autre
+construit exprès pour qu'**aucune** couleur candidate ne soit sûre — a rendu trois défauts en
+vingt minutes.
+
+**La phrase d'interdiction disait le contraire de ce qu'elle voulait dire.** Elle énumérait les
+endroits qui trahissent en écrivant *« (not on its outfit, its skin… ) »*, et elle part dans un
+champ que les adaptateurs replient derrière *« Do not include: »*. Une négation dans une
+négation : l'énumération cessait d'**étendre** l'interdiction pour la **retrancher** — ne mets
+pas cette couleur sur le sujet, sauf sur sa tenue et sa peau. **Le code ne pouvait pas le
+montrer** : il se lit toujours comme on l'a pensé, et la phrase n'existe en entier qu'une fois
+assemblée. Ce qui l'a trouvée est de l'avoir imprimée dans une console, à côté du reste. Un
+essai la garde désormais : *aucun « not » dans ce qui part en interdiction*.
+
+**Les deux écrans du fond affichaient une couleur qu'ils n'avaient pas.** `<input type="color">`
+n'a pas d'état vide — il *doit* porter une couleur —, donc une pastille magenta se retrouvait
+collée aux mots *« aucun fond posé »*. C'est la famille du piège déjà payé de la case à cocher
+qui ne change rien, et **aucun essai ne pouvait le voir** : en `jsdom` la valeur est celle qu'on
+a écrite, et l'essai l'aurait confirmée. Le damier prend la place — c'est le mot du produit pour
+« pas de couleur » partout ailleurs —, et le sélecteur reste **dessous**, atteignable : le
+retirer aurait fermé le seul chemin qui reste le jour où l'atelier ne peut rien proposer de sûr.
+
+**Et deux petites choses de langue**, qui ne se voient qu'écrites : une part en pourcentage
+rendue *« 9.1 % »* au milieu d'une phrase française, et la fiche d'un moteur qui redisait mot
+pour mot la ligne juste au-dessus d'elle — l'écran écrit désormais le côté d'inférence pour
+**tous** les modèles, et la note du catalogue n'avait plus à le répéter.
+
+*Trois défauts d'écriture sur trois, et pas un seul de logique.* C'est ce que la vérification au
+navigateur attrape, et c'est très exactement ce qu'aucune suite d'essais ne peut attraper à sa
+place.
 
 ---
 
