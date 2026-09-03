@@ -49,10 +49,14 @@ from atelier.domaine.plan import (
     plan_du_type,
     suit_le_plan_du_jeu,
 )
+from atelier.domaine.fond import AUCUN_FOND, fond_valide
 from atelier.domaine.teinte import AUCUNE, teinte_valide
 from atelier.domaine.direction import Direction, directions_depuis_json
 from atelier.domaine.vue import (
     AUCUNE_VUE,
+    FINESSE_PAR_DEFAUT,
+    FINESSES,
+    TAILLES,
     phrase_de_calage,
     phrase_de_grille,
     sans_phrase_du_produit,
@@ -60,11 +64,21 @@ from atelier.domaine.vue import (
 )
 from atelier.domaine.recette import (
     BAS,
+    BORD,
     Grille,
+    LANCZOS,
+    METHODE_LIVREE,
+    METHODES_DE_REDUCTION,
+    VOTE,
+    MOTEURS,
     Passe,
     Quantification,
     Recadrage,
     Recette,
+    TACHE,
+    methode_connue,
+    paliers_de_couleurs,
+    passe_livree,
 )
 
 # Le projet qui existe déjà au premier lancement (US-2). Ranger reste un geste,
@@ -189,7 +203,7 @@ class Champ:
 
 # ── Le barème d'échelles ─────────────────────────────────────────────────────
 #
-# **Sans lui, tout ce qui sort du produit fait la même hauteur** (`docs/PLAN.md`,
+# **Sans lui, tout ce qui sort du produit fait la même hauteur** (`docs/archive/plan-versions-tenues.md`,
 # T4). La séance du 27 août l'a montré sur cinq sujets réels : un coffre aussi
 # haut qu'un personnage. Ce n'est pas une coïncidence, c'est ce que donne
 # mécaniquement une occupation à 100 % — la case est remplie, donc tout la
@@ -297,6 +311,145 @@ CIBLE_PAR_DEFAUT = 64
 AUCUNE_CIBLE = 0
 
 
+# ── Le style graphique du jeu, arrivé en D2 ──────────────────────────────────
+#
+# **La première question de toutes, et elle n'existait pas.** Rien dans les
+# réglages ne demandait *ce jeu est-il en pixel art ?* — la réponse se déduisait
+# d'un détail : la neuvième valeur d'une liste de tailles, « aucune », dont le
+# libellé disait en toutes lettres *ce jeu n'est pas en pixel art*. Le style
+# était donc une conséquence d'un réglage de taille, quand c'est l'inverse : le
+# style décide de ce que la taille **veut dire**.
+#
+# **Deux styles, et ils ne posent pas la même question :**
+#
+# | | pixel art | dessin |
+# |---|---|---|
+# | la question | combien de **carrés** ? | quelle **finesse** ? |
+# | ce que ça veut dire | la quantité de dessin qui existe | la quantité de détail gardée |
+# | la transformation | destructrice — c'est le sujet de D2 | une réduction propre suffit |
+# | les couleurs | réduites à une palette finie | gardées : un dessin a ses nuances |
+# | ce qui part au modèle | « 2D pixel art on a NxN grid » | rien de tout ça |
+#
+# **En pixel art, la taille *est* le dessin** : un personnage de 32 et un de 128
+# ne sont pas la même image en deux tailles, ce sont deux dessins. En dessin,
+# elle n'est qu'une finesse — réduire de 1024 à 512 marche tout seul, sans
+# bouillie, parce qu'il n'y a rien à écraser.
+PIXEL_ART = "pixel"
+DESSIN = "dessin"
+STYLES = (PIXEL_ART, DESSIN)
+
+NOM_DU_STYLE = {PIXEL_ART: "en pixel art", DESSIN: "en dessin"}
+
+
+def style_connu(style: Any) -> str:
+    """Le style rendu tel quel s'il existe, sinon le pixel art.
+
+    Le domaine ne lève pas sur un nom qu'il ne connaît pas — même règle que
+    `methode_connue` et `durcissement_livre`. Le pixel art ferme la marche parce
+    qu'il est le défaut historique du produit : *« le pixel art est le défaut,
+    plus une limite »* (`docs/ARCHITECTURE.md`).
+    """
+    return style if style in STYLES else PIXEL_ART
+
+
+def cibles_du_style(style: str) -> tuple[int, ...]:
+    """Les tailles qu'un style propose, **« aucune » comprise**.
+
+    Deux listes qui ne se recoupent qu'en partie : 8 carrés n'a aucun sens pour
+    un dessin, 2048 n'en a aucun pour du pixel art. `AUCUNE_CIBLE` est dans les
+    deux — c'est *ne pas contraindre l'échelle*, un état légitime des deux côtés
+    (US-163), et l'auteur l'a demandé explicitement pour le dessin.
+    """
+    liste = FINESSES if style == DESSIN else TAILLES
+    return (AUCUNE_CIBLE,) + tuple(cible for cible, _ in liste)
+
+
+# **La façon de réduire qu'un style appelle**, et elle reste un choix.
+#
+# L'auteur veut les quatre méthodes disponibles partout — *« je veux qu'on puisse
+# choisir entre les 4 et changer en cours de route »* — et elles le restent : ce
+# n'est qu'un **défaut**. Mais le bon défaut n'est pas le même des deux côtés :
+# le vote en deux temps décide la forme case par case, ce qui donne exactement le
+# sprite qu'on veut en pixel art et **posterise** un dessin ; la réduction douce
+# fait l'inverse.
+METHODE_DU_STYLE = {PIXEL_ART: VOTE, DESSIN: LANCZOS}
+
+
+def methode_du_changement(vers: str, methode: str) -> str:
+    """La façon de réduire à garder quand on **change de style**.
+
+    **On ne réécrit que ce que personne n'a choisi**, et c'est la règle de D1
+    mot pour mot (`moteurs_suivis`) : une méthode restée sur le défaut de
+    l'ancien style est un réglage qu'on n'a pas posé, elle suit ; une méthode
+    déplacée à la main est un choix, et un choix ne se réécrit pas.
+    """
+    depuis = METHODE_DU_STYLE[PIXEL_ART if vers == DESSIN else DESSIN]
+    return METHODE_DU_STYLE[vers] if methode == depuis else methode
+
+
+def cible_du_changement(style: str, cible: int) -> int:
+    """La taille à garder quand on **change de style**, et il faut souvent bouger.
+
+    *« Si je décide de changer de style sur mon jeu cœur de pierre pour le faire
+    en dessin et plus en pixel art »* — l'auteur, 3 septembre 2026. Un jeu réglé
+    sur 64 carrés qui passe en dessin garderait une finesse de 64 : une vignette
+    de la taille d'une icône, là où l'auteur croit avoir juste changé de style.
+
+    **On ne garde donc que ce que le nouveau style sait porter**, et le reste
+    retombe sur son défaut — 64 carrés en pixel art, 512 de finesse en dessin.
+    Ce n'est pas une borne silencieuse : le réglage part avec l'univers que la
+    route renvoie, donc l'écran montre immédiatement la valeur qui s'applique.
+    """
+    if cible in cibles_du_style(style):
+        return cible
+    return FINESSE_PAR_DEFAUT if style == DESSIN else CIBLE_PAR_DEFAUT
+
+
+def style_deduit(donnees: dict[str, Any]) -> str:
+    """Le style d'un univers écrit **avant** que la question existe.
+
+    **Il se déduit sans rien inventer**, et c'est ce qui reprend les projets
+    d'avant sans leur changer une image : jusqu'ici, dire « aucune taille de
+    pixel » *était* dire « ce jeu n'est pas en pixel art » — le libellé de la
+    neuvième valeur le disait mot pour mot à l'écran. Une taille posée veut donc
+    dire pixel art, et son absence veut dire dessin.
+
+    C'est la seule lecture honnête : toute autre valeur par défaut ferait mentir
+    un fichier sur ce que son auteur avait choisi.
+    """
+    if "style" in donnees:
+        return style_connu(donnees.get("style"))
+    return DESSIN if int(donnees.get("cible_px", CIBLE_PAR_DEFAUT)) == AUCUNE_CIBLE else PIXEL_ART
+
+
+# ── La nature de l'image, arrivée en D1 ──────────────────────────────────────
+#
+# **Deux, et deux seulement** : ce qui arrive tout seul, et ce qui arrive dans
+# une planche qu'on découpe. Ce n'est pas un troisième axe de rangement à côté
+# de la famille — c'est *comment l'image est venue*, quand la famille dit *ce
+# qu'elle montre*. Une même créature détourée depuis une planche de huit
+# attitudes et détourée seule sont la même famille et deux natures.
+#
+# **Aucune troisième valeur n'attend son tour.** Une image importée « telle
+# quelle » n'est pas une nature : elle n'a pas de recette du tout (US-170), et
+# un état sans recette ne se range pas parmi des recettes par défaut.
+IMAGE_SEULE = "image"
+PLANCHE = "planche"
+NATURES = (IMAGE_SEULE, PLANCHE)
+
+NOM_DE_LA_NATURE = {
+    IMAGE_SEULE: "une image seule",
+    PLANCHE: "un morceau de planche",
+}
+
+# D'où vient le défaut qui s'applique. **Trois provenances, et le produit ferme
+# la marche** : il n'y a jamais de trou, seulement un réglage qu'on n'a pas
+# posé — la même phrase que le modèle par famille (US-58).
+DE_LA_FAMILLE = "famille"
+DE_LA_NATURE = "nature"
+DU_PRODUIT = "produit"
+
+
 # ── L'univers ────────────────────────────────────────────────────────────────
 
 
@@ -312,6 +465,13 @@ class Univers:
 
     bible: tuple[Champ, ...] = ()
     bareme: tuple[Echelle, ...] = BAREME_PAR_DEFAUT
+
+    # **Le style graphique du jeu** (D2), et il vient avant la taille parce
+    # qu'il décide de ce que la taille veut dire. Voir le bloc `PIXEL_ART` /
+    # `DESSIN` plus haut : la même case porte un nombre de carrés ou une
+    # finesse, et ce ne sont pas les mêmes valeurs ni la même question.
+    style: str = PIXEL_ART
+
     cible_px: int = CIBLE_PAR_DEFAUT
 
     # ── La vue du jeu, arrivée en E8 ─────────────────────────────────────────
@@ -341,10 +501,33 @@ class Univers:
     # aucune direction — ce qui est un état normal, celui d'un jeu de face.
     directions: tuple[Direction, ...] | None = None
 
-    # **Combien de couleurs on demande à la palette.** Elle, on ne la saisit
-    # jamais : elle se déduit par calcul des artworks officiels (US-54). Ce
-    # chiffre-ci est le seul réglage qu'on ait sur elle.
-    couleurs: int = 24
+    # **Combien de couleurs le pixel art du projet emploie.** Ce chiffre sert
+    # deux fois, et c'est voulu : il dit combien de teintes lire dans les
+    # artworks officiels pour en tirer la palette (US-54), et combien en garder
+    # quand il n'y a pas d'artwork du tout.
+    #
+    # **Passé de 24 à 32 en D2**, pour tomber sur l'un des six paliers tranchés
+    # par l'auteur le 3 septembre (`PALIERS_DE_COULEURS`). La mesure du même
+    # jour dit que ça ne coûte rien : sur les deux planches du guide, 24 teintes
+    # demandées en rendent 18 franchement distinctes et 32 en rendent 18 aussi
+    # — la coupe médiane sature avant. Les projets déjà écrits gardent leur 24,
+    # qui est dans leur fichier ; seuls les projets neufs partent de 32.
+    couleurs: int = 32
+
+    # ── La méthode de réduction, arrivée en D2 ───────────────────────────────
+    #
+    # **Le style de pixelisation du projet.** Quatre méthodes, mesurées et
+    # montrées côte à côte à l'auteur le 3 septembre ; il en a fait un choix
+    # d'auteur, pas un classement — *« les 4 ont des rendus différents [...] et
+    # peuvent influencer le style souhaité par le créateur »* — et a tranché le
+    # défaut sur le vote en deux temps.
+    #
+    # **Il ne s'impose qu'aux recettes fabriquées à neuf.** Les recettes déjà
+    # posées portent leur propre méthode dans leur JSON ; celles d'avant D2 n'en
+    # portent aucune et retombent sur « au plus proche », ce que l'atelier
+    # faisait alors. Changer ce réglage ne rejoue donc aucune image déjà rendue,
+    # exactement comme la taille de case ou le détourage par défaut.
+    methode_pixels: str = METHODE_LIVREE
 
     # ── La palette, et d'où elle vient ───────────────────────────────────────
     #
@@ -357,8 +540,28 @@ class Univers:
     palette: tuple[str, ...] = ()
     palette_empreinte: str = ""
 
+    # ── Le fond du jeu, arrivé en D3 ─────────────────────────────────────────
+    #
+    # **La couleur sur laquelle le sujet est posé, et elle part dans le texte.**
+    # Le produit demandait *un fond plat* sans dire lequel : le modèle rendait un
+    # gris clair, c'est-à-dire une couleur que le sujet porte aussi, d'où le
+    # découpage à reprendre sur presque chaque image.
+    #
+    # **Vide est une valeur, et c'est celle d'avant la tranche** : la phrase
+    # partie est alors exactement celle qui partait, et rien n'entre dans le
+    # champ d'interdiction. C'est ce qui fait qu'un univers écrit avant D3 — et
+    # un univers sans palette, qui n'a rien pour proposer — ne change pas d'un
+    # mot.
+    #
+    # **Un réglage, pas un calcul**, et c'est l'arbitrage de l'auteur du
+    # 2 septembre 2026. `atelier.domaine.fond.proposer` calcule la distance de
+    # quelques couleurs franches à la palette du jeu et nomme la première qui
+    # passe le seuil ; l'écran la propose, l'auteur tranche, et *s'il n'y a pas
+    # de candidat sûr l'atelier le dit* au lieu de choisir en silence.
+    fond: str = AUCUN_FOND
+
     # **Le modèle est un défaut par type d'asset, pas un réglage global**
-    # (`docs/PLAN.md`, T4). Une famille sans modèle retombe sur le défaut du
+    # (`docs/archive/plan-versions-tenues.md`, T4). Une famille sans modèle retombe sur le défaut du
     # catalogue — il n'y a pas de trou, seulement un réglage qu'on n'a pas posé.
     modeles: dict[str, str] = field(default_factory=dict)
 
@@ -384,6 +587,36 @@ class Univers:
     modele_planche: str = ""
     modele_edition: str = ""
 
+    # ── Le détourage par défaut, arrivé en D1 ────────────────────────────────
+    #
+    # **Trois champs, et le même rangement que les modèles juste au-dessus** —
+    # ce n'est pas une coïncidence, c'est la consigne : « le produit range déjà
+    # par famille le modèle par défaut d'un univers ; la recette suit le même
+    # rangement, et n'invente aucun vocabulaire ».
+    #
+    # Les deux premiers disent *comment l'image est venue*, le dictionnaire dit
+    # *ce qu'elle montre*, et ils ne se mêlent pas — exactement la décision de
+    # C2 pour `modele_planche` : mettre les deux natures dans `detourages`
+    # aurait demandé deux clés réservées dans un espace de noms que l'auteur
+    # croit être le sien, et « famille inconnue » aurait dû les excepter.
+    #
+    # **`None` n'est pas une passe vide**, et l'écart compte : *jamais réglé*
+    # retombe sur le défaut du produit — c'est ce qui fait qu'un univers écrit
+    # avant D1 rend exactement ce qu'il rendait — quand *réglé* impose ce qui
+    # est écrit. Une famille absente du dictionnaire hérite de sa nature ; une
+    # famille présente décide, et l'écran dit d'où vient ce qui s'applique.
+    #
+    # **Une `Passe` et pas un type neuf.** Le domaine en a déjà une, avec sa
+    # sérialisation, ses bornes et sa route ; un second objet qui décrirait un
+    # détourage serait une seconde vérité, et « deux vérités sur la même chose
+    # finissent par diverger ». Ce qu'une passe porte de *propre à une image* —
+    # le point de la pipette, le tracé à main levée, le masquage — n'a pas de
+    # sens dans un défaut : `passe_par_defaut` le retire à l'entrée, si bien
+    # que la chose est irreprésentable plutôt que défendue par une règle.
+    detourage_image: Passe | None = None
+    detourage_planche: Passe | None = None
+    detourages: dict[str, Passe] = field(default_factory=dict)
+
     # ── Ce qui se déduit ─────────────────────────────────────────────────────
 
     @property
@@ -402,9 +635,16 @@ class Univers:
         64, donc « posée » et « pas encore touchée » n'y sont pas
         distinguables, et un univers ne se dira jamais réglé pour une valeur
         que personne n'a choisie.
+
+        **Le fond y entre en D3, et pour la raison exacte de la vue** : c'est un
+        choix que personne ne fait par défaut — il n'y en a pas —, donc « posé »
+        et « pas encore touché » s'y distinguent sans ambiguïté. Sans cette
+        ligne, un jeu dont on vient de choisir le fond se dirait vierge, et la
+        phrase de calage — celle qui *porte* ce fond — ne partirait pas : on
+        aurait réglé la couleur et rien ne serait parti avec.
         """
         return not (
-            self.palette or self.vue or any(c.porte for c in self.bible)
+            self.palette or self.vue or self.fond or any(c.porte for c in self.bible)
         )
 
     def champ(self, nom: str) -> Champ:
@@ -433,10 +673,22 @@ class Univers:
         ne dit rien de la grille, et écrire `no pixel grid` serait une
         affirmation que personne n'a faite (US-57).
         """
+        # **Les deux phrases de grille sont celles du pixel art, et de lui
+        # seul** (D2). Un jeu en dessin qui garde une finesse de 1024 aurait
+        # envoyé *2D pixel art on a 1024x1024 grid* — le contraire mot pour mot
+        # de ce que l'auteur a choisi, et sur la case qui décide de l'allure.
+        # Le défaut n'était pas atteignable avant que le style existe : « aucune
+        # taille » était la seule façon de dire « pas de pixel art », et elle
+        # vidait les deux phrases par le même geste.
         if nom == "rendu":
-            return phrase_de_grille(self.cible_px)
+            return phrase_de_grille(self.cible_px) if self.style == PIXEL_ART else ""
         if nom == "technique":
-            return phrase_de_calage(self.cible_px)
+            # **Le calage est du pixel art, le fond est de tous les styles**
+            # (D3). Un jeu en dessin n'a pas de carrés à caler — sa cible vaut
+            # zéro ici — mais il a un fond comme les autres, et la phrase part
+            # alors réduite à sa première moitié.
+            cible = self.cible_px if self.style == PIXEL_ART else 0
+            return phrase_de_calage(cible, self.fond)
         if nom == "vue":
             connue = vue_connue(self.vue) if self.vue else None
             return connue.phrase if connue else ""
@@ -627,7 +879,54 @@ class Univers:
     def modele(self, famille: str) -> str | None:
         return self.modeles.get(famille) or None
 
-    def recette_de(self, echelle: Echelle | None) -> Recette:
+    def couleurs_tenues(self) -> int:
+        """Le nombre de couleurs, **ramené à ce que la taille peut porter** (D2).
+
+        Tranché par l'auteur le 3 septembre : *« le max bloqué au nombre de
+        pixel (on peut pas avoir du 128 couleurs sur du 32px) »*. Le plafond est
+        le côté du sprite, et il est mesuré : au-delà, l'image ne contient plus
+        assez de teintes distinctes pour remplir la palette demandée.
+
+        **On borne au lieu de refuser.** Une taille peut changer après que le
+        nombre de couleurs a été posé — passer un projet de 128 à 32 carrés ne
+        doit pas rendre son univers illisible ni lever à la relecture. Le réglage
+        garde donc sa valeur dans le fichier, et c'est à l'usage qu'il se plie.
+        """
+        possibles = paliers_de_couleurs(self.cible_px)
+        return min(self.couleurs, possibles[-1])
+
+    def detourage(
+        self, nature: str = IMAGE_SEULE, famille: str = ""
+    ) -> tuple[Passe, str]:
+        """La passe de détourage qui s'appliquera, **et d'où elle vient** (D1).
+
+        Trois niveaux, dans cet ordre : la famille du sujet, puis la nature de
+        l'image, puis le produit. Aucun trou — seulement un réglage qu'on n'a
+        pas posé, et c'est la phrase exacte du modèle par famille (US-58).
+
+        **La famille l'emporte entièrement, elle ne complète pas.** Un défaut de
+        famille qui n'écraserait que les champs qu'il déclare demanderait de
+        distinguer « posé à zéro » de « pas posé » sur chacun des quatre
+        réglages — quatre `None` de plus, et un écran qui doit les montrer. La
+        règle simple est celle que le critère écrit : *sans quoi elle hérite de
+        celle de sa nature*. C'est pour qu'elle ne surprenne jamais que la
+        provenance sort d'ici avec la passe, et que l'écran l'affiche.
+
+        **Elle ne rend jamais `None`.** Il y a toujours un détourage à décrire,
+        même quand personne n'a rien réglé : le savoir est ce qui permet à
+        l'écran de dire « voilà ce qui s'appliquera » avant de dépenser.
+        """
+        de_la_famille = self.detourages.get(famille) if famille else None
+        if de_la_famille is not None:
+            return de_la_famille, DE_LA_FAMILLE
+        de_la_nature = (
+            self.detourage_planche if nature == PLANCHE else self.detourage_image
+        )
+        if de_la_nature is not None:
+            return de_la_nature, DE_LA_NATURE
+        return passe_livree(BORD), DU_PRODUIT
+
+    def recette_de(self, echelle: Echelle | None, nature: str = IMAGE_SEULE) -> Recette:
         """**Ce que le projet impose à ce qui rentre**, et le seul endroit qui le dise.
 
         Écrite ici, dans le domaine, parce que deux appelants la posent — la
@@ -657,26 +956,55 @@ class Univers:
         dit que ce qu'on traite a une silhouette » —, il n'y a donc rien à
         transporter de plus : ne pas poser de passe suffit à dire « décor ».
 
-        **La quantification n'entre que s'il y a une palette.** Sans artwork
-        officiel il n'y a pas de palette, et ce n'est pas une pièce manquante :
-        c'est l'état réel d'un univers vide, qui ne contraint rien (US-57).
+        **Ce que la passe contient, en revanche, se règle** (D1). *S'il y a* une
+        passe reste décidé par la silhouette, comme avant ; *ce qu'elle vaut*
+        vient de `detourage`, qui lit la famille du sujet, puis la nature de
+        l'image, puis le produit. `nature` arrive donc en second paramètre, avec
+        une valeur par défaut : les appelants qui produisent une image seule
+        n'ont rien eu à changer, et ceux qui déplient une planche le disent.
+
+        **La quantification suit la taille, plus la palette** — corrigé en D2.
+        Elle n'entrait auparavant que s'il existait une palette, donc que si des
+        artworks officiels avaient été déposés. Mesuré le 3 septembre 2026 : un
+        projet sans artwork rendait des sprites de **dix mille couleurs**, sans
+        que rien à l'écran ne le dise. Ce n'était pas un réglage mal expliqué,
+        c'était une étape entière du traitement qui ne s'exécutait jamais, en
+        silence — et le réglage `couleurs` ne servait alors à rien.
+
+        **Ce qui la commande désormais est le style**, et non plus la palette.
+        Un nombre fini de couleurs *est* ce qui distingue un sprite d'une image
+        réduite ; réduire les couleurs d'un **dessin** le transformerait en
+        affiche sérigraphiée, et c'est justement ce qu'un jeu en dessin ne veut
+        pas. La palette, elle, reste facultative : présente elle s'impose,
+        absente les couleurs se déduisent de l'image.
+
+        *Elle se lisait sur `cible_px` entre-temps, faute de style — ce qui
+        donnait la bonne réponse par accident, « aucune taille » étant alors la
+        seule façon de déclarer qu'un jeu n'est pas en pixel art. Le style le
+        dit maintenant lui-même, et un jeu en dessin peut donc imposer une
+        finesse sans se faire quantifier au passage.*
         """
         silhouette = echelle.silhouette if echelle else True
+        passe, _ = self.detourage(nature, echelle.famille if echelle else "")
+        sur_grille = self.cible_px != AUCUNE_CIBLE
         return Recette(
-            passes=(Passe(),) if silhouette else (),
+            passes=(passe,) if silhouette else (),
             recadrage=Recadrage() if silhouette else None,
             grille=(
                 Grille(
                     cible=self.cible_px,
                     occupation=echelle.occupation if echelle else 100,
                     ancrage=BAS,
+                    methode=methode_connue(self.methode_pixels),
                 )
-                if self.cible_px != AUCUNE_CIBLE
+                if sur_grille
                 else None
             ),
             quantification=(
-                Quantification(couleurs=self.couleurs, palette=self.palette)
-                if self.palette
+                Quantification(
+                    couleurs=self.couleurs_tenues(), palette=self.palette
+                )
+                if sur_grille and self.style == PIXEL_ART
                 else None
             ),
             # Le nettoyage des bords n'est pas un défaut : il efface des taches,
@@ -690,6 +1018,7 @@ class Univers:
         return {
             "bible": [c.en_json() for c in self.bible],
             "bareme": [e.en_json() for e in self.bareme],
+            "style": self.style,
             "cible_px": self.cible_px,
             "vue": self.vue,
             "directions": (
@@ -698,11 +1027,31 @@ class Univers:
                 else [d.en_json() for d in self.directions]
             ),
             "couleurs": self.couleurs,
+            "methode_pixels": self.methode_pixels,
             "palette": list(self.palette),
             "palette_empreinte": self.palette_empreinte,
+            # **Le fond du jeu** (D3). La chaîne vide sort telle quelle : c'est
+            # *aucun fond posé*, l'état d'avant la tranche, et il n'y a rien à
+            # distinguer d'un second état comme pour le détourage — une couleur
+            # est toujours quelque chose, et la retirer est la remettre à vide.
+            "fond": self.fond,
             "modeles": dict(self.modeles),
             "modele_planche": self.modele_planche,
             "modele_edition": self.modele_edition,
+            # **Le détourage par défaut** (D1). `null` sort tel quel et ne se
+            # remplace pas par une passe vide : *jamais réglé* et *réglé sur les
+            # valeurs du produit* sont deux états, et l'écran les affiche
+            # différemment — « aucun choisi, le produit décide » n'est pas la
+            # même phrase que la liste des quatre réglages.
+            "detourage_image": (
+                None if self.detourage_image is None else self.detourage_image.en_json()
+            ),
+            "detourage_planche": (
+                None
+                if self.detourage_planche is None
+                else self.detourage_planche.en_json()
+            ),
+            "detourages": {f: p.en_json() for f, p in self.detourages.items()},
             # déduits — présents pour l'interface, jamais relus
             "vide": self.vide,
             # **Ce que l'atelier dit de lui-même, case par case.** L'écran des
@@ -742,18 +1091,73 @@ class Univers:
                 replace(c, texte=sans_phrase_du_produit(c.texte)) for c in relus
             ),
             bareme=bareme or BAREME_PAR_DEFAUT,
+            # **Déduit quand la clé manque**, jamais mis au défaut : un univers
+            # écrit avant D2 a bel et bien répondu à la question, par sa taille
+            # de pixel. Voir `style_deduit`.
+            style=style_deduit(d),
             cible_px=int(d.get("cible_px", CIBLE_PAR_DEFAUT)),
             vue=str(d.get("vue") or AUCUNE_VUE),
             directions=directions_depuis_json(d.get("directions")),
+            # **24 à la relecture, 32 pour un projet neuf**, et l'écart est
+            # voulu : un univers écrit avant D2 n'a pas cette clé et doit
+            # rouvrir sur la valeur qu'il employait, sans quoi sa palette se
+            # recalculerait toute seule à la première lecture.
             couleurs=int(d.get("couleurs", 24)),
+            # **Absent veut dire « au plus proche »**, comme pour une recette :
+            # un univers d'avant D2 n'a jamais choisi de méthode, et lui en
+            # inventer une changerait ses prochaines images sans qu'il l'ait
+            # demandé. Le vote en deux temps n'est le défaut que d'un projet neuf.
+            methode_pixels=methode_connue(d.get("methode_pixels")),
             palette=tuple(d.get("palette", ())),
             palette_empreinte=d.get("palette_empreinte", ""),
+            # **Un univers écrit avant D3 n'a pas ce champ**, et son absence veut
+            # dire *aucun fond posé* — la phrase qui part est alors celle d'avant
+            # la tranche, au caractère près. Une couleur illisible revient vide
+            # elle aussi : elle se repose d'un clic, et faire tomber la lecture
+            # d'un projet entier pour un champ de couleur serait hors de
+            # proportion.
+            fond=fond_valide(d.get("fond")),
             modeles={
                 f: m for f, m in (d.get("modeles") or {}).items() if f in FAMILLES and m
             },
             modele_planche=d.get("modele_planche", "") or "",
             modele_edition=d.get("modele_edition", "") or "",
+            # **Un univers écrit avant D1 n'a pas ces champs**, et leur absence
+            # veut dire *jamais réglé* : le produit décide, avec exactement les
+            # valeurs d'avant. C'est ce qui tient « une recette écrite avant
+            # cette tranche s'ouvre et rend ce qu'elle rendait ».
+            detourage_image=passe_par_defaut(d.get("detourage_image")),
+            detourage_planche=passe_par_defaut(d.get("detourage_planche")),
+            detourages={
+                f: passe
+                for f, brut in (d.get("detourages") or {}).items()
+                if f in FAMILLES and (passe := passe_par_defaut(brut)) is not None
+            },
         )
+
+
+def passe_par_defaut(brut: Any) -> Passe | None:
+    """Une passe relue **débarrassée de ce qui n'appartient qu'à une image** (D1).
+
+    Le point de la pipette vit dans les pixels du brut, le tracé à main levée
+    aussi, et le masquage est un geste de lecture qu'on pose le temps de
+    regarder. Aucun des trois n'a de sens dans un défaut d'univers : appliqué à
+    la première image venue, le point désignerait un pixel qui n'a rien à voir.
+
+    Ils sont retirés **ici**, au seul passage entre un fichier et un univers,
+    plutôt que défendus par une validation à l'entrée : ce qui est retiré à la
+    relecture ne peut pas revenir par une route qu'on aurait oubliée, ni par un
+    fichier écrit à la main.
+
+    **`None` traverse.** Pas de passe est un état, et le distinguer d'une passe
+    aux valeurs du produit est ce qui permet à l'écran de dire d'où vient ce qui
+    s'applique.
+    """
+    if not brut:
+        return None
+    passe = Passe.depuis_json(brut)
+    moteur = passe.moteur if passe.moteur in MOTEURS else BORD
+    return replace(passe, moteur=moteur, point=None, portee=TACHE, trace=(), masquee=False)
 
 
 def bible_complete(champs: Iterable[Champ]) -> tuple[Champ, ...]:
@@ -788,7 +1192,7 @@ def empreinte_palette(empreintes: Iterable[str], couleurs: int) -> str:
 class Projet:
     """Un univers. Il range, il totalise, et depuis T4 **il contraint**.
 
-    `docs/PLAN.md` § Quand chaque entité du modèle d'objets apparaît : le projet portait en T3
+    `docs/archive/plan-versions-tenues.md` § Quand chaque entité du modèle d'objets apparaît : le projet portait en T3
     « nom, rangement, total des coûts, journal », et se complète en T4 de la
     bible, des artworks, de la palette et des réglages par défaut. Les artworks,
     eux, ne sont pas ici : ce sont des cartes du tableau, et c'est la carte qui

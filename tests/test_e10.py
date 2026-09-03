@@ -439,7 +439,9 @@ def test_une_pose_ecrite_par_lauteur_part_telle_quelle(client):
         json={"prompt": "", "personnage": chose["identifiant"], "pose": "grimpe"},
     )
 
-    assert reponse.json()["texte"] == "grimpe"
+    # Le titre de la partie vient de R7 ; ce que cet essai protège est le texte
+    # dessous, qui est celui de la pose et rien d'autre.
+    assert reponse.json()["texte"] == "REQUEST\n\ngrimpe"
 
 
 def test_les_projets_davant_recoivent_langlais_sans_quun_fichier_soit_reecrit():

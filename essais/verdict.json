@@ -96,15 +96,15 @@
    "revenues": 8,
    "decoupables": 8,
    "notees": 8,
-   "n_mauvais": 3,
-   "n_moyen": 3,
-   "n_bon": 2,
-   "taux_bon_pct": 25,
-   "taux_tenable_pct": 62,
-   "score": 0.88,
+   "n_mauvais": 1,
+   "n_moyen": 2,
+   "n_bon": 5,
+   "taux_bon_pct": 62,
+   "taux_tenable_pct": 88,
+   "score": 1.5,
    "cout_total": 0.2366,
-   "cout_par_bon": 0.1183,
-   "cout_par_tenable": 0.0473,
+   "cout_par_bon": 0.0473,
+   "cout_par_tenable": 0.0338,
    "utilisables_mesure": 2,
    "forme_mediane": 5.0
   },
@@ -634,21 +634,21 @@
   },
   {
    "nom": "F-sans-proportions",
-   "essais": 7,
-   "revenues": 7,
-   "decoupables": 7,
-   "notees": 7,
-   "n_mauvais": 2,
-   "n_moyen": 2,
+   "essais": 15,
+   "revenues": 15,
+   "decoupables": 15,
+   "notees": 15,
+   "n_mauvais": 3,
+   "n_moyen": 9,
    "n_bon": 3,
-   "taux_bon_pct": 43,
-   "taux_tenable_pct": 71,
-   "score": 1.14,
-   "cout_total": 0.2074,
-   "cout_par_bon": 0.0691,
-   "cout_par_tenable": 0.0415,
-   "utilisables_mesure": 2,
-   "forme_mediane": 3.4
+   "taux_bon_pct": 20,
+   "taux_tenable_pct": 80,
+   "score": 1.0,
+   "cout_total": 0.4839,
+   "cout_par_bon": 0.1613,
+   "cout_par_tenable": 0.0403,
+   "utilisables_mesure": 3,
+   "forme_mediane": 3.6
   },
   {
    "nom": "G-livrable-guide",
@@ -667,6 +667,42 @@
    "cout_par_tenable": 0.0575,
    "utilisables_mesure": 3,
    "forme_mediane": 5.2
+  },
+  {
+   "nom": "H-4-produit",
+   "essais": 8,
+   "revenues": 8,
+   "decoupables": 8,
+   "notees": 8,
+   "n_mauvais": 8,
+   "n_moyen": 0,
+   "n_bon": 0,
+   "taux_bon_pct": 0,
+   "taux_tenable_pct": 0,
+   "score": 0.0,
+   "cout_total": 0.2177,
+   "cout_par_bon": null,
+   "cout_par_tenable": null,
+   "utilisables_mesure": 0,
+   "forme_mediane": 1.4
+  },
+  {
+   "nom": "H-4-sans-proportions",
+   "essais": 8,
+   "revenues": 8,
+   "decoupables": 8,
+   "notees": 8,
+   "n_mauvais": 7,
+   "n_moyen": 1,
+   "n_bon": 0,
+   "taux_bon_pct": 0,
+   "taux_tenable_pct": 12,
+   "score": 0.12,
+   "cout_total": 0.2181,
+   "cout_par_bon": null,
+   "cout_par_tenable": 0.2181,
+   "utilisables_mesure": 0,
+   "forme_mediane": 1.9
   }
  ],
  "natures": [
@@ -708,45 +744,45 @@
   },
   {
    "nom": "prompt du produit, avec son paragraphe protecteur",
-   "essais": 26,
-   "revenues": 26,
-   "decoupables": 26,
-   "notees": 26,
-   "n_mauvais": 8,
-   "n_moyen": 11,
-   "n_bon": 7,
-   "taux_bon_pct": 27,
-   "taux_tenable_pct": 69,
-   "score": 0.96,
-   "cout_total": 0.9823,
-   "cout_par_bon": 0.1403,
-   "cout_par_tenable": 0.0546,
-   "utilisables_mesure": 8,
-   "forme_mediane": 4.5
+   "essais": 50,
+   "revenues": 50,
+   "decoupables": 50,
+   "notees": 50,
+   "n_mauvais": 22,
+   "n_moyen": 18,
+   "n_bon": 10,
+   "taux_bon_pct": 20,
+   "taux_tenable_pct": 56,
+   "score": 0.76,
+   "cout_total": 1.6947,
+   "cout_par_bon": 0.1695,
+   "cout_par_tenable": 0.0605,
+   "utilisables_mesure": 9,
+   "forme_mediane": 3.4
   }
  ],
  "accord": {
   "croise": {
    "utilisable": {
-    "mauvais": 9,
-    "moyen": 11,
-    "bon": 2
+    "mauvais": 8,
+    "moyen": 12,
+    "bon": 3
    },
    "rejetee": {
-    "mauvais": 56,
-    "moyen": 24,
-    "bon": 9
+    "mauvais": 71,
+    "moyen": 30,
+    "bon": 11
    }
   },
   "forme_mediane_par_note": {
-   "mauvais": 5.8,
-   "moyen": 8.8,
-   "bon": 4.5
+   "mauvais": 4.1,
+   "moyen": 7.1,
+   "bon": 5.0
   },
   "forme_moyenne_par_note": {
-   "mauvais": 12.1,
-   "moyen": 9.8,
-   "bon": 5.9
+   "mauvais": 9.9,
+   "moyen": 9.3,
+   "bon": 6.0
   }
  }
 }

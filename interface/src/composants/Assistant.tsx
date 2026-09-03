@@ -44,49 +44,71 @@
 // * **Une seule humeur.** L'enchaînement n'existait que sur un univers vierge et
 //   se perdait au premier *j'ai fini pour l'instant* : l'auteur qui rouvrait ses
 //   réglages n'avait plus rien pour avancer. Le pied est toujours là.
-// * **Ce qui se montre passe devant ce qui se décrit** : les huit vues en
-//   cartes, les neuf tailles à leur vraie échelle, les huit types côte à côte.
+// * **Ce qui se montre passe devant ce qui se décrit** : les vues en cartes,
+//   les tailles à leur vraie échelle, les types côte à côte. *(Les trois
+//   comptes qui étaient écrits ici sont retirés : ils ont bougé trois fois
+//   depuis, et ce que la ligne dit ne dépend d'aucun d'eux — `G1`.)*
 //
 // Le tout est dessiné dans `docs/maquettes-v2.1/06quater-assistant-pas-a-pas.html`.
 
 import { useEffect, useState, type ReactNode } from "react"
 import {
   api,
+  CE_QUE_LA_METHODE_REND,
   FAMILLES,
   AUCUNE_CIBLE,
+  CIBLE_DE_REFERENCE,
   NOM_CHAMP,
   NOM_FAMILLE,
+  PALIERS_DE_COULEURS,
+  occupationMax,
+  paliersDeCouleurs,
   Refus,
   type Carte,
   type Consequences,
+  type EtatTraitement,
+  type Methode,
   type Tiroir,
   type Echelle,
   type EmplacementCorps,
   type Etiquette,
   type Famille,
+  type FondPropose,
   type Pose,
   type PosesDesTypes,
   type TailleDImage,
   type VueDuJeu,
   type VuesEtTailles,
+  type DefautDetourage,
   type Modele,
+  type Moteur,
+  type Passe,
+  type Style,
   type Univers,
 } from "../api"
 import {
   Curseur,
   EnTetePanneau,
   libelleModele,
+  EchantillonDeHauteur,
   Libelle,
   Raison,
   Segments,
 } from "./chassis"
+// **Le nom des moteurs et leur bord rongé livré vivent avec les tables**, où
+// l'auteur les manipule image par image. L'étape des défauts les emprunte
+// plutôt que d'en tenir une seconde liste (D1).
+import { DURCISSEMENT_LIVRE, MOTEUR } from "./Places"
 import { PANNEAU } from "./Infobulle"
 import { TiroirDesSecrets } from "./Secrets"
 
 /** Ce que l'auteur lit d'une cible. Zéro n'est pas « 0 px » — c'est l'absence
  *  de remise sur grille, et l'écrire en pixels serait un mensonge de mesure. */
 const NOM_CIBLE: Partial<Record<string, string>> = { "0": "aucune" }
-const COULEURS = [8, 12, 16, 24, 32, 48] as const
+// **Les paliers de couleurs viennent de `api.ts` depuis D2**, et ils sont
+// plafonnés par la taille du sprite : la liste écrite ici — 8, 12, 16, 24, 32,
+// 48 — ne connaissait pas la taille et proposait donc 48 couleurs sur un sprite
+// de 32 carrés, où l'image n'en contient pas tant. Voir `paliersDeCouleurs`.
 
 /** Poser un réglage, et **dire s'il a pris**. Le booléen n'est pas de la
  *  politesse : un bloc qui tient un brouillon doit savoir revenir à la valeur
@@ -94,28 +116,96 @@ const COULEURS = [8, 12, 16, 24, 32, 48] as const
  *  celle que le fichier du projet ne porte pas. */
 type Regler = (reglage: Parameters<typeof api.reglerUnivers>[0]) => Promise<boolean>
 
-/** Les dix étapes, dans l'ordre où on les remplit, et **rangées en quatre
+/** Les douze étapes, dans l'ordre où on les remplit, et **rangées en quatre
  *  groupes**.
  *
  *  Le groupe n'est pas de la décoration : *le jeu* dit ce qu'on fabrique, *le
  *  style* comment ça doit avoir l'air, *la production* combien d'images il
  *  faudra, *l'atelier* ce qui vaut pour tous les jeux. La dixième — la clé du
  *  fournisseur — est seule dans son groupe **parce qu'elle ne dépend d'aucun
- *  jeu**, exactement comme la base d'étiquettes. */
+ *  jeu**, exactement comme la base d'étiquettes.
+ *
+ *  **La onzième est arrivée en D1** — le détourage de départ —, et elle est
+ *  dans « la production » avec les emplacements et les IA : comme eux, elle ne
+ *  décide de rien de ce qui part au modèle, seulement de ce que l'atelier fait
+ *  de l'image au retour. */
 const ETAPES = [
   { cle: "nom", groupe: "le jeu", nom: "Le nom" },
+  // **Le style graphique, arrivé en D2, et il est deuxième exprès.** C'est la
+  // première question de toutes après le nom : elle décide de ce que *toutes*
+  // les suivantes veulent dire — la taille devient un nombre de carrés ou une
+  // finesse, les couleurs se réduisent ou non, la phrase qui part au modèle dit
+  // « pixel art » ou se tait. Jusqu'ici elle n'existait pas : la réponse se
+  // déduisait de la neuvième valeur d'une liste de tailles, trois étapes plus
+  // loin, dont le libellé disait *ce jeu n'est pas en pixel art*.
+  { cle: "style", groupe: "le jeu", nom: "Le style" },
   { cle: "vue", groupe: "le jeu", nom: "La vue" },
-  { cle: "taille", groupe: "le jeu", nom: "La taille" },
+  // **Seule étape à porter deux noms**, et c'est le style qui dit lequel (D2).
+  // Ce n'est pas un synonyme : en pixel art elle demande *combien de carrés*,
+  // en dessin *combien de détail*. La colonne de gauche et le titre de l'écran
+  // doivent dire le même mot — les voir se contredire à 240 px l'un de l'autre
+  // ferait douter qu'on soit au bon endroit —, et le rang se retrouve par l'un
+  // comme par l'autre, sans quoi l'étape perdrait sa ligne « étape 4 · le jeu ».
+  { cle: "taille", groupe: "le jeu", nom: "La taille", nomDessin: "La finesse" },
   { cle: "types", groupe: "le jeu", nom: "Les types d'objets" },
   { cle: "allure", groupe: "le style", nom: "L'allure" },
   { cle: "references", groupe: "le style", nom: "Références et couleurs" },
   { cle: "poses", groupe: "la production", nom: "Poses et états" },
   { cle: "emplacements", groupe: "la production", nom: "Emplacements" },
   { cle: "modeles", groupe: "la production", nom: "Les IA à utiliser" },
+  // **Le détourage de départ** (D1). Dans « la production » et pas dans « le
+  // style », parce qu'il ne décide de rien de ce qui part au modèle : il décide
+  // de ce que l'atelier fait de l'image **au retour**, comme les emplacements et
+  // les IA à côté de lui. Il est le dernier du groupe parce qu'il est le dernier
+  // dans le temps — après l'appel.
+  { cle: "detourage", groupe: "la production", nom: "Le détourage de départ" },
   { cle: "cle", groupe: "l'atelier", nom: "Les fournisseurs" },
 ] as const
 
 type Etape = (typeof ETAPES)[number]["cle"]
+
+/** Le nom d'une étape **tel que le style le dit** (D2) — voir « La taille ». */
+function nomDeLEtape(etape: (typeof ETAPES)[number], style: Style): string {
+  return "nomDessin" in etape && style === "dessin" ? etape.nomDessin : etape.nom
+}
+
+/** Le rang d'une étape retrouvé **par n'importe lequel de ses noms** (D2).
+ *
+ *  L'écran ouvert ne connaît que son titre, et une étape qui change de nom avec
+ *  le style ne doit pas pour autant changer de numéro : la trouver par le seul
+ *  `nom` la rendait introuvable en dessin, et elle s'affichait alors sans sa
+ *  ligne de repère — la seule des douze. */
+function rangDuTitre(titre: string): number {
+  return ETAPES.findIndex(
+    (e) => e.nom === titre || ("nomDessin" in e && e.nomDessin === titre),
+  )
+}
+
+/** Le rang d'une étape, **compté depuis la liste et jamais écrit à la main** (G1).
+ *
+ *  Sept phrases du produit citaient un numéro en dur. L'insertion de l'étape du
+ *  style les a **toutes décalées d'un cran le même jour**, sans qu'une seule
+ *  erreur se lève (`G1`) : elles disaient « la deuxième » d'une étape devenue
+ *  la troisième, et c'est exact au caractère près — simplement faux. Un numéro qui
+ *  ne se calcule pas est un numéro qui vieillit sans prévenir. */
+function rangDeLEtape(cle: Etape): number {
+  return ETAPES.findIndex((e) => e.cle === cle) + 1
+}
+
+/** Comment une phrase du produit **désigne** une autre étape (G1).
+ *
+ *  **Le nom d'abord, le rang ensuite.** C'est le nom qu'on retrouve dans la
+ *  colonne de gauche — elle n'affiche que des noms —, et le rang dit à quelle
+ *  distance il est. Un numéro seul demandait de compter les lignes.
+ *
+ *  Le nom suit le style, parce que la quatrième étape en porte deux — *La
+ *  taille* en pixel art, *La finesse* en dessin — et qu'un renvoi vers un nom
+ *  qu'on ne lit nulle part ne renvoie à rien. */
+function laDesignation(cle: Etape, style: Style): string {
+  const etape = ETAPES.find((e) => e.cle === cle)
+  if (!etape) return "une autre étape"
+  return `« ${nomDeLEtape(etape, style)} », l'étape ${rangDeLEtape(cle)}`
+}
 
 const GROUPES = ["le jeu", "le style", "la production", "l'atelier"] as const
 
@@ -137,6 +227,7 @@ export function Assistant({
   univers,
   modeles,
   artworks,
+  traitement,
   onUnivers,
   onErreur,
   onRealigner,
@@ -150,6 +241,10 @@ export function Assistant({
   univers: Univers
   modeles: Modele[]
   artworks: Carte[]
+  /** **Ce que cette machine-ci sait faire** (D2) — les quatre façons de réduire
+   *  et leur raison de grisé. L'assistant en a besoin pour ne proposer que les
+   *  méthodes installées, jamais pour refuser au clic. */
+  traitement: EtatTraitement
   onUnivers: (univers: Univers) => void
   onErreur: (raison: string) => void
   onRealigner: () => void
@@ -160,6 +255,10 @@ export function Assistant({
   const [etape, setEtape] = useState<Etape>("nom")
   const [vues, setVues] = useState<VuesEtTailles | null>(null)
   const [etiquettes, setEtiquettes] = useState<Etiquette[]>([])
+  /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), `null` tant
+   *  que le serveur n'a pas répondu — l'étape dit alors qu'elle ne sait pas
+   *  encore, jamais une couleur devinée. */
+  const [fondPropose, setFondPropose] = useState<FondPropose | null>(null)
   /** **Ce qu'on a ouvert au moins une fois**, et c'est tout ce que le fil du
    *  pied a besoin de savoir de plus que la valeur d'une étape. Une étape sans
    *  valeur qu'on a lue n'est pas en retard ; une étape qu'on n'a jamais
@@ -185,11 +284,25 @@ export function Assistant({
       .etiquettes()
       .then((recu) => setEtiquettes(recu?.etiquettes ?? []))
       .catch(() => setEtiquettes([]))
+    // **Ce que l'atelier proposerait comme fond** (D3). Il vient du serveur
+    // comme les deux listes fermées ci-dessus, et pour la même raison : la
+    // distance qui décide de la sûreté d'un fond est celle du détourage, et une
+    // seconde arithmétique ici finirait par proposer une couleur que le
+    // découpage mange.
+    void api
+      .univers()
+      .then((recu) => setFondPropose(recu?.fond_propose ?? null))
+      .catch(() => setFondPropose(null))
   }, [])
 
   const regler: Regler = async (reglage) => {
     try {
-      onUnivers((await api.reglerUnivers(reglage)).univers)
+      const recu = await api.reglerUnivers(reglage)
+      onUnivers(recu.univers)
+      // **La proposition suit le réglage** : promouvoir un artwork change la
+      // palette, donc change ce que l'atelier proposerait. Garder l'ancienne
+      // montrerait une couleur calculée sur des images qui ne sont plus là.
+      if (recu.fond_propose) setFondPropose(recu.fond_propose)
       return true
     } catch (erreur) {
       onErreur(erreur instanceof Refus ? erreur.message : "réglage refusé")
@@ -219,7 +332,12 @@ export function Assistant({
               <p className="mesure px-2 py-1 text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
                 {groupe}
               </p>
-              {ETAPES.filter((e) => e.groupe === groupe).map(({ cle, nom }) => {
+              {ETAPES.filter((e) => e.groupe === groupe).map((e) => {
+                const { cle } = e
+                // **Le nom que le style dit**, et c'est celui du titre de
+                // l'écran : « La taille » en pixel art, « La finesse » en
+                // dessin. Voir `nomDeLEtape`.
+                const nom = nomDeLEtape(e, univers.style)
                 const numero = ETAPES.findIndex((e) => e.cle === cle) + 1
                 const vaut = valeurDeLEtape(cle, univers, laVue)
                 return (
@@ -268,13 +386,15 @@ export function Assistant({
           className="defile flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto p-4"
         >
           {etape === "nom" && <LeNom onErreur={onErreur} />}
+          {etape === "style" && <LeStyle univers={univers} onRegler={regler} />}
           {etape === "vue" && (
             <LaVue univers={univers} vues={vues?.vues ?? []} onRegler={regler} />
           )}
           {etape === "taille" && (
             <LaTaille
               univers={univers}
-              tailles={vues?.tailles ?? []}
+              tailles={univers.style === "dessin" ? vues?.finesses ?? [] : vues?.tailles ?? []}
+              traitement={traitement}
               onRegler={regler}
               onRealigner={onRealigner}
             />
@@ -294,15 +414,21 @@ export function Assistant({
               univers={univers}
               artworks={artworks}
               vue={laVue}
+              fondPropose={fondPropose}
               onRegler={regler}
             />
           )}
-          {etape === "poses" && <LesPoses onErreur={onErreur} vue={laVue} />}
+          {etape === "poses" && (
+            <LesPoses univers={univers} onErreur={onErreur} vue={laVue} />
+          )}
           {etape === "emplacements" && (
             <LesEmplacements univers={univers} onErreur={onErreur} />
           )}
           {etape === "modeles" && (
             <LesIA univers={univers} modeles={modeles} onRegler={regler} />
+          )}
+          {etape === "detourage" && (
+            <LeDetourage univers={univers} onRegler={regler} />
           )}
           {etape === "cle" && <LaCle onErreur={onErreur} onDeposee={onDeposee} />}
         </div>
@@ -401,7 +527,7 @@ function PiedDeLAssistant({
       {/* **Une porte n'en est une que si elle s'ouvre dans les deux sens**
           (E19). On tombe dans le codex, avec le champ qui nomme allumé — pas
           dans la galerie, qui ne montre que des images produites et n'en a
-          aucune. On peut partir dès l'étape 1 et fabriquer quand même. */}
+          aucune. On peut partir dès la première étape et fabriquer quand même. */}
       <button
         type="button"
         onClick={() => onSortir?.()}
@@ -450,6 +576,16 @@ function valeurDeLEtape(
       const familles = FAMILLES.filter((f) => f !== "tous")
       const reglees = familles.filter((f) => univers.modeles[f]).length
       return reglees ? `${reglees} sur ${familles.length}` : ""
+    }
+    case "detourage": {
+      // **Le compte de ce qui a été posé**, natures comprises : ce sont trois
+      // façons de régler la même chose, et n'en compter qu'une ferait dire
+      // « rien » à une colonne qui montre un réglage.
+      const poses =
+        (univers.detourage_image ? 1 : 0) +
+        (univers.detourage_planche ? 1 : 0) +
+        Object.keys(univers.detourages).length
+      return poses ? `${poses} posé${poses > 1 ? "s" : ""}` : ""
     }
     default:
       return ""
@@ -553,7 +689,7 @@ function EtapeOuverte({
   conduite?: ReactNode
   children: ReactNode
 }) {
-  const rang = ETAPES.findIndex((e) => e.nom === titre)
+  const rang = rangDuTitre(titre)
   return (
     <section data-etape={titre} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -645,7 +781,7 @@ function SpriteDeTaille({ cible }: { cible: number }) {
 
 // ── Les dix étapes ──────────────────────────────────────────────────────────
 
-/** Étape 1 — le nom du jeu.
+/** L'étape « Le nom » — le nom du jeu.
  *
  *  **L'assistant ne crée pas le jeu, il le renomme** : sur une machine neuve,
  *  le « Bac à sable » existe déjà, et rien n'est exigé pour commencer.
@@ -711,7 +847,7 @@ function LeNom({ onErreur }: { onErreur: (raison: string) => void }) {
   )
 }
 
-/** Étape 2 — la vue du jeu.
+/** L'étape « La vue » — la vue du jeu.
  *
  *  **Chaque vue est une carte, pas une ligne de texte** : on ne choisit pas
  *  *isométrique* dans l'abstrait, on choisit celle qu'on reconnaît. Le dessin
@@ -791,7 +927,7 @@ function LaVue({
   )
 }
 
-/** Étape 3 — la taille des images.
+/** L'étape « La taille » — la taille des images.
  *
  *  **Le plus coûteux des dix.** Tout ce qui a été fabriqué a été découpé à
  *  l'ancienne taille : les images ne se recoupent pas, il faut les refabriquer,
@@ -802,19 +938,151 @@ function LaVue({
  *  `SpriteDeTaille` pour la mesure qui l'impose. La bande fait 256 px de haut et
  *  672 de large ; c'est cher, et c'est payé volontiers — l'étape en employait
  *  269 sur 754 pour un résultat qui ne montrait rien. */
+/** L'étape « Le style » — le style graphique du jeu (D2).
+ *
+ *  **La première question de toutes après le nom, et elle n'existait pas.** La
+ *  réponse se déduisait d'un détail trois étapes plus loin : la neuvième valeur
+ *  de la règle des tailles, « aucune », dont le libellé disait en toutes lettres
+ *  *ce jeu n'est pas en pixel art*. Le style était donc une conséquence d'un
+ *  réglage de taille, quand c'est l'inverse — **le style décide de ce que la
+ *  taille veut dire**.
+ *
+ *  **Deux images, pas deux phrases**, et c'est la demande de l'auteur : *« on
+ *  met une image cliquable pour chaque style qui permet de faire le choix »*.
+ *  Les deux montrent **le même personnage, au même cadrage** — seul le style
+ *  change —, parce qu'une comparaison entre deux sujets différents ne compare
+ *  plus le style. C'est la règle des dix-sept vignettes déjà là
+ *  (`docs/vignettes-vues.md`), et elles sont fabriquées par la chaîne du produit
+ *  elle-même (`essais/vignettes_de_style.py`). */
+function LeStyle({ univers, onRegler }: { univers: Univers; onRegler: Regler }) {
+  const styles = [
+    {
+      cle: "pixel" as const,
+      titre: "En pixel art",
+      quoi: "Des carrés de couleur visibles, comme les jeux rétro.",
+      // **Ce que le choix change ailleurs, pas ce que le contrôle fait** —
+      // la règle d'écriture des étapes.
+      suite: "L'étape suivante demandera combien de carrés, de 8 à 512.",
+    },
+    {
+      cle: "dessin" as const,
+      titre: "En dessin",
+      quoi: "Un dessin normal, sans carrés apparents.",
+      suite: "L'étape suivante demandera quelle finesse, de 256 à 2048.",
+    },
+  ]
+  return (
+    <EtapeOuverte
+      aide="univers.style"
+      titre="Le style"
+      conduite={
+        <>
+          Comment ton jeu est-il dessiné ?{" "}
+          <strong className="text-texte">
+            C'est la question qui commande toutes les autres
+          </strong>{" "}
+          : elle décide de ce que « la taille » veut dire, de ce qui part au
+          modèle, et de ce que l'atelier fait de l'image au retour.
+        </>
+      }
+    >
+      <ul className="flex flex-wrap gap-4">
+        {styles.map(({ cle, titre, quoi, suite }) => {
+          const marque = univers.style === cle
+          return (
+            <li key={cle}>
+              <button
+                type="button"
+                aria-pressed={marque}
+                onClick={() => void onRegler({ style: cle })}
+                className={[
+                  "flex w-[268px] flex-col gap-2 rounded-[2px] border p-3 text-left transition-colors duration-[80ms]",
+                  marque
+                    ? "border-signal bg-signal/13"
+                    : "border-bord hover:bg-fond-2",
+                ].join(" ")}
+              >
+                <VignetteDeStyle cle={cle} />
+                <span
+                  className={`text-[14px] leading-tight ${marque ? "text-signal" : "text-texte"}`}
+                >
+                  {titre}
+                </span>
+                <span className="mesure text-[10px] leading-snug text-texte-3">
+                  {quoi}
+                </span>
+                <span className="mesure text-[9.5px] leading-snug text-texte-3">
+                  {suite}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {/* **Ce que le changement ne fait pas**, et c'est ce qui le rend sans
+          danger : aucune image déjà rendue ne bouge. Ce que le style change
+          entre dans les prochaines recettes, comme la taille de case. */}
+      <Raison texte="changer de style ne rejoue aucune image déjà rendue — il change ce qui part et ce qu'on fait des suivantes" />
+      {univers.style === "dessin" && (
+        <Raison texte="en dessin, les couleurs ne sont plus réduites à une palette : un dessin garde ses nuances, les réduire en ferait une affiche" />
+      )}
+    </EtapeOuverte>
+  )
+}
+
+/** La vignette d'un style. **Absente, elle le dit** — même règle que les
+ *  vignettes de vue et de taille : une image manquante ne casse pas l'étape, et
+ *  le choix reste possible sur le titre et sa phrase. */
+function VignetteDeStyle({ cle }: { cle: "pixel" | "dessin" }) {
+  const [absent, setAbsent] = useState(false)
+  if (absent) {
+    return (
+      <span className="mesure flex h-[180px] items-center justify-center rounded-[2px] border border-dashed border-bord text-[9px] text-texte-3">
+        pas encore dessinée
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/vignettes/style-${cle}.png`}
+      alt=""
+      onError={() => setAbsent(true)}
+      className="block h-[180px] w-full rounded-[2px] bg-fond-0 object-contain"
+      // **Au plus proche, et pour les deux** : la vignette du pixel art perdrait
+      // ses carrés si le navigateur la lissait, et c'est très exactement ce
+      // qu'on demande de comparer.
+      style={{ imageRendering: "pixelated" }}
+    />
+  )
+}
+
 function LaTaille({
   univers,
   tailles,
+  traitement,
   onRegler,
   onRealigner,
 }: {
   univers: Univers
   tailles: TailleDImage[]
+  traitement: EtatTraitement
   onRegler: Regler
   onRealigner: () => void
 }) {
   const [vise, setVise] = useState<number | null>(null)
   const [casse, setCasse] = useState<Consequences | null>(null)
+  /** **Seulement ce que cette machine-ci sait faire** (D2) : « traits épaissis »
+   *  tire une bibliothèque lourde et peut manquer. On ne la propose pas alors,
+   *  plutôt que de l'offrir et de refuser au clic. */
+  const reductions = traitement.reductions.filter((r) => r.raison === null)
+  const indisponibles = traitement.reductions.filter((r) => r.raison !== null)
+  const libelleDeLaMethode = (nom: Methode) =>
+    traitement.reductions.find((r) => r.nom === nom)?.libelle ?? nom
+  /** **La même étape pose deux questions**, selon le style (D2) : *combien de
+   *  carrés* ou *quelle finesse*. Ce ne sont ni les mêmes valeurs, ni le même
+   *  mot, ni la même conséquence — et les confondre est ce qui faisait croire
+   *  qu'un jeu en dessin n'a pas de taille du tout. */
+  const dessin = univers.style === "dessin"
 
   useEffect(() => {
     if (vise === null || vise === univers.cible_px) {
@@ -834,15 +1102,26 @@ function LaTaille({
   return (
     <EtapeOuverte
       aide="assistant.taille"
-      titre="La taille"
+      titre={dessin ? "La finesse" : "La taille"}
       conduite={
-        <>
-          Le côté de la case où tout ce qui rentre est ramené.{" "}
-          <strong className="text-texte">
-            Le même personnage est dessiné à chaque taille, et à sa vraie taille
-          </strong>{" "}
-          : un nombre ne dit rien, deux personnages côte à côte disent tout.
-        </>
+        dessin ? (
+          <>
+            Combien de détail chaque image garde.{" "}
+            <strong className="text-texte">
+              Ce n'est pas un nombre de carrés : ton jeu n'est pas en pixel art
+            </strong>{" "}
+            — c'est la finesse du fichier, à choisir d'après la taille à
+            l'écran. Environ le double de la hauteur affichée, pour rester net.
+          </>
+        ) : (
+          <>
+            Le côté de la case où tout ce qui rentre est ramené.{" "}
+            <strong className="text-texte">
+              Le même personnage est dessiné à chaque taille, et à sa vraie taille
+            </strong>{" "}
+            : un nombre ne dit rien, deux personnages côte à côte disent tout.
+          </>
+        )
       }
     >
       {/* **« Aucune » est une valeur, pas un trou** (US-163), et elle est en
@@ -864,7 +1143,14 @@ function LaTaille({
       >
         {NOM_CIBLE["0"]}
         <span className="mesure text-[10px] text-texte-3">
-          — ce jeu n'est pas en pixel art : l'image entre telle que le modèle l'a rendue
+          {/* **La phrase d'avant est devenue fausse en D2** : elle disait « ce
+              jeu n'est pas en pixel art », ce qui était vrai tant que « aucune »
+              *était* la façon de le déclarer. Le style le dit maintenant
+              lui-même, et « aucune » redevient ce qu'elle prétend être — aucune
+              contrainte de taille, dans l'un ou l'autre style. */}
+          {dessin
+            ? "— l'image garde la finesse que le modèle lui a donnée"
+            : "— l'image garde la taille que le modèle lui a donnée"}
         </span>
       </button>
       {/* **Ce qui continue de s'appliquer**, dit là où on choisit de ne plus
@@ -940,6 +1226,44 @@ function LaTaille({
         </p>
       )}
       <Raison texte="ce choix écrit aussi la phrase de grille et celle de calage — le réglage et le texte envoyé ne peuvent plus se contredire" />
+
+      {/* **La façon de réduire, juste sous la taille** (D2), parce que c'est la
+          même question posée deux fois : la taille dit *combien de carrés*, la
+          méthode dit *comment on y arrive*. Séparées, on règle la première sans
+          savoir que la seconde décide autant du rendu.
+
+          **Elle disparaît avec « aucune ».** Sans remise sur grille il n'y a
+          aucune réduction à faire, et un réglage sans effet vaut mieux caché
+          qu'expliqué. */}
+      {univers.cible_px !== AUCUNE_CIBLE && (
+        <div className="flex flex-col gap-2 pt-1">
+          <div className="flex w-fit items-center gap-3">
+            <Libelle aide="grille.methode">Façon de réduire</Libelle>
+            <Segments
+              plusieursRangees
+              valeurs={reductions.map((r) => r.libelle)}
+              valeur={libelleDeLaMethode(univers.methode_pixels)}
+              onChange={(libelle) => {
+                const choisie = reductions.find((r) => r.libelle === libelle)
+                if (choisie) void onRegler({ methode_pixels: choisie.nom })
+              }}
+            />
+          </div>
+          <Raison texte={CE_QUE_LA_METHODE_REND[univers.methode_pixels]} />
+          {/* **Une méthode absente est annoncée, jamais tue.** « Ce qui est
+              indisponible est grisé avec sa raison » — et la taire serait pire
+              qu'un grisé : l'auteur croirait que le produit n'en propose que
+              trois, et ne saurait pas qu'il en manque une qu'il peut installer. */}
+          {indisponibles.map((r) => (
+            <Raison key={r.nom} texte={r.raison ?? ""} />
+          ))}
+          {/* **Ce qu'elle ne fait pas**, et c'est ce qui rend le réglage sans
+              danger : les images déjà rendues portent leur propre méthode et ne
+              bougent pas. C'est la même règle que la taille de case. */}
+          <Raison texte="ce choix part dans les prochaines recettes — les images déjà rendues gardent la leur, et se règlent une par une sur leur fiche" />
+        </div>
+      )}
+
       <button
         type="button"
         onClick={onRealigner}
@@ -951,7 +1275,7 @@ function LaTaille({
   )
 }
 
-/** Étape 4 — ce que le jeu contient.
+/** L'étape « Les types d'objets » — ce que le jeu contient.
  *
  *  **« Barème d'échelles » a quitté l'écran le 1ᵉʳ septembre 2026.** Le mot est
  *  juste, il est même précis, et il ne se comprend pas : personne ne cherche un
@@ -970,6 +1294,12 @@ function LaTaille({
  *  petit que le nain, et cela ne se voit que si les deux sont à l'écran. */
 function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler }) {
   const poser = (bareme: Echelle[]) => void onRegler({ bareme })
+  /** **La case contre laquelle les hauteurs se jugent.** Un jeu en dessin n'en
+   *  impose aucune, et l'échantillon a pourtant besoin d'en dessiner une : c'est
+   *  la case par défaut qui sert alors de mètre, exactement comme le serveur la
+   *  prend pour juger le barème d'un projet sans taille. */
+  const cible = univers.cible_px || CIBLE_DE_REFERENCE
+  const plafond = occupationMax(cible)
 
   return (
     <EtapeOuverte
@@ -979,18 +1309,26 @@ function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler })
         <>
           Les sortes d'objets que tu vas fabriquer. Chacune décide de{" "}
           <strong className="text-texte">trois choses à la fois</strong> : quelles
-          images de référence partent avec elle, quelle part de la case elle
-          remplit, et si elle se découpe.
+          images de référence partent avec elle,{" "}
+          <strong className="text-texte">quelle hauteur</strong> elle fait — en
+          personnages —, et si elle se découpe.
         </>
       }
     >
-      {/* **L'occupation n'agit que par la grille**, qui est ce qui met un sujet
+      {/* **La hauteur n'agit que par la grille**, qui est ce qui met un sujet
           à l'échelle de sa case : sans taille de pixel, elle ne s'applique pas.
           La famille et la silhouette, elles, continuent — l'une décide des
           artworks qui partent, l'autre du détourage. */}
       {univers.cible_px === AUCUNE_CIBLE && (
-        <Raison texte="sans taille de pixel, la part de case ne s'applique pas — les images de référence et le découpage, si" />
+        <Raison texte="sans taille de pixel, la hauteur ne s'applique pas — les images de référence et le découpage, si" />
       )}
+      {/* **Ce que la tranche des tailles vient d'ouvrir, dit une fois.** Le
+          plafond était le personnage, et personne ne pouvait le savoir : un
+          curseur qui s'arrête n'explique pas pourquoi. Maintenant qu'il monte,
+          il faut dire jusqu'où et dans quelle unité on compte. */}
+      <Raison
+        texte={`un type peut dépasser le personnage : 300 % fait un bâtiment de trois personnages de haut, et l'image revient d'autant plus grande — jusqu'à ${plafond} % sur une case de ${cible} carrés`}
+      />
 
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(232px,1fr))] gap-[9px]">
         {univers.bareme.map((echelle, rang) => (
@@ -1023,40 +1361,37 @@ function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler })
               </label>
             </div>
 
-            {/* **La case dessinée est le réglage.** Un pourcentage n'a pas de
-                sens sans la case ; la case dessinée en a un sans le
-                pourcentage — qui se lit quand même à côté, en mono, comme
-                toute mesure du produit. Le carré fait 56 px : c'est un dessin
-                et non une bande, comme la vignette d'une image de référence. */}
-            <div className="flex items-end gap-3">
-              <span
-                aria-hidden
-                className="flex h-[56px] w-[56px] shrink-0 items-end justify-center border border-bord-fort bg-fond-0"
-              >
-                <span
-                  className="block w-full bg-texte-3"
-                  style={{ height: `${echelle.occupation}%` }}
-                />
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <Curseur
-                  libelle={`la part de case de ${echelle.nom}`}
-                  valeur={echelle.occupation}
-                  min={10}
-                  max={100}
-                  unite=" %"
-                  onChange={(occupation) =>
-                    poser(
-                      univers.bareme.map((x, i) =>
-                        i === rang ? { ...x, occupation } : x,
-                      ),
-                    )
-                  }
-                />
-                <span className="mesure text-[9.5px] text-texte-3">
-                  la part de la case qu'il remplit
-                </span>
-              </div>
+            {/* **La hauteur dessinée est le réglage**, et le dessin dit
+                maintenant ce qu'il ne pouvait pas dire : une barre dans un carré
+                ne dépasse jamais le carré, donc l'ancien échantillon montrait
+                très exactement la limite qu'on vient de lever. Voir
+                `EchantillonDeHauteur` — le cadre y est le fichier qui reviendra,
+                et le pointillé la hauteur d'un personnage. */}
+            <div className="flex flex-col gap-2">
+              <EchantillonDeHauteur
+                occupation={echelle.occupation}
+                cible={univers.cible_px || CIBLE_DE_REFERENCE}
+              />
+              {/* **Pas de crans ici, contrairement au curseur d'une image.**
+                  Là-bas ils évitent que la main croie régler quelque chose quand
+                  deux positions rendent la même image ; ici la valeur est une
+                  *déclaration* — « ce type fait trois personnages » —, et un cran
+                  la ferait glisser à 294 % sur une petite case, où trois
+                  personnages ne tombent pas sur un compte rond de carrés. */}
+              <Curseur
+                libelle={`la hauteur de ${echelle.nom}`}
+                valeur={echelle.occupation}
+                min={10}
+                max={plafond}
+                unite=" %"
+                onChange={(occupation) =>
+                  poser(
+                    univers.bareme.map((x, i) =>
+                      i === rang ? { ...x, occupation } : x,
+                    ),
+                  )
+                }
+              />
             </div>
 
             <button
@@ -1088,12 +1423,19 @@ function LesTypes({ univers, onRegler }: { univers: Univers; onRegler: Regler })
       {/* **Montré grisé plutôt que caché** : on apprend qu'il existe, et on sait
           pourquoi il n'est pas là. C'est déjà la règle du produit pour tout ce
           qui est indisponible. */}
+      {/* **Le compte se lit sur le projet ouvert** (G1). « Les huit types »
+          était juste le jour de son écriture ; un huitième est entré dans le
+          barème livré le 31 août, et la phrase annonçait alors huit types à un
+          auteur qui en voyait sept — ou l'inverse, selon son jeu. Le barème est
+          juste au-dessus, dans la même étape : le compter est gratuit, et il ne
+          peut plus mentir. */}
       <button
         type="button"
         disabled
         className="mesure h-[26px] self-start px-2 text-[10px] text-texte-3"
       >
-        + type sur mesure — plus tard, les huit types couvrent ce qu'on sait faire
+        + type sur mesure — plus tard, les {univers.bareme.length} types de ce
+        jeu couvrent ce qu'on sait faire
       </button>
     </EtapeOuverte>
   )
@@ -1129,15 +1471,29 @@ const QUESTIONS: Record<string, string> = {
 }
 
 /** L'aide de chaque question, en une phrase — elle paraît sous la question
- *  ouverte et nulle part ailleurs. */
-const AIDE_DE_LA_CASE: Record<string, string> = {
-  monde: "Le lieu et l'univers du jeu — ce qu'on verrait en regardant autour de soi.",
-  epoque: "Le moment de l'histoire, ou son équivalent inventé. C'est lui qui décide des armes, des vêtements et des outils.",
-  rendu: "La technique de dessin — pas le sujet, la manière. C'est la case qui décide si ton jeu ressemble à du 16 bits, à de l'aquarelle ou à du papier découpé.",
-  trait: "Comment les formes sont bordées et remplies : un contour ou pas, des aplats ou des dégradés.",
-  eclairage: "D'où vient la lumière et de quelle couleur elle est. C'est ce qui donne l'heure et l'humeur.",
-  vue: "Écrit par l'étape 2. On le lit ici, on le choisit là-bas — sur une vignette.",
-  technique: "Écrit par l'étape 3. On le lit ici, on le choisit là-bas — sur la règle des neuf tailles.",
+ *  ouverte et nulle part ailleurs.
+ *
+ *  **Une fonction et non plus une table**, depuis `G1` : deux de ces phrases
+ *  renvoient vers une autre étape, et une étape se désigne par son nom et son
+ *  rang **calculés** (`G1`). Écrites à la main, elles annonçaient la deuxième
+ *  et la troisième là où il faut lire la troisième et la quatrième. */
+function aideDeLaCase(nom: string, style: Style): string {
+  const cases: Record<string, string> = {
+    monde: "Le lieu et l'univers du jeu — ce qu'on verrait en regardant autour de soi.",
+    // **Ce qu'elle fait, et pas ce qu'elle déciderait à ta place** (G1). La
+    // phrase d'avant disait qu'elle « décide des armes, des vêtements et des
+    // outils » : c'est toi qui les décides, en les écrivant. Elle, elle pose un
+    // moment technologique, et c'est tout ce qu'elle fait.
+    epoque:
+      "Le moment technologique du jeu — ce qui existe déjà, et ce qui n'existe pas encore. Elle ne choisit rien à ta place : elle empêche une arbalète de ressortir avec une lunette de visée.",
+    rendu:
+      "La technique de dessin — pas le sujet, la manière. C'est la case qui décide si ton jeu ressemble à du 16 bits, à de l'aquarelle ou à du papier découpé.",
+    trait: "Comment les formes sont bordées et remplies : un contour ou pas, des aplats ou des dégradés.",
+    eclairage: "D'où vient la lumière et de quelle couleur elle est. C'est ce qui donne l'heure et l'humeur.",
+    vue: `Écrite par ${laDesignation("vue", style)}. On la lit ici, on la choisit là-bas — sur une vignette.`,
+    technique: `Écrite par ${laDesignation("taille", style)}. On la lit ici, on la choisit là-bas — sur la règle des tailles.`,
+  }
+  return cases[nom] ?? ""
 }
 
 const PLACEHOLDERS: Record<string, string> = {
@@ -1151,7 +1507,7 @@ const PLACEHOLDERS: Record<string, string> = {
 }
 
 /**
- * Étape 5 — l'allure, en **sept questions qui s'ouvrent une à une**.
+ * L'étape « L'allure » — sept questions qui s'ouvrent une à une.
  *
  * **La plus longue des dix, et celle qui pèse le plus lourd** : sur une
  * génération payée, ces sept cases représentent 890 caractères sur 1 690 — 53 %
@@ -1214,11 +1570,20 @@ function LAllure({
       titre="L'allure"
       conduite={
         <>
-          Sept questions sur la tête que ton jeu doit avoir. C'est ce qui pèse le
-          plus lourd dans ce qui part au modèle —{" "}
-          <strong className="text-texte">plus de la moitié du texte</strong> — et
-          donc ce qui décide le plus de ce que tu recevras.{" "}
-          <strong className="text-texte">Clique plutôt que d'écrire</strong> :
+          {/* **La proportion a disparu de la phrase, elle n'y reviendra pas**
+              (G1). Elle disait « plus de la moitié du texte » ; c'était juste
+              le jour où elle a été écrite, et le bloc caméra l'a démentie le
+              soir même en ajoutant cinq cents caractères ailleurs. Un rapport
+              entre deux textes qui bougent chacun de leur côté ne peut pas être
+              tenu à jour à la main, et le calculer ici demanderait d'assembler
+              le prompt entier pour afficher une phrase d'introduction. Ce qui
+              reste est ce qui ne bouge pas : **c'est le bloc le plus lourd**. */}
+          Sept questions sur l'univers de ton jeu. C'est le bloc le plus lourd de
+          ce qui part au modèle, et donc{" "}
+          <strong className="text-texte">
+            ce qui décide le plus de ce que tu recevras
+          </strong>
+          . <strong className="text-texte">Clique plutôt que d'écrire</strong> :
           chaque étiquette pose une formule qui marche.
         </>
       }
@@ -1280,7 +1645,7 @@ function LAllure({
               {est_ouverte && (
                 <div className="flex flex-col gap-3 border-b border-bord bg-fond-2 px-3 pb-4 pl-9">
                   <p className="max-w-[64ch] text-[13px] text-texte-2">
-                    {AIDE_DE_LA_CASE[champ.nom]}
+                    {aideDeLaCase(champ.nom, univers.style)}
                   </p>
 
                   {/* **L'interrupteur de la case est ici, et nulle part
@@ -1317,8 +1682,8 @@ function LAllure({
                     <Raison
                       texte={
                         champ.nom === "vue"
-                          ? "cette case est écrite par l'étape 2 — on la choisit sur une vignette, pas en mots"
-                          : "cette case est écrite par l'étape 3 — on la choisit sur la règle des tailles"
+                          ? `cette case est écrite par ${laDesignation("vue", univers.style)} — on la choisit sur une vignette, pas en mots`
+                          : `cette case est écrite par ${laDesignation("taille", univers.style)} — on la choisit sur la règle des tailles`
                       }
                     />
                   ) : (
@@ -1499,7 +1864,7 @@ function LAllure({
   )
 }
 
-/** Étape 6 — les références et les couleurs.
+/** L'étape « Références et couleurs ».
  *
  *  **La palette est déduite par calcul, jamais saisie** (US-54). Montrée pour
  *  qu'on vérifie ce que la machine y a lu, et recalculée dès qu'on retire un
@@ -1509,13 +1874,25 @@ function LesReferences({
   univers,
   artworks,
   vue,
+  fondPropose,
   onRegler,
 }: {
   univers: Univers
   artworks: Carte[]
   vue: VueDuJeu | null
+  /** **Ce que l'atelier proposerait comme fond** (D3), `null` tant que le
+   *  serveur n'a pas répondu. */
+  fondPropose: FondPropose | null
   onRegler: Regler
 }) {
+  /** **Les paliers que cette taille-là peut porter** (D2). Le plafond est le
+   *  côté du sprite : *« on ne peut pas avoir du 128 couleurs sur du 32px »*. */
+  const paliers = paliersDeCouleurs(univers.cible_px)
+  /** **C'est le style qui décide, plus la taille** (D2). La quantification
+   *  n'entre qu'en pixel art : réduire les couleurs d'un dessin en ferait une
+   *  affiche sérigraphiée. Une taille « aucune » en pixel art n'a pas non plus
+   *  de palier à proposer, faute de grille où les compter. */
+  const pixelArt = univers.style === "pixel" && univers.cible_px !== AUCUNE_CIBLE
   return (
     <EtapeOuverte
       aide="univers.palette"
@@ -1545,30 +1922,166 @@ function LesReferences({
             {univers.palette.length} couleurs · lues sur {artworks.length}{" "}
             artwork{artworks.length > 1 ? "s" : ""}
           </p>
-          <div className="flex w-fit items-center gap-3 pt-1">
-            <Libelle aide="univers.couleurs">Couleurs demandées</Libelle>
-            <Segments
-              valeurs={COULEURS}
-              valeur={
-                (COULEURS.includes(univers.couleurs as (typeof COULEURS)[number])
-                  ? univers.couleurs
-                  : 24) as (typeof COULEURS)[number]
-              }
-              onChange={(couleurs) => void onRegler({ couleurs })}
-            />
-          </div>
         </>
       ) : (
-        <div className="w-fit rounded-[2px] border border-bord bg-fond-2 px-3 py-2">
-          <Raison texte="aucun artwork officiel — promeus une carte du tableau d'inspiration, et la palette se lira dessus" />
+        /* **Ce n'est plus un refus, c'est une annonce** (D2). Jusqu'ici cette
+           branche disait seulement « aucun artwork » et **cachait le réglage
+           des couleurs** — or sans artwork le produit ne réduisait aucune
+           couleur du tout, et les sprites sortaient à dix mille teintes sans
+           qu'un mot le dise. Le réglage descend donc hors de cette condition :
+           il agit dans les deux cas, il se montre dans les deux cas. */
+        <div className="flex w-fit flex-col gap-1 rounded-[2px] border border-bord bg-fond-2 px-3 py-2">
+          {/* **La même absence ne se raconte pas pareil selon le style** (D2).
+              En pixel art, sans artwork les couleurs se réduisent quand même —
+              image par image, faute de palette commune. En dessin elles ne se
+              réduisent pas du tout : dire « elles se déduisent de chaque
+              image » y promettrait un travail qui n'a pas lieu. */}
+          <Raison
+            texte={
+              pixelArt
+                ? "aucun artwork officiel — les couleurs se déduisent de chaque image, pas de la palette du jeu"
+                : "aucun artwork officiel — le jeu n'a pas encore de palette à joindre en référence aux images qu'il demande"
+            }
+          />
+          <Raison texte="pour que le jeu parle d'une seule voix : promeus une carte du tableau d'inspiration en artwork officiel, et la palette se lira dessus" />
         </div>
       )}
+      {/* **Le nombre de couleurs, dans les deux cas** — avec palette il dit
+          combien de teintes y lire, sans palette combien en garder sur chaque
+          image. C'est le même réglage, et il agit des deux côtés. */}
+      {pixelArt && (
+        <div className="flex w-fit items-center gap-3 pt-1">
+          <Libelle aide="univers.couleurs">Couleurs demandées</Libelle>
+          <Segments
+            valeurs={paliers}
+            valeur={paliers.includes(univers.couleurs) ? univers.couleurs : paliers[paliers.length - 1]}
+            onChange={(couleurs) => void onRegler({ couleurs })}
+          />
+        </div>
+      )}
+      {/* **Le plafond est le côté du sprite**, et il est mesuré : au-delà,
+          l'image ne contient plus assez de teintes distinctes pour remplir la
+          palette demandée. Dit ici pour qu'une liste courte ne se lise pas
+          comme un bug. */}
+      {pixelArt && paliers.length < PALIERS_DE_COULEURS.length && (
+          <Raison
+            texte={`un sprite de ${univers.cible_px} carrés de côté ne porte pas plus de ${paliers[paliers.length - 1]} couleurs — au-delà, l'image n'a plus assez de teintes distinctes`}
+          />
+        )}
+      {!pixelArt && (
+        <Raison texte="ce jeu est en dessin : les couleurs ne sont pas réduites, un dessin garde ses nuances" />
+      )}
+      <LeFondDuJeu
+        univers={univers}
+        propose={fondPropose}
+        onRegler={onRegler}
+      />
       <LeTexteACopier univers={univers} vue={vue} />
     </EtapeOuverte>
   )
 }
 
-/** Étape 6, seconde moitié — le texte à copier dans un outil d'images.
+/** **Le fond sur lequel le sujet est posé** (D3) — et pourquoi il est rangé ici.
+ *
+ *  Il vit sous la palette parce que c'est elle qui décide de sa sûreté : une
+ *  couleur de fond est bonne quand **rien dans le jeu ne la contient**, et la
+ *  palette est la seule liste qui dise ce que le jeu contient. Le proposer
+ *  ailleurs aurait demandé de regarder deux écrans pour trancher une question.
+ *
+ *  **L'atelier propose, il n'impose jamais.** C'est l'arbitrage de l'auteur du
+ *  2 septembre 2026, et c'est ce qui a retiré à cette tranche le banc de huit
+ *  tirages qu'elle réclamait : si la couleur choisie donne un moins bon
+ *  résultat, on la change en un geste et on le voit sur l'image suivante.
+ *
+ *  **Ce qu'un fond franc achète, dit avec ses mots.** Le produit demandait *un
+ *  fond plat* sans dire lequel, et le modèle rendait un gris clair — c'est-à-dire
+ *  une couleur que le sujet porte aussi, d'où le découpage à reprendre sur
+ *  presque chaque image. */
+function LeFondDuJeu({
+  univers,
+  propose,
+  onRegler,
+}: {
+  univers: Univers
+  propose: FondPropose | null
+  onRegler: Regler
+}) {
+  const pose = univers.fond !== ""
+  return (
+    <div className="flex flex-col gap-2 border-t border-bord pt-3">
+      <Libelle aide="univers.fond">Le fond du jeu</Libelle>
+      <p className="max-w-[54ch] text-[14px] leading-[1.5] text-texte-2">
+        Sur quelle couleur le sujet est demandé. Une couleur{" "}
+        <strong className="text-texte">que rien dans ton jeu ne contient</strong>{" "}
+        rend le découpage presque parfait ; un gris clair — ce que le modèle rend
+        quand on ne dit rien — est aussi la couleur d'une joue, et le découpage la
+        mange avec le fond.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={/^#[0-9a-fA-F]{6}$/.test(univers.fond) ? univers.fond : "#FF00FF"}
+          aria-label="Couleur du fond"
+          onChange={(e) => void onRegler({ fond: e.target.value })}
+          className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
+        />
+        <span className="mesure text-[10px] text-texte-2">
+          {pose ? univers.fond : "aucun fond posé"}
+        </span>
+        {pose && (
+          <button
+            type="button"
+            onClick={() => void onRegler({ fond: "" })}
+            className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte"
+          >
+            Retirer
+          </button>
+        )}
+      </div>
+      {/* **La proposition, et l'écart qui la porte.** Un chiffre nu ne se lit
+          pas : « à 192 de la couleur de ton jeu la plus proche » dit à la fois
+          ce qu'on gagne et sur quoi le calcul a porté. */}
+      {propose?.couleur && propose.couleur !== univers.fond && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void onRegler({ fond: propose.couleur })}
+            style={{ background: propose.couleur }}
+            aria-label={`Prendre ${propose.couleur}`}
+            className="h-4 w-4 shrink-0 rounded-[2px] border border-bord"
+          />
+          <button
+            type="button"
+            onClick={() => void onRegler({ fond: propose.couleur })}
+            className="mesure text-[10px] text-signal hover:text-signal-clair"
+          >
+            Prendre {propose.nom || propose.couleur}
+          </button>
+          <span className="mesure text-[10px] text-texte-3">
+            à {propose.ecart} de {propose.voisine}, la couleur de ton jeu la plus
+            proche
+          </span>
+        </div>
+      )}
+      {/* **Aucun candidat sûr est une réponse, pas une panne** — et l'atelier le
+          dit au lieu de choisir en silence. C'est le quatrième critère de la
+          tranche, pris à la lettre. */}
+      {propose?.raison && <Raison texte={propose.raison} />}
+      {pose && (
+        <Raison texte="la couleur part dans le texte, et une phrase interdit au modèle de l'employer sur le sujet — sur sa tenue, sa peau, ses accessoires, ses reflets et ses ombres" />
+      )}
+      {/* ⚠️ **Le prix, dit une fois et écrit** : changer le fond change ce qui
+          part au fournisseur, donc les images d'avant et d'après ne se comparent
+          plus. C'est un prix accepté, pas un oubli. */}
+      {pose && (
+        <Raison texte="⚠ changer le fond change ce qui part : les images tirées avant ne se comparent plus à celles d'après" />
+      )}
+    </div>
+  )
+}
+
+/** L'étape « Références et couleurs », seconde moitié — le texte à copier
+ *  dans un outil d'images.
  *
  *  **Il répond à un vrai problème : on n'a pas toujours d'images à déposer.** Un
  *  jeu qui démarre n'a que des mots. L'assistant assemble donc, à partir des
@@ -1598,9 +2111,15 @@ function LeTexteACopier({
       .filter((c) => c.texte.trim())
       .map((c) => `${NOM_CHAMP[c.nom] ?? c.nom}: ${c.texte.trim()}`),
     "",
+    // **Trois manières de penser la scène, et non trois températures de
+    // couleur** (G1). La demande d'avant faisait rendre quatre fois la même
+    // image dans quatre teintes : on choisissait un filtre, pas une direction.
+    // Ce qu'on cherche à ce moment-là est justement l'inverse — voir plusieurs
+    // façons d'habiter le même monde avant d'en retenir une.
     "Produce one key image that captures the mood of this game, plus three",
-    "variants that explore different colour temperatures. A single scene, not a",
-    "grid. No text, no interface elements, landscape format.",
+    "variants that each take a genuinely different approach to the same scene —",
+    "different composition, different moment, different mood. A single scene,",
+    "not a grid. No text, no interface elements, landscape format.",
   ]
   const texte = lignes.join("\n")
 
@@ -1631,11 +2150,11 @@ function LeTexteACopier({
   )
 }
 
-/** Étape 7 — ce que les choses font, **type par type** (E9).
+/** L'étape « Poses et états » — ce que les choses font, **type par type** (E9).
  *
  *  Une pose, c'est un moment d'un objet : un personnage au repos, en marche,
  *  qui attaque ; un coffre fermé, ouvert, vidé. **Le nombre d'images de chaque
- *  pose vient du choix de vue**, à l'étape 2 : il ne se tape plus à la main, et
+ *  pose vient du choix de vue**, à l'étape « La vue » : il ne se tape plus à la main, et
  *  c'est ce qui répare les sept endroits qui ne se parlaient pas.
  *
  *  **La liste appartient au type d'objet, plus au jeu entier** (E9). Avant, le
@@ -1649,9 +2168,14 @@ function LeTexteACopier({
  *  compte existait pose par pose et jamais en somme, alors que c'est lui qu'on
  *  vient chercher — c'est lui qui devient une facture. */
 function LesPoses({
+  univers,
   vue,
   onErreur,
 }: {
+  /** **Seulement pour nommer une autre étape** (G1) : la quatrième en porte
+   *  deux noms selon le style, et un renvoi qui se calcule a besoin de savoir
+   *  lequel est affiché. Rien d'autre de cette étape-ci n'en dépend. */
+  univers: Univers
   vue: VueDuJeu | null
   onErreur: (raison: string) => void
 }) {
@@ -1732,8 +2256,8 @@ function LesPoses({
       <Raison
         texte={
           vue
-            ? `le second nombre vient de la vue choisie à l'étape 2 — ${vue.libelle} — et ne se tape pas ici`
-            : "aucune vue choisie — l'étape 2 décide du nombre d'images par pose"
+            ? `le second nombre vient de la vue du jeu — ${vue.libelle} —, choisie à ${laDesignation("vue", univers.style)}, et ne se tape pas ici`
+            : `aucune vue choisie — c'est ${laDesignation("vue", univers.style)} qui décide du nombre d'images par pose`
         }
       />
 
@@ -1984,7 +2508,7 @@ function ListeDePoses({
   )
 }
 
-/** Étape 8 — les emplacements d'équipement.
+/** L'étape « Emplacements » — les emplacements d'équipement.
  *
  *  **« L'ordre compte » n'était pas une phrase, et l'ordre ne se changeait
  *  pas.** Cette demi-phrase énonçait une règle au-dessus d'une liste qui
@@ -2042,7 +2566,9 @@ function LesEmplacements({
         titre="Emplacements"
         conduite="Rien à régler ici, et c'est une réponse, pas un trou."
       >
-        <Raison texte="aucun type de ce jeu n'a de silhouette — un jeu de tuiles et de décors ne porte pas d'équipement. Donne une silhouette à un type à l'étape 4, et cette étape se remplira d'elle-même" />
+        <Raison
+          texte={`aucun type de ce jeu n'a de silhouette — un jeu de tuiles et de décors ne porte pas d'équipement. Donne une silhouette à un type à ${laDesignation("types", univers.style)}, et cette étape-ci se remplira d'elle-même`}
+        />
       </EtapeOuverte>
     )
   }
@@ -2165,7 +2691,7 @@ function LesEmplacements({
   )
 }
 
-/** Étape 9 — le modèle par défaut, **par famille** — pas un réglage global
+/** L'étape « Les IA à utiliser » — le modèle par défaut, **par famille**, pas un réglage global
  *  (US-58). */
 function LesIA({
   univers,
@@ -2269,7 +2795,229 @@ function LesIA({
   )
 }
 
-/** Étape 10 — **ce que les fournisseurs demandent** (F3).
+/** L'étape « Le détourage de départ » — par nature d'image puis par famille (D1).
+ *
+ *  ── Ce que la mesure a trouvé, et pourquoi cet écran n'a que deux colonnes ──
+ *
+ *  Comptées le 3 septembre 2026 sur les 123 passes de détourage écrites à la
+ *  main dans ce dépôt : **la tolérance est restée à sa valeur livrée 96 fois
+ *  sur 100** avec le moteur du bord, et le seuil de transparence aussi. Ce que
+ *  l'auteur déplace vraiment, c'est le moteur et le bord rongé — et le second
+ *  suit le premier de si près qu'il n'a même pas à être posé (voir
+ *  `DURCISSEMENT_LIVRE` dans le domaine).
+ *
+ *  Les deux autres réglages ne sont donc **pas** ici, et c'est un choix, pas un
+ *  oubli : ils se posent sur une image, là où l'on voit ce qu'ils font. Un écran
+ *  de défauts qui montre quatre curseurs dont deux ne bougent jamais fait perdre
+ *  du temps sur les deux qui comptent. */
+function LeDetourage({
+  univers,
+  onRegler,
+}: {
+  univers: Univers
+  onRegler: Regler
+}) {
+  const familles = FAMILLES.filter((f) => f !== "tous")
+  return (
+    <EtapeOuverte
+      aide="univers.detourage"
+      titre="Le détourage de départ"
+      conduite={
+        <>
+          Comment l'atelier <strong className="text-texte">retire le fond</strong>{" "}
+          d'une image qui revient, avant que tu y touches. Rien n'est obligatoire :
+          une ligne laissée vide n'est pas un trou, c'est un réglage que le produit
+          décide à ta place — et changer un réglage ici{" "}
+          <strong className="text-texte">ne retouche aucune image déjà faite</strong>.
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <Rangees titre="selon comment l'image est venue">
+          {(
+            [
+              ["detourage_image", "image seule", "quand une image arrive toute seule"],
+              [
+                "detourage_planche",
+                "morceau de planche",
+                "quand une planche est découpée en sujets",
+              ],
+            ] as const
+          ).map(([champ, nom, quand]) => (
+            <RangeeDetourage
+              key={champ}
+              nom={nom}
+              quand={quand}
+              passe={univers[champ]}
+              herite="le produit décide"
+              onPoser={(defaut) => void onRegler({ [champ]: defaut })}
+            />
+          ))}
+        </Rangees>
+
+        {/* **La famille l'emporte sur la nature, et elle l'emporte en entier.**
+            Un réglage de famille qui ne remplacerait que ce qu'il déclare
+            demanderait de distinguer « posé à zéro » de « pas posé » sur chaque
+            réglage — et l'écran devrait montrer cette distinction-là. La règle
+            simple est celle que la tranche écrit : sans réglage de famille, on
+            hérite de sa nature. C'est pour qu'elle ne surprenne jamais que la
+            fiche de chaque image dit ensuite d'où vient ce qui s'est appliqué. */}
+        <Rangees titre="ou selon ce que l'image montre — et alors ça l'emporte">
+          {familles.map((famille) => (
+            <RangeeDetourage
+              key={famille}
+              nom={NOM_FAMILLE[famille]}
+              quand={`pour tout ce que tu ranges dans ${NOM_FAMILLE[famille]}`}
+              passe={univers.detourages[famille] ?? null}
+              herite="comme sa nature d'image"
+              onPoser={(defaut) =>
+                void onRegler({
+                  detourages: sansVide({
+                    ...univers.detourages,
+                    [famille]: defaut,
+                  }),
+                })
+              }
+            />
+          ))}
+        </Rangees>
+
+        <p className="max-w-[66ch] text-[11.5px] leading-relaxed text-texte-3">
+          La tolérance et le seuil de transparence ne se règlent pas ici, et ce
+          n'est pas un oubli : comptés sur tes propres recettes, tu les as laissés
+          à leur valeur livrée <strong className="text-texte-2">96 fois sur 100</strong>.
+          Ils se posent sur une image, dans sa table de détourage, là où tu vois ce
+          qu'ils font.
+        </p>
+      </div>
+    </EtapeOuverte>
+  )
+}
+
+/** Un bloc de rangées avec son intitulé. Deux blocs, parce que ce sont deux
+ *  questions — *comment l'image est venue* et *ce qu'elle montre* — et qu'un
+ *  seul tableau les aurait fait passer pour une même liste. */
+function Rangees({ titre, children }: { titre: string; children: ReactNode }) {
+  return (
+    <div className="flex max-w-[560px] flex-col gap-1">
+      <Libelle>{titre}</Libelle>
+      <ul className="flex flex-col rounded-[2px] border border-bord">{children}</ul>
+    </div>
+  )
+}
+
+/** Une ligne : ce qu'on règle, avec quel moteur, et combien de bord il ronge.
+ *
+ *  **Un seul geste pose et retire.** Le moteur « — » n'est pas une valeur du
+ *  produit : c'est *aucun réglage*, et le choisir renvoie `null`, ce que la
+ *  route lit comme « remets-le au produit ». Un bouton de retrait en plus aurait
+ *  fait deux façons de dire la même chose. */
+function RangeeDetourage({
+  nom,
+  quand,
+  passe,
+  herite,
+  onPoser,
+}: {
+  nom: string
+  quand: string
+  passe: Passe | null
+  /** Ce qui décidera si cette ligne reste vide — la phrase se lit sur place,
+   *  sans avoir à chercher la règle ailleurs. */
+  herite: string
+  onPoser: (defaut: DefautDetourage | null) => void
+}) {
+  return (
+    <li className="flex items-center gap-2 border-b border-bord px-2 py-1.5 last:border-b-0">
+      <span className="w-[130px] shrink-0 text-[11px] text-texte-2" title={quand}>
+        {nom}
+      </span>
+      <select
+        value={passe?.moteur ?? ""}
+        aria-label={`Moteur de détourage pour ${nom}`}
+        onChange={(e) =>
+          onPoser(e.target.value ? defautPourMoteur(e.target.value as Moteur) : null)
+        }
+        className="mesure h-[26px] w-[110px] shrink-0 rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+      >
+        <option value="">—</option>
+        {(Object.keys(MOTEUR) as Moteur[]).map((m) => (
+          <option key={m} value={m}>
+            {MOTEUR[m]}
+          </option>
+        ))}
+      </select>
+      {passe ? (
+        <label className="mesure flex items-center gap-1 text-[9.5px] text-texte-3">
+          bord rongé
+          <input
+            type="number"
+            min={0}
+            max={4}
+            value={passe.durcissement}
+            aria-label={`Bord rongé pour ${nom}`}
+            onChange={(e) =>
+              onPoser({
+                ...defautPourMoteur(passe.moteur),
+                tolerance: passe.tolerance,
+                seuil_alpha: passe.seuil_alpha,
+                modele: passe.modele,
+                durcissement: Math.max(0, Math.min(4, Number(e.target.value) || 0)),
+              })
+            }
+            className="mesure h-[26px] w-[42px] rounded-[2px] border border-bord bg-fond-2 px-1 text-[10px] text-texte-2"
+          />
+          px
+        </label>
+      ) : (
+        /* **Une ligne vide dit ce qui décidera à sa place**, comme la liste des
+           IA juste avant : on apprend la règle en lisant le réglage. */
+        <span className="mesure shrink-0 text-[9.5px] text-texte-3">
+          aucun réglage — {herite}
+        </span>
+      )}
+    </li>
+  )
+}
+
+/** Le défaut que le produit pose pour un moteur — **et son bord rongé arrive
+ *  avec lui**.
+ *
+ *  La même table que `DURCISSEMENT_LIVRE` côté serveur, et les deux sont tenues
+ *  ensemble par un essai : c'est la mesure du 3 septembre 2026, où le moteur
+ *  décide du bord rongé dans quatre cas sur cinq et la nature de l'image dans
+ *  presque aucun. */
+function defautPourMoteur(moteur: Moteur): DefautDetourage {
+  return {
+    moteur,
+    tolerance: 28,
+    seuil_alpha: 128,
+    durcissement: DURCISSEMENT_LIVRE[moteur],
+    modele: "",
+  }
+}
+
+/** Le dictionnaire des familles sans celles qu'on vient de vider. Retirer une
+ *  famille, c'est **l'absence de sa clé** — la même convention que les modèles
+ *  par famille, et le serveur n'a donc rien de neuf à comprendre. */
+function sansVide(
+  familles: Partial<Record<Famille, DefautDetourage | Passe | null>>,
+): Partial<Record<Famille, DefautDetourage>> {
+  const gardees: Partial<Record<Famille, DefautDetourage>> = {}
+  for (const [famille, defaut] of Object.entries(familles)) {
+    if (!defaut) continue
+    gardees[famille as Famille] = {
+      moteur: defaut.moteur,
+      tolerance: defaut.tolerance,
+      seuil_alpha: defaut.seuil_alpha,
+      durcissement: defaut.durcissement,
+      modele: defaut.modele,
+    }
+  }
+  return gardees
+}
+
+/** L'étape « Les fournisseurs » — **ce qu'ils demandent** (F3).
  *
  *  **Seule dans son groupe, parce qu'elle vaut pour tous les jeux** — comme la
  *  base d'étiquettes, elle ne dépend d'aucun.

@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — la fiche d'une chose, repensée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 18px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 11px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 60px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 13px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:24px}
+  h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:26px 0 10px;line-height:1.2}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:10px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.mal{border-left-color:var(--echec)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.mal .lab{color:var(--echec)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:21px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:6px 0 6px 15px;position:relative;line-height:1.55}
+  .note li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:11px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:27px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:6px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+  .m.eg{color:var(--epingle)} .m.no{color:var(--texte-3)}
+  .m.bon{color:var(--ok)} .m.mal{color:var(--echec)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:14px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:11px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.5}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600}
+
+  .bulle{border:1px solid var(--bord-fort);border-radius:2px;background:var(--fond-1);
+    width:280px;padding:11px 12px;margin:0 0 14px}
+  .bulle .b1{font-size:12px;color:var(--texte);margin:0 0 9px;line-height:1.5}
+  .bulle .b2{font-size:12px;color:var(--texte-2);margin:0 0 9px;line-height:1.5}
+  .bulle .b3{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin:0;
+    display:flex;gap:10px;align-items:baseline}
+  .bulle .b3 a{color:var(--signal);text-decoration:none;margin-left:auto;white-space:nowrap}
+
+  /* ── Le croquis d'écran ─────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0);
+    margin-bottom:12px}
+  .wf-barre{min-width:1174px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:9px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .sep-v{width:1px;height:16px;background:var(--bord);margin:0 3px}
+  .wf-corps{min-width:1174px;display:flex;align-items:stretch;min-height:560px}
+
+  /* colonne de gauche — 240 px, le sommaire */
+  .rail{width:240px;flex:none;border-right:1px solid var(--bord);background:var(--fond-1);
+    padding:11px 10px;display:flex;flex-direction:column;gap:2px}
+  .col-t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:8px;display:block}
+  .bl{height:34px;display:flex;align-items:center;gap:8px;padding:0 8px;border-radius:2px;
+    font-size:11.5px;color:var(--texte-2)}
+  .bl.on{background:var(--fond-3);color:var(--texte)}
+  .bl .et{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bl.on .et{color:var(--texte-2)}
+  .bl .et.bon{color:var(--ok)}
+  .sep{height:1px;background:var(--bord);margin:9px 0 7px}
+  .qui{height:26px;display:flex;align-items:center;padding:0 8px;border:1px solid var(--bord);
+    border-radius:2px;font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:auto}
+
+  /* colonne du milieu — la page de la fiche */
+  .corps{flex:1;min-width:0;display:flex;flex-direction:column}
+  .ident{display:flex;gap:16px;align-items:flex-start;padding:16px;border-bottom:1px solid var(--bord)}
+  .damier{background-image:
+      linear-gradient(45deg,var(--damier-a) 25%,transparent 25%),
+      linear-gradient(-45deg,var(--damier-a) 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,var(--damier-a) 75%),
+      linear-gradient(-45deg,transparent 75%,var(--damier-a) 75%);
+    background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;
+    background-color:var(--damier-b)}
+  .portrait{width:96px;height:96px;flex:none;position:relative;border:1px solid var(--bord)}
+  .pcap{width:96px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    text-align:center;margin-top:5px}
+  .portrait i{position:absolute;display:block}
+  .ident .nom{font-family:var(--serif);font-size:32px;line-height:1.05;margin:0 0 8px}
+  .ident .faits{font-family:var(--mono);font-size:11px;color:var(--texte-2);
+    font-variant-numeric:tabular-nums;margin:0 0 6px}
+  .ident .faits .g{color:var(--texte-3)}
+  .ident .sous{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin:0}
+  .ident .sous a{color:var(--signal);text-decoration:none}
+
+  .sec{padding:15px 16px;border-bottom:1px solid var(--bord)}
+  .sec:last-child{border-bottom:0}
+  .sec-t{display:flex;align-items:baseline;gap:9px;margin-bottom:3px}
+  .sec-t .nm{font-size:11px;color:var(--texte-2);
+    text-decoration:underline dotted var(--bord-fort);text-underline-offset:3px}
+  .sec-t .cpt{font-family:var(--mono);font-size:10px;color:var(--texte-3);
+    font-variant-numeric:tabular-nums;margin-left:auto}
+  .propos{font-size:11.5px;color:var(--texte-2);line-height:1.5;margin:0 0 11px;max-width:64ch}
+  .zt{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:8px 9px;
+    font-family:var(--mono);font-size:11px;color:var(--texte);line-height:1.55;max-width:640px}
+  .ss{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:6px;
+    display:flex;align-items:center;gap:6px}
+  .ss::before{content:"";width:8px;height:1px;background:var(--texte-3);display:inline-block}
+
+  .ch{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--bord)}
+  .ch:last-child{border-bottom:0}
+  .ch .cn{width:76px;flex:none;font-family:var(--mono);font-size:10px;color:var(--texte-2);padding-top:2px}
+  .ch .ct{flex:1;min-width:0;font-size:11px;color:var(--texte-2);line-height:1.5}
+  .ch .co{flex:none;font-family:var(--mono);font-size:9.5px;color:var(--texte-3);padding-top:3px}
+
+  .lref{display:flex;align-items:center;gap:10px;height:38px;border-bottom:1px solid var(--bord)}
+  .lref:last-child{border-bottom:0}
+  .vg{width:38px;height:38px;flex:none;position:relative;border:1px solid var(--bord)}
+  .vg i{position:absolute;display:block}
+  .lref .nm{flex:1;min-width:0;font-size:11px;color:var(--texte-2)}
+  .lref .dt{font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .lref .ac{font-family:var(--mono);font-size:10px;color:var(--signal);white-space:nowrap}
+  .lref .ac.no{color:var(--texte-3)}
+
+  .grillette{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .cf{width:56px}
+  .cf .vg{width:56px;height:56px}
+  .cf .lg{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin-top:4px;text-align:center}
+  .cf.vide .vg{border-style:dashed}
+  .cf.vide .lg{color:var(--texte-3)}
+
+  .lpo{display:flex;align-items:center;gap:10px;height:26px;border-bottom:1px solid var(--bord);
+    font-size:11px;color:var(--texte-2)}
+  .lpo:last-child{border-bottom:0}
+  .lpo .nm{flex:1;min-width:0}
+  .lpo .im{font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+  .lpo .og{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:84px;text-align:right}
+
+  /* colonne de droite — 380 px, la matrice */
+  .droite{width:380px;flex:none;border-left:1px solid var(--bord);background:var(--fond-1);padding:11px 12px}
+  .lm{display:flex;align-items:center;gap:10px;height:26px;font-size:11px;color:var(--texte-2)}
+  .lm .nm{flex:1;min-width:0}
+  .lm .ct{font-family:var(--mono);font-size:10px;color:var(--texte-3);font-variant-numeric:tabular-nums}
+  .lm .ct.bon{color:var(--ok)}
+  .tot{font-family:var(--mono);font-size:10px;color:var(--texte-3);border-top:1px solid var(--bord);
+    padding-top:8px;margin-top:6px;font-variant-numeric:tabular-nums}
+
+  /* annotations sous le croquis */
+  .ans{display:flex;flex-direction:column;gap:0;margin-bottom:26px}
+  .an{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--bord);align-items:flex-start}
+  .an:last-child{border-bottom:0}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);width:22px;flex:none;padding-top:3px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.55}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.gris .k{color:var(--texte-3)}
+  .lgd{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin:0 0 26px}
+
+  .avant-apres{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  .cadre{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:12px 13px}
+  .cadre .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:10px;display:block}
+  .cadre.ok .t{color:var(--ok)}
+  .cadre.no .t{color:var(--echec)}
+  .cadre p{font-size:12.5px;color:var(--texte-2);margin:0 0 9px;max-width:none}
+  .cadre p:last-child{margin-bottom:0}
+
+  footer{border-top:1px solid var(--bord);padding-top:20px;margin-top:16px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  a.lien{color:var(--signal);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · la fiche d'une chose du jeu · deuxième dessin · 3 septembre 2026</div>
+    <h1>La fiche d'une chose —<br><em>la version qui se comprend</em></h1>
+    <p><strong>De quoi on parle.</strong> Dans l'atelier, chaque chose du jeu — un personnage, un
+      décor, un objet — possède une page à elle. On l'ouvre depuis le codex, l'index de tout ce que
+      le monde contient. C'est là qu'on écrit qui elle est, ce qui doit être redit à la machine à
+      chaque image qu'on lui demande, et quelles images d'exemple partent avec elle.</p>
+    <p><strong>Ce qui ne va pas.</strong> Constaté par l'auteur le 3 septembre 2026, devant la fiche
+      du pèlerin : <em>« il n'y a que du texte, pas une image, pas d'explication sur le propos de
+      chaque partie de la fiche ni sur leur utilité »</em>. C'est exact, et cette page dit pourquoi
+      ça arrive et à quoi la fiche ressemble une fois réparée.</p>
+    <p><strong>Ce que cette page ne refait pas.</strong> Elle ne rediscute ni ce que la fiche
+      contient, ni pourquoi elle existe : c'est le premier dessin de la fiche
+      (<span class="mesure">07bis-fiche-entite.html</span>) qui le tranche, et il reste vrai.
+      Ici on ne touche qu'à une chose : <strong>comment elle se lit</strong>.</p>
+  </div>
+
+  <!-- ═══ 01 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que l'écran montre aujourd'hui</h2></div>
+    <p class="intro">Voici la fiche du pèlerin telle qu'elle est, avec ses vrais chiffres. Le pèlerin
+      vit dans le jeu <em>Le Marais du Vieux Moulin</em>. Il a deux images faites sur six demandées,
+      une image d'exemple retenue, et un texte de présentation de cent vingt-trois lettres.</p>
+
+    <div class="note mal">
+      <span class="lab">Six choses manquent, et la première explique les cinq autres</span>
+      <ul>
+        <li><b>On ne voit pas le pèlerin.</b> Deux de ses images existent, une image d'exemple a été
+          retenue pour lui — et l'écran n'en montre aucune. L'image d'exemple retenue est désignée
+          par les deux mots <em>concept art</em>. On la garde ou on la jette sans jamais l'avoir
+          regardée.</li>
+        <li><b>L'écran ne dit pas son nom.</b> « Le pélerin » n'apparaît que dans la petite ligne de
+          navigation tout en haut, celle qui sert à revenir en arrière. La page d'une chose n'a pas
+          de titre.</li>
+        <li><b>Le même compte est écrit trois fois</b> — « 2 cases sur 6 » à gauche, en très gros au
+          milieu, et « 2 / 6 » à droite. Pendant ce temps les deux images correspondantes ne sont
+          montrées nulle part.</li>
+        <li><b>Les résumés de la colonne de gauche se coupent</b> et deviennent faux : on y lit
+          « 7 champs · 0 de son ambi… ». Un résumé tronqué ne résume plus rien.</li>
+        <li><b>Aucune des cinq parties ne dit à quoi elle sert.</b> « Ce qui l'habille » est un joli
+          nom qui ne se devine pas : ce sont les sept textes de style qui partent avec chaque
+          image — le monde, l'époque, la lumière, le trait, et trois autres.</li>
+        <li><b>Le grand espace du milieu est vide aux trois quarts.</b> Quelques lignes en haut,
+          puis du noir jusqu'en bas.</li>
+      </ul>
+    </div>
+
+    <div class="note att">
+      <span class="lab">La cause, et elle est mécanique</span>
+      <h3>L'atelier possède déjà de quoi expliquer et de quoi montrer. Cet écran n'utilise ni l'un ni l'autre.</h3>
+      <p>Le produit sait faire deux choses que cette fiche ne fait pas :</p>
+      <ol>
+        <li><b>L'explication au survol.</b> Le nom d'un réglage est souligné d'un pointillé ; on pose
+          le pointeur dessus et une petite bulle dit ce que c'est, ce que ça change, et d'où ça sort.
+          Le même texte alimente le Guide, la page de prose du produit. Il existe un recueil de ces
+          explications : <strong>trente-neuf pour les outils de retouche, vingt-trois pour les
+          réglages du jeu, et zéro pour la fiche d'une chose</strong>. L'écran ne branche pas ce
+          mécanisme, pas une fois.</li>
+        <li><b>La vignette.</b> Toute image du produit se montre en petit, et la barre d'espace
+          l'ouvre en grand. La fiche n'affiche pas une seule vignette.</li>
+      </ol>
+      <p style="margin-top:11px">Autrement dit, ce n'est pas le système de dessin du produit qui est
+        en cause. C'est que <strong>cet écran-là a été construit en dehors de lui</strong>.</p>
+    </div>
+
+    <div class="note gris">
+      <span class="lab">Et un détail qui explique le ton gris de la page</span>
+      <p>Le produit a une place réservée pour dire <em>pourquoi un bouton est éteint</em> : une
+        petite ligne grise sous le contrôle, précédée d'un tiret. Elle sert aux refus — « il manque
+        une clé », « il faut d'abord une palette ».</p>
+      <p style="margin-top:9px"><strong>La fiche écrit ses explications dans cette place-là.</strong>
+        « ce bloc dit ce qui est disponible… », « elle répond pendant qu'on règle », « la planche des
+        quatre directions viendra… » : trois phrases utiles, rendues dans la fente des mauvaises
+        nouvelles, à la taille et à la couleur des choses qui bloquent. Elles ont donc l'air
+        d'avertissements, et l'œil apprend à les sauter.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Le principe du nouveau dessin</h2></div>
+
+    <div class="note bien">
+      <span class="lab">Une phrase, et tout en découle</span>
+      <h3>Une fiche montre d'abord la chose dont elle est la fiche.</h3>
+      <p>Avant d'être un formulaire, c'est une page qu'on ouvre pour savoir <em>où en est</em> le
+        pèlerin. Elle doit donc, dès la première seconde et sans qu'on clique : le montrer, le
+        nommer, et dire où il en est. Le reste — les textes de style, les images d'exemple — vient
+        après, et chaque partie dit à quoi elle sert.</p>
+    </div>
+
+    <p class="intro" style="margin-top:20px">Trois changements de fond, et rien d'autre :</p>
+
+    <table>
+      <tr>
+        <td class="k" style="width:210px">Les cinq parties cessent<br>de se cacher l'une l'autre</td>
+        <td>Aujourd'hui ce sont cinq onglets : on en voit un, les quatre autres sont derrière un
+          clic. Pour savoir si une chose est bien réglée, il faut cliquer cinq fois et se souvenir.
+          Elles deviennent <strong>cinq sections d'une seule page qui défile</strong>, et la colonne
+          de gauche devient le sommaire qui suit le défilement. Ce n'est pas une invention : c'est
+          exactement la disposition du Guide, la page d'explications du produit — un sommaire à
+          gauche, le texte qui défile à droite.</td>
+      </tr>
+      <tr>
+        <td class="k">Chaque partie porte<br>son propos, écrit</td>
+        <td>Sous le titre de chaque section, <strong>une ligne dit à quoi elle sert</strong>, en
+          clair, sans qu'on ait besoin de survoler quoi que ce soit. Et le titre garde son pointillé,
+          pour la version longue au survol. Le texte est le même dans les deux cas — il n'y a qu'un
+          seul recueil d'explications dans le produit, et il ne se recopie pas.</td>
+      </tr>
+      <tr>
+        <td class="k">Les images entrent<br>là où elles décident</td>
+        <td>Un portrait en haut, pour savoir de qui on parle. Une vignette à côté de chaque image
+          d'exemple, pour pouvoir la garder ou la jeter en la regardant. Et les images déjà faites,
+          montrées en petit, à la place du gros chiffre qui les remplaçait.</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══ 03 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>L'écran</h2></div>
+    <p class="intro">Trois colonnes, exactement les mêmes qu'aujourd'hui et que dans le codex :
+      le sommaire à gauche, la page au milieu, le tableau des poses à droite. Aucune largeur
+      nouvelle. L'état dessiné est celui du pèlerin, avec ses vrais chiffres.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span>
+        <span class="tab on">Codex</span>
+        <span class="tab">Galerie</span>
+        <span class="fil">Le Marais du Vieux Moulin › Personnages › <b>Le pélerin</b></span>
+        <span class="wf-tard">
+          <span class="mesure">ce jeu, en argent $0,0361</span>
+          <span class="sep-v"></span>
+          <span>Réglages</span><span>Guide</span>
+        </span>
+      </div>
+
+      <div class="wf-corps">
+
+        <!-- 240 — le sommaire -->
+        <div class="rail">
+          <span class="col-t">sa fiche</span>
+          <div class="bl on">Ce qu'il est<span class="et">écrit</span></div>
+          <div class="bl">Ce qui l'habille<span class="et">7 textes</span></div>
+          <div class="bl">Ses images d'exemple<span class="et">1 retenue</span></div>
+          <div class="bl">Ce que le jeu réclame<span class="et">6 poses</span></div>
+          <div class="bl">Ce qui est fait<span class="et bon">2 sur 6</span></div>
+          <div class="sep"></div>
+          <div class="bl" style="color:var(--texte-3);font-family:var(--mono);font-size:10px">
+            le calibrage<span class="et">2 poses calées</span></div>
+          <div class="qui">Fermer la fiche — Échap</div>
+        </div>
+
+        <!-- 1fr — la page -->
+        <div class="corps">
+
+          <div class="ident">
+            <div>
+            <div class="portrait damier">
+              <i style="left:26px;top:14px;width:44px;height:30px;background:#2E4A46"></i>
+              <i style="left:30px;top:40px;width:36px;height:34px;background:#8A7A5E"></i>
+              <i style="left:34px;top:70px;width:28px;height:16px;background:#4A3A2C"></i>
+              <i style="left:70px;top:26px;width:6px;height:58px;background:#5A4632"></i>
+              <i style="left:66px;top:14px;width:14px;height:16px;background:#D8892E"></i>
+            </div>
+            <div class="pcap">sa pose « repos »</div>
+            </div>
+            <div>
+              <div class="nom">Le pélerin</div>
+              <div class="faits">2 cases sur 6 <span class="g">·</span> 1 image d'exemple
+                <span class="g">·</span> pixel de 64 px</div>
+              <div class="sous">aucune ambiance · <a href="#">la voir en grand ›</a></div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-t"><span class="nm">Ce qu'il est</span>
+              <span class="cpt">123 lettres</span></div>
+            <p class="propos">Le texte qui redit à la machine de qui il s'agit. Il repart avec
+              chaque image qu'on demande de cette chose, et on ne le retape jamais.</p>
+            <div class="zt">a weathered pilgrim in a hooded green cloak, carrying a lit torch,
+              worn leather satchel at his hip</div>
+            <div class="ss">il part avec chaque image de cette chose</div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-t"><span class="nm">Ce qui l'habille</span>
+              <span class="cpt">7 textes · 0 de son ambiance</span></div>
+            <p class="propos">Les sept textes de style qui décrivent le monde autour de lui. Ils
+              viennent du jeu, sauf ceux qu'on réécrit ici pour lui seul. Chaque ligne dit d'où
+              vient le sien.</p>
+            <div class="ch"><span class="cn">monde</span>
+              <span class="ct">dark fantasy marshland, rotting timber, standing water</span>
+              <span class="co">du jeu</span></div>
+            <div class="ch"><span class="cn">époque</span>
+              <span class="ct">late medieval</span><span class="co">du jeu</span></div>
+            <div class="ch"><span class="cn">rendu</span>
+              <span class="ct">pixel art, crisp edges, no anti-aliasing</span>
+              <span class="co">du jeu</span></div>
+            <div class="ch"><span class="cn">vue</span>
+              <span class="ct">side view, flat platformer angle</span><span class="co">du jeu</span></div>
+            <div class="ch" style="opacity:.45"><span class="cn">trait</span>
+              <span class="ct" style="text-decoration:line-through">dark outline, one pixel</span>
+              <span class="co">éteint</span></div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-t"><span class="nm">Ses images d'exemple</span>
+              <span class="cpt">1 retenue · 1 proposée</span></div>
+            <p class="propos">Quand on demande un dessin à la machine, on peut lui joindre des
+              images pour lui montrer le style visé. Celles retenues ici repartent avec chaque
+              image du pèlerin. On coche juste avant de payer celles qui partent vraiment.</p>
+            <div class="lref">
+              <div class="vg damier">
+                <i style="left:9px;top:5px;width:20px;height:13px;background:#2E4A46"></i>
+                <i style="left:12px;top:16px;width:14px;height:15px;background:#8A7A5E"></i>
+              </div>
+              <span class="nm">un dessin de départ, épinglé sur le pèlerin</span>
+              <span class="dt">512 × 512</span><span class="ac no">retirer</span>
+            </div>
+            <div class="lref">
+              <div class="vg damier">
+                <i style="left:10px;top:6px;width:18px;height:12px;background:#3A4A5E"></i>
+                <i style="left:13px;top:16px;width:12px;height:15px;background:#6E6E5E"></i>
+              </div>
+              <span class="nm">le corps retenu de la pose « repos »</span>
+              <span class="dt">64 × 64 · déjà passé par le style du jeu</span>
+              <span class="ac">retenir ›</span>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-t"><span class="nm">Ce que le jeu réclame</span>
+              <span class="cpt">6 poses · rien de rangé</span></div>
+            <p class="propos">Les attitudes que ce type d'objet doit avoir. Elles viennent de sa
+              famille — un personnage marche et meurt, un coffre s'ouvre —, et on peut en ajouter
+              pour lui seul.</p>
+            <div class="lpo"><span class="nm">repos</span><span class="im">1 image</span>
+              <span class="og">de son type</span></div>
+            <div class="lpo"><span class="nm">marche</span><span class="im">1 image</span>
+              <span class="og">de son type</span></div>
+            <div class="lpo"><span class="nm">course</span><span class="im">1 image</span>
+              <span class="og">de son type</span></div>
+            <div class="lpo"><span class="nm">attaque</span><span class="im">1 image</span>
+              <span class="og">de son type</span></div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-t"><span class="nm">Ce qui est fait</span>
+              <span class="cpt">2 cases sur 6</span></div>
+            <p class="propos">Les images qui existent déjà, une par attitude remplie. Pose le
+              pointeur dessus et appuie sur la barre d'espace : elle emplit l'écran.</p>
+            <div class="grillette">
+              <div class="cf"><div class="vg damier">
+                <i style="left:14px;top:8px;width:28px;height:19px;background:#2E4A46"></i>
+                <i style="left:18px;top:25px;width:20px;height:22px;background:#8A7A5E"></i>
+                <i style="left:41px;top:14px;width:4px;height:34px;background:#5A4632"></i>
+              </div><div class="lg">repos</div></div>
+              <div class="cf"><div class="vg damier">
+                <i style="left:12px;top:8px;width:30px;height:19px;background:#2E4A46"></i>
+                <i style="left:17px;top:25px;width:22px;height:22px;background:#8A7A5E"></i>
+                <i style="left:43px;top:16px;width:4px;height:32px;background:#5A4632"></i>
+              </div><div class="lg">marche</div></div>
+              <div class="cf vide"><div class="vg damier"></div><div class="lg">course</div></div>
+              <div class="cf vide"><div class="vg damier"></div><div class="lg">attaque</div></div>
+              <div class="cf vide"><div class="vg damier"></div><div class="lg">dégâts</div></div>
+              <div class="cf vide"><div class="vg damier"></div><div class="lg">mort</div></div>
+            </div>
+            <div class="ss">les voir toutes en grand, l'une après l'autre ›</div>
+          </div>
+
+        </div>
+
+        <!-- 380 — la matrice -->
+        <div class="droite">
+          <span class="col-t">Sa matrice</span>
+          <p class="propos" style="font-size:11px;margin-bottom:10px">Ce qui est fait et ce qui
+            manque, pose par pose. Elle change pendant qu'on règle à gauche, sans rien refermer.</p>
+          <div class="lm"><span class="nm">repos</span><span class="ct bon">2 / 1</span></div>
+          <div class="lm"><span class="nm">marche</span><span class="ct bon">1 / 1</span></div>
+          <div class="lm"><span class="nm">course</span><span class="ct">0 / 1</span></div>
+          <div class="lm"><span class="nm">attaque</span><span class="ct">0 / 1</span></div>
+          <div class="lm"><span class="nm">dégâts</span><span class="ct">0 / 1</span></div>
+          <div class="lm"><span class="nm">mort</span><span class="ct">0 / 1</span></div>
+          <div class="tot">2 / 6</div>
+          <p class="propos" style="font-size:11px;margin-top:12px;color:var(--texte-3)">
+            Ranger une pose retire sa ligne et son coût. Le compte des rangées reste écrit à côté,
+            pour qu'un tableau plein obtenu en rangeant se voie.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="lgd">croquis à l'échelle, aux polices et aux couleurs du produit · les silhouettes
+      sont schématiques · les chiffres sont ceux du pèlerin, relevés le 3 septembre 2026</div>
+
+    <div class="ans">
+      <div class="an"><span class="k">01</span><span class="t"><b>Le bandeau d'identité.</b> Le
+        portrait, le nom, et une ligne de faits. Le portrait est la meilleure image faite de la
+        chose — celle qu'on a marquée comme préférée, sinon la plus récente. Elle est posée sur le
+        damier gris, le motif que le produit emploie partout pour dire qu'une image a un fond
+        transparent. Rien n'est fabriqué : c'est une image qui existe déjà.</span></div>
+      <div class="an"><span class="k">02</span><span class="t"><b>Le nom en grand, une fois.</b>
+        C'est le seul emploi permis de la police à empattements ici — le produit s'autorise cette
+        police pour trois choses, dont le titre d'un écran. Aujourd'hui elle est employée pour
+        <em>autre chose</em> : le chiffre « 2 cases sur 6 » est écrit avec, en très gros, et la
+        règle typographique du produit dit que <b>toute mesure s'écrit dans la police à chasse
+        fixe, sans exception</b>. Le nouveau dessin rend la police à empattements au nom, et le
+        chiffre à la police des chiffres.</span></div>
+      <div class="an"><span class="k">03</span><span class="t"><b>Les résumés de gauche cessent de
+        se couper.</b> Ils deviennent un mot ou deux — <span class="mesure">écrit</span>,
+        <span class="mesure">7 textes</span>, <span class="mesure">1 retenue</span>,
+        <span class="mesure">2 sur 6</span> — au lieu d'une phrase tronquée. Un sommaire dit où
+        aller, il ne résume pas ce qu'on trouvera.</span></div>
+      <div class="an"><span class="k">04</span><span class="t"><b>Chaque section porte son propos
+        sous son titre</b>, en une phrase, dans le gris de lecture et non dans le gris des
+        avertissements. Le titre garde son pointillé : le survol donne la version complète, celle
+        que le Guide affiche aussi.</span></div>
+      <div class="an"><span class="k">05</span><span class="t"><b>Une vignette par image
+        d'exemple.</b> C'est la même hauteur que partout ailleurs dans le produit pour ce genre de
+        vignette. On retient ou on retire une image en la regardant, ce qui est le geste que la
+        section demande.</span></div>
+      <div class="an"><span class="k">06</span><span class="t"><b>Les images faites remplacent le
+        gros chiffre.</b> Six carrés, deux remplis, quatre en pointillé. Le compte reste écrit
+        au-dessus, en petit. Un carré vide occupe la même place qu'un carré plein — c'est la règle
+        du produit pour ses tableaux de poses : <em>le manque prend autant de place que le
+        fait</em>, sinon on ne le voit plus.</span></div>
+      <div class="an gris"><span class="k">07</span><span class="t"><b>Le tableau de droite ne
+        gagne pas de vignettes,</b> et c'est délibéré. Son métier est de bouger pendant qu'on règle
+        à gauche ; y poser des images en ferait une deuxième planche de contact, ce que le produit
+        s'interdit — il n'a qu'une seule galerie d'images, et il tient à ce que ça reste vrai. Les
+        images vivent dans la section « ce qui est fait », à trois centimètres de là.</span></div>
+      <div class="an gris"><span class="k">08</span><span class="t"><b>Le calibrage se rejoint
+        depuis le sommaire.</b> C'est l'outil qui met toutes les poses d'une chose à la même
+        taille ; aujourd'hui on ne l'atteint que depuis l'établi. Une ligne discrète en bas du
+        sommaire, avec son état, suffit — la fiche est l'endroit où l'on regarde une chose en
+        entier.</span></div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>Les cinq explications qui manquent</h2></div>
+    <p class="intro">Le produit range ses explications dans un recueil unique. Chacune tient en
+      trois lignes toujours identiques : <strong>ce que c'est</strong>, <strong>ce que ça
+      change</strong>, <strong>d'où ça sort</strong>. La même entrée sert au survol et au Guide.
+      Cinq entrées manquent, les voici écrites — elles sont prêtes à poser telles quelles.</p>
+
+    <div class="bulle">
+      <p class="b1">Le texte qui redit à la machine de qui il s'agit. Il repart avec chaque image
+        qu'on demande de cette chose.</p>
+      <p class="b2">Il part dans le texte de chaque génération de cette chose, avant le reste. Sans
+        lui, l'appel ne dit pas de quoi il s'agit et la machine invente.</p>
+      <p class="b3"><span>toi · vide au départ</span><a href="#">Le guide ›</a></p>
+    </div>
+    <p class="sourd" style="font-size:11.5px;margin-bottom:22px">↑ <b>Ce qu'il est</b> — la bulle au
+      survol du titre. La première des trois lignes est aussi celle qui s'écrit sous le titre, à
+      demeure.</p>
+
+    <table>
+      <tr>
+        <td class="k" style="width:180px">Ce qui l'habille</td>
+        <td><b>Ce que c'est ·</b> Les sept textes de style qui décrivent le monde autour de la
+          chose — le monde, l'époque, le rendu, la vue, le trait, la lumière, la technique.<br>
+          <b>Ce que ça change ·</b> Ils partent avec chaque image. Par défaut ils viennent du jeu ;
+          en réécrire un ici ne vaut que pour cette chose, et le texte remplacé reste lisible en
+          dessous, barré.<br>
+          <b>D'où ça sort ·</b> le jeu, ou l'ambiance choisie, ou toi</td>
+      </tr>
+      <tr>
+        <td class="k">Ses images d'exemple</td>
+        <td><b>Ce que c'est ·</b> Les images qu'on joint à la demande pour montrer le style visé.
+          Celles retenues ici sont disponibles pour chaque image de cette chose.<br>
+          <b>Ce que ça change ·</b> Rien tout seul. Ce qui part vraiment se coche juste avant de
+          payer — mais une image qui n'est pas retenue ici n'y sera pas proposée.<br>
+          <b>D'où ça sort ·</b> le tableau d'inspiration, les images déjà faites, toi</td>
+      </tr>
+      <tr>
+        <td class="k">Ce que le jeu réclame</td>
+        <td><b>Ce que c'est ·</b> Les attitudes que cette chose doit avoir : repos, marche, course
+          pour un personnage ; fermé, ouvert, vidé pour un coffre.<br>
+          <b>Ce que ça change ·</b> Rien à la génération. C'est cette liste qui décide du nombre de
+          cases à remplir, donc de ce que le tableau de droite compte.<br>
+          <b>D'où ça sort ·</b> le type d'objet · plus ce que cette chose s'est ajouté</td>
+      </tr>
+      <tr>
+        <td class="k">Ce qui est fait</td>
+        <td><b>Ce que c'est ·</b> Les images qui existent déjà pour cette chose, une par attitude
+          remplie.<br>
+          <b>Ce que ça change ·</b> Rien du tout, et c'est le point : on regarde, on ne modifie
+          rien et on ne paie rien.<br>
+          <b>D'où ça sort ·</b> les images faites · le manque n'a pas de couleur, il est en cours</td>
+      </tr>
+      <tr>
+        <td class="k">Sa matrice</td>
+        <td><b>Ce que c'est ·</b> Le tableau des attitudes de cette chose, avec ce qui les remplit.
+          Il change pendant qu'on règle à gauche.<br>
+          <b>Ce que ça change ·</b> Rien à la génération. Ranger une attitude retire sa ligne et son
+          coût — le compte des rangées reste écrit à côté, pour qu'un tableau plein obtenu en
+          rangeant ne passe pas pour un travail fini.<br>
+          <b>D'où ça sort ·</b> les images faites, comptées par le serveur</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══ 05 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>La ligne écrite sous le titre — décidée le 3 septembre 2026</h2></div>
+
+    <p class="intro">Cette section a d'abord été écrite comme une question posée à l'auteur. Elle
+      est devenue une décision le jour même, parce qu'un comptage dans le code a montré que la
+      question était mal posée. Les deux moitiés sont gardées : la première explique ce qu'on
+      croyait, la seconde ce qu'on a trouvé.</p>
+
+    <div class="note gris">
+      <span class="lab">Ce qu'on croyait — et pourquoi c'était trop prudent</span>
+      <p>Toutes les explications de l'atelier vivent dans <strong>un seul cahier</strong>. Chacune y
+        tient en trois lignes : ce que c'est, ce que ça change, d'où ça sort. Ce cahier s'affiche à
+        deux endroits — la petite bulle au survol d'un nom souligné, et le Guide.</p>
+      <p style="margin-top:10px">Écrire la première de ces trois lignes <em>sous le titre d'une
+        section</em>, visible sans rien survoler, semblait donc ajouter un <strong>troisième</strong>
+        affichage à une règle qui en fixe deux.</p>
+    </div>
+
+    <div class="note bien">
+      <span class="lab">Ce que le comptage a trouvé</span>
+      <h3>L'atelier écrit déjà ce genre de phrase partout, et la règle ne l'a jamais interdit.</h3>
+      <p><strong>74 petites lignes explicatives sont écrites en dur dans dix-sept écrans.</strong>
+        Quinze ont été relues une par une : <strong>treize expliquent ce que fait un réglage sans
+        rien refuser</strong>. Trois, telles quelles :</p>
+      <div class="bulle" style="width:auto;max-width:640px;margin-top:10px">
+        <p class="b1" style="margin-bottom:6px">« l'opacité ne pose aucune couleur : elle décide de
+          ce qui est là »</p>
+        <p class="b1" style="margin-bottom:6px">« multiples entiers seulement — un sprite agrandi
+          d'une fois et demie fabrique des pixels qui n'existent pas »</p>
+        <p class="b1" style="margin-bottom:0">« de combien une couleur doit changer pour compter
+          comme changée »</p>
+      </div>
+      <p style="margin-top:10px">Ce sont exactement les phrases que ce dessin proposait d'ajouter.
+        La règle « un seul cahier, deux affichages » ne dit pas <em>n'écris rien à l'écran</em> :
+        elle dit <strong>ne recopie pas le cahier ailleurs</strong>, parce que deux copies divergent
+        en trois semaines et que la fausse sera celle qu'on a sous les yeux au moment du doute.</p>
+    </div>
+
+    <div class="note">
+      <span class="lab">Ce qui est décidé</span>
+      <h3>La phrase s'écrit sous le titre, et elle est lue dans le cahier.</h3>
+      <p><strong>La vraie question était : on la tape dans l'écran comme les 74 autres, ou on la lit
+        dans le cahier ?</strong> On la lit. Ce n'est alors pas un troisième texte, c'est le même
+        texte montré une troisième fois : corriger l'entrée corrige la bulle, le Guide
+        <em>et</em> la ligne, du même geste.</p>
+      <p style="margin-top:10px"><strong>Rien n'est à rédiger en plus.</strong> Le cahier impose
+        déjà que <em>ce que c'est</em> tienne en une phrase, jamais deux — c'est-à-dire exactement
+        le format d'une ligne sous un titre.</p>
+      <p style="margin-top:10px"><strong>Et la règle en sort mieux tenue qu'avant</strong>, puisque
+        les 74 lignes d'aujourd'hui sont, elles, tapées à la main et ne se corrigent nulle part.</p>
+      <p style="margin-top:10px"><strong>La limite, pour que ça ne se répande pas.</strong> La ligne
+        s'écrit seulement là où <em>on peut se tromper de section</em> — le même test que celui qui
+        décide déjà de l'existence d'une bulle. Sur un panneau où chaque ligne porte un nom sans
+        ambiguïté, rien ne change : le pointillé au survol suffit.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Ce que ça n'ajoute pas</h2></div>
+    <p class="intro">La discipline du dossier est qu'un écran refait ne doit inventer ni couleur, ni
+      largeur, ni hauteur, ni symbole, ni police. Voici le compte.</p>
+
+    <div class="avant-apres">
+      <div class="cadre ok">
+        <span class="t">rien de neuf</span>
+        <p><b>Aucune largeur.</b> Les trois colonnes restent celles du codex.</p>
+        <p><b>Aucune couleur.</b> Le vert du fait, le gris du pas-encore, le bleu de l'action : les
+          trois qui existent.</p>
+        <p><b>Aucun symbole.</b> Le produit en compte trois ; le dessin n'en emploie aucun de plus.</p>
+        <p><b>Aucune hauteur.</b> Les bandes sont prises dans la liste fermée du produit.</p>
+        <p><b>Aucune police.</b> Les trois familles, chacune dans son rôle.</p>
+      </div>
+      <div class="cadre no">
+        <span class="t">ce qui disparaît</span>
+        <p><b>Le compte écrit trois fois</b> devient un compte écrit une fois, plus l'état du
+          sommaire.</p>
+        <p><b>Le grand chiffre à empattements</b> disparaît : une mesure s'écrit dans la police des
+          mesures.</p>
+        <p><b>Les résumés tronqués</b> disparaissent avec la troncature.</p>
+        <p><b>Les explications rangées dans la fente des refus</b> en sortent, et cette fente
+          retrouve son seul métier : dire pourquoi quelque chose est éteint.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 07 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que cette page fait reporter ailleurs</h2></div>
+    <p class="intro">Rien de ce dossier n'est encore reporté dans les documents qui font foi. Voici
+      ce que celle-ci doit y faire écrire, si le dessin est retenu.</p>
+    <table>
+      <tr><td class="k" style="width:250px">Le recueil des explications</td>
+        <td>Cinq entrées neuves — les cinq parties de la fiche —, écrites en entier au paragraphe 04
+          de cette page. Et le petit groupe « codex » du Guide passe de trois entrées à huit.</td></tr>
+      <tr><td class="k">Le document des motifs de dessin</td>
+        <td>Deux ajouts. <b>Un ·</b> une fiche montre la chose dont elle est la fiche — le bandeau
+          d'identité, sa composition, et le fait que le portrait ne fabrique rien. <b>Deux ·</b> le
+          propos d'une section s'écrit sous son titre quand on peut se tromper de section, et
+          <b>cette ligne est lue dans le cahier</b>, jamais retapée — décidé le 3 septembre 2026,
+          avec les mesures du paragraphe 05. La section « un seul corpus, deux rendus » devient
+          « un seul corpus, trois rendus », et ce qu'elle interdit ne change pas d'un mot :
+          <em class="it">recopier</em>.</td></tr>
+      <tr><td class="k">Le document du système de dessin</td>
+        <td>Une correction, pas un ajout : rappeler que la police à empattements ne porte jamais une
+          mesure, et que le gris le plus sourd ne porte jamais le nom d'un réglage — deux règles
+          déjà écrites, enfreintes ici.</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    Asset Kitchen — la fiche d'une chose du jeu, deuxième dessin · 3 septembre 2026 ·
+    écran entier · le premier dessin reste dans <span class="mesure">07bis-fiche-entite.html</span>
+  </footer>
+
+</div>
+</body>
+</html>

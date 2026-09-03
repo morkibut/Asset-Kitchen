@@ -21,6 +21,7 @@ essai d'ici n'appelle le fournisseur.
 from __future__ import annotations
 
 import io
+from dataclasses import replace
 
 import numpy as np
 from PIL import Image
@@ -245,6 +246,41 @@ def test_enregistrer_une_recette_dit_ce_qu_elle_n_emporte_pas(client, double):
     assert gardee["passes"][0]["point"] is None
     assert gardee["recadrage"]["boite"] is None
     assert gardee["recadrage"]["marge"] == 4
+
+
+def test_enregistrer_une_recette_quantifiee_sur_la_palette_du_projet(
+    client, atelier, double
+):
+    """Ce qui a été posé sans broncher s'enregistre sans broncher.
+
+    Signalé le 3 septembre 2026 : l'écran rendait un 409 à chaque essai
+    d'enregistrement. Une recette nommée ne pend à aucun asset, et personne ne
+    disait au filet quelle palette existe — il jugeait donc la quantification
+    sur *aucune* palette et refusait tout, y compris la recette que l'atelier
+    venait d'appliquer à l'image sous les yeux de l'auteur. C'est le projet
+    ouvert qu'il regarde désormais, celui-là même sur lequel l'écran a décidé
+    de ne pas griser la quantification.
+    """
+    projet = atelier.bibliotheque.creer_projet("un monde qui a sa palette")
+    objet = atelier.base.lire_projet(projet.identifiant)
+    objet.univers = replace(objet.univers, palette=("#101010", "#f0f0f0"))
+    atelier.base.enregistrer_projet(objet)
+
+    identifiant = _asset(client, double)
+    # La palette reste vide dans la recette : elle n'y est pas recopiée, elle
+    # est **posée** par le projet. C'est très exactement le cas que le refus
+    # attrapait.
+    _poser(
+        client,
+        identifiant,
+        quantification={"couleurs": 4, "palette": [], "tramage": "aucun"},
+    )
+    courante = client.get(f"/api/assets/{identifiant}").json()["recette"]
+
+    reponse = client.put("/api/recipes/quatre couleurs", json=courante)
+    assert reponse.status_code == 200, reponse.text
+    gardee = reponse.json()["recettes"]["quatre couleurs"]
+    assert gardee["quantification"]["couleurs"] == 4
 
 
 def test_deux_images_par_la_meme_recette_nommee_sortent_identiques(client, double):

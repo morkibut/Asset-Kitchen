@@ -24,7 +24,7 @@ besoin de ça » auraient fini par se contredire. Le nom reviendra avec le secon
 plan, s'il vient : `docs/archi-versions.md` §7 porte la décision.
 
 **Ajouter une pose n'ajoute qu'une case vide, jamais une génération**
-(`docs/PLAN.md` C1). Rien ici ne part vers le fournisseur, et rien ici ne coûte.
+(`docs/archive/plan-versions-tenues.md` C1). Rien ici ne part vers le fournisseur, et rien ici ne coûte.
 """
 
 from __future__ import annotations

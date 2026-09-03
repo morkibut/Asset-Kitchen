@@ -79,6 +79,7 @@ export function PanneauCalque({
   pose,
   piece,
   onFermer,
+  onSuperposition,
   onErreur,
 }: {
   calque: Asset
@@ -89,6 +90,10 @@ export function PanneauCalque({
   pose: string
   piece: string
   onFermer: () => void
+  /** **Refaire le calage à la main** (G16) : ouvre la table de superposition
+   *  sur ce vêtement. Absent, le bouton ne paraît pas — la carte se lit
+   *  exactement comme avant. */
+  onSuperposition?: () => void
   onErreur: (erreur: unknown, defaut: string) => void
 }) {
   const difference = calque.recette.difference
@@ -112,6 +117,18 @@ export function PanneauCalque({
   // une bascule laisserait l'écran sur l'avant après le regard, et la retouche
   // suivante se ferait sur une image qui n'est plus celle qu'on modifie.
   const [avant, setAvant] = useState(false)
+  // **Ce que la carte montre : le vêtement découpé, ou ce qui est arrivé.**
+  // Une bascule et non un appui, contrairement à *tenir montre l'avant* : on
+  // regarde ce qui est arrivé pour le juger, pas pour le comparer d'un coup
+  // d'œil — et on veut pouvoir le regarder les deux mains libres (G16).
+  const [arrivee, setArrivee] = useState(false)
+  // **Y a-t-il une case arrivée à montrer ?** Demandé une fois à l'ouverture,
+  // parce que **l'écran ne propose pas un geste qui échouera** : une planche
+  // partie du disque, un découpage qui ne correspond plus, et la réponse est
+  // non. C'est l'ouverture de la table de superposition qui porte le fait —
+  // c'est la même question, et deux endroits pour y répondre finiraient par
+  // répondre deux choses.
+  const [arriveePossible, setArriveePossible] = useState(false)
   const cadre = useRef<HTMLDivElement>(null)
 
   // Un calque changé ailleurs — un autre onglet, un recalcul — arrive par le
@@ -121,6 +138,23 @@ export function PanneauCalque({
     if (geste) return
     setZone((difference?.zone as Zone | undefined) ?? null)
   }, [calque.identifiant, difference?.zone?.join(","), geste])
+
+  useEffect(() => {
+    let vivant = true
+    setArrivee(false)
+    setArriveePossible(false)
+    if (!difference) return
+    api
+      .ouvrirSuperposition(calque.identifiant)
+      .then((recu) => vivant && setArriveePossible(Boolean(recu?.arrivee_possible)))
+      // **Un silence, pas une alerte** : ne pas savoir s'il y a une case
+      // arrivée n'empêche rien de ce que la carte fait déjà. La bascule ne
+      // paraît pas, et c'est tout ce que ça change.
+      .catch(() => vivant && setArriveePossible(false))
+    return () => {
+      vivant = false
+    }
+  }, [calque.identifiant, Boolean(difference)])
 
   const largeur = calque.traite ? calque.rendu_largeur : calque.largeur
   const hauteur = calque.traite ? calque.rendu_hauteur : calque.hauteur
@@ -272,8 +306,9 @@ export function PanneauCalque({
   // L'avant se demande à la même adresse, sous une autre question. `empreinte`
   // y voyage comme partout : le rendu change sous la même adresse à chaque
   // geste, et sans elle le navigateur resservirait l'image d'avant l'avant.
-  const source =
-    avant && mainPosee
+  const source = arrivee
+    ? api.arrivee(calque.identifiant)
+    : avant && mainPosee
       ? api.avant(calque.identifiant, calque.empreinte)
       : sujetCalque.src
 
@@ -284,14 +319,56 @@ export function PanneauCalque({
     >
       <EnTetePanneau>
         {piece} · {pose}
+        {/* **Refaire le calage à la main** (G16, US-503). À droite du titre,
+            parce que c'est un geste sur la carte entière et non sur l'un de ses
+            réglages — et qu'il emmène ailleurs, comme *sa fiche ›* ou *le
+            calibrage ›* de la colonne de gauche. Il ne paraît que sur un
+            vêtement : un corps habillé n'a rien à recaler. */}
+        {difference && onSuperposition && (
+          <button
+            type="button"
+            onClick={onSuperposition}
+            title="Refaire la superposition à la main, sans rien repayer"
+            className="mesure ml-auto px-1 text-[10px] normal-case text-texte-3 hover:text-texte"
+          >
+            superposition ›
+          </button>
+        )}
       </EnTetePanneau>
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
+        {/* **Ce que la carte montre** (G16, US-502). Le vêtement découpé, ou la
+            case telle qu'elle est arrivée du modèle — l'image payée, que rien
+            n'ouvrait jusqu'ici. Elle ne paraît que quand il y a vraiment
+            quelque chose à montrer : sans planche sur le disque, la bascule
+            serait un bouton qui échoue.
+
+            **Et elle dit ce que *brut* veut dire ici**, parce que le mot en
+            désigne deux : sur un corps habillé, le brut rangé *est* la case
+            telle qu'elle est arrivée ; sur un vêtement, c'est celle que
+            l'atelier a déjà mise à l'échelle et calée. Une bascule sans cette
+            phrase aurait laissé croire qu'on regarde le fichier rangé. */}
+        {arriveePossible && (
+          <div className="flex flex-col gap-2">
+            <Libelle>Ce qu'on regarde</Libelle>
+            <Segments<string>
+              valeurs={["calque", "brut"] as const}
+              valeur={arrivee ? "brut" : "calque"}
+              onChange={(quoi) => setArrivee(quoi === "brut")}
+            />
+            <p className="mesure text-[10px] leading-4 text-texte-3">
+              {arrivee
+                ? "la case telle qu'elle est arrivée du modèle, avant que l'atelier ne la mette à l'échelle et ne la cale sur le corps"
+                : "le vêtement seul, découpé par différence avec le corps"}
+            </p>
+          </div>
+        )}
+
         {/* **Les trois outils au-dessus du cadre**, parce qu'on choisit ce qu'on
             va faire avant de le faire. Ils ne paraissent que sur un calque : un
             corps habillé n'a ni masque ni retouche, et trois segments morts
             au-dessus de son image seraient du cadrage affiché. */}
-        {difference && (
+        {difference && !arrivee && (
           <div className="flex flex-col gap-2">
             <Libelle>Ce que la main tient</Libelle>
             <Segments<Outil>
@@ -312,18 +389,31 @@ export function PanneauCalque({
             —, donc la superposition est exacte sans qu'aucune mise à l'échelle
             n'ait à être calculée ici. Le damier dit ce qui est transparent, comme
             partout ailleurs dans le produit. */}
+        {/* **Pendant qu'on regarde ce qui est arrivé, la main ne tient rien**
+            (G16). Le cadre cesse d'être une surface de geste : la case arrivée
+            n'a ni les dimensions ni le cadrage du vêtement, et un rectangle
+            tracé dessus serait posé sur une image que le serveur ne connaît pas
+            sous ce nom-là. Le corps dessous s'efface pour la même raison — il
+            ne se superpose plus au pixel. */}
         <div
           ref={cadre}
-          onPointerDown={commencer}
-          onPointerMove={suivre}
-          onPointerUp={finir}
-          onPointerCancel={finir}
-          role="application"
-          aria-label={`Zone du calque ${piece} sur ${pose}`}
-          className="damier relative shrink-0 cursor-crosshair touch-none select-none"
+          onPointerDown={arrivee ? undefined : commencer}
+          onPointerMove={arrivee ? undefined : suivre}
+          onPointerUp={arrivee ? undefined : finir}
+          onPointerCancel={arrivee ? undefined : finir}
+          role={arrivee ? undefined : "application"}
+          aria-label={
+            arrivee
+              ? undefined
+              : `Zone du calque ${piece} sur ${pose}`
+          }
+          className={[
+            "damier relative shrink-0 touch-none select-none",
+            arrivee ? "" : "cursor-crosshair",
+          ].join(" ")}
           style={{ width: CADRE, height: haut }}
         >
-          {sujetCorps && (
+          {sujetCorps && !arrivee && (
             <img
               src={sujetCorps.src}
               alt=""
@@ -344,7 +434,7 @@ export function PanneauCalque({
               et `--echec` veut dire *ce qui échoue ou ce qui détruit*. Ce qu'il
               fait est dit par le segment allumé juste en dessous ; ce qu'il
               couvre est dit par le trait lui-même, et ça suffit. */}
-          {trace && (
+          {trace && !arrivee && (
             <svg
               aria-hidden
               className="pointer-events-none absolute inset-0"
@@ -376,7 +466,7 @@ export function PanneauCalque({
               qu'on affine. La poignée, elle, appartient au geste de C3 — la
               laisser sous un pinceau aurait mis une cible de retaille au milieu
               de la surface qu'on peint. */}
-          {zone && (
+          {zone && !arrivee && (
             <>
               <div
                 className={[
@@ -424,7 +514,7 @@ export function PanneauCalque({
             elle ôte, largement ou au pixel —, seule la surface sur laquelle elle
             le fait change. Deux jeux de réglages auraient demandé de les tenir
             d'accord pour un geste que la main ne distingue pas. */}
-        {outil !== "zone" && (
+        {outil !== "zone" && !arrivee && (
           <div className="flex flex-wrap items-center gap-2">
             <Segments<string>
               valeurs={["garder", "ôter"] as const}

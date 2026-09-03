@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T6 — l'export.
 
-Un test par critère de `docs/PLAN.md` § Phase T6, nommé d'après lui.
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T6, nommé d'après lui.
 
 **Aucun test de ce fichier n'appelle le fournisseur, et l'un le prouve** en
 comptant les appels du double avant et après un export. C'est le cinquième
@@ -189,7 +189,7 @@ def test_le_descriptif_porte_label_prompt_reglages_dimensions_et_filiation(
     # 2 · le prompt, et le prompt négatif : ceux de l'appel qui a produit la
     #     planche. Une découpe qui ne dirait pas d'où elle vient serait, dans un
     #     dossier de jeu, une image sans histoire.
-    assert fiche["generation"]["prompt"] == "une planche de deux"
+    assert fiche["generation"]["prompt"] == "REQUEST\n\nune planche de deux"
     assert fiche["generation"]["prompt_negatif"] == "flou"
     assert fiche["generation"]["modele"] == "essai:rend-du-png"
 

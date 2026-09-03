@@ -56,13 +56,22 @@ from atelier.domaine.plan import Pose
 from atelier.domaine.projet import (
     AUCUNE_CIBLE,
     CHAMPS_BIBLE,
+    CIBLE_PAR_DEFAUT,
     Champ,
     Echelle,
     Projet,
     Univers,
     bible_complete,
     empreinte_palette,
+    passe_par_defaut,
 )
+
+# **« Personne n'a parlé de ce champ-là »**, et c'est un troisième état (D1).
+# Il n'existe que pour le détourage par défaut, où `None` est déjà pris : là-bas
+# il veut dire « remets-le au produit », donc il fallait autre chose pour dire
+# « ne touche pas ». Un objet anonyme plutôt qu'une chaîne réservée : rien ne
+# peut l'imiter par accident depuis un fichier ou une route.
+NON_DIT = object()
 from atelier.domaine.lien import (
     CARTE as BOUT_CARTE,
     GENRES as GENRES_BOUT,
@@ -72,7 +81,11 @@ from atelier.domaine.lien import (
     Lien,
     meme_paire,
 )
+from atelier.domaine.fond import Proposition, fond_valide, proposer
 from atelier.domaine.teinte import AUCUNE, TEINTES
+from atelier.domaine.projet import STYLES, cible_du_changement, methode_du_changement
+from atelier.domaine.recette import METHODES_DE_REDUCTION, occupation_max
+from atelier.image.traitement import raison_methode
 from atelier.image import (
     COTE_MIN,
     COULEURS_MAX,
@@ -870,7 +883,7 @@ class ServiceUnivers:
     def couper(self, projet: str, identifiant: str) -> Lien:
         """Le trait part, tout de suite. Pas d'annulation courte, comme pour une
         carte : un lien n'a rien coûté. La toile en a une, en mémoire, qui vit le
-        temps de l'écran (`docs/PLAN.md` T8)."""
+        temps de l'écran (`docs/archive/plan-versions-tenues.md` T8)."""
         un = self.lien(projet, identifiant)
         self._fichiers.effacer_lien(projet, identifiant)
         self._diffusion.publier("lien", {**un.en_json(), "coupe": True})
@@ -1047,20 +1060,65 @@ class ServiceUnivers:
             return ()
         return self._accorder(projet).univers.palette
 
+    def fond_propose(self, projet: str | None) -> Proposition:
+        """La couleur de fond que l'atelier propose à ce jeu-là — **ou rien** (D3).
+
+        **Elle se calcule, elle ne s'enregistre pas.** La palette est déjà un
+        cache nommé par sa provenance ; ranger à côté d'elle une couleur qui s'en
+        déduit aurait été une seconde vérité qui se périme dès qu'un artwork
+        entre. Le calcul est une poignée de soustractions sur une liste fermée :
+        le refaire à chaque ouverture d'écran coûte moins que de le tenir à jour.
+
+        ⚠️ **Elle lit la palette telle qu'elle est, sans la remettre d'accord**,
+        et c'est la seule subtilité du chemin. `palette()` réaccorde la palette
+        avec les artworks et **écrit** quand elle a changé : la brancher ici
+        aurait fait de `GET /api/universe` une route qui modifie le projet
+        qu'elle rend — ce que `tests/test_r1.py` a rattrapé dans l'heure, sur un
+        essai qui vérifie qu'un réglage refusé ne laisse rien derrière lui.
+
+        Rien n'est perdu : la même route rend la palette *et* la proposition, et
+        toutes deux lisent le même état. Elles sont donc d'accord entre elles,
+        ce qui est la seule chose que l'écran demande. Un artwork promu réaccorde
+        la palette par son propre chemin, et la proposition suit à la lecture
+        suivante.
+
+        Sans projet, elle dit qu'il n'y a pas de palette — ce qui est vrai, et
+        c'est la même réponse qu'un projet qui n'a pas encore d'artwork.
+        """
+        return proposer(self.univers(projet).palette)
+
     def regler_univers(
         self,
         projet: str,
         *,
         bible: Iterable[dict[str, Any]] | None = None,
         bareme: Iterable[dict[str, Any]] | None = None,
+        style: str | None = None,
         cible_px: int | None = None,
         vue: str | None = None,
         couleurs: int | None = None,
+        methode_pixels: str | None = None,
+        fond: str | None = None,
         modeles: dict[str, str] | None = None,
         modele_planche: str | None = None,
         modele_edition: str | None = None,
+        detourage_image: Any = NON_DIT,
+        detourage_planche: Any = NON_DIT,
+        detourages: Any = NON_DIT,
     ) -> Projet:
-        """Poser les réglages de l'univers. Tout est facultatif, rien ne lève à vide."""
+        """Poser les réglages de l'univers. Tout est facultatif, rien ne lève à vide.
+
+        **Les trois derniers ne suivent pas la convention des autres**, et c'est
+        écrit ici pour qu'on ne s'y trompe pas en lisant vite. Partout ailleurs
+        dans cette signature, `None` veut dire *ne touche pas à celui-là* ; pour
+        le détourage par défaut (D1), `None` veut dire **remets-le au produit**,
+        et *ne touche pas* est le sentinelle `NON_DIT`.
+
+        La raison est qu'un défaut de détourage n'a pas de valeur vide. Une
+        chaîne vide retire un modèle, un dictionnaire sans la clé retire une
+        famille ; une passe, elle, est toujours quelque chose. Sans un troisième
+        état, un réglage posé une fois ne pourrait plus jamais être retiré.
+        """
         objet = self._exige(projet)
         univers = objet.univers
 
@@ -1086,14 +1144,56 @@ class ServiceUnivers:
                 raise UniversRefuse("une échelle a besoin d'un nom")
             if len(set(noms)) != len(noms):
                 raise UniversRefuse("deux échelles portent le même nom")
+            # **Le plafond du barème est ce que la case peut porter** (tranche des
+            # tailles, 3 septembre 2026). C'est ici que la fermeture se payait le
+            # plus cher : le barème est l'endroit même où l'on dit *un moulin est
+            # plus haut qu'un personnage*, et il refusait de l'entendre. 300 % se
+            # lit trois personnages, et la case grandit d'autant.
+            #
+            # **Sans taille imposée, on juge contre la case par défaut.** Un jeu
+            # en dessin n'a pas de grille, donc l'occupation n'y sert à rien de
+            # mécanique ; refuser au nom d'une case qui n'existe pas serait un
+            # refus sans objet, et l'accepter sans borne laisserait entrer
+            # n'importe quel nombre.
+            haut = occupation_max(univers.cible_px or CIBLE_PAR_DEFAUT)
             for echelle in echelles:
                 if echelle.famille not in FAMILLES:
                     raise UniversRefuse(f"famille inconnue « {echelle.famille} »")
-                if not 1 <= echelle.occupation <= 100:
+                if not 1 <= echelle.occupation <= haut:
                     raise UniversRefuse(
-                        f"« {echelle.nom} » : l'occupation va de 1 à 100 %"
+                        f"« {echelle.nom} » : l'occupation va de 1 à {haut} %"
                     )
             univers.bareme = echelles
+
+        # **Le style se pose avant la taille, et c'est l'ordre qui compte** (D2).
+        # Il décide de ce que la taille veut dire — un nombre de carrés ou une
+        # finesse —, donc il doit être posé quand la taille arrive dans le même
+        # message. Posés dans l'autre ordre, une taille de 1024 envoyée avec le
+        # style « dessin » serait jugée contre la liste du pixel art.
+        if style is not None:
+            if style not in STYLES:
+                connus = " » « ".join(STYLES)
+                raise UniversRefuse(
+                    f"style graphique inconnu « {style} » — "
+                    f"les styles sont « {connus} »"
+                )
+            change = style != univers.style
+            univers.style = style
+            # **Changer de style déplace la taille quand elle n'a plus de sens**,
+            # et seulement alors : un jeu à 64 carrés qui passe en dessin
+            # garderait une finesse de 64, c'est-à-dire une vignette. Voir
+            # `cible_du_changement`. Le nouvel univers repart dans la réponse,
+            # donc l'écran montre tout de suite ce qui s'applique.
+            if change and cible_px is None:
+                univers.cible_px = cible_du_changement(style, univers.cible_px)
+            # **Et la façon de réduire suit, quand personne ne l'a choisie.**
+            # Le vote en deux temps donne le sprite qu'on veut en pixel art et
+            # posterise un dessin ; la réduction douce fait l'inverse. Règle de
+            # D1 mot pour mot : on ne réécrit que ce qui était resté au défaut.
+            if change and methode_pixels is None:
+                univers.methode_pixels = methode_du_changement(
+                    style, univers.methode_pixels
+                )
 
         if cible_px is not None:
             # **« Aucune » est une valeur, pas un trou** (US-163) : zéro dit
@@ -1134,6 +1234,45 @@ class ServiceUnivers:
                 )
             univers.couleurs = couleurs
 
+        if methode_pixels is not None:
+            # **Refusée par son nom, et par son absence** (D2) — deux motifs
+            # distincts, et deux phrases distinctes. Un nom qui n'existe pas est
+            # une faute de l'appelant ; une méthode qui n'est pas installée sur
+            # cette machine n'en est pas une, et lui répondre « inconnue » ferait
+            # chercher une faute de frappe là où il manque une bibliothèque.
+            if methode_pixels not in METHODES_DE_REDUCTION:
+                connues = " » « ".join(METHODES_DE_REDUCTION)
+                raise UniversRefuse(
+                    f"méthode de pixelisation inconnue « {methode_pixels} » — "
+                    f"les méthodes sont « {connues} »"
+                )
+            manque = raison_methode(methode_pixels)
+            if manque is not None:
+                raise UniversRefuse(manque)
+            univers.methode_pixels = methode_pixels
+
+        # ── Le fond du jeu (D3) ──────────────────────────────────────────────
+        #
+        # **Une couleur hors palette se pose, elle ne se refuse pas**, et c'est
+        # la règle du dépôt reprise telle quelle : l'atelier *propose* une
+        # couleur sûre, il ne l'impose jamais. Ce qui se refuse ici est une
+        # chaîne qui n'est pas une couleur du tout — six chiffres hexadécimaux,
+        # rien d'autre —, parce qu'elle partirait dans le texte payé et se
+        # relirait des mois plus tard sur la génération enregistrée.
+        #
+        # **La chaîne vide retire le fond**, et c'est le seul geste de retrait
+        # dont ce réglage ait besoin : une couleur est toujours quelque chose,
+        # donc « jamais posé » et « posé sur rien » sont le même état — l'inverse
+        # exact du détourage par défaut, qui a besoin de ses trois états.
+        if fond is not None:
+            propre = fond.strip()
+            if propre and not fond_valide(propre):
+                raise UniversRefuse(
+                    f"« {propre} » n'est pas une couleur — le fond s'écrit en "
+                    f"six chiffres hexadécimaux, par exemple #FF00FF"
+                )
+            univers.fond = fond_valide(propre)
+
         if modeles is not None:
             inconnues = set(modeles) - set(FAMILLES)
             if inconnues:
@@ -1149,6 +1288,33 @@ class ServiceUnivers:
             univers.modele_planche = modele_planche.strip()
         if modele_edition is not None:
             univers.modele_edition = modele_edition.strip()
+
+        # ── Le détourage par défaut (D1) ─────────────────────────────────────
+        #
+        # **La relecture nettoie, elle ne refuse pas.** `passe_par_defaut` retire
+        # ce qui n'appartient qu'à une image — le point de la pipette, le tracé,
+        # le masquage — et ramène un moteur inconnu au bord. Un moteur mal
+        # orthographié n'a donc pas à lever ici : il arrive sans effet, comme
+        # partout ailleurs dans le produit.
+        if detourage_image is not NON_DIT:
+            univers.detourage_image = passe_par_defaut(detourage_image)
+        if detourage_planche is not NON_DIT:
+            univers.detourage_planche = passe_par_defaut(detourage_planche)
+        if detourages is not NON_DIT:
+            # **La famille, elle, se refuse** — et c'est la même règle que les
+            # modèles par famille juste au-dessus : une clé inventée est une
+            # faute d'appelant, pas un réglage sans effet. Une famille absente du
+            # message est retirée, comme un modèle vidé.
+            lues = detourages or {}
+            inconnues = set(lues) - set(FAMILLES)
+            if inconnues:
+                noms = " » « ".join(sorted(inconnues))
+                raise UniversRefuse(f"famille inconnue « {noms} »")
+            univers.detourages = {
+                famille: passe
+                for famille, brut in lues.items()
+                if (passe := passe_par_defaut(brut)) is not None
+            }
 
         self._bibliotheque.sauver_projet(objet.avec(univers))
         # Le compte de couleurs fait partie de ce que la palette lit : le
@@ -1339,7 +1505,7 @@ class ServiceUnivers:
             # le corps de sa pose, et lui poser une grille le rééchantillonnerait
             # — le casque glisserait de la tête. La différence, elle, survivrait
             # au `replace` ci-dessous ; l'alignement, non, et c'est lui qui fait
-            # tout l'intérêt de l'objet (`docs/PLAN.md`, C3).
+            # tout l'intérêt de l'objet (`docs/archive/plan-versions-tenues.md`, C3).
             #
             # Il n'y perd rien : il hérite de la grille et de la palette du corps
             # **par construction**, puisque ses pixels sont ceux d'une image déjà

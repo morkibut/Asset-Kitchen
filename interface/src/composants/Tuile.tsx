@@ -53,6 +53,7 @@ export function Tuile({
   zoom,
   onOuvrir,
   onRelancer,
+  onChoisir,
 }: {
   entree: Entree
   selectionnee: boolean
@@ -69,6 +70,9 @@ export function Tuile({
   zoom: Zoom
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRelancer: (generation: string, rang: number) => void
+  /** **Ouvrir le choix d'une planche qui attend** (R6). Il ne dépense rien —
+   *  c'est la seule chose à savoir avant de le confier à une tuile. */
+  onChoisir: (generation: string, rang: number) => void
 }) {
   const asset = entree.sorte === "asset" ? entree.asset : null
   const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
@@ -79,6 +83,11 @@ export function Tuile({
   const enCours =
     emplacement !== null &&
     (emplacement.statut === "en_cours" || emplacement.statut === "en_attente")
+  /** **La planche est là, et elle attend un regard** (R6). Ni raté ni en
+   *  cours : payée, arrivée, entière, et rien n'est entré en bibliothèque tant
+   *  que l'auteur n'a pas dit ce qu'il gardait. Elle porte donc l'image de la
+   *  planche — ce qu'on a acheté se voit — et un geste, pas une raison. */
+  const attend = lot?.pliage?.attend_un_choix === true
 
   const titre =
     entree.sorte === "asset" ? entree.asset.label : entree.generation.demande.prompt
@@ -97,7 +106,11 @@ export function Tuile({
   // de côté et recevait jusqu'à mille vingt-quatre — mesuré, 25,5 Mo
   // téléchargés pour 0,5 Mo affiché sur un seul passage. `sujet` reste ce que
   // le pointeur vise, et c'est bien le fichier entier qu'Espace doit ouvrir.
-  const source = asset ? vignetteAsset(asset, cote) : null
+  const source = asset
+    ? vignetteAsset(asset, cote)
+    : attend && lot && emplacement
+      ? api.image(lot.identifiant, emplacement.rang)
+      : null
   const visee = useVisee(sujet)
 
   /** La tuile est-elle à la taille de repos ? **Mesuré, pas estimé** : à 1× la
@@ -125,11 +138,21 @@ export function Tuile({
         selectionnee ? "shadow-[0_0_0_2px_var(--color-lumiere)]" : "",
       ].join(" ")}
     >
+      {/* **Deux noms pour deux surfaces, jamais le même deux fois.** L'image et
+          le bouton du pied mènent au même écran quand la planche attend, mais
+          les nommer pareil ferait dire deux fois la même chose à qui lit
+          l'écran autrement qu'avec les yeux — et rendrait le second
+          introuvable. */}
       <button
         type="button"
-        disabled={!asset}
-        onClick={(evenement) => asset && onOuvrir(asset.identifiant, evenement)}
-        aria-label="Ouvrir la fiche"
+        disabled={!asset && !(attend && lot !== null && emplacement !== null)}
+        onClick={(evenement) => {
+          if (asset) return onOuvrir(asset.identifiant, evenement)
+          // La planche entière est ce qu'on veut voir en grand pour choisir :
+          // le clic mène là où le bouton du bas mène, et pas ailleurs.
+          if (attend && lot && emplacement) onChoisir(lot.identifiant, emplacement.rang)
+        }}
+        aria-label={attend ? "Ouvrir la planche" : "Ouvrir la fiche"}
         className="relative aspect-square w-full cursor-pointer overflow-hidden disabled:cursor-default"
       >
         {source && (
@@ -156,6 +179,7 @@ export function Tuile({
           </div>
         )}
         {rate && <Raté raison={emplacement.raison} />}
+        {attend && lot?.pliage && <Attend pliage={lot.pliage} />}
         <Pastille asset={asset} emplacement={emplacement} />
         {/* « Coin plein haut-droit, `--signal`, 13 px — la seule marque
             visuelle, parce que c'est la seule que l'auteur pose lui-même »
@@ -168,7 +192,19 @@ export function Tuile({
         <span className="truncate text-[11.5px] text-texte" title={titre}>
           {titre}
         </span>
-        {rate && lot && emplacement ? (
+        {attend && lot && emplacement ? (
+          // **Le geste, jamais une raison.** Une planche qui attend n'a rien
+          // raté : ce qui lui manque est une décision, et le mot du bouton est
+          // celui de la décision — pas « voir », qui laisserait croire qu'on
+          // peut regarder sans trancher.
+          <button
+            type="button"
+            onClick={() => onChoisir(lot.identifiant, emplacement.rang)}
+            className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+          >
+            Choisir ce qu'on garde
+          </button>
+        ) : rate && lot && emplacement ? (
           <button
             type="button"
             onClick={() => onRelancer(lot.identifiant, emplacement.rang)}
@@ -313,6 +349,34 @@ function Raté({ raison }: { raison: string | null }) {
       <p className="text-center text-[11.5px] leading-snug text-echec">
         {raison ?? "échec sans raison connue"}
       </p>
+    </div>
+  )
+}
+
+/** Une planche arrivée qui attend un regard (R6).
+ *
+ * **Ni un raté ni une pastille**, et ce n'est pas une nuance : un raté couvre
+ * l'image, parce qu'il n'y a rien à voir dessous ; une pastille dit un état
+ * subi. Ici l'image est justement ce qu'il faut regarder — c'est elle qu'on a
+ * payée — et l'état n'est pas subi, il attend un geste. Le bandeau se pose donc
+ * **en bas**, sur un fond posé, et laisse la planche visible.
+ *
+ * En `--epingle`, comme « interrompu » et « réglé à la main » : arrêté à un
+ * instant, que le système ne bougera pas tout seul, et que seul un geste de
+ * l'auteur relance. C'est très exactement cette définition-là.
+ */
+function Attend({ pliage }: { pliage: NonNullable<Generation["pliage"]> }) {
+  const pleines = pliage.pleines?.length ?? 0
+  const mot =
+    pliage.surplus > 0
+      ? `${pliage.surplus} de trop`
+      : `${pleines} case${pleines > 1 ? "s" : ""} pleine${pleines > 1 ? "s" : ""}`
+  return (
+    <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-fond-0/85 px-2 py-1">
+      <span aria-hidden className="inline-block h-px w-2 bg-epingle" />
+      <span className="mesure truncate text-[9.5px] text-epingle">
+        {pliage.trouvees} sujets · {mot}
+      </span>
     </div>
   )
 }

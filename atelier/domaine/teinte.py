@@ -22,7 +22,7 @@ projet, pour celle d'un îlot — qui ne peut pas vivre sur ses cartes, six memb
 faisant six vérités possibles pour un seul îlot (`docs/ARCHITECTURE.md` §5).
 Écrire la liste dans l'un des deux aurait fait dépendre l'autre de lui.
 
-**La liste est fermée, et c'est un critère d'acceptation** (`docs/PLAN.md` T9) :
+**La liste est fermée, et c'est un critère d'acceptation** (`docs/archive/plan-versions-tenues.md` T9) :
 il n'existe aucun sélecteur libre, et le premier îlot rouge vif se lirait comme
 un échec.
 

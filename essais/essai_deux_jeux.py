@@ -47,7 +47,7 @@ dans un chiffre publié :
 Et **deux cellules qui répondent à des questions ouvertes** :
 
   · **la langue** — la même chose demandée avec une bible tout en français, puis
-    tout en anglais. `docs/etude-prompts.md` la laissait ouverte faute de mesure.
+    tout en anglais. `docs/archive/essais-v3/etude-prompts.md` la laissait ouverte faute de mesure.
   · **la direction** — la même pose vers le sud puis vers le nord, sur le jeu à
     quatre directions. Personne n'a jamais vérifié qu'elle arrive.
 
@@ -81,7 +81,7 @@ appel du produit, payé deux fois à deux moments, donne un écart sud/nord de 3
 puis de 0,6 %. Un effet qui ne se reproduit pas d'un lot à l'autre n'est pas un
 effet, et aucune des deux formulations essayées ne fait mieux que ce témoin-là.
 **La direction ne s'obtient pas par des mots**, et c'est ce que
-`docs/etude-mannequin.md` supposait déjà pour l'attitude.
+`docs/archive/essais-v3/etude-mannequin.md` supposait déjà pour l'attitude.
 
 **Le vrai plancher de ce banc n'est pas celui d'une image, c'est celui d'un
 lot.** Dix appels identiques donnent ±0,9 % ; deux lots de trois tirages du même

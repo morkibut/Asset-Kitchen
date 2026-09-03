@@ -1,0 +1,56 @@
+{
+ "essai": "video",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T19:36:57.958Z",
+ "notes": {
+  "_choix": {
+   "seedance-1.5-pro:clip1": {
+    "debut": 17,
+    "periode": 22
+   },
+   "seedance-2.0-mini:clip1": {
+    "debut": 32,
+    "periode": 24
+   },
+   "seedance-1.5-pro:clip2": {
+    "debut": 68,
+    "periode": 20
+   },
+   "seedance-2.0-mini:clip2": {
+    "debut": 47,
+    "periode": 30
+   },
+   "wan-3.0:clip2": {
+    "debut": 16,
+    "periode": 24
+   }
+  },
+  "wan-3.0:clip1": {
+   "echecs": [
+    "la caméra bouge, zoome ou tourne"
+   ],
+   "note": "mauvais",
+   "libre": "le personnage fait n'importe quoi il avance de gauche a droite puis repars en arriere en moonwalk. c'est pas utilisable;"
+  },
+  "wan-3.0:clip2": {
+   "note": "moyen",
+   "echecs": [],
+   "libre": "la vidéo est assez courte, peux de marge de manoeuvre pour retoucher"
+  },
+  "seedance-2.0-mini:clip2": {
+   "note": "bon",
+   "libre": "la première image est plus luminause, mais on peut récupérer sur la suite sans problème."
+  },
+  "seedance-1.5-pro:clip2": {
+   "echecs": [
+    "le personnage se retourne ou change de direction"
+   ],
+   "note": "moyen",
+   "libre": "l'animation est assez longue pour être exploitable, et propose même des images de retournement qui permettrait de créer d'autres animations. une erreur qui en fait révèle un potentiel !"
+  },
+  "seedance-2.0-mini:clip1": {
+   "note": "bon",
+   "libre": "la première image est plus luminause, mais on peut récupérer sur la suite sans problème."
+  }
+ }
+}

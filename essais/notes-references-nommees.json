@@ -1,0 +1,69 @@
+{
+ "essai": "references-nommees",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T17:44:39.456Z",
+ "notes": {
+  "IA-reecrit-art:jet1": {
+   "note": "mauvais",
+   "echecs": []
+  },
+  "IA-reecrit-art:jet2": {
+   "note": "mauvais"
+  },
+  "R2-priorite-art:jet1": {
+   "note": "mauvais"
+  },
+  "R2-priorite-art:jet2": {
+   "note": "moyen"
+  },
+  "R1-range-art:jet1": {
+   "note": "mauvais"
+  },
+  "R1-range-art:jet2": {
+   "note": "mauvais"
+  },
+  "A2-temoin-art:jet2": {
+   "note": "bon"
+  },
+  "A2-temoin-art:jet1": {
+   "note": "moyen",
+   "libre": "le personnage saute en avant, mais ca peut se recaler. "
+  },
+  "C-rangees:jet1": {
+   "note": "mauvais"
+  },
+  "C-rangees:jet2": {
+   "note": "mauvais"
+  },
+  "C-rangees:jet3": {
+   "note": "moyen"
+  },
+  "B-nommees:jet3": {
+   "note": "moyen"
+  },
+  "B-nommees:jet2": {
+   "note": "mauvais"
+  },
+  "B-nommees:jet1": {
+   "note": "moyen"
+  },
+  "A-temoin:jet1": {
+   "note": "bon"
+  },
+  "A-temoin:jet2": {
+   "note": "bon"
+  },
+  "A-temoin:jet3": {
+   "note": "moyen"
+  },
+  "A-temoin:jet4": {
+   "note": "mauvais"
+  },
+  "C-rangees:jet4": {
+   "note": "moyen"
+  },
+  "B-nommees:jet4": {
+   "note": "mauvais"
+  }
+ }
+}

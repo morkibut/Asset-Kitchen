@@ -4,7 +4,7 @@
 **C'est l'essai qui décide de ce qu'on répare dans le prompt.** La séance du
 1<sup>er</sup> septembre 2026 sur « Le Marais du Vieux Moulin » a payé trois
 générations, toutes revenues **de face** sur un jeu déclaré **vu de dessus**
-(`docs/etude-prompts.md`). L'étude a nommé quatre suspects ; aucun n'est mesuré,
+(`docs/archive/essais-v3/etude-prompts.md`). L'étude a nommé quatre suspects ; aucun n'est mesuré,
 et les quatre demandent d'écrire du code. Cet essai sépare ceux qui comptent de
 ceux qui ne sont que du rangement, pour le prix de vingt images.
 

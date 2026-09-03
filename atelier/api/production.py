@@ -32,7 +32,7 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from atelier.api.routes import CorpsTrait
-from atelier.domaine.recette import RAYON_MAX
+from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU, RAYON_MAX
 from atelier.services import Atelier
 
 routeur = APIRouter()
@@ -303,7 +303,7 @@ class CorpsMain(BaseModel):
 
     **La liste est entière, jamais un ajout**, et **vide elle annule la
     couche** : deux onglets qui empileraient des deltas ne convergeraient
-    jamais, et « chaque couche s'annule » (`docs/PLAN.md`, C4) demande un geste,
+    jamais, et « chaque couche s'annule » (`docs/archive/plan-versions-tenues.md`, C4) demande un geste,
     pas un mode.
 
     `couche` porte les noms du domaine — comme `portee` sur une pièce, et pour
@@ -526,7 +526,9 @@ class CorpsCalage(BaseModel):
     recette nommée.
     """
 
-    occupation: int | None = Field(None, ge=1, le=100)
+    # **Le plafond n'est plus 100 %** (tranche des tailles) : un géant se calibre
+    # comme un personnage, à son échelle. Borne large ici, refus exact au service.
+    occupation: int | None = Field(None, ge=1, le=OCCUPATION_MAX_ABSOLU)
     decalage: int | None = None
     projet: str | None = None
 

@@ -35,6 +35,7 @@ from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.personnage import Personnage
 from atelier.domaine.ambiance import CE_QU_ON_PREND, TEXTES, prises_du_mode
 from atelier.domaine.carte import PERSONNAGES
+from atelier.domaine.fond import fond_valide, interdiction, replier
 from atelier.domaine.envoi import (
     AMBIANCE as GROUPE_AMBIANCE,
     DE_SA_FICHE,
@@ -54,6 +55,7 @@ from atelier.domaine.vue import CADRE, sans_phrase_du_produit, vue as vue_connue
 from atelier.services.assets import AssetInconnu, ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
 from atelier.services.evenements import Diffusion
+from atelier.services.montre import de_quoi_montrer
 
 
 class PersonnageInconnu(ErreurAtelier):
@@ -159,12 +161,22 @@ class ServiceProduction:
         bibliotheque: ServiceBibliotheque,
         assets: ServiceAssets,
         diffusion: Diffusion,
+        univers: Any = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
         self._bibliotheque = bibliotheque
         self._assets = assets
         self._diffusion = diffusion
+        # **Le tableau d'inspiration, pour montrer les images d'exemple d'une
+        # chose** (R8). La fiche listait ses références en lignes de texte ; on
+        # les retenait ou on les retirait sans les regarder. Une vignette a
+        # besoin de l'objet qu'elle montre, et une carte se lit chez l'univers.
+        #
+        # **Facultatif, comme les dépendances tardives de `ServiceEnvoi`** : un
+        # essai qui ne monte que la production rend alors des lignes sans
+        # vignette, ce qui est exactement ce que rend une carte disparue.
+        self._univers = univers
 
     # ── Le plan du projet ────────────────────────────────────────────────────
 
@@ -708,7 +720,9 @@ class ServiceProduction:
 
     # ── La fiche d'une chose du jeu (E12) ────────────────────────────────────
 
-    def couches(self, projet: str | None, identifiant: str | None) -> Couches:
+    def couches(
+        self, projet: str | None, identifiant: str | None, fond: str | None = None
+    ) -> Couches:
         """Les trois épaisseurs de texte qui habillent une chose, **brutes** (E14).
 
         **Deux écrans les résolvent, et il n'y a qu'une résolution** : la fiche
@@ -720,6 +734,13 @@ class ServiceProduction:
         agent, d'un import, ou d'une image qu'on fabrique sans rien viser. Une
         chose disparue rend la même chose plutôt qu'un refus : un appel ne doit
         pas échouer parce qu'un personnage a été supprimé entre-temps.
+
+        **`fond` corrige la couleur pour cet appel-ci, et rien d'autre** (D3).
+        `None` laisse celle du jeu ; une couleur la remplace ; la chaîne vide la
+        retire. La correction se fait **sur une copie de l'univers**, pas sur une
+        phrase composée à côté : la case `technique` porte déjà le fond, elle
+        sait déjà l'écrire, et recomposer sa phrase ici aurait été la seconde
+        vérité que le 1ᵉʳ septembre 2026 venait de retirer.
         """
         if not projet:
             return Couches()
@@ -727,14 +748,17 @@ class ServiceProduction:
             objet = self._exiger(projet)
         except ProjetInconnu:
             return Couches()
+        univers = objet.univers
+        if fond is not None:
+            univers = replace(univers, fond=fond_valide(fond))
         # **Ce que la case dit vraiment**, et non ce qu'elle range : depuis le
         # 1ᵉʳ septembre 2026 la phrase de l'atelier — la grille, le calage, le
         # cadrage — se calcule ici plutôt que d'être recopiée dans le texte.
         # `texte_de_la_case` fait les deux moitiés et tient l'ordre, l'atelier
         # d'abord et l'auteur ensuite ; une case éteinte ne dit toujours rien.
         bible = tuple(
-            (champ.nom, objet.univers.texte_de_la_case(champ.nom))
-            for champ in objet.univers.bible
+            (champ.nom, univers.texte_de_la_case(champ.nom))
+            for champ in univers.bible
         )
         if not identifiant:
             return Couches(bible=bible)
@@ -1074,6 +1098,7 @@ class ServiceProduction:
                     "provenance": "image de son ambiance",
                     "detail": ambiance.nom if ambiance else "",
                     "ecartee": reference in ecartees,
+                    "montre": self._montre(projet, reference, carte=True),
                 }
             )
         for carte in personnage.concept_arts:
@@ -1084,6 +1109,7 @@ class ServiceProduction:
                     "provenance": "concept art",
                     "detail": "épinglé sur cette chose",
                     "ecartee": carte in ecartees,
+                    "montre": self._montre(projet, carte, carte=True),
                 }
             )
         for asset in personnage.references:
@@ -1094,6 +1120,7 @@ class ServiceProduction:
                     "provenance": "image promue",
                     "detail": "fabriquée puis retenue comme référence",
                     "ecartee": asset in ecartees,
+                    "montre": self._montre(projet, asset, carte=False),
                 }
             )
 
@@ -1105,6 +1132,24 @@ class ServiceProduction:
             "propositions": self._propositions(projet, personnage),
             "disponibles": sum(1 for l in lignes if not l["ecartee"]),
         }
+
+    def _montre(
+        self, projet: str, identifiant: str, *, carte: bool
+    ) -> dict[str, Any] | None:
+        """De quoi montrer cette image d'exemple — l'objet entier (R8).
+
+        **La réponse est écrite une seule fois**, dans
+        `atelier/services/montre.py` : l'écran de confirmation pose la même
+        question depuis U9, et deux réponses auraient fini par rendre deux
+        formes du même objet.
+        """
+        return de_quoi_montrer(
+            assets=self._assets,
+            univers=self._univers,
+            projet=projet,
+            identifiant=identifiant,
+            carte=carte,
+        )
 
     def _propositions(
         self, projet: str, personnage: Personnage
@@ -1137,6 +1182,8 @@ class ServiceProduction:
                         "genre": "asset",
                         "provenance": f"le corps retenu de « {case['pose']} »",
                         "detail": "ce à quoi il ressemble une fois passé par le style du jeu",
+                        "ecartee": False,
+                        "montre": self._montre(projet, case["corps"], carte=False),
                     }
                 )
                 break
@@ -1631,7 +1678,7 @@ class ServiceProduction:
         return personnage
 
     def supprimer_personnage(self, projet: str, identifiant: str) -> dict[str, Any]:
-        """Le personnage part, **ses images restent** (`docs/PLAN.md` C1).
+        """Le personnage part, **ses images restent** (`docs/archive/plan-versions-tenues.md` C1).
 
         Jamais de cascade : chaque image faite pour lui est marquée « personnage
         supprimé » et reste exactement où elle est, comme un enfant survit à son
@@ -1969,6 +2016,46 @@ class ServiceProduction:
             angle = trouvee.consigne if trouvee else ""
         return composer(voulue.dit(), angle)
 
+    # ── Le fond du jeu, et ce qu'il interdit (D3) ────────────────────────────
+
+    def fond(self, projet: str | None, corrige: str | None = None) -> str:
+        """La couleur de fond de cet appel-ci — celle du jeu, ou celle qu'on corrige.
+
+        **Un seul endroit la résout**, et c'est ce qui garantit que la phrase qui
+        *demande* le fond et celle qui *l'interdit sur le sujet* parlent de la
+        même couleur. Les composer chacune de son côté aurait laissé passer un
+        appel qui demande un fond magenta en interdisant le cyan — et il serait
+        parti sans que rien ne le dise.
+
+        `corrige` vaut `None` quand rien n'a été corrigé, une couleur quand
+        l'écran de confirmation en a posé une, la chaîne vide quand il l'a
+        retirée pour cet appel.
+        """
+        if corrige is not None:
+            return fond_valide(corrige)
+        if not projet:
+            return ""
+        try:
+            return self._exiger(projet).univers.fond
+        except ProjetInconnu:
+            return ""
+
+    def interdit(
+        self, projet: str | None, ecrit: str = "", corrige: str | None = None
+    ) -> str:
+        """Le champ d'interdiction tel qu'il partira — l'auteur, puis le fond (D3).
+
+        **Le produit n'a rien eu à écrire pour que ça parte** : `prompt_negatif`
+        existe depuis T1 et les deux adaptateurs le replient en fin de demande
+        sous *« Do not include: »*. Cette méthode ne fait que composer les deux
+        moitiés, et `atelier.domaine.fond.replier` tient la règle — **ce que
+        l'auteur a écrit ne cède jamais devant ce que le produit ajoute**.
+
+        Sans fond, elle rend le texte de l'auteur mot pour mot : un projet
+        d'avant la tranche envoie donc exactement ce qu'il envoyait.
+        """
+        return replier(interdiction(self.fond(projet, corrige)), ecrit)
+
     # ── La caméra du jeu, redite en queue de prompt ──────────────────────────
 
     def cadre(self, projet: str | None) -> str:
@@ -2173,7 +2260,7 @@ class ServiceProduction:
         if objet is None:
             raise AssetInconnu(asset)
 
-        # **Un calque est solidaire de sa pose** (`docs/PLAN.md`, C3). Un casque
+        # **Un calque est solidaire de sa pose** (`docs/archive/plan-versions-tenues.md`, C3). Un casque
         # vu de face n'est pas un casque vu de dos : il en faut un par pose, et
         # ce n'est pas une limite technique a lever, c'est une evidence de
         # dessin. Le produit ne propose donc nulle part de reposer un calque

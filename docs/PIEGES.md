@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Quatre-vingt-dix pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent quarante-six pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -906,3 +906,302 @@ la prochaine réécriture retrouvera.
   ce que son nom dit, demander ce que l'autre grandeur laisse entrer.* Ici, tout ce qui est long
   et plat. Un plancher d'épaisseur s'est ajouté à côté du rejet par l'aire — il n'écarte que ce
   qui n'a pas d'épaisseur du tout, et la lance reste un sujet.
+
+- **Une image agrandie au-delà de seize mille pixels ne s'affiche pas, et rien ne le dit.** La
+  maquette V3 animait ses deux boucles en étirant une planche de cent vingt et une images posées
+  côte à côte : à la taille d'affichage, cela demandait au navigateur une surface de cinquante
+  mille pixels de large. Les navigateurs plafonnent une surface à seize mille trois cent
+  quatre-vingt-quatre pixels de côté, et **au-delà ils ne dessinent rien** — pas d'erreur, pas
+  d'avertissement, une zone vide. Le symptôme était une page noire à mi-hauteur alors que la
+  console était propre et que tous les éléments avaient les bonnes dimensions. La garde : *une
+  planche d'images se range en grille, jamais en ligne*, et ce qu'on dessine se découpe dedans à
+  sa taille réelle au lieu d'être agrandi avant. Onze sur onze tient dans mille trois cents.
+  Payé le 3 septembre 2026, en montrant la V3.
+
+- **Une page qui redessine sans arrêt ne se laisse pas photographier.** Le même jour, et il
+  s'ajoute au précédent parce qu'ils se ressemblent à l'œil : une maquette dont le métronome
+  redessine deux zones dix fois par seconde rend des captures noires, le navigateur n'ayant
+  jamais fini de peindre quand on le photographie. Ce n'est pas un défaut de la page — elle est
+  juste à l'écran. La garde : *toute page animée du dépôt sait s'arrêter*, par une adresse
+  (`?fige`) et par la barre d'espace, et **elle cesse alors vraiment de dessiner** plutôt que de
+  redessiner la même image. Les deux ensemble ont coûté une demi-heure à départager, l'un
+  imitant l'autre.
+
+- **La vignette découpée est opaque partout, sur toutes les planches.** R6 devait distinguer une
+  planche saine d'une planche dont le modèle a redessiné le quadrillage, et la mesure évidente —
+  *quelle part de la vignette reste opaque après détourage ?* — rend **1,00 des deux côtés**.
+  Elle ne sépare rien, et elle a failli faire écrire le mauvais chiffre dans le plan. La raison
+  est que `decouper` taille dans les **octets d'origine**, fond compris, marge comprise : ce qui
+  en sort est un rectangle plein par construction. La mesure qui sépare est la part opaque de la
+  **boîte du sujet**, prise sur l'alpha du détourage — 0,34 à 0,77 pour une planche saine, 0,99
+  à 1,00 pour une planche quadrillée, rien entre les deux sur les 135 planches des bancs. La
+  garde : *une mesure de remplissage se prend sur l'alpha, jamais sur un fichier découpé*. Payé
+  le 3 septembre 2026.
+
+- **Un état qui attend une décision n'est ni « en cours » ni « raté », et il disparaît de
+  l'écran.** Le chantier de la galerie est *ce dont un emplacement attend encore une issue* —
+  en attente, en cours, interrompu. R6 a créé un quatrième cas : une planche arrivée, payée,
+  entière, dont **aucune image n'entre tant que l'auteur n'a pas tranché**. Son emplacement est
+  *réussi*, donc sa tuile quittait la grille à l'arrivée ; et comme rien n'était entré en
+  bibliothèque, aucun asset ne prenait sa place. L'auteur voyait sa tuile s'évanouir et n'avait
+  plus aucun chemin vers ce qu'il venait de payer — c'est-à-dire exactement le gâchis que la
+  tranche répare, refait par sa propre réparation. **Les essais d'écran ne peuvent pas
+  l'attraper** : ils poussent la génération dans le chantier eux-mêmes, donc la question « le
+  serveur la remonte-t-il ? » ne se pose jamais chez eux. Il a fallu ouvrir un second atelier sur
+  le double du fournisseur et regarder. La garde : *quand un statut nouveau apparaît, se demander
+  d'abord qui le remonte à l'écran*, et le vérifier au navigateur — pas en montant l'écran seul.
+
+- **Un comptage qui n'est pas croisé raconte l'histoire de la variable qu'on a regardée.** Le
+  plan de D1 tenait sur une mesure juste : 64 découpages sur 123 portent un durcissement quand le
+  réglage livré est zéro, et l'écart se lisait entre une image seule (67 %) et un morceau de
+  planche (38 %). Les deux chiffres sont exacts. **Croisés avec le moteur de détourage employé,
+  ils ne veulent plus rien dire** : à moteur égal la nature ne décide presque plus rien, quand le
+  moteur, lui, décide tout — le bord laisse le durcissement à zéro 78 fois sur 100, le modèle n'y
+  laisse jamais zéro et y met 2 quatre fois sur cinq. La cause était **dans le même document**,
+  trois mesures plus haut : le bord est binaire par construction et ne laisse aucune frange, le
+  modèle en laisse sur 95 % du sujet. Personne n'avait joint les deux, et une tranche entière
+  allait se construire sur la mauvaise moitié. La garde : *avant de faire d'un comptage une
+  décision de produit, chercher la variable qui pourrait l'expliquer entièrement — et la
+  chercher d'abord dans les mesures déjà écrites à côté*. Payé le 3 septembre 2026.
+
+- **Une règle qui « complète » une charge doit partir de la charge, jamais de ce qu'on avait.**
+  D1 fait suivre le durcissement quand l'auteur change de moteur, et la première écriture
+  reconstruisait la passe **depuis celle qui était rangée** en n'y changeant que le moteur. Elle
+  perdait alors tout ce que le même envoi apportait — poser la pipette *est* un changement de
+  moteur, et le point arrivait avec lui. Un essai d'une autre tranche l'a attrapé en une minute
+  (`tests/test_e3.py`, le point qui traverse le port et revient), ce qui est le seul mérite de
+  l'affaire. La garde : *la valeur qui sort est celle d'après, et le produit n'y ajoute qu'un
+  champ nommé — jamais une reconstruction*. Payé le 3 septembre 2026.
+
+- **Un essai qui pose un réglage le fait vraiment, et un moteur lourd se charge dans le
+  processus.** Trois essais de D1 posaient le moteur par modèle par la route qui rend une image :
+  la route détoure pour de bon, donc `rembg` et `onnxruntime` entraient dans `sys.modules` — et
+  `tests/test_t2.py` prouve précisément que le post-traitement ne les charge jamais. Il tombait,
+  mais **seulement quand la suite entière tournait** : seul, il passait. La garde : *ne jamais
+  choisir le moteur par modèle dans un essai qui rend une image ; la pipette porte la même règle
+  et n'allume rien*. Payé le 3 septembre 2026.
+
+- **Une étape du traitement qui ne s'exécute jamais ne se voit nulle part.** Depuis T4, la
+  quantification n'entrait dans une recette **que s'il existait une palette**, et la palette se
+  déduit des artworks officiels. Un projet sans artwork ne réduisait donc **aucune** couleur : le
+  réglage `Univers.couleurs` existait, se réglait, s'enregistrait, et ne faisait rien. Mesuré le
+  3 septembre 2026 : un personnage ramené à 64 carrés sortait à **905 couleurs**. Rien à l'écran ne
+  le disait — au contraire, la branche « aucun artwork » **cachait le réglage**, ce qui achevait de
+  rendre le défaut invisible. Et deux garde-fous le tenaient en place : le service **refusait** une
+  quantification sans palette, et trois essais figeaient ce refus, dont un nommé *reste refusée*.
+  La garde : *une place du traitement qui peut ne pas s'exécuter doit le dire à l'écran ; un
+  réglage qu'on peut poser et qui n'agit pas est pire qu'un réglage absent*. Et son corollaire :
+  *un essai qui fige une absence de comportement doit nommer ce qui la justifie, sinon il protège
+  la panne au lieu du produit*. Payé le 3 septembre 2026.
+
+- **Une bibliothèque « légère » peut tirer un moteur lourd par son seul import.** PixelOE publie
+  une API `pixeloe.legacy` explicitement NumPy/OpenCV, sans GPU — et
+  `from pixeloe.legacy.pixelize import pixelize` charge quand même **`torch`** dans `sys.modules`.
+  Or l'invariant « le post-traitement ne touche jamais le GPU » se *prouve* en regardant
+  `sys.modules` (`tests/test_t2.py`) : la simple question *faut-il griser ce bouton ?* aurait fait
+  tomber l'essai sur toute machine où le paquet est installé. C'est le piège de `rembg` à
+  l'identique, sur une bibliothèque qui annonce le contraire. La garde : *vérifier ce qu'un import
+  charge vraiment, en lisant `sys.modules` après coup, avant de décider qu'une dépendance est
+  légère ; et chercher la disponibilité avec `find_spec`, qui ne charge rien*. Payé le 3 septembre
+  2026.
+
+- **Une option qui porte le bon nom peut faire le contraire de ce qu'elle annonce.** PixelOE
+  accepte `colors=32` et quantifie correctement — puis rappelle `match_color` sur l'image *non*
+  quantifiée juste après, ce qui remet les milliers de couleurs d'origine. Mesuré le 3 septembre
+  2026 : **470 couleurs rendues pour 32 demandées**. Le banc ne l'a vu que parce qu'il comptait les
+  couleurs réellement présentes dans le résultat, au lieu de faire confiance au paramètre. La
+  garde : *mesurer sur la sortie ce qu'un réglage prétend faire, surtout quand il vient d'une
+  bibliothèque qu'on n'a pas écrite — un nom de paramètre n'est pas une garantie*. Payé le
+  3 septembre 2026.
+
+- **Un banc qui isole une variable peut en fausser une autre, et inventer un pire cas.** Le banc de
+  pixelisation de D2 travaillait **sans détourage**, à raison : c'était le seul moyen de juger la
+  réduction seule. Mais il croisait cette réduction avec le **nombre de couleurs**, et là le fond
+  uni fausse tout — mesuré, il occupait 73 % des pixels et raflait donc la majorité de la palette.
+  À 8 couleurs demandées, **5 partaient au fond et il en restait 3 pour le personnage** : d'où une
+  bouillie noire qui n'accusait que le palier. Le produit, lui, détoure avant de quantifier et ne
+  rencontre jamais ce cas. On allait donc écarter des paliers parfaitement utilisables. La garde :
+  *quand un banc isole une variable, vérifier que l'isolement n'en fausse pas une autre — et
+  surtout qu'il ne fabrique pas un pire cas que le produit ne produira jamais*. Payé le
+  3 septembre 2026.
+
+- **Un atelier jetable ne peut pas être peuplé et servi par la même application.** Le serveur MCP
+  embarqué se monte sur l'application FastAPI, et son gestionnaire de session refuse d'ouvrir son
+  cycle de vie deux fois : *« StreamableHTTPSessionManager .run() can only be called once per
+  instance »*. Peupler l'atelier avec un `TestClient` — qui ouvre ce cycle — puis le servir avec
+  uvicorn fait donc échouer le démarrage, et le message ne parle ni de MCP côté produit ni de ce
+  qu'on essayait de faire. La garde : *deux applications sur le même atelier, donc sur le même
+  dossier ; ce que l'une écrit, l'autre le lit*. Payé le 3 septembre 2026.
+
+- **Une étape qui change de nom perd son numéro, quand le numéro se retrouve par le nom.** L'assistant
+  déduit le rang et le groupe d'une étape de son **titre** — à raison : deux endroits qui
+  numéroteraient les mêmes douze étapes finiraient par se contredire. Le style graphique a donné à
+  l'étape des tailles un second titre — *La finesse* en dessin, *La taille* en pixel art —, et la
+  recherche par nom ne l'a plus trouvée : le garde-fou `rang >= 0` a fait ce pour quoi il était là,
+  et l'étape s'est affichée **sans sa ligne « étape 4 · le jeu »**, seule des douze, sans erreur ni
+  message. La colonne de gauche, elle, continuait d'afficher l'ancien nom : **deux noms pour une
+  étape, à 240 px l'un de l'autre**. La garde : *quand une chose se retrouve par son nom, lui donner
+  un second nom est un changement de clé — il faut retrouver par tous ses noms, et n'en afficher
+  qu'un seul à la fois*. Payé le 3 septembre 2026.
+
+- **Une phrase exacte dans un mode devient un mensonge dans l'autre.** L'annonce écrite pour l'absence
+  d'artwork — *« les couleurs se déduisent de chaque image, pas de la palette du jeu »* — était le
+  correctif d'un vrai défaut, et elle est juste en pixel art. Le style graphique a ouvert un second
+  mode où **les couleurs ne se réduisent pas du tout** : la même phrase y promettait un travail qui
+  n'a pas lieu, **trois lignes au-dessus** de celle qui dit qu'il n'a pas lieu. Rien ne casse, rien
+  ne se voit aux tests : c'est une phrase qui a cessé d'être vraie sans changer d'un mot. La
+  garde : *quand un réglage ouvre un mode où une mécanique s'éteint, relire les phrases qui
+  décrivent cette mécanique — pas seulement le code qui l'exécute*. Payé le 3 septembre 2026.
+
+- **Une borne qu'on lève peut être porteuse ailleurs, sans que rien ne le dise.** Le calibrage écrit
+  l'occupation d'une pose en **inversant** le calcul de la mise sur grille, et l'inverse d'un arrondi
+  dépasse volontiers d'un pour cent : la pose d'attaque du vrai projet — 523 × 430 dans une case de
+  64 — rend sa hauteur commune à **100,7 %**. Le `min(100, …)` qui traînait là ne bornait donc pas un
+  réglage : il rattrapait un demi-pixel. En le levant avec le plafond de l'occupation, le calibrage
+  d'un **personnage ordinaire** s'est mis à écrire 101 %, et ses images à sortir en **65 carrés au
+  lieu de 64** — tout le monde hors de sa case, pour un arrondi. La garde : *avant de lever une
+  borne, chercher qui s'appuie dessus sans le dire — une borne qui rattrape un arrondi ne ressemble
+  pas à une borne*. Payé le 3 septembre 2026.
+
+- **Une limite physique n'est pas une limite utile, et le curseur le dit avant l'auteur.** Le plafond
+  des hauteurs a d'abord été tiré de la seule contrainte défendable — un canevas de 2 048 carrés — et
+  c'était juste : sur une case de 16 carrés, 12 800 % tient dans l'image. Cent vingt-huit
+  personnages. Physiquement possible, jamais utile, et **deux mille positions** sur le curseur qu'on
+  venait d'ouvrir : le réglage devenait inutilisable au moment même où on le rendait utile. Il
+  fallait une **seconde borne, tirée du métier** — huit personnages, la hauteur d'une porte de ville,
+  au-delà de laquelle on fabrique un fond et non un sujet. La garde : *une borne physique et une
+  borne d'usage sont deux choses ; la première protège la machine, la seconde protège la main, et
+  aucune ne remplace l'autre*. Payé le 3 septembre 2026.
+
+- **Un dessin qui ne peut pas montrer un défaut le rend invisible.** L'échantillon d'échelle du
+  barème était une barre dans un carré, la barre haute d'un pourcentage. Il était juste, lisible, et
+  **structurellement incapable** de montrer un sujet plus haut qu'un personnage : une barre dans un
+  carré ne dépasse jamais le carré. Le seul écran qui aurait pu faire voir la limite en était donc la
+  meilleure illustration, et personne ne l'a vue pendant des semaines. La garde : *quand un dessin
+  encode la contrainte qu'on cherche à juger, il ne peut pas servir à la juger — vérifier ce qu'un
+  dessin est incapable de représenter, pas seulement ce qu'il représente*. Payé le 3 septembre 2026.
+
+- **La valeur au bord d'une plage n'a qu'un voisin, donc « le plus petit qui bat ses voisins » la
+  choisit toujours.** `mesurer_grille` retenait *le plus petit pas qui approche la crête et dépasse
+  ses deux voisins* — une règle juste, écrite pour ne pas rapporter une harmonique. Mais le premier
+  pas de la plage, 2, **n'a pas de voisin de gauche** : sur une peinture, dont l'autocorrélation
+  décroît doucement sans jamais faire de bosse, il gagne par forfait. Mesuré : **2, netteté 0,94**,
+  sur une image qui n'a pas l'ombre d'une grille — faux **et** confiant, le pire des deux états. La
+  garde : *quand une règle choisit « le premier qui bat ses voisins », vérifier ce qu'elle fait au
+  bord de sa propre plage, où il en manque un ; et lui adjoindre une épreuve qui ne dépend pas du
+  voisinage* — ici le peigne, qui demande que le contraste tombe sur les **multiples** du pas. Payé
+  le 3 septembre 2026.
+
+- **Un chiffre qui ressemble à un multiple rond est une supposition tant qu'un banc ne l'a pas
+  produit.** Le plan et le bilan portaient tous deux, en gras et sous un pictogramme
+  d'avertissement, *« ce dépôt a mesuré des blocs approchant quatre-vingts pixels »*, et un critère
+  d'acceptation en dépendait. Personne ne l'avait mesuré : 80, c'est 5 × 16. Relevé sur les
+  **149 images brutes du dépôt**, le pas le plus grossier est de **32 px** et 99 % tiennent sous 22.
+  Le chiffre faux ne faisait pas qu'égarer, il **coûtait** : il demandait une plage de recherche
+  deux fois et demie trop large. La garde : *avant de dimensionner quoi que ce soit sur un nombre lu
+  dans un document, retrouver la mesure qui l'a produit — un multiple rond sans banc derrière lui
+  n'est pas un relevé, et l'écrire en gras ne le rend pas vrai*. Payé le 3 septembre 2026.
+
+- **Une mesure de qualité ne fait pas un arbitre quand la réponse la plus fine gagne toujours.**
+  Pour trancher entre un pas et son double, l'idée qui vient d'instinct est l'aller-retour : réduire
+  au pas candidat, réagrandir, regarder ce qui a changé. Elle est **dégénérée par construction** —
+  tout diviseur du vrai pas reconstruit l'image aussi bien que lui, un bloc de 16 pixels d'une seule
+  couleur se reconstruisant parfaitement à 8, à 4, à 2 —, et il faut donc prendre le **plus grand**
+  qui reconstruise encore. Ce qui la casse pour de bon est ailleurs : dès que l'image est floue,
+  c'est-à-dire toujours, la reconstruction au vrai pas devient imparfaite pendant que celle au pas 2
+  reste presque parfaite. Mesuré sur le lot de réception : **170 cas justes sur 204 avec l'arbitre,
+  200 sans lui, et 30 erreurs d'octave qu'il fabrique lui-même**. La garde : *avant d'employer une
+  mesure de qualité pour choisir entre plusieurs réponses, vérifier qu'elle ne s'améliore pas
+  mécaniquement dans une direction — sinon elle ne classe pas, elle penche*. Payé le 3 septembre
+  2026.
+
+- **Un banc qui compare des bornes ne doit contenir aucun cas hors de la plus petite d'entre
+  elles.** Le lot de réception posait des grilles de 3 à 48 px pour voir ce que la détection fait
+  quand le pas lui échappe — utile, et à garder. Mais le même lot servait à comparer quatre bornes
+  de balayage, et les six cas à 48 px donnaient mécaniquement la victoire aux bornes larges : le
+  tableau annonçait 107 contre 101 pour une différence qui ne portait que sur des pas que le dépôt
+  ne produit pas. La conclusion allait être exactement l'inverse de la bonne. Séparé, le vrai chiffre
+  apparaît : dans la plage réelle, 64 fait **exactement** comme 32, et c'est la petite borne — 24 —
+  qui coupe, de douze cas. La garde : *un banc qui compare des réglages doit tenir chaque
+  comparaison sur le domaine où la question se pose ; un cas hors domaine ne départage pas les
+  réglages, il les classe par leur domaine*. Payé le 3 septembre 2026.
+
+- **Une fabrique d'essai qui annonce une propriété dans son nom ne la garantit pas.** `image_sujet`
+  du `conftest` se documente comme *« un sujet net sur un fond plat, peint sur une grille de `bloc`
+  pixels »*, et c'est vrai du dessin. Ce n'est pas vrai de sa **mesure** : le sujet est une barre de
+  huit colonnes logiques dans une toile de vingt-quatre, la répétition ne porte donc que sur un tiers
+  de la largeur, la netteté plafonne à **0,20** et toute détection honnête y renonce. Un essai de
+  route bâti dessus n'aurait pas mesuré le produit, il aurait mesuré le `conftest` — et il a d'abord
+  échoué pour cette raison-là, ce qui est la meilleure des deux issues. La garde : *une fabrique
+  partagée est écrite pour la question de son premier appelant ; avant de s'en servir pour une
+  question neuve, vérifier que la propriété qu'on vient y chercher est mesurable et pas seulement
+  dessinée*. Payé le 3 septembre 2026.
+
+- **Insérer un élément dans une liste ordonnée fait mentir toutes les phrases qui citent un rang,
+  et aucune ne lève d'erreur.** L'assistant a gagné une étape en deuxième position (`D2`), et
+  **huit phrases** du produit se sont mises à désigner la mauvaise : *« l'étape 2 »* pour une étape
+  devenue la troisième. Elles restaient parfaitement lisibles, parfaitement bien écrites, et
+  fausses. Cinq commentaires du code étaient même décalés de **deux** crans — une insertion de `D1`
+  puis une de `D2` —, et personne ne l'avait vu parce qu'un commentaire ne se relit qu'à l'occasion.
+  La garde : *un rang dans une liste ordonnée ne s'écrit jamais à la main ; il se calcule, et si
+  l'endroit ne peut pas calculer — un commentaire —, on **nomme** l'élément au lieu de le
+  numéroter*. Payé le 3 septembre 2026.
+
+- **Une règle avec une exception nommée est une règle qu'on n'applique pas.** L'essai qui refuse un
+  numéro d'étape écrit à la main a d'abord toléré les lignes portant le code de la tranche — celles
+  qui *racontent* la correction et doivent citer l'ancien numéro pour être lisibles. C'était une
+  règle à deux étages dont le second demandait de savoir qu'il existe : le premier lecteur pressé
+  aurait ajouté `G1` à un commentaire fautif et serait passé. La correction est allée dans l'autre
+  sens — les deux commentaires disent *« la deuxième »* en toutes lettres, ce qui les rend **plus
+  clairs** et rend l'essai absolu. La garde : *quand une règle mécanique demande une dérogation,
+  regarder d'abord si ce qui la demande ne devrait pas changer de forme — une exception dans le
+  garde-fou finit toujours par servir à autre chose que ce pour quoi elle a été écrite*. Payé le
+  3 septembre 2026.
+
+- **Une case à cocher qui ne change rien est pire qu'une case absente.** L'écran de découpe offrait
+  *« me le montrer sur l'image — en magenta, ce qui ne compte pas »* sur toutes les cartes, y
+  compris celles où la palette lit **100 %** de l'image : le magenta n'y couvre aucun pixel, et la
+  case coche, décoche, sans jamais rien changer. Mesuré le 3 septembre 2026 : **3 des 10 artworks
+  officiels du dépôt** sont dans ce cas. On la coche deux fois avant de conclure qu'elle est
+  cassée — et c'est le produit qu'on soupçonne, pas l'image. La garde : *un contrôle dont l'effet
+  peut être nul sur une donnée réelle doit se retirer sur cette donnée-là, pas se griser ni se
+  taire — et il faut chercher les cas où l'effet est nul avant de l'offrir partout*. Payé le
+  3 septembre 2026.
+
+- **Deux bornes sur le même chiffre, à deux endroits, et une seule se voit.** Le calibrage calcule
+  l'occupation à écrire dans `_occupation`, qui la borne à l'échelle déclarée par l'ensemble des
+  poses — jusqu'à 300 % depuis la tranche des tailles —, puis l'écrit par `_poser`, qui la borne à
+  100 %. Les deux bornes ne sont pas la même, donc **un géant déclaré à 300 % voit son calibrage
+  écrasé au tiers de sa taille**. Le défaut est invisible tant que la valeur ne sort pas du service :
+  personne ne compare une borne d'entrée à une borne de sortie. Il est devenu visible en `R9`, qui
+  montre l'empilement d'après — il fallait alors rendre un chiffre, et rendre le mauvais aurait fait
+  dessiner une hauteur et en écrire une autre. **Il n'est toujours pas corrigé**, parce que le
+  corriger changerait ce que l'outil écrit et que le dernier critère de `R9` l'interdit : le service
+  rend la valeur *réellement* écrite, et l'écran dessine ce qu'on obtiendra. La garde : *quand une
+  valeur traverse deux fonctions qui la bornent chacune, écrire la borne une fois et la faire
+  traverser — sinon la seconde borne est un plafond que personne ne relit*. Trouvé le 3 septembre
+  2026.
+
+- **Le piège du `ResizeObserver` a une famille, et `IntersectionObserver` en est.** La fiche
+  d'une chose suivait le défilement de ses cinq sections avec un `IntersectionObserver` : sur un
+  onglet qui ne compose pas ses images, aucune section ne croise jamais rien, et le sommaire
+  reste allumé sur la première pour toute la session. **Exactement le défaut déjà consigné neuf
+  jours plus tôt**, sur l'autre guetteur, avec la même cause — les rappels passent par la boucle
+  de rendu — et la même garde : lire les positions **à la demande**, avec
+  `getBoundingClientRect`, sur l'événement qui les change. Il a été payé une seconde fois parce
+  que l'entrée nommait le *composant* et non la *famille*. La garde élargie : *aucun `*Observer`
+  du navigateur ne pilote un affichage que l'écran doit tenir juste ; il peut au mieux réveiller
+  une mesure que l'on fait soi-même*. Et le corollaire de vérification : **ni jsdom ni un onglet
+  d'arrière-plan ne peut infirmer un guetteur** — un essai qui passe et une page qui ne bouge
+  pas ne prouvent rien l'un ni l'autre. Payé le 3 septembre 2026.
+
+- **Le tri qui désigne « la section qu'on lit » n'existe pas.** En corrigeant le guetteur
+  ci-dessus, la première réécriture a seulement inversé le tri des sections qui croisent la bande
+  du haut. Les deux sens sont faux, et les mesures le disent : sur la fiche du pèlerin, la bande
+  fait 316 px quand « ce qui l'habille » en fait **797** — trois sections la croisent en même
+  temps. Trier par le haut croissant désigne celle qu'on vient de quitter, décroissant celle où
+  l'on n'est pas encore arrivé. Ce qu'on lit est **la dernière dont le titre a passé le haut**,
+  avec le fond de page en cas à part, parce que la dernière section ne peut plus atteindre le
+  haut. La garde : *une règle de « ce qui est en vue » se vérifie sur les hauteurs réelles du
+  contenu, pas sur l'idée qu'on s'en fait — une section plus haute que la fenêtre casse toutes
+  les heuristiques de tri*. Payé le 3 septembre 2026.

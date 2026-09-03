@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de R2 — ce qui décide de l'apparence se voit et se règle.
 
-Un test par critère de `docs/PLAN.md` § R2, nommé d'après lui.
+Un test par critère de `docs/archive/plan-versions-tenues.md` § R2, nommé d'après lui.
 
 **Le défaut que cette tranche répare est un défaut de composition**, pas de
 code : « la dérive de grille est le cas normal » et « le style vient de la bible
@@ -61,8 +61,15 @@ def _apercu(client, prompt: str = "un tonneau", **corps) -> dict:
     return reponse.json()
 
 
-def _origines(apercu: dict) -> list[str]:
-    return [partie["origine"] for partie in apercu["parties"]]
+def _parties(apercu: dict) -> list[str]:
+    """Les parties **qui partent**, dans l'ordre. Trois depuis R7 — le contexte,
+    les références, la demande —, là où il y en avait cinq nommées d'après leur
+    provenance.
+
+    Les trois sont toujours rendues, parce que l'écran range des lignes et
+    qu'une ligne éteinte reste à sa place ; celle qui n'a pas de texte ne part
+    pas, et c'est ce qu'on lit ici."""
+    return [p["clef"] for p in apercu["parties"] if p["texte"].strip()]
 
 
 def _generer(client, **corps) -> dict:
@@ -121,8 +128,20 @@ def test_l_apercu_rend_la_bible_le_sujet_puis_la_planche_dans_cet_ordre(client):
         client, "un nain forgeron", personnage=personnage, poses=_poses(client)[:3]
     )
 
-    assert _origines(apercu) == ["bible", "sujet", "planche"]
-    assert apercu["texte"] == "\n\n".join(p["texte"] for p in apercu["parties"])
+    assert _parties(apercu) == ["contexte", "demande"]
+    # **Le texte est la jonction des parties, titres compris** (R7) : chaque
+    # partie porte son titre en majuscules suivi d'une ligne vide, et rien
+    # d'autre ne s'ajoute entre elles.
+    assert apercu["texte"] == "\n\n".join(
+        f"{p['titre']}\n\n{p['texte']}"
+        for p in apercu["parties"]
+        if p["texte"].strip()
+    )
+    # L'ordre du prompt n'a pas changé, seuls les titres se sont posés dessus :
+    # la bible en tête (US-53), les consignes de planche en queue.
+    assert apercu["texte"].index("World: marais de fer") < apercu["texte"].index(
+        "Render this as a sprite sheet"
+    )
 
 
 def test_l_apercu_ne_masque_rien_du_texte_qui_part(client, double):
@@ -403,10 +422,15 @@ def test_ce_que_le_projet_impose_se_lit_sur_l_asset(client):
         # **Zéro par défaut** (E17) : une image que le calibrage n'a pas touchée
         # rend exactement ce qu'elle rendait avant qu'il existe.
         "decalage": 0,
+        # **Le vote en deux temps est ce que le produit choisit** (D2), et un
+        # projet neuf le reçoit sans l'avoir demandé — comme la cible et
+        # l'occupation. Un univers écrit avant D2 garderait « proche ».
+        "methode": "vote",
     }
-    # Sans artwork officiel il n'y a pas de palette, et ce n'est pas un trou :
-    # c'est l'état réel d'un univers vide, qui ne contraint rien (US-57).
-    assert lu["impose"]["quantification"] is None
+    # Sans artwork officiel il n'y a pas de palette **imposée** — mais il y a
+    # bien une quantification depuis D2 : sans elle, le réglage `couleurs` du
+    # projet ne servait à rien et les sprites sortaient à dix mille couleurs.
+    assert lu["impose"]["quantification"]["palette"] == []
 
 
 def test_ce_que_le_projet_impose_suit_le_projet_et_non_l_asset(client):
@@ -437,11 +461,14 @@ def test_un_univers_vide_ne_contraint_toujours_rien(client, double):
     client.put("/api/universe", json={"cible_px": AUCUNE_CIBLE})
 
     apercu = _apercu(client, "un tonneau")
-    assert _origines(apercu) == ["sujet"]
-    assert apercu["texte"] == "un tonneau"
+    assert _parties(apercu) == ["demande"]
+    # **Une seule partie porte quand même son titre** (R7) : `REQUEST` dit au
+    # modèle que ce qui suit est ce qu'on lui demande, et l'absence des deux
+    # autres dit qu'il n'y a ni contexte ni image.
+    assert apercu["texte"] == "REQUEST\n\nun tonneau"
 
     asset = _asset_de(client, _generer(client))
-    assert double.demandes[-1].prompt == "un tonneau"
+    assert double.demandes[-1].prompt == "REQUEST\n\nun tonneau"
     assert asset["recette"]["grille"] is None
 
 
@@ -461,8 +488,8 @@ def test_l_apercu_d_un_champ_vide_montre_la_bible_seule(client):
     # fait passer l'aire du sujet de 14,7 % à 20,1 % de l'image. Ce que cet
     # essai protège n'a pas changé — un champ vide ne refuse pas, et la bible
     # part telle quelle —, et c'est ce qu'il vérifie.
-    assert _origines(apercu) == ["bible", "cadrage"]
-    assert apercu["texte"].startswith("World: marais de fer")
+    assert _parties(apercu) == ["contexte", "demande"]
+    assert apercu["texte"].startswith("CONTEXT\n\nWorld: marais de fer")
     assert "FRAMING —" in apercu["texte"]
 
 

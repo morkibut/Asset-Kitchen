@@ -76,12 +76,19 @@ class ServiceSuperposition:
         assets: Any,
         bibliotheque: Any,
         diffusion: Diffusion | None = None,
+        equipement: Any = None,
     ) -> None:
         self._base = base
         self._fichiers = fichiers
         self._assets = assets
         self._bibliotheque = bibliotheque
         self._diffusion = diffusion or Diffusion()
+        # **Pour une seule question, et c'est pourquoi il arrive en dernier**
+        # (G16) : *quelle était cette case avant que l'atelier ne la cale ?*
+        # L'équipement est le seul à savoir la recalculer, et la superposition
+        # est le seul écran qui ait besoin de la réponse. Facultatif — un
+        # atelier composé sans lui superpose exactement comme avant.
+        self._equipement = equipement
 
     # ── Ce que l'écran a besoin de savoir avant de caler ──────────────────────
 
@@ -98,6 +105,15 @@ class ServiceSuperposition:
         nom_bas = dessous or (
             haut.superposition.dessous if haut.superposition is not None else ""
         )
+        # **Un calque désigne déjà son corps, et c'est un préremplissage aussi
+        # légitime que l'autre** (G16). Sans cette ligne, ouvrir la table sur un
+        # vêtement laissait le dessous vide : l'auteur devait retrouver
+        # lui-même, parmi les sœurs, le corps que l'atelier avait employé pour
+        # le fabriquer. Le principe ne bouge pas — *le préremplissage vient de
+        # ce qui est déjà là* —, il y avait simplement un second endroit où
+        # c'était déjà là.
+        if not nom_bas and haut.recette.difference is not None:
+            nom_bas = haut.recette.difference.base or ""
         bas = self._assets.lire(nom_bas) if nom_bas else None
 
         gardes = bas.reglages_superposition if bas is not None else None
@@ -106,13 +122,26 @@ class ServiceSuperposition:
             if gardes is not None and bas is not None
             else Superposition(dessus=haut.identifiant, dessous=nom_bas)
         )
+        # **Sur un calque, on part de la case arrivée par défaut** : refaire un
+        # calage à la main en partant du calque reviendrait à repartir du
+        # résultat qu'on veut défaire. L'écran montre le choix et laisse le
+        # défaire ; il ne le montre pas du tout quand il n'y a rien à proposer.
+        arrivee = self._arrivee_possible(haut)
+        pose = replace(pose, dessus_arrivee=arrivee)
         return {
             "dessus": haut.en_json(),
             "dessous": bas.en_json() if bas is not None else None,
             "pose": pose.en_json(),
             "repris": gardes.en_json() if gardes is not None else None,
+            "arrivee_possible": arrivee,
             **self._etat_du_detourage(haut, bas),
         }
+
+    def _arrivee_possible(self, haut: Asset) -> bool:
+        """Le dessus a-t-il une case arrivée qu'on saurait retrouver ? (G16)"""
+        if self._equipement is None:
+            return False
+        return bool(self._equipement.a_une_case_arrivee(haut.identifiant))
 
     def _etat_du_detourage(self, haut: Asset, bas: Asset | None) -> dict[str, Any]:
         """« Avant de caler » — l'état des passes des deux images.
@@ -156,13 +185,15 @@ class ServiceSuperposition:
             haut.identifiant, replace(haut.recette, passes=bas.recette.passes)
         )
 
-    def recaler(self, dessus: str, dessous: str) -> dict[str, Any]:
+    def recaler(
+        self, dessus: str, dessous: str, *, arrivee: bool = False
+    ) -> dict[str, Any]:
         """La proposition de calage — trois valeurs, et rien d'autre.
 
         Elle ne verrouille rien et ne refuse rien. On la relance autant qu'on
         veut : elle repart de zéro, pas de l'ajustement.
         """
-        haut, bas = self._paire(dessus, dessous)
+        haut, bas = self._paire(dessus, dessous, arrivee=arrivee)
         echelle, dy, dx, couverture = proposer(bas, haut)
         return {
             "echelle": round(float(echelle), 3),
@@ -185,7 +216,9 @@ class ServiceSuperposition:
         obligé à ranger un brouillon quelque part — donc à le nettoyer.
         """
         self._verifier(pose)
-        haut, bas = self._paire(pose.dessus, pose.dessous)
+        haut, bas = self._paire(
+            pose.dessus, pose.dessous, arrivee=pose.dessus_arrivee
+        )
         calque, aplat = superposer(bas, haut, pose)
         return {
             "calque": _en_data(calque),
@@ -218,7 +251,7 @@ class ServiceSuperposition:
 
         haut = self._exiger(pose.dessus)
         bas = self._exiger(pose.dessous)
-        pixels_haut = en_rgba(self._rendu(haut))
+        pixels_haut = en_rgba(self._octets_dessus(haut, pose.dessus_arrivee))
         pixels_bas = en_rgba(self._rendu(bas))
         calque, aplat = superposer(pixels_bas, pixels_haut, pose)
         images = {CALQUE: calque, APLAT: aplat}
@@ -287,7 +320,9 @@ class ServiceSuperposition:
                 "cette image n'est pas sortie d'une superposition — il n'y a rien à rejouer"
             )
         self._verifier(pose)
-        haut, bas = self._paire(pose.dessus, pose.dessous)
+        haut, bas = self._paire(
+            pose.dessus, pose.dessous, arrivee=pose.dessus_arrivee
+        )
         calque, aplat = superposer(bas, haut, pose)
         sortie = deja.superposition.sortie
         octets = _en_png(calque if sortie == CALQUE else aplat)
@@ -350,12 +385,35 @@ class ServiceSuperposition:
             pose.seuil,
         )
 
-    def _paire(self, dessus: str, dessous: str) -> tuple[np.ndarray, np.ndarray]:
-        """Les deux images **rendues**, dans l'ordre haut, bas."""
+    def _paire(
+        self, dessus: str, dessous: str, *, arrivee: bool = False
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Les deux images **rendues**, dans l'ordre haut, bas.
+
+        `arrivee` fait lire le dessus tel qu'il est arrivé du modèle plutôt que
+        tel qu'il est rangé (G16). Le dessous ne bouge jamais : c'est le sol.
+        """
         return (
-            en_rgba(self._rendu(self._exiger(dessus))),
+            en_rgba(self._octets_dessus(self._exiger(dessus), arrivee)),
             en_rgba(self._rendu(self._exiger(dessous))),
         )
+
+    def _octets_dessus(self, haut: Asset, arrivee: bool) -> bytes:
+        """Le dessus, rendu — ou tel qu'il est arrivé du modèle (G16).
+
+        **Le refus vient de l'équipement et garde ses mots** : il sait pourquoi
+        il ne retrouve pas la case — une planche partie du disque, un découpage
+        qui ne correspond plus —, et le réécrire ici en ferait une seconde
+        version de la même vérité.
+        """
+        if not arrivee:
+            return self._rendu(haut)
+        if self._equipement is None:  # pragma: no cover — l'atelier le compose
+            raise SuperpositionRefusee(
+                "cet atelier ne sait pas retrouver la case telle qu'elle est arrivée"
+            )
+        octets, _ = self._equipement.case_arrivee(haut.identifiant)
+        return octets
 
     def _rendu(self, asset: Asset) -> bytes:
         octets, _ = self._assets.octets(asset)

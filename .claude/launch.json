@@ -25,6 +25,22 @@
       "port": 5173
     },
     {
+      "name": "atelier-jetable-d2",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_d2.py"
+      ],
+      "port": 8421
+    },
+    {
+      "name": "atelier-jetable-r8-r9",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_r8_r9.py"
+      ],
+      "port": 8422
+    },
+    {
       "name": "rapports",
       "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": [
@@ -35,6 +51,26 @@
         "essais"
       ],
       "port": 8931
+    },
+    {
+      "name": "maquettes",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8932",
+        "--directory",
+        "docs"
+      ],
+      "port": 8932
+    },
+    {
+      "name": "atelier-jetable-g16",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "essais/atelier_jetable_g16.py"
+      ],
+      "port": 8423
     }
   ]
 }

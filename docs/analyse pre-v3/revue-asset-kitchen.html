@@ -1,0 +1,581 @@
+<title>Revue Asset Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap">
+<style>
+  :root{
+    --ground:#F1F3F0; --surface:#FFFFFF; --surface-2:#E9EDEA; --surface-3:#DFE5E1;
+    --ink:#151B17; --ink-2:#3B4741; --muted:#66736C; --line:#D5DCD7; --line-soft:#E4E9E5;
+    --acc:#137A6C; --acc-soft:#DDEFEB; --acc-ink:#0B4D44;
+    --amb:#B8690F; --amb-soft:#FBEBD5;
+    --ok:#2A7A4E; --ok-soft:#DDF1E4;
+    --warn:#9A5B00; --warn-soft:#FBEBD0;
+    --bad:#B3261E; --bad-soft:#F9DEDC;
+    --info:#2B5FB8; --info-soft:#DEE7F8;
+    --prop:#5D6A64; --prop-soft:#E4E8E6;
+    --shadow:0 1px 2px rgba(21,27,23,.06), 0 10px 28px -18px rgba(21,27,23,.25);
+    --f-display:"Syne","Helvetica Neue",Arial,sans-serif;
+    --f-body:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif;
+    --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --f-pixel:"Silkscreen","JetBrains Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1412; --surface:#161C19; --surface-2:#1D2622; --surface-3:#25302A;
+      --ink:#E8EDE9; --ink-2:#C3CCC6; --muted:#8B978F; --line:#2A352F; --line-soft:#212B26;
+      --acc:#4FD1BC; --acc-soft:#123A33; --acc-ink:#9EEADB;
+      --amb:#F0A64A; --amb-soft:#3A2810;
+      --ok:#6CD39A; --ok-soft:#153726;
+      --warn:#E9B25C; --warn-soft:#3B2A0D;
+      --bad:#F08A80; --bad-soft:#421B18;
+      --info:#8AB0F5; --info-soft:#17284A;
+      --prop:#9AA6A0; --prop-soft:#26302B;
+      --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1412; --surface:#161C19; --surface-2:#1D2622; --surface-3:#25302A;
+    --ink:#E8EDE9; --ink-2:#C3CCC6; --muted:#8B978F; --line:#2A352F; --line-soft:#212B26;
+    --acc:#4FD1BC; --acc-soft:#123A33; --acc-ink:#9EEADB;
+    --amb:#F0A64A; --amb-soft:#3A2810;
+    --ok:#6CD39A; --ok-soft:#153726;
+    --warn:#E9B25C; --warn-soft:#3B2A0D;
+    --bad:#F08A80; --bad-soft:#421B18;
+    --info:#8AB0F5; --info-soft:#17284A;
+    --prop:#9AA6A0; --prop-soft:#26302B;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--acc-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+  a:hover{color:var(--acc)}
+  a:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:2px}
+  strong{font-weight:700}
+  code{font-family:var(--f-mono);font-size:.84em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:3px;padding:1px 5px;color:var(--ink);word-break:break-word}
+  p{margin:0 0 14px;max-width:72ch}
+  ul,ol{margin:0 0 16px;padding-left:22px;max-width:72ch}
+  li{margin-bottom:6px}
+  li::marker{color:var(--muted)}
+  h1,h2,h3,h4{text-wrap:balance}
+
+  .mast{background:var(--surface);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+  .mast::before{content:"";position:absolute;inset:0;background:
+     linear-gradient(var(--line-soft) 1px,transparent 1px) 0 0/24px 24px,
+     linear-gradient(90deg,var(--line-soft) 1px,transparent 1px) 0 0/24px 24px;opacity:.7;pointer-events:none}
+  .mast-in{position:relative;max-width:1180px;margin:0 auto;padding:56px 28px 40px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:end}
+  .eyebrow{font-family:var(--f-pixel);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin:0 0 14px}
+  h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.3rem,5vw,3.9rem);line-height:.98;letter-spacing:-.025em;margin:0 0 18px;max-width:16ch}
+  .standfirst{font-size:1.12rem;line-height:1.5;color:var(--ink-2);max-width:62ch;margin:0 0 20px}
+  .stamp{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:4px;overflow:hidden;width:fit-content;max-width:100%;background:var(--surface)}
+  .stamp div{padding:9px 14px;border-right:1px solid var(--line);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+  .stamp div:last-child{border-right:0}
+  .stamp b{color:var(--ink);font-weight:600}
+  .legend{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:16px 18px;box-shadow:var(--shadow)}
+  .legend h4{margin:0 0 10px;font-family:var(--f-pixel);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .legend .row{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2);margin-bottom:6px}
+  .legend .row:last-child{margin-bottom:0}
+
+  .shell{max-width:1180px;margin:0 auto;padding:0 28px 120px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;align-items:start}
+  .rail{position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:36px 0 36px}
+  .rail-title{font-family:var(--f-pixel);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .rail ol{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-direction:column;gap:1px}
+  .rail a{display:flex;gap:9px;padding:5px 8px;border-radius:3px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.3;border-left:2px solid transparent}
+  .rail a:hover{background:var(--surface-2);color:var(--ink)}
+  .rail a.on{border-left-color:var(--acc);color:var(--ink);background:var(--surface-2)}
+  .rail a .n{font-family:var(--f-mono);font-size:11px;color:var(--muted);padding-top:2px;min-width:1.6em}
+  .rail .note{font-size:12px;color:var(--muted);line-height:1.4;border-top:1px solid var(--line);padding-top:12px}
+
+  main{padding:36px 0 0;min-width:0}
+  section.dom{scroll-margin-top:20px;padding-bottom:12px}
+  section.dom + section.dom{margin-top:60px;border-top:1px solid var(--line);padding-top:44px}
+  .dom-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start;margin-bottom:18px}
+  .dom-n{font-family:var(--f-pixel);font-size:13px;color:var(--acc);padding-top:14px;letter-spacing:.06em}
+  h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.6rem,3vw,2.1rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 8px}
+  .lede{font-size:1.06rem;color:var(--ink-2);max-width:68ch;margin:0 0 22px}
+  h3{font-family:var(--f-display);font-weight:700;font-size:1.2rem;letter-spacing:-.01em;margin:36px 0 12px}
+  h4{font-family:var(--f-pixel);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+
+  .tw{overflow-x:auto;margin:0 0 20px;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.42}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  thead th{background:var(--surface-2);font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.b{font-weight:700;color:var(--ink);min-width:140px}
+  td.b small,td small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:2px}
+  td.m{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+  td.w{min-width:280px}
+
+  .pill{display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:3px;white-space:nowrap;border:1px solid transparent}
+  .pill.ok{color:var(--ok);background:var(--ok-soft)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft)}
+  .pill.bad{color:var(--bad);background:var(--bad-soft)}
+  .pill.info{color:var(--info);background:var(--info-soft)}
+  .pill.prop{color:var(--prop);background:var(--prop-soft)}
+  .pill.unk{color:var(--muted);background:transparent;border-color:var(--line)}
+  .eff{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+  .ref{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+
+  .cmp{border-left:2px solid var(--acc);padding:10px 16px;margin:0 0 22px;background:var(--acc-soft);border-radius:0 5px 5px 0;max-width:80ch}
+  .cmp p{margin:0 0 8px;font-size:14.5px;color:var(--ink-2)}
+  .cmp p:last-child{margin:0}
+  .cmp .lbl{font-family:var(--f-pixel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);display:block;margin-bottom:5px}
+  .cmp.amb{border-left-color:var(--amb);background:var(--amb-soft)}
+  .cmp.amb .lbl{color:var(--amb)}
+  .cmp.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+  .cmp.bad .lbl{color:var(--bad)}
+  .reco{font-weight:700;color:var(--ink)}
+  .todo{list-style:none;padding:0;margin:0 0 18px;max-width:80ch}
+  .todo li{position:relative;padding:6px 0 6px 28px;border-bottom:1px solid var(--line-soft);font-size:14.5px;color:var(--ink-2);margin:0}
+  .todo li::before{content:"";position:absolute;left:4px;top:11px;width:12px;height:12px;border:1.5px solid var(--acc);border-radius:2px}
+  .todo li b{color:var(--ink)}
+
+  .verdicts{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin:0 0 24px}
+  .verdict{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:14px 16px;box-shadow:var(--shadow)}
+  .verdict .k{font-family:var(--f-pixel);font-size:10px;color:var(--acc);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+  .verdict b{display:block;font-family:var(--f-display);font-size:15px;font-weight:700;margin-bottom:5px;line-height:1.25}
+  .verdict p{margin:0;font-size:13.5px;color:var(--ink-2)}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:0 0 20px}
+  .card{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:16px 18px}
+  .card h5{margin:0 0 8px;font-family:var(--f-display);font-weight:700;font-size:15px}
+  .card p,.card li{font-size:14px;color:var(--ink-2)}
+  .card ul{margin-bottom:0}
+  .arch{font-family:var(--f-mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;overflow-x:auto;margin:0 0 20px;color:var(--ink-2);white-space:pre}
+  .arch b{color:var(--acc);font-weight:600}
+  .arch i{color:var(--amb);font-style:normal}
+  .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 18px;margin:0 0 20px;font-size:14.5px;max-width:78ch}
+  .kv dt{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:3px;white-space:nowrap}
+  .kv dd{margin:0;color:var(--ink-2)}
+  footer{border-top:1px solid var(--line);background:var(--surface)}
+  .foot{max-width:1180px;margin:0 auto;padding:30px 28px 56px;color:var(--muted);font-size:13px}
+  .foot p{max-width:80ch}
+
+  @media (max-width:980px){
+    .mast-in{grid-template-columns:minmax(0,1fr)}
+    .shell{grid-template-columns:minmax(0,1fr);gap:0}
+    .rail{position:static;max-height:none;padding:28px 0 20px;border-bottom:1px solid var(--line)}
+    .rail ol{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    main{padding-top:28px}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  @media print{.rail{display:none}.shell{display:block}.tw{break-inside:avoid}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <div>
+      <p class="eyebrow">Revue externe · Asset Kitchen · 2 septembre 2026</p>
+      <h1>Revue Asset Kitchen</h1>
+      <p class="standfirst">Le dépôt <code>gag2</code> lu de bout en bout — code, essais, bancs payés et plan de la V3 — et confronté à l'état de l'art open source établi le même jour. Ce qui tient, ce que le code fait de faux, ce que le plan sous-estime, et ce que les briques libres changeraient concrètement à la V2.3 et à la V3, en tenant compte que la génération reste chez GPT-Image-2 et que l'objectif est le sprite animé, jamais la vidéo.</p>
+      <div class="stamp">
+        <div>99 commits · <b>34 k lignes</b> serveur</div>
+        <div><b>39 k lignes</b> interface</div>
+        <div><b>833 + 475</b> essais lus</div>
+        <div>Plan V3 : <b>R6, R7, D1–D4, A0–A8</b></div>
+      </div>
+    </div>
+    <aside class="legend">
+      <h4>Comment lire</h4>
+      <div class="row"><span class="pill ok">tient</span> à garder tel quel</div>
+      <div class="row"><span class="pill warn">à préciser</span> bon problème, énoncé incomplet</div>
+      <div class="row"><span class="pill info">à réordonner</span> bon contenu, mauvais moment</div>
+      <div class="row"><span class="pill bad">faux / sous-estimé</span> contredit par le code ou par la mesure</div>
+      <div class="row"><span class="ref">fichier:ligne</span> vérifié dans le snapshot du 2 sept.</div>
+      <div class="row"><span class="eff">2 j</span> effort estimé, en jours de travail</div>
+    </aside>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Sommaire">
+    <p class="rail-title">Sommaire</p>
+    <ol>
+      <li><a href="#s0"><span class="n">§0</span><span>En une page</span></a></li>
+      <li><a href="#s1"><span class="n">01</span><span>Ce qui tient</span></a></li>
+      <li><a href="#s2"><span class="n">02</span><span>GPT-Image-2 et le local</span></a></li>
+      <li><a href="#s3"><span class="n">03</span><span>Ce que le code fait de faux</span></a></li>
+      <li><a href="#s4"><span class="n">04</span><span>Le plan, tranche par tranche</span></a></li>
+      <li><a href="#s5"><span class="n">05</span><span>Le pantin : maillage ou paper-doll</span></a></li>
+      <li><a href="#s6"><span class="n">06</span><span>Briques à prendre, à laisser</span></a></li>
+      <li><a href="#s7"><span class="n">07</span><span>L'ordre que je proposerais</span></a></li>
+      <li><a href="#s8"><span class="n">08</span><span>V4 tuiles, V5 son</span></a></li>
+      <li><a href="#s9"><span class="n">§M</span><span>Méthode et limites</span></a></li>
+    </ol>
+    <p class="note">Quatre rapports d'audit détaillés (image, génération et architecture, interface, documents) accompagnent cette revue en annexe ; chaque affirmation y porte son <span class="ref">fichier:ligne</span>.</p>
+  </nav>
+
+  <main>
+<section class="dom" id="s0">
+  <div class="dom-head"><div class="dom-n">§0</div><div>
+    <h2>En une page</h2>
+    <p class="lede">Le verdict d'ensemble tient en une phrase : <strong>le plan V3 attaque le bon problème avec la bonne méthode, mais il s'appuie sur trois affirmations que le code ou les documents contredisent, il range la V2.3 devant la V3 pour une raison qu'A2 renverse elle-même, et il laisse pour la fin — A0 « en parallèle », A8 « à trancher à l'ouverture » — les deux essais gratuits qui décident de tout le reste.</strong> Rien de cela n'oblige à rouvrir ce que les bancs ont fermé.</p>
+  </div></div>
+
+  <div class="verdicts">
+    <div class="verdict"><div class="k">L'état réel</div><b>Un dépôt beaucoup plus avancé que le cahier des charges ne le laissait croire</b><p>Cinq versions tenues, 833 essais serveur et 475 d'écran, une règle d'autorité par document, 90 pièges consignés. La plupart des verrous de « Briques Libres » y ont déjà une réponse écrite et mesurée. La revue porte donc sur la V2.3 et la V3, pas sur l'existant.</p></div>
+    <div class="verdict"><div class="k">La V3</div><b>Fondée sur des mesures, et c'est ce qui la rend défendable</b><p>141 planches payées et notées à l'œil : une bonne sur dix, réécrire ne change rien, la mesure automatique ne prédit rien, l'échelle pompe. « Commander plusieurs planches et garder la bonne » est la seule conclusion honnête de ces chiffres. À ne pas toucher.</p></div>
+    <div class="verdict"><div class="k">Le code</div><b>Trois défauts que le plan connaît, une dizaine qu'il ne connaît pas</b><p>Vérifiés dans le snapshot : une planche d'équipement part <em>sans sa planche</em> chez un modèle sans place de référence ; le prompt négatif ferme le texte après « CAMERA — this overrides everything » ; la grille 3×3 incomplète fabrique le « neuf pour huit » que R6 veut tolérer ; un lot plié refuse <code>variations &gt; 1</code>, ce qu'A3 exige ; aucune annulation, concurrence non bornée.</p></div>
+    <div class="verdict"><div class="k">L'ordre</div><b>« V2.3 entière avant V3 » se contredit dans A2</b><p>La raison donnée — une image mal traitée n'est pas jugeable — est renversée par A2 : « aucun détourage entre la planche et l'œil ». Les 135 planches ont été jugées brutes. A1 → A2 → A3 peuvent partir dès R6 ; D2 et D4 ne bloquent que A4 et A5.</p></div>
+    <div class="verdict"><div class="k">A0</div><b>Les deux essais gratuits décident de tout, et ils sont rangés « en parallèle »</b><p>Un bras plié survit-il à la réduction ? Un pantin casse à quelle amplitude ? Les réponses décident si scipy entre au socle, si la découpe en pièces existe, la forme du modèle d'A6 et la moitié d'A8. Un à deux jours, à faire avant D1.</p></div>
+    <div class="verdict"><div class="k">Le pantin</div><b>Maillage en grand ou paper-doll à 64 px : le plan n'a comparé qu'une branche</b><p>Le plan retient « déformer en grand, pixeliser à la fin » sur trois preuves dont une seule en est une. La recherche dit qu'en dessous de 64 px les outils sérieux font des pièces rigides à pivot, angles quantifiés, RotSprite, positions entières — Pillow seul, sans scipy. L'essai n°1 d'A0 doit avoir deux branches.</p></div>
+    <div class="verdict"><div class="k">D3</div><b>Le meilleur rapport gain/coût du plan, pour une raison que le plan ne donne pas</b><p>Sur gris 235, un sujet pâle est gardé à 27 % ; sur une clé franche, à 100 %. C'est la sélectivité, pas le liseré, qui rend le détourage « à refaire à la main ». Mais le gris est codé à trois endroits que la tranche ne nomme pas : sans eux, les planches restent grises.</p></div>
+    <div class="verdict"><div class="k">D2</div><b>Le bon problème, sous-spécifié sur ce qui compte</b><p>Mesuré sur synthèse : la réduction en deux temps ramène la bouillie de 29 % à 15 % mais laisse le bouillonnement à 52 % ; réduire <em>sur le pas détecté</em> ramène les deux à zéro. Le plan met l'accent à l'envers, et « cible » entre en tension avec US-61 : décision de produit avant la première ligne.</p></div>
+    <div class="verdict"><div class="k">La recherche</div><b>Ce que GPT-Image-2 change, et ce qu'il ne change pas</b><p>La génération reste chez le fournisseur — c'est mesuré, et l'état de l'art n'a rien à y opposer. Les chapitres « génération locale », « LoRA », « vidéo » deviennent de la référence. Tout le reste — détourage, grille, découpe, pantin, formats, tuiles, son — est du calcul CPU, et s'applique tel quel.</p></div>
+    <div class="verdict"><div class="k">Formats et dépendances</div><b>Trois choses écrites à côté</b><p>« Les deux bibliothèques déjà installées » : scipy n'est pas déclarée, elle arrive par l'extra <code>rembg</code>. « Spine JSON, que Godot lit » : le runtime Spine est sous licence éditeur — DragonBones JSON (MIT). Le modèle allégé : 88,6 Mo dans le plan, 224 Mo dans l'étude qui l'a mesuré.</p></div>
+  </div>
+
+  <h3>Les cinq gestes de cette semaine, avant la première ligne de R6</h3>
+  <ul class="todo">
+    <li><b>Faire les deux essais gratuits d'A0, avec une troisième branche.</b> Un bras pivoté en grand puis réduit, <em>contre</em> le même bras extrait du sprite 64 px et tourné par RotSprite ; puis seize épingles à la main sur une silhouette de l'atelier, poussées jusqu'à la casse. Ce qui en sort décide A6, A8 et <code>pyproject.toml</code>. <span class="eff">1–2 j, 0 $</span></li>
+    <li><b>Réparer les trois dettes réelles.</b> La planche d'équipement sans image (<span class="ref">services/generation.py:1216-1218</span>), le négatif en queue (<span class="ref">fournisseur/openrouter.py:267-271</span>), le <code>TrustedHostMiddleware</code> absent de l'API. <span class="eff">½ j</span></li>
+    <li><b>Passer la grille de 8 cases en 4×2 complète et tirer huit planches</b> avant d'écrire la tolérance de R6 : on ne tolère pas un défaut qu'on fabrique. <span class="eff">½ j + 25 ¢</span></li>
+    <li><b>Deux relevés gratuits.</b> Le canal expose-t-il une édition masquée sur gpt-image-2 (A7 « remplacer une étape », V4 « intérieur figé, bords rebouchés » en dépendent) ; et le poids réel de <code>birefnet-general-lite</code>. <span class="eff">1 h</span></li>
+    <li><b>Réordonner sans rien réécrire.</b> A1 → A2 → A3 dès R6 ; D1 en parallèle ; D3 en premier de la V2.3 ; D2 et D4 bloquantes pour A4 et A5 seulement. <span class="eff">0</span></li>
+  </ul>
+
+  <div class="cmp"><span class="lbl">Ce que cette revue ne rouvre pas</span>
+    <p>Aucune reformulation du prompt (six dollars de mesures disent que ça ne sert à rien), aucun modèle local, aucun juge automatique qui refuse, aucune vidéo, pas de ComfyUI, pas de See-through dans le produit. Les invariants du dépôt — CPU sans GPU ni réseau pour le traitement, recettes non destructives, rien de relancé automatiquement, le catalogue décide, aucun format inventé — sont ce qui empêche ces pistes de revenir tous les six mois. <span class="reco">Ils sont la meilleure chose du projet.</span></p>
+  </div>
+</section>
+<section class="dom" id="s1">
+  <div class="dom-head"><div class="dom-n">01</div><div>
+    <h2>Ce qui tient, et qu'il ne faut pas toucher</h2>
+    <p class="lede">Une revue critique commence par dire ce qu'elle ne remet pas en cause, sinon tout le reste se lit comme une liste de reproches. Une bonne part des verrous de « Briques Libres » ont déjà, dans ce dépôt, une réponse écrite, mesurée et testée — parfois meilleure que ce que la recherche recommandait.</p>
+  </div></div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Verrou de la recherche</th><th>Ce que le dépôt fait déjà</th><th>Où</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Séparer domaine, fournisseur, traitement, services, dépôt, API, MCP</td><td class="w">Sept couches, étanchéité vérifiée par les imports : <code>domaine/</code> n'importe ni httpx ni sqlite3 ; <code>mcp/serveur.py</code> n'importe ni fournisseur ni dépôt ; un seul service parle au port. Un essai le vérifie.</td><td class="ref">services/__init__.py:148-336</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">MCP à ~15 outils-verbes depuis la couche de service</td><td class="w">Seize outils, grain « verbe », descriptions écrites à la main, refus traduits, même processus que l'API, <code>Host</code>/<code>Origin</code> limités à la boucle locale. <code>FastMCP.from_fastapi()</code> ferait pire : un outil par route, à élaguer.</td><td class="ref">mcp/serveur.py:111-926</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Coût avant clic</td><td class="w">Médiane des douze derniers appels réussis du modèle, décomposition base + pas par image jointe ; jamais un tarif de catalogue. Le piège <code>riverflow</code> (annoncé 0,019 $, facturé 0,042 $) justifie le choix. 48 % de la facture part dans les images jointes — mesuré.</td><td class="ref">services/prix.py:58-138</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Traitement non destructif, déterministe</td><td class="w">Image brute + recette ; rendu = cache effaçable ; coupe médiane plutôt que k-means ; le prix d'un changement de forme (pinceau carré de U11) est nommé et daté. C'est plus strict que SpriteCook, dont le post-traitement écrase.</td><td class="ref">AGENTS.md:387-405</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">AssetStore : sidecar JSON + index SQLite</td><td class="w">Exactement le motif recommandé, et mieux : l'index est jetable et reconstruit au changement de schéma, le fichier s'écrit avant l'index, écriture atomique par renommage. FTS5 et sqlite-vec n'ont pas de sens à cette échelle.</td><td class="ref">depot/base.py:37-165</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Composition du prompt</td><td class="w">Un seul endroit compose, trois lecteurs (écran, MCP, relance), aperçu = ce qui part mot pour mot. Chaque bloc cite son banc : caméra en queue (1,55 → 1,13), cadre (+37 % de pixels de sujet), images dites en mots. La recherche proposait des « CRITICAL : » et des clauses de constance renforcées : mesurés morts ici (20 % contre 62 %).</td><td class="ref">services/generation.py:1232-1526</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Pliage : gabarit, un prix par appel</td><td class="w">Gabarit mesuré (11/12 contre 9/12), cases énumérées en ordre de lecture, ≤ 3 rangées — la fiche 05 recommande la même chose. Et la mesure clé que la recherche n'avait pas : <em>trois cases et six cases coûtent le même prix, la variance entre deux appels dépasse l'écart entre deux tailles</em>.</td><td class="ref">services/pliage.py:56-246</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Le jeu d'épreuve</td><td class="w">135 planches d'animation notées une par une, 24 planches de vue, 31 réglages de prompt, deux séances d'usage consignées. C'est un corpus d'évaluation payé que personne d'autre n'a ; il sert à valider gratuitement tout préfiltre futur (§6).</td><td class="ref">essais/notes-auteur.json</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">La méthode</td><td class="w">Une tentative à la fois quand on explore, huit tirages quand on arbitre, échecs prévus écrits avant l'envoi, un témoin dans chaque séance, jamais de comparaison entre deux séances de notation. Une tranche n'est finie que lorsqu'on s'en est servi.</td><td class="ref">PLAN.md:593-621</td><td><span class="pill ok">tient</span></td></tr>
+      <tr><td class="b">Les doubles d'essai</td><td class="w">Le fournisseur est doublé <em>au bout du port</em> (<code>references_recues</code>), pas au niveau HTTP ; l'écran double <code>fetch</code> et <code>EventSource</code>. Aucun essai ne coûte un centime. 833 fonctions <code>test_</code> comptées, 822 annoncées.</td><td class="ref">tests/conftest.py:206</td><td><span class="pill ok">tient</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Trois idées du dépôt vont plus loin que la recherche, et méritent d'être nommées comme telles. <strong>La règle du prix par appel</strong> — mesurée sur trois appels payés — invalide le modèle « prix par case » que la fiche 05 supposait, et simplifie tout l'écran des dépenses. <strong>Le refus par le compte</strong> (nombre de sujets trouvés ≠ demandés) est le seul contrôle arithmétique qui vaille sur une planche, et R6 a raison de l'assouplir sans le supprimer. <strong>« Juger le mouvement et juger le découpage sont deux métiers »</strong> (A2) est une phrase que la fiche 06 aurait dû écrire : c'est elle qui justifie que l'aperçu de tri montre les pixels bruts, fond compris.</p>
+</section>
+<section class="dom" id="s2">
+  <div class="dom-head"><div class="dom-n">02</div><div>
+    <h2>GPT-Image-2 et le local : ce que ça change à la recherche</h2>
+    <p class="lede">« Briques Libres » a été écrit pour une contrainte de 8 Go de VRAM, avec la génération locale comme hypothèse centrale. Le dépôt, lui, a mesuré : à demande identique, <code>openai/gpt-image-2</code> signe treize des quatorze bonnes planches d'animation, à 0,047 $ la bonne ; Gemini 3 Pro Image en signe une, vingt-trois fois plus cher ; six autres modèles, zéro. Et les essais locaux de l'auteur (SDXL, Z-Image) ne sont « pas à la hauteur ». Il faut le dire nettement : <strong>sur la génération, le dépôt a raison contre la recherche</strong>, et la recherche n'a rien de mesuré à lui opposer.</p>
+  </div></div>
+
+  <h3>Ce qui devient de la référence, ce qui reste du calcul</h3>
+  <p>La conséquence est simple à tracer. Les chapitres 03 (génération locale, VRAM), 04 pour sa moitié locale (IP-Adapter, ControlNet, LoRA d'édition) et 07 (animation IA et 3D) de l'état de l'art deviennent de la <em>référence</em> : ce qui existe, à relire le jour où un modèle local ferait mieux qu'un appel à trois centimes, pas avant. Tout le reste — détourage, grille, découpe de planche, pantin, tuiles, exports, son — est du calcul CPU sous licence permissive, et la contrainte « 8 Go » ne s'y applique même plus : elle devient « tourne sur processeur, réseau coupé », ce qui est précisément l'invariant du dépôt. Les briques ONNX qui restent utiles (isnet-anime, birefnet-lite, rtmlib, DINOv2 small) pèsent entre 90 et 350 Mo et tournent en secondes sur CPU.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Ce que la recherche supposait</th><th>Ce que le dépôt a mesuré ou relevé</th><th>Conséquence</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Générer en local (klein 4B, Z-Image, SDXL) pour ne rien payer</td><td class="w">Local « pas à la hauteur » ; une bonne planche coûte 5 à 17 centimes ratés compris, « dérisoire à l'échelle d'un jeu »</td><td>Génération = API, point. Le prix n'est pas le verrou ; <strong>le temps de jugement l'est</strong> (§4, A3)</td></tr>
+      <tr><td class="b">Fond transparent natif (<code>background=transparent</code>) pour les planches</td><td class="w">Le catalogue OpenRouter déclare <code>["auto","opaque"]</code> pour gpt-image-2 — vérifié dans <code>donnees/catalogue.json</code> ; ouvert sur gpt-image-1, qui rend « une bouillie illisible »</td><td>L'alpha natif est fermé sur le modèle principal ; le détourage reste un calcul, d'où le poids de D3</td></tr>
+      <tr><td class="b">Retry partiel par masque (<code>edits</code> + alpha) pour refaire une case</td><td class="w">OpenRouter n'expose pas d'<code>edits</code> ; l'édition, c'est <code>input_references</code> + une instruction. Un adaptateur OpenAI direct coûterait deux jours — <em>si</em> gpt-image-2 y accepte un masque, ce qui n'est pas relevé</td><td>A7 « remplacer une seule étape » n'a pas de chemin de génération vérifié : relevé à faire avant d'écrire la tranche</td></tr>
+      <tr><td class="b">Seed fixe pour rejouer une génération</td><td class="w">gpt-image-2 ne déclare pas <code>seed</code> ; Seedream, Qwen, FLUX le déclarent</td><td>Sans objet : « la même bande redemandée revient identique » n'est promise que par le pantin (A8), et c'est cohérent</td></tr>
+      <tr><td class="b">Prompt structuré, « CRITICAL : », clause de constance répétée, hex exacts</td><td class="w">31 réglages, 0 bonne sur 20 en réécrivant ; clause remplacée = 20 % contre 62 %</td><td>Mort. Seul reste le <em>rangement</em> (R7) et le nommage des images jointes — le seul levier jamais essayé</td></tr>
+      <tr><td class="b">Scoring automatique (DINOv2, LPIPS, VBench) pour trier le best-of-K</td><td class="w">« La mesure automatique ne prédisait rien » — mais c'était une mesure de <em>forme</em> maison (rapport hauteur/largeur), confrontée à des notes de <em>mouvement</em></td><td>L'identité (« est-ce le même personnage ? ») est une autre question, que DINOv2 mesure et que les 135 notes permettent de valider gratuitement — sans jamais refuser</td></tr>
+      <tr><td class="b">Pose imposée par image (ControlNet, Qwen-Image-Edit à keypoints)</td><td class="w">Le « guide de marche » joint en troisième image : 2 bonnes sur 8 contre 5 sur 8 sans guide — « le modèle ne suit pas une pose qu'on lui montre, du moins pas comme ça »</td><td>Le « quatrième chemin » d'A0 diffère (une pose par appel, rôle <code>edition</code>, sprite promu en <code>reference</code>) et coûte zéro ligne de code. Si trois tours n'apprennent rien, les modèles conçus pour ça n'existent que hors OpenRouter</td></tr>
+      <tr><td class="b">Envoyer les références en grand</td><td class="w">Un sprite promu part en rendu PNG <em>à la taille cible</em> : 64×64 pour demander une image de 1024 (<span class="ref">services/assets.py:721-732</span>). Personne n'a mesuré ce que ça perd ; le coût croît avec la surface (+58 % à 1024²)</td><td>Huit tirages 64 px contre 256 px <code>nearest</code> tranchent pour moins d'un dollar. À faire avant le « référent par personnage »</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cmp"><span class="lbl">Ce que la recherche apporte encore côté génération</span>
+    <p>Trois choses, et pas davantage. <strong>Le référent dans la caméra du jeu</strong> — la « chose refaite une fois dans la caméra, la grille et la palette du jeu », jugée par l'auteur, qui remplace la carte de face comme référence de toutes les poses : le dépôt l'a <em>déjà mesuré bon</em> (tour 3 de l'étude des prompts : même taille, même silhouette, rien d'inventé) et ne l'a pas fait entrer dans le produit ; c'est l'ancre par personnage de la fiche 04, deux à trois jours. <strong>Le nommage ordinal des images jointes</strong> (« Image 1 — style reference… Image 3 — empty layout grid… ») : hypothèse largement rapportée pour GPT-Image, jamais mesurée ici, à vérifier à huit tirages dans R7. <strong>Gemini 3 Pro Image comme second candidat</strong> pour la boucle d'A0 uniquement — « presque jamais mauvais, presque jamais bon » — si gpt-image-2 refuse de suivre une image de posture.</p>
+  </div>
+
+  <p>Il reste un point que le dépôt sous-estime parce qu'il regarde le prix en dollars. <strong>Le coût qui compte est en jugements.</strong> À trois centimes la planche et une bonne sur dix, une bande de marche coûte dix planches à regarder bouger, avec un juge qui, mesuré, change cinq notes sur huit d'une lecture à l'autre. Un jeu vu de dessus à huit directions et cinq mouvements, c'est quarante bandes, quatre cents planches à juger — dérisoire en argent, écrasant en attention. Le pantin n'y change rien (décision 6 : il ne sert qu'une vue), le miroir est/ouest divise par deux. C'est le seul cas où le pipeline 3D → rig → rendu → pixelisation de la fiche 07 changerait l'ordre de grandeur, et il n'a pas à être construit aujourd'hui ; il a à être <em>écrit</em> dans le plan comme la question de la V3.5, pour le jour où le prochain jeu n'est pas de profil.</p>
+</section>
+<section class="dom" id="s3">
+  <div class="dom-head"><div class="dom-n">03</div><div>
+    <h2>Ce que le code fait de faux</h2>
+    <p class="lede">Lecture statique du snapshot, chaque ligne rejouée par grep ; les essais n'ont pas tourné (aucune dépendance ne s'installe depuis l'environnement de revue). La gravité est jugée à l'aune du plan : « bloque une tranche » pèse plus que « paie un appel pour rien », qui pèse plus que « dormant ».</p>
+  </div></div>
+
+  <h3>Les trois défauts que le bilan connaît, revérifiés</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Défaut du bilan § 3</th><th>Vérification</th><th>Ce que le plan en dit</th><th>Ce que la revue corrige</th></tr></thead>
+    <tbody>
+      <tr><td class="b">L'échelle est recalculée sur la boîte de chaque image</td><td class="w"><strong>Confirmé.</strong> <span class="ref">image/traitement.py:990-1001</span> : boîte opaque de l'image courante, <code>facteur = dedans / max(w, h)</code> de cette boîte. La docstring (<span class="ref">:966-970</span>) affirme l'inverse. Et le calibrage de E17 (<span class="ref">services/calibrage.py:281-285</span>) rattrape ensuite la <em>hauteur de boîte</em> par pose — sur une bande, une étape accroupie serait <em>agrandie</em>.</td><td>« Cinq lignes et un commentaire, premier travail d'A2 »</td><td><span class="pill warn">à préciser</span> Vrai du noyau, faux de la tranche : les N étapes sont N bruts coupés chacun sur <em>sa</em> boîte à 4 px de marge (<span class="ref">image/decoupe.py:88</span>) sans repère commun. La fenêtre commune doit naître <strong>au dépliage</strong>, dans le repère de la planche, par rangée. Et séparer l'échelle (commune) de l'ancrage (par étape : pieds pour une marche, fenêtre pour un saut). 1–2 j hors écran.</td></tr>
+      <tr><td class="b">Le bas de la boîte est posé sur la case, poussière comprise</td><td class="w"><strong>Confirmé.</strong> <code>nettoyer</code> tourne après la grille (<span class="ref">:1257</span> contre <span class="ref">:1235</span>), en pixels rendus. Et <code>composantes</code> (<span class="ref">:616-659</span>) alloue un tableau plein cadre <em>par tache</em> : 16 000 zones sur 1024² = 4 s — inutilisable sur le brut.</td><td>« Le nettoyage doit précéder le calcul de la boîte »</td><td><span class="pill warn">à préciser</span> Le remède impose <strong>scipy</strong> (<code>ndimage.label</code>, ~10 ms, BSD-3, déterministe), donc une dépendance dure à déclarer — ce que le plan ne dit pas. ½ j.</td></tr>
+      <tr><td class="b">La recette par défaut est fausse une fois sur deux</td><td class="w"><strong>Le fait est confirmé, pas le diagnostic.</strong> Mesuré sur un disque synthétique (contour 12 px, fond 235, anti-crénelage 1 px) : le liseré vaut un millième du contour à 1024 px — ce que le relevé a mesuré — et <strong>26 % des pixels de contour à 64 px</strong> après NEAREST, parce que le rééchantillonnage tire un pixel par bloc et tombe une fois sur <code>facteur</code> dans l'anneau. Le durcissement 1 est le pansement d'un défaut de réduction.</td><td>D1 : « le défaut livré tient compte des mesures »</td><td><span class="pill bad">faux / sous-estimé</span> Figer « durcissement 1 » en D1 avant D2 et D3, c'est graver le pansement. Prendre D1 pour la plomberie (défauts par nature, visibles avant de générer), recompter <em>après</em> D2/D3.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ce que le plan ne connaît pas — serveur</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Défaut</th><th>Où</th><th>Effet</th><th>Gravité</th><th>Coût</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Une planche d'équipement part <em>sans sa planche</em> chez un modèle sans place de référence</td><td class="ref">services/generation.py:1216-1218<br>domaine/catalogue.py:108-116</td><td class="w"><code>_jointes</code> rend <code>()</code> dès que <code>references_max ≤ 0</code> ; <code>Modele.refus</code> ne compte que <code>demande.references</code>. « The attached image is a sprite sheet… » part seul. Cas réel depuis F6 : le garde-fou de l'agent impose <code>Pollinations:sana</code>, sans place. Les essais de C5 le manquent parce que le double paie en dollars.</td><td><span class="pill bad">paie pour rien</span></td><td class="eff">3 lignes</td></tr>
+      <tr><td class="b">La grille 3×3 incomplète fabrique le « neuf pour huit »</td><td class="ref">domaine/pliage.py:52-68</td><td class="w"><code>geometrie(8)</code> préfère « la plus carrée » à « la plus complète » : dernière rangée à deux cases, le modèle complète la troisième. C'est la cause des quatre planches sur treize refusées. Une grille complète (8 → 4×2 en 3:2 ou 16:9, que gpt-image-2 déclare) supprime la case fantôme. Géométrie, pas reformulation : elle n'est pas dans les 31 réglages mesurés morts.</td><td><span class="pill bad">31 % d'appels perdus</span></td><td class="eff">½ j + 8 tirages</td></tr>
+      <tr><td class="b">Le prompt négatif ferme le texte</td><td class="ref">fournisseur/openrouter.py:267-271</td><td class="w"><code>_prompt_complet</code> colle « Do not include: … » <em>après</em> « CAMERA — this overrides everything above », la place que le banc a mesurée décisive. Champ vide aujourd'hui, donc dormant ; faux dès qu'on le remplit (D3 y met la phrase d'interdiction de la clé).</td><td><span class="pill warn">dormant → actif en D3</span></td><td class="eff">5 lignes</td></tr>
+      <tr><td class="b">Un lot plié refuse <code>variations &gt; 1</code></td><td class="ref">services/generation.py:546-550</td><td class="w">« Un lot plié part en un seul appel — c'est tout son intérêt. » Délibéré, et exactement ce qu'A3 doit lever : N emplacements = N planches, chacune dépliée à l'arrivée et relançable seule — le modèle existant le porte (<span class="ref">:879-902</span>). Et <code>appels = 1 if cases</code> dans le prix (<span class="ref">domaine/envoi.py:195</span>).</td><td><span class="pill info">bloque A3</span></td><td class="eff">½ j</td></tr>
+      <tr><td class="b">Aucune annulation, concurrence non bornée</td><td class="ref">services/generation.py:724-810</td><td class="w"><code>asyncio.create_task</code> par soumission, <code>gather</code> par lot, ni sémaphore ni <code>cancel</code>. Invisible à quatre variations ; A3 lance des planches qu'on voudra arrêter dès que la première est bonne.</td><td><span class="pill info">réel dès A3</span></td><td class="eff">30 lignes</td></tr>
+      <tr><td class="b">Pas de <code>TrustedHostMiddleware</code> sur l'API</td><td class="ref">api/app.py:155-161</td><td class="w">Le transport MCP vérifie <code>Host</code> ; l'API FastAPI, non. Écoute sur 127.0.0.1, donc seul le réattachement DNS permettrait à un site de lancer des générations payantes. Faible probabilité, parade triviale.</td><td><span class="pill warn">sécurité</span></td><td class="eff">3 lignes</td></tr>
+      <tr><td class="b">Un sujet pâle est mangé par le fond gris</td><td class="ref">image/traitement.py:344-429</td><td class="w">Tolérance 28 en Chebyshev RGB autour de (235,235,235) couvre tout le cube [207..255]³. Mesuré : un rectangle (215,215,215) sans contour noir est gardé à <strong>27 %</strong> ; sur vert pur, à 100 % jusqu'à tolérance 100. C'est probablement la moitié de « le détourage par défaut n'est pas efficace », et ni le durcissement ni la tolérance ne le réparent : c'est le fond.</td><td><span class="pill warn">D3</span></td><td class="eff">dans D3</td></tr>
+      <tr><td class="b"><code>mesurer_grille</code> n'est jamais appelée par <code>sur_grille</code></td><td class="ref">image/traitement.py:1288-1350</td><td class="w">Le pas n'est pas retrouvé : NEAREST à facteur non entier, phase inconnue. Et le détecteur existant répond <strong>(2, netteté 0,50)</strong> — au-dessus du seuil 0,35 — sur un bloc synthétique de 80 px : faux et confiant. Le seul relevé réel (<code>essais/mesures_grille.json</code>) donne 2 à 13 px ; « 80 » n'est mesuré nulle part.</td><td><span class="pill warn">D2</span></td><td class="eff">dans D2</td></tr>
+      <tr><td class="b">Les pixels transparents participent à la coupe médiane</td><td class="ref">image/traitement.py:1067-1068</td><td class="w">Sans palette imposée, <code>quantifier</code> coupe sur tous les pixels, transparents compris, dont le RGB est encore le gris du fond. L'écran refuse ce mode aujourd'hui ; A5 (« palette d'une bande calculée une fois ») repassera par là.</td><td><span class="pill warn">A5</span></td><td class="eff">2 lignes</td></tr>
+      <tr><td class="b">Quatre documents disent autre chose que le code</td><td class="ref">PIEGES.md:61-66 · AGENTS.md:390-392 · bilan-v3.md:127-131 · traitement.py:966-970</td><td class="w">Le piège « la quantification force l'alpha » est corrigé depuis le 31 août ; les « cinq places » sont sept (contours, main) ; « la dérive d'échelle n'est nommée nulle part » alors que <span class="ref">services/calibrage.py:4-13</span> la nomme mot pour mot — le remède y est simplement le mauvais invariant pour une bande.</td><td><span class="pill prop">doc</span></td><td class="eff">1 h</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ce que le plan ne connaît pas — interface</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Défaut</th><th>Où</th><th>Effet</th><th>Gravité</th><th>Coût</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Les vignettes de 44 px chargent le fichier entier</td><td class="ref">Personnages.tsx:2313 · Codex.tsx:696 · Tables.tsx:1813</td><td class="w"><code>sujetAsset(asset).src</code> est le rendu entier — 1024 px pour un asset non traité. La leçon « 25,5 Mo pour 0,5 » (<span class="ref">api.ts:3656-3661</span>) n'a été appliquée qu'à la galerie ; une matrice de 24 cases non traitées décode ~24 Mo.</td><td><span class="pill warn">perf</span></td><td class="eff">1 h</td></tr>
+      <tr><td class="b">Zéro gestion des flèches ; « ← → » sont des boutons</td><td class="ref">Superposition.tsx:457-468</td><td class="w">Aucun <code>ArrowLeft/Right/Up/Down</code> dans tout <code>src/</code> ; les glyphes sont des libellés. Quatorze écouteurs <code>keydown</code> sur <code>window</code> sans arbitrage ; les surfaces de geste ne sont pas focalisables (deux <code>tabIndex</code>). US-397 « déplacer une étape au pixel, au clavier » n'a aucune base.</td><td><span class="pill info">A1, A7, A8</span></td><td class="eff">1 j, une fois</td></tr>
+      <tr><td class="b">Zéro <code>&lt;canvas&gt;</code>, zéro <code>requestAnimationFrame</code> d'animation, zéro <code>React.memo</code></td><td class="ref">App.tsx:154-2648</td><td class="w">Un seul <code>App</code> à 65 <code>useState</code>, chaque message SSE <code>asset</code> re-rend tout l'arbre. Tenable tant que l'interface affiche des fichiers ; un aperçu animé piloté par l'état d'un ancêtre déclencherait ces passes à chaque image. La maquette d'A3 use de GIF serveur, à vitesse figée, non synchronisables.</td><td><span class="pill info">A2, A3</span></td><td class="eff">horloge de module + canvas 2D, 2–3 j</td></tr>
+      <tr><td class="b">La conversion clic → pixel est écrite quatre fois</td><td class="ref">Calque.tsx:142 · Tables.tsx:1882 · Decoupe.tsx:536 · Superposition.tsx:756</td><td class="w">Deux arrondis différents (<code>floor</code>/<code>round</code>). A1, A3, A7 et A8 en ajouteraient chacune une. Une « surface d'image » commune (mesure, conversion, échelle entière ou libre, couches DOM/SVG) est le premier chantier écran de la V3, et aucune tranche ne le nomme.</td><td><span class="pill info">avant A1</span></td><td class="eff">2 j</td></tr>
+      <tr><td class="b">Aucun <code>ErrorBoundary</code>, aucun <code>aria-live</code></td><td class="ref">src/ (grep)</td><td class="w">Une exception de rendu blanchit l'application ; la fente de refus et la barre d'état changent de texte sans être annoncées. Deux <code>onError</code> pour trente-quatre <code>&lt;img&gt;</code>.</td><td><span class="pill warn">robustesse</span></td><td class="eff">10 lignes</td></tr>
+      <tr><td class="b">~150 types écrits à la main, sans génération OpenAPI ni validateur</td><td class="ref">api.ts:4-2384</td><td class="w">Le contrat est tenu par les doubles de <code>App.test.tsx</code> qui recopient les charges. Un champ renommé côté Pydantic ne casse rien à la compilation. Acceptable pour un projet personnel ; un test de conformité au schéma <code>/api/docs</code> coûterait moins qu'un découpage.</td><td><span class="pill prop">acceptable</span></td><td class="eff">½ j</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cmp amb"><span class="lbl">Ce qui n'est pas une dette</span>
+    <p>L'absence de retry est un choix documenté (« rien n'est jamais relancé automatiquement », US-18). Les fichiers de 2 000 lignes sont à moitié de la documentation en place (49 % de code dans <code>generation.py</code>) ; le problème n'est pas la taille mais les six responsabilités que ses bandeaux séparent déjà — <code>services/composition.py</code> et <code>services/references.py</code> à façade constante, un jour, <strong>avant R7</strong> qui va grossir les deux dernières. Les écritures synchrones dans la boucle d'événements (SQLite, <code>os.replace</code>) coûtent des millisecondes : à surveiller à dix planches, pas à corriger.</p>
+  </div>
+</section>
+<section class="dom" id="s4">
+  <div class="dom-head"><div class="dom-n">04</div><div>
+    <h2>Le plan, tranche par tranche</h2>
+    <p class="lede">Quinze tranches, lues avec la même question à chaque fois : bon problème, bon ordre, bon niveau d'ambition, et qu'est-ce que le code ou la mesure contredit ? Les efforts sont ceux des quatre audits, en jours de travail serveur + écran, essais compris.</p>
+  </div></div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Tranche</th><th>Verdict</th><th>Ce qui tient</th><th>Ce que je changerais</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td class="b">R6<small>la planche de travers ne se jette plus</small></td><td><span class="pill warn">à préciser</span></td><td class="w">Bon problème (31 % d'appels jetés, du vide gardé en silence), bonne place (hors version, rembourse la V2).</td><td class="w"><strong>Réparer la cause avant de tolérer l'effet</strong> : grille complète 4×2 pour huit cases (<span class="ref">domaine/pliage.py:52-68</span>), huit tirages. Puis mettre <em>sous</em> l'écran trois algorithmes de la fiche 05 : centre-en-case (déjà écrit dans <span class="ref">essais/essai_grille.py:302-313</span>, jamais dans le produit), fusion par graines quand un sujet est en morceaux (N est connu), retrait des traits de quadrillage par morphologie avant l'étiquetage — on <em>récupère</em> la planche au lieu de la signaler.</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">R7<small>le texte en trois parties</small></td><td><span class="pill ok">tient</span></td><td class="w">Honnête sur ce qu'elle ne promet pas ; « nommer chaque image jointe » est le seul levier jamais essayé, et la fiche 05 le confirme.</td><td class="w">Le négatif ne doit plus fermer le texte ; l'ordre des images gelé et <em>numéroté</em> sur l'écran de confirmation (gabarit et bande de palette y entrent comme lignes non décochables) ; l'ordinal (« Image 2 ») mesuré à huit tirages avant d'être gardé ; <code>en_blocs</code> (<span class="ref">domaine/envoi.py:410-422</span>) remplacé, pas doublé. Découper <code>generation.py</code> d'abord.</td><td class="eff">2 j + 1 j</td></tr>
+      <tr><td class="b">D1<small>une recette par nature d'image</small></td><td><span class="pill warn">à préciser</span></td><td class="w">La plomberie est juste : défauts par nature (image seule / planche / famille), visibles avant de générer, non destructifs.</td><td class="w">Ne pas graver les valeurs avant D2 et D3 : le durcissement non nul compense l'échantillonnage NEAREST d'un anneau anti-crénelé, que D2 et D3 suppriment (§3). Ajouter une dimension <em>par fond</em> : la tolérance juste sur une clé n'est pas celle du gris.</td><td class="eff">2 j</td></tr>
+      <tr><td class="b">D2<small>la grille retrouvée</small></td><td><span class="pill bad">sous-estimé</span></td><td class="w">Le plus vieux défaut du produit, bien identifié ; « viser fin en cas de doute » est juste ; bloquer A5 dessus est juste.</td><td class="w">Trois choses. <strong>L'accent</strong> : réduire <em>sur le pas détecté</em> (bouillonnement 57 % → 0 sur synthèse), la réduction en deux temps n'est qu'un second filet. <strong>Une décision de produit</strong> : réduire au vrai pas rend N px, pas <code>cible</code> — poser tel quel dans la case (l'occupation devient un résultat), ou <em>valider</em> le pas attendu <code>côté de boîte / dedans</code> puisque la phrase « on a {cible}×{cible} grid » part déjà. <strong>Un banc obligatoire</strong> : les tests de T2 ne voient que des blocs entiers alignés à phase nulle (<span class="ref">tests/conftest.py:115</span>) ; il faut 40 vraies images du dépôt, pas jugé à l'œil. Ajouter la sortie « pas, phase, confiance, candidats », la grille non uniforme (perfectPixel) en option, et le cas des étapes déformées par le pantin, où l'on réduit d'un facteur <em>connu</em> au lieu de détecter. Le relevé chiffre D2 à une demi-journée ; c'est deux semaines avec le banc.</td><td class="eff">8–10 j</td></tr>
+      <tr><td class="b">D3<small>le fond, réglage du projet</small></td><td><span class="pill ok">tient</span></td><td class="w">La meilleure tranche de la V2.3, et la décision « réglage, pas calcul imposé » est la bonne : trois images de vrai usage valent un banc de trois heures.</td><td class="w">Écrire la vraie raison (la sélectivité, pas le liseré). Nommer les trois endroits où le gris est codé sans lire le prompt : <span class="ref">image/pliage.py:42-43</span> (gabarit), <span class="ref">image/calque.py:38,189</span> (planche d'équipement), <span class="ref">services/pliage.py:115-158</span> (textes) — et la ruse du trait « à peine plus foncé que le fond » à refaire pour une clé. Ajouter le despill CbCr (40–55 lignes, indispensable si un fournisseur rend du JPEG) et la tolérance par défaut liée au fond. Le risque n'est pas le magenta franc, ce sont les potions violettes : choisir la clé à distance de la palette.</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">D4<small>les moteurs, le contour</small></td><td><span class="pill warn">à préciser</span></td><td class="w">Deux modèles à essayer (isnet-anime Apache, birefnet-general-lite MIT), deux pièges à vérifier avant — bien.</td><td class="w">Le contour n'est pas un sujet de moteur : <code>contourner</code> trace déjà sur l'alpha réduit, c'est la réduction qui décide de la frontière — donc D2. Le défaut du moteur « modèle » devrait passer d'u2net (inféré à 320 px puis agrandi au Lanczos) à isnet (1024). Sur des images générées ici sur fond franc, aucun modèle ne battra le remplissage : D4 sert aux imports et aux pièces sans fond plat. Relever le poids réel du lite (88,6 ou 224 Mo) avant d'en faire un critère.</td><td class="eff">2 j + 1 j de banc</td></tr>
+      <tr><td class="b">A0<small>le relevé du pantin</small></td><td><span class="pill info">à réordonner</span></td><td class="w">La méthode — une tentative à la fois, échecs prévus écrits d'avance, conclusion par « quel échec s'est produit » — est ce que le dépôt a de meilleur.</td><td class="w"><strong>Mauvais moment</strong> : « en parallèle de tout » alors que ses deux essais gratuits décident si scipy entre au socle, si la découpe en pièces existe, la forme d'A6 et la moitié d'A8. À faire cette semaine. <strong>Incomplet</strong> : l'essai n°1 doit comparer <em>deux branches</em> (§5), et la première étape du quatrième chemin (« quels modèles acceptent une image d'entrée ») est déjà répondue dans le catalogue — 47 sur 48, gpt-image-2 en prend 16, et le rôle <code>edition</code> existe : le test coûte zéro ligne et 2,5 ¢ par tour.</td><td class="eff">1–2 j gratuits + quelques ¢</td></tr>
+      <tr><td class="b">A1<small>la planche se garde</small></td><td><span class="pill ok">tient</span></td><td class="w">Juste et courte ; « le coupable n'a jamais été automatique, c'était sans retour » est la bonne lecture. La moitié de la machinerie existe (<code>Decoupe</code> propose, ajoute, retire ; <code>Calque</code> déplace et retaille).</td><td class="w">Un identifiant de <em>dépliage</em> dans <code>Asset</code> (qui n'a que <code>parent</code>), sinon « les dépliages coexistent » n'est pas traçable. La planche devenue asset doit être <strong>non exportable par construction</strong> (drapeau exclu par <code>export.py</code>), sinon l'invariant « aucune feuille assemblée n'est livrable » devient un filtre à tenir. Peut partir dès R6.</td><td class="eff">3–5 j</td></tr>
+      <tr><td class="b">A2<small>la bande, fenêtre commune</small></td><td><span class="pill warn">à préciser</span></td><td class="w">La réparation la plus rentable de la V3 ; le diagnostic est exact ; « juger le mouvement et juger le découpage sont deux métiers » est la bonne règle.</td><td class="w">La promesse est surjouée : le balancement récupérable vaut 6 px sur 353, un pixel à 64 — A2 empêche le personnage de changer de taille, elle ne restitue pas un mouvement. À préciser en une page : fenêtre en coordonnées de planche, par rangée ; taches nettoyées <em>avant</em> la boîte (scipy) ; ancrage à neuf points appliqué à la bande, jamais à l'étape ; lequel du calibrage par pose ou de la fenêtre de bande l'emporte. Côté écran, « l'aperçu montre » cache une horloge de module, un canvas 2D, une vitesse, un pas à pas, <code>prefers-reduced-motion</code> et une entrée dans <code>design-decisions</code> (Motion tient une liste close). Et le brut réduit en <code>pixelated</code> fait disparaître les traits fins : deux régimes d'affichage pour deux questions.</td><td class="eff">2 j serveur + 4–6 j écran</td></tr>
+      <tr><td class="b">A3<small>N planches, garder la bonne</small></td><td><span class="pill bad">sous-estimé</span></td><td class="w">Le geste principal, et le seul honnête à une bonne sur dix ; « une seule planche reste le défaut » ; la maquette a été éprouvée et a démasqué la mesure automatique.</td><td class="w"><strong>La tranche la plus chère côté écran, et le plan ne le dit pas</strong> : échelle du lot (deux planches, deux fenêtres), une seule horloge <code>rAF</code> pour N+1 canvases, ~40 messages SSE dans une file de 64, 8–32 Mo de cases brutes décodées, un second plein cadre qui garde la barre qui paie. Côté serveur : lever le refus de <code>variations &gt; 1</code>, <code>appels = N</code> dans le prix, sémaphore et annulation. Ajouter deux critères : un <em>témoin</em> (planche déjà gardée) à côté des neuves, contre la dérive du juge ; et un préfiltre sur faits vérifiables (compte, remplissage, quadrillage, écart de taille) qui <em>dégrise</em> sans jamais classer. Et afficher le taux de la séance : à 62 %, quatre planches donnent 98 % de chances d'une bonne ; à 10 %, 34 %.</td><td class="eff">1 j serveur + 6–10 j écran</td></tr>
+      <tr><td class="b">A4<small>la bande sort</small></td><td><span class="pill warn">à préciser</span></td><td class="w">Courte, au bon endroit ; « on n'invente aucun format ».</td><td class="w">Le format « le plus lu » que le plan ne nomme pas est le <strong>JSON d'Aseprite</strong> (frames en <em>tableau</em>, <code>duration</code> en ms, <code>meta.frameTags</code> pour mouvement et direction, <code>sourceSize</code> pour la fenêtre commune) ; <code>export.py</code> n'écrit aujourd'hui ni atlas ni planche (un PNG par asset + <code>descriptif.json</code> maison). L'auteur vise Godot : ajouter <strong><code>SpriteFrames .tres</code></strong> (50–150 lignes) et valider dans Godot headless. Un playground Phaser en page isolée est la seule vérité extérieure sur « ce qui sort est ce que l'aperçu montrait ».</td><td class="eff">2–3 j (+2–3 j playground)</td></tr>
+      <tr><td class="b">A5<small>le contour qui ne bout pas</small></td><td><span class="pill warn">à préciser</span></td><td class="w">Diagnostic juste, et la mesure proposée (pixels de contour qui changent d'état entre deux étapes lentes) est la bonne — à écrire <em>en premier</em>, elle discrimine fortement.</td><td class="w">Le remède est déjà à moitié dans A2 + D2 : fenêtre commune = phase commune, réduire au vrai pas supprime le bouillonnement de rééchantillonnage. Reste à A5 : masquer les transparents dans toute palette de bande ; <strong>aucun dithering</strong> sur une bande (les fiches 06 et 07 se contredisent sur l'ordonné ; la seule règle sûre est « aucun ») ; et vérifier que « la palette recalculée par image » était bien le cas du banc avant de lui imputer le scintillement. Sur une planche IA, ce qui reste bout parce que le contour est <em>dessiné</em> autrement ; sur le pantin, le cache par angle le supprime par construction. A5 vaut surtout pour A8.</td><td class="eff">2 j</td></tr>
+      <tr><td class="b">A6<small>le mouvement nommé</small></td><td><span class="pill warn">à préciser</span></td><td class="w">Bon rang (atelier, pas projet), bon proto (<code>Pose</code> + <code>CONSIGNES</code>, <span class="ref">domaine/plan.py:56-153</span>) ; « deux bandes du même mouvement partent avec le même texte » est déjà tenu par construction.</td><td class="w"><strong>Deux tranches sous un nom</strong> : le gabarit de texte (petit, utile dès A2 — une liste d'<em>instants</em> en anglais, pas une phrase : « décrire un mouvement ne marche pas, énumérer chaque instant marche ») et la bibliothèque en angles (qui n'a de sens qu'avec A8). Séparer, et réserver dès la première le champ « angles par étape ». « Un cycle de marche tient en 48 nombres » n'a pas de source : 4 poses clés × 12 angles ? 8 étapes × 6 ? À écrire avant qu'A6 en fasse un modèle de données.</td><td class="eff">2 j + 2 j</td></tr>
+      <tr><td class="b">A7<small>corriger une étape</small></td><td><span class="pill bad">sous-estimé</span></td><td class="w">Pelure d'oignon, déplacement, ancrage : <code>Superposition</code> et <code>Calibrage</code> fournissent déjà la mécanique.</td><td class="w">« Remplacer une seule étape par un nouveau tirage » est <strong>un nouveau chemin de génération</strong>, non vérifié sur le canal : une case seule dont les sept voisines sont la référence (sept images jointes = 48 % de la facture), le pire cas de consistance du produit. Sans édition masquée ni référent stable, le taux d'une étape isolée qui s'accorde à sa bande n'est mesuré nulle part. <strong>A7 dépend d'A0 plus que d'A3.</strong> Et « chaque correction est annulable » alors que le produit n'a qu'annuler-le-dernier-passage et aucun refaire : l'annulation doit reposter l'état d'avant. Le clavier (surface focalisable, flèches sur l'élément, priorité entre les 14 écouteurs) est le vrai travail écran.</td><td class="eff">3–5 j écran + le chemin de génération</td></tr>
+      <tr><td class="b">A8<small>le pantin</small></td><td><span class="pill bad">sous-estimé</span></td><td class="w">« Nettement plus petite » qu'avant, sain côté écran parce que le calcul est serveur, et la décision 6 (une seule vue) est écrite d'avance, ce qui est rare.</td><td class="w">Toujours la plus grosse, et quatre manques. <strong>« Le squelette se pose tout seul »</strong> (US-402) n'a aucun mécanisme : le relevé suppose que l'atelier fournit les articulations ; il sait produire la silhouette, pas les épingles. rtmlib (Apache, ONNX, CPU) est le seul candidat compatible avec les invariants, et le critère doit descendre à « proposé, l'auteur corrige ». <strong>L'ordre d'empilement par étape</strong> : dans une marche de profil, le bras arrière passe derrière puis devant le torse ; « l'ordre des pièces se corrige » ne le couvre pas. <strong>Les proportions</strong> : sans IK deux os (~80 lignes), un mouvement transféré fait glisser les pieds — l'étude du mannequin l'avait vu. <strong>Le format</strong> : « Spine JSON, que Godot lit » suppose le runtime Spine sous licence éditeur ; DragonBones JSON (MIT) ou une scène Godot <code>Skeleton2D</code> — ou différer la sortie du pantin, ce que la décision 4 permet. Et la question « reprendre le code ou ses trois gestes » se tranche dans A0, pas « à l'ouverture », puisque la réponse décide des dépendances (§5).</td><td class="eff">plusieurs semaines pleines</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Les hypothèses que le plan ne dit pas, et sur lesquelles il repose</h3>
+  <p>Aucune n'est écrite comme telle ; chacune porte une tranche. <strong>Le taux de gpt-image-2 est une constante</strong> — mesuré sur un personnage, un mouvement, un style, deux jours, avec un catalogue qui change chaque semaine ; le bilan le dit en limite, le plan dimensionne A3 dessus. <strong>Le coût qui compte est en dollars</strong> — alors qu'à trois centimes la planche c'est le temps de jugement qui borne tout, avec un juge qui dérive d'un facteur deux. <strong>La fenêtre commune restitue le mouvement</strong> — elle empêche un défaut ; le balancement vaut un pixel à 64. <strong>Le pantin tourne sur les bibliothèques déjà installées</strong> — scipy n'est pas déclarée. <strong>Le squelette se pose tout seul</strong> — aucun modèle nommé. <strong>Un membre plié survit à la réduction, une marche de profil ne découvre pas de zone cachée</strong> — les deux essais gratuits d'A0, non faits. <strong>Un mouvement en angles se rejoue sur tout personnage</strong> — vrai pour les angles, faux pour les contacts au sol dès que les proportions changent. <strong>« Format existant » désigne une seule chose</strong> — pour la planche oui (Aseprite) ; pour le squelette, trois objets sous un mot (YAML d'AnimatedDrawings, Spine, « un format qu'un moteur lit »).</p>
+</section>
+<section class="dom" id="s5">
+  <div class="dom-head"><div class="dom-n">05</div><div>
+    <h2>Le pantin : maillage ou paper-doll</h2>
+    <p class="lede">C'est le seul endroit où le plan et l'état de l'art divergent sur le fond, et il commande A0, A6, A8 et <code>pyproject.toml</code>. Le plan a retenu « déformer en grand, pixeliser à la fin » — un maillage ARAP recopié d'AnimatedDrawings, appliqué au personnage en 1024 px, chaque étape rendue en grand puis ramenée sur la grille par la chaîne existante. La fiche 06 dit qu'en dessous de 64 px, les outils qui font du pixel art animé ne font pas ça.</p>
+  </div></div>
+
+  <h3>Les « trois preuves » du relevé, relues</h3>
+  <p>Le bilan appuie l'ordre « déformer en grand, pixeliser à la fin » sur trois sources indépendantes. Une seule en est une : <em>la déformation rend des positions continues, les écrire directement dans une grille de 64 fabrique le bras qui bave</em> — vrai, et c'est un argument contre la quantification précoce de la <em>géométrie</em>. Les deux autres n'en sont pas : « AnimatedDrawings redimensionne à 1 000 px » décrit un outil conçu pour de la vidéo HD de dessins d'enfants ; « Meta a réentraîné un estimateur de pose » ne parle pas de déformation. L'argument tient donc, mais il ne dit pas <em>comment</em> déformer, et c'est là que les deux branches se séparent.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Critère</th><th>Maillage ARAP en grand (le plan)</th><th>Paper-doll à la cible (la fiche 06)</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Principe</td><td class="w">Silhouette entière triangulée (Delaunay), 16 épingles, déformation « aussi rigide que possible » à 1024 px, rendu affine par morceaux, puis détourage → grille → quantification existants</td><td class="w">Le personnage découpé en pièces rigides (tête, torse, bras ×2, jambes ×2…), chacune avec un pivot ; une étape = angles + translations entières ; pièce rendue <em>une fois par angle quantifié</em> (5–15°) et mise en cache</td></tr>
+      <tr><td class="b">Rotation d'un membre</td><td class="w">Continue, sur le maillage ; le coude plie « comme du caoutchouc » — à 64 px, une bavure d'un ou deux pixels là où le pixel art attend une articulation nette</td><td class="w">RotSprite (Pixelorama, MIT, ~120 lignes NumPy : ×8 par Scale2x, rotation au plus proche voisin, sous-échantillonnage) sur la pièce <em>déjà en pixel art</em> ; articulation nette par construction</td></tr>
+      <tr><td class="b">Remise sur grille</td><td class="w">Par D2 — qui <em>détecte</em> un pas dans une image à grille axée ; une image dont un bras a tourné de 30° porte deux structures de blocs en conflit. Il faut réduire d'un facteur <em>connu</em>, pas détecter</td><td class="w">Aucune : on est déjà sur la grille ; positions entières, « zéro scintillement » entre étapes</td></tr>
+      <tr><td class="b">Contour stable (A5)</td><td class="w">Dépend de la phase de réduction de chaque étape ; c'est ce qu'A5 doit rattraper</td><td class="w">Structurel : même pièce, même angle, mêmes pixels ; le cache par angle <em>est</em> A5</td></tr>
+      <tr><td class="b">Zones cachées</td><td class="w">Le maillage d'un tenant n'en découvre pas tant que l'amplitude reste faible — c'est l'essai n°2 d'A0 ; au-delà, découpe en pièces et rebouchage deviennent nécessaires de toute façon</td><td class="w">Les pièces sont découpées d'emblée ; ce qui manque derrière une pièce se rebouche une fois (LaMa CPU, ou pixel à la main), pas par étape</td></tr>
+      <tr><td class="b">Ordre d'empilement, proportions</td><td class="w">Absents du plan ; le maillage n'a pas de notion de « bras derrière le torse »</td><td class="w">Z-order par étape (le motif <code>sheet_definitions</code> de LPC) et IK deux os pour les contacts au sol (~80 lignes) sont naturels dans ce modèle</td></tr>
+      <tr><td class="b">Dépendances</td><td class="w"><code>numpy + scipy.sparse</code> (+ un remplaçant de <code>find_contours</code>), à déclarer au socle ; déborde numériquement au-delà d'un millier de points</td><td class="w"><strong>Pillow + NumPy seuls</strong> — les deux bibliothèques réellement installées</td></tr>
+      <tr><td class="b">Où il est le bon choix</td><td class="w">Le style <em>detailed</em> / HD, les cinématiques, un personnage à 256 px et plus — cas que le produit accepte aussi (« pixel art d'abord, pas seulement »)</td><td class="w">Tout ce qui est rendu à 128 px et moins — le cas d'usage principal</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cmp"><span class="lbl">Ce que je retiendrais</span>
+    <p><span class="reco">Deux rigs, choisis par la taille cible du projet, et le paper-doll d'abord</span> parce qu'il ne demande aucune dépendance neuve, qu'il rend A5 inutile pour le pantin et qu'il fait entrer l'ordre d'empilement et l'IK dans le modèle de données dès le départ. Le maillage ARAP reste la branche « detailed », à ouvrir le jour où un projet HD le demande — et à ce moment-là scipy entre au socle, avec sa ligne dans <code>pyproject.toml</code>. Ce n'est pas une opinion à trancher sur le papier : <strong>c'est l'essai n°1 d'A0, à condition de lui donner deux branches</strong>, et il est gratuit.</p>
+  </div>
+
+  <h3>Une idée du dépôt que le plan sous-exploite : la planche de pièces</h3>
+  <p>Le bilan note en passant « demander une planche de pièces à plat » comme repli si le rebouchage coûte trop cher. C'est plus qu'un repli : <strong>c'est la synthèse du pliage et du pantin</strong>, et la voie la plus cohérente avec un produit qui génère par API. Un seul appel — le sprite promu en référence, un gabarit chroma à six ou huit cases nommées (<em>head, torso, left arm, right arm, left leg, right leg</em>), la consigne d'énumération que le produit sait déjà écrire — rend les pièces à plat, dans le style et la palette du personnage, sans zone cachée puisque rien ne se recouvre. Le dépliage existant les découpe et les nomme par case ; le pantin les assemble. Le modèle « recopie la structure de son entrée », défaut mesuré sur les grilles : ici c'est exactement ce qu'on veut. Trois échecs à écrire d'avance, selon la règle d'A0 : les pièces reviennent à des échelles différentes (mesurable, la fenêtre commune d'A2 s'applique) ; le modèle dessine le personnage entier dans une case (le compte le voit) ; les couleurs dérivent entre pièces (la palette de bande d'A5 s'applique). Un appel à trois centimes tranche.</p>
+
+  <h3>A0, réécrit</h3>
+  <ul class="todo">
+    <li><b>Essai 1, deux branches, gratuit.</b> Un bras d'un sprite déjà en bibliothèque, tourné de 15°, 30° et 45° : (a) sur l'image en grand puis réduit par la chaîne actuelle ; (b) extrait du rendu 64 px et tourné par RotSprite. Juger à l'œil les six vignettes côte à côte. Ce qui peut rater : (a) bave au coude, (b) casse la silhouette à 45°. <span class="eff">½ j</span></li>
+    <li><b>Essai 2, gratuit.</b> Seize épingles posées à la main sur une silhouette de l'atelier, une marche et une attaque de profil poussées jusqu'à la casse — <em>avec les deux rigs</em>. Ce qui peut rater : zone cachée derrière le bras, pied qui glisse. <span class="eff">½ j</span></li>
+    <li><b>Essai 3, un appel.</b> La planche de pièces à plat, sur le personnage du banc. Ce qui peut rater : échelles, personnage entier dans une case, dérive de couleurs. <span class="eff">3 ¢</span></li>
+    <li><b>Essai 4, la boucle du quatrième chemin.</b> Une image de posture en rôle <code>edition</code>, le sprite promu en <code>reference</code>, une pose par appel. Zéro ligne de code : <code>importer</code>, réinjecter, promouvoir, lancer. Arrêt quand ça marche ou quand deux tours n'apprennent rien. <span class="eff">2,5 ¢ par tour</span></li>
+    <li><b>Ce que la note d'A0 doit trancher, et que le plan renvoie « à l'ouverture »</b> : le rig (et donc les dépendances), l'existence de la découpe en pièces, la forme du mouvement (angles par étape, z-order, contacts), la pose automatique (rtmlib sur l'image en grand, jamais sur le sprite ; repli : gabarit de seize épingles aux proportions de la boîte), et le format de sortie du pantin — ou sa non-sortie.</li>
+  </ul>
+
+  <p>Sur les mouvements eux-mêmes, un mot de prudence contre la recherche autant que contre le plan. La fiche 06 propose 100STYLE (CC-BY : crédit dans le jeu) et CMU comme corpus de rétargeting ; le plan retient « un cycle de marche tient en 48 nombres ». <strong>Pour cinq mouvements sur 64 px, quatre poses clés dessinées ou procédurales (contact, appui, passage, envol) battent un rétargeting à soixante images par seconde</strong>, et 100STYLE n'a ni saut, ni attaque, ni mort. Socle procédural d'abord (sinus + IK deux os, quelques dizaines de lignes) ; corpus mocap seulement si un essai montre qu'un cycle rétargeté se lit mieux à cette taille — ce dont je doute.</p>
+</section>
+<section class="dom" id="s6">
+  <div class="dom-head"><div class="dom-n">06</div><div>
+    <h2>Briques à prendre, briques à laisser</h2>
+    <p class="lede">Filtre appliqué : pip ou npm, processeur seul, licence MIT/Apache/BSD, Python 3.11, déterminisme à machine fixée, et une place identifiée dans le code. La plupart des « briques » sont en réalité des algorithmes à reprendre en NumPy plutôt que des paquets à installer — c'est cohérent avec un dépôt qui n'a gagné qu'une dépendance côté écran depuis l'origine.</p>
+  </div></div>
+
+  <h3>À prendre</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Brique</th><th>Licence</th><th>Où l'insérer</th><th>Gain</th><th>Tranche</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td class="b">scipy<small>ndimage.label, binary_fill_holes, distance_transform_edt, morphologie</small></td><td><span class="pill ok">BSD-3</span></td><td class="ref">image/traitement.py composantes, taches.py</td><td class="w">Composantes sur le brut : 4 s → 10 ms ; filtre de poussière avant <code>boite_opaque</code> ; à déclarer au socle</td><td>A2, R6</td><td class="eff">½ j</td></tr>
+      <tr><td class="b">Fond chroma + despill CbCr + tolérance liée au fond</td><td><span class="pill ok">maison, ~60 l.</span></td><td class="ref">detourer_bord, image/pliage.py, image/calque.py, services/pliage.py</td><td class="w">Sujet pâle gardé 27 % → 100 % ; liseré absorbé sans érosion ; obligatoire si un fournisseur rend du JPEG</td><td>D3</td><td class="eff">2 j</td></tr>
+      <tr><td class="b">Poches fermées ≤ N px² retirées d'office</td><td><span class="pill ok">maison, reprend poches_de_fond</span></td><td class="ref">image/taches.py:189</td><td class="w"><code>enferme = proche &amp; ~joignable &amp; opaque</code> est déjà calculé ; supprime la plupart des onze pipettes</td><td>D1</td><td class="eff">½ j</td></tr>
+      <tr><td class="b">Rongement conditionnel</td><td><span class="pill ok">maison, ~20 l.</span></td><td class="ref">variante de ronger</td><td class="w">N'ôter que les pixels de bord plus proches du fond que de leur voisin intérieur : le sprite ne maigrit plus</td><td>D1</td><td class="eff">1 j</td></tr>
+      <tr><td class="b">Détecteur pas + phase avec pas attendu, arbitre d'octave par aller-retour, quantification à 16 couleurs avant profilage<small>algorithmes de pixel-art-fixer et perfectPixel, repris en NumPy</small></td><td><span class="pill ok">idées MIT</span></td><td class="ref">nouveau image/grille.py ; sur_grille réduit sur le pas</td><td class="w">Bouillie 29 % → 0, bouillonnement 57 % → 0 sur synthèse ; sortie « pas, phase, confiance, candidats »</td><td>D2</td><td class="eff">3–5 j + banc</td></tr>
+      <tr><td class="b">Réduction en deux temps</td><td><span class="pill ok">maison, ~80 l.</span></td><td class="ref">sur_grille</td><td class="w">Second filet quand le pas est incertain</td><td>D2</td><td class="eff">1–2 j</td></tr>
+      <tr><td class="b">OKLab en NumPy</td><td><span class="pill ok">maison, 15 l.</span></td><td class="ref">quantifier, palette.attirer</td><td class="w">Distance perceptuelle pour la palette imposée et la fusion ; Pillow quantifie en RGB à 6 bits par canal</td><td>D2</td><td class="eff">½ j</td></tr>
+      <tr><td class="b">Fusion par graines + centre-en-case + retrait des traits de quadrillage<small>sprite-gen, essai_grille.py:302-313</small></td><td><span class="pill ok">Apache / maison</span></td><td class="ref">services/pliage._boites, image/decoupe.py</td><td class="w">−31 % de refus ; planches quadrillées récupérées ; sujets en morceaux réunis (N connu)</td><td>R6</td><td class="eff">2 j</td></tr>
+      <tr><td class="b">Mesure de stabilité inter-étapes</td><td><span class="pill ok">maison, 30 l.</span></td><td class="ref">image/mesures.py</td><td class="w">Pixels de contour qui changent d'état entre deux étapes lentes ; l'étalon d'A5, à écrire <em>avant</em> A2</td><td>A2, A5</td><td class="eff">½ j</td></tr>
+      <tr><td class="b">isnet-anime, birefnet-general-lite<small>en ONNX via rembg</small></td><td><span class="pill ok">Apache / MIT</span></td><td class="ref">SILHOUETTES, traitement.py:174-206</td><td class="w">Un modèle entraîné sur du dessin ; un lite à peser ; isnet (1024) comme défaut du moteur « modèle » à la place d'u2net (320)</td><td>D4</td><td class="eff">½ j + 1 j de banc</td></tr>
+      <tr><td class="b">rtmlib (RTMPose)<small>17/26/133 points, onnxruntime</small></td><td><span class="pill ok">Apache-2.0</span></td><td class="ref">nouveau image/squelette.py, catalogue comme les moteurs de détourage</td><td class="w">Le seul candidat qui rende « le squelette se pose » compatible avec « pas de GPU, grisé avec sa raison » ; sur l'image en grand, jamais sur le sprite</td><td>A8</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">RotSprite<small>port de Pixelorama, ~120 l. NumPy</small></td><td><span class="pill ok">MIT</span></td><td class="ref">nouveau image/pantin.py</td><td class="w">Rotation propre d'une pièce déjà en pixel art ; cache par angle quantifié</td><td>A0, A8</td><td class="eff">1 j</td></tr>
+      <tr><td class="b">IK deux os + cycles procéduraux</td><td><span class="pill ok">maison, ~80 + 60 l.</span></td><td class="ref">domaine/mouvement.py</td><td class="w">Contacts au sol qui ne glissent pas ; marche, course, repos sans corpus</td><td>A6, A8</td><td class="eff">2 j</td></tr>
+      <tr><td class="b">LaMa sur CPU<small>rebouchage des zones cachées, masque dilaté de 2–4 px, en grand</small></td><td><span class="pill ok">Apache-2.0</span></td><td class="ref">optionnel, comme rembg</td><td class="w">Seulement si l'essai 2 d'A0 découvre des zones cachées ; sinon rien</td><td>A8</td><td class="eff">1 j si besoin</td></tr>
+      <tr><td class="b">DINOv2 small en ONNX comme <em>aide</em> au tri d'identité</td><td><span class="pill ok">Apache-2.0</span></td><td class="ref">essai d'abord sur les 135 planches notées</td><td class="w">Similarité de chaque case au sprite promu ; si les planches notées « dérive » se séparent, un dégrisage — jamais un refus. Sinon, une ligne dans le bilan</td><td>A3</td><td class="eff">1 j d'essai</td></tr>
+      <tr><td class="b">Aseprite JSON + Godot SpriteFrames .tres + GIF/APNG</td><td><span class="pill ok">specs publiques</span></td><td class="ref">services/export.py</td><td class="w">Le format le plus lu, et celui du moteur visé ; validé dans Godot headless</td><td>A4</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">DragonBones JSON<small>étendu par userData : pas de pixel, palette, z-order</small></td><td><span class="pill ok">MIT</span></td><td class="ref">export du pantin</td><td class="w">Lu par Godot (addon), Phaser, Cocos ; pas de licence par utilisateur, contrairement à Spine</td><td>A8, ou différé</td><td class="eff">3–5 j</td></tr>
+      <tr><td class="b">Canvas 2D natif + horloge de module<small>ImageBitmap, imageSmoothingEnabled=false, un seul rAF</small></td><td><span class="pill ok">natif</span></td><td class="ref">interface, nouveau composant Bande</td><td class="w">N+1 aperçus synchronisés à la même vitesse ; zéro paquet npm</td><td>A2, A3</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">Phaser en playground isolé</td><td><span class="pill ok">MIT</span></td><td class="ref">page à part, charge le ZIP exporté</td><td class="w">La seule vérité extérieure sur « ce qui sort est ce que l'aperçu montrait »</td><td>A4</td><td class="eff">2–3 j</td></tr>
+      <tr><td class="b">Sémaphore par fournisseur + annulation + TrustedHost</td><td><span class="pill ok">stdlib / Starlette</span></td><td class="ref">generation.py:724-810, api/app.py</td><td class="w">Nécessaires à A3 ; ferme le réattachement DNS</td><td>avant A3</td><td class="eff">½ j</td></tr>
+      <tr><td class="b">Référent par personnage dans la caméra du jeu</td><td><span class="pill ok">maison</span></td><td class="ref">production.py (champ), generation.py:2091-2112</td><td class="w">Déjà mesuré bon (tour 3) ; remplace la carte de face comme référence de toutes les poses</td><td>hors version, avant A7</td><td class="eff">2–3 j</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>À laisser</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Brique</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td class="b">Modèles locaux, LoRA de planche, ControlNet, IP-Adapter, ComfyUI, klein/Z-Image</td><td class="w">Mesuré « pas à la hauteur » ; « pas de ComfyUI » est une règle durable. À relire le jour où un LoRA de mise en page spécialisé serait accessible sans GPU local — c'est vraisemblablement ce que SpriteCook et Retro Diffusion ont fait, et c'est pourquoi leur taux est meilleur ; le plan devrait l'écrire pour fermer la porte proprement.</td></tr>
+      <tr><td class="b">Wan, AnimateDiff, FramePack, toute la vidéo</td><td class="w">Hors sujet : l'objectif est le sprite animé ; et la famille Hunyuan exclut l'UE.</td></tr>
+      <tr><td class="b">See-through (SIGGRAPH 2026)</td><td class="w">Décomposition en couches + inpainting, ~8 Go en NF4 : contredit « pas de GPU », entraîné sur de l'anime, et répond à la question que l'essai 2 d'A0 est conçu pour rendre sans objet. Outil hors atelier, une fois par personnage, si l'auteur veut l'essayer sur sa RTX 3080.</td></tr>
+      <tr><td class="b">SAM 2, GroundingDINO, OWLv2, Florence-2 pour le dépliage</td><td class="w">Sur-ingénierie devant huit cases posées sur un gabarit que l'atelier a dessiné lui-même ; le centre-en-case et la fusion par graines font le travail en 40 lignes.</td></tr>
+      <tr><td class="b">pymatting, alpha bleeding, hystérésis</td><td class="w">Le moteur par défaut rend 0 ou 255 ; le halo mesuré au bon endroit (64 px) se règle par la réduction, pas par une matte.</td></tr>
+      <tr><td class="b">PixelOE, unfake.py, pixel-art-fixer <em>en dépendance</em></td><td class="w">PixelOE résout un autre problème (HD → pixel art) et tire torch ; unfake embarque libimagequant (GPL) ; pixel-art-fixer est une CLI Rust + opencv. On reprend les algorithmes, pas les paquets.</td></tr>
+      <tr><td class="b">libimagequant, xBRZ, potrace, FastSAM, YOLO-World, @imgly/background-removal</td><td class="w">GPL / AGPL.</td></tr>
+      <tr><td class="b">RMBG-1.4/2.0, bria-rmbg, MatAnyone, EdgeSAM, FLUX Kontext, ICEdit</td><td class="w">Non commerciales — et <code>bria-rmbg</code> est le défaut de rembg que le dépôt a déjà écarté, à raison (15,8 s par image).</td></tr>
+      <tr><td class="b">k-means (sklearn, cv2), opencv</td><td class="w">Non déterministe sans graine ; rien qu'opencv fasse ici que scipy et NumPy ne fassent.</td></tr>
+      <tr><td class="b">Huey, table de jobs séparée, WebSocket, sqlite-vec, FTS5</td><td class="w">La file existe aux deux tiers (tâches asyncio, reprise « interrompue », SSE) ; il manque un sémaphore et une annulation, pas une infrastructure. Aucun avancement intermédiaire n'existe à transporter.</td></tr>
+      <tr><td class="b">FastMCP.from_fastapi()</td><td class="w">Produirait une centaine d'outils à élaguer en perdant les descriptions écrites et la traduction des refus. Les seize outils-verbes actuels sont déjà l'état recommandé.</td></tr>
+      <tr><td class="b">PixiJS, Konva, Fabric, react-timeline-editor, @theatre/core, dotting, Pixelorama en iframe, Excalidraw</td><td class="w">La déformation est serveur ; l'écran montre des images, seize épingles et un ordre : DOM + canvas 2D suffisent. Une bande est N images à cadence fixe, pas des pistes interpolées. L'éditeur de pixels est reporté par décision de l'auteur. PixiJS ne se justifierait que pour déformer sous la souris, ce qui doublerait l'ARAP en TypeScript.</td></tr>
+      <tr><td class="b">Prix depuis <code>/api/v1/models</code></td><td class="w">Contredit « mesuré, jamais tarif », que le piège <code>riverflow</code> justifie. À la rigueur en « annoncé », grisé.</td></tr>
+      <tr><td class="b">Scoring en cascade (ImageReward, HPSv2, VLM-juge) qui refuse</td><td class="w">« Faire juger par une machine » est écarté, et la mesure automatique a été prise en défaut ici. Un préfiltre sur faits vérifiables dégrise ; rien ne classe.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section class="dom" id="s7">
+  <div class="dom-head"><div class="dom-n">07</div><div>
+    <h2>L'ordre que je proposerais</h2>
+    <p class="lede">Rien n'est retiré du plan, rien n'est réécrit dans le prompt, aucune version n'est rouverte. Ce qui change est le moment de trois choses — A0, D3, le tri — et la reconnaissance que D2 et A3 coûtent trois fois ce que le relevé disait.</p>
+  </div></div>
+
+  <div class="arch"><b>Semaine 0</b>   A0 gratuit (essais 1 et 2, deux rigs)  ·  trois dettes réelles  ·  grille 4×2 + 8 tirages
+           relevé : édition masquée sur le canal ?  poids du lite ?  ·  scipy déclarée <i>si</i> le maillage gagne
+
+<b>Hors version</b>   R6 (cause d'abord : géométrie, centre-en-case, fusion, traits)  ─┐
+              R7 (après découpage de generation.py ; négatif déplacé ; ordinaux mesurés)  │
+                                                                                            ▼
+<b>V2.3</b>   D3 le fond  ──► D1 la plomberie des défauts (valeurs gravées <i>après</i> D2)
+        D2 la grille, avec son banc de 40 images  ──► D4 les moteurs (le contour rejoint D2)
+
+<b>V3</b>     A1 ──► A2 ──► A3 ──► A4            <i>peuvent partir dès R6 — les planches se jugent brutes</i>
+                     │        └──► A7           <i>après A0 (le chemin « remplacer une étape » n'existe pas encore)</i>
+                     ├──► A5   (attend D2)      <i>réduite à la mesure + la palette de bande</i>
+                     └──► A6a (gabarit d'instants, dès A2)  ──► A6b (angles, z-order, contacts)  ──► A8
+
+<b>Transversal</b>   surface d'image commune  ·  clavier (flèches, focus, priorité)  ·  ErrorBoundary + aria-live
+              horloge + canvas 2D partagés par A2 et A3  ·  un premier essai au navigateur pour A3</div>
+
+  <h3>Ce que ça change, en trois phrases</h3>
+  <p><strong>Le geste principal arrive des semaines plus tôt.</strong> A1 → A3 ne dépendent d'aucune amélioration de traitement : les 135 planches ont été jugées brutes, et A2 l'impose. <strong>La V2.3 commence par ce qui rapporte le plus pour le moins de code</strong> — le fond — et grave ses valeurs par défaut quand la réduction est juste, pas avant. <strong>A0 cesse d'être « en parallèle »</strong> : ses deux essais gratuits sont la première chose à faire, parce que leur réponse décide des dépendances, du modèle d'A6 et de la moitié d'A8, et qu'un plan qui attend « l'ouverture de la tranche » pour trancher le rig découvrira en A8 qu'il a construit A5 et A6 pour le mauvais.</p>
+
+  <h3>Si je n'avais que dix jours</h3>
+  <ul class="todo">
+    <li><b>Jours 1–2.</b> A0 gratuit, deux rigs, trois angles ; la planche de pièces à plat pour trois centimes ; la note qui tranche.</li>
+    <li><b>Jour 3.</b> Les trois dettes réelles ; la grille 4×2 et ses huit tirages ; les deux relevés ; les quatre corrections de documents.</li>
+    <li><b>Jour 4.</b> Découper <code>generation.py</code> en trois modules à façade constante — avant R7, sans risque, les 833 essais ne bougent pas.</li>
+    <li><b>Jours 5–6.</b> R6 par la cause : centre-en-case, fusion par graines, retrait des traits, puis l'écran de tolérance.</li>
+    <li><b>Jours 7–8.</b> D3 entier, despill compris, les trois gris codés remplacés, les deux mesures d'acceptation à l'écran.</li>
+    <li><b>Jour 9.</b> L'essai gratuit DINOv2 sur les 135 notes, et la mesure de stabilité inter-étapes — les deux outils de mesure dont A3 et A5 auront besoin, écrits avant les tranches.</li>
+    <li><b>Jour 10.</b> Réécrire A2, A5, A6 et A8 dans le plan à partir de la note d'A0 — une page chacune, avec les hypothèses maintenant explicites.</li>
+  </ul>
+
+  <div class="cmp amb"><span class="lbl">Un coût à écrire dans le plan, sans rien construire</span>
+    <p>Le nombre de jugements d'un jeu vu de dessus à huit directions — quarante bandes, quatre cents planches à regarder — est le seul cas où ni le tri ni le pantin ne changent l'ordre de grandeur, et où le pipeline 3D → rig → rendu → pixelisation le changerait. Ce n'est pas une tranche, c'est une phrase à mettre dans « ce que ce plan ne couvre pas », pour que la question se pose le jour où le prochain jeu n'est pas de profil, et pas six mois après.</p>
+  </div>
+</section>
+
+<section class="dom" id="s8">
+  <div class="dom-head"><div class="dom-n">08</div><div>
+    <h2>V4 tuiles, V5 son : deux esquisses à corriger avant qu'elles ne deviennent un plan</h2>
+    <p class="lede">Les deux versions suivantes ne sont décrites que dans <code>docs/archi-versions.md</code> § 9 et § 10. Elles héritent d'hypothèses écrites avant les bancs de la V3, et deux d'entre elles ne tiennent plus.</p>
+  </div></div>
+
+  <div class="grid2">
+    <div class="card"><h5>V4 — les tuiles qui se raccordent</h5>
+      <p>L'esquisse dit « lourd mais déterministe : aucune inconnue », avec un 15-pièces 4×4, un 17-pièces et un autotile-16, un recalage, une découpe, un atlas, et « PNG + JSON de mappage » en sortie. Trois choses changent.</p>
+      <ul>
+        <li><strong>« Aucune inconnue » est faux.</strong> Le banc d'animation a montré que le modèle ne reproduit pas l'arrangement du gabarit (4×2 rendu pour 3×3) — or une planche de tuiles est codée <em>par position</em>. C'est la même loterie qu'en V3, en pire : on ne trie pas un blob à l'œil. La V4 hérite d'A1/A3 (commander, regarder, garder) plus qu'elle ne s'en distingue.</li>
+        <li><strong>Le pivot est le dual-grid.</strong> On <em>génère</em> 16 tuiles (ou 6 avec symétries) et on <em>assemble</em> le blob 47 par quadrants ; « un tileset 47 n'est jamais dessiné ». Le Tileset Base Generator de SpriteCook est MIT : gabarit 15/17 et iso, masque de terrain, contour et grille de recalage d'un coup, à porter en NumPy. Un score de couture tient en dix lignes (<code>seam_ratio &gt; 1,5</code> = visible).</li>
+        <li><strong>« PNG + JSON de mappage » ne suffit à aucun moteur.</strong> Godot veut un <code>TileSetAtlasSource</code> avec ses peering bits, Tiled un <code>wangset</code>, LDtk des règles. Et le padding circulaire — la manière universelle d'obtenir une texture sans couture en local — est inapplicable via API ; reste l'offset d'une demi-tuile + rebouchage (LaMa CPU ou quilting) + le score pour décider.</li>
+      </ul>
+    </div>
+    <div class="card"><h5>V5 — le son</h5>
+      <p>L'esquisse vise « description → son court » avec Stable Audio Open, des boucles par traitement du signal, fondus et normalisation. La forme est bonne, le défaut est mauvais.</p>
+      <ul>
+        <li><strong>Pour des bruits rétro, sfxr est la voie par défaut</strong> : 24 paramètres bornés, rendu en millisecondes, CPU, sans licence (jsfxr Unlicense, jfxr BSD, rfxgen zlib) ; aucun port Python maintenu — ~400 lignes à écrire, ou <code>node</code> en sous-processus. Il se prête exactement au geste de la V3 — <em>en commander douze, garder le bon</em> — à coût nul, et la recette non destructive s'applique telle quelle : on garde les paramètres, pas le WAV.</li>
+        <li><strong>Stable Audio Open est sous licence communautaire Stability</strong> (gratuit sous 1 M$, révocable) — acceptable pour un projet personnel, à écrire à côté ; Small (341 M) tourne sur CPU en secondes. C'est la voie « réaliste », pas le défaut.</li>
+        <li><strong>Le « vrai travail de bouclage » devient presque vide</strong> si la musique est générée à BPM, tonalité et durée imposés (ACE-Step 1.5, MIT, sorties commerciales explicites) : des mesures entières bouclent par construction ; il reste un loop-maker de cinquante lignes. MIDI + FluidSynth pour le chiptune.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="dom" id="s9">
+  <div class="dom-head"><div class="dom-n">§M</div><div>
+    <h2>Méthode et limites</h2>
+    <p class="lede">Ce qui a été fait, ce qui n'a pas pu l'être, et ce qu'il faut vérifier avant de s'appuyer sur un chiffre de cette revue.</p>
+  </div></div>
+
+  <p>Le dépôt a été copié tel quel (code, documents, essais, données de catalogue ; sans les images ni les résultats de bancs) et lu par quatre audits parallèles — pipeline image, génération et architecture serveur, interface, documents de planification — chacun confronté aux fiches de « Briques Libres » de son domaine, avec l'obligation de citer <span class="ref">fichier:ligne</span> et de distinguer <em>vérifié</em> (lu dans le code, ou mesuré par un script jetable sur des images synthétiques appelant les fonctions du dépôt) de <em>supposé</em> (déduit d'une source externe non rejouée). Les quatre rapports (≈ 16 000 mots) sont livrés en annexe. Les affirmations reprises ici ont été rejouées une seconde fois par grep sur le snapshot : la géométrie 3×3, le négatif en queue, le refus des variations sur un pliage, les options de fond du catalogue, les dépendances déclarées, l'absence de canvas et de flèches dans l'interface, l'absence d'atlas dans l'export, les mentions de Spine et les deux poids du modèle allégé.</p>
+
+  <h3>Ce qui n'a pas pu être fait</h3>
+  <p><strong>Aucun essai n'a tourné</strong> : ni <code>pytest</code>, ni <code>vitest</code>, ni <code>tsc</code> — les registres PyPI et npm sont inaccessibles depuis l'environnement de revue. Tout est lecture statique, et les endroits où une exécution aurait tranché sont signalés dans les annexes. <strong>Les mesures chiffrées de la revue sont faites sur des images synthétiques</strong> (disque anti-crénelé, grille logique 55×55 peinte à 9,4 et 13,1 px) avec les fonctions du dépôt : ce sont des ordres de grandeur qui montrent un mécanisme, jamais des résultats sur les vraies images — le banc de 40 images réelles de D2 reste à faire. <strong>Deux pièges d'intégration de rembg</strong> (normalisation par le maximum ; masque u2net inféré à 320 px puis agrandi au Lanczos) sont cités de mémoire de la source 2.0.x et marqués supposés : une ligne chacun à vérifier au premier modèle ajouté. <strong>Les clés exactes du JSON Aseprite</strong> viennent de la recherche, pas d'un fichier ouvert ici. <strong>La disponibilité d'une édition masquée</strong> sur gpt-image-2 via un adaptateur OpenAI direct n'a pas été relevée.</p>
+
+  <h3>Où cette revue peut se tromper</h3>
+  <p>Sur la préférence paper-doll contre maillage : c'est l'avis de la fiche 06 et le mien, fondé sur ce que font les outils de pixel art et sur trois objections techniques, pas sur un essai — l'essai est gratuit et c'est précisément pourquoi A0 doit avoir deux branches. Sur l'ordre V2.3 / V3 : la contradiction est dans le plan, mais « la V3 ne s'ouvre pas avant que la V2 serve pour de vrai » est une règle de méthode que l'auteur tient depuis cinq versions ; la revue propose de découpler le tri de la V2.3, pas de renoncer à cette règle. Sur les efforts : ce sont des estimations d'auditeurs qui n'ont pas écrit une ligne de ce dépôt ; l'auteur, qui a tenu vingt-huit tranches, les corrigera d'un facteur qu'il connaît mieux que moi.</p>
+</section>
+  </main>
+</div>
+
+<footer>
+  <div class="foot">
+    <p><strong>Revue Asset Kitchen</strong> — regard externe sur le dépôt <code>gag2</code> (snapshot du 2 septembre 2026, dernier commit <code>0af4515</code>), établi le même jour à partir de quatre audits parallèles confrontés à « Briques Libres », l'état de l'art open source du 2 septembre 2026, et à l'analyse fonctionnelle de SpriteCook du 26 août.</p>
+    <p>Lecture statique : aucun essai du dépôt n'a été exécuté. Les mesures chiffrées sont des ordres de grandeur obtenus sur des images synthétiques avec les fonctions du dépôt. Chaque affirmation sur le code porte son fichier et sa ligne dans les annexes ; les efforts sont des estimations.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail ol a'));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var current = null;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          if (current) current.classList.remove('on');
+          current = map[e.target.id];
+          if (current) current.classList.add('on');
+        }
+      });
+    }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+    document.querySelectorAll('section.dom').forEach(function(s){ io.observe(s); });
+  }
+})();
+</script>

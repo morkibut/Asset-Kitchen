@@ -22,8 +22,8 @@ from atelier.domaine.envoi import (
     Couches,
     Tri,
     clef,
-    en_blocs,
     joindre,
+    parties,
     resoudre,
 )
 from atelier.domaine.erreurs import ErreurAtelier, ModeleInconnu, SansCle
@@ -84,11 +84,11 @@ __all__ = [
     "accorde",
     "argent",
     "clef",
-    "en_blocs",
     "est_argent",
     "geometrie",
     "identifiant_de",
     "joindre",
+    "parties",
     "resoudre",
     "repere",
 ]

@@ -9,7 +9,7 @@ que vaut** ce qu'on a reçu. La géométrie, elle, vit dans
 **Rien ici ne refuse.** Le compte d'images est le seul refus automatique du
 produit, et il est arithmétique : il se prend dans le service, sur la longueur
 d'une liste de boîtes. Les mesures de ce module informent, case par case, et
-n'empêchent jamais de garder (`docs/PLAN.md`, C2).
+n'empêchent jamais de garder (`docs/archive/plan-versions-tenues.md`, C2).
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from PIL import Image, ImageDraw
 
 from atelier.domaine.pliage import Geometrie, MesuresLot
 from atelier.image.decoupe import Boite
-from atelier.image.traitement import mesurer_grille
+from atelier.image.traitement import retrouver_grille
 
 __all__ = ["COTE", "cote_de_case", "gabarit", "mesurer_lot"]
 
@@ -110,7 +110,7 @@ def mesurer_lot(rgba: np.ndarray, boites: list[Boite]) -> list[MesuresLot]:
     silhouette d'un sujet n'existe qu'une fois le fond retiré, et détourer deux
     fois la même image pour deux mesures serait deux fois le même calcul.
 
-    Deux nombres par case, et pas un de plus :
+    Trois nombres par case, et pas un de plus :
 
     - **la ressemblance** — le plus fort recouvrement de silhouette entre cette
       case et une autre du lot, et laquelle. C'est le piège mesuré le 28 août :
@@ -118,8 +118,21 @@ def mesurer_lot(rgba: np.ndarray, boites: list[Boite]) -> list[MesuresLot]:
       pose. Le contrat était tenu, la planche sans valeur ;
     - **la grille** — le pas de pixel sur lequel le modèle a peint cette
       case-là, et la dérive du lot, qui est le rapport du plus grand au plus
-      petit. La mesure situe un ordre de grandeur et **ne remplace pas l'œil**
-      (`mesurer_grille`) ; c'est une raison de plus pour qu'elle ne refuse rien.
+      petit. Elle **ne refuse rien** : une case peinte sans grille rend zéro, et
+      l'écran l'affiche « — » plutôt que d'inventer un chiffre
+      (`retrouver_grille`, D2). La dérive ne compte que les cases qui ont
+      vraiment un pas ;
+    - **le remplissage** — la part de la boîte qui reste opaque (R6, US-368).
+      C'est le seul des trois qui attrape quelque chose qu'on ne voit pas : un
+      modèle qui redessine les traits du quadrillage rend des carrés pleins que
+      le compte accepte, et qui entraient en bibliothèque sans un mot. Il porte
+      un seuil, `SEUIL_PLEINE`, et il le porte parce qu'il est mesuré — 0,34 à
+      0,77 sur une planche saine, 0,99 à 1,00 sur une planche quadrillée, rien
+      entre les deux sur les 135 planches des bancs.
+
+    La boîte part avec, telle qu'elle a été trouvée. **C'est ce qui permet de
+    montrer les sujets avant d'en garder aucun** : l'écran découpe la planche
+    dans son coin, sans redemander au serveur ce qu'il vient de mesurer.
     """
     if not boites:
         return []
@@ -140,18 +153,34 @@ def mesurer_lot(rgba: np.ndarray, boites: list[Boite]) -> list[MesuresLot]:
         if valeur > fortes[j]:
             fortes[j], jumeaux[j] = valeur, i
 
-    pas = [mesurer_grille(_png(c)) for c in crops]
-    mesures = [p for p, nettete in pas if nettete > 0 and p > 0]
+    # **Le détecteur de D2, et plus `mesurer_grille`** (3 septembre 2026). Trois
+    # choses changent d'un coup, et aucune n'était un choix de style :
+    #
+    # - la case part **en tableau** au lieu d'un PNG réencodé pour être aussitôt
+    #   redécodé — la mesure d'une planche de vingt-quatre cases payait
+    #   vingt-quatre allers-retours pour rien ;
+    # - la mesure **voit l'alpha**, qui est le contraste le plus franc d'une case
+    #   détourée, au lieu de l'aplatir en gris ;
+    # - et surtout, **elle sait se taire**. La revue externe du 2 septembre
+    #   nommait le défaut : « `derive` hérite des faux positifs de
+    #   `mesurer_grille` » — une case peinte sans grille répondait 2, et la
+    #   dérive d'un lot se calculait sur ce 2. Une case sans grille rend
+    #   maintenant zéro, l'écran l'affiche « — » comme il le faisait déjà, et la
+    #   dérive ne compte plus que des pas qui existent.
+    pas = [retrouver_grille(c) for c in crops]
+    mesures = [g.pas for g in pas if g.trouvee]
     derive = round(max(mesures) / min(mesures), 2) if mesures else 1.0
 
     return [
         MesuresLot(
             case=index,
             cases=len(crops),
-            grille_px=pas[index][0],
+            grille_px=pas[index].pas,
             ressemblance=round(fortes[index], 4),
             jumeau=jumeaux[index],
             derive=derive,
+            remplissage=_remplissage(crops[index]),
+            boite=boites[index],
         )
         for index in range(len(crops))
     ]
@@ -168,6 +197,25 @@ def _silhouette(crop: np.ndarray) -> np.ndarray:
     return np.asarray(etiree) >= OPACITE
 
 
+def _remplissage(crop: np.ndarray) -> float:
+    """La part de la boîte qui reste opaque, entre 0 et 1 (R6, US-368).
+
+    **Dans la boîte, et surtout pas dans la vignette découpée.** La vignette est
+    taillée dans les octets d'origine — fond compris, marge comprise —, donc
+    elle est opaque partout : mesurée le 3 septembre 2026 à 1,00 sur les sept
+    planches d'essai, quadrillées comme saines. Elle ne sépare rien. C'est bien
+    la boîte du sujet, prise sur l'alpha du détourage, qui dit si ce qu'on tient
+    est une silhouette ou un rectangle.
+
+    Le même seuil d'opacité que la silhouette, et pour la même raison : un
+    contour à demi transparent est tranché une fois pour toutes, et deux lectures
+    de la même image rendent le même chiffre.
+    """
+    if crop.size == 0:  # pragma: no cover — une boîte trouvée n'est jamais vide
+        return 0.0
+    return round(float((crop[:, :, 3] >= OPACITE).mean()), 4)
+
+
 def _recouvrement(un: np.ndarray, autre: np.ndarray) -> float:
     """L'intersection sur l'union. Deux silhouettes vides se ressemblent
     entièrement — c'est vrai, et ça ne se produit pas : une case sans pixel
@@ -176,7 +224,7 @@ def _recouvrement(un: np.ndarray, autre: np.ndarray) -> float:
     return int((un & autre).sum()) / union if union else 1.0
 
 
-def _png(crop: np.ndarray) -> bytes:
-    tampon = io.BytesIO()
-    Image.fromarray(crop, "RGBA").save(tampon, format="PNG")
-    return tampon.getvalue()
+# `_png` vivait ici pour donner des octets à `mesurer_grille`, qui n'en prenait
+# pas d'autres. Le détecteur de D2 reçoit un tableau ; l'encodage n'a plus de
+# raison d'être et il est retiré plutôt que gardé « au cas où » — un aller-retour
+# PNG par case, sur une planche de vingt-quatre, ne se retrouve pas tout seul.

@@ -844,6 +844,9 @@ def test_les_textes_de_style_gardent_lordre_de_la_bible():
         ambiance_nom="Forge",
     )
 
+    # `CONTEXT` est le titre que R7 pose sur les textes de style. Ce que cet
+    # essai protège est l'ordre dessous : le monde, l'époque, le trait — celui
+    # de la bible, pas celui de la résolution des couches.
     assert joindre(resoudre(couches, None)) == (
-        "World: M\nEra: E\nLine and shading: T-ambiance"
+        "CONTEXT\n\nWorld: M\nEra: E\nLine and shading: T-ambiance"
     )

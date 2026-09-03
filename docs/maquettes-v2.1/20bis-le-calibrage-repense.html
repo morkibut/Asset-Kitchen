@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Kitchen — le calibrage, repensé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fond-0:#0B0D10; --fond-1:#111419; --fond-2:#171B21; --fond-3:#1E242B;
+    --bord:#252B33; --bord-fort:#39424C;
+    --texte:#E6EAEE; --texte-2:#98A2AC; --texte-3:#5E6771;
+    --signal:#49B3CE; --signal-clair:#8ED8E8; --signal-sourd:rgba(73,179,206,.13);
+    --lumiere:#EAF4F8;
+    --ok:#5FA871; --epingle:#C8A03C; --echec:#CB6C65;
+    --damier-a:#191E24; --damier-b:#14181D;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Instrument Sans",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--fond-0);color:var(--texte);font-family:var(--sans);
+    font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mesure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .page{max-width:1240px;margin:0 auto;padding:56px 32px 96px}
+
+  .chapeau{border-bottom:1px solid var(--bord);padding-bottom:28px;margin-bottom:44px}
+  .kicker{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1.05;margin:0 0 18px}
+  h1 em{font-style:italic;color:var(--signal)}
+  .chapeau p{max-width:74ch;color:var(--texte-2);font-size:14px;margin:0 0 11px}
+  strong{font-weight:600;color:var(--texte)}
+  .sourd{color:var(--texte-3)}
+
+  section{margin:0 0 60px}
+  .entete{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--bord);
+    padding-bottom:7px;margin-bottom:22px}
+  .entete .num{font-family:var(--mono);font-size:9.5px;color:var(--signal);letter-spacing:.11em}
+  .entete h2{font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;
+    letter-spacing:.11em;color:var(--texte-3);margin:0}
+  p{margin:0 0 13px;max-width:78ch}
+  .intro{color:var(--texte-2);font-size:13.5px;max-width:78ch;margin-bottom:24px}
+  h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:26px 0 10px;line-height:1.2}
+
+  .note{border:1px solid var(--bord);border-left:2px solid var(--signal);border-radius:2px;
+    background:var(--fond-1);padding:16px 18px;margin-bottom:10px}
+  .note.att{border-left-color:var(--epingle)}
+  .note.bien{border-left-color:var(--ok)}
+  .note.mal{border-left-color:var(--echec)}
+  .note.gris{border-left-color:var(--bord-fort)}
+  .note .lab{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--signal);display:block;margin-bottom:9px}
+  .note.att .lab{color:var(--epingle)}
+  .note.bien .lab{color:var(--ok)}
+  .note.mal .lab{color:var(--echec)}
+  .note.gris .lab{color:var(--texte-3)}
+  .note p:last-child{margin-bottom:0}
+  .note h3{font-family:var(--serif);font-size:21px;font-weight:400;margin:0 0 10px;line-height:1.2}
+  .note ul{margin:0;padding:0;list-style:none}
+  .note li{font-size:12.5px;color:var(--texte-2);padding:6px 0 6px 15px;position:relative;line-height:1.55}
+  .note li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:1px;background:var(--bord-fort)}
+  .note li b{color:var(--texte);font-weight:600}
+  .note ol{margin:11px 0 0;padding:0;list-style:none;counter-reset:et}
+  .note ol li{counter-increment:et;padding-left:27px}
+  .note ol li::before{content:counter(et);position:absolute;left:0;top:6px;width:auto;height:auto;
+    background:none;font-family:var(--mono);font-size:9.5px;color:var(--signal)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:14px}
+  th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);text-align:left;font-weight:500;padding:0 12px 8px;border-bottom:1px solid var(--bord)}
+  td{padding:11px 12px;border-bottom:1px solid var(--bord);color:var(--texte-2);
+    vertical-align:top;line-height:1.5}
+  tr:last-child td{border-bottom:0}
+  td.k{color:var(--texte);font-weight:600}
+  .m{font-family:var(--mono);font-size:11px;color:var(--signal-clair);font-variant-numeric:tabular-nums}
+
+  /* ── Le croquis d'écran ─────────────────────────────────────────── */
+  .croquis{border:1px solid var(--bord);border-radius:2px;overflow-x:auto;background:var(--fond-0);
+    margin-bottom:12px}
+  .wf-barre{min-width:1174px;height:44px;background:var(--fond-1);border-bottom:1px solid var(--bord);
+    display:flex;align-items:center;gap:5px;padding:0 12px}
+  .wf-nom{font-family:var(--serif);font-size:15px;margin-right:10px;line-height:1}
+  .tab{height:24px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bord);
+    border-radius:2px;background:var(--fond-2);color:var(--texte-2);font-size:11.5px;white-space:nowrap}
+  .tab.on{border-color:var(--signal);background:var(--signal-sourd);color:var(--signal-clair)}
+  .fil{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-left:8px}
+  .fil b{color:var(--texte-2);font-weight:400}
+  .wf-tard{margin-left:auto;display:flex;gap:9px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .sep-v{width:1px;height:16px;background:var(--bord);margin:0 3px}
+  .wf-corps{min-width:1174px;display:flex;align-items:stretch;min-height:520px}
+
+  /* colonne de gauche — 308 px */
+  .gauche{width:308px;flex:none;border-right:1px solid var(--bord);background:var(--fond-1);
+    padding:13px 14px;display:flex;flex-direction:column;gap:17px}
+  .col-t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);display:block;margin-bottom:6px}
+  .col-t.nm{text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:11px;
+    color:var(--texte-2);text-decoration:underline dotted var(--bord-fort);text-underline-offset:3px}
+  .tete{display:flex;align-items:baseline;gap:8px}
+  .tete .rt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .propos{font-size:11.5px;color:var(--texte-2);line-height:1.5;margin:0 0 8px}
+  .fait{font-family:var(--mono);font-size:10px;color:var(--texte-3);line-height:1.5;margin:0}
+  .fait b{color:var(--texte-2);font-weight:400}
+
+  .prop{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+  .pl{display:flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:10px;
+    color:var(--texte-3);font-variant-numeric:tabular-nums}
+  .pl .v{margin-left:auto;color:var(--texte-2)}
+  .pl .v.eg{color:var(--epingle)}
+  .bouton{height:34px;display:flex;align-items:center;justify-content:center;border-radius:2px;
+    background:var(--signal);color:#08171C;font-size:13px;font-weight:600}
+  .bouton.off{background:var(--fond-2);color:var(--texte-3);border:1px solid var(--bord);font-weight:400}
+  .raison{font-family:var(--mono);font-size:10px;color:var(--texte-3);margin-top:6px;
+    display:flex;align-items:flex-start;gap:6px;line-height:1.45}
+  .raison::before{content:"";width:8px;height:1px;background:var(--texte-3);display:inline-block;
+    margin-top:7px;flex:none}
+
+  .po{display:flex;align-items:center;gap:9px;height:34px}
+  .po .vg{width:26px;height:26px;flex:none;position:relative;border:1px solid var(--bord)}
+  .po .vg i{position:absolute;display:block;background:var(--texte-3)}
+  .po .nm{flex:1;min-width:0;font-size:11px;color:var(--texte-2);padding:0 4px;border-radius:2px}
+  .po.sel .nm{background:var(--fond-3);color:var(--texte)}
+  .po .oc{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:40px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .po .px{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:46px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .po .px.bas{color:var(--epingle)}
+  .po .rf{font-family:var(--mono);font-size:9px;color:var(--epingle);width:34px;text-align:right}
+  .po.hs{opacity:.5}
+  .po.hs .nm{text-decoration:line-through}
+
+  .rg{display:flex;align-items:center;gap:8px;height:26px}
+  .rg .rn{font-family:var(--mono);font-size:10px;color:var(--texte-2);width:76px;flex:none;
+    text-decoration:underline dotted var(--bord-fort);text-underline-offset:3px}
+  .rg .ch{height:26px;width:60px;border:1px solid var(--bord);border-radius:2px;background:var(--fond-2);
+    font-family:var(--mono);font-size:10px;color:var(--texte-2);display:flex;align-items:center;
+    justify-content:flex-end;padding:0 6px;font-variant-numeric:tabular-nums}
+  .rg .un{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);width:18px}
+  .rg .cr{height:26px;width:26px;border:1px solid var(--bord);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;
+    color:var(--texte-2)}
+  .gestes{display:flex;gap:14px;margin-top:8px;font-family:var(--mono);font-size:10px}
+  .gestes a{color:var(--signal);text-decoration:none}
+  .gestes a.eg{color:var(--epingle)}
+
+  .segs{display:flex;gap:6px}
+  .sg{height:26px;display:flex;align-items:center;padding:0 8px;border-radius:2px;
+    font-family:var(--mono);font-size:10px;color:var(--texte-3)}
+  .sg.on{background:var(--fond-3);color:var(--texte)}
+
+  /* la scène — avant / après */
+  .scene{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;padding:26px 20px}
+  .duo{display:flex;gap:40px;align-items:flex-end}
+  .bloc-c{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .bloc-c .tt{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3)}
+  .bloc-c .tt.ap{color:var(--ok)}
+  .damier{background-image:
+      linear-gradient(45deg,var(--damier-a) 25%,transparent 25%),
+      linear-gradient(-45deg,var(--damier-a) 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,var(--damier-a) 75%),
+      linear-gradient(-45deg,transparent 75%,var(--damier-a) 75%);
+    background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;
+    background-color:var(--damier-b)}
+  .case{width:256px;height:256px;position:relative;border:1px solid var(--bord)}
+  .case .sil{position:absolute;bottom:0;background:var(--texte-3);opacity:.2}
+  .case .sil.ref{opacity:.55;background:var(--texte-2)}
+  .case .sil.act{opacity:1;background:#7E9A8E}
+  .case .sol{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--bord-fort)}
+  .case .ligne{position:absolute;left:0;right:0;border-top:1px dashed rgba(200,160,60,.7)}
+  .case .ligne span{position:absolute;right:3px;top:-13px;font-family:var(--mono);font-size:9px;
+    color:var(--epingle);font-variant-numeric:tabular-nums}
+  .bloc-c .sous{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);
+    font-variant-numeric:tabular-nums}
+  .legende{display:flex;gap:18px;font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+  .legende span{display:flex;align-items:center;gap:6px}
+  .legende i{width:9px;height:9px;display:inline-block;background:var(--texte-3);opacity:.2}
+  .legende i.ref{opacity:.55;background:var(--texte-2)}
+  .legende i.act{opacity:1;background:#7E9A8E}
+
+  .ans{display:flex;flex-direction:column;gap:0;margin-bottom:26px}
+  .an{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--bord);align-items:flex-start}
+  .an:last-child{border-bottom:0}
+  .an .k{font-family:var(--mono);font-size:9.5px;color:var(--signal);width:22px;flex:none;padding-top:3px}
+  .an .t{font-size:12.5px;color:var(--texte-2);line-height:1.55}
+  .an .t b{color:var(--texte);font-weight:600}
+  .an.gris .k{color:var(--texte-3)}
+  .lgd{font-family:var(--mono);font-size:9.5px;color:var(--texte-3);margin:0 0 26px}
+
+  .avant-apres{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  .cadre{border:1px solid var(--bord);border-radius:2px;background:var(--fond-1);padding:12px 13px}
+  .cadre .t{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--texte-3);margin-bottom:10px;display:block}
+  .cadre.ok .t{color:var(--ok)}
+  .cadre.no .t{color:var(--echec)}
+  .cadre p{font-size:12.5px;color:var(--texte-2);margin:0 0 9px;max-width:none}
+  .cadre p:last-child{margin-bottom:0}
+
+  footer{border-top:1px solid var(--bord);padding-top:20px;margin-top:16px;
+    font-family:var(--mono);font-size:9.5px;color:var(--texte-3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="chapeau">
+    <div class="kicker">Asset Kitchen · le calibrage · deuxième dessin · 3 septembre 2026</div>
+    <h1>Le calibrage —<br><em>la version qui dit ce qu'elle répare</em></h1>
+    <p><strong>De quoi on parle.</strong> Quand on demande à la machine plusieurs images d'un même
+      personnage — au repos, en marche, en train de frapper —, elles ne reviennent pas toutes à la
+      même taille. Un bras tendu élargit le dessin, l'atelier le rétrécit pour le faire tenir dans
+      sa case, et le personnage devient plus petit sur cette image que sur les autres. Dans le jeu,
+      il grandit et rapetisse d'une animation à l'autre. <strong>Le calibrage est l'outil qui remet
+      toutes ses poses à la même hauteur</strong>, sans rien redessiner et sans rien payer.</p>
+    <p><strong>Ce qui ne va pas.</strong> Constaté par l'auteur le 3 septembre 2026 :
+      <em>« c'est super d'avoir plein d'outils, mais si on ne comprend pas à quoi ils servent ni
+      comment on s'en sert, et si leur interface n'est pas intuitive, il faut les revoir »</em>.
+      L'écran ne dit nulle part ce qu'il répare — et la phrase qui l'expliquerait le mieux existe
+      déjà, écrite et mesurée, dans le recueil d'explications du produit. Elle n'est simplement pas
+      à l'écran.</p>
+    <p><strong>Ce que cette page ne refait pas.</strong> Elle ne rediscute pas le fonctionnement de
+      l'outil : ce qu'il calcule, ce qu'il écrit, et pourquoi il n'est pas rangé avec les outils de
+      retouche sont tranchés par le premier dessin du calibrage
+      (<span class="mesure">20-outil-calibrage.html</span>), et ça reste vrai. Ici on ne touche
+      qu'à une chose : <strong>comment il se lit et comment on s'en sert</strong>.</p>
+  </div>
+
+  <!-- ═══ 01 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">01</span><h2>Ce que l'écran montre aujourd'hui</h2></div>
+    <p class="intro">Relevé sur l'écran du pèlerin, le personnage du jeu <em>Le Marais du Vieux
+      Moulin</em>. Il a deux poses faites, repos et marche, et elles sont déjà toutes les deux à la
+      bonne taille.</p>
+
+    <div class="note mal">
+      <span class="lab">Six choses qui empêchent de comprendre ou de se servir</span>
+      <ul>
+        <li><b>L'écran ne dit pas ce qu'il répare.</b> On lit le mot « Calibrage », puis
+          immédiatement un gros bouton bleu. Rien entre les deux. La phrase qui expliquerait le
+          défaut existe pourtant dans le recueil du produit : <em>six poses du même personnage,
+          même recette, sont sorties à 64, 60, 64, 53, 64 et 43 pixels de haut</em>. Elle n'est pas
+          affichée.</li>
+        <li><b>Le bouton vient avant son explication.</b> Il est le plus gros élément de l'écran, et
+          ce qu'il va faire est écrit <em>en dessous</em>, en petit gris, dans un paragraphe qui
+          tasse quatre faits différents. On appuie sans savoir.</li>
+        <li><b>Le gros bouton reste allumé alors qu'il n'y a rien à faire.</b> Sur cet écran, les
+          deux poses sont déjà à la même hauteur — l'écran l'écrit lui-même, « 0 pixel de la case
+          ne sert pas ». Le bouton invite quand même à appuyer. Le produit s'interdit ailleurs de
+          proposer puis de refuser ; ici il propose une action sans effet.</li>
+        <li><b>La liste des poses casse.</b> La ligne de la pose « marche » se replie sur trois
+          lignes — on y lit « 100 % · 64 », puis « px », puis « px » tout seul en dessous. La
+          colonne des chiffres est trop étroite pour ce qu'on y met.</li>
+        <li><b>Deux commandes sont muettes.</b> Un petit encadré <span class="mesure">réf</span>, et
+          un point plein qu'on clique pour mettre une pose de côté. Le produit s'interdit d'inventer
+          des symboles — il en compte trois dans tout l'atelier —, et ces deux-là en sont un
+          quatrième et un cinquième, sans un mot pour dire ce qu'ils font.</li>
+        <li><b>La grande zone de droite ne s'explique pas.</b> Les silhouettes y sont empilées à
+          trois niveaux de transparence qui désignent trois rôles différents, et aucune légende ne
+          le dit. Sur le cas du pèlerin, les deux poses se recouvrent exactement : l'écran montre
+          un sprite et ressemble à une visionneuse.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">02</span><h2>Trois morceaux du premier dessin n'ont pas survécu</h2></div>
+    <p class="intro">Le premier dessin du calibrage, fait le 30 août 2026, prévoyait des choses que
+      l'écran construit n'a pas. Ce n'est pas un reproche à l'écran : c'est la raison pour laquelle
+      il est moins clair que ce qu'on avait prévu, et il faut le savoir avant de redessiner.</p>
+
+    <table>
+      <tr><td class="k" style="width:250px">Une petite silhouette sur chaque ligne de pose</td>
+        <td>Le premier dessin montrait, à gauche du nom de chaque pose, la forme de son
+          personnage — large et basse pour l'attaque, haute et étroite pour le repos. <b>C'était ce
+          qui rendait la liste lisible sans lire les chiffres.</b> Elle n'existe pas dans l'écran
+          construit : il n'y a que du texte.</td></tr>
+      <tr><td class="k">Deux façons de calibrer</td>
+        <td>Le premier dessin offrait un choix — <em>tout doit tenir</em> ou <em>caler sur la
+          référence</em>. L'écran construit n'a qu'un seul bouton. <b>Cette page ne rouvre pas la
+          question</b> : c'est une décision sur ce que l'outil fait, et elle appartient au premier
+          dessin.</td></tr>
+      <tr><td class="k">Des raccourcis au clavier, dessinés sous ce qu'ils commandent</td>
+        <td>Prévus pour garder les yeux sur l'image pendant qu'on corrige. Seule la touche
+          d'échappement existe aujourd'hui.</td></tr>
+    </table>
+
+    <div class="note att">
+      <span class="lab">Et l'explication, elle, a bien été écrite</span>
+      <p>Le premier dessin se terminait par une section intitulée <em>ce que cet outil doit au
+        guide</em>, avec le texte complet de son explication, prêt à poser. <strong>Ce texte a bien
+        été rangé dans le recueil du produit</strong> — il y est encore aujourd'hui, mot pour mot.
+        <strong>Mais l'écran ne le branche pas.</strong> Il existe, personne ne peut le lire depuis
+        l'endroit où la question se pose.</p>
+      <p style="margin-top:10px">C'est le même défaut que sur la fiche d'une chose, et il a la même
+        cause : ces deux écrans-là ne posent pas une seule des petites poignées qui déclenchent une
+        explication au survol, et ne se déclarent même pas comme des panneaux de réglages auprès du
+        mécanisme qui les affiche.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 03 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">03</span><h2>Le principe du nouveau dessin</h2></div>
+
+    <div class="note bien">
+      <span class="lab">Une phrase, et tout en découle</span>
+      <h3>Un outil doit montrer le défaut qu'il répare avant de proposer de le réparer.</h3>
+      <p>Tant qu'on n'a pas vu que les poses ne sont pas à la même hauteur, le bouton
+        « Calibrer » ne veut rien dire. La grande zone de l'écran doit donc montrer <strong>le
+        défaut d'un côté et sa correction de l'autre</strong>, avant qu'on ait touché à quoi que ce
+        soit. C'est aussi la seule façon honnête de répondre à la question « qu'est-ce que ce bouton
+        va faire », sans avoir à l'appuyer pour le savoir.</p>
+    </div>
+
+    <table style="margin-top:20px">
+      <tr><td class="k" style="width:210px">L'écran s'annonce<br>en deux phrases</td>
+        <td>Sous le titre, ce que l'outil répare, en français ordinaire. Puis, en petit, le fait
+          mesuré qui le prouve. Le titre garde un pointillé : le survol donne la version complète,
+          celle que le Guide affiche aussi.</td></tr>
+      <tr><td class="k">Ce que le bouton va faire<br>se lit avant le bouton</td>
+        <td>Les trois chiffres de la proposition passent <em>au-dessus</em>, alignés, un par ligne.
+          Et le bouton porte son résultat au lieu de son verbe : <span class="mesure">Mettre les
+          6 poses à 53 px</span> plutôt que <span class="mesure">Calibrer les 6 poses</span>. Le
+          produit fait déjà ça ailleurs — son bouton qui paie annonce ce qu'il va coûter.</td></tr>
+      <tr><td class="k">Les deux symboles muets<br>deviennent deux mots</td>
+        <td>Ils quittent la ligne de la pose, qui n'a pas la place, et rejoignent le bloc qui règle
+          déjà la pose choisie. Toutes les actions sur une pose se retrouvent au même endroit, et
+          chacune est écrite en toutes lettres.</td></tr>
+      <tr><td class="k">La grande zone montre<br>l'avant et l'après</td>
+        <td>Deux cases côte à côte, la même pile de silhouettes dans les deux, à gauche telle
+          qu'elle est et à droite telle qu'elle serait. Avec une légende de trois lignes qui dit
+          enfin ce que les trois transparences désignent.</td></tr>
+    </table>
+  </section>
+
+  <!-- ═══ 04 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">04</span><h2>L'écran, sur un cas où il y a du travail</h2></div>
+    <p class="intro">Six poses d'un même personnage, aux six hauteurs réellement mesurées le 30 août
+      2026 : 64, 60, 64, 53, 64 et 43 pixels. La plus basse, <em>mort</em>, est un personnage
+      couché — elle est proposée à la mise de côté, sinon elle rapetisserait toutes les autres.
+      Les deux colonnes gardent leurs largeurs actuelles.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span>
+        <span class="tab on">Codex</span>
+        <span class="tab">Galerie</span>
+        <span class="fil">Cœur de pierre › Personnages › Michel le nain › <b>Calibrage</b></span>
+        <span class="wf-tard"><span class="mesure">6 poses · 5 calées · 1 mise de côté</span></span>
+      </div>
+
+      <div class="wf-corps">
+        <div class="gauche">
+
+          <div>
+            <div class="tete"><span class="col-t nm">Le calibrage</span>
+              <span class="rt">‹ l'établi</span></div>
+            <p class="propos">Les poses d'un même personnage ne sortent pas toutes à la même
+              hauteur. Cet outil les remet toutes à la même, sans rien redessiner et sans rien
+              payer.</p>
+            <p class="fait">mesuré sur six poses du même personnage, même recette :
+              <b>64, 60, 64, 53, 64 et 43 px de haut</b></p>
+          </div>
+
+          <div>
+            <span class="col-t">ce que ça donnerait</span>
+            <div class="prop">
+              <div class="pl"><span>hauteur commune</span><span class="v">53 px sur 64</span></div>
+              <div class="pl"><span>la pose qui limite</span><span class="v eg">attaque</span></div>
+              <div class="pl"><span>résolution perdue</span><span class="v">11 px · 17 %</span></div>
+            </div>
+            <div class="bouton">Mettre les 5 poses à 53 px</div>
+            <div class="raison"><span>c'est le prix de la cohérence : une fois calées, elles font
+              toutes la même taille dans le jeu</span></div>
+          </div>
+
+          <div>
+            <span class="col-t">les poses</span>
+            <div class="po"><div class="vg damier"><i style="left:8px;top:3px;width:9px;height:20px"></i></div>
+              <span class="nm">repos</span><span class="rf">réf</span>
+              <span class="oc">83 %</span><span class="px">53 px</span></div>
+            <div class="po sel"><div class="vg damier"><i style="left:7px;top:4px;width:11px;height:19px"></i></div>
+              <span class="nm">marche</span><span class="rf"></span>
+              <span class="oc">88 %</span><span class="px">52 px</span></div>
+            <div class="po"><div class="vg damier"><i style="left:7px;top:3px;width:10px;height:20px"></i></div>
+              <span class="nm">course</span><span class="rf"></span>
+              <span class="oc">83 %</span><span class="px">53 px</span></div>
+            <div class="po"><div class="vg damier"><i style="left:3px;top:4px;width:18px;height:19px"></i></div>
+              <span class="nm">attaque</span><span class="rf"></span>
+              <span class="oc">100 %</span><span class="px bas">53 px</span></div>
+            <div class="po"><div class="vg damier"><i style="left:6px;top:3px;width:12px;height:20px"></i></div>
+              <span class="nm">dégâts</span><span class="rf"></span>
+              <span class="oc">83 %</span><span class="px">53 px</span></div>
+            <div class="po hs"><div class="vg damier"><i style="left:3px;top:11px;width:18px;height:12px"></i></div>
+              <span class="nm">mort</span><span class="rf"></span>
+              <span class="oc"></span><span class="px">de côté</span></div>
+          </div>
+
+          <div>
+            <span class="col-t">marche — sa taille</span>
+            <div class="rg"><span class="rn">occupation</span><span class="ch">88</span>
+              <span class="un">%</span><span class="cr">−</span><span class="cr">+</span></div>
+            <div class="rg"><span class="rn">décalage</span><span class="ch">0</span>
+              <span class="un">px</span><span class="cr">−</span><span class="cr">+</span></div>
+            <div class="gestes">
+              <a href="#" class="eg">prendre comme référence</a>
+              <a href="#">mettre de côté</a>
+            </div>
+            <div class="raison"><span>la taille est une part de la case : changer la taille de la
+              case ne défait aucun calage</span></div>
+          </div>
+
+          <div>
+            <span class="col-t">voir</span>
+            <div class="segs"><span class="sg on">toutes les poses</span>
+              <span class="sg">celle-ci et la référence</span></div>
+          </div>
+
+        </div>
+
+        <div class="scene">
+          <div class="duo">
+            <div class="bloc-c">
+              <span class="tt">aujourd'hui</span>
+              <div class="case damier">
+                <div class="sil" style="left:74px;width:36px;height:256px"></div>
+                <div class="sil" style="left:98px;width:44px;height:240px"></div>
+                <div class="sil" style="left:86px;width:40px;height:256px"></div>
+                <div class="sil act" style="left:56px;width:72px;height:212px"></div>
+                <div class="sil ref" style="left:110px;width:38px;height:256px"></div>
+                <div class="sil" style="left:40px;width:176px;height:172px;opacity:.12"></div>
+                <div class="sol"></div>
+              </div>
+              <span class="sous">de 43 à 64 px · six hauteurs différentes</span>
+            </div>
+
+            <div class="bloc-c">
+              <span class="tt ap">après le calibrage</span>
+              <div class="case damier">
+                <div class="ligne" style="bottom:212px"><span>53 px</span></div>
+                <div class="sil" style="left:74px;width:30px;height:212px"></div>
+                <div class="sil" style="left:98px;width:39px;height:212px"></div>
+                <div class="sil" style="left:86px;width:33px;height:212px"></div>
+                <div class="sil act" style="left:56px;width:72px;height:212px"></div>
+                <div class="sil ref" style="left:110px;width:31px;height:212px"></div>
+                <div class="sil" style="left:40px;width:176px;height:172px;opacity:.12"></div>
+                <div class="sol"></div>
+              </div>
+              <span class="sous">toutes à 53 px · la pose couchée reste où elle est</span>
+            </div>
+          </div>
+
+          <div class="legende">
+            <span><i class="act"></i>celle qu'on règle — marche</span>
+            <span><i class="ref"></i>la référence — repos</span>
+            <span><i></i>les autres poses</span>
+          </div>
+          <span class="sous" style="font-family:var(--mono);font-size:9.5px;color:var(--texte-3)">
+            case de 64 × 64 px, montrée quatre fois plus grande · la ligne dorée est la hauteur
+            que toutes atteindront</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="lgd">croquis à l'échelle, aux polices et aux couleurs du produit · les silhouettes
+      sont schématiques · les six hauteurs sont celles mesurées le 30 août 2026</div>
+
+    <div class="ans">
+      <div class="an"><span class="k">01</span><span class="t"><b>Deux phrases avant tout le
+        reste.</b> La première dit ce que l'outil répare, en français ordinaire. La seconde donne
+        le fait mesuré qui le prouve. Le nom de l'outil porte le pointillé qui, au survol, donne
+        la version longue — celle qui existe déjà dans le recueil du produit et que personne ne
+        pouvait lire d'ici.</span></div>
+      <div class="an"><span class="k">02</span><span class="t"><b>La proposition se lit avant le
+        bouton</b>, en trois lignes alignées au lieu d'un paragraphe. Chaque ligne a son nom à
+        gauche et son chiffre à droite, dans la police des chiffres. On sait ce qu'on va obtenir et
+        ce qu'on va perdre avant d'avoir la main sur la souris.</span></div>
+      <div class="an"><span class="k">03</span><span class="t"><b>Le bouton dit son résultat.</b>
+        <span class="mesure">Mettre les 5 poses à 53 px</span> — pas <span class="mesure">Calibrer
+        les 6 poses</span>. Il compte cinq et non six parce que la pose couchée est mise de côté, et
+        ce chiffre-là est justement celui qu'on veut vérifier d'un coup d'œil avant
+        d'appuyer.</span></div>
+      <div class="an"><span class="k">04</span><span class="t"><b>La silhouette revient sur chaque
+        ligne de pose</b>, comme le premier dessin le prévoyait. C'est elle qui fait voir d'un coup
+        que l'attaque est large et basse et que la mort est couchée — sans lire un seul
+        chiffre.</span></div>
+      <div class="an"><span class="k">05</span><span class="t"><b>Les chiffres ont chacun leur
+        colonne</b> — la part de la case d'un côté, la hauteur obtenue de l'autre, alignées l'une
+        sous l'autre. Plus de repli sur trois lignes, et on lit la colonne des hauteurs comme une
+        colonne : c'est là que le défaut se voit.</span></div>
+      <div class="an"><span class="k">06</span><span class="t"><b>Les deux symboles muets deviennent
+        deux mots</b>, <span class="mesure">prendre comme référence</span> et
+        <span class="mesure">mettre de côté</span>, rangés dans le bloc qui règle déjà la pose
+        choisie. Toutes les actions sur une pose sont au même endroit. Le produit écrit déjà ses
+        gestes en toutes lettres ailleurs — <em>retenir</em>, <em>éteindre</em>,
+        <em>rallumer</em>. Sur la ligne, il ne reste qu'une <b>marque</b> : le mot
+        <span class="mesure">réf</span> écrit en doré à côté de la pose qui sert de référence, sans
+        encadré et sans clic. Une marque dit un état, un mot fait un geste — les deux ne doivent pas
+        se ressembler.</span></div>
+      <div class="an"><span class="k">07</span><span class="t"><b>L'avant et l'après, côte à
+        côte.</b> À gauche l'empilement tel qu'il est : six têtes à six hauteurs, et le défaut saute
+        aux yeux. À droite le même empilement une fois calé, avec la ligne dorée que toutes les
+        têtes touchent. C'est la réponse visuelle à « qu'est-ce que ce bouton va faire ».</span></div>
+      <div class="an"><span class="k">08</span><span class="t"><b>La légende, enfin.</b> Trois
+        lignes qui nomment les trois transparences. Le premier dessin assumait de ne rien écrire ;
+        à l'usage, personne ne devine que la silhouette à demi effacée est celle qui sert de
+        référence.</span></div>
+      <div class="an gris"><span class="k">09</span><span class="t"><b>La pose mise de côté reste
+        montrée</b>, très pâle, et sa ligne reste dans la liste, barrée. Sortir du calage commun
+        n'est pas disparaître — sa case se remplit et se compte comme les autres.</span></div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">05</span><h2>Le même écran quand il n'y a rien à faire</h2></div>
+    <p class="intro">C'est le cas du pèlerin, et c'est celui que tu as sous les yeux : deux poses,
+      déjà toutes les deux à 64 pixels. Aujourd'hui le gros bouton bleu est allumé et invite à
+      appuyer. Voici ce qu'il devient.</p>
+
+    <div class="croquis">
+      <div class="wf-barre">
+        <span class="wf-nom">Asset Kitchen</span>
+        <span class="tab">Univers</span>
+        <span class="tab on">Codex</span>
+        <span class="tab">Galerie</span>
+        <span class="fil">Le Marais du Vieux Moulin › Personnages › Le pélerin › <b>Calibrage</b></span>
+        <span class="wf-tard"><span class="mesure">2 poses · 2 calées</span></span>
+      </div>
+
+      <div class="wf-corps" style="min-height:300px">
+        <div class="gauche">
+          <div>
+            <div class="tete"><span class="col-t nm">Le calibrage</span>
+              <span class="rt">‹ l'établi</span></div>
+            <p class="propos">Les poses d'un même personnage ne sortent pas toutes à la même
+              hauteur. Cet outil les remet toutes à la même, sans rien redessiner et sans rien
+              payer.</p>
+          </div>
+
+          <div>
+            <span class="col-t">ce que ça donnerait</span>
+            <div class="prop">
+              <div class="pl"><span>hauteur commune</span><span class="v">64 px sur 64</span></div>
+              <div class="pl"><span>la pose qui limite</span><span class="v eg">repos</span></div>
+              <div class="pl"><span>résolution perdue</span><span class="v">aucune</span></div>
+            </div>
+            <div class="bouton off">Mettre les 2 poses à 64 px</div>
+            <div class="raison"><span>elles y sont déjà — il n'y a rien à changer</span></div>
+          </div>
+
+          <div>
+            <span class="col-t">les poses</span>
+            <div class="po"><div class="vg damier"><i style="left:8px;top:2px;width:10px;height:22px"></i></div>
+              <span class="nm">repos</span><span class="rf">réf</span>
+              <span class="oc">100 %</span><span class="px">64 px</span></div>
+            <div class="po sel"><div class="vg damier"><i style="left:7px;top:2px;width:12px;height:22px"></i></div>
+              <span class="nm">marche</span><span class="rf"></span>
+              <span class="oc">100 %</span><span class="px">64 px</span></div>
+          </div>
+        </div>
+
+        <div class="scene">
+          <div class="duo">
+            <div class="bloc-c">
+              <span class="tt">aujourd'hui</span>
+              <div class="case damier" style="width:200px;height:200px">
+                <div class="ligne" style="bottom:200px"><span>64 px</span></div>
+                <div class="sil ref" style="left:58px;width:52px;height:200px"></div>
+                <div class="sil act" style="left:86px;width:56px;height:200px"></div>
+                <div class="sol"></div>
+              </div>
+              <span class="sous">les deux à 64 px</span>
+            </div>
+            <div class="bloc-c" style="align-self:center;max-width:230px">
+              <p style="font-family:var(--serif);font-size:24px;line-height:1.2;color:var(--texte-2);
+                margin:0 0 10px;max-width:none">Rien à calibrer.</p>
+              <p style="font-size:12px;color:var(--texte-3);line-height:1.5;margin:0;max-width:none">
+                Les deux poses de cette chose atteignent déjà la même hauteur. Le bouton se
+                rallumera de lui-même dès qu'une pose sortira à une autre taille.</p>
+            </div>
+          </div>
+          <div class="legende">
+            <span><i class="act"></i>celle qu'on règle — marche</span>
+            <span><i class="ref"></i>la référence — repos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ans">
+      <div class="an"><span class="k">01</span><span class="t"><b>Le bouton s'éteint, et il dit
+        pourquoi.</b> C'est la règle du produit, écrite noir sur blanc : <em>on ne propose jamais
+        puis on ne refuse</em> — un contrôle indisponible porte sa raison dans une petite ligne
+        permanente juste en dessous. Cette règle existe, l'écran ne l'appliquait simplement pas
+        ici.</span></div>
+      <div class="an"><span class="k">02</span><span class="t"><b>La grande zone parle au lieu de
+        montrer deux fois la même image.</b> Répéter la pile à l'identique à droite serait un
+        dessin qui ment sur son propre propos. Une phrase courte, dans la police à empattements du
+        produit — celle qu'il réserve entre autres aux écrans où il n'y a rien —, dit ce qui se
+        passe et à quelle condition ça changera.</span></div>
+      <div class="an gris"><span class="k">03</span><span class="t">Et le reste de l'écran ne
+        change pas : la liste des poses, les réglages à la main, la légende. Un outil qui n'a rien
+        à proposer reste un outil qu'on peut ouvrir pour vérifier.</span></div>
+    </div>
+  </section>
+
+  <!-- ═══ 06 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">06</span><h2>Les quatre explications qui manquent</h2></div>
+    <p class="intro">Le produit range ses explications dans un recueil unique. Chacune tient en
+      trois lignes toujours identiques : <strong>ce que c'est</strong>, <strong>ce que ça
+      change</strong>, <strong>d'où ça sort</strong>. Celle du calibrage lui-même existe déjà et
+      n'est pas branchée ; les quatre autres n'existent pas.</p>
+
+    <table>
+      <tr><td class="k" style="width:180px">Le calibrage</td>
+        <td><span class="m">elle existe déjà, mot pour mot</span> — il suffit de poser le pointillé
+          sur le nom de l'outil pour qu'elle s'affiche. C'est un branchement, pas une
+          rédaction.</td></tr>
+      <tr><td class="k">occupation</td>
+        <td><b>Ce que c'est ·</b> La part de la case que le personnage occupe en hauteur. À cent
+          pour cent il touche le haut et le bas ; à quatre-vingts, il flotte.<br>
+          <b>Ce que ça change ·</b> La taille à laquelle il apparaîtra dans le jeu, et rien
+          d'autre. Comme c'est une part et non un nombre de pixels, changer la taille de la case
+          plus tard ne défait aucun calage.<br>
+          <b>D'où ça sort ·</b> la recette de l'image · l'outil la réécrit, la main aussi</td></tr>
+      <tr><td class="k">décalage</td>
+        <td><b>Ce que c'est ·</b> De combien le personnage est poussé à gauche ou à droite dans sa
+          case.<br>
+          <b>Ce que ça change ·</b> Où il se trouve dans la case, pas sa taille. Il sert à recentrer
+          une pose dont le geste déporte la silhouette — un bras tendu, une arme levée.<br>
+          <b>D'où ça sort ·</b> cet outil seul · il ne part jamais dans une recette qu'on
+          nomme</td></tr>
+      <tr><td class="k">la référence</td>
+        <td><b>Ce que c'est ·</b> La pose à laquelle on compare les autres à l'œil. C'est presque
+          toujours le repos, la première qu'on a dessinée.<br>
+          <b>Ce que ça change ·</b> Rien du tout : elle décide seulement quelle silhouette est
+          montrée à demi effacée dans l'empilement. Elle ne décide pas de la hauteur
+          commune.<br>
+          <b>D'où ça sort ·</b> toi · la première pose au départ</td></tr>
+      <tr><td class="k">mettre de côté</td>
+        <td><b>Ce que c'est ·</b> Sortir une pose du calage commun. On le fait pour une pose couchée
+          ou accroupie, qui est basse pour de bonnes raisons.<br>
+          <b>Ce que ça change ·</b> Elle cesse de tirer la hauteur commune vers le bas, donc les
+          autres cessent d'être rapetissées à cause d'elle. Sa case, elle, se remplit et se compte
+          comme avant.<br>
+          <b>D'où ça sort ·</b> toi · l'outil la propose quand une pose est très en dehors des
+          autres</td></tr>
+    </table>
+  </section>
+
+  <!-- ═══ 07 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">07</span><h2>Ce que ça n'ajoute pas</h2></div>
+
+    <div class="avant-apres">
+      <div class="cadre ok">
+        <span class="t">rien de neuf</span>
+        <p><b>Aucune largeur.</b> La colonne de gauche reste à la largeur du dossier, la scène prend
+          le reste.</p>
+        <p><b>Aucune couleur.</b> Le doré de la hauteur commune, le bleu de l'action, les gris : les
+          mêmes qu'aujourd'hui.</p>
+        <p><b>Aucun symbole.</b> Le dessin en <em>retire</em> deux.</p>
+        <p><b>Aucune hauteur.</b> Les bandes sont prises dans la liste fermée du produit.</p>
+        <p><b>Aucune explication à rédiger deux fois.</b> Une seule est déjà écrite, quatre sont à
+          écrire, et toutes servent au survol comme au Guide.</p>
+      </div>
+      <div class="cadre no">
+        <span class="t">ce qui disparaît</span>
+        <p><b>Le petit encadré <span class="mesure">réf</span></b> et <b>le point plein</b>
+          disparaissent, remplacés par deux mots.</p>
+        <p><b>Le paragraphe gris sous le bouton</b> disparaît : ses quatre faits deviennent trois
+          lignes alignées, placées avant le bouton.</p>
+        <p><b>Le repli sur trois lignes</b> disparaît avec la colonne des chiffres élargie.</p>
+        <p><b>Le bouton allumé pour rien</b> disparaît : quand il n'y a rien à faire, il s'éteint et
+          dit pourquoi.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 08 ═══════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="entete"><span class="num">08</span><h2>Ce que cette page fait reporter ailleurs</h2></div>
+    <table>
+      <tr><td class="k" style="width:250px">Le recueil des explications</td>
+        <td>Quatre entrées neuves — la part de la case, le décalage, la référence, la mise de
+          côté —, écrites en entier au paragraphe 06. Et l'entrée du calibrage, qui existe déjà,
+          gagne enfin un endroit d'où on peut la lire.</td></tr>
+      <tr><td class="k">Le document des motifs de dessin</td>
+        <td>Un ajout : <b>un outil montre le défaut qu'il répare avant de proposer de le
+          réparer</b> — l'avant et l'après côte à côte, et ce que devient la scène quand il n'y a
+          rien à faire.</td></tr>
+      <tr><td class="k">Le premier dessin du calibrage</td>
+        <td>Rien à corriger — il reste la référence sur ce que l'outil fait. Ajouter seulement une
+          note : trois de ses morceaux n'ont pas été construits, et la silhouette par ligne de pose
+          revient avec cette page.</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    Asset Kitchen — le calibrage, deuxième dessin · 3 septembre 2026 · écran entier ·
+    le premier dessin reste dans <span class="mesure">20-outil-calibrage.html</span>
+  </footer>
+
+</div>
+</body>
+</html>

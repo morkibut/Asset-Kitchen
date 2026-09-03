@@ -7,7 +7,7 @@ lui a demandé mot pour mot *le corps monte aux étapes 4 et 8, le bras balance*
 et il n'a rien fait. **Les mots ne savent pas dire une chorégraphie.**
 
 Une image, si. Ce module en dessine une, gratuitement, avec la géométrie d'un
-vrai cycle de marche — c'est le **mannequin articulé de `docs/etude-mannequin.md`
+vrai cycle de marche — c'est le **mannequin articulé de `docs/archive/essais-v3/etude-mannequin.md`
 réduit à deux dimensions et à zéro euro**, et l'essayer maintenant dit s'il vaut
 la peine de construire l'autre.
 
@@ -67,17 +67,27 @@ def _genou(
     return bx - uy * h * sens, by + ux * h * sens
 
 
-def squelette(phase: float, h: float) -> dict:
+# Les proportions d'un marcheur, en fractions de sa hauteur. `ADULTE` est le
+# squelette d'origine ; `MICHEL` est relu sur le sprite promu le 2 septembre
+# 2026 (E5, tour 2) : jambes courtes, grande capuche — le modèle avait allongé
+# les jambes du personnage pour suivre la silhouette d'adulte.
+ADULTE = {"jambe": 0.46, "foulee": 0.34, "lever": 0.09, "tronc": 0.30, "cou": 0.115, "rayon_tete": 0.062, "bras": 0.155, "avant_bras": 0.145}
+MICHEL = {"jambe": 0.27, "foulee": 0.22, "lever": 0.06, "tronc": 0.36, "cou": 0.06, "rayon_tete": 0.16, "bras": 0.13, "avant_bras": 0.11}
+
+
+def squelette(phase: float, h: float, proportions: dict | None = None) -> dict:
     """Les articulations d'un marcheur vu de côté, à un instant du cycle.
 
     `phase` va de 0 à 1 sur un cycle complet. `h` est la hauteur totale visée.
     Toutes les longueurs sont des fractions de `h` — le squelette se redessine
-    donc à n'importe quelle taille sans qu'un chiffre change.
+    donc à n'importe quelle taille sans qu'un chiffre change. `proportions`
+    remplace les fractions d'`ADULTE` par celles d'un autre corps.
     """
+    f = {**ADULTE, **(proportions or {})}
     p = phase * 2 * math.pi
-    jambe = 0.46 * h
+    jambe = f["jambe"] * h
     cuisse, tibia = jambe * 0.52, jambe * 0.48
-    foulee, lever = 0.34 * h, 0.09 * h
+    foulee, lever = f["foulee"] * h, f["lever"] * h
     sol = h
 
     # **Le bassin monte et descend deux fois par cycle.** Bas au contact, haut au
@@ -98,9 +108,9 @@ def squelette(phase: float, h: float) -> dict:
     genou_g = _genou(hanche, pied_g, cuisse, tibia, +1)
     genou_d = _genou(hanche, pied_d, cuisse, tibia, +1)
 
-    epaule = (hanche_x + 0.012 * h, hanche_y - 0.30 * h)
-    tete = (epaule[0] + 0.01 * h, epaule[1] - 0.115 * h)
-    bras, avant = 0.155 * h, 0.145 * h
+    epaule = (hanche_x + 0.012 * h, hanche_y - f["tronc"] * h)
+    tete = (epaule[0] + 0.01 * h, epaule[1] - f["cou"] * h - f["rayon_tete"] * h * 0.5)
+    bras, avant = f["bras"] * h, f["avant_bras"] * h
 
     def main(decalage: float) -> tuple[tuple[float, float], tuple[float, float]]:
         # **Le bras balance à l'opposé de la jambe du même côté.**
@@ -115,7 +125,7 @@ def squelette(phase: float, h: float) -> dict:
     return {
         "sol": sol,
         "tete": tete,
-        "rayon_tete": 0.062 * h,
+        "rayon_tete": f["rayon_tete"] * h,
         "epaule": epaule,
         "hanche": hanche,
         "gauche": {"genou": genou_g, "pied": pied_g, "coude": coude_g, "main": main_g},
@@ -185,6 +195,26 @@ def planche_guide(cases: int, colonnes: int, lignes: int, cote: int = 1024, plei
         base_y = y0 + (haut + corps) / 2
         d.line([x0 + 8, base_y, x0 + large - 8, base_y], fill=SOL, width=2)
         _dessiner(d, s, x0 + large / 2, base_y - corps, corps, pleine)
+    tampon = io.BytesIO()
+    image.save(tampon, format="PNG")
+    return tampon.getvalue()
+
+
+def image_guide(phase: float, cote: int = 512, pleine: bool = True, proportions: dict | None = None) -> bytes:
+    """**Une seule pose**, centrée sur le fond du produit, pieds sur une ligne de sol (E5).
+
+    Ajoutée le 2 septembre 2026 pour l'essai de la pose imposée par image : là
+    où `planche_guide` dessine le cycle entier dans la grille qu'on enverra,
+    celle-ci n'en rend qu'un instant, pour un appel qui ne demande qu'une
+    image. Le sol est à 10 % du bas ; le corps fait 80 % du côté. Le même
+    squelette, le même dessin, le même sens de marche — vers la droite.
+    """
+    image = Image.new("RGB", (cote, cote), FOND)
+    d = ImageDraw.Draw(image)
+    corps = cote * 0.80
+    sol_y = cote * 0.90
+    d.line([cote * 0.08, sol_y, cote * 0.92, sol_y], fill=SOL, width=max(2, cote // 256))
+    _dessiner(d, squelette(phase, corps, proportions), cote / 2, sol_y - corps, corps, pleine)
     tampon = io.BytesIO()
     image.save(tampon, format="PNG")
     return tampon.getvalue()

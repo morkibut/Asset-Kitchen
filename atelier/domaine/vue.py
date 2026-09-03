@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from atelier.domaine.direction import Direction
+from atelier.domaine.fond import dit as fond_dit
 
 # Le jeu qui n'a pas déclaré sa vue. **Une valeur, pas un trou** : un univers qui
 # ne dit pas d'où il regarde ne contraint rien, comme un univers sans artwork ne
@@ -179,7 +180,7 @@ def _cardinales(queue: str = "", du_cadre: bool = False) -> tuple[Direction, ...
     **Conclusion, et elle dépasse ce fichier : la direction ne s'obtient pas par
     des mots.** Elle est le second axe de la matrice et multiplie la production
     par quatre ; aucune phrase testée ne la fait arriver dans un jeu vu d'aplomb.
-    C'est exactement ce que `docs/etude-mannequin.md` avait supposé pour
+    C'est exactement ce que `docs/archive/essais-v3/etude-mannequin.md` avait supposé pour
     l'attitude — *les mots ne savent pas dire une posture* — et cette mesure-ci
     l'étend à l'orientation. La réparation, si elle vient, sera une **image** :
     un référent par direction, ou la scène articulée de la V3.
@@ -410,8 +411,40 @@ TAILLES: tuple[tuple[int, str], ...] = (
     (64, "Personnages très détaillés, petits boss."),
     (96, "Gros ennemis."),
     (128, "Grosses créatures, décors, boss."),
-    (256, "Portraits, illustrations, écrans de titre."),
+    (256, "Pixel art haute résolution — portraits, illustrations, écrans de titre."),
+    (512, "Pixel art haute résolution — le grain reste visible, le détail aussi."),
 )
+
+
+# ── Les finesses d'un jeu en dessin, arrivées en D2 ──────────────────────────
+#
+# **La même case, une autre question.** En pixel art, la taille *est* le dessin :
+# 64 veut dire *soixante-quatre carrés de couleur*. En dessin, elle n'est qu'une
+# **finesse** — combien de détail le fichier garde —, et la transformation qui y
+# mène n'a rien de destructeur : réduire un dessin de 2048 à 1024 marche tout
+# seul, parce qu'il n'y a aucune grille à écraser.
+#
+# **Elle compte quand même, et pour trois raisons concrètes** : une image de
+# 2048 occupe 16 Mo dans la mémoire de la carte graphique, cent objets pareils
+# et le jeu ne démarre plus ; un sprite trop grand pour sa taille à l'écran paie
+# de la mémoire pour rien, trop petit il est flou ; et surtout **deux objets à
+# deux finesses différentes, affichés à la même taille, n'ont pas le même
+# piqué** — c'est ce qui se voit le plus vite.
+#
+# La règle qui les choisit : **environ le double de la hauteur affichée**, pour
+# rester net sur un écran dense ou quand la caméra approche.
+FINESSES: tuple[tuple[int, str], ...] = (
+    (256, "Petits objets d'inventaire, icônes, éléments d'interface."),
+    (512, "La finesse courante d'un personnage de jeu 2D dessiné."),
+    (1024, "Personnages en gros plan, portraits de dialogue, gros objets."),
+    (2048, "Décors, écrans de titre, illustrations plein cadre."),
+)
+
+# La finesse d'un jeu en dessin qui n'en a pas choisi. **512 et non 1024** : un
+# personnage de jeu 2D dessiné s'affiche couramment autour de 250 points de
+# haut, et la règle du double le met à 512. Doubler encore paierait quatre fois
+# la mémoire pour un piqué que personne ne verra.
+FINESSE_PAR_DEFAUT = 512
 
 
 def phrase_de_grille(cible: int) -> str:
@@ -437,14 +470,39 @@ def phrase_de_grille(cible: int) -> str:
     return f"2D pixel art on a {cible}x{cible} grid" if cible else ""
 
 
-def phrase_de_calage(cible: int) -> str:
-    """Ce que le choix de taille écrit dans la case `technique`. Vide sans cible,
-    pour la raison de `phrase_de_grille`."""
-    return (
-        f"single isolated sprite on a flat background, strict {cible}x{cible} px tile snap"
-        if cible
-        else ""
+def phrase_de_calage(cible: int, fond: str = "") -> str:
+    """Ce que le choix de taille et **le fond du jeu** écrivent dans `technique`.
+
+    Vide sans cible **et sans fond**, pour la raison de `phrase_de_grille` : un
+    univers qui n'a rien posé ne contraint rien.
+
+    ── Le fond, arrivé en D3 ────────────────────────────────────────────────
+
+    **C'est ici, et nulle part ailleurs, que le fond part.** Il était déjà écrit
+    en toutes lettres dans cette phrase — *a flat background* — sans qu'on dise
+    lequel, et le modèle rendait donc un gris clair, c'est-à-dire une couleur que
+    le sujet porte aussi. Nommer la couleur ne déplace rien : c'est le même mot
+    de la même phrase, qui cesse d'être vague.
+
+    **Sans fond posé, la phrase est celle d'avant la tranche, au caractère
+    près.** C'est le sixième critère de D3, et il vaut pour les centaines
+    d'images déjà traitées comme pour un univers qui n'a pas de palette.
+
+    **Les deux moitiés se séparent, et c'est le style qui les sépare** (D2). Un
+    jeu en dessin n'a pas de calage en carrés — sa cible vaut zéro ici — mais il
+    a un fond comme les autres : le sujet isolé part seul, sans la seconde
+    moitié. Coller les deux aurait rendu le fond inatteignable à la moitié des
+    projets, et la tranche muette là où elle sert autant.
+    """
+    nomme = fond_dit(fond)
+    pose = (
+        f"single isolated sprite on a flat solid {nomme} background"
+        if nomme
+        else "single isolated sprite on a flat background"
     )
+    if cible:
+        return f"{pose}, strict {cible}x{cible} px tile snap"
+    return pose if nomme else ""
 
 
 # ── Le cadre, replié juste avant la caméra ───────────────────────────────────
@@ -490,6 +548,13 @@ def phrases_du_produit() -> frozenset[str]:
     de ce texte annonçait comme sûr et qui vient de se produire : une phrase a
     changé, et sans ces cinq lignes elle serait restée dans la case de l'auteur,
     à se dire une seconde fois.
+
+    **Les phrases de calage qui nomment un fond n'y sont pas, et il ne faut pas
+    les y mettre** (D3). Cette liste ne sert qu'à *retirer d'un fichier écrit
+    avant le 1ᵉʳ septembre 2026* ce que le produit y avait rangé lui-même ; aucun
+    de ces fichiers ne porte de fond, puisque le réglage n'existait pas. Les y
+    ajouter ferait parcourir six couleurs fois neuf tailles à chaque relecture de
+    case, pour retirer un texte qui n'y est jamais.
     """
     ecrites = {v.phrase for v in VUES} | set(_PHRASES_D_AVANT)
     for cible, _ in TAILLES:

@@ -1,0 +1,34 @@
+{
+ "images": 17,
+ "hauteur_du_sujet": {
+  "min": 274,
+  "max": 287,
+  "ecart": 13
+ },
+ "largeur_du_sujet": {
+  "min": 146,
+  "max": 173,
+  "ecart": 27
+ },
+ "bord_non_uni": {
+  "min": 1,
+  "max": 3,
+  "ecart": 2
+ },
+ "derive_du_fond": 3,
+ "fond_premiere": [
+  233,
+  233,
+  235
+ ],
+ "fond_derniere": [
+  233,
+  233,
+  233
+ ],
+ "couleurs_distinctes": {
+  "min": 18783,
+  "max": 21089,
+  "ecart": 2306
+ }
+}

@@ -1,0 +1,29 @@
+{
+ "essai": "taille-reference",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T18:34:25.490Z",
+ "notes": {
+  "A-temoin:jet1": {
+   "note": "bon",
+   "echecs": [],
+   "libre": "le perso saute a droite, 2 images a recaler"
+  },
+  "A-temoin:jet2": {
+   "note": "bon"
+  },
+  "B-256:jet1": {
+   "note": "moyen",
+   "libre": "pas mal mais une image a revoir sur l'animation du pas"
+  },
+  "B-256:jet2": {
+   "note": "moyen",
+   "libre": "pas mal mais 1 ou 2 image a revoir sur l'animation du pas"
+  },
+  "C-512:jet1": {
+   "note": "mauvais"
+  },
+  "C-512:jet2": {
+   "note": "mauvais"
+  }
+ }
+}

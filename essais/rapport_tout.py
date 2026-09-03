@@ -83,6 +83,16 @@ AXES = [
      "découpable — prompt complet, clause remplacée, guide joint. L'effet a disparu : "
      "c'était du hasard. Ces huit-là valent plus cher que les vingt-cinq premiers, parce "
      "qu'ils empêchent une conclusion fausse d'entrer dans le produit."),
+    ("H", "L'arbitrage — les deux dernières pistes, et leur mort",
+     "Les cent onze animations notées à la main n'avaient laissé que deux pistes vivantes : "
+     "moins de cases sur la planche, et le remplacement de la clause de constance. Ces "
+     "deux réglages les paient huit fois chacun, en partant du bloc complet du produit — "
+     "ce qui manquait aux essais à quatre cases des vagues précédentes, dont les six "
+     "planches étaient toutes indécoupables. Les seize d'ici le sont toutes, et c'était "
+     "l'objet de la manœuvre. Le résultat est net et il ferme le sujet : zéro bonne "
+     "planche sur seize. Le personnage est deux fois plus grand, parfaitement découpable, "
+     "et il ne marche pas mieux. À lire dans leur propre page, où les quatre combinaisons "
+     "sont mises en carré : essais/rapport-arbitrage.html."),
 ]
 
 STYLE = """
@@ -240,8 +250,15 @@ SCRIPT = """
   });
  }
  function compter(){
+  // **On compte les cartes de la page, jamais le tiroir.** Le tiroir est
+  // partagé entre les rapports : une page qui n'en montre que trente-neuf y
+  // trouverait les cent onze notes de l'autre, et annoncerait « 111 / 39 ». Le
+  // relevé exporté, lui, reste entier — c'est lui qui retourne dans le fichier.
   var n={bon:0,moyen:0,mauvais:0}, faites=0;
-  for(var id in notes){ if(n[notes[id]]!==undefined){ n[notes[id]]++; faites++; } }
+  cartes.forEach(function(c){
+   var v=notes[c.getAttribute('data-id')];
+   if(n[v]!==undefined){ n[v]++; faites++; }
+  });
   document.getElementById('compte').textContent=faites+' / '+total+' notées';
   document.getElementById('nb-bon').textContent=n.bon;
   document.getElementById('nb-moyen').textContent=n.moyen;
@@ -481,6 +498,14 @@ def main() -> None:
     # sur les fichiers présents : une planche peut être là et refuser de se
     # découper. Le chiffre est donc posé en dernier, quand les cartes existent.
 
+    # **Aucun compte n'est écrit à la main dans cette page.** Une vague de plus
+    # payée sur le banc, et « les 71 planches du banc 2 » devient un mensonge que
+    # personne ne relit — c'est arrivé, et ça se répare une seule fois.
+    n_modeles = sum(1 for p in planches if p["banc"] == "modeles")
+    n_recette = sum(1 for p in planches if p["banc"] == "recette")
+    n_reglages = len({p["reglage"] for p in planches if p["banc"] == "recette"})
+    n_notees = sum(1 for p in planches if notes.get(identifiant(p)))
+
     parts: list[str] = []
     parts.append(
         "<!doctype html><html lang=fr><meta charset=utf-8>"
@@ -517,8 +542,9 @@ def main() -> None:
     parts.append(
         f"<p class=chapeau>Deux bancs d'essai du 1<sup>er</sup> septembre 2026, réunis ici et "
         f"<b>jugés une seule fois, de la même façon</b>. Le premier compare <b>huit modèles à "
-        f"demande identique</b> ; le second compare <b>vingt-neuf demandes au même modèle</b>. "
-        f"{len(planches)} planches, ${paye:.2f} dépensés, <b>@NOTABLES@ animations à noter</b>.</p>"
+        f"demande identique</b> ; le second compare <b>{n_reglages} demandes au même modèle</b>. "
+        f"{len(planches)} planches, ${paye:.2f} dépensés, <b>@NOTABLES@ animations</b>, "
+        f"dont <b>@RESTE@ qui attendent encore une note</b>.</p>"
     )
     parts.append(
         "<p class=chapeau><b>Les animations sont montées sur les cases brutes, sans "
@@ -534,11 +560,11 @@ def main() -> None:
     for ancre, titre in (
         ("verdict", "Verdict — les modèles"),
         ("verdict-consignes", "Verdict — les consignes"),
-        ("verdict-reglages", "Verdict — les 29 réglages"),
+        ("verdict-reglages", f"Verdict — les {n_reglages} réglages"),
         ("accord", "Pourquoi ma mesure ne vaut rien"),
         ("juger", "Ce que la mesure comptait"),
-        ("planches-modeles", "Les 46 planches du banc 1"),
-        ("planches-recette", "Les 71 planches du banc 2"),
+        ("planches-modeles", f"Les {n_modeles} planches du banc 1"),
+        ("planches-recette", f"Les {n_recette} planches du banc 2"),
     ):
         parts.append(f"<a href='#{ancre}'>{html.escape(titre)}</a>")
     parts.append("</div>")
@@ -548,7 +574,12 @@ def main() -> None:
     par_note = verdict["accord"]["forme_moyenne_par_note"]
 
     m_gagnant = max(verdict["modeles"], key=lambda g: (g["taux_bon_pct"], -(g["cout_par_bon"] or 9e9)))
-    m_sur = max(verdict["modeles"], key=lambda g: (g["taux_tenable_pct"], g["score"] or 0))
+    # **Le dauphin, jamais le gagnant lui-même.** Tant que le modèle en place était
+    # deuxième en régularité, la phrase se lisait ; le jour où il prend les deux
+    # places, elle se compare à elle-même — « X est le plus régulier, contre X ».
+    # C'est arrivé, et on ne l'écrit pas deux fois.
+    m_sur = max((g for g in verdict["modeles"] if g["nom"] != m_gagnant["nom"]),
+                key=lambda g: (g["taux_tenable_pct"], g["score"] or 0))
     produit = next(g for g in verdict["natures"] if "produit" in g["nom"])
     essai = next(g for g in verdict["natures"] if "essai" in g["nom"])
     reecrite = next(g for g in verdict["natures"] if "réécrite" in g["nom"])
@@ -574,10 +605,11 @@ def main() -> None:
         f"<p><b>Le meilleur modèle est {html.escape(m_gagnant['nom'])}</b> — celui que le "
         f"produit utilise déjà : {m_gagnant['n_bon']} planches bonnes sur "
         f"{m_gagnant['essais']}, à ${m_gagnant['cout_par_bon']:.3f} la bonne. "
-        f"<span class=mono>{html.escape(m_sur['nom'])}</span> est le plus régulier — "
-        f"{m_sur['taux_tenable_pct']} % de planches gardables, contre "
-        f"{m_gagnant['taux_tenable_pct']} % — mais il n'en signe qu'une vraiment bonne, et "
-        f"elle lui revient à ${m_sur['cout_par_bon']:.3f}.</p>"
+        f"Il est aussi le plus régulier : {m_gagnant['taux_tenable_pct']} % de planches "
+        f"gardables. Son seul rival est "
+        f"<span class=mono>{html.escape(m_sur['nom'])}</span>, qui en garde autant — "
+        f"{m_sur['taux_tenable_pct']} % — mais n'en signe que {m_sur['n_bon']} vraiment "
+        f"bonne, et elle lui revient à ${m_sur['cout_par_bon']:.3f}.</p>"
     )
     parts.append(
         f"<p><b>La consigne du produit gagne nettement</b> : {produit['taux_bon_pct']} % de "
@@ -587,34 +619,58 @@ def main() -> None:
         f"réécritures de fond ({reecrite['essais']} tirages). Il n'y a rien à réécrire.</p>"
     )
 
-    # **La seule piste vivante, et elle se compte au lieu de s'affirmer.** Les
-    # deux chiffres sont recalculés ici à partir des planches notées, pour qu'un
-    # tirage ajouté demain les corrige tout seul plutôt que de les périmer.
+    # **Les deux pistes qui restaient sont mortes, et ça se compte au lieu de
+    # s'affirmer.** Les chiffres sont recalculés ici à partir des planches
+    # notées, pour qu'un tirage ajouté demain les corrige tout seul plutôt que
+    # de les périmer — c'est précisément ce qui vient d'arriver à la phrase que
+    # ce paragraphe remplace, laquelle annonçait « la seule piste encore
+    # vivante » sur six tirages.
     notees = [p for p in planches if notes.get(identifiant(p))]
 
     def compte(sous: list[dict]) -> tuple[int, int]:
         return sum(1 for p in sous if notes[identifiant(p)] == "bon"), len(sous)
 
+    par_reg = {g["nom"]: g for g in verdict["reglages"]}
+    h = [par_reg[n] for n in ("H-4-produit", "H-4-sans-proportions") if n in par_reg]
+    h_n = sum(g["essais"] for g in h)
+    h_bon = sum(g["n_bon"] for g in h)
+    h_moyen = sum(g["n_moyen"] for g in h)
+    clause = par_reg.get("F-sans-proportions")
+    temoin = next((g for g in verdict["modeles"] if g["nom"] == "openai/gpt-image-2"), None)
+    if h_n and clause and temoin:
+        parts.append(
+            f"<p><b>Les deux dernières pistes ont été payées, et elles sont mortes.</b> "
+            f"Huit tirages chacune, avec le bloc complet du produit : à <b>quatre cases</b>, "
+            f"<b>{h_bon} planche bonne sur {h_n}</b> — et {h_moyen} moyenne. Le personnage "
+            f"est bien deux fois plus grand et parfaitement découpable, mais il ne marche "
+            f"pas mieux pour autant. La <b>clause de constance remplacée</b>, portée à "
+            f"{clause['essais']} tirages, donne {clause['taux_bon_pct']} % de bonnes contre "
+            f"{temoin['taux_bon_pct']} % au prompt du produit tel qu'il est : elle ne le "
+            f"bat pas non plus. <b>La façon de demander est épuisée comme levier</b>, et "
+            f"c'est une réponse — elle renvoie au mannequin articulé, qui impose la "
+            f"géométrie au lieu de l'espérer.</p>"
+        )
     peu_b, peu_n = compte([p for p in notees if p["cases"] <= 4])
     huit_b, huit_n = compte([p for p in notees if p["cases"] >= 8])
-    guide = max(verdict["reglages"],
-                key=lambda g: (g["taux_bon_pct"], g["taux_tenable_pct"], -g["essais"]))
     parts.append(
-        f"<p><b>La seule piste encore vivante : moins de cases.</b> À quatre cases, "
+        f"<p><b>Le compte, toutes vagues confondues.</b> À quatre cases ou moins, "
         f"<b>{peu_b} planches sur {peu_n}</b> sont bonnes ; à huit, {huit_b} sur "
-        f"{huit_n}. Le personnage est deux fois plus grand, et il a la place de se "
-        f"déformer. Le meilleur réglage de tout le banc est d'ailleurs là : "
-        f"<span class=mono>{html.escape(guide['nom'])}</span> — quatre cases <i>et</i> le "
-        f"guide de marche joint — <b>{guide['n_bon']} bonnes sur {guide['essais']}</b>, à "
-        f"${guide['cout_par_bon']:.3f} la bonne. Deux tirages ne prouvent rien : c'est "
-        f"exactement ce qu'il reste à payer pour trancher.</p>"
+        f"{huit_n}. L'écart qui avait fait espérer — deux bonnes sur six — venait de "
+        f"<span class=mono>D-4-guide</span>, seul réglage à quatre cases à en signer, et "
+        f"ses deux planches ne sont <b>pas découpables</b> : elles employaient une consigne "
+        f"privée du paragraphe protecteur. Personne ne sait ce qui les rendait bonnes, et "
+        f"le produit ne saurait pas les livrer.</p>"
     )
+    # **Une note relue n'est pas une note nouvelle, et ça se dit.** Cinq planches
+    # du témoin ont changé de note en seconde passe, toutes vers le haut ; le
+    # taux du modèle en place a doublé sans qu'une seule image change. C'est la
+    # limite du juge unique, et elle est ici mesurée plutôt que redoutée.
     parts.append("</div>")
 
     # ── Le verdict, groupe par groupe ────────────────────────────────────────
     parts.append("<h2 id=verdict>Le verdict de l'auteur — les modèles</h2>")
     parts.append(
-        "<p class=axe>Cent onze animations regardées une par une et notées "
+        f"<p class=axe>{n_notees} animations regardées une par une et notées "
         "<b>mauvais</b>, <b>moyen</b> ou <b>bon</b>. <i>Gardable</i> veut dire bonne ou "
         "moyenne : ce qu'on garderait, quitte à le retoucher. <i>Revenues</i> et "
         "<i>découpables</i> ne viennent pas des notes : un appel qui échoue ne rend rien à "
@@ -632,7 +688,7 @@ def main() -> None:
     )
     parts.append(tableau_verdict(verdict["natures"], "Nature de la consigne", produit["nom"]))
 
-    parts.append("<h2 id=verdict-reglages>Le verdict de l'auteur — les vingt-neuf réglages</h2>")
+    parts.append(f"<h2 id=verdict-reglages>Le verdict de l'auteur — les {n_reglages} réglages</h2>")
     parts.append(
         "<p class=axe>Deux tirages par réglage ne prouvent rien — ce banc l'a démontré "
         "plusieurs fois. Ce tableau <b>désigne des pistes</b> ; seuls les réglages à sept ou "
@@ -697,15 +753,15 @@ def main() -> None:
     # ── Banc 1 ───────────────────────────────────────────────────────────────
     parts.append("<h2 id=modeles>Banc 1 — quel modèle sait dessiner une marche</h2>")
     parts.append(
-        "<p class=axe>Un seul geste rejoué quarante-six fois : <b>le prompt du produit et ses "
+        f"<p class=axe>Un seul geste rejoué {n_modeles} fois : <b>le prompt du produit et ses "
         "trois images sont relus dans une vraie génération</b>, jamais recomposés. Chaque "
         "modèle a reçu exactement la même chose, ce qui rend les huit colonnes comparables. Le "
-        "classement de ces quarante-six planches est plus haut, <a href='#verdict'>dans le "
+        f"classement de ces {n_modeles} planches est plus haut, <a href='#verdict'>dans le "
         "verdict</a> : il n'est pas répété ici, parce qu'il n'y a qu'un seul classement qui "
         "vaille et qu'en afficher deux inviterait à choisir le plus flatteur.</p>"
     )
 
-    parts.append("<h2 id=planches-modeles>Les 46 planches du banc 1</h2>")
+    parts.append(f"<h2 id=planches-modeles>Les {n_modeles} planches du banc 1</h2>")
     jointes = images_de({"banc": "modeles"})
     texte = next(p["texte"] for p in planches if p["banc"] == "modeles")
     parts.append("<div class=envoye style='margin-top:14px'>")
@@ -731,17 +787,23 @@ def main() -> None:
         )
         cpu = (f"${g['cout_par_bon']:.3f} la bonne"
                if g["cout_par_bon"] else "aucune bonne planche")
+        # Le pluriel s'accorde : « 1 bonnes » dans un bandeau de titre se lit
+        # comme une faute de calcul avant de se lire comme une faute de français.
+        def _s(n: int, mot: str) -> str:
+            return f"{n} {mot}{'s' if n > 1 else ''}"
+
         parts.append(
             f"<h2 style='margin-top:38px'><span class=groupe>{html.escape(modele)} "
-            f"<span class=prix>{cpu} · {g['n_bon']} bonnes et {g['n_moyen']} moyennes "
-            f"sur {g['essais']} · ${g['cout_total']:.3f} dépensés</span></span></h2>"
+            f"<span class=prix>{cpu} · {_s(g['n_bon'], 'bonne')} et "
+            f"{_s(g['n_moyen'], 'moyenne')} sur {g['essais']} · "
+            f"${g['cout_total']:.3f} dépensés</span></span></h2>"
         )
         parts.append("<div class=grille>")
         parts.extend(carte(p, avec_modele=False, notes=notes) for p in siens)
         parts.append("</div>")
 
     # ── Banc 2 ───────────────────────────────────────────────────────────────
-    parts.append("<h2 id=reglages>Banc 2 — les vingt-neuf réglages, un par un</h2>")
+    parts.append(f"<h2 id=reglages>Banc 2 — les {n_reglages} réglages, un par un</h2>")
     parts.append(
         "<p class=axe>Même modèle du début à la fin — <span class=mono>openai/gpt-image-2</span>, "
         "celui que le produit utilise déjà, et le seul présent des deux côtés. <b>Deux tirages "
@@ -752,7 +814,7 @@ def main() -> None:
         "verdict</a> ; ici on montre ce qui a été envoyé et ce qui est revenu.</p>"
     )
 
-    parts.append("<h2 id=planches-recette>Les 71 planches du banc 2</h2>")
+    parts.append(f"<h2 id=planches-recette>Les {n_recette} planches du banc 2</h2>")
     par_reglage = {g["nom"]: g for g in verdict["reglages"]}
     for lettre, titre, propos in AXES:
         noms = sorted(
@@ -808,10 +870,17 @@ def main() -> None:
     parts.append(f"</div><script>var CUITES={cuites};{SCRIPT}</script></body></html>")
 
     page = "".join(parts)
+    # **Notable et non notée sont deux comptes, et les confondre s'est vu.** Une
+    # carte est notable quand la planche a pu se découper ; elle reste à noter
+    # tant que l'auteur ne l'a pas regardée. Tant que tout était noté les deux
+    # chiffres coïncidaient, et le second se lisait à la place du premier.
     notables = page.count("<div class=carte data-id=")
-    SORTIE.write_text(page.replace("@NOTABLES@", str(notables)), encoding="utf-8")
+    reste = notables - sum(1 for p in planches if notes.get(identifiant(p)))
+    page = page.replace("@NOTABLES@", str(notables)).replace("@RESTE@", str(reste))
+    SORTIE.write_text(page, encoding="utf-8")
     poids = SORTIE.stat().st_size / 1_048_576
-    print(f"-> {SORTIE}  ({poids:.1f} Mo, {len(planches)} planches, {notables} a noter, ${paye:.2f})")
+    print(f"-> {SORTIE}  ({poids:.1f} Mo, {len(planches)} planches, "
+          f"{notables} notables dont {reste} a noter, ${paye:.2f})")
 
 
 if __name__ == "__main__":

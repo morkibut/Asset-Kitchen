@@ -8,6 +8,27 @@ essais/resultats_animation/
 essais/resultats_recette/
 essais/planches/
 essais/rapport-animation.html
+# Les six essais du 2 septembre 2026 : mêmes règles. Les `resultats_*/` portent
+# les images payées et les clips ; seuls leurs `mesures.json` reviennent dans
+# Git, par l'exception ci-dessous. Les rapports incrustent les images en base64
+# et pèsent des dizaines de mégaoctets ; ils se refont d'une commande.
+essais/resultats_*/
+!essais/resultats_*/mesures.json
+essais/rapport-references-nommees.html
+essais/rapport-taille-reference.html
+essais/rapport-grille-complete.html
+essais/rapport-mise-en-pose.html
+essais/rapport-pose-imposee.html
+essais/rapport-video.html
+# Les rapports partiels, limités à un banc (--nom-rapport) : même poids, même raison.
+essais/rapport-video-*.html
+# Le banc vidéo de la maison — même règle que les `resultats_*/`, sous un autre
+# nom et dans un autre dossier. Le rapport, les scripts et les mesures `.json`
+# reviennent dans Git ; les rendus — 127 images et quatre clips, 25 Mo — restent
+# sur la machine. Un chiffre se relit, un pixel figé dans l'historique ne se
+# reprend qu'en le réécrivant.
+docs/recherche-video-locale/bancs/**/*.png
+docs/recherche-video-locale/bancs/**/*.mp4
 .env
 __pycache__/
 donnees/

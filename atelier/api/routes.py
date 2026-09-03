@@ -29,9 +29,11 @@ from atelier.domaine import (
 )
 from atelier.domaine.catalogue import modele_en_json
 from atelier.domaine.recette import (
+    AU_PLUS_PROCHE,
     CERCLES,
     DEHORS,
     EPAISSEUR_MAX,
+    OCCUPATION_MAX_ABSOLU,
     PLACES,
     RAYON_MAX,
     SEUIL_COULEUR,
@@ -599,6 +601,11 @@ class CorpsApercu(BaseModel):
     # se rend tel quel. La route le sert quand même, pour que l'écran n'ait
     # jamais deux chemins selon l'état d'un interrupteur.
     repris: bool = False
+    # **Ce que l'auteur interdit de sa main** (D3). Il entre dans l'aperçu parce
+    # que le fond du jeu s'y ajoute : sans lui, l'écran montrerait l'interdiction
+    # du produit seule et l'appel en enverrait deux. C'est le seul champ de ce
+    # corps qui ne compose pas le prompt — il compose l'*autre* texte qui part.
+    prompt_negatif: str = ""
 
 
 @routeur.post("/prompt/preview")
@@ -634,6 +641,7 @@ async def apercu_prompt(requete: Request, corps: CorpsApercu) -> dict[str, Any]:
         direction=corps.direction or None,
         directions=corps.directions,
         tri=Tri.depuis_json(corps.tri),
+        prompt_negatif=corps.prompt_negatif,
     )
 
 
@@ -683,6 +691,7 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
         references_ecartees=corps.references_ecartees,
         variations=corps.variations,
         tri=Tri.depuis_json(corps.tri),
+        prompt_negatif=corps.prompt_negatif,
     )
 
 
@@ -706,6 +715,27 @@ async def lire_generation(requete: Request, identifiant: str) -> dict[str, Any]:
 async def relancer(requete: Request, identifiant: str, rang: int) -> dict[str, Any]:
     """Un seul emplacement repart. Les voisines ne sont pas rejouées (US-22)."""
     generation = await _atelier(requete).generations.relancer(identifiant, rang)
+    return generation.en_json()
+
+
+@routeur.post("/generations/{identifiant}/slots/{rang}/unfold")
+async def ecarter(
+    requete: Request, identifiant: str, rang: int, corps: dict[str, Any]
+) -> dict[str, Any]:
+    """L'auteur tranche sur une planche qui attend, et elle se déplie (R6).
+
+    **Elle ne dépense rien**, et elle est en `POST` quand même : elle écrit sur
+    le disque — N images entrent en bibliothèque — et une écriture ne se
+    demande pas en `GET`. C'est la même règle que le dépliage de T5.
+
+    Le corps porte `ecartees`, les numéros des sujets à laisser de côté, dans la
+    numérotation de ce que la planche a rendu. **Une liste vide est une réponse**,
+    pas une absence de réponse : elle dit « je les garde tous », ce qui est
+    exactement le geste que demande une planche aux cases pleines.
+    """
+    generation = _atelier(requete).generations.ecarter(
+        identifiant, rang, [int(i) for i in (corps.get("ecartees") or ())]
+    )
     return generation.en_json()
 
 
@@ -785,8 +815,22 @@ class CorpsRecadrage(BaseModel):
 
 class CorpsGrille(BaseModel):
     cible: int = Field(64, ge=8, le=512)
-    occupation: int = Field(100, ge=1, le=100)
+    # **Le plafond n'est plus 100 %** (tranche des tailles) : au-delà, le sujet
+    # dépasse la case et la boîte grandit avec lui — c'est ce qui rend un moulin
+    # ou une tour demandables. La borne portée ici est large exprès ; le service
+    # refuse au chiffre exact, qu'il calcule d'après la cible.
+    occupation: int = Field(100, ge=1, le=OCCUPATION_MAX_ABSOLU)
     ancrage: str = "bas"
+    # **La méthode de réduction** (D2). Elle se comporte comme `ancrage` : la
+    # charge la porte, l'écran l'envoie à chaque fois, et l'omettre retombe sur
+    # « au plus proche » — ce que l'atelier faisait avant que la question se
+    # pose. Elle voyage donc aussi dans une recette nommée, et c'est voulu :
+    # c'est un choix de style, et un style se rejoue.
+    #
+    # Le nom n'est pas validé ici mais dans le service, avec les bornes des
+    # autres réglages : une méthode installée sur une machine et pas sur une
+    # autre doit rendre « grisée avec sa raison », pas « champ invalide ».
+    methode: str = AU_PLUS_PROCHE
 
 
 class CorpsQuantification(BaseModel):
@@ -1112,7 +1156,7 @@ async def image_asset(
 
     Un rendu dont le fichier a disparu du disque **se recalcule ici**, sans que
     l'appelant ait à le savoir : « supprimer le fichier de rendu ne perd rien »
-    (`docs/PLAN.md`, T2).
+    (`docs/archive/plan-versions-tenues.md`, T2).
 
     `avant` rend le calque tel que la différence l'avait produit, **avant que la
     main y passe** (C4, US-151) — l'autre moitié de la comparaison d'un seul
@@ -1124,6 +1168,31 @@ async def image_asset(
     octets, type_media = atelier.assets.octets(
         _asset(requete, identifiant), brut=brut, avant=avant
     )
+    return Response(
+        content=octets,
+        media_type=type_media,
+        headers={"Cache-Control": _garder(requete)},
+    )
+
+
+@routeur.get("/assets/{identifiant}/incoming")
+async def image_arrivee(requete: Request, identifiant: str) -> Response:
+    """La case telle qu'elle est **arrivée du modèle** (G16).
+
+    **L'autre sens du mot *brut*, et c'est tout le sujet.** Le brut rangé d'un
+    vêtement est la case déjà mise à l'échelle et calée sur son corps ; celui
+    d'un corps habillé est la case telle qu'elle est arrivée. Deux images d'une
+    même planche, deux sens du même mot — cette adresse rend toujours le second,
+    et l'écran dit lequel des deux il montre.
+
+    **Elle ne range rien** : la case se recalcule de la planche à chaque
+    demande, comme le rejeu du recalage la recalcule. Pas un centime, pas un
+    appel, et rien de neuf sur le disque.
+
+    Le refus vient du service et garde ses mots — une planche partie du disque
+    et un découpage qui ne correspond plus ne sont pas la même panne.
+    """
+    octets, type_media = _atelier(requete).equipement.case_arrivee(identifiant)
     return Response(
         content=octets,
         media_type=type_media,
@@ -1263,6 +1332,10 @@ class CorpsSuperposition(BaseModel):
     seuil: int = Field(SEUIL_COULEUR, ge=0, le=255)
     main: list[CorpsTrait] = Field(default_factory=list)
     sortie: str = CALQUE
+    # **Lire le dessus tel qu'il est arrivé du modèle** (G16) — voir
+    # `atelier/domaine/superposition.py`. Faux partout sauf sur un vêtement,
+    # où c'est le seul point de départ qui permette de refaire le calage.
+    dessus_arrivee: bool = False
 
     def en_pose(self) -> Superposition:
         return Superposition.depuis_json(self.model_dump())
@@ -1294,13 +1367,22 @@ async def ouvrir_superposition(
 
 @routeur.get("/assets/{identifiant}/overlay/fit")
 async def recaler_superposition(
-    requete: Request, identifiant: str, dessous: str = Query(...)
+    requete: Request,
+    identifiant: str,
+    dessous: str = Query(...),
+    arrivee: bool = Query(False),
 ) -> dict[str, Any]:
     """La proposition de calage — trois valeurs, et rien d'autre (US-213).
 
     **Un bouton, pas un mode** : elle remplit les champs et s'arrête là.
+
+    `arrivee` la fait partir de la case telle qu'elle est arrivée (G16). Sans
+    lui, l'atelier proposerait un calage pour une image que l'écran ne montre
+    pas — et les trois valeurs rendues seraient justes pour la mauvaise.
     """
-    return _atelier(requete).superposition.recaler(identifiant, dessous)
+    return _atelier(requete).superposition.recaler(
+        identifiant, dessous, arrivee=arrivee
+    )
 
 
 @routeur.post("/assets/{identifiant}/overlay/inherit")
@@ -1374,7 +1456,14 @@ async def liste_recettes(requete: Request) -> dict[str, Any]:
 async def nommer_recette(
     requete: Request, nom: str, corps: CorpsRecette
 ) -> dict[str, Any]:
-    recettes, laisse = _atelier(requete).assets.nommer(nom, corps.en_recette())
+    atelier = _atelier(requete)
+    # **Le projet ouvert, parce qu'une recette nommée n'a pas d'asset.** C'est
+    # la seule palette dont on puisse dire qu'elle existe au moment où l'on
+    # enregistre, et c'est celle sur laquelle l'écran a grisé — ou pas — la
+    # quantification qu'on lui envoie.
+    recettes, laisse = atelier.assets.nommer(
+        nom, corps.en_recette(), atelier.bibliotheque.courant
+    )
     # **Ce qui n'a pas été enregistré se dit tout de suite** (U5) : au moment où
     # l'on nomme, pas au moment où l'on s'étonne de ce qui revient.
     return {

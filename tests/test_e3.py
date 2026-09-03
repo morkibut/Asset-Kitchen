@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from atelier.domaine.recette import Grille, Passe
+from atelier.domaine.recette import Grille, Passe, occupation_max
 from atelier.image.taches import crans_occupation, poches_de_fond, taches, trous
 from atelier.image.traitement import (
     _detourer,
@@ -242,9 +242,14 @@ def test_les_crans_d_occupation_ne_gardent_que_ce_qui_change():
     _poser(image, 4, 4, 11, 11)
 
     crans = crans_occupation(image, Grille(cible=16))
-    # Sur une cible de 16, il n'y a que seize tailles entières possibles — et
-    # l'occupation commence à 10 %, donc moins encore.
-    assert len(crans) < 91
+    # **La propriété est « moins de crans que de pour cent », pas un chiffre.**
+    # Elle était écrite `< 91` quand l'occupation s'arrêtait à 100 % ; depuis que
+    # la tranche des tailles l'ouvre jusqu'à huit personnages, l'intervalle
+    # change avec la case, et un nombre figé aurait cessé de dire ce qu'il
+    # voulait dire. Sur une cible de 16, il n'y a que seize tailles entières par
+    # personnage — donc bien moins de crans que de positions offertes.
+    offerts = occupation_max(16) - 10 + 1
+    assert len(crans) < offerts
     assert crans[0] == 10
     # Chaque cran donne une taille que le précédent ne donnait pas.
     tailles = [round(16 * c / 100) for c in crans]

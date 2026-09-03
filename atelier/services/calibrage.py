@@ -40,7 +40,13 @@ from typing import Any
 
 from atelier.domaine.asset import Asset
 from atelier.domaine.erreurs import ErreurAtelier
-from atelier.domaine.recette import Grille
+from atelier.domaine.recette import (
+    BAS,
+    Grille,
+    cote_du_canevas,
+    cote_du_sujet,
+    occupation_max,
+)
 from atelier.image.traitement import boite_opaque, detourer
 
 # **Ce qui fait qu'une pose est « très en dehors des autres »** — un dixième.
@@ -118,11 +124,37 @@ class ServiceCalibrage:
                     "rendue": self._rendue(
                         largeur, hauteur, cible, grille.occupation if grille else 100
                     ),
-                    # La plus haute que cette pose puisse atteindre sans sortir
-                    # de sa case : c'est elle qui décide de la commune.
-                    "plafond": self._plafond(largeur, hauteur, cible),
+                    # La plus haute que cette pose puisse atteindre : posée
+                    # après la boucle, parce qu'elle dépend de l'échelle
+                    # déclarée par l'ensemble des poses.
+                    "plafond": 0,
+                    # **Ce que le calibrage écrirait, et ce que ça donnerait**
+                    # (R9) : posés eux aussi après la boucle, parce qu'ils
+                    # dépendent de la hauteur commune, qui dépend de toutes les
+                    # poses. Voir `_visee`.
+                    "visee": 0,
+                    "apres": 0,
+                    # **Par le haut, par le bas ou au milieu** : l'écran de R9
+                    # montre l'empilement d'après en agrandissant chaque
+                    # silhouette autour de son point d'ancrage, et l'agrandir
+                    # autour du mauvais point la ferait flotter.
+                    "ancrage": grille.ancrage if grille else BAS,
                     "de_cote": case["pose"] in vise.hors_calibrage,
                 }
+            )
+
+        # **Le calibrage aligne, il ne redimensionne pas** (tranche des tailles,
+        # 3 septembre 2026). Depuis que l'occupation peut passer 100 %, un géant
+        # déclaré à 300 % a des poses qui rendent trois fois la case ; un plafond
+        # calculé à 100 % proposerait de toutes les rapetisser, et l'outil censé
+        # les accorder leur ferait perdre l'échelle que l'auteur a posée. Le
+        # plafond suit donc **la plus haute occupation en usage** parmi les poses,
+        # jamais moins de 100 % : sur un personnage ordinaire — toutes ses poses
+        # à 100 % —, c'est exactement le calcul d'avant, au carré près.
+        haute = max((int(p["occupation"]) for p in poses), default=100)
+        for p in poses:
+            p["plafond"] = self._plafond(
+                p["boite"]["largeur"], p["boite"]["hauteur"], cible, haute
             )
 
         retenues = [p for p in poses if not p["de_cote"]]
@@ -130,6 +162,33 @@ class ServiceCalibrage:
         limite = next(
             (p["pose"] for p in retenues if p["plafond"] == commune), ""
         )
+
+        # **Ce que le bouton ferait, pose par pose** (R9). L'écran montre
+        # l'empilement d'aujourd'hui *et* celui d'après, côte à côte, avant
+        # qu'on ait touché à quoi que ce soit ; il lui faut donc, pour chaque
+        # pose, l'occupation que le calibrage écrirait et la hauteur qu'elle
+        # rendrait alors.
+        #
+        # **Le client ne peut pas le recalculer, et c'est pour ça que ça sort
+        # d'ici** : `_occupation` borne à l'échelle déclarée par l'ensemble, et
+        # `_poser` la borne une seconde fois — deux bornes qu'il faudrait
+        # recopier à l'écran, où elles divergeraient. C'est la règle de R7
+        # appliquée à un chiffre : ce qui est montré passe par le chemin que
+        # l'écriture emprunte.
+        #
+        # **Une pose mise de côté ne bouge pas** : son après est son
+        # aujourd'hui. Sortir du calage commun n'est pas disparaître.
+        for p in poses:
+            if p["de_cote"] or not commune:
+                p["visee"] = int(p["occupation"])
+                p["apres"] = int(p["rendue"])
+                continue
+            p["visee"] = self._visee(
+                p["boite"]["largeur"], p["boite"]["hauteur"], cible, commune, haute
+            )
+            p["apres"] = self._rendue(
+                p["boite"]["largeur"], p["boite"]["hauteur"], cible, p["visee"]
+            )
         return {
             "personnage": vise.identifiant,
             "cible": cible,
@@ -140,7 +199,32 @@ class ServiceCalibrage:
             # servent pas ; c'est un sixième de résolution en moins, et c'est le
             # prix qu'on paie pour que le personnage ne rapetisse pas en
             # frappant. Le produit le dit, il ne le cache pas.
-            "perdus": max(0, cible - commune),
+            #
+            # **Comparé au côté réel de la case, pas à celui du projet** : sur un
+            # géant à 300 %, la case fait trois fois la cible, et retrancher la
+            # cible annoncerait une perte de zéro là où il y en a une.
+            "perdus": max(0, cote_du_canevas(cible, haute) - commune),
+            # **L'échelle à laquelle ce personnage-ci se calibre.** Elle sort
+            # d'ici pour que `calibrer` n'ait pas à la recalculer : deux endroits
+            # qui décident du plafond finiraient par ne plus dire le même.
+            "haute": haute,
+            # **Combien de poses le bouton changerait vraiment** (R9), et c'est
+            # la seule chose qui décide s'il s'allume. Il restait allumé sur une
+            # chose déjà calibrée, invitant à un geste qui ne change rien —
+            # « on ne propose jamais puis on ne refuse », et l'écran
+            # n'appliquait simplement pas la règle ici.
+            #
+            # **Compté sur l'occupation écrite, pas sur la hauteur rendue**, et
+            # c'est le sens littéral de « les poses qu'il touche » : une pose
+            # dont l'occupation change est une pose que le bouton réécrit. Le
+            # compter sur la hauteur dirait *rien à faire* là où le disque
+            # change quand même — deux occupations voisines rendent parfois la
+            # même hauteur à l'arrondi près.
+            "a_faire": sum(
+                1
+                for p in poses
+                if not p["de_cote"] and p["visee"] != int(p["occupation"])
+            ),
             "de_cote": self._a_mettre_de_cote(poses),
         }
 
@@ -159,15 +243,11 @@ class ServiceCalibrage:
         for pose in lu["poses"]:
             if pose["de_cote"]:
                 continue
-            self._poser(
-                pose["asset"],
-                occupation=self._occupation(
-                    pose["boite"]["largeur"],
-                    pose["boite"]["hauteur"],
-                    lu["cible"],
-                    lu["commune"],
-                ),
-            )
+            # **La valeur écrite est celle qui a été montrée**, au chiffre près :
+            # `visee` est posée par `calibrage`, et c'est elle qu'on écrit. Un
+            # second calcul ici aurait rouvert l'écart que R9 vient de fermer —
+            # l'écran annonçait une hauteur, le disque en recevait une autre.
+            self._poser(pose["asset"], occupation=pose["visee"])
         return self.calibrage(projet, personnage)
 
     def regler(
@@ -255,7 +335,7 @@ class ServiceCalibrage:
         return x1 - x0 + 1, y1 - y0 + 1
 
     @staticmethod
-    def _plafond(largeur: int, hauteur: int, cible: int) -> int:
+    def _plafond(largeur: int, hauteur: int, cible: int, haute: int = 100) -> int:
         """La plus haute que cette pose puisse atteindre **sans sortir de sa
         case**.
 
@@ -263,26 +343,75 @@ class ServiceCalibrage:
         hauteur vaut alors `cible × hauteur / max(largeur, hauteur)`. Un sujet
         plus large que haut plafonne donc en dessous de la case, et c'est très
         exactement le défaut qu'on répare.
+
+        **`haute` est l'échelle déclarée par l'ensemble des poses**, en pour cent,
+        depuis que l'occupation peut dépasser 100 % : la case d'un géant à 300 %
+        fait trois fois celle d'un personnage, et son plafond avec.
         """
-        return max(1, round(cible * hauteur / max(1, max(largeur, hauteur))))
+        dedans = cote_du_sujet(cible, max(100, haute))
+        return max(1, round(dedans * hauteur / max(1, max(largeur, hauteur))))
 
     @staticmethod
     def _rendue(largeur: int, hauteur: int, cible: int, occupation: int) -> int:
         """La hauteur que cette pose rend aujourd'hui, avec son occupation.
 
         **Le même calcul que `sur_grille`**, et pas un autre : deux formules
-        auraient fini par annoncer une hauteur et en produire une seconde.
+        auraient fini par annoncer une hauteur et en produire une seconde. C'est
+        pour cela que les deux côtés viennent maintenant du domaine — la copie
+        locale portait le plafond de 100 % que la tranche des tailles a levé.
         """
-        dedans = max(1, round(cible * max(1, min(100, occupation)) / 100))
+        dedans = cote_du_sujet(cible, occupation)
+        cote = cote_du_canevas(cible, occupation)
         facteur = dedans / max(1, max(largeur, hauteur))
-        return max(1, min(cible, round(hauteur * facteur)))
+        return max(1, min(cote, round(hauteur * facteur)))
 
     @staticmethod
-    def _occupation(largeur: int, hauteur: int, cible: int, commune: int) -> int:
+    def _occupation(
+        largeur: int, hauteur: int, cible: int, commune: int, haute: int = 100
+    ) -> int:
         """L'occupation à poser pour que cette pose rende `commune` pixels de
-        haut. C'est l'inverse de `_rendue`, et rien d'autre."""
+        haut. C'est l'inverse de `_rendue`, et rien d'autre.
+
+        **Le plafond est l'échelle déclarée, pas le plafond absolu de la case**,
+        et la nuance a été payée : l'inverse d'un arrondi dépasse volontiers d'un
+        pour cent — la pose d'attaque du vrai projet, 523 × 430 dans une case de
+        64, rend sa hauteur commune à 100,7 %. Sans borne, le calibrage d'un
+        personnage ordinaire l'écrivait donc à 101 %, et ses images sortaient en
+        65 carrés au lieu de 64 : un demi-pixel d'arrondi faisait sortir tout le
+        monde de la case. Borné à `haute` — 100 % pour un personnage, 300 % pour
+        un géant déclaré tel —, le calcul rend exactement ce qu'il rendait avant
+        la tranche, et suit l'échelle quand elle a été posée.
+        """
         dedans = commune * max(1, max(largeur, hauteur)) / max(1, hauteur)
-        return max(1, min(100, round(dedans / cible * 100)))
+        haut = min(max(100, haute), occupation_max(cible))
+        return max(1, min(haut, round(dedans / max(1, cible) * 100)))
+
+    @classmethod
+    def _visee(
+        cls, largeur: int, hauteur: int, cible: int, commune: int, haute: int
+    ) -> int:
+        """**L'occupation que le calibrage écrirait sur cette pose** — exactement.
+
+        C'est `_occupation` passée par la borne que `_poser` applique en
+        écrivant. Les deux existaient déjà et ne bornaient pas pareil ; tant que
+        la valeur ne sortait pas du service, l'écart ne se voyait pas. Depuis que
+        `calibrage` montre l'empilement d'après (R9), il se verrait — l'écran
+        dessinerait une hauteur et le disque en recevrait une autre.
+
+        **Un seul endroit décide donc**, et `calibrer` écrit ce que `calibrage`
+        a montré. C'est la règle de R7 — *ce qui est montré passe par le chemin
+        que l'écriture emprunte* — appliquée à un chiffre.
+
+        ⚠️ **La borne à 100 % n'est pas la bonne, et R9 ne la corrige pas.**
+        `_occupation` borne à l'échelle déclarée par l'ensemble (jusqu'à 300 %
+        pour un géant), `_poser` borne à 100 % : un géant déclaré tel voit donc
+        son calibrage écrasé. Le défaut est antérieur à cette tranche, et le
+        réparer changerait ce que l'outil écrit — ce que le dernier critère de
+        `R9` interdit. Il est consigné dans `docs/PIEGES.md`, et l'écran le
+        **montre** au lieu de le cacher : l'empilement d'après dessine la hauteur
+        vraiment obtenue, pas la hauteur commune visée.
+        """
+        return max(1, min(100, cls._occupation(largeur, hauteur, cible, commune, haute)))
 
     @staticmethod
     def _a_mettre_de_cote(poses: list[dict[str, Any]]) -> str:

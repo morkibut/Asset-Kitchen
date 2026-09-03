@@ -147,7 +147,7 @@ nu.
 
 Il y a de quoi s'en défendre, et c'est déjà à moitié décidé : le 29 août, il a été tranché que
 **chaque rôle de réinjection devait écrire sa propre consigne**, réglable dans l'écran des
-réglages (`docs/brainstorm-assistance.md`). La consigne d'une posture s'écrit d'elle-même :
+réglages (`docs/archive/brainstorm-assistance.md`). La consigne d'une posture s'écrit d'elle-même :
 *sers-toi de cette image uniquement pour l'attitude et l'angle de vue ; n'en reprends ni les
 couleurs, ni les matières, ni l'éclairage.*
 

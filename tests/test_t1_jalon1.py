@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T1 tenus par les jalons 1 et 2.
 
-Un test par critère de `docs/PLAN.md` § Phase T1, nommé d'après lui — la clé, le
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T1, nommé d'après lui — la clé, le
 catalogue, un appel qui rend une image téléchargeable, les variations
 concurrentes et les emplacements indépendants.
 

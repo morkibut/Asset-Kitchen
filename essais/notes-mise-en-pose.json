@@ -1,0 +1,46 @@
+{
+ "essai": "mise-en-pose",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T18:32:42.053Z",
+ "notes": {
+  "_choix": {
+   "prep": "jet2"
+  },
+  "prep:jet1": {
+   "note": "bon"
+  },
+  "prep:jet2": {
+   "note": "bon"
+  },
+  "prep:jet3": {
+   "note": "bon"
+  },
+  "prep:jet4": {
+   "note": "bon"
+  },
+  "A-temoin:jet4": {
+   "note": "mauvais"
+  },
+  "A-temoin:jet3": {
+   "note": "mauvais"
+  },
+  "A-temoin:jet2": {
+   "note": "moyen"
+  },
+  "A-temoin:jet1": {
+   "note": "bon"
+  },
+  "B-prep:jet1": {
+   "note": "mauvais"
+  },
+  "B-prep:jet2": {
+   "note": "mauvais"
+  },
+  "B-prep:jet3": {
+   "note": "mauvais"
+  },
+  "B-prep:jet4": {
+   "note": "mauvais"
+  }
+ }
+}

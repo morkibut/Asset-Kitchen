@@ -543,6 +543,25 @@ class ServiceBibliotheque:
 
     # ── Le journal ───────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _libelle(generation: Any) -> str:
+        """Ce qu'une ligne d'appel écrit pour dire *de quoi il s'agissait*.
+
+        **Le sujet, pas le texte entier** (R7). Ces lignes-là sont des étiquettes
+        dans une liste : une seule ligne, tronquée à la largeur de la colonne.
+        Elles portaient le prompt composé — huit cents caractères de bible dont
+        les quarante du sujet sont noyés —, et depuis que le texte est rangé,
+        elles commenceraient toutes par le même mot, `CONTEXT` ou `REQUEST`.
+        Une colonne de libellés identiques ne distingue plus rien.
+
+        Le sujet est enregistré à part depuis T3 pour nommer l'asset ; c'est très
+        exactement ce qu'une étiquette veut. **Repli sur le prompt** pour les
+        générations d'avant, qui n'en portent pas : elles se relisent comme
+        avant, sans qu'un fichier soit réécrit.
+        """
+        demande = generation.demande
+        return str(demande.get("sujet") or demande.get("prompt", ""))
+
     def journal(self, projet: str | None, limite: int = 100) -> dict[str, Any]:
         """Les appels d'un projet, **ratés compris, avec leur coût réel** (US-24).
 
@@ -576,7 +595,7 @@ class ServiceBibliotheque:
                 {
                     "identifiant": generation.identifiant,
                     "modele": generation.modele,
-                    "prompt": str(generation.demande.get("prompt", "")),
+                    "prompt": self._libelle(generation),
                     "cree_le": generation.cree_le,
                     "cout_usd": generation.cout_usd,
                     "statut": generation.statut.value,
@@ -663,7 +682,7 @@ class ServiceBibliotheque:
                 {
                     "identifiant": generation.identifiant,
                     "modele": generation.modele,
-                    "prompt": str(generation.demande.get("prompt", "")),
+                    "prompt": self._libelle(generation),
                     "cree_le": generation.cree_le,
                     "cout_usd": generation.cout_usd,
                     # **Ce que l'appel a consommé, et en quoi** (F2). En argent,

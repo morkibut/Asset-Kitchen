@@ -1,7 +1,7 @@
 // Le tiroir à secrets — **une place par fournisseur** (F3).
 //
-// « Trois portes, une seule pièce » : la fenêtre des réglages et l'étape 10 de
-// l'assistant rendent **ce composant-ci**, et déposer d'un côté écrit au même
+// « Trois portes, une seule pièce » : la fenêtre des réglages et l'étape « Les
+// fournisseurs » de l'assistant rendent **ce composant-ci**, et déposer d'un côté écrit au même
 // endroit que de l'autre. C'était déjà la promesse du premier lancement quand
 // il n'y avait qu'une clé ; elle gagne des portes sans gagner de pièce.
 //

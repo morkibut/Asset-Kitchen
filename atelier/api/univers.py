@@ -24,7 +24,8 @@ from pydantic import BaseModel, Field
 
 from atelier.domaine.teinte import TEINTES
 from atelier.image import rendre_en_png
-from atelier.domaine.vue import TAILLES, VUES
+from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU
+from atelier.domaine.vue import FINESSES, TAILLES, VUES
 from atelier.services import Atelier
 
 # **La liste close, rendue au schéma** — donc à `/api/docs`, et donc au refus
@@ -201,8 +202,35 @@ class CorpsChamp(BaseModel):
 class CorpsEchelle(BaseModel):
     nom: str = Field(min_length=1)
     famille: Literal["personnages", "objets", "decors", "interface", "tous"] = "tous"
-    occupation: int = Field(100, ge=1, le=100)
+    # **Le plafond n'est plus 100 %** (tranche des tailles), et c'est ici que la
+    # fermeture coûtait le plus : le barème est l'endroit même où l'on dit qu'un
+    # moulin est plus haut qu'un personnage. Ce corps ne porte pas la cible du
+    # projet, donc il ne peut pas juger le vrai plafond — le service le fait.
+    occupation: int = Field(100, ge=1, le=OCCUPATION_MAX_ABSOLU)
     silhouette: bool = True
+
+
+class CorpsDetourage(BaseModel):
+    """Un détourage **par défaut** — et pas une passe entière (D1).
+
+    `CorpsPasse`, celle des tables, porte en plus le point de la pipette, le
+    tracé à main levée et le masquage. Aucun des trois n'a de sens ici : ils
+    vivent dans les pixels d'une image précise, et un défaut s'applique à la
+    première image venue. Le domaine les retire déjà à la relecture ; les
+    laisser absents **de la porte** rend la chose irreprésentable au lieu de la
+    nettoyer après coup — et évite au passage d'aller chercher `CorpsPasse` dans
+    le module des tables, qui importe déjà celui-ci.
+
+    Les bornes sont les mêmes que là-bas, parce que c'est le même réglage.
+    """
+
+    moteur: str = "bord"
+    tolerance: int = Field(28, ge=0, le=255)
+    seuil_alpha: int = Field(128, ge=0, le=255)
+    durcissement: int = Field(0, ge=0, le=4)
+    # **Quel modèle de silhouette**, quand le moteur est `modele` (U13). Celui-là
+    # est bien un défaut : il ne désigne rien dans l'image, il nomme l'outil.
+    modele: str = ""
 
 
 class CorpsUnivers(BaseModel):
@@ -215,18 +243,70 @@ class CorpsUnivers(BaseModel):
 
     bible: list[CorpsChamp] | None = None
     bareme: list[CorpsEchelle] | None = None
+    # **Le style graphique du jeu** (D2). Il vient avant la taille parce qu'il
+    # decide de ce que la taille veut dire, et le service les pose dans cet
+    # ordre-la quand le meme message porte les deux.
+    style: str | None = None
     cible_px: int | None = None
     # **La vue du jeu** (E8) : un choix unique qui remplit le réglage et la
     # phrase de la case `vue`. La chaîne vide est une valeur — un jeu qui ne dit
     # pas d'où il regarde ne contraint rien.
     vue: str | None = None
     couleurs: int | None = None
+    # **La méthode de pixelisation du projet** (D2). Elle ne descend que dans
+    # les recettes fabriquées à neuf : en changer ne rejoue aucune image déjà
+    # rendue, exactement comme la taille de case.
+    methode_pixels: str | None = None
+    # **La couleur de fond du jeu** (D3). Elle part dans le texte, et elle décide
+    # de ce que le découpage aura à manger. La chaîne vide la retire et rend le
+    # comportement d'avant la tranche ; `null` reste *ne touche pas*, comme
+    # partout ailleurs dans ce corps.
+    fond: str | None = None
     modeles: dict[str, str] | None = None
     # **Deux défauts d'appel, pas de famille** (C2) : produire une planche et
     # éditer un corps ne se jouent pas chez le même modèle — mesuré le 28 août.
     # Le vide les remet au défaut du catalogue.
     modele_planche: str | None = None
     modele_edition: str | None = None
+    # ── Le détourage par défaut (D1) ─────────────────────────────────────────
+    #
+    # **Ici, `null` n'est pas « ne touche pas » — c'est « remets au produit ».**
+    # C'est la seule exception de ce corps, et elle est nécessaire : sans une
+    # valeur qui dise *je n'en veux plus*, un réglage posé une fois ne pourrait
+    # jamais être retiré, seulement remplacé par un autre. « Ne touche pas »
+    # reste disponible et redevient ce qu'il est partout ailleurs — **ne pas
+    # envoyer le champ du tout** —, ce que la route lit dans `model_fields_set`.
+    #
+    # Le dictionnaire est indexé par famille, comme `modeles` juste au-dessus —
+    # les deux natures d'image ont leurs propres champs, pour la raison écrite
+    # en C2 : deux clés réservées dans un espace de noms qui est celui de
+    # l'auteur, c'est une validation « famille inconnue » qui doit les excepter.
+    detourage_image: CorpsDetourage | None = None
+    detourage_planche: CorpsDetourage | None = None
+    detourages: dict[str, CorpsDetourage] | None = None
+
+    def detourages_poses(self) -> dict[str, Any]:
+        """Les seuls champs de détourage que ce message-ci prétend régler.
+
+        **Ce que le message ne dit pas, il ne l'efface pas** — la règle du
+        barème (E9), appliquée aux trois champs qui, seuls dans ce corps,
+        emploient `null` pour vouloir dire quelque chose.
+        """
+        poses = ("detourage_image", "detourage_planche", "detourages")
+        dit: dict[str, Any] = {}
+        for nom in poses:
+            if nom not in self.model_fields_set:
+                continue
+            valeur = getattr(self, nom)
+            if nom == "detourages":
+                dit[nom] = (
+                    None
+                    if valeur is None
+                    else {f: p.model_dump() for f, p in valeur.items()}
+                )
+            else:
+                dit[nom] = None if valeur is None else valeur.model_dump()
+        return dit
 
 
 class CorpsRealignement(BaseModel):
@@ -506,9 +586,16 @@ async def lecture_de_palette(
     """Quelle part de cette carte nourrit la palette du jeu.
 
     **Calculée à la demande, jamais posée sur la carte** : elle dépend de
-    l'image et de rien d'autre, elle coûte une centaine de millisecondes, et la
-    ranger dans le fichier de la carte ferait un second endroit à tenir d'accord
-    avec le premier.
+    l'image et de rien d'autre, et la ranger dans le fichier de la carte ferait
+    un second endroit à tenir d'accord avec le premier.
+
+    **Ce qu'elle coûte, remesuré le 3 septembre 2026 sur les 92 cartes du
+    dépôt** : de **6 ms** sur une vignette de 78 px à **1,2 s** sur une grande
+    carte, **360 ms en médiane**. La phrase d'avant annonçait *« une centaine de
+    millisecondes »* — juste sur les images du jour où elle a été écrite, et
+    fausse d'un facteur trois dès qu'une carte dépasse le millier de pixels, ce
+    qui est le cas courant. C'est pour ça que rien ne se calcule ici tant que
+    personne n'a cliqué (`G1`).
     """
     atelier = _atelier(requete)
     identifiant = _projet(requete, projet)
@@ -628,6 +715,12 @@ async def lire_univers(requete: Request, projet: str | None = None) -> dict[str,
     return {
         "projet": identifiant,
         "univers": atelier.univers.univers(identifiant).en_json(),
+        # **Ce que l'atelier proposerait comme fond, et ce qu'il en sait** (D3).
+        # Servie ici plutôt que calculée à l'écran pour la raison de toutes les
+        # autres listes de cette route : la distance qui décide de la sûreté d'un
+        # fond est celle du détourage, et une seconde arithmétique à l'écran
+        # aurait fini par proposer une couleur que le découpage mange.
+        "fond_propose": atelier.univers.fond_propose(identifiant).en_json(),
         # Les artworks tels qu'ils sont, pour que l'écran montre d'où vient la
         # palette sans recouper le tableau lui-même.
         "artworks": [c.en_json() for c in atelier.univers.artworks(identifiant, None)]
@@ -650,14 +743,30 @@ async def regler_univers(
         identifiant,
         bible=[c.model_dump() for c in corps.bible] if corps.bible is not None else None,
         bareme=[e.model_dump() for e in corps.bareme] if corps.bareme is not None else None,
+        style=corps.style,
         cible_px=corps.cible_px,
         vue=corps.vue,
         couleurs=corps.couleurs,
+        methode_pixels=corps.methode_pixels,
+        fond=corps.fond,
         modeles=corps.modeles,
         modele_planche=corps.modele_planche,
         modele_edition=corps.modele_edition,
+        # **Seulement ce que ce message-ci prétend régler** (D1). Les trois
+        # champs de détourage emploient `null` pour dire « remets au produit » ;
+        # « ne touche pas » y est donc *ne pas envoyer le champ*, et c'est le
+        # message qui le dit, pas une valeur.
+        **corps.detourages_poses(),
     )
-    return {"projet": identifiant, "univers": objet.univers.en_json()}
+    return {
+        "projet": identifiant,
+        "univers": objet.univers.en_json(),
+        # **La proposition suit le réglage** (D3) : changer la palette change ce
+        # que l'atelier proposerait, et un écran qui garderait l'ancienne
+        # proposition montrerait une couleur calculée sur des artworks qui ne
+        # sont plus là.
+        "fond_propose": atelier.univers.fond_propose(identifiant).en_json(),
+    }
 
 
 @routeur.get("/universe/views")
@@ -672,6 +781,11 @@ async def vues_et_tailles() -> dict[str, Any]:
     return {
         "vues": [v.en_json() for v in VUES],
         "tailles": [{"cible": cible, "quoi": quoi} for cible, quoi in TAILLES],
+        # **Les finesses d'un jeu en dessin** (D2). Deux listes et non une, parce
+        # que la même case pose deux questions : *combien de carrés* en pixel
+        # art, *quelle finesse* en dessin — et 8 carrés n'a pas plus de sens
+        # pour un dessin que 2048 n'en a pour du pixel art.
+        "finesses": [{"cible": cible, "quoi": quoi} for cible, quoi in FINESSES],
     }
 
 

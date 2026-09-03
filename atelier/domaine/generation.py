@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from atelier.domaine.animation import Clip
 from atelier.domaine.consommation import USD, argent
 from atelier.domaine.pliage import Pliage
 
@@ -62,6 +63,29 @@ REFERENCE = "reference"
 EDITION = "edition"
 STYLE = "style"
 ROLES = (REFERENCE, EDITION, STYLE)
+
+# **Deux images partent qui ne sont pas des réinjections** — le gabarit de la
+# grille et la bande de couleurs du jeu. Elles ne viennent pas de la
+# bibliothèque : le produit les **redessine** à chaque appel, et elles ne
+# s'enregistrent donc pas comme références. Elles occupent quand même une place
+# dans le plafond du modèle, et elles coûtent chez ceux qui facturent au token.
+#
+# **Elles n'avaient pas de nom jusqu'à R7**, et c'est précisément ce qui les
+# rendait dangereuses : le modèle recevait une grille vide sans qu'une ligne
+# dise que c'en était une, et *ce qu'on montre à un modèle, il le copie en
+# entier*. Nommer une image demande de pouvoir la nommer ; ces deux constantes
+# sont ce qui manquait. Elles ne rejoignent pas `ROLES`, qui est la liste close
+# de ce qu'une `Reinjection` peut porter.
+#
+# **Le gabarit a deux formes, et elles ne se nomment pas pareil** (C2 contre
+# C3) : une grille *vide* où le modèle fera naître N sujets, ou la planche
+# *pleine* qu'on lui redonne pour qu'il y ajoute une pièce. La confondre
+# reviendrait à dire « dessine un sujet par case » devant une planche déjà
+# dessinée, ce qui est le défaut le plus cher de C3.
+GABARIT = "gabarit"
+PLANCHE_JOINTE = "planche"
+PALETTE = "palette"
+ROLES_JOINTS = (STYLE, REFERENCE, EDITION, GABARIT, PLANCHE_JOINTE, PALETTE)
 
 # **D'où viennent les octets** — la deuxième famille d'images du produit est
 # arrivée en T4. Un asset vient de la bibliothèque et se relit par son
@@ -309,6 +333,20 @@ class Generation:
     # l'asset lit la case, pas la génération.
     pliage: Pliage | None = None
 
+    # ── Le clip — quand l'appel demande une vidéo, pas une image ─────────────
+    #
+    # Arrivé en A9 (V3). **C'est lui, et lui seul, qui dit qu'un appel est un
+    # appel vidéo**, exactement comme `piece` dit qu'une planche habille et
+    # `pliage` qu'elle porte plusieurs cases. Rien ne se devine du nom du modèle
+    # ni du type du fichier reçu : on lit un champ.
+    #
+    # **Ici et pas dans `demande`**, pour la raison de `personnage` et `pose` :
+    # c'est un fait sur l'appel. Le numéro du travail, surtout, n'est pas une
+    # préférence de l'auteur — c'est ce qui permet d'aller rechercher un clip
+    # déjà payé au lieu d'en repayer un, quand l'atelier a fermé pendant les
+    # deux minutes d'attente.
+    clip: Clip | None = None
+
     # ── Ce qui a été pris de l'ambiance, et par cet appel-là ──────────────────
     #
     # Arrivés en E14 (`docs/ARCHITECTURE.md` §5). Une ambiance est un lot de
@@ -439,6 +477,7 @@ class Generation:
             "ambiance": self.ambiance,
             "pris": list(self.pris),
             "pliage": self.pliage.en_json() if self.pliage else None,
+            "clip": self.clip.en_json() if self.clip else None,
             "demande": self.demande,
             "parametres_resolus": self.parametres_resolus,
             "ecartees": self.ecartees,
@@ -477,6 +516,9 @@ class Generation:
                 Reinjection.depuis_json(r) for r in (d.get("hors_plafond") or ())
             ),
             pliage=Pliage.depuis_json(d.get("pliage")),
+            # `None` pour tout ce qui a été écrit avant A9, et c'est la
+            # vérité : aucun appel du produit ne demandait de vidéo.
+            clip=Clip.depuis_json(d.get("clip")),
             demande=d.get("demande", {}),
             parametres_resolus=d.get("parametres_resolus", {}),
             ecartees=list(d.get("ecartees", [])),

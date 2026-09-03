@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T9 — les liens et les notes.
 
-Un test par critère de `docs/PLAN.md` § Phase T9, nommé d'après lui. **Trois des
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T9, nommé d'après lui. **Trois des
 neuf ne se vérifient pas ici** : que le trait suive ses deux objets quand on les
 déplace, que les teintes ne se confondent avec aucune couleur sémantique, et
 que Ctrl+Z défasse la création comme la coupe. Les deux premiers sont de la

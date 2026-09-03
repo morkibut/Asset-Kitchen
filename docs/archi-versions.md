@@ -7,11 +7,22 @@ les nomment ainsi ; les renuméroter les casserait tous pour un gain nul.
 **`docs/ARCHITECTURE.md` fait foi sur la construction** : les décisions de cadrage, les
 cinq règles qui tiennent l'ensemble, le squelette, le modèle d'objets et les risques y
 restent. Ce fichier-ci porte le détail d'une version donnée — les briques de la V1, le
-pliage et le calque de la V2, et ce que les V3 à V5 supposent. On l'ouvre quand on
-travaille *dans* une version, pas pour savoir comment le produit est bâti.
+pliage et le calque de la V2, ce que la **V3 a mesuré**, et ce que les V4 et V5 supposent
+encore. On l'ouvre quand on travaille *dans* une version, pas pour savoir comment le produit
+est bâti.
+
+**Trois versions n'ont pas de section ici, et c'est voulu** : la **V2.1** — l'interface refaite
+— est décrite dans `docs/ARCHITECTURE.md` § 5 ; la **V2.2** — les autres fournisseurs — dans
+`docs/archi-fournisseur.md` ; et la **V2.3** — le traitement qui cesse d'être à refaire — n'a
+que son plan, dans `docs/PLAN.md`, parce qu'elle ne pose aucune brique neuve : elle répare des
+briques existantes. L'ordre réel des versions est **V1, V2, V2.1, V2.2, V2.3, V3, V4, V5** —
+**plus une version d'édition, sans rang fixé**, qui portera le dessin à la main (trait,
+rectangle, pot de peinture, symétrie, et ce qui va avec). Décidée le 2 septembre 2026 : jusque-là
+le dessin reste un pinceau d'un seul pixel, et rien du plan ne présuppose l'inverse.
 
 Dans quel ordre chaque version a été construite : `docs/PLAN.md`. Ce que chaque tranche a
-livré : `docs/tranches/<code>.md`.
+livré : `docs/tranches/<code>.md`. **Ce que les bancs de la V3 ont mesuré, et qui commande son
+§8 : `docs/bilan-v3.md`.**
 
 ---
 
@@ -121,6 +132,124 @@ critères d'acceptation : **`docs/PLAN.md`**, qui fait foi sur l'ordre.
 
 Distribués tranche par tranche dans `docs/PLAN.md`, chacun écrit là où il devient
 vérifiable.
+
+### 6.5 bis · Ce que la toile ajoute au modèle
+
+*Écrit le 27 août 2026 avec T8 et T9.* Deux tranches nées de l'usage, qui ajoutent une entité,
+deux champs à la carte, et rien d'autre.
+
+**L'îlot n'est pas une entité — il *est* le groupe.** Un îlot nommé sur la toile et un `groupe`
+écrit sur une carte sont la même chose vue de deux endroits, et c'est ce qui interdit deux
+rangements concurrents. Tirer une carte dans un îlot écrit son groupe, l'en sortir le vide :
+composer et classer sont le même geste, dans les deux sens, et il n'existe aucun état où l'écran
+et le disque divergent. La contrepartie est assumée — **un îlot vide n'existe pas**, puisqu'un
+groupe sans carte n'a nulle part où être écrit. La teinte d'un îlot, elle, ne peut pas vivre sur
+ses cartes : six cartes feraient six vérités possibles pour un seul îlot. Elle vit dans le fichier
+du projet, une entrée par nom de groupe, et part avec le dernier membre. Une note est une carte
+texte : elle porte sa teinte elle-même.
+
+**Et elle vit sur le `Projet`, pas dans son `Univers`** — écrit en livrant T9, parce que « le
+fichier du projet » laissait les deux ouverts. `Univers` est défini dans sa première phrase comme
+*ce que le projet impose à ce qui rentre, et ce qu'il envoie avec* : une teinte d'îlot n'impose rien
+et ne part nulle part, et l'y poser en aurait fait le premier champ à démentir cette phrase-là. Elle
+voyage en revanche dans l'**enveloppe** du message `univers`, qui portait déjà `projet` et `nom`
+sans qu'ils soient dans l'objet — un genre d'événement de plus pour un dictionnaire de six entrées
+aurait fait un troisième canal sur un fichier qui en a un.
+
+**La position et la largeur libre sont sur la carte, jamais dans un fichier de mise en page.**
+Un `toile.json` par projet aurait exactement la panne qui a déjà valu son refus à `cartes.json`
+(`atelier/depot/fichiers.py`) : relire, modifier, réécrire — deux gestes dans le même instant se
+relisent tous les deux avant d'écrire, et le second efface le premier. Sur une toile ce n'est plus
+une hypothèse, c'est le régime normal : on déplace vite et souvent. La carte porte sa place, et un
+déplacement n'écrit qu'un fichier, le sien.
+
+**La largeur libre n'est pas la taille d'affichage, et aucune des deux ne ment sur l'autre.** La
+taille d'affichage est le cran 1× / 2× / 4× que lit la grille ; la largeur libre est une place
+occupée sur un plan — continue, aimantée sur ces mêmes trois largeurs (`docs/design-motifs.md` § L'écran
+Univers). Une valeur unique pour les deux aurait fait qu'agrandir une carte sur la toile change la
+grille de tout le monde. La hauteur ne se stocke pas : elle suit le rapport de l'image.
+
+**Posée n'est pas classée, et la réserve est la lecture de « ni l'un ni l'autre ».** Une carte peut
+avoir une position sans groupe — c'est le brouillon, trois images côte à côte pour voir si elles
+vont ensemble avant de décider qu'elles font un îlot. Le cas inverse existait avant la toile : une
+carte groupée depuis T4 n'a jamais été déplacée, donc n'a pas de position ; elle se pose dans son
+îlot à l'ouverture et n'écrit la sienne qu'au premier geste. Ce qui n'a **ni groupe ni position**
+attend en réserve.
+
+**Un fichier par lien, sous le tableau du projet** — `donnees/projets/<projet>/tableau/liens/<lien>.json`.
+Deux raisons, et la seconde est un fait du code. La première est celle de la carte, mot pour mot :
+écrire vite et souvent sans relire le tout. La seconde est que `parcourir_cartes` lit
+`tableau/*.json` et tient pour une carte tout JSON qui porte un identifiant — poser les liens à
+côté des cartes en ferait des cartes fantômes dans le tableau. Un sous-dossier, et la règle du
+dossier reste vraie telle quelle.
+
+**Pas d'index pour les liens, comme pour les cartes.** Ils ne se cherchent pas, ne se filtrent pas,
+ne se paginent pas : une toile se lit en entier. Corollaire hérité — jeter `atelier.sqlite3` ne
+touche ni au tableau ni aux liens, puisqu'ils n'y sont jamais entrés.
+
+**Un lien meurt avec son extrémité, et c'est la suppression qui l'emporte, pas un balayage.**
+`effacer_carte` efface déjà la carte et ses octets ensemble ; elle efface désormais aussi les liens
+qui y aboutissent. Un trait vers rien ne représente rien, et une entrée morte sur le disque serait
+une deuxième vérité qui attend son heure. Un îlot n'ayant pas d'existence propre, un lien vers un
+îlot disparaît avec le dernier membre du groupe.
+
+**La route qui les accepte est celle qui existe déjà.** `PUT /api/board/{carte}` porte depuis T4
+les réglages qui se remplissent ensemble — groupe, note, taille — et T8 lui ajoute **la position et
+la largeur**, sans en ouvrir une nouvelle. La raison est celle d'origine, renforcée : tirer une
+carte dans un îlot écrit sa position *et* son groupe, et deux appels rendraient possible un état où
+l'un est écrit et l'autre non — c'est-à-dire la divergence que toute la tranche est là pour
+empêcher. Elle est appelée **à la fin du geste, pas pendant** : un glissement écrit une fois, au
+relâchement, jamais à chaque image.
+
+Les liens ont les leurs, sur le même préfixe et dans la même langue — chemins en anglais, charges
+utiles en français : `POST /api/board/links` en pose un, `PUT /api/board/links/{lien}` lui donne
+son mot et sa pointe, `DELETE /api/board/links/{lien}` le coupe. `GET /api/board` les rend **avec
+les cartes**, comme il rend déjà les groupes : la toile se lit en un aller-retour, parce qu'elle
+est le tableau — et il rend les **teintes** avec, pour la même raison.
+
+**La teinte d'un îlot se pose par `PUT /api/board/groups/tint`, et le nom du groupe est dans le
+corps.** Deux décisions, deux raisons. Le nom d'abord : un groupe est du texte libre, `nord/sud` en
+chemin devient `%2F`, et un nom qui doit revenir intact ne s'encode ni dans un chemin ni dans une
+clé composite — c'est le refus de `"ilot:nom"` qui a déjà donné `Bout(genre, valeur)`. Les **trois
+segments** ensuite : à deux, `/board/tint` entre en concurrence avec `PUT /board/{carte}` et n'est
+atteinte que si elle est déclarée avant, donc l'adresse dépendrait de l'ordre des fonctions dans un
+fichier. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`, voir
+`docs/PIEGES.md`) ; à trois segments il n'y a plus d'ordre à respecter.
+
+**Et `PUT /api/board/groups/move` déplace un îlot entier**, écrit le 28 août 2026 avec T10. Trois
+segments pour la raison exacte de `tint`, et le nom du groupe dans le corps pour la même. Ce qu'elle
+ajoute est une **cardinalité** : un îlot n'a pas de position à lui, donc le déplacer, c'est écrire la
+place de chacune de ses cartes — et un appel par carte rendrait possible l'état où sept ont bougé et
+cinq sont restées, un îlot déchiré en deux moitiés que personne n'a demandé. C'est « deux appels
+pour un geste sont un état de trop » appliqué à un geste qui en aurait demandé douze. Elle exige
+donc **toutes** les places de l'îlot et rien d'autre — un sous-ensemble en ferait un second
+`PUT /board/{carte}` capable d'écrire des places en lot sous un nom de groupe qui ne les regarde
+pas —, elle les vérifie **avant** d'écrire la première, et elle n'élague rien : aucun groupe ne
+change, donc l'îlot garde ses liens et sa teinte. Les places sont **absolues et non un écart**,
+parce qu'une carte groupée avant T8 n'a pas de position écrite : c'est l'ouverture qui lui en
+calcule une, et un écart n'aurait rien eu à quoi s'ajouter pour elle.
+
+**`PUT /api/board/{carte}` gagne le texte d'une note en même temps que sa teinte**, et ça comble un
+trou de T4 : sans lui, corriger une faute demanderait de retirer la note et de la recoller — donc
+de perdre sa place, sa teinte et les liens qui y aboutissent, c'est-à-dire tout ce que T9 vient
+d'ajouter. Le trou ne s'était jamais vu parce qu'une note au bout d'une liste se retape sans rien
+perdre.
+
+**`POST /api/board/links` accepte un mot et une pointe, et c'est pour l'annulation seule.** « Il
+naît muet » reste vrai : c'est une règle de l'**écran**, qui ne les envoie jamais en tirant un
+trait. Mais défaire une coupe, c'est reposer le lien tel qu'il était — et une route qui ne saurait
+reposer qu'un trait nu forcerait l'annulation à passer par un second appel, donc par un état où le
+geste est à moitié défait. T8 a déjà tranché cette question : deux appels pour un geste sont un
+état de trop.
+
+**Et rien n'existe côté serveur pour l'annulation.** La pile de Ctrl+Z vit dans l'onglet et meurt
+en quittant l'écran (`docs/archive/plan-versions-tenues.md` T8) : annuler, c'est rappeler la même route avec la valeur
+d'avant. Une route d'annulation aurait fait de la composition un historique de projet — elle est le
+rattrapage du geste en cours, et rien d'autre.
+
+*Descendu de `docs/ARCHITECTURE.md` § 5 le 2 septembre 2026, sans qu'un mot change : la moitié « modèle » de la toile était là-bas et sa moitié « dépendance » ici, et les deux se renvoyaient l'une à l'autre. **`docs/ARCHITECTURE.md` fait toujours foi sur le modèle d'objets** ; ce qui suit en est le détail pour la toile.*
+
+---
 
 ### 6.5 La dépendance de la toile
 
@@ -310,10 +439,39 @@ entier par un objet à trous. Payé le 28 août 2026 (`docs/PIEGES.md`).
 
 ### Le pliage — la fonction générale de l'atelier
 
-Le pliage est **une ruse d'appel, pas un format de livraison**. On demande N images dans une
+> ⚠️ **Renversé en `A1`, le 2 septembre 2026.** Le paragraphe d'origine est gardé barré
+> ci-dessous, parce que c'est lui que soixante-dix renvois viennent lire et qu'il vaut mieux
+> voir ce qui a changé que ne plus rien trouver.
+
+~~Le pliage est **une ruse d'appel, pas un format de livraison**. On demande N images dans une
 seule planche, on paie un appel au lieu de N, et la planche est dépliée toute seule en N
 images séparées. Ce qui sort du produit, ce sont ces images-là et leur descriptif — jamais la
-feuille assemblée.
+feuille assemblée.~~
+
+**Ce qui tient toujours** : on demande N images dans une seule planche, et l'on paie un appel
+au lieu de N. **Ce qui tombe, en trois points** :
+
+- **La planche est devenue un objet du produit.** Elle se voit dans la galerie comme n'importe
+  quelle image, avec sa génération, son coût et sa géométrie ; elle se garde ; elle se
+  supprime en disant combien d'images en dépendent.
+- **Elle est toujours dépliée « toute seule » — mais le dépliage se refait.** Le premier
+  découpage reste automatique, et une planche qui revient bien ne demande aucun geste de plus
+  qu'aujourd'hui. Quand il tombe mal, l'auteur le **refait** : l'atelier repropose ses coupes,
+  il les déplace, en ajoute, en retire, et valide — autant de fois qu'il veut. Les dépliages
+  coexistent, et chaque image sortie dit **de quelle planche et de quel dépliage** elle vient.
+  *Tranché par l'auteur le 2 septembre 2026 : le défaut n'était pas que le dépliage soit
+  automatique, c'est qu'il fût sans retour.*
+- **La feuille assemblée n'est plus interdite en sortie.** Les images séparées et leur
+  descriptif restent la sortie ordinaire, mais une bande d'animation sort **assemblée** en
+  planche de sprites, avec son descriptif écrit dans un format existant.
+
+**Ce qui l'impose est mesuré, pas préféré.** Une planche d'animation revient bonne **une fois
+sur dix**, et aucune façon de la demander ne fait mieux (`docs/bilan-v3.md`). On commande donc
+plusieurs planches et l'on garde la bonne — ce qui suppose de pouvoir **juger** une planche
+avant de choisir, donc de la voir, et de prendre une étape ici et une étape là. Tant que la
+planche n'existait nulle part, un découpage tombé mal n'avait rien à reprendre : il fallait la
+repayer. *Le détail est dans `docs/PLAN.md` § P1 — la tranche qui s'appelait `A1` avant de
+sortir de la V3.*
 
 Ce n'est pas un dispositif du lot de poses : **c'est la manière dont l'atelier habille ou
 transforme N images d'un seul appel**, sur une grille carrée dont il connaît la géométrie case
@@ -341,6 +499,13 @@ pose sans que le compte en souffre.
 C'est le seul refus automatique de la version, et il est arithmétique — c'est ce qui le rend
 tenable.
 
+> **Révisé par `R6`, le 3 septembre 2026, et seulement d'un côté.** Le refus ne mord plus que
+> sur un compte **insuffisant** : sept images pour huit reste refusé, parce qu'il manque une
+> étape et qu'aucun choix ne la fabriquera. Neuf pour huit contient au contraire tout ce qui a
+> été demandé — le jeter coûtait **31 % des appels de planche** du banc d'animation —, donc la
+> planche s'ouvre et l'auteur écarte ce qu'il ne veut pas. Rien d'autre n'a bougé : aucune
+> mesure ne refuse toujours, et rien n'entre tant que le compte n'est pas juste.
+
 **Où il vit, et ce que la construction de C2 a tranché.** Le pliage est un module pur —
 `atelier/image/pliage.py`, le gabarit et les deux mesures — et un service —
 `atelier/services/pliage.py`, plier et déplier. La coupure est celle du slicer de T5 : un
@@ -349,12 +514,15 @@ l'un ni l'autre ne connaît personnage ni pose**, et ça se lit dans leurs impor
 de *cases*, et c'est le service de génération — le seul qui sache déjà relier un appel à une
 case — qui les compose. C'est ce qui laissera C3 le réemployer sans le rouvrir.
 
-- **La planche payée n'est pas un asset.** Elle reste le brut de sa génération, et seules les
-  N images séparées entrent en bibliothèque : « ce qui sort du produit, ce sont des images
-  séparées » devient vrai *par construction* au lieu d'être un filtre d'export à tenir. Elles
-  vivent aux rangs 100 et suivants dans le dossier de la génération, comme les découpes de T5
-  et protégées par le même piège du tiret dans le glob de suppression. Prix assumé : les N
-  corps n'ont pas de `parent` — c'est la génération qui les relie.
+- ~~**La planche payée n'est pas un asset.**~~ **Vrai de C2, renversé par `A1` le 2 septembre
+  2026.** Tel que C2 l'a construit, la planche reste le brut de sa génération et seules les N
+  images séparées entrent en bibliothèque ; elles vivent aux rangs 100 et suivants dans le
+  dossier de la génération, comme les découpes de T5 et protégées par le même piège du tiret
+  dans le glob de suppression. **`A1` fait de la planche un objet visible et gardé**, et
+  demande en plus la filiation que ce choix-ci ne donne pas : les N corps n'ont pas de
+  `parent`, c'est la génération qui les relie — or `A1` exige que chaque image dise **sa
+  planche et son dépliage**, ce qu'une génération seule ne distingue pas quand on déplie deux
+  fois. *C'est le premier travail de la tranche.*
 - **Un compte faux est un emplacement échoué**, avec sa raison et son coût. La relance de T1
   s'applique alors telle quelle, au prix plein, sans qu'aucun état neuf soit inventé.
 - **Le gabarit ne s'enregistre nulle part** : il se redessine depuis la géométrie, à la
@@ -363,7 +531,9 @@ case — qui les compose. C'est ce qui laissera C3 le réemployer sans le rouvri
   token —, et l'écran le dit.
 - **La reprise d'un lot est un rangement, jamais une relance.** Une planche payée et reçue que
   la fermeture a laissée non dépliée se déplie au démarrage, gratuitement et sans appeler
-  personne ; ce qui a été coupé *en vol* reste marqué interrompu et attend un geste, comme
+  personne — *et `A1` le confirme au lieu de le rouvrir : **le dépliage reste automatique**,
+  tranché par l'auteur le 2 septembre 2026. Ce que `A1` ajoute est le **retour en arrière**,
+  pas une validation de plus* ; ce qui a été coupé *en vol* reste marqué interrompu et attend un geste, comme
   depuis T1. Les deux moitiés sont écrites côte à côte pour qu'on ne les confonde jamais.
 
 ### Le calque par différence, sur une planche d'équipement
@@ -499,10 +669,19 @@ on fait*. Trois niveaux décident donc du défaut, sans trou : le modèle de pla
 est armé, sinon la famille du sujet, sinon le catalogue.
 
 **La planche redondante.** Deux planches sur vingt-quatre ont répété la même pose. Le compte
-était bon, donc le contrat était tenu, donc rien n'a refusé — et c'est correct : le compte
-d'images reste le seul refus automatique du produit. Mais la ressemblance entre cases d'un
-même lot est mesurée et montrée case par case, et la pose qui n'apporte rien se relance seule.
-Un compte juste peut donner une planche sans valeur ; le produit ne le cache pas.
+était bon, donc le contrat était tenu, donc rien n'a refusé — et c'est correct : un compte
+d'images insuffisant reste le seul refus automatique du produit (revoir l'encadré de `R6`,
+plus haut dans cette section). Mais la ressemblance entre cases d'un même lot est mesurée et
+montrée case par case, et la pose qui n'apporte rien se relance seule. Un compte juste peut
+donner une planche sans valeur ; le produit ne le cache pas.
+
+> **Et `R6` en a trouvé une seconde forme, pire parce qu'elle ne se voyait pas.** Une planche
+> dont le modèle a redessiné le quadrillage a elle aussi un compte juste — les cases bordées
+> font des taches opaques —, sauf qu'elle ne porte **aucun** sujet : les deux tiers de chaque
+> « case » sont du fond. Mesuré le 3 septembre 2026 sur les 95 planches du banc des recettes :
+> **47 étaient dans ce cas**, toutes entrées en bibliothèque sans un mot. Elles s'arrêtent
+> désormais, comme les planches en surplus, et pour la même raison — un compte juste ne dit
+> rien de ce qu'on tient.
 
 ### Le risque de la version
 
@@ -553,37 +732,105 @@ sur l'ordre.
 
 ## 8 · V3 — Animation de sprites
 
-Le morceau à risque. Le modèle d'animation de SpriteCook n'est pas exposé : il n'y
-a rien à copier, il faut retrouver une recette.
+> ⚠️ **Réécrite le 2 septembre 2026.** Cette section supposait ; elle est désormais **mesurée**.
+> Trois bancs payés les 1ᵉʳ et 2 septembre — **141 planches, 6,03 $**, toutes regardées et
+> notées une par une par l'auteur — ont répondu, et pas dans le sens espéré. **Le document qui
+> fait foi sur ces chiffres est `docs/bilan-v3.md`** ; le découpage en neuf tranches `A0` à `A8`
+> est dans `docs/PLAN.md`. Cette section-ci ne garde que ce qu'il faut savoir pour construire.
 
-**Approche retenue** : faire produire les images par l'IA, puis fournir un bon
-outil de découpe, d'alignement et de prévisualisation. Le travail manuel est
-accepté s'il se fait dans une interface agréable.
+**Ce n'est plus le morceau à risque : le risque est levé, et la réponse est négative.** Une
+planche d'animation revient bonne **une fois sur dix**. Ce n'est pas un échec, c'est un prix —
+de cinq à dix-sept centimes l'animation utilisable, une fois les ratés payés par les réussites.
+Mais ce chiffre **interdit un produit et en impose un autre**.
 
-L'outil, brique par brique :
-- découpe d'une planche de frames (le Slicer de V1 en fait déjà la moitié) ;
-- alignement : marge, marge de sécurité, forçage en puissance de deux, ancrage 3×3 ;
-- pelure d'oignon, aperçu animé avec réglage de vitesse ;
-- correction frame par frame ;
-- sortie : spritesheet + JSON, WebP animé, GIF.
+### Ce que la mesure interdit
 
-**Une piste sérieuse, trouvée par accident le 26 août 2026.** Pendant l'essai d'identité,
-`gemini-3.1-flash-image` a **calqué la mise en page de son image de référence** : on
-demandait un sprite, il en a rendu trois alignés (une rotation en trois étapes) — puis
-l'appel suivant, qui recevait ces trois-là, en a rendu trois dans la même disposition.
+~~**Approche retenue** : faire produire les images par l'IA, puis fournir un bon outil de
+découpe, d'alignement et de prévisualisation. Le travail manuel est accepté s'il se fait dans
+une interface agréable.~~
 
-Le modèle reproduit la **structure** de l'entrée, pas seulement son style. D'où l'hypothèse
-à tester : **fournir une planche gabarit** — huit cases vides, alignées, à la bonne taille —
-et le laisser la remplir. C'est ce que les indices relevés chez SpriteCook suggéraient déjà
-(entrée plafonnée à 256×256, sortie en spritesheet, nombre de frames toujours pair). Ce
-n'est plus une supposition, c'est un comportement observé.
+**Écarté, mesuré.** Cette approche bâtit la version sur *« on commande une planche, on la
+corrige »*. À une bonne sur dix, il faudrait corriger neuf fois sur dix — ce qui coûte plus cher
+que de recommander. **Le tri est moins cher que la retouche**, mais seulement si le tri ne coûte
+rien en gestes.
 
-**Prototypage préalable quand même**, avant tout engagement : la planche gabarit contre N
-générations successives à partir de la pose préparée. Mais la première branche part
-largement favorite.
+**Et mieux écrire la demande est mort comme levier.** Trente-et-un réglages essayés sur trois
+bancs : le nombre de cases, six formulations, ce qu'on joint, le format, la clause de constance.
+Les cinq réécritures de fond donnent **zéro bonne planche sur vingt** ; les planches à quatre
+cases, **zéro sur seize**. **Le texte du produit ne bouge pas**, et c'est autant de travail qui
+n'a pas lieu d'être.
 
-Effet de bord côté V1 : ce même comportement est une **nuisance** tant qu'on veut un sprite
-isolé. Le prompt doit imposer « one single sprite, one pose only ».
+### Ce que la mesure impose
+
+**Le geste central est : commander plusieurs planches, les regarder bouger côte à côte, garder
+la bonne** — ou prendre une étape ici et une étape là pour composer une bonne bande avec deux
+planches à moitié bonnes.
+
+L'outil, brique par brique, **révisé** :
+
+- **la planche devient un objet du produit** — elle se voit, elle se garde, son découpage se
+  fait toujours tout seul, et il **se refait à la main** autant de fois qu'on veut ; c'est le
+  renversement décrit au §7, et rien ne se construit sans lui ;
+- **une bande est un tout** : ses étapes se recadrent sur **une fenêtre commune**, jamais chacune
+  sur la sienne. ~~alignement : marge, marge de sécurité, forçage en puissance de deux, ancrage
+  3×3~~ — l'alignement image par image est **exactement le défaut mesuré** : le recadrage prend
+  chaque étape sur sa propre boîte, et les huit images livrées d'une même marche faisaient
+  toutes la même hauteur, ligne de sol au même pixel, **écart zéro**. Le balancement disparaît
+  avant que l'œil puisse le voir ;
+- **commander N planches d'un coup et trier** — la brique qui n'était pas prévue, et qui est la
+  principale ;
+- **pelure d'oignon, aperçu animé avec réglage de vitesse** — tenu, et l'aperçu se monte sur les
+  **cases brutes, fond compris** : juger le mouvement et juger le découpage sont deux métiers ;
+- **correction étape par étape** — tenu, et c'est la dernière économie : une bande bonne aux
+  sept huitièmes ne se rejette plus entière, on repaie **une étape** ;
+- **le mouvement devient un objet nommé de l'atelier**, avec ses étapes et sa cadence, qui se
+  rejoue sur tous les jeux suivants ;
+- **le contour cesse de grésiller** quand la bande tourne — un défaut fixe est un défaut, un
+  défaut animé est un défaut qu'on regarde ;
+- **sortie** : planche de sprites + descriptif dans un format existant, image animée — **et le
+  pantin**, voir plus bas. On n'invente aucun format.
+
+### La brique qui supprime la loterie — le pantin
+
+**Décidée le 2 septembre 2026.** À partir d'**une seule** image déjà validée, l'atelier découpe
+le personnage en morceaux articulés, pose les épingles aux articulations, applique un mouvement
+de la bibliothèque et rend la bande **sans un seul appel payant**. Rien n'est redessiné : ce
+sont les pixels d'origine, déplacés — donc le personnage ne peut plus changer de taille ni de
+visage entre deux étapes, et **le défaut dominant des trois bancs disparaît par construction**.
+
+**Ce qui sort vers le jeu, ce sont les images *et* le pantin** : la planche de sprites reste la
+livraison principale, le squelette et ses mouvements sortent en plus, dans un format existant.
+
+> ⚠️ **L'ordre des opérations commande tout le reste : déformer en grand format, pixeliser à la
+> fin.** Le problème n'est pas la rotation, c'est **quantifier la géométrie trop tôt**. Et
+> **le pantin ne fait bouger que ce qui est déjà dessiné** : une marche de profil oui, un
+> demi-tour, une main qui se retourne ou un visage qui change d'expression non — les huit
+> directions restent une affaire de génération.
+
+### Ce qui reste vrai de la version d'origine, et qui a servi
+
+**L'observation du 26 août 2026 tient, et elle a donné le gabarit.** Pendant l'essai d'identité,
+un modèle a **calqué la mise en page de son image de référence** : on demandait un sprite, il en
+a rendu trois alignés, et l'appel suivant en a rendu trois dans la même disposition. Le modèle
+reproduit la **structure** de l'entrée, pas seulement son style.
+
+**L'hypothèse qui en est sortie a été essayée et elle est bonne** : fournir une **planche
+gabarit** — des cases vides, alignées, à la bonne taille — et laisser le modèle la remplir.
+Mesuré le 28 août 2026 : le compte revient exact **11 fois sur 12** avec gabarit contre **9 sur
+12** sans. Le gabarit est aujourd'hui une pièce du produit.
+
+> ⚠️ **Mais le modèle qui a révélé le comportement n'est pas celui qui produit les animations.**
+> Sur le banc d'animation, à demande identique, il rend **zéro bonne planche sur huit**. Celui
+> que le produit emploie déjà en rend **cinq sur huit**, et pour vingt-trois fois moins cher par
+> bonne planche. L'observation valait pour ce qu'elle a appris, pas pour un choix de modèle.
+
+**Et l'effet de bord côté V1 reste vrai** : ce même comportement est une **nuisance** tant qu'on
+veut un sprite isolé. Le prompt doit imposer *« one single sprite, one pose only »*.
+
+**Enfin, une chose que les bancs ont apprise sur le produit et qui n'est pas de l'animation** :
+quatre planches sur treize ont été **refusées pour un sujet de trop** — le modèle complétant une
+grille que le gabarit ne dessinait qu'aux trois quarts. C'est la tranche `R6`, prise avant tout
+le reste et hors de toute version, parce qu'elle répare aussi les planches d'équipement du §7.
 
 ## 9 · V4 — Tileset autotile
 

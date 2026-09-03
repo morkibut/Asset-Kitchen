@@ -48,7 +48,7 @@ from atelier.domaine.equipement import (
 )
 from atelier.domaine.generation import Generation
 from atelier.domaine.pliage import CasePliee, MesuresLot, Pliage
-from atelier.domaine.projet import Projet, repere
+from atelier.domaine.projet import PLANCHE, Projet, repere
 from atelier.domaine.recette import Difference, Recette, traits_depuis_json
 from atelier.image.calque import (
     ECHELLE_TOLEREE,
@@ -62,6 +62,7 @@ from atelier.image.calque import (
     place_de,
     recadrer_sur,
 )
+from atelier.image import mesurer
 from atelier.image.pliage import COTE
 from atelier.services.assets import ServiceAssets
 from atelier.services.bibliotheque import ProjetInconnu, ServiceBibliotheque
@@ -512,6 +513,13 @@ class ServiceEquipement:
                 )
             )
 
+        # **Et la planche elle-même** (G16) — la même que celle de C2, par le
+        # même chemin : ce que le modèle a renvoyé entre en bibliothèque, à côté
+        # des calques qu'on en a tirés. C'est ici qu'elle compte le plus : sur
+        # un équipement, l'image rangée n'est pas la case telle qu'elle est
+        # arrivée, mais celle qui a été mise à l'échelle et calée sur le corps.
+        self._pliage.accueillir_planche(generation, emplacement)
+
         # L'arbre compte les assets par projet : N de plus changent ces comptes,
         # et personne d'autre ne les recalcule. Une fois, à la fin.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
@@ -613,6 +621,97 @@ class ServiceEquipement:
         # a changé, ce sont les images, et chaque asset l'a déjà annoncé.
         return rejoues
 
+    # ── Ce qui est arrivé, avant que l'atelier n'y touche ────────────────────
+
+    def a_une_case_arrivee(self, identifiant: str) -> bool:
+        """Cette image a-t-elle une case arrivée qu'on saurait retrouver ?
+
+        **Bon marché exprès** : elle ne décode aucune image. L'écran de
+        superposition la pose à chaque ouverture, pour savoir s'il propose le
+        geste ou pas — et proposer un geste qui échouera est pire que ne pas le
+        proposer.
+        """
+        asset = self._assets.lire(identifiant)
+        if asset is None or asset.recette.difference is None:
+            return False
+        generation = self._base.lire(asset.generation)
+        pliage = generation.pliage if generation is not None else None
+        if generation is None or pliage is None or not pliage.geometrie_connue:
+            return False
+        emplacement = next(
+            (e for e in generation.emplacements if e.resultat is not None), None
+        )
+        if emplacement is None or emplacement.resultat is None:
+            return False
+        return self._fichiers.existe(emplacement.resultat.fichier)
+
+    def case_arrivee(self, identifiant: str) -> tuple[bytes, str]:
+        """La case de ce calque **telle qu'elle est arrivée du modèle** (G16).
+
+        **Le mot *brut* désignait deux choses, et c'est ce qui a fait écrire la
+        remarque.** Le brut rangé d'un corps habillé est la case telle qu'elle
+        est arrivée ; celui d'un calque est la case *déjà mise à l'échelle et
+        calée sur son corps* — `_accueillir` le dit en toutes lettres. Deux
+        images d'une même planche, deux sens du même mot, et rien à l'écran ne
+        disait lequel on regardait. Cette méthode rend l'autre.
+
+        **Elle ne range rien, et c'est la décision de la tranche.** La case se
+        **recalcule** de la planche à chaque demande, exactement comme le rejeu
+        du recalage la recalcule — la garder doublerait sur le disque chaque
+        équipement payé, pour une image qu'on ne regarde qu'en cas de doute.
+
+        **Aucun appel, aucun centime** : la planche est là, et le découpage
+        coûte des millisecondes. C'est la même promesse que `recaler`.
+        """
+        asset = self._assets.lire(identifiant)
+        if asset is None:
+            raise ProductionRefusee(f"aucun asset « {identifiant} »")
+
+        generation = self._base.lire(asset.generation)
+        pliage = generation.pliage if generation is not None else None
+        if generation is None or pliage is None or not pliage.geometrie_connue:
+            raise ProductionRefusee(
+                "cette image n'est pas sortie d'une planche d'équipement — "
+                "il n'y a pas de case arrivée à retrouver"
+            )
+
+        emplacement = next(
+            (e for e in generation.emplacements if e.resultat is not None), None
+        )
+        # **La planche est la seule chose qu'on ne sait pas refaire**, et le
+        # refus est le même mot pour mot que celui du rejeu : c'est le même
+        # fait, et deux phrases pour un seul fait finissent par se contredire.
+        if emplacement is None or not self._fichiers.existe(
+            emplacement.resultat.fichier
+        ):
+            raise ProductionRefusee(
+                "la planche qui a payé cette image n'est plus sur le disque — "
+                "la case telle qu'elle est arrivée ne se retrouve pas sans elle"
+            )
+
+        # Les rangs du dépliage, dans l'ordre où il les a écrits : le n-ième
+        # rang est la n-ième case. Même lecture que le rejeu, et pour la même
+        # raison — un compte qui ne tombe pas juste veut dire qu'une purge est
+        # passée, et deviner quelle case a perdu son image serait pire que
+        # refuser.
+        rangs = sorted(
+            rang
+            for rang in self._base.rangs_de_generation(generation.identifiant)
+            if rang >= RANG_PLIAGE
+        )
+        if asset.rang not in rangs or len(rangs) != len(pliage.cases):
+            raise ProductionRefusee(
+                "le découpage de cette planche ne correspond plus à ses cases — "
+                "la case telle qu'elle est arrivée ne se retrouve pas"
+            )
+
+        retours, _, _ = self._lire_planche(generation, emplacement.rang)
+        index = rangs.index(asset.rang)
+        if index >= len(retours):  # pragma: no cover — le compte est vérifié
+            raise ProductionRefusee("cette case n'est pas dans la planche")
+        octets = retours[index][3]
+        return octets, mesurer(octets).type_media
+
     # ── Le masque ────────────────────────────────────────────────────────────
 
     def borner(self, identifiant: str, zone: Sequence[int] | None) -> Asset:
@@ -624,7 +723,7 @@ class ServiceEquipement:
         et du corps déjà là.
 
         `None` retire le masque : **revenir à la différence brute est un geste
-        unique** (`docs/PLAN.md`, C3), et c'est celui-ci, pas un autre.
+        unique** (`docs/archive/plan-versions-tenues.md`, C3), et c'est celui-ci, pas un autre.
         """
         asset = self._assets.lire(identifiant)
         if asset is None or asset.recette.difference is None:
@@ -659,7 +758,7 @@ class ServiceEquipement:
         a posé depuis le début, dans l'ordre ; deux onglets qui empileraient des
         deltas ne convergeraient jamais, et c'est déjà la règle des références
         écartées. **Une liste vide annule la couche** — « chaque couche
-        s'annule » (`docs/PLAN.md`, C4), et c'est ce geste-ci, pas un autre.
+        s'annule » (`docs/archive/plan-versions-tenues.md`, C4), et c'est ce geste-ci, pas un autre.
 
         **Pas un centime, pas un pixel de carte graphique** : la retouche se
         recalcule à partir de l'image déjà payée et du corps déjà là, sur le
@@ -798,7 +897,7 @@ class ServiceEquipement:
             recette = (
                 ancien.recette
                 if not etait_calque
-                else self._assets.recette_du_projet(generation)
+                else self._assets.recette_du_projet(generation, PLANCHE)
             )
 
         ancien.brut = self._fichiers.ecrire_brut(
@@ -872,7 +971,7 @@ class ServiceEquipement:
             recette = Recette(difference=Difference(base=base.identifiant))
         else:
             image = octets
-            recette = self._assets.recette_du_projet(generation)
+            recette = self._assets.recette_du_projet(generation, PLANCHE)
 
         chemin = self._fichiers.ecrire_brut(
             generation.identifiant, rang, image, ".png"

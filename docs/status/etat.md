@@ -11,6 +11,1131 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## D4 — le catalogue s'ouvre, et deux des trois choses qu'on attendait sont fausses — 3 septembre 2026
+
+**La V2.3 se ferme avec elle, cinq tranches sur cinq.**
+
+### Ce que le banc devait confirmer, et ce qu'il a dit à la place
+
+Le relevé d'outillage annonçait deux manques, et la tranche les avait recopiés. Le banc les a
+mesurés — cinq modèles, quatre images du dépôt, gratuit
+(`essais/essai_moteurs_de_detourage.py`).
+
+| modèle | entrée | ms | part gardée | **ajouré trouvé** |
+|---|---|---|---|---|
+| `birefnet-general-lite` | 1024 | 12 058 | 0,214 | **4,8** |
+| `isnet-anime` | 1024 | 1 578 | 0,213 | **2,2** |
+| `u2net` | 320 | 894 | 0,219 | 2,5 |
+| `isnet-general-use` | 1024 | 1 539 | 0,215 | 3,8 |
+| `birefnet-general` | 1024 | 21 595 | 0,214 | 3,5 |
+
+**La part gardée ne sépare rien**, et c'est elle que le relevé regardait : cinq modèles à
+quatre millièmes près. Ce qui sépare est l'**ajouré** — l'espace entre un bras et un torse, une
+boucle de ceinture, une frange —, et il fallait le compter pour le voir.
+
+**Le modèle entraîné sur du dessin est le plus mauvais des cinq sur ce point-là.** La tranche
+l'annonçait comme *« le plus proche de notre cas d'usage »* ; il trouve **un** trou là où les
+autres en trouvent trois à sept, et c'est celui qui s'écarte le plus de tous les autres — 0,925
+d'accord au pire. La raison se comprend après coup, et elle est dans son nom : `isnet-anime`
+apprend à découper **un personnage d'un seul tenant**, ce qui est exactement le contraire de
+garder l'ajouré. *Il reste au catalogue avec cette note écrite à côté de lui — un modèle écarté
+sans avoir été essayé se repropose tous les six mois.*
+
+**L'allégé bat le lourd, et il ne pèse pas ce qu'on disait.** 214 Mo pesés sur le disque, pas
+88,6 : le chiffre du relevé était celui des poids PyTorch, pas de l'export ONNX que `rembg`
+rapatrie — un quart du lourd, pas un onzième. Il le bat quand même : plus d'ajouré, deux fois
+moins de temps, 99,5 % d'accord avec lui. **C'est la seconde fois que ce relevé donne un
+chiffre faux à cette tranche**, la première étant *« nos deux modèles »* pour trois.
+
+### Et une affirmation de la tranche elle-même est tombée
+
+Elle écrivait que les *« 95 % de pixels à demi transparents »* cités par trois documents du
+dépôt étaient **en partie la trace du réagrandissement** du masque de `u2net`, qui infère à 320
+et étire. La mesure dit non : `isnet-general-use`, qui infère à 1024 et n'étire rien, en rend
+**autant** — 421 092 contre 445 278, 3 % d'écart. C'est la sortie douce du modèle, pas
+l'étirement, et c'est le durcissement qui la tranche depuis toujours.
+
+**Le paragraphe fautif est laissé dans le plan avec la correction sous les yeux**, plutôt que
+retiré : une affirmation effacée en silence se réécrit toute seule six mois plus tard.
+
+### Ce qui a été construit, et ce qui a servi à le construire
+
+**Le défaut du moteur par modèle passe à `isnet-general-use`**, pour la ligne de l'ajouré : une
+moitié de détails en plus, à part gardée égale, pour 0,7 seconde de plus — et le moteur par
+modèle sert les images **importées**, pas ce que l'atelier fabrique. ⚠️ *Une recette d'avant
+`U13` ne nomme aucun modèle et retombe sur ce défaut : son rendu change. Celles qui nomment
+`u2net` ne bougent pas d'un pixel.*
+
+**Les deux réparations de bord partagent une seule mesure**, et c'est ce qui les fait marcher
+sur les quatre moteurs à la fois : aucun ne déclare la couleur qu'il a prise pour du fond — le
+modèle ne rend qu'un masque —, mais tous laissent derrière eux les pixels qu'ils ont ouverts, et
+*effacer un pixel ne change pas sa couleur*. **Le fond d'une passe se lit dans son propre
+résultat.**
+
+- **Le rongement conditionnel épargne 47 185 pixels de sujet** sur les quatre images, et il ne
+  peut jamais en manger plus que l'érosion aveugle — c'est un sous-ensemble, vérifié. Un trait
+  d'un pixel d'épaisseur ne se ronge plus jamais, parce qu'aucun de ses pixels n'a de voisin
+  franchement intérieur à qui se comparer. *C'est le cas que l'érosion effaçait en entier : une
+  antenne, une lanière, la pointe d'une épée.*
+- **La décontamination repeint 9 à 51 % du pourtour** selon l'image, d'un écart moyen de 88 à
+  197 niveaux — ce qui dit assez que le défaut était réel. Elle ne touche pas à l'alpha, jamais
+  d'une valeur : c'est ce qui la sépare du *matting*, et un bord doux est très exactement ce que
+  le durcissement existe pour supprimer.
+
+**Le contour a gagné ses deux régimes, et il manquait un nombre pour ça.** D2 rendait le pas sur
+lequel le modèle a peint ; elle ne rendait pas **où la grille commence**. La recherche de phase
+existait dans le peigne depuis D2 — elle était jetée aussitôt faite. Sans elle, un trait posé
+sur la bonne maille mais au mauvais départ tombe à cheval sur deux blocs, ce qui est la moitié
+du défaut qu'on répare.
+
+**Un critère était déjà livré, et il a été vérifié au lieu d'être réécrit** : la couleur du
+trait se prend déjà dans la palette du jeu depuis `E5`, pastilles cliquables et marque « hors
+palette » comprises. *Une tranche qui réclame du travail livré est la façon la plus chère de
+perdre une journée* — c'est écrit dans la tranche elle-même, et c'est la seconde fois qu'elle
+l'évite.
+
+### La leçon, et elle est la même que celle de la veille
+
+Trois affirmations sur cinq venaient d'un document non vérifié, et les trois étaient fausses.
+La tranche s'était déjà fait prendre une fois — *« nos deux modèles »* pour trois — et l'avait
+écrit en tête de sa propre section. **Ça ne l'a pas empêchée de recopier les deux suivantes.**
+Ce qui les a trouvées n'est pas une relecture : c'est d'avoir **compté la bonne chose**, et la
+bonne chose n'était pas celle que le relevé regardait.
+
+---
+
+## D3 — le fond cesse d'être une phrase enterrée dans le code — 3 septembre 2026
+
+**Le produit demandait *un fond plat* sans dire lequel, depuis le premier jour.** Le modèle
+rendait donc un gris clair — c'est-à-dire une couleur que le sujet porte aussi, sur une joue,
+une lame, une pierre. De là le découpage à reprendre à la main sur presque chaque image :
+le remplissage depuis le bord mange ce qui ressemble au fond, et une joue grise ressemble à un
+fond gris.
+
+### Ce que la tranche a coûté, et ce n'est pas ce qui était prévu
+
+**Elle devait coûter un banc de huit tirages par branche.** L'auteur l'a retiré le 2 septembre :
+*« pas besoin de tester ça »*. La raison tient — le fond devient un **réglage**, pas une valeur
+imposée, et une mauvaise couleur se change en un geste. Ce qui remplace le banc est plus utile
+que lui : **deux mesures d'acceptation lues sur les images qu'on voulait de toute façon** — les
+pixels de bord à demi transparents, et les pixels du sujet encore à portée de tolérance du fond.
+C'est la doctrine du dépôt sur les notes de qualité, appliquée pour la première fois à un
+réglage d'**envoi** et non à un modèle.
+
+### Trois choses ont été tranchées en construisant, et aucune n'était écrite
+
+**1 · Le fond ne fabrique pas de ligne à lui dans le texte qui part.** La case `technique`
+disait déjà *un fond plat* ; elle dit maintenant lequel. Lui donner une ligne de plus aurait
+fait partir la couleur deux fois dans le même appel.
+
+**2 · Mais il a fallu un quatrième écart sur l'écran de confirmation**, à côté des lignes
+éteintes, des lignes rallumées et des textes corrigés. La raison est mécanique : le fond
+fabrique **deux** textes qui partent dans **deux champs différents** — la phrase de calage et la
+phrase d'interdiction. Le corriger en tapant dans la ligne aurait changé l'un sans l'autre, et
+l'appel serait parti en demandant du magenta tout en interdisant du cyan, **sans que rien ne le
+dise**. C'est le premier réglage de l'écran de confirmation qui ne soit pas du texte.
+
+**3 · Un jeu en dessin a un fond comme les autres.** La phrase de calage ne partait qu'en pixel
+art, puisqu'elle porte le calage en carrés. Elle se coupe désormais en deux moitiés, et le fond
+part seul quand il n'y a pas de carrés. Sans ça la tranche aurait été muette pour la moitié des
+projets — trouvé en relisant `phrase_du_produit`, pas en essayant.
+
+### Ce que la tranche ne coûte pas, et c'est ce qui la rendait facile
+
+**Le champ d'interdiction existait déjà** — `Demande.prompt_negatif`, depuis `T1` —, et les deux
+adaptateurs le replient en fin de demande sous *« Do not include: »*. La phrase qui interdit au
+modèle d'employer la couleur du fond sur le sujet entre donc dans un mécanisme qui était là,
+sans une ligne d'adaptateur. C'est ce que le bilan annonçait, et c'était juste.
+
+### Le seul chiffre qui ne vient pas d'un relevé, et il est écrit comme tel
+
+Le seuil de sûreté d'une couleur candidate est **trois fois la tolérance du détourage**. Une
+tolérance parce qu'en dessous la couleur serait mangée avec le fond ; les deux autres paient le
+fait que **le modèle ne rend jamais exactement l'hexadécimal demandé**. Cette dérive-là n'est
+pas connue — aucune image du dépôt n'a été tirée sur un fond franc —, et c'est la mesure
+« pixels encore collés à la couleur de fond » qui la dira sur les premières qui reviendront.
+*Le seuil se reposera alors sur ce qu'on aura vu.*
+
+⚠️ **Le prix de la tranche, dit une fois** : elle change ce qui part au fournisseur. Les images
+tirées avant ne se comparent plus à celles d'après — pas parce qu'elles sont moins bonnes, mais
+parce qu'on n'a plus demandé la même chose. Les 135 notes d'animation restent valables entre
+elles, jamais contre un tirage postérieur.
+
+---
+
+## G16 — ce qui est revenu du modèle se voit, et se reprend à la main — 3 septembre 2026
+
+**La remarque disait trois choses, et elle n'en disait qu'une.** *« Je ne peux pas voir
+l'image générée […] et le brut semble prendre souvent le calque déjà découpé. »* Trois
+manques distincts — voir la feuille payée, refaire le calage à la main, et un mot qui
+désigne deux choses — mais un seul fait dessous : **il n'existait aucune façon de nommer
+la case telle qu'elle était arrivée**. Les trois tombent avec elle.
+
+**Le mot *brut* désignait deux images, et personne ne l'avait remarqué.** Mesuré sur
+l'atelier jetable, pour une même case d'une même planche : la case **arrivée** fait
+512×512, entièrement opaque, et porte le fond du modèle, le corps et la pièce ; le **brut
+rangé** fait 64×64 et 2 118 pixels opaques — déjà remis à l'échelle, recalé et détouré ;
+le **rendu** en garde 363, la pièce seule. Trois images, deux sens du mot. `_accueillir`
+l'écrivait depuis C3 en toutes lettres — *« son brut est la case ramenée dans le cadre du
+corps »* — et aucun écran ne le disait.
+
+**Presque rien n'a été construit, et c'est la marque de la famille ②.** L'adresse qui sert
+la feuille existait depuis T1 ; le recalcul d'une case à partir d'elle existait depuis R5,
+dans le rejeu du recalage ; une image sans recette s'affichait déjà par l'adresse de son
+emplacement. La tranche a posé **des portes** : un asset pour la feuille, une adresse pour
+la case arrivée, un drapeau sur la superposition, deux boutons.
+
+**L'invariant renversé était prévu, et il a coûté ce qu'il annonçait.** *Le pliage est une
+ruse d'appel, jamais un format de livraison* (C2) tombe ici plutôt qu'en `P1`. Neuf essais
+le disaient et disent maintenant l'autre — et l'un d'eux, en tombant, a trouvé la seule
+chose que le renversement cassait vraiment : **au rattrapage du démarrage, une planche qui
+attend encore un choix serait entrée en bibliothèque**, contre la règle de `R6`. Le refus
+manquait ; il est écrit, mot pour mot comme celui de la reprise, juste à côté.
+
+**Ce que la feuille est, décidé à un seul endroit.** Trois chemins la font entrer — le
+dépliage des corps, celui d'un équipement, le rattrapage —, et trois constructions écrites
+à trois endroits auraient fini par donner trois images différentes : l'une avec son coût,
+l'autre sans, la troisième avec une recette de projet qui l'aurait mise sur grille. Elle
+est donc construite dans `atelier/domaine/planche.py`, et nulle part ailleurs.
+
+**Trois décisions qui l'empêchent d'être un sprite** : recette **vide** — donc ni grille,
+ni réduction de couleurs, ni détourage —, **aucune pose** — donc invisible pour la matrice,
+qui saute ce qui n'en a pas —, et **le coût de l'appel sur elle**, zéro sur ses morceaux.
+Vérifié : quatre cases pleines, une image chacune, la feuille dans aucune.
+
+**Un hasard heureux dans les rangs.** `premier_rang_libre` réservait déjà les rangs des
+emplacements depuis C2 — la feuille avait donc son rang libre, et rien n'a eu à bouger.
+
+**Ce que la tranche laisse ouvert, et qu'il vaut mieux écrire.** Supprimer la feuille depuis
+la galerie efface son fichier, et le recalage comme la case arrivée refusent alors avec leur
+raison — proprement, mais l'auteur ne sait pas ce qu'il perd au moment où il supprime. C'est
+exactement le critère de `P1` — *supprimer la planche demande confirmation et dit combien
+d'images en dépendent* —, et il reste chez elle.
+
+**Et un effet de bord qui se voit à l'écran, déjà prévu par le produit.** Partir de la case
+arrivée, c'est partir d'une image **avec son fond** : le premier aperçu annonce 117 % de part
+ajoutée. L'alerte *« sans alpha sur le dessus, le calque prendrait tout le fond »* était là
+depuis E6, avec son bouton — *reprendre les passes du dessous* —, et un clic ramène l'ajout à
+40 %. Rien à construire ; il fallait juste que ce chemin devienne le chemin ordinaire.
+
+**Ce que ça coûte :** rien au fournisseur, et c'est vérifié par le compte d'appels — regarder
+la feuille, regarder la case arrivée, refaire le calage et fabriquer ne touchent personne.
+Douze essais neufs, dix essais anciens réécrits pour dire le nouvel invariant. Vérifié au
+navigateur sur un atelier jetable, port 8423 : la bascule, le bouton, la table préremplie sur
+les deux bonnes images, et le second vêtement qui arrive dans la même case avec le premier
+intact.
+
+## R9 — un outil qui ne disait pas ce qu'il réparait — 3 septembre 2026
+
+**L'écran ouvrait sur un décompte et proposait un verbe.** *« 6 poses · 5 calées »*,
+puis un bouton marqué *« Calibrer les 5 poses »*. Rien ne disait ce qui n'allait pas,
+rien ne disait ce qu'on obtiendrait — et l'explication de l'outil, écrite le 30 août
+2026, complète et juste, **n'était citée par aucun composant** : elle n'était donc
+lisible nulle part. Six jours d'un texte parfait rangé dans un tiroir.
+
+**Le principe qui a tenu la tranche** : *un outil montre le défaut qu'il répare avant
+de proposer de le réparer*. Il est monté dans `docs/design-motifs.md`, avec l'ordre
+qui le fait — ce qu'il répare, ce que le geste donnerait, puis le geste.
+
+**Le critère du plan était faux à moitié, et la moitié fausse était la plus
+intéressante.** Il disait « il reste allumé aujourd'hui ». Le bouton s'éteignait bien,
+mais uniquement dans le cas dégénéré — aucune pose avec un corps, ou toutes mises de
+côté — et **muet** : l'écran montrait alors *« Calibrer les 0 poses »* en gris, le
+paragraphe explicatif disparaissait avec lui, et rien ne disait pourquoi. Ce que la
+tranche a posé n'est donc pas une extinction, c'est **un compte** et trois raisons.
+
+**Un défaut trouvé, montré, et délibérément pas corrigé.** L'occupation calibrée
+traverse deux fonctions qui la bornent chacune, et pas au même endroit :
+`_occupation` à l'échelle déclarée par l'ensemble — jusqu'à 300 % —, `_poser` à
+100 %. Un géant déclaré tel voit son calibrage écrasé au tiers. **Personne ne compare
+une borne d'entrée à une borne de sortie**, et tant que la valeur ne sortait pas du
+service, l'écart ne se voyait pas ; il est devenu visible le jour où l'écran a dû
+dessiner l'après. Le réparer changerait ce que l'outil écrit, ce que le dernier
+critère interdit noir sur blanc — le service rend donc la valeur *réellement* écrite,
+l'écran dessine ce qu'on obtiendra, et le piège est consigné.
+
+**Et le défaut est mesuré sur la chose qu'on a sous les yeux.** La maquette citait les
+six hauteurs du vrai projet ; les compter sur les poses de la chose ouverte dit la
+même chose et ne peut pas devenir faux. C'est `G1` appliqué avant d'avoir eu à le
+payer une treizième fois.
+
+**Le navigateur a confirmé l'empilement d'après, et corrigé un chiffre.** Sur l'atelier
+jetable, `repos` est bien agrandi de `scale(0.4375)` autour de son bas et retombe à 28 px
+réels, la ligne dorée est à sa place, et une pose déjà à la hauteur commune ne porte
+aucune transformation. Ce qui était faux tenait en un mot : le sous-titre disait
+« 4 hauteurs différentes » sous quatre poses dont deux sortent à la même hauteur. Il
+compte maintenant les hauteurs **distinctes** — `G1` pris avant qu'il ne coûte.
+
+**Ce que ça coûte :** rien en usage, rien au fournisseur. Huit essais serveur, douze
+côté écran, cinq repris — et **aucun essai de `E17` n'a bougé** : la tranche ajoute
+deux chiffres par pose, elle n'en révise aucun, et un essai de `R9` répète les valeurs
+de `E17` pour qu'une révision furtive se voie.
+
+## R8 — un écran plein de texte pour une chose qui n'existe qu'en images — 3 septembre 2026
+
+**Le défaut était mécanique, pas esthétique, et c'est ce qui rendait la tranche courte.** Le
+produit possède deux systèmes faits exactement pour ce que la fiche d'une chose ne faisait
+pas : l'explication au survol, adossée à un recueil unique qui alimente aussi le guide, et la
+vignette, qui montre une image en petit et l'ouvre en grand à la barre d'espace. **La fiche
+n'employait ni l'un ni l'autre** — le recueil comptait 123 entrées et **zéro** pour cet
+écran, et l'écran d'une chose qui possède des images n'en montrait aucune. On retenait ou
+l'on retirait une image de référence en lisant deux mots.
+
+**Le troisième rendu du corpus est la vraie décision de la tranche.** Écrire une phrase à
+demeure sous un titre de section semblait ajouter un rendu à un corpus qui n'en avait que
+deux. Le comptage du code a montré que la question était mal posée : le produit écrit déjà
+**74 lignes explicatives en dur dans dix-sept écrans**, dont treize sur quinze relues
+expliquent un réglage sans rien refuser. La règle n'a jamais interdit d'écrire une phrase à
+l'écran — elle interdit de **recopier** le corpus dans un second fichier. La ligne est donc
+*lue* dans le recueil, et corriger l'entrée corrige les trois affichages.
+
+**Deux critères du plan étaient faux, et les deux le sont restés dans le plan.**
+« Cinq entrées » : la maquette en annonçait cinq au récapitulatif et en rédigeait six au
+détail — la matrice de droite est un sixième titre à l'écran, et un titre sans entrée aurait
+été le seul sans bulle, sans propos et absent du guide. « Écrit trois fois » : le compte des
+cases paraissait à trois endroits **et deux des trois ne comptaient pas pareil** — l'un sur
+toutes les cases du plan, rangées comprises, l'autre sur les seules poses tenues, si bien
+qu'une chose à deux poses rangées se lisait « sur 6 » à gauche et « sur 4 » à droite. Le
+dessin validé garde les trois lieux, qui répondent à trois questions ; ce qui disparaît est
+le **quatrième**, le très gros chiffre à empattements. Ce qui est tenu est **un seul calcul**.
+
+*Les deux phrases de critère n'ont pas été réécrites pour coller au résultat — elles portent
+un renvoi vers l'arbitrage. Un critère retouché après coup ne mesure plus rien.*
+
+**Deux règles d'apparence enfreintes, trouvées en dessinant.** Une mesure écrite en serif de
+32 px, alors que `docs/DESIGN.md` dit *toute mesure est en mono, partout* ; et le nom d'un
+champ de style écrit dans le gris réservé à ce que quelque chose d'autre redit — or rien ne
+redit le nom d'un champ. Les deux corrections sont montées dans `docs/DESIGN.md`, à côté des
+trois enfreintes déjà consignées : c'est la troisième fois que la même règle de couleur est
+prise en défaut par la même question — *qu'est-ce qui redit ceci ailleurs ?*
+
+**Et les deux vrais défauts sont sortis du navigateur, pas des essais.** Montée sur un
+atelier jetable, la fiche a montré que **le sommaire ne suivait pas le défilement du tout** :
+elle employait un `IntersectionObserver`, et un guetteur ne livre rien à un onglet qui ne
+compose pas ses images — **exactement le piège consigné neuf jours plus tôt sur
+`ResizeObserver`**, payé une seconde fois parce que l'entrée nommait le composant et non la
+famille. La correction suivante — inverser le tri — était fausse aussi, et les mesures l'ont
+dit : la bande du haut fait 316 px quand une section en fait 797, trois se croisent à la
+fois, et aucun sens de tri ne désigne celle qu'on lit. Le second défaut était plus simple :
+**deux titres du sommaire se coupaient**, alors que la tranche existait pour réparer un
+résumé coupé.
+
+**Ce que ça coûte :** rien en usage, et rien au fournisseur. Quatre essais serveur, dix côté
+écran, plus huit clics d'onglet **retirés** d'essais existants — ils ouvraient des parties
+que la fiche montre désormais sans rien ouvrir.
+
+## R7 — un rangement construit contre une mesure qui disait non — 3 septembre 2026
+
+**La tranche avait été close avant d'être construite, et sur un chiffre.** Cinq variantes du
+texte qui part, tirées à images égales le 2 septembre avec un témoin neuf : **aucune ne
+passe**, et le pavé du produit les bat toutes — 0 sur 4 pour les trois titres, contre 2 sur 4
+pour le témoin. La règle écrite d'avance disait *au moins la moitié de bonnes, sinon on
+n'insiste pas*.
+
+**Elle a été rouverte par décision de l'auteur, en connaissance du chiffre, et pour la
+relisibilité seule.** Aucun gain de taux n'est promis — ni dans le plan, ni dans le dossier
+de tranche, ni dans l'entrée que l'auteur lit à l'écran. C'est la première tranche du dépôt
+dans ce cas, et l'encadré qui la disait close **reste** dans le plan, corrigé et non effacé :
+une tranche qu'on rouvre contre une mesure doit garder la mesure sous les yeux.
+
+**Le banc a servi de source, pas de modèle à réécrire.** Les deux variantes reprises sont
+recopiées **mot pour mot** de `essais/socle_essais.py`, et un essai le vérifie à chaque
+exécution. La raison est comptable : un tirage futur doit mesurer la même chose que celui
+qui a déjà été payé, et un texte voisin rendrait les $0,25 du 2 septembre inutilisables.
+
+**La caméra ne bouge pas, et c'est ce qui rendait la tranche faisable.** Un banc payé de
+trente images a établi que le rapport hauteur/largeur du sujet passe de **1,55 à 1,13** quand
+la caméra ferme le texte : un modèle d'image pondère la fin. La caméra appartient à la
+*demande*, qui est la troisième partie et dont elle est la dernière ligne — ranger ne l'a
+donc pas déplacée. Le seul déplacement est le bloc des références, qui remonte de
+l'avant-dernier rang au deuxième, et c'est exactement le déplacement que le banc a tiré.
+
+**Trois défauts trouvés en construisant, et réparés.** Deux groupes de l'écran de
+confirmation s'affichaient **sans titre depuis le 1ᵉʳ septembre**, nés le jour même — un
+titre absent ne laisse pas un trou, il laisse un blanc. Le texte annonçait au modèle **une
+bande de couleurs qui ne partait pas** dès que la case était cochée : une entorse à `E14`
+que seul le modèle aurait pu remarquer. Et la liste des dépenses allait devenir illisible,
+toutes ses lignes commençant par `CONTEXT` — elles écrivent maintenant le **sujet**, ce qui
+les rend distinctes pour la première fois.
+
+## G1 — douze phrases justes le jour de leur écriture, et fausses depuis — 3 septembre 2026
+
+**Aucune n'était une approximation, et c'est tout le sujet.** Toutes ont été mesurées ou
+vérifiées le jour où elles ont été écrites, par quelqu'un d'attentif, et toutes ont été
+démenties par un changement venu d'ailleurs — la plus ancienne a tenu sept jours, la plus
+récente deux. Un écran qui ment sans le savoir coûte deux fois : à l'usage d'abord, à la
+confiance ensuite, parce qu'une phrase prise en défaut emmène les suivantes avec elle.
+
+### Elles étaient neuf au plan, elles étaient douze
+
+Les trois de plus sont tombées dans le même filet en corrigeant les autres : *« les huit vues
+en cartes, les neuf tailles à leur vraie échelle, les huit types côte à côte »* — une seule
+ligne, trois comptes, et le produit porte aujourd'hui **dix** tailles. Elles sont **retirées**
+et non remesurées : ce que la phrase dit ne dépend d'aucun des trois.
+
+### Les numéros d'étape, et pourquoi ils se sont tous décalés le même jour
+
+Ils étaient huit, écrits à la main, et l'insertion de l'étape du style les a **tous** décalés
+d'un cran sans qu'une seule erreur ne se lève : *« l'étape 2 »* désignait une étape devenue la
+troisième, ce qui est exact au caractère près et simplement faux. Cinq commentaires du code
+citaient même *« l'étape 10 »* pour la douzième — décalés de deux crans, par `D1` puis par `D2`.
+
+Ils se désignent maintenant par leur **nom d'abord**, le rang ensuite : c'est le nom qu'on
+retrouve dans la colonne de gauche, qui n'affiche que des noms. Le nom suit le style, puisque la
+quatrième étape en porte deux depuis `D2`.
+
+### Deux chiffres remesurés, deux chiffres retirés
+
+| la phrase | ce qu'elle disait | ce qui est écrit maintenant |
+|---|---|---|
+| la lecture de palette | *« une centaine de millisecondes »* | **6 ms à 1,2 s, 360 ms en médiane** — sur les 92 cartes du dépôt |
+| le fond écarté d'un artwork | *« 100 % … le reste — le fond — est écarté »* | deux phrases selon qu'il reste quelque chose : **3 des 10 artworks officiels sont lus à 100,0 %** |
+| le poids de l'univers dans le prompt | *« plus de la moitié du texte »* | **retiré** — un rapport entre deux textes qui bougent chacun de leur côté |
+| la hauteur du menu d'une carte | *« il fait 300 px pour une carte 1× qui en fait 190 »* | **retiré** — ce qui décide la règle est le rapport, pas les valeurs |
+
+Et le seuil de 100 % a montré un défaut de plus, trouvé en écrivant la phrase : la case *« me le
+montrer sur l'image »* et le renvoi *« découper le montre en magenta »* s'offraient sur une carte
+où le magenta ne couvre aucun pixel. **Une case qui ne change pas l'image est pire qu'une case
+absente** — on la coche deux fois avant de conclure qu'elle est cassée.
+
+### Le garde-fou est là où il ne coûte rien, et nulle part ailleurs
+
+La règle générale — *un nombre affiché se calcule, ou il ne s'affiche pas* — reste écartée : c'est
+la décision de l'auteur, et le risque est écrit dans le plan plutôt que découvert plus tard.
+**Un seul essai la fige, sur la seule famille où le calcul est gratuit** : les numéros d'étape.
+Il est **sans exception**, et c'est ce qui l'a rendu utilisable — une première écriture tolérait
+les lignes portant `G1`, c'est-à-dire une règle à deux étages dont le second demandait de savoir
+qu'il existe. Les deux commentaires concernés disent maintenant *« la deuxième »* en toutes
+lettres.
+
+## D2, seconde moitié — le pas est retrouvé, et surtout la détection sait se taire — 3 septembre 2026
+
+**Le plus vieux défaut du produit avait deux moitiés, et c'est la seconde qui manquait.** Un
+modèle rend une image de mille pixels « à l'allure pixel art » ; parfois elle porte vraiment
+des carrés, parfois c'est une peinture. Le produit ne savait pas dire dans lequel des deux cas
+il se trouvait — et sa mesure de grille, `mesurer_grille`, répondait **2 avec une netteté de
+0,94 sur une peinture**. Faux, et confiant : le pire des deux états.
+
+### La pièce qui manquait s'appelle le peigne
+
+L'autocorrélation d'une image lisse décroît doucement depuis le pas 2 sans jamais faire de
+bosse ; la règle du produit — *le plus petit pas qui approche la crête* — attrapait alors ce 2,
+parce qu'il n'a pas de voisin de gauche à qui se comparer. **Le peigne demande autre chose** :
+que le contraste tombe sur les *multiples* du pas, et pas n'importe où. Sur une grille il y est
+presque tout ; sur une peinture il est partout.
+
+Mesuré sur les 149 images brutes du dépôt : **0,40 au plus bas quand la détection annonce un
+pas, 0,35 au plus haut quand elle se tait.** Le seuil est posé exactement dans ce vide, et rien
+ne le franchit par accident.
+
+### Le taux, sur un lot bâti à partir de vraies images du dépôt
+
+Aucune image du dépôt ne vient avec son pas écrit à côté, et personne ne le lit à l'œil sans se
+tromper. Le banc de réception (`essais/essai_grille_produit.py`, gratuit) fabrique donc la
+vérité : douze vrais dessins du dépôt, pris dans les six jeux, ramenés à quarante cases par la
+réduction du produit puis reposés sur une grille de pas connu — nets, flous, décalés, et à pas
+non entier, qui est le cas réel.
+
+| | |
+|---|---|
+| **200 sur 204, soit 98 %** | exacts, sur la plage que le dépôt produit (2 à 32 px) |
+| 0 erreur d'octave, 0 franc raté | les quatre écarts sont des **renoncements**, tous sur un pas de 9,4 px |
+| 12 cas posés **hors borne** | 12 renoncements — aucun pas faux annoncé avec assurance |
+
+Et sur les images brutes, où aucune vérité n'existe, la séparation suit les jeux : le jeu du
+marais, qui a reçu des carrés, fait **annoncer 26 fois sur 27** ; *cœur de pierre*, qui a reçu
+des peintures alors que sa bible réclamait mot pour mot *« strict 64x64 px tile snap »*, fait
+**renoncer 24 fois sur 26**.
+
+### Trois chiffres circulaient pour la borne, aucun n'était bon
+
+Le plan visait **80 px** — un chiffre jamais relevé, qui ressemble à 5 × 16 plus qu'à une
+mesure. Les détecteurs de référence s'arrêtent à **24** et *coupent* le dépôt : le jeu des
+vignettes monte à 32. La mesure d'avant balayait jusqu'à **64**, deux fois plus large que ce
+que le dépôt produit. La borne est donc **32 px**, le plus grossier pas trouvé sur les
+149 images ; 99 % tiennent sous 22.
+
+> ⚠️ **Une affirmation héritée n'est pas reproduite, et c'est écrit plutôt que tu.** Le plan et
+> le bilan disent tous deux que *relever la borne fait perdre de la finesse*. Cet effet
+> n'apparaît pas : à 64 la réussite est exactement celle de 32, et sur les images brutes la
+> borne ne change **rien du tout** — 61 annonces, de 24 à 128. La raison est mécanique : le pas
+> retenu est le *plus petit* qualifié, donc élargir la recherche ne lui donne pas d'occasion de
+> se tromper. Ce qui décide n'est pas ce qu'une grande borne coûterait, c'est ce qu'une petite
+> borne **coupe** — douze cas de plus renoncés à 24.
+
+### Ce qui a été mesuré puis écarté
+
+**L'arbitre d'aller-retour** — réduire au pas candidat, réagrandir, regarder ce qui a changé —
+est l'idée qui vient d'instinct, et elle **abîme** le détecteur : 170 cas justes sur 204 contre
+200 sans lui, et **30 erreurs d'octave qu'il fabrique lui-même**. La raison est mécanique : sur
+une image floue à pas 13,1, la reconstruction au pas 13 est imparfaite tandis que celle au pas
+2 est presque parfaite — des blocs de deux pixels sont uniformes dans n'importe quelle image
+lisse. L'arbitre choisit petit **pour la mauvaise raison**.
+
+**Additionner les canaux plutôt que de convertir en gris** est le second résultat
+contre-intuitif du banc d'étude, et la mesure de réception le nuance : sur des images pleines
+l'écart est d'**un cas sur 204**. Ce qui décide est ailleurs, et c'est franc — un sprite
+détouré d'une seule teinte porte toute sa grille dans sa silhouette, le gris jette l'alpha en
+entrant, et il répond **2 à tous les coups**.
+
+### Ce que l'écran montre, et ce qu'il ne pose pas
+
+Une ligne au-dessus du réglage de taille : *« le modèle a peint des carrés de 8 pixels :
+l'image en compte 48 de côté, et au-delà il n'y a plus de détail à récupérer »*. Le pas seul ne
+servirait à rien — la taille se règle en carrés, jamais en pixels de l'image reçue.
+
+Quand la détection renonce, elle le dit avec ses mots, et **les crans de taille restent là** :
+c'est alors l'auteur qui la pose, ce qu'il faisait déjà et ce qui ne change pas. La cible est
+demandée, jamais déduite de l'image reçue (US-61) ; ce que la tranche ajoute est qu'elle cesse
+de se choisir à l'aveugle.
+
+### Un défaut réparé en passant
+
+La dérive de grille d'une planche — le rapport du pas le plus grossier au plus fin — se
+calculait sur des faux positifs : une case peinte sans grille répondait 2, et ce 2 entrait dans
+le calcul. La revue externe le nommait. Une case sans grille rend maintenant zéro, l'écran
+l'affiche « — » comme il le faisait déjà, et la mesure ne réencode plus chaque case en PNG pour
+la redécoder aussitôt — vingt-quatre allers-retours par planche, pour rien.
+
+## D5 — rien ne pouvait être plus grand qu'un personnage, et c'était une famille d'assets entière — 3 septembre 2026
+
+**Le réglage d'échelle ne savait dire que *plus petit*.** Chaque image revenait dans une case carrée
+du même côté, et l'échelle disait quelle part de cette case le sujet remplit : un personnage 100 %,
+un meuble 66 %, un objet tenu 40 %. Le plafond était donc le personnage, et il était écrit **en douze
+endroits**, comptés — trois corps de route, deux refus de service, un calcul d'image, trois du
+calibrage, la liste des positions du curseur, et les deux curseurs d'écran. Un moulin, un arbre, une tour, une porte de ville : le produit n'avait
+aucune façon de les demander.
+
+Le modèle était **juste vers le bas** — c'est bien ainsi qu'un objet tenu en main se dessine — et
+faux vers le haut, où il n'allait pas.
+
+### La règle des vrais jeux 2D a dessiné la réparation
+
+**Le carré ne change jamais de taille.** Ce qui change entre un personnage et un bâtiment est le
+*nombre* de carrés qu'il couvre, jamais leur dimension : un personnage fait 32 carrés de haut, une
+maison en fait 96. Agrandir les carrés pour les gros objets est l'erreur classique et elle porte un
+nom — des **« mixels »** —, parce que deux tailles de pixel dans une même image se voient
+immédiatement : l'œil compare les bords. Les moteurs le confirment, et c'est le point qui tranche :
+la résolution de base, la taille de tuile et le filtrage n'ont **aucune variante « pour les gros
+objets »**. La taille de tuile est une propriété du jeu, pas de l'objet.
+
+### Donc l'occupation reste, et c'est son plafond qui tombe
+
+Elle disait déjà la bonne chose — une hauteur relative au personnage —, et 300 % se lit *trois
+personnages*. **Rien ne se convertit, aucun fichier ne se réécrit**, et tout ce qui est à 100 % ou
+en dessous rend exactement l'image d'avant : c'est le premier critère de la tranche, et le plus
+important, puisque le dépôt a des centaines d'images déjà traitées et qu'une image retraitée ne se
+compare à rien.
+
+| ce qu'on déclare | ce qui revient |
+|---|---|
+| 40 % — un objet tenu | 26 carrés dans une image de 64 · inchangé |
+| 100 % — un personnage | 64 carrés, l'image entière · inchangé |
+| **300 % — un bâtiment** | **une image de 192 carrés · impossible avant** |
+| 800 % — le plafond | une image de 512 carrés, huit personnages |
+
+### La forme du fichier, laissée au produit par l'auteur
+
+Ses mots : *« choisis ce qui est le mieux et compatible avec godot »*. C'est une **boîte carrée dont
+le côté suit la hauteur déclarée**. Trois raisons, et la troisième est la plus lourde : un moteur la
+pose telle quelle ; son côté reste un multiple entier de la case du projet, donc elle tombe aussi
+sur une grille de tuiles ; et les images d'une même animation **continuent de se superposer au
+pixel**. Un fichier taillé au ras du sujet aurait été plus léger et aurait fait perdre cette
+superposition — qui est très exactement le défaut que la tranche d'animation doit réparer.
+
+### Deux bornes, et l'une d'elles a été trouvée par un essai qui échouait
+
+Le plafond est la plus basse de deux bornes. **Celle du métier — huit personnages** : un bâtiment de
+trois étages en fait quatre à cinq, un grand arbre cinq à six, une porte de ville six à huit ;
+au-delà on fabrique un fond, et un fond est un décor qui ignore la case. **Celle de la machine — un
+canevas de 2048 carrés**, le plus grand nombre que le produit connaisse déjà.
+
+La première n'était pas prévue. Sans elle, une case de 16 carrés autorisait 12 800 % — cent
+vingt-huit personnages, physiquement possible et jamais utile — et le curseur y gagnait **deux mille
+positions**. C'est l'essai des crans, écrit en E3, qui l'a dit en échouant : une case plus fine
+rendait moins de crans qu'une grossière, l'inverse de ce qu'il affirme depuis.
+
+### Ce que l'auteur a demandé pour l'écran, et pourquoi c'est plus qu'un habillage
+
+*« Les deux, avec un rappel visuel, une sorte d'échantillon »*. Un nombre de carrés est ce que
+réclament les moteurs de jeu et les outils de dessin ; un nombre de personnages est ce qui se lit
+quand on décrit un monde. L'écran dit les deux et **dessine** le rapport : le cadre de l'échantillon
+*est* le fichier qui reviendra, et un trait pointillé y marque la hauteur d'un personnage — au tiers
+du cadre pour un bâtiment de trois.
+
+Le dessin d'avant plafonnait à la case, et c'est ce qui le rendait faux : **une barre dans un carré
+ne peut jamais dépasser le carré**, donc il montrait très exactement la limite qu'on venait de
+lever.
+
+### Ce que la tranche a appris
+
+- **Une borne qu'on lève peut être porteuse ailleurs.** Le calibrage s'appuyait sur le plafond de
+  100 % sans le dire : l'inverse d'un arrondi dépasse volontiers d'un pour cent, et sans borne le
+  calibrage d'un personnage ordinaire écrivait 101 % — ses images sortaient en 65 carrés au lieu de
+  64. Un demi-pixel d'arrondi faisait sortir tout le monde de la case.
+- **Une limite physique n'est pas une limite utile.** 12 800 % était possible et absurde. Il fallait
+  une seconde borne, tirée du métier et non de la machine.
+- **Un dessin qui ne peut pas montrer un défaut le cache.** L'échantillon d'avant était une barre
+  dans un carré : il ne *pouvait pas* dessiner un moulin plus haut qu'un personnage, donc il rendait
+  la limite invisible au moment même où on la subissait.
+- **Un essai qui échoue pour la bonne raison vaut une mesure.** Deux des trois trouvailles de cette
+  tranche viennent d'essais existants qui ont cessé de passer — pas d'une relecture.
+
+### Ce qui reste ouvert
+
+La **largeur**. Un sujet déclare sa hauteur, et sa largeur suit ses propres proportions dans une
+boîte carrée : un mur trois fois plus large que haut y laisse du vide de part et d'autre. Aucune
+image du dépôt n'est dans ce cas, et l'ouvrir demanderait une seconde question à chaque type — on
+attend qu'un vrai sujet la réclame.
+
+## D2, première moitié — la réduction devient un choix, le style graphique devient une question, et un réglage qui ne faisait rien depuis T4 se met à agir — 3 septembre 2026
+
+**La tranche s'est coupée en deux, et la mesure a dessiné la coupure.** D2 promettait deux choses :
+retrouver la grille d'une image qui en porte déjà une, et réduire sans bouillie. La première moitié
+livrée est la **réduction** ; la détection reste.
+
+Ce n'est pas un renoncement. Le banc est parti de deux illustrations que l'auteur a fournies, et
+elles n'ont **aucune grille à retrouver** — ce sont des peintures. Le chemin qu'elles demandent est
+celui que la revue externe appelle *pipeline B* : convertir. Livrer la détection d'abord aurait été
+livrer la moitié qui ne sert à aucune des images qu'on avait sous la main.
+
+### Ce que le banc a montré, et pourquoi il y a quatre méthodes et non une
+
+Quatre façons de passer de 1254 pixels à N carrés, **toutes ramenées au même nombre de couleurs**
+pour que la comparaison porte sur la seule réduction :
+
+| méthode | ce qu'elle rend |
+|---|---|
+| **vote en deux temps** | contour net **et** intérieur lisible — un sprite calme |
+| **traits épaissis** (PixelOE) | garde les traits d'un pixel — la hampe d'une lance reste entière —, contour plus agité |
+| **réduction douce** (Lanczos) | la silhouette la plus lisse, l'intérieur mou : un dessin réduit, pas un sprite |
+| **au plus proche** | ce que l'atelier faisait : un pixel sur N gardé, les autres jetés sans être regardés |
+
+**Aucune ne gagne, et c'est le résultat.** L'auteur a tranché : *« clairement les 4 ont des rendus
+différents avec leurs avantages et inconvénients et peuvent influencer le style souhaité par le
+créateur »*. Les quatre restent donc vivantes — choisies au projet, changeables **image par image
+en cours de route** —, avec le vote en deux temps pour défaut.
+
+Ce que l'atelier faisait jusque-là était le pire des quatre, et personne ne l'avait choisi : la
+réduction au plus proche voisin était écrite dans le code, sans réglage. Sur un dessin fin, un trait
+d'un pixel de large avait une chance sur N de survivre. **C'était un tirage au sort qui se faisait
+passer pour une méthode.**
+
+### Le défaut trouvé en chemin était plus gros que la tranche
+
+La quantification n'entrait dans une recette **que s'il existait une palette**, et la palette se
+déduit des artworks officiels. Un projet sans artwork ne réduisait donc **aucune couleur** : mesuré,
+un personnage ramené à 64 carrés sortait à **905 couleurs**. Le réglage `Univers.couleurs` existait
+depuis T4, se réglait, s'enregistrait — et ne faisait rien.
+
+Trois choses le maintenaient en place, et chacune paraissait raisonnable seule :
+
+1. `recette_de` ne **posait** pas la quantification sans palette ;
+2. le service la **refusait** si on l'écrivait à la main ;
+3. l'écran **cachait** le réglage dans ce cas — donc ne montrait même pas ce qui manquait.
+
+Et trois essais figeaient la règle, dont un nommé *reste refusée*. **Un essai qui fige une absence
+de comportement protège la panne si personne n'écrit pourquoi.** Les trois ont été réécrits à
+l'envers, avec la raison dans le corps du test.
+
+Le pivot est ailleurs qu'on l'aurait cru : ce qui commande la quantification n'est pas la palette,
+c'est **la taille de case** — c'est-à-dire le fait même de faire du pixel art. Un nombre fini de
+couleurs *est* ce qui distingue un sprite d'une image rétrécie. Sans taille imposée — un jeu en
+dessin — les couleurs ne sont plus touchées, parce que les réduire transformerait le dessin en
+affiche sérigraphiée.
+
+### Le plafond des couleurs est mesuré, pas décrété
+
+Six paliers tranchés par l'auteur — **8 · 16 · 32 · 64 · 128 · 256** —, *« avec le max bloqué au
+nombre de pixel »*. Le plafond retenu est **le côté du sprite**, et il tombe sur la mesure à chaque
+taille : le sujet occupe environ 27 % de la toile, et au-delà du côté l'image ne contient plus assez
+de teintes distinctes pour remplir la palette demandée — 32 carrés rendent 30 couleurs quand on en
+demande 32, et 229 quand on en demande 256.
+
+**Le banc s'est trompé avant de se corriger, et ça vaut d'être écrit.** Jugé sur une image non
+détourée — à la demande de l'auteur, pour isoler la pixelisation —, le fond uni occupait **73 % des
+pixels** et raflait la majorité de la palette : à 8 couleurs demandées, 5 partaient au fond et il en
+restait **3** pour le personnage. On allait écarter des paliers parfaitement utilisables sur la foi
+d'une bouillie que le produit ne fabrique jamais, puisqu'il détoure avant de quantifier. Palette
+comptée sur le sujet seul, **8 couleurs suffisent déjà** à 64 carrés.
+
+### Le style graphique — la décision la plus lourde du jeu se prenait par accident
+
+Elle n'était pas au programme, et elle est sortie de la question des couleurs. En cherchant quand
+réduire les couleurs, une chose est apparue : *ne pas réduire les couleurs* et *ne pas faire de pixel
+art* sont **la même décision**, et le produit ne la posait nulle part. Elle se **déduisait** de la
+neuvième valeur d'une liste de tailles, trois étapes plus loin, dont le libellé disait *ce jeu n'est
+pas en pixel art*. On choisissait une taille, et on décidait sans le savoir de tout le reste.
+
+Le style est donc devenu la **deuxième** question du jeu, juste après le nom, et il se choisit en
+image — la demande de l'auteur : *« on propose le choix du style de jeu ici et on met une image
+cliquable pour chaque style »*. Les deux vignettes sont **le même personnage**, passé par la chaîne
+du produit lui-même : ce qu'on compare en cliquant est bien ce que l'atelier rendra.
+
+Une fois posé, il commande trois choses que l'auteur ne réglait pas séparément :
+
+| | en pixel art | en dessin |
+|---|---|---|
+| ce que la taille veut dire | **combien de carrés** de côté — 8 à 512 | **combien de détail** — 256 à 2048 |
+| les couleurs | réduites au palier choisi | gardées : un dessin a ses nuances |
+| ce qui part au modèle | *2D pixel art on a 64x64 grid*, et le calage | rien de tout cela |
+
+**La troisième ligne était un dégât, pas une élégance.** Un jeu en dessin qui gardait une finesse de
+1024 envoyait au modèle *2D pixel art on a 1024x1024 grid* — le contraire mot pour mot de ce que
+l'auteur avait choisi, sur la case qui décide de l'allure. Le défaut n'était pas atteignable avant
+que le style existe : « aucune taille » était la seule façon de dire « pas de pixel art », et elle
+vidait les deux phrases par le même geste.
+
+**Changer d'avis ne casse rien**, et c'est la règle de D1 réemployée — *on ne réécrit que ce que
+personne n'a choisi*. Passer en dessin ramène la taille dans la nouvelle liste et pose la réduction
+douce **seulement si** la méthode était encore le défaut d'avant ; une méthode choisie à la main
+survit à la bascule. Et les projets d'avant se relisent sans qu'un fichier soit réécrit : sans champ
+`style`, il se déduit de la taille, exactement comme le produit le déduisait déjà.
+
+**Deux défauts sont nés du style lui-même, et tous deux étaient muets.** L'étape des tailles a pris
+un second titre — *La finesse* en dessin —, et le rang d'une étape se retrouve par son titre : elle
+est devenue introuvable dans sa propre liste, s'est affichée **sans sa ligne « étape 4 · le jeu »**,
+seule des douze, tandis que la colonne de gauche continuait d'afficher l'ancien nom. Deux noms pour
+une étape, à 240 px l'un de l'autre. Et l'annonce écrite la veille pour l'absence d'artwork —
+*« les couleurs se déduisent de chaque image »* — est restée affichée en dessin, où **rien ne se
+déduit** : une phrase exacte devenue fausse sans changer d'un mot, trois lignes au-dessus de celle
+qui dit le contraire. Les deux sont corrigés et tenus par des essais.
+
+### Ce que la tranche a appris
+
+- **Une étape du traitement qui ne s'exécute jamais ne se voit nulle part.** Un réglage qu'on peut
+  poser et qui n'agit pas est pire qu'un réglage absent : l'auteur croit avoir réglé quelque chose.
+- **Une bibliothèque « légère » peut tirer un moteur lourd par son seul import.** `pixeloe.legacy`
+  s'annonce NumPy/OpenCV et charge `torch`. La disponibilité se cherche donc avec `find_spec`, qui
+  ne charge rien — exactement comme `rembg` deux ans plus tôt.
+- **Une option qui porte le bon nom peut faire le contraire de ce qu'elle annonce.** Le `colors=32`
+  de PixelOE rendait 470 couleurs : il quantifie, puis rappelle un étalonnage qui défait tout.
+- **Un banc qui isole une variable peut en fausser une autre**, et fabriquer un pire cas que le
+  produit ne produira jamais.
+- **Donner un second nom à une chose qu'on retrouve par son nom est un changement de clé.**
+  L'étape des tailles a perdu son numéro le jour où elle a pu s'appeler autrement — sans erreur,
+  sans message, et le garde-fou a fait exactement ce pour quoi il était là.
+- **Une phrase exacte dans un mode devient un mensonge dans l'autre.** Quand un réglage ouvre un
+  mode où une mécanique s'éteint, il faut relire les phrases qui décrivent cette mécanique — pas
+  seulement le code qui l'exécute.
+
+### Ce qui reste, et ce qui suit
+
+**Rien ne reste : la seconde moitié est livrée le même jour**, et elle a son entrée en tête de ce
+journal — *le pas est retrouvé, et surtout la détection sait se taire*. Ce paragraphe disait alors
+qu'il restait à **retrouver le pas** d'une image qui porte déjà une grille, que le banc du
+détecteur existait (`essais/essai_grille_retrouvee.py`, 19 sur 19 sur le corpus bâti), que le test
+du peigne séparait franchement une peinture d'une vraie grille — **0,12 contre 0,69** — et que le
+pas maximal des images réelles du dépôt était de **32 px**, non 80. Les quatre se sont vérifiés.
+
+A suivi immédiatement, à la demande de l'auteur, et c'est fait le même jour : **la tranche des
+tailles**, `D5`, plus haut dans ce journal.
+
+## D1 — le réglage n'appartenait pas à la nature de l'image, il appartenait au moteur — 3 septembre 2026
+
+**La tranche a été construite en entier, et sa mesure de départ n'a pas survécu au recomptage.**
+
+Le plan tenait sur un chiffre juste : sur les 123 détourages écrits à la main dans ce dépôt,
+**64 portent un durcissement du bord quand le réglage livré est zéro**, et l'écart se lisait
+entre une image seule (67 %) et un morceau de planche (38 %). D'où le titre de la tranche : *une
+recette par défaut, par nature d'image*.
+
+**Recompté en croisant avec le moteur de détourage, cet écart s'évapore.**
+
+| moteur    | passes | durcissement laissé à zéro | valeur la plus fréquente |
+|-----------|--------|----------------------------|--------------------------|
+| le bord   |   72   |          **78 %**          | **0** (56 sur 72)        |
+| la pipette|   11   |           0 %              | **1** (6 sur 11)         |
+| le modèle |   40   |           2 %              | **2** (32 sur 40)        |
+
+À moteur égal, la nature ne décide presque plus rien — 100 % contre 93 % sur le moteur par
+modèle. Le moteur, lui, décide tout. **Et la raison était déjà écrite dans le même document**,
+trois mesures plus haut dans `docs/bilan-v3.md` : le moteur du bord ne produit aucun pixel à demi
+transparent, il est binaire par construction ; le moteur par modèle en produit sur 95 % du sujet.
+*Le durcissement ne corrige pas un goût, il corrige une frange — et la frange appartient au
+moteur qui la fabrique.* Personne n'avait joint les deux comptages, et une tranche entière allait
+se construire sur la mauvaise moitié.
+
+**Ce qui a été livré, du coup.** La structure demandée, entière : deux natures d'image et quatre
+familles qui se règlent, la provenance affichée avant de générer *et* sur la fiche, rien du passé
+réécrit. Et le contenu que la mesure vraie dicte : **le durcissement voyage avec le moteur**, y
+compris au moment où l'auteur en change sur une image — geste qu'il avait retapé à la main
+**39 fois sur 40**. Un durcissement qu'il a déplacé lui-même n'est jamais réécrit, qu'il l'ait
+posé dans le même envoi ou trois jours plus tôt.
+
+**Ce que ça rapporte, sur ses 123 passes** : le durcissement tapé à la main tombe de **54 % à
+24 %**. Le critère du plan demandait l'autre chiffre — combien de recettes s'écartent encore de
+leur défaut : **53 sur 108**, et le durcissement est en cause dans les 53. Ce n'est pas un échec,
+c'est ce qu'un moteur choisi image par image produit, et aucun défaut ne peut le deviner.
+
+**Trois choses apprises.**
+
+1. **Un comptage non croisé raconte l'histoire de la variable qu'on a regardée.** Avant de faire
+   d'un chiffre une décision de produit, chercher la variable qui pourrait l'expliquer
+   entièrement — et la chercher d'abord dans les mesures déjà écrites à côté.
+2. **Une règle qui complète une charge doit partir de la charge.** La première écriture de « le
+   durcissement suit le moteur » reconstruisait la passe depuis celle qui était rangée, et perdait
+   le point de la pipette que le même envoi apportait. Un essai d'une autre tranche l'a attrapé.
+3. **Un écran de défauts qui montre tout ne montre rien.** La tolérance et le seuil de
+   transparence sont restés à leur valeur livrée 96 fois sur 100 : les mettre là aurait fait
+   quatre curseurs dont deux ne bougent jamais. Ils se posent sur une image, où l'on voit ce
+   qu'ils font.
+
+Le banc : `essais/essai_defauts_de_detourage.py`, gratuit, il relit la base. 29 essais serveur,
+7 essais d'écran, aucun centime.
+
+---
+
+## R6 — une planche sur deux entrait pleine de vide, et personne ne le disait — 3 septembre 2026
+
+**La tranche a été ouverte pour un gâchis visible, et elle en a trouvé un plus gros à côté.**
+Le visible : le compte d'images était le seul refus automatique du produit, et il jetait des
+appels payés entiers — **quatre planches sur treize du banc d'animation refusées pour un sujet
+de trop**, trente-et-un pour cent des appels perdus sur un geste dont c'est le régime normal.
+L'invisible : quand un modèle redessine les traits du quadrillage, le remplissage depuis le bord
+**s'arrête sur eux**, le fond de chaque case reste opaque, huit cases bordées font huit taches,
+le compte tombe juste — et l'atelier acceptait.
+
+**Mesuré, et c'est la mesure qui a fait la tranche.** La chaîne du produit passée sur les
+135 planches des deux bancs :
+
+| | remplissage de la boîte du sujet | combien |
+|---|---|---|
+| planche saine | 0,34 à 0,77, médiane 0,63 | 32 à huit sujets |
+| quadrillage redessiné | **0,99 à 1,00** | **47 planches sur 95** |
+
+Les deux populations ne se touchent pas — rien entre 0,77 et 0,99 —, donc le seuil est posé au
+milieu du vide, à **0,90**. Et **une planche du banc des recettes sur deux** était entrée en
+bibliothèque comme des cases bordées dont les deux tiers sont du fond. Le plan estimait ce défaut
+à *« 64 % contre 34 % »* ; 64 %, c'est la valeur d'une planche **saine**.
+
+**Le piège de la mesure, et il a failli se refermer.** Le premier réflexe est de mesurer la part
+opaque de la **vignette découpée**. Elle vaut **1,00 sur toutes les planches, saines comprises** —
+parce qu'une vignette est taillée dans les octets d'origine, fond compris. Elle ne sépare rien.
+C'est la **boîte du sujet**, prise sur l'alpha du détourage, qui dit si ce qu'on tient est une
+silhouette ou un rectangle.
+
+**Un surplus s'ouvre, un manque refuse — et c'est la seule asymétrie.** Neuf sujets pour huit
+contiennent tout ce qui a été demandé ; sept n'en contiennent pas assez, et aucun choix ne
+fabriquera l'étape qui manque. Les deux anomalies, elles, se règlent du même geste : la planche
+s'arrête, montre ses sujets mesurés, et l'auteur écarte ce qu'il ne veut pas. **Jamais un refus,
+toujours un regard.**
+
+**Trois états, et le troisième est celui qu'on oublie.** *Personne n'a regardé*, *j'ai regardé et
+j'écarte ceci*, *j'ai regardé et je garde tout*. Le troisième doit exister et se distinguer du
+premier, sans quoi une planche aux cases pleines entrerait en silence — ce que la tranche existe
+pour empêcher. Un `null` d'un côté, une liste vide de l'autre.
+
+**Et le défaut trouvé en regardant, pas en lisant.** Le chantier est *ce dont un emplacement
+attend encore une issue*, et celui d'une planche en attente est **réussi** : sa tuile quittait
+donc la grille à l'arrivée, et comme rien n'était entré en bibliothèque, aucune image ne prenait
+sa place. L'auteur voyait un écran vide et n'avait plus aucun chemin vers ce qu'il venait de
+payer — **le gâchis silencieux de la tranche, refait à l'identique par sa propre réparation.**
+Les essais d'écran ne pouvaient pas l'attraper : ils injectent la génération eux-mêmes. Il a
+fallu ouvrir un second atelier sur le double du fournisseur et regarder.
+
+**Ce que ça coûte :** rien, ni en construction ni en usage. Vingt-cinq essais côté serveur, huit
+côté écran, tous sur des planches fabriquées ou déjà sur le disque. Écarter un sujet ne rappelle
+personne : c'est la même image, recoupée autrement.
+
+## A10 se dessine, et deux règles tombent avant d'être écrites — 3 septembre 2026
+
+**La maquette de la V3 a servi à ce qu'une maquette doit servir : trouver les erreurs avant le
+code.** Elle est vivante — la bande pixelisée s'y recalcule dans le navigateur par la chaîne du
+produit —, et c'est ce qui a permis de voir deux choses.
+
+**Une bande n'est pas un début et une période.** Le montage des essais prélevait N images
+régulièrement espacées dans une fenêtre. L'auteur l'a tranché en une phrase : *je dois pouvoir
+choisir individuellement chaque frame si besoin.* Il a raison, et la raison se dit en une image :
+un pas de marche demande **deux images serrées au moment du contact et une seule pendant la
+glisse**. Une bande est donc **une liste d'images choisies** ; la fenêtre qu'on tire ne fait plus
+que la proposer.
+
+**La fenêtre commune se prend sur le clip, pas sur la bande** — et c'est l'erreur juste à côté de
+la bonne réponse. Mesuré sur le clip du 2 septembre : la fenêtre du repos seul fait 217 × 376,
+celle de la marche 246 × 380. Ramené à 64 pixels de haut, **le même personnage sort à 37 pixels
+de large au repos et 41 en marchant** : il grandirait de 10 % en se mettant à marcher. Une
+fenêtre par bande cale les images *d'une* bande entre elles ; il faut une fenêtre par clip pour
+caler *les bandes* entre elles.
+
+**Et une règle a changé de forme, à la demande de l'auteur.** *L'éditeur n'invente aucune taille
+de pixel ni aucune palette : ce sont celles du projet, en lecture seule* devient **la recette du
+jeu est le point de départ, jamais une prison**. Le fond est gardé, et c'était lui qui comptait :
+*une bande qui s'écarte de son jeu le dit*, en clair, à côté du chiffre changé.
+
+**Ce que ça coûte :** rien. Quatre user stories de plus, cinq critères de plus sur `A10`, et zéro
+ligne de code à défaire — parce que rien de tout cela n'était encore écrit.
+
+## A9 — le clip entre dans l'atelier, et rien de ce qui est payé ne se perd — 3 septembre 2026
+
+**La première tranche de la V3 est écrite côté serveur, et elle n'a pas coûté un centime.**
+Trente-six essais, tous sur un double. L'atelier sait commander un clip vidéo à partir d'un
+sprite de la bibliothèque, l'attendre, encaisser ce qu'il a réellement coûté, en tirer ses
+images, et **aller rechercher un clip déjà payé au lieu de le repayer**.
+
+**Le second port du dépôt.** Depuis F1 la frontière du dépôt était le fournisseur d'images ;
+il y en a un deuxième. Ce n'est pas un modèle de plus, et trois choses l'empêchaient d'en
+être un. Un appel d'image part et revient dans la même requête, un clip se soumet et
+s'attend deux minutes — **et l'atelier peut fermer entre-temps**. L'image de départ d'un clip
+est *obligatoire*, là où les trois rôles d'image jointe du produit sont facultatifs et cèdent
+tous devant le plafond du modèle. Et ce qui revient n'est pas une image : la chaîne qui mesure
+tout fichier reçu y lève « illisible », et le rattrapage enregistrait alors **un échec à zéro
+dollar** — un clip payé disparu du journal.
+
+**L'ordre d'écriture est toute la tranche.** Le numéro du travail s'écrit *avant* la première
+seconde d'attente. La dépense s'écrit *avant* le fichier, le fichier *avant* les images. Chacun
+de ces « avant » ferme un trou par lequel de l'argent déjà dépensé sortait du journal, et chacun
+a son essai — dont un qui regarde ce qu'il y a sur le disque **pendant** que le clip se fabrique.
+
+**Deux choses ont changé de forme en cours de route, et les deux valaient mieux.** Le montant
+facturé se lit dans la réponse d'attente, sous `usage.cost` : le verrou d'ouverture de la
+tranche est tombé avant qu'elle s'ouvre. Et un montant *absent* de cette réponse ne s'écrit plus
+comme un zéro : le produit enregistre zéro **en disant qu'il ne sait pas**, parce qu'un total
+faux vers le bas en silence est pire qu'un trou qu'on voit.
+
+**Ce que la tranche ajoute au dépôt, et qui se justifie.** Un décodeur de vidéos — rien de ce
+qui était là ne sait ouvrir un conteneur vidéo. Il est **optionnel**, sur le modèle du second
+détoureur : sans lui, un clip s'achète, se paie, se garde et se récupère ; seules ses images
+attendent. **Un clip payé n'est jamais perdu faute d'une bibliothèque.**
+
+**Ce qui reste.** L'écran. Il est dans `A10` avec l'éditeur de montage, parce que commander un
+clip, l'attendre et le découper sont **un seul geste continu** — les dessiner séparément ferait
+deux écrans là où il en faut un.
+
+## La V3 change de méthode : l'animation passe par la vidéo — 2 septembre 2026
+
+**Six essais payés le même soir, 2,29 $, et ils renversent la version.** Le plan bâtissait la V3
+sur la planche de huit cases. Il la bâtit désormais sur un clip vidéo qu'on découpe.
+
+**Ce qui est mort, mesuré.** Quatre chemins, et chacun avait sa règle écrite d'avance. Nommer
+les images jointes, ranger le texte en sections, le faire réécrire par une IA : cinq variantes,
+zéro bonne planche, le témoin les bat toutes — **`R7` est close avant d'avoir été construite**.
+Agrandir la référence à 256 ou 512 pixels : le 64 n'est pas battu. Préparer la pose d'abord :
+quatre planches mauvaises sur quatre. Imposer la géométrie par une image de posture : la pose
+est suivie au pixel, mais **le modèle emprunte aussi la carrure du guide**, trois correctifs
+n'y ont rien changé. *Ce qu'on montre à un modèle, il le copie en entier* — c'est le résultat
+le plus instructif de la journée, et il vaut au-delà de la V3.
+
+**Ce qui vit.** Un modèle image-vers-vidéo reçoit le sprite et rend cent images d'un mouvement
+continu. Six clips, six marches lisibles, personnage stable, fond détourable. Puis la
+découverte qui commande tout : **un clip de cinq secondes porte plusieurs animations** si le
+texte minute les actions seconde par seconde, nomme les transitions et impose un retour à la
+même pose neutre entre deux actions. Un paiement, plusieurs bandes.
+
+**Ce que ça ajoute au plan.** Deux tranches, `A9` — le clip entre dans l'atelier — et `A10` — le
+montage, qui découpe plusieurs animations dans un clip —, seize user stories, et trois décisions
+durables de plus. `A0` est clos, `A8` déclassée de finale à complément, `A3` change d'objet, et
+le seul gain du côté planche — une grille de quatre colonnes sur deux rangées — descend dans
+`R6` avec sa précaution.
+
+**Ce que le plan écrit noir sur blanc sans l'avoir mesuré**, parce qu'un chemin neuf doit dire
+ce qu'il ignore : un seul personnage, le plus facile qui soit ; aucune bande pixelisée notée ;
+le montant réellement facturé d'un clip jamais relu, dix-huit fois sur dix-huit ; et le prix par
+bande utilisable inconnu. **La vidéo ne se justifie donc pas par son prix mais par ce qu'elle
+fait et qu'une planche ne fait pas.**
+
+---
+
+## Six arbitrages de l'auteur sur le plan, dont un qui me corrige — 2 septembre 2026
+
+**Un récapitulatif du plan écrit pour être lisible sans rien connaître du code a servi à ce
+qu'il devait servir** : l'auteur l'a relu et a tranché six points. Ils sont écrits ici parce que
+trois d'entre eux **changent ce qui sera construit**, et un **annule une conclusion que j'avais
+tirée trop large**.
+
+**1 · Le fond ne coûte plus de banc.** `D3` exigeait huit tirages par branche avant la première
+ligne ; c'est retiré. La raison tient : **le fond devient un réglage, pas une valeur imposée** —
+une mauvaise couleur se change en un geste et se voit sur l'image suivante. Ce qui remplace le
+banc est plus utile que lui : **deux mesures d'acceptation affichées sur chaque image revenue**,
+les pixels de bord et ceux encore collés à la couleur de fond. *Elles se lisent sur les images
+qu'on voulait de toute façon* — ce qui est très exactement la doctrine du dépôt sur les notes de
+qualité, appliquée ici pour la première fois à un réglage d'envoi.
+
+**2 · Le relevé du pantin passe de la comparaison à la boucle.** `A0` comparait trois formes de
+pantin d'un coup, environ un dollar. Jugé trop cher, et surtout mal fait : *« je préfère imaginer
+un test, anticiper ce qui peut échouer et le corriger, puis le tester, analyser le résultat,
+corriger, refaire — plutôt que tester quinze choses d'un coup et choisir la meilleure. »*
+
+**La règle qui en sort ne détruit pas celle des huit tirages, elle la borne** : on avance **une
+tentative à la fois quand on explore** — « est-ce que ça marche seulement ? » —, et l'on tire
+**assez de fois quand on arbitre** — « laquelle de ces deux branches est la meilleure ? », où le
+bruit déciderait à notre place. `A0` est une exploration. *Et une méthode de boucle est écrite
+avec, pour qu'une boucle ne soit pas quinze essais déguisés en un : on écrit d'avance ce qu'on
+attend et les deux ou trois façons dont ça peut rater, et l'on conclut chaque tour par **quel
+échec s'est produit**, jamais par une note. Un échec anticipé se corrige, un échec constaté se
+re-tire.* L'ordre des trois questions change aussi : **la gratuite qui peut tout arrêter passe en
+premier** — si un bras plié bave à la réduction, rien d'autre n'a d'objet, et rien n'a été payé.
+
+**3 · « Le texte du produit ne bouge pas » était faux, et c'est moi qui l'avais écrit.** Les
+bancs ont mesuré des **formulations** — dire la même chose avec d'autres mots. Ils n'ont **jamais
+touché à la mise en page**. J'en avais tiré une interdiction générale, reprise dans quatre
+documents. **Corrigée partout, et une tranche est née : `R7`, hors version comme `R6`**, parce
+qu'elle sert toutes les générations et pas seulement l'animation — le texte se range en trois
+parties nommées : le contexte, les références, la demande.
+
+**Et le cadrage de `R7` a récupéré une remarque d'usage qui dormait**, ce qui en fait la partie
+dont on peut attendre quelque chose : **une image jointe ne dit pas ce qu'elle est.** Un artwork
+de style, un gabarit de découpe et un sprite de pose partent aujourd'hui dans le même sac, sans
+qu'une ligne dise lequel est lequel — alors que le comportement qui a donné le gabarit est
+précisément que *le modèle recopie la structure de son entrée*. **La tranche ne promet aucun gain
+de taux**, et c'est écrit comme tel : elle promet un texte relisible.
+
+**4 · Le nombre de planches était déjà un choix ; c'est mon résumé qui trompait.** Le critère
+existait. Il est désormais explicite en deux lignes — le nombre se choisit **à chaque
+lancement**, et **une seule planche reste un choix valable, c'est le défaut**. *Leçon de
+rédaction : un résumé qui dit « on commande plusieurs planches » là où le plan dit « le nombre se
+choisit » invente une contrainte que le produit n'a pas.*
+
+**5 · Le doute de droit d'auteur sur le modèle de découpe est levé comme condition.** Retiré des
+critères de `D4` et du PRD ; gardé comme fait, avec la raison de l'auteur — *« tous les modèles
+sont comme ça, c'est un projet perso, rien de commercial derrière »*. Une seule clause survit,
+sans insister : le jour où quelque chose sortirait de ce jeu contre de l'argent, la question se
+rouvre — pour ce modèle comme pour tous les autres.
+
+**6 · Les petits outils de dessin ne se font pas, et ce n'est pas un refus.** Le trait droit, le
+rectangle, le pot de peinture et la symétrie avaient été proposés comme un ajout léger à la table
+de retouche. *« On ne les fait pas, il y aura plus tard une version avec éditeur. »* **La raison
+vaut d'être gardée** : chacun paraît petit isolé, et les prendre un par un fabriquerait un
+demi-éditeur que personne n'aurait décidé. C'est un **rang**, pas une exclusion — la version
+d'édition n'a pas de place fixée dans l'ordre, et aucune tranche du plan ne présuppose ces
+outils.
+
+**Ce que la séance dit sur la méthode.** Le récapitulatif avait été demandé pour vérifier *« si
+on n'a rien oublié, ou si des choix ne correspondent pas à mes souhaits »*. Sur quatorze étapes,
+**deux choix ne correspondaient pas** et **un troisième reposait sur une conclusion trop large**.
+Aucun des trois n'aurait été trouvé en relisant le plan : ils se sont vus **parce que le plan
+était réécrit sans jargon, pour quelqu'un qui ne l'a pas écrit**. Le plan compte désormais
+**quinze étapes, 67 promesses et 109 vérifications**.
+
+## Le dépliage reste automatique, et il se refait — 2 septembre 2026
+
+**La seule question que le relevé d'architecture avait laissée ouverte est tranchée**, et par
+l'auteur : *« je veux un dépliage automatique, mais la possibilité de refaire le dépliage à la
+main si je le souhaite. »*
+
+**Ce que ça corrige dans le cadrage de `A1`, et ce n'est pas un détail de formulation.** La
+tranche était écrite comme *« son dépliage devient un geste de l'auteur : l'atelier propose les
+coupes, l'auteur les corrige et valide »* — c'est-à-dire un écran de validation posé sur
+**chaque** planche revenue. Cela aurait fait payer à toutes les générations le prix des rares
+qui tombent mal, et alourdi le geste le plus fréquent du produit pour servir le plus rare.
+
+**La formule qui s'en dégage vaut d'être gardée : le coupable n'était pas « automatique »,
+c'était « sans retour ».** Ce qui coûtait cher n'a jamais été que la machine découpe toute
+seule — elle le fait bien la plupart du temps —, c'est qu'un découpage tombé mal n'avait rien à
+reprendre, parce que la planche n'existait nulle part. **La correction est donc de garder la
+planche, pas de retirer l'automatisme.**
+
+**Deux conséquences, écrites là où elles se lisent.** Le premier dépliage reste automatique et
+ne demande **aucun geste de plus qu'aujourd'hui** — c'est devenu un critère d'acceptation de la
+tranche, formulé pour être vérifiable. Et **la reprise au redémarrage ne se rouvre pas** : une
+planche payée et reçue que la fermeture a laissée non dépliée continue de se déplier seule au
+démarrage, comme depuis `C2` ; la décision la confirme au lieu de la remettre en cause.
+
+Reporté aux six endroits qui le portaient : `docs/PLAN.md` § P1 — la tranche s'appelait alors
+`A1`, et son titre, qui annonçait *« se déplie à la main »*, disait donc l'inverse —,
+`docs/PRD.md` § Solution et § Critères de succès, `docs/user-stories.md` (`US-372` et `US-374`,
+dont la seconde promettait exactement le contraire), `docs/ARCHITECTURE.md` § 3, et
+`docs/archi-versions.md` §7 et §8.
+
+## L'architecture relue, et une erreur que le recadrage venait d'introduire — 2 septembre 2026
+
+**Ce qui a été fait.** Un relevé à six angles sur `docs/ARCHITECTURE.md` et ses annexes, chaque
+trouvaille sérieuse passée devant un sceptique dont la consigne était de **réfuter par défaut**.
+Soixante-neuf trouvailles brutes, soixante-deux après dédoublonnage, huit soumises au sceptique,
+**six confirmées et deux réfutées**.
+
+**Le résultat n'était pas celui qu'on cherchait, et c'est ce qui le rend utile.** Les six
+confirmées ne sont **pas** dans `ARCHITECTURE.md` : elles sont toutes dans son annexe
+`docs/archi-versions.md`, dont le §8 — l'animation — avait été écrit **avant** les trois bancs
+payés et enseignait donc l'inverse de ce qu'ils ont mesuré. Il réclamait un prototypage déjà
+fait, et proposait *« produire les images puis fournir un bon outil de correction »* — très
+exactement l'approche que la mesure écarte. Le §7 y ajoutait la règle du pliage que `A1`
+renverse, portée sans une marque de révision.
+
+**Et le relevé a trouvé une erreur vieille de deux heures, qui était la mienne.** La tranche
+`D4`, écrite le matin même, réclamait *« un cran intermédiaire entre nos deux modèles »* et
+*« un catalogue qui cesse d'être deux noms en dur »*. Vérifié dans le code : le produit porte
+**trois** modèles de détourage depuis `U13`, dans un catalogue structuré, et celui du milieu
+porte littéralement le titre **« intermédiaire »** — le commentaire du code invoque même la
+règle *« le catalogue décide, jamais une liste en dur »*. Le produit compte par ailleurs
+**quatre** moteurs de découpe, pas trois.
+
+**La faute venait du relevé d'outillage, qui parle de « nos deux modèles », et elle a été
+recopiée sans vérifier.** Elle avait atteint quatre documents en une matinée. Corrigée aux cinq
+endroits, **source comprise**, avec la raison écrite à chaque fois pour qu'elle ne reparte pas.
+Ce qui reste vrai de `D4` après le tri : aucun de nos trois modèles n'est entraîné sur du
+dessin, essayer le lourd coûte 972 Mo, et le contour doit se poser sur la vraie frontière. *Et
+le seul modèle entraîné sur du dessin porte un doute de droit d'auteur que le relevé signalait
+et que la tranche escamotait : il est maintenant écrit dans les critères.*
+
+**La correction la plus grave portait sur les risques.** `ARCHITECTURE.md` déclarait la dérive
+d'échelle **corrigée** par « le recadrage et la normalisation d'échelle » — alors que c'est
+précisément la normalisation qui la **fabrique**, en calculant le facteur sur la boîte de
+l'image courante. Le document déclarait donc réglé le seul défaut qui détruit ce qui est payé
+en animation. Deux lignes de risque le disent maintenant, avec la réparation chiffrée.
+
+**Ce qui a été repris par ailleurs** : la table des décisions de cadrage, dont six lignes sur
+quinze étaient périmées et à laquelle il manquait les trois décisions du 2 septembre ; le compte
+des places de la recette — **huit, pas sept**, la *différence* était omise parce qu'elle ne se
+voit que sur un calque ; les quatre entités de la V2.1 comptées comme trois ; les deux entités
+de la V2.2 absentes du modèle ; et une note du carnet du PRD qui envoyait corriger un défaut
+**déjà corrigé** — une note « il reste à faire X » ne s'efface pas toute seule quand X est fait.
+
+**Enfin la coupe annoncée la veille et non prise a été prise** : les 8,9 Ko de *« ce que la
+toile ajoute au modèle »* descendent dans `docs/archi-versions.md` § 6.5 bis, à côté de la
+dépendance de la toile qui y était déjà — deux moitiés d'un même sujet qui se renvoyaient l'une
+à l'autre entre deux fichiers. **Les 1 033 renvois tombent juste**, corpus à 248 Ko.
+
+**La leçon, et elle est nouvelle.** Les deux compactages précédents cherchaient du **poids** ; le
+recadrage de la veille cherchait ce qui était **fini**. Celui-ci cherchait ce qui était **faux**,
+et il a trouvé son plus gros défaut dans un travail vieux de deux heures. *Un document
+d'autorité écrit vite doit être relu par quelqu'un qui essaie de le réfuter — et une recopie
+depuis un relevé non vérifié est le chemin le plus court vers une erreur qui se propage.*
+
+## La doc est recadrée, et le plan cesse de raconter du travail fini — 2 septembre 2026
+
+**Ce qui l'a déclenché.** Le corpus de démarrage était remonté à **300 Ko**, et `docs/PLAN.md`
+en portait 173 à lui seul — dont **plus des trois quarts racontaient des versions livrées**. À
+côté, ce que les trois bancs d'animation et le relevé d'outillage avaient appris était réparti
+sur **sept fichiers et 210 Ko**, sans qu'aucun ne conclue. Ouvrir la V3 aurait voulu dire les
+lire tous les sept.
+
+**Ce qui a été fait**, dans l'ordre où ça compte :
+
+- **`docs/bilan-v3.md` est né.** Il ne raconte rien, il conclut : les six chiffres qui décident
+  de la version, ce que chaque banc a répondu, **ce qui est mort et ne doit pas se reproposer**,
+  les trois défauts que le code porte aujourd'hui, ce que le relevé d'outillage rapporte axe par
+  axe, et les limites de tout ce qui précède. 20 Ko contre 210.
+- **`docs/PLAN.md` est passé de 173 à 54 Ko** : il ne garde que `R6`, la V2.3 et la V3. Les
+  cinq versions tenues sont descendues dans `docs/archive/plan-versions-tenues.md`, **sans
+  qu'un mot change**. Ce qui en est remonté, et ne devait pas descendre : **les invariants**,
+  rassemblés pour la première fois en une seule table par thème, avec la tranche qui les a
+  instaurés et, pour les six qui ont été révisés, ce qui les a remplacés.
+- **`docs/PRD.md` a rattrapé deux versions.** Il s'arrêtait au 1<sup>er</sup> septembre et
+  **contredisait la V3 en trois endroits** : *« animation de sprites »* écartée, *« squelette,
+  os, interpolation : c'est l'animation, pas le personnage »*, et *« le pliage est une ruse
+  d'appel, jamais un format de livraison »*. Les trois sont barrées à leur place, avec un
+  paragraphe daté qui dit ce qui les renverse. Il gagne deux frottements, deux blocs de
+  critères vérifiables et deux paragraphes de hors-périmètre.
+- **`AGENTS.md § Où en est le dépôt` est passé de 16 à 8,6 Ko.** Il racontait tranche par
+  tranche ce que `docs/status/etat.md` raconte déjà — la règle *« aucun document ne répète ce
+  qu'un autre dit »* était enfreinte par le fichier qui la porte. Il garde un tableau d'état et
+  **huit points qu'il faut savoir avant de toucher au code**, qui sont les endroits où une règle
+  a changé de forme sans changer de nom.
+- **Neuf documents sont descendus dans `docs/archive/`** : les cinq études préparatoires de la
+  V3, les vingt-et-un points d'interface traités un par un, et trois carnets clos.
+
+**Ce que le banc a trouvé, et c'est exactement pour ça qu'il existe.** Le déplacement a cassé
+**65 renvois** — 56 depuis le code, 9 entre documents —, et aucun n'aurait levé la moindre
+erreur : un renvoi qui cite une section déplacée **ment en silence**. `essais/essai_docs.py`
+les a tous nommés, fichier et ligne, et son relevé JSON a permis de les reprendre en une passe.
+Les 994 renvois tombent à nouveau juste, et le corpus de démarrage est à **242 Ko**.
+
+**La leçon, et elle est neuve.** Les deux compactages précédents avaient descendu une section
+parce qu'elle **pesait** trop. Celui-ci descend parce qu'elle **est finie** — ce n'est pas le
+même critère, et il est meilleur : un document d'autorité doit dire *ce qui reste*, jamais *ce
+qui a été fait*. Le second est un journal, et il en existait déjà un.
+
 ## La V2.2 se ferme à cinq tranches sur six — 1<sup>er</sup> septembre 2026
 
 **Ce qui l'a fermée n'est pas une décision de portée, c'est un compte que ce dépôt n'a pas.**
@@ -740,7 +1865,7 @@ d'acceptation de T1 à C1 sont cochés dans `docs/PLAN.md`, et 233 tests de serv
 d'écran les tiennent.**
 
 **Quatre décisions de construction, et trois défauts trouvés en s'en servant.** Les décisions
-sont dans `docs/PLAN.md` § C1 et `docs/archi-versions.md` §7 : un seul plan par projet, le
+sont dans `docs/archive/plan-versions-tenues.md` § C1 et `docs/archi-versions.md` §7 : un seul plan par projet, le
 personnage qui range **ce qu'il écarte**, la case déduite des images plutôt qu'enregistrée, et
 le coût annoncé **mesuré** au lieu d'être lu dans un tarif que le produit ne porte pas.
 
@@ -777,7 +1902,7 @@ largeur, le menu de teintes et le champ d'une note avaient le même trou, et `no
 paraissait suffire. S'y ajoutait le déplacement automatique de la librairie dès qu'un nœud tiré passe
 à moins de 40 px d'un bord, la réserve étant collée au bord droit. Le quatrième est ailleurs : le
 menu de teintes d'un îlot était **inatteignable à la souris**, le pointeur qui montait vers lui
-quittant la bande, seule surface qui le tenait ouvert. `docs/PLAN.md` § T10 dit pour chacun ce qui
+quittant la bande, seule surface qui le tenait ouvert. `docs/archive/plan-versions-tenues.md` § T10 dit pour chacun ce qui
 l'avait rendu invisible.
 
 **Un îlot se déplace, et ça ne fait pas de lui un objet.** Il n'a toujours ni identité, ni fichier,
@@ -840,7 +1965,7 @@ toile était invisible dans un onglet d'arrière-plan** ; et son cadrage d'ouver
 en silence pour la même raison. Deux d'une famille neuve — *un garde juste dont l'hypothèse
 est fausse* : Ctrl+Z n'annulait rien parce qu'il voyait un champ de saisie actif, celui du
 prompt de l'atelier, resté focalisé **derrière** l'écran Univers qui le couvre. Le tableau
-de `docs/PLAN.md` § T8 dit pour chacun ce qui l'avait rendu invisible.
+de `docs/archive/plan-versions-tenues.md` § T8 dit pour chacun ce qui l'avait rendu invisible.
 
 **Le produit a été utilisé pour de vrai à chaque fin de tranche, et c'est ce qui a trouvé
 presque tous les défauts.** T9 : six, dont cinq en s'en servant — et **le sixième, le plus grave,
@@ -855,7 +1980,7 @@ finissent par diverger. T4 : deux, dont un compte de références qui ne se reme
 jour quand on promouvait un artwork. T5 : trois, tous de mise en page, dont deux de la même
 famille — **une règle déléguée au navigateur dont personne n'a mesuré le résultat**. T6 :
 deux, de cette même famille, et **tous les deux antérieurs à la tranche qui les a trouvés**.
-**Aucun test de serveur ne pouvait les voir**, et les tableaux de `docs/PLAN.md` § T3, § T4,
+**Aucun test de serveur ne pouvait les voir**, et les tableaux de `docs/archive/plan-versions-tenues.md` § T3, § T4,
 § T5 et § T6 disent pour chacun ce qui l'avait rendu invisible. C'est désormais une règle du
 dépôt : **une tranche n'est finie que lorsqu'on s'en est servi.**
 

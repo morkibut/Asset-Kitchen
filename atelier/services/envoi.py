@@ -42,6 +42,7 @@ from atelier.domaine import Reinjection
 from atelier.domaine.envoi import (
     AMBIANCE,
     CADRAGE,
+    DE_LA_PARTIE,
     IMAGES,
     JEU,
     JOINTES,
@@ -53,8 +54,24 @@ from atelier.domaine.envoi import (
 )
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import CARTE
-from atelier.domaine.projet import AUCUNE_CIBLE
+from atelier.domaine.projet import (
+    AUCUNE_CIBLE,
+    DE_LA_FAMILLE,
+    DU_PRODUIT,
+    IMAGE_SEULE,
+    NOM_DE_LA_NATURE,
+    Echelle,
+)
+from atelier.domaine.recette import NOM_DU_MOTEUR, Passe
+
+# **Deux `PLANCHE` disent le même mot pour deux choses**, et c'est pourquoi
+# celui-ci arrive renommé : celui d'au-dessus est un *groupe de consignes*
+# dans l'écran d'envoi, celui-ci est une *nature d'image* (D1). Les deux
+# valent la même chaîne, si bien que la collision ne casse rien — elle rend
+# seulement illisible lequel on lit, ce qui est pire qu'une panne.
+from atelier.domaine.projet import PLANCHE as NATURE_PLANCHE
 from atelier.services.generation import ServiceGenerations
+from atelier.services.montre import de_quoi_montrer
 from atelier.services.prix import prix_de
 from atelier.services.production import ServiceProduction, _tailles_annoncees
 from atelier.services.univers import ServiceUnivers
@@ -125,6 +142,7 @@ class ServiceEnvoi:
         references_ecartees: Sequence[str] | None = None,
         variations: int = 1,
         tri: Tri | None = None,
+        prompt_negatif: str = "",
     ) -> dict[str, Any]:
         """Tout ce que l'écran montre, en un aller-retour.
 
@@ -160,6 +178,11 @@ class ServiceEnvoi:
             references=references,
             references_ecartees=references_ecartees,
             palette=palette_cochee,
+            # **Ce que l'auteur interdit de sa main** (D3), pour que l'aperçu
+            # rende le champ d'interdiction entier — le sien d'abord, celui du
+            # fond ensuite. Sans lui, l'écran qui promet de tout montrer tairait
+            # la moitié qui vient de l'auteur.
+            prompt_negatif=prompt_negatif,
         )
         lignes = apercu["lignes"]
         cases = self._cases(poses, directions, piece)
@@ -201,6 +224,14 @@ class ServiceEnvoi:
 
         return {
             "texte": apercu["texte"],
+            # **Le texte, coupé là où il se coupe** (R7). L'écran montrait un
+            # pavé dans sa colonne de droite ; il montre maintenant les trois
+            # parties, chacune sous le titre que le fournisseur reçoit. Elles
+            # viennent de la composition, jamais d'un découpage de l'écran :
+            # recouper le texte à l'affichage aurait été une seconde vérité sur
+            # ce qui part, et la première divergence se serait vue chez le
+            # modèle et pas chez nous.
+            "parties": apercu["parties"],
             "lignes": lignes,
             "groupes": self._groupes(lignes, images, options),
             "images": images,
@@ -237,6 +268,37 @@ class ServiceEnvoi:
             "cases": cases,
             "caracteres": self._caracteres(apercu["texte"], lignes),
             "corrections": sum(1 for l in lignes if l.get("corrigee")),
+            # **Le fond, et ce qu'il coûte de le changer ici** (D3). Trois
+            # choses, et elles répondent à trois questions différentes : sur
+            # quelle couleur cet appel part, ce que l'atelier proposerait à ce
+            # jeu-là, et si la couleur est bien celle du jeu ou une correction
+            # posée pour cet appel seulement.
+            #
+            # **La correction ne remonte nulle part**, comme tout ce que cet
+            # écran renvoie : elle habille l'appel et disparaît. Poser le fond
+            # durablement est un second geste, qui passe par le codex — la même
+            # règle que « garder cette correction » sur une ligne de texte.
+            "fond": self._fond(projet, apercu, tri),
+        }
+
+    def _fond(
+        self, projet: str | None, apercu: dict[str, Any], tri: Tri
+    ) -> dict[str, Any]:
+        """Ce que l'écran de confirmation dit du fond (D3).
+
+        **Il ne recompose rien** : la couleur et l'interdiction viennent de
+        l'aperçu, c'est-à-dire du chemin même que l'envoi emprunte. Ce que ce
+        service ajoute est ce qui n'appartient qu'à l'écran — la proposition du
+        jeu, et le fait qu'une correction est posée —, et aucun des deux
+        n'entre dans ce qui part.
+        """
+        propose = self._univers.fond_propose(projet).en_json()
+        return {
+            "couleur": apercu["fond"],
+            "interdiction": apercu["interdiction"],
+            "du_jeu": self._univers.univers(projet).fond,
+            "corrige": tri.fond is not None,
+            "propose": propose,
         }
 
     def _reserve(
@@ -279,18 +341,19 @@ class ServiceEnvoi:
         peut nommer un asset supprimé ou une carte retirée du tableau entre le
         moment où la ligne a été composée et celui où on la regarde. La ligne
         reste — elle dit ce qui partirait —, elle n'a simplement pas de vignette.
+
+        **La réponse est écrite une seule fois** (R8), dans
+        `atelier/services/montre.py` : la fiche d'une chose pose la même question
+        pour ses images d'exemple, et deux réponses auraient fini par rendre deux
+        formes du même objet.
         """
-        identifiant = ligne.get("asset")
-        if not identifiant:
-            return None
-        try:
-            if ligne.get("origine") == CARTE:
-                carte = self._univers.carte(projet or "", identifiant)
-                return {"sorte": "carte", "carte": carte.en_json()}
-            asset = self._assets.lire(identifiant) if self._assets else None
-            return {"sorte": "asset", "asset": asset.en_json()} if asset else None
-        except Exception:  # noqa: BLE001 — une image disparue se voit en moins
-            return None
+        return de_quoi_montrer(
+            assets=self._assets,
+            univers=self._univers,
+            projet=projet,
+            identifiant=str(ligne.get("asset") or ""),
+            carte=ligne.get("origine") == CARTE,
+        )
 
     def _images(
         self,
@@ -337,6 +400,13 @@ class ServiceEnvoi:
                     # partiraient pas. C'était sans conséquence tant qu'un tel
                     # modèle était refusé avant d'arriver ici ; il ne l'est plus.
                     "hors_plafond": cochee and rang > places,
+                    # **Le numéro que le texte lui donne** (R7). Le prompt dit
+                    # « Image 3 — STYLE REFERENCE » ; sans ce chiffre-là sur la
+                    # ligne, l'auteur lit un texte qui parle d'images et regarde
+                    # une liste qui ne les numérote pas. Une image qui ne part
+                    # pas n'a pas de numéro : elle n'en a pas dans le texte non
+                    # plus.
+                    "rang": rang if cochee and rang <= places else None,
                     "prix": pas,
                     # **L'objet entier, et pas une adresse** (U9). L'écran qui
                     # décide de ce qui part ne montrait aucune image : les
@@ -382,10 +452,22 @@ class ServiceEnvoi:
                     "texte": f"{places} places sur ce modèle · {compte['total']} cochées",
                 }
             )
+        # **Le rang du gabarit et de la bande, qui partent après les autres.**
+        # Ils ne sont pas des lignes à cocher — le gabarit *est* la demande, la
+        # bande se coche dans les options —, mais le texte les numérote comme
+        # les autres, et la phrase qui les annonce à l'écran doit donc porter le
+        # même chiffre.
+        partantes = sum(1 for l in lignes if l["cochee"] and not l["hors_plafond"])
+        rang_gabarit = partantes + 1 if compte["gabarit"] else None
+        rang_palette = (
+            partantes + compte["gabarit"] + 1 if compte.get("palette") else None
+        )
         return {
             "lignes": lignes,
             "places": places,
             "cochees": compte["total"],
+            "rang_gabarit": rang_gabarit,
+            "rang_palette": rang_palette,
             # **Combien partiront vraiment** (F6), calculé ici et nulle part
             # ailleurs : le sommaire des groupes, le prix et la réserve le
             # lisent tous les trois, et trois calculs finiraient par annoncer
@@ -475,14 +557,28 @@ class ServiceEnvoi:
             return []
         univers = self._univers.univers(projet)
         lue = self._univers.echelle(projet, echelle) if echelle else None
-        recette = univers.recette_de(lue)
+        # **La nature se lit sur le nombre de cases** (D1) : un appel plié rend
+        # une planche, et ce sont ses morceaux qui entreront en bibliothèque.
+        # C'est donc leur défaut qu'il faut annoncer, pas celui d'une image
+        # seule — sans quoi l'écran promettrait un réglage que rien n'appliquera.
+        nature = NATURE_PLANCHE if cases >= 2 else IMAGE_SEULE
+        recette = univers.recette_de(lue, nature)
         lignes: list[dict[str, str]] = []
         if cases >= 2:
             lignes.append(
                 {"nom": "découper la planche", "detail": f"{cases} cases"}
             )
         if recette.passes:
-            lignes.append({"nom": "détourer le fond", "detail": "remplissage du bord"})
+            # **Le défaut qui s'appliquera, et d'où il vient** (US-410). C'est
+            # le seul endroit qui le dise *avant* de dépenser ; la fiche de
+            # l'image le redit après, et les deux lisent le même `detourage`.
+            passe, origine = univers.detourage(nature, lue.famille if lue else "")
+            lignes.append(
+                {
+                    "nom": "détourer le fond",
+                    "detail": _detail_du_detourage(passe, origine, nature, lue),
+                }
+            )
         if recette.grille is not None and univers.cible_px != AUCUNE_CIBLE:
             lignes.append(
                 {
@@ -526,7 +622,17 @@ class ServiceEnvoi:
             allumees, total = compter(groupe)
             if total:
                 groupes.append(
-                    {"clef": groupe, "nom": nom, "allumees": allumees, "total": total}
+                    {
+                        "clef": groupe,
+                        "nom": nom,
+                        # **La partie du texte où ce groupe atterrit** (R7). Le
+                        # sommaire de gauche s'en sert pour ranger ses six
+                        # lignes sous trois titres, et la table qui en décide
+                        # est celle du domaine — la même que le texte suit.
+                        "partie": DE_LA_PARTIE[groupe],
+                        "allumees": allumees,
+                        "total": total,
+                    }
                 )
         # **Combien partent, sur combien sont cochées** (corrigé en F6). Le
         # total était les *places du modèle*, ce qui était une capacité et non
@@ -661,3 +767,27 @@ class ServiceEnvoi:
             f"ce texte dit {dites} · le jeu est réglé sur {cible} · "
             "corriger ici ne corrige que cet appel"
         )
+
+
+def _detail_du_detourage(
+    passe: Passe, origine: str, nature: str, echelle: Echelle | None
+) -> str:
+    """Ce qui va détourer, **et qui l'a dit** (US-410, D1).
+
+    « Je veux voir quel défaut va s'appliquer et d'où il vient, avant de
+    générer, afin de ne pas le découvrir sur l'image revenue. »
+
+    Trois provenances, trois phrases, et **la troisième ne nomme pas la famille
+    en français**. Elle le pourrait — l'écran connaît le mot — mais il aurait
+    fallu une seconde liste de noms de familles côté serveur, à tenir d'accord
+    avec celle de l'interface. La famille est déjà à l'écran, choisie deux
+    lignes plus haut : « cette famille » désigne sans recopier.
+    """
+    quoi = NOM_DU_MOTEUR.get(passe.moteur, passe.moteur)
+    if passe.durcissement:
+        quoi += f" · bord rongé de {passe.durcissement} px"
+    if origine == DU_PRODUIT:
+        return f"{quoi} · le réglage livré"
+    if origine == DE_LA_FAMILLE:
+        return f"{quoi} · ton réglage pour cette famille"
+    return f"{quoi} · ton réglage pour {NOM_DE_LA_NATURE[nature]}"

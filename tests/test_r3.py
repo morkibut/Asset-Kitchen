@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de R3 — faire entrer une image depuis l'écran.
 
-Un test par critère de `docs/PLAN.md` § R3, nommé d'après lui.
+Un test par critère de `docs/archive/plan-versions-tenues.md` § R3, nommé d'après lui.
 
 **Le geste que l'agent avait depuis T7 et que l'écran n'avait jamais eu.** La
 seule pièce neuve du serveur est une route qui prend les **octets** : celle qui
@@ -324,6 +324,9 @@ def test_le_traitement_du_projet_s_applique_quand_on_le_demande(client):
         # calibrage, et une image qu'il n'a pas touchée rend exactement ce
         # qu'elle rendait avant qu'il existe.
         "decalage": 0,
+        # **La méthode de réduction, arrivée en D2** — le produit choisit le
+        # vote en deux temps pour un projet neuf.
+        "methode": "vote",
     }
     assert len(asset["recette"]["passes"]) == 1
     assert (asset["rendu_largeur"], asset["rendu_hauteur"]) == (64, 64)

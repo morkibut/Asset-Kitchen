@@ -2,7 +2,7 @@
 // où le texte est plus gros que le châssis.
 //
 // « L'atelier s'ouvre sur un champ de prompt actif, sans écran à traverser »
-// (`docs/PLAN.md`, T1). Le prompt négatif est replié : on l'écrit rarement, on
+// (`docs/archive/plan-versions-tenues.md`, T1). Le prompt négatif est replié : on l'écrit rarement, on
 // le lit encore moins.
 //
 // **Et depuis R2, ce qui partira se voit** (US-158) — d'abord dans un dépliant

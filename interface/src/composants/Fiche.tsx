@@ -13,6 +13,7 @@
 import { Fragment, useEffect, useState } from "react"
 import {
   api,
+  NOM_DE_LA_METHODE,
   depense,
   estArgent,
   quantite,
@@ -22,6 +23,7 @@ import {
   type Filiation,
   type Generation,
   type Impose,
+  type Origine,
   type Passe,
   type Personnage,
   type Pose,
@@ -43,7 +45,7 @@ import {
 } from "./chassis"
 import { PANNEAU, POINTILLE, useInfobulle } from "./Infobulle"
 import { posesTenues } from "./Personnages"
-import { RESUME } from "./Places"
+import { MOTEUR, RESUME } from "./Places"
 
 /** Le modèle qui a produit une image, tel qu'il se lit (US-123).
  *
@@ -324,6 +326,18 @@ export function Fiche({
  *  (`docs/DESIGN.md`), et une ligne d'état suffit alors à dire ce que le projet
  *  a fait. Aucun pointillé sur les valeurs : ce qui se règle est juste en
  *  dessous. */
+/** D'où vient le détourage qui s'est appliqué, dit à l'auteur (D1).
+ *
+ *  Trois phrases pour trois niveaux, et **la dernière ne s'excuse pas** : « le
+ *  réglage livré » est une réponse complète, pas un aveu de réglage manquant.
+ *  C'est la même règle que le modèle par famille : il n'y a jamais de trou,
+ *  seulement un réglage qu'on n'a pas posé. */
+const VENU_DE: Record<Origine, string> = {
+  famille: "ton réglage pour cette famille",
+  nature: "ton réglage pour cette sorte d'image",
+  produit: "le réglage livré",
+}
+
 function ImposeParLeProjet({
   impose,
   recette,
@@ -359,6 +373,33 @@ function ImposeParLeProjet({
 
   const lignes: { quoi: string; valeur: string; main: boolean }[] = []
 
+  // **Le détourage de départ, et d'où il vient** (D1, US-410). Il ouvre la
+  // liste parce qu'il est la première étape du traitement, et parce que c'est
+  // celui que l'auteur reprenait le plus souvent à la main : compté sur ce
+  // dépôt, plus d'une recette sur deux déplaçait son bord rongé.
+  //
+  // La provenance compte autant que la valeur. Sans elle, on lit un réglage
+  // qu'on n'a pas posé sans savoir lequel des trois niveaux l'a décidé — la
+  // famille du sujet, la nature de l'image, ou le produit — donc sans savoir où
+  // aller le changer.
+  if (impose.detourage) {
+    const { passe, origine } = impose.detourage
+    const premiere = recette.passes[0] ?? null
+    lignes.push({
+      quoi: "détourage",
+      valeur:
+        `${MOTEUR[passe.moteur]}` +
+        (passe.durcissement
+          ? ` · ${passe.durcissement} px rongé${passe.durcissement > 1 ? "s" : ""}`
+          : "") +
+        ` · ${VENU_DE[origine]}`,
+      main:
+        premiere === null ||
+        premiere.moteur !== passe.moteur ||
+        premiere.durcissement !== passe.durcissement,
+    })
+  }
+
   lignes.push(
     pose.grille === null
       ? {
@@ -385,6 +426,16 @@ function ImposeParLeProjet({
       main: recette.grille?.occupation !== pose.grille.occupation,
     })
 
+  // **La façon de réduire fait partie de ce que le projet impose** (D2) : elle
+  // décide autant du rendu que la taille, et la lire ici est le seul endroit où
+  // l'on voit d'un coup ce que cette image a reçu sans l'avoir demandé.
+  if (pose.grille !== null)
+    lignes.push({
+      quoi: "réduction",
+      valeur: NOM_DE_LA_METHODE[pose.grille.methode],
+      main: recette.grille?.methode !== pose.grille.methode,
+    })
+
   lignes.push(
     pose.quantification === null
       ? {
@@ -392,14 +443,26 @@ function ImposeParLeProjet({
           valeur: "aucune",
           main: recette.quantification !== null,
         }
-      : {
-          quoi: "palette",
-          valeur: `${pose.quantification.palette.length} couleurs`,
-          main:
-            recette.quantification === null ||
-            recette.quantification.palette.join() !==
-              pose.quantification.palette.join(),
-        },
+      : pose.quantification.palette.length === 0
+        ? // **Zéro couleur n'était pas une lecture possible avant D2**, et le
+          // devenir l'a rendue trompeuse : « 0 couleurs » se lit *aucune
+          // réduction*, quand c'est l'inverse — l'image est bien ramenée à ce
+          // nombre-là, simplement lu sur elle et non sur la palette du jeu.
+          {
+            quoi: "couleurs",
+            valeur: `${pose.quantification.couleurs} · lues sur l'image`,
+            main:
+              recette.quantification === null ||
+              recette.quantification.couleurs !== pose.quantification.couleurs,
+          }
+        : {
+            quoi: "palette",
+            valeur: `${pose.quantification.palette.length} couleurs du jeu`,
+            main:
+              recette.quantification === null ||
+              recette.quantification.palette.join() !==
+                pose.quantification.palette.join(),
+          },
   )
 
   return (
@@ -1209,6 +1272,20 @@ export function BlocPasse({
               />
             </Reglage>
             <Raison texte={choisi.note} />
+            {/* **Le côté auquel il infère, dit à côté de son poids** (D4).
+                C'est le nombre qui décide de ce qu'un modèle peut rendre, et il
+                n'était nulle part : un masque calculé en 320 puis étiré à 1024
+                perd tout ce qui est plus fin que trois pixels, et le rebond du
+                réagrandissement fabrique des demi-transparences *à l'intérieur*
+                du sujet. Deux modèles voisins par le poids peuvent différer là
+                du tout au tout. */}
+            <Raison
+              texte={
+                choisi.entree >= 1024
+                  ? `il calcule à ${choisi.entree} px et ne réagrandit pas son masque · ${choisi.licence}`
+                  : `⚠ il calcule à ${choisi.entree} px puis réagrandit son masque — ce qui est plus fin que trois pixels y disparaît · ${choisi.licence}`
+              }
+            />
             {/* **La seconde des deux absences**, et elle ne grise pas : un
                 modèle qui n'est pas encore descendu se rapatrie tout seul au
                 premier rendu. Ce qu'on doit à l'auteur, c'est de lui dire ce

@@ -302,30 +302,47 @@ export function EcranDecoupe({
                   </p>
                 ) : (
                   <>
+                    {/* **« Le reste » n'existe pas toujours, et la phrase le
+                        disait quand même** (G1). Mesuré le 3 septembre 2026 sur
+                        les dix artworks officiels du dépôt : trois sont lus à
+                        100,0 % — le détourage n'y écarte rien du tout. La phrase
+                        annonçait alors « 100 % … le reste est écarté », qui se
+                        contredit dans sa propre longueur. Elle se dédouble donc
+                        au lieu de supposer un reste. */}
                     <p className="text-[11.5px] leading-snug text-texte-2">
                       <span className="mesure text-texte">{lecture.part} %</span>{" "}
                       de l'image {carte?.officiel ? "donne" : "donnerait"} ses
-                      couleurs au jeu. Le reste — le fond — est écarté tout seul.
+                      couleurs au jeu.{" "}
+                      {lecture.part >= 100
+                        ? "Rien n'en est écarté : le détourage n'a trouvé aucun fond à retirer."
+                        : "Le reste — le fond — est écarté tout seul."}
                     </p>
-                    <button
-                      type="button"
-                      aria-pressed={magenta}
-                      onClick={() => setMagenta(!magenta)}
-                      className="flex items-start gap-2 text-left text-[11.5px] leading-snug text-texte-2 hover:text-texte"
-                    >
-                      <span
-                        aria-hidden
-                        className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
-                          magenta ? "border-signal bg-signal" : "border-bord-fort"
-                        }`}
-                      />
-                      <span>
-                        me le montrer sur l'image
-                        <span className="mesure block text-[9.5px] text-texte-3">
-                          en magenta, ce qui ne compte pas
+                    {/* **Et la case ne s'offre pas quand il n'y a rien à
+                        montrer** : à 100 %, l'image se couvrirait de rien, et
+                        une case qui ne change pas l'image est pire qu'une case
+                        absente — on la coche deux fois avant de conclure qu'elle
+                        est cassée. */}
+                    {lecture.part < 100 && (
+                      <button
+                        type="button"
+                        aria-pressed={magenta}
+                        onClick={() => setMagenta(!magenta)}
+                        className="flex items-start gap-2 text-left text-[11.5px] leading-snug text-texte-2 hover:text-texte"
+                      >
+                        <span
+                          aria-hidden
+                          className={`mt-[3px] block h-[14px] w-[14px] shrink-0 rounded-[2px] border ${
+                            magenta ? "border-signal bg-signal" : "border-bord-fort"
+                          }`}
+                        />
+                        <span>
+                          me le montrer sur l'image
+                          <span className="mesure block text-[9.5px] text-texte-3">
+                            en magenta, ce qui ne compte pas
+                          </span>
                         </span>
-                      </span>
-                    </button>
+                      </button>
+                    )}
                   </>
                 )}
               </div>

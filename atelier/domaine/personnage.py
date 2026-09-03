@@ -17,7 +17,7 @@ laisse ses images en place ».
 **Il porte ce qu'il écarte, pas ce qu'il tient.** À l'écran on coche des poses
 tenues ; sur le disque on range celles qu'on ne tient pas. Le sens est le même,
 la panne évitée ne l'est pas : ajouter une pose au plan doit ajouter une case
-vide à *chaque* personnage (`docs/PLAN.md` C1), et avec une liste de poses
+vide à *chaque* personnage (`docs/archive/plan-versions-tenues.md` C1), et avec une liste de poses
 tenues il aurait fallu réécrire tous les personnages du projet à chaque ajout —
 un balayage capable de réussir à moitié, pour un geste qui ne devrait rien
 écrire du tout. Avec l'écart, la case neuve paraît partout sans qu'un seul

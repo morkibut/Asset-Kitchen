@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T10 — l'îlot se déplace, et ce qui va partir se voit.
 
-Un test par critère de `docs/PLAN.md` § Phase T10, nommé d'après lui. **Quatre des
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T10, nommé d'après lui. **Quatre des
 neuf ne se vérifient pas ici** : que la bande du titre soit la poignée, que le seuil
 sépare le clic du glissement, que l'îlot menacé se peigne en `--echec`, et qu'un
 seul Ctrl+Z défasse le déplacement. Les trois premiers sont du geste et de la

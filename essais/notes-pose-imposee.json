@@ -1,0 +1,39 @@
+{
+ "essai": "pose-imposee",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T18:56:07.272Z",
+ "notes": {
+  "tour1:jet1": {
+   "note": "moyen",
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette"
+  },
+  "tour1:jet2": {
+   "note": "moyen",
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette"
+  },
+  "_tours": {
+   "tour1": {
+    "conclusion": "le suivie de la pose est super, mais il manque une préservation de la proportion des membres du personnage qui est animé."
+   }
+  },
+  "tour2:jet1": {
+   "note": "moyen",
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette"
+  },
+  "tour2:jet2": {
+   "note": "moyen",
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette"
+  },
+  "tour3:jet1": {
+   "note": "moyen",
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette"
+  },
+  "tour3:jet2": {
+   "libre": "la pose est très bien, mais il a allongé les jambe comme sur la silhouette",
+   "note": "moyen"
+  },
+  "bande:jet1": {
+   "note": "mauvais"
+  }
+ }
+}

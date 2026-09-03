@@ -2,7 +2,7 @@
 """Le post-traitement — CPU, pur, dans un ordre fixe.
 
 **Ne touche jamais le GPU et n'appelle jamais le fournisseur** : invariant
-instauré ici (`docs/PLAN.md`, T2). Aucune fonction de ce module ne fait d'entrée
+instauré ici (`docs/archive/plan-versions-tenues.md`, T2). Aucune fonction de ce module ne fait d'entrée
 ni de sortie ; elle reçoit des tableaux, elle en rend. C'est ce qui les rend
 mesurables au banc et rejouables à l'identique.
 
@@ -46,6 +46,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from atelier.domaine.recette import (
+    AU_PLUS_PROCHE,
     BAS,
     BORD,
     BORDS,
@@ -55,12 +56,15 @@ from atelier.domaine.recette import (
     FLOYD,
     GRILLE,
     LA_MAIN,
+    LANCZOS,
     LAISSES,
     MODELE,
     PARTOUT,
+    PIXELOE,
     QUANTIFICATION,
     RECADRAGE,
     TRACE,
+    VOTE,
     Bords,
     CalqueDessin,
     Contour,
@@ -71,9 +75,13 @@ from atelier.domaine.recette import (
     Recadrage,
     Recette,
     Trait,
+    cote_du_canevas,
+    cote_du_sujet,
 )
 
 __all__ = [
+    "GrilleRetrouvee",
+    "MesuresDuFond",
     "MoteurAbsent",
     "Rendu",
     "appliquer",
@@ -89,16 +97,21 @@ __all__ = [
     "etendre",
     "finir",
     "mesurer_grille",
+    "mesures_du_fond",
+    "methode_disponible",
     "modele_descendu",
     "moteur_disponible",
     "peindre",
     "pinceau",
     "pose_du_calque",
+    "pourtour",
     "queue",
     "raison_du_modele",
+    "raison_methode",
     "raison_moteur",
     "restreindre",
     "retoucher",
+    "retrouver_grille",
     "ronger",
     "sans_les_deux_dernieres",
     "sans_moteur",
@@ -143,9 +156,44 @@ class Rendu:
 # **Et depuis U13, on n'en nomme plus un seul.** *Le catalogue décide, jamais une
 # liste en dur* est la règle du dépôt pour les modèles d'image ; elle vaut ici
 # pour la même raison, et un nom inscrit dans le code interdisait d'en essayer un
-# autre sans toucher au code. Trois modèles, du plus rapide au plus lourd, et le
-# choix se fait passe par passe.
-MODELE_ONNX = "u2net"
+# autre sans toucher au code. Cinq modèles depuis D4, et le choix se fait passe
+# par passe.
+#
+# ── Le défaut change en D4, et il change **sur mesure** ──────────────────────
+#
+# **`u2net` était le défaut, et il infère à 320 × 320.** Son masque est ensuite
+# réagrandi en Lanczos à la taille de l'image : sur une image de 1024, c'est une
+# carte de 320 étirée trois fois. Ce qui est plus fin que trois pixels y
+# disparaît. `isnet-general-use` infère à 1024 et ne réagrandit rien.
+#
+# **Mesuré le 3 septembre 2026** — `essais/essai_moteurs_de_detourage.py`,
+# gratuit, quatre images du dépôt, les deux modèles sur les mêmes :
+#
+# | | `u2net` | `isnet-general-use` |
+# |---|---|---|
+# | côté d'inférence | 320 | **1024** |
+# | part gardée | 0,219 | 0,215 |
+# | accord des deux silhouettes | 0,977 | — |
+# | **trous percés** (l'ajouré trouvé) | 2,5 | **3,8** |
+# | durée | 0,65 s | 1,33 s |
+#
+# **C'est la ligne des trous qui tranche**, et c'est la seule qui sépare
+# vraiment deux masques à part gardée égale : `isnet` trouve **une moitié de
+# détails ajourés en plus** — l'espace entre un bras et un torse, une boucle de
+# ceinture, une frange. La part gardée, elle, ne dit rien : les deux gardent la
+# même surface, en la découpant différemment.
+#
+# **Ce que ça coûte : 0,7 seconde par image, et seulement sur le moteur par
+# modèle** — qui n'est pas le moteur par défaut du produit. Le remplissage
+# depuis le bord reste imbattable sur ce que l'atelier fabrique, à fond plat, en
+# 130 ms ; le moteur par modèle sert les images **importées**, où l'on ne compte
+# pas à la demi-seconde.
+#
+# ⚠️ **Ce changement rejoue les passes par modèle qui n'ont pas nommé leur
+# modèle**, et c'est le prix, écrit une fois : une recette d'avant U13 ne porte
+# aucun nom, `silhouette("")` retombe sur ce défaut-ci, et son rendu change. Les
+# recettes qui nomment `u2net` explicitement ne bougent pas d'un pixel.
+MODELE_ONNX = "isnet-general-use"
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,6 +209,24 @@ class Silhouette:
     troisième par une question à l'adresse de téléchargement qui ne rapatrie
     rien. Un poids annoncé au jugé serait exactement le genre de chiffre qu'on
     croit avant de lancer une attente de plusieurs minutes.
+
+    ── Deux champs ajoutés en D4, et le premier est le cœur de la tranche ─────
+
+    `entree` est le côté auquel le modèle **infère**, et il ne se confond pas
+    avec la taille de l'image qu'on lui donne : `u2net` ramène tout à 320 × 320,
+    calcule là-dessus, puis **réagrandit son masque en Lanczos** à la taille de
+    l'image. Sur une image de 1024, c'est une carte de 320 étirée trois fois —
+    ce qui est plus fin que trois pixels disparaît, les coins s'arrondissent, et
+    le rebond de Lanczos fabrique des alphas à 240–254 *à l'intérieur* du sujet.
+    `isnet` et `birefnet` infèrent à 1024. **Ce nombre-là décide de ce qu'un
+    modèle peut rendre**, et il n'était nulle part.
+
+    `licence` est celle du modèle, pas celle de `rembg`. Elle est écrite parce
+    que la question s'est posée une fois et se reposera : *l'atelier est un
+    projet personnel, rien n'en sort commercialement*, et l'auteur choisit en le
+    sachant (arbitrage du 2 septembre 2026). Le jour où quelque chose sortirait
+    de ce jeu contre de l'argent, elle se relit — pour ces modèles comme pour
+    tous les autres.
     """
 
     nom: str
@@ -169,16 +235,69 @@ class Silhouette:
     octets: int
     lent: bool
     note: str
+    entree: int = 320
+    licence: str = ""
 
 
+# **Cinq modèles depuis D4, et les deux neufs répondent à deux manques réels.**
+#
+# La première version de la tranche en réclamait un troisième — *« il manque un
+# cran entre nos deux modèles »* — et se trompait : le produit en portait trois
+# depuis `U13`, celui du milieu s'appelant littéralement « intermédiaire ».
+# L'erreur venait du relevé d'outillage, recopiée sans vérifier. Ce qui reste
+# vrai après le tri est écrit ci-dessous, modèle par modèle.
+#
+# **L'ordre de la liste est celui du poids**, et c'est aussi l'ordre où l'écran
+# les propose : on descend jusqu'à ce qu'on accepte d'attendre.
 SILHOUETTES: tuple[Silhouette, ...] = (
+    Silhouette(
+        nom="isnet-anime",
+        titre="dessin",
+        fichier="isnet-anime.onnx",
+        octets=176_069_933,
+        lent=False,
+        entree=1024,
+        licence="Apache-2.0",
+        note=(
+            "le seul entraîné sur du dessin — mais il apprend à découper un "
+            "personnage d'un seul tenant, et il bouche l'ajouré : 2,2 trous "
+            "trouvés contre 3,8 au défaut, mesuré le 3 septembre 2026. C'est "
+            "celui qui s'écarte le plus des autres"
+        ),
+    ),
+    Silhouette(
+        nom="birefnet-general-lite",
+        titre="léger",
+        fichier="birefnet-general-lite.onnx",
+        # ⚠️ **214 Mo et non 88,6**, pesé sur le disque le 3 septembre 2026. Le
+        # chiffre de 88,6 Mo que le plan et le relevé d'outillage annonçaient est
+        # celui des poids PyTorch du modèle, pas de l'export ONNX que `rembg`
+        # rapatrie. C'est un quart du lourd, pas un onzième — et c'est encore une
+        # bonne affaire, voir la note.
+        octets=224_005_088,
+        lent=False,
+        entree=1024,
+        licence="MIT",
+        note=(
+            "l'allégé du lourd, et il le bat : mesuré le 3 septembre 2026, il "
+            "trouve plus d'ajouré que lui — 4,8 trous contre 3,5 — en deux fois "
+            "moins de temps, pour un quart du poids. Les deux silhouettes "
+            "s'accordent à 99,5 %"
+        ),
+    ),
     Silhouette(
         nom="u2net",
         titre="rapide",
         fichier="u2net.onnx",
         octets=175_997_641,
         lent=False,
-        note="le plus rapide — 0,9 s par image, mesuré le 1er septembre 2026",
+        entree=320,
+        licence="Apache-2.0",
+        note=(
+            "le plus rapide — 0,9 s par image, mesuré le 1er septembre 2026. "
+            "Il infère à 320 px et réagrandit son masque : ce qui est plus fin "
+            "que trois pixels disparaît"
+        ),
     ),
     Silhouette(
         nom="isnet-general-use",
@@ -186,9 +305,12 @@ SILHOUETTES: tuple[Silhouette, ...] = (
         fichier="isnet-general-use.onnx",
         octets=178_648_008,
         lent=False,
+        entree=1024,
+        licence="Apache-2.0",
         note=(
             "presque le même résultat que le rapide — 96 à 99 % d'accord — "
-            "pour un cinquième de temps en plus"
+            "pour un cinquième de temps en plus, et il infère à 1024 px sans "
+            "réagrandir"
         ),
     ),
     Silhouette(
@@ -197,10 +319,13 @@ SILHOUETTES: tuple[Silhouette, ...] = (
         fichier="birefnet-general.onnx",
         octets=972_666_916,
         lent=True,
+        entree=1024,
+        licence="MIT",
         note=(
-            "cinq fois plus lourd, et il vise les silhouettes difficiles — "
-            "des cheveux, une frange, un objet ajouré. Compte plusieurs "
-            "secondes par image"
+            "quatre fois plus lourd que l'allégé de sa famille, et mesuré "
+            "moins bon que lui le 3 septembre 2026 : moins d'ajouré trouvé, "
+            "deux fois plus de temps. Gardé pour que la comparaison reste "
+            "refaisable"
         ),
     ),
 )
@@ -270,6 +395,11 @@ def etat_des_silhouettes() -> list[dict[str, Any]]:
             "octets": s.octets,
             "lent": s.lent,
             "note": s.note,
+            # **Le côté auquel il infère** (D4). C'est ce qui sépare un masque
+            # calculé à la taille de l'image d'un masque calculé en 320 puis
+            # étiré : l'écran le dit, parce qu'aucune autre ligne ne l'explique.
+            "entree": s.entree,
+            "licence": s.licence,
             "defaut": s.nom == MODELE_ONNX,
             "descendu": modele_descendu(s.nom),
             "raison": absent,
@@ -577,11 +707,17 @@ def durcir(alpha: np.ndarray, seuil: int) -> np.ndarray:
 
 
 def ronger(alpha: np.ndarray, pixels: int) -> np.ndarray:
-    """Érosion en croix, `pixels` fois — le durcissement du bord (US-70).
+    """Érosion en croix, `pixels` fois — **l'érosion aveugle** (US-70).
 
     Ce qui reste d'un halo après le seuil, c'est un ou deux pixels de contour à
     la couleur du fond. Les ronger coûte un liseré de sprite ; ne pas les ronger
     coûte un halo. Le réglage existe pour que l'auteur tranche, image par image.
+
+    ⚠️ **Ce n'est plus ce que le produit emploie depuis D4** — voir
+    `ronger_conditionnel` juste dessous, qui n'ôte que ce qui est effectivement
+    contaminé. Celle-ci reste, et elle reste publique : c'est le témoin contre
+    lequel la conditionnelle se mesure (`essais/essai_moteurs_de_detourage.py`),
+    et un témoin qu'on retire est une comparaison qu'on ne peut plus refaire.
     """
     if pixels <= 0:
         return alpha
@@ -594,6 +730,301 @@ def ronger(alpha: np.ndarray, pixels: int) -> np.ndarray:
         garde[:, :-1] &= plein[:, 1:]
         plein = garde
     return np.where(plein, alpha, np.uint8(0))
+
+
+def _voisin_interieur(rgb: np.ndarray, sujet: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Pour chaque pixel de bord, la couleur d'un voisin **franchement intérieur**.
+
+    Rend deux tableaux : la couleur retenue, et un masque disant où l'on en a
+    trouvé une. Un pixel de bord dont les quatre voisins sont eux-mêmes des
+    pixels de bord — une partie fine d'un pixel d'épaisseur — n'en a pas, et
+    c'est un cas qu'on veut savoir distinguer : **on ne ronge pas un trait fin**,
+    parce que le ronger le fait disparaître.
+
+    **Un voisin, jamais une moyenne**, et c'est la même règle que pour la
+    couleur d'un contour : une moyenne de deux voisins fabrique une teinte que
+    l'image ne contient pas, et on chercherait ensuite d'où elle vient. L'ordre
+    — les quatre côtés, puis les quatre coins — est fixe, donc le résultat est
+    déterministe, ce qui est un critère du dépôt et non un confort.
+
+    **Huit voisins ici, quatre dans `pourtour`, et les deux comptes sont
+    justes.** Un pixel touche le dehors *par un côté* — une diagonale ne perce
+    pas une silhouette —, mais le voisin intérieur *le plus proche* d'un pixel de
+    coin est bien son diagonal. Trouvé en essayant : avec quatre voisins, les
+    quatre coins d'une frange restaient à la couleur du fond, seuls, parce
+    qu'aucun de leurs voisins de côté n'était franchement intérieur.
+    """
+    interieur = sujet & ~pourtour(sujet)
+    hauteur, largeur = sujet.shape
+    borde_rgb = np.pad(rgb, ((1, 1), (1, 1), (0, 0)))
+    borde = np.pad(interieur, 1, constant_values=False)
+    couleur = np.zeros_like(rgb)
+    trouve = np.zeros(sujet.shape, dtype=bool)
+    # (décalage vertical, décalage horizontal) : haut, bas, gauche, droite,
+    # puis les quatre coins.
+    for dy, dx in (
+        (0, 1),
+        (2, 1),
+        (1, 0),
+        (1, 2),
+        (0, 0),
+        (0, 2),
+        (2, 0),
+        (2, 2),
+    ):
+        candidat = borde[dy : dy + hauteur, dx : dx + largeur]
+        prendre = candidat & ~trouve
+        couleur[prendre] = borde_rgb[dy : dy + hauteur, dx : dx + largeur][prendre]
+        trouve |= candidat
+    return couleur, trouve
+
+
+def _couleur_enlevee(rgb: np.ndarray, avant: np.ndarray, apres: np.ndarray) -> np.ndarray | None:
+    """La couleur du fond **que cette passe-ci vient de retirer**, ou rien.
+
+    **Elle se mesure, elle ne se demande pas**, et c'est ce qui fait marcher les
+    deux réparations de D4 sur les quatre moteurs à la fois : le remplissage
+    depuis le bord, la pipette, la sélection magique et le modèle ne disent pas
+    tous quelle couleur ils ont pris pour du fond — mais tous laissent derrière
+    eux les pixels qu'ils ont ouverts, et *effacer un pixel ne change pas sa
+    couleur*. Le fond de la passe est donc la médiane de ce qu'elle a enlevé.
+
+    **La médiane des seuls pixels enlevés qui touchent ce qui reste**, quand il y
+    en a : c'est la bande de contact, celle qui décide du bord. Prendre tout
+    l'enlevé mêlerait un dégradé de ciel à la couleur qui borde le sujet.
+
+    `None` quand la passe n'a rien enlevé — un moteur qui ne trouve pas de fond
+    n'a pas de fond, et deviner ici ferait ronger sur une couleur inventée.
+    """
+    enleves = (avant > 0) & (apres == 0)
+    if not enleves.any():
+        return None
+    contact = enleves & pourtour(enleves)
+    lus = rgb[contact] if contact.any() else rgb[enleves]
+    return np.median(lus.astype(np.int16), axis=0)
+
+
+def ronger_conditionnel(
+    rgb: np.ndarray, alpha: np.ndarray, pixels: int, fond: np.ndarray | None
+) -> np.ndarray:
+    """Le rongement de D4 — **il n'ôte que ce qui est effectivement contaminé**.
+
+    **Ce que l'érosion aveugle coûtait.** `ronger` retire une couronne entière
+    de pixels, qu'ils soient pollués par le fond ou non : le sujet maigrit d'un
+    pixel par cran, partout, y compris là où le bord était déjà franc. Sur un
+    sprite de soixante-quatre carrés, deux crans mangent une bonne part d'un
+    doigt.
+
+    **Ce que celle-ci fait à la place.** Elle regarde chaque pixel de bord et
+    pose une seule question : *ressemble-t-il plus au fond qu'à son voisin
+    intérieur ?* Si oui, c'est un pixel d'anti-crénelage, il part. Sinon, c'est
+    du sujet, il reste. Les pixels retirés sont donc **un sous-ensemble** de ceux
+    que l'érosion aveugle retirait — la réparation ne peut pas manger davantage.
+
+    **Un trait d'un pixel d'épaisseur ne se ronge jamais**, parce qu'aucun de ses
+    pixels n'a de voisin franchement intérieur à qui se comparer. C'est le cas
+    que l'érosion aveugle effaçait en entier, et c'est le plus visible : une
+    antenne, une lanière, la pointe d'une épée.
+
+    **Sans fond mesuré, on retombe sur l'érosion aveugle** plutôt que de ne rien
+    faire. Une passe qui n'a rien enlevé n'a pas de couleur de fond à opposer, et
+    le durcissement que l'auteur a demandé doit quand même agir : c'est ce qu'il
+    a réglé, et un réglage qui cesserait d'agir sans le dire serait pire que
+    l'érosion qu'on répare.
+    """
+    if pixels <= 0:
+        return alpha
+    if fond is None:
+        return ronger(alpha, pixels)
+    fond = fond.astype(np.int16)
+    au_fond = np.abs(rgb.astype(np.int16) - fond).max(axis=2)
+    courant = alpha
+    for _ in range(pixels):
+        sujet = courant > 0
+        bord = pourtour(sujet)
+        if not bord.any():
+            break
+        dedans, connu = _voisin_interieur(rgb, sujet)
+        au_voisin = np.abs(rgb.astype(np.int16) - dedans.astype(np.int16)).max(axis=2)
+        contamine = bord & connu & (au_fond < au_voisin)
+        if not contamine.any():
+            break
+        courant = np.where(contamine, np.uint8(0), courant)
+    return courant
+
+
+# **Deux tolérances, et le facteur deux est le seul chiffre choisi de cette
+# réparation.** Un pixel à moins d'une tolérance du fond a déjà été emporté par
+# le détourage ; ce qui reste et qui est encore pollué est dans la traîne de
+# l'anti-crénelage, juste au-delà. Deux tolérances la couvrent sans mordre sur
+# ce qui est franchement du sujet — et la seconde condition, *plus proche du
+# fond que de son voisin intérieur*, ferme le cas d'un sujet légitimement de la
+# couleur du fond.
+CONTAMINATION = 2
+
+
+def decontaminer(
+    rgb: np.ndarray, alpha: np.ndarray, fond: np.ndarray | None, tolerance: int
+) -> np.ndarray:
+    """Un pixel de bord pollué par le fond prend la couleur de son voisin intérieur (D4).
+
+    **Ce que ça répare, et pourquoi ce n'est pas la même chose que ronger.** Un
+    pixel d'anti-crénelage est un mélange du sujet et du fond. Le ronger le
+    retire — le sujet maigrit ; le décontaminer le **garde à la bonne couleur** —
+    le sujet reste entier et le bord cesse d'être délavé. Sur un sprite qui
+    compte ses pixels, la seconde vaut mieux que la première.
+
+    **Sans jamais fabriquer de demi-transparence**, et c'est le critère : elle ne
+    touche pas au canal alpha, pas d'une valeur. C'est ce qui la distingue du
+    *matting*, qui rend un bord doux — et un bord doux est très exactement ce que
+    le durcissement existe pour supprimer, parce qu'un rééchantillonnage au plus
+    proche le tranche à pile ou face.
+
+    **Deux conditions, et la seconde est ce qui la rend sûre** : le pixel est
+    près du fond *et* plus près du fond que de son voisin intérieur. La première
+    seule aurait repeint un sujet légitimement de la couleur du fond — un mur
+    gris sur un fond gris —, ce qui est la panne que D3 rend rare et que
+    celle-ci ne doit pas rouvrir.
+
+    **Elle ne fabrique aucune couleur** : elle recopie celle d'un pixel voisin,
+    qui est déjà dans l'image. Une moyenne aurait introduit une teinte que ni le
+    modèle ni la palette ne contiennent.
+    """
+    if fond is None:
+        return rgb
+    sujet = alpha > 0
+    bord = pourtour(sujet)
+    if not bord.any():
+        return rgb
+    dedans, connu = _voisin_interieur(rgb, sujet)
+    entier = rgb.astype(np.int16)
+    au_fond = np.abs(entier - fond.astype(np.int16)).max(axis=2)
+    au_voisin = np.abs(entier - dedans.astype(np.int16)).max(axis=2)
+    pollue = bord & connu & (au_fond <= tolerance * CONTAMINATION) & (au_fond < au_voisin)
+    if not pollue.any():
+        return rgb
+    sortie = rgb.copy()
+    sortie[pollue] = dedans[pollue]
+    return sortie
+
+
+# ── Les deux mesures d'acceptation du fond (D3) ──────────────────────────────
+#
+# **Elles remplacent un banc, et c'est l'auteur qui l'a tranché** le 2 septembre
+# 2026. La version précédente de la tranche du fond exigeait huit tirages par
+# branche avant la première ligne de code ; c'est retiré. Ce qui prend la place
+# du banc est plus utile que lui : deux nombres lus **sur les images qu'on
+# voulait de toute façon**, à côté du réglage qui les explique.
+#
+# C'est la doctrine du dépôt sur les notes de qualité — *elle se juge à l'usage,
+# sur des images qu'on voulait de toute façon* — appliquée pour la première fois
+# à un réglage d'envoi et non à un modèle.
+
+
+@dataclass(frozen=True, slots=True)
+class MesuresDuFond:
+    """Ce qu'une image revenue dit du fond sur lequel elle a été demandée (D3).
+
+    `fond` est la couleur **telle qu'elle est revenue**, lue à la médiane des
+    bordures — jamais celle qu'on avait demandée. C'est le seul chiffre qui
+    réponde à la question qui compte : *le modèle a-t-il rendu le fond qu'on lui
+    a demandé ?* Comparer la couleur demandée à elle-même n'aurait rien mesuré.
+
+    `bord` est le pourtour du sujet en pixels, et il ne se lit pas seul : il est
+    le dénominateur de `frange`.
+
+    `frange` compte les pixels **à demi transparents** que le détourage a
+    laissés. C'est ce que le durcissement et le rongement existent pour retirer,
+    et c'est ce qui fabrique un halo quand on ne le fait pas.
+
+    `colles` compte les pixels **gardés** qui sont encore à portée de tolérance
+    de la couleur de fond. Ce sont ceux qu'un cran de tolérance de plus aurait
+    mangés : c'est très exactement le prix d'un fond mal choisi, et c'est la
+    mesure que la tranche du fond a mise à la place de son banc.
+
+    `part_collee` les rapporte au sujet entier, parce que six cents pixels ne
+    veulent pas dire la même chose sur un sprite de 64 et sur une image de 1024.
+    """
+
+    fond: str
+    sujet: int
+    bord: int
+    frange: int
+    colles: int
+    part_collee: float
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "fond": self.fond,
+            "sujet": self.sujet,
+            "bord": self.bord,
+            "frange": self.frange,
+            "colles": self.colles,
+            "part_collee": round(self.part_collee, 4),
+        }
+
+
+def _hexa(rgb: np.ndarray) -> str:
+    """Trois composantes en `#RRGGBB`, bornées à l'octet."""
+    r, v, b = (int(min(255, max(0, round(float(c))))) for c in rgb[:3])
+    return f"#{r:02X}{v:02X}{b:02X}"
+
+
+def pourtour(sujet: np.ndarray) -> np.ndarray:
+    """Les pixels du sujet qui touchent le dehors — **en quatre voisins**.
+
+    **Le bord du cadre compte comme du dehors**, et c'est le même choix que le
+    contour : un sujet recadré sur sa boîte opaque touche les quatre bords, et
+    l'en excepter ferait disparaître son pourtour là où il est le plus visible.
+
+    Écrite une fois et employée trois fois — la mesure du fond, le rongement
+    conditionnel et la décontamination (D4) —, parce que trois définitions du
+    mot *bord* dans le même fichier auraient fini par compter trois choses.
+    """
+    borde = np.pad(sujet, 1, constant_values=False)
+    hauteur, largeur = sujet.shape
+    voisins = (
+        borde[0:hauteur, 1 : largeur + 1]
+        & borde[2 : hauteur + 2, 1 : largeur + 1]
+        & borde[1 : hauteur + 1, 0:largeur]
+        & borde[1 : hauteur + 1, 2 : largeur + 2]
+    )
+    return sujet & ~voisins
+
+
+def mesures_du_fond(rgba: np.ndarray, tolerance: int = 28) -> MesuresDuFond:
+    """Les deux mesures d'acceptation du fond, sur une image détourée (D3).
+
+    **Sur l'image détourée et pas sur le rendu final**, parce que c'est là que
+    la question se pose : la couleur du fond est encore lisible dans les pixels
+    que le détourage a rendus transparents — *effacer un pixel ne change pas sa
+    couleur* —, et le rendu final les a déjà recadrés, réduits et quantifiés.
+
+    `tolerance` est celle du détourage, et c'est ce qui fait de `colles` une
+    mesure et non une opinion : elle compte les pixels qu'un cran de plus aurait
+    emportés, dans la distance exacte que le moteur du bord emploie.
+
+    **Une image sans sujet ne ment pas** : tout est à zéro, et la couleur de fond
+    reste lue — un détourage qui a tout mangé se voit, et il se voit mieux avec
+    la couleur qu'il a prise pour du fond.
+    """
+    alpha = rgba[:, :, 3]
+    rgb = rgba[:, :, :3]
+    cible = _couleur_du_bord(rgb)
+    sujet = alpha > 0
+    compte = int(sujet.sum())
+    if compte == 0:
+        return MesuresDuFond(_hexa(cible), 0, 0, 0, 0, 0.0)
+    ecart = np.abs(rgb.astype(np.int16) - cible).max(axis=2)
+    colles = int((sujet & (ecart <= tolerance)).sum())
+    return MesuresDuFond(
+        fond=_hexa(cible),
+        sujet=compte,
+        bord=int(pourtour(sujet).sum()),
+        frange=int(((alpha > 0) & (alpha < 255)).sum()),
+        colles=colles,
+        part_collee=colles / compte,
+    )
 
 
 def boite_opaque(alpha: np.ndarray) -> tuple[int, int, int, int] | None:
@@ -765,34 +1196,51 @@ def peindre(masque: np.ndarray, traits: Sequence[Trait]) -> np.ndarray:
 # précisément là où le sprite est le plus visible.
 
 
-def etendre(masque: np.ndarray, pixels: int) -> np.ndarray:
-    """Dilatation carrée de `pixels`, par décalages bornés."""
+# ── La forme du pinceau : le carré, et la croix (D4) ─────────────────────────
+#
+# **Les deux ont raison, à des épaisseurs différentes, et le code n'en connaissait
+# qu'une.** À **une** épaisseur d'un pixel, la convention du pixel art est la
+# **croix** : le carré pose des pixels en diagonale des coins, et un sprite avec
+# des pixels de coin qui dépassent n'est pas ce que dessine un pixel artiste.
+# Au-delà d'un pixel, c'est l'inverse, et le code avait une bonne raison
+# d'imposer le carré : une croix répétée donne un **losange**, visible aux quatre
+# coins d'un sprite.
+#
+# La règle est donc *la croix à un pixel, le carré au-dessus*, et c'est
+# `contourner` qui l'applique — ces deux fonctions-ci ne font qu'offrir les deux
+# formes.
+CARRE = ((0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2))
+CROIX = ((0, 1), (1, 0), (1, 1), (1, 2), (2, 1))
+
+
+def etendre(masque: np.ndarray, pixels: int, *, croix: bool = False) -> np.ndarray:
+    """Dilatation de `pixels`, par décalages bornés — **carrée par défaut**."""
     if pixels <= 0:
         return masque
     hauteur, largeur = masque.shape
+    forme = CROIX if croix else CARRE
     grossi = masque
     for _ in range(pixels):
         borde = np.pad(grossi, 1, constant_values=False)
         suivant = np.zeros_like(grossi)
-        for dy in range(3):
-            for dx in range(3):
-                suivant |= borde[dy : dy + hauteur, dx : dx + largeur]
+        for dy, dx in forme:
+            suivant |= borde[dy : dy + hauteur, dx : dx + largeur]
         grossi = suivant
     return grossi
 
 
-def restreindre(masque: np.ndarray, pixels: int) -> np.ndarray:
-    """Érosion carrée de `pixels`. Le bord du cadre ronge, comme du fond."""
+def restreindre(masque: np.ndarray, pixels: int, *, croix: bool = False) -> np.ndarray:
+    """Érosion de `pixels`. Le bord du cadre ronge, comme du fond."""
     if pixels <= 0:
         return masque
     hauteur, largeur = masque.shape
+    forme = CROIX if croix else CARRE
     reduit = masque
     for _ in range(pixels):
         borde = np.pad(reduit, 1, constant_values=False)
         suivant = np.ones_like(reduit)
-        for dy in range(3):
-            for dx in range(3):
-                suivant &= borde[dy : dy + hauteur, dx : dx + largeur]
+        for dy, dx in forme:
+            suivant &= borde[dy : dy + hauteur, dx : dx + largeur]
         reduit = suivant
     return reduit
 
@@ -816,8 +1264,37 @@ def _rvb(hexa: str) -> tuple[int, int, int]:
 # ── Le contour ───────────────────────────────────────────────────────────────
 
 
-def contourner(rgba: np.ndarray, contour: Contour) -> np.ndarray:
-    """La sixième place — le trait de bord, retracé (E5, US-205).
+def _en_blocs(
+    masque: np.ndarray, pas: int, phase: tuple[int, int]
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Le masque vu à la maille du modèle — **au vote de majorité par bloc**.
+
+    Rend le masque de blocs et les deux tables d'indices qui ramènent chaque
+    pixel à son bloc. Le vote de majorité est le même que celui de la réduction
+    d'alpha (`_alpha_reduit`), et c'est voulu : deux façons de décider si un bloc
+    appartient au sujet auraient fini par tracer le contour sur une frontière que
+    la mise sur grille place ailleurs.
+    """
+    hauteur, largeur = masque.shape
+    lignes = (np.arange(hauteur) - phase[0]) // pas
+    colonnes = (np.arange(largeur) - phase[1]) // pas
+    lignes = lignes - lignes.min()
+    colonnes = colonnes - colonnes.min()
+    hauts, larges = int(lignes.max()) + 1, int(colonnes.max()) + 1
+    rangs = lignes[:, None] * larges + colonnes[None, :]
+    plat = rangs.ravel()
+    dedans = np.bincount(plat, weights=masque.ravel().astype(np.float64), minlength=hauts * larges)
+    total = np.bincount(plat, minlength=hauts * larges)
+    blocs = (dedans * 2 >= np.maximum(total, 1)).reshape(hauts, larges) & (
+        total.reshape(hauts, larges) > 0
+    )
+    return blocs, lignes, colonnes
+
+
+def contourner(
+    rgba: np.ndarray, contour: Contour, grille: "GrilleRetrouvee | None" = None
+) -> np.ndarray:
+    """La sixième place — le trait de bord, retracé (E5, US-205 ; repris en D4).
 
     **Deux cas ne tracent rien, et ce sont les deux formes du même fait** : une
     image sans aucun pixel opaque n'a pas de sujet, une image entièrement opaque
@@ -831,6 +1308,33 @@ def contourner(rgba: np.ndarray, contour: Contour) -> np.ndarray:
     l'on trace le bord de ce qui reste. C'est le même remplissage depuis le bord
     que le détourage, et c'est voulu : *une zone transparente qui ne touche
     aucun bord est enfermée* est une définition, pas deux.
+
+    ── Les deux régimes de D4, et pourquoi il en fallait deux ────────────────
+
+    **L'épaisseur se compte en *blocs du sprite*, pas en pixels de fichier**, et
+    c'est la seule unité qui ne mente pas. Une fois la case du projet posée,
+    l'image rendue *est* la case : un pixel y est un bloc, et le trait était déjà
+    juste. **Sans case**, l'image fait encore mille pixels de côté, un trait d'un
+    pixel y est un cheveu invisible, et il ne longe pas la frontière du sprite
+    mais les dentelures que le modèle a peintes à l'intérieur d'un bloc.
+
+    `grille` est ce que `retrouver_grille` a trouvé — la maille sur laquelle le
+    modèle a peint, D2. Quand elle répond, le trait se pose **sur cette
+    frontière-là** : le masque passe à la maille du modèle, le trait s'y calcule,
+    et il redescend en pixels. Un trait d'une épaisseur fait alors un bloc, ce
+    qui est ce qu'on voulait dire.
+
+    **Quand elle se tait, c'est une peinture, et l'on ne fait rien de neuf** : la
+    seule frontière qui existe est celle de l'image telle qu'elle est, et le
+    trait la longe comme avant la tranche. *Écrire le premier régime en supposant
+    que la mesure répond toujours ferait exactement le défaut que D2 venait de
+    retirer* — c'est écrit dans le plan, et c'est ce que ce `if` tient.
+
+    **Le trait d'une épaisseur se pose en croix** — voir `CARRE` et `CROIX`
+    au-dessus. Le carré posait des pixels dans le prolongement diagonal des
+    coins ; la croix ne le fait pas, et c'est la convention du pixel art. Au-delà
+    d'une épaisseur c'est le carré qui reprend, parce qu'une croix répétée donne
+    un losange.
     """
     sujet = rgba[:, :, 3] > 0
     if not sujet.any() or sujet.all():
@@ -840,13 +1344,40 @@ def contourner(rgba: np.ndarray, contour: Contour) -> np.ndarray:
         sujet = ~_remplir(~sujet, _graines_du_bord(~sujet))
 
     dehors, dedans = contour.parts
-    if dehors:
-        rgba = np.pad(
-            rgba, ((dehors, dehors), (dehors, dehors), (0, 0)), constant_values=0
-        )
-        sujet = np.pad(sujet, dehors, constant_values=False)
+    # **La croix à une épaisseur, le carré au-dessus** (D4). L'épaisseur totale
+    # de l'anneau est ce qui décide, et non l'un de ses deux côtés : c'est elle
+    # qu'on voit.
+    croix = dehors + dedans <= 1
 
-    anneau = etendre(sujet, dehors) & ~restreindre(sujet, dedans)
+    pas = grille.pas if grille is not None and grille.trouvee else 1
+    if pas <= 1:
+        if dehors:
+            rgba = np.pad(
+                rgba, ((dehors, dehors), (dehors, dehors), (0, 0)), constant_values=0
+            )
+            sujet = np.pad(sujet, dehors, constant_values=False)
+        anneau = etendre(sujet, dehors, croix=croix) & ~restreindre(
+            sujet, dedans, croix=croix
+        )
+    else:
+        # **Le débord se paie en pixels, l'anneau se calcule en blocs.** Un
+        # trait externe d'un bloc agrandit l'image d'un bloc de chaque côté, et
+        # c'est ce que l'écran annonce — la même règle qu'à un pixel, à l'unité
+        # près.
+        marge = dehors * pas
+        if marge:
+            rgba = np.pad(
+                rgba, ((marge, marge), (marge, marge), (0, 0)), constant_values=0
+            )
+            sujet = np.pad(sujet, marge, constant_values=False)
+        # La phase du modèle est celle de l'image d'avant le débord ; la marge
+        # ajoutée est un multiple du pas, donc elle ne la décale pas.
+        blocs, lignes, colonnes = _en_blocs(sujet, pas, grille.phase)
+        anneau_blocs = etendre(blocs, dehors, croix=croix) & ~restreindre(
+            blocs, dedans, croix=croix
+        )
+        anneau = anneau_blocs[lignes[:, None], colonnes[None, :]]
+
     sortie = rgba.copy()
     rouge, vert, bleu = _rvb(contour.couleur)
     sortie[anneau] = (rouge, vert, bleu, 255)
@@ -955,6 +1486,180 @@ def _recadrer(rgba: np.ndarray, recadrage: Recadrage) -> np.ndarray:
     return rgba[y0 : y1 + 1, x0 : x1 + 1]
 
 
+# ── Les quatre réductions, arrivées en D2 ────────────────────────────────────
+#
+# **La réduction était un choix pris dans le code.** Jusqu'ici `sur_grille`
+# ramenait au plus proche voisin sans que rien ne le dise : sur un dessin fin,
+# un trait d'un pixel de large avait une chance sur N de survivre — un tirage au
+# sort, pas une méthode. Les quatre méthodes rendent ce choix visible et
+# réglable, parce que c'est un parti pris de style (`domaine/recette.py`).
+#
+# **Trois d'entre elles ne demandent rien de plus** que NumPy et Pillow, déjà
+# là. La quatrième, `pixeloe`, tire `torch` derrière elle — mesuré le
+# 3 septembre 2026, y compris par son chemin dit « léger » — donc elle suit
+# exactement le régime du moteur par modèle : cherchée par `find_spec`, grisée
+# avec sa raison, importée seulement quand on la demande.
+
+
+def methode_disponible(methode: str) -> bool:
+    return raison_methode(methode) is None
+
+
+def raison_methode(methode: str) -> str | None:
+    """La raison du grisé, en clair — ou `None` si la méthode est là.
+
+    **On cherche le paquet, on ne l'importe pas**, pour la raison écrite en
+    toutes lettres dans `raison_moteur` : « le post-traitement ne touche jamais
+    le GPU » se **prouve** en regardant `sys.modules`, et `import pixeloe`
+    charge `torch`. Une machine où PixelOE est installé ferait tomber
+    `tests/test_t2.py` sans qu'aucune image ait été réduite.
+    """
+    if methode in (VOTE, LANCZOS, AU_PLUS_PROCHE):
+        return None
+    if methode != PIXELOE:
+        return f"méthode inconnue — « {methode} »"
+    try:
+        if importlib.util.find_spec("pixeloe") is None:
+            return "la méthode « traits épaissis » n'est pas installée"
+    except (ImportError, ValueError):  # noqa: BLE001 — l'absence n'est pas une panne
+        return "la méthode « traits épaissis » n'est pas installée"
+    return None
+
+
+def _alpha_reduit(alpha: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """L'alpha ramené à `taille` par **vote majoritaire de case**.
+
+    Moyenner la surface puis trancher à mi-hauteur *est* le vote majoritaire,
+    puisque l'alpha arrive déjà durci — le durcissement se fait avant la
+    réduction, jamais après (voir l'en-tête du module). C'est ce que la revue
+    externe recommande pour les deux chaînes : « dans les deux cas l'alpha est
+    binarisé par vote majoritaire par cellule ».
+
+    Le faire à part est ce qui empêche le contour de redevenir translucide : une
+    réduction douce appliquée aux quatre canaux d'un coup rendrait des bords à
+    demi transparents, que le reste de la chaîne prendrait pour du sujet.
+    """
+    reduit = Image.fromarray(alpha, mode="L").resize(taille, Image.Resampling.BOX)
+    return np.where(np.asarray(reduit) >= 128, 255, 0).astype(np.uint8)
+
+
+def _par_vote(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """La réduction en deux temps : le tri décide la forme, l'original la couleur.
+
+    C'est la méthode que `docs/bilan-v3.md` § 4 réclame et que la revue externe
+    place en tête de ses idées. Dans chaque case, on regarde quelle **couleur
+    triée** est la plus fréquente — c'est elle qui décide la forme — puis on
+    peint la case avec la **moyenne des pixels d'origine** qui portaient cette
+    couleur-là. On obtient le trait net d'un vote sans la perte de nuances d'un
+    vote.
+
+    **Les 32 teintes de travail ne sont pas la palette du projet.** Elles ne
+    servent qu'à voter ; la quantification vient bien après, sur la recette
+    (`Quantification`), et c'est ce qui garde la règle « la palette imposée
+    s'applique après la réduction, jamais avant ».
+    """
+    large, haut = taille
+    pas = max(1, min(rgb.shape[0] // max(1, haut), rgb.shape[1] // max(1, large)))
+    if pas < 2:
+        # Moins d'une case entière par carré : il n'y a rien à faire voter, et
+        # une réduction douce rend alors exactement ce qu'on lui demande.
+        return _par_lanczos(rgb, taille)
+
+    # On recale la source sur un multiple exact de la cible avant de découper.
+    # Sans ça, 1254 divisé par des cases de 19 rendrait 66 carrés au lieu de 64
+    # — le résultat ne serait plus à la taille demandée.
+    coupe = np.asarray(
+        Image.fromarray(rgb, mode="RGB").resize(
+            (large * pas, haut * pas), Image.Resampling.LANCZOS
+        )
+    )
+
+    triees = np.asarray(
+        Image.fromarray(coupe, mode="RGB").quantize(
+            colors=32, method=Image.Quantize.MEDIANCUT
+        )
+    )
+    etiquettes = triees.reshape(haut, pas, large, pas).transpose(0, 2, 1, 3)
+    etiquettes = etiquettes.reshape(haut * large, pas * pas)
+
+    cases = coupe.reshape(haut, pas, large, pas, 3).transpose(0, 2, 1, 3, 4)
+    cases = cases.reshape(haut * large, pas * pas, 3)
+
+    sortie = np.empty((haut * large, 3), dtype=np.uint8)
+    for rang in range(haut * large):
+        gagnante = int(np.bincount(etiquettes[rang]).argmax())
+        retenus = cases[rang][etiquettes[rang] == gagnante]
+        sortie[rang] = retenus.mean(axis=0).round().astype(np.uint8)
+    return sortie.reshape(haut, large, 3)
+
+
+def _par_lanczos(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    return np.asarray(
+        Image.fromarray(rgb, mode="RGB").resize(taille, Image.Resampling.LANCZOS)
+    )
+
+
+def _par_pixeloe(rgb: np.ndarray, taille: tuple[int, int]) -> np.ndarray:
+    """PixelOE — les traits fins épaissis **avant** la réduction, puis choisis.
+
+    L'astuce tient dans l'ordre : dilater et éroder selon une carte de contraste
+    local avant de réduire fait survivre les traits d'un pixel de large, au lieu
+    de les noyer dans une moyenne. Mesuré le 3 septembre : la hampe de la lance
+    du garde reste un trait continu là où les trois autres méthodes la brisent.
+
+    **Son option `colors` n'est pas employée**, et c'est un défaut relevé au
+    banc : elle quantifie correctement puis rappelle `match_color`, qui remet
+    les milliers de couleurs d'origine — 470 couleurs rendues pour 32 demandées.
+    La quantification reste donc où elle doit être, sur la recette.
+
+    Il ne travaille que sur des images carrées **et** ne rend pas exactement la
+    taille demandée : on l'y ramène au plus proche, ce qui ne coûte rien puisque
+    l'écart est d'un ou deux carrés.
+    """
+    if raison_methode(PIXELOE) is not None:
+        raise MoteurAbsent("la méthode « traits épaissis » n'est pas installée")
+    from pixeloe.legacy.pixelize import pixelize  # type: ignore[import-not-found]
+
+    large, haut = taille
+    vise = max(1, max(large, haut))
+    rendu = pixelize(
+        rgb[:, :, ::-1].copy(),
+        mode="contrast",
+        target_size=vise,
+        patch_size=max(2, min(rgb.shape[:2]) // vise),
+        thickness=2,
+        colors=None,
+        no_upscale=True,
+    )
+    rendu = np.ascontiguousarray(rendu[:, :, ::-1])
+    if rendu.shape[1] == large and rendu.shape[0] == haut:
+        return rendu
+    return np.asarray(
+        Image.fromarray(rendu, mode="RGB").resize(taille, Image.Resampling.NEAREST)
+    )
+
+
+_REDUCTIONS = {VOTE: _par_vote, LANCZOS: _par_lanczos, PIXELOE: _par_pixeloe}
+
+
+def _reduire(image: Image.Image, taille: tuple[int, int], methode: str) -> Image.Image:
+    """L'image RGBA ramenée à `taille`, par la méthode demandée.
+
+    **`proche` passe par le chemin d'avant, aux quatre canaux d'un coup.** Ce
+    n'est pas de la paresse : c'est ce qui garantit qu'une recette d'avant D2
+    rend exactement la même image qu'avant. Les trois autres séparent la couleur
+    de l'alpha, parce qu'elles moyennent — et moyenner l'alpha rendrait des
+    bords translucides que la chaîne prendrait ensuite pour du sujet.
+    """
+    if methode == AU_PLUS_PROCHE or methode not in _REDUCTIONS:
+        return image.resize(taille, Image.Resampling.NEAREST)
+
+    rgba = np.asarray(image.convert("RGBA"))
+    couleurs = _REDUCTIONS[methode](np.ascontiguousarray(rgba[:, :, :3]), taille)
+    alpha = _alpha_reduit(np.ascontiguousarray(rgba[:, :, 3]), taille)
+    return Image.fromarray(np.dstack([couleurs, alpha]), mode="RGBA")
+
+
 def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     """Le sujet, ramené à la taille de bloc demandée.
 
@@ -985,7 +1690,7 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     if not case:
         facteur = cible / max(largeur, hauteur)
         taille = (max(1, round(largeur * facteur)), max(1, round(hauteur * facteur)))
-        return np.asarray(image.resize(taille, Image.Resampling.NEAREST))
+        return np.asarray(_reduire(image, taille, grille.methode))
 
     boite = boite_opaque(rgba[:, :, 3])
     if boite is None:
@@ -993,15 +1698,22 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     x0, y0, x1, y1 = boite
     sujet = image.crop((x0, y0, x1 + 1, y1 + 1))
 
-    dedans = max(1, round(cible * max(1, min(100, grille.occupation)) / 100))
+    # **La boîte grandit avec le sujet, au lieu de le rogner** (tranche des
+    # tailles, 3 septembre 2026). Le plafond de 100 % était écrit ici deux fois
+    # — dans le `min(100, …)` de l'occupation et dans les `min(cible, …)` de la
+    # taille — et il fermait au produit les bâtiments, les arbres et les tours.
+    # En dessous de 100 % rien ne change : le côté du canevas reste la case du
+    # projet, et l'image sort au pixel près comme avant. Voir `cote_du_canevas`.
+    dedans = cote_du_sujet(cible, grille.occupation)
+    cote = cote_du_canevas(cible, grille.occupation)
     facteur = dedans / max(sujet.width, sujet.height)
     taille = (
-        max(1, min(cible, round(sujet.width * facteur))),
-        max(1, min(cible, round(sujet.height * facteur))),
+        max(1, min(cote, round(sujet.width * facteur))),
+        max(1, min(cote, round(sujet.height * facteur))),
     )
-    reduit = sujet.resize(taille, Image.Resampling.NEAREST)
+    reduit = _reduire(sujet, taille, grille.methode)
 
-    toile = Image.new("RGBA", (cible, cible), (0, 0, 0, 0))
+    toile = Image.new("RGBA", (cote, cote), (0, 0, 0, 0))
     # **Centré sur sa boîte, puis décalé — et jamais hors de la case** (E17). Le
     # centrage horizontal se fait sur la boîte du sujet ; un bras tendu déplace
     # donc le corps sans que la taille ait bougé, et le décalage est ce qui
@@ -1009,10 +1721,10 @@ def sur_grille(rgba: np.ndarray, grille: Grille, *, case: bool) -> np.ndarray:
     # case couperait le sprite en silence, et une case existe justement pour que
     # rien n'en sorte. Aux bords, les boutons cessent d'avoir un effet — ce qui
     # se voit, et c'est mieux qu'une image rognée.
-    x = (cible - reduit.width) // 2
+    x = (cote - reduit.width) // 2
     if grille.decalage:
-        x = max(0, min(cible - reduit.width, x + grille.decalage))
-    y = cible - reduit.height if grille.ancrage == BAS else (cible - reduit.height) // 2
+        x = max(0, min(cote - reduit.width, x + grille.decalage))
+    y = cote - reduit.height if grille.ancrage == BAS else (cote - reduit.height) // 2
     toile.paste(reduit, (x, y))
     return np.asarray(toile)
 
@@ -1142,9 +1854,25 @@ def _detourer(rgba: np.ndarray, passe: Passe) -> np.ndarray:
 
     alpha = np.minimum(rgba[:, :, 3], neuf)
     alpha = durcir(alpha, passe.seuil_alpha)
-    alpha = ronger(alpha, passe.durcissement)
+
+    # ── Les deux réparations de bord de D4 ───────────────────────────────────
+    #
+    # **Elles partagent une seule mesure** : la couleur que *cette passe-ci*
+    # vient de retirer. Aucun des quatre moteurs ne la déclare — le modèle ne
+    # rend qu'un masque —, mais tous laissent derrière eux les pixels qu'ils ont
+    # ouverts, et *effacer un pixel ne change pas sa couleur* (`AGENTS.md`,
+    # point 5). Le fond de la passe se lit donc dans son propre résultat.
+    #
+    # **L'ordre n'est pas indifférent** : on ronge d'abord, on décontamine
+    # ensuite. Ronger après aurait retiré des pixels qu'on venait de repeindre,
+    # et le travail de la seconde aurait été jeté par la première.
+    fond = _couleur_enlevee(rgba[:, :, :3], rgba[:, :, 3], alpha)
+    alpha = ronger_conditionnel(rgba[:, :, :3], alpha, passe.durcissement, fond)
     sortie = rgba.copy()
     sortie[:, :, 3] = alpha
+    sortie[:, :, :3] = decontaminer(
+        rgba[:, :, :3], alpha, fond, passe.tolerance
+    )
     return sortie
 
 
@@ -1260,7 +1988,17 @@ def queue(rgba: np.ndarray, recette: Recette) -> np.ndarray:
     # Les deux places de E5. Le contour après les miettes et après les
     # couleurs ; la main après tout, y compris après lui.
     if recette.contours is not None and not recette.dort(CONTOURS):
-        rgba = contourner(rgba, recette.contours)
+        # **Les deux régimes du trait** (D4). Sur une image qu'on vient de poser
+        # sur la case du projet, un pixel *est* un bloc du sprite et le trait
+        # était déjà juste : on ne mesure rien, et c'est aussi ce qui évite de
+        # payer un balayage de profils à chaque glissement de curseur — le cas
+        # de presque toutes les recettes. Sans case, la seule maille qui existe
+        # est celle sur laquelle le modèle a peint, et `retrouver_grille` sait
+        # la rendre **ou se taire**.
+        sur_case = recette.grille is not None and not recette.dort(GRILLE)
+        rgba = contourner(
+            rgba, recette.contours, None if sur_case else retrouver_grille(rgba)
+        )
 
     if recette.main is not None and not recette.dort(LA_MAIN):
         rgba = retoucher(rgba, recette.main)
@@ -1273,7 +2011,7 @@ def appliquer(recette: Recette, octets: bytes) -> Rendu:
 
     Ne lève pas quand le détourage a tout mangé : elle rend l'image vide telle
     quelle. « Un détourage qui a mangé le sujet se voit immédiatement et se
-    reprend avec d'autres réglages » (`docs/PLAN.md`, T2) — se voir suppose
+    reprend avec d'autres réglages » (`docs/archive/plan-versions-tenues.md`, T2) — se voir suppose
     d'être rendu, pas d'être refusé.
     """
     return finir(detourer(recette, octets), recette)
@@ -1348,3 +2086,324 @@ def _periode(profil: np.ndarray, maximum: int) -> tuple[int, float]:
         if correlations[pas] >= 0.9 * crete and correlations[pas] >= max(voisines):
             return pas, correlations[pas]
     return max(correlations, key=correlations.__getitem__), crete
+
+
+# ── La grille du modèle, retrouvée — D2, seconde moitié ──────────────────────
+#
+# **`mesurer_grille` reste juste au-dessus et ne bouge pas.** C'est la version
+# faible ; elle est gardée parce que les bancs s'appuient dessus pour chiffrer
+# l'écart entre les deux, et parce qu'un piège corrigé ne s'efface pas du dépôt.
+# Ce qui suit est la version qui **décide**, et c'est elle que l'écran montre.
+#
+# Trois écarts, et chacun vient d'une mesure du banc
+# `essais/essai_grille_retrouvee.py` — gratuit : il relit des images déjà sur le
+# disque et fabrique les autres lui-même.
+#
+# **1. La somme des canaux, alpha compris, au lieu des niveaux de gris.** Sur des
+# images pleines, l'écart est mince et il faut le dire ainsi : 200 cas justes
+# contre 199 sur le lot de réception. Ce qui décide est ailleurs, et c'est franc
+# — le produit détecte sur l'image **détourée**, et il existe des sprites dont
+# toute la grille vit dans la silhouette : un sujet d'une seule teinte sur un
+# fond peint sans grille. Le gris jette l'alpha en entrant, donc il cherche une
+# période dans le fond et répond **2 à tous les coups**
+# (`tests/test_d2.py::test_l_alpha_porte_une_grille…`). Deux couleurs de
+# luminance égale, elles, disparaissent aussi l'une dans l'autre en gris — le
+# cas est réel, il est simplement plus rare que le précédent.
+#
+# **2. Le peigne, qui dit s'il y a une grille du tout**, et c'est la pièce qui
+# manquait. Sans lui, l'autocorrélation d'une peinture décroît doucement depuis
+# le pas 2 sans jamais faire de bosse ; la règle du plus petit pas qualifié
+# attrape alors ce 2 — il n'a pas de voisin de gauche à qui se comparer — et la
+# mesure répond **2 avec une netteté de 0,83** sur une image qui n'a aucune
+# grille. C'est très exactement ce que `mesurer_grille` fait aujourd'hui.
+#
+# **3. La borne de balayage vient du dépôt**, et elle vaut 32 px. Voir
+# `PAS_MAXIMAL`, où les trois chiffres qui circulaient avant la mesure sont
+# écrits avec ce qu'ils coûtaient.
+#
+# **Et une quatrième chose qui n'y est pas, mesurée deux fois puis écartée.** Le
+# banc porte un arbitre d'octave par aller-retour — réduire au pas candidat,
+# réagrandir, mesurer ce qui a changé — et il **abîme** le détecteur. Sur le
+# corpus fabriqué : 16 cas sur 19 contre 19 sur 19 sans lui. Sur le lot de
+# réception bâti à partir de vraies images (`essais/essai_grille_produit.py`) :
+# **170 sur 204 contre 200, et 30 erreurs d'octave qui n'existent pas sans lui.**
+#
+# La raison est mécanique : sur une image floue à pas 13,1, la reconstruction au
+# pas 13 est imparfaite tandis que celle au pas 2 est presque parfaite — des
+# blocs de deux pixels sont uniformes dans n'importe quelle image lisse.
+# L'arbitre choisit donc petit **pour la mauvaise raison**, et il ne rattrape
+# rien : la règle du plus petit pas qualifié rend déjà zéro erreur d'octave sur
+# les deux lots.
+
+
+#: Le pas le plus grossier qu'on cherche, en pixels de l'image reçue.
+#:
+#: **Mesuré, pas décrété.** Le banc a passé les 149 images brutes du dépôt aux
+#: quatre détecteurs le 3 septembre 2026 : le pas le plus grossier trouvé est de
+#: **32 px**, et 99 % des pas tiennent sous 22. Trois chiffres circulaient avant
+#: cette mesure, et aucun n'était bon :
+#:
+#: - **80 px**, la valeur que le plan visait. Elle n'a jamais été relevée — elle
+#:   ressemble à 5 × 16 plus qu'à un chiffre mesuré, et la revue externe le
+#:   disait déjà ;
+#: - **24 px**, la borne des détecteurs de référence. Elle **coupe** le dépôt par
+#:   le haut : le jeu « vignettes » monte à 32 ;
+#: - **64 px**, la borne de `mesurer_grille`. Deux fois plus large que ce que le
+#:   dépôt produit.
+#:
+#: ⚠️ **Une affirmation héritée n'est pas reproduite ici, et c'est écrit plutôt
+#: que tu.** Le plan et le bilan disent tous deux *« relever la borne n'est pas
+#: gratuit : le détecteur y perd de la finesse »*. Mesuré le 3 septembre 2026
+#: (`essais/essai_grille_produit.py`), **cet effet n'apparaît pas** : à 64 la
+#: réussite est exactement celle de 32, et sur les 149 images brutes du dépôt la
+#: borne ne change **rien du tout** — 61 annonces, de 24 à 128. La raison est
+#: mécanique : le pas retenu est le *plus petit* qualifié, donc élargir la
+#: recherche ne lui donne pas d'occasion de se tromper.
+#:
+#: **Ce qui décide n'est donc pas ce qu'une grande borne coûterait, c'est ce
+#: qu'une petite borne coupe** : à 24, douze cas du lot de réception passent de
+#: « trouvé » à « renoncé ». 32 est la plus petite borne qui couvre le dépôt, et
+#: c'est à ce titre qu'elle est ici — pas parce qu'aller plus haut ferait mal.
+#: *(Un seul indice va dans le sens de l'affirmation héritée, et il est trop
+#: mince pour la fonder : à 80, un cas sur 204 sort en franche erreur, le seul
+#: du banc.)*
+PAS_MAXIMAL = 32
+
+#: Le pas le plus fin qu'on cherche. En dessous il n'y a plus de bloc : un pas
+#: de un, c'est l'image elle-même, et toutes les images en portent un.
+PAS_MINIMAL = 2
+
+#: Sous cette valeur, le contraste ne tombe pas sur les multiples du pas trouvé
+#: et il n'y a **pas de grille** — seulement une image lisse dont
+#: l'autocorrélation décroît. Mesuré le 3 septembre 2026 sur les deux
+#: illustrations de l'auteur : **0,12** pour la peinture du nain, **0,69** pour
+#: le porteur de torche. Rien entre les deux ; le seuil est posé au milieu du
+#: vide, comme `NETTETE_MINIMALE` avant lui.
+PEIGNE_MINIMAL = 0.35
+
+# ── Ce que la détection dit quand elle renonce ───────────────────────────────
+#
+# **Renoncer n'est pas une panne, c'est la bonne réponse.** Sur une peinture, il
+# n'y a aucune grille à retrouver et en inventer une ne rend service à personne.
+# Ce qui distingue cette version de `mesurer_grille` tient là : l'ancienne
+# répondait « 2 » et y croyait, celle-ci se tait **et dit pourquoi**.
+#
+# Les trois phrases partent telles quelles à l'écran, donc elles s'adressent à
+# l'auteur et non à un développeur : elles nomment ce qui a été vu, et elles
+# disent ce qu'il reste à faire.
+
+SANS_GRILLE = (
+    "le modèle a peint une image lisse : il n'y a aucune grille à retrouver, "
+    "c'est la taille demandée qui décide des carrés"
+)
+IMAGE_TROP_PETITE = (
+    "l'image est trop petite pour qu'on y cherche une grille"
+)
+IMAGE_UNIE = "l'image est d'une seule teinte : il n'y a rien à mesurer"
+
+
+@dataclass(frozen=True)
+class GrilleRetrouvee:
+    """Le pas sur lequel le modèle a peint — **ou la raison de renoncer**.
+
+    `pas` vaut zéro quand la détection renonce, et `raison` dit alors pourquoi,
+    en français et à l'auteur. Les deux ne se contredisent jamais : `trouvee`
+    est la seule lecture à faire, et elle exige les deux à la fois.
+
+    **Les deux nombres qui restent ne servent pas à décider, ils servent à
+    comprendre.** `nettete` dit à quel point le profil se répète, `peigne` dit si
+    ce qui se répète tombe bien sur les multiples du pas. Une netteté haute avec
+    un peigne bas est le portrait exact d'une peinture, et c'est l'état que la
+    version d'avant prenait pour une grille.
+
+    `carres` est le côté de l'image **compté en cases de ce pas-là** : c'est la
+    lecture dont l'auteur a besoin pour reposer la taille à la main, puisque
+    c'est en carrés que la cible se règle et non en pixels de l'image reçue.
+
+    ── `phase`, ajoutée en D4 — *où* la grille commence ──────────────────────
+
+    **Le pas seul ne suffit pas à poser un trait dessus.** Une grille de modèle
+    ne commence jamais au pixel zéro : le sujet est centré, la marge est ce
+    qu'elle est, et un peigne calé au mauvais endroit mesure les creux en croyant
+    mesurer les dents. La recherche de phase existait déjà — `_peigne` la fait à
+    chaque appel depuis D2 — mais elle était jetée aussitôt trouvée.
+
+    Deux nombres et non un, `(ligne, colonne)` : rien ne garantit que les deux
+    directions commencent au même endroit, et supposer que si aurait décalé le
+    trait d'un demi-bloc dans un cas sur deux. Ils valent zéro quand la détection
+    renonce, ce qui est sans conséquence — on ne s'en sert pas.
+    """
+
+    pas: int = 0
+    nettete: float = 0.0
+    peigne: float = 0.0
+    carres: int = 0
+    phase: tuple[int, int] = (0, 0)
+    raison: str | None = None
+
+    @property
+    def trouvee(self) -> bool:
+        return self.pas >= PAS_MINIMAL and self.raison is None
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "pas": self.pas,
+            "nettete": round(self.nettete, 3),
+            "peigne": round(self.peigne, 3),
+            "carres": self.carres,
+            "phase": list(self.phase),
+            "raison": self.raison,
+        }
+
+
+def _profils_des_canaux(rgba: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Le contraste entre voisins, **canal par canal et alpha compris**.
+
+    Un profil par direction : pour les colonnes, la somme sur toute la hauteur
+    des écarts entre une colonne et sa voisine. Sur une image posée sur une
+    grille, ce profil est presque nul à l'intérieur d'un bloc et saute à chaque
+    frontière — c'est cette dent de scie dont on cherche la période.
+
+    **Les quatre canaux s'additionnent au lieu d'être fondus en un gris.** Voir
+    la note qui ouvre cette section : le gris confond des couleurs qui sautent
+    aux yeux, et il efface la silhouette, qui est le contraste le plus franc
+    d'une image détourée.
+    """
+    canaux = rgba.astype(np.float64)
+    return (
+        np.abs(np.diff(canaux, axis=1)).sum(axis=(0, 2)),
+        np.abs(np.diff(canaux, axis=0)).sum(axis=(1, 2)),
+    )
+
+
+def _peigne(profil: np.ndarray, pas: int) -> tuple[float, int]:
+    """**Le contraste tombe-t-il sur les multiples du pas, ou n'importe où ?**
+
+    On compare ce que le profil porte sur les **dents** du peigne — les
+    positions multiples du pas — à ce qu'il porte entre elles, un demi-pas plus
+    loin. Sur une vraie grille, presque tout est sur les dents et le rapport
+    approche 1 ; sur une peinture, il y en a autant partout et le rapport tombe
+    vers 0.
+
+    La phase est cherchée, et elle n'est pas optionnelle : la grille d'un modèle
+    ne commence jamais au pixel zéro, et un peigne calé au mauvais endroit
+    mesurerait les creux en croyant mesurer les dents.
+
+    **Elle est rendue depuis D4**, avec le rapport. Elle était trouvée puis
+    jetée, et le contour en avait besoin : un trait posé sur la bonne maille mais
+    au mauvais départ tombe à cheval sur deux blocs, ce qui est la moitié du
+    défaut qu'on répare. *Le profil est celui des écarts entre voisins* : une
+    dent à l'indice `i` est la frontière entre les rangs `i` et `i + 1`, donc la
+    grille commence au rang `i + 1`.
+    """
+    meilleur, sa_phase = 0.0, 0
+    for phase in range(pas):
+        dents = profil[phase::pas]
+        creux = profil[(phase + pas // 2) % pas :: pas]
+        largeur = min(dents.size, creux.size)
+        if largeur < 3:
+            continue
+        sur, entre = float(dents[:largeur].mean()), float(creux[:largeur].mean())
+        if sur + entre > 0:
+            rapport = (sur - entre) / (sur + entre)
+            if rapport > meilleur:
+                meilleur, sa_phase = rapport, (phase + 1) % pas
+    return meilleur, sa_phase
+
+
+def retrouver_grille(
+    rgba: np.ndarray, maximum: int = PAS_MAXIMAL
+) -> GrilleRetrouvee:
+    """Sur quelle grille le modèle a-t-il peint cette image-là ?
+
+    **Descriptive, et elle le reste.** La cible du produit est demandée, jamais
+    déduite de l'image reçue (US-61) : ce que cette fonction rend est montré à
+    l'auteur, jamais appliqué dans son dos. Ce qu'elle ajoute est qu'elle est
+    désormais **assez juste pour être montrée**, et qu'elle sait se taire.
+
+    Reçoit un **tableau**, et c'est délibéré : `mesurer_grille` prend des octets
+    puis convertit en gris, donc elle ne saurait ni recevoir l'image que le
+    produit a déjà en main ni voir l'alpha. Les deux lui manquaient.
+
+    Trois épreuves, dans cet ordre, et chacune peut renoncer :
+
+    1. **l'autocorrélation propose un pas** — le plus petit qui approche la
+       crête, la règle qui évite de rapporter une harmonique au lieu de la
+       fondamentale ;
+    2. **la netteté dit si le profil se répète assez** pour qu'on parle de
+       période (`NETTETE_MINIMALE`) ;
+    3. **le peigne dit s'il s'agit d'une grille** et pas d'une image simplement
+       lisse (`PEIGNE_MINIMAL`). C'est la seule des trois qui sépare une
+       peinture d'un faux pixel art, et c'est celle qui manquait au produit.
+
+    **En cas de doute, on vise fin**, et la règle du plus petit pas qualifié est
+    exactement cela. Ce n'est pas une préférence : une grille un peu trop fine se
+    rattrape presque parfaitement — chaque case du vrai pas reste d'une seule
+    couleur —, alors qu'une grille trop grossière fond deux cases en une et
+    détruit le sujet sans retour.
+    """
+    profils = _profils_des_canaux(rgba)
+    borne = min(maximum, min(profil.size for profil in profils) // 4)
+    if borne < PAS_MINIMAL:
+        return GrilleRetrouvee(raison=IMAGE_TROP_PETITE)
+
+    # La meilleure proposition des deux directions, et la crête la plus haute
+    # qu'on ait vue — celle-là part même quand on renonce, parce qu'un chiffre
+    # qui explique le refus vaut mieux qu'un refus nu.
+    propose, sa_nettete, crete_vue = 0, 0.0, 0.0
+    unie = True
+    for profil in profils:
+        centre = profil - profil.mean()
+        variance = float((centre * centre).mean())
+        if variance == 0:
+            continue
+        unie = False
+        correlations = {
+            pas: float((centre[:-pas] * centre[pas:]).mean() / variance)
+            for pas in range(PAS_MINIMAL, borne + 1)
+        }
+        crete = max(correlations.values())
+        crete_vue = max(crete_vue, crete)
+        if crete < NETTETE_MINIMALE:
+            continue
+        for pas in sorted(correlations):
+            voisines = (
+                correlations.get(pas - 1, -1.0),
+                correlations.get(pas + 1, -1.0),
+            )
+            if correlations[pas] >= 0.9 * crete and correlations[pas] >= max(voisines):
+                if correlations[pas] > sa_nettete:
+                    propose, sa_nettete = pas, correlations[pas]
+                break
+
+    if unie:
+        return GrilleRetrouvee(raison=IMAGE_UNIE)
+    if propose < PAS_MINIMAL:
+        return GrilleRetrouvee(nettete=round(crete_vue, 3), raison=SANS_GRILLE)
+
+    # **Le peigne a le dernier mot**, et il se lit sur les deux directions : une
+    # grille est carrée, donc un pas qui ne se retrouve dans aucune des deux
+    # n'en est pas une.
+    #
+    # **Les deux phases sortent d'ici depuis D4**, chacune de sa direction : le
+    # premier profil est celui des colonnes, le second celui des lignes. C'est
+    # `GrilleRetrouvee.phase` — voir sa docstring pour la raison d'en garder
+    # deux.
+    horizontal, phase_x = _peigne(profils[0], propose)
+    vertical, phase_y = _peigne(profils[1], propose)
+    peigne = max(horizontal, vertical)
+    if peigne < PEIGNE_MINIMAL:
+        return GrilleRetrouvee(
+            nettete=round(sa_nettete, 3),
+            peigne=round(peigne, 3),
+            raison=SANS_GRILLE,
+        )
+
+    hauteur, largeur = rgba.shape[:2]
+    return GrilleRetrouvee(
+        pas=propose,
+        nettete=round(sa_nettete, 3),
+        peigne=round(peigne, 3),
+        carres=max(1, round(max(hauteur, largeur) / propose)),
+        phase=(phase_y, phase_x),
+    )

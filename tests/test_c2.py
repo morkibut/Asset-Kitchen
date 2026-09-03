@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de C2 — le lot plié.
 
-Un test par critère de `docs/PLAN.md` § C2, nommé d'après lui.
+Un test par critère de `docs/archive/plan-versions-tenues.md` § C2, nommé d'après lui.
 
 **Aucun test de ce fichier ne coûte un centime**, et deux d'entre eux le
 prouvent plutôt que de l'affirmer, en comptant les appels du double. C'est aussi
@@ -186,14 +186,25 @@ def test_la_planche_se_deplie_sans_qu_on_le_demande(client, double):
 
     assert lot["statut"] == "reussie"
     nes = [a for a in _grille(client) if a["generation"] == lot["identifiant"]]
-    assert len(nes) == 4
+    # Quatre corps, plus la planche elle-même depuis G16. Le compte des *corps*
+    # est ce que cet essai garde : c'est lui qui dit qu'aucun geste n'a été
+    # demandé, et il ne bouge pas d'un cran.
+    assert len([a for a in nes if a["rang"] >= 100]) == 4
 
 
-def test_la_planche_n_entre_pas_en_bibliotheque(client, double):
-    """**Ce qui sort du produit reste des images séparées.** La feuille
-    assemblée est le brut de sa génération — payée, gardée, redépliable — et
-    n'est pas un asset : sans ça, « aucune feuille assemblée n'est livrable »
-    cesserait d'être vrai par construction pour devenir un filtre à tenir."""
+def test_la_planche_entre_en_bibliotheque_sans_se_confondre_avec_ses_morceaux(
+    client, double
+):
+    """**Ce qui a été payé cesse d'être invisible** (G16).
+
+    L'invariant de C2 — *le pliage est une ruse d'appel, jamais un format de
+    livraison* — est renversé : la feuille entre en bibliothèque et s'y regarde.
+    Le plan le prévoyait pour `P1` ; `G16` en prend la première moitié — voir —
+    et laisse la seconde — redécouper.
+
+    **Ce que l'essai tient, c'est qu'elle ne se fait pas passer pour un
+    sprite** : recette vide, aucune pose, et le coût de l'appel sur elle plutôt
+    que sur ses morceaux."""
     double.rendre = lambda: planche_sujets(4)
     personnage = _creer(client)
     poses = [p["identifiant"] for p in _plan(client)][:4]
@@ -202,15 +213,32 @@ def test_la_planche_n_entre_pas_en_bibliotheque(client, double):
     nes = [a for a in _grille(client) if a["generation"] == lot["identifiant"]]
     # L'emplacement occupe le rang 0 ; les images dépliées vivent à 100 et
     # au-dessus, comme les découpes de T5 et pour la même raison.
-    assert all(a["rang"] >= 100 for a in nes)
-    assert client.get(f"/api/assets/{lot['identifiant']}-0").status_code == 404
+    assert len([a for a in nes if a["rang"] >= 100]) == 4
+
+    reponse = client.get(f"/api/assets/{lot['identifiant']}-0")
+    assert reponse.status_code == 200, "la planche est une image de la bibliothèque"
+    planche = reponse.json()
+    assert planche["rang"] == 0
+    # **Elle n'est pas un sprite** : aucune recette, donc ni grille, ni
+    # réduction de couleurs, ni détourage du projet posés sur elle.
+    assert not planche["traite"]
+    # **Elle n'a pas de pose**, et c'est ce qui la tient hors de la matrice.
+    assert planche["pose"] is None
+    assert planche["label"].startswith("planche 4 cases")
+    # **Le coût de l'appel est sur elle**, et sur aucun de ses morceaux.
+    assert planche["consomme"] > 0
+    assert all(a["consomme"] == 0 for a in nes if a["rang"] >= 100)
+    # Et la matrice du personnage ne la voit pas : quatre cases pleines, une
+    # image chacune.
+    cases = _cases(client, personnage["identifiant"])[:4]
+    assert all(len(c["images"]) == 1 for c in cases)
 
 
 def test_les_corps_survivent_a_un_index_efface(client, double, tmp_path):
     """Les fichiers font foi. Une image dépliée est un asset entier, écrit à
-    côté de ses octets — la reconstruction la retrouve, et **ne ressuscite pas
-    la planche pour autant** : un index refait ne doit pas faire entrer en
-    bibliothèque une feuille que le produit dit ne pas livrer."""
+    côté de ses octets — la reconstruction la retrouve, **et la planche avec**
+    depuis G16 : c'est ce rattrapage-là qui fait apparaître les planches payées
+    avant que le produit ne sache les montrer."""
     import asyncio
 
     from atelier.services import Atelier
@@ -227,9 +255,10 @@ def test_les_corps_survivent_a_un_index_efface(client, double, tmp_path):
     asyncio.run(refait.ouvrir())
 
     nes = [a for a in refait.assets.recents() if a.generation == lot["identifiant"]]
-    assert len(nes) == 4
-    assert all(a.rang >= 100 for a in nes)
-    assert refait.assets.lire(f"{lot['identifiant']}-0") is None
+    assert len([a for a in nes if a.rang >= 100]) == 4
+    planche = refait.assets.lire(f"{lot['identifiant']}-0")
+    assert planche is not None, "un index refait retrouve la planche"
+    assert planche.recette.vide and planche.pose is None
 
 
 # ── « Un lot qui revient avec huit images pour neuf demandées est refusé :
@@ -282,14 +311,29 @@ def test_un_lot_refuse_se_relance_d_un_geste(client, double):
     assert all(len(c["images"]) == 1 for c in _cases(client, personnage["identifiant"]))
 
 
-def test_un_lot_qui_revient_trop_plein_est_refuse_aussi(client, double):
-    """Le refus est **arithmétique**, pas « moins que demandé » : dix images
-    pour neuf est aussi faux que huit, et c'est ce qui le rend tenable."""
+def test_un_lot_qui_revient_trop_plein_n_est_plus_refuse(client, double):
+    """**Le critère de C2 s'est inversé le 3 septembre 2026** (R6, US-367).
+
+    Il disait : *le refus est arithmétique, pas « moins que demandé » ; dix
+    images pour neuf est aussi faux que huit, et c'est ce qui le rend tenable*.
+    Tenable, il l'était ; **payé, il l'était aussi** — quatre planches sur treize
+    du banc d'animation jetées pour un sujet de trop, trente-et-un pour cent des
+    appels perdus sur un geste dont c'est le régime normal.
+
+    Ce qui reste vrai de la règle est gardé ici, et c'est le plus important :
+    **rien n'entre tant que personne n'a regardé**. Ce qui change est ce qu'on
+    fait ensuite — un choix au lieu d'une relance. Le détail vit dans
+    `tests/test_r6.py`."""
     double.rendre = lambda: planche_sujets(10)
     personnage = _creer(client)
     lot = _lot(client, personnage["identifiant"], _neuf_poses(client))
-    assert lot["statut"] == "echouee"
-    assert "10 images pour 9 demandées" in lot["emplacements"][0]["raison"]
+
+    assert lot["statut"] == "reussie", "la planche est payée, entière, et gardée"
+    assert lot["emplacements"][0]["raison"] is None, "un choix n'est pas un échec"
+    assert lot["pliage"]["attend_un_choix"] is True
+    assert lot["pliage"]["trouvees"] == 10
+    assert lot["pliage"]["surplus"] == 1
+    assert [a for a in _grille(client) if a["generation"] == lot["identifiant"]] == []
 
 
 # ── « Le compte d'images est le **seul** refus automatique — les mesures de
@@ -407,7 +451,11 @@ def test_un_lot_recu_mais_non_deplie_se_range_au_redemarrage(client, atelier, do
     asyncio.run(atelier.ouvrir())
 
     assert double.appels == avant, "reprendre un lot ne repaie rien"
-    assert len([a for a in _grille(client) if a["generation"] == lot["identifiant"]]) == 4
+    repris = [a for a in _grille(client) if a["generation"] == lot["identifiant"]]
+    assert len([a for a in repris if a["rang"] >= 100]) == 4
+    # La planche n'a pas été touchée par le défaisage, et la reprise ne l'a pas
+    # doublée : un asset par rang, ici comme partout.
+    assert len([a for a in repris if a["rang"] == 0]) == 1
 
 
 def test_un_lot_coupe_en_vol_ne_se_relance_pas_tout_seul(client, atelier, double):
@@ -440,28 +488,37 @@ def test_un_lot_coupe_en_vol_ne_se_relance_pas_tout_seul(client, atelier, double
     assert all(c["images"] == [] for c in _cases(client, personnage["identifiant"])[:4])
 
 
-# ── « Ce qui sort du produit reste des images séparées : aucune feuille
-#     assemblée n'est livrable » ──────────────────────────────────────────────
+# ── « Une feuille assemblée sort quand on la demande, et jamais toute seule »
+#     (G16, qui renverse l'invariant de C2) ───────────────────────────────────
 
 
-def test_l_archive_ne_contient_que_les_images_separees(client, double):
-    """L'export travaille sur des assets, et la planche n'en est pas un : la
-    feuille est absente **par construction**, pas par un filtre."""
+def test_l_archive_ne_contient_la_planche_que_si_on_la_choisit(client, double):
+    """**L'export travaille sur ce qu'on lui donne**, et rien de plus.
+
+    Depuis G16 la planche est un asset : la choisir la fait sortir, ne pas la
+    choisir la laisse. Ce que l'essai tient, c'est qu'elle ne s'invite jamais
+    dans une archive où l'auteur ne l'a pas mise — l'ancienne garantie était
+    *par construction*, celle-ci est *par sélection*, et c'est ce que le
+    renversement de l'invariant coûte."""
     import io
     import zipfile
+
+    def noms(identifiants):
+        reponse = client.post("/api/exports", json={"identifiants": identifiants})
+        assert reponse.status_code == 200, reponse.text
+        with zipfile.ZipFile(io.BytesIO(reponse.content)) as archive:
+            return [n for n in archive.namelist() if n.endswith(".png")]
 
     double.rendre = lambda: planche_sujets(4)
     personnage = _creer(client)
     poses = [p["identifiant"] for p in _plan(client)][:4]
     lot = _lot(client, personnage["identifiant"], poses)
-    nes = [a["identifiant"] for a in _grille(client)
-           if a["generation"] == lot["identifiant"]]
+    nes = [a for a in _grille(client) if a["generation"] == lot["identifiant"]]
+    corps = [a["identifiant"] for a in nes if a["rang"] >= 100]
+    planche = [a["identifiant"] for a in nes if a["rang"] == 0]
 
-    reponse = client.post("/api/exports", json={"identifiants": nes})
-    assert reponse.status_code == 200, reponse.text
-    with zipfile.ZipFile(io.BytesIO(reponse.content)) as archive:
-        images = [n for n in archive.namelist() if n.endswith(".png")]
-    assert len(images) == 4
+    assert len(noms(corps)) == 4, "les quatre corps seuls, et la planche reste"
+    assert len(noms(corps + planche)) == 5, "choisie, elle sort comme les autres"
 
 
 # ── « Avant de lancer, l'écran dit ce qu'un compte faux coûterait — le lot

@@ -1,0 +1,176 @@
+{
+ "seance": "2026-09-03",
+ "machine": "RTX 3080 Laptop 8 Go, plafond 100 W, 33,6 Go de RAM, ComfyUI 0.33.4",
+ "montage": "Wan2.2-I2V-A14B Q4_K_M (deux moities) + greffon pixel art styly-agents + lightx2v 4 pas",
+ "entree": "entree-832x480.png — le nain de profil sur fond gris 235",
+ "texte": "\"Pixel art game sprite. The character walks in place, side view, static camera, no zoom, \"\n    \"no camera movement, plain flat background, the character stays the same size and the same \"\n    \"design, seamless walk cycle loop.\"",
+ "tirages": [
+  {
+   "nom": "chaud-17",
+   "note": "INVALIDE comme test de qualite : une seule moitie de moteur sur les 4 etapes",
+   "images": 17,
+   "taille": "832x480",
+   "secondes": 101.2,
+   "vram_go": 6.22
+  },
+  {
+   "nom": "vrai-17",
+   "note": "le vrai montage, les deux moities",
+   "images": 17,
+   "taille": "832x480",
+   "secondes": 129.8,
+   "vram_go": 6.0,
+   "mesures": {
+    "images": 17,
+    "hauteur_du_sujet": {
+     "min": 274,
+     "max": 287,
+     "ecart": 13
+    },
+    "largeur_du_sujet": {
+     "min": 146,
+     "max": 173,
+     "ecart": 27
+    },
+    "bord_non_uni": {
+     "min": 1,
+     "max": 3,
+     "ecart": 2
+    },
+    "derive_du_fond": 3,
+    "fond_premiere": [
+     233,
+     233,
+     235
+    ],
+    "fond_derniere": [
+     233,
+     233,
+     233
+    ],
+    "couleurs_distinctes": {
+     "min": 18783,
+     "max": 21089,
+     "ecart": 2306
+    }
+   }
+  },
+  {
+   "nom": "vrai-33",
+   "images": 33,
+   "taille": "832x480",
+   "secondes": 151.0,
+   "vram_go": 6.0,
+   "mesures": {
+    "images": 33,
+    "hauteur_du_sujet": {
+     "min": 275,
+     "max": 287,
+     "ecart": 12
+    },
+    "largeur_du_sujet": {
+     "min": 126,
+     "max": 195,
+     "ecart": 69
+    },
+    "bord_non_uni": {
+     "min": 2,
+     "max": 3,
+     "ecart": 1
+    },
+    "derive_du_fond": 4,
+    "fond_premiere": [
+     234,
+     234,
+     235
+    ],
+    "fond_derniere": [
+     234,
+     234,
+     234
+    ],
+    "couleurs_distinctes": {
+     "min": 16532,
+     "max": 22950,
+     "ecart": 6418
+    }
+   }
+  },
+  {
+   "nom": "vrai-45",
+   "images": 45,
+   "taille": "832x480",
+   "secondes": 210.1,
+   "vram_go": 5.83,
+   "mesures": {
+    "images": 45,
+    "hauteur_du_sujet": {
+     "min": 276,
+     "max": 288,
+     "ecart": 12
+    },
+    "largeur_du_sujet": {
+     "min": 124,
+     "max": 178,
+     "ecart": 54
+    },
+    "bord_non_uni": {
+     "min": 1,
+     "max": 3,
+     "ecart": 2
+    },
+    "derive_du_fond": 3,
+    "fond_premiere": [
+     234,
+     235,
+     235
+    ],
+    "fond_derniere": [
+     235,
+     234,
+     235
+    ],
+    "couleurs_distinctes": {
+     "min": 17353,
+     "max": 22007,
+     "ecart": 4654
+    }
+   }
+  }
+ ],
+ "temoin_paye": {
+  "images": 97,
+  "hauteur_du_sujet": {
+   "min": 360,
+   "max": 370,
+   "ecart": 10
+  },
+  "largeur_du_sujet": {
+   "min": 210,
+   "max": 239,
+   "ecart": 29
+  },
+  "bord_non_uni": {
+   "min": 0,
+   "max": 9,
+   "ecart": 9
+  },
+  "derive_du_fond": 20,
+  "fond_premiere": [
+   234,
+   234,
+   234
+  ],
+  "fond_derniere": [
+   221,
+   220,
+   221
+  ],
+  "couleurs_distinctes": {
+   "min": 12365,
+   "max": 13849,
+   "ecart": 1484
+  }
+ },
+ "conclusion": "Plus le clip est long, plus la bande se degrade — visible a l oeil, invisible aux mesures automatiques. 17 images est le plus propre. Le greffon est entraine par paquets de 8 a 32 images. La memoire n est jamais le mur (6,0 Go au pire sur 6,92) : la marge est en resolution, pas en longueur."
+}

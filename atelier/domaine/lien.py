@@ -41,7 +41,7 @@ CARTE = "carte"
 ILOT = "ilot"
 GENRES = (CARTE, ILOT)
 
-# **Le mot d'un lien est une étiquette, pas une phrase** (`docs/PLAN.md` T9 :
+# **Le mot d'un lien est une étiquette, pas une phrase** (`docs/archive/plan-versions-tenues.md` T9 :
 # « une étiquette courte »). La borne n'est pas du confort : l'étiquette se pose
 # au milieu d'un trait, entre deux objets qui peuvent être à trente pixels l'un
 # de l'autre, et ce qui déborde recouvre ce qu'il relie. Au-delà, ce qu'on veut

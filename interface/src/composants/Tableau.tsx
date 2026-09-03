@@ -1066,9 +1066,16 @@ export function CarteTuile({
  * du tableau est trop près, jamais dessus.
  *
  * C'est la règle qui répond à « le menu est plus grand que la vignette » : il
- * fait 300 px pour une carte 1× qui en fait 190, donc il déborde forcément.
- * Il déborde sur les **voisines**, hors du flux — et jamais sur l'image qu'il
- * règle, ce qui serait absurde puisque c'est elle qu'on regarde en réglant.
+ * porte plus de blocs qu'une carte 1× n'a de hauteur, donc il déborde
+ * forcément. Il déborde sur les **voisines**, hors du flux — et jamais sur
+ * l'image qu'il règle, ce qui serait absurde puisque c'est elle qu'on regarde
+ * en réglant.
+ *
+ * *Deux hauteurs en pixels étaient écrites ici, mesurées le jour de l'écriture
+ * et démenties par les deux blocs arrivés depuis — « concept art de » et la
+ * lecture de palette. Elles sont **retirées plutôt que remesurées** (`G1`) :
+ * ce qui décide la règle est le rapport entre les deux, pas leur valeur, et un
+ * rapport se lit sans chiffre.*
  *
  * Largeur : celle de la carte, et au moins 240 px. Une carte 1× est trop
  * étroite pour la rangée des familles, qui y passerait à cinq lignes.
@@ -1240,16 +1247,26 @@ function LectureDePalette({
             ce qui arrive à une matière ou à une texture, qui n'ont pas de fond.
           </p>
         ) : (
+          /* **« Le reste » n'existe pas toujours** (G1) — voir la même phrase
+             dans l'écran de découpe : trois des dix artworks officiels du dépôt
+             sont lus à 100,0 %, et il n'y a alors rien à écarter. */
           <p className="text-[11.5px] leading-snug text-texte-2">
             <span className="mesure text-texte">{lu.part} %</span> de l'image
-            donne ses couleurs au jeu. Le reste — le fond — est écarté tout seul.
+            donne ses couleurs au jeu.{" "}
+            {lu.part >= 100
+              ? "Rien n'en est écarté : le détourage n'a trouvé aucun fond à retirer."
+              : "Le reste — le fond — est écarté tout seul."}
           </p>
         ))}
 
       {/* Où voir la chose plutôt que la lire. **Ce n'est pas un renvoi vers un
           ailleurs vague** : le lien qui y mène est deux lignes plus bas, dans ce
-          même menu. */}
-      {lu && !lu.entiere && (
+          même menu.
+
+          **Et il n'y a rien à aller voir quand rien n'est écarté** (G1) : sur
+          une carte lue à 100 %, l'image en grand serait entièrement sans
+          magenta, et la ligne enverrait chercher une absence. */}
+      {lu && !lu.entiere && lu.part < 100 && (
         <p className="mesure text-[9.5px] leading-snug text-texte-3">
           Découper le montre en magenta, sur l'image en grand.
         </p>

@@ -269,3 +269,142 @@ cinq gestes, avec le piège du jeton créé à la main qui ne peut que lire. Ave
   planche de style.
 
 **Leonardo ne demande plus rien** : sa question est tranchée sans clé.
+
+---
+
+## Hors relevé · Meshy, une piste 3D pour l'animation de la V3
+
+> Ajouté le 1<sup>er</sup> septembre 2026. **Ce n'est pas un fournisseur d'images et ce
+> n'est pas gratuit** — donc rien de ce que F0 mesure ne s'y applique. C'est une note de
+> côté, posée ici parce que c'est le seul endroit du dépôt où l'on tient la liste de ce qui
+> existe ailleurs. `docs/v3-animation.md` fait foi sur l'animation.
+
+**Le constat qui la motive.** Le banc du 1<sup>er</sup> septembre a jugé 111 planches
+lisibles pour $5,32 : **environ une sur dix est bonne**, et le défaut dominant n'est pas le
+mouvement mais **le personnage redessiné à des tailles différentes d'une case à l'autre**.
+Un modèle d'image ne tient pas la cohérence d'une case à la suivante — c'est une propriété
+du procédé, pas un réglage à trouver.
+
+**Ce que la 3D change au problème.** Meshy (`https://api.meshy.ai`) enchaîne
+`image-to-3d` → `rigging` → `animations` : un sprite devient un maillage, l'auto-rig lui
+pose un squelette, et une bibliothèque d'actions produit le mouvement. **La taille du
+personnage ne peut plus varier d'une case à l'autre, puisque c'est le même objet** — le
+défaut dominant du banc disparaît par construction, il n'est pas corrigé. Il resterait à
+rendre la planche et à la repasser par la normalisation de grille, qui est de toute façon
+obligatoire (`docs/archi-fournisseur.md` § 4 bis, enseignement 2).
+
+**Où en lire le mode d'emploi.** `github.com/OnePersonLabs/asset-mcp` — un prototype de
+651 lignes, un seul commit du 24 décembre 2025, à lire comme **documentation d'API et rien
+d'autre** : son architecture est en retrait de celle de ce dépôt sur tous les points communs
+(port fournisseur à cinq méthodes sans catalogue ni unité, `provider: 'meshy'` figé dans le
+type, multi-fournisseur annoncé mais absent, aucun test). Ce qu'il donne et qui vaut le
+signet : les sept adresses exactes, la chaîne de dépendances `rig_task_id` → `action_id`,
+et le fait que Meshy pousse la progression en SSE (`/stream`) plutôt qu'en la faisant
+interroger.
+
+**Ce qu'il faudrait mesurer avant d'y croire.** Deux choses, et aucune n'est dans ce
+prototype : **ce que Meshy coûte réellement** par personnage animé, et **ce que le rendu
+3D → pixel donne sur un sprite de 64 px** — c'est-à-dire si le détour survit à la
+réduction. Un banc payé, comme les deux précédents, ou rien.
+
+---
+
+## Hors relevé · Ludo.ai, ce qu'un concurrent fait de l'animation 2D
+
+> Ajouté le 2 septembre 2026, à la demande de l'auteur. **Ce n'est ni un fournisseur
+> gratuit ni un fournisseur candidat** : rien de ce que F0 mesure ne s'y applique. C'est une
+> note de côté, posée ici pour la même raison que celle sur Meshy — c'est le seul endroit du
+> dépôt où l'on tient la liste de ce qui existe ailleurs. **`docs/v3-animation.md` fait foi
+> sur l'animation**, et rien de ce qui suit n'est mesuré.
+
+**Ce qu'on a lu, exactement.** `github.com/api-evangelist/ludo-ai` **ne contient aucun
+code** : c'est un profil d'interface tenu par un tiers (API Evangelist), pas la
+documentation officielle de Ludo.ai. On y trouve des descriptions `openapi/` (animation,
+images, modèles 3D, audio, vidéo, résultats), des collections Postman, un schéma d'objet
+`json-schema/ludo-ai-game-asset-schema.json`, et les pages tarifs / limites de débit. **À
+lire comme une déclaration d'intention d'un produit concurrent, et rien d'autre** — même
+précaution que pour le prototype Meshy plus haut.
+
+### Le premier fait, et il est rassurant : ils ne riguent pas non plus
+
+Ludo.ai vend des modèles 3D *et* de l'animation de sprites, et **les deux ne se touchent
+pas** : nulle part dans la description de l'animation il n'est question de squelette, d'os
+ou de rig. Leur animation 2D part d'une image et d'une phrase, exactement comme la nôtre.
+
+**Ça ne prouve pas qu'il n'existe pas de meilleure méthode** — le pantin découpé de
+`docs/v3-animation.md` en est le contre-exemple, libre et gratuit. **Ça dit qu'un produit qui
+vend ça n'en a pas trouvé de moins chère.** La loterie mesurée le 1<sup>er</sup> septembre — une
+bonne planche sur dix — n'est probablement pas une maladresse de notre côté.
+
+### Les trois endroits où leur interface est mieux pensée que la nôtre
+
+**1 · Le mouvement est un objet, pas une phrase à retaper.** `GET /animation-presets` — et
+c'est le seul appel gratuit des trois — rend un catalogue de mouvements nommés, chacun avec
+sa catégorie, sa durée, son aperçu, **les perspectives et les directions qu'il supporte**.
+Les directions sont les huit points cardinaux `N NE E SE S SO O NO`, c'est-à-dire très
+exactement les huit vues que le dépôt tient déjà dans `atelier/domaine/vue.py`. Chez nous, la
+même marche se redemande en mots à chaque personnage, et rien ne garantit que la phrase
+d'hier donnera le geste d'aujourd'hui.
+
+**2 · `POST /sprites/transfer-motion` : imposer le mouvement au lieu de le décrire.** On
+envoie le sprite **plus une vidéo de quatre secondes** — ou un `preset_id` du catalogue avec
+sa perspective et sa direction — et le mouvement de la source est reporté sur le sujet.
+
+C'est la **cinquième famille** recensée par `docs/v3-animation.md`, à côté du mannequin
+articulé, du détour 3D et du pantin découpé — et **la seule qui ne demande ni pièces
+séparées, ni squelette, ni trois dimensions**. Elle vise pile le résultat le plus dur du
+banc : *décrire un mouvement ne marche pas* — zéro bonne planche sur vingt réécritures de
+fond. Elle est aussi **la plus faible des cinq** : c'est encore un modèle qui redessine, donc
+rien n'y garantit la constance de taille. Elle se teste avant le pantin parce qu'elle ne
+coûte presque rien, pas parce qu'elle promet plus.
+
+> ⚠️ **Ne pas confondre avec `essais/guide_marche.py`, qui est mort.** Le guide était une
+> **image fixe jointe à la demande**, et il n'a rien donné à huit cases (2 bonnes sur 8 avec,
+> 3 sur 7 sans). Une **vidéo de référence** n'est pas la même entrée, et elle n'a jamais été
+> essayée ici. C'est une piste ouverte, pas une piste réhabilitée.
+
+**3 · Ils rendent la planche avant *et* après le détourage.** Le drapeau
+`spritesheet_with_background` renvoie la version non détourée en plus de l'autre — et
+`individual_frames`, `gif`, le tout dans la même réponse. C'est exactement la manœuvre que le
+banc du 1<sup>er</sup> septembre a dû improviser pour pouvoir juger : *les animations jugées
+sont montées sans détourage*, parce qu'autrement on note le détourage au lieu de la marche.
+**Juger le mouvement et juger le découpage sont deux métiers**, et leur interface le dit dans
+sa signature. La nôtre devrait aussi.
+
+### Les réglages qu'ils exposent, et ce qu'ils valent pour nous
+
+`POST /sprites/animate` prend l'image de départ, une phrase de mouvement, et :
+
+| Réglage déclaré | Ce que ça vaut pour la V3 |
+|---|---|
+| `frames` ∈ 4, 9, 16, 25, 36, 49, 64 — **défaut 36** | Que des carrés parfaits : la planche est une **grille**, pas une bande. Leur minimum est 4, comme notre piste vivante — mais **leur défaut est 36**, soit bien *plus* de cases que nos 8. Ça ne soutient pas la piste « moins de cases » ; ça dit juste que le sujet reste petit chez eux aussi. |
+| `final_image` — la case d'arrivée, en plus de celle de départ | **Jamais essayé ici.** Le banc n'a testé que le départ. Encadrer le mouvement aux deux bouts est une entrée de plus, et elle est bon marché à mesurer. |
+| `loop` (défaut vrai) | Le bouclage est demandé au modèle, pas rattrapé après coup. |
+| `image_type` ∈ `sprite`, `sprite-vfx`, `ui_asset` | La **nature du sujet est déclarée**, pas décrite dans la phrase. Une torche qui brûle et un personnage qui marche ne se demandent pas pareil — c'est justement la limite « un seul sujet essayé » de `docs/v3-animation.md`. |
+| `crop`, `margin_ratio`, `margin_ratio_mode` | Le recadrage est réglé **sur la planche entière**. C'est la leçon n° 3 du banc — *une bande se recadre sur une boîte commune, jamais case par case* — et ils l'ont mise dans la signature. |
+| `frame_size` ∈ 64, 128, 256, 0 (max) · `duration` 1,2 à 4 s · `model` `standard` \| `new` | Rien à en tirer sans mesure. |
+
+**Coût déclaré : 5 crédits par animation, 30 à 90 secondes.** En crédits, donc incomparable
+à nos douze centimes la bonne planche tant qu'on n'a pas le prix du crédit.
+
+### Ce qu'il faudrait mesurer avant d'y croire
+
+**Leur taux de réussite est inconnu, et ce n'est pas un détail.** Une interface bien dessinée
+n'est pas une preuve de qualité : rien dans ces fichiers ne dit qu'une planche Ludo sur deux
+est bonne plutôt qu'une sur dix. **Il est parfaitement possible qu'ils vivent la même loterie
+que nous, cachée derrière des crédits.** Ce profil est de toute façon tenu par un tiers, donc
+même les réglages listés ci-dessus demandent d'être vérifiés sur la vraie interface avant
+qu'on s'appuie dessus.
+
+**Et il y a deux choses différentes à ne pas mélanger :**
+
+- **prendre les idées ne coûte rien** — catalogue de mouvements, boîte commune, rendu avant
+  détourage, nature du sujet déclarée. Ce sont des décisions de forme du produit, pas des
+  achats ;
+- **prendre le fournisseur, c'est une clé de plus**, hors OpenRouter, en crédits, hors du
+  périmètre gratuit de F0. Ça ne se décide pas sur une lecture de fichiers.
+
+**Ce que ça ne change pas.** L'ordre de `docs/v3-animation.md` tient : les trois branches à
+soixante-quinze centimes — quatre cases, clause remplacée, et leur croisement — **passent
+avant**, elles sont déjà tirées et attendent d'être notées. Rien ici n'a été mesuré, donc
+rien ici ne passe devant quelque chose qui l'a été.

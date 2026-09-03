@@ -54,13 +54,35 @@ import { sujetAsset, sujetCarte, useVisee, vignetteAsset } from "./Apercu"
 /** Le tri de départ — **rien**. Il ne porte que des écarts, jamais un état
  *  complet : c'est ce qui fait qu'éteindre les trois lignes d'une ambiance
  *  rallume les textes du jeu d'eux-mêmes. */
-export const TRI_VIDE: Tri = { eteints: [], allumes: [], textes: {} }
+export const TRI_VIDE: Tri = { eteints: [], allumes: [], textes: {}, fond: null }
 
+/** Le nom français d'un groupe de lignes.
+ *
+ *  **Deux manquaient** — `jointes` et `cadrage`, rendus depuis le
+ *  1ᵉʳ septembre 2026 : leurs sections s'affichaient sans titre, et personne ne
+ *  l'avait vu parce que le titre absent ne laisse pas de trou, il laisse un
+ *  blanc. Trouvé en construisant R7, en cherchant où poser les parties. */
 const NOM_DU_GROUPE: Record<string, string> = {
   jeu: "les textes du jeu",
   ambiance: "son ambiance",
   sujet: "le sujet",
   planche: "la planche",
+  jointes: "ce que les images disent",
+  cadrage: "la caméra",
+}
+
+/** Les groupes de chaque partie, **dans l'ordre où le texte les assemble** (R7).
+ *
+ *  C'est la table `DE_LA_PARTIE` du domaine, lue à l'envers : là-bas un groupe
+ *  dit sa partie, ici une partie dit ses groupes. Elle est recopiée plutôt
+ *  qu'appelée parce que l'écran n'a pas de serveur sous la main pour dessiner
+ *  ses sections — et chaque ligne rendue porte, elle, la partie que le serveur
+ *  lui a donnée : si les deux divergeaient, une section resterait vide et ça se
+ *  verrait au premier coup d'œil. */
+const GROUPES_DE_LA_PARTIE: Record<string, readonly string[]> = {
+  contexte: ["jeu", "ambiance"],
+  references: ["jointes"],
+  demande: ["sujet", "planche", "cadrage"],
 }
 
 export function EcranEnvoi({
@@ -143,19 +165,18 @@ export function EcranEnvoi({
     onTri({ ...tri, textes: restant })
   }
 
-  // **L'ordre est celui de l'assemblage**, et les deux derniers sont arrivés le
-  // 1ᵉʳ septembre 2026 : ce que les images jointes veulent dire, puis la caméra
-  // du jeu. Elles ferment le prompt parce qu'un banc a mesuré que la dernière
-  // phrase décide de la vue (`essais/essai_vue.py`), et elles ferment donc aussi
-  // l'écran — on lit de haut en bas ce qui part de gauche à droite.
-  const groupes = [
-    "jeu",
-    "ambiance",
-    "sujet",
-    "planche",
-    "jointes",
-    "cadrage",
-  ] as const
+  // **L'ordre est celui de l'assemblage**, et depuis R7 il se lit en trois
+  // parties : le contexte, les références, la demande. On lit de haut en bas ce
+  // qui part de gauche à droite, et les titres de l'écran sont ceux que le
+  // fournisseur reçoit — traduits une fois, ici, comme les intitulés de la
+  // bible.
+  //
+  // **Les parties viennent du serveur**, qui les compose en même temps que le
+  // texte : l'écran ne fait que les afficher dans l'ordre où elles arrivent. Il
+  // garde en revanche la table des groupes de chaque partie, parce que le
+  // milieu de l'écran range des *lignes* — celles qu'on éteint et qu'on corrige
+  // — et non des paragraphes.
+  const parties = envoi?.parties ?? []
 
   return (
     <div
@@ -182,20 +203,57 @@ export function EcranEnvoi({
 
         {envoi && (
           <>
+            {/* **Le sommaire suit les trois parties** (R7) : on y lit d'abord
+                à quoi sert ce qui part, puis d'où chaque morceau vient. Les
+                groupes qu'aucune partie rendue ne réclame — il n'y en a pas
+                aujourd'hui — resteraient invisibles, et c'est le seul cas où le
+                sommaire mentirait ; le repli en fin de liste les rattrape. */}
             <ul className="flex flex-col">
-              {envoi.groupes.map((groupe) => (
-                <li
-                  key={groupe.clef}
-                  className="mesure flex h-[26px] items-center gap-2 text-[10px]"
-                >
-                  <span className="flex-1 truncate text-texte-2">
-                    {groupe.nom}
-                  </span>
-                  <span className="text-texte">
-                    {groupe.allumees} sur {groupe.total}
-                  </span>
-                </li>
-              ))}
+              {parties.map((partie) => {
+                const siens = envoi.groupes.filter(
+                  (g) => g.partie === partie.clef,
+                )
+                if (!siens.length) return null
+                return (
+                  <li key={partie.clef} className="flex flex-col">
+                    <span className="mesure mt-2 flex h-[22px] items-center text-[9.5px] tracking-[.11em] text-texte-3 uppercase first:mt-0">
+                      {partie.nom}
+                    </span>
+                    <ul className="flex flex-col">
+                      {siens.map((groupe) => (
+                        <li
+                          key={groupe.clef}
+                          className="mesure flex h-[26px] items-center gap-2 pl-2 text-[10px]"
+                        >
+                          <span className="flex-1 truncate text-texte-2">
+                            {groupe.nom}
+                          </span>
+                          <span className="text-texte">
+                            {groupe.allumees} sur {groupe.total}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                )
+              })}
+              {envoi.groupes
+                .filter(
+                  (g) => !parties.some((p) => p.clef === g.partie),
+                )
+                .map((groupe) => (
+                  <li
+                    key={groupe.clef}
+                    className="mesure flex h-[26px] items-center gap-2 text-[10px]"
+                  >
+                    <span className="flex-1 truncate text-texte-2">
+                      {groupe.nom}
+                    </span>
+                    <span className="text-texte">
+                      {groupe.allumees} sur {groupe.total}
+                    </span>
+                  </li>
+                ))}
             </ul>
 
             {/* **Un compte qu'on voit sans descendre** : on a divergé, et de
@@ -243,30 +301,66 @@ export function EcranEnvoi({
         {!envoi ? (
           <p className="mesure text-[10px] text-texte-3">…</p>
         ) : (
-          groupes.map((groupe) => {
-            const miennes = envoi.lignes.filter((l) => l.groupe === groupe)
-            if (!miennes.length) return null
+          parties.map((partie) => {
+            const groupes = partie.repris
+              ? ["sujet"]
+              : (GROUPES_DE_LA_PARTIE[partie.clef] ?? [])
+            const dedans = groupes.filter((groupe) =>
+              envoi.lignes.some((l) => l.groupe === groupe),
+            )
+            if (!dedans.length) return null
             return (
-              <section key={groupe} className="flex flex-col gap-2">
-                <div className="flex items-baseline gap-2">
-                  <Libelle>{NOM_DU_GROUPE[groupe]}</Libelle>
-                  <span className="mesure text-[9.5px] text-texte-3">
-                    {miennes.filter((l) => l.allumee).length} sur{" "}
-                    {miennes.length}
-                  </span>
+              // **La partie porte son titre et son propos, puis ses groupes.**
+              // Le titre est celui que le fournisseur reçoit, écrit en mono
+              // juste après le nom français : c'est un fait sur ce qui part, pas
+              // un libellé, et le produit écrit les faits dans la police des
+              // chiffres.
+              <section
+                key={partie.clef}
+                data-partie={partie.clef}
+                className="flex flex-col gap-3 border-t border-bord-fort pt-4 first:border-t-0 first:pt-0"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-baseline gap-2">
+                    <Libelle>{partie.nom}</Libelle>
+                    {partie.titre && (
+                      <span className="mesure text-[9.5px] text-texte-3">
+                        part sous « {partie.titre} »
+                      </span>
+                    )}
+                  </div>
+                  <p className="mesure text-[10px] leading-4 text-texte-2">
+                    {partie.propos}
+                  </p>
                 </div>
-                <ul className="flex flex-col border-t border-bord">
-                  {miennes.map((ligne) => (
-                    <Ligne
-                      key={ligne.clef}
-                      ligne={ligne}
-                      onBasculer={() => basculer(ligne.clef, ligne.allumee)}
-                      onCorriger={(texte) => corriger(ligne.clef, texte)}
-                      onRemettre={() => remettre(ligne.clef)}
-                      onGarder={() => onGarder(ligne)}
-                    />
-                  ))}
-                </ul>
+                {dedans.map((groupe) => {
+                  const miennes = envoi.lignes.filter(
+                    (l) => l.groupe === groupe,
+                  )
+                  return (
+                    <div key={groupe} className="flex flex-col gap-2">
+                      <div className="flex items-baseline gap-2">
+                        <Libelle>{NOM_DU_GROUPE[groupe] ?? groupe}</Libelle>
+                        <span className="mesure text-[9.5px] text-texte-3">
+                          {miennes.filter((l) => l.allumee).length} sur{" "}
+                          {miennes.length}
+                        </span>
+                      </div>
+                      <ul className="flex flex-col border-t border-bord">
+                        {miennes.map((ligne) => (
+                          <Ligne
+                            key={ligne.clef}
+                            ligne={ligne}
+                            onBasculer={() => basculer(ligne.clef, ligne.allumee)}
+                            onCorriger={(texte) => corriger(ligne.clef, texte)}
+                            onRemettre={() => remettre(ligne.clef)}
+                            onGarder={() => onGarder(ligne)}
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                })}
               </section>
             )
           })
@@ -321,7 +415,9 @@ export function EcranEnvoi({
                 elle ressemble. */}
             {envoi.images.gabarit > 0 && (
               <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                + le gabarit de la grille, qui dit au modèle où poser les{" "}
+                {envoi.images.rang_gabarit !== null &&
+                  `Image ${envoi.images.rang_gabarit} · `}
+                le gabarit de la grille, qui dit au modèle où poser les{" "}
                 {envoi.cases} sujets. Il ne se décoche pas — une planche sans lui
                 ne dit pas à quoi elle ressemble — et il compte dans les places.
               </p>
@@ -333,7 +429,9 @@ export function EcranEnvoi({
                 à un seul endroit. */}
             {envoi.images.palette > 0 && (
               <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                + la bande des couleurs du jeu, cochée dans les options plus bas.
+                {envoi.images.rang_palette !== null &&
+                  `Image ${envoi.images.rang_palette} · `}
+                la bande des couleurs du jeu, cochée dans les options plus bas.
                 Elle compte dans les places du modèle, et dans le prix.
               </p>
             )}
@@ -371,6 +469,14 @@ export function EcranEnvoi({
             </ul>
           </section>
         )}
+
+        {/* ── Le fond, corrigeable avant de payer ──────────────────────────── */}
+        {envoi && (
+          <SectionFond
+            fond={envoi.fond}
+            onFond={(couleur) => onTri({ ...tri, fond: couleur })}
+          />
+        )}
       </section>
 
       {/* ── Ce qui part, mot pour mot ──────────────────────────────────────── */}
@@ -378,9 +484,39 @@ export function EcranEnvoi({
         <Libelle>ce qui part, mot pour mot</Libelle>
         {envoi && (
           <>
-            <p className="mesure whitespace-pre-wrap rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-2">
-              {envoi.texte || "rien encore — écris un sujet"}
-            </p>
+            {/* **Le pavé se coupe là où le texte se coupe** (R7). C'était un
+                seul bloc de mille deux cents caractères ; ce sont maintenant
+                trois blocs, chacun sous le titre que le fournisseur reçoit —
+                et le titre est écrit **dans** le bloc, en tête, parce qu'il
+                part avec. Rien n'est résumé, rien n'est réécrit, et recoller
+                les blocs dans l'ordre rend exactement `envoi.texte`. */}
+            {parties.every((p) => !p.texte.trim()) ? (
+              <p className="mesure rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-3">
+                rien encore — écris un sujet
+              </p>
+            ) : (
+              parties
+                .filter((partie) => partie.texte.trim())
+                .map((partie) => (
+                  <div key={partie.clef} className="flex flex-col gap-1">
+                    <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+                      {partie.nom}
+                    </span>
+                    <p
+                      data-partie-qui-part={partie.clef}
+                      className="mesure whitespace-pre-wrap rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-2"
+                    >
+                      {partie.titre && (
+                        <span className="text-texte-3">
+                          {partie.titre}
+                          {"\n\n"}
+                        </span>
+                      )}
+                      {partie.texte}
+                    </p>
+                  </div>
+                ))
+            )}
 
             {/* **Reprendre pose le texte exact, et rien d'autre** (US-159) :
                 l'univers n'est pas touché, la bible reste ce qu'elle est. C'est
@@ -574,6 +710,120 @@ export function EcranEnvoi({
         )}
       </aside>
     </div>
+  )
+}
+
+/** **Le fond, et ce qu'il interdit — corrigeable jusqu'au dernier moment** (D3).
+ *
+ *  **Pourquoi une section et pas une ligne.** Tout le reste de cet écran est une
+ *  ligne de texte avec son interrupteur ; le fond n'en est pas une. C'est un
+ *  réglage du jeu qui *fabrique* une ligne — la phrase de calage, qu'on lit plus
+ *  haut dans « les textes du jeu » — **et** qui fabrique en plus l'interdiction,
+ *  laquelle part dans un autre champ de la demande. Le corriger en tapant dans
+ *  la ligne aurait changé l'une sans l'autre : l'appel serait parti en demandant
+ *  un fond magenta tout en interdisant le cyan, sans que rien ne le dise.
+ *
+ *  **L'interdiction est montrée ici parce qu'elle ne peut être montrée nulle
+ *  part ailleurs.** Elle est le seul morceau de ce qui part que le texte ne
+ *  contient pas — les adaptateurs la replient en fin de demande sous *« Do not
+ *  include: »*. Sans ce bloc, l'écran qui promet de tout montrer aurait un angle
+ *  mort, et ce serait celui que la tranche vient d'ouvrir.
+ *
+ *  **La correction ne remonte nulle part**, comme tout ce que cet écran renvoie.
+ *  Poser le fond durablement est un second geste, qui passe par le codex — la
+ *  même règle que « garder cette correction » sur une ligne de texte. */
+function SectionFond({
+  fond,
+  onFond,
+}: {
+  fond: Envoi["fond"]
+  onFond: (couleur: string | null) => void
+}) {
+  const propose = fond.propose
+  return (
+    <section className="flex flex-col gap-2">
+      <Libelle>le fond</Libelle>
+      <div className="flex flex-col gap-2 border-t border-bord pt-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={/^#[0-9a-fA-F]{6}$/.test(fond.couleur) ? fond.couleur : "#FF00FF"}
+            aria-label="Couleur du fond, pour cet appel"
+            onChange={(e) => onFond(e.target.value)}
+            className="h-[26px] w-[34px] shrink-0 rounded-[2px] border border-bord bg-fond-2"
+          />
+          <span className="mesure text-[10px] text-texte-2">
+            {fond.couleur || "aucun fond — le modèle rendra ce qu'il voudra"}
+          </span>
+          {/* **Remettre celui du jeu, et retirer le fond, sont deux gestes** :
+              l'un annule la correction, l'autre en est une. Les confondre aurait
+              rendu « pas de fond pour cet essai » impossible à demander sur un
+              jeu qui en a un. */}
+          {fond.corrige && (
+            <button
+              type="button"
+              onClick={() => onFond(null)}
+              className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte"
+            >
+              Remettre celui du jeu
+            </button>
+          )}
+          {!fond.corrige && fond.couleur !== "" && (
+            <button
+              type="button"
+              onClick={() => onFond("")}
+              className="mesure h-[26px] text-[10px] text-texte-3 hover:text-texte"
+            >
+              Sans fond
+            </button>
+          )}
+        </div>
+
+        {fond.corrige && (
+          <Raison texte="corrigé pour cet appel seulement — le jeu garde le sien" />
+        )}
+
+        {/* **La proposition n'apparaît que si elle ajoute quelque chose** : la
+            reproposer quand elle est déjà prise ferait cliquer sur ce qu'on a
+            déjà. */}
+        {propose.couleur && propose.couleur !== fond.couleur && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onFond(propose.couleur)}
+              style={{ background: propose.couleur }}
+              aria-label={`Prendre ${propose.couleur}`}
+              className="h-4 w-4 shrink-0 rounded-[2px] border border-bord"
+            />
+            <button
+              type="button"
+              onClick={() => onFond(propose.couleur)}
+              className="mesure text-[10px] text-signal hover:text-signal-clair"
+            >
+              Prendre {propose.nom || propose.couleur}
+            </button>
+            <span className="mesure text-[10px] text-texte-3">
+              à {propose.ecart} de {propose.voisine}
+            </span>
+          </div>
+        )}
+
+        {/* **Ce qui part dans l'autre champ**, mot pour mot et sans repli : il
+            fait deux lignes, pas mille deux cents caractères. */}
+        {fond.interdiction ? (
+          <div className="flex flex-col gap-1">
+            <span className="mesure text-[9.5px] tracking-[.11em] text-texte-3 uppercase">
+              ce qui part en interdiction
+            </span>
+            <p className="mesure whitespace-pre-wrap rounded-[2px] border border-bord bg-fond-2 p-2 text-[10.5px] leading-[1.45] text-texte-2">
+              {fond.interdiction}
+            </p>
+          </div>
+        ) : (
+          <Raison texte="rien n'est interdit à ce modèle — pose un fond, et la couleur lui sera interdite sur le sujet" />
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -852,6 +1102,15 @@ function LigneImage({
             style={{ imageRendering: "pixelated" }}
           />
         )}
+      </span>
+      {/* **Le numéro que le texte lui donne** (R7). Le prompt dit « Image 3 —
+          STYLE REFERENCE » ; sans ce chiffre-là sur la ligne, on lit un texte
+          qui parle d'images et on regarde une liste qui ne les numérote pas.
+          Une image qui ne part pas n'en a pas — elle n'en a pas dans le texte
+          non plus —, et la colonne garde sa largeur pour que les noms restent
+          alignés. */}
+      <span className="mesure w-[46px] shrink-0 text-[10px] text-texte-3">
+        {image.rang === null ? "" : `Image ${image.rang}`}
       </span>
       <span className="mesure min-w-0 flex-1 truncate text-[10px] text-texte-2">
         {image.provenance}

@@ -425,7 +425,7 @@ produit accompagne, il ne refuse pas.
 qu'on met en position, dont on tire une image, et qu'on envoie au modèle pour lui dicter
 la géométrie du corps. On refait alors exactement la même séance, avec des postures
 fabriquées à la main dans un outil gratuit du navigateur (`posemy.art`), pour savoir si
-le modèle obéit à une image de posture. Le détail est dans `docs/etude-mannequin.md`.
+le modèle obéit à une image de posture. Le détail est dans `docs/archive/essais-v3/etude-mannequin.md`.
 
 Dans les trois cas, la séance a rendu ce qu'on lui demandait, et elle a coûté moins qu'un
 café.
@@ -893,7 +893,7 @@ est redessiné par le module du produit. Chaque modèle a donc reçu **exactemen
 
 ## ⚠️ La conclusion précédente était fausse, et c'est le banc qui la corrige
 
-`docs/essai-animation.md` concluait, sur trois tirages d'un seul modèle : *« le modèle sait
+`docs/archive/essais-v3/essai-animation.md` concluait, sur trois tirages d'un seul modèle : *« le modèle sait
 tenir un personnage, il ne sait pas lui faire exécuter un mouvement — et on ne peut pas le
 lui apprendre par le texte »*, et cette conclusion désignait le mannequin.
 
@@ -971,35 +971,60 @@ produit**, puisque c'est lui, et non la méthode, qui décide si une animation e
 
 ---
 
-# ⚠️ Cette dernière phrase est fausse, et c'est un troisième banc qui la corrige
+# ⚠️ Cette dernière phrase est fausse, et deux bancs de plus l'ont corrigée
 
 **Le choix du modèle n'est pas ce qui décide.** `gpt-image-2`, celui que le produit utilise
 déjà, reste le meilleur rapport, et il n'y a rien à changer de ce côté.
 
 Un banc de **vingt-neuf demandes envoyées au même modèle**, le 1<sup>er</sup> septembre 2026,
 l'a vérifié en changeant la demande au lieu du modèle : le nombre de cases, six façons
-d'écrire la consigne, et ce qu'on joint comme images.
+d'écrire la consigne, et ce qu'on joint comme images. Les **cent dix-sept planches** des deux
+bancs ont ensuite été montées en animations et **regardées une par une par l'auteur**, qui
+les a notées *mauvais*, *moyen* ou *bon*.
 
-**Il n'a pas trouvé de réglage qui fasse franchement mieux**, et c'est le résultat. Deux
-pistes qui paraissaient évidentes ont été payées et sont mortes :
+## ⚠️ Et ce jugement a fait tomber la mesure qui pilotait tout
 
-- retirer du prompt la phrase `same proportions, same size` — qui interdit au corps de
-  changer de forme — semblait tout changer sur trois tirages. Huit tirages plus tard,
-  l'effet avait disparu ;
-- joindre un dessin de cycle de marche fait par le programme n'a rien donné non plus.
+Les bancs se conduisaient à la **forme** — de combien le rapport hauteur/largeur du
+personnage change d'une case à l'autre. Confrontée aux notes, **elle ne prédit rien** : les
+planches qu'elle rejetait contiennent autant de bonnes marches (10 %) que celles qu'elle
+retenait (9 %), et sa valeur moyenne est **plus haute sur les mauvaises planches que sur les
+bonnes**. Elle confondait *un corps qui marche* avec *un personnage dessiné à des tailles
+différentes* — et le second cas est bien plus fréquent.
 
-**Deux choses en revanche sont sûres, et elles valent d'être sues avant de refaire une
-séance :**
+**Tout classement de cette page qui s'appuie sur la forme est donc à jeter**, y compris celui
+de la manche 3 juste au-dessus. Les classements refaits sur les notes sont dans
+`docs/v3-animation.md` ; les animations tournent, avec leur note, dans
+`essais/rapport-animation.html`.
 
-- **l'énumération des poses case par case est ce qui porte la marche.** Les cinq façons de
-  réécrire la consigne autrement — cycle continu, vocabulaire d'animateur, description par
-  différence — ont donné **zéro planche animée sur dix**. Le produit écrit déjà la bonne
-  formulation ; la piste, si elle existe, est de **détailler chaque case davantage**, pas de
-  reformuler ;
-- **une planche dont le modèle a redessiné le quadrillage passe le contrôle du compte**, et
-  l'atelier en tire huit carrés opaques sans rien refuser. Ça n'arrive pas avec le prompt du
-  produit, qui l'interdit explicitement et efficacement — mais il n'existe aucun garde-fou
-  si ça arrive.
+## Ce que les notes disent
 
-Tout est dans `docs/v3-animation.md`, et les animations tournent dans
-`essais/resultats_recette/rapport.html`.
+- **une bonne planche sur dix**, et une sur douze si l'on exige en plus qu'elle soit
+  découpable. C'est la loterie, chiffrée : le produit doit être bâti sur *« on en commande
+  plusieurs, on regarde, on garde la bonne »* ;
+- **le prompt du produit gagne la comparaison des consignes** : 27 % de bonnes planches,
+  contre 9 % pour une consigne d'essai plus détaillée et **0 % pour cinq réécritures de
+  fond**. Décrire *un mouvement* ne marche pas ; énumérer *chaque instant* marche, et le
+  produit écrit déjà l'énumération ;
+- **le paragraphe qui interdit de redessiner le quadrillage est décisif** : avec lui, 0
+  planche sur 26 a le quadrillage redessiné ; sans lui, 47 sur 53. Il ne faut pas y toucher ;
+- **une planche au quadrillage redessiné passe quand même le contrôle du compte**, et
+  l'atelier en tire huit carrés opaques sans rien refuser. Il manque un contrôle de
+  remplissage.
+
+## Deux pistes vivantes, et une rétractation
+
+Ce que la version précédente de cette annexe donnait pour mort ne l'est pas :
+
+- **retirer la clause `same proportions, same size`** — je l'avais déclarée sans effet sur la
+  foi de la mesure. Sur les notes, à modèle et prompt constants : **5 bonnes planches sur 15
+  avec la clause remplacée, contre 2 sur 11 avec la clause**. Ce n'est pas une preuve — un
+  tel écart sort du hasard sans peine — mais c'est redevenu la meilleure piste ;
+- **moins de cases sur la planche** : 2 bonnes sur 6 à quatre cases, contre 9 sur 101 à huit.
+  Le personnage est deux fois plus grand et a la place de se déformer. Six tirages ne
+  décident rien, et cette piste n'a **jamais été essayée avec le paragraphe protecteur**.
+
+En revanche **le guide de marche dessiné par le programme ne fait rien à huit cases** — 2
+bonnes sur 8 avec lui, 3 sur 7 sans lui.
+
+**Trois branches de huit tirages, environ soixante-quinze centimes, trancheraient les deux
+pistes.** Le détail est dans `docs/v3-animation.md`.

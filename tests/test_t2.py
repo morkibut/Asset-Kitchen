@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T2 — le post-traitement.
 
-Un test par critère de `docs/PLAN.md` § Phase T2, nommé d'après lui. Le dixième
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T2, nommé d'après lui. Le dixième
 critère — « la comparaison est faite et tranchée : sortie brute du modèle contre
 sortie post-traitée » — ne se vérifie pas ici : c'est un banc sur des images
 réelles, il vit dans `essais/essai_pixel.py`, et il est gratuit.
@@ -273,16 +273,24 @@ def test_une_recette_nommee_inconnue_est_refusee_en_le_disant(client, double):
     assert reponse.json()["raison"] == "aucune recette nommée « jamais-posée »"
 
 
-# ── « La quantification est grisée avec sa raison tant qu'aucune palette
-#     n'existe » ─────────────────────────────────────────────────────────────
+# ── « La quantification s'annonce sans palette, elle ne se grise plus »
+#
+#    **Renversé en D2.** T2 grisait la quantification tant qu'aucune palette
+#    n'existait, et refusait la recette si elle arrivait quand même — en
+#    attendant que T4 apporte les artworks. T4 les a apportés, mais le grisé est
+#    resté pour les projets qui n'en promeuvent aucun : mesuré le 3 septembre
+#    2026, ces projets-là ne réduisaient **aucune** couleur et rendaient des
+#    sprites à dix mille teintes, sans un mot à l'écran.
+#
+#    Ce que le test garde est l'invariant lui-même, appliqué correctement : ce
+#    qui est indisponible est annoncé avec sa raison. Rien n'est indisponible
+#    ici — il y a seulement quelque chose à dire. ────────────────────────────
 
 
-def test_la_quantification_est_grisee_avec_sa_raison(client, double):
-    """Grisée, donc annoncée avec sa raison **avant** d'être choisie — et
-    refusée en la répétant si elle arrive quand même. Elle s'allumera en T4,
-    quand la palette se déduira des artworks officiels du projet (US-65)."""
-    raison = client.get("/api/status").json()["traitement"]["quantification"]["raison"]
-    assert raison == "aucune palette : elle se déduira des artworks du projet"
+def test_la_quantification_s_annonce_sans_palette_au_lieu_de_se_griser(client, double):
+    etat = client.get("/api/status").json()["traitement"]["quantification"]
+    assert etat["raison"] is None, "réduire à N couleurs sans palette est défini"
+    assert "aucun artwork officiel" in etat["note"]
 
     asset = _generer(client, double)
     reponse = client.put(
@@ -290,8 +298,24 @@ def test_la_quantification_est_grisee_avec_sa_raison(client, double):
         json=_recette(quantification={"couleurs": 16, "palette": [], "tramage": "aucun"}),
     )
 
-    assert reponse.status_code == 409
-    assert reponse.json()["raison"] == f"quantification — {raison}"
+    assert reponse.status_code == 200, reponse.text
+    assert reponse.json()["recette"]["quantification"]["couleurs"] == 16
+
+
+# ── Les quatre réductions sont annoncées avec leur raison de grisé (D2) ──────
+
+
+def test_les_quatre_reductions_sont_annoncees_avec_leur_raison(client):
+    """Même invariant que les moteurs de détourage : trois méthodes ne demandent
+    rien, la quatrième tire une bibliothèque lourde et se grise si elle manque —
+    jamais proposée puis refusée."""
+    reductions = {
+        r["nom"]: r for r in client.get("/api/status").json()["traitement"]["reductions"]
+    }
+    assert set(reductions) == {"vote", "pixeloe", "lanczos", "proche"}
+    for nom in ("vote", "lanczos", "proche"):
+        assert reductions[nom]["raison"] is None, f"« {nom} » ne demande rien"
+        assert reductions[nom]["libelle"]
 
 
 # ── Le moteur de détourage absent est grisé avec sa raison ───────────────────

@@ -89,6 +89,61 @@ MODELE = "modele"
 TRACE = "trace"
 MOTEURS = (BORD, COULEUR, MODELE, TRACE)
 
+
+# ── Le durcissement appartient au moteur, et c'est la mesure qui le dit (D1) ──
+#
+# **Comptée le 3 septembre 2026 sur les 116 assets vivants du dépôt**, 123
+# passes de détourage écrites par l'auteur lui-même :
+#
+# | moteur    | passes | durcissement nul | valeur la plus fréquente |
+# |-----------|--------|------------------|--------------------------|
+# | `bord`    |   72   |      78 %        | **0** (56 sur 72)        |
+# | `couleur` |   11   |       0 %        | **1** (6 sur 11)         |
+# | `modele`  |   40   |       2 %        | **2** (32 sur 40)        |
+#
+# Le plan lisait ce chiffre autrement : « le réglage livré est faux plus d'une
+# fois sur deux », et il en concluait qu'une planche et une image seule ne
+# veulent pas le même défaut. **Croisé avec le moteur, cet écart disparaît** —
+# à moteur égal la nature ne décide presque plus rien (`modele` : 100 % contre
+# 93 %), pendant que le moteur, lui, décide tout. Ce qui coûtait à l'auteur
+# n'était pas le défaut d'une image seule : c'était que **changer de moteur
+# laisse le durcissement du moteur d'avant**, et il l'a retapé 39 fois sur 40.
+#
+# La raison est déjà écrite ailleurs, elle n'avait simplement jamais été jointe
+# à ce comptage : `bord` **ne produit aucun pixel à demi transparent, il est
+# binaire par construction**, donc il n'y a pas de frange à ronger ; `modele` en
+# produit sur 95 % du sujet (`docs/bilan-v3.md` § 1, mesure 3). Le durcissement
+# ne corrige pas un goût, il corrige une frange — et la frange appartient au
+# moteur qui la fabrique.
+#
+# **`trace` ne borne que la recherche**, il ne détoure pas lui-même : il n'a pas
+# de frange propre, donc pas de durcissement livré.
+DURCISSEMENT_LIVRE = {BORD: 0, COULEUR: 1, MODELE: 2, TRACE: 0}
+
+
+# Comment le produit **nomme** chaque moteur quand il en parle en français.
+#
+# **La même liste vit dans `interface/src/composants/Places.tsx`**, et les deux
+# sont tenues ensemble par un essai — comme les crans de cible avant elles.
+# Deux listes pour un fait finissent toujours par diverger ; un essai qui les
+# compare est ce qui rend la divergence impossible à livrer.
+NOM_DU_MOTEUR = {
+    BORD: "bord",
+    COULEUR: "pipette",
+    MODELE: "modèle",
+    TRACE: "sélection",
+}
+
+
+def durcissement_livre(moteur: str) -> int:
+    """Ce que ce moteur-là demande de ronger, sans que personne l'ait posé.
+
+    **Un moteur inconnu ne ronge rien.** Le domaine ne lève pas sur un nom qu'il
+    ne connaît pas — une recette écrite avant qu'un moteur existe doit continuer
+    de s'ouvrir —, et zéro est la valeur qui ne touche à rien.
+    """
+    return DURCISSEMENT_LIVRE.get(moteur, 0)
+
 # ── Les places, nommées une fois (U4) ────────────────────────────────────────
 #
 # **Les sept places du traitement, dans l'ordre où elles s'appliquent**, plus la
@@ -246,7 +301,7 @@ class Difference:
     """La seconde place — celle qui fait d'une image un **calque** (C3).
 
     « Le corps d'origine n'est jamais modifié : le calque est rangé à côté de
-    l'image payée » (`docs/PLAN.md`, C3). Il l'est **par construction** : cette
+    l'image payée » (`docs/archive/plan-versions-tenues.md`, C3). Il l'est **par construction** : cette
     place ne décrit qu'un calcul, et le brut de l'asset reste la case telle
     qu'elle est revenue du fournisseur. Rien ne s'écrit jamais dans le corps.
 
@@ -272,7 +327,7 @@ class Difference:
     distincts pour que la promesse tienne *par construction* : `affinage` est ce
     que la main dit du masque, `retouche` ce qu'elle dit du calque, et poser
     l'une n'écrit jamais dans l'autre. « Modifier le masque ne détruit pas la
-    retouche, et inversement » (`docs/PLAN.md`, C4) n'est donc pas une
+    retouche, et inversement » (`docs/archive/plan-versions-tenues.md`, C4) n'est donc pas une
     précaution à tenir : c'est la forme de l'objet.
 
     **Le masque est le rectangle *et* son affinage** — une seule couche, deux
@@ -443,6 +498,69 @@ class Passe:
         )
 
 
+def passe_livree(moteur: str = BORD) -> Passe:
+    """La passe que le produit pose pour ce moteur-là, et rien de plus (D1).
+
+    **Le seul endroit qui fabrique une passe sans que personne l'ait réglée.**
+    Tout ce qui pose un défaut passe par ici — la recette d'un univers, celle
+    d'un projet neuf — pour que le durcissement mesuré du moteur arrive avec
+    lui au lieu d'être retapé à la main.
+    """
+    return Passe(moteur=moteur, durcissement=durcissement_livre(moteur))
+
+
+def moteurs_suivis(
+    avant: tuple[Passe, ...], apres: tuple[Passe, ...]
+) -> tuple[Passe, ...]:
+    """Les passes d'après, **avec le durcissement qui suit les moteurs changés** (D1).
+
+    Mesuré : sans ça, passer du bord au modèle laissait zéro là où l'auteur a
+    ensuite tapé 2 lui-même **39 fois sur 40**.
+
+    **Écrite ici parce que l'écran ne dit pas ce qu'il a changé** : il renvoie la
+    recette entière, et c'est en la comparant à celle qu'on avait que le
+    changement de moteur se lit. Rang par rang, parce qu'une passe n'a pas
+    d'autre identité que sa place dans la suite — la même décision que la
+    pipette, dont le point vit dans les pixels du brut et pas dans un numéro.
+
+    **Seul le durcissement est touché, et la passe qui sort est celle d'après.**
+    Reconstruire depuis celle d'avant perdrait tout ce que le même envoi
+    apportait — le point qu'on vient de poser en passant à la pipette, par
+    exemple. Le produit n'ajoute qu'un chiffre ; il ne réécrit pas le geste.
+
+    Une passe ajoutée en bout n'a pas d'avant : elle arrive telle quelle, et
+    l'écran l'a déjà fabriquée par `passe_livree`.
+    """
+    return tuple(
+        replace(passe, durcissement=durcissement_livre(passe.moteur))
+        if rang < len(avant) and _durcissement_non_choisi(avant[rang], passe)
+        else passe
+        for rang, passe in enumerate(apres)
+    )
+
+
+def _durcissement_non_choisi(avant: Passe, apres: Passe) -> bool:
+    """Le moteur a bougé, et **personne n'a jamais choisi ce durcissement-là**.
+
+    Trois conditions, et les trois comptent :
+
+    1. le moteur change — sinon il n'y a rien à faire suivre ;
+    2. le durcissement ne bouge pas dans le même envoi — s'il bouge, l'auteur
+       vient de le choisir, et **un choix ne se réécrit pas** ;
+    3. il valait la valeur livrée du moteur qu'on quitte — sinon c'est un choix
+       plus ancien, et il ne se réécrit pas davantage.
+
+    Sans la troisième, un durcissement réglé à la main il y a trois jours serait
+    balayé par un simple changement de moteur : exactement la panne que la règle
+    existe pour éviter, à l'envers.
+    """
+    return (
+        apres.moteur != avant.moteur
+        and apres.durcissement == avant.durcissement
+        and avant.durcissement == durcissement_livre(avant.moteur)
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class Recadrage:
     """Sur la boîte opaque, avec une marge. Une boîte explicite l'emporte.
@@ -484,6 +602,188 @@ FLOYD = "floyd"
 TRAMAGES = (AUCUN, FLOYD)
 
 
+# ── Les méthodes de réduction, arrivées en D2 ────────────────────────────────
+#
+# **Quatre façons de passer de mille pixels à N carrés, et ce n'est pas un
+# classement.** Mesurées le 3 septembre 2026 sur deux illustrations fournies par
+# l'auteur (`essais/essai_pixelisation_complet.py`), toutes quatre ramenées au
+# même nombre de couleurs pour que la comparaison porte sur la seule réduction :
+#
+# | méthode    | ce qu'elle rend                                          |
+# |------------|----------------------------------------------------------|
+# | `vote`     | contour net **et** intérieur lisible — un sprite calme    |
+# | `pixeloe`  | garde les traits d'un pixel, contour plus agité           |
+# | `lanczos`  | la silhouette la plus lisse, l'intérieur mou              |
+# | `proche`   | brut : un pixel sur N gardé, les autres jetés             |
+#
+# **Le choix est un parti pris de style, pas une qualité** — décision de
+# l'auteur le 3 septembre : *« clairement les 4 ont des rendus différents avec
+# leurs avantages et inconvénients et peuvent influencer le style souhaité par
+# le créateur »*. D'où quatre valeurs vivantes, et non une bonne et trois
+# reliques.
+AU_PLUS_PROCHE = "proche"
+LANCZOS = "lanczos"
+VOTE = "vote"
+PIXELOE = "pixeloe"
+METHODES_DE_REDUCTION = (VOTE, PIXELOE, LANCZOS, AU_PLUS_PROCHE)
+
+NOM_DE_LA_METHODE = {
+    VOTE: "vote en deux temps",
+    PIXELOE: "traits épaissis",
+    LANCZOS: "réduction douce",
+    AU_PLUS_PROCHE: "au plus proche",
+}
+
+# **Ce que le produit choisit pour un projet neuf** — tranché par l'auteur le
+# 3 septembre : *« par défaut tu mets Vote en deux temps »*.
+#
+# **Ce n'est pas le défaut du champ**, et la distinction est celle de D1 : le
+# champ de `Grille` retombe sur `proche`, qui est ce que l'atelier faisait avant
+# cette tranche, de sorte qu'une recette enregistrée avant D2 — dont le JSON ne
+# porte aucune méthode — se rouvre en rendant exactement la même image. Le
+# défaut du produit, lui, n'entre que dans les recettes fabriquées à neuf.
+METHODE_LIVREE = VOTE
+
+
+def methode_connue(methode: Any) -> str:
+    """Le nom rendu tel quel s'il existe, sinon celui qui ne surprend personne.
+
+    **Le domaine ne lève pas sur un nom qu'il ne connaît pas** — même règle que
+    `durcissement_livre` pour les moteurs. Un fichier écrit par une version plus
+    récente, ou abîmé, doit continuer de s'ouvrir. On retombe sur `proche`,
+    c'est-à-dire sur ce que l'atelier faisait avant que la question se pose :
+    d'une valeur illisible on ne peut rien déduire, et la moins inventive est la
+    seule honnête.
+    """
+    return methode if methode in METHODES_DE_REDUCTION else AU_PLUS_PROCHE
+
+
+# ── Les paliers de couleurs, arrivés en D2 ───────────────────────────────────
+#
+# **Six paliers, et le plafond est le côté du sprite.** Tranché par l'auteur le
+# 3 septembre : *« on propose un nombre de 8 / 16 / 32 / 64 / 128 / 256
+# couleurs, avec le max bloqué au nombre de pixel (on peut pas avoir du 128
+# couleurs sur du 32px) »*.
+#
+# **Le plafond est mesuré, pas décrété.** Relevé le même jour sur les deux
+# illustrations : le sujet occupe environ 27 % de la toile à toutes les tailles,
+# et au-delà du côté du sprite l'image **ne contient plus assez de teintes
+# distinctes** pour remplir la palette demandée — 32 carrés rendent 30 couleurs
+# quand on en demande 32, et 229 quand on en demande 256. Demander plus que le
+# côté, c'est donc payer un réglage qui n'agit plus.
+PALIERS_DE_COULEURS = (8, 16, 32, 64, 128, 256)
+
+
+def paliers_de_couleurs(cible: int) -> tuple[int, ...]:
+    """Les paliers qui ont un sens pour un sprite de `cible` carrés de côté.
+
+    **Jamais vide.** Une cible plus petite que le premier palier — ou nulle,
+    quand le projet n'impose aucune taille — rend quand même le palier le plus
+    bas : un écran qui ne propose rien laisserait l'auteur devant une liste
+    morte, sans savoir si c'est un bug ou une règle.
+    """
+    tenus = tuple(p for p in PALIERS_DE_COULEURS if p <= cible)
+    return tenus or (PALIERS_DE_COULEURS[0],)
+
+
+# ── La hauteur d'un sujet, et le plafond qui fermait une famille entière ─────
+#
+# **Jusqu'ici rien ne pouvait être plus grand qu'un personnage.** L'occupation
+# dit la part de la case que le sujet remplit, et elle était bornée à 100 % en
+# douze endroits — trois corps de route, deux refus de service, un calcul d'image, trois du calibrage, la liste des positions du curseur, et les deux curseurs d'écran. Un moulin, un arbre, une tour, une porte
+# de ville : le produit n'avait aucune façon de les demander. Le modèle était
+# juste vers le bas — c'est bien ainsi qu'un objet tenu en main se dessine — et
+# faux vers le haut, où il ne montait pas.
+#
+# **Le carré ne change jamais de taille, et c'est la règle des vrais jeux 2D**
+# (`docs/bilan-v3.md` § 3). Ce qui change entre un personnage et un bâtiment est
+# le *nombre* de carrés qu'il couvre, jamais leur dimension : deux tailles de
+# pixel dans une même scène — des « mixels » — se voient immédiatement, parce
+# que l'œil compare les bords. La taille de tuile est une propriété du jeu, pas
+# de l'objet, et les trois réglages que réclame un moteur le confirment.
+#
+# **Donc l'occupation reste, et c'est son plafond qui tombe.** Elle disait déjà
+# la bonne chose — une hauteur relative au personnage —, et 300 % se lit « trois
+# personnages ». Rien ne se convertit, aucun fichier ne se réécrit, et tout ce
+# qui est en dessous de 100 % rend **exactement** l'image d'avant.
+
+# Le côté maximal d'une case, en carrés. **Le plus grand nombre que le produit
+# connaisse déjà** — la plus haute finesse de dessin —, plutôt qu'une borne
+# inventée pour l'occasion.
+CANEVAS_MAX = 2048
+
+# Combien de personnages de haut un sujet peut faire, au plus. **C'est la borne
+# du métier, et l'autre est celle de la machine** — les deux sont nécessaires,
+# et aucune ne remplace l'autre.
+#
+# Sans celle-ci, une case de 16 carrés autorisait 12 800 % : cent vingt-huit
+# personnages. Physiquement possible, jamais utile, et le curseur de l'écran y
+# gagnait **deux mille positions** — de quoi rendre inutilisable le réglage
+# qu'on venait d'ouvrir.
+#
+# **Huit, parce que c'est le nombre juste au-dessus de ce qu'un jeu demande.**
+# Un bâtiment de trois étages fait quatre à cinq personnages, un grand arbre
+# cinq à six, une porte de ville six à huit. Au-delà on ne fabrique plus un
+# sujet mais un fond, et un fond est un décor — il passe par l'homothétie et
+# ignore la case.
+PERSONNAGES_MAX = 8
+
+
+def occupation_max(cible: int) -> int:
+    """Jusqu'où l'occupation peut monter sur une case de `cible` carrés.
+
+    **Le plafond n'est plus 100 %, et il vient de deux bornes.** Celle du métier
+    — huit personnages, `PERSONNAGES_MAX` — et celle de la machine — un canevas
+    de `CANEVAS_MAX` carrés. La plus basse des deux gagne : sur une case de 64
+    carrés c'est le métier qui borne, à 800 % ; sur une case de 512, c'est le
+    canevas, à 400 %.
+
+    **Jamais en dessous de 100 %**, faute de quoi une case déjà plus grande que
+    le canevas maximal rendrait un plafond sous le plancher, et l'écran
+    n'offrirait plus rien.
+    """
+    par_le_canevas = round(CANEVAS_MAX / max(1, cible) * 100)
+    return max(100, min(100 * PERSONNAGES_MAX, par_le_canevas))
+
+
+# La borne la plus large qu'une occupation puisse prendre, quelle que soit la
+# case. **Elle sert aux corps de route et à rien d'autre** : un corps ne connaît
+# pas toujours la cible du projet — celui du barème ne la porte pas —, donc il
+# ne peut pas juger le vrai plafond. Il écarte ce qui n'a aucun sens, et le
+# service, qui connaît la case, refuse précisément avec le chiffre exact. C'est
+# la même répartition que pour la cible : la charge donne la forme, le service
+# donne la règle.
+OCCUPATION_MAX_ABSOLU = 100 * PERSONNAGES_MAX
+
+
+def cote_du_sujet(cible: int, occupation: int) -> int:
+    """Le côté que le sujet occupera, en carrés. L'arithmétique d'avant, isolée.
+
+    Elle était écrite trois fois — dans le traitement, dans le calibrage, dans
+    les positions du curseur — et les trois copies devaient s'accorder au carré
+    près, sans quoi le curseur s'arrête là où l'image ne change pas.
+    """
+    return max(1, round(max(1, cible) * max(1, occupation) / 100))
+
+
+def cote_du_canevas(cible: int, occupation: int) -> int:
+    """Le côté de la boîte qui revient, en carrés.
+
+    **En dessous du personnage, c'est la case du projet ; au-dessus, c'est la
+    hauteur demandée.** Les deux formules se rejoignent exactement à 100 %, donc
+    il n'y a pas de marche : un sujet passé de 99 à 101 % grandit d'un carré, pas
+    d'une forme.
+
+    **Et c'est pour cela que la boîte reste carrée.** Un fichier taillé au ras du
+    sujet serait plus léger, mais les images d'une même animation cesseraient de
+    se superposer au pixel — le défaut même que la tranche d'animation doit
+    réparer (`docs/bilan-v3.md` § 3). Un carré dont le côté suit la hauteur se
+    pose tel quel dans un moteur, et son côté reste un multiple entier de la case
+    du projet, donc il tombe aussi sur une grille de tuiles.
+    """
+    return max(max(1, cible), cote_du_sujet(cible, occupation))
+
+
 @dataclass(frozen=True, slots=True)
 class Grille:
     """La remise sur grille — l'étape qui rend le produit possible.
@@ -500,10 +800,14 @@ class Grille:
     `occupation` est la part de la case que le sujet remplit. C'est elle, et non
     la taille de l'image d'origine, qui met un tonneau et un personnage à la même
     échelle de pixel.
+
+    **Elle peut désormais passer 100 %**, et c'est ce qui ouvre les bâtiments,
+    les arbres et les tours : 300 % se lit *trois personnages de haut*, et la
+    boîte grandit d'autant au lieu de rogner le sujet. Voir `cote_du_canevas`.
     """
 
     cible: int = 64  # côté de la case, en pixels logiques
-    occupation: int = 100  # % de la case rempli par le sujet
+    occupation: int = 100  # % de la case rempli par le sujet — au-delà de 100, le sujet dépasse la case
     ancrage: str = BAS
 
     # ── Le décalage horizontal, arrivé en E17 ────────────────────────────────
@@ -525,12 +829,48 @@ class Grille:
     # écrit par le calibrage seul.
     decalage: int = 0
 
+    # ── La méthode de réduction, arrivée en D2 ───────────────────────────────
+    #
+    # **Comment on passe de mille pixels à `cible` carrés.** Jusqu'ici la
+    # question n'existait pas : l'atelier réduisait au plus proche voisin, sans
+    # que rien ne le dise ni ne permette d'en changer. C'était donc un choix de
+    # style pris dans le code, et le plus brutal des quatre.
+    #
+    # **`proche` par défaut, et c'est voulu.** Une recette écrite avant D2 n'a
+    # pas cette clé ; elle retombe ici, donc elle rend au pixel près l'image
+    # qu'elle rendait. Les recettes fabriquées à neuf reçoivent, elles, le choix
+    # du projet — `Univers.methode_pixels`, livré sur « vote en deux temps ».
+    methode: str = AU_PLUS_PROCHE
+
+    @property
+    def cote_sujet(self) -> int:
+        """Le côté du sujet dans la boîte, en carrés."""
+        return cote_du_sujet(self.cible, self.occupation)
+
+    @property
+    def cote_canevas(self) -> int:
+        """Le côté de la boîte qui revient, en carrés. Voir `cote_du_canevas`."""
+        return cote_du_canevas(self.cible, self.occupation)
+
+    @property
+    def en_personnages(self) -> float:
+        """La hauteur dite **en personnages** — un moulin à 300 % en fait trois.
+
+        L'auteur a demandé les deux lectures à la fois, le 3 septembre 2026 :
+        *« les deux, avec un rappel visuel, une sorte d'échantillon »*. Le
+        stockage, lui, n'en garde qu'une — la relative —, et c'est ce qui fait
+        qu'un changement de taille de projet emmène tous les types avec lui au
+        lieu de les laisser sur place.
+        """
+        return max(1, self.occupation) / 100
+
     def en_json(self) -> dict[str, Any]:
         return {
             "cible": self.cible,
             "occupation": self.occupation,
             "ancrage": self.ancrage,
             "decalage": self.decalage,
+            "methode": self.methode,
         }
 
     @staticmethod
@@ -540,6 +880,7 @@ class Grille:
             occupation=int(d.get("occupation", 100)),
             ancrage=d.get("ancrage", BAS),
             decalage=int(d.get("decalage", 0) or 0),
+            methode=methode_connue(d.get("methode", AU_PLUS_PROCHE)),
         )
 
 
@@ -549,7 +890,7 @@ class Quantification:
 
     **Livrée branchée et grisée** en T2 : elle a besoin d'une palette, et la
     palette se déduit des artworks officiels du projet, qui arrivent en T4
-    (`docs/PLAN.md`, US-65). `palette` vide veut dire « déduite de l'image
+    (`docs/archive/plan-versions-tenues.md`, US-65). `palette` vide veut dire « déduite de l'image
     elle-même » — ce que le service refuse à l'écran, et ce dont l'essai de
     comparaison se sert, lui, pour mesurer ce que le post-traitement rapporte.
     """

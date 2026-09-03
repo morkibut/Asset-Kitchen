@@ -20,7 +20,14 @@ import re
 from pathlib import Path
 
 from atelier.domaine.projet import BAREME_PAR_DEFAUT, CHAMPS_BIBLE
-from atelier.domaine.vue import TAILLES, VUES, phrase_de_calage, phrase_de_grille, vue
+from atelier.domaine.vue import (
+    FINESSES,
+    TAILLES,
+    VUES,
+    phrase_de_calage,
+    phrase_de_grille,
+    vue,
+)
 
 PLACES = (
     Path(__file__).resolve().parents[1] / "interface" / "src" / "composants" / "Places.tsx"
@@ -38,7 +45,7 @@ def _case(client, nom: str) -> dict:
 # ── Les deux listes fermées ──────────────────────────────────────────────────
 
 
-def test_les_huit_vues_et_les_neuf_tailles_se_servent_du_serveur(client):
+def test_les_huit_vues_et_les_dix_tailles_se_servent_du_serveur(client):
     """**Deux listes fermées, servies par le serveur** — pas écrites à l'écran.
 
     C'est le même choix qui remplit le réglage *et* la phrase de la bible : deux
@@ -48,7 +55,11 @@ def test_les_huit_vues_et_les_neuf_tailles_se_servent_du_serveur(client):
     recu = client.get("/api/universe/views").json()
 
     assert len(recu["vues"]) == 8
-    assert len(recu["tailles"]) == 9
+    # **Dix depuis D2** : 512 est entré avec le pixel art haute résolution.
+    assert len(recu["tailles"]) == 10
+    # **Et une seconde liste fermée, celle des finesses** (D2) : un jeu en
+    # dessin ne demande pas des carrés, il demande combien de détail garder.
+    assert [f["cible"] for f in recu["finesses"]] == [c for c, _ in FINESSES]
     # Chaque vue dit combien d'images une pose demande — c'est le chiffre qui
     # multiplie toute la production, donc tout ce qu'on paiera.
     assert all(v["images"] >= 1 for v in recu["vues"])
@@ -56,7 +67,7 @@ def test_les_huit_vues_et_les_neuf_tailles_se_servent_du_serveur(client):
 
 
 def test_la_table_grille_propose_les_memes_tailles_que_l_assistant():
-    """**La table de grille propose exactement les neuf tailles du domaine.**
+    """**La table de grille propose exactement les tailles du domaine.**
 
     Ce n'est pas un détail d'affichage : le réglage du projet nomme la case à
     laquelle tout est ramené, et la table est l'outil qui la pose sur une image.
@@ -65,7 +76,7 @@ def test_la_table_grille_propose_les_memes_tailles_que_l_assistant():
     est arrivé, sept contre neuf, entre le 30 et le 31 août 2026 : 8 et 256
     étaient entrés dans le domaine et l'assistant sans entrer dans la table.
 
-    L'essai lit la source de l'écran plutôt que de recopier les neuf nombres :
+    L'essai lit la source de l'écran plutôt que de recopier les nombres :
     une troisième copie de la même liste serait précisément la panne qu'on ferme
     ici. Le croquis de l'écran (`docs/maquettes-v2.1/13-table-grille.html`,
     première annotation) porte le même arbitrage.

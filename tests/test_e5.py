@@ -88,8 +88,15 @@ def test_le_contour_se_trace_sur_la_silhouette_definitive():
     assert rendu.shape[:2] == (18, 18)
     # Le sujet occupait la moitié de son image : ramené à 16, il fait 8. Le
     # trait fait le tour de **ce** carré-là — un anneau d'un pixel autour d'un
-    # bloc de 8 pèse 10 × 10 moins 8 × 8.
-    assert int(_anneau(rendu).sum()) == 10 * 10 - 8 * 8
+    # bloc de 8 pèserait 10 × 10 moins 8 × 8, **moins ses quatre coins**.
+    #
+    # ⚠️ **Ce test comptait 36 jusqu'à D4, et il en compte 32 depuis.** Le trait
+    # d'une épaisseur se pose désormais en croix et non en carré : le carré
+    # posait des pixels dans le prolongement diagonal des coins, ce qu'un pixel
+    # artiste ne dessine pas. Au-delà d'une épaisseur le carré reprend — une
+    # croix répétée donne un losange —, et les essais de croissance ci-dessous
+    # ne bougent pas d'un pixel, puisque la boîte grandit pareil.
+    assert int(_anneau(rendu).sum()) == 10 * 10 - 8 * 8 - 4
 
 
 # ── « Choisir la position extérieure écrit que l'image s'agrandit » ───────────

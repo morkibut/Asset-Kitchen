@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """D'où vient la palette d'un univers — CPU, pure, aucune entrée-sortie.
 
-« La palette se déduit par calcul des artworks officiels » (`docs/PLAN.md`, T4).
+« La palette se déduit par calcul des artworks officiels » (`docs/archive/plan-versions-tenues.md`, T4).
 Ce module est ce calcul, et rien d'autre : il reçoit des octets d'images, il rend
 des couleurs en hexadécimal. Il ne lit aucun fichier, n'appelle aucun modèle, et
 ne touche jamais le réseau — c'est ce qui fait que « retirer un artwork officiel

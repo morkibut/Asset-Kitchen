@@ -1,9 +1,15 @@
 # Asset Kitchen — Architecture
 
-> Établi le 26 août 2026, à partir de l'analyse de SpriteCook
-> (`Anatomie de SpriteCook.html`, captures dans `screen_spritecook/`)
+> Établi le 26 août 2026, **tenu à jour au 2 septembre 2026**, à partir de l'analyse de
+> SpriteCook (`Anatomie de SpriteCook.html`, captures dans `screen_spritecook/`)
 > et de l'état des trois projets qui précèdent : `_DEV/game-asset-generator` (GAG),
 > `_DEV/MySpriteAi`, `_DEV/game-asset-generator/texel-studio`.
+>
+> **Ce document fait foi sur la construction** : les décisions de cadrage, le squelette, le
+> modèle d'objets, les risques. Ce que le produit doit faire, à l'usage : `docs/PRD.md`. Dans
+> quel ordre on le construit : `docs/PLAN.md`. Le détail d'une version :
+> `docs/archi-versions.md` pour la V1, la V2 et la V3, `docs/archi-fournisseur.md` pour les
+> fournisseurs. **Ce que les bancs de la V3 ont mesuré : `docs/bilan-v3.md`.**
 
 ---
 
@@ -16,9 +22,14 @@ de lui-même** ; juger, c'est marquer favori ou supprimer, et ce qui est jugé l
 avant de partir dans le jeu, pas avant d'entrer dans la bibliothèque
 (`docs/PRD.md` fait foi sur ce point).
 
-Le moteur d'image est une API payante. Ce n'est pas un compromis : c'est la seule
-famille de modèles qui sait **préserver l'identité d'un sujet** d'une génération à
+Le moteur d'image est **une API, jamais un modèle local**. Ce n'est pas un compromis : c'est
+la seule famille de modèles qui sait **préserver l'identité d'un sujet** d'une génération à
 la suivante — la capacité sur laquelle repose toute la V2, et tout ce qui la suit.
+
+**Payante n'en est plus une condition, depuis `F1`** : le produit connaît plusieurs
+fournisseurs, dont un qui ne demande ni compte ni clé. Sur une machine où rien n'a été déposé,
+une image arrive. Ce qui reste vrai : les univers, eux, partent chez le fournisseur payant —
+le gratuit n'accepte aucune image en entrée, donc aucune référence.
 
 ## 2 · Ce que ce n'est pas
 
@@ -39,16 +50,19 @@ l'intégration ne l'est pas.
 | Socle | Nouveau dépôt. Récupération ciblée, pas de fork. | Paradigme opposé à GAG, moteur opposé à MySpriteAi. |
 | Moteur d'image | **API seulement.** OpenRouter d'abord ; **plusieurs fournisseurs depuis F1**, voir la ligne suivante. | Cohérence d'identité impossible en local sur 8 Go — mesuré : Flux GGUF 1024 à 106,9 s/image sur cette machine. C'est le *local* qui est écarté, et cette moitié-là n'a jamais bougé. |
 | Fournisseur | **Plusieurs adaptateurs depuis F1**, et OpenRouter reste celui qui porte les univers. Un modèle se nomme par son fournisseur **et** par son nom, les deux ensemble. | *Révisé le 1<sup>er</sup> septembre 2026.* La décision de départ tenait tant que la question était la couverture : 48 modèles de 11 éditeurs derrière un seul jeu de paramètres, et écrire trois adaptateurs pour ça aurait coûté trois fois le travail pour le même résultat. Elle est tombée sur une autre question — **le prix** : six relances en trente-deux minutes ont emporté le quart de tout l'argent dépensé ici, et un fournisseur qui ne demande ni compte ni clé change ce que ce geste coûte. Ce qui ne change pas : **aucun repli automatique de l'un sur l'autre**, et aucun mélange dans un même appel. |
-| Comptabilité | **Aucun compteur de crédits maison en V1.** Suivi des coûts dans le tableau de bord OpenRouter. | Économise tout un pan de code pour une information déjà rendue ailleurs. |
-| Modèles locaux | Hors application. Import du résultat. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. |
-| Détourage | **Remplissage depuis le bord** par défaut, la **pipette** en recours pour ce qu'il n'atteint pas, `rembg` en troisième moteur facultatif. Passes multiples dans les trois cas. | *Révisé le 27 août 2026, à la mesure.* Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
+| Comptabilité | **Aucun compteur de crédits maison**, et ça n'a pas bougé. Mais le produit enregistre **ce que chaque appel a consommé, dans l'unité du fournisseur**, le totalise par projet, et tient son propre écran des dépenses depuis `E18`. | *Précisé le 1<sup>er</sup> septembre 2026.* Ce qui est écarté, c'est la **comptabilité parallèle** — recompter les crédits d'un fournisseur à sa place. Ce qui ne l'a jamais été, c'est enregistrer ce qu'on a soi-même dépensé : un tarif de catalogue mentait de plus du double, $0,019 annoncés contre $0,042 facturés. La réserve d'un fournisseur se lit chez lui quand il la dit, se compte ici quand il ne la dit pas, **et l'écran dit toujours lequel des deux**. |
+| Modèles locaux | **Aucun modèle _génératif_ local.** Hors application, import du résultat. Un modèle de **segmentation** sur processeur est admis comme moteur de détourage facultatif — c'est la ligne suivante. | Évite le gestionnaire de VRAM, les rechargements, les custom nodes. *Précisé en T2, pas contourné* : la règle vise ce qui **fabrique** une image, pas ce qui en découpe une, et le geste courant ne charge aucun modèle. |
+| Détourage | **Quatre moteurs**, et le remplissage depuis le bord reste le défaut : le **remplissage**, la **pipette** pour ce que le bord n'atteint pas, le **modèle** de segmentation — trois modèles au catalogue depuis `U13`, du rapide à l'intermédiaire au lourd —, et la **sélection magique** arrivée en V2.1, où l'on entoure grossièrement un sujet et l'atelier va chercher son bord dedans. Passes multiples dans les quatre cas. **Depuis `D1`, chaque moteur porte le durcissement qu'il demande** — zéro pour le remplissage, un pour la pipette, deux pour le modèle — et ce durcissement suit l'auteur quand il change de moteur, sans jamais réécrire une valeur qu'il a posée lui-même. | *Révisé le 27 août 2026, à la mesure ; le durcissement rattaché au moteur le 3 septembre 2026.* Le durcissement ne corrige pas un goût, il corrige une frange : le remplissage est binaire par construction et n'en laisse aucune, le modèle en laisse sur 95 % du sujet. Mesuré sur les 123 détourages du dépôt — à moteur égal, la nature de l'image ne décide presque rien. Tout ce que l'atelier produit arrive sur un fond plat : le remplissage suffit sur 44 images de six modèles, en 130 ms, sans modèle, sans téléchargement et hors ligne. Faire du modèle la dépendance par défaut aurait fait payer 180 Mo et un premier lancement en ligne pour un résultat que personne ne distinguerait. |
 | Post-traitement | Local, CPU, jamais sur le GPU. | Reprise de AD-9 de GAG. Un curseur doit répondre instantanément. |
 | Univers | Bible écrite à la main + planches de référence + palette extraite par calcul. | La palette sert **en entrée** (contrainte de quantification), pas en contrôle. |
-| Conformité | **Aucune vérification automatique.** L'humain juge à l'œil. | Écarté volontairement : coûte de l'analyse d'image pour un jugement que l'auteur fait mieux. Réintégrable plus tard si le besoin apparaît. |
+| Conformité | **Aucun refus automatique sur la qualité.** Les mesures s'affichent toutes — ressemblance, corps repeint, échelle au retour — et n'empêchent jamais de garder ; **seul un compte d'images *insuffisant* refuse** — `R6`, close le 3 septembre 2026, a réécrit la règle : un sujet en trop ne se jette plus, il se choisit, et un sujet qui remplit presque toute sa boîte arrête la planche pour le dire au lieu d'entrer en silence. | Écarté volontairement : l'auteur juge mieux. *Et c'est désormais mesuré plutôt que supposé* — la mesure automatique d'une planche d'animation a été confrontée aux notes de l'auteur le 2 septembre 2026 et s'est révélée **sans rapport avec elles**. Un écran de tri montre des images animées, pas des chiffres. |
 | Forme | Serveur Python local + interface web dans le navigateur. | Pillow, numpy et le SDK MCP imposent Python ; l'ergonomie impose le web ; le navigateur donne les outils de développement, qu'une WebView cache. |
 | Toile de composition | **`@xyflow/react`**, ajoutée en T8 — la seule dépendance d'exécution que l'interface ait gagnée depuis React. | *Décidé le 27 août 2026.* Le plan, la conversion écran → plan, la sélection et le confinement d'une carte dans un îlot sont du code de bibliothèque, éprouvé et sous licence MIT ; les réécrire coûterait des semaines pour reproduire ce qui existe. Ce qu'elle ne fournit pas — la carte, la persistance, le classement, l'annulation — reste entièrement au produit : §6.5 fait la part exacte. |
-| Style | V1 = pixel art. Aucune décision ne doit interdire le 2D non-pixel. | La quantification stricte abîme le 2D peint — elle devra avoir deux régimes le jour venu. |
+| Style | **Le pixel art est le défaut, plus une limite.** La taille de pixel d'un univers accepte **« aucune »** depuis `R2`, et la bible a gagné la vue et la technique de rendu. | *Révisé le 28 août 2026.* L'écart n'était pas là où ce document le plaçait : rien du style ne part dans le prompt, mais le **post-traitement** imposait l'apparence sans qu'on l'ait demandée — la remise sur grille est systématique, la quantification s'allume dès qu'un artwork existe. La case « aucune » suffit à rendre la grille facultative, et un mode HD à part entière est écarté pour ça. ~~*Limite acceptée* : la quantification reste liée à l'existence d'une palette.~~ **Levée en D2, le 3 septembre 2026, et ce n'était pas une limite mais une panne** : liée à la palette, la quantification ne s'exécutait *jamais* sur un projet sans artwork — mesuré, 905 couleurs sur un sprite de 64 carrés, et rien à l'écran ne le disait. Ce qui la commande est désormais **la taille de case**, c'est-à-dire le fait de faire du pixel art ; la palette, quand elle existe, s'impose en plus. **Et la réduction elle-même devient un choix** entre quatre méthodes, au projet et par image : c'était un parti pris de style écrit dans le code, et le plus brutal des quatre. |
 | Validation | Manuelle, systématique. | C'est le principe du produit, pas une limite. |
+| **La planche** | **C'est un objet du produit**, plus le brut jetable de sa génération : elle se voit dans la galerie et elle y reste. **Son découpage reste automatique** — une planche qui revient bien ne demande aucun geste —, et il **se refait à la main** autant de fois qu'on veut. | *Tranché le 2 septembre 2026.* Renverse « le pliage est une ruse d'appel, jamais un format de livraison ». Ce qui l'impose est mesuré : une planche d'animation revient bonne **une fois sur dix**, donc on en commande plusieurs et l'on garde la bonne — ce qui suppose de pouvoir la **juger** avant de choisir, donc de la voir. Voir `docs/archi-versions.md` §7 et §8. |
+| **Le squelette** | **Dans le périmètre**, en fin de V3 : un pantin articulé fabriqué depuis **une seule** image déjà validée, qui rend une bande sans un appel payant. Ce qui sort vers le jeu, ce sont les **images _et_ le pantin**, dans des formats existants qu'on n'invente pas. | *Tranché le 2 septembre 2026.* Renverse « squelette, os, interpolation : c'est l'animation, pas le personnage ». C'est le seul chemin qui **supprime** la loterie au lieu de la subir : rien n'est redessiné, donc le personnage ne peut plus changer de taille entre deux étapes. Limite écrite d'avance : il ne fait bouger que ce qui est **déjà dessiné**. |
+| **Le fond de génération** | **Un réglage du projet**, choisi par l'auteur, visible, et corrigible à la main juste avant de payer. L'atelier **propose** une couleur que rien du jeu ne porte ; il ne l'impose jamais. | *Tranché le 2 septembre 2026, par l'auteur.* Le fond était une phrase enterrée dans le code, et c'était un gris que le sujet porte aussi — d'où le découpage à reprendre sur presque chaque image. C'est un morceau du texte qui part : il appartient à l'auteur comme le reste. |
 
 ## 4 · Architecture
 
@@ -88,9 +102,16 @@ Cinq règles qui tiennent l'ensemble :
    l'index**, jamais l'inverse, pour qu'une coupure laisse l'index en retard sur
    le disque plutôt que le disque en retard sur l'index.
 4. **Le post-traitement ne touche jamais le GPU.** Il est CPU, pur, et ses étapes
-   s'appliquent dans un ordre fixe : détourage, recadrage, grille, quantification,
-   bords, **contours, la main**. Aucune ne se réordonne — cinq des sept n'ont pas
-   de sens avant celle qui les précède.
+   s'appliquent dans un ordre fixe : détourage, **différence**, recadrage, grille,
+   quantification, bords, **contours, la main**. Aucune ne se réordonne — six des
+   huit n'ont pas de sens avant celle qui les précède.
+
+   > **Huit places, pas sept, et la deuxième ne se voit pas.** La *différence* est la
+   > place qui fabrique un calque d'équipement, posée par la V2 : elle est dans la
+   > liste du code au même titre que les autres, mais elle ne paraît que sur un calque
+   > — sur une image ordinaire elle n'a rien à faire. Ce document l'a longtemps omise en
+   > comptant les places « qu'on voit », ce qui est une bonne façon de croire qu'un
+   > traitement en compte sept quand il en applique huit.
 
    **Sept places depuis la V2.1, et les deux dernières sont arrivées par le même
    raisonnement que les cinq premières** — écrit le 31 août 2026. Les *contours*
@@ -233,6 +254,24 @@ remplacement ; or il n'y a qu'une base, qu'un disque, qu'une interface, et aucun
 ne changera. Le fournisseur, lui, changera. Partout ailleurs : des modules à responsabilité
 claire, comme `server/` dans MySpriteAi.
 
+**Et derrière cette frontière, deux ports depuis A9** — un fournisseur d'images, un
+**animateur** qui rend des clips. Le même adaptateur peut porter les deux, et c'est le cas :
+OpenRouter sert les deux avec un compte, une clé et une facture. Le produit, lui, ne les
+confond jamais, parce que leurs gestes ne se recouvrent pas.
+
+| | Le fournisseur d'images | L'animateur |
+|---|---|---|
+| Le geste | un appel, une image, dans la même requête | on soumet, on attend, on télécharge |
+| La durée | quelques secondes | deux minutes, et **l'atelier peut fermer entre-temps** |
+| Ce qui est joint | trois rôles, tous facultatifs, tous cèdent devant le plafond du modèle (F6) | **une image de départ, obligatoire, qui ne cède jamais** |
+| Ce qui revient | une image, que la chaîne mesure | un conteneur vidéo, qu'aucune chaîne d'images ne sait lire |
+| Ce qui se refuse d'avance | un nombre d'images de référence | une durée, une résolution, **et un prix qu'on n'a pas pu relire** |
+
+**Un port de plus n'est pas un modèle de plus**, et chacune de ces cinq lignes casse quelque
+chose si on l'ignore. La plus coûteuse est la dernière du milieu : un fichier vidéo passé par
+la mesure d'image lève « illisible », et le rattrapage enregistre alors un échec **à zéro
+dollar** — un clip payé qui disparaît du journal du projet.
+
 **`mcp/` est le voisin de `api/`, pas son client.** Les deux appellent `services/`, aucune ne
 réimplémente rien. C'est ce qui garantit que ce qu'un agent peut faire est exactement ce que
 l'écran peut faire.
@@ -322,8 +361,28 @@ du serveur MCP. Le numéro y est conservé : un renvoi `§4 bis` reste valide.
 Ce tableau tient le modèle de la V1. **Les cinq entités de la V2** — plan de poses,
 personnage, emplacement, pièce, calque — sont décrites en §7, et aucune ne modifie une
 ligne ci-dessus : elles s'ajoutent, et le corps comme le calque rendu restent des assets
-ordinaires. **Les trois entités de la V2.1** — étiquette, palette, ambiance — sont
-décrites plus bas, avec les cinq champs qui les accompagnent.
+ordinaires. **Les quatre entités de la V2.1** — étiquette, palette, direction, ambiance —
+sont décrites plus bas, avec les champs qui les accompagnent.
+
+**La V2.2 en a posé deux de plus**, et elles sont décrites dans `docs/archi-fournisseur.md` :
+le **fournisseur** — son nom, l'état de ses identifiants, la date de sa dernière photo de
+catalogue, et d'où viennent les fiches de ses modèles — et sa **réserve** — ce qui reste, dans
+quelle unité, quand ça revient, et **si le chiffre est lu chez lui ou compté ici**. Elles
+n'ajoutent que deux champs à ce qui existe : le nom du fournisseur sur la génération et sur
+l'asset, et ce que l'appel a consommé avec son unité.
+
+> **Ce que les deux versions ouvertes poseront, écrit d'avance pour qu'aucune ne le découvre en
+> route.** La **V2.3** ne pose aucune entité neuve — elle répare : la recette par défaut cesse
+> d'être unique et se range **par nature d'image** comme le modèle par défaut se range déjà par
+> famille, et le **fond de génération** devient un champ de l'univers. La **V3** en pose cinq, et
+> c'est beaucoup : la **planche** cesse d'être le brut jetable de sa génération pour devenir un
+> objet visible et gardé ; le **dépliage** est neuf et c'est lui qui porte la filiation, parce
+> qu'une planche se déplie plusieurs fois et qu'une génération seule ne distingue pas deux
+> dépliages ; la **bande** — un mouvement, une direction, des étapes, et **une fenêtre
+> commune** ; le **mouvement** nommé, qui appartient à l'atelier et non à un projet, comme
+> l'étiquette ; et le **pantin**, dont où il vit reste la question ouverte de la tranche `A8` —
+> une planche est un asset, un squelette n'en est pas un. *Le découpage est dans
+> `docs/PLAN.md`, ce qui l'a décidé dans `docs/bilan-v3.md`.*
 
 **Pourquoi le personnage mérite une entité et pas un champ.** C'est la deuxième fois seulement
 depuis T4 qu'on ajoute un objet au modèle — le lien de T9 était le premier —, et la barre doit
@@ -334,126 +393,24 @@ décrit des images qui n'existent pas — qui fait l'entité. Le champ `groupe` 
 déjà échoué sur ce point en T8, pour la même raison : une étiquette n'a pas de forme, et ce qui
 n'existe pas encore n'a rien à étiqueter.
 
-### Ce que la toile ajoute au modèle
+### Ce que la toile ajoute au modèle → `docs/archi-versions.md` § 6.5
 
-*Écrit le 27 août 2026 avec T8 et T9.* Deux tranches nées de l'usage, qui ajoutent une entité,
-deux champs à la carte, et rien d'autre.
+**Une entité — le lien —, deux champs sur la carte, et l'îlot qui n'est pas une entité mais
+*est* le groupe.** Le détail est descendu le 2 septembre 2026 dans `docs/archi-versions.md`
+§ 6.5, à côté de la dépendance de la toile qui y était déjà : deux moitiés d'un même sujet qui
+se renvoyaient l'une à l'autre entre deux fichiers.
 
-**L'îlot n'est pas une entité — il *est* le groupe.** Un îlot nommé sur la toile et un `groupe`
-écrit sur une carte sont la même chose vue de deux endroits, et c'est ce qui interdit deux
-rangements concurrents. Tirer une carte dans un îlot écrit son groupe, l'en sortir le vide :
-composer et classer sont le même geste, dans les deux sens, et il n'existe aucun état où l'écran
-et le disque divergent. La contrepartie est assumée — **un îlot vide n'existe pas**, puisqu'un
-groupe sans carte n'a nulle part où être écrit. La teinte d'un îlot, elle, ne peut pas vivre sur
-ses cartes : six cartes feraient six vérités possibles pour un seul îlot. Elle vit dans le fichier
-du projet, une entrée par nom de groupe, et part avec le dernier membre. Une note est une carte
-texte : elle porte sa teinte elle-même.
-
-**Et elle vit sur le `Projet`, pas dans son `Univers`** — écrit en livrant T9, parce que « le
-fichier du projet » laissait les deux ouverts. `Univers` est défini dans sa première phrase comme
-*ce que le projet impose à ce qui rentre, et ce qu'il envoie avec* : une teinte d'îlot n'impose rien
-et ne part nulle part, et l'y poser en aurait fait le premier champ à démentir cette phrase-là. Elle
-voyage en revanche dans l'**enveloppe** du message `univers`, qui portait déjà `projet` et `nom`
-sans qu'ils soient dans l'objet — un genre d'événement de plus pour un dictionnaire de six entrées
-aurait fait un troisième canal sur un fichier qui en a un.
-
-**La position et la largeur libre sont sur la carte, jamais dans un fichier de mise en page.**
-Un `toile.json` par projet aurait exactement la panne qui a déjà valu son refus à `cartes.json`
-(`atelier/depot/fichiers.py`) : relire, modifier, réécrire — deux gestes dans le même instant se
-relisent tous les deux avant d'écrire, et le second efface le premier. Sur une toile ce n'est plus
-une hypothèse, c'est le régime normal : on déplace vite et souvent. La carte porte sa place, et un
-déplacement n'écrit qu'un fichier, le sien.
-
-**La largeur libre n'est pas la taille d'affichage, et aucune des deux ne ment sur l'autre.** La
-taille d'affichage est le cran 1× / 2× / 4× que lit la grille ; la largeur libre est une place
-occupée sur un plan — continue, aimantée sur ces mêmes trois largeurs (`docs/design-motifs.md` § L'écran
-Univers). Une valeur unique pour les deux aurait fait qu'agrandir une carte sur la toile change la
-grille de tout le monde. La hauteur ne se stocke pas : elle suit le rapport de l'image.
-
-**Posée n'est pas classée, et la réserve est la lecture de « ni l'un ni l'autre ».** Une carte peut
-avoir une position sans groupe — c'est le brouillon, trois images côte à côte pour voir si elles
-vont ensemble avant de décider qu'elles font un îlot. Le cas inverse existait avant la toile : une
-carte groupée depuis T4 n'a jamais été déplacée, donc n'a pas de position ; elle se pose dans son
-îlot à l'ouverture et n'écrit la sienne qu'au premier geste. Ce qui n'a **ni groupe ni position**
-attend en réserve.
-
-**Un fichier par lien, sous le tableau du projet** — `donnees/projets/<projet>/tableau/liens/<lien>.json`.
-Deux raisons, et la seconde est un fait du code. La première est celle de la carte, mot pour mot :
-écrire vite et souvent sans relire le tout. La seconde est que `parcourir_cartes` lit
-`tableau/*.json` et tient pour une carte tout JSON qui porte un identifiant — poser les liens à
-côté des cartes en ferait des cartes fantômes dans le tableau. Un sous-dossier, et la règle du
-dossier reste vraie telle quelle.
-
-**Pas d'index pour les liens, comme pour les cartes.** Ils ne se cherchent pas, ne se filtrent pas,
-ne se paginent pas : une toile se lit en entier. Corollaire hérité — jeter `atelier.sqlite3` ne
-touche ni au tableau ni aux liens, puisqu'ils n'y sont jamais entrés.
-
-**Un lien meurt avec son extrémité, et c'est la suppression qui l'emporte, pas un balayage.**
-`effacer_carte` efface déjà la carte et ses octets ensemble ; elle efface désormais aussi les liens
-qui y aboutissent. Un trait vers rien ne représente rien, et une entrée morte sur le disque serait
-une deuxième vérité qui attend son heure. Un îlot n'ayant pas d'existence propre, un lien vers un
-îlot disparaît avec le dernier membre du groupe.
-
-**La route qui les accepte est celle qui existe déjà.** `PUT /api/board/{carte}` porte depuis T4
-les réglages qui se remplissent ensemble — groupe, note, taille — et T8 lui ajoute **la position et
-la largeur**, sans en ouvrir une nouvelle. La raison est celle d'origine, renforcée : tirer une
-carte dans un îlot écrit sa position *et* son groupe, et deux appels rendraient possible un état où
-l'un est écrit et l'autre non — c'est-à-dire la divergence que toute la tranche est là pour
-empêcher. Elle est appelée **à la fin du geste, pas pendant** : un glissement écrit une fois, au
-relâchement, jamais à chaque image.
-
-Les liens ont les leurs, sur le même préfixe et dans la même langue — chemins en anglais, charges
-utiles en français : `POST /api/board/links` en pose un, `PUT /api/board/links/{lien}` lui donne
-son mot et sa pointe, `DELETE /api/board/links/{lien}` le coupe. `GET /api/board` les rend **avec
-les cartes**, comme il rend déjà les groupes : la toile se lit en un aller-retour, parce qu'elle
-est le tableau — et il rend les **teintes** avec, pour la même raison.
-
-**La teinte d'un îlot se pose par `PUT /api/board/groups/tint`, et le nom du groupe est dans le
-corps.** Deux décisions, deux raisons. Le nom d'abord : un groupe est du texte libre, `nord/sud` en
-chemin devient `%2F`, et un nom qui doit revenir intact ne s'encode ni dans un chemin ni dans une
-clé composite — c'est le refus de `"ilot:nom"` qui a déjà donné `Bout(genre, valeur)`. Les **trois
-segments** ensuite : à deux, `/board/tint` entre en concurrence avec `PUT /board/{carte}` et n'est
-atteinte que si elle est déclarée avant, donc l'adresse dépendrait de l'ordre des fonctions dans un
-fichier. Le dépôt a déjà payé un chemin qui ne s'atteint pas (`Mount("/mcp")`, voir
-`docs/PIEGES.md`) ; à trois segments il n'y a plus d'ordre à respecter.
-
-**Et `PUT /api/board/groups/move` déplace un îlot entier**, écrit le 28 août 2026 avec T10. Trois
-segments pour la raison exacte de `tint`, et le nom du groupe dans le corps pour la même. Ce qu'elle
-ajoute est une **cardinalité** : un îlot n'a pas de position à lui, donc le déplacer, c'est écrire la
-place de chacune de ses cartes — et un appel par carte rendrait possible l'état où sept ont bougé et
-cinq sont restées, un îlot déchiré en deux moitiés que personne n'a demandé. C'est « deux appels
-pour un geste sont un état de trop » appliqué à un geste qui en aurait demandé douze. Elle exige
-donc **toutes** les places de l'îlot et rien d'autre — un sous-ensemble en ferait un second
-`PUT /board/{carte}` capable d'écrire des places en lot sous un nom de groupe qui ne les regarde
-pas —, elle les vérifie **avant** d'écrire la première, et elle n'élague rien : aucun groupe ne
-change, donc l'îlot garde ses liens et sa teinte. Les places sont **absolues et non un écart**,
-parce qu'une carte groupée avant T8 n'a pas de position écrite : c'est l'ouverture qui lui en
-calcule une, et un écart n'aurait rien eu à quoi s'ajouter pour elle.
-
-**`PUT /api/board/{carte}` gagne le texte d'une note en même temps que sa teinte**, et ça comble un
-trou de T4 : sans lui, corriger une faute demanderait de retirer la note et de la recoller — donc
-de perdre sa place, sa teinte et les liens qui y aboutissent, c'est-à-dire tout ce que T9 vient
-d'ajouter. Le trou ne s'était jamais vu parce qu'une note au bout d'une liste se retape sans rien
-perdre.
-
-**`POST /api/board/links` accepte un mot et une pointe, et c'est pour l'annulation seule.** « Il
-naît muet » reste vrai : c'est une règle de l'**écran**, qui ne les envoie jamais en tirant un
-trait. Mais défaire une coupe, c'est reposer le lien tel qu'il était — et une route qui ne saurait
-reposer qu'un trait nu forcerait l'annulation à passer par un second appel, donc par un état où le
-geste est à moitié défait. T8 a déjà tranché cette question : deux appels pour un geste sont un
-état de trop.
-
-**Et rien n'existe côté serveur pour l'annulation.** La pile de Ctrl+Z vit dans l'onglet et meurt
-en quittant l'écran (`docs/PLAN.md` T8) : annuler, c'est rappeler la même route avec la valeur
-d'avant. Une route d'annulation aurait fait de la composition un historique de projet — elle est le
-rattrapage du geste en cours, et rien d'autre.
+On l'ouvre quand on touche à la toile, aux îlots, aux liens ou aux teintes. **Ce qui reste ici,
+parce que ça vaut pour tout le modèle et pas pour la toile** : *l'îlot est le groupe — hors
+îlot, pas de groupe, et jamais deux rangements concurrents.*
 
 ### Ce que la V2.1 ajoute au modèle
 
-*Écrit le 31 août 2026, en reportant `docs/maquettes-v2.1/`.* **Trois entités neuves et
+*Écrit le 31 août 2026, en reportant `docs/maquettes-v2.1/`.* **Quatre entités neuves et
 cinq champs**, et la barre reste celle du §5 : une étiquette sur un objet existant aurait
-suffi partout où elle suffit, et chacune des trois est là parce qu'elle ne suffisait pas.
-Le détail des arbitrages qui les ont posées est dans `docs/v21-arbitrages.md`.
+suffi partout où elle suffit, et chacune des quatre est là parce qu'elle ne suffisait pas.
+La quatrième — la **direction** — a été posée *en construisant*, et le tableau ci-dessous dit
+pourquoi. Le détail des arbitrages est dans `docs/v21-arbitrages.md`.
 
 | Entité | Contenu | Note |
 |---|---|---|
@@ -514,7 +471,8 @@ plan du jeu** : c'est l'état d'avant la tranche, et c'est ce qui reprend les pr
 existants sans qu'un seul fichier ait eu à être réécrit.
 
 *Écrit en la faisant, le 31 août 2026.* **Le calibrage n'écrit que dans l'occupation**, qui
-existe depuis T4 et qui est déjà exprimée en part de la case. C'est ce qui le rend gratuit à
+existe depuis T4 et qui est déjà exprimée en **hauteur relative au personnage** — « part de la
+case » jusqu'à la tranche des tailles, qui a levé son plafond de 100 % sans changer sa nature. C'est ce qui le rend gratuit à
 conserver : passer une case de 64 à 128 ne défait aucun calage, parce qu'une part n'est pas un
 nombre de pixels. Le **décalage horizontal** reste donc le seul ajout de la V2.1 à la recette
 d'une image, et il se comporte comme la différence d'un calque — une coordonnée qui nomme
@@ -588,8 +546,15 @@ d'interface neuve.
 
 **Ce que chaque version contient, et par quel mécanisme, vit dans
 `docs/archi-versions.md`** — §6 la V1 et ses briques, §7 la V2 avec le pliage, le calque
-par différence et le risque de la version, §8 à §10 l'animation, les tuiles et le son. Les
+par différence et le risque de la version, §8 l'animation — **réécrite le 2 septembre 2026,
+elle est désormais mesurée et non plus supposée** —, §9 et §10 les tuiles et le son. Les
 numéros y sont conservés : un renvoi `§7` ou `§6.2` reste valide, seul le fichier change.
+
+**Trois versions n'y ont pas de section, et c'est voulu** : la **V2.1** est décrite ci-dessus,
+§5 ; la **V2.2** dans `docs/archi-fournisseur.md` ; et la **V2.3** n'a que son plan, parce
+qu'elle ne pose aucune brique neuve — elle répare des briques existantes. L'ordre réel des
+versions est **V1, V2, V2.1, V2.2, V2.3, V3, V4, V5**, **plus une version d'édition sans rang
+fixé** — le dessin à la main, décidé le 2 septembre 2026 et non découpé.
 
 On l'ouvre quand on travaille *dans* une version. Ce qui tient l'ensemble — les cinq
 règles, le squelette, le modèle d'objets, les risques — reste ici.
@@ -598,13 +563,14 @@ règles, le squelette, le modèle d'objets, les risques — reste ici.
 
 | Risque | Gravité | Quand le lever |
 |---|---|---|
-| **La recette d'animation n'existe pas** | élevée | prototypage dédié avant la V3 — **piste sérieuse trouvée**, voir §8 |
+| ~~**La recette d'animation n'existe pas**~~ | — | **levé le 2 septembre 2026, et la réponse est négative.** Trois bancs payés — **141 planches, 6,03 $**, toutes notées une par une par l'auteur : une planche d'animation revient bonne **une fois sur dix**, et **aucune façon de la demander ne fait mieux** que celle qui part déjà (trente-et-un réglages, cinq réécritures de fond pour zéro bonne planche sur vingt). Ce n'est pas un motif d'abandon, c'est un **prix** — et c'est lui qui impose la forme du produit : *on commande plusieurs planches et l'on garde la bonne*, jamais *on commande et on corrige*. `docs/bilan-v3.md`, et `docs/archi-versions.md` §8 réécrite le même jour |
 | ~~Un calque ne se repose pas sur une autre pose~~ | — | **retiré le 28 août 2026 : ce n'était pas un risque, c'était une promesse fausse.** Un casque vu de face n'est pas un casque vu de dos ; un calque est solidaire de sa pose et il en faut un par pose. Ce qui l'a remplacé — la planche d'équipement pliée, N calques pour un appel — rend le prix acceptable sans rien promettre qu'on n'ait mesuré. Voir §7 |
 | ~~La toile avec marge n'a jamais été essayée~~ | — | **tiré le 29 août 2026, six planches payées.** L'échelle au retour est restée dans la tolérance à chaque fois, à 0,92 comme à 0,62 : la marge **n'a pas eu à servir**, et le repli sur le corps habillé n'a jamais été pris que sur une échelle inventée par un recalage défectueux. L'hypothèse n'est pas validée pour autant — le dézoom qu'elle prévient ne s'est pas présenté —, mais elle ne coûte rien et elle reste posée. Voir §7 |
 | **La différence trouve ce qui s'ajoute et manque ce qui se substitue** | faible depuis C4 — la main ramène ce que la mesure n'a pas vu (451 pixels contre 1 044, mesuré) ; ce qui reste est que rien ne l'annonce d'avance | **mesuré le 29 août 2026**, sur les mêmes six planches : une hache est revenue en calque net, un casque en poussière. Une pièce qui occupe l'empreinte de ce qu'elle remplace relève de `touche`, et la tolérance au voisin de 3×3 — juste, elle protège du résidu de recalage — l'efface avec le bruit. La portée déclarée oppose *contenue* et *qui agrandit* ; ce qui décide ici est *ajoute* contre *substitue*, et les deux découpes ne se recouvrent pas. Non cadré : `docs/releve-usage.md` |
 | ~~Le bon modèle pour une planche n'est pas le bon pour une édition~~ | — | **traité le 28 août 2026, pas seulement mesuré.** Un modèle recopie les traits du gabarit de découpe et rend la planche tramée, un autre l'ignore. Le projet porte donc **deux** défauts de modèle — planche, et édition d'un corps — sans que l'auteur ait à y penser. Passé en décision produit, ce n'est plus un risque ouvert |
 | ~~Aucun fournisseur ne préserve l'identité~~ | — | **levé le 26 août 2026.** `gemini-3.1-flash-image` tient l'identité et la dérive entre deux poses enchaînées est quasi nulle. Seedream 4.5 échoue sur ce point mais excelle au transfert de style. |
-| **L'échelle du sujet dérive d'une génération à l'autre** | moyenne — bloque le montage d'animations | constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires** |
+| **L'échelle du sujet dérive d'une génération à l'autre** | **élevée — et c'est le mécanisme censé la corriger qui la fabrique** | ~~constaté le 26 août. Corrigé par le recadrage et la normalisation d'échelle, qui passent donc de « confort » à **obligatoires**~~ — **faux, et c'est l'inverse du vrai. Trouvé en lisant le code le 2 septembre 2026.** La remise sur grille calcule le facteur de réduction sur **la boîte de l'image courante** : un bras tendu agrandit la boîte, donc **réduit tout le personnage**. La normalisation ne corrige pas la dérive entre deux images d'un même mouvement, elle l'**introduit**. Mesuré sur la chaîne complète : les huit images livrées d'une même marche faisaient toutes exactement la même hauteur, ligne de sol au même pixel, **écart zéro** — le balancement disparaît avant d'être vu. Et le commentaire du code affirme le contraire de ce que le code fait. **Réparation : cinq lignes et un commentaire**, c'est le premier travail de la tranche `A2` (`docs/bilan-v3.md` § 3). *Le code connaît la dérive **horizontale** et offre un décalage à la main ; c'est la dérive d'**échelle** qui est fatale, et elle n'est nommée nulle part.* |
+| **Une poussière sous les pieds déplace tout le sujet** | moyenne — même chaîne que la ligne ci-dessus | **trouvé le 2 septembre 2026, en lisant le code.** L'ancrage vertical pose le **bas de la boîte englobante** sur le bas de la case : toute poussière, toute ombre isolée sous les pieds soulève le personnage d'autant. **Le nettoyage des taches doit précéder le calcul de la boîte**, sinon un pixel perdu décide de la position de toute l'étape. Corollaire d'ordre de `A2`, à ne pas découvrir en route |
 | ~~La couverture image d'OpenRouter~~ | — | **levé le 27 août 2026** par `essais/essai_couverture.py` : 48 modèles image, 11 fournisseurs, 31 acceptant trois références ou plus. Et le catalogue a bougé en un jour — 47 → 48 — ce qu'une liste en dur n'aurait pas vu |
 | **Le coût par image dérive** | moyenne | enregistrer le coût réel de chaque génération dès la T1, et le totaliser par projet |
 | ~~**Le gain d'une planche n'est mesuré qu'à quatre cases**~~ **— mesuré le 31 août 2026** | *levé, et il a rendu une autre réponse que celle qu'on cherchait* | Trois appels payés à trois, cinq et six cases sur le même sujet (`essais/essai_prix_planche.py`, $0,081, relevé versionné). **Trois cases et six cases ont coûté exactement le même prix**, `$0,0139`, pour la même taille d'image et la même durée ; cinq cases ont coûté `$0,0534` sur un appel dont rien ne distingue le résultat. Une planche coûte donc le prix d'**un appel**, quel que soit ce qu'elle porte : le prix par image tombe en `1/N`, et six cases reviennent à `$0,0023` l'image contre `$0,0128` pour une image seule. Mais **la variance entre deux appels identiques dépasse l'écart entre deux tailles de planche**, et c'est le risque qui reste : un écran qui afficherait un prix par nombre de cases montrerait du bruit comme s'il montrait une structure |
@@ -645,6 +611,9 @@ défense ; il est là pour être lu la prochaine fois.**
 | MySpriteAi | `src/lib/audioPipeline.ts` | V5 |
 | MySpriteAi | `workflows/audio/txt2sfx.api.json` | V5, si le local reste au menu |
 | SpriteCook | captures `screen_spritecook/` | référence d'ergonomie, écran par écran |
+| **Le pantin articulé libre** | l'**algorithme** de déformation du maillage, pas le dépôt | **V3, tranche `A8`.** Code et poids sous une licence qui ne pose aucune condition, et — c'est ce qui change la taille de la tranche — **sa partie animation ne dépend d'aucun modèle lourd** : si l'atelier fournit lui-même la silhouette et la position des articulations, ce qu'il sait déjà faire, toute la chaîne tourne sur les deux bibliothèques de calcul déjà installées. Il n'y a **aucun poids d'attache à calculer** : les articulations sont de simples épingles. ⚠️ **On recopie, on ne dépend pas** — le dépôt est archivé depuis septembre 2025, son calcul déborde numériquement au-delà d'un millier de points, et son affichage passe par la carte graphique, à ne pas reprendre |
+| **Les corpus de mouvements** | des mouvements nommés, réutilisables commercialement | **V3, tranche `A6`.** Un cycle de marche complet, une fois ramené à des angles à plat, tient en **quarante-huit nombres**. Une bibliothèque maison se paie une fois en travail et devient gratuite pour tous les personnages suivants |
+| **Les formats de sortie** | le descriptif d'une planche de sprites, et le format de squelette | **V3, tranches `A4` et `A8`. On n'invente aucun format** : celui que les moteurs lisent le plus est connu et ses clés sont relevées, et le format de squelette de référence existe. Un moteur ouvre alors la planche sans la remesurer |
 
 ## 13 · Hors périmètre, et pourquoi
 
@@ -652,9 +621,14 @@ défense ; il est là pour être lu la prochaine fois.**
 |---|---|---|
 | ComfyUI dans l'application | coût d'intégration élevé, bénéfice nul une fois le moteur passé en API | oui, derrière le port fournisseur |
 | Contrôle de conformité automatique | l'auteur juge mieux et plus vite | oui, la palette mesurée est déjà là |
-| Description du style par un modèle de vision | c'est de l'analyse d'image, écartée avec le reste | oui, le port existe dans GAG |
+| Description du style par un modèle de vision | l'auteur décrit mieux son propre univers qu'un modèle ne le devine, et une bible est une décision, pas une observation | oui, le port existe dans GAG. *Raison réécrite le 2 septembre 2026 : « c'est de l'analyse d'image, écartée avec le reste » n'est plus vrai comme énoncé général — la V2.3 en fait, pour **retrouver la vraie taille de bloc** d'une image. Ce qui est écarté, c'est de faire **juger** par une machine, pas de faire **mesurer**.* |
 | UI Kit + éditeur 9-slice | 8 étapes, taxonomie, extraction — un produit à lui seul | oui, mais ce sera un chantier |
 | Paquets moteur Unity / Godot | entre le ZIP et le paquet, il n'y a que du glisser-déposer | oui |
 | Pack d'assets par genre | fabrique de la quantité — c'est le métier de GAG | non souhaitable |
 | Comptes, crédits, distribution | outil personnel | non souhaitable |
-| Génération non-pixel-art | V1 seulement ; rien ne doit l'interdire structurellement | prévu |
+| ~~Génération non-pixel-art~~ | — | **revenue dans le périmètre le 28 août 2026, et livrée.** La taille de pixel d'un univers accepte « aucune », la bible a gagné la vue et la technique de rendu, et le prompt exact se voit et se reprend |
+| **Réécrire la demande d'animation** | **mesuré mort** : trente-et-un réglages sur trois bancs, cinq réécritures de fond pour **zéro bonne planche sur vingt**, les planches à quatre cases pour **zéro sur seize** | non — *« une demande de plus au même modèle ne donnera rien : ce n'est plus une opinion, c'est six dollars de mesures »* |
+| **Corriger le bord d'un détourage par calcul de transparence** | **mesuré inutile ici** : cherché sur quarante vraies images, le halo vaut **80 pixels sur 138 465**, un millième. Le produit génère sur fond plat et découpe par inondation, et le moteur par défaut ne rend **aucun** pixel à demi transparent | oui, et à deux lignes : la bibliothèque est installée et jamais appelée. Le jour où le moteur par modèle deviendrait le défaut |
+| **Dégrossir une animation chez un fournisseur gratuit avant de payer le bon** | structurel : le modèle gratuit **n'accepte aucune image en entrée**, donc pas le personnage. Ce ne serait pas un brouillon, ce serait un autre personnage | oui, le jour où un gratuit accepterait des références |
+| **Faire du pantin la sortie principale du produit** | on ne sait pas encore s'il tient sur nos images, et bâtir la livraison sur une chose non vérifiée est le contraire de la règle du dépôt | oui, si `A0` et `A8` rendent mieux qu'espéré |
+| **Un format de livraison inventé ici**, pour la planche comme pour le squelette | les formats les plus lus existent et s'écrivent tels quels | non souhaitable |

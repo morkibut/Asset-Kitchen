@@ -1,0 +1,531 @@
+
+========================================================================
+### video_wan2_2_14B_i2v
+========================================================================
+--- [VRAM Usage] ---
+## GPU:RTX4090D 24GB
+
+| Model            | Size |VRAM Usage | 1st Generation | 2nd Generation |
+|---------------------|-------|-----------|---------------|-----------------|
+| fp8_scaled               |640*640| 84%               | ≈  536s              | ≈ 513s                   |
+| fp8_scaled +  4steps LoRA  | 640*640  | 83%                | ≈ 97s               | ≈ 71s                   |
+
+--- [Model Links] ---
+[Tutorial](https://docs.comfy.org/tutorials/video/wan/wan2_2
+)
+
+**Diffusion Model**
+- [wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors)
+- [wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors)
+
+**LoRA**
+- [wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors)
+- [wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors)
+
+**VAE**
+- [wan_2.1_vae.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors)
+
+**Text Encoder**   
+- [umt5_xxl_fp8_e4m3fn_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors)
+
+
+File save location
+
+```
+ComfyUI/
+├───📂 models/
+│   ├───📂 diffusion_models/
+│   │   ├─── wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors
+│   │   └─── wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors
+│   ├───📂 loras/
+│   │   ├─── wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors
+│   │   └─── wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors
+│   ├───📂 text_encoders/
+│   │   └─── umt5_xxl_fp8_e4m3fn_scaled.safetensors 
+│   └───📂 vae/
+│       └── wan_2.1_vae.safetensors
+```
+
+
+
+========================================================================
+### video_wan2_2_5B_ti2v
+========================================================================
+--- [Model Links] ---
+[Tutorial](https://docs.comfy.org/tutorials/video/wan/wan2_2
+) 
+
+**Diffusion Model**
+- [wan2.2_ti2v_5B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors)
+
+**VAE**
+- [wan2.2_vae.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan2.2_vae.safetensors)
+
+**Text Encoder**   
+- [umt5_xxl_fp8_e4m3fn_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors)
+
+
+File save location
+
+```
+ComfyUI/
+├───📂 models/
+│   ├───📂 diffusion_models/
+│   │   └───wan2.2_ti2v_5B_fp16.safetensors
+│   ├───📂 text_encoders/
+│   │   └─── umt5_xxl_fp8_e4m3fn_scaled.safetensors 
+│   └───📂 vae/
+│       └── wan2.2_vae.safetensors
+```
+
+
+
+========================================================================
+### video_causal_forcing_i2v
+========================================================================
+--- [] ---
+Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph)
+
+## Model Links
+
+**diffusion_models**
+
+- [causal_forcing-framewise.safetensors](https://huggingface.co/TalmajM/causal_forcing_framewise_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/causal_forcing-framewise.safetensors)
+
+**vae**
+
+- [wan_2.1_vae.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors)
+
+**text_encoders**
+
+- [umt5_xxl_fp8_e4m3fn_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors)
+
+
+## Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 diffusion_models/
+│   │   └── causal_forcing-framewise.safetensors
+│   ├── 📂 vae/
+│   │   └── wan_2.1_vae.safetensors
+│   └── 📂 text_encoders/
+│       └── umt5_xxl_fp8_e4m3fn_scaled.safetensors
+```
+
+## Report Issue
+
+Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet.
+
+- Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues)
+- UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues)
+- Workflow issues: [workflow_templates/issues](https://github.com/Comfy-Org/workflow_templates/issues)
+
+
+--- [Note: Causal Forcing Framewise] ---
+## About Causal Forcing
+
+[Causal Forcing](https://github.com/thu-ml/Causal-Forcing) is an open-source video generation method from Tsinghua University. It uses **Causal ODE** or **Causal Consistency Distillation** to distill autoregressive diffusion models into a few-step generator, enabling high-quality real-time interactive video generation.
+
+Compared to earlier methods like Self Forcing, Causal Forcing delivers better visual quality and motion dynamics at the same training budget and inference speed.
+
+**This workflow template is image-to-video (I2V) only** — it takes a starting image and animates it with a text prompt. It uses the **Causal Forcing Framewise 4-step** checkpoint with Wan 2.1 components.
+
+## Duration Limit
+
+**The maximum output length in this template is about 5 seconds.**
+
+- Output is encoded at **16 fps** (`CreateVideo`)
+- Frame count is computed as `min(duration × 16 + 1, 81)`
+- The cap of **81 frames** corresponds to roughly **5 seconds** of video
+
+Adjust the **duration** input on the subgraph (default: 5). Values above ~5 s will still be clamped to 81 frames.
+
+## How to Use
+
+1. **Load Image** — upload the first frame of your video
+2. **Image to Video (Causal Forcing Framewise)** subgraph — set the main controls:
+   - **first_frame** — connected from Load Image
+   - **positive_prompt** — describe the motion and scene you want
+   - **width / height** — output resolution (default 832 × 480)
+   - **duration** — length in seconds (default 5, max ~5)
+   - **noise_seed** — change to get different results
+3. **Save Video** — output is saved under `video/CausalForcing_I2V`
+
+The **negative prompt** is preset inside the subgraph and is not exposed as an input. Edit it inside the subgraph if you need to customize it.
+
+## Sampling Settings (inside subgraph)
+
+These are pre-tuned for the framewise 4-step checkpoint and generally should not be changed:
+
+- **4 sampling steps** (`BasicScheduler`)
+- **CFG = 1** (`CFGGuider`) — classifier-free guidance is disabled
+- **SamplerARVideo** — autoregressive frame-by-frame generation
+
+## Tips
+
+- Write prompts that describe **motion and camera behavior**, not just the static image content
+- Match your input image aspe
+
+
+========================================================================
+### video_hunyuan_video_1.5_720p_i2v
+========================================================================
+--- [Model links] ---
+
+
+## Report issue
+
+If you found any issues when running this workflow, [report template issue here](https://github.com/Comfy-Org/workflow_templates/issues)
+
+## Model links
+
+[HunyuanVideo_1.5_repackaged](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/tree/main/split_files)
+
+**text_encoders**
+
+- [qwen_2.5_vl_7b_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors)
+- [byt5_small_glyphxl_fp16.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/byt5_small_glyphxl_fp16.safetensors)
+
+**clip_vision**
+
+- [sigclip_vision_patch14_384.safetensors](https://huggingface.co/Comfy-Org/sigclip_vision_384/resolve/main/sigclip_vision_patch14_384.safetensors)
+
+**diffusion_models**
+
+- [hunyuanvideo1.5_720p_i2v_fp16.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/diffusion_models/hunyuanvideo1.5_720p_i2v_fp16.safetensors)
+
+**vae**
+
+- [hunyuanvideo15_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/vae/hunyuanvideo15_vae_fp16.safetensors)
+
+
+Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 text_encoders/
+│   │      ├── qwen_2.5_vl_7b_fp8_scaled.safetensors
+│   │      └── byt5_small_glyphxl_fp16.safetensors
+│   ├── 📂 clip_vision/
+│   │      └── sigclip_vision_patch14_384.safetensors
+│   ├── 📂 diffusion_models/
+│   │      └── hunyuanvideo1.5_720p_i2v_fp16.safetensors
+│   └── 📂 vae/
+│          └── hunyuanvideo15_vae_fp16.safetensors
+```
+
+
+--- [] ---
+If you don't have enough VRAM and encounter the OOM error, please try to set the `weight_dtype` to `fp8_e4n3fn`.
+
+--- [Sampler settings] ---
+50 inference steps just take too long to get the final video, so by default we set the step to 20 steps. If you want a better quality, please try the original settings below
+
+## Original setting from Hunyuan team
+| Model              | cfg | embeded_cfg | shift | inference step |
+|-----------------------|-----|-------------|-------|----------------|
+| 480p_t2v              | 6   | None        | 5     | 50             |
+| 480p_i2v              | 6   | None        | 5     | 50             |
+| 720p_t2v              | 6   | None        | 9     | 50             |
+| 720p_i2v              | 6   | None        | 7     | 50             |
+| 480p_t2v_distilled    | 1   | None        | 5     | 50             |
+| 480p_i2v_distilled    | 1   | None        | 5     | 50             |
+| 720p_t2v_distilled    | 1   | None        | 9     | 50             |
+| 720p_i2v_distilled    | 1   | None        | 7     | 50             |
+
+
+========================================================================
+### video_ltx2_i2v_distilled
+========================================================================
+--- [About Size] ---
+Width & height settings must be divisible by 64.
+Frame count must be divisible by 8 + 1. 
+
+
+Running with invalid parameters **will not cause errors**. Instead, the flow will silently choose the closest valid parameters. 
+
+By default, we are using 720p resolution. You can try 1920*1088 if you have a powerful GPU.
+
+--- [Model Links] ---
+Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph)
+
+
+## LTX-2 Prompting Tips
+
+1. **Core Actions**: Describe events and actions as they occur over time  
+2. **Visual Details**: Describe all visual details you want to appear in the video  
+3. **Audio**: Describe sounds and dialogue needed for the scene
+
+## Report LTX-2 Issues
+To report any issues when running this workflow, [go to GitHub](https://github.com/Lightricks/ComfyUI-LTXVideo/issues)
+
+## Model links (for local users)
+
+**checkpoints**
+
+- [ltx-2-19b-distilled.safetensors](https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-19b-distilled.safetensors)
+
+- [ltx-2-19b-distilled-fp8.safetensors](https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-19b-distilled-fp8.safetensors)
+
+**text_encoders**
+
+- [gemma_3_12B_it_fp4_mixed.safetensors](https://huggingface.co/Comfy-Org/ltx-2/resolve/main/split_files/text_encoders/gemma_3_12B_it_fp4_mixed.safetensors)
+
+**loras**
+
+- [ltx-2-19b-lora-camera-control-dolly-left.safetensors](https://huggingface.co/Lightricks/LTX-2-19b-LoRA-Camera-Control-Dolly-Left/resolve/main/ltx-2-19b-lora-camera-control-dolly-left.safetensors)
+
+**latent_upscale_models**
+
+- [ltx-2-spatial-upscaler-x2-1.0.safetensors](https://huggingface.co/Lightricks/LTX-2/resolve/main/ltx-2-spatial-upscaler-x2-1.0.safetensors)
+
+
+Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 checkpoints/
+│   │      ├── ltx-2-19b-distilled.safetensors
+│   │      └── ltx-2-19b-distilled-fp8.safetensors
+│   ├── 📂 text_encoders/
+│   │      └── gemma_3_12B_it_fp4_mixed.safetensors
+│   ├── 📂 loras/
+│   │      └── ltx-2-19b-lora-camera-control-dolly-left.safetensors
+│   └── 📂 latent_upscale_models/
+│          └── ltx-2-spatial-upscaler-x2-1.0.safetensors
+```
+
+
+## Report other issues
+
+Note: please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud will be updated after the stable release; nightly-supported models may not be included yet, please wait for the next stable release.
+
+- Cannot run / runtime errors: [ComfyUI/issues](https://github.com/Comfy-Org/ComfyUI/issues)
+- UI / frontend issues: [ComfyUI_frontend/issues]
+
+--- [LoRA] ---
+# Using LoRAs
+**Ctrl + B to enable**
+
+For the camera LoRA we recommend setting strength = 1
+
+You can use LTX [Ready to use camera LoRAs](https://huggingface.co/collections/Lightricks/ltx-2)
+
+
+
+
+Use a second LoRa only when the details are important in the LoRa. 
+
+## Training
+We have made available a full trainer to help you to train your own LoRA. You can [find it here](https://github.com/Lightricks/LTX-2).
+
+
+========================================================================
+### image_to_video_wan
+========================================================================
+--- [] ---
+[Tutorial](https://docs.comfy.org/tutorials/video/wan/wan-video)
+
+
+## Model links
+
+**text_encoders**
+
+- [umt5_xxl_fp8_e4m3fn_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors)
+
+**clip_vision**
+
+- [clip_vision_h.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors)
+
+**diffusion_models**
+
+- [wan2.1_i2v_480p_14B_fp16.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_480p_14B_fp16.safetensors)
+
+**vae**
+
+- [wan_2.1_vae.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors)
+
+
+Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 text_encoders/
+│   │      └── umt5_xxl_fp8_e4m3fn_scaled.safetensors
+│   ├── 📂 clip_vision/
+│   │      └── clip_vision_h.safetensors
+│   ├── 📂 diffusion_models/
+│   │      └── wan2.1_i2v_480p_14B_fp16.safetensors
+│   └── 📂 vae/
+│          └── wan_2.1_vae.safetensors
+```
+
+
+
+========================================================================
+### ltxv_image_to_video
+========================================================================
+--- [] ---
+
+## Model links
+
+**checkpoints**
+
+- [ltx-video-2b-v0.9.5.safetensors](https://huggingface.co/Lightricks/LTX-Video/resolve/main/ltx-video-2b-v0.9.5.safetensors)
+
+**text_encoders**
+
+- [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
+
+
+Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 checkpoints/
+│   │      └── ltx-video-2b-v0.9.5.safetensors
+│   └── 📂 text_encoders/
+│          └── t5xxl_fp16.safetensors
+```
+
+
+
+========================================================================
+### video_kandinsky5_i2v
+========================================================================
+--- [Note: Video Size] ---
+768x512x121 for 5s or 768x512x241 for 10s, Width and Height should be divisible by 128 for 10s model. In case of image 2 video aspect ratio of result is close to start image ratio and area is close to 768*512
+
+--- [For Local User] ---
+
+## Report issue
+
+If you found any issues when running this workflow, [report template issue here](https://github.com/Comfy-Org/workflow_templates/issues)
+
+## Model links
+
+Other model weight: [kandinsky-50-video-lite](https://huggingface.co/collections/kandinskylab/kandinsky-50-video-lite)
+
+**text_encoders**
+
+- [qwen_2.5_vl_7b_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors)
+- [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors?download=true)
+
+**diffusion_models**
+
+- [kandinsky5lite_i2v_5s.safetensors](https://huggingface.co/kandinskylab/Kandinsky-5.0-I2V-Lite-5s/resolve/main/model/kandinsky5lite_i2v_5s.safetensors)
+
+**vae**
+
+- [hunyuan_video_vae_bf16.safetensors](https://huggingface.co/Kijai/HunyuanVideo_comfy/resolve/main/hunyuan_video_vae_bf16.safetensors)
+
+
+Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 text_encoders/
+│   │      ├── qwen_2.5_vl_7b_fp8_scaled.safetensors
+│   │      └── clip_l.safetensors
+│   ├── 📂 diffusion_models/
+│   │      └── kandinsky5lite_i2v_5s.safetensors
+│   └── 📂 vae/
+│          └── hunyuan_video_vae_bf16.safetensors
+```
+
+
+
+
+========================================================================
+### video_capybara_v0_1_image_to_video
+========================================================================
+--- [Model Lnks] ---
+- Subgraph Guide: [subgraph](https://docs.comfy.org/interface/features/subgraph) 
+- [xgen-universe/Capybara](https://huggingface.co/xgen-universe/Capybara)
+## Model Links
+
+**diffusion_models**
+
+- [capybara_v0.1.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/diffusion_models/capybara_v0.1.safetensors)
+
+**text_encoders**
+
+- [qwen_2.5_vl_7b.safetensors](https://huggingface.co/Comfy-Org/HunyuanImage_2.1_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b.safetensors)
+- [byt5_small_glyphxl_fp16.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/byt5_small_glyphxl_fp16.safetensors)
+
+**vae**
+
+- [hunyuanvideo15_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/vae/hunyuanvideo15_vae_fp16.safetensors)
+
+**clip_vision**
+
+- [sigclip_vision_patch14_384.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/clip_vision/sigclip_vision_patch14_384.safetensors)
+
+
+## Model Storage Location
+
+```
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 diffusion_models/
+│   │   └── capybara_v0.1.safetensors
+│   ├── 📂 text_encoders/
+│   │   ├── qwen_2.5_vl_7b.safetensors
+│   │   └── byt5_small_glyphxl_fp16.safetensors
+│   ├── 📂 vae/
+│   │   └── hunyuanvideo15_vae_fp16.safetensors
+│   └── 📂 clip_vision/
+│       └── sigclip_vision_patch14_384.safetensors
+```
+
+## Report Issue
+
+Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud will be updated after the stable release; nightly-supported models may not be included yet, please wait for the next stable release.
+
+- Cannot run / runtime errors: [ComfyUI/issues](https://github.com/Comfy-Org/ComfyUI/issues)
+- UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues)
+- Workflow issues: [workflow_templates/issues](https://github.com/Comfy-Org/workflow_templates/issues)
+
+
+--- [Sampler Setting] ---
+ | Parameter | Inference Script (Default) | ComfyUI (Default) |
+ |-----------|---------------------------|-------------------|
+ | **Steps** | 50 | 20 |
+ | **CFG** | 4.0 | 6.0 |
+> 💡 **Tip:** For better quality results, consider using **50 steps** instead of the default 20  steps in ComfyUI. 
+
+--- [Size and Ratio Setting] ---
+## Capybara Resolution Configuration
+
+| Resolution Group | Aspect Ratio | Height (H) | Width (W) | Total Pixels |
+|-----------------|--------------|------------|-----------|--------------|
+| **480p** | 16:9 | 480 | 848 | ~407k |
+| | 4:3 | 544 | 720 | ~392k |
+| | 1:1 | 640 | 640 | ~410k |
+| | 3:4 | 720 | 544 | ~392k |
+| | 9:16 | 848 | 480 | ~407k |
+| **720p** | 16:9 | 720 | 1280 | ~922k |
+| | 4:3 | 832 | 1104 | ~919k |
+| | 1:1 | 960 | 960 | ~922k |
+| | 3:4 | 1104 | 832 | ~919k |
+| | 9:16 | 1280 | 720 | ~922k |
+| **1024** | 16:9 | 768 | 1360 | ~1,044k |
+| | 4:3 | 880 | 1184 | ~1,042k |
+| | 1:1 | 1024 | 1024 | ~1,049k |
+| | 3:4 | 1184 | 880 | ~1,042k |
+| | 9:16 | 1360 | 768 | ~1,044k |
+| **1080p** | 16:9 | 1088 | 1920 | ~2,089k |
+| | 4:3 | 1248 | 1664 | ~2,077k |
+| | 1:1 | 1440 | 1440 | ~2,074k |
+| | 3:4 | 1664 | 1248 | ~2,077k |
+| | 9:16 | 1920 | 1088 | ~2,089k |
+
+
+

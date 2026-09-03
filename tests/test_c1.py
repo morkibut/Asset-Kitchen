@@ -2,7 +2,7 @@
 """Les critères d'acceptation de C1 — le personnage, son plan, une pose, et ce
 qui part avec elle.
 
-Un test par critère de `docs/PLAN.md` § C1, nommé d'après lui. Ce fichier grossit
+Un test par critère de `docs/archive/plan-versions-tenues.md` § C1, nommé d'après lui. Ce fichier grossit
 jalon par jalon, dans l'ordre du plan.
 
 **Aucun test de ce fichier ne coûte un centime**, et le dernier de chaque jalon le

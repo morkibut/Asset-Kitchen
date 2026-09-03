@@ -25,6 +25,14 @@ if (!("ResizeObserver" in globalThis)) {
   } as unknown as typeof ResizeObserver
 }
 
+// **Un doublon posé en R8, retiré le même jour** : la fiche d'une chose suivait
+// le défilement de ses cinq sections avec un `IntersectionObserver`, et il a
+// fallu ce doublon pour que jsdom monte l'écran. Il n'y en a plus besoin — la
+// fiche lit les positions **à la demande**, sur l'événement de défilement, parce
+// qu'un guetteur ne livre rien à un onglet qui ne compose pas ses images. C'est
+// le piège déjà payé du `ResizeObserver` juste au-dessus, retrouvé un cran plus
+// loin ; `docs/PIEGES.md` le dit, et sa garde était déjà la bonne.
+
 if (!("DOMMatrixReadOnly" in globalThis)) {
   globalThis.DOMMatrixReadOnly = class {
     m22 = 1

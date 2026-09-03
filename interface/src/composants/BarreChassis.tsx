@@ -17,7 +17,7 @@
 // 34 pour la barre des tables quand elle existera (E3). **Le fil d'Ariane n'est
 // pas une bande** — il vit dans les 44 px d'ici, à la place du nom de l'onglet.
 // C'est le paragraphe « La barre complète » de la même maquette, et le point
-// H-2 de `docs/v21-corrections-a-traiter.md`, qui le tranchent.
+// H-2 de `docs/archive/v21-corrections-a-traiter.md`, qui le tranchent.
 
 import type { ReactNode } from "react"
 import { Bouton } from "./chassis"
@@ -187,7 +187,7 @@ function EtatDesFournisseurs({
  * **Et le second total est parti d'ici.** La barre affichait `$3,180 en tout` à
  * côté ; il vit désormais dans l'écran des dépenses, dont c'est *« la seule
  * chose qu'on vient chercher et qu'on ne trouve nulle part ailleurs »*
- * (B-4 de `docs/v21-corrections-a-traiter.md`). L'afficher aux deux endroits
+ * (B-4 de `docs/archive/v21-corrections-a-traiter.md`). L'afficher aux deux endroits
  * retirait à cet écran sa raison d'exister.
  */
 function Total({
@@ -332,8 +332,9 @@ export function BarreChassis({
   tiroirs: readonly { fournisseur: string; manque: string | null; pret: boolean }[] | null
   onDepenses?: () => void
   /** Ouvrir la fenêtre où les secrets habitent. **Trois portes, une seule
-   *  pièce** : ce contrôle-ci, l'étape 10 de l'assistant, et le bouton qui paie
-   *  quand il est éteint mènent tous les trois au même tiroir. */
+   *  pièce** : ce contrôle-ci, l'étape « Les fournisseurs » de l'assistant, et
+   *  le bouton qui paie quand il est éteint mènent tous les trois au même
+   *  tiroir. */
   onReglagesCle?: () => void
   /** **Chaque bascule nomme la colonne qu'elle replie sur l'écran courant.**
    *  Deux mots uniques — `arbre` et `réglages` — servaient les quatre écrans,

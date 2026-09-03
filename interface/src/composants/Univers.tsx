@@ -34,6 +34,7 @@ import {
   api,
   Refus,
   type Carte,
+  type EtatTraitement,
   type Fabrique,
   type Lien,
   type Modele,
@@ -52,6 +53,7 @@ import { CoteAmbiancesEtCouleurs, type CibleAmbiances } from "./Ambiances"
 export function EcranUnivers({
   univers,
   modeles,
+  traitement,
   cartes,
   liens,
   teintes,
@@ -75,6 +77,9 @@ export function EcranUnivers({
 }: {
   univers: Univers
   modeles: Modele[]
+  /** **Ce que cette machine-ci sait faire** (D2). Il ne sert pas ici : il
+   *  descend a l'assistant, qui propose les facons de reduire installees. */
+  traitement: EtatTraitement
   /** Le tableau, tenu par `App` — comme la grille et l'arbre. **Un seul endroit
    *  écoute le flux**, pour toute la vie de l'onglet : un second abonnement
    *  ouvert à l'ouverture de cet écran-ci se rebrancherait à chaque aller-retour
@@ -99,7 +104,7 @@ export function EcranUnivers({
    *  allumé. C'est `App` qui sait où l'on tombe — cet écran-ci ne connaît que
    *  le sien. */
   onSortirDeLAssistant: () => void
-  /** **Un secret vient d'être déposé à l'étape 10** (F3). L'écran ne s'en sert
+  /** **Un secret vient d'être déposé à l'étape « Les fournisseurs »** (F3). L'écran ne s'en sert
    *  pas lui-même : il le fait passer à l'assistant, parce que ce que le dépôt
    *  change — la barre du haut et le grisé des modèles — est rendu ailleurs. */
   onDeposee: () => void
@@ -156,7 +161,7 @@ export function EcranUnivers({
   const grilleReserve = useRef<HTMLDivElement>(null)
   const crans = useCrans(grilleReserve, vue)
 
-  // **La pile d'annulation vit ici, donc elle meurt avec l'écran** (`docs/PLAN.md`
+  // **La pile d'annulation vit ici, donc elle meurt avec l'écran** (`docs/archive/plan-versions-tenues.md`
   // T8) : ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
   // cours. Rien ne la vide au départ, et il ne faut rien écrire pour ça — un
   // `useRef` est neuf à chaque montage, et une remise à zéro posée en plus
@@ -337,6 +342,7 @@ export function EcranUnivers({
           univers={univers}
           modeles={modeles}
           artworks={cartes.filter((c) => c.artwork)}
+          traitement={traitement}
           onUnivers={onUnivers}
           onErreur={setRefus}
           onRealigner={realigner}

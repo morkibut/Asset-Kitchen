@@ -103,7 +103,7 @@ class Modele:
 
         C'est cette phrase que l'interface écrit sous le modèle grisé. Le produit
         ne propose jamais pour rejeter ensuite en 400 : ce qui est impossible se
-        voit avant d'être choisi (`docs/PLAN.md`, T1).
+        voit avant d'être choisi (`docs/archive/plan-versions-tenues.md`, T1).
         """
         nombre = len(demande.references)
         if nombre > self.references_max:

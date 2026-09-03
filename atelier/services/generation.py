@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Générer — soumettre, suivre, retrouver.
 
-**La génération vit côté serveur dès cette tranche** (`docs/PLAN.md`, T1) :
+**La génération vit côté serveur dès cette tranche** (`docs/archive/plan-versions-tenues.md`, T1) :
 fermer l'onglet ne l'arrête pas, rouvrir la retrouve. On soumet, on reçoit un
 identifiant, on regarde avancer. Rien ici ne suppose qu'un navigateur écoute.
 
@@ -48,7 +48,17 @@ from atelier.domaine.erreurs import (
     GenerationInconnue,
     SansCle,
 )
-from atelier.domaine.generation import ASSET, AUTEUR, CARTE, EDITION, REFERENCE, STYLE
+from atelier.domaine.generation import (
+    ASSET,
+    AUTEUR,
+    CARTE,
+    EDITION,
+    GABARIT,
+    PALETTE,
+    PLANCHE_JOINTE,
+    REFERENCE,
+    STYLE,
+)
 from atelier.domaine.direction import composer
 from atelier.domaine.ambiance import COULEURS, REFERENCES, TEXTES, prises_du_mode
 from atelier.domaine.envoi import (
@@ -69,8 +79,8 @@ from atelier.domaine.envoi import (
     SUJET,
     Tri,
     clef,
-    en_blocs,
     joindre,
+    parties,
     resoudre,
 )
 from atelier.domaine.pliage import CasePliee, Pliage
@@ -83,7 +93,13 @@ from atelier.services.catalogue import ServiceCatalogue
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.evenements import Diffusion
 from atelier.services.equipement import ServiceEquipement
-from atelier.services.pliage import CompteFaux, ServicePliage, consignes, reference
+from atelier.services.pliage import (
+    ChoixAttendu,
+    CompteFaux,
+    ServicePliage,
+    consignes,
+    reference,
+)
 from atelier.services.prix import mesures as mesures_de_prix
 from atelier.services.prix import prix_de as prix_de_lappel
 
@@ -220,6 +236,14 @@ class ServiceGenerations:
         bibliothèque relue ne le contient pas (US-23), et l'appel, avec son
         coût réel, reste au journal du projet (US-24).
 
+        **Une planche qui attend un choix en fait partie** (R6), et pourtant son
+        emplacement est réussi : elle est arrivée entière, elle est payée, et
+        rien n'est entré en bibliothèque. Elle attend donc bien une issue —
+        celle que l'auteur va décider. Sans cette ligne, sa tuile quitterait la
+        grille à l'arrivée et aucun asset ne prendrait sa place : l'appel payé
+        s'évanouirait sous les yeux de l'auteur, ce qui est très exactement le
+        gâchis silencieux que la tranche répare.
+
         Le tri se fait ici et non en SQL parce que le statut d'une génération
         est celui de **l'ensemble** de ses emplacements : un lot où une image
         est arrivée est « réussi » même si sa voisine a été coupée.
@@ -229,6 +253,7 @@ class ServiceGenerations:
             generation
             for generation in self._base.recentes(limite)
             if any(e.statut in en_suspens for e in generation.emplacements)
+            or (generation.pliage is not None and generation.pliage.attend_un_choix)
         ]
 
     def total_couts(self, projet: str | None = None) -> float:
@@ -593,6 +618,18 @@ class ServiceGenerations:
             # l'asset, et il n'existe plus une ligne plus bas. Voir
             # `Demande.sujet`.
             sujet=demande.prompt.strip(),
+            # **Le fond du jeu s'interdit sur le sujet** (D3), et la phrase entre
+            # dans un champ qui existait déjà — `prompt_negatif`, que les deux
+            # adaptateurs replient en fin de demande. Elle est composée **ici**,
+            # avec le prompt et avant l'enregistrement : `generation.json` porte
+            # donc l'interdiction telle qu'elle est partie, et une génération se
+            # relit des mois après sans avoir à reconstituer le fond du jour.
+            #
+            # **Un texte repris n'y échappe pas, et c'est voulu.** Reprendre le
+            # texte à la main est une prise de main sur *le prompt* ; le champ
+            # d'interdiction est un autre champ, l'auteur y écrit ce qu'il veut,
+            # et son texte passe en tête sans jamais céder.
+            prompt_negatif=self._interdit(projet, demande.prompt_negatif, tri),
             prompt=self._texte(
                 demande.prompt,
                 demande.repris,
@@ -602,8 +639,19 @@ class ServiceGenerations:
                 pose=pose,
                 direction=direction,
                 tri=tri,
-                roles=tuple(r.role for r in reinjectes),
-                palette=demande.palette,
+                # **Les rôles de ce qui part vraiment, dans l'ordre** (R7). Le
+                # gabarit et la bande de couleurs en font partie : ce sont deux
+                # images de plus dans le sac, et le texte les numérote comme les
+                # autres. `_roles_qui_partent` est le seul endroit où cette
+                # liste s'écrit — l'aperçu lit exactement la même.
+                roles=self._roles_qui_partent(
+                    reinjectes,
+                    pliage,
+                    identifiant_modele,
+                    self._bande_jointe(
+                        demande.palette, projet, personnage, identifiant_modele
+                    ),
+                ),
             ),
         )
         demande = replace(
@@ -770,6 +818,72 @@ class ServiceGenerations:
         tache.add_done_callback(self._en_vol.discard)
         return generation
 
+    def ecarter(self, identifiant: str, rang: int, ecartees: Sequence[int]) -> Generation:
+        """L'auteur a regardé la planche, il tranche, et le lot se déplie (R6).
+
+        **Le geste qui remplace un refus.** Avant R6, une planche qui rendait
+        neuf sujets pour huit était jetée entière et se relançait au prix plein ;
+        quatre planches sur treize du banc d'animation partaient comme ça. Ici,
+        elle a été payée une fois, elle est sur le disque, et ce qui manquait
+        n'était qu'une décision : *lesquels je garde*.
+
+        `ecartees` est vide quand il n'y a rien à écarter — un « je garde tout »
+        explicite, qui est aussi une décision (US-368) : c'est ce qui fait
+        entrer en bibliothèque une planche dont les sujets remplissaient toute
+        leur boîte, **sans que ça ait pu arriver en silence**.
+
+        **Il ne paie rien et n'appelle personne.** Comme le dépliage dont il est
+        la porte, il est local et gratuit : c'est la même image qu'on recoupe
+        autrement.
+        """
+        generation = self._base.lire(identifiant)
+        if generation is None:
+            raise GenerationInconnue(identifiant)
+
+        pliage = generation.pliage
+        emplacement = generation.emplacement(rang)
+        if pliage is None or emplacement is None:
+            raise ErreurAtelier("cet appel n'est pas une planche")
+        if self._pliage is None:  # pragma: no cover — l'atelier le compose
+            raise ErreurAtelier("le dépliage n'est pas disponible")
+        if self._pliage.deplie(generation):
+            # **Une planche déjà dépliée ne se re-tranche pas.** Redéplier
+            # créerait N assets de plus à des rangs neufs, et il faudrait
+            # supprimer les anciens — or un calque désigne son corps par
+            # identifiant. Même refus que `recaler` en C3, et pour la raison
+            # exacte.
+            raise ErreurAtelier("cette planche a déjà rendu ses images")
+        if emplacement.resultat is None:
+            raise ErreurAtelier("cette planche n'est pas arrivée")
+
+        hors = [i for i in ecartees if not 0 <= i < pliage.trouvees]
+        if hors:
+            raise ErreurAtelier(
+                f"la planche a rendu {pliage.trouvees} sujets — "
+                f"il n'y a pas de n° {hors[0] + 1}"
+            )
+
+        # **La décision d'abord, le dépliage ensuite**, et sur le même objet :
+        # `attend_un_choix` doit être faux au moment où `decouper_retour`
+        # regarde, sans quoi le lot redemanderait la question qu'on vient de lui
+        # répondre.
+        pliage.ecartees = tuple(sorted(set(int(i) for i in ecartees)))
+        try:
+            if generation.piece and self._equipement is not None:
+                self._equipement.deplier(generation, rang)
+            else:
+                self._pliage.deplier(generation, emplacement)
+        except CompteFaux as refus:
+            # **L'auteur en a écarté trop.** Ce n'est pas la planche qui est en
+            # faute, c'est le choix : la décision est reprise pour qu'il puisse
+            # en poser une autre, et rien n'est marqué en échec.
+            pliage.ecartees = None
+            self._sauver(generation)
+            raise ErreurAtelier(refus.raison) from refus
+
+        self._sauver(generation)
+        return generation
+
     async def attendre(self, identifiant: str, delai_s: float) -> Generation | None:
         """Attente bornée — le contrat du MCP, utile aussi aux essais.
 
@@ -898,6 +1012,18 @@ class ServiceGenerations:
                 generation.pliage.refus = refus.raison
                 emplacement.statut = Statut.ECHOUEE
                 emplacement.raison = refus.raison
+                self._sauver(generation)
+            except ChoixAttendu:
+                # **Ni refus ni échec, et c'est le cœur de R6** (US-367). La
+                # planche est arrivée entière : l'emplacement reste réussi, rien
+                # ne se relance, et l'appel payé ne se rejoue pas. Ce qui manque
+                # est un regard, et le pliage porte maintenant de quoi le poser —
+                # combien de sujets, où, et ce que chacun mesure.
+                #
+                # **Aucune raison n'est écrite sur l'emplacement.** `raison` est
+                # le mot du produit pour « pourquoi ça a raté » ; s'en servir ici
+                # ferait lire un échec là où il n'y en a pas, dans le journal des
+                # ratés comme dans la tuile.
                 self._sauver(generation)
             return
 
@@ -1181,6 +1307,57 @@ class ServiceGenerations:
         trouvee = self._production.direction(projet, direction)
         return composer(visee.dit(), trouvee.consigne if trouvee else "")
 
+    def _role_joint(
+        self, pliage: Pliage | None, identifiant_modele: str
+    ) -> str | None:
+        """Le rôle de l'image que la planche ajoute, ou `None` si elle n'en ajoute
+        aucune — **et c'est `_jointes` qui décide, pas une seconde condition**.
+
+        Écrit pour R7 : nommer une image demande de savoir laquelle part, et la
+        seule façon de ne jamais se tromper d'un rang est que la condition
+        n'existe qu'une fois. `_jointes` la lit ici plutôt que de la refaire ;
+        deux conditions écrites à deux endroits auraient fini par annoncer un
+        gabarit que le modèle ne reçoit pas — l'entorse exacte que la tranche
+        répare sur la bande de palette.
+
+        **Elle ne dessine rien**, et c'est ce qui la rend appelable depuis
+        l'aperçu : recomposer une planche d'équipement à chaque frappe du champ
+        de prompt aurait relu N images de la bibliothèque pour écrire une ligne
+        de texte.
+        """
+        if pliage is None:
+            return None
+        if self._catalogue.modele(identifiant_modele).references_max <= 0:
+            return None
+        if pliage.geometrie_connue:
+            if self._equipement is None:  # pragma: no cover — l'atelier le monte
+                return None
+            return PLANCHE_JOINTE
+        return GABARIT
+
+    def _roles_qui_partent(
+        self,
+        partantes: Sequence[Reinjection],
+        pliage: Pliage | None,
+        identifiant_modele: str,
+        palette_jointe: bool,
+    ) -> tuple[str, ...]:
+        """Les rôles des images, **dans l'ordre exact où les octets partent** (R7).
+
+        C'est l'ordre de `preparer` : les réinjections qui ont survécu au
+        plafond du modèle, puis le gabarit ou la planche, puis la bande de
+        couleurs. Le texte numérote les images d'après cette liste et rien
+        d'autre ; l'écran de confirmation lit la même, ce qui est ce qui tient
+        l'invariant d'E14 sur la numérotation comme il le tient sur le texte.
+        """
+        roles = [r.role for r in partantes]
+        joint = self._role_joint(pliage, identifiant_modele)
+        if joint is not None:
+            roles.append(joint)
+        if palette_jointe:
+            roles.append(PALETTE)
+        return tuple(roles)
+
     def _jointes(
         self, pliage: Pliage | None, identifiant_modele: str
     ) -> tuple[bytes, ...]:
@@ -1192,7 +1369,7 @@ class ServiceGenerations:
 
         **La grille pleine de C3 envoie la planche elle-même** — les corps
         déjà là, sur le fond plat du produit, et **rien d'autre** : ni ancre, ni
-        mire, ni silhouette de repère, ni les traits du gabarit (`docs/PLAN.md`,
+        mire, ni silhouette de repère, ni les traits du gabarit (`docs/archive/plan-versions-tenues.md`,
         C3). C'est un critère d'acceptation de la tranche, et il est vrai ici :
         le gabarit et la planche sont deux branches d'un `if`, jamais deux images
         qui partiraient ensemble.
@@ -1210,20 +1387,23 @@ class ServiceGenerations:
         bien mais qui marche. Il n'est pas grisé pour autant : le grisé dit
         *cette chose est indisponible*, et celle-ci ne l'est pas — le modèle peut
         honorer la demande, un peu moins bien.
+
+        **La condition vit dans `_role_joint`, et nulle part ailleurs** (R7) :
+        c'est elle qui décide ici comme dans le texte qui nomme les images. Une
+        image annoncée au modèle et jamais envoyée serait un mensonge qu'il ne
+        peut pas vérifier.
         """
-        if pliage is None:
+        role = self._role_joint(pliage, identifiant_modele)
+        if role is None:
             return ()
-        modele = self._catalogue.modele(identifiant_modele)
-        if modele.references_max <= 0:
-            return ()
-        if pliage.geometrie_connue:
-            if self._equipement is None:  # pragma: no cover — l'atelier le compose
-                return ()
+        assert pliage is not None
+        if role == PLANCHE_JOINTE:
             # **Sans référence possible, la planche ne part pas — et l'appel non
             # plus.** Le gabarit est un confort dont C2 peut se passer ; la
             # planche d'équipement *est* la demande. Un modèle qui n'accepte
             # aucune image ne peut donc pas habiller, et il est grisé par le
             # catalogue avant d'arriver ici (`Modele.refus`).
+            assert self._equipement is not None
             return (self._equipement.planche(pliage),)
         return (reference(pliage),)
 
@@ -1241,7 +1421,6 @@ class ServiceGenerations:
         pliage: Pliage | None = None,
         tri: Tri | None = None,
         roles: Sequence[str] = (),
-        palette: bool = False,
     ) -> list[dict[str, Any]]:
         """Ce qui part, **une ligne par chose**, dans l'ordre de l'assemblage (E14).
 
@@ -1298,7 +1477,17 @@ class ServiceGenerations:
         lignes: list[dict[str, Any]] = []
         if self._production is not None:
             lignes.extend(
-                resoudre(self._production.couches(projet, personnage), tri)
+                resoudre(
+                    # **Le fond corrigé descend jusqu'à la case qui le porte**
+                    # (D3). Il ne fabrique pas de ligne à lui : la case
+                    # `technique` dit déjà le fond depuis que la phrase de calage
+                    # le nomme, et lui en donner une seconde aurait fait partir
+                    # la couleur deux fois dans le même texte.
+                    self._production.couches(
+                        projet, personnage, (tri or Tri()).fond
+                    ),
+                    tri,
+                )
             )
         elif self._univers is not None and projet is not None:  # pragma: no cover
             # L'atelier monte toujours les deux services ensemble ; ce repli
@@ -1390,7 +1579,7 @@ class ServiceGenerations:
                 }
             )
 
-        dites = self._dire_les_images(roles, palette, pliage)
+        dites = self._dire_les_images(roles, pliage)
         if dites:
             lignes.append(
                 {
@@ -1470,60 +1659,108 @@ class ServiceGenerations:
             )
         return lignes
 
-    def _dire_les_images(
-        self, roles: Sequence[str], palette: bool, pliage: Pliage | None
-    ) -> str:
-        """Ce que les images jointes veulent dire, en mots.
+    def _dire_les_images(self, roles: Sequence[str], pliage: Pliage | None) -> str:
+        """Ce que les images jointes veulent dire — **une ligne par image** (R7).
 
-        **Elles partaient muettes jusqu'au 1ᵉʳ septembre 2026.** Le prompt ne les
-        mentionnait nulle part, sauf pour une planche — vérifié : les deux seules
-        phrases anglaises du dépôt qui parlaient d'une image jointe étaient dans
-        `atelier/services/pliage.py`. Le modèle recevait donc une planche de
-        quatre poses dessinées de face et un texte qui demandait le dessus, sans
-        rien pour arbitrer. Il a fait la chose raisonnable : il a recopié ce
-        qu'il voyait.
+        **Elles partaient muettes jusqu'au 1ᵉʳ septembre 2026**, puis en bloc
+        jusqu'à R7. Le prompt ne les mentionnait nulle part, sauf pour une
+        planche — vérifié : les deux seules phrases anglaises du dépôt qui
+        parlaient d'une image jointe étaient dans `atelier/services/pliage.py`.
+        Le modèle recevait donc une planche de quatre poses dessinées de face et
+        un texte qui demandait le dessus, sans rien pour arbitrer. Il a fait la
+        chose raisonnable : il a recopié ce qu'il voyait.
 
-        **Deux rôles, deux phrases, et une troisième qui vaut pour les deux.**
-        Un artwork dit *voilà l'allure* ; une image promue dit *voilà le sujet
-        déjà dessiné*. Aucun des deux ne dit *voilà la caméra*, et c'est cette
-        phrase-là qui manquait.
+        **Ce que R7 change : le sac devient une liste.** Le produit écrivait
+        « une ou plusieurs images de référence sont jointes » — une phrase par
+        *sorte* d'image, jamais par image. Un artwork de style, un gabarit de
+        découpe et un sprite de pose partaient donc dans le même sac, sans
+        qu'une ligne dise lequel est lequel. Chaque image porte maintenant son
+        rang et son rôle, dans l'ordre exact où les octets partent : `Image 1 —
+        STYLE REFERENCE`, `Image 2 — THE SAME CHARACTER`, et ainsi de suite.
 
-        **Rien pour une édition.** L'image qu'on retouche *est* la demande : lui
-        dire de ne pas copier sa mise en page serait exactement le contraire de
-        ce qu'on veut. Le bloc entier se tait alors, plutôt que de risquer une
-        contradiction dans le même texte.
+        **Le texte est celui du banc, mot pour mot** — `essais/socle_essais.py`,
+        `lignes_de_nommage`. Il a été tiré le 2 septembre 2026 et il n'a pas
+        amélioré le taux : zéro bonne planche sur quatre, contre deux pour le
+        témoin. La tranche est reprise pour la relisibilité, et le texte est
+        recopié plutôt que réécrit — pour qu'un tirage futur mesure la même
+        chose que celui qui a déjà été payé.
 
-        **Et la mise en page se tait pour une planche**, qui vient justement de
-        demander qu'on la recopie. Il ne reste que la caméra et la pose, qui
-        restent vraies.
+        **Le rang est celui de l'envoi, et rien d'autre ne le fixe.** Il doit
+        donc être calculé sur la liste qui part vraiment — celle d'après le
+        plafond du modèle, d'après le dédoublonnage, et gabarit et bande de
+        palette compris. Voir `_roles_qui_partent`, qui est le seul endroit où
+        cette liste s'écrit ; un second endroit décalerait la numérotation d'un
+        rang et nommerait chaque image par le rôle de sa voisine.
+
+        **Un rôle inconnu lève.** Une image qu'on ne sait pas nommer ne doit pas
+        partir sous un faux nom : mieux vaut un appel refusé qu'un modèle à qui
+        l'on dit que le gabarit est le personnage.
         """
-        vus = set(roles)
-        if EDITION in vus:
-            return ""
-        phrases: list[str] = []
-        if STYLE in vus:
-            phrases.append(
-                "One or more reference images are attached: they show the look to "
-                "follow — the same colours, the same outfit, the same proportions, "
-                "the same drawing style."
-            )
-        if REFERENCE in vus:
-            phrases.append(
-                "One or more attached images show this same subject already drawn: "
-                "keep it recognisably the same thing."
-            )
-        if phrases:
-            phrases.append(
-                "Do NOT copy the camera angle or the pose of the attached images"
-                + ("" if pliage is not None else ", and do not copy their framing or their layout")
-                + " — those are set below, and they override what the images show."
-            )
-        if palette:
-            phrases.append(
-                "One attached image is a flat strip of colour swatches: it is not a "
-                "subject, it is the palette to draw with."
-            )
-        return " ".join(phrases)
+        lignes = self._nommer_les_images(roles, self._cases_du_pliage(pliage))
+        return "\n".join(lignes)
+
+    @staticmethod
+    def _cases_du_pliage(pliage: Pliage | None) -> int:
+        """Combien de cases la grille porte, pour la ligne qui nomme le gabarit."""
+        return 0 if pliage is None else pliage.nombre
+
+    @staticmethod
+    def _nommer_les_images(roles: Sequence[str], cases: int) -> list[str]:
+        """Une ligne par image, numérotée dans l'ordre d'envoi, depuis son rôle.
+
+        Recopié de `essais/socle_essais.py` — `lignes_de_nommage` —, à un rôle
+        près : le banc levait sur `edition`, parce qu'aucun de ses tirages n'en
+        portait. Le produit, lui, en retouche une image sur trois, et la taire
+        laisserait la seule image dont tout le reste dépend sans nom au milieu
+        d'une liste où toutes les autres en ont un.
+
+        **Ce que la ligne d'édition dit, et ce qu'elle se garde de dire.**
+        L'image qu'on retouche *est* la demande : lui interdire de copier sa
+        mise en page serait exactement le contraire de ce qu'on veut, et c'est
+        pour ça que le bloc entier se taisait avant R7. La ligne la nomme donc
+        sans rien lui interdire.
+        """
+        lignes: list[str] = []
+        for rang, role in enumerate(roles, start=1):
+            if role == STYLE:
+                lignes.append(
+                    f"Image {rang} — STYLE REFERENCE (an official artwork of this game): "
+                    f"follow its colours, outfit, proportions and drawing style. Do NOT "
+                    f"copy its pose, its camera angle or its layout."
+                )
+            elif role == REFERENCE:
+                lignes.append(
+                    f"Image {rang} — THE SAME CHARACTER, already drawn in the game's "
+                    f"camera: keep it recognisably the same character in every cell."
+                )
+            elif role == GABARIT:
+                lignes.append(
+                    f"Image {rang} — EMPTY LAYOUT GRID: {cases} cells. Draw exactly one "
+                    f"sprite per cell, one instant of the motion per cell, in reading "
+                    f"order. Do NOT draw the grid lines."
+                )
+            elif role == PLANCHE_JOINTE:
+                lignes.append(
+                    f"Image {rang} — THE SPRITE SHEET TO CHANGE: {cases} sprites of the "
+                    f"same character, already drawn. Keep every cell where it is and "
+                    f"change only what the request below asks for."
+                )
+            elif role == PALETTE:
+                lignes.append(
+                    f"Image {rang} — PALETTE STRIP: not a subject, only the colours to "
+                    f"draw with."
+                )
+            elif role == EDITION:
+                lignes.append(
+                    f"Image {rang} — THE IMAGE TO EDIT: this is the picture the request "
+                    f"below modifies. Keep everything it does not ask you to change."
+                )
+            else:  # pragma: no cover — la liste des rôles est close
+                raise DemandeRefusee(
+                    f"une image jointe porte un rôle que le texte ne sait pas nommer : "
+                    f"{role!r}"
+                )
+        return lignes
 
     def _est_le_signalement(
         self, projet: str | None, personnage: str | None, sujet: str
@@ -1543,16 +1780,35 @@ class ServiceGenerations:
 
     def parties(
         self, sujet: str, repris: bool, projet: str | None, pliage: Pliage | None
-    ) -> list[dict[str, str]]:
-        """Les lignes, **groupées comme elles s'assemblent** (US-158).
+    ) -> list[dict[str, Any]]:
+        """Les lignes, **groupées comme elles s'assemblent** (US-158, R7).
 
-        Conservée telle quelle pour ce qui lit encore des blocs — l'agent, les
-        essais de R2. Elle ne compose plus rien : elle groupe ce que `lignes`
-        rend, ce qui garantit qu'un bloc et sa ligne ne peuvent pas diverger.
+        Elle ne compose rien : elle groupe ce que `lignes` rend, ce qui garantit
+        qu'une partie et sa ligne ne peuvent pas diverger. Depuis R7 les parties
+        sont les trois du texte qui part — le contexte, les références, la
+        demande —, et elles portent le titre que le fournisseur reçoit.
         """
-        return en_blocs(
+        return parties(
             self.lignes(sujet, repris=repris, projet=projet, pliage=pliage)
         )
+
+    def _interdit(
+        self, projet: str | None, ecrit: str, tri: "Tri | None" = None
+    ) -> str:
+        """Le champ d'interdiction tel qu'il partira — **un seul endroit l'écrit**.
+
+        Jumelle exacte de `_texte` un cran plus bas, et pour la raison exacte :
+        l'écran de confirmation montre ce que cette méthode rend, et la
+        soumission envoie ce que cette méthode rend. Deux compositions écrites à
+        deux endroits auraient fini par montrer une interdiction et en envoyer
+        une autre — sur le seul champ du produit que personne ne relit.
+
+        Sans service de production — un essai qui n'en monte pas — il reste ce
+        que l'auteur a écrit, ce qui est le comportement d'avant D3.
+        """
+        if self._production is None:
+            return ecrit
+        return self._production.interdit(projet, ecrit, (tri or Tri()).fond)
 
     def _texte(
         self,
@@ -1566,7 +1822,6 @@ class ServiceGenerations:
         direction: str | None = None,
         tri: Tri | None = None,
         roles: Sequence[str] = (),
-        palette: bool = False,
     ) -> str:
         """Les lignes allumées, jointes — **le seul endroit qui écrive le prompt**.
 
@@ -1589,7 +1844,6 @@ class ServiceGenerations:
                 pliage=pliage,
                 tri=tri,
                 roles=roles,
-                palette=palette,
             )
         )
 
@@ -1611,6 +1865,7 @@ class ServiceGenerations:
         references: Sequence[Reinjection] = (),
         references_ecartees: Sequence[str] | None = None,
         palette: bool = False,
+        prompt_negatif: str = "",
     ) -> dict[str, Any]:
         """Le texte exact qui partira, **sans rien préparer ni rien facturer**.
 
@@ -1646,7 +1901,17 @@ class ServiceGenerations:
                 references_ecartees,
                 modele,
             )
-            roles = tuple(r.role for r in partantes)
+            # **Exactement la liste de `preparer`, par la même fonction** (R7) :
+            # gabarit ou planche, puis bande de couleurs, dans l'ordre où les
+            # octets partent. Sans ça l'écran montrerait un texte plus court que
+            # celui qui part, ou pire, numéroterait les images autrement — et
+            # l'invariant d'E14 tomberait sur le seul point que R7 ajoute.
+            roles = self._roles_qui_partent(
+                partantes,
+                pliage,
+                modele,
+                self._bande_jointe(palette, projet, personnage, modele),
+            )
         lignes = self.lignes(
             sujet,
             repris=repris,
@@ -1659,16 +1924,38 @@ class ServiceGenerations:
             pliage=pliage,
             tri=tri,
             roles=roles,
-            palette=palette,
         )
         return {
             "texte": joindre(lignes),
-            "parties": en_blocs(lignes),
+            # **Les trois parties, telles qu'elles partent** (R7). L'écran de
+            # confirmation les montre séparément et n'en recompose aucune : le
+            # texte entier est leur jonction, et il est rendu juste au-dessus.
+            "parties": parties(lignes),
             # **Une ligne par chose qui part** (E14). Le même appel sert le
             # dépliant d'hier et l'écran de confirmation : deux routes auraient
             # rouvert la question de savoir laquelle dit vrai.
             "lignes": lignes,
+            # ── Le fond, et ce qu'il interdit (D3) ───────────────────────────
+            #
+            # **Le fond résolu, pour que l'écran montre la couleur sur laquelle
+            # il travaille** — celle du jeu, ou celle qu'on vient de corriger
+            # pour cet appel. Il est *déjà* dans le texte, dans la case
+            # `technique` : ce champ ne le double pas, il le nomme, pour que
+            # l'écran puisse en dessiner la pastille sans relire de l'anglais.
+            "fond": self._interdit_fond(projet, tri),
+            # **Et l'interdiction telle qu'elle partira**, dans l'autre champ de
+            # la demande. C'est le seul morceau de ce qui part que le texte ne
+            # contient pas ; sans cette ligne, l'écran qui promet de tout montrer
+            # aurait un angle mort — et ce serait celui que la tranche vient
+            # d'ouvrir.
+            "interdiction": self._interdit(projet, prompt_negatif, tri),
         }
+
+    def _interdit_fond(self, projet: str | None, tri: "Tri | None") -> str:
+        """La couleur de fond de cet appel-ci, résolue par la production."""
+        if self._production is None:
+            return ""
+        return self._production.fond(projet, (tri or Tri()).fond)
 
     def _sous_le_plafond(
         self,
@@ -1989,15 +2276,33 @@ class ServiceGenerations:
 
         Un modèle qui n'accepte aucune référence part sans, comme pour le
         gabarit : la case reste cochée, elle ne trouve simplement pas de place.
+
+        **La condition vit dans `_bande_jointe`, et nulle part ailleurs** (R7).
+        C'est une entorse à E14 qui a été réparée en la déplaçant : le texte
+        annonçait « une image jointe est une bande de couleurs » dès que la case
+        était cochée, alors qu'un jeu sans palette ou un modèle sans place n'en
+        envoie aucune. On annonçait donc au modèle une image qu'il ne recevait
+        pas.
         """
-        if not demande.palette:
+        if not self._bande_jointe(
+            demande.palette, projet, personnage, identifiant_modele
+        ):
             return ()
-        couleurs = self._couleurs(projet, personnage)
-        if not couleurs:
-            return ()
-        if self._catalogue.modele(identifiant_modele).references_max <= 0:
-            return ()
-        return (bande_de_palette(couleurs),)
+        return (bande_de_palette(self._couleurs(projet, personnage)),)
+
+    def _bande_jointe(
+        self,
+        cochee: bool,
+        projet: str | None,
+        personnage: str | None,
+        identifiant_modele: str,
+    ) -> bool:
+        """La bande de couleurs part-elle vraiment ? Voir `_bande`."""
+        if not cochee:
+            return False
+        if not self._couleurs(projet, personnage):
+            return False
+        return self._catalogue.modele(identifiant_modele).references_max > 0
 
     def _couleurs(
         self, projet: str | None, personnage: str | None

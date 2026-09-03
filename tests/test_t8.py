@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T8 — la toile.
 
-Un test par critère de `docs/PLAN.md` § Phase T8, nommé d'après lui. **Six des
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T8, nommé d'après lui. **Six des
 treize ne se vérifient pas ici**, parce qu'ils portent sur ce que l'écran montre
 ou sur une géométrie que le serveur ne connaît pas : la grille inchangée, les
 îlots peuplés à l'ouverture, le collage qui ne bouge rien sur la toile, Ctrl+Z,

@@ -271,6 +271,14 @@ const INTITULE: Record<string, string> = {
 
 const UNIVERS: Univers = {
   vue: "",
+  style: "pixel",
+  methode_pixels: "proche",
+  // **Aucun fond posé** (D3) — l'état d'avant la tranche, celui d'un projet qui
+  // n'a rien choisi : le produit demande *un fond plat* sans dire lequel.
+  fond: "",
+  detourage_image: null,
+  detourage_planche: null,
+  detourages: {},
   bible: [
     { nom: "monde", texte: "", actif: true },
     { nom: "epoque", texte: "", actif: true },
@@ -475,6 +483,10 @@ const ETAT: Etat = {
         octets: 175_997_641,
         lent: false,
         note: "le plus rapide",
+        // **Il calcule en 320 puis réagrandit son masque** (D4) : c'est le
+        // nombre qui décide de ce qu'il peut rendre, et l'écran le dit.
+        entree: 320,
+        licence: "Apache-2.0",
         defaut: true,
         descendu: true,
         raison: null,
@@ -485,12 +497,23 @@ const ETAT: Etat = {
         octets: 972_666_916,
         lent: true,
         note: "le meilleur sur les silhouettes difficiles",
+        entree: 1024,
+        licence: "MIT",
         defaut: false,
         descendu: false,
         raison: null,
       },
     ],
-    quantification: { raison: "aucune palette" },
+    quantification: {
+      raison: null,
+      note: "aucun artwork officiel — les couleurs se déduisent de chaque image",
+    },
+    reductions: [
+      { nom: "vote", libelle: "vote en deux temps", raison: null },
+      { nom: "pixeloe", libelle: "traits épaissis", raison: null },
+      { nom: "lanczos", libelle: "réduction douce", raison: null },
+      { nom: "proche", libelle: "au plus proche", raison: null },
+    ],
     recettes: [],
   },
   bibliotheque: BIBLIOTHEQUE,
@@ -773,19 +796,30 @@ function voyageDouble(recette: Recette): [Recette, string[]] {
   ]
 }
 
+/** L'asset visé, où qu'il soit rangé — en galerie ou dans une case, **ou rien**
+ *  s'il n'existe nulle part.
+ *
+ *  Cette forme-ci sert là où le serveur répond `null` plutôt que d'inventer :
+ *  une ligne de référence peut nommer une image effacée depuis, et elle doit
+ *  alors rester **sans vignette** (R8). */
+function trouverAssetSiConnu(
+  etat: { assets: Asset[]; personnages: Personnage[] },
+  identifiant: string,
+): Asset | null {
+  const range = etat.personnages
+    .flatMap((p) => p.cases)
+    .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+    .find((a) => a.identifiant === identifiant)
+  return range ?? etat.assets.find((a) => a.identifiant === identifiant) ?? null
+}
+
 /** L'asset visé, où qu'il soit rangé — en galerie ou dans une case. */
 function trouverAsset(
   etat: { assets: Asset[]; personnages: Personnage[] },
   identifiant: string,
 ): Asset {
-  const range = etat.personnages
-    .flatMap((p) => p.cases)
-    .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
-    .find((a) => a.identifiant === identifiant)
   return (
-    range ??
-    etat.assets.find((a) => a.identifiant === identifiant) ??
-    asset(identifiant, "une image")
+    trouverAssetSiConnu(etat, identifiant) ?? asset(identifiant, "une image")
   )
 }
 
@@ -1014,7 +1048,14 @@ function serveurDouble(options: {
         eteints: [],
         allumes: [],
         textes: {},
-      }) as { eteints: string[]; allumes: string[]; textes: Record<string, string> }
+      }) as {
+        eteints: string[]
+        allumes: string[]
+        textes: Record<string, string>
+        // **Le quatrième écart** (D3) : la couleur de fond corrigée pour cet
+        // appel-ci. Absent laisse celle du jeu, `""` la retire.
+        fond?: string | null
+      }
       const vivante = (clef: string) =>
         tri.allumes.includes(clef) || !tri.eteints.includes(clef)
       const texteDe = (clef: string, defaut: string) => tri.textes[clef] ?? defaut
@@ -1095,47 +1136,118 @@ function serveurDouble(options: {
           })
       }
       const debout = lignes.filter((l) => l.allumee)
-      const morceaux = [
-        debout
-          .filter((l) => l.groupe === "jeu")
-          .map((l) => `${l.intitule}: ${l.texte}`)
-          .join("\n"),
-        debout
-          .filter((l) => l.groupe === "sujet")
-          .map((l) => l.texte)
-          .join(", "),
-        ...debout.filter((l) => l.groupe === "planche").map((l) => String(l.texte)),
-      ].filter(Boolean)
-      const texte = morceaux.join("\n\n")
+      // **Trois parties, comme le serveur les compose** (R7) : le contexte, les
+      // références, la demande. Une partie vide n'est pas rendue ; un texte
+      // repris n'en fait qu'une, sans titre, parce qu'il part mot pour mot.
+      const contenu = (clef: string) =>
+        clef === "contexte"
+          ? [
+              debout
+                .filter((l) => l.groupe === "jeu")
+                .map((l) => `${l.intitule}: ${l.texte}`)
+                .join("\n"),
+            ].filter(Boolean)
+          : clef === "references"
+            ? debout.filter((l) => l.groupe === "jointes").map((l) => String(l.texte))
+            : [
+                debout
+                  .filter((l) => l.groupe === "sujet")
+                  .map((l) => l.texte)
+                  .join(", "),
+                ...debout
+                  .filter((l) => l.groupe === "planche")
+                  .map((l) => String(l.texte)),
+              ].filter(Boolean)
+      const PROPOS: Record<string, string> = {
+        contexte: "ce que ton jeu est, et qui ne change pas d'une image à l'autre",
+        references:
+          "ce que chaque image jointe est, dite dans l'ordre où elles partent",
+        demande: "ce que tu veux cette fois-ci — et la caméra, qui ferme le texte",
+      }
+      const NOM_PARTIE: Record<string, string> = {
+        contexte: "le contexte",
+        references: "les références",
+        demande: "la demande",
+      }
+      const parties = corps?.repris
+        ? [
+            {
+              clef: "demande",
+              titre: "",
+              nom: "ton texte",
+              propos: "repris à la main — il part mot pour mot, sans titre",
+              texte: debout.map((l) => String(l.texte)).join("\n\n"),
+              repris: true,
+            },
+          ]
+        : // Les trois sont rendues même vides — l'écran range des lignes, et
+          // une ligne éteinte reste à sa place. C'est le texte vide qui dit
+          // qu'une partie ne part pas.
+          ["contexte", "references", "demande"].map((clef) => ({
+            clef,
+            titre: { contexte: "CONTEXT", references: "REFERENCES", demande: "REQUEST" }[
+              clef
+            ]!,
+            nom: NOM_PARTIE[clef],
+            propos: PROPOS[clef],
+            texte: contenu(clef).join("\n\n"),
+            repris: false,
+          }))
+      const texte = parties
+        .filter((p) => p.texte.trim())
+        .map((p) => (p.titre ? `${p.titre}\n\n${p.texte}` : p.texte))
+        .join("\n\n")
       const compte = options.references ?? CATALOGUE.references
       const ecartees = (corps?.references_ecartees ?? null) as string[] | null
-      const images = compte.lignes.map((ligne) => ({
-        ...ligne,
-        cochee: ecartees ? !ecartees.includes(ligne.asset) : !ligne.ecartee_par,
-        hors_plafond: false,
-        prix: 0.008,
-      }))
+      let rangImage = 0
+      const images = compte.lignes.map((ligne) => {
+        const cochee = ecartees
+          ? !ecartees.includes(ligne.asset)
+          : !ligne.ecartee_par
+        if (cochee) rangImage += 1
+        return {
+          ...ligne,
+          cochee,
+          hors_plafond: false,
+          // Le numéro que le texte lui donne (R7).
+          rang: cochee ? rangImage : null,
+          prix: 0.008,
+        }
+      })
       const cochees = images.filter((i) => i.cochee).length + compte.gabarit
+      const PARTIE_DU_GROUPE: Record<string, "contexte" | "references" | "demande"> = {
+        jeu: "contexte",
+        ambiance: "contexte",
+        jointes: "references",
+        sujet: "demande",
+        planche: "demande",
+        cadrage: "demande",
+      }
       const compter = (groupe: string, nom: string) => ({
         clef: groupe,
         nom,
+        partie: PARTIE_DU_GROUPE[groupe],
         allumees: lignes.filter((l) => l.groupe === groupe && l.allumee).length,
         total: lignes.filter((l) => l.groupe === groupe).length,
       })
       return rendre({
         texte,
+        parties,
         lignes,
         groupes: [
           compter("jeu", "les textes du jeu"),
           compter("sujet", "le sujet"),
+          compter("planche", "la planche"),
           { clef: "images", nom: "les images", allumees: cochees, total: 14 },
-        ],
+        ].filter((g) => g.clef === "images" || g.total > 0),
         images: {
           lignes: images,
           places: 14,
           cochees,
           gabarit: compte.gabarit,
           palette: 0,
+          rang_gabarit: compte.gabarit ? rangImage + 1 : null,
+          rang_palette: null,
           prix: 0.008,
           avertissements: [],
         },
@@ -1175,6 +1287,23 @@ function serveurDouble(options: {
         cases: 0,
         caracteres: { total: texte.length, sujet: sujet.length, eteints: 0 },
         corrections: Object.keys(tri.textes).length,
+        // **Le fond de cet appel-ci** (D3). Le double le rend comme le serveur
+        // le rend : la couleur du jeu, ou celle que l'écran vient de corriger
+        // pour cet appel — `tri.fond`, qui est un écart de plus et non une
+        // ligne de texte.
+        fond: {
+          couleur: tri.fond ?? UNIVERS.fond,
+          interdiction: "",
+          du_jeu: UNIVERS.fond,
+          corrige: tri.fond != null,
+          propose: {
+            couleur: "",
+            nom: "",
+            ecart: 0,
+            voisine: "",
+            raison: "ce jeu n'a pas encore de palette",
+          },
+        },
       })
     }
     if (url === "/api/status")
@@ -1308,6 +1437,17 @@ function serveurDouble(options: {
         visees: [],
         poches_total: 0,
         trous: [],
+        // **La grille sur laquelle le modèle a peint** (D2). Le double en
+        // annonce une, parce que c'est le cas où la mesure a quelque chose à
+        // dire ; les essais qui regardent le renoncement posent une raison à la
+        // place, comme le serveur le fait sur une peinture.
+        grille_du_modele: {
+          pas: 8,
+          nettete: 0.82,
+          peigne: 0.71,
+          carres: 128,
+          raison: null,
+        },
         // **Ce que la table de recadrage lit** (U2) — un sujet qui occupe le
         // quart central d'une image de 1 024, comme un modèle en rend un.
         recadrage: {
@@ -1358,7 +1498,7 @@ function serveurDouble(options: {
             passes: [],
             difference: null,
             recadrage: null,
-            grille: { cible: 64, occupation: 100, ancrage: "bas", decalage: 0 },
+            grille: { cible: 64, occupation: 100, ancrage: "bas", decalage: 0, methode: "proche" },
             quantification: null,
             bords: null,
             contours: null,
@@ -1367,6 +1507,24 @@ function serveurDouble(options: {
             nom: null,
           },
           echelle: "",
+          // **Le détourage de départ et sa provenance** (D1). Le double rend
+          // celui du produit : c'est ce qu'un univers sans réglage applique.
+          nature: "image",
+          detourage: {
+            passe: {
+              moteur: "bord",
+              tolerance: 28,
+              seuil_alpha: 128,
+              durcissement: 0,
+              point: null,
+              portee: "tache",
+              masquee: false,
+              trace: [],
+              modele: "",
+            },
+            origine: "produit",
+            famille: "",
+          },
         },
       )
     // ── Découper une carte, et ce que la palette y lit (06bis) ────────────
@@ -1488,7 +1646,7 @@ function serveurDouble(options: {
           recadrage: null,
           grille:
             parametres.get("traiter") === "true"
-              ? { cible: 64, occupation: 100, ancrage: "bas" as const, decalage: 0 }
+              ? { cible: 64, occupation: 100, ancrage: "bas" as const, decalage: 0, methode: "proche" as const }
               : null,
           quantification: null,
           bords: null,
@@ -2025,12 +2183,23 @@ function serveurDouble(options: {
         )
       }
       const vive = etat.personnages.find((p) => p.identifiant === identifiant)
+      // **De quoi montrer l'exemple** (R8). Le serveur joint l'objet entier à
+      // la ligne — et `null` quand l'image a disparu du dépôt entre le moment
+      // où la ligne a été composée et celui où on la regarde. Le double fait
+      // les deux : une ligne orpheline reste, sans vignette.
+      const deQuoiMontrer = (vise: string) => {
+        const carte = etat.cartes.find((c) => c.identifiant === vise)
+        if (carte) return { sorte: "carte", carte }
+        const image = trouverAssetSiConnu(etat, vise)
+        return image ? { sorte: "asset", asset: image } : null
+      }
       const lignes = (vive?.references ?? []).map((reference) => ({
         reference,
         genre: "asset",
         provenance: "image promue",
         detail: "fabriquée puis retenue comme référence",
         ecartee: false,
+        montre: deQuoiMontrer(reference),
       }))
       // **L'atelier propose le corps retenu de la première pose faite**, et
       // seulement s'il n'est pas déjà retenu : une proposition acceptée cesse
@@ -2045,6 +2214,7 @@ function serveurDouble(options: {
                 provenance: "le corps retenu de « repos »",
                 detail: "ce à quoi il ressemble une fois passé par le style du jeu",
                 ecartee: false,
+                montre: deQuoiMontrer(corpsRetenu),
               },
             ]
           : []
@@ -2474,6 +2644,23 @@ function serveurDouble(options: {
       const g = options.aPublier?.() ?? generation("zzzz0000", 1, "en_cours")
       FluxDouble.ouverts.at(-1)?.emettre("generation", g)
       return rendre(g)
+    }
+    // **L'auteur tranche sur une planche qui attend, et elle se déplie** (R6).
+    // Le double rend ce que le vrai serveur rend : la même génération, la
+    // décision écrite, et la question refermée. Il ne repaie rien — et c'est
+    // très exactement ce que les essais vérifient en comptant les appels.
+    if (url.endsWith("/unfold") && init?.method === "POST") {
+      const lot = options.aPublier?.() ?? generation("zzzz0000", 1, "reussie")
+      return rendre({
+        ...lot,
+        pliage: lot.pliage
+          ? {
+              ...lot.pliage,
+              ecartees: (corps?.ecartees as number[]) ?? [],
+              attend_un_choix: false,
+            }
+          : null,
+      })
     }
     // Une génération relue — le quatrième rôle de la réinjection, celui qui
     // n'envoie aucune image (US-12). Son `prompt` est **ce qui est parti** :
@@ -3002,10 +3189,19 @@ describe("l'écran de l'atelier", () => {
     //
     // Sans artwork, la palette n'est pas une pièce manquante : c'est un état,
     // et il porte sa raison — « le grisé porte sa raison, jamais une infobulle ».
+    //
+    // **La phrase a changé en D2**, et le changement est le fond de l'affaire :
+    // elle disait seulement qu'il manquait un artwork, ce qui laissait croire
+    // qu'il ne se passait rien. Il se passait quelque chose de pire — aucune
+    // couleur n'était réduite, et les sprites sortaient à dix mille teintes.
+    // Elle dit maintenant ce qui a lieu, puis comment faire mieux.
     expect(
       await screen.findByText(
-        /aucun artwork officiel — promeus une carte du tableau d'inspiration/,
+        /aucun artwork officiel — les couleurs se déduisent de chaque image/,
       ),
+    ).toBeTruthy()
+    expect(
+      screen.getByText(/promeus une carte du tableau d'inspiration/),
     ).toBeTruthy()
 
     const univers: Univers = {
@@ -3546,16 +3742,29 @@ describe("l'infobulle et le guide", () => {
     // fiche, elle tient une table à elle —, mais la règle est la même : une
     // table indisponible **s'ouvre**, et porte sa raison à la place de ses
     // réglages.
+    //
+    // **L'état grisé est construit ici, il n'est plus supposé** (D2). Ce test
+    // se servait du grisé réel de la quantification, qui n'existe plus : sans
+    // artwork officiel, elle réduit maintenant les couleurs de chaque image au
+    // lieu de refuser. Ce qu'on vérifie est la règle du châssis, pas la règle
+    // du produit — le double pose donc la raison dont le test a besoin.
     const images = [asset("aaaa1111-0")]
     const double = serveurDouble({ assets: images })
-    await monter(double.fetchDouble, { ...ETAT, assets: images })
+    await monter(double.fetchDouble, {
+      ...ETAT,
+      assets: images,
+      traitement: {
+        ...ETAT.traitement,
+        quantification: { raison: "aucune palette", note: null },
+      },
+    })
 
     await waitFor(() => expect(tuiles()).toHaveLength(1))
     fireEvent.click(tuiles()[0])
     fireEvent.click(await screen.findByRole("button", { name: "Ouvrir les tables" }))
     fireEvent.click(await screen.findByRole("button", { name: /^quantification/ }))
 
-    // Le double annonce « aucune palette » : la table s'ouvre, et le dit.
+    // La table s'ouvre, et porte la raison à la place de ses réglages.
     expect(await screen.findByText("aucune palette")).toBeTruthy()
     // **À la place des réglages, jamais à côté d'eux** : aucun contrôle mort
     // sous la raison.
@@ -4157,7 +4366,7 @@ describe("l'agent, vu de l'atelier", () => {
 
   test("quitter l'écran vide la pile : au retour, ce qui est sur disque fait foi", async () => {
     // « Ce n'est pas de l'historique de projet, c'est le rattrapage du geste en
-    // cours » (`docs/PLAN.md` T8). La pile meurt avec l'écran, et un Ctrl+Z au
+    // cours » (`docs/archive/plan-versions-tenues.md` T8). La pile meurt avec l'écran, et un Ctrl+Z au
     // retour ne défait rien du tout.
     //
     // **Il se lit avec celui d'au-dessus, et pas seul.** Celui-ci prouve qu'un
@@ -4535,7 +4744,7 @@ describe("l'agent, vu de l'atelier", () => {
   test("les dix teintes sont les seules, et elles ne renvoient à aucun token sémantique", () => {
     // « Les teintes sont les seules disponibles, et aucune ne se confond avec
     // une couleur sémantique du produit — **vérifié à côté d'une carte en
-    // échec** » (`docs/PLAN.md` T9). La seconde moitié de ce critère est un
+    // échec** » (`docs/archive/plan-versions-tenues.md` T9). La seconde moitié de ce critère est un
     // constat d'œil, et il se fait au navigateur : deux valeurs peuvent être
     // distinctes et se confondre quand même.
     //
@@ -4964,9 +5173,16 @@ describe("le réglage d'univers se voit à l'instant", () => {
    *  message de l'abonnement qui le pose (« un abonné qui arrive en retard
    *  demande l'état complet »). Le double et l'état de départ doivent donc dire
    *  la même chose, sans quoi l'écran montrerait l'un et réglerait l'autre. */
-  const ouvrirLUnivers = async (univers: Univers = UNIVERS) => {
+  const ouvrirLUnivers = async (
+    univers: Univers = UNIVERS,
+    /** **De quoi poser un état de traitement à soi** (D2). Les façons de réduire
+     *  qu'une machine sait faire viennent du serveur ; un test qui vérifie le
+     *  grisé doit pouvoir en retirer une, sans dépendre de ce qui est installé
+     *  sur la machine qui fait tourner les essais. */
+    etat: Partial<typeof ETAT> = {},
+  ) => {
     const double = serveurDouble({ univers })
-    const flux = await monter(double.fetchDouble, { ...ETAT, univers })
+    const flux = await monter(double.fetchDouble, { ...ETAT, univers, ...etat })
     await ouvrirLesReglagesDuJeu("L'allure")
     await waitFor(() =>
       expect(document.querySelector(`[data-etape="L'allure"]`)).toBeTruthy(),
@@ -5004,23 +5220,144 @@ describe("le réglage d'univers se voit à l'instant", () => {
   })
 
   test("le nombre de couleurs demandé est celui qui vient d'être posé", async () => {
-    // La palette n'offre son réglage que lorsqu'elle existe : sans artwork, le
-    // bloc porte sa raison, pas un contrôle mort.
+    // **Le réglage s'offre même sans palette depuis D2** : sans artwork, les
+    // couleurs se déduisent de chaque image au lieu de ne pas être réduites du
+    // tout, et cacher le contrôle cachait précisément ce défaut-là. On part
+    // quand même d'une palette ici, pour rester au plus près du test d'avant.
     await ouvrirLUnivers({ ...UNIVERS, palette: ["#3d2b2d", "#b59b72"], vide: false })
     const palette = await ouvrir("Références et couleurs")
 
-    // 8 et 12 n'appartiennent qu'aux couleurs ; 96 et 128 qu'aux tailles de
-    // pixel. On règle sur ce qui ne peut pas être l'autre.
-    fireEvent.click(palette.getByRole("button", { name: "12" }))
+    // **Les paliers ont changé en D2** — 8, 16, 32, 64 sur un sprite de 64 —, et
+    // ils sont plafonnés par le côté du sprite. On règle sur deux d'entre eux.
+    fireEvent.click(palette.getByRole("button", { name: "16" }))
 
     await waitFor(() =>
-      expect(palette.getByRole("button", { name: "12" }).className).toContain(
+      expect(palette.getByRole("button", { name: "16" }).className).toContain(
         "border-signal",
       ),
     )
-    expect(palette.getByRole("button", { name: "24" }).className).not.toContain(
+    expect(palette.getByRole("button", { name: "32" }).className).not.toContain(
       "border-signal",
     )
+  })
+
+  test("le style se choisit sur deux images, et il commande la suite", async () => {
+    // *« On propose le choix du style de jeu ici et on met une image cliquable
+    // pour chaque style qui permet de faire le choix »* — l'auteur, 3 septembre.
+    const { appels } = await ouvrirLUnivers()
+    fireEvent.click(screen.getByRole("button", { name: "Le style" }))
+
+    const dessin = await screen.findByRole("button", { name: /En dessin/ })
+    expect(screen.getByRole("button", { name: /En pixel art/ })).toBeTruthy()
+    // Le choix dit **ce qu'il change ailleurs**, pas ce que le contrôle fait.
+    expect(dessin.textContent).toContain("quelle finesse")
+
+    fireEvent.click(dessin)
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url.includes("/universe")).at(-1)?.corps,
+      ).toMatchObject({ style: "dessin" }),
+    )
+  })
+
+  test("en dessin, l'étape des tailles demande une finesse", async () => {
+    // **La même étape, deux questions.** Ce ne sont ni les mêmes valeurs, ni le
+    // même mot, ni la même conséquence — et les confondre est ce qui faisait
+    // croire qu'un jeu en dessin n'a pas de taille du tout.
+    await ouvrirLUnivers({ ...UNIVERS, style: "dessin", cible_px: 512, vide: false })
+    // **La colonne dit le même mot que le titre.** Elle disait « La taille »
+    // pendant que l'écran disait « La finesse » — deux noms pour une étape, à
+    // 240 px l'un de l'autre —, et l'écran perdait du même coup sa ligne de
+    // repère, faute de se retrouver dans la liste sous ce titre-là.
+    expect(screen.queryByRole("button", { name: "La taille" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "La finesse" }))
+
+    expect(await screen.findByRole("heading", { name: "La finesse" })).toBeTruthy()
+    expect(screen.getByText("étape 4 · le jeu")).toBeTruthy()
+    expect(screen.getByText(/ton jeu n'est pas en pixel art/)).toBeTruthy()
+    // Et les couleurs cessent d'être un réglage : un dessin garde ses nuances.
+    fireEvent.click(screen.getByRole("button", { name: "Références et couleurs" }))
+    expect(
+      await screen.findByText(/ce jeu est en dessin : les couleurs ne sont pas réduites/),
+    ).toBeTruthy()
+    // **L'absence d'artwork ne se raconte pas pareil selon le style.** La
+    // phrase du pixel art — « les couleurs se déduisent de chaque image » —
+    // promettrait ici une réduction qui n'a pas lieu, juste au-dessus de la
+    // ligne qui dit qu'elle n'a pas lieu. Ce qui manque en dessin est une
+    // palette de référence à joindre aux images, et c'est ce qu'elle dit.
+    expect(screen.queryByText(/les couleurs se déduisent de chaque image/)).toBeNull()
+    expect(
+      screen.getByText(/le jeu n'a pas encore de palette à joindre en référence/),
+    ).toBeTruthy()
+  })
+
+  test("le projet choisit sa façon de réduire, sous la taille", async () => {
+    // **Sous la taille, parce que c'est la même question posée deux fois** : la
+    // taille dit *combien de carrés*, la méthode dit *comment on y arrive*.
+    const { appels } = await ouvrirLUnivers()
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "traits épaissis" }))
+
+    await waitFor(() =>
+      expect(
+        appels.filter((a) => a.url.includes("/universe")).at(-1)?.corps,
+      ).toMatchObject({ methode_pixels: "pixeloe" }),
+    )
+  })
+
+  test("une façon de réduire non installée est annoncée, jamais tue", async () => {
+    // « Ce qui est indisponible est grisé avec sa raison, jamais proposé puis
+    // refusé » — et la taire serait pire qu'un grisé : l'auteur croirait que le
+    // produit n'en propose que trois.
+    await ouvrirLUnivers(UNIVERS, {
+      traitement: {
+        ...ETAT.traitement,
+        reductions: [
+          { nom: "vote" as const, libelle: "vote en deux temps", raison: null },
+          {
+            nom: "pixeloe" as const,
+            libelle: "traits épaissis",
+            raison: "la méthode « traits épaissis » n'est pas installée",
+          },
+        ],
+      },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+
+    // La raison se suffit à elle-même : elle nomme déjà la méthode, et la
+    // préfixer du libellé le disait deux fois dans la même phrase.
+    expect(
+      await screen.findByText(/la méthode « traits épaissis » n'est pas installée/),
+    ).toBeTruthy()
+    expect(screen.queryByRole("button", { name: "traits épaissis" })).toBeNull()
+  })
+
+  test("sans remise sur grille, la façon de réduire disparaît", async () => {
+    // Un réglage sans effet vaut mieux caché qu'expliqué : sans taille imposée
+    // il n'y a aucune réduction à faire, donc rien à régler.
+    await ouvrirLUnivers({ ...UNIVERS, cible_px: 0, vide: false })
+    fireEvent.click(screen.getByRole("button", { name: "La taille" }))
+    await screen.findByText(/l'image garde la taille que le modèle lui a donnée/)
+
+    expect(screen.queryByRole("button", { name: "vote en deux temps" })).toBeNull()
+  })
+
+  test("les paliers de couleurs sont plafonnés par la taille du sprite", async () => {
+    // *« On ne peut pas avoir du 128 couleurs sur du 32px »* — l'auteur,
+    // 3 septembre 2026. Le plafond est le côté du sprite, et il est mesuré :
+    // au-delà, l'image n'a plus assez de teintes distinctes pour remplir la
+    // palette demandée.
+    await ouvrirLUnivers({ ...UNIVERS, cible_px: 32, vide: false })
+    const palette = await ouvrir("Références et couleurs")
+
+    for (const tenu of ["8", "16", "32"]) {
+      expect(palette.getByRole("button", { name: tenu })).toBeTruthy()
+    }
+    expect(palette.queryByRole("button", { name: "64" })).toBeNull()
+    expect(palette.queryByRole("button", { name: "128" })).toBeNull()
+    // Et la liste courte s'explique, pour qu'elle ne se lise pas comme un bug.
+    expect(palette.getByText(/32 carrés de côté ne porte pas plus de 32/)).toBeTruthy()
   })
 
   test("la taille de pixel posée s'affiche, sans rechargement", async () => {
@@ -5158,7 +5495,7 @@ describe("le réglage d'univers se voit à l'instant", () => {
 // rien écrit, qu'une attitude ajoutée paraisse chez chacun, et surtout **que
 // cet écran ne soit pas une grille d'assets** — ni recherche, ni filtres, ni
 // sélection multiple. C'est cette privation qui préserve « une seule grille
-// dans tout le produit » (`docs/PLAN.md` C1), et elle ne se vérifie qu'ici.
+// dans tout le produit » (`docs/archive/plan-versions-tenues.md` C1), et elle ne se vérifie qu'ici.
 
 describe("l'écran des personnages", () => {
   beforeEach(() => {
@@ -5852,6 +6189,25 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
    *  un texte que le modèle ne recevrait pas. */
   const brut = { normalizer: (texte: string) => texte.trim() }
 
+  /** Le contenu d'une des trois parties du texte qui part, **titre compris**
+   *  (R7) — c'est ce que le fournisseur reçoit pour cette partie-là. Rend
+   *  `null` quand la partie n'est pas rendue, ce qui est le cas d'une partie
+   *  vide. */
+  const partieQuiPart = (clef: string) =>
+    document.querySelector(`[data-partie-qui-part="${clef}"]`)?.textContent ?? null
+
+  /** Attendre que l'écran de confirmation ait posé ce qui part, et rendre le
+   *  texte entier tel qu'il partirait — la jonction des parties, titres
+   *  compris. C'est ce que « Reprendre le texte » met dans le champ. */
+  const texteEntier = (sujet: string) =>
+    `CONTEXT\n\n${BIBLE_PARTIE}\n\nREQUEST\n\n${sujet}`
+
+  const attendreCeQuiPart = async (sujet: string) =>
+    waitFor(() => {
+      expect(partieQuiPart("contexte")).toBe(`CONTEXT\n\n${BIBLE_PARTIE}`)
+      expect(partieQuiPart("demande")).toBe(`REQUEST\n\n${sujet}`)
+    })
+
   // ── « Avant de lancer, le texte exact qui partira s'affiche : bible active,
   //     sujet, consignes de pliage — dans l'ordre d'envoi » ──────────────────
 
@@ -5861,18 +6217,27 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
 
     const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau cerclé" } })
-    const envoi = await relire()
+    await relire()
 
     // **Le texte assemblé se lit mot pour mot**, et c'est celui-là qui part :
     // l'écran ne le recompose pas, il le rend tel que le serveur l'a rendu.
-    await envoi.findByText(`${BIBLE_PARTIE}\n\nun tonneau cerclé`, brut)
+    // **Depuis R7 il se lit en trois parties**, chacune sous le titre que le
+    // fournisseur reçoit — et recoller les parties dans l'ordre rend le texte
+    // entier, à la ligne vide près.
+    await waitFor(() =>
+      expect(partieQuiPart("contexte")).toBe(`CONTEXT\n\n${BIBLE_PARTIE}`),
+    )
+    expect(partieQuiPart("demande")).toBe("REQUEST\n\nun tonneau cerclé")
 
     // Et les lignes sont **dans cet ordre** : la bible se replie en tête, le
     // sujet suit. L'ordre est celui du prompt, pas une préférence d'affichage —
     // on le lit donc sur la position, pas sur la présence.
-    const rendus = envoi
-      .getAllByText(/^(marais de fer|pixel art 16 bits|un tonneau cerclé)$/, brut)
-      .map((n) => n.textContent)
+    // On lit les **lignes** du milieu de l'écran, celles qu'on éteint et qu'on
+    // corrige : la colonne de droite montre les mêmes mots rangés en parties,
+    // et les compter deux fois ne dirait rien de l'ordre d'assemblage.
+    const rendus = Array.from(
+      document.querySelectorAll("[data-envoi] [data-texte-qui-part]"),
+    ).map((n) => n.textContent!.trim())
     expect(rendus).toEqual(["marais de fer", "pixel art 16 bits", "un tonneau cerclé"])
   })
 
@@ -5908,7 +6273,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
 
     const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
-    await (await relire()).findByText(`${BIBLE_PARTIE}\n\nun tonneau`, brut)
+    await relire()
+    await attendreCeQuiPart("un tonneau")
     // On referme sans rien dépenser : décocher se fait dans les réglages du
     // jeu, et l'écran de confirmation se relit après.
     fireEvent.click(screen.getByRole("button", { name: /Revenir sans rien dépenser/ }))
@@ -5941,7 +6307,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     await waitFor(() =>
       expect(envoi.queryByText(/pixel art 16 bits/, brut)).toBeNull(),
     )
-    expect(envoi.getByText("World: marais de fer\n\nun tonneau", brut)).toBeTruthy()
+    expect(partieQuiPart("contexte")).toBe("CONTEXT\n\nWorld: marais de fer")
+    expect(partieQuiPart("demande")).toBe("REQUEST\n\nun tonneau")
   })
 
   // ── « Le texte repris à la main part mot pour mot » · « Reprendre le texte
@@ -5953,8 +6320,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
 
     const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
-    const envoi = await relire()
-    await envoi.findByText(`${BIBLE_PARTIE}\n\nun tonneau`, brut)
+    await relire()
+    await attendreCeQuiPart("un tonneau")
 
     fireEvent.click(screen.getByRole("button", { name: /Reprendre le texte/ }))
 
@@ -5962,7 +6329,10 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     const libre = (await screen.findByPlaceholderText(
       "Le texte part exactement tel qu'il est écrit ici.",
     )) as HTMLTextAreaElement
-    expect(libre.value).toBe(`${BIBLE_PARTIE}\n\nun tonneau`)
+    // **Le texte entier, titres compris** (R7) : reprendre rend ce qui part,
+    // et ce qui part porte ses trois titres. Un champ qui recevrait le texte
+    // sans eux ferait partir autre chose que ce qui était montré.
+    expect(libre.value).toBe(texteEntier("un tonneau"))
 
     fireEvent.change(libre, { target: { value: "a plain wooden barrel, painterly" } })
     await payer()
@@ -5986,7 +6356,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
 
     const champ = await champDePrompt()
     fireEvent.change(champ, { target: { value: "un tonneau" } })
-    await (await relire()).findByText(`${BIBLE_PARTIE}\n\nun tonneau`, brut)
+    await relire()
+    await attendreCeQuiPart("un tonneau")
     fireEvent.click(screen.getByRole("button", { name: /Reprendre le texte/ }))
     await screen.findByPlaceholderText("Le texte part exactement tel qu'il est écrit ici.")
 
@@ -5998,8 +6369,17 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     expect(revenu.value).toContain("un tonneau")
     // Et l'habillage est de retour — la bible reparaît, ligne par ligne, avec
     // son propre interrupteur.
+    //
+    // **Le sujet, lui, est le texte repris tel quel** : rendre la main ne
+    // défait pas ce que reprendre avait posé dans le champ, titres compris. La
+    // demande le porte donc en entier, et le contexte est de nouveau là.
     const envoi = await relire()
-    await envoi.findByText(`${BIBLE_PARTIE}\n\nun tonneau`, brut)
+    await waitFor(() =>
+      expect(partieQuiPart("contexte")).toBe(`CONTEXT\n\n${BIBLE_PARTIE}`),
+    )
+    expect(partieQuiPart("demande")).toBe(
+      `REQUEST\n\n${texteEntier("un tonneau")}`,
+    )
     expect(envoi.getByText("marais de fer", brut)).toBeTruthy()
     expect(envoi.getByLabelText("Éteindre monde")).toBeTruthy()
   })
@@ -6050,7 +6430,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
         passes: [],
         difference: null,
         recadrage: null,
-        grille: { cible: 32, occupation: 40, ancrage: "bas" as const, decalage: 0 },
+        grille: { cible: 32, occupation: 40, ancrage: "bas" as const, decalage: 0, methode: "proche" as const },
         quantification: null,
         bords: null,
         contours: null,
@@ -6066,7 +6446,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           passes: [],
           difference: null,
           recadrage: null,
-          grille: { cible: 64, occupation: 40, ancrage: "bas", decalage: 0 },
+          grille: { cible: 64, occupation: 40, ancrage: "bas", decalage: 0, methode: "proche" },
           quantification: null,
           bords: null,
           contours: null,
@@ -6075,6 +6455,8 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
           nom: null,
         },
         echelle: "objet tenu",
+        nature: "image",
+        detourage: null,
       },
     })
     await monter(fetchDouble, { ...ETAT, assets: [image] })
@@ -6086,7 +6468,9 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     // Replié, le bloc porte déjà les trois valeurs du projet — c'est ce qui
     // permet de lire la fiche entière sans rien ouvrir.
     const entete = await screen.findByRole("button", { name: /^Imposé par le projet/ })
-    expect(entete.textContent).toContain("64 px · 40 % · aucune")
+    // **Quatre valeurs depuis D2** : la façon de réduire s'ajoute aux trois
+    // autres, parce qu'elle décide autant du rendu que la taille.
+    expect(entete.textContent).toContain("64 px · 40 % · au plus proche · aucune")
 
     fireEvent.click(entete)
     const bloc = within(entete.closest("section") as HTMLElement)
@@ -6101,7 +6485,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
   test("la fiche dit qu'elle ne sait pas quand la génération a disparu", async () => {
     const { fetchDouble } = serveurDouble({
       assets: [asset("eeee5555-0")],
-      impose: { impose: null, echelle: "" },
+      impose: { impose: null, echelle: "", nature: "", detourage: null },
     })
     await monter(fetchDouble, { ...ETAT, assets: [asset("eeee5555-0")] })
 
@@ -6148,7 +6532,7 @@ describe("ce qui décide de l'apparence se voit et se règle", () => {
     expect(
       await within(
         document.querySelector(`[data-etape="Les types d'objets"]`) as HTMLElement,
-      ).findByText(/sans taille de pixel, la part de case ne s'applique pas/),
+      ).findByText(/sans taille de pixel, la hauteur ne s'applique pas/),
     ).toBeTruthy()
     expect(screen.queryByText("Barème d'échelles")).toBeNull()
   })
@@ -6393,7 +6777,8 @@ describe("l'infobulle sort du panneau, sur les trois écrans", () => {
     // libellé. Elle se pose sur la ligne de repère juste au-dessus, qui dit le
     // rang de l'étape et son groupe.
     const marque = await waitFor(() => {
-      const trouvee = poignee("étape 5 · le style")
+      // **Sixième depuis D2** : le style graphique s'est glissé en deuxième.
+      const trouvee = poignee("étape 6 · le style")
       expect(trouvee).toBeTruthy()
       return trouvee!
     })
@@ -8429,7 +8814,7 @@ describe("le châssis des tables", () => {
       ...ETAT,
       traitement: {
         ...ETAT.traitement,
-        quantification: { raison: null },
+        quantification: { raison: null, note: null },
       },
     })
     await ouvrirLEtabli("Le nain")
@@ -8885,11 +9270,94 @@ describe("le châssis des tables", () => {
     })
 
     fireEvent.click(puce(cadre, "grille"))
-    // **Un pour cent n'est pas une mesure** : ce que l'occupation décide est un
-    // nombre de pixels dans la case, et c'est ce nombre qu'on compare.
+    // **Un pour cent n'est pas une mesure** : ce que la hauteur décide est un
+    // nombre de carrés, et c'est ce nombre qu'on compare. Il est passé du texte
+    // des crans à l'échantillon, où il se lit à côté du dessin.
     expect(
-      await cadre.findByText(/64 px dans la case · 10 crans changent l'image/),
+      await cadre.findByText(/l'image revient en 64 carrés de côté/),
     ).toBeTruthy()
+    expect(cadre.getByText(/100 % d'un personnage/)).toBeTruthy()
+    // **Le curseur ne s'arrête que là où l'image change**, et le compte des
+    // positions offertes suit maintenant le plafond de la case — 791 sur une
+    // case de 64 carrés, depuis que la hauteur peut monter à huit personnages.
+    expect(
+      cadre.getByText(/10 crans changent l'image, sur les 791 du curseur/),
+    ).toBeTruthy()
+  })
+
+  test("la hauteur d'une image peut dépasser le personnage, et le dit", async () => {
+    // **C'est la tranche des tailles**, et c'est ce qui rend un bâtiment
+    // fabricable : le curseur montait à 100 %, donc rien ne pouvait être plus
+    // haut qu'un personnage. À 300 % l'image revient en 192 carrés, et
+    // l'échantillon dit les deux lectures — trois personnages, 192 carrés.
+    const moulin = asset("bbbb2222-0", "le moulin")
+    const { cadre } = await ouvrirUneTable({}, [
+      {
+        ...moulin,
+        recette: {
+          ...moulin.recette,
+          grille: {
+            cible: 64,
+            occupation: 300,
+            ancrage: "bas" as const,
+            decalage: 0,
+            methode: "proche" as const,
+          },
+        },
+      },
+    ])
+
+    fireEvent.click(puce(cadre, "grille"))
+    expect(await cadre.findByText(/3 personnages de haut/)).toBeTruthy()
+    expect(cadre.getByText(/l'image revient en 192 carrés de côté/)).toBeTruthy()
+  })
+
+  // ── « L'écran montre le pas retrouvé, et laisse l'imposer à la main quand la
+  //     détection renonce » (D2, seconde moitié) ──────────────────────────────
+
+  test("la table de grille dit sur quels carrés le modèle a peint", async () => {
+    // **La table portait quatre réglages et ne disait pas sur quoi ils
+    // travaillaient.** Un dessin peint sur des carrés de 8 pixels ne rendra
+    // jamais 128 carrés propres, et rien à l'écran ne le disait. Le pas seul ne
+    // suffirait pas : la taille se règle en carrés, donc la mesure les compte.
+    const { cadre } = await ouvrirUneTable()
+
+    fireEvent.click(puce(cadre, "grille"))
+    expect(await cadre.findByText(/carrés de 8 pixels/)).toBeTruthy()
+    expect(cadre.getByText(/128 de côté/)).toBeTruthy()
+    expect(cadre.getByText(/plus de détail à récupérer/)).toBeTruthy()
+  })
+
+  test("sur une peinture, la table dit qu'elle renonce et la taille reste à la main", async () => {
+    // **Renoncer n'est pas une panne, c'est la bonne réponse.** Sur une
+    // peinture il n'y a aucune grille à retrouver, et la mesure d'avant
+    // répondait « 2 » en y croyant. La phrase vient du serveur telle quelle :
+    // c'est lui qui sait *pourquoi* il s'est tu.
+    const renonce =
+      "le modèle a peint une image lisse : il n'y a aucune grille à retrouver, " +
+      "c'est la taille demandée qui décide des carrés"
+    const { cadre } = await ouvrirUneTable({
+      mesures: {
+        grille_du_modele: {
+          pas: 0,
+          nettete: 0.94,
+          peigne: 0.03,
+          carres: 0,
+          // **Zéro quand la détection renonce**, et c'est sans conséquence :
+          // sans pas, personne ne lit la phase (D4).
+          phase: [0, 0],
+          raison: renonce,
+        },
+      },
+    })
+
+    fireEvent.click(puce(cadre, "grille"))
+    expect(await cadre.findByText(renonce)).toBeTruthy()
+    // Rien n'a disparu : les neuf crans de taille sont là, et c'est **la**
+    // réponse quand la détection se tait — la cible est demandée, jamais
+    // déduite de l'image reçue.
+    expect(cadre.getByRole("button", { name: "64" })).toBeTruthy()
+    expect(cadre.queryByText(/carrés de \d+ pixels/)).toBeNull()
   })
 
   // ── « Le rectangle de recadrage se pose sur l'image » ──────────────────────
@@ -10115,11 +10583,15 @@ describe("l'assistant de démarrage", () => {
 
   // ── « Dix étapes en quatre groupes, et la colonne les range » ─────────────
 
-  test("les dix étapes sont là, rangées en quatre groupes", async () => {
+  test("les douze étapes sont là, rangées en quatre groupes", async () => {
     await ouvrirLAssistant()
 
     for (const nom of [
       "Le nom",
+      // **La deuxième, arrivée en D2** : le style graphique. Elle est si haut
+      // parce qu'elle commande toutes les suivantes — la taille devient un
+      // nombre de carrés ou une finesse selon ce qu'on y répond.
+      "Le style",
       "La vue",
       "La taille",
       "Les types d'objets",
@@ -10128,6 +10600,10 @@ describe("l'assistant de démarrage", () => {
       "Poses et états",
       "Emplacements",
       "Les IA à utiliser",
+      // **La onzième, arrivée en D1**, et dans « la production » avec les deux
+      // d'avant : comme elles, elle ne décide de rien de ce qui part au modèle,
+      // seulement de ce que l'atelier fait de l'image au retour.
+      "Le détourage de départ",
       "Les fournisseurs",
     ]) {
       expect(screen.getByRole("button", { name: nom })).toBeTruthy()
@@ -10160,7 +10636,7 @@ describe("l'assistant de démarrage", () => {
     // réglages n'avait plus rien pour avancer. Un jeu déjà réglé, donc.
     await ouvrirLAssistant({}, { ...UNIVERS, vue: "vue-dessus-34", vide: false })
 
-    expect(await screen.findByText("étape 1 sur 10")).toBeTruthy()
+    expect(await screen.findByText("étape 1 sur 12")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Continuer →" })).toBeTruthy()
     // **Et il y a un retour.** Il n'y en avait aucun : on avançait ou l'on
     // abandonnait, ce qui est la définition d'un tunnel — et le produit s'est
@@ -10179,13 +10655,13 @@ describe("l'assistant de démarrage", () => {
     await ouvrirLAssistant({}, { ...UNIVERS, vide: true })
 
     fireEvent.click(screen.getByRole("button", { name: "Continuer →" }))
-    expect(await screen.findByText("étape 2 sur 10")).toBeTruthy()
+    expect(await screen.findByText("étape 2 sur 12")).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "‹ Retour" }))
-    expect(await screen.findByText("étape 1 sur 10")).toBeTruthy()
+    expect(await screen.findByText("étape 1 sur 12")).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "Les fournisseurs" }))
-    expect(await screen.findByText("étape 10 sur 10")).toBeTruthy()
+    expect(await screen.findByText("étape 12 sur 12")).toBeTruthy()
     // La dernière n'a pas de suivante, et le bouton le dit plutôt que de faire
     // semblant d'avancer.
     expect(
@@ -10335,7 +10811,7 @@ describe("l'assistant de démarrage", () => {
 
   // ── « L'assistant est le seul écran qui règle un jeu » ────────────────────
 
-  test("les dix étapes couvrent tout ce qui se réglait ailleurs", async () => {
+  test("les douze étapes couvrent tout ce qui se réglait ailleurs", async () => {
     await ouvrirLAssistant()
 
     // Les cinq réglages d'avant sont tous atteignables depuis une étape, et
@@ -10395,6 +10871,215 @@ describe("l'assistant de démarrage", () => {
       expect(conduite, nom).toBeTruthy()
       expect(conduite!.textContent!.length, nom).toBeGreaterThan(60)
     }
+  })
+
+  // ── D1 · Le détourage de départ ──────────────────────────────────────────
+  //
+  // **La onzième étape**, et la seule dont le contenu livré vient d'un comptage
+  // fait sur les recettes de l'auteur. Le plan demandait un défaut par nature
+  // d'image ; la mesure a montré que ce qui décide vraiment du bord rongé est le
+  // **moteur** — le bord découpe net et n'en a pas besoin, le modèle laisse une
+  // frange et en demande deux pixels. La structure du plan est bâtie en entier ;
+  // le contenu suit la mesure.
+
+  test("l'étape range les deux natures d'image et les quatre familles", async () => {
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    await screen.findByText("selon comment l'image est venue")
+    expect(screen.getByText("image seule")).toBeTruthy()
+    expect(screen.getByText("morceau de planche")).toBeTruthy()
+
+    // **« tous » n'est pas une famille de sujet** : c'est la clé du catalogue
+    // qui dit *n'importe quel sujet*, et l'étape ne lui offre pas de rangée.
+    expect(screen.getByText("ou selon ce que l'image montre — et alors ça l'emporte")).toBeTruthy()
+    for (const famille of ["personnages", "objets", "décors", "interface"]) {
+      expect(screen.getByText(famille)).toBeTruthy()
+    }
+  })
+
+  test("une ligne sans réglage dit ce qui décidera à sa place", async () => {
+    await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+    await screen.findByText("selon comment l'image est venue")
+
+    // **Une nature vide retombe sur le produit ; une famille vide retombe sur sa
+    // nature.** Deux phrases différentes, parce que ce sont deux règles — et on
+    // les apprend en lisant le réglage, sans avoir à les chercher ailleurs.
+    expect(screen.getAllByText(/aucun réglage — le produit décide/)).toHaveLength(2)
+    expect(
+      screen.getAllByText(/aucun réglage — comme sa nature d'image/),
+    ).toHaveLength(4)
+  })
+
+  test("choisir un moteur pose le défaut, et son bord rongé arrive avec lui", async () => {
+    const { appels } = await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    const choix = await screen.findByLabelText(
+      "Moteur de détourage pour morceau de planche",
+    )
+    fireEvent.change(choix, { target: { value: "modele" } })
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      expect(pose).toBeTruthy()
+      // **Le bord rongé du modèle, sans que personne l'ait tapé.** C'est la
+      // mesure de la tranche : l'auteur l'avait posé lui-même 39 fois sur 40.
+      expect((pose!.corps as Record<string, unknown>).detourage_planche).toEqual({
+        moteur: "modele",
+        tolerance: 28,
+        seuil_alpha: 128,
+        durcissement: 2,
+        modele: "",
+      })
+    })
+  })
+
+  test("le bord du produit n'en ronge aucun, et c'est aussi une mesure", async () => {
+    const { appels } = await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    fireEvent.change(
+      await screen.findByLabelText("Moteur de détourage pour image seule"),
+      { target: { value: "bord" } },
+    )
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      const envoye = (pose!.corps as Record<string, { durcissement: number }>)
+        .detourage_image
+      // Le moteur du bord découpe net : il ne laisse aucune frange, donc il n'y
+      // a rien à ronger. Zéro n'est pas une prudence, c'est ce que l'auteur a
+      // laissé 56 fois sur 72.
+      expect(envoye.durcissement).toBe(0)
+    })
+  })
+
+  test("remettre le moteur à « — » retire le réglage au lieu d'en poser un", async () => {
+    const { appels } = await ouvrirLAssistant({}, {
+      ...UNIVERS,
+      detourage_planche: {
+        moteur: "modele",
+        tolerance: 28,
+        seuil_alpha: 128,
+        durcissement: 2,
+        point: null,
+        portee: "tache",
+        masquee: false,
+        trace: [],
+        modele: "",
+      },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    fireEvent.change(
+      await screen.findByLabelText("Moteur de détourage pour morceau de planche"),
+      { target: { value: "" } },
+    )
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      // **`null` veut dire « remets-le au produit »**, et c'est un geste, pas
+      // deux : un bouton de retrait en plus aurait fait deux façons de dire la
+      // même chose.
+      expect((pose!.corps as Record<string, unknown>).detourage_planche).toBeNull()
+    })
+  })
+
+  test("une famille réglée l'emporte, et l'écran le dit avant qu'on génère", async () => {
+    const { appels } = await ouvrirLAssistant()
+    fireEvent.click(screen.getByRole("button", { name: "Le détourage de départ" }))
+
+    fireEvent.change(
+      await screen.findByLabelText("Moteur de détourage pour personnages"),
+      { target: { value: "couleur" } },
+    )
+
+    await waitFor(() => {
+      const pose = appels.filter((a) => a.url === "/api/universe").at(-1)
+      const envoyees = (pose!.corps as Record<string, Record<string, unknown>>)
+        .detourages
+      expect(envoyees.personnages).toEqual({
+        moteur: "couleur",
+        tolerance: 28,
+        seuil_alpha: 128,
+        durcissement: 1,
+        modele: "",
+      })
+    })
+  })
+
+  test("la fiche dit d'où vient le détourage qui s'est appliqué", async () => {
+    const image = asset("aaaa1111-0")
+    const { fetchDouble } = serveurDouble({
+      assets: [image],
+      impose: {
+        impose: {
+          passes: [
+            {
+              moteur: "modele",
+              tolerance: 28,
+              seuil_alpha: 128,
+              durcissement: 2,
+              point: null,
+              portee: "tache",
+              masquee: false,
+              trace: [],
+              modele: "",
+            },
+          ],
+          difference: null,
+          recadrage: null,
+          grille: { cible: 64, occupation: 100, ancrage: "bas", decalage: 0, methode: "proche" },
+          quantification: null,
+          bords: null,
+          contours: null,
+          main: null,
+          veille: [],
+          nom: null,
+        },
+        echelle: "personnage",
+        nature: "image",
+        detourage: {
+          passe: {
+            moteur: "modele",
+            tolerance: 28,
+            seuil_alpha: 128,
+            durcissement: 2,
+            point: null,
+            portee: "tache",
+            masquee: false,
+            trace: [],
+            modele: "",
+          },
+          origine: "famille",
+          famille: "personnages",
+        },
+      },
+    })
+    await monter(fetchDouble, { ...ETAT, assets: [image] })
+
+    await waitFor(() => expect(tuiles()).toHaveLength(1))
+    fireEvent.click(tuiles()[0])
+    await screen.findByLabelText("Fermer la fiche")
+
+    // Replié, le bloc porte déjà le moteur — c'est ce qui permet de lire la
+    // fiche entière sans rien ouvrir. Le détourage ouvre la liste parce qu'il
+    // est la première étape du traitement.
+    const entete = await screen.findByRole("button", { name: /^Imposé par le projet/ })
+    expect(entete.textContent).toContain("modèle · 64 px")
+
+    fireEvent.click(entete)
+    const bloc = within(entete.closest("section") as HTMLElement)
+    // **La provenance compte autant que la valeur** : sans elle, on lit un
+    // réglage qu'on n'a pas posé sans savoir lequel des trois niveaux l'a
+    // décidé, donc sans savoir où aller le changer.
+    expect(
+      bloc.getAllByRole("listitem").map((li) => li.textContent),
+    ).toContainEqual(
+      expect.stringContaining("modèle · 2 px rongés · ton réglage pour cette famille"),
+    )
   })
 })
 
@@ -11449,6 +12134,16 @@ describe("la fiche d'une chose du jeu", () => {
     vi.restoreAllMocks()
   })
 
+  /** Les cinq parties, **nommées par le recueil** (R8) : l'écran ne les nomme
+   *  plus lui-même, et l'essai les lit là où l'écran les lit. */
+  const NOMS_DES_PARTIES = [
+    "codex.chose.sujet",
+    "codex.chose.habillage",
+    "codex.chose.exemples",
+    "codex.chose.poses",
+    "codex.chose.faites",
+  ].map((clef) => AIDE[clef].nom)
+
   /** L'établi d'une chose, puis sa fiche — les deux crans de la maquette. */
   const ouvrirLaFiche = async (options: Parameters<typeof serveurDouble>[0] = {}) => {
     const double = serveurDouble({
@@ -11468,22 +12163,183 @@ describe("la fiche d'une chose du jeu", () => {
 
   // ── « L'écran rassemble l'identité, l'équipement, les références… » ────────
 
-  test("la fiche ouvre les cinq blocs, et la colonne porte leur valeur", async () => {
+  test("les cinq parties se lisent sans un clic, et le sommaire y mène", async () => {
+    // **Elles étaient cinq onglets** (R8) : pour savoir si une chose était bien
+    // réglée, il fallait cliquer cinq fois et se souvenir. Ce sont cinq
+    // sections d'une seule page, et la colonne de gauche en est le sommaire.
     const { fiche } = await ouvrirLaFiche()
 
-    for (const nom of [
-      "Ce qu'il est",
-      "Ce qui l'habille",
-      "Ses images de référence",
-      "Ce que le jeu lui réclame",
-      "Ce qui est fait",
-    ]) {
-      expect(fiche.getByRole("button", { name: new RegExp(`^${nom}`) })).toBeTruthy()
+    for (const nom of NOMS_DES_PARTIES) {
+      // Le titre de la section — présent d'emblée, sans qu'on ait rien ouvert.
+      expect(fiche.getByRole("button", { name: nom })).toBeTruthy()
+      // Et la ligne du sommaire qui y mène, qui porte un nom distinct.
+      expect(fiche.getByRole("button", { name: `Aller à ${nom}` })).toBeTruthy()
     }
     // **La matrice reste affichée à droite** : c'est la seule raison pour
     // laquelle la fiche garde une colonne de 380 px au lieu de s'étaler.
-    expect(fiche.getByText("Sa matrice")).toBeTruthy()
-    expect(fiche.getByText("elle répond pendant qu'on règle")).toBeTruthy()
+    expect(fiche.getByRole("button", { name: "Sa matrice" })).toBeTruthy()
+  })
+
+  test("chaque partie porte son propos sous son titre, lu dans le recueil", async () => {
+    // **Le troisième rendu du corpus** (R8) : la même entrée sert la bulle au
+    // survol, le Guide, et cette ligne-ci écrite à demeure. Rien n'est retapé
+    // dans l'écran — l'essai le vérifie en comparant au recueil, mot pour mot.
+    const { fiche } = await ouvrirLaFiche()
+
+    for (const clef of [
+      "codex.chose.sujet",
+      "codex.chose.habillage",
+      "codex.chose.exemples",
+      "codex.chose.poses",
+      "codex.chose.faites",
+      "codex.chose.matrice",
+    ]) {
+      const entree = AIDE[clef]
+      expect(entree).toBeTruthy()
+      expect(fiche.getByText(entree.quoi)).toBeTruthy()
+      // Le titre aussi vient de l'entrée : renommer une partie se fait dans le
+      // recueil, et le sommaire comme la section suivent.
+      expect(fiche.getByRole("button", { name: entree.nom })).toBeTruthy()
+    }
+  })
+
+  test("la fiche montre la chose, et porte son nom sur sa surface", async () => {
+    // **Elle n'en montrait rien** : pas une image, et le nom ne vivait que dans
+    // le fil du châssis. On ne savait pas de qui c'était la fiche.
+    const { fiche } = await ouvrirLaFiche()
+
+    expect(fiche.getByRole("heading", { name: "Balthazar" })).toBeTruthy()
+    expect(
+      document.querySelector("[data-fiche] [data-portrait]"),
+    ).toBeTruthy()
+  })
+
+  test("les images faites remplacent le grand chiffre, et un vide occupe la même place", async () => {
+    // **Le grand chiffre à empattements enfreignait deux règles à la fois** :
+    // une mesure s'écrit dans la police des mesures, et un compte déjà écrit
+    // ailleurs n'a pas besoin de trente-deux pixels. Ce qui le remplace est ce
+    // qu'on venait voir : les images.
+    //
+    // **Une case vide occupe la même place qu'une case pleine** — le manque
+    // prend autant de place que le fait, sinon on ne le voit plus.
+    const { fiche } = await ouvrirLaFiche({
+      personnages: [
+        personnage("Balthazar", {
+          cases: PLAN.map((p, rang) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: rang === 0 ? [asset("balthazar-corps")] : [],
+            ...VIDE_C3,
+          })),
+        }),
+      ],
+    })
+
+    const cases = Array.from(
+      document.querySelectorAll("[data-fiche] [data-case-faite]"),
+    )
+    expect(cases).toHaveLength(PLAN.length)
+    // Une seule porte une image ; les cinq autres sont là quand même, à la
+    // même taille, en pointillé.
+    expect(cases.filter((c) => c.querySelector("img"))).toHaveLength(1)
+    expect(cases.filter((c) => c.className.includes("border-dashed"))).toHaveLength(
+      PLAN.length - 1,
+    )
+    // Et l'étiquette de chaque case est le nom de sa pose : on sait laquelle
+    // manque sans compter les positions.
+    for (const pose of PLAN) {
+      expect(fiche.getAllByText(pose.nom).length).toBeGreaterThan(0)
+    }
+  })
+
+  test("aucune mesure n'est écrite dans la police à empattements", async () => {
+    // `docs/DESIGN.md` § Typography, règle 2 : « Toute mesure est en JetBrains
+    // Mono, partout. » La fiche écrivait le compte des cases en serif 32 px.
+    // **Le serif revient au nom**, qui n'est pas une mesure.
+    await ouvrirLaFiche()
+
+    const serif = Array.from(
+      document.querySelectorAll("[data-fiche] .font-serif"),
+    )
+    expect(serif).toHaveLength(1)
+    expect(serif[0].textContent).toBe("Balthazar")
+    expect(serif[0].textContent).not.toMatch(/\d/)
+  })
+
+  test("le nom d'un réglage n'est pas écrit dans le gris le plus sourd", async () => {
+    // `docs/DESIGN.md` § Color : `--texte-3` porte le grisé, la méta et la
+    // raison — trois choses qu'autre chose redit ailleurs. **Rien ne redit le
+    // nom d'un champ de style**, il n'est donc pas un grisé.
+    const { fiche } = await ouvrirLaFiche()
+
+    const nom = await fiche.findByText("monde")
+    expect(nom.className).toContain("text-texte-2")
+    expect(nom.className).not.toContain("text-texte-3")
+  })
+
+  test("le compte des cases est calculé une fois, et tout ce qui l'écrit s'accorde", async () => {
+    // **Il était écrit trois fois — et deux des trois ne comptaient pas
+    // pareil** : l'un portait sur toutes les cases du plan, rangées comprises,
+    // l'autre sur les seules poses tenues. Une chose dont on avait rangé deux
+    // poses se lisait donc « sur 6 » à un endroit et « sur 4 » à l'autre.
+    //
+    // Le très gros chiffre du milieu est parti — c'est l'essai de la police à
+    // empattements qui le tient. Les trois écritures qui restent sont chacune à
+    // sa place — l'identité, la section, le tableau —, plus l'état du sommaire,
+    // et **toutes lisent le même calcul**.
+    const { fiche } = await ouvrirLaFiche({
+      personnages: [personnage("Balthazar", { ecartees: ["mort", "degats"] })],
+    })
+
+    // Quatre poses tenues, deux rangées, aucune image faite : le piège est
+    // qu'un compte pris sur le plan entier dirait « sur 6 ».
+    expect(fiche.getAllByText(/0 case sur 4/)).toHaveLength(2)
+    expect(fiche.getByRole("button", { name: /Aller à Ce qui est fait/ }).textContent)
+      .toContain("0 sur 4")
+    // Et le tableau écrit les rangées **à côté**, jamais fondues dedans : une
+    // jauge pleine obtenue en rangeant doit se lire comme telle.
+    expect(fiche.getByText("0 / 4 · 2 rangées")).toBeTruthy()
+  })
+
+  test("aucun résumé du sommaire ne se coupe au milieu d'un mot", async () => {
+    // **« 7 champs · 0 de son ambi… »** : un résumé tronqué ne résume plus
+    // rien. Un sommaire dit où aller, il ne résume pas ce qu'on y trouvera.
+    const { fiche } = await ouvrirLaFiche()
+
+    const etatDe = (nom: string) =>
+      fiche
+        .getByRole("button", { name: `Aller à ${nom}` })
+        .textContent!.replace(nom, "")
+        .trim()
+
+    // Un « … » est un compte qui n'est pas encore revenu du serveur, pas un
+    // résumé coupé : on attend qu'ils soient tous lus avant de les mesurer.
+    await waitFor(() => {
+      for (const nom of NOMS_DES_PARTIES) {
+        if (etatDe(nom) === "…") throw new Error(`« ${nom} » compte encore`)
+      }
+    })
+
+    for (const nom of NOMS_DES_PARTIES) {
+      // Un mot ou deux, jamais une phrase : trois mots seraient déjà un résumé,
+      // et un résumé de 240 px se coupe.
+      expect(etatDe(nom).split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(3)
+    }
+  })
+
+  test("la fente des refus ne porte plus une seule explication", async () => {
+    // **Le produit a une place réservée pour dire pourquoi un bouton est
+    // éteint** : une ligne grise sous le contrôle, précédée d'un tiret. La
+    // fiche y écrivait ses explications — elles avaient donc l'air
+    // d'avertissements, et l'œil apprenait à les sauter.
+    const { fiche } = await ouvrirLaFiche()
+
+    // Le motif de la fente est ce tiret de 8 px. Aucun dans la fiche.
+    expect(
+      document.querySelectorAll("[data-fiche] span.h-px.w-2"),
+    ).toHaveLength(0)
+    // Et ce qui s'y écrivait est maintenant le propos, lu dans le recueil.
+    expect(fiche.getByText(AIDE["codex.chose.matrice"].quoi)).toBeTruthy()
   })
 
   test("la barre qui paie se retire quand la fiche s'ouvre", async () => {
@@ -11519,7 +12375,6 @@ describe("la fiche d'une chose du jeu", () => {
       },
     })
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
 
     expect(await fiche.findByLabelText("monde")).toBeTruthy()
     // Le cas ordinaire, et il se dit : rien n'a été changé pour cette chose-là.
@@ -11535,7 +12390,6 @@ describe("la fiche d'une chose du jeu", () => {
         ),
       },
     })
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
 
     const champ = await fiche.findByLabelText("vue et cadrage")
     fireEvent.change(champ, { target: { value: "flat orthographic icon" } })
@@ -11557,7 +12411,6 @@ describe("la fiche d'une chose du jeu", () => {
 
   test("éteindre un texte écrit un refus, et rallumer le défait", async () => {
     const { fiche, fetchDouble } = await ouvrirLaFiche()
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
 
     const eteindre = (await fiche.findAllByRole("button", { name: "éteindre" }))[0]
     fireEvent.click(eteindre)
@@ -11578,7 +12431,6 @@ describe("la fiche d'une chose du jeu", () => {
       personnages: [personnage("Balthazar", { eteints: ["technique"] })],
     })
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
 
     expect(await fiche.findByRole("button", { name: "rallumer" })).toBeTruthy()
     // Un seul champ éteint : l'origine est écrite à côté de son nom, et elle
@@ -11602,7 +12454,6 @@ describe("la fiche d'une chose du jeu", () => {
       },
     })
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui l'habille/ }))
 
     expect(await fiche.findByText("128 px de grille")).toBeTruthy()
     expect(fiche.getByText(/annonce une autre grille dans le texte qui part/)).toBeTruthy()
@@ -11626,11 +12477,12 @@ describe("la fiche d'une chose du jeu", () => {
       ],
     })
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ses images de référence/ }))
 
     // **Il propose, il ne décide pas** — et la provenance est écrite dessous.
     expect(await fiche.findByText(/le corps retenu de/)).toBeTruthy()
-    fireEvent.click(await fiche.findByRole("button", { name: "retenir ›" }))
+    // **Le geste nomme l'image sur laquelle il porte** (R8) : les lignes se
+    // ressemblent, et « retenir » seul ne dirait pas laquelle.
+    fireEvent.click(await fiche.findByRole("button", { name: /^retenir le corps retenu de/ }))
 
     await waitFor(() =>
       expect(
@@ -11646,10 +12498,64 @@ describe("la fiche d'une chose du jeu", () => {
     expect(await fiche.findByText("image promue")).toBeTruthy()
   })
 
+  test("chaque image d'exemple porte sa vignette, retenue comme proposée", async () => {
+    // **On retenait ou on retirait une image sans la voir** (R8) : la ligne ne
+    // portait que du texte — une provenance, un détail, un geste —, et deux
+    // images de la même chose s'y écrivaient avec les mêmes mots. Retenir une
+    // image d'exemple est pourtant le geste le plus visuel de la fiche.
+    const corps = asset("corps-1")
+    const deja = asset("deja-0")
+    const { fiche } = await ouvrirLaFiche({
+      assets: [deja],
+      personnages: [
+        personnage("Balthazar", {
+          references: [deja.identifiant],
+          cases: PLAN.map((p) => ({
+            pose: p.identifiant,
+            demandees: p.images,
+            images: p.identifiant === "repos" ? [corps] : [],
+            ...VIDE_C3,
+            corps: p.identifiant === "repos" ? corps.identifiant : null,
+          })),
+        }),
+      ],
+    })
+
+    // Une retenue, et une proposée — les deux se jugent en regardant, et les
+    // deux passent par la même ligne.
+    await fiche.findByText("image promue")
+    await fiche.findByText(/le corps retenu de/)
+    const vignettes = Array.from(
+      document.querySelectorAll("[data-fiche] [data-vignette-exemple]"),
+    )
+    expect(vignettes).toHaveLength(2)
+    for (const vignette of vignettes) {
+      expect(vignette.querySelector("img")).toBeTruthy()
+    }
+  })
+
+  test("une image d'exemple disparue laisse sa ligne, sans vignette", async () => {
+    // **`null`, jamais une erreur** : une référence peut nommer une image
+    // effacée depuis. La ligne reste — elle dit ce qui partirait —, elle n'a
+    // simplement rien à montrer, et la case damier reste à sa place pour que
+    // la liste ne se déforme pas.
+    const { fiche } = await ouvrirLaFiche({
+      personnages: [
+        personnage("Balthazar", { references: ["une-image-effacee-0"] }),
+      ],
+    })
+
+    await fiche.findByText("image promue")
+    const vignettes = Array.from(
+      document.querySelectorAll("[data-fiche] [data-vignette-exemple]"),
+    )
+    expect(vignettes).toHaveLength(1)
+    expect(vignettes[0].querySelector("img")).toBeNull()
+  })
+
   test("sans référence, la fiche dit ce que ça coûte", async () => {
     const { fiche } = await ouvrirLaFiche()
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ses images de référence/ }))
 
     expect(
       await fiche.findByText(/Dix-sept appels payés sur vingt-huit/),
@@ -11912,13 +12818,20 @@ describe("le calibrage", () => {
     vi.restoreAllMocks()
   })
 
-  /** Le vrai défaut, mesuré le 30 août 2026 : trois poses, trois hauteurs. */
+  /** Le vrai défaut, mesuré le 30 août 2026 : trois poses, trois hauteurs.
+   *
+   *  **`apres` et `visee` viennent du serveur, comme le reste** (R9) : l'écran
+   *  ne les recalcule pas, parce que deux bornes du domaine y entrent et que
+   *  les recopier à l'écran serait poser une seconde vérité sur la même
+   *  question. Le double les porte donc, sans rejouer le calcul — c'est déjà la
+   *  règle de ce double pour la hauteur commune. */
   const pose = (
     nom: string,
     occupation: number,
     rendue: number,
     plafond: number,
     de_cote = false,
+    apres = rendue,
   ): PoseCalee => ({
     pose: nom,
     asset: `${nom}-corps`,
@@ -11928,6 +12841,9 @@ describe("le calibrage", () => {
     empreinte: `e-${nom}`,
     rendue,
     plafond,
+    visee: Math.max(1, Math.round((apres / Math.max(1, rendue)) * occupation)),
+    apres,
+    ancrage: "bas",
     de_cote,
   })
 
@@ -11935,13 +12851,17 @@ describe("le calibrage", () => {
     personnage: "balthazar",
     cible: 64,
     poses: [
-      pose("repos", 100, 64, 64),
-      pose("attaque", 100, 53, 53),
-      pose("mort", 100, 43, 43),
+      pose("repos", 100, 64, 64, false, 43),
+      pose("attaque", 100, 53, 53, false, 43),
+      pose("mort", 100, 43, 43, false, 43),
     ],
     commune: 43,
     limite: "mort",
     perdus: 21,
+    haute: 100,
+    // Deux des trois changeraient : la mort rend déjà la hauteur commune, c'est
+    // elle qui la fixe.
+    a_faire: 2,
     de_cote: "mort",
   }
 
@@ -11974,9 +12894,9 @@ describe("le calibrage", () => {
     for (const nom of ["repos", "attaque", "mort"]) {
       expect(within(canevas).getByAltText(nom)).toBeTruthy()
     }
-    // Une seule case, à un multiple entier : agrandir d'une fois et demie
-    // fabriquerait des pixels qui n'existent pas.
-    expect(ecran.getByText(/64 × 64 · ×\d+/)).toBeTruthy()
+    // À un multiple entier : agrandir d'une fois et demie fabriquerait des
+    // pixels qui n'existent pas.
+    expect(ecran.getByText(/case de 64 × 64 px, montrée ×\d+/)).toBeTruthy()
   })
 
   test("chaque silhouette porte l'empreinte de sa recette", async () => {
@@ -11993,22 +12913,138 @@ describe("le calibrage", () => {
   // ── « Un bouton propose, nomme qui limite, et dit le coût » ───────────────
 
   test("la proposition dit la hauteur commune, qui limite, et ce que ça coûte", async () => {
+    // **Une ligne par fait, et au-dessus du bouton** (R9) : c'était un
+    // paragraphe de deux phrases, coupé par un retour à la ligne, écrit
+    // **sous** le bouton qu'il justifie.
     const { ecran } = await ouvrir()
 
-    const dit = ecran.getByText(/qui limite/).textContent ?? ""
-    expect(dit).toContain("hauteur commune")
-    expect(dit).toContain("43 px")
-    expect(dit).toContain("mort")
+    const faits = Array.from(
+      document.querySelectorAll("[data-calibrage] [data-fait]"),
+    ).map((f) => f.textContent ?? "")
+    expect(faits).toEqual([
+      "hauteur commune43 px sur 64",
+      "la pose qui limitemort",
+      "résolution perdue21 px · 33 %",
+    ])
     // **Le prix de la cohérence, en clair** — le produit le dit, il ne le cache
     // pas.
-    expect(ecran.getByText(/21 px de la case ne servent pas/)).toBeTruthy()
-    expect(ecran.getByText(/33 % de résolution en moins/)).toBeTruthy()
+    expect(
+      ecran.getByText(/c'est le prix de la cohérence/),
+    ).toBeTruthy()
+  })
+
+  test("les faits se lisent avant le bouton, jamais après", async () => {
+    // **On sait ce qu'on va obtenir et ce qu'on va perdre avant d'avoir la main
+    // sur la souris** (R9). L'ordre du document est ce qui le tient : un fait
+    // écrit sous le bouton se lit après l'avoir appuyé.
+    const { ecran } = await ouvrir()
+
+    const bouton = ecran.getByRole("button", { name: /^Mettre les/ })
+    for (const fait of document.querySelectorAll("[data-calibrage] [data-fait]")) {
+      expect(
+        fait.compareDocumentPosition(bouton) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    }
+  })
+
+  test("le bouton annonce son résultat, et non son verbe", async () => {
+    // **« Calibrer les 3 poses » était un verbe et un décompte** (R9) : rien ne
+    // disait ce qu'on obtiendrait. Le bouton qui paie annonce ce qu'il va
+    // coûter ; celui-ci annonce la hauteur qu'il pose.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByRole("button", { name: "Mettre les 3 poses à 43 px" })).toBeTruthy()
+    expect(ecran.queryByRole("button", { name: /^Calibrer/ })).toBeNull()
+  })
+
+  test("le compte du bouton est celui des poses qu'il touche, pas celui du plan", async () => {
+    // **Cinq et non six** : c'est ce chiffre-là qu'on veut vérifier d'un coup
+    // d'œil avant d'appuyer, et une pose mise de côté n'est pas touchée.
+    const { ecran } = await ouvrir({
+      ...CALIBRAGE,
+      poses: [
+        pose("repos", 100, 64, 64, false, 53),
+        pose("attaque", 100, 53, 53),
+        pose("mort", 100, 43, 43, true),
+      ],
+      commune: 53,
+      limite: "attaque",
+      perdus: 11,
+      a_faire: 1,
+    })
+
+    expect(ecran.getByRole("button", { name: "Mettre les 2 poses à 53 px" })).toBeTruthy()
+  })
+
+  test("quand il n'y a rien à calibrer, le bouton s'éteint et dit pourquoi", async () => {
+    // **Il restait allumé** (R9) : sur une chose déjà calée, il invitait à un
+    // geste qui ne change rien. Le produit interdit de proposer puis de
+    // refuser — un contrôle indisponible porte sa raison dans une petite ligne
+    // permanente. La règle existait, l'écran ne l'appliquait pas ici.
+    const { ecran } = await ouvrir({
+      ...CALIBRAGE,
+      poses: [pose("repos", 100, 64, 64), pose("marche", 100, 64, 64)],
+      commune: 64,
+      limite: "repos",
+      perdus: 0,
+      a_faire: 0,
+      de_cote: "",
+    })
+
+    expect(ecran.getByRole("button", { name: "Mettre les 2 poses à 64 px" })).toBeDisabled()
+    expect(ecran.getByText("elles y sont déjà — il n'y a rien à changer")).toBeTruthy()
+  })
+
+  test("sans rien à faire, la scène parle au lieu de doubler l'image", async () => {
+    // **Répéter la pile à l'identique à droite serait un dessin qui ment sur
+    // son propre propos** : la seconde case ne se dessine pas, et la place
+    // revient à la phrase qui dit pourquoi il n'y a rien à faire.
+    const { ecran } = await ouvrir({
+      ...CALIBRAGE,
+      poses: [pose("repos", 100, 64, 64), pose("marche", 100, 64, 64)],
+      commune: 64,
+      limite: "repos",
+      perdus: 0,
+      a_faire: 0,
+      de_cote: "",
+    })
+
+    expect(document.querySelector("[data-canevas='apres']")).toBeNull()
+    expect(document.querySelector("[data-canevas='aujourdhui']")).toBeTruthy()
+    expect(ecran.getByText("Rien à calibrer.")).toBeTruthy()
+  })
+
+  test("l'empilement d'avant et celui d'après se voient côte à côte", async () => {
+    // **C'est la réponse visuelle à « qu'est-ce que ce bouton va faire »**, et
+    // elle se lit avant qu'on ait touché à quoi que ce soit.
+    const { ecran } = await ouvrir()
+
+    const avant = document.querySelector("[data-canevas='aujourdhui']") as HTMLElement
+    const apres = document.querySelector("[data-canevas='apres']") as HTMLElement
+    expect(avant).toBeTruthy()
+    expect(apres).toBeTruthy()
+    expect(ecran.getByText("aujourd'hui")).toBeTruthy()
+    expect(ecran.getByText("après le calibrage")).toBeTruthy()
+
+    // **Aucune image n'est fabriquée pour ce dessin** : c'est la même, agrandie
+    // du rapport entre ce qu'elle rend et ce qu'elle rendrait.
+    const repos = within(apres).getByAltText("repos")
+    expect(repos.getAttribute("src")).toContain("v=e-repos")
+    expect(repos.style.transform).toBe(`scale(${43 / 64})`)
+    // Et elle grandit depuis le sol : l'agrandir autour du centre la ferait
+    // décoller de la ligne qu'elle est censée toucher.
+    expect(repos.style.transformOrigin).toBe("bottom center")
+    // À gauche, rien n'est transformé — c'est l'état d'aujourd'hui.
+    expect(within(avant).getByAltText("repos").style.transform).toBe("")
+    // La hauteur commune n'est tracée que là où elle est visée.
+    expect(avant.querySelector("[data-hauteur-commune]")).toBeNull()
+    expect(apres.querySelector("[data-hauteur-commune]")).toBeTruthy()
   })
 
   test("calibrer pose la hauteur commune, et rien ne part chez le fournisseur", async () => {
     const { ecran, appels } = await ouvrir()
 
-    fireEvent.click(ecran.getByRole("button", { name: /^Calibrer les/ }))
+    fireEvent.click(ecran.getByRole("button", { name: /^Mettre les/ }))
 
     await waitFor(() =>
       expect(
@@ -12048,27 +13084,43 @@ describe("le calibrage", () => {
     const { ecran, appels } = await ouvrir({
       ...CALIBRAGE,
       poses: [
-        pose("repos", 100, 64, 64),
+        pose("repos", 100, 64, 64, false, 53),
         pose("attaque", 100, 53, 53),
         pose("mort", 100, 43, 43, true),
       ],
       commune: 53,
       limite: "attaque",
       perdus: 11,
+      a_faire: 1,
       de_cote: "",
     })
 
-    expect(ecran.getByText("mise de côté")).toBeTruthy()
+    expect(ecran.getByText("de côté")).toBeTruthy()
     expect(document.querySelector("[data-canevas]")).toBeTruthy()
-    // Elle est toujours dans l'empilement.
+    // Elle est toujours dans l'empilement, des deux côtés.
+    for (const quand of ["aujourdhui", "apres"]) {
+      expect(
+        within(
+          document.querySelector(`[data-canevas='${quand}']`) as HTMLElement,
+        ).getByAltText("mort"),
+      ).toBeTruthy()
+    }
+    // **Et elle ne bouge pas d'un côté à l'autre** : son après est son
+    // aujourd'hui, ce que le sous-titre dit aussi en toutes lettres.
     expect(
-      within(document.querySelector("[data-canevas]") as HTMLElement).getByAltText(
-        "mort",
-      ),
+      within(
+        document.querySelector("[data-canevas='apres']") as HTMLElement,
+      ).getByAltText("mort").style.transform,
+    ).toBe("")
+    expect(
+      ecran.getByText(/la pose mise de côté reste où elle est/),
     ).toBeTruthy()
 
+    // **Le geste est un mot, et il vit là où l'on règle la pose** (R9) : il
+    // faut donc l'avoir choisie, ce qui est exactement le geste qu'on ferait.
+    fireEvent.click(ecran.getByRole("button", { name: "mort" }))
     fireEvent.click(
-      ecran.getByRole("button", { name: "Faire rentrer mort dans le calage" }),
+      ecran.getByRole("button", { name: "la faire rentrer dans le calage" }),
     )
     await waitFor(() =>
       expect(
@@ -12079,6 +13131,153 @@ describe("le calibrage", () => {
         ),
       ).toBe(true),
     )
+  })
+
+  // ── « Les commandes sont des mots, pas des symboles » ─────────────────────
+
+  test("« prendre comme référence » et « mettre de côté » sont des mots", async () => {
+    // **Une marque dit un état, un mot fait un geste** (R9). L'encadré « réf »
+    // et le rond plein étaient un vocabulaire à apprendre : leur sens ne vivait
+    // que dans un `title` et un nom accessible.
+    const { ecran, appels } = await ouvrir()
+
+    // La ligne ne porte plus qu'une marque — sans encadré, sans clic — et une
+    // seule pose la porte.
+    const marques = Array.from(
+      document.querySelectorAll("[data-calibrage] [data-marque-reference]"),
+    )
+    expect(marques).toHaveLength(3)
+    expect(marques.filter((m) => m.textContent === "réf")).toHaveLength(1)
+    for (const marque of marques) expect(marque.tagName).toBe("SPAN")
+
+    // Les deux gestes sont écrits en toutes lettres, dans le bloc de la pose
+    // qu'on règle.
+    fireEvent.click(ecran.getByRole("button", { name: "attaque" }))
+    fireEvent.click(ecran.getByRole("button", { name: "prendre comme référence" }))
+    expect(
+      within(
+        document.querySelector("[data-canevas='aujourdhui']") as HTMLElement,
+      ).getByAltText("attaque").className,
+    ).toContain("opacity-100")
+
+    fireEvent.click(ecran.getByRole("button", { name: "mettre de côté" }))
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/characters/balthazar/calibration/attaque/aside" &&
+            JSON.stringify(a.corps).includes('"de_cote":true'),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("chaque ligne de pose porte sa silhouette, et ses deux mesures ne se replient pas", async () => {
+    // **La silhouette était au premier dessin et n'a jamais été construite**
+    // (R9) : c'est elle qui fait voir d'un coup que l'attaque est large et
+    // basse, sans lire un chiffre.
+    await ouvrir()
+
+    const silhouettes = Array.from(
+      document.querySelectorAll("[data-calibrage] [data-silhouette] img"),
+    )
+    expect(silhouettes).toHaveLength(3)
+    // La vignette, jamais le fichier entier : trois timbres-poste ne valent pas
+    // trois images pleines.
+    expect(silhouettes[0].getAttribute("src")).toContain("/vignette?cote=")
+    expect(silhouettes[0].getAttribute("src")).toContain("v=e-repos")
+
+    // **Deux colonnes, chacune insécable** : les deux mesures tenaient dans une
+    // seule chaîne de 86 px, dont les quatre espaces étaient quatre points de
+    // coupe — la ligne s'étalait sur trois.
+    const ligne = document
+      .querySelector("[data-calibrage] [data-silhouette]")!
+      .closest("li") as HTMLElement
+    const colonnes = Array.from(ligne.querySelectorAll("span")).filter((s) =>
+      /^\d+ (%|px)$/.test(s.textContent ?? ""),
+    )
+    expect(colonnes.map((c) => c.textContent)).toEqual(["100 %", "64 px"])
+    for (const colonne of colonnes) {
+      expect(colonne.className).toContain("whitespace-nowrap")
+    }
+  })
+
+  test("une légende nomme les trois traitements de silhouette", async () => {
+    // **Le premier dessin assumait de ne rien écrire** ; à l'usage, personne ne
+    // devine que la silhouette à demi effacée est celle qui sert de référence.
+    const { ecran } = await ouvrir()
+
+    const legende = Array.from(
+      document.querySelectorAll("[data-calibrage] [data-legende]"),
+    ).map((l) => l.textContent)
+    expect(legende).toEqual([
+      "celle qu'on règle — repos",
+      "la référence — repos",
+      "les autres poses",
+    ])
+    // Elle tombe à deux entrées quand on ne montre que deux silhouettes : une
+    // légende qui nomme ce qui n'est pas là est une légende fausse.
+    fireEvent.click(ecran.getByRole("button", { name: "celle-ci et la référence" }))
+    expect(
+      document.querySelectorAll("[data-calibrage] [data-legende]"),
+    ).toHaveLength(2)
+  })
+
+  test("l'écran dit ce qu'il répare, et la phrase est lue dans le recueil", async () => {
+    // **L'entrée existait depuis le 30 août 2026 et n'était accrochée à rien**
+    // (R9) : aucun composant ne la citait, et l'écran ouvrait sur un décompte.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(AIDE["etabli.calibrage"].quoi)).toBeTruthy()
+    // Le nom porte le pointillé, donc la version longue au survol.
+    expect(ecran.getByRole("button", { name: "Le calibrage" })).toBeTruthy()
+    // Et le défaut est mesuré **sur cette chose-ci** : les hauteurs citées sont
+    // celles de ses poses, pas celles d'un souvenir.
+    expect(ecran.getByText("64, 53, 43")).toBeTruthy()
+  })
+
+  test("les quatre entrées neuves s'ouvrent depuis ce qu'elles expliquent", async () => {
+    // **Une explication écrite pour un réglage est atteignable depuis ce
+    // réglage** — l'autre bout de la règle « une explication ne se recopie
+    // jamais ». Vingt-trois entrées du corpus étaient écrites et accrochées à
+    // rien ; en ajouter quatre de plus aurait été creuser le trou que `G3`
+    // existe pour combler.
+    const { ecran } = await ouvrir()
+
+    // Deux sont des libellés de réglage : le nom devient sa propre poignée.
+    for (const clef of ["calibrage.occupation", "calibrage.decalage"]) {
+      expect(AIDE[clef]).toBeTruthy()
+      expect(ecran.getByRole("button", { name: AIDE[clef].nom })).toBeTruthy()
+    }
+
+    // Les deux autres sont des **gestes**, et le mot du geste porte le
+    // pointillé. Un élément focalisable imbriqué dans un bouton serait du HTML
+    // invalide : c'est le bouton lui-même qui reçoit le survol.
+    for (const clef of ["calibrage.reference", "calibrage.mise_de_cote"]) {
+      expect(AIDE[clef]).toBeTruthy()
+    }
+    // La pose ouverte est déjà la référence : son geste dit alors l'état, pas
+    // l'action. On en choisit une autre, ce qui est le geste qu'on ferait.
+    fireEvent.click(ecran.getByRole("button", { name: "attaque" }))
+    const geste = ecran.getByRole("button", { name: "prendre comme référence" })
+    expect(geste.querySelector(".decoration-dotted")).toBeTruthy()
+    fireEvent.mouseEnter(geste)
+    expect(await screen.findByText(AIDE["calibrage.reference"].change)).toBeTruthy()
+  })
+
+  test("la colonne se déclare comme panneau, et les poignées sont dedans", async () => {
+    // **Une bulle sort du panneau qui porte l'ancre**, pas de l'ancre seule :
+    // sur 308 px, elle couvrirait sinon le réglage d'à côté — celui-là même
+    // qu'on est en train de comparer. La colonne ne portait aucune poignée
+    // avant `R9`, et la déclaration n'avait donc rien à faire.
+    await ouvrir()
+
+    const poignee = [...document.querySelectorAll("span")].find(
+      (e) =>
+        e.textContent === "occupation" && e.className.includes("decoration-dotted"),
+    )
+    expect(poignee).toBeTruthy()
+    expect(poignee!.closest("[data-panneau]")).toBeTruthy()
   })
 
   // ── « La reprise à la main se fait pose par pose » ────────────────────────
@@ -12115,9 +13314,11 @@ describe("le calibrage", () => {
         ),
       ).toBe(true),
     )
-    expect(
-      ecran.getByText(/ne part pas dans une recette nommée/),
-    ).toBeTruthy()
+    // **Où ça s'écrit est dit par le recueil, pas par une phrase de l'écran**
+    // (R9) : l'entrée du décalage porte son origine, et c'est elle qui le dit.
+    expect(AIDE["calibrage.decalage"].origine).toContain(
+      "il ne part jamais dans une recette qu'on nomme",
+    )
   })
 
   // ── Ce que le calibrage ne fait pas ───────────────────────────────────────
@@ -12561,8 +13762,9 @@ describe("la vitrine", () => {
       }),
     )
 
-    fireEvent.click(fiche.getByRole("button", { name: /^Ce qui est fait/ }))
-    fireEvent.click(await fiche.findByRole("button", { name: "les voir en grand ›" }))
+    // **La porte est en tête, à côté du portrait** (R8) : c'est là qu'on est
+    // quand on se demande à quoi la chose ressemble vraiment.
+    fireEvent.click(await fiche.findByRole("button", { name: "la voir en grand ›" }))
 
     // On passe de la fiche à la vitrine sans repasser par l'établi.
     await waitFor(() =>
@@ -13127,8 +14329,38 @@ describe("l'écran de confirmation", () => {
    *  qu'ils mesurent est le rendu, pas la composition : celle-ci a ses propres
    *  essais, côté serveur, où elle est écrite. */
   const ENVOI: Envoi = {
+    // **Le texte est la jonction des parties, titres compris** (R7) : recoller
+    // `titre`, une ligne vide, `texte`, dans l'ordre, rend exactement ceci.
     texte:
-      "World: marais de fer\nLighting: forge-lit from below\n\nun forgeron nain, walking posture",
+      "CONTEXT\n\nWorld: marais de fer\nLighting: forge-lit from below\n\nREQUEST\n\nun forgeron nain, walking posture",
+    parties: [
+      {
+        clef: "contexte",
+        titre: "CONTEXT",
+        nom: "le contexte",
+        propos: "ce que ton jeu est, et qui ne change pas d'une image à l'autre",
+        texte: "World: marais de fer\nLighting: forge-lit from below",
+        repris: false,
+      },
+      {
+        clef: "references",
+        titre: "REFERENCES",
+        nom: "les références",
+        propos:
+          "ce que chaque image jointe est, dite dans l'ordre où elles partent",
+        // Vide : rendue quand même, et elle ne part pas.
+        texte: "",
+        repris: false,
+      },
+      {
+        clef: "demande",
+        titre: "REQUEST",
+        nom: "la demande",
+        propos: "ce que tu veux cette fois-ci — et la caméra, qui ferme le texte",
+        texte: "un forgeron nain, walking posture",
+        repris: false,
+      },
+    ],
     lignes: [
       {
         clef: "jeu.monde",
@@ -13190,9 +14422,9 @@ describe("l'écran de confirmation", () => {
       },
     ],
     groupes: [
-      { clef: "jeu", nom: "les textes du jeu", allumees: 1, total: 1 },
-      { clef: "ambiance", nom: "son ambiance", allumees: 1, total: 1 },
-      { clef: "sujet", nom: "le sujet", allumees: 2, total: 2 },
+      { clef: "jeu", nom: "les textes du jeu", partie: "contexte", allumees: 1, total: 1 },
+      { clef: "ambiance", nom: "son ambiance", partie: "contexte", allumees: 1, total: 1 },
+      { clef: "sujet", nom: "le sujet", partie: "demande", allumees: 2, total: 2 },
       { clef: "images", nom: "les images", allumees: 1, total: 2 },
     ],
     images: {
@@ -13207,6 +14439,9 @@ describe("l'écran de confirmation", () => {
           ecartee_par: null,
           cochee: true,
           hors_plafond: false,
+          // Le numéro que le texte lui donne (R7). La seconde est décochée :
+          // elle ne part pas, donc elle n'a pas de numéro.
+          rang: 1,
           prix: 0.008,
         },
         {
@@ -13218,6 +14453,7 @@ describe("l'écran de confirmation", () => {
           ecartee_par: null,
           cochee: false,
           hors_plafond: false,
+          rang: null,
           prix: 0.008,
         },
       ],
@@ -13226,6 +14462,8 @@ describe("l'écran de confirmation", () => {
       partent: 1,
       gabarit: 0,
       palette: 0,
+      rang_gabarit: null,
+      rang_palette: null,
       prix: 0.008,
       avertissements: [],
     },
@@ -13284,6 +14522,21 @@ describe("l'écran de confirmation", () => {
     cases: 0,
     caracteres: { total: 96, sujet: 16, eteints: 0 },
     corrections: 0,
+    // **Aucun fond posé** (D3) : la fixture décrit un jeu d'avant la tranche,
+    // et l'écran doit donc rendre exactement ce qu'il rendait.
+    fond: {
+      couleur: "",
+      interdiction: "",
+      du_jeu: "",
+      corrige: false,
+      propose: {
+        couleur: "",
+        nom: "",
+        ecart: 0,
+        voisine: "",
+        raison: "ce jeu n'a pas encore de palette",
+      },
+    },
   }
 
   /** Un monde qui a quelque chose à dire — sans quoi le groupe « les textes du
@@ -13372,6 +14625,64 @@ describe("l'écran de confirmation", () => {
           (a) =>
             a.url === "/api/outgoing" &&
             JSON.stringify(a.corps).includes('"eteints":["jeu.monde"]'),
+        ),
+      ).toBe(true),
+    )
+    // Rien n'a été écrit — ni l'univers, ni la chose du jeu.
+    expect(
+      appels.filter((a) => a.url.startsWith("/api/universe") && a.corps),
+    ).toEqual([])
+  })
+
+  // ── D3 · « Le fond se corrige à la main, avant de payer, pour cet appel
+  //     seulement » ─────────────────────────────────────────────────────────
+
+  test("le fond de l'appel se voit, avec l'interdiction qui part avec lui", async () => {
+    // **L'interdiction est le seul morceau de ce qui part que le texte ne
+    // contient pas** : les adaptateurs la replient en fin de demande, dans un
+    // autre champ. Sans ce bloc, l'écran qui promet de tout montrer aurait un
+    // angle mort — et ce serait celui que la tranche vient d'ouvrir.
+    const { ecran } = await ouvrir({
+      envoi: {
+        ...ENVOI,
+        fond: {
+          couleur: "#FF00FF",
+          interdiction:
+            "the background colour #FF00FF magenta, or any shade close to it",
+          du_jeu: "#FF00FF",
+          corrige: false,
+          propose: {
+            couleur: "#FF00FF",
+            nom: "magenta",
+            ecart: 192,
+            voisine: "#C0C0C0",
+            raison: null,
+          },
+        },
+      },
+    })
+
+    expect(ecran.getByText("le fond")).toBeTruthy()
+    expect(ecran.getByText("#FF00FF")).toBeTruthy()
+    expect(ecran.getByText(/or any shade close to it/)).toBeTruthy()
+  })
+
+  test("corriger le fond ne part que dans le tri de cet appel", async () => {
+    // **La correction habille l'appel et disparaît**, comme tout ce que cet
+    // écran renvoie. Poser le fond durablement est un second geste, qui passe
+    // par le codex.
+    const { ecran, appels } = await ouvrir()
+
+    fireEvent.change(await ecran.findByLabelText("Couleur du fond, pour cet appel"), {
+      target: { value: "#00ffff" },
+    })
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/outgoing" &&
+            JSON.stringify(a.corps).includes('"fond":"#00ffff"'),
         ),
       ).toBe(true),
     )
@@ -13547,6 +14858,8 @@ describe("l'écran de confirmation", () => {
       lignes: ENVOI.images.lignes.map((l) => ({
         ...l,
         hors_plafond: l.cochee,
+        // Aucune ne part : aucune n'a de numéro dans le texte (R7).
+        rang: null,
       })),
       avertissements: [
         {
@@ -15220,6 +16533,7 @@ describe("une table s'éteint, et ça se voit", () => {
             occupation: 100,
             ancrage: "bas" as const,
             decalage: 0,
+            methode: "proche" as const,
           },
           veille,
         },
@@ -15250,6 +16564,28 @@ describe("une table s'éteint, et ça se voit", () => {
 
   const carreDe = (cadre: ReturnType<typeof within>, nom: string) =>
     cadre.getByRole("switch", { name: new RegExp(nom) })
+
+  // ── « La façon de réduire se change image par image » (D2) ─────────────────
+
+  test("la façon de réduire se change sur une image, et part dans sa recette", async () => {
+    // *« Je veux qu'on puisse choisir entre les 4 et changer en cours de route
+    // dans l'atelier »* — l'auteur, 3 septembre 2026. Les quatre méthodes
+    // rendent des sprites franchement différents ; le choix est un parti pris
+    // de style, et il appartient à l'image autant qu'au projet.
+    const { cadre, appels } = await ouvrirLesTables()
+    fireEvent.click(cadre.getByRole("button", { name: /^grille/ }))
+
+    // Ce que la méthode posée rend est dit sous les segments : un libellé de
+    // trois mots ne dit pas ce qu'on gagne et ce qu'on perd.
+    expect(await cadre.findByText(/un pixel sur N gardé/)).toBeTruthy()
+
+    fireEvent.click(await cadre.findByRole("button", { name: "vote en deux temps" }))
+
+    await waitFor(() =>
+      expect(recettesPosees(appels).at(-1)?.grille?.methode).toBe("vote"),
+    )
+    expect(cadre.getByText(/contour net et intérieur lisible/)).toBeTruthy()
+  })
 
   // ── « Cliquer le carré l'éteint ; recliquer la rallume » ───────────────────
 
@@ -15634,7 +16970,13 @@ describe("les réglages voyagent d'une image à l'autre", () => {
           ...RECETTE_VIDE,
           passes: [PASSE],
           recadrage: { marge: 6, boite: [4, 4, 20, 20] },
-          grille: { cible: 32, occupation: 100, ancrage: "bas", decalage: 3 },
+          grille: {
+            cible: 32,
+            occupation: 100,
+            ancrage: "bas",
+            decalage: 3,
+            methode: "proche",
+          },
         },
       },
     })
@@ -16537,7 +17879,7 @@ describe("ce qu'un appel consomme", () => {
 // **Ce qui se mesure ici** : ce que l'écran fait du tiroir. Une place par
 // fournisseur, un fournisseur qui ne demande rien qui le dise, un fournisseur à
 // deux places qui dise **lequel** manque, le retrait qui ne se propose que
-// quand il retire vraiment, et les deux portes — les réglages, l'étape 10 de
+// quand il retire vraiment, et les deux portes — les réglages, l'étape 11 de
 // l'assistant — qui rendent le même tiroir. Ce qui se calcule — l'écriture du
 // fichier, le refus d'un nom inconnu, la relecture à chaque appel — vit dans
 // `tests/test_f3.py`.
@@ -16702,7 +18044,7 @@ describe("les clés au pluriel", () => {
     ).toBeTruthy()
     // **Seule dans son groupe, parce qu'elle ne dépend d'aucun jeu** — comme la
     // base d'étiquettes. La ligne de repère de l'étape le dit.
-    expect(screen.getByText("étape 10 · l'atelier")).toBeTruthy()
+    expect(screen.getByText("étape 12 · l'atelier")).toBeTruthy()
     fireEvent.change(await screen.findByLabelText("le jeton"), {
       target: { value: "jeton-de-lessai" },
     })
@@ -17117,6 +18459,31 @@ describe("découper une carte du tableau", () => {
     expect(screen.queryByText("0 %")).toBeNull()
   })
 
+  test("à 100 %, la carte ne parle pas d'un reste qui n'existe pas", async () => {
+    // **La phrase se contredisait dans sa propre longueur** (G1) : « 100 % de
+    // l'image donne ses couleurs au jeu. Le reste — le fond — est écarté tout
+    // seul. » Il n'y a pas de reste. Mesuré le 3 septembre 2026 sur les dix
+    // artworks officiels du dépôt : **trois** sont lus à 100,0 %, parce que le
+    // détourage n'y trouve aucun fond à retirer.
+    //
+    // Ce n'est pas le cas de `entiere`, qui dit l'inverse — le détourage a tout
+    // mangé et la palette reprend l'image entière. Les deux se ressemblent à
+    // l'écran et n'ont pas la même cause.
+    const { fetchDouble } = serveurDouble({
+      cartes: [carteImage(CARTE, { officiel: true })],
+      lecture: { carte: CARTE, part: 100, entiere: false, largeur: 512, hauteur: 512 },
+    })
+    await monter(fetchDouble)
+    await ouvrirLeMenu()
+    fireEvent.click(await screen.findByRole("button", { name: "regarder" }))
+
+    expect(await screen.findByText("100 %")).toBeTruthy()
+    expect(screen.getByText(/n'a trouvé aucun fond à retirer/)).toBeTruthy()
+    expect(screen.queryByText(/le fond — est écarté tout seul/)).toBeNull()
+    // Et rien n'envoie voir un magenta qui ne couvrirait aucun pixel.
+    expect(screen.queryByText(/Découper le montre en magenta/)).toBeNull()
+  })
+
   test("une carte non promue ne montre aucune lecture de palette", async () => {
     // Une carte qui n'est pas un artwork officiel ne nourrit aucune palette :
     // lui poser un chiffre à côté dirait qu'elle compte, ce qui est faux.
@@ -17181,5 +18548,241 @@ describe("découper une carte du tableau", () => {
 
     await waitFor(() => expect(ecran()).toBeNull())
     expect(await screen.findByRole("button", { name: "Ouvrir la carte" })).toBeTruthy()
+  })
+})
+
+// ── R6 : la planche qui revient de travers ne se jette plus ─────────────────
+//
+// **Les deux critères de la tranche qui ne se vérifient que devant l'écran.**
+// Le reste vit dans `tests/test_r6.py` : ce que la planche a rendu, ce qu'un
+// choix fait entrer, ce qu'un refus garde au journal. Ici, une seule chose est
+// en jeu, et elle est visuelle — **un appel payé ne doit pas s'évanouir**.
+//
+// Le défaut qu'ils attrapent est mécanique et invisible côté serveur : une
+// planche en attente est *réussie*, donc sa tuile quittait le chantier ; et rien
+// n'étant entré en bibliothèque, aucun asset ne prenait sa place. L'auteur
+// voyait sa tuile disparaître et n'avait plus aucun chemin vers ce qu'il venait
+// de payer.
+
+describe("R6 — la planche qui attend un regard", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+  })
+
+  /** Une planche arrivée qui porte N sujets pour huit cases (R6).
+   *
+   *  Les boîtes sont posées sur une grille régulière : l'écran s'en sert pour
+   *  découper les sujets dans l'image de la planche, et un essai qui les
+   *  laisserait toutes à zéro ne prouverait rien du cadrage. */
+  const planche = (
+    trouvees: number,
+    { pleines = [] as number[], demandees = 8 } = {},
+  ): Generation => {
+    const lot = generation("pppp0000", 1, "reussie")
+    return {
+      ...lot,
+      pliage: {
+        nombre: demandees,
+        colonnes: 3,
+        lignes: 3,
+        refus: null,
+        trouvees,
+        mesures: Array.from({ length: trouvees }, (_, i) => ({
+          case: i,
+          cases: trouvees,
+          grille_px: 4,
+          ressemblance: 0.2,
+          jumeau: -1,
+          derive: 1,
+          remplissage: pleines.includes(i) ? 1 : 0.55,
+          boite: [
+            40 + (i % 3) * 320,
+            40 + Math.floor(i / 3) * 320,
+            300 + (i % 3) * 320,
+            300 + Math.floor(i / 3) * 320,
+          ] as [number, number, number, number],
+          pleine: pleines.includes(i),
+        })),
+        ecartees: null,
+        surplus: Math.max(0, trouvees - demandees),
+        pleines,
+        attend_un_choix: trouvees > demandees || pleines.length > 0,
+      },
+    }
+  }
+
+  const sujets = () => screen.queryAllByRole("button", { name: /^sujet n° \d+/ })
+  const garder = () => screen.getByRole("button", { name: /^Garder/ })
+
+  async function ouvrirLeChoix(attendue: Generation) {
+    act(() => FluxDouble.ouverts[0].emettre("generation", attendue))
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Choisir ce qu'on garde" }),
+    )
+    await waitFor(() =>
+      expect(sujets()).toHaveLength(attendue.pliage?.trouvees ?? 0),
+    )
+  }
+
+  // ── « Une planche à neuf sujets pour huit demandés entre, avec le choix de
+  //     la case à écarter » (US-367) ──────────────────────────────────────────
+
+  test("une planche qui attend garde sa tuile au lieu de s'évanouir", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    laGalerie()
+
+    act(() => FluxDouble.ouverts[0].emettre("generation", planche(9)))
+
+    // Elle est **réussie** : sans la ligne que R6 ajoute à la grille, cette
+    // tuile aurait disparu, et rien ne l'aurait remplacée — l'appel payé se
+    // serait perdu sous les yeux de l'auteur.
+    expect(
+      await screen.findByRole("button", { name: "Choisir ce qu'on garde" }),
+    ).toBeTruthy()
+    // Et elle montre ce qu'on a acheté, pas un carré vide.
+    expect(
+      document.querySelector('img[src="/api/generations/pppp0000/slots/0/image"]'),
+    ).toBeTruthy()
+  })
+
+  test("la tuile dit ce qui cloche, en clair, sans dire « échec »", async () => {
+    const { fetchDouble } = serveurDouble()
+    await monter(fetchDouble)
+    laGalerie()
+    act(() => FluxDouble.ouverts[0].emettre("generation", planche(9)))
+
+    expect(await screen.findByText("9 sujets · 1 de trop")).toBeTruthy()
+    // **Aucun mot d'échec**, et c'est le point : rien n'a raté, rien ne se
+    // relance, et rien n'a été perdu.
+    expect(screen.queryByRole("button", { name: "Relancer" })).toBeNull()
+  })
+
+  test("écarter un sujet arme le bouton, et ce qui part est le numéro cliqué", async () => {
+    const attendue = planche(9)
+    const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
+    await monter(fetchDouble)
+    laGalerie()
+    // Neuf sujets à l'écran, découpés par la page dans l'image de la planche —
+    // aucune vignette n'existe côté serveur, c'est tout l'enjeu de la tranche.
+    await ouvrirLeChoix(attendue)
+
+    // **Neuf gardés pour huit cases : le bouton est fermé**, et il dit pourquoi.
+    expect((garder() as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/il en reste 1 de trop/)).toBeTruthy()
+
+    fireEvent.click(sujets()[2])
+    await waitFor(() => expect((garder() as HTMLButtonElement).disabled).toBe(false))
+
+    fireEvent.click(garder())
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url.endsWith("/unfold"))
+      expect(parti?.corps).toEqual({ ecartees: [2] })
+    })
+  })
+
+  test("écarter deux sujets de trop referme le bouton — le compte doit tomber juste", async () => {
+    const attendue = planche(9)
+    const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
+    await monter(fetchDouble)
+    laGalerie()
+    await ouvrirLeChoix(attendue)
+
+    fireEvent.click(sujets()[0])
+    fireEvent.click(sujets()[1])
+
+    await waitFor(() =>
+      expect((garder() as HTMLButtonElement).disabled).toBe(true),
+    )
+    expect(screen.getByText(/il en manque 1/)).toBeTruthy()
+    expect(appels.some((a) => a.url.endsWith("/unfold"))).toBe(false)
+  })
+
+  test("l'écran du choix n'appelle jamais le fournisseur", async () => {
+    // **La phrase la plus importante de cet écran est une absence.** On y
+    // regarde une planche déjà payée ; le seul geste qui coûterait — relancer —
+    // n'y est pas, et aucun appel de génération n'en part.
+    const attendue = planche(9)
+    const { fetchDouble, appels } = serveurDouble({ aPublier: () => attendue })
+    await monter(fetchDouble)
+    laGalerie()
+    await ouvrirLeChoix(attendue)
+
+    fireEvent.click(sujets()[4])
+    fireEvent.click(garder())
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url.endsWith("/unfold"))).toBe(true),
+    )
+    expect(appels.some((a) => a.url === "/api/generations")).toBe(false)
+  })
+
+  // ── « Une planche au quadrillage redessiné est signalée en toutes lettres,
+  //     jamais acceptée en silence » (US-368) ─────────────────────────────────
+
+  test("huit cases pleines pour huit demandées arrêtent quand même la planche", async () => {
+    // **Le compte tombe juste, et c'est tout le piège.** Rien dans
+    // l'arithmétique ne distingue huit cases bordées de huit personnages.
+    const quadrillee = planche(8, { pleines: [0, 1, 2, 3, 4, 5, 6, 7] })
+    const { fetchDouble } = serveurDouble({ aPublier: () => quadrillee })
+    await monter(fetchDouble)
+    laGalerie()
+
+    act(() => FluxDouble.ouverts[0].emettre("generation", quadrillee))
+    expect(await screen.findByText("8 sujets · 8 cases pleines")).toBeTruthy()
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Choisir ce qu'on garde" }),
+    )
+
+    expect(
+      await screen.findByText(/c'est le quadrillage que le modèle a redessiné/),
+    ).toBeTruthy()
+    expect(
+      screen.getByText(
+        "rien n'est entré en bibliothèque tant que vous n'avez pas tranché",
+      ),
+    ).toBeTruthy()
+  })
+
+  test("garder tout est une décision, et elle part comme telle", async () => {
+    // La liste vide est une réponse, pas une absence de réponse : c'est ce qui
+    // fait entrer huit carrés pleins **après** que quelqu'un les a vus.
+    const quadrillee = planche(8, { pleines: [0, 1, 2, 3, 4, 5, 6, 7] })
+    const { fetchDouble, appels } = serveurDouble({ aPublier: () => quadrillee })
+    await monter(fetchDouble)
+    laGalerie()
+    await ouvrirLeChoix(quadrillee)
+
+    // Huit gardés pour huit cases : le compte est juste d'emblée.
+    expect((garder() as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(garder())
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url.endsWith("/unfold"))
+      expect(parti?.corps).toEqual({ ecartees: [] })
+    })
+  })
+
+  test("le dépliage fait, l'écran se referme sans que personne le ferme", async () => {
+    // Il ne tient pas de copie de la planche : il la relit dans le chantier. Le
+    // lot revient sans `attend_un_choix`, et l'écran n'a plus de raison d'être.
+    const attendue = planche(9)
+    const { fetchDouble } = serveurDouble({ aPublier: () => attendue })
+    await monter(fetchDouble)
+    laGalerie()
+    await ouvrirLeChoix(attendue)
+
+    fireEvent.click(sujets()[8])
+    fireEvent.click(garder())
+
+    await waitFor(() => expect(sujets()).toHaveLength(0))
+    expect(screen.queryByText("Ce que la planche a rendu")).toBeNull()
   })
 })

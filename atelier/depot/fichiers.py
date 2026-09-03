@@ -144,6 +144,18 @@ class Fichiers:
     def ecrire_enregistrement(self, identifiant: str, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.dossier_generation(identifiant) / "generation.json", contenu)
 
+    def dossier_images_clip(self, identifiant: str, rang: int) -> Path:
+        """Où vivent les images tirées d'un clip (A9).
+
+        **À côté du clip, dans le dossier de sa génération**, et pas ailleurs :
+        une centaine de PNG par clip, qui n'ont de sens qu'avec lui et qui
+        disparaissent avec lui. Les mettre dans la bibliothèque ferait entrer
+        cent images non choisies pour une seule animation gardée.
+        """
+        dossier = self.dossier_generation(identifiant) / f"{rang}-images"
+        dossier.mkdir(parents=True, exist_ok=True)
+        return dossier
+
     # ── Assets, recettes et rendus ───────────────────────────────────────────
 
     def ecrire_asset(self, generation: str, rang: int, contenu: dict[str, Any]) -> None:
@@ -454,7 +466,7 @@ class Fichiers:
     # ── Relire le disque ─────────────────────────────────────────────────────
     #
     # « La base d'index effacée, la bibliothèque se reconstruit depuis les
-    # fichiers sans perdre un asset » (`docs/PLAN.md`, T3). Ces deux méthodes
+    # fichiers sans perdre un asset » (`docs/archive/plan-versions-tenues.md`, T3). Ces deux méthodes
     # sont tout ce que ça demande : le disque est un arbre, on le parcourt.
 
     def parcourir_generations(self) -> Iterator[dict[str, Any]]:

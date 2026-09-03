@@ -20,6 +20,8 @@ from typing import Any, Callable
 
 from atelier.depot import Base, Fichiers
 from atelier.fournisseur import OpenRouter, Pollinations, PortFournisseur
+from atelier.fournisseur.openrouter_video import OpenRouterVideo
+from atelier.fournisseur.port import PortAnimateur
 from atelier.fournisseur.openrouter import CLE
 from atelier.reglages import lire_secret
 from atelier.services.agent import (
@@ -30,6 +32,7 @@ from atelier.services.agent import (
 )
 from atelier.services.ambiances import AmbianceRefusee, ServiceAmbiances
 from atelier.services.calibrage import CalibrageRefuse, ServiceCalibrage
+from atelier.services.animation import ServiceAnimation
 from atelier.services.assets import AssetInconnu, RecetteRefusee, ServiceAssets
 from atelier.services.bibliotheque import (
     ANNULATION_S,
@@ -51,7 +54,7 @@ from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
-from atelier.services.pliage import CompteFaux, ServicePliage
+from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
 from atelier.services.production import (
     PersonnageInconnu,
     PoseInconnue,
@@ -74,6 +77,7 @@ __all__ = [
     "CarteInconnue",
     "CarteRefusee",
     "CollectionInconnue",
+    "ChoixAttendu",
     "CompteFaux",
     "DecoupeRefusee",
     "EtiquetteRefusee",
@@ -102,6 +106,7 @@ __all__ = [
     "ServiceBibliotheque",
     "ServiceCatalogue",
     "ServiceDecoupe",
+    "ServiceAnimation",
     "ServiceEtiquettes",
     "ServiceSuperposition",
     "ServiceExport",
@@ -136,6 +141,21 @@ def _pollinations() -> PortFournisseur:
     return Pollinations()
 
 
+def _openrouter_video() -> PortAnimateur:
+    """L'animateur, arrivé en A9. **Le même compte, la même clé, l'autre port.**
+
+    Il n'est pas dans `FOURNISSEURS` et ce n'est pas un oubli : cette liste-là
+    est celle des fournisseurs d'images, et tout ce qui la parcourt — le
+    catalogue, le grisé d'un modèle, le tiroir à secrets — parle d'images. Un
+    animateur qui s'y glisserait devrait répondre à des questions qui n'ont pas
+    de sens pour lui, et le produit finirait par proposer un modèle vidéo là où
+    il attend une planche.
+
+    La clé se relit ici comme ailleurs, à chaque appel.
+    """
+    return OpenRouterVideo(lire_secret(CLE.nom))
+
+
 # **L'ordre est celui de la liste des modèles à l'écran, et il est délibéré** :
 # le payant d'abord, parce que c'est lui qui porte les univers et que le gratuit
 # est un brouillon (`docs/PLAN.md` § V2.2 — *ce qui n'est pas une raison*). Il
@@ -151,6 +171,11 @@ class Atelier:
         racine: Path | None = None,
         fabrique_fournisseur: Callable[[], PortFournisseur] | None = None,
         fabriques_fournisseurs: list[Callable[[], PortFournisseur]] | None = None,
+        # **L'animateur, arrivé en A9.** Séparé des fournisseurs d'images pour
+        # la raison écrite sur `_openrouter_video` : ce n'est pas le même port.
+        # Un essai qui n'en donne pas monte l'atelier avec le vrai, qui ne part
+        # jamais tout seul — aucun appel ne se fait sans un geste de l'auteur.
+        fabrique_animateur: Callable[[], PortAnimateur] | None = None,
     ) -> None:
         self.fichiers = Fichiers(racine)
         self.fichiers.preparer()
@@ -205,25 +230,27 @@ class Atelier:
         self.decoupe = ServiceDecoupe(
             self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
         )
-        # **La seconde fabrique, au même rang que la première et pour la même
-        # raison** : superposer deux images déjà payées ne demande ni catalogue
-        # ni fournisseur, et c'est très exactement ce qui fait qu'un recalage
-        # raté ne coûte plus une génération.
         # **La base d'étiquettes ne connaît ni projet ni fournisseur** : elle
         # lit un fichier à la racine et en rend une liste. Elle est montée ici
         # plutôt que sur l'univers parce qu'elle n'appartient à aucun jeu —
         # comme la clé du fournisseur.
         self.etiquettes = ServiceEtiquettes(self.fichiers)
-        self.superposition = ServiceSuperposition(
-            self.base, self.fichiers, self.assets, self.bibliotheque, self.diffusion
-        )
         # **Après la bibliothèque et les assets, comme le slicer, et pour la
         # même raison** : le plan, les personnages et la matrice ne fabriquent
         # aucune image. Ni catalogue, ni fournisseur — c'est ce qui fait que
         # tout C1 se consulte et se modifie réseau coupé, sauf la génération
         # elle-même, qui part de l'atelier.
+        # **L'univers lui est passé depuis R8**, et seulement pour montrer : la
+        # fiche d'une chose liste ses images d'exemple, et une carte du tableau
+        # se lit chez l'univers. Il est monté juste au-dessus, donc aucun cycle
+        # — c'est le même ordre que `ServiceAmbiances`, qui prend les deux.
         self.production = ServiceProduction(
-            self.base, self.fichiers, self.bibliotheque, self.assets, self.diffusion
+            self.base,
+            self.fichiers,
+            self.bibliotheque,
+            self.assets,
+            self.diffusion,
+            self.univers,
         )
         # **Le calibrage, monté après la production** (E17) : il lit les poses
         # d'une chose et écrit dans la recette de leurs corps. Ni catalogue, ni
@@ -265,6 +292,25 @@ class Atelier:
             self.pliage,
             self.diffusion,
         )
+        # **La seconde fabrique, au même rang que la première et pour la même
+        # raison** : superposer deux images déjà payées ne demande ni catalogue
+        # ni fournisseur, et c'est très exactement ce qui fait qu'un recalage
+        # raté ne coûte plus une génération.
+        #
+        # **Elle est descendue ici en `G16`**, sous l'équipement, pour une
+        # question et une seule : *quelle était cette case avant que l'atelier
+        # ne la cale ?* Refaire à la main le calage d'un vêtement demande de
+        # repartir de la case telle qu'elle est arrivée, et l'équipement est le
+        # seul à savoir la recalculer. Rien entre les deux ne demandait la
+        # superposition — l'ordre ne coûte donc rien.
+        self.superposition = ServiceSuperposition(
+            self.base,
+            self.fichiers,
+            self.assets,
+            self.bibliotheque,
+            self.diffusion,
+            self.equipement,
+        )
         self.generations = ServiceGenerations(
             self.base,
             self.fichiers,
@@ -293,6 +339,20 @@ class Atelier:
         # chemin de l'envoi* — donc il lui faut le service qui envoie. Elle ne
         # fabrique rien et n'enregistre rien ; le seul endroit d'où l'argent part
         # reste la barre qui paie.
+        # **L'animation, montée après les générations** (A9). Elle écrit des
+        # générations comme elles, sur la même base et le même disque — c'est ce
+        # qui met la dépense d'un clip dans la barre de tête et dans le total du
+        # projet sans qu'aucun compteur ait à apprendre qu'il existe des vidéos.
+        # Elle ne passe pas par `ServiceGenerations` : les deux services parlent
+        # à des ports différents, et faire transiter un appel vidéo par le
+        # chemin des images rendrait la mesure de fichier obligatoire — très
+        # exactement le défaut qui faisait disparaître un clip payé du journal.
+        self.animation = ServiceAnimation(
+            self.base,
+            self.fichiers,
+            fabrique_animateur or _openrouter_video,
+            self.diffusion,
+        )
         self.planche = ServicePlanche(self.production, self.generations)
         # **Ce qui part, monté après elle** (E14) : l'écran qui s'intercale
         # entre le bouton et la dépense. Comme la planche, il ne compose rien et
@@ -367,6 +427,14 @@ class Atelier:
         # que le disque dit se repose d'abord, ce qui manque se comble ensuite.
         self.pliage.reprendre(recentes)
         await self.catalogue.rafraichir()
+        # **Le catalogue vidéo n'est pas relu ici, et c'est délibéré** (A9). Il
+        # ne sert qu'à l'écran qui commande un clip, et il se relit quand cet
+        # écran le demande. L'ouverture de l'atelier ne paie donc pas un aller
+        # chez un fournisseur dont la plupart des séances ne se serviront pas.
+        #
+        # **Rien n'est récupéré ici non plus** : un clip en souffrance attend un
+        # geste de l'auteur, exactement comme une génération coupée depuis T1 —
+        # sauf que le geste, lui, ne repaie rien.
 
     def etat(self) -> dict[str, Any]:
         """Tout ce qu'il faut pour dessiner l'atelier à l'ouverture.

@@ -6,7 +6,7 @@ module est le troisième compagnon : celui-là dit **où** couper, celui-ci dit
 **quoi envoyer** quand la grille part pleine, et **ce qui a changé** quand elle
 revient.
 
-**Rien n'est ajouté à l'image envoyée pour aider le recalage** (`docs/PLAN.md`,
+**Rien n'est ajouté à l'image envoyée pour aider le recalage** (`docs/archive/plan-versions-tenues.md`,
 C3) : ni ancre, ni mire, ni silhouette de repère, et surtout pas le gabarit de
 cases vides de C2 — celui-là dessine des traits, et un trait est une chose que le
 modèle recopie. La planche d'équipement est faite des corps eux-mêmes, posés sur

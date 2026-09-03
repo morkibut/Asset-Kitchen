@@ -39,9 +39,9 @@ export function EcranReglages({
   onAgent,
   onFermer,
 }: {
-  /** **Une place par fournisseur** (F3) — le même objet que rend l'étape 10 de
-   *  l'assistant, et le même composant le dessine : trois portes, une seule
-   *  pièce. */
+  /** **Une place par fournisseur** (F3) — le même objet que rend l'étape « Les
+   *  fournisseurs » de l'assistant, et le même composant le dessine : trois
+   *  portes, une seule pièce. */
   tiroirs: Tiroir[]
   /** Le cadre et la consommation, tels que le serveur les sert. **Jamais
    *  recalculés ici** : le refus opposé à l'agent et le chiffre lu par l'auteur

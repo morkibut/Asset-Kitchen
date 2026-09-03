@@ -1,0 +1,510 @@
+[
+  {
+    "modele": "qwen3.5:4b",
+    "recouvrement": 0.08880126976767039,
+    "ms": 2539.9186000007226,
+    "essais": [
+      {
+        "dossier": "038b7c1113c84457a232a28dabc7cd1d",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand, idle stance, full body, facing right, side view",
+        "decrit": "pixel art character, hooded cloak, backpack, lantern in hand, standing pose, side view, dark background",
+        "style": "pixel art, flat colors, minimal shading, single color palette, low resolution",
+        "recouvrement": 0.17073170731707318,
+        "ms_decrire": 20771.376499993494,
+        "ms_style": 334.5522000017809,
+        "erreur": ""
+      },
+      {
+        "dossier": "05440dbd684c459fa6f75fbead1c3dbc",
+        "attendu": "met ce personnge dans une vue Perspective Cavalière",
+        "decrit": "pixel art character, teal hooded cloak, brown tunic and boots, holding lit lantern, side view, white background, black outline",
+        "style": "pixel art, thick black outlines, flat shading, limited 3-color palette, blocky pixel grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 967.9516000032891,
+        "ms_style": 894.5952999929432,
+        "erreur": ""
+      },
+      {
+        "dossier": "058b04b0d8364461b8eb5d06c1f42565",
+        "attendu": "A stocky, broad-shouldered dwarf, short of stature, with a thick, heavy dark brown beard and mustache flowing unbraided down his chest, and a weathered face. His head is bare, showing long, flowing brown hair, but no helmet. He wears a simple, plain brown short-sleeved t-shirt and grey trousers, cinched by a basic leather belt with a metal buckle. He has open-toed leather sandals on his feet. On h",
+        "decrit": "bearded man, large backpack, lantern in hand, walking forward, pixel art style, dark background",
+        "style": "pixel art, thick outlines, flat shading, muted earth tones, low resolution",
+        "recouvrement": 0.021739130434782608,
+        "ms_decrire": 419.79680000804365,
+        "ms_style": 347.0344999950612,
+        "erreur": ""
+      },
+      {
+        "dossier": "0e231d92c4b04436b960e5297062b61f",
+        "attendu": "Iron battle axe with runes at the center The attached image is a sprite sheet of 1 sprites of the same character, laid out in exactly 1 columns and 1 rows. Return the SAME sheet with the described item added to every sprite. Change absolutely nothing else: the same character, the same poses, the same proportions, the same size, the same position of each sprite in its cell, the same viewing angles,",
+        "decrit": "brown shield, orange center, black outline, floating particles, white background, top-down view, simple 2d sprite",
+        "style": "pixel art, black background, orange and brown palette, simple shapes, minimal detail",
+        "recouvrement": 0.05263157894736842,
+        "ms_decrire": 484.5716999989236,
+        "ms_style": 376.1324000079185,
+        "erreur": ""
+      },
+      {
+        "dossier": "0ed71e0e2f4045f595876e0fd4f1cb09",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art character, teal hooded cloak, brown tunic, belt buckle, backpack, lantern, standing on platform, front view, black outline, transparent background",
+        "style": "pixel art, thick black outlines, flat shading, limited palette, low-res grid",
+        "recouvrement": 0.1,
+        "ms_decrire": 806.02760000329,
+        "ms_style": 606.201400005375,
+        "erreur": ""
+      },
+      {
+        "dossier": "13583f345d32430a8d90b8a68954ed4e",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "pixel art character, hooded cloak, backpack on back, lantern in hand, walking pose, side view, simple background",
+        "style": "pixel art, black outlines, flat colors, limited palette, low resolution",
+        "recouvrement": 0.14583333333333334,
+        "ms_decrire": 467.63849999115337,
+        "ms_style": 363.3962000021711,
+        "erreur": ""
+      },
+      {
+        "dossier": "1769a41b23584ce9a895fadc8ee85934",
+        "attendu": "a stocky dwarf, broad-shouldered and short-legged, thick auburn beard braided at the tip, weathered face with heavy brows; olive-green quilted tunic under a worn brown leather harness, grey iron shoulder and knee plates, wide leather belt with a brass buckle, dark green trousers, tall scuffed brown boots; a battered iron lantern with a warm amber flame always at his left hip, a short pickaxe strap",
+        "decrit": "dwarf, red beard, green tunic, metal shoulder pads, pickaxe on back, lantern in hand, pixel art style, front view, grey background",
+        "style": "pixel art, cel-shaded outlines, muted earth tones, low-res grid",
+        "recouvrement": 0.15384615384615385,
+        "ms_decrire": 751.9748999911826,
+        "ms_style": 532.1258000039961,
+        "erreur": ""
+      },
+      {
+        "dossier": "21117700d82d4ac9ab57442bd9a87492",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art character, teal hooded cloak, tan tunic, brown belt buckle, brown boots, wooden backpack, glowing lantern in hand, front view, transparent background",
+        "style": "pixel art, thick black outlines, flat shading, limited palette, low-resolution grid",
+        "recouvrement": 0.075,
+        "ms_decrire": 821.5348000085214,
+        "ms_style": 661.4200999902096,
+        "erreur": ""
+      },
+      {
+        "dossier": "23bc90d5efe6481db5c5336dc1493e17",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art character sprite, teal tunic, brown boots, rolled brown backpack straps, glowing lantern on right side, top-down view, solid brown background",
+        "style": "pixel art, thick black outlines, flat shading, limited palette, low-res grid",
+        "recouvrement": 0.1,
+        "ms_decrire": 667.2320000070613,
+        "ms_style": 525.299000000814,
+        "erreur": ""
+      },
+      {
+        "dossier": "2ae774ef64414428b9a8c2f55a8e075f",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art character, teal hooded cloak, tan tunic, brown belt buckle, rolled scroll on back, lantern in hand, standing pose, white background, black outline",
+        "style": "pixel art, thick black outlines, flat shading, muted earth tones, low-res grid",
+        "recouvrement": 0.1,
+        "ms_decrire": 2804.698500011,
+        "ms_style": 2541.0394000064116,
+        "erreur": ""
+      },
+      {
+        "dossier": "34c45ab46c524abca57d35a162f522f2",
+        "attendu": "balthazar test zefrze.jpg",
+        "decrit": "bearded dwarf character sprite sheet, four views, front back side profile, brown tunic green pants backpack lantern sandals, pixel art style, grey background",
+        "style": "pixel art, hard outlines, flat shading, muted earth tones, visible 16x16 grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 1027.4968999874545,
+        "ms_style": 907.6083999971161,
+        "erreur": ""
+      },
+      {
+        "dossier": "35608624563d412290a88b4a0c08ee75",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "pixel art character, hooded cloak, backpack, lantern in hand, standing pose, side view, brown outline, dark background",
+        "style": "pixel art, thick black outlines, minimal shading, muted earth tones, low-res grid",
+        "recouvrement": 0.14583333333333334,
+        "ms_decrire": 488.7234000052558,
+        "ms_style": 377.2771000076318,
+        "erreur": ""
+      }
+    ]
+  },
+  {
+    "modele": "gemma3:4b",
+    "recouvrement": 0.08522007074167731,
+    "ms": 2026.1878250009129,
+    "essais": [
+      {
+        "dossier": "038b7c1113c84457a232a28dabc7cd1d",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand, idle stance, full body, facing right, side view",
+        "decrit": "side view, male character, hooded cloak, brown robe, backpack, lantern, walking, beige background, pixel art",
+        "style": "pixelated, flat shading, limited palette, bold outlines, 16x32 grid",
+        "recouvrement": 0.17073170731707318,
+        "ms_decrire": 11192.076299994369,
+        "ms_style": 1128.7669000012102,
+        "erreur": ""
+      },
+      {
+        "dossier": "05440dbd684c459fa6f75fbead1c3dbc",
+        "attendu": "met ce personnge dans une vue Perspective Cavalière",
+        "decrit": "2d pixel art, male character, hooded cloak, brown tunic, brown pants, lantern, right side view, simple outline, white background",
+        "style": "pixel art, flat shading, limited palette, blocky outlines, 16x16 grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 1275.5005000071833,
+        "ms_style": 1160.7266000064556,
+        "erreur": ""
+      },
+      {
+        "dossier": "058b04b0d8364461b8eb5d06c1f42565",
+        "attendu": "A stocky, broad-shouldered dwarf, short of stature, with a thick, heavy dark brown beard and mustache flowing unbraided down his chest, and a weathered face. His head is bare, showing long, flowing brown hair, but no helmet. He wears a simple, plain brown short-sleeved t-shirt and grey trousers, cinched by a basic leather belt with a metal buckle. He has open-toed leather sandals on his feet. On h",
+        "decrit": "dwarf, beard, backpack, helmet, standing, top-down view, brown outline, plain background",
+        "style": "pixelated, limited palette, flat shading, bold outlines, low-resolution grid, painterly",
+        "recouvrement": 0.13043478260869565,
+        "ms_decrire": 1124.3507000035606,
+        "ms_style": 1061.844600000768,
+        "erreur": ""
+      },
+      {
+        "dossier": "0e231d92c4b04436b960e5297062b61f",
+        "attendu": "Iron battle axe with runes at the center The attached image is a sprite sheet of 1 sprites of the same character, laid out in exactly 1 columns and 1 rows. Return the SAME sheet with the described item added to every sprite. Change absolutely nothing else: the same character, the same poses, the same proportions, the same size, the same position of each sprite in its cell, the same viewing angles,",
+        "decrit": "sword, helmet, dark background, side view, pixelated, floating, stars",
+        "style": "pixelated, low-poly, flat shading, limited palette, visible grid, simple outlines",
+        "recouvrement": 0.0,
+        "ms_decrire": 1061.2793000036618,
+        "ms_style": 1045.162900001742,
+        "erreur": ""
+      },
+      {
+        "dossier": "0ed71e0e2f4045f595876e0fd4f1cb09",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art, hooded figure, brown hood, yellow tunic, brown cloak, belt, lantern, standing, side view, simple outline, plain background",
+        "style": "pixelated, flat shading, simple outline, limited palette, visible 8x8 grid",
+        "recouvrement": 0.075,
+        "ms_decrire": 1248.3532999904128,
+        "ms_style": 1089.437899994664,
+        "erreur": ""
+      },
+      {
+        "dossier": "13583f345d32430a8d90b8a68954ed4e",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "boy, hooded, backpack, brown belt, lantern, side view, pixel art, beige background",
+        "style": "pixelated, side-scrolling, limited palette, bold outlines, simple shading, 8-bit grid",
+        "recouvrement": 0.125,
+        "ms_decrire": 1104.323799998383,
+        "ms_style": 1098.5753999993904,
+        "erreur": ""
+      },
+      {
+        "dossier": "1769a41b23584ce9a895fadc8ee85934",
+        "attendu": "a stocky dwarf, broad-shouldered and short-legged, thick auburn beard braided at the tip, weathered face with heavy brows; olive-green quilted tunic under a worn brown leather harness, grey iron shoulder and knee plates, wide leather belt with a brass buckle, dark green trousers, tall scuffed brown boots; a battered iron lantern with a warm amber flame always at his left hip, a short pickaxe strap",
+        "decrit": "dwarf, red beard, braided hair, armor, pickaxe, lantern, green tunic, brown boots, standing, side view, grey background",
+        "style": "pixelated, hand-drawn, flat shading, limited palette, 32x32 grid",
+        "recouvrement": 0.19230769230769232,
+        "ms_decrire": 1254.9675999907777,
+        "ms_style": 1112.615799997002,
+        "erreur": ""
+      },
+      {
+        "dossier": "21117700d82d4ac9ab57442bd9a87492",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "small character, hooded, brown robe, blue hood, backpack, lantern, standing, side view, simple outline, white background",
+        "style": "pixelated, flat shading, limited palette, bold outlines, 16-bit, simple, cartoonish",
+        "recouvrement": 0.075,
+        "ms_decrire": 1204.0934999968158,
+        "ms_style": 1132.9462000139756,
+        "erreur": ""
+      },
+      {
+        "dossier": "23bc90d5efe6481db5c5336dc1493e17",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "top-down view, character, blue robe, brown backpack, lantern, standing, brown outline, green background",
+        "style": "pixelated, top-down, simple shading, limited palette, blocky, outlined, 16-bit",
+        "recouvrement": 0.05,
+        "ms_decrire": 1172.918900003424,
+        "ms_style": 1155.7329000061145,
+        "erreur": ""
+      },
+      {
+        "dossier": "2ae774ef64414428b9a8c2f55a8e075f",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art, 2d, character, hooded figure, backpack, cloak, brown robe, lantern, standing, side view, simple outline, plain background",
+        "style": "pixel art, dithering, bold outlines, limited palette, 32x32 pixel grid",
+        "recouvrement": 0.1,
+        "ms_decrire": 1328.201900003478,
+        "ms_style": 1191.435899992939,
+        "erreur": ""
+      },
+      {
+        "dossier": "34c45ab46c524abca57d35a162f522f2",
+        "attendu": "balthazar test zefrze.jpg",
+        "decrit": "dwarf, beard, backpack, lantern, pants, sandals, back view, four views, grey background",
+        "style": "pixelated, flat shading, limited palette, distinct outlines, 8-bit grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 1197.8268000093522,
+        "ms_style": 1124.089200005983,
+        "erreur": ""
+      },
+      {
+        "dossier": "35608624563d412290a88b4a0c08ee75",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "boy, side view, hooded, brown clothes, backpack, blue scarf, lantern, beige background, pixel art",
+        "style": "pixelated, flat shading, limited palette, blocky, simple outlines, 16-bit grid",
+        "recouvrement": 0.10416666666666667,
+        "ms_decrire": 1150.3613000095356,
+        "ms_style": 1147.1738999971421,
+        "erreur": ""
+      }
+    ]
+  },
+  {
+    "modele": "ministral-3:3b",
+    "recouvrement": 0.06951401530275643,
+    "ms": 1156.8296166684984,
+    "essais": [
+      {
+        "dossier": "038b7c1113c84457a232a28dabc7cd1d",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand, idle stance, full body, facing right, side view",
+        "decrit": "pixel-art character, helmet with visor, backpack, backpack straps, backpack straps crossed, backpack straps wrapped around torso, pixelated outline, low-angle camera, pixelated grid background, minimalist monochrome tones.",
+        "style": "pixel art, blocky, low-poly, cel-shaded, flat shading, limited palette, 8x8 grid.",
+        "recouvrement": 0.04878048780487805,
+        "ms_decrire": 6116.519400005927,
+        "ms_style": 326.07130000542384,
+        "erreur": ""
+      },
+      {
+        "dossier": "05440dbd684c459fa6f75fbead1c3dbc",
+        "attendu": "met ce personnge dans une vue Perspective Cavalière",
+        "decrit": "pixel-art character, blocky head, glowing eyes, lantern on right shoulder, upright stance, block outline, dark vertical background, rectangular window cutouts on chest, dim yellow lantern light.",
+        "style": "pixel-art, blocky, flat-shading, limited palette, monochromatic lighting, grid-based, cel-shaded, blocky outlines, warm/cool contrast.",
+        "recouvrement": 0.0,
+        "ms_decrire": 924.7636999934912,
+        "ms_style": 913.4997000073781,
+        "erreur": ""
+      },
+      {
+        "dossier": "058b04b0d8364461b8eb5d06c1f42565",
+        "attendu": "A stocky, broad-shouldered dwarf, short of stature, with a thick, heavy dark brown beard and mustache flowing unbraided down his chest, and a weathered face. His head is bare, showing long, flowing brown hair, but no helmet. He wears a simple, plain brown short-sleeved t-shirt and grey trousers, cinched by a basic leather belt with a metal buckle. He has open-toed leather sandals on his feet. On h",
+        "decrit": "character with heavy, layered armor, greasy, greying beard, one hand holding a small, round object, bent forward slightly, low-angle camera, pixelated outline, dark, pixelated background with faint vertical lines.",
+        "style": "pixel art, blocky outlines, flat shading, limited palette, 8x8 pixel grid.",
+        "recouvrement": 0.08695652173913043,
+        "ms_decrire": 525.5337999988114,
+        "ms_style": 270.43060000869446,
+        "erreur": ""
+      },
+      {
+        "dossier": "0e231d92c4b04436b960e5297062b61f",
+        "attendu": "Iron battle axe with runes at the center The attached image is a sprite sheet of 1 sprites of the same character, laid out in exactly 1 columns and 1 rows. Return the SAME sheet with the described item added to every sprite. Change absolutely nothing else: the same character, the same poses, the same proportions, the same size, the same position of each sprite in its cell, the same viewing angles,",
+        "decrit": "a circular, metallic, glowing object with a raised rim,\ncentered in a dark, starry, abstract background,\nsilhouette of a small, abstract, glowing shape resembling a helmet or headgear,\noutline of a glowing, circular, raised platform or base.",
+        "style": "pixel art, blocky outlines, flat shading, limited palette, 16x16 grid.",
+        "recouvrement": 0.02631578947368421,
+        "ms_decrire": 552.3153999965871,
+        "ms_style": 265.0197000039043,
+        "erreur": ""
+      },
+      {
+        "dossier": "0ed71e0e2f4045f595876e0fd4f1cb09",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel-art character, round head, hooded cloak, brown tunic, belt, lantern on hip, right arm raised, straight-on frontal view, blocky outline, plain white background.",
+        "style": "pixel-art, blocky, flat-shading, limited palette, 8x8 grid, cel-shaded textures, monochromatic outlines, soft gradients.",
+        "recouvrement": 0.1,
+        "ms_decrire": 735.4981000098633,
+        "ms_style": 663.3402000006754,
+        "erreur": ""
+      },
+      {
+        "dossier": "13583f345d32430a8d90b8a68954ed4e",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "character with helmet, padded armor, round shield, backpack, bent knees, slight forward lean, top-down perspective, pixelated outline, dark forest floor with sparse trees.",
+        "style": "pixel-art, blocky outlines, flat shading, limited palette, 16x16 grid.",
+        "recouvrement": 0.08333333333333333,
+        "ms_decrire": 412.6176999998279,
+        "ms_style": 264.3517999968026,
+        "erreur": ""
+      },
+      {
+        "dossier": "1769a41b23584ce9a895fadc8ee85934",
+        "attendu": "a stocky dwarf, broad-shouldered and short-legged, thick auburn beard braided at the tip, weathered face with heavy brows; olive-green quilted tunic under a worn brown leather harness, grey iron shoulder and knee plates, wide leather belt with a brass buckle, dark green trousers, tall scuffed brown boots; a battered iron lantern with a warm amber flame always at his left hip, a short pickaxe strap",
+        "decrit": "front-facing character, long beard, full-length brown coat, belt with buckle, lantern on belt, padded armor, hammer in right hand, lantern in left hand, helmet with visor, standing upright, outline with rounded edges, plain white background.",
+        "style": "flat cel-shaded, blocky outlines, matte gradient lighting, limited palette, no pixel grid.",
+        "recouvrement": 0.1346153846153846,
+        "ms_decrire": 727.2236000135308,
+        "ms_style": 478.13509999832604,
+        "erreur": ""
+      },
+      {
+        "dossier": "21117700d82d4ac9ab57442bd9a87492",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel-art character, round head, hooded cloak, brown tunic, lantern, upright stance, front-facing, outline with blocky edges, transparent background.",
+        "style": "pixel-art, blocky outlines, limited gradient shading, narrow palette, 8x8 pixel grid.",
+        "recouvrement": 0.1,
+        "ms_decrire": 683.6040999914985,
+        "ms_style": 573.6172999895643,
+        "erreur": ""
+      },
+      {
+        "dossier": "23bc90d5efe6481db5c5336dc1493e17",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel-art, blocky, circular, lantern, glowing, centerpiece, elevated platform, rectangular outline, brownish-brown, beige, muted, pixelated, top-down, minimalist, flat-shaded.",
+        "style": "pixel-art, blocky, isometric projection, flat shading, limited palette (earthy, teal, gold), 8x8 grid.",
+        "recouvrement": 0.075,
+        "ms_decrire": 624.6007000008831,
+        "ms_style": 507.5848999986192,
+        "erreur": ""
+      },
+      {
+        "dossier": "2ae774ef64414428b9a8c2f55a8e075f",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel-art character, round head, hooded cloak, belted tunic, lantern on right shoulder, torch in left hand, standing upright, side profile, plain white background, blocky outlines.",
+        "style": "pixel-art, blocky, cel-shaded, flat lighting, limited palette, 8x8 grid, monochrome base, vibrant accent highlights.",
+        "recouvrement": 0.075,
+        "ms_decrire": 1083.4353999962332,
+        "ms_style": 1042.3102000058861,
+        "erreur": ""
+      },
+      {
+        "dossier": "34c45ab46c524abca57d35a162f522f2",
+        "attendu": "balthazar test zefrze.jpg",
+        "decrit": "front-facing, back-facing, side-facing, crouching, lantern in right hand, belted tunic, knee-high pants, boots, pixel-art style, flat background, silhouette outline.",
+        "style": "pixel-art, cel-shaded, blocky outlines, flat lighting, earthy palette, limited color, soft gradients, low-res grid.",
+        "recouvrement": 0.0,
+        "ms_decrire": 1010.7313000044087,
+        "ms_style": 906.187200002023,
+        "erreur": ""
+      },
+      {
+        "dossier": "35608624563d412290a88b4a0c08ee75",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "character with hooded cloak, backpack, one arm bent at elbow, low-angle shot, pixelated outline, pixelated silhouette, pixelated background, pixelated grassy terrain, pixelated trees.",
+        "style": "pixel art, blocky, low-poly, cel-shaded, flat lighting, limited palette, 8x8 grid.",
+        "recouvrement": 0.10416666666666667,
+        "ms_decrire": 485.11220001091715,
+        "ms_style": 319.83360000594985,
+        "erreur": ""
+      }
+    ]
+  },
+  {
+    "modele": "qwen3.5:9b",
+    "recouvrement": 0.06055936973623388,
+    "ms": 2366.828775003038,
+    "essais": [
+      {
+        "dossier": "038b7c1113c84457a232a28dabc7cd1d",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand, idle stance, full body, facing right, side view",
+        "decrit": "pixelated character, hooded cloak, backpack, lantern, standing pose, side view, dark background",
+        "style": "pixel art, thick outlines, flat shading, muted earthy palette, 8-bit grid",
+        "recouvrement": 0.14634146341463414,
+        "ms_decrire": 10457.55239999562,
+        "ms_style": 536.5852000104496,
+        "erreur": ""
+      },
+      {
+        "dossier": "05440dbd684c459fa6f75fbead1c3dbc",
+        "attendu": "met ce personnge dans une vue Perspective Cavalière",
+        "decrit": "pixelated character, teal hooded cloak, brown tunic with belt buckle, holding lit lantern, standing pose, front view, plain background",
+        "style": "pixel art, bold outlines, flat shading, limited palette, visible pixel grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 1530.0579000031576,
+        "ms_style": 1278.625799997826,
+        "erreur": ""
+      },
+      {
+        "dossier": "058b04b0d8364461b8eb5d06c1f42565",
+        "attendu": "A stocky, broad-shouldered dwarf, short of stature, with a thick, heavy dark brown beard and mustache flowing unbraided down his chest, and a weathered face. His head is bare, showing long, flowing brown hair, but no helmet. He wears a simple, plain brown short-sleeved t-shirt and grey trousers, cinched by a basic leather belt with a metal buckle. He has open-toed leather sandals on his feet. On h",
+        "decrit": "bearded man, leather armor, large backpack, lantern in hand, walking forward, pixelated outline, dark background",
+        "style": "pixel art, bold outlines, flat shading, limited palette, 16x16 grid",
+        "recouvrement": 0.043478260869565216,
+        "ms_decrire": 651.9976999989012,
+        "ms_style": 576.037400009227,
+        "erreur": ""
+      },
+      {
+        "dossier": "0e231d92c4b04436b960e5297062b61f",
+        "attendu": "Iron battle axe with runes at the center The attached image is a sprite sheet of 1 sprites of the same character, laid out in exactly 1 columns and 1 rows. Return the SAME sheet with the described item added to every sprite. Change absolutely nothing else: the same character, the same poses, the same proportions, the same size, the same position of each sprite in its cell, the same viewing angles,",
+        "decrit": "floating axe, metallic blade, brown handle, number 19 on blade, black background, small glowing particles, top-down view, isolated object, minimal detail",
+        "style": "pixel art, black background, minimal shading, single color palette, no outlines, 16x16 grid",
+        "recouvrement": 0.02631578947368421,
+        "ms_decrire": 852.5163000012981,
+        "ms_style": 646.5625999990152,
+        "erreur": ""
+      },
+      {
+        "dossier": "0ed71e0e2f4045f595876e0fd4f1cb09",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixelated character, teal hooded cloak, brown tunic, belt, boots, backpack, lantern in hand, standing on platform, white background",
+        "style": "pixel art, blocky outlines, flat shading, limited palette, visible 16x16 grid",
+        "recouvrement": 0.025,
+        "ms_decrire": 1140.69310000923,
+        "ms_style": 978.653199999826,
+        "erreur": ""
+      },
+      {
+        "dossier": "13583f345d32430a8d90b8a68954ed4e",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "pixelated character, hooded cloak, backpack, walking pose, side view, dark outline, plain background",
+        "style": "pixel art, bold outlines, flat shading, limited palette, 16x16 grid",
+        "recouvrement": 0.08333333333333333,
+        "ms_decrire": 627.1385000000009,
+        "ms_style": 571.0052999929758,
+        "erreur": ""
+      },
+      {
+        "dossier": "1769a41b23584ce9a895fadc8ee85934",
+        "attendu": "a stocky dwarf, broad-shouldered and short-legged, thick auburn beard braided at the tip, weathered face with heavy brows; olive-green quilted tunic under a worn brown leather harness, grey iron shoulder and knee plates, wide leather belt with a brass buckle, dark green trousers, tall scuffed brown boots; a battered iron lantern with a warm amber flame always at his left hip, a short pickaxe strap",
+        "decrit": "dwarf, red beard, green tunic, brown leather armor, metal shoulder pads, pickaxe on back, lantern in hand, standing pose, front view, plain background",
+        "style": "pixel art, bold outlines, cel-shaded, muted earth tones, 16x16 grid",
+        "recouvrement": 0.17307692307692307,
+        "ms_decrire": 1163.9470000081928,
+        "ms_style": 901.0192999994615,
+        "erreur": ""
+      },
+      {
+        "dossier": "21117700d82d4ac9ab57442bd9a87492",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixelated character, teal hooded cloak, brown tunic, belt, boots, lantern in right hand, backpack on left shoulder, front view, transparent background",
+        "style": "pixel art, thick black outlines, flat shading, limited palette, visible 16x16 pixel grid",
+        "recouvrement": 0.025,
+        "ms_decrire": 1269.82250000583,
+        "ms_style": 1084.934999991674,
+        "erreur": ""
+      },
+      {
+        "dossier": "23bc90d5efe6481db5c5336dc1493e17",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixel art character from behind, teal tunic, brown backpack straps, holding lantern, standing on brown ground, flat background",
+        "style": "pixel art, bold outlines, flat shading, muted palette, 16x16 grid",
+        "recouvrement": 0.075,
+        "ms_decrire": 922.4318000051426,
+        "ms_style": 771.3460000086343,
+        "erreur": ""
+      },
+      {
+        "dossier": "2ae774ef64414428b9a8c2f55a8e075f",
+        "attendu": "Pixel-art sprite illustration for a small user-interface thumbnail. Generate ONE image only. REFERENCE An image is attached. Keep the character exactly as it is drawn there: same design, same proportions, same palette, same shading, same amount of detail, same outline treatment. Do not restyle it, do not add ornaments, do not change a single colour. You are not redrawing the character — you are re",
+        "decrit": "pixelated character, teal hooded cloak, yellow tunic, brown belt, brown boots, brown backpack with rolled mat, holding glowing lantern, standing on brown ground, white background",
+        "style": "pixel art, bold black outlines, flat shading, limited palette, visible pixel grid",
+        "recouvrement": 0.025,
+        "ms_decrire": 7140.440200004377,
+        "ms_style": 6714.665300009074,
+        "erreur": ""
+      },
+      {
+        "dossier": "34c45ab46c524abca57d35a162f522f2",
+        "attendu": "balthazar test zefrze.jpg",
+        "decrit": "pixelated character sprite sheet, four views front back left right, muscular man with beard and long hair, brown tunic, green pants, sandals, large backpack, lantern in hand, neutral expression, plain gray background",
+        "style": "pixel art, blocky outlines, flat shading, muted earth palette, 16x16 grid",
+        "recouvrement": 0.0,
+        "ms_decrire": 2019.4750999944517,
+        "ms_style": 1542.3098000028403,
+        "erreur": ""
+      },
+      {
+        "dossier": "35608624563d412290a88b4a0c08ee75",
+        "attendu": "a hooded traveller, seen from the side; deep teal hooded cloak covering the head and falling down the back; ochre long coat closed by a brown leather belt; brown leather backpack with a rolled bedroll strapped on top; brown boots; a lit lantern hanging from the near hand Render this as a sprite sheet of 8 sprites of the SAME subject. Exactly 3 columns and 3 rows, 8 cells total, one single sprite p",
+        "decrit": "pixelated character, hooded cloak, backpack, lantern, standing pose, side view, beige background",
+        "style": "pixel art, bold outlines, flat shading, muted palette, 16x16 grid",
+        "recouvrement": 0.10416666666666667,
+        "ms_decrire": 625.8728000102565,
+        "ms_style": 573.8863000005949,
+        "erreur": ""
+      }
+    ]
+  }
+]

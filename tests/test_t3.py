@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T3 — la bibliothèque.
 
-Un test par critère de `docs/PLAN.md` § Phase T3, nommé d'après lui. Cinq des
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T3, nommé d'après lui. Cinq des
 seize critères ne se vérifient pas ici parce qu'ils portent sur ce que l'écran
 montre — la fiche en panneau latéral, l'état vide, l'invitation à écrire, les
 trois panneaux, le repli. Ceux-là vivent dans `interface/src/App.test.tsx`,
@@ -139,6 +139,9 @@ def test_aucun_echec_n_entre_en_bibliotheque_et_le_journal_le_garde(client, doub
     assert journal["rates"] == 1
     assert journal["cout_rate_usd"] == 0.011
     appel = next(a for a in journal["appels"] if a["identifiant"] == generation["identifiant"])
+    # **Le libellé d'une ligne de journal est le sujet**, pas le texte composé
+    # (R7) : c'est une étiquette dans une liste, et le texte entier se relit sur
+    # la fiche de l'image.
     assert appel["prompt"] == "un raté"
     assert appel["rates"][0]["raison"] == "le fournisseur n'a rendu aucune image"
     assert appel["rates"][0]["cout_usd"] == 0.011
@@ -511,7 +514,7 @@ def test_un_asset_se_reinjecte_dans_ses_quatre_roles(client, double):
     # 4 · jeu de réglages — aucune image ne part : l'écran relit les paramètres
     #     de la génération d'un asset et repeuple le générateur avec.
     reglages = client.get(f"/api/generations/{souche['generation']}").json()
-    assert reglages["demande"]["prompt"] == "la souche"
+    assert reglages["demande"]["prompt"] == "REQUEST\n\nla souche"
     assert reglages["modele"] == MODELE
 
 

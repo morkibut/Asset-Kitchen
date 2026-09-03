@@ -314,7 +314,8 @@ function ListeDePalettes({
       <ul className="flex flex-col">
         {/* **Celle du jeu en tête, et elle n'est pas un objet à part** : le
             projet *est* l'ambiance générale du jeu. Elle ne s'ouvre pas ici —
-            elle se règle à l'étape 6 de l'assistant, où ses sources vivent —,
+            elle se règle à l'étape « Références et couleurs » de l'assistant, où ses
+            sources vivent —,
             et le dire évite d'aller la chercher dans deux endroits. */}
         <li className="mesure flex h-[26px] items-center gap-2 px-2 text-[10px]">
           <span className="min-w-0 flex-1 truncate text-[11.5px] text-texte-2">

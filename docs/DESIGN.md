@@ -112,6 +112,13 @@ montant, chez un fournisseur qui ne facture pas. `$0,0000` serait un nombre just
 *sans limite* là où il faut lire *sans prix* — et ce que l'appel a consommé garde, lui, son
 chiffre et son unité (`1 jeton`) juste à côté.
 
+**La règle a été enfreinte une fois, et corrigée le 3 septembre 2026 (`R8`).** La fiche
+d'une chose du jeu écrivait le compte de ses cases — « 2 cases sur 6 » — en serif de 32 px,
+au milieu de l'écran. C'était le plus gros texte de la page, et c'était une mesure. Le serif
+y est revenu à ce qu'il porte : **le nom de la chose**, qui n'en est pas une. *Une mesure
+qu'on veut voir de loin se grossit dans la police des mesures ; elle ne change pas de
+famille.*
+
 ### Échelle
 
 | px | Famille | Usage |
@@ -182,6 +189,12 @@ réservé à ce qui l'est.
   avec l'onglet allumé se dit par le fond plein, qui est la marque, pas par l'effacement du
   texte.
 
+**Un troisième cas, trouvé et corrigé le 3 septembre 2026 (`R8`)** — même famille que les
+deux premiers. **Le nom d'un champ de style, sur la fiche d'une chose** : *monde*, *époque*,
+*lumière*, *trait*. Rien ne les redit ailleurs — le texte qu'ils portent ne les nomme pas —,
+et ce sont eux qu'on cherche des yeux pour savoir lequel réécrire. Ils passent en
+`--texte-2` ; le *contenu* du champ, lui, reste ce qu'il était.
+
 **Le test qui reste** : devant un `--texte-3`, se demander *qu'est-ce qui redit ceci ailleurs ?*
 Si la réponse est « rien », ce n'est pas un grisé.
 
@@ -214,7 +227,7 @@ dans une grille de tonneaux et de clés.
 
 ### Les teintes d'îlot
 
-Ajoutées le 27 août 2026 avec la toile (`PLAN.md` T8-T9), et c'est le **seul endroit du produit
+Ajoutées le 27 août 2026 avec la toile (`docs/archive/plan-versions-tenues.md` T8-T9), et c'est le **seul endroit du produit
 où une couleur ne veut rien dire**. Un îlot ou une note en porte une parce que l'auteur l'a
 choisie, jamais parce qu'un état la commande — l'inverse exact des quatre sémantiques ci-dessus,
 et il faut donc que rien ne les confonde.

@@ -517,9 +517,12 @@ def test_quand_rien_ne_manque_completer_est_grise_avec_sa_raison(client, tmp_pat
 
 
 def test_une_planche_nentre_jamais_en_bibliotheque_ses_morceaux_si(client, double):
-    """**C'est une ruse pour payer moins, pas un format de livraison.** La
-    feuille est le brut de sa génération ; ce qui entre, ce sont les morceaux, et
-    ils sont filiés vers elle par leur génération."""
+    """**La feuille entre aussi, depuis G16 — et elle ne prend la place de
+    personne.** Ce que cet essai garde intact est ce qu'il gardait déjà : les
+    morceaux connaissent leur case, pose *et* direction, écrites à leur
+    naissance. Ce qui change est que la feuille cesse d'être invisible ; elle
+    n'a ni pose ni direction, donc elle ne remplit aucune case et n'entre dans
+    aucune jauge."""
     chose = _creer(client)
     _vue(client)
     atelier = client.app.state.atelier
@@ -549,13 +552,18 @@ def test_une_planche_nentre_jamais_en_bibliotheque_ses_morceaux_si(client, doubl
         if a.generation == identifiant
     ]
 
-    assert len(nees) == 4
+    morceaux = [a for a in nees if a.rang >= 100]
+    assert len(morceaux) == 4
     # Chaque morceau connaît sa case — pose *et* direction —, écrites à sa
     # naissance et non à la main après coup.
-    assert {a.pose for a in nees} == {"marche"}
-    assert {a.direction for a in nees} == {"nord", "sud", "est", "ouest"}
-    # Et la feuille n'est nulle part : aucun asset ne porte la planche entière.
-    assert all(a.rang >= 100 for a in nees)
+    assert {a.pose for a in morceaux} == {"marche"}
+    assert {a.direction for a in morceaux} == {"nord", "sud", "est", "ouest"}
+    # Et la feuille est là, à son propre rang, **sans case à elle** : c'est
+    # cette absence qui la tient hors de la matrice et des jauges (G16).
+    planche = [a for a in nees if a.rang == 0]
+    assert len(planche) == 1
+    assert planche[0].pose is None and planche[0].direction is None
+    assert planche[0].recette.vide
     assert projet
 
 

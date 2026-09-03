@@ -19,10 +19,23 @@ au fournisseur. **Aucun `fournisseur` dans ce fichier**, et ça se lit dans ses
 imports : déplier une planche déjà là marche réseau coupé, exactement comme la
 découper.
 
-**Le seul refus automatique du produit vit ici**, et il est arithmétique : si le
-nombre d'images revenues n'est pas celui demandé, rien n'entre et le lot se
-relance d'un geste. Ressemblance et dérive de grille sont mesurées à côté, elles
-s'affichent, et elles n'empêchent jamais de garder.
+**Le seul refus automatique du produit vit ici**, et il est arithmétique : s'il
+revient **moins** d'images que demandé, rien n'entre et le lot se relance d'un
+geste. Ressemblance et dérive de grille sont mesurées à côté, elles s'affichent,
+et elles n'empêchent jamais de garder.
+
+**Ce qui revient en trop, en revanche, ne se jette plus** (R6, US-367). La règle
+« seul le compte refuse » a été écrite pour un lot de poses, où une case en trop
+n'a pas de sens ; sur une planche de personnage, c'est le régime normal — quatre
+planches sur treize du banc d'animation, trente-et-un pour cent des appels payés
+jetés pour un sujet de trop. Une planche qui en rend neuf pour huit s'ouvre
+donc, avec ses sujets mesurés, et l'auteur écarte ce qu'il ne veut pas.
+
+Et le même geste répare un défaut plus grave parce qu'il ne se voyait pas
+(US-368) : quand un modèle redessine les traits du quadrillage, les cases bordées
+font des taches opaques, le compte tombe juste, et l'atelier faisait entrer des
+carrés pleins sans un mot. Ils sont mesurés maintenant, et ils arrêtent la
+planche de la même façon — **jamais un refus, toujours un regard**.
 """
 
 from __future__ import annotations
@@ -35,7 +48,9 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation, Statut
+from atelier.domaine.planche import asset_de_planche
 from atelier.domaine.pliage import CasePliee, Geometrie, MesuresLot, Pliage
+from atelier.domaine.projet import PLANCHE
 from atelier.domaine.recette import BORD, Passe, Recette
 from atelier.image import Boite, decouper, detourer, grille_fixe, mesurer, zones_opaques
 from atelier.image.decoupe import MARGE
@@ -54,14 +69,38 @@ RANG_PLIAGE = 100
 
 
 class CompteFaux(ErreurAtelier):
-    """Le nombre d'images revenues n'est pas celui demandé.
+    """Il revient **moins** d'images que demandé.
 
-    **Le seul refus automatique du produit** (`docs/PLAN.md`, C2), et il est
+    **Le seul refus automatique du produit** (`docs/archive/plan-versions-tenues.md`, C2), et il est
     arithmétique — c'est ce qui le rend tenable. Rien n'entre, l'appel payé reste
     au journal avec son coût (US-24), et le lot se relance d'un geste.
+
+    **Il ne se lève plus sur un surplus depuis R6.** Sept images pour huit reste
+    un refus, et pour une raison qui tient en une phrase : il manque une étape à
+    l'animation, et aucun choix de l'auteur ne la fabriquera. Neuf pour huit, en
+    revanche, contient tout ce qui a été demandé — jeter l'appel entier pour ce
+    qu'il a en trop était la perte que R6 répare.
     """
 
     code = "compte_faux"
+
+
+class ChoixAttendu(ErreurAtelier):
+    """La planche est arrivée, quelque chose cloche, et personne n'a tranché.
+
+    **Ce n'est pas un échec, et c'est tout l'intérêt** (R6). L'appel a été payé,
+    la planche est sur le disque, elle est complète : l'emplacement reste réussi,
+    rien ne se relance, et rien ne se repaie. Ce qui manque est un regard —
+    quels sujets garder, parmi ceux que la planche porte.
+
+    Elle se lève à chaque fois qu'on essaie de déplier un lot en attente, y
+    compris au démarrage, et c'est ce qui garantit qu'**aucune image n'entre en
+    bibliothèque avant que l'auteur ait vu ce qui est arrivé** (US-368). La
+    décision se pose une fois, par `ServiceGenerations.ecarter`, et le lot se
+    déplie dans la foulée.
+    """
+
+    code = "choix_attendu"
 
 
 def consignes(pliage: Pliage) -> str:
@@ -213,11 +252,19 @@ class ServicePliage:
         construire à côté serait un doublon de la grille, du gabarit et du
         découpeur ».
 
-        Lève `CompteFaux` si le nombre d'images trouvées n'est pas celui demandé.
-        **Rien n'est écrit avant que le compte soit vérifié**, ici comme chez ses
-        deux appelants : « aucune image n'entre » est vrai au pied de la lettre,
-        et pas rattrapé après coup par une suppression qui pourrait échouer à
-        moitié.
+        Lève `CompteFaux` s'il revient **moins** d'images que demandé, et
+        `ChoixAttendu` s'il en revient plus, ou si l'une d'elles remplit presque
+        toute sa boîte, tant que l'auteur n'a pas tranché (R6). **Rien n'est
+        écrit avant**, ici comme chez ses deux appelants : « aucune image
+        n'entre » est vrai au pied de la lettre, et pas rattrapé après coup par
+        une suppression qui pourrait échouer à moitié.
+
+        **Ce que la planche portait s'écrit sur le pliage avant tout verdict**,
+        et c'est ce qui rend le choix possible : l'écran a besoin des sujets et
+        de leurs mesures pour les montrer, or au moment où il les montre, aucun
+        asset n'existe encore pour les porter. C'est un fait sur l'arrivée, au
+        même titre que le coût de l'appel, et il ne se recalcule pas à chaque
+        ouverture de l'écran.
 
         Les mesures de lot partent avec les morceaux. Elles ne veulent pas dire
         la même chose des deux côtés — la ressemblance entre deux corps d'un même
@@ -231,10 +278,36 @@ class ServicePliage:
 
         octets = self._fichiers.lire(emplacement.resultat.fichier)
         rgba = detourer(Recette(passes=(Passe(moteur=BORD),)), octets)
-        boites = self._boites(pliage, rgba)
+        toutes = self._boites(pliage, rgba)
 
-        if len(boites) != pliage.nombre:
-            raise CompteFaux(_compte(len(boites), pliage.nombre))
+        # Le fait d'abord, le verdict ensuite. Une planche à sept sujets pour
+        # huit est refusée, et le pliage dit quand même ce qu'elle portait :
+        # sans ça, le journal du refus n'apprendrait rien à qui le relit.
+        pliage.trouvees = len(toutes)
+        pliage.mesures = tuple(mesurer_lot(rgba, toutes))
+
+        if len(toutes) < pliage.nombre:
+            raise CompteFaux(_manque(len(toutes), pliage.nombre))
+        if pliage.attend_un_choix:
+            raise ChoixAttendu(_choix(pliage))
+
+        gardees = pliage.gardees
+        if len(gardees) != pliage.nombre:
+            raise CompteFaux(_compte(len(gardees), pliage.nombre))
+
+        boites = [toutes[index] for index in gardees]
+        # **Les mesures des images qui entrent se reprennent sur elles seules**,
+        # jamais sur celles du regard d'avant. La ressemblance est *« le plus
+        # fort recouvrement avec une autre case du lot »*, et le lot est
+        # maintenant celui des huit gardées : recopier les chiffres des neuf
+        # ferait dire à un corps qu'il ressemble à une case qui n'existe plus.
+        # Le calcul est le même, sur moins de cases ; on l'évite quand il n'y a
+        # rien eu à écarter, ce qui est le cas ordinaire.
+        mesures = (
+            list(pliage.mesures)
+            if len(boites) == len(toutes)
+            else mesurer_lot(rgba, boites)
+        )
 
         # **Pas de marge sur une grille connue.** La marge existe pour les
         # boîtes serrées de C2, trouvées sur les taches opaques : elle leur rend
@@ -243,7 +316,7 @@ class ServicePliage:
         # ferait mordre sur sa voisine — le calque de la pose 1 porterait un bout
         # de la pose 2.
         marge = 0 if pliage.geometrie_connue else MARGE
-        return decouper(octets, boites, marge=marge), mesurer_lot(rgba, boites)
+        return decouper(octets, boites, marge=marge), mesures
 
     def deplier(
         self, generation: Generation, emplacement: Emplacement
@@ -256,10 +329,11 @@ class ServicePliage:
         planche est arrivée parce que le produit l'a demandée, et il sait
         combien d'images elle doit contenir.
 
-        Lève `CompteFaux` si elle n'en contient pas ce nombre-là. **Rien n'est
-        écrit avant que le compte soit vérifié** : « aucune image n'entre dans
-        le plan » est vrai au pied de la lettre, et pas rattrapé après coup par
-        une suppression qui pourrait échouer à moitié.
+        Lève `CompteFaux` s'il en manque, et `ChoixAttendu` tant que l'auteur
+        n'a pas dit quoi faire d'un surplus ou d'un carré plein (R6). **Rien
+        n'est écrit avant que le compte soit vérifié** : « aucune image n'entre
+        dans le plan » est vrai au pied de la lettre, et pas rattrapé après coup
+        par une suppression qui pourrait échouer à moitié.
         """
         pliage = generation.pliage
         if pliage is None or emplacement.resultat is None:  # pragma: no cover
@@ -273,10 +347,57 @@ class ServicePliage:
                 self._accueillir(generation, case, image, rang + index, mesures[index])
             )
 
+        # **Et la planche elle-même, en dernier** (G16). Après ses morceaux,
+        # parce que le compte peut encore refuser au-dessus : une planche qui
+        # entre alors que rien n'en est sorti serait une image payée rangée
+        # comme une réussite. Après aussi parce que `premier_rang_libre` réserve
+        # déjà les rangs des emplacements — le sien ne pouvait pas être pris.
+        self.accueillir_planche(generation, emplacement)
+
         # L'arbre compte les assets par projet : N de plus changent ces comptes,
         # et personne d'autre ne les recalcule. Une fois, à la fin.
         self._diffusion.publier("bibliotheque", self._bibliotheque.arbre())
         return nees
+
+    def accueillir_planche(
+        self, generation: Generation, emplacement: Emplacement
+    ) -> Asset | None:
+        """La planche revenue entre en bibliothèque, à son propre rang (G16).
+
+        **Ce qui a été payé cesse d'être invisible.** Jusqu'ici la feuille
+        restait sur le disque sans qu'aucun écran ne puisse l'ouvrir : l'auteur
+        ne voyait jamais l'image qu'il avait achetée, seulement ce que l'atelier
+        en avait tiré. Elle entre donc, et sans rien changer d'autre — ses
+        morceaux gardent leurs rangs, leurs recettes et leurs cases.
+
+        **Elle ne se dédouble jamais.** Un asset déjà là à ce rang est rendu tel
+        quel : le dépliage, la reprise au démarrage et le rattrapage passent
+        tous les trois par ici, et deux appels ne feraient pas deux images.
+
+        **Pas de fichier, pas d'asset.** C'est la règle du rattrapage, et elle
+        vaut ici pour la même raison : effacer les fichiers d'une planche doit
+        suffire à la faire disparaître, sans qu'une pierre tombale traîne
+        quelque part.
+
+        Ce qu'elle *est* — sa recette vide, son coût, son absence de pose — est
+        écrit à un seul endroit, `atelier/domaine/planche.py`, parce que trois
+        chemins la construisent.
+        """
+        if emplacement.resultat is None or generation.pliage is None:
+            return None
+        if not self._fichiers.existe(emplacement.resultat.fichier):
+            return None
+
+        deja = self._base.lire_asset(
+            identifiant_de(generation.identifiant, emplacement.rang)
+        )
+        if deja is not None:
+            return deja
+
+        planche = asset_de_planche(generation, emplacement)
+        if planche is None:  # pragma: no cover — les deux gardes sont au-dessus
+            return None
+        return self._assets.accueillir(planche)
 
     def deplie(self, generation: Generation) -> bool:
         """Ce lot a-t-il déjà rendu ses images ?
@@ -304,10 +425,17 @@ class ServicePliage:
 
         Un compte faux au redémarrage se comporte comme un compte faux à
         l'arrivée : l'emplacement passe en échec avec sa raison, et rien n'entre.
+
+        **Un lot qui attend un choix, lui, n'est pas repris** (R6) : il a déjà
+        été regardé une fois, ses sujets sont mesurés et écrits, et le redéplier
+        à chaque démarrage relirait la planche pour retomber sur la même
+        question. Il attend un geste de l'auteur, pas un rangement — et c'est
+        pour ça que la première rencontre écrit ce qu'elle a vu.
         """
         repris = 0
         for generation in generations:
-            if generation.pliage is None or self.deplie(generation):
+            pliage = generation.pliage
+            if pliage is None or self.deplie(generation) or pliage.attend_un_choix:
                 continue
             for emplacement in generation.emplacements:
                 if emplacement.resultat is None:
@@ -317,13 +445,40 @@ class ServicePliage:
                 try:
                     self.deplier(generation, emplacement)
                 except CompteFaux as refus:
-                    generation.pliage.refus = refus.raison
+                    pliage.refus = refus.raison
                     emplacement.statut = Statut.ECHOUEE
                     emplacement.raison = refus.raison
+                except ChoixAttendu:
+                    # **Ni échec ni refus** : la planche est là, entière, payée.
+                    # L'emplacement reste réussi et le pliage porte désormais ce
+                    # qu'elle contenait — l'écran a de quoi poser la question.
+                    pass
+                # **Écrit dans tous les cas, et c'est nouveau.** Jusqu'ici la
+                # reprise décidait en mémoire et ne sauvait rien : un compte faux
+                # au démarrage se rejouait au démarrage suivant. Sans conséquence
+                # tant que rien n'était écrit ; avec R6, les mesures de l'arrivée
+                # doivent survivre à la fermeture de l'atelier, sans quoi l'écran
+                # du choix redécouperait la planche à chaque ouverture.
+                self._sauver(generation)
                 repris += 1
         return repris
 
     # ── Le dedans ────────────────────────────────────────────────────────────
+
+    def _sauver(self, generation: Generation) -> None:
+        """Le disque, l'index, puis l'annonce — dans cet ordre.
+
+        **Écrit ici et pas ailleurs**, parce que `ServiceGenerations` tient déjà
+        `ServicePliage` : lui demander de sauver ferait un cercle entre les deux
+        services. Les trois lignes sont celles de `ServiceGenerations._sauver`,
+        et leur ordre a la même raison — une coupure entre le fichier et l'index
+        laisse l'index en retard, ce que la reconstruction rattrape ; dans
+        l'autre sens elle mettrait l'invariant à l'envers.
+        """
+        contenu = generation.en_json()
+        self._fichiers.ecrire_enregistrement(generation.identifiant, contenu)
+        self._base.enregistrer(generation)
+        self._diffusion.publier("generation", contenu)
 
     def _boites(self, pliage: Pliage, rgba: np.ndarray) -> list[Boite]:
         """Où couper le retour, et les deux façons de le savoir.
@@ -369,7 +524,11 @@ class ServicePliage:
                 hauteur=mesure.hauteur,
                 type_media=mesure.type_media,
                 label=_label(case),
-                recette=self._assets.recette_du_projet(generation),
+                # **Un morceau de planche, et il le dit** (D1) : le défaut
+                # de détourage se règle par nature d'image, et celle-ci en
+                # est une. La génération ne suffirait pas à le deviner —
+                # c'est la même qui a rendu la planche entière.
+                recette=self._assets.recette_du_projet(generation, PLANCHE),
                 # **Une image dépliée n'a rien coûté seule.** L'argent a été
                 # dépensé une fois, pour l'appel, et le journal du projet le
                 # porte. Lui attribuer une part du prix inventerait un chiffre
@@ -430,6 +589,56 @@ def _compte(trouvees: int, demandees: int) -> str:
     return (
         f"{trouvees} image{'s' if trouvees > 1 else ''} pour {demandees} demandées — "
         f"le lot entier est refusé, rien n'est entré, et il se relance au prix plein"
+    )
+
+
+def _manque(trouvees: int, demandees: int) -> str:
+    """Il en manque, et ça, aucun choix ne le répare (R6).
+
+    Elle garde mot pour mot le début de l'ancienne raison — les deux nombres,
+    dans le même ordre — parce que c'est ce qu'on lit d'abord dans le journal, et
+    qu'une planche refusée avant R6 et une planche refusée après doivent se
+    relire pareil. Ce qu'elle ajoute est la seule chose que R6 change ici : la
+    raison pour laquelle celle-là, et plus celle d'à côté, est sans issue.
+    """
+    return (
+        f"{_compte(trouvees, demandees)} — il en manque "
+        f"{demandees - trouvees}, et aucun choix ne les fabriquera"
+    )
+
+
+def _choix(pliage: Pliage) -> str:
+    """Ce que la planche attend de l'auteur, en toutes lettres (R6).
+
+    **Elle nomme les deux défauts séparément**, parce qu'ils ne se corrigent pas
+    de la même façon dans la tête de celui qui lit : un sujet en trop est une
+    case à désigner, un carré plein est un morceau de quadrillage que le modèle a
+    dessiné. Les confondre dans un « quelque chose cloche » ferait chercher.
+
+    Aucune des deux phrases ne dit « refusé » — rien ne l'est. La planche est
+    payée, entière, et sur le disque ; ce qui manque est un regard.
+    """
+    dits = []
+    if pliage.surplus:
+        trop = pliage.surplus
+        dits.append(
+            f"{pliage.trouvees} sujets pour {pliage.nombre} demandés — "
+            f"{trop} de trop, à écarter"
+        )
+    if pliage.pleines:
+        pleines = pliage.pleines
+        combien = len(pleines)
+        dits.append(
+            f"{combien} sujet{'s' if combien > 1 else ''} "
+            f"remplit{'' if combien == 1 else 'ssent'} presque toute "
+            f"{'sa boîte' if combien == 1 else 'leur boîte'} "
+            f"({', '.join(f'n° {i + 1}' for i in pleines)}) — "
+            f"c'est le quadrillage que le modèle a redessiné, pas un personnage"
+        )
+    return (
+        f"{' ; '.join(dits)}. La planche est payée et complète : rien n'est "
+        f"refusé, rien n'est entré, et rien ne se relance — choisissez ce que "
+        f"vous gardez."
     )
 
 

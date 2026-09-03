@@ -76,6 +76,73 @@ OPTIONS = "options"  # ce que le modèle choisi sait faire en plus
 GROUPES = (JEU, AMBIANCE, SUJET, PLANCHE, JOINTES, CADRAGE, IMAGES, OPTIONS)
 
 
+# ── Les trois parties du texte qui part (R7) ─────────────────────────────────
+#
+# **Un groupe dit d'où une ligne vient ; une partie dit à quoi elle sert.** Les
+# six groupes ci-dessus sont restés ce qu'ils étaient — ils portent les clefs,
+# les interrupteurs et les corrections, et rien de tout ça ne bouge. Ce qui
+# s'ajoute au-dessus d'eux est un rangement en trois : *le contexte* — ce qui ne
+# change pas d'une image à l'autre —, *les références* — ce que chaque image
+# jointe est —, *la demande* — ce qu'on veut cette fois-ci.
+#
+# **Ce rangement a été mesuré avant d'être construit, et il n'a rien donné.**
+# Cinq variantes tirées le 2 septembre 2026, à images égales : le témoin — le
+# pavé d'alors — a fait deux bonnes planches sur quatre, les trois titres posés
+# dessus zéro sur quatre, les références nommées zéro sur quatre. La tranche est
+# donc reprise **pour la relisibilité seule**, décidée par l'auteur le
+# 3 septembre 2026 en connaissance de ce chiffre, et elle ne promet aucun gain
+# de taux. `docs/tranches/R7.md` porte la mesure et la décision.
+#
+# **La caméra reste la dernière phrase du texte, et c'est ce qui rendait le
+# rangement possible.** Un banc payé — `essais/essai_vue.py`, trente images — a
+# établi que le rapport hauteur/largeur du sujet passe de 1,55 à 1,13 quand la
+# caméra ferme le texte. La caméra appartient à *la demande*, qui est la
+# troisième partie ; le cadre et la caméra en sont les dernières lignes. Ranger
+# ne l'a donc pas déplacée. **Ce qui se déplace est le bloc des références**,
+# qui remonte de l'avant-dernier rang au deuxième : c'est le seul changement
+# d'ordre de la tranche, et il est celui que le banc a tiré.
+CONTEXTE = "contexte"
+REFERENCES = "references"
+DEMANDE = "demande"
+PARTIES = (CONTEXTE, REFERENCES, DEMANDE)
+
+# **Les titres partent en anglais, comme les intitulés de la bible** (T4). Le
+# prompt part en anglais chez tous les modèles du catalogue, et « CONTEXTE »
+# dégraderait ce que « CONTEXT » obtient. Ce sont les trois mots exacts du banc
+# — `essais/socle_essais.py`, `TITRES` —, recopiés ici pour que le produit
+# envoie ce qui a été mesuré et non une variante voisine.
+TITRE = {CONTEXTE: "CONTEXT", REFERENCES: "REFERENCES", DEMANDE: "REQUEST"}
+
+# Quelle partie porte quel groupe. **Une seule table, lue par le serveur et par
+# l'écran** : deux tables auraient fini par ranger la caméra dans deux parties
+# différentes selon qu'on lise le texte ou l'écran qui le montre.
+DE_LA_PARTIE = {
+    JEU: CONTEXTE,
+    AMBIANCE: CONTEXTE,
+    JOINTES: REFERENCES,
+    SUJET: DEMANDE,
+    PLANCHE: DEMANDE,
+    CADRAGE: DEMANDE,
+}
+
+# Ce que l'écran écrit au-dessus de chaque partie. **En français, parce que
+# personne ne le lit chez le fournisseur** — c'est l'exacte symétrie des
+# intitulés de la bible, qui partent en anglais et se lisent en français.
+NOM_DE_LA_PARTIE = {
+    CONTEXTE: "le contexte",
+    REFERENCES: "les références",
+    DEMANDE: "la demande",
+}
+
+# Ce que chaque partie dit d'elle-même, sous son titre, sur l'écran de
+# confirmation. **Une phrase, jamais deux** — le format du recueil.
+PROPOS_DE_LA_PARTIE = {
+    CONTEXTE: "ce que ton jeu est, et qui ne change pas d'une image à l'autre",
+    REFERENCES: "ce que chaque image jointe est, dite dans l'ordre où elles partent",
+    DEMANDE: "ce que tu veux cette fois-ci — et la caméra, qui ferme le texte",
+}
+
+
 def clef(groupe: str, nom: str) -> str:
     """Le nom d'une ligne, unique dans tout l'écran.
 
@@ -105,11 +172,26 @@ class Tri:
     lui. Un `Tri` vide veut dire « l'auteur a regardé et n'a rien éteint ». Les
     deux donnent le même texte aujourd'hui ; les confondre nous priverait du seul
     endroit où l'on pourrait un jour distinguer les deux.
+
+    ── `fond` : la couleur corrigée juste avant de payer (D3) ────────────────
+
+    **Un quatrième écart, et il ne se range pas dans `textes`.** La couleur de
+    fond n'est pas une ligne du texte : c'est un réglage du jeu qui *fabrique*
+    une ligne — la phrase de calage — **et** la phrase d'interdiction qui part
+    dans un autre champ de la demande. La corriger en tapant dans la ligne aurait
+    changé l'une sans l'autre, et l'appel serait parti en demandant un fond
+    magenta tout en interdisant le cyan.
+
+    Sa valeur suit la règle du `Tri` : elle ne vaut que pour cet appel, elle ne
+    remonte pas au projet, et **la chaîne vide est une valeur** — c'est *retire
+    le fond pour cet appel-ci*, ce qui est un geste légitime quand on veut
+    comparer avec ce que le jeu rendait avant. `None` est *n'y touche pas*.
     """
 
     eteints: frozenset[str] = frozenset()
     allumes: frozenset[str] = frozenset()
     textes: Mapping[str, str] = field(default_factory=dict)
+    fond: str | None = None
 
     def etat(self, ligne: str, defaut: bool) -> bool:
         """Cette ligne est-elle candidate, sachant ce que la fiche en dit ?
@@ -135,10 +217,24 @@ class Tri:
         corrige = self.textes.get(ligne)
         return defaut if corrige is None else corrige
 
+    def fond_de(self, defaut: str) -> str:
+        """Le fond de cet appel-ci, sachant celui du jeu.
+
+        **La chaîne vide corrige, elle ne se confond pas avec l'absence** :
+        `None` laisse le fond du jeu, `""` le retire pour cet appel. C'est la
+        même distinction que `texte`, où effacer un texte est un geste distinct
+        d'éteindre sa ligne.
+        """
+        return defaut if self.fond is None else self.fond
+
     @staticmethod
     def depuis_json(d: Mapping[str, Any] | None) -> "Tri | None":
         if not d:
             return None
+        # **Absent et vide ne se confondent pas**, et c'est la seule clé de ce
+        # message où la différence compte : `"fond": ""` retire le fond pour cet
+        # appel, ne pas envoyer la clé laisse celui du jeu.
+        fond = d.get("fond")
         return Tri(
             eteints=frozenset(str(c) for c in (d.get("eteints") or ())),
             allumes=frozenset(str(c) for c in (d.get("allumes") or ())),
@@ -147,6 +243,7 @@ class Tri:
                 for k, v in (d.get("textes") or {}).items()
                 if isinstance(k, str)
             },
+            fond=None if fond is None else str(fond),
         )
 
     def en_json(self) -> dict[str, Any]:
@@ -154,6 +251,7 @@ class Tri:
             "eteints": sorted(self.eteints),
             "allumes": sorted(self.allumes),
             "textes": dict(self.textes),
+            "fond": self.fond,
         }
 
 
@@ -322,11 +420,19 @@ def _allumees(lignes: Iterable[Mapping[str, Any]], groupe: str) -> list[Mapping[
     ]
 
 
-def joindre(lignes: Iterable[Mapping[str, Any]]) -> str:
-    """Le prompt, tel qu'il partira — **et il n'y a que celui-ci**.
+def _repris(lignes: Iterable[Mapping[str, Any]]) -> bool:
+    """L'auteur a-t-il pris la main sur l'ensemble du texte ?
 
-    Trois blocs séparés d'une ligne vide, dans l'ordre où le produit les replie
-    depuis T4 : les textes de style, le sujet, les consignes de planche.
+    Un texte repris part **mot pour mot** (US-159) : il ne se range pas, et il
+    ne reçoit pas de titre. Poser `CONTEXT` au-dessus de ce que quelqu'un a
+    écrit lui-même serait ajouter un mot à un texte dont toute la promesse est
+    qu'aucun n'y sera ajouté.
+    """
+    return any(l.get("origine") == REPRIS for l in lignes)
+
+
+def _morceaux(lues: list[Mapping[str, Any]], partie: str) -> list[str]:
+    """Les paragraphes d'une partie, dans l'ordre où ils s'assemblent.
 
     **Les textes de style gardent l'ordre de la bible**, quelle que soit la
     couche qui a gagné : un monde venu d'une ambiance se lit à la place du
@@ -339,34 +445,115 @@ def joindre(lignes: Iterable[Mapping[str, Any]]) -> str:
     texte assemblé est le même, mot pour mot, et seul son découpage à l'écran a
     changé — **tant que le signalement tient sur une ligne**. Voir `_sujet`.
 
-    **Ce que les images jointes veulent dire, puis la caméra, ferment le
-    texte** (1ᵉʳ septembre 2026). C'est la place qui décide chez un modèle
-    d'image, et elle était occupée jusqu'ici par la consigne de pose — la seule
-    phrase du prompt qui ne savait pas d'où le jeu regarde.
+    **Le cadre et la caméra font un seul paragraphe, deux lignes qui se
+    suivent** — c'est la forme que le banc a tirée (`essais/socle_essais.py`,
+    `ranger`). Deux paragraphes séparés diraient deux choses ; ils n'en disent
+    qu'une, et elle ferme le texte.
     """
-    lues = list(lignes)
-    rang = {nom: i for i, nom in enumerate(CHAMPS_BIBLE)}
-    style = sorted(
-        _allumees(lues, JEU) + _allumees(lues, AMBIANCE),
-        key=lambda l: rang.get(str(l["nom"]), len(rang)),
-    )
-    blocs: list[str] = []
-    if style:
-        blocs.append(
+    if partie == CONTEXTE:
+        rang = {nom: i for i, nom in enumerate(CHAMPS_BIBLE)}
+        style = sorted(
+            _allumees(lues, JEU) + _allumees(lues, AMBIANCE),
+            key=lambda l: rang.get(str(l["nom"]), len(rang)),
+        )
+        if not style:
+            return []
+        return [
             "\n".join(
                 f"{l['intitule']}: {str(l['texte']).strip()}"
                 if l.get("intitule")
                 else str(l["texte"]).strip()
                 for l in style
             )
-        )
+        ]
+    if partie == REFERENCES:
+        return [str(l["texte"]).strip() for l in _allumees(lues, JOINTES)]
+    morceaux: list[str] = []
     sujet = _sujet([str(l["texte"]).strip() for l in _allumees(lues, SUJET)])
     if sujet:
-        blocs.append(sujet)
-    blocs.extend(str(l["texte"]) for l in _allumees(lues, PLANCHE))
-    blocs.extend(str(l["texte"]).strip() for l in _allumees(lues, JOINTES))
-    blocs.extend(str(l["texte"]).strip() for l in _allumees(lues, CADRAGE))
-    return "\n\n".join(blocs)
+        morceaux.append(sujet)
+    morceaux.extend(str(l["texte"]) for l in _allumees(lues, PLANCHE))
+    cadrage = [str(l["texte"]).strip() for l in _allumees(lues, CADRAGE)]
+    if cadrage:
+        morceaux.append("\n".join(cadrage))
+    return morceaux
+
+
+def parties(lignes: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Les trois parties du texte, chacune avec son titre et son contenu (R7).
+
+    **Une partie vide est rendue quand même, avec un texte vide** — et elle ne
+    part pas : `joindre` la saute, titre compris. Un `REFERENCES` posé au-dessus
+    de rien annoncerait au modèle des images qui ne partent pas, ce qui est très
+    exactement le défaut que la tranche répare.
+
+    Elle est rendue quand même parce que **l'écran range des lignes, pas des
+    paragraphes** : une ligne éteinte reste à sa place, barrée, et elle ne
+    produit aucun texte. Si la partie qui la porte disparaissait de cette
+    liste-là, éteindre la dernière ligne d'une partie ferait disparaître la
+    ligne avec elle — et on ne pourrait plus la rallumer.
+
+    Rend la partie **telle qu'elle part**, texte compris : c'est cette liste que
+    l'écran de confirmation affiche, et `joindre` n'est que sa jonction. Un
+    écran qui recomposerait ses parties de son côté serait une seconde vérité
+    sur ce qui part.
+    """
+    lues = list(lignes)
+    if _repris(lues):
+        # Un texte repris est une seule partie sans titre : *la demande*, parce
+        # que c'est bien ce que l'auteur demande, et rien d'autre.
+        texte = "\n\n".join(
+            str(l["texte"]).strip() for l in _allumees(lues, SUJET) if str(l["texte"]).strip()
+        )
+        if not texte:
+            return []
+        return [
+            {
+                "clef": DEMANDE,
+                "titre": "",
+                "nom": "ton texte",
+                "propos": "repris à la main — il part mot pour mot, sans titre",
+                "texte": texte,
+                "repris": True,
+            }
+        ]
+    return [
+        {
+            "clef": partie,
+            "titre": TITRE[partie],
+            "nom": NOM_DE_LA_PARTIE[partie],
+            "propos": PROPOS_DE_LA_PARTIE[partie],
+            "texte": "\n\n".join(
+                m for m in _morceaux(lues, partie) if m.strip()
+            ),
+            "repris": False,
+        }
+        for partie in PARTIES
+    ]
+
+
+def joindre(lignes: Iterable[Mapping[str, Any]]) -> str:
+    """Le prompt, tel qu'il partira — **et il n'y a que celui-ci**.
+
+    Depuis R7 il se lit en trois parties nommées, chacune annoncée par son titre
+    en majuscules suivi d'une ligne vide : `CONTEXT` porte les textes de style,
+    `REFERENCES` ce que chaque image jointe est, `REQUEST` le sujet, les
+    consignes de planche, le cadre et la caméra.
+
+    **La caméra ferme toujours le texte** (1ᵉʳ septembre 2026, trente images
+    payées) : elle est la dernière ligne de la dernière partie, et le rangement
+    ne l'a pas déplacée. Ce qui a changé de place est le bloc des références,
+    qui remonte au deuxième rang — le seul déplacement de la tranche.
+
+    **On range, on ne réécrit pas.** Hors les trois titres et les lignes de
+    nommage des images, pas un mot n'entre ni ne sort ; `tests/test_r7.py` le
+    vérifie en comptant les mots, avec l'outil du banc.
+    """
+    return "\n\n".join(
+        f"{p['titre']}\n\n{p['texte']}" if p["titre"] else str(p["texte"])
+        for p in parties(lignes)
+        if str(p["texte"]).strip()
+    )
 
 
 def _sujet(morceaux: list[str]) -> str:
@@ -393,30 +580,3 @@ def _sujet(morceaux: list[str]) -> str:
     if any("\n" in m for m in morceaux):
         return "\n".join(morceaux)
     return ", ".join(morceaux)
-
-
-# Ce que les blocs de R2 appelaient une origine. **Une lecture des lignes, pas
-# une seconde composition** : un bloc et sa ligne ne peuvent donc pas diverger.
-_BLOC = {
-    JEU: "bible",
-    AMBIANCE: "bible",
-    SUJET: "sujet",
-    PLANCHE: "planche",
-    JOINTES: "jointes",
-    CADRAGE: "cadrage",
-}
-
-
-def en_blocs(lignes: Iterable[Mapping[str, Any]]) -> list[dict[str, str]]:
-    """Les lignes, groupées comme elles s'assemblent (US-158)."""
-    lues = list(lignes)
-    if any(l.get("origine") == REPRIS for l in lues):
-        return [{"origine": "repris", "texte": joindre(lues)}]
-    blocs: list[dict[str, str]] = []
-    for groupe in (JEU, SUJET, PLANCHE, JOINTES, CADRAGE):
-        morceau = joindre(
-            [l for l in lues if _BLOC.get(str(l["groupe"])) == _BLOC.get(groupe)]
-        )
-        if morceau:
-            blocs.append({"origine": _BLOC[groupe], "texte": morceau})
-    return blocs

@@ -1,0 +1,63 @@
+{
+ "references-nommees": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "A-temoin         bonnes 2 · moyennes 1 · mauvaises 1 sur 4 notées → témoin, le point de comparaison · $0.118 la bonne",
+   "A2-temoin-art    bonnes 1 · moyennes 1 · mauvaises 0 sur 2 notées → témoin, le point de comparaison · $0.057 la bonne",
+   "B-nommees        bonnes 0 · moyennes 2 · mauvaises 2 sur 4 notées (il en faut 2) → on n'insiste pas · — la bonne",
+   "C-rangees        bonnes 0 · moyennes 2 · mauvaises 2 sur 4 notées (il en faut 2) → on n'insiste pas · — la bonne",
+   "IA-reecrit-art   bonnes 0 · moyennes 0 · mauvaises 2 sur 2 notées (il en faut 1) → on n'insiste pas · — la bonne",
+   "R1-range-art     bonnes 0 · moyennes 0 · mauvaises 2 sur 2 notées (il en faut 1) → on n'insiste pas · — la bonne",
+   "R2-priorite-art  bonnes 0 · moyennes 1 · mauvaises 1 sur 2 notées (il en faut 1) → on n'insiste pas · — la bonne",
+   "rien ne passe la barre : le texte du produit ne bouge pas"
+  ]
+ },
+ "taille-reference": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "« même personnage » : 64 px 2 · 256 px 2 · 512 px 0",
+   "taille retenue : 64 px — 64 px n'est pas battu, la question est fermée",
+   "      64 px  bonnes 2 · $0.028 la bonne",
+   "     256 px  bonnes 0 · — la bonne",
+   "     512 px  bonnes 0 · — la bonne"
+  ]
+ },
+ "grille-complete": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "A-temoin : bonnes 1 · neuf-pour-huit cochés 0",
+   "B-4x2-carre : neuf-pour-huit 0 (il en faut 0) · bonnes 2 contre A 1 (il en faut >= 1) → règle atteinte · $0.028 la bonne",
+   "C-4x2-3sur2 : neuf-pour-huit 0 (il en faut 0) · bonnes 0 contre A 1 (il en faut >= 1) → non atteinte · — la bonne",
+   "entre B et C : le format où l'auteur juge le personnage le plus lisible — à lui de le dire"
+  ]
+ },
+ "mise-en-pose": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "prep choisie : jet2",
+   "B >= A + 2 : 0 contre 1 → non",
+   "« la taille change » recule d'au moins trois : A 0 → B 0 → non",
+   "la prep n'entre pas dans la V3 comme étape ; le référent reste une question ouverte"
+  ]
+ },
+ "pose-imposee": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "tour1 : obéit 0 · à moitié 2 · n'obéit pas 0 · même personnage 2 / 2 · conclusion : le suivie de la pose est super, mais il manque une préservation de la proportion des membres du personnage qui est animé.",
+   "tour2 : obéit 0 · à moitié 2 · n'obéit pas 0 · même personnage 2 / 2 · conclusion : (à écrire)",
+   "tour3 : obéit 0 · à moitié 2 · n'obéit pas 0 · même personnage 2 / 2 · conclusion : (à écrire)",
+   "deux tours de suite donnent le même résultat sans qu'aucune pose n'obéisse (3 tours faits, trois correctifs) : arrêt, la pose imposée par image n'entre pas dans A0 — le modèle suit la géométrie du guide et lui emprunte la carrure",
+   "la bande de huit appels contre le témoin : mauvais → le quatrième chemin n'est pas retenu par cette bande"
+  ]
+ },
+ "video": {
+  "seance": "2026-09-02",
+  "lignes": [
+   "témoin (les planches A2 de E1) : 1 bonne(s) sur 2 · $0.057 la bonne planche",
+   "seedance-1.5-pro : clips utilisables 0 / 2 · bandes pixelisées bonnes 0 / 2 (il en faut 1) · — la bonne bande → bandes pixelisées pas encore notées",
+   "seedance-2.0-mini : clips utilisables 2 / 2 · bandes pixelisées bonnes 0 / 2 (il en faut 1) · — la bonne bande → bandes pixelisées pas encore notées",
+   "    brutes bonnes, pixelisées mauvaises : c'est D2 qui est en cause, pas la vidéo",
+   "wan-3.0 : clips utilisables 0 / 2 · bandes pixelisées bonnes 0 / 2 (il en faut 1) · — la bonne bande → bandes pixelisées pas encore notées"
+  ]
+ }
+}

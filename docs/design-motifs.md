@@ -410,7 +410,10 @@ mais elle ne remplace ni ne déplace la raison, qui reste dans sa fente, permane
 cohabitent parce qu'elles ne disent pas la même chose : *pourquoi c'est fermé* n'est pas
 *à quoi ça sert*.
 
-#### Un seul corpus, deux rendus
+#### Un seul corpus, trois rendus
+
+*Deux jusqu'au 3 septembre 2026 ; le troisième est arrivé avec `R8`, et il est décrit
+juste en dessous. **Ce que la règle interdit n'a pas changé d'un mot** : recopier.*
 
 **L'infobulle et le guide sont le même texte.** Le panneau rend les trois lignes d'une
 entrée du guide ; l'écran Guide rend toutes les entrées à la file, avec le contexte autour.
@@ -419,6 +422,12 @@ deux fois — *deux comptes calculés à deux endroits se contredisent* (bloc «
 *deux éléments qui disent la même chose à deux altitudes, et aucun des deux n'est l'autorité*
 (le bandeau hors ligne). Une explication recopiée dans deux fichiers diverge en trois
 semaines, et c'est celle qui est sous les yeux au moment du doute qui sera la fausse.
+
+**Et le propos écrit sous un titre de section est le troisième rendu du même texte.**
+Il ne montre que *ce que c'est* — la première ligne de l'entrée, celle que le corpus impose
+déjà de tenir en **une phrase, jamais deux** —, là où la bulle y ajoute *ce que ça change*
+et *d'où ça vient*. Corriger l'entrée corrige les trois d'un coup. Le motif complet, avec
+sa limite, est au § **Le propos d'une section s'écrit sous son titre**.
 
 **Un réglage sans entrée n'a pas de pointillé, et rien ne casse.** Aucune infobulle vide,
 aucun `à documenter` dans le châssis. C'est le **guide** qui tient la liste de ce qui lui
@@ -508,6 +517,109 @@ ses deux segments, « bord » et « modèle », c'est-à-dire sur ses **valeurs*
 que `groupe` et `note`, dont le nom vivait dans un `placeholder` : *un contrôle qui n'est
 nommé que par ce qu'il vaut n'a nulle part où accrocher son explication.* Le pointillé n'a
 pas seulement documenté le produit, il a servi une troisième fois de détecteur.
+
+### Le propos d'une section s'écrit sous son titre
+
+*Décidé le 3 septembre 2026, avec l'auteur, en construisant `R8`. La mesure qui l'a tranché
+est au § 05 de `docs/maquettes-v2.1/07ter-la-fiche-repensee.html`.*
+
+**Une phrase à demeure sous le titre d'une section, qui dit à quoi la section sert — et
+cette ligne est *lue dans le recueil*, jamais retapée dans l'écran.** C'est
+`EnTeteDeSection`, dans le châssis : il prend la clef d'une entrée et rend le nom, le compte
+à droite, et le propos dessous.
+
+**La question posée d'abord était mauvaise, et c'est le comptage du code qui l'a montrée.**
+Écrire une phrase à demeure semblait ajouter un troisième rendu à un corpus qui n'en avait
+que deux. Or le produit écrit déjà ce genre de phrase partout : **74 lignes explicatives en
+dur dans dix-sept écrans**, et sur les quinze relues une par une, **treize expliquent ce que
+fait un réglage sans rien refuser** — « l'opacité ne pose aucune couleur : elle décide de ce
+qui est là », « multiples entiers seulement — un sprite agrandi d'une fois et demie fabrique
+des pixels qui n'existent pas ». La règle n'a jamais interdit d'écrire une phrase à l'écran.
+Ce qu'elle interdit est de **recopier le corpus dans un second fichier**.
+
+**La vraie question était donc : on la tape comme les 74 autres, ou on la lit dans le
+corpus ?** On la lit. Ce n'est alors pas un troisième texte, c'est **le même texte montré
+une troisième fois**. Rien n'est à rédiger en plus — le corpus impose déjà que *ce que
+c'est* tienne en une phrase, jamais deux, ce qui est exactement le format d'une ligne sous
+un titre. La règle en sort **mieux tenue** qu'avec les 74 lignes tapées à la main.
+
+**La limite, pour que ça ne se répande pas : la ligne ne s'écrit que là où l'on peut se
+tromper de section.** Sur un panneau où chaque ligne porte un nom sans ambiguïté —
+*occupation*, *décalage* —, rien ne change : le pointillé au survol suffit. C'est le même
+test binaire qui décide déjà de l'existence d'une bulle.
+
+**Et le compte de la section s'écrit sur la même ligne que le titre, aligné à droite, en
+mono.** Même geste que le bloc replié qui porte son réglage : un titre qui porte sa mesure
+se lit sans qu'on ouvre quoi que ce soit.
+
+### Un outil montre le défaut qu'il répare avant de proposer de le réparer
+
+*Écrit le 3 septembre 2026, en construisant `R9`. Le défaut réparé : l'écran du
+calibrage ouvrait sur un décompte — « 6 poses · 5 calées » — et proposait un
+verbe — « Calibrer les 5 poses ». Rien ne disait ce qui n'allait pas.*
+
+**Trois choses dans cet ordre, et l'ordre est le motif.**
+
+1. **Ce qu'il répare**, en clair, avant tout le reste. La phrase est **lue dans le
+   recueil** (§ Le propos d'une section s'écrit sous son titre), et suivie du
+   défaut **mesuré sur la chose qu'on a sous les yeux** — jamais sur un souvenir :
+   « ses poses sortent à 64, 53 et 43 px de haut ». Un chiffre cité de mémoire
+   devient faux, et `G1` a passé une tranche à le démontrer.
+2. **Ce que le geste donnerait**, une ligne par fait, **au-dessus** du contrôle
+   qui l'engage. Nom à gauche, chiffre à droite, dans la police des chiffres : les
+   trois se lisent comme une colonne. Un fait écrit sous le bouton se lit après
+   l'avoir appuyé.
+3. **Le contrôle, qui annonce son résultat et non son verbe** — « Mettre les 5
+   poses à 53 px », pas « Calibrer les 5 poses ». C'est le geste que le bouton qui
+   paie fait depuis toujours : il annonce ce qu'il va coûter.
+
+**Et quand il n'y a rien à réparer, il s'éteint avec sa raison.** C'est la règle
+du § Le grisé porte sa raison, appliquée à un outil au lieu d'un réglage : un
+contrôle allumé qui ne changerait rien invite à un geste sans effet, ce qui use
+la confiance plus vite qu'un refus.
+
+**L'avant et l'après, côte à côte, avant tout geste.** C'est la réponse visuelle
+à *« qu'est-ce que ce bouton va faire »*, et elle vaut mieux qu'un paragraphe.
+Deux règles la tiennent :
+
+- **rien n'est fabriqué pour ce dessin** — l'après est la même image, transformée
+  du rapport exact que le geste appliquera ;
+- **quand il n'y a rien à faire, la seconde image ne se dessine pas.** Répéter la
+  pile à l'identique serait un dessin qui ment sur son propre propos ; la place
+  revient à une phrase qui dit pourquoi il n'y a rien à faire.
+
+**Une marque dit un état, un mot fait un geste**, et les deux ne doivent pas se
+ressembler. L'encadré « réf » et le rond plein de cet écran étaient un vocabulaire
+à apprendre : leur sens ne vivait que dans un `title`. *Prendre comme référence*
+et *mettre de côté* s'écrivent en toutes lettres, là où l'on règle la pose ; sur
+la ligne il ne reste que la marque, sans encadré et sans clic. Le produit dit déjà
+*retenir*, *éteindre*, *rallumer*.
+
+**Et une superposition à plusieurs traitements porte sa légende.** Trois niveaux
+de transparence disent trois rôles ; personne ne devine que la silhouette à demi
+effacée est celle qui sert de référence. La légende nomme ce qui est montré, et
+elle rétrécit quand on montre moins : nommer ce qui n'est pas là est une légende
+fausse.
+
+### Une fiche montre la chose dont elle est la fiche
+
+*Écrit le 3 septembre 2026, en construisant `R8`. Le défaut réparé : la fiche d'une chose
+du jeu ne montrait ni image d'elle, ni son nom — un écran entier de texte sur une chose qui
+n'existe qu'en images.*
+
+**En tête, un bandeau d'identité** : le portrait à gauche, 96 px sur damier ; à droite le
+nom, puis une ligne de faits en mono, puis une ligne de contexte. Rien de neuf — ce sont les
+mesures et les polices que le produit emploie déjà.
+
+**Le portrait est pris parmi les images déjà faites de la chose** — la favorite de sa
+première pose remplie, sinon la plus récente. **Il ne fabrique rien et ne paie rien**, et
+c'est la seule règle non négociable du motif : un écran de réglage qui déclencherait une
+génération pour s'illustrer serait le contraire de ce que le produit promet. Une chose sans
+aucune image montre **une case vide qui le dit**, ce qui est déjà un renseignement.
+
+**Le nom est le seul emploi de la police à empattements sur cet écran** — c'est un nom, pas
+une mesure. La règle du § *Typography* ne souffre pas d'exception : les mesures sont en
+mono, partout.
 
 ### L'annulation se pose dans une fente, jamais dans un bandeau
 

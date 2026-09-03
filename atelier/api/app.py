@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from atelier.api.animation import routeur as routeur_animation
 from atelier.api.bibliotheque import routeur as routeur_bibliotheque
 from atelier.api.production import routeur as routeur_production
 from atelier.api.routes import routeur
@@ -171,6 +172,10 @@ def creer_application(atelier: Atelier | None = None) -> FastAPI:
     # Le quatrième, arrivé avec C1 : ce qu'il reste à fabriquer — le plan de
     # poses du projet, ses personnages, et la matrice qui dit ce qui manque.
     application.include_router(routeur_production, prefix="/api")
+    # Le cinquième, arrivé avec A9 : le clip. Il répond à une question que
+    # personne ne posait avant la V3 — *ce qui bouge* —, et son appel n'a ni la
+    # forme ni la durée d'un appel d'image.
+    application.include_router(routeur_animation, prefix="/api")
 
     @application.exception_handler(ErreurAtelier)
     async def _refus(_: Request, erreur: ErreurAtelier) -> JSONResponse:

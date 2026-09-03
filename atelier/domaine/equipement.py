@@ -176,7 +176,7 @@ class MesuresCalque:
     """Ce qu'on a lu sur une case au moment où le calque est apparu (US-147).
 
     **Cinq nombres, et aucun ne refuse.** Le compte d'images reste le seul refus
-    automatique du produit (`docs/PLAN.md`, C2, reconduit en C3) : celles-ci
+    automatique du produit (`docs/archive/plan-versions-tenues.md`, C2, reconduit en C3) : celles-ci
     s'affichent, se comparent d'une case à l'autre, et laissent l'auteur juger.
     Une pièce qui repeint 4 % du corps est peut-être exactement ce qu'il
     voulait ; le produit n'en sait rien.

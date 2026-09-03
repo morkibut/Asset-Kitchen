@@ -44,18 +44,23 @@ from atelier.image.taches import (
 )
 from atelier.image.pliage import gabarit, mesurer_lot
 from atelier.image.traitement import (
+    GrilleRetrouvee,
+    MesuresDuFond,
     MoteurAbsent,
     Rendu,
     appliquer,
     detourer,
     finir,
     mesurer_grille,
+    mesures_du_fond,
     moteur_disponible,
     raison_moteur,
+    retrouver_grille,
 )
 
 __all__ = [
     "COTE_MIN",
+    "GrilleRetrouvee",
     "Tache",
     "crans_occupation",
     "poches_de_fond",
@@ -70,6 +75,7 @@ __all__ = [
     "Boite",
     "MARGE",
     "Mesure",
+    "MesuresDuFond",
     "MoteurAbsent",
     "Rendu",
     "appliquer",
@@ -85,10 +91,12 @@ __all__ = [
     "mesurer",
     "mesurer_grille",
     "mesurer_lot",
+    "mesures_du_fond",
     "moteur_disponible",
     "palette_de",
     "raison_moteur",
     "rendre_en_png",
+    "retrouver_grille",
     "vignette",
     "zones_opaques",
 ]

@@ -31,6 +31,8 @@ from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset, identifiant_de
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Emplacement, Generation
+from atelier.domaine.planche import asset_de_planche
+from atelier.domaine.projet import IMAGE_SEULE, PLANCHE
 from atelier.domaine.recette import (
     ANCRAGES,
     BORD,
@@ -38,8 +40,10 @@ from atelier.domaine.recette import (
     DETOURAGE,
     DIFFERENCE,
     EPAISSEUR_MAX,
+    METHODES_DE_REDUCTION,
     MODELE,
     MOTEURS,
+    NOM_DE_LA_METHODE,
     PLACES,
     PORTEES,
     POSITIONS,
@@ -51,6 +55,10 @@ from atelier.domaine.recette import (
     Main,
     Passe,
     Recette,
+    cote_du_canevas,
+    cote_du_sujet,
+    moteurs_suivis,
+    occupation_max,
     voyage,
 )
 from atelier.image import (
@@ -58,9 +66,11 @@ from atelier.image import (
     crans_occupation,
     detourer,
     finir,
+    mesures_du_fond,
     poches_de_fond,
     raison_moteur,
     rendre_en_png,
+    retrouver_grille,
     taches,
     trous,
 )
@@ -73,6 +83,7 @@ from atelier.image.traitement import (
     pose_du_calque,
     queue,
     raison_du_modele,
+    raison_methode,
     sans_les_deux_dernieres,
     silhouette,
 )
@@ -85,7 +96,16 @@ from atelier.services.evenements import Diffusion
 # silence vers la borne la plus proche. Ramener discrètement « 512 » à « 256 »
 # rendrait un sprite d'une autre taille que celle inscrite dans la recette,
 # sans que personne puisse le voir — leçon de `MySpriteAi/src/lib/renderSettings.ts`.
-CIBLE_MIN, CIBLE_MAX = 8, 512
+# **Le plafond est passé de 512 à 2048 en D2**, et c'est le style qui l'exige :
+# un jeu en dessin ne demande pas des carrés, il demande une **finesse**, et ses
+# quatre valeurs montent à 2048 (`domaine/vue.py`, `FINESSES`). Le plancher ne
+# bouge pas — 8 carrés reste la tuile des toutes premières consoles.
+#
+# Ce n'est pas un assouplissement du pixel art : sa liste à lui s'arrête à 512,
+# et c'est l'écran qui propose l'une ou l'autre selon le style. Ici on borne ce
+# qu'un fichier retouché à la main a le droit de contenir, et les deux styles
+# passent par la même case.
+CIBLE_MIN, CIBLE_MAX = 8, 2048
 DURCISSEMENT_MAX = 4
 COULEURS_MIN, COULEURS_MAX = 2, 256
 
@@ -158,13 +178,44 @@ class ServiceAssets:
         return objet.univers.palette if objet else ()
 
     def raison_quantification(self, projet: str | None) -> str | None:
-        """Pourquoi la quantification est grisée — ou `None` quand elle ne l'est plus.
+        """Pourquoi la quantification est grisée — **plus jamais depuis D2**.
 
-        Elle s'allume au premier artwork officiel promu (US-65, achevée en T4).
+        Elle l'était tant qu'aucun artwork officiel n'avait été promu. Mesuré le
+        3 septembre 2026, ce grisé coûtait bien plus qu'il ne protégeait : un
+        projet sans artwork ne réduisait **aucune** couleur, et le seul signe
+        visible était un sprite à dix mille couleurs que personne ne rapprochait
+        de la cause. Le réglage existait, il ne faisait rien.
+
+        Réduire à N couleurs sans palette imposée est pourtant un traitement
+        parfaitement défini — c'est ce que fait `quantifier` quand `palette` est
+        vide, et ce que le banc de D2 a mesuré. **Il n'y a donc plus rien à
+        griser** ; il reste quelque chose à dire, et `note_de_palette` le dit.
+
+        La méthode est gardée : elle est l'endroit où ce grisé se rallumerait
+        s'il devait revenir, et son absence de raison est une réponse, pas un
+        oubli.
+        """
+        return None
+
+    def note_de_palette(self, projet: str | None) -> str | None:
+        """Ce que l'écran annonce quand les couleurs ne viennent pas du projet.
+
+        **Une information, pas un refus** — c'est toute la différence avec le
+        grisé d'avant. Sans artwork officiel, les couleurs se déduisent de
+        l'image elle-même : le traitement a lieu, mais il n'obéit pas à la
+        palette du jeu, et deux sprites peuvent donc sortir sur deux
+        vocabulaires voisins au lieu d'un seul.
+
+        Demandé par l'auteur le 3 septembre 2026 : *« on doit indiquer qu'il n'y
+        a pas d'artwork et proposer de choisir une image de l'univers »*. La
+        proposition d'y remédier appartient à l'écran ; ce service dit le fait.
         """
         if self.palette_du_projet(projet):
             return None
-        return "aucune palette : elle se déduira des artworks du projet"
+        return (
+            "aucun artwork officiel — les couleurs se déduisent de chaque image, "
+            "pas de la palette du jeu"
+        )
 
     def traitement(self, projet: str | None = None) -> dict[str, Any]:
         """Ce que l'écran a besoin de savoir pour griser sans redemander."""
@@ -176,7 +227,23 @@ class ServiceAssets:
             # écrit en dur, donc il se sert comme tout le reste : le serveur le
             # rend, l'écran le montre, et personne ne le recompose.
             "silhouettes": etat_des_silhouettes(),
-            "quantification": {"raison": self.raison_quantification(projet)},
+            "quantification": {
+                "raison": self.raison_quantification(projet),
+                # **Ce que l'écran annonce sans interdire** (D2) : la palette du
+                # jeu manque, les couleurs viennent donc de l'image.
+                "note": self.note_de_palette(projet),
+            },
+            # **Les quatre façons de réduire** (D2), avec leur raison de grisé.
+            # Trois ne demandent rien ; « traits épaissis » tire une
+            # bibliothèque lourde et suit le régime du moteur par modèle.
+            "reductions": [
+                {
+                    "nom": methode,
+                    "libelle": NOM_DE_LA_METHODE[methode],
+                    "raison": raison_methode(methode),
+                }
+                for methode in METHODES_DE_REDUCTION
+            ],
             "recettes": sorted(self._fichiers.lire_recettes()),
         }
 
@@ -209,24 +276,59 @@ class ServiceAssets:
         asset = self._trouver(identifiant)
         generation = self._base.lire(asset.generation)
         if generation is None:
-            return {"impose": None, "echelle": ""}
+            return {"impose": None, "echelle": "", "nature": "", "detourage": None}
+        # **La nature se lit sur l'asset, pas sur la génération** (D1) : le lot
+        # est ce qui dit qu'une image est sortie d'une planche, et c'est déjà
+        # lui que l'écran interroge partout ailleurs.
+        nature = PLANCHE if asset.lot is not None else IMAGE_SEULE
+        echelle = str(generation.demande.get("echelle", "") or "")
         return {
-            "impose": self.recette_du_projet(generation).en_json(),
+            "impose": self.recette_du_projet(generation, nature).en_json(),
             # **Ce que l'auteur avait dit fabriquer**, parce que c'est elle qui
             # décide de l'occupation : « imposé 40 % » ne s'explique que si la
             # fiche peut ajouter « objet tenu ».
-            "echelle": str(generation.demande.get("echelle", "") or ""),
+            "echelle": echelle,
+            # **Comment l'image est venue, et d'où son détourage vient** (D1,
+            # US-410). Sans la provenance, l'auteur lit un durcissement qu'il
+            # n'a pas posé sans pouvoir savoir lequel de ses trois réglages l'a
+            # décidé — c'est exactement ce que le critère demande d'éviter.
+            "nature": nature,
+            "detourage": self._provenance_du_detourage(generation, nature, echelle),
+        }
+
+    def _provenance_du_detourage(
+        self, generation: Generation, nature: str, echelle: str
+    ) -> dict[str, Any] | None:
+        """La passe par défaut qui s'applique, et le nom du niveau qui l'a dite.
+
+        Rend `null` quand le projet n'impose rien du tout — sans projet, ou pour
+        une image entrée « telle quelle » : il n'y a alors pas de défaut à
+        montrer, et afficher celui du produit ferait croire qu'il s'applique.
+        """
+        if generation.demande.get("traiter") is False or generation.projet is None:
+            return None
+        objet = self._base.lire_projet(generation.projet)
+        if objet is None:
+            return None
+        lue = objet.univers.echelle(echelle)
+        passe, origine = objet.univers.detourage(nature, lue.famille if lue else "")
+        return {
+            "passe": passe.en_json(),
+            "origine": origine,
+            "famille": lue.famille if lue else "",
         }
 
     def taches_de(self, identifiant: str, plafond: int = 200) -> dict[str, Any]:
-        """Ce qu'une table a besoin de savoir de l'image (E3, étendu en E5).
+        """Ce qu'une table a besoin de savoir de l'image (E3, étendu en E5 puis D2).
 
-        **Cinq mesures, et aucune n'est un réglage** : les taches que le
+        **Six mesures, et aucune n'est un réglage** : les taches que le
         nettoyage des bords va effacer, les poches de fond que le sujet enferme,
         les crans d'occupation où la remise sur grille change vraiment quelque
-        chose, ce que chaque couche de la main touche, et la couleur que chaque
-        pipette a sous son point. Toutes répondent à la même question posée cinq
-        fois — *qu'est-ce que ce curseur va faire, avant que je le bouge ?*
+        chose, ce que chaque couche de la main touche, la couleur que chaque
+        pipette a sous son point, et **la grille sur laquelle le modèle a peint**.
+        Les cinq premières répondent à la même question posée cinq fois —
+        *qu'est-ce que ce curseur va faire, avant que je le bouge ?* La sixième en
+        pose une autre, et c'est celle de D2 : *sur quoi est-ce que je travaille ?*
 
         **À l'échelle où le réglage agit, et c'est une correction du 31 août
         2026.** Elles se prenaient sur l'image *détourée* — donc à la taille du
@@ -263,6 +365,28 @@ class ServiceAssets:
             "crans_occupation": crans_occupation(
                 rgba, asset.recette.grille or Grille()
             ),
+            # **Ce que la hauteur donne, dit par le serveur** (tranche des
+            # tailles). L'auteur a demandé les deux lectures d'un coup —
+            # *« les deux, avec un rappel visuel »* — et l'écran ne les calcule
+            # donc pas de son côté : une seconde arithmétique aurait fini par
+            # annoncer une hauteur et en produire une autre, ce qui est très
+            # exactement le défaut que le calibrage venait de payer.
+            "hauteur": self._hauteur_de(asset.recette.grille or Grille()),
+            # **La grille sur laquelle le modèle a peint** (D2, seconde moitié).
+            # Une mesure de plus, et elle répond à la question que la table
+            # posait sans pouvoir y répondre : *le modèle a-t-il tenu la grille
+            # qu'on lui a demandée, et laquelle ?*
+            "grille_du_modele": self._grille_du_modele(asset),
+            # **Les deux mesures d'acceptation du fond** (D3). Elles ne décrivent
+            # pas un réglage de cette table-ci : elles disent ce que *l'appel*
+            # a rendu — la couleur de fond revenue, la frange que le détourage a
+            # laissée, et les pixels du sujet qu'un cran de tolérance de plus
+            # aurait mangés.
+            #
+            # **C'est ce qui remplace le banc de la tranche du fond**, tranché
+            # par l'auteur le 2 septembre 2026 : la mesure se lit sur les images
+            # qu'on voulait de toute façon, à côté du curseur qui l'explique.
+            "fond": self._mesures_du_fond(asset),
             # **Une image entièrement opaque n'a pas de bord de sujet** — le
             # seul cas où le contour est indisponible, et l'écran a besoin de
             # le savoir pour griser la table avec sa raison. Ce n'est pas une
@@ -271,6 +395,76 @@ class ServiceAssets:
             "main": self._pixels_de_la_main(asset),
             "visees": self._couleurs_visees(asset),
             "recadrage": self._recadrage_de(asset),
+        }
+
+    def _mesures_du_fond(self, asset: Asset) -> dict[str, Any]:
+        """Ce que cette image-là dit du fond sur lequel elle a été demandée (D3).
+
+        **Sur l'image détourée, et pour la raison de `_grille_du_modele`** juste
+        en dessous : le tableau y est déjà en cache — `detourage` est le seul
+        endroit du dépôt qui détoure —, la couleur du fond y est encore lisible
+        dans les pixels rendus transparents, et le rendu final les a déjà
+        recadrés, réduits et quantifiés.
+
+        **La tolérance est celle de la dernière passe qui agit**, parce que c'est
+        elle qui a tranché le bord. Sans passe vive — un import posé tel quel —,
+        c'est celle du produit : la mesure reste lisible, elle dit seulement ce
+        qu'un détourage *aurait* mangé.
+        """
+        vives = asset.recette.passes_vives()
+        tolerance = vives[-1].tolerance if vives else Passe().tolerance
+        return mesures_du_fond(self.detourage(asset), tolerance).en_json()
+
+    def _grille_du_modele(self, asset: Asset) -> dict[str, Any]:
+        """Sur quelle grille le modèle a peint cette image-là — **ou rien** (D2).
+
+        **Une mesure, jamais un réglage**, comme les cinq autres de cette route.
+        La cible reste demandée et jamais déduite (US-61) : ce chiffre s'affiche
+        à côté du réglage de taille, il ne le remplit pas. Ce qu'il apporte est
+        que l'auteur cesse de choisir à l'aveugle — un modèle qui a peint sur
+        des blocs de 8 px ne rendra jamais 128 carrés propres, et jusqu'ici rien
+        dans l'écran ne le disait.
+
+        **Sur l'image détourée, et avant la mise sur grille.** Deux raisons, et
+        les deux sont des pièges évités :
+
+        - la mesure de cette route travaille d'ordinaire sur le rendu *arrêté
+          avant les bords*, c'est-à-dire une image **déjà ramenée à la case du
+          projet**. Y chercher la grille du modèle reviendrait à mesurer la
+          nôtre : la réponse serait 1, toujours, et elle aurait l'air juste ;
+        - le détourage, lui, est le bon endroit : il ne touche pas aux blocs, et
+          il pose un alpha qui est le contraste le plus franc de l'image. Le
+          tableau est de surcroît **déjà en cache** — `detourage` est le seul
+          endroit du dépôt qui détoure —, donc la mesure ne coûte rien de plus
+          qu'un balayage de profils.
+        """
+        return retrouver_grille(self.detourage(asset)).en_json()
+
+    @staticmethod
+    def _hauteur_de(grille: Grille) -> dict[str, Any]:
+        """Les deux lectures d'une même hauteur, et le plafond de la case.
+
+        **L'auteur a demandé les deux à la fois**, le 3 septembre 2026 :
+        *« les deux, avec un rappel visuel, une sorte d'échantillon »*. Un nombre
+        de carrés est ce que réclament les moteurs de jeu et les outils de dessin ;
+        un nombre de personnages est ce qui se lit quand on décrit un monde. Ce
+        sont deux façons de dire la même valeur, et aucune n'est de trop.
+
+        **Ce qui est stocké reste la relative**, et c'est ce qui fait qu'un
+        changement de taille de projet emmène tous les types avec lui : un moulin
+        de trois personnages en fait trois que le jeu tourne en 32 ou en 64
+        carrés. Un nombre de carrés figé aurait demandé de reprendre chaque type
+        à la main.
+        """
+        return {
+            "carres": cote_du_canevas(grille.cible, grille.occupation),
+            "personnages": grille.en_personnages,
+            "max": occupation_max(grille.cible),
+            # **Le sujet et la case ne font qu'un au-delà de 100 %**, et se
+            # séparent en dessous : un objet tenu à 40 % occupe 26 carrés dans
+            # une case de 64. L'écran montre les deux, sans quoi son échantillon
+            # dessinerait une case là où il y a un petit objet dedans.
+            "sujet": cote_du_sujet(grille.cible, grille.occupation),
         }
 
     def _recadrage_de(self, asset: Asset) -> dict[str, Any]:
@@ -452,7 +646,9 @@ class ServiceAssets:
             ],
         }
 
-    def recette_du_projet(self, generation: Generation) -> Recette:
+    def recette_du_projet(
+        self, generation: Generation, nature: str = IMAGE_SEULE
+    ) -> Recette:
         """Ce que l'univers impose à cette image-là, à sa naissance.
 
         **La remise sur grille est systématique tant qu'une cible est posée**
@@ -477,6 +673,13 @@ class ServiceAssets:
         le balayage de palette laisse tranquille (« un asset ramené au brut
         reste au brut »). Une image entrée telle quelle le reste donc, sans
         qu'aucune règle nouvelle ait à le dire.
+
+        **`nature` dit comment l'image est venue** (D1), et il est **posé par
+        l'appelant plutôt que deviné ici**. On aurait pu le lire dans la
+        génération — celle qui porte un pliage fabrique une planche — mais la
+        même génération donne les deux : la planche elle-même naît par
+        `naitre`, ses morceaux naissent au dépliage. Une seule génération, deux
+        natures ; il n'y a donc rien à deviner, seulement à dire.
         """
         if generation.demande.get("traiter") is False:
             return Recette()
@@ -486,7 +689,7 @@ class ServiceAssets:
         if objet is None:
             return Recette()
         nom = str(generation.demande.get("echelle", "") or "")
-        return objet.univers.recette_de(objet.univers.echelle(nom))
+        return objet.univers.recette_de(objet.univers.echelle(nom), nature)
 
     def naitre(self, generation: Generation, emplacement: Emplacement) -> Asset | None:
         """Un emplacement qui réussit devient un asset, tout de suite.
@@ -516,7 +719,7 @@ class ServiceAssets:
             # image neuve, elle, naît **déjà habillée de son univers** — c'est
             # « la chaîne complète tient d'un bout à l'autre : un asset se
             # génère, se détoure, se ramène sur la grille et la palette du
-            # projet, et se range tout seul » (`docs/PLAN.md`, T4).
+            # projet, et se range tout seul » (`docs/archive/plan-versions-tenues.md`, T4).
             recette=ancien.recette if ancien else self.recette_du_projet(generation),
             epingle=ancien.epingle if ancien else False,
             # Ce que l'appel a facturé pour cette image-là. La tuile le porte ;
@@ -620,14 +823,42 @@ class ServiceAssets:
         """
         nes = 0
         for generation in generations:
-            # **La planche d'un lot plié n'est pas un asset, et ne le devient
-            # pas ici non plus.** Ce qui entre en bibliothèque, ce sont les N
-            # images séparées ; leur ranger la feuille à côté la rendrait
-            # exportable, et « aucune feuille assemblée n'est livrable »
-            # (`docs/PLAN.md`, C2) cesserait d'être vrai par construction. Le
-            # dépliage manquant, lui, se rattrape ailleurs — `ServicePliage`
-            # sait le faire sans rien repayer.
+            # **La planche d'un lot plié entre ici comme les autres, depuis
+            # `G16`.** Elle n'entrait pas : « aucune feuille assemblée n'est
+            # livrable » (C2) l'interdisait, et l'auteur ne pouvait donc jamais
+            # regarder l'image qu'il avait payée. Cet invariant est levé — le
+            # plan le prévoyait pour `P1`, `G16` en prend la première moitié.
+            #
+            # **Ce rattrapage est ce qui la fait apparaître sur les lots
+            # d'avant**, et il ne repaie rien : la feuille est sur le disque
+            # depuis son arrivée, on lui donne son asset. Ses morceaux, eux,
+            # sont déjà rangés ; un dépliage manquant se rattrape ailleurs,
+            # chez `ServicePliage`.
             if generation.pliage is not None:
+                # **Une planche qui attend un choix n'entre pas**, elle non plus
+                # (R6, US-368). *Aucune image n'entre en bibliothèque avant que
+                # l'auteur ait vu ce qui est arrivé* : la feuille en est une
+                # depuis `G16`, et la règle vaut donc pour elle. C'est le même
+                # refus, mot pour mot, que celui de la reprise au démarrage —
+                # le lot a déjà été regardé une fois, il attend un geste, pas
+                # un rangement. Elle entrera au dépliage, avec ses morceaux.
+                if generation.pliage.attend_un_choix:
+                    continue
+                for emplacement in generation.emplacements:
+                    if emplacement.resultat is None:
+                        continue
+                    if not self._fichiers.existe(emplacement.resultat.fichier):
+                        continue
+                    identifiant = identifiant_de(
+                        generation.identifiant, emplacement.rang
+                    )
+                    if self._base.lire_asset(identifiant) is not None:
+                        continue
+                    planche = asset_de_planche(generation, emplacement)
+                    if planche is None:  # pragma: no cover — garde du dessus
+                        continue
+                    self.accueillir(planche, annoncer=False)
+                    nes += 1
                 continue
             for emplacement in generation.emplacements:
                 if emplacement.resultat is None:
@@ -772,10 +1003,24 @@ class ServiceAssets:
         ici, une fois, **de quoi cette charge-là parle**. Un champ de plus
         aurait rendu possible qu'un onglet en retard réécrive une différence
         avec la version qu'il avait chargée.
+
+        **Et c'est ici que le durcissement suit le moteur** (D1). Changer de
+        moteur sans y toucher laissait le durcissement du moteur d'avant ;
+        compté sur les recettes de l'auteur, il l'a retapé lui-même **39 fois
+        sur 40** en passant au moteur par modèle. La comparaison avec la recette
+        rangée est ce qui permet de lire *le moteur a changé* dans une charge
+        qui ne dit que son état final — et la règle ne touche que ce que
+        personne n'a choisi : un durcissement déplacé à la main est un choix, et
+        un choix ne se réécrit pas.
         """
         asset = self._trouver(identifiant)
         return self.poser_recette(
-            identifiant, replace(recette, difference=asset.recette.difference)
+            identifiant,
+            replace(
+                recette,
+                difference=asset.recette.difference,
+                passes=moteurs_suivis(asset.recette.passes, recette.passes),
+            ),
         )
 
     def revenir_au_brut(self, identifiant: str) -> Asset:
@@ -806,18 +1051,28 @@ class ServiceAssets:
         }
 
     def nommer(
-        self, nom: str, recette: Recette
+        self, nom: str, recette: Recette, projet: str | None = None
     ) -> tuple[dict[str, Recette], tuple[str, ...]]:
         """« Un preset *est* une recette nommée » — rien de plus (§4, règle 5).
 
         Rend les recettes **et ce qui n'a pas été enregistré** : une recette
         nommée ne garde que ce qui voyage, et l'auteur doit l'apprendre en
         l'enregistrant plutôt qu'en la rappelant.
+
+        **`projet` est le projet ouvert, et il n'est pas facultatif en fait.**
+        Une recette nommée ne pend à aucun asset : il n'y a donc pas d'univers
+        « auquel elle appartient » à interroger, et sans rien dire ici la
+        vérification jugeait la quantification sur *aucune* palette. Elle
+        refusait alors toute recette quantifiée — la palette du projet étant
+        posée sans être recopiée dans la recette —, y compris celle que l'écran
+        venait d'accepter de composer. Le filet doit dire ce que le grisé dit,
+        et le grisé regarde le projet ouvert : c'est lui qu'on lui passe.
+        Corrigé le 3 septembre 2026, sur un 409 à l'enregistrement.
         """
         propre = nom.strip()
         if not propre:
             raise RecetteRefusee("une recette nommée a besoin d'un nom")
-        self._verifier(recette)
+        self._verifier(recette, projet)
         enregistrees = self._fichiers.lire_recettes()
         # **Sans ce qui désigne un endroit de cette image-là** (U5). La règle est
         # écrite une fois, dans le domaine : la différence, les points de
@@ -1137,16 +1392,47 @@ class ServiceAssets:
                 raise RecetteRefusee(
                     f"la grille cible va de {CIBLE_MIN} à {CIBLE_MAX} pixels"
                 )
-            if not 1 <= grille.occupation <= 100:
-                raise RecetteRefusee("l'occupation va de 1 à 100 %")
+            # **Le plafond n'est plus 100 %, c'est ce que la case peut porter**
+            # (tranche des tailles). Le refus disait la borne dans son message,
+            # et c'était l'un des douze endroits où « rien ne peut être plus grand
+            # qu'un personnage » était écrit. Le plafond dépend maintenant de la
+            # cible — une case de 64 carrés porte trente-deux personnages, une de
+            # 512 en porte quatre —, donc il se dit avec sa cible, sans quoi le
+            # message serait vrai pour un projet et faux pour le suivant.
+            haut = occupation_max(grille.cible)
+            if not 1 <= grille.occupation <= haut:
+                raise RecetteRefusee(
+                    f"l'occupation va de 1 à {haut} % sur une case de {grille.cible} carrés"
+                )
             if grille.ancrage not in ANCRAGES:
                 raise RecetteRefusee(f"ancrage inconnu « {grille.ancrage} »")
+            # **La méthode de réduction est refusée par son nom, et par son
+            # absence** (D2). Le nom inconnu suit la règle du fichier retouché à
+            # la main ; le grisé suit celle des moteurs — « ce qui est
+            # indisponible est grisé avec sa raison, jamais proposé puis
+            # refusé », et ce refus-ci est le filet derrière l'écran, pas la
+            # porte d'entrée.
+            if grille.methode not in METHODES_DE_REDUCTION:
+                raise RecetteRefusee(f"méthode de réduction inconnue « {grille.methode} »")
+            manque = raison_methode(grille.methode)
+            if manque is not None:
+                raise RecetteRefusee(f"réduction — {manque}")
 
         quantification = recette.quantification
         if quantification is not None:
-            raison = self.raison_quantification(projet)
-            if raison is not None and not quantification.palette:
-                raise RecetteRefusee(f"quantification — {raison}")
+            # **Le refus « aucune palette » est tombé en D2**, et c'était le
+            # défaut lui-même. Il rendait la quantification impossible tant
+            # qu'aucun artwork officiel n'était promu ; comme `recette_de` ne
+            # la posait pas non plus dans ce cas, un projet sans artwork
+            # produisait des sprites de dix mille couleurs **sans que rien ne
+            # le dise**. Le réglage `couleurs` de l'univers ne servait alors à
+            # rien du tout.
+            #
+            # Une palette vide n'est pas une pièce manquante : c'est « les
+            # couleurs se déduisent de l'image », ce que `quantifier` sait
+            # faire depuis toujours et ce dont l'essai de comparaison se sert.
+            # L'écran le dit maintenant au lieu de l'interdire — voir
+            # `raison_quantification`.
             if not COULEURS_MIN <= quantification.couleurs <= COULEURS_MAX:
                 raise RecetteRefusee(
                     f"le nombre de couleurs va de {COULEURS_MIN} à {COULEURS_MAX}"

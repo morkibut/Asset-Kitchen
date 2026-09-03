@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T5 — le slicer.
 
-Un test par critère de `docs/PLAN.md` § Phase T5, nommé d'après lui.
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T5, nommé d'après lui.
 
 **Aucun test de ce fichier n'appelle le fournisseur, et deux le prouvent** en
 comptant les appels du double avant et après une découpe. C'est le cinquième

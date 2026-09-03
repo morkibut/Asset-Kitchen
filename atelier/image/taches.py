@@ -34,7 +34,7 @@ from typing import Any
 
 import numpy as np
 
-from atelier.domaine.recette import Grille
+from atelier.domaine.recette import Grille, cote_du_sujet, occupation_max
 from atelier.image.traitement import composantes
 
 
@@ -241,10 +241,10 @@ def trous(rgba: np.ndarray) -> list[Tache]:
 def crans_occupation(rgba: np.ndarray, grille: Grille) -> list[int]:
     """Les valeurs d'occupation où l'image **change vraiment**.
 
-    Le curseur va de 10 à 100 et s'arrête à chaque pour cent : quatre-vingt-onze
-    positions pour une image qui, sur une cible de 64 pixels, n'en a qu'une
-    trentaine de tailles possibles. Deux crans voisins rendent alors la même
-    image, et la main croit régler quelque chose.
+    Le curseur part de 10 % et s'arrête à chaque pour cent : sur une cible de 64
+    pixels il avait quatre-vingt-onze positions pour une trentaine de tailles
+    possibles. Deux crans voisins rendent alors la même image, et la main croit
+    régler quelque chose.
 
     Ce qui décide est la taille en pixels que le sujet occupera dans la case :
     `round(cible × occupation / 100)`. Deux occupations qui donnent la même
@@ -258,8 +258,12 @@ def crans_occupation(rgba: np.ndarray, grille: Grille) -> list[int]:
     cible = max(1, grille.cible)
     vus: set[int] = set()
     retenus: list[int] = []
-    for occupation in range(10, 101):
-        cote = round(cible * occupation / 100)
+    # **Le curseur monte maintenant au-delà de la case** (tranche des tailles,
+    # 3 septembre 2026). Il s'arrêtait à 100 %, et c'était l'un des douze endroits
+    # qui fermaient au produit les bâtiments, les arbres et les tours. Le plafond
+    # vient du domaine, où il se justifie une fois pour toutes.
+    for occupation in range(10, occupation_max(cible) + 1):
+        cote = cote_du_sujet(cible, occupation)
         if cote in vus:
             continue
         vus.add(cote)

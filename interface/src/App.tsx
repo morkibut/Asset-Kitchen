@@ -87,6 +87,7 @@ import { EcranEtabli } from "./composants/Personnages"
 import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { EcranTables, TABLES, type Table } from "./composants/Tables"
+import { EcranDepliage } from "./composants/Depliage"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
@@ -178,6 +179,14 @@ export function App() {
   // Le chantier : ce qui tourne, et ce qu'un redémarrage a coupé. Ce qui a
   // réussi est en bibliothèque, ce qui a échoué est au journal du projet.
   const [chantier, setChantier] = useState<Generation[]>([])
+  /** La planche dont on choisit ce qu'on garde (R6) — **par identifiant, jamais
+   *  par objet**. La génération vit dans le chantier, que le flux tient à jour :
+   *  en garder une copie ici ferait un second exemplaire qui vieillirait pendant
+   *  qu'on regarde, et l'écran trancherait sur des mesures périmées. */
+  const [depliage, setDepliage] = useState<{
+    generation: string
+    rang: number
+  } | null>(null)
   // La bibliothèque telle que le serveur l'a filtrée. C'est **lui** qui filtre :
   // la recherche doit porter sur tout, pas sur ce que cet onglet a en mémoire.
   const [grille, setGrille] = useState<Asset[]>([])
@@ -1078,8 +1087,15 @@ export function App() {
     // apparaître dans une recherche mentirait sur ce qu'elle a trouvé.
     if (!filtreActif(filtre)) {
       for (const generation of chantier) {
+        // **Une planche qui attend un choix garde sa place** (R6). Elle est
+        // réussie — payée, arrivée, entière — mais rien n'est entré en
+        // bibliothèque : sans cette ligne, sa tuile disparaîtrait à l'arrivée
+        // et aucun asset ne prendrait le relais. L'auteur verrait son appel
+        // s'évanouir sous ses yeux, ce qui est exactement le gâchis silencieux
+        // que la tranche répare.
+        const attend = generation.pliage?.attend_un_choix === true
         for (const emplacement of generation.emplacements) {
-          if (emplacement.statut === "reussie") continue
+          if (emplacement.statut === "reussie" && !attend) continue
           const cle = `${generation.identifiant}-${emplacement.rang}`
           parCle.set(cle, {
             cle,
@@ -1187,6 +1203,20 @@ export function App() {
    *
    *  Les échecs n'y sont pas : ils ont leur propre locataire dans la fente, le
    *  revers, et deux tenants à la fois est ce que la fente s'interdit. */
+  /** La planche ouverte, relue dans le chantier — la seule vérité (R6).
+   *
+   *  Elle disparaît d'elle-même quand le lot cesse d'attendre : le dépliage
+   *  fait, la génération revient sans `attend_un_choix`, et l'écran se referme
+   *  sans que personne ait à le fermer. */
+  const plancheAChoisir = depliage
+    ? (() => {
+        const lot = chantier.find((g) => g.identifiant === depliage.generation)
+        return lot?.pliage?.attend_un_choix
+          ? { generation: lot, rang: depliage.rang }
+          : null
+      })()
+    : null
+
   const enRoute = chantier.flatMap((generation) =>
     generation.emplacements.filter(
       (e) => e.statut === "en_attente" || e.statut === "en_cours",
@@ -1424,6 +1454,10 @@ export function App() {
         variations: cases ? 1 : variations,
         repris,
         tri,
+        // **Ce que l'auteur interdit de sa main** (D3) : le fond du jeu s'y
+        // ajoute, et sans lui l'écran montrerait l'interdiction du produit
+        // seule là où l'appel en enverra deux.
+        prompt_negatif: promptNegatif.trim(),
       })
       .then((recu) => {
         if (!vivant) return
@@ -1459,6 +1493,7 @@ export function App() {
     reinjections,
     ecarteesGeneration,
     tri,
+    promptNegatif,
     univers,
   ])
 
@@ -2142,9 +2177,9 @@ export function App() {
         // dit « aucune clé » que si aucun n'est utilisable — ce qui n'arrive
         // plus, puisqu'il en reste toujours un.
         tiroirs={etat?.secrets ?? null}
-        // **Trois portes, une seule pièce** : ce mot-ci, l'étape 10 de
-        // l'assistant, et le bouton qui paie éteint mènent tous les trois au
-        // champ où la clé habite.
+        // **Trois portes, une seule pièce** : ce mot-ci, l'étape « Les
+        // fournisseurs » de l'assistant, et le bouton qui paie éteint mènent
+        // tous les trois au champ où la clé habite.
         onReglagesCle={() => setReglagesOuverts(true)}
         bascules={depensesOuvertes ? [] : bascules}
         onBasculer={(cle) => setReplies((r) => ({ ...r, [cle]: !r[cle] }))}
@@ -2374,6 +2409,23 @@ export function App() {
             etat={entree}
             onOuvrir={(identifiant) => setSelection([identifiant])}
           />
+          {/* **L'écran du choix prend la place de la grille** (R6), il ne se
+              pose pas dessus : c'est la profondeur suivante du même endroit,
+              exactement comme un outil dans l'établi. Le pied de la galerie
+              reste sous lui, et sa phrase est plus vraie que jamais — écarter
+              un sujet ne rappelle personne. */}
+          {plancheAChoisir ? (
+            <EcranDepliage
+              generation={plancheAChoisir.generation}
+              rang={plancheAChoisir.rang}
+              onFini={(rendue) => {
+                setDepliage(null)
+                setChantier((liste) => fondre(liste, rendue))
+              }}
+              onFermer={() => setDepliage(null)}
+              onErreur={echouer}
+            />
+          ) : (
           <Grille
             entrees={entrees}
             selection={selection}
@@ -2381,9 +2433,11 @@ export function App() {
             zoom={zoomRendu}
             entree={entree}
             onRelancer={relancer}
+            onChoisir={(generation, rang) => setDepliage({ generation, rang })}
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
           />
+          )}
 
           {/* **Le pied de la galerie dit qu'aucun appel ne part d'ici** (E4).
               De quoi savoir d'un coup d'œil dans quelle moitié du produit on se
@@ -2434,10 +2488,15 @@ export function App() {
           leur retire leur en-tête de 44 px — il y en avait trois, un par écran,
           et il n'y en a plus qu'un — et leur fente de refus, désormais
           partagée. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "univers" && (
+      {/* **`etat` garde l'écran** depuis D2 : l'assistant a besoin de savoir
+          quelles façons de réduire cette machine-ci sait faire, et cette liste
+          vient du serveur. Même garde que la galerie deux cents lignes plus
+          haut — on ne rend pas un écran avant d'avoir de quoi le remplir. */}
+      {!depensesOuvertes && !envoiOuvert && onglet === "univers" && etat && (
         <EcranUnivers
           univers={univers}
           modeles={modeles}
+          traitement={etat.traitement}
           cartes={cartes}
           liens={liens}
           teintes={teintes}
@@ -2539,6 +2598,14 @@ export function App() {
           // porte pas le champ qui dépense.
           barreQuiPaie={imageOuverte ? null : barreQuiPaie}
           onOuvrirCase={setCaseOuverte}
+          // **Deux gestes en un, et l'ordre compte** (G16) : l'image s'ouvre
+          // dans les tables, et la table ouverte est la superposition. Écrit
+          // ici parce que la table ouverte est un état de l'établi — la
+          // matrice, elle, n'a pas à savoir qu'il existe des tables.
+          onSuperposition={(identifiant) => {
+            setCaseOuverte(identifiant)
+            setTable("superposition")
+          }}
           outil={
             imageOuverte && etat ? (
               <EcranTables
@@ -2858,6 +2925,7 @@ function Grille({
   zoom,
   entree,
   onRelancer,
+  onChoisir,
   onOuvrir,
   onRetirerFiltre,
 }: {
@@ -2870,6 +2938,9 @@ function Grille({
   /** Faire entrer une image en la déposant ici (US-167). */
   entree: Import
   onRelancer: (generation: string, rang: number) => void
+  /** **Ouvrir le choix d'une planche qui attend** (R6). Elle est arrivée et
+   *  payée ; ce qui lui manque est une décision, et ce geste ne dépense rien. */
+  onChoisir: (generation: string, rang: number) => void
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRetirerFiltre: () => void
 }) {
@@ -2942,6 +3013,7 @@ function Grille({
             cote={Math.max(256, CRANS[zoom])}
             zoom={zoom}
             onRelancer={onRelancer}
+            onChoisir={onChoisir}
             onOuvrir={onOuvrir}
           />
         ))}

@@ -816,7 +816,7 @@ type Parametres = {
   crans: Crans | null
   /** La pile d'annulation, tenue par l'écran Univers pour qu'elle **meure avec
    *  lui** : ce n'est pas de l'historique de projet, c'est le rattrapage du
-   *  geste en cours (`docs/PLAN.md` T8). */
+   *  geste en cours (`docs/archive/plan-versions-tenues.md` T8). */
   pile: React.RefObject<Geste[]>
   /** Les trois côtés de l'onglet Univers, posés à gauche de la barre du
    *  tableau. Deux bandes au-dessus du plan en auraient fait trois avec celle

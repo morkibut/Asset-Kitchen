@@ -16,13 +16,18 @@
 import { useEffect, useRef, useState } from "react"
 import {
   api,
+  CE_QUE_LA_METHODE_REND,
   CONTOUR_PAR_DEFAUT,
   MAIN_VIDE,
   PASSE_PAR_DEFAUT,
   RECETTE_VIDE,
+  occupationMax,
   type Asset,
   type Contour,
+  type GrilleDuModele,
   type Main,
+  type MesuresDuFond,
+  type Methode,
   type TachesDeLAsset,
   type Bords,
   type EtatTraitement,
@@ -34,7 +39,14 @@ import {
   type Trait,
   type Univers,
 } from "../api"
-import { Curseur, Libelle, NomDuReglage, Raison, Segments } from "./chassis"
+import {
+  Curseur,
+  EchantillonDeHauteur,
+  Libelle,
+  NomDuReglage,
+  Raison,
+  Segments,
+} from "./chassis"
 
 /** Les cibles proposées. Reprises de `MySpriteAi`, où elles ont servi pour de
  *  vrai — 16 pour une tuile, 64 pour un sprite, 128 pour un décor.
@@ -51,13 +63,39 @@ import { Curseur, Libelle, NomDuReglage, Raison, Segments } from "./chassis"
  *  Les deux listes sont tenues ensemble par `tests/test_e8.py` : elles disent le
  *  même fait, et deux listes pour un fait finissent toujours par diverger — la
  *  divergence de sept contre neuf en est la preuve. */
-export const CIBLES = [8, 16, 24, 32, 48, 64, 96, 128, 256] as const
+// **512 est entré en D2**, avec le pixel art haute résolution que l'auteur a
+//  demandé le 3 septembre 2026 : *« il faut ajouter le 256 et 512 pour le pixel
+//  art haute résolution car c'est un style intéressant »*. Dix valeurs, donc, et
+//  `tests/test_e8.py` tient toujours les deux listes ensemble.
+export const CIBLES = [8, 16, 24, 32, 48, 64, 96, 128, 256, 512] as const
 
 export const MOTEUR: Record<Passe["moteur"], string> = {
   bord: "bord",
   couleur: "pipette",
   modele: "modèle",
   trace: "sélection",
+}
+
+/** **Ce que chaque moteur ronge de bord sans que personne l'ait posé** (D1).
+ *
+ *  Comptée le 3 septembre 2026 sur les 123 passes de détourage écrites à la
+ *  main dans ce dépôt : le bord laisse le durcissement à zéro 78 fois sur 100,
+ *  la pipette ne le laisse jamais à zéro et y met 1 le plus souvent, le modèle
+ *  ne le laisse jamais à zéro et y met 2 quatre fois sur cinq. À moteur égal, la
+ *  nature de l'image ne décide presque plus rien — c'est le moteur qui décide.
+ *
+ *  La raison tient en une phrase : le bord **ne produit aucun pixel à demi
+ *  transparent**, il est net par construction, donc il n'y a pas de frange à
+ *  ronger ; le modèle en produit sur presque tout le sujet.
+ *
+ *  **La même table vit dans `atelier/domaine/recette.py`**, et les deux sont
+ *  tenues ensemble par un essai — comme les crans de cible et le nom des
+ *  moteurs avant elles. */
+export const DURCISSEMENT_LIVRE: Record<Passe["moteur"], number> = {
+  bord: 0,
+  couleur: 1,
+  modele: 2,
+  trace: 0,
 }
 
 /** Ce qu'une place posée dit d'elle-même quand elle est repliée
@@ -128,6 +166,12 @@ export const defautGrille = (): Grille => ({
   // **Zéro** (E17) : le décalage n'est écrit que par le calibrage, et une
   // recette qu'il n'a pas touchée rend exactement l'image d'avant.
   decalage: 0,
+  // **`proche` et non le défaut du produit** (D2). Ceci complète une recette
+  // qui n'avait pas de grille du tout ; le vote en deux temps est ce qu'un
+  // *projet neuf* met dans ses recettes, et il arrive alors du serveur. Écrire
+  // le défaut du produit ici changerait l'image d'une recette ancienne au
+  // premier réglage posé, sans que personne l'ait demandé.
+  methode: "proche",
 })
 
 // ── La machine qui pose une recette ─────────────────────────────────────────
@@ -425,6 +469,61 @@ export function PanneauDetourage({
           <Raison texte="le produit n'en efface aucune — c'est du fond, ou c'est de la matière, et lui ne peut pas le savoir" />
         </div>
       )}
+
+      {mesures?.fond && <MesuresDuFondRendues mesures={mesures.fond} />}
+    </div>
+  )
+}
+
+/** **Les deux mesures d'acceptation du fond** (D3) — et ce qu'elles remplacent.
+ *
+ *  La tranche du fond exigeait huit tirages par branche avant sa première ligne
+ *  de code. L'auteur l'a retiré le 2 septembre 2026 : *« pas besoin de tester
+ *  ça »*. Ce qui prend la place du banc est plus utile que lui — **deux nombres
+ *  lus sur les images qu'on voulait de toute façon**, ici, à côté du curseur qui
+ *  les explique.
+ *
+ *  **Aucun des deux n'est un réglage**, comme les six autres mesures de cette
+ *  table : ils décrivent ce que l'appel a rendu, et c'est l'auteur qui décide.
+ *
+ *  **La couleur affichée est celle qui est *revenue*, pas celle qu'on avait
+ *  demandée** : c'est la seule qui réponde à la question qui compte, *le modèle
+ *  a-t-il rendu le fond qu'on lui a demandé ?* Comparer la couleur demandée à
+ *  elle-même n'aurait rien mesuré. */
+function MesuresDuFondRendues({ mesures }: { mesures: MesuresDuFond }) {
+  if (mesures.sujet === 0) return null
+  const part = Math.round(mesures.part_collee * 1000) / 10
+  return (
+    <div className="border-t border-bord pt-2">
+      <Libelle aide="detourage.fond">Le fond, tel qu'il est revenu</Libelle>
+      <div className="mt-1 flex items-center gap-2">
+        <span
+          title={mesures.fond}
+          style={{ background: mesures.fond }}
+          className="h-4 w-4 shrink-0 rounded-[2px] border border-bord"
+        />
+        <span className="mesure text-[10px] text-texte-2">{mesures.fond}</span>
+      </div>
+      {/* **Le pourtour est le dénominateur de la frange**, et il est dit avec
+          elle : « 312 pixels à demi transparents » ne veut rien dire tant qu'on
+          ne sait pas si le bord en fait 300 ou 30 000. */}
+      <Raison
+        texte={
+          mesures.frange === 0
+            ? `aucun pixel à demi transparent — le bord est franc sur ses ${mesures.bord} px de pourtour`
+            : `${mesures.frange} px à demi transparents sur ${mesures.bord} px de pourtour — c'est ce qui fabrique un halo, et c'est ce que le bord rongé retire`
+        }
+      />
+      {/* **La seconde mesure est le prix exact d'un fond mal choisi** : ces
+          pixels-là sont ceux qu'un cran de tolérance de plus aurait mangés. Une
+          couleur franche que rien dans le jeu ne contient les met à zéro. */}
+      <Raison
+        texte={
+          mesures.colles === 0
+            ? "aucun pixel du sujet n'est encore à la couleur du fond — le découpage n'a rien à manger de plus"
+            : `${mesures.colles} px du sujet sont encore à la couleur du fond, soit ${part} % — un cran de tolérance de plus les emporterait ; un fond d'une couleur que le jeu ne contient pas les met à zéro`
+        }
+      />
     </div>
   )
 }
@@ -572,19 +671,69 @@ export function PanneauRecadrage({ recette, regler, poser, mesures }: Reglages) 
   )
 }
 
-export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
+/** Ce que la grille retrouvée dit à l'auteur, en une phrase (D2).
+ *
+ *  **Deux états, et le second n'est pas une panne.** Quand la détection a
+ *  trouvé, elle donne le pas et surtout ce qu'il vaut en carrés — parce que la
+ *  taille se règle en carrés, jamais en pixels de l'image reçue, et qu'un pas
+ *  seul obligerait l'auteur à faire la division lui-même. Quand elle renonce,
+ *  elle rend **la phrase du serveur telle quelle** : c'est lui qui sait
+ *  *pourquoi* il s'est tu, et réécrire ici une phrase générique ferait deux
+ *  vérités sur le même refus.
+ *
+ *  Rien de tout cela ne remplit un réglage. La taille reste demandée et jamais
+ *  déduite de l'image reçue (US-61) ; ce texte l'éclaire, il ne la pose pas. */
+export function ceQueLeModeleAPeint(grille: GrilleDuModele): string {
+  if (grille.raison !== null || grille.pas < 2) return grille.raison ?? ""
+  return (
+    `le modèle a peint des carrés de ${grille.pas} pixels : l'image en compte ` +
+    `${grille.carres} de côté, et au-delà il n'y a plus de détail à récupérer`
+  )
+}
+
+export function PanneauGrille({
+  recette,
+  regler,
+  poser,
+  mesures,
+  traitement,
+}: Reglages) {
   /** **Le curseur ne s'arrête que là où l'image change.** Quatre-vingt-onze
    *  positions pour une trentaine de tailles possibles : deux crans voisins
    *  rendaient la même image, et la main croyait régler quelque chose. */
   const crans = mesures?.crans_occupation ?? []
-  /** Sur combien de pixels le curseur tombe, à la position où il est. C'est la
-   *  même arithmétique que le serveur applique — cible × occupation —, et
-   *  c'est elle qui décide de ce que la case contiendra vraiment. */
-  const cote = Math.round(
-    ((recette.grille?.cible ?? 64) * (recette.grille?.occupation ?? 100)) / 100,
-  )
+  const cible = recette.grille?.cible ?? 64
+  const occupation = recette.grille?.occupation ?? 100
+  /** **Le plafond vient du serveur quand il a parlé** (tranche des tailles) : il
+   *  dépend de la case, et c'est lui qui refuse. L'écran sait le recalculer —
+   *  il en a besoin avant la première mesure —, mais il ne l'invente pas quand
+   *  la réponse est là. */
+  const plafond = mesures?.hauteur?.max ?? occupationMax(cible)
+  /** **Ce que cette machine-ci sait faire**, dit par le serveur (D2). On ne
+   *  propose que les méthodes installées ; les autres sont annoncées sous les
+   *  segments avec leur raison, jamais offertes puis refusées au clic. */
+  const reductions = traitement.reductions.filter((r) => r.raison === null)
+  const indisponibles = traitement.reductions.filter((r) => r.raison !== null)
+  const methode = recette.grille?.methode ?? "proche"
+  const libelleDe = (nom: Methode) =>
+    traitement.reductions.find((r) => r.nom === nom)?.libelle ?? nom
   return (
     <div className="flex flex-col gap-2">
+      {/* **Sur quoi on travaille, avant de régler quoi que ce soit** (D2). La
+          table portait quatre réglages et ne disait jamais ce que le modèle
+          avait rendu : un dessin peint sur des carrés de 8 pixels ne rendra
+          jamais 128 carrés propres, et rien à l'écran ne le disait. La mesure
+          se place **au-dessus** de la taille, parce que c'est elle qui
+          l'éclaire — et elle ne la remplit pas : la taille est demandée,
+          jamais déduite de l'image reçue. Quand la détection renonce, elle le
+          dit avec ses mots plutôt que d'inventer un pas, et le réglage
+          juste en dessous est alors la seule réponse — celle de l'auteur. */}
+      {mesures?.grille_du_modele && (
+        <div className="flex flex-col gap-1">
+          <Libelle aide="grille.du-modele">les carrés du modèle</Libelle>
+          <Raison texte={ceQueLeModeleAPeint(mesures.grille_du_modele)} />
+        </div>
+      )}
       <Reglage libelle="cible" aide="grille.cible">
         <Segments
           // Neuf valeurs ne tiennent pas sur la largeur de la colonne, et
@@ -598,11 +747,12 @@ export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
           }
         />
       </Reglage>
-      <Reglage libelle="occupation" aide="grille.occupation">
+      <Reglage libelle="hauteur" aide="grille.occupation">
         <Curseur
-          valeur={recette.grille?.occupation ?? 100}
+          valeur={occupation}
           min={10}
-          max={100}
+          max={plafond}
+          crans={crans.length > 0 ? crans : undefined}
           unite=" %"
           onChange={(occupation) =>
             regler({
@@ -618,12 +768,15 @@ export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
           }
         />
       </Reglage>
-      {/* **Et il dit sur combien de pixels il tombe.** Un pour cent n'est pas
-          une mesure : ce que l'occupation décide est un nombre de pixels dans
-          la case, et c'est ce nombre-là qu'on compare d'une image à l'autre. */}
+      {/* **L'échantillon, et non plus un pour cent seul** (tranche des tailles).
+          Un pour cent n'est pas une mesure : ce que la hauteur décide est un
+          nombre de carrés, et c'est celui-là qu'on compare d'une image à
+          l'autre. Depuis que le réglage peut dépasser le personnage, il faut de
+          surcroît voir *de combien* — le dessin le montre, le texte le compte. */}
+      <EchantillonDeHauteur occupation={occupation} cible={cible} haut={64} />
       {crans.length > 0 && (
         <Raison
-          texte={`${cote} px dans la case · ${crans.length} crans changent l'image, sur les 91 du curseur`}
+          texte={`${crans.length} crans changent l'image, sur les ${plafond - 10 + 1} du curseur`}
         />
       )}
       <Reglage libelle="ancrage" aide="grille.ancrage">
@@ -638,6 +791,35 @@ export function PanneauGrille({ recette, regler, poser, mesures }: Reglages) {
           }
         />
       </Reglage>
+      {/* **La façon de réduire, image par image** (D2). Le projet donne le
+          départ ; ici on en change pour *cette* image, parce que les quatre
+          méthodes rendent des sprites franchement différents et que le choix
+          est un parti pris de style, pas un classement. */}
+      <Reglage libelle="réduction" aide="grille.methode">
+        <Segments
+          plusieursRangees
+          valeurs={reductions.map((r) => r.libelle)}
+          valeur={libelleDe(methode)}
+          onChange={(libelle) => {
+            const choisie = reductions.find((r) => r.libelle === libelle)
+            if (!choisie) return
+            poser({
+              ...recette,
+              grille: { ...(recette.grille ?? defautGrille()), methode: choisie.nom },
+            })
+          }}
+        />
+      </Reglage>
+      {/* **Ce que cette méthode-là rend**, en une ligne. Un libellé de trois
+          mots ne dit pas ce qu'on gagne et ce qu'on perd, et c'est précisément
+          ce qui départage les quatre. */}
+      <Raison texte={CE_QUE_LA_METHODE_REND[methode]} />
+      {/* **Grisée avec sa raison, jamais proposée puis refusée.** « Traits
+          épaissis » tire une bibliothèque lourde ; absente, elle ne figure pas
+          dans les segments, et on dit pourquoi plutôt que de la taire. */}
+      {indisponibles.map((r) => (
+        <Raison key={r.nom} texte={r.raison ?? ""} />
+      ))}
     </div>
   )
 }
@@ -814,6 +996,38 @@ export function laPlusSombre(palette: string[]): string | null {
   return palette.reduce((a, b) => (clarte(b) < clarte(a) ? b : a))
 }
 
+/** **Dans quelle unité l'épaisseur du trait se compte** (D4) — et il y en a deux.
+ *
+ *  Une fois la case du projet posée, l'image rendue *est* la case : un pixel y
+ *  est un bloc du sprite, et le trait était déjà juste. **Sans case**, l'image
+ *  fait encore mille pixels de côté, un trait d'un pixel y est un cheveu
+ *  invisible, et il ne longe pas la frontière du sprite mais les dentelures que
+ *  le modèle a peintes à l'intérieur d'un bloc. Le trait se pose alors sur la
+ *  maille que le modèle a employée, quand la mesure la trouve.
+ *
+ *  **Et quand elle se tait, c'est une peinture** : il n'y a pas de maille, la
+ *  seule frontière est celle de l'image telle qu'elle est, et la phrase le dit
+ *  au lieu de promettre une grille qui n'existe pas.
+ */
+export function uniteDuTrait(
+  epaisseur: number,
+  recette: Recette,
+  mesures?: TachesDeLAsset | null,
+): string {
+  // **Une place endormie est sautée, et la question posée ici est *agit-elle ?*
+  // et non *est-elle écrite ?*** C'est la même lecture que le serveur fait dans
+  // `queue` ; une seconde façon de la poser aurait fini par répondre autrement.
+  const surCase = recette.grille !== null && !(recette.veille ?? []).includes("grille")
+  if (surCase) {
+    return `${epaisseur} px de l'image rendue — celle qui part dans le jeu`
+  }
+  const pas = mesures?.grille_du_modele?.pas ?? 0
+  if (pas > 1) {
+    return `${epaisseur} bloc${epaisseur > 1 ? "s" : ""} de ${pas} px — la maille sur laquelle le modèle a peint, pas les pixels du fichier`
+  }
+  return `${epaisseur} px de l'image telle qu'elle est — aucune case posée, et le modèle n'a peint aucune grille où caler le trait`
+}
+
 export function PanneauContours({ recette, univers, poser, regler, mesures }: Reglages) {
   const contour = recette.contours ?? {
     ...CONTOUR_PAR_DEFAUT,
@@ -849,9 +1063,23 @@ export function PanneauContours({ recette, univers, poser, regler, mesures }: Re
       </Reglage>
       {/* **Le chiffre et son jumeau.** Un nombre seul demanderait « de
           quoi ? » : l'épaisseur se compte dans l'image rendue, et c'est elle
-          qui part dans le jeu. */}
+          qui part dans le jeu.
+          **Et depuis D4, l'unité peut ne pas être le pixel** : sans case posée,
+          l'image fait encore mille pixels de côté et un trait d'un pixel y est
+          un cheveu invisible. Le trait se pose alors sur la maille du modèle, et
+          l'écran dit laquelle plutôt que de laisser deviner. */}
+      <Raison texte={uniteDuTrait(contour.epaisseur, recette, mesures)} />
+      {/* **La forme du pinceau, dite au moment du choix** (D4). Les deux ont
+          raison à des épaisseurs différentes, et rien à l'écran ne le disait :
+          la croix à un pixel — le carré poserait des pixels en diagonale des
+          coins —, le carré au-dessus, parce qu'une croix répétée donne un
+          losange visible aux quatre coins d'un sprite. */}
       <Raison
-        texte={`${contour.epaisseur} px de l'image rendue — celle qui part dans le jeu`}
+        texte={
+          contour.epaisseur <= 1
+            ? "en croix, la convention du pixel art à une épaisseur — le carré poserait des pixels en diagonale des coins"
+            : "en carré, au-delà d'une épaisseur — une croix répétée donnerait un losange"
+        }
       />
 
       <Reglage libelle="couleur" aide="contours.couleur">

@@ -1,0 +1,28 @@
+{
+ "essai": "grille-complete",
+ "seance": "2026-09-02",
+ "exporte_le": "2026-09-02T18:35:20.360Z",
+ "_temoin": "A-temoin:jet1 et jet2 sont les planches A2-temoin-art de E1, notées par l'auteur dans notes-references-nommees.json (moyen, bon) ; reprises ici sans renotation.",
+ "notes": {
+  "A-temoin:jet1": {
+   "note": "moyen",
+   "libre": "le personnage saute en avant, mais ca peut se recaler. (note reprise de E1, A2-temoin-art:jet1)"
+  },
+  "A-temoin:jet2": {
+   "note": "bon",
+   "libre": "(note reprise de E1, A2-temoin-art:jet2)"
+  },
+  "B-4x2-carre:jet1": {
+   "note": "bon"
+  },
+  "B-4x2-carre:jet2": {
+   "note": "bon"
+  },
+  "C-4x2-3sur2:jet1": {
+   "note": "mauvais"
+  },
+  "C-4x2-3sur2:jet2": {
+   "note": "mauvais"
+  }
+ }
+}

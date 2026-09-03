@@ -10,7 +10,7 @@ Ce banc-ci ne change plus de modèle. Il change **la demande**, et il n'en bouge
 qu'un morceau à la fois : combien de cases, comment la consigne est écrite, et ce
 qu'on joint comme images — dont un **guide de cycle de marche dessiné par le
 programme** (`essais/guide_marche.py`), qui était le mannequin de
-`docs/etude-mannequin.md` en deux dimensions et pour zéro euro.
+`docs/archive/essais-v3/etude-mannequin.md` en deux dimensions et pour zéro euro.
 
 **Il s'est écrit en trois vagues, et les deux dernières sont des corrections.**
 C'est la partie utile de ce fichier :
@@ -61,7 +61,11 @@ PROJET = "essai-animation"
 
 MODELE = "openai/gpt-image-2"
 JETS = (1, 2)
-PLAFOND_USD = 2.60
+# **Le plafond est cumulé, pas par lancement** — voir `principal()`. Il est passé
+# de $2,60 à $3,45 le 1ᵉʳ septembre 2026 pour la quatrième vague : vingt-quatre
+# tirages de plus, à trois centimes et demi pièce, soit environ quatre-vingts
+# centimes. Les $2,449 déjà sur le disque se retranchent tout seuls.
+PLAFOND_USD = 3.45
 PARALLELE = 4
 
 # La grille la plus carrée pour N cases — la même règle que le pliage du produit.
@@ -394,6 +398,43 @@ def reglages() -> list[dict]:
           [carte, promue, gabarit(8), planche_guide(8, 3, 3)],
           jets=(1, 2, 3, 4, 5, 6, 7, 8))
 
+    # ── Quatrieme vague : l'arbitrage, sur les notes de l'auteur ─────────────
+    #
+    # **Les trois vagues precedentes ont ete jugees par une mesure qui ne predit
+    # rien.** Les cent onze animations ont ete regardees une par une et notees a
+    # la main (`essais/notes-auteur.json`), et le classement en a ete refait.
+    # Deux pistes seulement y survivent, et aucune n'est prouvee :
+    #
+    # 1. **moins de cases** — deux bonnes planches sur six a quatre cases, contre
+    #    neuf sur cent une a huit. Six tirages ne decident rien, et les six
+    #    portaient tous ma consigne d'essai : aucun n'etait decoupable ;
+    # 2. **la clause de constance remplacee** — cinq bonnes sur quinze contre
+    #    deux sur onze. L'ecart sort du hasard sans difficulte.
+    #
+    # **Les trois branches partent donc du bloc complet du produit**, paragraphe
+    # protecteur compris. C'est ce qui manquait aux essais a quatre cases, et
+    # c'est ce qui les rendait indecoupables : mesurer une piste sur des planches
+    # que l'atelier ne saurait pas ouvrir ne decide de rien.
+    #
+    # Huit tirages chacune, parce que ce banc a montre trois fois qu'en dessous
+    # on publie des conclusions fausses. La troisieme branche n'en paie que huit
+    # de plus : `F-sans-proportions` en a deja sept, et les tirages deja sur le
+    # disque ne se repaient jamais.
+    quatre = bloc_a_4_cases(exact)
+    huit = tuple(range(1, 9))
+    poser("H-4-produit",
+          "4 cases, bloc complet du produit, clause de constance telle quelle",
+          quatre, [carte, promue, gabarit(4)], cases=4, jets=huit)
+    poser("H-4-sans-proportions",
+          "4 cases, bloc complet du produit, clause de constance remplacee",
+          sans_proportions(quatre), [carte, promue, gabarit(4)], cases=4, jets=huit)
+    # La meme demande qu'en troisieme vague, portee de sept a quinze tirages.
+    # Le nom ne change pas : c'est la meme case du tableau, et lui en donner un
+    # second scinderait en deux un chiffre qui doit se lire d'un coup.
+    for r in liste:
+        if r["nom"] == "F-sans-proportions":
+            r["jets"] = tuple(range(1, 16))
+
     return liste
 
 
@@ -401,6 +442,52 @@ def bloc_du_produit() -> str:
     """La consigne de planche telle qu'elle est partie, relue dans la génération."""
     fiche = json.loads((REFERENCE / "generation.json").read_text("utf-8"))
     return fiche["demande"]["prompt"].split("\n\n")[2]
+
+
+def bloc_a_4_cases(texte: str) -> str:
+    """Le même bloc, pour quatre cases — et **rien d'autre de changé**.
+
+    C'est le point délicat de la quatrième vague. Les essais à quatre cases des
+    vagues précédentes utilisaient `t_produit(4)`, ma reconstitution : elle
+    n'écrit ni la phrase de constance, ni le paragraphe qui interdit de
+    redessiner le quadrillage. **Leurs six planches sont toutes indécoupables**,
+    et l'on ne sait donc pas si c'est le nombre de cases qui les rendait bonnes
+    ou l'absence du paragraphe qui les rendait inutilisables.
+
+    Ici on part du bloc **payé**, on n'y touche qu'aux endroits qui comptent les
+    cases, et on garde tout le reste au caractère près : la phrase de constance,
+    le fond gris, l'interdiction des bordures. C'est la seule façon d'isoler le
+    nombre de cases.
+
+    Les quatre étapes sont **les impaires des huit** — contact gauche, passage
+    droit, contact droit, passage gauche —, c'est-à-dire le cycle de marche à
+    quatre temps des animateurs. Elles se relisent dans le texte plutôt que de se
+    réécrire : deux libellés qui devraient être les mêmes et qui divergent, c'est
+    la panne qu'on ne voit jamais.
+    """
+    tete, reste = texte.split("The cells, in reading order, show: ", 1)
+    cellules, queue = reste.split(". It must be the same subject", 1)
+    etapes = [c.split(": ", 1)[1] for c in cellules.split("; ")]
+    assert len(etapes) == 8, f"huit cases attendues, {len(etapes)} lues"
+
+    for avant, apres in (
+        ("sprite sheet of 8 sprites", "sprite sheet of 4 sprites"),
+        ("Exactly 3 columns and 3 rows, 8 cells total",
+         "Exactly 2 columns and 2 rows, 4 cells total"),
+    ):
+        assert avant in tete, f"le bloc du produit a change — « {avant} » introuvable"
+        tete = tete.replace(avant, apres)
+    assert "shows 8 empty cells" in queue, "le bloc du produit a change — gabarit introuvable"
+    queue = queue.replace("shows 8 empty cells", "shows 4 empty cells")
+
+    liste = "; ".join(
+        f"{i + 1}. walk cycle, frame {i + 1} of 4: {e}"
+        for i, e in enumerate(etapes[::2])
+    )
+    return (
+        f"{tete}The cells, in reading order, show: {liste}"
+        f". It must be the same subject{queue}"
+    )
 
 
 CLAUSE = (

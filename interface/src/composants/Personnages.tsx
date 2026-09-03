@@ -12,7 +12,7 @@
 // nomme déjà, la colonne de ce qu'on manipule.
 //
 // **Ce n'est pas une grille d'assets, et c'est ce qui préserve l'invariant** :
-// ni recherche, ni filtres, ni sélection multiple (`docs/PLAN.md` C1). La
+// ni recherche, ni filtres, ni sélection multiple (`docs/archive/plan-versions-tenues.md` C1). La
 // réserve de T8 avait tenu la même règle par le même moyen — une privation
 // assumée, pas un manque à combler.
 //
@@ -157,6 +157,7 @@ export function EcranEtabli({
   onFente,
   barreQuiPaie,
   onOuvrirCase,
+  onSuperposition,
   outil,
 }: {
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
@@ -215,6 +216,11 @@ export function EcranEtabli({
   /** **Tenu par `App`**, comme la chose ouverte : c'est un étage du fil
    *  d'Ariane, et le fil vit dans le châssis. */
   onOuvrirCase: (identifiant: string) => void
+  /** **Refaire le calage d'un vêtement à la main** (G16) : ouvre l'image dans
+   *  les tables, sur la superposition. Deux gestes en un, et c'est pour ça
+   *  qu'il vit dans le châssis plutôt qu'ici — la table ouverte est un état de
+   *  l'établi, pas de la matrice. */
+  onSuperposition: (identifiant: string) => void
   /** L'outil rendu en plein cadre. `App` le compose, parce qu'il a besoin du
    *  traitement, de l'univers et du plan — que cet écran-ci n'a pas à
    *  connaître pour montrer une matrice. */
@@ -358,6 +364,13 @@ export function EcranEtabli({
               setFicheOuverte(false)
               setVitrineOuverte(true)
             }}
+            // **Et de la fiche au calibrage, pour la même raison** (R8) : c'est
+            // sur la fiche qu'on voit qu'une pose sort du lot, et la même
+            // profondeur ne se referme pas pour se rouvrir.
+            onCalibrage={() => {
+              setFicheOuverte(false)
+              setCalibrageOuvert(true)
+            }}
             onErreur={echouer}
           />
         ) : (
@@ -397,6 +410,7 @@ export function EcranEtabli({
             }
             piece={piece.nom}
             onFermer={() => setCalque(null)}
+            onSuperposition={() => onSuperposition(ouvertCalque.identifiant)}
             onErreur={echouer}
           />
         )}

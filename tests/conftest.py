@@ -175,6 +175,44 @@ def planche_sujets(
     return tampon.getvalue()
 
 
+def planche_quadrillee(sujets: int, *, cote: int = 480, format_: str = "PNG") -> bytes:
+    """La planche qui a redessiné son quadrillage — le piège de R6 (US-368).
+
+    **Le défaut n'est pas que les traits soient laids, c'est ce qu'ils font au
+    détourage.** Le gabarit part avec des cases dessinées et le prompt demande
+    en toutes lettres de ne pas les reproduire ; un modèle sur six du 28 août les
+    a reproduites quand même. Le remplissage depuis le bord part alors des
+    quatre côtés de l'image, **et les traits l'arrêtent** : le fond de chaque
+    case reste opaque, la case entière devient une tache, et le compte tombe
+    juste. L'atelier acceptait, et il faisait entrer huit carrés pleins.
+
+    Elle est donc bâtie comme `planche_sujets`, aux traits près — même fond,
+    mêmes sujets, mêmes gouttières. C'est la seule différence qui compte, et
+    c'est celle-là qu'on veut voir attraper.
+    """
+    colonnes = math.ceil(math.sqrt(max(1, sujets)))
+    lignes = math.ceil(max(1, sujets) / colonnes)
+    image = Image.open(io.BytesIO(planche_sujets(sujets, cote=cote))).convert("RGB")
+    dessin = ImageDraw.Draw(image)
+    marge = 24
+    large = (cote - 2 * marge) // colonnes
+    haut = (cote - 2 * marge) // lignes
+    for index in range(sujets):
+        x0 = marge + (index % colonnes) * large
+        y0 = marge + (index // colonnes) * haut
+        # Rentrés de cinq pixels : deux cases voisines doivent rester deux
+        # taches. Des traits jointifs n'en feraient qu'une, et la planche
+        # tomberait dans le refus du compte au lieu du piège qu'on veut montrer.
+        dessin.rectangle(
+            [x0 + 5, y0 + 5, x0 + large - 6, y0 + haut - 6],
+            outline=SUJET_SOMBRE,
+            width=2,
+        )
+    tampon = io.BytesIO()
+    image.save(tampon, format=format_)
+    return tampon.getvalue()
+
+
 def bloc_mesure(octets: bytes) -> int:
     """La plus longue plage horizontale d'une même couleur dans le sujet.
 
@@ -335,6 +373,36 @@ class FournisseurDouble:
         return defaut if self.compte_declare is None else 1.0
 
 
+class AnimateurMuet:
+    """Implémente `PortAnimateur`, et ne fait rien — **surtout pas de réseau**.
+
+    Arrivé en A9, et il est ici plutôt que dans les essais de la tranche parce
+    qu'il vaut pour tous les autres : depuis que l'ouverture de l'atelier relit
+    aussi le catalogue vidéo, un atelier d'essai sans animateur double irait le
+    demander à OpenRouter — neuf cents fois, une par essai. **Un essai qui
+    touche le réseau est un essai qui ment le jour où le réseau tombe.**
+
+    Ses trois autres gestes lèvent plutôt que de rendre quelque chose : aucun
+    essai n'est censé commander un clip par ce double-là, et un double qui
+    répondrait poliment laisserait passer un essai qui croit mesurer une
+    commande de clip sans en mesurer aucune.
+    """
+
+    nom = FOURNISSEUR
+
+    async def catalogue_video(self) -> list:
+        return []
+
+    async def soumettre(self, modele, demande):  # pragma: no cover — voir plus haut
+        raise AssertionError("ce double ne commande pas de clip : voir tests/test_a9.py")
+
+    async def etat(self, travail):  # pragma: no cover
+        raise AssertionError("ce double ne commande pas de clip : voir tests/test_a9.py")
+
+    async def recuperer(self, travail):  # pragma: no cover
+        raise AssertionError("ce double ne commande pas de clip : voir tests/test_a9.py")
+
+
 @pytest.fixture
 def double() -> FournisseurDouble:
     return FournisseurDouble()
@@ -354,7 +422,13 @@ def atelier(tmp_path, double) -> Atelier:
     fournisseur qui ne demande rien est très exactement ce que F1 a fait entrer
     dans le produit.
     """
-    return Atelier(racine=tmp_path, fabrique_fournisseur=lambda: double)
+    return Atelier(
+        racine=tmp_path,
+        fabrique_fournisseur=lambda: double,
+        # **Et un animateur qui ne fait rien** (A9) : sans lui, cet atelier-ci
+        # irait relire le catalogue vidéo chez OpenRouter à chaque essai.
+        fabrique_animateur=lambda: AnimateurMuet(),
+    )
 
 
 @pytest.fixture

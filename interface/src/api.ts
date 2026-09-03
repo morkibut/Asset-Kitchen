@@ -157,6 +157,13 @@ export type Generation = {
    *  de confirmation éteint ligne par ligne, donc un appel peut avoir pris le
    *  monde sans l'éclairage — ce qu'aucun mode ne décrit. */
   pris?: string[]
+  /** **Une planche, quand l'appel en était une** (C2) — N images demandées d'un
+   *  seul coup. Vide pour l'immense majorité des appels, qui visent une image.
+   *
+   *  C'est lui que la galerie lit pour savoir qu'une planche arrivée attend un
+   *  regard : sans lui, sa tuile disparaîtrait à l'arrivée sans que rien entre
+   *  en bibliothèque, et l'appel payé se perdrait sous les yeux de l'auteur. */
+  pliage?: Pliage | null
 }
 
 // ── Le post-traitement ──────────────────────────────────────────────────────
@@ -295,6 +302,12 @@ export type Superposition = {
   seuil: number
   main: Trait[]
   sortie: "calque" | "aplat"
+  /** **Lire le dessus tel qu'il est arrivé du modèle**, et non tel qu'il est
+   *  rangé (G16). Les deux ne diffèrent que sur un vêtement : son brut rangé
+   *  est la case *déjà mise à l'échelle et calée sur son corps*, et refaire le
+   *  calage en partant de là reviendrait à repartir du résultat qu'on défait.
+   *  Sur toute autre image, c'est le même fichier. */
+  dessus_arrivee: boolean
 }
 
 /** Ce qu'on reprendra la prochaine fois qu'on superpose sur cette image-là.
@@ -322,6 +335,11 @@ export type OuvertureSuperposition = {
   /** **Le fait que l'alerte nomme** : sans alpha sur le dessus, le calque
    *  prendrait tout le fond. Le produit constate ; il ne refuse pas. */
   sans_alpha: boolean
+  /** Y a-t-il une case arrivée qu'on saurait retrouver pour ce dessus ? (G16)
+   *  Faux sur tout ce qui n'est pas un vêtement sorti d'une planche, et faux
+   *  aussi quand la planche a quitté le disque — **l'écran ne propose pas un
+   *  geste qui échouera**. */
+  arrivee_possible: boolean
 }
 
 /** Les deux sorties et les cinq mesures, sans rien écrire. Les images arrivent
@@ -394,7 +412,16 @@ export type PropositionDeBaisse = {
 
 export type TailleDImage = { cible: number; quoi: string }
 
-export type VuesEtTailles = { vues: VueDuJeu[]; tailles: TailleDImage[] }
+export type VuesEtTailles = {
+  vues: VueDuJeu[]
+  /** Les tailles d'un jeu **en pixel art** — un nombre de carrés, de 8 à 512. */
+  tailles: TailleDImage[]
+  /** Les finesses d'un jeu **en dessin** — combien de détail garder, de 256 à
+   *  2048. Deux listes et non une, parce que la même case pose deux questions :
+   *  8 carrés n'a pas plus de sens pour un dessin que 2048 n'en a pour du pixel
+   *  art (D2). */
+  finesses: TailleDImage[]
+}
 
 /** Une paire : un libellé qu'on clique, et le texte anglais qui part vraiment.
  *
@@ -442,6 +469,7 @@ export const POSE_VIDE: Superposition = {
   seuil: 32,
   main: [],
   sortie: "calque",
+  dessus_arrivee: false,
 }
 
 /** La septième place : un sol, et ce qu'on empile dessus.
@@ -474,6 +502,114 @@ export type Grille = {
    *  — même règle que la différence d'un calque. Zéro par défaut, de sorte
    *  qu'une recette sans calibrage rend exactement l'image d'avant. */
   decalage: number
+  /** Comment on passe de mille pixels à `cible` carrés (D2).
+   *
+   *  **Un choix de style, pas un classement** : les quatre méthodes rendent des
+   *  images franchement différentes, et c'est l'auteur qui tranche laquelle
+   *  ressemble à son jeu. Le projet donne le départ (`Univers.methode_pixels`),
+   *  l'image garde le dernier mot.
+   *
+   *  `proche` est le défaut du champ, et c'est ce que l'atelier faisait avant
+   *  la tranche : une recette enregistrée avant D2 rend ainsi la même image
+   *  qu'au jour où elle a été validée. */
+  methode: Methode
+}
+
+/** Les deux styles graphiques d'un jeu (D2).
+ *
+ *  **En pixel art, la taille *est* le dessin** : 64 veut dire soixante-quatre
+ *  carrés de couleur, et un personnage de 32 et un de 128 sont deux dessins,
+ *  pas la même image en deux tailles. **En dessin, elle n'est qu'une finesse**
+ *  — combien de détail le fichier garde —, et la réduction qui y mène n'a rien
+ *  de destructeur puisqu'il n'y a aucune grille à écraser.
+ *
+ *  Les valeurs traversent le port telles quelles. */
+export type Style = "pixel" | "dessin"
+
+export const NOM_DU_STYLE: Record<Style, string> = {
+  pixel: "en pixel art",
+  dessin: "en dessin",
+}
+
+/** Les quatre façons de réduire (D2), du plus soigné au plus brut.
+ *
+ *  Les valeurs traversent le port telles quelles : une valeur traduite au
+ *  passage est une valeur qu'on peut traduire de travers. */
+export type Methode = "vote" | "pixeloe" | "lanczos" | "proche"
+
+/** Le nom court de chaque méthode. **La même table vit dans
+ *  `atelier/domaine/recette.py`**, et les deux sont tenues ensemble par un
+ *  essai — comme `MOTEUR` et `DURCISSEMENT_LIVRE` avant elles.
+ *
+ *  **Elle double `traitement.reductions`, et c'est assumé** : celui-ci arrive du
+ *  serveur et ne porte que les méthodes de *cette* machine, ce qui suffit à un
+ *  choix mais pas à relire une recette. Une recette peut nommer une méthode que
+ *  la machine n'a pas — écrite ailleurs, ou installée puis retirée —, et une
+ *  fiche qui afficherait alors `pixeloe` en clair aurait perdu le seul mot que
+ *  l'auteur comprend. */
+export const NOM_DE_LA_METHODE: Record<Methode, string> = {
+  vote: "vote en deux temps",
+  pixeloe: "traits épaissis",
+  lanczos: "réduction douce",
+  proche: "au plus proche",
+}
+
+/** Ce que chaque méthode rend, en une ligne. **Le libellé vient du serveur**
+ *  (`traitement.reductions`) ; ceci décrit le parti pris, ce qu'un libellé de
+ *  trois mots ne peut pas porter. */
+export const CE_QUE_LA_METHODE_REND: Record<Methode, string> = {
+  vote: "contour net et intérieur lisible — un sprite calme",
+  pixeloe: "garde les traits d'un pixel, contour plus agité",
+  lanczos: "silhouette lisse, intérieur mou — proche d'un dessin réduit",
+  proche: "brut : un pixel sur N gardé, les autres jetés",
+}
+
+/** Les six paliers de couleurs, et le plafond est **le côté du sprite** (D2).
+ *
+ *  Mesuré le 3 septembre 2026 : au-delà, l'image ne contient plus assez de
+ *  teintes distinctes pour remplir la palette demandée — 32 carrés rendent 30
+ *  couleurs quand on en demande 32, et 229 quand on en demande 256. */
+export const PALIERS_DE_COULEURS = [8, 16, 32, 64, 128, 256] as const
+
+export function paliersDeCouleurs(cible: number): number[] {
+  const tenus = PALIERS_DE_COULEURS.filter((p) => p <= cible)
+  // Jamais vide : une liste morte laisserait l'auteur sans savoir si c'est un
+  // bug ou une règle.
+  return tenus.length > 0 ? [...tenus] : [PALIERS_DE_COULEURS[0]]
+}
+
+// ── La hauteur d'un sujet, et le plafond levé (tranche des tailles) ──────────
+//
+// **Jusqu'ici rien ne pouvait être plus grand qu'un personnage.** L'occupation
+// dit la part de la case que le sujet remplit, et elle était bornée à 100 % en
+// douze endroits — dont ce curseur-ci. Un moulin, un arbre, une tour : le produit
+// n'avait aucune façon de les demander.
+//
+// **Le carré ne change jamais de taille**, c'est la règle des vrais jeux 2D : ce
+// qui change entre un personnage et un bâtiment est le *nombre* de carrés qu'il
+// couvre. Deux tailles de pixel dans une même scène — des « mixels » — se voient
+// immédiatement. Donc 300 % se lit « trois personnages », et la case grandit.
+//
+// Ces trois fonctions doublent celles du serveur (`atelier/domaine/recette.py`),
+// et un essai les tient d'accord — l'écran a besoin de dessiner l'échantillon
+// avant d'avoir posé quoi que ce soit, donc avant d'avoir une réponse.
+export const CANEVAS_MAX = 2048
+export const PERSONNAGES_MAX = 8
+
+export function occupationMax(cible: number): number {
+  const parLeCanevas = Math.round((CANEVAS_MAX / Math.max(1, cible)) * 100)
+  return Math.max(100, Math.min(100 * PERSONNAGES_MAX, parLeCanevas))
+}
+
+export function coteDuSujet(cible: number, occupation: number): number {
+  return Math.max(
+    1,
+    Math.round((Math.max(1, cible) * Math.max(1, occupation)) / 100),
+  )
+}
+
+export function coteDuCanevas(cible: number, occupation: number): number {
+  return Math.max(Math.max(1, cible), coteDuSujet(cible, occupation))
 }
 export type Quantification = {
   couleurs: number
@@ -652,11 +788,16 @@ export type Asset = {
 
 /** Ce qu'un lot plié a mesuré sur une de ses cases (C2, US-135).
  *
- *  Deux nombres, et pas un de plus. **Aucun seuil** : le produit montre le
- *  chiffre et son jumeau, et l'auteur décide — un seuil serait un nombre
- *  inventé sur un corpus de vingt-quatre planches. Pour mémoire, sur ce
- *  corpus : les deux planches qui répétaient une pose ressortaient à 0,999 et
- *  1,000, les vingt-deux autres plafonnaient à 0,897. */
+ *  **Presque aucun seuil** : le produit montre le chiffre et son jumeau, et
+ *  l'auteur décide — un seuil serait un nombre inventé sur un corpus de
+ *  vingt-quatre planches. Pour mémoire, sur ce corpus : les deux planches qui
+ *  répétaient une pose ressortaient à 0,999 et 1,000, les vingt-deux autres
+ *  plafonnaient à 0,897.
+ *
+ *  `remplissage` est l'exception, et il en est une parce qu'il a été mesuré
+ *  (R6) : sur les 135 planches des deux bancs, une planche saine remplit sa
+ *  boîte de 0,34 à 0,77 et une planche au quadrillage redessiné de 0,99 à 1,00.
+ *  Rien entre les deux. */
 export type MesuresLot = {
   /** Sa place dans la planche, en ordre de lecture. */
   case: number
@@ -670,6 +811,47 @@ export type MesuresLot = {
   /** La dérive de grille du lot entier — le rapport du plus grand pas au plus
    *  petit. Un fait sur le lot, recopié sur chaque case qui doit le dire. */
   derive: number
+  /** La part de la boîte qui reste opaque, entre 0 et 1 (R6, US-368).
+   *  Absent des images d'avant R6, et c'est la vérité : personne ne l'avait
+   *  mesurée. */
+  remplissage?: number
+  /** Où ce sujet a été pris dans sa planche — `[x0, y0, x1, y1]`, en pixels de
+   *  la planche, bornes comprises. C'est ce qui permet à l'écran du choix de
+   *  découper les sujets lui-même, dans l'image de la planche. */
+  boite?: [number, number, number, number]
+  /** Ce sujet remplit presque toute sa boîte : c'est une case, pas un
+   *  personnage. Déduit par le serveur du seuil qu'il a mesuré — l'écran ne le
+   *  recalcule pas, sans quoi le seuil vivrait à deux endroits. */
+  pleine?: boolean
+}
+
+/** Ce qu'un appel plié a demandé, et ce que son arrivée a trouvé (C2, R6).
+ *
+ *  **Deux états à ne pas confondre.** `ecartees: null` veut dire *personne n'a
+ *  encore regardé* ; `ecartees: []` veut dire *j'ai regardé et je garde tout*.
+ *  C'est cette différence qui fait qu'une planche aux cases pleines ne peut pas
+ *  entrer en silence — il faut que quelqu'un l'ait dit. */
+export type Pliage = {
+  nombre: number
+  colonnes: number
+  lignes: number
+  /** La raison d'un refus, en français. Depuis R6, il n'en reste qu'un : il
+   *  manque des sujets, et aucun choix ne les fabriquera. */
+  refus: string | null
+  /** Combien de sujets la planche portait vraiment. Zéro tant qu'elle n'est
+   *  pas arrivée. */
+  trouvees: number
+  /** Ce que chacun mesure — dans l'ordre de lecture de la planche, et pour
+   *  **tous** ceux qu'elle portait, écartés compris. */
+  mesures: MesuresLot[]
+  ecartees: number[] | null
+  /** Combien de sujets de trop restent une fois les écartés retirés. */
+  surplus: number
+  /** Les numéros de ceux qui remplissent presque toute leur boîte. */
+  pleines: number[]
+  /** La planche est là, quelque chose cloche, et personne n'a tranché. Rien
+   *  n'est entré en bibliothèque tant que c'est vrai. */
+  attend_un_choix: boolean
 }
 
 /** Ce que la différence a lu d'un calque (C3, US-147).
@@ -1039,6 +1221,19 @@ export type PoseCalee = {
   /** La plus haute qu'elle puisse atteindre sans sortir de sa case. C'est la
    *  plus basse de toutes qui décide de la hauteur commune. */
   plafond: number
+  /** **L'occupation que le bouton écrirait sur cette pose** (R9) — calculée par
+   *  le service, jamais ici : elle passe par deux bornes que l'écran aurait dû
+   *  recopier, et qui auraient divergé. Une pose mise de côté garde la sienne. */
+  visee: number
+  /** **La hauteur qu'elle rendrait alors** (R9) — ce que dessine l'empilement
+   *  « après ». Elle n'est pas toujours la hauteur commune, et c'est voulu :
+   *  l'inverse d'un arrondi dépasse, et une borne du domaine peut mordre. Le
+   *  dessin montre ce qu'on obtient, pas ce qu'on vise. */
+  apres: number
+  /** Par le bas ou au milieu — **le point autour duquel la silhouette grandit**
+   *  (R9). L'agrandir autour du mauvais point la ferait flotter au-dessus du
+   *  sol. */
+  ancrage: "bas" | "centre"
   de_cote: boolean
 }
 
@@ -1056,6 +1251,16 @@ export type Calibrage = {
   limite: string
   /** Ce que la cohérence coûte, en pixels de la case qui ne servent pas. */
   perdus: number
+  /** **L'échelle déclarée par l'ensemble des poses**, en pour cent, jamais moins
+   *  de 100 (tranche des tailles). Un géant déclaré à 300 % a des poses qui
+   *  rendent trois fois la case, et son plafond suit. Le service la rendait
+   *  déjà ; elle n'était simplement pas déclarée ici. */
+  haute: number
+  /** **Combien de poses le bouton changerait vraiment** (R9), et c'est la seule
+   *  chose qui décide s'il s'allume. Zéro veut dire *elles y sont déjà*, et le
+   *  bouton s'éteint avec sa raison — il restait allumé, invitant à un geste
+   *  sans effet. */
+  a_faire: number
   /** La pose que l'outil **propose** de mettre de côté, ou rien. Une seule,
    *  jamais une cascade : écarter la plus basse fait de la suivante la plus
    *  basse, et reproposer finirait par ne garder qu'une pose. */
@@ -1426,6 +1631,18 @@ export type ReferenceDeLaChose = {
   provenance: string
   detail: string
   ecartee: boolean
+  /** De quoi la montrer — **l'objet entier, pas une adresse** (R8). La fiche
+   *  listait ses images d'exemple en lignes de texte : on les retenait ou on
+   *  les retirait sans les regarder, ce qui est le contraire du geste que la
+   *  section demande. C'est la même forme que sur l'écran de confirmation, et
+   *  elle vient de la même fonction côté serveur.
+   *
+   *  `null` quand l'image a disparu entre la composition de la ligne et sa
+   *  lecture : la ligne reste, elle n'a simplement pas de vignette. */
+  montre:
+    | { sorte: "asset"; asset: Asset }
+    | { sorte: "carte"; carte: Carte }
+    | null
 }
 
 export type ReferencesDeLaChose = {
@@ -1552,19 +1769,56 @@ export type Echelle = {
  *  projet imposait sans échappatoire. */
 export const AUCUNE_CIBLE = 0
 
+/** La case contre laquelle une hauteur se juge **quand le jeu n'en impose
+ *  aucune** (tranche des tailles). Un jeu en dessin n'a pas de grille, et son
+ *  barème garde pourtant des hauteurs : il faut bien un mètre pour les dessiner
+ *  et pour les borner. C'est celui du serveur, `CIBLE_PAR_DEFAUT`. */
+export const CIBLE_DE_REFERENCE = 64
+
 export type Univers = {
   bible: Champ[]
   bareme: Echelle[]
-  /** Le côté de case imposé à ce qui rentre — ou `AUCUNE_CIBLE`. */
+  /** **Le style graphique du jeu** (D2) — la question qui commande toutes les
+   *  autres. Elle décide de ce que `cible_px` veut dire : un nombre de carrés
+   *  en pixel art, une finesse en dessin. Jusqu'en D2 elle n'existait pas, et
+   *  se déduisait de `cible_px === AUCUNE_CIBLE` — donc d'un réglage qu'elle
+   *  aurait dû commander. */
+  style: Style
+  /** Le côté de case imposé à ce qui rentre — ou `AUCUNE_CIBLE`.
+   *
+   *  **Une case, deux questions** : *combien de carrés* en pixel art, *quelle
+   *  finesse* en dessin. Voir `style` juste au-dessus. */
   cible_px: number
   /** **La vue du jeu** (E8) : un choix unique qui remplit le réglage *et* la
    *  phrase de la case `vue`. Vide est une valeur — un jeu qui ne dit pas d'où
    *  il regarde ne contraint rien. */
   vue: string
+  /** Combien de couleurs le pixel art du projet emploie.
+   *
+   *  **Il sert deux fois, et c'est voulu** : combien de teintes lire dans les
+   *  artworks officiels pour en tirer la palette, et combien en garder quand il
+   *  n'y a pas d'artwork du tout. Avant D2 il ne servait que la première fois —
+   *  un projet sans artwork ne réduisait aucune couleur, en silence. */
   couleurs: number
+  /** **La méthode de pixelisation du projet** (D2) — le départ de toute recette
+   *  fabriquée à neuf. En changer ne rejoue aucune image déjà rendue, exactement
+   *  comme la taille de case ou le détourage par défaut. */
+  methode_pixels: Methode
   /** Déduite par calcul des artworks officiels, jamais saisie (US-54). */
   palette: string[]
   palette_empreinte: string
+  /** **La couleur de fond du jeu** (D3) — celle sur laquelle on demande que le
+   *  sujet soit posé, et celle que le découpage aura à retirer.
+   *
+   *  **Vide est une valeur, et c'est celle d'avant la tranche** : le produit
+   *  demande alors *un fond plat* sans dire lequel, le modèle rend un gris
+   *  clair, et le découpage mange ce qui lui ressemble — une joue grise. Une
+   *  couleur franche que rien dans le jeu ne contient rend le découpage presque
+   *  gratuit.
+   *
+   *  **Un réglage, jamais un calcul** : l'atelier *propose* — voir
+   *  `fond_propose` —, l'auteur tranche. */
+  fond: string
   modeles: Partial<Record<Famille, string>>
   /** **Les deux modèles d'appel** (C2). Ils ne sont pas dans `modeles`, qui est
    *  indexé par famille de *sujet* : ceux-ci répondent à une autre question —
@@ -1573,6 +1827,21 @@ export type Univers = {
    *  sujet puis le catalogue reprennent la main. */
   modele_planche: string
   modele_edition: string
+  /** **Le détourage par défaut, par nature d'image puis par famille** (D1).
+   *
+   *  Même rangement que `modeles` juste au-dessus, et ce n'est pas une
+   *  coïncidence : le produit range déjà par famille le modèle par défaut d'un
+   *  univers, et la recette suit le même rangement plutôt que d'inventer un
+   *  vocabulaire.
+   *
+   *  **`null` n'est pas une passe vide**, et l'écart porte tout : *jamais
+   *  réglé* laisse décider le produit — c'est ce qui fait qu'un univers écrit
+   *  avant D1 rend exactement ce qu'il rendait — quand *réglé* impose ce qui est
+   *  écrit. Une famille absente hérite de sa nature ; une famille présente
+   *  décide, et l'écran dit d'où vient ce qui s'applique. */
+  detourage_image: Passe | null
+  detourage_planche: Passe | null
+  detourages: Partial<Record<Famille, Passe>>
   /** Ni bible qui parle, ni palette, ni vue. Un état normal, pas une
    *  configuration manquante : « un univers vide ne contraint rien » (US-57). */
   vide: boolean
@@ -1596,14 +1865,31 @@ export type Univers = {
 export const UNIVERS_VIDE: Univers = {
   bible: [],
   bareme: [],
+  // **`pixel` et non `dessin`** : c'est l'univers *vide* qu'on affiche avant
+  // d'avoir lu le serveur, et le pixel art est le défaut historique du produit
+  // — « le pixel art est le défaut, plus une limite ».
+  style: "pixel",
   cible_px: 64,
   vue: "",
-  couleurs: 24,
+  couleurs: 32,
+  // **`proche` et non `vote`**, et l'écart est le même que pour le détourage :
+  // ceci est l'univers *vide* qu'on affiche avant d'avoir lu le serveur, pas
+  // l'univers d'un projet neuf. Y mettre le défaut du produit ferait clignoter
+  // l'écran sur un réglage qu'un vieux projet n'a pas.
+  methode_pixels: "proche",
   palette: [],
   palette_empreinte: "",
+  // **Aucun fond posé, et c'est l'état d'avant D3** : la phrase qui part est
+  // celle qui partait, au caractère près.
+  fond: "",
   modeles: {},
   modele_planche: "",
   modele_edition: "",
+  // **Aucun détourage réglé, et c'est l'état d'un univers vide** (D1) : le
+  // produit décide, avec exactement les valeurs qu'il décidait avant la tranche.
+  detourage_image: null,
+  detourage_planche: null,
+  detourages: {},
   vide: true,
   phrases: {},
 }
@@ -1857,7 +2143,75 @@ export type Tache = {
   point: [number, number]
 }
 
-/** Cinq mesures, et aucune n'est un réglage : elles décrivent ce que l'image
+/** **Le pas sur lequel le modèle a peint — ou la raison de renoncer** (D2).
+ *
+ *  `pas` vaut zéro quand la détection renonce, et `raison` dit alors pourquoi,
+ *  en français et à l'auteur. Les deux ne se contredisent jamais : il n'y a
+ *  qu'une lecture à faire, `pas >= 2 && raison === null`.
+ *
+ *  `nettete` dit à quel point le profil de l'image se répète ; `peigne` dit si
+ *  ce qui se répète tombe bien sur les multiples du pas. Une netteté haute avec
+ *  un peigne bas est le portrait exact d'une peinture — et c'est l'état que la
+ *  mesure d'avant prenait pour une grille.
+ *
+ *  `carres` est le côté de l'image compté en cases de ce pas-là : c'est la
+ *  lecture dont l'auteur a besoin, puisque la taille se règle en carrés et non
+ *  en pixels de l'image reçue. */
+export type GrilleDuModele = {
+  pas: number
+  nettete: number
+  peigne: number
+  carres: number
+  /** **Où la grille commence**, `[ligne, colonne]` (D4). Le pas seul ne suffit
+   *  pas à poser un trait dessus : une grille de modèle ne commence jamais au
+   *  pixel zéro, et un contour calé au mauvais départ tombe à cheval sur deux
+   *  blocs. Deux nombres et non un — rien ne garantit que les deux directions
+   *  commencent au même endroit. `[0, 0]` quand la détection renonce, ce qui est
+   *  sans conséquence : on ne s'en sert pas. */
+  phase: [number, number]
+  raison: string | null
+}
+
+/** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3).
+ *
+ *  `couleur` vide veut dire *aucun candidat sûr*, et `raison` dit alors
+ *  pourquoi. Il n'y a qu'une lecture à faire : `couleur !== "" && raison ===
+ *  null`.
+ *
+ *  `ecart` est la distance du candidat à la couleur du jeu la plus proche, dans
+ *  la distance du détourage — celle qui décide si un pixel est mangé avec le
+ *  fond. Il ne sert pas à décider, il sert à comprendre : 200 dit *hors de tout
+ *  danger*, 90 dit *ça passe de justesse*. `voisine` est cette couleur-là. */
+export type FondPropose = {
+  couleur: string
+  nom: string
+  ecart: number
+  voisine: string
+  raison: string | null
+}
+
+/** **Ce qu'une image revenue dit du fond sur lequel elle a été demandée** (D3).
+ *
+ *  `fond` est la couleur **telle qu'elle est revenue**, lue sur les bordures —
+ *  jamais celle qu'on avait demandée : comparer la couleur demandée à elle-même
+ *  n'aurait rien mesuré.
+ *
+ *  `frange` compte les pixels à demi transparents que le détourage a laissés —
+ *  ce qui fabrique un halo. `colles` compte les pixels **gardés** encore à
+ *  portée de tolérance du fond : ceux qu'un cran de plus aurait mangés, donc le
+ *  prix exact d'un fond mal choisi. `part_collee` les rapporte au sujet, parce
+ *  que six cents pixels ne disent pas la même chose sur un sprite de 64 et sur
+ *  une image de 1024. */
+export type MesuresDuFond = {
+  fond: string
+  sujet: number
+  bord: number
+  frange: number
+  colles: number
+  part_collee: number
+}
+
+/** Sept mesures, et aucune n'est un réglage : elles décrivent ce que l'image
  *  contient, et c'est l'auteur qui décide. */
 export type TachesDeLAsset = {
   /** De la plus petite à la plus grande — l'ordre du seuil. */
@@ -1877,6 +2231,25 @@ export type TachesDeLAsset = {
   trous: Tache[]
   /** Les valeurs d'occupation où l'image change vraiment. */
   crans_occupation: number[]
+  /** **Les deux lectures d'une même hauteur**, et le plafond de cette case-là
+   *  (tranche des tailles). L'auteur les a demandées ensemble : un nombre de
+   *  carrés est ce que réclament les moteurs de jeu, un nombre de personnages
+   *  est ce qui se lit quand on décrit un monde. `sujet` est la hauteur du
+   *  sujet, `carres` celle de la case — elles se séparent en dessous de 100 %,
+   *  où un objet tenu occupe 26 carrés dans une case de 64. */
+  hauteur: {
+    carres: number
+    personnages: number
+    max: number
+    sujet: number
+  }
+  /** **La grille sur laquelle le modèle a peint**, mesurée sur l'image détourée
+   *  et avant toute mise sur grille (D2). Elle répond à la question que la
+   *  table posait sans pouvoir y répondre : *sur quoi est-ce que je travaille ?* */
+  grille_du_modele: GrilleDuModele
+  /** **Les deux mesures d'acceptation du fond** (D3) — celles qui ont remplacé
+   *  le banc de la tranche, tranché par l'auteur le 2 septembre 2026. */
+  fond: MesuresDuFond
   /** Aucun pixel transparent — donc **aucun bord de sujet à tracer**. C'est le
    *  seul cas où la table des contours est indisponible. */
   opaque: boolean
@@ -2056,6 +2429,11 @@ export type ImageQuiPart = LigneReference & {
   /** Cochée au-delà du plafond du modèle : grisée avec son compte, jamais
    *  retirée — on choisit lesquelles enlever. */
   hors_plafond: boolean
+  /** Le numéro que le texte donne à cette image (R7) : le prompt écrit
+   *  « Image 3 — STYLE REFERENCE », et la ligne porte le même 3. `null` quand
+   *  l'image ne part pas — décochée, ou au-delà du plafond du modèle : elle n'a
+   *  alors pas de numéro dans le texte non plus. */
+  rang: number | null
   /** Ce que cette image ajoute au prix de l'appel, **mesuré sur ce que cette
    *  machine a payé**. `null` quand la machine n'a pas de quoi le mesurer : le
    *  produit dit alors qu'il ne sait pas. */
@@ -2110,14 +2488,48 @@ export type PrixDeLEnvoi = {
   }
 }
 
+/** Une des trois parties du texte qui part (R7) — le contexte, les références,
+ *  la demande.
+ *
+ *  `titre` est le mot que le fournisseur reçoit, en majuscules et en anglais
+ *  (`CONTEXT`, `REFERENCES`, `REQUEST`) ; `nom` et `propos` sont ce que l'écran
+ *  écrit en français. `texte` est le contenu **sans** son titre : le texte
+ *  entier est leur jonction, titres compris, et il est rendu à part.
+ *
+ *  Une partie vide n'est pas rendue du tout. Un texte repris à la main n'en
+ *  fait qu'une, sans titre : il part mot pour mot. */
+export type PartieQuiPart = {
+  clef: "contexte" | "references" | "demande"
+  titre: string
+  nom: string
+  propos: string
+  texte: string
+  repris: boolean
+}
+
 export type Envoi = {
   texte: string
+  parties: PartieQuiPart[]
   lignes: LigneQuiPart[]
-  groupes: { clef: string; nom: string; allumees: number; total: number }[]
+  groupes: {
+    clef: string
+    nom: string
+    /** La partie du texte où ce groupe atterrit (R7). **Absente pour les deux
+     *  groupes qui ne sont pas du texte** — les images et les options : ils se
+     *  lisent sous le sommaire des parties, là où ils ont toujours été. */
+    partie?: "contexte" | "references" | "demande"
+    allumees: number
+    total: number
+  }[]
   images: {
     lignes: ImageQuiPart[]
     places: number
     cochees: number
+    /** Le numéro que le texte donne au gabarit et à la bande de couleurs (R7).
+     *  `null` quand l'image ne part pas — elle n'a alors pas de numéro dans le
+     *  texte non plus. */
+    rang_gabarit: number | null
+    rang_palette: number | null
     /** Combien partiront vraiment (F6). Égal à `cochees` sauf chez un modèle
      *  qui n'a pas assez de places : ce que le jeu ajoute de lui-même cède
      *  alors, et le sommaire des groupes lit ce chiffre-ci. Calculé par le
@@ -2156,6 +2568,28 @@ export type Envoi = {
   cases: number
   caracteres: { total: number; sujet: number; eteints: number }
   corrections: number
+  /** **Le fond de cet appel-ci, et ce qu'il interdit** (D3).
+   *
+   *  `couleur` est celle sur laquelle l'appel part — celle du jeu, ou celle
+   *  qu'on vient de corriger ici. Elle est **déjà** dans le texte, dans la case
+   *  `technique` : ce champ ne la double pas, il la nomme, pour que l'écran
+   *  puisse en dessiner la pastille sans relire de l'anglais.
+   *
+   *  `interdiction` est le second texte qui part — celui du champ que les
+   *  adaptateurs replient sous *« Do not include: »*. C'est le seul morceau de
+   *  ce qui part que le texte ne contient pas ; sans lui, l'écran qui promet de
+   *  tout montrer aurait un angle mort.
+   *
+   *  `corrige` dit si la couleur vient d'ici plutôt que du jeu — **et la
+   *  correction ne remonte nulle part** : la poser durablement est un second
+   *  geste, qui passe par le codex. */
+  fond: {
+    couleur: string
+    interdiction: string
+    du_jeu: string
+    corrige: boolean
+    propose: FondPropose
+  }
 }
 
 /** Ce que l'écran de confirmation renvoie — **et qui ne vaut que pour cet
@@ -2165,6 +2599,19 @@ export type Tri = {
   eteints: string[]
   allumes: string[]
   textes: Record<string, string>
+  /** **La couleur de fond corrigée pour cet appel-ci** (D3).
+   *
+   *  **Un quatrième écart, et il ne se range pas dans `textes`** : le fond n'est
+   *  pas une ligne du texte, c'est un réglage qui en *fabrique* une — la phrase
+   *  de calage — et qui fabrique en plus la phrase d'interdiction, laquelle part
+   *  dans un autre champ de la demande. Le corriger en tapant dans la ligne
+   *  aurait changé l'une sans l'autre, et l'appel serait parti en demandant un
+   *  fond magenta tout en interdisant le cyan.
+   *
+   *  `null` — ou absent — laisse le fond du jeu ; `""` le retire pour cet
+   *  appel, ce qui est un geste légitime quand on veut comparer avec ce que le
+   *  jeu rendait avant. */
+  fond?: string | null
 }
 
 /** Ce que le projet impose à une image donnée, aujourd'hui (US-164).
@@ -2177,6 +2624,63 @@ export type Impose = {
   /** Ce que l'auteur avait dit fabriquer — c'est elle qui décide de
    *  l'occupation, et « 40 % » ne s'explique qu'avec « objet tenu » à côté. */
   echelle: string
+  /** **Comment l'image est venue** (D1) : toute seule, ou dans une planche
+   *  qu'on a découpée. C'est ce qui décide lequel des deux défauts de détourage
+   *  s'est appliqué. Vide quand la génération n'est plus sur le disque. */
+  nature: Nature | ""
+  /** **Le défaut de détourage qui s'applique, et d'où il vient** (US-410).
+   *
+   *  `null` quand le projet n'impose rien du tout — sans projet, ou pour une
+   *  image entrée « telle quelle » : il n'y a alors pas de défaut à montrer, et
+   *  afficher celui du produit ferait croire qu'il s'applique. */
+  detourage: {
+    passe: Passe
+    origine: Origine
+    /** La famille du sujet, quand l'échelle en nommait une. */
+    famille: string
+  } | null
+}
+
+/** **Comment une image est venue** (D1). Deux, et deux seulement : ce qui
+ *  arrive tout seul, et ce qui arrive dans une planche qu'on découpe.
+ *
+ *  Ce n'est pas un axe de rangement à côté de la famille — la famille dit *ce
+ *  que l'image montre*, la nature dit *comment elle est venue*. Une même
+ *  créature détourée depuis une planche de huit attitudes et détourée seule
+ *  sont la même famille et deux natures. */
+/** Les quatre façons de désigner ce qu'on retire. Nommées à part parce que
+ *  plusieurs écrans en parlent — les tables, et depuis D1 les défauts de
+ *  l'univers — et qu'écrire l'union deux fois, c'est la voir diverger. */
+export type Moteur = Passe["moteur"]
+
+export type Nature = "image" | "planche"
+
+export const NOM_DE_LA_NATURE: Record<Nature, string> = {
+  image: "une image seule",
+  planche: "un morceau de planche",
+}
+
+/** D'où vient le défaut qui s'applique (D1). **Trois niveaux, et le produit
+ *  ferme la marche** : il n'y a jamais de trou, seulement un réglage qu'on n'a
+ *  pas posé — la phrase exacte du modèle par famille (US-58). */
+export type Origine = "famille" | "nature" | "produit"
+
+/** Ce qu'on envoie pour poser un détourage par défaut (D1).
+ *
+ *  **Ce n'est pas une `Passe` entière**, et l'écart est la décision : une passe
+ *  porte en plus le point de la pipette, le tracé à main levée et le masquage,
+ *  qui vivent dans les pixels d'une image précise. Un défaut s'applique à la
+ *  première image venue ; les lui laisser porter n'aurait aucun sens. Le
+ *  serveur les retire déjà à la relecture — les tenir absents d'ici rend la
+ *  chose impossible à écrire plutôt qu'à nettoyer. */
+export type DefautDetourage = {
+  moteur: Passe["moteur"]
+  tolerance: number
+  seuil_alpha: number
+  durcissement: number
+  /** Quel modèle de silhouette, quand le moteur est `modele` (U13). Celui-là est
+   *  bien un défaut : il ne désigne rien dans l'image, il nomme l'outil. */
+  modele: string
 }
 
 /** Ce que le post-traitement peut faire **sur cette machine**, et ce qu'il ne
@@ -2199,6 +2703,17 @@ export type Silhouette = {
   octets: number
   lent: boolean
   note: string
+  /** **Le côté auquel le modèle infère** (D4), et il ne se confond pas avec la
+   *  taille de l'image qu'on lui donne. `u2net` ramène tout à 320 × 320,
+   *  calcule là-dessus, puis réagrandit son masque en Lanczos : sur une image de
+   *  1024, c'est une carte de 320 étirée trois fois — ce qui est plus fin que
+   *  trois pixels disparaît, et le rebond fabrique des demi-transparences *à
+   *  l'intérieur* du sujet. Les autres infèrent à 1024. Ce nombre-là décide de
+   *  ce qu'un modèle peut rendre, et il n'était nulle part. */
+  entree: number
+  /** La licence du modèle, pas celle de `rembg`. Écrite parce que la question
+   *  s'est posée une fois et se reposera. */
+  licence: string
   defaut: boolean
   descendu: boolean
   raison: string | null
@@ -2207,7 +2722,19 @@ export type Silhouette = {
 export type EtatTraitement = {
   moteurs: { nom: Passe["moteur"]; raison: string | null }[]
   silhouettes: Silhouette[]
-  quantification: { raison: string | null }
+  /** **`raison` ne vaut plus jamais autre chose que `null`** depuis D2, et la
+   *  clé est gardée parce qu'elle est l'endroit où le grisé se rallumerait.
+   *
+   *  `note` l'a remplacée, et la différence porte tout : le grisé *interdisait*
+   *  — sans artwork officiel, un projet ne réduisait aucune couleur et rendait
+   *  des sprites à dix mille teintes sans un mot. La note *annonce* : le
+   *  traitement a bien lieu, mais les couleurs viennent de chaque image et non
+   *  de la palette du jeu. `null` dès qu'une palette existe. */
+  quantification: { raison: string | null; note: string | null }
+  /** Les quatre façons de réduire, avec leur raison de grisé (D2). Trois ne
+   *  demandent rien ; « traits épaissis » tire une bibliothèque lourde et se
+   *  grise quand elle manque — jamais proposée puis refusée. */
+  reductions: { nom: Methode; libelle: string; raison: string | null }[]
   recettes: string[]
 }
 
@@ -2532,6 +3059,18 @@ export const api = {
       method: "POST",
     }),
 
+  /** L'auteur tranche sur une planche qui attend, et elle se déplie (R6).
+   *
+   *  **Elle ne dépense rien** — c'est la même image, recoupée autrement. Une
+   *  liste vide est une réponse, pas une absence de réponse : elle dit « je les
+   *  garde tous », ce qui est exactement ce que demande une planche dont les
+   *  cases sont pleines. */
+  deplierPlanche: (identifiant: string, rang: number, ecartees: number[]) =>
+    appeler<Generation>(`/generations/${identifiant}/slots/${rang}/unfold`, {
+      method: "POST",
+      body: JSON.stringify({ ecartees }),
+    }),
+
   /** Les paramètres d'une génération passée — le quatrième rôle de la
    *  réinjection, celui qui n'envoie aucune image (US-12). */
   generation: (identifiant: string) =>
@@ -2559,6 +3098,10 @@ export const api = {
     variations?: number
     repris?: boolean
     tri?: Tri | null
+    /** **Ce que l'auteur interdit de sa main** (D3). Il entre ici parce que le
+     *  fond du jeu s'y ajoute : sans lui, l'écran montrerait l'interdiction du
+     *  produit seule et l'appel en enverrait deux. */
+    prompt_negatif?: string
   }) =>
     appeler<Envoi>("/outgoing", {
       method: "POST",
@@ -2841,9 +3384,10 @@ export const api = {
       `/assets/${dessus}/overlay${dessous ? `?dessous=${encodeURIComponent(dessous)}` : ""}`,
     ),
 
-  recalerSuperposition: (dessus: string, dessous: string) =>
+  recalerSuperposition: (dessus: string, dessous: string, arrivee = false) =>
     appeler<{ echelle: number; dx: number; dy: number; couverture: number }>(
-      `/assets/${dessus}/overlay/fit?dessous=${encodeURIComponent(dessous)}`,
+      `/assets/${dessus}/overlay/fit?dessous=${encodeURIComponent(dessous)}` +
+        (arrivee ? "&arrivee=true" : ""),
     ),
 
   heriterDetourage: (dessus: string, dessous: string) =>
@@ -3398,7 +3942,8 @@ export const api = {
    *
    *  **Le vestiaire naît toujours vide**, et ceci est un geste de l'auteur, pas
    *  un effet de bord : rien n'est écrit derrière son dos. Ce que ça répare est
-   *  mesuré — l'étape 8 montrait une liste vide sous une demi-phrase qui
+   *  mesuré — l'étape « Emplacements » montrait une liste vide sous une
+   *  demi-phrase qui
    *  énonçait une règle sur un ordre que rien ne permettait de changer.
    *
    *  Rappelée deux fois, elle n'ajoute que ce qui manque. */
@@ -3601,7 +4146,16 @@ export const api = {
   // ── L'univers du projet ───────────────────────────────────────────────────
 
   univers: () =>
-    appeler<{ projet: string; univers: Univers; artworks: Carte[] }>("/universe"),
+    appeler<{
+      projet: string
+      univers: Univers
+      /** **Ce que l'atelier proposerait comme fond à ce jeu-là** (D3), calculé
+       *  par le serveur : la distance qui décide de la sûreté d'un fond est
+       *  celle du détourage, et une seconde arithmétique ici aurait fini par
+       *  proposer une couleur que le découpage mange. */
+      fond_propose: FondPropose
+      artworks: Carte[]
+    }>("/universe"),
 
   /** Tout est facultatif : ce qu'on n'envoie pas ne bouge pas. Un `PUT` qui
    *  exigerait l'univers entier obligerait l'écran à en tenir une copie. */
@@ -3609,16 +4163,36 @@ export const api = {
     vue?: string
     bible?: Champ[]
     bareme?: Echelle[]
+    /** **Le style graphique** (D2). Il se pose avant la taille, et le service
+     *  les traite dans cet ordre quand le même message porte les deux :
+     *  changer de style déplace la taille quand elle n'a plus de sens. */
+    style?: Style
     cible_px?: number
     couleurs?: number
+    /** **La méthode de pixelisation du projet** (D2). Elle ne descend que dans
+     *  les recettes fabriquées à neuf : en changer ne rejoue aucune image. */
+    methode_pixels?: Methode
+    /** **La couleur de fond du jeu** (D3). La chaîne vide la retire et rend le
+     *  comportement d'avant la tranche ; ne pas envoyer le champ ne touche à
+     *  rien, comme partout ailleurs dans ce message. */
+    fond?: string
     modeles?: Partial<Record<Famille, string>>
     modele_planche?: string
     modele_edition?: string
+    /** **Le détourage par défaut** (D1), et la seule exception à la phrase
+     *  ci-dessus : ici `null` ne veut pas dire « ne touche pas », il veut dire
+     *  **remets-le au produit**. Sans une valeur qui dise *je n'en veux plus*,
+     *  un réglage posé une fois ne pourrait jamais être retiré, seulement
+     *  remplacé. « Ne touche pas » redevient alors ce qu'il est partout
+     *  ailleurs : ne pas envoyer le champ du tout. */
+    detourage_image?: DefautDetourage | null
+    detourage_planche?: DefautDetourage | null
+    detourages?: Partial<Record<Famille, DefautDetourage>> | null
   }) =>
-    appeler<{ projet: string; univers: Univers }>("/universe", {
-      method: "PUT",
-      body: JSON.stringify(reglage),
-    }),
+    appeler<{ projet: string; univers: Univers; fond_propose: FondPropose }>(
+      "/universe",
+      { method: "PUT", body: JSON.stringify(reglage) },
+    ),
 
   /** Réappliquer la palette et la grille du projet — **sans un appel payant**.
    *  Sans identifiants, tout le projet en sautant les épinglés ; avec, cette
@@ -3646,6 +4220,13 @@ export const api = {
 
   telechargement: (identifiant: string, rang: number) =>
     `/api/generations/${identifiant}/slots/${rang}/download`,
+
+  /** **La case telle qu'elle est arrivée du modèle** (G16) — l'autre sens du
+   *  mot *brut*. Sur un vêtement, `rendu(…, brut)` sert la case déjà mise à
+   *  l'échelle et calée sur son corps ; celle-ci sert ce que le modèle a
+   *  vraiment renvoyé. Elle se recalcule de la planche à chaque demande et ne
+   *  range rien — pas d'empreinte à faire voyager, donc, et pas de cache. */
+  arrivee: (identifiant: string) => `/api/assets/${identifiant}/incoming`,
 
   // Le rendu change sous la même adresse à chaque cran de curseur : `version`
   // porte l'empreinte de la recette pour que le navigateur cherche une image

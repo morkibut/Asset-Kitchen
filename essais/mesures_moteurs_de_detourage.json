@@ -1,0 +1,732 @@
+{
+  "pieges": [
+    {
+      "piege": "la normalisation divise par le maximum de l'image, pas par 255",
+      "verifie": true,
+      "ou": "rembg.sessions.base.BaseSession.normalize",
+      "ligne": "im_ary = im_ary / max(np.max(im_ary), 1e-6)"
+    },
+    {
+      "piege": "le masque est calculé petit puis réagrandi en Lanczos",
+      "verifie": true,
+      "ou": "rembg.sessions.u2net.U2netSession.predict",
+      "entrees": {
+        "birefnet-general-lite": 1024,
+        "isnet-anime": 1024,
+        "u2net": 320,
+        "isnet-general-use": 1024,
+        "birefnet-general": 1024
+      }
+    }
+  ],
+  "normalisation_sur_nos_images": [
+    {
+      "image": "guide · goblin",
+      "max": 255,
+      "facteur": 1.0
+    },
+    {
+      "image": "guide · nain",
+      "max": 255,
+      "facteur": 1.0
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "max": 255,
+      "facteur": 1.0
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "max": 255,
+      "facteur": 1.0
+    }
+  ],
+  "modeles": [
+    {
+      "image": "guide · goblin",
+      "modele": "birefnet-general-lite",
+      "entree": 1024,
+      "ms": 12755.3,
+      "part": 0.2264,
+      "demi": 244299,
+      "demi_dedans": 217129,
+      "pourtour": 4268,
+      "morceaux": 1,
+      "trous": 5
+    },
+    {
+      "image": "guide · goblin",
+      "modele": "isnet-anime",
+      "entree": 1024,
+      "ms": 1690.4,
+      "part": 0.2256,
+      "demi": 255855,
+      "demi_dedans": 218708,
+      "pourtour": 3780,
+      "morceaux": 2,
+      "trous": 1
+    },
+    {
+      "image": "guide · goblin",
+      "modele": "u2net",
+      "entree": 320,
+      "ms": 973.3,
+      "part": 0.2321,
+      "demi": 263221,
+      "demi_dedans": 221420,
+      "pourtour": 3674,
+      "morceaux": 1,
+      "trous": 3
+    },
+    {
+      "image": "guide · goblin",
+      "modele": "isnet-general-use",
+      "entree": 1024,
+      "ms": 1639.2,
+      "part": 0.2274,
+      "demi": 250763,
+      "demi_dedans": 218257,
+      "pourtour": 4264,
+      "morceaux": 1,
+      "trous": 3
+    },
+    {
+      "image": "guide · goblin",
+      "modele": "birefnet-general",
+      "entree": 1024,
+      "ms": 29439.4,
+      "part": 0.227,
+      "demi": 236568,
+      "demi_dedans": 210024,
+      "pourtour": 4193,
+      "morceaux": 1,
+      "trous": 3
+    },
+    {
+      "image": "guide · nain",
+      "modele": "birefnet-general-lite",
+      "entree": 1024,
+      "ms": 18853.0,
+      "part": 0.2508,
+      "demi": 269184,
+      "demi_dedans": 244801,
+      "pourtour": 3709,
+      "morceaux": 1,
+      "trous": 2
+    },
+    {
+      "image": "guide · nain",
+      "modele": "isnet-anime",
+      "entree": 1024,
+      "ms": 1448.5,
+      "part": 0.25,
+      "demi": 273365,
+      "demi_dedans": 244898,
+      "pourtour": 3520,
+      "morceaux": 1,
+      "trous": 1
+    },
+    {
+      "image": "guide · nain",
+      "modele": "u2net",
+      "entree": 320,
+      "ms": 730.9,
+      "part": 0.2545,
+      "demi": 278816,
+      "demi_dedans": 241200,
+      "pourtour": 3344,
+      "morceaux": 1,
+      "trous": 1
+    },
+    {
+      "image": "guide · nain",
+      "modele": "isnet-general-use",
+      "entree": 1024,
+      "ms": 1675.9,
+      "part": 0.2514,
+      "demi": 272244,
+      "demi_dedans": 245570,
+      "pourtour": 3725,
+      "morceaux": 1,
+      "trous": 1
+    },
+    {
+      "image": "guide · nain",
+      "modele": "birefnet-general",
+      "entree": 1024,
+      "ms": 24577.8,
+      "part": 0.2511,
+      "demi": 256438,
+      "demi_dedans": 232794,
+      "pourtour": 3667,
+      "morceaux": 1,
+      "trous": 1
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "birefnet-general-lite",
+      "entree": 1024,
+      "ms": 9042.0,
+      "part": 0.1528,
+      "demi": 165091,
+      "demi_dedans": 138241,
+      "pourtour": 4708,
+      "morceaux": 1,
+      "trous": 7
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "isnet-anime",
+      "entree": 1024,
+      "ms": 1593.7,
+      "part": 0.1466,
+      "demi": 172655,
+      "demi_dedans": 135260,
+      "pourtour": 3833,
+      "morceaux": 1,
+      "trous": 2
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "u2net",
+      "entree": 320,
+      "ms": 869.8,
+      "part": 0.1585,
+      "demi": 186340,
+      "demi_dedans": 144704,
+      "pourtour": 3612,
+      "morceaux": 1,
+      "trous": 3
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "isnet-general-use",
+      "entree": 1024,
+      "ms": 1465.4,
+      "part": 0.1528,
+      "demi": 168355,
+      "demi_dedans": 138041,
+      "pourtour": 4946,
+      "morceaux": 1,
+      "trous": 7
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "modele": "birefnet-general",
+      "entree": 1024,
+      "ms": 16582.5,
+      "part": 0.1524,
+      "demi": 162720,
+      "demi_dedans": 133394,
+      "pourtour": 4844,
+      "morceaux": 1,
+      "trous": 7
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "birefnet-general-lite",
+      "entree": 1024,
+      "ms": 7580.2,
+      "part": 0.2263,
+      "demi": 970294,
+      "demi_dedans": 906857,
+      "pourtour": 8568,
+      "morceaux": 1,
+      "trous": 5
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "isnet-anime",
+      "entree": 1024,
+      "ms": 1581.0,
+      "part": 0.2291,
+      "demi": 1022530,
+      "demi_dedans": 924372,
+      "pourtour": 7356,
+      "morceaux": 1,
+      "trous": 5
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "u2net",
+      "entree": 320,
+      "ms": 1003.9,
+      "part": 0.2321,
+      "demi": 1052733,
+      "demi_dedans": 912341,
+      "pourtour": 7365,
+      "morceaux": 1,
+      "trous": 3
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "isnet-general-use",
+      "entree": 1024,
+      "ms": 1374.6,
+      "part": 0.2277,
+      "demi": 993006,
+      "demi_dedans": 912155,
+      "pourtour": 8521,
+      "morceaux": 1,
+      "trous": 4
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "modele": "birefnet-general",
+      "entree": 1024,
+      "ms": 15781.9,
+      "part": 0.227,
+      "demi": 953771,
+      "demi_dedans": 892172,
+      "pourtour": 8366,
+      "morceaux": 1,
+      "trous": 3
+    }
+  ],
+  "accords": [
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-anime"
+      ],
+      "accord": 0.9876
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "birefnet-general-lite",
+        "u2net"
+      ],
+      "accord": 0.9755
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-general-use"
+      ],
+      "accord": 0.9933
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "birefnet-general-lite",
+        "birefnet-general"
+      ],
+      "accord": 0.9952
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "isnet-anime",
+        "u2net"
+      ],
+      "accord": 0.9702
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "isnet-anime",
+        "isnet-general-use"
+      ],
+      "accord": 0.9881
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "isnet-anime",
+        "birefnet-general"
+      ],
+      "accord": 0.9898
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ],
+      "accord": 0.9794
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "u2net",
+        "birefnet-general"
+      ],
+      "accord": 0.9779
+    },
+    {
+      "image": "guide · goblin",
+      "entre": [
+        "isnet-general-use",
+        "birefnet-general"
+      ],
+      "accord": 0.996
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-anime"
+      ],
+      "accord": 0.993
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "birefnet-general-lite",
+        "u2net"
+      ],
+      "accord": 0.9848
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-general-use"
+      ],
+      "accord": 0.9956
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "birefnet-general-lite",
+        "birefnet-general"
+      ],
+      "accord": 0.9968
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "isnet-anime",
+        "u2net"
+      ],
+      "accord": 0.9823
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "isnet-anime",
+        "isnet-general-use"
+      ],
+      "accord": 0.9937
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "isnet-anime",
+        "birefnet-general"
+      ],
+      "accord": 0.9946
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ],
+      "accord": 0.9868
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "u2net",
+        "birefnet-general"
+      ],
+      "accord": 0.986
+    },
+    {
+      "image": "guide · nain",
+      "entre": [
+        "isnet-general-use",
+        "birefnet-general"
+      ],
+      "accord": 0.9973
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-anime"
+      ],
+      "accord": 0.9591
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "birefnet-general-lite",
+        "u2net"
+      ],
+      "accord": 0.9632
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-general-use"
+      ],
+      "accord": 0.9924
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "birefnet-general-lite",
+        "birefnet-general"
+      ],
+      "accord": 0.9938
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "isnet-anime",
+        "u2net"
+      ],
+      "accord": 0.925
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "isnet-anime",
+        "isnet-general-use"
+      ],
+      "accord": 0.9588
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "isnet-anime",
+        "birefnet-general"
+      ],
+      "accord": 0.961
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ],
+      "accord": 0.9625
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "u2net",
+        "birefnet-general"
+      ],
+      "accord": 0.9609
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "entre": [
+        "isnet-general-use",
+        "birefnet-general"
+      ],
+      "accord": 0.9942
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-anime"
+      ],
+      "accord": 0.9743
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "birefnet-general-lite",
+        "u2net"
+      ],
+      "accord": 0.9747
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "birefnet-general-lite",
+        "isnet-general-use"
+      ],
+      "accord": 0.9928
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "birefnet-general-lite",
+        "birefnet-general"
+      ],
+      "accord": 0.9949
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "isnet-anime",
+        "u2net"
+      ],
+      "accord": 0.9595
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "isnet-anime",
+        "isnet-general-use"
+      ],
+      "accord": 0.9744
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "isnet-anime",
+        "birefnet-general"
+      ],
+      "accord": 0.9764
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "u2net",
+        "isnet-general-use"
+      ],
+      "accord": 0.98
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "u2net",
+        "birefnet-general"
+      ],
+      "accord": 0.9775
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "entre": [
+        "isnet-general-use",
+        "birefnet-general"
+      ],
+      "accord": 0.9958
+    }
+  ],
+  "verdict_defaut": {
+    "u2net": {
+      "ms": 894.475,
+      "part": 0.219,
+      "demi": 445277.5,
+      "demi_dedans": 379916.25,
+      "pourtour": 4498.75,
+      "morceaux": 1.0,
+      "trous": 2.5
+    },
+    "isnet-general-use": {
+      "ms": 1538.775,
+      "part": 0.215,
+      "demi": 421092.0,
+      "demi_dedans": 378505.75,
+      "pourtour": 5364.0,
+      "morceaux": 1.0,
+      "trous": 3.75
+    }
+  },
+  "rongements": [
+    {
+      "image": "guide · goblin",
+      "crans": 1,
+      "sujet": 248725,
+      "aveugle_garde": 244625,
+      "conditionnel_garde": 246534,
+      "epargnes": 1909,
+      "part_epargnee": 0.0077
+    },
+    {
+      "image": "guide · goblin",
+      "crans": 2,
+      "sujet": 248725,
+      "aveugle_garde": 241138,
+      "conditionnel_garde": 245466,
+      "epargnes": 4328,
+      "part_epargnee": 0.0174
+    },
+    {
+      "image": "guide · nain",
+      "crans": 1,
+      "sujet": 266298,
+      "aveugle_garde": 262341,
+      "conditionnel_garde": 264299,
+      "epargnes": 1958,
+      "part_epargnee": 0.0074
+    },
+    {
+      "image": "guide · nain",
+      "crans": 2,
+      "sujet": 266298,
+      "aveugle_garde": 258688,
+      "conditionnel_garde": 263950,
+      "epargnes": 5262,
+      "part_epargnee": 0.0198
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "crans": 1,
+      "sujet": 169417,
+      "aveugle_garde": 165372,
+      "conditionnel_garde": 167765,
+      "epargnes": 2393,
+      "part_epargnee": 0.0141
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "crans": 2,
+      "sujet": 169417,
+      "aveugle_garde": 161512,
+      "conditionnel_garde": 167709,
+      "epargnes": 6197,
+      "part_epargnee": 0.0366
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "crans": 1,
+      "sujet": 994894,
+      "aveugle_garde": 983697,
+      "conditionnel_garde": 992975,
+      "epargnes": 9278,
+      "part_epargnee": 0.0093
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "crans": 2,
+      "sujet": 994894,
+      "aveugle_garde": 976395,
+      "conditionnel_garde": 992255,
+      "epargnes": 15860,
+      "part_epargnee": 0.0159
+    }
+  ],
+  "decontamination": [
+    {
+      "image": "guide · goblin",
+      "bord": 4100,
+      "repeints": 2095,
+      "part_du_bord": 0.511,
+      "ecart_moyen": 136.6
+    },
+    {
+      "image": "guide · nain",
+      "bord": 3957,
+      "repeints": 1528,
+      "part_du_bord": 0.3862,
+      "ecart_moyen": 197.0
+    },
+    {
+      "image": "gpt-image-2 high · marche",
+      "bord": 4045,
+      "repeints": 719,
+      "part_du_bord": 0.1778,
+      "ecart_moyen": 141.9
+    },
+    {
+      "image": "seedream-4.5 · base",
+      "bord": 11197,
+      "repeints": 1029,
+      "part_du_bord": 0.0919,
+      "ecart_moyen": 87.9
+    }
+  ]
+}

@@ -1,8 +1,12 @@
-# Asset Kitchen — Les 366 user stories
+# Asset Kitchen — Les 501 user stories
 
 Le catalogue, groupé comme il l'a été écrit — par geste, dans l'ordre où l'auteur les
 rencontre. **On l'ouvre par numéro** : un critère d'acceptation cite `US-65`, on vient
 lire ce qu'elle demande.
+
+*Treize stories neuves — `482` à `494` — ont été écrites le 3 septembre 2026, quand la V3 a été
+recadrée sur la seule animation. Quatre autres sont **retirées** ce jour-là, barrées à leur place
+avec la raison ; elles ne sont plus portées par aucune tranche.*
 
 **`docs/PRD.md` fait foi sur ce que le produit doit faire.** Ce fichier-ci en est le
 détail énuméré, pas une autorité de plus : en cas d'écart, le PRD a raison. Quelle tranche
@@ -578,3 +582,314 @@ geste court, et la règle de ce qui ne voyage pas.*
 - **US-364** — En tant qu'auteur, je veux qu'un moteur absent de ma machine soit grisé avec sa raison et le geste pour l'installer, afin de ne jamais découvrir l'absence après avoir lancé.
 - **US-365** — En tant qu'auteur, je veux qu'une recette qui nomme un moteur absent le dise sans casser le rendu des autres passes, afin qu'une recette venue d'ailleurs ne me laisse pas devant une image blanche.
 - **US-366** — En tant qu'auteur, je veux savoir sur quoi repose « meilleur » — la durée de chaque moteur et ce qu'ils rendent côte à côte sur des silhouettes difficiles —, afin de choisir sur un relevé et non sur une promesse.
+
+---
+
+## R6 — la planche qui revient de travers
+
+*Hors V3 : cette reprise répare aussi les planches d'équipement de la V2, et elle se rembourse
+dès aujourd'hui — trente-et-un pour cent des appels d'une planche se perdent pour cette raison.*
+
+- **US-367** — En tant qu'auteur, je veux qu'une planche revenue avec plus de sujets que demandé me soit proposée avec les cases en trop à écarter, plutôt que refusée en bloc, afin qu'un appel payé ne se perde pas pour une case de trop.
+- **US-368** — En tant qu'auteur, je veux être prévenu quand un « sujet » occupe presque toute sa case — c'est le quadrillage que le modèle a redessiné, pas un personnage —, afin de ne pas garder du vide payé sans le savoir.
+
+---
+
+## La V3 — l'animation
+
+*Recadrée le 3 septembre 2026 : **la version ne fait qu'animer**. Les stories de la planche et de
+son dépliage descendent en V3.5 — elles servent le prix de toutes les générations, pas
+l'animation. Celles du pantin sortent du plan. Et quatre sont retirées parce qu'une décision
+durable les contredit ou qu'une autre tranche les rend en mieux.*
+
+### Le mouvement, dit une fois pour toutes
+
+*`A6` — avant tout le reste : on ne commande pas un clip sans nommer ce qu'on demande.*
+
+- **US-392** — En tant qu'auteur, je veux que l'atelier connaisse des mouvements par leur nom — repos, marche, course, saut —, chacun avec ses étapes et ses directions, afin de ne plus les décrire en mots à chaque personnage.
+- **US-393** — En tant qu'auteur, je veux ajouter mes propres mouvements à cette liste, afin que l'atelier suive mon jeu au lieu de le précéder.
+- **US-394** — En tant qu'auteur, je veux qu'un clip commandé deux fois pour le même mouvement parte avec exactement la même demande, afin qu'un écart entre deux tirages vienne du modèle et non de ma frappe.
+- **US-395** — En tant qu'auteur, je veux que ces mouvements appartiennent à l'atelier et non à un projet, afin de les retrouver dans le jeu suivant.
+
+### Le cadre qui ne dérive pas
+
+*`A2` — une correction, pas une fonctionnalité.*
+
+- **US-376** — En tant qu'auteur, je veux que toutes les images d'une bande soient recadrées sur une seule et même fenêtre, afin que le personnage ne saute pas et ne change pas de taille d'une image à l'autre.
+- **US-379** — En tant qu'auteur, je veux que l'aperçu me montre les pixels que le modèle a dessinés, fond compris, afin de ne pas juger le détourage à la place de la marche.
+
+### Le clip entre dans l'atelier
+
+*`A9` — le serveur est écrit et éprouvé ; l'écran reste. Écrites le 2 septembre 2026, quand six
+essais ont fait de la vidéo le chemin de l'animation ; celles de la file réécrites le 3 septembre,
+quand l'objet commandé est devenu un clip.*
+
+- **US-434** — En tant qu'auteur, je veux commander une vidéo d'animation depuis un personnage, en choisissant le mouvement et le modèle, afin d'obtenir une animation sans avoir à demander une planche qui rate neuf fois sur dix.
+- **US-435** — En tant qu'auteur, je veux savoir avant d'envoyer ce que le clip va coûter **et d'où sort ce prix**, afin de décider en connaissance de cause plutôt que de faire confiance à un chiffre.
+- **US-436** — En tant qu'auteur, je veux que le clip revienne avec ce qu'il a **réellement** coûté, afin que l'argent que je dépense ne disparaisse jamais du journal.
+- **US-437** — En tant qu'auteur, je veux retrouver un clip commandé même si j'ai fermé l'atelier pendant qu'il se fabriquait, afin de ne pas payer deux fois la même attente.
+- **US-438** — En tant qu'auteur, je veux que récupérer un clip déjà payé soit un geste **que je demande**, afin que l'atelier ne rappelle jamais le fournisseur sans moi.
+- **US-439** — En tant qu'auteur, je veux voir mes clips dans la bibliothèque à côté du reste, afin de ne pas avoir un objet payé qui se cache.
+- **US-440** — En tant qu'auteur, je veux qu'un modèle vidéo proposé sans avoir été assez mesuré me le dise, afin de ne pas prendre une hypothèse pour un résultat.
+- **US-380** — En tant qu'auteur, je veux lancer plusieurs clips du même mouvement en un seul geste, afin de ne pas payer une attente par tentative.
+- **US-381** — En tant qu'auteur, je veux les voir revenir un par un et bouger dès leur arrivée, afin de choisir en regardant au lieu de deviner, et sans attendre les autres.
+- **US-382** — En tant qu'auteur, je veux savoir avant de lancer ce que le lot entier va coûter, afin de décider du nombre de tentatives en connaissance de cause.
+- **US-383** — En tant qu'auteur, je veux garder un clip et jeter les autres d'un seul geste, afin que le tri ne me coûte pas plus cher que la fabrication.
+
+### Le montage — plusieurs animations dans un clip
+
+*`A10` — le cœur de la version.*
+
+- **US-441** — En tant qu'auteur, je veux qu'un clip s'ouvre en tournant déjà en boucle, afin de juger le mouvement au lieu de l'imaginer.
+- **US-442** — En tant qu'auteur, je veux faire glisser une fenêtre sur les images du clip pour choisir ce que je garde, afin de caler un cycle à l'œil sans taper un seul chiffre.
+- **US-443** — En tant qu'auteur, je veux voir en même temps les images brutes et la bande passée par la chaîne du jeu, afin de juger le mouvement et le découpage séparément — ce sont deux métiers.
+- **US-444** — En tant qu'auteur, je veux tirer **plusieurs animations du même clip**, chacune sous son nom, afin qu'un seul paiement remplisse plusieurs cases.
+- **US-445** — En tant qu'auteur, je veux que l'atelier me montre où le clip se referme le mieux et où il ne bouge presque pas, afin de savoir où regarder sans parcourir cent images.
+- **US-446** — En tant qu'auteur, je veux affecter une bande à une case du plan de poses de mon personnage, afin que ce que je découpe aille se ranger tout seul.
+- **US-447** — En tant qu'auteur, je veux régler la vitesse une seule fois et que ce soit celle qui part à l'export, afin que ce que je vois dans l'atelier soit ce que le jeu jouera.
+- **US-448** — En tant qu'auteur, je veux voir ce que me revient une animation de ce clip, et que ce prix baisse à chaque bande gardée, afin de savoir quand j'ai tiré du clip tout ce qu'il avait.
+- **US-449** — En tant qu'auteur, je veux savoir que rien sur cet écran ne dépense, afin de découper et recommencer sans compter.
+- **US-450** — En tant qu'auteur, je veux prendre ou laisser **chaque image du clip une par une**, afin de serrer deux images au moment du contact d'un pas et n'en garder qu'une pendant la glisse — ce qu'un échantillonnage régulier ne saura jamais faire.
+- **US-451** — En tant qu'auteur, je veux refaire le cadrage d'une bande à la main quand le cadrage automatique tombe mal, afin de ne pas être bloqué par une mesure qui s'est trompée.
+- **US-452** — En tant qu'auteur, je veux régler la recette du découpage depuis l'écran de montage — la taille du pixel, les couleurs, le détourage —, afin d'essayer et de voir, au lieu d'aller changer les réglages du jeu pour une seule bande.
+- **US-453** — En tant qu'auteur, je veux que toutes les bandes tirées d'un même clip aient la même assise, afin que mon personnage ne change pas de taille en passant du repos à la marche.
+
+### Le moteur de la maison — animer sans payer
+
+*`A11` — la seule tranche qui amène le prix d'un clip à zéro.*
+
+- **US-454** — En tant qu'auteur, je veux fabriquer un clip **sur la carte graphique de mon propre ordinateur**, afin de ne plus rien payer pour animer et d'en tirer autant que je veux.
+- **US-455** — En tant qu'auteur, je veux voir le moteur de la maison **dans la même liste** que les modèles payants, afin de choisir sans avoir à apprendre un second écran.
+- **US-456** — En tant qu'auteur, je veux qu'on m'annonce **une attente au lieu d'un prix** quand la fabrication est gratuite, afin de savoir à quoi je m'engage — le temps se dépense aussi.
+- **US-457** — En tant qu'auteur, je veux que mon journal des dépenses distingue **un clip qui n'a rien coûté** d'un clip dont le prix n'a pas pu être lu, afin de ne pas confondre « gratuit » et « on ne sait pas ».
+- **US-458** — En tant qu'auteur, je veux pouvoir demander un clip d'**une, deux ou trois secondes**, afin de rester dans la longueur où la bande sort propre.
+- **US-459** — En tant qu'auteur, je veux qu'on me dise **combien d'images le clip contiendra vraiment**, afin de ne pas croire à une durée ronde que le moteur ne sait pas rendre.
+- **US-460** — En tant qu'auteur, je veux savoir **ce qui manque et ce que ça pèse** avant de lancer un téléchargement de modèles, afin de décider en connaissance de cause et de ne pas attendre pour rien.
+- **US-461** — En tant qu'auteur, je veux que l'atelier **ne touche jamais à mon installation de ComfyUI**, afin qu'ajouter la vidéo ne casse pas ce qui marchait déjà — mes bruitages notamment.
+
+### Toutes les poses, en animation
+
+*`A12` — c'est ici que l'objectif de la version se vérifie. Écrites le 3 septembre 2026.*
+
+- **US-482** — En tant qu'auteur, je veux lire la matrice de mon personnage sur **deux calques** — ses images fixes et ses animations —, afin de voir ce qui manque d'un côté sans qu'une case remplie de l'autre me le cache.
+- **US-483** — En tant qu'auteur, je veux **une jauge par calque**, afin de savoir combien de poses sont animées sans les compter à la main.
+- **US-484** — En tant qu'auteur, je veux commander le clip d'une case vide **depuis cette case**, avec l'image de départ déjà proposée, afin de ne pas retraverser trois écrans à chaque case que je remplis.
+- **US-485** — En tant qu'auteur, je veux voir chaque case animée tourner à la taille de sa vignette, afin de juger ma matrice en la regardant au lieu de la lire.
+- **US-486** — En tant qu'auteur, je veux qu'une case animée dise **de quel clip** elle vient et que je puisse y remonter, afin de la redécouper autrement sans rien repayer.
+
+### L'image attrapée au vol
+
+*`A13` — la version rend service au-delà de l'animation. Écrites le 3 septembre 2026.*
+
+- **US-487** — En tant qu'auteur, je veux **mettre de côté une image du clip** pendant que je découpe, sans quitter l'écran, afin de récupérer une belle attitude que je n'étais pas venu chercher.
+- **US-488** — En tant qu'auteur, je veux que cette image entre dans ma bibliothèque **avec ce dont elle vient** — quel clip, quelle image, quelle génération l'a payé —, afin de savoir plus tard d'où elle sort.
+- **US-489** — En tant qu'auteur, je veux la ranger **ensuite** dans une case ou sur un objet, en un second geste facultatif, afin de ne pas avoir à décider au moment où je prélève juste pour voir.
+- **US-490** — En tant qu'auteur, je veux qu'elle passe par la chaîne de mon jeu comme n'importe quelle image, afin qu'une image tirée d'une vidéo ne soit pas une exception que je devrais retraiter à part.
+
+### La bande sort de l'atelier
+
+*`A4`.*
+
+- **US-385** — En tant qu'auteur, je veux exporter une bande en planche de sprites accompagnée de sa description, afin de la charger dans mon moteur sans avoir à la remesurer.
+- **US-386** — En tant qu'auteur, je veux l'exporter aussi en image animée, afin de la montrer sans demander à personne d'ouvrir un moteur de jeu.
+- **US-387** — En tant qu'auteur, je veux que l'export dise à quelle cadence la bande a été pensée, afin que ce que je vois dans l'atelier soit ce que je verrai dans le jeu.
+- **US-388** — En tant qu'auteur, je veux exporter toutes les bandes d'un personnage en une seule archive, afin de livrer un personnage complet d'un geste.
+
+### Le contour qui ne bout pas
+
+*`A5` — la stabilité entre deux images ; le bord juste, lui, est le sujet de `D4`.*
+
+- **US-390** — En tant qu'auteur, je veux que le bord de ma silhouette soit calculé de la même façon sur toutes les images d'une bande, afin qu'il ne grésille pas quand la bande tourne.
+- **US-391** — En tant qu'auteur, je veux comparer l'avant et l'après de cette correction sur une même bande, afin de vérifier qu'elle améliore au lieu de le croire sur parole.
+
+### Reprendre une image sans refaire la bande
+
+*`A7` — rétrécie le 3 septembre 2026 : choisir les images, c'est l'écran de montage.*
+
+- **US-396** — En tant qu'auteur, je veux voir l'image précédente en transparence sous celle que je corrige, afin de juger un déplacement au lieu de le deviner.
+- **US-397** — En tant qu'auteur, je veux déplacer une image au pixel dans sa fenêtre, afin de rattraper un décalage sans rien repayer.
+- **US-398** — En tant qu'auteur, je veux remplacer une image par une autre du même clip, afin qu'une bande bonne aux sept huitièmes ne parte pas à la poubelle.
+- **US-384** — En tant qu'auteur, je veux prendre une image dans un clip et une autre dans un autre clip, afin de composer une bonne animation avec deux clips à moitié bons.
+- **US-399** — En tant qu'auteur, je veux que la fenêtre commune se recalcule quand je change une image, afin de ne pas réintroduire à la main le saut qu'elle est faite pour éviter.
+- **US-400** — En tant qu'auteur, je veux ancrer une bande par l'un de ses neuf points — les pieds, le centre, un coin —, afin que le personnage tienne au sol plutôt qu'au cadre.
+
+### Retirées le 3 septembre 2026
+
+*Écrites ici barrées plutôt que supprimées, pour que personne ne les repropose sans savoir
+pourquoi elles sont parties.*
+
+- ~~**US-375** — déclarer une bande avec un **nombre d'étapes**.~~ **Contredite par une décision durable** : une bande est une liste d'images choisies, et son nombre d'images se lit au lieu de se régler. Un cycle de marche n'est pas régulier.
+- ~~**US-377** — voir sa bande tourner tout de suite.~~ **Rendue en mieux par `US-441`** : le clip s'ouvre en tournant déjà, et deux boucles y tournent côte à côte.
+- ~~**US-378** — régler la vitesse de cet aperçu.~~ **Rendue en mieux par `US-447`** : un seul curseur, qui règle l'aperçu *et* la cadence qui part à l'export.
+- ~~**US-389** — un bord juste, sans arbitrer entre un halo et un sprite qui maigrit.~~ **C'est le défaut que `D4` répare** (`US-429`), sur une image seule. `A5` ne traite que la stabilité entre deux images.
+
+### Sorties du plan avec le pantin
+
+*Aucune ligne écrite. Le pantin était le seul moyen d'animer sans payer ; le moteur de la maison
+l'est aussi, sans squelette ni maillage. Les arguments restent, en fin de `docs/PLAN.md`.*
+
+- **US-401** — En tant qu'auteur, je veux obtenir les pièces d'un personnage — tête, buste, bras, jambes — à partir d'une de ses images, afin d'avoir de quoi l'articuler.
+- **US-402** — En tant qu'auteur, je veux que l'atelier pose le squelette tout seul sur ces pièces, afin de ne pas passer une heure par personnage à planter des pivots.
+- **US-403** — En tant qu'auteur, je veux corriger un pivot ou l'ordre des pièces quand la pose automatique se trompe, afin qu'un cas difficile reste faisable.
+- **US-404** — En tant qu'auteur, je veux appliquer un mouvement de la bibliothèque à ce pantin et obtenir une bande sans payer un seul appel, afin qu'une animation de plus ne coûte plus rien.
+- **US-405** — En tant qu'auteur, je veux que la même bande, redemandée, revienne identique, afin de ne plus dépendre d'un tirage.
+- **US-406** — En tant qu'auteur, je veux que l'atelier me dise clairement ce que le pantin ne sait pas faire — changer de vue, retourner une main —, afin de savoir quand il faut repasser par une génération.
+
+---
+
+## La V3.5 — le dépliage généralisé
+
+*Née le 3 septembre 2026 du recadrage de la V3. Elle ne fabrique rien de neuf : **elle divise le
+prix de tout ce que le produit fabrique déjà.** Demander huit images coûte huit appels ; demander
+une grande image qui en contient huit coûte un appel.*
+
+### La planche se garde, et son dépliage se refait
+
+*`P1` — ex-`A6` du premier découpage de la V3, sortie de l'animation le 3 septembre 2026.*
+
+- **US-369** — En tant qu'auteur, je veux retrouver la planche entière dans ma galerie, à côté des images qui en sont sorties, afin de pouvoir la regarder, la comparer et la reprendre.
+- **US-370** — En tant qu'auteur, je veux voir sur chaque image de quelle planche et de quel dépliage elle vient, afin de ne jamais perdre le fil de ce que j'ai fabriqué.
+- **US-371** — En tant qu'auteur, je veux déplier une planche autant de fois que je le veux, afin qu'un découpage raté se refasse au lieu de se repayer.
+- **US-372** — En tant qu'auteur, je veux corriger les coupes à la main quand je refais un dépliage — déplacer, ajouter, retirer un rectangle —, afin que la grille rendue par le modèle ne décide pas à ma place.
+- **US-373** — En tant qu'auteur, je veux supprimer les images d'un dépliage sans toucher à la planche ni aux autres dépliages, afin de faire le ménage sans rien perdre d'autre.
+- **US-374** — En tant qu'auteur, je veux que le premier dépliage se fasse tout seul, sans rien me demander, afin qu'une planche qui revient bien n'ajoute aucun geste à ce que je fais déjà.
+
+### Une planche pour plusieurs choses
+
+*`P2` — et un invariant à lever d'abord : aujourd'hui une planche ne porte qu'une seule chose du
+jeu. Écrites le 3 septembre 2026.*
+
+- **US-491** — En tant qu'auteur, je veux commander **plusieurs objets différents sur une seule planche**, afin de payer un appel au lieu de huit pour remplir mon inventaire.
+- **US-492** — En tant qu'auteur, je veux dire d'avance ce que **chaque case** de la planche doit contenir, afin que le découpage range chaque morceau à sa place sans que je le fasse à la main.
+- **US-493** — En tant qu'auteur, je veux qu'une case dont le sujet n'est pas celui annoncé **me le signale**, afin de ne pas ranger une potion à la place d'une clé.
+- **US-494** — En tant qu'auteur, je veux voir le **prix par sujet** à côté du prix de la planche, afin de mesurer ce que le regroupement me fait vraiment économiser.
+
+## La V2.3 — le traitement cesse d'être à refaire
+
+### Une recette par défaut, par nature d'image
+
+- **US-407** — En tant qu'auteur, je veux que le détourage par défaut soit celui qui marche le plus souvent sur mes images, afin de ne plus le refaire à la main sur presque chacune.
+- **US-408** — En tant qu'auteur, je veux un défaut distinct pour une image seule et pour une planche, afin que le réglage suive ce que je fabrique au lieu de faire une moyenne des deux.
+- **US-409** — En tant qu'auteur, je veux pouvoir donner à une famille de mon univers son propre défaut, afin qu'un décor et un personnage ne soient pas traités pareil.
+- **US-410** — En tant qu'auteur, je veux voir quel défaut va s'appliquer et d'où il vient, avant de générer, afin de ne pas le découvrir sur l'image revenue.
+- **US-411** — En tant qu'auteur, je veux que changer un défaut ne touche à aucune image déjà faite, afin qu'un réglage d'aujourd'hui ne réécrive pas mon travail d'hier.
+- **US-412** — En tant qu'auteur, je veux régler ces défauts au même endroit que le reste de mon univers, afin de ne pas chercher dans un second écran ce que le premier décide déjà.
+
+### La grille retrouvée, et la réduction qui ne bave plus
+
+*Les sept sont livrées le 3 septembre 2026, en deux moitiés le même jour (`docs/PLAN.md` § D2).*
+
+> ⚠️ **`US-413` et `US-61` se lisent ensemble, et leur écart est réel.** `US-413` veut que
+> l'atelier retrouve la taille de bloc *« afin de ne pas ramener une image sur une grille qui
+> n'est pas la sienne »* ; `US-61` veut que la taille de sortie soit **demandée, jamais déduite
+> de l'image reçue**, parce qu'en déduire une reviendrait à laisser le fournisseur décider de
+> l'échelle du jeu. Les deux ne peuvent pas être vraies au sens fort en même temps.
+>
+> **Ce qui est livré tranche pour `US-61`, et honore `US-413` par la lecture faible** : le pas du
+> modèle est **retrouvé et montré**, avec ce qu'il vaut en carrés, juste au-dessus du réglage de
+> taille ; il n'est jamais appliqué. L'auteur cesse de choisir à l'aveugle, ce qui est le besoin
+> derrière `US-413` ; il continue de choisir, ce qui est l'exigence de `US-61`. Si l'auteur veut
+> un jour la lecture forte — se caler d'office sur la grille du modèle —, c'est `US-61` qu'il
+> faut rouvrir d'abord, et une cinquième méthode de réduction attend au banc
+> (`essais/essai_conversion_pixel.py`).
+
+- **US-413** — En tant qu'auteur, je veux que l'atelier retrouve tout seul la vraie taille de bloc que le modèle a dessinée, afin de ne pas ramener une image sur une grille qui n'est pas la sienne.
+- **US-414** — En tant qu'auteur, je veux que la réduction garde les couleurs de mon sprite au lieu d'en inventer entre deux, afin qu'un aplat reste un aplat.
+- **US-415** — En tant qu'auteur, je veux que l'antialiasing du modèle disparaisse au lieu d'être moyenné dans mes couleurs, afin de ne pas récupérer un bord flou sur une image nette.
+- **US-416** — En tant qu'auteur, je veux que ma palette s'applique sur l'image déjà réduite, afin de ne pas fabriquer des couleurs de bord qui n'existent nulle part dans mon jeu.
+- **US-417** — En tant qu'auteur, je veux imposer la taille de bloc à la main quand la détection se trompe, afin de n'être jamais bloqué par une mesure. *(Tenue depuis toujours par `US-61` : la taille est demandée. Ce que D2 ajoute est que les crans **restent là** quand la détection se tait, et que la phrase du refus les désigne.)*
+- **US-418** — En tant qu'auteur, je veux que l'atelier dise clairement qu'il n'a pas su trouver la grille, afin de ne pas prendre une supposition pour une mesure. *(Le cœur de la seconde moitié : la mesure d'avant répondait « 2 » avec une netteté de 0,94 sur une peinture. Trois refus, trois phrases en français.)*
+- **US-419** — En tant qu'auteur, je veux comparer l'ancienne et la nouvelle réduction sur la même image, afin de vérifier que c'est mieux au lieu de le croire.
+
+### Le fond, réglage du projet
+
+- **US-420** — En tant qu'auteur, je veux choisir la couleur de fond sur laquelle le modèle pose mes sujets, afin que le détourage cesse d'être un arbitrage sur presque chaque image.
+- **US-421** — En tant qu'auteur, je veux que la demande interdise au modèle d'employer cette couleur et ses voisines dans le sujet, les reflets, les accessoires et les ombres, afin qu'elle ne réapparaisse pas là où elle ferait un trou.
+- **US-422** — En tant qu'auteur, je veux que l'atelier me dise quand aucune couleur de fond n'est sûre pour mon univers, afin qu'il ne choisisse pas en silence une couleur que mon personnage porte déjà.
+- **US-423** — En tant qu'auteur, je veux corriger la couleur de fond juste avant de lancer une génération, afin de l'adapter à un sujet particulier sans changer le réglage de tout le projet.
+- **US-424** — En tant qu'auteur, je veux qu'un univers qui n'a pas encore de palette continue de se comporter comme avant, afin qu'un jeu neuf ne demande pas un réglage qu'il ne peut pas encore fournir.
+
+### Les moteurs de détourage s'ouvrent, et le contour se pose net
+
+- **US-425** — En tant qu'auteur, je veux savoir sur quoi chaque moteur de détourage a été entraîné, afin de comprendre pourquoi l'un réussit là où l'autre échoue.
+- **US-426** — En tant qu'auteur, je veux un moteur entraîné sur du dessin et non sur de la photo, afin que le détourage travaille enfin sur des images qui ressemblent aux miennes.
+- **US-427** — En tant qu'auteur, je veux essayer le moteur qui vise les silhouettes difficiles sans rapatrier près d'un gigaoctet, afin de savoir s'il vaut mieux que les autres sur mes images.
+- **US-428** — En tant qu'auteur, je veux qu'un moteur absent me dise ce qu'il doit récupérer et combien ça pèse avant de le lancer, afin de décider en connaissance de cause.
+- **US-429** — En tant qu'auteur, je veux que le contour se pose sur le vrai bord du sujet et non entre deux couleurs, afin d'obtenir un trait net sur une image réduite.
+- **US-430** — En tant qu'auteur, je veux comparer côte à côte ce que rendent les moteurs et le temps qu'ils prennent, afin de choisir sur ce que je vois et non sur ce qu'on me promet.
+
+### Le texte qui part se lit en trois parties
+
+- **US-431** — En tant qu'auteur, je veux que le texte envoyé au modèle soit rangé en parties nommées — le contexte, les références, ce que je demande —, afin de relire ce qui part sans démêler un bloc.
+- **US-432** — En tant qu'auteur, je veux voir ces parties séparément sur l'écran qui montre ce qui va partir, afin de corriger l'une sans toucher aux autres.
+- **US-433** — En tant qu'auteur, je veux que chaque image jointe soit annoncée pour ce qu'elle est — un style, une pose, un gabarit —, afin que le modèle ne prenne pas une référence de style pour une consigne de posture.
+
+## R8 et R9 — les deux écrans qui ne disaient pas à quoi ils servaient
+
+### La fiche d'une chose montre la chose, et dit à quoi chaque partie sert
+
+- **US-462** — En tant qu'auteur, je veux voir la chose sur sa propre fiche — son portrait, pris parmi ses images déjà faites —, afin de savoir de qui je parle sans ouvrir un autre écran.
+- **US-463** — En tant qu'auteur, je veux que la fiche porte le nom de la chose sur sa surface et non seulement dans le fil de navigation, afin de savoir où je suis d'un coup d'œil.
+- **US-464** — En tant qu'auteur, je veux que chaque partie de la fiche dise à quoi elle sert, écrit sous son titre, afin de ne plus deviner ce que « ce qui l'habille » recouvre.
+- **US-465** — En tant qu'auteur, je veux l'explication complète d'une partie au survol de son titre, afin de la lire là où la question se pose au lieu d'aller chercher dans le guide.
+- **US-466** — En tant qu'auteur, je veux voir chaque image d'exemple en vignette, afin de la retenir ou de l'écarter en la regardant au lieu de lire son nom.
+- **US-467** — En tant qu'auteur, je veux voir les images déjà faites de cette chose sur sa fiche, afin de juger ce qui est fait au lieu de lire un chiffre qui le résume.
+- **US-468** — En tant qu'auteur, je veux lire l'état complet d'une chose sans cliquer cinq fois, et sans qu'un résumé se coupe au milieu d'un mot, afin de ne pas avoir à tenir cet état dans ma tête.
+
+### Le calibrage montre le défaut qu'il répare
+
+- **US-469** — En tant qu'auteur, je veux que l'écran du calibrage me dise quel défaut il répare, afin de comprendre à quoi cet outil sert avant d'y toucher.
+- **US-470** — En tant qu'auteur, je veux lire ce que le bouton va faire au-dessus du bouton, afin de savoir ce que j'obtiens et ce que je perds avant d'appuyer.
+- **US-471** — En tant qu'auteur, je veux voir mes poses telles qu'elles sont et telles qu'elles seraient, côte à côte, afin de juger le résultat sans avoir à le déclencher pour le découvrir.
+- **US-472** — En tant qu'auteur, je veux que le bouton s'éteigne et me dise pourquoi quand mes poses sont déjà à la bonne taille, afin de ne pas être invité à un geste qui ne change rien.
+- **US-473** — En tant qu'auteur, je veux que les commandes de cet écran soient écrites en toutes lettres, afin de ne pas avoir à cliquer un symbole pour découvrir ce qu'il fait.
+- **US-474** — En tant qu'auteur, je veux voir la silhouette de chaque pose à côté de son nom, avec ses mesures alignées et lisibles, afin de repérer celle qui sort du lot sans lire une colonne de chiffres.
+- **US-475** — En tant qu'auteur, je veux l'explication de chaque réglage de cet écran au survol de son nom, afin de savoir ce que « occupation » et « décalage » déplacent avant de les changer.
+
+### Rien ne peut être plus grand qu'un personnage
+
+- **US-476** — En tant qu'auteur, je veux déclarer qu'un type d'objet fait plusieurs personnages de haut, afin de pouvoir enfin commander un bâtiment, un arbre ou une tour.
+- **US-477** — En tant qu'auteur, je veux lire la hauteur que je règle en personnages **et** en carrés à la fois, afin de ne pas convertir de tête entre ce que je décris et ce que mon moteur de jeu demande.
+- **US-478** — En tant qu'auteur, je veux un échantillon dessiné où le sujet se compare à un personnage, afin de juger un rapport d'échelle d'un coup d'œil au lieu de lire un pourcentage.
+- **US-479** — En tant qu'auteur, je veux que l'image d'un sujet plus haut qu'un personnage revienne d'autant plus grande, afin qu'elle garde la même taille de carré que tout le reste du jeu.
+- **US-480** — En tant qu'auteur, je veux savoir jusqu'où la hauteur peut monter sur ma case et pourquoi elle s'arrête là, afin de ne pas découvrir la borne en butant dessus.
+- **US-481** — En tant qu'auteur, je veux que mes images déjà traitées rendent exactement la même chose après cette évolution, afin de ne pas avoir à toutes les revérifier.
+
+---
+
+## La V3.1 — l'atelier tient ce qu'il dit
+
+*Les sept gestes que la V3.1 ajoute vraiment. Le reste de la version — une quarantaine de
+changements — répare ce que le produit avait déjà promis, construit ou décidé : ceux-là n'ouvrent
+aucune histoire d'usage neuve, ils tiennent celles qui existent. Nés du carnet de l'auteur, séance
+du 3 septembre 2026, et arbitrés le même jour.*
+
+> **`G1` est le premier de ces quarante et quelques changements à être livré**, le 3 septembre
+> 2026, et il n'ouvre en effet aucune story : douze phrases visibles du produit avaient cessé
+> d'être vraies sans changer d'un mot, et elles disent à nouveau ce qu'elles ont toujours voulu
+> dire. Ce qu'il faut retenir ici est la forme du défaut, parce qu'elle se reproduira : *une
+> histoire d'usage tenue par une phrase juste le jour de son écriture n'est tenue que ce jour-là*.
+
+### Un jeu ne porte que les types d'objets qu'il contient
+
+- **US-495** — En tant qu'auteur, je veux éteindre un type d'objet sans le supprimer, afin que la liste des sujets ne me propose que ce que mon jeu contient.
+- **US-496** — En tant qu'auteur, je veux qu'un projet reçoive les types d'objets ajoutés après sa création, afin de ne pas rester privé de ce que le produit sait faire.
+
+### Une recette se pose sur plusieurs images à la fois
+
+- **US-497** — En tant qu'auteur, je veux poser une recette nommée sur plusieurs images d'un coup, afin de ne pas refaire trente fois le même réglage.
+- **US-498** — En tant qu'auteur, je veux voir d'un coup d'œil les images qu'une pose de recette écraserait, afin de ne pas perdre une retouche faite à la main.
+
+### Une carte de la toile se lit sans se battre avec un menu
+
+- **US-499** — En tant qu'auteur, je veux cliquer une carte de la toile et lire son contenu dans une colonne, afin de ne plus dézoomer pour atteindre un menu qui sort de l'écran.
+
+### Un jeu neuf dit qu'il y a des questions à répondre
+
+- **US-500** — En tant qu'auteur, je veux que créer un jeu ouvre l'assistant, afin de savoir qu'il y a des questions à répondre avant de fabriquer.
+- **US-501** — En tant qu'auteur, je veux que l'assistant sépare ce que je sais en commençant de ce que le produit décide bien tout seul, afin de ne pas être arrêté par onze questions dont neuf ont un bon défaut.
+
+### Ce qui est revenu du modèle se voit, et se reprend à la main
+
+- **US-502** — En tant qu'auteur, je veux voir la case telle qu'elle est revenue du modèle depuis la fiche de l'équipement, par une bascule à côté du vêtement découpé, afin de juger ce que j'ai payé au lieu de juger ce que l'atelier en a fait.
+- **US-503** — En tant qu'auteur, je veux refaire à la main la superposition d'un vêtement sur son corps depuis la fiche du personnage, et garder les deux résultats côte à côte, afin qu'un calage automatique raté ne me laisse pas sans recours.

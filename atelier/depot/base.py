@@ -485,7 +485,7 @@ class Base:
         """La bibliothèque, filtrée. **Une seule requête pour tout le produit.**
 
         « La grille sous le prompt et la grille qui sert à organiser sont la
-        même » (`docs/PLAN.md`, T3) : il n'existe donc qu'un seul endroit qui
+        même » (`docs/archive/plan-versions-tenues.md`, T3) : il n'existe donc qu'un seul endroit qui
         sache filtrer des assets, et l'écran comme le MCP de T7 passent par lui.
         Deux listages écrits à deux endroits, c'est la divergence relevée chez
         SpriteCook, dont une grille montre les pastilles et l'autre non.

@@ -68,6 +68,14 @@ class Superposition:
     de l'image rendue du dessous, inclusif aux deux bouts — la convention de
     rectangle du produit depuis T5.
 
+    `dessus_arrivee` dit de lire le dessus **tel qu'il est arrivé du modèle**, et
+    non tel qu'il est rangé. Les deux diffèrent sur un seul genre d'image, et
+    c'est justement celui qu'on vient réparer ici : le brut d'un calque est la
+    case *déjà mise à l'échelle et calée sur son corps* — refaire le calage à la
+    main en partant de là reviendrait à repartir du résultat qu'on veut défaire.
+    Sur toute autre image, les deux sont le même fichier et le drapeau ne change
+    rien (G16).
+
     `main` porte les passages posés **sur le dessus, avant la comparaison**, et
     la règle qui les range ici tient en une phrase : *si le réglage est vrai de
     l'image toute seule, il va dans la recette de l'image ; s'il n'est vrai que
@@ -85,6 +93,7 @@ class Superposition:
     seuil: int = SEUIL_COULEUR
     main: tuple[Trait, ...] = ()
     sortie: str = CALQUE
+    dessus_arrivee: bool = False
 
     @property
     def calee(self) -> bool:
@@ -103,6 +112,7 @@ class Superposition:
             "seuil": self.seuil,
             "main": [t.en_json() for t in self.main],
             "sortie": self.sortie,
+            "dessus_arrivee": self.dessus_arrivee,
         }
 
     @staticmethod
@@ -118,6 +128,7 @@ class Superposition:
             seuil=int(d.get("seuil", SEUIL_COULEUR)),
             main=traits_depuis_json(d.get("main")),
             sortie=str(d.get("sortie") or CALQUE),
+            dessus_arrivee=bool(d.get("dessus_arrivee", False)),
         )
 
 

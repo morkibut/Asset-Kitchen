@@ -79,7 +79,7 @@ def extension(type_media: str) -> str:
 def rendre_en_png(octets: bytes) -> bytes:
     """Le PNG du téléchargement. Rend les octets tels quels si c'en est déjà un.
 
-    « Une image se télécharge seule, en PNG » (`docs/PLAN.md`, T1) — or tous les
+    « Une image se télécharge seule, en PNG » (`docs/archive/plan-versions-tenues.md`, T1) — or tous les
     modèles ne rendent pas du PNG, et deux d'entre eux ne rendent que du JPEG.
     La conversion est donc du ressort du produit, pas de l'auteur.
     """

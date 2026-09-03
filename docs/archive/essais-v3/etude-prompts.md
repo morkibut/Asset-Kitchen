@@ -399,7 +399,7 @@ cadrage qui bouge. L'est et l'ouest, mesurés sur l'autre axe, ne font pas mieux
 32,5 % de masse à gauche, pour un plancher de ±2,4 % sur cet axe-là.
 
 **Conclusion : la direction ne s'obtient pas par des mots.** C'est exactement ce que
-`docs/etude-mannequin.md` avait supposé pour l'attitude — *les mots ne savent pas dire une posture* —
+`docs/archive/essais-v3/etude-mannequin.md` avait supposé pour l'attitude — *les mots ne savent pas dire une posture* —
 et cette mesure l'étend à l'orientation. La réparation, si elle vient, sera une **image** : un
 référent par direction (§5), ou la scène articulée de la V3. Le repère du cadre a quand même été
 gardé : demander à un personnage vu de dessus de faire face au spectateur, c'est lui demander de
@@ -426,7 +426,7 @@ regarder le ciel, et un contresens qui ne coûte rien reste un contresens.
 - **La grille de pixel ne suit pas la taille demandée.** Le jeu à 32 px et le jeu à 64 px rendent
   tous deux des blocs de 8 à 12 px sur une image de 1 024 — soit à peu près la même densité, alors
   qu'un facteur deux les sépare. Le dépôt le savait déjà pour d'autres raisons
-  (`docs/archi-versions.md` §4 bis) ; ce banc le confirme sur deux styles opposés. **Le prompt n'y
+  (`docs/ARCHITECTURE.md` §4 bis) ; ce banc le confirme sur deux styles opposés. **Le prompt n'y
   peut rien** : c'est le rééchantillonnage de l'atelier qui rattrape, et il rattrape mieux quand le
   sujet est gros — d'où l'intérêt de la phrase de cadre.
 - **Les artworks officiels qui ne le sont pas.** Aucune des six cartes du projet « Le Marais du Vieux

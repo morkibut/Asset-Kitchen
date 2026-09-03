@@ -28,6 +28,36 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
 # gigaoctet qui met 15,8 s par image de 1024 px sur processeur, là où `u2net`
 # met 0,47 s pour une silhouette équivalente à deux points près.
 detourage = ["rembg>=2.0", "onnxruntime>=1.20"]
+# **Lire un clip et en tirer ses images** (`atelier/image/clip.py`, A9). Entré
+# dans le produit avec la V3, qui fabrique ses animations en animant un sprite
+# puis en découpant le clip : rien de ce qui était déjà là ne sait ouvrir un
+# conteneur vidéo — Pillow lit des images fixes, `numpy` des tableaux.
+#
+# Optionnel **exprès**, sur le modèle du second détoureur juste au-dessus : le
+# binaire ffmpeg embarqué pèse plusieurs dizaines de mégaoctets, et un atelier
+# doit pouvoir s'installer sans lui. Absent, seul le prélèvement d'images
+# attend, avec sa raison — commander un clip, le payer, le garder et le
+# récupérer marchent sans décodeur, et **un clip payé n'est donc jamais perdu
+# faute d'une bibliothèque**.
+#
+# Paquets BSD ; le binaire ffmpeg qu'ils embarquent est sous sa propre licence
+# LGPL, et c'est la raison pour laquelle il n'est pas dans les dépendances dures.
+video = ["imageio>=2.35", "imageio-ffmpeg>=0.5"]
+# Le même jeu, sous le nom que les essais utilisent depuis E6.
+essais-video = ["imageio>=2.35", "imageio-ffmpeg>=0.5"]
+# **La quatrième façon de réduire** (D2, `atelier/image/traitement.py`) : PixelOE
+# épaissit les traits fins avant de réduire, pour qu'ils survivent au lieu d'être
+# noyés dans la moyenne. Recommandée par la revue externe pour le chemin « image
+# détaillée → pixel art », et mesurée le 3 septembre 2026 sur deux illustrations
+# de l'auteur : c'est la seule des quatre qui garde la hampe d'une lance entière.
+#
+# Optionnelle **exprès**, sur le modèle du second détoureur : mesuré le même
+# jour, `import pixeloe` charge `torch` — plusieurs centaines de mégaoctets, et
+# une infraction directe à l'invariant « le post-traitement ne touche jamais le
+# GPU », qui se **prouve** en regardant `sys.modules` (`tests/test_t2.py`).
+# Absente, la méthode est grisée avec sa raison et les trois autres suffisent ;
+# `raison_methode` la cherche avec `find_spec`, sans jamais l'importer.
+pixelisation = ["pixeloe>=0.1.4"]
 
 [project.scripts]
 atelier = "atelier.__main__:main"

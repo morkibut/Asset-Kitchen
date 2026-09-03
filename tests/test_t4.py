@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Les critères d'acceptation de T4 — le tableau et l'univers.
 
-Un test par critère de `docs/PLAN.md` § Phase T4, nommé d'après lui. Deux des
+Un test par critère de `docs/archive/plan-versions-tenues.md` § Phase T4, nommé d'après lui. Deux des
 dix-neuf ne se vérifient pas ici parce qu'ils portent sur ce que l'écran montre
 — la carte qui paraît en moins d'une seconde pendant qu'on continue à coller, et
 le changement de palette qui *se voit*. Ceux-là vivent dans
@@ -412,13 +412,17 @@ def test_generer_sans_bible_ni_artwork_fonctionne(client, double):
     generation = _generer(client, "un tonneau")
     assert generation["statut"] == "reussie"
     assert double.references_recues[-1] == 0
-    assert double.demandes[-1].prompt == "un tonneau"
+    assert double.demandes[-1].prompt == "REQUEST\n\nun tonneau"
 
     # La grille du projet s'applique quand même : « un univers vide ne contraint
     # rien » ne veut pas dire « un univers vide ne fait rien ».
     asset = _asset(client, generation)
     assert asset["recette"]["grille"]["cible"] == 64
-    assert asset["recette"]["quantification"] is None
+    # **Et la quantification aussi, depuis D2.** Sans artwork il n'y a pas de
+    # palette imposée — mais il y a un nombre de couleurs, et le réduire est
+    # exactement ce qui distingue un sprite d'une image rétrécie.
+    assert asset["recette"]["quantification"]["palette"] == []
+    assert asset["recette"]["quantification"]["couleurs"] == 32
 
 
 # ── « Un personnage et un petit objet sortent avec la même taille de pixel » ─
@@ -493,30 +497,55 @@ def test_la_remise_sur_grille_est_systematique_et_la_cible_n_est_jamais_deduite(
         assert (asset["rendu_largeur"], asset["rendu_hauteur"]) == (32, 32)
 
 
-# ── « La quantification n'est plus grisée dès qu'une palette existe » ────────
+# ── « La quantification n'est plus jamais grisée, et une note dit pourquoi »
+#
+#    **Réécrit en D2, et c'est un renversement assumé.** Ces deux tests
+#    figeaient le grisé de T2 : sans artwork officiel, pas de palette, donc pas
+#    de quantification — ni posée par le projet, ni acceptée si on l'écrivait à
+#    la main. Mesuré le 3 septembre 2026, ce grisé coûtait bien plus qu'il ne
+#    protégeait : un projet sans artwork rendait des sprites de dix mille
+#    couleurs, et rien à l'écran ne le disait.
+#
+#    Ce qu'ils gardent est donc l'inverse, et c'est la garantie qui compte
+#    maintenant : le traitement a lieu, et l'écran annonce d'où viennent les
+#    couleurs. ────────────────────────────────────────────────────────────────
 
 
-def test_la_quantification_s_allume_des_qu_une_palette_existe(client):
-    grisee = client.get("/api/status").json()["traitement"]["quantification"]["raison"]
-    assert grisee == "aucune palette : elle se déduira des artworks du projet"
+def test_la_quantification_n_est_plus_grisee_et_la_note_dit_pourquoi(client):
+    vide = client.get("/api/status").json()["traitement"]["quantification"]
+    assert vide["raison"] is None, "la quantification ne se grise plus"
+    assert "aucun artwork officiel" in vide["note"]
 
     _univers_peuple(client, "tous", "tous")
 
-    allumee = client.get("/api/status").json()["traitement"]["quantification"]["raison"]
-    assert allumee is None
+    peuple = client.get("/api/status").json()["traitement"]["quantification"]
+    assert peuple["raison"] is None
+    assert peuple["note"] is None, "la note tombe dès que la palette existe"
 
 
-def test_une_quantification_sans_palette_reste_refusee_sur_un_projet_vide(
+def test_une_quantification_sans_palette_est_acceptee_et_reduit_vraiment(
     client, double
 ):
-    """Le grisé de T2 ne se renégocie pas : il devient simplement faux quand la
-    palette existe, et reste vrai tant qu'elle n'existe pas."""
-    generation = _generer(client, "un tonneau")
-    asset = _asset(client, generation)
-    recette = {**asset["recette"], "quantification": {"couleurs": 16, "palette": [], "tramage": "aucun"}}
-    refus = client.put(f"/api/assets/{asset['identifiant']}/recipe", json=recette)
-    assert refus.status_code == 409, refus.text
-    assert "aucune palette" in refus.json()["raison"]
+    """Palette vide veut dire « déduites de l'image », pas « pièce manquante ».
+
+    C'est le défaut que D2 répare : le réglage `couleurs` de l'univers existait
+    depuis T4 et **ne faisait rien** tant qu'aucun artwork n'était promu.
+    """
+    double.rendre = lambda: image_sujet(bloc=4)
+    asset = _asset(client, _generer(client, "un tonneau", echelle="personnage"))
+
+    # Le projet la pose tout seul, sans qu'aucun artwork existe.
+    assert asset["recette"]["quantification"] is not None
+    assert asset["recette"]["quantification"]["palette"] == []
+
+    # Et elle s'écrit aussi à la main, sans être refusée.
+    recette = {
+        **asset["recette"],
+        "quantification": {"couleurs": 16, "palette": [], "tramage": "aucun"},
+    }
+    pose = client.put(f"/api/assets/{asset['identifiant']}/recipe", json=recette)
+    assert pose.status_code == 200, pose.text
+    assert pose.json()["recette"]["quantification"]["couleurs"] == 16
 
 
 # ── « Changer la palette du projet remet ses assets à jour sans un seul appel
@@ -554,7 +583,10 @@ def test_changer_la_palette_remet_les_assets_a_jour_sans_un_appel_et_saute_les_e
     conserve = client.get(f"/api/assets/{epingle['identifiant']}").json()
     assert conserve["epingle"] is True
     assert conserve["recette"]["bords"] == {"aire_min": 5}
-    assert conserve["recette"]["quantification"] is None
+    # **L'épinglé garde la quantification qu'il avait à sa naissance** — sans
+    # palette, donc sur ses propres couleurs (D2). Ce qui compte ici est qu'il
+    # n'ait **pas** reçu celle du projet : le balayage l'a bien sauté.
+    assert conserve["recette"]["quantification"]["palette"] == []
 
 
 def test_un_asset_ramene_au_brut_reste_au_brut(client, double):

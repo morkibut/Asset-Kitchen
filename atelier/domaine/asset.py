@@ -177,7 +177,7 @@ class Asset:
     #
     # **Elles n'empêchent rien.** Le compte d'images est le seul refus
     # automatique du produit ; ressemblance et dérive s'affichent et laissent
-    # l'auteur décider (`docs/PLAN.md`, C2).
+    # l'auteur décider (`docs/archive/plan-versions-tenues.md`, C2).
     lot: MesuresLot | None = None
 
     # ── Ce que la différence a mesuré sur ce calque-là ───────────────────────

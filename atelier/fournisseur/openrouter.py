@@ -17,7 +17,7 @@ Trois traductions valent d'être connues, parce qu'elles ne sont pas des détail
   traduction de fournisseur, elle n'a pas à remonter dans le produit.
 - **Le nombre d'images par appel (`n`) n'est jamais utilisé.** Une variation est
   un appel : c'est ce qui permet qu'un raté ne coûte pas ses voisines et se
-  relance seul (`docs/PLAN.md`, T1).
+  relance seul (`docs/archive/plan-versions-tenues.md`, T1).
 """
 
 from __future__ import annotations

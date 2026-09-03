@@ -135,7 +135,7 @@ opaques avant, 1 044 après un seul passage de la main, et la pièce est lisible
 ouvert et **non cadré** est la première piste : rien n'annonce *d'avance* qu'une pièce va se
 substituer, et aucune des cinq mesures ne le dit — celle-ci affichait une échelle à 1,00 et une
 silhouette à 100 %. La réparation coûte donc un geste au lieu d'une image perdue, et c'est tout
-ce qui a changé. Voir `docs/PLAN.md`, C4, et `docs/status/etat.md`.
+ce qui a changé. Voir `docs/archive/plan-versions-tenues.md`, C4, et `docs/status/etat.md`.
 
 **Ce que ça ne remet pas en cause** : ni le pliage, ni le compte, ni le masque, ni le fait que
 les mesures ne refusent rien. Le calque illisible est **gardé**, comme prévu, et il se retouche.
@@ -289,6 +289,14 @@ là-dessus que ça se pose —, et l'atelier **propose**, provenance affichée, 
   projet impose 64 ». `atelier/image/traitement.py` sait déjà mesurer une grille
   (`mesurer_grille`), et cette mesure n'est aujourd'hui montrée nulle part.
 
+  > *Deux moitiés de cette ligne ont bougé le 3 septembre 2026, en `D2`.* **La mesure est
+  > montrée** : la table de grille d'une image dit sur quels carrés le modèle a peint, et
+  > combien l'image en compte. Et **ce n'est plus `mesurer_grille` qui la fait** — celle-là
+  > répondait *2 avec une netteté de 0,94* sur une peinture, faux et confiant. C'est
+  > `retrouver_grille`, qui sait **renoncer** et le dit. Ce qui reste à décider ici est donc la
+  > seule chose que la ligne demandait vraiment : la montrer **au moment de l'import**, à côté
+  > de ce que le projet impose.
+
 **Ce que ça ne remet pas en cause.** « Le corps naît dans l'atelier, et jamais d'une planche
 venue d'ailleurs » (US-122) reste vrai : l'image importée devient une **référence** et une
 **description**, pas un corps. La première pose se génère toujours ici. C'est la promesse de la
@@ -398,7 +406,7 @@ Rien n'est modifié par ce document — il note ce qui devra l'être.
 | `docs/PRD.md`, *Hors périmètre* | « Écarté parce que l'auteur fait mieux » | Juste, mais à préciser : **décider** est écarté, **proposer avec sa provenance** ne l'est pas |
 | `docs/PRD.md`, *Hors périmètre* (reprises) | « Prompt réécrit par l'application … automatiquement » | Juste pour l'enrichissement **en chemin**. Écrire **dans le champ**, sous les yeux de l'auteur, est autre chose |
 | `docs/PRD.md`, *Utilisateur cible* | « Il ne veut ni tunnel de configuration, ni assistant, ni écran à traverser » | Tient. Rien ici n'ajoute d'écran à traverser : tout se pose dans les écrans existants |
-| `docs/PLAN.md`, C4 « La main » | la retouche au pixel réservée au calque d'équipement | À sortir de C4 : la gomme sert au détourage de n'importe quel asset, et C3 n'est pas écrite |
+| `docs/archive/plan-versions-tenues.md`, C4 « La main » | la retouche au pixel réservée au calque d'équipement | À sortir de C4 : la gomme sert au détourage de n'importe quel asset, et C3 n'est pas écrite |
 
 ### Ce que ce relevé ne remet pas en cause
 

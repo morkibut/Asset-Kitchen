@@ -252,7 +252,20 @@ export function EcranSuperposition({
   useEffect(() => {
     rafraichir(pose)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pose.dessus, pose.dessous, pose.echelle, pose.dx, pose.dy, pose.seuil, pose.rectangle])
+  }, [
+    pose.dessus,
+    pose.dessous,
+    pose.echelle,
+    pose.dx,
+    pose.dy,
+    pose.seuil,
+    pose.rectangle,
+    // **Changer d'image du dessus change tout ce qui en découle** (G16) :
+    // sans cette ligne, la bascule aurait laissé les trois vues sur le calcul
+    // d'avant, et l'écran aurait montré autre chose que ce qu'il allait
+    // fabriquer.
+    pose.dessus_arrivee,
+  ])
 
   const poser = (suivante: Partial<Superposition>) =>
     setPose((deja) => ({ ...deja, ...suivante }))
@@ -265,7 +278,11 @@ export function EcranSuperposition({
     if (!pret) return
     setRecalage(true)
     try {
-      const trouve = await api.recalerSuperposition(pose.dessus, pose.dessous)
+      const trouve = await api.recalerSuperposition(
+        pose.dessus,
+        pose.dessous,
+        pose.dessus_arrivee,
+      )
       poser({ echelle: trouve.echelle, dx: trouve.dx, dy: trouve.dy })
     } catch (erreur) {
       onErreur(String(erreur))
@@ -299,10 +316,41 @@ export function EcranSuperposition({
             <Libelle aide="superposition.images">les deux images</Libelle>
             <ImageChoisie
               asset={dessus}
-              role="DESSUS · SE DÉPLACE"
+              role={
+                pose.dessus_arrivee
+                  ? "DESSUS · TEL QU'IL EST ARRIVÉ"
+                  : "DESSUS · SE DÉPLACE"
+              }
               actif
+              arrivee={pose.dessus_arrivee}
               onChanger={() => setChoisir("dessus")}
             />
+            {/* **De quelle image du dessus on part** (G16, US-503). Elle ne
+                paraît que là où la question se pose vraiment : un vêtement
+                sorti d'une planche, dont le fichier rangé est *déjà* mis à
+                l'échelle et calé sur son corps. Repartir de là pour refaire le
+                calage reviendrait à repartir du résultat qu'on veut défaire —
+                c'est pourquoi le défaut est *telle qu'elle est arrivée*, et
+                non l'inverse. Partout ailleurs, les deux sont le même fichier
+                et la rangée n'a rien à dire. */}
+            {ouverture?.arrivee_possible && (
+              <div className="flex flex-col gap-1 pt-1">
+                <Segments<string>
+                  valeurs={["telle qu'arrivée", "telle que rangée"] as const}
+                  valeur={
+                    pose.dessus_arrivee ? "telle qu'arrivée" : "telle que rangée"
+                  }
+                  onChange={(quoi) =>
+                    poser({ dessus_arrivee: quoi === "telle qu'arrivée" })
+                  }
+                />
+                <span className="mesure text-[10px] leading-4 text-texte-3">
+                  {pose.dessus_arrivee
+                    ? "la case telle que le modèle l'a rendue — c'est d'elle qu'on repart pour refaire le calage"
+                    : "le vêtement déjà découpé et calé : refaire le calage sur lui repartirait du résultat"}
+                </span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() =>
@@ -684,11 +732,17 @@ function ImageChoisie({
   asset,
   role,
   actif,
+  arrivee = false,
   onChanger,
 }: {
   asset: Asset
   role: string
   actif?: boolean
+  /** **Montrer ce qui part, et non ce qui est rangé** (G16). Quand la table
+   *  travaille sur la case telle qu'elle est arrivée, la vignette la montre :
+   *  une vignette du calque au-dessus d'un calcul fait sur autre chose serait
+   *  le genre de mensonge tranquille que cette version répare. */
+  arrivee?: boolean
   onChanger: () => void
 }) {
   return (
@@ -699,7 +753,11 @@ function ImageChoisie({
       ].join(" ")}
     >
       <img
-        src={api.rendu(asset.identifiant, asset.empreinte)}
+        src={
+          arrivee
+            ? api.arrivee(asset.identifiant)
+            : api.rendu(asset.identifiant, asset.empreinte)
+        }
         alt={asset.label}
         className="damier h-[38px] w-[38px] shrink-0 object-contain"
         style={{ imageRendering: "pixelated" }}

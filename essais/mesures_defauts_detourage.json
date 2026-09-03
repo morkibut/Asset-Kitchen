@@ -1,0 +1,75 @@
+{
+  "assets": 116,
+  "morceaux_de_planche": 46,
+  "par_moteur": [
+    {
+      "moteur": "bord",
+      "passes": 72,
+      "part_nulle": 78,
+      "plus_frequent": 0,
+      "part_du_plus_frequent": 78,
+      "livre": 0,
+      "livre_est_le_plus_frequent": true
+    },
+    {
+      "moteur": "couleur",
+      "passes": 11,
+      "part_nulle": 0,
+      "plus_frequent": 1,
+      "part_du_plus_frequent": 55,
+      "livre": 1,
+      "livre_est_le_plus_frequent": true
+    },
+    {
+      "moteur": "modele",
+      "passes": 40,
+      "part_nulle": 2,
+      "plus_frequent": 2,
+      "part_du_plus_frequent": 80,
+      "livre": 2,
+      "livre_est_le_plus_frequent": true
+    }
+  ],
+  "par_nature": [
+    {
+      "moteur": "bord",
+      "nature": "image",
+      "passes": 43,
+      "part_non_nulle": 33
+    },
+    {
+      "moteur": "bord",
+      "nature": "planche",
+      "passes": 29,
+      "part_non_nulle": 7
+    },
+    {
+      "moteur": "modele",
+      "nature": "image",
+      "passes": 26,
+      "part_non_nulle": 100
+    },
+    {
+      "moteur": "modele",
+      "nature": "planche",
+      "passes": 14,
+      "part_non_nulle": 93
+    }
+  ],
+  "ecarts": {
+    "comparees": 108,
+    "ecartees": 53,
+    "par_champ": {
+      "durcissement": 53,
+      "moteur": 37,
+      "seuil_alpha": 19,
+      "tolerance": 5
+    },
+    "sans_projet": 0
+  },
+  "durcissements_retapes": {
+    "passes": 123,
+    "retapes_avant": 66,
+    "retapes_apres": 29
+  }
+}

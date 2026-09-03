@@ -13,8 +13,16 @@ import {
   type ReactNode,
   type Ref,
 } from "react"
-import { quantite, secondes, type Modele, type Reserve } from "../api"
+import {
+  coteDuCanevas,
+  coteDuSujet,
+  quantite,
+  secondes,
+  type Modele,
+  type Reserve,
+} from "../api"
 import { POINTILLE, useInfobulle } from "./Infobulle"
+import { explication } from "../aide"
 
 /** Comment un modèle se dit dans une liste déroulante (F1).
  *
@@ -266,6 +274,63 @@ export function Libelle({
       </span>
       {bulle}
     </>
+  )
+}
+
+/**
+ * L'en-tête d'une section : son nom, son propos écrit dessous, son compte.
+ *
+ * **Le troisième rendu du recueil, et il n'ajoute aucun texte** (R8). Le corpus
+ * servait la bulle au survol et le Guide ; il sert ici la ligne écrite **à
+ * demeure** sous un titre. Le nom vient de l'entrée, le propos est sa première
+ * ligne — *ce que c'est* —, et le pointillé sous le nom rend la version longue
+ * au survol. Corriger l'entrée corrige les trois affichages d'un coup.
+ *
+ * **Ce n'est pas une 75ᵉ phrase écrite en dur.** Le produit en a 74 dans
+ * dix-sept écrans, et la règle « un seul corpus, deux rendus » ne les a jamais
+ * interdites : ce qu'elle interdit est de **recopier le corpus** ailleurs, parce
+ * que deux copies divergent en trois semaines et que la fausse est celle qu'on a
+ * sous les yeux au moment du doute. Lire l'entrée tient la règle mieux que ne la
+ * tenaient ces 74 lignes.
+ *
+ * **Elle ne s'écrit que là où l'on peut se tromper de section** — le même test
+ * binaire qui décide déjà de l'existence d'une bulle. Sur un panneau où chaque
+ * ligne porte un nom sans ambiguïté, le pointillé au survol suffit, et cet
+ * en-tête n'a rien à y faire.
+ *
+ * **Sans entrée, il ne casse rien** : le titre paraît seul, sans pointillé et
+ * sans propos, exactement comme un `Libelle` sans aide. C'est ce qui permet
+ * d'écrire l'écran avant le recueil sans laisser de bulle vide.
+ */
+export function EnTeteDeSection({
+  aide,
+  titre,
+  compte,
+}: {
+  /** La clef de l'entrée du recueil. Elle donne le nom **et** le propos. */
+  aide: string
+  /** Quand l'écran nomme la section autrement que le recueil. À éviter : deux
+   *  noms pour une chose sont deux choses pour qui lit. */
+  titre?: ReactNode
+  /** Le compte de la section, aligné à droite. **Écrit une fois** : c'est la
+   *  correction de R8, où le même compte figurait à trois endroits. */
+  compte?: ReactNode
+}) {
+  const entree = explication(aide)
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline gap-3">
+        <Libelle aide={aide}>{titre ?? entree?.nom ?? aide}</Libelle>
+        {compte && (
+          <span className="mesure ml-auto text-[10px] text-texte-3">{compte}</span>
+        )}
+      </div>
+      {entree && (
+        <p className="max-w-[64ch] text-[11.5px] leading-[1.5] text-texte-2">
+          {entree.quoi}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -885,8 +950,12 @@ export function Etape({
 /**
  * La jauge du produit — **déterminée**, `docs/DESIGN.md` § Motion : « ça
  * travaille, et voilà où ça en est ». Le seul mouvement continu du produit, et
- * il n'y en a qu'un : une génération dans la grille et une retouche dans la
- * fiche portent la même barre, aux mêmes 2 px, dans la même couleur.
+ * il n'y en a qu'un : une génération dans la grille et une retouche **dans les
+ * tables** portent la même barre, aux mêmes 2 px, dans la même couleur.
+ *
+ * *La phrase disait « une retouche dans la fiche » ; la retouche a quitté la
+ * fiche pour les tables en `E4`, le 31 août 2026, et l'exemple désignait depuis
+ * un endroit où la barre ne paraît plus (`G1`).*
  *
  * Elle ne ment pas sur ce qu'elle sait : la barre avance vers l'attente
  * mesurée, puis ralentit sans jamais atteindre le bout, parce qu'elle ne sait
@@ -1106,5 +1175,84 @@ export function Point({ couleur }: { couleur: string }) {
       className="inline-block h-[5px] w-[5px] rounded-full"
       style={{ background: couleur }}
     />
+  )
+}
+
+/**
+ * L'échantillon de hauteur — **le sujet à côté d'un personnage** (tranche des
+ * tailles, 3 septembre 2026).
+ *
+ * **Il répond à une demande précise de l'auteur** : *« les deux, avec un rappel
+ * visuel, une sorte d'échantillon »*. Les deux, ce sont les deux façons de dire
+ * la même hauteur — un nombre de carrés, que réclament les moteurs de jeu et les
+ * outils de dessin ; un nombre de personnages, qui est ce qu'on a en tête quand
+ * on décrit un monde. Ni l'une ni l'autre n'est de trop, et un pourcentage seul
+ * ne dit ni l'un ni l'autre.
+ *
+ * **Le dessin qu'il remplace plafonnait à la case**, et c'est ce qui le rendait
+ * faux : une barre dans un carré ne peut jamais dépasser le carré, donc elle ne
+ * pouvait pas montrer un moulin plus haut qu'un personnage — le dessin disait
+ * exactement ce que le produit ne savait pas faire. Ici le cadre **est** le
+ * fichier qui reviendra, et le trait pointillé marque la hauteur d'un
+ * personnage : au-dessous de 100 % il se confond avec le haut du cadre, au-delà
+ * il descend, et le rapport se lit d'un coup d'œil.
+ */
+export function EchantillonDeHauteur({
+  occupation,
+  cible,
+  haut = 84,
+}: {
+  occupation: number
+  cible: number
+  /** La hauteur du dessin, en points d'écran. Le seul réglage : les deux écrans
+   *  qui s'en servent n'ont pas la même place. */
+  haut?: number
+}) {
+  const enPersonnages = Math.max(1, occupation) / 100
+  // **L'échelle du dessin est le plus grand des deux** — le sujet ou le
+  // personnage —, sans quoi un moulin de trois personnages sortirait du cadre au
+  // lieu de le remplir.
+  const echelle = Math.max(1, enPersonnages)
+  const hSujet = Math.max(2, Math.round((haut * enPersonnages) / echelle))
+  const hPersonnage = Math.round(haut / echelle)
+  const carres = coteDuCanevas(cible, occupation)
+  const sujet = coteDuSujet(cible, occupation)
+  const depasse = occupation > 100
+  const nombre = (n: number) =>
+    n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
+  return (
+    <div className="flex items-end gap-3">
+      <span
+        aria-hidden
+        className="relative flex w-[56px] shrink-0 items-end justify-center border border-bord-fort bg-fond-0"
+        style={{ height: `${haut}px` }}
+      >
+        <span
+          className="block w-full bg-texte-3"
+          style={{ height: `${hSujet}px` }}
+        />
+        {/* **La hauteur d'un personnage, en pointillé.** Dessinée seulement
+            quand elle dit quelque chose : à 100 % et au-dessous elle est le haut
+            du cadre, et un trait posé sur une bordure n'est pas un repère. */}
+        {depasse && (
+          <span
+            className="absolute right-0 left-0 border-t border-dashed border-epingle"
+            style={{ bottom: `${hPersonnage}px` }}
+          />
+        )}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <span className="text-[11.5px] leading-tight text-texte-2">
+          {depasse
+            ? `${nombre(enPersonnages)} personnages de haut`
+            : `${occupation} % d'un personnage`}
+        </span>
+        <span className="mesure text-[9.5px] leading-tight text-texte-3">
+          {sujet === carres
+            ? `l'image revient en ${carres} carrés de côté`
+            : `${sujet} carrés dans une image de ${carres}`}
+        </span>
+      </div>
+    </div>
   )
 }
