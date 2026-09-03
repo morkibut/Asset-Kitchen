@@ -280,6 +280,78 @@ def test_la_fiche_dit_lequel_des_deux_compte_et_laisse_en_changer(client, double
     assert retenu["identifiant"] == vetement["identifiant"]
 
 
+# ── Ce que l'usage a trouvé le lendemain ────────────────────────────────────
+
+
+def test_fabriquer_un_calque_ne_casse_pas_la_planche(client, double):
+    """**Le défaut trouvé en usage le 4 septembre 2026, et il était grave.**
+
+    Une superposition écrit son résultat dans le dossier de la *même*
+    génération, au premier rang libre — donc au-dessus des cases, sans en
+    remplir aucune. Le rejeu du recalage et la case arrivée comptaient ces
+    rangs-là comme des cases : après un seul calque refait à la main, l'atelier
+    lisait *« trois images rangées pour deux cases »* et refusait les deux
+    gestes **sur toute la planche**, définitivement. Refaire un calque cassait
+    donc le geste qui l'avait fait.
+
+    Le défaut attendait depuis que `E6` et `R5` se sont croisés sans se voir ;
+    `G16` l'a rendu atteignable en un clic, et l'usage l'a trouvé le lendemain.
+    """
+    monte = _monter(client, double)
+    vetements = monte["vetements"]
+    pose = client.get(f"/api/assets/{vetements[0]['identifiant']}/overlay").json()["pose"]
+
+    client.post(
+        "/api/overlay", json={"pose": pose, "sorties": ["calque"], "garder": False}
+    ).raise_for_status()
+
+    # **Les deux gestes tiennent, et sur chaque case** — pas seulement celle
+    # qu'on vient de refaire.
+    for vetement in vetements:
+        arrivee = client.get(f"/api/assets/{vetement['identifiant']}/incoming")
+        assert arrivee.status_code == 200, arrivee.text
+        ouverture = client.get(f"/api/assets/{vetement['identifiant']}/overlay").json()
+        assert ouverture["arrivee_possible"] is True
+
+    # Et le rejeu du recalage, qui comptait les mêmes rangs : il refusait
+    # « trois images rangées pour deux cases » sur toute la planche.
+    rejeu = client.post(f"/api/assets/{vetements[0]['identifiant']}/realign")
+    assert rejeu.status_code == 200, rejeu.text
+
+
+def test_une_image_sans_recette_se_sert_par_son_asset(client, double):
+    """**Le second défaut du même jour, et la même cause.**
+
+    L'écran choisissait l'adresse d'une image selon une règle vraie depuis `T3`
+    et devenue fausse : *une image sans recette se lit par son emplacement*. Ce
+    n'est vrai que des images de `C1` — tout ce qui naît d'un dépliage, d'une
+    découpe ou d'une superposition porte un rang qui n'est l'emplacement de
+    rien. Un calque né d'une superposition a la recette vide et le rang 102 :
+    l'écran demandait l'emplacement 102 d'un appel qui n'a que le 0, et recevait
+    un 400 sur un cadre vide.
+
+    L'essai tient le **fait serveur** qui rend l'écran possible : l'adresse de
+    l'asset sert n'importe quelle image, avec ou sans recette, à n'importe quel
+    rang."""
+    monte = _monter(client, double)
+    vetement = monte["vetements"][0]
+    pose = client.get(f"/api/assets/{vetement['identifiant']}/overlay").json()["pose"]
+    ne = client.post(
+        "/api/overlay", json={"pose": pose, "sorties": ["calque"], "garder": False}
+    ).json()["superpositions"][0]
+
+    assert ne["traite"] is False, "une superposition ne pose aucune recette"
+    assert ne["rang"] >= 100, "et elle se range au-dessus des cases"
+    # L'adresse de l'emplacement, celle que l'écran prenait : elle ne peut pas.
+    manquee = client.get(
+        f"/api/generations/{ne['generation']}/slots/{ne['rang']}/image"
+    )
+    assert manquee.status_code == 400
+    # Celle de l'asset, celle qu'il prend depuis : elle sert le fichier rangé.
+    servie = client.get(f"/api/assets/{ne['identifiant']}/image?brut=false")
+    assert servie.status_code == 200 and len(servie.content) > 0
+
+
 # ── « Aucun appel au fournisseur : la tranche se vérifie réseau coupé » ──────
 
 

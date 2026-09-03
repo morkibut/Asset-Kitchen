@@ -60,14 +60,26 @@ export type Sujet = {
  *
  * Une image traitée se lit par son **empreinte** : le rendu change sous la même
  * adresse à chaque cran de curseur, et c'est elle qui fait chercher la neuve.
- * Une image sans recette se lit par son **emplacement**, l'adresse de la grille.
- * Un asset sans recette n'a qu'une image : sa bascule *brut* ne change alors
- * rien, et il n'y a aucune raison de la demander par deux adresses.
+ * Une image sans recette se lit par son **fichier**, sans empreinte : il n'y a
+ * qu'une image, et sa bascule *brut* ne change alors rien.
+ *
+ * **Elle passait par l'adresse de l'emplacement, et c'était faux.** *Une image
+ * sans recette se lit par son emplacement* n'est vrai que si son rang **est** un
+ * emplacement — ce qui exclut tout ce qui naît d'un dépliage, d'une découpe ou
+ * d'une superposition. Une image née d'une superposition a la recette vide et un
+ * rang de dépliage : l'écran demandait donc l'emplacement 102 d'un appel qui n'a
+ * qu'un emplacement 0, et recevait *« l'emplacement 102 n'a pas d'image »* — un
+ * 400, et un cadre vide. Trouvé en usage le 4 septembre 2026, sur le chemin que
+ * `G16` venait d'ouvrir ; le défaut, lui, date de `E6`, où la superposition a
+ * commencé à écrire des assets sans recette.
+ *
+ * L'adresse de l'asset, elle, est vraie pour tous : elle lit le fichier rangé
+ * quand la recette est vide, et le rendu sinon.
  */
 export const imageAsset = (asset: Asset, brut = false): string =>
   asset.traite
     ? api.rendu(asset.identifiant, asset.empreinte, brut)
-    : api.image(asset.generation, asset.rang)
+    : api.fichier(asset.identifiant, brut)
 
 /**
  * L'adresse de l'image d'un asset **pour une case de grille** — réduite.

@@ -862,8 +862,18 @@ function CadreDuTravail({
           filter: FILTRE[teinte],
         }}
       />
+      {/* **Le dessus tel qu'il part au calcul, pas tel qu'il est rangé** (G16).
+          Sans cette ligne, le cadre où l'on trace le rectangle montrait le
+          vêtement déjà découpé pendant que le serveur travaillait sur la case
+          telle qu'elle est arrivée : on découpait sur une image, et l'atelier
+          coupait dans une autre. Trouvé en usage le 4 septembre 2026 — la
+          vignette de gauche avait été corrigée, le grand cadre non. */}
       <img
-        src={api.rendu(dessus.identifiant, dessus.empreinte)}
+        src={
+          pose.dessus_arrivee
+            ? api.arrivee(dessus.identifiant)
+            : api.rendu(dessus.identifiant, dessus.empreinte)
+        }
         alt={dessus.label}
         draggable={false}
         className="pointer-events-none absolute inset-0 h-full w-full object-contain select-none"

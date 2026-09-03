@@ -4973,8 +4973,14 @@ describe("l'aperçu", () => {
     // exactement le geste de compter ses pixels. Ce qui ne doit pas changer,
     // et que cet essai tient, est qu'elles nomment **le même asset** : c'est de
     // la seconde décision sur « rendu ou brut » qu'on se garde.
+    //
+    // **L'adresse a changé le 4 septembre 2026**, et ce que l'essai tient n'a
+    // pas bougé : elle nomme toujours le même asset. Elle passait par
+    // l'emplacement de la génération, ce qui n'était vrai que des images de C1 —
+    // tout ce qui naît d'un dépliage, d'une découpe ou d'une superposition a un
+    // rang qui n'est l'emplacement de rien, et recevait un 400.
     expect(apercu()).toBeTruthy()
-    expect(image().getAttribute("src")).toBe("/api/generations/aaaa1111/slots/0/image")
+    expect(image().getAttribute("src")).toBe("/api/assets/aaaa1111-0/image?brut=false")
     expect(vignette.querySelector("img")!.getAttribute("src")).toMatch(
       /^\/api\/assets\/aaaa1111-0\/vignette\?cote=256&v=/,
     )
@@ -7190,11 +7196,15 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // juger — c'est très exactement ce que US-143 demande de voir.
     const images = Array.from(vignette.querySelectorAll("img"))
     expect(images.length).toBe(2)
-    // L'adresse d'une image se lit sur sa génération et son rang — un seul
-    // endroit du produit la nomme (`Apercu.imageAsset`), et l'essai la lit là où
-    // elle est écrite plutôt que de la recomposer.
-    expect(images[0].getAttribute("src")).toContain("aaaa1111/slots/0/image")
-    expect(images[1].getAttribute("src")).toContain("bbbb2222/slots/100/image")
+    // **Chacune nomme son asset**, et c'est tout ce que l'essai a jamais voulu
+    // tenir : le corps dessous, le calque dessus, et pas deux fois la même
+    // image. Un seul endroit du produit compose cette adresse
+    // (`Apercu.imageAsset`) ; l'essai vérifie l'identité, pas la forme, parce
+    // que la forme a déjà changé une fois — le 4 septembre 2026, quand
+    // l'adresse d'emplacement s'est révélée fausse pour tout ce qui naît d'un
+    // dépliage.
+    expect(images[0].getAttribute("src")).toContain("/api/assets/aaaa1111-0/image")
+    expect(images[1].getAttribute("src")).toContain("/api/assets/bbbb2222-100/image")
   })
 
   // ── « Les mesures s'affichent toutes, et aucune ne rend un calque impossible

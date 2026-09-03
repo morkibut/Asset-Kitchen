@@ -199,6 +199,54 @@ place.
 
 ---
 
+## G16, le lendemain — deux défauts que seul l'usage pouvait trouver — 4 septembre 2026
+
+**Un symptôme, deux causes, et la seconde était la pire.** L'auteur signale que les images ne
+s'affichent plus après avoir refait un calque à la main. Le journal du serveur donne un `400`
+sur `/generations/…/slots/100/image`, répété.
+
+**La première cause était une règle vraie devenue fausse.** L'écran composait l'adresse d'une
+image ainsi : *une image traitée se lit par son empreinte, une image sans recette se lit par son
+emplacement*. Le second membre n'est vrai que des images de `C1` — **tout ce qui naît d'un
+dépliage, d'une découpe ou d'une superposition porte un rang qui n'est l'emplacement de rien**.
+Un calque né d'une superposition a la recette vide (voulu depuis `E6` : les deux images étaient
+déjà rendues) et le rang 102 : l'écran demandait l'emplacement 102 d'un appel qui n'a que le 0.
+La vignette de la grille, elle, marchait — elle passe par l'adresse de l'asset. C'est l'aperçu
+qui ne marchait pas, et c'est l'aperçu qu'on regarde.
+
+**La seconde a été trouvée en vérifiant la première, et elle cassait bien plus.** Une
+superposition écrit son résultat dans le dossier de la **même génération**, au premier rang
+libre — donc au-dessus des cases, sans en remplir aucune. Or le rejeu du recalage (`R5`) et la
+case arrivée (`G16`) retrouvaient « leur » case en comptant les rangs du dossier : après **un
+seul** calque refait à la main, l'atelier lisait *« cinq images rangées pour quatre cases »* et
+refusait les deux gestes **sur toute la planche**, définitivement. Refaire un calque cassait le
+geste qui l'avait fabriqué, et pour toutes ses sœurs.
+
+> **Le défaut attendait depuis que `E6` et `R5` se sont croisés sans se voir.** Personne n'avait
+> encore refait une superposition sur une planche d'équipement — il fallait aller chercher la
+> table à la main. `G16` a mis ce chemin sur la route ordinaire, et l'usage l'a trouvé en un
+> jour. C'est le cas d'école d'un défaut que ni les essais ni la relecture n'atteignent : les
+> deux gestes marchaient, séparément, depuis des semaines.
+
+**Réparé par la filiation, pas par un drapeau.** Une image dépliée n'a ni parent ni
+superposition — elle sort d'une case, pas d'une autre image. Un drapeau de plus aurait été une
+seconde vérité sur une question à laquelle la filiation répond déjà. Deux essais de non-retour
+tiennent les deux défauts.
+
+**Et une lenteur, mesurée puis levée.** Afficher la case arrivée coûtait **2,5 s** au
+navigateur : elle passait par la lecture de planche qui aligne *chaque* case sur *son* corps
+pour produire les calques, alors qu'elle rend la case **avant** tout ça. Le découpage seul
+suffit — **483 ms**, cinq fois moins. Le rejeu du recalage, lui, garde la lecture complète : il
+a besoin des alignements.
+
+**Ce qui reste ouvert, et qui est écrit dans les remarques du jour.** Le zoom manque
+*entièrement* dans la superposition — `G10` fait monter le plafond **des tables**, et cet
+écran-là n'en est pas une ; la main n'y est pas non plus, alors que le champ existe dans le
+domaine avec sa raison écrite et n'a aucun écran ; et un calque né d'une superposition s'annonce
+*« corps habillé »*, parce que sa recette est vide et que c'est elle qui départage les deux.
+Les trois se tiennent : **trois endroits fabriquent ou réparent un calque et ne se ressemblent
+pas.** À reprendre en entier.
+
 ## G16 — ce qui est revenu du modèle se voit, et se reprend à la main — 3 septembre 2026
 
 **La remarque disait trois choses, et elle n'en disait qu'une.** *« Je ne peux pas voir

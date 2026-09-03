@@ -4234,6 +4234,17 @@ export const api = {
   rendu: (identifiant: string, version: string, brut = false) =>
     `/api/assets/${identifiant}/image?brut=${brut}&v=${encodeURIComponent(version)}`,
 
+  /** **Le fichier d'un asset, sans empreinte à faire voyager.**
+   *
+   *  Elle sert la même chose que `rendu` quand la recette est vide — le brut,
+   *  puisqu'il n'y a rien à rendre — mais **sans `v`**, et c'est délibéré : une
+   *  recette vide a bien une empreinte, et elle ne change *jamais*. La faire
+   *  voyager ferait garder un an une image qu'un rejeu de superposition réécrit
+   *  sous le même nom. Sans `v`, le serveur répond `no-store`, exactement comme
+   *  l'ancienne adresse d'emplacement qu'elle remplace. */
+  fichier: (identifiant: string, brut = false) =>
+    `/api/assets/${identifiant}/image?brut=${brut}`,
+
   /** **L'image réduite pour une case de grille**, jamais le fichier entier.
    *
    *  Mesuré le 31 août 2026 : la galerie téléchargeait 25,5 Mo pour en afficher

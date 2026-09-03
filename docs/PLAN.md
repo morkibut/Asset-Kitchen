@@ -31,6 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
+| **V2.4** — M1 à M3 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, rien de construit** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
@@ -157,6 +158,7 @@ Le détail par tranche des versions tenues est dans l'archive.
 | **R7** | **431 à 433** | **3** |
 | **R8** *(la fiche d'une chose)* | **462 à 468** | **7** |
 | **R9** *(le calibrage)* | **469 à 475** | **7** |
+| **V2.4 — M1 à M3** *(ce qui est cassé, et le coin redessiné)* | **aucune** | **0** *(`M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
 | **V3 — A2, A4 à A7, A9 à A13** *(l'animation)* | **376, 379 à 388, 390 à 400, 434 à 461, 482 à 490** | **59** |
 | **V3.1 — G1 à G16** *(l'atelier tient ce qu'il dit)* | **495 à 501**, plus **369** *(reprise à `P1`)* et **502, 503** | **10** *(les quarante-trois autres changements tiennent des stories déjà écrites)* |
 | **V3.5 — P1, P2** *(le dépliage généralisé)* | **370 à 374, 491 à 494** | **9** *(`369` est partie en `G16` le 3 septembre 2026)* |
@@ -206,6 +208,13 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
       ├ D3  le fond              ✔ close  │  D3 n'a pas coûté de banc :
       ├ D4  les moteurs, le contour ✔     │  deux mesures l'ont remplacé
       └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
+ │
+ ▼
+V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026.
+      │ M2  la maquette du coin entier   │  Aucune n'en bloque une autre.
+      └ M3  l'écran cesse de figer       ┘  M1 et M3 réparent ; M2 dessine.
+                                            La tranche qui bâtit l'écran de
+                                            M2 ne s'écrit qu'après elle.
  │
  ▼
 V3    A6  le mouvement, dit une fois pour toutes
@@ -1420,6 +1429,272 @@ bâtiments, arbres, tours, portes de ville. Et pas un pixel de changé sur ce qu
 hauteur, et sa largeur suit ses propres proportions dans une boîte carrée. Un mur trois fois plus
 large que haut y laisse donc du vide de part et d'autre. Aucune image du dépôt n'est dans ce cas, et
 l'ouvrir demanderait une seconde question à chaque type — on attend qu'un vrai sujet la réclame.
+
+---
+
+## V2.4 — Ce qui est cassé se répare, et le coin du parcours se redessine
+
+*Née le 4 septembre 2026, en reprenant une par une les remarques d'usage du carnet. **Elle ne prend
+que ce qui est cassé** : des gestes que le produit propose et qui perdent du travail déjà payé, ou
+qui rendent un écran impraticable. Ce qui manque attend son tour ; ce qui est rompu passe devant
+l'animation.*
+
+**Deux remarques l'ont ouverte, et aucune n'était ce qu'elle paraissait** — c'est devenu la marque
+de ce carnet. *« Je ne peux pas zoomer »* cachait une image payée dont le calcul ne garde rien ;
+*« ça freeze quand je tape »* cachait un projet relu quarante-deux fois pour composer un écran.
+Les dossiers sont `docs/remarques/fabriquer-un-calque-a-la-main.md` et
+`docs/remarques/l-ecran-fige-a-chaque-lettre.md`.*
+
+**Ce qu'elle répare, en clair.** Quand on met un casque sur un personnage, l'atelier ne range pas
+« le personnage casqué » : il range **le casque seul**, découpé, prêt à être reposé ailleurs. C'est
+ce que le produit appelle un *calque*, et l'écran qui le fabrique s'appelle la *superposition*.
+`G16` a ouvert le geste **refaire ce découpage à la main** — et il ne marche pas sur les seules
+images pour lesquelles il a été ouvert.
+
+**La mesure, faite le 4 septembre 2026 sur les deux cas réels du dépôt.** Le serveur ne
+redimensionne pas l'image du dessus pour la faire entrer dans le cadre du dessous : il la colle
+dans le coin haut-gauche et jette ce qui dépasse. C'est un contrat écrit, sain, et sans conséquence
+tant que les deux images ont des tailles voisines — ce qui était vrai avant `G16`. Depuis, le
+dessus peut être la case telle qu'elle est arrivée du modèle, et elle est bien plus grande :
+
+| | La case arrivée | Le corps dessous | Ce que le serveur garde | Ce qu'il reste du casque |
+|---|---|---|---|---|
+| premier casque de *balthazar-2* | 1024 × 1024 | 253 × 321 | le coin, **7,7 %** | **0 pixel sur 214 718** |
+| second casque de *balthazar-2* | 1024 × 1024 | 128 × 128 | le coin, **1,6 %** | **0 pixel sur 180 876** |
+
+Le dessin commence à 271 pixels du bord gauche ; le coin gardé s'arrête à 253. **Le sujet est
+entièrement dehors.** Le coin ne contient que du fond uni, qui ne ressemble en rien au corps : la
+comparaison le garde donc en entier, et le calque qui sort est un **rectangle plein de fond**, 98 %
+du cadre rempli, sans un pixel de casque. Le bouton *recaler* calcule sa proposition sur ce même
+vide et rend des chiffres d'apparence honnête.
+
+**Et c'est le pire endroit possible.** Ces deux casques sont ceux que le produit signale lui-même
+comme les plus mal revenus — leur défaut est enregistré sous le nom *« échelle au retour »*, à la
+gravité maximale. Sur les huit pièces d'équipement du dépôt, **deux sont dans ce cas, et ce sont
+les deux qui avaient besoin du geste**.
+
+**Pourquoi aucun essai ne l'a vu.** Tous ceux de la superposition emploient deux images de même
+taille. La phrase *« ce qui déborde est perdu »* n'a pas été rouverte quand `G16` a introduit une
+image huit fois plus grande.
+
+### Pourquoi cette version passe devant l'animation
+
+Parce qu'elle ne fait pas attendre l'animation longtemps, et parce que le contraire coûterait plus
+cher : `G16` est **livrée**, l'auteur s'en sert, et chaque équipement mal revenu qu'il essaie de
+rattraper lui rend un rectangle vide sans un mot. Ce n'est pas un geste qui manque, c'est du
+travail payé qui se perd.
+
+### Ce que cette version ne fait pas
+
+- **Elle ne construit pas le grossissement, ni la main.** Les deux sont réels — l'écran n'a
+  **aucun** grossissement, et la main est écrite du domaine jusqu'au calcul sans avoir jamais eu
+  d'écran. *Tranché par l'auteur le 4 septembre 2026 : les poser sur l'écran d'aujourd'hui
+  reviendrait à les construire deux fois, puisqu'on va le refondre.* Ils entrent dans le dessin de
+  `M2`.
+- **Elle ne bâtit pas l'écran refondu.** `M2` le dessine ; la tranche qui le construit ne s'écrit
+  qu'une fois la maquette arbitrée — on ne sait pas encore si c'est un écran ou deux.
+- **Elle ne touche pas au défaut voisin** — un calque né d'une superposition s'annonce *« corps
+  habillé »*, parce que sa recette est vide et que c'est la recette qui départage les deux. Relevé
+  le 4 septembre 2026, cohérent avec `E6`, faux à l'usage. Il attend son tour.
+
+### ⚠️ Ce que la version tient pour acquis sans l'avoir mesuré
+
+**Que ramener l'image entière donne un meilleur point de départ que le coin.** C'est évident quand
+le sujet est hors du coin — mesuré, deux fois sur deux —, et ça reste à voir pour une image dont le
+sujet serait *dans* le coin : la réduire l'éloignerait de sa taille d'arrivée. **Aucune image du
+dépôt n'est dans ce cas**, et le calage à la main rattrape l'écart en un geste. C'est un prix
+accepté, pas un oubli.
+
+---
+
+### M1 · Le découpage du coin, réparé
+
+*Aucune US neuve — elle rend son sens à `US-503`, écrite pour `G16`*
+
+**Ce qu'on livre.** Une image du dessus plus grande que le cadre du dessous **entre entière**,
+réduite pour tenir, au lieu d'être coupée à son coin haut-gauche. Le calage part alors d'un point
+de départ qui a un sens, et le bouton *recaler* travaille sur ce qu'il y a vraiment à caler.
+
+**Ce que ça ne change pas, et c'est la moitié de la tranche.** Quand les deux images sont de même
+taille, ou que le dessus est plus petit, **rien ne bouge, au pixel près**. C'est le cas de six des
+huit pièces du dépôt, de la seule superposition qui y ait été fabriquée, et de tous les essais
+existants. La loi ne change pas non plus : *le cadre du dessous fait loi*, et le calque sort à la
+taille du corps — sans quoi il ne se reposerait sur rien.
+
+**Ce que ça ne casse pas, et c'est vérifié** : **aucun réglage de superposition n'est gardé dans le
+dépôt**, et la seule superposition fabriquée emploie deux images de 64 carrés de côté. La
+réparation n'a rien à rattraper derrière elle.
+
+**Ce que l'écran en dit.** Rien de neuf à dessiner, une phrase à ajouter : quand le dessus a été
+ramené au cadre, l'écran le **dit**, pour qu'on ne lise pas l'échelle comme si elle partait de la
+taille d'arrivée.
+
+**Aucun appel, aucun centime** — tout se recalcule d'images déjà payées, et la tranche entière se
+vérifie réseau coupé.
+
+**Critères d'acceptation**
+
+- [ ] Un dessus plus grand que le cadre du dessous y entre **entier**, réduit pour tenir, et non
+      coupé à son coin
+- [ ] Sur les deux casques de *balthazar-2*, le calque contient le casque — mesuré en pixels de
+      sujet gardés, là où il y en avait **zéro**
+- [ ] Le bouton *recaler* rend sa proposition sur l'image entière, et sa couverture cesse d'être
+      calculée sur du fond uni
+- [ ] **Deux images de même taille rendent exactement l'image d'avant la tranche**, au pixel près —
+      et un essai le tient
+- [ ] Un essai emploie enfin **deux tailles différentes, le dessus le plus grand** : c'est ce
+      qu'aucun essai de la superposition ne faisait
+- [ ] Le cadre de travail montre la même image que celle sur laquelle le serveur calcule
+- [ ] L'écran dit quand le dessus a été ramené au cadre, au lieu de le faire en silence
+- [ ] Aucun appel au fournisseur, aucun centime : la tranche entière se vérifie réseau coupé
+
+**Bloquée par** — aucune. *Elle ne dépend pas de `M2` : elle ne change pas un pixel de l'écran.*
+
+---
+
+### M2 · Le coin du parcours se redessine — maquette seule
+
+*Aucune US neuve — une maquette n'a pas d'utilisateur qui la demande ; c'est le cas d'`E0`, `F0` et
+`A0`*
+
+**Ce qu'on livre.** Une maquette, et rien d'autre. **Elle ne construit rien et ne se code pas.**
+
+**Le fait qu'elle a à régler.** Trois endroits du produit fabriquent ou réparent un calque, et
+aucun ne ressemble aux autres :
+
+| | Choisir les deux images | Caler l'une sur l'autre | Grossir | La main |
+|---|---|---|---|---|
+| **La planche d'équipement** — on commande, l'atelier déduit | non | non | — | non |
+| **La carte d'un vêtement** — *zone · affinage · retouche* | non | non | **non** | **oui** |
+| **La superposition** | **oui** | **oui** | **non** | **non** |
+
+Aucun des trois n'a de grossissement. L'un a la main sans le choix des images ; l'autre le choix et
+le calage sans la main. **Pour faire le travail en entier il faut passer de l'un à l'autre, et rien
+ne dit qu'ils se complètent.** C'est le mot de l'auteur : *« ce n'est pas trop logique ni bien
+organisé cette partie du workflow »*.
+
+**Ce qu'elle réemploie plutôt que d'inventer.** Deux choses sont déjà construites et l'attendent :
+
+- **Le grossissement libre** — molette, image qu'on attrape et qu'on déplace, jusqu'à seize fois
+  l'ajustement — existe sur l'écran « voir en grand » de la galerie, avec sa raison écrite : *seize
+  fois suffit à compter les pixels d'un sprite*. La maquette le reprend ; elle n'en dessine pas un
+  troisième, à côté de celui des tables qui compte en pour-cent.
+- **La main** est écrite de bout en bout — la définition, l'échange avec le serveur, le calcul, et
+  jusqu'à sa raison : *« un casque sombre sur des cheveux sombres, qu'aucun seuil ne distingue »*.
+  **Seul l'écran manque.** Le seul endroit qui la nomme aujourd'hui est le bouton *Tout défaire*,
+  qui propose d'annuler un geste qu'on ne peut pas faire.
+
+**Ce à quoi elle doit répondre, et qu'aucune des deux autres pistes ne réglait**
+
+- Un écran ou deux ? Et si c'est un, par quelles portes y entre-t-on ?
+- Que devient **la carte d'un vêtement** et ses trois outils : elle disparaît, elle se réduit, ou
+  elle reste et renvoie vers l'écran unique ?
+- Comment **tracer un rectangle** et **attraper l'image pour la déplacer** cohabitent, puisque
+  c'est la même main. Le produit a déjà tranché ce conflit ailleurs, par un seuil de trois pixels
+  entre un clic et un glissement ; ici il faudra sans doute séparer autrement.
+- Où va la main : sur le même cadre que le calage, ou sur un moment d'après ?
+
+**Critères d'acceptation**
+
+- [ ] La maquette existe dans `docs/maquettes-v2.4/`, ouvrable seule, sans serveur
+- [ ] Elle montre le parcours entier — entrer, choisir, caler, grossir, retoucher, fabriquer — et
+      dit d'où l'on y entre
+- [ ] Elle tranche ce que devient la carte d'un vêtement, et l'écrit
+- [ ] Elle tranche le partage entre tracer et déplacer, et l'écrit
+- [ ] Elle réemploie le grossissement de l'aperçu et la main du calque : **aucun troisième
+      mécanisme** pour un geste qui existe deux fois
+- [ ] Elle doit sa ligne au guide pour tout écran ou réglage qu'elle ajoute — la règle du dépôt
+- [ ] **Elle ne code rien** : aucun fichier de l'interface ni du serveur n'est touché par cette
+      tranche
+
+**Bloquée par** — aucune. *`M1` peut se construire avant, pendant ou après : elles ne se touchent
+pas.*
+
+---
+
+### M3 · Corriger un texte cesse de figer l'écran
+
+*Aucune US neuve — elle tient `US-296`, l'écran qui montre ce qui part avant de payer*
+
+**Ce qu'on livre.** On corrige une ligne de la fenêtre de confirmation comme on écrit dans
+n'importe quel champ : les lettres s'affichent au fur et à mesure, **le curseur reste où on l'a
+mis**, et le prix se remet à jour quand la frappe se pose.
+
+**Trois défauts, et ils ne sont pas de la même famille.** L'auteur les a vécus comme un seul —
+*« ça freeze »* — et ils se réparent ensemble parce qu'ils se cachent l'un l'autre.
+
+> ### ① Composer ce qui part relit le projet quarante-deux fois
+>
+> **Mesuré le 4 septembre 2026, sur les vraies données, un sac de voyage posé sur une pose du
+> pèlerin.** Le temps que met l'atelier à dire ce qui part ne suit rien d'autre que le nombre de
+> fois où il relit le projet du jeu :
+>
+> | Ce qu'on demande | Lectures du projet | Le temps |
+> |---|---|---|
+> | l'aperçu du texte seul | **5** | 27 ms |
+> | la confirmation d'une image ordinaire | **15** | 122 ms |
+> | **la confirmation d'un équipement** | **42** | **322 ms** |
+>
+> Une lecture ouvre une connexion neuve à la base, pose deux réglages, lit un bloc de 5,4 Ko, le
+> reconstruit entièrement en mémoire, puis referme. **Refermer à chaque opération est une décision
+> écrite** — c'est ce qui permet d'effacer le fichier de la base sous Windows, et c'est un critère
+> du produit depuis `T3`. **Ce qui n'a jamais été décidé, c'est de le faire quarante-deux fois pour
+> répondre à une seule question.** Le compte vient de ce que chaque petit service redemande le
+> projet pour son compte : la liste des personnages est relue dix-huit fois, l'ambiance quatre fois.
+>
+> **Mesuré en alternant les deux façons de faire, quarante fois, même machine, même instant** :
+> 351 ms tel quel, **100 ms** quand le projet est lu une seule fois. **71 % de moins**, sans rien
+> changer à ce que l'écran affiche ni à ce qu'on y fait.
+
+> ### ② Chaque lettre déclenche un aller-retour
+>
+> Une lettre tapée écrit dans le tri, le tri est une dépendance de l'effet qui redemande ce qui
+> part. **Un mot de dix lettres, dix allers-retours enchaînés.** L'appel rapporte le texte et le
+> prix ensemble et ne peut pas être coupé en deux — c'est une règle écrite, et elle ne bouge pas.
+
+> ### ③ Le curseur repart à la fin, deux fois par lettre
+>
+> **Relevé par l'auteur le 4 septembre 2026** : *« si je modifiais le début ou le milieu c'est
+> chiant »*. Le champ de correction n'a aucune mémoire à lui — ce qu'il affiche vient directement
+> de la dernière réponse du serveur. À chaque lettre : l'écran se redessine **avant** la réponse,
+> donc avec le texte d'avant la lettre ; le navigateur, à qui l'on réécrit le contenu d'un champ,
+> replace le curseur à la fin ; puis la réponse arrive, le texte est réécrit, et le curseur repart
+> à la fin. **Deux sauts par lettre, et entre les deux un texte en retard d'une frappe.**
+>
+> C'est ce défaut-là qui rend la correction du milieu d'une ligne impraticable, quand les deux
+> autres ne la rendaient que lente. Taper à la fin le masque, puisque la fin est là où le curseur
+> atterrit.
+
+**Ce que la tranche ne fait pas.** Elle ne pose **pas** de bouton *valider* à la place du lien
+*fermer*. C'était la proposition de départ de l'auteur, et **il l'a écartée lui-même en
+arbitrant** : elle existait pour supprimer les allers-retours, et une fois ① et ② faits il n'y en a
+plus à supprimer. Elle aurait coûté un geste de plus à chaque correction, et surtout elle aurait
+laissé, entre la frappe et la validation, **un prix affiché qui ne correspond plus au texte lu** —
+exactement ce que la règle *« le texte et le prix ensemble »* interdit.
+
+**La portée est la composition entière, et c'est tranché.** On ne répare pas le seul écran où la
+lenteur se voit : les cinq lectures de l'aperçu, les quinze de l'écran ordinaire et les quarante-deux
+de l'équipement sortent du même endroit. On y passe une fois.
+
+**Aucun appel, aucun centime** — la tranche entière se vérifie serveur du fournisseur coupé.
+
+**Critères d'acceptation**
+
+- [ ] Composer ce qui part **lit le projet une seule fois** par demande, et un essai compte les
+      lectures au lieu de mesurer un temps — un temps dépend de la machine, un compte non
+- [ ] Le compte tombe à **1** sur les trois cas mesurés : l'aperçu du texte, la confirmation d'une
+      image ordinaire, la confirmation d'un équipement
+- [ ] **Ce que l'écran affiche ne change pas d'un caractère** avant et après la réparation, sur ces
+      trois cas
+- [ ] La demande ne repart qu'une fois la frappe posée, et jamais à chaque lettre
+- [ ] **Le curseur reste où l'auteur l'a mis**, y compris au milieu d'une ligne, y compris pendant
+      qu'une demande est en vol
+- [ ] Le champ montre toujours ce qui vient d'être tapé, jamais un texte en retard
+- [ ] Le prix et le texte restent affichés ensemble, et jamais l'un sans l'autre : la règle ne bouge
+      pas
+- [ ] Aucun appel au fournisseur, aucun centime
+
+**Bloquée par** — aucune. *Elle ne touche ni `M1` ni `M2`.*
 
 ---
 

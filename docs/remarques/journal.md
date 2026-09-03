@@ -510,3 +510,91 @@ vérifications faites dans le code le jour même, et **rien n'est tranché**.*
   fabrique un **second** vêtement à côté du premier, au lieu de le remplacer. Le troisième manque
   — le mot *brut* qui désigne deux choses — est **dit** à l'écran et non réparé : refaire le
   rangement pour que les deux bruts soient la même chose reste ouvert.
+
+---
+
+## Séance du 4 septembre 2026 — en découpant un calque à la main
+
+*Trois remarques nées de l'usage de `G16`, le lendemain de sa livraison, sur l'écran de
+superposition ouvert depuis la carte d'un vêtement. Le texte de l'auteur, mot pour mot ; les
+paragraphes en gras sont des vérifications faites dans le code le jour même.*
+
+- j'ai encore un petot soucis qu'il faudrait améliorer dans la superposition : je dois pouvoir
+  zoomer autant que je veux. c'est un point que j'ai déjà demandé quelque part dans les remarque
+  il me semble et qui a peut être même été planifié. car la c'est impossible de découper
+  proprement un calque a la main. dans un si petit dessin.
+
+  **Ce n'est pas le même défaut que celui déjà planifié, et c'est important.** `G10` — *le zoom
+  des tables monte* — fait passer le plafond des **tables** de 250 % à une règle qui s'adapte à
+  l'image. L'écran de superposition n'est pas une table : c'est une fabrique, à droite du trait
+  de la barre, avec ses trois panneaux à elle. Vérifié le 4 septembre 2026 : **il n'a aucun zoom
+  du tout**. Les deux images y sont posées en `object-contain`, c'est-à-dire ajustées au panneau
+  et rien de plus. `G10` livrée n'y changerait donc rien.
+
+  **Et il y a une seconde raison pour laquelle le découpage à la main est difficile là.** Le
+  cadre de travail ajuste **chacune** des deux images à son panneau, alors que le serveur, lui,
+  pose le dessus dans le cadre du dessous à l'échelle demandée. Tant que les deux images ont la
+  même taille, les deux façons de faire coïncident ; depuis `G16`, le dessus peut être la case
+  telle qu'elle est arrivée — 512 px contre 64 — et elles ne coïncident plus. Le rectangle qu'on
+  trace, lui, reste juste : il est compté en pixels du dessous. C'est ce qu'on **voit** qui ment.
+
+- Deplus, si je découpe et que j'applique ma superposition pour créer un calque, cela semble
+  causé des problème ensuite car les images ne s'affiche pas.
+  `GET /api/generations/32a2c95994fc4579bb50f7b6a674c301/slots/100/image HTTP/1.1" 400 Bad Request`
+
+  **Reproduit et corrigé le 4 septembre 2026.** L'écran choisissait l'adresse d'une image selon
+  une règle vraie depuis T3 et devenue fausse : *une image traitée se lit par son empreinte, une
+  image sans recette se lit par son emplacement*. Or « sans recette » et « rang d'emplacement »
+  ne vont ensemble que pour les images de C1 : **tout ce qui naît d'un dépliage, d'une découpe ou
+  d'une superposition a un rang qui n'est l'emplacement de rien.** Une image née d'une
+  superposition a la recette vide — voulu depuis `E6`, les deux images étaient déjà rendues — et
+  un rang de dépliage : l'écran demandait donc l'emplacement 102 d'un appel qui n'a qu'un
+  emplacement 0, et recevait un 400.
+
+  **Le défaut date de `E6` ; `G16` l'a mis sur le chemin ordinaire.** Avant, il fallait aller
+  chercher la table de superposition ; depuis, un bouton de la fiche d'un personnage y mène en un
+  clic, et ce qui en sort se range dans la matrice, où on le regarde en grand. Mesuré : la
+  vignette de la grille marchait — elle passe par l'adresse de l'asset —, c'est **l'aperçu** qui
+  ne marchait pas.
+
+  **Un second défaut sous le même symptôme, et c'était le pire des deux.** Trouvé en vérifiant
+  le premier au navigateur, une fois la fusion de l'auteur terminée. Une superposition écrit son
+  résultat dans le dossier de la **même génération**, au premier rang libre — donc au-dessus des
+  cases, sans en remplir aucune. Or le rejeu du recalage et la case arrivée retrouvaient « leur »
+  case en comptant les rangs du dossier : après **un seul** calque refait à la main, l'atelier
+  lisait *« cinq images rangées pour quatre cases »* et refusait les deux gestes **sur toute la
+  planche**, définitivement. Autrement dit : refaire un calque à la main cassait le geste qui
+  l'avait fabriqué, et pour toutes ses sœurs.
+
+  **Réparé en distinguant ce qui vient du dépliage.** Une image dépliée n'a ni parent ni
+  superposition — elle sort d'une case, pas d'une autre image ; c'est la filiation qui répond,
+  et non un drapeau de plus. Le rejeu du recalage était atteint aussi : le défaut attendait
+  depuis que `E6` et `R5` se sont croisés sans se voir, et personne n'avait encore refait une
+  superposition sur une planche d'équipement.
+
+  **Et une lenteur, mesurée puis levée.** Afficher la case arrivée coûtait **2,5 s** : elle
+  passait par la lecture qui aligne *chaque* case sur *son* corps, alors qu'elle rend la case
+  **avant** tout ça. Le découpage seul suffit — **483 ms**, cinq fois moins. Le rejeu, lui, garde
+  la lecture complète : il a besoin des alignements.
+
+  **Un défaut voisin, trouvé au passage et pas corrigé.** Le calque qui sort d'une superposition
+  porte une recette **vide**, et c'est `recette.calque` qui départage un calque d'un corps
+  habillé. La fiche annonce donc *« corps habillé — il s'exporte, il ne s'empile pas »* sur une
+  image qui est un calque. C'est cohérent avec `E6` et faux à l'usage ; ça touche à ce que le
+  produit appelle un calque, et ça ne se répare pas en passant.
+
+- autre point : je ne peux pas retoucher manuellement les pixel pour remettre ou ôter (la main)
+  quand je fait une superposition. en fait c'est pas trop logique ni bien organiser cette partie
+  du workflow.
+
+  **Le fait, vérifié.** La main existe à deux endroits — la table *la main* d'une image, et les
+  trois outils de la carte d'un vêtement, *zone · masque · retouche*, qui écrivent dans la
+  différence du calque. La superposition, elle, porte bien un champ `main` dans son domaine, avec
+  sa raison écrite : *si le réglage n'est vrai que de cette superposition, il va dans la
+  superposition*. **Ce champ n'a aucun écran** : rien ne le pose, rien ne le montre.
+
+  **Ce qui est à revoir n'est donc pas un bouton, c'est un partage.** Trois endroits fabriquent
+  ou réparent un calque — la planche d'équipement qui le déduit, la carte qui l'affine à la main,
+  la superposition qui le refait —, et ils ne se ressemblent pas : le premier n'a pas de zoom, le
+  deuxième a la main mais pas le choix des images, le troisième a le choix des images et le
+  calage mais ni la main ni le zoom. **À reprendre en entier**, pas à rapiécer.

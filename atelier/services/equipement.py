@@ -577,16 +577,7 @@ class ServiceEquipement:
                 "le recalage ne se rejoue pas sans elle"
             )
 
-        # Les rangs du dépliage, **dans l'ordre où il les a écrits**, supprimés
-        # compris : `deplier` a pris `premier + index` case par case, donc le
-        # n-ième rang est la n-ième case. Un compte qui ne tombe pas juste veut
-        # dire qu'une purge est passée entre-temps — on refuse plutôt que de
-        # deviner quelle case a perdu son image.
-        rangs = sorted(
-            rang
-            for rang in self._base.rangs_de_generation(generation.identifiant)
-            if rang >= RANG_PLIAGE
-        )
+        rangs = self._rangs_du_depliage(generation)
         if len(rangs) != len(pliage.cases):
             raise ProductionRefusee(
                 f"{len(rangs)} image{'s' if len(rangs) > 1 else ''} rangée"
@@ -689,27 +680,24 @@ class ServiceEquipement:
                 "la case telle qu'elle est arrivée ne se retrouve pas sans elle"
             )
 
-        # Les rangs du dépliage, dans l'ordre où il les a écrits : le n-ième
-        # rang est la n-ième case. Même lecture que le rejeu, et pour la même
-        # raison — un compte qui ne tombe pas juste veut dire qu'une purge est
-        # passée, et deviner quelle case a perdu son image serait pire que
-        # refuser.
-        rangs = sorted(
-            rang
-            for rang in self._base.rangs_de_generation(generation.identifiant)
-            if rang >= RANG_PLIAGE
-        )
+        rangs = self._rangs_du_depliage(generation)
         if asset.rang not in rangs or len(rangs) != len(pliage.cases):
             raise ProductionRefusee(
                 "le découpage de cette planche ne correspond plus à ses cases — "
                 "la case telle qu'elle est arrivée ne se retrouve pas"
             )
 
-        retours, _, _ = self._lire_planche(generation, emplacement.rang)
+        # **Le découpage seul, pas le recalage** — mesuré au navigateur le
+        # 4 septembre 2026 : passer par `_lire_planche` coûtait **2,5 s** par
+        # affichage, parce qu'il aligne *chaque* case sur *son* corps pour
+        # produire les calques. Or ce qu'on rend ici est la case **avant** tout
+        # ça : le découpage suffit, et il est la moitié bon marché du travail.
+        # Le rejeu, lui, garde `_lire_planche` — il a besoin des alignements.
+        morceaux, _ = self._pliage.decouper_retour(generation, emplacement)
         index = rangs.index(asset.rang)
-        if index >= len(retours):  # pragma: no cover — le compte est vérifié
+        if index >= len(morceaux):  # pragma: no cover — le compte est vérifié
             raise ProductionRefusee("cette case n'est pas dans la planche")
-        octets = retours[index][3]
+        octets = morceaux[index]
         return octets, mesurer(octets).type_media
 
     # ── Le masque ────────────────────────────────────────────────────────────
@@ -784,6 +772,46 @@ class ServiceEquipement:
         )
 
     # ── Le dedans ────────────────────────────────────────────────────────────
+
+    def _rangs_du_depliage(self, generation: Generation) -> list[int]:
+        """Les rangs que le **dépliage** a écrits, dans l'ordre, et eux seuls.
+
+        `deplier` a pris `premier + index` case par case : le n-ième rang est
+        donc la n-ième case, et c'est ce qui permet au rejeu comme à la case
+        arrivée de retrouver la leur. Les supprimés comptent — leur rang reste
+        pris —, et un compte qui ne tombe pas juste veut dire qu'une purge est
+        passée : on refuse plutôt que de deviner quelle case a perdu son image.
+
+        **Ce qui ne vient pas du dépliage ne compte pas, et c'est la réparation
+        du 4 septembre 2026.** Une superposition écrit son résultat dans le
+        dossier de la même génération, au premier rang libre — donc au-dessus
+        des cases, sans en remplir aucune. L'atelier lisait alors *« cinq images
+        rangées pour quatre cases »* et refusait **le rejeu du recalage et la
+        case arrivée sur toute la planche**, pour toujours : fabriquer un calque
+        à la main cassait le geste qui l'avait fabriqué. Trouvé en usage, sur le
+        chemin ouvert par `G16` ; le défaut, lui, attendait depuis que `E6` et
+        `R5` se sont croisés sans se voir.
+
+        **Ce qui les distingue est ce qui les a faites.** Une image dépliée n'a
+        ni parent ni superposition — elle sort d'une case, pas d'une autre
+        image. Un drapeau de plus aurait été une seconde vérité sur une question
+        à laquelle la filiation répond déjà.
+        """
+        rangs: list[int] = []
+        for rang in self._base.rangs_de_generation(generation.identifiant):
+            if rang < RANG_PLIAGE:
+                continue
+            asset = self._base.lire_asset(
+                identifiant_de(generation.identifiant, rang)
+            )
+            # Un rang sans asset est un supprimé purgé : il ne compte pas non
+            # plus, et le compte dira alors qu'une purge est passée.
+            if asset is None:
+                continue
+            if asset.parent or asset.superposition is not None:
+                continue
+            rangs.append(rang)
+        return sorted(rangs)
 
     def _lire_planche(
         self, generation: Generation, rang: int
