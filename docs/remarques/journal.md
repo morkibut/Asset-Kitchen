@@ -598,3 +598,61 @@ paragraphes en gras sont des vérifications faites dans le code le jour même.*
   la superposition qui le refait —, et ils ne se ressemblent pas : le premier n'a pas de zoom, le
   deuxième a la main mais pas le choix des images, le troisième a le choix des images et le
   calage mais ni la main ni le zoom. **À reprendre en entier**, pas à rapiécer.
+
+---
+
+## Séance du 4 septembre 2026 — deux images pour une case, et laquelle part
+
+*Relevée en regardant la colonne d'un sac de voyage sur le pèlerin, où la pose « repos » portait
+deux calques. Le texte de l'auteur, mot pour mot ; les paragraphes en gras sont des vérifications
+faites dans le code le jour même.*
+
+- je vois aussi un autre problème. je ne peux pas retirer un calque. ici par exemple j'en ai 2
+  pour la même pose. comment je fait pour choisir le calque que je sélectionne comme bon (celui
+  qui partirai theoriquement pour le jeu ?). Ou si je veux supprimer l'autre ?
+  est-ce que c'est un oubli ? dans ce cas il faut le mettre en remarque et le coder dessuite, ou
+  est-ce que c'est un bug ? Et en vrai c'est pareil pour les pose de base. je ne peux pas
+  sélectionner celle que je veux "garder".
+
+  **Un oubli d'écran, et la question posée était la bonne.** La règle existe et décide déjà : *le
+  favori d'abord, sinon la plus récente*, écrite une seule fois dans tout le dépôt
+  (`corps_retenu`) et lue par trois chemins — le corps qu'une planche d'équipement emporte, le
+  calque qui sort à l'export vers le jeu, et le calibrage. Rien n'était cassé ; **rien ne se
+  voyait non plus**. La fiche du personnage est le seul écran du produit qui montre des images
+  concurrentes côte à côte, et c'était celui qui n'offrait pas la marque : ni coin de favori, ni
+  suppression, ni la moindre indication de laquelle des deux gagnait. Le geste existait ailleurs
+  — dans la galerie —, ce qui suppose de savoir que la règle existe et d'aller retrouver la bonne
+  image dans un autre écran.
+
+  **Et deux vrais défauts dedans, trouvés en vérifiant.** Le premier se chiffre : les mesures
+  posées à droite de la rangée — *repeint 98,6 % · ajout 0,1 %* — décrivaient la **première image
+  de la case** et non celle que la règle retient. Les deux coïncident tant que personne ne marque
+  de favori, puisque la liste arrive la plus fraîche en tête ; dès qu'un favori plus ancien est
+  posé, la rangée décrit un calque et l'export en sort un autre. Le second est plus large :
+  **marquer un favori était le seul geste de la bibliothèque à ne prévenir personne**. La galerie
+  s'en tirait parce qu'elle se recharge elle-même après l'appel ; la fiche du personnage n'a pas
+  ce second chemin — elle écrit et elle reçoit —, et c'est précisément l'écran dont le favori
+  décide de ce qui partira.
+
+  **Construit le jour même, `M6`.** La matrice porte désormais, pièce par pièce, le calque que le
+  serveur sortirait — calculé par la même fonction que l'export, jamais recomposé dans la page.
+  Le retenu porte un liseré, **et seulement quand la case a le choix** : une marque répond à une
+  question, et une case à une seule image n'en pose pas. Le coin plein en cyan se pose d'un clic
+  sur les vignettes, calques comme corps, et la carte de droite reprend les deux mots de la
+  galerie — *◤ favori* et *Supprimer cette image* —, précédés de la phrase qui dit lequel part.
+  La croix qui vidait la case est descendue en bas de la vignette : les deux marques se
+  disputaient le même angle, et c'est le coin qui ne peut pas déménager sans cesser d'être le
+  même partout.
+
+- autre problème que je vois, différent mais lié, si je clique sur "habiller" pour lancer la
+  génération du sac de voyage pour la pose "marcher" par exemple, dans le prompt préparé, dans
+  les images fournis la pose marché déjà générer pour ce personnage semble faire parti des images
+  envoyé, mais on ne la vois pas contrairement aux deux autres, ce qui est contre intuitif.
+
+  **Déjà relevé, déjà étayé, et traité ailleurs.** C'est la remarque du 3 septembre sur la légende
+  des images jointes : la pose part bien — le code le dit noir sur blanc, *« une planche
+  d'équipement en envoie une aussi, et c'est la planche elle-même, pas un gabarit »* —, mais
+  l'écran de confirmation la range avec le gabarit de grille d'une génération ordinaire : une
+  phrase, sans vignette. Voir `remarques/ce-qui-decrit-une-image-jointe.md`, qui note déjà que
+  *« la voir n'a jamais été décidé — c'est un manque, pas un choix »*. **L'auteur l'a prise dans
+  une autre séance** ; elle n'est pas redoublée ici.

@@ -1868,6 +1868,19 @@ class ServiceProduction:
                         piece: [a.en_json() for a in liste]
                         for piece, liste in calques.get(pose.identifiant, {}).items()
                     },
+                    # **Et lequel de ces calques-là partirait dans le jeu**,
+                    # pièce par pièce. La même règle que pour le corps, appelée
+                    # au même endroit : `corps_retenu`. Elle décidait déjà — à
+                    # l'export, sans jamais le dire —, et l'écran ne montrait
+                    # donc pas ce qu'il déciderait. Le calculer ici plutôt que
+                    # dans l'écran est la règle de `corps` telle quelle : deux
+                    # règles à deux endroits finiraient par désigner deux
+                    # images différentes.
+                    "retenus": {
+                        piece: retenu.identifiant
+                        for piece, liste in calques.get(pose.identifiant, {}).items()
+                        if (retenu := corps_retenu(liste)) is not None
+                    },
                     # **Le corps que cette pose enverrait en planche
                     # d'équipement**, ou rien — et c'est ce « rien » qui rend une
                     # pose visiblement inéligible (US-141). Le favori d'abord,

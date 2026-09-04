@@ -11,6 +11,63 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M6 — deux images pour une case, et laquelle part — 4 septembre 2026
+
+**La question posée était la bonne, et la réponse était « ni l'un ni l'autre ».** L'auteur
+demandait : *oubli, ou bug ?* C'était un **oubli d'écran** — la règle existe depuis `C2`, elle
+décide déjà, et rien n'était cassé. *Le favori d'abord, sinon la plus récente* (`corps_retenu`),
+écrite une seule fois et lue par trois chemins : le corps qu'une planche d'équipement emporte, le
+calque qui sort à l'export, le calibrage.
+
+**Ce qui manquait tenait entièrement à l'écran, et c'est un motif qu'on a déjà vu.** La fiche du
+personnage est le seul endroit du produit qui montre des images concurrentes côte à côte — et
+c'était le seul à n'offrir ni la marque qui décide, ni la réponse à *« laquelle gagne ? »*. Le
+geste existait ailleurs, dans la galerie, ce qui suppose de savoir que la règle existe et d'aller
+retrouver la bonne image dans un autre écran. **Une règle qu'on ne peut pas voir n'existe pas pour
+celui qui s'en sert.**
+
+**Et deux vrais défauts se cachaient dedans**, trouvés en vérifiant la remarque. Les mesures
+posées à droite d'une rangée décrivaient la **première image de la case** au lieu de la retenue :
+les deux coïncident tant que personne ne marque de favori — la liste arrive la plus fraîche en
+tête —, et dès qu'un favori plus ancien est posé, la rangée décrit un calque quand l'export en
+sort un autre. **Mesuré au navigateur : 1,9 % puis 10,7 % de repeint sur la même rangée**, selon
+la marque posée. Et **marquer un favori était le seul geste de la bibliothèque à ne prévenir
+personne** : la galerie s'en tirait parce qu'elle se recharge elle-même après l'appel, la fiche du
+personnage n'a pas ce second chemin — elle écrit et elle reçoit —, et c'est justement l'écran dont
+le favori décide de ce qui part.
+
+**Le serveur dit désormais ce qu'il retiendrait**, pièce par pièce, calculé par la fonction même
+qui décide à l'export. Recomposer la règle dans la page aurait fait deux règles à deux endroits,
+qui finissent toujours par désigner deux images différentes — c'est la raison déjà écrite pour le
+corps, appliquée une seconde fois.
+
+**La marque ne paraît que quand la case a le choix.** Une marque répond à une question, et une
+case à une seule image n'en pose pas ; un liseré sur chaque vignette du produit aurait fait un
+ornement. Le geste, lui, n'invente rien : c'est le coin plein en cyan, qui veut dire *favori*
+partout ailleurs, et la carte de droite reprend les deux mots de la fiche de la galerie — *◤
+favori* et *Supprimer cette image* — sous la phrase qui dit lequel part. *« Juger, c'est marquer
+favori ou supprimer »*, appliqué là où l'on juge.
+
+> **Le navigateur a trouvé ce qu'aucun essai ne cherchait.** Supprimer depuis la fiche marchait,
+> l'image partait — et le bandeau *annuler* ne se voyait nulle part : il vit dans la barre
+> d'outils de la galerie, que cet écran-là ne montre pas. **On jetait depuis un endroit d'où l'on
+> ne pouvait pas défaire**, sous une infobulle qui promettait le contraire. Le compte rendu part
+> maintenant dans la fente du châssis, **avec le geste qui rend**. Et le premier essai de ce geste
+> a échoué pour une seconde raison : le bouton posé au moment de la suppression capturait
+> l'annulation telle qu'elle était *avant* — c'est-à-dire vide. Les identifiants se passent, ils
+> ne se relisent pas.
+
+**Deux déplacements, chacun pour éviter un piège.** La croix qui vide une case est descendue en
+bas de la vignette : elle occupait l'angle du coin de favori, et c'est le coin qui ne peut pas
+déménager sans cesser d'être la même marque partout. Et le bouton de la carte dit *Supprimer cette
+image* et non *Supprimer* : la colonne de gauche du même écran porte déjà un *Supprimer*, celui de
+la chose entière.
+
+**Ce qui reste ouvert et n'appartient pas à cette tranche.** Le corps retenu vaut pour l'attitude
+entière, toutes directions confondues — c'est ainsi que le serveur le choisit depuis `C2`, et la
+matrice le montre tel quel plutôt que d'inventer une seconde règle par direction. Le jour où une
+pose devra retenir un corps *par* direction, c'est `corps_retenu` qui changera, à un seul endroit.
+
 ## D4 — le catalogue s'ouvre, et deux des trois choses qu'on attendait sont fausses — 3 septembre 2026
 
 **La V2.3 se ferme avec elle, cinq tranches sur cinq.**

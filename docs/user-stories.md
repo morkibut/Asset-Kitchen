@@ -893,3 +893,8 @@ du 3 septembre 2026, et arbitrés le même jour.*
 
 - **US-502** — En tant qu'auteur, je veux voir la case telle qu'elle est revenue du modèle depuis la fiche de l'équipement, par une bascule à côté du vêtement découpé, afin de juger ce que j'ai payé au lieu de juger ce que l'atelier en a fait.
 - **US-503** — En tant qu'auteur, je veux refaire à la main la superposition d'un vêtement sur son corps depuis la fiche du personnage, et garder les deux résultats côte à côte, afin qu'un calage automatique raté ne me laisse pas sans recours.
+
+### Deux images pour une case : laquelle part
+
+- **US-504** — En tant qu'auteur, je veux voir dans la fiche du personnage laquelle de mes images part dans le jeu, et la choisir d'un clic, afin de ne plus avoir à deviner ce que l'atelier retiendrait ni à aller le décider dans un autre écran.
+- **US-505** — En tant qu'auteur, je veux jeter depuis la fiche le calque que je n'ai pas choisi, afin de ne pas garder côte à côte deux versions dont une seule sert.

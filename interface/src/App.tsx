@@ -1649,28 +1649,40 @@ export function App() {
     dernierClic.current = identifiant
   }
 
-  const supprimer = async (identifiants: string[]) => {
-    if (identifiants.length === 0) return
+  /** **Ce qui vient d'être jeté**, ou rien — pour que celui qui l'a jeté puisse
+   *  le rendre sans dépendre d'un état lu au prochain rendu. */
+  const supprimer = async (identifiants: string[]): Promise<string[] | null> => {
+    if (identifiants.length === 0) return null
     try {
       const rendu = await api.supprimerAssets(identifiants)
       setAnnulation({ identifiants: rendu.supprimes, expireLe: rendu.expire_le })
       setSelection([])
       await relireGrille()
+      return rendu.supprimes
     } catch (erreur) {
       echouer(erreur, "suppression refusée")
+      return null
     }
   }
 
-  const annuler = async () => {
-    if (!annulation) return
+  /** Rendre ce qui a été jeté. **Les identifiants sont passés, jamais relus** :
+   *  un compte rendu posé au moment de la suppression garderait sinon la valeur
+   *  d'`annulation` telle qu'elle était *avant* — c'est-à-dire vide, et le
+   *  geste ne ferait rien. Constaté au navigateur le 4 septembre 2026. */
+  const rendre = async (identifiants: string[]) => {
     try {
-      await api.restaurer(annulation.identifiants)
+      await api.restaurer(identifiants)
       setAnnulation(null)
       await relireGrille()
     } catch (erreur) {
       setAnnulation(null)
       echouer(erreur, "annulation refusée")
     }
+  }
+
+  const annuler = async () => {
+    if (!annulation) return
+    await rendre(annulation.identifiants)
   }
 
   const marquerFavori = async (identifiants: string[], favori: boolean) => {
@@ -2605,6 +2617,39 @@ export function App() {
           onSuperposition={(identifiant) => {
             setCaseOuverte(identifiant)
             setTable("superposition")
+          }}
+          // **Jeter depuis la matrice passe par le même geste que la galerie**
+          // (US-505) : un seul chemin de suppression dans tout le produit.
+          //
+          // **Mais le geste rendait dans le vide, et c'est le navigateur qui
+          // l'a dit** (4 septembre 2026) : le bandeau *annuler* vit dans la
+          // barre d'outils de la galerie, et cet écran-ci ne la montre pas. On
+          // supprimait donc depuis un endroit d'où l'on ne pouvait pas défaire,
+          // alors que l'infobulle du bouton promettait le contraire. Le compte
+          // rendu part dans la fente du châssis — la place des comptes rendus —
+          // **avec le geste qui rend**, et non un simple mot.
+          onSupprimer={(identifiants) => {
+            void supprimer(identifiants).then((jetes) => {
+              if (!jetes) return
+              setFente({
+                ton: "ok",
+                texte: (
+                  <>
+                    l'image est à la corbeille —{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void rendre(jetes)
+                        setFente(null)
+                      }}
+                      className="underline underline-offset-2 hover:text-texte"
+                    >
+                      la rendre
+                    </button>
+                  </>
+                ),
+              })
+            })
           }}
           outil={
             imageOuverte && etat ? (

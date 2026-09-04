@@ -1002,6 +1002,11 @@ export type Case = {
    *  habillés : c'est `recette.difference` qui les distingue, jamais un drapeau
    *  de plus. Vide pour l'immense majorité des cases. */
   calques: Record<string, Asset[]>
+  /** **Le calque que cette case sortirait dans le jeu**, pièce par pièce — la
+   *  même règle que `corps`, calculée au même endroit. Une case qui n'a qu'un
+   *  calque le désigne quand même : ce qui se voit n'est pas *« il y a un
+   *  choix »*, c'est *« voici lequel part »*. */
+  retenus: Record<string, string>
   /** **Le corps que cette attitude enverrait en planche d'équipement**, ou rien
    *  — et c'est ce « rien » qui la rend visiblement inéligible (US-141). Le
    *  favori d'abord, sinon la plus récente : la règle est calculée par le

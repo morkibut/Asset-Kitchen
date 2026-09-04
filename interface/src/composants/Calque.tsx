@@ -78,7 +78,9 @@ export function PanneauCalque({
   corps,
   pose,
   piece,
+  retenu,
   onFermer,
+  onSupprimer,
   onSuperposition,
   onErreur,
 }: {
@@ -89,7 +91,15 @@ export function PanneauCalque({
   corps: Asset | null
   pose: string
   piece: string
+  /** **Est-ce ce calque-ci qui partirait dans le jeu ?** Calculé par le
+   *  serveur, jamais ici : la règle — *le favori d'abord, sinon le plus
+   *  récent* — s'écrit une fois et se lit des deux côtés. */
+  retenu: boolean
   onFermer: () => void
+  /** **Jeter celui qu'on n'a pas choisi.** Absent, la rangée du jugement
+   *  n'offre que le favori — c'est ce que fait la galerie quand une image n'y
+   *  est plus. */
+  onSupprimer?: () => void
   /** **Refaire le calage à la main** (G16) : ouvre la table de superposition
    *  sur ce vêtement. Absent, le bouton ne paraît pas — la carte se lit
    *  exactement comme avant. */
@@ -337,6 +347,26 @@ export function PanneauCalque({
       </EnTetePanneau>
 
       <div className="defile flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
+        {/* **Juger, c'est marquer favori ou supprimer** — la phrase de la
+            galerie (US-25, US-26), et les deux mêmes gestes, posés ici où l'on
+            regarde le calque.
+
+            **Ils manquaient, et c'est ce manque qui se voyait** : une pose qui
+            a deux calques n'a jamais dit lequel des deux partirait dans le
+            jeu, et l'on ne pouvait ni le choisir ni jeter l'autre sans aller
+            le retrouver dans la galerie — c'est-à-dire sans savoir que la
+            règle existe. Relevé par l'auteur le 4 septembre 2026.
+
+            **La phrase dit d'abord la réponse, le bouton ensuite.** Ce que
+            l'auteur demande est *« lequel part ? »* : y répondre par deux
+            boutons sans le dire aurait laissé la question entière. */}
+        <Jugement
+          asset={calque}
+          retenu={retenu}
+          onSupprimer={onSupprimer}
+          onErreur={onErreur}
+        />
+
         {/* **Ce que la carte montre** (G16, US-502). Le vêtement découpé, ou la
             case telle qu'elle est arrivée du modèle — l'image payée, que rien
             n'ouvrait jusqu'ici. Elle ne paraît que quand il y a vraiment
@@ -650,6 +680,83 @@ export function PanneauCalque({
         </div>
       </div>
     </aside>
+  )
+}
+
+/** Lequel des calques de cette case part dans le jeu, et les deux gestes qui
+ *  en décident.
+ *
+ *  **La même rangée que la fiche de la galerie**, aux mêmes mots — *◤ favori*
+ *  et *Supprimer*. Deux rangées différentes pour un même jugement auraient
+ *  fait croire à deux jugements ; et le coin plein en cyan veut dire *favori*
+ *  partout ailleurs dans le produit.
+ *
+ *  **La phrase au-dessus est la réponse, et elle passe avant les boutons.**
+ *  Sans elle, une case à deux calques offrait deux gestes sans jamais dire
+ *  lequel des deux gagnait déjà — ce qui est très exactement la question
+ *  posée. */
+function Jugement({
+  asset,
+  retenu,
+  onSupprimer,
+  onErreur,
+}: {
+  asset: Asset
+  retenu: boolean
+  onSupprimer?: () => void
+  onErreur: (erreur: unknown, defaut: string) => void
+}) {
+  const basculerFavori = async () => {
+    try {
+      await api.favori([asset.identifiant], !asset.favori)
+    } catch (erreur) {
+      onErreur(erreur, "favori refusé")
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Libelle>Ce qu'on garde</Libelle>
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {retenu
+          ? "c'est ce calque-ci qui part dans le jeu, et qui sert de référence à cette pièce."
+          : "un autre calque de cette case part dans le jeu — le favori d'abord, sinon le plus récent. Marque celui-ci favori pour que ce soit lui."}
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void basculerFavori()}
+          title={
+            asset.favori
+              ? "retirer la marque — le plus récent redeviendrait celui qui part"
+              : "c'est lui qui partira dans le jeu, même si un autre est fait après"
+          }
+          className={[
+            "mesure h-[26px] rounded-[2px] border px-2 text-[11px] transition-colors duration-[80ms]",
+            asset.favori
+              ? "border-signal bg-signal/13 text-signal"
+              : "border-bord bg-fond-2 text-texte-2 hover:bg-fond-3",
+          ].join(" ")}
+        >
+          {asset.favori ? "◤ favori" : "favori"}
+        </button>
+        {onSupprimer && (
+          <button
+            type="button"
+            onClick={onSupprimer}
+            title="l'image part à la corbeille — le pied de l'écran propose de la rendre"
+            className="mesure ml-auto h-[26px] px-1 text-[10px] text-texte-3 hover:text-echec"
+          >
+            {/* **« Cette image », et non « Supprimer » tout court.** La
+                colonne de gauche du même écran porte déjà un *Supprimer* —
+                celui de la chose entière —, et deux boutons du même nom sur
+                un écran où l'un jette un personnage et l'autre une image
+                auraient été un piège. */}
+            Supprimer cette image
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 

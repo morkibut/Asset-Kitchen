@@ -44,14 +44,27 @@ raison : le jour où il ne correspond plus, c'est lui qui a tort.*
 
 | | Combien | Ce que ça veut dire |
 |---|---|---|
-| **close** | **6** | Faites ou abandonnées, la raison écrite |
-| **partie au plan** | **17** | Tranchées, écrites dans une tranche, **pas encore construites** |
-| **étayée** | **2** | Instruites, avec leurs pistes — mais rien n'est tranché |
-| **en vrac** | **15** | Jamais regardées |
-| | **40** | |
+| **close** | **7** | Faites ou abandonnées, la raison écrite |
+| **partie au plan** | **22** | Tranchées, écrites dans une tranche, **pas encore construites** |
+| **étayée** | **4** | Instruites, avec leurs pistes — mais rien n'est tranché |
+| **en vrac** | **9** | Jamais regardées |
+| | **42** | |
 
-**Il reste donc 34 remarques à traiter**, dont **17 sur lesquelles aucune décision n'est prise** —
-les 15 en vrac et les 2 étayées. Les 17 autres n'attendent que d'être construites.
+**Il reste donc 35 remarques à traiter**, dont **14 sur lesquelles aucune décision n'est prise** —
+les 10 en vrac et les 4 étayées. Les 21 autres n'attendent que d'être construites.
+
+---
+
+## Séance du 4 septembre 2026 — deux images pour une case, et laquelle part
+
+*Relevée en regardant la colonne d'un sac de voyage, où une pose portait deux calques. L'auteur
+demandait explicitement de trancher entre l'oubli et le défaut : c'était un oubli d'écran, avec
+deux vrais défauts dedans.*
+
+| La remarque | État | Où lire |
+|---|---|---|
+| **On ne peut ni choisir l'image qui part, ni jeter l'autre, depuis la fiche du personnage.** *« J'en ai 2 pour la même pose. Comment je fais pour choisir le calque […] celui qui partirait théoriquement pour le jeu ? Ou si je veux supprimer l'autre ? […] Et en vrai c'est pareil pour les poses de base. »* **Vérifié : oubli d'écran, rien de cassé.** La règle — *le favori d'abord, sinon la plus récente* — est écrite une seule fois et décide déjà de trois choses : le corps qu'une planche emporte, le calque qui sort à l'export, le calibrage. La fiche est le seul écran qui montre des images concurrentes côte à côte, et c'était le seul à n'offrir ni la marque ni la réponse. **Deux vrais défauts trouvés dedans** : les mesures de la rangée décrivaient la première image de la case et non la retenue ; et marquer un favori était le seul geste de la bibliothèque à ne prévenir personne — sur l'écran même dont le favori décide de ce qui part. | **close** — `M6` **livrée le 4 septembre 2026** | journal — *le retenu porte un liseré quand la case a le choix, le coin de favori se pose d'un clic sur les vignettes, et la carte de droite reprend les deux mots de la galerie* |
+| **La pose déjà faite part avec l'appel, mais l'écran l'appelle « gabarit » et ne la montre pas.** *« Elle semble faire partie des images envoyées, mais on ne la voit pas contrairement aux deux autres, ce qui est contre-intuitif. »* **Vérifié : elle part vraiment** — le code dit que la planche d'équipement en envoie une *« et c'est la planche elle-même, pas un gabarit »*. Même défaut que la remarque du 3 septembre, sous un autre angle. | étayée — *même cause que la remarque du 3 septembre ; l'auteur la traite dans une autre séance* | [`remarques/ce-qui-decrit-une-image-jointe.md`](remarques/ce-qui-decrit-une-image-jointe.md) — *« la voir n'a jamais été décidé : c'est un manque, pas un choix »* |
 
 ---
 
@@ -84,9 +97,9 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 | La remarque | État | Où lire |
 |---|---|---|
 | **Corriger un texte fige l'écran à chaque lettre tapée.** Chaque frappe redemande au serveur ce qui part — un mot de dix lettres, dix allers-retours. **Le mécanisme est bien celui-là — mais la lenteur vient d'ailleurs.** Mesuré : composer cet écran fait **relire le projet du jeu quarante-deux fois**, et le temps ne suit rien d'autre que ce compte. **Lu une seule fois, c'est 71 % de moins**, sans toucher au geste. | **partie au plan** — `M3` | [`remarques/l-ecran-fige-a-chaque-lettre.md`](remarques/l-ecran-fige-a-chaque-lettre.md) — *trois défauts sous un seul mot, dont **le curseur qui repart à la fin deux fois par lettre**, ajouté par l'auteur à l'arbitrage. Le bouton* valider *proposé au départ est écarté par lui : il n'a plus rien à supprimer* |
-| **La légende des références est en haut, illisible, et détachée des images qu'elle décrit.** Elle devrait être accrochée à chaque image jointe, plus bas. **Et le « gabarit de la grille » proposé en bas est en fait la pose elle-même** : le serveur le sait et l'écrit dans son propre commentaire, l'écran n'a qu'un seul libellé pour les deux cas. D'où le sentiment de voir une image jamais validée, qu'on ne peut ni décocher ni ouvrir. | en vrac | journal — *le libellé fautif est localisé ; le déménagement de la légende ne l'est pas* |
-| **Ajouter une image de référence sans quitter l'écran de confirmation.** Aujourd'hui il faut sortir, et l'on perd toutes les corrections en cours. | en vrac | journal |
-| **Pourquoi une planche, et des « cases », pour une seule pose ?** **Réponse trouvée le jour même : c'est délibéré** — un calque ne se fabrique que par une planche, fût-elle d'une case, parce qu'habiller consiste à renvoyer la même planche avec la pièce en plus. **Ce qui ne l'est pas, c'est le texte qui en sort** : « a sprite sheet of 1 sprites, exactly 1 columns and 1 rows », et un écran qui parle de cases au pluriel pour une case. | en vrac | journal — *la mécanique est justifiée, les mots ne le sont pas* |
+| **La légende des références est en haut, illisible, et détachée des images qu'elle décrit.** Elle devrait être accrochée à chaque image jointe, plus bas. **Et l'écran nomme cette image autrement que le texte qui part, au même moment** : le texte dit *« la planche existante, n'y change que ce qu'on demande »*, l'écran dit *« le gabarit de la grille, place les sujets dedans »* — **deux demandes opposées, une seule image**. Le serveur connaît les deux rôles et n'en transmet aucun. Et la légende ne peut pas déménager : elle est du texte qui part. | **partie au plan** — `M4` | [`remarques/ce-qui-decrit-une-image-jointe.md`](remarques/ce-qui-decrit-une-image-jointe.md) — *le vrai nom d'abord, puis la vignette, puis la légende recopiée sous chaque image. La traduction est écartée : deux textes à tenir d'accord* |
+| **Ajouter une image de référence sans quitter l'écran de confirmation.** Aujourd'hui il faut sortir, et l'on perd toutes les corrections en cours. **Ce n'est pas un oubli : trois décisions écrites, justes chacune, se rencontrent** — la fenêtre couvre tout, le geste qui ajoute une image force un changement d'onglet, et changer d'onglet vide les corrections. | **partie au plan** — `M5` | [`remarques/ajouter-une-reference-sans-sortir.md`](remarques/ajouter-une-reference-sans-sortir.md) — *2 moitiés, la perte d'abord ; **révise une décision écrite**, celle du tri qui repart de rien* |
+| **Pourquoi une planche, et des « cases », pour une seule pose ?** **Réponse trouvée le jour même : c'est délibéré** — un calque ne se fabrique que par une planche, fût-elle d'une case, parce qu'habiller consiste à renvoyer la même planche avec la pièce en plus. **Ce qui ne l'est pas, c'est le texte qui en sort.** Mesuré : le pluriel est faux dès qu'une dimension vaut un — **14 planches du dépôt sur 22, et les 7 planches d'équipement sur 7**. Et à une case, le texte décrit au modèle une grille qui n'existe pas. **Trouvé en chemin : l'écran de la planche affirme encore qu'elle n'entre pas en bibliothèque — faux depuis `G16`, la veille.** | **partie au plan** — `M4` | [`remarques/les-mots-de-la-planche-d-une-case.md`](remarques/les-mots-de-la-planche-d-une-case.md) — *la mécanique est justifiée ; fondue dans `M4`, qui compose la phrase juste à côté* |
 
 ---
 
@@ -102,7 +115,7 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 
 | La remarque | État | Où lire |
 |---|---|---|
-| **Un historique des retouches, pour revenir en arrière.** **Pour bien plus tard.** C'est son absence qui rend la pose d'une recette en lot dangereuse : rien ne garde le réglage d'avant, et « revenir au brut » ramène à l'image nue. Écarté par écrit aujourd'hui. | en vrac | journal — *bien plus tard ; **écarté par écrit du périmètre de la V3.1*** |
+| **Un historique des retouches, pour revenir en arrière.** **Pour bien plus tard.** C'est son absence qui rend la pose d'une recette en lot dangereuse : rien ne garde le réglage d'avant, et « revenir au brut » ramène à l'image nue. **Mesuré : 131 des 164 images du dépôt portent un réglage qu'on perdrait sans retour**, et garder les vingt derniers réglages de toutes tiendrait dans 2 Mo — *le refus écrit du dépôt vise des fichiers d'images, pas des réglages*. | étayée | [`remarques/revenir-en-arriere-sur-une-retouche.md`](remarques/revenir-en-arriere-sur-une-retouche.md) — *4 pistes ; **reportée par l'auteur le 4 septembre 2026**, rien n'est tranché. Le hors-périmètre du PRD range deux objets sous une seule raison, qui n'en couvre qu'un* |
 
 ---
 
@@ -111,8 +124,8 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 | La remarque | État | Où lire |
 |---|---|---|
 | **Sans artwork officiel, l'atelier ne réduit aucune couleur — et ne le dit pas.** La quantification n'entre que s'il existe une palette, et la palette se déduit des artworks. Pas d'artwork déposé, donc pas de palette, donc un sprite qui sort avec dix mille couleurs sans que rien ne le signale. Il faut l'annoncer, proposer de choisir une image de l'univers, et renvoyer vers un guide qui explique comment fabriquer les artworks d'un personnage — ce chapitre n'existe pas. | **partie au plan** — `G15` | journal — *mesurée au banc `D2` ; à arbitrer avant d'être construite* |
-| **On ne peut pas créer une entité depuis l'univers.** On règle l'univers avant d'avoir peuplé le codex ; à ce moment-là il n'y a aucun personnage à qui attribuer une image, donc aucun artwork possible. L'ordre du produit interdit ce que l'écran demande. Il manque le geste « créer une chose d'ici ». | en vrac | journal |
-| **Fabriquer un artwork depuis la toile de l'univers.** Quand l'auteur n'a pas d'image, lui proposer d'en générer une — mais il faut alors que la description du personnage vive quelque part, par exemple sur une carte de l'univers. Cela demande de savoir composer un prompt sur mesure et de fournir plusieurs références, images ou texte, pour demander précisément quelque chose. | en vrac | journal |
+| **On ne peut pas créer une entité depuis l'univers.** On règle l'univers avant d'avoir peuplé le codex ; à ce moment-là il n'y a aucun personnage à qui attribuer une image. **Et le geste ne manque pas seulement : il est invisible** — le bloc « Concept art de » n'existe que s'il y a déjà une chose, sinon il ne s'affiche pas du tout, sans un mot. **Mesuré : 2 projets sur 6 sont dans ce cas, dont un avec 55 cartes.** | **partie au plan** — `G7` | [`remarques/creer-une-chose-depuis-l-univers.md`](remarques/creer-une-chose-depuis-l-univers.md) — *nommer une chose sur place, dans le menu que `G7` refait déjà ; ferme une promesse du Guide* |
+| **Fabriquer un artwork depuis la toile de l'univers.** Quand l'auteur n'a pas d'image, lui proposer d'en générer une. **Deux tiers de la demande existent déjà** — la description vit sur la chose du jeu, et composer un prompt avec plusieurs références est le cœur du produit. **Ce que la mesure a trouvé, c'est un mur** : promouvoir en artwork se pose sur une carte, une image fabriquée est un asset, et aucun geste ne fait passer l'un dans l'autre — **une image payée ne peut pas donner ses couleurs au jeu**. | **partie au plan** — `G15` | [`remarques/fabriquer-un-artwork-depuis-la-toile.md`](remarques/fabriquer-un-artwork-depuis-la-toile.md) — *une image de la bibliothèque devient promouvable ; générer depuis la toile reste ouvert, maquette d'abord* |
 | **Le calage horizontal est effacé en silence dès qu'on repose une recette.** Trouvé et *vérifié* le 3 septembre 2026 en travaillant sur D2, hors de son périmètre. Le décalage n'est écrit que par le calibrage, et la charge de l'écran ne le porte pas : reposer n'importe quel réglage de la grille le remet donc à zéro. Un calage patiemment ajusté disparaît au premier cran de curseur, sans un mot. | **partie au plan** — `G14` | journal — *mesuré par la route, un asset calé à 7 revient à 0 ; à arbitrer avant d'être construite* |
 
 ---

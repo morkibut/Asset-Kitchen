@@ -469,13 +469,23 @@ class ServiceBibliotheque:
     def marquer_favori(self, identifiants: Iterable[str], favori: bool) -> list[Asset]:
         """La seule marque que l'auteur pose lui-même — d'où sa forme, un coin
         plein, quand tout ce que le système constate est un mot
-        (`docs/design-motifs.md` § La tuile)."""
+        (`docs/design-motifs.md` § La tuile).
+
+        **Et elle s'annonce, comme le rangement et la suppression.** Le favori
+        n'est pas une décoration : c'est lui qui décide, par `corps_retenu`, de
+        l'image qui part en planche d'équipement et de celle qui sort dans le
+        jeu. Il était pourtant le seul geste de la bibliothèque à ne prévenir
+        personne — la galerie s'en tirait en se rechargeant elle-même, et la
+        fiche du personnage, qui n'a pas ce second chemin, gardait à l'écran un
+        choix que le serveur avait déjà changé. Relevé le 4 septembre 2026.
+        """
         marques = []
         for identifiant in identifiants:
             asset = self._trouver(identifiant)
             asset.favori = favori
             self._assets.sauver(asset)
             marques.append(asset)
+        self._annoncer()
         return marques
 
     # ── Jeter ────────────────────────────────────────────────────────────────

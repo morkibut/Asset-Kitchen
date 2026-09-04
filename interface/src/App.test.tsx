@@ -595,6 +595,9 @@ const generation = (
 // n'en a pas déclaré — l'immense majorité des essais.
 const VIDE_C3: Omit<Case, "pose" | "demandees" | "images"> = {
   calques: {},
+  // **Ce que le serveur désigne, pièce par pièce** (US-504) : sans calque, il
+  // n'y a rien à désigner, et la marque du retenu ne paraît nulle part.
+  retenus: {},
   corps: null,
   origine: "type",
   directions: [],
@@ -7080,6 +7083,11 @@ describe("l'écran des personnages — la pièce et le calque", () => {
         calques: (p.identifiant === "repos" && calques.length
           ? { casque: calques }
           : {}) as Record<string, Asset[]>,
+        // Le serveur désigne le calque qui partirait ; en essai, c'est le
+        // premier de la liste, comme la plus récente l'est au serveur.
+        retenus: (p.identifiant === "repos" && calques.length
+          ? { casque: calques[0].identifiant }
+          : {}) as Record<string, string>,
         corps: p.identifiant === "repos" ? corps.identifiant : null,
         origine: "type" as const,
         directions: [],
@@ -7205,6 +7213,203 @@ describe("l'écran des personnages — la pièce et le calque", () => {
     // dépliage.
     expect(images[0].getAttribute("src")).toContain("/api/assets/aaaa1111-0/image")
     expect(images[1].getAttribute("src")).toContain("/api/assets/bbbb2222-100/image")
+  })
+
+  // ── « Deux images pour une case : laquelle part » (M6, US-504, US-505) ─────
+  //
+  // **La règle décidait déjà, et personne ne pouvait la voir.** `corps_retenu`
+  // — *le favori d'abord, sinon la plus récente* — sert la planche
+  // d'équipement, l'export et le calibrage depuis C2. Ce qui manquait tenait
+  // à l'écran : la matrice ne disait pas laquelle des deux images gagnait, et
+  // n'offrait pas la marque qui en décide. Relevé par l'auteur le 4 septembre
+  // 2026, en regardant deux calques d'une même pose.
+
+  /** Une pose « repos » avec deux calques de casque, et le second retenu. */
+  const deuxCalques = (corps: Asset, retenu: string) => {
+    const chose = avecCorps(corps, [
+      calque("bbbb2222-100", corps.identifiant),
+      calque("cccc3333-100", corps.identifiant),
+    ])
+    return {
+      ...chose,
+      cases: chose.cases.map((c) =>
+        c.pose === "repos" ? { ...c, retenus: { casque: retenu } } : c,
+      ),
+    }
+  }
+
+  test("des deux calques d'une case, celui qui part porte la marque", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [deuxCalques(corps, "cccc3333-100")],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    // **Le liseré est sur le retenu, et sur lui seul.** Sans marque, l'écran
+    // montrait deux vignettes identiques et laissait deviner.
+    const vignettes = ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })
+    expect(vignettes).toHaveLength(2)
+    const marquees = vignettes.filter((v) => v.className.includes("outline-signal"))
+    expect(marquees).toHaveLength(1)
+  })
+
+  test("un seul calque ne porte aucune marque — il n'y a pas de question", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [avecCorps(corps, [calque("bbbb2222-100", corps.identifiant)])],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    // **La marque répond à une question ; sans concurrence il n'y en a pas.**
+    // Un liseré sur chaque vignette du produit aurait fait un ornement.
+    expect(
+      ecran
+        .getByRole("button", { name: "Ouvrir casque · repos" })
+        .className.includes("outline-signal"),
+    ).toBe(false)
+  })
+
+  test("le coin garde l'image, et c'est le favori qui part au serveur", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [deuxCalques(corps, "cccc3333-100")],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    // Le premier des deux coins : celui du calque qui **ne** part pas.
+    fireEvent.click(
+      ecran.getAllByRole("button", { name: "Garder casque · repos" })[0],
+    )
+
+    // **C'est le favori, et rien d'autre** — la même marque que la galerie, et
+    // la seule que le serveur lit pour désigner ce qui part.
+    await waitFor(() => {
+      const marque = appels.find((a) => a.url === "/api/assets/favorite")
+      expect(marque).toBeTruthy()
+      expect(marque!.corps).toEqual({
+        identifiants: ["bbbb2222-100"],
+        favori: true,
+      })
+    })
+  })
+
+  test("les mesures de la rangée sont celles du calque retenu", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const chose = deuxCalques(corps, "cccc3333-100")
+    // Deux calques que tout distingue à la lecture : la rangée doit décrire le
+    // second, qui est le retenu, et non le premier de la liste.
+    const cases = chose.cases.map((c) =>
+      c.pose === "repos"
+        ? {
+            ...c,
+            calques: {
+              casque: [
+                {
+                  ...c.calques.casque[0],
+                  calque: { ...c.calques.casque[0].calque!, repeint: 0.111 },
+                },
+                {
+                  ...c.calques.casque[1],
+                  calque: { ...c.calques.casque[1].calque!, repeint: 0.777 },
+                },
+              ],
+            } as Record<string, Asset[]>,
+          }
+        : c,
+    )
+    const { ecran } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [{ ...chose, cases }],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+
+    // **Elles décrivaient `calques[0]`** — la plus récente, donc le retenu tant
+    // que personne ne marquait de favori. Un favori plus ancien posé, la rangée
+    // décrivait un calque et l'export en sortait un autre.
+    expect(ecran.getByText(/repeint 77,7 %/)).toBeTruthy()
+    expect(ecran.queryByText(/repeint 11,1 %/)).toBeNull()
+  })
+
+  test("la carte du calque dit lequel part, et offre de jeter l'autre", async () => {
+    const corps = asset("aaaa1111-0", "un nain au repos")
+    const { ecran, appels } = await ouvrir({
+      emplacements: [TETE],
+      pieces: [CASQUE],
+      personnages: [deuxCalques(corps, "cccc3333-100")],
+    })
+
+    fireEvent.click(ecran.getByRole("button", { name: "casque" }))
+    // Le premier des deux : celui qui **ne** part pas.
+    fireEvent.click(
+      ecran.getAllByRole("button", { name: "Ouvrir casque · repos" })[0],
+    )
+
+    // **La phrase dit la réponse avant que les boutons ne proposent le geste** :
+    // la question de l'auteur était « lequel part ? », pas « que puis-je faire ».
+    expect(ecran.getByText(/un autre calque de cette case part dans le jeu/)).toBeTruthy()
+
+    fireEvent.click(ecran.getByRole("button", { name: "Supprimer cette image" }))
+    await waitFor(() =>
+      expect(
+        appels.find((a) => a.url === "/api/assets/delete"),
+      ).toBeTruthy(),
+    )
+
+    // **Et le geste qui rend suit l'image**, dans la fente du châssis. Le
+    // bandeau *annuler* vit dans la barre d'outils de la galerie, que cet
+    // écran-ci ne montre pas : sans cette ligne, on supprimait depuis un
+    // endroit d'où l'on ne pouvait pas défaire. Constaté au navigateur le
+    // 4 septembre 2026, pas par un essai — d'où celui-ci.
+    const rendre = await screen.findByRole("button", { name: "la rendre" })
+    fireEvent.click(rendre)
+    await waitFor(() =>
+      expect(appels.find((a) => a.url === "/api/assets/restore")).toBeTruthy(),
+    )
+  })
+
+  test("un corps concurrent porte la même marque, et le même clic", async () => {
+    const premier = asset("aaaa1111-0", "un nain au repos")
+    const second = asset("aaaa1111-1", "un nain au repos, encore")
+    const chose = avecCorps(premier)
+    const { ecran, appels } = await ouvrir({
+      personnages: [
+        {
+          ...chose,
+          cases: chose.cases.map((c) =>
+            c.pose === "repos"
+              ? { ...c, images: [premier, second], corps: second.identifiant }
+              : c,
+          ),
+        },
+      ],
+    })
+
+    // **« Et en vrai c'est pareil pour les poses de base »** — la remarque le
+    // disait, et le serveur le faisait déjà : seul l'écran manquait.
+    const vignettes = ecran.getAllByRole("button", {
+      name: /Ouvrir un nain au repos/,
+    })
+    expect(
+      vignettes.filter((v) => v.querySelector("img.outline-signal")),
+    ).toHaveLength(1)
+
+    fireEvent.click(ecran.getByRole("button", { name: "Garder un nain au repos" }))
+    await waitFor(() => {
+      const marque = appels.find((a) => a.url === "/api/assets/favorite")
+      expect((marque?.corps as { identifiants: string[] }).identifiants).toEqual([
+        "aaaa1111-0",
+      ])
+    })
   })
 
   // ── « Les mesures s'affichent toutes, et aucune ne rend un calque impossible
@@ -7666,6 +7871,15 @@ describe("l'écran des personnages — la pièce et le calque", () => {
                   ]!,
                 } as Record<string, Asset[]>)
               : ({} as Record<string, Asset[]>),
+            retenus: (() => {
+              const sien = { repos: doux, marche: pire, course: fait }[
+                p.identifiant
+              ]
+              return (sien ? { casque: sien.identifiant } : {}) as Record<
+                string,
+                string
+              >
+            })(),
             directions: [],
             directions_rangees: [],
             sans_direction: [],

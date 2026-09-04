@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M3 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, rien de construit** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine | ci-dessous |
+| **V2.4** — M1 à M6 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, une close sur six** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
@@ -158,13 +158,13 @@ Le détail par tranche des versions tenues est dans l'archive.
 | **R7** | **431 à 433** | **3** |
 | **R8** *(la fiche d'une chose)* | **462 à 468** | **7** |
 | **R9** *(le calibrage)* | **469 à 475** | **7** |
-| **V2.4 — M1 à M3** *(ce qui est cassé, et le coin redessiné)* | **aucune** | **0** *(`M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
+| **V2.4 — M1 à M6** *(ce qui est cassé, et le coin redessiné)* | `US-504`, `US-505` | **2** *(les deux sont de `M6`, close. Les cinq autres n'en ouvrent aucune : `M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296`, `M4` et `M5` tiennent `US-126`, et `M4` ferme une phrase du genre de `G1` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
 | **V3 — A2, A4 à A7, A9 à A13** *(l'animation)* | **376, 379 à 388, 390 à 400, 434 à 461, 482 à 490** | **59** |
 | **V3.1 — G1 à G16** *(l'atelier tient ce qu'il dit)* | **495 à 501**, plus **369** *(reprise à `P1`)* et **502, 503** | **10** *(les quarante-trois autres changements tiennent des stories déjà écrites)* |
 | **V3.5 — P1, P2** *(le dépliage généralisé)* | **370 à 374, 491 à 494** | **9** *(`369` est partie en `G16` le 3 septembre 2026)* |
 | *Retirées le 3 septembre 2026, dépassées par l'écran de montage et par `D4`* | *375, 377, 378, 389* | *4* |
 | *Sorties du plan avec le pantin* | *401 à 406* | *6* |
-| | **Total écrit** | **503** |
+| | **Total écrit** | **505** |
 
 *Les numéros suivent le jour où la story a été écrite, jamais l'ordre de construction* : la
 V2.3 se construit avant la V3 et porte pourtant les numéros d'après. C'est déjà vrai des
@@ -210,11 +210,24 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
       └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
  │
  ▼
-V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026.
-      │ M2  la maquette du coin entier   │  Aucune n'en bloque une autre.
-      └ M3  l'écran cesse de figer       ┘  M1 et M3 réparent ; M2 dessine.
-                                            La tranche qui bâtit l'écran de
-                                            M2 ne s'écrit qu'après elle.
+V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026,
+      │ M2  la maquette du coin entier   │  une close sur six.
+      │ M3  l'écran cesse de figer       │  Aucune n'en bloque une autre.
+      │ M4  la planche dit enfin vrai    │  M2 dessine, les autres réparent.
+      ├ M5  la référence qui manque ─────┤  La tranche qui bâtit l'écran de
+      └ M6  laquelle part      ✔ close ──┘  M2 ne s'écrit qu'après elle.
+           ▲ après M4, qui refait la
+             liste où son geste se pose    M3, M4 et M5 sont le même écran,
+                                           pris par trois bouts : ce qu'il
+                                           fait, ce qu'il dit, ce qu'il perd.
+                                           M4 seule change ce qui part au
+                                           modèle, et le plan l'écrit.
+
+                                           M6 est ailleurs : la matrice de la
+                                           fiche, où aucune des cinq n'entre.
+                                           Close le jour où elle est née — la
+                                           règle existait, seul l'écran
+                                           manquait.
  │
  ▼
 V3    A6  le mouvement, dit une fois pour toutes
@@ -1445,6 +1458,11 @@ de ce carnet. *« Je ne peux pas zoomer »* cachait une image payée dont le cal
 Les dossiers sont `docs/remarques/fabriquer-un-calque-a-la-main.md` et
 `docs/remarques/l-ecran-fige-a-chaque-lettre.md`.*
 
+**Une troisième s'y est ajoutée le même jour, et elle n'était rien de cassé du tout** : *« j'ai
+deux calques pour la même pose, comment je choisis celui qui part ? »*. La règle qui choisit
+existait et décidait déjà ; c'est l'écran qui ne la montrait ni ne la posait. Elle est devenue
+`M6`, **close le jour de sa naissance** — et elle a mis au jour deux vrais défauts en passant.
+
 **Ce qu'elle répare, en clair.** Quand on met un casque sur un personnage, l'atelier ne range pas
 « le personnage casqué » : il range **le casque seul**, découpé, prêt à être reposé ailleurs. C'est
 ce que le produit appelle un *calque*, et l'écran qui le fabrique s'appelle la *superposition*.
@@ -1695,6 +1713,335 @@ de l'équipement sortent du même endroit. On y passe une fois.
 - [ ] Aucun appel au fournisseur, aucun centime
 
 **Bloquée par** — aucune. *Elle ne touche ni `M1` ni `M2`.*
+
+---
+
+### M4 · La planche cesse d'être mal décrite — à l'écran, et au modèle
+
+*Aucune US neuve — elle tient `US-126` et `US-296`, prolonge le travail de `R7` sur les images
+nommées, et **ferme une phrase du genre de `G1`**, née le jour de sa clôture*
+
+**Ce qu'on livre.** Partout où le produit parle de la planche — l'écran qui montre ce qui part,
+l'écran de la planche elle-même, et le texte envoyé au modèle — **il en dit la même chose, et c'est
+vrai**.
+
+> **Deux remarques, et c'est une seule cause.** *« Le gabarit qu'on me propose, je ne l'ai jamais
+> validé »* et *« pourquoi on parle de planche et de cases pour une seule pose ? »* ont été écrites
+> le même jour, sur le même écran, sans se ressembler. Elles disent la même chose : **la planche est
+> mal décrite, et elle l'est à trois endroits différents.**
+
+---
+
+#### ① L'écran nomme une image autrement que le texte qui part, au même instant
+
+Les deux phrases s'affichent ensemble, à quelques centimètres l'une de l'autre :
+
+| | Ce qui est écrit |
+|---|---|
+| le texte qui part au modèle | *« Image 3 — THE SPRITE SHEET TO CHANGE : 1 sprites of the same character, already drawn. Keep every cell where it is and change only what the request below asks »* |
+| l'écran, plus bas | *« Image 3 · le gabarit de la grille, qui dit au modèle où poser les 1 sujets »* |
+
+L'un dit *voici la planche existante, n'y change que ce qu'on demande* ; l'autre dit *voici une
+grille vide, place les sujets dedans*. **Deux demandes opposées, une seule image** — et c'est au
+moment où l'auteur décide de payer. Il cherchait une image qu'il aurait validée : c'était son
+propre corps, redessiné à la volée.
+
+**Le serveur sait très bien laquelle des deux c'est.** Il distingue deux rôles — *le gabarit*, des
+cases vides à remplir, et *la planche*, des corps déjà là à modifier — et une seule fonction en
+décide, écrite exprès pour qu'aucun rang ne se trompe. Son propre commentaire l'écrit : *« une
+planche d'équipement en envoie une aussi — et c'est la planche elle-même, pas un gabarit »*. Mais
+**ce qu'il renvoie à l'écran est un nombre, sans le rôle** : l'écran n'a pas de quoi choisir ses
+mots, et il a gardé ceux du plus ancien des deux cas. Le gabarit vient de `C2` ; la planche
+d'équipement est arrivée en `C3`, a réemployé la même place et le même compteur, et la phrase n'a
+pas été rouverte.
+
+**Les trois images, et ce que l'écran en fait aujourd'hui** — mesuré le 4 septembre 2026 sur un sac
+de voyage posé sur une pose du pèlerin :
+
+| L'image | Où l'écran la met | Vignette | S'ouvre | Se décoche |
+|---|---|---|---|---|
+| **1** — le personnage déjà dessiné | une ligne de la liste | oui | oui | oui |
+| **2** — l'artwork officiel, pour le style | une ligne de la liste | oui | oui | oui |
+| **3** — la planche du corps à habiller | **un paragraphe sous la liste** | **non** | **non** | non |
+
+**Qu'elle ne se décoche pas reste vrai, et c'est écrit** : *décocher reviendrait à demander une
+planche sans dire à quoi elle ressemble*. **Qu'on ne puisse pas la voir n'a jamais été décidé.**
+
+**La légende ne peut pas déménager**, et l'auteur ne pouvait pas le savoir en l'écrivant : le bloc
+*« Image 1 — …, Image 2 — … »* est du texte qui part au modèle, et l'écran promet de montrer ce qui
+part mot pour mot, dans l'ordre où c'est assemblé. Elle est donc **recopiée** sous chaque image, et
+l'écran dit ce que chaque endroit est : en haut *ce qui part*, en bas *ce que ça décrit*.
+
+**La traduction est écartée, et par l'auteur.** Montrer la légende en français à côté de l'image la
+rendrait lisible d'un coup, au prix d'un second texte à tenir d'accord avec le premier — la
+fabrique à deux vérités que le dépôt refuse partout ailleurs. *La question se rouvre si la légende
+recopiée ne suffit pas ; pas avant.*
+
+#### ② Le texte qui part décrit une grille qui n'existe pas — sur 64 % des planches
+
+**La mécanique, elle, est juste, et la question de l'auteur a une bonne réponse.** Une pose qu'on
+*crée* n'est jamais pliée en dessous de deux cases — plier pour une seule ferait payer un gabarit
+pour rien. Une pièce posée sur un corps l'est **toujours**, même à une case : habiller consiste à
+renvoyer la même planche avec la pièce en plus, et le calque se fabrique par différence entre les
+deux. **Sans planche, il n'y a rien à comparer.** Rien à changer là.
+
+**Ce qui en sort, si.** Le texte est composé avec les nombres de la grille, sans jamais accorder :
+
+> *« The attached image is a sprite sheet of **1 sprites** of the same character, laid out in
+> exactly **1 columns** and **1 rows** »*
+
+**Mesuré le 4 septembre 2026 sur les vraies planches du dépôt.** La faute apparaît dès qu'une
+dimension vaut un, ce qui est le cas courant :
+
+| Cases | La grille | Ce qui est faux | |
+|---|---|---|---|
+| **1** | 1 × 1 | *1 sprites*, *1 columns*, *1 rows* | **7 planches du dépôt** |
+| **2** | 2 × 1 | *1 rows* | **7 planches du dépôt** |
+| 3 et au-delà | 2 × 2, 3 × 2… | rien | 8 planches |
+
+**14 planches sur 22 — 64 % — ont reçu un pluriel faux. Et les 7 planches d'équipement du dépôt
+sont toutes dans ce cas.**
+
+**Ce n'est pas qu'une faute d'accord.** À une case, le texte affirme au modèle qu'il regarde une
+feuille de contact quadrillée, lui demande de *garder exactement la même grille*, et lui interdit
+*les bordures de cases et les lignes de grille* — pour une image qui n'a ni cases ni grille. **Ce
+qui part est une description de ce que l'image n'est pas.**
+
+**La redondance du texte ne se rediscute pas** : un banc du 28 août 2026 l'a étalonnée, et la règle
+qu'il en tire est que *tout ce qu'on ne dit pas explicitement « ne change pas » est une invitation à
+le changer*. Ce qui est en cause n'est pas la redondance, c'est qu'elle décrive une grille absente.
+
+#### ③ Et l'écran de la planche affirme le contraire de ce que le produit fait depuis la veille
+
+Trouvée en vérifiant le point ②, hors du périmètre des deux remarques. L'écran de la planche dit
+encore :
+
+> *« la planche n'y entre **pas** — ses N morceaux, oui, chacun dans sa direction. C'est une ruse
+> pour payer moins, pas un format de livraison. »*
+
+**C'était vrai jusqu'au 3 septembre 2026 à 23 h 45**, heure de la livraison de `G16`. Depuis, la
+planche **entre en bibliothèque** : elle s'y regarde, s'y met en favori, s'en exporte, et un fichier
+entier du produit ne décrit qu'elle. L'invariant qui portait la phrase — *le pliage est une ruse
+d'appel, jamais un format de livraison* — est **renversé**, et ce plan l'écrit deux cents lignes
+plus haut. L'écran de la planche n'a pas été touché depuis la tranche qui l'a créé.
+
+**C'est une dixième phrase du genre de celles de `G1`**, et elle a tenu **un jour**. La `V3.1` avait
+écrit noir sur blanc que rien dans le produit n'empêchait la dixième ; la voici.
+
+---
+
+**⚠️ Ce que la tranche coûte, et il faut le savoir.** Le point ② **change ce qui part au
+fournisseur**, donc il **invalide les comparaisons avec les tirages déjà payés** sur les planches
+d'une et de deux cases. C'est le même prix que `D3` a accepté en l'écrivant, et il est accepté ici
+de la même façon : *un prix, pas un oubli.*
+
+**Ce que la tranche ne fait pas.** Elle n'explique nulle part **pourquoi** une planche d'une case
+existe. Un auteur qui en voit passer une n'a toujours aucun moyen de l'apprendre. *Écarté par
+l'auteur le 4 septembre 2026 ; à reprendre si la question revient.*
+
+**Aucun appel, aucun centime** — les deux sortes d'images sont des octets que le serveur fabrique
+déjà pour l'appel, et il sait les rendre en aperçu sans rien ranger sur le disque. Mesurer le gain
+du point ②, en revanche, coûterait des tirages : **ce n'est pas fait, et ce n'est pas promis.**
+
+**Critères d'acceptation**
+
+*① l'écran de confirmation*
+
+- [ ] Le serveur dit **lequel des deux rôles** il a choisi, et l'écran a deux phrases au lieu d'une
+- [ ] Sur une planche d'équipement, l'écran dit *la planche du corps, que le modèle doit modifier* —
+      **et un essai compare cette phrase à celle du texte qui part**, pour que les deux ne puissent
+      plus diverger
+- [ ] Sur une grille vide, l'écran dit toujours *le gabarit de la grille, qui dit où poser les
+      sujets*
+- [ ] La troisième image a **sa vignette** et s'ouvre en grand, comme les deux autres
+- [ ] Elle **n'a pas de case à cocher** — pas une case grisée : une ligne sans case, qui porte sa
+      raison
+- [ ] Chaque image porte, sous elle, le morceau de légende qui la concerne
+- [ ] La légende reste **entière et inchangée** dans ce qui part, mot pour mot
+
+*② le texte qui part au modèle*
+
+- [ ] Les nombres s'accordent : *1 sprite*, *1 column*, *1 row* — **et un essai le tient pour 1, 2 et
+      4 cases**, les trois formes que le dépôt produit
+- [ ] À **une seule case**, le texte dit ce que l'image est — une image unique à modifier — et ne
+      parle plus ni de feuille, ni de cases, ni de lignes de grille, ni de bordures à ne pas dessiner
+- [ ] À deux cases et au-delà, le texte reste **mot pour mot celui d'aujourd'hui**, redondance
+      comprise : le banc du 28 août n'est pas rejoué
+- [ ] Le plan **écrit** que les comparaisons avec les tirages d'avant ne valent plus sur les
+      planches d'une et deux cases
+
+*③ l'écran de la planche*
+
+- [ ] *« la planche n'y entre pas »* est réécrite : elle y entre, avec le coût de l'appel, et ses
+      morceaux à côté
+- [ ] Aucune autre phrase de cet écran ne contredit ce que `G16` a livré — **il est relu en entier**
+
+- [ ] Aucun appel au fournisseur, aucun centime : la tranche se vérifie serveur du fournisseur coupé
+
+**Bloquée par** — aucune. *Elle touche le même écran que `M3` et `M5`, et pas les mêmes endroits :
+`M3` répare ce qu'il fait, `M5` ce qu'il perd, celle-ci ce qu'il dit. **`M5` se pose après elle**,
+parce que le geste de `M5` vient dans la liste que celle-ci refait.*
+
+**Ce qui reste ouvert** — **le dessin de la ligne sans case.** Une ligne sans case dans une liste de
+cases doit se lire autrement qu'une case grisée, et c'est exactement ce que la décision d'origine
+voulait éviter. *À trancher en construisant, contre le motif écrit du dépôt — « le grisé porte sa
+raison ».*
+
+---
+
+### M5 · Une référence s'ajoute sans perdre ses corrections
+
+*Aucune US neuve — elle tient `US-126` et `US-160`, et **révise une décision écrite**, celle du tri
+qui repart de rien*
+
+**Ce qu'on livre.** En lisant ce qui va partir, on s'aperçoit qu'une image de référence manque. On
+l'ajoute — **sans refermer la fenêtre** —, et si l'on doit malgré tout sortir, **les corrections
+qu'on venait d'écrire sont encore là au retour**.
+
+> ### Le défaut n'est pas un oubli : trois décisions justes se rencontrent
+>
+> Aucune des trois n'est fautive prise seule, et c'est ce qui l'a rendu invisible.
+>
+> | La décision | Où elle est écrite | Ce qu'elle fait ici |
+> |---|---|---|
+> | **la fenêtre de confirmation recouvre tout le produit** — c'est ce qui en fait le seul endroit d'où l'argent part | huit conditions dans l'écran principal | il n'existe **aucun chemin** vers une image sans la refermer |
+> | ***réinjecter* va où son effet se voit** — *« sinon l'auteur est devant un geste dont rien n'a bougé à l'écran »* | le geste lui-même | ajouter une référence **force un changement d'onglet** |
+> | **le tri repart de rien à chaque ouverture** — *« ce qu'on a éteint la fois d'avant ne vaut que pour l'appel d'avant »* | l'ouverture de la fenêtre, et le changement d'onglet | changer d'onglet **vide les corrections** |
+>
+> **Leur rencontre met l'auteur devant un choix que personne n'a voulu lui imposer** : garder ses
+> corrections, ou ajouter l'image dont il vient de voir qu'elle manquait. Et c'est le pire moment
+> pour ça — cette fenêtre est **le seul endroit du produit qui montre quelles références partent**,
+> donc le seul où l'on s'aperçoit qu'il en manque une.
+>
+> Dans la fenêtre, on peut **décocher** une image jointe ; on ne peut jamais en ajouter une.
+
+**⚠️ Ce que la tranche révise, et elle le fait par écrit.** La règle du tri visait un vrai danger —
+un réglage qui traînerait d'un appel au suivant — et elle reste. Ce qui change est **ce qu'elle
+appelle un autre appel** : sortir chercher une image et revenir n'en est pas un. *La décision est
+réécrite avec sa nouvelle raison, à l'endroit où elle est écrite ; elle n'est pas contournée en
+silence.* C'est le motif du dépôt, celui de `G6`, `G7` et `G8`.
+
+**Les deux moitiés, et leur ordre compte**
+
+- **① les corrections survivent à l'aller-retour.** Peu de travail, et c'est le vrai reproche. Elle
+  est **livrable seule**, et elle rend l'écran acceptable tout de suite.
+- **② ajouter une référence sans refermer.** Un geste *ajouter une référence ›* dans la section des
+  images jointes, qui ouvre une surface de choix par-dessus et revient avec l'image.
+
+`①` seule laisse le détour ; `②` seule laisserait la perte entière dès qu'on sort pour une autre
+raison. **On ne construit pas `②` avant `①`.**
+
+**La surface de choix ne s'invente pas.** L'invariant du produit dit **une seule grille d'assets
+dans tout l'atelier** : celle qui s'ouvre ici est celle-là, réemployée. En dessiner une neuvième
+serait une neuvième façon de choisir une image, et c'est la contrainte principale de la seconde
+moitié — c'est aussi ce qui en fait la plus chère.
+
+**Ce que la tranche ne fait pas.** Elle n'empêche pas *réinjecter* de changer d'onglet. Ç'aurait été
+utile si l'on devait continuer à sortir ; une fois `②` faite, on ne sort plus. *Si `②` devait
+tarder, la question se rouvre.*
+
+**Aucun appel, aucun centime** : choisir une image de référence ne fait aucun appel.
+
+**Critères d'acceptation**
+
+- [ ] Sortir de la fenêtre de confirmation et y revenir **pour le même appel** rend les corrections
+      intactes — chaque ligne éteinte, allumée ou réécrite est comme on l'avait laissée
+- [ ] Un appel qui a changé repart d'un tri vide, comme aujourd'hui — **et un essai tient les deux
+      cas**, pas seulement le nouveau
+- [ ] La décision écrite est **réécrite avec sa nouvelle raison**, et dit ce qu'est « le même
+      appel »
+- [ ] Un geste *ajouter une référence ›* vit dans la section des images jointes
+- [ ] Il ouvre **la grille d'assets du produit**, pas une surface neuve — l'invariant ne bouge pas
+- [ ] L'image choisie entre dans la liste, avec son rôle, **sans que la fenêtre se referme**
+- [ ] Les corrections en cours ne bougent pas d'un caractère pendant l'ajout
+- [ ] Aucun appel au fournisseur, aucun centime
+
+**Bloquée par** — aucune. *Elle touche le même écran que `M3` et `M4`, et pas les mêmes endroits.
+`M4` refait la section des images jointes, où le geste de celle-ci vient se poser : **les faire dans
+cet ordre évite de dessiner deux fois la même liste.***
+
+---
+
+### M6 · Deux images pour une case : laquelle part — **close le 4 septembre 2026**
+
+*`US-504` et `US-505`*
+
+**Ce qu'on livre.** Une pose qui porte deux images — deux corps, ou deux calques d'une même pièce
+— dit **laquelle des deux partira dans le jeu**, et on en change d'un clic sans quitter la fiche
+du personnage. Celle qu'on ne garde pas se jette du même endroit.
+
+> ### Ce n'était pas un défaut : c'était la règle sans son écran
+>
+> **La règle existe depuis `C2` et décide déjà.** *Le favori d'abord, sinon la plus récente*
+> (`corps_retenu`), écrite une seule fois dans tout le dépôt, et lue par trois chemins : le corps
+> qu'une planche d'équipement emporte, le calque qui sort à l'export vers le jeu, et le calibrage.
+> Rien n'était cassé.
+>
+> **Ce qui manquait tenait entièrement à l'écran.** La fiche du personnage est le seul endroit du
+> produit qui montre des images concurrentes côte à côte — et c'était le seul à n'offrir ni la
+> marque qui décide, ni la réponse à *« laquelle gagne ? »*. Le geste existait ailleurs, dans la
+> galerie, ce qui suppose de savoir que la règle existe et d'aller retrouver la bonne image dans un
+> autre écran.
+>
+> **Et deux vrais défauts se cachaient dedans**, trouvés en vérifiant. Les mesures posées à droite
+> d'une rangée décrivaient la **première image de la case** et non la retenue : les deux coïncident
+> tant que personne ne marque de favori — la liste arrive la plus fraîche en tête —, et dès qu'un
+> favori plus ancien est posé, la rangée décrit un calque quand l'export en sort un autre. Et
+> **marquer un favori était le seul geste de la bibliothèque à ne prévenir personne** : la galerie
+> s'en tirait parce qu'elle se recharge elle-même après l'appel, la fiche du personnage n'a pas ce
+> second chemin — elle écrit et elle reçoit —, et c'est justement l'écran dont le favori décide de
+> ce qui part.
+
+**Ce que la matrice dit en plus.** Le serveur y ajoute, pièce par pièce, **le calque qu'il
+sortirait**, calculé par la fonction même qui décide à l'export. Jamais recomposé dans la page :
+deux règles à deux endroits finiraient par désigner deux images différentes, et l'écran montrerait
+alors autre chose que ce qui part.
+
+**Ce qui se voit, et quand.** Le retenu porte un liseré — **et seulement quand la case a le
+choix**. Une marque répond à une question, et une case à une seule image n'en pose pas ; un liseré
+sur chaque vignette du produit aurait fait un ornement au lieu d'une réponse.
+
+**Le geste est celui qui existe, pas un neuf.** Le coin plein en cyan veut dire *favori* sur toutes
+les tuiles de la galerie et du codex ; il se pose maintenant d'un clic sur les vignettes de la
+matrice, calques comme corps. La carte d'un vêtement reprend, elle, les deux mots de la fiche de la
+galerie — *◤ favori* et *Supprimer cette image* — sous la phrase qui dit lequel part. **Rien
+d'inventé** : c'est *« juger, c'est marquer favori ou supprimer »*, appliqué là où l'on juge.
+
+**Deux déplacements, chacun pour éviter un piège.** La croix qui vide une case est descendue en bas
+de la vignette : elle occupait l'angle du coin de favori, et c'est le coin qui ne peut pas déménager
+sans cesser d'être la même marque partout. Et le bouton de la carte dit *Supprimer cette image* et
+non *Supprimer* : la colonne de gauche du même écran porte déjà un *Supprimer*, celui de la chose
+entière.
+
+**Supprimer passe par le chemin de la galerie** : un second chemin de suppression aurait été un
+second endroit d'où l'on jette sans pouvoir défaire. **Le geste qui rend a dû suivre, et c'est le
+navigateur qui l'a dit** — le bandeau *annuler* vit dans la barre d'outils de la galerie, que cet
+écran-ci ne montre pas. Le compte rendu part donc dans la fente du châssis, *l'image est à la
+corbeille — la rendre*, avec le geste dedans.
+
+**Aucun appel, aucun centime** — tout se lit d'images déjà payées, et la tranche entière se vérifie
+réseau coupé.
+
+**Critères d'acceptation**
+
+- [x] La matrice désigne, pièce par pièce, le calque qui partirait — par la **même fonction** que
+      l'export, et un essai confronte les deux
+- [x] Sans favori, c'est la plus récente ; un favori posé sur une plus ancienne renverse la
+      désignation, et l'export suit
+- [x] Le retenu porte sa marque **quand la case a le choix**, et rien quand elle n'a qu'une image
+- [x] Un clic sur le coin marque le favori, et c'est le seul appel qui part
+- [x] Les mesures de la rangée sont celles du **retenu**, et non de la première image de la case
+- [x] Le favori **s'annonce**, comme le rangement et la suppression : la fiche se remet d'accord
+      sans se recharger
+- [x] La carte d'un calque dit lequel part avant d'offrir le moindre bouton
+- [x] Jeter le retenu laisse l'autre, qui devient le retenu — sans cascade sur les poses voisines
+- [x] **On peut défaire depuis l'endroit où l'on a jeté** : le compte rendu porte le geste qui rend
+- [x] Le geste vaut pour les corps comme pour les calques : *« et en vrai c'est pareil pour les
+      poses de base »*
+- [x] Aucun appel au fournisseur, aucun centime : la tranche entière se vérifie réseau coupé
+
+**Bloquée par** — aucune. *Elle ne touche ni l'écran de confirmation (`M3`, `M4`, `M5`) ni la
+superposition (`M1`, `M2`) : elle vit dans la matrice de la fiche, où aucune des cinq n'entre.*
 
 ---
 
@@ -2891,6 +3238,31 @@ et **« Référence de cette chose »** ; une ligne mesurée dit ce que **cette 
 mesuré, **quatre désignations sur six ne font rien** dans le dépôt, parce que la carte partait
 déjà ; et le pied de carte cesse de taire une désignation quand la carte est aussi promue.
 
+**Et une chose du jeu se crée depuis là — ajouté le 4 septembre 2026.** *« On règle l'univers avant
+d'avoir peuplé le codex ; à ce moment-là il n'y a aucun personnage à qui attribuer une image. »*
+
+> ⚠️ **Le geste ne manque pas seulement : il est invisible.** Le bloc *Concept art de* n'existe
+> qu'à la condition qu'il y ait au moins une chose du jeu. **Quand le codex est vide, il ne
+> s'affiche pas du tout** — pas une liste vide, pas une phrase, pas un grisé avec sa raison :
+> rien. L'auteur ne voit pas qu'il ne peut pas désigner, il ne voit pas qu'il *pourrait*. Le motif
+> du dépôt — *le grisé porte sa raison* — n'est pas appliqué là où il servirait le plus.
+>
+> **Mesuré le 4 septembre 2026** : **deux projets du dépôt sur six ont des images sur leur toile
+> et aucune chose du jeu à qui les attribuer** — *cœur de pierre* avec **55 cartes**, *bac à
+> sable* avec 5. Sur ces soixante cartes, le geste n'a jamais pu être proposé une seule fois.
+>
+> **Le réglage voisin, lui, s'affiche toujours** : promouvoir en artwork officiel ne demande
+> aucune chose du jeu. Les deux sont côte à côte dans le même menu — celui que cette tranche
+> refait — et **l'un est toujours là quand l'autre disparaît sans un mot**.
+
+La colonne montre donc le bloc **même quand le codex est vide**, avec sa raison, et **un champ pour
+nommer une chose sur place**. Le champ du codex est réemployé tel quel : nommer suffit à créer, et
+le serveur pose la famille. La chose naît, la carte lui est désignée dans le même geste, et la
+marque apparaît sur la carte — *le geste va où son effet se voit*, et son effet est là.
+
+*Cela ferme une promesse que le Guide fait et que le code ne tient pas* : « nommer, c'est créer,
+**partout** ». `G9` la relève par l'autre bout, pour les poses.
+
 **Critères d'acceptation**
 
 - [ ] Cliquer une carte ouvre une colonne de 380 px qui montre son visuel en grand
@@ -2903,6 +3275,11 @@ déjà ; et le pied de carte cesse de taire une désignation quand la carte est 
 - [ ] Une ligne dit ce que cette carte-ci fera, y compris *« la désigner n'ajoute rien »* — en constat, jamais en reproche
 - [ ] Une carte promue **et** désignée dit les deux dans son pied
 - [ ] La règle des bascules et la décision du menu non borné sont réécrites avec leur raison
+- [ ] **Le bloc de désignation s'affiche même quand le codex est vide**, avec sa raison — il ne
+      disparaît plus en silence
+- [ ] Un champ y nomme une chose du jeu **sur place**, et la carte lui est désignée dans le même geste
+- [ ] La marque de la désignation apparaît sur la carte sans qu'on ait changé d'écran
+- [ ] Le Guide dit vrai : *nommer, c'est créer* vaut aussi ici
 
 **Bloquée par** — `G6` la rend inutile ; les deux peuvent se faire dans l'ordre inverse.
 
@@ -3098,12 +3475,45 @@ n'existe pas**.
 > Un auteur qui a désigné des concept arts et promu zéro carte n'a **aucune palette**, et croit
 > avoir donné ses couleurs à son jeu. C'est le même fait que `G7` prend par l'autre bout.
 
+**Et le mur tombe : une image de la galerie peut être promue — ajouté le 4 septembre 2026.**
+
+> ⚠️ **Une image que l'atelier a fabriquée et payée ne peut pas donner ses couleurs au jeu.**
+> Mesuré le 4 septembre 2026 : promouvoir en artwork officiel **se pose sur une carte** de la
+> toile, et rien d'autre n'est promouvable ; une image fabriquée est un **asset**, elle vit dans la
+> galerie ; **aucun geste ne fait passer l'un dans l'autre, dans un sens ni dans l'autre.** Et une
+> carte ne naît que de quatre collages — un fichier, une adresse, un texte, le découpage d'une
+> carte déjà là : **aucun ne passe par un fournisseur.**
+>
+> Le seul chemin existant est de **télécharger l'image puis de la redéposer** sur la toile, ce qui
+> fabrique une seconde copie du même fichier dont l'atelier ne saura plus qu'elle vient de lui.
+
+La tranche l'ouvre : **une image de la bibliothèque se promeut en artwork officiel**, exactement
+comme une carte. Rien ne bouge sur la toile, rien ne se duplique, et la palette gagne les images que
+l'atelier sait faire. *C'est ce qui donne une réponse au cas que le reste de la tranche ne couvre
+pas* : proposer de **choisir** une image de l'univers suppose qu'il y en ait une, et cette
+remarque-ci est née du cas où il n'y en a aucune.
+
+> **Deux tiers de la remarque d'origine n'ont rien à construire, et il faut le dire.** L'auteur
+> demandait aussi *« que la description du personnage vive quelque part »* et *« pouvoir composer
+> des prompts sur mesure et fournir différentes références »*. **Les deux existent** : la
+> description est un champ de la chose du jeu, qui part dans chaque appel la concernant et que le
+> geste *garder cette correction sur la chose* écrit ; la composition d'un prompt avec plusieurs
+> références **est le cœur du produit**. Ce qui manque n'est pas de les construire, c'est que
+> l'auteur ne sache pas qu'ils existent — **et c'est le sujet de cette tranche-ci**, qui est celle
+> qui dit ce que le produit fait.
 **Critères d'acceptation**
 
 - [ ] Un projet sans artwork officiel le dit avant qu'une image en sorte
 - [ ] Le produit propose de promouvoir une image de l'univers depuis l'endroit où le manque se voit
 - [ ] Le guide gagne le chapitre qui explique comment fabriquer les artworks d'une chose
 - [ ] Rien ne réclame : le manque s'annonce, il ne s'excuse pas
+- [ ] **Une image de la bibliothèque se promeut en artwork officiel**, et compte dans la palette
+      exactement comme une carte promue
+- [ ] Elle ne se duplique nulle part : aucun fichier de plus sur le disque
+- [ ] La promotion dit la même chose des deux côtés — sur une carte et sur une image — **et un
+      essai le tient**
+- [ ] Le manque annoncé propose **les deux** chemins : choisir une image de l'univers, ou en
+      fabriquer une
 
 #### L'arbitrage, commencé le 3 septembre 2026 puis arrêté
 
@@ -3143,6 +3553,8 @@ réduction, qui n'existe plus.
 > ouvre sa table et **n'y voit aucun segment allumé** — la comparaison est stricte —, et le premier
 > clic écrase son réglage sans un mot. `paliersDeCouleurs(univers.cible_px)` existe déjà et rend la
 > bonne liste ; il faudra la seconde rangée, comme la cible de la table de grille.
+
+> ⚠️ **Ce que la promotion d'une image laisse ouvert.** Un artwork officiel porte une **famille**, qui décide avec quelles générations il part. Une carte en a une ; une image de la bibliothèque porte autre chose — un personnage, une pose, une pièce. *À trancher en construisant : la déduire de la chose du jeu à laquelle l'image appartient est la piste évidente, elle n'est pas vérifiée.*
 
 **Bloquée par** — aucune, mais **elle ne se prend pas maintenant** : c'est la V3.1, et la V3 passe
 devant — la V2.3 est close depuis le 3 septembre 2026. *L'arbitrage ci-dessus est fait ; il reste

@@ -158,6 +158,7 @@ export function EcranEtabli({
   barreQuiPaie,
   onOuvrirCase,
   onSuperposition,
+  onSupprimer,
   outil,
 }: {
   /** **Le vestiaire du projet** (C3) — l'autre axe de la même matrice. Tenu par
@@ -221,6 +222,11 @@ export function EcranEtabli({
    *  qu'il vit dans le châssis plutôt qu'ici — la table ouverte est un état de
    *  l'établi, pas de la matrice. */
   onSuperposition: (identifiant: string) => void
+  /** **Jeter le calque qu'on n'a pas choisi** (US-505). Tenu par `App` et non
+   *  ici, parce que supprimer ouvre le bandeau qui rend — *« annuler »* — et
+   *  que ce bandeau appartient au châssis. Un second chemin de suppression
+   *  aurait été un second endroit d'où l'on jette sans pouvoir défaire. */
+  onSupprimer: (identifiants: string[]) => void
   /** L'outil rendu en plein cadre. `App` le compose, parce qu'il a besoin du
    *  traitement, de l'univers et du plan — que cet écran-ci n'a pas à
    *  connaître pour montrer une matrice. */
@@ -409,7 +415,15 @@ export function EcranEtabli({
               (ouvertCalque.pose ?? "")
             }
             piece={piece.nom}
+            retenu={
+              caseDuCalque?.retenus?.[piece.identifiant] ===
+              ouvertCalque.identifiant
+            }
             onFermer={() => setCalque(null)}
+            onSupprimer={() => {
+              onSupprimer([ouvertCalque.identifiant])
+              setCalque(null)
+            }}
             onSuperposition={() => onSuperposition(ouvertCalque.identifiant)}
             onErreur={echouer}
           />
@@ -1590,6 +1604,29 @@ function Cases({
     }
   }
 
+  /** Garder celle-ci plutôt qu'une autre (US-504).
+   *
+   *  **C'est le favori de la galerie, et rien d'autre.** La règle qui décide de
+   *  ce qui part — *le favori d'abord, sinon la plus récente* — existe depuis
+   *  `C2` et sert déjà la planche d'équipement et l'export. Ce qui manquait
+   *  était l'endroit où la poser : la matrice est le seul écran du produit qui
+   *  montre des images concurrentes côte à côte, et c'est celui qui n'offrait
+   *  pas la marque.
+   *
+   *  **Rien à recharger ici**, comme la désignation juste au-dessus : l'asset
+   *  change, le serveur l'annonce, et les cases se redemandent d'elles-mêmes.
+   *  L'annonce manquait au favori seul — corrigée le 4 septembre 2026. */
+  const basculerFavori = async (asset: string) => {
+    const image = personnage.cases
+      .flatMap((c) => [...c.images, ...Object.values(c.calques).flat()])
+      .find((a) => a.identifiant === asset)
+    try {
+      await api.favori([asset], !image?.favori)
+    } catch (erreur) {
+      onErreur(erreur, "favori refusé")
+    }
+  }
+
   /** Dire sous quel angle une image montre sa pose (E10).
    *
    *  **Confirmer et déplacer sont le même geste** — celui qui écrit la
@@ -1712,6 +1749,7 @@ function Cases({
                 )
               }
               onOuvrir={onCalque}
+              onFavori={(asset) => void basculerFavori(asset)}
               onArmer={() => onArmer(personnage, [pose], piece)}
             />
           ))}
@@ -1758,6 +1796,7 @@ function Cases({
                   : void cocher(pose.identifiant, false)
               }
               onDesigner={(asset) => void designer(asset)}
+              onFavori={(asset) => void basculerFavori(asset)}
               onOuvrirCase={onOuvrirCase}
             />
           ))}
@@ -1917,6 +1956,7 @@ function LigneCase({
   onPlacer,
   onRetirer,
   onDesigner,
+  onFavori,
   onOuvrirCase,
 }: {
   pose: Pose
@@ -1945,9 +1985,18 @@ function LigneCase({
   onPlacer?: (asset: string, direction: string) => void
   onRetirer: () => void
   onDesigner: (asset: string) => void
+  /** **Garder celle-ci plutôt qu'une autre** (US-504). C'est le favori, la
+   *  seule marque que l'auteur pose lui-même, et c'est elle qui décide du
+   *  corps qui part en planche et qui sort dans le jeu. */
+  onFavori: (asset: string) => void
   onOuvrirCase: (identifiant: string) => void
 }) {
   const images = case_?.images ?? []
+  // **Le corps retenu, dit par le serveur** — celui-là même qui composera la
+  // planche. Sa marque ne paraît que si l'attitude a le choix : une attitude à
+  // une seule image ne pose pas la question.
+  const retenu = case_?.corps ?? null
+  const concurrence = images.length > 1
   const demandees = case_?.demandees ?? pose.images
   const faites = faitesDeLaCase(case_)
   const faite = faites >= demandees
@@ -2023,7 +2072,10 @@ function LigneCase({
                 key={asset.identifiant}
                 asset={asset}
                 pose={pose.nom}
+                retenu={asset.identifiant === retenu}
+                concurrence={concurrence}
                 onDesigner={onDesigner}
+                onFavori={onFavori}
                 onOuvrir={onOuvrirCase}
               />
             ))}
@@ -2123,7 +2175,10 @@ function LigneCase({
             key={angle.identifiant}
             pose={pose}
             angle={angle}
+            retenu={retenu}
+            concurrence={concurrence}
             onDesigner={onDesigner}
+            onFavori={onFavori}
             onOuvrirCase={onOuvrirCase}
             onArmer={() => onArmerDirection?.(angle.identifiant)}
             onRanger={() => onRangerDirection?.(angle.identifiant, true)}
@@ -2187,7 +2242,10 @@ function SousLigneDirection({
   pose,
   angle,
   angles,
+  retenu,
+  concurrence,
   onDesigner,
+  onFavori,
   onOuvrirCase,
   onArmer,
   onRanger,
@@ -2198,7 +2256,13 @@ function SousLigneDirection({
   /** Toutes les directions tenues — de quoi déplacer une image d'une case à
    *  l'autre sans quitter la rangée. */
   angles: CaseDirection[]
+  /** **Le corps retenu de l'attitude entière**, toutes directions confondues :
+   *  c'est ainsi que le serveur le choisit, et l'écran ne réinvente pas une
+   *  seconde règle par direction. */
+  retenu: string | null
+  concurrence: boolean
   onDesigner: (asset: string) => void
+  onFavori: (asset: string) => void
   onOuvrirCase: (identifiant: string) => void
   onArmer: () => void
   onRanger: () => void
@@ -2218,7 +2282,10 @@ function SousLigneDirection({
             <VignetteDeCase
               asset={asset}
               pose={`${pose.nom} — ${angle.nom}`}
+              retenu={asset.identifiant === retenu}
+              concurrence={concurrence}
               onDesigner={onDesigner}
+              onFavori={onFavori}
               onOuvrir={onOuvrirCase}
             />
             {/* **« À confirmer », et un clic la place** (US-242). Une image
@@ -2298,12 +2365,21 @@ function SousLigneDirection({
 function VignetteDeCase({
   asset,
   pose,
+  retenu,
+  concurrence,
   onDesigner,
+  onFavori,
   onOuvrir,
 }: {
   asset: Asset
   pose: string
+  /** **C'est ce corps-là qui part en planche d'équipement**, et qui sort dans
+   *  le jeu — dit par le serveur, jamais déduit ici. */
+  retenu: boolean
+  /** Cette attitude a-t-elle plus d'un corps ? La marque ne paraît que là. */
+  concurrence: boolean
   onDesigner: (identifiant: string) => void
+  onFavori: (identifiant: string) => void
   /** **Une case pleine ouvre son outil en plein cadre** (E2), sans quitter
    *  l'établi ni changer d'onglet. C'est la porte que les tables de E3
    *  franchiront ; d'ici là elle donne la recette, seul outil qui existe. */
@@ -2326,16 +2402,30 @@ function VignetteDeCase({
         <img
           src={sujetAsset(asset).src}
           alt={asset.label}
-          className="damier h-[44px] w-[44px] object-contain"
+          className={[
+            "damier h-[44px] w-[44px] object-contain",
+            retenu && concurrence ? "outline outline-1 outline-signal" : "",
+          ].join(" ")}
           style={{ imageRendering: "pixelated" }}
         />
       </button>
+      {/* **Le coin est passé en haut, la croix en bas** — les deux marques se
+          disputaient le même angle depuis que la première existe. L'ordre est
+          celui du produit : le coin plein en cyan est en haut à droite sur
+          toutes les tuiles de la galerie, et c'est lui qui ne peut pas
+          déménager sans que la marque cesse d'être la même. */}
+      <CoinFavori
+        asset={asset}
+        retenu={retenu}
+        concurrence={concurrence}
+        onBasculer={() => onFavori(asset.identifiant)}
+      />
       <button
         type="button"
         onClick={() => onDesigner(asset.identifiant)}
         aria-label={`Retirer cette image de la case ${pose}`}
         title="l'image reste en bibliothèque — c'est la case qu'on vide"
-        className="mesure absolute top-0 right-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
+        className="mesure absolute right-0 bottom-0 hidden bg-fond-0/80 px-1 text-[10px] text-texte-3 group-hover:block hover:text-echec"
       >
         ×
       </button>
@@ -2362,6 +2452,7 @@ function LigneCalque({
   cochee,
   onCocher,
   onOuvrir,
+  onFavori,
   onArmer,
 }: {
   pose: Pose
@@ -2370,11 +2461,17 @@ function LigneCalque({
   cochee: boolean
   onCocher: (veut: boolean) => void
   onOuvrir: (calque: string | null) => void
+  onFavori: (identifiant: string) => void
   onArmer: () => void
 }) {
   const corps = case_?.images.find((a) => a.identifiant === case_?.corps) ?? null
   const calques = case_?.calques[piece.identifiant] ?? []
   const habillable = Boolean(case_?.corps)
+  // **Le retenu vient du serveur**, comme le corps de la case juste au-dessus.
+  // Le calculer ici aurait fait une seconde règle à tenir d'accord avec celle
+  // qui décide vraiment, à l'export.
+  const retenu = case_?.retenus?.[piece.identifiant] ?? null
+  const choisi = calques.find((a) => a.identifiant === retenu) ?? calques[0]
 
   return (
     <li
@@ -2406,7 +2503,10 @@ function LigneCalque({
             key={asset.identifiant}
             calque={asset}
             corps={corps}
+            retenu={asset.identifiant === retenu}
+            concurrence={calques.length > 1}
             onOuvrir={() => onOuvrir(asset.identifiant)}
+            onFavori={() => onFavori(asset.identifiant)}
           />
         ))}
         {calques.length === 0 && (
@@ -2418,7 +2518,12 @@ function LigneCalque({
         )}
       </div>
 
-      <MesuresDuCalque calque={calques[0]} />
+      {/* **Les mesures sont celles du calque retenu**, et non de la première
+          image venue. Elles décrivaient jusqu'ici `calques[0]` — la plus
+          récente, donc le retenu tant que personne ne marquait de favori. Dès
+          qu'un favori plus ancien était posé, la rangée décrivait un calque et
+          l'export en sortait un autre. Relevé le 4 septembre 2026. */}
+      <MesuresDuCalque calque={choisi} />
 
       {/* **Armer, pas payer** — la règle de C1, telle quelle. Absent quand la
           pose n'a pas de corps : il n'y a pas de chose indisponible, il n'y a
@@ -2447,11 +2552,22 @@ function LigneCalque({
 function Superposition({
   calque,
   corps,
+  retenu,
+  concurrence,
   onOuvrir,
+  onFavori,
 }: {
   calque: Asset
   corps: Asset | null
+  /** **C'est celui-ci qui part dans le jeu**, dit par le serveur. */
+  retenu: boolean
+  /** Cette case a-t-elle plus d'un calque pour cette pièce ? La marque du
+   *  retenu ne paraît **que** là : seule une case qui a le choix pose la
+   *  question, et un liseré sur chaque vignette du produit aurait fait un
+   *  ornement au lieu d'une réponse. */
+  concurrence: boolean
   onOuvrir: () => void
+  onFavori: () => void
 }) {
   const dessus = sujetAsset(calque)
   const dessous = corps ? sujetAsset(corps) : null
@@ -2461,32 +2577,100 @@ function Superposition({
   // seconde composition. Ajouté le 31 août 2026 (E0).
   const visee = useVisee(dessus)
   return (
-    <button
-      type="button"
-      onClick={onOuvrir}
+    <span
+      className="group relative shrink-0"
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
-      title={
-        empile
-          ? "voir le calque en grand, et borner sa zone"
-          : "corps habillé — il s'exporte, il ne s'empile pas"
-      }
-      aria-label={`Ouvrir ${calque.label}`}
-      className="damier relative h-[44px] w-[44px] shrink-0"
     >
-      {dessous && empile && (
+      <button
+        type="button"
+        onClick={onOuvrir}
+        title={
+          empile
+            ? "voir le calque en grand, et borner sa zone"
+            : "corps habillé — il s'exporte, il ne s'empile pas"
+        }
+        aria-label={`Ouvrir ${calque.label}`}
+        className={[
+          "damier relative block h-[44px] w-[44px]",
+          retenu && concurrence ? "outline outline-1 outline-signal" : "",
+        ].join(" ")}
+      >
+        {dessous && empile && (
+          <img
+            src={dessous.src}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain opacity-45"
+            style={{ imageRendering: "pixelated" }}
+          />
+        )}
         <img
-          src={dessous.src}
-          alt=""
-          className="absolute inset-0 h-full w-full object-contain opacity-45"
+          src={dessus.src}
+          alt={calque.label}
+          className="absolute inset-0 h-full w-full object-contain"
           style={{ imageRendering: "pixelated" }}
         />
-      )}
-      <img
-        src={dessus.src}
-        alt={calque.label}
-        className="absolute inset-0 h-full w-full object-contain"
-        style={{ imageRendering: "pixelated" }}
+      </button>
+      <CoinFavori
+        asset={calque}
+        retenu={retenu}
+        concurrence={concurrence}
+        onBasculer={onFavori}
+      />
+    </span>
+  )
+}
+
+/** Le coin plein en cyan, **et il se pose d'un clic** (US-504).
+ *
+ *  **C'est la seule marque que l'auteur pose lui-même**, et elle a la même
+ *  forme partout — la tuile de la galerie, le codex, et maintenant la matrice.
+ *  Elle décide de ce qui part : `corps_retenu` lit le favori d'abord, le plus
+ *  récent ensuite. La matrice était le dernier endroit où l'on voyait des
+ *  images concurrentes sans pouvoir dire laquelle garder.
+ *
+ *  **Éteint, il ne paraît qu'au survol**, comme la croix juste en dessous :
+ *  une case pleine de coins gris aurait fait passer une marque rare pour un
+ *  décor de vignette. */
+function CoinFavori({
+  asset,
+  retenu,
+  concurrence,
+  onBasculer,
+}: {
+  asset: Asset
+  retenu: boolean
+  concurrence: boolean
+  onBasculer: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onBasculer}
+      aria-label={
+        asset.favori
+          ? `Retirer le favori de ${asset.label}`
+          : `Garder ${asset.label}`
+      }
+      title={
+        asset.favori
+          ? "retirer la marque — la plus récente redeviendrait celle qui part"
+          : concurrence
+            ? retenu
+              ? "c'est déjà elle qui part, parce qu'elle est la plus récente — la marquer la garde même après une autre"
+              : "la garder : c'est elle qui partira dans le jeu, même si une autre est faite après"
+            : "la garder : c'est elle qui partira dans le jeu"
+      }
+      className={[
+        "absolute top-0 right-0 h-[14px] w-[14px]",
+        asset.favori ? "" : "hidden group-hover:block",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "absolute top-0 right-0 h-0 w-0 border-t-[13px] border-l-[13px] border-l-transparent",
+          asset.favori ? "border-t-signal" : "border-t-texte-3/60",
+        ].join(" ")}
       />
     </button>
   )
