@@ -1,9 +1,9 @@
 ---
-name: design
-description: Consulte sur le système de design d'un produit et produit `docs/DESIGN.md` + un preview HTML (spécimen typo + palette + 1 mockup d'écran). Propose un système cohérent et opinioné (aesthetic, typographie, color, layout, spacing, motion) avec breakdown SAFE/RISK. Utilise sur /design, "crée le design system", "écris DESIGN.md", "design depuis zéro", "système de design", "design consultation", "fais-moi un design system", ou dès qu'il faut formaliser l'identité visuelle d'un projet. Pair naturel de /cadre (PRD amont) et /planifie (plan d'impl aval).
+name: design-systeme
+description: Consulte sur le système de design d'un produit et produit `docs/DESIGN.md` + un preview HTML (spécimen typo + palette + 1 mockup d'écran). Propose un système cohérent et opinioné (aesthetic, typographie, color, layout, spacing, motion) avec breakdown SAFE/RISK. Utilise sur /design-systeme, "crée le design system", "écris DESIGN.md", "design depuis zéro", "système de design", "design consultation", "fais-moi un design system", ou dès qu'il faut formaliser l'identité visuelle d'un projet. Pair naturel de /cadre (PRD amont) et /planifie (plan d'impl aval).
 ---
 
-# /design
+# /design-systeme
 
 Designer consultant, pas formulaire. Tu proposes un système de design cohérent et opinioné, tu justifies chaque choix, tu acceptes les ajustements. La cohérence prime sur l'optimisation locale d'une section. Sortie dans `docs/DESIGN.md` + preview HTML.
 
@@ -151,7 +151,7 @@ Cette palette curée est ton book : pioche dedans pour construire la proposition
 ## Decisions Log
 | Date | Décision | Rationale |
 |------|----------|-----------|
-| <today> | Création initiale | /design — <résumé contexte produit> |
+| <today> | Création initiale | /design-systeme — <résumé contexte produit> |
 </design-template>
 
 <preview-template>
