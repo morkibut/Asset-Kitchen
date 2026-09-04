@@ -56,6 +56,7 @@ export function Tuile({
   onChoisir,
   autresDuLot = 0,
   onGarderLeClip,
+  onDecouperLeClip,
 }: {
   entree: Entree
   selectionnee: boolean
@@ -82,6 +83,10 @@ export function Tuile({
   /** Garder ce clip-là et jeter les autres du lot. **Un seul geste, et il se
    *  défait** ; ce qui a été payé reste au journal. */
   onGarderLeClip?: (generation: string) => void
+  /** **Ouvrir le montage de ce clip** (A10). Il ne dépense rien — c'est la
+   *  seule chose à savoir avant de le confier à une tuile, et c'est la même
+   *  garantie que pour le choix d'une planche. */
+  onDecouperLeClip?: (generation: string) => void
 }) {
   const asset = entree.sorte === "asset" ? entree.asset : null
   const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
@@ -223,6 +228,9 @@ export function Tuile({
             onGarder={
               onGarderLeClip ? () => onGarderLeClip(lot.identifiant) : undefined
             }
+            onDecouper={
+              onDecouperLeClip ? () => onDecouperLeClip(lot.identifiant) : undefined
+            }
           />
         ) : attend && lot && emplacement ? (
           // **Le geste, jamais une raison.** Une planche qui attend n'a rien
@@ -273,10 +281,12 @@ function CeQueLeClipDit({
   generation,
   autresDuLot,
   onGarder,
+  onDecouper,
 }: {
   generation: Generation
   autresDuLot: number
   onGarder?: () => void
+  onDecouper?: () => void
 }) {
   const clip = generation.clip
   if (!clip) return null
@@ -310,6 +320,20 @@ function CeQueLeClipDit({
         >
           Garder celui-ci · jeter {autresDuLot} autre
           {autresDuLot > 1 ? "s" : ""}
+        </button>
+      )}
+      {/* **La porte du montage** (A10), et il n'y en a qu'une : un clip se
+          découpe depuis sa tuile, là où on le regarde. Elle ne paraît que quand
+          les images ont pu être tirées — sans elles il n'y a rien à découper, et
+          la première ligne dit déjà pourquoi. */}
+      {clip.images > 0 && onDecouper && (
+        <button
+          type="button"
+          onClick={onDecouper}
+          title="rien n'y dépense : le clip est déjà payé"
+          className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+        >
+          Découper ›
         </button>
       )}
     </>

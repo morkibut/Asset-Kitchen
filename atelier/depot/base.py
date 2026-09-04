@@ -32,12 +32,13 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 
 from atelier.domaine.asset import Asset
+from atelier.domaine.bande import Bande
 from atelier.domaine.generation import Generation
 from atelier.domaine.projet import Collection, Projet
 
 # Change à chaque évolution du schéma. L'index est alors jeté et refait depuis
 # les fichiers : c'est le geste normal, pas un incident.
-VERSION = 5
+VERSION = 6
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS generations (
@@ -101,9 +102,31 @@ CREATE TABLE IF NOT EXISTS collections (
     cree_le     REAL NOT NULL,
     contenu     TEXT NOT NULL
 );
+
+-- **Les bandes ne sont pas des assets** (A10), et cette table est la forme que
+-- prend cette décision. Une bande est une suite d'images qui n'existent
+-- qu'ensemble ; la ranger dans `assets` aurait obligé chaque endroit du produit
+-- qui manipule une image à savoir qu'un asset peut en porter douze.
+--
+-- Deux questions se posent d'elles-mêmes, donc deux index : *les bandes de ce
+-- clip* — l'écran de montage les liste à chaque ouverture — et *les bandes de ce
+-- personnage*, qui est ce que la matrice animée d'`A12` demandera par case.
+CREATE TABLE IF NOT EXISTS bandes (
+    identifiant TEXT PRIMARY KEY,
+    clip        TEXT NOT NULL,
+    nom         TEXT NOT NULL DEFAULT '',
+    cree_le     REAL NOT NULL,
+    projet      TEXT,
+    personnage  TEXT,
+    pose        TEXT,
+    direction   TEXT,
+    contenu     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS bandes_par_clip ON bandes (clip);
+CREATE INDEX IF NOT EXISTS bandes_par_personnage ON bandes (personnage);
 """
 
-TABLES = ("generations", "assets", "projets", "collections")
+TABLES = ("generations", "assets", "projets", "collections", "bandes")
 
 
 # ── Le projet, lu une seule fois par demande ─────────────────────────────────
@@ -882,6 +905,84 @@ class Base:
                 "DELETE FROM collections WHERE identifiant = ?", (identifiant,)
             )
 
+    # ── Les bandes (A10) ─────────────────────────────────────────────────────
+
+    def enregistrer_bande(self, bande: Bande) -> None:
+        with self._connexion() as connexion:
+            connexion.execute(
+                """
+                INSERT INTO bandes (
+                    identifiant, clip, nom, cree_le,
+                    projet, personnage, pose, direction, contenu
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(identifiant) DO UPDATE SET
+                    clip = excluded.clip,
+                    nom = excluded.nom,
+                    projet = excluded.projet,
+                    personnage = excluded.personnage,
+                    pose = excluded.pose,
+                    direction = excluded.direction,
+                    contenu = excluded.contenu
+                """,
+                (
+                    bande.identifiant,
+                    bande.clip,
+                    bande.nom,
+                    bande.cree_le,
+                    bande.projet,
+                    bande.personnage,
+                    bande.pose,
+                    bande.direction,
+                    json.dumps(bande.en_json(), ensure_ascii=False),
+                ),
+            )
+
+    def lire_bande(self, identifiant: str) -> Bande | None:
+        with self._connexion() as connexion:
+            ligne = connexion.execute(
+                "SELECT contenu FROM bandes WHERE identifiant = ?", (identifiant,)
+            ).fetchone()
+        if ligne is None:
+            return None
+        return Bande.depuis_json(json.loads(ligne["contenu"]))
+
+    def bandes_du_clip(self, clip: str) -> list[Bande]:
+        """Dans l'ordre où elles ont été gardées, la première d'abord.
+
+        **Et pas la plus récente d'abord**, contrairement à tout le reste du
+        produit : cette liste raconte un découpage en cours, et un découpage se
+        lit dans l'ordre où on l'a fait. Une galerie montre le dernier travail ;
+        celle-ci montre *ce qu'on a déjà tiré de ce clip*.
+        """
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM bandes WHERE clip = ? ORDER BY cree_le",
+                (clip,),
+            ).fetchall()
+        return [Bande.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def bandes_du_personnage(self, personnage: str) -> list[Bande]:
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM bandes WHERE personnage = ? ORDER BY cree_le",
+                (personnage,),
+            ).fetchall()
+        return [Bande.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def bandes(self) -> list[Bande]:
+        with self._connexion() as connexion:
+            lignes = connexion.execute(
+                "SELECT contenu FROM bandes ORDER BY cree_le DESC"
+            ).fetchall()
+        return [Bande.depuis_json(json.loads(l["contenu"])) for l in lignes]
+
+    def oublier_bande(self, identifiant: str) -> None:
+        with self._connexion() as connexion:
+            connexion.execute(
+                "DELETE FROM bandes WHERE identifiant = ?", (identifiant,)
+            )
+
     # ── La reconstruction ────────────────────────────────────────────────────
 
     def remplir(
@@ -891,6 +992,7 @@ class Base:
         assets: Iterable[Asset] = (),
         projets: Iterable[Projet] = (),
         collections: Iterable[Collection] = (),
+        bandes: Iterable[Bande] = (),
     ) -> None:
         """Repose en bloc ce qu'on vient de relire du disque (US-40)."""
         for projet in projets:
@@ -901,3 +1003,5 @@ class Base:
             self.enregistrer(generation)
         for asset in assets:
             self.enregistrer_asset(asset)
+        for bande in bandes:
+            self.enregistrer_bande(bande)

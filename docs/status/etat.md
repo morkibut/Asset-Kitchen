@@ -11,6 +11,113 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A10 — le montage, où un clip payé devient plusieurs animations — 4 septembre 2026
+
+**Un clip de cinq secondes porte plus qu'une animation, et c'est tout le sujet de cette
+tranche.** Le banc du 2 septembre l'avait montré deux fois : un texte minuté seconde par seconde,
+avec un retour à la même pose neutre entre deux actions, rend un clip où le repos et la marche se
+découpent séparément. Ce qui manquait était l'écran qui permet de les séparer — et de recommencer
+dans le même clip autant de fois qu'on veut, **sans jamais repayer**.
+
+### Ce qu'une bande est, et ce qu'elle n'est pas
+
+Une bande **n'est pas une image de plus dans la bibliothèque**. La question s'est posée
+franchement — la faire entrer comme un asset aurait donné gratuitement l'affichage, la sélection,
+l'export — et c'est le critère d'`A13` qui a tranché : *une image prélevée entre en bibliothèque
+**comme une image de plus***. S'il faut le dire d'une image, c'est que ça n'est pas vrai d'une
+bande. En faire un asset aurait obligé chaque endroit du produit qui manipule une image à savoir
+qu'un asset peut en porter douze.
+
+Et ce qu'une bande garde n'est pas des pixels : **c'est une intention**. Des numéros d'image, un
+cadre, une recette. Sa planche de sprites est un cache, effaçable sans rien perdre — la règle 5 de
+l'architecture, sans exception. C'est ce qui rend vrai, *par construction et non par discipline*,
+le critère qui comptait le plus : **ce qui sort est exactement ce que l'aperçu montrait.** L'écran
+n'anime pas une liste d'images qu'un exportateur ré-assemblerait ensuite à sa façon ; il anime la
+planche elle-même, celle que l'export écrira. Deux chemins vers les mêmes pixels finissent
+toujours par ne plus les rendre identiques, et c'est l'auteur qui découvre l'écart.
+
+### Ce que la machine remarque, et pourquoi elle le remarque deux fois
+
+À l'ouverture, l'atelier lit le clip et pose deux phrases : *ici, il ne bouge presque pas* et
+*ici, la boucle se referme le mieux*. **Elles ne décident de rien** — c'est la règle déjà écrite
+de l'écran de découpe, et c'est elle qui fait qu'une machine qui se trompe ne bloque personne.
+
+Les deux se cherchent avec des mesures différentes, et il le fallait : **un moment immobile est la
+boucle parfaite, et la plus mauvaise animation qui soit**. Chercher les deux de la même façon
+aurait toujours rendu le repos. La recherche de boucle exige donc du mouvement *à l'intérieur* du
+cycle, en plus d'une bonne fermeture.
+
+Elles ne se prennent pas non plus sur la même image : la fenêtre commune se mesure sur l'image
+**recadrée**, parce que c'est le système de coordonnées de la mise sur grille ; le rythme se
+mesure sur l'image détourée mais **non recadrée**, parce que recadrer chaque image sur sa propre
+silhouette ramènerait le sujet au même endroit et ferait passer une marche pour un repos.
+
+### La leçon d'`A9`, et les deux qu'elle n'avait pas encore dites
+
+L'entrée d'`A9` finit sur une phrase : *écrire un serveur sans son écran, c'est écrire sans le
+seul endroit d'où l'on voit ce qu'il fait*. Elle s'est vérifiée encore, et deux fois plus large.
+
+> ### ⚠️ Six défauts, et pas un seul essai ne pouvait en voir un
+>
+> Trente-six essais côté atelier et dix-neuf côté écran passent aujourd'hui, et pas un seul de
+> ceux qui existaient avant ne voyait quoi que ce soit. Ce que le premier quart
+> d'heure devant un vrai atelier a trouvé :
+>
+> 1. **Aucune des deux propositions ne paraissait**, sur un clip qui porte exactement les deux. La
+>    mesure prenait la médiane du mouvement pour repère, et un clip dont la moitié des images ne
+>    bougent pas a une médiane nulle : **la détection se taisait exactement quand le repos était le
+>    plus long**, c'est-à-dire dans le cas qu'on cherche.
+> 2. *Une de plus ferait tomber ce prix à…* **annonçait le même prix**. Avec zéro bande gardée,
+>    « une de plus » se calculait sur zéro.
+> 3. **Le liseré des images retenues ne s'était jamais dessiné.** Le style écrivait `var(--signal)`
+>    et le thème déclare `--color-signal`. **Une couleur inconnue ne fait pas d'erreur, elle ne
+>    fait rien** — ni la compilation, ni les types, ni le navigateur d'essai n'avaient de quoi le
+>    voir, parce que celui-ci ne résout pas les variables de couleur.
+> 4. Rejoindre le bouton *Garder* au clavier demandait **cent vingt et une pressions** : toutes les
+>    cellules du ruban étaient dans l'ordre de tabulation.
+> 5. **Le bouton *à la main* n'ouvrait rien.** Les trois choix de cadre s'affichaient, l'écran
+>    disait lequel était en usage, et *à la main* allumait un mode que rien ne permettait de
+>    régler. Les essais demandaient ce que le bouton **dit**, jamais ce qu'il **fait**.
+> 6. Une fois le cadre construit, **tirer un bord ne faisait rien** — et quand ça faisait quelque
+>    chose, ça déplaçait la boîte au lieu de l'agrandir.
+>
+> Les deux dernières portent chacune une leçon générale.
+>
+> **Un geste rapide passe avant le rendu.** Les écouteurs de glissement étaient posés dans un
+> `useEffect` déclenché par un état posé au `mousedown` ; l'effet s'exécute **après** le rendu, et
+> un coup sec envoie son `mousemove` et son `mouseup` avant. Le geste ne faisait alors rien du
+> tout, sans la moindre erreur nulle part. Un humain lent ne s'en aperçoit pas — c'est précisément
+> ce qui rend le défaut durable. **La même course dormait aux poignées de la pellicule** ; elle y
+> est corrigée aussi, et le motif est banni : les écouteurs se posent dans le geste.
+>
+> **Un `mousedown` sur un bord remonte à ce qui le porte.** Sans `stopPropagation`, le rectangle
+> l'entendait comme *déplacer*, et le dernier geste déclenché gagnait.
+
+### Deux familles d'essais qui ne voient rien, et ce qu'on en fait
+
+`A9` avait nommé le trou : *aucun essai ne rouvre un atelier déjà rempli, aucun ne recharge une
+page*. Il faut y ajouter deux lignes, découvertes ici :
+
+- **Les essais d'écran ne résolvent pas les couleurs.** Un nom de variable inventé passe partout.
+  Un essai a été ajouté qui refuse, dans tout l'écran de montage, un `var(--…)` dont le nom ne
+  commence pas par `color-` — la seule famille que le thème déclare.
+- **Les essais ne demandent jamais ce qu'un bouton fait.** Ils vérifient qu'il paraît, qu'il porte
+  le bon mot, qu'il est allumé. C'est ainsi qu'un mode entier a pu s'afficher sans rien ouvrir.
+
+Le reste est resté vérifié à la main, dans un atelier jetable sur le port 8432, dont le clip est
+fabriqué sur place : vingt-quatre images, douze immobiles et douze où un bras s'allonge puis se
+replie, **pour que les deux propositions aient une réponse connue d'avance**. La planche servie
+par l'export y a été comparée octet pour octet à celle que l'aperçu montrait ; la page a été
+rechargée, l'écran rouvert, et la bande gardée était toujours là.
+
+### Le chiffre qui manquait à la version
+
+Personne ne sait combien de clips il faut payer pour une animation utilisable. L'écran affiche le
+prix par bande de ce clip-ci et le voit baisser à chaque bande gardée — 0,067 $ pour une, la
+moitié pour deux. **C'est cet affichage-là qui produira le chiffre**, à l'usage, sans banc
+supplémentaire. Il n'y avait pas d'autre façon de l'obtenir : un banc aurait mesuré ce qu'un
+opérateur pressé garde, pas ce qu'un auteur garde.
+
 ## A9 — commander un clip, et l'attendre — 4 septembre 2026
 
 **Le serveur savait commander un clip depuis la veille, et il ne servait à rien.** La tranche

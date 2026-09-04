@@ -389,6 +389,30 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               ouvert. Ce total est un lien : il ouvre les dépenses, où tous les appels payés
               se lisent un par un. Il faut pouvoir expliquer une facture.
             </P>
+            <P>
+              Une animation arrive ici comme une image, avec un bouton de plus :{" "}
+              <I>Découper</I>. Il ouvre <B>le montage</B>, à la place de la grille. Deux boucles
+              y tournent côte à côte et sur le même métronome — à gauche ce que le modèle a
+              rendu, fond compris, pour juger le <B>mouvement</B> ; à droite les mêmes images
+              passées par la chaîne de ton jeu, pour juger le <B>découpage</B>. Le ruban en
+              dessous porte toutes les images du clip, une tranche chacune : un clic prend ou
+              laisse, une loupe suit le pointeur, et les flèches puis la barre d'espace font la
+              même chose au clavier.
+            </P>
+            <P>
+              À l'ouverture, l'atelier a déjà regardé le clip et pose deux remarques : où il ne
+              bouge presque pas, et où la boucle se referme le mieux. <B>Elles ne décident de
+              rien</B> — elles disent où regarder, et tout se reprend image par image ensuite.
+              Un même clip donne autant d'animations que tu veux : nomme-en une, garde-la,
+              recommence. Elles partagent toutes le même cadre, <B>pour qu'un personnage ne
+              change pas de taille en passant du repos à la marche</B>.
+            </P>
+            <P>
+              <B>Rien de tout cela ne dépense</B> : le clip est payé une fois, et l'écran
+              t'écrit ce qu'il t'a coûté par animation gardée — <C>$0,0670</C> pour une seule,
+              la moitié dès la deuxième. C'est le seul endroit qui te dira combien vaut vraiment
+              une animation.
+            </P>
 
             <H id="l-etabli">L'établi</H>
             <P>

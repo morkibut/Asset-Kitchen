@@ -96,6 +96,7 @@ import { EcranReglages } from "./composants/EcranReglages"
 import { BlocPasse, Fiche, nomDuModele } from "./composants/Fiche"
 import { EcranTables, TABLES, type Table } from "./composants/Tables"
 import { EcranDepliage } from "./composants/Depliage"
+import { EcranMontage } from "./composants/Montage"
 import { CeQuiNEstPasEntre, useImport, type Import } from "./composants/Import"
 import { EcranGuide, fermerGuide, ouvrirGuide, useGuide } from "./composants/Guide"
 import { CoutAttendu, PanneauReglages } from "./composants/PanneauReglages"
@@ -265,6 +266,17 @@ export function App() {
    *  Il tient **la case visée**, jamais un booléen : l'image de départ
    *  proposée, le mouvement proposé et le titre en dépendent tous les trois. */
   const [clipOuvert, setClipOuvert] = useState<CibleDuClip | null>(null)
+
+  /** **Le clip qu'on est en train de découper** (A10) — l'identifiant de sa
+   *  génération, ou rien.
+   *
+   *  Il prend la place de la grille dans la galerie, comme l'écran du choix
+   *  d'une planche : c'est la profondeur suivante du même endroit, et on y va
+   *  depuis la tuile du clip, là où on le regarde. **Il ne recouvre pas le
+   *  produit** — contrairement aux trois écrans qui paient —, parce qu'il ne
+   *  dépense rien : le clip est déjà payé, et découper se refait autant de fois
+   *  qu'on veut. */
+  const [montageOuvert, setMontageOuvert] = useState<string | null>(null)
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
@@ -2814,7 +2826,19 @@ export function App() {
               exactement comme un outil dans l'établi. Le pied de la galerie
               reste sous lui, et sa phrase est plus vraie que jamais — écarter
               un sujet ne rappelle personne. */}
-          {plancheAChoisir ? (
+          {/* **Et le montage prend la même place** (A10), pour la même raison
+              exactement : découper un clip est la profondeur suivante de la
+              galerie, on y entre depuis la tuile du clip, et rien n'y dépense.
+              Il passe avant le choix d'une planche parce que les deux ne
+              peuvent pas être ouverts ensemble — on n'ouvre pas un montage
+              depuis un écran de choix. */}
+          {montageOuvert ? (
+            <EcranMontage
+              clip={montageOuvert}
+              onFermer={() => setMontageOuvert(null)}
+              onErreur={(raison) => setPanne(raison)}
+            />
+          ) : plancheAChoisir ? (
             <EcranDepliage
               generation={plancheAChoisir.generation}
               rang={plancheAChoisir.rang}
@@ -2837,6 +2861,7 @@ export function App() {
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
             onGarderLeClip={garderLeClip}
+            onDecouperLeClip={setMontageOuvert}
           />
           )}
 
@@ -3371,6 +3396,7 @@ function Grille({
   onOuvrir,
   onRetirerFiltre,
   onGarderLeClip,
+  onDecouperLeClip,
 }: {
   entrees: Entree[]
   selection: string[]
@@ -3390,6 +3416,10 @@ function Grille({
    *  la grille sert à désigner plutôt qu'à juger — on ne jette pas trois vidéos
    *  payées en cherchant une image de référence. */
   onGarderLeClip?: (generation: string) => void
+  /** **Ouvrir le montage de ce clip** (A10). Absent pour la même raison que le
+   *  geste d'au-dessus : une grille qui sert à désigner une image de référence
+   *  n'a pas à ouvrir un écran de découpage. */
+  onDecouperLeClip?: (generation: string) => void
 }) {
   // **La même mécanique de dépôt que le tableau d'inspiration**, réemployée
   // telle quelle : c'est le geste, pas la surface, qui décide de la forme. Un
@@ -3469,6 +3499,7 @@ function Grille({
                qu'un clip du lot. */
             autresDuLot={autresDuLot(entrees, entree)}
             onGarderLeClip={onGarderLeClip}
+            onDecouperLeClip={onDecouperLeClip}
           />
         ))}
       </div>

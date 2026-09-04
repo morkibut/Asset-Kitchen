@@ -28,10 +28,10 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A10` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos, `A9` écrite côté serveur. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9` et `A10` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. Restent `A11`, `A12`, `A13`, `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 170 essais de
-serveur et 580 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 3 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 303 essais de
+serveur et 658 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — neuf points, et pas un de plus

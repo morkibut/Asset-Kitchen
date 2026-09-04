@@ -31,7 +31,11 @@ from atelier.domaine.animation import (
     SECONDES_DEFAUT,
     DemandeClip,
 )
+from atelier.domaine.bande import BOUCLE
+from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
+from atelier.domaine.bande import Cadre
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
+from atelier.domaine.recette import Recette
 from atelier.services import Atelier
 
 routeur = APIRouter()
@@ -476,6 +480,197 @@ async def image_du_clip(requete: Request, identifiant: str, numero: int) -> Resp
         media_type="image/png",
         headers={"Cache-Control": "private, max-age=86400"},
     )
+
+
+# ── Le montage (A10) ─────────────────────────────────────────────────────────
+#
+# **Le cœur de la version, et aucune de ces routes ne dépense.** Le clip est
+# payé, ses images sont sur le disque depuis son arrivée, et découper est un
+# geste qu'on refait autant de fois qu'on veut. C'est ce que le pied de l'écran
+# annonce, et c'est vrai jusque dans les imports du service : ni catalogue, ni
+# fournisseur, ni animateur.
+#
+# Elles vivent dans ce fichier-ci parce que la question est la même — *ce qui
+# bouge*. Un clip qu'on commande et un clip qu'on découpe sont deux moments d'un
+# seul geste, et les séparer aurait fait deux fichiers pour une question.
+
+
+class CorpsApercuBande(BaseModel):
+    """Ce qu'il faut pour monter une bande : les images, la recette, le cadre.
+
+    **La recette voyage entière**, et non par différences avec celle du jeu. Une
+    différence obligerait les deux bouts à s'accorder sur ce qu'est « le jeu » au
+    moment du calcul, et le projet change pendant qu'un écran de montage est
+    ouvert — c'est très exactement le genre d'accord qui se défait en silence.
+    """
+
+    clip: str
+    images: list[int] = []
+    recette: dict[str, Any] | None = None
+    cadre: dict[str, Any] | None = None
+
+
+class CorpsBande(CorpsApercuBande):
+    """Ce qu'on garde en plus de ce qu'on montre : le nom, la cadence, le sens,
+    et la case visée — facultative, parce qu'une bande sans case est un
+    brouillon et qu'un brouillon ne bloque rien."""
+
+    nom: str = ""
+    cadence: float = 0.0
+    sens: str = ""
+    pose: str | None = None
+    direction: str | None = None
+
+
+class CorpsCase(BaseModel):
+    """La case qu'une bande remplit — ou plus aucune, les deux vides."""
+
+    pose: str | None = None
+    direction: str | None = None
+
+
+class CorpsNom(BaseModel):
+    nom: str = ""
+
+
+@routeur.post("/montage/preview")
+async def apercu_de_la_bande(
+    requete: Request, corps: CorpsApercuBande
+) -> dict[str, Any]:
+    """La bande montée, **sans rien écrire** : la planche repart en `data:`.
+
+    **Déclarée avant `/montage/{identifiant}`**, pour la raison de
+    `board/groups/tint` : un chemin fixe posé après un chemin à trou se fait
+    manger par lui, et le refus qui en sort parle d'un identifiant que personne
+    n'a écrit.
+    """
+    atelier = _atelier(requete)
+    return atelier.montage.apercu(
+        corps.clip,
+        corps.images,
+        _recette(corps.recette),
+        Cadre.depuis_json(corps.cadre),
+    )
+
+
+@routeur.get("/montage/{identifiant}")
+async def ouvrir_le_montage(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Tout ce que l'écran demande, en un seul aller-retour.
+
+    Un écran qui s'ouvre en tournant déjà en boucle n'a pas le temps de poser
+    quatre questions.
+    """
+    return _atelier(requete).montage.ouvrir(identifiant)
+
+
+@routeur.get("/montage/{identifiant}/contact")
+async def contact_du_clip(requete: Request, identifiant: str) -> Response:
+    """Toutes les images du clip en une seule, en grille.
+
+    L'écran en tire sa pellicule — une tranche au centre de chaque case — et sa
+    loupe — la case entière. Un clip ne change jamais : le navigateur peut la
+    garder longtemps.
+    """
+    return Response(
+        content=_atelier(requete).montage.contact(identifiant),
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=86400"},
+    )
+
+
+@routeur.post("/montage/{identifiant}/frame")
+async def reprendre_le_cadre(
+    requete: Request, identifiant: str, corps: CorpsApercuBande | None = None
+) -> dict[str, Any]:
+    """La fenêtre commune, remesurée sur **toutes** les images du clip.
+
+    **Un geste que l'auteur demande**, et il coûte une vingtaine de secondes :
+    le faire dans son dos ferait attendre sans dire pourquoi.
+    """
+    return _atelier(requete).montage.reprendre_le_cadre(
+        identifiant, _recette(corps.recette if corps else None)
+    )
+
+
+@routeur.get("/strips")
+async def liste_bandes(
+    requete: Request, clip: str = Query(...)
+) -> dict[str, Any]:
+    """Les bandes déjà taillées dans ce clip, **dans l'ordre où on les a gardées**."""
+    bandes = _atelier(requete).montage.bandes(clip)
+    return {"bandes": [b.en_json() for b in bandes]}
+
+
+@routeur.post("/strips")
+async def garder_une_bande(requete: Request, corps: CorpsBande) -> dict[str, Any]:
+    """Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.**"""
+    atelier = _atelier(requete)
+    bande = atelier.montage.garder(
+        corps.clip,
+        corps.nom,
+        corps.images,
+        cadence=corps.cadence or CADENCE_DE_BANDE,
+        sens=corps.sens or BOUCLE,
+        cadre=Cadre.depuis_json(corps.cadre),
+        recette=_recette(corps.recette),
+        pose=corps.pose,
+        direction=corps.direction,
+    )
+    return bande.en_json()
+
+
+@routeur.put("/strips/{identifiant}/case")
+async def affecter_une_bande(
+    requete: Request, identifiant: str, corps: CorpsCase
+) -> dict[str, Any]:
+    """La case du plan de poses que cette bande remplit — ou plus aucune.
+
+    Les deux champs vides la retirent de sa case : elle redevient un brouillon,
+    elle ne disparaît pas.
+    """
+    bande = _atelier(requete).montage.affecter(
+        identifiant, corps.pose, corps.direction
+    )
+    return bande.en_json()
+
+
+@routeur.put("/strips/{identifiant}/name")
+async def renommer_une_bande(
+    requete: Request, identifiant: str, corps: CorpsNom
+) -> dict[str, Any]:
+    return _atelier(requete).montage.renommer(identifiant, corps.nom).en_json()
+
+
+@routeur.delete("/strips/{identifiant}")
+async def oublier_une_bande(requete: Request, identifiant: str) -> dict[str, Any]:
+    """La bande s'en va, le clip et ses images restent."""
+    return _atelier(requete).montage.oublier(identifiant).en_json()
+
+
+@routeur.get("/strips/{identifiant}/sheet")
+async def planche_de_la_bande(requete: Request, identifiant: str) -> Response:
+    """La planche de sprites, **recalculée si le cache a sauté**.
+
+    Elle n'est pas gardée par le navigateur : la recette d'une bande se règle,
+    donc ses pixels changent sous la même adresse. C'est l'exact contraire d'un
+    clip, qui ne change jamais.
+    """
+    return Response(
+        content=_atelier(requete).montage.planche(identifiant),
+        media_type="image/png",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def _recette(brut: dict[str, Any] | None) -> Recette | None:
+    """La recette envoyée par l'écran, ou rien — et rien veut dire *celle du jeu*.
+
+    Ne pas en envoyer est le cas courant : on ouvre un clip, on découpe, on
+    garde, et la bande hérite du jeu sans que l'écran ait à recopier ses
+    réglages. C'est aussi ce qui fait qu'une bande gardée sans y toucher n'a
+    aucun écart à afficher.
+    """
+    return Recette.depuis_json(brut) if brut else None
 
 
 def _clip(requete: Request, identifiant: str):

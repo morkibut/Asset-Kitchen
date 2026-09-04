@@ -646,6 +646,179 @@ export type Clip = {
   montant_dit: string
 }
 
+// ── Le montage (A10) ────────────────────────────────────────────────────────
+//
+// **Rien de ce bloc ne dépense.** Le clip est payé, ses images sont sur le
+// disque depuis son arrivée, et découper est un geste qu'on refait autant de
+// fois qu'on veut. C'est ce que le pied de l'écran annonce, et c'est vrai
+// jusque dans les imports du service qui répond.
+
+/** Le rectangle sur lequel toutes les images d'une bande se recadrent.
+ *
+ *  Il porte **d'où il vient** en plus de ses quatre nombres : *du clip* est le
+ *  défaut, et c'est le seul qui donne à toutes les bandes d'un clip la même
+ *  assise — sans lui, un personnage grandit de 10 % en passant du repos à la
+ *  marche (mesuré en `A2`). Les deux autres existent parce qu'un cadrage
+ *  automatique se trompe parfois. */
+export type Cadre = {
+  choix: "clip" | "bande" | "main"
+  gauche: number
+  sommet: number
+  droite: number
+  bas: number
+  largeur: number
+  hauteur: number
+  /** La phrase qui dit ce que ce choix-là implique. Écrite au serveur, comme
+   *  toutes celles que deux endroits pourraient rédiger deux fois. */
+  mot: string
+}
+
+/** Le cadre **tel qu'on l'envoie** : le choix, et les quatre nombres seulement
+ *  quand l'auteur les a posés lui-même. Les envoyer toujours obligerait l'écran
+ *  à connaître le rectangle du clip avant de demander quoi que ce soit, et
+ *  c'est le serveur qui le mesure. */
+export type CadrePose = {
+  choix: string
+  gauche?: number
+  sommet?: number
+  droite?: number
+  bas?: number
+}
+
+/** La fenêtre commune, telle que le serveur l'a mesurée sur le clip entier. */
+export type FenetreDuClip = {
+  gauche: number
+  sommet: number
+  droite: number
+  bas: number
+  largeur: number
+  hauteur: number
+  /** Sur combien d'images elle a été prise. **Écrit plutôt que déduit** :
+   *  l'écran doit pouvoir dire *prise sur le clip entier* ou *sur la bande*. */
+  images: number
+  taches_ecartees: number
+}
+
+/** Un endroit du clip que l'atelier a remarqué. **Jamais un verdict.**
+ *
+ *  La détection propose, l'auteur juge : c'est la règle déjà écrite de l'écran
+ *  de découpe, et c'est elle qui fait qu'une machine qui s'est trompée ne
+ *  bloque personne. Deux au plus, et parfois zéro — ne rien proposer est une
+ *  réponse. */
+export type PropositionDeRythme = {
+  quoi: "repos" | "boucle"
+  debut: number
+  fin: number
+  images: number[]
+  mot: string
+  mesure: number
+  longueur: number
+}
+
+/** Une animation taillée dans un clip, et gardée.
+ *
+ *  **Ce qu'elle garde est une intention, pas des pixels** : les numéros
+ *  d'image, la fenêtre et la recette. Sa planche de sprites se recalcule à
+ *  partir de ça, et le fichier n'est qu'un cache. */
+export type Bande = {
+  identifiant: string
+  clip: string
+  nom: string
+  /** Dans l'ordre où elles se jouent. **Rien n'oblige à ce qu'elles soient
+   *  régulièrement espacées** — un pas de marche demande deux images serrées au
+   *  contact et une seule pendant la glisse. */
+  images: number[]
+  cadence: number
+  sens: "boucle" | "aller-retour"
+  cadre: Cadre
+  recette: Recette
+  projet: string | null
+  personnage: string | null
+  pose: string | null
+  direction: string | null
+  planche: string | null
+  case_largeur: number
+  case_hauteur: number
+  cree_le: number
+  compte: number
+  secondes: number
+  /** Aucune case visée. Elle existe, elle sert, **elle ne bloque rien**. */
+  brouillon: boolean
+}
+
+/** Tout ce que l'écran de montage reçoit à l'ouverture, **en une seule fois**.
+ *
+ *  Un écran qui s'ouvre en tournant déjà en boucle n'a pas le temps de poser
+ *  quatre questions. */
+export type Montage = {
+  clip: {
+    identifiant: string
+    images: number
+    cadence: number
+    largeur: number
+    hauteur: number
+    secondes: number
+    commande_secondes: number
+    montant_dit: string
+    consomme: number
+    unite: string
+    mouvement: string
+    texte: string
+    projet: string | null
+    personnage: string | null
+    pose: string | null
+    direction: string | null
+  }
+  /** La géométrie de la planche contact — l'image unique où toutes les images
+   *  du clip tiennent, et dont l'écran tire sa pellicule **et** sa loupe. */
+  contact: { cote: number; colonnes: number; lignes: number }
+  recette_du_jeu: Recette
+  fenetre: FenetreDuClip | null
+  propositions: PropositionDeRythme[]
+  bandes: Bande[]
+  /** Ce que coûte une bande utilisable de ce clip, **et il baisse à chaque
+   *  bande gardée**. C'est ici que se prend le chiffre qui manque à la
+   *  version : combien de clips pour une bande utilisable. */
+  prix: {
+    clip: number
+    unite: string
+    bandes: number
+    par_bande: number
+    si_une_de_plus: number
+  }
+  images_max: number
+}
+
+/** La bande montée, telle qu'elle sortira. **Une planche de sprites**, pas une
+ *  liste d'images : l'écran l'anime en la décalant, l'export l'écrira telle
+ *  quelle, et *ce qui sort est exactement ce que l'aperçu montrait* devient
+ *  vrai par construction. */
+export type ApercuDeBande = {
+  planche: string
+  case_largeur: number
+  case_hauteur: number
+  compte: number
+  largeur: number
+  hauteur: number
+  fenetre: FenetreDuClip | null
+  cadre: Cadre
+  /** Ce que cette recette change à celle du jeu, **une phrase par réglage**.
+   *  Vide quand la bande n'a rien changé. */
+  ecarts: string[]
+  /** La **première image seule**, détourée, sans cadre autour d'elle, en
+   *  `data:`. Elle sert à ce que la planche ne peut pas faire : montrer le
+   *  cadre **pendant qu'on le tire**. Avec le sujet en main, l'écran repose
+   *  lui-même le rectangle autour de lui et n'attend le serveur qu'au
+   *  relâchement ; sans lui, il faudrait une demande par pixel de glissement. */
+  sujet: string | null
+  sujet_largeur: number
+  sujet_hauteur: number
+  /** Où le sujet se pose dans son cadre : sur ses pieds, ou au milieu. **Écrit
+   *  au serveur**, parce que la même règle décide du rectangle qu'on tire et de
+   *  la bande qui en sortira — la poser deux fois les ferait dériver. */
+  ancrage?: string
+}
+
 /** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.
  *  Rien n'est jamais grisé dans l'assistant : la ligne dit le compte et le
  *  coût, puis laisse décider. */
@@ -3739,6 +3912,84 @@ export const api = {
       body: JSON.stringify({ clips }),
     }),
 
+  // ── Le montage (A10) ──────────────────────────────────────────────────────
+  //
+  // **Aucune de ces routes ne dépense.** Le clip est payé. On découpe, on
+  // garde, on efface, on recommence, et le total du projet ne bouge pas d'un
+  // centime.
+
+  /** Tout ce que l'écran demande à l'ouverture, en un seul aller-retour. */
+  ouvrirLeMontage: (clip: string) => appeler<Montage>(`/montage/${clip}`),
+
+  /** La bande montée, **sans rien écrire**. La planche revient en `data:` :
+   *  un aperçu n'existe nulle part sur le disque, et lui donner une adresse
+   *  obligerait à ranger un brouillon — donc à le nettoyer. */
+  apercuDeBande: (corps: {
+    clip: string
+    images: number[]
+    recette?: Recette | null
+    cadre?: CadrePose | null
+  }) =>
+    appeler<ApercuDeBande>("/montage/preview", {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  /** La fenêtre commune, remesurée sur **toutes** les images du clip.
+   *
+   *  **Un geste que l'auteur demande**, et il coûte une vingtaine de secondes :
+   *  le faire à chaque cran de curseur rendrait l'écran inutilisable, le faire
+   *  dans son dos ferait attendre sans dire pourquoi. */
+  reprendreLeCadre: (clip: string, recette?: Recette | null) =>
+    appeler<{
+      fenetre: FenetreDuClip | null
+      propositions: PropositionDeRythme[]
+      a_jour: boolean
+    }>(`/montage/${clip}/frame`, {
+      method: "POST",
+      body: JSON.stringify({ clip, recette: recette ?? null }),
+    }),
+
+  bandesDuClip: (clip: string) =>
+    appeler<{ bandes: Bande[] }>(`/strips?clip=${encodeURIComponent(clip)}`),
+
+  /** Une bande de plus, taillée dans ce clip. **Rien n'est dépensé.** */
+  garderLaBande: (corps: {
+    clip: string
+    nom: string
+    images: number[]
+    cadence?: number
+    sens?: string
+    recette?: Recette | null
+    cadre?: CadrePose | null
+    pose?: string | null
+    direction?: string | null
+  }) =>
+    appeler<Bande>("/strips", { method: "POST", body: JSON.stringify(corps) }),
+
+  /** La case du plan de poses que cette bande remplit — **ou plus aucune** :
+   *  les deux vides la retirent de sa case sans la supprimer. */
+  affecterLaBande: (
+    identifiant: string,
+    pose: string | null,
+    direction: string | null = null,
+  ) =>
+    appeler<Bande>(`/strips/${identifiant}/case`, {
+      method: "PUT",
+      body: JSON.stringify({ pose, direction }),
+    }),
+
+  renommerLaBande: (identifiant: string, nom: string) =>
+    appeler<Bande>(`/strips/${identifiant}/name`, {
+      method: "PUT",
+      body: JSON.stringify({ nom }),
+    }),
+
+  /** La bande s'en va, **le clip et ses images restent**. Un découpage raté ne
+   *  coûte rien : c'est toute la différence avec l'autre moitié de l'atelier. */
+  oublierLaBande: (identifiant: string) =>
+    appeler<Bande>(`/strips/${identifiant}`, { method: "DELETE" }),
+
   /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
    *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un
    *  second. */
@@ -4607,6 +4858,19 @@ export const api = {
 
   /** Le fichier tel qu'il est arrivé. Le brut, jamais un rendu. */
   videoDuClip: (identifiant: string) => `/api/clips/${identifiant}/video`,
+
+  /** **Toutes les images du clip en une seule** (A10), rangées en grille.
+   *
+   *  L'écran de montage en tire deux choses du même fichier : la pellicule, en
+   *  prenant une tranche au centre de chaque case, et la loupe, en montrant la
+   *  case entière. Servir cent vingt images de 480 pixels pour dessiner un
+   *  ruban de sept pixels de large ferait payer des mégaoctets à un survol. */
+  contactDuClip: (identifiant: string) => `/api/montage/${identifiant}/contact`,
+
+  /** La planche de sprites d'une bande gardée. **Elle change sous la même
+   *  adresse** quand la recette de la bande change — l'exact contraire d'un
+   *  clip, qui ne change jamais —, donc le navigateur ne la garde pas. */
+  plancheDeLaBande: (identifiant: string) => `/api/strips/${identifiant}/sheet`,
 
   // Le rendu change sous la même adresse à chaque cran de curseur : `version`
   // porte l'empreinte de la recette pour que le navigateur cherche une image

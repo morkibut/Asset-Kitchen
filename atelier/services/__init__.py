@@ -53,6 +53,7 @@ from atelier.services.evenements import Diffusion, Evenement
 from atelier.services.export import Archive, ExportRefuse, ServiceExport, Sortie
 from atelier.services.fournisseurs import Fournisseurs
 from atelier.services.generation import ServiceGenerations
+from atelier.services.montage import ServiceMontage
 from atelier.services.planche import PlancheRefusee, ServicePlanche
 from atelier.services.equipement import ServiceEquipement
 from atelier.services.pliage import ChoixAttendu, CompteFaux, ServicePliage
@@ -114,6 +115,7 @@ __all__ = [
     "ServiceSuperposition",
     "ServiceExport",
     "ServiceGenerations",
+    "ServiceMontage",
     "PlancheRefusee",
     "ServicePlanche",
     "ServiceEnvoi",
@@ -360,6 +362,23 @@ class Atelier:
             self.base,
             self.fichiers,
             fabrique_animateur or _openrouter_video,
+            self.diffusion,
+        )
+        # **Le montage, monté juste après l'animation** (A10), et il ne reçoit
+        # ni l'animateur, ni le catalogue, ni un fournisseur : découper un clip
+        # déjà payé ne demande rien à personne. C'est la même privation que le
+        # slicer et les deux fabriques, et c'est elle qui autorise la phrase du
+        # pied de son écran — *rien ici ne dépense*.
+        #
+        # Il prend les assets pour une seule chose — la recette que le jeu
+        # applique à ce qui entre — et la production pour une seule autre — le
+        # type du personnage, qui dit à quelle taille son espèce vit dans ce
+        # jeu. Ni l'un ni l'autre ne connaît le montage : l'ordre tient.
+        self.montage = ServiceMontage(
+            self.base,
+            self.fichiers,
+            self.assets,
+            self.production,
             self.diffusion,
         )
         self.planche = ServicePlanche(self.production, self.generations)

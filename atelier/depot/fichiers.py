@@ -161,6 +161,60 @@ class Fichiers:
         dossier.mkdir(parents=True, exist_ok=True)
         return dossier
 
+    # ── Les bandes taillées dans un clip (A10) ───────────────────────────────
+
+    def dossier_bandes(self, clip: str) -> Path:
+        """Les bandes d'un clip vivent **dans le dossier de ce clip**.
+
+        Même raison que ses images, et une de plus : une bande ne se recalcule
+        qu'à partir des images du clip, donc une bande dont le clip a disparu ne
+        pourrait plus rien rendre. Les ranger ensemble fait qu'elles partent
+        ensemble, sans qu'aucun nettoyage ait à le savoir.
+        """
+        dossier = self.dossier_generation(clip) / "bandes"
+        dossier.mkdir(parents=True, exist_ok=True)
+        return dossier
+
+    def ecrire_bande(self, clip: str, identifiant: str, contenu: dict[str, Any]) -> None:
+        """La fiche de la bande, et c'est elle qui fait foi.
+
+        L'index se refait depuis ces fichiers-là au premier démarrage qui suit
+        un changement de schéma — c'est la contrepartie de « aucune migration ».
+        """
+        self._ecrire_json(self.dossier_bandes(clip) / f"{identifiant}.json", contenu)
+
+    def ecrire_planche_de_bande(
+        self, clip: str, identifiant: str, octets: bytes
+    ) -> str:
+        """La planche de sprites déjà calculée, et son chemin relatif.
+
+        **C'est un cache** (règle 5 de `docs/ARCHITECTURE.md`) : l'effacer ne
+        perd rien, puisque la fiche porte de quoi le refaire — les numéros
+        d'image, la fenêtre et la recette.
+        """
+        chemin = self.dossier_bandes(clip) / f"{identifiant}.png"
+        self._poser(chemin, octets)
+        return chemin.relative_to(self.racine).as_posix()
+
+    def oublier_bande(self, clip: str, identifiant: str) -> None:
+        """La fiche et sa planche, ensemble. Le clip et ses images ne bougent pas."""
+        dossier = self.dossier_bandes(clip)
+        for chemin in (dossier / f"{identifiant}.json", dossier / f"{identifiant}.png"):
+            chemin.unlink(missing_ok=True)
+
+    def parcourir_bandes(self) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Chaque fiche de bande du dépôt, avec le clip dans lequel elle est taillée."""
+        if not self.generations.is_dir():
+            return
+        for dossier in sorted(self.generations.iterdir()):
+            bandes = dossier / "bandes"
+            if not bandes.is_dir():
+                continue
+            for fiche in sorted(bandes.glob("*.json")):
+                contenu = self._lire_json(fiche)
+                if isinstance(contenu, dict) and contenu.get("identifiant"):
+                    yield dossier.name, contenu
+
     # ── Assets, recettes et rendus ───────────────────────────────────────────
 
     def ecrire_asset(self, generation: str, rang: int, contenu: dict[str, Any]) -> None:

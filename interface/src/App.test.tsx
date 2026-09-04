@@ -37,7 +37,7 @@ import { reinitialiserGuide } from "./composants/Guide"
 import { reinitialiserPressePapier } from "./composants/Tables"
 import { AIDE, SANS_ENTREE } from "./aide"
 import { POSE_VIDE } from "./api"
-import { COULEUR_TEINTE, NOM_TEINTE, RECETTE_VIDE, TEINTES } from "./api"
+import { COULEUR_TEINTE, NOM_TEINTE, PASSE_PAR_DEFAUT, RECETTE_VIDE, TEINTES } from "./api"
 import type {
   Envoi,
   Tri,
@@ -61,6 +61,9 @@ import type {
   BaseMouvements,
   BaseModelesVideo,
   ImageDeDepart,
+  ApercuDeBande,
+  Bande,
+  Montage,
   FondPropose,
   Main,
   Modele,
@@ -957,6 +960,138 @@ function clipRendu(identifiant: string, jete: boolean): Generation {
 }
 
 
+/** Ce que le serveur rend à l'ouverture d'un montage (A10).
+ *
+ *  **Deux propositions et une fenêtre**, parce que c'est l'état complet : un
+ *  clip qui n'en aurait aucune est un cas à part, et le double du cas courant
+ *  doit être le cas courant. Le clip fait 24 images pour que le compte reste
+ *  lisible dans les assertions — le vrai en porte cent vingt. */
+const MONTAGE_RENDU: Montage = {
+  clip: {
+    identifiant: "clip-a",
+    images: 24,
+    cadence: 24,
+    largeur: 480,
+    hauteur: 480,
+    secondes: 1,
+    commande_secondes: 5,
+    montant_dit: "montant relu chez le fournisseur",
+    consomme: 0.067,
+    unite: "usd",
+    mouvement: "marche",
+    texte: "walking cycle, walking in place",
+    projet: "jeu-1",
+    personnage: "chose-1",
+    pose: "marche",
+    direction: "sud",
+  },
+  contact: { cote: 96, colonnes: 16, lignes: 2 },
+  recette_du_jeu: {
+    ...RECETTE_VIDE,
+    passes: [{ ...PASSE_PAR_DEFAUT }],
+    grille: {
+      cible: 64,
+      occupation: 80,
+      ancrage: "bas",
+      decalage: 0,
+      methode: "proche",
+    },
+    quantification: { couleurs: 24, palette: [], tramage: "aucun" },
+  },
+  fenetre: {
+    gauche: 0,
+    sommet: 0,
+    droite: 245,
+    bas: 380,
+    largeur: 246,
+    hauteur: 381,
+    images: 24,
+    taches_ecartees: 3,
+  },
+  propositions: [
+    {
+      quoi: "repos",
+      debut: 4,
+      fin: 11,
+      images: [4, 5, 6, 7, 8, 9, 10, 11],
+      mot: "ici, il ne bouge presque pas — 8 images, images 4 à 11",
+      mesure: 0.002,
+      longueur: 8,
+    },
+    {
+      quoi: "boucle",
+      debut: 12,
+      fin: 23,
+      images: [12, 14, 16, 18, 20, 22],
+      mot: "ici, la boucle se referme le mieux — 12 images, images 12 à 23",
+      mesure: 0.31,
+      longueur: 12,
+    },
+  ],
+  bandes: [],
+  prix: {
+    clip: 0.067,
+    unite: "usd",
+    bandes: 0,
+    par_bande: 0.067,
+    si_une_de_plus: 0.0335,
+  },
+  images_max: 64,
+}
+
+/** La bande montée. **Une planche de sprites**, pas une liste d'images : c'est
+ *  ce que l'écran anime et ce que l'export écrira. */
+const APERCU_RENDU: ApercuDeBande = {
+  planche: "data:image/png;base64,",
+  case_largeur: 64,
+  case_hauteur: 64,
+  compte: 8,
+  largeur: 512,
+  hauteur: 64,
+  fenetre: MONTAGE_RENDU.fenetre,
+  cadre: {
+    choix: "clip",
+    gauche: 0,
+    sommet: 0,
+    droite: 245,
+    bas: 380,
+    largeur: 246,
+    hauteur: 381,
+    mot: "pris sur le clip entier — toutes ses bandes ont la même assise",
+  },
+  ecarts: [],
+  // Le sujet seul, sans cadre autour de lui : c'est lui que l'écran repose dans
+  // la boîte pendant qu'on la tire, sans redemander une image par pixel.
+  sujet: "data:image/png;base64,",
+  sujet_largeur: 200,
+  sujet_hauteur: 340,
+  ancrage: "bas",
+}
+
+function bandeRendue(nom: string, images: number[]): Bande {
+  return {
+    identifiant: `bande-${nom}`,
+    clip: "clip-a",
+    nom,
+    images,
+    cadence: 8,
+    sens: "boucle",
+    cadre: APERCU_RENDU.cadre,
+    recette: MONTAGE_RENDU.recette_du_jeu,
+    projet: "jeu-1",
+    personnage: "chose-1",
+    pose: null,
+    direction: null,
+    planche: `generations/clip-a/bandes/bande-${nom}.png`,
+    case_largeur: 64,
+    case_hauteur: 64,
+    cree_le: 1_787_800_000,
+    compte: images.length,
+    secondes: images.length / 8,
+    brouillon: true,
+  }
+}
+
 function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
@@ -1068,6 +1203,10 @@ function serveurDouble(options: {
    *  la règle est **au serveur**, et le prouver demande qu'elle ne soit pas
    *  ici non plus. */
   imageDeDepart?: ImageDeDepart
+  /** Ce que le serveur rend à l'ouverture d'un montage (A10). Le double le
+   *  rend entier, comme le vrai serveur : l'écran s'ouvre en tournant déjà, et
+   *  quatre appels séparés feraient quatre états d'attente pour un seul geste. */
+  montage?: Montage
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
   /** Les deux listes du côté Ambiances (E11). */
@@ -1600,6 +1739,34 @@ function serveurDouble(options: {
       return rendre({
         clips: ((corps?.clips ?? []) as string[]).map((i) => clipRendu(i, false)),
       })
+    // ── Le montage (A10) ─────────────────────────────────────────────────
+    //
+    // **Aucune de ces routes ne dépense**, et le double le rend visible : rien
+    // n'y a de montant, rien n'y a de modèle. Ce qui se vérifie ici est ce que
+    // l'écran montre et ce qu'il envoie ; les pixels, eux, sont tenus par
+    // `tests/test_a10.py`, sur la vraie chaîne et sur le disque.
+    if (url === "/api/montage/preview")
+      return rendre({
+        ...APERCU_RENDU,
+        compte: ((corps?.images ?? []) as number[]).length,
+        largeur: APERCU_RENDU.case_largeur * ((corps?.images ?? []) as number[]).length,
+      })
+    if (url.startsWith("/api/montage/") && url.endsWith("/frame"))
+      return rendre({
+        fenetre: options.montage?.fenetre ?? MONTAGE_RENDU.fenetre,
+        propositions: options.montage?.propositions ?? MONTAGE_RENDU.propositions,
+        a_jour: true,
+      })
+    if (url.startsWith("/api/montage/"))
+      return rendre(options.montage ?? MONTAGE_RENDU)
+    if (url.startsWith("/api/strips?"))
+      return rendre({ bandes: options.montage?.bandes ?? [] })
+    if (url === "/api/strips" && init?.method === "POST")
+      return rendre(
+        bandeRendue(String(corps?.nom ?? ""), (corps?.images ?? []) as number[]),
+      )
+    if (url.startsWith("/api/strips/") && init?.method === "DELETE")
+      return rendre(bandeRendue("effacee", []))
     if (url === "/api/clips" && init?.method === "POST") {
       const combien = Number(corps?.nombre ?? 1)
       return rendre({
@@ -20766,5 +20933,402 @@ describe("A9 — commander un clip", () => {
     await waitFor(() =>
       expect(screen.queryByText("121 images · 24 i/s")).toBeNull(),
     )
+  })
+})
+
+describe("A10 — découper un clip en bandes", () => {
+  // Même montage que le bloc d'`A9`, et pour la même raison : cet écran-ci ne
+  // parle d'aucun des trois onglets. Il prend la place de la grille dans la
+  // galerie, comme l'écran du choix d'une planche.
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Ouvrir le montage depuis la tuile du clip, **la seule porte**.
+   *
+   *  Un clip se découpe là où on le regarde. Une entrée de menu ou un quatrième
+   *  onglet auraient ouvert l'écran sans savoir quel clip, et auraient demandé
+   *  de le rechoisir dans une liste. */
+  const ouvrirLeMontage = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain")],
+      ...options,
+    })
+    const flux = await monter(double.fetchDouble)
+    laGalerie()
+    flux.emettre("generation", clipRendu("clip-a", false))
+    fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-montage]")
+      if (!cadre) throw new Error("l'écran de montage ne s'est pas ouvert")
+      return cadre as HTMLElement
+    })
+    return { ...double, flux, panneau: within(panneau) }
+  }
+
+  // ── « Un clip s'ouvre déjà en train de tourner » ──────────────────────────
+
+  test("l'écran s'ouvre en posant une proposition, sans qu'on règle quoi que ce soit", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    // Un seul aller-retour pour tout ce que l'écran montre.
+    expect(
+      appels.filter((a) => a.url === "/api/montage/clip-a"),
+    ).toHaveLength(1)
+
+    // Et il tourne déjà : la première proposition est posée, donc huit images
+    // sont retenues avant le moindre clic.
+    expect(await panneau.findByText("8 images retenues")).toBeTruthy()
+    await waitFor(() => {
+      const vu = appels.find((a) => a.url === "/api/montage/preview")?.corps as
+        | { images?: number[] }
+        | undefined
+      expect(vu?.images).toEqual([4, 5, 6, 7, 8, 9, 10, 11])
+    })
+  })
+
+  test("les deux boucles tournent côte à côte, et posent chacune sa question", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    expect(await panneau.findByText("le mouvement est-il bon ?")).toBeTruthy()
+    expect(panneau.getByText("le découpage est-il bon ?")).toBeTruthy()
+    // À gauche l'image telle que le modèle l'a rendue, fond compris ; à droite
+    // la planche déjà passée par la chaîne du jeu.
+    const brute = await panneau.findByAltText(/^Image \d+ du clip$/)
+    expect(brute.getAttribute("src")).toMatch(/^\/api\/clips\/clip-a\/frames\/\d+$/)
+    await waitFor(() =>
+      expect(document.querySelector("[data-case-de-la-planche]")).toBeTruthy(),
+    )
+  })
+
+  // ── « Les deux propositions ne décident de rien » ─────────────────────────
+
+  test("les propositions s'affichent avec leur phrase, et posent un découpage sans le figer", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    expect(await panneau.findByText(/il ne bouge presque pas/)).toBeTruthy()
+    fireEvent.click(panneau.getByText(/la boucle se referme le mieux/))
+
+    await waitFor(() => {
+      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
+      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
+        12, 14, 16, 18, 20, 22,
+      ])
+    })
+    expect(panneau.getByText(/Elles ne décident de rien/)).toBeTruthy()
+  })
+
+  test("repartir de zéro ne garde aucune image, et le dit", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    await panneau.findByText("8 images retenues")
+    fireEvent.click(panneau.getByText(/ne garder aucune image/))
+    expect(await panneau.findByText(/aucune image retenue/)).toBeTruthy()
+  })
+
+  // ── « Chaque image se prend ou se laisse d'un clic » ──────────────────────
+
+  test("un clic sur la pellicule prend une image, un second la laisse", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    await panneau.findByText("8 images retenues")
+
+    // L'image 0 n'est pas dans la proposition : le clic l'ajoute.
+    fireEvent.click(panneau.getByRole("button", { name: "Image 0" }))
+    await waitFor(() => {
+      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
+      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
+        0, 4, 5, 6, 7, 8, 9, 10, 11,
+      ])
+    })
+
+    // Et l'image 4, qui y est, en sort.
+    fireEvent.click(panneau.getByRole("button", { name: "Image 4 — retenue" }))
+    await waitFor(() => {
+      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
+      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
+        0, 5, 6, 7, 8, 9, 10, 11,
+      ])
+    })
+  })
+
+  test("les images retenues se voient dans l'ordre et se retirent de là", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    await panneau.findByText("8 images retenues")
+    fireEvent.click(await panneau.findByRole("button", { name: "Retirer l'image 6" }))
+    await waitFor(() => {
+      const dernier = appels.filter((a) => a.url === "/api/montage/preview").at(-1)
+      expect((dernier?.corps as { images?: number[] })?.images).toEqual([
+        4, 5, 7, 8, 9, 10, 11,
+      ])
+    })
+  })
+
+  test("la pellicule et la loupe tiennent dans une seule image", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    const case3 = await panneau.findByRole("button", { name: "Image 3" })
+    // La pellicule ne charge pas cent vingt images : elle décale la planche
+    // contact, qui est **une seule adresse**.
+    expect(case3.getAttribute("style")).toContain("/api/montage/clip-a/contact")
+    fireEvent.mouseEnter(case3)
+    const loupe = await waitFor(() => {
+      const vu = document.querySelector("[data-loupe]")
+      if (!vu) throw new Error("la loupe ne paraît pas")
+      return vu as HTMLElement
+    })
+    expect(loupe.getAttribute("style")).toContain("/api/montage/clip-a/contact")
+    // Et rien de tout ça n'a demandé les images du clip une par une.
+    expect(appels.filter((a) => a.url.includes("/frames/"))).toHaveLength(0)
+  })
+
+  // ── « Le cadrage se reprend à la main, et l'écran dit lequel est en usage » ─
+
+  test("le cadre par défaut vient du clip entier, et l'écran dit ce que ça implique", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    expect(await panneau.findByText(/pris sur le clip entier/)).toBeTruthy()
+    expect(
+      await panneau.findByText((texte) =>
+        texte.startsWith("246 × 381, pris sur"),
+      ),
+    ).toBeTruthy()
+  })
+
+  test("reprendre le cadre est un geste demandé, et il dit ce qu'il coûte", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    const bouton = await panneau.findByText(/reprendre le cadre sur tout le clip/)
+    expect(panneau.getByText(/une vingtaine de secondes/)).toBeTruthy()
+    // **Rien ne l'a déclenché tout seul** : c'est le fond de la décision.
+    expect(appels.some((a) => a.url.endsWith("/frame"))).toBe(false)
+    fireEvent.click(bouton)
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/montage/clip-a/frame")).toBe(true),
+    )
+  })
+
+  // ── « La recette part de celle du jeu, tout écart est écrit en clair » ────
+
+  test("la recette part du jeu, et l'écran dit où ce qu'on change s'écrit", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    // Les trois réglages arrivent **déjà remplis de ceux du jeu** : 64 px de
+    // haut et 24 couleurs, qui sont ce que `recette_du_jeu` porte.
+    expect(
+      await panneau.findByLabelText("Taille du pixel, en chiffres"),
+    ).toHaveValue("64 px de haut")
+    expect(panneau.getByLabelText("Couleurs, en chiffres")).toHaveValue("24")
+    expect(panneau.getByText(/Ce que vous changez ici s'écrit/)).toBeTruthy()
+  })
+
+  test("la vitesse réglée ici est celle qui part", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    await panneau.findByText("8 images retenues")
+    const vitesse = panneau
+      .getAllByRole("slider")
+      .find((rail) => rail.getAttribute("max") === "24")
+    fireEvent.change(vitesse as HTMLElement, { target: { value: "12" } })
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "marche" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « marche »/ }))
+    await waitFor(() => {
+      const parti = appels
+        .filter((a) => a.url === "/api/strips")
+        .at(-1)?.corps as { cadence?: number } | undefined
+      expect(parti?.cadence).toBe(12)
+    })
+  })
+
+  // ── « Plusieurs bandes se gardent depuis le même clip » ───────────────────
+
+  test("garder une bande la range dans la liste du clip, et rien n'est dépensé", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    fireEvent.change(await panneau.findByLabelText("Le nom de l'animation"), {
+      target: { value: "repos" },
+    })
+    fireEvent.click(panneau.getByRole("button", { name: /Garder « repos »/ }))
+
+    expect(await panneau.findByText("repos")).toBeTruthy()
+    expect(panneau.getByText(/Rien sur cet écran ne dépense/)).toBeTruthy()
+    // **Aucun appel de génération n'est parti** : c'est ce que la phrase promet.
+    expect(appels.filter((a) => a.url === "/api/generations")).toHaveLength(0)
+  })
+
+  test("une bande se garde sous un nom, et le bouton dit ce qui manque", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    await panneau.findByText("8 images retenues")
+    // Le nom arrive proposé — celui du mouvement demandé —, et on peut l'effacer.
+    fireEvent.change(panneau.getByLabelText("Le nom de l'animation"), {
+      target: { value: "" },
+    })
+    expect(
+      panneau.getByRole("button", { name: "nommez cette animation" }),
+    ).toBeTruthy()
+  })
+
+  test("une bande sans case reste un brouillon, et le dit", async () => {
+    const { panneau } = await ouvrirLeMontage({
+      montage: {
+        ...MONTAGE_RENDU,
+        clip: { ...MONTAGE_RENDU.clip, pose: null, direction: null },
+      },
+    })
+    expect(await panneau.findByText(/un brouillon ne bloque rien/)).toBeTruthy()
+  })
+
+  // ── « Le prix par bande baisse à chaque bande gardée » ────────────────────
+
+  test("le prix par bande se lit à l'écran, avec ce que la suivante ferait", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    expect(await panneau.findByText("$0,0670")).toBeTruthy()
+    expect(
+      panneau.getByText(/Une de plus ferait tomber ce prix à \$0,0335/),
+    ).toBeTruthy()
+  })
+
+  // ── « Le cadrage se reprend à la main » ───────────────────────────────────
+
+  /** **À la main veut dire à la main**, pas *noté et sans effet*.
+   *
+   *  L'écran offrait les trois choix et disait lequel était en usage, mais *à la
+   *  main* n'ouvrait rien : le mode s'allumait, et le rectangle restait celui
+   *  que la machine avait mesuré. Trouvé en cliquant le bouton dans un vrai
+   *  navigateur le 4 septembre 2026 — les treize essais d'écran passaient tous,
+   *  parce qu'aucun ne demandait ce que le bouton *fait*. */
+  test("« à la main » ouvre le cadre, sème le rectangle en vigueur, et l'envoie", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/montage/preview")).toBe(true),
+    )
+
+    fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
+
+    // Le rectangle paraît, et il part de celui que la machine avait mesuré.
+    const boite = await waitFor(() => {
+      const trouve = document.querySelector("[data-cadre-a-la-main]")
+      if (!trouve) throw new Error("le cadre à la main ne s'est pas ouvert")
+      return trouve as HTMLElement
+    })
+    // Les quatre bords se tirent à la souris ; les deux nombres se règlent au
+    // clavier. Le geste se répète trois fois par clip, et une boîte qui ne se
+    // règle qu'à la souris n'est réglable que par ceux qui en ont une.
+    expect(boite.querySelectorAll("[data-bord]")).toHaveLength(4)
+    const largeur = panneau.getByLabelText("Largeur du cadre, en chiffres")
+    const hauteur = panneau.getByLabelText("Hauteur du cadre, en chiffres")
+    expect(largeur).toHaveValue("246 px")
+    expect(hauteur).toHaveValue("381 px")
+
+    // Et ce que l'auteur pose part **avec ses quatre nombres** : un cadre à la
+    // main qui n'enverrait que son mot ne cadrerait rien.
+    fireEvent.change(largeur, { target: { value: "300" } })
+    fireEvent.blur(largeur)
+    await waitFor(() => {
+      const vu = appels
+        .filter((a) => a.url === "/api/montage/preview")
+        .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
+      expect(vu?.cadre?.choix).toBe("main")
+      expect(vu?.cadre?.droite).toBe(299)
+    })
+  })
+
+  /** **Tirer un bord redimensionne ; il ne déplace pas.**
+   *
+   *  Le `mousedown` d'un bord remonte au rectangle qui le porte, et le rectangle
+   *  l'entend comme *déplacer*. Sans `stopPropagation`, les deux gestes se
+   *  déclenchaient l'un après l'autre et le dernier gagnait : tirer le bord
+   *  droit **déplaçait** la boîte entière, à largeur constante. Mesuré au
+   *  navigateur le 4 septembre 2026. */
+  test("tirer le bord droit élargit la boîte au lieu de la déplacer", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/montage/preview")).toBe(true),
+    )
+    fireEvent.click(panneau.getByRole("button", { name: "à la main" }))
+    const bord = await waitFor(() => {
+      const trouve = document.querySelector('[data-cadre-a-la-main] [data-bord="droite"]')
+      if (!trouve) throw new Error("le bord droit ne s'est pas affiché")
+      return trouve as HTMLElement
+    })
+
+    fireEvent.mouseDown(bord, { clientX: 100, clientY: 200 })
+    fireEvent.mouseMove(window, { clientX: 180, clientY: 200 })
+    fireEvent.mouseUp(window, { clientX: 180, clientY: 200 })
+
+    await waitFor(() => {
+      const vu = appels
+        .filter((a) => a.url === "/api/montage/preview")
+        .at(-1)?.corps as { cadre?: Record<string, number | string> } | undefined
+      expect(vu?.cadre?.choix).toBe("main")
+      // Le bord gauche n'a pas bougé — c'est toute la différence entre
+      // redimensionner et déplacer.
+      expect(vu?.cadre?.gauche).toBe(0)
+      expect(vu?.cadre?.droite as number).toBeGreaterThan(245)
+    })
+  })
+
+  // ── Ce que seul le navigateur avait vu ────────────────────────────────────
+
+  /** **Une couleur qui n'existe pas ne fait pas d'erreur : elle ne fait rien.**
+   *
+   *  Trouvé en mesurant l'écran dans un vrai navigateur, le 4 septembre 2026 :
+   *  les images retenues s'écrivaient `1px solid var(--signal)` et le nom court
+   *  n'existe pas — la feuille de style déclare `--color-signal`. L'encadré ne
+   *  s'était donc **jamais** dessiné, et le liseré qui dit quelle image retenue
+   *  passe en ce moment non plus. Rien n'avait échoué nulle part : ni la
+   *  compilation, ni les types, ni les treize essais d'écran, parce que le
+   *  navigateur d'essai ne résout pas les variables de couleur.
+   *
+   *  Ce que cet essai garde n'est donc pas une couleur, c'est **la forme du
+   *  nom** : tout ce que l'écran de montage pose en clair dans un style doit
+   *  citer une variable qui commence par `--color-`, la seule famille que le
+   *  thème déclare. */
+  test("aucune couleur de l'écran ne cite un nom que le thème ne déclare pas", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    await waitFor(() =>
+      expect(document.querySelector("[data-case-de-la-planche]")).toBeTruthy(),
+    )
+    const cadre = panneau.getByText("le mouvement est-il bon ?").closest("[data-montage]")
+    const inventees: string[] = []
+    for (const noeud of (cadre as HTMLElement).querySelectorAll<HTMLElement>(
+      "[style]",
+    )) {
+      for (const [, nom] of noeud.getAttribute("style")!.matchAll(
+        /var\(--([a-z0-9-]+)\)/g,
+      )) {
+        if (!nom.startsWith("color-")) inventees.push(nom)
+      }
+    }
+    expect(inventees).toEqual([])
+  })
+
+  /** **La pellicule est un seul arrêt de tabulation, pas cent vingt et un.**
+   *
+   *  Mesuré au navigateur le même jour : chaque cellule du ruban était dans
+   *  l'ordre de tabulation, et rejoindre le bouton *Garder* au clavier demandait
+   *  autant de pressions que le clip a d'images. Le clavier de cet écran est
+   *  fait autrement — on entre dans la pellicule, les flèches déplacent le
+   *  curseur, l'espace prend ou laisse —, et cet essai garde la porte à une
+   *  seule battante. */
+  test("la pellicule n'occupe qu'un seul arrêt de tabulation", async () => {
+    const { panneau } = await ouvrirLeMontage()
+    const ruban = await waitFor(() => {
+      const trouve = document.querySelector("[data-pellicule]")
+      if (!trouve) throw new Error("la pellicule ne s'est pas affichée")
+      return trouve as HTMLElement
+    })
+    const cellules = [...ruban.querySelectorAll("button")]
+    expect(cellules.length).toBe(24)
+    expect(cellules.filter((c) => c.tabIndex === 0)).toHaveLength(1)
+    // Et l'arrêt est là où le curseur est, pour qu'on reprenne où on regardait.
+    expect(cellules.findIndex((c) => c.tabIndex === 0)).toBe(0)
+    // Le reste de l'écran, lui, se rejoint : le bouton qui garde est atteignable
+    // dès la tabulation suivante.
+    expect(panneau.getByRole("button", { name: /^Garder « / })).toBeTruthy()
   })
 })

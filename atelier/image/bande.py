@@ -40,12 +40,13 @@ Pillow et la recette.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import io
+from dataclasses import dataclass, replace
 from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from atelier.domaine.recette import Recette, cote_du_sujet
+from atelier.domaine.recette import CENTRE, RECADRAGE, Recette, cote_du_sujet
 from atelier.image.traitement import (
     Rendu,
     avant_la_grille,
@@ -53,6 +54,7 @@ from atelier.image.traitement import (
     composantes,
     detourer,
     finir,
+    queue,
 )
 
 
@@ -174,8 +176,188 @@ def monter(
     par ne plus donner les mêmes pixels, et c'est l'auteur qui découvrirait
     l'écart à l'export.
     """
-    cadre = fenetre.en_tuple() if fenetre else None
-    return [finir(image, recette, cadre) for image in preparees]
+    if fenetre is None or not a_recadre(recette):
+        cadre = fenetre.en_tuple() if fenetre else None
+        return [finir(image, recette, cadre) for image in preparees]
+    cadre = (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
+    suite = _sans_recadrer(recette)
+    return [
+        finir(poser_dans(image, fenetre, recette), suite, cadre)
+        for image in preparees
+    ]
+
+
+def a_recadre(recette: Recette) -> bool:
+    """`preparer` a-t-il recadré chaque image sur sa propre silhouette ?
+
+    **C'est ce qui décide si la fenêtre est un rectangle ou une taille.** Sans
+    recadrage, les images restent dans un système de coordonnées commun : la
+    fenêtre y désigne un vrai endroit, et on y découpe. Avec, chaque image a le
+    sien : la fenêtre n'est plus qu'un format, et il faut **poser** dedans au
+    lieu d'y découper.
+
+    La condition est celle d'`avant_la_grille`, recopiée à l'identique et pas
+    approchée : deux formulations de « a-t-on recadré » finiraient par ne plus
+    répondre pareil, et l'écart se verrait sous la forme d'un personnage qui
+    plane.
+    """
+    return recette.recadrage is not None and not recette.dort(RECADRAGE)
+
+
+def _sans_recadrer(recette: Recette) -> Recette:
+    """La même recette, **sa place de recadrage déjà consommée**.
+
+    `preparer` a déjà recadré ; la queue de la chaîne le referait, et ce second
+    recadrage **annulerait la pose dans la fenêtre** — il rognerait le vide que
+    `poser_dans` vient d'ajouter pour mettre le sujet à sa place. C'était le
+    défaut de l'accroupi qui plane, et il tenait tout entier dans une étape
+    jouée deux fois.
+
+    Rien d'autre ne change : la place est vidée parce qu'elle a servi, pas
+    parce qu'on renonce à elle.
+    """
+    return replace(recette, recadrage=None)
+
+
+def poser_dans(
+    preparee: np.ndarray, fenetre: Fenetre, recette: Recette
+) -> np.ndarray:
+    """L'image posée **dans** la fenêtre commune, au lieu d'y être découpée.
+
+    > ### ⚠️ Un personnage accroupi flottait, et l'écart d'échelle qu'`A2` avait
+    > ### réparé cachait celui-là (corrigé en `A10`, 4 septembre 2026)
+    >
+    > `sur_grille` reçoit la fenêtre et **découpe l'image dessus**, depuis son
+    > coin haut-gauche. Or chaque image du clip est déjà recadrée sur sa propre
+    > silhouette : une image plus courte que la fenêtre se voyait donc complétée
+    > de vide **en bas**, et l'ancrage posait ce vide-là sur le sol. Mesuré sur
+    > deux images d'un même sujet, un debout et un accroupi, dans une case de
+    > 32 : l'accroupi occupait les rangées 0 à 18 et **treize rangées vides le
+    > séparaient du sol**. Il ne changeait pas de taille — `A2` tenait — il
+    > planait.
+    >
+    > La cause est en amont, et elle n'est pas réparable au découpage : le
+    > recadrage de chaque image détruit, avant la fenêtre, la seule chose qui
+    > dirait où chaque sujet se tient par rapport aux autres. Ce qui reste
+    > possible, et qui est fait ici, est de **poser** chaque image dans la
+    > fenêtre selon la règle du produit — le bas sur le bas, le milieu sur le
+    > milieu — plutôt que de l'y découper depuis un coin.
+
+    Horizontalement, le sujet est **centré**, et c'est la seule réponse tenable :
+    la position relative de deux images est déjà perdue, donc un alignement à
+    gauche ferait sautiller la bande au gré des largeurs. `sur_grille` centre
+    déjà la boîte dans sa case quand il n'y a pas de fenêtre — c'est la même
+    règle, appliquée un cran plus tôt.
+    """
+    hauteur, largeur = preparee.shape[:2]
+    cadre = np.zeros((fenetre.hauteur, fenetre.largeur, 4), dtype=preparee.dtype)
+    x = max(0, (fenetre.largeur - largeur) // 2)
+    y = (
+        max(0, (fenetre.hauteur - hauteur) // 2)
+        if recette.grille is not None and recette.grille.ancrage == CENTRE
+        else max(0, fenetre.hauteur - hauteur)
+    )
+    # Une image plus grande que la fenêtre ne peut pas arriver — la fenêtre est
+    # l'union des boîtes —, mais un cadre posé à la main le peut : on garde
+    # alors ce qui tient, plutôt que de lever sur un rectangle que l'auteur a
+    # dessiné lui-même.
+    prise = preparee[: fenetre.hauteur - y, : fenetre.largeur - x]
+    cadre[y : y + prise.shape[0], x : x + prise.shape[1]] = prise
+    return cadre
+
+
+@dataclass(frozen=True, slots=True)
+class Planche:
+    """Les images d'une bande **côte à côte, en une seule image**.
+
+    C'est la forme qu'un moteur de jeu lit, et c'est aussi celle que l'écran de
+    montage anime : une image qu'on décale plutôt qu'une douzaine qu'on charge.
+    **Un seul objet pour les deux usages**, et c'est ce qui rend vrai sans
+    discipline le critère d'`A10` *ce qui sort est exactement ce que l'aperçu
+    montrait* — il n'y a rien d'autre à faire sortir.
+    """
+
+    octets: bytes
+    case_largeur: int
+    case_hauteur: int
+    compte: int
+
+    @property
+    def largeur(self) -> int:
+        return self.case_largeur * self.compte
+
+    def en_json(self) -> dict[str, Any]:
+        return {
+            "case_largeur": self.case_largeur,
+            "case_hauteur": self.case_hauteur,
+            "compte": self.compte,
+            "largeur": self.largeur,
+            "hauteur": self.case_hauteur,
+        }
+
+
+def assembler(
+    preparees: Sequence[np.ndarray], recette: Recette, fenetre: Fenetre | None
+) -> Planche:
+    """La planche de sprites de cette bande, dans l'ordre donné (A10).
+
+    **Elle passe par la même chaîne que `monter`**, et il ne pouvait pas en
+    aller autrement : deux chemins vers les mêmes pixels finiraient par ne plus
+    les rendre identiques, et c'est l'auteur qui découvrirait l'écart entre son
+    aperçu et son export.
+
+    **Les cases sont toutes de la taille de la plus grande**, et le sujet est
+    posé au centre en bas de la sienne. Avec une fenêtre commune et un
+    détourage, elles sortent déjà toutes identiques et rien n'est ajouté ; sans
+    détourage — un décor, une image entrée telle quelle —, elles peuvent
+    différer, et une planche à cases inégales n'est lisible par aucun moteur.
+    Le bas plutôt que le milieu, parce que c'est l'ancrage du produit : un
+    personnage se pose sur ses pieds.
+    """
+    pose = fenetre is not None and a_recadre(recette)
+    cadre = (
+        (0, 0, fenetre.largeur - 1, fenetre.hauteur - 1)
+        if pose
+        else (fenetre.en_tuple() if fenetre else None)
+    )
+    suite = _sans_recadrer(recette) if pose else recette
+    rendus = [
+        queue(poser_dans(image, fenetre, recette) if pose else image, suite, cadre)
+        for image in preparees
+    ]
+    if not rendus:
+        return Planche(octets=b"", case_largeur=0, case_hauteur=0, compte=0)
+
+    largeur = max(r.shape[1] for r in rendus)
+    hauteur = max(r.shape[0] for r in rendus)
+    planche = np.zeros((hauteur, largeur * len(rendus), 4), dtype=np.uint8)
+    for rang, image in enumerate(rendus):
+        h, l = image.shape[:2]
+        x = rang * largeur + (largeur - l) // 2
+        y = hauteur - h
+        planche[y : y + h, x : x + l] = image
+
+    return Planche(
+        octets=en_png(planche),
+        case_largeur=largeur,
+        case_hauteur=hauteur,
+        compte=len(rendus),
+    )
+
+
+def en_png(image: np.ndarray) -> bytes:
+    """Une image en octets PNG, **et le seul endroit du module qui encode**.
+
+    Partagé par la planche et par le sujet seul que l'écran de montage montre
+    sous le cadre. La raison est celle qui vaut partout ici : deux chemins vers
+    les mêmes pixels finissent par ne plus les rendre identiques, et c'est
+    l'auteur qui découvre l'écart.
+    """
+    from PIL import Image
+
+    tampon = io.BytesIO()
+    Image.fromarray(image, mode="RGBA").save(tampon, format="PNG", optimize=True)
+    return tampon.getvalue()
 
 
 # ── Les taches, et pourquoi le seuil se convertit ────────────────────────────

@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent cinquante et un pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent cinquante-quatre pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1276,3 +1276,34 @@ la prochaine réécriture retrouvera.
   et le défaut est revenu intact. La garde en sort élargie : *une correction de séance qui ne
   rejoint pas la branche principale le jour même n'existe pas — c'est la réécriture suivante qui
   décide, et elle ne sait rien.* Remise en place le 3 septembre 2026.
+
+- **Une couleur dont le nom n'existe pas ne lève rien : elle ne dessine rien.** Le thème déclare
+  `--color-signal`, `--color-bord`, `--color-fond-1` ; du code écrivait `var(--signal)`. Une
+  déclaration CSS dont la valeur ne se résout pas est **simplement ignorée** — pas d'erreur de
+  compilation, pas d'erreur de type, rien dans la console. Sur l'écran de montage, l'encadré des
+  images retenues et le liseré qui dit *quelle image passe en ce moment* ne s'étaient donc jamais
+  dessinés, et personne n'avait de quoi le savoir : **le navigateur d'essai ne résout pas les
+  variables de couleur**, donc un essai qui lirait la couleur calculée confirmerait n'importe
+  quoi. La garde est mécanique et ne dépend d'aucune relecture : *un essai qui parcourt les styles
+  posés en clair et refuse tout `var(--…)` dont le nom ne commence pas par `color-`*. ⚠️ Le même
+  nom court traîne ailleurs dans le dépôt, hors du terrain de la tranche — c'est une famille, pas
+  un accident. Payé le 4 septembre 2026.
+
+- **Les écouteurs d'un glissement se posent dans le geste, jamais dans un effet.** Le motif
+  courant — `onMouseDown` pose un état, un `useEffect` réagit à cet état et attache `mousemove` et
+  `mouseup` sur la fenêtre — a une course : **l'effet s'exécute après le rendu**, et un geste
+  rapide envoie son `mousemove` et son `mouseup` avant. Le glissement ne fait alors *rien du
+  tout*, sans la moindre erreur nulle part. Ce qui le rend durable est qu'un humain qui tire
+  lentement ne le voit jamais : le défaut ne se montre qu'au coup sec, c'est-à-dire au geste de
+  quelqu'un qui le refait pour la dixième fois. Les essais d'écran ne le voient pas non plus —
+  leur `fireEvent` vide la file des effets entre deux événements, ce que la vraie souris ne fait
+  pas. **La correction est d'attacher dans le gestionnaire lui-même**, et de tout détacher au
+  relâchement ; le point de départ vit alors dans la fermeture, ce qui a un second mérite — le
+  bord opposé ne dérive plus pendant qu'on tire. Payé le 4 septembre 2026.
+
+- **Un `mousedown` sur une poignée remonte à ce qui la porte.** Un rectangle qu'on déplace en le
+  tirant, avec des bords qu'on tire pour le redimensionner : sans `stopPropagation` sur les
+  bords, les deux gestes se déclenchent l'un après l'autre et **le dernier gagne** — tirer un bord
+  déplaçait la boîte entière, à taille constante. Le symptôme trompe, parce que quelque chose
+  bouge : on cherche l'erreur dans le calcul de la taille, jamais dans le fait qu'un second geste
+  a démarré. Payé le 4 septembre 2026, en même temps que le précédent et sur le même rectangle.

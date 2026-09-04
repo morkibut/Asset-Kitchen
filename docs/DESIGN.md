@@ -483,10 +483,28 @@ transition de couleur au maximum, jamais de transformation).
 | Repli / dépliage d'un panneau | 160 ms sur la largeur | tu n'as pas perdu ta place |
 | Ouverture / fermeture de la fiche | 160 ms sur la largeur | idem |
 | **Ce qui paraît sans clic** — menu de carte, infobulle | fondu 80 ms + 2 px de levée | c'est venu se poser par-dessus, la grille n'a pas bougé |
+| **Les deux boucles du montage** | continue, à la cadence de la bande — **réglée par l'auteur, pas par le design** | ce n'est pas un effet : c'est **la chose qu'on est venu juger** |
 
-La dernière rangée porte **deux locataires, et n'en accepte pas un troisième sans repasser
+L'avant-dernière rangée porte **deux locataires, et n'en accepte pas un troisième sans repasser
 par la règle d'admission** : elle est réservée à ce qui paraît sans qu'un geste ait dit
 qu'on le demandait. Un menu qui s'ouvre au clic n'y entre pas — le clic l'a déjà annoncé.
+
+**La septième rangée est d'une autre espèce que les six premières**, et c'est pour cela qu'elle
+entre sans affaiblir la règle *(le 4 septembre 2026, avec l'écran de montage)*. Les six premières
+sont des mouvements que le design **ajoute** à une chose immobile, pour la faire remarquer ; leur
+durée est donc une décision de design, et elle est courte. Celle-ci ne s'ajoute à rien :
+**l'animation est le contenu**, et la faire tenir tranquille reviendrait à cacher ce qu'on est
+venu regarder. Sa durée n'appartient pas au design non plus — c'est la vitesse de la bande, un
+réglage de l'auteur, et le même chiffre part dans le jeu.
+
+Ce qu'elle emporte de la règle générale, en revanche, tient toujours : **rien d'autre ne bouge
+pendant qu'elle tourne**. Les deux boucles partent ensemble et sur un seul métronome, parce que
+deux animations qui démarrent chacune quand elle a fini de charger ne se comparent plus.
+
+**Ce qu'elle n'autorise pas** : un aperçu qui s'anime au survol ailleurs dans le produit. La
+distinction est celle du geste — ici, on a ouvert un écran dont c'est le sujet ; une tuile de
+galerie qui se mettrait à bouger sous le pointeur serait un effet, et retomberait sous la règle
+d'admission des six premières rangées.
 
 **La règle qui garde la liste close**, posée le 27 août 2026 en refusant d'y ajouter le repli hors
 ligne : *un mouvement n'entre dans la liste que si la chose qui arrive n'a aucun autre moyen d'être

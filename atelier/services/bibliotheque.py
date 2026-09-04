@@ -32,6 +32,7 @@ from typing import Any, Iterable
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.asset import Asset
+from atelier.domaine.bande import Bande
 from atelier.domaine.consommation import est_argent
 from atelier.domaine.erreurs import ErreurAtelier
 from atelier.domaine.generation import Generation, Statut
@@ -193,17 +194,31 @@ class ServiceBibliotheque:
                     asset.modele = generation.modele
                 assets.append(asset)
 
+        # **Les bandes se relisent comme le reste** (A10). Une bande dont le clip
+        # n'est plus là ne revient pas : elle ne se recalcule qu'à partir des
+        # images de son clip, donc la garder sans lui laisserait une fiche qui ne
+        # peut plus rien rendre. Même règle qu'un asset sans image brute,
+        # appliquée à ce qui est fait de plusieurs images.
+        connus = {generation.identifiant for generation in generations}
+        bandes = [
+            Bande.depuis_json(fiche)
+            for clip, fiche in self._fichiers.parcourir_bandes()
+            if clip in connus
+        ]
+
         self._base.remplir(
             generations=generations,
             assets=assets,
             projets=projets,
             collections=collections,
+            bandes=bandes,
         )
         return {
             "projets": len(projets),
             "collections": len(collections),
             "generations": len(generations),
             "assets": len(assets),
+            "bandes": len(bandes),
         }
 
     # ── Les projets ──────────────────────────────────────────────────────────

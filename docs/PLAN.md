@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2` et `A9` closes le jour de l'ouverture | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9` et `A10` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. Les cinq tranches qui l'attendaient — `A12`, `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -250,7 +250,7 @@ V3    A6  le mouvement, dit une fois pour toutes
        │         ne bloque rien, mais c'est   │
        ▼         lui qui rend A12 tenable     │
       A10 le montage — le cœur de la version ◄┘
-       │
+       │   ← close le 4 septembre 2026
        ├──► A12  toutes les poses, en animation   ← l'objectif de la version
        ├──► A13  l'image attrapée au vol
        ├──► A4   la bande sort de l'atelier
@@ -2987,7 +2987,7 @@ la version**, et elle ne bloque plus rien.
 
 ---
 
-### A10 · Le montage — plusieurs animations dans un clip
+### A10 · Le montage — plusieurs animations dans un clip — ✅ **livrée le 4 septembre 2026**
 *13 US (441–453)* · **le cœur de la version**
 
 **Ce qu'on livre.** L'écran qui transforme un clip payé en bandes utilisables. Le clip s'ouvre en
@@ -3064,24 +3064,67 @@ supplémentaire.
 
 **Critères d'acceptation**
 
-- [ ] Un clip s'ouvre déjà en train de tourner, sans qu'on ait à régler quoi que ce soit
-- [ ] La fenêtre se déplace et se redimensionne à la souris ; l'aperçu brut **suit la main**, l'aperçu pixelisé se refait au relâchement
-- [ ] **Chaque image du clip se prend ou se laisse d'un clic**, et la bande n'est jamais forcée à des images régulièrement espacées — un pas de marche demande deux images serrées au contact et une seule pendant la glisse
-- [ ] Les images retenues se voient **dans l'ordre, au format de la bande**, et chacune se retire de là aussi
-- [ ] Le cadrage se **reprend à la main** quand l'automatique tombe mal, et l'écran dit lequel des trois cadres est en usage
-- [ ] Toutes les bandes d'un même clip partagent la même assise par défaut — **un personnage ne change pas de taille en passant du repos à la marche**
-- [ ] La recette du découpage se règle depuis cet écran, elle **part de celle du jeu**, et tout écart avec le jeu est écrit en clair
-- [ ] Plusieurs bandes se gardent depuis le même clip, chacune nommée, et la liste s'en voit
-- [ ] Une bande gardée dit **quelle case du plan de poses elle remplit** ; une bande sans case visée reste un brouillon et ne bloque rien
-- [ ] Ce qui sort est exactement ce que l'aperçu de droite montrait
-- [ ] La vitesse réglée ici est celle qui part à l'export
-- [ ] Les deux propositions de la machine — la boucle qui se referme, les moments calmes — s'affichent sans rien décider, et se ferment
-- [ ] Le prix par bande utilisable de ce clip se lit à l'écran, et **il baisse à chaque bande gardée**
-- [ ] Rien sur cet écran n'engage une dépense, et une phrase le dit
-- [ ] Tout se fait au clavier autant qu'à la souris, parce que le geste se répète trois fois par clip
-- [ ] Le guide reçoit sa ligne, et la table des mouvements du design reçoit **sa septième entrée avec sa raison** : ici le mouvement n'est pas un effet, c'est le contenu qu'on juge
+- [x] Un clip s'ouvre déjà en train de tourner, sans qu'on ait à régler quoi que ce soit
+- [x] La fenêtre se déplace et se redimensionne à la souris ; l'aperçu brut **suit la main**, l'aperçu pixelisé se refait au relâchement
+- [x] **Chaque image du clip se prend ou se laisse d'un clic**, et la bande n'est jamais forcée à des images régulièrement espacées — un pas de marche demande deux images serrées au contact et une seule pendant la glisse
+- [x] Les images retenues se voient **dans l'ordre, au format de la bande**, et chacune se retire de là aussi
+- [x] Le cadrage se **reprend à la main** quand l'automatique tombe mal, et l'écran dit lequel des trois cadres est en usage
+- [x] Toutes les bandes d'un même clip partagent la même assise par défaut — **un personnage ne change pas de taille en passant du repos à la marche**
+- [x] La recette du découpage se règle depuis cet écran, elle **part de celle du jeu**, et tout écart avec le jeu est écrit en clair
+- [x] Plusieurs bandes se gardent depuis le même clip, chacune nommée, et la liste s'en voit
+- [x] Une bande gardée dit **quelle case du plan de poses elle remplit** ; une bande sans case visée reste un brouillon et ne bloque rien
+- [x] Ce qui sort est exactement ce que l'aperçu de droite montrait
+- [x] La vitesse réglée ici est celle qui part à l'export
+- [x] Les deux propositions de la machine — la boucle qui se referme, les moments calmes — s'affichent sans rien décider, et se ferment
+- [x] Le prix par bande utilisable de ce clip se lit à l'écran, et **il baisse à chaque bande gardée**
+- [x] Rien sur cet écran n'engage une dépense, et une phrase le dit
+- [x] Tout se fait au clavier autant qu'à la souris, parce que le geste se répète trois fois par clip
+- [x] Le guide reçoit sa ligne, et la table des mouvements du design reçoit **sa septième entrée avec sa raison** : ici le mouvement n'est pas un effet, c'est le contenu qu'on juge
 
-**Bloquée par** — `A9` pour le clip, `A2` pour la fenêtre commune.
+**Ce qui a été livré, le 4 septembre 2026.** Trente-six essais côté atelier, dix-neuf côté écran,
+**aucun appel payant**. Le clip d'essai est fabriqué sur place — vingt-quatre images dont douze
+immobiles et douze où un bras s'allonge puis se replie —, de sorte que les deux propositions de la
+machine ont une réponse connue d'avance.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| L'écran de montage | `interface/src/composants/Montage.tsx` | les deux boucles sur un seul métronome, la pellicule et sa loupe, les images retenues dans l'ordre, le cadre, la recette, le pupitre, le prix par bande |
+| Ce qu'est une bande | `atelier/domaine/bande.py`, table `bandes` de `atelier/depot/base.py` | **une intention, pas des pixels** : des numéros d'image, un cadre, une recette. Sa planche est un cache, et la règle 5 de l'architecture s'applique sans exception |
+| Le service qui monte, garde et oublie | `atelier/services/montage.py` | l'ouverture en **un seul aller-retour**, l'étude chère gardée sur le disque à côté du clip, et le prix par bande |
+| Ce que la machine remarque | `atelier/image/rythme.py` | où le clip se repose, où sa boucle se referme. **Deux mesures différentes**, parce qu'un moment immobile est la boucle parfaite et la plus mauvaise animation qui soit |
+| La planche de sprites | `atelier/image/bande.py` § `assembler` | **le même objet** que l'aperçu anime et que l'export écrira : *ce qui sort est exactement ce que l'aperçu montrait* devient vrai par construction |
+| L'atelier jetable | `essais/atelier_jetable_a10.py` | le décor complet sur le port 8432, avec un clip dont on connaît la réponse |
+
+> ⚠️ **Cinq défauts que seuls les yeux ont vus**, et aucun essai n'en voyait un seul. C'est la
+> leçon d'`A9` répétée mot pour mot, avec deux familles de plus : **les essais d'écran ne résolvent
+> pas les couleurs**, et **ils ne mesurent pas le temps qu'un rendu prend**.
+>
+> | Ce qu'on a vu | Ce que c'était | Où c'est réparé |
+> |---|---|---|
+> | **Aucune des deux propositions ne paraissait**, sur un clip qui porte exactement les deux | la mesure prenait la **médiane** du mouvement pour repère. Un clip dont la moitié des images ne bougent pas a une médiane nulle, donc un seuil nul : la détection se taisait exactement quand le repos était le plus long | `atelier/image/rythme.py` § `_reference` — la moyenne de la moitié qui bouge le plus |
+> | *Une de plus ferait tomber ce prix à…* **annonçait le même prix** | avec zéro bande gardée, « une de plus » se calculait sur zéro : l'écran promettait une baisse qu'il ne montrait pas | `atelier/services/montage.py` § `_prix` |
+> | **Le liseré des images retenues ne s'était jamais dessiné**, ni celui qui dit quelle image passe | le style écrivait `var(--signal)`, et le thème déclare `--color-signal`. **Une couleur inconnue ne fait pas d'erreur, elle ne fait rien** : ni la compilation, ni les types, ni les essais d'écran n'avaient de quoi le voir | `interface/src/composants/Montage.tsx`, et un essai qui refuse tout nom de couleur hors `--color-` |
+> | Rejoindre le bouton *Garder* au clavier demandait **cent vingt et une pressions** | les cent vingt et une cellules du ruban étaient toutes dans l'ordre de tabulation. Le clavier de cet écran est fait autrement — on entre dans la pellicule, les flèches déplacent le curseur, l'espace prend ou laisse | même fichier — la pellicule est **un seul arrêt**, celui du curseur |
+> | **Tirer un bord du cadre ne faisait rien**, et quand ça faisait quelque chose, ça déplaçait | deux défauts d'un coup : les écouteurs de glissement étaient posés dans un `useEffect`, qui s'exécute **après** le rendu — un geste rapide passait entièrement avant lui ; et le `mousedown` d'un bord remontait au rectangle, qui l'entendait comme *déplacer* | même fichier — les écouteurs se posent dans le geste, et le bord arrête la propagation. **La même course existait aux poignées de la pellicule** et y est corrigée aussi |
+>
+> Les deux dernières lignes viennent d'un sixième constat, plus gênant que les cinq : **le bouton
+> *à la main* n'ouvrait rien.** Les trois choix de cadre s'affichaient, l'écran disait lequel était
+> en usage, et *à la main* allumait un mode que rien ne permettait de régler. Treize essais d'écran
+> passaient, parce qu'aucun ne demandait ce que le bouton **fait**.
+
+**Deux choix faits seuls, et voici pourquoi.**
+
+1. **Une bande n'est pas un asset.** Elle a sa table, son service, sa liste. En faire un asset
+   aurait obligé chaque endroit qui manipule une image à savoir qu'un asset peut en porter douze —
+   et le critère d'`A13`, *une image prélevée entre en bibliothèque comme une image de plus*, dit
+   exactement l'inverse : les images en sont, les bandes n'en sont pas.
+2. **L'écran prend la place de la grille dans la galerie**, comme l'écran du choix d'une planche.
+   Pas un quatrième onglet — un clip se découpe là où on le regarde — et pas un écran qui recouvre
+   le produit, parce que **cet écran-là ne dépense rien** et que le recouvrement est la marque de
+   ce qui paie.
+
+**Bloquée par** — `A9` pour le clip, `A2` pour la fenêtre commune. **Elle ne bloque plus rien** :
+`A12`, `A13`, `A4`, `A5` et `A7` l'attendaient toutes les cinq.
 
 ---
 

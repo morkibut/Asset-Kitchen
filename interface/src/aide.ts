@@ -1481,6 +1481,58 @@ export const AIDE: Record<string, Explication> = {
     long: "Aucun fournisseur ne déclare ça, et un écran qui proposerait deux modèles sans le dire ferait passer une hypothèse pour un résultat.\n\nVide veut dire *on n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un modèle proposé a été éprouvé.",
   },
 
+  // ── Le montage : découper un clip en bandes (A10) ─────────────────────────
+
+  "bande.nom": {
+    nom: "Le nom de l'animation",
+    ou: "galerie",
+    quoi: "Comment cette animation-là s'appellera, une fois tirée du clip.",
+    change:
+      "Ce que tu liras dans la liste des bandes, et ce qui partira dans le descriptif de l'export. **Un clip en porte plusieurs** : un même tirage donne souvent un repos et une marche, et sans nom tu ne saurais plus laquelle est laquelle.",
+    origine: "l'atelier propose le mouvement demandé · tu écris ce que tu veux",
+    long: "Une bande se garde sous un nom, toujours : c'est la seule chose que l'écran exige.\n\nLa case qu'elle remplit, elle, est facultative. **Une bande sans case est un brouillon, et un brouillon ne bloque rien** — tu gardes d'abord, tu ranges ensuite, comme partout ailleurs dans l'atelier.",
+  },
+
+  "bande.cadre": {
+    nom: "Le cadre de la bande",
+    ou: "galerie",
+    quoi: "Le rectangle sur lequel toutes les images de la bande sont recadrées.",
+    change:
+      "La taille à laquelle ton personnage sort, et **si elle reste la même d'une animation à l'autre**. Pris sur le clip entier, toutes les bandes de ce clip ont la même assise ; pris sur la bande seule, elles ne s'accordent plus entre elles.",
+    origine: "mesuré par l'atelier · repris à la main si besoin",
+    long: "Sans cadre commun, chaque image se recadre sur sa propre silhouette. Un bras tendu agrandit la silhouette, donc réduit tout le personnage : mesuré sur un vrai clip, **il grandit de dix pour cent en se mettant à marcher**.\n\nUne fenêtre par bande cale les images *d'une* bande entre elles ; il faut une fenêtre par clip pour caler *les bandes* entre elles. C'est pourquoi « du clip » est le choix par défaut.\n\nLes deux autres existent quand même : un cadrage automatique se trompe parfois, et une bande où le personnage quitte le champ a besoin du sien.",
+  },
+
+  "bande.recette": {
+    nom: "La recette du découpage",
+    ou: "galerie",
+    quoi: "Ce qu'on fait aux images du clip pour en tirer des sprites : détourer, réduire, limiter les couleurs.",
+    change:
+      "L'aspect de la bande, et rien d'autre. **Elle part de celle du jeu et ne s'y substitue jamais** : ce que tu changes ici s'écrit sur cette bande-là, ton jeu ne bouge pas, et la bande suivante repart du jeu.",
+    origine: "celle du jeu · modifiable pour cette bande",
+    long: "La règle a changé le 3 septembre 2026 : le jeu est le **point de départ**, jamais une prison. Une bande a le droit de sortir plus fine ou avec moins de couleurs que le reste.\n\nCe qui reste de l'ancienne règle en est le fond : **une bande qui s'écarte de son jeu le dit**, en clair, sous les réglages, une phrase par écart.\n\nChanger le détourage ne reprend pas le cadre tout seul : le cadre se mesure sur toutes les images du clip, ce qui prend une vingtaine de secondes, et c'est un bouton.",
+  },
+
+  "bande.vitesse": {
+    nom: "La vitesse de la bande",
+    ou: "galerie",
+    quoi: "Combien d'images par seconde, et dans quel sens elles se jouent.",
+    change:
+      "L'aperçu que tu regardes **et** ce qui partira dans ton moteur de jeu. C'est le même réglage : deux — un pour regarder, un pour livrer — finiraient par se contredire, et c'est toi qui découvrirais l'écart dans le jeu.",
+    origine: "proposée par le mouvement · réglée ici",
+    long: "*En boucle* : la dernière image est suivie de la première. *Aller-retour* : on repart en arrière au lieu de sauter au début — ce qui double la durée sans doubler les images, et qui est la bonne réponse pour un balancement, une respiration, une flamme.\n\nIl n'y a pas de *une seule fois* : ce n'est pas une propriété de la bande, c'est une décision de ton moteur au moment où il la joue.",
+  },
+
+  "bande.gardees": {
+    nom: "Les bandes de ce clip",
+    ou: "galerie",
+    quoi: "Ce que tu as déjà tiré de ce tirage-ci.",
+    change:
+      "Le prix par animation, qui **baisse à chaque bande gardée**. Un clip de cinq secondes porte plus qu'un cycle de marche, et c'est ce compteur qui te dit ce que tu as vraiment payé pour une animation utilisable.",
+    origine: "ce que tu as gardé",
+    long: "Effacer une bande n'efface ni le clip ni ses images : un découpage raté ne coûte rien. C'est toute la différence avec l'autre moitié de l'atelier, où jeter une image est jeter de l'argent.\n\nLe prix par bande est le seul chiffre que la version ne connaissait pas d'avance : combien de clips faut-il pour une animation utilisable. Il se remplit à l'usage, ici.",
+  },
+
   "agent.plafond": {
     nom: "Plafond de la séance",
     ou: "reglages",
