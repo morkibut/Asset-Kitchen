@@ -739,8 +739,15 @@ def test_la_vitesse_reglee_ici_est_celle_qui_part(client_video, clip):
     ).json()
     assert bande["cadence"] == 14
     assert bande["sens"] == ALLER_RETOUR
-    # Un aller-retour dure deux fois le tour sans coûter deux fois les images.
-    assert bande["secondes"] == pytest.approx(8 / 14, abs=0.01)
+    # ⚠️ **Un aller-retour dure presque deux tours, pas tout à fait deux.**
+    # Quatre images en jouent six — 0, 1, 2, 3, 2, 1 — et non huit : les deux
+    # bouts ne se rejouent pas, sans quoi le mouvement marquerait un temps
+    # d'arrêt à chaque extrémité. Cet essai attendait huit jusqu'en `A4`, et il
+    # se trompait avec le code : ni la vignette de la matrice ni le format
+    # d'export ne rejouent les bouts. Personne ne l'avait vu parce que ce nombre
+    # ne paraissait nulle part — `A4` le fait sortir de l'atelier, et un nombre
+    # qui part dans un fichier de jeu doit être celui que le fichier joue.
+    assert bande["secondes"] == pytest.approx(6 / 14, abs=0.01)
 
 
 def test_une_cadence_nulle_se_refuse(client_video, clip):

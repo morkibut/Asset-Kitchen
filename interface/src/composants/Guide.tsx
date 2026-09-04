@@ -482,6 +482,21 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               clip, lui, a été payé une fois.
             </P>
             <P>
+              <B>Une animation sort de l'atelier en trois fichiers.</B> La planche — toutes ses
+              images côte à côte, ce qu'un moteur de jeu charge —, un petit fichier qui la décrit,
+              et une image qui tourne toute seule, pour la montrer sans rien installer. Deux
+              endroits pour la faire sortir : <C>Sortir ›</C> sur la ligne d'une animation que tu
+              viens de tailler, et <C>Sortir ses animations ›</C> sous la jauge du calque animé,
+              qui les emporte <B>toutes en une seule archive</B>.
+            </P>
+            <P>
+              Le petit fichier n'est pas de nous : c'est <B>celui qu'écrit Aseprite</B>, et c'est
+              le plus lu par les moteurs. Un moteur qui sait le lire fabrique l'animation tout
+              seul, à la bonne vitesse et dans le bon sens. Ce que l'atelier sait en plus — de quel
+              clip elle vient, ce qui a été payé, quels réglages — est écrit <B>à côté</B>, dans un
+              fichier à part : on n'ajoute rien dans le format des autres.
+            </P>
+            <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
               barre des tables d'une image, à droite du trait — la première des deux fabriques.
               Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce

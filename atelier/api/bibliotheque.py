@@ -23,6 +23,7 @@ from typing import Any
 from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
+from atelier.api.routes import reponse_archive
 from atelier.services import Atelier
 
 routeur = APIRouter()
@@ -266,18 +267,7 @@ async def exporter(requete: Request, corps: CorpsExport) -> Response:
     **Aucun réseau, aucun centime.** Le service n'importe pas de fournisseur ;
     ce qui part est déjà sur le disque.
     """
-    archive = _atelier(requete).export.exporter(corps.identifiants)
-    return Response(
-        content=archive.octets,
-        media_type="application/zip",
-        headers={
-            "Content-Disposition": f'attachment; filename="{archive.nom}"',
-            # Le navigateur lit le nom du fichier dans l'en-tête ci-dessus, et
-            # il ne le voit pas sans ça : `Content-Disposition` ne fait pas
-            # partie des en-têtes qu'une réponse expose d'elle-même à `fetch`.
-            "Access-Control-Expose-Headers": "Content-Disposition",
-        },
-    )
+    return reponse_archive(_atelier(requete).export.exporter(corps.identifiants))
 
 
 @routeur.get("/assets/{identifiant}/lineage")

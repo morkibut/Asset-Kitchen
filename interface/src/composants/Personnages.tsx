@@ -40,6 +40,7 @@ import {
   api,
   CE_QU_ON_PREND,
   NOM_DE_CE_QU_ON_PREND,
+  poserLeFichier,
   type AmbianceDuJeu,
   type Asset,
   type Bande,
@@ -1682,6 +1683,11 @@ function Cases({
   // l'écran d'avant, au pixel près, et la seule chose qui s'ajoute est la
   // bascule — sans quoi le calque animé serait inatteignable.
   const [calqueMatrice, setCalqueMatrice] = useState<CalqueDeLaMatrice>("images")
+  /** L'archive des animations est en train de se fabriquer (A4). Elle ne coûte
+   *  rien mais elle prend un instant — une planche par bande, et une image
+   *  animée découpée dedans —, et un bouton qui ne dit rien pendant ce temps-là
+   *  se reclique. */
+  const [sort, setSort] = useState(false)
   // Une pose décochée du plan, ou retirée au personnage, sort d'elle-même : on
   // ne retient que des identifiants, et on les relit dans le plan vivant.
   const lot = tenues.filter((p) => cochees.includes(p.identifiant))
@@ -1736,6 +1742,27 @@ function Cases({
       await api.affecterLaBande(bande, null, null)
     } catch (erreur) {
       onErreur(erreur, "retrait refusé")
+    }
+  }
+
+  /** Toutes les animations de ce personnage sortent, en une archive (A4).
+   *
+   *  **L'interface ne dresse pas la liste**, et c'est le point : « les
+   *  animations de ce personnage » a déjà une écriture, celle qui remplit ce
+   *  calque-ci, et la refaire ici en aurait fait une deuxième. On nomme le
+   *  personnage, le serveur rassemble.
+   *
+   *  Le bouton est sur le calque animé et nulle part ailleurs : c'est là qu'on
+   *  regarde ce qui va sortir, et c'est là qu'on voudra le faire sortir. */
+  const sortirLesAnimations = async () => {
+    if (sort) return
+    setSort(true)
+    try {
+      poserLeFichier(await api.exporterLesBandesDuPersonnage(personnage.identifiant))
+    } catch (erreur) {
+      onErreur(erreur, "sortie refusée")
+    } finally {
+      setSort(false)
     }
   }
 
@@ -2034,6 +2061,30 @@ function Cases({
             className="mesure ml-auto px-1 text-[10px] text-signal hover:text-signal-clair"
           >
             {piece ? "Habiller ensemble ›" : "Fabriquer ensemble ›"}
+          </button>
+        </div>
+      )}
+
+      {/* **La sortie des animations** (A4), et elle ne vit que sur le calque
+          animé : c'est là qu'on regarde ce qui va sortir. Elle ne porte aucun
+          nombre, et c'est délibéré — l'archive emporte *toutes* les animations
+          du personnage, y compris celles d'une attitude rangée sous le trait,
+          que la jauge ci-dessus ne compte pas. Un chiffre affiché ici aurait
+          annoncé moins que ce que l'archive contient. */}
+      {calqueMatrice === "animations" &&
+        personnage.cases.some((c) => c.bandes.length > 0) && (
+        <div className="flex items-center gap-2 pt-1">
+          <span className="mesure text-[10px] text-texte-3">
+            planche de sprites, son descriptif, et une image qui tourne
+          </span>
+          <button
+            type="button"
+            disabled={sort}
+            onClick={() => void sortirLesAnimations()}
+            title="toutes ses animations, dans une seule archive — rien n'est dépensé"
+            className="mesure ml-auto px-1 text-[10px] text-texte-2 hover:text-texte disabled:opacity-40"
+          >
+            {sort ? "…" : "Sortir ses animations ›"}
           </button>
         </div>
       )}

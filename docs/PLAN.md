@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. Les trois tranches qui restent — `A4`, `A5`, `A7` — sont libres | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée devient une planche de sprites, son fichier d'accompagnement dans le format que les moteurs lisent, et une image qui tourne toute seule — jusque-là, une bande ne servait qu'à être regardée dans l'atelier. Les deux tranches qui restent — `A5`, `A7` — sont libres | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -255,7 +255,8 @@ V3    A6  le mouvement, dit une fois pour toutes
        │         ← close le 4 septembre 2026
        ├──► A13  l'image attrapée au vol
        │         ← close le 4 septembre 2026
-       ├──► A4   la bande sort de l'atelier
+       ├──► A4   la bande sort de l'atelier       ← la version devient livrable
+       │         ← close le 4 septembre 2026
        ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
        └──► A7   reprendre une image sans refaire la bande
 
@@ -3484,8 +3485,8 @@ depuis `A10` et `T2`.
 
 ---
 
-### A4 · La bande sort de l'atelier
-*4 US (385–388)*
+### A4 · La bande sort de l'atelier — ✅ **livrée le 4 septembre 2026**
+*4 US (385–388)* · **la version devient livrable**
 
 **Ce qu'on livre.** Une bande gardée devient un fichier utilisable dans un moteur de jeu : planche
 de sprites accompagnée de sa description, et image animée pour la montrer sans rien installer. La
@@ -3505,14 +3506,53 @@ squelette partait avec le pantin ; elle sort du plan avec lui.*
 
 **Critères d'acceptation**
 
-- [ ] Une bande sort en planche de sprites, avec un descriptif qui dit la taille d'une case, leur nombre et leur ordre
-- [ ] Le descriptif est écrit dans le format existant le plus lu, jamais dans un format inventé ici
-- [ ] Une bande sort en image animée, lisible sans moteur de jeu
-- [ ] La cadence est écrite dans le descriptif, et l'image animée la respecte
-- [ ] Toutes les bandes d'un personnage sortent en une seule archive
-- [ ] Ce qui sort est exactement ce que l'aperçu montrait — mêmes pixels, même fenêtre
+- [x] Une bande sort en planche de sprites, avec un descriptif qui dit la taille d'une case, leur nombre et leur ordre
+- [x] Le descriptif est écrit dans le format existant le plus lu, jamais dans un format inventé ici
+- [x] Une bande sort en image animée, lisible sans moteur de jeu
+- [x] La cadence est écrite dans le descriptif, et l'image animée la respecte
+- [x] Toutes les bandes d'un personnage sortent en une seule archive
+- [x] Ce qui sort est exactement ce que l'aperçu montrait — mêmes pixels, même fenêtre
 
-**Bloquée par** — `A10`.
+**Ce qui a été livré, le 4 septembre 2026.** Dix-huit essais côté atelier, six côté écran, et le
+pronostic du plan s'est vérifié : **ce qui s'ajoutait était le format, pas la machinerie**. Trois
+fichiers sortent par animation — la planche, son descriptif, et une image qui tourne toute seule —
+et ils sont accompagnés du descriptif de l'atelier, celui qui existe depuis `T6`.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| Le fichier d'accompagnement | `atelier/domaine/aseprite.py` | **le format d'Aseprite, écrit tel quel**, clé par clé, d'après un relevé fait avant l'ouverture de la tranche (`revue-externe-2026-09-02/research/12-ui-hud-exports.md`, lignes 148, 152 et 159). Ce que ça ouvre sans une ligne de plus : Phaser fabrique l'animation tout seul en lisant l'étiquette, l'extension Godot la plus installée lit le même fichier, et ses quatre champs de base sont aussi ceux de l'outil d'atlas le plus répandu — le fichier se lit donc **aussi** comme un atlas ordinaire |
+| L'ordre, porté par la forme | même fichier, `frames` en **liste** | le format existe en deux formes ; celle en dictionnaire range les images sous leur nom, et l'ordre des clés d'un objet JSON n'est garanti par aucune norme. *Le descriptif dit leur ordre* est un critère : une liste le porte dans sa forme |
+| L'image animée | `atelier/image/bande.py` § `en_image_animee` | ⚠️ **elle est découpée dans la planche exportée**, pas refaite à côté : les deux fichiers de l'archive ne peuvent pas diverger, l'un est fait de l'autre. C'est le sixième critère rendu vrai **par construction** |
+| Le format de l'image animée | même fonction | un **PNG animé**, et pas un GIF : c'est le seul format d'image animée qui garde les couleurs et la transparence telles quelles — un GIF n'en connaît que deux cent cinquante-six et une transparence tout-ou-rien, donc il changerait les pixels qu'on vient de promettre identiques. Et un lecteur qui ne saurait pas l'animer **affiche la première image au lieu d'échouer**, parce qu'un PNG animé est un PNG |
+| Les deux sorties | `POST /strips/export`, `POST /characters/{id}/strips/export` | une sélection d'animations, ou toutes celles d'un personnage. **L'écran ne dresse pas la liste** : « les animations de ce personnage » a déjà une écriture, celle qui remplit le calque animé de la matrice, et la refaire ici en aurait fait une deuxième |
+| Les deux boutons | l'écran de montage, le calque animé de la matrice | sur la ligne de la bande qu'on vient de tailler, et sous la jauge qui compte les animations. Les deux endroits où l'on regarde ce qui va sortir |
+| L'atelier jetable | `essais/atelier_jetable_a4.py` | il **fabrique l'archive et la déplie sur le disque** avant même d'ouvrir : c'est ce qu'il y a de plus utile à regarder, et l'écran ne peut pas le montrer |
+
+> ⚠️ **Un aller-retour durait deux images de trop, et rien ne le disait** (corrigé ici). La fiche
+> d'une bande comptait sa durée comme `images × 2` — ce qui suppose que les deux bouts se rejouent
+> au demi-tour. Ni la vignette de la matrice ne le fait, ni le format d'export : sur quatre images,
+> un va-et-vient en joue six — 0, 1, 2, 3, 2, 1 — et non huit. Personne ne l'avait vu **parce que
+> ce nombre ne paraissait nulle part** : il vivait dans la fiche, et aucun écran ne l'affichait.
+> `A4` le fait sortir de l'atelier, et un nombre qui part dans un fichier de jeu doit être celui
+> que le fichier joue. Un essai d'`A10` attendait l'ancienne valeur et se trompait avec le code.
+
+**Trois choix faits seuls, et voici pourquoi.**
+
+1. **Le service d'export reçoit le montage, et ça n'entame rien.** Sa première phrase promet qu'il
+   n'appelle jamais le fournisseur, et le montage n'en a pas non plus — ni catalogue, ni animateur.
+   Il est là pour **une seule chose** : refaire la planche quand son cache a sauté. La recalculer
+   dans l'export en aurait fait une seconde écriture, et deux chemins vers les mêmes pixels
+   finissent par ne plus les rendre identiques.
+2. **Une archive, et pas le dossier du jeu**, alors que la sortie d'un personnage fait l'inverse.
+   Ce que la tranche demande est *une seule archive* ; poser en plus les fichiers dans le dossier
+   du jeu serait une seconde sortie que personne n'a demandée. Le jour où on la voudra, elle
+   s'écrira comme celle du dessus, par le même code.
+3. **Le descriptif de l'atelier reste à côté du format emprunté**, il ne s'y glisse pas. De quel
+   clip l'animation est tirée, quelles images du clip elle retient, quelle recette, quel appel a
+   été payé : rien de tout ça n'a de place dans un fichier qui appartient à quelqu'un d'autre, et
+   l'y ajouter est exactement la façon dont un format emprunté devient un dialecte maison.
+
+**Bloquée par** — `A10`. **Elle ne bloque rien.**
 
 ---
 

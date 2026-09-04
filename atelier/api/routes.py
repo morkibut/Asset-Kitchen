@@ -50,6 +50,7 @@ from atelier.image import rendre_en_png, vignette
 from atelier.reglages import deposer_secret, retirer_secret
 from atelier.services import Atelier
 from atelier.services.assets import AssetInconnu, TRACE_MAX
+from atelier.services.export import Archive
 from atelier.services.catalogue import EtatFournisseur
 
 routeur = APIRouter()
@@ -65,6 +66,26 @@ BATTEMENT = ": battement\n\n"
 
 def _atelier(requete: Request) -> Atelier:
     return requete.app.state.atelier
+
+
+def reponse_archive(archive: Archive) -> Response:
+    """Une archive rendue au navigateur, **et il y a trois routes qui le font**.
+
+    Une pour une sélection d'images (T6), deux pour des animations (`A4`). Les
+    trois disent la même chose, et l'en-tête du milieu est celui qu'on oublie :
+    sans lui, le navigateur *reçoit* le nom du fichier mais `fetch` ne le voit
+    pas, et l'interface sauve l'archive sous un nom qu'elle a inventé. C'était
+    déjà écrit une fois ; le recopier une troisième aurait fini par le perdre
+    quelque part.
+    """
+    return Response(
+        content=archive.octets,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{archive.nom}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
 
 
 # ── L'état d'ouverture ───────────────────────────────────────────────────────

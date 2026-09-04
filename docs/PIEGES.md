@@ -1369,3 +1369,26 @@ la prochaine réécriture retrouvera.
   voit : un essai clique le bouton là où il est, il ne traverse pas l'écran pour aller le
   chercher. La règle : **le jour où l'on pose un geste sur une surface qui n'en portait pas, on
   relit d'abord *quand elle disparaît*.** Payé le 4 septembre 2026.
+
+
+- **Un chiffre qu'aucun écran ne montre n'est vérifié par personne — et son essai se trompe avec
+  lui.** La fiche d'une bande comptait la durée d'un aller-retour comme *images × 2*, ce qui
+  suppose que les deux bouts se rejouent au demi-tour. Ni la vignette de la matrice ne le fait, ni
+  le format d'export : quatre images en jouent **six** — 0, 1, 2, 3, 2, 1 — et non huit. Le chiffre
+  était faux depuis sa naissance, un essai l'affirmait, et **rien ne pouvait le contredire** : il
+  vivait dans une fiche que personne n'affichait. ⚠️ Il n'a été vu qu'au moment où une tranche l'a
+  fait *sortir de l'atelier*, dans un fichier destiné à un moteur de jeu. La règle : **une valeur
+  calculée que rien n'affiche est une hypothèse, pas une mesure** — quand une tranche la fait
+  sortir, on la recalcule à la main avant de la croire, et on relit son essai en se demandant s'il
+  ne fait que répéter le code. Payé le 4 septembre 2026.
+
+
+- **Un format emprunté ne se dégrade pas d'un coup : il se dégrade d'une clé.** Le fichier
+  d'accompagnement d'une planche de sprites est écrit dans le format d'un autre outil, pour qu'un
+  moteur de jeu l'ouvre sans rien apprendre. Ce qui le tue n'est pas une réécriture, c'est une clé
+  ajoutée « qui ne gêne personne », puis une clé renommée pour faire plus clair — et six mois plus
+  tard le fichier ne s'ouvre plus nulle part, sans qu'aucun essai n'ait jamais rougi. ⚠️ **Un essai
+  qui vérifie que les bonnes clés sont là ne suffit pas** : il faut vérifier qu'il n'y en a pas
+  d'autres, c'est-à-dire comparer le **jeu de clés exact**. Ce qui appartient à l'atelier — d'où
+  vient l'animation, ce qui a été payé, quelle recette — se met **à côté**, dans le descriptif
+  maison, jamais dedans. Payé le 4 septembre 2026.

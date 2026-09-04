@@ -5100,43 +5100,71 @@ export const api = {
   telechargementAsset: (identifiant: string, brut = false) =>
     `/api/assets/${identifiant}/download?brut=${brut}`,
 
-  /** L'archive d'une sélection (US-76) — **le seul appel qui ne rende pas du
-   *  JSON**, d'où son chemin à part.
+  /** L'archive d'une sélection d'images (US-76). */
+  exporter: (identifiants: string[]): Promise<Archive> =>
+    archive("/api/exports", { identifiants }),
+
+  /** L'archive d'une sélection d'animations (A4).
    *
-   *  Un `POST` parce qu'une sélection de deux cents identifiants ne tient pas
-   *  dans une adresse, et un lien `download` ne sait pas poster. Le refus, lui,
-   *  revient en JSON comme partout ailleurs : c'est le même `Refus` que le
-   *  reste de l'interface affiche, et l'export ne s'invente pas de message.
+   *  Trois fichiers par animation en sortent : la planche de sprites, le
+   *  fichier d'accompagnement qui la décrit, et une image qui tourne toute
+   *  seule. **L'interface ne choisit rien de tout ça** — ce qui sort d'une
+   *  bande est fixé par le produit, et le laisser régler ici en ferait trois
+   *  réglages à tenir de deux côtés. */
+  exporterLesBandes: (identifiants: string[]): Promise<Archive> =>
+    archive("/api/strips/export", { identifiants }),
+
+  /** Toutes les animations d'un personnage, en une seule archive (A4).
    *
-   *  Le nom du fichier vient du serveur, jamais d'ici : deux endroits qui
-   *  nommeraient la même archive finiraient par ne plus dire la même date. */
-  exporter: async (identifiants: string[]): Promise<Archive> => {
-    let reponse: Response
-    try {
-      reponse = await fetch("/api/exports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifiants }),
-      })
-    } catch {
-      throw new Refus("l'atelier ne répond pas", "atelier_arrete")
-    }
-    if (!reponse.ok) {
-      const charge = await reponse.json().catch(() => null)
-      throw new Refus(
-        charge?.raison ?? `l'atelier a répondu ${reponse.status}`,
-        charge?.code ?? "erreur",
-        charge?.ou_aller ?? null,
-      )
-    }
-    return {
-      nom: nomDeFichier(reponse.headers.get("Content-Disposition")),
-      octets: await reponse.blob(),
-    }
-  },
+   *  **Le serveur décide lesquelles**, et c'est le point : « les animations de
+   *  ce personnage » a déjà une écriture, celle qui remplit le calque animé de
+   *  la matrice. En rassembler la liste ici en aurait fait une deuxième, et
+   *  l'archive aurait fini par ne plus contenir ce que la jauge comptait. */
+  exporterLesBandesDuPersonnage: (
+    personnage: string,
+    projet?: string | null,
+  ): Promise<Archive> =>
+    archive(`/api/characters/${personnage}/strips/export`, {
+      projet: projet ?? null,
+    }),
 }
 
 export type Archive = { nom: string; octets: Blob }
+
+/** Une archive fabriquée par l'atelier — **les seuls appels qui ne rendent pas
+ *  du JSON**, d'où ce chemin à part.
+ *
+ *  Un `POST` parce qu'une sélection de deux cents identifiants ne tient pas
+ *  dans une adresse, et un lien `download` ne sait pas poster. Le refus, lui,
+ *  revient en JSON comme partout ailleurs : c'est le même `Refus` que le reste
+ *  de l'interface affiche, et un export ne s'invente pas de message.
+ *
+ *  Le nom du fichier vient du serveur, jamais d'ici : deux endroits qui
+ *  nommeraient la même archive finiraient par ne plus dire la même date. */
+async function archive(url: string, corps: unknown): Promise<Archive> {
+  let reponse: Response
+  try {
+    reponse = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corps),
+    })
+  } catch {
+    throw new Refus("l'atelier ne répond pas", "atelier_arrete")
+  }
+  if (!reponse.ok) {
+    const charge = await reponse.json().catch(() => null)
+    throw new Refus(
+      charge?.raison ?? `l'atelier a répondu ${reponse.status}`,
+      charge?.code ?? "erreur",
+      charge?.ou_aller ?? null,
+    )
+  }
+  return {
+    nom: nomDeFichier(reponse.headers.get("Content-Disposition")),
+    octets: await reponse.blob(),
+  }
+}
 
 /** Le nom que le serveur a posé dans `Content-Disposition`.
  *

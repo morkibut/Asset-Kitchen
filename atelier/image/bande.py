@@ -360,6 +360,77 @@ def en_png(image: np.ndarray) -> bytes:
     return tampon.getvalue()
 
 
+def en_image_animee(
+    planche: bytes,
+    case_largeur: int,
+    case_hauteur: int,
+    ordre: Sequence[int],
+    duree_ms: int,
+) -> bytes:
+    """La bande en une image qui tourne toute seule, **découpée dans sa planche** (A4).
+
+    ⚠️ **Elle est faite de la planche, pas des mêmes images que la planche**, et
+    c'est ce qui rend vrai le sixième critère de la tranche — *ce qui sort est
+    exactement ce que l'aperçu montrait* — sans avoir à y veiller. Les deux
+    fichiers de l'archive ne peuvent pas diverger : le second est **découpé
+    dans** le premier. Refaire les images une seconde fois pour l'animation
+    aurait rouvert la porte que `assembler` avait fermée.
+
+    **Le format est un PNG animé**, et le choix se tient en deux phrases. C'est
+    le seul format d'image animée qui garde les couleurs et la transparence
+    telles quelles : un GIF ne connaît que deux cent cinquante-six couleurs et
+    une transparence tout-ou-rien, et il changerait donc les pixels qu'on vient
+    de promettre identiques. Et un lecteur qui ne saurait pas l'animer affiche
+    la première image au lieu d'échouer — un PNG animé **est** un PNG.
+
+    `ordre` est la suite des cases jouées, celle d'`aseprite.ordre_des_images` :
+    en aller-retour, elle redescend sans rejouer les bouts, exactement comme
+    l'écran. `duree_ms` est le temps d'une image, celui-là même qui part dans le
+    descriptif — un seul nombre pour les deux, arrondi une seule fois.
+
+    *Deux cases voisines identiques sont fondues en une seule, de durée double :
+    c'est l'encodeur qui le fait, la durée totale ne bouge pas, et la bande joue
+    la même chose.*
+    """
+    from PIL import Image
+
+    if not ordre or case_largeur <= 0 or case_hauteur <= 0:
+        return b""
+
+    with Image.open(io.BytesIO(planche)) as ouverte:
+        entiere = ouverte.convert("RGBA")
+        cases = [
+            entiere.crop(
+                (
+                    rang * case_largeur,
+                    0,
+                    (rang + 1) * case_largeur,
+                    case_hauteur,
+                )
+            )
+            for rang in ordre
+        ]
+
+    tampon = io.BytesIO()
+    cases[0].save(
+        tampon,
+        format="PNG",
+        save_all=True,
+        append_images=cases[1:],
+        duration=duree_ms,
+        # Sans fin. Une bande tourne ; combien de tours elle fait appartient au
+        # jeu qui la joue, et l'écrire ici inventerait une décision.
+        loop=0,
+        # **Effacer avant de poser, et poser sans mélanger.** Une image de sprite
+        # est trouée : sans ces deux réglages, chaque case laisserait voir la
+        # précédente au travers de ses trous, et le personnage traînerait
+        # derrière lui toutes ses poses passées.
+        disposal=1,
+        blend=0,
+    )
+    return tampon.getvalue()
+
+
 # ── Les taches, et pourquoi le seuil se convertit ────────────────────────────
 
 

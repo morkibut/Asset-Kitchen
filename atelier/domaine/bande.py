@@ -198,11 +198,28 @@ class Bande:
 
     @property
     def secondes(self) -> float:
-        """La durée d'un tour, telle qu'elle tournera dans le jeu."""
+        """La durée d'un tour, telle qu'elle tournera dans le jeu.
+
+        > ### ⚠️ Un aller-retour durait deux images de trop (corrigé en `A4`,
+        > ### 4 septembre 2026)
+        >
+        > Le compte était `compte × 2`, ce qui suppose que les deux bouts se
+        > rejouent au demi-tour. Ni l'écran ne le fait — la vignette de la
+        > matrice repart sur l'avant-dernière image —, ni le format d'export.
+        > Sur huit images à huit par seconde, la fiche annonçait deux secondes
+        > là où l'écran en jouait une et trois quarts. Personne ne l'avait vu :
+        > ce nombre ne paraissait nulle part. `A4` le fait sortir de l'atelier,
+        > et un nombre qui part dans un fichier de jeu doit être celui que le
+        > fichier joue.
+        """
         if self.cadence <= 0:  # pragma: no cover — refusé à l'écriture
             return 0.0
-        tours = self.compte * (2 if self.sens == ALLER_RETOUR else 1)
-        return round(tours / self.cadence, 2)
+        jouees = (
+            max(self.compte * 2 - 2, self.compte)
+            if self.sens == ALLER_RETOUR
+            else self.compte
+        )
+        return round(jouees / self.cadence, 2)
 
     def en_json(self) -> dict[str, Any]:
         return {

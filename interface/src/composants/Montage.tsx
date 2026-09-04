@@ -35,6 +35,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   api,
   dollars,
+  poserLeFichier,
   type ApercuDeBande,
   type Asset,
   type Bande,
@@ -68,6 +69,10 @@ export function EcranMontage({
 }) {
   const [montage, setMontage] = useState<Montage | null>(null)
   const [refus, setRefus] = useState<string | null>(null)
+  /** L'animation qui est en train de sortir (A4). **Une à la fois** : le
+   *  navigateur ne pose qu'un fichier par clic, et deux archives fabriquées en
+   *  même temps arriveraient dans le désordre. */
+  const [sort, setSort] = useState<string | null>(null)
 
   // ── Ce que l'auteur compose ───────────────────────────────────────────────
   /** Les images retenues, **dans l'ordre où elles se jouent**. Rien n'oblige à
@@ -332,6 +337,26 @@ export function EcranMontage({
       api.ouvrirLeMontage(clip).then((recu) => setMontage(recu)).catch(() => {})
     } catch (erreur) {
       onErreur(erreur instanceof Error ? erreur.message : "la bande ne s'efface pas")
+    }
+  }
+
+  /** Une animation sort de l'atelier (A4).
+   *
+   *  **Ici, sur la ligne de la bande**, et pas dans une barre d'export à part :
+   *  on vient de la garder, on veut la voir tourner dans son moteur, et une
+   *  sortie qui obligerait à changer d'écran ferait perdre le clip ouvert.
+   *
+   *  Ce qui part est décidé par l'atelier — la planche, son descriptif, l'image
+   *  animée —, et le nom du fichier vient de lui aussi. */
+  const sortir = async (identifiant: string) => {
+    setRefus(null)
+    setSort(identifiant)
+    try {
+      poserLeFichier(await api.exporterLesBandes([identifiant]))
+    } catch (erreur) {
+      setRefus(erreur instanceof Error ? erreur.message : "l'animation ne sort pas")
+    } finally {
+      setSort(null)
     }
   }
 
@@ -705,6 +730,16 @@ export function EcranMontage({
                   <span className="mesure ml-auto text-[10px] text-texte-3">
                     {bande.compte} images
                   </span>
+                  <button
+                    type="button"
+                    disabled={sort !== null}
+                    onClick={() => void sortir(bande.identifiant)}
+                    aria-label={`Sortir l'animation ${bande.nom}`}
+                    title="planche de sprites, son descriptif, et une image qui tourne"
+                    className="mesure text-[10px] text-texte-3 hover:text-texte disabled:opacity-40"
+                  >
+                    {sort === bande.identifiant ? "…" : "Sortir ›"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => void oublier(bande.identifiant)}

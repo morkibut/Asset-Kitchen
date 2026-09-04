@@ -107,7 +107,12 @@ def _poser_une_bande(
         nom=nom,
         images=(0, 2, 4, 6),
         cadence=8.0,
-        cadre=Cadre(0, 0, 23, 23),
+        # **Nommés, et pas posés dans l'ordre** : le premier champ d'un cadre
+        # est *d'où il vient*, pas son bord gauche. Sans les noms, la bande
+        # sortait avec un cadre de seize de large là où elle en annonçait
+        # vingt-quatre — sans rien casser ici, et c'est bien le problème (vu en
+        # `A4`, la tranche qui fait sortir ces nombres de l'atelier).
+        cadre=Cadre(gauche=0, sommet=0, droite=23, bas=23),
         projet=atelier.bibliotheque.courant,
         personnage=personnage,
         pose=pose,

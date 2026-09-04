@@ -1402,7 +1402,11 @@ function serveurDouble(options: {
     // dont la réponse est un fichier. Le double rend donc ce que le vrai
     // serveur rend : des octets, et le nom du fichier dans l'en-tête. Le refus,
     // lui, reste du JSON comme partout ailleurs.
-    if (url === "/api/exports") {
+    // **Les trois routes qui rendent une archive**, et non plus une seule :
+    // `A4` fait sortir les animations, en sélection et par personnage. Elles
+    // répondent toutes de la même façon — c'est le même code au serveur —, et
+    // le double n'a donc qu'une seule branche à tenir.
+    if (url === "/api/exports" || url.endsWith("/strips/export")) {
       if (options.refusExport)
         return {
           ok: false,
@@ -1413,13 +1417,23 @@ function serveurDouble(options: {
             ou_aller: null,
           }),
         } as unknown as Response
+      // **Trois noms distincts, parce que le serveur en rend trois.** Une
+      // archive d'animations ne s'appelle pas comme une archive d'images, et
+      // celle d'un personnage porte son nom : c'est ce qui permet à un essai de
+      // dire *quelle* sortie a été prise, et non seulement qu'il y en a eu une.
+      const nom =
+        url === "/api/exports"
+          ? "atelier-20260827-1743.zip"
+          : url === "/api/strips/export"
+            ? "atelier-animations-20260904-1743.zip"
+            : "le-nain-animations-20260904-1743.zip"
       return {
         ok: true,
         status: 200,
         headers: {
-          get: (nom: string) =>
-            nom.toLowerCase() === "content-disposition"
-              ? 'attachment; filename="atelier-20260827-1743.zip"'
+          get: (entete: string) =>
+            entete.toLowerCase() === "content-disposition"
+              ? `attachment; filename="${nom}"`
               : null,
         },
         blob: async () => new Blob(["PK"], { type: "application/zip" }),
@@ -22239,5 +22253,215 @@ describe("A13 — l'image attrapée au vol", () => {
     await waitFor(() =>
       expect(aCoteDeLaLoupe().getByText("image 1")).toBeTruthy(),
     )
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  A4 — la bande sort de l'atelier
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// **Ce que ces essais mesurent.** Les deux endroits d'où une animation sort, et
+// ce qui part quand on clique : l'appel, et le nom sous lequel le fichier est
+// posé.
+//
+// Ce qu'ils ne mesurent pas : ce qu'il y a dans l'archive. Les trois fichiers,
+// leurs clés, les pixels de l'image animée et sa cadence sont tenus par
+// `tests/test_a4.py`, qui ouvre le zip et compare case par case. Ici on vérifie
+// que le geste existe, qu'il est au bon endroit, et qu'il ne part pas ailleurs.
+
+describe("A4 — la bande sort de l'atelier", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Doubler les deux choses que jsdom n'a pas : l'adresse d'objet et le clic
+   *  d'un lien fabriqué. Ce qu'on garde est **le nom sous lequel le fichier est
+   *  posé** — il vient du serveur, et c'est ce qui distingue les trois
+   *  sorties. */
+  const guetterLesFichiers = () => {
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: () => "blob:essai",
+      revokeObjectURL: () => {},
+    })
+    const poses: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      poses.push(this.download)
+    })
+    return poses
+  }
+
+  /** Une bande gardée dans ce clip, telle que le montage la relit. */
+  const GARDEE = { ...bandeRendue("marche", [12, 14, 16, 18]), pose: null }
+
+  const ouvrirLeMontage = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain")],
+      montage: { ...MONTAGE_RENDU, bandes: [GARDEE] },
+      ...options,
+    })
+    const flux = await monter(double.fetchDouble)
+    laGalerie()
+    flux.emettre("generation", clipRendu("clip-a", false))
+    fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-montage]")
+      if (!cadre) throw new Error("l'écran de montage ne s'est pas ouvert")
+      return cadre as HTMLElement
+    })
+    return { ...double, panneau: within(panneau) }
+  }
+
+  // ── Depuis l'écran qui vient de la tailler ────────────────────────────────
+
+  test("une bande gardée sort depuis sa ligne, sans quitter le clip ouvert", async () => {
+    const poses = guetterLesFichiers()
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    fireEvent.click(
+      await panneau.findByRole("button", { name: "Sortir l'animation marche" }),
+    )
+
+    await waitFor(() => expect(poses).toEqual(["atelier-animations-20260904-1743.zip"]))
+    const envoi = appels.find((a) => a.url === "/api/strips/export")
+    expect((envoi?.corps as { identifiants: string[] }).identifiants).toEqual([
+      "bande-marche",
+    ])
+    // **Le clip reste ouvert** : on vient de découper, on va recommencer, et un
+    // écran qui se refermerait pour poser un fichier ferait tout reprendre.
+    expect(document.querySelector("[data-montage]")).toBeTruthy()
+  })
+
+  test("faire sortir une animation ne commande aucun clip", async () => {
+    guetterLesFichiers()
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    fireEvent.click(
+      await panneau.findByRole("button", { name: "Sortir l'animation marche" }),
+    )
+
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/strips/export")).toBe(true),
+    )
+    // *Rien sur cet écran ne dépense* — la phrase du pied reste vraie après ce
+    // geste-ci comme après les autres.
+    expect(appels.some((a) => a.url === "/api/clips" && a.corps)).toBe(false)
+  })
+
+  test("un refus dit la phrase du serveur, et aucun fichier n'est posé", async () => {
+    const poses = guetterLesFichiers()
+    const { panneau } = await ouvrirLeMontage({
+      refusExport: "« bande-marche » n'est plus dans l'atelier",
+    })
+
+    fireEvent.click(
+      await panneau.findByRole("button", { name: "Sortir l'animation marche" }),
+    )
+
+    expect(
+      await panneau.findByText(/n'est plus dans l'atelier/),
+    ).toBeTruthy()
+    expect(poses).toEqual([])
+  })
+
+  // ── Depuis la matrice, pour tout un personnage ────────────────────────────
+
+  /** Un personnage dont deux attitudes portent une animation. */
+  const LE_NAIN = personnage("Le nain", {
+    cases: PLAN.map((p) => ({
+      pose: p.identifiant,
+      demandees: p.images,
+      images: [],
+      ...VIDE_C3,
+      bandes: ["marche", "repos"].includes(p.identifiant)
+        ? [
+            {
+              ...bandeRendue(p.identifiant, [0, 2, 4, 6]),
+              pose: p.identifiant,
+              direction: null,
+              brouillon: false,
+            },
+          ]
+        : [],
+    })),
+  })
+
+  const surLeCalqueAnime = async (
+    quelPersonnage: Personnage = LE_NAIN,
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({ personnages: [quelPersonnage], ...options })
+    await monter(double.fetchDouble)
+    const etabli = await ouvrirLEtabli("Le nain")
+    fireEvent.click(await etabli.findByRole("button", { name: /^animations / }))
+    return { ...double, etabli }
+  }
+
+  test("toutes les animations d'un personnage sortent en une archive à son nom", async () => {
+    const poses = guetterLesFichiers()
+    const { etabli, appels } = await surLeCalqueAnime()
+
+    fireEvent.click(
+      await etabli.findByRole("button", { name: "Sortir ses animations ›" }),
+    )
+
+    await waitFor(() =>
+      expect(poses).toEqual(["le-nain-animations-20260904-1743.zip"]),
+    )
+    // **L'écran ne dresse pas la liste des bandes** : il nomme le personnage, et
+    // le serveur rassemble. Une liste montée ici serait une seconde écriture de
+    // « les animations de ce personnage », et elle divergerait de la jauge.
+    const envoi = appels.find((a) => a.url.endsWith("/strips/export"))
+    expect(envoi?.url).toBe(`/api/characters/${LE_NAIN.identifiant}/strips/export`)
+    expect(envoi?.corps).not.toHaveProperty("identifiants")
+  })
+
+  test("la sortie ne vit que sur le calque animé", async () => {
+    const { etabli } = await surLeCalqueAnime()
+
+    expect(
+      etabli.getByRole("button", { name: "Sortir ses animations ›" }),
+    ).toBeTruthy()
+
+    // De retour sur les images fixes, plus rien : ce qui sort ici est une
+    // animation, et les images ont déjà leur sortie, dans la galerie.
+    fireEvent.click(etabli.getByRole("button", { name: /^images / }))
+    expect(
+      etabli.queryByRole("button", { name: "Sortir ses animations ›" }),
+    ).toBeNull()
+  })
+
+  test("un personnage sans aucune animation n'a rien à faire sortir", async () => {
+    // **Rien plutôt qu'un bouton grisé** : il n'y a pas de geste à préparer,
+    // et un bouton éteint promettrait qu'il suffit de revenir. Ce qui manque
+    // est une animation, et la ligne au-dessus dit déjà laquelle.
+    const { etabli } = await surLeCalqueAnime(
+      personnage("Le nain", {
+        cases: PLAN.map((p) => ({
+          pose: p.identifiant,
+          demandees: p.images,
+          images: [],
+          ...VIDE_C3,
+          bandes: [],
+        })),
+      }),
+    )
+
+    expect(
+      etabli.queryByRole("button", { name: "Sortir ses animations ›" }),
+    ).toBeNull()
   })
 })

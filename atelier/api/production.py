@@ -28,10 +28,10 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
-from atelier.api.routes import CorpsTrait
+from atelier.api.routes import CorpsTrait, reponse_archive
 from atelier.domaine.recette import OCCUPATION_MAX_ABSOLU, RAYON_MAX
 from atelier.services import Atelier
 
@@ -1149,6 +1149,37 @@ async def sortir(
         _projet(requete, corps.projet), identifiant, corps.dossier
     )
     return sortie.en_json()
+
+
+class CorpsAnimations(BaseModel):
+    """De qui l'on sort les animations. **Pas de dossier** : celles-ci reviennent
+    au navigateur en archive, elles ne se posent pas sur la machine."""
+
+    projet: str | None = None
+
+
+@routeur.post("/characters/{identifiant}/strips/export")
+async def sortir_les_animations(
+    requete: Request, identifiant: str, corps: CorpsAnimations
+) -> Response:
+    """Toutes les animations d'un personnage, en une seule archive (A4).
+
+    **Une archive, et pas le dossier du jeu**, alors que la route juste
+    au-dessus fait l'inverse. Ce n'est pas une incohérence : ce que la tranche
+    demande est *une seule archive*, et poser en plus les fichiers dans le
+    dossier du jeu serait une seconde sortie que personne n'a demandée. Le jour
+    où on la voudra, elle s'écrira comme celle du dessus — avec le même
+    descriptif, par le même code.
+
+    **Ici, à côté de l'autre sortie du personnage**, plutôt qu'avec les routes
+    des bandes : c'est là qu'on viendra la chercher, parce que c'est un
+    personnage qu'on fait sortir.
+    """
+    return reponse_archive(
+        _atelier(requete).export.exporter_bandes_du_personnage(
+            _projet(requete, corps.projet), identifiant
+        )
+    )
 
 
 # ── Ce qui ne part plus ──────────────────────────────────────────────────────

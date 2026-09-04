@@ -465,6 +465,12 @@ class Atelier:
             self.production,
             self.equipement,
             self.agent,
+            # **Le montage, pour une seule chose** (A4) : la planche de sprites
+            # d'une bande, refaite si son cache a sauté. Il est monté bien plus
+            # haut et n'apporte ici ni fournisseur, ni catalogue, ni animateur —
+            # l'export reste du disque et du processeur, ce que son premier
+            # paragraphe promet et ce que ses essais comptent.
+            self.montage,
         )
 
     async def ouvrir(self) -> None:

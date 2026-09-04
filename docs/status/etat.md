@@ -11,6 +11,101 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A4 — la bande sort de l'atelier : la version devient livrable — 4 septembre 2026
+
+**Une animation gardée devient trois fichiers** : une planche de sprites, le fichier
+d'accompagnement qui la décrit, et une image qui tourne toute seule. Jusqu'à cette tranche, une
+bande ne servait qu'à être regardée dans l'atelier.
+
+### Le pronostic du plan s'est vérifié : ce qui s'ajoutait était le format, pas la machinerie
+
+L'archive existe depuis `T6`, et c'est le seul geste du produit qui fasse sortir des images. La
+planche de sprites, elle, existe depuis `A10`, et il n'y a qu'un endroit qui l'assemble. Ce que
+la tranche a eu à écrire tient donc en trois choses : **le fichier d'accompagnement**, **l'image
+animée**, et **deux boutons**.
+
+### N'inventer aucun format n'est pas une intention, c'est un essai qui compte des clés
+
+Le fichier d'accompagnement d'une planche de sprites le plus lu par les moteurs est celui
+qu'écrit Aseprite, l'éditeur de pixel art. Ses clés exactes avaient été relevées avant que la
+tranche ne s'ouvre, et elles sont écrites **telles quelles**. Ce que ça ouvre, sans une ligne de
+plus :
+
+- **Phaser** lit ce fichier d'une seule instruction et fabrique l'animation tout seul, parce qu'il
+  sait lire les *étiquettes* que le format porte ;
+- **l'extension Godot la plus installée** pour ce genre d'image lit le même fichier ;
+- ses quatre champs de base sont aussi ceux de **l'outil d'atlas le plus répandu** — le fichier se
+  lit donc **aussi** comme un atlas ordinaire par tout ce qui n'a jamais entendu parler d'Aseprite.
+
+⚠️ **Un format emprunté ne se dégrade jamais d'un coup.** Il se dégrade d'une clé ajoutée « qui ne
+gêne personne », puis d'une clé renommée pour faire plus clair, et six mois plus tard le fichier ne
+s'ouvre plus nulle part. C'est pour ça qu'un essai vérifie **le jeu de clés exact**, un à un, et
+refuse tout ce qui s'y ajouterait.
+
+Une seule décision de forme a été prise : le format existe en deux variantes, l'une qui range les
+images sous leur nom et l'autre qui les met en liste. *Le descriptif dit leur ordre* est un critère
+de la tranche, et **l'ordre des clés d'un objet JSON n'est garanti par aucune norme**. La liste le
+porte dans sa forme ; personne n'a à le rétablir.
+
+### « Mêmes pixels » se rend vrai par construction, pas par discipline
+
+Le sixième critère demande que ce qui sort soit exactement ce que l'aperçu montrait. Deux façons
+de le tenir :
+
+| | Ce que ça donne |
+|---|---|
+| Refaire les images pour l'image animée | deux chemins vers les mêmes pixels, à surveiller pour toujours |
+| **Découper l'image animée dans la planche exportée** | les deux fichiers **ne peuvent pas** diverger : l'un est fait de l'autre |
+
+C'est la seconde. Et la planche elle-même n'est pas recalculée par l'export : elle est demandée au
+montage, le seul endroit du produit qui en assemble une.
+
+### Le format de l'image animée : un PNG animé, pas un GIF
+
+Deux raisons, et la première est un critère.
+
+1. **Un GIF changerait les pixels.** Il ne connaît que deux cent cinquante-six couleurs et une
+   transparence tout-ou-rien. Sur un sprite déjà réduit à seize couleurs il tomberait juste ; sur
+   un décor sorti sans réduction, non — et il tomberait faux **en silence**.
+2. **Un PNG animé est un PNG.** Une visionneuse qui ne sait pas l'animer affiche la première image
+   au lieu d'échouer. C'est la meilleure façon de tenir *lisible sans moteur de jeu* : le pire cas
+   est une image fixe, pas un fichier qui ne s'ouvre pas.
+
+### Un nombre qui ne paraît nulle part finit par être faux
+
+⚠️ La fiche d'une bande comptait la durée d'un aller-retour comme `images × 2`, ce qui suppose que
+les deux bouts se rejouent au demi-tour. **Ni la vignette de la matrice ne le fait, ni le format
+d'export** : sur quatre images, un va-et-vient en joue six — 0, 1, 2, 3, 2, 1 — et non huit.
+
+Personne ne l'avait vu, et pour une raison simple : **ce nombre ne paraissait nulle part**. Il
+vivait dans la fiche d'une bande, un essai l'affirmait, et aucun écran ne l'affichait. `A4` le fait
+sortir de l'atelier — et un nombre qui part dans un fichier de jeu doit être celui que le fichier
+joue.
+
+> **La leçon générale** : un chiffre qu'aucun écran ne montre n'est pas vérifié par l'usage. Il
+> l'est par ses essais, et un essai écrit en même temps que le code se trompe avec lui. La tranche
+> qui fait *sortir* ce chiffre est celle qui le corrige.
+
+### Deux sorties, et l'écran ne dresse aucune liste
+
+Une sélection d'animations, ou toutes celles d'un personnage. La seconde compte : « les animations
+de ce personnage » a déjà une écriture — celle qui remplit le calque animé de la matrice — et en
+faire une deuxième à l'écran l'aurait fait diverger de la jauge qui la compte. L'écran nomme le
+personnage ; le serveur rassemble.
+
+Le bouton du personnage ne porte **aucun nombre**, et c'est délibéré : l'archive emporte aussi les
+animations d'une attitude rangée sous le trait, que la jauge ne compte pas. Un chiffre affiché là
+aurait annoncé moins que ce que l'archive contient.
+
+### Ce que ça a coûté
+
+Rien. Dix-huit essais côté atelier, six côté écran, aucun appel payant : l'atelier jetable monte
+un vrai clip rendu par un double qui facture zéro, en taille deux animations, et **déplie l'archive
+sur le disque avant même d'ouvrir** — c'est ce qu'il y a de plus utile à regarder, et l'écran ne
+peut pas le montrer.
+
+---
+
 ## A13 — l'image attrapée au vol : la version sort de l'animation — 4 septembre 2026
 
 **Une image de la pellicule se met de côté, et elle entre en bibliothèque comme une image de

@@ -36,6 +36,7 @@ from atelier.domaine.bande import CADENCE_PAR_DEFAUT as CADENCE_DE_BANDE
 from atelier.domaine.bande import Cadre
 from atelier.domaine.erreurs import ErreurAtelier, GenerationInconnue
 from atelier.domaine.recette import Recette
+from atelier.api.routes import reponse_archive
 from atelier.services import Atelier
 
 # **Un seul endroit qui met un modèle vidéo en JSON**, et c'est le service.
@@ -738,6 +739,35 @@ async def garder_une_bande(requete: Request, corps: CorpsBande) -> dict[str, Any
         direction=corps.direction,
     )
     return bande.en_json()
+
+
+class CorpsBandes(BaseModel):
+    """Les animations qu'on fait sortir. **Rien d'autre à dire** : ce qui part
+    d'une bande est fixé par la tranche — la planche, son descriptif et l'image
+    animée —, et le laisser choisir ici en ferait trois réglages à tenir."""
+
+    identifiants: list[str] = []
+
+
+@routeur.post("/strips/export")
+async def exporter_des_bandes(requete: Request, corps: CorpsBandes) -> Response:
+    """Une sélection d'animations sort en une archive (A4).
+
+    `POST` et non `GET`, pour la raison déjà écrite de l'archive des images :
+    une sélection ne tient pas dans une adresse, et l'archive n'est pas une
+    ressource qu'on pourrait aller rechercher — elle est fabriquée pour ce
+    lot-là, à cet instant-là.
+
+    **Déclarée avant celles qui prennent un identifiant**, parce que c'est
+    l'ordre qui rend la question sans objet : rien n'aura jamais à décider si
+    `export` est le nom d'une bande.
+
+    **Aucun réseau, aucun centime.** Le clip est payé depuis longtemps ; ce qui
+    sort d'ici est du disque et du processeur.
+    """
+    return reponse_archive(
+        _atelier(requete).export.exporter_bandes(corps.identifiants)
+    )
 
 
 @routeur.put("/strips/{identifiant}/case")

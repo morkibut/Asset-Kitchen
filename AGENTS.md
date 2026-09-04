@@ -28,10 +28,10 @@ points.
 | **V2.2** — `F0` à `F6` | D'autres fournisseurs, dont un qui ne demande ni compte ni clé | **close à 5 sur 6** — reste `F4`, qui attend un compte Cloudflare que ce dépôt n'a pas |
 | **Reprises** — `R6` à `R9` | La planche de travers, le texte qui part en trois parties, la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** |
 | **V2.3** — `D1` à `D5` | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** |
-| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11`, `A12` et `A13` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. Restent `A4`, `A5`, `A7`, et **aucune n'en bloque une autre** |
+| **V3** — `A0` à `A13` | L'animation, **par la vidéo et le découpage** | **ouverte** — `A0` clos ; `A6`, `A2`, `A9`, `A10`, `A11`, `A12` et `A13` closes le 4 septembre 2026. La méthode a changé après cadrage : on n'achète plus une planche de huit cases, on anime le sprite en vidéo et on découpe le clip. **`A10` était le cœur de la version** — un clip payé devient plusieurs animations, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et le bouton porte un temps au lieu d'un montant. **`A12` est l'objectif de la version, et il est atteint** : la matrice d'un personnage se lit sur deux calques — images fixes, animations —, chacun avec sa jauge. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. **`A4` rend la version livrable** : une animation gardée sort en planche de sprites, avec le fichier d'accompagnement que les moteurs lisent et une image qui tourne toute seule. Restent `A5` et `A7`, et **aucune n'en bloque une autre** |
 
-**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 384 essais de
-serveur et 687 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
+**226 critères d'acceptation cochés pour la V1 et la V2, 87 pour le lot U ; 1 402 essais de
+serveur et 693 d'écran** tiennent aujourd'hui l'ensemble du dépôt — comptés le 4 septembre 2026,
 et **aucun ne coûte un centime**.
 
 ### Ce qu'il faut savoir avant de toucher au code — dix points, et pas un de plus
@@ -93,6 +93,16 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    se multiplie pas** comme le premier : une marche demande huit images *par direction* pour être
    dessinée et **une seule bande** par direction pour être animée — la bande porte déjà ses huit
    images dedans.
+8quinquies. **Le fichier qui accompagne une planche de sprites n'est pas de nous, et on n'y
+   ajoute rien.** Depuis `A4`, une animation sort avec le descriptif qu'écrit Aseprite, le plus
+   lu par les moteurs, **clé pour clé** d'après un relevé
+   (`revue-externe-2026-09-02/research/12-ui-hud-exports.md`). ⚠️ Un format emprunté ne se
+   dégrade pas d'un coup : il se dégrade d'une clé ajoutée « qui ne gêne personne », et six mois
+   plus tard le fichier ne s'ouvre plus nulle part. Un essai compare donc le **jeu de clés
+   exact**, pas seulement la présence des bonnes. Ce que l'atelier sait en plus — de quel clip,
+   quelle recette, quel appel payé — va dans le descriptif maison, **à côté**. Et l'image animée
+   est **découpée dans la planche exportée** : les deux fichiers ne peuvent pas diverger parce
+   que l'un est fait de l'autre.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et
@@ -535,7 +545,7 @@ deux vivent côte à côte.
 
 ## Pièges connus → `docs/PIEGES.md`
 
-Cent soixante pièges payés une fois chacun — encodage Windows, lots payants,
+Cent soixante-deux pièges payés une fois chacun — encodage Windows, lots payants,
 `ResizeObserver`, onglet d'arrière-plan, SQLite, montages FastAPI et Starlette, transport
 MCP, mise en page CSS, préparation cachée d'une bibliothèque de vision — vivent dans
 **`docs/PIEGES.md`**, que le code cite là où chacun mord.

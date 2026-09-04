@@ -149,7 +149,9 @@ def _une_bande(
         nom=nom,
         images=tuple(range(IMAGES)),
         cadence=4.0,
-        cadre=Cadre(0, 0, COTE - 1, COTE - 1),
+        # Nommés : le premier champ d'un cadre est *d'où il vient*, pas son
+        # bord gauche (vu en `A4`).
+        cadre=Cadre(gauche=0, sommet=0, droite=COTE - 1, bas=COTE - 1),
         projet=atelier.bibliotheque.courant,
         personnage=personnage,
         pose=pose,
