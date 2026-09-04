@@ -656,3 +656,21 @@ faites dans le code le jour même.*
   phrase, sans vignette. Voir `remarques/ce-qui-decrit-une-image-jointe.md`, qui note déjà que
   *« la voir n'a jamais été décidé — c'est un manque, pas un choix »*. **L'auteur l'a prise dans
   une autre séance** ; elle n'est pas redoublée ici.
+
+---
+
+## Séance du 4 septembre 2026, au soir — le calque qu'on ne peut ni reposer ni reprendre
+
+*Deux remarques d'un même sujet : un calque fabriqué une fois ne sert qu'une fois. **Le texte de
+l'auteur, mot pour mot ; rien n'est vérifié dans le code — elles sont en vrac.***
+
+- pouvoir utiliser un calque sur plusieurs pose différente. Exemple : sur le projet 'le Marais du
+  vieux moulin' sur le personnage du pélerin, j'ai créer un 'sac de voyage' sur la pose "repos".
+  cet equipement sera le même pour les autres poses, mais je n'ia aucun moyen de choisir un calque
+  ou une image pour une pose ou équipement sur la pose a part générer par IA.
+
+- pouvoir ajouter un calque en référence d'une génération. Imaginons que je veux faire un 'sac de
+  voyage' avec plusieurs niveau d'évolution. je voudrais donc générer un 'sac de voyage niveau 2'
+  en repartant du premier sac et en ajoutant juste des détails en plus dans la génération.
+  AUjourd'hui je ne peux pas le faire sauf en passant par la galerie pour trouver le calque et le
+  reinjecter.

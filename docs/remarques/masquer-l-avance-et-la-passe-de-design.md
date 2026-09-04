@@ -159,16 +159,36 @@ exactement la maquette écartée le 26 août 2026, et elle l'a été après essa
 
 ---
 
-## 6 · Ce qui est tranché
+## 6 · Ce qui est tranché — 4 septembre 2026
 
-*Rien n'est encore tranché.* **La remarque avait déjà été écartée du périmètre de la V3.1 le
-3 septembre 2026** — *« à reprendre après la V3, voire plus tard »* — et rien ici ne demande de
-revenir sur ce report.
+**Tranché par l'auteur : `A`, et la remarque ouvre une version à elle — la `V2.5`, placée après la
+`V2.4` et avant l'animation.**
 
-**La recommandation est `A`, et elle peut se faire tout de suite, gratuitement.** Reprendre l'audit
-et dire ce qu'il en reste ne coûte qu'une relecture, ne touche à aucune décision, et **change la
-nature de la remarque** : on saurait si la charge dont l'auteur se plaint est un défaut déjà relevé
-ou une direction à rouvrir. `B`, `C` et `D` se jugent après, et pas avant.
+Le report du 3 septembre — *« après la V3, voire plus tard »* — **est donc levé par son auteur**, et
+c'est une révision assumée : le chantier passe devant l'animation.
+
+### a) La version commence par un relevé, pas par un dessin
+
+`N1` — *l'audit de design repris, et ce qu'il en reste* — donne un état écrit des quatorze défauts :
+**fait**, **pas fait**, ou **sans objet**, chacun avec sa preuve dans le code. **Aucun écran n'est
+touché.**
+
+La raison est mesurée : trois défauts sur quatre sondés étaient **déjà réparés** sans que rien ne
+l'écrive. Si la proportion tient, la grosse passe réclamée est en grande partie déjà faite, et ce
+qui reste est une poignée de points. Sinon, on saura enfin de quoi on parle. **Redessiner avant de
+relever, ce serait refaire un travail déjà payé.**
+
+### b) `B`, `C` et `D` ne sont pas écartées — elles ne sont pas encore écrites
+
+Replier l'avancé, rouvrir la direction de design, trancher la teinte de l'interface : les trois sont
+les tranches candidates de la `V2.5`. **Aucune ne s'écrit avant `N1`**, parce qu'on ne sait pas
+encore si la charge est faite de défauts déjà relevés ou d'une direction à rouvrir.
+
+### Ce qui reste ouvert
+
+**Qui décide de ce qui est « avancé ».** Le dépôt n'a **aucune mesure de qui ouvre quoi** : replier
+au jugé revient à parier. `N1` ne le mesurera pas non plus. *Si une tranche de repli s'écrit, elle
+devra dire comment elle décide — ou assumer le pari par écrit.*
 
 ---
 

@@ -31,7 +31,8 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M6 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, une close sur six** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, une close sur six** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait | ci-dessous |
+| **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
@@ -158,7 +159,8 @@ Le détail par tranche des versions tenues est dans l'archive.
 | **R7** | **431 à 433** | **3** |
 | **R8** *(la fiche d'une chose)* | **462 à 468** | **7** |
 | **R9** *(le calibrage)* | **469 à 475** | **7** |
-| **V2.4 — M1 à M6** *(ce qui est cassé, et le coin redessiné)* | `US-504`, `US-505` | **2** *(les deux sont de `M6`, close. Les cinq autres n'en ouvrent aucune : `M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296`, `M4` et `M5` tiennent `US-126`, et `M4` ferme une phrase du genre de `G1` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
+| **V2.4 — M1 à M7** *(ce qui est cassé, et le coin redessiné)* | `US-504`, `US-505` | **2** *(les deux sont de `M6`, close. Les cinq autres n'en ouvrent aucune : `M1` rend son sens à `US-503`, écrite pour `G16` ; `M3` tient `US-296`, `M4` et `M5` tiennent `US-126`, et `M4` ferme une phrase du genre de `G1` ; `M2` est une maquette, et une maquette n'a pas d'utilisateur qui la demande — c'est le cas d'`E0`, `F0` et `A0`)* |
+| **V2.5 — N1…** *(le design reprend la main)* | **aucune** | **0** *(`N1` est un relevé, comme `E0`, `F0` et `A0`)* |
 | **V3 — A2, A4 à A7, A9 à A13** *(l'animation)* | **376, 379 à 388, 390 à 400, 434 à 461, 482 à 490** | **59** |
 | **V3.1 — G1 à G16** *(l'atelier tient ce qu'il dit)* | **495 à 501**, plus **369** *(reprise à `P1`)* et **502, 503** | **10** *(les quarante-trois autres changements tiennent des stories déjà écrites)* |
 | **V3.5 — P1, P2** *(le dépliage généralisé)* | **370 à 374, 491 à 494** | **9** *(`369` est partie en `G16` le 3 septembre 2026)* |
@@ -215,7 +217,8 @@ V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026,
       │ M3  l'écran cesse de figer       │  Aucune n'en bloque une autre.
       │ M4  la planche dit enfin vrai    │  M2 dessine, les autres réparent.
       ├ M5  la référence qui manque ─────┤  La tranche qui bâtit l'écran de
-      └ M6  laquelle part      ✔ close ──┘  M2 ne s'écrit qu'après elle.
+      ├ M6  laquelle part      ✔ close   │  M2 ne s'écrit qu'après elle.
+      └ M7  le détourage complet ────────┘
            ▲ après M4, qui refait la
              liste où son geste se pose    M3, M4 et M5 sont le même écran,
                                            pris par trois bouts : ce qu'il
@@ -228,6 +231,12 @@ V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026,
                                            Close le jour où elle est née — la
                                            règle existait, seul l'écran
                                            manquait.
+ │
+ ▼
+V2.5    N1  l'audit de design repris        ouverte le 4 septembre 2026.
+                                            N1 est un relevé : il ne touche
+        N2… ne s'écrit qu'après N1          aucun écran, et il bloque tout
+                                            le reste de la version.
  │
  ▼
 V3    A6  le mouvement, dit une fois pour toutes
@@ -2042,6 +2051,178 @@ réseau coupé.
 
 **Bloquée par** — aucune. *Elle ne touche ni l'écran de confirmation (`M3`, `M4`, `M5`) ni la
 superposition (`M1`, `M2`) : elle vit dans la matrice de la fiche, où aucune des cinq n'entre.*
+
+---
+
+### M7 · Le détourage de départ redevient complet, et se règle depuis l'image
+
+*Aucune US neuve — elle tient `US-407` à `US-412`, écrites pour `D1`*
+
+**Ce qu'on livre.** Deux choses. L'étape *Le détourage de départ* montre **les quatre réglages**
+qu'elle commande, au lieu de deux. Et la table de détourage d'une image gagne un lien
+**« enregistrer ce réglage comme défaut du projet »**, qui met le geste dans le bon sens.
+
+> ### ⚠️ Le chiffre qui a servi à cacher deux réglages ne se reproduit pas
+>
+> Deux des quatre réglages — **la tolérance** et **le seuil de transparence** — ont été écartés de
+> l'écran par `D1`, délibérément, sur une mesure : *« tu les as laissés à leur valeur livrée 96 fois
+> sur 100 »*.
+>
+> **Recompté le 4 septembre 2026 sur les 147 passes de détourage du dépôt** :
+>
+> | Le réglage | Laissé tel quel | **Changé à la main** | Offert par l'écran ? |
+> |---|---|---|---|
+> | la tolérance | 91 % | 13 fois — **9 %** | non |
+> | **le seuil de transparence** | 77 % | **34 fois — 23 %** | **non** |
+> | le bord rongé | 51 % | 72 fois — **49 %** | oui |
+> | le modèle de silhouette | — | 16 fois — **11 %** | non |
+>
+> **Le seuil de transparence a été déplacé une fois sur quatre**, dans cinq des six projets, et
+> **vingt-deux de ces trente-quatre fois avec le moteur *modèle***. Le chiffre de 96 % portait
+> peut-être sur un autre sous-ensemble ; sur le corpus entier, il ne se retrouve pas.
+>
+> **La sélection de l'écran est juste pour un des quatre.** Le réglage le plus déplacé de tous — le
+> bord rongé, une fois sur deux — est bien celui qu'il offre ; les trois autres sont écartés à tort,
+> et le plus employé des trois l'est sur un chiffre faux.
+
+**Le mauvais moment se répare par l'autre bout, et pas en déplaçant l'étape.** L'auteur écrivait que
+l'étape arrive trop tôt — onzième sur douze, donc **avant d'avoir fabriqué la moindre image**, alors
+qu'on ne sait quel détourage convient qu'après. **La réponse n'est pas de la déplacer** : c'est de
+laisser régler une image, puis de dire *« garde ça »* depuis l'image elle-même. L'étape des réglages
+devient alors la **relecture** de ce qu'on a promu.
+
+> **Et son repli au démarrage est déjà écrit ailleurs, dans `G8`.** *« Les douze étapes sont
+> réparties en deux groupes, le second replié derrière une ligne qui dit pourquoi il peut
+> attendre »* — et le détourage est nommément dans le groupe replié ; *« aucune étape ne disparaît :
+> la page des réglages reste entière »*. **Cette tranche-ci ne touche donc pas au repli**, et les
+> deux ne se gênent pas : `G8` décide *quand on la voit*, celle-ci décide *ce qu'elle contient*.
+>
+> ⚠️ **À savoir en construisant** : le parcours de démarrage et la page des réglages de l'univers
+> **sont le même écran** — l'assistant *est* le côté *réglages* de l'onglet Univers. Il n'existe
+> aucun drapeau disant si un jeu a déjà été réglé une fois. *C'est `G8` qui aura à le poser, pas
+> celle-ci.*
+
+**Ce que la tranche ne fait pas.** Elle **ne remet pas le choix du modèle de silhouette**. *Tranché
+par l'auteur le 4 septembre 2026 : il attend `G13`.* Il est déjà établi que le modèle annoncé comme
+lourd **ne détoure rien du tout** — la bibliothèque ne connaît pas ce nom-là et retombe en silence
+sur le rapide. Offrir ici un choix dont un des termes ne fait rien serait pire que de ne pas
+l'offrir.
+
+**Aucun appel, aucun centime.**
+
+**Critères d'acceptation**
+
+- [ ] L'étape montre **quatre réglages par ligne** : le moteur, la tolérance, le seuil de
+      transparence, le bord rongé
+- [ ] **Le modèle de silhouette n'y est pas**, et la raison est écrite dans la tranche : il attend
+      `G13`
+- [ ] Une ligne sans moteur **dit ce qu'elle cache** — *choisis un moteur pour régler le reste* — au
+      lieu de n'afficher que « — » : c'est ce qui a fait lire le bord rongé comme absent
+- [ ] La décision de `D1` qui avait écarté deux réglages est **réécrite avec le bon chiffre**, et
+      dit lequel des deux reste discutable
+- [ ] La table de détourage d'une image porte un lien **enregistrer ce réglage comme défaut du
+      projet**
+- [ ] Le lien dit **pour quoi** le défaut vaudra — la nature de l'image, ou sa famille — et laisse
+      choisir
+- [ ] Il dit aussi ce qu'il ne fait pas : **aucune image déjà faite n'est retouchée**, la règle de
+      `D1` ne bouge pas
+- [ ] Aucun appel au fournisseur, aucun centime
+
+**Bloquée par** — aucune. *`G8` replie l'étape de son côté et ne la vide pas ; les deux tranches
+peuvent se faire dans n'importe quel ordre.*
+
+---
+
+## V2.5 — Le design reprend la main
+
+*Ouverte le 4 septembre 2026, sur demande de l'auteur, en instruisant sa remarque du 3 septembre :
+**« cette interface hyper chargée qui assomme d'infos techniques »**. Elle était écartée du
+périmètre de la V3.1 le jour même — *« après la V3, voire plus tard »* ; l'auteur l'avance, et lui
+donne sa version à elle. Le dossier est `docs/remarques/masquer-l-avance-et-la-passe-de-design.md`.*
+
+**Ce qu'elle vise, en clair.** L'atelier est dense, et **c'est une thèse, pas un accident** :
+`docs/DESIGN.md` écrit *« la densité est celle d'un instrument, pas d'une page »*, et le principe
+dont tout découle est que *chaque décision retire une concurrence à la grille*. Un auteur qui trouve
+son outil assommant a raison sur le ressenti, quelle que soit la thèse. **Cette version décide, par
+écrit, ce qu'on garde de la thèse et ce qu'on rouvre.**
+
+### ⚠️ Pourquoi elle commence par un relevé et non par un dessin
+
+**Une passe de design a déjà eu lieu, et personne ne sait où elle en est.**
+`docs/audit-design-post-v21.html`, daté du 31 août 2026, relève **quatorze défauts** classés par ce
+qu'ils coûtent à l'usage. Il est cité par `docs/DESIGN.md` et par `docs/PIEGES.md`. **Il n'est cité
+nulle part dans ce plan** — zéro occurrence avant aujourd'hui. Ses quatorze défauts ne sont jamais
+devenus une liste de travaux.
+
+**Et une bonne partie a été réparée sans que personne ne le note.** Sondage du 4 septembre 2026, sur
+trois défauts pris au hasard plus celui que le plan connaît :
+
+| Le défaut de l'audit | Aujourd'hui |
+|---|---|
+| *Échap ne ferme pas ce qu'on ouvre* | **fait** — quatorze écrans écoutent la touche |
+| *la galerie télécharge 26 Mo pour 49 vignettes* | **fait** — vignettes calibrées, employées dans quatre écrans |
+| *la description s'écrit par un hublot de quatre lignes* | **fait** — le champ va de 3 à 16 lignes |
+| *le zoom absent des tables* | **pas fait** — c'est `G10`, écrite au plan |
+
+**Redessiner avant de relever, ce serait refaire un travail déjà payé.**
+
+### Les trois demandes de l'auteur, et elles n'ont pas le même statut
+
+| La demande | Ce que le dépôt en dit aujourd'hui |
+|---|---|
+| **masquer l'avancé** | **compatible, et sa forme est déjà tranchée** — *un bloc replié porte son réglage à droite de son titre*, écrit le 27 août 2026, *« sans elle, le repli cacherait au lieu de résumer »*. Ce n'est pas la demande qui est refusée, c'est le repli muet |
+| **ajouter des icônes, des retours visuels** | **refusé par écrit** — *« aucune icône illustrative »*, trois glyphes dans tout le produit, et *« l'absence de mouvement retire la concurrence d'attention »*. **Le refus a déjà été payé** : les premières maquettes dessinaient une roue dentée et un point d'interrogation, *« les deux ont été retirés, et remplacés par des mots »* |
+| **teinter l'interface à la palette du jeu** | **contredit le principe fondateur** — *« le froid retire la concurrence chromatique »* — et **le cas exact a déjà été jugé** : la maquette du 26 août 2026, châssis ambre sur charbon, écartée avec sa raison — *« entre en concurrence avec le pixel art, qui sature déjà les ors et les bruns »* |
+
+**Rien de tout cela n'est un refus définitif.** Le dépôt rouvre ses décisions ; il les rouvre **par
+écrit, avec leur nouvelle raison**, et jamais en les contournant. C'est ce que cette version aura à
+faire — ou à ne pas faire, en le disant.
+
+### Ce que cette version ne fait pas encore
+
+**Elle n'a qu'une tranche écrite.** `N2` et au-delà — replier l'avancé, rouvrir la direction,
+trancher la teinte — **ne s'écrivent qu'une fois `N1` rendu** : on ne sait pas encore si la charge
+dont l'auteur se plaint est faite de défauts déjà relevés ou d'une direction à rouvrir, et c'est
+exactement ce que `N1` répond.
+
+### ⚠️ Ce qu'elle tient pour acquis sans l'avoir mesuré
+
+**Que ce qui est *avancé* pour l'auteur l'est pour tout usage.** Le dépôt n'a **aucune mesure de qui
+ouvre quoi** : replier au jugé revient à parier. `N1` ne le mesurera pas non plus. *Si `N2` existe,
+elle devra dire comment elle décide, ou l'assumer comme un pari.*
+
+---
+
+### N1 · L'audit de design repris, et ce qu'il en reste
+
+*Aucune US — c'est un relevé, et un relevé n'a pas d'utilisateur qui le demande ; c'est le cas d'`E0`,
+`F0` et `A0`*
+
+**Ce qu'on livre.** Un état écrit des quatorze défauts de l'audit du 31 août 2026 : **fait**, **pas
+fait**, ou **devenu sans objet**, chacun avec sa preuve dans le code. Et, pour ce qui reste, une
+place : une tranche existante qui le porte déjà, ou une ligne dans cette version.
+
+**Ce que ça ne fait pas.** **Aucun écran n'est touché.** C'est une lecture, pas une correction.
+
+**Pourquoi ça compte plus qu'il n'y paraît.** Trois défauts sur quatre sondés étaient déjà réparés
+sans que rien ne l'écrive. Si la proportion tient, la « grosse passe de design » que l'auteur
+réclame est **en grande partie déjà faite**, et ce qui reste est une poignée de points — pas un
+chantier. *Si elle ne tient pas, on saura enfin de quoi on parle.*
+
+**Aucun appel, aucun centime** : c'est une relecture du dépôt.
+
+**Critères d'acceptation**
+
+- [ ] Les quatorze défauts de l'audit portent chacun un état : **fait**, **pas fait**, **sans objet**
+- [ ] Chaque « fait » cite le fichier et la ligne qui le prouvent — pas une impression
+- [ ] Chaque « pas fait » nomme la tranche qui le porte, ou dit qu'aucune ne le porte
+- [ ] Les surfaces que l'audit déclare **non examinées** sont listées telles quelles — l'assistant de
+      démarrage, la planche de pose, les états d'erreur et d'attente — sans être jugées
+- [ ] L'audit lui-même gagne, en tête, la ligne qui dit où il en est et à quelle date
+- [ ] `docs/PLAN.md` le cite : il ne doit plus être un document que le plan ignore
+- [ ] **Aucun fichier de l'interface n'est modifié par cette tranche**
+
+**Bloquée par** — aucune. *Elle ne dépend de rien et bloque tout le reste de la version.*
 
 ---
 

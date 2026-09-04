@@ -37,21 +37,38 @@ fois. On range par cause, pas par symptôme.
 
 ---
 
-## Où l'on en est — relevé le 4 septembre 2026
+## Où l'on en est — relevé le 4 septembre 2026, en fin de journée
 
 *Ce compte se refait à la main en relisant les tableaux ci-dessous. Il est daté pour cette
 raison : le jour où il ne correspond plus, c'est lui qui a tort.*
 
 | | Combien | Ce que ça veut dire |
 |---|---|---|
-| **close** | **7** | Faites ou abandonnées, la raison écrite |
-| **partie au plan** | **22** | Tranchées, écrites dans une tranche, **pas encore construites** |
+| **close** | **8** | Faites ou abandonnées, la raison écrite |
+| **partie au plan** | **24** | Tranchées, écrites dans une tranche, **pas encore construites** |
 | **étayée** | **4** | Instruites, avec leurs pistes — mais rien n'est tranché |
-| **en vrac** | **9** | Jamais regardées |
-| | **42** | |
+| **en vrac** | **8** | Jamais regardées |
+| | **44** | |
 
-**Il reste donc 35 remarques à traiter**, dont **14 sur lesquelles aucune décision n'est prise** —
-les 10 en vrac et les 4 étayées. Les 21 autres n'attendent que d'être construites.
+**Il reste 36 remarques à traiter**, dont **12 sur lesquelles aucune décision n'est prise** — les
+8 en vrac et les 4 étayées. Les 24 autres n'attendent que d'être construites.
+
+*Elles se répartissent entre quatre versions — la **V2.4** *(ce qui est cassé)*, la **V2.5** *(le
+design)*, la **V3.1** *(l'atelier tient ce qu'il dit)* et la **V3.5** *(le dépliage)*. **Le compte
+par version se lit dans `docs/PLAN.md`**, qui fait foi sur l'ordre de construction ; le recopier
+ici en ferait une seconde vérité.*
+
+---
+
+## Séance du 4 septembre 2026, au soir — le calque qu'on ne peut ni reposer ni reprendre
+
+*Deux remarques d'un même sujet, écrites en fin de journée : **un calque fabriqué une fois ne sert
+qu'une fois.** Rien n'est vérifié dans le code — elles attendent leur tour.*
+
+| La remarque | État | Où lire |
+|---|---|---|
+| **Un calque ne se repose pas sur une autre pose.** *« Sur le pèlerin, j'ai créé un sac de voyage sur la pose repos. Cet équipement sera le même pour les autres poses, mais je n'ai aucun moyen de choisir un calque ou une image pour une pose, à part générer par IA. »* Chaque pose repaie donc ce qui existe déjà. | en vrac | journal |
+| **Un calque ne se reprend pas en référence d'une génération.** *« Je voudrais générer un sac de voyage niveau 2 en repartant du premier et en ajoutant juste des détails. Aujourd'hui je ne peux pas, sauf en passant par la galerie pour trouver le calque et le réinjecter. »* Le chemin existe, il est long et il n'est pas là où le besoin naît. | en vrac | journal |
 
 ---
 
@@ -145,7 +162,7 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 | **Les réglages de « l'allure » — sept reproches d'un coup.** Dont le plus lourd : l'univers occuperait plus de la moitié du texte envoyé, au détriment de la pose et de la vue. **Mesuré : l'univers pèse 41 à 45 %, et la consigne de pose 1,5 à 2,3 %.** La phrase de l'écran est fausse depuis le 1<sup>er</sup> septembre. Et sept phrases citent un numéro d'étape en dur : **les sept sont fausses d'un cran** depuis le travail en cours de `D2`. | **close** — `G1` **livrée le 3 septembre 2026** | [`remarques/l-allure.md`](remarques/l-allure.md) — *les 5 textes sont réécrits, et les numéros d'étape se calculent désormais au lieu d'être tapés — ils étaient huit, pas sept. **Un seul des sept reproches reste ouvert** : le déséquilibre du prompt, daté **post-V3** avec sa mesure ; il est porté par la remarque du 1<sup>er</sup> septembre sur la vue du jeu, qui est la même question* |
 | **Le menu d'une carte de la toile déborde hors de l'écran**, et l'écran de l'univers mériterait deux colonnes latérales. **Le garde-fou existe depuis le 27 août et il est éteint sur la toile, par une décision écrite** — dont l'objection technique a été levée depuis, dans le même fichier, pour cinq autres usages. | **partie au plan** — `G6 · G7` | [`remarques/menu-de-carte-et-ecran-univers.md`](remarques/menu-de-carte-et-ecran-univers.md) — *3 chantiers ; révise 2 décisions écrites, et refait l'écran de l'univers* |
 | **« Ce que la palette lit » est incompréhensible**, même pour l'auteur de l'outil. **Ce n'est pas un défaut d'explication : sur 4 des 9 artworks du dépôt, la phrase se contredit** — elle annonce un reste qui n'existe pas, puis renvoie voir en magenta une image où rien ne serait magenta. Cause trouvée : une condition posée sur un seul bout d'une échelle qui en a deux. **Tranché autrement que par la réparation** : le bloc quitte la toile, qui est un cadre pour poser des idées et non pour lire un calcul. | **partie au plan** — `G7` | [`remarques/ce-que-la-palette-lit.md`](remarques/ce-que-la-palette-lit.md) — *4 changements ; le bloc déménage du côté des palettes* |
-| **Ne montrer que l'essentiel, masquer l'avancé, et une grosse passe de design.** Trois demandes en une, dont deux contredisent des décisions écrites. | en vrac | journal — ***écartée du périmètre de la V3.1 le 3 septembre 2026** : à reprendre après la V3, voire plus tard* |
+| **Ne montrer que l'essentiel, masquer l'avancé, et une grosse passe de design.** Trois demandes en une, dont deux contredisent des décisions écrites. **Trouvé en instruisant : une passe de design a déjà eu lieu** — un audit du 31 août relève quatorze défauts, il est cité par deux documents et **jamais par le plan**, et trois sur quatre sondés sont déjà réparés sans que rien ne l'écrive. | **partie au plan** — `N1` | [`remarques/masquer-l-avance-et-la-passe-de-design.md`](remarques/masquer-l-avance-et-la-passe-de-design.md) — ***ouvre la V2.5***, qui commence par relever l'audit avant de redessiner quoi que ce soit |
 
 ---
 
@@ -154,7 +171,7 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 | La remarque | État | Où lire |
 |---|---|---|
 | **L'atelier ne demande jamais si le jeu est en pixel art**, et c'est la première question de toutes. Mesuré : deux jeux du dépôt demandent du pixel art et reçoivent deux choses différentes, une peinture et une vraie grille — et le produit ne sait pas dans lequel il est. | **close** — `D2` **close le 3 septembre 2026** | journal — *reprise en `D2`, et livrée entière : le style se choisit en image à la **deuxième** étape, il décide de ce que la taille veut dire, et le peigne dit à l'auteur quand le modèle a rendu autre chose que ce qu'il a demandé* |
-| **Le détourage de départ est incomplet, et il arrive au mauvais moment de l'usage.** On le règle avant d'avoir fabriqué la moindre image, alors qu'on ne sait ce qui convient qu'après. | étayée | journal — *à reprendre, maquette d'abord* |
+| **Le détourage de départ est incomplet, et il arrive au mauvais moment de l'usage.** On le règle avant d'avoir fabriqué la moindre image, alors qu'on ne sait ce qui convient qu'après. **Deux des quatre réglages ont été cachés sur une mesure qui ne se reproduit pas** : recompté sur les 147 détourages du dépôt, le seuil de transparence a été déplacé **une fois sur quatre**, pas 4 fois sur 100. | **partie au plan** — `M7` | [`remarques/le-detourage-de-depart.md`](remarques/le-detourage-de-depart.md) — *les quatre réglages reviennent, et un lien depuis la table met le geste dans le bon sens. Le repli au démarrage était **déjà écrit dans `G8`** ; le modèle de silhouette attend `G13`* |
 | **Deux astuces de détourage de la revue externe manquaient au plan.** Le rongement conditionnel et la décontamination sans matting. | close | journal — *écrites dans `D4`* |
 
 ---
@@ -172,8 +189,8 @@ seule pose. Trois ont été vérifiées dans le code le jour même ; aucune n'es
 | La remarque | État | Où lire |
 |---|---|---|
 | **Découper, recadrer et détourer une image posée sans quitter la toile.** | close | journal — *fait le jour même, maquette « découper une carte »* |
-| **Des catégories pour ranger les choses du codex.** Héros, méchants, bestiaire — une famille dit ce qu'une chose est, pas où l'auteur la range. | en vrac | journal |
-| **Le panneau « réglages de l'appel » ne se referme pas**, et l'interface manque de fluidité en général. | en vrac | journal |
+| **Des catégories pour ranger les choses du codex.** Héros, méchants, bestiaire — une famille dit ce qu'une chose est, pas où l'auteur la range. **Mesuré : le plus gros codex du dépôt compte 4 choses** — le besoin est anticipé, pas constaté. Et le motif existe déjà : le champ `groupe` de la toile est exactement ça, et il a reçu sa forme. | étayée | [`remarques/des-categories-dans-le-codex.md`](remarques/des-categories-dans-le-codex.md) — *3 pistes ; **mise de côté par l'auteur le 4 septembre 2026** : à reprendre à la fin, quand le reste est traité* |
+| ~~**Le panneau « réglages de l'appel » ne se referme pas**~~, et l'interface manque de fluidité en général. | **close** — **abandonnée par l'auteur le 4 septembre 2026** | journal — *le panneau se referme aujourd'hui ; sa seconde moitié — le manque de fluidité — est reprise en `V2.5`* |
 | **Le prompt d'une pose ne tient pas la vue du jeu.** Mesuré : la consigne de vue arrive sixième sur sept, entre deux lignes qui la contredisent. | étayée | journal — *recoupe la tranche `R7`* |
 
 ---
