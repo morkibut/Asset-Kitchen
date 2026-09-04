@@ -2310,6 +2310,29 @@ export function App() {
             setEnvoiOuvert(false)
           }}
           refus={refus?.texte ?? null}
+          /* **L'adresse de l'image que la planche joint** (M4). Elle se compose
+             ici et pas dans l'écran, parce que c'est ici que vivent les repères
+             de l'appel — le même endroit qui les envoie déjà à la confirmation.
+             Elle décrit donc exactement l'appel qui vient d'être composé. */
+          plancheJointe={
+            envoi?.images.jointe && modele
+              ? api.plancheJointe({
+                  modele: modele.identifiant,
+                  projet: bibliotheque.courant,
+                  personnage: cible?.personnage ?? null,
+                  pose:
+                    !cases || enPlanche
+                      ? (posesCible[0]?.identifiant ?? null)
+                      : null,
+                  piece: cible?.piece ?? null,
+                  poses:
+                    cases && !enPlanche
+                      ? posesCible.map((p) => p.identifiant)
+                      : null,
+                  directions: enPlanche ? directionsCible : null,
+                })
+              : null
+          }
         />
       )}
 

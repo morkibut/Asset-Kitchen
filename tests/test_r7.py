@@ -436,8 +436,13 @@ def test_le_rang_des_images_est_celui_de_lenvoi(atelier):
         Reinjection(asset="b", role=STYLE),
     )
 
-    lignes = service._nommer_les_images((STYLE, STYLE, GABARIT, PALETTE), 4)
+    # **Le rang et le rôle voyagent à côté du texte depuis M4** : l'écran de
+    # confirmation pose sous chaque image le morceau de légende qui la concerne,
+    # et recouper le bloc à l'affichage aurait été une seconde numérotation.
+    nommees = service._nommer_les_images((STYLE, STYLE, GABARIT, PALETTE), 4)
+    lignes = [texte for _, _, texte in nommees]
 
+    assert [rang for rang, _, _ in nommees] == [1, 2, 3, 4]
     assert [int(NOMMAGE.match(l).group(1)) for l in lignes] == [1, 2, 3, 4]
     assert "EMPTY LAYOUT GRID: 4 cells" in lignes[2]
     assert "PALETTE STRIP" in lignes[3]
@@ -458,9 +463,14 @@ def test_les_lignes_de_nommage_sont_mot_pour_mot_celles_du_banc(atelier):
 
     roles = ("style", "reference", "gabarit", "palette")
 
-    assert atelier.generations._nommer_les_images(roles, 8) == lignes_de_nommage(
-        roles, 8
-    )
+    # **Huit cases, et c'est ce qui permet la comparaison mot pour mot.** Le
+    # banc ne connaît pas l'accord que `M4` a posé sur ces nombres — il n'a
+    # jamais tiré de planche d'une seule case —, et *8 cells* s'écrit pareil des
+    # deux côtés. La comparaison porte donc sur ce qu'elle a toujours porté : la
+    # phrase, pas la grammaire du nombre.
+    nommees = atelier.generations._nommer_les_images(roles, 8)
+
+    assert [texte for _, _, texte in nommees] == lignes_de_nommage(roles, 8)
 
 
 def test_un_role_inconnu_refuse_plutot_que_de_nommer_faux(atelier):

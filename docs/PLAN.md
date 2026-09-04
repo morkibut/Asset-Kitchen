@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, quatre closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, cinq closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3` et `M4` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -213,9 +213,9 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
  │
  ▼
 V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin ✔ dessinée │  quatre closes sur sept.
+      │ M2  la maquette du coin ✔ dessinée │  cinq closes sur sept.
       │ M3  l'écran ne fige plus ✔ close   │  Aucune n'en bloque une autre.
-      │ M4  la planche dit enfin vrai      │  M2 dessine, les autres réparent.
+      │ M4  la planche dit vrai ✔ close    │  M2 dessine, les autres réparent.
       ├ M5  la référence qui manque ───────┤  La tranche qui bâtit l'écran de
       ├ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
       └ M7  le détourage complet ──────────┘
@@ -1816,7 +1816,7 @@ curseur, lui, saute de 11 à 18 quand on retire le brouillon du champ. **Un essa
 
 ---
 
-### M4 · La planche cesse d'être mal décrite — à l'écran, et au modèle
+### M4 · La planche cesse d'être mal décrite — ✅ **livrée le 4 septembre 2026**
 
 *Aucune US neuve — elle tient `US-126` et `US-296`, prolonge le travail de `R7` sur les images
 nommées, et **ferme une phrase du genre de `G1`**, née le jour de sa clôture*
@@ -1947,36 +1947,36 @@ du point ②, en revanche, coûterait des tirages : **ce n'est pas fait, et ce n
 
 *① l'écran de confirmation*
 
-- [ ] Le serveur dit **lequel des deux rôles** il a choisi, et l'écran a deux phrases au lieu d'une
-- [ ] Sur une planche d'équipement, l'écran dit *la planche du corps, que le modèle doit modifier* —
+- [x] Le serveur dit **lequel des deux rôles** il a choisi, et l'écran a deux phrases au lieu d'une
+- [x] Sur une planche d'équipement, l'écran dit *la planche du corps, que le modèle doit modifier* —
       **et un essai compare cette phrase à celle du texte qui part**, pour que les deux ne puissent
       plus diverger
-- [ ] Sur une grille vide, l'écran dit toujours *le gabarit de la grille, qui dit où poser les
+- [x] Sur une grille vide, l'écran dit toujours *le gabarit de la grille, qui dit où poser les
       sujets*
-- [ ] La troisième image a **sa vignette** et s'ouvre en grand, comme les deux autres
-- [ ] Elle **n'a pas de case à cocher** — pas une case grisée : une ligne sans case, qui porte sa
+- [x] La troisième image a **sa vignette** et s'ouvre en grand, comme les deux autres
+- [x] Elle **n'a pas de case à cocher** — pas une case grisée : une ligne sans case, qui porte sa
       raison
-- [ ] Chaque image porte, sous elle, le morceau de légende qui la concerne
-- [ ] La légende reste **entière et inchangée** dans ce qui part, mot pour mot
+- [x] Chaque image porte, sous elle, le morceau de légende qui la concerne
+- [x] La légende reste **entière et inchangée** dans ce qui part, mot pour mot
 
 *② le texte qui part au modèle*
 
-- [ ] Les nombres s'accordent : *1 sprite*, *1 column*, *1 row* — **et un essai le tient pour 1, 2 et
+- [x] Les nombres s'accordent : *1 sprite*, *1 column*, *1 row* — **et un essai le tient pour 1, 2 et
       4 cases**, les trois formes que le dépôt produit
-- [ ] À **une seule case**, le texte dit ce que l'image est — une image unique à modifier — et ne
+- [x] À **une seule case**, le texte dit ce que l'image est — une image unique à modifier — et ne
       parle plus ni de feuille, ni de cases, ni de lignes de grille, ni de bordures à ne pas dessiner
-- [ ] À deux cases et au-delà, le texte reste **mot pour mot celui d'aujourd'hui**, redondance
+- [x] À deux cases et au-delà, le texte reste **mot pour mot celui d'aujourd'hui**, redondance
       comprise : le banc du 28 août n'est pas rejoué
-- [ ] Le plan **écrit** que les comparaisons avec les tirages d'avant ne valent plus sur les
+- [x] Le plan **écrit** que les comparaisons avec les tirages d'avant ne valent plus sur les
       planches d'une et deux cases
 
 *③ l'écran de la planche*
 
-- [ ] *« la planche n'y entre pas »* est réécrite : elle y entre, avec le coût de l'appel, et ses
+- [x] *« la planche n'y entre pas »* est réécrite : elle y entre, avec le coût de l'appel, et ses
       morceaux à côté
-- [ ] Aucune autre phrase de cet écran ne contredit ce que `G16` a livré — **il est relu en entier**
+- [x] Aucune autre phrase de cet écran ne contredit ce que `G16` a livré — **il est relu en entier**
 
-- [ ] Aucun appel au fournisseur, aucun centime : la tranche se vérifie serveur du fournisseur coupé
+- [x] Aucun appel au fournisseur, aucun centime : la tranche se vérifie serveur du fournisseur coupé
 
 **Bloquée par** — aucune. *Elle touche le même écran que `M3` et `M5`, et pas les mêmes endroits :
 `M3` répare ce qu'il fait, `M5` ce qu'il perd, celle-ci ce qu'il dit. **`M5` se pose après elle**,
@@ -1986,6 +1986,57 @@ parce que le geste de `M5` vient dans la liste que celle-ci refait.*
 cases doit se lire autrement qu'une case grisée, et c'est exactement ce que la décision d'origine
 voulait éviter. *À trancher en construisant, contre le motif écrit du dépôt — « le grisé porte sa
 raison ».*
+
+#### Ce que la construction a appris, et ce qu'elle a tranché
+
+**La ligne sans case est dessinée, et voici ce qui a été retenu.** La colonne de la case reste
+**vide** au lieu de porter un carré grisé, et la vignette garde donc son alignement avec celles du
+dessus. La raison s'écrit à la suite du nom, sur la même ligne, dans le gris des origines : *elle ne
+se décoche pas — sans elle, il n'y aurait rien à modifier — et elle compte dans les places*. Le
+motif du dépôt — *le grisé porte sa raison* — n'est pas enfreint : il vaut pour **ce qu'on pourrait
+faire et qui est refusé ici**, et cette image-là n'est refusée nulle part. Une case grisée aurait
+demandé de comprendre pourquoi elle l'est ; une ligne sans case dit qu'il n'y a rien à décider.
+
+**Le rôle est descendu d'un cran, et c'est ce qui répare vraiment ①.** La décision *gabarit ou
+planche* existait à deux endroits — le texte qui nomme les images, et le compte des images — et les
+deux copies avaient divergé. Elle vit désormais dans une seule fonction, `role_de_planche`, que les
+deux appellent. Le compte, lui, rendait un **nombre** ; il rend maintenant le nom du rôle à côté, et
+l'écran n'a plus rien à deviner.
+
+> #### ⚠️ Une troisième phrase fausse, trouvée en relisant l'écran de la planche
+>
+> Le critère demandait de relire l'écran **en entier**, et la relecture a rapporté plus que ce
+> qu'elle cherchait. *« Un compte de cases faux ne fait rien entrer : la planche entière se relance,
+> au prix plein »* n'est plus vrai que d'une moitié depuis `R6` : **un sujet qui manque refuse
+> encore, un sujet de trop ne jette plus rien.** Le relevé qui avait changé la règle est net —
+> quatre planches sur treize du banc d'animation refusées pour un sujet en trop, soit 31 % des
+> appels payés perdus sur un geste dont c'est le régime normal. La phrase promettait donc, avant de
+> payer, exactement le contraire de ce que le produit fait.
+>
+> Elle est réécrite dans les deux sens. **Ce n'est pas une phrase du genre de `G1` de plus** : celle
+> de `G16` avait tenu un jour, celle-ci a tenu **le jour même** — `R6` et cet écran ont été touchés
+> à quelques heures d'intervalle le 3 septembre.
+
+**Ce que la mesure a confirmé, et il ne change pas.** Les comparaisons avec les tirages déjà payés
+ne valent plus sur les planches d'**une et de deux cases**, et sur elles seules : à trois cases et
+au-delà, la grille la plus carrée n'a jamais de dimension à un, et le texte est **identique au
+caractère près** à celui d'avant. C'est le prix écrit avant de commencer, et il est payé tel quel.
+
+> #### Vérifié au navigateur, sur l'atelier jetable en 8427
+>
+> Sur une planche d'équipement à deux poses : la troisième image est une **ligne comme les autres**,
+> avec la feuille elle-même en vignette — les deux corps côte à côte —, *Image 1*, la phrase *la
+> planche du corps, que le modèle doit modifier*, sa raison à côté, **aucun bouton dans la ligne**,
+> et sous elle la légende telle qu'elle part. La barre d'espace l'ouvre en grand comme n'importe
+> quelle autre image, et le bas de l'aperçu la nomme.
+>
+> Le texte qui part écrit *laid out in exactly 2 columns and 1 row* — l'accord est là où il
+> manquait. À **une seule** case, la consigne de planche ne contient plus un seul mot de grille :
+> ni *sheet*, ni *cell*, ni *column*, ni *row*, ni *border*, et les six garanties de non-changement
+> y sont mot pour mot.
+>
+> Sur l'écran de la planche : *la planche y entre, et elle porte le prix de l'appel — ses 4 morceaux
+> entrent à côté*, et la phrase du compte dit maintenant ce qui arrive dans les deux sens.
 
 ---
 

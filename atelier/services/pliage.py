@@ -103,6 +103,23 @@ class ChoixAttendu(ErreurAtelier):
     code = "choix_attendu"
 
 
+def accorde(nombre: int, singulier: str, pluriel: str = "") -> str:
+    """Un nombre et son nom, **accordés** — `1 sprite`, `2 sprites` (M4).
+
+    Le texte se composait avec les nombres de la grille sans jamais accorder, et
+    la faute apparaissait dès qu'une dimension valait un : *« a sprite sheet of
+    1 sprites […] laid out in exactly 1 columns and 1 rows »*. Mesuré le
+    4 septembre 2026 sur les vraies planches du dépôt — **14 sur 22, soit 64 %,
+    avaient reçu un pluriel faux**, et les 7 planches d'équipement étaient toutes
+    dans ce cas.
+
+    Le pluriel par défaut est le singulier plus un `s` : les quatre mots que ce
+    fichier accorde le suivent tous, et une table de formes irrégulières pour
+    quatre mots réguliers serait une table à tenir à jour pour rien.
+    """
+    return f"{nombre} {singulier if nombre == 1 else (pluriel or singulier + 's')}"
+
+
 def consignes(pliage: Pliage) -> str:
     """Ce qui s'ajoute au prompt pour demander une planche plutôt qu'une image.
 
@@ -110,9 +127,14 @@ def consignes(pliage: Pliage) -> str:
     une grille partie vide demande de *créer* N sujets (C2), une grille partie
     pleine demande de les *habiller* (C3). Le reste de la chaîne — le pliage, le
     découpeur, le compte — ne fait aucune différence entre les deux.
+
+    **Et depuis M4, la planche d'une seule case a son propre texte** — parce
+    qu'elle n'est pas une planche. Voir `_habiller_une_seule`.
     """
     if pliage.geometrie_connue:
-        return _habiller(pliage)
+        return (
+            _habiller_une_seule() if pliage.nombre <= 1 else _habiller(pliage)
+        )
     return _creer(pliage)
 
 
@@ -138,8 +160,10 @@ def _creer(pliage: Pliage) -> str:
         f"{rang}. {case.texte}" for rang, case in enumerate(pliage.cases, start=1)
     )
     consigne = (
-        f"Render this as a sprite sheet of {forme.cases} sprites of the SAME subject. "
-        f"Exactly {forme.colonnes} columns and {forme.lignes} rows, {forme.cases} cells "
+        f"Render this as a sprite sheet of "
+        f"{accorde(forme.cases, 'sprite')} of the SAME subject. "
+        f"Exactly {accorde(forme.colonnes, 'column')} and "
+        f"{accorde(forme.lignes, 'row')}, {accorde(forme.cases, 'cell')} "
         # **`all standing on the same baseline` est parti le 1ᵉʳ septembre 2026.**
         # Ce que cette phrase achetait — des sujets alignés, donc découpables —
         # est gardé mot pour mot ; ce qu'elle disait en plus, *ils sont debout sur
@@ -161,7 +185,8 @@ def _creer(pliage: Pliage) -> str:
     # le détourage lit un fond plat sur la bordure, et les traits deviendraient
     # du sujet. Un des six modèles du 28 août l'a fait.
     return (
-        f"{consigne} The attached layout image shows {forme.cases} empty cells. Draw "
+        f"{consigne} The attached layout image shows "
+        f"{accorde(forme.cases, 'empty cell')}. Draw "
         f"one sprite inside each cell, keeping the cells at their positions and sizes. "
         f"Do NOT draw the cell outlines in your image — the background must stay one "
         f"plain flat light gray, with no visible cell borders and no separating lines."
@@ -188,17 +213,56 @@ def _habiller(pliage: Pliage) -> str:
     """
     forme = pliage.geometrie
     return (
-        f"The attached image is a sprite sheet of {forme.cases} sprites of the same "
-        f"character, laid out in exactly {forme.colonnes} columns and {forme.lignes} "
-        f"rows. Return the SAME sheet with the described item added to every sprite. "
+        f"The attached image is a sprite sheet of "
+        f"{accorde(forme.cases, 'sprite')} of the same "
+        f"character, laid out in exactly {accorde(forme.colonnes, 'column')} and "
+        f"{accorde(forme.lignes, 'row')}. "
+        f"Return the SAME sheet with the described item added to every sprite. "
         f"Change absolutely nothing else: the same character, the same poses, the same "
         f"proportions, the same size, the same position of each sprite in its cell, the "
         f"same viewing angles, the same colors everywhere else, the same pixel art "
         f"style, the same outline weight, the same plain flat light gray background. "
-        f"Keep the exact same grid: {forme.colonnes} columns, {forme.lignes} rows, "
+        f"Keep the exact same grid: {accorde(forme.colonnes, 'column')}, "
+        f"{accorde(forme.lignes, 'row')}, "
         f"same cell positions, same cell sizes, same overall image size. Only the item "
         f"is added. Nothing else moves, nothing else is redrawn, nothing is zoomed in "
         f"or out, no cell borders, no grid lines, no text, no numbers, no frames."
+    )
+
+
+def _habiller_une_seule() -> str:
+    """Une seule case : **ce n'est pas une planche, et le texte cesse de le dire** (M4).
+
+    Habiller passe toujours par le pliage, même à une case — le calque se
+    fabrique par différence entre l'avant et l'après, et sans planche il n'y a
+    rien à comparer. Rien à changer là. **Ce qui en sortait, si.** Le texte
+    affirmait au modèle qu'il regardait une feuille de contact quadrillée, lui
+    demandait de *garder exactement la même grille*, et lui interdisait *les
+    bordures de cases et les lignes de grille* — pour une image qui n'a ni cases
+    ni grille. Ce qui partait était **une description de ce que l'image n'est
+    pas**, et sur les 22 planches du dépôt, 7 étaient dans ce cas.
+
+    **La redondance ne se rediscute pas, et elle est reprise mot pour mot.** Le
+    banc du 28 août 2026 l'a étalonnée : *tout ce qu'on ne dit pas explicitement
+    « ne change pas » est une invitation à le changer*. Ce qui était en cause
+    n'était pas la redondance, c'était qu'elle décrive une grille absente — les
+    six mêmes garanties se répètent donc ici, dites de l'image entière au lieu de
+    la case.
+
+    **Elle ne se compose pas depuis la géométrie**, et c'est voulu : une grille
+    de 1 × 1 n'a rien à dire, et lui faire dire *« une colonne, une ligne »*
+    serait la même faute écrite correctement.
+    """
+    return (
+        "The attached image is a single sprite of the same character, already drawn. "
+        "Return the SAME image with the described item added to the character. "
+        "Change absolutely nothing else: the same character, the same pose, the same "
+        "proportions, the same size, the same position of the character in the image, "
+        "the same viewing angle, the same colors everywhere else, the same pixel art "
+        "style, the same outline weight, the same plain flat light gray background. "
+        "Keep the exact same framing: same subject position, same subject size, same "
+        "overall image size. Only the item is added. Nothing else moves, nothing else "
+        "is redrawn, nothing is zoomed in or out, no text, no numbers, no frames."
     )
 
 

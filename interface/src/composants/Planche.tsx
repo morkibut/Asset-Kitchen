@@ -213,13 +213,22 @@ export function EcranPlanche({
               </p>
             </section>
 
-            {/* ── Ce qu'une planche est, et ce qu'elle n'est pas ─────────── */}
+            {/* ── Ce qui entre en bibliothèque ────────────────────────────
+                **La phrase disait le contraire, et elle a tenu un jour.** Elle
+                affirmait *la planche n'y entre pas — c'est une ruse pour payer
+                moins, pas un format de livraison*, ce qui était vrai jusqu'au
+                3 septembre 2026 à 23 h 45, heure de la livraison de G16. Depuis,
+                la planche entre : elle se regarde, se met en favori, s'exporte,
+                et un fichier entier du produit ne décrit qu'elle. L'écran, lui,
+                n'avait pas été rouvert. */}
             <section className="flex flex-col gap-1.5">
               <Libelle>ce qui entre en bibliothèque</Libelle>
               <p className="mesure text-[10px] leading-4 text-texte-3">
-                la planche n'y entre <span className="text-texte-2">pas</span> —
-                ses {lu.geometrie.cases} morceaux, oui, chacun dans sa direction.
-                C'est une ruse pour payer moins, pas un format de livraison.
+                la planche <span className="text-texte-2">y entre</span>, et
+                elle porte le prix de l'appel — ses {lu.geometrie.cases}{" "}
+                morceaux entrent à côté, chacun dans sa direction, sans prix
+                propre. Ce qui a été payé se regarde donc en entier : la feuille
+                telle qu'elle est revenue, et ce que l'atelier en a tiré.
               </p>
             </section>
 
@@ -386,11 +395,25 @@ export function EcranPlanche({
                           }`
                   }
                 />
+                {/* **Trouvée en relisant l'écran en entier** (M4). Elle disait
+                    *un compte de cases faux ne fait rien entrer*, ce qui n'est
+                    plus vrai que d'une moitié depuis R6 : un sujet qui manque
+                    refuse encore — il manque une étape, et aucun choix ne la
+                    fabriquera —, mais un sujet de trop ne jette plus rien. Le
+                    relevé qui a changé la règle est net : quatre planches sur
+                    treize du banc d'animation étaient refusées pour un sujet en
+                    trop, soit 31 % des appels payés perdus sur un geste dont
+                    c'est le régime normal. */}
                 <p className="mesure text-[9.5px] leading-4 text-texte-3">
                   armer pose la planche dans la barre qui paie, en bas : c'est
                   elle qui envoie, ici comme partout ailleurs. Un jet unique — le
-                  modèle n'en rend pas deux —, et un compte de cases faux ne fait
-                  rien entrer : la planche entière se relance, au prix plein.
+                  modèle n'en rend pas deux. S'il revient{" "}
+                  <span className="text-texte-2">moins</span> de sujets que de
+                  cases, rien n'entre et la planche entière se relance, au prix
+                  plein ; s'il en revient{" "}
+                  <span className="text-texte-2">plus</span>, rien n'est jeté —
+                  la planche s'ouvre avec ses sujets mesurés, et on écarte ceux
+                  qu'on ne veut pas.
                 </p>
               </section>
             )}

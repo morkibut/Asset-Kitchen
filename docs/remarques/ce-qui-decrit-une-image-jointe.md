@@ -201,3 +201,28 @@ autrement qu'une case grisée, et c'est exactement ce que la décision d'origine
 - **`G1`** — les phrases qui ont cessé d'être vraies. Le libellé du *gabarit* est une dixième du
   même genre, découverte après la clôture de la tranche : écrite juste, démentie par un changement
   venu d'ailleurs.
+
+---
+
+## Ce que la tranche a livré — 4 septembre 2026
+
+**`M4` est close le jour même de l'arbitrage.**
+
+**La question laissée ouverte ci-dessus est tranchée : la ligne sans case.** La colonne de la case
+reste **vide** au lieu de porter un carré grisé — la vignette garde ainsi son alignement avec celles
+du dessus — et la raison s'écrit à la suite du nom, dans le gris des origines. Le motif du dépôt
+— *le grisé porte sa raison* — n'est pas enfreint : il vaut pour ce qu'on **pourrait** faire et qui
+est refusé ici, et cette image-là n'est refusée nulle part. Une case grisée aurait demandé de
+comprendre pourquoi elle l'est ; une ligne sans case dit qu'il n'y a rien à décider.
+
+**La traduction de la légende reste écartée, et elle n'a pas eu à se rouvrir.** La légende est
+recopiée sous chaque image, telle qu'elle part, découpée **par celui qui l'a écrite** — recouper le
+bloc à l'affichage aurait été une seconde vérité sur la numérotation.
+
+**Et la réparation est descendue d'un cran.** Le vrai défaut n'était pas le mot de l'écran : c'était
+que la décision *gabarit ou planche* existait **deux fois** — dans le texte qui nomme les images, et
+dans le compte des images — et que la seconde ne rendait qu'un nombre. Elle vit désormais dans une
+seule fonction, que les deux appellent.
+
+*Le détail de ce que la construction a appris est dans `docs/status/etat.md`, à l'entrée du
+4 septembre 2026 ; les critères d'acceptation tenus sont dans `docs/PLAN.md`.*

@@ -97,6 +97,7 @@ from atelier.services.pliage import (
     ChoixAttendu,
     CompteFaux,
     ServicePliage,
+    accorde,
     consignes,
     reference,
 )
@@ -122,6 +123,34 @@ FENETRE_MESURES = 8
 # jamais, et c'est exactement ce qu'il dit — cette image n'a rien coûté et ne se
 # relance pas.
 IMPORT = "import"
+
+
+def role_de_planche(*, cases: int, piece: bool) -> str | None:
+    """Laquelle des deux images une planche joint — ou aucune.
+
+    **Le seul endroit du dépôt qui en décide** (M4). Les deux sortes ne
+    demandent pas la même chose au modèle : un `GABARIT` est une grille *vide*
+    où il fera naître N sujets, une `PLANCHE_JOINTE` est la planche *pleine*
+    qu'on lui redonne pour qu'il y ajoute une pièce. Les confondre revient à
+    dire *« dessine un sujet par case »* devant une planche déjà dessinée.
+
+    **Elle existait deux fois, et les deux copies avaient divergé.** Le texte
+    qui part demandait à modifier la planche existante ; l'écran, à quelques
+    centimètres de là et au même instant, annonçait un gabarit à remplir — parce
+    que le compte des images ne rendait qu'un **nombre**, sans le rôle, et que
+    l'écran n'avait alors que les mots du plus ancien des deux cas. Le gabarit
+    vient de `C2`, la planche d'équipement de `C3`, qui a réemployé la même
+    place sans rouvrir la phrase.
+
+    **Une pièce dès une case, une grille à partir de deux.** Habiller consiste à
+    renvoyer la même planche avec la pièce en plus, et le calque se fabrique par
+    différence entre les deux : sans planche, il n'y a rien à comparer. Plier
+    une pose seule, en revanche, ferait payer un gabarit pour une image que le
+    produit sait déjà demander.
+    """
+    if piece:
+        return PLANCHE_JOINTE if cases >= 1 else None
+    return GABARIT if cases >= 2 else None
 
 
 class ImportRefuse(ErreurAtelier):
@@ -1174,6 +1203,45 @@ class ServiceGenerations:
         """
         return self._plier(projet, personnage, poses, piece, pose, directions)
 
+    def image_jointe(
+        self,
+        projet: str | None,
+        personnage: str | None,
+        *,
+        modele: str,
+        pose: str | None = None,
+        directions: Sequence[str] | None = None,
+        poses: Sequence[str] | None = None,
+        piece: str | None = None,
+    ) -> tuple[str, bytes] | None:
+        """L'image que la planche joint, **telle qu'elle partira** — et son rôle.
+
+        **`_jointes` rendu public, et rien d'autre** (M4), pour la raison qui a
+        déjà décidé de l'aperçu du prompt et des cases de la planche : la
+        redessiner à l'écran en aurait fait une seconde vérité sur ce qui part.
+        Celle-ci est la même image, par le même chemin, à l'octet près.
+
+        **Elle ne coûte rien et n'enregistre rien.** Les deux sortes se
+        redessinent du geste à chaque appel et ne s'écrivent jamais sur le
+        disque ; les rendre en aperçu ne fait donc que refaire, gratuitement, ce
+        que la soumission refera.
+
+        Rien quand la planche ne joint aucune image — un appel sans lot, ou un
+        modèle qui n'accepte aucune référence.
+        """
+        # **Le projet ouvert se lit ici comme partout ailleurs**, et pas à la
+        # route : le défaut vit dans les services depuis T7.
+        if projet is None and self._bibliotheque is not None:
+            projet = self._bibliotheque.courant
+        pliage = self._plier(projet, personnage, poses, piece, pose, directions)
+        role = self._role_joint(pliage, modele)
+        if role is None:
+            return None
+        octets = self._jointes(pliage, modele)
+        if not octets:  # pragma: no cover — `_role_joint` vient d'en promettre une
+            return None
+        return role, octets[0]
+
     def _plier(
         self,
         projet: str | None,
@@ -1329,11 +1397,15 @@ class ServiceGenerations:
             return None
         if self._catalogue.modele(identifiant_modele).references_max <= 0:
             return None
-        if pliage.geometrie_connue:
-            if self._equipement is None:  # pragma: no cover — l'atelier le monte
-                return None
-            return PLANCHE_JOINTE
-        return GABARIT
+        if pliage.geometrie_connue and self._equipement is None:
+            return None  # pragma: no cover — l'atelier le monte toujours
+        # **Le choix lui-même vit dans `role_de_planche`, et nulle part
+        # ailleurs** (M4) : le compte des images le refaisait pour son compte,
+        # et l'écran annonçait un gabarit là où le texte demandait de modifier
+        # une planche.
+        return role_de_planche(
+            cases=pliage.nombre, piece=pliage.geometrie_connue
+        )
 
     def _roles_qui_partent(
         self,
@@ -1696,8 +1768,8 @@ class ServiceGenerations:
         partir sous un faux nom : mieux vaut un appel refusé qu'un modèle à qui
         l'on dit que le gabarit est le personnage.
         """
-        lignes = self._nommer_les_images(roles, self._cases_du_pliage(pliage))
-        return "\n".join(lignes)
+        nommees = self._nommer_les_images(roles, self._cases_du_pliage(pliage))
+        return "\n".join(texte for _, _, texte in nommees)
 
     @staticmethod
     def _cases_du_pliage(pliage: Pliage | None) -> int:
@@ -1705,8 +1777,18 @@ class ServiceGenerations:
         return 0 if pliage is None else pliage.nombre
 
     @staticmethod
-    def _nommer_les_images(roles: Sequence[str], cases: int) -> list[str]:
+    def _nommer_les_images(
+        roles: Sequence[str], cases: int
+    ) -> list[tuple[int, str, str]]:
         """Une ligne par image, numérotée dans l'ordre d'envoi, depuis son rôle.
+
+        **Elle rend le rang et le rôle à côté du texte depuis M4**, et non le
+        texte seul : l'écran de confirmation pose sous chaque image le morceau
+        de légende qui la concerne, et il ne peut le faire qu'en sachant lequel.
+        Le découper à l'écran, en recoupant le bloc sur ses retours à la ligne,
+        aurait été une seconde vérité sur la numérotation — celle-là même que
+        `_roles_qui_partent` existe pour empêcher. La légende, elle, part
+        entière et inchangée : c'est du texte qui va au modèle.
 
         Recopié de `essais/socle_essais.py` — `lignes_de_nommage` —, à un rôle
         près : le banc levait sur `edition`, parce qu'aucun de ses tirages n'en
@@ -1720,38 +1802,48 @@ class ServiceGenerations:
         pour ça que le bloc entier se taisait avant R7. La ligne la nomme donc
         sans rien lui interdire.
         """
-        lignes: list[str] = []
+        lignes: list[tuple[int, str, str]] = []
         for rang, role in enumerate(roles, start=1):
             if role == STYLE:
-                lignes.append(
+                texte = (
                     f"Image {rang} — STYLE REFERENCE (an official artwork of this game): "
                     f"follow its colours, outfit, proportions and drawing style. Do NOT "
                     f"copy its pose, its camera angle or its layout."
                 )
             elif role == REFERENCE:
-                lignes.append(
+                texte = (
                     f"Image {rang} — THE SAME CHARACTER, already drawn in the game's "
                     f"camera: keep it recognisably the same character in every cell."
                 )
             elif role == GABARIT:
-                lignes.append(
-                    f"Image {rang} — EMPTY LAYOUT GRID: {cases} cells. Draw exactly one "
-                    f"sprite per cell, one instant of the motion per cell, in reading "
-                    f"order. Do NOT draw the grid lines."
+                texte = (
+                    f"Image {rang} — EMPTY LAYOUT GRID: {accorde(cases, 'cell')}. Draw "
+                    f"exactly one sprite per cell, one instant of the motion per cell, "
+                    f"in reading order. Do NOT draw the grid lines."
+                )
+            elif role == PLANCHE_JOINTE and cases <= 1:
+                # **Une seule case n'est pas une feuille de contact** (M4), et la
+                # nommer ainsi contredisait la consigne de planche du même
+                # prompt, qui vient d'être réécrite pour ce cas-là.
+                texte = (
+                    f"Image {rang} — THE IMAGE TO CHANGE: the same character, already "
+                    f"drawn. Keep it exactly where it is and change only what the "
+                    f"request below asks for."
                 )
             elif role == PLANCHE_JOINTE:
-                lignes.append(
-                    f"Image {rang} — THE SPRITE SHEET TO CHANGE: {cases} sprites of the "
+                texte = (
+                    f"Image {rang} — THE SPRITE SHEET TO CHANGE: "
+                    f"{accorde(cases, 'sprite')} of the "
                     f"same character, already drawn. Keep every cell where it is and "
                     f"change only what the request below asks for."
                 )
             elif role == PALETTE:
-                lignes.append(
+                texte = (
                     f"Image {rang} — PALETTE STRIP: not a subject, only the colours to "
                     f"draw with."
                 )
             elif role == EDITION:
-                lignes.append(
+                texte = (
                     f"Image {rang} — THE IMAGE TO EDIT: this is the picture the request "
                     f"below modifies. Keep everything it does not ask you to change."
                 )
@@ -1760,6 +1852,7 @@ class ServiceGenerations:
                     f"une image jointe porte un rôle que le texte ne sait pas nommer : "
                     f"{role!r}"
                 )
+            lignes.append((rang, role, texte))
         return lignes
 
     def _est_le_signalement(
@@ -1942,6 +2035,17 @@ class ServiceGenerations:
             # dépliant d'hier et l'écran de confirmation : deux routes auraient
             # rouvert la question de savoir laquelle dit vrai.
             "lignes": lignes,
+            # **La légende, découpée par image** (M4). Le bloc entier part au
+            # modèle et se lit tel quel dans le texte ci-dessus ; celui-ci est le
+            # même texte, rendu **rang par rang**, pour que l'écran pose sous
+            # chaque image le morceau qui la concerne. Le recouper à l'affichage
+            # aurait été une seconde vérité sur la numérotation.
+            "nommage": [
+                {"rang": rang, "role": role, "texte": texte}
+                for rang, role, texte in self._nommer_les_images(
+                    roles, self._cases_du_pliage(pliage)
+                )
+            ],
             # ── Le fond, et ce qu'il interdit (D3) ───────────────────────────
             #
             # **Le fond résolu, pour que l'écran montre la couleur sur laquelle
@@ -2197,7 +2301,15 @@ class ServiceGenerations:
         # elle-même, pas un gabarit. Elle compte pareil : une place dans le
         # plafond du modèle, et un coût chez ceux qui facturent au token. Dès
         # **une** case, parce qu'une planche d'une seule pose reste une planche.
-        gabarit = 1 if (cases >= 2 or (piece and cases >= 1)) else 0
+        #
+        # **Le rôle part avec le compte depuis M4**, et il vient du même endroit
+        # que celui du texte : ce compte-ci rendait un nombre, l'écran n'avait
+        # donc pas de quoi choisir ses mots, et il annonçait *un gabarit à
+        # remplir* pendant que le texte demandait de *modifier la planche
+        # existante* — deux demandes opposées pour une seule image, au moment
+        # précis où l'on décide de payer.
+        role_joint = role_de_planche(cases=cases, piece=bool(piece))
+        gabarit = 1 if role_joint else 0
 
         # **La bande de couleurs compte comme le gabarit**, et pour les mêmes
         # deux raisons : elle occupe une place dans le plafond du modèle, et elle
@@ -2220,6 +2332,10 @@ class ServiceGenerations:
             # dit ce qu'on ne peut pas ne pas envoyer.
             "incompressibles": len({r.asset for r in manuelles}) + gabarit + bande,
             "gabarit": gabarit,
+            # **Laquelle des deux, en toutes lettres** (M4) — `gabarit` dit
+            # *combien*, celui-ci dit *laquelle*, et l'écran ne peut plus
+            # inventer la phrase qui manque.
+            "role_joint": role_joint,
             "palette": bande,
             "manuelles": sum(1 for l in retenues if l["origine"] != CARTE),
             "artworks": sum(

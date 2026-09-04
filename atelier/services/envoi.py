@@ -54,7 +54,7 @@ from atelier.domaine.envoi import (
     clef,
 )
 from atelier.domaine.erreurs import ErreurAtelier
-from atelier.domaine.generation import CARTE
+from atelier.domaine.generation import CARTE, PLANCHE_JOINTE
 from atelier.domaine.projet import (
     AUCUNE_CIBLE,
     DE_LA_FAMILLE,
@@ -216,7 +216,17 @@ class ServiceEnvoi:
             ligne["avertissement"] = self._avertissement(ligne, cible)
 
         images = self._images(
-            compte, mesure, places, palette_cochee, projet, personnage
+            compte,
+            mesure,
+            places,
+            palette_cochee,
+            projet,
+            personnage,
+            # **La légende vient de la composition, jamais d'un découpage à
+            # l'écran** (M4) : c'est le même texte que celui du haut, rendu rang
+            # par rang par celui qui l'a écrit.
+            nommage=apercu.get("nommage", ()),
+            cases=cases,
         )
         options = self._options(
             projet, personnage, modele_lu, palette_cochee, compte, places
@@ -369,6 +379,8 @@ class ServiceEnvoi:
         palette_cochee: bool,
         projet: str | None,
         personnage: str | None,
+        nommage: Sequence[dict[str, Any]] = (),
+        cases: int = 0,
     ) -> dict[str, Any]:
         """Chaque image jointe, avec son prix **sur la ligne où on la coche**.
 
@@ -385,8 +397,18 @@ class ServiceEnvoi:
         **Les images en trop sont grisées avec leur compte**, jamais retirées :
         « 14 places, 16 cochées », et l'on choisit lesquelles retirer. C'est le
         grisé de T1 appliqué à une liste plutôt qu'à un bouton.
+
+        **Chaque image porte sa légende depuis M4.** Le bloc *« Image 1 — …,
+        Image 2 — … »* est du texte qui part au modèle : il se lit donc en haut,
+        entier et dans l'ordre, comme tout ce qui part. Il est **recopié** sous
+        chaque image, et non déménagé — l'écran promet de montrer ce qui part mot
+        pour mot, et le déplacer romprait la promesse. En haut *ce qui part*, en
+        bas *ce que ça décrit*.
         """
         pas = mesure.get("par_image")
+        legendes = {
+            int(n["rang"]): str(n["texte"]) for n in nommage if n.get("rang")
+        }
         lignes: list[dict[str, Any]] = []
         rang = 0
         for ligne in compte["lignes"]:
@@ -413,6 +435,12 @@ class ServiceEnvoi:
                     # pas n'a pas de numéro : elle n'en a pas dans le texte non
                     # plus.
                     "rang": rang if cochee and rang <= places else None,
+                    # **Le morceau de légende qui parle d'elle** (M4), recopié
+                    # tel qu'il part. Vide pour une image qui ne part pas : elle
+                    # n'a pas de rang, donc pas de ligne dans la légende.
+                    "legende": legendes.get(rang, "")
+                    if cochee and rang <= places
+                    else "",
                     "prix": pas,
                     # **L'objet entier, et pas une adresse** (U9). L'écran qui
                     # décide de ce qui part ne montrait aucune image : les
@@ -474,6 +502,13 @@ class ServiceEnvoi:
             "cochees": compte["total"],
             "rang_gabarit": rang_gabarit,
             "rang_palette": rang_palette,
+            # **La troisième image, décrite comme les deux autres** (M4). Elle
+            # était un paragraphe sous la liste : sans vignette, sans moyen de
+            # l'ouvrir, et nommée *gabarit* même quand le texte qui part au même
+            # instant demandait de **modifier la planche existante**. Qu'elle ne
+            # se décoche pas reste vrai et reste écrit ; qu'on ne puisse pas la
+            # voir n'avait jamais été décidé.
+            "jointe": self._jointe(compte, rang_gabarit, pas, legendes, cases),
             # **Combien partiront vraiment** (F6), calculé ici et nulle part
             # ailleurs : le sommaire des groupes, le prix et la réserve le
             # lisent tous les trois, et trois calculs finiraient par annoncer
@@ -486,6 +521,54 @@ class ServiceEnvoi:
             "palette": compte.get("palette", 0),
             "prix": pas,
             "avertissements": avertissements,
+        }
+
+    @staticmethod
+    def _jointe(
+        compte: dict[str, Any],
+        rang: int | None,
+        prix: float | None,
+        legendes: dict[int, str],
+        cases: int,
+    ) -> dict[str, Any] | None:
+        """L'image que la planche ajoute — **et laquelle des deux c'est** (M4).
+
+        **Le rôle vient du serveur, jamais d'une déduction de l'écran.** Les deux
+        sortes ne demandent pas la même chose au modèle : un *gabarit* est une
+        grille vide où poser des sujets, une *planche* est la feuille déjà
+        dessinée qu'on lui redonne à modifier. L'écran n'avait qu'un nombre, il a
+        donc gardé les mots du plus ancien des deux cas — et il annonçait *un
+        gabarit à remplir* à quelques centimètres d'un texte qui demandait
+        l'inverse, au moment précis où l'on décide de payer.
+
+        **Elle n'a pas de case à cocher, et ce n'est pas une case grisée.** La
+        décision d'origine est gardée telle quelle — *décocher reviendrait à
+        demander une planche sans dire à quoi elle ressemble* — et elle est
+        écrite sur la ligne. Une case grisée aurait demandé de comprendre
+        pourquoi elle l'est ; une ligne sans case dit qu'il n'y a rien à décider.
+        """
+        role = compte.get("role_joint")
+        if not role or rang is None:
+            return None
+        planche = role == PLANCHE_JOINTE
+        return {
+            "role": role,
+            "rang": rang,
+            "nom": (
+                "la planche du corps, que le modèle doit modifier"
+                if planche
+                else "le gabarit de la grille, qui dit au modèle où poser les "
+                f"{cases} sujets"
+            ),
+            "raison": (
+                "elle ne se décoche pas — sans elle, il n'y aurait rien à "
+                "modifier — et elle compte dans les places"
+                if planche
+                else "il ne se décoche pas — une planche sans lui ne dit pas à "
+                "quoi elle ressemble — et il compte dans les places"
+            ),
+            "legende": legendes.get(rang, ""),
+            "prix": prix,
         }
 
     def _part_des_images(

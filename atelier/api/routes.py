@@ -695,6 +695,51 @@ async def envoi(requete: Request, corps: CorpsEnvoi) -> dict[str, Any]:
     )
 
 
+@routeur.get("/outgoing/sheet")
+async def image_jointe(
+    requete: Request,
+    modele: str = Query(...),
+    projet: str | None = Query(None),
+    personnage: str | None = Query(None),
+    pose: str | None = Query(None),
+    piece: str | None = Query(None),
+    poses: list[str] = Query(default_factory=list),
+    directions: list[str] = Query(default_factory=list),
+) -> Response:
+    """L'image que la planche joint, **telle qu'elle partira** (M4).
+
+    **`GET` là où l'aperçu et la confirmation sont en `POST`**, et ce n'est pas
+    une entorse : ceux-là portent un prompt entier, celle-ci ne porte que des
+    repères courts. Surtout, c'est une **image**, et une image se met dans un
+    `src` — une route en `POST` aurait obligé l'écran à la charger à la main et à
+    la garder en mémoire, là où le navigateur sait déjà faire les deux.
+
+    Elle ne facture rien, n'enregistre rien, et ne sort pas de la machine : les
+    deux sortes d'images se redessinent du geste à chaque appel.
+
+    **404 quand la planche n'en joint aucune** — un appel sans lot, ou un modèle
+    qui n'accepte aucune référence. C'est une absence, pas une panne : l'écran
+    n'affiche alors pas de vignette, ce qu'il sait déjà faire pour une référence
+    dont l'image a disparu.
+    """
+    jointe = _atelier(requete).generations.image_jointe(
+        projet,
+        personnage or None,
+        modele=modele,
+        pose=pose or None,
+        piece=piece or None,
+        poses=poses or None,
+        directions=directions or None,
+    )
+    if jointe is None:
+        # Un 404 nu, et pas un refus du domaine : il n'y a rien de fautif à
+        # dire. L'écran ne demande cette adresse que lorsque la confirmation lui
+        # a annoncé une image jointe ; ce code-ci est le garde-fou du cas où
+        # l'appel a changé entre les deux.
+        return Response(status_code=404)
+    return Response(content=jointe[1], media_type="image/png")
+
+
 @routeur.get("/generations")
 async def liste_generations(
     requete: Request, limite: int = Query(50, ge=1, le=500)

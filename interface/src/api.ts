@@ -2481,6 +2481,43 @@ export type ImageQuiPart = LigneReference & {
    *  lecture. La ligne reste — elle dit ce qui partirait —, elle n'a
    *  simplement pas de vignette. */
   montre: { sorte: "asset"; asset: Asset } | { sorte: "carte"; carte: Carte } | null
+  /** **Le morceau de légende qui parle d'elle** (M4), recopié tel qu'il part.
+   *
+   *  Le bloc *« Image 1 — …, Image 2 — … »* est du texte qui va au modèle : il
+   *  se lit donc en entier, en haut, dans l'ordre où il est assemblé. Il est
+   *  **recopié** sous chaque image, jamais déménagé — l'écran promet de montrer
+   *  ce qui part mot pour mot. En haut *ce qui part*, en bas *ce que ça décrit*.
+   *
+   *  Vide pour une image qui ne part pas : elle n'a pas de rang, donc pas de
+   *  ligne dans la légende. */
+  legende: string
+}
+
+/** **La troisième image d'une planche, et laquelle des deux c'est** (M4).
+ *
+ *  Elle ne vient pas de la bibliothèque : le produit la redessine à chaque
+ *  appel. Deux sortes, et elles demandent l'inverse l'une de l'autre — un
+ *  *gabarit* est une grille vide où le modèle posera des sujets, une *planche*
+ *  est la feuille déjà dessinée qu'on lui redonne à modifier.
+ *
+ *  **Le rôle vient du serveur.** L'écran ne recevait qu'un nombre, il a donc
+ *  gardé les mots du plus ancien des deux cas, et il annonçait un gabarit à
+ *  remplir à quelques centimètres d'un texte qui demandait de modifier la
+ *  planche existante — au moment précis où l'on décide de payer. */
+export type PlancheQuiPart = {
+  role: "gabarit" | "planche"
+  /** Le numéro que le texte lui donne, comme aux autres images. */
+  rang: number
+  /** Ce qu'elle est, en français : *la planche du corps, que le modèle doit
+   *  modifier*, ou *le gabarit de la grille, qui dit au modèle où poser les N
+   *  sujets*. Écrit par le serveur, qui est le seul à savoir laquelle c'est. */
+  nom: string
+  /** Pourquoi elle n'a pas de case à cocher. **Une ligne sans case, pas une
+   *  case grisée** : une case grisée aurait demandé de comprendre pourquoi elle
+   *  l'est ; une ligne sans case dit qu'il n'y a rien à décider. */
+  raison: string
+  legende: string
+  prix: number | null
 }
 
 export type OptionQuiPart = {
@@ -2560,6 +2597,9 @@ export type Envoi = {
      *  texte non plus. */
     rang_gabarit: number | null
     rang_palette: number | null
+    /** L'image que la planche joint, décrite comme les deux autres (M4).
+     *  `null` quand l'appel n'en joint aucune. */
+    jointe: PlancheQuiPart | null
     /** Combien partiront vraiment (F6). Égal à `cochees` sauf chez un modèle
      *  qui n'a pas assez de places : ce que le jeu ajoute de lui-même cède
      *  alors, et le sommaire des groupes lit ce chiffre-ci. Calculé par le
@@ -4298,6 +4338,38 @@ export const api = {
    *  c'est un calcul, pas un fichier. */
   avant: (identifiant: string, version: string) =>
     `/api/assets/${identifiant}/image?avant=true&v=${encodeURIComponent(version)}`,
+
+  /** **L'image que la planche joint, telle qu'elle partira** (M4).
+   *
+   *  Elle ne vient pas de la bibliothèque : le produit la redessine du geste à
+   *  chaque appel, et elle ne s'écrit jamais sur le disque. Elle n'a donc ni
+   *  identifiant ni empreinte — son adresse porte l'appel lui-même, ce qui est
+   *  aussi ce qui la fait changer quand l'appel change.
+   *
+   *  Elle ne coûte rien et n'enregistre rien : la demander, c'est refaire
+   *  gratuitement ce que la soumission refera. */
+  plancheJointe: (appel: {
+    modele: string
+    projet?: string | null
+    personnage?: string | null
+    pose?: string | null
+    piece?: string | null
+    poses?: string[] | null
+    directions?: string[] | null
+  }) => {
+    const parametres = new URLSearchParams({ modele: appel.modele })
+    for (const [nom, valeur] of [
+      ["projet", appel.projet],
+      ["personnage", appel.personnage],
+      ["pose", appel.pose],
+      ["piece", appel.piece],
+    ] as const)
+      if (valeur) parametres.append(nom, valeur)
+    for (const pose of appel.poses ?? []) parametres.append("poses", pose)
+    for (const angle of appel.directions ?? [])
+      parametres.append("directions", angle)
+    return `/api/outgoing/sheet?${parametres.toString()}`
+  },
 
   telechargementAsset: (identifiant: string, brut = false) =>
     `/api/assets/${identifiant}/download?brut=${brut}`,

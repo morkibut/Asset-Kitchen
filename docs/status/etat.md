@@ -11,6 +11,81 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M4 — la planche cesse d'être mal décrite — 4 septembre 2026
+
+**Deux remarques écrites le même jour, sur le même écran, sans se ressembler.** *« Le gabarit qu'on
+me propose, je ne l'ai jamais validé »* et *« pourquoi on parle de planche et de cases pour une
+seule pose ? »* disent la même chose : **la planche est mal décrite, et elle l'est à trois endroits
+différents.**
+
+**L'écran nommait une image autrement que le texte qui part, au même instant.** Le texte disait
+*voici la planche existante, n'y change que ce qu'on demande* ; l'écran, quelques centimètres plus
+bas, *voici une grille vide, place les sujets dedans*. Deux demandes opposées pour une seule image,
+au moment où l'on décide de payer — l'auteur cherchait un gabarit qu'il aurait validé, c'était son
+propre corps, redessiné à la volée.
+
+> ### La décision existait deux fois, et les deux copies avaient divergé
+>
+> Le serveur **savait** laquelle des deux c'était : une fonction écrite exprès pour qu'aucun rang ne
+> se trompe, avec son commentaire — *une planche d'équipement en envoie une aussi, et c'est la
+> planche elle-même, pas un gabarit*. Mais le **compte des images** refaisait le choix pour son
+> compte, et ne rendait qu'un **nombre**. L'écran n'avait donc pas de quoi choisir ses mots, et il a
+> gardé ceux du plus ancien des deux cas : le gabarit vient de `C2`, la planche d'équipement de
+> `C3`, qui a réemployé la même place et le même compteur sans rouvrir la phrase.
+>
+> La réparation n'est pas dans les mots : elle est un cran plus bas. Le choix vit maintenant dans
+> **une seule fonction**, que le texte et le compte appellent tous les deux, et le compte rend le
+> nom du rôle à côté du nombre.
+
+**Le texte qui part décrivait une grille qui n'existe pas — sur 64 % des planches du dépôt.** Les
+nombres ne s'accordaient jamais : *1 sprites*, *1 columns*, *1 rows*. La faute apparaissait dès
+qu'une dimension valait un, c'est-à-dire dans le cas courant — 14 planches sur 22, et **les 7
+planches d'équipement toutes**. À **une seule case**, c'était pire qu'une faute d'accord : le texte
+affirmait au modèle qu'il regardait une feuille de contact quadrillée, lui demandait de garder
+exactement la même grille, et lui interdisait les bordures de cases — pour une image qui n'a ni
+cases ni grille. **Ce qui partait était une description de ce que l'image n'est pas.**
+
+**La redondance, elle, n'a pas été touchée, et c'est délibéré.** Le banc du 28 août 2026 l'a
+étalonnée : *tout ce qu'on ne dit pas explicitement « ne change pas » est une invitation à le
+changer*. Ce qui était en cause n'était pas la redondance mais la grille absente ; les six mêmes
+garanties se répètent donc à une case, dites de l'image entière au lieu de la case.
+
+**Le prix est écrit et il est payé.** Ce changement invalide les comparaisons avec les tirages déjà
+payés — **sur les planches d'une et de deux cases, et sur elles seules** : à trois cases et au-delà,
+la grille la plus carrée n'a jamais de dimension à un, et le texte est identique au caractère près.
+
+> ### ⚠️ Une troisième phrase fausse, trouvée en relisant l'écran de la planche
+>
+> Le critère demandait de relire cet écran **en entier**, et la relecture a rapporté plus que ce
+> qu'elle cherchait. La phrase visée — *« la planche n'y entre pas… c'est une ruse pour payer moins,
+> pas un format de livraison »* — était vraie jusqu'au 3 septembre 2026 à 23 h 45, heure de la
+> livraison de `G16` ; c'est la dixième du genre de celles de `G1`, et elle avait tenu **un jour**.
+>
+> La seconde n'était dans aucun périmètre. *« Un compte de cases faux ne fait rien entrer : la
+> planche entière se relance, au prix plein »* n'est plus vrai que d'une moitié depuis `R6` : un
+> sujet qui manque refuse encore, **un sujet de trop ne jette plus rien**. Le relevé qui avait
+> changé la règle est net — quatre planches sur treize du banc d'animation refusées pour un sujet en
+> trop, soit 31 % des appels payés perdus sur un geste dont c'est le régime normal. La phrase
+> promettait donc, avant de payer, le contraire de ce que le produit fait. Elle a tenu **le jour
+> même** : `R6` et cet écran ont été touchés à quelques heures d'intervalle.
+>
+> **La leçon n'est pas neuve, elle est simplement recomptée** : un écran qu'aucune tranche ne rouvre
+> vieillit sans qu'on le voie, et c'est le fait de le relire *en entier* — pas de chercher la phrase
+> qu'on venait corriger — qui a trouvé la seconde.
+
+**Ce qui restait ouvert est tranché : la ligne sans case.** La colonne de la case reste **vide** au
+lieu de porter un carré grisé, et la vignette garde son alignement avec celles du dessus ; la raison
+s'écrit à la suite du nom, dans le gris des origines. Le motif du dépôt — *le grisé porte sa raison*
+— n'est pas enfreint : il vaut pour ce qu'on **pourrait** faire et qui est refusé, et cette image-là
+n'est refusée nulle part. Une case grisée aurait demandé de comprendre pourquoi elle l'est ; une
+ligne sans case dit qu'il n'y a rien à décider.
+
+**Et la légende se recopie, elle ne déménage pas.** Le bloc *« Image 1 — …, Image 2 — … »* est du
+texte qui va au modèle : il se lit en haut, entier, dans l'ordre où il s'assemble. Chaque image en
+porte le morceau qui la concerne, découpé **par celui qui l'a écrit** — recouper le bloc à
+l'affichage aurait été une seconde vérité sur la numérotation, celle-là même qu'un seul endroit
+existe pour empêcher.
+
 ## M3 — corriger un texte cesse de figer l'écran — 4 septembre 2026
 
 **Trois défauts vécus comme un seul.** L'auteur les a dits en trois mots — *« ça freeze »* — et ils

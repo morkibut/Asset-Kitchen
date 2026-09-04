@@ -197,3 +197,26 @@ rouvre si elle revient.
   l'écran de la planche en est une dixième, née le jour même de la clôture.
 - **`P1`** — le dépliage généralisé. Elle hérite de la moitié de `G16` ; c'est elle qui portera ce
   que devient une planche qu'on déplie plusieurs fois, donc ce que l'écran devra en dire.
+
+---
+
+## Ce que la tranche a livré — 4 septembre 2026
+
+**Traitée avec `M4`, comme la remarque le proposait**, et pour la raison qu'elle donnait : c'est le
+même paragraphe de texte.
+
+**Les nombres s'accordent**, et l'accord s'écrit à un seul endroit. **À une seule case, la consigne
+de planche est autre** : elle ne contient plus un seul mot de grille — ni *sheet*, ni *cell*, ni
+*column*, ni *row*, ni *border* —, et les six garanties de non-changement y sont reprises mot pour
+mot, dites de l'image entière au lieu de la case. La légende de l'image jointe change avec elle :
+les deux phrases du même prompt disaient la même chose fausse.
+
+**Le prix annoncé est payé tel quel** : les comparaisons avec les tirages déjà payés ne valent plus
+sur les planches d'une et de deux cases, **et sur elles seules** — à trois cases et au-delà, la
+grille la plus carrée n'a jamais de dimension à un, et le texte est identique au caractère près.
+
+**Ce qui restait écarté le reste** : nulle part le produit n'explique pourquoi une planche d'une
+case existe. La question se rouvrira si elle revient.
+
+*Le détail de ce que la construction a appris est dans `docs/status/etat.md`, à l'entrée du
+4 septembre 2026 ; les critères d'acceptation tenus sont dans `docs/PLAN.md`.*

@@ -14552,15 +14552,36 @@ describe("la planche d'une pose", () => {
     expect(ecran.getByText(/3.6 fois plus\s+grand/)).toBeTruthy()
   })
 
-  // ── « Une planche n'est jamais gardée en bibliothèque ; ses morceaux le
-  //     sont » ────────────────────────────────────────────────────────────────
+  // ── « La feuille entre en bibliothèque avec le prix de l'appel, ses
+  //     morceaux à côté » ──────────────────────────────────────────────────────
 
-  test("l'écran dit que la feuille n'entre pas en bibliothèque, ses morceaux si", async () => {
-    // **C'est une ruse pour payer moins, pas un format de livraison**, et il
-    // vaut mieux le lire avant de payer qu'après avoir cherché la feuille.
+  test("l'écran dit que la feuille entre en bibliothèque, avec le prix de l'appel", async () => {
+    // **La phrase disait le contraire, et elle a tenu un jour** (M4). Elle
+    // affirmait *la planche n'y entre pas — c'est une ruse pour payer moins,
+    // pas un format de livraison*, ce qui était vrai jusqu'à la livraison de
+    // `G16`, le 3 septembre 2026 à 23 h 45. Depuis, la planche entre : elle se
+    // regarde, se met en favori, s'exporte. L'écran, lui, n'avait pas été
+    // rouvert — c'est la dixième phrase du genre de celles de `G1`, et la V3.1
+    // avait écrit noir sur blanc que rien n'empêchait la dixième.
     const { ecran } = await ouvrir()
 
-    expect(ecran.getByText(/ses 4 morceaux, oui/)).toBeTruthy()
+    expect(ecran.getByText(/y entre/)).toBeTruthy()
+    expect(ecran.getByText(/le prix de l'appel/)).toBeTruthy()
+    expect(ecran.getByText(/4 morceaux entrent à côté/)).toBeTruthy()
+    // Et l'ancienne phrase n'est plus nulle part.
+    expect(ecran.queryByText(/ruse pour payer moins/)).toBeNull()
+  })
+
+  test("l'écran dit ce qu'un compte faux fait, et ce n'est plus la même chose dans les deux sens", async () => {
+    // **Trouvée en relisant l'écran en entier** (M4). Elle disait *un compte de
+    // cases faux ne fait rien entrer*, ce qui n'est plus vrai que d'une moitié
+    // depuis `R6` : un sujet qui manque refuse encore, un sujet de trop ne jette
+    // plus rien — quatre planches sur treize du banc d'animation étaient
+    // refusées pour un sujet en trop.
+    const { ecran } = await ouvrir()
+
+    expect(ecran.getByText(/de sujets que de\s+cases, rien n'entre/)).toBeTruthy()
+    expect(ecran.getByText(/rien n'est jeté/)).toBeTruthy()
   })
 
   // ── « Refaire les quatre est proposé à côté de compléter les trois, avec les
@@ -14937,6 +14958,10 @@ describe("l'écran de confirmation", () => {
           // Le numéro que le texte lui donne (R7). La seconde est décochée :
           // elle ne part pas, donc elle n'a pas de numéro.
           rang: 1,
+          // Le morceau de légende qui parle d'elle (M4), recopié tel qu'il part.
+          legende:
+            "Image 1 — STYLE REFERENCE (an official artwork of this game): follow "
+            + "its colours, outfit, proportions and drawing style.",
           prix: 0.008,
         },
         {
@@ -14949,6 +14974,8 @@ describe("l'écran de confirmation", () => {
           cochee: false,
           hors_plafond: false,
           rang: null,
+          // Décochée : pas de rang dans le texte, donc pas de légende.
+          legende: "",
           prix: 0.008,
         },
       ],
@@ -14959,6 +14986,7 @@ describe("l'écran de confirmation", () => {
       palette: 0,
       rang_gabarit: null,
       rang_palette: null,
+      jointe: null,
       prix: 0.008,
       avertissements: [],
     },
@@ -16097,6 +16125,119 @@ describe("l'écran de confirmation", () => {
     fireEvent.click(await ecran.findByRole("button", { name: "remettre" }))
 
     await waitFor(() => expect(champ.value).toBe("marais de fer"))
+  })
+
+  // ── M4 · « L'écran nommait une image autrement que le texte qui part » ────
+  //
+  // **Les deux phrases s'affichaient ensemble, à quelques centimètres l'une de
+  // l'autre.** Le texte qui part disait *voici la planche existante, n'y change
+  // que ce qu'on demande* ; l'écran, plus bas, *voici une grille vide, place les
+  // sujets dedans*. Deux demandes opposées pour une seule image, au moment où
+  // l'on décide de payer — l'auteur cherchait un gabarit qu'il aurait validé,
+  // c'était son propre corps, redessiné à la volée.
+  //
+  // Le serveur savait très bien laquelle des deux c'était : il ne rendait qu'un
+  // **nombre**, sans le rôle, et l'écran a gardé les mots du plus ancien des
+  // deux cas.
+
+  /** Ce que le serveur rend pour la troisième image d'une planche
+   *  d'équipement — celle qu'on redonne au modèle pour qu'il la modifie. */
+  const PLANCHE_JOINTE = {
+    role: "planche" as const,
+    rang: 2,
+    nom: "la planche du corps, que le modèle doit modifier",
+    raison:
+      "elle ne se décoche pas — sans elle, il n'y aurait rien à modifier — " +
+      "et elle compte dans les places",
+    legende:
+      "Image 2 — THE SPRITE SHEET TO CHANGE: 4 sprites of the same character, " +
+      "already drawn. Keep every cell where it is and change only what the " +
+      "request below asks for.",
+    prix: 0.008,
+  }
+
+  const GABARIT_JOINT = {
+    ...PLANCHE_JOINTE,
+    role: "gabarit" as const,
+    nom: "le gabarit de la grille, qui dit au modèle où poser les 4 sujets",
+    raison:
+      "il ne se décoche pas — une planche sans lui ne dit pas à quoi elle " +
+      "ressemble — et il compte dans les places",
+    legende: "Image 2 — EMPTY LAYOUT GRID: 4 cells. Do NOT draw the grid lines.",
+  }
+
+  const avecJointe = (jointe: typeof PLANCHE_JOINTE | typeof GABARIT_JOINT) => ({
+    ...ENVOI,
+    images: { ...ENVOI.images, gabarit: 1, rang_gabarit: 2, jointe },
+  })
+
+  test("la planche d'un équipement est nommée pour ce qu'elle est", async () => {
+    // **Le mot vient du serveur**, qui est le seul à savoir laquelle des deux
+    // images c'est. L'écran ne le devine plus depuis un nombre.
+    const { ecran } = await ouvrir({ envoi: avecJointe(PLANCHE_JOINTE) })
+
+    expect(
+      await ecran.findByText(/la planche du corps, que le modèle doit modifier/),
+    ).toBeTruthy()
+    expect(ecran.queryByText(/le gabarit de la grille/)).toBeNull()
+  })
+
+  test("une grille vide garde les mots qu'elle avait", async () => {
+    // La réparation ne change rien au cas qui était juste : c'est la moitié qui
+    // compte d'une correction de vocabulaire.
+    const { ecran } = await ouvrir({ envoi: avecJointe(GABARIT_JOINT) })
+
+    expect(
+      await ecran.findByText(/le gabarit de la grille, qui dit au modèle/),
+    ).toBeTruthy()
+  })
+
+  test("la troisième image a sa vignette, et elle s'ouvre en grand", async () => {
+    // **Qu'elle ne se décoche pas était écrit et reste vrai ; qu'on ne puisse
+    // pas la voir n'avait jamais été décidé.** Elle était un paragraphe sous la
+    // liste, sans image.
+    const { ecran } = await ouvrir({ envoi: avecJointe(PLANCHE_JOINTE) })
+
+    const vignette = (await ecran.findByText(/la planche du corps/))
+      .closest("li")!
+      .querySelector("[data-planche-jointe] img") as HTMLImageElement
+    expect(vignette.getAttribute("src")).toContain("/api/outgoing/sheet")
+
+    // Et le geste de l'aperçu, celui qui existe déjà partout ailleurs.
+    fireEvent.pointerOver(vignette.closest("li")!)
+    fireEvent.keyDown(window, { key: " ", code: "Space" })
+    const apercu = screen.getByRole("dialog", { name: "Aperçu" })
+    expect(apercu.querySelector("img")!.getAttribute("src")).toContain(
+      "/api/outgoing/sheet",
+    )
+  })
+
+  test("la troisième image n'a pas de case à cocher, et sa raison est écrite", async () => {
+    // **Une ligne sans case, pas une case grisée** : une case grisée aurait
+    // demandé de comprendre pourquoi elle l'est ; une ligne sans case dit qu'il
+    // n'y a rien à décider.
+    const { ecran } = await ouvrir({ envoi: avecJointe(PLANCHE_JOINTE) })
+
+    const ligne = (await ecran.findByText(/la planche du corps/)).closest("li")!
+    expect(ligne.querySelector("button")).toBeNull()
+    expect(ligne.textContent).toContain("ne se décoche pas")
+  })
+
+  test("chaque image porte, sous elle, le morceau de légende qui la concerne", async () => {
+    // **Recopiée, jamais déménagée.** Le bloc entier est du texte qui part : il
+    // se lit en haut, mot pour mot, dans l'ordre où il s'assemble.
+    const { ecran } = await ouvrir({ envoi: avecJointe(PLANCHE_JOINTE) })
+
+    const ligne = (await ecran.findByText(/la planche du corps/)).closest("li")!
+    expect(ligne.textContent).toContain("THE SPRITE SHEET TO CHANGE")
+
+    const artwork = ecran.getByText("artwork officiel").closest("li")!
+    expect(artwork.textContent).toContain("Image 1 — STYLE REFERENCE")
+
+    // Une image décochée n'a pas de rang dans le texte : elle n'a donc pas de
+    // légende non plus.
+    const concept = ecran.getByText("concept art").closest("li")!
+    expect(concept.textContent).not.toContain("Image ")
   })
 })
 

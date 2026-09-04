@@ -46,6 +46,7 @@ import {
   type ImageQuiPart,
   type LigneQuiPart,
   type OptionQuiPart,
+  type PlancheQuiPart,
   type Tri,
 } from "../api"
 import { Bouton, Libelle, LigneReserve, Raison } from "./chassis"
@@ -98,6 +99,7 @@ export function EcranEnvoi({
   onSauter,
   onReprendre,
   refus,
+  plancheJointe,
 }: {
   /** Ce que le serveur rend, `null` tant qu'il n'a pas répondu. L'écran dit
    *  alors qu'il ne sait pas encore, jamais un texte deviné. */
@@ -136,6 +138,11 @@ export function EcranEnvoi({
    *  qu'on reprendrait — on ne reprend pas un texte qu'on ne voit pas. */
   onReprendre: (texte: string) => void
   refus: string | null
+  /** **L'adresse de l'image que la planche joint** (M4), ou rien quand l'appel
+   *  n'en joint aucune. Elle est composée par l'atelier, qui tient les repères
+   *  de l'appel : cet écran-ci ne les a pas, et les lui donner pour qu'il
+   *  refasse l'adresse aurait été un second endroit où elle s'écrit. */
+  plancheJointe: string | null
 }) {
   useEffect(() => {
     const touche = (evenement: KeyboardEvent) => {
@@ -408,19 +415,19 @@ export function EcranEnvoi({
                     onBasculer={() => onImage(image.asset, image.cochee)}
                   />
                 ))}
+                {/* **La troisième image est une ligne comme les deux autres**
+                    (M4). Elle était un paragraphe sous la liste : sans vignette,
+                    sans moyen de l'ouvrir en grand, et nommée *gabarit* même
+                    quand le texte qui part au même instant demandait de modifier
+                    la planche existante. Le rôle vient du serveur, qui est le
+                    seul à savoir laquelle des deux c'est. */}
+                {envoi.images.jointe && (
+                  <LigneJointe
+                    jointe={envoi.images.jointe}
+                    adresse={plancheJointe}
+                  />
+                )}
               </ul>
-            )}
-            {/* **Ce qui part et ne se décoche pas**, avec sa raison : décocher
-                le gabarit reviendrait à demander une planche sans dire à quoi
-                elle ressemble. */}
-            {envoi.images.gabarit > 0 && (
-              <p className="mesure text-[9.5px] leading-4 text-texte-3">
-                {envoi.images.rang_gabarit !== null &&
-                  `Image ${envoi.images.rang_gabarit} · `}
-                le gabarit de la grille, qui dit au modèle où poser les{" "}
-                {envoi.cases} sujets. Il ne se décoche pas — une planche sans lui
-                ne dit pas à quoi elle ressemble — et il compte dans les places.
-              </p>
             )}
             {/* **La palette compte dans le total, elle doit donc se voir ici.**
                 Sans cette ligne, l'en-tête annonçait « 1 cochée » au-dessus d'une
@@ -1110,10 +1117,11 @@ function LigneImage({
 
   return (
     <li
-      className="flex items-center gap-3 border-b border-bord py-2"
+      className="flex flex-col gap-1 border-b border-bord py-2"
       onPointerEnter={visee.entrer}
       onPointerLeave={visee.sortir}
     >
+      <div className="flex items-center gap-3">
       <button
         type="button"
         onClick={onBasculer}
@@ -1183,6 +1191,107 @@ function LigneImage({
           +{dollars(image.prix)}
         </span>
       )}
+      </div>
+      {/* **Ce que le texte dit d'elle, sous elle** (M4) — recopié tel qu'il
+          part, jamais traduit. La légende est du texte qui va au modèle : elle
+          se lit en entier plus haut, dans l'ordre où elle est assemblée, et
+          l'écran promet de montrer ce qui part mot pour mot. La déménager
+          romprait la promesse ; la traduire ferait un second texte à tenir
+          d'accord avec le premier. */}
+      {image.legende && <Legende texte={image.legende} />}
+    </li>
+  )
+}
+
+/** Ce que le texte qui part dit d'une image, **posé sous elle**.
+ *
+ *  Écrit une fois parce que les deux sortes de lignes en portent une — les
+ *  images qu'on coche et la planche qu'on ne coche pas — et que deux copies
+ *  auraient divergé au premier changement de gris. */
+function Legende({ texte }: { texte: string }) {
+  return (
+    <p className="mesure pl-[58px] text-[9.5px] leading-4 text-texte-3">
+      {texte}
+    </p>
+  )
+}
+
+/** **L'image que la planche joint, et laquelle des deux c'est** (M4).
+ *
+ *  Elle vivait en paragraphe sous la liste : sans vignette, sans moyen de
+ *  l'ouvrir en grand, et **nommée par le plus ancien des deux cas**. L'écran
+ *  annonçait *un gabarit de grille où poser les sujets* pendant que le texte
+ *  qui part, à quelques centimètres de là, demandait de *garder la planche et
+ *  de n'y changer que ce qu'on demande* — deux demandes opposées pour une seule
+ *  image, au moment précis où l'on décide de payer.
+ *
+ *  **Une ligne sans case, et pas une case grisée.** La décision d'origine ne
+ *  bouge pas — la décocher reviendrait à demander une planche sans dire à quoi
+ *  elle ressemble —, mais une case grisée aurait demandé de comprendre pourquoi
+ *  elle l'est. Une ligne sans case dit qu'il n'y a rien à décider, et la raison
+ *  est écrite à côté. La colonne de la case reste vide pour que les vignettes
+ *  restent alignées avec celles du dessus. */
+function LigneJointe({
+  jointe,
+  adresse,
+}: {
+  jointe: PlancheQuiPart
+  adresse: string | null
+}) {
+  // **Le même geste que sur les autres images** : la barre d'espace ouvre en
+  // grand ce que le pointeur vise. Elle se redessine du geste et ne se range
+  // nulle part — pas d'empreinte, donc pas de dimensions connues, et l'aperçu
+  // se tait alors sur le facteur, comme pour toute image qu'on n'a pas mesurée.
+  const sujet = adresse
+    ? {
+        cle: adresse,
+        src: adresse,
+        titre: jointe.nom,
+        largeur: 0,
+        hauteur: 0,
+        pixelise: true,
+      }
+    : null
+  const visee = useVisee(sujet)
+
+  return (
+    <li
+      className="flex flex-col gap-1 border-b border-bord py-2"
+      onPointerEnter={visee.entrer}
+      onPointerLeave={visee.sortir}
+    >
+      <div className="flex items-center gap-3">
+        <span aria-hidden className="h-[9px] w-[9px] shrink-0" />
+        <span
+          data-vignette-jointe
+          data-planche-jointe
+          className="damier h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[1px] border border-bord"
+        >
+          {adresse && (
+            <img
+              src={adresse}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain"
+              style={{ imageRendering: "pixelated" }}
+            />
+          )}
+        </span>
+        <span className="mesure w-[46px] shrink-0 text-[10px] text-texte-3">
+          Image {jointe.rang}
+        </span>
+        <span className="mesure min-w-0 flex-1 text-[10px] text-texte-2">
+          {jointe.nom}
+          <span className="text-texte-3"> · {jointe.raison}</span>
+        </span>
+        {jointe.prix !== null && (
+          <span className="mesure text-[10px] text-epingle">
+            +{dollars(jointe.prix)}
+          </span>
+        )}
+      </div>
+      {jointe.legende && <Legende texte={jointe.legende} />}
     </li>
   )
 }
