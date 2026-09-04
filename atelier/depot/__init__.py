@@ -8,7 +8,7 @@ vigueur qu'en T3, mais il se paie ici, dès T1 : chaque génération écrit son
 bibliothèque se reconstruira depuis le disque.
 """
 
-from atelier.depot.base import Base
+from atelier.depot.base import Base, projet_lu_une_fois
 from atelier.depot.fichiers import Fichiers
 
-__all__ = ["Base", "Fichiers"]
+__all__ = ["Base", "Fichiers", "projet_lu_une_fois"]

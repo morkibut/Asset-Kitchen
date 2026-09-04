@@ -11,6 +11,63 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M3 — corriger un texte cesse de figer l'écran — 4 septembre 2026
+
+**Trois défauts vécus comme un seul.** L'auteur les a dits en trois mots — *« ça freeze »* — et ils
+se cachaient l'un l'autre. Composer ce qui part relisait le projet du jeu **jusqu'à quarante-deux
+fois** pour répondre à une seule question ; chaque lettre tapée déclenchait un aller-retour
+complet ; et le champ de correction n'avait aucune mémoire à lui, si bien que le curseur repartait
+à la fin **deux fois par lettre**. Réparer un seul des trois n'aurait rien donné de visible.
+
+> ### Le montage d'essai retrouve les chiffres des vraies données, à l'unité près
+>
+> 5 lectures pour l'aperçu du texte, 15 pour la confirmation d'une image ordinaire, 42 pour celle
+> d'un équipement — exactement ce que la mesure du 4 septembre avait relevé sur le dépôt de
+> l'auteur. Cela dit quelque chose de plus que le chiffre : **le compte ne dépendait pas du contenu
+> du jeu mais de la façon dont la composition est écrite**. Un projet de deux images le relisait
+> autant de fois qu'un projet de deux cents. La réparation valait donc pour tout le monde, et pas
+> seulement pour l'atelier chargé de celui qui s'en plaignait.
+
+**La portée du mémo est explicite et courte, et c'est là qu'est la décision.** Un cache posé une
+fois pour toutes sur la lecture du projet aurait été plus court à écrire, et faux : on n'aurait
+plus su dire de quand datait ce qu'on lisait. Un service l'ouvre le temps de composer, le referme,
+et hors de là le projet se relit du disque comme avant ; l'enregistrer ou l'oublier vide le mémo
+sur-le-champ. **La connexion par opération, elle, ne bouge pas** — refermer à chaque fois est ce
+qui permet d'effacer le fichier de l'index sous Windows, et c'est un critère du produit depuis
+`T3`. Ce qui n'avait jamais été décidé, c'était de refaire quarante-deux fois le même aller-retour.
+
+**Un essai qui compte a besoin d'une couture pour compter.** L'index sépare désormais *répondre* de
+*aller chercher* : sans cette séparation, l'essai aurait compté des **appels** — quarante-deux
+avant comme après — au lieu de compter des **lectures**. C'est la même leçon que le banc de `M1`
+sur la mesure prise au mauvais endroit, et elle est arrivée deux fois en un jour.
+
+**Le témoin est la moitié qui compte.** Chaque cas est joué deux fois, mémo débranché puis branché,
+et les deux réponses sont comparées caractère par caractère. Un mémo qui répondrait autre chose que
+le disque serait pire que la lenteur qu'il répare.
+
+> ### ⚠️ Deux essais d'écran ont été écrits contre eux-mêmes avant d'être gardés
+>
+> Le premier essai du repos de frappe **passait même sans repos du tout**. Six frappes envoyées
+> d'affilée dans une seule bouffée d'instructions ne laissent rien se déclencher entre elles : la
+> minuterie de la dernière annulait toutes les précédentes, et l'essai félicitait un code qui
+> n'avait rien réparé. Espacées de trente millisecondes — la frappe d'un dactylo pressé —, elles
+> font **six** demandes sans la réparation et **une** avec.
+>
+> Le second, celui du curseur, a été vérifié de la même façon : sans le brouillon du champ, il
+> saute de 11 à 18, c'est-à-dire à la fin de la ligne. **Un essai qu'on n'a pas vu échouer ne
+> prouve rien** — c'est le piège de la case qui ne change rien, déjà payé, sous une autre forme.
+
+**Ce que la tranche n'a pas fait, et l'auteur l'a écarté lui-même.** Un bouton *valider* à la place
+du lien *fermer* existait pour supprimer les allers-retours ; une fois les deux premiers défauts
+réparés, il n'y en avait plus à supprimer. Il aurait coûté un geste de plus à chaque correction et
+laissé, entre la frappe et la validation, **un prix affiché qui ne correspond plus au texte lu** —
+exactement ce que la règle *« le texte et le prix ensemble »* interdit.
+
+**Vérifié au navigateur, sur un atelier jetable en 8427.** Curseur posé au septième caractère de
+*marais de fer*, cinq lettres tapées à la main : le champ montre *marais gris de fer*, le curseur
+reste au douzième, et il y reste encore après que la réponse du serveur a redessiné l'écran. Deux
+demandes en tout — une à l'ouverture, une une fois la frappe posée.
+
 ## M2 — le coin du calque, dessiné avant d'être bâti — 4 septembre 2026
 
 **Une maquette qui ne construit rien, et c'est son critère.** Elle est là pour trancher, pas pour

@@ -865,6 +865,21 @@ function Ligne({
 }) {
   const [ouvert, setOuvert] = useState(false)
   const champ = useRef<HTMLTextAreaElement>(null)
+  // **Ce que le champ montre pendant qu'on écrit dedans** (M3).
+  //
+  // Il n'avait aucune mémoire à lui : sa valeur venait directement de la
+  // dernière réponse du serveur. À chaque lettre, l'écran se redessinait
+  // **avant** la réponse — donc avec le texte d'avant la lettre —, le navigateur
+  // replaçait le curseur à la fin puisqu'on lui réécrivait le contenu d'un
+  // champ, puis la réponse arrivait et le curseur repartait à la fin une seconde
+  // fois. Deux sauts par lettre, et entre les deux un texte en retard d'une
+  // frappe. Taper à la fin le masquait, la fin étant là où le curseur atterrit.
+  //
+  // Le brouillon fait donc autorité tant que le champ est ouvert, et il ne
+  // remplace rien : la correction continue de partir dans le tri à chaque
+  // lettre, c'est la *demande* qui attend que la frappe se pose. `null` veut
+  // dire « rien tapé ici », et le champ montre alors ce que le serveur dit.
+  const [brouillon, setBrouillon] = useState<string | null>(null)
 
   useEffect(() => {
     if (ouvert) champ.current?.focus()
@@ -926,7 +941,14 @@ function Ligne({
             {ligne.corrigee && (
               <button
                 type="button"
-                onClick={onRemettre}
+                onClick={() => {
+                  // **Remettre efface le brouillon avec la correction.** Sans
+                  // ça, le champ continuerait de montrer ce qu'on vient de
+                  // reprendre alors que le texte qui part est revenu à
+                  // l'original — le champ mentirait sur ce qui part.
+                  setBrouillon(null)
+                  onRemettre()
+                }}
                 className="mesure text-[10px] text-signal hover:text-signal-clair"
               >
                 remettre
@@ -945,7 +967,12 @@ function Ligne({
             )}
             <button
               type="button"
-              onClick={() => setOuvert((o) => !o)}
+              onClick={() => {
+                // Fermer le champ rend la main au serveur : la correction est
+                // déjà dans le tri, et c'est lui qui dit désormais le texte.
+                setBrouillon(null)
+                setOuvert((o) => !o)
+              }}
               className="mesure text-[10px] text-signal hover:text-signal-clair"
             >
               {ouvert ? "fermer" : "corriger"}
@@ -956,8 +983,11 @@ function Ligne({
         {ouvert ? (
           <textarea
             ref={champ}
-            value={ligne.texte}
-            onChange={(e) => onCorriger(e.target.value)}
+            value={brouillon ?? ligne.texte}
+            onChange={(e) => {
+              setBrouillon(e.target.value)
+              onCorriger(e.target.value)
+            }}
             rows={2}
             aria-label={`Corriger ${ligne.nom}`}
             className="mesure min-h-[44px] resize-y rounded-[2px] border border-signal bg-fond-2 px-2 py-1 text-[10.5px] leading-[1.45] text-texte"

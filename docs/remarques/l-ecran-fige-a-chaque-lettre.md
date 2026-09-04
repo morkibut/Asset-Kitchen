@@ -224,3 +224,26 @@ passent par elle.* À voir si la lenteur s'y montre.
 - **Le relevé des lectures du projet dépasse cet écran.** Quinze lectures pour une image ordinaire,
   cinq pour le seul aperçu du texte : le motif est général, et la remarque n'en voit qu'un cas.
   *À décider : la réparation vise-t-elle la composition entière, ou ce seul écran ?*
+
+---
+
+## Ce que la tranche a livré — 4 septembre 2026
+
+**`M3` est close le jour même de l'arbitrage**, et les trois défauts sont réparés ensemble.
+
+**La question laissée ouverte ci-dessus est tranchée : la composition entière.** On ne répare pas
+le seul écran où la lenteur se voit, puisque les cinq lectures de l'aperçu, les quinze de l'image
+ordinaire et les quarante-deux de l'équipement sortent toutes du même endroit. Les trois comptes
+tombent à **un**.
+
+**Et la mesure a dit une chose de plus que le chiffre.** Le montage d'essai — un jeu de deux images
+monté de toutes pièces — retrouve exactement 5, 15 et 42. Le compte ne dépendait donc pas du
+contenu du jeu, mais de la façon dont la composition est écrite : un projet de deux images le
+relisait autant de fois qu'un projet de deux cents.
+
+**Ce qui reste vraiment ouvert n'a pas bougé** : les autres écrans du produit — la toile, le codex,
+la fiche d'un personnage — n'ont pas été relevés. La réparation ne les couvre que s'ils passent par
+la composition.
+
+*Le détail de ce que la construction a appris est dans `docs/status/etat.md`, à l'entrée du
+4 septembre 2026 ; les critères d'acceptation tenus sont dans `docs/PLAN.md`.*

@@ -24,6 +24,7 @@ marche vraiment.
 from __future__ import annotations
 
 import contextlib
+import contextvars
 import json
 import sqlite3
 import unicodedata
@@ -105,6 +106,47 @@ CREATE TABLE IF NOT EXISTS collections (
 TABLES = ("generations", "assets", "projets", "collections")
 
 
+# ── Le projet, lu une seule fois par demande ─────────────────────────────────
+#
+# Composer ce qui part relisait le projet **quarante-deux fois** pour répondre à
+# une seule question (M3, mesuré le 4 septembre 2026) : chaque petit service le
+# redemande pour son compte, et aucun ne sait ce que le voisin vient de lire. La
+# liste des personnages était relue dix-huit fois, l'ambiance quatre.
+#
+# Ce n'est **pas** la connexion par opération qui est en cause, et elle ne bouge
+# pas : refermer à chaque fois est ce qui permet d'effacer le fichier de l'index
+# sous Windows, et c'est un critère du produit depuis T3. Ce qui n'a jamais été
+# décidé, c'est de refaire quarante-deux fois le même aller-retour.
+#
+# La portée est donc **explicite et courte** — un service l'ouvre le temps de
+# composer, et la referme. Pas de cache qui vit plus longtemps que la question
+# posée : hors de cette portée, `lire_projet` relit le disque comme avant, et un
+# projet enregistré ou oublié vide le mémo sur-le-champ. Un cache qu'on n'ouvre
+# jamais soi-même est un cache dont on ne sait plus dire de quand il date.
+_projets_lus: contextvars.ContextVar[dict[tuple[Path, str], "Projet | None"] | None] = (
+    contextvars.ContextVar("projets_lus", default=None)
+)
+
+
+@contextlib.contextmanager
+def projet_lu_une_fois() -> Iterator[None]:
+    """Le temps de ce bloc, le même projet ne se lit qu'une fois.
+
+    À ouvrir autour d'une **question entière** — composer ce qui part, dire ce
+    qu'un envoi coûtera — jamais autour d'un programme entier. Les blocs
+    s'emboîtent sans se gêner : le plus extérieur tient le mémo, les autres s'y
+    posent.
+    """
+    if _projets_lus.get() is not None:
+        yield
+        return
+    jeton = _projets_lus.set({})
+    try:
+        yield
+    finally:
+        _projets_lus.reset(jeton)
+
+
 def normaliser(texte: str) -> str:
     """Ce sur quoi la recherche compare : minuscules, accents dépliés.
 
@@ -173,6 +215,7 @@ class Base:
 
     def vider(self) -> None:
         """Tout l'index, d'un coup. Aucun fichier n'est touché."""
+        self._demarquer()
         with self._connexion() as connexion:
             for table in TABLES:
                 connexion.execute("DELETE FROM " + table)
@@ -711,7 +754,23 @@ class Base:
 
     # ── Projets et collections ───────────────────────────────────────────────
 
+    def _demarquer(self, identifiant: str | None = None) -> None:
+        """Le mémo oublie ce projet — ou tout, quand l'index est vidé.
+
+        Écrire pendant une portée de lecture est rare, mais on ne veut pas avoir
+        à s'en souvenir : la portée sert à ne pas relire deux fois la **même**
+        chose, jamais à survivre à un changement.
+        """
+        memo = _projets_lus.get()
+        if memo is None:
+            return
+        if identifiant is None:
+            memo.clear()
+        else:
+            memo.pop((self.chemin, identifiant), None)
+
     def enregistrer_projet(self, projet: Projet) -> None:
+        self._demarquer(projet.identifiant)
         with self._connexion() as connexion:
             connexion.execute(
                 """
@@ -743,6 +802,29 @@ class Base:
         return [Projet.depuis_json(json.loads(l["contenu"])) for l in lignes]
 
     def lire_projet(self, identifiant: str) -> Projet | None:
+        """Le projet, relu du disque — **sauf dans une portée qui l'a déjà lu**.
+
+        Voir `projet_lu_une_fois` : hors de cette portée, rien ne change. Le
+        projet absent se retient aussi, parce que la question *« ce projet
+        existe-t-il ? »* se pose autant de fois que l'autre.
+        """
+        memo = _projets_lus.get()
+        cle = (self.chemin, identifiant)
+        if memo is not None and cle in memo:
+            return memo[cle]
+        lu = self._lire_projet_du_disque(identifiant)
+        if memo is not None:
+            memo[cle] = lu
+        return lu
+
+    def _lire_projet_du_disque(self, identifiant: str) -> Projet | None:
+        """L'aller-retour réel : connexion neuve, bloc lu, objet reconstruit.
+
+        Séparé de `lire_projet` pour que l'essai de M3 puisse compter des
+        **lectures** et non des appels. Le compte est ce que la tranche promet —
+        *une seule lecture par demande* —, et un temps ne le dirait pas : un temps
+        dépend de la machine, un compte non.
+        """
         with self._connexion() as connexion:
             ligne = connexion.execute(
                 "SELECT contenu FROM projets WHERE identifiant = ?", (identifiant,)
@@ -752,6 +834,7 @@ class Base:
         return Projet.depuis_json(json.loads(ligne["contenu"]))
 
     def oublier_projet(self, identifiant: str) -> None:
+        self._demarquer(identifiant)
         with self._connexion() as connexion:
             connexion.execute(
                 "DELETE FROM projets WHERE identifiant = ?", (identifiant,)

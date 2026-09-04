@@ -38,6 +38,7 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+from atelier.depot import projet_lu_une_fois
 from atelier.domaine import Reinjection
 from atelier.domaine.envoi import (
     AMBIANCE,
@@ -124,6 +125,11 @@ class ServiceEnvoi:
 
     # ── L'écran ──────────────────────────────────────────────────────────────
 
+    # Même portée qu'`apercu`, et pour la même raison (M3) : la confirmation
+    # appelle l'aperçu **et** tout ce qui compose le prix, les références et les
+    # cases. Les deux portées s'emboîtent sans se gêner — la plus extérieure
+    # tient le mémo, l'autre s'y pose.
+    @projet_lu_une_fois()
     def envoi(
         self,
         *,

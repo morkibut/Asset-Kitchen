@@ -31,7 +31,7 @@ import uuid
 from dataclasses import replace
 from typing import Any, Sequence
 
-from atelier.depot import Base, Fichiers
+from atelier.depot import Base, Fichiers, projet_lu_une_fois
 from atelier.domaine import (
     USD,
     Demande,
@@ -1847,6 +1847,13 @@ class ServiceGenerations:
             )
         )
 
+    # **Le projet ne se lit qu'une fois pour composer** (M3). Composer un aperçu
+    # d'équipement le relisait quarante-deux fois : chaque petit service appelé
+    # ici le redemande pour son compte, et aucun ne sait ce que le voisin vient
+    # de lire. La portée est posée en décoration plutôt qu'en `with` autour du
+    # corps pour que la réparation se lise d'un coup d'œil — et qu'elle ne se
+    # perde pas dans un décalage de deux cents lignes.
+    @projet_lu_une_fois()
     def apercu(
         self,
         sujet: str,

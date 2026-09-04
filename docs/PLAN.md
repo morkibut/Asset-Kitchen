@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, trois closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, quatre closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -213,8 +213,8 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
  │
  ▼
 V2.4  ┌ M1  le découpage du coin ✔ close   ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin ✔ dessinée │  trois closes sur sept.
-      │ M3  l'écran cesse de figer         │  Aucune n'en bloque une autre.
+      │ M2  la maquette du coin ✔ dessinée │  quatre closes sur sept.
+      │ M3  l'écran ne fige plus ✔ close   │  Aucune n'en bloque une autre.
       │ M4  la planche dit enfin vrai      │  M2 dessine, les autres réparent.
       ├ M5  la référence qui manque ───────┤  La tranche qui bâtit l'écran de
       ├ M6  laquelle part      ✔ close     │  M2 ne s'écrit qu'après elle.
@@ -1689,7 +1689,7 @@ coûte aussi la ligne du guide, la puce des tables et deux essais.
 
 ---
 
-### M3 · Corriger un texte cesse de figer l'écran
+### M3 · Corriger un texte cesse de figer l'écran — ✅ **livrée le 4 septembre 2026**
 
 *Aucune US neuve — elle tient `US-296`, l'écran qui montre ce qui part avant de payer*
 
@@ -1757,21 +1757,62 @@ de l'équipement sortent du même endroit. On y passe une fois.
 
 **Critères d'acceptation**
 
-- [ ] Composer ce qui part **lit le projet une seule fois** par demande, et un essai compte les
+- [x] Composer ce qui part **lit le projet une seule fois** par demande, et un essai compte les
       lectures au lieu de mesurer un temps — un temps dépend de la machine, un compte non
-- [ ] Le compte tombe à **1** sur les trois cas mesurés : l'aperçu du texte, la confirmation d'une
+- [x] Le compte tombe à **1** sur les trois cas mesurés : l'aperçu du texte, la confirmation d'une
       image ordinaire, la confirmation d'un équipement
-- [ ] **Ce que l'écran affiche ne change pas d'un caractère** avant et après la réparation, sur ces
+- [x] **Ce que l'écran affiche ne change pas d'un caractère** avant et après la réparation, sur ces
       trois cas
-- [ ] La demande ne repart qu'une fois la frappe posée, et jamais à chaque lettre
-- [ ] **Le curseur reste où l'auteur l'a mis**, y compris au milieu d'une ligne, y compris pendant
+- [x] La demande ne repart qu'une fois la frappe posée, et jamais à chaque lettre
+- [x] **Le curseur reste où l'auteur l'a mis**, y compris au milieu d'une ligne, y compris pendant
       qu'une demande est en vol
-- [ ] Le champ montre toujours ce qui vient d'être tapé, jamais un texte en retard
-- [ ] Le prix et le texte restent affichés ensemble, et jamais l'un sans l'autre : la règle ne bouge
+- [x] Le champ montre toujours ce qui vient d'être tapé, jamais un texte en retard
+- [x] Le prix et le texte restent affichés ensemble, et jamais l'un sans l'autre : la règle ne bouge
       pas
-- [ ] Aucun appel au fournisseur, aucun centime
+- [x] Aucun appel au fournisseur, aucun centime
 
 **Bloquée par** — aucune. *Elle ne touche ni `M1` ni `M2`.*
+
+#### Ce que la construction a appris
+
+**Le montage d'essai retrouve les chiffres des vraies données, à l'unité près** — 5, 15 et 42
+lectures. Cela dit que le compte ne dépendait pas du contenu du jeu mais de **la façon dont la
+composition est écrite** : chaque petit service redemande le projet pour son compte, et un projet
+de deux images le relit autant de fois qu'un projet de deux cents. La réparation valait donc pour
+tout le monde, pas seulement pour l'atelier chargé de l'auteur.
+
+**La portée du mémo est explicite et courte, et c'est le cœur de la décision.** Un cache posé sur
+`lire_projet` une fois pour toutes aurait été plus court à écrire et faux : on n'aurait plus su
+dire de quand datait ce qu'on lisait. Ici un service l'ouvre le temps de composer et le referme —
+hors de là, `lire_projet` relit le disque comme avant, et enregistrer ou oublier un projet vide le
+mémo sur-le-champ. **La connexion par opération ne bouge pas** : refermer à chaque fois est ce qui
+permet d'effacer le fichier de l'index sous Windows, critère du produit depuis `T3`.
+
+**Un essai qui compte a besoin d'une couture pour compter.** `Base` sépare désormais `lire_projet`,
+qui répond, de `_lire_projet_du_disque`, qui va chercher : sans cette séparation, l'essai aurait
+compté des **appels** — quarante-deux avant comme après — au lieu de compter des **lectures**.
+
+**Et le témoin est la moitié qui compte.** Chaque cas est joué deux fois, mémo débranché puis
+branché, et les deux réponses sont comparées caractère par caractère. Un mémo qui répondrait autre
+chose que le disque serait pire que la lenteur qu'il répare.
+
+**Deux essais d'écran ont été écrits contre eux-mêmes avant d'être gardés.** Le premier essai du
+repos passait **même sans repos du tout** : six frappes d'affilée dans une seule bouffée
+d'instructions ne laissent rien se déclencher entre elles. Espacées de trente millisecondes — la
+frappe d'un dactylo pressé —, elles font six demandes sans la réparation et une seule avec. Le
+curseur, lui, saute de 11 à 18 quand on retire le brouillon du champ. **Un essai qu'on n'a pas vu
+échouer ne prouve rien.**
+
+> #### Vérifié au navigateur, sur un atelier jetable en 8427
+>
+> Curseur posé au septième caractère de *marais de fer*, cinq lettres tapées à la main : le champ
+> montre *marais gris de fer*, **le curseur reste au douzième**, et il y reste encore après que la
+> réponse du serveur a redessiné l'écran. L'onglet réseau ne montre que **deux** demandes en tout
+> — une à l'ouverture, une une fois la frappe posée. Le texte qui part dit *World: marais gris de
+> fer* mot pour mot, avec son prix à côté. *Remettre* efface le brouillon avec la correction, et
+> le mot *gris* disparaît des deux endroits à la fois.
+>
+> L'atelier de l'auteur, sur 8420, n'a pas été touché.
 
 ---
 

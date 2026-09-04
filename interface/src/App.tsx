@@ -136,6 +136,18 @@ const fondre = (liste: Generation[], recue: Generation): Generation[] =>
 const PADDING = 16
 const GOUTTIERE = 9
 
+// **Le temps qu'on laisse à la frappe de se poser** (M3). Corriger une ligne de
+// la fenêtre de confirmation écrit dans le tri, et le tri commande la demande
+// qui dit ce qui part : sans repos, un mot de dix lettres partait en dix
+// allers-retours enchaînés. Ce n'est pas un nouveau réglage — 200 ms est déjà ce
+// que le produit appelle *« la main s'est arrêtée »*, à l'infobulle comme à la
+// table d'inspiration.
+//
+// **Il ne s'applique jamais à l'ouverture** : on ouvre la fenêtre pour voir ce
+// qui part, et la faire attendre un cinquième de seconde pour rien serait payer
+// la réparation avec la chose qu'elle répare.
+const REPOS_FRAPPE = 200
+
 /**
  * Un cran tient-il à cette largeur ?
  *
@@ -349,6 +361,12 @@ export function App() {
   // n'est dépensé tant que le bouton *de cet écran-là* n'est pas pressé.
   const [envoiOuvert, setEnvoiOuvert] = useState(false)
   const [envoi, setEnvoi] = useState<Envoi | null>(null)
+  // **Vrai tant que la fenêtre vient de s'ouvrir** (M3) : c'est ce qui fait
+  // partir la première demande sans attendre, alors que toutes les suivantes
+  // laissent à la frappe le temps de se poser. Une référence plutôt qu'un état :
+  // elle change pendant l'effet, et un état y déclencherait un second rendu — et
+  // donc un second appel — pour ne rien dire de neuf à l'écran.
+  const ouverture = useRef(true)
   // **Le tri ne porte que des écarts, jamais un état complet**, et il ne
   // s'enregistre nulle part : une correction faite ici vaut pour cet appel
   // seulement, et le prochain repart des réglages.
@@ -1434,42 +1452,58 @@ export function App() {
   // demanderait son texte à une route et son prix à une autre finirait par
   // afficher un texte d'avant à côté d'un prix d'après. Rien n'est facturé, rien
   // n'est enregistré, et l'appel ne sort pas de la machine.
+  //
+  // **Et la demande attend que la frappe se pose** (M3). Corriger une ligne
+  // écrit dans le tri, qui est une dépendance d'ici : un mot de dix lettres
+  // partait en dix allers-retours enchaînés. Le repos vaut pour tout ce qui
+  // change pendant que la fenêtre est ouverte, et pour rien à l'ouverture — la
+  // première demande part sur-le-champ.
   useEffect(() => {
-    if (!envoiOuvert || !modele) return
+    if (!envoiOuvert || !modele) {
+      // Fenêtre fermée : la prochaine ouverture repart sans attendre.
+      ouverture.current = true
+      return
+    }
     let vivant = true
-    void api
-      .envoi({
-        prompt: prompt.trim(),
-        modele: modele.identifiant,
-        projet: bibliotheque.courant,
-        echelle,
-        personnage: cible?.personnage ?? null,
-        pose: !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
-        direction: cases ? null : (cible?.direction ?? null),
-        directions: enPlanche ? directionsCible : null,
-        poses: cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
-        piece: cible?.piece ?? null,
-        references: reinjections,
-        references_ecartees: ecarteesGeneration,
-        variations: cases ? 1 : variations,
-        repris,
-        tri,
-        // **Ce que l'auteur interdit de sa main** (D3) : le fond du jeu s'y
-        // ajoute, et sans lui l'écran montrerait l'interdiction du produit
-        // seule là où l'appel en enverra deux.
-        prompt_negatif: promptNegatif.trim(),
-      })
-      .then((recu) => {
-        if (!vivant) return
-        setEnvoi(recu)
-      })
-      .catch((erreur) => {
-        if (!vivant) return
-        setEnvoi(null)
-        echouer(erreur, "l'atelier ne dit pas ce qui partirait")
-      })
+    const attente = ouverture.current ? 0 : REPOS_FRAPPE
+    ouverture.current = false
+    const minuterie = window.setTimeout(() => {
+      void api
+        .envoi({
+          prompt: prompt.trim(),
+          modele: modele.identifiant,
+          projet: bibliotheque.courant,
+          echelle,
+          personnage: cible?.personnage ?? null,
+          pose: !cases || enPlanche ? (posesCible[0]?.identifiant ?? null) : null,
+          direction: cases ? null : (cible?.direction ?? null),
+          directions: enPlanche ? directionsCible : null,
+          poses:
+            cases && !enPlanche ? posesCible.map((p) => p.identifiant) : null,
+          piece: cible?.piece ?? null,
+          references: reinjections,
+          references_ecartees: ecarteesGeneration,
+          variations: cases ? 1 : variations,
+          repris,
+          tri,
+          // **Ce que l'auteur interdit de sa main** (D3) : le fond du jeu s'y
+          // ajoute, et sans lui l'écran montrerait l'interdiction du produit
+          // seule là où l'appel en enverra deux.
+          prompt_negatif: promptNegatif.trim(),
+        })
+        .then((recu) => {
+          if (!vivant) return
+          setEnvoi(recu)
+        })
+        .catch((erreur) => {
+          if (!vivant) return
+          setEnvoi(null)
+          echouer(erreur, "l'atelier ne dit pas ce qui partirait")
+        })
+    }, attente)
     return () => {
       vivant = false
+      window.clearTimeout(minuterie)
     }
     // Les poses et les directions **jointes** et non les tableaux : ils se
     // refabriquent à chaque rendu, et deux appels de même taille sur des cases

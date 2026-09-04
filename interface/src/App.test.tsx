@@ -15995,6 +15995,109 @@ describe("l'écran de confirmation", () => {
     expect(envoiOuvert.contains(apercu)).toBe(false)
     expect(ecran.getByRole("button", { name: /^Payer et lancer/ })).toBeTruthy()
   })
+
+  // ── M3 · « Corriger un texte cesse de figer l'écran » ─────────────────────
+  //
+  // **Trois défauts vécus comme un seul.** L'auteur les a dits en trois mots —
+  // *« ça freeze »* — et ils se cachaient l'un l'autre : la composition relisait
+  // le projet jusqu'à quarante-deux fois par demande (mesuré côté serveur, dans
+  // `tests/test_m3.py`), chaque lettre déclenchait un aller-retour, et le champ
+  // de correction n'avait aucune mémoire à lui. Les deux derniers se voient ici.
+
+  const corrigerLeMonde = async () => {
+    const ouvert = await ouvrir()
+    fireEvent.click(ouvert.ecran.getAllByRole("button", { name: "corriger" })[0])
+    const champ = (await ouvert.ecran.findByLabelText(
+      "Corriger monde",
+    )) as HTMLTextAreaElement
+    return { ...ouvert, champ }
+  }
+
+  const demandes = (appels: { url: string }[]) =>
+    appels.filter((a) => a.url === "/api/outgoing").length
+
+  test("un mot tapé dans une correction ne part pas lettre par lettre", async () => {
+    // **Une lettre écrivait dans le tri, et le tri commande la demande.** Un mot
+    // de dix lettres, dix allers-retours enchaînés — et chacun relisait le
+    // projet quinze à quarante-deux fois. La demande attend maintenant que la
+    // frappe se pose ; l'appel, lui, n'est pas coupé en deux : il rapporte
+    // toujours le texte et le prix ensemble, et cette règle-là ne bouge pas.
+    const { champ, appels } = await corrigerLeMonde()
+    const avant = demandes(appels)
+
+    // **Les lettres sont espacées pour de vrai**, trente millisecondes — la
+    // frappe d'un dactylo pressé. Six `fireEvent` d'affilée, sans attente, ne
+    // prouveraient rien : rien ne peut se déclencher entre deux instructions
+    // d'une même bouffée, et l'essai passerait même sans repos du tout.
+    for (const mot of ["m", "ma", "mar", "mara", "marai", "marais"]) {
+      fireEvent.change(champ, { target: { value: mot } })
+      await new Promise((suite) => setTimeout(suite, 30))
+    }
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/outgoing" &&
+            JSON.stringify(a.corps).includes('"marais"'),
+        ),
+      ).toBe(true),
+    )
+    expect(demandes(appels) - avant).toBe(1)
+  })
+
+  test("la fenêtre qui s'ouvre demande sur-le-champ, sans attendre", async () => {
+    // **Le repos ne s'applique qu'à ce qui change pendant qu'on est dedans.** On
+    // ouvre cet écran pour voir ce qui part : le faire attendre un cinquième de
+    // seconde pour rien serait payer la réparation avec la chose qu'elle répare.
+    const { appels } = await ouvrir()
+
+    expect(demandes(appels)).toBe(1)
+  })
+
+  test("le champ montre ce qui vient d'être tapé, jamais un texte en retard", async () => {
+    // **Le champ n'avait aucune mémoire à lui** : ce qu'il affichait venait de
+    // la dernière réponse du serveur. À chaque lettre, l'écran se redessinait
+    // *avant* la réponse — donc avec le texte d'avant la lettre.
+    const { champ } = await corrigerLeMonde()
+
+    fireEvent.change(champ, { target: { value: "marais de rouille" } })
+
+    expect(champ.value).toBe("marais de rouille")
+  })
+
+  test("le curseur reste où l'auteur l'a mis, au milieu d'une ligne", async () => {
+    // **C'est le défaut qui rendait la correction du milieu impraticable**,
+    // quand les deux autres ne la rendaient que lente : le navigateur, à qui
+    // l'on réécrit le contenu d'un champ, replace le curseur à la fin. Taper à
+    // la fin le masquait, la fin étant là où le curseur atterrit.
+    const { champ, appels } = await corrigerLeMonde()
+    const avant = demandes(appels)
+
+    // On écrit *gris* au milieu, et le curseur se pose derrière, comme le
+    // navigateur le ferait.
+    fireEvent.change(champ, { target: { value: "marais gris de fer" } })
+    champ.setSelectionRange(11, 11)
+
+    // Et la demande part, revient, redessine l'écran — c'est là que le curseur
+    // sautait la seconde fois.
+    await waitFor(() => expect(demandes(appels)).toBe(avant + 1))
+    await waitFor(() => expect(champ.value).toBe("marais gris de fer"))
+
+    expect(champ.selectionStart).toBe(11)
+  })
+
+  test("remettre efface le brouillon avec la correction", async () => {
+    // Sans quoi le champ continuerait de montrer ce qu'on vient de reprendre
+    // alors que le texte qui part est revenu à l'original — **le champ mentirait
+    // sur ce qui part**, ce que cet écran existe précisément pour interdire.
+    const { ecran, champ } = await corrigerLeMonde()
+
+    fireEvent.change(champ, { target: { value: "marais de rouille" } })
+    fireEvent.click(await ecran.findByRole("button", { name: "remettre" }))
+
+    await waitFor(() => expect(champ.value).toBe("marais de fer"))
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

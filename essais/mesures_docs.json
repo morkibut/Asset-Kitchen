@@ -1,11 +1,11 @@
 {
- "releve_le": 1788485230.557453,
+ "releve_le": 1788487234.8381796,
  "repere": {
   "quand": "le 29 août 2026, avant compactage",
   "octets": 322899
  },
  "corpus": {
-  "octets": 511889,
+  "octets": 514922,
   "documents": {
    "AGENTS.md": {
     "octets": 45083,
@@ -248,20 +248,20 @@
     ]
    },
    "docs/PLAN.md": {
-    "octets": 290930,
-    "titres": 102,
+    "octets": 293963,
+    "titres": 103,
     "sections": [
      {
       "titre": "Plan : Asset Kitchen — ce qui reste à construire",
       "niveau": 1,
       "ligne": 1,
-      "octets": 286806
+      "octets": 289798
      },
      {
       "titre": "Où en est le dépôt",
       "niveau": 2,
       "ligne": 20,
-      "octets": 4350
+      "octets": 4422
      },
      {
       "titre": "Les invariants du produit",
@@ -321,7 +321,7 @@
       "titre": "L'ordre de ce qui reste, et les deux endroits où il se resserre",
       "niveau": 2,
       "ligne": 202,
-      "octets": 8351
+      "octets": 8354
      },
      {
       "titre": "R6 — la planche qui revient de travers, **close**",
@@ -447,7 +447,7 @@
       "titre": "V2.4 — Ce qui est cassé se répare, et le coin du parcours se redessine",
       "niveau": 2,
       "ligne": 1457,
-      "octets": 46608
+      "octets": 49525
      },
      {
       "titre": "Pourquoi cette version passe devant l'animation",
@@ -492,375 +492,381 @@
       "octets": 2928
      },
      {
-      "titre": "M3 · Corriger un texte cesse de figer l'écran",
+      "titre": "M3 · Corriger un texte cesse de figer l'écran — ✅ **livrée le 4 septembre 2026**",
       "niveau": 3,
       "ligne": 1692,
-      "octets": 5209
+      "octets": 8126
+     },
+     {
+      "titre": "Ce que la construction a appris",
+      "niveau": 4,
+      "ligne": 1776,
+      "octets": 2882
      },
      {
       "titre": "M4 · La planche cesse d'être mal décrite — à l'écran, et au modèle",
       "niveau": 3,
-      "ligne": 1778,
+      "ligne": 1819,
       "octets": 10424
      },
      {
       "titre": "① L'écran nomme une image autrement que le texte qui part, au même instant",
       "niveau": 4,
-      "ligne": 1794,
+      "ligne": 1835,
       "octets": 3064
      },
      {
       "titre": "② Le texte qui part décrit une grille qui n'existe pas — sur 64 % des planches",
       "niveau": 4,
-      "ligne": 1839,
+      "ligne": 1880,
       "octets": 2019
      },
      {
       "titre": "③ Et l'écran de la planche affirme le contraire de ce que le produit fait depuis la veille",
       "niveau": 4,
-      "ligne": 1873,
+      "ligne": 1914,
       "octets": 4486
      },
      {
       "titre": "M5 · Une référence s'ajoute sans perdre ses corrections",
       "niveau": 3,
-      "ligne": 1951,
+      "ligne": 1992,
       "octets": 4706
      },
      {
       "titre": "M6 · Deux images pour une case : laquelle part — **close le 4 septembre 2026**",
       "niveau": 3,
-      "ligne": 2024,
+      "ligne": 2065,
       "octets": 5441
      },
      {
       "titre": "M7 · Le détourage de départ redevient complet, et se règle depuis l'image",
       "niveau": 3,
-      "ligne": 2107,
+      "ligne": 2148,
       "octets": 4699
      },
      {
       "titre": "V2.5 — Le design reprend la main",
       "niveau": 2,
-      "ligne": 2186,
+      "ligne": 2227,
       "octets": 6130
      },
      {
       "titre": "⚠️ Pourquoi elle commence par un relevé et non par un dessin",
       "niveau": 3,
-      "ligne": 2199,
+      "ligne": 2240,
       "octets": 1192
      },
      {
       "titre": "Les trois demandes de l'auteur, et elles n'ont pas le même statut",
       "niveau": 3,
-      "ligne": 2219,
+      "ligne": 2260,
       "octets": 1441
      },
      {
       "titre": "Ce que cette version ne fait pas encore",
       "niveau": 3,
-      "ligne": 2231,
+      "ligne": 2272,
       "octets": 381
      },
      {
       "titre": "⚠️ Ce qu'elle tient pour acquis sans l'avoir mesuré",
       "niveau": 3,
-      "ligne": 2238,
+      "ligne": 2279,
       "octets": 341
      },
      {
       "titre": "N1 · L'audit de design repris, et ce qu'il en reste",
       "niveau": 3,
-      "ligne": 2246,
+      "ligne": 2287,
       "octets": 1867
      },
      {
       "titre": "V3 — L'animation",
       "niveau": 2,
-      "ligne": 2279,
+      "ligne": 2320,
       "octets": 61353
      },
      {
       "titre": "Ce que le relevé `A0` a tranché, et ce qu'il n'a pas tranché",
       "niveau": 3,
-      "ligne": 2326,
+      "ligne": 2367,
       "octets": 1929
      },
      {
       "titre": "⚠️ Ce que la version tient pour acquis sans l'avoir mesuré",
       "niveau": 3,
-      "ligne": 2348,
+      "ligne": 2389,
       "octets": 1986
      },
      {
       "titre": "Les décisions durables de cette version",
       "niveau": 3,
-      "ligne": 2374,
+      "ligne": 2415,
       "octets": 4656
      },
      {
       "titre": "Les chemins écartés, et pourquoi ils ne reviendront pas",
       "niveau": 3,
-      "ligne": 2403,
+      "ligne": 2444,
       "octets": 1116
      },
      {
       "titre": "A0 · Le relevé qui a décidé du chemin — **clos le 2 septembre 2026**",
       "niveau": 3,
-      "ligne": 2422,
+      "ligne": 2463,
       "octets": 2225
      },
      {
       "titre": "A6 · Le mouvement, dit une fois pour toutes",
       "niveau": 3,
-      "ligne": 2461,
+      "ligne": 2502,
       "octets": 2667
      },
      {
       "titre": "A2 · Le cadre qui ne dérive pas",
       "niveau": 3,
-      "ligne": 2501,
+      "ligne": 2542,
       "octets": 4176
      },
      {
       "titre": "A9 · Commander un clip, et l'attendre",
       "niveau": 3,
-      "ligne": 2562,
+      "ligne": 2603,
       "octets": 9843
      },
      {
       "titre": "A10 · Le montage — plusieurs animations dans un clip",
       "niveau": 3,
-      "ligne": 2680,
+      "ligne": 2721,
       "octets": 7644
      },
      {
       "titre": "A11 · Le moteur de la maison — animer sans payer",
       "niveau": 3,
-      "ligne": 2778,
+      "ligne": 2819,
       "octets": 9942
      },
      {
       "titre": "Les quatre décisions que ça impose au code",
       "niveau": 4,
-      "ligne": 2813,
+      "ligne": 2854,
       "octets": 3119
      },
      {
       "titre": "Ce qui manque se dit, et les trois absences ne sont pas la même",
       "niveau": 4,
-      "ligne": 2853,
+      "ligne": 2894,
       "octets": 986
      },
      {
       "titre": "Les trois pièges, payés une fois au banc du 3 septembre 2026",
       "niveau": 4,
-      "ligne": 2868,
+      "ligne": 2909,
       "octets": 1339
      },
      {
       "titre": "Ce que cette tranche n'est pas",
       "niveau": 4,
-      "ligne": 2886,
+      "ligne": 2927,
       "octets": 2236
      },
      {
       "titre": "A12 · Toutes les poses, en animation",
       "niveau": 3,
-      "ligne": 2913,
+      "ligne": 2954,
       "octets": 3076
      },
      {
       "titre": "A13 · L'image attrapée au vol",
       "niveau": 3,
-      "ligne": 2959,
+      "ligne": 3000,
       "octets": 2958
      },
      {
       "titre": "A4 · La bande sort de l'atelier",
       "niveau": 3,
-      "ligne": 3004,
+      "ligne": 3045,
       "octets": 1617
      },
      {
       "titre": "A5 · Le contour qui ne bout pas",
       "niveau": 3,
-      "ligne": 3036,
+      "ligne": 3077,
       "octets": 2021
      },
      {
       "titre": "A7 · Reprendre une image sans refaire la bande",
       "niveau": 3,
-      "ligne": 3072,
+      "ligne": 3113,
       "octets": 2010
      },
      {
       "titre": "V3.1 — L'atelier tient ce qu'il dit",
       "niveau": 2,
-      "ligne": 3106,
+      "ligne": 3147,
       "octets": 51793
      },
      {
       "titre": "Les quatre familles, et elles commandent l'ordre",
       "niveau": 3,
-      "ligne": 3131,
+      "ligne": 3172,
       "octets": 1456
      },
      {
       "titre": "Ce que cette version ne fait pas",
       "niveau": 3,
-      "ligne": 3148,
+      "ligne": 3189,
       "octets": 1263
      },
      {
       "titre": "⚠️ Ce que la version ne se donne pas les moyens de tenir",
       "niveau": 3,
-      "ligne": 3165,
+      "ligne": 3206,
       "octets": 804
      },
      {
       "titre": "G1 · Les phrases qui ont cessé d'être vraies — ✔ **close le 3 septembre 2026**",
       "niveau": 3,
-      "ligne": 3181,
+      "ligne": 3222,
       "octets": 7354
      },
      {
       "titre": "G2 · La barre d'attente revient aux tables",
       "niveau": 3,
-      "ligne": 3277,
+      "ligne": 3318,
       "octets": 2177
      },
      {
       "titre": "G3 · Les vingt-trois explications s'accrochent",
       "niveau": 3,
-      "ligne": 3313,
+      "ligne": 3354,
       "octets": 2126
      },
      {
       "titre": "G4 · Les curseurs posent au relâchement",
       "niveau": 3,
-      "ligne": 3348,
+      "ligne": 3389,
       "octets": 2122
      },
      {
       "titre": "G5 · Le geste qu'on ne trouve pas",
       "niveau": 3,
-      "ligne": 3385,
+      "ligne": 3426,
       "octets": 659
      },
      {
       "titre": "G6 · Le menu ne sort plus de l'écran",
       "niveau": 3,
-      "ligne": 3401,
+      "ligne": 3442,
       "octets": 1704
      },
      {
       "titre": "G7 · L'écran de l'univers se refait",
       "niveau": 3,
-      "ligne": 3432,
+      "ligne": 3473,
       "octets": 5982
      },
      {
       "titre": "G8 · L'accueil s'ouvre sur chaque jeu neuf",
       "niveau": 3,
-      "ligne": 3519,
+      "ligne": 3560,
       "octets": 1919
      },
      {
       "titre": "G9 · Démarrer la première pose",
       "niveau": 3,
-      "ligne": 3553,
+      "ligne": 3594,
       "octets": 903
      },
      {
       "titre": "G10 · Le zoom des tables monte",
       "niveau": 3,
-      "ligne": 3573,
+      "ligne": 3614,
       "octets": 864
      },
      {
       "titre": "G11 · Éteindre un type d'objet",
       "niveau": 3,
-      "ligne": 3594,
+      "ligne": 3635,
       "octets": 1576
      },
      {
       "titre": "G12 · Une recette sur plusieurs images",
       "niveau": 3,
-      "ligne": 3621,
+      "ligne": 3662,
       "octets": 1973
      },
      {
       "titre": "G13 · Le modèle « lourd » ne détoure rien",
       "niveau": 3,
-      "ligne": 3655,
+      "ligne": 3696,
       "octets": 1198
      },
      {
       "titre": "G14 · Le calage horizontal effacé en silence",
       "niveau": 3,
-      "ligne": 3678,
+      "ligne": 3719,
       "octets": 639
      },
      {
       "titre": "G15 · Sans artwork officiel, aucune couleur n'est réduite",
       "niveau": 3,
-      "ligne": 3694,
+      "ligne": 3735,
       "octets": 8152
      },
      {
       "titre": "L'arbitrage, commencé le 3 septembre 2026 puis arrêté",
       "niveau": 4,
-      "ligne": 3749,
+      "ligne": 3790,
       "octets": 4484
      },
      {
       "titre": "G16 · Ce qui est revenu du modèle se voit, et se reprend à la main — ✅ **livrée le 3 septembre 2026**",
       "niveau": 3,
-      "ligne": 3796,
+      "ligne": 3837,
       "octets": 7297
      },
      {
       "titre": "V3.5 — Le dépliage généralisé",
       "niveau": 2,
-      "ligne": 3892,
+      "ligne": 3933,
       "octets": 6943
      },
      {
       "titre": "P1 · La planche se garde, et son découpage se refait",
       "niveau": 3,
-      "ligne": 3914,
+      "ligne": 3955,
       "octets": 3419
      },
      {
       "titre": "P2 · Une planche pour plusieurs choses",
       "niveau": 3,
-      "ligne": 3963,
+      "ligne": 4004,
       "octets": 2296
      },
      {
       "titre": "Ce que ce plan ne couvre pas",
       "niveau": 2,
-      "ligne": 4003,
+      "ligne": 4044,
       "octets": 8824
      },
      {
       "titre": "Le pantin — sorti de la V3 le 3 septembre 2026, arguments intacts",
       "niveau": 3,
-      "ligne": 4008,
+      "ligne": 4049,
       "octets": 5215
      },
      {
       "titre": "Les trois risques encore ouverts",
       "niveau": 3,
-      "ligne": 4080,
+      "ligne": 4121,
       "octets": 1772
      },
      {
       "titre": "Un risque qui est levé, et il faut le dire",
       "niveau": 3,
-      "ligne": 4104,
+      "ligne": 4145,
       "octets": 1638
      }
     ]
@@ -1029,7 +1035,7 @@
    "casses": []
   },
   "docs": {
-   "total": 731,
+   "total": 733,
    "casses": []
   }
  }
