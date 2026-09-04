@@ -11,6 +11,56 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## M1 — le découpage du coin, réparé — 4 septembre 2026
+
+**Un contrat sain, une image huit fois trop grande, et personne entre les deux.** Le serveur ne
+redimensionnait pas l'image du dessus pour la faire entrer dans le cadre du dessous : il la collait
+au coin haut-gauche et jetait ce qui dépassait. C'était écrit, c'était volontaire, et c'était sans
+conséquence tant que les deux images avaient des tailles voisines. `G16` a ouvert le geste *refaire
+ce découpage à la main* en partant de la case **telle qu'elle est arrivée du modèle** — et cette
+image-là fait 1 024 pixels de côté quel que soit le corps.
+
+**La phrase qui n'a pas été rouverte.** *« Ce qui déborde est perdu »* datait de `C3` ; elle est
+restée telle quelle quand `G16` a introduit, dans la même fonction, une image huit fois plus grande
+que son cadre. Aucun essai ne l'a vue parce que **tous ceux de la superposition emploient deux
+images de même taille** — il n'en existait pas un seul avec deux tailles différentes.
+
+> ### ⚠️ La mesure a élargi le défaut : neuf pièces sur neuf, et non deux
+>
+> Le banc écrit pour la tranche — `essais/essai_superposition_cadre.py`, gratuit, en lecture seule
+> sur le disque — reprend **chaque** pièce d'équipement du dépôt, la repose sur le corps que son
+> pliage désigne, et compte les pixels de sujet que le calque contient. **Neuf sur neuf en
+> rendaient zéro** : le coin gardait entre 0,4 % et 7,8 % de la case arrivée, jamais l'endroit où
+> le dessin se trouve, et le calque sortait **rempli de fond uni à 95–98 % du cadre** — un
+> résultat d'apparence honnête, dont le bouton *recaler* tirait des chiffres tout aussi honnêtes.
+>
+> Les deux casques de *balthazar-2* que la tranche nomme restent les siens, mais pour l'autre
+> raison : ce sont les deux **qui avaient besoin du geste**. Leurs chiffres se retrouvent — *0 sur
+> 213 836* et *0 sur 180 320*, le coin gardant 7,7 % et 1,6 %.
+>
+> **Et le compte de ce qui ne bouge pas était pris sur la mauvaise image.** La tranche disait *six
+> des huit pièces*, ce qui est vrai des tailles rangées sur le disque ; le service, lui, lit
+> l'image **rendue**, et sur le rendu **les neuf tiennent déjà dans leur cadre**. Elles rendent
+> donc toutes le calque d'avant la tranche, au pixel près — le banc le vérifie une par une, et
+> c'est la moitié qui compte : une réparation qui abîmerait le cas courant serait pire que le
+> défaut.
+
+**La réduction emploie la moyenne de surface, et ce n'était pas un choix libre.** C'est déjà celui
+du retour d'une planche, avec sa raison écrite : *on réduit une image de modèle vers la grille du
+projet, et le plus proche voisin y perdrait un pixel sur deux du contour*. Or le contour est
+précisément ce que la comparaison lit.
+
+**L'écran ne montrait pas la même image que le calcul, et dans les deux sens.** Le cadre de travail
+posait le dessus en `object-contain` : il **réduisait** l'image que le serveur coupait au coin, et
+il **agrandissait** celle que le serveur laissait à sa taille dans un coin. Le serveur rend
+maintenant le rectangle où il pose le dessus, en pixels du cadre, et l'écran le dessine tel quel.
+La leçon est celle de `G16` — *la vignette de gauche avait été corrigée, le grand cadre non* — et
+elle vaut deux fois : **on ne répare pas un calcul sans regarder ce que l'écran en montre.**
+
+**La phrase, enfin, existe pour l'échelle.** Sans elle on lit *× 1,00* et on croit que l'image part
+de sa taille d'arrivée. Elle ne paraît que lorsqu'il y a eu réduction : dans le cas courant, il n'y
+a rien à dire, et une phrase qui paraîtrait partout cesserait d'être une réponse.
+
 ## M6 — deux images pour une case, et laquelle part — 4 septembre 2026
 
 **La question posée était la bonne, et la réponse était « ni l'un ni l'autre ».** L'auteur

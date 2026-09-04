@@ -44,6 +44,7 @@ import type {
   Asset,
   Bibliotheque,
   Boite,
+  Cadrage,
   Carte,
   Case,
   LectureDePalette,
@@ -944,6 +945,11 @@ function serveurDouble(options: {
   /** Ce que la palette lit d'une carte (06bis). Le tiers par défaut : un sujet sur
    *  un fond, ce que le détourage rend sur une image ordinaire. */
   lecture?: LectureDePalette
+  /** Comment le dessus est entré dans le cadre du dessous (M1). **Rien par
+   *  défaut** : deux images de même taille, le cas courant, où le serveur ne
+   *  touche à rien. Un essai qui joue une case arrivée bien plus grande que le
+   *  corps pose la sienne. */
+  cadrage?: Cadrage
 } = {}) {
   const etat = {
     assets: options.assets ?? [],
@@ -1422,6 +1428,20 @@ function serveurDouble(options: {
           ajout: 0.08,
           echelle: 1,
           compacite: 0.94,
+        },
+        // **Le cadrage arrive avec l'aperçu** (M1) : c'est le serveur qui sait
+        // s'il a dû réduire le dessus pour le faire entrer, et l'écran a besoin
+        // de la réponse pour l'écrire *et* pour dessiner la même image que
+        // celle sur laquelle le calcul a été fait.
+        cadrage: options.cadrage ?? {
+          ramene: false,
+          facteur: 1,
+          gauche: 0,
+          sommet: 0,
+          largeur: 64,
+          hauteur: 64,
+          source_largeur: 64,
+          source_hauteur: 64,
         },
       })
     if (url.includes("/overlay")) {
@@ -10780,11 +10800,14 @@ describe("le contour et la main", () => {
   /** La fabrique, ouverte sur **deux** images : c'est ce qu'elle demande, et
    *  sans la seconde tout ce qui suit serait grisé pour une autre raison que
    *  celle qu'on veut mesurer. */
-  const ouvrirLaFabrique = async () => {
+  const ouvrirLaFabrique = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
     const dessus = asset("bbbb2222-0", "le nain, au repos")
     const dessous = asset("bbbb2222-1", "le nain, casqué")
     const { cadre, ...reste } = await ouvrirUneTable({
       assets: [dessus, dessous],
+      ...options,
     })
     fireEvent.click(puce(cadre, "superposition"))
     await cadre.findByText("les deux images")
@@ -10883,6 +10906,68 @@ describe("le contour et la main", () => {
     // dit avant qu'on ait lu.
     const { cadre } = await ouvrirLaFabrique()
     expect(cadre.getByText("aucun appel ne part d'ici")).toBeTruthy()
+  })
+
+  // ── M1 : le dessus ramené au cadre, dit et dessiné ────────────────────────
+
+  /** Une case arrivée quatre fois plus grande que le cadre du corps — le cas
+   *  des deux casques de *balthazar-2*, transposé sur les images du double, qui
+   *  font 1 024 de côté. Le dessus n'est pas carré, pour que le centrage ait
+   *  quelque chose à dire. */
+  const RAMENE = {
+    ramene: true,
+    facteur: 0.25,
+    gauche: 0,
+    sommet: 128,
+    largeur: 1024,
+    hauteur: 768,
+    source_largeur: 4096,
+    source_hauteur: 3072,
+  }
+
+  test("l'écran dit quand le dessus a été ramené au cadre, et se tait sinon", async () => {
+    // **La phrase existe pour l'échelle** : sans elle on lit « × 1,00 » et on
+    // croit que l'image part de sa taille d'arrivée, alors qu'elle a déjà été
+    // réduite au quart pour entrer.
+    const { cadre } = await ouvrirLaFabrique({ cadrage: RAMENE })
+
+    expect(await cadre.findByText(/ramené au cadre/)).toBeTruthy()
+    expect(cadre.getByText(/4096×3072/)).toBeTruthy()
+    expect(cadre.getByText(/25 %/)).toBeTruthy()
+  })
+
+  test("rien n'est dit quand deux images de même taille se posent", async () => {
+    // **Une marque qui paraîtrait partout cesserait d'être une réponse** —
+    // c'est la règle du liseré de `M6`, et elle vaut ici.
+    const { cadre } = await ouvrirLaFabrique()
+    await cadre.findByText("le calage du dessus")
+
+    expect(cadre.queryByText(/ramené au cadre/)).toBeNull()
+  })
+
+  test("le cadre de travail pose le dessus là où le serveur le pose", async () => {
+    // **La même image des deux côtés.** Un `object-contain` seul mentait des
+    // deux côtés à la fois : il réduisait ce que le serveur coupait, et il
+    // agrandissait ce que le serveur laissait dans son coin.
+    await ouvrirLaFabrique({ cadrage: RAMENE })
+
+    const image = await waitFor(() => {
+      const trouve = document.querySelector("[data-dessus-cadre]") as HTMLElement | null
+      if (!trouve || !trouve.style.width) throw new Error("le dessus n'est pas cadré")
+      return trouve
+    })
+
+    // Le cadre du dessous fait 1 024 de côté ; le dessus y entre à 1 024 × 768,
+    // centré verticalement — donc pleine largeur, trois quarts de hauteur, et
+    // un huitième d'écart en haut. Ce sont les chiffres du serveur, repris tels
+    // quels et non recalculés à l'écran.
+    expect(image.style.left).toBe("0%")
+    expect(image.style.top).toBe("12.5%")
+    expect(image.style.width).toBe("100%")
+    expect(image.style.height).toBe("75%")
+    // **Lissé quand l'image a été réduite** : le serveur réduit en moyenne de
+    // surface, et le plus proche voisin montrerait un autre dessin.
+    expect(image.style.imageRendering).toBe("auto")
   })
 })
 

@@ -22,6 +22,7 @@ import {
   POSE_VIDE,
   type ApercuSuperposition,
   type Asset,
+  type Cadrage,
   type MesuresCalque,
   type OuvertureSuperposition,
   type Superposition,
@@ -473,6 +474,22 @@ export function EcranSuperposition({
               en manuel, il remplit les trois valeurs et s'arrête là. */}
           <div className="flex flex-col gap-2 border-t border-bord pt-2">
             <Libelle aide="superposition.calage">le calage du dessus</Libelle>
+            {/* **Ce qui a été fait avant que le calage commence** (M1). Le
+                dessus plus grand que le cadre y entre entier, réduit pour
+                tenir — et sans cette phrase on lirait « × 1,00 » en croyant
+                que l'image part de sa taille d'arrivée. Elle ne paraît que
+                lorsqu'il y a eu réduction : dans le cas courant, il n'y a rien
+                à dire. */}
+            {apercu?.cadrage.ramene && (
+              <Raison
+                texte={
+                  `le dessus a été ramené au cadre — ${apercu.cadrage.source_largeur}×` +
+                  `${apercu.cadrage.source_hauteur} réduit à ` +
+                  `${Math.round(apercu.cadrage.facteur * 100)} % pour y entrer entier, ` +
+                  `et l'échelle ci-dessous part de là`
+                }
+              />
+            )}
             <button
               type="button"
               disabled={!pret || recalage}
@@ -648,6 +665,7 @@ export function EcranSuperposition({
             dessous={dessous}
             dessus={dessus}
             pose={pose}
+            cadrage={apercu?.cadrage ?? null}
             teinte={teinte}
             opaciteDessous={opaciteDessous}
             opaciteDessus={opaciteDessus}
@@ -787,6 +805,7 @@ function CadreDuTravail({
   dessous,
   dessus,
   pose,
+  cadrage,
   teinte,
   opaciteDessous,
   opaciteDessus,
@@ -795,6 +814,10 @@ function CadreDuTravail({
   dessous: Asset | null
   dessus: Asset
   pose: Superposition
+  /** Où le serveur pose le dessus dans le cadre (M1). `null` tant que le
+   *  premier aperçu n'est pas revenu — l'image tient alors la place entière,
+   *  comme avant. */
+  cadrage: Cadrage | null
   teinte: Teinte
   opaciteDessous: number
   opaciteDessus: number
@@ -867,22 +890,52 @@ function CadreDuTravail({
           vêtement déjà découpé pendant que le serveur travaillait sur la case
           telle qu'elle est arrivée : on découpait sur une image, et l'atelier
           coupait dans une autre. Trouvé en usage le 4 septembre 2026 — la
-          vignette de gauche avait été corrigée, le grand cadre non. */}
-      <img
-        src={
-          pose.dessus_arrivee
-            ? api.arrivee(dessus.identifiant)
-            : api.rendu(dessus.identifiant, dessus.empreinte)
-        }
-        alt={dessus.label}
-        draggable={false}
-        className="pointer-events-none absolute inset-0 h-full w-full object-contain select-none"
+          vignette de gauche avait été corrigée, le grand cadre non.
+
+          **Et posé là où le serveur le pose** (M1). Le calque enveloppant porte
+          l'échelle et le décalage — il fait la taille du cadre, donc ses
+          pour-cent de déplacement sont ceux du serveur ; l'image, dedans, prend
+          la place que le cadrage lui donne. Un `object-contain` seul mentait des
+          deux côtés à la fois : il réduisait ce que le serveur coupait, et il
+          agrandissait ce que le serveur laissait dans son coin. */}
+      <div
+        className="pointer-events-none absolute inset-0"
         style={{
-          imageRendering: "pixelated",
           opacity: opaciteDessus / 100,
           transform: `translate(${(pose.dx / largeur) * 100}%, ${(pose.dy / hauteur) * 100}%) scale(${pose.echelle})`,
         }}
-      />
+      >
+        <img
+          src={
+            pose.dessus_arrivee
+              ? api.arrivee(dessus.identifiant)
+              : api.rendu(dessus.identifiant, dessus.empreinte)
+          }
+          alt={dessus.label}
+          draggable={false}
+          data-dessus-cadre
+          className={
+            cadrage
+              ? "absolute select-none"
+              : "absolute inset-0 h-full w-full object-contain select-none"
+          }
+          style={
+            cadrage
+              ? {
+                  left: `${(cadrage.gauche / largeur) * 100}%`,
+                  top: `${(cadrage.sommet / hauteur) * 100}%`,
+                  width: `${(cadrage.largeur / largeur) * 100}%`,
+                  height: `${(cadrage.hauteur / hauteur) * 100}%`,
+                  // **Lissé quand l'image a été réduite, net sinon.** Le serveur
+                  // réduit en moyenne de surface ; demander au navigateur le
+                  // plus proche voisin sur la même réduction montrerait un autre
+                  // dessin que celui qui est mesuré.
+                  imageRendering: cadrage.ramene ? "auto" : "pixelated",
+                }
+              : { imageRendering: "pixelated" }
+          }
+        />
+      </div>
       {dessine && (
         <span
           aria-hidden

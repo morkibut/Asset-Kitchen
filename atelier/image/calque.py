@@ -45,10 +45,12 @@ __all__ = [
     "ECHELLE_TOLEREE",
     "OCCUPATION_AGRANDIT",
     "OCCUPATION_CONTENUE",
+    "Cadrage",
     "Place",
     "Retour",
     "aligner",
     "avec_alpha",
+    "cadrer",
     "cases_de",
     "composer",
     "differencier",
@@ -399,18 +401,113 @@ def mesurer_calque(corps: np.ndarray, retour: Retour, seuil: int) -> MesuresCalq
 # écrite ici aurait fini par juger autrement la même paire.
 
 
+@dataclass(frozen=True, slots=True)
+class Cadrage:
+    """Comment le dessus est entré dans le cadre du dessous — et de combien.
+
+    **Rendu au lieu d'être fait en silence** (`M1`) : quand le dessus est ramené,
+    l'échelle que l'écran affiche ne part plus de la taille d'arrivée de l'image
+    mais de celle-là. Sans le dire, on lit *× 1,00* et on croit que rien n'a
+    bougé.
+
+    `facteur` vaut 1,0 quand rien n'a été touché — c'est le cas courant, et
+    c'est celui où `ramene` est faux.
+    """
+
+    facteur: float
+    gauche: int
+    sommet: int
+    largeur: int
+    hauteur: int
+    source_largeur: int
+    source_hauteur: int
+
+    @property
+    def ramene(self) -> bool:
+        return self.facteur < 1.0
+
+    def en_json(self) -> dict[str, float | int | bool]:
+        return {
+            "ramene": self.ramene,
+            "facteur": round(float(self.facteur), 4),
+            "gauche": int(self.gauche),
+            "sommet": int(self.sommet),
+            "largeur": int(self.largeur),
+            "hauteur": int(self.hauteur),
+            "source_largeur": int(self.source_largeur),
+            "source_hauteur": int(self.source_hauteur),
+        }
+
+
+def cadrer(dessus: tuple[int, int], dessous: tuple[int, int]) -> Cadrage:
+    """Où le dessus se pose dans le cadre du dessous, et à quelle réduction.
+
+    **Deux régimes, et le second est celui que `M1` a ouvert.** Tant que le
+    dessus tient dans le cadre, il s'y pose au coin haut-gauche à sa taille —
+    c'est ce que le produit fait depuis C3, et rien n'y change au pixel près.
+    Dès qu'il dépasse, il est **réduit pour entrer entier** et centré, au lieu
+    d'être coupé à son coin.
+
+    **Mesuré le 4 septembre 2026 sur les deux casques de *balthazar-2*** : une
+    case arrivée de 1024 px sur un corps de 253 px laissait **7,7 %** de
+    l'image, et le dessin commençait à 271 px du bord — le sujet était
+    entièrement dehors, et le calque sortait plein de fond uni. Le coin n'était
+    pas un mauvais choix : il n'avait simplement jamais rencontré une image huit
+    fois plus grande que son cadre, ce que `G16` a rendu courant.
+
+    Les proportions sont gardées : réduire les deux côtés au même facteur laisse
+    le sujet reconnaissable pour la comparaison, et le calage à la main rattrape
+    l'écart en un geste.
+    """
+    hauteur_haut, largeur_haut = dessus
+    hauteur_bas, largeur_bas = dessous
+    tient = largeur_haut <= largeur_bas and hauteur_haut <= hauteur_bas
+    facteur = (
+        1.0
+        if tient
+        else min(largeur_bas / max(1, largeur_haut), hauteur_bas / max(1, hauteur_haut))
+    )
+    largeur = max(1, round(largeur_haut * facteur))
+    hauteur = max(1, round(hauteur_haut * facteur))
+    return Cadrage(
+        facteur=facteur,
+        # Le coin quand il tient — la règle d'origine, intacte ; centré quand il
+        # a fallu le réduire, comme la composition centre un corps dans sa case.
+        gauche=0 if tient else (largeur_bas - largeur) // 2,
+        sommet=0 if tient else (hauteur_bas - hauteur) // 2,
+        largeur=largeur,
+        hauteur=hauteur,
+        source_largeur=largeur_haut,
+        source_hauteur=hauteur_haut,
+    )
+
+
 def aligner(dessus: np.ndarray, dessous: np.ndarray, pose: Superposition) -> np.ndarray:
     """Le dessus, remis dans le cadre du dessous — mis à l'échelle et décalé.
 
     **Le cadre du dessous fait loi.** Deux images de tailles différentes ne se
     comparent pas ; c'est le dessous qui donne la case, parce que c'est lui le
-    sol et que le résultat s'y range. Ce qui déborde est perdu, ce qui manque
-    est transparent — le même contrat que la case d'une planche.
+    sol et que le résultat s'y range. Ce qui manque est transparent — le même
+    contrat que la case d'une planche.
+
+    **Ce qui déborde n'est plus perdu** (`M1`) : un dessus plus grand que le
+    cadre y entre entier, réduit pour tenir. Le reste ne bouge pas d'un pixel —
+    voir `cadrer`, qui porte la règle et la mesure qui l'a décidée.
     """
     hauteur, largeur = dessous.shape[:2]
     if dessus.shape[:2] != (hauteur, largeur):
+        boite = cadrer(dessus.shape[:2], (hauteur, largeur))
+        image = Image.fromarray(dessus, "RGBA")
+        if boite.ramene:
+            # **Moyenne de surface, et c'est le même choix qu'au retour d'une
+            # planche** : on réduit une image de modèle vers la grille du
+            # projet. Le plus proche voisin y perdrait un pixel sur deux du
+            # contour, et le contour est précisément ce que la comparaison lit.
+            image = image.resize(
+                (boite.largeur, boite.hauteur), Image.Resampling.BOX
+            )
         cadre = Image.new("RGBA", (largeur, hauteur), (0, 0, 0, 0))
-        cadre.paste(Image.fromarray(dessus, "RGBA"), (0, 0))
+        cadre.paste(image, (boite.gauche, boite.sommet))
         dessus = np.asarray(cadre)
     return _poser(dessus, float(pose.echelle), int(pose.dy), int(pose.dx))
 

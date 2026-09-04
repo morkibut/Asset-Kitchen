@@ -1,0 +1,227 @@
+[
+  {
+    "calque": "0e231d92c4b04436b960e5297062b61f-100",
+    "label": "Battle axe · repos",
+    "personnage": "balthazar-2",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      128,
+      128
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0156,
+    "sujet_de_l_arrivee": 202204,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 830,
+    "remplissage_du_calque_sans_detourage": 0.9794,
+    "range": [
+      128,
+      128
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "32a2c95994fc4579bb50f7b6a674c301-100",
+    "label": "Sac de voyage · repos",
+    "personnage": "le-pelerin",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      64,
+      64
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0039,
+    "sujet_de_l_arrivee": 360443,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 82,
+    "remplissage_du_calque_sans_detourage": 0.9529,
+    "range": [
+      64,
+      64
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "3af27ce73d7848d5be2d6116678ff556-100",
+    "label": "Battle axe · repos",
+    "personnage": "balthazar-2",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      128,
+      128
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0156,
+    "sujet_de_l_arrivee": 417966,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 1227,
+    "remplissage_du_calque_sans_detourage": 0.9794,
+    "range": [
+      128,
+      128
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "58224d8735d5427c9afce4f3577dd948-100",
+    "label": "helmet · repos",
+    "personnage": "balthazar",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      128,
+      128
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0156,
+    "sujet_de_l_arrivee": 194777,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 581,
+    "remplissage_du_calque_sans_detourage": 0.9659,
+    "range": [
+      96,
+      96
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "6a74fa9bb5dc494d874933acc1dc97bc-100",
+    "label": "Epée · repos",
+    "personnage": "le-pelerin",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      64,
+      64
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0039,
+    "sujet_de_l_arrivee": 324745,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 118,
+    "remplissage_du_calque_sans_detourage": 0.9529,
+    "range": [
+      64,
+      64
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "889fdad87aed42c49c3bb687da157a85-100",
+    "label": "Sac de voyage · marche",
+    "personnage": "le-pelerin",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      64,
+      64
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0039,
+    "sujet_de_l_arrivee": 381583,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 115,
+    "remplissage_du_calque_sans_detourage": 0.9495,
+    "range": [
+      64,
+      64
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "8d0eeeb3df624fd3aae73ffd15586a93-100",
+    "label": "helmet · repos",
+    "personnage": "balthazar-2",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      128,
+      128
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0156,
+    "sujet_de_l_arrivee": 180320,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 685,
+    "remplissage_du_calque_sans_detourage": 0.9794,
+    "range": [
+      128,
+      128
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "cc5f11105b554039bd2dafe1a2e99107-100",
+    "label": "helmet · repos",
+    "personnage": "balthazar",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      128,
+      128
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0156,
+    "sujet_de_l_arrivee": 425157,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 1014,
+    "remplissage_du_calque_sans_detourage": 0.9659,
+    "range": [
+      128,
+      128
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  },
+  {
+    "calque": "cf2010af0125409f9b1c064ad6537b16-100",
+    "label": "helmet · repos",
+    "personnage": "balthazar-2",
+    "arrivee": [
+      1024,
+      1024
+    ],
+    "corps": [
+      253,
+      321
+    ],
+    "ramene": true,
+    "part_gardee_par_le_coin": 0.0775,
+    "sujet_de_l_arrivee": 213836,
+    "sujet_avec_le_coin": 0,
+    "sujet_avec_le_cadre": 3714,
+    "remplissage_du_calque_sans_detourage": 0.9831,
+    "range": [
+      128,
+      128
+    ],
+    "range_tient_dans_le_cadre": true,
+    "range_identique": true
+  }
+]

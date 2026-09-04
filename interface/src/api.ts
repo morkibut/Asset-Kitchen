@@ -342,12 +342,37 @@ export type OuvertureSuperposition = {
   arrivee_possible: boolean
 }
 
+/** Comment le dessus est entré dans le cadre du dessous (M1).
+ *
+ *  **Le cadre du dessous fait loi**, et un dessus plus grand que lui y entre
+ *  entier, réduit pour tenir — il était coupé à son coin haut-gauche jusqu'au
+ *  4 septembre 2026. Les quatre premières valeurs sont en pixels du cadre :
+ *  c'est ce qui permet au cadre de travail de dessiner exactement l'image sur
+ *  laquelle le serveur a calculé. */
+export type Cadrage = {
+  /** Faux dans le cas courant — deux images de même taille, ou un dessus plus
+   *  petit : rien n'a été touché. */
+  ramene: boolean
+  facteur: number
+  gauche: number
+  sommet: number
+  largeur: number
+  hauteur: number
+  source_largeur: number
+  source_hauteur: number
+}
+
 /** Les deux sorties et les cinq mesures, sans rien écrire. Les images arrivent
  *  en `data:` — un aperçu n'existe nulle part sur le disque. */
 export type ApercuSuperposition = {
   calque: string
   aplat: string
   mesures: MesuresCalque
+  /** **Ce que l'écran a besoin de dire et de dessiner** (M1) : de combien le
+   *  dessus a été réduit pour entrer, et où il se pose. Il arrive avec
+   *  l'aperçu, et non à l'ouverture, parce que la bascule *telle qu'arrivée*
+   *  change la taille du dessus. */
+  cadrage: Cadrage
 }
 
 /** Une manière de regarder le monde, et ce qu'elle impose (E8).

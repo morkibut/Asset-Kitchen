@@ -45,7 +45,14 @@ from atelier.domaine.superposition import (
     Superposition,
 )
 from atelier.image import mesurer, rendre_en_png
-from atelier.image.calque import Retour, aligner, mesurer_calque, proposer, superposer
+from atelier.image.calque import (
+    Retour,
+    aligner,
+    cadrer,
+    mesurer_calque,
+    proposer,
+    superposer,
+)
 from atelier.services.evenements import Diffusion
 
 
@@ -214,6 +221,13 @@ class ServiceSuperposition:
         Les images repartent en `data:` plutôt que par une adresse : un aperçu
         n'existe nulle part sur le disque, et lui donner une adresse aurait
         obligé à ranger un brouillon quelque part — donc à le nettoyer.
+
+        **Le cadrage part avec elles** (`M1`), et pour deux raisons qui n'en
+        font qu'une : l'écran a besoin de le *dire* quand le dessus a été
+        ramené, et le cadre de travail a besoin de le *dessiner* pour montrer
+        la même image que celle sur laquelle le calcul a été fait. Le donner
+        ici, et non à l'ouverture, le tient d'accord avec la bascule *telle
+        qu'arrivée* : c'est elle qui change la taille du dessus.
         """
         self._verifier(pose)
         haut, bas = self._paire(
@@ -224,6 +238,7 @@ class ServiceSuperposition:
             "calque": _en_data(calque),
             "aplat": _en_data(aplat),
             "mesures": self._mesurer(bas, haut, pose).en_json(),
+            "cadrage": cadrer(haut.shape[:2], bas.shape[:2]).en_json(),
         }
 
     # ── Ce qu'elle fabrique ──────────────────────────────────────────────────

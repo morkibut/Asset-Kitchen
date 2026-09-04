@@ -31,7 +31,7 @@
 | **R7** | Le texte qui part s'organise en trois parties | **close le 3 septembre 2026, hors version** — construite *pour la relisibilité seule*, contre une mesure qui disait non | ci-dessous, `docs/tranches/R7.md` |
 | **R8**, **R9** | Deux écrans qui ne disaient pas à quoi ils servaient : la fiche d'une chose, le calibrage | **closes le 3 septembre 2026, hors version** | ci-dessous, `docs/tranches/R8.md` et `R9.md` |
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
-| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, une close sur six** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait | ci-dessous |
+| **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **ouverte le 4 septembre 2026, deux closes sur sept** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1` et `M3` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
 | **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
@@ -212,8 +212,8 @@ V2.3  ┌ D1  le réglage de départ  ✔ close ┐  ✅ close, cinq sur cinq,
       └ D5  les tailles          ✔ close  ┘  D4 attendait D2, qui était close
  │
  ▼
-V2.4  ┌ M1  le découpage du coin, réparé ┐  ouverte le 4 septembre 2026,
-      │ M2  la maquette du coin entier   │  une close sur six.
+V2.4  ┌ M1  le découpage du coin ✔ close ┐  ouverte le 4 septembre 2026,
+      │ M2  la maquette du coin entier   │  deux closes sur sept.
       │ M3  l'écran cesse de figer       │  Aucune n'en bloque une autre.
       │ M4  la planche dit enfin vrai    │  M2 dessine, les autres réparent.
       ├ M5  la référence qui manque ─────┤  La tranche qui bâtit l'écran de
@@ -1534,7 +1534,7 @@ accepté, pas un oubli.
 
 ---
 
-### M1 · Le découpage du coin, réparé
+### M1 · Le découpage du coin, réparé — ✅ **livrée le 4 septembre 2026**
 
 *Aucune US neuve — elle rend son sens à `US-503`, écrite pour `G16`*
 
@@ -1561,21 +1561,41 @@ vérifie réseau coupé.
 
 **Critères d'acceptation**
 
-- [ ] Un dessus plus grand que le cadre du dessous y entre **entier**, réduit pour tenir, et non
+- [x] Un dessus plus grand que le cadre du dessous y entre **entier**, réduit pour tenir, et non
       coupé à son coin
-- [ ] Sur les deux casques de *balthazar-2*, le calque contient le casque — mesuré en pixels de
+- [x] Sur les deux casques de *balthazar-2*, le calque contient le casque — mesuré en pixels de
       sujet gardés, là où il y en avait **zéro**
-- [ ] Le bouton *recaler* rend sa proposition sur l'image entière, et sa couverture cesse d'être
+- [x] Le bouton *recaler* rend sa proposition sur l'image entière, et sa couverture cesse d'être
       calculée sur du fond uni
-- [ ] **Deux images de même taille rendent exactement l'image d'avant la tranche**, au pixel près —
+- [x] **Deux images de même taille rendent exactement l'image d'avant la tranche**, au pixel près —
       et un essai le tient
-- [ ] Un essai emploie enfin **deux tailles différentes, le dessus le plus grand** : c'est ce
+- [x] Un essai emploie enfin **deux tailles différentes, le dessus le plus grand** : c'est ce
       qu'aucun essai de la superposition ne faisait
-- [ ] Le cadre de travail montre la même image que celle sur laquelle le serveur calcule
-- [ ] L'écran dit quand le dessus a été ramené au cadre, au lieu de le faire en silence
-- [ ] Aucun appel au fournisseur, aucun centime : la tranche entière se vérifie réseau coupé
+- [x] Le cadre de travail montre la même image que celle sur laquelle le serveur calcule
+- [x] L'écran dit quand le dessus a été ramené au cadre, au lieu de le faire en silence
+- [x] Aucun appel au fournisseur, aucun centime : la tranche entière se vérifie réseau coupé
 
 **Bloquée par** — aucune. *Elle ne dépend pas de `M2` : elle ne change pas un pixel de l'écran.*
+
+#### ⚠️ Ce que la mesure a corrigé de la tranche elle-même
+
+**Le geste était cassé pour les neuf pièces du dépôt, et non pour deux.** Le banc écrit pour la
+tranche reprend chaque pièce d'équipement, la repose sur son corps en repartant de la case telle
+qu'elle est arrivée, et compte les pixels de sujet que le calque contient. **Neuf sur neuf en
+rendaient zéro**, et le calque sortait rempli de fond uni à 95–98 % du cadre. La raison est simple
+et vaut pour toutes : *un modèle rend 1 024 quelle que soit la taille du corps envoyé* — la case
+arrivée est donc toujours bien plus grande que le cadre, et le coin ne tombait jamais sur le sujet.
+
+Les deux casques de *balthazar-2* restent ceux dont la tranche parle, mais pour l'autre raison :
+ce sont les deux **qui avaient besoin du geste**, signalés à la gravité maximale sous le nom
+*« échelle au retour »*. Les chiffres de la tranche se retrouvent : *0 sur 213 836* pour le premier
+casque — la tranche annonçait 213 836 sous la forme 214 718 —, *0 sur 180 320* pour le second,
+et le coin gardait 7,7 % et 1,6 % de l'image.
+
+**Et le compte de ce qui ne bouge pas était mesuré sur la mauvaise image.** La tranche disait *six
+des huit pièces* : c'est vrai des tailles **rangées sur le disque**. Le service, lui, lit l'image
+**rendue** — et sur le rendu, **les neuf pièces tiennent déjà dans le cadre de leur corps**. Elles
+rendent donc toutes le calque d'avant la tranche, au pixel près, ce que le banc vérifie une par une.
 
 ---
 

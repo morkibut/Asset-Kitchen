@@ -180,6 +180,12 @@ py essais/maquette_v3.py             les images de la maquette de la V3, refaite
                                      par `?fige` ou la barre d'espace : sans ça elle ne se
                                      laisse pas photographier (`docs/PIEGES.md`)
 py essais/essai_pixel.py             brut contre traité, sur les images déjà là, gratuit
+py essais/essai_superposition_cadre.py   ce que le découpage du coin gardait, et ce qu'il
+                                     jetait — sur les pièces d'équipement du dépôt. GRATUIT,
+                                     et **en lecture seule sur `donnees/`** : l'atelier de
+                                     l'auteur peut tourner à côté. C'est lui qui a montré que
+                                     le geste de G16 était cassé pour les neuf pièces et non
+                                     pour deux. Sortie : `essais/mesures_superposition_cadre.json`
 py essais/essai_couleurs_et_taches.py  les deux dernières places de la recette — le nombre de
                                      couleurs, la palette, le tramage, les taches et l'aire
                                      minimale. Gratuit, sur les images déjà là ; c'est lui

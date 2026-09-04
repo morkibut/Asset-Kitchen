@@ -1514,6 +1514,8 @@ export const AIDE: Record<string, Explication> = {
     change:
       "C'est **le seul réglage de l'outil qui abîme l'image** : rééchantillonner du pixel art à un facteur qui n'est pas simple détruit la grille. Le champ le marque ; il ne le refuse pas.",
     origine: "toi · proposé par le recalage",
+    long:
+      "**Elle ne part pas toujours de la taille d'arrivée de l'image.** Le cadre du dessous fait loi : un dessus plus grand que lui y entre entier, réduit pour tenir, et c'est *à partir de là* que 1,000 se compte. L'écran le dit quand ça arrive, avec la taille de départ et la réduction — sans quoi on lirait « × 1,00 » en croyant que rien n'a bougé.\n\nUn dessus qui tient déjà dans le cadre, lui, s'y pose à sa taille et rien n'est dit : c'est le cas courant.",
   },
 
   "superposition.decalage": {
