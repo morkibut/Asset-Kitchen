@@ -283,6 +283,21 @@ class ServiceGenerations:
             for generation in self._base.recentes(limite)
             if any(e.statut in en_suspens for e in generation.emplacements)
             or (generation.pliage is not None and generation.pliage.attend_un_choix)
+            # ⚠️ **Un clip arrivé garde sa place, comme la planche d'au-dessus
+            # et pour la même raison** (A9, V3) — vu au navigateur le
+            # 4 septembre 2026 : la galerie était vide au rechargement, alors
+            # que trois clips payés étaient sur le disque.
+            #
+            # Un clip est réussi dès qu'il arrive, donc il sortait d'ici ; et
+            # **rien ne prenait le relais**, parce qu'un clip n'entre pas en
+            # bibliothèque — ce n'est pas une image. Sa tuile disparaissait à
+            # l'arrivée. C'est le gâchis silencieux que `R6` a réparé pour la
+            # planche, à l'identique.
+            #
+            # **Jeté, il s'en va**, et c'est tout le sens du geste : il quitte
+            # la galerie et reste au journal, où l'argent, lui, ne s'efface
+            # jamais.
+            or (generation.clip is not None and not generation.clip.jete)
         ]
 
     def total_couts(self, projet: str | None = None) -> float:

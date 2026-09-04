@@ -82,6 +82,7 @@ import {
   type Zoom,
 } from "./composants/chassis"
 import { ChampPrompt, type EnVol } from "./composants/ChampPrompt"
+import { EcranClip, type CibleDuClip } from "./composants/Clip"
 import { EcranDecoupe } from "./composants/Decoupe"
 import { EcranDepenses } from "./composants/Depenses"
 import { EcranEnvoi, TRI_VIDE } from "./composants/Envoi"
@@ -253,6 +254,17 @@ export function App() {
   // vient : `Cœur de pierre › Les dépenses`. Il n'a pas de lieu à lui parce
   // qu'il ne parle d'aucun des trois — il parle de l'atelier entier.
   const [depensesOuvertes, setDepensesOuvertes] = useState(false)
+
+  /** **Commander un clip est une profondeur, pas un quatrième onglet** (A9).
+   *
+   *  Il s'ouvre depuis une case de l'établi — *animer celle-ci* — et recouvre
+   *  le produit comme l'écran de confirmation, pour la même raison : c'est le
+   *  dernier écran avant que l'argent parte, et il porte le montant sur son
+   *  bouton.
+   *
+   *  Il tient **la case visée**, jamais un booléen : l'image de départ
+   *  proposée, le mouvement proposé et le titre en dépendent tous les trois. */
+  const [clipOuvert, setClipOuvert] = useState<CibleDuClip | null>(null)
 
   // **Chaque écran replie ses colonnes, et les nomme.** Une seule table pour
   // les trois : c'est la barre du châssis qui rend les bascules, et elle ne
@@ -1176,8 +1188,18 @@ export function App() {
         // s'évanouir sous ses yeux, ce qui est exactement le gâchis silencieux
         // que la tranche répare.
         const attend = generation.pliage?.attend_un_choix === true
+        // **Un clip garde sa place à l'arrivée** (A9), et pour la raison même
+        // qui la garde à une planche : il n'entre pas en bibliothèque — ce
+        // n'est pas une image —, donc aucun asset ne prendrait le relais. Sans
+        // cette ligne, la tuile d'un clip payé disparaîtrait sous les yeux de
+        // l'auteur à la seconde où il arrive.
+        //
+        // **Jeté, il s'en va** : c'est tout le sens du geste. Il reste au
+        // journal des dépenses, où l'argent, lui, ne s'efface jamais.
+        const clip = generation.clip ?? null
+        if (clip?.jete) continue
         for (const emplacement of generation.emplacements) {
-          if (emplacement.statut === "reussie" && !attend) continue
+          if (emplacement.statut === "reussie" && !attend && !clip) continue
           const cle = `${generation.identifiant}-${emplacement.rang}`
           parCle.set(cle, {
             cle,
@@ -1805,6 +1827,66 @@ export function App() {
     await rendre(annulation.identifiants)
   }
 
+  /** **Garder ce clip-là, et jeter les autres du même geste** (A9).
+   *
+   *  Les autres se lisent sur le lot que le serveur a écrit, jamais sur une
+   *  ressemblance : quatre clips lancés d'un coup partagent leur texte et leur
+   *  minute, et les rapprocher là-dessus jetterait la mauvaise vidéo payée le
+   *  jour où l'auteur relance exactement la même chose.
+   *
+   *  **Le compte rendu porte le geste qui rend**, comme la suppression depuis
+   *  l'établi : le bandeau d'annulation de la barre d'outils décompte huit
+   *  secondes, et ce geste-ci n'expire pas — un clip écarté est toujours là,
+   *  au journal, et se remontre quand on veut. Un compte à rebours mentirait. */
+  const garderLeClip = (identifiant: string) => {
+    const clip = chantier.find((g) => g.identifiant === identifiant)
+    const lot = clip?.clip?.lot
+    if (!lot) return
+    const autres = chantier
+      .filter(
+        (g) =>
+          g.clip?.lot === lot &&
+          !g.clip.jete &&
+          g.identifiant !== identifiant,
+      )
+      .map((g) => g.identifiant)
+    if (autres.length === 0) return
+    void api
+      .garderClip(identifiant, autres)
+      .then(({ garde, jetes }) => {
+        setChantier((liste) =>
+          [garde, ...jetes].reduce((tenue, recu) => fondre(tenue, recu), liste),
+        )
+        setFente({
+          ton: "ok",
+          texte: (
+            <>
+              {jetes.length} clip{jetes.length > 1 ? "s" : ""} écarté
+              {jetes.length > 1 ? "s" : ""} — ils restent au journal des
+              dépenses,{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  void api
+                    .rendreClips(autres)
+                    .then(({ clips }) =>
+                      setChantier((liste) =>
+                        clips.reduce((tenue, recu) => fondre(tenue, recu), liste),
+                      ),
+                    )
+                  setFente(null)
+                }}
+                className="underline underline-offset-2 hover:text-texte"
+              >
+                les rendre
+              </button>
+            </>
+          ),
+        })
+      })
+      .catch((erreur) => echouer(erreur, "le clip n'a pas pu être gardé"))
+  }
+
   const marquerFavori = async (identifiants: string[], favori: boolean) => {
     try {
       await api.favori(identifiants, favori)
@@ -2327,6 +2409,7 @@ export function App() {
           setDecoupeOuverte(null)
           setCarteDecoupee(null)
           setDepensesOuvertes(false)
+          setClipOuvert(null)
           fermerCeQuiPart()
           setChoseOuverte(null)
           setCaseOuverte(null)
@@ -2386,11 +2469,39 @@ export function App() {
           s'ouvre depuis le total de la barre de tête, qui est sur les trois ;
           il n'a donc pas de lieu à lui, parce qu'il ne parle d'aucun des
           trois — il parle de l'atelier entier. */}
-      {depensesOuvertes && !envoiOuvert && (
+      {depensesOuvertes && !envoiOuvert && !clipOuvert && (
         <EcranDepenses
           projetCourant={bibliotheque.courant}
           onErreur={setPanne}
           onFermer={() => setDepensesOuvertes(false)}
+        />
+      )}
+
+      {/* ── Commander un clip, entre la case et la dépense (A9) ────────────
+          **La troisième surface d'où l'argent part**, et la V3 l'assume : on ne
+          commande pas une animation depuis une barre de saisie faite pour des
+          images, parce qu'on n'y choisit ni durée, ni format, ni image de
+          départ obligatoire. Ce qui tenait derrière la règle tient toujours —
+          l'argent ne part jamais sans un écran qui recouvre le produit, montre
+          ce qui va partir et porte le montant sur son bouton.
+
+          Il prend la même ligne que les dépenses et la confirmation : il
+          n'appartient à aucun des trois onglets. */}
+      {clipOuvert && !envoiOuvert && (
+        <EcranClip
+          cible={clipOuvert}
+          onFermer={() => setClipOuvert(null)}
+          /* **Les clips partis se regardent arriver dans la galerie.** Ils y
+             tiennent leur place comme n'importe quel appel — le flux les y
+             pose, un par un, et chacun se voit dès son arrivée. L'écran se
+             referme : ce qu'on voulait faire est fait. */
+          onCommande={(clips) => {
+            setClipOuvert(null)
+            setOnglet("galerie")
+            setChantier((liste) =>
+              clips.reduce((tenue, clip) => fondre(tenue, clip), liste),
+            )
+          }}
         />
       )}
 
@@ -2560,7 +2671,7 @@ export function App() {
           même une recette, et il faut un endroit pour la régler. Ses sœurs sont
           alors les voisines de la grille, ce que la maquette du châssis prévoit
           en toutes lettres. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && imageDesTables && etat && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && imageDesTables && etat && (
         <EcranTables
           asset={imageDesTables}
           soeurs={grille}
@@ -2590,7 +2701,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !imageDesTables && planche && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && !imageDesTables && planche && (
         <EcranDecoupe
           sujet={{
             famille: "planche",
@@ -2636,7 +2747,7 @@ export function App() {
           par l'écran, jamais par son contenu » interdit. La retirer répare les
           deux d'un coup, et elle ne perd rien en partant : ce qu'elle tient vit
           dans `App`, pas dans son montage. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "galerie" && !planche &&
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "galerie" && !planche &&
         !imageDesTables && (
       <main
         className="grid min-h-0"
@@ -2725,6 +2836,7 @@ export function App() {
             onChoisir={(generation, rang) => setDepliage({ generation, rang })}
             onOuvrir={ouvrir}
             onRetirerFiltre={() => setFiltre(FILTRE_VIDE)}
+            onGarderLeClip={garderLeClip}
           />
           )}
 
@@ -2781,7 +2893,7 @@ export function App() {
           quelles façons de réduire cette machine-ci sait faire, et cette liste
           vient du serveur. Même garde que la galerie deux cents lignes plus
           haut — on ne rend pas un écran avant d'avoir de quoi le remplir. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "univers" && etat && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "univers" && etat && (
         <EcranUnivers
           univers={univers}
           modeles={modeles}
@@ -2836,7 +2948,7 @@ export function App() {
           codex par son établi — c'est le même endroit vu de plus près, et le
           fil d'Ariane le dit. Les deux portent la barre qui paie, parce qu'ils
           sont les deux lieux d'où l'argent part. */}
-      {!depensesOuvertes && !envoiOuvert && onglet === "codex" && !choseOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && !choseOuverte && (
         <EcranCodex
           plan={plan}
           personnages={personnages}
@@ -2873,7 +2985,7 @@ export function App() {
         />
       )}
 
-      {!depensesOuvertes && !envoiOuvert && onglet === "codex" && choseOuverte && (
+      {!depensesOuvertes && !envoiOuvert && !clipOuvert && onglet === "codex" && choseOuverte && (
         <EcranEtabli
           ouvert={choseOuverte}
           plan={plan}
@@ -2881,6 +2993,13 @@ export function App() {
           emplacements={emplacements}
           pieces={pieces}
           onArmer={armer}
+          /* **Animer une case ouvre l'écran du clip** (A9). La matrice désigne,
+             cet écran-là paie — exactement le partage que `onArmer` tient déjà
+             avec la barre qui paie, sauf que le guichet n'est pas le même : on
+             y commande une vidéo, pas une image. */
+          onAnimer={(personnage, pose, direction) =>
+            setClipOuvert({ personnage, pose, direction: direction ?? null })
+          }
           onFente={setFente}
           // **La barre de prompt se retire quand l'outil s'ouvre** : on
           // retouche, on ne paie pas — et un écran incapable de dépenser ne
@@ -3251,6 +3370,7 @@ function Grille({
   onChoisir,
   onOuvrir,
   onRetirerFiltre,
+  onGarderLeClip,
 }: {
   entrees: Entree[]
   selection: string[]
@@ -3266,6 +3386,10 @@ function Grille({
   onChoisir: (generation: string, rang: number) => void
   onOuvrir: (identifiant: string, evenement: React.MouseEvent) => void
   onRetirerFiltre: () => void
+  /** **Garder ce clip-là, jeter les autres du même geste** (A9). Absent là où
+   *  la grille sert à désigner plutôt qu'à juger — on ne jette pas trois vidéos
+   *  payées en cherchant une image de référence. */
+  onGarderLeClip?: (generation: string) => void
 }) {
   // **La même mécanique de dépôt que le tableau d'inspiration**, réemployée
   // telle quelle : c'est le geste, pas la surface, qui décide de la forme. Un
@@ -3338,11 +3462,36 @@ function Grille({
             onRelancer={onRelancer}
             onChoisir={onChoisir}
             onOuvrir={onOuvrir}
+            /* **Combien d'autres clips du même geste sont encore montrés.** Il
+               se compte sur les entrées de la grille, la seule vérité de cet
+               écran : un clip déjà jeté n'y est plus, donc il ne se compte
+               plus, et le bouton disparaît de lui-même quand il ne reste
+               qu'un clip du lot. */
+            autresDuLot={autresDuLot(entrees, entree)}
+            onGarderLeClip={onGarderLeClip}
           />
         ))}
       </div>
     </div>
   )
+}
+
+/** Combien d'autres clips du même geste la grille montre encore (A9).
+ *
+ *  **Sur le lot écrit par le serveur, jamais sur une ressemblance.** Quatre
+ *  clips lancés d'un coup partagent leur texte et leur minute ; les rapprocher
+ *  là-dessus marcherait presque toujours, et jetterait la mauvaise vidéo payée
+ *  le jour où l'auteur relance exactement la même chose. */
+function autresDuLot(entrees: Entree[], entree: Entree): number {
+  if (entree.sorte !== "emplacement") return 0
+  const lot = entree.generation.clip?.lot
+  if (!lot) return 0
+  return entrees.filter(
+    (autre) =>
+      autre.sorte === "emplacement" &&
+      autre.generation.clip?.lot === lot &&
+      autre.generation.identifiant !== entree.generation.identifiant,
+  ).length
 }
 
 /** Ce que la grille montre quand un fichier la survole.

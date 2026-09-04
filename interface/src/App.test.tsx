@@ -59,6 +59,8 @@ import type {
   Etat,
   Etiquette,
   BaseMouvements,
+  BaseModelesVideo,
+  ImageDeDepart,
   FondPropose,
   Main,
   Modele,
@@ -866,6 +868,95 @@ function trouverAsset(
   )
 }
 
+// ── Le catalogue vidéo, et ce qu'un clip rend (A9) ───────────────────────────
+//
+// **Deux modèles, dont un grisé.** Ce que l'écran doit prouver est qu'il en
+// propose un avec son prix *et sa formule*, qu'il refuse l'autre **avec sa
+// raison** plutôt que de le cacher, et qu'il écrit à côté de chacun ce que ce
+// dépôt a mesuré de lui — vide compris.
+const MODELES_VIDEO: BaseModelesVideo = {
+  modeles: [
+    {
+      identifiant: "bytedance/seedance-2.0-mini",
+      nom: "Seedance 2.0 Mini",
+      fournisseur: "openrouter",
+      durees: [4, 5, 6],
+      resolutions: ["480p", "720p"],
+      proportions: ["1:1", "16:9"],
+      mesure:
+        "3 clips payés, 2 notés bons sur 2. Sous la barre des 8 tirages : " +
+        "c'est une proposition étayée, pas un arbitrage clos.",
+      prix: {
+        montant: 0.0945,
+        formule: "0,0000035 $ le jeton (video_tokens) × 480×480×24×5/1024 = 27 000 jetons",
+        nature: "estimation",
+        releve_le: null,
+      },
+      grise: null,
+    },
+    {
+      identifiant: "essai/sans-tarif",
+      nom: "Aleph 2",
+      fournisseur: "openrouter",
+      durees: [5],
+      resolutions: ["480p"],
+      proportions: ["1:1"],
+      mesure: "",
+      prix: { montant: null, formule: "aucun tarif reconnu", nature: "estimation", releve_le: null },
+      grise:
+        "son prix n'a pas pu être relu chez le fournisseur — aucun tarif reconnu",
+    },
+  ],
+  recu_le: 1_787_800_000,
+  raison: null,
+  manque: null,
+  decodeur: null,
+  demande: { secondes: 5, resolution: "480p", proportions: "1:1" },
+}
+
+/** Ce que le serveur propose comme image de départ. **Le portrait**, parce que
+ *  c'est le cas par défaut : la case visée est vide dans la plupart des essais,
+ *  et c'est celui que la règle traite en second. */
+const DEPART_PROPOSE: ImageDeDepart = {
+  asset: asset("aaaa1111-0", "le nain, de profil"),
+  origine: "portrait",
+  raison:
+    "le portrait de Le nain — la première image qu'il montre de lui à chacun " +
+    "de ses appels.",
+}
+
+/** Une génération de clip, telle que le serveur la rend. Elle est **réussie et
+ *  arrivée** : c'est l'état où la galerie doit lui garder sa place et montrer
+ *  une image prélevée dedans, jamais une tuile en erreur. */
+function clipRendu(identifiant: string, jete: boolean): Generation {
+  const gabarit = generation(identifiant, 1, "reussie")
+  return {
+    ...gabarit,
+    modele: "bytedance/seedance-2.0-mini",
+    demande: { ...gabarit.demande, prompt: "walking cycle, walking in place" },
+    cout_usd: 0.067,
+    consomme: 0.067,
+    emplacements: [{ ...gabarit.emplacements[0], statut: "reussie" }],
+    clip: {
+      travail: `travail-${identifiant}`,
+      secondes: 5,
+      proportions: "1:1",
+      resolution: "480p",
+      prix_annonce: 0.0945,
+      prix_formule: "0,0000035 $ le jeton × 480×480×24×5/1024",
+      images: 121,
+      cadence: 24,
+      extraction_refus: null,
+      montant_relu: true,
+      recupere: false,
+      jete,
+      lot: "lot-1",
+      montant_dit: "montant relu chez le fournisseur",
+    },
+  }
+}
+
+
 function serveurDouble(options: {
   assets?: Asset[]
   cartes?: Carte[]
@@ -968,6 +1059,15 @@ function serveurDouble(options: {
    *  étiquettes : l'atelier arrive avec sept mouvements livrés, et un écran qui
    *  les montrerait vides mesurerait le contraire du produit. */
   mouvements?: BaseMouvements
+  /** Le catalogue vidéo et le prix du jour (A9). **Deux modèles par défaut, et
+   *  l'un des deux grisé** : ce que l'écran doit prouver est qu'il propose
+   *  l'un, refuse l'autre avec sa raison, et n'en cache aucun. */
+  modelesVideo?: BaseModelesVideo
+  /** Ce que le serveur propose comme image de départ, et pourquoi celle-là. Le
+   *  double le rend, comme le vrai serveur le déciderait sur la bibliothèque :
+   *  la règle est **au serveur**, et le prouver demande qu'elle ne soit pas
+   *  ici non plus. */
+  imageDeDepart?: ImageDeDepart
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
   /** Les deux listes du côté Ambiances (E11). */
@@ -1460,8 +1560,54 @@ function serveurDouble(options: {
     // que soit le geste : ce qui se vérifie ici est **ce que l'écran affiche et
     // ce qu'il envoie**, pas ce que le serveur en fait — cette moitié-là est
     // tenue par `tests/test_a6.py`, sur le vrai service et sur le disque.
+    // Ce qui animerait cette case-là (A6). **Avant la liste**, sinon l'adresse
+    // la plus large gagne — le piège des routes à segments, payé au serveur et
+    // qui se rejoue à l'identique dans un double.
+    if (url.includes("/movements/for-pose/")) {
+      const pose = url.split("/movements/for-pose/")[1].split("?")[0]
+      const trouve = (options.mouvements?.mouvements ?? MOUVEMENTS).find(
+        (m) => m.identifiant === pose,
+      )
+      return rendre({
+        pose,
+        mouvement: trouve ?? null,
+        texte: trouve?.texte ?? "",
+        origine: trouve ? "mouvement" : "aucun",
+      })
+    }
     if (url.includes("/movements"))
       return rendre(options.mouvements ?? { mouvements: MOUVEMENTS, masques: [] })
+
+    // ── Les clips (A9) ───────────────────────────────────────────────────
+    //
+    // **Les adresses littérales d'abord**, pour la même raison que ci-dessus.
+    // Le double ne fabrique aucune vidéo : ce qui se vérifie ici est ce que
+    // l'écran affiche et ce qu'il envoie. Le reste — la dépense écrite avant le
+    // fichier, le clip qui survit à la fermeture — est tenu par
+    // `tests/test_a9.py`, sur le vrai service et sur le disque.
+    if (url.startsWith("/api/clips/models"))
+      return rendre(options.modelesVideo ?? MODELES_VIDEO)
+    if (url.startsWith("/api/clips/start-image"))
+      return rendre(options.imageDeDepart ?? DEPART_PROPOSE)
+    if (url === "/api/clips/keep") {
+      const jete = (corps?.jette ?? []) as string[]
+      return rendre({
+        garde: clipRendu(String(corps?.garde ?? ""), false),
+        jetes: jete.map((identifiant) => clipRendu(identifiant, true)),
+      })
+    }
+    if (url === "/api/clips/restore")
+      return rendre({
+        clips: ((corps?.clips ?? []) as string[]).map((i) => clipRendu(i, false)),
+      })
+    if (url === "/api/clips" && init?.method === "POST") {
+      const combien = Number(corps?.nombre ?? 1)
+      return rendre({
+        clips: Array.from({ length: combien }, (_, rang) =>
+          clipRendu(`clip-${rang}`, false),
+        ),
+      })
+    }
     // La seconde fabrique (E6) : ouvrir ne crée rien, et l'aperçu non plus.
     // Le double répond ce que le serveur répond — un dessous nul quand rien
     // n'est désigné, et deux images vides en `data:`.
@@ -20293,5 +20439,332 @@ describe("R6 — la planche qui attend un regard", () => {
 
     await waitFor(() => expect(sujets()).toHaveLength(0))
     expect(screen.queryByText("Ce que la planche a rendu")).toBeNull()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  A9 — commander un clip, et l'attendre
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// **Ce que ces essais mesurent, et ce qu'ils ne mesurent pas.** Ils mesurent ce
+// que l'écran montre et ce qu'il envoie : l'image de départ proposée, le texte
+// anglais lu avant l'envoi, le prix du lot, ce qui est grisé et pourquoi. Ils
+// ne mesurent rien de ce qui se passe après le clic — la dépense écrite avant
+// le fichier, le clip qui survit à la fermeture de l'atelier, le montant relu
+// chez le fournisseur : cette moitié-là est tenue par `tests/test_a9.py`, sur
+// le vrai service et sur le disque, et la rejouer ici sur un double ne
+// prouverait que la qualité du double.
+
+describe("A9 — commander un clip", () => {
+  // Le même montage que le reste du fichier. **Ce bloc est un frère, pas un
+  // fils** : il ne parle d'aucun des trois onglets, il parle d'un écran qui les
+  // recouvre — et il pose donc lui-même le double du flux et la mesure.
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Ouvrir l'écran du clip depuis une case de l'établi.
+   *
+   *  **C'est la seule porte, et c'est voulu** : on anime *une case*, et la case
+   *  est ce qui décide de l'image de départ proposée. Une porte posée ailleurs
+   *  aurait ouvert l'écran sans savoir ce qu'on anime. */
+  const ouvrirLeClip = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+    bouton = "Animer marche",
+  ) => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain", { description: "un forgeron nain" })],
+      ...options,
+    })
+    await monter(double.fetchDouble)
+    const ecran = await ouvrirLEtabli()
+    fireEvent.click(ecran.getByRole("button", { name: bouton }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-clip]")
+      if (!cadre) throw new Error("l'écran du clip ne s'est pas ouvert")
+      return cadre as HTMLElement
+    })
+    return { ...double, panneau: within(panneau) }
+  }
+
+  // ── « L'écran de commande existe » ────────────────────────────────────────
+
+  test("l'écran porte l'image de départ, le mouvement, les modèles et le montant", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    // L'image de départ, avec la raison de ce choix-là — jamais un cadre muet.
+    expect(await panneau.findByAltText("le nain, de profil")).toBeTruthy()
+    expect(panneau.getByText(/la première image qu'il montre de lui/)).toBeTruthy()
+
+    // Les modèles, leur prix **et la formule qui le produit**.
+    expect(await panneau.findByText("Seedance 2.0 Mini")).toBeTruthy()
+    expect(panneau.getByText(/27 000 jetons/)).toBeTruthy()
+
+    // Et le bouton porte le montant, pas seulement le verbe.
+    expect(panneau.getByRole("button", { name: /Commander ce clip · ≈ \$0,0945/ })).toBeTruthy()
+  })
+
+  // ── « Un modèle proposé sans avoir été assez mesuré le dit » (US-440) ─────
+
+  test("chaque modèle dit ce que ce dépôt a mesuré de lui, à l'endroit où on le choisit", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    expect(
+      await panneau.findByText(/Sous la barre des 8 tirages/),
+    ).toBeTruthy()
+    // Et celui dont on ne sait rien l'écrit, plutôt que de laisser un blanc qui
+    // se lirait comme une absence de réserve.
+    expect(
+      panneau.getByText(/ce dépôt n'a encore rien mesuré de ce modèle/),
+    ).toBeTruthy()
+  })
+
+  test("un modèle qui ne peut pas honorer la demande est grisé avec sa raison, jamais caché", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    const refuse = await panneau.findByRole("button", { name: /Aleph 2/ })
+    expect((refuse as HTMLButtonElement).disabled).toBe(true)
+    expect(panneau.getByText(/son prix n'a pas pu être relu/)).toBeTruthy()
+  })
+
+  // ── « Le mouvement se choisit dans la liste d'A6, et le texte qui part se
+  //     lit avant l'envoi » ──────────────────────────────────────────────────
+
+  test("le texte anglais se lit avant l'envoi, et c'est celui de la bibliothèque", async () => {
+    const { panneau } = await ouvrirLeClip()
+
+    // La case visée est *marche* : c'est le mouvement du même nom qui est
+    // proposé, sans qu'on ait relié quoi que ce soit.
+    await waitFor(() =>
+      expect(
+        (panneau.getByLabelText("Le mouvement") as HTMLSelectElement).value,
+      ).toBe("marche"),
+    )
+    const texte = document.querySelector("[data-texte-du-clip]")
+    expect(texte?.textContent).toBe(
+      "walking cycle, full body, walking in place, looping seamlessly",
+    )
+  })
+
+  test("l'écran envoie le mouvement, pas le texte qu'il vient d'afficher", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    await panneau.findByText("Seedance 2.0 Mini")
+    fireEvent.click(
+      panneau.getByRole("button", { name: /Commander ce clip/ }),
+    )
+
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/clips")?.corps as
+        | { mouvement?: string; asset?: string; prompt?: string }
+        | undefined
+      // **Le mouvement, et l'image de départ.** Le texte anglais, lui, n'est
+      // écrit qu'à un seul endroit — la bibliothèque de mouvements —, et le
+      // serveur va l'y chercher. Deux chemins vers le même texte finiraient
+      // par en envoyer un troisième, et c'est un appel payé qui le dirait.
+      expect(parti?.mouvement).toBe("marche")
+      expect(parti?.asset).toBe("aaaa1111-0")
+      expect(parti?.prompt).toBeUndefined()
+    })
+  })
+
+  // ── « Le nombre de clips se choisit à chaque fois — un est le défaut —, et
+  //     le prix du lot s'annonce avant » ─────────────────────────────────────
+
+  test("le prix annoncé est celui du lot, et le lot part en autant de clips", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    await panneau.findByText("Seedance 2.0 Mini")
+    // Un par défaut, sans qu'on ait rien réglé.
+    expect(panneau.getByRole("button", { name: /Commander ce clip · ≈ \$0,0945/ })).toBeTruthy()
+
+    fireEvent.click(panneau.getByRole("button", { name: "4" }))
+
+    // Quatre fois le prix, annoncé **avant** l'envoi.
+    await waitFor(() =>
+      expect(
+        panneau.getByRole("button", { name: /Commander ces 4 clips · ≈ \$0,3780/ }),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(panneau.getByRole("button", { name: /Commander ces 4 clips/ }))
+    await waitFor(() =>
+      expect(
+        (appels.find((a) => a.url === "/api/clips")?.corps as { nombre?: number })
+          ?.nombre,
+      ).toBe(4),
+    )
+  })
+
+  test("le prix se recalcule quand le format change, et il ne se garde pas", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    await panneau.findByText("Seedance 2.0 Mini")
+    fireEvent.click(panneau.getByRole("button", { name: "grand format" }))
+
+    // **Le catalogue se redemande avec le réglage courant** : un prix vidéo
+    // dépend de la surface, et un catalogue chiffré une fois annoncerait le
+    // prix d'autre chose que ce qu'on va demander.
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url.includes("/clips/models") && a.url.includes("720p")),
+      ).toBe(true),
+    )
+  })
+
+  // ── « L'image de départ se propose et se change » ─────────────────────────
+
+  test("n'importe quelle image de la bibliothèque remplace la proposition, d'un clic", async () => {
+    const autre = asset("bbbb2222-0", "un nain accroupi")
+    const { panneau, appels } = await ouvrirLeClip({ assets: [autre] })
+
+    await panneau.findByAltText("le nain, de profil")
+    fireEvent.click(panneau.getByRole("button", { name: "changer d'image ›" }))
+    fireEvent.click(await panneau.findByRole("button", { name: "un nain accroupi" }))
+
+    // Ce que l'écran dit change avec ce qu'il montre : la raison du serveur ne
+    // décrit plus l'image qu'on regarde, donc elle cède la place.
+    expect(await panneau.findByText(/choisie à la main/)).toBeTruthy()
+
+    fireEvent.click(panneau.getByRole("button", { name: /Commander ce clip/ }))
+    await waitFor(() =>
+      expect(
+        (appels.find((a) => a.url === "/api/clips")?.corps as { asset?: string })
+          ?.asset,
+      ).toBe("bbbb2222-0"),
+    )
+  })
+
+  test("un personnage sans la moindre image dit pourquoi, et le bouton reste fermé", async () => {
+    const { panneau } = await ouvrirLeClip({
+      imageDeDepart: {
+        asset: null,
+        origine: "aucune",
+        raison:
+          "« Le nain » n'a encore aucune image. Choisissez-en une dans la " +
+          "bibliothèque : un clip part toujours d'une image.",
+      },
+    })
+
+    expect(await panneau.findByText(/n'a encore aucune image/)).toBeTruthy()
+    expect(panneau.getByText("aucune image")).toBeTruthy()
+    await waitFor(() =>
+      expect(
+        (panneau.getByRole("button", { name: /Commander/ }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true),
+    )
+    // Le grisé porte sa raison, comme partout — et c'est celle du serveur,
+    // qui nomme le personnage, pas une phrase réécrite ici.
+    expect(
+      panneau.getAllByText(/un clip part toujours d'une image/).length,
+    ).toBeGreaterThan(0)
+  })
+
+  // ── Rien ne part tant qu'on n'a pas appuyé ────────────────────────────────
+
+  test("ouvrir l'écran ne dépense rien, et Échap le referme sans rien envoyer", async () => {
+    const { panneau, appels } = await ouvrirLeClip()
+
+    await panneau.findByText("Seedance 2.0 Mini")
+    expect(appels.some((a) => a.url === "/api/clips")).toBe(false)
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    await waitFor(() => expect(document.querySelector("[data-clip]")).toBeNull())
+    expect(appels.some((a) => a.url === "/api/clips")).toBe(false)
+  })
+
+  // ── « La galerie montre un clip par une image prélevée dedans » ───────────
+
+  test("un clip arrivé garde sa place dans la galerie et montre une image prise dedans", async () => {
+    const { fetchDouble } = serveurDouble({
+      personnages: [personnage("Le nain")],
+    })
+    const flux = await monter(fetchDouble)
+    laGalerie()
+
+    flux.emettre("generation", clipRendu("clip-a", false))
+
+    // **Il garde sa place** : un clip n'entre pas en bibliothèque, donc aucun
+    // asset ne viendrait le remplacer, et sans cette place sa tuile
+    // disparaîtrait à la seconde où il arrive.
+    const image = await screen.findByRole("img", {
+      name: "walking cycle, walking in place",
+    })
+    expect(image.getAttribute("src")).toBe("/api/clips/clip-a/frames/0")
+    // Et il dit ce qu'il porte et ce qu'il a coûté.
+    expect(screen.getByText("121 images · 24 i/s")).toBeTruthy()
+    expect(screen.getByText("$0,0670")).toBeTruthy()
+  })
+
+  test("garder un clip et jeter les autres est un seul geste, et il s'annule", async () => {
+    const { fetchDouble, appels } = serveurDouble({
+      personnages: [personnage("Le nain")],
+    })
+    const flux = await monter(fetchDouble)
+    laGalerie()
+
+    flux.emettre("generation", clipRendu("clip-a", false))
+    flux.emettre("generation", clipRendu("clip-b", false))
+    flux.emettre("generation", clipRendu("clip-c", false))
+
+    // Le bouton dit combien il jette, et il ne paraît que s'il y a de quoi.
+    const garder = await screen.findAllByRole("button", {
+      name: "Garder celui-ci · jeter 2 autres",
+    })
+    expect(garder).toHaveLength(3)
+    fireEvent.click(garder[0])
+
+    await waitFor(() => {
+      const parti = appels.find((a) => a.url === "/api/clips/keep")?.corps as
+        | { garde?: string; jette?: string[] }
+        | undefined
+      // **Un gardé, les deux autres écartés** — et lequel dépend de la tuile
+      // cliquée, pas de l'ordre où le flux les a posés. Écrire un identifiant
+      // en dur ferait passer l'ordre de la grille pour une règle.
+      expect(parti?.jette).toHaveLength(2)
+      expect([parti?.garde, ...(parti?.jette ?? [])].sort()).toEqual([
+        "clip-a",
+        "clip-b",
+        "clip-c",
+      ])
+    })
+
+    // **Et le compte rendu porte le geste qui rend**, avec la phrase qui dit où
+    // l'argent est resté.
+    const rendre = await screen.findByRole("button", { name: "les rendre" })
+    expect(screen.getByText(/restent au journal des dépenses/)).toBeTruthy()
+    fireEvent.click(rendre)
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/clips/restore")).toBe(true),
+    )
+  })
+
+  test("un clip jeté quitte la galerie, et un clip seul ne propose pas de jeter", async () => {
+    const { fetchDouble } = serveurDouble({
+      personnages: [personnage("Le nain")],
+    })
+    const flux = await monter(fetchDouble)
+    laGalerie()
+
+    flux.emettre("generation", clipRendu("clip-a", false))
+    await screen.findByText("121 images · 24 i/s")
+    // Seul de son lot, il n'a rien à jeter : le bouton ne paraît pas.
+    expect(
+      screen.queryByRole("button", { name: /Garder celui-ci/ }),
+    ).toBeNull()
+
+    flux.emettre("generation", clipRendu("clip-a", true))
+    await waitFor(() =>
+      expect(screen.queryByText("121 images · 24 i/s")).toBeNull(),
+    )
   })
 })

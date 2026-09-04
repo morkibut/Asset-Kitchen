@@ -823,6 +823,25 @@ class ServiceAssets:
         """
         nes = 0
         for generation in generations:
+            # ⚠️ **Un clip n'entre jamais en bibliothèque** (A9, V3), et cette
+            # ligne est ce qui empêche l'atelier de refuser de s'ouvrir.
+            #
+            # Trouvé au navigateur le 4 septembre 2026, sur un atelier jetable
+            # où trois clips étaient déjà arrivés : au redémarrage, ce
+            # rattrapage voyait trois emplacements réussis sans asset, tentait
+            # d'en faire des images, et le détourage levait *cannot identify
+            # image file* sur le fichier vidéo. **L'atelier ne démarrait plus
+            # du tout** — pas une tuile cassée, pas une image manquante : plus
+            # d'atelier. Aucun essai ne pouvait le voir : ils montent un
+            # atelier neuf et ne le rouvrent jamais.
+            #
+            # C'est le même refus que celui de la planche qui attend, et pour
+            # une raison plus forte encore : une planche *est* une image, un
+            # clip n'en est pas une, et rien de ce qui mesure une image ne sait
+            # le lire. Son fichier, sa dépense et ses images extraites vivent
+            # sur la génération, où l'ouverture les retrouve intacts.
+            if generation.clip is not None:
+                continue
             # **La planche d'un lot plié entre ici comme les autres, depuis
             # `G16`.** Elle n'entrait pas : « aucune feuille assemblée n'est
             # livrable » (C2) l'interdisait, et l'auteur ne pouvait donc jamais

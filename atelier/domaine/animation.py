@@ -114,6 +114,38 @@ def taille_demandee(resolution: str, proportions: str) -> tuple[int, int]:
     return int(round(hauteur * largeur_rapport / hauteur_rapport)), hauteur
 
 
+# ── Écrire un nombre pour qu'il se lise ─────────────────────────────────────
+#
+# ⚠️ **Vu au navigateur le 4 septembre 2026**, et pas avant : la formule
+# s'affichait `3.5e-06 $ le jeton … = 27000 jetons`. Trois choses à la fois — la
+# notation scientifique, le point décimal, et un compte sans séparateur — sur la
+# ligne dont tout l'objet est de rendre un prix **vérifiable de tête**. Un
+# nombre qu'on n'arrive pas à lire ne vérifie rien.
+#
+# Le produit écrit la virgule décimale partout ailleurs (`docs/DESIGN.md`
+# § Typography) ; c'est écrit ici parce qu'une formule est composée au serveur,
+# et que l'écran ne peut pas remettre en forme un texte déjà assemblé.
+#
+# **Une espace ordinaire pour les milliers, pas une espace fine insécable.** Le
+# produit n'en emploie aucune, nulle part ; en poser une ici aurait fait un
+# caractère invisible que rien d'autre ne porte, introuvable à la recherche et
+# impossible à distinguer d'une espace dans un diff.
+
+
+def _lisible(montant: float) -> str:
+    """Un tarif à l'unité, en toutes lettres. `0,0000035`, jamais `3.5e-06`.
+
+    Douze décimales : c'est plus qu'aucun tarif observé n'en porte, et les
+    zéros de queue sont retirés — un tarif ne s'écrit pas avec du remplissage.
+    """
+    return f"{montant:.12f}".rstrip("0").rstrip(".").replace(".", ",") or "0"
+
+
+def _compte(valeur: float) -> str:
+    """Un compte entier, avec son espace des milliers : `27 000`."""
+    return f"{valeur:,.0f}".replace(",", " ")
+
+
 @dataclass(frozen=True, slots=True)
 class Prix:
     """Ce qu'un clip devrait coûter, **et d'où ce chiffre sort**.
@@ -230,7 +262,7 @@ class ModeleVideo:
         if tarif.genre == "seconde":
             montant = tarif.montant * demande.secondes
             formule = (
-                f"{tarif.montant} $ la seconde ({tarif.libelle}) "
+                f"{_lisible(tarif.montant)} $ la seconde ({tarif.libelle}) "
                 f"× {demande.secondes:g} s"
             )
         else:
@@ -244,9 +276,10 @@ class ModeleVideo:
             )
             montant = tarif.montant * jetons
             formule = (
-                f"{tarif.montant} $ le jeton ({tarif.libelle}) × {largeur}×{hauteur}"
+                f"{_lisible(tarif.montant)} $ le jeton ({tarif.libelle}) "
+                f"× {largeur}×{hauteur}"
                 f"×{IMAGES_PAR_SECONDE_FACTUREES}×{demande.secondes:g}/1024 "
-                f"= {jetons:.0f} jetons"
+                f"= {_compte(jetons)} jetons"
             )
         return Prix(montant=round(montant, 4), formule=formule, releve_le=releve_le)
 
@@ -337,6 +370,34 @@ class Clip:
     # sauvé au lieu d'être repayé.
     recupere: bool = False
 
+    # ── Le lot, c'est-à-dire le geste qui les a lancés ───────────────────────
+    #
+    # **Écrit, jamais déduit.** Quatre clips lancés d'un coup partagent le même
+    # texte, la même image de départ et la même minute : les rapprocher après
+    # coup sur ces trois-là marcherait presque toujours, et se tromperait le
+    # jour où l'auteur relance exactement la même chose. « Garder celui-ci et
+    # jeter les autres » a besoin de savoir *lesquels* sans se tromper, et un
+    # geste qui jette la mauvaise vidéo payée est un geste qu'on ne refait pas.
+    #
+    # Vide pour les clips d'avant ce champ, et c'est la vérité : ils n'ont pas
+    # été lancés en lot. Un lot d'un seul clip en porte un quand même — la
+    # réponse ne change pas de forme selon le nombre.
+    lot: str = ""
+
+    # ── Jeté, et pourtant toujours là ────────────────────────────────────────
+    #
+    # **Un clip jeté quitte la galerie et reste au journal.** C'est la
+    # différence avec une image jetée, qui s'efface pour de bon après quelques
+    # secondes : celle-ci a coûté de l'argent, et le premier invariant du
+    # produit est que l'argent dépensé ne s'efface jamais. On lance quatre
+    # clips, on en garde un — les trois autres ont été payés, et l'écran des
+    # dépenses le dira toujours.
+    #
+    # Rien n'expire, donc rien ne presse : le geste se défait quand on veut, et
+    # le bandeau d'annulation n'a aucun compte à rebours à afficher. C'est plus
+    # simple que la suppression d'une image, et c'est plus sûr.
+    jete: bool = False
+
     @property
     def montant_dit(self) -> str:
         """Ce que l'écran écrit à côté du chiffre. **Une phrase, pas un drapeau.**
@@ -372,6 +433,8 @@ class Clip:
             "extraction_refus": self.extraction_refus,
             "montant_relu": self.montant_relu,
             "recupere": self.recupere,
+            "jete": self.jete,
+            "lot": self.lot,
             # Déduit, écrit quand même : c'est la phrase que l'écran affiche à
             # côté du montant, et deux rédactions finiraient par dire deux
             # choses.
@@ -394,4 +457,6 @@ class Clip:
             extraction_refus=d.get("extraction_refus"),
             montant_relu=bool(d.get("montant_relu", True)),
             recupere=bool(d.get("recupere", False)),
+            jete=bool(d.get("jete", False)),
+            lot=d.get("lot", ""),
         )

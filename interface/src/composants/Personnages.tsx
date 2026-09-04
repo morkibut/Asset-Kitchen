@@ -153,6 +153,7 @@ export function EcranEtabli({
   pieces,
   onPersonnage,
   onArmer,
+  onAnimer,
   dossierJeu,
   onFente,
   barreQuiPaie,
@@ -193,6 +194,21 @@ export function EcranEtabli({
     /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
      *  plie : une attitude, N directions, un seul appel payé. */
     directions?: string[] | null,
+  ) => void
+  /** **Animer une case** (A9, V3) — la seconde façon de la remplir, et elle ne
+   *  passe pas par la barre qui paie.
+   *
+   *  Elle ouvre l'écran qui commande un clip : on y choisit l'image de départ,
+   *  le mouvement, le modèle et le nombre, et **c'est le bouton de cet écran-là
+   *  qui paie**. La matrice ne fait ici que désigner la case, exactement comme
+   *  `onArmer` ne fait que remplir un prompt.
+   *
+   *  **La direction est facultative** parce qu'un jeu vu de face n'en déclare
+   *  aucune, et qu'on anime alors la pose telle quelle. */
+  onAnimer: (
+    personnage: Personnage,
+    pose: Pose,
+    direction?: { identifiant: string; nom: string } | null,
   ) => void
   /** **Où le jeu range ses images** (C5) — le dossier posé dans les Réglages.
    *
@@ -395,6 +411,7 @@ export function EcranEtabli({
           onOuvrirCase={onOuvrirCase}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
+          onAnimer={onAnimer}
           onFiche={() => setFicheOuverte(true)}
           onVitrine={() => setVitrineOuverte(true)}
           onCalibrage={() => setCalibrageOuvert(true)}
@@ -946,6 +963,7 @@ function Fiche({
   onOuvrirCase,
   onPersonnage,
   onArmer,
+  onAnimer,
   onFiche,
   onVitrine,
   onCalibrage,
@@ -970,6 +988,13 @@ function Fiche({
     /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
      *  plie : une attitude, N directions, un seul appel payé. */
     directions?: string[] | null,
+  ) => void
+  /** **Animer une case** (A9) — l'écran qui commande un clip. La matrice
+   *  désigne, cet écran-là paie. */
+  onAnimer: (
+    personnage: Personnage,
+    pose: Pose,
+    direction?: { identifiant: string; nom: string } | null,
   ) => void
   /** Descendre d'un cran : la fiche plein cadre (E12). Elle vit dans l'établi
    *  parce que c'est de là qu'on y entre et qu'on y revient. */
@@ -1048,6 +1073,7 @@ function Fiche({
           onOuvrirCase={onOuvrirCase}
           onPersonnage={onPersonnage}
           onArmer={onArmer}
+          onAnimer={onAnimer}
           onPlanche={onPlanche}
           onErreur={onErreur}
         />
@@ -1531,6 +1557,7 @@ function Cases({
   onOuvrirCase,
   onPersonnage,
   onArmer,
+  onAnimer,
   onPlanche,
   onErreur,
 }: {
@@ -1550,6 +1577,13 @@ function Cases({
     /** **Les angles d'une planche de pose** (E13). Deux ou plus, et l'appel se
      *  plie : une attitude, N directions, un seul appel payé. */
     directions?: string[] | null,
+  ) => void
+  /** **Animer une case** (A9) — l'écran qui commande un clip. La matrice
+   *  désigne, cet écran-là paie. */
+  onAnimer: (
+    personnage: Personnage,
+    pose: Pose,
+    direction?: { identifiant: string; nom: string } | null,
   ) => void
   /** Ouvrir l'outil d'une case pleine, en plein cadre (E2). */
   onOuvrirCase: (identifiant: string) => void
@@ -1778,6 +1812,10 @@ function Cases({
               onArmerDirection={(direction) =>
                 onArmer(personnage, [pose], null, direction)
               }
+              onAnimer={() => onAnimer(personnage, pose)}
+              onAnimerDirection={(direction, nom) =>
+                onAnimer(personnage, pose, { identifiant: direction, nom })
+              }
               onPlanche={() => onPlanche(pose.identifiant)}
               onRangerDirection={(direction, rangee) =>
                 void rangerDirection(pose.identifiant, direction, rangee)
@@ -1951,6 +1989,8 @@ function LigneCase({
   onCocher,
   onArmer,
   onArmerDirection,
+  onAnimer,
+  onAnimerDirection,
   onPlanche,
   onRangerDirection,
   onPlacer,
@@ -1974,6 +2014,14 @@ function LigneCase({
   /** Armer **une case** — cette pose dans cette direction-là (E10). Le sujet
    *  composé par le serveur y ajoute la consigne de la direction. */
   onArmerDirection?: (direction: string) => void
+  /** **Animer cette attitude** (A9) — l'autre façon de remplir une case, et
+   *  elle ne passe pas par la barre qui paie : elle ouvre l'écran qui commande
+   *  un clip, et c'est le bouton de cet écran-là qui dépense. */
+  onAnimer: () => void
+  /** Animer **une case** — cette attitude sous cet angle-là. Le nom voyage
+   *  avec l'identifiant parce que l'écran du clip l'écrit dans son titre, et
+   *  qu'il n'a pas la liste des directions du jeu sous la main. */
+  onAnimerDirection?: (direction: string, nom: string) => void
   /** **Ouvrir la planche de cette pose** (E13) — voir ce qu'on achète avant de
    *  payer : combien de cases, ce qui est écrit dans chacune, et le prix.
    *  Absent quand la pose n'a qu'une direction : il n'y a rien à plier. */
@@ -2145,6 +2193,20 @@ function LigneCase({
         Fabriquer ›
       </button>
 
+      {/* **Animer, et c'est un autre chemin que fabriquer** (A9, V3). Celui-ci
+          ne remplit pas le prompt : il ouvre l'écran qui commande un clip, où
+          l'on choisit l'image de départ, le mouvement et le modèle, et où le
+          bouton porte le montant. On y paie une vidéo, pas une image. */}
+      <button
+        type="button"
+        onClick={onAnimer}
+        aria-label={`Animer ${pose.nom}`}
+        title="ouvre l'écran qui commande un clip — rien n'est dépensé ici"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+      >
+        Animer ›
+      </button>
+
       <button
         type="button"
         onClick={onRetirer}
@@ -2181,6 +2243,7 @@ function LigneCase({
             onFavori={onFavori}
             onOuvrirCase={onOuvrirCase}
             onArmer={() => onArmerDirection?.(angle.identifiant)}
+            onAnimer={() => onAnimerDirection?.(angle.identifiant, angle.nom)}
             onRanger={() => onRangerDirection?.(angle.identifiant, true)}
             onPlacer={onPlacer}
             angles={angles}
@@ -2248,6 +2311,7 @@ function SousLigneDirection({
   onFavori,
   onOuvrirCase,
   onArmer,
+  onAnimer,
   onRanger,
   onPlacer,
 }: {
@@ -2265,6 +2329,9 @@ function SousLigneDirection({
   onFavori: (asset: string) => void
   onOuvrirCase: (identifiant: string) => void
   onArmer: () => void
+  /** **Animer cette case** (A9) — ouvre l'écran qui commande un clip, avec
+   *  cette attitude et cet angle déjà visés. */
+  onAnimer: () => void
   onRanger: () => void
   onPlacer?: (asset: string, direction: string) => void
 }) {
@@ -2338,6 +2405,16 @@ function SousLigneDirection({
         className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
       >
         Fabriquer ›
+      </button>
+
+      <button
+        type="button"
+        onClick={onAnimer}
+        aria-label={`Animer ${pose.nom} vers ${angle.nom}`}
+        title="ouvre l'écran qui commande un clip — l'attitude et l'angle sont déjà visés"
+        className="mesure shrink-0 px-1 text-[10px] text-signal hover:text-signal-clair"
+      >
+        Animer ›
       </button>
 
       <button

@@ -241,7 +241,22 @@ async def test_le_prix_annonce_porte_toujours_sa_formule(service):
         identifiant="essai:x", nom="X", durees=(5,), tarification=A_LA_SECONDE
     ).prix(demande())
     assert a_la_seconde.montant == pytest.approx(0.10)
-    assert "0.02 $ la seconde" in a_la_seconde.formule
+    assert "0,02 $ la seconde" in a_la_seconde.formule
+
+
+def test_la_formule_s_ecrit_en_nombres_qu_on_peut_lire():
+    """⚠️ *Elle s'écrivait `3.5e-06 $ le jeton … = 27000 jetons`.*
+
+    Vu au navigateur le 4 septembre 2026, et pas avant : trois défauts à la
+    fois — la notation scientifique, le point décimal, un compte sans
+    séparateur — **sur la ligne dont tout l'objet est de rendre un prix
+    vérifiable de tête**. Un nombre qu'on n'arrive pas à lire ne vérifie rien,
+    et la formule ne servait donc à personne.
+    """
+    formule = MELE.prix(demande()).formule
+    assert formule.startswith("0,0000035 $ le jeton")
+    assert "27 000 jetons" in formule
+    assert "e-" not in formule
 
 
 def test_une_estimation_se_dit_estimation_dans_ce_qui_part_a_l_ecran():
@@ -752,7 +767,9 @@ def test_commander_un_clip_part_du_sprite_de_la_bibliotheque(
         },
     )
     assert reponse.status_code == 202
-    corps = reponse.json()
+    # **Une liste, même à un seul clip** : la réponse a la même forme qu'on en
+    # demande un ou huit, et aucun appelant n'a deux cas à traiter.
+    corps = reponse.json()["clips"][0]
     assert corps["clip"]["travail"] == "travail-1"
     assert corps["parametres_resolus"]["image_de_depart"] == "obligatoire, jointe"
 
@@ -768,7 +785,7 @@ def test_un_clip_commande_se_voit_dans_la_liste_et_se_sert_en_video(client_video
     identifiant = client_video.post(
         "/api/clips",
         json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["identifiant"]
+    ).json()["clips"][0]["identifiant"]
 
     clips = client_video.get("/api/clips").json()["clips"]
     assert [c["identifiant"] for c in clips] == [identifiant]
@@ -789,7 +806,7 @@ def test_la_galerie_montre_un_clip_par_une_image_prelevee_dedans(client_video):
     identifiant = client_video.post(
         "/api/clips",
         json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["identifiant"]
+    ).json()["clips"][0]["identifiant"]
 
     image = client_video.get(f"/api/clips/{identifiant}/frames/0")
     assert image.status_code == 200
@@ -804,7 +821,7 @@ def test_recuperer_par_la_route_ne_recommande_rien(client_video, animateur):
     identifiant = client_video.post(
         "/api/clips",
         json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["identifiant"]
+    ).json()["clips"][0]["identifiant"]
 
     reprise = client_video.post(f"/api/clips/{identifiant}/recover")
     assert reprise.status_code == 200
@@ -821,6 +838,355 @@ def test_commander_sans_image_de_la_bibliotheque_se_refuse_avant_de_payer(
     assert reponse.status_code == 400
     assert "pas-la" in reponse.json()["raison"]
     assert animateur.soumissions == []
+
+
+# ── Ce que l'écran de commande demande au serveur ───────────────────────────
+#
+# Le côté serveur d'`A9` était écrit et éprouvé avant l'écran ; ce qui suit est
+# ce que l'écran a fait apparaître. **Le serveur ne connaissait ni personnage,
+# ni pose, ni mouvement** — la demande portait un texte libre. Ce lien-là est ce
+# que la tranche ajoute, et il vaut la peine d'être mesuré : c'est lui qui fait
+# qu'un texte anglais ne se retape jamais, et qu'un lot de quatre clips reste
+# quatre dépenses.
+
+
+def un_personnage(client, nom: str = "Michel") -> str:
+    """Un personnage du projet ouvert, sans aucune image."""
+    return client.post(
+        "/api/characters", json={"nom": nom, "description": "un voyageur"}
+    ).json()["personnage"]["identifiant"]
+
+
+def test_l_image_de_depart_est_celle_de_la_case_quand_la_case_en_porte_une(
+    client_video,
+):
+    """*L'image de départ se propose : la case visée si elle porte une image.*
+
+    C'est le cas où le produit sait le mieux ce qu'il fait : l'attitude et
+    l'angle ont déjà été validés en fixe, et le clip les suit au lieu de
+    repartir d'une posture neutre.
+    """
+    personnage = un_personnage(client_video)
+    sprite = un_sprite(client_video)
+    client_video.put(
+        f"/api/assets/{sprite}/character",
+        json={"personnage": personnage, "pose": "marche"},
+    )
+
+    recu = client_video.get(
+        "/api/clips/start-image", params={"personnage": personnage, "pose": "marche"}
+    ).json()
+    assert recu["origine"] == "case"
+    assert recu["asset"]["identifiant"] == sprite
+    assert "case visée" in recu["raison"]
+
+
+def test_sans_image_dans_la_case_c_est_le_portrait_qui_se_propose(client_video):
+    """*Le portrait sinon.*
+
+    Le produit n'a pas d'objet portrait, et n'en invente pas un : le portrait
+    est **la première image que le personnage promeut en référence** — celle
+    qu'il montre déjà de lui à chacun de ses appels.
+    """
+    personnage = un_personnage(client_video)
+    sprite = un_sprite(client_video)
+    client_video.put(
+        f"/api/assets/{sprite}/character",
+        json={"personnage": personnage, "pose": "repos"},
+    )
+    client_video.put(
+        f"/api/characters/{personnage}/references",
+        json={"asset": sprite, "promue": True},
+    )
+
+    # La case *course* est vide : c'est le portrait qui vient.
+    recu = client_video.get(
+        "/api/clips/start-image", params={"personnage": personnage, "pose": "course"}
+    ).json()
+    assert recu["origine"] == "portrait"
+    assert recu["asset"]["identifiant"] == sprite
+    assert "montre de lui" in recu["raison"]
+
+
+def test_un_personnage_sans_la_moindre_image_le_dit_au_lieu_de_rendre_un_cadre_vide(
+    client_video,
+):
+    """Un clip part toujours d'une image : quand il n'y en a aucune, l'écran
+    doit pouvoir écrire pourquoi plutôt que d'afficher un carré gris."""
+    personnage = un_personnage(client_video, "Perceval")
+    recu = client_video.get(
+        "/api/clips/start-image", params={"personnage": personnage, "pose": "repos"}
+    ).json()
+    assert recu["origine"] == "aucune"
+    assert recu["asset"] is None
+    assert "n'a encore aucune image" in recu["raison"]
+
+
+def test_le_mouvement_choisi_ecrit_le_texte_et_l_ecran_ne_le_retape_pas(
+    client_video, animateur
+):
+    """*Le mouvement se choisit dans la liste d'`A6`, et le texte qui part se
+    lit avant l'envoi.*
+
+    L'écran envoie **le mouvement**, pas le texte qu'il vient d'afficher. Deux
+    chemins vers le même texte anglais finiraient par en envoyer un troisième —
+    et c'est un appel payé qui le dirait.
+    """
+    sprite = un_sprite(client_video)
+    reponse = client_video.post(
+        "/api/clips",
+        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
+    )
+    assert reponse.status_code == 202
+
+    _, demande = animateur.soumissions[0]
+    connus = client_video.get("/api/movements").json()["mouvements"]
+    marche = next(m for m in connus if m["identifiant"] == "marche")
+    assert demande.texte == marche["texte"]
+    # Et la génération garde lequel, pour qu'`A10` sache quoi tailler dedans.
+    assert reponse.json()["clips"][0]["demande"]["mouvement"] == "marche"
+
+
+def test_un_mouvement_inconnu_se_refuse_avant_de_payer(client_video, animateur):
+    sprite = un_sprite(client_video)
+    reponse = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "danse-de-la-pluie",
+            "asset": sprite,
+        },
+    )
+    assert reponse.status_code == 400
+    assert "danse-de-la-pluie" in reponse.json()["raison"]
+    assert animateur.soumissions == []
+
+
+def test_un_clip_sans_texte_ni_mouvement_se_refuse_avant_de_payer(
+    client_video, animateur
+):
+    sprite = un_sprite(client_video)
+    reponse = client_video.post(
+        "/api/clips", json={"modele": MELE.identifiant, "asset": sprite}
+    )
+    assert reponse.status_code == 400
+    assert "part d'un texte" in reponse.json()["raison"]
+    assert animateur.soumissions == []
+
+
+def test_un_lot_lance_autant_de_clips_que_demande_et_chacun_est_une_depense(
+    client_video, animateur
+):
+    """*Le nombre de clips à lancer se choisit à chaque fois — un est le défaut.*
+
+    Et **chacun est une génération à part**, avec sa dépense et son numéro de
+    travail : quatre clips coûtent quatre fois, et l'écran des dépenses doit le
+    dire quatre fois.
+    """
+    sprite = un_sprite(client_video)
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 4,
+        },
+    ).json()["clips"]
+
+    assert len(lot) == 4
+    assert len({c["identifiant"] for c in lot}) == 4
+    assert len({c["clip"]["travail"] for c in lot}) == 4
+    assert len(animateur.soumissions) == 4
+    # **Et ils savent qu'ils sont du même geste.** C'est ce qui permettra d'en
+    # garder un et de jeter les autres sans rapprocher trois clips sur l'heure
+    # et le texte — un rapprochement qui se tromperait le jour où l'auteur
+    # relance exactement la même chose.
+    lots = {c["clip"]["lot"] for c in lot}
+    assert len(lots) == 1 and lots != {""}
+    # Et un défaut à un, sans qu'on ait à l'écrire.
+    seul = client_video.post(
+        "/api/clips",
+        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
+    ).json()["clips"]
+    assert len(seul) == 1
+
+
+def test_un_lot_demesure_se_refuse_avant_de_payer(client_video, animateur):
+    """Le geste paie N fois : il a une borne, et elle se dit en clair."""
+    sprite = un_sprite(client_video)
+    reponse = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 40,
+        },
+    )
+    assert reponse.status_code == 400
+    assert "1 à 8" in reponse.json()["raison"]
+    assert animateur.soumissions == []
+
+
+def test_garder_un_clip_et_jeter_les_autres_est_un_seul_geste_et_il_se_defait(
+    client_video,
+):
+    """*Garder un clip et jeter les autres est un seul geste, et il est
+    annulable.*"""
+    sprite = un_sprite(client_video)
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 3,
+        },
+    ).json()["clips"]
+    garde, *autres = [c["identifiant"] for c in lot]
+
+    rendu = client_video.post(
+        "/api/clips/keep", json={"garde": garde, "jette": autres}
+    ).json()
+    assert rendu["garde"]["clip"]["jete"] is False
+    assert [c["clip"]["jete"] for c in rendu["jetes"]] == [True, True]
+
+    # Un seul geste rend les deux.
+    repris = client_video.post("/api/clips/restore", json={"clips": autres}).json()
+    assert [c["clip"]["jete"] for c in repris["clips"]] == [False, False]
+
+
+def test_un_clip_jete_reste_au_journal_des_depenses(client_video):
+    """*Le journal garde ce qui a été payé, y compris les clips jetés.*
+
+    C'est le premier invariant du produit, et c'est ici qu'il compte le plus :
+    un lot de trois clips coûte trois fois, et un auteur qui n'en verrait plus
+    qu'un au journal croirait avoir payé une fois.
+    """
+    sprite = un_sprite(client_video)
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 3,
+        },
+    ).json()["clips"]
+    garde, *autres = [c["identifiant"] for c in lot]
+    client_video.post("/api/clips/keep", json={"garde": garde, "jette": autres})
+
+    # Les trois sont toujours des clips connus de l'atelier, jetés compris.
+    clips = client_video.get("/api/clips").json()["clips"]
+    assert {c["identifiant"] for c in clips} == {c["identifiant"] for c in lot}
+    jetes = [c for c in clips if c["clip"]["jete"]]
+    assert {c["identifiant"] for c in jetes} == set(autres)
+    # Et l'écran des dépenses les compte toujours, tous les trois.
+    journal = client_video.get("/api/spending").json()
+    payes = {a["identifiant"] for a in journal["appels"]}
+    assert {c["identifiant"] for c in lot} <= payes
+
+
+def test_un_clip_arrive_garde_sa_place_au_rechargement(client_video):
+    """⚠️ *La galerie était vide alors que trois clips payés étaient là.*
+
+    Vu au navigateur le 4 septembre 2026. Ce que la grille montre à côté de la
+    bibliothèque est **le chantier** : les emplacements qui attendent encore une
+    issue. Un clip est réussi dès qu'il arrive, donc il en sortait — et rien ne
+    prenait le relais, parce qu'un clip n'entre pas en bibliothèque. Sa tuile
+    disparaissait à l'arrivée, et il ne restait rien de l'appel payé.
+
+    C'est le même défaut que celui de la planche qui attend un choix, réparé en
+    `R6`, et c'est la même ligne qui le répare.
+
+    **Jeté, il s'en va** : c'est très exactement ce que le geste veut dire.
+    """
+    sprite = un_sprite(client_video)
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 2,
+        },
+    ).json()["clips"]
+    for _ in range(300):
+        arrives = client_video.get("/api/clips").json()["clips"]
+        if all(c["statut"] == "reussie" for c in arrives):
+            break
+        client_video.get("/api/status")
+
+    chantier = client_video.app.state.atelier.generations.chantier()
+    assert {g.identifiant for g in chantier} == {c["identifiant"] for c in lot}
+
+    garde, jete = [c["identifiant"] for c in lot]
+    client_video.post("/api/clips/keep", json={"garde": garde, "jette": [jete]})
+    chantier = client_video.app.state.atelier.generations.chantier()
+    assert {g.identifiant for g in chantier} == {garde}
+
+
+async def test_un_atelier_qui_porte_un_clip_se_rouvre(atelier_video, client_video):
+    """⚠️ **L'atelier refusait de démarrer**, et aucun essai ne pouvait le voir.
+
+    Trouvé au navigateur le 4 septembre 2026. À l'ouverture, l'atelier donne un
+    asset aux images produites avant que les assets existent : il voyait un
+    emplacement réussi sans asset, tentait d'en faire une image, et le détourage
+    levait *cannot identify image file* sur le fichier vidéo. **Plus d'atelier
+    du tout** — pas une tuile cassée : l'application ne démarrait pas.
+
+    Les essais ne pouvaient pas l'attraper parce qu'ils montent un atelier neuf
+    et ne le rouvrent jamais. Celui-ci le rouvre, et c'est tout son objet.
+    """
+    sprite = un_sprite(client_video)
+    client_video.post(
+        "/api/clips",
+        json={"modele": MELE.identifiant, "mouvement": "marche", "asset": sprite},
+    )
+    # **Arrivé, et c'est la condition du défaut** : un clip encore en vol n'a
+    # pas de fichier sur le disque, donc rien que le rattrapage puisse essayer
+    # de lire comme une image.
+    for _ in range(300):
+        clips = client_video.get("/api/clips").json()["clips"]
+        if clips and clips[0]["statut"] == "reussie":
+            break
+        client_video.get("/api/status")
+    assert clips[0]["statut"] == "reussie"
+
+    # Le geste du démarrage, sur un atelier qui porte déjà un clip arrivé.
+    await atelier_video.ouvrir()
+
+    # Et le clip n'est pas devenu une image : il n'en est pas une.
+    assets = client_video.get("/api/assets").json()["assets"]
+    clips = client_video.get("/api/clips").json()["clips"]
+    assert len(clips) == 1
+    assert clips[0]["identifiant"] not in {a["generation"] for a in assets}
+
+
+def test_garder_celui_qu_on_avait_jete_est_le_meme_geste_dans_l_autre_sens(
+    client_video,
+):
+    """On garde un clip, puis on change d'avis : le même bouton le ramène, sans
+    qu'il faille se rappeler qu'il avait été écarté."""
+    sprite = un_sprite(client_video)
+    lot = client_video.post(
+        "/api/clips",
+        json={
+            "modele": MELE.identifiant,
+            "mouvement": "marche",
+            "asset": sprite,
+            "nombre": 2,
+        },
+    ).json()["clips"]
+    premier, second = [c["identifiant"] for c in lot]
+
+    client_video.post("/api/clips/keep", json={"garde": premier, "jette": [second]})
+    rendu = client_video.post(
+        "/api/clips/keep", json={"garde": second, "jette": [premier]}
+    ).json()
+    assert rendu["garde"]["clip"]["jete"] is False
+    assert rendu["jetes"][0]["clip"]["jete"] is True
 
 
 async def test_un_montant_absent_de_la_reponse_ne_se_lit_pas_comme_un_clip_gratuit(

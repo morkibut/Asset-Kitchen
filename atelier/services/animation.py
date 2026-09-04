@@ -30,7 +30,7 @@ import asyncio
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from atelier.depot import Base, Fichiers
 from atelier.domaine.animation import (
@@ -225,6 +225,9 @@ class ServiceAnimation:
         projet: str | None = None,
         personnage: str | None = None,
         pose: str | None = None,
+        direction: str | None = None,
+        mouvement: str | None = None,
+        lot: str = "",
         provenance: str = AUTEUR,
         attendre: bool = True,
     ) -> Generation:
@@ -255,14 +258,22 @@ class ServiceAnimation:
                 "proportions": demande.proportions,
                 "resolution": demande.resolution,
                 "options": dict(demande.options),
+                # **Le mouvement demandé, par son identifiant** (A6). Le texte
+                # anglais est déjà dans `prompt` : ce qui manquait est de quoi
+                # savoir, des mois plus tard, quelle entrée de la bibliothèque
+                # l'a écrit — et c'est ce que le montage d'`A10` lira pour
+                # nommer les bandes qu'il taillera dans ce clip.
+                "mouvement": mouvement,
             },
             parametres_resolus=_resolus(modele, demande),
             emplacements=[Emplacement(rang=0)],
             projet=projet,
             personnage=personnage,
             pose=pose,
+            direction=direction,
             provenance=provenance,
             clip=Clip(
+                lot=lot,
                 secondes=demande.secondes,
                 proportions=demande.proportions,
                 resolution=demande.resolution,
@@ -326,6 +337,78 @@ class ServiceAnimation:
         self._sauver(generation)
         generation.clip.recupere = True
         await self._encaisser(generation)
+        return generation
+
+    # ── Garder celui-là, jeter les autres — un seul geste ────────────────────
+
+    def garder(self, garde: str, jette: Iterable[str]) -> dict[str, Any]:
+        """Un clip retenu, les autres écartés. **Un geste, et il se défait.**
+
+        On lance quatre clips pour en avoir un bon ; les trois autres encombrent
+        la galerie dès la minute suivante. Les écarter un par un serait trois
+        gestes pour une seule décision — *c'est celui-là* —, et le produit
+        écrirait trois fois ce qu'on a pensé une fois.
+
+        **Ce qui a été payé reste payé.** Un clip écarté quitte la galerie ; il
+        ne quitte ni le journal, ni le total du projet, ni l'écran des dépenses.
+        C'est le premier invariant du produit, et c'est ici qu'il compte le
+        plus : un lot de quatre clips coûte quatre fois le prix d'un, et un
+        auteur qui n'en verrait plus qu'un au journal croirait avoir payé une
+        fois.
+
+        **Rien n'expire.** Contrairement à l'image jetée, dont les octets
+        s'effacent après quelques secondes, le clip écarté est toujours là :
+        `rendre` le remontre quand on veut, et le bandeau d'annulation n'a
+        aucun compte à rebours à afficher.
+
+        Le clip gardé est ramené au jour s'il ne l'était pas — garder un clip
+        qu'on avait écarté est le même geste, dans l'autre sens.
+        """
+        touches: list[Generation] = []
+        garde_la = self._clip(garde)
+        if garde_la.clip.jete:
+            garde_la.clip.jete = False
+            touches.append(garde_la)
+        jetes: list[Generation] = []
+        for identifiant in jette:
+            if identifiant == garde:
+                # Se jeter soi-même n'est pas une décision, c'est une
+                # contradiction : on garde celui-là, donc on ne le jette pas.
+                continue
+            autre = self._clip(identifiant)
+            if not autre.clip.jete:
+                autre.clip.jete = True
+                touches.append(autre)
+            jetes.append(autre)
+        for generation in touches:
+            self._sauver(generation)
+        return {
+            "garde": garde_la.en_json(),
+            "jetes": [g.en_json() for g in jetes],
+        }
+
+    def rendre(self, identifiants: Iterable[str]) -> list[Generation]:
+        """Remontrer des clips écartés. **L'annulation du geste d'au-dessus.**
+
+        Elle ne rapatrie rien et ne repaie rien : les clips n'étaient pas
+        partis, ils étaient rangés.
+        """
+        rendus = []
+        for identifiant in identifiants:
+            generation = self._clip(identifiant)
+            if generation.clip.jete:
+                generation.clip.jete = False
+                self._sauver(generation)
+            rendus.append(generation)
+        return rendus
+
+    def _clip(self, identifiant: str) -> Generation:
+        """La génération de ce clip, ou le refus qui dit laquelle manque."""
+        generation = self._base.lire(identifiant)
+        if generation is None:
+            raise GenerationInconnue(identifiant)
+        if generation.clip is None:
+            raise ErreurAtelier("cette génération n'est pas un clip")
         return generation
 
     async def attendre_tout(self) -> None:

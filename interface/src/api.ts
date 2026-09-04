@@ -164,6 +164,17 @@ export type Generation = {
    *  regard : sans lui, sa tuile disparaîtrait à l'arrivée sans que rien entre
    *  en bibliothèque, et l'appel payé se perdrait sous les yeux de l'auteur. */
   pliage?: Pliage | null
+  /** **Un clip, quand l'appel en était un** (A9). Vide pour tout le reste.
+   *
+   *  La galerie le lit pour la raison même qui lui fait lire `pliage` : un clip
+   *  arrivé n'entre pas en bibliothèque — ce n'est pas une image —, et sans ce
+   *  champ sa tuile disparaîtrait à l'arrivée sans que rien la remplace. */
+  clip?: Clip | null
+  /** La direction visée, quand l'appel en visait une. */
+  direction?: string | null
+  /** La chose du jeu visée, quand l'appel en visait une. */
+  personnage?: string | null
+  pose?: string | null
 }
 
 // ── Le post-traitement ──────────────────────────────────────────────────────
@@ -526,6 +537,113 @@ export type MouvementDeLaPose = {
    *  case-là, et il le dit plutôt que d'inventer un texte qui partira dans un
    *  appel payé. */
   origine: "mouvement" | "pose" | "aucun"
+}
+
+// ── L'animation par la vidéo (A9) ───────────────────────────────────────────
+//
+// **Un clip est une génération**, avec un emplacement unique et un champ
+// `clip`. Ce n'est pas une commodité : c'est ce qui met sa dépense dans la
+// barre de tête, dans le total du projet et dans l'écran des dépenses, sans
+// qu'aucun des endroits qui comptent l'argent ait à apprendre qu'il existe des
+// vidéos.
+
+/** Ce qu'un modèle vidéo coûterait pour ce qu'on demande, **et d'où le chiffre
+ *  sort**.
+ *
+ *  Un prix vidéo se *calcule* — hauteur × largeur × images par seconde × durée
+ *  — au lieu de se lire dans une grille. La formule voyage donc avec le
+ *  montant : un prix qu'on ne peut pas vérifier n'est pas un prix. */
+export type PrixVideo = {
+  /** `null` quand le tarif n'a pas pu être relu chez le fournisseur. Le modèle
+   *  est alors grisé, avec sa raison — on ne propose pas ce qu'on ne sait pas
+   *  chiffrer. */
+  montant: number | null
+  formule: string
+  /** `estimation` avant l'envoi. Ce qui s'enregistre après est le montant
+   *  facturé, et l'écart mesuré va jusqu'à moitié moins. */
+  nature: string
+  releve_le: number | null
+}
+
+/** Un modèle vidéo au catalogue, tel que l'écran de commande le montre. */
+export type ModeleVideo = {
+  identifiant: string
+  nom: string
+  fournisseur: string
+  durees: number[]
+  resolutions: string[]
+  proportions: string[]
+  /** **Ce que ce dépôt a mesuré de lui, et rien d'autre.** Vide veut dire *on
+   *  n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un
+   *  modèle proposé a été éprouvé. Aucun des trois n'atteint la barre des huit
+   *  tirages : ce sont des propositions étayées, pas un arbitrage clos. */
+  mesure: string
+  prix: PrixVideo
+  /** La phrase qui dit pourquoi ce modèle ne peut pas honorer la demande
+   *  courante, ou `null`. **Le produit ne propose jamais pour rejeter
+   *  ensuite** : ce qui est impossible se voit avant d'être choisi. */
+  grise: string | null
+}
+
+/** Le catalogue vidéo pour un réglage donné. Le prix dépend de ce qu'on
+ *  demande : il se recalcule à chaque changement de durée ou de format. */
+export type BaseModelesVideo = {
+  modeles: ModeleVideo[]
+  recu_le: number | null
+  raison: string | null
+  manque: string | null
+  /** Ce qui manque pour découper un clip en images, ou `null` quand le
+   *  décodeur est là. Un clip s'achète quand même sans lui — il ne se découpe
+   *  pas, et il reste payé. */
+  decodeur: string | null
+  demande: { secondes: number; resolution: string; proportions: string }
+}
+
+/** L'image qu'un clip prendrait au départ, **et pourquoi celle-là**.
+ *
+ *  Une proposition, jamais une contrainte : l'auteur en change d'un clic pour
+ *  n'importe quelle image de la bibliothèque. */
+export type ImageDeDepart = {
+  asset: Asset | null
+  /** `case` : l'image de la case visée, dont l'attitude et l'angle ont déjà été
+   *  validés. `portrait` : ce que le personnage montre de lui — sa première
+   *  référence promue, sinon le corps retenu de sa première attitude.
+   *  `aucune` : il n'y a rien, et la raison le dit. */
+  origine: "case" | "portrait" | "aucune"
+  raison: string
+}
+
+/** Ce qu'une génération porte quand c'est un clip. Absent partout ailleurs —
+ *  et c'est ce champ, jamais le nom du modèle, qui dit qu'un appel est vidéo. */
+export type Clip = {
+  /** Le numéro du travail chez le fournisseur, écrit **avant** la première
+   *  attente. Sans lui, un clip payé pendant qu'on fermait l'atelier est un
+   *  clip qu'on repaie. */
+  travail: string
+  secondes: number
+  proportions: string
+  resolution: string
+  prix_annonce: number | null
+  prix_formule: string
+  /** Combien d'images le clip porte, et à quelle cadence — **mesurées sur le
+   *  fichier**, jamais déduites de ce qui a été demandé. Zéro tant que rien
+   *  n'est extrait, et zéro pour toujours si le décodeur manque. */
+  images: number
+  cadence: number
+  extraction_refus: string | null
+  montant_relu: boolean
+  recupere: boolean
+  /** Écarté d'un lot. **Il quitte la galerie, pas le journal** : ce qui a été
+   *  payé reste payé, et rien n'expire — le geste se défait quand on veut. */
+  jete: boolean
+  /** **Le geste qui l'a lancé**, partagé par tous les clips du même lot.
+   *  Écrit au serveur, jamais déduit : rapprocher quatre clips sur leur texte
+   *  et leur minute marcherait presque toujours, et se tromperait le jour où
+   *  l'auteur relance exactement la même chose. Vide pour les clips d'avant. */
+  lot: string
+  /** La phrase que l'écran écrit à côté du montant. Écrite une fois, au
+   *  serveur : deux rédactions finiraient par dire deux choses. */
+  montant_dit: string
 }
 
 /** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.
@@ -3540,6 +3658,87 @@ export const api = {
   montrerMouvement: (identifiant: string) =>
     appeler<BaseMouvements>(`/movements/${identifiant}/show`, { method: "POST" }),
 
+  // ── Les clips (A9) ────────────────────────────────────────────────────────
+  //
+  // **Une seule de ces routes dépense** — `commanderClips`. Toutes les autres
+  // lisent, rangent ou rendent, et aucune ne rappelle le fournisseur : même
+  // `rendreClips`, qui remontre un clip écarté, ne fait que défaire une marque
+  // sur le disque.
+
+  /** Les modèles vidéo et **le prix du jour pour ce réglage-là**.
+   *
+   *  Le prix se recalcule à chaque changement de durée ou de format : une
+   *  seconde de plus n'est pas le même prix, et un catalogue chiffré une fois
+   *  au démarrage annoncerait le prix d'autre chose. */
+  modelesVideo: (secondes: number, resolution: string, proportions: string) =>
+    appeler<BaseModelesVideo>(
+      `/clips/models?secondes=${secondes}` +
+        `&resolution=${encodeURIComponent(resolution)}` +
+        `&proportions=${encodeURIComponent(proportions)}`,
+    ),
+
+  /** Ce qu'un clip prendrait au départ, **et pourquoi celle-là**. Une
+   *  proposition : l'écran la montre, l'auteur en change d'un clic. */
+  imageDeDepart: (
+    personnage: string,
+    pose?: string | null,
+    direction?: string | null,
+  ) =>
+    appeler<ImageDeDepart>(
+      `/clips/start-image?personnage=${encodeURIComponent(personnage)}` +
+        (pose ? `&pose=${encodeURIComponent(pose)}` : "") +
+        (direction ? `&direction=${encodeURIComponent(direction)}` : ""),
+    ),
+
+  /** **La seule route de ce bloc qui dépense**, et elle dépense `nombre` fois.
+   *
+   *  L'écran envoie le **mouvement**, pas le texte qu'il vient d'afficher :
+   *  deux chemins vers le même texte anglais finiraient par en envoyer un
+   *  troisième, et c'est un appel payé qui le dirait. */
+  commanderClips: (corps: {
+    modele: string
+    asset: string
+    mouvement?: string | null
+    prompt?: string
+    secondes?: number
+    resolution?: string
+    proportions?: string
+    nombre?: number
+    personnage?: string | null
+    pose?: string | null
+    direction?: string | null
+  }) =>
+    appeler<{ clips: Generation[] }>("/clips", {
+      method: "POST",
+      body: JSON.stringify(corps),
+    }),
+
+  clips: () => appeler<{ clips: Generation[] }>("/clips"),
+
+  /** Ceux qui sont payés — ou peut-être payés — et attendent un geste. **La
+   *  liste ne récupère rien** : elle dit ce qu'il y a à récupérer. */
+  clipsEnSouffrance: () => appeler<{ clips: Generation[] }>("/clips/pending"),
+
+  /** Rapatrie un clip **déjà payé**. Ne commande rien, ne repaie rien. */
+  recupererClip: (identifiant: string) =>
+    appeler<Generation>(`/clips/${identifiant}/recover`, { method: "POST" }),
+
+  /** Garder celui-là, écarter les autres — **un seul geste**, et il se défait.
+   *  Ce qui a été payé reste au journal : un clip écarté quitte la galerie, pas
+   *  les dépenses. */
+  garderClip: (garde: string, jette: string[]) =>
+    appeler<{ garde: Generation; jetes: Generation[] }>("/clips/keep", {
+      method: "POST",
+      body: JSON.stringify({ garde, jette }),
+    }),
+
+  /** L'annulation du geste ci-dessus. Rien n'expire : elle marche toujours. */
+  rendreClips: (clips: string[]) =>
+    appeler<{ clips: Generation[] }>("/clips/restore", {
+      method: "POST",
+      body: JSON.stringify({ clips }),
+    }),
+
   /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
    *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un
    *  second. */
@@ -4397,6 +4596,17 @@ export const api = {
    *  vraiment renvoyé. Elle se recalcule de la planche à chaque demande et ne
    *  range rien — pas d'empreinte à faire voyager, donc, et pas de cache. */
   arrivee: (identifiant: string) => `/api/assets/${identifiant}/incoming`,
+
+  /** Une image prélevée dans un clip, par son numéro (A9). C'est ce que la
+   *  galerie sert pour montrer un clip — jamais une tuile en erreur —, et ce
+   *  que le montage servira cent fois de suite en faisant glisser sa fenêtre.
+   *  Les images sont sur le disque depuis l'arrivée du clip : rien n'est
+   *  décodé à la demande. */
+  imageDuClip: (identifiant: string, numero: number) =>
+    `/api/clips/${identifiant}/frames/${numero}`,
+
+  /** Le fichier tel qu'il est arrivé. Le brut, jamais un rendu. */
+  videoDuClip: (identifiant: string) => `/api/clips/${identifiant}/video`,
 
   // Le rendu change sous la même adresse à chaque cran de curseur : `version`
   // porte l'empreinte de la recette pour que le navigateur cherche une image

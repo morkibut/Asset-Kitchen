@@ -1932,6 +1932,120 @@ class ServiceProduction:
             f"« {vise.nom} » ne tient pas la pose « {pose} »"
         )
 
+    def image_de_depart(
+        self,
+        projet: str,
+        personnage: str,
+        pose: str | None = None,
+        direction: str | None = None,
+    ) -> dict[str, Any]:
+        """L'image qu'un clip prendrait au départ, et **d'où elle vient** (A9).
+
+        Un clip part toujours d'**une** image, et d'une seule. L'écran en
+        propose une ; l'auteur en change d'un clic. Ce qui est écrit ici est la
+        proposition, et rien de plus — aucun automatisme ne sait tout, et celui
+        qui décide reste la main.
+
+        **La règle, tranchée par l'auteur le 3 septembre 2026**, dans cet ordre :
+
+        1. **La case visée**, quand on anime une attitude qui porte déjà une
+           image fixe. Le clip suit alors l'attitude et l'angle déjà validés,
+           ce qui est très exactement ce qu'on veut quand ils l'ont été.
+        2. **Le portrait du personnage**, sinon — et c'est le défaut, celui que
+           les essais du dépôt ont mesuré.
+        3. **Rien**, et la raison le dit plutôt que de laisser un cadre vide.
+
+        **Ce que « le portrait » veut dire ici, écrit une fois.** Le produit n'a
+        pas d'objet portrait, et lui en inventer un aurait fait un second
+        endroit où désigner l'image d'un personnage. C'est donc, dans l'ordre :
+        la première image que ce personnage **promeut en référence** (E12) —
+        celle qu'il montre déjà de lui à chacun de ses appels —, sinon le corps
+        retenu de **sa première attitude tenue**, qui est la posture neutre du
+        plan. Deux images qui existent déjà, aucune notion de plus.
+
+        **Le corps retenu, pas la plus récente** : `corps_retenu` décide ici
+        comme il décide à la planche d'équipement et à l'export — le favori
+        d'abord, sinon la dernière. Trois écrans, une règle.
+
+        **Ne dépense rien et n'appelle personne.** Elle lit la bibliothèque.
+        """
+        vise = self.personnage(projet, personnage)
+        corps = [
+            asset
+            for asset in self._base.assets_du_personnage(vise.identifiant)
+            # Un calque porte une pièce : ce n'est pas le personnage, c'est un
+            # vêtement posé sur lui. Animer un casque seul n'a pas de sens.
+            if not asset.piece
+        ]
+
+        if pose:
+            siennes = [a for a in corps if a.pose == pose]
+            attitude = next(
+                (p for p in self.plan_de(projet, vise) if p.identifiant == pose), None
+            )
+            if direction and attitude is not None:
+                # **Une image sans direction compte pour la première**, comme
+                # dans la matrice : elle a été faite avant que le jeu ne déclare
+                # ses angles, et le produit l'y range en le disant plutôt que
+                # de la faire disparaître.
+                angles = vise.directions_tenues(
+                    attitude, self._exiger(projet).univers.directions_du_jeu()
+                )
+                premiere = angles[0].identifiant if angles else ""
+                siennes = [
+                    a
+                    for a in siennes
+                    if a.direction == direction
+                    or (a.direction is None and direction == premiere)
+                ]
+            retenu = corps_retenu(siennes)
+            if retenu is not None:
+                nomme = attitude.nom if attitude is not None else pose
+                ou = f" vers {direction}" if direction else ""
+                return {
+                    "asset": retenu.en_json(),
+                    "origine": "case",
+                    "raison": (
+                        f"l'image de la case visée — {vise.nom}, {nomme}{ou}. "
+                        "Le clip suivra l'attitude et l'angle déjà validés."
+                    ),
+                }
+
+        for identifiant in vise.references:
+            promue = self._base.lire_asset(identifiant)
+            if promue is not None and promue.supprime_le is None:
+                return {
+                    "asset": promue.en_json(),
+                    "origine": "portrait",
+                    "raison": (
+                        f"le portrait de {vise.nom} — la première image qu'il "
+                        "montre de lui à chacun de ses appels."
+                    ),
+                }
+
+        tenues = vise.tenues(self.plan_de(projet, vise))
+        if tenues:
+            neutre = tenues[0]
+            retenu = corps_retenu([a for a in corps if a.pose == neutre.identifiant])
+            if retenu is not None:
+                return {
+                    "asset": retenu.en_json(),
+                    "origine": "portrait",
+                    "raison": (
+                        f"le portrait de {vise.nom} — le corps retenu de sa "
+                        f"première attitude, « {neutre.nom} »."
+                    ),
+                }
+
+        return {
+            "asset": None,
+            "origine": "aucune",
+            "raison": (
+                f"« {vise.nom} » n'a encore aucune image. Choisissez-en une "
+                "dans la bibliothèque : un clip part toujours d'une image."
+            ),
+        }
+
     def sujet(
         self,
         projet: str,

@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6` et `A2` closes le jour de l'ouverture, le serveur d'`A9` écrit et éprouvé | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2` et `A9` closes le jour de l'ouverture | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -243,8 +243,8 @@ V3    A6  le mouvement, dit une fois pour toutes
        │                                     A2  le cadre qui ne dérive pas
        ▼                                      │   n'attend rien et n'est attendue
       A9  commander un clip, et l'attendre    │   que par A10 : à faire quand on
-       │   ← le serveur est écrit ;           │   veut, de front avec A6 ou A9
-       │     l'écran et la file restent       │
+       │   ← close le 4 septembre 2026        │   veut, de front avec A6 ou A9
+       │                                      │
        │                                      │
        ├──► A11  le moteur de la maison       │
        │         ne bloque rien, mais c'est   │
@@ -320,12 +320,16 @@ diagramme : `G6` disparaît avec `G7`, et `G12` réclame une réparation avant e
 *chaque tranche est utilisable à sa livraison, et on ne passe à la suivante que lorsque la
 précédente sert vraiment.*
 
-> ⚠️ **Une exception assumée, et la seule de la version.** `A9` livrée seule pose l'écran de
-> commande et fait arriver un clip dans la bibliothèque — c'est utilisable. Mais **son serveur a
-> été écrit avant son écran**, et pendant cet intervalle la tranche n'était démontrable que par
-> ses essais. C'était le bon ordre — le port asynchrone et l'écriture de la dépense sont ce qui
-> pouvait faire perdre de l'argent, et il valait mieux les tenir d'abord —, mais il faut l'écrire
-> plutôt que de le laisser passer pour la règle.
+> ⚠️ **Une exception assumée, et la seule de la version — refermée le 4 septembre 2026.** `A9` a
+> eu **son serveur écrit avant son écran**, et pendant cet intervalle la tranche n'était
+> démontrable que par ses essais. C'était le bon ordre — le port asynchrone et l'écriture de la
+> dépense sont ce qui pouvait faire perdre de l'argent, et il valait mieux les tenir d'abord.
+>
+> **Et l'intervalle a coûté ce qu'un intervalle coûte.** Les trois défauts trouvés en posant
+> l'écran étaient dans le serveur, et deux d'entre eux étaient graves — l'atelier ne redémarrait
+> plus, la galerie était vide au rechargement. Aucun essai ne pouvait les voir : ils montent un
+> atelier neuf et ne le rouvrent jamais. **Écrire un serveur sans écran, c'est écrire sans le
+> seul endroit d'où l'on voit ce qu'il fait.**
 
 **Et un critère de plus, propre à la V3 : chaque tranche rend une animation plus facile ou moins
 chère à obtenir.** C'est l'ordre dans lequel elles sont rangées. `A6` et `A2` préparent le
@@ -2840,8 +2844,8 @@ chaque cran de curseur.
 
 ---
 
-### A9 · Commander un clip, et l'attendre
-*11 US (380–383, 434–440)* · **le serveur est écrit ; l'écran reste**
+### A9 · Commander un clip, et l'attendre — ✅ **livrée le 4 septembre 2026**
+*11 US (380–383, 434–440)* · **le serveur était écrit ; l'écran, la file et le lien sont arrivés**
 
 **Ce qu'on livre.** L'atelier sait commander un clip et le voir arriver. On choisit un
 personnage, un mouvement et un modèle vidéo ; **l'image de départ se propose et se change** ; le
@@ -2924,37 +2928,62 @@ la certitude que rien ne se perd si l'atelier ferme.
 - [x] Les images du clip sont extraites une fois, à l'arrivée, et le clip dit combien il en porte et à quelle cadence
 - [x] Un clip hérite son style de son sprite de départ **et de rien d'autre**
 - [x] Ce que le décodeur de clips ajoute au dépôt est déclaré et justifié
-- [ ] **L'écran de commande existe** : l'image de départ, le mouvement, les modèles avec leur prix, et un bouton qui porte le montant
-- [ ] **L'image de départ se propose et se change** : la case visée si elle porte une image, le portrait sinon, n'importe quelle image de la bibliothèque d'un clic
-- [ ] **Le mouvement se choisit dans la liste d'`A6`**, et le texte qui part se lit avant l'envoi
-- [ ] Le nombre de clips à lancer se choisit à chaque fois — **un est le défaut** —, et le prix du lot s'annonce avant
-- [ ] Les clips reviennent **un par un**, chacun visible dès son arrivée : on n'attend pas les autres
-- [ ] Garder un clip et jeter les autres est un seul geste, et il est annulable
-- [ ] Le journal garde ce qui a été payé, **y compris les clips jetés**
-- [ ] Un clip en cours se voit, dit ce qu'il a coûté, et **survit à la fermeture de l'atelier**
-- [ ] La galerie montre un clip par une image prélevée dedans, jamais par une tuile en erreur
-- [ ] **Un modèle proposé sans avoir été assez mesuré le dit**, à l'endroit où on le choisit
-- [ ] Rien n'est jamais relancé automatiquement — l'invariant de `T1` tient jusqu'ici
+- [x] **L'écran de commande existe** : l'image de départ, le mouvement, les modèles avec leur prix, et un bouton qui porte le montant
+- [x] **L'image de départ se propose et se change** : la case visée si elle porte une image, le portrait sinon, n'importe quelle image de la bibliothèque d'un clic
+- [x] **Le mouvement se choisit dans la liste d'`A6`**, et le texte qui part se lit avant l'envoi
+- [x] Le nombre de clips à lancer se choisit à chaque fois — **un est le défaut** —, et le prix du lot s'annonce avant
+- [x] Les clips reviennent **un par un**, chacun visible dès son arrivée : on n'attend pas les autres
+- [x] Garder un clip et jeter les autres est un seul geste, et il est annulable
+- [x] Le journal garde ce qui a été payé, **y compris les clips jetés**
+- [x] Un clip en cours se voit, dit ce qu'il a coûté, et **survit à la fermeture de l'atelier**
+- [x] La galerie montre un clip par une image prélevée dedans, jamais par une tuile en erreur
+- [x] **Un modèle proposé sans avoir été assez mesuré le dit**, à l'endroit où on le choisit
+- [x] Rien n'est jamais relancé automatiquement — l'invariant de `T1` tient jusqu'ici
 
-**Où en est la tranche, au 3 septembre 2026.** **Le côté serveur est écrit et éprouvé : trente-six
-essais, aucun appel payant.**
+**Ce qui a été livré, le 4 septembre 2026.** Le serveur était écrit depuis le 3 ; ce qui manquait
+est arrivé d'un bloc — **l'écran, la file, et le lien entre un clip et la chose du jeu qu'il
+anime**. Cinquante essais côté atelier, treize côté écran, **aucun appel payant**.
 
-| Ce qui est écrit | Où | Ce que ça tient |
+| Ce qui est arrivé | Où | Ce que ça tient |
 |---|---|---|
-| La demande de clip, le modèle vidéo, le tarif et sa formule | `atelier/domaine/animation.py` | l'entrée obligatoire, le refus en français, le prix vérifiable |
-| Le second port et ce qu'il rend | `atelier/fournisseur/port.py` | soumettre et récupérer sont **deux gestes**, jamais un seul |
-| L'adaptateur vidéo d'OpenRouter | `atelier/fournisseur/openrouter_video.py` | les trois pièges payés une fois : la liste filtrée, l'adresse qui veut la clé, le montant qui n'est pas où on le cherche |
-| Le décodeur de clips, optionnel | `atelier/image/clip.py` | un clip payé n'est jamais perdu faute d'une bibliothèque |
-| Commander, attendre, encaisser, reprendre | `atelier/services/animation.py` | l'ordre : le numéro du travail, puis la dépense, puis le fichier, puis les images |
-| Les routes du clip | `atelier/api/animation.py` | ce que l'écran lira |
-| Les essais | `tests/test_a9.py` | 36 essais, dont l'ordre d'écriture et la reprise sans repaiement |
+| L'écran qui commande un clip | `interface/src/composants/Clip.tsx` | les trois colonnes de la maquette : l'image de départ et le mouvement, ce qu'on va recevoir et son format, les modèles et le bouton qui porte le montant |
+| L'image de départ proposée | `atelier/services/production.py` § `image_de_depart` | la règle tranchée le 3 septembre — la case visée, sinon le portrait —, écrite **une fois**, au serveur |
+| Le lot, le mouvement, la direction | `atelier/api/animation.py`, `atelier/services/animation.py` | un geste lance de 1 à 8 clips ; **le texte anglais ne se retape jamais**, l'écran envoie le mouvement et le serveur va chercher le texte dans la bibliothèque d'`A6` |
+| Garder l'un, jeter les autres | `POST /api/clips/keep`, `POST /api/clips/restore` | un seul geste, et il se défait ; **rien n'expire**, parce qu'un clip écarté est toujours là |
+| Le clip dans la galerie | `interface/src/composants/Tuile.tsx`, `App.tsx` | il garde sa place, montre **une image prélevée dedans**, dit ce qu'il porte et ce qu'il a coûté |
+| L'atelier jetable | `essais/atelier_jetable_a9.py` | le décor complet, sur le port 8431 : un personnage à deux images, trois clips déjà arrivés, et deux modèles dont un grisé |
 
-**Ce qu'il reste** : l'écran, la file, et le choix de l'image de départ. **Le serveur ne connaît
-aujourd'hui ni personnage, ni pose, ni mouvement** — la demande porte un texte libre. C'est ce
-lien-là qui s'ajoute ici.
+**Ce que l'écran change à une règle du produit, et c'est assumé.** Le produit tenait *deux lieux
+seulement d'où l'argent part* — la barre qui paie, qui sert l'établi et le codex. Cet écran-ci en
+est un **troisième**. On ne peut pas commander une animation depuis une barre de saisie faite pour
+des images : on n'y choisit ni durée, ni format, ni image de départ obligatoire. **Ce qui tenait
+derrière la règle tient toujours** : l'argent ne part jamais sans un écran qui recouvre le produit,
+montre exactement ce qui va partir, et porte le montant sur son bouton. Ce qui passe de deux à
+trois est un compte, pas une garantie.
+
+> ⚠️ **Trois défauts que seuls les yeux ont vus**, et deux d'entre eux étaient graves. Les essais
+> montent un atelier neuf par un client d'essai ; aucun ne le **rouvre**, et aucun ne **recharge**
+> une page. C'est le trou où ces trois-là vivaient.
+>
+> | Ce qu'on a vu | Ce que c'était | Où c'est réparé |
+> |---|---|---|
+> | **L'atelier ne démarrait plus du tout** | à l'ouverture, le rattrapage donne un asset aux images qui n'en ont pas ; il voyait trois clips arrivés sans asset, tentait d'en faire des images, et le détourage levait *cannot identify image file* sur un fichier vidéo. **Pas une tuile cassée : plus d'atelier** | `atelier/services/assets.py` § `rattraper` — un clip n'entre jamais en bibliothèque |
+> | **La galerie était vide** alors que trois clips payés étaient sur le disque | un clip est réussi dès qu'il arrive, donc il sortait du chantier — et rien ne prenait le relais, puisqu'un clip n'entre pas en bibliothèque. Sa tuile disparaissait à l'arrivée. **Le même défaut que la planche de `R6`**, à l'identique | `atelier/services/generation.py` § `chantier` |
+> | La formule du prix s'écrivait `3.5e-06 $ le jeton … = 27000 jetons` | notation scientifique, point décimal, compte sans séparateur — **sur la ligne dont tout l'objet est de rendre un prix vérifiable de tête**. Un nombre qu'on n'arrive pas à lire ne vérifie rien | `atelier/domaine/animation.py` — elle lit `0,0000035 $ le jeton … = 27 000 jetons` |
+
+**Deux choix faits seuls, et voici pourquoi.**
+
+1. **L'écran s'ouvre depuis une case de l'établi, et de là seulement.** *Animer ›* est posé à côté
+   de *Fabriquer ›*, sur la ligne d'une attitude et sur celle d'une direction. C'est la case qui
+   décide de l'image de départ proposée : une porte ouverte ailleurs aurait ouvert l'écran sans
+   savoir ce qu'on anime. Changer d'image reste possible d'un clic, depuis l'écran.
+2. **Un lot va jusqu'à huit clips, et c'est une borne de sécurité, pas la règle des huit tirages.**
+   Celle-là parle de ce qu'il faut voir avant de juger un modèle ; celle-ci d'un geste qui paie N
+   fois. À 0,067 $ le clip, huit font un peu plus d'un demi-dollar, et c'est le plus gros geste
+   d'un coup que le produit accepte.
 
 **Bloquée par** — `A6`, pour le mouvement que l'écran fait choisir. **Elle bloque tout le reste de
-la version.**
+la version**, et elle ne bloque plus rien.
 
 ---
 

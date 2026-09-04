@@ -281,7 +281,7 @@ def test_l_apercu_brut_montre_les_pixels_du_modele(client_video):
     identifiant = client_video.post(
         "/api/clips",
         json={"modele": MELE.identifiant, "prompt": "marche", "asset": sprite},
-    ).json()["identifiant"]
+    ).json()["clips"][0]["identifiant"]
 
     reponse = client_video.get(f"/api/clips/{identifiant}/frames/0")
     assert reponse.status_code == 200

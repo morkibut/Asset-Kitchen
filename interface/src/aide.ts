@@ -1425,6 +1425,62 @@ export const AIDE: Record<string, Explication> = {
     long: "Douze est le compromis du pixel art : au-dessous le pas saccade, au-dessus tu paies des images que l'œil ne distingue plus à cette taille. Les livrés s'en écartent quand le mouvement le demande — le repos à huit, la course à quatorze.",
   },
 
+  // ── Commander un clip (A9) ────────────────────────────────────────────────
+  //
+  // Rangées dans l'établi, parce que c'est de là qu'on ouvre l'écran : *un
+  // lieu, pas un thème*. Le mouvement, lui, reste dans les réglages — on
+  // l'écrit là-bas, on le choisit ici.
+
+  "clip.depart": {
+    nom: "L'image de départ",
+    ou: "etabli",
+    quoi: "La première image du clip — celle que le modèle va animer, et il n'en prend qu'une.",
+    change:
+      "Tout ce à quoi le clip ressemblera. **Elle est obligatoire et ne cède jamais** : sans elle il n'y a pas d'appel du tout, là où les images jointes d'une génération ordinaire s'effacent quand le modèle n'a plus de place. Le clip n'hérite de rien d'autre — ni des textes du jeu, ni de son ambiance.",
+    origine: "l'atelier propose · tu changes d'un clic",
+    long: "L'atelier propose **l'image de la case visée** quand elle en porte une : l'attitude et l'angle ont déjà été validés en fixe, et le clip les suit. Sinon il propose le **portrait** du personnage — la première image qu'il montre de lui, celle que tu as promue en référence, sinon le corps retenu de sa première attitude.\n\nCe n'est qu'une proposition : aucun automatisme ne sait tout, et n'importe quelle image de ta bibliothèque la remplace d'un clic.\n\nCe qui part n'est pas le sprite tel quel : il est agrandi sur la toile du format demandé. Un sprite de soixante-quatre pixels envoyé à un modèle qui rend du 480 lui demanderait d'inventer tout ce qu'il ne voit pas.",
+  },
+
+  "clip.format": {
+    nom: "Le format du clip",
+    ou: "etabli",
+    quoi: "Sa durée, ses proportions et sa taille — les trois choses qui décident du prix.",
+    change:
+      "Le prix, à chaque cran. Un modèle vidéo se facture au **jeton vidéo** — hauteur × largeur × images par seconde × durée —, donc la surface compte autant que le temps : le carré coûte près de moitié moins que le format large, et il cadre mieux un personnage seul.",
+    origine: "toi · 5 secondes, carré, petit format",
+    long: "Cinq secondes plutôt que quatre, et c'est mesuré : quatre suffisent à un cycle de marche seul, mais le geste de la version est d'en tirer **plusieurs animations dans un clip**, et il faut de la place pour les transitions entre elles.\n\nUn modèle qui ne sait pas faire la durée que tu demandes se grise avec sa raison plutôt que de disparaître : ce qui est impossible se voit avant d'être choisi.",
+  },
+
+  "clip.lot": {
+    nom: "Combien de clips",
+    ou: "etabli",
+    quoi: "Le nombre de clips que ce geste lance d'un coup. Un est le défaut.",
+    change:
+      "Le prix, multiplié d'autant, et le bouton l'annonce avant. **Chacun est une dépense à part** : quatre clips coûtent quatre fois, et l'écran des dépenses le dira quatre fois — y compris pour ceux que tu jetteras.",
+    origine: "toi · un clip",
+    long: "Un même texte ne rend jamais deux fois le même clip. En lancer plusieurs et n'en garder qu'un est le geste ordinaire ici, et il tient en un clic : *garder celui-ci* écarte les autres du même lot.\n\nLes clips écartés quittent la galerie, **jamais le journal**. C'est le premier invariant du produit, et il compte le plus ici : un lot de quatre coûte quatre fois, et n'en voir plus qu'un au journal ferait croire qu'on a payé une fois.\n\nRien n'expire : un clip écarté est toujours là, et *les rendre* marche quand tu veux — contrairement à une image jetée, dont les octets s'effacent après quelques secondes.",
+  },
+
+  "clip.prix": {
+    nom: "Le prix du clip",
+    ou: "etabli",
+    quoi: "Ce que le clip devrait coûter, avec la formule qui produit ce chiffre.",
+    change:
+      "Rien à ce qui part. C'est une **borne haute** affichée avant l'envoi : ce qui s'enregistre après est le montant que le fournisseur a facturé, et l'écart mesuré sur treize clips va de quatre pour cent de plus à cinquante-huit pour cent de moins.",
+    origine: "relu chez le fournisseur, à chaque changement de format",
+    long: "La formule est là parce qu'un prix vidéo se **calcule** au lieu de se lire dans une grille : sans elle, le montant serait à croire sur parole. Elle dit le tarif, la surface, la cadence facturée et la durée — de quoi refaire le calcul et le vérifier sur la page du modèle.\n\nUn modèle dont le tarif n'a pas pu être relu est grisé avec sa raison. Ce n'est pas du zèle : un clip se fait attendre deux minutes, et proposer sans savoir ce qu'on engage serait proposer à l'aveugle.",
+  },
+
+  "clip.mesure": {
+    nom: "Ce qui est mesuré",
+    ou: "etabli",
+    quoi: "Ce que ce dépôt-ci a observé du modèle en payant ses propres essais, et rien d'autre.",
+    change:
+      "Rien à ce qui part. C'est ce qui te permet de choisir en sachant sur quoi tu t'appuies — **aucun modèle proposé n'atteint la barre des huit tirages** : ce sont des propositions étayées, pas un arbitrage clos.",
+    origine: "les essais payés du dépôt · vide quand rien n'a été mesuré",
+    long: "Aucun fournisseur ne déclare ça, et un écran qui proposerait deux modèles sans le dire ferait passer une hypothèse pour un résultat.\n\nVide veut dire *on n'en sait rien*, et l'écran l'écrit plutôt que de laisser croire qu'un modèle proposé a été éprouvé.",
+  },
+
   "agent.plafond": {
     nom: "Plafond de la séance",
     ou: "reglages",

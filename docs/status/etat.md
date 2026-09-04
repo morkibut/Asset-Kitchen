@@ -11,6 +11,82 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A9 — commander un clip, et l'attendre — 4 septembre 2026
+
+**Le serveur savait commander un clip depuis la veille, et il ne servait à rien.** La tranche
+avait été ouverte en écrivant d'abord la mécanique — comment on demande une vidéo, comment on
+l'attend, comment on la range — en remettant l'écran à plus tard. C'était une exception assumée,
+et elle a coûté exactement ce qu'une exception de ce genre coûte : **trois défauts que cinquante
+essais n'ont pas vus, et que la première minute passée devant un vrai atelier a montrés tous les
+trois**.
+
+> ### ⚠️ Ce qui rendait ces trois-là invisibles est une seule chose
+>
+> Chaque essai monte un atelier **neuf**, par un client d'essai, fait son geste, et s'arrête.
+> **Aucun ne rouvre un atelier déjà rempli. Aucun ne recharge une page.** Or les deux défauts
+> graves vivaient précisément dans *la deuxième fois* :
+>
+> - **L'atelier ne redémarrait plus du tout.** À l'ouverture, l'atelier repasse sur ce qui est
+>   arrivé pendant qu'il dormait et fabrique les images qui manquent. Il tombait sur trois clips
+>   payés, tentait de découper un fichier vidéo comme une image, et s'arrêtait là. Pas une tuile
+>   cassée dans un coin : **plus d'atelier**, plus rien, sur un dépôt dont tous les essais
+>   passaient.
+> - **La galerie était vide** alors que trois clips payés dormaient sur le disque. Un clip est
+>   *réussi* dès qu'il arrive, donc il quittait la file des choses en cours — et rien ne prenait
+>   le relais, puisqu'un clip n'entre jamais en bibliothèque. Il disparaissait en arrivant.
+>   **C'est mot pour mot le défaut réparé pour la planche** quelques tranches plus tôt : la même
+>   chose ne se range pas au même endroit selon qu'elle est en route ou arrivée.
+>
+> Le troisième était moins grave et plus gênant à voir : la ligne qui explique le prix — celle
+> dont tout l'objet est de rendre un montant vérifiable de tête — s'écrivait en notation
+> savante, avec un point à la place de la virgule et un compte de milliers collé d'un bloc.
+> **Un nombre qu'on n'arrive pas à lire ne vérifie rien.**
+>
+> *La leçon ne porte pas sur les clips. Elle porte sur l'ordre : écrire un serveur sans son
+> écran, c'est écrire sans le seul endroit d'où l'on voit ce qu'il fait.* Le reste de la version
+> ne recommence pas.
+
+**Le produit avait une règle qui disait *deux lieux seulement d'où l'argent part* ; ils sont
+trois.** On ne commande pas une animation depuis la barre de saisie qui sert à faire des images :
+il n'y a là ni durée, ni format, ni image de départ obligatoire, et les entasser dans une barre
+qui marche aurait abîmé la barre pour loger l'exception. **Ce qui protégeait vraiment l'auteur
+tient toujours** : l'argent ne part jamais sans un écran qui recouvre tout le produit, montre ce
+qui va partir, et porte le montant sur son bouton. Ce qui passe de deux à trois est un compte,
+pas une garantie — et c'était le bon moment pour le dire à voix haute plutôt que de laisser la
+règle vieillir en silence.
+
+**La porte de cet écran est une case de l'établi, et de là seulement.** *Animer ›* est posé à
+côté de *Fabriquer ›*, sur la ligne d'une attitude et sur celle d'une direction. La raison est
+courte : **c'est la case qui sait ce qu'on anime**, donc c'est elle qui peut proposer une image
+de départ juste. Une porte ouverte ailleurs — un bouton dans la galerie, une entrée de menu —
+aurait ouvert l'écran sans savoir de quoi il parle, et aurait rendu obligatoire un choix que la
+case rend automatique. Changer d'image reste possible d'un clic, depuis l'écran.
+
+**La notion de *portrait* n'existait nulle part dans le produit, et elle n'a pas été inventée
+comme objet.** Il fallait bien une image de repli quand la case visée est vide ; il n'a pas
+fallu pour autant un nouveau champ, une nouvelle case à cocher, un nouveau statut à tenir à
+jour. La règle est écrite une fois, en toutes lettres, à l'endroit qui répond à la question —
+la première image mise en avant du personnage, sinon le corps retenu de sa première attitude.
+**Une règle nommée est moins chère qu'un objet nommé** : elle ne se désynchronise de rien.
+
+**Un lot de clips porte une marque écrite, pas une marque devinée.** Un geste peut lancer
+jusqu'à huit clips d'un coup ; quand l'auteur en garde un, les autres partent. Il aurait été
+tentant de reconnaître les frères par leur texte et leur heure — c'est gratuit et ça marche
+presque toujours. *Presque* : le jour où l'auteur relance deux fois la même chose, ça jette la
+mauvaise vidéo payée. Chaque clip porte donc le nom du geste qui l'a lancé, et rien n'est
+déduit. ⚠️ La borne à huit est **une borne de sécurité, pas la règle des huit tirages** — celle-là
+dit ce qu'il faut voir avant de juger un modèle, celle-ci dit ce qu'un seul clic a le droit de
+payer.
+
+**Et un clip écarté n'expire pas.** Une image supprimée se rattrape pendant quelques secondes,
+puis c'est fini ; un clip écarté, lui, reste là indéfiniment — il quitte la galerie, il ne quitte
+ni le disque ni le journal des dépenses. Le bandeau qui propose de les rendre n'a donc **aucun
+compte à rebours**, et le code dit pourquoi : un compte à rebours annoncerait une échéance qui
+n'existe pas. On ne fait pas payer à l'auteur la peur de perdre quelque chose qu'on ne jette
+jamais.
+
+---
+
 ## A2 — le cadre qui ne dérive pas — 4 septembre 2026
 
 **Le commentaire du code disait l'inverse de ce que la ligne faisait.** Il affirmait que la case

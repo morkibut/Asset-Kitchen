@@ -54,6 +54,8 @@ export function Tuile({
   onOuvrir,
   onRelancer,
   onChoisir,
+  autresDuLot = 0,
+  onGarderLeClip,
 }: {
   entree: Entree
   selectionnee: boolean
@@ -73,6 +75,13 @@ export function Tuile({
   /** **Ouvrir le choix d'une planche qui attend** (R6). Il ne dépense rien —
    *  c'est la seule chose à savoir avant de le confier à une tuile. */
   onChoisir: (generation: string, rang: number) => void
+  /** Combien d'autres clips sont encore montrés du **même geste** (A9). Zéro
+   *  quand le clip est parti seul, et le bouton *garder celui-ci* ne paraît
+   *  alors pas : il n'y aurait rien à jeter. */
+  autresDuLot?: number
+  /** Garder ce clip-là et jeter les autres du lot. **Un seul geste, et il se
+   *  défait** ; ce qui a été payé reste au journal. */
+  onGarderLeClip?: (generation: string) => void
 }) {
   const asset = entree.sorte === "asset" ? entree.asset : null
   const emplacement = entree.sorte === "emplacement" ? entree.emplacement : null
@@ -88,6 +97,17 @@ export function Tuile({
    *  que l'auteur n'a pas dit ce qu'il gardait. Elle porte donc l'image de la
    *  planche — ce qu'on a acheté se voit — et un geste, pas une raison. */
   const attend = lot?.pliage?.attend_un_choix === true
+  /** **Un clip, et il est arrivé** (A9). Ni raté ni en cours : payé, arrivé, et
+   *  il garde sa place parce qu'aucun asset ne viendra le remplacer — un clip
+   *  n'entre pas en bibliothèque, ce n'est pas une image.
+   *
+   *  Ce qu'il montre est **une image prélevée dedans**, jamais une tuile en
+   *  erreur : c'est le critère de la tranche, en toutes lettres. Quand
+   *  l'extraction n'a pas pu se faire — le décodeur manque —, la tuile dit
+   *  pourquoi et reste une tuile ordinaire. Le clip, lui, reste payé. */
+  const clip = lot?.clip ?? null
+  const clipArrive = clip !== null && emplacement?.statut === "reussie"
+  const clipEnImages = clipArrive && clip.images > 0
 
   const titre =
     entree.sorte === "asset" ? entree.asset.label : entree.generation.demande.prompt
@@ -108,9 +128,13 @@ export function Tuile({
   // le pointeur vise, et c'est bien le fichier entier qu'Espace doit ouvrir.
   const source = asset
     ? vignetteAsset(asset, cote)
-    : attend && lot && emplacement
-      ? api.image(lot.identifiant, emplacement.rang)
-      : null
+    : clipEnImages && lot
+      ? // La première image du clip. **Prélevée, pas décodée à la demande** :
+        // elle est sur le disque depuis l'arrivée.
+        api.imageDuClip(lot.identifiant, 0)
+      : attend && lot && emplacement
+        ? api.image(lot.identifiant, emplacement.rang)
+        : null
   const visee = useVisee(sujet)
 
   /** La tuile est-elle à la taille de repos ? **Mesuré, pas estimé** : à 1× la
@@ -192,7 +216,15 @@ export function Tuile({
         <span className="truncate text-[11.5px] text-texte" title={titre}>
           {titre}
         </span>
-        {attend && lot && emplacement ? (
+        {clipArrive && lot ? (
+          <CeQueLeClipDit
+            generation={lot}
+            autresDuLot={autresDuLot}
+            onGarder={
+              onGarderLeClip ? () => onGarderLeClip(lot.identifiant) : undefined
+            }
+          />
+        ) : attend && lot && emplacement ? (
           // **Le geste, jamais une raison.** Une planche qui attend n'a rien
           // raté : ce qui lui manque est une décision, et le mot du bouton est
           // celui de la décision — pas « voir », qui laisserait croire qu'on
@@ -219,6 +251,68 @@ export function Tuile({
         )}
       </figcaption>
     </figure>
+  )
+}
+
+/** Ce qu'un clip arrivé dit sous son image (A9).
+ *
+ *  **Trois choses, et pas une de plus** — c'est la même règle que pour un asset,
+ *  et un clip n'a pas droit à plus de place qu'une image :
+ *
+ *  1. **ce qu'il porte** : combien d'images, à quelle cadence — mesurées sur le
+ *     fichier, jamais déduites de ce qui a été demandé ;
+ *  2. **ce qu'il a coûté**, et ce montant est celui de la facture, pas
+ *     l'estimation lue avant l'envoi ;
+ *  3. **le geste**, quand il y en a un : garder celui-ci et jeter les autres du
+ *     même lot.
+ *
+ *  Quand les images n'ont pas pu être tirées, la première ligne dit pourquoi.
+ *  **Ce n'est pas un échec** : le clip est là, il est payé, et il se découpera
+ *  le jour où ce qui manque sera installé. */
+function CeQueLeClipDit({
+  generation,
+  autresDuLot,
+  onGarder,
+}: {
+  generation: Generation
+  autresDuLot: number
+  onGarder?: () => void
+}) {
+  const clip = generation.clip
+  if (!clip) return null
+  return (
+    <>
+      <div className="mesure flex min-w-0 items-center gap-1.5 text-[11px] text-texte-2">
+        <span className="min-w-0 truncate">
+          {clip.images > 0
+            ? `${clip.images} images · ${clip.cadence.toFixed(0)} i/s`
+            : (clip.extraction_refus ?? "images non tirées")}
+        </span>
+        <span aria-hidden className="shrink-0">
+          ·
+        </span>
+        {/* **Le montant de la facture, pas l'estimation.** Le mot qui va avec
+            vient du serveur, écrit une fois : deux rédactions de la même
+            nuance finiraient par dire deux choses. */}
+        <span className="shrink-0" title={clip.montant_dit}>
+          {depense(generation.consomme, generation.unite)}
+        </span>
+      </div>
+      {/* **Garder celui-ci, et jeter les autres du même geste.** Il ne paraît
+          que s'il y a d'autres clips à jeter : proposer de jeter zéro clip
+          serait proposer un geste qui ne fait rien. */}
+      {autresDuLot > 0 && onGarder && (
+        <button
+          type="button"
+          onClick={onGarder}
+          title="les autres quittent la galerie et restent au journal des dépenses"
+          className="mesure self-start text-[9.5px] text-signal hover:text-signal-clair"
+        >
+          Garder celui-ci · jeter {autresDuLot} autre
+          {autresDuLot > 1 ? "s" : ""}
+        </button>
+      )}
+    </>
   )
 }
 
