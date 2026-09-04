@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. Les quatre tranches qui restent — `A13`, `A4`, `A5`, `A7` — sont libres | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6`, `A2`, `A9`, `A10`, `A11` et `A12` closes le jour de l'ouverture. **`A10` était le cœur de la version** : un clip payé devient plusieurs bandes utilisables, et l'écran dit ce que chacune a coûté. **`A11` en amène le prix à zéro** : le même clip se fabrique sur la carte de la maison, et l'écran annonce un temps là où il annonçait un montant — c'est ce qui rend `A12` tenable, puisqu'il faut couvrir une matrice entière. **`A12` est l'objectif de la version, et il est atteint** : la matrice se lit sur deux calques, chacun avec sa jauge, et une animation manquante ne se cache plus derrière une image présente. **`A13` fait sortir la version de l'animation** : une image de la pellicule se met de côté et entre en bibliothèque avec sa filiation. Les trois tranches qui restent — `A4`, `A5`, `A7` — sont libres | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -254,6 +254,7 @@ V3    A6  le mouvement, dit une fois pour toutes
        ├──► A12  toutes les poses, en animation   ← l'objectif de la version
        │         ← close le 4 septembre 2026
        ├──► A13  l'image attrapée au vol
+       │         ← close le 4 septembre 2026
        ├──► A4   la bande sort de l'atelier
        ├──► A5   le contour qui ne bout pas       (D2 l'attendait, elle est close)
        └──► A7   reprendre une image sans refaire la bande
@@ -3403,7 +3404,7 @@ manquait était de la porter dans la case, et de la montrer.
 
 ---
 
-### A13 · L'image attrapée au vol
+### A13 · L'image attrapée au vol — ✅ **livrée le 4 septembre 2026**
 *4 US (487–490)* · **la version rend service au-delà de l'animation**
 
 **Ce qu'on livre.** Sur l'écran de montage, un second geste sur une image de la pellicule la
@@ -3435,16 +3436,51 @@ réponse viendra de l'usage, et elle est notée en fin de document.
 
 **Critères d'acceptation**
 
-- [ ] Un second geste sur une image de la pellicule la met de côté, **sans quitter l'écran de montage** et sans toucher aux images retenues pour la bande
-- [ ] L'image mise de côté **entre en bibliothèque** avec sa filiation : de quel clip, quelle image, quelle génération l'a payé
-- [ ] Elle passe par **la chaîne du jeu**, et sa recette se reprend après coup comme celle de n'importe quelle image
-- [ ] **L'image brute est gardée** : le traitement reste non destructif
-- [ ] Un second geste facultatif l'affecte à une case du plan de poses ou à un objet — jamais demandé au moment du prélèvement
-- [ ] Prélever plusieurs images d'affilée ne demande pas de recommencer le geste depuis le début
-- [ ] Rien ici ne dépense, et la filiation dit que le clip, lui, a été payé
-- [ ] Tout fonctionne réseau coupé
+- [x] Un second geste sur une image de la pellicule la met de côté, **sans quitter l'écran de montage** et sans toucher aux images retenues pour la bande
+- [x] L'image mise de côté **entre en bibliothèque** avec sa filiation : de quel clip, quelle image, quelle génération l'a payé
+- [x] Elle passe par **la chaîne du jeu**, et sa recette se reprend après coup comme celle de n'importe quelle image
+- [x] **L'image brute est gardée** : le traitement reste non destructif
+- [x] Un second geste facultatif l'affecte à une case du plan de poses ou à un objet — jamais demandé au moment du prélèvement
+- [x] Prélever plusieurs images d'affilée ne demande pas de recommencer le geste depuis le début
+- [x] Rien ici ne dépense, et la filiation dit que le clip, lui, a été payé
+- [x] Tout fonctionne réseau coupé
 
-**Bloquée par** — `A10`, dont il reprend la pellicule et la loupe.
+**Ce qui a été livré, le 4 septembre 2026.** Quatorze essais côté atelier, sept côté écran, et le
+pronostic du plan s'est vérifié : **il ne manquait qu'une destination**. Le geste tient en une
+route et un bouton ; tout le reste — les images extraites, la loupe, la chaîne du jeu — existait
+depuis `A10` et `T2`.
+
+| Ce qui est arrivé | Où | Ce que ça tient |
+|---|---|---|
+| Le mot d'une image prélevée | `atelier/services/generation.py` § `PRELEVEMENT` | un « modèle » à elle, comme `import` en a un. Même nature — elle n'a appelé personne, elle ne se relance pas —, et pourtant pas le même : ⚠️ **une image prélevée vient de quelque chose qui a été payé**, et écrire *importée* dessus ferait perdre ce que le produit sait d'elle |
+| La filiation | `importer(..., filiation=…)` | de quel clip, quelle image, **quelle génération l'a payée**, et le mouvement qui l'a demandée. Écrite dans la demande, donc dans le `generation.json` : elle survit à l'effacement de l'index, comme tout le reste de ce qu'on sait d'une entrée |
+| Ce qu'on sait du clip qu'on prélève | `atelier/services/montage.py` § `prelevement` | ⚠️ **il prépare, il ne fait pas entrer.** Donner au montage le service qui fait naître les images y aurait fait rentrer le catalogue et le fournisseur — et c'est cette privation qui autorise la phrase du pied de son écran, *rien ici ne dépense* |
+| La route qui compose | `POST /clips/{id}/frames/{n}/pick` | le montage sait *quoi*, les générations savent *faire entrer*. Une route assemble ; c'est très exactement son travail, comme le tableau de bord d'un personnage |
+| La loupe qui porte un geste | `interface/src/composants/Montage.tsx` § `Pellicule` | ⚠️ **elle ne s'efface plus quand le pointeur la quitte.** À sept pixels de large, une cellule du ruban ne porte pas deux gestes qu'on puisse viser ; la loupe montre déjà *cette image-là* en grand. Restait qu'elle disparaissait au moment précis où l'on partait cliquer dessus |
+| La marque de ce qui est pris | `data-mise-de-cote` | un trait en pied de cellule, et non un second encadré : l'encadré dit *retenue pour la bande*, et **une image peut être les deux à la fois** — on garde le contact pour la bande et l'on prélève la même image comme pose fixe |
+| L'atelier jetable | `essais/atelier_jetable_a13.py` | un vrai clip avec de vraies images sur le disque — celui d'`A10`, écrit à la main image par image —, sur un dossier temporaire. **Rien n'a été payé** : l'animateur est un double qui facture zéro |
+
+> ⚠️ **Une surface qui porte un geste ne peut pas s'effacer au moment où l'on va le faire.** La
+> loupe montrait l'image survolée et disparaissait dès que le pointeur quittait le ruban — parfait
+> tant qu'elle ne faisait que montrer. Lui donner un bouton l'a rendue inatteignable : on vise, on
+> part cliquer, elle n'est plus là. La correction tient en une ligne — le survol ne se relâche
+> plus en sortant — et le clavier reprend la main en le remettant à rien, de sorte que la loupe
+> suit toujours *le dernier des deux qui a parlé*.
+
+**Trois choix faits seuls, et voici pourquoi.**
+
+1. **Le geste vit sur la loupe, pas sur la cellule.** Une cellule fait sept pixels de large : lui
+   demander de distinguer deux gestes reviendrait à viser au pixel près cent vingt fois de suite.
+   La loupe, elle, montre déjà l'image dont on parle — c'est la surface qui sait de quoi il est
+   question.
+2. **Un doublon est signalé, jamais refusé.** C'est la forme d'un import, reprise telle quelle :
+   le produit dit ce dont il est certain — les mêmes octets, deux fois — et l'auteur décide. Le
+   geste se répète en glissant le long d'un clip, et un refus l'arrêterait pour une information.
+3. **L'image prélevée passe par la chaîne du jeu**, contrairement à un fichier déposé à la main
+   qui entre « telle quelle ». Une image tirée d'un clip du jeu est une image *de ce jeu-là* ;
+   la rendre brute obligerait à la retraiter juste après, à la main, et pour tout le monde.
+
+**Bloquée par** — `A10`, dont il reprend la pellicule et la loupe. **Elle ne bloque rien.**
 
 ---
 
@@ -4512,9 +4548,12 @@ pas cher au clip, il coûte de **devoir compter**.
 assez fidèle au personnage pour tenir comme pose officielle, là où l'animation pardonne le flou
 parce que ça défile ? C'est la question que le banc animé n'a pas eu à poser. **Aucune tranche du
 plan ne présuppose la réponse**, et l'ouvrir demande que le moteur de la maison existe et ait
-servi. **Sa moitié utilisable est devenue une tranche** : `A13` donne le geste pour attraper une
-image d'un clip et la faire entrer en bibliothèque. Ce qui reste ouvert n'est plus le geste, c'est
-la qualité — et c'est l'usage d'`A13` qui y répondra.
+servi. **Sa moitié utilisable est devenue une tranche, et elle est livrée** : depuis le
+4 septembre 2026, `A13` donne le geste pour attraper une image d'un clip et la faire entrer en
+bibliothèque, traitée par la chaîne du jeu et avec sa filiation. ⚠️ **Ce qui reste ouvert n'est
+plus le geste, c'est la qualité** — une case tirée d'une vidéo tient-elle comme pose officielle —,
+et la tranche ne l'a pas tranchée : elle s'est construite sur un clip d'essai écrit à la main,
+sans une seconde de carte graphique. La réponse viendra de l'usage.
 
 **Et seize questions de la V2.1 restent ouvertes**, chacune avec ce qui manque pour y répondre
 et l'étape où elle se pose : `docs/v21-arbitrages.md` § B. Aucune n'empêche d'ouvrir l'étape qui

@@ -468,6 +468,20 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               être animée : une animation porte déjà ses images dedans.
             </P>
             <P>
+              Sur l'écran qui découpe un clip, <B>une image se met de côté</B> : survole le ruban,
+              la loupe la montre en grand, et <C>Mettre de côté ›</C> la fait entrer en
+              bibliothèque. Ça ne touche pas aux images que tu retiens pour l'animation — tu peux
+              prélever pendant que tu découpes. Une pose fixe, un objet, un détail de décor : ce
+              que tu en fais n'appartient plus à l'animation.
+            </P>
+            <P>
+              Elle arrive <B>traitée comme le reste</B> — détourage, grille, palette du jeu —, et
+              sa recette se reprend après coup comme celle de n'importe quelle image ; l'image
+              brute est toujours là. Elle ne va dans <B>aucune case</B> : la ranger est un second
+              geste, quand tu veux, et c'est le geste ordinaire. Sa fiche dit d'où elle vient — le
+              clip, lui, a été payé une fois.
+            </P>
+            <P>
               La découpe, elle, n'est plus un lieu : c'est une table parmi les autres, sur la
               barre des tables d'une image, à droite du trait — la première des deux fabriques.
               Les tables ne se visitent pas non plus : elles s'ouvrent sur une image, et ce

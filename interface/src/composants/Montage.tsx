@@ -36,6 +36,7 @@ import {
   api,
   dollars,
   type ApercuDeBande,
+  type Asset,
   type Bande,
   type Montage,
   type Mouvement,
@@ -108,6 +109,19 @@ export function EcranMontage({
   /** L'image que le clavier désigne. Le geste se répète trois fois par clip :
    *  il doit se faire au clavier autant qu'à la souris. */
   const [curseur, setCurseur] = useState(0)
+  /** **Les images déjà mises de côté** (A13), pour que prélever plusieurs fois
+   *  d'affilée se lise sur la pellicule au lieu de se retenir de tête. Il vit
+   *  dans l'écran et nulle part ailleurs : c'est ce qu'on a fait *pendant cette
+   *  visite*, et le relire au serveur demanderait de comparer des octets. */
+  const [prelevees, setPrelevees] = useState<number[]>([])
+  /** Ce que le dernier prélèvement a donné — l'image entrée, ou celle qui
+   *  portait déjà les mêmes octets. **Une phrase, pas un bandeau** : le geste
+   *  est court et se répète, et un bandeau à chasser le rendrait long. */
+  const [misDeCote, setMisDeCote] = useState<{
+    numero: number
+    asset: Asset | null
+    doublon: Asset | null
+  } | null>(null)
 
   // **Échap referme**, comme partout ailleurs — et ici il ne renonce à rien :
   // les bandes gardées sont déjà sur le disque.
@@ -237,8 +251,14 @@ export function EcranMontage({
       const cible = evenement.target as HTMLElement | null
       if (cible && ["INPUT", "TEXTAREA", "SELECT"].includes(cible.tagName)) return
       if (evenement.key === "ArrowRight") {
+        // **Le clavier reprend la main sur la souris** (A13) : la loupe suit ce
+        // qu'on regarde, et ce qu'on regarde est le dernier des deux qui a
+        // parlé. Sans ça, un survol laissé derrière figerait la loupe pendant
+        // que les flèches déplacent le curseur ailleurs.
+        setSurvol(null)
         setCurseur((c) => Math.min(dernier, c + 1))
       } else if (evenement.key === "ArrowLeft") {
+        setSurvol(null)
         setCurseur((c) => Math.max(0, c - 1))
       } else if (evenement.key === " ") {
         evenement.preventDefault()
@@ -251,6 +271,32 @@ export function EcranMontage({
     window.addEventListener("keydown", touche)
     return () => window.removeEventListener("keydown", touche)
   }, [montage, basculer])
+
+  /** **Mettre une image de côté** (A13), et rien de plus.
+   *
+   *  ⚠️ **Elle ne touche pas aux images retenues pour la bande** : les deux
+   *  gestes vivent sur le même écran et sur la même pellicule, et c'est
+   *  précisément pour ça qu'ils ne partagent aucun état. Prélever « pour voir »
+   *  ne doit pas défaire un découpage en cours.
+   *
+   *  **Aucune case n'est visée**, et c'est un critère de la tranche : l'image
+   *  entre en bibliothèque, et l'affecter à une pose ou à un objet est un second
+   *  geste facultatif, par le chemin ordinaire. Poser la question ici
+   *  alourdirait le geste court au moment précis où il doit rester court. */
+  const prelever = async (numero: number) => {
+    setRefus(null)
+    try {
+      const rendu = await api.prelever(clip, numero)
+      setMisDeCote({ numero, ...rendu })
+      setPrelevees((deja) => (deja.includes(numero) ? deja : [...deja, numero]))
+    } catch (erreur) {
+      // Le refus reste **dans cet écran-ci** : le geste est local, et le
+      // remonter au châssis l'afficherait derrière un écran qui le recouvre.
+      setRefus(
+        erreur instanceof Error ? erreur.message : "cette image ne se prélève pas",
+      )
+    }
+  }
 
   const garder = async () => {
     if (!montage || retenues.length === 0) return
@@ -394,11 +440,14 @@ export function EcranMontage({
           retenues={retenues}
           curseur={curseur}
           survol={survol}
+          prelevees={prelevees}
+          misDeCote={misDeCote}
           onSurvol={setSurvol}
           onBasculer={(numero) => {
             setCurseur(numero)
             basculer(numero)
           }}
+          onPrelever={(numero) => void prelever(numero)}
           onEtendue={(debut, fin) => setRetenues(regulier(debut, fin))}
         />
 
@@ -1004,8 +1053,11 @@ function Pellicule({
   retenues,
   curseur,
   survol,
+  prelevees,
+  misDeCote,
   onSurvol,
   onBasculer,
+  onPrelever,
   onEtendue,
 }: {
   clip: string
@@ -1014,8 +1066,18 @@ function Pellicule({
   retenues: number[]
   curseur: number
   survol: number | null
+  /** **Les images déjà mises de côté pendant cette visite** (A13). Marquées sur
+   *  le ruban, parce que prélever plusieurs images d'affilée se fait en glissant
+   *  le long du clip : sans marque, on redemande deux fois la même. */
+  prelevees: number[]
+  /** Ce que le dernier prélèvement a donné. Une phrase sous la loupe, jamais un
+   *  bandeau : le geste est court et se répète. */
+  misDeCote: { numero: number; asset: Asset | null; doublon: Asset | null } | null
   onSurvol: (numero: number | null) => void
   onBasculer: (numero: number) => void
+  /** **Mettre cette image de côté** (A13) — elle entre en bibliothèque, et rien
+   *  de ce qui est retenu pour la bande ne bouge. */
+  onPrelever: (numero: number) => void
   onEtendue: (debut: number, fin: number) => void
 }) {
   const ruban = useRef<HTMLDivElement>(null)
@@ -1023,6 +1085,11 @@ function Pellicule({
   const fin = retenues.length ? Math.max(...retenues) : 0
   const url = api.contactDuClip(clip)
   const facteur = RUBAN / contact.cote
+  // **L'image qu'on regarde** — celle que le pointeur survole, ou celle que le
+  // clavier désigne quand c'est lui qui a parlé en dernier. Un seul nombre, et
+  // c'est ce qui permet à la loupe de porter un geste : elle a toujours une
+  // cible, y compris avant le premier survol.
+  const regarde = survol ?? curseur
 
   const numeroSous = useCallback(
     (x: number) => {
@@ -1062,10 +1129,15 @@ function Pellicule({
 
   return (
     <div className="flex flex-col gap-1.5">
+      {/* ⚠️ **Le survol ne se relâche pas quand le pointeur sort** (A13), et
+          c'est ce qui rend le geste de prélèvement possible : la loupe reste sur
+          la dernière image regardée, et le bouton qui la met de côté est
+          atteignable. Le relâcher faisait disparaître la loupe — donc sa cible —
+          au moment précis où l'on partait cliquer dessus. Le clavier, lui,
+          reprend la main en remettant le survol à rien. */}
       <div
         ref={ruban}
         data-pellicule
-        onMouseLeave={() => onSurvol(null)}
         className="relative flex select-none overflow-hidden rounded-[2px] border border-bord bg-fond-1"
         style={{ height: RUBAN }}
       >
@@ -1073,11 +1145,14 @@ function Pellicule({
           const colonne = numero % contact.colonnes
           const ligne = Math.floor(numero / contact.colonnes)
           const prise = retenues.includes(numero)
+          const misee = prelevees.includes(numero)
           return (
             <button
               key={numero}
               type="button"
-              aria-label={`Image ${numero}${prise ? " — retenue" : ""}`}
+              aria-label={`Image ${numero}${prise ? " — retenue" : ""}${
+                misee ? " — mise de côté" : ""
+              }`}
               aria-pressed={prise}
               // **Une seule cellule dans l'ordre de tabulation : celle du
               // curseur.** Mesuré au navigateur : les cent vingt et une cellules
@@ -1107,9 +1182,24 @@ function Pellicule({
                 // d'erreur, elle ne fait rien.
                 outline: prise ? "1px solid var(--color-signal)" : undefined,
                 outlineOffset: "-1px",
-                opacity: prise ? 1 : 0.55,
+                opacity: prise || misee ? 1 : 0.55,
               }}
-            />
+            >
+              {/* **La marque de ce qui est déjà pris** (A13) — un trait en pied,
+                  et non un second encadré : l'encadré dit *retenue pour la
+                  bande*, et deux encadrés sur la même cellule ne se
+                  distingueraient pas. Une image peut être les deux à la fois, et
+                  c'est un cas ordinaire : on garde le contact pour la bande et
+                  on prélève la même image comme pose fixe. */}
+              {misee && (
+                <span
+                  aria-hidden
+                  data-mise-de-cote={numero}
+                  className="pointer-events-none block h-[2px] w-full bg-ok"
+                  style={{ marginTop: RUBAN - 2 }}
+                />
+              )}
+            </button>
           )
         })}
         {retenues.length > 0 && (
@@ -1147,24 +1237,62 @@ function Pellicule({
       </div>
 
       {/* **La loupe, parce qu'à sept pixels de large on ne sait pas ce qu'on
-          clique.** Elle prend la même planche contact, à sa taille naturelle. */}
-      {survol !== null && (
-        <div className="flex items-center gap-2">
-          <div
-            data-loupe
-            className="rounded-[2px] border border-bord-fort"
-            style={{
-              width: contact.cote,
-              height: contact.cote,
-              backgroundImage: `url(${url})`,
-              backgroundPosition: `-${(survol % contact.colonnes) * contact.cote}px -${
-                Math.floor(survol / contact.colonnes) * contact.cote
-              }px`,
-            }}
-          />
-          <span className="mesure text-[10px] text-texte-3">image {survol}</span>
+          clique.** Elle prend la même planche contact, à sa taille naturelle.
+
+          **Elle ne disparaît plus** (A13) : elle montre la dernière image
+          regardée — au pointeur, ou au clavier quand c'est lui qui a parlé en
+          dernier — et c'est ce qui lui permet de porter un geste. Une loupe qui
+          s'efface au moment où l'on va cliquer dessus n'est pas une surface,
+          c'est un reflet. */}
+      <div className="flex items-center gap-2">
+        <div
+          data-loupe
+          className="shrink-0 rounded-[2px] border border-bord-fort"
+          style={{
+            width: contact.cote,
+            height: contact.cote,
+            backgroundImage: `url(${url})`,
+            backgroundPosition: `-${(regarde % contact.colonnes) * contact.cote}px -${
+              Math.floor(regarde / contact.colonnes) * contact.cote
+            }px`,
+          }}
+        />
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="mesure text-[10px] text-texte-3">image {regarde}</span>
+
+          {/* **Le second geste de la pellicule** (A13), et il est ici plutôt que
+              sur le ruban : à sept pixels de large, une cellule ne porte pas
+              deux gestes qu'on puisse viser. La loupe, elle, montre déjà *cette
+              image-là* en grand — c'est la surface qui sait de quoi elle parle.
+
+              ⚠️ **Il ne touche pas aux images retenues.** On prélève « pour
+              voir » pendant qu'un découpage est en cours, et le découpage ne
+              doit pas s'en apercevoir. */}
+          <button
+            type="button"
+            onClick={() => onPrelever(regarde)}
+            aria-label={`Mettre l'image ${regarde} de côté`}
+            title="elle entre en bibliothèque — rien n'est dépensé, et les images retenues ne bougent pas"
+            className="mesure w-fit px-1 text-[10px] text-signal hover:text-signal-clair"
+          >
+            Mettre de côté ›
+          </button>
+
+          {/* **Ce qui vient d'arriver, en une phrase.** Un bandeau à chasser
+              rendrait long un geste qui se répète ; et le doublon n'est pas un
+              refus — le produit signale ce dont il est certain, les mêmes octets
+              deux fois, et l'auteur décide. */}
+          {misDeCote && (
+            <span className="mesure text-[9.5px] leading-4 text-texte-3">
+              {misDeCote.doublon
+                ? `l'image ${misDeCote.numero} était déjà en bibliothèque — `
+                  + `« ${misDeCote.doublon.label} »`
+                : `l'image ${misDeCote.numero} est en bibliothèque — on la range `
+                  + `quand on veut, dans une case ou sur un objet`}
+            </span>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

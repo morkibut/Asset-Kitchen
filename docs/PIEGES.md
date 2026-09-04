@@ -1359,3 +1359,13 @@ la prochaine réécriture retrouvera.
   regarder la jauge ne pas bouger. La règle qui en sort : **quand une donnée gagne un second
   lecteur, elle a besoin d'une annonce**, et le moment où on l'ajoute est celui où on écrit le
   second lecteur — jamais plus tard. Payé le 4 septembre 2026.
+
+
+- **Une surface qui ne fait que montrer a le droit de s'effacer ; une surface qui porte un
+  geste, non.** La loupe de l'écran de montage suivait le pointeur et disparaissait dès qu'il
+  quittait le ruban — juste, tant qu'elle ne servait qu'à regarder. Le jour où elle a reçu un
+  bouton, le geste est devenu impossible **sans que rien n'échoue** : on vise une image, on part
+  cliquer, et il n'y a plus de bouton. ⚠️ Ce qui rend le cas durable est qu'aucun essai ne le
+  voit : un essai clique le bouton là où il est, il ne traverse pas l'écran pour aller le
+  chercher. La règle : **le jour où l'on pose un geste sur une surface qui n'en portait pas, on
+  relit d'abord *quand elle disparaît*.** Payé le 4 septembre 2026.

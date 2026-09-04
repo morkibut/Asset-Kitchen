@@ -11,6 +11,74 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A13 — l'image attrapée au vol : la version sort de l'animation — 4 septembre 2026
+
+**Une image de la pellicule se met de côté, et elle entre en bibliothèque comme une image de
+plus.** Une pose fixe, un objet, un détail de décor : ce qu'on en fait n'appartient plus à
+l'animation.
+
+### Le pronostic du plan s'est vérifié : il ne manquait qu'une destination
+
+L'écran de montage avait déjà tout — les images extraites depuis l'arrivée du clip, la loupe parce
+qu'à sept pixels de large on ne sait pas ce qu'on clique, la chaîne du jeu qui tourne sur l'aperçu
+de droite. Le geste tient donc en **une route et un bouton**, et c'est la tranche la moins chère
+de la version.
+
+Ce qui a demandé du soin n'est pas le geste, c'est **où le poser**.
+
+### Une surface qui porte un geste ne peut pas s'effacer au moment où l'on va le faire
+
+⚠️ La loupe montrait l'image survolée et disparaissait dès que le pointeur quittait le ruban.
+Parfait tant qu'elle ne faisait que **montrer** : on regarde, on part, elle n'a plus rien à dire.
+
+Lui donner un bouton l'a rendue inatteignable, et d'une façon qui ne ressemble pas à un défaut :
+on vise une image, on part cliquer le bouton, et il n'y a plus de bouton. Rien n'échoue, rien ne
+lève ; le geste est simplement impossible.
+
+La correction tient en une ligne — le survol ne se relâche plus en sortant du ruban — et le
+clavier reprend la main en le remettant à rien, de sorte que la loupe suit **le dernier des deux
+qui a parlé**. C'est une règle d'interface ordinaire, mais elle n'apparaît qu'au moment où une
+surface passive devient active.
+
+> **La leçon générale** : le jour où l'on pose un geste sur une surface qui n'en portait pas, il
+> faut relire *quand elle disparaît*. Une surface qui ne fait que montrer a le droit de s'effacer
+> au moindre mouvement ; une surface qui porte un geste, non.
+
+### Pourquoi le geste n'est pas sur la cellule du ruban
+
+Une cellule fait sept pixels de large. Lui demander de distinguer deux gestes — *prendre pour la
+bande* et *mettre de côté* — reviendrait à viser au pixel près, cent vingt fois de suite, sur un
+écran dont la loupe existe précisément parce qu'on n'y voit rien. La loupe, elle, montre déjà
+l'image dont on parle : c'est la surface qui sait de quoi il est question.
+
+Et **une image peut être les deux à la fois** : on garde le contact pour la bande *et* on prélève
+la même image comme pose fixe. C'est pour ça que la marque du prélèvement est un trait en pied de
+cellule et non un second encadré — deux encadrés sur la même cellule ne se distingueraient pas.
+
+### Une image prélevée n'est pas une image importée
+
+Les deux n'ont appelé personne et ne se relancent pas. Mais une image importée est arrivée d'un
+disque, et **une image prélevée vient de quelque chose qui a été payé**. Elle porte donc un
+« modèle » à elle — `clip` —, et une filiation qui nomme le clip, l'image, la génération qui l'a
+payée et le mouvement demandé.
+
+La filiation est écrite **dans la demande de sa génération**, donc dans le `generation.json` du
+disque : elle survit à l'effacement de l'index, comme tout le reste de ce qu'on sait d'une entrée.
+Sans elle, rien ne pourrait dire ensuite d'où l'image sort.
+
+### Qui prépare, et qui fait entrer
+
+⚠️ Le service de montage **prépare** un prélèvement — les octets, le nom, la taille à laquelle
+l'espèce du personnage vit dans ce jeu, la filiation — et il ne le fait pas entrer. Lui donner le
+service qui fait naître les images y aurait fait rentrer le catalogue et le fournisseur par la
+porte de derrière, et **c'est cette privation qui autorise la phrase du pied de son écran** :
+*rien ici ne dépense*.
+
+C'est donc la route qui compose, comme celle du tableau de bord d'un personnage. Un routeur
+assemble ; c'est très exactement son travail.
+
+---
+
 ## A12 — la matrice sur deux calques, et l'objectif de la version atteint — 4 septembre 2026
 
 **« Il manque la mort du nain » devient lisible en deux versions : l'image, ou l'animation.** La

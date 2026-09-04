@@ -4057,6 +4057,22 @@ export const api = {
   /** Tout ce que l'écran demande à l'ouverture, en un seul aller-retour. */
   ouvrirLeMontage: (clip: string) => appeler<Montage>(`/montage/${clip}`),
 
+  /** **Mettre une image du clip de côté** (A13) — elle entre en bibliothèque.
+   *
+   *  Rend **la même forme qu'un import** — l'un des deux toujours nul — parce
+   *  que c'est le même geste vu d'un cran plus loin : une image déjà prélevée
+   *  n'est pas un refus, elle est signalée, et `forcer` la fait entrer quand
+   *  même.
+   *
+   *  ⚠️ **Aucune case n'est visée ici**, et c'est un critère de la tranche : on
+   *  prélève « pour voir », et l'affecter à une pose ou à un objet est un second
+   *  geste facultatif, par le chemin ordinaire de n'importe quelle image. */
+  prelever: (clip: string, numero: number, forcer = false) =>
+    appeler<{ asset: Asset | null; doublon: Asset | null }>(
+      `/clips/${clip}/frames/${numero}/pick${forcer ? "?forcer=true" : ""}`,
+      { method: "POST" },
+    ),
+
   /** La bande montée, **sans rien écrire**. La planche revient en `data:` :
    *  un aperçu n'existe nulle part sur le disque, et lui donner une adresse
    *  obligerait à ranger un brouillon — donc à le nettoyer. */

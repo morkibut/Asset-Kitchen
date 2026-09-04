@@ -559,6 +559,50 @@ async def image_du_clip(requete: Request, identifiant: str, numero: int) -> Resp
     )
 
 
+@routeur.post("/clips/{identifiant}/frames/{numero}/pick", status_code=201)
+async def prelever_une_image(
+    requete: Request, identifiant: str, numero: int, forcer: bool = Query(False)
+) -> dict[str, Any]:
+    """Une image du clip **entre en bibliothèque** (A13). Rien n'est dépensé.
+
+    **C'est la route qui compose, pas un service** — comme le tableau de bord
+    d'un personnage, et pour une raison de même nature. Le montage sait ce qu'on
+    prélève : quelle image, à quelle taille son espèce vit dans ce jeu, et de
+    quel clip payé elle sort. Les générations savent faire entrer une image ; ce
+    sont elles, et elles seules, qui en font naître une. Donner l'un à l'autre
+    aurait fait rentrer le catalogue et le fournisseur dans un service qui n'en
+    a aucun — **et c'est cette privation qui autorise la phrase du pied de
+    l'écran de montage**.
+
+    Elle rend la **même forme qu'un import** — `{asset, doublon}`, l'un des deux
+    toujours nul —, parce que c'est le même geste vu d'un cran plus loin : une
+    image déjà prélevée n'est pas un refus, elle est signalée, et rappeler avec
+    `forcer` la fait entrer quand même.
+
+    ⚠️ **Aucune case n'est visée ici**, et c'est un critère de la tranche : on
+    prélève « pour voir », et l'affecter à une pose ou à un objet est un second
+    geste facultatif, qui passe par le même chemin que pour n'importe quelle
+    image. Poser la question au moment du prélèvement alourdirait le geste court
+    au moment précis où il doit rester court.
+    """
+    atelier = _atelier(requete)
+    pris = atelier.montage.prelevement(identifiant, numero)
+    return atelier.generations.importer(
+        pris["octets"],
+        pris["nom"],
+        projet=pris["projet"],
+        # **Elle passe par la chaîne du jeu**, contrairement à un fichier déposé
+        # à la main : une image tirée d'un clip du jeu est une image *de ce
+        # jeu-là*, et la rendre « telle quelle » obligerait à la retraiter à la
+        # main juste après. Le traitement reste non destructif — l'image brute
+        # est gardée, et la recette se reprend après coup.
+        traiter=True,
+        echelle=pris["echelle"],
+        filiation=pris["filiation"],
+        forcer=forcer,
+    )
+
+
 # ── Le montage (A10) ─────────────────────────────────────────────────────────
 #
 # **Le cœur de la version, et aucune de ces routes ne dépense.** Le clip est

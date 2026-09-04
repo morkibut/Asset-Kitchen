@@ -66,6 +66,11 @@ import { MOTEUR, RESUME } from "./Places"
  *  tape pas. Un nom sans deux-points date d'avant la V2.2 et se rend tel quel. */
 export const nomDuModele = (modele: string): string => {
   if (modele === "import") return "importé"
+  // **Un mot à elle** (A13). Les deux n'ont appelé personne et ne se relancent
+  // pas, mais une image importée est arrivée d'un disque et une image prélevée
+  // **vient de quelque chose qui a été payé** — c'est ce que sa filiation garde,
+  // et écrire *importée* dessus ferait perdre ce que le produit sait d'elle.
+  if (modele === "clip") return "prélevée d'un clip"
   if (!modele) return "modèle inconnu"
   const coupe = modele.indexOf(":")
   if (coupe < 0) return modele
@@ -667,15 +672,21 @@ function LeTexteQuiLAFaite({
       </Bloc>
     )
 
-  // **Entrée par import, ou génération disparue** : il n'y a pas de texte, et
-  // le dire vaut mieux qu'un blanc dont on ne sait pas s'il charge encore.
+  // **Entrée par import, prélevée d'un clip, ou génération disparue** : il n'y
+  // a pas de texte, et le dire vaut mieux qu'un blanc dont on ne sait pas s'il
+  // charge encore. Les trois cas ne se ressemblent pas — le dernier est une
+  // perte, les deux premiers sont l'état ordinaire d'une image qui n'a pas été
+  // décrite.
   if (!parti)
     return (
       <Bloc cle="fiche.prompt" titre="Son texte" etat="aucun texte">
         <p className="text-[11px] leading-snug text-texte-2">
           {asset.modele === "import"
             ? "Cette image est entrée par import : personne ne l'a décrite ici."
-            : "Le texte de cette image n'est plus sur le disque — sa génération a été effacée."}
+            : asset.modele === "clip"
+              ? "Cette image a été prélevée d'un clip : c'est le clip qui a été "
+                + "décrit, et c'est lui qui a été payé."
+              : "Le texte de cette image n'est plus sur le disque — sa génération a été effacée."}
         </p>
       </Bloc>
     )

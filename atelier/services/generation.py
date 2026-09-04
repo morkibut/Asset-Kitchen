@@ -124,6 +124,13 @@ FENETRE_MESURES = 8
 # relance pas.
 IMPORT = "import"
 
+# **Et celui d'une image tirée d'un clip** (A13). Même nature qu'un import — elle
+# n'a appelé personne, elle ne se relance pas —, et pourtant un mot à elle : une
+# image prélevée **vient de quelque part qui a été payé**, et sa filiation le
+# dit. Les confondre aurait fait lire *importée* sur une image dont le produit
+# sait exactement de quel clip et de quelle image elle sort.
+PRELEVEMENT = "clip"
+
 
 def role_de_planche(*, cases: int, piece: bool) -> str | None:
     """Laquelle des deux images une planche joint — ou aucune.
@@ -405,6 +412,8 @@ class ServiceGenerations:
         provenance: str = AUTEUR,
         traiter: bool = False,
         forcer: bool = False,
+        echelle: str = "",
+        filiation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Un fichier devient un asset entier (US-82, US-167, US-168).
 
@@ -435,6 +444,21 @@ class ServiceGenerations:
         vivent pas dans deux produits différents. La décision est portée par la
         génération, donc elle survit à l'effacement de l'index.
 
+        **`filiation` fait entrer une image qui vient d'ailleurs dans le dépôt**
+        (A13) : une image tirée d'un clip. Le « modèle » devient alors
+        `PRELEVEMENT` au lieu d'`IMPORT`, et la filiation s'écrit dans la
+        demande — donc **sur le disque**, dans le `generation.json`, où elle
+        survit à l'effacement de l'index comme tout le reste de ce qu'on sait
+        d'une entrée. Sans elle, rien ne pourrait dire ensuite d'où l'image
+        sort : ⚠️ ce n'est pas une décoration, c'est **le seul endroit** qui
+        garde que le clip, lui, a été payé.
+
+        **`echelle` sert au traitement, et il n'y a que là qu'on peut le dire.**
+        Un import ordinaire n'en porte pas — c'est un fichier, il n'a pas
+        d'espèce —, mais une image prélevée sur le clip d'un personnage doit
+        recevoir la taille à laquelle ce personnage-là vit dans ce jeu. Le
+        nommer ici évite que la chaîne la devine.
+
         L'asset naît pour le reste par le même chemin que tous les autres : il
         entre en bibliothèque de lui-même, et se range dans le projet ouvert
         quand on n'en nomme pas. **Aucun appel au fournisseur** — importer
@@ -453,9 +477,10 @@ class ServiceGenerations:
         if projet is None and self._bibliotheque is not None:
             projet = self._bibliotheque.courant
 
+        modele = PRELEVEMENT if filiation else IMPORT
         empreinte = empreinte_de(octets)
         if not forcer:
-            deja = self._deja_importe(projet, empreinte)
+            deja = self._deja_importe(projet, empreinte, modele)
             if deja is not None:
                 return {"asset": None, "doublon": deja.en_json()}
 
@@ -476,21 +501,27 @@ class ServiceGenerations:
         )
         generation = Generation(
             identifiant=identifiant,
-            modele=IMPORT,
+            modele=modele,
             # Le nom du fichier fait le label, par `_label` : c'est le seul
             # texte qu'un import apporte, et c'est celui que l'auteur cherchera
             # dans la grille. `traiter` et l'empreinte y sont aussi : la
             # première décide de ce que l'asset reçoit à sa naissance, la
             # seconde de ce qu'un import suivant reconnaîtra comme doublon — et
             # les deux doivent survivre à l'effacement de l'index.
+            #
+            # **Et la filiation avec elles** (A13), pour la même raison exacte :
+            # d'où l'image sort ne se redevine pas, et le `generation.json` est
+            # ce qui reste quand l'index a été effacé.
             demande={
                 "prompt": nom,
                 "variations": 1,
                 "source": nom,
                 "traiter": traiter,
                 "empreinte": empreinte,
+                **({"echelle": echelle} if echelle else {}),
+                **({"filiation": filiation} if filiation else {}),
             },
-            parametres_resolus={"modele": IMPORT, "source": nom},
+            parametres_resolus={"modele": modele, "source": nom},
             emplacements=[emplacement],
             cree_le=time.time(),
             projet=projet,
@@ -502,8 +533,16 @@ class ServiceGenerations:
             raise ErreurAtelier(f"« {propre} » n'a pas pu entrer en bibliothèque")
         return {"asset": asset.en_json(), "doublon": None}
 
-    def _deja_importe(self, projet: str | None, empreinte: str) -> Asset | None:
+    def _deja_importe(
+        self, projet: str | None, empreinte: str, modele: str = IMPORT
+    ) -> Asset | None:
         """L'asset importé qui porte déjà ces octets-là, ou rien.
+
+        **Le modèle fait partie de la question** (A13) : une image prélevée d'un
+        clip et un fichier déposé à la main sont deux entrées différentes, et
+        chercher l'une chez l'autre aurait fait dire *doublon* à la première
+        image qu'un clip et un import partagent — c'est-à-dire jamais, ou par
+        accident. Chacune cherche chez ses semblables.
 
         **Dans ce projet, et pas dans toute la bibliothèque** — même portée
         qu'au tableau d'inspiration, et l'écran dit « comme au tableau ». Un
@@ -520,7 +559,7 @@ class ServiceGenerations:
         signaler — il n'est plus dans la bibliothèque —, d'où la relecture par
         l'asset et non par la génération seule.
         """
-        for generation in self._base.generations_du_modele(IMPORT, projet):
+        for generation in self._base.generations_du_modele(modele, projet):
             if generation.demande.get("empreinte") != empreinte:
                 continue
             asset = self._assets.lire(f"{generation.identifiant}-0")

@@ -427,6 +427,68 @@ class ServiceMontage:
         self._annoncer(bande, oubliee=True)
         return bande
 
+    # ── Prélever une image du clip (A13) ─────────────────────────────────────
+
+    def prelevement(self, clip: str, numero: int) -> dict[str, Any]:
+        """Tout ce qu'il faut pour faire entrer une image du clip en bibliothèque.
+
+        ⚠️ **Il prépare, il ne fait pas entrer.** C'est délibéré, et c'est ce qui
+        garde vraie la phrase du pied de l'écran de montage — *rien ici ne
+        dépense*. Ce service n'a ni catalogue, ni fournisseur, ni animateur, et
+        lui donner celui qui fait naître les images ferait rentrer tout ça par la
+        porte de derrière. **C'est la route qui compose**, comme celle du
+        tableau de bord d'un personnage : elle demande ici ce qu'on sait du clip,
+        et là-bas de faire entrer.
+
+        Ce qu'il rend, et pourquoi chacun des quatre :
+
+        - `octets` — l'image telle qu'elle est sortie du clip, **jamais
+          retouchée** : la chaîne du jeu s'appliquera par-dessus, et l'image
+          brute reste sur le disque comme pour n'importe quelle entrée.
+        - `nom` — de quoi la reconnaître dans une grille de deux cents vignettes.
+        - `echelle` — le type du personnage du clip, donc **la taille à laquelle
+          son espèce vit dans ce jeu**. Sans lui, une image prélevée sur un nain
+          reviendrait à la taille par défaut du projet.
+        - `filiation` — de quel clip, quelle image, et **quelle génération l'a
+          payé**. C'est le seul endroit qui gardera que cette image-ci ne se
+          relance pas mais qu'elle est venue de quelque chose qui a coûté.
+        """
+        generation = self._clip(clip)
+        toutes = self._images(clip)
+        if not 0 <= int(numero) < len(toutes):
+            raise ErreurAtelier(
+                generation.clip.extraction_refus
+                or f"ce clip ne porte pas d'image numéro {numero} — "
+                f"il en a {len(toutes)}"
+            )
+        type_du_sujet = ""
+        if generation.projet and generation.personnage:
+            try:
+                personnage = self._production.personnage(
+                    generation.projet, generation.personnage
+                )
+                type_du_sujet = personnage.type
+            except ErreurAtelier:
+                type_du_sujet = ""
+        mouvement = str(generation.demande.get("mouvement") or "") or "clip"
+        return {
+            "octets": toutes[int(numero)].read_bytes(),
+            "nom": f"{mouvement} — image {numero}",
+            "projet": generation.projet,
+            "echelle": type_du_sujet,
+            "filiation": {
+                "clip": clip,
+                "image": int(numero),
+                # **Le clip *est* la génération qui l'a payé**, et c'est écrit
+                # ici plutôt que deviné : le jour où un clip naîtra autrement,
+                # cette ligne sera le seul endroit à changer.
+                "generation": clip,
+                "modele": generation.modele,
+                "mouvement": generation.demande.get("mouvement") or "",
+                "personnage": generation.personnage,
+            },
+        }
+
     def planche(self, identifiant: str) -> bytes:
         """La planche de sprites de cette bande, **recalculée si le cache a sauté**.
 

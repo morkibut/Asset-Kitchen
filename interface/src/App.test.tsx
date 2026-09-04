@@ -1301,6 +1301,11 @@ function serveurDouble(options: {
    *  rend entier, comme le vrai serveur : l'écran s'ouvre en tournant déjà, et
    *  quatre appels séparés feraient quatre états d'attente pour un seul geste. */
   montage?: Montage
+  /** **Une image du clip déjà mise de côté** (A13), par son numéro. Le serveur
+   *  la signale comme doublon au lieu de la refaire entrer — un doublon n'est
+   *  pas un refus —, et poser le cas ici évite à l'essai de deviner l'ordre des
+   *  appels pour l'obtenir. */
+  imageDejaPrise?: number
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
   /** Les deux listes du côté Ambiances (E11). */
@@ -1879,6 +1884,22 @@ function serveurDouble(options: {
         pose: (corps?.pose ?? null) as string | null,
         direction: (corps?.direction ?? null) as string | null,
       })
+    // **Prélever une image du clip** (A13) — elle entre en bibliothèque. Le
+    // double rend la forme d'un import, l'un des deux toujours nul : un
+    // prélèvement déjà fait n'est pas un refus, il est signalé. `imageDejaPrise`
+    // permet à un essai de poser ce second cas sans deviner l'ordre des appels.
+    if (url.includes("/frames/") && url.endsWith("/pick")) {
+      const numero = Number(url.split("/frames/")[1].split("/")[0])
+      if (options.imageDejaPrise === numero)
+        return rendre({
+          asset: null,
+          doublon: asset("cccc3333-0", "marche — image 12"),
+        })
+      return rendre({
+        asset: { ...asset(`prise-${numero}-0`, `marche — image ${numero}`), modele: "clip" },
+        doublon: null,
+      })
+    }
     if (url === "/api/clips" && init?.method === "POST") {
       const combien = Number(corps?.nombre ?? 1)
       return rendre({
@@ -22020,5 +22041,203 @@ describe("A12 — la matrice sur deux calques", () => {
 
     expect(etabli.getAllByText("rien ne bouge encore")).toHaveLength(6)
     expect(document.querySelector("[data-bande-qui-tourne]")).toBeNull()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  A13 — l'image attrapée au vol
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// **Ce que ces essais mesurent.** Le second geste de la pellicule : où il vit,
+// ce qu'il envoie, ce qu'il ne touche pas, et ce que l'écran dit après.
+//
+// ⚠️ **Ils cliquent**, comme ceux d'`A11` et d'`A12`. Le bouton est cliqué et
+// c'est l'appel qui en sort qui est vérifié ; le découpage en cours est relu
+// après, parce que *sans toucher aux images retenues* est un critère qu'aucun
+// affichage ne prouve.
+//
+// Ce qu'ils ne mesurent pas : la filiation écrite sur le disque, la chaîne du
+// jeu appliquée, l'image brute gardée. Tout ça est tenu par `tests/test_a13.py`,
+// sur un vrai clip et un vrai disque.
+
+describe("A13 — l'image attrapée au vol", () => {
+  beforeEach(() => {
+    FluxDouble.ouverts = []
+    vi.stubGlobal("EventSource", FluxDouble)
+    doublerLaMesure()
+    toutReplier()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  /** Le même chemin qu'`A10` : on ouvre le montage depuis la tuile du clip. */
+  const ouvrirLeMontage = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble({
+      personnages: [personnage("Le nain")],
+      ...options,
+    })
+    const flux = await monter(double.fetchDouble)
+    laGalerie()
+    flux.emettre("generation", clipRendu("clip-a", false))
+    fireEvent.click(await screen.findByRole("button", { name: "Découper ›" }))
+    const panneau = await waitFor(() => {
+      const cadre = document.querySelector("[data-montage]")
+      if (!cadre) throw new Error("l'écran de montage ne s'est pas ouvert")
+      return cadre as HTMLElement
+    })
+    return { ...double, flux, panneau: within(panneau) }
+  }
+
+  /** Viser une image, puis la mettre de côté. **Deux gestes distincts**, et
+   *  c'est le sujet : viser passe par la pellicule, prélever par la loupe. */
+  const mettreDeCote = async (
+    panneau: ReturnType<typeof within>,
+    numero: number,
+  ) => {
+    // ⚠️ **Le nom de la cellule porte son état** — *retenue*, *mise de côté* —,
+    // et une image peut être les deux. On vise donc le début du nom, sinon
+    // l'essai ne trouverait la cellule que dans l'état où on l'imaginait.
+    fireEvent.mouseEnter(
+      panneau.getByRole("button", { name: new RegExp(`^Image ${numero}(?: —|$)`) }),
+    )
+    fireEvent.click(
+      await panneau.findByRole("button", { name: `Mettre l'image ${numero} de côté` }),
+    )
+  }
+
+  // ── « Un second geste sur une image de la pellicule la met de côté » ──────
+
+  test("la loupe porte le geste, et elle ne s'efface pas quand le pointeur la quitte", async () => {
+    const { panneau } = await ouvrirLeMontage()
+
+    // ⚠️ **La loupe est là avant le premier survol.** Sans cible, elle n'aurait
+    // pas de geste à porter ; elle montre l'image du curseur, c'est-à-dire la
+    // première. On lit *à côté de la loupe* et non dans tout l'écran : le pied
+    // du ruban porte aussi les mots « image 0 », qui nomment son extrémité
+    // gauche et non ce qu'on regarde.
+    const aCoteDeLaLoupe = () =>
+      within(document.querySelector("[data-loupe]")!.parentElement!)
+    await waitFor(() => expect(document.querySelector("[data-loupe]")).toBeTruthy())
+    expect(aCoteDeLaLoupe().getByText("image 0")).toBeTruthy()
+
+    fireEvent.mouseEnter(
+      panneau.getByRole("button", { name: /^Image 12(?: —|$)/ }),
+    )
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
+
+    // Le pointeur quitte le ruban : **la loupe reste sur la dernière image
+    // regardée**, et c'est ce qui rend son bouton atteignable. Avant `A13`, le
+    // ruban relâchait le survol en partant et la loupe disparaissait au moment
+    // précis où l'on allait cliquer dessus.
+    fireEvent.mouseLeave(document.querySelector("[data-pellicule]")!)
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
+    expect(
+      panneau.getByRole("button", { name: "Mettre l'image 12 de côté" }),
+    ).toBeTruthy()
+  })
+
+  test("mettre une image de côté part sur la route du clip, et rien d'autre ne part", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    await mettreDeCote(panneau, 12)
+
+    await waitFor(() =>
+      expect(
+        appels.some((a) => a.url === "/api/clips/clip-a/frames/12/pick"),
+      ).toBe(true),
+    )
+    // **Rien ne dépense** : aucune commande de clip ne part de ce geste.
+    expect(appels.some((a) => a.url === "/api/clips" && a.corps)).toBe(false)
+  })
+
+  test("prélever ne touche pas aux images retenues pour la bande", async () => {
+    // ⚠️ **Le critère qu'aucun affichage ne prouve.** Les deux gestes vivent sur
+    // la même pellicule ; on pose un découpage, on prélève, et on relit.
+    const { panneau } = await ouvrirLeMontage()
+    fireEvent.click(await panneau.findByText(/la boucle se referme le mieux/))
+    const avant = await panneau.findByText(/\d+ images retenues/)
+    const compte = avant.textContent
+
+    await mettreDeCote(panneau, 3)
+
+    expect(panneau.getByText(compte!)).toBeTruthy()
+  })
+
+  // ── « Sans quitter l'écran de montage » ──────────────────────────────────
+
+  test("l'écran de montage reste ouvert, et dit où l'image est partie", async () => {
+    const { panneau } = await ouvrirLeMontage()
+
+    await mettreDeCote(panneau, 12)
+
+    expect(document.querySelector("[data-montage]")).toBeTruthy()
+    expect(
+      await panneau.findByText(/l'image 12 est en bibliothèque/),
+    ).toBeTruthy()
+    // **Et la phrase dit que le rangement est un second geste, facultatif.**
+    expect(panneau.getByText(/dans une case ou sur un objet/)).toBeTruthy()
+  })
+
+  test("une image déjà prise se signale, et ce n'est pas un refus", async () => {
+    const { panneau } = await ouvrirLeMontage({ imageDejaPrise: 12 })
+
+    await mettreDeCote(panneau, 12)
+
+    expect(
+      await panneau.findByText(/l'image 12 était déjà en bibliothèque/),
+    ).toBeTruthy()
+    // Aucun bandeau de refus : le produit signale ce dont il est certain.
+    expect(panneau.queryByText(/ne se prélève pas/)).toBeNull()
+  })
+
+  // ── « Prélever plusieurs images d'affilée » ──────────────────────────────
+
+  test("ce qui est déjà pris se marque sur le ruban, et l'on enchaîne sans recommencer", async () => {
+    const { panneau, appels } = await ouvrirLeMontage()
+
+    await mettreDeCote(panneau, 10)
+    await waitFor(() =>
+      expect(document.querySelector("[data-mise-de-cote='10']")).toBeTruthy(),
+    )
+    await mettreDeCote(panneau, 14)
+    await waitFor(() =>
+      expect(document.querySelector("[data-mise-de-cote='14']")).toBeTruthy(),
+    )
+
+    // Deux appels, deux images — et la cellule le dit d'elle-même, pour qu'on
+    // ne redemande pas deux fois la même en glissant le long du clip.
+    expect(
+      appels.filter((a) => a.url.includes("/frames/") && a.url.endsWith("/pick")),
+    ).toHaveLength(2)
+    expect(
+      panneau.getByRole("button", { name: /^Image 10 —.*mise de côté$/ }),
+    ).toBeTruthy()
+  })
+
+  // ── « Le clavier fait ce que la souris fait » ────────────────────────────
+
+  test("les flèches reprennent la main sur le survol, et la loupe les suit", async () => {
+    const { panneau } = await ouvrirLeMontage()
+
+    const aCoteDeLaLoupe = () =>
+      within(document.querySelector("[data-loupe]")!.parentElement!)
+    fireEvent.mouseEnter(
+      panneau.getByRole("button", { name: /^Image 12(?: —|$)/ }),
+    )
+    expect(aCoteDeLaLoupe().getByText("image 12")).toBeTruthy()
+
+    // ⚠️ Sans cette reprise, un survol laissé derrière figerait la loupe pendant
+    // que les flèches déplacent le curseur ailleurs — et le geste porterait sur
+    // une image qu'on ne regarde plus.
+    fireEvent.keyDown(window, { key: "ArrowRight" })
+    await waitFor(() =>
+      expect(aCoteDeLaLoupe().getByText("image 1")).toBeTruthy(),
+    )
   })
 })
