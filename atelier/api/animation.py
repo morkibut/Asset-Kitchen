@@ -521,19 +521,84 @@ async def recuperer_clip(requete: Request, identifiant: str) -> dict[str, Any]:
 
 @routeur.get("/clips/{identifiant}/video")
 async def video_du_clip(requete: Request, identifiant: str) -> Response:
-    """Le fichier tel qu'il est arrivé. Le brut, jamais un rendu."""
+    """Le fichier tel qu'il est arrivé. Le brut, jamais un rendu.
+
+    > ### ⚠️ Elle existait, et aucun écran ne s'en servait
+    >
+    > L'écran de montage montre la pellicule, la loupe et deux boucles tirées des
+    > **images extraites** ; la vidéo payée restait sur le disque, joignable par
+    > cette route-ci, et invisible par tout chemin que l'auteur pouvait prendre.
+    > Signalé par lui le 5 septembre 2026 : *« je n'ai jamais la possibilité de
+    > voir la vidéo générée entière »*.
+    >
+    > Ce n'est pas la même chose que les images : celles-ci sont figées et
+    > l'écran les rejoue à *sa* cadence, alors que la vidéo porte le rythme du
+    > modèle, ses fondus, ce qu'il fait entre deux images.
+
+    **Elle répond aux demandes de plage**, et sans ça la barre de lecture ne
+    marcherait pas : un navigateur qui ne peut pas demander « les octets 400 000
+    à 500 000 » ne sait pas se déplacer dans une vidéo — il la rejoue depuis le
+    début, ou refuse de la lire. Le lecteur envoie d'ailleurs sa toute première
+    demande en plage, avant même de connaître la taille du fichier.
+    """
     generation = _clip(requete, identifiant)
     resultat = generation.emplacements[0].resultat
     if resultat is None:
         raise ErreurAtelier("ce clip n'est pas encore arrivé")
-    atelier = _atelier(requete)
+    fichiers = _atelier(requete).fichiers
+    if not fichiers.existe(resultat.fichier):
+        raise ErreurAtelier("le fichier vidéo de ce clip a disparu du disque")
+
+    # Un clip ne change jamais : une fois payé et écrit, ses octets sont
+    # définitifs. Le navigateur peut le garder longtemps.
+    entetes = {"Accept-Ranges": "bytes", "Cache-Control": "private, max-age=86400"}
+    taille = fichiers.taille(resultat.fichier)
+    debut, fin = _plage_demandee(requete.headers.get("range", ""), taille)
+    if debut is None:
+        return Response(
+            content=fichiers.lire(resultat.fichier),
+            media_type=resultat.type_media,
+            headers=entetes,
+        )
+    if debut > fin:
+        # **Un refus qui dit la taille, pas une tranche vide** : c'est ainsi que
+        # le lecteur apprend jusqu'où il peut demander.
+        return Response(
+            status_code=416,
+            headers={**entetes, "Content-Range": f"bytes */{taille}"},
+        )
     return Response(
-        content=atelier.fichiers.lire(resultat.fichier),
+        content=fichiers.tranche(resultat.fichier, debut, fin),
+        status_code=206,
         media_type=resultat.type_media,
-        # Un clip ne change jamais : une fois payé et écrit, ses octets sont
-        # définitifs. Le navigateur peut le garder longtemps.
-        headers={"Cache-Control": "private, max-age=86400"},
+        headers={**entetes, "Content-Range": f"bytes {debut}-{fin}/{taille}"},
     )
+
+
+def _plage_demandee(entete: str, taille: int) -> tuple[int | None, int]:
+    """L'en-tête `Range` traduit en deux bornes **inclusives**, ou rien.
+
+    Rien veut dire *sers le fichier entier*, et c'est la réponse pour tout ce qui
+    n'est pas une plage d'octets lisible : une plage illisible n'est pas une
+    erreur à renvoyer à la figure, c'est une demande à laquelle le fichier entier
+    répond. Une seule forme est refusée plus loin — celle qui commence après la
+    fin —, parce qu'elle ne peut être satisfaite par rien.
+    """
+    if not entete.startswith("bytes="):
+        return None, 0
+    morceaux = entete[6:].split("-", 1)
+    if len(morceaux) != 2:
+        return None, 0
+    try:
+        if not morceaux[0]:
+            # `bytes=-500` : les cinq cents **derniers** octets.
+            derniers = int(morceaux[1])
+            return max(0, taille - derniers), taille - 1
+        debut = int(morceaux[0])
+        fin = int(morceaux[1]) if morceaux[1] else taille - 1
+    except ValueError:
+        return None, 0
+    return debut, min(fin, taille - 1)
 
 
 @routeur.get("/clips/{identifiant}/frames/{numero}")

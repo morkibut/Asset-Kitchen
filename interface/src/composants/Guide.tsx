@@ -400,6 +400,13 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               même chose au clavier.
             </P>
             <P>
+              La boucle de gauche sait aussi montrer <B>la vidéo entière</B>, telle qu'elle
+              est arrivée — le lien est au-dessus d'elle. Ce n'est pas la même chose que les
+              images : celles-ci sont figées et l'écran les rejoue à <I>sa</I> vitesse, alors
+              que la vidéo porte le rythme du modèle, ses fondus, ce qu'il fait entre deux
+              images. C'est là qu'on juge si le mouvement lui-même est bon.
+            </P>
+            <P>
               À l'ouverture, l'atelier a déjà regardé le clip et pose deux remarques : où il ne
               bouge presque pas, et où la boucle se referme le mieux. <B>Elles ne décident de
               rien</B> — elles disent où regarder, et tout se reprend image par image ensuite.
@@ -532,6 +539,22 @@ export function EcranGuide({ onFermer }: { onFermer: () => void }) {
               clip du même personnage : le clip est déjà payé, en reprendre une image ne coûte
               rien. C'est ce qu'on fait quand deux clips sont chacun bons à moitié. L'animation
               dit alors de quel clip vient chacune de ses images.
+            </P>
+            <P>
+              <B>Le détourage se règle finement, moteur compris.</B> Quatre au choix — bord,
+              pipette, modèle, sélection —, et ce qu'ils demandent n'est pas le même : le
+              bord et la pipette lisent une tolérance, le modèle décide seul, la sélection
+              suit un tracé fait sur l'image brute. Le curseur de tolérance cède la place à
+              une phrase quand le moteur ne la lit pas, plutôt que de bouger sans effet.
+              Changer de moteur emporte son <I>ronger le bord</I> : le bord ne laisse aucun
+              pixel à demi transparent, le modèle en laisse sur presque tout le sujet.
+            </P>
+            <P>
+              Si la recette de ton jeu ne détoure rien, l'écran le dit et propose d'ajouter
+              un détourage à cette animation. Et si tu as <B>enregistré des recettes</B>, la
+              liste en haut de la colonne en applique une d'un coup — elle remplace tous les
+              réglages à la fois, parce qu'en prendre la moitié rendrait une image que
+              personne n'a jamais jugée.
             </P>
             <P>
               <B>Rien n'est écrit tant que tu n'as pas enregistré</B>, et <I>Annuler</I> ramène

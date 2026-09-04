@@ -11,6 +11,56 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A7 bis — trois demandes, et aucune ne demandait un mécanisme neuf — 5 septembre 2026
+
+Trois remarques de l'auteur, nées du même usage : découper un clip du pèlerin, garder l'animation,
+la reprendre. **Aucune n'ouvre de question** — chacune branche ou complète ce qui existait déjà.
+
+### Le détourage ne se réglait que par sa tolérance
+
+Et ⚠️ **la tolérance ne sert à rien sur trois moteurs sur quatre** : la pipette vise un point, le
+modèle ne lit aucune tolérance, la sélection suit un tracé. L'écran offrait donc un curseur qui,
+la plupart du temps, ne faisait rien — sans le dire.
+
+Les quatre moteurs se choisissent maintenant, et **le durcissement suit celui qu'on prend**. C'est
+la mesure de `D1` : à moteur égal la nature de l'image ne décide presque rien, et laisser le
+durcissement du moteur d'avant est ce que l'auteur avait dû retaper trente-neuf fois sur quarante.
+
+Un cas qui n'avait aucune issue : **une recette de jeu sans aucune passe**. Le fond restait, et il
+n'y avait rien à régler ni aucun moyen d'ajouter un détourage. C'est un bouton, maintenant.
+
+### Une recette enregistrée ne se posait que sur une image
+
+Elle s'applique à une animation entière, et **elle remplace tous les réglages à la fois** : une
+recette est un ensemble, en prendre la moitié rendrait une image que personne n'a jamais jugée.
+Elle n'écrit rien tout de suite — sans quoi elle serait le seul geste de cet écran à ne pas
+s'annuler.
+
+### La vidéo payée ne se regardait nulle part
+
+> ⚠️ **La route existait.** `GET /clips/{id}/video` sert le fichier depuis `A9`, et **aucun écran
+> ne s'en servait**. Le montage montre la pellicule, la loupe et deux boucles — toutes tirées des
+> *images extraites*. La vidéo restait sur le disque, joignable, invisible.
+
+Ce n'est pas la même chose que les images, et c'est ce qui rend le manque réel : les images sont
+figées et l'écran les rejoue à *sa* cadence, alors que la vidéo porte le rythme du modèle, ses
+fondus, ce qu'il fait entre deux images. Elle se prend sur la boucle de gauche — celle qui demande
+déjà *le mouvement est-il bon ?* — et pas d'emblée : ce qu'on vient faire sur cet écran est
+découper, et les deux boucles sur le même métronome sont ce qui permet de comparer.
+
+**La route sait maintenant répondre aux demandes de plage.** Sans ça la barre de lecture ne marche
+pas : un navigateur qui ne peut pas demander « les octets 400 000 à 500 000 » ne sait pas se
+déplacer dans une vidéo — il la rejoue depuis le début, ou refuse de la lire. Son lecteur envoie
+d'ailleurs sa toute première demande en plage, avant même de connaître la taille du fichier.
+
+### Ce que les trois disent ensemble
+
+Aucune ne demandait un mécanisme neuf. Une route servait une vidéo que rien n'affichait ; un
+curseur réglait une valeur que trois moteurs sur quatre ignorent ; des recettes nommées existaient
+et ne se posaient que sur une image. **Ce qui manquait était le chemin, pas la chose** — et c'est
+exactement la famille ② de la `V3.1`, *ce qui est construit et jamais branché*, retrouvée trois
+fois de plus par l'usage, en une seule séance.
+
 ## A7 — reprendre une image sans refaire la bande : le vrai sujet n'était pas dans le plan — 5 septembre 2026
 
 La dernière tranche de la V3, et **son sujet principal n'était écrit nulle part**. Le plan

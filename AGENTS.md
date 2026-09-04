@@ -130,6 +130,18 @@ cours de route coûte cher ; les lire ici coûte deux minutes.
    neutralisé, et en écrire un qui le laisse en marche — **ralenti plutôt qu'arrêté**. Et
    vérifier qu'il tombe **en défaisant le correctif** : un essai écrit après coup passe souvent
    des deux côtés.
+8nonies. **Une route qui sert quelque chose que nul écran n'affiche n'existe pas.** Trois
+   demandes de l'auteur le 5 septembre 2026, et les trois avaient la même forme : la vidéo
+   d'un clip était servie par une route depuis `A9` et **aucun écran ne la montrait** ; les
+   recettes nommées existaient et ne se posaient que sur une image ; le détourage offrait un
+   curseur de tolérance que **deux moteurs sur quatre ne lisent pas**. ⚠️ Ni une revue de code
+   ni un essai d'écran ne voient ça — la route est là, testée, correcte, et l'essai vérifie ce
+   que l'écran montre, jamais ce qu'il ne montre pas. **À la fin d'une tranche, lister ce que
+   le serveur sait rendre et vérifier que chaque chose a un chemin depuis un écran** ; ce qui
+   n'en a pas est soit à brancher, soit à retirer. Corollaire du même jour : **un contrôle qui
+   dépend d'un choix voisin disparaît quand ce choix le rend inerte**, et laisse une phrase à
+   sa place — un curseur qui bouge sans que l'image change ne se distingue pas d'un curseur
+   cassé.
 
 8. **Une planche coûte le prix d'un appel, quel que soit ce qu'elle porte.** Mesuré le 31 août
    2026 sur trois appels payés : trois cases et six cases ont coûté exactement le même prix, et

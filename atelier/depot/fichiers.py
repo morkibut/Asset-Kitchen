@@ -146,6 +146,27 @@ class Fichiers:
     def existe(self, chemin_relatif: str) -> bool:
         return (self.racine / chemin_relatif).is_file()
 
+    def taille(self, chemin_relatif: str) -> int:
+        return (self.racine / chemin_relatif).stat().st_size
+
+    def tranche(self, chemin_relatif: str, debut: int, fin: int) -> bytes:
+        """Les octets de `debut` à `fin` **inclus**, sans lire le reste.
+
+        Elle existe pour une seule chose : servir une vidéo à un navigateur. Un
+        lecteur qui ne peut pas demander *« les octets 400 000 à 500 000 »* ne
+        sait pas se déplacer dans une vidéo — sa barre de lecture ne répond pas,
+        et certains refusent même de la lire. Lire dix mégaoctets en mémoire
+        pour en servir cent kilo-octets, cent fois pendant qu'on cherche un
+        passage, serait l'autre façon de mal le faire.
+
+        Les bornes sont **inclusives des deux côtés**, parce que c'est ainsi que
+        HTTP les compte, et qu'un décalage d'un octet à la traduction fait une
+        vidéo qui se lit presque.
+        """
+        with (self.racine / chemin_relatif).open("rb") as fichier:
+            fichier.seek(debut)
+            return fichier.read(max(0, fin - debut + 1))
+
     def ecrire_enregistrement(self, identifiant: str, contenu: dict[str, Any]) -> None:
         self._ecrire_json(self.dossier_generation(identifiant) / "generation.json", contenu)
 

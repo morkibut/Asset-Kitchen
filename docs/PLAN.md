@@ -3714,6 +3714,42 @@ neuve sans que rien n'ait à passer dessus.
 
 ---
 
+### A7 bis · Trois demandes de l'auteur, livrées dans la foulée — ✅ **le 5 septembre 2026**
+
+Elles sont arrivées pendant qu'`A7` s'écrivait, toutes les trois nées du même usage : découper un
+clip du pèlerin, garder l'animation, la reprendre. Elles ne valaient pas une tranche à elles seules
+— **aucune n'ouvre de question**, chacune branche ou complète ce qui existait déjà.
+
+**① Le détourage se règle finement.** L'écran n'offrait qu'un curseur de tolérance, et ⚠️ **il ne
+sert à rien sur trois moteurs sur quatre** : la pipette vise un point, le modèle ne lit aucune
+tolérance, la sélection suit un tracé. Les quatre moteurs se choisissent maintenant, le
+durcissement suit celui qu'on prend — c'est la mesure de `D1`, et laisser celui du moteur d'avant
+est ce que l'auteur avait dû retaper trente-neuf fois sur quarante —, et la tolérance cède la place
+à une phrase quand le moteur ne la lit pas. **Et une recette de jeu sans aucune passe peut en
+recevoir une** : il n'y avait aucun moyen d'en ajouter, donc le fond restait sans rien à régler.
+
+**② Une recette enregistrée s'applique.** Elle **remplace tous les réglages à la fois** : une
+recette est un ensemble, et en prendre la moitié rendrait une image que personne n'a jamais jugée.
+Elle n'écrit rien tout de suite, comme le reste de l'écran — sans quoi elle serait le seul geste
+qui ne s'annule pas.
+
+**③ La vidéo du clip se regarde entière.** ⚠️ **La route existait, et aucun écran ne s'en
+servait** : le montage montre la pellicule et deux boucles tirées des *images extraites*, et la
+vidéo payée restait sur le disque sans aucun chemin pour l'atteindre. *« Je n'ai jamais la
+possibilité de voir la vidéo générée entière »*, 5 septembre 2026. Ce n'est pas la même chose que
+les images : celles-ci sont figées et l'écran les rejoue à *sa* cadence, alors que la vidéo porte
+le rythme du modèle, ses fondus, ce qu'il fait entre deux images. Elle se prend sur la boucle de
+gauche, celle qui demande déjà *le mouvement est-il bon ?* — et la route sait maintenant répondre
+aux demandes de plage, sans quoi la barre de lecture ne marcherait pas.
+
+> **La leçon des trois, et elle est la même.** Aucune n'a demandé un mécanisme neuf. Une route
+> servait une vidéo que rien n'affichait ; un curseur réglait une valeur que trois moteurs sur
+> quatre ignorent ; des recettes nommées existaient et ne se posaient que sur une image. **Ce qui
+> manquait était le chemin**, pas la chose — et c'est exactement la famille ② de la `V3.1`, *ce qui
+> est construit et jamais branché*, retrouvée trois fois de plus par l'usage.
+
+---
+
 ## V3.1 — L'atelier tient ce qu'il dit
 
 *Née le 3 septembre 2026 du carnet de l'auteur — douze remarques relevées en une semaine d'usage,

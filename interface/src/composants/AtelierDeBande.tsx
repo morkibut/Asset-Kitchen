@@ -32,15 +32,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   api,
+  PASSE_PAR_DEFAUT,
   type Ancrage,
   type AtelierDeBande as AtelierRecu,
   type CadrePose,
+  type Passe,
   type Prise,
   type Recette,
 } from "../api"
 import { rangDeLaBande } from "./Apercu"
 import { Curseur, EnTetePanneau, Libelle } from "./chassis"
 import { PANNEAU } from "./Infobulle"
+import { DURCISSEMENT_LIVRE, MOTEUR } from "./Places"
 
 /** Les neuf points, **dans l'ordre où ils se dessinent** — trois par rangée.
  *  Les mots sont ceux du serveur, à la lettre : deux vocabulaires pour la même
@@ -101,6 +104,7 @@ export function EcranAtelierDeBande({
   const [planche, setPlanche] = useState<string | null>(null)
   const [enregistre, setEnregistre] = useState(false)
   const [remesure, setRemesure] = useState(false)
+  const [recettes, setRecettes] = useState<Record<string, Recette>>({})
   const toile = useRef<HTMLDivElement | null>(null)
 
   // **Dire une panne ne doit pas relancer l'aperçu.** L'écran d'accueil passe
@@ -132,6 +136,25 @@ export function EcranAtelierDeBande({
       vivant = false
     }
   }, [identifiant])
+
+  // **Les recettes enregistrées, lues une fois.** Elles vivent sur le disque et
+  // ne changent pas pendant qu'on corrige une animation ; les redemander à
+  // chaque geste serait un aller-retour pour rien. Un échec ne dit rien à
+  // l'écran : sans recettes nommées, le bloc ne paraît simplement pas.
+  useEffect(() => {
+    let vivant = true
+    void (async () => {
+      try {
+        const lues = await api.recettesNommees()
+        if (vivant) setRecettes(lues.recettes)
+      } catch {
+        /* pas de recette nommée : le bloc ne paraît pas */
+      }
+    })()
+    return () => {
+      vivant = false
+    }
+  }, [])
 
   // ── Ce qui a bougé depuis l'ouverture ─────────────────────────────────────
   //
@@ -361,6 +384,8 @@ export function EcranAtelierDeBande({
           <b className="text-texte-2">toute l'animation</b> ; ce qui se corrige
           au milieu ne vaut que pour l'image choisie.
         </p>
+
+        <RecetteEnregistree recettes={recettes} onRecette={setRecette} />
 
         <ReglagesDeLaBande
           recette={recette}
@@ -894,22 +919,7 @@ function ReglagesDeLaBande({
           }
         />
       )}
-      {recette.passes[0] && (
-        <Curseur
-          libelle="Détourage, tolérance"
-          valeur={recette.passes[0].tolerance}
-          min={4}
-          max={80}
-          onChange={(v) =>
-            onRecette({
-              ...recette,
-              passes: recette.passes.map((passe, index) =>
-                index === 0 ? { ...passe, tolerance: v } : passe,
-              ),
-            })
-          }
-        />
-      )}
+      <Detourage recette={recette} onRecette={onRecette} />
       <div className="mt-1 flex items-center gap-2">
         <span className="mesure text-[10px] text-texte-3">sens de lecture</span>
         {(["boucle", "aller-retour"] as const).map((choix) => (
@@ -1005,6 +1015,181 @@ function FenetreDeLaBande({
           : "Une vingtaine de secondes — toutes les images sont redétourées et remesurées. Rien n'est dépensé."}
       </p>
     </div>
+  )
+}
+
+/** Le détourage de l'animation, **réglé finement** — pas seulement sa tolérance.
+ *
+ *  ⚠️ **L'écran n'offrait qu'un curseur de tolérance**, et il ne servait à rien
+ *  sur trois moteurs sur quatre : la pipette vise un point, le modèle ne lit
+ *  aucune tolérance, la sélection suit un tracé. Demandé par l'auteur le
+ *  4 septembre 2026, après avoir découpé son pèlerin.
+ *
+ *  **Le durcissement suit le moteur quand on en change**, comme partout ailleurs
+ *  dans le produit : le bord ne produit aucun pixel à demi transparent et n'a
+ *  donc pas de frange à ronger, le modèle en produit sur presque tout le sujet.
+ *  Laisser le durcissement du moteur d'avant est ce que l'auteur a dû retaper
+ *  trente-neuf fois sur quarante (`D1`).
+ *
+ *  Les deux moteurs qui demandent un geste sur l'image — la pipette vise un
+ *  pixel, la sélection se dessine — **ne se posent pas ici** : cet écran n'a pas
+ *  l'image brute sous la main, seulement la planche déjà réduite. Ils restent
+ *  offerts, et la ligne dessous dit ce qu'ils attendent. */
+function Detourage({
+  recette,
+  onRecette,
+}: {
+  recette: Recette
+  onRecette: (r: Recette) => void
+}) {
+  const passe = recette.passes[0]
+
+  if (!passe) {
+    // ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran n'offrait
+    // alors aucun moyen d'en ajouter une : le fond restait, et il n'y avait
+    // rien à régler. Signalé par l'auteur le 4 septembre 2026.
+    return (
+      <div className="flex flex-col gap-1 border-t border-bord pt-2">
+        <Libelle aide="detourage.moteur">le détourage</Libelle>
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          Cette animation ne détoure rien : le fond du clip part dans les
+          sprites tel quel.
+        </p>
+        <button
+          type="button"
+          onClick={() =>
+            onRecette({
+              ...recette,
+              passes: [{ ...PASSE_PAR_DEFAUT, moteur: "bord" }],
+            })
+          }
+          className="mesure self-start border border-bord px-2 py-1 text-[10px] text-signal hover:bg-signal hover:text-fond-0"
+        >
+          Ajouter un détourage
+        </button>
+      </div>
+    )
+  }
+
+  const changer = (quoi: Partial<Passe>) =>
+    onRecette({
+      ...recette,
+      passes: recette.passes.map((p, rang) =>
+        rang === 0 ? { ...p, ...quoi } : p,
+      ),
+    })
+
+  const litLaTolerance = passe.moteur === "bord" || passe.moteur === "couleur"
+  return (
+    <div className="flex flex-col gap-1.5 border-t border-bord pt-2">
+      <div className="flex items-baseline gap-2">
+        <Libelle aide="detourage.moteur">le détourage</Libelle>
+        {recette.passes.length > 1 && (
+          <span className="mesure ml-auto text-[10px] text-texte-3">
+            {recette.passes.length} passes — la première se règle ici
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-1">
+        {(Object.keys(MOTEUR) as Passe["moteur"][]).map((nom) => (
+          <button
+            key={nom}
+            type="button"
+            aria-pressed={passe.moteur === nom}
+            onClick={() =>
+              changer({ moteur: nom, durcissement: DURCISSEMENT_LIVRE[nom] })
+            }
+            className={`mesure border px-1.5 py-0.5 text-[10px] ${
+              passe.moteur === nom
+                ? "border-signal text-signal"
+                : "border-bord text-texte-3 hover:text-texte-1"
+            }`}
+          >
+            {MOTEUR[nom]}
+          </button>
+        ))}
+      </div>
+
+      {litLaTolerance ? (
+        <Curseur
+          libelle="Tolérance"
+          valeur={passe.tolerance}
+          min={4}
+          max={80}
+          onChange={(v) => changer({ tolerance: v })}
+        />
+      ) : (
+        <p className="mesure text-[10px] leading-4 text-texte-3">
+          {passe.moteur === "modele"
+            ? "Le modèle décide seul de la silhouette : il n'y a pas de tolérance à régler."
+            : "La sélection suit le tracé fait sur l'image brute, dans la table de découpe."}
+        </p>
+      )}
+
+      <Curseur
+        libelle="Ronger le bord"
+        valeur={passe.durcissement}
+        min={0}
+        max={4}
+        unite=" px"
+        onChange={(v) => changer({ durcissement: v })}
+      />
+      <p className="mesure text-[10px] leading-4 text-texte-3">
+        {passe.moteur === "couleur" && !passe.point
+          ? "La pipette n'a pas de point visé : elle se pose sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
+          : passe.moteur === "trace" && passe.trace.length === 0
+            ? "Aucun tracé : la sélection se dessine sur l'image brute, dans la table de découpe. Ici elle n'agit pas."
+            : "Ce qui change ici vaut pour toutes les images de l'animation."}
+      </p>
+    </div>
+  )
+}
+
+/** Une recette enregistrée, appliquée à l'animation entière.
+ *
+ *  Demandé par l'auteur le 4 septembre 2026. Ce qu'il fallait trancher :
+ *  **appliquer une recette enregistrée n'écrit rien tout de suite**, comme tout
+ *  le reste de cet écran — elle remplace les réglages en cours, l'aperçu se
+ *  refait, et « Annuler » ramène ceux d'avant. Une recette nommée qui écrirait
+ *  d'office serait le seul geste de l'écran à ne pas s'annuler.
+ *
+ *  Elle **remplace tout**, pas seulement le détourage : une recette est un
+ *  ensemble, et en prendre la moitié rendrait une image que personne n'a jamais
+ *  jugée. */
+function RecetteEnregistree({
+  recettes,
+  onRecette,
+}: {
+  recettes: Record<string, Recette>
+  onRecette: (r: Recette) => void
+}) {
+  const noms = Object.keys(recettes).sort((a, b) => a.localeCompare(b, "fr"))
+  if (noms.length === 0) return null
+  return (
+    <label className="mesure flex flex-col gap-1 border-t border-bord pt-2 text-[10px] text-texte-3">
+      <Libelle aide="fiche.recettes">une recette enregistrée</Libelle>
+      <select
+        value=""
+        onChange={(evenement) => {
+          const choisie = recettes[evenement.target.value]
+          if (choisie) onRecette(choisie)
+        }}
+        aria-label="appliquer une recette enregistrée à cette animation"
+        className="border border-bord bg-fond-2 px-1 py-0.5 text-texte-1"
+      >
+        <option value="">— en appliquer une —</option>
+        {noms.map((nom) => (
+          <option key={nom} value={nom}>
+            {nom}
+          </option>
+        ))}
+      </select>
+      <span className="leading-4">
+        Elle remplace <b className="text-texte-2">tous</b> les réglages
+        ci-dessus, et rien n'est écrit tant que vous n'avez pas enregistré.
+      </span>
+    </label>
   )
 }
 

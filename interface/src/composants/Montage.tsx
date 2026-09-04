@@ -103,6 +103,12 @@ export function EcranMontage({
 
   // ── Ce que le serveur répond ──────────────────────────────────────────────
   const [apercu, setApercu] = useState<ApercuDeBande | null>(null)
+  // **La vidéo n'est pas montrée d'emblée**, et c'est un arbitrage : ce qu'on
+  // vient faire ici est découper, et les deux boucles côte à côte sur le même
+  // métronome sont ce qui permet de comparer. La vidéo répond à une autre
+  // question — *est-ce que le mouvement lui-même est bon ?* — et elle se
+  // demande.
+  const [enVideo, setEnVideo] = useState(false)
   const [bandes, setBandes] = useState<Bande[]>([])
   const [mouvements, setMouvements] = useState<Mouvement[]>([])
   const [reprend, setReprend] = useState(false)
@@ -431,14 +437,51 @@ export function EcranMontage({
           <Boucle
             titre="Ce que le modèle a rendu"
             question="le mouvement est-il bon ?"
-            badge="brut · fond compris"
+            badge={
+              enVideo
+                ? `la vidéo · ${montage.clip.secondes} s`
+                : "brut · fond compris"
+            }
+            geste={
+              <button
+                type="button"
+                onClick={() => setEnVideo((avant) => !avant)}
+                title={
+                  enVideo
+                    ? "revenir aux images retenues, à la vitesse de la bande"
+                    : "la vidéo telle qu'elle est arrivée — son rythme, ses fondus"
+                }
+                className="mesure text-[10px] text-signal hover:text-signal-clair"
+              >
+                {enVideo ? "les images ›" : "la vidéo entière ›"}
+              </button>
+            }
           >
-            {retenues.length > 0 && (
-              <img
-                src={api.imageDuClip(clip, numero)}
-                alt={`Image ${numero} du clip`}
-                className="max-h-[220px] w-auto"
+            {/* ⚠️ **La vidéo et les images ne montrent pas la même chose.** Les
+                images sont figées et l'écran les rejoue à *sa* cadence ; la
+                vidéo porte le rythme du modèle, ses fondus, ce qu'il fait entre
+                deux images. Elle est sur le disque depuis son arrivée et ne se
+                regardait par aucun chemin — signalé par l'auteur le 5 septembre
+                2026. */}
+            {enVideo ? (
+              <video
+                key={clip}
+                src={api.videoDuClip(clip)}
+                controls
+                loop
+                autoPlay
+                muted
+                aria-label="la vidéo du clip, telle qu'elle est arrivée"
+                className="max-h-[240px] w-auto"
               />
+            ) : (
+              retenues.length > 0 && (
+                <img
+                  src={api.imageDuClip(clip, numero)}
+                  alt={`Image ${numero} du clip`}
+                  className="max-h-[220px] w-auto"
+                />
+              )
             )}
           </Boucle>
           <Boucle
@@ -855,11 +898,14 @@ function Boucle({
   titre,
   question,
   badge,
+  geste,
   children,
 }: {
   titre: string
   question: string
   badge: string
+  /** Un geste posé au bout de l'en-tête, quand la boucle en porte un. */
+  geste?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -867,6 +913,7 @@ function Boucle({
       <div className="flex items-baseline gap-2">
         <span className="mesure text-[10px] text-texte-2">{titre}</span>
         <b className="mesure text-[10px] font-normal text-texte-3">{question}</b>
+        {geste && <span className="ml-auto">{geste}</span>}
       </div>
       <div className="relative flex h-[240px] items-center justify-center overflow-hidden rounded-[2px] border border-bord bg-fond-1">
         {children}

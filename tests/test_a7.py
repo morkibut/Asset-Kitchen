@@ -662,6 +662,86 @@ def test_un_cadre_pose_a_la_main_ne_se_dit_jamais_d_avant(
 
 
 # --------------------------------------------------------------------------- #
+# 6bis. La vidéo du clip, qui ne se regardait nulle part                       #
+# --------------------------------------------------------------------------- #
+
+
+def test_la_video_du_clip_se_sert_entiere(client_video, clip, animateur):
+    """⚠️ **Elle existait, et aucun écran ne s'en servait.**
+
+    L'écran de montage montre la pellicule et deux boucles tirées des *images
+    extraites* ; la vidéo payée restait sur le disque, joignable par cette route
+    et invisible par tout chemin que l'auteur pouvait prendre. Signalé par lui le
+    5 septembre 2026.
+    """
+    reponse = client_video.get(f"/api/clips/{clip}/video")
+
+    assert reponse.status_code == 200, reponse.text
+    assert reponse.headers["content-type"].startswith("video/")
+    assert reponse.headers["accept-ranges"] == "bytes"
+    assert len(reponse.content) > 0
+
+
+def test_la_video_repond_a_une_demande_de_plage(client_video, clip, animateur):
+    """Sans ça, **la barre de lecture ne marche pas**.
+
+    Un navigateur qui ne peut pas demander « les octets 100 à 199 » ne sait pas
+    se déplacer dans une vidéo : il la rejoue depuis le début, ou refuse de la
+    lire. Son lecteur envoie d'ailleurs sa toute première demande en plage.
+    """
+    entiere = client_video.get(f"/api/clips/{clip}/video").content
+
+    tranche = client_video.get(
+        f"/api/clips/{clip}/video", headers={"Range": "bytes=100-199"}
+    )
+
+    assert tranche.status_code == 206, tranche.text
+    assert tranche.content == entiere[100:200]
+    assert tranche.headers["content-range"] == f"bytes 100-199/{len(entiere)}"
+
+
+def test_une_plage_ouverte_va_jusqu_au_bout(client_video, clip, animateur):
+    """`bytes=10-` veut dire *à partir de dix, jusqu'à la fin* — c'est ce que le
+    lecteur envoie en premier, avant de connaître la taille du fichier."""
+    entiere = client_video.get(f"/api/clips/{clip}/video").content
+
+    depuis = client_video.get(
+        f"/api/clips/{clip}/video", headers={"Range": "bytes=10-"}
+    )
+
+    assert depuis.status_code == 206
+    assert depuis.content == entiere[10:]
+
+
+def test_une_plage_qui_commence_apres_la_fin_se_refuse_en_disant_la_taille(
+    client_video, clip, animateur
+):
+    """**Un refus qui dit la taille, pas une tranche vide** : c'est ainsi que le
+    lecteur apprend jusqu'où il peut demander."""
+    taille = len(client_video.get(f"/api/clips/{clip}/video").content)
+
+    reponse = client_video.get(
+        f"/api/clips/{clip}/video", headers={"Range": f"bytes={taille + 10}-"}
+    )
+
+    assert reponse.status_code == 416
+    assert reponse.headers["content-range"] == f"bytes */{taille}"
+
+
+def test_une_plage_illisible_rend_le_fichier_entier(client_video, clip, animateur):
+    """Une demande qu'on ne sait pas lire n'est pas une erreur à renvoyer à la
+    figure : c'est une demande à laquelle le fichier entier répond."""
+    entiere = client_video.get(f"/api/clips/{clip}/video").content
+
+    reponse = client_video.get(
+        f"/api/clips/{clip}/video", headers={"Range": "des octets, voyons"}
+    )
+
+    assert reponse.status_code == 200
+    assert reponse.content == entiere
+
+
+# --------------------------------------------------------------------------- #
 # 7. Les neuf points d'ancrage                                                 #
 # --------------------------------------------------------------------------- #
 

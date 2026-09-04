@@ -22889,6 +22889,110 @@ describe("A7 · l'atelier d'une animation", () => {
     ).toBeNull()
   })
 
+  test("le détourage se règle finement, moteur compris", async () => {
+    // ⚠️ **L'écran n'offrait qu'un curseur de tolérance**, et il ne sert à rien
+    // sur trois moteurs sur quatre. Demandé par l'auteur après avoir découpé son
+    // pèlerin.
+    const { atelier } = await ouvrirLAtelier()
+
+    const moteurs = await atelier.findAllByRole("button", {
+      name: /^(bord|pipette|modèle|sélection)$/,
+    })
+    expect(moteurs).toHaveLength(4)
+    // La tolérance est là tant que le moteur la lit.
+    expect(atelier.getByLabelText(/Tolérance, en chiffres/)).toBeTruthy()
+
+    fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
+
+    // **Le modèle ne lit aucune tolérance**, et l'écran le dit plutôt que de
+    // laisser un curseur qui ne fait rien.
+    await waitFor(() =>
+      expect(atelier.queryByLabelText(/Tolérance, en chiffres/)).toBeNull(),
+    )
+    expect(await atelier.findByText(/pas de tolérance à régler/)).toBeTruthy()
+  })
+
+  test("changer de moteur emporte son durcissement", async () => {
+    // C'est la mesure de `D1` : à moteur égal la nature de l'image ne décide
+    // presque rien, et laisser le durcissement du moteur d'avant est ce que
+    // l'auteur a dû retaper trente-neuf fois sur quarante.
+    const { atelier } = await ouvrirLAtelier()
+    const ronge = (await atelier.findByLabelText(
+      /Ronger le bord, en chiffres/,
+    )) as HTMLInputElement
+    expect(ronge.value).toBe("0 px")
+
+    fireEvent.click(atelier.getByRole("button", { name: "modèle" }))
+
+    await waitFor(() =>
+      expect(
+        (atelier.getByLabelText(/Ronger le bord, en chiffres/) as HTMLInputElement)
+          .value,
+      ).toBe("2 px"),
+    )
+  })
+
+  test("une recette de jeu sans passe se voit, et on peut en ajouter une", async () => {
+    // ⚠️ **Une recette de jeu peut n'avoir aucune passe**, et l'écran n'offrait
+    // alors aucun moyen d'en ajouter : le fond restait, et il n'y avait rien à
+    // régler.
+    const { atelier } = await ouvrirLAtelier({
+      atelierDeBande: {
+        bande: { ...GARDEE_A7, recette: { ...GARDEE_A7.recette, passes: [] } },
+        planche: "data:image/png;base64,AAAA",
+        clips: { "clip-a": clipRendu("clip-a", false) },
+        images_par_clip: { "clip-a": 22 },
+        cadre: { choix: "clip", a_jour: true, mesuree_le: 1_787_800_000 },
+        clips_voisins: VOISINS_A7,
+      },
+    })
+
+    expect(await atelier.findByText(/ne détoure rien/)).toBeTruthy()
+    fireEvent.click(atelier.getByRole("button", { name: "Ajouter un détourage" }))
+
+    expect(await atelier.findByLabelText(/Tolérance, en chiffres/)).toBeTruthy()
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+  })
+
+  test("une recette enregistrée s'applique à l'animation entière", async () => {
+    const { atelier, appels } = await ouvrirLAtelier({
+      recettes: {
+        "mon pixel art": {
+          ...RECETTE_VIDE,
+          passes: [{ ...PASSE_PAR_DEFAUT, tolerance: 61 }],
+        },
+      },
+    })
+
+    const choix = await atelier.findByLabelText(
+      "appliquer une recette enregistrée à cette animation",
+    )
+    fireEvent.change(choix, { target: { value: "mon pixel art" } })
+
+    // Elle remplace les réglages en cours, et **n'écrit rien** : c'est la règle
+    // de tout l'écran, et une recette nommée serait sinon le seul geste qui ne
+    // s'annule pas.
+    expect(await atelier.findByText(/des corrections attendent/)).toBeTruthy()
+    expect(
+      (atelier.getByLabelText(/Tolérance, en chiffres/) as HTMLInputElement).value,
+    ).toBe("61")
+    expect(
+      appels.some((a) => a.url === "/api/strips/bande-marche" && Boolean(a.corps)),
+    ).toBe(false)
+  })
+
+  test("sans recette enregistrée, aucune liste ne paraît", async () => {
+    // Un menu vide promettrait qu'il y a quelque part des recettes à trouver.
+    const { atelier } = await ouvrirLAtelier({ recettes: {} })
+
+    await atelier.findByText(/en pixels du sprite/)
+    expect(
+      atelier.queryByLabelText(
+        "appliquer une recette enregistrée à cette animation",
+      ),
+    ).toBeNull()
+  })
+
   test("annuler ramène exactement l'état d'ouverture", async () => {
     const { atelier, cadre } = await ouvrirLAtelier()
     pousserDUnPixel(cadre)
@@ -22965,9 +23069,7 @@ describe("A7 · l'atelier d'une animation", () => {
     const { atelier, cadre } = await ouvrirLAtelier()
     expect(cadre.querySelector("[data-fenetre-davant]")).toBeNull()
 
-    const tolerance = await atelier.findByLabelText(
-      /Détourage, tolérance, en chiffres/,
-    )
+    const tolerance = await atelier.findByLabelText(/Tolérance, en chiffres/)
     fireEvent.change(tolerance, { target: { value: "42" } })
     fireEvent.keyDown(tolerance, { key: "Enter" })
     fireEvent.click(await atelier.findByRole("button", { name: "Enregistrer ›" }))

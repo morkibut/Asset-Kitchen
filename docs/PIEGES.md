@@ -1,6 +1,6 @@
 # Asset Kitchen — Pièges connus
 
-Cent soixante-neuf pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
+Cent soixante-douze pièges, chacun payé une fois. Un piège n'entre ici que s'il a **coûté** —
 une séance, un appel payant, une tranche entière —, et il s'écrit avec ce qui l'a rendu
 invisible, jamais seulement avec sa correction.
 
@@ -1473,3 +1473,35 @@ la prochaine réécriture retrouvera.
   évité toute migration : **une forme neuve accepte l'ancienne à la lecture** — un entier vaut une
   prise sans décalage — et **un champ vide veut dire « celui de l'objet qui me porte »**, ici le
   clip de la bande. Payé le 5 septembre 2026.
+
+- **Un réglage qui ne fait rien la plupart du temps est pire qu'un réglage absent.** L'écran de
+  montage offrait *la tolérance du détourage* et rien d'autre — or la tolérance n'est lue que par
+  deux moteurs sur quatre : la pipette vise un point, le modèle décide seul, la sélection suit un
+  tracé. ⚠️ **Le curseur bougeait sans que l'image change, et rien ne le disait** : l'auteur ne
+  pouvait pas distinguer *ce réglage ne s'applique pas ici* de *ce réglage ne marche pas*. La
+  règle : **un contrôle qui dépend d'un choix voisin disparaît quand ce choix le rend inerte, et
+  laisse une phrase à sa place.** Corollaire trouvé le même jour : quand la valeur par défaut d'un
+  réglage dépend d'un autre, **elle suit** — le durcissement était resté celui du moteur d'avant,
+  et l'auteur l'avait retapé trente-neuf fois sur quarante. Payé le 5 septembre 2026.
+
+
+- **Une route qui sert quelque chose que nul écran n'affiche n'existe pas.** `GET
+  /clips/{id}/video` servait la vidéo payée depuis `A9` ; l'écran de montage montrait la pellicule
+  et deux boucles tirées des *images extraites*, et la vidéo n'avait **aucun chemin** que l'auteur
+  puisse prendre. ⚠️ Une revue de code ne le voit pas — la route est là, testée, correcte —, et un
+  essai d'écran ne le voit pas non plus : il vérifie ce que l'écran montre, jamais ce qu'il ne
+  montre pas. La règle : **à la fin d'une tranche, lister ce que le serveur sait rendre et vérifier
+  que chaque chose a un chemin depuis un écran** ; ce qui n'en a pas est soit à brancher, soit à
+  retirer. C'est la famille ② de la `V3.1` — *ce qui est construit et jamais branché* —, et elle se
+  reforme toute seule. Payé le 5 septembre 2026.
+
+
+- **Servir une vidéo sans répondre aux demandes de plage, c'est servir une vidéo qu'on ne peut pas
+  parcourir.** Un navigateur se déplace dans une vidéo en demandant des tranches d'octets ; sans
+  `Accept-Ranges` et sans réponse `206`, la barre de lecture ne répond pas, et certains lecteurs
+  refusent même de commencer. ⚠️ **Le lecteur envoie sa toute première demande en plage**, avant
+  de connaître la taille du fichier — un serveur qui ne sait répondre qu'au fichier entier semble
+  donc marcher jusqu'au moment où l'on cherche un passage. Trois formes à tenir, et elles sont
+  toutes envoyées en vrai : `bytes=100-199`, `bytes=10-` (jusqu'à la fin) et `bytes=-500` (les
+  derniers). Une plage qui commence après la fin se refuse en **416 avec la taille**, pas en
+  tranche vide : c'est ainsi que le lecteur apprend jusqu'où demander. Payé le 5 septembre 2026.
