@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Les routes du clip — une façade sur `ServiceAnimation`, et rien d'autre.
+"""Les routes de l'animation — une façade, et rien d'autre.
 
-Arrivées en A9 (V3). Elles sont dans leur propre fichier pour la raison qui
-sépare déjà la production, la bibliothèque et l'univers : un fichier de routes
-par question qu'on pose à l'atelier.
+Arrivées en A9 (V3), rejointes en A6 par celles du **mouvement**. Elles sont
+dans leur propre fichier pour la raison qui sépare déjà la production, la
+bibliothèque et l'univers : un fichier de routes par question qu'on pose à
+l'atelier. Ici la question est *animer* — le vocabulaire du mouvement et la
+commande d'un clip en sont les deux moitiés, et les séparer aurait fait deux
+fichiers pour une seule question.
 
 **Ce qu'aucune de ces routes ne fait.** Aucune ne rappelle le fournisseur toute
 seule. Commander part d'un geste ; récupérer part d'un geste. Le seul appel qui
 se fait sans qu'on le demande est l'attente d'un clip qu'on vient de commander,
-et elle ne coûte rien — le clip est déjà payé au moment où elle commence.
+et elle ne coûte rien — le clip est déjà payé au moment où elle commence. **Les
+routes du mouvement, elles, n'appellent personne du tout** : c'est du
+vocabulaire, il s'écrit sur le disque, et tout y marche réseau coupé.
 """
 
 from __future__ import annotations
@@ -33,6 +38,129 @@ routeur = APIRouter()
 
 def _atelier(requete: Request) -> Atelier:
     return requete.app.state.atelier
+
+
+# ── Les mouvements (A6) ──────────────────────────────────────────────────────
+#
+# **Avant les clips, comme dans le plan.** On ne commande pas un clip sans
+# nommer ce qu'on demande : c'est ce que la tranche livre, et l'ordre des
+# routes le dit. Aucune ne coûte, aucune n'appelle, toutes marchent réseau
+# coupé.
+
+
+class CorpsMouvement(BaseModel):
+    """Ce qu'il faut pour fabriquer ou régler un mouvement.
+
+    **Les deux textes sont la définition.** Le nom se lit, le texte part au
+    modèle ; un mouvement sans l'un des deux n'est pas un mouvement. `cadence`
+    et `directions` sont facultatifs et prennent le défaut du domaine — un
+    chiffre écrit ici serait un second défaut à tenir d'accord.
+    """
+
+    nom: str | None = None
+    texte: str | None = None
+    cadence: float | None = None
+    directions: list[str] | None = None
+
+
+@routeur.get("/movements")
+async def liste_mouvements(requete: Request) -> dict[str, Any]:
+    """La bibliothèque de mouvements — **la même pour tous les jeux**.
+
+    Elle rend aussi les masqués, dans une seconde liste : c'est ce qui rend le
+    masquage réversible, et un geste irréversible sur du vocabulaire livré n'a
+    aucune raison d'être.
+    """
+    return _atelier(requete).mouvements.en_json()
+
+
+@routeur.get("/movements/for-pose/{identifiant_pose}")
+async def mouvement_de_la_pose(
+    requete: Request, identifiant_pose: str, projet: str | None = Query(None)
+) -> dict[str, Any]:
+    """Ce qui partira pour animer cette case du plan, **et d'où le texte vient**.
+
+    La règle est ici et **nulle part ailleurs** : l'écran ne rejoue jamais la
+    correspondance de son côté. Deux endroits qui apparient une pose et un
+    mouvement finiraient par ne plus s'accorder, et l'auteur découvrirait
+    l'écart sur une case, un jour, sans savoir lequel des deux ment.
+
+    `origine` dit ce que l'écran doit écrire à côté du texte : `mouvement`
+    quand la case est animée par un mouvement connu, `pose` quand on retombe sur
+    la consigne figée du plan — moins bonne, mais en anglais et juste sur
+    l'attitude —, `aucun` quand le produit ne sait rien dire de cette case-là.
+    """
+    atelier = _atelier(requete)
+    ouvert = projet or atelier.bibliotheque.courant
+    repli = ""
+    for pose in atelier.production.plan(ouvert):
+        if pose.identifiant == identifiant_pose:
+            repli = pose.dit()
+            break
+    mouvement = atelier.mouvements.pour_la_pose(identifiant_pose)
+    texte = atelier.mouvements.texte_de_la_pose(identifiant_pose, repli)
+    return {
+        "pose": identifiant_pose,
+        "mouvement": mouvement.en_json() if mouvement else None,
+        "texte": texte,
+        "origine": "mouvement" if mouvement else ("pose" if repli else "aucun"),
+    }
+
+
+@routeur.post("/movements", status_code=201)
+async def fabriquer_mouvement(
+    requete: Request, corps: CorpsMouvement
+) -> dict[str, Any]:
+    """Écrire un nom crée le mouvement, sur-le-champ, sans formulaire et sans
+    rien payer — l'invariant de `C1`, généralisé en `E2`."""
+    atelier = _atelier(requete)
+    atelier.mouvements.fabriquer(
+        corps.nom or "",
+        corps.texte or "",
+        corps.cadence,
+        tuple(corps.directions or ()),
+    )
+    return atelier.mouvements.en_json()
+
+
+@routeur.put("/movements/{identifiant}")
+async def regler_mouvement(
+    requete: Request, identifiant: str, corps: CorpsMouvement
+) -> dict[str, Any]:
+    """Renommer, retoucher le texte, changer la cadence ou les directions.
+
+    **Ce que ce mouvement a déjà fait partir ne bouge pas** : le texte est parti
+    dans l'appel au moment du clic. Jamais de cascade, ici comme ailleurs.
+    """
+    atelier = _atelier(requete)
+    atelier.mouvements.regler(
+        identifiant,
+        nom=corps.nom,
+        texte=corps.texte,
+        cadence=corps.cadence,
+        directions=tuple(corps.directions) if corps.directions is not None else None,
+    )
+    return atelier.mouvements.en_json()
+
+
+@routeur.delete("/movements/{identifiant}")
+async def masquer_mouvement(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Retirer un mouvement de la liste — **un livré laisse une pierre**.
+
+    Le catalogue des livrés se relit à chaque lecture : effacer un livré le
+    ferait revenir à la ligne suivante. Un fabriqué, lui, s'en va pour de bon.
+    """
+    atelier = _atelier(requete)
+    atelier.mouvements.masquer(identifiant)
+    return atelier.mouvements.en_json()
+
+
+@routeur.post("/movements/{identifiant}/show")
+async def montrer_mouvement(requete: Request, identifiant: str) -> dict[str, Any]:
+    """Rendre à la liste un livré masqué."""
+    atelier = _atelier(requete)
+    atelier.mouvements.montrer(identifiant)
+    return atelier.mouvements.en_json()
 
 
 def _demande_de_jauge(

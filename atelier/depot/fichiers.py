@@ -8,6 +8,7 @@
     ├─ recettes.json              les recettes nommées (US-66)
     ├─ prereglages.json           les jeux de réglages nommés (US-134)
     ├─ etiquettes.json            la base d'étiquettes, partagée par tous les jeux (E8)
+    ├─ mouvements.json            la bibliothèque de mouvements, partagée aussi (A6)
     ├─ collections.json           les collections, avec leur projet éventuel
     ├─ projets/<identifiant>/
     │  ├─ projet.json             le projet — bible, barème, palette, défauts
@@ -67,6 +68,10 @@ class Fichiers:
         self.recettes = self.racine / "recettes.json"
         self.prereglages = self.racine / "prereglages.json"
         self.etiquettes = self.racine / "etiquettes.json"
+        # La bibliothèque de mouvements (A6). **À la racine, comme les
+        # étiquettes et pour la même raison** : un mouvement appartient à
+        # l'atelier, pas à un jeu, et il sert tous les jeux suivants.
+        self.mouvements = self.racine / "mouvements.json"
         self.collections = self.racine / "collections.json"
         self.etat = self.racine / "atelier.json"
         # Le cadre de l'agent — plafond, modèle imposé, dossier du jeu. Un
@@ -228,6 +233,23 @@ class Fichiers:
         a nommées, donc celui qu'il reconnaît.
         """
         lu = self._lire_json(self.etiquettes)
+        return lu if isinstance(lu, list) else []
+
+    def ecrire_mouvements(self, contenu: list[Any]) -> None:
+        self._ecrire_json(self.mouvements, contenu)
+
+    def lire_mouvements(self) -> list[Any]:
+        """La bibliothèque de mouvements (A6).
+
+        **À la racine, pas dans un projet** : c'est la décision durable de la
+        V3 — un mouvement appartient à l'atelier. Le plan de poses dit *quelles*
+        cases un jeu veut ; l'atelier sait *comment* chacune se dit quand on
+        l'anime, et ce savoir-là sert tous les jeux suivants.
+
+        **Une liste, pas un dictionnaire**, comme les étiquettes : l'ordre de
+        fabrication est celui dans lequel l'auteur les a nommés.
+        """
+        lu = self._lire_json(self.mouvements)
         return lu if isinstance(lu, list) else []
 
     def ecrire_prereglages(self, contenu: dict[str, Any]) -> None:

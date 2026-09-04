@@ -46,6 +46,7 @@ from atelier.services.catalogue import EtatCatalogue, ServiceCatalogue
 from atelier.services.reserves import ServiceReserves
 from atelier.services.decoupe import DecoupeRefusee, ServiceDecoupe
 from atelier.services.etiquettes import EtiquetteRefusee, ServiceEtiquettes
+from atelier.services.mouvements import MouvementRefuse, ServiceMouvements
 from atelier.services.superposition import ServiceSuperposition, SuperpositionRefusee
 from atelier.services.envoi import EnvoiRefuse, ServiceEnvoi
 from atelier.services.evenements import Diffusion, Evenement
@@ -81,6 +82,7 @@ __all__ = [
     "CompteFaux",
     "DecoupeRefusee",
     "EtiquetteRefusee",
+    "MouvementRefuse",
     "SuperpositionRefusee",
     "DepotRefuse",
     "Diffusion",
@@ -108,6 +110,7 @@ __all__ = [
     "ServiceDecoupe",
     "ServiceAnimation",
     "ServiceEtiquettes",
+    "ServiceMouvements",
     "ServiceSuperposition",
     "ServiceExport",
     "ServiceGenerations",
@@ -235,6 +238,12 @@ class Atelier:
         # plutôt que sur l'univers parce qu'elle n'appartient à aucun jeu —
         # comme la clé du fournisseur.
         self.etiquettes = ServiceEtiquettes(self.fichiers)
+        # **La bibliothèque de mouvements, au même rang et pour la même raison**
+        # (A6) : elle lit un fichier à la racine et n'appartient à aucun jeu. Un
+        # mouvement se réfléchit une fois et sert tous les projets suivants —
+        # c'est la décision durable de la V3, et elle se lit dans cette ligne :
+        # ni projet, ni catalogue, ni fournisseur ne lui sont passés.
+        self.mouvements = ServiceMouvements(self.fichiers)
         # **Après la bibliothèque et les assets, comme le slicer, et pour la
         # même raison** : le plan, les personnages et la matrice ne fabriquent
         # aucune image. Ni catalogue, ni fournisseur — c'est ce qui fait que

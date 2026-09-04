@@ -11,6 +11,54 @@ des dix précédentes ; elle a besoin de `docs/PLAN.md` et de `docs/PIEGES.md`.
 
 Une entrée s'ajoute à chaque fin de tranche. Les plus récentes en tête.
 
+## A6 — le mouvement, dit une fois pour toutes — 4 septembre 2026
+
+**La V3 s'ouvre, et par sa plus petite tranche.** *« On ne commande pas un clip sans nommer ce
+qu'on demande »* : c'est la phrase du plan, et elle explique pourquoi cette tranche-là passe avant
+l'écran qui paie.
+
+**Ce qui manquait n'était pas une liste.** Le produit savait dire une pose depuis `E10` — la case
+« marche » sait qu'elle s'écrit `walking posture, full body`. C'est une **posture figée** : juste
+pour une image, fausse pour un clip, où il faut dire que ça boucle. Ajouter une seconde liste à
+côté des poses aurait été le réflexe, et c'était le piège : deux listes concurrentes finissent par
+diverger, et l'auteur découvre l'écart sur une case, un jour, sans savoir laquelle des deux ment.
+**Le lien se fait donc par l'identifiant seul** — la pose `marche` trouve le mouvement `marche` —,
+et il n'y a rien à relier, rien à cocher, rien à tenir d'accord.
+
+**Ce que la correspondance a coûté à écrire : rien, et c'est le résultat.** Les sept mouvements
+livrés recouvrent exactement le plan de poses de départ, plus le saut. Un atelier neuf sur un
+projet neuf sait donc animer ses six cases sans qu'une ligne soit écrite. Un essai le tient, parce
+que la correspondance serait fausse d'un mot et que rien ne le signalerait.
+
+> ### Ce que les textes livrés portent, et qui vient des bancs payés
+>
+> Deux précautions reviennent dans chacun des sept, et aucune n'est un ornement.
+>
+> **`in place, without moving across the frame`** — sans elle, le personnage traverse le cadre.
+> La fenêtre commune d'`A2` se prend alors sur tout ce qu'il a parcouru, et la bande sort avec un
+> personnage minuscule au milieu de beaucoup de vide.
+>
+> **`returning to the neutral stance`** sur ce qui n'est pas un cycle — le saut, l'attaque, les
+> dégâts. C'est ce que le banc du 2 septembre a découvert deux fois : un texte qui ramène au repos
+> entre deux actions rend un clip où **repos et marche se découpent séparément**. C'est la
+> découverte qui commande tout l'écran de montage, et elle est maintenant écrite dans le
+> vocabulaire plutôt que dans une tête.
+
+**Les deux choix tranchés seuls.** *Le bloc est dans les Réglages*, parce que c'est l'écran qui
+tient déjà ce qui ne dépend d'aucun jeu — la clé, les garde-fous, le dossier. On y **écrit** un
+mouvement ; on le **choisira** ailleurs, sur l'écran de commande d'`A9`, qui ne fera que lire cette
+liste. Deux endroits qui l'écriraient finiraient par en montrer deux. Et *masquer ne veut pas dire
+la même chose des deux côtés* : un livré laisse une pierre et se remontre, un fabriqué s'en va pour
+de bon — le motif exact des étiquettes livrées, repris tel quel parce que le catalogue se relit à
+chaque lecture et rendrait un livré effacé à la ligne suivante.
+
+**Ce que la tranche n'a pas fait, et qui se verra en `A9`.** Le texte d'un mouvement n'est encore
+parti dans aucun appel : rien de cette tranche ne parle à un fournisseur. Ce qu'elle a mesuré est
+donc ce qu'un écran affiche et ce qu'une route rend, pas ce qu'un modèle en fait. **La première
+fois qu'un de ces sept textes sera jugé, c'est un clip payé qui le jugera.**
+
+---
+
 ## M7 — le détourage de départ redevient complet, et se règle depuis l'image — 4 septembre 2026
 
 **Une remarque en deux moitiés, et la seconde était le vrai reproche.** L'étape *Le détourage de

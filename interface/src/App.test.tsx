@@ -58,6 +58,7 @@ import type {
   Depenses,
   Etat,
   Etiquette,
+  BaseMouvements,
   FondPropose,
   Main,
   Modele,
@@ -457,6 +458,42 @@ const SANS_SECRET = {
   manque: null,
   pret: true,
 }
+
+// ── Les mouvements livrés (A6) ───────────────────────────────────────────────
+//
+// **Trois des sept, et c'est assez.** Ce que l'écran doit montrer est une liste
+// de mouvements livrés, la marque de ce qui a été nommé ici, et le texte anglais
+// qui part — pas le catalogue entier. Recopier les sept ferait de cet essai un
+// second endroit à corriger le jour où l'on en livre un huitième.
+const MOUVEMENTS: BaseMouvements["mouvements"] = [
+  {
+    identifiant: "repos",
+    nom: "repos",
+    texte: "idle breathing loop, standing still, looping seamlessly",
+    cadence: 8,
+    directions: [],
+    livre: true,
+    masque: false,
+  },
+  {
+    identifiant: "marche",
+    nom: "marche",
+    texte: "walking cycle, full body, walking in place, looping seamlessly",
+    cadence: 12,
+    directions: [],
+    livre: true,
+    masque: false,
+  },
+  {
+    identifiant: "mort",
+    nom: "mort",
+    texte: "death, collapsing to the ground, then lying still",
+    cadence: 10,
+    directions: ["sud"],
+    livre: true,
+    masque: false,
+  },
+]
 
 const ETAT: Etat = {
   secrets: [
@@ -927,6 +964,10 @@ function serveurDouble(options: {
   /** La base d'étiquettes (E8). **Vide par défaut**, comme sur un atelier neuf :
    *  personne ne l'écrit à la place de l'auteur. */
   etiquettes?: Etiquette[]
+  /** La bibliothèque de mouvements (A6). **Pleine par défaut**, à l'inverse des
+   *  étiquettes : l'atelier arrive avec sept mouvements livrés, et un écran qui
+   *  les montrerait vides mesurerait le contraire du produit. */
+  mouvements?: BaseMouvements
   /** Ce que chaque type d'objet réclame (E9). */
   types?: PosesDesTypes["types"]
   /** Les deux listes du côté Ambiances (E11). */
@@ -1415,6 +1456,12 @@ function serveurDouble(options: {
     if (url.includes("/universe/consequences"))
       return rendre({ images: 0, cout_usd: 0, cible: 128, poses: 0, images_de_pose: 0 })
     if (url.includes("/labels")) return rendre({ etiquettes: options.etiquettes ?? [] })
+    // La bibliothèque de mouvements (A6). Le double la rend telle quelle quel
+    // que soit le geste : ce qui se vérifie ici est **ce que l'écran affiche et
+    // ce qu'il envoie**, pas ce que le serveur en fait — cette moitié-là est
+    // tenue par `tests/test_a6.py`, sur le vrai service et sur le disque.
+    if (url.includes("/movements"))
+      return rendre(options.mouvements ?? { mouvements: MOUVEMENTS, masques: [] })
     // La seconde fabrique (E6) : ouvrir ne crée rien, et l'aperçu non plus.
     // Le double répond ce que le serveur répond — un dessous nul quand rien
     // n'est désigné, et deux images vides en `data:`.
@@ -4294,6 +4341,159 @@ describe("l'agent, vu de l'atelier", () => {
       const section = screen.getByRole("heading", { name: "L'agent" }).closest("section")!
       expect(section.textContent).not.toContain("avant le plafond")
     })
+  })
+
+  // ── Les mouvements (A6) ───────────────────────────────────────────────────
+  //
+  // **Le quatrième bloc de l'écran, et il est ici pour la raison des trois
+  // autres** : ce qui ne dépend d'aucun jeu. Un mouvement appartient à
+  // l'atelier — décision durable de la V3 —, il s'écrit une fois et sert tous
+  // les projets suivants. On l'écrit ici, on le **choisit** ailleurs.
+
+  const ouvrirLesMouvements = async (
+    options: Parameters<typeof serveurDouble>[0] = {},
+  ) => {
+    const double = serveurDouble(options)
+    await monter(double.fetchDouble)
+    fireEvent.click(screen.getByRole("button", { name: "Réglages" }))
+    await screen.findByRole("heading", { name: "Les mouvements" })
+    return double
+  }
+
+  test("l'atelier arrive avec ses mouvements, et le texte qui part se lit sans déplier", async () => {
+    await ouvrirLesMouvements()
+
+    // **Ce que l'auteur vient vérifier ici est le texte anglais** : c'est lui
+    // qui part, et c'est la seule chose qu'une liste de noms ne dirait pas.
+    expect(screen.getByRole("button", { name: "marche" })).toBeTruthy()
+    expect(
+      screen.getByText(
+        "walking cycle, full body, walking in place, looping seamlessly",
+      ),
+    ).toBeTruthy()
+
+    // La cadence et les directions se lisent sur la ligne. **Vide veut dire
+    // toutes** : seule la mort en déclare une, et c'est un fait sur le monde.
+    expect(screen.getByText("10 i/s · sud")).toBeTruthy()
+    expect(screen.getByText("12 i/s")).toBeTruthy()
+  })
+
+  test("un mouvement nommé ici porte sa marque, un livré n'en porte aucune", async () => {
+    await ouvrirLesMouvements({
+      mouvements: {
+        mouvements: [
+          ...MOUVEMENTS,
+          {
+            identifiant: "nage",
+            nom: "nage",
+            texte: "swimming cycle, arms stroking, looping seamlessly",
+            cadence: 12,
+            directions: [],
+            livre: false,
+            masque: false,
+          },
+        ],
+        masques: [],
+      },
+    })
+
+    // La même marque que partout ailleurs dans le produit : un livré est le
+    // même chez tout le monde, un fabriqué n'existe que dans cet atelier-ci.
+    expect(screen.getAllByText("nommé ici")).toHaveLength(1)
+  })
+
+  test("nommer un mouvement envoie ses deux textes, et rien avant qu'ils soient là", async () => {
+    const { appels } = await ouvrirLesMouvements()
+
+    fireEvent.click(screen.getByRole("button", { name: "Nommer un mouvement" }))
+    const nom = screen.getByPlaceholderText("nage")
+    const texte = screen.getByPlaceholderText(
+      "swimming cycle, arms stroking, looping seamlessly",
+    )
+
+    // **Les deux textes sont la définition**, et le bouton le dit avant que le
+    // serveur ait à le refuser : un mouvement sans texte anglais ne fait rien
+    // partir, un mouvement sans nom ne se clique pas.
+    fireEvent.change(nom, { target: { value: "nage" } })
+    expect(screen.getByRole("button", { name: "Nommer" })).toBeDisabled()
+
+    fireEvent.change(texte, { target: { value: "swimming cycle" } })
+    fireEvent.click(screen.getByRole("button", { name: "Nommer" }))
+
+    await waitFor(() =>
+      expect(
+        appels.some(
+          (a) =>
+            a.url === "/api/movements" &&
+            JSON.stringify(a.corps) ===
+              JSON.stringify({ nom: "nage", texte: "swimming cycle" }),
+        ),
+      ).toBe(true),
+    )
+  })
+
+  test("masquer dit ce qu'il fait, et ce n'est pas la même chose des deux côtés", async () => {
+    await ouvrirLesMouvements({
+      mouvements: {
+        mouvements: [
+          MOUVEMENTS[1],
+          {
+            identifiant: "nage",
+            nom: "nage",
+            texte: "swimming cycle",
+            cadence: 12,
+            directions: [],
+            livre: false,
+            masque: false,
+          },
+        ],
+        masques: [],
+      },
+    })
+
+    // **Un livré laisse une pierre, un fabriqué s'en va pour de bon**, et
+    // l'écran ne promet pas la même chose dans les deux cas : le catalogue des
+    // livrés se relit à chaque lecture, donc effacer un livré le ferait revenir.
+    fireEvent.click(screen.getByRole("button", { name: "marche" }))
+    expect(screen.getByText("masquer — il se remontre")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "nage" }))
+    await waitFor(() => expect(screen.getByText("masquer — il s'en va")).toBeTruthy())
+  })
+
+  test("un livré masqué se remontre d'un clic", async () => {
+    const { appels } = await ouvrirLesMouvements({
+      mouvements: {
+        mouvements: [MOUVEMENTS[0]],
+        masques: [{ ...MOUVEMENTS[1], masque: true }],
+      },
+    })
+
+    // Sans cette liste, masquer serait irréversible — et un geste irréversible
+    // sur du vocabulaire livré n'a aucune raison d'être.
+    fireEvent.click(screen.getByRole("button", { name: "marche · remontrer" }))
+    await waitFor(() =>
+      expect(appels.some((a) => a.url === "/api/movements/marche/show")).toBe(true),
+    )
+  })
+
+  test("les trois réglages d'un mouvement portent leur explication", async () => {
+    await ouvrirLesMouvements()
+
+    for (const cle of ["mouvement.nom", "mouvement.texte", "mouvement.cadence"]) {
+      expect(AIDE[cle], `${cle} — absent du corpus`).toBeTruthy()
+      expect(AIDE[cle].ou).toBe("reglages")
+    }
+
+    // Et elles sont **atteignables depuis le réglage** : le pointillé ne paraît
+    // que sur un libellé dont le corpus porte l'entrée.
+    fireEvent.click(screen.getByRole("button", { name: "marche" }))
+    const marque = (nom: string) =>
+      [...document.querySelectorAll("span")].some(
+        (e) => e.textContent === nom && e.className.includes("decoration-dotted"),
+      )
+    await waitFor(() => expect(marque("Ce qui part au modèle")).toBe(true))
+    expect(marque("Cadence")).toBe(true)
   })
 
   test("les trois réglages de l'agent portent leur explication", async () => {

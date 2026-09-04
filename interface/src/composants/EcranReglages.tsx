@@ -3,8 +3,13 @@
 // En T1 il n'existait que pour la clé, et son en-tête annonçait déjà la suite :
 // « les garde-fous de l'agent et les dossiers le rejoindront en T7 ». Les voici,
 // et l'écran garde sa forme — un panneau posé sur l'atelier, pas un quatrième
-// écran plein. Trois blocs, trois questions, et rien qui ait à être cherché
+// écran plein. Quatre blocs, quatre questions, et rien qui ait à être cherché
 // ailleurs : c'est exactement ce que la user story demande.
+//
+// **Le quatrième est arrivé en A6, et la règle de l'écran n'a pas bougé** : ce
+// panneau tient ce qui ne dépend d'aucun jeu. La clé du fournisseur, les
+// garde-fous de l'agent, le dossier du jeu — et le vocabulaire du mouvement,
+// qui appartient à l'atelier par décision durable de la V3.
 //
 // **Ce qui se règle ici prend effet à l'appel suivant, sans redémarrage**
 // (US-91). Rien à faire pour ça côté écran : le serveur relit son fichier à
@@ -29,6 +34,7 @@ import {
 import { Bouton, Curseur, Libelle, libelleModele, Raison } from "./chassis"
 import { nomDuModele } from "./Fiche"
 import { TiroirDesSecrets } from "./Secrets"
+import { BlocMouvements } from "./Mouvements"
 import { PANNEAU } from "./Infobulle"
 
 export function EcranReglages({
@@ -90,6 +96,14 @@ export function EcranReglages({
         <BlocSecrets tiroirs={tiroirs} onDeposee={onDeposee} />
         <BlocAgent agent={agent} modeles={modeles} onAgent={onAgent} />
         <BlocDossiers agent={agent} onAgent={onAgent} />
+        {/* **Le quatrième bloc, arrivé en A6.** Il est ici pour la raison qui a
+            mis les trois autres ici : ce qui ne dépend d'aucun jeu. Un
+            mouvement appartient à l'atelier — décision durable de la V3 —, il
+            s'écrit une fois et sert tous les projets suivants. On l'écrit ici,
+            on le **choisit** ailleurs : l'écran qui commande un clip ne fait
+            que lire cette liste, et deux endroits qui l'écriraient finiraient
+            par en montrer deux. */}
+        <BlocMouvements />
 
         {/* Le bouton dit la touche, comme celui du Guide et celui de la
             vitrine : une sortie au clavier qui ne s'écrit nulle part ne se

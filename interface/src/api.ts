@@ -473,6 +473,61 @@ export type Etiquette = {
   oubliee: boolean
 }
 
+/** Un mouvement de l'atelier — **ce que la même pose dit quand on l'anime** (A6).
+ *
+ *  Le produit savait déjà dire une pose : `walking posture, full body`. C'est
+ *  une **posture figée**, juste pour une image et fausse pour un clip. Ce qui
+ *  manquait n'est pas une liste de plus, c'est cette moitié-là : un cycle qui
+ *  boucle, une cadence, et les directions où le mouvement existe.
+ *
+ *  **Il appartient à l'atelier, pas à un jeu** — comme une étiquette, et pour
+ *  la même raison : il se réfléchit une fois et sert tous les jeux suivants. */
+export type Mouvement = {
+  /** **Il ne bouge pas quand le nom change**, comme pour une pose : c'est lui
+   *  qui accroche le mouvement à la case du plan. */
+  identifiant: string
+  /** Le nom français — ce qu'on lit. */
+  nom: string
+  /** Le texte anglais — ce qui part. Les séparer est le partage de `E10`. */
+  texte: string
+  /** Les images par seconde de la bande. Elle voyage jusqu'au descriptif de
+   *  l'export : deux réglages séparés finiraient par se contredire. */
+  cadence: number
+  /** Les directions où ce mouvement a un sens — **vide veut dire toutes**.
+   *  Ça propose, ça n'interdit jamais : un mouvement de l'atelier ne connaît
+   *  pas les directions qu'un jeu déclare. */
+  directions: string[]
+  /** Livré avec l'atelier, ou nommé ici. Même marque que pour une étiquette. */
+  livre: boolean
+  /** Masqué. Ne sort du serveur que dans la seconde liste, celle qui rend le
+   *  masquage réversible. */
+  masque: boolean
+}
+
+/** La bibliothèque de mouvements telle que le serveur la sert : ceux qu'on
+ *  voit, et ceux qu'on a masqués et qu'on peut remontrer. */
+export type BaseMouvements = {
+  mouvements: Mouvement[]
+  masques: Mouvement[]
+}
+
+/** Ce qui partira pour animer une case du plan, **et d'où le texte vient**.
+ *
+ *  La règle vit sur le serveur et **nulle part ailleurs** : l'écran ne rejoue
+ *  jamais la correspondance pose ↔ mouvement de son côté. Deux endroits qui
+ *  l'appareillent finiraient par ne plus s'accorder. */
+export type MouvementDeLaPose = {
+  pose: string
+  mouvement: Mouvement | null
+  texte: string
+  /** `mouvement` : la case est animée par un mouvement connu. `pose` : on
+   *  retombe sur la consigne figée du plan — moins bonne, mais en anglais et
+   *  juste sur l'attitude. `aucun` : le produit ne sait rien dire de cette
+   *  case-là, et il le dit plutôt que d'inventer un texte qui partira dans un
+   *  appel payé. */
+  origine: "mouvement" | "pose" | "aucun"
+}
+
 /** Ce qu'un changement de réglage casserait, **avec les vrais chiffres**.
  *  Rien n'est jamais grisé dans l'assistant : la ligne dit le compte et le
  *  coût, puis laisse décider. */
@@ -3439,6 +3494,51 @@ export const api = {
 
   oublierEtiquette: (identifiant: string) =>
     appeler<{ etiquettes: Etiquette[] }>(`/labels/${identifiant}`, { method: "DELETE" }),
+
+  // ── Les mouvements (A6) ───────────────────────────────────────────────────
+  //
+  // **Aucune de ces routes ne coûte et aucune n'appelle personne** : c'est du
+  // vocabulaire, il s'écrit sur le disque, et tout y marche réseau coupé.
+
+  mouvements: () => appeler<BaseMouvements>("/movements"),
+
+  /** Ce qui partira pour animer cette case du plan. **La règle est au serveur**
+   *  et l'écran ne la rejoue jamais : deux endroits qui apparient une pose et
+   *  un mouvement finiraient par ne plus s'accorder. */
+  mouvementDeLaPose: (pose: string, projet?: string) =>
+    appeler<MouvementDeLaPose>(
+      `/movements/for-pose/${encodeURIComponent(pose)}` +
+        (projet ? `?projet=${encodeURIComponent(projet)}` : ""),
+    ),
+
+  fabriquerMouvement: (
+    nom: string,
+    texte: string,
+    cadence?: number,
+    directions?: string[],
+  ) =>
+    appeler<BaseMouvements>("/movements", {
+      method: "POST",
+      body: JSON.stringify({ nom, texte, cadence, directions }),
+    }),
+
+  /** Renommer, retoucher le texte, changer la cadence. **Ce que ce mouvement a
+   *  déjà fait partir ne bouge pas** : jamais de cascade. */
+  reglerMouvement: (
+    identifiant: string,
+    champs: { nom?: string; texte?: string; cadence?: number; directions?: string[] },
+  ) =>
+    appeler<BaseMouvements>(`/movements/${identifiant}`, {
+      method: "PUT",
+      body: JSON.stringify(champs),
+    }),
+
+  /** Un livré laisse une pierre, un fabriqué s'en va pour de bon. */
+  masquerMouvement: (identifiant: string) =>
+    appeler<BaseMouvements>(`/movements/${identifiant}`, { method: "DELETE" }),
+
+  montrerMouvement: (identifiant: string) =>
+    appeler<BaseMouvements>(`/movements/${identifiant}/show`, { method: "POST" }),
 
   /** Le nom change, **l'identifiant jamais** : c'est ce qui permet à
    *  l'assistant de renommer le « Bac à sable » plutôt que d'en créer un

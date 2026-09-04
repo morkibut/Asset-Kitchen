@@ -48,6 +48,7 @@ from atelier.services.calibrage import CalibrageRefuse
 from atelier.services.envoi import EnvoiRefuse
 from atelier.services.planche import PlancheRefusee
 from atelier.services.etiquettes import EtiquetteRefusee
+from atelier.services.mouvements import MouvementRefuse
 from atelier.services.superposition import SuperpositionRefusee
 from atelier.services.production import (
     PersonnageInconnu,
@@ -88,6 +89,7 @@ CODES = {
     UniversRefuse: 409,
     DecoupeRefusee: 409,
     EtiquetteRefusee: 409,
+    MouvementRefuse: 409,
     AmbianceRefusee: 409,
     CalibrageRefuse: 409,
     PlancheRefusee: 409,

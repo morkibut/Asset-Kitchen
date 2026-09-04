@@ -1391,6 +1391,40 @@ export const AIDE: Record<string, Explication> = {
   // autorisation — c'est ce qui l'empêche de se figer, et c'est exactement ce
   // qui rend ces trois réglages nécessaires.
 
+  // ── Les mouvements (A6) ────────────────────────────────────────────────────
+  //
+  // Trois entrées pour un réglage à trois champs. **Une entrée décrit un
+  // réglage, pas un écran** — la règle qui a fait vieillir six phrases seulement
+  // sur cent en vingt étapes.
+
+  "mouvement.nom": {
+    nom: "Nom du mouvement",
+    ou: "reglages",
+    quoi: "Le nom français du mouvement — ce que tu lis, et jamais ce qui part au modèle.",
+    change:
+      "Rien à la génération : le nom ne quitte pas l'atelier. Mais **le repère qu'il produit accroche le mouvement à la case du plan** : un mouvement nommé « marche » anime la pose « marche » sans que tu relies quoi que ce soit. Renommer un mouvement déjà nommé ne défait pas ce lien — le repère, lui, ne bouge plus.",
+    origine: "toi · sept mouvements arrivent avec l'atelier",
+    long: "Le repère se dérive du nom au moment où tu le nommes, et pas après : « vol plané » donne `vol-plane`. C'est ce repère-là qui doit correspondre à l'identifiant d'une pose pour que la case en hérite.\n\nUn mouvement livré renommé reste livré : c'est son origine, pas son état. Le fichier l'emporte alors sur le catalogue, et ton nom survit à la mise à jour suivante.",
+  },
+  "mouvement.texte": {
+    nom: "Ce qui part au modèle",
+    ou: "reglages",
+    quoi: "Le texte anglais envoyé pour obtenir le clip. C'est la moitié qui agit.",
+    change:
+      "Tout. C'est ce texte-là qui décide de ce que le modèle anime, et **deux clips du même mouvement partent avec exactement le même** : ce qui varie d'un tirage à l'autre redevient le tirage, et non la frappe.",
+    origine: "toi · les livrés arrivent écrits",
+    long: "Un texte de mouvement dit un **cycle**, pas une posture. C'est toute la différence avec la consigne d'une pose : `walking posture, full body` est juste pour une image et faux pour un clip, où il faut dire que ça boucle et que le personnage n'avance pas dans le cadre — sans quoi il sort du champ, et la fenêtre de découpage devient énorme pour rien.\n\nLes textes livrés portent deux précautions qui valent d'être gardées quand tu en écris un : *in place, without moving across the frame* pour les déplacements, et *returning to the neutral stance* pour ce qui n'est pas un cycle. La seconde est ce qui permet de découper **deux animations dans un seul clip**, en repérant le retour au repos entre deux actions.\n\nChanger ce texte ne touche à rien de ce qui est déjà parti : il était parti au moment du clic.",
+  },
+  "mouvement.cadence": {
+    nom: "Cadence",
+    ou: "reglages",
+    quoi: "Les images par seconde de la bande qu'on tirera du clip.",
+    change:
+      "Elle règle la vitesse de l'aperçu **et** elle est écrite dans le fichier d'accompagnement à l'export. Un seul réglage pour les deux : séparés, ils finiraient par se contredire, et c'est toi qui paierais l'écart.",
+    origine: "toi · 12 images par seconde à défaut",
+    long: "Douze est le compromis du pixel art : au-dessous le pas saccade, au-dessus tu paies des images que l'œil ne distingue plus à cette taille. Les livrés s'en écartent quand le mouvement le demande — le repos à huit, la course à quatorze.",
+  },
+
   "agent.plafond": {
     nom: "Plafond de la séance",
     ou: "reglages",

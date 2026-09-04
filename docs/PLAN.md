@@ -33,7 +33,7 @@
 | **V2.3** — D1 à D5 | Le traitement cesse d'être à refaire | **close le 3 septembre 2026, cinq sur cinq** — le réglage de départ, la réduction et la grille retrouvée, le fond du jeu, les moteurs et le contour net, les tailles | ci-dessous |
 | **V2.4** — M1 à M7 | Ce qui est cassé se répare avant qu'on anime : une image payée qu'un découpage vide, un écran qui fige à chaque lettre, une case dont on ne savait pas laquelle des deux images part — et le coin du parcours où l'on fabrique un calque se redessine | **✅ close le 4 septembre 2026, sept sur sept — ouverte et close le même jour** — née des remarques d'usage des 3 et 4 septembre, instruites une par une ; `M1`, `M3`, `M4` et `M5` réparent des pertes mesurées, `M2` ne construit rien et dessine, et `M6` a été **close le jour de sa naissance** — la règle existait, seul l'écran manquait. `M1` a fermé le même soir, et sa mesure a élargi le défaut : le geste était cassé pour **les neuf pièces du dépôt**, pas pour deux ; `M3` a fait tomber les lectures du projet de **42 à 1** par demande ; `M4` a rendu à l'écran de confirmation le droit de nommer la troisième image pour ce qu'elle est, et cessé d'envoyer au modèle **la description d'une grille qui n'existe pas** ; `M5` a rendu à cet écran ce qu'il faisait perdre — **on y ajoute désormais l'image qui manque sans en sortir, et ce qu'on venait de corriger survit à l'aller-retour** ; `M7` a rendu à l'étape du détourage de départ **les deux réglages qu'un comptage faux lui avait retirés**, et mis le geste dans le bon sens — on règle une image, puis on promeut, au lieu de deviner à froid avant d'en avoir fabriqué une seule | ci-dessous |
 | **V2.5** — N1… | Le design reprend la main : l'audit du 31 août 2026 repris, puis ce qu'on garde de la densité et ce qu'on rouvre | **ouverte le 4 septembre 2026, une seule tranche écrite** — `N1` est un relevé et ne touche aucun écran ; la suite ne s'écrit qu'après lui | ci-dessous |
-| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **refondue le 2, recadrée le 3 septembre 2026, non ouverte** ; `A0` clos, le serveur d'`A9` écrit et éprouvé | ci-dessous |
+| **V3** — l'animation | Animer un personnage **par la vidéo**, chez un fournisseur **ou sur la carte de la maison**, et découper le clip image par image | **ouverte le 4 septembre 2026 à la demande de l'auteur**, refondue le 2 et recadrée le 3 — `A0` clos, `A6` close le jour de l'ouverture, le serveur d'`A9` écrit et éprouvé | ci-dessous |
 | **V3.1** — G1 à G16 | L'atelier tient ce qu'il dit : les phrases devenues fausses, l'attente qu'on ne voit pas, les explications décrochées, les gestes qu'on ne trouve pas | **ouverte, 2 closes sur 16** — `G1` et `G16` closes le 3 septembre 2026, la seconde **prise hors tour** à la demande de l'auteur ; l'arbitrage de `G15` est écrit et retourne son titre, mais **rien d'autre n'y est construit : la V3 passe devant** — `R7`, `R8`, `R9` et la V2.3 entière sont closes | ci-dessous |
 | **V3.5** — P1, P2 | Le dépliage généralisé : la planche se garde, son découpage se refait, et il s'ouvre aux objets | **née du recadrage du 3 septembre 2026, non ouverte** | ci-dessous |
 | **V4**, **V5** | Les tuiles qui se raccordent, le son | **non découpées** | `docs/archi-versions.md` §9 et §10 |
@@ -2663,7 +2663,7 @@ pantin casse-t-il ?* — ne servaient que `A8`. **Elles sortent du plan avec lui
 
 ---
 
-### A6 · Le mouvement, dit une fois pour toutes
+### A6 · Le mouvement, dit une fois pour toutes — ✅ **livrée le 4 septembre 2026**
 *4 US (392–395)* · **avant tout le reste : on ne commande pas un clip sans nommer ce qu'on demande**
 
 **Ce qu'on livre.** Un mouvement — repos, marche, course, saut, attaque — cesse d'être une phrase
@@ -2690,16 +2690,45 @@ non la frappe. Sur une matrice de vingt-quatre cases, c'est vingt-quatre frappes
 
 **Critères d'acceptation**
 
-- [ ] L'atelier arrive avec une liste de mouvements livrés, et la distinction livré / fabriqué est celle qu'il emploie déjà partout
-- [ ] Un mouvement porte son texte, sa cadence et les directions où il a un sens
-- [ ] Un mouvement fabriqué se crée, se renomme et se masque ; un livré se masque sans se supprimer
-- [ ] **Une pose du plan dont l'identifiant correspond à un mouvement connu hérite de son texte animé**, sans rien relier à la main
-- [ ] Une pose sans mouvement connu se commande quand même, avec le texte que l'auteur écrit
-- [ ] Deux clips du même mouvement partent avec **exactement le même texte**
-- [ ] Un mouvement survit au changement de projet
-- [ ] Rien ici ne part vers le fournisseur, rien ne coûte, et tout fonctionne réseau coupé
+- [x] L'atelier arrive avec une liste de mouvements livrés, et la distinction livré / fabriqué est celle qu'il emploie déjà partout
+- [x] Un mouvement porte son texte, sa cadence et les directions où il a un sens
+- [x] Un mouvement fabriqué se crée, se renomme et se masque ; un livré se masque sans se supprimer
+- [x] **Une pose du plan dont l'identifiant correspond à un mouvement connu hérite de son texte animé**, sans rien relier à la main
+- [x] Une pose sans mouvement connu se commande quand même, avec le texte que l'auteur écrit
+- [x] Deux clips du même mouvement partent avec **exactement le même texte**
+- [x] Un mouvement survit au changement de projet
+- [x] Rien ici ne part vers le fournisseur, rien ne coûte, et tout fonctionne réseau coupé
 
 **Bloquée par** — aucune.
+
+**Ce que la tranche a livré, et les deux choix qu'elle a faits seuls.**
+
+| Ce qui est écrit | Où | Ce que ça tient |
+|---|---|---|
+| Le mouvement, ses sept livrés, et le lien à la pose | `atelier/domaine/mouvement.py` | la correspondance par l'identifiant, et **rien à relier à la main** |
+| La bibliothèque, à la racine des données | `atelier/services/mouvements.py` | un mouvement survit au projet ; un livré masqué ne revient pas |
+| Les routes, dans le routeur de l'animation | `atelier/api/animation.py` | `/movements/for-pose/{pose}` porte la règle du lien, **et elle n'est nulle part ailleurs** |
+| Le bloc de l'écran | `interface/src/composants/Mouvements.tsx` | on l'écrit là, on le choisit ailleurs |
+| Les essais | `tests/test_a6.py`, `interface/src/App.test.tsx` | 19 essais de serveur, 6 d'écran, **aucun centime** |
+
+**Le premier choix : les sept livrés recouvrent exactement le plan de poses de départ**, plus le
+saut. Un atelier neuf sur un projet neuf sait donc animer ses six cases sans qu'une ligne soit
+écrite — et la correspondance serait fausse d'un mot, ce qu'un essai tient.
+
+**Le second : le bloc est dans les Réglages, et pas dans l'univers d'un jeu.** C'est l'écran qui
+tient déjà ce qui ne dépend d'aucun projet — la clé, les garde-fous, le dossier du jeu. *On y
+écrit un mouvement, on le choisit ailleurs* : l'écran de commande d'`A9` ne fera que lire cette
+liste, et deux endroits qui l'écriraient finiraient par en montrer deux.
+
+**Ce que les textes livrés portent, et qui vient du banc.** Deux précautions reviennent dans
+chacun : *in place, without moving across the frame* — sans elle le personnage sort du cadre, et
+la fenêtre commune d'`A2` devient énorme pour rien — et *returning to the neutral stance* sur ce
+qui n'est pas un cycle, qui est **ce qui permet de découper deux animations dans un seul clip**.
+
+> **Le mot qui a été ajouté au vocabulaire, et il n'est pas dans les critères** : *masquer* est
+> réversible pour un livré et définitif pour un fabriqué, et **l'écran ne promet pas la même chose
+> dans les deux cas**. C'est le motif des étiquettes livrées repris tel quel (`E8`) : le catalogue
+> se relit à chaque lecture, donc effacer un livré le ferait revenir à la ligne suivante.
 
 ---
 
